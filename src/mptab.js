@@ -1203,7 +1203,7 @@ function mpRotJudge(FJ, J, jp) { const C = FJ._rotJ || (FJ._rotJ = new Map()), k
 // Procs from the log itself (mpGained, mpRanOut). No judge: only what the Rotation tab grades bad, a slip at most. MP_BARS: a mistake bar of 0 or 99 is
 // never red, and a healer's never. A priority slip about a cooldown is that cooldown's row, not its own)
 function mpRotRows(x, v) { const { R, name, per, p } = x, me = v.mine; if (!me) return [];
-  const J = v.jud, SP = me.spec, TOP = 'top ' + SP + 's', Top = 'Top ' + SP + 's', W = MP_WHY[SP] || {}, heal = per.role === 'healer', big7 = !p.boss && x.n >= 7, sc = J && J.dur ? me.dur / J.dur : null;
+  const J = v.jud, SP = me.spec, TOP = 'top ' + SP + 's', Top = 'Top ' + SP + 's', W = (v1215(SP) ? MP_WHY[SP] : null) || {}, heal = per.role === 'healer', big7 = !p.boss && x.n >= 7, sc = J && J.dur ? me.dur / J.dur : null;
   const bar = (nm, d) => MP_BARS[SP + '|' + nm] || d, red = (nm) => { const b = MP_BARS[SP + '|' + nm]; return !heal && !(b && (b[1] === 0 || b[1] >= 99)); }, pc = (q) => Math.round(q * 100) + '%', bx = (t) => '<b>' + esc(t) + '</b>';
   const tb = (t) => (p.boss ? t : String(t || '').replace(/\bthe boss\b/g, 'your target').replace(/\bThe boss\b/g, 'Your target').replace(/\bon your target\b/g, 'on your targets'));
   const wds = (t) => new Set(String(t || '').toLowerCase().match(/[a-z']{4,}/g) || []), best = (L, cond) => { const L2 = p.boss ? L.filter((w) => !/\bpacks?\b/i.test(w)) : L; let b = (L2[0] || L[0]), bn = -1; const a = wds(cond); for (const w of L2.length ? L2 : L) { let n = 0; for (const y of wds(w)) if (a.has(y)) n++; if (n > bn) { bn = n; b = w; } } return b; };
@@ -1305,7 +1305,7 @@ function mpHealUse(RR, nm, k, L) { const cs = (RR.cid || {})[nm] || {}, q = RR.p
 function mpPlayHeal(x) { const { R, F, name, per, i } = x, SP = mpSpN(per), L = MP_HDMG[SP]; if (per.role !== 'healer' || !L || !L.length || !x.same || !F) return []; if (x.p.e - x.p.s < 20) { x.short = true; return []; } /* (too short to judge) */
   const J = (F.people || []).filter((y) => y.spec === per.spec && y.cls === per.cls).map((y) => y.name), jp = mpPLike(F, x.p, R); if (!J.length || !jp.length) return [];
   const me = mpHealUse(R, name, i, L), ja = L.map(() => [0, 0]); for (const nm of J) for (const k of jp) mpHealUse(F, nm, k, L).forEach((u, z) => { ja[z][0] += u.n; ja[z][1] += u.m; });
-  const rows = [], oks = x.oks || (x.oks = []), W = MP_WHY[SP] || {};
+  const rows = [], oks = x.oks || (x.oks = []), W = (v1215(SP) ? MP_WHY[SP] : null) || {};
   me.forEach((u, z) => { const [jn, jm] = ja[z]; if (!jm || !u.m) return; if (!u.n && !jn) return; /* (a button neither of you pressed: not in the build) */ const jf = jn / jm, over = u.m - u.n - (1 - jf) * u.m; if (over < 1.5) { oks.push(u.s + ' ' + Math.round((100 * u.n) / u.m) + '%'); return; }
     rows.push({ k: 'heal', src: 'prio', cmp: 1, f: 'slip', ic: '⟳', s: over, t: 'Used <b>' + esc(u.s) + '</b> on ' + Math.round((100 * u.n) / u.m) + '% of its cooldowns. Press it when nobody needs healing <span class="mpt-m">(top ' + SP + 's: ' + Math.round(jf * 100) + '%)</span>',
       why: Array.isArray(W[u.s]) ? W[u.s][0] : W[u.s] || '', kind: per.spec + ' damage · vs top ' + SP + 's', nt: 'press ' + esc(u.s) + ' when nobody needs healing.' }); });
