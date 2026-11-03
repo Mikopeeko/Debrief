@@ -25232,6 +25232,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
+    "Debriefing Timeline replay: health bars for the bosses and adds on the map, in its top-left corner, moving with the replay.",
     "Debriefing Timeline replay, Ula'tek on Mythic: each Toxic Incubation hit on the off-tank now sends its Caustic Waves out to both sides of them on the map.",
     'Windwalker Monks now get the full explanations on the Rotation tab, checked against patch 12.1.5.',
     "Debriefing Timeline replay, Ula'tek: the tail looks like a tail, with a rattle at its tip, and its waves are narrow bands, about 10 yards wide as in the game, lined up with where the raid walked and who got hit.",
@@ -68449,6 +68450,27 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
            under the strip; the moment tiles and the chart below are hidden while the strip is up (Flex, Nov 2: "What if these were the
            timeline played at the bottom of the map instead?", "we could potentially remove this as well with the new timeline version",
            "maybe make the right column shorter so the timeline can expand across the whole bottom"; mock tlm3, "Yes, build it")) */
+        /* (health bars (Flex, Nov 3: "it would be good to put healthbars of the boss/adds on the screen somewhere!"): the bosses and adds on
+           the map at this moment, from the log's health readings, in the map's top-left corner: bosses first, then the biggest adds, 3 at
+           most (and how many more); a unit that shares the boss's health (Ula'tek's tail) isn't listed twice) */
+        var HPU = rep.hpUnits && rep.hpUnits.get ? rep.hpUnits : null, HPD = rep.enemyDied && rep.enemyDied.get ? rep.enemyDied : null;
+        /* (a unit that never loses health in the pull (Coiled Altar's ghosts) isn't listed; one on the map but not hit yet is full) */
+        var hpOf = function (g, ft) { var u = HPU && HPU.get(g); if (!u || !u.samples || !u.samples.length) return null; if (u._lo == null) { u._lo = 1; u.samples.forEach(function (s) { if (s[1] < u._lo) u._lo = s[1]; }); } if (u._lo >= 0.999) return null;
+          if (u.samples[0][0] > ft + 0.01) return 1; var v = null; for (var i = 0; i < u.samples.length && u.samples[i][0] <= ft + 0.01; i++) v = u.samples[i][1]; return v == null ? u.samples[0][1] : v; };
+        var hpBars = function (ft) { var mw = box.querySelector('.dtm-map'); if (!mw || !HPU || !P.fr) return; var el = mw.querySelector('.dtm-hp'); var f0 = P.fr[Math.max(0, Math.min(P.fr.length - 1, Math.round(ft / STEP)))];
+          var B = [], A = [], seen = {}; ((f0 && f0.pts) || []).forEach(function (q) { if (!q || (q.kind !== 'boss' && q.kind !== 'add') || seen[q.guid]) return; seen[q.guid] = 1; var d = HPD ? HPD.get(q.guid) : null; if (d != null && d <= ft) return; var u = HPU.get(q.guid), v = hpOf(q.guid, ft); if (!u || v == null || v <= 0.0005) return;
+            (q.kind === 'boss' ? B : A).push({ n: u.name || q.name, v: v, max: u.max || 0 }); });
+          var bm = {}; B.forEach(function (b) { bm[b.max] = 1; }); A = A.filter(function (a) { return !bm[a.max]; }).sort(function (a, b) { return b.max - a.max || a.v - b.v; });
+          var bk = {}; B = B.filter(function (b) { var k = b.n + '|' + b.max; if (bk[k]) return false; bk[k] = 1; return true; });
+          var more = Math.max(0, A.length - 3); A = A.slice(0, 3); if (!B.length && !A.length) { if (el) el.style.display = 'none'; return; }
+          /* (one slim line per unit (name, bar, %), so the corner stays small and the players there still show) */
+          if (!el) { el = document.createElement('div'); el.className = 'dtm-hp'; el.style.cssText = 'position:absolute;left:8px;top:8px;z-index:3;width:236px;max-width:56%;padding:4px 8px;border-radius:4px;background:rgba(10,12,16,.72);border:1px solid rgba(255,255,255,.08);pointer-events:none;font-size:12px;line-height:17px'; mw.appendChild(el); }
+          el.style.display = ''; var row = function (x, boss) { var pc = x.v * 100, tx = pc >= 10 ? Math.round(pc) + '%' : pc.toFixed(1) + '%';
+            return '<div style="display:flex;align-items:center;gap:7px"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (boss ? '#e6e6e6' : '#aeb6bf') + ';font-weight:' + (boss ? 600 : 400) + '">' + E(x.n) + '</span>' +
+              '<span style="flex:0 0 56px;height:' + (boss ? 5 : 4) + 'px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden"><span style="display:block;height:100%;width:' + Math.max(0, Math.min(100, pc)).toFixed(1) + '%;background:' + (boss ? '#e5534b' : '#e8a23a') + '"></span></span>' +
+              '<span style="flex:0 0 36px;text-align:right;color:#e6e6e6;font-variant-numeric:tabular-nums">' + tx + '</span></div>'; };
+          var h = B.map(function (b) { return row(b, true); }).join('') + A.map(function (a) { return row(a, false); }).join('') + (more ? '<div style="color:#aeb6bf">+' + more + ' more</div>' : '');
+          if (el._h !== h) { el._h = h; el.innerHTML = h; } };
         var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
         var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
           var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; }
@@ -68480,10 +68502,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           var med = function (L) { L.sort(function (p, q) { return p - q; }); return L[Math.floor(L.length / 2)]; }, W0 = FOLLOW * yd, cx = med(xs), cy = med(ys), tg = [cx - W0 / 2, cy - W0 / 2, W0, W0];
           var cur = !now && mb._cam ? mb._cam : null, vb = cur ? cur.map(function (v, i) { return v + (tg[i] - v) * 0.2; }) : tg; mb._cam = vb; mb._zoomTo(vb); };
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); tlm(seekT); cam(true, seekT);
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); tlm(seekT); cam(true, seekT);
         if (FOLLOW) { var sv0 = mb.querySelector('svg.zmap'), pdn = null; if (sv0) { sv0.addEventListener('pointerdown', function (e) { pdn = [e.clientX, e.clientY]; }); sv0.addEventListener('pointerup', function (e) { if (pdn && Math.hypot(e.clientX - pdn[0], e.clientY - pdn[1]) > 5) P.camFree = true; pdn = null; }); }
           [].slice.call(mb.querySelectorAll('.zin, .zout, .zfull, .zfocus')).forEach(function (b0) { b0.addEventListener('click', function () { P.camFree = true; }); }); }
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); tlm(ft); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); tlm(ft); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
           if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
