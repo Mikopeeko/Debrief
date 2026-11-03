@@ -35829,6 +35829,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:1 1 50%;min-height:0;height:auto !important;overflow:auto}',
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:1 1 50%;min-height:0;margin:0 !important;overflow:auto}',
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dbt-two{grid-template-columns:minmax(0,1fr) !important;gap:10px !important}',
+          /* (no "Every time this phase" on the replay's card (Flex, Nov 3: "this can be removed from these cards")) */
+          'html body #view > .dbt.dbt.dbx .dtm-vd .dbt-more{display:none !important}',
           '@media (max-width:900px){.dtm-rc{height:auto !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:none;max-height:440px !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:none;overflow:visible}}',
           '@media (max-width:700px){.dtm-mm .zanim{flex-wrap:wrap}.dtm-ctl{flex-basis:100%}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{max-height:260px !important}}'
         ].join('\n'); document.head.appendChild(st); };
