@@ -68827,33 +68827,37 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           '.dtm-rf{position:absolute;z-index:4;background:rgba(10,12,16,.6);border:0;border-radius:5px;padding:8px 3px 3px;box-shadow:0 2px 12px rgba(0,0,0,.4);user-select:none}',
           '.dtm-rfh{position:absolute;left:0;right:0;top:0;height:8px;cursor:grab;touch-action:none}.dtm-rfh:active{cursor:grabbing}',
           '.dtm-rfh::before{content:"";position:absolute;left:50%;top:2px;width:22px;height:3px;margin-left:-11px;border-radius:2px;background:#8b939c;opacity:.45;transition:opacity .15s}.dtm-rf:hover .dtm-rfh::before{opacity:1}',
+          /* (round 2, section 4 (Flex, Nov 3: "make them look and feel like real raid frames in the game as long as they are readable and people know
+             what's going on"): the game's frames, 50x22 with a 1 px black border, black behind the missing health, full class colour with a sheen,
+             white names with a black outline top-left, the boss's debuffs bottom-left, the defensive or external bottom-right, the debuff to dispel
+             top-right in its type colour, "Dead" on a grey frame, a white border on the followed player; kept as aids: the dark-red empty part
+             under 35%, a subtle red flash on a big hit, and the game's white absorb stripes) */
           '.dtm-rfg{display:grid;grid-template-columns:repeat(4,50px);gap:1px}',
-          '.dtm-rff{position:relative;height:18px;background:#0d0f13;border-radius:2px;overflow:hidden;cursor:pointer;--dt:#cc0000;--dtg:rgba(204,0,0,.6);--dtt:rgba(204,0,0,.3)}',
-          '.dtm-rff>i{position:absolute;z-index:0;left:0;top:0;bottom:0;transition:width .2s linear;filter:brightness(.74) saturate(.9);background-image:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 50%,rgba(0,0,0,.2))}',
+          '.dtm-rff{position:relative;box-sizing:border-box;height:22px;background:#000;border:1px solid #000;border-radius:0;overflow:hidden;cursor:pointer;--dt:#cc0000;--dtg:rgba(204,0,0,.6);--dtt:rgba(204,0,0,.3)}',
+          '.dtm-rff>i{position:absolute;z-index:0;left:0;top:0;bottom:0;transition:width .2s linear;background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%,rgba(0,0,0,.22))}',
           '.dtm-rff>.rfn{position:absolute;right:2px;color:#fff;white-space:nowrap;overflow:hidden}',
-          /* (beats the site's 11 px type-scale rule for these names, Flex's call) */
-          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:3px !important;top:1px !important;font-size:9px !important;line-height:10px !important;font-weight:600 !important;text-shadow:0 0 2px #000,0 1px 1px #000 !important}',
+          /* (beats the site's 11 px type-scale rule for these names, Flex's call; a 1 px black outline so they read on Rogue yellow and Priest white) */
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:2px !important;top:1px !important;font-size:9px !important;line-height:10px !important;font-weight:600 !important;text-shadow:1px 0 #000,-1px 0 #000,0 1px #000,0 -1px #000 !important}',
+          /* (the page colours every player name by class (round 423 wraps it in a span); inside the frames it keeps the frame's white) */
+          'html body .dtm-rf .dtm-rff>.rfn .r423{color:inherit !important}',
           '.dtm-rff.low{background:#3b1517}',
-          '.dtm-rff.dead{background:#16171b}.dtm-rff.dead>i{width:0 !important}html body .dtm-rf .dtm-rff.dead>span.rfn{color:#69707a !important;text-shadow:none !important;right:14px}',
-          '.dtm-rff.dead::after{content:"☠";position:absolute;right:3px;bottom:1px;font-size:10px;line-height:12px;color:#ff8f87}',
+          '.dtm-rff.dead{background:#3a3e44}.dtm-rff.dead>i{width:0 !important}html body .dtm-rf .dtm-rff.dead>span.rfn{color:#c4cad0 !important}',
+          '.dtm-rff.dead::after{content:"Dead";position:absolute;left:0;right:0;top:10px;bottom:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#9aa3ac}',
           '.dtm-rff.dt-magic{--dt:#3399ff;--dtg:rgba(51,153,255,.85);--dtt:rgba(51,153,255,.42)}.dtm-rff.dt-curse{--dt:#9900ff;--dtg:rgba(153,0,255,.85);--dtt:rgba(153,0,255,.42)}',
           '.dtm-rff.dt-disease{--dt:#996600;--dtg:rgba(204,140,20,.85);--dtt:rgba(153,102,0,.45)}.dtm-rff.dt-poison{--dt:#009900;--dtg:rgba(40,200,40,.85);--dtt:rgba(0,153,0,.42)}',
           '.dtm-rff.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg)}',
           '.dtm-rff.disp::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(0deg,var(--dtt) 0%,transparent 75%)}',
-          '.dtm-rff.fol{box-shadow:0 0 0 1px #fff,0 0 6px rgba(255,255,255,.35)}.dtm-rff.fol.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg),0 0 0 1px #fff}',
-          '.dtm-rff>s{position:absolute;z-index:3;right:2px;bottom:3px;display:flex;gap:1px;text-decoration:none}',
-          '.dtm-rff>s .icw{display:inline-block !important;width:12px;height:12px;margin:0;vertical-align:top}',
-          '.dtm-rff>s .icw img.oi{border-radius:1px;box-shadow:0 0 0 1px #000}.dtm-rff.disp>s .icw.dsp img.oi{box-shadow:0 0 0 1px var(--dt)}',
-          /* (round 2: a defensive or external top-right (white ring: from someone else; black: their own), the game's white absorb stripes after
-             the health, a white edge when the shield is bigger than what's missing, and a red flash on a big hit, under the dispel tint) */
-          '.dtm-rff>u{position:absolute;z-index:3;right:2px;top:2px;display:flex;text-decoration:none}.dtm-rff>u:empty{display:none}.dtm-rff.hasdef>.rfn{right:13px}',
-          '.dtm-rff>u .icw{display:inline-block !important;width:10px;height:10px;margin:0;vertical-align:top}.dtm-rff>u .icw img.oi{border-radius:1px}',
-          '.dtm-rff>u.ext .icw img.oi{box-shadow:0 0 0 1px #fff}.dtm-rff>u.own .icw img.oi{box-shadow:0 0 0 1px #000}',
+          '.dtm-rff.fol{border-color:#fff;box-shadow:0 0 6px rgba(255,255,255,.35)}.dtm-rff.fol.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg),0 0 6px rgba(255,255,255,.35)}',
+          '.dtm-rff>s,.dtm-rff>u,.dtm-rff>.rfd{position:absolute;z-index:3;display:flex;gap:1px;text-decoration:none}.dtm-rff>u:empty,.dtm-rff>.rfd:empty{display:none}',
+          '.dtm-rff>s{left:2px;bottom:1px}.dtm-rff>u{right:2px;bottom:1px}.dtm-rff>.rfd{right:2px;top:1px}.dtm-rff.hasdsp>.rfn{right:13px}',
+          '.dtm-rff>s .icw,.dtm-rff>u .icw,.dtm-rff>.rfd .icw{display:inline-block !important;width:10px;height:10px;margin:0;vertical-align:top}',
+          '.dtm-rff>s .icw img.oi,.dtm-rff>u .icw img.oi,.dtm-rff>.rfd .icw img.oi{border-radius:0;box-shadow:0 0 0 1px #000}.dtm-rff>.rfd .icw img.oi{box-shadow:0 0 0 1px var(--dt)}',
+          '.dtm-rff>u.ext .icw img.oi{box-shadow:0 0 0 1px #fff}',
           '.dtm-rff>em{position:absolute;z-index:1;top:0;bottom:0;width:0;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 2px,rgba(255,255,255,.22) 2px 4px)}',
           '.dtm-rff>em.oab{box-shadow:inset -2px 0 0 rgba(255,255,255,.85)}.dtm-rff.dead>em{display:none}',
           '.dtm-rff.hit::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;animation:dtmRfHit .6s ease-out forwards}',
-          '@keyframes dtmRfHit{0%{box-shadow:inset 0 0 0 2px #ff4d4d;background:rgba(90,26,28,.85)}100%{box-shadow:inset 0 0 0 2px rgba(255,77,77,0);background:rgba(90,26,28,0)}}',
-          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:15px}.dtm-rff.dead::after{line-height:15px;font-size:9px}.dtm-rff>s{bottom:2px}.dtm-rff>s .icw{width:9px;height:9px}.dtm-rff>u .icw{width:8px;height:8px}.dtm-rff.hasdef>.rfn{right:11px}',
+          '@keyframes dtmRfHit{0%{box-shadow:inset 0 0 0 2px rgba(255,77,77,.9);background:rgba(90,26,28,.55)}100%{box-shadow:inset 0 0 0 2px rgba(255,77,77,0);background:rgba(90,26,28,0)}}',
+          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:18px}.dtm-rff.dead::after{top:8px;font-size:8px}.dtm-rff>s .icw,.dtm-rff>u .icw,.dtm-rff>.rfd .icw{width:8px;height:8px}.dtm-rff.hasdsp>.rfn{right:11px}',
           'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{font-size:8px !important;line-height:9px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         var rfKey = 'dtmRaidFrames', rfPos = null; try { rfPos = JSON.parse(localStorage.getItem(rfKey) || 'null'); } catch (e1) { rfPos = null; }
@@ -68866,7 +68870,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up); }); };
         var rfFrames = function (ft) { var mw = box.querySelector('.dtm-map'); if (!mw || !RFL.length) return; rfCss(); var el = mw.querySelector('.dtm-rf');
           if (!el) { el = document.createElement('div'); el.className = 'dtm-rf'; el.innerHTML = '<div class="dtm-rfh" title="Drag to move the raid frames"></div><div class="dtm-rfg">' + RFL.map(function (p) { var cc = (typeof CC !== 'undefined' && CC[p.name]) || '#7a8090';
-              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><em></em><span class="rfn">' + E(p.name) + '</span><u></u><s></s></div>'; }).join('') + '</div>';
+              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><em></em><span class="rfn">' + E(p.name) + '</span><span class="rfd"></span><u></u><s></s></div>'; }).join('') + '</div>';
             mw.appendChild(el); rfDrag(mw, el); el._fr = [].slice.call(el.querySelectorAll('.dtm-rff')); }
           if (!el._placed || el._W !== mw.clientWidth) { el._placed = 1; el._W = mw.clientWidth; rfPlace(mw, el); }
           var pbn = box.querySelector('.zplay'), playing = !!pbn && /Pause/.test(pbn.textContent);
@@ -68874,15 +68878,17 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var dead = dt != null && !(hv[1] > dt + 0.5 && hv[0] > 0.01), pc = dead ? 0 : Math.max(0, Math.min(1, hv[0])) * 100;
             var bar = fr.firstChild; if (bar._p !== Math.round(pc)) { bar._p = Math.round(pc); bar.style.width = pc.toFixed(1) + '%'; }
             fr.classList.toggle('dead', dead); fr.classList.toggle('low', !dead && pc < 35); fr.classList.toggle('fol', fol === p.name);
-            /* (a debuff to dispel: the frame lights in its own type colour, from the game's 12.1.5 data (RFT), and its icon shows first, edged in it) */
+            /* (a debuff to dispel: the frame lights in its own type colour, from the game's 12.1.5 data (RFT), and its icon sits top-right, edged in it) */
             var dsp = null; if (!dead) Object.keys(RFS).forEach(function (n) { if (!dsp) { var v = rfOn(p, n, ft); if (v) dsp = [v.id || RFS[n] || 0, n]; } }); fr.classList.toggle('disp', !!dsp);
             var ty = dsp ? RFT[dsp[0]] || RFT[RFS[dsp[1]]] || 0 : 0; ['magic', 'curse', 'disease', 'poison'].forEach(function (c, j) { fr.classList.toggle('dt-' + c, ty === j + 1); });
-            var ic = dsp && w.spellIcon ? [[dsp[0], dsp[1], 1]] : []; if (!dead && w.spellIcon) Object.keys(RFI).forEach(function (n) { if (ic.length < 2 && !(dsp && dsp[1] === n)) { var v = rfOn(p, n, ft); if (v) ic.push([v.id || 0, n]); } }); var k = ic.map(function (x) { return x[1]; }).join('|');
-            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { var h = w.spellIcon(x[0], x[1]); return x[2] ? h.replace('class="icw', 'class="icw dsp') : h; }).join(''); if (ic.length) icn = true; }
+            fr.classList.toggle('hasdsp', !!dsp); var rd = fr.children[3], rk = dsp ? dsp[1] : ''; if (rd && rd._k !== rk) { rd._k = rk; rd.innerHTML = dsp && w.spellIcon ? w.spellIcon(dsp[0], dsp[1]) : ''; if (dsp) icn = true; }
+            /* (the boss's debuffs bottom-left, up to 2, as in the game) */
+            var ic = []; if (!dead && w.spellIcon) Object.keys(RFI).forEach(function (n) { if (ic.length < 2 && !(dsp && dsp[1] === n)) { var v = rfOn(p, n, ft); if (v) ic.push([v.id || 0, n]); } }); var k = ic.map(function (x) { return x[1]; }).join('|');
+            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { return w.spellIcon(x[0], x[1]); }).join(''); if (ic.length) icn = true; }
             /* (round 2: the absorb stripes right after the health, as wide as the shield (capped at what's missing), a white edge when it's bigger) */
             var em = fr.children[1], ab = dead ? 0 : rfAb(p.guid, ft), miss = Math.max(0, 100 - pc), aw = Math.min(miss, ab * 100); if (em && em._w !== Math.round(aw * 2)) { em._w = Math.round(aw * 2); em.style.left = pc.toFixed(1) + '%'; em.style.width = aw.toFixed(1) + '%'; } if (em) em.classList.toggle('oab', !dead && ab * 100 > miss + 0.5 && ab > 0.005);
             /* (round 2: the major defensive or external up on them, the latest one) */
-            var df = dead ? null : rfDef(p, ft), u = fr.children[3], dk = df ? df.n + '|' + (df.by ? 1 : 0) : ''; fr.classList.toggle('hasdef', !!df); if (u && u._k !== dk) { u._k = dk; u.className = df ? (df.by ? 'ext' : 'own') : ''; u.innerHTML = df && w.spellIcon ? w.spellIcon(df.id, df.n) : ''; if (df) icn = true; }
+            var df = dead ? null : rfDef(p, ft), u = fr.children[4], dk = df ? df.n + '|' + (df.by ? 1 : 0) : ''; if (u && u._k !== dk) { u._k = dk; u.className = df ? (df.by ? 'ext' : 'own') : ''; u.innerHTML = df && w.spellIcon ? w.spellIcon(df.id, df.n) : ''; if (df) icn = true; }
             /* (round 2: a big hit while playing, 30% or more within a second: a 0.6 s red flash, not again within 1.5 s) */
             if (playing && !dead && (fr._hitT == null || ft - fr._hitT > 1.5 || ft < fr._hitT)) { var dr = rfDrop(p.guid, ft); if (dr >= 0.3) { fr._hitT = ft; fr._hitTx = 'Took ' + Math.round(dr * 100) + '% in one second at ' + rfT(ft) + (function (n) { return n ? ' (' + n + ')' : ''; })(rfHitBy(p, ft)); fr.classList.remove('hit'); void fr.offsetWidth; fr.classList.add('hit'); (function (f0) { setTimeout(function () { f0.classList.remove('hit'); }, 650); })(fr); } }
             if (fr._hitT != null && (ft < fr._hitT - 0.5 || ft > fr._hitT + 6)) { fr._hitT = null; fr._hitTx = ''; }
