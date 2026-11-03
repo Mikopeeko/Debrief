@@ -258,7 +258,7 @@ namespace Debrief {
     string BoundsFile { get { return Path.Combine(here, "window2.txt") /* (new name: the window got smaller, so everyone starts at the new size once) */; } }
     Rectangle SavedBounds() {
       var wa = Screen.FromHandle(Handle).WorkingArea;
-      int w = Math.Min(Px(1000), wa.Width - 40), h = Math.Min(Px(540), wa.Height - 40); // (look B: the ring, the coach line, the night line, two switches)
+      int w = Math.Min(Px(1045), wa.Width - 40), h = Math.Min(Px(634), wa.Height - 40); // (your character's season at a glance (Nov 3): the size Flex uses)
       var r = new Rectangle(wa.Left + (wa.Width - w) / 2, wa.Top + (wa.Height - h) / 2, w, h);
       try {
         var p = File.ReadAllText(BoundsFile).Split(',');

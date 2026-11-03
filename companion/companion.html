@@ -205,14 +205,47 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 .swrow { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); gap: 22px; }
 .hkline { margin-top: 4px; }
 .top #web { color: var(--text); }
+/* ---------- the window: your character's season at a glance (Nov 3, the studio's companion-stats-brief.md). The site's rules: 1 px #353b49 tiles,
+   4 px corners, the flat #171a22 panel, Barlow Condensed, numbers first, colour only where it means something ---------- */
+:root { --body: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; } /* (Barlow Condensed throughout, as the site (Nov 3)) */
+.cs-top { gap: 12px; padding: 11px 20px; min-height: 66px; }
+.cs-av { width: 44px; height: 44px; border-radius: 50%; flex: none; background: #222 center/cover no-repeat; box-shadow: 0 0 0 2px var(--cls, #6c7381); }
+.cs-av.emb { background-size: 70%; box-shadow: 0 0 0 2px var(--cls, #6c7381), 0 0 16px color-mix(in srgb, var(--cls, #6c7381) 45%, transparent); }
+.cs-who { min-width: 0; }
+.cs-nm { font: 700 21px var(--body); color: var(--cls, var(--text)); line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-sp { margin-top: 3px; color: #cfd4da; font: 600 13px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cs-sp em { font-style: normal; color: var(--muted); font-weight: 500; }
+.cs-top .stat { margin: 0 6px 0 0; } .cs-rd { color: var(--muted); font-weight: 500; margin-left: 4px; } .cs-rd:empty { display: none; }
+.main.cs-main { display: block; flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 22px 14px; }
+.main.cs-main::-webkit-scrollbar { width: 8px; } .main.cs-main::-webkit-scrollbar-thumb { background: #2f3542; border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+.cs-lab { font: 600 11.5px var(--body); text-transform: uppercase; letter-spacing: .04em; color: var(--faint); display: flex; align-items: baseline; gap: 6px; margin: 0 0 7px; }
+.cs-lab em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 500; } .cs-lab .asof { margin-left: auto; color: var(--warn); }
+.cs-sec { margin-top: 13px; }
+.cs-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.cs-tile { border: 1px solid var(--line2); border-radius: 4px; background: #171a22; padding: 8px 11px 9px; min-width: 0; }
+.cs-tile .v { font: 700 26px var(--body); line-height: 1; font-variant-numeric: tabular-nums; } .cs-tile .v small { font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 3px; }
+.cs-tile .k { margin-top: 3px; color: #cfd4da; font: 600 13px var(--body); text-transform: none; letter-spacing: 0; } .cs-tile .d { margin-top: 2px; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-boss { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.cs-bs { display: flex; align-items: center; justify-content: space-between; gap: 6px; height: 31px; padding: 0 10px; border: 1px solid var(--line2); border-radius: 4px; background: #171a22; min-width: 0; }
+.cs-bs .bn { font: 600 13px var(--body); color: #cfd4da; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cs-bs b { font: 700 16px var(--body); font-variant-numeric: tabular-nums; } .cs-bs.no .bn { color: var(--faint); }
+.cs-keys { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line2); border-radius: 4px; background: #171a22; }
+.cs-kr { display: flex; align-items: center; gap: 10px; height: 34px; padding: 0 12px; border-bottom: 1px solid rgba(255,255,255,.04); min-width: 0; font: 600 13.5px var(--body); }
+.cs-kr:nth-child(odd) { border-right: 1px solid var(--line); } .cs-keys .cs-kr:nth-last-child(-n+2):nth-child(odd), .cs-keys .cs-kr:last-child { border-bottom: 0; }
+.cs-kr .lv { width: 34px; flex: none; font: 700 15px var(--body); color: #ff8000; } .cs-kr .dn { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-kr .tm { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; } .cs-kr .tm b { font-weight: 600; } .cs-kr .tm b.ok { color: var(--em); } .cs-kr .tm b.over { color: var(--warn); }
+.cs-kr .sc { width: 40px; text-align: right; color: #cfd4da; font-weight: 500; font-variant-numeric: tabular-nums; }
+.cs-none { color: var(--muted); font: 500 13.5px var(--body); margin: 2px 0 0; }
+.cs-sw { flex: none; display: flex; align-items: center; gap: 18px; padding: 8px 20px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.cs-sw .swrow { margin: 0; padding: 0; border: 0; gap: 20px; } .cs-sw .hkline { margin: 0 0 0 auto; color: var(--faint); font: 500 12.5px var(--body); }
+@media (max-width: 860px) { .cs-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cs-boss { grid-template-columns: repeat(3, minmax(0, 1fr)); } .cs-keys { grid-template-columns: 1fr; } .cs-kr:nth-child(odd) { border-right: 0; } .cs-keys .cs-kr:nth-last-child(-n+2):nth-child(odd) { border-bottom: 1px solid rgba(255,255,255,.04); } .cs-top .stat .cs-rd { display: none; } }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="lgfMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4cf"/><stop offset=".22" stop-color="#f6d27a"/><stop offset=".5" stop-color="#d9a441"/><stop offset=".62" stop-color="#a8701f"/><stop offset=".8" stop-color="#f2c862"/><stop offset="1" stop-color="#7a4f14"/></linearGradient><linearGradient id="lgfMetalDk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e4611"/><stop offset=".5" stop-color="#c48a2c"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient><radialGradient id="lgfEnamel" cx=".5" cy=".3" r=".8"><stop offset="0" stop-color="#2b3247"/><stop offset=".6" stop-color="#161a25"/><stop offset="1" stop-color="#0a0c12"/></radialGradient><linearGradient id="lgfEmerald" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset=".45" stop-color="#5fdc7a"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs></svg>
-<header class="top">
-  <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <div class="tt"><h1>Debrief Companion</h1><div class="stat" id="stat"><i></i><span id="statT">Starting…</span></div></div>
+<header class="top cs-top">
+  <div class="cs-av" id="csAv" aria-hidden="true"></div>
+  <div class="cs-who"><div class="cs-nm" id="csNm">Debrief Companion</div><div class="cs-sp" id="csSp"></div></div>
   <span class="grow"></span>
+  <div class="stat" id="stat"><i></i><span id="statT">Starting…</span><span class="cs-rd" id="csRd"></span></div>
   <a class="btn" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
   <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
@@ -220,8 +253,13 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 <div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
 
 <div class="stage">
-  <main class="main">
-    <div class="ring dim" id="ring" title="">
+  <main class="main cs-main">
+    <div id="folderBox" hidden>
+        <p class="empty">I couldn't find your WoW Logs folder. Type where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
+        <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn gold" id="folderGo" type="button">Use this folder</button></div>
+      </div>
+    <div class="cs-body" id="csBody"></div>
+    <div class="cs-old" hidden><div class="ring dim" id="ring" title="">
       <svg viewBox="0 0 120 120" aria-hidden="true"><defs>
         <linearGradient id="rgGo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e6b450"/><stop offset="1" stop-color="#5fdc7a"/></linearGradient>
         <linearGradient id="rgSent" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs>
@@ -229,24 +267,11 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
         <circle class="arc" id="arc" cx="60" cy="60" r="52" fill="none" stroke="url(#rgGo)" stroke-width="9" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" transform="rotate(-90 60 60)"/></svg>
       <div class="in" id="ringT"><b>…</b><span>Starting</span></div>
     </div>
-    <div class="mid">
-      <p class="k" id="bossK">Tonight</p>
-      <p class="ht" id="headT">After each boss pull, your recap pops up over the game with a chime.</p>
-      <p class="fc" id="focT" hidden></p>
-      <div class="acts" id="acts" hidden></div>
-      <svg class="night" id="night" aria-label="How far each pull got tonight"></svg>
-      <div class="swrow">
-        <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
-        <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
-        <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
-        <button class="btn" id="setBtn" type="button" title="Every setting of your recap window: what it shows, its look, where it sits">Settings</button>
-      </div>
-      <p class="hkline" id="hkLine"></p>
-      <div id="folderBox" hidden>
-        <p class="empty">I couldn't find your WoW Logs folder. Type where WoW is installed (for example <b>C:\Program Files (x86)\World of Warcraft</b>).</p>
-        <div class="folder"><input id="folderIn" placeholder="C:\Program Files (x86)\World of Warcraft"><button class="btn gold" id="folderGo" type="button">Use this folder</button></div>
-      </div>
-    </div>
+<p class="k" id="bossK">Tonight</p>
+<p class="ht" id="headT">After each boss pull, your recap pops up over the game with a chime.</p>
+<p class="fc" id="focT" hidden></p>
+<div class="acts" id="acts" hidden></div>
+<svg class="night" id="night" aria-label="How far each pull got tonight"></svg></div>
   </main>
   <div class="hkask" id="hkAsk" hidden><div class="hkcard">
     <p class="k">One step</p>
@@ -268,6 +293,12 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <aside class="side" hidden><div id="preview"></div></aside>
 </div>
 
+<div class="cs-sw"><div class="swrow">
+        <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
+        <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
+        <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
+        <button class="btn" id="setBtn" type="button" title="Every setting of your recap window: what it shows, its look, where it sits">Settings</button>
+      </div><p class="hkline" id="hkLine"></p></div>
 <footer class="foot">
   <button class="lnk" id="logT" type="button" title="Pick another combat log">Log: looking…</button>
   <button class="lnk archb" id="archB" type="button" title="Moves your old combat logs into the archive folder next to them, so the Logs folder starts clean. Nothing is deleted: they stay in the log list behind the gear.">Archive old logs</button>
@@ -407,6 +438,7 @@ async function waitLoop() {
     try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size + (L.dummy ? '&quick=1' : '')); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
     if (x.newfile) { await loadLogs(); continue; } // (a newer log: switch to it and keep watching)
     if (x.size !== L.size || L.dummy) {
+      csWatch(x.size); /* (who you're playing, from the newest lines (Nov 3)) */
       try {
         const fresh = await scanMore(false);
         if (fresh.length && $('pop').checked) send(fresh[fresh.length - 1], false);
@@ -647,6 +679,7 @@ function ring(kind, fill, html, tip) {
   a.setAttribute('stroke', kind === 'sent' ? 'url(#rgSent)' : kind === 'fail' ? '#e8a23a' : 'url(#rgGo)');
   a.setAttribute('stroke-dashoffset', (RING * (1 - fill)).toFixed(1)); a.style.opacity = fill > 0.005 ? '' : '0';
   if ($('ringT').innerHTML !== html) $('ringT').innerHTML = html;
+  try { const t = String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); const rd = $('csRd'); if (rd) rd.textContent = t && t !== '…' && t !== 'Starting' ? '· ' + t : ''; if (kind === 'sent') setTimeout(() => csFetch(true), 120000); } catch (e) { /* (the header line only) */ } /* (the header's status line (Nov 3); a fresh recap: the season again in 2 minutes) */
 }
 // (round 482, Nov 1: a Mythic+ key shows its timer, not the raid chart with one dot (Flex's Charonus picture): the key the last boss pull
 // belongs to, its time limit from mplus.js, how many levels it goes up, and the bosses it killed)
@@ -1161,6 +1194,107 @@ async function cdAgain(make) {
   try { W.cdForget(); } catch (e) { /* older engine */ } return make();
 }
 
+// ---------- your character's season (Nov 3, the studio's companion-stats-brief.md): the character you're on (the live log, else the last one played),
+// Raider.IO's public profile (item level, score and rank, best keys, the face, the hero tree) and Warcraft Logs through debriefme.io (Mythic and Heroic
+// bosses killed and parses, healing for a healer, damage otherwise). Fetched on a switch, after a recap and every 30 minutes; kept here, shown "as of"
+// when offline; never guessed ----------
+const CS = { chars: [], region: 'us', me: '', cur: null, busy: false, scanAt: 0 };
+const CLSC = { WARRIOR: '#C69B6D', PALADIN: '#F48CBA', HUNTER: '#AAD372', ROGUE: '#FFF468', PRIEST: '#FFFFFF', DEATHKNIGHT: '#C41E3A', SHAMAN: '#0070DD', MAGE: '#3FC7EB', WARLOCK: '#8788EE', MONK: '#00FF98', DRUID: '#FF7C0A', DEMONHUNTER: '#A330C9', EVOKER: '#33937F' };
+const CLSN = (c) => String(c || '').toUpperCase().replace(/[^A-Z]/g, '');
+const HERO = { 18: 'Voidweaver', 19: 'Archon', 20: 'Oracle', 21: 'Druid of the Claw', 22: 'Wildstalker', 23: 'Keeper of the Grove', 24: 'Elune\'s Chosen', 31: 'San\'layn', 32: 'Rider of the Apocalypse', 33: 'Deathbringer', 34: 'Fel-Scarred', 35: 'Aldrachi Reaver', 36: 'Scalecommander', 37: 'Flameshaper', 38: 'Chronowarden', 39: 'Sunfury', 40: 'Spellslinger', 41: 'Frostfire', 42: 'Sentinel', 43: 'Pack Leader', 44: 'Dark Ranger', 48: 'Templar', 49: 'Lightsmith', 50: 'Herald of the Sun', 51: 'Trickster', 52: 'Fatebound', 53: 'Deathstalker', 54: 'Totemic', 55: 'Stormbringer', 56: 'Farseer', 57: 'Soul Harvester', 58: 'Hellcaller', 59: 'Diabolist', 60: 'Slayer', 61: 'Mountain Thane', 62: 'Colossus', 64: 'Conduit of the Celestials', 65: 'Shado-Pan', 66: 'Master of Harmony', 124: 'Annihilator', 126: 'Void-Scarred' }; /* (TraitSubTree, 12.1.5, wago.tools) */
+const BOSS_SHORT = { "nek'zali the soulcoiler": "Nek'zali", 'entombed sentinels': 'Sentinels', 'vashnik the malignant': 'Vashnik', 'the lost explorers': 'Explorers', 'sszorak': 'Sszorak', 'the twin fangs': 'Twin Fangs', 'the coiled altar': 'Coiled Altar', "ula'tek": "Ula'tek", 'nymrissa wavecaller': 'Nymrissa', "kith'ix": "Kith'ix" };
+const parseCol = (p) => (p == null ? 'var(--faint)' : p >= 100 ? '#e5cc80' : p >= 99 ? '#e268a8' : p >= 95 ? '#ff8000' : p >= 75 ? '#a335ee' : p >= 50 ? '#0070ff' : p >= 25 ? '#1eff00' : '#9d9d9d');
+const csKey = (c) => (c ? (c.name + '-' + c.realm).toLowerCase() : '');
+const csNorm = (r) => String(r || '').toLowerCase().replace(/['’\s-]/g, '');
+const csSlug = (r) => String(r || '').replace(/['’]/g, '').replace(/([a-z])([A-Z0-9])/g, '$1 $2').replace(/([0-9])([A-Za-z])/g, '$1 $2').trim().toLowerCase().replace(/\s+/g, '-');
+const mmssK = (ms) => { const t = Math.round((ms || 0) / 1000); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+async function csInit() {
+  try { const x = await j('/setup/chars'); CS.chars = x.chars || []; CS.region = x.region || 'us'; CS.me = x.me || ''; } catch (e) { /* (an older app) */ }
+  const sv = store.get('dbf-ch-cur', null);
+  let c = sv && (CS.chars.find((q) => csKey(q) === csKey(sv)) || sv);
+  if (!c && CS.me) c = CS.chars.find((q) => q.name === CS.me);
+  if (!c && CS.chars.length) c = CS.chars.slice().sort((a, b) => (b.at || 0) - (a.at || 0))[0]; /* (the last one played) */
+  csSet(c || null);
+  setInterval(() => csFetch(true), 30 * 60000);
+}
+function csSet(c, force) {
+  if (!c) { csDraw(null); return; }
+  const same = CS.cur && csKey(CS.cur) === csKey(c); CS.cur = c; store.set('dbf-ch-cur', { name: c.name, realm: c.realm });
+  if (same && !force) return; csDraw(store.get('dbf-ch:' + csKey(c), null)); csFetch(false);
+}
+// (who you're playing: the newest of this PC's characters in the last lines of the live log, as "Name-Realm")
+async function csWatch(size) {
+  if (!CS.chars.length || !L.name || Date.now() - CS.scanAt < 15000) return; CS.scanAt = Date.now();
+  try { const from = Math.max(0, size - 131072), r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + from + '&to=' + size); if (!r.ok) return;
+    const t = new TextDecoder().decode(await r.arrayBuffer()); let best = -1, hit = null;
+    for (const c of CS.chars) { const i = t.lastIndexOf('"' + c.name + '-'); if (i > best) { const rl = t.slice(i + c.name.length + 2, t.indexOf('"', i + 1)); if (csNorm(rl) === csNorm(c.realm)) { best = i; hit = c; } } }
+    if (hit && csKey(hit) !== csKey(CS.cur)) csSet(hit, true);
+  } catch (e) { /* (next time) */ }
+}
+// (your spec and role from your latest pull's own lines (COMBATANT_INFO), else Raider.IO's)
+function csLogSpec(c) {
+  try { const reps = [...L.reps.values()].map((x) => x && x.rep).filter(Boolean); for (let i = reps.length - 1; i >= 0; i--) { for (const p of reps[i].players.values()) if (String(p.name || '').split('-')[0] === c.name && p.specId && W && W.E && W.E.SPECS && W.E.SPECS[p.specId]) return { spec: W.E.SPECS[p.specId][0], cls: W.E.SPECS[p.specId][1], role: p.role }; } } catch (e) { /* (no pull yet) */ }
+  return null;
+}
+async function csFetch(force) {
+  const c = CS.cur; if (!c || CS.busy) return; const k = csKey(c), cache = store.get('dbf-ch:' + k, null);
+  if (!force && cache && Date.now() - cache.at < 30 * 60000) return;
+  CS.busy = true;
+  try {
+    const nm = encodeURIComponent(c.name), rl = encodeURIComponent(csSlug(c.realm)), rg = CS.region; let online = false;
+    const get = (u) => fetch(u).then((r) => { online = true; return r.ok ? r.json() : null; }).catch(() => null);
+    const rio = await get('https://raider.io/api/v1/characters/profile?region=' + rg + '&realm=' + rl + '&name=' + nm + '&fields=gear,guild,talents,mythic_plus_scores_by_season:current,mythic_plus_ranks,mythic_plus_best_runs');
+    const ls = csLogSpec(c), heal = ls ? ls.role === 'healer' : /HEAL/i.test((rio && rio.active_spec_role) || ''), m = heal ? 'hps' : 'dps';
+    const ch = await get('https://debriefme.io/api/char?name=' + nm + '&srv=' + rl + '&reg=' + rg);
+    let wc = null; if (ch && ch.id) { const [r5, r4] = await Promise.all([5, 4].map((d) => get('https://debriefme.io/api/charrank?id=' + ch.id + '&d=' + d + '&m=' + m))); wc = { id: ch.id, m, mythic: r5, heroic: r4, guild: ((ch.guilds || [])[0] || {}).name || '', cls: ch.classID }; }
+    if (!online) { csDraw(cache, true); return; } /* (offline: the last numbers, "as of") */
+    if (CS.cur !== c) return;
+    const d = { at: Date.now(), rio: rio && !rio.error ? rio : null, wc, heal }; store.set('dbf-ch:' + k, d); csDraw(d);
+  } finally { CS.busy = false; }
+}
+function csDraw(d, offline) {
+  const c = CS.cur, body = $('csBody'); if (!body) return;
+  if (!c) { $('csNm').textContent = 'Debrief Companion'; $('csSp').textContent = 'Play a character and it shows up here.'; $('csAv').className = 'cs-av'; body.innerHTML = ''; return; }
+  const rio = d && d.rio, wc = d && d.wc, ls = csLogSpec(c);
+  const cls = CLSN((ls && ls.cls) || (rio && rio.class) || ''), col = CLSC[cls] || 'var(--text)';
+  document.documentElement.style.setProperty('--cls', CLSC[cls] || '#6c7381');
+  $('csNm').textContent = c.name;
+  // (the face, loaded live; else the class emblem on a soft glow, never a broken picture)
+  const av = $('csAv'), face = rio && rio.thumbnail_url;
+  if (face) { av.className = 'cs-av'; av.style.backgroundImage = 'url("' + face.replace(/"/g, '') + '")'; }
+  else { av.className = 'cs-av emb'; av.style.backgroundImage = cls ? 'url("https://wow.zamimg.com/images/wow/icons/large/classicon_' + cls.toLowerCase() + '.jpg")' : ''; }
+  let hero = ''; try { const L0 = (rio && rio.talentLoadout && rio.talentLoadout.loadout) || [], n = {}; for (const x of L0) { const t = x.node && x.node.subTreeId; if (t && HERO[t]) n[t] = (n[t] || 0) + 1; } const top = Object.keys(n).sort((p, q) => n[q] - n[p])[0]; if (top) hero = HERO[top]; } catch (e) { /* (no talents) */ } /* (the hero tree: the one whose talents are taken) */
+  const spec = ls ? ls.spec + ' ' + (rio ? rio.class : '') : rio ? rio.active_spec_name + ' ' + rio.class : '';
+  const guild = (rio && rio.guild && rio.guild.name) || (wc && wc.guild) || '';
+  $('csSp').innerHTML = [spec.trim() ? esc(spec.trim()) : '', hero ? esc(hero) : ''].filter(Boolean).join(' · ') + '<em>' + [c.realm, guild ? '<' + guild + '>' : ''].filter(Boolean).map((x) => ' · ' + esc(x)).join('') + '</em>';
+  if (!d) { body.innerHTML = '<p class="cs-none">' + (offline ? 'Couldn\'t reach Raider.IO or Warcraft Logs. Your season shows here once you\'re online.' : 'Reading ' + esc(c.name) + '\'s season…') + '</p>'; return; }
+  const asof = offline || Date.now() - d.at > 45 * 60000 ? '<span class="asof">as of ' + new Date(d.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + '</span>' : '';
+  // this season
+  const il = rio && rio.gear && rio.gear.item_level_equipped ? Math.round(rio.gear.item_level_equipped) : null;
+  const sc = rio && (rio.mythic_plus_scores_by_season || [])[0], scA = sc && sc.segments && sc.segments.all, score = scA ? Math.round(scA.score) : 0;
+  const specId = rio && rio.talentLoadout && rio.talentLoadout.loadout_spec_id, rk = rio && rio.mythic_plus_ranks && specId ? rio.mythic_plus_ranks['spec_' + specId] : null;
+  const rows = (z) => ((z && z.rankings) || []), kills = (z) => rows(z).filter((x) => x.totalKills > 0).length, nB = rows(wc && wc.mythic).length || rows(wc && wc.heroic).length || 10;
+  const avg = (z) => (z && z.bestPerformanceAverage != null ? Math.round(z.bestPerformanceAverage) : null), pM = avg(wc && wc.mythic), pH = avg(wc && wc.heroic);
+  const tile = (v, k, sub, c0) => '<div class="cs-tile"><div class="v"' + (c0 ? ' style="color:' + c0 + '"' : '') + '>' + v + '</div><div class="k">' + k + '</div><div class="d">' + sub + '</div></div>';
+  let h = '<div class="cs-lab">This season' + asof + '</div><div class="cs-tiles">' +
+    tile(il != null ? il : '—', 'Item level', il != null ? 'equipped' : 'not on Raider.IO yet') +
+    tile(score ? score.toLocaleString('en-US') : '—', 'Raider.IO score', rk && rk.realm ? '#' + rk.realm + ' ' + esc(rio.active_spec_name + ' ' + rio.class) + ' on ' + esc(c.realm) : score ? 'this season' : 'no keys this season', score && scA.color ? scA.color : '') +
+    tile(kills(wc && wc.mythic) + '<small>/' + nB + '</small>', 'Mythic bosses', 'Heroic ' + kills(wc && wc.heroic) + '/' + nB) +
+    tile(pM != null ? pM : '—', 'Mythic parse', (pM != null ? 'best average' : 'no Mythic kill yet') + (pH != null ? ' · Heroic <b style="color:' + parseCol(pH) + '">' + pH + '</b>' : ''), pM != null ? parseCol(pM) : '') + '</div>';
+  // Mythic, boss by boss
+  const R5 = rows(wc && wc.mythic).length ? rows(wc && wc.mythic) : rows(wc && wc.heroic).map((x) => ({ encounter: x.encounter, totalKills: 0 }));
+  h += '<div class="cs-sec"><div class="cs-lab">Mythic, boss by boss <em>your best ' + (d.heal ? 'healing' : 'damage') + ' parse on each</em></div><div class="cs-boss">' +
+    (R5.length ? R5.map((x) => { const nm = String((x.encounter || {}).name || ''), sh = BOSS_SHORT[nm.toLowerCase()] || nm, p = x.totalKills > 0 && x.rankPercent != null ? Math.round(x.rankPercent) : null;
+      return '<div class="cs-bs' + (p == null ? ' no' : '') + '" title="' + esc(nm) + '"><span class="bn">' + esc(sh) + '</span><b style="color:' + parseCol(p) + '">' + (p == null ? '—' : p) + '</b></div>'; }).join('')
+      : Object.values(BOSS_SHORT).map((sh) => '<div class="cs-bs no"><span class="bn">' + esc(sh) + '</span><b style="color:var(--faint)">—</b></div>').join('')) + '</div></div>';
+  // best keys
+  const runs = ((rio && rio.mythic_plus_best_runs) || []).slice(0, 8), timed = runs.filter((r) => r.num_keystone_upgrades > 0), lv = new Set(timed.map((r) => r.mythic_level));
+  const kl = !runs.length ? '' : timed.length === 8 && lv.size === 1 ? 'all 8 dungeons timed at +' + [...lv][0] : timed.length + (timed.length === 1 ? ' dungeon' : ' dungeons') + ' timed';
+  h += '<div class="cs-sec"><div class="cs-lab">Best keys' + (kl ? ' <em>' + kl + '</em>' : '') + '</div>' + (runs.length ? '<div class="cs-keys">' + runs.map((r) =>
+    '<div class="cs-kr"><span class="lv">+' + r.mythic_level + '</span><span class="dn">' + esc(r.dungeon) + '</span><span class="tm"><b class="' + (r.num_keystone_upgrades > 0 ? 'ok' : 'over') + '">' + mmssK(r.clear_time_ms) + '</b> of ' + mmssK(r.par_time_ms) + '</span><span class="sc">' + Math.round(r.score || 0) + '</span></div>').join('') + '</div>' : '<p class="cs-none">No keys this season.</p>') + '</div>';
+  body.innerHTML = h;
+}
+csInit();
 j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; RECAP.appV = RECAP.appV || x.version || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy'); renderMain();
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));

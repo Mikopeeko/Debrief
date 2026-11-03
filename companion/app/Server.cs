@@ -170,6 +170,7 @@ namespace Debrief {
         else if (post && path == "/setup/sample") { ShowSample?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
         else if (post && path == "/setup/wowdir") SendJson(res, new Dictionary<string, object> { { "logs", PickWowDir != null ? PickWowDir() : "" } });
         else if (get && path == "/setup") SendJson(res, SetupInfo());
+        else if (get && path == "/setup/chars") SendJson(res, CharsInfo()); // (the Companion window's character (Nov 3))
         else if (get && path == "/setup/addoncard") SendJson(res, Wow.AddonPicks(here)); // (each player's /db picks, carried over once)
         else if (get && path == "/setup/pull") { // (the preview's pull: your latest raid pull, else the sample, with who you are)
           string data = null; bool sample = false;
@@ -225,6 +226,19 @@ namespace Debrief {
       o["addon"] = addon; o["display"] = display;
       var card = Wow.AddonCard(here); o["me"] = card.ContainsKey("me") ? card["me"] : ""; o["chars"] = card.ContainsKey("mine") ? card["mine"] : new List<string>();
       int n = 1; try { n = System.Windows.Forms.Screen.AllScreens.Length; } catch { } o["screens"] = n;
+      return o;
+    }
+    // (every character on this PC with its realm, from WoW's own folders, when each was last played, and the region from Config.wtf)
+    Dictionary<string, object> CharsInfo() {
+      var o = new Dictionary<string, object>(); var list = new List<Dictionary<string, object>>(); string region = "us";
+      var r = Wow.FindRetail(here);
+      if (r != null) {
+        try { var cfg = Path.Combine(r, @"WTF\Config.wtf"); if (File.Exists(cfg)) { var m = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(cfg), "SET portal \"(\\w+)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase); if (m.Success) region = m.Groups[1].Value.ToLowerInvariant(); } } catch { }
+        try { var acc = Path.Combine(r, @"WTF\Account"); if (Directory.Exists(acc)) foreach (var a in Directory.GetDirectories(acc)) foreach (var realm in Directory.GetDirectories(a)) { var rn = Path.GetFileName(realm); if (rn == "SavedVariables") continue;
+          foreach (var ch in Directory.GetDirectories(realm)) list.Add(new Dictionary<string, object> { { "name", Path.GetFileName(ch) }, { "realm", rn }, { "at", (long)(Directory.GetLastWriteTimeUtc(ch) - new DateTime(1970, 1, 1)).TotalMilliseconds } }); } } catch { }
+      }
+      var card = Wow.AddonCard(here); o["me"] = card.ContainsKey("me") ? card["me"] : ""; o["chars"] = list;
+      o["region"] = region == "eu" || region == "kr" || region == "tw" ? region : "us";
       return o;
     }
     string AddonVersion() {
