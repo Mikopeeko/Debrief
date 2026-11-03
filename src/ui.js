@@ -2028,7 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
-    "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and a gold edge when they need a dispel. Click a frame to follow that player, and drag the grid anywhere on the map.",
+    "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Click a frame to follow that player, and drag the grid anywhere on the map.",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
     'Holy Paladin: the Infusion of Light check says why a Holy Light wastes the uses you still hold: with your tier set it fills Infusion back up to 2.',
@@ -35693,30 +35693,47 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         /* (raid frames (Flex, Nov 3: "what if we put the raids healthbars in raid frame grid style in the bottom left corner?", "keep it small to save
            space", "make them movable so the person can move them out of the way if it covers something up"): the raid in a small grid, tanks,
            healers, melee, then ranged; each frame's bar is that player's health at this moment (the log's readings) in their class colour, grey
-           when dead (until a rez); a gold edge while a debuff that someone dispelled in this pull is on them; up to two icons for the boss's
-           debuffs on them. A click on a frame follows that player; the grip on top drags the grid anywhere on the map (remembered per viewer)) */
+           when dead (until a rez); the game's dispel glow, in the debuff's type colour, while a debuff that someone dispelled in this pull is on them; up to two icons for its
+           and the boss's debuffs on them. A click on a frame follows that player; the grip on top drags the grid anywhere on the map (remembered per viewer)) */
         var RFP = rep.php && rep.php.get ? rep.php : null, RFRO = {}; try { RFRO = (window.dbtRoles && window.dbtRoles(rep)) || {}; } catch (e0) { RFRO = {}; }
         var RFD = {}; (rep.deaths || []).forEach(function (d) { if (d && d.guid != null) (RFD[d.guid] = RFD[d.guid] || []).push(+d.t); });
         var RFX = RX[it0.boss] || {}, RFI = {}; Object.keys(RFX.debuffs || {}).forEach(function (n) { RFI[n] = 1; }); (RFX.badDebuffs || []).concat(RFX.goodDebuffs || []).forEach(function (b) { var n = typeof b === 'string' ? b : b && b.n; if (n) RFI[n] = 1; });
-        var RFS = {}; rep.players.forEach(function (p) { ((p && p.dispL) || []).forEach(function (x) { if (x && !x.foe && x.aura) RFS[x.aura] = 1; }); });
+        var RFS = {}; rep.players.forEach(function (p) { ((p && p.dispL) || []).forEach(function (x) { if (x && !x.foe && x.aura) RFS[x.aura] = x.id || RFS[x.aura] || 1; }); });
+        /* (each dispellable debuff's type, from the game's 12.1.5 data (wago.tools SpellCategories, build 12.1.5.70688, DispelType: 1 Magic, 2 Curse,
+           3 Disease, 4 Poison) for every debuff the raid dispelled in the log library's kills of all ten bosses, plus Atrophic Poison; one that isn't
+           here, or has no type in the data, lights in the game's neutral red) */
+        var RFT = { 1287036: 4, 1295173: 1, 1284471: 1, 1304046: 1, 1287083: 4, 1287434: 1, 1306906: 4, 55078: 3, 1305833: 1, 443404: 1, 431414: 1, 34914: 1, 247456: 1, 383346: 1, 55095: 3, 370898: 1, 188389: 1, 469882: 1, 445474: 1, 1305711: 1, 357209: 1, 430589: 1, 1263250: 1, 1301800: 4, 392388: 4 };
         var RFO = { tank: 0, healer: 1, melee: 2, ranged: 3 }, RFL = []; rep.players.forEach(function (p) { if (p && p.name && p.guid) RFL.push(p); });
         RFL.sort(function (a, b) { var x = RFO[RFRO[a.name]], y = RFO[RFRO[b.name]]; return (x != null ? x : 4) - (y != null ? y : 4) || String(a.name).localeCompare(String(b.name)); });
         var rfHp = function (g, ft) { var a = RFP && RFP.get(g); if (!a || !a.length) return [1, -1]; var lo = 0, hi = a.length - 1, k = -1; while (lo <= hi) { var m = (lo + hi) >> 1; if (a[m][0] <= ft) { k = m; lo = m + 1; } else hi = m - 1; } return k < 0 ? [a[0][1], -1] : [a[k][1], a[k][0]]; };
         var rfOn = function (p, n, ft) { var v = p.debuffs && p.debuffs.get ? p.debuffs.get(n) : null; if (!v || !v.sp) return null; for (var i = 0; i < v.sp.length; i++) { var a = +v.sp[i][0], b = v.sp[i][1] == null ? a + 6 : +v.sp[i][1]; if (ft >= a && ft <= b) return v; } return null; };
         var rfCss = function () { if (document.getElementById('dtm-rf-css')) return; var st = document.createElement('style'); st.id = 'dtm-rf-css'; st.textContent = [
-          '.dtm-rf{position:absolute;z-index:4;background:rgba(10,12,16,.74);border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:0 4px 4px;user-select:none}',
-          '.dtm-rfh{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;line-height:16px;color:#aeb6bf;cursor:grab;touch-action:none}',
-          '.dtm-rfh:active{cursor:grabbing}.dtm-rfh i{font-style:normal;letter-spacing:1px;opacity:.7}',
-          '.dtm-rfg{display:grid;grid-template-columns:repeat(4,50px);gap:2px}',
-          '.dtm-rff{position:relative;height:18px;background:#1b1f27;border-radius:2px;overflow:hidden;cursor:pointer}',
-          '.dtm-rff>i{position:absolute;z-index:0;left:0;top:0;bottom:0;transition:width .2s linear;filter:brightness(.62) saturate(1.2)}',
-          '.dtm-rff>.rfn{position:absolute;z-index:1;left:3px;right:2px;top:0;font-size:10.5px;font-weight:600;line-height:18px;color:#fff !important;text-shadow:0 0 2px #000,0 1px 2px #000,0 0 3px #000;white-space:nowrap;overflow:hidden}',
-          '.dtm-rff.dead{background:#3a1f22}.dtm-rff.dead>i{width:0 !important}.dtm-rff.dead>.rfn{color:#8d8d8d !important}',
-          '.dtm-rff.disp{box-shadow:inset 0 0 0 2px #e8c05a}.dtm-rff.fol{outline:1px solid #fff;outline-offset:-1px}',
-          '.dtm-rff>s{position:absolute;z-index:2;right:1px;bottom:1px;display:flex;gap:1px;text-decoration:none}',
-          '.dtm-rff>s .icw{display:inline-block !important;width:10px;height:10px;margin:0;vertical-align:top}',
-          '.dtm-rff>s .icw img.oi{border-radius:1px;box-shadow:0 0 0 1px #000}',
-          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:15px}.dtm-rff>.rfn{font-size:9.5px;line-height:15px}.dtm-rff>s .icw{width:8px;height:8px}}'
+          /* (the Design studio's refined look (Nov 3, rf-design.md; Flex: "refine the design of them otherwise its solid", "The names can be much smaller
+             in the top left corner", "the dispel overlay should resemble similar to the in game one"): no box, a small pill grip, calmer bars with a
+             sheen, 9 px names top-left, a dark red empty part under 35%, grey with a skull when dead, and the game's dispel look in the debuff's
+             own type colour) */
+          '.dtm-rf{position:absolute;z-index:4;background:rgba(10,12,16,.6);border:0;border-radius:5px;padding:8px 3px 3px;box-shadow:0 2px 12px rgba(0,0,0,.4);user-select:none}',
+          '.dtm-rfh{position:absolute;left:0;right:0;top:0;height:8px;cursor:grab;touch-action:none}.dtm-rfh:active{cursor:grabbing}',
+          '.dtm-rfh::before{content:"";position:absolute;left:50%;top:2px;width:22px;height:3px;margin-left:-11px;border-radius:2px;background:#8b939c;opacity:.45;transition:opacity .15s}.dtm-rf:hover .dtm-rfh::before{opacity:1}',
+          '.dtm-rfg{display:grid;grid-template-columns:repeat(4,50px);gap:1px}',
+          '.dtm-rff{position:relative;height:18px;background:#0d0f13;border-radius:2px;overflow:hidden;cursor:pointer;--dt:#cc0000;--dtg:rgba(204,0,0,.6);--dtt:rgba(204,0,0,.3)}',
+          '.dtm-rff>i{position:absolute;z-index:0;left:0;top:0;bottom:0;transition:width .2s linear;filter:brightness(.74) saturate(.9);background-image:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,0) 50%,rgba(0,0,0,.2))}',
+          '.dtm-rff>.rfn{position:absolute;right:2px;color:#fff;white-space:nowrap;overflow:hidden}',
+          /* (beats the site's 11 px type-scale rule for these names, Flex's call) */
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:3px !important;top:1px !important;font-size:9px !important;line-height:10px !important;font-weight:600 !important;text-shadow:0 0 2px #000,0 1px 1px #000 !important}',
+          '.dtm-rff.low{background:#3b1517}',
+          '.dtm-rff.dead{background:#16171b}.dtm-rff.dead>i{width:0 !important}html body .dtm-rf .dtm-rff.dead>span.rfn{color:#69707a !important;text-shadow:none !important;right:14px}',
+          '.dtm-rff.dead::after{content:"☠";position:absolute;right:3px;bottom:1px;font-size:10px;line-height:12px;color:#ff8f87}',
+          '.dtm-rff.dt-magic{--dt:#3399ff;--dtg:rgba(51,153,255,.85);--dtt:rgba(51,153,255,.42)}.dtm-rff.dt-curse{--dt:#9900ff;--dtg:rgba(153,0,255,.85);--dtt:rgba(153,0,255,.42)}',
+          '.dtm-rff.dt-disease{--dt:#996600;--dtg:rgba(204,140,20,.85);--dtt:rgba(153,102,0,.45)}.dtm-rff.dt-poison{--dt:#009900;--dtg:rgba(40,200,40,.85);--dtt:rgba(0,153,0,.42)}',
+          '.dtm-rff.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg)}',
+          '.dtm-rff.disp::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(0deg,var(--dtt) 0%,transparent 75%)}',
+          '.dtm-rff.fol{box-shadow:0 0 0 1px #fff,0 0 6px rgba(255,255,255,.35)}.dtm-rff.fol.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg),0 0 0 1px #fff}',
+          '.dtm-rff>s{position:absolute;z-index:3;right:2px;bottom:3px;display:flex;gap:1px;text-decoration:none}',
+          '.dtm-rff>s .icw{display:inline-block !important;width:12px;height:12px;margin:0;vertical-align:top}',
+          '.dtm-rff>s .icw img.oi{border-radius:1px;box-shadow:0 0 0 1px #000}.dtm-rff.disp>s .icw.dsp img.oi{box-shadow:0 0 0 1px var(--dt)}',
+          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:15px}.dtm-rff.dead::after{line-height:15px;font-size:9px}.dtm-rff>s{bottom:2px}.dtm-rff>s .icw{width:9px;height:9px}',
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{font-size:8px !important;line-height:9px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         var rfKey = 'dtmRaidFrames', rfPos = null; try { rfPos = JSON.parse(localStorage.getItem(rfKey) || 'null'); } catch (e1) { rfPos = null; }
         var rfPlace = function (mw, el) { var W = mw.clientWidth, H = mw.clientHeight, w0 = el.offsetWidth, h0 = el.offsetHeight, x, y;
@@ -35727,17 +35744,19 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var up = function () { hd.removeEventListener('pointermove', mv); hd.removeEventListener('pointerup', up); hd.removeEventListener('pointercancel', up); rfPos = { x: el.offsetLeft / Math.max(1, mw.clientWidth), y: el.offsetTop / Math.max(1, mw.clientHeight) }; try { localStorage.setItem(rfKey, JSON.stringify(rfPos)); } catch (e3) {} };
             hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up); }); };
         var rfFrames = function (ft) { var mw = box.querySelector('.dtm-map'); if (!mw || !RFL.length) return; rfCss(); var el = mw.querySelector('.dtm-rf');
-          if (!el) { el = document.createElement('div'); el.className = 'dtm-rf'; el.innerHTML = '<div class="dtm-rfh" title="Drag to move the raid frames">Raid <i>⠿</i></div><div class="dtm-rfg">' + RFL.map(function (p) { var cc = (typeof CC !== 'undefined' && CC[p.name]) || '#7a8090';
-              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background:' + cc + ';width:100%"></i><span class="rfn">' + E(p.name) + '</span><s></s></div>'; }).join('') + '</div>';
+          if (!el) { el = document.createElement('div'); el.className = 'dtm-rf'; el.innerHTML = '<div class="dtm-rfh" title="Drag to move the raid frames"></div><div class="dtm-rfg">' + RFL.map(function (p) { var cc = (typeof CC !== 'undefined' && CC[p.name]) || '#7a8090';
+              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><span class="rfn">' + E(p.name) + '</span><s></s></div>'; }).join('') + '</div>';
             mw.appendChild(el); rfDrag(mw, el); el._fr = [].slice.call(el.querySelectorAll('.dtm-rff')); }
           if (!el._placed || el._W !== mw.clientWidth) { el._placed = 1; el._W = mw.clientWidth; rfPlace(mw, el); }
           var fol = SS.mechP || '', icn = false; RFL.forEach(function (p, i) { var fr = el._fr[i]; if (!fr) return; var hv = rfHp(p.guid, ft), ds = RFD[p.guid] || [], dt = null; ds.forEach(function (t) { if (t <= ft + 0.05 && (dt == null || t > dt)) dt = t; });
             var dead = dt != null && !(hv[1] > dt + 0.5 && hv[0] > 0.01), pc = dead ? 0 : Math.max(0, Math.min(1, hv[0])) * 100;
             var bar = fr.firstChild; if (bar._p !== Math.round(pc)) { bar._p = Math.round(pc); bar.style.width = pc.toFixed(1) + '%'; }
-            fr.classList.toggle('dead', dead); fr.classList.toggle('fol', fol === p.name);
-            var dsp = false; if (!dead) Object.keys(RFS).forEach(function (n) { if (!dsp && rfOn(p, n, ft)) dsp = true; }); fr.classList.toggle('disp', dsp);
-            var ic = []; if (!dead && w.spellIcon) Object.keys(RFI).forEach(function (n) { if (ic.length < 2) { var v = rfOn(p, n, ft); if (v) ic.push([v.id || 0, n]); } }); var k = ic.map(function (x) { return x[1]; }).join('|');
-            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { return w.spellIcon(x[0], x[1]); }).join(''); fr.title = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (a debuff to dispel)' : '') + ' (click to follow)'; if (ic.length) icn = true; } });
+            fr.classList.toggle('dead', dead); fr.classList.toggle('low', !dead && pc < 35); fr.classList.toggle('fol', fol === p.name);
+            /* (a debuff to dispel: the frame lights in its own type colour, from the game's 12.1.5 data (RFT), and its icon shows first, edged in it) */
+            var dsp = null; if (!dead) Object.keys(RFS).forEach(function (n) { if (!dsp) { var v = rfOn(p, n, ft); if (v) dsp = [v.id || RFS[n] || 0, n]; } }); fr.classList.toggle('disp', !!dsp);
+            var ty = dsp ? RFT[dsp[0]] || RFT[RFS[dsp[1]]] || 0 : 0; ['magic', 'curse', 'disease', 'poison'].forEach(function (c, j) { fr.classList.toggle('dt-' + c, ty === j + 1); });
+            var ic = dsp && w.spellIcon ? [[dsp[0], dsp[1], 1]] : []; if (!dead && w.spellIcon) Object.keys(RFI).forEach(function (n) { if (ic.length < 2 && !(dsp && dsp[1] === n)) { var v = rfOn(p, n, ft); if (v) ic.push([v.id || 0, n]); } }); var k = ic.map(function (x) { return x[1]; }).join('|');
+            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { var h = w.spellIcon(x[0], x[1]); return x[2] ? h.replace('class="icw', 'class="icw dsp') : h; }).join(''); fr.title = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (' + dsp[1] + ' can be dispelled)' : '') + ' (click to follow)'; if (ic.length) icn = true; } });
           if (icn && w.hydrateIcons) w.hydrateIcons(); };
         var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
         var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
