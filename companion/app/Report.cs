@@ -28,8 +28,13 @@ namespace Debrief {
     static string Line(string b) {
       var m = Regex.Match(b, "\\[\"m\"\\] = \"((?:[^\"\\\\]|\\\\.)*)\""); if (!m.Success) return "";
       var v = Regex.Match(b, "\\[\"v\"\\] = \"([^\"]*)\""); var n = Regex.Match(b, "\\[\"n\"\\] = (\\d+)");
+      if (!Current(v.Success ? v.Groups[1].Value : "")) return ""; // (only the current addon's notes (0.6.0 and later): the old in-game card's errors are gone with it (Nov 3))
       var msg = m.Groups[1].Value.Replace("\\\"", "\"").Replace("\\\\", "\\");
       return (v.Success && v.Groups[1].Value != "" ? v.Groups[1].Value + " · " : "") + (n.Success && n.Groups[1].Value != "1" ? n.Groups[1].Value + "x · " : "") + msg;
+    }
+    static bool Current(string v) {
+      var p = (v ?? "").Split('.'); int a, b; if (p.Length < 2 || !int.TryParse(p[0], out a) || !int.TryParse(p[1], out b)) return false;
+      return a > 0 || b >= 6;
     }
     public static Dictionary<string, object> Send(string here, string addonVersion, Dictionary<string, object> body) {
       var js = new JavaScriptSerializer();

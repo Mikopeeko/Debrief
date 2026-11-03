@@ -907,7 +907,7 @@ function lkWith(lk0) { const S = SETS(), o = Object.assign({}, lk0 || {}); if (!
 const ACCENT = { gold: '#e6b450', frost: '#3fc7eb', fel: '#45c15c', crimson: '#e5534b', violet: '#a78bfa' };
 function applyLook() { const S = SETS() || {}, r = document.documentElement.style, b = document.body; if (!b) return;
   let acc = ACCENT[S.accent] || null;
-  if ((S.accent || 'class') === 'class') { const me = String((D && D.lk && D.lk.me) || '').split('-')[0], c = ((D && D.cls) || []).find((x) => String(x[0]).split('-')[0] === me) || ((D && D.mplus && D.mplus.people) || []).map((p) => [p.name, p.cls]).find((x) => String(x[0]).split('-')[0] === me); acc = c && CC[c[1]] ? CC[c[1]] : null; }
+  if ((S.accent || 'class') === 'class') { let cur = null; try { cur = JSON.parse(localStorage.getItem('dbf-cur-cls') || 'null'); } catch (e) { cur = null; } const me = String((D && D.lk && D.lk.me) || '').split('-')[0], c = ((D && D.cls) || []).find((x) => String(x[0]).split('-')[0] === me) || ((D && D.mplus && D.mplus.people) || []).map((p) => [p.name, p.cls]).find((x) => String(x[0]).split('-')[0] === me); acc = cur && CC[cur.cls] ? CC[cur.cls] : c && CC[c[1]] ? CC[c[1]] : null; } /* (the character you're on now, from the Companion window, else this pull's own (Nov 3)) */
   if (acc) r.setProperty('--gold', acc); else r.removeProperty('--gold');
   b.classList.toggle('cb', !!S.colorblind); b.classList.toggle('f-plain', S.font === 'plain'); b.classList.toggle('st-flat', S.style === 'flat'); b.classList.toggle('st-glass', S.style === 'glass'); b.classList.toggle('locked', !!S.lock);
   const a = document.getElementById('app'), z = (S.size || 1) * (PV ? 0.72 : 1); if (a) { a.style.zoom = S.size && S.size !== 1 ? String(S.size) : ''; a.style.height = a.style.maxHeight = z !== 1 ? 'calc(100vh / ' + z + ')' : ''; } } /* (still the window's full height at any size) */
@@ -915,7 +915,7 @@ function applyLook() { const S = SETS() || {}, r = document.documentElement.styl
 function sendPlace() { const S = SETS(); if (!S) return; post('set:' + JSON.stringify({ screen: S.screen || 'main', lock: !!S.lock, size: S.size || 1, resetAt: S.resetAt || 0 })); }
 window.DBF_SETS = () => { if (D) D.lk = lkWith(LK0); applyLook(); if (D) render(); sendPlace(); };
 window.DBF_PVVIEW = (v) => { if (!D || D.mplus) return; VIEW = v === 'raid' ? 'raid' : 'me'; render(); }; /* (the preview shows the Raid view while its page is open) */
-window.addEventListener('storage', (e) => { if (e.key === SETK) window.DBF_SETS(); });
+window.addEventListener('storage', (e) => { if (e.key === SETK || e.key === 'dbf-cur-cls') window.DBF_SETS(); });
 // (Close by itself: not while the mouse is on it)
 let AC = 0, ACIN = false;
 const acArm = () => { clearTimeout(AC); const s = (SETS() || {}).autoClose || 0; if (!s || PV) return; AC = setTimeout(() => { if (!ACIN) post('close'); else acArm(); }, s * 1000); };

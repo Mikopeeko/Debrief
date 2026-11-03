@@ -1,11 +1,10 @@
 // The small helper the window talks to, on http://localhost:8772 (only this PC can reach it). The same addresses the
 // PowerShell app answered, so companion.html works unchanged: it lists and reads combat logs, waits for new pulls,
-// copies the recap with a chime, and installs the addon.
+// shows the recap, and installs the addon.
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Media;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -185,7 +184,6 @@ namespace Debrief {
           var raw = Body(req); var body = Json.Deserialize<Dictionary<string, object>>(raw);
           bool show = body.ContainsKey("show") && body["show"] is bool sb && sb;
           if (Popup != null) Popup(show && body.ContainsKey("data") ? Json.Serialize(body["data"]) : null, show);
-          if (show && body.ContainsKey("sound") && body["sound"] is bool snd && snd) Chime();
           SendJson(res, new Dictionary<string, object> { { "ok", Popup != null } });
         }
         else if (post && path == "/folder") {
@@ -244,14 +242,6 @@ namespace Debrief {
     string AddonVersion() {
       try { foreach (var line in File.ReadAllLines(Path.Combine(here, @"addon\Debrief\Debrief.toc"))) if (line.StartsWith("## Version:")) return line.Substring(11).Trim(); } catch { }
       return "";
-    }
-
-    static void Chime() {
-      var media = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Media");
-      foreach (var w in new[] { "Windows Notify System Generic.wav", "Windows Notify Calendar.wav", "chimes.wav" }) {
-        var p = Path.Combine(media, w);
-        if (File.Exists(p)) { try { using (var sp = new SoundPlayer(p)) sp.PlaySync(); } catch { } break; }
-      }
     }
 
     const string Moved = "<!doctype html><meta charset=utf-8><title>Debrief Companion</title><body style=\"margin:0;background:#0f1117;color:#ece8df;font:16px/1.5 Segoe UI,sans-serif;display:grid;place-items:center;min-height:100vh;text-align:center\">" +

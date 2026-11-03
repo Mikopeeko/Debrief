@@ -100,6 +100,7 @@ namespace Debrief {
     protected override void OnHandleCreated(EventArgs e) {
       base.OnHandleCreated(e);
       LoadHotkey(); // (the recap key picked before, made live again for this start)
+      WatchForeground(); // (Ctrl + a letter is held only while WoW or Debrief is in front (Nov 3))
       // (the size and place, now that Windows says how big this screen's pixels are)
       if (!sized) { sized = true; MinimumSize = new Size(Px(700), Px(380)); Bounds = SavedBounds(); }
       if (!pageStarted) { pageStarted = true; BeginInvoke(new Action(async () => await StartPage())); }
@@ -203,36 +204,65 @@ namespace Debrief {
     [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
     [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h, int id);
     const int HotkeyId = 0xD0B1;
-    int hkMods, hkVk; bool hkOn, hkTaken; string hkName = "";
-    string HotkeyFile { get { return Path.Combine(here, "hotkey.txt"); } } // ("mods,vk,name": mods 1 Alt, 2 Ctrl, 4 Shift; e.g. "6,68,Ctrl+Shift+D")
+    int hkMods, hkVk; bool hkOn, hkTaken, hkWant = true, hkFail, fgOk = true; string hkName = "";
+    string HotkeyFile { get { return Path.Combine(here, "hotkey.txt"); } } // ("mods,vk,name": mods 1 Alt, 2 Ctrl, 4 Shift; e.g. "2,82,Ctrl + R")
+    // (Ctrl + a letter, like Ctrl + R, is every browser's own key (refresh), so it's held only while WoW or one of Debrief's windows is in front
+    // (Nov 3, the studio's settings-cleanup-brief.md); other keys work anywhere, as before)
+    bool HkWowOnly { get { return hkMods == 2 && hkVk >= 65 && hkVk <= 90; } }
+    void HkApply() {
+      bool want = hkWant && hkVk != 0 && (!HkWowOnly || fgOk);
+      if (want && !hkOn) { hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000 /* MOD_NOREPEAT */, (uint)hkVk); hkFail = !hkOn; }
+      else if (!want && hkOn) { UnregisterHotKey(Handle, HotkeyId); hkOn = false; }
+    }
     // (mods -1: let go of it while the window listens for a new one; -2: take the saved one back)
     public string SetHotkey(int mods, int vk, string name) {
       if (InvokeRequired) return (string)Invoke(new Func<string>(() => SetHotkey(mods, vk, name)));
-      if (mods == -1) { if (hkOn) UnregisterHotKey(Handle, HotkeyId); hkOn = false; return ""; }
-      if (mods == -2) { if (!hkOn && hkVk != 0) hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000, (uint)hkVk); return ""; }
+      if (mods == -1) { hkWant = false; HkApply(); return ""; }
+      if (mods == -2) { hkWant = true; HkApply(); return ""; }
       if ((mods & 7) == 0 || vk <= 0) return "needs"; // (a plain key: WoW uses those)
       if (hkOn) { UnregisterHotKey(Handle, HotkeyId); hkOn = false; }
-      if (!RegisterHotKey(Handle, HotkeyId, (uint)mods | 0x4000 /* MOD_NOREPEAT */, (uint)vk)) {
-        if (hkVk != 0) hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000, (uint)hkVk); // (the old one back)
-        return "taken";
-      }
-      hkOn = true; hkTaken = false; hkMods = mods; hkVk = vk; hkName = name ?? "";
+      if (!RegisterHotKey(Handle, HotkeyId, (uint)mods | 0x4000, (uint)vk)) { hkWant = true; HkApply(); return "taken"; } // (the old one back)
+      hkOn = true; hkTaken = false; hkFail = false; hkWant = true; hkMods = mods; hkVk = vk; hkName = name ?? "";
       try { File.WriteAllText(HotkeyFile, mods + "," + vk + "," + hkName); } catch { }
+      HkApply(); // (a WoW-only key is let go again until WoW is in front)
       return "";
     }
     public System.Collections.Generic.Dictionary<string, object> HotkeyInfo() {
-      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", hkOn }, { "chosen", File.Exists(HotkeyFile) }, { "taken", hkTaken } };
+      bool working = hkOn || (hkWant && HkWowOnly && !fgOk && !hkFail); // (a WoW-only key waiting for WoW counts as on)
+      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", working }, { "chosen", File.Exists(HotkeyFile) }, { "taken", hkTaken }, { "wowOnly", HkWowOnly } };
     }
     void LoadHotkey() {
-      // (the recap key is the only way back to a recap since the card left WoW (Nov 3, the studio), so it starts as Ctrl + Shift + D when nothing else has it;
-      // if another program does, the window asks for another)
+      // (the recap key is the only way back to a recap since the card left WoW, so it starts as Ctrl + R when nothing else has it (Flex, Nov 3: "make
+      // Ctrl+r the default"); if another program does, the window asks for another. Ctrl + Shift + D was the start before: anyone still on it never
+      // picked a key, so they move to Ctrl + R once (hotkey-r.txt marks it done); a key someone picked stays)
+      var moved = Path.Combine(here, "hotkey-r.txt"); bool first = !File.Exists(moved);
+      try { if (first) File.WriteAllText(moved, "Ctrl + R is the start (Nov 3)"); } catch { }
+      try { if (first && File.Exists(HotkeyFile) && File.ReadAllText(HotkeyFile).StartsWith("6,68,")) File.Delete(HotkeyFile); } catch { }
       if (!File.Exists(HotkeyFile)) {
-        if (RegisterHotKey(Handle, HotkeyId, 6 | 0x4000, 68)) { hkOn = true; hkMods = 6; hkVk = 68; hkName = "Ctrl + Shift + D"; try { File.WriteAllText(HotkeyFile, "6,68," + hkName); } catch { } }
-        else { hkTaken = true; Program.Log("the recap key Ctrl + Shift + D is taken by another program"); }
+        if (RegisterHotKey(Handle, HotkeyId, 2 | 0x4000, 82)) { hkOn = true; hkMods = 2; hkVk = 82; hkName = "Ctrl + R"; try { File.WriteAllText(HotkeyFile, "2,82," + hkName); } catch { } }
+        else if (first && RegisterHotKey(Handle, HotkeyId, 6 | 0x4000, 68)) { hkOn = true; hkMods = 6; hkVk = 68; hkName = "Ctrl + Shift + D"; try { File.WriteAllText(HotkeyFile, "6,68," + hkName); } catch { } } // (Ctrl + R taken: keep the old start)
+        else { hkTaken = true; Program.Log("the recap key Ctrl + R is taken by another program"); }
         return;
       }
       try { var p = File.ReadAllText(HotkeyFile).Split(new[] { ',' }, 3); int m = int.Parse(p[0]), v = int.Parse(p[1]); hkMods = m; hkVk = v; hkName = p[2];
-        hkOn = RegisterHotKey(Handle, HotkeyId, (uint)m | 0x4000, (uint)v); if (!hkOn) Program.Log("recap key " + hkName + " is taken by another program"); } catch { }
+        hkOn = RegisterHotKey(Handle, HotkeyId, (uint)m | 0x4000, (uint)v); hkFail = !hkOn; if (!hkOn) Program.Log("recap key " + hkName + " is taken by another program"); } catch { }
+    }
+    // (which window is in front: WoW, or one of Debrief's own (the pop-up, Settings, this window, where Ctrl + R would reload the page))
+    delegate void WinEventProc(IntPtr hook, uint ev, IntPtr hwnd, int idObject, int idChild, uint thread, uint time);
+    [DllImport("user32.dll")] static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr mod, WinEventProc proc, uint pid, uint tid, uint flags);
+    [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+    WinEventProc fgProc; uint myPid;
+    void WatchForeground() {
+      myPid = (uint)Process.GetCurrentProcess().Id;
+      fgProc = (h, e, w, o, c, t, tm) => OnForeground(w); // (kept in a field so it isn't collected)
+      SetWinEventHook(3 /* EVENT_SYSTEM_FOREGROUND */, 3, IntPtr.Zero, fgProc, 0, 0, 0 /* WINEVENT_OUTOFCONTEXT */);
+      OnForeground(GetForegroundWindow());
+    }
+    void OnForeground(IntPtr w) {
+      bool ok = false;
+      try { uint pid; GetWindowThreadProcessId(w, out pid); if (pid == myPid) ok = true; else using (var p = Process.GetProcessById((int)pid)) ok = p.ProcessName.StartsWith("Wow", StringComparison.OrdinalIgnoreCase); } catch { }
+      if (ok == fgOk) return; fgOk = ok; HkApply();
     }
     protected override void WndProc(ref Message m) {
       if (m.Msg == 0x0312 /* WM_HOTKEY */ && (int)m.WParam == HotkeyId) { ToggleRecap(); return; }

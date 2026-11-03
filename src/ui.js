@@ -2028,7 +2028,9 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', h: [{ t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
-    "Debrief Companion: your recap key starts as Ctrl + Shift + D, and it's the way back to any recap, even mid-raid. Change it in Settings.",
+    "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
+    "Debrief Companion: your recap key starts as Ctrl + R, and it only works while you're in WoW, so your browser's Ctrl + R still refreshes. It's the way back to any recap, even mid-raid. Change it in Settings.",
+    "Debrief Companion: the My class accent follows the character you're playing, the Chime is gone, and Report a problem only counts problems from the current addon.",
     "Debrief Companion: if WoW is in true Fullscreen, a one-time tip shows how to make the pop-up show over the game, or how to put it on your second screen.",
     "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the selected mistake card beside the map under the play-by-play, and a short trail behind the player you follow.",
     "Debriefing Timeline replay: the mistake card beside the map has a Watch it button that plays the moment, its own ◀ 1 of 5 ▶, and a ring on the map around each player it names.",
@@ -3154,11 +3156,11 @@ function openInGame() {
     '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
-      '<li><i>2</i><b>Your recap pops up over the game</b><span>A short chime, and the recap opens on your screen.</span></li>' +
+      '<li><i>2</i><b>Your recap pops up over the game</b><span>A few seconds after each pull, the recap opens on your screen.</span></li>' +
       '<li><i>3</i><b>Press your recap key</b><span>See it again any time, even mid-raid, and tap the boss or key name to pick an earlier one.</span></li></ol>' +
       '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to do by hand.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The pop-up over the game, the Raid view, a Mythic+ key and the settings window.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>Your recap key</h2><p>Your recap key shows or hides your recap, even mid-raid. It starts as Ctrl + Shift + D; change it in Settings.</p></div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Your recap key</h2><p>Your recap key shows or hides your recap, even mid-raid. It starts as Ctrl + R and only works while you\'re in WoW, so your browser\'s Ctrl + R still refreshes. Change it in Settings.</p></div></section>' +
     '<p class="igm-foot">Debrief Companion is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
   '</div></section>';
   const root = $('#main .igm');

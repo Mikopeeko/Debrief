@@ -22,9 +22,12 @@ button { font: inherit; color: inherit; }
 /* the rail */
 .rail { width: 188px; flex: none; border-right: 1px solid var(--line); padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
 .rail a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 4px; color: var(--muted); font: 600 13.5px 'Barlow Condensed', sans-serif; text-decoration: none; cursor: pointer; user-select: none; }
-.rail a svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; }
+/* (each page's colour (the studio, Nov 3): Pop-up blue, Your card your class, Look violet, Setup green or amber; the tile is stronger on the open page) */
+.rail a .pt { width: 22px; height: 22px; flex: none; border-radius: 6px; display: grid; place-items: center; background: color-mix(in srgb, var(--ic) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ic) 45%, transparent); }
+.rail a .pt svg { width: 14px; height: 14px; stroke: var(--ic); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.rail a.on .pt { background: color-mix(in srgb, var(--ic) 32%, transparent); }
 .rail a:hover { background: var(--raised); color: var(--text); }
-.rail a.on { background: var(--raised); color: var(--gold); }
+.rail a.on { background: var(--raised); color: var(--text); }
 .rail a .n { margin-left: auto; font: 600 11.5px 'Barlow Condensed', sans-serif; color: var(--faint); }
 .rail a .n.ok { color: var(--green); } .rail a .n.am { color: var(--amber); }
 .rail .foot { margin-top: auto; padding: 8px 10px; color: var(--faint); font-size: 12px; line-height: 1.5; border-top: 1px solid var(--line); }
@@ -35,10 +38,33 @@ button { font: inherit; color: inherit; }
 .h1 { display: flex; align-items: baseline; gap: 10px; }
 .h1 h1 { margin: 0; font: 700 18px 'Barlow Condensed', sans-serif; }
 .h1 .mono { color: var(--muted); font-size: 12px; }
+.ptile { width: 26px; height: 26px; flex: none; border-radius: 7px; display: grid; place-items: center; align-self: center; background: color-mix(in srgb, var(--ic) 20%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ic) 45%, transparent); }
+.ptile svg { width: 15px; height: 15px; stroke: var(--ic); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .h1 .rs, .h1 .pvl { margin-left: auto; }
 .h1 .rs + .pvl { margin-left: 14px; }
 .hint { color: var(--muted); font-size: 12.5px; margin: 2px 0 10px; }
 .lab { font: 600 11.5px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); margin: 14px 0 2px; }
+.lab em { font-style: normal; text-transform: none; letter-spacing: 0; color: var(--faint); font-weight: 500; margin-left: 6px; }
+.ld { display: inline-block; width: 7px; height: 7px; border-radius: 2px; margin-right: 6px; transform: translateY(-1px); }
+/* (each row's icon in the colour that part uses on the card; grey when hidden) */
+.rtile { width: 24px; height: 24px; flex: none; border-radius: 6px; display: grid; place-items: center; background: color-mix(in srgb, var(--ic) 16%, transparent); }
+.rtile svg { width: 14px; height: 14px; stroke: var(--ic); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.row.off .rtile { filter: grayscale(1); opacity: .5; }
+/* (Your card: three starts with a "how full" mark, then the fold) */
+.pre { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 4px 0 10px; }
+.pc { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; background: none; border: 1px solid var(--line2); border-radius: 4px; padding: 9px 11px; cursor: pointer; color: var(--text); }
+.pc:hover { border-color: #4a505a; }
+.pc b { display: block; font: 700 14.5px 'Barlow Condensed', sans-serif; } .pc span { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.pc.on { border-color: var(--gold); background: rgba(242,196,107,.05); } .pc.on b { color: var(--gold); }
+.dens { display: flex; gap: 2px; align-items: flex-end; height: 14px; margin-bottom: 6px; }
+.dens s { display: block; width: 5px; border-radius: 1px; background: #3a404c; text-decoration: none; }
+.dens s:nth-child(1) { height: 6px; } .dens s:nth-child(2) { height: 10px; } .dens s:nth-child(3) { height: 14px; }
+.d1 s:nth-child(1), .d2 s:nth-child(-n+2), .d3 s { background: #9aa3ac; }
+.pc.on .d1 s:nth-child(1), .pc.on .d2 s:nth-child(-n+2), .pc.on .d3 s { background: var(--gold); }
+.fold { display: flex; width: calc(100% + 16px); align-items: baseline; gap: 8px; margin: 10px -8px 0; padding: 9px 8px; border: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; cursor: pointer; font: 600 14px 'Barlow Condensed', sans-serif; color: var(--text); text-align: left; }
+.fold:hover { background: var(--raised); }
+.fold .ar { color: var(--muted); font-size: 11px; display: inline-block; transition: transform .15s; } .fold.open .ar { transform: rotate(90deg); }
+.fold em { font-style: normal; color: var(--faint); font-weight: 500; font-size: 12.5px; }
 .row { display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 5px 8px; margin: 0 -8px; border-radius: 4px; border-bottom: 1px solid rgba(255,255,255,.04); }
 .row:hover { background: var(--raised); }
 .row.click { cursor: pointer; user-select: none; }
@@ -132,7 +158,7 @@ const DEF = () => ({ v: 1, preset: 'standard', show: showOf('standard'), max: Ob
   hideFight: true, autoClose: 0, side: 'right', screen: 'main', lock: false, accent: 'class', colorblind: false, style: 'panels', font: 'debrief', size: 1, bg: 0.97, me: '' });
 const load = () => { let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { s = null; } const d = DEF(); if (!s) return d; s.show = Object.assign(d.show, s.show || {}); s.max = Object.assign(d.max, s.max || {}); return Object.assign(d, s); };
 let S = load();
-const sw = (k, def) => { try { const v = localStorage.getItem('dbf-sw-' + k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }; /* (Pop up and Chime stay where the Companion window keeps them) */
+const sw = (k, def) => { try { const v = localStorage.getItem('dbf-sw-' + k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }; /* (Pop up stays where the Companion window keeps it) */
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* full: kept for this window */ } pvApply(); draw(); }
 const changed = () => { const p = PRE[S.preset] || PRE.standard, sh = showOf(S.preset in PRE ? S.preset : 'standard'); return ALL.some((k) => !!S.show[k] !== sh[k]) || Object.keys(p.max).some((k) => S.max[k] !== p.max[k]) || !!S.openSecs !== !!p.openSecs; };
 
@@ -146,32 +172,47 @@ const CARD = [['num', 'Your number', '', ['tile']], ['rot', 'Rotation tips', '',
   ['chart', 'Charts', 'Your numbers and how far, pull by pull tonight.', ['chartLine', 'chartNight']], ['grade', 'Report card grade', '', ['grade']], ['mech', 'Boss mechanics', 'How each mechanic went, worst first.', ['mechs'], 'maxMech', 1, 16]];
 const RAID = [['coach', 'Raid lead box', 'The headline, what wiped us and the other big mistakes.', ['coach'], 'maxRaid', 1, 5], ['right', 'What went right', '', ['right']], ['cdeaths', 'Deaths', '', ['cdeaths']],
   ['cavoid', 'Avoidable damage', '', ['cavoid']], ['rmech', 'Boss mechanics', 'How each mechanic went, worst first.', ['mechs']], ['rdefs', 'Defensives', 'Who pressed a defensive, and who never did.', ['rdefs']], ['rcons', 'Healthstones', 'Who dropped low with one still ready.', ['rcons']]];
+const SK = '<path d="M8 2a5 5 0 0 0-5 5c0 1.8.9 3 2 3.6V13h6v-2.4c1.1-.6 2-1.8 2-3.6a5 5 0 0 0-5-5z"/><circle cx="6" cy="7.2" r=".9"/><circle cx="10" cy="7.2" r=".9"/>', TRI = '<path d="M8 2l6 11H2z"/><path d="M8 6.5v3M8 11.3v.2"/>',
+  SHD = '<path d="M8 1.8l5 2v4c0 3.2-2.2 5.3-5 6.4-2.8-1.1-5-3.2-5-6.4v-4z"/>', CLK = '<circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/>';
+const RI = { num: ['', '<path d="M2 13h12M4 11V7M8 11V4M12 11V8"/>'], rot: ['#f2c46b', '<path d="M8 2.5a5.5 5.5 0 1 1-5.2 3.7"/><path d="M2.5 2.8v3.4h3.4"/>'], boss: ['#ff8f87', TRI], surv: ['#7d9be8', SHD],
+  next: ['#7ee08f', '<path d="M2.5 8h10M9 4.5L12.5 8 9 11.5"/>'], trend: ['#6fc7b4', '<path d="M5 13V3M2.5 5.5L5 3l2.5 2.5M11 3v10M8.5 10.5L11 13l2.5-2.5"/>'],
+  chips: ['#c9ced4', '<rect x="1.5" y="4" width="3.5" height="8" rx="1"/><rect x="6.25" y="4" width="3.5" height="8" rx="1"/><rect x="11" y="4" width="3.5" height="8" rx="1"/>'], died: ['#ff8f87', SK],
+  chart: ['#a98bf0', '<path d="M2 12l4-4 3 2 5-6"/>'], grade: ['#e6b450', '<path d="M8 2l1.8 3.9 4.2.5-3.1 2.9.8 4.2L8 11.4 4.3 13.5l.8-4.2L2 6.4l4.2-.5z"/>'], mech: ['#e8a25a', CLK],
+  coach: ['#f2c46b', '<path d="M2.5 4.5h11v6h-6l-3 2.5v-2.5h-2z"/>'], right: ['#7ee08f', '<path d="M3 8.5l3 3 7-7"/>'], cdeaths: ['#ff8f87', SK], cavoid: ['#e8a25a', TRI], rmech: ['#e8a25a', CLK], rdefs: ['#7d9be8', SHD],
+  rcons: ['#7ee08f', '<path d="M8 2l4.5 4-4.5 8-4.5-8z"/>'] };
+const rtile = (id) => { const x = RI[id]; return x ? '<span class="rtile" style="--ic:' + (x[0] || clsCol()) + '"><svg viewBox="0 0 16 16" aria-hidden="true">' + x[1] + '</svg></span>' : ''; };
+const lab = (col, t, em) => '<div class="lab"><i class="ld" style="background:' + col + '"></i>' + t + (em ? '<em>' + em + '</em>' : '') + '</div>';
 const isOn = (r) => r[3].some((k) => S.show[k] !== false);
 const nOn = (L) => L.filter(isOn).length;
 const txt = (nm, ds) => '<div class="tx"><div class="nm">' + nm + '</div>' + (ds ? '<div class="ds">' + ds + '</div>' : '') + '</div>';
 const tg = (k, on) => '<button type="button" class="tg' + (on ? ' on' : '') + '" data-tg="' + k + '" aria-pressed="' + !!on + '"></button>';
 const row = (nm, ds, ctl, cls, attrs) => '<div class="row' + (cls ? ' ' + cls : '') + '"' + (attrs || '') + '>' + txt(nm, ds) + (ctl || '') + '</div>';
 const seg = (k, opts, cur) => '<div class="seg">' + opts.map(([v, l]) => '<button type="button" data-seg="' + k + '" data-v="' + esc(v) + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
-const eyeRow = (r) => { const on = isOn(r); return '<div class="row click' + (on ? '' : ' off') + '" data-eye="' + r[0] + '" title="' + (on ? 'Shown: tap to hide' : 'Hidden: tap to show') + '">' + txt(r[1], r[2]) +
+const eyeRow = (r) => { const on = isOn(r); return '<div class="row click' + (on ? '' : ' off') + '" data-eye="' + r[0] + '" title="' + (on ? 'Shown: tap to hide' : 'Hidden: tap to show') + '">' + rtile(r[0]) + txt(r[1], r[2]) +
   (r[4] ? '<div class="ct"><span class="st"><button type="button" data-st="' + r[4] + '" data-d="-1" aria-label="Fewer"' + (S.max[r[4]] <= r[5] ? ' disabled' : '') + '>‹</button><b>' + S.max[r[4]] + '</b><button type="button" data-st="' + r[4] + '" data-d="1" aria-label="More"' + (S.max[r[4]] >= r[6] ? ' disabled' : '') + '>›</button></span></div>' : '') + (on ? EYE : EYEX) + '</div>'; };
 const ACC = [['class', 'My class', ''], ['gold', 'Debrief gold', '#e6b450'], ['frost', 'Frost', '#3fc7eb'], ['fel', 'Fel', '#45c15c'], ['crimson', 'Crimson', '#e5534b'], ['violet', 'Void', '#a78bfa']];
 const CLS = { WARRIOR: '#c69b6d', PALADIN: '#f48cba', HUNTER: '#aad372', ROGUE: '#fff468', PRIEST: '#ffffff', DEATHKNIGHT: '#c41e3a', SHAMAN: '#0070dd', MAGE: '#3fc7eb', WARLOCK: '#8788ee', MONK: '#00ff98', DRUID: '#ff7c0a', DEMONHUNTER: '#a330c9', EVOKER: '#33937f' };
 const PVCLS = {}; /* (the preview pull's players) */
 const clsMap = () => { let m = {}; try { m = JSON.parse(localStorage.getItem('dbf-cls') || '{}'); } catch (e) { m = {}; } return Object.assign({}, PVCLS, m); };
 const short = (n) => String(n || '').split('-')[0];
-let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '';
+let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '', PVV = 'me', FOLD = false;
+try { FOLD = localStorage.getItem('dbf-set-fold') === '1'; } catch (e) { /* closed */ } /* (Customize what shows: closed until you open it, then remembered) */
 try { const p = sessionStorage.getItem('dbf-set-page'); if (p) PAGE = p; } catch (e) { /* first page */ }
-{ const h = location.hash.slice(1).split(':'); if (['pop', 'card', 'raid', 'look', 'setup'].includes(h[0])) PAGE = h[0]; if (h[1] === 'pv') document.body.classList.add('pvopen'); } /* (#page, and #page:pv with the preview open: for pictures) */
-const myCls = () => { const me = S.me || (SETUP && SETUP.me) || ''; return clsMap()[short(me)] || ''; };
+{ const h = location.hash.slice(1).split(':'); if (['pop', 'card', 'raid', 'look', 'setup'].includes(h[0])) PAGE = h[0]; if (h.includes('pv')) document.body.classList.add('pvopen'); if (h.includes('open')) FOLD = true; if (h.includes('shut')) FOLD = false; } /* (#page, #page:pv with the preview open, #card:open with the fold open: for pictures) */
+if (PAGE === 'raid') { PAGE = 'card'; FOLD = true; } /* (Raid view lives in Your card's fold since Nov 3) */
+// (the character you're on right now, from the Companion window (Nov 3, Flex: "Accent should have class color mode for whatever character they are playing"))
+const curCls = () => { try { const c = JSON.parse(localStorage.getItem('dbf-cur-cls') || 'null'); return (c && c.cls) || ''; } catch (e) { return ''; } };
+const myCls = () => { const cc = curCls(); if (cc) return cc; const me = S.me || (SETUP && SETUP.me) || ''; return clsMap()[short(me)] || ''; };
+const clsCol = () => CLS[myCls()] || '#e6b450';
 
 function pageHtml() {
   if (PAGE === 'pop') {
     const k = HK && HK.name ? HK.name.split('+').map((x) => '<kbd>' + esc(x.trim()) + '</kbd>').join('+') : 'Not set';
-    return '<section class="pg on"><div class="h1"><h1>Pop-up</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">How your recap window opens and where it sits.</div>' +
+    const kd = HK && HK.wowOnly ? 'Shows or hides your recap while you\'re in WoW.' + (/^Ctrl \+ R$/.test(HK.name || '') ? ' WoW\'s own Ctrl + R (frame rate) won\'t work while Debrief runs.' : '') : 'Shows or hides your recap, even while you play.';
+    return '<section class="pg on">' + head('pop', 'Pop-up', PVL) + '<div class="hint">How your recap window opens and where it sits.</div>' +
       '<div class="lab">When it opens</div>' +
       row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true))) +
-      row('Chime', 'A short sound when your recap is ready.', tg('snd', sw('snd', true))) +
-      row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : 'Shows or hides your recap, even while you play.', '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>') +
+      row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : kd, '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>') +
       row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight)) +
       row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose)) +
       '<div class="lab">Where it sits</div>' +
@@ -180,24 +221,27 @@ function pageHtml() {
       row('Size and place', 'Back to fitting each pull, in the middle of the screen.', '<button type="button" class="btn" data-act="resetPlace">Reset</button>') + '</section>';
   }
   if (PAGE === 'card') {
-    const n = nOn(CARD), heal = SETUP && SETUP.role === 'healer', gk = heal ? 'goalHps' : 'goalDps', gv = S[gk] || 0;
-    return '<section class="pg on"><div class="h1"><h1>Your card</h1><span class="mono">' + n + ' of ' + CARD.length + ' shown</span>' + (changed() ? '<button type="button" class="lk rs" data-act="resetCard">Reset</button>' : '') + '<button type="button" class="lk pvl" data-pv="1">Preview</button></div>' +
-      '<div class="hint">What your recap shows. Tap a row to hide it; the preview changes as you go.</div>' +
-      '<div class="row" style="border:0">' + txt('Start from', '') + seg('preset', [['simple', 'Simple'], ['standard', 'Standard'], ['detailed', 'Detailed']], S.preset) + '</div>' +
-      '<div class="lab">On your card</div>' + CARD.map(eyeRow).join('') +
-      '<div class="lab">How it reads</div>' +
+    const n = nOn(CARD) + nOn(RAID), all = CARD.length + RAID.length, heal = SETUP && SETUP.role === 'healer', gk = heal ? 'goalHps' : 'goalDps', gv = S[gk] || 0;
+    // (two things on top: where to start and Only the mistakes; the rest folded (the studio, Nov 3; Flex: "i feel like there might be too many"))
+    const PC = [['simple', 'Simple', 'Your number, your top fix and the next pull tip.', 1], ['standard', 'Standard', 'Your fixes, survival, deaths and the raid\'s biggest mistakes.', 2], ['detailed', 'Detailed', 'Everything, with every section open.', 3]];
+    return '<section class="pg on">' + head('card', 'Your card', '<span class="mono">' + n + ' of ' + all + ' shown</span>' + (changed() ? '<button type="button" class="lk rs" data-act="resetCard">Reset</button>' : '') + PVL) +
+      '<div class="hint">What your recap shows. Pick a start; the preview changes as you go.</div>' +
+      '<div class="pre">' + PC.map(([v, l, ds, b]) => '<button type="button" class="pc' + (S.preset === v ? ' on' : '') + '" data-seg="preset" data-v="' + v + '" aria-pressed="' + (S.preset === v) + '"><i class="dens d' + b + '" aria-hidden="true"><s></s><s></s><s></s></i><b>' + l + '</b><span>' + ds + '</span></button>').join('') + '</div>' +
       row('Only the mistakes', 'Hide the lines you did right.', tg('onlyBad', S.onlyBad)) +
-      row('Boss mistakes first', 'Above your rotation tips.', tg('bossFirst', S.bossFirst)) +
-      row('Open the sections', 'Off: they start closed, with their count.', tg('openSecs', S.openSecs)) +
-      '<div class="lab">Goal</div>' +
-      row(heal ? 'Healing goal' : 'Damage goal', 'Your ' + (heal ? 'HPS' : 'DPS') + ' target. The first + starts a little above your latest pull.', '<div class="ct"><span class="st"><button type="button" data-goal="' + gk + '" data-d="-1" aria-label="Lower"' + (gv <= 0 ? ' disabled' : '') + '>‹</button><b>' + (gv ? kN(gv) : 'Off') + '</b><button type="button" data-goal="' + gk + '" data-d="1" aria-label="Higher">›</button></span></div>') + '</section>';
+      '<button type="button" class="fold' + (FOLD ? ' open' : '') + '" data-fold="1" aria-expanded="' + FOLD + '"><span class="ar">▸</span>Customize what shows<em>' + all + ' rows · counts · Raid view · your goal</em></button>' +
+      (FOLD ? '<div class="fbody">' + lab(clsCol(), 'Me', 'your own part of the card') + CARD.map(eyeRow).join('') +
+        lab('#7d9be8', 'Raid view', 'the whole raid') + RAID.map(eyeRow).join('') +
+        lab('#9aa3ac', 'How it reads') +
+        row('Boss mistakes first', 'Above your rotation tips.', tg('bossFirst', S.bossFirst)) +
+        row('Open the sections', 'Off: they start closed, with their count.', tg('openSecs', S.openSecs)) +
+        lab('#7ee08f', 'Goal') +
+        row(heal ? 'Healing goal' : 'Damage goal', 'Your ' + (heal ? 'HPS' : 'DPS') + ' target. The first + starts a little above your latest pull.', '<div class="ct"><span class="st"><button type="button" data-goal="' + gk + '" data-d="-1" aria-label="Lower"' + (gv <= 0 ? ' disabled' : '') + '>‹</button><b>' + (gv ? kN(gv) : 'Off') + '</b><button type="button" data-goal="' + gk + '" data-d="1" aria-label="Higher">›</button></span></div>') + '</div>' : '') + '</section>';
   }
-  if (PAGE === 'raid') return '<section class="pg on"><div class="h1"><h1>Raid view</h1><span class="mono">' + nOn(RAID) + ' of ' + RAID.length + ' shown</span><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">The Raid side of the card: what the whole raid did. Tap a row to hide it.</div><div class="lab">On the Raid view</div>' + RAID.map(eyeRow).join('') + '</section>';
   if (PAGE === 'look') {
-    const cc = CLS[myCls()] || '#f48cba';
-    return '<section class="pg on"><div class="h1"><h1>Look</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">Colours, style and size of your recap window.</div>' +
+    const cc = clsCol();
+    return '<section class="pg on">' + head('look', 'Look', PVL) + '<div class="hint">Colours, style and size of your recap window.</div>' +
       '<div class="lab">Colour</div>' +
-      row('Accent', 'Your class colour, or one of Debrief\'s.', '<div class="sw">' + ACC.map(([k, l, c]) => '<button type="button" data-acc="' + k + '" title="' + l + '" class="' + (S.accent === k ? 'on' : '') + '" style="background:' + (c || cc) + '"></button>').join('') + '</div>') +
+      row('Accent', 'The class colour of the character you\'re on, or one of Debrief\'s.', '<div class="sw">' + ACC.map(([k, l, c]) => '<button type="button" data-acc="' + k + '" title="' + l + '" class="' + (S.accent === k ? 'on' : '') + '" style="background:' + (c || cc) + '"></button>').join('') + '</div>') +
       row('Colour-blind colours', 'Blue for good, orange for bad.', tg('colorblind', S.colorblind)) +
       '<div class="lab">Style</div>' +
       row('Card style', '', seg('style', [['panels', 'Panels'], ['glass', 'Glass'], ['flat', 'Flat']], S.style)) +
@@ -209,7 +253,7 @@ function pageHtml() {
   const dm = X.display === 'fullscreen' ? ['am', 'Your recap can\'t show over WoW in Fullscreen. In WoW: Options › Graphics › Display Mode › <b style="color:var(--text)">Windowed (Fullscreen)</b>. Or use your second screen.']
     : X.display === 'fullwin' ? ['', 'Windowed (Fullscreen): your recap shows over WoW.'] : X.display === 'windowed' ? ['', 'Windowed: your recap shows over WoW.'] : ['no', 'Not found yet. WoW writes it the first time you play.'];
   const ad = X.addon === 'ok' ? ['', 'On. The Debrief addon turns it on every time you log in.', ''] : [X.retail ? 'am' : 'no', X.addon === 'old' ? 'The Debrief addon in WoW is out of date, so your combat log may stay off.' : 'The Debrief addon isn\'t in WoW, so your combat log may stay off.', X.retail ? '<button type="button" class="btn" data-act="addon">Put it back</button>' : ''];
-  return '<section class="pg on"><div class="h1"><h1>Setup</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">Debrief checks these by itself. Green means you\'re set.</div><div class="lab">Checks</div>' +
+  return '<section class="pg on">' + head('setup', 'Setup', PVL) + '<div class="hint">Debrief checks these by itself. Green means you\'re set.</div><div class="lab">Checks</div>' +
     '<div class="row' + (X.retail ? '' : ' am') + '"><span class="dot' + (X.retail ? '' : ' am') + '"></span>' + txt('WoW folder', X.retail ? '<span class="path">' + esc(X.retail) + '</span>' : 'Not found. Pick the folder WoW is in.') + '<button type="button" class="lk" data-act="wowdir">Change</button></div>' +
     '<div class="row' + (ad[0] === 'am' ? ' am' : '') + '"><span class="dot' + (ad[0] ? ' ' + ad[0] : '') + '"></span>' + txt('Combat log', ad[1]) + ad[2] + '</div>' +
     '<div class="row' + (dm[0] === 'am' ? ' am' : '') + '"><span class="dot' + (dm[0] ? ' ' + dm[0] : '') + '"></span>' + txt('Display mode', dm[1]) + '</div>' +
@@ -221,13 +265,16 @@ function pageHtml() {
 }
 const kN = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k');
 const ICONS = { pop: '<rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M10 2.5v11"/>', card: '<rect x="3" y="1.5" width="10" height="13" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
-  raid: '<circle cx="5.5" cy="6" r="2.2"/><circle cx="11" cy="6" r="2.2"/><path d="M1.8 13c.6-2.2 2-3.3 3.7-3.3s3.1 1.1 3.7 3.3M8.4 11.2c.6-1 1.5-1.5 2.6-1.5 1.7 0 3 1.1 3.5 3.3"/>',
   look: '<circle cx="8" cy="8" r="6"/><circle cx="5.6" cy="6.4" r=".9"/><circle cx="9.4" cy="5.2" r=".9"/><circle cx="11" cy="8.6" r=".9"/>', setup: '<path d="M3 8.5l3 3 7-7"/>' };
+const PCOL = (k) => (k === 'pop' ? '#7d9be8' : k === 'card' ? clsCol() : k === 'look' ? '#a98bf0' : toFix() > 0 ? '#f2c46b' : '#7ee08f');
+const ptile = (k, cls) => '<span class="' + cls + '" style="--ic:' + PCOL(k) + '"><svg viewBox="0 0 16 16" aria-hidden="true">' + ICONS[k] + '</svg></span>';
+const PVL = '<button type="button" class="lk pvl" data-pv="1">Preview</button>';
+const head = (k, t, extra) => '<div class="h1">' + ptile(k, 'ptile') + '<h1>' + t + '</h1>' + (extra || '') + '</div>';
 function toFix() { const X = SETUP; if (!X) return -1; return (X.retail ? 0 : 1) + (X.addon === 'ok' || !X.retail ? 0 : 1) + (X.display === 'fullscreen' ? 1 : 0) + ((S.me || X.me) ? 0 : 1); }
 function railHtml() {
   const f = toFix(), up = SETUP && SETUP.update;
-  const L = [['pop', 'Pop-up', ''], ['card', 'Your card', nOn(CARD) + ' of ' + CARD.length], ['raid', 'Raid view', nOn(RAID) + ' of ' + RAID.length], ['look', 'Look', ''], ['setup', 'Setup', f < 0 ? '' : f ? f + ' to fix' : 'All set', f > 0 ? 'am' : f === 0 ? 'ok' : '']];
-  return L.map(([k, l, n, c]) => '<a data-p="' + k + '" class="' + (PAGE === k ? 'on' : '') + '"><svg viewBox="0 0 16 16" aria-hidden="true">' + ICONS[k] + '</svg>' + l + (n ? '<span class="n' + (c ? ' ' + c : '') + '">' + n + '</span>' : '') + '</a>').join('') +
+  const L = [['pop', 'Pop-up', ''], ['card', 'Your card', (nOn(CARD) + nOn(RAID)) + ' of ' + (CARD.length + RAID.length)], ['look', 'Look', ''], ['setup', 'Setup', f < 0 ? '' : f ? f + ' to fix' : 'All set', f > 0 ? 'am' : f === 0 ? 'ok' : '']];
+  return L.map(([k, l, n, c]) => '<a data-p="' + k + '" class="' + (PAGE === k ? 'on' : '') + '">' + ptile(k, 'pt') + l + (n ? '<span class="n' + (c ? ' ' + c : '') + '">' + n + '</span>' : '') + '</a>').join('') +
     '<div class="foot"><b>Debrief Companion ' + esc((SETUP && SETUP.version) || '') + '</b><br>' + (up ? 'Update ready · <button type="button" class="lk" data-act="update">Update now</button>' : (CHECKING ? 'Checking…' : 'Up to date · <button type="button" class="lk" data-act="check">Check</button>')) + '</div>';
 }
 let CHECKING = false;
@@ -238,18 +285,19 @@ document.addEventListener('click', (e) => { if (!document.body.classList.contain
 document.addEventListener('click', async (e) => {
   const t = e.target.closest('button, a, .row.click'); if (!t) { if (OPENDD) { OPENDD = ''; draw(); } return; }
   const d = t.dataset;
-  if (d.p) { PAGE = d.p; OPENDD = ''; try { sessionStorage.setItem('dbf-set-page', PAGE); } catch (x) { /* kept for this window */ } $('mid').scrollTop = 0; pvView(); draw(); return; }
+  if (d.p) { PAGE = d.p; OPENDD = ''; PVV = 'me'; try { sessionStorage.setItem('dbf-set-page', PAGE); } catch (x) { /* kept for this window */ } $('mid').scrollTop = 0; pvView(); draw(); return; }
+  if (d.fold) { FOLD = !FOLD; try { localStorage.setItem('dbf-set-fold', FOLD ? '1' : '0'); } catch (x) { /* kept for this window */ } draw(); return; }
   if (d.pv) { document.body.classList.toggle('pvopen'); return; }
   if (d.dd) { OPENDD = OPENDD === d.dd ? '' : d.dd; draw(); return; }
   if (d.font != null) { S.font = d.font; OPENDD = ''; save(); return; }
   if (d.me != null) { S.me = d.me; OPENDD = ''; save(); return; }
   if (OPENDD) { OPENDD = ''; }
-  if (d.tg) { const k = d.tg; if (k === 'pop' || k === 'snd') { try { localStorage.setItem('dbf-sw-' + k, JSON.stringify(!sw(k, true))); } catch (x) { /* kept */ } draw(); return; } S[k] = !S[k]; if (k === 'lock' || k === 'hideFight') { save(); return; } save(); return; }
+  if (d.tg) { const k = d.tg; if (k === 'pop') { try { localStorage.setItem('dbf-sw-' + k, JSON.stringify(!sw(k, true))); } catch (x) { /* kept */ } draw(); return; } S[k] = !S[k]; if (k === 'lock' || k === 'hideFight') { save(); return; } save(); return; }
   if (d.seg) { const k = d.seg, v = d.v; if (k === 'preset') { S.preset = v; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; } else S[k] = k === 'autoClose' ? +v : v; save(); return; }
-  if (d.st) { const r = CARD.concat(RAID).find((x) => x[4] === d.st); S.max[d.st] = Math.max(r[5], Math.min(r[6], (S.max[d.st] || r[5]) + (+d.d))); save(); return; }
+  if (d.st) { const r = CARD.concat(RAID).find((x) => x[4] === d.st); pvFor(r); S.max[d.st] = Math.max(r[5], Math.min(r[6], (S.max[d.st] || r[5]) + (+d.d))); save(); return; }
   if (d.goal) { const k = d.goal, cur = S[k] || 0, step = cur >= 1e6 ? 50000 : 10000; let v = cur + (+d.d) * step; if (!cur && +d.d > 0) { const l = SETUP && SETUP.lastV; v = l ? Math.round(l * 1.1 / 10000) * 10000 : 100000; } S[k] = Math.max(0, v); save(); return; }
   if (d.acc) { S.accent = d.acc; save(); return; }
-  if (d.eye) { const r = CARD.concat(RAID).find((x) => x[0] === d.eye); if (e.target.closest('.st')) return; const on = !isOn(r); for (const k of r[3]) S.show[k] = on; save(); return; }
+  if (d.eye) { const r = CARD.concat(RAID).find((x) => x[0] === d.eye); if (e.target.closest('.st')) return; pvFor(r); const on = !isOn(r); for (const k of r[3]) S.show[k] = on; save(); return; }
   if (d.hk) { if (HKWAIT) { HKWAIT = false; postJ('/hotkey', { mods: -2 }).catch(() => {}); draw(); return; } HKWAIT = true; HKMSG = ''; postJ('/hotkey', { mods: -1 }).catch(() => {}); draw(); return; }
   if (d.act === 'resetCard') { const v = S.preset in PRE ? S.preset : 'standard'; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; save(); return; }
   if (d.act === 'resetPlace') { S.resetAt = Date.now(); save(); return; }
@@ -274,13 +322,14 @@ document.addEventListener('keydown', async (e) => {
   HKWAIT = false; HKMSG = ''; await hkLoad(); draw();
 });
 $('close').addEventListener('click', () => post('close'));
-// (another window changed something: the Companion's Pop up or Chime, or the pop-up's own side after a drag)
-window.addEventListener('storage', (e) => { if (e.key === KEY) S = load(); if (e.key === KEY || /^dbf-sw-/.test(e.key || '')) draw(); });
+// (another window changed something: the Companion's Pop up, the pop-up's own side after a drag, or the character you're on)
+window.addEventListener('storage', (e) => { if (e.key === KEY) S = load(); if (e.key === KEY || e.key === 'dbf-cur-cls' || /^dbf-sw-/.test(e.key || '')) draw(); });
 
 // ---------- the preview: the pop-up itself (popup.html in preview mode), a sample pull or your latest one ----------
 const pvW = () => { try { return $('pvF').contentWindow; } catch (e) { return null; } };
 function pvApply() { const w = pvW(); try { if (w && w.DBF_SETS) w.DBF_SETS(); } catch (e) { /* still loading */ } }
-function pvView() { const w = pvW(); try { if (w && w.DBF_PVVIEW) w.DBF_PVVIEW(PAGE === 'raid' ? 'raid' : 'me'); } catch (e) { /* still loading */ } }
+function pvView() { const w = pvW(); try { if (w && w.DBF_PVVIEW) w.DBF_PVVIEW(PVV); } catch (e) { /* still loading */ } }
+const pvFor = (r) => { const v = RAID.includes(r) ? 'raid' : 'me'; if (v !== PVV) { PVV = v; pvView(); } }; /* (a Raid view row turns the preview to the Raid view, a Me row back) */
 $('pvF').addEventListener('load', async () => {
   let M = null; try { M = await j('/setup/pull'); } catch (e) { M = null; }
   const w = pvW(); if (!M || !M.data || !w) { $('pvCap').textContent = 'No pull to show yet.'; return; }

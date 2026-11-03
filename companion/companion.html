@@ -268,7 +268,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
       <div class="in" id="ringT"><b>…</b><span>Starting</span></div>
     </div>
 <p class="k" id="bossK">Tonight</p>
-<p class="ht" id="headT">After each boss pull, your recap pops up over the game with a chime.</p>
+<p class="ht" id="headT">After each boss pull, your recap pops up over the game.</p>
 <p class="fc" id="focT" hidden></p>
 <div class="acts" id="acts" hidden></div>
 <svg class="night" id="night" aria-label="How far each pull got tonight"></svg></div>
@@ -276,11 +276,11 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <div class="hkask" id="hkAsk" hidden><div class="hkcard">
     <p class="k">One step</p>
     <h2>Pick your recap key</h2>
-    <p class="hkp">Press it anywhere, even in WoW, and your newest recap shows over the game. Press it again to hide it.</p>
-    <div class="hkbig" id="hkBig">Ctrl + Shift + D</div>
+    <p class="hkp">Press it in WoW and your newest recap shows over the game. Press it again to hide it.</p>
+    <div class="hkbig" id="hkBig">Ctrl + R</div>
     <p class="hkmsg" id="hkMsg"></p>
-    <div class="hkacts"><button class="btn gold" id="hkUse" type="button">Use Ctrl + Shift + D</button><button class="btn" id="hkPick" type="button">Press another</button></div>
-    <p class="hkp sm">Play WoW in <b>Windowed (Fullscreen)</b> so the recap shows on top of the game. You can change the key any time here.</p>
+    <div class="hkacts"><button class="btn gold" id="hkUse" type="button">Use Ctrl + R</button><button class="btn" id="hkPick" type="button">Press another</button></div>
+    <p class="hkp sm">Ctrl + R only works while you're in WoW, so your browser's Ctrl + R still refreshes. WoW's own Ctrl + R (frame rate) won't work while Debrief runs. Play WoW in <b>Windowed (Fullscreen)</b> so the recap shows on top of the game. You can change the key any time here.</p>
   </div></div>
 
   <aside class="more" id="more" hidden>
@@ -295,7 +295,6 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
 
 <div class="cs-sw"><div class="swrow">
         <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
-        <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
         <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
         <button class="btn" id="setBtn" type="button" title="Every setting of your recap window: what it shows, its look, where it sits">Settings</button>
       </div><p class="hkline" id="hkLine"></p></div>
@@ -468,8 +467,8 @@ async function readText(b, quiet, name) {
   return new TextDecoder().decode(all);
 }
 function progress(f) { L.prog = f; renderRing(); }
-for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
-// ---------- the settings window (Nov 3, the studio's settings-brief.md): opened from here, the tray and the pop-up's gear; Pop up and Chime are the same
+for (const [id, def] of [['pop', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
+// ---------- the settings window (Nov 3, the studio's settings-brief.md): opened from here, the tray and the pop-up's gear; Pop up is the same
 // switches as here, so a change there shows here too ----------
 $('setBtn').addEventListener('click', () => { j('/setup/open', { method: 'POST' }).catch(() => {}); });
 // (the full-screen tip (Nov 3, the studio's pop-up-only-brief.md): read from WoW's own Config.wtf; shown once when WoW is in true fullscreen, and again only
@@ -480,7 +479,7 @@ async function fsCheck() { let x = null; try { x = await j('/setup'); } catch (e
 $('fsOk').addEventListener('click', () => { $('fsbar').hidden = true; });
 $('fsSecond').addEventListener('click', () => { const S = store.get('dbf-set', null); if (S) { S.screen = 'second'; store.set('dbf-set', S); } $('fsbar').hidden = true; });
 fsCheck(); setInterval(fsCheck, 5 * 60000);
-window.addEventListener('storage', (e) => { const m = /^dbf-sw-(pop|snd)$/.exec(e.key || ''); if (m) $(m[1]).checked = store.get(e.key, true); });
+window.addEventListener('storage', (e) => { const m = /^dbf-sw-(pop)$/.exec(e.key || ''); if (m) $(m[1]).checked = store.get(e.key, true); });
 const setGet = () => store.get('dbf-set', null) || {};
 // (each player's /db picks come across once, on the first start after the update: nobody's setup is reset. An old pick with no row any more keeps the
 // closest one: Card size x Text size is Size, any WoW or other addon's font is Plain)
@@ -508,8 +507,8 @@ const setGet = () => store.get('dbf-set', null) || {};
 const HK = { listen: null };
 const hkName = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : ''].filter(Boolean).concat([e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)]).join(' + ');
 async function hkShow() { try { const x = await j('/hotkey'); $('hkBtn').textContent = x.name || 'Pick one'; $('hkLine').classList.toggle('bad', !!(x.chosen && !x.on));
-  $('hkLine').textContent = x.chosen ? (x.on ? x.name + ' shows or hides your recap over the game. Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
-  if (!x.chosen) { $('hkAsk').hidden = false; if (x.taken) { $('hkUse').hidden = true; $('hkBig').textContent = 'Press your keys'; $('hkMsg').textContent = 'Ctrl + Shift + D is taken by another program on this PC. Press another key combination.'; } } } catch (e) { /* an older app: no hotkey */ } }
+  $('hkLine').textContent = x.chosen ? (x.on ? x.name + (x.wowOnly ? ' shows or hides your recap while you\'re in WoW.' : ' shows or hides your recap over the game.') + ' Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
+  if (!x.chosen) { $('hkAsk').hidden = false; if (x.taken) { $('hkUse').hidden = true; $('hkBig').textContent = 'Press your keys'; $('hkMsg').textContent = 'Ctrl + R is taken by another program on this PC. Press another key combination.'; } } } catch (e) { /* an older app: no hotkey */ } }
 async function hkSet(mods, vk, name) { const x = await j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods, vk, name }) });
   return x.ok ? '' : x.why === 'taken' ? 'Another program already uses ' + name + '. Press another combo.' : 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.'; }
 // (listening: the saved key is let go first, so pressing it again counts; Esc stops and takes it back)
@@ -524,8 +523,8 @@ function hkListen(target, done) { j('/hotkey', { method: 'POST', headers: { 'Con
     HK.listen = null; target.classList.remove('wait'); done('', name); }; }
 document.addEventListener('keydown', (e) => { if (HK.listen) HK.listen(e); }, true);
 $('hkBtn').addEventListener('click', () => { const b = $('hkBtn'); hkListen(b, (why, name) => { $('hkLine').classList.toggle('bad', !!why); if (why) { $('hkLine').textContent = why; return; } hkShow(); if (!name) hkShow(); }); });
-$('hkUse').addEventListener('click', async () => { const why = await hkSet(6, 68, 'Ctrl + Shift + D'); if (why) { $('hkMsg').textContent = why; return; } $('hkAsk').hidden = true; hkShow(); });
-$('hkPick').addEventListener('click', () => { $('hkMsg').textContent = ''; hkListen($('hkBig'), (why, name) => { if (why) { $('hkMsg').textContent = why; return; } if (name) { $('hkAsk').hidden = true; hkShow(); } else { $('hkBig').textContent = 'Ctrl + Shift + D'; } }); });
+$('hkUse').addEventListener('click', async () => { const why = await hkSet(2, 82, 'Ctrl + R'); if (why) { $('hkMsg').textContent = why; return; } $('hkAsk').hidden = true; hkShow(); });
+$('hkPick').addEventListener('click', () => { $('hkMsg').textContent = ''; hkListen($('hkBig'), (why, name) => { if (why) { $('hkMsg').textContent = why; return; } if (name) { $('hkAsk').hidden = true; hkShow(); } else { $('hkBig').textContent = 'Ctrl + R'; } }); });
 hkShow();
 function addonFlags() { /* (the addon only keeps the combat log on since Nov 3 (the studio's pop-up-only-brief.md): it reads no flags from this app) */ }
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
@@ -617,7 +616,7 @@ function mplusShow(r, again) {
           for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; } }
       // (the key for the pop-up's Saved list; it no longer goes into WoW (Nov 3))
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
-      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } }, sound: $('snd').checked && !again }) }).catch(() => {});
+      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } } }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
@@ -633,7 +632,7 @@ function popShow(model, code, copied, pack, cm) {
   L.popUp = true;
   const data = { h: model.h, coach: (model.coach && model.coach.raid) || null, cls: (model.players || []).map((p) => [String(p.name || '').split('-')[0], p.cls]), code, copiedAlready: !!copied, full: true, pack: pack || null, cut: cm ? cm.cut : null, cutN: cm ? cm.cutN : 0, wc: cm ? cm.wc || null : null, card: cardOf(model), night: popNight(L.popLast && L.popLast.b ? L.popLast.b.startByte : null) };
   data.saved = popSaved(); /* (the switch and Saved (Nov 1)) */
-  j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data, sound: $('snd').checked && !copied && !(cm && cm.quiet) }) }).catch(() => {});
+  j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data }) }).catch(() => {});
 }
 function popHide() { if (!L.popUp) return; L.popUp = false; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: false }) }).catch(() => {}); }
 
@@ -749,7 +748,7 @@ function renderTop() {
   const g = curGroup();
   if (!g) {
     $('bossK').textContent = L.name ? 'No boss pulls in this log yet' : 'Tonight';
-    $('headT').textContent = 'After each boss pull, your recap pops up over the game with a chime.';
+    $('headT').textContent = 'After each boss pull, your recap pops up over the game.';
     $('focT').hidden = true; $('acts').hidden = true; return;
   }
   { const kr = keyOf(g); if (kr) { keyTop(g, kr); return; } } /* (round 482: a key) */
@@ -1257,6 +1256,7 @@ function csDraw(d, offline) {
   if (!c) { $('csNm').textContent = 'Debrief Companion'; $('csSp').textContent = 'Play a character and it shows up here.'; $('csAv').className = 'cs-av'; body.innerHTML = ''; return; }
   const rio = d && d.rio, wc = d && d.wc, ls = csLogSpec(c);
   const cls = CLSN((ls && ls.cls) || (rio && rio.class) || ''), col = CLSC[cls] || 'var(--text)';
+  { const was = store.get('dbf-cur-cls', null); if (cls) { if (!was || was.cls !== cls || was.name !== c.name) store.set('dbf-cur-cls', { name: c.name, realm: c.realm, cls }); } else if (was && was.name !== c.name) { try { localStorage.removeItem('dbf-cur-cls'); } catch (e) { /* ignore */ } } } /* (the "My class" accent follows the character you're on (Nov 3)) */
   document.documentElement.style.setProperty('--cls', CLSC[cls] || '#6c7381');
   $('csNm').textContent = c.name;
   // (the face, loaded live; else the class emblem on a soft glow, never a broken picture)
