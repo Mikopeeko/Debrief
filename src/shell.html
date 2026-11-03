@@ -12346,7 +12346,7 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 .hd .hd-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; }
 .hd .hd-k { padding: 12px 16px; border-right: 1px solid var(--line); min-width: 0; } .hd .hd-k:last-child { border-right: 0; }
 .hd .hd-kv { font: 700 22px/1.1 var(--head); margin-top: 3px; color: var(--text); white-space: nowrap; } .hd .hd-kv small { font-size: 13.5px; color: var(--muted); font-weight: 600; margin-left: 2px; }
-.hd .hd-kd { margin-top: 3px; color: var(--muted); font: 500 12.5px var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hd .hd-kd { margin-top: 3px; color: var(--muted); font: 500 12.5px/1.35 var(--head); overflow-wrap: anywhere; } /* (a long line wraps to a second line; never cut) */
 /* (progression and raid nights) */
 .hd .hd-g2 { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 16px; margin-top: 16px; align-items: start; }
 .hd .hd-track { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; padding: 14px 16px 12px; }
@@ -12395,7 +12395,11 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 @media (max-width: 1180px) { .hd .hd-g2 { grid-template-columns: minmax(0, 1fr); } .hd .hd-g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hd .hd-g3 > :last-child { grid-column: 1 / -1; } }
 @media (max-width: 760px) {
   .home.hd { padding: 12px 12px 32px; } .hd .hd-head { flex-wrap: wrap; } .hd .hd-ctl { margin-left: 0; width: 100%; justify-content: space-between; }
-  .hd .pc-diffs button { padding: 5px 8px; } .hd .hd-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hd .hd-k { border-bottom: 1px solid var(--line); } .hd .hd-k:nth-child(2n) { border-right: 0; } .hd .hd-k:last-child { grid-column: 1 / -1; border-bottom: 0; }
+  .hd .hd-crest, .hd .hd-crest > * { width: 32px !important; height: 32px !important; } .hd .hd-crest { align-self: flex-start; margin-top: 2px; } .hd .hd-tt { flex: 1 1 0; } /* (the crest beside the name) */
+  .hd .pc-diffs button { padding: 5px 8px; } .hd .hd-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hd .hd-k { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+  /* (progress as one full-width row, its number left and the other difficulties right; the other four 2 x 2 under it) */
+  .hd .hd-k:first-child { grid-column: 1 / -1; border-right: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; align-items: baseline; } .hd .hd-k:first-child > :first-child { grid-column: 1 / -1; } .hd .hd-k:first-child .hd-kd { text-align: right; margin-top: 0; }
+  .hd .hd-k:nth-child(2n + 3) { border-right: 0; } .hd .hd-k:nth-child(n + 4) { border-bottom: 0; } .hd .hd-k:last-child { border-right: 0; }
   .hd .hd-track { overflow-x: auto; grid-template-columns: repeat(10, 74px); } .hd .hd-now { flex-direction: column; gap: 10px; } .hd .hd-nb { width: auto; }
   .hd .hd-g3 { grid-template-columns: minmax(0, 1fr); } .hd .hd-g3 > :last-child { grid-column: auto; } .hd .hd-row .hd-pl { width: 110px; }
   .hd .hd-shh { display: none; } .hd .hd-shr { grid-template-columns: 22px minmax(0, 1fr) auto; grid-template-areas: "n p m" "n g k"; padding: 6px 14px; row-gap: 2px; }

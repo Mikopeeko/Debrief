@@ -32656,7 +32656,7 @@ function hdDash(X) {
   const nts = new Set(pr.map((v) => nightOf(v.at))).size, time = pr.reduce((s, v) => s + (v.dur || 0), 0), pct = bk.length ? 100 : nb && nb.left != null ? Math.floor(100 - nb.left) : null;
   const left = nb && nb.left != null && !bk.length ? nb.label + (/%$/.test(nb.label) ? ' left' : '') : '';
   // (the strip: five numbers)
-  const others = diffs.filter(([d]) => d !== cur).map(([d, nm]) => nm + ' ' + killedOn(d) + '/' + order.length).join(' · ');
+  const others = diffs.filter(([d, nm]) => d !== cur && !/^LFR$/i.test(nm)).slice(0, 2).map(([d, nm]) => nm + ' ' + killedOn(d) + '/' + order.length).join(' · ');
   const scores = R.map((m) => rioOf(m.name)).filter((c) => c && c.score != null), avg = scores.length ? Math.round(scores.reduce((s, c) => s + c.score, 0) / scores.length) : null;
   const avgCol = avg != null ? scores.slice().sort((x, y) => Math.abs(x.score - avg) - Math.abs(y.score - avg))[0].col : '';
   const runsOf = (k) => R.flatMap((m) => ((rioOf(m.name) || {})[k] || []).map((x) => ({ ...x, who: m.name, cls: m.cls })));
@@ -32665,7 +32665,7 @@ function hdDash(X) {
   const cell = (l, v, d) => '<div class="hd-k">' + lab(l) + '<div class="hd-kv">' + v + '</div><div class="hd-kd">' + d + '</div></div>';
   const strip = '<section class="hd-strip">' +
     cell(esc(diffName) + ' progress', '<span class="num">' + killedOn(cur) + '</span><small>/' + order.length + '</small>', esc(others || plural(nightsL.length, 'raid night'))) +
-    cell(openB ? 'Now on' : 'Last kill', nowBoss ? (bk.length ? '<span class="hd-g">Killed</span>' : '<span class="hd-p num">' + (pct != null ? pct + '%' : '—') + '</span>') : '—', nowBoss ? esc(nowBoss) + (left ? ' · best ' + esc(left) : bk.length ? ' · ' + esc(hdDate(bk[bk.length - 1].at)) : '') : 'Nothing pulled yet') +
+    cell(openB ? 'Now on' : 'Last kill', nowBoss ? (bk.length ? '<span class="hd-g">Killed</span>' : '<span class="hd-p num">' + (pct != null ? pct + '%' : '—') + '</span>') : '—', nowBoss ? esc(hdBossShort(nowBoss)) + (left ? ' · ' + esc(left.replace(/ · /g, ', ')) : bk.length ? ' · ' + esc(hdDate(bk[bk.length - 1].at)) : '') : 'Nothing pulled yet') +
     cell('On this boss', nowBoss ? '<span class="num">' + pr.length + '</span><small> pulls' + (bk.length ? ' to the kill' : '') + '</small>' : '—', nowBoss ? plural(nts, 'night') + ' · ' + esc(durH(time)) : '') +
     cell('Team Mythic+', wait ? shim('3.5em') : avg != null ? '<span class="num" style="color:' + esc(avgCol || 'var(--text)') + '">' + hdNum(avg) + '</span>' : '—', wait ? shim('9em') : avg != null ? 'average of ' + plural(scores.length, 'raider') : 'Raider.IO doesn\'t know this team yet') +
     cell(wk.length ? 'Best key this week' : 'Best key this season', wait ? shim('2.5em') : top ? '<span class="num" style="color:' + (top.up > 0 ? '#ff8000' : 'var(--muted)') + '">+' + top.l + '</span>' : '—',
