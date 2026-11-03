@@ -64146,7 +64146,8 @@ async function mpRwStart(R, text) { if (R._rw || !window.DBF_MPLUS_ROT || !windo
   for (let k = 0; k < 2; k++) { rw.stale = false; try { await window.DBF_MPLUS_ROT(R, text, W, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => CB.spellId(W, n) }); } catch (e) { console.error(e); }
     if (k || !rw.stale) break; for (let j = 0; j < 50 && pend(); j++) await new Promise((r) => setTimeout(r, 300));
     for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; for (const k2 of Object.keys(all)) delete all[k2]; rw.raw = {}; }
-  rw.done = true; R._rwS = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); } }
+  rw.done = true; R._rwS = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); }
+  if (MP.item && MP.R[mpK(MP.item)] === R && MP.pick && MP.pick.auto) mpMapAutoGo(); } /* (the auto pick counts the rotation's mistakes too) */
 // (words: no guide names (a sentence naming one goes), "1 was"; a value as the card says it, "3 of 6")
 const MP_RW_GUIDE = /\b(Wowhead|Icy Veins|SimulationCraft|Raidbots|Bloodmallet|WoWAnalyzer|log tool)\b|\b(a|both|the|one|another) guides?\b|\bthe simulations?\b/i;
 const mpRwTxt = (s) => String(s || '').split(/(?<=[.!?])\s+/).filter((x) => x && !MP_RW_GUIDE.test(x)).join(' ').replace(/\b1 were\b/g, '1 was').trim();
@@ -64916,7 +64917,7 @@ function mpMapHtml(R, F, tl) {
         (more.length ? '<p class="mpt-pkm" tabindex="0"' + mpT1(more.map((x) => x.c + '× ' + esc(x.n2)).join('<br>')) + '>+' + plural(more.length, 'more type') + '</p>' : '') +
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
         (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>', '', !rotOpen); })();
-    return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b><span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
+    return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b>' + (run === 'you' ? '<i class="mpt-mca">Most mistakes</i>' : '') + '<span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
       '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
@@ -64944,7 +64945,8 @@ function mpMapHtml(R, F, tl) {
 // rest dim, the card shows it; the pick stays when the tab redraws. A hover only lights up (MP.peek), never moving the card or the floor)
 const mpMdtFloor = (box, j) => { if (!box || j == null || j === '') return; j = String(j); if (MP.mz && MP.mz.f !== j) { MP.mz = { f: j, z: 1, c: null }; mpZoomBtns(box, 1); } box.querySelectorAll('[data-mdtf]').forEach((x) => x.classList.toggle('on', x.dataset.mdtf === j)); box.querySelectorAll('.mpt-mdtm').forEach((m) => { m.hidden = m.dataset.f !== j; }); mpZoom(box); }; /* (the new floor's marks at the map's size) */
 function mpMapView(box, v) { box.querySelectorAll('[data-mdtv]').forEach((x) => { x.classList.toggle('on', x.dataset.mdtv === v); x.setAttribute('aria-pressed', String(x.dataset.mdtv === v)); }); box.querySelectorAll('.mpt-mdtv').forEach((x) => { x.hidden = x.dataset.v !== v; }); }
-function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
+function mpMapPick(v, ids, sum, auto) { const box = document.querySelector('.mpt-mdt'); if (!box) return; const view = box.querySelector('.mpt-mdtv[data-v="' + v + '"]'); if (!view) return;
+  box.querySelectorAll('.mpt-mdtv').forEach((x) => x.classList.toggle('apick', !!auto && x === view)); /* ("Most mistakes" only on the auto pick) */
   if (view.hidden) mpMapView(box, v); ids = [].concat(ids).map(String); const one = ids.length === 1 && !sum;
   const li = view.querySelector('.mpt-mfl li[data-pi="' + ids[0] + '"]'); if (li && li.dataset.fl) mpMdtFloor(box, li.dataset.fl);
   view.classList.add('pick'); view.querySelectorAll('[data-pi]').forEach((x) => { if (!x.classList.contains('mpt-mc')) x.classList.toggle('hot', ids.includes(x.dataset.pi)); });
@@ -64953,9 +64955,20 @@ function mpMapPick(v, ids, sum) { const box = document.querySelector('.mpt-mdt')
   box.querySelectorAll('.mpt-mstrip .mpt-blk[data-pi]').forEach((b) => b.classList.toggle('hot', b.dataset.run === v && ids.includes(b.dataset.pi)));
   const lab = box.querySelector('.mpt-mstep span'); if (lab && li) lab.textContent = one ? li.dataset.lab + ' · ' + (+ids[0] + 1) + ' of ' + view.dataset.n : plural(ids.length, 'pull') + ' lit up';
   if (li) { const ol = li.parentNode; if (li.offsetTop < ol.scrollTop || li.offsetTop + li.offsetHeight > ol.scrollTop + ol.clientHeight) ol.scrollTop = li.offsetTop - ol.clientHeight / 2; }
-  MP.pick = { v, ids, sum: sum || '' };
+  MP.pick = { v, ids, sum: sum || '', k: MP.item ? mpK(MP.item) : '', auto: !!auto, pp: MP.pp || '' };
   for (const sv of view.querySelectorAll('.mpt-mdtm svg')) mpEdges(sv, MP.mz && MP.mz.f === (sv.closest('.mpt-mdtm') || {}).dataset.f ? MP.mz.z : 1);
   if (one) mpFitPull(box, view, ids[0]); else mpZoomTo(box, 1, null); } /* (a picked pull fills the map (item 9); several lit up, the whole floor) */
+// (the card beside the map opens filled (the studio, Nov 3, Flex: "Fill the empty panel"): with no pull picked on this key yet, the viewed player's pull
+// with the most mistakes: their deaths, casts that went off with their kick ready, avoidable hits and red rotation mistakes (Everyone: all of them), the
+// earlier pull on a tie, pull 1 when there are none. It picks again when the player changes or the rotation arrives, until the viewer picks a pull)
+function mpMapAuto(R) { const name = MP.pp || '', who = (w) => !name || w === name; let best = 0, bn = 0;
+  R.pulls.forEach((q, i) => { let n = 0; for (const d of q.deaths || []) if (who(d.who)) n++; for (const x of q.through || []) if (who(x.who)) n++; for (const a of q.avoid || []) if (who(a.who)) n += a.n || 0;
+    for (const [nm, r] of Object.entries(q.rot || {})) if (who(nm)) n += ((r && r.fix) || []).filter((f2) => f2[0] === 'bad').length; if (n > bn) { bn = n; best = i; } });
+  return best; }
+function mpMapAutoGo(now) { const it = MP.item, R = it && MP.R[mpK(it)], box = document.querySelector('.mpt-mdt'), view = box && box.querySelector('.mpt-mdtv[data-v="you"]'); if (!R || !view || view.hidden) return false;
+  const i = String(mpMapAuto(R)), p = MP.pick; if (!now && p && p.auto && p.k === mpK(it) && p.ids[0] === i) { p.pp = MP.pp || ''; return true; } /* (the same pull: the card stays put) */
+  MP.zNow = !!now; try { mpMapPick('you', [i], '', true); } finally { MP.zNow = false; } return true; }
+const mpMapAutoOn = () => { const p = MP.pick; return !p || p.auto || p.k !== (MP.item ? mpK(MP.item) : ''); }; /* (the viewer hasn't picked a pull on this key) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
 function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
@@ -64963,7 +64976,8 @@ function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!bo
   { const it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (R2 && MP_ROT_ON) { if (MP_RK_OLD) { mpRkPaint(R2); if (name) mpRkGo(); } else mpRwPaint(R2); } } /* (the Rotation chapter follows the pick) */
   { const pe = document.getElementById('mptPart'), it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (pe && R2 && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R2, MP.fastOf && MP.fastOf.k === mpK(it2) ? MP.fastOf : null, name); } /* (Your part follows the pick) */
   box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; });
-  box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name))); }
+  box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name)));
+  if (MP.pick && MP.pick.auto && MP.pick.pp !== name) mpMapAutoGo(); } /* (the card follows the new player's most mistakes) */
 document.addEventListener('change', (e) => { const x = e.target; if (!x || !x.matches || !x.matches('[data-mppsel]')) return; mpMapPP(x.value); if (MP.ppK) { const m = mpPPGet(); m[MP.ppK] = x.value; try { localStorage.setItem(MP_PPK, JSON.stringify(m)); } catch (e2) { /* (not kept) */ } } });
 document.addEventListener('toggle', (e) => { const d = e.target; if (!d.matches || !d.matches('details[data-cf]')) return; if (d.dataset.auto) { delete d.dataset.auto; return; } const k = d.dataset.cf; /* (a skull's click opens one, and isn't kept) */ let m = {}; try { m = JSON.parse(localStorage.getItem('mpt-cardfold') || '{}') || {}; } catch (x) { m = {}; }
   if (!!m[k] !== d.open) { m[k] = d.open; try { localStorage.setItem('mpt-cardfold', JSON.stringify(m)); } catch (x) { /* (not kept) */ } } document.querySelectorAll('details[data-cf="' + k + '"]').forEach((x) => { if (x !== d && x.open !== d.open) x.open = d.open; }); }, true); /* (the card's one-liners, open or closed the same on every pull) */
@@ -65068,7 +65082,7 @@ function mpFitPull(box, view, i) { const svg = view.querySelector('.mpt-mdtm:not
   const pl = svg.querySelector('polyline[data-pis]'), ix = pl ? pl.dataset.pis.split(',').indexOf(String(i)) : -1;
   if (ix > 0) { const [px, py] = pl.getAttribute('points').split(' ')[ix - 1].split(',').map(Number), a = Math.min(x0, px), b = Math.min(y0, py), c = Math.max(x1, px), d = Math.max(y1, py); if (fit(a, b, c, d) >= 1.5) { x0 = a; y0 = b; x1 = c; y1 = d; } }
   mpZoomTo(box, Math.max(1.5, Math.min(2.25, fit(x0, y0, x1, y1))), [(x0 + x1) / 2, (y0 + y1) / 2]); }
-function mpMapRestore() { const p = MP.pick, has = p && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has) { const bx = document.querySelector('.mpt-mdt'); if (bx) mpZoom(bx, MP.mz && MP.mz.z > 1 ? MP.mz.c : null); } }
+function mpMapRestore() { const p = MP.pick, has = p && !p.auto && p.k === (MP.item ? mpK(MP.item) : '') && document.querySelector('.mpt-mdtv[data-v="' + p.v + '"]'); if (has) { MP.zNow = true; try { mpMapPick(p.v, p.ids, p.sum); } finally { MP.zNow = false; } } if (MP.pp) mpMapPP(MP.pp); if (!has && !mpMapAutoGo(true)) { const bx = document.querySelector('.mpt-mdt'); if (bx) mpZoom(bx, MP.mz && MP.mz.z > 1 ? MP.mz.c : null); } }
 document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) return; const box = t.closest('.mpt-mdt');
   if (MP.dragT && Date.now() - MP.dragT < 250 && t.closest('.mpt-mdtm')) { e.stopPropagation(); e.preventDefault(); return; } /* (the end of a drag or pinch, not a pick) */
   if (!t.closest('.mpt-lay')) document.querySelectorAll('.mpt-lay.open').forEach((x) => { x.classList.remove('open'); x.querySelector('.mpt-layb').setAttribute('aria-expanded', 'false'); });
@@ -65507,7 +65521,7 @@ html:not([data-theme]) .mpt .mpt-chap{background-image:linear-gradient(rgba(255,
 .mpt-mside{position:relative;min-width:0;min-height:380px} .mpt-mside > .mpt-mcard{position:relative;inset:auto;height:auto;min-height:100%;overflow:visible} /* (the card at least as tall as the map and its tiles, and taller when it needs to be: never a scrollbar of its own (the studio, Nov 2)) */
 .mpt-mcard{position:relative;height:380px;overflow:auto;box-sizing:border-box;padding:10px 12px;background:var(--raised);border:1px solid var(--line2);border-radius:4px;font:500 13px/1.4 var(--body);color:var(--mpt-soft)}
 .mpt-mcard p{margin:4px 0 0} .mpt-mcard b{color:var(--text)} .mpt .mpt-mc0{margin:0;color:var(--faint)}
-.mpt-mch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px} .mpt-mch > b{font:700 15px var(--body);color:var(--text)} .mpt-mch > span:last-child{color:var(--muted);font-size:12.5px}
+.mpt-mch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px} .mpt-mch > i.mpt-mca{display:none;order:9;margin-left:auto;padding:1px 7px;border-radius:9px;font:600 11px var(--body);font-style:normal;white-space:nowrap;color:#9aa3ac;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)} .mpt-mdtv.apick .mpt-mch > i.mpt-mca{display:inline-block} .mpt-mch > b{font:700 15px var(--body);color:var(--text)} .mpt-mch > span:last-child{color:var(--muted);font-size:12.5px}
 .mpt .mpt-mcd{color:#ffb3ad} .mpt .mpt-mck{color:#d9c4ff} .mpt .mpt-mcm{color:var(--muted)} .mpt .mpt-mcn{color:#f2c46b} .mpt .mpt-mcl{color:#ffd166} .mpt .mpt-mcw{color:var(--muted)} .mpt .mpt-mco{color:#7ee08f}
 .mpt .mpt-mck2{margin:10px 0 4px!important;font:700 11px var(--head);letter-spacing:.44px;text-transform:uppercase;color:var(--faint)}
 .mpt-gbk{--gbx-cols:168px minmax(0,1fr) 64px 56px 48px;--gbx-cols-m:104px minmax(0,1fr) 44px 40px 36px} .mpt-gbk .gbx-s[data-tt]{cursor:help} .mpt-gbk .gbx-hd > span:nth-child(n+3){text-align:right}
