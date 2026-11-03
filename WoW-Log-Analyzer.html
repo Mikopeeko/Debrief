@@ -17023,8 +17023,17 @@ function strictView(r, lv) {
 function caPools(ev) {
   const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
   const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
-  return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
+  const fangs = casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
     return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 47 : 37 }; }); /* round 414 real pools: 40 Mythic pulls' hits; Nov 2 (Flex: "they seem a little too big"): 37 and 47, where players stop getting Noxious Ground on 3 pulls */
+  // (and P3's Defilement of the Coiled Altar: the same mouths spew Defiled Ground, which absorbs healing, 5 s after each cast, down until the
+  // last time anyone got it. Measured Nov 3 like the Fangs pools (where half the spots had it, 2 pulls of the 25/10 night): about 39 yd the
+  // first time, 48 after)
+  const lc = (e) => String(e.spell || '').toLowerCase();
+  const dc = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && (e.id === 1298381 || lc(e) === 'defilement of the coiled altar')).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
+  const dh = ev.filter((e) => (e.k === 'dmg' || (e.k === 'aura' && e.op !== 'remove')) && (e.id === 1298591 || lc(e) === 'defiled ground')).map((e) => e.t);
+  const defiled = dc.map((t, i) => { const nx = i + 1 < dc.length ? dc[i + 1] : Infinity, mine = dh.filter((x) => x >= t && x < Math.min(nx, t + 45));
+    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 48 : 39, name: 'Defiled Ground' }; });
+  return fangs.concat(defiled);
 }
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
@@ -25221,6 +25230,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-03', n: [
+    "Debriefing Timeline replay, The Coiled Altar: every Guillotine now shows its big 40-yard eruption after the drop, the soak circle goes away when the axe erupts, and phase 3's Defilement pools are on the map.",
+  ] },
   { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it, and the fight\'s timeline playing underneath. Click a dot or a line to watch that moment, and the box below says whether it was done right and what to do next time.' }], n: [ /* round 484 */
     'Rotation: a spec still being checked for patch 12.1.5 shows your numbers only, with no talent or proc explanations, until it is confirmed.',
     'Rotation: Unholy, Windwalker and Demonology now have a pack priority too, and fairer rules for keys: Soul Reaper under 35% counts on bosses only in a key, and spending Chi near an Energy cap is fine.',
@@ -35534,7 +35546,9 @@ function mapLook(mp) {
   const A = ARENAS['The Coiled Altar'], W = 52, fr = mp.frames && mp.frames.length ? mp.frames : null, w0 = fr ? fr[0].t : mp.t, w1 = fr ? fr[fr.length - 1].t : mp.t;
   const rings = (mp.rings || []).slice(), pauses = (mp.pauses || []).slice();
   for (const p of mp.pools) if (w0 != null && p.t0 <= w1 + 0.1 && p.t1 >= w0 - 0.1) for (const dx of [-W, W])
-    rings.push({ x: A.cx + dx, y: A.cy, r: p.r, clip: true, fx: 'puddle', t0: p.t0, dur: p.t1 - p.t0, color: '#c4f03c', fill: 'rgba(52,128,30,.4)', cn: 'Noxious Ground', legend: 'Fangs pools, as they were in this pull' });
+    rings.push(p.name === 'Defiled Ground' /* (P3's Defilement pools: the same mouths, dark purple ground that absorbs healing (Nov 3)) */
+      ? { x: A.cx + dx, y: A.cy, r: p.r, clip: true, fx: 'puddle', t0: p.t0, dur: p.t1 - p.t0, color: '#8a6aa6', fill: 'rgba(66,34,96,.45)', cn: 'Defiled Ground', legend: 'Defilement pools (Defiled Ground absorbs your healing), as they were in this pull' }
+      : { x: A.cx + dx, y: A.cy, r: p.r, clip: true, fx: 'puddle', t0: p.t0, dur: p.t1 - p.t0, color: '#c4f03c', fill: 'rgba(52,128,30,.4)', cn: 'Noxious Ground', legend: 'Fangs pools, as they were in this pull' });
   // (key moments: each frontal holds for a moment with what it hit)
   if (fr) { (mp.cones || []).forEach((c, i, all) => { if (c.at == null || c.at <= w0 || c.at >= w1) return;
       pauses.push({ t: c.at, dur: 2.4, text: (all.length > 1 ? 'Frontal ' + (i + 1) : 'The frontal') + ' lands: the orbs inside the cone pop.' }); });
@@ -67650,6 +67664,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     /* (the axes: the log places one only when it hits someone, so each shows only around its hits, never frozen between them (Flex,
        Nov 2: "youll only know where the axes are by people taking damage from them", "if you cant accurately draw axegrinder then just remove it")) */
     hits: { Axegrinder: 'axe' }, noMap: ['vf'] /* (fight checks kept to the list: the Venomfang dispels) */,
+    /* (the axe erupts 6 s after it lands and is gone: the soak circle where it landed ends with the eruption, not 30 s later (Nov 3 audit)) */
+    mmCut: function (q) { if (q.fx === 'soak' && !q.guid && q.at != null && /Guillotine soak/.test(q.legend || '')) q.dur = Math.min(q.dur || 30, q.at + 6.8 - q.t0); },
     debuffs: { Gloombomb: [15, '#da3df2', 'Gloombomb'], 'Volatile Venom': [5, '#5fd35f', 'Carrying a green orb'], 'Mutagenic Venom': [6, '#b65cff', 'Carrying a purple orb'], Dreadmarch: [3, '#b98cff', 'Mind-controlled'], Gravebound: [2.5, '#aeb6bf', 'Gravebound (pick up your fragments)'] },
     /* (whole lives worked out from the log: orbs [kind, the debuff a pickup gives], ghosts [the fixation on their player]) */
     life: { orbs: { 'Coalesced Venom Stalker': ['orb', 'Volatile Venom'], 'Virulent Mutation': ['porb', 'Mutagenic Venom'] }, ghosts: { 'Manifestation of Dread': 'Unnerving Fixation' } },
@@ -68116,7 +68132,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         /* (a circle's colour as a word, for the map's Key: one line per kind, "Purple circle: Carrying a purple orb") */
         var CW = function (c) { return ({ '#da3df2': 'Pink', '#5fd35f': 'Green', '#7ee08f': 'Green', '#b65cff': 'Purple', '#a35cf2': 'Purple', '#b98cff': 'Lilac', '#aeb6bf': 'Grey', '#e8c05a': 'Gold', '#cdb35a': 'Gold', '#e8a23a': 'Orange', '#ff9628': 'Orange', '#6aa8ff': 'Blue', '#f0726a': 'Red', '#c0392b': 'Dark red', '#c4f03c': 'Lime', '#c8a36a': 'Brown', '#d8f22f': 'Yellow', '#3af2a8': 'Teal', '#24f2cb': 'Teal', '#9be13a': 'Green', '#e5534b': 'Red', '#e6e0c8': 'Pale', '#8a6aa6': 'Purple', '#7fd8ff': 'Light blue', '#9fd4ff': 'Ice blue', '#bfefff': 'Ice', '#ff4a5a': 'Red', '#a03040': 'Dark red', '#ff7a2a': 'Orange', '#7a5cff': 'Violet', '#5b3a7e': 'Dark purple' }[String(c).toLowerCase()] || 'Coloured') + ' circle'; };
         MMs.forEach(function (x) { var mp0 = x.map || {}, F0 = mp0.frames || [], a0 = F0.length ? F0[0].t : x.t - 3, b0 = F0.length ? F0[F0.length - 1].t : x.t + 2;
-          (mp0.rings || []).forEach(function (g) { if (g.fx === 'debuff' && (RX[it0.boss] || {}).debuffs) return; if ((RX[it0.boss] || {}).mmSkip && RX[it0.boss].mmSkip(g)) return; var q = Object.assign({}, g); if (q.t0 == null) q.t0 = a0; if (q.dur == null && q.fx !== 'puddle' && q.fx !== 'zone') q.dur = Math.max(1, b0 - q.t0); var kk = (q.guid || (q.x + ',' + q.y)) + '|' + Math.round(q.t0 * 10); if (seenR[kk]) return; seenR[kk] = 1; rings.push(q); });
+          (mp0.rings || []).forEach(function (g) { if (g.fx === 'debuff' && (RX[it0.boss] || {}).debuffs) return; if ((RX[it0.boss] || {}).mmSkip && RX[it0.boss].mmSkip(g)) return; var q = Object.assign({}, g); if (q.t0 == null) q.t0 = a0; if (q.dur == null && q.fx !== 'puddle' && q.fx !== 'zone') q.dur = Math.max(1, b0 - q.t0); if ((RX[it0.boss] || {}).mmCut) RX[it0.boss].mmCut(q);
+            /* (the same circle from two mechanic maps is drawn once; a different size or kind at the same spot and moment is its own: Guillotine's
+               40 yd eruption starts where its 9 yd soak landed (Flex, Nov 3: "guillotine was missing the second big circle after the drop")) */
+            var kk = (q.guid || (q.x + ',' + q.y)) + '|' + Math.round(q.t0 * 10) + '|' + (q.r || 0) + '|' + (q.fx || ''); if (seenR[kk]) return; seenR[kk] = 1; rings.push(q); });
           (mp0.cones || []).concat(mp0.cone ? [mp0.cone] : []).forEach(function (c) { var q = Object.assign({}, c); if (q.at == null) q.at = x.t; var kk = (q.name || '') + '|' + Math.round(q.at * 10); if (seenC[kk]) return; seenC[kk] = 1; cones.push(q); });
           if (!pools && mp0.pools && mp0.pools.length) pools = mp0.pools;
           /* (and their lines (Corrosive Spit), markers, links and arrows: only ones with their own start and end, so each shows in its time) */

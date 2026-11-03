@@ -3649,8 +3649,17 @@ function strictView(r, lv) {
 function caPools(ev) {
   const casts = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && e.id === 1282487).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
   const hits = ev.filter((e) => e.k === 'dmg' && e.id === 1283290).map((e) => e.t);
-  return casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
+  const fangs = casts.map((t, i) => { const nx = i + 1 < casts.length ? casts[i + 1] : Infinity, mine = hits.filter((x) => x >= t && x < Math.min(nx, t + 45));
     return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 47 : 37 }; }); /* round 414 real pools: 40 Mythic pulls' hits; Nov 2 (Flex: "they seem a little too big"): 37 and 47, where players stop getting Noxious Ground on 3 pulls */
+  // (and P3's Defilement of the Coiled Altar: the same mouths spew Defiled Ground, which absorbs healing, 5 s after each cast, down until the
+  // last time anyone got it. Measured Nov 3 like the Fangs pools (where half the spots had it, 2 pulls of the 25/10 night): about 39 yd the
+  // first time, 48 after)
+  const lc = (e) => String(e.spell || '').toLowerCase();
+  const dc = ev.filter((e) => (e.k === 'cast' || e.k === 'start') && (e.id === 1298381 || lc(e) === 'defilement of the coiled altar')).map((e) => e.t).sort((a, b) => a - b).filter((t, i, a) => !i || t - a[i - 1] > 10);
+  const dh = ev.filter((e) => (e.k === 'dmg' || (e.k === 'aura' && e.op !== 'remove')) && (e.id === 1298591 || lc(e) === 'defiled ground')).map((e) => e.t);
+  const defiled = dc.map((t, i) => { const nx = i + 1 < dc.length ? dc[i + 1] : Infinity, mine = dh.filter((x) => x >= t && x < Math.min(nx, t + 45));
+    return { t0: +(t + 5).toFixed(2), t1: +((mine.length ? Math.max(...mine) : t + 30) + 0.5).toFixed(2), r: i ? 48 : 39, name: 'Defiled Ground' }; });
+  return fangs.concat(defiled);
 }
 function buildCoiledAltar(ev, r, h) {
   const pl = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
