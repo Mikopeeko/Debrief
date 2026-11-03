@@ -66017,7 +66017,7 @@ body.mpz-wh .spc-tt{display:none !important}
 // ---------- card mode (Nov 3, the studio's pop-up-only-brief.md, Flex: "I still want the pop up window"): the PC app's pop-up shows this tab for one
 // key from the app's own copy of the site (/app?mpcard=1 in a frame). The same code as the website, so it reads the same; the page around it is hidden,
 // and the blocks go in the studio's order: the summary, Your part, Where your time went, the map (with the pull tiles and the pull's card), then You
-// against the fast run. They wrap into 1, 2 or 3 columns with the window's width. The fast run comes from debriefme.io (src/wcl.js, MPC) ----------
+// against the fast run. The top wraps into 1 or 2 columns with the window's width; the map below takes any extra width. The fast run comes from debriefme.io (src/wcl.js, MPC) ----------
 let MPC_ME = '';
 const MPC_ON = location.hostname === 'localhost' && /[?&]mpcard=1\b/.test(location.search);
 const MPC_CSS = `
@@ -66030,13 +66030,12 @@ html.mpcard #mptBody>.mpt-chap,html.mpcard #mptBody>.mpt-jb{display:none}
 html.mpcard .mpcg{display:flex;flex-direction:column;gap:14px;padding-top:12px}
 html.mpcard .mpcg-top{columns:1;column-gap:18px}
 html.mpcard .mpcg[data-cols="2"] .mpcg-top{columns:2}
-html.mpcard .mpcg[data-cols="3"] .mpcg-top{columns:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;align-items:start}
 html.mpcard .mpcg-top>.mpcb{break-inside:avoid;margin:0 0 14px;min-width:0}
 html.mpcard .mpcg>.mpcb{min-width:0}
 html.mpcard .mpcg .mpt-chap{display:block;margin:0}
 html.mpcard .mpcb-note{grid-column:1/-1;margin:0;color:#8f98a1;font:400 13px var(--body)}
 `;
-const mpcCols = (w) => (w >= 960 ? 3 : w >= 600 ? 2 : 1);
+const mpcCols = (w) => (w >= 600 ? 2 : 1); /* (two at most (the studio's audit, Nov 3): wider only widens; the map below takes the extra width) */
 function mpcLay() {
   const b = document.getElementById('mptBody'), c1 = b && b.querySelector(':scope > #mptC1'); if (!c1 || c1.dataset.mpcDone) return; c1.dataset.mpcDone = '1'; /* (once per draw: moving the blocks is a change too) */
   const blk = (cls, nodes) => { nodes = nodes.filter(Boolean); if (!nodes.length) return null; const d = document.createElement('div'); d.className = 'mpcb ' + cls; for (const n of nodes) d.appendChild(n); return d; };
