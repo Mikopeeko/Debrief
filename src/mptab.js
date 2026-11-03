@@ -136,11 +136,11 @@ function mpSkipBuild(raw, R) {
         const L = [...per.values()].filter((o) => o.on != null), me = per.get(cast.g), end = me && me.off != null ? me.off : Math.max(...L.map((o) => (o.off != null ? o.off : b)));
         for (const o of L) if (o.off == null) o.off = Math.min(b, end + 2);
         const early = []; for (const o of L) { if (o.g === cast.g) continue; const rest = L.filter((q) => q !== o).map((q) => q.off), mx = Math.max(...rest); if (o.off < mx - 1) { const p1 = posAt(o.g, o.off, 5), p2 = posAt(cast.g, o.off, 5); early.push({ who: o.who, t: o.off, ago: mx - o.off, yd: p1 && p2 ? Math.hypot(p1[1] - p2[1], p1[2] - p2[2]) : null }); } }
-        sk.hid = { s: cast.t, e: end, n: L.length, of: (R.people || []).length || L.length, sp: cast.sp, id: cast.id, who: cast.who, early, offs: L.map((o) => o.off), names: L.map((o) => o.who) };
+        sk.hid = { s: cast.t, e: Math.max(end, ...L.map((o) => o.off)), ce: end, n: L.length, of: (R.people || []).length || L.length, sp: cast.sp, id: cast.id, who: cast.who, early, offs: L.map((o) => o.off), names: L.map((o) => o.who) };
         sk.at = [cast.x, cast.y, cast.ui]; }
       else if (inv) { const L = raw.auras.filter((x) => !x.npc && (x.k === 'self' || x.k === 'stealth') && x.t >= inv.t - 15 && x.t < b + 1), offs = [];
         for (const g of inv.on.keys()) { const r = L.filter((x) => x.g === g && !x.on && x.t >= inv.t)[0]; offs.push(r ? r.t : b); }
-        sk.hid = { s: inv.t, e: Math.max(...offs), n: inv.on.size, of: (R.people || []).length || inv.on.size, sp: '', id: 0, who: '', early: [], offs, names: [...inv.on.keys()].map((g) => ((raw.auras.find((x) => x.g === g) || {}).who || '')) }; }
+        sk.hid = { s: inv.t, e: Math.max(...offs), ce: Math.max(...offs), n: inv.on.size, of: (R.people || []).length || inv.on.size, sp: '', id: 0, who: '', early: [], offs, names: [...inv.on.keys()].map((g) => ((raw.auras.find((x) => x.g === g) || {}).who || '')) }; }
       // (crowd control: who, on what, and whether it ever got to the group (an enemy no player hit, as the trigger needs))
       for (const q of ccs) { const x = q.x, tl = raw.tools.find((y) => y.g === x.bg && lc(y.sp) === lc(x.sp) && x.t - y.t >= -0.5 && x.t - y.t <= 4), u = raw.U.get(x.g);
         const bk = raw.auras.find((y) => y.brk && y.g === x.g && y.t >= x.t && y.t - x.t <= 60);
@@ -155,12 +155,17 @@ function mpSkipBuild(raw, R) {
       // enemy started while the group was still hidden is the skip breaking)
       { const w0 = sk.hid ? Math.min(...sk.hid.offs) - 1 : t0, w1 = sk.hid ? Math.max(...sk.hid.offs) + 6 : b - 1, ccG = new Set(sk.cc.map((x) => x.g));
         for (const u of raw.U.values()) { if (u.c0 == null || u.c0 < w0 || u.c0 > w1 || u.sum || ccG.has(u.g) || (u.cBy !== 'e' && u.cBy !== 'k')) continue;
-          const pk = u.d0 != null ? pullOf(u.d0) : null; if (pk === i && u.c0 >= P[i].s - 1 && !(sk.hid && u.c0 < sk.hid.e - 0.5)) continue;
+          const pk = u.d0 != null ? pullOf(u.d0) : null; if (pk === i && u.c0 >= P[i].s - 1 && !(sk.hid && u.c0 < sk.hid.ce - 0.5)) continue;
           const hit = u.hit && u.hit.t - u.c0 < 15 ? { ...u.hit, hp: ((q) => (q ? q[4] : 0))(before(u.hit.g, u.hit.t, 4)), max: ((q) => (q ? q[5] : 0))(before(u.hit.g, u.hit.t, 60)) } : null;
-          sk.came.push({ t: u.c0, g: u.g, n: u.n, npc: u.npc, by: u.cBy, fought: u.d0 != null, pull: pk, hid: !!(sk.hid && u.c0 < sk.hid.e - 0.5), hit, at: u.at }); }
+          sk.came.push({ t: u.c0, g: u.g, n: u.n, npc: u.npc, by: u.cBy, fought: u.d0 != null, pull: pk, hid: !!(sk.hid && u.c0 < sk.hid.ce - 0.5), hit, at: u.at }); }
         sk.came.sort((p, q) => p.t - q.t); }
       for (const d of raw.deaths) if (d.t >= t0 && d.t <= b + 0.5) { const p = before(d.g, d.t), m = (R.pulls[pullOf(d.t)].deaths || []).find((x) => x.who === d.who && Math.abs(x.t - d.t) < 1);
         sk.died.push({ t: d.t, who: d.who, to: m ? m.to : '', from: m ? m.from : '', at: p ? [p[1], p[2], p[3]] : null, hp: p ? p[5] : 0 }); }
+      // (a death within 10 s of an enemy coming in is the skip's, even once the next pull has started, whoever landed the blow (the studio, Nov 3:
+      // Agroo's +18: a Brutal Overseer from the skipped pack came in, and its packmate's Lava Bolt killed Flëxørçïst 0.8 s past the window))
+      if (sk.came.length) for (const p of P) for (const d of p.deaths || []) { if (d.t < sk.came[0].t || d.t - sk.came[0].t > 10 || sk.died.some((x) => x.who === d.who && Math.abs(x.t - d.t) < 1)) continue;
+        const rd = raw.deaths.find((x) => x.who === d.who && Math.abs(x.t - d.t) < 1), q = rd ? before(rd.g, d.t) : null; sk.died.push({ t: d.t, who: d.who, to: d.to, from: d.from, at: q ? [q[1], q[2], q[3]] : null, hp: q ? q[5] : 0 }); }
+      sk.died.sort((p, q) => p.t - q.t);
       // (Worked: nothing came in, nobody died. Broke: a fight an enemy started while you were still hidden, or a controlled enemy that got fought. Partly
       // broke: anything else that came in, broke free or killed someone)
       for (const x of sk.cc) { const u = raw.U.get(x.g); x.fought = !!(u && u.d0 != null); }
