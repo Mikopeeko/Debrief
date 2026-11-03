@@ -25269,7 +25269,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
-    "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the phase chart beside the map under the play-by-play, and a short trail behind the player you follow.",
+    "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the selected mistake card beside the map under the play-by-play, and a short trail behind the player you follow.",
     "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Big defensives and externals show on the frames too, with absorb shields as white stripes and a red flash when someone takes a big hit. Click a frame to follow that player, drag the grid anywhere on the map, or hide it with the Raid frames button beside the speeds (hidden at first on a phone).",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
@@ -68925,12 +68925,13 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           '.dtm-tmk{position:absolute;left:0;top:0;right:0;height:0;z-index:2;pointer-events:none}',
           '.dtm-tmk i{position:absolute;width:2px;height:8px;margin-left:-1px;border-radius:1px;pointer-events:auto;cursor:pointer}.dtm-tmk i::before{content:"";position:absolute;left:-4px;right:-4px;top:-2px;bottom:-2px}',
           '.dtm-tmk b{position:absolute;width:12px;margin-left:-6px;text-align:center;font-size:10px;line-height:11px;color:#ff8f87;pointer-events:auto;cursor:pointer;font-weight:400}',
-          /* (4. the right column: the play-by-play on top, the phase chart under it, together as tall as the map and its bar) */
+          /* (4. the right column: the play-by-play on top, the selected mistake card under it (Why and Next time stacked), together as tall as the
+             map and its bar; the phase chart stays full width under them (Flex, Nov 3: "yes move the mistake card")) */
           '.dtm-rc{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}',
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:1 1 50%;min-height:0;height:auto !important;overflow:auto}',
-          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-tlm{flex:1 1 50%;min-height:0;margin-top:0;overflow:auto}',
-          '.dtm-rc .dtm-tlm .dbx-labs > *{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dtm-rc .dtm-tlm .dbx-ax, .dtm-rc .dtm-tlm .dbx-ax *{font-size:11px !important}',
-          '@media (max-width:900px){.dtm-rc{height:auto !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:none;max-height:440px !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-tlm{flex:none;overflow:visible}}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:1 1 50%;min-height:0;margin:0 !important;overflow:auto}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dbt-two{grid-template-columns:minmax(0,1fr) !important;gap:10px !important}',
+          '@media (max-width:900px){.dtm-rc{height:auto !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:none;max-height:440px !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:none;overflow:visible}}',
           '@media (max-width:700px){.dtm-mm .zanim{flex-wrap:wrap}.dtm-ctl{flex-basis:100%}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{max-height:260px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         /* (the clock: "0:31 / 3:55") */
@@ -68950,9 +68951,11 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           lay.addEventListener('click', function (e) { var mk = e.target.closest('[data-tj]'); if (!mk) return; e.preventDefault(); e.stopPropagation(); P.seek = true; P.clip = null; rg.value = Math.max(0, Math.round((+mk.dataset.tj - 2) / STEP)); rg.dispatchEvent(new Event('input', { bubbles: true })); }); };
         var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
         var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
-          var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; /* (4. the phase chart beside the map, under the play-by-play (Flex, Nov 3: "What if we moved the bottom red outline to the top red outline and had the play by play only take up half that area?")) */
-            var pbc = gd.querySelector('.dtm-pb'), rc = gd.querySelector('.dtm-rc'); if (!rc && pbc) { tl3Css(); rc = document.createElement('div'); rc.className = 'dtm-rc'; pbc.parentNode.insertBefore(rc, pbc); rc.appendChild(pbc); } if (rc) rc.appendChild(slot); else gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; if (box._fit) box._fit(); }
-          if (sec) sec.classList.add('dtm-tlon'); var vd0 = box.querySelector('.dtm-left > .dtm-vd'); if (vd0) gd.parentNode.insertBefore(vd0, gd.nextSibling);
+          var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; }
+          if (sec) sec.classList.add('dtm-tlon'); /* (4. the selected mistake card beside the map, under the play-by-play (Flex, Nov 3: "What if we moved the bottom red outline to the top red outline and had the play by play
+             only take up half that area?", then "yes move the mistake card")) */
+          var vd0 = box.querySelector('.dtm-left > .dtm-vd'); if (vd0) { var pbc = gd.querySelector('.dtm-pb'), rc = gd.querySelector('.dtm-rc'); if (!rc && pbc) { tl3Css(); rc = document.createElement('div'); rc.className = 'dtm-rc'; pbc.parentNode.insertBefore(rc, pbc); rc.appendChild(pbc); }
+            if (rc) { rc.appendChild(vd0); if (box._fit) box._fit(); } else slot.parentNode.insertBefore(vd0, slot.nextSibling); }
           var k = 0; for (var i = 0; i < PHS.length; i++) if (ft >= PHS[i].start - 0.01) k = i; k = Math.min(k, secs.length - 1);
           if (k !== box._tlPh) { box._tlPh = k; slot.innerHTML = '<div class="dtm-tlc">' + (PHS.length > 1 ? PHS.map(function (p, i) { return '<button type="button" class="' + (i === k ? 'on' : '') + '" data-tph="' + i + '">' + E(p.name) + '</button>'; }).join('') : '') + '</div>';
             var cl = secs[k].cloneNode(true); slot.appendChild(cl); [].slice.call(cl.querySelectorAll('.dbx-mk')).forEach(function (d) { var al = d.getAttribute('aria-label'); if (al) d.dataset.tt = E(al); });
@@ -68967,7 +68970,9 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         /* (1. one player bar under the map (Flex, Nov 3: "All three"): Play, the time bar, the clock "0:31 / 3:55", the speeds and the raid frames'
            eye in one row; the top keeps the health bars, what's happening now, Key and N) */
         (function () { var zan0 = mb.querySelector('.zanim'), mt0 = box.querySelector('.dtm-mt'); if (!zan0 || !mt0) return; tl3Css(); var clk0 = document.createElement('span'); clk0.className = 'dtm-clk'; zan0.appendChild(clk0);
-          var ctl0 = document.createElement('span'); ctl0.className = 'dtm-ctl'; [].slice.call(mt0.querySelectorAll('[data-spd], [data-rft]')).forEach(function (b) { ctl0.appendChild(b); }); zan0.appendChild(ctl0); mt0.style.display = 'none'; })();
+          var ctl0 = document.createElement('span'); ctl0.className = 'dtm-ctl'; [].slice.call(mt0.querySelectorAll('[data-spd], [data-rft]')).forEach(function (b) { ctl0.appendChild(b); }); zan0.appendChild(ctl0); mt0.style.display = 'none';
+          /* (the marks show from the start, for every mistake and death: built once the bar has its width, and again whenever it changes) */
+          [0, 250, 800, 2000].forEach(function (d) { setTimeout(tl3Marks, d); }); var rgo = zan0.querySelector('.zrange'); if (rgo && window.ResizeObserver) new ResizeObserver(function () { tl3Marks(); }).observe(rgo); })();
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         var pbT = mb.querySelector('.zplay'); if (pbT) pbT.title = 'Play or pause (Space)';
         /* (a big room (The Twin Fangs' three platforms): the camera frames about FOLLOW yards around the middle of the raid and glides with it as it
