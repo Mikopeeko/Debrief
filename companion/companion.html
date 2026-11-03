@@ -209,8 +209,8 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
    4 px corners, the flat #171a22 panel, Barlow Condensed, numbers first, colour only where it means something ---------- */
 :root { --body: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif; } /* (Barlow Condensed throughout, as the site (Nov 3)) */
 .cs-top { gap: 12px; padding: 11px 20px; min-height: 66px; }
-.cs-av { width: 44px; height: 44px; border-radius: 50%; flex: none; background: #222 center/cover no-repeat; box-shadow: 0 0 0 2px var(--cls, #6c7381); }
-.cs-av.emb { background-size: 70%; box-shadow: 0 0 0 2px var(--cls, #6c7381), 0 0 16px color-mix(in srgb, var(--cls, #6c7381) 45%, transparent); }
+.cs-av { width: 44px; height: 44px; border-radius: 50%; flex: none; background: #222 center/cover no-repeat; box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--cls, #6c7381); } /* (a dark gap so the ring reads on any backdrop, Horde red or Alliance blue (the studio, Nov 3)) */
+.cs-av.emb { background-size: 70%; box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--cls, #6c7381), 0 0 16px color-mix(in srgb, var(--cls, #6c7381) 45%, transparent); }
 .cs-who { min-width: 0; }
 .cs-nm { font: 700 21px var(--body); color: var(--cls, var(--text)); line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cs-sp { margin-top: 3px; color: #cfd4da; font: 600 13px var(--body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .cs-sp em { font-style: normal; color: var(--muted); font-weight: 500; }
