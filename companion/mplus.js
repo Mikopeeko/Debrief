@@ -169,8 +169,10 @@ function build(text, E) {
     if (!boss) cur.e = Math.max(cur.e, t); last = t;
   }
   // (a pack of one stray enemy hit for a few seconds is folded into the pull before it, and so are one or two that joined a pull still going:
-  // a patrol or a straggler, not a pull of their own. A lone elite pulled with nothing else alive stays its own pull)
-  for (let i = pulls.length - 1; i > 0; i--) { const p = pulls[i]; const n = [...p.mobs.values()].reduce((a, s) => a + s.size, 0); if (!p.enc && ((p.hit.size <= 1 && p.e - p.s < 8) || (p.chain && n <= 2))) { const q = pulls[i - 1]; for (const [k, v] of p.mobs) { if (!q.mobs.has(k)) q.mobs.set(k, new Set()); for (const g of v) q.mobs.get(k).add(g); } q.e = Math.max(q.e, p.e); pulls.splice(i, 1); } }
+  // a patrol or a straggler, not a pull of their own. A lone elite pulled with nothing else alive stays its own pull. A stray that came more than
+  // 4 s after the pull had ended doesn't stretch it (Nov 3: Voidscar's second Watchful Harrower swung at Horoba 25 s after pull 6, during a skip,
+  // and made pull 6 half a minute longer))
+  for (let i = pulls.length - 1; i > 0; i--) { const p = pulls[i]; const n = [...p.mobs.values()].reduce((a, s) => a + s.size, 0); if (!p.enc && ((p.hit.size <= 1 && p.e - p.s < 8) || (p.chain && n <= 2))) { const q = pulls[i - 1]; for (const [k, v] of p.mobs) { if (!q.mobs.has(k)) q.mobs.set(k, new Set()); for (const g of v) q.mobs.get(k).add(g); } if (p.s - q.e <= 4) q.e = Math.max(q.e, p.e); pulls.splice(i, 1); } }
   const pullOf = (t) => { for (let i = pulls.length - 1; i >= 0; i--) if (t >= pulls[i].s - 2) return i; return 0; };
   // ---- casts: kicked, stopped, finished or cut short ----
   const casts = [], open = new Map();
@@ -242,7 +244,7 @@ function build(text, E) {
       if (LIST.ccCast.has(lc(x[3]))) o.through.push({ t: x[0], spell: LIST.ccCast.get(lc(x[3])), mob: short(x[4]), ready: [], cc: true }); /* (nobody stunned it: the enemy got its buff) */
       else { const b = o.ebuffs[x[3]] || (o.ebuffs[x[3]] = { on: 0, removed: 0 }); b.on++; } }
     else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5); const top = l.slice().sort((a, b) => b[3] - a[3])[0];
-      o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length }); }
+      o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length, ...(x[0] > o.e + 2 ? { gap: true } : {}) }); } /* (gap: after the pull had ended, before the next one (a skip, a walk): counted for the key, not for the pull) */
   }
   const sorted = casts.slice().sort((a, b) => a.t - b.t);
   for (const c of sorted) {
