@@ -1618,7 +1618,7 @@ function mpPartHtml(R, fx, pick) {
     if (F2 && F2.pc) row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', [m2 ? '<b class="mpt-bad">needs work on ' + m2 + '</b>' : '', s2 ? '<b class="mpt-a">mostly right on ' + s2 + '</b>' : '', g2 ? '<b class="mpt-g">right on ' + g2 + '</b>' : ''].filter(Boolean).join('<small> · </small>') + '<small> of ' + plural(P.length, 'pull') + '</small>', w && (w.y.vm || w.y.vs) ? ' data-mppick="' + w.i + '"' : ''); }
   // (6) the rotation, the app's way (the whole run's verdict and its split by pull; a click opens the pull with the most mistakes)
   if (MP_ROT_ON && !MP_RK_OLD && R._rw && R._rw.done) { const s2 = mpRwSum(R, name); if (s2.seen.length) { const w = s2.seen.slice().sort((a, b) => b.r.fix.filter((f2) => f2[0] === 'bad').length - a.r.fix.filter((f2) => f2[0] === 'bad').length || b.r.fix.length - a.r.fix.length)[0];
-    row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', (s2.pct != null ? mpRwPc(s2, true) + '<small> · </small>' + mpRwVw(s2.st) : mpRwVw(s2.st) + '<small> · ' + mpRwSplit(s2) + '</small>'), w && w.r.fix.length ? ' data-mppick="' + w.i + '"' : ''); } }
+    row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', (s2.pct != null ? mpRwPc(s2, true) + '<small> · </small>' : '') + mpRwVw(s2.st), w && w.r.fix.length ? ' data-mppick="' + w.i + '"' : ''); } }
   // (7) avoidable hits
   const av = []; P.forEach((q, i) => { for (const a of q.avoid || []) if (a.who === name && a.n) av.push({ ...a, i }); }); const avN = av.reduce((t, a) => t + a.n, 0), byP = new Map(); for (const a of av) byP.set(a.i, (byP.get(a.i) || 0) + a.n);
   const top = avN ? [...byP].sort((a, b) => b[1] - a[1])[0][0] : -1;
