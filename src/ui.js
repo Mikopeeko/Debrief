@@ -2049,6 +2049,7 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay, Ula'tek: the tail looks like a tail, with a rattle at its tip, and its waves are narrow bands, about 10 yards wide as in the game, lined up with where the raid walked and who got hit.",
     "Debriefing Timeline replay, The Coiled Altar: every Guillotine now shows its big 40-yard eruption after the drop, the soak circle goes away when the axe erupts, and phase 3's Defilement pools are on the map.",
   ], f: [
+    'Debrief Companion: the window switches to the character you\'re playing again, even in a busy city.',
     'Rotation: lines that said "1 seconds" now say "1 second".',
     'Holy Paladin: Holy Shock\'s 2 charges from Light\'s Conviction come from your talents, so a pull where you never pressed it twice quickly no longer reads one charge.',
     'Debrief Companion: the key recap reads everyone\'s talents from the log, so checks that depend on a talent match the website (Shadow Dance\'s cooldown, for one).',
