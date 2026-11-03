@@ -8233,7 +8233,7 @@ document.addEventListener('click', (e) => { if (!ndzPlOn() || e.button > 0 || !e
   else ndzPlPick(e, who, cur, t); });
 document.addEventListener('change', (e) => { const c = e.target.closest && e.target.closest('[data-plall]'); if (!c) return; S.ndzPlAll = c.checked; ndzTlRedraw(); });
 document.addEventListener('keydown', (e) => { if (!ndzPlOn() || /^(INPUT|SELECT|TEXTAREA)$/.test((e.target || {}).tagName || '')) return;
-  if (e.key === 'Escape' && (S.ndzStamp || !($('#ndzPlPick') || {}).hidden)) { e.stopImmediatePropagation(); S.ndzStamp = null; ndzPlClosePick(); ndzTlRedraw(); return; }
+  const pk0 = $('#ndzPlPick'); if (e.key === 'Escape' && (S.ndzStamp || (pk0 && !pk0.hidden))) { e.stopImmediatePropagation(); /* (only while a stamp is held or the picker is open: before, a missing picker counted as open, so every Escape stopped here (Nov 3)) */ S.ndzStamp = null; ndzPlClosePick(); ndzTlRedraw(); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); ndzPlStep(!e.shiftKey); return; }
   if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); ndzPlStep(false); } }, true);
 // (a good-news pop-up: the same toast with a green edge)
