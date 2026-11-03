@@ -16,6 +16,10 @@ namespace Debrief {
     readonly MainForm main; readonly string here; readonly int port; readonly CoreWebView2Environment env;
     readonly WebView2 web = new WebView2();
     string pending; bool ready, starting, placed;
+    // (Nov 3, the studio's pop-up-only-brief.md: a window you can place. Drag the header to move it, any edge or corner to resize it; dropped against the
+    // left or right edge of a screen it docks as the full-height side panel again, which stays the default. Kept in popup-place.txt:
+    // "dock,<left|right>,<screen>" or "float,<x>,<y>,<width>,<height>")
+    bool floating, moved, resized; Rectangle floatR; string dockSide, dockScreen;
 
     public PopupForm(MainForm main, string here, int port, CoreWebView2Environment env) {
       this.main = main; this.here = here; this.port = port; this.env = env;
@@ -25,6 +29,7 @@ namespace Debrief {
       BackColor = Color.FromArgb(0x17, 0x1a, 0x22);
       web.Dock = DockStyle.Fill; web.DefaultBackgroundColor = BackColor;
       Controls.Add(web);
+      LoadPlace();
     }
 
     // (shown without taking focus: the game keeps your keys and mouse)
@@ -87,7 +92,14 @@ namespace Debrief {
     // its full working height; as wide as the addon's Width, or the width its inner edge was dragged to (kept until Width changes in /db).
     // One column that scrolls inside; it never doubles, follows the card's height, or moves ----------
     void Dock() {
-      var look = Wow.AddonLook(here); var wa = GameScreen().WorkingArea; bool left = look.Length > 2 && look[2] == "left";
+      MinimumSize = new Size(Px(300), Px(360));
+      if (floating) { // (where it was left, while that spot is still on a screen)
+        bool seen = false; foreach (var s in Screen.AllScreens) { var x = Rectangle.Intersect(s.WorkingArea, floatR); if (x.Width >= Px(120) && x.Height >= Px(80)) seen = true; }
+        if (seen) { docking = true; try { SetBounds(floatR.X, floatR.Y, Math.Max(floatR.Width, MinimumSize.Width), Math.Max(floatR.Height, MinimumSize.Height)); } finally { docking = false; }
+          var pf = new Padding(EdgeW); if (Padding != pf) Padding = pf; return; } // (a thin frame all round to resize from)
+        floating = false;
+      }
+      var look = Wow.AddonLook(here); var wa = DockScreen().WorkingArea; bool left = dockSide != null ? dockSide == "left" : look.Length > 2 && look[2] == "left";
       int dpi = DpiAt(wa), w = SavedW(look[0]); if (w <= 0) w = (int)Math.Round(WidthOf(look[0]) * dpi / 96.0);
       w = Math.Max((int)Math.Round(380 * dpi / 96.0), Math.Min(w, (int)(wa.Width * 0.6)));
       docking = true; try { SetBounds(left ? wa.Left : wa.Right - w, wa.Top, w, wa.Height); } finally { docking = false; }
@@ -96,14 +108,42 @@ namespace Debrief {
     protected override void OnMove(EventArgs e) { base.OnMove(e); if (placed && Visible && !docking && !sizing) BeginInvoke(new Action(Dock)); } // (it stays docked)
     protected override void WndProc(ref Message m) {
       if (m.Msg == 0x0084 /* WM_NCHITTEST */ && placed) {
-        long lp = m.LParam.ToInt64(); var p = PointToClient(new Point((short)(lp & 0xffff), (short)((lp >> 16) & 0xffff))); bool left = Padding.Right > 0;
-        if (!left && p.X < EdgeW) { m.Result = (IntPtr)10 /* HTLEFT */; return; }
-        if (left && p.X >= ClientSize.Width - EdgeW) { m.Result = (IntPtr)11 /* HTRIGHT */; return; }
+        long lp = m.LParam.ToInt64(); var p = PointToClient(new Point((short)(lp & 0xffff), (short)((lp >> 16) & 0xffff)));
+        if (floating) { // (every edge and corner)
+          int e = EdgeW + 2; bool L = p.X < e, R = p.X >= ClientSize.Width - e, T = p.Y < e, B = p.Y >= ClientSize.Height - e;
+          int hit = T && L ? 13 : T && R ? 14 : B && L ? 16 : B && R ? 17 : L ? 10 : R ? 11 : T ? 12 : B ? 15 : 0; /* HTTOPLEFT … HTBOTTOM */
+          if (hit != 0) { m.Result = (IntPtr)hit; return; }
+        } else {
+          bool left = Padding.Right > 0;
+          if (!left && p.X < EdgeW) { m.Result = (IntPtr)10 /* HTLEFT */; return; }
+          if (left && p.X >= ClientSize.Width - EdgeW) { m.Result = (IntPtr)11 /* HTRIGHT */; return; }
+        }
       }
-      if (m.Msg == 0x0231 /* WM_ENTERSIZEMOVE */) sizing = true;
-      if (m.Msg == 0x0232 /* WM_EXITSIZEMOVE */) { sizing = false; SaveW(); BeginInvoke(new Action(Dock)); }
+      if (m.Msg == 0x0231 /* WM_ENTERSIZEMOVE */) { sizing = true; moved = false; resized = false; }
+      if (m.Msg == 0x0214 /* WM_SIZING */) resized = true;
+      if (m.Msg == 0x0216 /* WM_MOVING */) moved = true;
+      if (m.Msg == 0x0232 /* WM_EXITSIZEMOVE */) { sizing = false; AfterDrag(); }
       base.WndProc(ref m);
     }
+    // (a drag just ended: the docked panel's inner edge keeps its width; a move that ends against the left or right edge of a screen docks it there,
+    // anywhere else it floats, a little shorter than the full height when it leaves the side)
+    void AfterDrag() {
+      if (!moved && !resized) return;
+      if (!floating && !moved) { SaveW(); BeginInvoke(new Action(Dock)); return; }
+      var sc = Screen.FromRectangle(Bounds); var wa = sc.WorkingArea; int snap = Px(24);
+      if (moved && Left <= wa.Left + snap) { floating = false; dockSide = "left"; dockScreen = sc.DeviceName; }
+      else if (moved && Right >= wa.Right - snap) { floating = false; dockSide = "right"; dockScreen = sc.DeviceName; }
+      else { var r = Bounds; if (!floating && r.Height > wa.Height * 0.8) r.Height = (int)(wa.Height * 0.75); floating = true; floatR = r; }
+      SavePlace(); BeginInvoke(new Action(Dock));
+    }
+    Screen DockScreen() { if (dockScreen != null) foreach (var s in Screen.AllScreens) if (s.DeviceName == dockScreen) return s; return GameScreen(); }
+    string PlaceFile { get { return Path.Combine(here, "popup-place.txt"); } }
+    void LoadPlace() {
+      try { var p = File.ReadAllText(PlaceFile).Trim().Split(',');
+        if (p[0] == "float" && p.Length == 5) { floatR = new Rectangle(int.Parse(p[1]), int.Parse(p[2]), int.Parse(p[3]), int.Parse(p[4])); floating = true; }
+        else if (p[0] == "dock" && p.Length > 1) { dockSide = p[1] == "left" ? "left" : "right"; if (p.Length > 2 && p[2] != "") dockScreen = p[2]; } } catch { }
+    }
+    void SavePlace() { try { File.WriteAllText(PlaceFile, floating ? "float," + floatR.X + "," + floatR.Y + "," + floatR.Width + "," + floatR.Height : "dock," + dockSide + "," + (dockScreen ?? "")); } catch { } }
     string SideFile { get { return Path.Combine(here, "popup-side.txt"); } } // ("<the addon's Width>,<pixels>": a dragged width, for that Width setting)
     int SavedW(string widthSetting) { try { var p = File.ReadAllText(SideFile).Split(','); if (p.Length > 1 && p[0] == widthSetting) return int.Parse(p[1]); } catch { } return 0; }
     void SaveW() { try { File.WriteAllText(SideFile, Wow.AddonLook(here)[0] + "," + Width); } catch { } }

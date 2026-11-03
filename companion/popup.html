@@ -21,7 +21,10 @@ body.is-kill.k-anim { animation: killGlow 1.8s ease-out both; }
 body.is-kill .kyou .kv { font-size: 17px; }
 @media (prefers-reduced-motion: reduce) { body.k-anim { animation: none !important; } .mini { animation: none !important; } }
 .wrap { display: flex; flex-direction: column; max-height: 100vh; height: 100vh; } /* (layout A: a full-height side panel; the card scrolls inside (Nov 1)) */
-.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); flex: none; } /* (docked: no dragging (Nov 1)) */
+.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); flex: none; app-region: drag; -webkit-app-region: drag; } /* (drag the header to move the window; dropped on the screen's left or right edge it docks again (Nov 3)) */
+.top button, .top a, .top input, .top select { app-region: no-drag; -webkit-app-region: no-drag; }
+/* (the raid card's sections wrap with the window's width (Nov 3): one column on the side panel, two or three when it's dragged wider; top to bottom, then across) */
+.body:not(.mpx) .kgrid.one > .kL { columns: 260px 3; column-gap: 22px; } .body:not(.mpx) .kgrid.one > .kL > * { break-inside: avoid; }
 .top svg { width: 17px; height: 19px; flex: none; }
 .top b { font: 700 17px Barlow Condensed, sans-serif; }
 .top .bt { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -73,6 +76,7 @@ body.is-kill .kyou .kv { font-size: 17px; }
 .cnt { color: var(--faint); font: 13px/1.4 Barlow Condensed, sans-serif; margin: 4px 0 8px; }
 .ic { width: 20px; height: 20px; border-radius: 3px; background: #262b36; border: 1px solid #000; flex: none; display: inline-block; vertical-align: middle; overflow: hidden; }
 .ic img { width: 100%; height: 100%; display: block; transform: scale(1.1); }
+.body.mpcb0 { display: flex; flex-direction: column; padding: 0; overflow: hidden; } .body.mpcb0 #mpcHead { padding: 12px 14px 0; flex: none; } .mpcf { flex: 1; min-height: 0; width: 100%; border: 0; display: block; background: var(--bg); }
 .foot { display: flex; align-items: center; gap: 10px; padding: 10px 14px 12px; border-top: 1px solid var(--line); flex: none; }
 .btn { background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold); border-radius: 7px; padding: 7px 14px; font: 600 14.5px Barlow Condensed, sans-serif; cursor: pointer; white-space: nowrap; }
 .btn:hover { background: #efc265; }
@@ -529,6 +533,7 @@ const nth = (n) => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd
 function renderMplus() {
   const app = document.getElementById('app'), R = D.mplus, run = R.run, LK = D.lk || {};
   if (SAVED) { app.innerHTML = topBar() + '<div class="body mpx">' + savedView() + '</div><div class="foot"><button class="lnk" type="button" data-open="1">Open Debrief</button><span class="hint">Your key, pull by pull</span></div>'; fit(); return; }
+  if (D.mpc && D.mpc.run) { mpcRender(); return; }
   const ORD = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 2 : 1);
   const ppl = (R.people || []).slice().sort((a, b) => ORD(a) - ORD(b) || b.dps - a.dps);
   /* (Me opens on you: the character from your last logout, or whichever of your characters on this PC is in the key; ‹ › steps to anyone;
@@ -780,6 +785,21 @@ function stopRow() {
 }
 let waiting = false;
 // (the window grows to fit the card, up to most of the screen; the rest scrolls)
+// (the key, as the website's Mythic+ tab shows it (Nov 3, the studio's pop-up-only-brief.md, Flex: "I still want the pop up window"): this app's own copy of
+// the site in a frame, in card mode (src/mptab.js, MPC_ON): the summary, Your part, Where your time went, the map and the fast run, the same code as the
+// website. The frame stays while you use the header; a new key, or coming back from Saved, opens it again)
+function mpcRender() {
+  const app = document.getElementById('app'), R = D.mplus, run = R.run, LK = D.lk || {}, c0 = run.clock || {}, k = String(D.mpc.run.startByte);
+  const stat = run.left ? 'Left early' : run.timed ? 'Timed' : 'Over time';
+  const kmeta = [c0.time ? mmssP(c0.time) + (c0.par ? ' of ' + mmssP(c0.par) : '') : run.timeMs ? mmssP(run.timeMs / 1000) : '', c0.up ? 'up ' + c0.up + (c0.up === 1 ? ' level' : ' levels') : '', dayOf(D.saved && D.saved.keys && (D.saved.keys.find((x) => x.sb === D.saved.lastKey) || {}).night)].filter(Boolean).join(' · ');
+  const head = '<div class="khead"><div><button class="kbn kpick" type="button" data-mpick="1">' + esc(run.dungeon) + ' +' + run.level + caretSvg(MPICK) + '</button>' + (MPICK ? '<div class="kpdd"><div class="body0 mpx">' + savedList('mplus') + '</div></div>' : '') + '<div class="kmeta">' + kmeta + '</div></div><span class="kres' + (run.timed && !run.left ? ' k' : '') + '">' + stat + (c0.up ? ' +' + c0.up : '') + '</span></div>';
+  const fr = document.getElementById('mpcF');
+  if (fr && fr.dataset.k === k) { const t = app.querySelector('.top'), h = document.getElementById('mpcHead'); if (t) t.outerHTML = topBar('mplus'); if (h) h.innerHTML = head; return; } /* (the header only: the frame keeps its place) */
+  app.innerHTML = topBar('mplus') + '<div class="body mpx mpk mpcb0"><div id="mpcHead">' + head + '</div><iframe id="mpcF" class="mpcf" title="Your key" data-k="' + esc(k) + '" src="/app?mpcard=1"></iframe></div>';
+  const f = document.getElementById('mpcF'), short = (n) => String(n || '').split('-')[0];
+  const me = (R.people || []).find((p) => LK.me && (p.name === LK.me || short(p.name) === short(LK.me))) || (R.people || []).find((p) => (LK.mine || []).some((n) => p.name === n || short(p.name) === short(n)));
+  f.addEventListener('load', () => { try { f.contentWindow.DBF_MPCARD({ name: D.mpc.name, run: D.mpc.run, me: me ? me.name : '' }); } catch (e) { console.error(e); } }, { once: true });
+}
 function fit() { const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   /* (one column always since layout A (Nov 1): the side panel never doubles) */ void cols2;
   const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }

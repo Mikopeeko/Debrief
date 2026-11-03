@@ -552,11 +552,13 @@ function mplusShow(r, again) {
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
       if (!again) try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
         j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) }).catch(() => {}); markSaved(key); } } catch (e) { console.error(e); }
-      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved() }, sound: $('snd').checked && !again }) }).catch(() => {});
+      L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } }, sound: $('snd').checked && !again }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
   }).catch(() => {});
 }
+// (the key's place in the log, for the pop-up's Mythic+ view: the website's own Mythic+ tab reads it from this app (Nov 3, the studio's pop-up-only-brief.md))
+const mpcRun = (r) => { const o = {}; for (const k of ['boss', 'zone', 'level', 'diff', 'startMs', 'startByte', 'endByte', 'kill', 'result', 'duration', 'inst', 'timeMs', 'left']) if (r[k] != null) o[k] = r[k]; return o; };
 window.DBF_POPLAST = () => { const p = L.popLast; if (p && p.b && p.b.dungeon && L.mpLast) { window.DBF_POPKEY(L.mpLast); return true; } /* (after a key, its recap, not one of its bosses) */ if (p && p.model) { popShow(p.model, p.code || '', p.copied, null, { cut: p.cutN ? popCut() : null, cutN: p.cutN, wc: p.wc, quiet: true, force: true }); return true; } if (L.mpLast) { window.DBF_POPKEY(L.mpLast); return true; }
   /* (nothing shown since Debrief started (Nov 1, Flex: "the hotkey thing only works after a window pops up"): the newest pull or key in this log; a boss inside the newest key opens the key) */
   const b = [...(L.items || [])].reverse().find((x) => x.endByte), r = [...((L.ix && L.ix.peek && L.ix.peek().runs) || [])].reverse().find((x) => x.endByte);

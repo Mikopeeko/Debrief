@@ -206,7 +206,7 @@ async function mpRead(it, onStep) {
       text = (await WCL.translateAsync(it, ev, () => new Promise((r) => setTimeout(r, 0)))).join('\n');
     } else { /* (a key from a log on this PC or a shared night: its own lines, Nov 1) */
       if (p.on) p.on(it.shr ? 'Downloading the key…' : 'Reading the key from your log…', 0.3);
-      text = it.shr ? await shrText(it) : FH.dir ? await fhText(it.startByte, it.endByte) : await S.file.slice(it.startByte, it.endByte).text();
+      text = it.getText ? await it.getText() : it.shr ? await shrText(it) : FH.dir ? await fhText(it.startByte, it.endByte) : await S.file.slice(it.startByte, it.endByte).text();
       if (p.on) p.on('Reading the key…', 0.85);
     }
     await new Promise((r) => setTimeout(r, 30));
@@ -477,6 +477,7 @@ document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.cl
 // (the tab opens on you (the studio's item 19, Flex's plan): your character in this key, by your Home character, then your saved ones, then your
 // sign-in ones, is picked in Player; a choice you make is kept for that key in this browser)
 const mpMyNames = () => { const out = [], add = (n) => { if (n && !out.some((x) => mpLc(x) === mpLc(n))) out.push(n); };
+  try { if (MPC_ME) add(MPC_ME); } catch (e) { /* (not the PC app's pop-up: card mode below) */ }
   try { const me = typeof meOf === 'function' ? meOf() : null; if (me) add(me.name); } catch (e) { /* (no Home character) */ }
   try { for (const g of groups()) if (g.kind === 'char') add(g.name); } catch (e) { /* (no saved characters) */ }
   try { const w = WCL.HOSTED && typeof wclMe === 'function' ? wclMe() : null; for (const c of (w && w.chars) || []) add(c.n); } catch (e) { /* (not signed in) */ } return out; };
@@ -3326,3 +3327,59 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt .mpt-rwg{margin:10px 0 0;border-top:1px solid var(--line);padding-top:9px;color:#7ee08f;font-size:13px} .mpt .mpt-rwf{font-size:11px;color:#6c757e;margin:10px 0 0} .mpt .mpt-rw .mpt-rkr > b:last-child{margin-left:auto}
 .mpt .mpt-ypw{display:block;font:400 12.5px var(--body);color:#8f98a1;margin-top:2px} .mpt .mpt-ypk{display:block;font:400 11px var(--body);color:#6c757e;margin-top:1px} .mpt .mpt-ypf{font:400 11px var(--body);color:#6c757e;margin:6px 0 0}
 `;
+
+// ---------- card mode (Nov 3, the studio's pop-up-only-brief.md, Flex: "I still want the pop up window"): the PC app's pop-up shows this tab for one
+// key from the app's own copy of the site (/app?mpcard=1 in a frame). The same code as the website, so it reads the same; the page around it is hidden,
+// and the blocks go in the studio's order: the summary, Your part, Where your time went, the map (with the pull tiles and the pull's card), then You
+// against the fast run. They wrap into 1, 2 or 3 columns with the window's width. The fast run comes from debriefme.io (src/wcl.js, MPC) ----------
+let MPC_ME = '';
+const MPC_ON = location.hostname === 'localhost' && /[?&]mpcard=1\b/.test(location.search);
+const MPC_CSS = `
+html.mpcard,html.mpcard body{background:#171a22;overflow-x:hidden;border:0}
+html.mpcard .topbar,html.mpcard #bossHead,html.mpcard #strip,html.mpcard .pg-tabbar,html.mpcard #tour,html.mpcard .toast{display:none!important}
+html.mpcard #main{padding:0 14px 18px;margin:0;max-width:none}
+html.mpcard #view.mpt-page{padding:0;margin:0;max-width:none}
+html.mpcard .mpt>*:not(#mptBody){display:none}
+html.mpcard #mptBody>.mpt-chap,html.mpcard #mptBody>.mpt-jb{display:none}
+html.mpcard .mpcg{display:flex;flex-direction:column;gap:14px;padding-top:12px}
+html.mpcard .mpcg-top{columns:1;column-gap:18px}
+html.mpcard .mpcg[data-cols="2"] .mpcg-top{columns:2}
+html.mpcard .mpcg[data-cols="3"] .mpcg-top{columns:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:18px;align-items:start}
+html.mpcard .mpcg-top>.mpcb{break-inside:avoid;margin:0 0 14px;min-width:0}
+html.mpcard .mpcg>.mpcb{min-width:0}
+html.mpcard .mpcg .mpt-chap{display:block;margin:0}
+html.mpcard .mpcb-note{grid-column:1/-1;margin:0;color:#8f98a1;font:400 13px var(--body)}
+`;
+const mpcCols = (w) => (w >= 960 ? 3 : w >= 600 ? 2 : 1);
+function mpcLay() {
+  const b = document.getElementById('mptBody'), c1 = b && b.querySelector(':scope > #mptC1'); if (!c1 || c1.dataset.mpcDone) return; c1.dataset.mpcDone = '1'; /* (once per draw: moving the blocks is a change too) */
+  const blk = (cls, nodes) => { nodes = nodes.filter(Boolean); if (!nodes.length) return null; const d = document.createElement('div'); d.className = 'mpcb ' + cls; for (const n of nodes) d.appendChild(n); return d; };
+  const br = c1.querySelector('.mpt-br'), fxH = br && br.querySelector(':scope > .mpt-chk'), fx = br && br.querySelector(':scope > .mpt-fx'), rest = br ? [...br.children].filter((n) => n !== fxH && n !== fx) : [];
+  const g = document.createElement('div'); g.className = 'mpcg'; g.dataset.cols = String(mpcCols(document.documentElement.clientWidth)); /* (the window's width: the pop-up's) */
+  const fo = MP.fastOf && MP.item && MP.fastOf.k === mpK(MP.item) ? MP.fastOf : null; /* (no fast run: said plainly, never guessed) */
+  const note = fo && !fo.wait && !fo.R ? '<p class="mpcb-note">' + (!fo.list || fo.list.error ? 'Couldn\'t reach debriefme.io for a fast run, so the comparisons with one are left out. Check your internet, then open the key again.' : 'No public fast run of this dungeon and level to compare with yet.') + '</p>' : '';
+  /* (the three short blocks flow in columns, top to bottom then across, so nothing leaves a gap; the map (its pull tiles, the pull's card and the lanes
+     against the fast run inside) takes the whole width under them) */
+  const top = document.createElement('div'); top.className = 'mpcg-top';
+  for (const x of [blk('mpcb-sum', [c1.querySelector('.mpt-ksum')]), blk('mpcb-part', [c1.querySelector('.mpt-bl')]), blk('mpcb-went', [fxH, fx].concat(rest))]) if (x) top.appendChild(x);
+  g.appendChild(top); { const m = blk('mpcb-map', [b.querySelector(':scope > #mptCM')]); if (m) g.appendChild(m); }
+  if (note) g.insertAdjacentHTML('afterbegin', note);
+  b.prepend(g);
+  try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ }
+}
+if (MPC_ON) {
+  document.documentElement.classList.add('mpcard');
+  try { store.set(TOUR_KEY, '1'); } catch (e) { /* (the tour stays shut anyway: its box is hidden) */ }
+  { const st = document.createElement('style'); st.id = 'mpc-css'; st.textContent = MPC_CSS; document.head.appendChild(st); }
+  // (each draw of the tab is laid out at once, before it's painted; the columns follow the window while it's dragged)
+  new MutationObserver(() => { try { mpcLay(); } catch (e) { console.error(e); } }).observe(document.getElementById('main'), { childList: true, subtree: true });
+  let rz = 0; window.addEventListener('resize', () => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { const g = document.querySelector('#mptBody > .mpcg'); if (g) { const c = String(mpcCols(document.documentElement.clientWidth)); if (g.dataset.cols !== c) g.dataset.cols = c; } }); });
+  // (the app hands in the key: its log's name and where the key is in it; its lines are read from the app, 16 MB at a time)
+  window.DBF_MPCARD = (o) => {
+    const it = mpLocalKeys([Object.assign({}, o.run, { kind: 'run' })])[0];
+    MPC_ME = o.me || ''; if (o.me && it) { MP.ppK = mpK(it); MP.pp = o.me; } /* (Your part opens on you, as Your part: the app knows who you are) */
+    if (!it) { $('#main').innerHTML = '<div class="mpt-err"><b>Couldn\'t read this key.</b> It was too short to read.</div>'; return; }
+    it.getText = async () => { const parts = [], dec = new TextDecoder(); for (let at = it.startByte; at < it.endByte;) { const r = await fetch('/read?name=' + encodeURIComponent(o.name || '') + '&from=' + at + '&to=' + Math.min(it.endByte, at + 16 * 1048576)); if (!r.ok) throw new Error('Couldn\'t read the log.'); const buf = new Uint8Array(await r.arrayBuffer()); if (!buf.length) break; parts.push(dec.decode(buf, { stream: true })); at += buf.length; } parts.push(dec.decode()); return parts.join(''); };
+    mpOpen(it);
+  };
+}

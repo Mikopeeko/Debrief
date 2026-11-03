@@ -16,7 +16,10 @@ function parseLink(s) {
 // Hosted (the Cloudflare Worker holds the API key): plain GET endpoints, no credentials in the browser. The desktop app
 // isn't served by the site, so it sets WLA_API to the site's address and asks there.
 const HOSTED = typeof window !== 'undefined' && !!window.WLA_HOSTED;
-const API_BASE = (typeof window !== 'undefined' && window.WLA_API) || '';
+// (the PC app's pop-up shows the Mythic+ tab from the app's own copy of the site (/app?mpcard=1, Nov 3): its fast run comes from debriefme.io, which
+// holds the Warcraft Logs key; nothing else there goes online)
+const MPC = typeof location !== 'undefined' && location.hostname === 'localhost' && /[?&]mpcard=1\b/.test(location.search), HOSTED_FAST = HOSTED || MPC;
+const API_BASE = (typeof window !== 'undefined' && window.WLA_API) || (MPC ? 'https://debriefme.io' : '');
 // A dropped connection, a reply cut off halfway, or the site being busy (5xx, 429) is tried again, up to 4 tries. The
 // retries skip the browser's own saved copy (cache: 'reload'): a broken copy kept by one browser (it happened in Chrome
 // while Edge was fine) would otherwise fail the same way every time. The message keeps the browser's own reason.
@@ -235,7 +238,7 @@ async function topSpec(creds, v) {
   return topSpecOf((q, vars) => gql(creds, q, vars), v);
 }
 async function mpFast(creds, v) {
-  if (HOSTED) return api('/api/mpfast?e=' + v.e + '&l=' + v.l + '&v=3'); /* (v=2: the 20 fastest and their middle time, Nov 1; v=3: healers' DPS too, Nov 2) */
+  if (HOSTED_FAST) return api('/api/mpfast?e=' + v.e + '&l=' + v.l + '&v=3'); /* (v=2: the 20 fastest and their middle time, Nov 1; v=3: healers' DPS too, Nov 2) */
   return mpFastOf((q, vars) => gql(creds, q, vars), v);
 }
 async function topKills(creds, v) {
@@ -263,7 +266,7 @@ async function rateRecs(v) { if (!HOSTED) return null; return api('/api/rates?e=
 
 async function loadReport(creds, code, live) {
   let rep;
-  if (HOSTED) rep = await api('/api/report?code=' + encodeURIComponent(code) + (live ? '&live=1' : '')); // (live: the site keeps it 20 seconds, not 2 minutes)
+  if (HOSTED_FAST) rep = await api('/api/report?code=' + encodeURIComponent(code) + (live ? '&live=1' : '')); // (live: the site keeps it 20 seconds, not 2 minutes)
   else { const d = await gql(creds, REPORT_Q, { code }); rep = d && d.reportData && d.reportData.report; }
   if (!rep) throw new Error('Report ' + code + ' was not found or is private.');
   const actors = new Map(rep.masterData.actors.map((a) => [a.id, a]));
@@ -469,7 +472,7 @@ async function fetchSlice(creds, w, s, e, last, onPage) {
   while (s != null && s < e) {
     let ev;
     // (/api/fightlog, not /api/events: ad blockers block addresses ending in /api/events as tracking)
-    if (HOSTED) ev = evOf(await api('/api/fightlog?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
+    if (HOSTED_FAST) ev = evOf(await api('/api/fightlog?code=' + encodeURIComponent(w.code) + '&fight=' + w.fight + '&s=' + s + '&e=' + e));
     else { const d = await gql(creds, EVENTS_Q, { code: w.code, fid: [w.fight], s, e }); ev = d.reportData.report.events; }
     const data = typeof ev.data === 'string' ? JSON.parse(ev.data) : ev.data;
     // slice ends overlap by a millisecond; keep each event in exactly one slice
