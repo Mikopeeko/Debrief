@@ -20,19 +20,24 @@ body.locked .top { app-region: no-drag; -webkit-app-region: no-drag; }
 html.pv { zoom: .72; } html.pv body { border-radius: 0; } html.pv .top { app-region: no-drag; -webkit-app-region: no-drag; } html.pv .top .x { display: none !important; } /* (a picture of the card: nothing to close) */
 .top .gear { margin-left: auto; } .top .gear + .x { margin-left: 0; } .top .gear svg { width: 15px; height: 15px; display: block; margin: auto; fill: none; stroke: currentColor; stroke-width: 1.6; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 Barlow Condensed, 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
-body { border: 1px solid var(--line2); border-radius: 10px; }
+/* (the window is the frame (Nov 3, the studio's popup-shape-brief.md): Windows 11 rounds its corners and draws its 1 px line; on Windows 10 the page draws the line) */
+body.w10::after { content: ""; position: fixed; inset: 0; border: 1px solid var(--line2); pointer-events: none; z-index: 50; }
+/* (invisible resize edges: pressing one starts a real Windows resize; the header still moves the window) */
+.rz { position: fixed; z-index: 60; app-region: no-drag; -webkit-app-region: no-drag; }
+.rz.n, .rz.s { left: 12px; right: 12px; height: 6px; cursor: ns-resize; } .rz.n { top: 0; } .rz.s { bottom: 0; }
+.rz.w, .rz.e { top: 12px; bottom: 12px; width: 6px; cursor: ew-resize; } .rz.w { left: 0; } .rz.e { right: 0; }
+.rz.nw, .rz.ne, .rz.sw, .rz.se { width: 12px; height: 12px; } .rz.nw { left: 0; top: 0; cursor: nwse-resize; } .rz.se { right: 0; bottom: 0; cursor: nwse-resize; } .rz.ne { right: 0; top: 0; cursor: nesw-resize; } .rz.sw { left: 0; bottom: 0; cursor: nesw-resize; }
+body.locked .rz, html.pv .rz { display: none; }
 /* (a kill (Oct 25, the Design studio's round 3, like the site's boss banner): the edge goes gold with a glow for 1.8 s, then a 1px gold edge;
    the raid lead's first line a size up. Nothing moves under reduced motion) */
-body.is-kill { border-color: #e6b450; box-shadow: inset 0 0 0 1px rgba(230,180,80,.6), inset 0 0 26px rgba(230,180,80,.14); } /* (settles to a full gold edge (the studio's check, Oct 25)) */
-body.is-kill.k-anim { animation: killGlow 1.8s ease-out both; }
 @keyframes killGlow { 0% { box-shadow: inset 0 0 0 2px rgba(230,180,80,.95), inset 0 0 70px rgba(230,180,80,.34); } 100% { box-shadow: inset 0 0 0 1px rgba(230,180,80,.6), inset 0 0 26px rgba(230,180,80,.14); } }
 body.is-kill .kyou .kv { font-size: 17px; }
 @media (prefers-reduced-motion: reduce) { body.k-anim { animation: none !important; } .mini { animation: none !important; } }
 .wrap { display: flex; flex-direction: column; max-height: 100vh; height: 100vh; } /* (layout A: a full-height side panel; the card scrolls inside (Nov 1)) */
-.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); flex: none; app-region: drag; -webkit-app-region: drag; } /* (drag the header to move the window; dropped on the screen's left or right edge it docks again (Nov 3)) */
+.top { display: flex; align-items: center; gap: 8px; padding: 10px 10px 9px 14px; border-bottom: 1px solid var(--line); flex: none; app-region: drag; -webkit-app-region: drag; } /* (drag the header to move the window (Nov 3)) */
 .top button, .top a, .top input, .top select { app-region: no-drag; -webkit-app-region: no-drag; }
 /* (the raid card's sections wrap with the window's width (Nov 3): one column on the side panel, two or three when it's dragged wider; top to bottom, then across) */
-.body:not(.mpx) .kgrid.one > .kL { columns: 260px 3; column-gap: 22px; } .body:not(.mpx) .kgrid.one > .kL > * { break-inside: avoid; }
+.body:not(.mpx) .kgrid.one > .kL { columns: 420px 3; column-gap: 22px; } .body:not(.mpx) .kgrid.one > .kL > * { break-inside: avoid; }
 .top svg { width: 17px; height: 19px; flex: none; }
 .top b { font: 700 17px Barlow Condensed, sans-serif; }
 .top .bt { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -153,7 +158,7 @@ body.isMini { border-color: rgba(230,180,80,.85); box-shadow: inset 0 0 0 1px rg
 /* (the same type as the card in WoW (Oct 24, the user: "THEY ALL LOOK THE SAME"): Barlow Condensed (Oct 25: the site font), one size up, nothing under 12; the raid lead box's gold edge) */
 html, body { font-weight: 500; } .body b { font-weight: 600; } .kyou { border-left: 3px solid var(--gold); }
 .kgr { display: flex; gap: 14px; align-items: center; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 0 0 10px; } .kgr b { font: 700 31px Barlow Condensed, sans-serif; line-height: 1; min-width: 26px; } .kgr small, .kch small { display: block; color: var(--faint); font-weight: 700; font-size: 12px; letter-spacing: .04em; } .kgr span { color: var(--soft); font-size: 14px; }
-.kch { position: relative; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch em { position: absolute; right: 12px; top: 8px; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 12.5px; } .kL .kc, .kR .kc { background: none; border: 0; border-radius: 0; margin: 0 0 14px; } .kL .kc > .kh, .kR .kc > .kh { padding: 0 0 4px; } .kL .kc > .kh b, .kR .kc > .kh b { font: 700 13.5px Barlow Condensed, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .kL .kc > .kb, .kR .kc > .kb { padding: 0; }
+.kch { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 8px; margin: 0 0 10px; } .kch > small { flex: 1 1 auto; min-width: 0; } .kch > svg { flex: 0 0 100%; } .kch em { margin-left: auto; font-style: normal; color: #5fdc7a; font-weight: 700; font-size: 12.5px; } .kL .kc, .kR .kc { background: none; border: 0; border-radius: 0; margin: 0 0 14px; } .kL .kc > .kh, .kR .kc > .kh { padding: 0 0 4px; } .kL .kc > .kh b, .kR .kc > .kh b { font: 700 13.5px Barlow Condensed, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); } .kL .kc > .kb, .kR .kc > .kb { padding: 0; }
 .kch svg { display: block; width: 100%; height: auto; margin-top: 6px; } .kchs { margin: 0 0 10px; } .kchs .kch { margin: 0; } .kchs .kch + .kch { margin-top: 10px; } .kchs.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; } .kchs.two .kch + .kch { margin-top: 0; } .kch .kno { margin: 6px 0 0; } .kgrid.two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } /* (two columns when it's long (Oct 24)) */
 .kl { color: var(--gold); font: 700 12.5px/1 Barlow Condensed, sans-serif; letter-spacing: .05em; margin: 2px 0 7px; } .kl.mut { color: var(--muted); margin-top: 12px; }
 .khd { font: 600 17.5px/1.35 Barlow Condensed, sans-serif; margin: 0 0 12px; }
@@ -809,11 +814,21 @@ function mpcRender() {
   app.innerHTML = topBar('mplus') + '<div class="body mpx mpk mpcb0"><div id="mpcHead">' + head + '</div><iframe id="mpcF" class="mpcf" title="Your key" data-k="' + esc(k) + '" src="/app?mpcard=1"></iframe></div>';
   const f = document.getElementById('mpcF'), short = (n) => String(n || '').split('-')[0];
   const me = (R.people || []).find((p) => LK.me && (p.name === LK.me || short(p.name) === short(LK.me))) || (R.people || []).find((p) => (LK.mine || []).some((n) => p.name === n || short(p.name) === short(n)));
+  setTimeout(fitNow, 30);
   f.addEventListener('load', () => { try { f.contentWindow.DBF_MPCARD({ name: D.mpc.name, run: D.mpc.run, me: me ? me.name : '' }); } catch (e) { console.error(e); } }, { once: true });
 }
 function fit() { try { bossFirstFix(); applyLook(); } catch (e) { /* (as drawn) */ } const bd0 = document.querySelector('.body'); if (bd0) bd0.onscroll = () => bd0.classList.toggle('scrolled', bd0.scrollTop > 140); /* (the slim bar (Nov 1)) */ requestAnimationFrame(() => { const a = document.getElementById('app'), m = a.querySelector('.mini'), t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot');
   /* (one column always since layout A (Nov 1): the side panel never doubles) */ void cols2;
-  const want = m ? m.offsetHeight + 2 : (t ? t.offsetHeight : 0) + (b ? b.scrollHeight : 0) + (f ? f.offsetHeight : 0) + 2; post('h:' + Math.ceil(want)); }); }
+  void m; void t; void b; void f; post('h:' + cardH() + ':' + document.documentElement.clientWidth); }); setTimeout(fitNow, 60); }
+// (the same measure without waiting for a frame: a window not shown yet gets no frames, and the app sizes it before showing it (Nov 3))
+function fitNow() { const a = document.getElementById('app'); if (!a) return; if (D && D.mplus && D.mpc) { post('h:99999:' + document.documentElement.clientWidth); return; } /* (a key: two columns at the cap, it scrolls) */
+  post('h:' + cardH() + ':' + document.documentElement.clientWidth); }
+// (the card's own height: the header, what's in the body down to its last line, and the footer; never the empty space of a taller window)
+function cardH() { const a = document.getElementById('app'); if (!a) return 0; const m = a.querySelector('.mini'); if (m) return m.offsetHeight + 2;
+  const t = a.querySelector('.top'), b = a.querySelector('.body'), f = a.querySelector('.foot'), z = parseFloat(a.style.zoom) || 1; let inner = 0;
+  if (b) { const br = b.getBoundingClientRect(); let bot = 0; for (const c of b.children) { const r = c.getBoundingClientRect(); if (r.height) bot = Math.max(bot, r.bottom - br.top + b.scrollTop * z + (parseFloat(getComputedStyle(c).marginBottom) || 0) * z); } inner = bot + (parseFloat(getComputedStyle(b).paddingBottom) || 0) * z; }
+  return Math.ceil(((t ? t.offsetHeight : 0) + (f ? f.offsetHeight : 0) + 2) * z + inner); }
+window.DBF_FITH = cardH;
 // (two columns when the card is long (Oct 24), like the card in WoW: measured at one column's width; when it's taller than the window can
 // grow (most of the screen), the sections from the one that best balances the two sides move to a right column and the window doubles)
 let COLS = 1;
@@ -894,7 +909,7 @@ function applyLook() { const S = SETS() || {}, r = document.documentElement.styl
   b.classList.toggle('cb', !!S.colorblind); b.classList.toggle('f-plain', S.font === 'plain'); b.classList.toggle('st-flat', S.style === 'flat'); b.classList.toggle('st-glass', S.style === 'glass'); b.classList.toggle('locked', !!S.lock);
   const a = document.getElementById('app'), z = (S.size || 1) * (PV ? 0.72 : 1); if (a) { a.style.zoom = S.size && S.size !== 1 ? String(S.size) : ''; a.style.height = a.style.maxHeight = z !== 1 ? 'calc(100vh / ' + z + ')' : ''; } } /* (still the window's full height at any size) */
 // (where it sits, for the window itself: the side, the screen, locked, how solid, and a Reset)
-function sendPlace() { const S = SETS(); if (!S) return; post('set:' + JSON.stringify({ side: S.side || 'right', screen: S.screen || 'main', lock: !!S.lock, bg: S.bg || 0.97, resetAt: S.resetAt || 0 })); }
+function sendPlace() { const S = SETS(); if (!S) return; post('set:' + JSON.stringify({ screen: S.screen || 'main', lock: !!S.lock, size: S.size || 1, resetAt: S.resetAt || 0 })); }
 window.DBF_SETS = () => { if (D) D.lk = lkWith(LK0); applyLook(); if (D) render(); sendPlace(); };
 window.DBF_PVVIEW = (v) => { if (!D || D.mplus) return; VIEW = v === 'raid' ? 'raid' : 'me'; render(); }; /* (the preview shows the Raid view while its page is open) */
 window.addEventListener('storage', (e) => { if (e.key === SETK) window.DBF_SETS(); });
@@ -1006,8 +1021,10 @@ function ttShow(el, ev) {
 document.addEventListener('mouseover', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el) ttShow(el, e); });
 document.addEventListener('mouseout', (e) => { const el = e.target.closest ? e.target.closest('.ic[data-sid]') : null; if (el && !(e.relatedTarget && el.contains(e.relatedTarget))) { const b = document.getElementById('ktt'); if (b) { b.hidden = true; b.dataset.for = ''; } } });
 window.DBF_SHOW = take; // (tests)
-if (wv) wv.addEventListener('message', (e) => { if (typeof e.data === 'string' && e.data.startsWith('side:')) { const S = SETS(); if (S) { S.side = e.data.slice(5) === 'left' ? 'left' : 'right'; try { localStorage.setItem(SETK, JSON.stringify(S)); } catch (x) { /* kept */ } } return; } take(e.data); });
+if (wv) wv.addEventListener('message', (e) => { if (e.data === 'refit') { fitNow(); return; } if (e.data === 'frame:w10') { document.body.classList.add('w10'); return; } if (e.data === 'frame:w11') return; if (typeof e.data === 'string' && e.data.startsWith('side:')) { const S = SETS(); if (S) { S.side = e.data.slice(5) === 'left' ? 'left' : 'right'; try { localStorage.setItem(SETK, JSON.stringify(S)); } catch (x) { /* kept */ } } return; } take(e.data); });
 post('ready'); sendPlace();
+let RZT = 0; window.addEventListener('resize', () => { clearTimeout(RZT); RZT = setTimeout(fitNow, 40); }); /* (the window changed width: the card's height again, for Fit to the pull) */
+for (const [k, ht] of [['n', 12], ['s', 15], ['w', 10], ['e', 11], ['nw', 13], ['ne', 14], ['sw', 16], ['se', 17]]) { const z = document.createElement('div'); z.className = 'rz ' + k; z.addEventListener('mousedown', (e) => { if (e.button) return; e.preventDefault(); post('rs:' + ht); }); document.body.appendChild(z); }
 })();
 </script>
 </body>

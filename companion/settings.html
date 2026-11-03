@@ -175,10 +175,9 @@ function pageHtml() {
       row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight)) +
       row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose)) +
       '<div class="lab">Where it sits</div>' +
-      row('Side', 'It snaps to this edge, full height. Drag a corner to make it any size.', seg('side', [['right', 'Right'], ['left', 'Left']], S.side)) +
       (SETUP && SETUP.screens >= 2 ? row('Screen', 'Your second screen keeps it off the game.', seg('screen', [['main', 'Main screen'], ['second', 'Second screen']], S.screen)) : '') +
       row('Lock in place', 'It can\'t be moved or resized.', tg('lock', S.lock)) +
-      row('Size and place', 'Back to the ' + (S.side === 'left' ? 'left' : 'right') + ' edge, full height.', '<button type="button" class="btn" data-act="resetPlace">Reset</button>') + '</section>';
+      row('Size and place', 'Back to fitting each pull, in the middle of the screen.', '<button type="button" class="btn" data-act="resetPlace">Reset</button>') + '</section>';
   }
   if (PAGE === 'card') {
     const n = nOn(CARD), heal = SETUP && SETUP.role === 'healer', gk = heal ? 'goalHps' : 'goalDps', gv = S[gk] || 0;
