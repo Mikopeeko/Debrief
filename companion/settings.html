@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Debrief settings</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- The settings window (Nov 3, the studio's settings-brief.md, Flex: "i want it to look nicer and be more organized", then "Yes, send it"): every
+     setting of the recap pop-up, on this PC (the addon in WoW only keeps the combat log on now). Saves as you go, in this app's own storage
+     ('dbf-set'), which the pop-up reads; the preview on the right is the pop-up itself, drawn by popup.html -->
+<style>
+:root { --page: #0b0d10; --win: #121418; --panel: #15181d; --raised: #1b1f25; --line: #232830; --line2: #2a2f38; --text: #e8eaed; --muted: #9aa3ac; --faint: #6b737c;
+  --gold: #f2c46b; --green: #7ee08f; --amber: #f2c46b; --red: #ff8f87; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--win); color: var(--text); font: 13px 'Barlow Condensed', 'Segoe UI', system-ui, sans-serif; overflow: hidden; }
+body { display: flex; flex-direction: column; border: 1px solid var(--line2); }
+button { font: inherit; color: inherit; }
+.tb { height: 42px; flex: none; display: flex; align-items: center; gap: 9px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--line); app-region: drag; -webkit-app-region: drag; user-select: none; }
+.logo { width: 22px; height: 22px; flex: none; } .logo svg { width: 22px; height: 22px; display: block; }
+.tb .t { font: 700 15px 'Barlow Condensed', sans-serif; letter-spacing: .2px; }
+.tb .s { color: var(--faint); font-size: 12.5px; }
+.tb .x { margin-left: auto; app-region: no-drag; -webkit-app-region: no-drag; background: none; border: 0; color: var(--muted); font-size: 17px; width: 30px; height: 30px; border-radius: 4px; cursor: pointer; }
+.tb .x:hover { background: var(--raised); color: var(--text); }
+.main { flex: 1; display: flex; min-height: 0; }
+/* the rail */
+.rail { width: 188px; flex: none; border-right: 1px solid var(--line); padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+.rail a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 4px; color: var(--muted); font: 600 13.5px 'Barlow Condensed', sans-serif; text-decoration: none; cursor: pointer; user-select: none; }
+.rail a svg { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.rail a:hover { background: var(--raised); color: var(--text); }
+.rail a.on { background: var(--raised); color: var(--gold); }
+.rail a .n { margin-left: auto; font: 600 11.5px 'Barlow Condensed', sans-serif; color: var(--faint); }
+.rail a .n.ok { color: var(--green); } .rail a .n.am { color: var(--amber); }
+.rail .foot { margin-top: auto; padding: 8px 10px; color: var(--faint); font-size: 12px; line-height: 1.5; border-top: 1px solid var(--line); }
+.rail .foot b { color: var(--muted); font-weight: 600; }
+/* the page */
+.mid { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 22px 18px; scrollbar-width: thin; scrollbar-color: #2a2f38 transparent; }
+.pg { display: none; max-width: 640px; } .pg.on { display: block; }
+.h1 { display: flex; align-items: baseline; gap: 10px; }
+.h1 h1 { margin: 0; font: 700 18px 'Barlow Condensed', sans-serif; }
+.h1 .mono { color: var(--muted); font-size: 12px; }
+.h1 .rs, .h1 .pvl { margin-left: auto; }
+.h1 .rs + .pvl { margin-left: 14px; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 2px 0 10px; }
+.lab { font: 600 11.5px 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--faint); margin: 14px 0 2px; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 5px 8px; margin: 0 -8px; border-radius: 4px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.row:hover { background: var(--raised); }
+.row.click { cursor: pointer; user-select: none; }
+.row .nm { font: 600 13.5px 'Barlow Condensed', sans-serif; }
+.row .ds { color: var(--muted); font-size: 12px; margin-top: 1px; }
+.row .tx { flex: 1; min-width: 0; }
+.row .ct { display: flex; align-items: center; gap: 6px; flex: none; color: var(--muted); font: 600 12.5px 'Barlow Condensed', sans-serif; font-variant-numeric: tabular-nums; }
+.row.off .nm { color: var(--faint); text-decoration: line-through; }
+.row.off .ds { color: #555c64; }
+.row.am { background: rgba(242,196,107,.05); }
+.eye { width: 18px; height: 18px; flex: none; stroke: var(--muted); fill: none; stroke-width: 1.6; }
+.row:hover .eye { stroke: var(--gold); }
+.row.off .eye { stroke: #555c64; }
+.tg { width: 30px; height: 17px; border-radius: 9px; background: #2a2f38; position: relative; flex: none; cursor: pointer; border: 0; padding: 0; }
+.tg::after { content: ""; position: absolute; left: 2px; top: 2px; width: 13px; height: 13px; border-radius: 50%; background: #7b838c; transition: left .15s; }
+.tg.on { background: rgba(126,224,143,.28); }
+.tg.on::after { left: 15px; background: var(--green); }
+.st { display: flex; align-items: center; gap: 2px; }
+.st button { background: none; border: 0; color: var(--faint); padding: 0 4px; cursor: pointer; font-size: 14px; line-height: 1; }
+.st button:hover { color: var(--text); } .st button:disabled { opacity: .3; cursor: default; }
+.st b { min-width: 30px; text-align: center; color: var(--text); font-weight: 600; }
+.row.off .st { opacity: .35; }
+.seg { display: flex; gap: 14px; flex: none; }
+.seg button { background: none; border: 0; color: var(--muted); font: 600 13px 'Barlow Condensed', sans-serif; padding: 3px 0; cursor: pointer; }
+.seg button:hover { color: var(--text); }
+.seg button.on { color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); }
+.sel { min-width: 140px; display: flex; justify-content: space-between; gap: 8px; border: 0; border-bottom: 1px solid var(--line2); padding: 2px 0; background: none; color: var(--text); font: 600 13px 'Barlow Condensed', sans-serif; cursor: pointer; position: relative; flex: none; }
+.sel em { font-style: normal; color: var(--faint); }
+.dd { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; min-width: 180px; background: var(--raised); border: 1px solid var(--line2); border-radius: 4px; padding: 4px; box-shadow: 0 10px 28px rgba(0,0,0,.5); }
+.dd button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 6px 8px; border-radius: 3px; font: 600 13px 'Barlow Condensed', sans-serif; cursor: pointer; color: var(--text); }
+.dd button:hover, .dd button.on { background: #242932; }
+.kc { height: 24px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border: 1px solid var(--line2); border-radius: 4px; color: var(--text); font: 600 12.5px 'Barlow Condensed', sans-serif; flex: none; }
+.kc kbd { font: inherit; padding: 0 4px; border-radius: 3px; background: #20242b; }
+.kc.wait { border-color: var(--gold); color: var(--gold); }
+.btn { height: 28px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid var(--line2); border-radius: 4px; color: var(--text); font: 600 12.5px 'Barlow Condensed', sans-serif; background: transparent; cursor: pointer; flex: none; }
+.btn:hover { border-color: #4a505a; background: var(--raised); }
+.lk { color: var(--gold); font: 600 12.5px 'Barlow Condensed', sans-serif; background: none; border: 0; padding: 0; cursor: pointer; flex: none; }
+.lk:hover { text-decoration: underline; }
+.msg { color: var(--amber); font-size: 12px; margin-top: 2px; }
+.sl { display: flex; align-items: center; gap: 10px; flex: none; }
+.sl input { width: 150px; accent-color: #d7dbe0; height: 3px; cursor: pointer; }
+.sl span { min-width: 38px; text-align: right; color: var(--text); font-weight: 600; }
+.sw { display: flex; gap: 8px; flex: none; }
+.sw button { width: 22px; height: 22px; border-radius: 4px; border: 1px solid rgba(255,255,255,.1); cursor: pointer; padding: 0; }
+.sw button.on { outline: 2px solid var(--text); outline-offset: 2px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--green); margin-left: 2px; }
+.dot.am { background: var(--amber); } .dot.no { background: #555c64; }
+.path { color: var(--muted); font-size: 12px; word-break: break-all; }
+/* the preview */
+.pv { width: 330px; flex: none; border-left: 1px solid var(--line); padding: 14px 0 0; display: flex; flex-direction: column; background: #0f1114; min-height: 0; }
+.pv .lab { margin: 0 14px 8px; }
+.pv .lab em { font-style: normal; color: var(--faint); text-transform: none; letter-spacing: 0; font-weight: 500; margin-left: 4px; }
+.pv iframe { flex: 1; min-height: 0; width: 100%; border: 0; display: block; background: #0f1114; }
+.pv .cap { color: var(--faint); font-size: 12px; margin: 8px 14px 10px; flex: none; }
+.pvl { display: none; }
+/* (below about 1000 px the preview waits behind a link; never a sideways scroll) */
+@media (max-width: 999px) {
+  .pv { display: none; position: absolute; right: 0; top: 42px; bottom: 0; z-index: 6; box-shadow: -14px 0 30px rgba(0,0,0,.5); }
+  body.pvopen .pv { display: flex; }
+  .pvl { display: inline; }
+}
+</style></head><body>
+<div class="tb"><span class="logo" id="logo"></span><span class="t">Debrief settings</span><span class="s">Saves as you go</span><button class="x" type="button" id="close" title="Close">✕</button></div>
+<div class="main">
+  <nav class="rail" id="rail"></nav>
+  <div class="mid" id="mid"></div>
+  <aside class="pv" id="pv"><div class="lab">Preview<em id="pvWhat">a sample pull</em></div><iframe id="pvF" title="Preview" src="/popup?preview=1"></iframe><div class="cap" id="pvCap">Hidden rows drop out of the preview straight away.</div></aside>
+</div>
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="pm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4cf"/><stop offset=".5" stop-color="#d9a441"/><stop offset="1" stop-color="#7a4f14"/></linearGradient><linearGradient id="pe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8ffd2"/><stop offset="1" stop-color="#178a3c"/></linearGradient></defs><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#pm)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="#161a25"/><path fill-rule="evenodd" fill="url(#pm)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#pe)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; /* (the pop-up's own logo) */
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const wv = window.chrome && window.chrome.webview;
+const post = (m) => { try { if (wv) wv.postMessage(m); } catch (e) { /* not in the app */ } };
+async function j(url, opt) { const r = await fetch(url, opt); const x = await r.json().catch(() => ({})); if (!r.ok) throw new Error(x.error || ('HTTP ' + r.status)); return x; }
+const postJ = (url, body) => j(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+
+// ---------- the settings: one object in this app's storage, shared with the pop-up and the Companion window ----------
+const KEY = 'dbf-set';
+// (the three starts, as the addon's PRESETS were (Oct 24), now with every row honest: Simple hides what its short card never showed)
+const ALL = ['tile', 'rotation', 'boss', 'surv', 'cons', 'next', 'trend', 'chips', 'died', 'chartLine', 'chartNight', 'grade', 'mechs', 'coach', 'right', 'cdeaths', 'cavoid', 'rdefs', 'rcons'];
+const PRE = {
+  simple: { off: ['rotation', 'boss', 'surv', 'cons', 'trend', 'chips', 'died', 'chartLine', 'chartNight', 'grade', 'mechs', 'right', 'cdeaths', 'cavoid', 'rdefs', 'rcons'], max: { maxSlips: 1, maxBoss: 1, maxRaid: 1, maxDied: 3, maxMech: 3 }, openSecs: true },
+  standard: { off: ['chartLine', 'chartNight', 'grade', 'mechs'], max: { maxSlips: 3, maxBoss: 3, maxRaid: 3, maxDied: 3, maxMech: 6 }, openSecs: false },
+  detailed: { off: [], max: { maxSlips: 8, maxBoss: 7, maxRaid: 5, maxDied: 6, maxMech: 12 }, openSecs: true },
+};
+const showOf = (p) => { const o = {}; for (const k of ALL) o[k] = !PRE[p].off.includes(k); return o; };
+const DEF = () => ({ v: 1, preset: 'standard', show: showOf('standard'), max: Object.assign({}, PRE.standard.max), openSecs: false, onlyBad: false, bossFirst: false, goalHps: 0, goalDps: 0,
+  hideFight: true, autoClose: 0, side: 'right', screen: 'main', lock: false, accent: 'class', colorblind: false, style: 'panels', font: 'debrief', size: 1, bg: 0.97, me: '' });
+const load = () => { let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { s = null; } const d = DEF(); if (!s) return d; s.show = Object.assign(d.show, s.show || {}); s.max = Object.assign(d.max, s.max || {}); return Object.assign(d, s); };
+let S = load();
+const sw = (k, def) => { try { const v = localStorage.getItem('dbf-sw-' + k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }; /* (Pop up and Chime stay where the Companion window keeps them) */
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* full: kept for this window */ } pvApply(); draw(); }
+const changed = () => { const p = PRE[S.preset] || PRE.standard, sh = showOf(S.preset in PRE ? S.preset : 'standard'); return ALL.some((k) => !!S.show[k] !== sh[k]) || Object.keys(p.max).some((k) => S.max[k] !== p.max[k]) || !!S.openSecs !== !!p.openSecs; };
+
+// ---------- the rows ----------
+const EYE = '<svg class="eye" viewBox="0 0 20 20" aria-hidden="true"><path d="M1.5 10S5 4 10 4s8.5 6 8.5 6-3.5 6-8.5 6S1.5 10 1.5 10z"/><circle cx="10" cy="10" r="2.6"/></svg>';
+const EYEX = '<svg class="eye" viewBox="0 0 20 20" aria-hidden="true"><path d="M1.5 10S5 4 10 4s8.5 6 8.5 6-3.5 6-8.5 6S1.5 10 1.5 10z"/><path d="M3 17L17 3"/></svg>';
+// [id, name, description, show keys, count key, min, max]
+const CARD = [['num', 'Your number', '', ['tile']], ['rot', 'Rotation tips', '', ['rotation'], 'maxSlips', 1, 8], ['boss', 'Boss mistakes', 'Your mistakes, avoidable damage, kicks and dispels.', ['boss'], 'maxBoss', 1, 7],
+  ['surv', 'Survival', 'Your defensives, Healthstone and potion.', ['surv', 'cons']], ['next', 'Next pull tip', '', ['next']], ['trend', 'Worse and better', 'Than your last pull.', ['trend']],
+  ['chips', 'Your last pulls', 'Along the top. Click one to look at it again.', ['chips']], ['died', 'Who died', 'Who died first, and to what.', ['died'], 'maxDied', 1, 8],
+  ['chart', 'Charts', 'Your numbers and how far, pull by pull tonight.', ['chartLine', 'chartNight']], ['grade', 'Report card grade', '', ['grade']], ['mech', 'Boss mechanics', 'How each mechanic went, worst first.', ['mechs'], 'maxMech', 1, 16]];
+const RAID = [['coach', 'Raid lead box', 'The headline, what wiped us and the other big mistakes.', ['coach'], 'maxRaid', 1, 5], ['right', 'What went right', '', ['right']], ['cdeaths', 'Deaths', '', ['cdeaths']],
+  ['cavoid', 'Avoidable damage', '', ['cavoid']], ['rmech', 'Boss mechanics', 'How each mechanic went, worst first.', ['mechs']], ['rdefs', 'Defensives', 'Who pressed a defensive, and who never did.', ['rdefs']], ['rcons', 'Healthstones', 'Who dropped low with one still ready.', ['rcons']]];
+const isOn = (r) => r[3].some((k) => S.show[k] !== false);
+const nOn = (L) => L.filter(isOn).length;
+const txt = (nm, ds) => '<div class="tx"><div class="nm">' + nm + '</div>' + (ds ? '<div class="ds">' + ds + '</div>' : '') + '</div>';
+const tg = (k, on) => '<button type="button" class="tg' + (on ? ' on' : '') + '" data-tg="' + k + '" aria-pressed="' + !!on + '"></button>';
+const row = (nm, ds, ctl, cls, attrs) => '<div class="row' + (cls ? ' ' + cls : '') + '"' + (attrs || '') + '>' + txt(nm, ds) + (ctl || '') + '</div>';
+const seg = (k, opts, cur) => '<div class="seg">' + opts.map(([v, l]) => '<button type="button" data-seg="' + k + '" data-v="' + esc(v) + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + l + '</button>').join('') + '</div>';
+const eyeRow = (r) => { const on = isOn(r); return '<div class="row click' + (on ? '' : ' off') + '" data-eye="' + r[0] + '" title="' + (on ? 'Shown: tap to hide' : 'Hidden: tap to show') + '">' + txt(r[1], r[2]) +
+  (r[4] ? '<div class="ct"><span class="st"><button type="button" data-st="' + r[4] + '" data-d="-1" aria-label="Fewer"' + (S.max[r[4]] <= r[5] ? ' disabled' : '') + '>‹</button><b>' + S.max[r[4]] + '</b><button type="button" data-st="' + r[4] + '" data-d="1" aria-label="More"' + (S.max[r[4]] >= r[6] ? ' disabled' : '') + '>›</button></span></div>' : '') + (on ? EYE : EYEX) + '</div>'; };
+const ACC = [['class', 'My class', ''], ['gold', 'Debrief gold', '#e6b450'], ['frost', 'Frost', '#3fc7eb'], ['fel', 'Fel', '#45c15c'], ['crimson', 'Crimson', '#e5534b'], ['violet', 'Void', '#a78bfa']];
+const CLS = { WARRIOR: '#c69b6d', PALADIN: '#f48cba', HUNTER: '#aad372', ROGUE: '#fff468', PRIEST: '#ffffff', DEATHKNIGHT: '#c41e3a', SHAMAN: '#0070dd', MAGE: '#3fc7eb', WARLOCK: '#8788ee', MONK: '#00ff98', DRUID: '#ff7c0a', DEMONHUNTER: '#a330c9', EVOKER: '#33937f' };
+const clsMap = () => { try { return JSON.parse(localStorage.getItem('dbf-cls') || '{}'); } catch (e) { return {}; } };
+const short = (n) => String(n || '').split('-')[0];
+let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '';
+try { const p = sessionStorage.getItem('dbf-set-page'); if (p) PAGE = p; } catch (e) { /* first page */ }
+{ const h = location.hash.slice(1).split(':'); if (['pop', 'card', 'raid', 'look', 'setup'].includes(h[0])) PAGE = h[0]; if (h[1] === 'pv') document.body.classList.add('pvopen'); } /* (#page, and #page:pv with the preview open: for pictures) */
+const myCls = () => { const me = S.me || (SETUP && SETUP.me) || ''; return clsMap()[short(me)] || ''; };
+
+function pageHtml() {
+  if (PAGE === 'pop') {
+    const k = HK && HK.name ? HK.name.split('+').map((x) => '<kbd>' + esc(x.trim()) + '</kbd>').join('+') : 'Not set';
+    return '<section class="pg on"><div class="h1"><h1>Pop-up</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">How your recap window opens and where it sits.</div>' +
+      '<div class="lab">When it opens</div>' +
+      row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true))) +
+      row('Chime', 'A short sound when your recap is ready.', tg('snd', sw('snd', true))) +
+      row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : 'Shows or hides your recap, even while you play.', '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>') +
+      row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight)) +
+      row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose)) +
+      '<div class="lab">Where it sits</div>' +
+      row('Side', 'It snaps to this edge, full height. Drag a corner to make it any size.', seg('side', [['right', 'Right'], ['left', 'Left']], S.side)) +
+      (SETUP && SETUP.screens >= 2 ? row('Screen', 'Your second screen keeps it off the game.', seg('screen', [['main', 'Main screen'], ['second', 'Second screen']], S.screen)) : '') +
+      row('Lock in place', 'It can\'t be moved or resized.', tg('lock', S.lock)) +
+      row('Size and place', 'Back to the ' + (S.side === 'left' ? 'left' : 'right') + ' edge, full height.', '<button type="button" class="btn" data-act="resetPlace">Reset</button>') + '</section>';
+  }
+  if (PAGE === 'card') {
+    const n = nOn(CARD), heal = SETUP && SETUP.role === 'healer', gk = heal ? 'goalHps' : 'goalDps', gv = S[gk] || 0;
+    return '<section class="pg on"><div class="h1"><h1>Your card</h1><span class="mono">' + n + ' of ' + CARD.length + ' shown</span>' + (changed() ? '<button type="button" class="lk rs" data-act="resetCard">Reset</button>' : '') + '<button type="button" class="lk pvl" data-pv="1">Preview</button></div>' +
+      '<div class="hint">What your recap shows. Tap a row to hide it; the preview changes as you go.</div>' +
+      '<div class="row" style="border:0">' + txt('Start from', '') + seg('preset', [['simple', 'Simple'], ['standard', 'Standard'], ['detailed', 'Detailed']], S.preset) + '</div>' +
+      '<div class="lab">On your card</div>' + CARD.map(eyeRow).join('') +
+      '<div class="lab">How it reads</div>' +
+      row('Only the mistakes', 'Hide the lines you did right.', tg('onlyBad', S.onlyBad)) +
+      row('Boss mistakes first', 'Above your rotation tips.', tg('bossFirst', S.bossFirst)) +
+      row('Open the sections', 'Off: they start closed, with their count.', tg('openSecs', S.openSecs)) +
+      '<div class="lab">Goal</div>' +
+      row(heal ? 'Healing goal' : 'Damage goal', 'Your ' + (heal ? 'HPS' : 'DPS') + ' target. The first + starts a little above your latest pull.', '<div class="ct"><span class="st"><button type="button" data-goal="' + gk + '" data-d="-1" aria-label="Lower"' + (gv <= 0 ? ' disabled' : '') + '>‹</button><b>' + (gv ? kN(gv) : 'Off') + '</b><button type="button" data-goal="' + gk + '" data-d="1" aria-label="Higher">›</button></span></div>') + '</section>';
+  }
+  if (PAGE === 'raid') return '<section class="pg on"><div class="h1"><h1>Raid view</h1><span class="mono">' + nOn(RAID) + ' of ' + RAID.length + ' shown</span><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">The Raid side of the card: what the whole raid did. Tap a row to hide it.</div><div class="lab">On the Raid view</div>' + RAID.map(eyeRow).join('') + '</section>';
+  if (PAGE === 'look') {
+    const cc = CLS[myCls()] || '#f48cba';
+    return '<section class="pg on"><div class="h1"><h1>Look</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">Colours, style and size of your recap window.</div>' +
+      '<div class="lab">Colour</div>' +
+      row('Accent', 'Your class colour, or one of Debrief\'s.', '<div class="sw">' + ACC.map(([k, l, c]) => '<button type="button" data-acc="' + k + '" title="' + l + '" class="' + (S.accent === k ? 'on' : '') + '" style="background:' + (c || cc) + '"></button>').join('') + '</div>') +
+      row('Colour-blind colours', 'Blue for good, orange for bad.', tg('colorblind', S.colorblind)) +
+      '<div class="lab">Style</div>' +
+      row('Card style', '', seg('style', [['panels', 'Panels'], ['glass', 'Glass'], ['flat', 'Flat']], S.style)) +
+      row('Font', '', '<button type="button" class="sel" data-dd="font">' + (S.font === 'plain' ? 'Plain' : 'Debrief') + '<em>▾</em>' + (OPENDD === 'font' ? '<div class="dd">' + [['debrief', 'Debrief'], ['plain', 'Plain']].map(([v, l]) => '<button type="button" data-font="' + v + '" class="' + (S.font === v ? 'on' : '') + '">' + l + '</button>').join('') + '</div>' : '') + '</button>') +
+      row('Size', 'Text and icons. Drag the window\'s corner for its width.', '<div class="sl"><input type="range" min="85" max="120" step="5" value="' + Math.round(S.size * 100) + '" data-range="size" aria-label="Size"><span>' + Math.round(S.size * 100) + '%</span></div>') + '</section>';
+  }
+  // Setup
+  const X = SETUP || {}, cm = clsMap(), me = S.me || X.me || '', chars = X.chars || [];
+  const dm = X.display === 'fullscreen' ? ['am', 'Your recap can\'t show over WoW in Fullscreen. In WoW: Options › Graphics › Display Mode › <b style="color:var(--text)">Windowed (Fullscreen)</b>. Or use your second screen.']
+    : X.display === 'fullwin' ? ['', 'Windowed (Fullscreen): your recap shows over WoW.'] : X.display === 'windowed' ? ['', 'Windowed: your recap shows over WoW.'] : ['no', 'Not found yet. WoW writes it the first time you play.'];
+  const ad = X.addon === 'ok' ? ['', 'On. The Debrief addon turns it on every time you log in.', ''] : [X.retail ? 'am' : 'no', X.addon === 'old' ? 'The Debrief addon in WoW is out of date, so your combat log may stay off.' : 'The Debrief addon isn\'t in WoW, so your combat log may stay off.', X.retail ? '<button type="button" class="btn" data-act="addon">Put it back</button>' : ''];
+  return '<section class="pg on"><div class="h1"><h1>Setup</h1><button type="button" class="lk pvl" data-pv="1">Preview</button></div><div class="hint">Debrief checks these by itself. Green means you\'re set.</div><div class="lab">Checks</div>' +
+    '<div class="row' + (X.retail ? '' : ' am') + '"><span class="dot' + (X.retail ? '' : ' am') + '"></span>' + txt('WoW folder', X.retail ? '<span class="path">' + esc(X.retail) + '</span>' : 'Not found. Pick the folder WoW is in.') + '<button type="button" class="lk" data-act="wowdir">Change</button></div>' +
+    '<div class="row' + (ad[0] === 'am' ? ' am' : '') + '"><span class="dot' + (ad[0] ? ' ' + ad[0] : '') + '"></span>' + txt('Combat log', ad[1]) + ad[2] + '</div>' +
+    '<div class="row' + (dm[0] === 'am' ? ' am' : '') + '"><span class="dot' + (dm[0] ? ' ' + dm[0] : '') + '"></span>' + txt('Display mode', dm[1]) + '</div>' +
+    '<div class="row"><span class="dot' + (me ? '' : ' am') + '"></span>' + txt('You', 'Found from the characters you play on this PC.') + '<button type="button" class="sel" data-dd="me"><span style="color:' + (CLS[cm[short(me)]] || 'var(--text)') + '">' + esc(short(me) || 'Pick one') + '</span><em>▾</em>' +
+      (OPENDD === 'me' ? '<div class="dd">' + chars.map((c) => '<button type="button" data-me="' + esc(c) + '" class="' + (short(c) === short(me) ? 'on' : '') + '" style="color:' + (CLS[cm[short(c)]] || 'var(--text)') + '">' + esc(c) + '</button>').join('') + (S.me ? '<button type="button" data-me="" style="color:var(--muted)">Find it by itself</button>' : '') + '</div>' : '') + '</button></div>' +
+    '<div class="lab">Help</div>' +
+    row('Sample recap', 'See the window with a made-up pull.', '<button type="button" class="btn" data-act="sample">Show</button>') +
+    row('Run the setup again', 'Your recap key and the first steps, in the Companion window.', '<button type="button" class="btn" data-act="setup">Start</button>') + '</section>';
+}
+const kN = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1000) + 'k');
+const ICONS = { pop: '<rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M10 2.5v11"/>', card: '<rect x="3" y="1.5" width="10" height="13" rx="1.5"/><path d="M5.5 5h5M5.5 8h5M5.5 11h3"/>',
+  raid: '<circle cx="5.5" cy="6" r="2.2"/><circle cx="11" cy="6" r="2.2"/><path d="M1.8 13c.6-2.2 2-3.3 3.7-3.3s3.1 1.1 3.7 3.3M8.4 11.2c.6-1 1.5-1.5 2.6-1.5 1.7 0 3 1.1 3.5 3.3"/>',
+  look: '<circle cx="8" cy="8" r="6"/><circle cx="5.6" cy="6.4" r=".9"/><circle cx="9.4" cy="5.2" r=".9"/><circle cx="11" cy="8.6" r=".9"/>', setup: '<path d="M3 8.5l3 3 7-7"/>' };
+function toFix() { const X = SETUP; if (!X) return -1; return (X.retail ? 0 : 1) + (X.addon === 'ok' || !X.retail ? 0 : 1) + (X.display === 'fullscreen' ? 1 : 0) + ((S.me || X.me) ? 0 : 1); }
+function railHtml() {
+  const f = toFix(), up = SETUP && SETUP.update;
+  const L = [['pop', 'Pop-up', ''], ['card', 'Your card', nOn(CARD) + ' of ' + CARD.length], ['raid', 'Raid view', nOn(RAID) + ' of ' + RAID.length], ['look', 'Look', ''], ['setup', 'Setup', f < 0 ? '' : f ? f + ' to fix' : 'All set', f > 0 ? 'am' : f === 0 ? 'ok' : '']];
+  return L.map(([k, l, n, c]) => '<a data-p="' + k + '" class="' + (PAGE === k ? 'on' : '') + '"><svg viewBox="0 0 16 16" aria-hidden="true">' + ICONS[k] + '</svg>' + l + (n ? '<span class="n' + (c ? ' ' + c : '') + '">' + n + '</span>' : '') + '</a>').join('') +
+    '<div class="foot"><b>Debrief Companion ' + esc((SETUP && SETUP.version) || '') + '</b><br>' + (up ? 'Update ready · <button type="button" class="lk" data-act="update">Update now</button>' : (CHECKING ? 'Checking…' : 'Up to date · <button type="button" class="lk" data-act="check">Check</button>')) + '</div>';
+}
+let CHECKING = false;
+function draw() { const sc = $('mid').scrollTop; $('rail').innerHTML = railHtml(); $('mid').innerHTML = pageHtml(); $('mid').scrollTop = sc; }
+
+// ---------- what each control does ----------
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('button, a, .row.click'); if (!t) { if (OPENDD) { OPENDD = ''; draw(); } return; }
+  const d = t.dataset;
+  if (d.p) { PAGE = d.p; OPENDD = ''; try { sessionStorage.setItem('dbf-set-page', PAGE); } catch (x) { /* kept for this window */ } $('mid').scrollTop = 0; pvView(); draw(); return; }
+  if (d.pv) { document.body.classList.toggle('pvopen'); return; }
+  if (d.dd) { OPENDD = OPENDD === d.dd ? '' : d.dd; draw(); return; }
+  if (d.font != null) { S.font = d.font; OPENDD = ''; save(); return; }
+  if (d.me != null) { S.me = d.me; OPENDD = ''; save(); return; }
+  if (OPENDD) { OPENDD = ''; }
+  if (d.tg) { const k = d.tg; if (k === 'pop' || k === 'snd') { try { localStorage.setItem('dbf-sw-' + k, JSON.stringify(!sw(k, true))); } catch (x) { /* kept */ } draw(); return; } S[k] = !S[k]; if (k === 'lock' || k === 'hideFight') { save(); return; } save(); return; }
+  if (d.seg) { const k = d.seg, v = d.v; if (k === 'preset') { S.preset = v; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; } else S[k] = k === 'autoClose' ? +v : v; save(); return; }
+  if (d.st) { const r = CARD.concat(RAID).find((x) => x[4] === d.st); S.max[d.st] = Math.max(r[5], Math.min(r[6], (S.max[d.st] || r[5]) + (+d.d))); save(); return; }
+  if (d.goal) { const k = d.goal, cur = S[k] || 0, step = cur >= 1e6 ? 50000 : 10000; let v = cur + (+d.d) * step; if (!cur && +d.d > 0) { const l = SETUP && SETUP.lastV; v = l ? Math.round(l * 1.1 / 10000) * 10000 : 100000; } S[k] = Math.max(0, v); save(); return; }
+  if (d.acc) { S.accent = d.acc; save(); return; }
+  if (d.eye) { const r = CARD.concat(RAID).find((x) => x[0] === d.eye); if (e.target.closest('.st')) return; const on = !isOn(r); for (const k of r[3]) S.show[k] = on; save(); return; }
+  if (d.hk) { if (HKWAIT) { HKWAIT = false; postJ('/hotkey', { mods: -2 }).catch(() => {}); draw(); return; } HKWAIT = true; HKMSG = ''; postJ('/hotkey', { mods: -1 }).catch(() => {}); draw(); return; }
+  if (d.act === 'resetCard') { const v = S.preset in PRE ? S.preset : 'standard'; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; save(); return; }
+  if (d.act === 'resetPlace') { S.resetAt = Date.now(); save(); return; }
+  if (d.act === 'wowdir') { try { await postJ('/setup/wowdir'); } catch (x) { /* kept as it was */ } await setupLoad(); return; }
+  if (d.act === 'addon') { try { await j('/addon'); } catch (x) { /* shown below */ } await setupLoad(); return; }
+  if (d.act === 'sample') { postJ('/setup/sample').catch(() => {}); return; }
+  if (d.act === 'setup') { post('setup'); return; }
+  if (d.act === 'check') { CHECKING = true; draw(); try { const x = await postJ('/update-check'); if (SETUP) SETUP.update = x.available || ''; } catch (x) { /* offline */ } CHECKING = false; draw(); return; }
+  if (d.act === 'update') { postJ('/update').catch(() => {}); return; }
+});
+document.addEventListener('input', (e) => { const k = e.target.dataset && e.target.dataset.range; if (!k) return; S[k] = +e.target.value / 100; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (x) { /* kept */ } e.target.nextElementSibling.textContent = e.target.value + '%'; pvApply(); });
+document.addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.range) draw(); });
+// (the recap key: pressed here, checked by the app as in the Companion window)
+const hkNm = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : '', e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)].filter(Boolean).join(' + ');
+document.addEventListener('keydown', async (e) => {
+  if (!HKWAIT) { if (e.key === 'Escape' && OPENDD) { OPENDD = ''; draw(); } return; }
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return; e.preventDefault();
+  if (e.key === 'Escape') { HKWAIT = false; postJ('/hotkey', { mods: -2 }).catch(() => {}); draw(); return; }
+  const ok = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 65 && e.keyCode <= 90) || (e.keyCode >= 112 && e.keyCode <= 123), mods = (e.altKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.shiftKey ? 4 : 0);
+  if (!ok || !mods) { HKMSG = 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.'; draw(); return; }
+  try { const x = await postJ('/hotkey', { mods, vk: e.keyCode, name: hkNm(e) }); if (x.error) { HKMSG = x.error; draw(); return; } } catch (x) { HKMSG = String(x.message || x); draw(); return; }
+  HKWAIT = false; HKMSG = ''; await hkLoad(); draw();
+});
+$('close').addEventListener('click', () => post('close'));
+// (another window changed something: the Companion's Pop up or Chime, or the pop-up's own side after a drag)
+window.addEventListener('storage', (e) => { if (e.key === KEY) S = load(); if (e.key === KEY || /^dbf-sw-/.test(e.key || '')) draw(); });
+
+// ---------- the preview: the pop-up itself (popup.html in preview mode), a sample pull or your latest one ----------
+const pvW = () => { try { return $('pvF').contentWindow; } catch (e) { return null; } };
+function pvApply() { const w = pvW(); try { if (w && w.DBF_SETS) w.DBF_SETS(); } catch (e) { /* still loading */ } }
+function pvView() { const w = pvW(); try { if (w && w.DBF_PVVIEW) w.DBF_PVVIEW(PAGE === 'raid' ? 'raid' : 'me'); } catch (e) { /* still loading */ } }
+$('pvF').addEventListener('load', async () => {
+  let M = null; try { M = await j('/setup/pull'); } catch (e) { M = null; }
+  const w = pvW(); if (!M || !M.data || !w) { $('pvCap').textContent = 'No pull to show yet.'; return; }
+  $('pvWhat').textContent = M.sample ? 'a sample pull' : 'your latest pull';
+  $('pvCap').textContent = M.sample ? 'A made-up pull. Once you raid, your latest pull shows here. Hidden rows drop out straight away.' : 'Your latest pull. Hidden rows drop out straight away.';
+  for (let i = 0; i < 25 && !w.DBF_SHOW; i++) await new Promise((r) => setTimeout(r, 120));
+  try { w.DBF_SHOW(Object.assign({}, M.data, { full: true }, M.data.lk ? {} : { lk: M.lk || {} })); pvView(); } catch (e) { console.error(e); }
+});
+
+async function setupLoad() { try { SETUP = await j('/setup'); } catch (e) { SETUP = SETUP || null; } draw(); }
+async function hkLoad() { try { HK = await j('/hotkey'); } catch (e) { HK = null; } }
+$('logo').innerHTML = LOGO;
+draw(); hkLoad().then(draw); setupLoad();
+post('ready');
+</script>
+</body></html>

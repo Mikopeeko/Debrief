@@ -20,6 +20,19 @@ namespace Debrief {
     // left or right edge of a screen it docks as the full-height side panel again, which stays the default. Kept in popup-place.txt:
     // "dock,<left|right>,<screen>" or "float,<x>,<y>,<width>,<height>")
     bool floating, moved, resized; Rectangle floatR; string dockSide, dockScreen;
+    bool locked; long resetSeen = -1; string wantScreen = "main";
+    void ApplySet(string json) {
+      try {
+        var d = new System.Web.Script.Serialization.JavaScriptSerializer().Deserialize<System.Collections.Generic.Dictionary<string, object>>(json);
+        Func<string, object> g = (k) => d.ContainsKey(k) ? d[k] : null; bool redock = false;
+        locked = g("lock") is bool && (bool)g("lock");
+        long ra = 0; try { ra = Convert.ToInt64(g("resetAt") ?? 0); } catch { }
+        if (resetSeen < 0) resetSeen = ra; else if (ra != resetSeen) { resetSeen = ra; floating = false; dockScreen = null; try { File.Delete(SideFile); } catch { } redock = true; } // (Size and place: Reset)
+        var sc = g("screen") as string ?? "main"; if (sc != wantScreen) { wantScreen = sc; dockScreen = null; redock = true; }
+        var side = g("side") as string; if ((side == "left" || side == "right") && side != dockSide) { dockSide = side; redock = true; }
+        if (redock) { if (!floating) SavePlace(); if (placed && Visible) Dock(); }
+      } catch (Exception e) { Program.Log("popup set: " + e.Message); }
+    }
 
     public PopupForm(MainForm main, string here, int port, CoreWebView2Environment env) {
       this.main = main; this.here = here; this.port = port; this.env = env;
@@ -78,6 +91,8 @@ namespace Debrief {
       if (m == "ready") { ready = true; if (pending != null) Send(pending); }
       else if (m == "close") Hide();
       else if (m == "open") main.ShowInFront();
+      else if (m == "settings") main.ShowSettings(); // (the gear (Nov 3))
+      else if (m.StartsWith("set:")) ApplySet(m.Substring(4)); // (the settings window's Side, Screen, Lock in place and Size and place: Reset)
       else if (m.StartsWith("pull:")) main.PopupPull(m.Substring(5)); // (a pull chip: the main page loads that pull's coach box)
       else if (m.StartsWith("key:")) main.PopupKey(m.Substring(4)); // (a key picked from the switch, Saved or the key's name (Nov 1))
       else if (m.StartsWith("cut:")) main.PopupCut(m.Substring(4)); // (Stop at death changed: the main page rebuilds the coach box)
@@ -109,7 +124,8 @@ namespace Debrief {
     protected override void WndProc(ref Message m) {
       if (m.Msg == 0x0084 /* WM_NCHITTEST */ && placed) {
         long lp = m.LParam.ToInt64(); var p = PointToClient(new Point((short)(lp & 0xffff), (short)((lp >> 16) & 0xffff)));
-        if (floating) { // (every edge and corner)
+        if (locked) { } // (Lock in place: no resizing)
+        else if (floating) { // (every edge and corner)
           int e = EdgeW + 2; bool L = p.X < e, R = p.X >= ClientSize.Width - e, T = p.Y < e, B = p.Y >= ClientSize.Height - e;
           int hit = T && L ? 13 : T && R ? 14 : B && L ? 16 : B && R ? 17 : L ? 10 : R ? 11 : T ? 12 : B ? 15 : 0; /* HTTOPLEFT … HTBOTTOM */
           if (hit != 0) { m.Result = (IntPtr)hit; return; }
@@ -128,15 +144,20 @@ namespace Debrief {
     // (a drag just ended: the docked panel's inner edge keeps its width; a move that ends against the left or right edge of a screen docks it there,
     // anywhere else it floats, a little shorter than the full height when it leaves the side)
     void AfterDrag() {
-      if (!moved && !resized) return;
+      if ((!moved && !resized) || locked) return;
       if (!floating && !moved) { SaveW(); BeginInvoke(new Action(Dock)); return; }
       var sc = Screen.FromRectangle(Bounds); var wa = sc.WorkingArea; int snap = Px(24);
-      if (moved && Left <= wa.Left + snap) { floating = false; dockSide = "left"; dockScreen = sc.DeviceName; }
-      else if (moved && Right >= wa.Right - snap) { floating = false; dockSide = "right"; dockScreen = sc.DeviceName; }
+      if (moved && Left <= wa.Left + snap) { floating = false; dockSide = "left"; dockScreen = sc.DeviceName; TellSide(); }
+      else if (moved && Right >= wa.Right - snap) { floating = false; dockSide = "right"; dockScreen = sc.DeviceName; TellSide(); }
       else { var r = Bounds; if (!floating && r.Height > wa.Height * 0.8) r.Height = (int)(wa.Height * 0.75); floating = true; floatR = r; }
       SavePlace(); BeginInvoke(new Action(Dock));
     }
-    Screen DockScreen() { if (dockScreen != null) foreach (var s in Screen.AllScreens) if (s.DeviceName == dockScreen) return s; return GameScreen(); }
+    void TellSide() { try { web.CoreWebView2.PostWebMessageAsString("side:" + dockSide); } catch { } } // (the settings window's Side follows a snap)
+    Screen DockScreen() {
+      if (dockScreen != null) foreach (var s in Screen.AllScreens) if (s.DeviceName == dockScreen) return s;
+      var game = GameScreen(); if (wantScreen == "second") foreach (var s in Screen.AllScreens) if (s.DeviceName != game.DeviceName) return s; // (Screen: Second screen)
+      return game;
+    }
     string PlaceFile { get { return Path.Combine(here, "popup-place.txt"); } }
     void LoadPlace() {
       try { var p = File.ReadAllText(PlaceFile).Trim().Split(',');

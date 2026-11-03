@@ -20,6 +20,7 @@ namespace Debrief {
     public Action<string, bool> Popup; // (the recap pop-up over the game)
     public Action Quit;
     public Func<int, int, string, string> SetHotkey; public Func<Dictionary<string, object>> HotkeyInfo; // (the recap hotkey (Nov 1))
+    public Action OpenSettings, ShowSample; public Func<string> PickWowDir; // (the settings window (Nov 3))
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     // (the window marks its requests; an old Edge window from the PowerShell app still open on this address gets told to stand down,
     // so a pull isn't copied twice)
@@ -71,7 +72,7 @@ namespace Debrief {
           if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
-        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/hotkey" || path == "/addonflags" || path == "/addonpull" || path == "/" || path == "/index.html")) {
+        if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/hotkey" || path == "/addonflags" || path == "/addonpull" || path.StartsWith("/setup") || path == "/settings" || path == "/" || path == "/index.html")) {
           if (path == "/wait") { Thread.Sleep(25000); SendJson(res, new Dictionary<string, object> { { "size", Num(q["size"]) }, { "name", q["name"] ?? "" } }); return; }
           if (path == "/" || path == "/index.html") { Send(res, Encoding.UTF8.GetBytes(Moved), "text/html; charset=utf-8"); return; }
           res.StatusCode = 409; SendJson(res, new Dictionary<string, object> { { "error", "Debrief Companion is its own app now. Close this window." } }); return;
@@ -163,6 +164,20 @@ namespace Debrief {
           SendJson(res, new Dictionary<string, object> { { "ok", why == "" }, { "why", why } });
         }
         else if (get && path == "/popup") Send(res, File.ReadAllBytes(Path.Combine(here, "popup.html")), "text/html; charset=utf-8");
+        // ---------- the settings window (Nov 3, the studio's settings-brief.md) ----------
+        else if (get && path == "/settings") Send(res, File.ReadAllBytes(Path.Combine(here, "settings.html")), "text/html; charset=utf-8");
+        else if (post && path == "/setup/open") { OpenSettings?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
+        else if (post && path == "/setup/sample") { ShowSample?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
+        else if (post && path == "/setup/wowdir") SendJson(res, new Dictionary<string, object> { { "logs", PickWowDir != null ? PickWowDir() : "" } });
+        else if (get && path == "/setup") SendJson(res, SetupInfo());
+        else if (get && path == "/setup/addoncard") SendJson(res, Wow.AddonPicks(here)); // (each player's /db picks, carried over once)
+        else if (get && path == "/setup/pull") { // (the preview's pull: your latest raid pull, else the sample, with who you are)
+          string data = null; bool sample = false;
+          try { var f = Path.Combine(here, "lastpop.json"); if (File.Exists(f)) { var t = File.ReadAllText(f); if (t.Contains("\"card\"") && !t.Contains("\"mplus\"")) data = t; } } catch { }
+          if (data == null) { try { data = File.ReadAllText(Path.Combine(here, "sample-pop.json")); sample = true; } catch { data = "null"; } }
+          var lk = Wow.AddonCard(here); var lkj = new System.Web.Script.Serialization.JavaScriptSerializer().Serialize(new Dictionary<string, object> { { "me", lk.ContainsKey("me") ? lk["me"] : "" }, { "mine", lk.ContainsKey("mine") ? lk["mine"] : new List<string>() } });
+          Send(res, Encoding.UTF8.GetBytes("{\"sample\":" + (sample ? "true" : "false") + ",\"lk\":" + lkj + ",\"data\":" + data + "}"), "application/json; charset=utf-8");
+        }
         else if (post && path == "/popup") {
           // (the main page: show this pull's recap over the game, or hide it when the next pull starts)
           if (!(req.ContentType ?? "").StartsWith("application/json")) throw new Exception("Expected JSON.");
@@ -197,6 +212,20 @@ namespace Debrief {
       if (string.IsNullOrEmpty(o)) return false;
       return o == "https://debriefme.io" || o == "https://www.debriefme.io" || o == "http://localhost:8765" ||
         System.Text.RegularExpressions.Regex.IsMatch(o, @"^https://([a-z0-9-]+-)?debrief\.james-m-nemecek\.workers\.dev$");
+    }
+    // (Setup's checks: the WoW folder, the addon (it keeps the combat log on), the display mode from WoW's own Config.wtf, your characters, the screens)
+    Dictionary<string, object> SetupInfo() {
+      var o = new Dictionary<string, object>(); var retail = Wow.FindRetail(here); o["retail"] = retail ?? ""; o["version"] = Program.Version; o["update"] = Program.Available ?? "";
+      string addon = "missing", display = "unknown";
+      if (retail != null) {
+        try { var toc = Path.Combine(retail, @"Interface\AddOns\Debrief\Debrief.toc"); if (File.Exists(toc)) { string iv = ""; foreach (var line in File.ReadAllLines(toc)) if (line.StartsWith("## Version:")) iv = line.Substring(11).Trim(); var bv = AddonVersion(); addon = bv == "" || iv == bv ? "ok" : "old"; } } catch { }
+        try { var cfg = Path.Combine(retail, @"WTF\Config.wtf"); if (File.Exists(cfg)) { var t = File.ReadAllText(cfg); var w = System.Text.RegularExpressions.Regex.Match(t, "SET gxWindow \"(\\d)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase); var mx = System.Text.RegularExpressions.Regex.Match(t, "SET gxMaximize \"(\\d)\"", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+          display = w.Success && w.Groups[1].Value == "0" ? "fullscreen" : mx.Success && mx.Groups[1].Value == "1" ? "fullwin" : "windowed"; } } catch { }
+      }
+      o["addon"] = addon; o["display"] = display;
+      var card = Wow.AddonCard(here); o["me"] = card.ContainsKey("me") ? card["me"] : ""; o["chars"] = card.ContainsKey("mine") ? card["mine"] : new List<string>();
+      int n = 1; try { n = System.Windows.Forms.Screen.AllScreens.Length; } catch { } o["screens"] = n;
+      return o;
     }
     string AddonVersion() {
       try { foreach (var line in File.ReadAllLines(Path.Combine(here, @"addon\Debrief\Debrief.toc"))) if (line.StartsWith("## Version:")) return line.Substring(11).Trim(); } catch { }

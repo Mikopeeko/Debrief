@@ -238,6 +238,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
         <label class="tg" for="pop" title="After each boss pull, a small bar floats over the game: click it for your recap. It never takes focus from WoW and closes when the next pull starts."><input type="checkbox" id="pop" checked>Pop-up recap</label>
         <label class="tg" for="snd" title="A short chime when your recap is ready."><input type="checkbox" id="snd" checked>Chime</label>
         <span class="tg hk" title="Press it anywhere, even in WoW, to show or hide your recap over the game."><span>Recap key</span><button class="btn hkb" id="hkBtn" type="button">…</button></span>
+        <button class="btn" id="setBtn" type="button" title="Every setting of your recap window: what it shows, its look, where it sits">Settings</button>
       </div>
       <p class="hkline" id="hkLine"></p>
       <div id="folderBox" hidden>
@@ -435,6 +436,32 @@ async function readText(b, quiet, name) {
 }
 function progress(f) { L.prog = f; renderRing(); }
 for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.get('dbf-sw-' + id, def); $(id).addEventListener('change', () => { store.set('dbf-sw-' + id, $(id).checked); if (id === 'pop') addonFlags(); }); }
+// ---------- the settings window (Nov 3, the studio's settings-brief.md): opened from here, the tray and the pop-up's gear; Pop up and Chime are the same
+// switches as here, so a change there shows here too ----------
+$('setBtn').addEventListener('click', () => { j('/setup/open', { method: 'POST' }).catch(() => {}); });
+window.addEventListener('storage', (e) => { const m = /^dbf-sw-(pop|snd)$/.exec(e.key || ''); if (m) $(m[1]).checked = store.get(e.key, true); });
+const setGet = () => store.get('dbf-set', null) || {};
+// (each player's /db picks come across once, on the first start after the update: nobody's setup is reset. An old pick with no row any more keeps the
+// closest one: Card size x Text size is Size, any WoW or other addon's font is Plain)
+(async () => {
+  if (store.get('dbf-set', null)) return;
+  let A = null; try { A = await j('/setup/addoncard'); } catch (e) { return; } /* (an older app: nothing to carry) */
+  const P0 = { simple: ['rotation', 'boss', 'surv', 'cons', 'trend', 'chips', 'died', 'chartLine', 'chartNight', 'grade', 'mechs', 'right', 'cdeaths', 'cavoid', 'rdefs', 'rcons'], standard: ['chartLine', 'chartNight', 'grade', 'mechs'], detailed: [] };
+  const MX = { simple: { maxSlips: 1, maxBoss: 1, maxRaid: 1, maxDied: 3, maxMech: 3 }, standard: { maxSlips: 3, maxBoss: 3, maxRaid: 3, maxDied: 3, maxMech: 6 }, detailed: { maxSlips: 8, maxBoss: 7, maxRaid: 5, maxDied: 6, maxMech: 12 } };
+  const K = ['tile', 'rotation', 'boss', 'surv', 'cons', 'next', 'trend', 'chips', 'died', 'chartLine', 'chartNight', 'grade', 'mechs', 'coach', 'right', 'cdeaths', 'cavoid', 'rdefs', 'rcons'];
+  const raw = (A && A.raw) || {}, pr = { heavy: 'detailed', medium: 'standard' }[A.preset] || (P0[A.preset] ? A.preset : 'standard'), show = {}, max = Object.assign({}, MX[pr]);
+  for (const k of K) show[k] = !P0[pr].includes(k);
+  if (A.found) { for (const [k, v] of Object.entries(A.show || {})) if (k in show) show[k] = !!v; if (A.compact && pr === 'simple') { show.rotation = show.boss = show.surv = show.cons = false; } }
+  for (const [k, v] of Object.entries(A.max || {})) if (k in max && v != null) max[k] = +v;
+  if (max.maxDied === 0) { show.died = false; max.maxDied = 3; } /* (0 hid the list: now it's the eye) */
+  const num = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d);
+  const S = { v: 1, preset: pr, show, max, openSecs: A.openSecs !== false, onlyBad: !!A.onlyBad, bossFirst: !!raw.bossFirst, goalHps: num(raw.goalHps, 0, 1e8, 0), goalDps: num(raw.goalDps, 0, 1e8, 0),
+    hideFight: raw.hideCombat !== false, autoClose: [0, 30, 60, 120].includes(raw.autoClose) ? raw.autoClose : 0, side: raw.panelSide === 'left' ? 'left' : 'right', screen: 'main', lock: !!raw.lock,
+    accent: raw.classTheme === false && raw.accent ? String(raw.accent) : raw.accent === 'class' || raw.classTheme !== false ? 'class' : String(raw.accent || 'class'), colorblind: !!raw.colorblind,
+    style: ['panels', 'glass', 'flat'].includes(raw.cardStyle) ? raw.cardStyle : 'panels', font: !raw.font || raw.font === 'debrief' ? 'debrief' : 'plain',
+    size: Math.round(num((raw.fontScale || 1) * (raw.scale || 1), 0.85, 1.2, 1) * 20) / 20, me: '', carried: A.found ? 1 : 0 };
+  store.set('dbf-set', S);
+})();
 // (tells the addon the pop-up's switch; WoW reads it at login or /reload)
 // ---------- the recap key (Nov 1): picked once in a one-step prompt, changeable with the button; Windows refuses a combo another program holds ----------
 const HK = { listen: null };
@@ -657,7 +684,7 @@ function renderRing() {
   if (L.reading) return ring('go', Math.max(0.03, L.prog || 0), '<b>Reading</b><span>pull ' + L.reading.pull + '</span>');
   const g = curGroup(), N = nightOf(L.name), done = g ? g.list.filter((b) => b.endByte) : [], lastDone = done[done.length - 1];
   const tail = L.items[L.items.length - 1], on = L.live && tail && !tail.endByte ? tail : null;
-  if (on) { popHide(); return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is ready the moment it ends.'); }
+  if (on) { if (setGet().hideFight !== false) popHide(); return ring('on', 1, '<b>Pull ' + on.pull + '</b><span>on now</span>', 'A boss pull is on. Your recap is ready the moment it ends.'); }
   const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
   if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
     /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it with Save this pull or at the next login) */
@@ -833,7 +860,11 @@ const SIG = { 71: ['Mortal Strike', '~Overpower'], 72: ['Bloodthirst', 'Rampage'
   581: ['Soul Cleave', 'Fracture', 'Spirit Bomb'], 1467: ['Disintegrate', 'Pyre'], 1468: ['Echo', 'Reversion', 'Dream Breath'], 1473: ['Ebon Might', 'Eruption', 'Prescience'] };
 // (your spec from your last boss pulls, kept on this PC: a practice pull uses it when your buttons don't make it clear)
 const SPEC_MEM = store.get('dbf-specs', {});
-function rememberSpecs(rep) { let ch = false; for (const [g, p] of rep.players) if (p.specId && /^Player-/.test(g) && SPEC_MEM[g] !== p.specId) { SPEC_MEM[g] = p.specId; ch = true; } if (ch) store.set('dbf-specs', SPEC_MEM); }
+function rememberSpecs(rep) { let ch = false; for (const [g, p] of rep.players) if (p.specId && /^Player-/.test(g) && SPEC_MEM[g] !== p.specId) { SPEC_MEM[g] = p.specId; ch = true; } if (ch) store.set('dbf-specs', SPEC_MEM); rememberCls(rep); }
+// (each player's class by name, for the settings window's character picker in class colour (Nov 3); the newest 400)
+const CLS_MEM = store.get('dbf-cls', {});
+function rememberCls(rep) { let ch = false; for (const [g, p] of rep.players) { const n = String(p.name || '').split('-')[0]; if (/^Player-/.test(g) && n && p.cls && CLS_MEM[n] !== p.cls) { delete CLS_MEM[n]; CLS_MEM[n] = p.cls; ch = true; } }
+  if (!ch) return; const ks = Object.keys(CLS_MEM); for (const k of ks.slice(0, Math.max(0, ks.length - 400))) delete CLS_MEM[k]; store.set('dbf-cls', CLS_MEM); }
 function withSpecs(text, E) {
   // (training dummies are neutral in the log, and Debrief only counts damage on enemies: mark them as enemies)
   text = text.replace(/,("[^"]*Dummy"),0x([0-9a-fA-F]+),/g, (x, n, fl) => ',' + n + ',0x' + ((parseInt(fl, 16) & ~0x70) | 0x40).toString(16) + ',');

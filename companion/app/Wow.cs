@@ -129,6 +129,16 @@ namespace Debrief {
       } catch { return false; }
     }
     public static string SvText(string here) { AddonLook(here); return svText ?? ""; } // (for Report: the problems the addon noted (Oct 24))
+    // (each player's /db picks for the settings window's one-time carry-over (Nov 3): the card settings above, plus the look and the window's)
+    public static Dictionary<string, object> AddonPicks(string here) {
+      var o = AddonCard(here); var s = svText ?? ""; var RX = System.Text.RegularExpressions.RegexOptions.Multiline; var raw = new Dictionary<string, object>();
+      foreach (var k in new[] { "accent", "classTheme", "colorblind", "cardStyle", "font", "fontScale", "scale", "alpha", "autoClose", "lock", "panelSide", "hideCombat", "bossFirst", "goalHps", "goalDps", "preset" }) {
+        var ms = System.Text.RegularExpressions.Regex.Matches(s, @"^\[""" + k + @"""\] = (""[^""]*""|-?[\d.]+|true|false)", RX); if (ms.Count == 0) continue;
+        var v = ms[ms.Count - 1].Groups[1].Value; double d;
+        raw[k] = v.StartsWith("\"") ? (object)v.Trim('"') : v == "true" ? (object)true : v == "false" ? (object)false : double.TryParse(v, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out d) ? (object)d : v;
+      }
+      o["raw"] = raw; o["found"] = s.Length > 0; return o;
+    }
     public static Dictionary<string, object> AddonCard(string here) {
       var look0 = AddonLook(here); var s = svText ?? ""; var o = new Dictionary<string, object> { { "width", look0[0] }, { "preset", look0[1] } };
       try {

@@ -32,6 +32,7 @@ namespace Debrief {
       using (var s = typeof(MainForm).Assembly.GetManifestResourceStream("debrief.ico")) { tray.Icon = new Icon(s, SystemInformation.SmallIconSize); }
       var menu = new ContextMenuStrip();
       menu.Items.Add("Open Debrief", null, (a, b) => ShowInFront());
+      menu.Items.Add("Settings", null, (a, b) => ShowSettings()); // (the settings window (Nov 3))
       menu.Items.Add("Quit", null, (a, b) => QuitApp());
       tray.ContextMenuStrip = menu;
       tray.MouseClick += (a, b) => { if (b.Button == MouseButtons.Left) ShowInFront(); };
@@ -138,6 +139,36 @@ namespace Debrief {
       try { File.WriteAllText(LastPopFile, json); } catch { } // (kept for the recap hotkey after a restart (Nov 1))
     }
     string LastPopFile { get { return Path.Combine(here, "lastpop.json"); } }
+
+    // ---------- the settings window (Nov 3, the studio's settings-brief.md): from the tray, the Companion window's Settings button and the pop-up's gear ----------
+    SettingsForm settings;
+    public void ShowSettings() {
+      if (InvokeRequired) { BeginInvoke(new Action(ShowSettings)); return; }
+      if (Program.EdgeFallback || web.CoreWebView2 == null) { ShowInFront(); return; }
+      if (settings == null || settings.IsDisposed) { settings = new SettingsForm(this, port, web.CoreWebView2.Environment); settings.FormClosed += (a, b) => settings = null; }
+      settings.ShowFront();
+    }
+    // (Setup's WoW folder: Change. Pick the WoW folder, _retail_ or its Logs; the Logs folder is kept in logs-path.txt, as when it was pasted in the window)
+    public string PickWowDir() {
+      if (InvokeRequired) return (string)Invoke(new Func<string>(PickWowDir));
+      using (var d = new FolderBrowserDialog { Description = "Pick your World of Warcraft folder (the one with _retail_ in it)", ShowNewFolderButton = false }) {
+        IWin32Window owner = settings != null && !settings.IsDisposed ? (IWin32Window)settings : this;
+        if (d.ShowDialog(owner) != DialogResult.OK) return "";
+        string p = d.SelectedPath.TrimEnd('\\'); string n = Path.GetFileName(p);
+        var logs = n.Equals("Logs", StringComparison.OrdinalIgnoreCase) ? p : n.Equals("_retail_", StringComparison.OrdinalIgnoreCase) ? Path.Combine(p, "Logs") : Directory.Exists(Path.Combine(p, "_retail_")) ? Path.Combine(p, @"_retail_\Logs") : null;
+        if (logs == null) return "";
+        try { File.WriteAllText(Path.Combine(here, "logs-path.txt"), logs); } catch { return ""; }
+        return logs;
+      }
+    }
+    // (Sample recap: the made-up pull in the pop-up, never kept as your last recap)
+    public void ShowSample() {
+      if (InvokeRequired) { BeginInvoke(new Action(ShowSample)); return; }
+      if (Program.EdgeFallback || web.CoreWebView2 == null) return;
+      string json; try { json = File.ReadAllText(Path.Combine(here, "sample-pop.json")); } catch { return; }
+      if (popup == null) popup = new PopupForm(this, here, port, web.CoreWebView2.Environment);
+      popup.ShowRecap(json);
+    }
 
     // (the pop-up's Stop at death: the main page rebuilds the coach box at that setting and sends it back)
     public void PopupPull(string sb) {
