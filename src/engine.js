@@ -3379,6 +3379,23 @@ HOW["Kith'ix"] = Object.assign(HOW["Kith'ix"] || {}, { pace: "The hardest part i
 HOW["Vashnik the Malignant"] = Object.assign(HOW["Vashnik the Malignant"] || {}, { pace: "Every Imbibe stacks Toxic Vapor on him, so he hits harder each time: the soft enrage. Burn him so the last totem set can be ignored; top guilds finish after the third or fourth Imbibe." });
 HOW["Entombed Sentinels"] = Object.assign(HOW["Entombed Sentinels"] || {}, { pace: "Keep both Sentinels even and on pace: top guilds have both under 76%, 44% and 14% as the three intermissions begin, and finish in the fourth cycle. The enrage comes after the fourth cycle." });
 HOW["Ula'tek"] = Object.assign(HOW["Ula'tek"] || {}, { pace: "Rage of the Shackled opens three damage windows. On pace: Ula'tek at 67% or lower after the first and 45% or lower after the second (top guilds: 60 to 66% and 32 to 40%)." });
+// Heroic Ula'tek's own explanations (Nov 3, Flex: "The heroic version of ulatek needs to have as much detail as the mythic version does in the
+// overview section"): the in-game journal's Heroic tags, the Heroic plan (Tactyks' Normal/Heroic video), our two Heroic kills (xBTWphFCkG4jdwbY
+// #12, QRGp7N6ngdVj9B1A #10) and 30 top Heroic kills since the Oct 6 tuning (log library): heart windows at 2:15 and 4:41, six intermission
+// circles, six tethers with stacking Blight Vein, two Weakened Doomscales and no Revenge, three bites a cast cleared by 3 to 21 players,
+// Volatile Purge bursts of about 340K, and the tail surfacing two or three times a pull. Mythic-only mechanics aren't named.
+const HOW_UL_H = {
+  waves: 'Caustic Waves are green venom waves rolling across the platform. Ula\'tek sends hers from one side, then the other: twice in Stage 1 and again in Stage 3. On Heroic the tail (Gore Rattle) surfaces only with her first waves, at the edge and then at two corners, and each tail sends a wave straight across at about 12.5 yards a second. A hit leaves a 10-second Caustic Waves poison, and a wave that touches an egg hatches it into a Viper. Each row is one hit and says which wave it was: a tail wave (and which way it was heading) or Ula\'tek\'s own.',
+  eggs: 'Call of the Serpent drops eggs (Blightscale Spawn) in random spots: at the pull, again in Stage 1 and in the intermission, and Stage 2 has its own eggs by each Doomscale Warden. Pick up every egg (carrying one is a small damage over time, Malignant Shell). An egg popped early, like the eggs a Spectral Coil pops in its soakers\' hands, becomes a weak Blightscale Rawling (on Heroic its Poisonous Bite stacks on the tank). Anything green touching an egg or its carrier (Caustic Waves, Mephitic Thrash), or its carrier dying, hatches a Blightscale Viper instead: kill it at once. On Heroic every Viper puts Putrid Membrane on the whole raid, and its Petrifying Sting turns everyone near its target to stone with a big heal absorb. In Stage 2 it is safer to let Blight Vein drop before picking up an egg. That isn\'t flagged on its own, but a carrier who dies with it shows up as the Viper\'s cause.',
+  coils: 'The tail (Gore Rattle) slams Spectral Coils: two circles in Stage 1 and a run of six in the intermission. Each slam hits the whole raid and the players in its circle split it, so the more soakers, the less everyone takes. On Heroic a soaker gets Soul Constrictor and doesn\'t count toward the next circle (standing in both is fine, it just doesn\'t help), so the raid splits into two groups that take turns: one soaks circles 1, 3 and 5 of the intermission, the other 2, 4 and 6. Eggs carried into a circle pop into weak Rawlings, which is fine. Soakers are counted from Soul Constrictor; a circle with fewer than about a fifth of the raid in it is flagged.',
+  amps: 'Rage of the Shackled opens the Venomous Heart for 20 seconds, taking 100% more damage, three times a fight: at the end of Stage 1 (about 2:15 on Heroic), at the end of Stage 2 (about 4:41) and on the last platform. These are the damage windows. Line up damage cooldowns and potions for them (the Heroic plan uses Bloodlust on the first one), and dodge the brown Falling Debris circles. On Heroic, Ula\'tek at 60% or lower after the first window and 37% or lower after the second is on pace for a kill: two Heroic kills that finished in the last window had her at 56 to 59% and 34 to 37%. Shown: each window\'s damage into the heart, player by player (the faded end of a bar is damage into Ula\'tek or her tail instead, which isn\'t doubled), the boss\'s health before and after it, and the combat potions drunk for it.',
+  pace: 'Rage of the Shackled opens three damage windows. On pace on Heroic: Ula\'tek at 60% or lower after the first and 37% or lower after the second (Heroic kills that finished in the last window: 56 to 59% and 34 to 37%; top guilds: 38 to 44% and 18 to 20%).',
+  fangs: 'Stage 2: Grasping Fangs tethers six players in all, three per side (one Doomscale Warden each). On Heroic breaking a tether puts Blight Vein on the whole raid (both sides), and each break adds a stack. Break two at a time on a call and let the stacks drop, or break more together under a raid cooldown, everyone at the edge of their tether a couple of seconds early. A spread-out break means extra Blight Vein ticks. Shown: who was tethered, each batch, the raid cooldowns under it and the Blight Vein peak; a death while tethered is flagged.',
+  doomscale: 'Stage 2: tank the Doomscale Warden on its eggs so the cleave breaks them, interrupt its Malice, and kill it before its second Writhing Gestation (its enrage). While it lives, its eggs can\'t be picked up and standing next to them hurts (Warden\'s Protection). Then carry the small eggs to the cauldron first and the big Doomscale Egg last, before its timer runs out, or it hatches a Ravenous Doomscale. The cauldron hatches a Weakened Doomscale on each side, two in all on Heroic. Give each a kick rotation for Anguished Cry (a 6-second stun on everyone within 60 yards), keep its frontal (Desperate Thrash) off the raid, and bring it to Ula\'tek to cleave. Heroic has no Revenge, so they don\'t have to die together.',
+  bite: 'Stage 3: Serpent\'s Bite marks a melee, a healer and a ranged player for 15 seconds. Players in a bitten player\'s 7-yard circle leech the venom away; if it isn\'t gone in time, they become a Calcified Corpse (on Heroic the corpse also hurts the whole raid every second). On Heroic each role\'s group soaks its own bite: melee on her platform, healers and ranged on the next one. Taking the venom gives a soaker Volatile Purge, which bursts around them about 5 seconds later (about 340K on Heroic, then a damage over time), so spread right after. Shown: who cleared each bite, any Calcified Corpse and anyone caught in a Purge they weren\'t holding.',
+  shriek: 'Stage 3: each Call of the Serpent drops a Blightscale Clutch on the platforms. Break each one (it hatches weak Rawlings), or it hatches a Blightscale Shrieker; once a platform is destroyed, its clutch hatches a Shrieker every time. Tank Shriekers by the boss, interrupt Vicious Echoes (see Interrupts) and kill them before their next cast. Shown: each Shrieker\'s time alive and anything beyond its first cast.',
+  avoid: 'Every source of damage that positioning can avoid, most harmful first. Harmful: Caustic Waves, the brown Falling Debris circles during the damage windows, the Weakened Doomscale frontal on non-tanks and Virulent Spit. Minor: standing on or next to an egg while its Doomscale Warden lives. Raid-wide damage (Necrotic Vapors, Spectral Coils, Blight Vein, Circling Prey) isn\'t avoidable and isn\'t listed, and Mephitic Thrash\'s slam has its own card.',
+};
 HOW["The Twin Fangs"] = Object.assign(HOW["The Twin Fangs"] || {}, { pace: "Cleave Vexhul into execute first, then swap to Ithraz at 35%. On pace: about 25% Vexhul and 40% Ithraz by the last platform; kill Vexhul around the final soak before the enrage (about 8 minutes)." });
 HOW["Nymrissa Wavecaller"] = Object.assign(HOW["Nymrissa Wavecaller"] || {}, { pace: "She enrages after a few Pops (about 7:15). Top guilds finish between the second and third Pop, at 3:49 to 4:35." });
 HOW["Sszorak"] = Object.assign(HOW["Sszorak"] || {}, { pace: "He enrages at about 6:20; after the last Dig In, leave the fourth cyst. Top guilds finish at 4:43 to 5:01, with him at 34 to 39% at 3:00." });
@@ -3428,6 +3445,7 @@ function avLim(r, src, secs) {
 function paceCard(ev, r, h, mistakes, boss, x) {
   x = x || {};
   const dur = r.duration, mythic = r.item.diff === 'Mythic', kill = r.item.kill, rows = [];
+  let judge = mythic; /* (Heroic Ula'tek is judged too, against its own line (Nov 3)) */
   const ms2 = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
   const ids = (a) => (Array.isArray(a) ? a : [a]);
   const gapT = (l, g) => l.sort((a, b) => a - b).filter((t, i, s) => !i || t - s[i - 1] > g);
@@ -3439,10 +3457,10 @@ function paceCard(ev, r, h, mistakes, boss, x) {
   const hpAt = (re, t) => { const u = unitOf(re); if (!u) return null; let v = null; for (const [s, f] of u.samples) { if (s > t) break; v = f; } return v == null ? null : Math.round(100 * v); };
   // (one row: lvl 0 on pace, 1 a slip, 2 the plan broke; a mistake for 1 and 2 on Mythic)
   const row = (what, t, txt, kills, lvl, sub, detail, fix, noMistake) => {
-    const pre = mythic && preNerf(r.item), l = mythic && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
+    const pre = judge && preNerf(r.item), l = judge && !kill && !pre ? lvl || 0 : 0; /* (before the boss's last nerf: shown, not judged (Oct 27)) (a kill is shown, not judged: the boss died, so the pace was enough (Oct 22: All pulls said Pace "0% done right" with the kill among the misses)) */
     if (l && !noMistake) mistakes.push({ t, player: 'Raid', mechanic: 'Pace', id: spell[0], severity: l === 2 ? 'High' : 'Medium', detail, fix });
-    /* (round 370 pace numbers: an on-pace moment says its numbers in its line) */ const okL = !l && txt ? what + ' · ' + txt + (sub ? ' (' + sub + ')' : kills && mythic ? ' (' + kills + ')' : '') : what;
-    rows.push([{ txt: okL }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: mythic ? kills : '', dim: true }]);
+    /* (round 370 pace numbers: an on-pace moment says its numbers in its line) */ const okL = !l && txt ? what + ' · ' + txt + (sub ? ' (' + sub + ')' : kills && judge ? ' (' + kills + ')' : '') : what;
+    rows.push([{ txt: okL }, { t }, { txt, bad: l === 2, warn: l === 1, sub: pre && lvl ? 'pre-nerf, not compared' + (sub ? ' · ' + sub : '') : sub || '' }, { txt: judge ? kills : '', dim: true }]);
   };
   let spell = [0, 'Pace'], title = '', summary = '';
   if (boss === "Kith'ix") {
@@ -3473,8 +3491,12 @@ function paceCard(ev, r, h, mistakes, boss, x) {
       row('Intermission ' + (i + 1), it.t0, 'up to ' + v + '%', 'top guilds: ' + KB[i] + '% or lower', lvl, 'Breath ' + (a ?? '?') + '%, Blood ' + (b ?? '?') + '%', 'The Sentinels were still at ' + (a ?? '?') + '% and ' + (b ?? '?') + '% at intermission ' + (i + 1) + ' (top guilds: ' + KB[i] + '% or lower).', fix); });
   } else if (boss === "Ula'tek") {
     spell = [UL.rage, 'Rage of the Shackled']; title = 'Pace (Burst the heart on time)';
-    summary = 'Ula\'tek\'s health right after each Rage of the Shackled window. On pace: 67% or lower after the first and 45% or lower after the second (top guilds: 60 to 66% and 32 to 40%).';
-    const wins = auraOn(UL.rage, 30), G = [67, 45], K = ['60 to 66%', '32 to 40%'], fix = 'Line up damage cooldowns and potions for the Rage of the Shackled windows, and keep everyone alive into the second one.';
+    // (Heroic, Nov 3: two Heroic kills that finished in the last heart window had her at 56 to 59% and 34 to 37% (9:51 and 9:48); 30 top
+    // Heroic kills since the Oct 6 tuning: 38 to 44% and 18 to 20%)
+    const hc = r.item.diff === 'Heroic'; if (hc) judge = true;
+    summary = hc ? 'Ula\'tek\'s health right after each Rage of the Shackled window. On pace on Heroic: 60% or lower after the first and 37% or lower after the second (top guilds: 38 to 44% and 18 to 20%).'
+      : 'Ula\'tek\'s health right after each Rage of the Shackled window. On pace: 67% or lower after the first and 45% or lower after the second (top guilds: 60 to 66% and 32 to 40%).';
+    const wins = auraOn(UL.rage, 30), G = hc ? [60, 37] : [67, 45], K = hc ? ['38 to 44%', '18 to 20%'] : ['60 to 66%', '32 to 40%'], fix = 'Line up damage cooldowns and potions for the Rage of the Shackled windows, and keep everyone alive into the second one.';
     wins.slice(0, 2).forEach((s, i) => { const t = s + 22; if (t > dur) return; const v = hpAt(/^Ula'tek$/, t); if (v == null) return; const lvl = v > G[i] + 10 ? 2 : v > G[i] ? 1 : 0;
       row('After window ' + (i + 1), t, 'Ula\'tek at ' + v + '%', 'top guilds: ' + K[i], lvl, 'on pace: ' + G[i] + '% or lower', 'Ula\'tek was still at ' + v + '% after damage window ' + (i + 1) + ' (on pace: ' + G[i] + '% or lower; top guilds: ' + K[i] + ').', fix); });
   } else if (boss === 'The Twin Fangs') {
@@ -3504,7 +3526,7 @@ function paceCard(ev, r, h, mistakes, boss, x) {
     turns.forEach((p, i) => { const lvl = i >= 2 ? 1 : 0; row('Turn ' + (i + 1), p.start, p.name, i >= 2 ? 'top guilds: all 20 finish before it' : 'top guilds: two turns', lvl, '', 'A third turn (' + p.name + ') began at ' + ms2(p.start) + ' (all 20 of top guilds finish in two).', 'Push damage so the explorers die before a third one is empowered.'); });
   } else return null;
   if (!rows.length) return null;
-  return { id: 'pace', title, spell, verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good', summary, cols: ['Moment', 'When', 'Result', mythic ? 'Top guilds' : ''], rows };
+  return { id: 'pace', title, spell, verdict: rows.some((x) => x[2].bad) ? 'bad' : rows.some((x) => x[2].warn) ? 'warn' : 'good', summary, cols: ['Moment', 'When', 'Result', judge ? 'Top guilds' : ''], rows };
 }
 function avoidPanel(ev, r, h, list) {
   const L = (x) => String(x).toLowerCase(), groups = [];
@@ -5158,8 +5180,9 @@ function buildUlatek(ev, r, h) {
   const ulU = [...(r.hpUnits || new Map()).values()].find((u) => u.name === "Ula'tek");
   const poolS = ulU ? [...r.hpUnits.values()].filter((u) => u.max >= 0.9 * ulU.max).flatMap((u) => u.samples).sort((a, b) => a[0] - b[0]) : [];
   const hpAt = (t) => { let v = null; for (const [tt, f] of poolS) { if (tt > t) break; v = f; } return v; };
-  // (Mythic: Ula'tek at 67% or lower after the first window, and 45% or lower after the second, is on pace for a kill)
-  const PACE = mythic ? [0.67, 0.45] : [];
+  // (Mythic: Ula'tek at 67% or lower after the first window, and 45% or lower after the second, is on pace for a kill; Heroic: 60% and
+  // 37%, from two Heroic kills that finished in the last window (Nov 3, the pace card's note))
+  const PACE = mythic ? [0.67, 0.45] : diff === 'Heroic' ? [0.60, 0.37] : [];
   // (each window, player by player: their damage into the heart (doubled while it's open) and elsewhere on the boss)
   const amps = wins.map((w, i) => { const per = new Map(); let heart = 0, other = 0;
     for (const e of ev) { if (e.k !== 'pdmg' || e.t < w.s || e.t > w.e) continue; const p = r.players.get(e.src); if (!p || !p.name) continue;
@@ -5172,7 +5195,7 @@ function buildUlatek(ev, r, h) {
       { txt: hp != null ? (hp < 0.005 ? 'killed in it' : pc(hp) + ' after') : '—', warn: slow, dim: hp == null, sub: [a.hp0 != null && hp != null ? 'from ' + pc(a.hp0) : '', a.pace != null ? 'on pace at ' + pc(a.pace) + ' or lower' : ''].filter(Boolean).join(' · ') },
       { txt: pl(a.pots, 'combat potion'), dim: !a.pots, sub: a.lust ? 'with Bloodlust' : '' }]; });
   if (ampRows.length) sections.push({ id: 'amps', title: 'Rage of the Shackled (Damage windows)', spell: S('rage of the shackled'), verdict: ampRows.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: 'It shows the damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '. Bloodlust was at ' + T(lustT) : '') + '.',
+    summary: 'It shows the damage into the Venomous Heart in each 20-second window, player by player, the boss\'s health before and after it' + (mythic ? ' (on pace: 67% after the first, 45% after the second)' : diff === 'Heroic' ? ' (on pace on Heroic: 60% after the first, 37% after the second)' : '') + ' and the combat potions drunk for it' + (lustT != null ? '. Bloodlust was at ' + T(lustT) : '') + '.',
     cols: ['Window', 'When', 'Into the heart', 'Boss health', 'Potions'], rows: ampRows, amps });
 
   // ---- 6. Stage 2: Grasping Fangs tethers (broken in planned batches, the big one together under a raid cooldown) ----
@@ -5347,8 +5370,14 @@ function buildUlatek(ev, r, h) {
     split('shriek', (x) => /rawling/i.test(String((x[1] || {}).txt || '')), { id: 'rawling', title: 'Blightscale Rawling (Kill the adds)', place: 'Blightscale Rawlings (stage 3 clutches)', summary: 'Rawlings hatched from the stage 3 egg clutches: when each died.', how: H.shriek || '' });
     const ssec = sections.find((x) => x.id === 'shriek'); if (ssec) { ssec.title = 'Blightscale Shrieker (Kick and kill)'; ssec.place = 'Blightscale Shriekers (eggs that reached the venom)'; ssec.how = H.shriek || ''; }
   }
+  /* (Heroic, Nov 3 (Flex: "the heroic version of ulatek needs to have as much detail as the mythic version"): every card explains Heroic's
+     own fight, not Mythic's; Serpent's Bite is soaked by each role's group, and the Doomscales have no Revenge, so they needn't die together) */
+  if (diff === 'Heroic') { const HH = HOW_UL_H, hd = HH.doomscale, cut = hd.indexOf('The cauldron hatches');
+    for (const s of sections) { if (s.id === 'warden') s.how = hd.slice(0, cut).trim(); else if (s.id === 'doomscale') s.how = hd.slice(cut).trim(); else if (s.id === 'rawling') s.how = HH.shriek; else if (HH[s.id]) s.how = HH[s.id]; }
+    const bs = sections.find((x) => x.id === 'bite'); if (bs) { bs.title = "Serpent's Bite (Soak with your group)"; bs.place = "Serpent's Bite (Soak the bite)"; }
+    const dsH = sections.find((x) => x.id === 'doomscale'); if (dsH) { dsH.title = 'Weakened Doomscales (Kick and kill)'; dsH.summary = 'It shows each Weakened Doomscale and when it died (Heroic has no Revenge, so they needn\'t die together), and any big egg that hatched.'; } }
   return { diag, windows, title: diff + " audit: Ula'tek", reached: phases[phases.length - 1].name, phases, marks, sections: sections.filter((s) => mythic || !s.mythicOnly), mistakes,
-    note: mythic ? '' : 'Mythic-only checks (Toxic Incubation, Rancid Yolk, Revenge) are hidden on this difficulty.' };
+    note: mythic ? '' : 'Mythic-only mechanics (Toxic Incubation, the Blightscale Wretch, Noxious Shell, Rancid Yolk and Revenge) aren\'t in this difficulty, so they aren\'t shown.' };
 }
 
 // ---------- NSRT note import: compare assignments with what happened ----------

@@ -2028,6 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
+    "Heroic Ula'tek on Debriefing: every card now explains the Heroic fight with Heroic's own numbers, not Mythic's. The heart windows and Pace are judged on Heroic too: Ula'tek at 60% or lower after the first window and 37% or lower after the second is on pace, so a slow window gets its own card with each player's heart damage, in each pull and in All pulls.",
     "Debriefing Timeline replay: health bars for the bosses and adds on the map, in its top-left corner, moving with the replay.",
     "Debriefing Timeline replay, Ula'tek on Mythic: each Toxic Incubation hit on the off-tank now sends its Caustic Waves out to both sides of them on the map.",
     'Windwalker Monks now get the full explanations on the Rotation tab, checked against patch 12.1.5.',
