@@ -68837,16 +68837,18 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
              top-right in its type colour, "Dead" on a grey frame, a white border on the followed player; kept as aids: the dark-red empty part
              under 35%, a subtle red flash on a big hit, and the game's white absorb stripes) */
           '.dtm-rfg{display:grid;grid-template-columns:repeat(4,50px);gap:1px}',
-          '.dtm-rff{position:relative;box-sizing:border-box;height:22px;background:#000;border:1px solid #000;border-radius:0;overflow:hidden;cursor:pointer;--dt:#cc0000;--dtg:rgba(204,0,0,.6);--dtt:rgba(204,0,0,.3)}',
+          '.dtm-rff{position:relative;box-sizing:border-box;height:24px;background:#000;border:1px solid #000;border-radius:0;overflow:hidden;cursor:pointer;--dt:#cc0000;--dtg:rgba(204,0,0,.6);--dtt:rgba(204,0,0,.3)}',
           '.dtm-rff>i{position:absolute;z-index:0;left:0;top:0;bottom:0;transition:width .2s linear;background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%,rgba(0,0,0,.22))}',
           '.dtm-rff>.rfn{position:absolute;right:2px;color:#fff;white-space:nowrap;overflow:hidden}',
-          /* (beats the site's 11 px type-scale rule for these names, Flex's call; a 1 px black outline so they read on Rogue yellow and Priest white) */
-          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:2px !important;top:1px !important;font-size:9px !important;line-height:10px !important;font-weight:600 !important;text-shadow:1px 0 #000,-1px 0 #000,0 1px #000,0 -1px #000 !important}',
+          /* (beats the site's 11 px type-scale rule for these names, Flex's call: 7 px bold with the full 8-way black outline, picked from a true-size
+             comparison (Nov 3: "Do size 7, but make the raid frames slightly taller"), so they read on Rogue yellow and Priest white) */
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:2px !important;top:2px !important;font-size:7px !important;line-height:8px !important;font-weight:700 !important;letter-spacing:.15px !important;text-shadow:1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 2px rgba(0,0,0,.9) !important}',
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn *{font-size:7px !important;line-height:8px !important;font-weight:700 !important}',
           /* (the page colours every player name by class (round 423 wraps it in a span); inside the frames it keeps the frame's white) */
           'html body .dtm-rf .dtm-rff>.rfn .r423{color:inherit !important}',
           '.dtm-rff.low{background:#3b1517}',
           '.dtm-rff.dead{background:#3a3e44}.dtm-rff.dead>i{width:0 !important}html body .dtm-rf .dtm-rff.dead>span.rfn{color:#c4cad0 !important}',
-          '.dtm-rff.dead::after{content:"Dead";position:absolute;left:0;right:0;top:10px;bottom:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#9aa3ac}',
+          '.dtm-rff.dead::after{content:"Dead";position:absolute;left:0;right:0;top:9px;bottom:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#9aa3ac}',
           '.dtm-rff.dt-magic{--dt:#3399ff;--dtg:rgba(51,153,255,.85);--dtt:rgba(51,153,255,.42)}.dtm-rff.dt-curse{--dt:#9900ff;--dtg:rgba(153,0,255,.85);--dtt:rgba(153,0,255,.42)}',
           '.dtm-rff.dt-disease{--dt:#996600;--dtg:rgba(204,140,20,.85);--dtt:rgba(153,102,0,.45)}.dtm-rff.dt-poison{--dt:#009900;--dtg:rgba(40,200,40,.85);--dtt:rgba(0,153,0,.42)}',
           '.dtm-rff.disp{box-shadow:inset 0 0 0 1.5px var(--dt),inset 0 0 7px 1px var(--dtg)}',
@@ -68861,8 +68863,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           '.dtm-rff>em.oab{box-shadow:inset -2px 0 0 rgba(255,255,255,.85)}.dtm-rff.dead>em{display:none}',
           '.dtm-rff.hit::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;animation:dtmRfHit .6s ease-out forwards}',
           '@keyframes dtmRfHit{0%{box-shadow:inset 0 0 0 2px rgba(255,77,77,.9);background:rgba(90,26,28,.55)}100%{box-shadow:inset 0 0 0 2px rgba(255,77,77,0);background:rgba(90,26,28,0)}}',
-          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:18px}.dtm-rff.dead::after{top:8px;font-size:8px}.dtm-rff>s .icw,.dtm-rff>u .icw,.dtm-rff>.rfd .icw{width:8px;height:8px}.dtm-rff.hasdsp>.rfn{right:11px}',
-          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{font-size:8px !important;line-height:9px !important}}'
+          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:20px}.dtm-rff.dead::after{top:8px;font-size:8px}.dtm-rff>s .icw,.dtm-rff>u .icw,.dtm-rff>.rfd .icw{width:8px;height:8px}.dtm-rff.hasdsp>.rfn{right:11px}',
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{font-size:7px !important;line-height:8px !important;top:1px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         var rfKey = 'dtmRaidFrames', rfPos = null; try { rfPos = JSON.parse(localStorage.getItem(rfKey) || 'null'); } catch (e1) { rfPos = null; }
         var rfPlace = function (mw, el) { var W = mw.clientWidth, H = mw.clientHeight, w0 = el.offsetWidth, h0 = el.offsetHeight, x, y;
