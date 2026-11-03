@@ -34841,6 +34841,9 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
        each into the Breath 4 s later; the intermission's numbers and pairs come from the fight check's own map) */
     'Entombed Sentinels': { bosses: ["Breath of Ula'tek", "Blood of Ula'tek"], adds: ['Venom Coagulation', 'Vashnik'], flash: [], st: true,
     life: { fromRings: { title: /^Toxic Droplets/, legend: /stepped on a droplet/, name: 'Toxic Droplet' } }, visits: { 'Vashnik': [4.5, 1.5] },
+    /* (the fight check's own "where a droplet was picked up" dots stayed on the floor long after (Flex, Nov 2: "whats going on with the sentinels
+       map"); our droplets already vanish the moment they're picked up, so those dots stay off the replay) */
+    mmSkip: function (g) { return /where a droplet was picked up/.test(g.legend || ''); },
     debuffs: { 'Shifting Protovenom': [6, '#ff9628', 'Shifting Protovenom (touch another circle to clear both)'], 'Clinging Murk': [2.5, '#e5534b', 'Clinging Murk (drops a blood pool where it ends)'] },
     auras: { 'Vitriolic Stasis': [["Breath of Ula'tek", "Blood of Ula'tek"], 12, '#e6e0c8', 'Vitriolic Stasis: 99% less damage, and the weaker one heals up', ''] } },
     "Ula'tek": { bosses: ['Ula\'tek'], bossMinPts: 3, ul: true, adds: ['Gore Rattle', 'Blightscale Rawling', 'Blightscale Wretch', 'Doomscale Warden', 'Weakened Doomscale', 'Blightscale Shrieker', 'Venomous Heart', 'Blightscale Clutch', 'Slithering Clutch'], flash: [],
