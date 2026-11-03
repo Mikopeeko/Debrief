@@ -25218,7 +25218,7 @@ window.addEventListener('unhandledrejection', (e) => keepErr('Unhandled: ' + ((e
 const TAB_NAME = { me: 'Home', live: 'Recap', audit: 'Debriefing', overview: 'Assignments', rot: 'Rotation', perf: 'Graphs', night: 'All pulls', player: 'Report card', hw: 'Homework', gdz: 'Guides' };
 function reportCtx() {
   const it = S.rep && S.rep.item, c = { page: S.rep && $('#view') ? TAB_NAME[S.tab] || S.tab : $('#main .pg-hub') ? 'Teams' : 'Start page' };
-  if (S.page === 'guides') c.page = 'Boss guides'; if (S.page === 'ingame') c.page = 'Debrief Addon'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
+  if (S.page === 'guides') c.page = 'Boss guides'; if (S.page === 'ingame') c.page = 'Debrief Companion'; if (S.rpAbout) c.about = S.rpAbout; /* (a guide's Something wrong here?: which part) */
   if (it) { c.boss = it.boss + (it.diff ? ' (' + it.diff + ')' : ''); if (it.pull) c.pull = it.pull; if (S.scope === 'all') c.scope = 'all pulls'; }
   if (it && it.wcl) c.report = 'https://www.warcraftlogs.com/reports/' + it.wcl.code + '#fight=' + it.wcl.fight; else if (S.wclCode) c.report = 'https://www.warcraftlogs.com/reports/' + S.wclCode; else if (S.file) c.report = 'a combat log file';
   if (typeof LIVE !== 'undefined' && LIVE.on) c.live = 'yes';
@@ -26403,7 +26403,7 @@ function openInGame() {
       '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to do by hand.</b> The app does it all.</span></div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The pop-up over the game, the Raid view, a Mythic+ key and the settings window.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>Your recap key</h2><p>Your recap key shows or hides your recap, even mid-raid. It starts as Ctrl + Shift + D; change it in Settings.</p></div></section>' +
-    '<p class="igm-foot">The addon is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
+    '<p class="igm-foot">Debrief Companion is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
   '</div></section>';
   const root = $('#main .igm');
   const bk = root.querySelector('.igm-back'); if (bk) bk.onclick = () => { const g = IGM_BACK; IGM_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
@@ -54999,9 +54999,9 @@ function fp3Shot() {
 // (the three ways in, Oct 24: Debrief before raid (the boss guides), during it (the addon and app) and after it (your night))
 function fp3Ways(art) {
   const card = (b, when, h, p, go) => '<div class="fp3-way" style="--fp3-art:' + art(b) + '"><span class="fp3-when">' + when + '</span><h3>' + h + '</h3><p>' + p + '</p>' + go + '</div>';
-  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub fp3-wsub">Boss guides before raid, a debrief in game during it, and every pull explained after.</p></div><div class="fp3-wg">' +
+  return '<section class="fpx-sec fp3-ways"><div class="fpx-in"><div class="fpx-sh"><div class="fp-k">Three ways in</div><h2>Before, during and after raid</h2><p class="sub fp3-wsub">Boss guides before raid, a recap over WoW during it, and every pull explained after.</p></div><div class="fp3-wg">' +
     card('The Twin Fangs', 'Before raid', 'Learn every boss', 'Guides for all ten bosses, Heroic and Mythic: maps that play each mechanic in order, and your job on each.', '<a class="fp3-go" href="?guides">Open the boss guides ›</a>') +
-    card("Ula'tek", 'During raid', 'A debrief after every pull, in game', 'The Debrief addon and app show the mistakes and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the addon ›</a>') +
+    card("Ula'tek", 'During raid', 'A recap after every pull, over WoW', 'Debrief Companion shows the mistakes and what to fix, before the next pull starts.', '<a class="fp3-go" href="?ingame">Get the app ›</a>') +
     card('The Coiled Altar', 'After raid', 'Every pull, explained', 'Warcraft Logs or your own combat log: mechanics, deaths and your rotation, pull by pull.', '<button class="fp3-go linkbtn" id="fpDemo2" type="button">See a real raid night ›</button><div class="fp-msg fp-note" id="fpDemoMsg2"></div>') +
     '</div></div></section>';
 }
