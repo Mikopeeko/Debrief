@@ -2028,6 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
+    "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the phase chart beside the map under the play-by-play, and a short trail behind the player you follow.",
     "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Big defensives and externals show on the frames too, with absorb shields as white stripes and a red flash when someone takes a big hit. Click a frame to follow that player, drag the grid anywhere on the map, or hide it with the Raid frames button beside the speeds (hidden at first on a phone).",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
@@ -12517,6 +12518,11 @@ function miniMap(mp, pmap) {
   };
   const micL = []; // (the mechanics' icons, drawn on top at the end)
   /* round 413: a ring with a countdown (cd) says how long until it goes off */ const cdLab413 = (g0, g) => { const nw = mp.ft != null ? mp.ft : mp.t, lf = g0.at - nw; /* round 413 soak live */ if (g0.need && g) { const n = pts.filter((q) => q.kind === 'player' && Math.hypot(q.x - g.x, q.y - g.y) <= g0.r).length; return lf > 0.05 ? g0.cd + ' in ' + lf.toFixed(1) + ' s · ' + n + ' in, needs ' + g0.need : lf > -1.5 ? g0.cd + ': ' + n + ' soaked' : (g0.label || ''); } return lf > 0.05 ? (g0.who ? g0.who + ' ' + lf.toFixed(1) + ' s' : g0.cd + ' in ' + lf.toFixed(1) + ' s') : lf > -1.2 ? (g0.who ? g0.who + ': boom' : g0.cd + '!') : (g0.label || ''); };
+  /* (the Timeline replay's followed player (Nov 3): their last 8 s as a fading line in their class colour, under the circles and the dots; after
+     a death it stays at the death spot for 8 s) */
+  if (mp.trail && live && Array.isArray(mp.frames)) { const tr = mp.trail; let dd = null; for (const d of tr.deaths || []) if (d <= ftC + 1e-6 && (dd == null || d > dd)) dd = d; const t1 = dd != null && ftC - dd <= 8 ? dd : ftC, TP = [];
+    for (const f of mp.frames) { if (f.t < t1 - 8 - 1e-6 || f.t > t1 + 1e-6) continue; const q = (f.pts || []).find((p) => p.guid === tr.guid); if (q) TP.push([f.t, X(q), Y(q)]); }
+    for (let i = 1; i < TP.length; i++) { const op = Math.max(0, Math.min(0.8, (TP[i][0] - (t1 - 8)) / 8 * 0.8)); if (op <= 0.02) continue; s += '<line x1="' + (+TP[i - 1][1]).toFixed(1) + '" y1="' + (+TP[i - 1][2]).toFixed(1) + '" x2="' + (+TP[i][1]).toFixed(1) + '" y2="' + (+TP[i][2]).toFixed(1) + '" stroke="' + tr.color + '" stroke-opacity="' + op.toFixed(2) + '" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'; } }
   for (const g0 of mp.rings || []) {
     const g = ringAt(g0); if (!g) continue;
     const col = g.color || '#e6b450', fill = g.fill || (g.color ? 'rgba(126,224,143,.16)' : 'rgba(230,180,80,.14)');
@@ -35805,10 +35811,46 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var tt = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (' + dsp[1] + ' can be dispelled)' : '') + (df ? '. ' + df.n + (df.by ? ' from ' + df.by : '') + (df.z != null ? ' (' + Math.max(0, Math.ceil(df.z - ft)) + ' s left)' : '') : '') + (fr._hitTx ? '. ' + fr._hitTx : '') + ' (click to follow)';
             if (fr._tt !== tt) { fr._tt = tt; fr.title = tt; } });
           if (icn && w.hydrateIcons) w.hydrateIcons(); };
+        /* (the player bar's styles, once) */
+        var tl3Css = function () { if (document.getElementById('dtm-tl3-css')) return; var st = document.createElement('style'); st.id = 'dtm-tl3-css'; st.textContent = [
+          '.dtm-mm .zanim{position:relative;padding-top:18px}.dtm-mm .zanim .ztime{display:none}',
+          /* (the time bar is back on a computer too: it carries the marks (it was hidden on Nov 2 when the phase chart's playhead took over)) */
+          'html body #view > .dbt.dbt.dbx.dtm-on.dtm-tlon .dtm-mm .zanim .zrange{display:block !important;min-width:0}',
+          '.dtm-clk{flex:none;min-width:74px;text-align:right;font-variant-numeric:tabular-nums;font-size:12.5px;color:#aeb6bf;white-space:nowrap}',
+          '.dtm-ctl{display:flex;align-items:center;gap:2px;flex:none;font-size:12px}.dtm-ctl button{all:unset;cursor:pointer;padding:3px 8px;border-radius:4px;color:#aeb6bf}',
+          '.dtm-ctl button.on{color:#0d1116;background:var(--gold);font-weight:700}.dtm-ctl button.dtm-rft{display:inline-flex;align-items:center;gap:4px;margin-left:6px;white-space:nowrap}',
+          /* (2. the marks: ticks just above the time bar so the handle stays on top and easy to grab; a skull above them for deaths) */
+          '.dtm-tmk{position:absolute;left:0;top:0;right:0;height:0;z-index:2;pointer-events:none}',
+          '.dtm-tmk i{position:absolute;width:2px;height:8px;margin-left:-1px;border-radius:1px;pointer-events:auto;cursor:pointer}.dtm-tmk i::before{content:"";position:absolute;left:-4px;right:-4px;top:-2px;bottom:-2px}',
+          '.dtm-tmk b{position:absolute;width:12px;margin-left:-6px;text-align:center;font-size:10px;line-height:11px;color:#ff8f87;pointer-events:auto;cursor:pointer;font-weight:400}',
+          /* (4. the right column: the play-by-play on top, the phase chart under it, together as tall as the map and its bar) */
+          '.dtm-rc{display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:1 1 50%;min-height:0;height:auto !important;overflow:auto}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-tlm{flex:1 1 50%;min-height:0;margin-top:0;overflow:auto}',
+          '.dtm-rc .dtm-tlm .dbx-labs > *{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dtm-rc .dtm-tlm .dbx-ax, .dtm-rc .dtm-tlm .dbx-ax *{font-size:11px !important}',
+          '@media (max-width:900px){.dtm-rc{height:auto !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:none;max-height:440px !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-tlm{flex:none;overflow:visible}}',
+          '@media (max-width:700px){.dtm-mm .zanim{flex-wrap:wrap}.dtm-ctl{flex-basis:100%}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{max-height:260px !important}}'
+        ].join('\n'); document.head.appendChild(st); };
+        /* (the clock: "0:31 / 3:55") */
+        var tl3Clk = function (ft) { var c = box.querySelector('.dtm-clk'); if (!c) return; var tx = rfT(ft) + ' / ' + rfT(end); if (c._t !== tx) { c._t = tx; c.textContent = tx; } };
+        /* (2. marks on the time bar, from the play-by-play's own rows: serious red, moderate orange, minor amber, a skull for a death; nothing for
+           what went right. Hover says what it was; a click jumps to 2 s before it; marks closer than 4 px merge, worst colour first, all listed) */
+        var tl3Marks = function () { var zan = mb.querySelector('.zanim'), rg = zan && zan.querySelector('.zrange'); if (!rg || !rg.offsetWidth) return; var rows = box.querySelectorAll('.dtm-pb .dtm-pr'); var key = rg.offsetWidth + '|' + rg.offsetLeft + '|' + rg.offsetTop + '|' + rows.length; if (zan._mk === key) return; zan._mk = key;
+          var old = zan.querySelector('.dtm-tmk'); if (old) old.remove(); var mx = (+rg.max || 1) * STEP, W = rg.offsetWidth, R0 = 7, XP = function (t) { return rg.offsetLeft + R0 + (W - 2 * R0) * Math.max(0, Math.min(1, t / mx)); };
+          var LV = { 'lv-s': [3, '#e5534b', 'Serious'], 'lv-m': [2, '#e8a23a', 'Moderate'], 'lv-n': [1, '#f2c46b', 'Minor'] }, tk = [], dk = [];
+          [].forEach.call(rows, function (r) { var t = +r.dataset.t; if (isNaN(t)) return; var k = (r.className.match(/\blv-\w+/) || [''])[0], wd = r.querySelector('.w'), nm = wd ? ((wd.querySelector('b') || wd).textContent || '').replace(/\s+/g, ' ').trim() : '', tx = wd ? (wd.textContent || '').replace(/\s+/g, ' ').trim() : '';
+            if (LV[k]) tk.push({ t: t, x: XP(t), sev: LV[k][0], col: LV[k][1], tip: rfT(t) + ' · ' + nm + ' · ' + LV[k][2] }); else if (k === 'lv-d' || k === 'lv-q') dk.push({ t: t, x: XP(t), sev: 1, col: '#ff8f87', tip: rfT(t) + ' · ' + tx }); });
+          var merge = function (L) { L.sort(function (a, b) { return a.x - b.x; }); var out = []; L.forEach(function (m) { var g = out[out.length - 1]; if (g && m.x - g.x1 < 4) { g.x1 = m.x; g.tips.push(m.tip); if (m.sev > g.sev) { g.sev = m.sev; g.col = m.col; } } else out.push({ x: m.x, x1: m.x, t: m.t, sev: m.sev, col: m.col, tips: [m.tip] }); }); return out; };
+          var lay = document.createElement('div'); lay.className = 'dtm-tmk'; var y0 = rg.offsetTop - 10, h = '';
+          merge(tk).forEach(function (g) { h += '<i style="left:' + ((g.x + g.x1) / 2).toFixed(1) + 'px;top:' + y0 + 'px;background:' + g.col + '" data-tj="' + g.t + '" data-tt="' + E(g.tips.join(' / ')) + '"></i>'; });
+          merge(dk).forEach(function (g) { h += '<b style="left:' + ((g.x + g.x1) / 2).toFixed(1) + 'px;top:' + (y0 - 12) + 'px" data-tj="' + g.t + '" data-tt="' + E(g.tips.join(' / ')) + '">☠</b>'; });
+          lay.innerHTML = h; zan.appendChild(lay);
+          lay.addEventListener('click', function (e) { var mk = e.target.closest('[data-tj]'); if (!mk) return; e.preventDefault(); e.stopPropagation(); P.seek = true; P.clip = null; rg.value = Math.max(0, Math.round((+mk.dataset.tj - 2) / STEP)); rg.dispatchEvent(new Event('input', { bubbles: true })); }); };
         var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
         var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
-          var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; }
-          if (sec) sec.classList.add('dtm-tlon'); var vd0 = box.querySelector('.dtm-left > .dtm-vd'); if (vd0) slot.parentNode.insertBefore(vd0, slot.nextSibling);
+          var slot = box.querySelector('.dtm-tlm'); if (!slot) { slot = document.createElement('div'); slot.className = 'dtm-tlm'; /* (4. the phase chart beside the map, under the play-by-play (Flex, Nov 3: "What if we moved the bottom red outline to the top red outline and had the play by play only take up half that area?")) */
+            var pbc = gd.querySelector('.dtm-pb'), rc = gd.querySelector('.dtm-rc'); if (!rc && pbc) { tl3Css(); rc = document.createElement('div'); rc.className = 'dtm-rc'; pbc.parentNode.insertBefore(rc, pbc); rc.appendChild(pbc); } if (rc) rc.appendChild(slot); else gd.parentNode.insertBefore(slot, gd.nextSibling); box._tlPh = -1; if (box._fit) box._fit(); }
+          if (sec) sec.classList.add('dtm-tlon'); var vd0 = box.querySelector('.dtm-left > .dtm-vd'); if (vd0) gd.parentNode.insertBefore(vd0, gd.nextSibling);
           var k = 0; for (var i = 0; i < PHS.length; i++) if (ft >= PHS[i].start - 0.01) k = i; k = Math.min(k, secs.length - 1);
           if (k !== box._tlPh) { box._tlPh = k; slot.innerHTML = '<div class="dtm-tlc">' + (PHS.length > 1 ? PHS.map(function (p, i) { return '<button type="button" class="' + (i === k ? 'on' : '') + '" data-tph="' + i + '">' + E(p.name) + '</button>'; }).join('') : '') + '</div>';
             var cl = secs[k].cloneNode(true); slot.appendChild(cl); [].slice.call(cl.querySelectorAll('.dbx-mk')).forEach(function (d) { var al = d.getAttribute('aria-label'); if (al) d.dataset.tt = E(al); });
@@ -35816,7 +35858,14 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           var p = PHS[k], len = Math.max(1, p.end - p.start), hd = slot.querySelector('.dtm-tlh'); if (hd) hd.style.left = Math.max(0, Math.min(100, (ft - p.start) / len * 100)) + '%';
           [].slice.call(slot.querySelectorAll('.dbx-mk')).forEach(function (d) { var lf = parseFloat(d.style.left); if (!isNaN(lf)) d.classList.toggle('fut', p.start + lf / 100 * len > ft + 0.25); }); };
         var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); }); box._names = byN;
+        /* (3. a short trail behind the followed player: their last 8 s in their class colour, fading in from the oldest point; at a death it stays
+           at the death spot for 8 s (the map draws it, from the dots' own positions)) */
+        if (SS.mechP && byN[SS.mechP]) { var tgd = byN[SS.mechP]; mp.trail = { guid: tgd, color: (typeof CC !== 'undefined' && CC[SS.mechP]) || '#ffffff', deaths: (rep.deaths || []).filter(function (d) { return d && d.guid === tgd; }).map(function (d) { return +d.t; }) }; }
         mb.innerHTML = w.miniMap(mp, pmap);
+        /* (1. one player bar under the map (Flex, Nov 3: "All three"): Play, the time bar, the clock "0:31 / 3:55", the speeds and the raid frames'
+           eye in one row; the top keeps the health bars, what's happening now, Key and N) */
+        (function () { var zan0 = mb.querySelector('.zanim'), mt0 = box.querySelector('.dtm-mt'); if (!zan0 || !mt0) return; tl3Css(); var clk0 = document.createElement('span'); clk0.className = 'dtm-clk'; zan0.appendChild(clk0);
+          var ctl0 = document.createElement('span'); ctl0.className = 'dtm-ctl'; [].slice.call(mt0.querySelectorAll('[data-spd], [data-rft]')).forEach(function (b) { ctl0.appendChild(b); }); zan0.appendChild(ctl0); mt0.style.display = 'none'; })();
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         var pbT = mb.querySelector('.zplay'); if (pbT) pbT.title = 'Play or pause (Space)';
         /* (a big room (The Twin Fangs' three platforms): the camera frames about FOLLOW yards around the middle of the raid and glides with it as it
@@ -35836,10 +35885,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           var med = function (L) { L.sort(function (p, q) { return p - q; }); return L[Math.floor(L.length / 2)]; }, W0 = FOLLOW * yd, cx = med(xs), cy = med(ys), tg = [cx - W0 / 2, cy - W0 / 2, W0, W0];
           var cur = !now && mb._cam ? mb._cam : null, vb = cur ? cur.map(function (v, i) { return v + (tg[i] - v) * 0.2; }) : tg; mb._cam = vb; mb._zoomTo(vb); };
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); rfFrames(seekT); tlm(seekT); cam(true, seekT);
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); rfFrames(seekT); tlm(seekT); tl3Clk(seekT); tl3Marks(); cam(true, seekT);
         if (FOLLOW) { var sv0 = mb.querySelector('svg.zmap'), pdn = null; if (sv0) { sv0.addEventListener('pointerdown', function (e) { pdn = [e.clientX, e.clientY]; }); sv0.addEventListener('pointerup', function (e) { if (pdn && Math.hypot(e.clientX - pdn[0], e.clientY - pdn[1]) > 5) P.camFree = true; pdn = null; }); }
           [].slice.call(mb.querySelectorAll('.zin, .zout, .zfull, .zfocus')).forEach(function (b0) { b0.addEventListener('click', function () { P.camFree = true; }); }); }
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); tl3Clk(ft); tl3Marks(); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
           if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
@@ -35849,7 +35898,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
     setCur(pk, true);
     if (w.hydrateIcons) w.hydrateIcons(); if (w.refreshIcons) w.refreshIcons();
     /* (the play-by-play is as tall as the replay, the tiles and the verdict; a longer list scrolls inside) */
-    var fit = function () { var lf = box.querySelector('.dtm-left'), cdv = box.querySelector('.dtm-card'); if (lf && cdv) cdv.style.height = innerWidth > 900 ? Math.max(320, lf.offsetHeight) + 'px' : ''; }; box._fit = fit; fit(); setTimeout(fit, 150); setTimeout(fit, 800);
+    var fit = function () { var lf = box.querySelector('.dtm-left'), cdv = box.querySelector('.dtm-card'), rc = box.querySelector('.dtm-rc'); if (lf && rc) { rc.style.height = innerWidth > 900 ? Math.max(420, lf.offsetHeight) + 'px' : ''; if (cdv) cdv.style.height = ''; } else if (lf && cdv) cdv.style.height = innerWidth > 900 ? Math.max(320, lf.offsetHeight) + 'px' : ''; }; box._fit = fit; /* (4. with the chart beside it, the right column takes the map's height and splits it) */ fit(); setTimeout(fit, 150); setTimeout(fit, 800);
     if (fromChart && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' });
     if (box._bound) return; box._bound = 1;
     if (!tip) { tip = document.createElement('div'); tip.className = 'dtm-tip'; document.body.appendChild(tip); }
