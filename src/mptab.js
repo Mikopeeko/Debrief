@@ -3336,6 +3336,7 @@ let MPC_ME = '';
 const MPC_ON = location.hostname === 'localhost' && /[?&]mpcard=1\b/.test(location.search);
 const MPC_CSS = `
 html.mpcard,html.mpcard body{background:#171a22;overflow-x:hidden;border:0}
+html.mpcard::-webkit-scrollbar{width:8px}html.mpcard::-webkit-scrollbar-track{background:transparent}html.mpcard::-webkit-scrollbar-thumb{background:#2f3542;border-radius:4px;border:2px solid transparent;background-clip:padding-box}html.mpcard::-webkit-scrollbar-thumb:hover{background-color:#3a4250}
 html.mpcard .topbar,html.mpcard #bossHead,html.mpcard #strip,html.mpcard .pg-tabbar,html.mpcard #tour,html.mpcard .toast{display:none!important}
 html.mpcard #main{padding:0 14px 18px;margin:0;max-width:none}
 html.mpcard #view.mpt-page{padding:0;margin:0;max-width:none}
