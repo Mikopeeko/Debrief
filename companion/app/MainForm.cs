@@ -203,7 +203,7 @@ namespace Debrief {
     [DllImport("user32.dll")] static extern bool RegisterHotKey(IntPtr h, int id, uint mods, uint vk);
     [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h, int id);
     const int HotkeyId = 0xD0B1;
-    int hkMods, hkVk; bool hkOn; string hkName = "";
+    int hkMods, hkVk; bool hkOn, hkTaken; string hkName = "";
     string HotkeyFile { get { return Path.Combine(here, "hotkey.txt"); } } // ("mods,vk,name": mods 1 Alt, 2 Ctrl, 4 Shift; e.g. "6,68,Ctrl+Shift+D")
     // (mods -1: let go of it while the window listens for a new one; -2: take the saved one back)
     public string SetHotkey(int mods, int vk, string name) {
@@ -216,14 +216,21 @@ namespace Debrief {
         if (hkVk != 0) hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000, (uint)hkVk); // (the old one back)
         return "taken";
       }
-      hkOn = true; hkMods = mods; hkVk = vk; hkName = name ?? "";
+      hkOn = true; hkTaken = false; hkMods = mods; hkVk = vk; hkName = name ?? "";
       try { File.WriteAllText(HotkeyFile, mods + "," + vk + "," + hkName); } catch { }
       return "";
     }
     public System.Collections.Generic.Dictionary<string, object> HotkeyInfo() {
-      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", hkOn }, { "chosen", File.Exists(HotkeyFile) } };
+      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", hkOn }, { "chosen", File.Exists(HotkeyFile) }, { "taken", hkTaken } };
     }
     void LoadHotkey() {
+      // (the recap key is the only way back to a recap since the card left WoW (Nov 3, the studio), so it starts as Ctrl + Shift + D when nothing else has it;
+      // if another program does, the window asks for another)
+      if (!File.Exists(HotkeyFile)) {
+        if (RegisterHotKey(Handle, HotkeyId, 6 | 0x4000, 68)) { hkOn = true; hkMods = 6; hkVk = 68; hkName = "Ctrl + Shift + D"; try { File.WriteAllText(HotkeyFile, "6,68," + hkName); } catch { } }
+        else { hkTaken = true; Program.Log("the recap key Ctrl + Shift + D is taken by another program"); }
+        return;
+      }
       try { var p = File.ReadAllText(HotkeyFile).Split(new[] { ',' }, 3); int m = int.Parse(p[0]), v = int.Parse(p[1]); hkMods = m; hkVk = v; hkName = p[2];
         hkOn = RegisterHotKey(Handle, HotkeyId, (uint)m | 0x4000, (uint)v); if (!hkOn) Program.Log("recap key " + hkName + " is taken by another program"); } catch { }
     }

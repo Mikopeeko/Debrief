@@ -58,7 +58,7 @@ ev:SetScript("OnEvent", function(self, e, arg)
 end)
 
 -- (the old commands, for old habits: one line, no windows)
-local function onPc() if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Debrief's|r recap and settings are on your PC now: press your recap hotkey, or open Debrief Companion.") end end
+local function onPc() if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage(GOLD .. "Debrief's|r recap and settings are on your PC now: press your recap key, or open Debrief Companion.") end end
 SLASH_DEBRIEF1 = "/recap"; SLASH_DEBRIEF2 = "/debrief"; SlashCmdList.DEBRIEF = onPc
 SLASH_DEBRIEFMO1 = "/db"; SlashCmdList.DEBRIEFMO = onPc
 

@@ -217,7 +217,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
 <div class="updbar" id="fsbar" hidden><div><b>Your recap pops up over WoW only in Windowed (Fullscreen)</b><span>In WoW: Options › Graphics › Display Mode › Windowed (Fullscreen). Or show the pop-up on your second screen.</span></div><button class="btn" id="fsSecond" type="button" hidden>Use my second screen</button><button class="btn" id="fsOk" type="button">Got it</button></div>
-<div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding. Afterwards, type /reload in WoW.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
+<div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
 
 <div class="stage">
   <main class="main">
@@ -477,7 +477,7 @@ const HK = { listen: null };
 const hkName = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : ''].filter(Boolean).concat([e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)]).join(' + ');
 async function hkShow() { try { const x = await j('/hotkey'); $('hkBtn').textContent = x.name || 'Pick one'; $('hkLine').classList.toggle('bad', !!(x.chosen && !x.on));
   $('hkLine').textContent = x.chosen ? (x.on ? x.name + ' shows or hides your recap over the game. Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
-  if (!x.chosen) $('hkAsk').hidden = false; } catch (e) { /* an older app: no hotkey */ } }
+  if (!x.chosen) { $('hkAsk').hidden = false; if (x.taken) { $('hkUse').hidden = true; $('hkBig').textContent = 'Press your keys'; $('hkMsg').textContent = 'Ctrl + Shift + D is taken by another program on this PC. Press another key combination.'; } } } catch (e) { /* an older app: no hotkey */ } }
 async function hkSet(mods, vk, name) { const x = await j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods, vk, name }) });
   return x.ok ? '' : x.why === 'taken' ? 'Another program already uses ' + name + '. Press another combo.' : 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.'; }
 // (listening: the saved key is let go first, so pressing it again counts; Esc stops and takes it back)
@@ -694,7 +694,7 @@ function renderRing() {
   const s = L.lastSent, sb = s && L.items.find((b) => b.startByte === s.sb);
   if (sb && ((lastDone && s.sb === lastDone.startByte) || Date.now() - s.at < 90e3)) {
     /* (nothing is copied any more (Oct 24): the pop-up shows it, and WoW gets it with Save this pull or at the next login) */
-    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'in WoW on /recap') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
+    return ring('sent', 1, '<b>✓</b><span>' + (sb.kill ? 'Kill recap is up' : 'Recap is up') + '</span><em>' + ($('pop').checked ? 'in the pop-up' : 'press your recap key') + '</em>', 'Pull ' + sb.pull + "'s recap is " + ($('pop').checked ? 'in the pop-up over the game. ' : 'saved. ') + 'In WoW, /reload brings it into /recap.');
   }
   { const kr = keyOf(g); if (kr) return keyRing(kr); } /* (round 482: a key) */
   const best = done.reduce((m, b) => { const e = N[b.startByte]; return e && e.l != null ? Math.max(m, 100 - e.l) : m; }, 0);
@@ -1144,7 +1144,7 @@ function renderPreview(m) {
     '<div class="c-res"><h3 class="' + (h.kill ? 'kill' : 'wipe') + '">' + (h.kill ? 'Kill!' : 'Wipe' + (h.pct !== '' ? ' at ' + esc(h.pct) + '%' : '')) + '</h3><p>' + [h.dur, h.where, h.deaths + (h.deaths === '1' ? ' death' : ' deaths')].filter(Boolean).map(esc).join(' · ') + '</p></div>' +
     '<div class="c-tabs"><button type="button" data-v="me" class="' + (PV.view === 'me' ? 'on' : '') + '">Me</button><button type="button" data-v="raid" class="' + (PV.view === 'raid' ? 'on' : '') + '">Raid view</button>' +
     (PV.view === 'me' ? '<span class="c-who"><button type="button" data-w="-1" aria-label="Previous player">◀</button>' + (P ? nm(P.name, P.cls) : '') + '<button type="button" data-w="1" aria-label="Next player">▶</button></span>' : '') + '</div>' +
-    '<div class="c-body">' + body + '</div><div class="c-foot">In game, the card opens on your own character. Type /debrief to open it again.</div></div>';
+    '<div class="c-body">' + body + '</div><div class="c-foot">Your recap key opens it again.</div></div>';
   box.querySelectorAll('[data-v]').forEach((x) => x.addEventListener('click', () => { PV.view = x.dataset.v; renderPreview(m); }));
   box.querySelectorAll('[data-w]').forEach((x) => x.addEventListener('click', () => { const i = names.indexOf(PV.who); PV.who = names[(i + (+x.dataset.w) + names.length) % names.length]; store.set('dbf-me', PV.who); renderPreview(m); }));
 }

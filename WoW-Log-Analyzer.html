@@ -13350,7 +13350,7 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     <div class="cutside" id="cutSide"></div>
     <a class="btn tb-disc" id="tbDisc" href="#" target="_blank" rel="noopener" aria-label="Join our Discord" title="Join our Discord" hidden></a>
     <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPlan" type="button">Plan<span>rosters and notes for every boss</span></button><button class="tbm-i" id="tbGuides" type="button">Boss guides<span>how each fight works, with animated maps</span></button><button class="tbm-i" id="tbInGame" type="button">Debrief Addon<span>your pull recap inside WoW, and the download</span></button><button class="tbm-i" id="tbTheme" type="button">Theme<span>change how Debrief looks</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
+      <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPlan" type="button">Plan<span>rosters and notes for every boss</span></button><button class="tbm-i" id="tbGuides" type="button">Boss guides<span>how each fight works, with animated maps</span></button><button class="tbm-i" id="tbInGame" type="button">Debrief Companion<span>your pull recap over WoW, and the download</span></button><button class="tbm-i" id="tbTheme" type="button">Theme<span>change how Debrief looks</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
     <input type="file" id="packIn" accept=".json" multiple hidden>
@@ -25271,7 +25271,9 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', n: [
+  { d: '2026-11-03', h: [{ t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+    "Debrief Companion: your recap key starts as Ctrl + Shift + D, and it's the way back to any recap, even mid-raid. Change it in Settings.",
+    "Debrief Companion: if WoW is in true Fullscreen, a one-time tip shows how to make the pop-up show over the game, or how to put it on your second screen.",
     "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the selected mistake card beside the map under the play-by-play, and a short trail behind the player you follow.",
     "Debriefing Timeline replay: the mistake card beside the map has a Watch it button that plays the moment, its own ◀ 1 of 5 ▶, and a ring on the map around each player it names.",
     "Why we wiped on Debriefing: the Serious, Moderate and Minor counts match the rows, a mechanic missed more than once is one row with each time and who (\"Soul Sever ×2\"), every row has an icon (a death shows what killed them), and a click on a row plays that moment on the Timeline replay.",
@@ -26354,16 +26356,13 @@ function openPatchNotes() {
 // The downloads are the site's own files (site-assets/companion): the app updates itself from latest.json there, so this page
 // only links to them. The pictures are in site-assets/companion/shots.
 const IGM_URL = () => (WCL.HOSTED ? '/companion/' : 'https://debriefme.io/companion/');
+// (the pop-up only since Nov 3 (the studio's pop-up-only-brief.md): the pictures are the pop-up and the settings window, with made-up names)
 const IGM_SHOTS = [
-  ['big-window.jpg', 'Big window', 'Every pull of the night: your numbers pull by pull, how far each pull got, and what the raid needs to clean up. Press Expand on your card.'],
-  ['simple-medium-heavy.png', 'Simple, Standard or Detailed', 'Pick how much your card shows, from a quick read to everything. Standard opens with its sections closed: tap one to open it.'],
-  ['raid-view.png', 'Raid view', 'The raid\'s biggest mistakes and who died. Use the arrows to look at anyone\'s pull.'],
-  ['settings.png', 'Settings', 'Type /db: pick a style, the four everyday switches, and the rest in folds. Your card sits beside it and changes as you click.'],
-  ['mini-bar.png', 'Mini bar', 'Type /debrief mini for one slim line after each pull instead of the card. Click it for the full card.'],
-  ['card-sizes.png', 'On your PC', 'The same recap pops up over the game a few seconds after each boss pull.'],
-  ['tutorial.png', 'First-time setup', 'Four short steps the first time you log in: it checks that everything works, then helps you pick what you see.'],
+  ['popup-raid.png', 'Your recap over the game', 'A few seconds after every boss pull: the raid lead\'s words, your number, your rotation and who died. Drag it anywhere, or let it sit at the side.'],
+  ['popup-raidview.png', 'Raid view', 'The raid\'s biggest mistakes and who died. Use the arrows to look at anyone\'s pull.'],
+  ['popup-mplus.jpg', 'A Mythic+ key', 'At the end of a key: what got you the time or cost it, your part, and every pull on the map against a fast run.'],
+  ['settings-window.png', 'Settings', 'What your recap shows, its look and where it sits, with the recap beside it changing as you click.'],
 ];
-const IGM_CMDS = [['/recap', 'Shows or hides your card.'], ['/db', 'Opens the settings.'], ['/debrief setup', 'Opens the guided setup again.']];
 // (the site's own logo, the same as the top bar's; its colours are the lgf* gradients at the top of the page)
 const IGM_LOGO = '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 2 57 11.5V30c0 15.5-11.3 26.6-25 32C18.3 56.6 7 45.5 7 30V11.5Z" fill="url(#lgfMetal)" stroke="#4a300a" stroke-width=".8"/><path d="M32 7 52.5 14.8V30c0 12.8-9.2 22-20.5 26.6C20.7 52 11.5 42.8 11.5 30V14.8Z" fill="url(#lgfMetalDk)"/><path d="M32 9.2 50.5 16.3V30c0 11.7-8.3 20.2-18.5 24.5C21.8 50.2 13.5 41.7 13.5 30V16.3Z" fill="url(#lgfEnamel)"/><path d="M32 9.2 50.5 16.3V23C40 20.5 24 20.5 13.5 23V16.3Z" fill="#fff" opacity=".07"/><path fill-rule="evenodd" transform="translate(0 1.2)" fill="#000" opacity=".55" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path fill-rule="evenodd" fill="url(#lgfMetal)" d="M21 18h11c9.5 0 14.5 6 14.5 14S41.5 46 32 46H21Z M26.5 23.5H32c5.6 0 9 3.4 9 8.5s-3.4 8.5-9 8.5h-5.5Z"/><path d="m29 32.4 2.7 2.7 5.6-6.1" fill="none" stroke="url(#lgfEmerald)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 let IGM_BACK = null;
@@ -26379,31 +26378,31 @@ function openInGame() {
   const all = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="16.5" cy="8.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M2 19.5c.6-3 2.9-4.8 6-4.8s5.4 1.8 6 4.8M13.6 15c.9-.2 1.9-.3 2.9-.3 3.1 0 5.4 1.8 6 4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
   const shot = (s, i) => '<button type="button" class="igm-shot' + (i ? '' : ' feat') + '" data-i="' + i + '" aria-label="' + esc(s[1]) + ': see it big"><span class="igm-thumb"><img src="' + U + 'shots/' + s[0] + '" alt="' + esc(s[1]) + '" loading="lazy"></span><span class="igm-cap"><b>' + esc(s[1]) + '</b><span>' + esc(s[2]) + '</span>' + (i ? '' : '<em>Click any picture to see it big.</em>') + '</span></button>';
   $('#main').innerHTML = '<section id="view" class="igm-page"><div class="igm">' +
-    '<div class="igm-top">' + (IGM_BACK && S.index ? '<button type="button" class="btn igm-back">‹ Back to your pull</button>' : '') + '<h1>Debrief Addon</h1></div>' +
-    '<header class="igm-hero"><div class="igm-hin"><div class="igm-kick">An addon and a small PC app</div><h2>Your pull recap, inside WoW</h2>' +
-      '<p class="igm-lead">A few seconds after every boss pull, your recap pops up over the game on your PC. In WoW, /recap shows it too.</p>' +
+    '<div class="igm-top">' + (IGM_BACK && S.index ? '<button type="button" class="btn igm-back">‹ Back to your pull</button>' : '') + '<h1>Debrief Companion</h1></div>' +
+    '<header class="igm-hero"><div class="igm-hin"><div class="igm-kick">A small PC app for Windows</div><h2>Your pull recap, right over WoW</h2>' +
+      '<p class="igm-lead">A few seconds after every boss pull, your recap pops up over the game. Press your recap key to see it again.</p>' +
       '<ul class="igm-gets" aria-label="What you get">' + ['Your numbers', 'Your biggest slips', 'Your boss mistakes', 'Who died', 'One thing to try next pull'].map((x) => '<li>' + x + '</li>').join('') + '</ul>' +
-      '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 3.6 MB · the PC app, with the addon built in') /* (round 464 one download: the addon doesn't work without the app (Flex)) */ + '</div>' +
+      '<div class="igm-cta">' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 3.6 MB · the PC app, with a small addon that keeps your combat log on') /* (round 464 one download: the addon doesn't work without the app (Flex)) */ + '</div>' +
       '<p class="igm-warn"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg><span>The app is signed. While it\'s new, Windows may still say <b>"Windows protected your PC"</b>: click <b>More info</b>, then <b>Run anyway</b>.</span></p>' +
       '<p class="igm-ver">The app keeps itself and the addon up to date.</p>' +
+      '<p class="igm-ver">Play WoW in Windowed (Fullscreen) so the pop-up can show over it. Or put the pop-up on a second screen.</p>' +
       '<p class="igm-phone">On your phone? The download is for a Windows PC: open debriefme.io/?ingame there.</p></div>' +
-      '<div class="igm-art"><img src="' + U + 'shots/card.png" alt="A recap card in the game after a kill: the raid lead\'s words, your healing, your rotation, boss mechanics, survival and who died"></div></header>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone who wants their recap runs the PC app. It puts the addon in too.</p></div><div class="igm-who">' +
+      '<div class="igm-art"><img src="' + U + 'shots/popup-raid.png" alt="The recap pop-up after a pull: the raid lead\'s words, your healing, your rotation and who died"></div></header>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Who needs what</h2><p>Everyone who wants their recap runs the PC app. It puts a small addon into WoW for the combat log.</p></div><div class="igm-who">' +
       '<div class="igm-wc"><div class="igm-wh">' + all + '<div><div class="igm-tag">In the game</div><h3>The addon</h3></div></div>' +
-        '<p>Shows your recaps in WoW: type /recap, and click Save this pull when the card offers it.</p>' +
+        '<p>Keeps WoW\'s combat log on, everywhere and at every login, so the app can read your pulls. No windows, nothing to set up.</p>' +
         '<p class="igm-how">It comes with the PC app: the setup puts it into WoW for you, and the app keeps it up to date. It doesn\'t work without the app.</p></div>' +
       '<div class="igm-wc one"><div class="igm-wh">' + one + '<div><div class="igm-tag">On your PC</div><h3>The PC app</h3></div></div>' +
-        '<p>Reads your combat log after each boss pull and shows your recap over the game a few seconds later. It also saves it for the addon.</p>' +
+        '<p>Reads your combat log after each boss pull and shows your recap over the game a few seconds later. Your settings, your recap key and every saved pull are in the app.</p>' +
         '<p class="igm-how">Run Debrief-Setup.exe: it puts in the addon too, starts with Windows and turns the combat log on for you in raids.</p>' + btn(true, 'Debrief-Setup.exe', 'Download for Windows', 'About 3.6 MB') + '</div>' +
     '</div></section>' +
     '<section class="igm-sec"><div class="igm-sh"><h2>After every boss pull</h2><p>Three steps, a few seconds.</p></div><ol class="igm-steps">' +
       '<li><i>1</i><b>The pull ends</b><span>Kill or wipe, the app reads it from the combat log.</span></li>' +
       '<li><i>2</i><b>Your recap pops up over the game</b><span>A short chime, and the recap opens on your screen.</span></li>' +
-      '<li><i>3</i><b>In WoW, type /recap</b><span>Click Save this pull on the card, and every pull from tonight is in the game too.</span></li></ol>' +
+      '<li><i>3</i><b>Press your recap key</b><span>See it again any time, even mid-raid, and tap the boss or key name to pick an earlier one.</span></li></ol>' +
       '<div class="igm-all"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor" opacity=".18"/><path d="m7.5 12.4 3 3 6-6.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Nothing to do by hand.</b> The app does it all.</span></div></section>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The card, the raid view, the big window, the settings and the pop-up on your PC.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
-    '<section class="igm-sec"><div class="igm-sh"><h2>Handy commands</h2><p>Type these in the chat box in WoW.</p></div><div class="igm-cmds">' +
-      IGM_CMDS.map(([c, d]) => '<div class="igm-cmd"><code>' + esc(c) + '</code><span>' + esc(d) + '</span></div>').join('') + '</div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>What it looks like</h2><p>The pop-up over the game, the Raid view, a Mythic+ key and the settings window.</p></div><div class="igm-gal">' + IGM_SHOTS.map(shot).join('') + '</div></section>' +
+    '<section class="igm-sec"><div class="igm-sh"><h2>Your recap key</h2><p>Your recap key shows or hides your recap, even mid-raid. It starts as Ctrl + Shift + D; change it in Settings.</p></div></section>' +
     '<p class="igm-foot">The addon is new. ' + (REPORT_ON() ? 'Found something off? <a href="#" class="rp-open">Report a problem</a> and it goes on our list.' : 'Found something off? Tell us on our Discord.') + '</p>' +
   '</div></section>';
   const root = $('#main .igm');
@@ -54613,10 +54612,9 @@ function startTour(at) {
 const PAGE_TIPS = {
   // (the Debrief in game page's own tips (Oct 21: Help there started the whole tour))
   ingame: [
-    { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app and the addon in one go.' },
-    { sel: '#main .igm-who', t: 'Who needs what', p: 'Everyone who wants their recap runs the PC app. It reads their own combat log and puts the addon in too.' },
-    { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up on your PC by itself. In WoW, /recap shows it too: click Save this pull when the card offers it.' },
-    { sel: '#main .igm-cmds', t: 'Handy commands', p: 'Type /recap for your card, /db for the settings, or /debrief setup for the guided setup again.' }],
+    { sel: '#main .igm-cta', t: 'Get it', p: 'Download for Windows puts in the PC app, with the small addon that keeps your combat log on.' },
+    { sel: '#main .igm-who', t: 'Who needs what', p: 'Everyone who wants their recap runs the PC app. It reads their own combat log and puts a small addon into WoW for the combat log.' },
+    { sel: '#main .igm-steps', t: 'After every pull', p: 'Your recap pops up over the game by itself. Press your recap key to see it again, even mid-raid.' }],
   live: [
     { sel: '#bhPulls .bhp-row, #list .film', t: 'Every pull of the night', p: 'Each bar is one pull: the higher it is, the further it got. Click one to see it. Its color shows how far it got too, and orange is a kill.' },
     { sel: '#view .lp-tiles', t: 'The pull at a glance', p: 'Green went right; yellow had some mistakes; red failed. The ▲ and ▼ arrows compare it with the last pull. Click a box for its details.' },
