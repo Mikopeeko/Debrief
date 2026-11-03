@@ -35665,9 +35665,12 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             (q.kind === 'boss' ? B : A).push({ n: u.name || q.name, v: v, max: u.max || 0 }); });
           var bm = {}; B.forEach(function (b) { bm[b.max] = 1; }); A = A.filter(function (a) { return !bm[a.max]; }).sort(function (a, b) { return b.max - a.max || a.v - b.v; });
           var bk = {}; B = B.filter(function (b) { var k = b.n + '|' + b.max; if (bk[k]) return false; bk[k] = 1; return true; });
-          var more = Math.max(0, A.length - 3); A = A.slice(0, 3); if (!B.length && !A.length) { if (el) el.style.display = 'none'; return; }
+          /* (a phone's small map: the boss and one add, then "+N more") */ var cap = mw.clientWidth < 500 ? 1 : 3;
+          var more = Math.max(0, A.length - cap); A = A.slice(0, cap); if (!B.length && !A.length) { if (el) el.style.display = 'none'; return; }
           /* (one slim line per unit (name, bar, %), so the corner stays small and the players there still show) */
           if (!el) { el = document.createElement('div'); el.className = 'dtm-hp'; el.style.cssText = 'position:absolute;left:8px;top:8px;z-index:3;width:236px;max-width:56%;padding:4px 8px;border-radius:4px;background:rgba(10,12,16,.72);border:1px solid rgba(255,255,255,.08);pointer-events:none;font-size:12px;line-height:17px'; mw.appendChild(el); }
+          /* (inside the map's own top-left corner, under the bar with the replay's speed buttons (Flex, Nov 3: "its covering up the speed of the video")) */
+          var sv = mw.querySelector('svg.zmap'), tp = sv ? Math.max(8, Math.round(sv.getBoundingClientRect().top - mw.getBoundingClientRect().top) + 8) + 'px' : '46px'; if (el.style.top !== tp) el.style.top = tp;
           el.style.display = ''; var row = function (x, boss) { var pc = x.v * 100, tx = pc >= 10 ? Math.round(pc) + '%' : pc.toFixed(1) + '%';
             return '<div style="display:flex;align-items:center;gap:7px"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (boss ? '#e6e6e6' : '#aeb6bf') + ';font-weight:' + (boss ? 600 : 400) + '">' + E(x.n) + '</span>' +
               '<span style="flex:0 0 56px;height:' + (boss ? 5 : 4) + 'px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden"><span style="display:block;height:100%;width:' + Math.max(0, Math.min(100, pc)).toFixed(1) + '%;background:' + (boss ? '#e5534b' : '#e8a23a') + '"></span></span>' +
