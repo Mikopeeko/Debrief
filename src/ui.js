@@ -35741,7 +35741,7 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           /* (beats the site's 11 px type-scale rule for these names, Flex's call: 7 px bold with the full 8-way black outline, picked from a true-size
              comparison (Nov 3: "Do size 7, but make the raid frames slightly taller"), so they read on Rogue yellow and Priest white) */
           'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{z-index:3 !important;left:2px !important;top:2px !important;font-size:7px !important;line-height:8px !important;font-weight:700 !important;letter-spacing:.15px !important;text-shadow:1px 0 0 #000,-1px 0 0 #000,0 1px 0 #000,0 -1px 0 #000,1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 2px rgba(0,0,0,.9) !important}',
-          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn *{font-size:7px !important;line-height:8px !important;font-weight:700 !important}',
+          'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn *{font-size:7px !important;line-height:8px !important;font-weight:700 !important;text-shadow:inherit !important;color:inherit !important}',
           /* (the page colours every player name by class (round 423 wraps it in a span); inside the frames it keeps the frame's white) */
           'html body .dtm-rf .dtm-rff>.rfn .r423{color:inherit !important}',
           '.dtm-rff.low{background:#3b1517}',
