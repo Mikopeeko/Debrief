@@ -2029,6 +2029,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
     "Debriefing Timeline replay: one player bar under the map (Play, the time bar with a tick for each mistake and a skull for each death, the speeds and the raid frames button), the selected mistake card beside the map under the play-by-play, and a short trail behind the player you follow.",
+    "Debriefing Timeline replay: the mistake card beside the map has a Watch it button that plays the moment, its own ◀ 1 of 5 ▶, and a ring on the map around each player it names.",
     "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Big defensives and externals show on the frames too, with absorb shields as white stripes and a red flash when someone takes a big hit. Click a frame to follow that player, drag the grid anywhere on the map, or hide it with the Raid frames button beside the speeds (hidden at first on a phone).",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
@@ -12730,6 +12731,8 @@ function miniMap(mp, pmap) {
     nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 5.1, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : on ? 4 : 5, must: on,
       mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml mlp' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
+  if (mp.cardRing && mp.cardRing.guids && mp.cardRing.guids.size && mp.cardRing.color) { const c0 = mp.cardRing.color; for (const p of pts.filter((q) => q.kind === 'player')) { if (!mp.cardRing.guids.has(p.guid) || (meN && p.name === meN)) continue;
+    s += ic(X(p), Y(p), '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="' + c0 + '" stroke-opacity=".3" stroke-width="5"/><circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="' + c0 + '" stroke-width="2"/>'); } }
   { const put = [], hit = (n, ly) => put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - ly) < 12);
     for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (!n.mk) { if (hit(n, n.ly)) continue; put.push(n); s += ic(n.x, n.y, n.html); continue; }
       /* (above the icon; below it when above is taken; the player the row is about is always named, the others only where there's room) */
@@ -35831,10 +35834,32 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dbt-two{grid-template-columns:minmax(0,1fr) !important;gap:10px !important}',
           /* (no "Every time this phase" on the replay's card (Flex, Nov 3: "this can be removed from these cards")) */
           'html body #view > .dbt.dbt.dbx .dtm-vd .dbt-more{display:none !important}',
+          /* (the card's three touches (the Design studio's timeline-card.md; Flex: "that works"): Watch it and the stepper in its header, no divider
+             above Why, the card as tall as its content and the play-by-play taking the rest) */
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dtm-ch{display:flex !important;flex-wrap:wrap;align-items:center;gap:6px 8px}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dtm-ch > div{flex:1 1 160px;min-width:0}',
+          '.dtm-chr{display:flex;align-items:center;gap:8px;margin-left:auto;flex:none}.dtm-chr .dtm-step{display:inline-flex;align-items:center;gap:4px;margin:0}',
+          '.dtm-watch{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:2px 9px;border:1px solid var(--line2);border-radius:999px;color:#aeb6bf;white-space:nowrap}.dtm-watch:hover{color:var(--gold);border-color:var(--gold)}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dbt-two{border-top:0 !important}html body #view > .dbt.dbt.dbx .dtm-bar.dtm-stepin .dtm-step{display:none !important}',
+          'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:1 1 auto;min-height:140px}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:0 1 auto}',
           '@media (max-width:900px){.dtm-rc{height:auto !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:none;max-height:440px !important}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:none;overflow:visible}}',
           '@media (max-width:700px){.dtm-mm .zanim{flex-wrap:wrap}.dtm-ctl{flex-basis:100%}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{max-height:260px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         /* (the clock: "0:31 / 3:55") */
+        /* (the card beside the map: "▶ Watch it" (2 s before the moment, 4 s before a death, then Play), the "◀ 1 of 5 ▶" stepper moved into its
+           header, and a ring on the map around every player it names, in the mistake's colour, while it shows) */
+        var RINGC = { guids: new Set(), color: '' }, RNM = []; rep.players.forEach(function (p) { if (p && p.name && p.guid) { var b0 = String(p.name).split('-')[0]; if (b0.length >= 3) RNM.push([new RegExp('(^|[^\\p{L}\\p{N}])' + b0.replace(/[.*+?^$(){}|[\]\\]/g, '\\        var PHS = ((rep.module && rep.module.phases) || [])') + '($|[^\\p{L}\\p{N}])', 'u'), p.guid]); } });
+        var tl3Card = function () { var vd = box.querySelector('.dtm-rc > .dtm-vd'), ch = vd && vd.querySelector('.dtm-ch'); if (!ch) { if (RINGC.guids.size) { RINGC.guids = new Set(); RINGC.color = ''; } return; }
+          var chr = ch.querySelector('.dtm-chr'); if (!chr) { chr = document.createElement('span'); chr.className = 'dtm-chr'; var lt = ch.querySelector('.dtm-lt'); if (lt) chr.appendChild(lt); var wb = document.createElement('button'); wb.type = 'button'; wb.className = 'dtm-watch'; wb.textContent = '▶ Watch it'; wb.title = 'Watch it on the replay';
+            wb.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); var em = ch.querySelector('em'), m0 = String((em && em.textContent) || ch.textContent).match(/(\d+):(\d\d)/); if (!m0) return; var tm = +m0[1] * 60 + +m0[2], pre = /\blv-[dq]\b/.test(ch.className) ? 4 : 2;
+              /* (it plays into the moment and stops just after, with the card held on it, the way a dot on the chart does) */
+              var rg = mb.querySelector('.zrange'), pb = mb.querySelector('.zplay'); if (!rg) return; P.clip = { to: tm + 1.5 }; rg.value = Math.max(0, Math.round((tm - pre) / STEP)); rg.dispatchEvent(new Event('input', { bubbles: true })); if (pb && !/Pause/.test(pb.textContent)) { P.auto = true; pb.click(); P.auto = false; } });
+            chr.appendChild(wb); ch.appendChild(chr); }
+          /* (the stepper: a copy in the card's header, kept in step with the original, which stays hidden in the top row (its clicks work the same)) */
+          var bar0 = box.querySelector('.dtm-bar'), st = bar0 && bar0.querySelector('.dtm-step'); if (st) { var cl = chr.querySelector('.dtm-step'), stx = st.textContent; if (!cl || cl._src !== stx) { if (cl) cl.remove(); cl = st.cloneNode(true); cl._src = stx; var s2 = cl.querySelector('span'); if (s2) s2.textContent = s2.textContent.replace(' to review', ''); chr.appendChild(cl); } bar0.classList.add('dtm-stepin'); }
+          var key = ch.className + '|' + ((ch.querySelector(':scope > div') || ch).textContent); if (RINGC._k === key) return; RINGC._k = key; var lv = (ch.className.match(/\blv-(\w)\b/) || [])[1], col = { s: '#e5534b', m: '#e8a23a', n: '#f2c46b', d: '#e5534b', q: '#e5534b' }[lv] || '', G = new Set();
+          /* (the card's text piece by piece, so a name next to a time or a heading still reads as a word) */ var tw = document.createTreeWalker(vd, NodeFilter.SHOW_TEXT), tl = []; for (var tn = tw.nextNode(); tn; tn = tw.nextNode()) tl.push(tn.nodeValue); var tx = tl.join(' ');
+          if (col) RNM.forEach(function (x) { if (x[0].test(tx)) G.add(x[1]); }); RINGC.guids = G; RINGC.color = col;
+          /* (the map draws the new rings now, even while paused) */ var rg1 = mb.querySelector('.zrange'); if (rg1) rg1.dispatchEvent(new Event('input', { bubbles: true })); };
         var tl3Clk = function (ft) { var c = box.querySelector('.dtm-clk'); if (!c) return; var tx = rfT(ft) + ' / ' + rfT(end); if (c._t !== tx) { c._t = tx; c.textContent = tx; } };
         /* (2. marks on the time bar, from the play-by-play's own rows: serious red, moderate orange, minor amber, a skull for a death; nothing for
            what went right. Hover says what it was; a click jumps to 2 s before it; marks closer than 4 px merge, worst colour first, all listed) */
@@ -35865,14 +35890,14 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         var pmap = new Map(); rep.players.forEach(function (p) { if (p && p.name) pmap.set(p.name, p); }); box._names = byN;
         /* (3. a short trail behind the followed player: their last 8 s in their class colour, fading in from the oldest point; at a death it stays
            at the death spot for 8 s (the map draws it, from the dots' own positions)) */
-        if (SS.mechP && byN[SS.mechP]) { var tgd = byN[SS.mechP]; mp.trail = { guid: tgd, color: (typeof CC !== 'undefined' && CC[SS.mechP]) || '#ffffff', deaths: (rep.deaths || []).filter(function (d) { return d && d.guid === tgd; }).map(function (d) { return +d.t; }) }; }
+        mp.cardRing = RINGC; if (SS.mechP && byN[SS.mechP]) { var tgd = byN[SS.mechP]; mp.trail = { guid: tgd, color: (typeof CC !== 'undefined' && CC[SS.mechP]) || '#ffffff', deaths: (rep.deaths || []).filter(function (d) { return d && d.guid === tgd; }).map(function (d) { return +d.t; }) }; }
         mb.innerHTML = w.miniMap(mp, pmap);
         /* (1. one player bar under the map (Flex, Nov 3: "All three"): Play, the time bar, the clock "0:31 / 3:55", the speeds and the raid frames'
            eye in one row; the top keeps the health bars, what's happening now, Key and N) */
         (function () { var zan0 = mb.querySelector('.zanim'), mt0 = box.querySelector('.dtm-mt'); if (!zan0 || !mt0) return; tl3Css(); var clk0 = document.createElement('span'); clk0.className = 'dtm-clk'; zan0.appendChild(clk0);
           var ctl0 = document.createElement('span'); ctl0.className = 'dtm-ctl'; [].slice.call(mt0.querySelectorAll('[data-spd], [data-rft]')).forEach(function (b) { ctl0.appendChild(b); }); zan0.appendChild(ctl0); mt0.style.display = 'none';
           /* (the marks show from the start, for every mistake and death: built once the bar has its width, and again whenever it changes) */
-          [0, 250, 800, 2000].forEach(function (d) { setTimeout(tl3Marks, d); }); var rgo = zan0.querySelector('.zrange'); if (rgo && window.ResizeObserver) new ResizeObserver(function () { tl3Marks(); }).observe(rgo); })();
+          [0, 250, 800, 2000].forEach(function (d) { setTimeout(function () { tl3Marks(); tl3Card(); }, d); }); var rgo = zan0.querySelector('.zrange'); if (rgo && window.ResizeObserver) new ResizeObserver(function () { tl3Marks(); }).observe(rgo); })();
         mb.addEventListener('input', function (ev) { if (ev.isTrusted) P.seek = true; }, true); /* (a drag on the slider counts as a jump) */
         var pbT = mb.querySelector('.zplay'); if (pbT) pbT.title = 'Play or pause (Space)';
         /* (a big room (The Twin Fangs' three platforms): the camera frames about FOLLOW yards around the middle of the raid and glides with it as it
@@ -35892,10 +35917,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           var med = function (L) { L.sort(function (p, q) { return p - q; }); return L[Math.floor(L.length / 2)]; }, W0 = FOLLOW * yd, cx = med(xs), cy = med(ys), tg = [cx - W0 / 2, cy - W0 / 2, W0, W0];
           var cur = !now && mb._cam ? mb._cam : null, vb = cur ? cur.map(function (v, i) { return v + (tg[i] - v) * 0.2; }) : tg; mb._cam = vb; mb._zoomTo(vb); };
         if (w.bindZoom) w.bindZoom(mb); if (w.bindAnim) w.bindAnim(mb, mp, pmap); if (w.hydrateMapIcons) w.hydrateMapIcons(mb);
-        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); rfFrames(seekT); tlm(seekT); tl3Clk(seekT); tl3Marks(); cam(true, seekT);
+        var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); rfFrames(seekT); tlm(seekT); tl3Clk(seekT); tl3Marks(); tl3Card(); cam(true, seekT);
         if (FOLLOW) { var sv0 = mb.querySelector('svg.zmap'), pdn = null; if (sv0) { sv0.addEventListener('pointerdown', function (e) { pdn = [e.clientX, e.clientY]; }); sv0.addEventListener('pointerup', function (e) { if (pdn && Math.hypot(e.clientX - pdn[0], e.clientY - pdn[1]) > 5) P.camFree = true; pdn = null; }); }
           [].slice.call(mb.querySelectorAll('.zin, .zout, .zfull, .zfocus')).forEach(function (b0) { b0.addEventListener('click', function () { P.camFree = true; }); }); }
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); tl3Clk(ft); tl3Marks(); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); tl3Clk(ft); tl3Marks(); tl3Card(); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
           if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
