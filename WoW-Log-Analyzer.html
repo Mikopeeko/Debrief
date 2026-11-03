@@ -3742,6 +3742,9 @@ html { scrollbar-gutter: stable; }
 .pg-intab .my-hist { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 760px) { .pg-intab .my-who, .pg-intab .my-hist { grid-template-columns: minmax(0, 1fr); } .my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
+/* (Mythic+ coming soon (Nov 2): faded, no gold, a small pill beside the name) */
+.tabbar .tab.mpt-soon, .tabbar .tab.mpt-soon:hover, .tabbar .tab.mpt-soon.on { color: #5c6270; background: none; box-shadow: none; border-color: transparent; } .tabbar .tab.mpt-soon .tab-ic { opacity: .45; filter: grayscale(1); }
+.tabbar .tab .mpt-soonp { margin-left: 6px; padding: 1px 7px; border-radius: 9px; font: 600 11px var(--body); letter-spacing: 0; text-transform: none; white-space: nowrap; color: #9aa3ac; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
 .cz-slot { padding: 18px var(--gut) 0; } .cz-slot .cz-site { margin: 0; } .cz-slot + #view { padding-top: 14px; } /* (the building site on the tabs still being built, in place of the old line of text) */
@@ -62559,9 +62562,15 @@ const mpSpecId = (spec, cls) => { for (const [id, s] of Object.entries(E.SPECS |
 const mpNorm = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
 // (the tab: only when the open report has a key)
 const MP_TICO = '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/></svg>';
-function mpTabHtml(on) { on = !!on; const tt = mpKeys().length ? 'Your Mythic+ key, top to bottom: what gets you a level up, where you fell behind a fast run, every pull, kick and death' : 'Find your Mythic+ keys, or anyone\'s, and see where the time went'; /* (always in the top bar (the key finder, Nov 2)) */
+// (Mythic+ coming soon (Flex, Nov 2: "make the mythic+ tab greyed out overnight with a "coming soon" thing"): false opens it for everyone again. Flex himself
+// (the boss guides' owner check: his Home character or his Warcraft Logs sign-in) still opens it on the website, and so does a copy run on this PC)
+const MP_SOON = true;
+const mpSoon = () => MP_SOON && !!window.WLA_HOSTED && !(typeof gdzOwner === 'function' && gdzOwner());
+const mpSoonGo = () => { try { home(); } catch (e) { /* (already on a page) */ } try { toast('The Mythic+ tab is coming soon.', 4000); } catch (e) { /* (no note) */ } }; /* (a link or tile: the normal default page, with a note) */
+function mpTabHtml(on) { if (mpSoon()) return '<button class="tab mpt-tab tab-off mpt-soon" data-t="mplus" role="tab" aria-disabled="true" aria-selected="false" data-tt="Coming soon" aria-description="Coming soon">' + MP_TICO + 'Mythic+<span class="mpt-soonp">Coming soon</span></button>';
+  on = !!on; const tt = mpKeys().length ? 'Your Mythic+ key, top to bottom: what gets you a level up, where you fell behind a fast run, every pull, kick and death' : 'Find your Mythic+ keys, or anyone\'s, and see where the time went'; /* (always in the top bar (the key finder, Nov 2)) */
   return '<button class="tab mpt-tab' + (on ? ' on' : '') + '" data-t="mplus" role="tab" aria-selected="' + on + '" data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + MP_TICO + 'Mythic+</button>'; }
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.mpt-tab'); if (!b) return; e.preventDefault(); e.stopPropagation(); mpOpen(); }, true);
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.mpt-tab'); if (!b) return; e.preventDefault(); e.stopPropagation(); if (mpSoon()) { b.focus(); return; } mpOpen(); }, true); /* (coming soon: the click only shows its hover) */
 // (a key picked in the report's list of keys)
 document.addEventListener('change', (e) => { const s = e.target; if (!s || s.id !== 'mptPick') return; const it = mpKeys()[+s.value]; if (it) mpOpen(it); });
 function mpKeyName(it) { return it.boss + ' +' + it.level + ' · ' + (it.keyMs ? mpMM(it.keyMs / 1000) : 'left early') + (it.keyMs ? (it.timed ? ' · Timed +' + (it.up || mpUp(it)) : ' · Over time') : ''); }
@@ -62629,6 +62638,7 @@ function mpFastRun(it) {
 
 // ---------- the page ----------
 function mpOpen(it) {
+  if (mpSoon()) { mpSoonGo(); return; } /* (coming soon) */
   const keys = mpKeys(); if (!it) it = MP.item && keys.includes(MP.item) ? MP.item : keys[keys.length - 1]; if (!it) { mpFinder(); return; } /* (no key open: the key finder) */
   if (MPF.addNext && it.wcl) { MPF.addNext = false; const J = mpkGet(); for (const k of mpKeys()) if (k.wcl && !J.added.some((a) => a.code === k.wcl.code && a.fight === k.wcl.fight)) J.added.push(mpkOf(k)); mpkSet(J); } /* (a link pasted in the key finder: its keys join the list) */
   if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
@@ -62669,6 +62679,7 @@ function mpfMine() {
 // character's keys by dungeon. Keys come in on their own (mpkImport); a reload draws them at once from what was read before ----------
 const MP_REAL = { night: 'AEVxiCJqkaR3pmxgnKtnsA', pull: 0 }; /* (Flex's Voidscar +19, shared: "See a real +19 key") */
 function mpFinder() {
+  if (mpSoon()) { mpSoonGo(); return; } /* (coming soon) */
   if (S.page === 'pull' && S.item) PROG_BACK = S.item; /* (the raid you came from stays one tab away) */
   S.page = 'mpfind'; mpCss(); MPF.addNext = false;
   for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
@@ -62940,7 +62951,7 @@ async function mpGo(code, fight) {
   if (S.wclCode !== code || !S.index) { let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; } await openWcl({ code, fight }, creds); return; }
   const it = mpKeys().find((x) => x.wcl.fight === fight); if (it) mpOpen(it); else home();
 }
-const mpWantTab = (code) => { try { return RQ.get('tab') === 'mplus' && RQ.get('report') === code; } catch (e) { return false; } };
+const mpWantTab = (code) => { try { const w = RQ.get('tab') === 'mplus' && RQ.get('report') === code; if (w && mpSoon()) { setTimeout(() => { try { toast('The Mythic+ tab is coming soon.', 4000); } catch (e2) { /* (no note) */ } }, 0); return false; } return w; } catch (e) { return false; } }; /* (coming soon: a raid report opens on its own tabs) */
 
 // ---------- the numbers ----------
 // (the key's timer: it starts after the countdown, and each death adds its penalty where it happened (15 s at +12 on Flex's keys, measured

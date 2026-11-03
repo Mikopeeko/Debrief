@@ -3742,6 +3742,9 @@ html { scrollbar-gutter: stable; }
 .pg-intab .my-hist { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 760px) { .pg-intab .my-who, .pg-intab .my-hist { grid-template-columns: minmax(0, 1fr); } .my-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tabbar .tab.tab-off, .tabbar .tab.tab-off:hover { color: #5c6270; cursor: not-allowed; } .tabbar .tab.tab-off .tab-ic { opacity: .45; }
+/* (Mythic+ coming soon (Nov 2): faded, no gold, a small pill beside the name) */
+.tabbar .tab.mpt-soon, .tabbar .tab.mpt-soon:hover, .tabbar .tab.mpt-soon.on { color: #5c6270; background: none; box-shadow: none; border-color: transparent; } .tabbar .tab.mpt-soon .tab-ic { opacity: .45; filter: grayscale(1); }
+.tabbar .tab .mpt-soonp { margin-left: 6px; padding: 1px 7px; border-radius: 9px; font: 600 11px var(--body); letter-spacing: 0; text-transform: none; white-space: nowrap; color: #9aa3ac; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
 /* a little construction sign on the tabs still being built (your call, Oct 19: Compare and Players) */
 .tabbar .tab.tab-uc { background-image: repeating-linear-gradient(-45deg, #e6b450 0 5px, #1a1c22 5px 10px); background-size: 100% 3px; background-repeat: no-repeat; background-position: left bottom; }
 .cz-slot { padding: 18px var(--gut) 0; } .cz-slot .cz-site { margin: 0; } .cz-slot + #view { padding-top: 14px; } /* (the building site on the tabs still being built, in place of the old line of text) */
