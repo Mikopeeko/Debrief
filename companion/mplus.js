@@ -112,7 +112,7 @@ function build(text, E) {
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2])));
         const ow = ownerOf(adv);
         if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); if (hasAdv && f[adv] === dg) { const m = num(f[adv + 3]); if (m > (mobHp.get(dg) || 0)) mobHp.set(dg, m); } } /* (the advanced block is the enemy hit: its max health) */
-        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8]]); /* (x[8]: the spell id, for its icon (Nov 1)) */
+        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8], Math.max(0, num(f[s0 + 2]))]); /* (x[8]: the spell id, for its icon (Nov 1); x[9]: its overkill (Nov 3)) */
         if (!swing && ow && isNpc(dg) && KNOCK.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
         break;
       }
@@ -228,7 +228,7 @@ function build(text, E) {
     const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
     if (x[1] === 'dmg') addTo(o.dmg, x[2], x[3]);
     else if (x[1] === 'heal') addTo(o.heal, x[2], x[3]);
-    else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3]]); if (l.length > 6) l.shift(); recent.set(x[2], l);
+    else if (x[1] === 'hit') { const l = recent.get(x[2]) || []; l.push([x[0], x[4], x[5], x[3], x[9] || 0]); if (l.length > 6) l.shift(); recent.set(x[2], l);
       /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
          a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
       if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4])) && LIST.own.has(lc(x[4])) && !(ownAt.get(x[2] + '|' + lc(x[4])) > x[0] - 8)) ownAt.set(x[2] + '|' + lc(x[4]), x[0]); /* (their own line this cast: not a mistake) */
@@ -243,7 +243,9 @@ function build(text, E) {
     else if (x[1] === 'ebuff') {
       if (LIST.ccCast.has(lc(x[3]))) o.through.push({ t: x[0], spell: LIST.ccCast.get(lc(x[3])), mob: short(x[4]), ready: [], cc: true }); /* (nobody stunned it: the enemy got its buff) */
       else { const b = o.ebuffs[x[3]] || (o.ebuffs[x[3]] = { on: 0, removed: 0 }); b.on++; } }
-    else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5); const top = l.slice().sort((a, b) => b[3] - a[3])[0];
+    /* (what killed them: the hit with overkill in the 1.5 s before (the killing blow, as the raid engine's last hit); else the biggest of the last 5 s.
+       Before (Nov 3, the studio's audit): always the biggest after overkill, so a killing swing that was nearly all overkill lost to an earlier spell) */
+    else if (x[1] === 'died') { const l = (recent.get(x[2]) || []).filter((h) => x[0] - h[0] < 5), kb = l.filter((h) => h[4] > 0 && x[0] - h[0] <= 1.5).pop(); const top = kb || l.slice().sort((a, b) => b[3] - a[3])[0];
       o.deaths.push({ t: x[0], who: x[2], to: top ? top[1] : 'unknown', from: top ? top[2] : '', defs: out.flatMap((q) => q.defs).filter((d) => d.who === x[2] && x[0] - d.t < 30).length, ...(x[0] > o.e + 2 ? { gap: true } : {}) }); } /* (gap: after the pull had ended, before the next one (a skip, a walk): counted for the key, not for the pull) */
   }
   const sorted = casts.slice().sort((a, b) => a.t - b.t);

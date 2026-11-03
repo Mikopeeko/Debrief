@@ -2300,7 +2300,7 @@ function mpSkCard(RR, s, F) {
   if (s.hid) rows.push([s.hid.e, '', (sp ? 'The ' + esc(spS) + ' drops' : 'The invisibility ends') + ' after ' + Math.round(s.hid.e - s.hid.s) + ' seconds', 1]);
   for (const x of s.came) { rows.push([x.t, '', X(mpSkA(x.n).replace(/^a/, 'A') + ' comes in') + (x.hid ? ' while you\'re still hidden' : '') + (x.fought ? ', and you fight it' : '')]);
     if (x.hit) rows.push([x.hit.t, '', 'It hits ' + W(x.hit.who)]); }
-  for (const d of s.died) rows.push([d.t, '', X(esc(d.who) + ' dies') + (d.to && d.to !== 'unknown' ? ' to ' + (d.to === 'Melee' && d.from ? mpSkA(d.from).replace(/^an? /, (m) => m) + '\'s melee' : esc(d.to) + (d.from ? ' (' + esc(d.from) + ')' : '')) : '')]);
+  for (const d of s.died) rows.push([d.t, '', X(esc(d.who) + ' dies') + (d.to && d.to !== 'unknown' ? ' to ' + (d.to === 'Melee' && d.from ? (s.came.some((c) => c.n === d.from) ? 'the ' + esc(d.from) : mpSkA(d.from)) + '\'s melee' : esc(d.to) + (d.from ? ' (' + esc(d.from) + ')' : '')) : '')]);
   rows.push([s.b, '', '<b>' + mpSkNext(RR, s).replace(/^p/, 'P') + '</b> pulled', 1]);
   rows.sort((a, b) => a[0] - b[0]);
   const list = '<div class="mpt-skr">' + rows.map((r) => '<span class="t">' + tv(r[0]) + '</span>' + (r[1] || '<span class="dot"></span>') + '<span' + (r[3] ? ' class="m"' : '') + '>' + r[2] + '</span>').join('') + '</div>';
