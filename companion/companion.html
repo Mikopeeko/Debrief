@@ -494,7 +494,7 @@ window.DBF_POPPULL = async (sb) => {
       // (the full recap, as /recap draws it (Oct 24): the pull before it on this boss is read first, for "than last pull")
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
       if (k > 0 && !(L.reps.get(same[k - 1].startByte) || {}).rep) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
-      const model = RECAP.build(b, rep, same.slice(0, k + 1)); nightVals(b, model);
+      const model = await RECAP.build(b, rep, same.slice(0, k + 1)); nightVals(b, model);
       const wc = model.wc || null, cutN = wc ? 1 : 0, cut = cutN ? popCut() : null;
       const pack = null; /* (the card replaces the website's box in the pop-up) */
       L.popLast = { model, code: '', copied: false, b, rep, cutN, wc };
@@ -542,7 +542,12 @@ function mplusShow(r, again) {
       const txt = await readText(r, true), R = window.DBF_MPLUS ? window.DBF_MPLUS(txt, W.E) : null; if (!R || !R.pulls.length) return;
       // (Rotation per pull (Nov 1): the website's checks on each pull, in the card's own short lines; a few seconds for a whole key)
       const CB = window.DBF_CARDBITS || {};
-      if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy'); try { await window.DBF_MPLUS_ROT(R, txt, W, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); } }
+      if (window.DBF_MPLUS_ROT && W.specRun) { stat('Checking everyone\'s rotation…', 'busy');
+        /* (a check made while a cooldown was still being read (cdAgain): wait for them and check the key once more) */
+        let stale = false; const W2 = Object.assign({}, W, { specRun: (...a) => { const x = W.specRun(...a); if (cdPend()) stale = true; return x; } });
+        for (let k = 0; k < 2; k++) { stale = false; try { await window.DBF_MPLUS_ROT(R, txt, W2, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); }
+          if (k || !stale) break; for (let i = 0; i < 27 && cdPend(); i++) await sleep(300); try { W.cdForget(); } catch (e) { /* older engine */ }
+          for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; } }
       // (and the key for the addon (Nov 1, the in-game card): Save this key in WoW brings the run recap in, as a saved pull)
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
       if (!again) try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
@@ -897,7 +902,7 @@ async function resaveOld() {
         const pre = new Set([...C.reps.keys()].filter((s0) => (C.reps.get(s0) || {}).rep));
         if (k > 0) { try { await get(same[k - 1]); } catch (e) { /* skip */ } }
         const rep = await get(b);
-        const mdl = window.DBF_BUILD(b, rep, same.slice(0, k + 1), W, C); nightVals(b, mdl); const code = RECAP.encode(mdl);
+        const mdl = await RECAP.build(b, rep, same.slice(0, k + 1), C); nightVals(b, mdl); const code = RECAP.encode(mdl);
         await j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) });
         markSaved(key); ok++;
         // (memory: of the reads this added, only this pull's stays, for the next pull on the same boss)
@@ -925,7 +930,7 @@ async function send(b, byHand) {
       const same = L.items.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
       if (k > 0 && !(L.reps.get(same[k - 1].startByte) || {}).rep) { try { await analyze(same[k - 1]); } catch (e) { /* skip */ } }
       const rep = await analyze(b); progress(0.8);
-      const model = RECAP.build(b, rep, same.slice(0, k + 1));
+      const model = await RECAP.build(b, rep, same.slice(0, k + 1));
       const code = RECAP.encode(model);
       RECAP.lastModel = model; renderPreview(model);
       // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
@@ -1162,7 +1167,15 @@ function renderPreview(m) {
 RECAP.renderPreview = renderPreview;
 
 // recap builder lives below (filled in from the engine's results)
-RECAP.build = (b, rep, same) => window.DBF_BUILD(b, rep, same, W, L);
+RECAP.build = (b, rep, same, C) => cdAgain(() => window.DBF_BUILD(b, rep, same, W, C || L));
+// (a spell's cooldown is read from its tooltip the first time this PC sees it, and checks that need one (Holy Shock on cooldown) are left out
+// until it's in. So a card made meanwhile waits for them (up to 8 s) and is made once more (Nov 2, the Mythic+ tab builder's catch))
+const cdPend = () => { try { return !!(W && W.cdPending && W.cdPending()); } catch (e) { return false; } };
+async function cdAgain(make) {
+  const x = make(); if (!cdPend()) return x;
+  for (let i = 0; i < 27 && cdPend(); i++) await sleep(300);
+  try { W.cdForget(); } catch (e) { /* older engine */ } return make();
+}
 
 j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; RECAP.appV = RECAP.appV || x.version || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy'); renderMain();
