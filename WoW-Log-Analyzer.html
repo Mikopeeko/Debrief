@@ -25261,6 +25261,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
+    'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
+    'Holy Paladin: the Infusion of Light check says why a Holy Light wastes the uses you still hold: with your tier set it fills Infusion back up to 2.',
     "Heroic Ula'tek on Debriefing: every card now explains the Heroic fight with Heroic's own numbers, not Mythic's. The heart windows and Pace are judged on Heroic too: Ula'tek at 60% or lower after the first window and 37% or lower after the second is on pace, so a slow window gets its own card with each player's heart damage, in each pull and in All pulls.",
     "Debriefing Timeline replay: health bars for the bosses and adds on the map, in its top-left corner, moving with the replay.",
     "Debriefing Timeline replay, Ula'tek on Mythic: each Toxic Incubation hit on the off-tank now sends its Caustic Waves out to both sides of them on the map.",
@@ -25268,6 +25270,8 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay, Ula'tek: the tail looks like a tail, with a rattle at its tip, and its waves are narrow bands, about 10 yards wide as in the game, lined up with where the raid walked and who got hit.",
     "Debriefing Timeline replay, The Coiled Altar: every Guillotine now shows its big 40-yard eruption after the drop, the soak circle goes away when the axe erupts, and phase 3's Defilement pools are on the map.",
   ], f: [
+    'Holy Paladin: Holy Shock\'s 2 charges from Light\'s Conviction come from your talents, so a pull where you never pressed it twice quickly no longer reads one charge.',
+    'Debrief Companion: the key recap reads everyone\'s talents from the log, so checks that depend on a talent match the website (Shadow Dance\'s cooldown, for one).',
     'Strike of the Windlord and Whirling Dragon Punch now follow your talents: 35 seconds, 30 with Communion With Wind, and sooner with Heart of the Jade Serpent.',
   ] },
   { d: '2026-11-02', h: [{ t: 'Watch the pull on the Timeline', d: 'Debriefing\'s Timeline now replays the pull on a big map, with a play-by-play beside it of every mechanic and how the raid handled it, and the fight\'s timeline playing underneath. Click a dot or a line to watch that moment, and the box below says whether it was done right and what to do next time.' }], n: [ /* round 484 */
@@ -43567,7 +43571,7 @@ function treeOf(spec) {
 }
 // a player's talents in one pull: { names: name -> { rank, max, id, apex }, unknown, n }, or null when the log has none
 function talentsOf(r, p) {
-  const c = (r.combatants || []).find((x) => x.name === p.name); if (!c || !c.talents || !c.talents.length || !TALENT_DATA[p.cls]) return null;
+  const c = (r.combatants || []).find((x) => x.name === p.name) || (() => { const x = (r.combatantsRaw || []).find((y) => y.guid === p.guid); return x ? { name: p.name, talents: x.talents || [] } : null; })(); if (!c || !c.talents || !c.talents.length || !TALENT_DATA[p.cls]) return null;
   const m = talentMap(p.cls), tr = treeOf(p.specName), out = new Map(); let unknown = 0;
   for (const t of c.talents) { const q = tr && tr.byEntry.get(+t.id), x = q ? { id: q.e.spell, name: q.e.name, max: q.e.max, apex: q.n.ty === 't', apexMax: q.n.max } : m.get(+t.id); if (!x) { unknown++; continue; } const o = out.get(x.name) || { rank: 0, max: x.apex ? x.apexMax : 0, id: x.id, apex: x.apex }; o.rank += +t.rank || 1; if (!x.apex) o.max += x.max; out.set(x.name, o); }
   return { names: out, unknown, n: c.talents.length };
@@ -43642,7 +43646,7 @@ function talentGraphHtml(r, p, key, tab) {
 }
 // (Holy Paladin's own "Next time" for each line, by its key: what to do instead, with the moment when it helps)
 const HPAL_TIPS = {
-  hs: (c, K) => 'Press Holy Shock before it reaches full charges, because it\'s your strongest button' + (K.long ? ', and from ' + K.long.from + ' it sat full for ' + K.long.secs + ' seconds.' : '.'),
+  hs: (c, K) => (/Lightsmith/.test(c.how || '') ? 'Press Holy Shock on enemies whenever it\'s ready: each one gives Holy Power' + (/Light's Conviction/.test(c.how || '') ? ' and half its mana back' : '') + '. Use one on an ally only for a quick spot heal' : 'Press Holy Shock before it reaches full charges, because it\'s your strongest button') + (K.long ? ', and from ' + K.long.from + ' it sat full for ' + plural(K.long.secs, 'second') + '.' : '.'),
   bv: (c, K) => 'Press Beacon of Virtue as the damage goes out, close to every 15 seconds' + (K.long ? '. From ' + K.long.from + ', it sat ready for ' + K.long.secs + ' seconds.' : '.'),
   jhs: () => 'When Holy Shock is full, press it first, and Judgment only while Holy Shock recharges.',
   cm: () => 'When Judgment is ready, press it before Holy Shock, because Crusader\'s Might can\'t take time off a Judgment that\'s already ready.',
@@ -43686,7 +43690,7 @@ function hpalChecks(reps, name, one) {
   const by = (p, n, t1) => (p.byName.get(n.toLowerCase()) || []).filter((t) => t <= t1).slice().sort((a, b) => a - b);
   // ---- the talents they ran (from the log, when it has them); otherwise what the log shows them using ----
   const TL = per.map(({ r, p }) => talentsOf(r, p)).filter(Boolean), TAL = TL.length ? TL[TL.length - 1] : null, tal = (n) => !!(TAL && TAL.names.has(n));
-  const hs2 = per.some(({ p }) => { const ts = by(p, 'Holy Shock', 1e9); return ts.some((t, i) => i && t - ts[i - 1] < 3.5); });
+  const hs2 = TAL ? tal('Light\'s Conviction') : per.some(({ p }) => { const ts = by(p, 'Holy Shock', 1e9); return ts.some((t, i) => i && t - ts[i - 1] < 3.5); });
   const virtue = has('Beacon of Virtue') || tal('Beacon of Virtue'), herald = TAL ? tal('Dawnlight') : has('Dawnlight'), smith = TAL ? tal('Holy Armaments') : has('Holy Bulwark') || has('Sacred Weapon'), crusader = TAL ? tal('Avenging Crusader') : has('Avenging Crusader'), savior = TAL ? tal('Beacon of the Savior') : has('Beacon of the Savior');
   // (Ringing of the Heavens: Aura Mastery also casts a Divine Toll, seen as Holy Shock's Holy Power landing on several allies at once with no Divine Toll pressed)
   const roth = TAL ? tal('Ringing of the Heavens') : per.some(({ p }) => (p.byName.get('aura mastery') || []).some((t) => (p.gainL || []).filter((g) => g.ty === '9' && g.spell === 'Holy Shock' && g.t >= t - 0.1 && g.t <= t + 0.8).length >= 3 && !(p.byName.get('divine toll') || []).some((x) => Math.abs(x - t) < 1)));
@@ -43715,12 +43719,14 @@ function hpalChecks(reps, name, one) {
   const hpOn = (q) => (!q.tal || tal(q.tal)) && (!q.not || !(tal(q.not) || has(q.not)));
   for (const x of per) { const { r, p, t1, end, c } = x, s = { pull: r.item.pull, kill: r.item.kill, len: t1, m: {}, bx: {} }, BX = (k, t, cls, tip) => (s.bx[k] = s.bx[k] || []).push([t, cls, tip]), nmL = (q) => String(q).replace(/\b\w/g, (ch) => ch.toUpperCase()).replace(/ Of /g, ' of ');
     s.apl = aplPull(x, s, HPAL_A, per, tal, ''); // (the rotation check: each cast against the priority list)
-    const e1 = castEff({ p, per: [{ w: { r, w0: 0, w1: end }, c }] }); s.wait = e1 ? e1.wait : 0; s.hs = e1 && e1.list.find((o) => o.name.toLowerCase() === 'holy shock'); s.bv = e1 && e1.list.find((o) => o.name.toLowerCase() === 'beacon of virtue');
+    const e1 = castEff({ p, per: [{ w: { r, w0: 0, w1: end }, c }] }); s.wait = e1 ? e1.wait : 0; s.hs = e1 && e1.list.find((o) => o.name.toLowerCase() === 'holy shock');
+    // (Light's Conviction: Holy Shock always has 2 charges, so a pull with no two Shocks close together isn't read as one charge (the studio, Nov 3))
+    if (s.hs && hs2 && s.hs.ch < 2) { const ab = c.ab.find((y) => y.name.toLowerCase() === 'holy shock'), ci = ab ? cdInfo(ab.id) : null, cd = ci && ci.cd >= 4 ? ci.cd : 6, sim = cdSim(ab ? ab.ts : [], cd, 2, 0, c.t1, castForced(r, p)); s.hs = { ...s.hs, cd, ch: 2, poss: sim.poss, cap: sim.cap, early: sim.early }; } s.bv = e1 && e1.list.find((o) => o.name.toLowerCase() === 'beacon of virtue');
     s.procs = HPAL_PROCS.map((d) => procUse(r, p, t1, d.n === 'Infusion of Light' && IOP ? { ...d, per: IOP } : d)).filter(Boolean); for (const y of s.procs) { s.m['p:' + y.n] = y.wt; for (const [t, k] of y.ev || []) BX('p:' + y.n, t, k == null ? 'bad' : y.n === 'Infusion of Light' && k === 'judgment' ? 'warn' : 'ok', T(t) + (k == null ? ': wasted' : ': spent on ' + nmL(k))); }
     const o = ioOf(p);
     // (the tier set: a Holy Light while uses are held refreshes the proc, so those uses are lost)
     s.hlLost = 0; const hlT = []; if (tier4 && o) for (const t of by(p, 'Holy Light', t1)) { const n = o.held(t); s.hlLost += n; if (n) hlT.push(t); }
-    const io = s.procs.find((y) => y.n === 'Infusion of Light'); if (io && s.hlLost) { io.lost += s.hlLost; io.wasted += s.hlLost; io.gained += s.hlLost; s.m['p:Infusion of Light'] = io.wt.concat(hlT).sort((u, w) => u - w); for (const t of hlT) for (let i = 0, n = o.held(t); i < n; i++) BX('p:Infusion of Light', t, 'bad', T(t) + ': lost to a Holy Light cast while you still held one'); }
+    const io = s.procs.find((y) => y.n === 'Infusion of Light'); if (io && s.hlLost) { io.lost += s.hlLost; io.wasted += s.hlLost; io.gained += s.hlLost; s.m['p:Infusion of Light'] = io.wt.concat(hlT).sort((u, w) => u - w); for (const t of hlT) for (let i = 0, n = o.held(t); i < n; i++) BX('p:Infusion of Light', t, 'bad', T(t) + ': lost, Holy Light filled Infusion back up while you still held one'); }
     // (Flash of Light: with a proc or without one; and, with Moment of Compassion, whether an Infused one landed on a Beacon target)
     const fol = by(p, 'Flash of Light', t1), infused = o ? fol.filter((t) => o.spent.some((y) => Math.abs(y - t) <= 0.35)) : [], bvF = virtue ? by(p, 'Beacon of Virtue', t1) : [], inBvF = (t) => bvF.some((b) => t >= b - 0.1 && t <= b + 9);
     s.fol = fol.length; s.m.fol = fol.filter((t) => !infused.includes(t) && !inBvF(t)); s.folHard = s.m.fol.length; for (const t of fol) { const w = infused.includes(t), wb = !w && inBvF(t); BX('fol', t, w || wb ? 'ok' : 'bad', T(t) + (w ? ': Flash of Light with an Infusion' : wb ? ': Flash of Light without an Infusion, inside Beacon of Virtue, which is fine' : ': Flash of Light without an Infusion')); }
@@ -43903,13 +43909,15 @@ function hpalChecks(reps, name, one) {
   let bwStrip = '', bwD = null; const groups = [], grp = (t) => { const g = { t, l: [] }; groups.push(g); return g; }, add = (g, st, ic, label, v, sub, k, how) => g.l.push({ st, ic, label, v, sub, k, how, mo: M(k) });
   const gA = grp('Your priority'), aplSl = aplAdd(rows, HPAL_A, add, gA, 'Holy Shock');
   const g1 = grp('On cooldown');
-  if (hs) add(g1, hs.f == null ? 'na' : hs.f >= 0.85 ? 'ok' : hs.f >= 0.75 ? 'warn' : 'bad', 'Holy Shock', 'Holy Shock on cooldown', pct(hs.f), 'You cast it ' + hs.n + ' of ' + hs.poss + ' possible times.' + (hs.cap >= 1 ? ' It sat full for ' + Math.round(hs.cap) + ' seconds.' : ''), 'hs',
-    'Holy Shock has ' + (hs.ch > 1 ? hs.ch + ' charges' : 'one charge') + ' that refill every 6 seconds. Glorious Dawn and Imbued Infusions give some back, so presses they made possible count too. 85% or more is good. The times listed are when it sat at full charges for 2 seconds or more, when its recharge went to waste.');
+  /* (Lightsmith (the key build, 97% at +20): most Holy Shocks go on enemies, and the top +20 Lightsmiths press it about 6 times a minute, 48 to 93% of
+    what it allows, about 64% in the middle (20 of the fastest +20s, Nov 3), and a top Lightsmith in the whole-key reading is at 54 to 78%, so it's judged at 50%; Herald, the raid build, at 85%) */ const hsOk = smith ? 0.5 : 0.85, hsWarn = smith ? 0.4 : 0.75;
+  if (hs) add(g1, hs.f == null ? 'na' : hs.f >= hsOk ? 'ok' : hs.f >= hsWarn ? 'warn' : 'bad', 'Holy Shock', 'Holy Shock on cooldown', pct(hs.f), 'You cast it ' + hs.n + ' of ' + hs.poss + ' possible times.' + (hs.cap >= 1 ? ' It sat full for ' + plural(Math.round(hs.cap), 'second') + '.' : ''), 'hs',
+    'Holy Shock has ' + (hs.ch > 1 ? hs.ch + ' charges' + (hs2 ? ' (Light\'s Conviction)' : '') + ' that refill' : 'one charge that refills') + ' every 6 seconds. Glorious Dawn and Imbued Infusions give some back, so presses they made possible count too. ' + (smith ? 'As Lightsmith, most of your Holy Shocks go on enemies, for damage and Holy Power, and one goes on an ally only for a quick spot heal. Top players in +20 keys press it about 6 times a minute, about two thirds of what it allows. 50% or more is good.' : '85% or more is good.') + ' The times listed are when it sat at full charges for 2 seconds or more, when its recharge went to waste.');
   if (bv) add(g1, bv.f == null ? 'na' : bv.f >= 0.75 ? 'ok' : bv.f >= 0.6 ? 'warn' : 'bad', 'Beacon of Virtue', 'Beacon of Virtue uses', pct(bv.f), 'You cast it ' + bv.n + ' of ' + bv.poss + ' possible times.' + (bv.cap >= 1 ? ' It waited unused for ' + Math.round(bv.cap) + ' seconds.' : ''), 'bv',
     'Use Beacon of Virtue as the damage goes out, close to every 15 seconds. It costs a lot of mana, so holding it until people are hurt is right, and so is saving it for Divine Toll or Aura Mastery. The top players use about 85% of theirs. 75% or more is good. The times listed are when it sat ready for 8 seconds or more while 5 or more people were under 80% health.');
   /* (the spender the player really casts, as the page's Eternal Flame check names it) */ const efNm = sum((s) => s.efWg) * 2 > sum((s) => s.efA) ? 'Word of Glory' : 'Eternal Flame';
   const g2 = grp('Procs'), PHOW = {
-    'Infusion of Light': 'Each proc holds ' + (ioPer > 1 ? '2 uses (Inflorescence of the Sunwell)' : 'one use') + '. Spend them on Flash of Light, or on Judgment when nobody needs healing. A use is wasted when it runs out, or when a new proc arrives while you still hold one' + (tier4 ? '. With your tier set, every Holy Light grants a proc, so a Holy Light cast while you still hold uses wastes them' : '') + '.',
+    'Infusion of Light': 'Each proc holds ' + (ioPer > 1 ? '2 uses (Inflorescence of the Sunwell)' : 'one use') + '. Spend them on Flash of Light, or on Judgment when nobody needs healing. A use is wasted when it runs out, or when a new proc arrives while you still hold one' + (tier4 ? '. With your tier set, every Holy Light ' + (ioPer > 1 ? 'fills Infusion of Light back up to 2' : 'gives a fresh Infusion of Light in place of the one you hold') + ', so any uses you still hold when you cast it are lost. Spend them on Flash of Light first' : '') + '.',
     'Divine Purpose': 'Divine Purpose makes your next Holy Power spender free' + (tal('Aurora') ? ', and Aurora grants it after every Divine Toll' : '') + '. It is wasted when it runs out' + (tal('Aurora') ? ', or when you get a new one while you still hold one, because the new one just replaces it. Warcraft Logs doesn\'t record that replacing, so Debrief catches the one case it can see, a Divine Toll pressed while you still held one, which always loses Aurora\'s new one. Spend it before Divine Toll' : '') + '.',
     Dawnlight: 'With Herald of the Sun, your next 2 spenders after Divine Toll apply Dawnlight. They are wasted when they run out.',
     'Hand of Divinity': 'Avenging Wrath makes your next ' + (tal('Avenging Crusader') ? 'Holy Light' : '2 Holy Lights') + ' instant and cost 50% less mana, for 20 seconds. They are wasted when they run out.',
@@ -43924,7 +43932,7 @@ function hpalChecks(reps, name, one) {
     // (the studio, Nov 3: the count first ("3 of 8 wasted"), then what made up the waste; with none wasted, what they went on, named for the spender
     // the player really casts (the log can name an Eternal Flame player's spender Word of Glory))
     const spN = new Map(); for (const [q, v] of sp) { const k = /^(eternal flame|word of glory)$/.test(q) ? efNm.toLowerCase() : q; spN.set(k, (spN.get(k) || 0) + v); }
-    const sub = x.wasted ? procWhat([[ranU, 'ran out', 'ran out'], [hl, 'was lost to a Holy Light cast while you still held some', 'were lost to Holy Lights cast while you still held some'],
+    const sub = x.wasted ? procWhat([[ranU, 'ran out', 'ran out'], [hl, 'was wasted by casting Holy Light while you still held it', 'were wasted by casting Holy Light while you still held them'],
       [dl, 'was lost by pressing Divine Toll while you still had one', 'were lost by pressing Divine Toll while you still had one'], [rpl, ...procLost(x.cap)]], x.wasted)
       : 'You had ' + plural(x.gained, 'use') + '.' + (spN.size || unn ? ' You spent ' + andL([...spN].sort((u, w) => w[1] - u[1]).map(([q, v]) => v + ' on ' + nm(q)).concat(unn ? [unn + ' on other spells'] : [])) + '.' : '');
     add(g2, st, x.n, x.n, procV(x.wasted, x.gained), sub, 'p:' + x.n, PHOW[x.n] || ''); }
