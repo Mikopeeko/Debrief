@@ -6422,6 +6422,9 @@ function* analyzeSteps(item, text, opts) {
   // each player's health from advanced logging (damage and heals on them): guid -> [[t, fraction]], one sample per
   // quarter second keeping the lowest, for the survival check's close calls
   const php = new Map(); r.php = php;
+  // (each player's absorb shield as a share of their health, [t, share], when it changes: the Timeline replay's raid frames draw it (Nov 3))
+  const pab = new Map(); r.pab = pab;
+  const seenAb = (g, ab, mx, t) => { if (!(mx > 0) || !isPlayer(g)) return; const fr = Math.max(0, ab) / mx; let l = pab.get(g); if (!l) { if (!(fr > 0.002)) return; pab.set(g, l = []); } const last = l[l.length - 1]; if (last && Math.abs(last[1] - fr) < 0.004) return; l.push([+(+t).toFixed(2), +fr.toFixed(4)]); };
   // (Tyr's Deliverance's buff (200654) on a player, by whose: their Holy Light, Flash of Light and Holy Shock heal that player 10% more (12.1.5))
   const TIER_EVN = new Set(['Sigil of Flame', 'Immolation Aura', 'Sigil of Spite', 'Crash Lightning', 'Slam', 'Icy Death Torrent', 'Fate Mirror', 'Necrotic Bolt', 'Withering Grasp', 'Lingering Shadow', 'Lightning Bolt', 'Chain Lightning', 'Lava Burst', 'Cobra Shot', 'Shield Slam', 'Revenge', 'Arcane Blast', 'Arcane Pulse', 'Prismatic Bolt', 'Rising Sun Kick', 'Spinning Crane Kick', 'Wildfire Bomb', 'Pyroblast', 'Flamestrike', 'Mangle']),
     TIER_EVP = /^(Eviscerate|Black Powder|Backstab|Gloomblade|Shuriken Storm)/, TIER_EVPET = new Set(['Necrotic Bolt', 'Withering Grasp']); // (the hits a tier bonus changes one by one (Oct 25))
@@ -6528,7 +6531,7 @@ function* analyzeSteps(item, text, opts) {
         let hp = -1;
         if (hasAdv) pos(f[adv], f[adv] === dg ? dn : f[adv] === sg ? sn : '', f[adv + PX], f[adv + PX + 1], t);
         if (hasAdv && f[adv] === sg && isPlayer(sg)) resAt(P(sg, sn), f, adv, t); // (their power, when the block is theirs)
-        if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); } }
+        if (hasAdv && f[adv] === dg) { const mx = num(f[adv + 3]); if (mx > 0 && isPlayer(dg)) pMax.set(dg, mx); if (mx > 0) { hp = num(f[adv + 2]) / mx * 100; seenHp(dg, dn, num(f[adv + 2]), mx, t); seenPhp(dg, num(f[adv + 2]), mx, t); seenAb(dg, num(f[adv + 9]), mx, t); } }
         if (isPlayer(dg)) {
           const p = P(dg, dn);
           if (ev !== 'SPELL_PERIODIC_DAMAGE' && (parseInt(f[2], 16) & 0x40)) { if (!p.hitIn) p.hitIn = []; if (p.hitIn.length < 20000) p.hitIn.push([t, id]); } /* (an enemy's direct hits on them, melee included: when a tank was tanking (Oct 25)) */
@@ -6570,7 +6573,7 @@ function* analyzeSteps(item, text, opts) {
         if (f.length < 16) break;
         const s0 = 11 + (f.length >= 11 + ADV + 5 ? ADV : 0);
         if (s0 > 11) pos(f[11], f[11] === dg ? dn : f[11] === sg ? sn : '', f[11 + PX], f[12 + PX], t);
-        if (s0 > 11 && f[11] === dg) { seenPhp(dg, num(f[13]), num(f[14]), t); if (num(f[14]) > 0 && isPlayer(dg)) pMax.set(dg, num(f[14])); }
+        if (s0 > 11 && f[11] === dg) { seenPhp(dg, num(f[13]), num(f[14]), t); seenAb(dg, num(f[20]), num(f[14]), t); if (num(f[14]) > 0 && isPlayer(dg)) pMax.set(dg, num(f[14])); }
         const amount = num(f[s0 + 1]), over = Math.max(0, num(f[s0 + 2])), crit = f[s0 + 4] === '1';
         const eff = Math.max(0, amount - over), id = num(f[8]), spell = f[9];
         noteSchool(id, f[10]);
@@ -7631,7 +7634,7 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

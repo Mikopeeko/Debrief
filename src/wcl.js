@@ -564,7 +564,7 @@ function* translateSteps(item, events) {
     const cr = has && Array.isArray(e.classResources) && e.classResources.length ? e.classResources : null;
     // (and the cast's cost, where WoW writes it after the power: what a healer spent their mana on)
     const pw = cr ? [cr.map((c) => c.type | 0).join('|'), cr.map((c) => c.amount | 0).join('|'), cr.map((c) => c.max | 0).join('|'), cr.map((c) => c.cost | 0).join('|')] : [0, 0, 0, 0];
-    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, 0, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
+    return [has ? who : '0000000000000000', '0000000000000000', hp, mx, 0, 0, 0, 0, 0, has && e.absorb > 0 ? Math.round(e.absorb) : 0 /* (the unit's absorb shield, where WoW writes it (Nov 3)) */, pw[0], pw[1], pw[2], pw[3], x, y, e.mapID || 0, fc.toFixed(4), 0].join(',');
   };
   const add = (e, body) => out.push(stamp(e.timestamp) + body);
   // (a Mythic+ key (Nov 1) is written the way WoW writes one: the key's start and end around it, and each boss's start and end inside it, with

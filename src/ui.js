@@ -2028,7 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', n: [
-    "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Click a frame to follow that player, and drag the grid anywhere on the map.",
+    "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Big defensives and externals show on the frames too, with absorb shields as white stripes and a red flash when someone takes a big hit. Click a frame to follow that player, and drag the grid anywhere on the map.",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
     'Holy Paladin: the Infusion of Light check says why a Holy Light wastes the uses you still hold: with your tier set it fills Infusion back up to 2.',
@@ -35707,6 +35707,20 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
         RFL.sort(function (a, b) { var x = RFO[RFRO[a.name]], y = RFO[RFRO[b.name]]; return (x != null ? x : 4) - (y != null ? y : 4) || String(a.name).localeCompare(String(b.name)); });
         var rfHp = function (g, ft) { var a = RFP && RFP.get(g); if (!a || !a.length) return [1, -1]; var lo = 0, hi = a.length - 1, k = -1; while (lo <= hi) { var m = (lo + hi) >> 1; if (a[m][0] <= ft) { k = m; lo = m + 1; } else hi = m - 1; } return k < 0 ? [a[0][1], -1] : [a[k][1], a[k][0]]; };
         var rfOn = function (p, n, ft) { var v = p.debuffs && p.debuffs.get ? p.debuffs.get(n) : null; if (!v || !v.sp) return null; for (var i = 0; i < v.sp.length; i++) { var a = +v.sp[i][0], b = v.sp[i][1] == null ? a + 6 : +v.sp[i][1]; if (ft >= a && ft <= b) return v; } return null; };
+        /* (round 2 (the Design studio's rf-design-2.md; Flex gave it creative freedom, Nov 3): a major defensive or external on the frame, the game's
+           white absorb stripes, and a red flash on a big hit while playing.
+           The defensives: the site's own list, the one the death checks use (each class's DEFENSIVES, minus the raid-wide ones and the self-heals,
+           and the externals SAVE_EXT), so the frame and the death check agree; from each player's buffs, which keep who cast them) */
+        var RFDF = {}, RFEX = {}; try { var EN = window.ENGINE || {}; Object.keys(EN.DEFENSIVES || {}).forEach(function (c) { (EN.DEFENSIVES[c] || []).forEach(function (d) { var n = String(d[0]); if (d[5] === 'heal' || /^(Rallying Cry|Darkness|Metamorphosis)$/.test(n)) return; RFDF[n] = d[1]; }); }); (EN.SAVE_EXT || []).forEach(function (n) { RFEX[n] = 1; }); } catch (e4) {}
+        var rfDef = function (p, ft) { if (!p.buffs || !p.buffs.forEach) return null; var best = null; p.buffs.forEach(function (b, n) { if (!(RFDF[n] || RFEX[n]) || !b || !b.sp) return; for (var i = 0; i < b.sp.length; i++) { var a = +b.sp[i][0], z = b.sp[i][1] == null ? null : +b.sp[i][1]; if (ft >= a && (z == null ? ft <= a + 12 : ft <= z) && (!best || a > best.a)) {
+              var by = null; if (b.by && b.by.forEach) b.by.forEach(function (c, who) { if (!by && who && who !== p.name) by = who; }); best = { n: n, id: b.id || RFDF[n] || 0, a: a, z: z, by: by }; } } }); return best; };
+        /* (absorb shields: each player's shield amount from the log (WoW writes it in every line's advanced block; Warcraft Logs sends it too), as a
+           share of their health) */
+        var RFA = rep.pab && rep.pab.get ? rep.pab : null, rfAb = function (g, ft) { var a = RFA && RFA.get(g); if (!a || !a.length) return 0; var lo = 0, hi = a.length - 1, k = -1; while (lo <= hi) { var m = (lo + hi) >> 1; if (a[m][0] <= ft) { k = m; lo = m + 1; } else hi = m - 1; } return k < 0 ? 0 : a[k][1]; };
+        /* (a big hit: 30% of their health or more gone within a second; the biggest ability they took in that second names it) */
+        var rfDrop = function (g, ft) { var a = RFP && RFP.get(g); if (!a || !a.length) return 0; var lo = 0, hi = a.length - 1, k = a.length; while (lo <= hi) { var m = (lo + hi) >> 1; if (a[m][0] >= ft - 1) { k = m; hi = m - 1; } else lo = m + 1; } var mx = 0, now = null; for (var i = Math.max(0, k - 1); i < a.length && a[i][0] <= ft + 0.01; i++) { if (a[i][1] > mx) mx = a[i][1]; now = a[i][1]; } return now == null ? 0 : mx - now; };
+        var rfHitBy = function (p, ft) { var S0 = p.takenAbS || [], best = null; [Math.floor(ft), Math.floor(ft) - 1].forEach(function (s) { var o = S0[s]; if (o) Object.keys(o).forEach(function (n) { var v = o[n]; if (v && (!best || +v[1] > best[1])) best = [n, +v[1]]; }); }); return best ? best[0] : ''; };
+        var rfT = function (t) { t = Math.max(0, Math.floor(t)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
         var rfCss = function () { if (document.getElementById('dtm-rf-css')) return; var st = document.createElement('style'); st.id = 'dtm-rf-css'; st.textContent = [
           /* (the Design studio's refined look (Nov 3, rf-design.md; Flex: "refine the design of them otherwise its solid", "The names can be much smaller
              in the top left corner", "the dispel overlay should resemble similar to the in game one"): no box, a small pill grip, calmer bars with a
@@ -35732,7 +35746,16 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
           '.dtm-rff>s{position:absolute;z-index:3;right:2px;bottom:3px;display:flex;gap:1px;text-decoration:none}',
           '.dtm-rff>s .icw{display:inline-block !important;width:12px;height:12px;margin:0;vertical-align:top}',
           '.dtm-rff>s .icw img.oi{border-radius:1px;box-shadow:0 0 0 1px #000}.dtm-rff.disp>s .icw.dsp img.oi{box-shadow:0 0 0 1px var(--dt)}',
-          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:15px}.dtm-rff.dead::after{line-height:15px;font-size:9px}.dtm-rff>s{bottom:2px}.dtm-rff>s .icw{width:9px;height:9px}',
+          /* (round 2: a defensive or external top-right (white ring: from someone else; black: their own), the game's white absorb stripes after
+             the health, a white edge when the shield is bigger than what's missing, and a red flash on a big hit, under the dispel tint) */
+          '.dtm-rff>u{position:absolute;z-index:3;right:2px;top:2px;display:flex;text-decoration:none}.dtm-rff>u:empty{display:none}.dtm-rff.hasdef>.rfn{right:13px}',
+          '.dtm-rff>u .icw{display:inline-block !important;width:10px;height:10px;margin:0;vertical-align:top}.dtm-rff>u .icw img.oi{border-radius:1px}',
+          '.dtm-rff>u.ext .icw img.oi{box-shadow:0 0 0 1px #fff}.dtm-rff>u.own .icw img.oi{box-shadow:0 0 0 1px #000}',
+          '.dtm-rff>em{position:absolute;z-index:1;top:0;bottom:0;width:0;pointer-events:none;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 2px,rgba(255,255,255,.22) 2px 4px)}',
+          '.dtm-rff>em.oab{box-shadow:inset -2px 0 0 rgba(255,255,255,.85)}.dtm-rff.dead>em{display:none}',
+          '.dtm-rff.hit::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;animation:dtmRfHit .6s ease-out forwards}',
+          '@keyframes dtmRfHit{0%{box-shadow:inset 0 0 0 2px #ff4d4d;background:rgba(90,26,28,.85)}100%{box-shadow:inset 0 0 0 2px rgba(255,77,77,0);background:rgba(90,26,28,0)}}',
+          '@media (max-width:700px){.dtm-rfg{grid-template-columns:repeat(4,40px)}.dtm-rff{height:15px}.dtm-rff.dead::after{line-height:15px;font-size:9px}.dtm-rff>s{bottom:2px}.dtm-rff>s .icw{width:9px;height:9px}.dtm-rff>u .icw{width:8px;height:8px}.dtm-rff.hasdef>.rfn{right:11px}',
           'html body :is(#view,#main,#bossHead):is(#view,#main,#bossHead):is(#view,#main,#bossHead) .dtm-rf .dtm-rff>span.rfn{font-size:8px !important;line-height:9px !important}}'
         ].join('\n'); document.head.appendChild(st); };
         var rfKey = 'dtmRaidFrames', rfPos = null; try { rfPos = JSON.parse(localStorage.getItem(rfKey) || 'null'); } catch (e1) { rfPos = null; }
@@ -35745,9 +35768,10 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             hd.addEventListener('pointermove', mv); hd.addEventListener('pointerup', up); hd.addEventListener('pointercancel', up); }); };
         var rfFrames = function (ft) { var mw = box.querySelector('.dtm-map'); if (!mw || !RFL.length) return; rfCss(); var el = mw.querySelector('.dtm-rf');
           if (!el) { el = document.createElement('div'); el.className = 'dtm-rf'; el.innerHTML = '<div class="dtm-rfh" title="Drag to move the raid frames"></div><div class="dtm-rfg">' + RFL.map(function (p) { var cc = (typeof CC !== 'undefined' && CC[p.name]) || '#7a8090';
-              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><span class="rfn">' + E(p.name) + '</span><s></s></div>'; }).join('') + '</div>';
+              return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><em></em><span class="rfn">' + E(p.name) + '</span><u></u><s></s></div>'; }).join('') + '</div>';
             mw.appendChild(el); rfDrag(mw, el); el._fr = [].slice.call(el.querySelectorAll('.dtm-rff')); }
           if (!el._placed || el._W !== mw.clientWidth) { el._placed = 1; el._W = mw.clientWidth; rfPlace(mw, el); }
+          var pbn = box.querySelector('.zplay'), playing = !!pbn && /Pause/.test(pbn.textContent);
           var fol = SS.mechP || '', icn = false; RFL.forEach(function (p, i) { var fr = el._fr[i]; if (!fr) return; var hv = rfHp(p.guid, ft), ds = RFD[p.guid] || [], dt = null; ds.forEach(function (t) { if (t <= ft + 0.05 && (dt == null || t > dt)) dt = t; });
             var dead = dt != null && !(hv[1] > dt + 0.5 && hv[0] > 0.01), pc = dead ? 0 : Math.max(0, Math.min(1, hv[0])) * 100;
             var bar = fr.firstChild; if (bar._p !== Math.round(pc)) { bar._p = Math.round(pc); bar.style.width = pc.toFixed(1) + '%'; }
@@ -35756,7 +35780,17 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             var dsp = null; if (!dead) Object.keys(RFS).forEach(function (n) { if (!dsp) { var v = rfOn(p, n, ft); if (v) dsp = [v.id || RFS[n] || 0, n]; } }); fr.classList.toggle('disp', !!dsp);
             var ty = dsp ? RFT[dsp[0]] || RFT[RFS[dsp[1]]] || 0 : 0; ['magic', 'curse', 'disease', 'poison'].forEach(function (c, j) { fr.classList.toggle('dt-' + c, ty === j + 1); });
             var ic = dsp && w.spellIcon ? [[dsp[0], dsp[1], 1]] : []; if (!dead && w.spellIcon) Object.keys(RFI).forEach(function (n) { if (ic.length < 2 && !(dsp && dsp[1] === n)) { var v = rfOn(p, n, ft); if (v) ic.push([v.id || 0, n]); } }); var k = ic.map(function (x) { return x[1]; }).join('|');
-            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { var h = w.spellIcon(x[0], x[1]); return x[2] ? h.replace('class="icw', 'class="icw dsp') : h; }).join(''); fr.title = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (' + dsp[1] + ' can be dispelled)' : '') + ' (click to follow)'; if (ic.length) icn = true; } });
+            if (fr._k !== k) { fr._k = k; fr.lastChild.innerHTML = ic.map(function (x) { var h = w.spellIcon(x[0], x[1]); return x[2] ? h.replace('class="icw', 'class="icw dsp') : h; }).join(''); if (ic.length) icn = true; }
+            /* (round 2: the absorb stripes right after the health, as wide as the shield (capped at what's missing), a white edge when it's bigger) */
+            var em = fr.children[1], ab = dead ? 0 : rfAb(p.guid, ft), miss = Math.max(0, 100 - pc), aw = Math.min(miss, ab * 100); if (em && em._w !== Math.round(aw * 2)) { em._w = Math.round(aw * 2); em.style.left = pc.toFixed(1) + '%'; em.style.width = aw.toFixed(1) + '%'; } if (em) em.classList.toggle('oab', !dead && ab * 100 > miss + 0.5 && ab > 0.005);
+            /* (round 2: the major defensive or external up on them, the latest one) */
+            var df = dead ? null : rfDef(p, ft), u = fr.children[3], dk = df ? df.n + '|' + (df.by ? 1 : 0) : ''; fr.classList.toggle('hasdef', !!df); if (u && u._k !== dk) { u._k = dk; u.className = df ? (df.by ? 'ext' : 'own') : ''; u.innerHTML = df && w.spellIcon ? w.spellIcon(df.id, df.n) : ''; if (df) icn = true; }
+            /* (round 2: a big hit while playing, 30% or more within a second: a 0.6 s red flash, not again within 1.5 s) */
+            if (playing && !dead && (fr._hitT == null || ft - fr._hitT > 1.5 || ft < fr._hitT)) { var dr = rfDrop(p.guid, ft); if (dr >= 0.3) { fr._hitT = ft; fr._hitTx = 'Took ' + Math.round(dr * 100) + '% in one second at ' + rfT(ft) + (function (n) { return n ? ' (' + n + ')' : ''; })(rfHitBy(p, ft)); fr.classList.remove('hit'); void fr.offsetWidth; fr.classList.add('hit'); (function (f0) { setTimeout(function () { f0.classList.remove('hit'); }, 650); })(fr); } }
+            if (fr._hitT != null && (ft < fr._hitT - 0.5 || ft > fr._hitT + 6)) { fr._hitT = null; fr._hitTx = ''; }
+            /* (the hover says it all: debuffs, a dispel, the defensive with who and how long, the last big hit) */
+            var tt = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (' + dsp[1] + ' can be dispelled)' : '') + (df ? '. ' + df.n + (df.by ? ' from ' + df.by : '') + (df.z != null ? ' (' + Math.max(0, Math.ceil(df.z - ft)) + ' s left)' : '') : '') + (fr._hitTx ? '. ' + fr._hitTx : '') + ' (click to follow)';
+            if (fr._tt !== tt) { fr._tt = tt; fr.title = tt; } });
           if (icn && w.hydrateIcons) w.hydrateIcons(); };
         var PHS = ((rep.module && rep.module.phases) || []).filter(function (p) { return p && p.end > p.start; }); if (!PHS.length) PHS = [{ name: '', start: 0, end: end }]; box._phs = PHS;
         var tlm = function (ft) { var sec = box.closest('section.dbt'), secs = (sec || document).querySelectorAll('.dbx-wrap section.dbx-ph'), gd = box.querySelector('.dtm-grid'); if (!secs.length || !gd) return;
