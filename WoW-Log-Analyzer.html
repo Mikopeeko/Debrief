@@ -62765,8 +62765,8 @@ function mpSkipRaw(text, Ex) {
     const aura = ev === 'SPELL_AURA_APPLIED' || ev === 'SPELL_AURA_REMOVED', dmg = DMG.test(ev), adv = ADV.test(ev);
     if (!aura && !dmg && !adv && ev !== 'SPELL_INTERRUPT') continue;
     const h = head(line, c, 12), sg = uq(h[0]), dg = uq(h[4]), miss = /_MISSED$/.test(ev);
-    if (NPC.test(dg) && isPP(sg) && (dmg || ev === 'SPELL_CAST_SUCCESS' || ev === 'SPELL_INTERRUPT')) { const x = uOf(dg, h[5]); if (x.c0 == null) { x.c0 = t; x.cBy = dmg && !miss ? 'd' : ev === 'SPELL_INTERRUPT' || KICK.has(uq(h[9]).toLowerCase()) ? 'k' : 'c'; } if (dmg && !miss) { if (x.d0 == null) x.d0 = t; x.d1 = t; } }
-    else if (NPC.test(sg) && isP(dg) && dmg) { const x = uOf(sg, h[1]); if (x.c0 == null) { x.c0 = t; x.cBy = 'e'; }
+    if (NPC.test(dg) && isPP(sg) && (dmg || ev === 'SPELL_CAST_SUCCESS' || ev === 'SPELL_INTERRUPT')) { const x = uOf(dg, h[5]); if (x.c0 == null) { x.c0 = t; x.cBy = dmg && !miss ? 'd' : ev === 'SPELL_INTERRUPT' || KICK.has(uq(h[9]).toLowerCase()) ? 'k' : 'c'; x.cWho = sh(h[1]); } if (dmg && !miss) { if (x.d0 == null) x.d0 = t; x.d1 = t; } }
+    else if (NPC.test(sg) && isP(dg) && dmg) { const x = uOf(sg, h[1]); if (x.c0 == null) { x.c0 = t; x.cBy = 'e'; x.cWho = sh(h[5]); }
       if (!x.hit && !miss) { const f = Ex.split(line, c + 1), a = /^SWING/.test(ev) ? 8 : 11; x.hit = { t, g: dg, who: sh(f[5]), sp: a === 8 ? 'Melee' : uq(f[9]), amt: +f[a + 19] || 0, abs: +f[a + 25] || 0 }; } }
     if ((aura || ev === 'SPELL_CAST_SUCCESS') && isPP(sg) && MP_SK_RX.test(line)) { const f = Ex.split(line, c + 1), sn = uq(f[9]), k = mpSkKind(sn);
       if (k && aura) auras.push({ t, on: ev === 'SPELL_AURA_APPLIED', g: dg, who: NPC.test(dg) ? uq(f[5]) : sh(f[5]), bg: sg, by: sh(f[1]), sp: sn, id: +f[8], k, npc: NPC.test(dg) });
@@ -62795,8 +62795,9 @@ function mpSkipBuild(raw, R) {
     // (a control: on an enemy nobody had touched (its own cast aside) that no player ever hit after (walked past), or that got hit within 10 s or in the
     // first 3 s of the next pull (swept in: Selectra's Imprison on Voidscar's Brawler, Nov 1). One controlled and killed late in a pull is just part of it)
     for (const x of raw.auras) if (x.on && x.k === 'cc' && x.npc && inG(x.t)) { const u = raw.U.get(x.g); if (u && (u.sum || u.c0 < x.t - 1)) continue;
-      if (!u || u.d0 == null || u.d0 - x.t <= 10 || u.d0 - P[pullOf(u.d0)].s <= 3) trig.push({ t: x.t, k: 'cc', x }); }
-    { const L = raw.auras.filter((x) => !x.npc && (x.k === 'self' || x.k === 'stealth') && x.t > a - 30 && x.t < b + 1).sort((p, q) => p.t - q.t), on = new Map();
+      const k2 = u && u.d0 != null ? pullOf(u.d0) : null, swept = k2 != null && (u.d0 - x.t <= 10 || (k2 === i && u.d0 - P[i].s <= 3)); if (k2 === i && !swept) continue; /* (part of the next pull) */
+      trig.push({ t: x.t, k: 'cc', x, swept, later: !swept && k2 != null ? k2 : null }); }
+    { const L = raw.auras.filter((x) => !x.npc && /^Player-/.test(x.g) && (x.k === 'self' || x.k === 'stealth') && x.t > a - 30 && x.t < b + 1).sort((p, q) => p.t - q.t), on = new Map();
       for (const x of L) { if (x.on) on.set(x.g, x.k); else on.delete(x.g); if (x.on && inG(x.t) && on.size >= 3 && [...on.values()].includes('self')) { trig.push({ t: x.t, k: 'invis', on: new Map(on) }); break; } } }
     if (!trig.length) continue;
     trig.sort((p, q) => p.t - q.t); const cl = [[trig[0]]]; for (const x of trig.slice(1)) { const c = cl[cl.length - 1]; if (x.t - c[c.length - 1].t <= 30) c.push(x); else cl.push([x]); }
@@ -62804,20 +62805,21 @@ function mpSkipBuild(raw, R) {
       const t0 = C[0].t, g0 = C.find((q) => q.k === 'group'), ccs = C.filter((q) => q.k === 'cc'), inv = C.find((q) => q.k === 'invis'), cast = g0 ? g0.x : null;
       const sk = { i, a, b, t0, k: g0 ? 'group' : inv ? 'invis' : 'cc', tools: [], hid: null, cc: [], came: [], died: [], tag: 'ok', at: null, path: [], walk: [], skipped: [] };
       // (hidden: the group tool's aura on each player, from its first landing to its last removal (it flickers off and on at the edge of its 30 yards))
-      if (cast) { const per = new Map(); for (const x of raw.auras) { if (x.npc || x.k !== 'group' || x.t < cast.t - 1 || x.t > Math.min(b + 1, cast.t + 40)) continue; let o = per.get(x.g);
+      if (cast) { const per = new Map(); for (const x of raw.auras) { if (x.npc || !/^Player-/.test(x.g) || x.k !== 'group' || x.t < cast.t - 1 || x.t > cast.t + 20) continue; /* (to its end, not the next pull's start: a tank pulls out of it) */ let o = per.get(x.g);
           if (!o) per.set(x.g, o = { g: x.g, who: x.who, on: null, off: null }); if (x.on) { if (o.on == null) o.on = x.t; o.off = null; } else if (o.on != null) o.off = x.t; }
         const L = [...per.values()].filter((o) => o.on != null), me = per.get(cast.g), end = me && me.off != null ? me.off : Math.max(...L.map((o) => (o.off != null ? o.off : b)));
         for (const o of L) if (o.off == null) o.off = Math.min(b, end + 2);
-        const early = []; for (const o of L) { if (o.g === cast.g) continue; const rest = L.filter((q) => q !== o).map((q) => q.off), mx = Math.max(...rest); if (o.off < mx - 1) { const p1 = posAt(o.g, o.off, 5), p2 = posAt(cast.g, o.off, 5); early.push({ who: o.who, t: o.off, ago: mx - o.off, yd: p1 && p2 ? Math.hypot(p1[1] - p2[1], p1[2] - p2[2]) : null }); } }
+        const role = (n) => ((R.people || []).find((p) => p.name === n) || {}).role;
+        const early = []; for (const o of L) { if (o.g === cast.g) continue; const rest = L.filter((q) => q !== o).map((q) => q.off), mx = Math.max(...rest); if (o.off < mx - 1) { const p1 = posAt(o.g, o.off, 5), p2 = posAt(cast.g, o.off, 5); early.push({ who: o.who, t: o.off, ago: mx - o.off, yd: p1 && p2 ? Math.hypot(p1[1] - p2[1], p1[2] - p2[2]) : null, pull: role(o.who) === 'tank' && Math.abs(P[i].s - o.off) <= 2 }); } } /* (pull: the tank starting the next pull) */
         sk.hid = { s: cast.t, e: Math.max(end, ...L.map((o) => o.off)), ce: end, n: L.length, of: (R.people || []).length || L.length, sp: cast.sp, id: cast.id, who: cast.who, early, offs: L.map((o) => o.off), names: L.map((o) => o.who) };
         sk.at = [cast.x, cast.y, cast.ui]; }
-      else if (inv) { const L = raw.auras.filter((x) => !x.npc && (x.k === 'self' || x.k === 'stealth') && x.t >= inv.t - 15 && x.t < b + 1), offs = [];
+      else if (inv) { const L = raw.auras.filter((x) => !x.npc && /^Player-/.test(x.g) && (x.k === 'self' || x.k === 'stealth') && x.t >= inv.t - 15 && x.t < b + 1), offs = [];
         for (const g of inv.on.keys()) { const r = L.filter((x) => x.g === g && !x.on && x.t >= inv.t)[0]; offs.push(r ? r.t : b); }
         sk.hid = { s: inv.t, e: Math.max(...offs), ce: Math.max(...offs), n: inv.on.size, of: (R.people || []).length || inv.on.size, sp: '', id: 0, who: '', early: [], offs, names: [...inv.on.keys()].map((g) => ((raw.auras.find((x) => x.g === g) || {}).who || '')) }; }
       // (crowd control: who, on what, and whether it ever got to the group (an enemy no player hit, as the trigger needs))
       for (const q of ccs) { const x = q.x, tl = raw.tools.find((y) => y.g === x.bg && lc(y.sp) === lc(x.sp) && x.t - y.t >= -0.5 && x.t - y.t <= 4), u = raw.U.get(x.g);
         const bk = raw.auras.find((y) => y.brk && y.g === x.g && y.t >= x.t && y.t - x.t <= 60);
-        sk.cc.push({ t: x.t, who: x.by, sp: x.sp, id: x.id, on: x.who, g: x.g, at: u && u.at ? u.at : tl ? [tl.x, tl.y, tl.ui] : null, broke: !!(u && u.c0 != null && u.c0 > x.t), brk: bk ? { t: bk.t, ...bk.brk } : null }); }
+        sk.cc.push({ t: x.t, fought: !!q.swept, later: q.later, who: x.by, sp: x.sp, id: x.id, on: x.who, g: x.g, at: u && u.at ? u.at : tl ? [tl.x, tl.y, tl.ui] : null, broke: !!(u && u.c0 != null && u.c0 > x.t && u.c0 <= P[i].s + 3), brk: bk ? { t: bk.t, ...bk.brk } : null }); }
       if (!sk.at) { const c0 = sk.cc[0], tl = raw.tools.find((y) => y.k !== 'cc' && y.t >= t0 - 1 && y.t <= t0 + 2); sk.at = tl ? [tl.x, tl.y, tl.ui] : c0 && c0.at ? c0.at : null; }
       // (the tools, in time order: the group tool, the controls, and each player's own stealth or invisibility from 15 s before to the end)
       const end = sk.hid ? sk.hid.e : Math.max(...sk.cc.map((x) => x.t)) + 1;
@@ -62827,8 +62829,8 @@ function mpSkipBuild(raw, R) {
       // Harrower, fought on purpose once the Shroud is done, as the fast run does). Whether the group fought it, whom it hit first, and how hard. A fight an
       // enemy started while the group was still hidden is the skip breaking)
       { const w0 = sk.hid ? Math.min(...sk.hid.offs) - 1 : t0, w1 = sk.hid ? Math.max(...sk.hid.offs) + 6 : b - 1, ccG = new Set(sk.cc.map((x) => x.g));
-        for (const u of raw.U.values()) { if (u.c0 == null || u.c0 < w0 || u.c0 > w1 || u.sum || ccG.has(u.g) || (u.cBy !== 'e' && u.cBy !== 'k')) continue;
-          const pk = u.d0 != null ? pullOf(u.d0) : null; if (pk === i && u.c0 >= P[i].s - 1 && !(sk.hid && u.c0 < sk.hid.ce - 0.5)) continue;
+        for (const u of raw.U.values()) { if (u.c0 == null || u.c0 < w0 || u.c0 > w1 || u.sum || ccG.has(u.g) || (u.cBy !== 'e' && u.cBy !== 'k') || u.c0 > P[i].s + 1) continue; /* (after the next pull started: that fight's) */
+          const pk = u.d0 != null ? pullOf(u.d0) : null; if (pk === i && u.c0 >= P[i].s - 1 && (!(sk.hid && u.c0 < sk.hid.ce - 0.5) || (sk.hid.early || []).some((e) => e.pull && e.who === u.cWho) || ((R.people || []).find((p) => p.name === u.cWho) || {}).role === 'tank')) continue; /* (the next pull starting, a tank's pull out of the cover included) */
           const hit = u.hit && u.hit.t - u.c0 < 15 ? { ...u.hit, hp: ((q) => (q ? q[4] : 0))(before(u.hit.g, u.hit.t, 4)), max: ((q) => (q ? q[5] : 0))(before(u.hit.g, u.hit.t, 60)) } : null;
           sk.came.push({ t: u.c0, g: u.g, n: u.n, npc: u.npc, by: u.cBy, fought: u.d0 != null, pull: pk, hid: !!(sk.hid && u.c0 < sk.hid.ce - 0.5), hit, at: u.at }); }
         sk.came.sort((p, q) => p.t - q.t); }
@@ -62841,7 +62843,6 @@ function mpSkipBuild(raw, R) {
       sk.died.sort((p, q) => p.t - q.t);
       // (Worked: nothing came in, nobody died. Broke: a fight an enemy started while you were still hidden, or a controlled enemy that got fought. Partly
       // broke: anything else that came in, broke free or killed someone)
-      for (const x of sk.cc) { const u = raw.U.get(x.g); x.fought = !!(u && u.d0 != null); }
       sk.tag = sk.came.some((x) => x.fought && x.hid) || sk.cc.some((x) => x.fought) ? 'broke' : sk.came.length || sk.died.length || sk.cc.some((x) => x.broke) ? 'part' : 'ok';
       // (the path: the caster's spots while hidden (a group tool) or the hidden players' (invisibility); the walk in, from the pull before)
       const lead = cast ? cast.g : sk.cc[0] ? (raw.tools.find((y) => y.who === sk.cc[0].who) || {}).g : inv ? [...inv.on.keys()][0] : null;
@@ -64439,7 +64440,7 @@ function mpPartHtml(R, fx, pick) {
     else if (wt && R.run.clock && R.run.clock.up === 0) rows.push('<div class="mpt-prow mpt-prow2"><i class="mpt-pic" style="color:#aeb6bf" aria-hidden="true">⏱</i><span class="mpt-ypl">Did ' + (own ? 'your' : 'their') + ' damage time it?</span><span class="mpt-ypv2">' + mpShimT('You were 0:40 over. Matching the middle healer would have saved about 0:25.') + '</span></div>'); }
   // (one Next time line, the first that applies: a death, casts with their kick ready, missed cooldowns, avoidable hits, damage behind the spec)
   let nt = ''; const you = own ? 'you' : 'them';
-  if (dd.length) { const d = dd[0], k = dSk(d), sk = k >= 0 ? R.skips[k] : null, e = sk && sk.hid ? sk.hid.early.find((x) => x.who === name) : null, cov = sk && sk.hid && sk.hid.sp ? (mpLc(sk.hid.sp) === 'shroud of concealment' ? 'Shroud' : esc(sk.hid.sp)) : 'cover';
+  if (dd.length) { const d = dd[0], k = dSk(d), sk = k >= 0 ? R.skips[k] : null, e = sk && sk.hid ? sk.hid.early.find((x) => x.who === name && !x.pull) : null, cov = sk && sk.hid && sk.hid.sp ? (mpLc(sk.hid.sp) === 'shroud of concealment' ? 'Shroud' : esc(sk.hid.sp)) : 'cover';
     /* (a death in a skip: what the log shows there, the cover left early or what came in when it dropped (Nov 3)) */
     if (sk) nt = e ? 'Stay in the ' + cov + ' until it drops ' + dOn(d) + '. ' + (own ? 'You' : esc(name)) + ' left it ' + Math.round(e.ago) + ' s before the others' + (d.from ? ', and ' + mpSkA(d.from) + ' killed ' + you : '') + '.' : 'Watch for ' + ((d.bigFrom || d.from) ? mpSkA(d.bigFrom || d.from) : 'what comes in') + ' when the ' + cov + ' drops ' + dOn(d) + '. ' + (d.bigFrom ? 'It hit ' + you + ' hardest there.' : (d.from ? 'It' : 'Something') + ' killed ' + you + ' there.');
     else { const B = d.big ? esc(d.big) + (d.bigFrom ? ' (' + esc(d.bigFrom) + ')' : '') : '', they = own ? 'you' : 'they'; /* (the biggest hit, when it isn't the killing blow (Nov 3)) */
@@ -64968,10 +64969,10 @@ function mpSkCard(RR, s, F) {
   for (const x of s.tools) { if (x.k === 'group') rows.push([x.t, IC(x.sp, x.id), W(x.who) + ' casts ' + V(x.sp) + (s.hid ? ': ' + (s.hid.n >= s.hid.of ? 'all ' + s.hid.of + ' of you hidden' : s.hid.n + ' of ' + s.hid.of + ' hidden') : '')]);
     else rows.push([x.t, IC(x.sp, x.id), W(x.who) + (x.k === 'stealth' && /^(stealth|prowl)$/i.test(x.sp) ? ' goes into ' : ' uses ') + V(x.sp)]); }
   if (s.hid && !sp) rows.push([s.hid.s, '', W(s.hid.n + ' of you') + ' invisible at once']);
-  for (const x of s.cc) { rows.push([x.t, IC(x.sp, x.id), W(x.who) + ' uses ' + V(x.sp) + ' on ' + mpSkA(x.on) + (x.fought || x.brk ? '' : x.broke ? '. It breaks free' : '. It\'s never fought')]);
-    if (x.brk) rows.push([x.brk.t, '', X('The ' + esc(x.sp) + ' breaks') + ': ' + W(x.brk.who) + '\'s ' + esc(x.brk.sp) + ' hits it' + (x.fought ? ', and you fight it' : '')]);
+  for (const x of s.cc) { rows.push([x.t, IC(x.sp, x.id), W(x.who) + ' uses ' + V(x.sp) + ' on ' + mpSkA(x.on) + (x.fought ? '' : x.later != null ? '. It\'s fought later, in ' + (RR.pulls[x.later].boss ? esc(RR.pulls[x.later].boss) : 'pull ' + mpNo(RR, RR.pulls[x.later].n)) : x.broke ? '. It breaks free' : '. It\'s never fought')]);
+    if (x.brk && x.fought) rows.push([x.brk.t, '', X('The ' + esc(x.sp) + ' breaks') + ': ' + W(x.brk.who) + '\'s ' + esc(x.brk.sp) + ' hits it' + (x.fought ? ', and you fight it' : '')]);
     else if (x.fought) rows.push([s.b, '', X('The ' + esc(x.on) + ' gets pulled') + ' with ' + mpSkNext(RR, s)]); }
-  if (s.hid) for (const e of s.hid.early) rows.push([e.t, '', W(e.who) + ' loses the ' + esc(spS)]);
+  if (s.hid) for (const e of s.hid.early) rows.push([e.t, '', W(e.who) + (e.pull ? ' leaves the ' + esc(spS) + ' and pulls' : ' loses the ' + esc(spS))]);
   if (s.hid) rows.push([s.hid.e, '', (sp ? 'The ' + esc(spS) + ' drops' : 'The invisibility ends') + ' after ' + Math.round(s.hid.e - s.hid.s) + ' seconds', 1]);
   for (const x of s.came) { rows.push([x.t, '', X(mpSkA(x.n).replace(/^a/, 'A') + ' comes in') + (x.hid ? ' while you\'re still hidden' : '') + (x.fought ? ', and you fight it' : '')]);
     if (x.hit) rows.push([x.hit.t, '', 'It hits ' + W(x.hit.who)]); }
@@ -64987,7 +64988,7 @@ function mpSkCard(RR, s, F) {
   // (the facts behind the result, each once: who wasn't covered, who lost it early and how far from the caster, the first hit of what came in, the deaths)
   const why = [];
   if (s.hid && s.hid.n < s.hid.of) { const miss = (RR.people || []).map((p) => p.name).filter((nm2) => !(s.hid.names || []).includes(nm2)); why.push('Only ' + s.hid.n + ' of ' + s.hid.of + ' were hidden' + (miss.length ? ': ' + mpAnd(miss.map(W)) + (miss.length > 1 ? ' weren\'t' : ' wasn\'t') + ' in range' : '') + '.'); }
-  for (const e of s.hid ? s.hid.early : []) why.push(W(e.who) + ' lost the ' + esc(spS) + ' ' + Math.round(e.ago) + ' s before the others' + (e.yd != null && s.hid.who ? ', about ' + Math.round(e.yd) + ' yards from ' + W(s.hid.who) : '') + '.');
+  for (const e of s.hid ? s.hid.early : []) why.push(e.pull ? W(e.who) + ', the tank, left the ' + esc(spS) + ' to start ' + mpSkNext(RR, s) + ', ' + Math.round(e.ago) + ' s before the others.' : W(e.who) + ' lost the ' + esc(spS) + ' ' + Math.round(e.ago) + ' s before the others' + (e.yd != null && s.hid.who ? ', about ' + Math.round(e.yd) + ' yards from ' + W(s.hid.who) : '') + '.');
   for (const x of s.came) if (x.hit) why.push('The ' + esc(x.n) + '\'s first hit on ' + W(x.hit.who) + ': ' + mpGF(x.hit.amt) + ' from ' + (x.hit.sp === 'Melee' ? 'its melee' : esc(x.hit.sp)) + (x.hit.abs ? ', with ' + mpGF(x.hit.abs) + ' more absorbed' : '') + '.' + (x.hit.max ? ' ' + W(x.hit.who) + ' had ' + mpGF(x.hit.max) + ' health.' : ''));
   if (s.tag === 'ok') why.push('Nothing came in and nobody died.');
   const tvd = (A, a, b) => { const K = mpClock(A); return K ? K.tv(b) - K.tv(a) : b - a; }, t0 = tvd(RR, s.a, s.b), why2 = why.length ? '<ul class="mpt-skwl">' + why.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '';
