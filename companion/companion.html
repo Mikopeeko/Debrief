@@ -1200,7 +1200,7 @@ async function cdAgain(make) {
 // Raider.IO's public profile (item level, score and rank, best keys, the face, the hero tree) and Warcraft Logs through debriefme.io (Mythic and Heroic
 // bosses killed and parses, healing for a healer, damage otherwise). Fetched on a switch, after a recap and every 30 minutes; kept here, shown "as of"
 // when offline; never guessed ----------
-const CS = { chars: [], region: 'us', me: '', cur: null, busy: false, scanAt: 0 };
+const CS = { chars: [], region: 'us', me: '', cur: null, busy: false, scanAt: 0, scanFile: '', scanTo: 0 };
 const CLSC = { WARRIOR: '#C69B6D', PALADIN: '#F48CBA', HUNTER: '#AAD372', ROGUE: '#FFF468', PRIEST: '#FFFFFF', DEATHKNIGHT: '#C41E3A', SHAMAN: '#0070DD', MAGE: '#3FC7EB', WARLOCK: '#8788EE', MONK: '#00FF98', DRUID: '#FF7C0A', DEMONHUNTER: '#A330C9', EVOKER: '#33937F' };
 const CLSN = (c) => String(c || '').toUpperCase().replace(/[^A-Z]/g, '');
 const HERO = { 18: 'Voidweaver', 19: 'Archon', 20: 'Oracle', 21: 'Druid of the Claw', 22: 'Wildstalker', 23: 'Keeper of the Grove', 24: 'Elune\'s Chosen', 31: 'San\'layn', 32: 'Rider of the Apocalypse', 33: 'Deathbringer', 34: 'Fel-Scarred', 35: 'Aldrachi Reaver', 36: 'Scalecommander', 37: 'Flameshaper', 38: 'Chronowarden', 39: 'Sunfury', 40: 'Spellslinger', 41: 'Frostfire', 42: 'Sentinel', 43: 'Pack Leader', 44: 'Dark Ranger', 48: 'Templar', 49: 'Lightsmith', 50: 'Herald of the Sun', 51: 'Trickster', 52: 'Fatebound', 53: 'Deathstalker', 54: 'Totemic', 55: 'Stormbringer', 56: 'Farseer', 57: 'Soul Harvester', 58: 'Hellcaller', 59: 'Diabolist', 60: 'Slayer', 61: 'Mountain Thane', 62: 'Colossus', 64: 'Conduit of the Celestials', 65: 'Shado-Pan', 66: 'Master of Harmony', 124: 'Annihilator', 126: 'Void-Scarred' }; /* (TraitSubTree, 12.1.5, wago.tools) */
@@ -1225,11 +1225,19 @@ function csSet(c, force) {
   if (same && !force) return; csDraw(store.get('dbf-ch:' + csKey(c), null)); csFetch(false);
 }
 // (who you're playing: the newest of this PC's characters in the last lines of the live log, as "Name-Realm")
+// (Nov 3, Flex: "its not switching my characters": the last 128 KB was only a few seconds of other players in a busy place. Now everything new since
+// the last look is read (the last 4 MB at most, and of a log just opened), and you are the player the log marks as yours: "Name-Realm-US",0x511)
 async function csWatch(size) {
-  if (!CS.chars.length || !L.name || Date.now() - CS.scanAt < 15000) return; CS.scanAt = Date.now();
-  try { const from = Math.max(0, size - 131072), r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + from + '&to=' + size); if (!r.ok) return;
-    const t = new TextDecoder().decode(await r.arrayBuffer()); let best = -1, hit = null;
-    for (const c of CS.chars) { const i = t.lastIndexOf('"' + c.name + '-'); if (i > best) { const rl = t.slice(i + c.name.length + 2, t.indexOf('"', i + 1)).replace(/-(US|EU|KR|TW|CN)$/i, ''); /* (retail writes "Name-Realm-US") */ if (csNorm(rl) === csNorm(c.realm)) { best = i; hit = c; } } }
+  if (!CS.chars.length || !L.name || size <= 0) return;
+  if (CS.scanFile !== L.name) { CS.scanFile = L.name; CS.scanTo = 0; CS.scanAt = 0; } /* (a new log) */
+  if (Date.now() - CS.scanAt < 15000) return; CS.scanAt = Date.now();
+  const from = Math.max(CS.scanTo || 0, size - 4194304); if (from >= size) return;
+  try { const r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + from + '&to=' + size); if (!r.ok) return;
+    const t0 = new TextDecoder().decode(await r.arrayBuffer()); CS.scanTo = size;
+    const nf = (s) => String(s || '').normalize('NFC'), names = CS.chars.map((c) => nf(c.name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const re = new RegExp('"(' + names.join('|') + ')-([^"]+?)-(?:US|EU|KR|TW|CN)",0x([0-9a-f]+)', 'gi'); let hit = null, m; const t = nf(t0);
+    while ((m = re.exec(t))) { const f = parseInt(m[3], 16); if (!(f & 0x400) || (f & 0xf) !== 1) continue; /* (a player, and yours: not a party member or anyone else) */
+      const c = CS.chars.find((q) => nf(q.name) === m[1] && csNorm(q.realm) === csNorm(m[2])); if (c) hit = c; }
     if (hit && csKey(hit) !== csKey(CS.cur)) csSet(hit, true);
   } catch (e) { /* (next time) */ }
 }
