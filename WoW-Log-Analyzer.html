@@ -63987,17 +63987,17 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const MP_ROT_SKIP = /^(Opener|Mana at the)|potion/i; /* (the checks rotation() leaves out, the same filter as companion/mplus.js) */
 const mpRwKeep = (c, o) => c.st && c.st !== 'na' && !/^(st|boss):/.test(String(c.k || '')) && !MP_ROT_SKIP.test(mpPlain(c.label).trim()) && !(!o.boss && / uses$/i.test(mpPlain(c.label).trim()));
 async function mpRwStart(R, text) { if (R._rw || !window.DBF_MPLUS_ROT || !window.DBF_CARDBITS || typeof SPEC_CHECKS === 'undefined') return;
-  const CB = window.DBF_CARDBITS, all = {}, rw = R._rw = { all, done: false }; let cur = null;
+  const CB = window.DBF_CARDBITS, all = {}, rw = R._rw = { all, raw: {}, done: false }; let cur = null;
   const E2 = Object.create(E); E2.analyze = (b, seg, o) => { cur = b.pull; return E.analyze(b, seg, o); }; /* (which pull each check is for) */
-  const slim = (c) => ({ st: c.st, k: c.k, label: c.label, v: c.v, sub: c.sub, how: c.how, tip: c.tip, ic: c.ic, isMain: c.isMain, cost: c.cost, bx: (c.bx || []).map((q) => ({ cls: q.cls, tip: q.tip, t: q.t })) });
+  const slim = (c) => ({ st: c.st, k: c.k, label: c.label, v: c.v, sub: c.sub, how: c.how, tip: c.tip, ic: c.ic, isMain: c.isMain, cost: c.cost, share: c.share, bx: (c.bx || []).map((q) => ({ cls: q.cls, tip: q.tip, t: q.t })) });
   const pend = () => cdiQ.length > 0 || cdiBusy > 0 || [...CDI.values()].some((v) => v === undefined);
   const W = { E: E2, S, specRun: (sp, reps, n, one) => { let x = null; try { x = SPEC_CHECKS[sp] ? SPEC_CHECKS[sp](reps, n, one) : null; } finally { for (const [k2, v2] of GEN_MEMO) if (v2 === x) GEN_MEMO.delete(k2); } if (pend()) rw.stale = true;
-    if (x && x.checks && cur != null) (all[cur] = all[cur] || {})[String(n).replace(/-.*$/, '')] = x.checks.map(slim); return x; } }; /* (the app's own specRun, each pull's checks kept) */
+    if (x && x.checks && cur != null) { const nm = String(n).replace(/-.*$/, ''); (all[cur] = all[cur] || {})[nm] = x.checks.map(slim); if (x.score != null) (rw.raw[cur] = rw.raw[cur] || {})[nm] = x.score; } return x; } }; /* (the app's own specRun, each pull's checks kept) */
   // (a check that needs a spell's cooldown (Holy Shock on cooldown) is left out while the cooldown is still being read, the first time this browser
   // sees that spell: then it waits for them and runs once more, so the first pulls are judged like the rest)
   for (let k = 0; k < 2; k++) { rw.stale = false; try { await window.DBF_MPLUS_ROT(R, text, W, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => CB.spellId(W, n) }); } catch (e) { console.error(e); }
     if (k || !rw.stale) break; for (let j = 0; j < 50 && pend(); j++) await new Promise((r) => setTimeout(r, 300));
-    for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; for (const k2 of Object.keys(all)) delete all[k2]; }
+    for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; for (const k2 of Object.keys(all)) delete all[k2]; rw.raw = {}; }
   rw.done = true; R._rwS = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); } }
 // (words: no guide names (a sentence naming one goes), "1 was"; a value as the card says it, "3 of 6")
 const MP_RW_GUIDE = /\b(Wowhead|Icy Veins|SimulationCraft|Raidbots|Bloodmallet|WoWAnalyzer|log tool)\b|\b(a|both|the|one|another) guides?\b|\bthe simulations?\b/i;
@@ -64006,6 +64006,13 @@ const mpRwVal = (v) => mpPlain(v).replace(/(\d+)\s*\/\s*(\d+)/, '$1 of $2').trim
 const mpRwGood = (g) => (/ wasted$/i.test(g) ? 'No ' + g : g);
 const MP_RWV = { bad: ['needs work', 'b'], warn: ['mostly right', 'w'], ok: ['played right', 'g'] };
 const mpRwSt = (fix) => (fix.some((f) => f[0] === 'bad') ? 'bad' : fix.length ? 'warn' : 'ok');
+// (a pull's verdict: its rotation score, the Rotation tab's own formula (each check's weight; a clean one counts in full, a minor one half) over the checks
+// the app judges in a key, in the site's colours for a 0 to 100 score, the report card's grades (letterOf and its colours: 92 and up green, 72 to 91 amber,
+// under 72 red); the fixes keep their own pills (the studio, Nov 2: "the pull verdicts are too strict"))
+const mpRwScore = (R, i, n) => { const o = R.pulls[i], L = ((R._rw && R._rw.all[o.n]) || {})[n]; if (!L) return null; let w = 0, v = 0;
+  for (const c of L) { if (!mpRwKeep(c, o) || !/^(ok|warn|bad)$/.test(c.st)) continue; const k = c.share || 0; w += k; v += c.st === 'ok' ? k : c.st === 'warn' ? k / 2 : 0; }
+  return w ? Math.round(100 * v / w) : null; };
+const mpRwPv = (R, i, n) => { const sc = mpRwScore(R, i, n), o = R.pulls[i]; if (sc == null) return o.rot && o.rot[n] ? mpRwSt(o.rot[n].fix) : null; return sc >= 92 ? 'ok' : sc >= 72 ? 'warn' : 'bad'; };
 const mpRwVw = (st) => '<b class="mpt-rwc-' + MP_RWV[st][1] + '">' + (st === 'ok' ? '✓ ' : '') + MP_RWV[st][0] + '</b>';
 // (an icon for each check: its spell's, or a plain one for a check with none)
 const MP_RW_IC = [[/^Always be (pressing|casting)/i, 'inv_misc_pocketwatch_01'], [/^Rotation priority/i, 'inv_misc_note_01'], [/^Cancelled casts/i, 'spell_holy_silence'], [/^Runic Power/i, 'spell_deathknight_runetap'], [/^Holy Power/i, 'spell_holy_holybolt'],
@@ -64016,8 +64023,8 @@ const mpRwPull = (R, i) => { const o = R.pulls[i]; return o.boss ? '★ ' + esc(
 function mpRwCard(R, i, pick) { const o = R.pulls[i], rw = R._rw, ppl = (R.people || []).slice().sort(mpByRole), CB = window.DBF_CARDBITS;
   if (!rw || !rw.done) return { sum: '<b>Rotation</b>', body: '<p class="mpt-mcf">' + (R._rwOff && !rw ? 'Reload the page to check the rotation for this key.' : 'Checking the rotation…') + '</p>' };
   const any = o.rot && Object.keys(o.rot).length, of = (n) => o.rot && o.rot[n];
-  const vd = (n) => (of(n) ? mpRwVw(mpRwSt(of(n).fix)) : '<b class="mpt-m">' + (any ? 'not judged' : 'too short to judge') + '</b>');
-  const mk = (n) => { const r = of(n); if (!r) return '<i class="mpt-m">–</i>'; const s = mpRwSt(r.fix); return s === 'ok' ? '<i class="mpt-rwc-g">✓</i>' : '<i class="mpt-rwc-' + MP_RWV[s][1] + '">●</i>'; };
+  const vd = (n) => { if (!of(n)) return '<b class="mpt-m">' + (any ? 'not judged' : 'too short to judge') + '</b>'; const sc = mpRwScore(R, i, n); return mpRwVw(mpRwPv(R, i, n)) + (sc != null ? ' <span class="mpt-m">(' + sc + '%)</span>' : ''); };
+  const mk = (n) => { const r = of(n); if (!r) return '<i class="mpt-m">–</i>'; const s = mpRwPv(R, i, n); return s === 'ok' ? '<i class="mpt-rwc-g">✓</i>' : '<i class="mpt-rwc-' + MP_RWV[s][1] + '">●</i>'; };
   if (!pick) return { sum: '<b>Rotation</b> · everyone', body: '<div class="mpt-rke">' + ppl.map((p) => '<button type="button" class="mpt-rkr" data-mprk="' + esc(p.name) + '">' + mpWho(R, p.name) + vd(p.name) + '</button>').join('') + '</div>' };
   const sum = '<b>Rotation</b> · ' + mpWho(R, pick) + ' · ' + vd(pick), r = of(pick);
   const who = '<div class="mpt-rwo">' + ppl.filter((p) => p.name !== pick).map((p) => '<button type="button" data-mprk="' + esc(p.name) + '">' + mpWho(R, p.name) + ' ' + mk(p.name) + '</button>').join('') + '</div>';
@@ -64047,7 +64054,7 @@ function mpRwSum(R, n) { R._rwS = R._rwS || {}; if (R._rwS[n]) return R._rwS[n];
     a.act = mpRwTxt(String(a.f[5] || '').replace(/,? and from (?:the start of the pull|\d+:\d\d),? it [^.]*/g, '')).split(/(?<=[.!?])\s+/).filter((s) => !/\b\d+:\d\d\b|the start of the pull/.test(s)).join(' '); }
   // (the whole run's verdict from the pulls' own (the studio, Nov 2, Flex: "Yes, do both"): no red pull and no more than a quarter amber is played right,
   // half or more red is needs work, anything else mostly right. The fixes keep their own pills)
-  const pv = seen.map((x) => mpRwSt(x.r.fix)), nb = pv.filter((v) => v === 'bad').length, nw = pv.filter((v) => v === 'warn').length, ng = pv.length - nb - nw, J = pv.length;
+  const pv = seen.map((x) => mpRwPv(R, x.i, n)), nb = pv.filter((v) => v === 'bad').length, nw = pv.filter((v) => v === 'warn').length, ng = pv.length - nb - nw, J = pv.length;
   const st = !nb && nw <= J / 4 ? 'ok' : nb >= J / 2 ? 'bad' : 'warn';
   return (R._rwS[n] = { seen, fix, good, st, ng, nw, nb }); }
 const mpRwSplit = (s) => [s.ng ? s.ng + ' played right' : '', s.nw ? s.nw + ' mostly right' : '', s.nb ? s.nb + ' needs work' : ''].filter(Boolean).join(', ');
