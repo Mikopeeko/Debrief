@@ -35662,8 +35662,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
            timeline played at the bottom of the map instead?", "we could potentially remove this as well with the new timeline version",
            "maybe make the right column shorter so the timeline can expand across the whole bottom"; mock tlm3, "Yes, build it")) */
         /* (health bars (Flex, Nov 3: "it would be good to put healthbars of the boss/adds on the screen somewhere!"): the bosses and adds on
-           the map at this moment, from the log's health readings, in the map's top-left corner: bosses first, then the biggest adds, 3 at
-           most (and how many more); a unit that shares the boss's health (Ula'tek's tail) isn't listed twice) */
+           the map at this moment, from the log's health readings, in the map's top-left corner: bosses first, then every add, the biggest
+           first; a unit that shares the boss's health (Ula'tek's tail) isn't listed twice) */
         var HPU = rep.hpUnits && rep.hpUnits.get ? rep.hpUnits : null, HPD = rep.enemyDied && rep.enemyDied.get ? rep.enemyDied : null;
         /* (a unit that never loses health in the pull (Coiled Altar's ghosts) isn't listed; one on the map but not hit yet is full) */
         var hpOf = function (g, ft) { var u = HPU && HPU.get(g); if (!u || !u.samples || !u.samples.length) return null; if (u._lo == null) { u._lo = 1; u.samples.forEach(function (s) { if (s[1] < u._lo) u._lo = s[1]; }); } if (u._lo >= 0.999) return null;
@@ -35673,8 +35673,8 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
             (q.kind === 'boss' ? B : A).push({ n: u.name || q.name, v: v, max: u.max || 0 }); });
           var bm = {}; B.forEach(function (b) { bm[b.max] = 1; }); A = A.filter(function (a) { return !bm[a.max]; }).sort(function (a, b) { return b.max - a.max || a.v - b.v; });
           var bk = {}; B = B.filter(function (b) { var k = b.n + '|' + b.max; if (bk[k]) return false; bk[k] = 1; return true; });
-          /* (a phone's small map: the boss and one add, then "+N more") */ var cap = mw.clientWidth < 500 ? 1 : 3;
-          var more = Math.max(0, A.length - cap); A = A.slice(0, cap); if (!B.length && !A.length) { if (el) el.style.display = 'none'; return; }
+          /* (always every unit, never "+N more" (Flex, Nov 3: "this needs to always be fully expanded")) */ var more = 0;
+          if (!B.length && !A.length) { if (el) el.style.display = 'none'; return; }
           /* (one slim line per unit (name, bar, %), so the corner stays small and the players there still show) */
           if (!el) { el = document.createElement('div'); el.className = 'dtm-hp'; el.style.cssText = 'position:absolute;left:8px;top:8px;z-index:3;width:236px;max-width:56%;padding:4px 8px;border-radius:4px;background:rgba(10,12,16,.72);border:1px solid rgba(255,255,255,.08);pointer-events:none;font-size:12px;line-height:17px'; mw.appendChild(el); }
           /* (inside the map's own top-left corner, under the bar with the replay's speed buttons (Flex, Nov 3: "its covering up the speed of the video")) */
