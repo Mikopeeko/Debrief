@@ -144,7 +144,7 @@ local function decode(code)
       elseif t == "MM" then q.minor[#q.minor + 1] = { t = tonumber(g(3)) or 0, spell = g(4), mob = g(5), ready = g(6) ~= "" and split(g(6), ";") or {}, id = g(7) or "", who = g(8) or "" } -- (medium kicks that went off: a note (Nov 1))
       elseif t == "MW" then q.spam[#q.spam + 1] = { spell = g(3), casts = tonumber(g(4)) or 0, kicked = tonumber(g(5)) or 0, stopped = tonumber(g(6)) or 0, enemies = tonumber(g(7)) or 0, mob = g(8), id = g(9) or "" } -- (kick when you can (Nov 1))
       elseif t == "MA" then q.avoid[#q.avoid + 1] = { who = g(3), spell = g(4), n = tonumber(g(5)) or 0, dmg = tonumber(g(6)) or 0, id = g(7) or "" }
-      elseif t == "MD" then q.deaths[#q.deaths + 1] = { t = tonumber(g(3)) or 0, who = g(4), to = g(5), from = g(6), defs = tonumber(g(7)) or 0 }
+      elseif t == "MD" then q.deaths[#q.deaths + 1] = { t = tonumber(g(3)) or 0, who = g(4), to = g(5), from = g(6), defs = tonumber(g(7)) or 0, big = g(8) ~= "" and g(8) or nil, gap = g(9) == "1" } -- (big: the biggest hit, for the tip; gap: died after the pull had ended (Nov 3))
       elseif t == "MK" then q.kicks[#q.kicks + 1] = { t = tonumber(g(3)) or 0, who = g(4), kind = g(5), spell = g(6), mob = g(7), with = g(8) }
       elseif t == "MF" then q.defs[g(3)] = g(4)
       elseif t == "MV" then q.vals[g(3)] = { dps = tonumber(g(4)) or 0, hps = tonumber(g(5)) or 0, ds = tonumber(g(6)) or 0, ps = tonumber(g(7)) or 0 }
@@ -897,7 +897,7 @@ end
 -- (NEXT KEY (Nov 1, the flawless card): a gold box at the top of a key with its most useful tips: deaths with no defensive, then the top rotation fix)
 function UI.nextKey(y, P, PL, n)
   local tips, ab = {}, {}
-  for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n and d.defs == 0 then local seen = false; for _, x in ipairs(ab) do if x == d.to then seen = true end end; if not seen then ab[#ab + 1] = d.to end end end end
+  for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do local k = d.big or d.to; if d.who == n and d.defs == 0 then local seen = false; for _, x in ipairs(ab) do if x == k then seen = true end end; if not seen then ab[#ab + 1] = k end end end end
   if #ab > 0 then tips[#tips + 1] = "Use a defensive before " .. (#ab == 1 and ab[1] or (ab[1] .. " and " .. ab[2])) .. ": " .. (#ab == 1 and "that death had" or "those deaths had") .. " none in the 30 s before." end
   local f = P.rot and P.rot[1]; if f then tips[#tips + 1] = f.label .. " needed work in " .. ((#f.pulls >= (f.of or 0)) and ("all " .. (f.of or #f.pulls)) or (#f.pulls .. " of " .. (f.of or #f.pulls))) .. " pulls." end
   if #tips == 0 then return y end
@@ -1122,7 +1122,7 @@ function UI.mplus(raw)
         -- (the dot: red for a death or 3+ casts through, grey for a cast through or avoidable damage, green for a clean pull; yours on Me)
         local th = P and #myThr(q, P.name) or #q.thr
         local died, av = false, false
-        for _, d in ipairs(q.deaths) do if not P or d.who == P.name then died = true end end
+        for _, d in ipairs(q.deaths) do if (not P or d.who == P.name) and not d.gap then died = true end end
         for _, a in ipairs(q.avoid) do if not P or a.who == P.name then av = true end end
         b.dot = b.dot or b:CreateTexture(nil, "OVERLAY"); b.dot:SetTexture(SLICE .. "dot"); b.dot:SetSize(7, 7); b.dot:ClearAllPoints(); b.dot:SetPoint("LEFT", 9, 0)
         local tone = (died or th > 2) and "bad" or ((th > 0 or av) and "warn" or "good"); b.tone = tone
@@ -1467,7 +1467,7 @@ function UI.mplus(raw)
   local function ofV(v) return (tostring(v or ""):gsub("^(%d+)/(%d+)$", "%1 of %2")) end
   local RS = { bad = "bad", warn = "warn" }
   local function worstOf(L, k) for _, f in ipairs(L) do if f[k] == "bad" then return "r" end end; return "w" end
-  local function dRow(d, where) return { "bad", "", "", (where and "" or ("@" .. d.who .. " died to ")) .. (where and "Died to " or "") .. WH .. d.to .. "|r" .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (where and (", " .. where) or "") .. "." .. (d.defs == 0 and ("  |cff" .. COL.badT .. "No defensive in the 30 s before.|r") or ""), mm(d.t) } end
+  local function dRow(d, where) return { "bad", "", "", (where and "" or ("@" .. d.who .. " died to ")) .. (where and "Died to " or "") .. WH .. d.to .. "|r" .. (d.from ~= "" and (" (" .. d.from .. ")") or "") .. (where and (", " .. where) or (d.gap and ", after the pull" or "")) .. "." .. (d.defs == 0 and ("  |cff" .. COL.badT .. "No defensive in the 30 s before.|r") or ""), mm(d.t) } end
   -- (avoidable damage by spell, the most first; who: true names everyone hit; the pulls each spell hit in, as chips)
   -- (kick when you can (Nov 1): a pack's spam, shown, never a mistake: "Lightspore Shot, from 30 Lightspawn Lashers, 26 of 65 stopped")
   local function spamR(L, kp)
@@ -1564,7 +1564,7 @@ function UI.mplus(raw)
       table.sort(order, function(a, c) return by[a].n > by[c].n end)
       do local tips, ab = {}, {}
         if #order > 0 then tips[#tips + 1] = "Save " .. (you and "your" or "the") .. " kick for " .. WH .. order[1] .. "|r" .. (order[2] and (" and " .. WH .. order[2] .. "|r") or "") .. ": " .. #th .. " got through while it was ready." end
-        for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n and d.defs == 0 then local seen = false; for _, x in ipairs(ab) do if x == d.to then seen = true end end; if not seen then ab[#ab + 1] = d.to end end end end
+        for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do local k = d.big or d.to; if d.who == n and d.defs == 0 then local seen = false; for _, x in ipairs(ab) do if x == k then seen = true end end; if not seen then ab[#ab + 1] = k end end end end
         if #ab > 0 then tips[#tips + 1] = "Use a defensive before " .. WH .. ab[1] .. "|r" .. (ab[2] and (" and " .. WH .. ab[2] .. "|r") or "") .. ": " .. (#ab == 1 and "that death had" or "those deaths had") .. " none in the 30 s before." end
         local f = P.rot and P.rot[1]; if f then tips[#tips + 1] = WH .. f.label .. "|r needed work in " .. ((#f.pulls >= (f.of or 0)) and ("all " .. (f.of or #f.pulls)) or (#f.pulls .. " of " .. (f.of or #f.pulls))) .. " pulls." .. ((f.tip or "") ~= "" and (" " .. f.tip) or "") end -- (and the fix itself (Nov 1))
         goldBox("NEXT KEY", tips) end
@@ -1581,7 +1581,7 @@ function UI.mplus(raw)
         det[#det + 1] = { "p", b.ev }; det[#det + 1] = { "t", "|cff" .. COL.gold .. "Next time:|r save the kick for it." }
         L[#L + 1] = { "bad", b.id, sp, "from " .. b.mob, times(b.n), det, "r:mpk:" .. n .. ":" .. sp } end
       secB("Got through while " .. yo .. " kick was ready", L, { #th .. " got through", "r" })
-      local D = {}; for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n then D[#D + 1] = dRow(d, pname(q)) end end end
+      local D = {}; for _, q in ipairs(PL) do for _, d in ipairs(q.deaths) do if d.who == n then D[#D + 1] = dRow(d, d.gap and ("after " .. (q.boss ~= "" and q.boss or ("pull " .. q.n))) or pname(q)) end end end
       secB(Yo .. " deaths", D, { #D .. (#D == 1 and " death" or " deaths"), "r" })
       local A = {}; for _, q in ipairs(PL) do for _, a in ipairs(q.avoid) do if a.who == n then A[#A + 1] = { who = a.who, spell = a.spell, n = a.n, dmg = a.dmg, id = a.id, pull = q.n } end end end
       secB("Avoidable damage", avR(A, false, n), { hits(P.avoid), "w" })
@@ -1595,7 +1595,7 @@ function UI.mplus(raw)
       if listed then cols[#cols + 1] = "Avoidable" end; cols[#cols + 1] = "Defensives"; cols[#cols + 1] = "Deaths"
       local PR = {}
       for _, q in ipairs(PL) do
-        local v = q.vals[n] or {}; local dd, av = cnt2(q.deaths, n), 0
+        local v = q.vals[n] or {}; local dd, av = 0, 0; for _, d in ipairs(q.deaths) do if d.who == n and not d.gap then dd = dd + 1 end end
         for _, a in ipairs(q.avoid) do if a.who == n then av = av + a.n end end
         local g = P.kick and #myThr(q, n) or (v.ds or 0)
         local r = { pname(q), kN(heal(P) and (v.hps or 0) or (v.dps or 0)), cnt2(q.kicks, n, "k"), cnt2(q.kicks, n, "s"), (P.kick and g > 0) and ("|cff" .. COL.badT .. g .. "|r") or g }
@@ -1638,7 +1638,7 @@ function UI.mplus(raw)
       -- (the key, pull by pull (Nov 1, the Design studio's round 477; Flex: "group view should be based on performance from pull to pull not individual
       -- rotations"): each pull's time, the group's damage, what got through, avoidable hits and deaths; a row opens its pull)
       local KR = {}
-      for _, q in ipairs(PL) do local gd, av, th, d0 = 0, 0, #q.thr, #q.deaths
+      for _, q in ipairs(PL) do local gd, av, th, d0 = 0, 0, #q.thr, 0; for _, d in ipairs(q.deaths) do if not d.gap then d0 = d0 + 1 end end
         for _, v in pairs(q.vals) do gd = gd + (v.dps or 0) end; for _, a in ipairs(q.avoid) do av = av + a.n end
         local r = { pname(q), mm(q.dur), kN(gd), th > 0 and ("|cff" .. (th > 2 and COL.badT or COL.warn) .. th .. "|r") or th }
         if listed then r[#r + 1] = av > 0 and ("|cff" .. COL.warn .. av .. "|r") or av end

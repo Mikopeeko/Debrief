@@ -1010,7 +1010,7 @@ RECAP.encode = (m) => {
 // (a Mythic+ key for the addon (Nov 1, the in-game card): the run recap, coded the same way, M lines after the H line.
 // MR~level~T|O|L~time~timer~levels up~next level's mark~deaths' cost~deaths~levels up without them~fighting~between pulls~score
 // MP~name~CLASS~spec~role~dps~hps~kicks~stops~defensives~deaths~dispels~purges~avoidable hits~has a kick   MU~pull~boss~kill~start~length~enemies
-// MT~pull~time~spell~enemy~needs CC~kick ready (a;b)   MA~pull~who~spell~hits~damage   MD~pull~time~who~died to~from~defensives before
+// MT~pull~time~spell~enemy~needs CC~kick ready (a;b)   MA~pull~who~spell~hits~damage   MD~pull~time~who~died to~from~defensives before~biggest hit (when not the killing blow)~after the pull
 // MK~pull~time~who~k|s~spell~enemy~with   MF~pull~who~defensives (a;b)   MV~pull~who~dps~hps~dispels~purges   MS~pull~spell~landed~removed~d|p
 // MO~pull~who~flag~icon~check~value~line   MG~pull~who~went well (a;b)   MX~who~flag~icon~check~pulls (1;3)~pulls checked)
 RECAP.encodeMplus = (R, night) => {
@@ -1024,7 +1024,7 @@ RECAP.encodeMplus = (R, night) => {
     for (const x of o.minor || []) rec.push(['MM', o.n, n0(x.t), x.spell, x.mob, x.ready.join(';'), x.id || '', x.who || '']); /* (medium kicks that went off: a note (Nov 1)) */
     for (const x of o.spam || []) rec.push(['MW', o.n, x.spell, x.casts, x.kicked, x.stopped, x.enemies, x.mob, x.id || '']); /* (kick when you can (Nov 1)) */
     for (const a of o.avoid || []) rec.push(['MA', o.n, a.who, a.spell, a.n, a.dmg, a.id || '']);
-    for (const d of o.deaths) rec.push(['MD', o.n, n0(d.t), d.who, d.to, d.from || '', d.defs || 0]);
+    for (const d of o.deaths) rec.push(['MD', o.n, n0(d.t), d.who, d.to, d.from || '', d.defs || 0, d.big || '', d.gap ? 1 : '']);
     for (const x of o.kicks) rec.push(['MK', o.n, n0(x.t), x.who, 'k', x.spell, x.mob, x.with]);
     for (const x of o.stops) rec.push(['MK', o.n, n0(x.t), x.who, 's', x.spell, x.mob, x.with]);
     const dpl = new Map(); for (const x of o.defs) dpl.set(x.who, (dpl.get(x.who) || []).concat(x.name));

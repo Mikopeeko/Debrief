@@ -644,7 +644,7 @@ function renderMplus() {
     const n = me.name, th = R.pulls.flatMap((q) => mineThrough(q, n).map((x) => Object.assign({ pull: q.n }, x)));
     const by = new Map(); for (const x of th) { if (!by.has(x.spell)) by.set(x.spell, { n: 0, mob: x.mob, id: x.id, ev: [], also: new Map() }); const b = by.get(x.spell); b.n++; b.ev.push(x); for (const r of x.ready) if (r !== n) b.also.set(r, (b.also.get(r) || 0) + 1); }
     const thL = [...by].sort((a, b) => b[1].n - a[1].n);
-    { const ab = [...new Set(R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n && !x.defs).map((x) => x.to)))], tips = [];
+    { const ab = [...new Set(R.pulls.flatMap((q) => q.deaths.filter((x) => x.who === n && !x.defs).map((x) => x.big || x.to)))], tips = []; /* (the biggest hit, when the killing blow was a small one (Nov 3)) */
       if (thL.length) tips.push('Save ' + (me === mine ? 'your' : 'the') + ' kick for <b>' + esc(thL[0][0]) + '</b>' + (thL[1] ? ' and <b>' + esc(thL[1][0]) + '</b>' : '') + ': ' + th.length + ' got through while it was ready.');
       if (ab.length) tips.push('Use a defensive before <b>' + esc(ab[0]) + '</b>' + (ab.length > 1 ? ' and <b>' + esc(ab[1]) + '</b>' : '') + ': ' + (ab.length === 1 ? 'that death had' : 'those deaths had') + ' none in the 30 s before.');
       const f0 = me.rot && me.rot.fix[0]; if (f0) tips.push('<b>' + esc(f0.label) + '</b> needed work ' + (f0.pulls.length >= me.rot.pulls ? 'in all ' + me.rot.pulls + ' pulls.' : 'in ' + f0.pulls.length + ' of ' + me.rot.pulls + ' pulls.') + (f0.tip ? ' ' + esc(f0.tip) : '')); /* (and the fix itself (Nov 1)) */
