@@ -1,12 +1,10 @@
 ## Interface: 120000, 120001, 120005, 120007, 120100, 120101, 120102, 120105, 120107
 ## Title: Debrief
-## Notes: Your pull recap in game, a few seconds after every boss pull.
+## Notes: Keeps your combat log on for Debrief Companion.
 ## Author: Debrief
 ## Version: 0.5.82
 ## SavedVariables: DebriefDB
 ## Category: Combat
 ## IconTexture: Interface\AddOns\Debrief\Media\logo
 
-Companion.lua
-Pulls.lua
 Debrief.lua

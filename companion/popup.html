@@ -885,7 +885,7 @@ let LK0 = null;
 function lkWith(lk0) { const S = SETS(), o = Object.assign({}, lk0 || {}); if (!S) return o;
   o.preset = S.preset; o.show = Object.assign({}, S.show || {}); o.max = Object.assign({}, S.max || {}); if (o.show.died === false) o.max.maxDied = 0;
   o.onlyBad = !!S.onlyBad; o.openSecs = !!S.openSecs; o.compact = false; o.detailed = S.preset === 'detailed'; o.bossFirst = !!S.bossFirst; o.goal = { hps: S.goalHps || 0, dps: S.goalDps || 0 };
-  if (S.me && !o.sample) o.me = S.me; return o; } /* (the sample pull keeps its own made-up player) */
+  if (S.me && !o.sample) o.me = S.me; o.reload = false; return o; } /* (no "Type /reload in WoW" line: the recap lives only on this PC (Nov 3)) */ /* (the sample pull keeps its own made-up player) */
 const ACCENT = { gold: '#e6b450', frost: '#3fc7eb', fel: '#45c15c', crimson: '#e5534b', violet: '#a78bfa' };
 function applyLook() { const S = SETS() || {}, r = document.documentElement.style, b = document.body; if (!b) return;
   let acc = ACCENT[S.accent] || null;

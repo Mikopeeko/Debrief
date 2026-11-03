@@ -73,7 +73,7 @@ namespace Debrief {
     public static void SetFlags(string here, bool popup, bool auto) {
       flagPopup = popup; flagAuto = auto;
       var r = FindRetail(here); if (r == null) return;
-      var dst = Path.Combine(r, @"Interface\AddOns\Debrief"); if (Directory.Exists(dst)) WriteFlagFile(dst);
+      /* (the addon reads no flag file since Nov 3: it only keeps the combat log on) */
     }
     // (the addon's saved pulls (Oct 22): the last 60 pulls' codes (30 until Oct 25, when a long night could outrun it), kept beside the app and written into the addon's Pulls.lua, which
     // WoW reads at login or /reload; the addon adds the ones it doesn't have yet)
@@ -183,10 +183,12 @@ namespace Debrief {
       try { newer = have != "" && new Version(have) >= new Version(v); } catch { newer = have == v; }
       // (tells the addon this PC runs the app, so the "See your recap?" prompt comes from your very first boss pull; written every start,
       // so it's back after CurseForge updates the addon)
-      Action flag = () => WriteFlagFile(dst);
+      Action flag = () => { }; // (no flag file since Nov 3: the addon only keeps the combat log on)
       if (newer) { flag(); return "The Debrief addon (version " + have + ") is installed in " + dst; }
       try {
-        CopyDir(src, dst); RewritePulls(here); // (the saved pulls go back in after the folder is copied over)
+        CopyDir(src, dst); // (no saved pulls go into WoW since Nov 3; the old card's files go)
+        foreach (var old in new[] { "Pulls.lua", "Companion.lua" }) { try { File.Delete(Path.Combine(dst, old)); } catch { } }
+        try { if (Directory.Exists(Path.Combine(dst, "Fonts"))) Directory.Delete(Path.Combine(dst, "Fonts"), true); } catch { }
         flag();
         return "Installed the Debrief addon (version " + v + ") in " + dst + ". If WoW is open, type /reload.";
       } catch (Exception e) { return "Couldn't install the addon in " + dst + " (" + e.Message + @"). Copy the folder addon\Debrief (next to this app) there yourself."; }

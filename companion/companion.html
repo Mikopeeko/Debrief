@@ -216,6 +216,7 @@ details.code textarea { width: 100%; height: 90px; margin-top: 8px; background: 
   <a class="btn" id="web" href="https://debriefme.io/?pc" target="_blank" rel="noopener" title="Opens debriefme.io in your browser. It follows this PC's combat log, so every pull shows up there as it ends.">Open on the website</a>
   <button class="btn ib" id="gear" type="button" aria-expanded="false" aria-controls="more" title="Settings: your combat log, every pull, updates">⚙</button>
 </header>
+<div class="updbar" id="fsbar" hidden><div><b>Your recap pops up over WoW only in Windowed (Fullscreen)</b><span>In WoW: Options › Graphics › Display Mode › Windowed (Fullscreen). Or show the pop-up on your second screen.</span></div><button class="btn" id="fsSecond" type="button" hidden>Use my second screen</button><button class="btn" id="fsOk" type="button">Got it</button></div>
 <div class="updbar" id="updbar" hidden><div><b id="updT">Debrief is ready to update</b><span>Update when you aren't raiding. Afterwards, type /reload in WoW.</span></div><button class="btn gold" id="updGo" type="button">Update now</button><button class="btn" id="updLater" type="button">Later</button></div>
 
 <div class="stage">
@@ -365,7 +366,7 @@ async function openLog(i) {
   L.ix = W.E.createIndexer({ dungeons: true });
   await scanMore(true);
   L.mpDone = new Set((L.ix.peek().runs || []).filter((r) => r.endByte).map((r) => r.startByte)); /* (keys already over: no pop-up (Nov 1)) */
-  if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); if (L.fresh) resaveOld(); }
+  if (L.live) { stat('Watching your combat log', 'live'); if (!L.waiting) waitLoop(); } /* (nothing to re-save for WoW: the recap lives only on this PC since Nov 3) */
   else stat('Older log: not watching it', '');
   renderMain(); fillNight();
   try { const a = await j('/addon'); addonLine(a.msg); } catch (e) { /* older helper */ }
@@ -439,6 +440,14 @@ for (const [id, def] of [['pop', true], ['snd', true]]) { $(id).checked = store.
 // ---------- the settings window (Nov 3, the studio's settings-brief.md): opened from here, the tray and the pop-up's gear; Pop up and Chime are the same
 // switches as here, so a change there shows here too ----------
 $('setBtn').addEventListener('click', () => { j('/setup/open', { method: 'POST' }).catch(() => {}); });
+// (the full-screen tip (Nov 3, the studio's pop-up-only-brief.md): read from WoW's own Config.wtf; shown once when WoW is in true fullscreen, and again only
+// if it changes back to it later. A second screen can take the pop-up instead)
+async function fsCheck() { let x = null; try { x = await j('/setup'); } catch (e) { return; } if (!x || !x.display || x.display === 'unknown') return;
+  const was = store.get('dbf-disp', ''); store.set('dbf-disp', x.display);
+  if (x.display === 'fullscreen' && was !== 'fullscreen') { $('fsSecond').hidden = !(x.screens >= 2); $('fsbar').hidden = false; } else if (x.display !== 'fullscreen') $('fsbar').hidden = true; }
+$('fsOk').addEventListener('click', () => { $('fsbar').hidden = true; });
+$('fsSecond').addEventListener('click', () => { const S = store.get('dbf-set', null); if (S) { S.screen = 'second'; store.set('dbf-set', S); } $('fsbar').hidden = true; });
+fsCheck(); setInterval(fsCheck, 5 * 60000);
 window.addEventListener('storage', (e) => { const m = /^dbf-sw-(pop|snd)$/.exec(e.key || ''); if (m) $(m[1]).checked = store.get(e.key, true); });
 const setGet = () => store.get('dbf-set', null) || {};
 // (each player's /db picks come across once, on the first start after the update: nobody's setup is reset. An old pick with no row any more keeps the
@@ -486,8 +495,7 @@ $('hkBtn').addEventListener('click', () => { const b = $('hkBtn'); hkListen(b, (
 $('hkUse').addEventListener('click', async () => { const why = await hkSet(6, 68, 'Ctrl + Shift + D'); if (why) { $('hkMsg').textContent = why; return; } $('hkAsk').hidden = true; hkShow(); });
 $('hkPick').addEventListener('click', () => { $('hkMsg').textContent = ''; hkListen($('hkBig'), (why, name) => { if (why) { $('hkMsg').textContent = why; return; } if (name) { $('hkAsk').hidden = true; hkShow(); } else { $('hkBig').textContent = 'Ctrl + Shift + D'; } }); });
 hkShow();
-function addonFlags() { j('/addonflags', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ popup: $('pop').checked, autocopy: false }) }).catch(() => {}); }
-addonFlags();
+function addonFlags() { /* (the addon only keeps the combat log on since Nov 3 (the studio's pop-up-only-brief.md): it reads no flags from this app) */ }
 // (the pop-up over the game: this pull's recap, or hidden when the next pull starts)
 // (the pop-up's Stop at death: your last choice, or the website's own filter; the coach box is built at it)
 // (the pop-up's Wipe call, on or off (Oct 23); on unless you turned it off)
@@ -575,10 +583,8 @@ function mplusShow(r, again) {
         for (let k = 0; k < 2; k++) { stale = false; try { await window.DBF_MPLUS_ROT(R, txt, W2, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => (CB.spellId ? CB.spellId(W, n) : '') }); } catch (e) { console.error(e); }
           if (k || !stale) break; for (let i = 0; i < 27 && cdPend(); i++) await sleep(300); try { W.cdForget(); } catch (e) { /* older engine */ }
           for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; } }
-      // (and the key for the addon (Nov 1, the in-game card): Save this key in WoW brings the run recap in, as a saved pull)
+      // (the key for the pop-up's Saved list; it no longer goes into WoW (Nov 3))
       (L.mpRes = L.mpRes || {})[r.startByte] = { stat: R.run.left ? 'L' : R.run.timed ? 'T' : 'O', up: (R.run.clock && R.run.clock.up) || 0, people: R.people.map((p) => [p.name, p.cls]) }; L.mpLast = r.startByte;
-      if (!again) try { if (L.name) { const key = L.name + ':' + r.startByte, code = RECAP.encodeMplus(R, r.startMs ? new Date(r.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '');
-        j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) }).catch(() => {}); markSaved(key); } } catch (e) { console.error(e); }
       L.popUp = true; j('/popup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ show: true, data: { full: true, mplus: R, saved: popSaved(), mpc: { name: L.name, run: mpcRun(r) } }, sound: $('snd').checked && !again }) }).catch(() => {});
     } catch (e) { console.error(e); }
     stat(L.live ? 'Watching your combat log' : '', L.live ? 'live' : '');
@@ -896,60 +902,7 @@ function markSaved(key) {
   const ks = Object.keys(SAVED); for (const k of ks.slice(0, Math.max(0, ks.length - 80))) delete SAVED[k];
   store.set('dbf-saved-ver', SAVED);
 }
-// (tonight's logs: the watched one, and any other WoW wrote in the last 12 hours, since WoW starts a new log at times, say after a relog.
-// An earlier log is scanned once per version; the newest 30 pulls of all of them are the ones WoW keeps)
-const LOGDONE = store.get('dbf-resaved-logs', {});
-async function resaveOld() {
-  if (resaveOld.on) return; resaveOld.on = true;
-  try {
-    if (!RECAP.appV) { try { const x = await j('/app-version'); RECAP.appV = x.version || ''; } catch (e) { return; } }
-    const v = RECAP.appV, cur = L.name; if (!v || !cur) return;
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms)), pullOn = () => L.items.length && !L.items[L.items.length - 1].endByte;
-    const logs = L.files.filter((f) => f.name !== cur && Date.now() - f.mtime < 12 * 3600e3 && LOGDONE[f.name] !== v).map((f) => f.name).reverse(); /* (archived ones too, say by the Raider.IO app) */
-    const all = [], ctx = new Map([[cur, L]]);
-    for (const name of logs) {
-      while (pullOn()) await sleep(5000);
-      if (cur !== L.name) return;
-      try {
-        const x = await j('/scan?name=' + encodeURIComponent(name) + '&from=0'), ix = W.E.createIndexer({ dungeons: true });
-        for (const it of x.items || []) ix.line(it.t, it.o, it.e);
-        const items = ix.peek().bosses.filter((b) => !b.skip && b.endByte && b.id !== DUMMY && !resetPull(b));
-        ctx.set(name, { name, reps: new Map(), items }); for (const b of items) all.push([name, b]);
-      } catch (e) { console.warn('re-save scan', name, e); }
-    }
-    for (const b of L.items.filter((b) => b.endByte && b.id !== DUMMY)) all.push([cur, b]);
-    const list = all.slice(-30).filter(([name, b]) => SAVED[name + ':' + b.startByte] !== v); /* (only the newest 30: WoW keeps 30) */
-    let n = 0, ok = 0; const mine = []; /* ([reads, start] of the pulls this read, so all but the last are let go) */
-    for (const [name, b] of list) {
-      // (a pull is on: wait for it to end; a pull's own recap always goes first)
-      while (cur === L.name && pullOn()) await sleep(5000);
-      if (cur !== L.name) return;
-      const key = name + ':' + b.startByte; n++;
-      if (SAVED[key] === v) { ok++; continue; } // (sent again by hand meanwhile)
-      const C = ctx.get(name), here = name === cur;
-      L.busy = L.busy.then(async () => {
-        if (cur !== L.name) return;
-        if (!L.reading) stat('Updating your saved pulls for WoW: ' + n + ' of ' + list.length + '…', 'busy');
-        const pool = here ? L.items : C.items, same = pool.filter((x) => x.endByte && x.id === b.id && x.diffId === b.diffId), k = same.indexOf(b);
-        const get = async (q) => { if (here) return analyze(q); const o = C.reps.get(q.startByte); if (o && o.rep) return o.rep; const r = await readRep(q, name, true); C.reps.set(q.startByte, r); return r.rep; };
-        const pre = new Set([...C.reps.keys()].filter((s0) => (C.reps.get(s0) || {}).rep));
-        if (k > 0) { try { await get(same[k - 1]); } catch (e) { /* skip */ } }
-        const rep = await get(b);
-        const mdl = await RECAP.build(b, rep, same.slice(0, k + 1), C); nightVals(b, mdl); const code = RECAP.encode(mdl);
-        await j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, code }) });
-        markSaved(key); ok++;
-        // (memory: of the reads this added, only this pull's stays, for the next pull on the same boss)
-        for (const [s0, o] of C.reps) if (!pre.has(s0) && o && o.rep) mine.push([C.reps, s0]);
-        for (let i = mine.length - 1; i >= 0; i--) { const [m, s0] = mine[i]; if (m === C.reps && s0 === b.startByte) continue; const o = m.get(s0); if (o) o.rep = null; mine.splice(i, 1); }
-      }).catch((e) => console.warn('re-save', e));
-      await L.busy;
-    }
-    for (const name of logs) { LOGDONE[name] = v; }
-    for (const k0 of Object.keys(LOGDONE).slice(0, Math.max(0, Object.keys(LOGDONE).length - 20))) delete LOGDONE[k0];
-    store.set('dbf-resaved-logs', LOGDONE);
-    if (cur === L.name && !L.reading && ok && list.length) stat('Your saved pulls are up to date', L.live ? 'live' : ''); /* (no /reload: they come in with Save this pull on the card, or at the next login (Oct 25)) */
-  } finally { resaveOld.on = false; }
-}
+// (no re-saving of tonight's earlier pulls for WoW since Nov 3: the recap lives only on this PC)
 
 // ---------- the recap: what goes to the game ----------
 const RECAP = window.DBF_RECAP = {};
@@ -966,9 +919,7 @@ async function send(b, byHand) {
       const model = await RECAP.build(b, rep, same.slice(0, k + 1));
       const code = RECAP.encode(model);
       RECAP.lastModel = model; renderPreview(model);
-      // (every pull's code goes into the addon's folder too, so /reload in WoW brings it in as a saved pull (Oct 22))
-      if (b.id !== DUMMY) { j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: L.name + ':' + b.startByte, code }) }).catch(() => {}); markSaved(L.name + ':' + b.startByte); }
-      else j('/addonpull', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'practice', code }) }).catch(() => {}); /* (your latest practice pull, one slot, so /recap shows it after /reload (Oct 24)) */
+      void code; /* (pulls no longer go into WoW's addon folder (Nov 3): the recap lives only on this PC) */
       const ok = false; /* (nothing goes on your clipboard any more (Oct 24)) */
       L.reading = null; L.lastSent = { sb: b.startByte, ok: true, shared: false, at: Date.now() }; saveNight(b, rep, model.coach && model.coach.raid); nightVals(b, model);
       // (Debriefing's own coach box, exactly as the tab draws it, for the pop-up)
