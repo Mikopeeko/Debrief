@@ -1382,7 +1382,7 @@ let HOLD_0 = 0;
    Since last pull (3 s at most; a download can take much longer, then it swaps in when it's read) and the finishing touches; 6.5 s at most) */
 const holdWait = (el) => (el < 4000 && (!!LIVE_T || livePending(true))) || (el < 3000 && !!(prevOf(S.item) || {})._pl);
 function holdStart() { try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now();
-  bufStart(holdWait, 6500, (why) => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } if (why === 'ready') try { dbrReveal(); } catch (e) { /* (no motion) */ } });
+  bufStart(holdWait, 6500, (why) => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } if (why === 'ready') try { dbrReveal(); if (window.dsMo) window.dsMo.reveal(); } catch (e) { /* (no motion) */ } });
   BUF.snaps.forEach((g) => loadSet(g, 'Putting the page together…')); /* (the card says what it's waiting on) */ }
 /* round 333 all pulls list */ window.allPulls333 = () => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), G = [], by = new Map(); L.forEach((b, i) => { const k = b.id + ':' + b.diffId; let g = by.get(k); if (!g) { g = { k, label: b.boss + (b.diff ? ' · ' + b.diff : ''), cur: false, pulls: [] }; by.set(k, g); G.push(g); } const pc = b.kill ? null : (typeof pullPct === 'function' ? pullPct(b) : null); g.pulls.push({ i, pull: b.pull, kill: !!b.kill, txt: 'Pull ' + b.pull + ' · ' + (b.kill ? 'Kill' : pc != null ? 'Wipe at ' + Math.round(pc) + '%' : 'Wipe'), col: b.kill ? '#e6b450' : (typeof pullCol === 'function' ? pullCol(b) : '') || '', on: b === S.item }); if (S.item && b.id === S.item.id && b.diffId === S.item.diffId) g.cur = true; }); return G; };
 /* round 334 pick any boss */ window.setPullPickAt334 = (idxs) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), bs = (idxs || []).map((i) => L[i]).filter(Boolean); if (!bs.length) return; const b0 = bs[0], same = bs.filter((b) => b.id === b0.id && b.diffId === b0.diffId); S.pullPick = { k: b0.id + ':' + b0.diffId, s: new Set(same.map((b) => b.pull)) }; S.plData = null; setScope('all'); if (S.item && S.item.id === b0.id && S.item.diffId === b0.diffId) renderMain(); else select(same[same.length - 1]); };
@@ -2038,6 +2038,7 @@ const PATCH_NOTES = [
     "Debriefing Timeline replay: the mistake card beside the map has a Watch it button that plays the moment, its own ◀ 1 of 5 ▶, and a ring on the map around each player it names.",
     "Why we wiped on Debriefing: the Serious, Moderate and Minor counts match the rows, a mechanic missed more than once is one row with each time and who (\"Soul Sever ×2\"), every row has an icon (a death shows what killed them), and a click on a row plays that moment on the Timeline replay.",
     "Debriefing Timeline: Filters open from the bar on top of the replay, next to the pull's totals, and float over it; the card under the play-by-play shows in full; a death in Why we wiped is only put under a mechanic when that mechanic killed them, and its phase is right with one player picked.",
+    "Motion is back, calmly: once a page has finished loading, the big numbers roll in, How it went draws itself row by row with its tags stamping in, Why we wiped's headline fades in word by word, bars fill, and the gold mark on a row of tabs slides to the tab you click. It plays once per pull or tab, never while a page is still loading, and not at all with your device's reduce motion on.",
     "Debriefing Timeline replay: raid frames. A small grid of the raid shows everyone's health as the pull plays, with the boss's debuffs on them and the game's dispel glow, in the debuff's own colour, when they need a dispel. Big defensives and externals show on the frames too, with absorb shields as white stripes and a red flash when someone takes a big hit. Click a frame to follow that player, drag the grid anywhere on the map, or hide it with the Raid frames button beside the speeds (hidden at first on a phone).",
     'Mythic+: on trash, a cooldown that only comes back in the last 15 seconds of a pack isn\'t counted as missed, because top players save it for the next pack. Bosses are judged as before.',
     'Holy Paladin, Lightsmith: Holy Shock on cooldown is judged the way top players use it in keys, mostly on enemies for damage and Holy Power, so 50% or more is good.',
@@ -35081,6 +35082,105 @@ const r442Raw = () => { document.querySelectorAll('#view .oa-tiles > .dbr-n').fo
 // ===== Design studio round 443 (Nov 1): page-load motion off, for now (Flex: "maybe just remove the animations for now", "and start
 // over"). Owner: the Design studio chat. =====
 /* round 443 still */ dsMotion = function () { /* (no count-ups or growing bars) */ };
+// ===== Motion (Nov 3, the Design studio's motion-brief.md; Flex: "i kinda like them all except the mouse one", "hopefully it doesnt bug this
+// time!"): six motions, played once a page is drawn and idle. Replaces round 443's no-op. Why it no longer flashes: every piece is put in its
+// starting state in the same tick it is drawn (before the browser paints it), so nothing is ever seen, hidden and shown again; it plays only
+// after the data, the fonts and the Debriefing hold, on an idle moment (requestIdleCallback, 400 ms at most, then a frame); once per page view
+// (a pull or a tab change plays again, a filter change or a redraw never does); about 1.2 s; transform and opacity only (and one blur). The
+// tab rows' gold mark glides on every click. The device's "reduce motion" turns all of it off. Owner: the Timeline replay chat, for the studio. =====
+const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapKit().S) || {}; /* (the app's state: this part of the page code can't see S directly) */
+  const off = () => !Element.prototype.animate || document.hidden || !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const EASE = 'cubic-bezier(.2,.7,.2,1)', POP = 'cubic-bezier(.2,1.6,.4,1)', ROLL = 'cubic-bezier(.16,.84,.3,1)';
+  const css = () => { if (document.getElementById('dsmCss')) return; const st = document.createElement('style'); st.id = 'dsmCss'; st.textContent = "dsm-n{display:inline;white-space:nowrap}dsm-d{display:inline-block;position:relative;margin:0;padding:0;border:0;background:none;-webkit-text-fill-color:transparent !important;clip-path:inset(0 -3px)}dsm-d::before{content:'0\\A 1\\A 2\\A 3\\A 4\\A 5\\A 6\\A 7\\A 8\\A 9';white-space:pre;position:absolute;left:-3px;right:-3px;top:0;margin:0;padding:0;border:0;background:none;text-align:center;-webkit-text-fill-color:currentColor;pointer-events:none}dsm-w{display:inline-block}.dsm-gl{position:fixed;pointer-events:none;z-index:1000;transform-origin:0 0;will-change:transform}"; document.head.appendChild(st); };
+  /* (a paused animation shows its first frame at once (fill backwards), so a piece armed before the paint is first seen in its starting state) */
+  const mk = (A, el, kf, o) => { try { const a = el.animate(kf, Object.assign({ fill: 'backwards', easing: EASE }, o)); a.pause(); A.push(a); return a; } catch (e) { return null; } };
+  /* (cheap and layout-free: arming reads everything first, then changes the page once, then makes the animations, so the page is measured
+     once, not once per piece; no visibility checks that force a layout) */
+  const seen = (el) => !!(el && el.getClientRects().length); /* (the tab glide only, on a click) */
+  const vis = (el) => !!el && !el.hidden && !el.closest('[hidden]');
+  const qa = (root, sel) => [].slice.call(root.querySelectorAll(sel)).filter(vis);
+  const FADE = [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], LINE = [{ transform: 'scaleY(0)', transformOrigin: '50% 0' }, { transform: 'scaleY(1)', transformOrigin: '50% 0' }];
+  const STAMP = [{ opacity: 0, transform: 'scale(1.5)' }, { opacity: 1, transform: 'scale(1)' }], WORD = [{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0px)' }];
+  const FILL = [{ transform: 'scaleX(0)', transformOrigin: '0 50%' }, { transform: 'scaleX(1)', transformOrigin: '0 50%' }], POPK = [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }];
+  const digitOf = (el) => { const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let n = tw.nextNode(); n; n = tw.nextNode()) if (/\d/.test(n.nodeValue)) return n.nodeValue.trim().length > 12 ? null : n; return null; };
+  /* the pieces in a container, armed now (before the paint) and played together once the page is idle */
+  const play = (root, what) => { if (!root || off()) return false; css(); const A = [], U = [], J = []; let end = 0; what = what || {};
+    try {
+      /* 1. read */
+      const w = what.why ? root.querySelector('.dbt-why') : null, rows = w ? qa(w, '.dbt-chn > .dbt-chr') : [], h2 = w ? w.querySelector('h2') : null;
+      const nums = what.nums ? qa(root, what.nums).map((el) => { const tn = digitOf(el); return tn ? { tn: tn } : null; /* (no colour read: the digit's own colour carries through) */ }).filter(Boolean) : [];
+      const bars = what.bars ? qa(root, 'details.phase > summary .prw-i').map((r) => ({ b: r.querySelector('.prw-t > i'), full: /\b100%/.test(r.textContent) ? [].slice.call(r.querySelectorAll('*')).filter((x) => !x.children.length && /^100%$/.test(x.textContent.trim()))[0] : null })).filter((x) => x.b) : [];
+      const track = what.track ? qa(root, what.track) : [];
+      /* 2. write: words and digits get their own small tags (the text stays the same) */
+      const W2 = []; if (h2) { const tw = document.createTreeWalker(h2, NodeFilter.SHOW_TEXT), L = []; for (let n = tw.nextNode(); n; n = tw.nextNode()) if (n.nodeValue.trim()) L.push(n);
+        L.forEach((n) => { const fr = document.createDocumentFragment(); n.nodeValue.split(/(\s+)/).forEach((p) => { if (!p) return; if (!p.trim()) { fr.appendChild(document.createTextNode(p)); return; } const s = document.createElement('dsm-w'); s.textContent = p; fr.appendChild(s); W2.push(s); }); n.parentNode.replaceChild(fr, n); }); }
+      const D2 = nums.map((x) => { const wr = document.createElement('dsm-n'), D = []; for (const ch of x.tn.nodeValue) { if (/\d/.test(ch)) { const s = document.createElement('dsm-d'); s.textContent = ch; wr.appendChild(s); D.push(s); } else wr.appendChild(document.createTextNode(ch)); }
+        const p = x.tn.parentNode; p.replaceChild(wr, x.tn); U.push([p, wr]); return D; });
+      /* 3. the animations */
+      /* (1. How it went draws itself: each row slides in as the line reaches it, the line grows down to the next dot; "Wipe called" lands last;
+         4. each tag stamps in as its row arrives) */
+      if (rows.length) { const n = rows.length, t0 = 150, gap = Math.min(270, Math.round(850 / Math.max(1, n - 1)));
+        rows.forEach((r, k) => { const at = t0 + k * gap; mk(A, r, FADE, { duration: 250, delay: at, easing: 'ease-out' }); if (k < n - 1) mk(A, r, LINE, { pseudoElement: '::before', duration: gap, delay: at, easing: 'linear' });
+          const tg = r.querySelector('.dbt-lv'); if (tg && tg.textContent.trim()) mk(A, tg, STAMP, { duration: 280, delay: at + 120, easing: POP }); });
+        const e1 = t0 + (n - 1) * gap + 250; end = Math.max(end, e1);
+        w.querySelectorAll('.dbt-add > .dbt-addr .dbt-lv').forEach((t, j) => { if (t.textContent.trim()) mk(A, t, STAMP, { duration: 280, delay: Math.max(400, e1 - 100) + j * 60, easing: POP }); }); }
+      if (w) { w.querySelectorAll('.dbt-c5w .dbt-c5').forEach((b, k) => mk(A, b, STAMP, { duration: 280, delay: 350 + k * 80, easing: POP })); end = Math.max(end, 1100); }
+      /* (5. the headline word by word, blur to sharp) */ W2.slice(0, 40).forEach((s, k) => mk(A, s, WORD, { duration: 250, delay: 300 + k * 28, easing: 'ease-out' }));
+      /* (3. numbers roll like a scoreboard: only the digits move, each column a little later; a ::before can only be animated once it is on the page) */
+      D2.forEach((D, j) => D.forEach((s, i) => mk(A, s, [{ transform: 'translateY(0)' }, { transform: 'translateY(-' + (+s.textContent * 10) + '%)' }], { pseudoElement: '::before', duration: 1000, delay: 120 + j * 60 + i * 70, easing: ROLL, fill: 'both' }))); if (D2.length) end = Math.max(end, 1500);
+      /* (6. bars fill from the left, a little staggered; a full row's 100% pops in after its bar) */
+      bars.forEach((x, k) => { mk(A, x.b, FILL, { duration: 600, delay: 300 + k * 60 }); if (x.full) mk(A, x.full, POPK, { duration: 300, delay: 850 + k * 60, easing: POP }); }); if (bars.length) end = Math.max(end, 1300);
+      track.forEach((b, k) => mk(A, b, FILL, { duration: 600, delay: 300 + k * 40 })); if (track.length) end = Math.max(end, 1300);
+    } catch (e) { console.warn(e); }
+    if (!A.length) return false;
+    let state = 0; const done = () => { if (state === 2) return; state = 2; A.forEach((a) => { try { a.cancel(); } catch (e) { /* (gone) */ } });
+      U.forEach(([p, wr]) => { if (wr.parentNode) wr.parentNode.replaceChild(document.createTextNode(wr.textContent), wr); try { p.normalize(); } catch (e) { /* (gone) */ } }); }; /* (the rolled numbers go back to plain text) */
+    /* (never left half way: if the idle moment hasn't come in 3 s, everything is shown as it is) */
+    setTimeout(() => { if (state === 0) done(); }, 3000);
+    const go = () => { if (state !== 0) return; state = 1; A.forEach((a) => { try { a.play(); } catch (e) { /* (gone) */ } }); setTimeout(done, end + 250); };
+    const idle = () => (window.requestIdleCallback ? requestIdleCallback(() => requestAnimationFrame(go), { timeout: 400 }) : setTimeout(() => requestAnimationFrame(go), 60));
+    if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(idle, idle); else idle();
+    return true; };
+  /* the page view: a pull or a tab, not a filter */
+  const key = () => { const S = S0(); return (S.tab || '') + '|' + (S.page || '') + '|' + ((S.item && (S.item.boss + '@' + S.item.startMs)) || '') + '|' + (/[?&]all=1/.test(location.search) ? 'all' : ''); };
+  const M = { play, key, k: '', ov: '' };
+  /* Debriefing plays when its hold lifts by itself (the moment it is first seen): Why we wiped, the top numbers, and the bars if Overview is open */
+  M.reveal = () => { if (off()) return; const v = document.getElementById('view'); if (!v) return; M.k = key(); const full = v.classList.contains('dbt-full'); if (full) M.ov = M.k;
+    play(v, { why: true, nums: '.r212-sb .oa-tiles .dbr-n .dbr-v, .r212-sb .cch-ab .cgl-p', bars: full }); };
+  /* Overview's bars play the first time Overview is opened on a pull */
+  (function watchOv() { const v = document.getElementById('view'); if (!v || !window.MutationObserver) { setTimeout(watchOv, 500); return; } let was = v.classList.contains('dbt-full');
+    new MutationObserver(() => { const now = v.classList.contains('dbt-full'); if (now && !was && S0().tab === 'audit' && !document.documentElement.classList.contains('dbr-holding')) { const k = key(); if (M.ov !== k) { M.ov = k; play(v, { bars: true }); } } was = now; }).observe(v, { attributes: true, attributeFilter: ['class'] }); })();
+  /* every other page: on its first draw that has its numbers (the studio's passes call this in the same tick as a draw, before the paint) */
+  M.draw = () => { if (off() || document.documentElement.classList.contains('dbr-holding') || S0().tab === 'audit') return; const k = key(); if (M.k === k) return;
+    const hd = document.querySelector('#main .hd .hd-strip .num, #view .hd .hd-strip .num'), rc = document.querySelector('#view .rcb-bt .v');
+    if (!hd && !rc) return; M.k = k;
+    if (hd) { const h = hd.closest('.hd'); play(h, { nums: '.hd-strip .num', track: '.hd-track .hd-bar u' }); }
+    if (rc) play(document.getElementById('view'), { nums: '.rcb-bt .v, .rcb-st > b' }); };
+  /* 2. the gold mark glides to the clicked tab (every click, every slim tab row whose picked tab has a gold line or tint) */
+  const gold = (c) => { const m = String(c || '').match(/rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/); if (!m) return false; const r = +m[1], g = +m[2], b = +m[3], a = m[4] == null ? 1 : +m[4]; return a > 0.04 && r > 170 && g > 120 && g < 230 && b < 140 && r - b > 70; };
+  const markOf = (el) => { const cs = getComputedStyle(el); if (parseFloat(cs.borderBottomWidth) >= 2 && gold(cs.borderBottomColor)) return { line: true, c: cs.borderBottomColor, h: parseFloat(cs.borderBottomWidth) };
+    if (/inset/.test(cs.boxShadow) && gold(cs.boxShadow) && !gold(cs.backgroundColor)) return { line: true, c: (cs.boxShadow.match(/rgba?\([^)]*\)/) || [])[0], h: 2 };
+    if (gold(cs.backgroundColor)) return { line: false, bg: cs.backgroundColor, sh: cs.boxShadow, rad: cs.borderRadius }; return null; };
+  const HIDE = ['border-bottom-color', 'box-shadow', 'background-color'];
+  const hide = (el, on) => HIDE.forEach((p) => { if (on) el.style.setProperty(p, p === 'box-shadow' ? 'none' : 'transparent', 'important'); else el.style.removeProperty(p); });
+  const tabOf = (e) => e && e.closest && e.closest('button, a, [role="tab"]');
+  document.addEventListener('click', (e) => { if (off()) return; const b = tabOf(e.target); if (!b || b.classList.contains('on') || b.disabled) return; const row = b.parentElement; if (!row) return;
+    const old = [].slice.call(row.children).filter((x) => x !== b && x.classList && x.classList.contains('on'))[0]; if (!old || !seen(old) || row.children.length > 14) return; const mk0 = markOf(old); if (!mk0) return;
+    css(); const r0 = old.getBoundingClientRect(), c0 = b.getBoundingClientRect(); if (r0.height > 48 || c0.height > 48) return; /* (slim tab rows only) */ const o = document.createElement('i'); o.className = 'dsm-gl';
+    o.style.cssText += ';left:' + r0.left + 'px;width:' + r0.width + 'px;' + (mk0.line ? 'top:' + (r0.bottom - mk0.h) + 'px;height:' + mk0.h + 'px;background:' + mk0.c : 'top:' + r0.top + 'px;height:' + r0.height + 'px;background:' + mk0.bg + ';box-shadow:' + mk0.sh + ';border-radius:' + mk0.rad);
+    document.body.appendChild(o); hide(b, true); let nb = b;
+    const quit = () => { o.remove(); hide(nb, false); if (nb !== b) hide(b, false); };
+    /* (it waits, up to 1.5 s, for the clicked tab to be picked: a page that loads first picks it only once it is drawn) */
+    let n = 0; const tick = () => { try {
+      if (!nb.isConnected) { const x = tabOf(document.elementFromPoint(c0.left + c0.width / 2, c0.top + c0.height / 2)); if (x && x !== nb) { hide(nb, false); nb = x; hide(nb, true); } }
+      if (!nb.isConnected || !nb.classList.contains('on')) { if (++n < 90) requestAnimationFrame(tick); else quit(); return; }
+      const ox = old.isConnected ? old : tabOf(document.elementFromPoint(r0.left + r0.width / 2, r0.top + r0.height / 2)); if (ox && ox !== nb && ox.classList.contains('on')) { quit(); return; } /* (a toggle that keeps the old one on is not a tab row) */ const r1 = nb.getBoundingClientRect(); if (!r1.width || (Math.abs(r1.left - r0.left) < 2 && Math.abs(r1.width - r0.width) < 2)) { quit(); return; }
+      const dy = mk0.line ? (r1.bottom - mk0.h) - (r0.bottom - mk0.h) : r1.top - r0.top, a = o.animate([{ transform: 'none' }, { transform: 'translate(' + (r1.left - r0.left) + 'px,' + dy + 'px) scaleX(' + (r1.width / r0.width) + ')' }], { duration: 280, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' });
+      a.onfinish = quit; setTimeout(quit, 600); } catch (er) { quit(); } };
+    requestAnimationFrame(tick); }, true);
+  return M; })();
+/* (round 443's no-op becomes the module's draw: the studio's passes call dsMotion after every draw) */ dsMotion = function () { try { dsMo.draw(); } catch (e) { /* (no motion) */ } };
+window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by itself: the moment the pull is first seen) */
 
 // ===== Design studio round 456 (Nov 1): the tab bar gets its tint only while pinned at the top (Flex: "it looks weird on every
 // theme honestly"). Owner: the Design studio chat. =====
