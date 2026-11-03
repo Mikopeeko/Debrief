@@ -89,7 +89,8 @@ button { font: inherit; color: inherit; }
 .path { color: var(--muted); font-size: 12px; word-break: break-all; }
 /* the preview */
 .pv { width: 330px; flex: none; border-left: 1px solid var(--line); padding: 14px 0 0; display: flex; flex-direction: column; background: #0f1114; min-height: 0; }
-.pv .lab { margin: 0 14px 8px; }
+.pv .lab { margin: 0 14px 8px; display: flex; align-items: baseline; }
+.pv .pvhide { display: none; margin-left: auto; text-transform: none; letter-spacing: 0; }
 .pv .lab em { font-style: normal; color: var(--faint); text-transform: none; letter-spacing: 0; font-weight: 500; margin-left: 4px; }
 .pv iframe { flex: 1; min-height: 0; width: 100%; border: 0; display: block; background: #0f1114; }
 .pv .cap { color: var(--faint); font-size: 12px; margin: 8px 14px 10px; flex: none; }
@@ -98,14 +99,14 @@ button { font: inherit; color: inherit; }
 @media (max-width: 999px) {
   .pv { display: none; position: absolute; right: 0; top: 42px; bottom: 0; z-index: 6; box-shadow: -14px 0 30px rgba(0,0,0,.5); }
   body.pvopen .pv { display: flex; }
-  .pvl { display: inline; }
+  .pvl { display: inline; } .pv .pvhide { display: inline; }
 }
 </style></head><body>
 <div class="tb"><span class="logo" id="logo"></span><span class="t">Debrief settings</span><span class="s">Saves as you go</span><button class="x" type="button" id="close" title="Close">✕</button></div>
 <div class="main">
   <nav class="rail" id="rail"></nav>
   <div class="mid" id="mid"></div>
-  <aside class="pv" id="pv"><div class="lab">Preview<em id="pvWhat">a sample pull</em></div><iframe id="pvF" title="Preview" src="/popup?preview=1"></iframe><div class="cap" id="pvCap">Hidden rows drop out of the preview straight away.</div></aside>
+  <aside class="pv" id="pv"><div class="lab">Preview<em id="pvWhat">a sample pull</em><button type="button" class="lk pvhide" data-pv="1">Hide preview</button></div><iframe id="pvF" title="Preview" src="/popup?preview=1"></iframe><div class="cap" id="pvCap">Hidden rows drop out of the preview straight away.</div></aside>
 </div>
 <script>
 'use strict';
@@ -155,7 +156,8 @@ const eyeRow = (r) => { const on = isOn(r); return '<div class="row click' + (on
   (r[4] ? '<div class="ct"><span class="st"><button type="button" data-st="' + r[4] + '" data-d="-1" aria-label="Fewer"' + (S.max[r[4]] <= r[5] ? ' disabled' : '') + '>‹</button><b>' + S.max[r[4]] + '</b><button type="button" data-st="' + r[4] + '" data-d="1" aria-label="More"' + (S.max[r[4]] >= r[6] ? ' disabled' : '') + '>›</button></span></div>' : '') + (on ? EYE : EYEX) + '</div>'; };
 const ACC = [['class', 'My class', ''], ['gold', 'Debrief gold', '#e6b450'], ['frost', 'Frost', '#3fc7eb'], ['fel', 'Fel', '#45c15c'], ['crimson', 'Crimson', '#e5534b'], ['violet', 'Void', '#a78bfa']];
 const CLS = { WARRIOR: '#c69b6d', PALADIN: '#f48cba', HUNTER: '#aad372', ROGUE: '#fff468', PRIEST: '#ffffff', DEATHKNIGHT: '#c41e3a', SHAMAN: '#0070dd', MAGE: '#3fc7eb', WARLOCK: '#8788ee', MONK: '#00ff98', DRUID: '#ff7c0a', DEMONHUNTER: '#a330c9', EVOKER: '#33937f' };
-const clsMap = () => { try { return JSON.parse(localStorage.getItem('dbf-cls') || '{}'); } catch (e) { return {}; } };
+const PVCLS = {}; /* (the preview pull's players) */
+const clsMap = () => { let m = {}; try { m = JSON.parse(localStorage.getItem('dbf-cls') || '{}'); } catch (e) { m = {}; } return Object.assign({}, PVCLS, m); };
 const short = (n) => String(n || '').split('-')[0];
 let SETUP = null, HK = null, PAGE = 'card', OPENDD = '', HKWAIT = false, HKMSG = '';
 try { const p = sessionStorage.getItem('dbf-set-page'); if (p) PAGE = p; } catch (e) { /* first page */ }
@@ -233,6 +235,7 @@ let CHECKING = false;
 function draw() { const sc = $('mid').scrollTop; $('rail').innerHTML = railHtml(); $('mid').innerHTML = pageHtml(); $('mid').scrollTop = sc; }
 
 // ---------- what each control does ----------
+document.addEventListener('click', (e) => { if (!document.body.classList.contains('pvopen') || (e.target.closest && (e.target.closest('#pv') || e.target.closest('[data-pv]')))) return; document.body.classList.remove('pvopen'); e.preventDefault(); e.stopPropagation(); }, true);
 document.addEventListener('click', async (e) => {
   const t = e.target.closest('button, a, .row.click'); if (!t) { if (OPENDD) { OPENDD = ''; draw(); } return; }
   const d = t.dataset;
@@ -263,7 +266,7 @@ document.addEventListener('change', (e) => { if (e.target.dataset && e.target.da
 // (the recap key: pressed here, checked by the app as in the Companion window)
 const hkNm = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : '', e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)].filter(Boolean).join(' + ');
 document.addEventListener('keydown', async (e) => {
-  if (!HKWAIT) { if (e.key === 'Escape' && OPENDD) { OPENDD = ''; draw(); } return; }
+  if (!HKWAIT) { if (e.key === 'Escape' && document.body.classList.contains('pvopen')) { document.body.classList.remove('pvopen'); return; } if (e.key === 'Escape' && OPENDD) { OPENDD = ''; draw(); } return; }
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return; e.preventDefault();
   if (e.key === 'Escape') { HKWAIT = false; postJ('/hotkey', { mods: -2 }).catch(() => {}); draw(); return; }
   const ok = (e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 65 && e.keyCode <= 90) || (e.keyCode >= 112 && e.keyCode <= 123), mods = (e.altKey ? 1 : 0) | (e.ctrlKey ? 2 : 0) | (e.shiftKey ? 4 : 0);
@@ -283,6 +286,7 @@ $('pvF').addEventListener('load', async () => {
   let M = null; try { M = await j('/setup/pull'); } catch (e) { M = null; }
   const w = pvW(); if (!M || !M.data || !w) { $('pvCap').textContent = 'No pull to show yet.'; return; }
   $('pvWhat').textContent = M.sample ? 'a sample pull' : 'your latest pull';
+  for (const c of M.data.cls || []) if (c && c[0] && c[1]) PVCLS[short(c[0])] = c[1]; if (PAGE === 'setup' || PAGE === 'look') draw();
   $('pvCap').textContent = M.sample ? 'A made-up pull. Once you raid, your latest pull shows here. Hidden rows drop out straight away.' : 'Your latest pull. Hidden rows drop out straight away.';
   for (let i = 0; i < 25 && !w.DBF_SHOW; i++) await new Promise((r) => setTimeout(r, 120));
   try { w.DBF_SHOW(Object.assign({}, M.data, { full: true }, M.data.lk ? {} : { lk: M.lk || {} })); pvView(); } catch (e) { console.error(e); }
