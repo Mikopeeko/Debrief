@@ -1155,7 +1155,7 @@ const MP_RID = new WeakMap(); let MP_RN = 0; const mpRid = (o) => { if (!MP_RID.
 // (a check's numbers, from its own words: "2/3", "91%", "4 wasted" of "You got 9 procs", "157 of the 820 Runic Power", "of your 56 casts" and each slip)
 function mpRotNum(c) { const v = mpPlain(c.v), sub = mpPlain(c.sub), o = {}; let m;
   if ((m = v.match(/^(\d+)\s*\/\s*(\d+)/))) { o.a = +m[1]; o.b = +m[2]; } else if ((m = v.match(/^(\d+(?:\.\d+)?)%/))) o.pct = +m[1] / 100;
-  if (c.k.startsWith('p:')) { o.w = +((v.match(/(\d+) wasted/) || [])[1] || 0); o.g = +((sub.match(/(?:got|had) (\d+) (?:procs?|uses?)/) || [])[1] || 0); delete o.pct; }
+  if (c.k.startsWith('p:')) { const vw = v.match(/(\d+)(?: of (\d+))? wasted/); o.w = vw ? +vw[1] : 0; o.g = vw && vw[2] ? +vw[2] : +((sub.match(/(?:got|had) (\d+) (?:procs?|uses?)/) || [])[1] || 0); delete o.pct; }
   if (c.k === 'res' && (m = sub.match(/([\d,]+) of the ([\d,]+) (.+?) you gained/))) { o.lost = +m[1].replace(/,/g, ''); o.gain = +m[2].replace(/,/g, ''); o.rn = m[3]; delete o.pct; }
   if (c.k === 'apl') { o.casts = +((sub.match(/of your (\d+) casts/) || [])[1] || 0); o.sl = (c.slips || []).map((x) => ({ k: x.k, did: x.did, want: x.want, why: mpPlain(x.why), n: x.n })); delete o.pct; }
   if (c.k === 'cc') { o.n = +v || 0; delete o.pct; }
@@ -1535,7 +1535,7 @@ function mpRwSum(R, n) { R._rwS = R._rwS || {}; if (R._rwS[n]) return R._rwS[n];
   // (the whole key's total for a check: "3 of 6" added up, a % by each pull's length, "N wasted" and plain counts added up)
   const tot = (lb) => { let a = 0, b = 0, w = 0, ws = 0, kind = ''; for (const x of seen) { const c = ((all[x.o.n] || {})[n] || []).find((y) => mpPlain(y.label).trim() === lb && mpRwKeep(y, x.o)); if (!c) continue; const v = mpPlain(c.v).trim(); let m;
       if ((m = v.match(/^(\d+)\s*\/\s*(\d+)$/))) { kind = kind || 'of'; a += +m[1]; b += +m[2]; } else if ((m = v.match(/^(\d+)%/))) { kind = kind || 'pct'; ws += (x.o.dur || 1) * +m[1]; w += x.o.dur || 1; }
-      else if ((m = v.match(/^(\d+) wasted$/))) { kind = kind || 'wasted'; a += +m[1]; } else if ((m = v.match(/^(\d+)$/))) { kind = kind || 'n'; a += +m[1]; } }
+      else if ((m = v.match(/^(\d+)(?: of \d+)? wasted$/))) { kind = kind || 'wasted'; a += +m[1]; } else if ((m = v.match(/^(\d+)$/))) { kind = kind || 'n'; a += +m[1]; } }
     return kind === 'of' ? a + ' of ' + b : kind === 'pct' ? Math.round(ws / Math.max(1, w)) + '%' : kind === 'wasted' ? a + ' wasted' : kind === 'n' ? plural(a, 'time') : ''; };
   for (const a of fix) { a.tot = tot(a.f[2]); const o = R.pulls[a.i0], c = ((all[o.n] || {})[n] || []).find((y) => mpPlain(y.label).trim() === a.f[2]); let b = null; try { b = c ? window.DBF_CARDBITS.rotBits(c, 0) : null; } catch (e) { b = null; } a.why = mpRwTxt(b ? b.why : '');
     // (the fix as one action, without its pull's own times: "From 0:31 it sat full", "Your first wasted one was at 0:34")
