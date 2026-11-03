@@ -1548,23 +1548,26 @@ function mpRwSum(R, n) { R._rwS = R._rwS || {}; if (R._rwS[n]) return R._rwS[n];
   for (const a of fix) { a.tot = tot(a.f[2]); const o = R.pulls[a.i0], c = ((all[o.n] || {})[n] || []).find((y) => mpPlain(y.label).trim() === a.f[2]); let b = null; try { b = c ? window.DBF_CARDBITS.rotBits(c, 0) : null; } catch (e) { b = null; } a.why = mpRwTxt(b ? b.why : '');
     // (the fix as one action, without its pull's own times: "From 0:31 it sat full", "Your first wasted one was at 0:34")
     a.act = mpRwTxt(String(a.f[5] || '').replace(/,? and from (?:the start of the pull|\d+:\d\d),? it [^.]*/g, '')).split(/(?<=[.!?])\s+/).filter((s) => !/\b\d+:\d\d\b|the start of the pull/.test(s)).join(' '); }
-  // (the whole run's verdict from the pulls' own (the studio, Nov 2, Flex: "Yes, do both"): no red pull and no more than a quarter amber is played right,
-  // half or more red is needs work, anything else mostly right. The fixes keep their own pills)
+  // (the whole key's % (the studio, Nov 3, Flex: "Yes, build it"): each judged pull's score, longer pulls counting more; the word follows it, the pull bands
+  // (92 and up played right, 72 to 91 mostly right, under 72 needs work), so the two never disagree. No pull with a score: no %, the word from the pulls' own)
   const pv = seen.map((x) => mpRwPv(R, x.i, n)), nb = pv.filter((v) => v === 'bad').length, nw = pv.filter((v) => v === 'warn').length, ng = pv.length - nb - nw, J = pv.length;
-  const st = !nb && nw <= J / 4 ? 'ok' : nb >= J / 2 ? 'bad' : 'warn';
-  return (R._rwS[n] = { seen, fix, good, st, ng, nw, nb }); }
-const mpRwSplit = (s) => [s.ng ? s.ng + ' played right' : '', s.nw ? s.nw + ' mostly right' : '', s.nb ? s.nb + ' needs work' : ''].filter(Boolean).join(', ');
+  let sw = 0, sv = 0; for (const x of seen) { const sc = mpRwScore(R, x.i, n); if (sc == null) continue; const d = Math.max(1, x.o.dur || 0); sw += d; sv += d * sc; }
+  const pct = sw ? Math.round(sv / sw) : null, st = pct != null ? (pct >= 92 ? 'ok' : pct >= 72 ? 'warn' : 'bad') : !nb && nw <= J / 4 ? 'ok' : nb >= J / 2 ? 'bad' : 'warn';
+  return (R._rwS[n] = { seen, fix, good, st, pct, ng, nw, nb }); }
+const mpRwSplit = (s) => [s.ng ? s.ng + ' played right' : '', s.nw ? s.nw + ' mostly right' : '', s.nb ? s.nb + (s.nb === 1 ? ' needs work' : ' need work') : ''].filter(Boolean).join(', ');
+const MP_RW_PCT = 'Rotation score for the whole key: each pull’s score from the Rotation tab’s checks, longer pulls counting more.';
+const mpRwPc = (s, big) => (s.pct == null ? '' : big ? '<b class="mpt-rwc-' + MP_RWV[s.st][1] + '"' + mpT1(MP_RW_PCT) + '>' + s.pct + '%</b>' : ' <span class="mpt-m"' + mpT1(MP_RW_PCT) + '>(' + s.pct + '%)</span>');
 function mpRwHtml(R) { const rw = R._rw, pick = MP.pp || '', ppl = (R.people || []).slice().sort(mpByRole), N = R.pulls.length;
   if (!rw || !rw.done) return '<div id="mptRot" class="mpt-rw"><p class="mpt-mcf">' + (R._rwOff && !rw ? 'Reload the page to check the rotation for this key.' : 'Checking everyone’s rotation…') + '</p></div>';
   const foot = '<p class="mpt-rwf">The Rotation tab’s own checks, the same as the Debrief app. Click a pull to open it in the card.</p>';
-  if (!pick || !ppl.some((p) => p.name === pick)) return '<div id="mptRot" class="mpt-rw"><div class="mpt-rke">' + ppl.map((p) => { const s = mpRwSum(R, p.name); return '<button type="button" class="mpt-rkr" data-mprk="' + esc(p.name) + '">' + mpWho(R, p.name) + (s.seen.length ? mpRwVw(s.st) : '<b class="mpt-m">not judged</b>') + '</button>'; }).join('') + '</div><p class="mpt-ypf">Pick a player to see their biggest fixes.</p></div>';
+  if (!pick || !ppl.some((p) => p.name === pick)) return '<div id="mptRot" class="mpt-rw"><div class="mpt-rke">' + ppl.map((p) => { const s = mpRwSum(R, p.name); return '<button type="button" class="mpt-rkr" data-mprk="' + esc(p.name) + '">' + mpWho(R, p.name) + (s.seen.length ? mpRwVw(s.st) + mpRwPc(s) : '<b class="mpt-m">not judged</b>') + '</button>'; }).join('') + '</div><p class="mpt-ypf">Pick a player to see their biggest fixes.</p></div>';
   const s = mpRwSum(R, pick); if (!s.seen.length) return '<div id="mptRot" class="mpt-rw"><p class="mpt-rwv">' + mpWho(R, pick) + '’s rotation: <span class="mpt-m">no pull long enough to judge.</span></p></div>';
   const miss = R.pulls.map((o, i) => i).filter((i) => !(R.pulls[i].rot && R.pulls[i].rot[pick])), short = miss.every((i) => !Object.keys(R.pulls[i].rot || {}).length);
   const ml = miss.length ? ' (' + (miss.length === 1 ? 'pull ' : 'pulls ') + mpAnd(miss.map((i) => mpRwPull(R, i).replace(/^★ /, ''))) + (short ? (miss.length === 1 ? ' was' : ' were') + ' too short)' : (miss.length === 1 ? ' wasn’t' : ' weren’t') + ' judged)') : '';
   const rows = s.fix.map((a, j) => { const bad = a.st === 'bad';
     return '<div class="mpt-rwi"><span class="mpt-rwn">' + (j + 1) + '</span>' + mpRwIc(a.f[1], a.f[2]) + '<span class="mpt-rwt">' + (a.act ? esc(a.act) + ' ' : '<b>' + esc(a.f[2]) + '</b>. ') + 'This came up on ' + a.pulls.length + ' of ' + s.seen.length + ' pulls' + (a.tot ? ' (' + esc(mpRwVal(a.tot)) + ' across the key)' : '') + '.' +
       (a.why ? '<span class="mpt-rwy">' + esc(a.why) + '</span>' : '') + '<span class="mpt-rwp">On ' + a.pulls.map((i) => '<button type="button" class="mpt-rwch' + (R.pulls[i].boss ? ' b' : '') + '" data-rwgo="' + i + '">' + mpRwPull(R, i) + '</button>').join('') + '</span></span><span class="mpt-rkq ' + (bad ? 'm' : 's') + '">' + (bad ? 'mistake' : 'slip') + '</span></div>'; }).join('');
-  return '<div id="mptRot" class="mpt-rw"><p class="mpt-rwv">' + mpWho(R, pick) + '’s rotation: ' + mpRwVw(s.st) + '</p><p class="mpt-rws2">Checked on ' + s.seen.length + ' of ' + N + ' pulls: ' + mpRwSplit(s) + ml + '.' + (s.fix.length ? ' What came up most:' : '') + '</p>' + rows +
+  return '<div id="mptRot" class="mpt-rw"><p class="mpt-rwv">' + mpWho(R, pick) + '’s rotation: ' + mpRwVw(s.st) + mpRwPc(s) + '</p><p class="mpt-rws2">Checked on ' + s.seen.length + ' of ' + N + ' pulls: ' + mpRwSplit(s) + ml + '.' + (s.fix.length ? ' What came up most:' : '') + '</p>' + rows +
     (s.good.length ? '<p class="mpt-rwg">Done well: ' + s.good.map((g) => '✓ ' + esc(mpRwGood(g))).join(' · ') + '</p>' : '') + foot + '</div>'; }
 function mpRwPaint(R) { const it = MP.item; if (!it || MP.R[mpK(it)] !== R || !MP_ROT_ON || MP_RK_OLD) return; const pick = MP.pp || '';
   document.querySelectorAll('.mpt-mdtv[data-v="you"] details[data-rwp]').forEach((d) => { const h = mpRwCard(R, +d.dataset.rwp, pick), sm = d.querySelector(':scope > summary'), bd = d.querySelector(':scope > .mpt-cfb'); if (sm) sm.innerHTML = h.sum; if (bd) bd.innerHTML = h.body; });
@@ -1615,7 +1618,7 @@ function mpPartHtml(R, fx, pick) {
     if (F2 && F2.pc) row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', [m2 ? '<b class="mpt-bad">needs work on ' + m2 + '</b>' : '', s2 ? '<b class="mpt-a">mostly right on ' + s2 + '</b>' : '', g2 ? '<b class="mpt-g">right on ' + g2 + '</b>' : ''].filter(Boolean).join('<small> · </small>') + '<small> of ' + plural(P.length, 'pull') + '</small>', w && (w.y.vm || w.y.vs) ? ' data-mppick="' + w.i + '"' : ''); }
   // (6) the rotation, the app's way (the whole run's verdict and its split by pull; a click opens the pull with the most mistakes)
   if (MP_ROT_ON && !MP_RK_OLD && R._rw && R._rw.done) { const s2 = mpRwSum(R, name); if (s2.seen.length) { const w = s2.seen.slice().sort((a, b) => b.r.fix.filter((f2) => f2[0] === 'bad').length - a.r.fix.filter((f2) => f2[0] === 'bad').length || b.r.fix.length - a.r.fix.length)[0];
-    row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', mpRwVw(s2.st) + '<small> · ' + mpRwSplit(s2) + '</small>', w && w.r.fix.length ? ' data-mppick="' + w.i + '"' : ''); } }
+    row('▸', '#c39bff', own ? 'Your rotation' : esc(name) + '’s rotation', (s2.pct != null ? mpRwPc(s2, true) + '<small> · </small>' + mpRwVw(s2.st) : mpRwVw(s2.st) + '<small> · ' + mpRwSplit(s2) + '</small>'), w && w.r.fix.length ? ' data-mppick="' + w.i + '"' : ''); } }
   // (7) avoidable hits
   const av = []; P.forEach((q, i) => { for (const a of q.avoid || []) if (a.who === name && a.n) av.push({ ...a, i }); }); const avN = av.reduce((t, a) => t + a.n, 0), byP = new Map(); for (const a of av) byP.set(a.i, (byP.get(a.i) || 0) + a.n);
   const top = avN ? [...byP].sort((a, b) => b[1] - a[1])[0][0] : -1;
