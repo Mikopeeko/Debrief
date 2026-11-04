@@ -34607,6 +34607,7 @@ function dsGuides() {
 (function () {
   var E = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var mm = function (s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  var plural = function (n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }; /* (its own: this block can't see ui.js's) */
   var txt = function (h) { var d = document.createElement('div'); d.innerHTML = String(h || ''); return (d.textContent || '').replace(/\s+/g, ' ').trim(); };
   var first = function (s) { var m = String(s || '').match(/^[\s\S]*?[.!?](\s|$)/); return (m ? m[0] : String(s || '')).trim(); };
   var one = function (w) { return String(w).replace(/ies$/, 'y').replace(/(sh|ch|x|ss)es$/, '$1').replace(/s$/, ''); };
