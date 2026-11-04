@@ -13081,7 +13081,8 @@ function miniMap(mp, pmap) {
           for (const q of f.pts) if (q.kind === 'player' && q.guid !== c.on) { const px = X(q), py = Y(q); if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; } }
         const v = n * 10 + out * 4 + Math.abs(ox) + Math.abs(oy) + up; if (!best || v < best[0]) best = [v, ox * w * 0.6, oy * (h + gap), up]; if (!n && !out) break; }
       return (c._fa = { dx: best[1], dy: best[2], up: best[3] }); };
-    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue;
+    const CO = (mp.callouts || []).filter((q) => q.kind === 'spot').concat((mp.callouts || []).filter((q) => q.kind !== 'spot')); /* (the freeze's ring first: a caption is never crossed by it) */
+    for (const c of CO) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue;
       if (c.free && c.kind == null) { const q = freeAt(c), x = X(p) + q.dx, y = Y(p) + q.dy; s += icl(x, y, gdzCallSvg(q.up ? { ...c, up: 1 } : c, x, y, ft, atU)); continue; } s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : icl(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)

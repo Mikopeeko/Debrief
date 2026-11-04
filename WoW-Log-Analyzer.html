@@ -36673,7 +36673,8 @@ function miniMap(mp, pmap) {
           for (const q of f.pts) if (q.kind === 'player' && q.guid !== c.on) { const px = X(q), py = Y(q); if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; } }
         const v = n * 10 + out * 4 + Math.abs(ox) + Math.abs(oy) + up; if (!best || v < best[0]) best = [v, ox * w * 0.6, oy * (h + gap), up]; if (!n && !out) break; }
       return (c._fa = { dx: best[1], dy: best[2], up: best[3] }); };
-    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue;
+    const CO = (mp.callouts || []).filter((q) => q.kind === 'spot').concat((mp.callouts || []).filter((q) => q.kind !== 'spot')); /* (the freeze's ring first: a caption is never crossed by it) */
+    for (const c of CO) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue;
       if (c.free && c.kind == null) { const q = freeAt(c), x = X(p) + q.dx, y = Y(p) + q.dy; s += icl(x, y, gdzCallSvg(q.up ? { ...c, up: 1 } : c, x, y, ft, atU)); continue; } s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : icl(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
@@ -62262,10 +62263,10 @@ function gdzReadTog(root) {
 function gdzPauseUi(zbox, label) {
   const el = document.createElement('div'); el.className = 'gdz-vpause'; el.innerHTML = '<b>⏸ ' + (label || 'Raid lead') + '</b><span></span><i></i>'; zbox.appendChild(el);
   // (the studio, Nov 4: the box never covers players. Of eight spots (top, bottom, nearer each edge, then a corner at half width) it
-  // takes the first that hides the fewest of them, the spot the freeze is about and the video's own captions)
+  // takes the first that hides the fewest of them, the spot the freeze is about, the video's own captions and the map's controls)
   const POS = ['', 'gdz-vpb', 'gdz-vpt', 'gdz-vpb2', 'gdz-vptl', 'gdz-vptr', 'gdz-vpbl', 'gdz-vpbr'], place = () => { const box = (r) => r && r.width ? r : null, root = zbox.querySelector('svg') ? zbox : zbox.parentElement || zbox /* (the video's box sits in a layer over its map) */, ic = [...root.querySelectorAll('svg g.ic:not(.icl)')].map((g) => box(g.getBoundingClientRect())).filter(Boolean),
     sp = root.querySelector('svg circle[stroke-dasharray="8 5"]'), spr = sp && box(sp.getBoundingClientRect()), spc = spr ? { left: spr.left + spr.width * 0.3, right: spr.right - spr.width * 0.3, top: spr.top + spr.height * 0.3, bottom: spr.bottom - spr.height * 0.3 } : null,
-      own = [...zbox.querySelectorAll('.gdz-vlow, .gdz-vcard, .gdz-vchip, .zleg')].filter((x) => +getComputedStyle(x).opacity > 0.05).map((x) => box(x.getBoundingClientRect())).filter(Boolean);
+      own = [...(zbox.closest('.gdz-mapc') || zbox).querySelectorAll('.gdz-vlow, .gdz-vcard, .gdz-vchip, .zleg, .zkeyb, .zkey, .znorth, .zctl, .zscale, .gdz-mode')].filter((x) => +getComputedStyle(x).opacity > 0.05) /* (the video's own captions and the map's controls) */.map((x) => box(x.getBoundingClientRect())).filter(Boolean);
     const cost = () => { const b = el.getBoundingClientRect(), on = (r) => r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom; return ic.filter(on).length + (spc && on(spc) ? 6 : 0) + own.filter(on).length * 20; };
     let best = null; for (const c of POS) { POS.forEach((x) => x && el.classList.remove(x)); if (c) el.classList.add(c); const v = cost(); if (!best || v < best[1]) best = [c, v]; if (!v) break; }
     POS.forEach((x) => x && el.classList.remove(x)); if (best[0]) el.classList.add(best[0]); };
@@ -62657,7 +62658,12 @@ function gdzRaider(root, G, D) {
   const seg = (k, cur, opts, lead) => '<div class="gdz-seg" data-k="' + k + '">' + (lead ? '<span>' + lead + '</span>' : '') + opts.map(([v, n]) => '<button type="button" data-v="' + v + '" class="' + (v === cur ? 'on' : '') + '">' + n + '</button>').join('') + '</div>';
   // (Nov 4: one slim bar under the hero that stays at the top: whose job to show on the left, and the parts of the fight on the right. A
   // part's link jumps to it and lights up while you read it; nothing is hidden)
-  const parts = [...root.querySelectorAll(':scope > .gdz-sec')].filter((x) => x.id && x.id !== 'gdz-all' && !x.classList.contains('gdz-roles'));
+  let parts = [...root.querySelectorAll(':scope > .gdz-sec')].filter((x) => x.id && x.id !== 'gdz-all' && !x.classList.contains('gdz-roles'));
+  // (when the guide's real kill plays its parts in another order (Heroic Lost Explorers: Nama's turn before Gebbo's), the page follows the
+  // kill, so the bar, the chapters and the fight at a glance agree; a part the kill never reached stays after the rest)
+  const pStart = (x) => { const i = G.phases.findIndex((p) => 'gdz-' + p.id === x.id), e = i < 0 ? null : (G.sim || []).find((q) => (q.ph || 0) === i); return e ? e.at : Infinity; };
+  const byKill = parts.slice().sort((a, b) => pStart(a) - pStart(b) || parts.indexOf(a) - parts.indexOf(b));
+  if (byKill.some((x, j) => x !== parts[j])) { const after = parts[parts.length - 1].nextSibling; byKill.forEach((x) => root.insertBefore(x, after)); parts = byKill; }
   // (a part's number among the parts that aren't an intermission, and its short name: "Phase 1: Zul'jan" is Zul'jan, "The loop: every 110 seconds" is The loop)
   const ptx = (x) => ((x.querySelector('.gdz-sh h3') || {}).textContent || '').trim(), isInt = (t) => /^Intermission/i.test(t), nPart = parts.filter((x) => !isInt(ptx(x)));
   const short = (t) => { const m = /^Phase (?:\d+|one|two|three|four)\s*:\s*(.*)$/i.exec(t), c = /^([^:]{2,28}):/.exec(t), v = (m ? m[1] : c ? c[1] : t).replace(/\s*\(.*\)\s*$/, ''); return v.charAt(0).toUpperCase() + v.slice(1); };
@@ -62705,10 +62711,10 @@ function gdzRaider(root, G, D) {
   const gl = document.createElement('section'); gl.className = 'gdz-glance'; gl.id = 'gdz-glance'; gl.innerHTML = tl; bar.after(gl);
   gl.insertAdjacentHTML('afterend', wipe.replace('<ul>', '<ul style="--n:' + wfails.length + '">') + job.replace('</h4>', '</h4>' + asg)); /* (the overview first, what wipes us as one row of tiles, your job full width) */
   // (each part reads like a chapter: "PHASE 1 OF 3 · 0:00 – 2:57", timed by the real kill when the guide has one)
-  const P0 = G.phases, at0 = (i) => { const e = (G.sim || []).find((x) => (x.ph || 0) === i); return e ? e.at : null; }, kl = gdzKillLen(G), word = nPart.every((x) => /^Phase\b/i.test(ptx(x))) ? 'Phase' : 'Part';
-  const T0 = parts.map((x) => { const i = P0.findIndex((p) => 'gdz-' + p.id === x.id); return i < 0 ? null : at0(i); }), inOrder = T0.filter((v) => v != null).every((v, j, a) => !j || v >= a[j - 1]);
-  parts.forEach((x, k) => { const i = P0.findIndex((p) => 'gdz-' + p.id === x.id), h = x.querySelector('.gdz-sh h3'); if (i < 0 || !h) return; const a = T0[k], b = i + 1 < P0.length ? at0(i + 1) : kl || null;
-    const lab = isInt(ptx(x)) ? 'Intermission' : nPart.length > 1 ? word + ' ' + (nPart.indexOf(x) + 1) + ' of ' + nPart.length : '', tm = inOrder && a != null && b != null && b > a ? clk(a) + ' – ' + clk(b) : '';
+  const kl = gdzKillLen(G), word = nPart.every((x) => /^Phase\b/i.test(ptx(x))) ? 'Phase' : 'Part';
+  const T0 = parts.map(pStart); /* (in the kill's order now: each part runs to the next one's start, the last to the kill) */
+  parts.forEach((x, k) => { const h = x.querySelector('.gdz-sh h3'); if (!h) return; const a = T0[k], b = k + 1 < parts.length && isFinite(T0[k + 1]) ? T0[k + 1] : kl || Infinity;
+    const lab = isInt(ptx(x)) ? 'Intermission' : nPart.length > 1 ? word + ' ' + (nPart.indexOf(x) + 1) + ' of ' + nPart.length : '', tm = isFinite(a) && isFinite(b) && b > a ? clk(a) + ' – ' + clk(b) : '';
     if (lab || tm) h.insertAdjacentHTML('beforebegin', '<b class="gdz-chk">' + esc([lab, tm].filter(Boolean).join(' · ')) + '</b>'); });
   // (the bar's links: a smooth jump past the bar, and the part you're reading lit)
   const jl = [...bar.querySelectorAll('.gdz-jump a')], jt = jl.map((a) => root.querySelector(a.getAttribute('href')));
