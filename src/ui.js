@@ -2028,6 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'Home is your home base', d: 'Home welcomes you back with what\'s new since your last visit, your next raid, your week and WoW news, with one click back to wherever you were.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+    'Home: Your season shows your item level, Raider.IO, Mythic bosses and parse, like the Companion app.',
     "Debrief Companion: if WoW is in true Fullscreen, one press switches it to Windowed (Fullscreen), so your recap can show over the game. With WoW open, it switches the moment you close WoW.",
     "Debrief Companion: the pop-up still resizes, but it stops where your recap ends, so it never grows bigger than the card.",
     "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
@@ -32763,14 +32764,29 @@ function hdRioC(c, ready) { const o = HD_RIOC.get(c.gid); if (o && (o.p || Date.
     .catch(() => { x.d = x.d || { none: true }; x.at = Date.now() - 3300e3; }).finally(() => { x.p = null; ready(); });
   HD_RIOC.set(c.gid, x); return x.d; }
 // (the season row: item level, Raider.IO score, best parse; shared by your team's Home and an alt's)
-const hdSeason = (ch, chR, wait) => '<div class="hd-ss"><span><b class="num">' + (wait && ch ? '<span class="hd-shim" style="width:2em;height:20px"></span>' : chR && chR.ilvl ? Math.round(chR.ilvl) : '—') + '</b><em>item level</em></span><span><b class="num" style="color:' + esc((chR && chR.col) || 'var(--text)') + '">' + (wait && ch ? '<span class="hd-shim" style="width:2.6em;height:20px"></span>' : chR && chR.score != null ? hdNum(chR.score) : '—') + '</b><em>Raider.IO</em></span>' +
-  '<span><b class="num" style="color:' + (ch && ch.parse ? hdPCol(ch.parse.best) : 'var(--text)') + '">' + (ch && ch.parse ? Math.floor(ch.parse.best) : '—') + '</b><em>best parse</em></span></div>';
-const hdVault = (ch, chR, wait) => { const wk = ((chR && chR.week) || []).slice().sort((a, b) => b.l - a.l), wkT = wk.filter((x) => x.up > 0).length;
-  return { html: !ch ? '<div class="hd-wv"><small>—</small></div>' : wait ? '<div class="hd-vault">' + [0, 1, 2].map(() => '<span class="hd-shim" style="width:100%;height:30px"></span>').join('') + '</div>' : '<div class="hd-vault">' + [1, 4, 8].map((n) => { const on = wk.length >= n; return '<span class="hd-vs' + (on ? ' on' : '') + '">' + (on ? '<u></u><b class="num">+' + wk[n - 1].l + '</b>' : n + (n === 1 ? ' key' : ' keys')) + '</span>'; }).join('') + '</div>',
-    sub: !ch ? 'Pick your character to see your vault.' : wait ? '<span class="hd-shim" style="width:9em"></span>' : plural(wk.length, 'key') + ' this week' + (wk.length ? ', ' + wkT + ' timed' : '') }; };
 const hdResetCell = (reg) => { const rs = hdReset(reg), left = rs.next - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor((left % 864e5) / 3600e3), mi = Math.floor((left % 3600e3) / 60000), rd = new Date(rs.next);
   return { v: '<div class="hd-wv"><span class="num">' + (dd ? dd + 'd ' + hh + 'h' : hh ? hh + 'h ' + mi + 'm' : mi + 'm') + '</span></div>', d: esc(HD_DN[rd.getDay()] + ', ' + rd.toLocaleTimeString('en-US', { hour: 'numeric', minute: rd.getMinutes() ? '2-digit' : undefined })), rs }; };
-const hdWCell = (l, v, d) => '<div class="hd-wk"><div class="hd-lab">' + l + '</div>' + v + '<div class="hd-kd">' + d + '</div></div>';
+// (Your season (Flex: "Yes, send it"; it replaces Your week, and the vault comes off Home): four tiles read and worded the way Debrief Companion's
+// window reads them, so the two always match: item level and Raider.IO from Raider.IO (the score's realm rank for the spec), Mythic bosses and the
+// parse from the character's Warcraft Logs rankings on Mythic and Heroic for their role; the team's raid kills this week join the bosses' line)
+const HD_WC = new Map();
+function hdWcSeason(c, heal, ready) { const k = c.gid + '|' + (heal ? 'h' : 'd'), o = HD_WC.get(k); if (o) return o.d; const x = { d: null }; HD_WC.set(k, x);
+  (async () => { try { const creds = await wclCreds(), m = heal ? 'hps' : 'dps', get = (d) => { const kk = c.id + '|' + d + '|' + m + '|'; if (!RANK_CACHE.has(kk)) RANK_CACHE.set(kk, WCL.charRankings(creds, c.id, d, m, null).catch((e) => { RANK_CACHE.delete(kk); throw e; })); return RANK_CACHE.get(kk); };
+    const [r5, r4] = await Promise.all([get(5).catch(() => null), get(4).catch(() => null)]); x.d = { mythic: r5, heroic: r4 }; } catch (e) { x.d = { err: true }; } ready(); })();
+  return null; }
+function hdSeasonCard(c, chR, wait, wc, wkKill) {
+  const clsN = (chR && chR.cls) || (E.CLASSES[c.cls] || [])[0] || '', spec = ((chR && chR.spec) || (c.parse && c.parse.spec) || '') + ' ' + clsN, realm = String(c.server || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, '');
+  const rs = hdReset(hdRegion(c)), left = rs.next - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor((left % 864e5) / 3600e3), mi = Math.floor((left % 3600e3) / 60000);
+  const rows = (z) => (z && z.rankings) || [], kills = (z) => rows(z).filter((x) => x.totalKills > 0).length, nB = rows(wc && wc.mythic).length || rows(wc && wc.heroic).length || 10, avg = (z) => (z && z.bestPerformanceAverage != null ? Math.round(z.bestPerformanceAverage) : null);
+  const pM = avg(wc && wc.mythic), pH = avg(wc && wc.heroic), il = chR && chR.ilvl ? Math.round(chR.ilvl) : null, score = (chR && chR.score) || 0;
+  const sid = chR && chR.spec ? (Object.entries(E.SPECS).find(([, [n, k]]) => k === hdClsKey(chR.cls) && n === chR.spec) || [])[0] : null, rk = sid && chR.rk ? chR.rk['spec_' + sid] : null;
+  const sk = (w) => '<span class="hd-shim" style="width:' + w + ';height:22px"></span>', wcw = !wc;
+  const tile = (v, k, sub, col) => '<div class="hd-st"><div class="v num"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="k">' + k + '</div><div class="d" title="' + esc(hdPlain(sub)) + '">' + sub + '</div></div>';
+  return '<section class="hd-pn hd-season"><div class="hd-ph"><h3>Your season</h3><span class="m">' + esc(spec.trim()) + '</span><span class="hd-sres">week resets in <b class="num">' + (dd ? dd + 'd ' + hh + 'h' : hh ? hh + 'h ' + mi + 'm' : mi + 'm') + '</b></span></div><div class="hd-sts">' +
+    tile(wait ? sk('2em') : il != null ? il : '—', 'Item level', wait ? '&nbsp;' : il != null ? 'equipped' : 'not on Raider.IO yet') +
+    tile(wait ? sk('3em') : score ? hdNum(score) : '—', 'Raider.IO score', wait ? '&nbsp;' : rk ? '#' + rk + ' ' + esc(spec.trim()) + ' on ' + esc(realm) : score ? 'this season' : 'no keys this season', score && chR.col ? chR.col : '') +
+    tile(wcw ? sk('2em') : kills(wc.mythic) + '<small>/' + nB + '</small>', 'Mythic bosses', wcw ? '&nbsp;' : [wkKill != null ? plural(wkKill, 'kill') + ' this week' : '', 'Heroic ' + kills(wc.heroic) + '/' + nB].filter(Boolean).join(' · ')) +
+    tile(wcw ? sk('1.6em') : pM != null ? pM : '—', 'Mythic parse', wcw ? '&nbsp;' : (pM != null ? 'best average' : 'no Mythic kill yet') + (pH != null ? ' · Heroic <b style="color:' + hdPCol(pH) + '">' + pH + '</b>' : ''), pM != null ? hdPCol(pM) : '') + '</div></section>'; }
 // (Jump back in: four doors back into the site, each to the exact place you were; never empty: with no history, the newest night, your newest key,
 // your spec's rotation on the newest night, the current boss's guide)
 function hdJump(J) { const { ch, chR, nightsL, gb, gd } = J, last = hdLastAll()[(ch && ch.gid) || '*'] || hdLastAll()['*'] || {}, n0 = nightsL[0];
@@ -32889,10 +32905,8 @@ function hdDash(X) {
         : '<h2>No pulls on ' + dN + ' yet</h2><div class="hd-gempty">When your team pulls a boss on ' + dN + ', it shows up here.</div>') +
       '<div class="hd-gbt">' + (allK && up ? '<button class="hd-gb gold" type="button" data-hddiff="' + esc(String(up[0])) + '">Try ' + esc(up[1]) + ' ›</button>' : '') + (lastKill ? guideB(lastKill.boss) : '') + '</div></section>'; }
   // (4. your week, 2 x 2: raid kills since the reset, your Mythic+ vault (1 / 4 / 8 keys), your season, the reset)
-  const RC = hdResetCell(hdRegion(ch || g)), rs = RC.rs, wkKill = new Set((all || list).filter((v) => v.kill && v.at >= rs.last).map((v) => v.boss + '|' + v.diffId)).size, VA = hdVault(ch, chR, wait), farmN = killedOn(cur);
-  const week = '<section class="hd-pn hd-week">' +
-    hdWCell('Raid kills this week', '<div class="hd-wv"><span class="num">' + wkKill + '</span><small>' + (wkKill === 1 ? 'kill' : 'kills') + (wkKill ? '' : ' yet') + '</small></div>', gb ? (farmN ? farmN + ' to farm, then ' + esc(hdBossShort(gb)) : 'then ' + esc(hdBossShort(gb))) : farmN ? 'a full clear: ' + plural(farmN, 'boss').replace('bosss', 'bosses') : '') +
-    hdWCell('Your Mythic+ vault', VA.html, VA.sub) + hdWCell('Your season', hdSeason(ch, chR, wait), '') + hdWCell('Weekly reset', RC.v, RC.d) + '</section>';
+  const RC = hdResetCell(hdRegion(ch || g)), rs = RC.rs, wkKill = new Set((all || list).filter((v) => v.kill && v.at >= rs.last).map((v) => v.boss + '|' + v.diffId)).size, farmN = killedOn(cur);
+  const heal = /heal/i.test((chR && chR.role) || ''), week = ch ? hdSeasonCard(ch, chR, wait, hdWcSeason(ch, heal, redraw), wkKill) : '<section class="hd-pn hd-season"><div class="hd-ph"><h3>Your season</h3></div><p class="hd-none">Pick your character at the top to see your season.</p></section>';
   // (Next raid: when, from the team's own nights (the usual days and the middle first and last pull), a countdown, this week's raid days, and reminders:
   // tonight's plan when there is one, a 30-minute reminder for Debrief Companion, and whether the app is on)
   const tm = hdRaidTimes(all || list), nr = hdNextRaid(days, tm), plOk = (() => { try { const o = gb ? JSON.parse(store.get(notesKey(gb)) || 'null') : null; return !!(o && o.list && o.list.length); } catch (e) { return false; } })();
@@ -32959,11 +32973,11 @@ function hdDash(X) {
     hdJump({ ch, chR, nightsL, gb, gd: gDiff }) + '<div class="hd-top">' + news + goal + '</div><div class="hd-mid">' + nextR + week + wnews + '</div><div class="hd-team">' + trow + rkBox + team + pills + '<div class="hd-g3">' + nights + ladder + keys + '</div></div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
 // (a character with no team: the greeting, Jump back in, a plain line with Add a team, then their week (vault, season, reset))
 function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [], first = hdSeen(c, null).at == null, chR0 = hdRioC(c, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); }), wait = !chR0, chR = chR0 && !chR0.none ? chR0 : null;
-  const VA = hdVault(c, chR, wait), RC = hdResetCell(hdRegion(c));
+  const heal = /heal/i.test((chR && chR.role) || ''), WC = hdWcSeason(c, heal, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); });
   return '<div class="home prog hd hd2" id="hdPage"><header class="hd-head hd-greet"><span class="hd-gface">' + hdFace(c) + '</span><div class="hd-tt"><h1>' + (first ? 'Welcome, ' : 'Welcome back, ') + '<span style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</span></h1><p>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + '</p></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
     hdJump({ ch: c, chR, nightsL: [], gb: null, gd: 'm' }) +
     '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' +
-    '<section class="hd-pn hd-week hd-week3">' + hdWCell('Your Mythic+ vault', VA.html, VA.sub) + hdWCell('Your season', hdSeason(c, chR, wait), '') + hdWCell('Weekly reset', RC.v, RC.d) + '</section>' + (rest || '') + '</div>'; }
+    hdSeasonCard(c, chR, wait, WC, null) + (rest || '') + '</div>'; }
 // (the Companion app's own window marks this browser storage as seen (its page, /app); Home's Next raid card reads it)
 try { if (location.pathname === '/app' || /[?&]mpcard=1/.test(location.search)) store.set('wla-app-seen', String(Date.now())); } catch (e) { /* (not kept) */ }
 // (the page's own clicks: the character menu, Show all and All ›, the boss track and the night chart)

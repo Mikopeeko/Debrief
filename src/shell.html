@@ -12484,6 +12484,11 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 /* (Next raid) */
 .hd .hd-nr2 { display: flex; flex-direction: column; } .hd .hd-nrw { padding: 12px 14px 10px; }
 .hd .hd-nrt { display: flex; align-items: baseline; gap: 10px; } .hd .hd-nrt b { font: 700 22px var(--head); color: var(--text); white-space: nowrap; } .hd .hd-nrcd { margin-left: auto; font: 700 18px var(--head); color: #ffe2a6; white-space: nowrap; }
+.hd .hd-season { display: flex; flex-direction: column; } .hd .hd-sres { margin-left: auto; color: var(--faint); font: 500 12.5px var(--head); white-space: nowrap; } .hd .hd-sres b { color: var(--text); font-weight: 700; }
+.hd .hd-sts { flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 8px; padding: 10px; }
+.hd .hd-st { min-width: 0; padding: 10px; background: var(--raised); border: 1px solid var(--line2); border-radius: 4px; display: flex; flex-direction: column; justify-content: center; }
+.hd .hd-st .v { font: 700 24px/1.1 var(--head); color: var(--text); white-space: nowrap; } .hd .hd-st .v small { margin-left: 3px; font: 600 13.5px var(--head); color: var(--muted); }
+.hd .hd-st .k { margin-top: 3px; font: 600 13.5px var(--head); color: var(--text); } .hd .hd-st .d { margin-top: 1px; color: var(--faint); font: 500 12px var(--head); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hd .hd-nrnx { margin-top: 3px; color: var(--muted); font: 500 12.5px var(--head); }
 .hd .hd-nrd { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; } .hd .hd-nrc { height: 22px; padding: 0 7px; display: inline-flex; align-items: center; border: 1px dashed #4a5262; border-radius: 3px; color: var(--muted); font: 600 12.5px var(--head); }
 .hd .hd-nrc.on { border: 1px solid var(--gold); color: var(--gold); background: rgba(230,180,80,.08); } .hd .hd-nrc.past { opacity: .45; } .hd .hd-nrh { margin-left: 4px; color: var(--faint); font: 500 12.5px var(--head); }
@@ -12505,8 +12510,8 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
   /* (the phone's order: greeting, Jump back in, the goal, What's new, Next raid with the calendar under it, your week, WoW news, then the team) */
   .home.hd2 { display: flex; flex-direction: column; gap: 16px; } .hd2 .hd-top, .hd2 .hd-mid, .hd2 .hd-team, .hd2 .hd-g3 { display: contents; }
   .hd2 > *, .hd2 .hd-top > *, .hd2 .hd-mid > *, .hd2 .hd-team > *, .hd2 .hd-g3 > * { order: 50; margin-top: 0 !important; } .hd2 > .pg-links { order: 0; }
-  .hd2 > .hd-greet { order: 1; } .hd2 .hd-jump { order: 2; } .hd2 .hd-goal { order: 3; } .hd2 .hd-news { order: 4; } .hd2 .hd-nr2 { order: 5; } .hd2 .hd-nights { order: 6; } .hd2 .hd-week { order: 7; } .hd2 .hd-wnews { order: 8; }
-  .hd2 .hd-trow { order: 9; } .hd2 .pg-rkbox { order: 10; } .hd2 .hd-pills { order: 11; } .hd2 .hd-g3 > :not(.hd-nights) { order: 12; } .hd2 > .hd-info { order: 60; } .hd2 .hd-noteam { order: 3; } .hd2 .hd-week3 { order: 4; grid-template-columns: minmax(0, 1fr); } .hd2 .hd-week3 .hd-wk { border-right: 0; border-bottom: 1px solid var(--hl) !important; } .hd2 .hd-week3 .hd-wk:last-child { border-bottom: 0 !important; }
+  .hd2 > .hd-greet { order: 1; } .hd2 .hd-jump { order: 2; } .hd2 .hd-goal { order: 3; } .hd2 .hd-news { order: 4; } .hd2 .hd-nr2 { order: 5; } .hd2 .hd-nights { order: 6; } .hd2 .hd-week, .hd2 .hd-season { order: 7; } .hd2 .hd-wnews { order: 8; }
+  .hd2 .hd-trow { order: 9; } .hd2 .pg-rkbox { order: 10; } .hd2 .hd-pills { order: 11; } .hd2 .hd-g3 > :not(.hd-nights) { order: 12; } .hd2 > .hd-info { order: 60; } .hd2 .hd-noteam { order: 3; } .hd2 .hd-noteam ~ .hd-season { order: 4; } .hd2 .hd-week3 { order: 4; grid-template-columns: minmax(0, 1fr); } .hd2 .hd-week3 .hd-wk { border-right: 0; border-bottom: 1px solid var(--hl) !important; } .hd2 .hd-week3 .hd-wk:last-child { border-bottom: 0 !important; }
   .hd .hd-jc { padding: 10px 12px; gap: 10px; } .hd .hd-gline { white-space: normal; } .hd .hd-nrt b { font-size: 18px; } .hd .hd-nrcd { font-size: 18px; }
 }
 /* (a narrower screen, then a phone) */
