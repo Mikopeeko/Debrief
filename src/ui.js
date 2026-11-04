@@ -2029,6 +2029,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
+    'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
     'Plan: Debrief spots your alts. Drag one in and it swaps out its main, so each player takes one spot.',
     'Plan: pictures for Discord show everyone\'s class icon, tidier lists, and labels that never cover anyone.',
@@ -34152,7 +34153,8 @@ function dsGuides() {
   // (gdzView writes the page with view(), which runs the look passes at once, and adds the rail's row right after: so the first
   // run sees no .gdz-rbar and must leave the page unmarked for the deferred run)
   if (!rbar || !hero) return; g.dataset.ds53 = '1';
-  // 1. the rail
+  // 1. the rail (since Nov 4 the guide has its own slim bar (guides.js): every card then shows its first three steps and its own Everything link)
+  if (rbar.classList.contains('gdz-bar')) g.classList.add('ds-gsum'); else {
   const rail = document.createElement('div'); rail.className = 'ds-grail';
   const role = rbar.querySelector('.gdz-seg[data-k="role"]'), mode = rbar.querySelector('.gdz-seg[data-k="mode"]'), watch = rbar.querySelector('.gdz-watch');
   if (role) rail.appendChild(role);
@@ -34165,7 +34167,7 @@ function dsGuides() {
   const sp = document.createElement('span'); sp.className = 'ds-gsp'; rail.appendChild(sp);
   if (watch) rail.appendChild(watch);
   if (mode) mode.hidden = true;
-  rbar.after(rail); rbar.classList.add('ds-ghide');
+  rbar.after(rail); rbar.classList.add('ds-ghide'); }
   // 2. your job and what wipes us first
   if (cards && glance) { glance.before(cards); cards.classList.add('ds-gcards'); }
   // 3. named keys under the phase bars
