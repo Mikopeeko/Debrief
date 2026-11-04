@@ -56839,6 +56839,7 @@ function hdTpJobs(K, boss, night, me) { const o = hdTpGet(K, 'wla-rnote|' + boss
   const cds = ((P && P.reminders) || []).filter((x) => (x.tags || []).some((t) => String(t).split('-')[0].toLowerCase() === lo)).map((x) => ({ nm: x.text || ndzSpellNm(+x.spellid) || 'Cooldown', ph: x.ph, t: x.time })).sort((a, b) => (a.ph || 0) - (b.ph || 0) || a.t - b.t);
   for (const c of cds) if (!jobs.includes(c.nm)) jobs.push(c.nm);
   return { note: n, has: L.length > 0, jobs, cds, sit: on.length > 0 && !on.includes(lo), diff }; }
+const hdBossFace = (b, cls) => { const H = BOSS_HERO[b]; return H ? '<img class="' + cls + '" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 28%" onerror="this.remove()">' : BOSS_ART[b] ? '<img class="' + cls + '" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy">' : '<span class="hj-ni"></span>'; };
 const HD_CAM = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="10" rx="2"/><circle cx="8" cy="8.5" r="2.5"/></svg>';
 function hdJobs(g, ch, gb, redraw) {
   const me = ch && ch.name ? String(ch.name).split('-')[0] : ''; if (!me) return ''; const r = hdTeamPlan(g, redraw); if (!r) return '';
@@ -56848,7 +56849,7 @@ function hdJobs(g, ch, gb, redraw) {
   const skip = night.skip || hdTpGet(K, PLAN_SKIP_K) || [], bosses = planBossesAll().filter((b) => !skip.includes(b)), role = mine.role === 'healer' ? 'Heal' : mine.role === 'tank' ? 'Tank' : '';
   const day = new Date(night.date + 'T12:00:00'), dayN = isNaN(day) ? 'Next' : day.toLocaleDateString([], { weekday: 'long' }), upd = Math.max(0, ...Object.values(K).map((e) => e.at || 0));
   HD_JOBS.ctx = { K, night, me, bosses, team: gName(g) };
-  const tiles = bosses.map((b, i) => { const J = hdTpJobs(K, b, night, me), art = BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy">' : '<span class="hj-ni"></span>';
+  const tiles = bosses.map((b, i) => { const J = hdTpJobs(K, b, night, me), art = hdBossFace(b, 'hj-face');
     const tag = J.sit ? '<span class="hj-no">Sitting this one</span>' : J.jobs.length ? '<span class="hj-tg">' + esc(J.jobs[0]) + '</span>' + (J.jobs.length > 1 ? '<span class="hj-more">+' + (J.jobs.length - 1) + '</span>' : '') : '<span class="hj-no">' + (J.has ? (role ? role + ' · no job' : 'No job') : 'No plan yet') + '</span>';
     return '<button type="button" class="hj-t' + (J.sit ? ' sit' : '') + (b === gb ? ' goal' : '') + '" data-hdjob="' + esc(b) + '"' + (J.note && !J.sit ? '' : ' data-nojob="1"') + '>' + art + '<span class="hj-tx"><span class="hj-nm"><i>' + (i + 1) + '</i>' + esc(pnShort(b)) + '</span><span class="hj-jb">' + tag + '</span></span><span class="hj-pic" data-hjcam="' + esc(b) + '"></span></button>'; }).join('');
   setTimeout(hdJobCams, 60);
@@ -56859,7 +56860,9 @@ const HD_JOBS = { ctx: null, sets: new Map() };
 function hdJobSet(b) { const c = HD_JOBS.ctx; if (!c) return null; const J = hdTpJobs(c.K, b, c.night, c.me); if (!J.note || J.sit) return { J, cards: [] };
   const key = b + '|' + J.note.id + '|' + (J.note.saved || 0); if (HD_JOBS.sets.has(key)) return HD_JOBS.sets.get(key);
   let cards = [], set = null; try { const names = ndzNoteRoster(J.note) || [...new Set(noteNames(noteResolve(J.note.text)).map((x) => String(x).split('-')[0]))];
-    set = ppSet(ndzPlanRep({ pick: b, diff: J.diff, on: new Set(names) }, ndzSpecs()), J.note); const lo = c.me.toLowerCase();
+    // (each raider's class, spec and role from the team plan's roster, where this browser hasn't read them from a pull: never a blank dot)
+    const sp = Object.assign({}, ndzSpecs()); for (const r of (hdTpGet(c.K, PLAN_RK) || {}).list || []) for (const q of r.players || []) { const k = String(q.n).split('-')[0].toLowerCase(); if (!(sp[k] && sp[k].cls) && q.cls) sp[k] = { cls: q.cls, sid: +q.sid || 0, role: q.role === 'healer' || q.role === 'tank' ? q.role : 'dps' }; }
+    set = ppSet(ndzPlanRep({ pick: b, diff: J.diff, on: new Set(names) }, sp), J.note); const lo = c.me.toLowerCase();
     cards = (set.cards || []).filter((cd) => cd.legend.some((G) => G.items.some((it) => String(it.name || '').split('-')[0].toLowerCase() === lo))); } catch (e) { cards = []; }
   const o = { J, cards, set }; HD_JOBS.sets.set(key, o); return o; }
 // (the small camera on each tile, counted once the page is drawn, a boss at a time)
@@ -56918,7 +56921,7 @@ async function hdJobOpen(b) {
     .concat(o.J.cds.length ? [{ t: 'Your cooldowns', s: [...new Set(o.J.cds.map((c) => c.nm))].join(', '), ph: plural(o.J.cds.length, 'call') + ' in the plan', cd: null, cds: o.J.cds }] : []);
   if (!rows.length) return; let cur = 0;
   document.querySelectorAll('#hdJv').forEach((x) => x.remove()); const box = document.createElement('div'); box.id = 'hdJv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Your jobs on ' + b);
-  box.innerHTML = '<div class="jv"><div class="jv-h">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="">' : '') + '<b>' + esc(b) + '</b><span>your ' + plural(rows.length, 'job') + ' · ' + esc(o.J.diff) + '</span><button type="button" class="jv-x" aria-label="Close">✕</button></div>' +
+  box.innerHTML = '<div class="jv"><div class="jv-h">' + hdBossFace(b, 'jv-face') + '<b>' + esc(b) + '</b><span>your ' + plural(rows.length, 'job') + ' · ' + esc(o.J.diff) + '</span><button type="button" class="jv-x" aria-label="Close">✕</button></div>' +
     '<div class="jv-b"><div class="jv-l">' + rows.map((x, i) => '<button type="button" class="jv-r" data-i="' + i + '"><span class="n">' + (i + 1) + '</span><span><span class="t" style="display:block">' + esc(x.t) + '</span><span class="s" style="display:block">' + esc(x.s) + '</span>' + (x.ph ? '<span class="ph" style="display:block">' + esc(x.ph) + '</span>' : '') + '</span></button>').join('') + '</div>' +
     '<div><div class="jv-p"></div><div class="jv-f"><span>Only you are on these pictures. Your raid lead\'s plan has everyone.</span><button type="button" class="jv-nx">Next job ›</button></div></div></div></div>';
   document.body.appendChild(box); document.body.classList.add('ndz-modal');
