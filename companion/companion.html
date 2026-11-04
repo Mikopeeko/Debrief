@@ -1256,7 +1256,7 @@ async function csFetch(force) {
     const rio = await get('https://raider.io/api/v1/characters/profile?region=' + rg + '&realm=' + rl + '&name=' + nm + '&fields=gear,guild,talents,mythic_plus_scores_by_season:current,mythic_plus_ranks,mythic_plus_best_runs');
     const ls = csLogSpec(c), heal = ls ? ls.role === 'healer' : /HEAL/i.test((rio && rio.active_spec_role) || ''), m = heal ? 'hps' : 'dps';
     const ch = await get('https://debriefme.io/api/char?name=' + nm + '&srv=' + rl + '&reg=' + rg);
-    let wc = null; if (ch && ch.id) { const [r5, r4] = await Promise.all([5, 4].map((d) => get('https://debriefme.io/api/charrank?id=' + ch.id + '&d=' + d + '&m=' + m))); wc = { id: ch.id, m, mythic: r5, heroic: r4, guild: ((ch.guilds || [])[0] || {}).name || '', cls: ch.classID }; }
+    let wc = null; if (ch && ch.id) { const [r5, r4] = await Promise.all([5, 4].map((d) => get('https://debriefme.io/api/charrank?id=' + ch.id + '&d=' + d + '&m=' + m))); wc = { id: ch.id, m, mythic: r5, heroic: r4, guild: ((ch.guilds || [])[0] || {}).name || '', gid: ((ch.guilds || [])[0] || {}).id || 0, cls: ch.classID }; }
     if (!online) { csDraw(cache, true); return; } /* (offline: the last numbers, "as of") */
     if (CS.cur !== c) return;
     const d = { at: Date.now(), rio: rio && !rio.error ? rio : null, wc, heal }; store.set('dbf-ch:' + k, d); csDraw(d);
@@ -1320,6 +1320,45 @@ csInit();
 // (Windowed (Fullscreen) waiting for WoW to close, from the walkthrough's or Setup's Yes, switch it: a small line until it's done)
 async function wmWatch() { try { const x = await j('/setup/winmode'), el = $('wmLine'); el.hidden = x.state !== 'queued' && x.state !== 'done'; el.textContent = x.state === 'queued' ? 'Switching to Windowed (Fullscreen) when WoW closes' : x.state === 'done' ? 'WoW opens in Windowed (Fullscreen) next time' : ''; } catch (e) { /* (an older app) */ } }
 wmWatch(); setInterval(wmWatch, 10000);
+// ---------- the raid reminder (Nov 3, the studio's raid-reminder-brief.md; Flex approved it on Home): a Windows notification before your team's raid,
+// "Raid in 30 min · <team>", and a click opens tonight's plan on debriefme.io. Your team's nights come from debriefme.io (/api/raidtimes, the last 4
+// weeks of raid uploads) and are read with Home's own rule, so the two always agree: the usual weekdays, the middle first-pull time rounded to 15 min,
+// this PC's clock. Once a raid night, only before it starts. On by default, 15, 30 or 60 minutes before (Settings › Pop-up). The switch is shared with
+// Home inside the app ('wla-raid-remind'), and 'wla-app-seen' tells Home the app is on.
+const RR_KEY = 'wla-raid-remind';
+const rrSets = () => { const s = store.get('dbf-set', null) || {}; return { on: s.remind !== false, mins: [15, 30, 60].includes(+s.remindMins) ? +s.remindMins : 30 }; };
+const rrDay = (at) => new Date(at - 6 * 3600e3); /* (a raid past midnight belongs to the night before, as on Home) */
+function rrPlan(nights) {
+  const now = Date.now(), N = new Map();
+  for (const x of nights || []) { const a = +x[0], b = +x[1] || a; if (!a || now - a > 28 * 864e5) continue; const d = rrDay(a), k = d.toDateString(), m0 = new Date(k).getTime(), o = N.get(k), s = (a - m0) / 60000, e = (b - m0) / 60000;
+    if (!o) N.set(k, { wd: d.getDay(), a: s, b: e }); else { o.a = Math.min(o.a, s); o.b = Math.max(o.b, e); } }
+  if (!N.size) return null; const L = [...N.values()], cnt = [0, 0, 0, 0, 0, 0, 0]; for (const x of L) cnt[x.wd]++; const max = Math.max(...cnt);
+  const med = (l) => { const s = l.slice().sort((p, q) => p - q); return s[Math.floor((s.length - 1) / 2)]; }, r15 = (v) => Math.round(v / 15) * 15;
+  return { days: [1, 2, 3, 4, 5, 6, 0].filter((wd) => cnt[wd] >= (max >= 2 ? 2 : 1)), start: r15(med(L.map((x) => x.a))), end: r15(med(L.map((x) => x.b))) }; }
+// (the next raid: the next usual day whose end is still ahead, as Home's countdown)
+function rrNext(p) { if (!p || !p.days.length) return null; const now = Date.now(), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  for (let i = -1; i < 8; i++) { const d = new Date(t0); d.setDate(t0.getDate() + i); if (!p.days.includes(d.getDay())) continue; const s = d.getTime() + p.start * 60000, e = d.getTime() + p.end * 60000; if (now < e) return { key: d.toDateString(), start: s, end: e }; }
+  return null; }
+// (your team: the one Home inside the app picked, else the guild of the character you're on; its nights asked once a day, kept for when you're offline)
+async function rrLoad() {
+  const R = store.get(RR_KEY, null) || {}; let id = +R.teamId || 0, team = R.team || '';
+  if (!id && CS.cur) { const d = store.get('dbf-ch:' + csKey(CS.cur), null); if (d && d.wc && d.wc.gid) { id = +d.wc.gid; team = d.wc.guild || ''; } }
+  if (!id) return null; const C = store.get('dbf-raidtimes', null), mine = C && C.id === id;
+  if (mine && Date.now() - C.at < 864e5) return { id, team: team || C.team, nights: C.nights };
+  try { const r = await fetch('https://debriefme.io/api/raidtimes?id=' + id), x = r.ok ? await r.json() : null; if (x && Array.isArray(x.nights)) { store.set('dbf-raidtimes', { id, team, at: Date.now(), nights: x.nights }); return { id, team, nights: x.nights }; } } catch (e) { /* (offline, or not on debriefme.io yet) */ }
+  return mine ? { id, team: team || C.team, nights: C.nights } : null; }
+async function rrTick() {
+  try { localStorage.setItem('wla-app-seen', String(Date.now())); } catch (e) { /* (not kept) */ }
+  const set = rrSets(), T = await rrLoad(), p = T && rrPlan(T.nights), nx = rrNext(p), R = store.get(RR_KEY, null) || {};
+  store.set(RR_KEY, Object.assign({}, R, { on: set.on, mins: set.mins, app: true }, T ? { team: R.team || T.team, teamId: R.teamId || T.id } : {}, nx ? { next: nx.start, start: p.start, end: p.end, days: p.days } : {}));
+  if (!set.on || !nx) return; const now = Date.now(); if (now < nx.start - set.mins * 60000 || now >= nx.start) return;
+  if (store.get('dbf-raid-reminded', '') === nx.key) return; store.set('dbf-raid-reminded', nx.key); /* (once a raid night) */
+  const R2 = store.get(RR_KEY, null) || {}, left = Math.max(1, Math.round((nx.start - now) / 60000));
+  const title = ['Raid in ' + (left >= 60 && left % 60 === 0 ? left / 60 + (left === 60 ? ' hour' : ' hours') : left + ' min'), R2.team || (T && T.team), R2.diff].filter(Boolean).join(' · ');
+  j('/setup/remind', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, text: 'Click for tonight\'s plan on debriefme.io.', url: 'https://debriefme.io/?go=plan' }) }).catch(() => {}); }
+// (Home inside the app turned it on or off: the same switch here)
+window.addEventListener('storage', (e) => { if (e.key !== RR_KEY) return; try { const o = JSON.parse(e.newValue || 'null'), s = store.get('dbf-set', null) || {}; if (o && typeof o.on === 'boolean' && (s.remind !== false) !== o.on) { s.remind = o.on; store.set('dbf-set', s); } } catch (x) { /* (as it was) */ } });
+setTimeout(rrTick, 15000); setInterval(rrTick, 60000);
 j('/app-version').then((x) => { RECAP.addonV = x.addon || ''; RECAP.appV = RECAP.appV || x.version || ''; }).catch(() => {});
 stat('Loading Debrief…', 'busy'); renderMain();
 engineReady.then(() => loadLogs()).catch((e) => stat(e.message, 'err'));

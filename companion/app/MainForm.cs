@@ -190,10 +190,21 @@ namespace Debrief {
 
     // (no clipboard: nothing is copied or pasted since Oct 24; the copy code left on Oct 25)
     // (an update is ready (Oct 25): a note by the clock, once per version; clicking it opens the window, where Update now is)
-    bool balloonHooked;
+    bool balloonHooked; string balloonUrl;
+    // (a note's click: the raid reminder opens its page on debriefme.io, any other note opens this window)
+    void HookBalloon() {
+      if (balloonHooked) return; balloonHooked = true;
+      tray.BalloonTipClicked += (s, e) => { var u = balloonUrl; balloonUrl = null; if (u != null) { try { Process.Start(new ProcessStartInfo(u) { UseShellExecute = true }); } catch { } } else ShowInFront(); };
+      tray.BalloonTipClosed += (s, e) => balloonUrl = null;
+    }
+    // (the raid reminder (Nov 3, the studio's raid-reminder-brief.md): a Windows notification by the clock with the Debrief icon and Windows' own sound)
+    public void Remind(string title, string text, string url) {
+      Action a = () => { HookBalloon(); balloonUrl = url; tray.ShowBalloonTip(15000, string.IsNullOrEmpty(title) ? "Raid soon" : title, string.IsNullOrEmpty(text) ? " " : text, ToolTipIcon.None); };
+      try { if (InvokeRequired) BeginInvoke(a); else a(); } catch { }
+    }
     public void UpdateReady(string v) {
       Action a = () => {
-        if (!balloonHooked) { balloonHooked = true; tray.BalloonTipClicked += (s, e) => ShowInFront(); }
+        HookBalloon(); balloonUrl = null;
         tray.ShowBalloonTip(8000, "Debrief " + v + " is ready", "Update when it suits you, not mid-raid: open Debrief and press Update now.", ToolTipIcon.None);
       };
       try { if (InvokeRequired) BeginInvoke(a); else a(); } catch { }

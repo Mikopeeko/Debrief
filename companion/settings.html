@@ -86,7 +86,7 @@ button { font: inherit; color: inherit; }
 .st button { background: none; border: 0; color: var(--faint); padding: 0 4px; cursor: pointer; font-size: 14px; line-height: 1; }
 .st button:hover { color: var(--text); } .st button:disabled { opacity: .3; cursor: default; }
 .st b { min-width: 30px; text-align: center; color: var(--text); font-weight: 600; }
-.row.off .st { opacity: .35; }
+.row.off .st { opacity: .35; } .ct.off .seg { opacity: .4; }
 .seg { display: flex; gap: 14px; flex: none; }
 .seg button { background: none; border: 0; color: var(--muted); font: 600 13px 'Barlow Condensed', sans-serif; padding: 3px 0; cursor: pointer; }
 .seg button:hover { color: var(--text); }
@@ -155,7 +155,7 @@ const PRE = {
 };
 const showOf = (p) => { const o = {}; for (const k of ALL) o[k] = !PRE[p].off.includes(k); return o; };
 const DEF = () => ({ v: 1, preset: 'standard', show: showOf('standard'), max: Object.assign({}, PRE.standard.max), openSecs: false, onlyBad: false, bossFirst: false, goalHps: 0, goalDps: 0,
-  hideFight: true, autoClose: 0, side: 'right', screen: 'main', lock: false, accent: 'class', colorblind: false, style: 'panels', font: 'debrief', size: 1, bg: 0.97, me: '' });
+  hideFight: true, autoClose: 0, remind: true, remindMins: 30, side: 'right', screen: 'main', lock: false, accent: 'class', colorblind: false, style: 'panels', font: 'debrief', size: 1, bg: 0.97, me: '' });
 const load = () => { let s = null; try { s = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { s = null; } const d = DEF(); if (!s) return d; s.show = Object.assign(d.show, s.show || {}); s.max = Object.assign(d.max, s.max || {}); return Object.assign(d, s); };
 let S = load();
 const sw = (k, def) => { try { const v = localStorage.getItem('dbf-sw-' + k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } }; /* (Pop up stays where the Companion window keeps it) */
@@ -214,6 +214,7 @@ function pageHtml() {
       row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true)), '', ' data-tour="pop"') +
       row('Recap key', HKMSG ? '<span class="msg">' + esc(HKMSG) + '</span>' : kd, '<div class="kc' + (HKWAIT ? ' wait' : '') + '">' + (HKWAIT ? 'Press your keys…' : k) + '</div><button type="button" class="lk" data-hk="1">' + (HKWAIT ? 'Cancel' : 'Change') + '</button>', '', ' data-tour="pop"') +
       row('Hide during a fight', 'It stays closed until the fight ends.', tg('hideFight', S.hideFight), '', ' data-tour="pop"') +
+      row('Raid reminder', 'A Windows notification before your team\'s raid. Click it for tonight\'s plan.', '<div class="ct' + (S.remind ? '' : ' off') + '">' + seg('remindMins', [[15, '15 min'], [30, '30 min'], [60, '1 hour']], S.remindMins || 30) + tg('remind', S.remind) + '</div>', '', ' data-tour="pop"') + /* (Nov 3, the studio's raid-reminder-brief.md) */
       row('Close by itself', 'Not while your mouse is on it.', seg('autoClose', [[0, 'Never'], [30, '30 s'], [60, '60 s'], [120, '2 min']], S.autoClose), '', ' data-tour="pop"') +
       '<div class="lab">Where it sits</div>' +
       (SETUP && SETUP.screens >= 2 ? row('Screen', 'Your second screen keeps it off the game.', seg('screen', [['main', 'Main screen'], ['second', 'Second screen']], S.screen), '', ' data-tour="pop"') : '') +
@@ -296,7 +297,7 @@ document.addEventListener('click', async (e) => {
   if (d.me != null) { S.me = d.me; OPENDD = ''; save(); return; }
   if (OPENDD) { OPENDD = ''; }
   if (d.tg) { const k = d.tg; if (k === 'pop') { try { localStorage.setItem('dbf-sw-' + k, JSON.stringify(!sw(k, true))); } catch (x) { /* kept */ } draw(); return; } S[k] = !S[k]; if (k === 'lock' || k === 'hideFight') { save(); return; } save(); return; }
-  if (d.seg) { const k = d.seg, v = d.v; if (k === 'preset') { S.preset = v; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; } else S[k] = k === 'autoClose' ? +v : v; save(); return; }
+  if (d.seg) { const k = d.seg, v = d.v; if (k === 'preset') { S.preset = v; S.show = showOf(v); S.max = Object.assign({}, PRE[v].max); S.openSecs = PRE[v].openSecs; } else S[k] = k === 'autoClose' || k === 'remindMins' ? +v : v; save(); return; }
   if (d.st) { const r = CARD.concat(RAID).find((x) => x[4] === d.st); pvFor(r); S.max[d.st] = Math.max(r[5], Math.min(r[6], (S.max[d.st] || r[5]) + (+d.d))); save(); return; }
   if (d.goal) { const k = d.goal, cur = S[k] || 0, step = cur >= 1e6 ? 50000 : 10000; let v = cur + (+d.d) * step; if (!cur && +d.d > 0) { const l = SETUP && SETUP.lastV; v = l ? Math.round(l * 1.1 / 10000) * 10000 : 100000; } S[k] = Math.max(0, v); save(); return; }
   if (d.acc) { S.accent = d.acc; save(); return; }

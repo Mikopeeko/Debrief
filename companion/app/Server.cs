@@ -20,6 +20,7 @@ namespace Debrief {
     public Action Quit;
     public Func<int, int, string, string> SetHotkey; public Func<Dictionary<string, object>> HotkeyInfo; // (the recap hotkey (Nov 1))
     public Action OpenSettings, ShowSample; public Func<string> PickWowDir; // (the settings window (Nov 3))
+    public Action<string, string, string> Remind; // (the raid reminder's Windows notification (Nov 3))
     static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
     // (the window marks its requests; an old Edge window from the PowerShell app still open on this address gets told to stand down,
     // so a pull isn't copied twice)
@@ -167,6 +168,10 @@ namespace Debrief {
         else if (get && path == "/settings") Send(res, File.ReadAllBytes(Path.Combine(here, "settings.html")), "text/html; charset=utf-8");
         else if (post && path == "/setup/open") { OpenSettings?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
         else if (post && path == "/setup/sample") { ShowSample?.Invoke(); SendJson(res, new Dictionary<string, object> { { "ok", true } }); }
+        else if (post && path == "/setup/remind") { // (the raid reminder: a Windows notification; a click opens tonight's plan on debriefme.io)
+          var b = Json.Deserialize<Dictionary<string, object>>(Body(req)) ?? new Dictionary<string, object>(); Func<string, string> g = (k) => b.ContainsKey(k) ? Convert.ToString(b[k]) : "";
+          var url = g("url"); if (!url.StartsWith("https://debriefme.io/")) url = "https://debriefme.io/";
+          Remind?.Invoke(g("title"), g("text"), url); SendJson(res, new Dictionary<string, object> { { "ok", Remind != null } }); }
         else if (path == "/setup/winmode") SendJson(res, post ? WinMode.Switch(here) : WinMode.Info()); // (Windowed (Fullscreen) by a press (Nov 3, the walkthrough))
         else if (post && path == "/setup/wowdir") SendJson(res, new Dictionary<string, object> { { "logs", PickWowDir != null ? PickWowDir() : "" } });
         else if (get && path == "/setup") SendJson(res, SetupInfo());

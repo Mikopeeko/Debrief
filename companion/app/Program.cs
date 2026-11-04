@@ -73,7 +73,7 @@ namespace Debrief {
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
       var form = new MainForm(Here, port); Form = form;
-      var server = new Server(Here, port) { Quit = form.QuitApp, Popup = form.Popup, SetHotkey = form.SetHotkey, HotkeyInfo = form.HotkeyInfo, OpenSettings = form.ShowSettings, PickWowDir = form.PickWowDir, ShowSample = form.ShowSample };
+      var server = new Server(Here, port) { Quit = form.QuitApp, Popup = form.Popup, SetHotkey = form.SetHotkey, HotkeyInfo = form.HotkeyInfo, OpenSettings = form.ShowSettings, PickWowDir = form.PickWowDir, ShowSample = form.ShowSample, Remind = form.Remind };
       var up = false;
       for (int i = 0; i < 8 && !(up = server.Start()); i++) { Thread.Sleep(750); if (i == 2) Setup.StopOldApp(); }
       if (!up) {
