@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'A new Home page', d: 'Home welcomes you back with what\'s new since your last visit, the boss you\'re working on with the one fix for the next pull, and your week: raid kills, your Mythic+ vault and the reset. Your team\'s scores, keys and raid nights are under it.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+  { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'Home is your home base', d: 'Home welcomes you back with what\'s new since your last visit, your next raid, your week and WoW news, with one click back to wherever you were.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
     "Debrief Companion: if WoW is in true Fullscreen, one press switches it to Windowed (Fullscreen), so your recap can show over the game. With WoW open, it switches the moment you close WoW.",
     "Debrief Companion: the pop-up still resizes, but it stops where your recap ends, so it never grows bigger than the card.",
     "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
@@ -30923,6 +30923,7 @@ const PAGE_TITLE_SITE = 'Debrief: WoW raid log review for Mythic progression'; /
 const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine, st.b, st.d].join('|') : ''); // (b, d: a guide's boss and Heroic or Mythic, so its address follows them (Oct 21))
 function navNote() {
   const st = navState(); if (!st) return;
+  try { hdTrack(st); } catch (e) { /* (Home's Jump back in only) */ }
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
   let url = WCL.HOSTED ? (st.v === 'mp' ? (st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.night ? '?night=' + st.night + '&pull=' + st.sn + '&tab=mplus' : location.pathname) : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'mf' ? '?mplus' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
   if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
@@ -32727,6 +32728,71 @@ function hdNewsCard(e) { const old = document.getElementById('hdNC'); if (old) o
     '<a class="hd-gb gold" href="' + esc(it.u) + '" target="_blank" rel="noopener noreferrer">Read the original ›</a></div>';
   document.body.appendChild(el); const close = () => { el.remove(); document.removeEventListener('keydown', key, true); }, key = (k) => { if (k.key === 'Escape') { k.preventDefault(); close(); } };
   el.onclick = (k) => { if (k.target === el || k.target.closest('.hd-ncx')) close(); }; document.addEventListener('keydown', key, true); const a = el.querySelector('a'); if (a) a.focus(); }
+// ---- Home as a home base (Nov 3; Flex: "looks so much better, send it"; the studio's home-base-brief.md): no fixes or coaching on Home, only reminders,
+// schedules, shortcuts, the week and news.
+// (what you opened last, per character on this browser, for Jump back in: a pull on Debriefing or Rotation, a key, a boss guide. navNote calls it)
+const HD_LAST = 'wla-hd-last'; let HD_JKEY = null;
+const hdLastAll = () => { try { return JSON.parse(store.get(HD_LAST) || '{}') || {}; } catch (e) { return {}; } };
+function hdTrack(st) { try { if (!st || !st.v) return; const me = meOf(), id = (me && me.char) || '*', m = hdLastAll(), o = m[id] || {}, it = S.item || {}, now = Date.now();
+    if (st.v === 'p' && st.code && st.fight != null && !it.dungeon) { const x = { code: st.code, fight: st.fight, boss: it.boss || '', at: now }; if (st.tab === 'rot') o.rot = x; else if (st.tab === 'audit' || st.tab === 'overview') o.deb = x; else return; }
+    else if (st.v === 'mp' && st.code) o.mp = { code: st.code, fight: st.fight, d: it.boss || '', l: it.level || null, at: now };
+    else if (st.v === 'gd' && st.b) o.gd = { b: st.b, d: st.d || 'm', at: now };
+    else return;
+    m[id] = o; store.set(HD_LAST, JSON.stringify(m)); } catch (e) { /* (not kept) */ } }
+const hdAgoW = (at) => { const n = hdDays0(at, Date.now()); return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n < 7 ? HD_DN[new Date(at).getDay()] : new Date(at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+const hdClock = (min) => { const h = Math.floor(min / 60) % 24, m = Math.round(min % 60), ap = h >= 12 ? 'PM' : 'AM', h12 = h % 12 || 12; return h12 + (m ? ':' + String(m).padStart(2, '0') : '') + ' ' + ap; };
+// (the team's usual raid times from its own pulls in the last 4 weeks: the middle first pull and the middle last pull end, rounded to 15 minutes, in
+// minutes after the night's midnight (a raid past midnight counts past 24:00))
+function hdRaidTimes(all) { const now = Date.now(), nights = new Map(); for (const v of all) { if (now - v.at > 28 * 864e5) continue; const d = hdDay(v.at), k = d.toDateString(), m0 = new Date(k).getTime(), a = (v.at - m0) / 60000, b = (v.at + (v.dur || 0) * 1000 - m0) / 60000, o = nights.get(k);
+    if (!o) nights.set(k, { a, b }); else { o.a = Math.min(o.a, a); o.b = Math.max(o.b, b); } }
+  if (!nights.size) return null; const med = (l) => { const s = l.slice().sort((x, y) => x - y); return s[Math.floor((s.length - 1) / 2)]; }, r15 = (x) => Math.round(x / 15) * 15, L = [...nights.values()];
+  return { start: r15(med(L.map((x) => x.a))), end: r15(med(L.map((x) => x.b))) }; }
+// (the next raid: the next usual raid day whose start is still ahead, or the one going on now)
+function hdNextRaid(days, tm) { if (!days.length || !tm) return null; const now = Date.now(), t0 = new Date(); t0.setHours(0, 0, 0, 0);
+  for (let i = -1; i < 8; i++) { const d = new Date(t0); d.setDate(t0.getDate() + i); if (!days.includes(d.getDay())) continue; const s = d.getTime() + tm.start * 60000, e = d.getTime() + tm.end * 60000;
+    if (now < e) return { day: d, start: s, end: e, now: now >= s }; } return null; }
+// (Debrief Companion's raid reminder (the studio: the pop-up is the app's job): the switch and the team's schedule, kept on this browser for the app's page
+// to read; the app can also ask the site for any team's raid nights at /api/raidtimes?id=<team>)
+const HD_REMIND = 'wla-raid-remind'; let HD_TICK = 0;
+const hdCd = (ms) => { const m = Math.max(0, Math.round((ms - Date.now()) / 60000)); return m >= 2880 ? 'in ' + Math.round(m / 1440) + ' days' : m >= 60 ? 'in ' + Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : 'in ' + m + 'm'; };
+const hdRemind = () => { try { return JSON.parse(store.get(HD_REMIND) || 'null') || {}; } catch (e) { return {}; } };
+// (a Raider.IO look-up for one character (an alt with no team), kept an hour)
+const HD_RIOC = new Map();
+function hdRioC(c, ready) { const o = HD_RIOC.get(c.gid); if (o && (o.p || Date.now() - o.at < 3600e3)) return o.d; const x = { at: Date.now(), d: o ? o.d : null, p: null };
+  x.p = WCL.rioTeam(hdRegion(c), [[c.name, String(c.server || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, '')]]).then((d) => { x.d = ((d && d.chars) || [])[0] || { none: true }; x.at = Date.now(); })
+    .catch(() => { x.d = x.d || { none: true }; x.at = Date.now() - 3300e3; }).finally(() => { x.p = null; ready(); });
+  HD_RIOC.set(c.gid, x); return x.d; }
+// (the season row: item level, Raider.IO score, best parse; shared by your team's Home and an alt's)
+const hdSeason = (ch, chR, wait) => '<div class="hd-ss"><span><b class="num">' + (wait && ch ? '<span class="hd-shim" style="width:2em;height:20px"></span>' : chR && chR.ilvl ? Math.round(chR.ilvl) : '—') + '</b><em>item level</em></span><span><b class="num" style="color:' + esc((chR && chR.col) || 'var(--text)') + '">' + (wait && ch ? '<span class="hd-shim" style="width:2.6em;height:20px"></span>' : chR && chR.score != null ? hdNum(chR.score) : '—') + '</b><em>Raider.IO</em></span>' +
+  '<span><b class="num" style="color:' + (ch && ch.parse ? hdPCol(ch.parse.best) : 'var(--text)') + '">' + (ch && ch.parse ? Math.floor(ch.parse.best) : '—') + '</b><em>best parse</em></span></div>';
+const hdVault = (ch, chR, wait) => { const wk = ((chR && chR.week) || []).slice().sort((a, b) => b.l - a.l), wkT = wk.filter((x) => x.up > 0).length;
+  return { html: !ch ? '<div class="hd-wv"><small>—</small></div>' : wait ? '<div class="hd-vault">' + [0, 1, 2].map(() => '<span class="hd-shim" style="width:100%;height:30px"></span>').join('') + '</div>' : '<div class="hd-vault">' + [1, 4, 8].map((n) => { const on = wk.length >= n; return '<span class="hd-vs' + (on ? ' on' : '') + '">' + (on ? '<u></u><b class="num">+' + wk[n - 1].l + '</b>' : n + (n === 1 ? ' key' : ' keys')) + '</span>'; }).join('') + '</div>',
+    sub: !ch ? 'Pick your character to see your vault.' : wait ? '<span class="hd-shim" style="width:9em"></span>' : plural(wk.length, 'key') + ' this week' + (wk.length ? ', ' + wkT + ' timed' : '') }; };
+const hdResetCell = (reg) => { const rs = hdReset(reg), left = rs.next - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor((left % 864e5) / 3600e3), mi = Math.floor((left % 3600e3) / 60000), rd = new Date(rs.next);
+  return { v: '<div class="hd-wv"><span class="num">' + (dd ? dd + 'd ' + hh + 'h' : hh ? hh + 'h ' + mi + 'm' : mi + 'm') + '</span></div>', d: esc(HD_DN[rd.getDay()] + ', ' + rd.toLocaleTimeString('en-US', { hour: 'numeric', minute: rd.getMinutes() ? '2-digit' : undefined })), rs }; };
+const hdWCell = (l, v, d) => '<div class="hd-wk"><div class="hd-lab">' + l + '</div>' + v + '<div class="hd-kd">' + d + '</div></div>';
+// (Jump back in: four doors back into the site, each to the exact place you were; never empty: with no history, the newest night, your newest key,
+// your spec's rotation on the newest night, the current boss's guide)
+function hdJump(J) { const { ch, chR, nightsL, gb, gd } = J, last = hdLastAll()[(ch && ch.gid) || '*'] || hdLastAll()['*'] || {}, n0 = nightsL[0];
+  const cell = (k, ic, cls, t, s, act) => '<' + (act.href ? 'a href="' + esc(act.href) + '"' : 'button type="button"' + (act.data || '')) + ' class="hd-jc ' + cls + '"><span class="hd-ji" aria-hidden="true">' + ic + '</span><span class="hd-jt"><span class="hd-lab">' + k + '</span><b title="' + esc(hdPlain(t)) + '">' + t + '</b><em>' + s + '</em></span><i class="hd-jr" aria-hidden="true">›</i></' + (act.href ? 'a' : 'button') + '>';
+  const q = (code, fight, tab) => '?report=' + encodeURIComponent(code) + '&fight=' + encodeURIComponent(fight) + '&tab=' + tab;
+  const pct = (n) => (n && n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '');
+  const deb = last.deb ? cell('Debriefing', tabIco('audit'), 'j-deb', esc(last.deb.boss || 'Your last pull'), 'pull ' + esc(String(last.deb.fight)) + ' · opened ' + esc(hdAgoW(last.deb.at)), { href: q(last.deb.code, last.deb.fight, 'audit') })
+    : n0 && n0.op ? cell('Debriefing', tabIco('audit'), 'j-deb', 'Last night: ' + esc(n0.main.boss), esc(nightLabel(n0.at)) + ' · ' + plural(n0.main.l.length, 'pull') + (pct(n0) ? ' · best ' + pct(n0) : n0.kills.length ? ' · ' + plural(n0.kills.length, 'kill') : ''), { href: q(n0.op.code, n0.op.fight, 'audit') })
+    : cell('Debriefing', tabIco('audit'), 'j-deb', 'Open a raid night', 'a log or a report', { data: ' data-hdj="open"' });
+  const rr = chR && chR.recent && chR.recent.slice().sort((a, b) => b.at - a.at)[0];
+  if (rr) { const me = { ...rr, who: ch.name, cls: ch.cls, srv: String(ch.server || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, ''), reg: hdRegion(ch) }; HD_JKEY = { ...me, with: [me] }; } else HD_JKEY = null;
+  const mp = last.mp ? cell('Mythic+', MP_TICO, 'j-mp', 'Your last key: ' + esc(last.mp.d || 'a key') + (last.mp.l ? ' +' + last.mp.l : ''), 'opened ' + esc(hdAgoW(last.mp.at)), { href: q(last.mp.code, last.mp.fight, 'mplus') })
+    : rr ? cell('Mythic+', MP_TICO, 'j-mp', 'Your last key: ' + esc(rr.d) + ' +' + rr.l, esc(hdAgoW(rr.at)) + ' · ' + (rr.up > 0 ? 'timed +' + rr.up : 'over time'), { data: ' data-hdj="key"' })
+    : cell('Mythic+', MP_TICO, 'j-mp', 'Find your keys', 'every key you uploaded this season', { data: ' data-hdj="keys"' });
+  const spec = (ch && ((ch.parse && ch.parse.spec) || (chR && chR.spec))) || '', clsN = ch ? (E.CLASSES[ch.cls] || [])[0] || '' : '', rotT = 'Your ' + esc((spec + ' ' + clsN).trim() || 'spec') + ' rotation';
+  const rot = last.rot ? cell('Rotation', tabIco('rot'), 'j-rot', rotT, 'last looked at ' + esc(hdAgoW(last.rot.at)) + (last.rot.boss ? ' · ' + esc(hdBossShort(last.rot.boss)) : ''), { href: q(last.rot.code, last.rot.fight, 'rot') })
+    : n0 && n0.op ? cell('Rotation', tabIco('rot'), 'j-rot', rotT, 'on the newest night, ' + esc(nightLabel(n0.at)), { href: q(n0.op.code, n0.op.fight, 'rot') })
+    : cell('Rotation', tabIco('rot'), 'j-rot', rotT, 'open a raid night to see it', { data: ' data-hdj="open"' });
+  const gB = last.gd ? last.gd.b : gb, gD = last.gd ? last.gd.d : gd || 'm';
+  const gdz = gB ? cell('Guides', tabIco('gdz'), 'j-gd', esc(hdBossShort(gB)) + ' guide', (gD === 'h' ? 'Heroic' : 'Mythic') + (last.gd ? ' · opened ' + esc(hdAgoW(last.gd.at)) : ' · the boss you\'re on'), { data: ' data-hdguide="' + esc(gB) + '" data-hdgd="' + esc(gD) + '"' })
+    : cell('Guides', tabIco('gdz'), 'j-gd', 'Boss guides', 'every boss, with maps', { data: ' data-hdj="guides"' });
+  return '<nav class="hd-pn hd-jump" aria-label="Jump back in">' + deb + mp + rot + gdz + '</nav>'; }
 // (the page)
 function hdDash(X) {
   const { g, list, all, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, you, info } = X;
@@ -32812,8 +32878,8 @@ function hdDash(X) {
     const cfg = typeof PROGRESS !== 'undefined' ? PROGRESS[gb] : null, marks = []; if (cfg && !cfg.pool && cfg.phases && cfg.phases.length > 1) { let acc = 0; for (const p of cfg.phases) { const w = 100 * phShare(cfg, p); if (!/^Int/i.test(p)) marks.push({ p, at: acc }); acc += w; } }
     const bar = gp != null ? '<div class="hd-gbw"><div class="hd-gbl">' + marks.filter((m) => m.at < 82).map((m) => '<span style="left:' + m.at.toFixed(1) + '%">' + esc(m.p) + '</span>').join('') + '<span class="r">' + gp + '% of the fight</span></div><div class="hd-gbar"><u style="width:' + gp + '%"></u>' + marks.slice(1).map((m) => '<i style="left:' + m.at.toFixed(1) + '%"></i>').join('') + '</div></div>' : '';
     goal = '<section class="hd-pn hd-goal">' + art(gb) + '<div class="hd-gk">The goal · ' + dN + ' ' + (order.indexOf(gb) + 1) + ' of ' + order.length + (nerf ? '<button class="hd-ntag" type="button" data-hdnews="' + esc(nerf.u) + '">' + (nerfP ? 'Nerfed ' + esc(nerfP) + '%' : 'Nerfed') + ' · ' + esc(new Date(nerf.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</button>' : '') + '</div><h2>Kill ' + esc(gb) + '</h2>' +
-      '<div class="hd-gr1"><div class="hd-gp"><span class="num">' + (gp != null ? gp + '%' : '—') + '</span><em>best pull' + (gnb && gnb.label ? ' · ' + esc(String(gnb.label).replace(/ · /g, ', ')) + (/%$/.test(gnb.label) ? ' left' : '') : '') + '</em></div>' +
-      '<div class="hd-gnb">' + (newBest ? '<span class="hd-tag hd-tagp">New best ' + esc(hdWd(lastP.at)) + '</span>' : '') + '<em>' + (newBest ? 'up from ' + prevMax + '% · ' : '') + plural(gl.length, 'pull') + ' · ' + plural(per.size, 'night') + (newBest ? '' : ' · ' + esc(durH(gTime)) + ' on it') + '</em></div>' + spark + '</div>' + bar +
+      '<div class="hd-gr1"><span class="hd-gp"><span class="num">' + (gp != null ? gp + '%' : '—') + '</span></span>' + (newBest ? '<span class="hd-tag hd-tagp">New best ' + esc(hdWd(lastP.at)) + '</span>' : '') + spark + '</div>' +
+      ((t) => '<div class="hd-gline" title="' + esc(t) + '">' + esc(t) + '</div>')('best pull' + (gnb && gnb.label ? ' · ' + String(gnb.label).replace(/ · /g, ', ') + (/%$/.test(gnb.label) ? ' left' : '') : '') + (newBest ? ' · up from ' + prevMax + '% over ' + plural(gl.length, 'pull') : ' · ' + plural(gl.length, 'pull') + ' over ' + plural(per.size, 'night'))) + bar +
       /* (no fixes on Home (Flex, Nov 3: "i dont want the homepage to have fixes on it … i want it more to be a home base"): fixes live on Debriefing and Rotation) */
       '<div class="hd-gbt">' + (gOp ? '<button class="hd-gb gold" id="pnwGo" type="button" data-code="' + esc(gOp.code) + '" data-fight="' + esc(String(gOp.fight)) + '">Open the last night ›</button>' : '') + guideB(gb) + '</div></section>'; }
   else { const kl = list.filter((v) => v.kill && v.dur), fast = kl.slice().sort((a, b) => a.dur - b.dur)[0], allK = order.length && killedOn(cur) === order.length;
@@ -32823,18 +32889,25 @@ function hdDash(X) {
         : '<h2>No pulls on ' + dN + ' yet</h2><div class="hd-gempty">When your team pulls a boss on ' + dN + ', it shows up here.</div>') +
       '<div class="hd-gbt">' + (allK && up ? '<button class="hd-gb gold" type="button" data-hddiff="' + esc(String(up[0])) + '">Try ' + esc(up[1]) + ' ›</button>' : '') + (lastKill ? guideB(lastKill.boss) : '') + '</div></section>'; }
   // (4. your week, 2 x 2: raid kills since the reset, your Mythic+ vault (1 / 4 / 8 keys), your season, the reset)
-  const rs = hdReset(hdRegion(ch || g)), wkKill = new Set((all || list).filter((v) => v.kill && v.at >= rs.last).map((v) => v.boss + '|' + v.diffId)).size;
-  const wk = ((chR && chR.week) || []).slice().sort((a, b) => b.l - a.l), wkT = wk.filter((x) => x.up > 0).length;
-  const vault = '<div class="hd-vault">' + [1, 4, 8].map((n) => { const on = wk.length >= n; return '<span class="hd-vs' + (on ? ' on' : '') + '">' + (on ? '<u></u><b class="num">+' + wk[n - 1].l + '</b>' : n + (n === 1 ? ' key' : ' keys')) + '</span>'; }).join('') + '</div>';
-  const left = rs.next - Date.now(), dd = Math.floor(left / 864e5), hh = Math.floor((left % 864e5) / 3600e3), mi = Math.floor((left % 3600e3) / 60000), rd = new Date(rs.next);
-  const rAt = HD_DN[rd.getDay()] + ', ' + rd.toLocaleTimeString('en-US', { hour: 'numeric', minute: rd.getMinutes() ? '2-digit' : undefined });
-  const wcell = (l, v, d) => '<div class="hd-wk">' + lab(l) + v + '<div class="hd-kd">' + d + '</div></div>';
+  const RC = hdResetCell(hdRegion(ch || g)), rs = RC.rs, wkKill = new Set((all || list).filter((v) => v.kill && v.at >= rs.last).map((v) => v.boss + '|' + v.diffId)).size, VA = hdVault(ch, chR, wait), farmN = killedOn(cur);
   const week = '<section class="hd-pn hd-week">' +
-    wcell('Raid this week', '<div class="hd-wv"><span class="num">' + wkKill + '</span><small>' + (wkKill === 1 ? 'kill' : 'kills') + (wkKill ? '' : ' yet') + '</small></div>', days.length ? 'next raid: usually ' + days.map((d) => HD_DN[d]).join(' · ') : 'No usual raid days yet') +
-    wcell('Your Mythic+ vault', !ch ? '<div class="hd-wv"><small>—</small></div>' : wait ? '<div class="hd-vault">' + [0, 1, 2].map(() => shim('100%', '28px')).join('') + '</div>' : vault, !ch ? 'Pick your character to see your vault.' : wait ? shim('9em') : plural(wk.length, 'key') + ' this week' + (wk.length ? ', ' + wkT + ' timed' : '')) +
-    wcell('Your season', '<div class="hd-ss"><span><b class="num">' + (wait && ch ? shim('2em', '22px') : chR && chR.ilvl ? Math.round(chR.ilvl) : '—') + '</b><em>item level</em></span><span><b class="num" style="color:' + esc((chR && chR.col) || 'var(--text)') + '">' + (wait && ch ? shim('2.6em', '22px') : chR && chR.score != null ? hdNum(chR.score) : '—') + '</b><em>Raider.IO</em></span>' +
-      '<span><b class="num" style="color:' + (ch && ch.parse ? hdPCol(ch.parse.best) : 'var(--text)') + '">' + (ch && ch.parse ? Math.floor(ch.parse.best) : '—') + '</b><em>best parse</em></span></div>', '') +
-    wcell('Weekly reset', '<div class="hd-wv"><span class="num">' + (dd ? dd + 'd ' + hh + 'h' : hh ? hh + 'h ' + mi + 'm' : mi + 'm') + '</span></div>', esc(rAt)) + '</section>';
+    hdWCell('Raid kills this week', '<div class="hd-wv"><span class="num">' + wkKill + '</span><small>' + (wkKill === 1 ? 'kill' : 'kills') + (wkKill ? '' : ' yet') + '</small></div>', gb ? (farmN ? farmN + ' to farm, then ' + esc(hdBossShort(gb)) : 'then ' + esc(hdBossShort(gb))) : farmN ? 'a full clear: ' + plural(farmN, 'boss').replace('bosss', 'bosses') : '') +
+    hdWCell('Your Mythic+ vault', VA.html, VA.sub) + hdWCell('Your season', hdSeason(ch, chR, wait), '') + hdWCell('Weekly reset', RC.v, RC.d) + '</section>';
+  // (Next raid: when, from the team's own nights (the usual days and the middle first and last pull), a countdown, this week's raid days, and reminders:
+  // tonight's plan when there is one, a 30-minute reminder for Debrief Companion, and whether the app is on)
+  const tm = hdRaidTimes(all || list), nr = hdNextRaid(days, tm), plOk = (() => { try { const o = gb ? JSON.parse(store.get(notesKey(gb)) || 'null') : null; return !!(o && o.list && o.list.length); } catch (e) { return false; } })();
+  const RM = hdRemind(); if (nr && tm) try { store.set(HD_REMIND, JSON.stringify({ ...RM, on: !!RM.on, mins: 30, team: g.name, teamId: g.id, next: nr.start, start: tm.start, end: tm.end, days })); } catch (e) { /* (not kept) */ }
+  const appOn = !!store.get('wla-app-seen'), wkS = new Date(); wkS.setHours(0, 0, 0, 0); wkS.setDate(wkS.getDate() - ((wkS.getDay() + 6) % 7));
+  const chips = nr ? [1, 2, 3, 4, 5, 6, 0].filter((wd) => days.includes(wd)).map((wd) => { const d = new Date(wkS); d.setDate(wkS.getDate() + ((wd + 6) % 7)); const nx = d.toDateString() === nr.day.toDateString(), past = d < wkS || (d.getTime() + tm.end * 60000 < Date.now()); return '<span class="hd-nrc' + (nx ? ' on' : past ? ' past' : '') + '">' + HD_DN[wd] + ' ' + d.getDate() + '</span>'; }).join('') : '';
+  const rRow = (ic, t, end) => '<div class="hd-rr"><span class="hd-rri" aria-hidden="true">' + ic + '</span><span class="hd-rrt" title="' + esc(hdPlain(t)) + '">' + t + '</span>' + end + '</div>';
+  const IC = { plan: '<svg viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="15" rx="2"/><path d="M8 3v4M16 3v4M4.5 10h15"/></svg>', bell: '<svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>', pc: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="11" rx="1.5"/><path d="M9 19.5h6M12 15.5v4"/></svg>' };
+  const nextR = '<section class="hd-pn hd-nr2"><div class="hd-ph"><h3>Next raid</h3><span class="m">' + esc(gName(g)) + ' · ' + dN + '</span><button class="hd-lk2" type="button" data-hdj="plan">Plan ›</button></div>' +
+    (!nr ? '<p class="hd-none">Your raid days show up here after your first logged night.</p>' : '<div class="hd-nrw">' + (nr.now ? '<div class="hd-nrt"><b>Raid night: started ' + esc(hdClock(tm.start)) + '</b></div>'
+      : '<div class="hd-nrt"><b>' + esc(HD_DN[nr.day.getDay()] + ', ' + hdClock(tm.start)) + '</b><span class="hd-nrcd num" id="hdNRcd" data-at="' + nr.start + '">' + hdCd(nr.start) + '</span></div>') +
+      '<div class="hd-nrd">' + chips + '<span class="hd-nrh">' + esc(hdClock(tm.start).replace(/ (AM|PM)$/, (m) => (hdClock(tm.end).endsWith(m.trim()) ? '' : m)) + ' – ' + hdClock(tm.end)) + ', from your logs</span></div></div>' +
+      (nr.now ? '' : (plOk ? rRow(IC.plan, esc(HD_DNL[nr.day.getDay()]) + '\'s plan for ' + esc(hdBossShort(gb)) + ' is ready', '<button class="hd-rrl" type="button" data-hdj="plan">Open ›</button>') : '') +
+        rRow(IC.bell, 'Remind me 30 min before raid', '<button class="hd-sw' + (RM.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + !!RM.on + '" data-hdremind="1" aria-label="Remind me 30 minutes before raid"><i></i></button>') +
+        (appOn ? rRow(IC.pc, 'Companion app is on: your pulls save themselves', '<span class="hd-rron">On</span>') : rRow(IC.pc, 'The Companion app saves your pulls by itself', '<button class="hd-rrl gold" type="button" data-hdj="app">Get it ›</button>')))) + '</section>';
   // (WoW news, beside your week and as tall: the newest retail stories (All: every story), a picture, the headline, Wowhead and when; a click opens
   // the story in a new tab; More news adds the next 10 in the same scrolling list)
   const wAll = !!S.hdNewsAll, wl = newsAll.filter((it) => wAll || hdRetail(it)), wn = Math.min(wl.length, OPEN.wnews ? 15 : 5);
@@ -32883,11 +32956,16 @@ function hdDash(X) {
     (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + (kLink ? '</button>' : '</div>'); /* (a key opens on the Mythic+ tab; while that's coming soon, not a link) */
   const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">newest first</span>' + (keysAll.length > 5 ? allB('keys') : '') + '</div>' + (wait ? skel(5) : keysAll.length ? hdList('keys', keysAll.slice(0, OPEN.keys ? keysAll.length : 5).map(kRow).join('')) : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
   return '<div class="home prog hd hd2" id="hdPage">' + (back ? '<div class="pg-links">' + back + '</div>' : '') + greet + pgMsg + meLd + liveStrip + sugg + meCard +
-    '<div class="hd-top">' + news + goal + '</div><div class="hd-mid">' + week + wnews + '</div><div class="hd-team">' + trow + rkBox + team + pills + '<div class="hd-g3">' + ladder + keys + nights + '</div></div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
-// (a character with no team: the header with the character menu, then a plain line)
-function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [], first = hdSeen(c, null).at == null;
+    hdJump({ ch, chR, nightsL, gb, gd: gDiff }) + '<div class="hd-top">' + news + goal + '</div><div class="hd-mid">' + nextR + week + wnews + '</div><div class="hd-team">' + trow + rkBox + team + pills + '<div class="hd-g3">' + nights + ladder + keys + '</div></div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
+// (a character with no team: the greeting, Jump back in, a plain line with Add a team, then their week (vault, season, reset))
+function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [], first = hdSeen(c, null).at == null, chR0 = hdRioC(c, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); }), wait = !chR0, chR = chR0 && !chR0.none ? chR0 : null;
+  const VA = hdVault(c, chR, wait), RC = hdResetCell(hdRegion(c));
   return '<div class="home prog hd hd2" id="hdPage"><header class="hd-head hd-greet"><span class="hd-gface">' + hdFace(c) + '</span><div class="hd-tt"><h1>' + (first ? 'Welcome, ' : 'Welcome back, ') + '<span style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</span></h1><p>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + '</p></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
-    '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' + (rest || '') + '</div>'; }
+    hdJump({ ch: c, chR, nightsL: [], gb: null, gd: 'm' }) +
+    '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' +
+    '<section class="hd-pn hd-week hd-week3">' + hdWCell('Your Mythic+ vault', VA.html, VA.sub) + hdWCell('Your season', hdSeason(c, chR, wait), '') + hdWCell('Weekly reset', RC.v, RC.d) + '</section>' + (rest || '') + '</div>'; }
+// (the Companion app's own window marks this browser storage as seen (its page, /app); Home's Next raid card reads it)
+try { if (location.pathname === '/app' || /[?&]mpcard=1/.test(location.search)) store.set('wla-app-seen', String(Date.now())); } catch (e) { /* (not kept) */ }
 // (the page's own clicks: the character menu, Show all and All ›, the boss track and the night chart)
 function hdBind(ROOT) {
   const b = ROOT.querySelector('#hdMe'), m = ROOT.querySelector('#hdMeMenu');
@@ -32900,6 +32978,10 @@ function hdBind(ROOT) {
   ROOT.querySelectorAll('[data-hdaddteam]').forEach((x) => (x.onclick = () => gsStart()));
   ROOT.querySelectorAll('[data-hdev]').forEach((x) => (x.onclick = async () => { const e = HD_EVS[+x.dataset.hdev]; if (!e) return; if (e.news) { hdNewsCard(e); return; } if (e.mk) { mpGo(e.mk.code, e.mk.fight); return; } if (e.key) { hdKeyOpen(e.key); return; }
     if (e.op) try { await openWcl({ code: e.op.code, fight: +e.op.fight || null }, await wclCreds()); } catch (er) { toast('<span>' + esc(er.message) + '</span>', 6000); } }));
+  // (Jump back in, Plan, the Companion app; the reminder switch; the countdown, once a minute while Home is up)
+  ROOT.querySelectorAll('[data-hdj]').forEach((x) => (x.onclick = () => { const k = x.dataset.hdj; try { if (k === 'key' && HD_JKEY) hdKeyOpen(HD_JKEY); else if (k === 'keys') mpFinder(); else if (k === 'guides') openGuides(); else if (k === 'plan') planPage(); else if (k === 'app') openInGame(); else home(); } catch (e) { console.warn(e); } window.scrollTo(0, 0); }));
+  ROOT.querySelectorAll('[data-hdremind]').forEach((x) => (x.onclick = () => { const o = hdRemind(); o.on = !o.on; try { store.set(HD_REMIND, JSON.stringify(o)); } catch (e) { /* (not kept) */ } x.classList.toggle('on', o.on); x.setAttribute('aria-checked', String(o.on)); }));
+  clearInterval(HD_TICK); if (ROOT.querySelector('#hdNRcd')) HD_TICK = setInterval(() => { const el = document.getElementById('hdNRcd'); if (!el) { clearInterval(HD_TICK); return; } el.textContent = hdCd(+el.dataset.at); }, 60000);
   ROOT.querySelectorAll('[data-hdnf]').forEach((x) => (x.onclick = () => { S.hdNF = x.dataset.hdnf; S.hdOpen = { ...(S.hdOpen || {}), news: false }; renderProgress(); }));
   ROOT.querySelectorAll('[data-hdwall]').forEach((x) => (x.onclick = () => { S.hdNewsAll = x.dataset.hdwall === '1'; renderProgress(); }));
   ROOT.querySelectorAll('[data-hdnews]').forEach((x) => (x.onclick = () => { const it = ((HD_NEWS.d && HD_NEWS.d.items) || []).find((y) => y.u === x.dataset.hdnews); if (it) hdNewsCard({ news: it, why: 'your current boss', mean: 'It\'s about the boss your team is working on. A change to it can change how your next pulls go.' }); }));

@@ -408,6 +408,11 @@ async function rioOne(r, s, n) { let res; try { res = await fetch('https://raide
 // summary the page only uses to match a story to your raid, spec or dungeons (never shown))
 const whText = (s) => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 const whTag = (x, t) => { const m = new RegExp('<' + t + '[^>]*>([\\s\\S]*?)</' + t + '>').exec(x); return m ? m[1] : ''; };
+// (a team's raid nights for Debrief Companion's raid reminder (Nov 3, the studio's home-base-brief.md): its uploads of the last 4 weeks as [start, end]
+// in UTC ms, Mythic+ uploads left out. The app works out the usual days and times in its own clock the way Home does: the weekdays with 2 or more
+// nights, the middle start and the middle end, rounded to 15 minutes)
+ROUTES['/api/raidtimes'] = { q: () => TEAM_REPORTS_Q, age: 3600, v: (p) => { const id = parseInt(p.get('id'), 10); return id > 0 ? { id, page: 1 } : null; },
+  out: (d) => { const now = Date.now(), L = ((d.reportData && d.reportData.reports) || {}).data || []; return { nights: L.filter((r) => r.zone && !/mythic\+/i.test(r.zone.name || '') && now - r.startTime < 28 * 864e5).map((r) => [r.startTime, r.endTime]) }; } };
 ROUTES['/api/wownews'] = { age: 1800, v: () => ({}),
   run: async () => { let res; try { res = await fetch('https://www.wowhead.com/news/rss/all', { headers: { 'User-Agent': 'Debrief (https://debriefme.io)', Accept: 'application/rss+xml, application/xml' } }); } catch (e) { return { error: 'The news couldn\'t be read right now.', status: 502 }; }
     if (!res.ok) return { error: 'The news couldn\'t be read right now.', status: 502 }; const xml = await res.text(), items = [];
