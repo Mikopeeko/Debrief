@@ -667,7 +667,7 @@ const GDZ_CA_M = {
     if (o && o.kick) return gdzCaKicks(k, RA, MA);
     k.boss('hm', 'Malacrass', 0, 18, 20).add('ar', 'Spiteful Soulcoiler', 0, RA[0], RA[1]).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
     k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 14, 31, 5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r3', 'r4', 'r5', 'r6', 'r7'], -4, 12, 6);
-    k.at(0, ['m1', 'm2'], 18, 28, 2).at(0, ['r1', 'r2'], -16, -10, 2);
+    k.at(0, 'm1', 8, 26).at(0, 'm2', 28, 29).at(0, ['r1', 'r2'], -16, -10, 2); /* (the melee bombs start either side of the melee, so neither walks over Malacrass to their add) */
     // (each pair about 12 yards out on opposite sides of its add: the 15-yard circles overlap only over the add, like a Venn diagram, and
     // reach nobody else; then each picks up their 3 fragments and walks back)
     [['r1', [RA[0] + 8.5, RA[1] - 8.5]], ['r2', [RA[0] - 8.5, RA[1] + 8.5]], ['m1', [MA[0] - 12, MA[1] - 3]], ['m2', [MA[0] + 12, MA[1] - 3]]].forEach(([id, p]) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 1, at: 6, dur: 5, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' });
