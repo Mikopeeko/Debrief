@@ -24524,7 +24524,7 @@ async function teamImport(g, onStep, onFound) {
 async function teamImportRun(g0, onStep, onFound) {
   await HIST.load();
   const g = g0 && groups().find((x) => x.gid === g0.gid); if (!g || !g.id) throw new Error('Add your team first.');
-  const creds = await wclCreds(), ch = g.kind === 'char'; g.done = g.done || {};
+  const creds = await wclCreds(), ch = g.kind === 'char'; g.done = g.done || {}; if (Object.keys(g.done).length && ![...HIST.mem.values()].some((v) => pullGroups(v).includes(g.gid))) g.done = {}; /* (its reports marked read but none of its pulls saved (cleared, or a page left mid-save): read them again, Nov 4) */ if (!ch && !g.kfix) { const C0 = groups().filter((o) => o.kind === 'char' && o.done); for (const code of Object.keys(g.done)) if (C0.some((o) => o.done[code])) delete g.done[code]; g.kfix = 1; } /* (once: a team's reports taken over from a character's read (only that character's pulls) are read again in full, so its alts' pulls are there, Nov 4) */
   if (onStep) onStep('Looking for ' + gName(g) + '\'s reports…');
   // (every report since the tier's first raid, wherever Warcraft Logs filed it: a raid night that also had keys in it is
   // filed under Mythic+, like the Oct 14 Twin Fangs kill; only this tier's bosses are kept from each. A character's list
@@ -24546,7 +24546,7 @@ async function teamImportRun(g0, onStep, onFound) {
   let added = 0, dup = 0, pulls = 0, failed = 0;
   // (a report another of your teams already read in full isn't downloaded again: its saved pulls are this one's too, for a
   // character the ones they were in)
-  const known = (x) => groups().some((o) => o.gid !== g.gid && o.done && o.done[x.code] === x.endTime);
+  const known = (x) => groups().some((o) => o.gid !== g.gid && (ch || o.kind !== 'char') && o.done && o.done[x.code] === x.endTime); /* (a team only takes over another team's full read: a character's read saved only the pulls they were in, so their alts' pulls were missing, Nov 4) */
   for (const x of todo.filter(known)) {
     for (const v of [...(await HIST.reload()).values()]) { if (!v.wcl || v.wcl.code !== x.code || (ch && !(v.players || []).includes(g.name))) continue; const gs = pullGroups(v); pulls++; dup++; if (!gs.includes(g.gid)) { v.groups = gs.concat(g.gid); await HIST.put(v); } }
     g.done[x.code] = x.endTime;
@@ -30960,7 +30960,7 @@ function planRosBind() { const E0 = S.planRosEd, redraw = () => { const y = wind
   $$('#assignBox [data-plrdel]').forEach((b) => (b.onclick = () => { if (!b.dataset.armed) { b.dataset.armed = '1'; b.innerHTML = NOTE_TRASH + ' Click again to delete'; b.classList.add('bad'); return; }
     const o = rostersGet(); o.list = o.list.filter((x) => x.id !== b.dataset.plrdel); if (o.cur === b.dataset.plrdel) o.cur = o.list[0] ? o.list[0].id : null; rostersSet(o); PLAN_RC = null; redraw(); }));
   if ($('#assignBox [data-plrnew]')) $('#assignBox [data-plrnew]').onclick = () => HIST.load().catch(() => null).then(() => { const P = planPool(), /* (the saved nights first, so a first visit's roster comes from them, Nov 4) */ nm = rostersGet().list.length ? 'Roster ' + (rostersGet().list.length + 1) : (P.team && P.team.name ? P.team.name : 'Main roster');
-    const T = P.team ? planTeamRegs(P.team) : null, rdN = !(T && T.reg.length) && !P.core.names.length && P.team && P.team.id && P.team.kind !== 'char', l = T && T.reg.length ? T.reg : P.core.names.length ? P.core.names : P.team && !rdN ? teamMembers(P.team).map((x) => String(x.name).split('-')[0]) : []; /* (nights still to read: wait for them, not the guild's whole member list (alts and all), Nov 4) */
+    const T = P.team ? planTeamRegs(P.team) : null, rdN = !(T && T.reg.length) && !P.core.names.length && P.team && P.team.id && P.team.kind !== 'char', l = T && T.reg.length ? T.reg : P.core.names.length ? P.core.names : P.team && !(P.team.id && P.team.kind !== 'char') ? teamMembers(P.team).map((x) => String(x.name).split('-')[0]) : []; /* (a Warcraft Logs team never starts from its whole member list (alts and all): its nights are read first, Nov 4) */ /* (nights still to read: wait for them, not the guild's whole member list (alts and all), Nov 4) */
     S.planWclMsg = T && T.reg.length ? planTeamMsg(T) : rdN ? 'Reading ' + gName(P.team) + '\'s raid nights…' : ''; S.planRosEd = { id: null, name: nm, auto: true, on: new Map(l.map((n) => [n.toLowerCase(), { n, bench: false }])) }; planAssign(); window.scrollTo({ top: 0 });
     if (P.team && P.team.id && P.team.kind !== 'char') planTeamFill(S.planRosEd, true); });
   if (!E0) return; const sp = planSp(), keep = () => { const i = $('#planRosName'); if (i) E0.name = i.value; };
@@ -31099,9 +31099,10 @@ async function planTeamFill(E0, auto) { const P = planPool(), g = P.team; if (!g
   const btn = $('#assignBox [data-plrwcl]'); if (btn) btn.disabled = true; let err = '';
   if (g.id && g.kind !== 'char') err = await pgTeamRead(g, (t) => { if (S.planRosEd === E0) say(t); }); /* (the shared read: it finishes even if the editor closes first) */
   if (S.planRosEd !== E0 || (auto && !E0.auto)) { const b = $('#assignBox [data-plrwcl]'); if (b) b.disabled = false; return; }
-  const T = planTeamRegs(g);
-  if (!T.reg.length && !E0.on.size) { const l0 = P.core.names.length ? P.core.names : teamMembers(g).map((x) => String(x.name).split('-')[0]); E0.on = new Map(l0.map((n) => [n.toLowerCase(), { n, bench: false }])); } /* (no raid nights read: the core raiders, else everyone on the team, Nov 4) */
-  if (!T.reg.length) say(err === 'busy' ? 'Another tab is still reading the team\'s reports. Try again in a minute.' : err ? 'Couldn\'t read the team from Warcraft Logs: ' + err : 'No raid nights found for this team this tier yet.');
+  let T = planTeamRegs(g); for (let w = 0; w < 20 && !T.reg.length && Date.now() - +(store.get(IMPORT_LOCK) || 0) < 45e3 && S.planRosEd === E0; w++) { say('Reading ' + gName(g) + '\'s raid nights…'); await new Promise((r) => setTimeout(r, 3000)); try { await HIST.reload(); } catch (e) { /* (what's loaded) */ } T = planTeamRegs(g); } /* (another read still saving nights: keep checking, up to a minute) */
+  if (S.planRosEd !== E0) { const b = $('#assignBox [data-plrwcl]'); if (b) b.disabled = false; return; }
+  if (!T.reg.length && !E0.on.size && P.core.names.length) E0.on = new Map(P.core.names.map((n) => [n.toLowerCase(), { n, bench: false }])); /* (no team nights: the core raiders; never the whole member list, Nov 4) */
+  if (!T.reg.length) say(err === 'busy' ? 'Another tab is still reading the team\'s reports. Try again in a minute.' : err ? 'Couldn\'t read the team from Warcraft Logs: ' + err : 'No raid nights found for this team this tier yet.' + (E0.on.size ? '' : ' Add your raiders below.'));
   else { E0.on = new Map(T.reg.map((n) => [n.toLowerCase(), { n, bench: false }])); say(planTeamMsg(T) + (err === 'busy' ? ' (Another tab is still reading Warcraft Logs, so this is from the nights read so far.)' : err ? ' (Warcraft Logs didn\'t answer, so this is from the nights already read.)' : '')); }
   const nmI = $('#planRosName'); if (nmI) E0.name = nmI.value; const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); }
 
