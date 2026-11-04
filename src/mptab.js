@@ -33,9 +33,10 @@ const mpSpecId = (spec, cls) => { for (const [id, s] of Object.entries(E.SPECS |
 const mpNorm = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
 // (the tab: only when the open report has a key)
 const MP_TICO = '<svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/></svg>';
-// (Mythic+ coming soon (Flex, Nov 2: "make the mythic+ tab greyed out overnight with a "coming soon" thing"): false opens it for everyone again. Flex himself
+// (Mythic+ coming soon (Flex, Nov 2: "make the mythic+ tab greyed out overnight with a "coming soon" thing"); open for everyone since Nov 3 (Flex: "yes push it
+// live"). true greys it out again. Flex himself
 // (the boss guides' owner check: his Home character or his Warcraft Logs sign-in) still opens it on the website, and so does a copy run on this PC)
-const MP_SOON = true;
+const MP_SOON = false;
 const mpSoon = () => MP_SOON && !!window.WLA_HOSTED && !(typeof gdzOwner === 'function' && gdzOwner());
 const mpSoonGo = () => { try { home(); } catch (e) { /* (already on a page) */ } try { toast('The Mythic+ tab is coming soon.', 4000); } catch (e) { /* (no note) */ } }; /* (a link or tile: the normal default page, with a note) */
 function mpTabHtml(on) { if (mpSoon()) return '<button class="tab mpt-tab tab-off mpt-soon" data-t="mplus" role="tab" aria-disabled="true" aria-selected="false" data-tt="Coming soon" aria-description="Coming soon">' + MP_TICO + 'Mythic+<span class="mpt-soonp">Coming soon</span></button>';

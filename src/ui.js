@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', h: [{ t: 'A new Home page', d: 'Home is one tidy page now: your progress on every boss, the last raid nights, everyone\'s Mythic+ score and the team\'s newest keys. Pick your character at the top, and the page follows them.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+  { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'A new Home page', d: 'Home is one tidy page now: your progress on every boss, the last raid nights, everyone\'s Mythic+ score and the team\'s newest keys. Pick your character at the top, and the page follows them.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
     "Debrief Companion: if WoW is in true Fullscreen, one press switches it to Windowed (Fullscreen), so your recap can show over the game. With WoW open, it switches the moment you close WoW.",
     "Debrief Companion: the pop-up still resizes, but it stops where your recap ends, so it never grows bigger than the card.",
     "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
@@ -32651,6 +32651,22 @@ function hdSpecIc(c, m) { const k = (m && m.cls) || hdClsKey((c || {}).cls), sp 
   const ic = (sid && NDZ_SPECIC[+sid]) || (k ? 'classicon_' + k.toLowerCase() : null), nm = [sp, (E.CLASSES[k] || [])[0]].filter(Boolean).join(' '), ro = hdRole(c && c.role);
   return '<span class="hd-si" style="color:' + ((E.CLASSES[k] || [])[1] || 'var(--muted)') + '" role="img" aria-label="' + esc(nm + (ro ? ', ' + ro : '')) + '"' + (nm ? ' tabindex="0" data-tt="' + esc(hdSpecTip(c, m)) + '"' : '') + '>' +
     '<svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(4.5 4.5) scale(.625)" class="gl em">' + G[CLASS_GLYPH[k] || 'orb'] + '</g></svg>' + (ic ? '<img class="oi" data-icon="' + esc(ic) + '" alt="">' : '') + '</span>'; }
+// (a key on Home opens on the Mythic+ tab (Nov 3, the launch): one of your saved keys when it's there; otherwise each of its players' uploads from
+// around that time are read for it (who they are, their newest uploads, the one with the key), and the first that has it opens; a key nobody
+// uploaded says so)
+let HD_KEYS = [], HD_KBUSY = false;
+async function hdKeyOpen(x) { if (!x || HD_KBUSY) return; HD_KBUSY = true;
+  const same = (b, l) => +l === +x.l && mpLc(mpDung(b)) === mpLc(x.d);
+  // (the nearest end to Raider.IO's time; a run that was left counts as far away, so the finished one wins)
+  const off = (k) => Math.abs((k.wallMs || 0) + (k.duration || 0) * 1000 - x.at) + (k.left || !k.keyMs ? 864e5 : 0), best = (l) => l.slice().sort((a, b) => off(a) - off(b))[0] || null;
+  try { const J = mpkGet(), k = best(Object.values(J.chars || {}).flatMap((c) => c.keys || []).filter((k) => same(k.boss, k.level) && Math.abs((k.wallMs || 0) - x.at) < 3 * 3600e3)); if (k) { mpGo(k.code, k.fight); return; }
+    toast('<span>Finding this key…</span>', 6000); let creds = null; try { creds = await wclCreds(); } catch (e) { creds = null; }
+    for (const w of x.with || [x]) { try { const c = await WCL.charInfo(creds, { name: w.who, srv: srvSlug(w.srv), reg: String(w.reg || 'us').toUpperCase() }), p = await WCL.charReportsPage(creds, c.id, 1);
+        for (const r of p.data.filter((r) => MP_SEASON(r.zone) && r.startTime - 600e3 <= x.at && x.at <= r.endTime + 3 * 3600e3)) { const rep = await WCL.loadReport(creds, r.code).catch(() => null), runs = (rep && rep.runs) || [];
+          const it = best(runs.filter((k) => same(k.boss, k.level))) || (runs.filter((k) => +k.level === +x.l).length === 1 ? runs.find((k) => +k.level === +x.l) : null); if (it) { mpGo(it.wcl.code, it.wcl.fight); return; } }
+      } catch (e) { /* (the key's next player) */ } }
+    toast('<span>Nobody uploaded this key, so it can\'t be opened.</span>', 6000);
+  } finally { HD_KBUSY = false; } }
 // (the page)
 function hdDash(X) {
   const { g, list, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, lastK, you, info } = X;
@@ -32673,7 +32689,7 @@ function hdDash(X) {
   const others = diffs.filter(([d, nm]) => d !== cur && !/^LFR$/i.test(nm)).slice(0, 2).map(([d, nm]) => nm + ' ' + killedOn(d) + '/' + order.length).join(' · ');
   const scores = R.map((m) => rioOf(m.name)).filter((c) => c && c.score != null), avg = scores.length ? Math.round(scores.reduce((s, c) => s + c.score, 0) / scores.length) : null;
   const avgCol = avg != null ? scores.slice().sort((x, y) => Math.abs(x.score - avg) - Math.abs(y.score - avg))[0].col : '';
-  const runsOf = (k) => R.flatMap((m) => ((rioOf(m.name) || {})[k] || []).map((x) => ({ ...x, who: m.name, cls: m.cls })));
+  const runsOf = (k) => R.flatMap((m) => ((rioOf(m.name) || {})[k] || []).map((x) => ({ ...x, who: m.name, cls: m.cls, srv: m.srv, reg: hdRegion(g) })));
   const wk = runsOf('week').sort((x, y) => y.l - x.l || (y.up > 0) - (x.up > 0)), sb = wk.length ? null : runsOf('best').sort((x, y) => y.l - x.l || (y.up > 0) - (x.up > 0))[0], top = wk[0] || sb;
   const topN = top && wk.length ? wk.filter((x) => x.who === top.who && x.up > 0).length : 0;
   const cell = (l, v, d) => '<div class="hd-k">' + lab(l) + '<div class="hd-kv">' + v + '</div><div class="hd-kd">' + d + '</div></div>';
@@ -32712,8 +32728,9 @@ function hdDash(X) {
   const ladder = '<section class="hd-pn"><div class="hd-ph"><h3>Mythic+ ladder</h3><span class="m">Raider.IO, this season</span></div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : ranked.length ? hdList('ladder', ranked.slice(0, (S.hdOpen || {}).ladder ? ranked.length : 8).map((x, i) => '<div class="hd-row hd-lr' + (YOU(x.m.name) ? ' hd-mine" style="--cc:' + colOf(x.m.name, x.m.cls) : '') + '"><span class="hd-rk num">' + (i + 1) + '</span>' + hdSpecIc(x.c, x.m) + '<span class="hd-pl" style="color:' + colOf(x.m.name, x.m.cls) + '" data-tt="' + esc(hdSpecTip(x.c, x.m)) + '">' + esc(x.m.name) + YOU(x.m.name) + '</span><span class="hd-sc num" style="color:' + esc(x.c.col || 'var(--text)') + '">' + hdNum(x.c.score) + '</span></div>').join('')) +
       (ranked.length > 8 ? '<button class="hd-more" type="button" data-hdopen="ladder" aria-expanded="' + !!(S.hdOpen || {}).ladder + '">' + ((S.hdOpen || {}).ladder ? 'Show the top 8' : 'Show all ' + ranked.length) + '</button>' : '') : '<p class="hd-none">Raider.IO doesn\'t have scores for this team yet.</p>') + '</section>';
   const keysAll = (() => { const m = new Map(); for (const x of runsOf('recent')) { const k = hdLc(x.d) + '|' + Math.round(x.at / 60000); const o = m.get(k); if (o) o.with.push(x); else m.set(k, { ...x, with: [x] }); } return [...m.values()].sort((a, b) => b.at - a.at); })();
-  const kRow = (x) => '<div class="hd-row hd-kr"><span class="hd-dt num">' + esc(hdDate(x.at)) + '</span><span class="hd-kl num" style="color:' + (x.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + x.l + '</span><span class="hd-kn">' + esc(x.d) + '</span><span class="hd-kw" style="color:' + colOf(x.who, x.cls) + '">' + esc(x.who) + (x.with.length > 1 ? '<em> +' + (x.with.length - 1) + '</em>' : '') + '</span>' +
-    (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + '</div>'; /* (a key opens on the Mythic+ tab once that's live; until then not a link) */
+  HD_KEYS = keysAll; const kLink = !mpSoon();
+  const kRow = (x, i) => (kLink ? '<button class="hd-row hd-kr" type="button" data-hdkey="' + i + '" data-tt="Open this key">' : '<div class="hd-row hd-kr">') + '<span class="hd-dt num">' + esc(hdDate(x.at)) + '</span><span class="hd-kl num" style="color:' + (x.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + x.l + '</span><span class="hd-kn">' + esc(x.d) + '</span><span class="hd-kw" style="color:' + colOf(x.who, x.cls) + '">' + esc(x.who) + (x.with.length > 1 ? '<em> +' + (x.with.length - 1) + '</em>' : '') + '</span>' +
+    (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + (kLink ? '</button>' : '</div>'); /* (a key opens on the Mythic+ tab; while that's coming soon, not a link) */
   const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">the team, newest first</span>' + (keysAll.length > 8 ? hdOpenB('keys') : '') + '</div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : keysAll.length ? hdList('keys', keysAll.slice(0, (S.hdOpen || {}).keys ? keysAll.length : 8).map(kRow).join('')) : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
   // (Since last raid, smaller: got better and slipped by 2 points or more, 4 a side)
   const SL = hdSince(list), sl = (x) => '<div class="hd-row hd-sr"><span class="hd-pl" style="color:' + ((E.CLASSES[x.cls] || [])[1] || 'var(--text)') + '">' + esc(x.n) + '</span><span class="hd-gr">' + gradeChip(letterOf(x.was)) + '<span class="sub">→</span>' + gradeChip(letterOf(x.v)) + '</span>' + plTr(x.d) + '</div>';
@@ -32737,6 +32754,7 @@ function hdBind(ROOT) {
     hdParse(groups().find((x) => x.gid === b.dataset.gid));
     m.onkeydown = (e) => { if (e.key === 'Escape') { close(); b.focus(); } }; }
   ROOT.querySelectorAll('[data-hdaddteam]').forEach((x) => (x.onclick = () => gsStart()));
+  ROOT.querySelectorAll('[data-hdkey]').forEach((x) => (x.onclick = () => hdKeyOpen(HD_KEYS[+x.dataset.hdkey])));
   ROOT.querySelectorAll('[data-hdopen]').forEach((x) => (x.onclick = () => { const k = x.dataset.hdopen; S.hdOpen = { ...(S.hdOpen || {}), [k]: !(S.hdOpen || {})[k] }; renderProgress(); const nb = document.querySelector('#hdPage [data-hdopen="' + k + '"]'); if (nb) nb.focus({ preventScroll: true }); }));
   ROOT.querySelectorAll('.hd-bt[data-code], .hd-cp[data-code], .hd-nr[data-code], #pnwGo').forEach((x) => (x.onclick = async () => { try { await openWcl({ code: x.dataset.code, fight: +x.dataset.fight || null }, await wclCreds()); } catch (e) { toast('<span>' + esc(e.message) + '</span>', 6000); } }));
 }
