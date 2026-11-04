@@ -5055,16 +5055,24 @@ function gdzReadTog(root) {
 }
 // ---- the page ----
 // the note shown while a map is frozen at a key moment: the raid lead's words, and a bar running down until it plays on
+// (the room picture, fetched as soon as a guide opens (the studio, Nov 4): every map frame draws it again, so while it was still on its way
+// the first map to play showed a bare floor)
+const GDZ_WARM = new Map();
+function gdzArtWarm(b) { const u = typeof ARENA_HI !== 'undefined' && ARENA_HI[b === 'The Bargained Crown' ? 'The Coiled Altar' : b]; if (!u || GDZ_WARM.has(u)) return; const im = new Image(); im.decoding = 'async'; im.src = u; GDZ_WARM.set(u, im); }
 function gdzPauseUi(zbox, label) {
   const el = document.createElement('div'); el.className = 'gdz-vpause'; el.innerHTML = '<b>⏸ ' + (label || 'Raid lead') + '</b><span></span><i></i>'; zbox.appendChild(el);
-  // (the studio, Nov 4: the box never covers players. Of eight spots (top, bottom, nearer each edge, then a corner at half width) it
-  // takes the first that hides the fewest of them, the spot the freeze is about, the video's own captions and the map's controls)
-  const POS = ['', 'gdz-vpb', 'gdz-vpt', 'gdz-vpb2', 'gdz-vptl', 'gdz-vptr', 'gdz-vpbl', 'gdz-vpbr'], place = () => { const box = (r) => r && r.width ? r : null, root = zbox.querySelector('svg') ? zbox : zbox.parentElement || zbox /* (the video's box sits in a layer over its map) */, ic = [...root.querySelectorAll('svg g.ic:not(.icl)')].map((g) => box(g.getBoundingClientRect())).filter(Boolean),
+  // (the studio, Nov 4: never over players or captions, then never over the map's controls. Of eight spots (top, bottom, nearer each
+  // edge, then a corner at half width) it takes the first clean one; when none is, a card's map shows the line under itself instead. The
+  // whole-fight video, which can't grow, keeps the spot that hides the least)
+  const POS = ['', 'gdz-vpb', 'gdz-vpt', 'gdz-vpb2', 'gdz-vptl', 'gdz-vptr', 'gdz-vpbl', 'gdz-vpbr'], place = () => { const box = (r) => r && r.width ? r : null, root = zbox.querySelector('svg') ? zbox : zbox.parentElement || zbox /* (the video's box sits in a layer over its map) */, ic = [...root.querySelectorAll('svg g.ic:not(.icl), svg g.icl')].filter((g) => !g.classList.contains('icl') || g.querySelector('text')).map((g) => box(g.getBoundingClientRect())).filter(Boolean) /* (players, bosses and the map's captions) */,
     sp = root.querySelector('svg circle[stroke-dasharray="8 5"]'), spr = sp && box(sp.getBoundingClientRect()), spc = spr ? { left: spr.left + spr.width * 0.3, right: spr.right - spr.width * 0.3, top: spr.top + spr.height * 0.3, bottom: spr.bottom - spr.height * 0.3 } : null,
-      own = [...(zbox.closest('.gdz-mapc') || zbox).querySelectorAll('.gdz-vlow, .gdz-vcard, .gdz-vchip, .zleg, .zkeyb, .zkey, .znorth, .zctl, .zscale, .gdz-mode')].filter((x) => +getComputedStyle(x).opacity > 0.05) /* (the video's own captions and the map's controls) */.map((x) => box(x.getBoundingClientRect())).filter(Boolean);
-    const cost = () => { const b = el.getBoundingClientRect(), on = (r) => r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom; return ic.filter(on).length + (spc && on(spc) ? 6 : 0) + own.filter(on).length * 20; };
+      vis = (q) => [...(zbox.closest('.gdz-mapc') || zbox).querySelectorAll(q)].filter((x) => +getComputedStyle(x).opacity > 0.05).map((x) => box(x.getBoundingClientRect())).filter(Boolean),
+      cap = vis('.gdz-vlow, .gdz-vcard, .gdz-vchip') /* (the video's own captions) */, ctl = vis('.zleg, .zkeyb, .zkey, .znorth, .zctl, .zscale, .gdz-mode') /* (the map's controls) */;
+    if (el.parentElement !== zbox) zbox.appendChild(el); el.classList.remove('gdz-vpout');
+    const cost = () => { const b = el.getBoundingClientRect(), on = (r) => r.right > b.left && r.left < b.right && r.bottom > b.top && r.top < b.bottom; return (ic.filter(on).length + cap.filter(on).length) * 100 + (spc && on(spc) ? 6 : 0) + ctl.filter(on).length * 20; };
     let best = null; for (const c of POS) { POS.forEach((x) => x && el.classList.remove(x)); if (c) el.classList.add(c); const v = cost(); if (!best || v < best[1]) best = [c, v]; if (!v) break; }
-    POS.forEach((x) => x && el.classList.remove(x)); if (best[0]) el.classList.add(best[0]); };
+    POS.forEach((x) => x && el.classList.remove(x));
+    if (best[1] >= 20 && !zbox.classList.contains('gdz-vid')) { el.classList.add('gdz-vpout'); zbox.after(el); } else if (best[0]) el.classList.add(best[0]); };
   return (p) => { if (!p) { el.classList.remove('on'); return; } el.querySelector('span').textContent = p.text; el.style.transition = 'none'; try { place(); } catch (e) { /* (it stays at the top) */ } void el.offsetWidth; el.style.transition = ''; /* (measured with its own words and no slide) */ const bar = el.querySelector('i'); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'gdzBar ' + (p.dur || 3.6) + 's linear forwards'; el.classList.add('on'); };
 }
 // Boss guides as a page of its own (your call, Oct 20: in the menu, not a tab, open to anyone without a report or sign-in).
@@ -5101,7 +5109,7 @@ function gdzView() {
   // difficulty. A part can be one difficulty only (only: 'h' / 'm') or change on one (h: { .. } / m: { .. } over the shared fields).
   if (!S.gdzDiff) S.gdzDiff = S.rep && S.rep.item && S.rep.item.diffId !== 16 ? 'h' : 'm';
   const D = S.gdzDiff, own = (o) => (!o || (o.only && o.only !== D) ? null : Object.assign({}, o, o[D] || {}));
-  const boss = S.gdzBoss, G0 = GDZ[boss], G = G0 && own(G0);
+  const boss = S.gdzBoss, G0 = GDZ[boss], G = G0 && own(G0); try { gdzArtWarm(boss); } catch (e) { /* (the maps fetch it themselves) */ }
   if (G) { G.phases = G.phases.map(own).filter(Boolean).map((p) => ({ ...p, mechs: (p.mechs || []).map(own).filter(Boolean), tiles: (p.tiles || []).map(own).filter(Boolean) })); G.facts = (G.facts || []).filter((x) => !x[2] || x[2] === D).map((x) => (x[0] === 'Enrage' ? ['Hard enrage', x[1]] : x));
     const kl = gdzKillLen(G); if (kl) { const was = (G.facts.find((x) => x[0] === 'Fight length') || [])[1] || '', more = was.includes(',') ? was.replace(/^[^,]*,\s*/, '') : '';
       G.facts = G.facts.filter((x) => x[0] !== 'Fight length').concat([['Fight length', Math.floor(kl / 60) + ':' + String(Math.floor(kl % 60)).padStart(2, '0') + ' on a real kill' + (more ? ' · ' + more : '')]]); }
@@ -5333,6 +5341,7 @@ function gdzCss() {
 .gdz-vpause.gdz-vptl, .gdz-vpause.gdz-vptr, .gdz-vpause.gdz-vpbl, .gdz-vpause.gdz-vpbr { width: min(46%, 320px); top: 3%; left: 2%; transform: translate(0, -8px); }
 .gdz-vpause.gdz-vptr, .gdz-vpause.gdz-vpbr { left: auto; right: 2%; } .gdz-vpause.gdz-vpbl, .gdz-vpause.gdz-vpbr { top: auto; bottom: 3%; }
 .gdz-vpause.on.gdz-vptl, .gdz-vpause.on.gdz-vptr, .gdz-vpause.on.gdz-vpbl, .gdz-vpause.on.gdz-vpbr { transform: none; }
+.gdz-vpause.gdz-vpout { position: relative; top: auto; left: auto; width: auto; margin: 8px 0 0; transform: none; } .gdz-vpause.gdz-vpout:not(.on) { display: none; } .gdz-vpause.gdz-vpout.on { transform: none; }
 @media (hover: hover) and (pointer: fine) { .gdz-vlow { transition: bottom .18s; } .zbox:hover .gdz-vlow, .zbox:focus-within .gdz-vlow { bottom: 60px; } } /* (the caption steps up out of the play bar's way) */
 .gdz-vpause b { display: block; color: var(--gold); font: 800 .75em var(--head); letter-spacing: .12em; text-transform: uppercase; margin-bottom: .15em; }
 .gdz-vpause span { font-family: var(--body); line-height: 1.35; }
