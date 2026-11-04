@@ -403,6 +403,19 @@ const rioTrim = (j, n, s) => { const sc = (((j.mythic_plus_scores_by_season || [
 async function rioOne(r, s, n) { let res; try { res = await fetch('https://raider.io/api/v1/characters/profile?region=' + r + '&realm=' + encodeURIComponent(s) + '&name=' + encodeURIComponent(n) + '&fields=' + encodeURIComponent('mythic_plus_scores_by_season:current,mythic_plus_recent_runs,mythic_plus_weekly_highest_level_runs,mythic_plus_best_runs,gear'), { headers: { 'User-Agent': 'Debrief (https://debriefme.io)', Accept: 'application/json' } }); } catch (e) { return { d: { n, s, none: true }, keep: false }; }
   if (res.status === 400 || res.status === 404) return { d: { n, s, none: true }, keep: true }; if (!res.ok) return { d: { n, s, none: true }, keep: false };
   try { return { d: rioTrim(await res.json(), n, s), keep: true }; } catch (e) { return { d: { n, s, none: true }, keep: false }; } }
+// (WoW news for Home (Nov 3; Flex: "I think putting wowhead news in there is fine", "people generally enjoy seeing it"): Wowhead's news feed, read here and
+// kept 30 minutes for everyone. Each story: its headline, link, time, Wowhead's category (Live, PTR, WoW, Forever …) and picture, plus a short plain
+// summary the page only uses to match a story to your raid, spec or dungeons (never shown))
+const whText = (s) => String(s || '').replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const whTag = (x, t) => { const m = new RegExp('<' + t + '[^>]*>([\\s\\S]*?)</' + t + '>').exec(x); return m ? m[1] : ''; };
+ROUTES['/api/wownews'] = { age: 1800, v: () => ({}),
+  run: async () => { let res; try { res = await fetch('https://www.wowhead.com/news/rss/all', { headers: { 'User-Agent': 'Debrief (https://debriefme.io)', Accept: 'application/rss+xml, application/xml' } }); } catch (e) { return { error: 'The news couldn\'t be read right now.', status: 502 }; }
+    if (!res.ok) return { error: 'The news couldn\'t be read right now.', status: 502 }; const xml = await res.text(), items = [];
+    for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) { const x = m[1], u = whText(whTag(x, 'link')), t = whText(whTag(x, 'title')); if (!t || !/^https:\/\/www\.wowhead\.com\//.test(u)) continue;
+      const img = (/<media:content[^>]*url="([^"]+)"/.exec(x) || [])[1] || '';
+      items.push({ t, u, at: Date.parse(whText(whTag(x, 'pubDate'))) || 0, cat: whText(whTag(x, 'category')), img: /^https:\/\/wow\.zamimg\.com\//.test(img) ? img : '', d: whText(whTag(x, 'description')).replace(/Continue reading.*$/, '').slice(0, 400) });
+      if (items.length >= 40) break; }
+    return { items }; } };
 ROUTES['/api/rioteam'] = { age: 3600,
   v: (p) => { const r = String(p.get('r') || '').toLowerCase(), c = String(p.get('c') || '').split(',').map((x) => x.split('|')).filter((x) => x.length === 2 && x[0] && x[1] && x[0].length < 40 && x[1].length < 60).slice(0, 40); return /^(us|eu|kr|tw)$/.test(r) && c.length ? { r, c } : null; },
   run: async (env, v) => { const cache = caches.default, out = [];

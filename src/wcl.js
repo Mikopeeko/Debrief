@@ -241,6 +241,8 @@ async function topSpec(creds, v) {
 const rioTrim = (j, n, s) => { const sc = (((j.mythic_plus_scores_by_season || [])[0] || {}).segments || {}).all || {}, run = (x) => ({ d: x.dungeon || '', l: x.mythic_level | 0, at: Date.parse(x.completed_at) || 0, up: x.num_keystone_upgrades | 0 });
   return { n: j.name || n, s, cls: j.class || '', spec: j.active_spec_name || '', role: j.active_spec_role || '', ilvl: (j.gear && j.gear.item_level_equipped) || null, score: sc.score != null ? Math.round(sc.score) : null, col: sc.color || '',
     recent: (j.mythic_plus_recent_runs || []).slice(0, 10).map(run), week: (j.mythic_plus_weekly_highest_level_runs || []).slice(0, 10).map(run), best: (j.mythic_plus_best_runs || []).slice(0, 3).map(run) }; };
+// (WoW news for Home: Wowhead's feed through the site, kept 30 minutes; a copy on this PC can't read it (the browser blocks it) and shows none)
+async function wowNews() { if (HOSTED) return api('/api/wownews'); return { items: [] }; }
 async function rioTeam(r, chars) { if (HOSTED) return api('/api/rioteam?r=' + encodeURIComponent(r) + '&c=' + encodeURIComponent(chars.map(([n, s]) => n + '|' + s).join(',')));
   const out = []; for (const [n, s] of chars) { try { const res = await fetch('https://raider.io/api/v1/characters/profile?region=' + r + '&realm=' + encodeURIComponent(s) + '&name=' + encodeURIComponent(n) + '&fields=' + encodeURIComponent('mythic_plus_scores_by_season:current,mythic_plus_recent_runs,mythic_plus_weekly_highest_level_runs,mythic_plus_best_runs,gear')); out.push(res.ok ? rioTrim(await res.json(), n, s) : { n, s, none: true }); } catch (e) { out.push({ n, s, none: true }); } }
   return { r, chars: out }; }
@@ -680,6 +682,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, loadParses, rioTeam, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
