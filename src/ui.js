@@ -35125,7 +35125,7 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
         const e1 = t0 + (n - 1) * gap + 250; end = Math.max(end, e1);
         w.querySelectorAll('.dbt-add > .dbt-addr .dbt-lv').forEach((t, j) => { if (t.textContent.trim()) mk(A, t, STAMP, { duration: 280, delay: Math.max(400, e1 - 100) + j * 60, easing: POP }); }); }
       if (w) { w.querySelectorAll('.dbt-c5w .dbt-c5').forEach((b, k) => mk(A, b, STAMP, { duration: 280, delay: 350 + k * 80, easing: POP })); end = Math.max(end, 1100); }
-      /* (5. the headline word by word, blur to sharp) */ W2.slice(0, 40).forEach((s, k) => mk(A, s, WORD, { duration: 250, delay: 300 + k * 28, easing: 'ease-out' }));
+      /* (5. the headline word by word, blur to sharp, about 0.4 s in all (the studio, Nov 3): the words start 0.15 s apart at most) */ const ws = W2.length > 1 ? Math.min(28, Math.round(150 / (W2.length - 1))) : 0; W2.slice(0, 40).forEach((s, k) => mk(A, s, WORD, { duration: 250, delay: 150 + k * ws, easing: 'ease-out' }));
       /* (3. numbers roll like a scoreboard: only the digits move, each column a little later; a ::before can only be animated once it is on the page) */
       D2.forEach((D, j) => D.forEach((s, i) => mk(A, s, [{ transform: 'translateY(0)' }, { transform: 'translateY(-' + (+s.textContent * 10) + '%)' }], { pseudoElement: '::before', duration: 1000, delay: 120 + j * 60 + i * 70, easing: ROLL, fill: 'both' }))); if (D2.length) end = Math.max(end, 1500);
       /* (6. bars fill from the left, a little staggered; a full row's 100% pops in after its bar) */
