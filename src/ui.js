@@ -7368,8 +7368,8 @@ function planRosBind() { const E0 = S.planRosEd, redraw = () => { const y = wind
   $$('#assignBox [data-plrdel]').forEach((b) => (b.onclick = () => { if (!b.dataset.armed) { b.dataset.armed = '1'; b.innerHTML = NOTE_TRASH + ' Click again to delete'; b.classList.add('bad'); return; }
     const o = rostersGet(); o.list = o.list.filter((x) => x.id !== b.dataset.plrdel); if (o.cur === b.dataset.plrdel) o.cur = o.list[0] ? o.list[0].id : null; rostersSet(o); PLAN_RC = null; redraw(); }));
   if ($('#assignBox [data-plrnew]')) $('#assignBox [data-plrnew]').onclick = () => HIST.load().catch(() => null).then(() => { const P = planPool(), /* (the saved nights first, so a first visit's roster comes from them, Nov 4) */ nm = rostersGet().list.length ? 'Roster ' + (rostersGet().list.length + 1) : (P.team && P.team.name ? P.team.name : 'Main roster');
-    const T = P.team ? planTeamRegs(P.team) : null, l = T && T.reg.length ? T.reg : P.core.names.length ? P.core.names : P.team ? teamMembers(P.team).map((x) => String(x.name).split('-')[0]) : [];
-    S.planWclMsg = T && T.reg.length ? planTeamMsg(T) : ''; S.planRosEd = { id: null, name: nm, auto: true, on: new Map(l.map((n) => [n.toLowerCase(), { n, bench: false }])) }; planAssign(); window.scrollTo({ top: 0 });
+    const T = P.team ? planTeamRegs(P.team) : null, rdN = !(T && T.reg.length) && !P.core.names.length && P.team && P.team.id && P.team.kind !== 'char', l = T && T.reg.length ? T.reg : P.core.names.length ? P.core.names : P.team && !rdN ? teamMembers(P.team).map((x) => String(x.name).split('-')[0]) : []; /* (nights still to read: wait for them, not the guild's whole member list (alts and all), Nov 4) */
+    S.planWclMsg = T && T.reg.length ? planTeamMsg(T) : rdN ? 'Reading ' + gName(P.team) + '\'s raid nights…' : ''; S.planRosEd = { id: null, name: nm, auto: true, on: new Map(l.map((n) => [n.toLowerCase(), { n, bench: false }])) }; planAssign(); window.scrollTo({ top: 0 });
     if (P.team && P.team.id && P.team.kind !== 'char') planTeamFill(S.planRosEd, true); });
   if (!E0) return; const sp = planSp(), keep = () => { const i = $('#planRosName'); if (i) E0.name = i.value; };
   if ($('#assignBox [data-plrwcl]')) $('#assignBox [data-plrwcl]').onclick = () => { keep(); planTeamFill(E0, false); };
@@ -7487,12 +7487,28 @@ function planTeamRegs(g) { const T = planTeamAll(g), all = T.list.filter((x) => 
 const planTeamMsg = (T) => plural(T.reg.length, 'raider') + ': everyone at ' + T.need + ' or more of the team\'s ' + plural(T.nights, 'raid night') + ' this tier.' + (T.others ? ' ' + plural(T.others, 'fill-in') + ' left off.' : '');
 // (Your whole team: reads the team's reports again, then fills the roster; auto = the background read of a new roster, which stops
 // if the roster was changed by hand or closed meanwhile)
+// (one read of a team's Warcraft Logs reports in this tab at a time (Make my roster, Your whole team and the roster that makes itself
+// share it): it waits for a read that's still running somewhere (its lock), runs to the end even if the roster editor closes, then the
+// saved nights load again; alts are spotted again, and the picks are fixed on the next draw (the studio's cold first visit, Nov 4))
+let PG_READ = null;
+// (the roster Plan made by itself this visit, from a read cut short: once every night is read, it's made again from all of them, if nobody
+// changed it, and Who plays is picked again (bosses you set by hand stay))
+function pgAutoRefresh() { const A = S.pgAutoMade; if (!A) return; S.pgAutoMade = null; const o = rostersGet(), R = o.list.find((x) => x.id === A.id); if (!R || R.players.map((p) => p.n).sort().join('|') !== A.names) return;
+  let P = null; try { P = planPool(); } catch (e) { return; } const g = P && P.team; if (!g) return; const T = planTeamRegs(g), names = [...new Set(T.reg)]; if (!names.length || names.slice().sort().join('|') === A.names) return;
+  const sp = planSp(); R.players = names.map((n) => { const i = planInfo(sp, { n }); return { n, cls: i.cls || null, sid: i.sid || 0, role: i.role || 'dps', bench: false }; }); R.saved = Date.now(); rostersSet(o); PLAN_RC = null; PG_ALT.k = '';
+  const n0 = pnGet(); if (n0 && n0.rid === R.id) { n0.man = n0.man || {}; const pk = pnPick(n0, pnPeople(n0)); n0.on = pk.on; pnSet(n0); } }
+function pgTeamRead(g, say) { if (PG_READ) return PG_READ;
+  PG_READ = (async () => { let err = ''; for (let w = 0; w < 60 && Date.now() - +(store.get(IMPORT_LOCK) || 0) < 45e3; w++) { if (say) say('Reading ' + gName(g) + '\'s raid nights…'); await new Promise((r) => setTimeout(r, 1000)); }
+    try { await teamImport(g, (t) => { if (say) say(t); }); } catch (e) { err = /already running/.test(e.message || '') ? 'busy' : e.message || String(e); console.warn('Roster import:', e); }
+    try { await HIST.reload(); } catch (e) { /* (what's loaded) */ } PG_ALT.k = ''; PG_RDY.clear(); return err; })();
+  PG_READ.finally(() => { PG_READ = null; try { pgAutoRefresh(); } catch (e) { /* (the roster stays as made) */ } if (S.page === 'plan' && !S.planRosEd && !S.noteBuild && rostersGet().list.length) { const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } }).catch(() => null);
+  return PG_READ; }
 async function planTeamFill(E0, auto) { const P = planPool(), g = P.team; if (!g) return; const say = (t) => { S.planWclMsg = t; const m = $('#planWclMsg'); if (m) m.textContent = t; };
   const btn = $('#assignBox [data-plrwcl]'); if (btn) btn.disabled = true; let err = '';
-  if (g.id && g.kind !== 'char') { for (let w = 0; w < 60 && Date.now() - +(store.get(IMPORT_LOCK) || 0) < 45e3; w++) { say('Reading ' + gName(g) + '\'s reports…'); await new Promise((r) => setTimeout(r, 1000)); if (S.planRosEd !== E0) return; } /* (a read already running, like a first visit's: wait for it, Nov 4) */
-    try { await teamImport(g, (t) => say(t)); } catch (e) { err = /already running/.test(e.message || '') ? 'busy' : e.message || String(e); console.warn('Roster import:', e); } try { await HIST.reload(); } catch (e) { /* (what's loaded) */ } }
+  if (g.id && g.kind !== 'char') err = await pgTeamRead(g, (t) => { if (S.planRosEd === E0) say(t); }); /* (the shared read: it finishes even if the editor closes first) */
   if (S.planRosEd !== E0 || (auto && !E0.auto)) { const b = $('#assignBox [data-plrwcl]'); if (b) b.disabled = false; return; }
   const T = planTeamRegs(g);
+  if (!T.reg.length && !E0.on.size) { const l0 = P.core.names.length ? P.core.names : teamMembers(g).map((x) => String(x.name).split('-')[0]); E0.on = new Map(l0.map((n) => [n.toLowerCase(), { n, bench: false }])); } /* (no raid nights read: the core raiders, else everyone on the team, Nov 4) */
   if (!T.reg.length) say(err === 'busy' ? 'Another tab is still reading the team\'s reports. Try again in a minute.' : err ? 'Couldn\'t read the team from Warcraft Logs: ' + err : 'No raid nights found for this team this tier yet.');
   else { E0.on = new Map(T.reg.map((n) => [n.toLowerCase(), { n, bench: false }])); say(planTeamMsg(T) + (err === 'busy' ? ' (Another tab is still reading Warcraft Logs, so this is from the nights read so far.)' : err ? ' (Warcraft Logs didn\'t answer, so this is from the nights already read.)' : '')); }
   const nmI = $('#planRosName'); if (nmI) E0.name = nmI.value; const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); }
@@ -7659,12 +7675,15 @@ function planAutoRoster() { let P = null; try { P = planPool(); } catch (e) { re
   const names = T && T.reg.length ? T.reg : (P.core && P.core.names) || []; if (!names.length) return; const sp = planSp();
   const players = [...new Set(names)].map((n) => { const i = planInfo(sp, { n }); return { n, cls: i.cls || null, sid: i.sid || 0, role: i.role || 'dps', bench: false }; });
   const o = rostersGet(), Rr = { id: 'r' + Date.now().toString(36), name: g.name || 'My team', players, saved: Date.now(), auto: true }; o.list.push(Rr); o.cur = Rr.id; rostersSet(o); PLAN_RC = null;
+  S.pgAutoMade = { id: Rr.id, names: players.map((p) => p.n).sort().join('|') }; if (g.id && g.kind !== 'char' && !S.pgReadOnce && typeof pgTeamRead === 'function') { S.pgReadOnce = true; pgTeamRead(g); } /* (a read cut short (the opener's page left early): finish it, then this roster makes itself again from every night, Nov 4) */
   S.plWhy = { v: 'night', t: 'Your roster is ready', html: '<p class="sub">Made from <b>' + esc(Rr.name) + '</b> on Home: ' + esc(T && T.reg.length ? planTeamMsg(T) : plural(players.length, 'core raider') + '.') + ' Use <b>Edit</b> next to the roster to add, bench or take anyone off.</p>' }; }
 
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ptr-ros [data-plred]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation(); const Rr = rostersGet().list.find((x) => x.id === b.dataset.plred); if (!Rr) return;
   S.planV = 'ros'; store.set(PLAN_VK, 'ros'); S.planOpen = false; S.plRosBack = 'tonight'; S.planRosEd = { id: Rr.id, name: Rr.name, on: new Map(Rr.players.map((q) => [q.n.toLowerCase(), { ...q }])) }; planAssign(); window.scrollTo({ top: 0 }); }, true); /* (Edit from any step, Oct 23) */
 
-function planAutoRetry(n) { if (S.page !== 'plan' || rostersGet().list.length || S.planRosEd || n > 8) return; if (!HIST.mem.size) HIST.load().catch(() => null); /* (Plan opened first: the saved nights load, so the roster can make itself from them, Nov 4) */ planAutoRoster(); if (rostersGet().list.length) { S.planV = 'night'; store.set(PLAN_VK, 'night'); planAssign(); window.scrollTo({ top: 0 }); } else setTimeout(() => planAutoRetry(n + 1), 700); }
+function planAutoRetry(n) { if (S.page !== 'plan' || rostersGet().list.length || S.planRosEd || n > (PG_READ ? 130 : 8)) return; /* (while the team's nights are read, up to 90 s more) */
+  if (n === 3 && !PG_READ) { let g = null; try { g = planPool().team; } catch (e) { g = null; } if (g && g.id && g.kind !== 'char') { let T = null; try { T = planTeamRegs(g); } catch (e) { T = null; } if (!(T && T.reg.length)) pgTeamRead(g); } } /* (nothing to make it from: read the team's nights, Nov 4) */
+  if (PG_READ) { setTimeout(() => planAutoRetry(n + 1), 700); return; } /* (the read first, so the roster comes from every night) */ if (!HIST.mem.size) HIST.load().catch(() => null); /* (Plan opened first: the saved nights load, so the roster can make itself from them, Nov 4) */ planAutoRoster(); if (rostersGet().list.length) { S.planV = 'night'; store.set(PLAN_VK, 'night'); planAssign(); window.scrollTo({ top: 0 }); } else setTimeout(() => planAutoRetry(n + 1), 700); }
 
 // ---- Back and Forward inside Plan (Oct 23): each place is a history step; Back goes to the last one, the builder's steps too ----
 let PLAN_POP = false;
@@ -8419,7 +8438,7 @@ function pgHeadFix(h, pb) { if (S.page !== 'plan' || !pb) return h; const o = pn
   const left = planBosses().filter((b) => { if (!NDZ_BUILD[b]) return false; try { const x = pgRdy(o, b); return x.k !== 'ok' && (x.none || x.fix) && !pgDry(b, x); } catch (e) { return false; } }).length;
   const one = '<span class="pg-one"><span class="sub">Picks who plays, then fills every cooldown, job and kick the way the fastest kills do.</span><button type="button" class="btn primary" data-pgwhole="' + esc(pb) + '" data-tt="' + esc('<b>Make the whole plan</b><br>' + (r.none ? 'Makes this boss\'s plan for the players on the Roster: every cooldown, job and kick.' : 'Fills only what\'s missing (' + esc(andL(r.left.filter((x) => !/buff/.test(x)))) + '). Your own picks stay.') + ' Undo is in the message.') + '">✨ Make the whole plan</button>' + (left > 1 ? '<button type="button" class="btn" data-tnmiss="1" data-pgevery="1" data-tt="' + esc('<b>Every boss</b><br>Makes the missing plans and finishes the started ones, the way the fastest kills do. One Undo for all of them.') + '">Every boss · ' + left + ' left</button>' : '') + '</span>';
   const i = h.indexOf('</div><div class="bh-l2">'); if (i < 0) return h; h = h.slice(0, i) + one + h.slice(i);
-  return h.replace('class="btn sm primary pg-tbauto"', 'class="btn sm pg-tbauto pg-tbq"').replace('class="btn sm primary" data-pgcdauto="1">', 'class="btn sm pg-tbq" data-pgcdauto="1">'); } /* (and the empty chart's own one, the studio's audit) */ /* (one gold button per view: Plan them for me goes plain) */
+  return h.replace('class="btn sm primary pg-tbauto"', 'class="btn sm pg-tbauto pg-tbq"').replace('class="btn sm primary" data-pgcdauto="1">', 'class="btn sm pg-tbq" data-pgcdauto="1">').replace('class="btn sm primary" data-pgcdauto="1" data-tt=', 'class="btn sm pg-tbq" data-pgcdauto="1" data-tt='); } /* (and the empty chart's own one, and the no-cooldowns header's, the studio's audits) */ /* (one gold button per view: Plan them for me goes plain) */
 // (✨ Make the whole plan: a boss with no plan gets one (Pick who plays first when the number playing is wrong); a started plan keeps every
 // pick and gets only what's missing: its empty job spots, picked the way ✨ Fill this card picks them, and cooldowns for the big hits
 // nobody covers, the way Plan them for me adds them (never one that clashes with yours). One note save; the message says what it did, with
