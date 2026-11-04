@@ -56374,7 +56374,7 @@ function hdDash(X) {
   // (Next raid: when, from the team's own nights (the usual days and the middle first and last pull), a countdown, this week's raid days, and reminders:
   // tonight's plan when there is one, a 30-minute reminder for Debrief Companion, and whether the app is on)
   const tm = hdRaidTimes(all || list), nr = hdNextRaid(days, tm), plOk = (() => { try { const o = gb ? JSON.parse(store.get(notesKey(gb)) || 'null') : null; return !!(o && o.list && o.list.length); } catch (e) { return false; } })();
-  const RM = hdRemind(); if (nr && tm) try { store.set(HD_REMIND, JSON.stringify({ ...RM, on: !!RM.on, mins: 30, team: g.name, teamId: g.id, next: nr.start, start: tm.start, end: tm.end, days })); } catch (e) { /* (not kept) */ }
+  const RM = hdRemind(); if (nr && tm) try { store.set(HD_REMIND, JSON.stringify({ ...RM, on: !!RM.on, mins: +RM.mins || 30, team: g.name, teamId: g.id, diff: diffName, next: nr.start, start: tm.start, end: tm.end, days })) /* (the app's own minutes (15/30/60) are kept) */; } catch (e) { /* (not kept) */ }
   const appOn = !!store.get('wla-app-seen'), wkS = new Date(); wkS.setHours(0, 0, 0, 0); wkS.setDate(wkS.getDate() - ((wkS.getDay() + 6) % 7));
   const chips = nr ? [1, 2, 3, 4, 5, 6, 0].filter((wd) => days.includes(wd)).map((wd) => { const d = new Date(wkS); d.setDate(wkS.getDate() + ((wd + 6) % 7)); const nx = d.toDateString() === nr.day.toDateString(), past = d < wkS || (d.getTime() + tm.end * 60000 < Date.now()); return '<span class="hd-nrc' + (nx ? ' on' : past ? ' past' : '') + '">' + HD_DN[wd] + ' ' + d.getDate() + '</span>'; }).join('') : '';
   const rRow = (ic, t, end) => '<div class="hd-rr"><span class="hd-rri" aria-hidden="true">' + ic + '</span><span class="hd-rrt" title="' + esc(hdPlain(t)) + '">' + t + '</span>' + end + '</div>';
@@ -56384,7 +56384,7 @@ function hdDash(X) {
       : '<div class="hd-nrt"><b>' + esc(HD_DN[nr.day.getDay()] + ', ' + hdClock(tm.start)) + '</b><span class="hd-nrcd num" id="hdNRcd" data-at="' + nr.start + '">' + hdCd(nr.start) + '</span></div>') +
       '<div class="hd-nrd">' + chips + '<span class="hd-nrh">' + esc(hdClock(tm.start).replace(/ (AM|PM)$/, (m) => (hdClock(tm.end).endsWith(m.trim()) ? '' : m)) + ' – ' + hdClock(tm.end)) + ', from your logs</span></div></div>' +
       ((plOk ? rRow(IC.plan, esc(HD_DNL[nr.day.getDay()]) + '\'s plan for ' + esc(hdBossShort(gb)) + ' is ready', '<button class="hd-rrl" type="button" data-hdj="plan">Open ›</button>') : '') +
-        rRow(IC.bell, 'Remind me 30 min before raid', appOn ? '<button class="hd-sw' + (RM.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + !!RM.on + '" data-hdremind="1" aria-label="Remind me 30 minutes before raid"><i></i></button>' : '<button class="hd-rrl" type="button" data-hdj="app">in the Companion app ›</button>') /* (the app owns the reminder: a switch only in its own page; never a switch that does nothing) */ +
+        rRow(IC.bell, 'Remind me ' + (+RM.mins || 30) + ' min before raid', appOn ? '<button class="hd-sw' + (RM.on ? ' on' : '') + '" type="button" role="switch" aria-checked="' + !!RM.on + '" data-hdremind="1" aria-label="Remind me 30 minutes before raid"><i></i></button>' : '<button class="hd-rrl" type="button" data-hdj="app">in the Companion app ›</button>') /* (the app owns the reminder: a switch only in its own page; never a switch that does nothing) */ +
         (appOn ? rRow(IC.pc, 'Companion app is on: your pulls save themselves', '<span class="hd-rron">On</span>') : rRow(IC.pc, 'The Companion app saves your pulls by itself', '<button class="hd-rrl gold" type="button" data-hdj="app">Get it ›</button>')))) + '</section>';
   // (WoW news, beside your week and as tall: the newest retail stories (All: every story), a picture, the headline, Wowhead and when; a click opens
   // the story in a new tab; More news adds the next 10 in the same scrolling list)
@@ -56771,7 +56771,7 @@ if (WCL.HOSTED) {
   $('.brand p').textContent = 'Paste a Warcraft Logs link or drop your own log';
   const qp = RQ;
   if (reloadSt) { if (reloadSt.v === 'p') $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the report', 'Loading the report…', null, 'loadmsg') + '</div>'; /* (not the paste panel: it flashed before Debriefing (Oct 25)) */ NAV_RESTORE = true; navGo(reloadSt).catch((err) => { console.warn('Reload:', err && err.message); home(); }).finally(() => { NAV_RESTORE = false; }); }
-  else if (qp.has('plan')) setTimeout(() => { if (ASG_OFF()) home(); else { planPage(); window.scrollTo(0, 0); } }, 0); /* (a ?plan address opens the Plan tab) */
+  else if (qp.has('plan') || qp.get('go') === 'plan') setTimeout(() => { if (ASG_OFF()) home(); else { planPage(); window.scrollTo(0, 0); } }, 0); /* (a ?plan address opens the Plan tab) */
   else if (qp.has('ingame')) setTimeout(openInGame, 0); /* (a ?ingame address opens the Debrief in game page) */
   else if (qp.has('mplus') && !qp.has('report') && !nightLink) setTimeout(mpFinder, 0); /* (?mplus: the Mythic+ key finder, Nov 2) */
   else if (GUIDE_PATH) setTimeout(() => { const b = GDZ_ORDER.find((n) => guideSlug(n) === GUIDE_PATH[1]); openGuides(b || null, GUIDE_PATH[2] === 'heroic' ? 'h' : 'm'); }, 0); /* (a boss guide's own address, /guide/<boss>/<heroic|mythic>, Oct 27) */
