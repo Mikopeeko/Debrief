@@ -3301,7 +3301,7 @@ function renderMain0() {
   refreshIcons(); S.page = 'pull'; navNote();
   if (S.tab === 'audit' && S.noteSwap && S.noteSwap.from === 'audit' && NDZ_ON()) ndzOvl(); /* (the swap pop-up stays open over Debriefing) */
 }
-const view = (h) => { $('#view').innerHTML = h; try { if (typeof dsBars === 'function') { window.dsNow = 1; try { dsBars(); } finally { window.dsNow = 0; } } } catch (e) { /* (the studio passes are extra) */ } }; /* (Nov 3: the whole chain, past its 150 ms limit (window.dsNow): dsBars.now was lost to the wrappers added after round 26, so a page written inside the 150 ms (Rotation's redraw when the background pulls change its score) painted its plain layout first) */ /* (the studio passes, in the same tick as the page write and past their 150 ms limit, so a page never paints in its old layout first (Oct 25)) */
+const view = (h) => { $('#view').innerHTML = h; try { if (typeof dsBars === 'function') { window.dsNow = /pf-inl pf-srcd spc-v/.test(h) ? 1 : 0; try { dsBars(); } finally { window.dsNow = 0; } } } catch (e) { /* (the studio passes are extra) */ } }; /* (Nov 3: a Rotation page gets the whole chain at once, past its 150 ms limit (window.dsNow): dsBars.now was lost to the wrappers added after round 26, so Rotation's redraw when the background pulls change its score painted its plain layout first. Only Rotation: every page at once slowed the whole-night Report card, which writes the page many times while it reads its pulls) */ /* (the studio passes, in the same tick as the page write and past their 150 ms limit, so a page never paints in its old layout first (Oct 25)) */
 // ---------- No guide names on the page (your call, Oct 19: "remove the guide names from the pages and keep the text neutral") ----------
 // The checks are researched from written guides and simulations, but the page never names them: "both guides", "a guide" (or
 // "one guide" and "another guide" when two are in the same text), "the simulations". It's done as text appears on the page, so
@@ -35515,7 +35515,8 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
     { id: 'guide', ready: () => F('#view .gdz article.gdz-m ol.gdz-steps'), k: () => 'guide|' + location.pathname, go: () => play(V(), { steps: true }) },
   ];
   /* every other page: on its first draw that has its content (the studio's passes call this in the same tick as a draw, before the paint) */
-  M.draw = () => { if (off() || document.documentElement.classList.contains('dbr-holding') || S0().tab === 'audit') return; const t = S0().tab;
+  M.draw = () => { const t = S0().tab; if (t !== M.lt) { M.lt = t; M.ks = {}; } /* (another tab opened: coming back to one plays it again, once per tab open) */
+    if (off() || document.documentElement.classList.contains('dbr-holding') || t === 'audit') return;
     SURF.forEach((sf) => { if (sf.tab && sf.tab !== t) return; const el = sf.ready(); if (!el) { more(sf); return; } const k = sf.k();
       if (M.ks[sf.id] === k) { if (sf.redraw) try { redraw(sf, el); } catch (e) { console.warn(e); } return; } M.ks[sf.id] = k; M.kt[sf.id] = Date.now(); try { M.ph[sf.id] = sf.go(el); } catch (e) { console.warn(e); } }); };
   /* (the same view drawn again while it is on screen (Rotation, when the background pulls change its score): if its motion hasn't started yet, the
