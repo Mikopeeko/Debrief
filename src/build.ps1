@@ -36,12 +36,15 @@ $w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
 $base = $w.Replace("`r`n", "`n")
 # the website's Worker: the app baked in, and no listener class (Cloudflare gives no practice links to a Worker that implements a Durable Object)
-$w = $base.Replace('__ROLE__', 'site').Replace('__HTML__', (& $js $hosted))
+# (the phone home-screen icon and favicons, Nov 3: src/icons baked into the website Worker as base64, by path)
+$ictype = @{ '.png' = 'image/png'; '.ico' = 'image/x-icon'; '.webmanifest' = 'application/manifest+json' }
+$icons = '{' + ((Get-ChildItem (Join-Path $src 'icons') -File | Where-Object { $ictype.ContainsKey($_.Extension) } | Sort-Object Name | ForEach-Object { '"/' + $_.Name + '":["' + $ictype[$_.Extension] + '","' + [Convert]::ToBase64String([IO.File]::ReadAllBytes($_.FullName)) + '"]' }) -join ',') + '}'
+$w = $base.Replace('__ROLE__', 'site').Replace('__HTML__', (& $js $hosted)).Replace('__ICONS__', $icons)
 $w = [regex]::Replace($w, '/\*@GATEWAY-START\*/[\s\S]*?/\*@GATEWAY-END\*/', '')
 # the Discord helper's own Worker "debrief-discord" (wrangler.bot.toml): the listener class and the Discord jobs, no site page and no key hand-over class
-$bot = $base.Replace('__ROLE__', 'bot').Replace('__HTML__', '""')
+$bot = $base.Replace('__ROLE__', 'bot').Replace('__HTML__', '""').Replace('__ICONS__', '{}')
 $bot = [regex]::Replace($bot, '/\*@KEYS-START\*/[\s\S]*?/\*@KEYS-END\*/', '')
-foreach ($b in $w, $bot) { if ($b -match '__[A-Z_]+_Q__|__HTML__|__ROLE__|/\*TOPSPEC\*/') { throw 'a Worker still has a placeholder' } }
+foreach ($b in $w, $bot) { if ($b -match '__[A-Z_]+_Q__|__HTML__|__ROLE__|__ICONS__|/\*TOPSPEC\*/') { throw 'a Worker still has a placeholder' } }
 if (($w -match 'class DiscordGateway') -or ($bot -notmatch 'export class DiscordGateway') -or ($w -notmatch 'export class BotKeys') -or ($bot -match 'class BotKeys')) { throw 'the split between the website Worker and the Discord Worker is wrong' }
 New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'online\worker.js'), $w, $utf8)

@@ -10,7 +10,10 @@ w=open('worker_template.js', encoding='utf-8').read()
 for n in names: w=w.replace('__'+n+'__',json.dumps(qq[n]))
 import re
 w=w.replace('/*TOPSPEC*/',re.search(r'// <topspec>[\s\S]*?// </topspec>',open('wcl.js', encoding='utf-8').read()).group(0))
-site=re.sub(r'/\*@GATEWAY-START\*/[\s\S]*?/\*@GATEWAY-END\*/','',w.replace('__ROLE__','site').replace('__HTML__',json.dumps(hosted)))
-bot=re.sub(r'/\*@KEYS-START\*/[\s\S]*?/\*@KEYS-END\*/','',w.replace('__ROLE__','bot').replace('__HTML__','""'))
+import base64, os
+IT={'.png':'image/png','.ico':'image/x-icon','.webmanifest':'application/manifest+json'}
+icons=json.dumps({'/'+f:[IT[os.path.splitext(f)[1]],base64.b64encode(open('icons/'+f,'rb').read()).decode()] for f in sorted(os.listdir('icons')) if os.path.splitext(f)[1] in IT},separators=(',',':'))
+site=re.sub(r'/\*@GATEWAY-START\*/[\s\S]*?/\*@GATEWAY-END\*/','',w.replace('__ROLE__','site').replace('__HTML__',json.dumps(hosted)).replace('__ICONS__',icons))
+bot=re.sub(r'/\*@KEYS-START\*/[\s\S]*?/\*@KEYS-END\*/','',w.replace('__ROLE__','bot').replace('__HTML__','""').replace('__ICONS__','{}'))
 import os; os.makedirs('../online', exist_ok=True); open('../online/worker.js','w', encoding='utf-8').write(site); open('../online/bot.js','w', encoding='utf-8').write(bot)
 print(len(html), len(site), len(bot))

@@ -2031,6 +2031,7 @@ const PATCH_NOTES = [
     'Plan: a boss with no plan yet starts calm, and raid nights are now a small date picker in the top bar.',
     'Plan: a cleaner Cooldowns chart and toolbar, and raid markers show as icons in job names.',
     'Plan: cleaner job cards, plain labels, and the cooldown suggestions fold into one line.',
+    'Saving Debrief to your phone\'s home screen now shows the Debrief shield. Already saved it? Remove it and add it again.',
     'Home: Your season shows your item level, Raider.IO, Mythic bosses and parse, like the Companion app.',
     "Debrief Companion: if WoW is in true Fullscreen, one press switches it to Windowed (Fullscreen), so your recap can show over the game. With WoW open, it switches the moment you close WoW.",
     "Debrief Companion: the pop-up still resizes, but it stops where your recap ends, so it never grows bigger than the card.",

@@ -1245,6 +1245,11 @@ const GUIDE_PAGES = {"nymrissa-wavecaller/heroic":{"boss":"Nymrissa Wavecaller",
 /* GUIDE_PAGES:end */
 const SEO_PRIVATE = ['report', 'fight', 'night', 'plan', 'pc', 'p', 'code', 'pull'];
 const SEO_PAGES = ['/', '/?guides', '/?ingame', '/?patchnotes'];
+// (the phone home-screen icon and the favicons, Nov 3: src/icons, baked in by the build as base64 by path. iOS asks for
+// /apple-touch-icon.png (and -precomposed) on its own and ignores the page's SVG icon; Android reads the manifest's icons)
+const ICONS = __ICONS__, ICON_BIN = {};
+const iconRes = (p) => { const k = p === '/apple-touch-icon-precomposed.png' ? '/apple-touch-icon.png' : p, ic = ICONS[k]; if (!ic) return null; const b = ICON_BIN[k] || (ICON_BIN[k] = Uint8Array.from(atob(ic[1]), (c) => c.charCodeAt(0)));
+  return new Response(b, { headers: { 'Content-Type': ic[0], 'Cache-Control': 'public, max-age=604800', 'Access-Control-Allow-Origin': '*' } }); };
 const ROBOTS_TXT = 'User-agent: *\nAllow: /$\nAllow: /?guides\nAllow: /?ingame\nAllow: /?patchnotes\nDisallow: /api/\nDisallow: /*report=\nDisallow: /*night=\nDisallow: /*?plan\nDisallow: /*&plan\nDisallow: /*pc=\nDisallow: /*?p=\nDisallow: /*&p=\nDisallow: /*code=\n\nSitemap: https://debriefme.io/sitemap.xml\n';
 const SITEMAP_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + SEO_PAGES.concat(Object.keys(GUIDE_PAGES).map((k) => '/guide/' + k)).map((p) => '  <url><loc>https://debriefme.io' + p + '</loc></url>\n').join('') + '</urlset>\n'; /* (and every boss guide, Oct 27) */
 // (a boss guide's page: the app's page with the guide's title and description, and its words in the page until the app opens the guide)
@@ -1770,6 +1775,7 @@ export default {
     // (search engines, Oct 27: the public pages are listed; raid logs, nights, plans and character pages are other guilds' logs and
     // people's names, so they stay out of search (robots.txt and a noindex header); practice and old addresses are never indexed)
     { const gm = GUIDE_RX.exec(url.pathname); if (gm) { const g = GUIDE_PAGES[gm[1] + '/' + gm[2]]; return new Response(guidePage(env, g, url), { status: g ? 200 : 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoHeaders(url) } }); } } /* (a boss guide's own page, Oct 27) */
+    { const ir = url.pathname.length < 40 && typeof ICONS === 'object' ? iconRes(url.pathname) : null; if (ir) return ir; } /* (the home-screen icon, favicons and manifest, Nov 3) */
     if (url.pathname === '/robots.txt') return new Response(url.hostname === HOME_HOST ? ROBOTS_TXT : 'User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
     if (url.pathname === '/sitemap.xml') return new Response(SITEMAP_XML, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
     const seoH = seoHeaders(url);
