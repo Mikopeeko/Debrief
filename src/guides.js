@@ -643,7 +643,7 @@ const GDZ_CA_M = {
     CC.forEach(([id, t, at, p]) => { k.hold(3, id).at(4.6, id, p[0], p[1]).press(id, t, at, at + 1.2).hold(7, id); });
     k.at(9.4, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5);
     k.call(4.4, 6.2, 'Stun them in turns', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(6.3, 8, 'Look at your ghosts', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(8.1, 9.6, 'Line up the frontal', { on: 't1' });
-    mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); k.tag(id, 'MC', 1, 6); const [dx, dy] = gdzSpot(i, 3, 2.5); k.hold(1, id).at(4.4, id, SQ[0] + dx, SQ[1] + dy).hold(6.4, id); });
+    mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); const [dx, dy] = gdzSpot(i, 3, 6); k.hold(1, id).at(4.4, id, SQ[0] - 3 + dx, SQ[1] - 3 + dy).hold(6.4, id); }); /* (apart on the square, a step in from its edge: each one's mark and name reads) */
     // (they land around their player and are frozen on the spot by being looked at; the two outside the cone are let creep in)
     const G = [[28, 34], [31, 26], [38, 38], [37, 25], [25, 28], [20, 38]], IN = { 5: [24, 32], 2: [36, 32] };
     G.forEach(([x, y], q) => { const g = 'g' + q; k.obj(g, 'ghost', 6.2, x, y).show(g, 6.2, 12); if (IN[q]) k.obj(g, 'ghost', 8, x, y).obj(g, 'ghost', 9.6, IN[q][0], IN[q][1]); });
@@ -652,7 +652,7 @@ const GDZ_CA_M = {
     mc.forEach((id, i) => k.at(9.4, id, 12 - i * 3, 30 + i * 3));
     k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'] });
     k.ring1(mc.concat('t1')).step(1).step(2).step(6.2).step(8).step(11);
-    k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'Mind controlled, with a shield' });
+    k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'What they press' });
   },
   bombs(o) {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-32, -28], MA = [24, 8];
