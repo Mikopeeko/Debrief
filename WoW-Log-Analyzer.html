@@ -25619,7 +25619,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }], n: [
+  { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
@@ -31222,6 +31222,147 @@ function planBuildHead(B) { const R = planRoster(), it = (k, l) => '<button type
   return '<div class="tn-back plb-bk"><button type="button" class="btn sm" data-plbx="tonight">← Plan</button><span class="ptr-s" aria-hidden="true">›</span><button type="button" class="btn sm" data-plbx="boss">' + esc(typeof pnShort === 'function' ? pnShort(B.pick || '') : B.pick || '') + '</button></div>'; } /* (Tonight is home, Oct 24) */
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-plbx]'); if (!b || S.page !== 'plan') return; e.preventDefault(); if (!planLeaveOk()) return; /* (asks first, Oct 23) */ const B = S.noteBuild, k = b.dataset.plbx; S.noteBuild = null;
   S.planV = k === 'ros' ? 'ros' : k === 'tonight' ? 'tonight' : 'plans'; store.set(PLAN_VK, S.planV); S.planOpen = k === 'boss'; if (k === 'boss' && B) { S.ndzPick = B.pick; store.set(PLAN_BK, B.pick); } planAssign(); window.scrollTo({ top: 0 }); });
+
+// ===== The team plan, saved online (Nov 4, Flex: "One team plan saved online": "Yes", and "I want mine to be very easy"). The raid lead
+// saves it for the team once (signed in with Warcraft Logs); from then on every change saves by itself a few seconds after the last one,
+// and everyone on the team who opens Plan sees the same plan, a teammate's changes within about 20 seconds. Only the raid lead and the
+// officers they name can change it; everyone else reads it. Plan's own code is untouched: the pieces it keeps in this browser (each
+// boss's plans, Who plays, the nights, the markers, the alts) are mirrored to the team's file (the Worker's /api/team) and back. =====
+const TP_KEYS = ['wla-rosters', 'wla-night', 'wla-nights', 'wla-plan-chosen', 'wla-plan-skip', 'wla-alts', 'wla-roster-no', 'wla-nicks', 'wla-ndz-extra'], TP_PRE = ['wla-rnote|', 'wla-pp|'];
+const tpIs = (k) => !!k && (TP_KEYS.includes(k) || TP_PRE.some((p) => k.startsWith(p)));
+const TP = { id: null, name: '', ver: null, base: null, doc: null, busy: false, sig: '', since: 0, chg: [] };
+// (practice links only: a test officer by name, since the Warcraft Logs sign-in only comes back to debriefme.io; never on debriefme.io)
+const TP_PRACTICE = /-debrief\.[a-z0-9-]+\.workers\.dev$/.test(location.hostname);
+const tpTeam = () => { try { const tm = ndzBTeams(), cur = S.planRosTeam || store.get(GROUP_CUR), t = tm.find((g) => g.gid === cur) || tm[0] || null; return t && /^(team|guild)$/.test(t.kind) && /^\d+$/.test(String(t.id)) ? t : null; } catch (e) { return null; } };
+const tpMe = () => { const m = meOf(); return m ? String(m.name).split('-')[0] : ''; };
+const tpSnap = () => { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (tpIs(k)) o[k] = localStorage.getItem(k); } } catch (e) { /* storage off */ } return o; };
+const tpAgo = (at) => { const m = Math.max(0, Math.round((Date.now() - at) / 60000)); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; };
+const tpApi = async (q, body) => { const r = await fetch('/api/team?' + q, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' }); return Object.assign(await r.json().catch(() => ({})), { _st: r.status }); };
+// (the team's plan, read again: every 20 seconds while a page that shows it is open, and when the tab comes back into view)
+async function tpPull() {
+  const t = tpTeam(); if (!t || TP.busy) return; const id = t.kind + ':' + t.id;
+  if (id !== TP.id) Object.assign(TP, { id, name: gName(t), ver: null, base: null, doc: null, chg: [] });
+  const q = new URLSearchParams({ id, me: tpMe(), w: S.page === 'plan' ? pnShort(planBoss()) : '' }); if (TP.ver != null && TP.doc && TP.doc.exists && !(TP.base && TP.doc.you && !TP.doc.you.can && Object.keys(tpDirty()).some((k) => (TP.doc.keys || {})[k]))) q.set('v', TP.ver); /* (a reader whose copy of a team piece differs reads it all again, so it's put back) */
+  let r; try { r = await tpApi(q); } catch (e) { return; } if (id !== TP.id || r._st >= 400) return;
+  TP.doc = Object.assign({}, TP.doc || {}, r, { keys: r.keys || (TP.doc || {}).keys });
+  if (r.exists && r.keys) tpApply(r); else if (!r.exists) TP.base = null;
+  tpChip();
+}
+// (a teammate's changes come in: a piece not changed here since the last save takes the team's version; a reader always mirrors the
+// team's plan. The first time, what this browser had counts as saved, so only later changes go out)
+function tpApply(r) {
+  const snap = tpSnap(), first = !TP.base, can = !!(r.you && r.you.can), got = [];
+  if (first) TP.base = Object.assign({}, snap);
+  for (const [k, e] of Object.entries(r.keys)) { const v = e.v == null ? null : e.v, here = snap[k] === undefined ? null : snap[k], was = TP.base[k] === undefined ? null : TP.base[k];
+    if (here === v) { TP.base[k] = v; continue; }
+    if (first || !can || here === was) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e2) { /* storage off */ } TP.base[k] = v; got.push([k, was, v, e]); } }
+  TP.ver = r.ver;
+  if (got.length && !first) { const now = Date.now(); for (const [k, a, b, e] of got) { if (!k.startsWith('wla-rnote|') || e.by === tpMe()) continue; const lab = tpNoteDiff(a, b); if (lab) TP.chg.push({ boss: k.slice(10), lab, by: e.by, at: e.at || now }); }
+    TP.chg = TP.chg.filter((x) => now - x.at < 30 * 60e3).slice(-20); }
+  if (got.length) tpRedraw();
+}
+// (Plan drawn again with the team's changes, once nobody is typing or dragging on it)
+function tpRedraw() { if (S.page !== 'plan') return; const a = document.activeElement; if ((a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) || document.querySelector('.dragging, .pg-drag')) { clearTimeout(tpRedraw.t); tpRedraw.t = setTimeout(tpRedraw, 2000); return; }
+  const y = window.scrollY; planPage(); window.scrollTo({ top: y }); }
+// (what changed in a boss's plans: the label of the first job line that's new, like "Guillotine 2")
+function tpNoteDiff(a, b) { const lines = (v) => { try { const o = JSON.parse(v || 'null'); return new Set(((o && o.list) || []).flatMap((n) => String(n.text || '').split('\n'))); } catch (e) { return new Set(); } };
+  const A = lines(a); for (const l of lines(b)) if (!A.has(l)) { const m = /^\s*([^:{}\n]{2,40}?)\s*[:{]/.exec(l); if (m && !/^(difficulty|boss|EncounterID)\b/i.test(m[1].trim())) return m[1].trim(); } return ''; }
+const tpSum = (k, a, b) => k.startsWith('wla-rnote|') ? ((l) => (l ? 'changed ' + l + ' on ' : 'changed the plan for ') + pnShort(k.slice(10)))(tpNoteDiff(a, b)) : k.startsWith('wla-pp|') ? 'moved the markers on ' + pnShort(k.split('|')[1])
+  : ({ 'wla-rosters': 'changed the roster', 'wla-night': 'changed who plays', 'wla-nights': 'changed the raid nights', 'wla-plan-chosen': 'picked another plan', 'wla-plan-skip': 'changed which bosses are planned', 'wla-alts': 'changed the alts', 'wla-roster-no': 'changed the roster', 'wla-nicks': 'changed the nicknames', 'wla-ndz-extra': 'added a raider' })[k] || 'changed the plan';
+// (this browser's changes: sent once they've stopped changing for a few seconds; never for a reader)
+function tpDirty() { const snap = tpSnap(), d = {}; for (const k of new Set(Object.keys(snap).concat(Object.keys(TP.base || {})))) { const a = snap[k] === undefined ? null : snap[k], b = TP.base[k] === undefined ? null : TP.base[k]; if (a !== b) d[k] = a; } return d; }
+async function tpTick() {
+  if (!TP.base || TP.busy || !TP.doc || !TP.doc.exists || !(TP.doc.you && TP.doc.you.can)) return;
+  const d = tpDirty(), sig = Object.entries(d).map(([k, v]) => k + ':' + (v == null ? -1 : v.length)).join('|'); if (!sig) { TP.sig = ''; return; }
+  if (sig !== TP.sig) { TP.sig = sig; TP.since = Date.now(); return; } if (Date.now() - TP.since < 3500) return;
+  TP.busy = true; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
+  try { const r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'set', keys: d, sums, me: tpMe() });
+    if (r.ok) { for (const [k, v] of Object.entries(d)) TP.base[k] = v; Object.assign(TP.doc, { ver: r.ver, log: r.log, officers: r.officers }); TP.ver = r.ver; TP.sig = ''; tpChip(); }
+    else if (r._st === 401 || r._st === 403) { TP.doc.you = Object.assign({}, TP.doc.you, { can: false }); tpChip(); }
+  } catch (e) { /* (sent again on the next tick) */ } finally { TP.busy = false; }
+}
+setInterval(() => { try { tpTick(); } catch (e) { /* (next tick) */ } }, 1500);
+setInterval(() => { if (document.visibilityState === 'visible' && (S.page === 'plan' || TP.doc)) tpPull(); }, 20000);
+window.addEventListener('focus', () => { if (S.page === 'plan' || TP.doc) tpPull(); });
+// (a tab closed right after a change: what wasn't sent yet goes out as the page closes)
+window.addEventListener('pagehide', () => { try { if (!TP.base || !TP.doc || !(TP.doc.you && TP.doc.you.can)) return; const d = tpDirty(); if (!Object.keys(d).length) return; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
+  navigator.sendBeacon('/api/team?id=' + encodeURIComponent(TP.id), new Blob([JSON.stringify({ op: 'set', keys: d, sums, me: tpMe() })], { type: 'application/json' })); } catch (e) { /* closing */ } });
+// ---- the header's chip and its pop-up ----
+const TP_CSS = String.raw`
+.tp-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; vertical-align: middle; }
+.tp-av { display: inline-flex; } .tp-av span { display: inline-grid; place-items: center; width: 24px; height: 24px; margin-left: -6px; border-radius: 50%; border: 2px solid var(--bg, #0f1117); font: 700 11px var(--body); color: #0d1013; }
+.tp-av span:first-child { margin-left: 0; }
+.tp-chip { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 9px; border: 1px solid var(--line); border-radius: 999px; background: #11151a; color: var(--text); font: 600 12.5px var(--body); white-space: nowrap; cursor: pointer; }
+.tp-chip:hover { border-color: rgba(230,180,80,.5); } .tp-chip i { width: 7px; height: 7px; border-radius: 50%; background: #3fb950; } .tp-chip.tp-ro i { background: var(--faint); } .tp-chip span { color: var(--muted); font-weight: 400; }
+.tp-chip.tp-save { border-color: rgba(230,180,80,.55); color: var(--gold); background: rgba(230,180,80,.1); } .tp-chip.tp-save i { display: none; }
+.tp-pop { position: absolute; z-index: 80; width: 340px; max-width: calc(100vw - 24px); background: var(--panel, #13171b); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 14px 40px rgba(0,0,0,.45); font: 400 13px var(--body); color: var(--text); }
+.tp-pop .h { padding: 12px 14px; border-bottom: 1px solid var(--line); } .tp-pop .h b { display: block; font-size: 13.5px; font-weight: 700; } .tp-pop .h p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.tp-pop .sec { padding: 10px 14px; border-bottom: 1px solid var(--line); } .tp-pop .sec:last-child { border-bottom: 0; }
+.tp-pop .lab { margin-bottom: 6px; font: 700 11px var(--body); letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
+.tp-pop .row { display: flex; align-items: center; gap: 8px; padding: 4px 0; } .tp-pop .row em { margin-left: auto; font-style: normal; font-size: 12.5px; color: var(--muted); }
+.tp-pop .row .nm { font-weight: 600; } .tp-pop .row .dt { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; }
+.tp-pop .ch { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 12.5px; color: var(--muted); } .tp-pop .ch b { color: var(--text); font-weight: 600; } .tp-pop .ch span { flex: 1; }
+.tp-pop button.lk { padding: 0; border: 0; background: none; color: var(--gold); font: 600 12.5px var(--body); cursor: pointer; } .tp-pop button.lk:hover { text-decoration: underline; } .tp-pop button.lk.q { color: var(--muted); font-weight: 400; }
+.tp-pop form { display: flex; gap: 6px; margin-top: 6px; } .tp-pop input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg, #0f1117); color: var(--text); font: 400 13px var(--body); }
+.tp-pop form button { padding: 5px 10px; border: 0; border-radius: 6px; background: var(--gold); color: #1a1408; font: 700 12.5px var(--body); cursor: pointer; }
+.tp-pop .err { margin-top: 6px; font-size: 12.5px; color: #ff8f87; } .tp-pop .pr { font-size: 12.5px; color: var(--muted); }
+.tp-chg { display: inline-flex; align-items: center; margin-left: 8px; padding: 2px 6px; border-radius: 4px; background: rgba(163,113,247,.12); color: #c9a5ff; font: 600 11px var(--body); vertical-align: middle; }
+.tp-chgc { box-shadow: inset 3px 0 0 #a371f7 !important; }
+@media (max-width: 760px) { .tp-wrap { margin: 6px 0 0; } .tp-chip span { display: none; } }
+`;
+const tpCol = (n) => { try { const p = [...((rostersGet().list || []).flatMap((r) => r.players || []))].find((x) => String(x.n).split('-')[0].toLowerCase() === String(n).toLowerCase()); return (p && p.cls && E.CLASSES[p.cls] && E.CLASSES[p.cls][1]) || '#c9ced8'; } catch (e) { return '#c9ced8'; } };
+function tpChip() {
+  if (S.page !== 'plan') return; const host = document.querySelector('#view .bh-l1'); if (!host) return;
+  if (!document.getElementById('tp-css')) { const st = document.createElement('style'); st.id = 'tp-css'; st.textContent = TP_CSS; document.head.appendChild(st); }
+  let w = host.querySelector('.tp-wrap'); if (!w) { w = document.createElement('span'); w.className = 'tp-wrap'; host.appendChild(w); }
+  const d = TP.doc; if (!d || !TP.id) { w.innerHTML = ''; return; }
+  const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpMe().toLowerCase()).slice(0, 4);
+  const av = here.length ? '<span class="tp-av" title="' + esc(here.map((h) => h.n).join(', ')) + ' ' + (here.length > 1 ? 'are' : 'is') + ' here">' + here.map((h) => '<span style="background:' + tpCol(h.n) + '">' + esc(h.n.charAt(0).toUpperCase()) + '</span>').join('') + '</span>' : '';
+  const can = d.you && d.you.can;
+  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
+    : '<button type="button" class="tp-chip tp-save" title="Save this plan online for your whole team">Save it for the team</button>');
+  w.querySelector('.tp-chip').onclick = (e) => { e.stopPropagation(); tpPop(w.querySelector('.tp-chip')); };
+  tpDeco();
+}
+// (the job cards a teammate just changed get a quiet tag)
+function tpDeco() { if (S.page !== 'plan' || !TP.chg.length) return; const boss = planBoss();
+  for (const c of document.querySelectorAll('#view .plb-rc')) { if (c.querySelector('.tp-chg')) continue; const t = c.textContent || '', x = TP.chg.slice().reverse().find((q) => q.boss === boss && t.includes(q.lab)); if (!x) continue;
+    const h = c.querySelector('.plb-rch b') || c.querySelector('.plb-rch'); if (!h) continue; c.classList.add('tp-chgc'); h.insertAdjacentHTML('afterend', '<span class="tp-chg">' + esc(x.by) + ' changed this · ' + tpAgo(x.at) + '</span>'); } }
+function tpPop(anchor) {
+  document.querySelectorAll('.tp-pop').forEach((x) => x.remove()); const d = TP.doc; if (!d) return;
+  const p = document.createElement('div'); p.className = 'tp-pop'; const me = tpMe(), you = d.you, can = you && you.can;
+  const draw = (err) => {
+    const prac = TP_PRACTICE ? '<div class="sec"><div class="lab">Practice copy</div>' + (you && you.practice ? '<div class="pr">You\'re testing as <b>' + esc(you.name) + '</b>. <button type="button" class="lk q" data-tp="pout">Stop</button></div>' : '<div class="pr">Sign in with Warcraft Logs only works on debriefme.io. Test as a character:</div><form data-tp="pin"><input name="n" placeholder="Character name" maxlength="24" value="' + esc(me) + '"><button>Test</button></form>') + '</div>' : '';
+    if (!d.exists) { p.innerHTML = '<div class="h"><b>Save it for the team</b><p>Your plan goes online for ' + esc(TP.name) + '. Every change after that saves by itself, your officers can change it too, and everyone else on the team can read it.</p></div>' +
+      '<div class="sec">' + (you ? '<form data-tp="mk"><button>Save it for the team</button></form>' : '<div class="pr">Sign in with Warcraft Logs first, so only you and your officers can change it.</div>' + (TP_PRACTICE ? '' : '<form data-tp="sign"><button>Sign in with Warcraft Logs</button></form>')) + (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>' + prac; }
+    else { const lead = (d.lead || '') + (you && you.lead ? '' : '');
+      p.innerHTML = '<div class="h"><b>' + esc(TP.name) + '\'s plan</b><p>Saved online for the whole team. ' + (can ? 'Every change saves by itself.' : 'Only the raid lead and the officers can change it.') + '</p></div>' +
+        '<div class="sec"><div class="lab">Here now</div>' + ((d.here || []).length ? d.here.slice(0, 8).map((h) => '<div class="row"><span class="dt"></span><span class="nm" style="color:' + tpCol(h.n) + '">' + esc(h.n) + '</span><em>' + (h.n.toLowerCase() === me.toLowerCase() ? 'you' : h.w ? 'looking at ' + esc(h.w) : 'on the site') + '</em></div>').join('') : '<div class="pr">Nobody else right now.</div>') + '</div>' +
+        '<div class="sec"><div class="lab">Can change it</div><div class="row"><span class="nm" style="color:' + tpCol(lead) + '">' + esc(lead) + '</span><em>' + (you && you.lead ? 'you · ' : '') + 'raid lead</em></div>' +
+        (d.officers || []).map((n) => '<div class="row"><span class="nm" style="color:' + tpCol(n) + '">' + esc(n) + '</span><em>' + (n.toLowerCase() === me.toLowerCase() ? 'you · ' : '') + 'officer' + (you && you.lead ? ' · <button type="button" class="lk q" data-tp="del" data-n="' + esc(n) + '">Remove</button>' : '') + '</em></div>').join('') +
+        (you && you.lead ? '<form data-tp="add"><input name="n" placeholder="Officer\'s character name" maxlength="24"><button>Add</button></form>' : '') + '</div>' +
+        '<div class="sec"><div class="lab">Today</div>' + ((d.log || []).slice(-8).reverse().map((x) => '<div class="ch"><span><b>' + esc(x.by === me ? 'You' : x.by) + '</b> ' + esc(x.sum) + ' · ' + tpAgo(x.at) + '</span>' + (can && x.undo ? '<button type="button" class="lk q" data-tp="undo" data-i="' + x.i + '">Undo</button>' : '') + '</div>').join('') || '<div class="pr">No changes yet today.</div>') +
+        (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>' + prac; }
+    p.querySelectorAll('form').forEach((f) => (f.onsubmit = (e) => { e.preventDefault(); act(f.dataset.tp, (f.querySelector('input') || {}).value); }));
+    p.querySelectorAll('button[data-tp]').forEach((b) => (b.onclick = () => act(b.dataset.tp, b.dataset.n || b.dataset.i)));
+  };
+  const act = async (k, v) => {
+    try {
+      if (k === 'sign') { wclSignIn(); return; }
+      if (k === 'pin' || k === 'pout') { const n = String(v || '').trim(); document.cookie = 'dbp=' + (k === 'pin' && n ? encodeURIComponent(n) : '') + '; Path=/; Secure; SameSite=Lax; Max-Age=' + (k === 'pin' && n ? 86400 : 0); TP.ver = null; await tpPull(); return tpPop(anchor); }
+      let r;
+      if (k === 'mk') { r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'create', name: TP.name, keys: tpSnap(), me }); if (r.ok) { TP.base = tpSnap(); TP.ver = r.ver; } }
+      else if (k === 'add' || k === 'del') { if (!String(v || '').trim()) return; r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'officer', [k]: String(v).trim(), me }); }
+      else if (k === 'undo') r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'undo', i: +v, me });
+      if (r && !r.ok) return draw(r.error || 'That didn\'t save. Try again.');
+      TP.ver = k === 'undo' ? null : TP.ver; await tpPull(); tpPop(anchor);
+    } catch (e) { draw('That didn\'t save. Try again.'); }
+  };
+  draw(); document.body.appendChild(p); const r = anchor.getBoundingClientRect(); p.style.top = Math.round(r.bottom + window.scrollY + 8) + 'px'; p.style.left = Math.round(Math.max(12, Math.min(r.left, window.innerWidth - p.offsetWidth - 12))) + 'px';
+  const off = (e) => { if (!p.contains(e.target) && e.target !== anchor) { p.remove(); document.removeEventListener('click', off, true); } }; setTimeout(() => document.addEventListener('click', off, true), 0);
+}
+// (every time Plan is drawn: the chip, the tags, and a read of the team's plan when the team changed or nothing's been read yet)
+(function () { const p0 = planPage; planPage = function () { const r = p0.apply(this, arguments); try { tpChip(); const t = tpTeam(); if (t && (t.kind + ':' + t.id !== TP.id || !TP.doc)) tpPull(); } catch (e) { /* (Plan works on its own) */ } return r; }; })();
 
 // ---- Plan's four steps (Oct 23): each boss's chosen plan, per roster; step 4, Into the game ----
 const PLAN_CH_K = 'wla-plan-chosen';

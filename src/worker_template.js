@@ -1560,6 +1560,77 @@ async function planShare(req, env, url) {
   return json({ ok: true });
 }
 
+// ---- The team plan, saved online (Nov 4, Flex: "One team plan saved online": "Yes"). One file per team in R2 (debrief-nights) holds
+// Plan's own pieces as the page keeps them (each boss's plans, Who plays, the nights, the markers, the alts), each with when and by whom
+// it last changed; who may change it (the raid lead who saved it, and the officers they name); and the last day and a half of changes
+// with what each replaced, for Undo. R2 rather than KV: a raid night saves often, and KV's free writes (1,000 a day) would run out,
+// R2's run to a million a month. The page saves a few seconds after the last change, never per keystroke. No Warcraft Logs token is
+// ever kept in it: an officer's characters are asked of Warcraft Logs with their own sign-in and remembered for an hour at the edge.
+const TEAM_ID = /^(team|guild):[0-9]{1,12}$/, TEAM_KEY = /^wla-(rosters|night|nights|plan-chosen|plan-skip|alts|roster-no|nicks|ndz-extra|rnote\|[^|]{1,60}|pp\|[^|]{1,60}\|[A-Za-z]{1,10})$/;
+const teamK = (id, url) => (PRACTICE_HOST(url) ? 'practice-team/' : 'team/') + id.replace(':', '-') + '.json'; /* (a practice link keeps its own copies: testing with a real team never touches its real plan) */
+async function teamGet(env, id, url) { const o = await env.debrief_nights.get(teamK(id, url)); if (!o) return null; return { doc: JSON.parse(await new Response(o.body.pipeThrough(new DecompressionStream('gzip'))).text()), etag: o.etag }; }
+// (only over the version that was read: two saves at the same moment can't undo each other, the second reads again and merges)
+async function teamPut(env, id, doc, etag, url) { const gz = await new Response(new Blob([JSON.stringify(doc)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  return env.debrief_nights.put(teamK(id, url), gz, { httpMetadata: { contentType: 'application/octet-stream' }, ...(etag ? { onlyIf: { etagMatches: etag } } : {}) }); }
+// (practice links only, never debriefme.io: a test officer by name, so two browsers can try the team plan without Warcraft Logs (its
+// sign-in only comes back to debriefme.io))
+const PRACTICE_HOST = (u) => /-debrief\.[a-z0-9-]+\.workers\.dev$/.test(u.hostname);
+async function teamWho(req, env, url) {
+  if (PRACTICE_HOST(url)) { const m = (req.headers.get('Cookie') || '').match(/(?:^|;\s*)dbp=([^;]{1,80})/); let n = ''; try { n = m ? decodeURIComponent(m[1]).trim().slice(0, 24) : ''; } catch (e) { n = ''; }
+    if (n) return { uid: 'p:' + n.toLowerCase(), name: n, chars: [n.toLowerCase()], practice: true }; }
+  const s = await sessOf(req, env); return s && s.uid ? { uid: 'w:' + s.uid, name: s.name, t: s.t } : null;
+}
+async function teamChars(who) {
+  if (who.chars) return who.chars; const c = caches.default, ck = new Request('https://debrief.cache/team-chars/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { characters { name } } } }' }) });
+    l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).characters || []; l = l.map((x) => String(x.name || '').toLowerCase()).filter(Boolean); } catch (e) { l = []; }
+  await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l;
+}
+const teamCan = async (doc, who) => { if (!who) return false; if (doc.owner.uid === who.uid) return true; const of = (doc.officers || []).map((x) => x.toLowerCase()); if (!of.length) return false; return (await teamChars(who)).some((n) => of.includes(n)); };
+// (who has the plan open: each open page says so every 20 seconds; kept a minute at the edge, nothing written to storage)
+async function teamHere(id, me, w) {
+  const c = caches.default, ck = new Request('https://debrief.cache/team-here/' + id), now = Date.now(); let h = {}; try { const r = await c.match(ck); if (r) h = await r.json(); } catch (e) { h = {}; }
+  for (const k of Object.keys(h)) if (now - (h[k].at || 0) > 60000) delete h[k];
+  if (me) { h[me.toLowerCase()] = { n: me, at: now, w }; await c.put(ck, new Response(JSON.stringify(h), { headers: { 'Cache-Control': 'max-age=300' } })).catch(() => {}); }
+  return Object.values(h);
+}
+const teamLog = (d) => (d.log || []).map((x, i) => ({ i, at: x.at, by: x.by, k: x.k, sum: x.sum, undo: x.prev !== undefined }));
+async function teamPlan(req, env, url) {
+  if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
+  const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
+  const who = await teamWho(req, env, url), you = (d, can) => (who ? { name: who.name, can, lead: !!d && d.owner.uid === who.uid, practice: !!who.practice } : null);
+  if (req.method === 'GET') {
+    const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
+    if (!g) return json({ exists: false, here, you: you(null, false) });
+    const d = g.doc; return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: teamLog(d), here, you: you(d, await teamCan(d, who)), keys: url.searchParams.get('v') === String(d.ver) ? null : d.keys });
+  }
+  if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+  if (!who) return json({ error: 'Sign in with Warcraft Logs to change the team plan.', signin: true }, 401);
+  const raw = await req.arrayBuffer(); if (raw.byteLength > 3 * 1024 * 1024) return json({ error: 'That plan is too big to save.' }, 413);
+  let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
+  if (!b || !['create', 'set', 'officer', 'undo'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
+  const me = String(b.me || '').trim().slice(0, 24) || who.name, keys = b.keys && typeof b.keys === 'object' ? b.keys : {};
+  for (const [k, v] of Object.entries(keys)) if (!TEAM_KEY.test(k) || (v !== null && (typeof v !== 'string' || v.length > 600 * 1024))) return json({ error: 'That change isn\'t right.' }, 400);
+  for (let tries = 0; tries < 4; tries++) {
+    const g = await teamGet(env, id, url).catch(() => null), now = Date.now(); let d = g ? g.doc : null;
+    if (b.op === 'create') { if (d) return json({ error: 'This team already has a plan saved online.', exists: true }, 409);
+      d = { id, name: String(b.name || '').slice(0, 60), owner: { uid: who.uid, char: me }, officers: [], keys: {}, ver: 0, log: [] }; }
+    else if (!d) return json({ error: 'This team has no plan saved online yet.' }, 404);
+    else if (!(await teamCan(d, who))) return json({ error: 'Only the raid lead and the officers can change the team plan.' }, 403);
+    const put = (k, v, sum) => { const prev = d.keys[k] ? d.keys[k].v : null; if (prev === v) return; d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k, sum: String(sum || 'changed the plan').slice(0, 140), prev }); };
+    if (b.op === 'create') { for (const [k, v] of Object.entries(keys)) if (v !== null) d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'saved the whole plan for the team' }); }
+    else if (b.op === 'set') { const sums = b.sums && typeof b.sums === 'object' ? b.sums : {}; for (const [k, v] of Object.entries(keys)) put(k, v, sums[k]); }
+    else if (b.op === 'undo') { const e = d.log[+b.i]; if (!e || e.prev === undefined || !e.k) return json({ error: 'That change can\'t be undone.' }, 400); put(e.k, e.prev, 'undid "' + e.sum + '"'); }
+    else { if (d.owner.uid !== who.uid) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
+      const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
+      const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
+    d.ver = (d.ver || 0) + 1; d.log = d.log.filter((x) => now - x.at < 36 * 3600e3).slice(-60);
+    if (await teamPut(env, id, d, g ? g.etag : null, url)) return json({ ok: true, ver: d.ver, officers: d.officers, log: teamLog(d), you: you(d, true) });
+  }
+  return json({ error: 'Someone else saved at the same moment. Try again.' }, 409);
+}
+
 // ---- The instant listener (Oct 26, the owner's ask: "the whole point of a bot is to make it quick").
 // Discord tells a bot about a new message only over a connection the bot keeps open (the "gateway"). A Worker can't keep one, so this small Durable
 // Object does: it holds the connection all day, hears every message, and answers a tag from the owner or a moderator in about a second. The
@@ -1736,6 +1807,7 @@ export default {
     if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
+    if (url.pathname === '/api/team') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);
