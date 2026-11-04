@@ -5436,13 +5436,21 @@ function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null
   const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
   return { C, base, marks, uses, saved: !!(s.marks || s.uses) }; }
 const ppSave = (b, d, v) => { const C = GDZ_PP[b] && GDZ_PP[b][d]; store.set(ppKey(b, d), JSON.stringify(C && C.mver ? { ...v, mver: C.mver } : v)); };
-// (a stand-in for whoever the fight picks: a grey dot with a question mark)
+// (a group's list has no stand-in rows ("Whoever gets the axe"): the group says in a sentence who the fight picks, Plan round 5)
+const PP_ANYT = { 'Whoever gets the axe': 'The boss picks one player.', 'Random players': 'The boss picks them.', 'Whoever gets a bite': 'The boss picks them.', 'Whoever gets Chilling Frost': 'The boss picks them.', 'Whoever gets Rend': 'The boss picks them.', 'Whoever gets it': 'The boss picks them.', 'Whoever gets a fear': 'The boss picks them.' };
+const ppLegG = (G) => { const any = G.items.filter((it) => it.any); if (!any.length) return G; const items = G.items.filter((it) => !it.any); return { ...G, items, sub: items.length ? G.sub : [PP_ANYT[any[0].name] || 'The boss picks them.', G.sub].filter(Boolean).join(' ') }; };
+// (a stand-in for whoever the fight picks, on the map: a grey dot with a question mark)
 const ppAny = (label) => ({ name: label, color: '#c9ced8', specIcon: 'inv_misc_questionmark', any: true });
-// (who each name is: class colour, spec icon and role, from the pull, else from Plan's saved specs)
+// (who each name is: class colour, spec icon and role, from the pull, else from Plan's roster (the job cards' own data), else Plan's
+// saved specs; the class icon when the spec isn't known, never a question mark for a real player (Plan round 5, Nov 4: in a fresh browser
+// everyone was a "?" and "ranged", Vandagos the tank too))
 function ppWho(r, names) { const sp = ndzSpecs(), here = new Map((r ? ndzIn(r) : []).map((p) => [ndzPn(p).toLowerCase(), p])), P = new Map();
-  for (const n of names) { const p = here.get(n.toLowerCase()), s = sp[n.toLowerCase()] || {}, cls = p ? p.cls : s.cls, sid = +(p ? p.specId : s.sid) || 0, role = p ? p.role : s.role;
-    P.set(n.toLowerCase(), { name: n, cls, color: [p && p.color, s.color, (E.CLASSES[cls] || [])[1]].find((c) => c && c !== 'inherit') || '#ddd', specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : 'inv_misc_questionmark'),
-      role: role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged' }); }
+  let ro = new Map(), ps = {}; try { if (typeof pnPeople === 'function' && typeof pnGet === 'function') ro = new Map(pnPeople(pnGet(), { alts: true }).map((q) => [String(q.n).toLowerCase(), q])); } catch (e) { ro = new Map(); } try { if (typeof planSp === 'function') ps = planSp() || {}; } catch (e) { ps = {}; }
+  const RK = { tank: 1, healer: 1, melee: 1, ranged: 1 };
+  for (const n of names) { const k = n.toLowerCase(), p = here.get(k), q = ro.get(k), s1 = ps[k] || {}, s0 = sp[k] || {}, s = s1.cls ? s1 : s0.cls ? s0 : s1;
+    const cls = (p && p.cls) || (q && q.cls) || s.cls || null, sid = +((p && p.specId) || (q && q.sid) || s.sid) || 0;
+    const role = p && p.role ? (p.role === 'tank' || p.role === 'healer' ? p.role : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged') : q && RK[q.kind] ? q.kind : s.role === 'tank' || s.role === 'healer' ? s.role : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged';
+    P.set(k, { name: n, cls, color: [p && p.color, (E.CLASSES[cls] || [])[1], s.color].find((c) => c && c !== 'inherit') || '#c9ced8', specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : ''), role }); }
   return P; }
 // (who stands in which of the guide's spots: the jobs first, then everyone else by role, so a healer takes a healer's spot)
 function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix).filter((v) => typeof v === 'string')), left = [...P.values()].map((p) => p.name).filter((n) => !used.has(n)), free = GDZ_RAID.filter((s) => !(s in S)), R = { t: 'tank', h: 'healer', m: 'melee', r: 'ranged' };
@@ -5470,8 +5478,8 @@ function ppFreeze(mp, T, S, P, M, o) {
       if (rr <= 14) { c = m; r = rr; rings.push({ x: m.x, y: m.y, r: rr, fx: 'zone', t0: 0, dur: 1e9, color, cn: text, label: false }); } else { const e = at(ids, below); c = { x: e.x, y: e.y }; r = 1.5; } }
     else if (ids.rx != null) { c = { x: cx + ids.rx, y: cy + ids.ry }; r = ids.r || 0; } else c = ids;
     if (!c) return null; let up = !!below; /* (a bubble that would leave the picture's frame goes to the other side of its ring) */
-    if (FR) { const ph = FR.r * 0.19; if (!up && c.y + r + ph > FR.y + FR.r) up = true; else if (up && c.y - r - ph < FR.y - FR.r) up = false; }
-    return { t0: 0, t1: 1e9, text, x: c.x, y: up ? c.y - r + off : c.y + r - off, up, color, ink: ink || '#fff' }; }).filter(Boolean);
+    if (FR) { const ph = FR.r * 0.19; if (!up && c.y + r + 3 + ph > FR.y + FR.r) up = true; else if (up && c.y - r - 3 - ph < FR.y - FR.r) up = false; }
+    return { t0: 0, t1: 1e9, text, x: c.x, y: up ? c.y - r + off - 3 : c.y + r - off + 3, up, color, ink: ink || '#fff' }; }).filter(Boolean); /* (3 yards further out than the ring, so a pill never covers the group, round 5) */
   const cb = {}; for (const [g, l] of Object.entries(mp.cbars || {})) cb[g] = l.map((b) => ({ ...b, by: '' }));
   // (the raid lead's markers, drawn 4 yards further out than their spot so whoever stands on one doesn't hide it)
   const mo = PP_MKOUT[mp.boss], wm = PP_MKS.filter((k) => M[k] && (!o.marks || o.marks.includes(k))).map((k) => ({ k, x: cx + M[k][0] + (Array.isArray(mo) ? mo[0] : 0), y: cy + M[k][1] + (Array.isArray(mo) ? mo[1] : (M[k][1] >= 0 ? 1 : -1) * (mo == null ? 4 : mo)) }));
@@ -5521,7 +5529,8 @@ function ppReadCA(N, P) {
 }
 // (the starting map pieces of a static scene: the raid around Zul'jan, everyone not placed in two clumps beside him)
 function ppRest(k, put, spots, spread) { const left = GDZ_RAID.filter((s) => !put.has(s)); spots.forEach(([x, y], j) => k.at(0, left.filter((_, i) => i % spots.length === j), x, y, spread || 4.5)); }
-// (an axe soak on a marker: the target and its soakers there, its 9-yard circle and the 40-yard eruption after it; the raid by the boss)
+// (an axe soak on a marker: the target and its soakers there, its 9-yard circle (the 40-yard walk-out is the footer's line, not a ring:
+// Plan round 5); the raid by the boss)
 function ppAxe(at, soak, ext, zeph, P, M) {
   const k = gdzKit('The Coiled Altar', 3), fix = {}, put = new Set(), tanks = soak.filter((n) => (P.get(n.toLowerCase()) || {}).role === 'tank'), others = soak.filter((n) => !tanks.includes(n));
   const B = tanks.length ? [at[0] * 0.72, at[1] * 0.72] : [0, 0]; k.boss('zj', 'Zul\'jan', 0, B[0], B[1]);
@@ -5531,10 +5540,10 @@ function ppAxe(at, soak, ext, zeph, P, M) {
   others.forEach((n, i) => { const s = OS.find((x) => !put.has(x)); fix[s] = n; put.add(s); });
   const G = Object.keys(fix).filter((s) => s !== 'm7'); G.forEach((s, i) => { const [dx, dy] = gdzSpot(i + 1, G.length + 1, 4.6); k.at(0, s, at[0] + dx, at[1] + dy); });
   const jobs = [[ext, 'External'], [zeph, 'Zephyr']].filter(([n]) => n && !soak.includes(n)).map(([n, t]) => { const s = OS.find((x) => !put.has(x)); fix[s] = n; put.add(s); return [s, t]; });
-  const away = [-at[0] * 0.15, -at[1] * 0.15]; jobs.forEach(([s], i) => k.at(0, s, away[0] + (i ? 7 : -7), away[1] - 9));
+  const away = [-at[0] * 0.15, -at[1] * 0.15]; jobs.forEach(([s], i) => k.at(0, s, away[0] + (i ? 11 : -11), away[1] - 9)); /* (22 yards apart, so "External" and "Zephyr" never run together, round 5) */
   if (!tanks.length) { const T = TS.filter((s) => !put.has(s)); k.at(0, T[0], 0, -4).at(0, T[1], 4, 3); T.forEach((s) => put.add(s)); }
   ppRest(k, put, [[away[0] - 10, away[1] + 6], [away[0] + 10, away[1] + 6]]);
-  k.ring({ on: 'm7', r: 9, fx: 'soak', t0: 0, at: 4, dur: 5, color: '#f24824', cn: 'Guillotine', label: false }).ring({ x: at[0], y: at[1], r: 40, fx: 'burst', t0: 0.4, at: 6.4, dur: 6.2, color: '#9ff26d', cn: 'Widow\'s Kiss', label: false });
+  k.ring({ on: 'm7', r: 9, fx: 'soak', t0: 0, at: 4, dur: 5, color: '#f24824', cn: 'Guillotine', label: false });
   const S = ppSeat(P, fix); return { mp: k.done({ title: 'Guillotine', focus: { x: 0, y: 0, r: 30 } }), T: 1, S, G: G.concat('m7'), jobs };
 }
 function ppCardsCA(J, M, U, P) {
@@ -6259,6 +6268,8 @@ function ppDeclutter(sv, out) {
   if (out.ppBands) { const h = out.ppBands.map((b) => '<line x1="' + SX(b.a[0]) + '" y1="' + SY(b.a[1]) + '" x2="' + SX(b.b[0]) + '" y2="' + SY(b.b[1]) + '" stroke="' + b.color + '" stroke-opacity=".34" stroke-width="' + (b.w * yu).toFixed(1) + '" stroke-linecap="round"/>').join('');
     const first = sv.querySelector('g.ic'); if (first) first.insertAdjacentHTML('beforebegin', h); else sv.insertAdjacentHTML('beforeend', h); } /* (soft rounded bands under everything else) */ const f = Math.min(1, vb.width * 0.024 / 12); /* (text and labels: about 2.4% of the frame's width) */
   const bx = (x0, y0, x1, y1) => ({ x0, y0, x1, y1 }), hit = (a, b) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1, taken = [], icons = [];
+  const SCR = (() => { try { const m = sv.getScreenCTM(), pt = (x, y) => { const p = sv.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(m); }, a = pt(vb.x, vb.y), b = pt(vb.x + vb.width, vb.y + vb.height), u = Math.abs(b.x - a.x) / vb.width; return { x0: Math.min(a.x, b.x) + 3 * u, y0: Math.min(a.y, b.y) + 3 * u, x1: Math.max(a.x, b.x) - 3 * u, y1: Math.max(a.y, b.y) - 3 * u }; } catch (e) { return null; } })(); /* (the picture's frame on the screen: inside it, whatever turns the map, round 5) */
+  const outside = (el) => { if (!SCR) return false; let r; try { r = el.getBoundingClientRect(); } catch (e) { return false; } return r.left < SCR.x0 || r.right > SCR.x1 || r.top < SCR.y0 || r.bottom > SCR.y1; };
   sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y + (g.querySelector('[data-up]') ? 8 : -8); let b; try { b = g.getBBox(); } catch (e) { return; } /* (y: the pointer's tip) */
     if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
     const q = bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f);
@@ -6273,7 +6284,7 @@ function ppDeclutter(sv, out) {
     icons.push({ x, y, b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
   { const pill = sv.querySelector('g.icl'); sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.insertBefore(g, pill && pill.parentNode === sv ? pill : null); }); } /* (raid markers over the icons, under the labels: the spot always shows) */
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
-    t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); });
+    t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); try { const b = t.getBBox(); if (b.width) taken.push(bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1)); } catch (e) { /* (not measured) */ } }); /* (a unit's own name (the Soulcoiler, Zul'jan) is taken too: players' names go round it, round 5) */
   sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
     if (out.ppBadges) { const tg = String((t.querySelector('tspan') || {}).textContent || '').trim(), ch = /^backup$/i.test(tg) ? 'B' : tg; /* (badges: a gold number on the dot, no name) */
       if (ch) { const bx0 = X + 5.2 * ds, by0 = Y - 5.2 * ds; sv.insertAdjacentHTML('beforeend', '<circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * ds).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * ds).toFixed(2) + '"/>' +
@@ -6282,25 +6293,27 @@ function ppDeclutter(sv, out) {
     // (the four sides close in, then the four corners, then the four sides a step further out)
     const h = 12 * f, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
     const e = 7 * ds, E = 12 * ds, C = side(r).concat([['start', X + e, Y - e], ['end', X - e, Y - e], ['start', X + e, Y + e + 0.7 * h], ['end', X - e, Y + e + 0.7 * h]], side(r + 6 * ds),
-      [['start', X + E, Y - E], ['end', X - E, Y - E], ['start', X + E, Y + E + 0.7 * h], ['end', X - E, Y + E + 0.7 * h]], side(r + 13 * ds), side(r + 20 * ds));
+      [['start', X + E, Y - E], ['end', X - E, Y - E], ['start', X + E, Y + E + 0.7 * h], ['end', X - E, Y + E + 0.7 * h]], side(r + 13 * ds), side(r + 20 * ds), side(r + 28 * ds), side(r + 36 * ds)); /* (two steps further out, so a crowd's names and tags spread instead of piling up, round 5) */
     let best = null; const put = (c, q, i) => { const [an, x, y] = c; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); taken.push(q);
       if (i >= 4) { const lx = Math.max(q.x0, Math.min(X, q.x1)), ly = Math.max(q.y0, Math.min(Y, q.y1)), d = Math.hypot(lx - X, ly - Y) || 1, sx = X + (lx - X) / d * 7 * ds, sy = Y + (ly - Y) / d * 7 * ds;
         t.insertAdjacentHTML('beforebegin', '<line x1="' + sx.toFixed(1) + '" y1="' + sy.toFixed(1) + '" x2="' + lx.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="#e9e4d6" stroke-opacity=".8" stroke-width="' + (0.9 * ds).toFixed(2) + '"/>'); } }; /* (a line back to the dot) */
     for (let i = 0; i < C.length; i++) { const [an, x, y] = C[i]; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); let b; try { b = t.getBBox(); } catch (e) { return; }
-      const q = bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1); if (q.x0 < vb.x + 3 || q.x1 > vb.x + vb.width - 3 || q.y0 < vb.y + 3 || q.y1 > vb.y + vb.height - 3) continue; /* (a small margin inside the picture) */
+      const q = bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1); if (q.x0 < vb.x + 3 || q.x1 > vb.x + vb.width - 3 || q.y0 < vb.y + 3 || q.y1 > vb.y + vb.height - 3 || outside(t)) continue; /* (a small margin inside the picture) */
       const n = taken.filter((o) => hit(o, q)).length + icons.filter((o) => (Math.abs(o.x - X) > 0.5 || Math.abs(o.y - Y) > 0.5) && hit(o.b, q)).length; if (!n) { put(C[i], q, i); return; } if (!best || n < best.n) best = { c: C[i], q, i, n }; }
     if (best) put(best.c, best.q, best.i); else t.remove(); });
   // (notes beside the map: a block of lines in colour (an area's name, then its kickers in order), centred on its spot)
   for (const n of out.ppNotes || []) { const sz = (k) => (12 * f * (k || 1)), H = n.lines.reduce((a, l) => a + sz(l.size) * 1.25, 0); let y = +SY(n.y) - H / 2;
     for (const l of n.lines) { y += sz(l.size) * 1.1; sv.insertAdjacentHTML('beforeend', '<text x="' + SX(n.x) + '" y="' + y.toFixed(1) + '" text-anchor="' + (n.anchor || 'middle') + '" style="font:600 ' + sz(l.size).toFixed(2) + 'px Barlow, sans-serif;paint-order:stroke;stroke:#0f1117;stroke-width:' + (2.6 * f).toFixed(2) + 'px">' +
-      l.parts.map((p) => '<tspan fill="' + p.c + '"' + (p.w ? ' font-weight="' + p.w + '"' : '') + '>' + esc(p.t) + '</tspan>').join('') + '</text>'); y += sz(l.size) * 0.15; } } }
+      l.parts.map((p) => '<tspan fill="' + p.c + '"' + (p.w ? ' font-weight="' + p.w + '"' : '') + '>' + esc(p.t) + '</tspan>').join('') + '</text>');
+      { const tx = sv.lastElementChild; if (SCR && tx) { const r = tx.getBoundingClientRect(), u = (SCR.x1 - SCR.x0) / (vb.width - 6), d = r.left < SCR.x0 ? SCR.x0 - r.left : r.right > SCR.x1 ? SCR.x1 - r.right : 0; if (d) tx.setAttribute('x', (+tx.getAttribute('x') + d / u).toFixed(1)); } } /* (a note stays inside the picture, round 5) */ y += sz(l.size) * 0.15; } } }
 async function ppMapImg(fz) {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;pointer-events:none'; box.className = 'pp-off'; box.innerHTML = miniMap(fz.out, fz.pm); document.body.appendChild(box);
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
     ppDeclutter(sv, fz.out);
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
-    walk(sv, cl); cl.removeAttribute('style'); cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
+    walk(sv, cl); cl.removeAttribute('style');
+    cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '0.55'; im.setAttribute('opacity', '0.55'); } }); /* (the arena at 55%: icons, names and labels stand out, round 5) */ cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
     if (!cl.querySelector('#pclip')) cl.insertAdjacentHTML('afterbegin', '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>');
     await Promise.all([...cl.querySelectorAll('image')].map(async (im) => { const d = await ppData(ppArt(im.getAttribute('href'))); if (d) im.setAttribute('href', d); else im.remove(); }));
@@ -6321,7 +6334,8 @@ async function ppDraw(card, boss, diff) {
   const icons = new Map(); await Promise.all(card.legend.flatMap((G) => G.items).map(async (it) => { if (it.specIcon && !icons.has(it.specIcon)) icons.set(it.specIcon, await ppImg(await ppData('https://wow.zamimg.com/images/wow/icons/medium/' + it.specIcon + '.jpg'))); }));
   const MKI = new Map(); await Promise.all(PP_MKS.map(async (k) => MKI.set(GDZ_WM[k][1].replace(' (X)', ''), await ppMarkImg(k))));
   // (the right side at a scale: the phase chip (the site's quiet pill with the phase's colour dot), the title, then the legend: each
-  // group's title with its colour, then its players in two columns (one when a job is long). Discord shows a pasted picture about
+  // group's title with its colour, then one row a person (round icon, name in class colour, every tag of theirs right after it as a small
+  // gold pill, a marker job as its marker), in two columns, one when the group has 4 or fewer or a long tag (Plan round 5). Discord shows a pasted picture about
   // 550 px wide, so the type is as big as the space allows: a dry run at each size, the biggest that fits is drawn (Design studio, Oct 26))
   const FOOT = H - 58, side = (s, draw) => { const F = (px) => Math.round(px * s), D = (fn) => { if (draw) fn(); }; let lost = 0;
     const [phN, phC] = PP_PH[card.ph] || ['', '#888']; g.font = '700 ' + F(12) + 'px Barlow, sans-serif'; const chip = phN.toUpperCase() + (card.when ? '  ·  ' + card.when : ''), ch = F(20), cw = g.measureText(chip).width + F(28);
@@ -6330,16 +6344,19 @@ async function ppDraw(card, boss, diff) {
     let y = 24 + ch + F(30); g.font = '800 ' + F(25) + 'px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#ece8df';
     for (const l of wrap(card.title, CW).slice(0, 2)) { D(() => g.fillText(l, X0, y)); y += F(28); }
     g.font = '500 ' + F(11) + 'px Barlow, sans-serif'; g.fillStyle = '#7d8594'; D(() => g.fillText(fit(boss + ' · ' + diff, CW), X0, y - F(8))); y += F(10);
-    for (const G of card.legend) { y += F(6); D(() => { g.fillStyle = G.color; g.beginPath(); g.roundRect ? g.roundRect(X0, y - F(10), F(10), F(10), 3) : g.rect(X0, y - F(10), F(10), F(10)); g.fill(); });
+    for (const G of card.legend.map(ppLegG)) { y += F(6); D(() => { g.fillStyle = G.color; g.beginPath(); g.roundRect ? g.roundRect(X0, y - F(10), F(10), F(10), 3) : g.rect(X0, y - F(10), F(10), F(10)); g.fill(); });
       g.font = '700 ' + F(15) + 'px Barlow, sans-serif'; g.fillStyle = '#ece8df'; D(() => g.fillText(fit(G.title, CW - F(16)), X0 + F(16), y)); y += F(4);
       if (G.sub) { g.font = '500 ' + F(12) + 'px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; for (const l of wrap(G.sub, CW).slice(0, 2)) { y += F(15); D(() => g.fillText(l, X0, y)); } }
-      const one = G.items.some((it) => it.job && it.job.length > 10) || G.items.length <= 2 && G.items.some((it) => it.any), cols = one ? 1 : 2, colW = (CW - (cols - 1) * 14) / cols, rh = F(25), ic0 = F(19); y += F(9);
-      G.items.forEach((it, i) => { const x = X0 + (i % cols) * (colW + 14), yy = y + Math.floor(i / cols) * rh; if (yy + rh > FOOT) { lost++; return; } if (!draw) return;
-        const ic = icons.get(it.specIcon); if (ic) { g.save(); g.beginPath(); g.arc(x + ic0 / 2, yy + ic0 / 2, ic0 / 2, 0, Math.PI * 2); g.clip(); g.drawImage(ic, x, yy, ic0, ic0); g.restore(); }
-        const mi = it.job && MKI.get(it.job), jw = it.job ? (mi ? F(16) + 2 : (g.font = '700 ' + F(11.5) + 'px Barlow, sans-serif', g.measureText(it.job).width + 6)) : 0;
-        g.font = (it.any ? 'italic ' : '') + '700 ' + F(15) + 'px Barlow, sans-serif'; g.fillStyle = it.color; g.fillText(fit(it.name, colW - ic0 - 8 - jw), x + ic0 + 6, yy + ic0 * 0.78);
-        if (it.job) { if (mi) g.drawImage(mi, x + colW - F(16), yy + (ic0 - F(16)) / 2, F(16), F(16)); else { g.font = '700 ' + F(11.5) + 'px Barlow, sans-serif'; g.fillStyle = '#f3d48a'; g.fillText(it.job, x + colW - g.measureText(it.job).width, yy + ic0 * 0.76); } } });
-      y += Math.ceil(G.items.length / cols) * rh + F(8); }
+      const L = []; for (const it of G.items) { const k0 = String(it.name).toLowerCase(); let q = L.find((z) => z.k0 === k0); if (!q) { q = { ...it, k0, jobs: [] }; L.push(q); } if (it.job && !q.jobs.includes(it.job)) q.jobs.push(it.job); }
+      const cols = L.length > 4 && !L.some((q) => q.jobs.join(' ').length > 9) ? 2 : 1, gap = F(18), colW = (CW - (cols - 1) * gap) / cols, rh = F(25), ic0 = F(18); y += F(9);
+      L.forEach((it, i) => { const x = X0 + (i % cols) * (colW + gap), yy = y + Math.floor(i / cols) * rh; if (yy + rh > FOOT) { lost++; return; } if (!draw) return;
+        const ic = icons.get(it.specIcon); g.save(); g.beginPath(); g.arc(x + ic0 / 2, yy + ic0 / 2, ic0 / 2, 0, Math.PI * 2); g.clip(); if (ic) g.drawImage(ic, x, yy, ic0, ic0); else { g.fillStyle = it.color; g.fillRect(x, yy, ic0, ic0); } g.restore();
+        g.font = '700 ' + F(11) + 'px Barlow, sans-serif'; const jw = it.jobs.reduce((t, j) => t + (MKI.get(j) ? F(19) : g.measureText(j).width + F(14)), 0);
+        g.font = '600 ' + F(15) + 'px Barlow, sans-serif'; g.fillStyle = it.color; const nm = fit(it.name, colW - ic0 - F(8) - jw); g.fillText(nm, x + ic0 + F(7), yy + ic0 * 0.78);
+        let jx = x + ic0 + F(7) + g.measureText(nm).width + F(8);
+        for (const j of it.jobs) { const mi = MKI.get(j); if (mi) { g.drawImage(mi, jx, yy + (ic0 - F(15)) / 2, F(15), F(15)); jx += F(19); continue; }
+          g.font = '700 ' + F(11) + 'px Barlow, sans-serif'; const w = g.measureText(j).width + F(10); g.fillStyle = '#242a36'; g.beginPath(); if (g.roundRect) g.roundRect(jx, yy + F(2), w, ic0 - F(4), F(4)); else g.rect(jx, yy + F(2), w, ic0 - F(4)); g.fill(); g.fillStyle = '#e8c77a'; g.fillText(j, jx + F(5), yy + ic0 * 0.7); jx += w + F(4); } });
+      y += Math.ceil(L.length / cols) * rh + F(8); }
     if (draw) { g.fillStyle = '#2a2f3b'; g.fillRect(X0, FOOT, CW, 1); g.font = '500 ' + F(12) + 'px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; wrap(card.foot || '', CW - 90).slice(0, 2).forEach((l, i) => g.fillText(l, X0, FOOT + F(16) + i * F(16)));
       g.font = '800 ' + F(14) + 'px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - 24 - g.measureText('DEBRIEF').width, H - 14); }
     return { y, lost }; };
