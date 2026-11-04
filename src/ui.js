@@ -12994,6 +12994,8 @@ function miniMap(mp, pmap) {
   // (a short note after a name, e.g. Helical Toxins stacks; and lines joining two players for a moment, e.g. a pair)
   // (a tag can be for a stretch of time: [guid, text, from, to])
   const tagOf = new Map((mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)).map(([g, txt]) => [g, txt]));
+  // (a press (guides.js, Nov 4): what a player presses at the hit. It shows as a gold badge on their dot, so a tight soak never piles words up)
+  const pressOf = new Set((mp.tags || []).filter((t) => t[4] && (t[2] == null || (ft >= t[2] && ft < t[3]))).map((t) => t[0]));
   for (const l of mp.links || []) { if (ft < l.t0 || ft > l.t1) continue; const a = byG.get(l.from), b = l.toPt || byG.get(l.to); if (!a || !b) continue;
     // (dash: a pointer, e.g. Nama to the mark he leaps to next: thin and dashed, starting just off the boss)
     if (l.dash) { const x0 = X(a), y0 = Y(a), x1 = X(b), y1 = Y(b), d = Math.hypot(x1 - x0, y1 - y0) || 1, sx0 = x0 + (x1 - x0) / d * Math.min(12, d * 0.3), sy0 = y0 + (y1 - y0) / d * Math.min(12, d * 0.3); /* (a short pointer starts nearer, so it still shows) */
@@ -13011,17 +13013,21 @@ function miniMap(mp, pmap) {
     const pl = pmap.get(p.name), col = pl ? pl.color : '#9aa0ac', me = !!meN && p.name === meN, on = me || hl.has(p.guid) || good.has(p.guid) || bad.has(p.guid) || warnS.has(p.guid), mark = badNow.has(p.guid) ? 'bad' : goodNow.has(p.guid) ? 'good' : warnS.has(p.guid) ? 'warn' : '';
     const tg = tagOf.get(p.guid);
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
-      (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
+      (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : '') +
+      (pressOf.has(p.guid) ? '<circle cx="' + (X(p) - 6) + '" cy="' + (Y(p) - 6) + '" r="3.6" fill="#f3d48a" stroke="#14100a" stroke-width="1.4"/>' : ''));
     const nm0 = pl && pl.glyph ? p.name : String(p.name).split('-')[0]; /* (every player gets a name now, in their class colour (Oct 22); the others only where there's room) */
-    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 5.1, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) || tg ? 3 : on ? 4 : 5, must: on || !!tg,
+    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * (pressOf.has(p.guid) ? 6.2 : 5.1), /* (a press label keeps a little more room: never on another name) */ pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) || tg ? 3 : on ? 4 : 5, must: on && !pressOf.has(p.guid),
+      alt: pressOf.has(p.guid) ? { w: String(tg).length * 6.2 + 4, mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml mlp" style="fill:#f3d48a;font-weight:800">' + esc(tg) + '</text>' } : null,
       mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml mlp' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
   if (mp.cardRing && mp.cardRing.guids && mp.cardRing.guids.size && mp.cardRing.color) { const c0 = mp.cardRing.color; for (const p of pts.filter((q) => q.kind === 'player')) { if (!mp.cardRing.guids.has(p.guid) || (meN && p.name === meN)) continue;
     s += ic(X(p), Y(p), '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="' + c0 + '" stroke-opacity=".3" stroke-width="5"/><circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10.5" fill="none" stroke="' + c0 + '" stroke-width="2"/>'); } }
   { const put = [], hit = (n, ly) => put.some((q) => Math.abs(q.x - n.x) < (q.w + n.w) / 2 && Math.abs(q.ly - ly) < 12);
-    for (const n of nameL.sort((a, b) => a.pri - b.pri)) { if (!n.mk) { if (hit(n, n.ly)) continue; put.push(n); s += ic(n.x, n.y, n.html); continue; }
+    for (const n of nameL.sort((a, b) => a.pri - b.pri || (b.must ? 1 : 0) - (a.must ? 1 : 0))) { /* (names that always show go first, so a press label steps around them) */ if (!n.mk) { if (hit(n, n.ly)) continue; put.push(n); s += ic(n.x, n.y, n.html); continue; }
       /* (above the icon; below it when above is taken; the player the row is about is always named, the others only where there's room) */
-      const ly = !hit(n, n.ly) ? n.ly : !hit(n, n.y + 19) ? n.y + 19 : n.must ? n.ly : null; if (ly == null) continue; put.push({ ...n, ly }); s += ic(n.x, n.y, n.mk(ly)); } }
+      const ly = !hit(n, n.ly) ? n.ly : !hit(n, n.y + 19) ? n.y + 19 : n.must ? n.ly : null;
+      if (ly == null) { const a = n.alt && { ...n, w: n.alt.w }, la = a && (!hit(a, n.ly) ? n.ly : !hit(a, n.y + 19) ? n.y + 19 : null); if (la != null) { put.push({ ...a, ly: la }); s += ic(n.x, n.y, n.alt.mk(la)); } continue; } /* (a press with no room for the name: the word alone) */
+      put.push({ ...n, ly }); s += ic(n.x, n.y, n.mk(ly)); } }
   // legend inside the image: only what this map shows
   // (a guide's map (liveLeg): the key lists only what's on the map at this moment, and changes as it plays)
   const LL = !!(mp.liveLeg && live), lm = LL ? { ...mp, rings: (mp.rings || []).filter((g) => ringAt(g)), tags: (mp.tags || []).filter(([, , a, b]) => a == null || (ft >= a && ft < b)), links: (mp.links || []).filter((l) => ft >= l.t0 && ft <= l.t1), arrows: (mp.arrows || []).filter((a) => ft >= a.t0 - 0.05 && ft <= a.t1 + 0.05), frames: null } : mp,
@@ -34194,7 +34200,7 @@ function dsGuides() {
   // 4. cards in Summary: the "Everything · …" line per card
   g.querySelectorAll('article.gdz-m').forEach((a) => { if (a.querySelector('.ds-gmore')) return; const mt = a.querySelector('.gdz-mt'); if (!mt) return;
     const steps = mt.querySelectorAll('ol.gdz-steps > li'), extra = Math.max(0, steps.length - 3), bits = [];
-    if (extra) bits.push(extra + ' more step' + (extra > 1 ? 's' : '')); if (mt.querySelector('.gdz-plan')) bits.push('the full plan'); if (mt.querySelector('.gdz-my')) bits.push('the Mythic note');
+    if (extra) bits.push(extra + ' more step' + (extra > 1 ? 's' : '')); if (mt.querySelector('.gdz-plan')) bits.push('the full plan'); if (/Mythic/.test(((mt.querySelector('.gdz-my') || {}).textContent || '').slice(0, 12))) bits.push('the Mythic note'); /* (a Heroic page never mentions Mythic) */
     if (!bits.length) return; const b = document.createElement('button'); b.type = 'button'; b.className = 'ds-gmore'; b.textContent = 'Everything \u00b7 ' + bits.join(', ');
     b.addEventListener('click', () => a.classList.add('ds-open')); const ol = mt.querySelector('ol.gdz-steps'); if (ol) ol.after(b); else mt.appendChild(b); });
   // 6. the hero's meta lines: the source is in the foot already; the "Updated" line joins it

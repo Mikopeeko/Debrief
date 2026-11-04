@@ -573,7 +573,7 @@ const GDZ_CA_M = {
     const L = 11, k = GDZ_CA_M.home2(gdzKit('The Coiled Altar', L), ['r1', 'm3']), MK = [['r1', [3, 2], [-24, -18]], ['m3', [17, 24], [34, -10]]];
     MK.forEach(([id, p, q]) => { k.at(0, id, p[0], p[1]); k.ring({ on: id, r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 5.4, color: '#da3df2', cn: 'Gloombomb', label: 'Run out', legend: 'explodes 15 yards around them' }); k.hold(1, id).at(5.6, id, q[0], q[1]).hold(6.4, id).at(10.8, id, p[0], p[1]); });
     MK.forEach(([id]) => k.press(id, 'Defensive', 5, 6.6));
-    k.ring1(MK.map((x) => x[0])).step(0.6).step(1.2).step(6);
+    k.ring1(MK.map((x) => x[0])).step(0.6).step(6);
     k.pause(5.6, 'Freeze. Both marked players are well away from everyone, so the blast hits nobody else.', { x: 4, y: 4, r: 30 });
     return k.done({ title: 'Gloombomb: run out', focus: { x: 6, y: 6, r: 32 }, hlLabel: 'the marked players' });
   },
@@ -639,7 +639,7 @@ const GDZ_CA_M = {
       .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 0, 24, 4)
       .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6);
     k.at(0, 'r5', 10, 24).at(0, 'm4', 16, 22).at(0, 'h2', 4, 30);
-    const mc = ['r5', 'm4', 'h2'], CC = [['m1', 'Ring of Peace', 4.6, [28, 30]], ['m2', 'Shockwave', 5.2, [30, 25]], ['m3', 'Chaos Nova', 5.8, [26, 35]]]; /* (in turns, one after another) */
+    const mc = ['r5', 'm4', 'h2'], CC = [['m1', 'Ring of Peace', 4.6, [27, 27]], ['m2', 'Shockwave', 5.2, [31, 23]], ['m3', 'Chaos Nova', 5.8, [23, 31]]]; /* (in turns, one after another) */
     CC.forEach(([id, t, at, p]) => { k.hold(3, id).at(4.6, id, p[0], p[1]).press(id, t, at, at + 1.2).hold(7, id); });
     k.at(9.4, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5);
     k.call(4.4, 6.2, 'Stun them in turns', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(6.3, 8, 'Look at your ghosts', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(8.1, 9.6, 'Line up the frontal', { on: 't1' });
@@ -1056,8 +1056,8 @@ GDZ['The Coiled Altar'] = {
             k.pause(13.1, 'Freeze. This is the pile: every orb right in front of the boss, and the off-tank has taunted. 5 to 7 orbs is fine. More hurts.', { x: 0, y: -15, r: 9 }); return k.done({ title: 'Toxic Deluge and Sever', focus: { x: 0, y: -4, r: 17 }, tagLabel: 'Carrying an orb', hlLabel: 'orb carriers and tanks' });
           } },
         { id: 'axe', fail: GDZ_CA_FAIL.axe, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 5 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 40 yards out.',
-          do: ['Axe target: *Walk to a corner*, away from the raid, as soon as the axe marks you.', 'Soak group: *Walk in with them*. At least *5* must be inside. On Heroic you can send the whole raid.', 'Everyone in it: *Press a defensive* as it lands. The hit is split between you.', 'Everyone in it: *Walk out 40 yards* right after it lands. The spot erupts 6 seconds later.', 'Everyone: *Gate into* a soak, never out of one. Orbs spawn on the path.'],
-          roles: ['', '', '', '', ''],
+          do: ['Axe target: *Walk to a corner*, away from the raid, as soon as the axe marks you.', 'Soak group: *Walk in with them*. At least *5* must be inside. On Heroic you can send the whole raid.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 40 yards*. The spot erupts 6 seconds later.', 'Everyone: *Gate into* a soak, never out of one. Orbs spawn on the path.'],
+          roles: ['', '', '', ''],
           note: 'Soaking leaves Guillotined (the next axe hits you 500% harder). Phase 1 usually has one axe, so the whole raid can share it; if a second comes, the players without the debuff take it.',
           m: { note: null, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 5 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 40 yards out. Soaking marks you for 100 seconds, and the next axe would hit you 500% harder.',
             do: GDZ_CA_AXES[1].do.concat(GDZ_CA_AXES[2].do), roles: ['', 'd', '', 'td', 'tdh', ''],
@@ -1074,7 +1074,7 @@ GDZ['The Coiled Altar'] = {
             const a0 = Math.atan2(10 - C[1], -C[0]), LP = { x: C[0] + Math.cos(a0) * 10, y: C[1] + Math.sin(a0) * 10 }, CO = { color: '#ff8a6a', ink: '#1a0d08' }; /* (just outside the circle, toward the boss) */
             k.call(1, 2.4, 'Axe: to a corner', { on: 'r3', ...CO }).call(2.4, 4.4, 'Soak: walk in', { ...LP, ...CO }).call(4.4, 6, 'Soak here · 5+', { ...LP, ...CO }).call(6, 11, 'Walk out 40 yards', { ...LP, color: '#9ff26d', ink: '#0d1a06' });
             [['r3', 'Defensive'], ['m5', 'Wall'], ['m6', 'Feint'], ['r6', 'Dispersion']].forEach(([id, t]) => k.press(id, t, 4.6, 9));
-            k.ring1(['r3']).step(1).step(2.4).step(4.6).step(6.3).step(11);
+            k.ring1(['r3']).step(1).step(2.4).step(4.6).step(11);
             k.pause(5.6, 'Freeze. Count them: at least 5 in the circle, everyone else well away. In a moment the spot erupts 40 yards out.', { x: C[0], y: C[1], r: 11 }); return k.done({ title: 'Guillotine', focus: { x: 16, y: -14, r: 26 }, hlLabel: 'player with the axe', goodLabel: 'in the soak' });
           } },
         { id: 'grinder', fail: GDZ_CA_FAIL.grinder, how: 1, name: 'Axegrinder (Rolling Axes)', spell: 'Axegrinder', what: 'Zul\'jan throws 5 axes out from himself. Anyone they fly into is knocked back. Then they roll around the room for 3 minutes and hurt anyone they touch.',
@@ -1101,7 +1101,7 @@ GDZ['The Coiled Altar'] = {
       m: { sum: 'Malacrass. Mind controls always stack on the square marker, ghosts get frozen apart and swept by the frontal, bombs go on the adds, and every second set brings the shield.' },
       mechs: [
         { id: 'dm', fail: GDZ_CA_FAIL.dmH, how: 1, name: 'Dreadmarch (Mind Control)', spell: 'Dreadmarch', what: 'A few players are mind controlled and walk to the edge with a big shield on. Once freed, two ghosts chase each of them. A ghost only moves while its player looks away.',
-          do: ['Mind controlled: *Press your cancel macro*. It drops your speed boosts and shields, so the raid can free you fast.', 'Everyone: Bring them to *one spot*. *Stun or root* them there, one after another, and *break their shields*.', 'Freed: *Stand still* until your ghosts spawn, two each.', 'Freed: *Lead your ghosts* into one pile in front of the boss. Then *turn and look* at them so they freeze.', 'Boss tank: Aim *Soul Sever* through the pile. Anyone it hits: *pick up your 3 Soul Fragments* or you die.'],
+          do: ['Mind controlled: *Press your cancel macro*. It drops your speed boosts and shields, so the raid can free you fast.', 'Everyone: Bring them to *one spot*. *Stun or root* them there, one after another, and *break their shields*.', 'Freed: *Stand still* until your ghosts spawn, two each. Then *face them*: a ghost only moves while you look away.', 'Freed: *Lead your ghosts* into one pile in front of the boss. Then *turn and look* at them so they freeze.', 'Boss tank: Aim *Soul Sever* through the pile. Anyone it hits: *pick up your 3 Soul Fragments* or you die.'],
           roles: ['', '', '', '', 't'],
           note: 'A ghost that reaches its player mind controls them again.',
           m: { fail: GDZ_CA_FAIL.dmM, name: 'Dreadmarch (Mind Control)', what: 'A few players are mind controlled with a big shield. Once freed, two ghosts chase each of them. Only you see your ghosts, and two ghosts touching kills both players.',
@@ -1132,8 +1132,8 @@ GDZ['The Coiled Altar'] = {
           plan: ['One add is the ranged add and the other the melee add. One player marks the ranged add and calls where both are: marked means ranged kicks, unmarked means melee kicks.', 'Which is which, by where they spawn (the plan\'s rule): an add at the moon is always ranged; an add beside the stack spot is always melee.', 'Skull add: melee if the other is at the moon, ranged if the other is at the square or star. Star add: melee if the other is at the moon or skull, ranged if the other is at the square.', 'Every second set of adds is followed by Eternal Nightfall, so the adds must die before the next set but the shield comes first.', 'The last set before the intermission doesn\'t need bombs: their shields break at the transition. Just keep kicking.'],
           map: (d, o) => GDZ_CA_M.bombs(o) },
         { id: 'gloomh', only: 'h', fail: GDZ_CA_FAIL.gloomH, how: 1, spell: 'Gloombomb', name: 'Gloombomb (Bombs)', what: 'Two players get a bomb that explodes 15 yards around them. Anyone it hits must pick up their Soul Fragments.',
-          do: ['Marked: You have a *Gloombomb*. *Run away from everyone* right away.', 'Marked: Get *15 yards from everyone* before it goes off, and *press a defensive*.', 'Everyone: With nobody else in it, nobody has Soul Fragments to collect. Hit by one? *Pick up your fragments*.'],
-          roles: ['', '', ''],
+          do: ['Marked: *Run 15 yards from everyone* right away and *press a defensive*.', 'Everyone: *Stay away* from marked players. Hit by a bomb? *Pick up your Soul Fragments*.'],
+          roles: ['', ''],
           map: () => GDZ_CA_M.gloomH() },
         { id: 'nightfall', fail: GDZ_CA_FAIL.nightfall, how: 1, spell: 'Eternal Nightfall', name: 'Eternal Nightfall (Shield Break)', what: 'Malacrass shields himself and starts a cast that wipes the raid. Breaking the shield stops the cast. Then purple circles drop.',
           do: ['DPS: *Burst the shield* on Malacrass. Save your *damage cooldowns* for it.', 'Everyone: The shield breaks and the cast stops. *Step out of the purple circles*.'],
@@ -1184,8 +1184,8 @@ GDZ['The Coiled Altar'] = {
           plan: ['Gloombomb with no adds up: just run to the edge of the room, away from the raid. Speed boosts help.', 'The next orb sets are built around the circle and diamond markers: the circle side gets its frontal first (two purples by the circle).', 'Damage: kill Zul\'jan before his pool cast, about a minute after the second shield, because every orb blows up then. Malacrass at 7 or 8% when Zul\'jan dies is fine. Don\'t over-damage Malacrass.', 'The last frontals hit 0 or 1 orbs. The last adds just need kicks.', 'Axes in phase 3: the first at the star marker, the second and third at the square.'],
           map: () => GDZ_CA_M.diamond() },
         { id: 'grim', fail: GDZ_CA_FAIL.axe, how: 1, spell: 'Grim Guillotine', name: 'Grim Guillotine (Soak)', what: 'Phase 1\'s axe again, now shadow damage. At least 5 share its 9-yard circle. Then the spot erupts 40 yards out.',
-          do: ['Axe target: *Walk to a corner*, away from the raid and the orbs.', 'Soak group: *Walk in with them*. At least *5* must be inside.', 'Everyone in it: *Press a defensive* as it lands. The hit is split between you.', 'Everyone in it: *Walk out 40 yards* right after it lands.', 'Everyone: *Gate into* a soak, never out of one.'],
-          roles: ['', '', '', '', ''],
+          do: ['Axe target: *Walk to a corner*, away from the raid and the orbs.', 'Soak group: *Walk in with them*. At least *5* must be inside.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 40 yards*.', 'Everyone: *Gate into* a soak, never out of one.'],
+          roles: ['', '', '', ''],
           m: { name: 'Grim Guillotine (Soak)', what: 'Three magic axes in phase 3. At least 5 share each 9-yard circle. Soaking marks you for 120 seconds, so axe 2 needs new players or immunities.',
             do: ['Axe 1 target: *Walk to the star marker*. Healers put *big externals* on you.', 'Soak 1: *4 players who never soaked* walk in with them. *Press a defensive*, then *walk out 40 yards*.', 'Axe 2 target: *Walk to the square marker*. Big externals again.', 'Soak 2: Players who already soaked go in with *Cloak*, *Bubble* or *Spellwarding*. At least 5 in all, then walk out.', 'Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity. Four wipes, so *send six*.'],
             roles: ['', 'd', '', 'dh', '', ''],
