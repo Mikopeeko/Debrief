@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'Home is your home base', d: 'Home welcomes you back with what\'s new since your last visit, your goal, your raid schedule, your season and WoW news.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+  { d: '2026-11-03', h: [{ t: 'Mythic+ is here', d: 'Open any key to see every pull on the map, the packs you skipped, and your run next to a fast one. It shows where your time went, pull by pull.' }, { t: 'Every tab moves now', d: 'Each tab opens with a short motion: grades flip in, scores roll up, bars grow and lines draw themselves.' }, { t: 'Home is your home base', d: 'Home welcomes you back with what\'s new since your last visit, your goal, your raid schedule, your season and WoW news.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
     'Plan: a boss with no plan yet starts calm, and raid nights are now a small date picker in the top bar.',
     'Plan: a cleaner Cooldowns chart and toolbar, and raid markers show as icons in job names.',
     'Home: Your season shows your item level, Raider.IO, Mythic bosses and parse, like the Companion app.',
@@ -3301,7 +3301,7 @@ function renderMain0() {
   refreshIcons(); S.page = 'pull'; navNote();
   if (S.tab === 'audit' && S.noteSwap && S.noteSwap.from === 'audit' && NDZ_ON()) ndzOvl(); /* (the swap pop-up stays open over Debriefing) */
 }
-const view = (h) => { $('#view').innerHTML = h; try { if (typeof dsBars === 'function') (dsBars.now || dsBars)(); } catch (e) { /* (the studio passes are extra) */ } }; /* (the studio passes, in the same tick as the page write and past their 150 ms limit, so a page never paints in its old layout first (Oct 25)) */
+const view = (h) => { $('#view').innerHTML = h; try { if (typeof dsBars === 'function') { window.dsNow = 1; try { dsBars(); } finally { window.dsNow = 0; } } } catch (e) { /* (the studio passes are extra) */ } }; /* (Nov 3: the whole chain, past its 150 ms limit (window.dsNow): dsBars.now was lost to the wrappers added after round 26, so a page written inside the 150 ms (Rotation's redraw when the background pulls change its score) painted its plain layout first) */ /* (the studio passes, in the same tick as the page write and past their 150 ms limit, so a page never paints in its old layout first (Oct 25)) */
 // ---------- No guide names on the page (your call, Oct 19: "remove the guide names from the pages and keep the text neutral") ----------
 // The checks are researched from written guides and simulations, but the page never names them: "both guides", "a guide" (or
 // "one guide" and "another guide" when two are in the same text), "the simulations". It's done as text appears on the page, so
@@ -34838,7 +34838,7 @@ function dsGuides() {
     top.classList.add('rpc-on'); top.prepend(card);
   };
   var run = function () { document.querySelectorAll('#view .pf-inl.spc-v > .ds-rtop:not(.rpc-on)').forEach(function (top) { try { make(top); } catch (e) { console.error(e); } }); };
-  var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(run, 60); };
+  var kick = function () { run(); }; /* (Nov 3, motion on every tab: the card is built in the same tick as the page's draw, before the paint; it was 60 ms later, so the old layout showed first for a moment) */
   var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(kick).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
@@ -35224,14 +35224,18 @@ function dsGuides() {
     redraw();
   });
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(function () { try { build(); } catch (e) { console.error(e); } }, 120); };
-  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(function (ms) { if (ms.every(function (x) { return x.target.closest && x.target.closest('.rtl'); })) return; kick(); }).observe(m, { childList: true, subtree: true }); kick(); };
+  var start = function () { var m = document.getElementById('main') || document.body; if (!m) return setTimeout(start, 300); new MutationObserver(function (ms) { if (ms.every(function (x) { return x.target.closest && x.target.closest('.rtl'); })) return;
+      /* (Nov 3: a new Rotation page gets its Checklist/Timeline row in the same tick, before the paint; it came 120 ms later, so a redraw (the background
+         pulls changing the score) showed the page without it for a moment) */
+      var pg = document.querySelector('#view .pf-inl.spc-v'); if (pg && !pg.querySelector(':scope > .rtl-vt') && window.rotData && ms.some(function (x) { return [].some.call(x.addedNodes, function (n) { return n.nodeType === 1 && (n === pg || n.contains(pg)); }); })) { clearTimeout(tm); try { build(); } catch (e) { console.error(e); } return; }
+      kick(); }).observe(m, { childList: true, subtree: true }); kick(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
 // ===== Design studio round 26 (Oct 26): the look passes run at most once per 150 ms. Wraps the whole chain: one run at once after a quiet spell,
 // then at most one trailing run per 150 ms. Keep this the last block. Owner: the Design studio chat. =====
 (function () { const f17 = dsBars; let last = 0, tm = 0, pendingRoot;
-  dsBars = function (root) { const now = performance.now(); if (now - last < 150) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
+  dsBars = function (root) { const now = performance.now(); if (now - last < 150 && !window.dsNow) { pendingRoot = root; clearTimeout(tm); tm = setTimeout(() => { last = performance.now(); try { f17(pendingRoot); } catch (e) {} }, Math.max(16, 150 - (now - last))); return; } last = now; clearTimeout(tm); f17(root); };
   /* the Rotation chat's hook (2367e9d): view() calls this right after it writes a page, so a page never paints in its old layout
      because it landed inside the 150 ms; it runs the whole chain at once and resets the clock */
   dsBars.now = (root) => { last = performance.now(); clearTimeout(tm); f17(root); }; })();
@@ -35355,17 +35359,93 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
      once, not once per piece; no visibility checks that force a layout) */
   const seen = (el) => !!(el && el.getClientRects().length); /* (the tab glide only, on a click) */
   const vis = (el) => !!el && !el.hidden && !el.closest('[hidden]');
-  const qa = (root, sel) => [].slice.call(root.querySelectorAll(sel)).filter(vis);
+  const isFresh = (el) => !M.fresh || M.fresh.some((r) => r === el || r.contains(el)); /* (only what was just inserted, before the paint: never a piece already seen) */
+  const qa = (root, sel) => [].slice.call(root.querySelectorAll(sel)).filter((el) => vis(el) && isFresh(el));
   const FADE = [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], LINE = [{ transform: 'scaleY(0)', transformOrigin: '50% 0' }, { transform: 'scaleY(1)', transformOrigin: '50% 0' }];
   const STAMP = [{ opacity: 0, transform: 'scale(1.5)' }, { opacity: 1, transform: 'scale(1)' }], WORD = [{ opacity: 0, filter: 'blur(3px)' }, { opacity: 1, filter: 'blur(0px)' }];
   const FILL = [{ transform: 'scaleX(0)', transformOrigin: '0 50%' }, { transform: 'scaleX(1)', transformOrigin: '0 50%' }], POPK = [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 1, transform: 'scale(1)' }];
   const digitOf = (el) => { const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let n = tw.nextNode(); n; n = tw.nextNode()) if (/\d/.test(n.nodeValue)) return n.nodeValue.trim().length > 12 ? null : n; return null; };
+
+  /* ===== motion on every tab (Nov 3, the Design studio's motion-tabs-brief.md; Flex: "is there anyway we could apply animations to each tab?",
+     "yes id like nice animations site wide honestly"). A prototype on a practice link until Flex OKs the video. Same rules as the rest of the
+     module: armed before the paint, played on an idle moment, once per tab open (a new graph, raider or view plays its new content; filters never
+     do), about 1.1 s, transform, opacity, stroke-dashoffset and clip-path only. ===== */
+  const inView = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.width > 0; };
+  const FLIP = [{ transform: 'perspective(300px) rotateX(0deg)', opacity: 0.15, offset: 0 }, { transform: 'perspective(300px) rotateX(90deg)', opacity: 0.15, offset: 0.5 }, { transform: 'perspective(300px) rotateX(-90deg)', opacity: 1, offset: 0.5 }, { transform: 'perspective(300px) rotateX(0deg)', opacity: 1, offset: 1 }];
+  const GROW = [{ transform: 'scaleX(0)', transformOrigin: '0 50%' }, { transform: 'scaleX(1)', transformOrigin: '0 50%' }], SLIDE8 = [{ opacity: 0, transform: 'translateX(-8px)' }, { opacity: 1, transform: 'none' }], FADEIN = [{ opacity: 0 }, { opacity: 1 }];
+  const ARRIVE = [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], PULSE = [{ opacity: 0.9, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(2.2)' }];
+  const SVGNS = 'http://www.w3.org/2000/svg', GOLD = '#e6b450';
+  const ptsOf = (pl) => String(pl.getAttribute('points') || '').trim().split(/\s+/).map((p) => p.split(',').map(Number)).filter((p) => p.length === 2 && isFinite(p[0]) && isFinite(p[1]));
+  /* (a line whose stroke keeps its width (non-scaling-stroke) counts its dashes in screen pixels, so its length is measured on the screen: Home's
+     stretched chart showed half its line before drawing it) */
+  const lenOf = (pl) => { let len = 0; try { len = pl.getTotalLength(); } catch (e) { len = 0; } if (getComputedStyle(pl).vectorEffect !== 'non-scaling-stroke') return len; const m = pl.getScreenCTM(), P = ptsOf(pl); if (!m || P.length < 2) return len * Math.max(Math.abs(m ? m.a : 1), Math.abs(m ? m.d : 1));
+    let s = 0; for (let i = 1; i < P.length; i++) { const x = P[i][0] - P[i - 1][0], y = P[i][1] - P[i - 1][1]; s += Math.hypot(m.a * x + m.c * y, m.b * x + m.d * y); } return s + 2; };
+  const draw = (A, C, pl, at, ms) => { const len = lenOf(pl); if (!(len > 0)) return 0; pl.style.strokeDasharray = len + ' ' + len; C.push(() => pl.style.removeProperty('stroke-dasharray'));
+    mk(A, pl, [{ strokeDashoffset: len + 'px' }, { strokeDashoffset: '0px' }], { duration: ms, delay: at, easing: 'ease-in-out' }); return len; };
+  /* (one Guides card: the line grows down its steps, each step arrives as the line reaches it, then the map's first shape pulses once) */
+  const stepCard = (A, C, card, t0) => { const ol = card.querySelector('ol.gdz-steps'), lis = ol ? [].slice.call(ol.children) : [], gap = Math.min(180, Math.round(600 / Math.max(1, lis.length)));
+    if (ol && lis.length) { const pos = getComputedStyle(ol).position; if (pos === 'static') { ol.style.position = 'relative'; C.push(() => ol.style.removeProperty('position')); }
+      const ln = document.createElement('dsm-ln'); ln.style.cssText = 'position:absolute;left:-12px;top:6px;bottom:6px;width:2px;border-radius:2px;background:rgba(230,180,80,.55);pointer-events:none;transform-origin:50% 0'; ol.appendChild(ln); C.push(() => ln.remove());
+      mk(A, ln, [{ transform: 'scaleY(0)', opacity: 1, offset: 0 }, { transform: 'scaleY(1)', opacity: 1, offset: 0.85 }, { transform: 'scaleY(1)', opacity: 0, offset: 1 }], { duration: lis.length * gap + 300, delay: t0, easing: 'linear', fill: 'both' });
+      lis.forEach((li, i) => mk(A, li, ARRIVE, { duration: 250, delay: t0 + i * gap, easing: 'ease-out' })); }
+    const sv = card.querySelector('.gdz-mapc svg, .gdz-mm svg'), sh = sv && sv.querySelector('circle, ellipse'); if (sh) { const r0 = sh.cloneNode(false); r0.removeAttribute('class'); r0.setAttribute('fill', 'none'); r0.setAttribute('stroke', GOLD); r0.setAttribute('stroke-width', '2'); r0.style.cssText = 'transform-box:fill-box;transform-origin:center;pointer-events:none;opacity:0'; /* (hidden until its pulse: never a still ring waiting) */
+      sh.parentNode.appendChild(r0); C.push(() => r0.remove()); mk(A, r0, PULSE, { duration: 800, delay: t0 + 200, easing: 'ease-out', fill: 'forwards' }); } };
+  const TABX = {
+    /* Report card: each grade flips in like a departure board, a blank face first and the grade on the way back */
+    grades: (A, root) => { const L = qa(root, '.rcb-ring b, .grade').filter(inView).slice(0, 30); L.forEach((g, i) => mk(A, g, FLIP, { duration: 300, delay: Math.min(150 + i * 30, 800), easing: 'ease-in-out' })); return L.length ? 1100 : 0; },
+    /* Graphs and Compare: bar rows grow from zero, a little staggered (rows in view only) */
+    grow: (A, root, C, sel) => { const L = qa(root, sel).filter(inView).slice(0, 40); L.forEach((b, i) => mk(A, b, GROW, { duration: 500, delay: 100 + Math.min(i * 25, 450) })); return L.length ? 1100 : 0; },
+    /* Graphs: the line draws, its area fades in under it, then the dots and labels */
+    line: (A, root, C) => { const sv = root.querySelector('svg.pfc'); if (!sv || !inView(sv)) return 0; const pl = sv.querySelector('polyline.pfc-l'); if (pl) draw(A, C, pl, 100, 700);
+      sv.querySelectorAll('polygon').forEach((p) => mk(A, p, FADEIN, { duration: 600, delay: 200 })); sv.querySelectorAll('g.pfc-m, g.pfc-dg, g.mk269, circle, text.pfc-pl').forEach((g) => mk(A, g, FADEIN, { duration: 250, delay: 800 })); return 1100; },
+    /* Rotation: the score ring fills */
+    ring: (A, root) => { const sv = root.querySelector('.spc-rw svg'); if (!sv) return 0; sv.querySelectorAll('circle').forEach((c) => { const da = String(c.getAttribute('stroke-dasharray') || '').split(/[\s,]+/).map(Number), off = +(c.getAttribute('stroke-dashoffset') || 0); if (!(da[0] > 0)) return;
+        mk(A, c, [{ strokeDashoffset: off + da[0] }, { strokeDashoffset: off }], { duration: 900, delay: 150 }); }); return 1100; },
+    /* Rotation: the score changed while the page was on screen (the background pulls finished): only the number rolls on from the old score
+       to the new one, and the ring slides with it (the studio, Nov 3: the whole page faded back in, which read as a flicker) */
+    reroll: (A, root, C, x) => { const tn = digitOf(x.el); if (!tn) return 0; const nv = tn.nodeValue.trim(), ov = x.old; if (!/^\d+$/.test(nv) || !/^\d+$/.test(ov) || nv === ov || nv.length !== ov.length) return 0;
+      const wr = document.createElement('dsm-n'), D = []; for (const ch of nv) { const s = document.createElement('dsm-d'); s.textContent = ch; wr.appendChild(s); D.push(s); } tn.parentNode.replaceChild(wr, tn);
+      C.push(() => { if (wr.parentNode) wr.parentNode.replaceChild(document.createTextNode(nv), wr); });
+      D.forEach((s, i) => mk(A, s, [{ transform: 'translateY(-' + (+ov[i] * 10) + '%)' }, { transform: 'translateY(-' + (+nv[i] * 10) + '%)' }], { pseudoElement: '::before', duration: 600, delay: 100, easing: ROLL, fill: 'both' }));
+      (x.rings || []).forEach(([c, o]) => mk(A, c, [{ strokeDasharray: o.da, strokeDashoffset: o.off }, { strokeDasharray: c.getAttribute('stroke-dasharray'), strokeDashoffset: c.getAttribute('stroke-dashoffset') }], { duration: 600, delay: 100, easing: ROLL, fill: 'both' })); return 800; },
+    /* Rotation: the fix-first list and the checklist sections arrive one by one */
+    arrive: (A, root, C, sel) => { const L = qa(root, sel).filter(inView).slice(0, 12); L.forEach((r, i) => mk(A, r, ARRIVE, { duration: 250, delay: 250 + i * 70, easing: 'ease-out' })); return L.length ? 1100 : 0; },
+    /* Rotation: the strip or the timeline plays back left to right behind a thin gold playhead (clip-path: no widths change) */
+    strip: (A, root, C, sel) => { const el = qa(root, sel).filter(inView)[0]; if (!el) return 0; const w = el.getBoundingClientRect().width;
+      mk(A, el, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)' }], { duration: 800, delay: 100, easing: 'ease-in-out' });
+      const pos = getComputedStyle(el).position; if (pos === 'static') { el.style.position = 'relative'; C.push(() => el.style.removeProperty('position')); }
+      const ph = document.createElement('dsm-ph'); ph.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:1px;background:' + GOLD + ';box-shadow:0 0 6px ' + GOLD + ';pointer-events:none;z-index:2'; el.appendChild(ph); C.push(() => ph.remove());
+      mk(A, ph, [{ transform: 'translateX(0)', opacity: 1, offset: 0 }, { transform: 'translateX(' + w + 'px)', opacity: 1, offset: 0.92 }, { transform: 'translateX(' + w + 'px)', opacity: 0, offset: 1 }], { duration: 870, delay: 100, easing: 'ease-in-out', fill: 'both' }); return 1100; },
+    /* Plan: the cooldown blocks slide into their lanes in time order, like a sequencer */
+    seq: (A, root) => { const L = qa(root, '#ndzTl .btl-c').map((e) => [e, parseFloat(e.style.left) || 0]).sort((a, b) => a[1] - b[1]), n = L.length;
+      L.forEach(([e], i) => mk(A, e, SLIDE8, { duration: 250, delay: 100 + (n > 1 ? Math.round(i / (n - 1) * 700) : 0), easing: 'ease-out' })); return n ? 1100 : 0; },
+    /* Compare: the head-to-head bar grows out from the line where the two sides meet (each side from that line to its end) */
+    split: (A, root) => { const L = qa(root, '.cmp-hpbar').filter(inView).slice(0, 2); L.forEach((b) => [].slice.call(b.children).forEach((e, i) => { const o = i === 0 ? '100% 50%' : '0 50%';
+        mk(A, e, [{ transform: 'scaleX(0)', transformOrigin: o }, { transform: 'scaleX(1)', transformOrigin: o }], { duration: 600, delay: 100 }); })); return L.length ? 1100 : 0; },
+    /* Guides: a card's steps draw as a timeline (How it went's line), and its map's first shape gives one ring pulse; the cards further down
+       play as they're scrolled to (each set to its start just before it comes into view, never once it has been seen) */
+    steps: (A, root, C) => { if (M.gio) { M.gio.forEach((o) => o.disconnect()); M.gio = null; }
+      const all = qa(root, 'article.gdz-m'), now = all.filter(inView).slice(0, 3), later = all.filter((c) => now.indexOf(c) < 0);
+      now.forEach((card, c) => stepCard(A, C, card, 150 + c * 150));
+      if (later.length && window.IntersectionObserver) { const arm = new Map();
+        /* (each card is watched by its step list: on a phone the map sits above the steps, which would otherwise play out of sight) */ const cardOf = new Map(later.map((c) => [c.querySelector('ol.gdz-steps') || c, c]));
+        const io2 = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; io2.unobserve(e.target); const x = arm.get(e.target); if (x) (off() ? x.done : x.go)(); }), { rootMargin: '0px 0px -8% 0px' });
+        const io1 = new IntersectionObserver((es) => es.forEach((e) => { if (!e.isIntersecting) return; io1.unobserve(e.target); if (e.boundingClientRect.top < innerHeight || off()) return; /* (already on the screen: left as it is) */
+          const A2 = [], C2 = []; stepCard(A2, C2, cardOf.get(e.target) || e.target, 60); if (!A2.length) return; let st = 0;
+          const done = () => { if (st === 2) return; st = 2; A2.forEach((a) => { try { a.cancel(); } catch (er) { /* (gone) */ } }); C2.forEach((fn) => { try { fn(); } catch (er) { /* (gone) */ } }); };
+          arm.set(e.target, { done, go: () => { if (st) return; st = 1; A2.forEach((a) => { try { a.play(); } catch (er) { /* (gone) */ } }); setTimeout(done, 1300); } }); io2.observe(e.target); }), { rootMargin: '0px 0px 100% 0px' }); /* (a screen ahead: a quick scroll still finds it set) */
+        cardOf.forEach((c, t) => io1.observe(t)); M.gio = [io1, io2]; }
+      return now.length ? 1100 : 0; },
+  };
   /* the pieces in a container, armed now (before the paint) and played together once the page is idle */
-  const play = (root, what) => { if (!root || off()) return false; css(); const A = [], U = [], J = []; let end = 0; what = what || {};
+  const play = (root, what) => { if (!root || off()) return false; css(); const A = [], U = [], J = [], C = []; let end = 0; what = what || {};
     try {
       /* 1. read */
       const w = what.why ? root.querySelector('.dbt-why') : null, rows = w ? qa(w, '.dbt-chn > .dbt-chr') : [], h2 = w ? w.querySelector('h2') : null;
-      const nums = what.nums ? qa(root, what.nums).map((el) => { const tn = digitOf(el); return tn ? { tn: tn } : null; /* (no colour read: the digit's own colour carries through) */ }).filter(Boolean) : [];
+      /* (a number the page showed just before this draw (a pull still loading showed it already) stays as it is: rolling it from zero would hide it and show it again) */
+      const was = new Set(); if (what.nums && M.gone) M.gone().forEach((n) => { if (n.nodeType === 3) { was.add(n.nodeValue.trim()); return; } const tw = document.createTreeWalker(n, NodeFilter.SHOW_TEXT); for (let t = tw.nextNode(); t; t = tw.nextNode()) if (/\d/.test(t.nodeValue)) was.add(t.nodeValue.trim()); });
+      const shown = (v) => v.length > 1 && was.has(v);
+      const nums = what.nums ? qa(root, what.nums).map((el) => { const tn = digitOf(el); return tn && !shown(tn.nodeValue.trim()) ? { tn: tn } : null; /* (no colour read: the digit's own colour carries through) */ }).filter(Boolean) : [];
       const bars = what.bars ? qa(root, 'details.phase > summary .prw-i').map((r) => ({ b: r.querySelector('.prw-t > i'), full: /\b100%/.test(r.textContent) ? [].slice.call(r.querySelectorAll('*')).filter((x) => !x.children.length && /^100%$/.test(x.textContent.trim()))[0] : null })).filter((x) => x.b) : [];
       const track = what.track ? qa(root, what.track) : [], rowsH = what.rows ? qa(root, what.rows) : [];
       const lines = what.lines ? qa(root, what.lines).map((l) => { let n = 0; try { n = l.getTotalLength(); } catch (e) { n = 0; } return { l, n }; }).filter((x) => x.n > 0) : [];
@@ -35393,16 +35473,17 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
       /* (7. Home's news lines arrive one by one; 8. a line chart draws itself) */
       rowsH.forEach((r, k) => mk(A, r, FADE, { duration: 260, delay: 120 + k * 70, easing: 'ease-out' })); if (rowsH.length) end = Math.max(end, 120 + rowsH.length * 70 + 260);
       lines.forEach((x) => mk(A, x.l, [{ strokeDashoffset: x.n }, { strokeDashoffset: 0 }], { duration: 700, delay: 250 })); if (lines.length) end = Math.max(end, 950);
+      /* (motion on every tab: each piece reads, adds its few overlays, makes its animations, and leaves its clean-up) */ Object.keys(TABX).forEach((k0) => { if (what[k0]) { const e0 = TABX[k0](A, root, C, what[k0]); if (e0) end = Math.max(end, e0); } });
     } catch (e) { console.warn(e); }
     if (!A.length) return false;
-    let state = 0; const done = () => { if (state === 2) return; state = 2; A.forEach((a) => { try { a.cancel(); } catch (e) { /* (gone) */ } });
+    let state = 0; const done = () => { if (state === 2) return; state = 2; A.forEach((a) => { try { a.cancel(); } catch (e) { /* (gone) */ } }); C.forEach((fn) => { try { fn(); } catch (e) { /* (gone) */ } });
       U.forEach(([p, wr]) => { if (wr.parentNode) wr.parentNode.replaceChild(document.createTextNode(wr.textContent), wr); try { p.normalize(); } catch (e) { /* (gone) */ } }); }; /* (the rolled numbers go back to plain text) */
     /* (never left half way: if the idle moment hasn't come in 3 s, everything is shown as it is) */
     setTimeout(() => { if (state === 0) done(); }, 3000);
     const go = () => { if (state !== 0) return; state = 1; A.forEach((a) => { try { a.play(); } catch (e) { /* (gone) */ } }); setTimeout(done, end + 250); };
-    const idle = () => (window.requestIdleCallback ? requestIdleCallback(() => requestAnimationFrame(go), { timeout: 400 }) : setTimeout(() => requestAnimationFrame(go), 60));
+    let tries = 0; const idle = () => (window.requestIdleCallback ? requestIdleCallback((dl) => { if (dl && dl.didTimeout && ++tries < 3) { idle(); return; } requestAnimationFrame(go); }, { timeout: 400 }) : setTimeout(() => requestAnimationFrame(go), 60)); /* (the page still busy drawing: wait for a real idle moment, about 1.2 s at most) */
     if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(idle, idle); else idle();
-    return true; };
+    return () => state; }; /* (what it is doing now: 0 set and waiting, 1 playing, 2 done) */
   /* the page view: a pull or a tab, not a filter */
   const key = () => { const S = S0(); return (S.tab || '') + '|' + (S.page || '') + '|' + ((S.item && (S.item.boss + '@' + S.item.startMs)) || '') + '|' + (/[?&]all=1/.test(location.search) ? 'all' : ''); };
   const M = { play, key, k: '', ov: '' };
@@ -35413,11 +35494,38 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
   (function watchOv() { const v = document.getElementById('view'); if (!v || !window.MutationObserver) { setTimeout(watchOv, 500); return; } let was = v.classList.contains('dbt-full');
     new MutationObserver(() => { const now = v.classList.contains('dbt-full'); if (now && !was && S0().tab === 'audit' && !document.documentElement.classList.contains('dbr-holding')) { const k = key(); if (M.ov !== k) { M.ov = k; play(v, { bars: true }); } } was = now; }).observe(v, { attributes: true, attributeFilter: ['class'] }); })();
   /* every other page: on its first draw that has its numbers (the studio's passes call this in the same tick as a draw, before the paint) */
-  M.draw = () => { if (off() || document.documentElement.classList.contains('dbr-holding') || S0().tab === 'audit') return; const k = key(); if (M.k === k) return;
-    const hd = document.querySelector('#main .hd .hd-goal, #view .hd .hd-goal'), rc = document.querySelector('#view .rcb-bt .v');
-    if (!hd && !rc) return; M.k = k;
-    if (hd) { const h = hd.closest('.hd'); play(h, { nums: '.hd-gp .num', track: '.hd-pill .hd-bar u, .hd-gbar > u, .hd-vs.on > u', rows: '.hd-news .hd-ev, .hd-calw', lines: '.hd-spark polyline' }); }
-    if (rc) play(document.getElementById('view'), { nums: '.rcb-bt .v, .rcb-st > b' }); };
+  M.ks = {}; const V = () => document.getElementById('view'), txt = (sel) => ((document.querySelector(sel) || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const qp = (k0) => (location.search.match(new RegExp('[?&]' + k0 + '=([^&]*)')) || [])[1] || '';
+  /* (a surface is looked for only in what was just put on the page, never the whole page: a page that builds itself in many small steps stays fast) */
+  const F = (sel) => { const fr = M.fresh; if (!fr) return document.querySelector(sel); for (const n of fr) { if (!n.isConnected) continue; if (n.matches(sel)) return n; const x = n.querySelector(sel); if (x) return x; } return null; };
+  const hdr = (sel) => { const el = document.querySelector(sel); const h = el && (el.closest('.panel, section') || el.parentElement); const t = h && h.querySelector('b, h3, h4'); return t ? t.textContent.trim().slice(0, 40) : ''; };
+  /* (each surface: when it is drawn with its content, the key that says it is new (a tab, a pull, a raider, a graph), and what plays) */
+  const SURF = [
+    { id: 'home', ready: () => F('#main .hd .hd-goal, #view .hd .hd-goal'), k: () => key(), go: (el) => play(el.closest('.hd'), { nums: '.hd-gp .num', track: '.hd-pill .hd-bar u, .hd-gbar > u, .hd-vs.on > u', rows: '.hd-news .hd-ev, .hd-calw', lines: '.hd-spark polyline' }) }, /* (the Home chat's motion for the new Home) */
+    { id: 'report', tab: 'player', ready: () => F('#view .rcb-bt .v'), k: () => key(), go: () => play(V(), { nums: '.rcb-bt .v, .rcb-st > b', grades: true }) },
+    { id: 'graphs', tab: 'perf', ready: () => F('#view svg.pfc, #view .gb-rows .cb-b'), k: () => key() + '|' + hdr('#view svg.pfc') + '|' + hdr('#view .gb-rows'), go: () => play(V(), { grow: '.gb-rows .cb-f > i', line: true }) },
+    { id: 'rot', tab: 'rot', ready: () => F('#view .rpc .spc-rw, #view section.rtl .rtv'), k: () => key() + '|' + qp('p') + '|' + (txt('#view .rtl-vt .on') || 'Checklist'), go: () => play(V(), { ring: true, nums: '.spc-rc', arrive: '.rpx > .rpx-i, .rcx > .rcx-sec', strip: '.rcx-strip, section.rtl .rtv' }),
+      more: { sel: '#view .rpx > .rpx-i, #view .rcx > .rcx-sec, #view .rcx-strip', what: { arrive: '.rpx > .rpx-i, .rcx > .rcx-sec', strip: '.rcx-strip' } },
+      redraw: (el, g) => { let orw = null; g.some((n) => { if (n.nodeType !== 1) return false; orw = n.matches('.spc-rw') ? n : n.querySelector('.spc-rw'); return !!orw; }); if (!orw) return;
+        const orc = orw.querySelector('.spc-rc'), nrc = el.querySelector('.spc-rc'), ov = orc && (orc.textContent.match(/\d+/) || [])[0]; if (!nrc || !ov) return;
+        const oc = [].slice.call(orw.querySelectorAll('svg circle:not(.bg)')), nc = [].slice.call(el.querySelectorAll('svg circle:not(.bg)'));
+        play(V(), { reroll: { el: nrc, old: ov, rings: nc.map((c, i) => [c, oc[i] && { off: oc[i].getAttribute('stroke-dashoffset'), da: oc[i].getAttribute('stroke-dasharray') }]).filter((x) => x[1] && x[1].da) } }); } },
+    { id: 'cmp', tab: 'cmp', ready: () => F('#view .cmp-hpbar > i, #view .cmp-gr .cb-f > i'), k: () => key() + '|' + txt('#view .cmp-hseg .on') + '|' + (txt('#view .cmp-hpr .cmp-hpw') || txt('#view .cmp-hpr')), go: () => play(V(), { split: true, grow: '.cmp-cbb > i, .cmp-slb > em, .cmp-gr .cb-f > i', nums: '.cmp-hpv, .cmp-hpm b, .cmp-cb > b' }) },
+    { id: 'plan', ready: () => F('#ndzTl .btl-c'), k: () => 'plan|' + txt('#view .ndz-cth, #view h2') + '|' + location.search, go: () => play(V(), { seq: true }) },
+    { id: 'guide', ready: () => F('#view .gdz article.gdz-m ol.gdz-steps'), k: () => 'guide|' + location.pathname, go: () => play(V(), { steps: true }) },
+  ];
+  /* every other page: on its first draw that has its content (the studio's passes call this in the same tick as a draw, before the paint) */
+  M.draw = () => { if (off() || document.documentElement.classList.contains('dbr-holding') || S0().tab === 'audit') return; const t = S0().tab;
+    SURF.forEach((sf) => { if (sf.tab && sf.tab !== t) return; const el = sf.ready(); if (!el) { more(sf); return; } const k = sf.k();
+      if (M.ks[sf.id] === k) { if (sf.redraw) try { redraw(sf, el); } catch (e) { console.warn(e); } return; } M.ks[sf.id] = k; M.kt[sf.id] = Date.now(); try { M.ph[sf.id] = sf.go(el); } catch (e) { console.warn(e); } }); };
+  /* (the same view drawn again while it is on screen (Rotation, when the background pulls change its score): if its motion hasn't started yet, the
+     new copy gets it; once it has, only what changed moves) */
+  M.ph = {}; const redraw = (sf, el) => { const g = M.gone ? M.gone() : []; if (!g.some((n) => n.nodeType === 1)) return; const ph = M.ph[sf.id], st = typeof ph === 'function' ? ph() : 2;
+    if (st === 0) { M.ph[sf.id] = sf.go(el); return; } sf.redraw(el, g); };
+  /* (a page that adds its rows a moment after its frame (Rotation's fix-first list): new rows within 1.5 s of the first draw get their arrival too;
+     rows that replace ones already seen stay as they are) */
+  M.kt = {}; const more = (sf) => { if (!sf.more || !M.ks[sf.id] || Date.now() - M.kt[sf.id] > 1500 || !F(sf.more.sel) || sf.k() !== M.ks[sf.id]) return;
+    const s0 = sf.more.sel.replace(/#view /g, ''), g = M.gone ? M.gone() : []; if (g.some((n) => n.nodeType === 1 && (n.matches(s0) || n.querySelector(s0)))) return; try { play(V(), sf.more.what); } catch (e) { console.warn(e); } };
   /* 2. the gold mark glides to the clicked tab (every click, every slim tab row whose picked tab has a gold line or tint) */
   const gold = (c) => { const m = String(c || '').match(/rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/); if (!m) return false; const r = +m[1], g = +m[2], b = +m[3], a = m[4] == null ? 1 : +m[4]; return a > 0.04 && r > 170 && g > 120 && g < 230 && b < 140 && r - b > 70; };
   const markOf = (el) => { const cs = getComputedStyle(el); if (parseFloat(cs.borderBottomWidth) >= 2 && gold(cs.borderBottomColor)) return { line: true, c: cs.borderBottomColor, h: parseFloat(cs.borderBottomWidth) };
@@ -35441,7 +35549,18 @@ const dsMo = (function () { const S0 = () => (window.dbtMapKit && window.dbtMapK
       a.onfinish = quit; setTimeout(quit, 600); } catch (er) { quit(); } };
     requestAnimationFrame(tick); }, true);
   return M; })();
-/* (round 443's no-op becomes the module's draw: the studio's passes call dsMotion after every draw) */ dsMotion = function () { try { dsMo.draw(); } catch (e) { /* (no motion) */ } };
+/* (round 443's no-op becomes the module's draw: the studio's passes call dsMotion after every draw) */ dsMotion = function () { /* (motion now starts from its own watcher, below) */ };
+/* (the motion watcher: every batch of inserted elements, in the same tick and before the paint, may start a surface's motion, with only those
+   elements armed (Nov 3: a later call armed bars already on the screen, which flashed)) */
+(function dsmWatch() { if (!document.body || !window.MutationObserver) { setTimeout(dsmWatch, 100); return; } let since = [], rem = [], raf = 0; /* (everything put on the page since the last frame: not seen yet; and every removal since then, across batches) */
+  new MutationObserver((recs) => { if (!window.dsMo) return; const add = []; recs.forEach((r) => { r.addedNodes.forEach((n) => { since.push(n); if (n.nodeType === 1 && !/^DSM-/.test(n.tagName) && n.tagName !== 'circle') add.push(n); }); if (r.removedNodes.length) rem.push(r); });
+  if (!raf) raf = requestAnimationFrame(() => { since = []; rem = []; raf = 0; }); if (since.length > 4000) since = since.slice(-2000); if (rem.length > 2000) rem = rem.slice(-1000); /* (a hidden tab has no frames: kept small) */ if (!add.length) return;
+  /* (what this draw took away from the screen, so a number it showed stays put; not what was put in and taken out before a frame, never seen;
+     worked out only when a surface asks) */
+  let gone = null; const goneFn = () => { if (gone) return gone; gone = []; const put = new Set(since), els = since.filter((a) => a.nodeType === 1 && a.isConnected);
+    /* (every removal since the last frame, not just this batch's: a page drawn in steps before one paint (Rotation: the page, then its card) took the old one away in an earlier step) */
+    rem.forEach((r) => { if (!r.removedNodes.length || els.some((a) => a === r.target || a.contains(r.target))) return; r.removedNodes.forEach((n) => { if ((n.nodeType === 1 || n.nodeType === 3) && !put.has(n)) gone.push(n); }); }); return gone; };
+  dsMo.fresh = add; dsMo.gone = goneFn; try { dsMo.draw(); } catch (e) { /* (no motion) */ } finally { dsMo.fresh = null; dsMo.gone = null; } }).observe(document.body, { childList: true, subtree: true }); })();
 window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by itself: the moment the pull is first seen) */
 
 // ===== Design studio round 456 (Nov 1): the tab bar gets its tint only while pinned at the top (Flex: "it looks weird on every

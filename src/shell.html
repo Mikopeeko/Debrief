@@ -3430,6 +3430,8 @@ span.sn-log { padding: 4px 10px; }
 
 /* ---- a row's details, opened right under it ---- */
 .pf-inl { margin: -2px 0 8px 26px; padding: 12px 14px 14px; background: var(--raised); border: 1px solid rgba(230,180,80,.4); border-top: 0; border-radius: 0 0 12px 12px; animation: rcIn .18s ease-out; }
+/* (Nov 3, the studio: Rotation's page redraws in place when the background pulls change its score, with no fade; it read as a flicker right after
+   the opening motion. Its first draw never faded either: .spc-anim turns that off) */ .pf-inl.spc-v { animation: none; }
 .pf-inl > h3.nh:first-child, .pf-inl > .pf-ph:first-child { margin-top: 0; } .pf-cols.solo { grid-template-columns: minmax(0, 1fr); }
 .pf-inl { min-width: 0; max-width: 100%; overflow-x: auto; } .pf-cols > .panel { min-width: 0; } /* (a wide table inside scrolls in its own box, never the page) */
 @media (max-width: 640px) { .pf-inl { margin-left: 0; padding: 10px 10px 12px; } }
