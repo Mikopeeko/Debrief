@@ -7643,6 +7643,8 @@ const TP = { id: null, name: '', ver: null, base: null, doc: null, busy: false, 
 const TP_PRACTICE = /-debrief\.[a-z0-9-]+\.workers\.dev$/.test(location.hostname);
 const tpTeam = () => { try { const tm = ndzBTeams(), cur = S.planRosTeam || store.get(GROUP_CUR), t = tm.find((g) => g.gid === cur) || tm[0] || null; return t && /^(team|guild)$/.test(t.kind) && /^\d+$/.test(String(t.id)) ? t : null; } catch (e) { return null; } };
 const tpMe = () => { const m = meOf(); return m ? String(m.name).split('-')[0] : ''; };
+// (who "you" are on the team plan: only someone signed in (or testing as someone on a practice link); a reader is never "you")
+const tpWho = () => { const d = TP.doc; return d && d.you ? (d.you.practice ? d.you.name : tpMe() || d.you.name) : ''; };
 const tpSnap = () => { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (tpIs(k)) o[k] = localStorage.getItem(k); } } catch (e) { /* storage off */ } return o; };
 const tpAgo = (at) => { const m = Math.max(0, Math.round((Date.now() - at) / 60000)); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; };
 const tpApi = async (q, body) => { const r = await fetch('/api/teamplan?' + q, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' }); return Object.assign(await r.json().catch(() => ({})), { _st: r.status }); };
@@ -7665,7 +7667,7 @@ function tpApply(r) {
     if (here === v) { TP.base[k] = v; continue; }
     if (first || !can || here === was) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e2) { /* storage off */ } TP.base[k] = v; got.push([k, was, v, e]); } }
   TP.ver = r.ver;
-  if (got.length && !first) { const now = Date.now(); for (const [k, a, b, e] of got) { if (!k.startsWith('wla-rnote|') || e.by === tpMe()) continue; const lab = tpNoteDiff(a, b); if (lab) TP.chg.push({ boss: k.slice(10), lab, by: e.by, at: e.at || now }); }
+  if (got.length && !first) { const now = Date.now(); for (const [k, a, b, e] of got) { if (!k.startsWith('wla-rnote|') || e.by === tpWho()) continue; const lab = tpNoteDiff(a, b); if (lab) TP.chg.push({ boss: k.slice(10), lab, by: e.by, at: e.at || now }); }
     TP.chg = TP.chg.filter((x) => now - x.at < 30 * 60e3).slice(-20); }
   if (got.length) tpRedraw();
 }
@@ -7675,7 +7677,10 @@ function tpRedraw() { if (S.page !== 'plan') return; const a = document.activeEl
 // (what changed in a boss's plans: the label of the first job line that's new, like "Guillotine 2")
 function tpNoteDiff(a, b) { const lines = (v) => { try { const o = JSON.parse(v || 'null'); return new Set(((o && o.list) || []).flatMap((n) => String(n.text || '').split('\n'))); } catch (e) { return new Set(); } };
   const A = lines(a); for (const l of lines(b)) if (!A.has(l)) { const m = /^\s*([^:{}\n]{2,40}?)\s*[:{]/.exec(l); if (m && !/^(difficulty|boss|EncounterID)\b/i.test(m[1].trim())) return m[1].trim(); } return ''; }
-const tpSum = (k, a, b) => k.startsWith('wla-rnote|') ? ((l) => (l ? 'changed ' + l + ' on ' : 'changed the plan for ') + pnShort(k.slice(10)))(tpNoteDiff(a, b)) : k.startsWith('wla-pp|') ? 'moved the markers on ' + pnShort(k.split('|')[1])
+const tpPick = (a, b) => { const P = (v) => { try { return JSON.parse(v || '{}') || {}; } catch (e) { return {}; } }, A = P(a), B = P(b);
+  for (const [r, m] of Object.entries(B)) for (const [boss, id] of Object.entries(m || {})) if (!A[r] || A[r][boss] !== id) { const n = notesOf(boss).list.find((x) => x.id === id); return 'switched ' + pnShort(boss) + (n && n.name ? ' to "' + n.name + '"' : ' to another plan'); }
+  return 'switched a boss to another plan'; };
+const tpSum = (k, a, b) => k === 'wla-plan-chosen' ? tpPick(a, b) : k.startsWith('wla-rnote|') ? ((l) => (l ? 'changed ' + l + ' on ' : 'changed the plan for ') + pnShort(k.slice(10)))(tpNoteDiff(a, b)) : k.startsWith('wla-pp|') ? 'moved the markers on ' + pnShort(k.split('|')[1])
   : ({ 'wla-rosters': 'changed the roster', 'wla-night': 'changed who plays', 'wla-nights': 'changed the raid nights', 'wla-plan-chosen': 'picked another plan', 'wla-plan-skip': 'changed which bosses are planned', 'wla-alts': 'changed the alts', 'wla-roster-no': 'changed the roster', 'wla-nicks': 'changed the nicknames', 'wla-ndz-extra': 'added a raider' })[k] || 'changed the plan';
 // (this browser's changes: sent once they've stopped changing for a few seconds; never for a reader)
 function tpDirty() { const snap = tpSnap(), d = {}; for (const k of new Set(Object.keys(snap).concat(Object.keys(TP.base || {})))) { const a = snap[k] === undefined ? null : snap[k], b = TP.base[k] === undefined ? null : TP.base[k]; if (a !== b) d[k] = a; } return d; }
@@ -7684,7 +7689,7 @@ async function tpTick() {
   const d = tpDirty(), sig = Object.entries(d).map(([k, v]) => k + ':' + (v == null ? -1 : v.length)).join('|'); if (!sig) { TP.sig = ''; return; }
   if (sig !== TP.sig) { TP.sig = sig; TP.since = Date.now(); return; } if (Date.now() - TP.since < 3500) return;
   TP.busy = true; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
-  try { const r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'set', keys: d, sums, me: tpMe() });
+  try { const r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'set', keys: d, sums, me: tpWho() });
     if (r.ok) { for (const [k, v] of Object.entries(d)) TP.base[k] = v; Object.assign(TP.doc, { ver: r.ver, log: r.log, officers: r.officers }); TP.ver = r.ver; TP.sig = ''; tpChip(); }
     else if (r._st === 401 || r._st === 403) { TP.doc.you = Object.assign({}, TP.doc.you, { can: false }); tpChip(); }
   } catch (e) { /* (sent again on the next tick) */ } finally { TP.busy = false; }
@@ -7694,7 +7699,7 @@ setInterval(() => { if (document.visibilityState === 'visible' && (S.page === 'p
 window.addEventListener('focus', () => { if (S.page === 'plan' || TP.doc) tpPull(); });
 // (a tab closed right after a change: what wasn't sent yet goes out as the page closes)
 window.addEventListener('pagehide', () => { try { if (!TP.base || !TP.doc || !(TP.doc.you && TP.doc.you.can)) return; const d = tpDirty(); if (!Object.keys(d).length) return; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
-  navigator.sendBeacon('/api/teamplan?id=' + encodeURIComponent(TP.id), new Blob([JSON.stringify({ op: 'set', keys: d, sums, me: tpMe() })], { type: 'application/json' })); } catch (e) { /* closing */ } });
+  navigator.sendBeacon('/api/teamplan?id=' + encodeURIComponent(TP.id), new Blob([JSON.stringify({ op: 'set', keys: d, sums, me: tpWho() })], { type: 'application/json' })); } catch (e) { /* closing */ } });
 // ---- the header's chip and its pop-up ----
 const TP_CSS = String.raw`
 .tp-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; vertical-align: middle; }
@@ -7724,7 +7729,7 @@ function tpChip() {
   if (!document.getElementById('tp-css')) { const st = document.createElement('style'); st.id = 'tp-css'; st.textContent = TP_CSS; document.head.appendChild(st); }
   let w = host.querySelector('.tp-wrap'); if (!w) { w = document.createElement('span'); w.className = 'tp-wrap'; host.appendChild(w); }
   const d = TP.doc; if (!d || !TP.id) { w.innerHTML = ''; return; }
-  const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpMe().toLowerCase()).slice(0, 4);
+  const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpWho().toLowerCase()).slice(0, 4);
   const av = here.length ? '<span class="tp-av" title="' + esc(here.map((h) => h.n).join(', ')) + ' ' + (here.length > 1 ? 'are' : 'is') + ' here">' + here.map((h) => '<span style="background:' + tpCol(h.n) + '">' + esc(h.n.charAt(0).toUpperCase()) + '</span>').join('') + '</span>' : '';
   const can = d.you && d.you.can;
   w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
@@ -7738,18 +7743,18 @@ function tpDeco() { if (S.page !== 'plan' || !TP.chg.length) return; const boss 
     const h = c.querySelector('.plb-rch b') || c.querySelector('.plb-rch'); if (!h) continue; c.classList.add('tp-chgc'); h.insertAdjacentHTML('afterend', '<span class="tp-chg">' + esc(x.by) + ' changed this · ' + tpAgo(x.at) + '</span>'); } }
 function tpPop(anchor) {
   document.querySelectorAll('.tp-pop').forEach((x) => x.remove()); const d = TP.doc; if (!d) return;
-  const p = document.createElement('div'); p.className = 'tp-pop'; const me = tpMe(), you = d.you, can = you && you.can;
+  const p = document.createElement('div'); p.className = 'tp-pop'; const me = tpWho(), you = d.you, can = you && you.can;
   const draw = (err) => {
-    const prac = TP_PRACTICE ? '<div class="sec"><div class="lab">Practice copy</div>' + (you && you.practice ? '<div class="pr">You\'re testing as <b>' + esc(you.name) + '</b>. <button type="button" class="lk q" data-tp="pout">Stop</button></div>' : '<div class="pr">Sign in with Warcraft Logs only works on debriefme.io. Test as a character:</div><form data-tp="pin"><input name="n" placeholder="Character name" maxlength="24" value="' + esc(me) + '"><button>Test</button></form>') + '</div>' : '';
+    const prac = TP_PRACTICE ? '<div class="sec"><div class="lab">Practice copy</div>' + (you && you.practice ? '<div class="pr">You\'re testing as <b>' + esc(you.name) + '</b>. <button type="button" class="lk q" data-tp="pout">Stop</button></div>' : '<div class="pr">Sign in with Warcraft Logs only works on debriefme.io. Test as a character:</div><form data-tp="pin"><input name="n" placeholder="Character name" maxlength="24" value="' + esc(tpMe()) + '"><button>Test</button></form>') + '</div>' : '';
     if (!d.exists) { p.innerHTML = '<div class="h"><b>Save it for the team</b><p>Your plan goes online for ' + esc(TP.name) + '. Every change after that saves by itself, your officers can change it too, and everyone else on the team can read it.</p></div>' +
       '<div class="sec">' + (you ? '<form data-tp="mk"><button>Save it for the team</button></form>' : '<div class="pr">Sign in with Warcraft Logs first, so only you and your officers can change it.</div>' + (TP_PRACTICE ? '' : '<form data-tp="sign"><button>Sign in with Warcraft Logs</button></form>')) + (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>' + prac; }
     else { const lead = (d.lead || '') + (you && you.lead ? '' : '');
       p.innerHTML = '<div class="h"><b>' + esc(TP.name) + '\'s plan</b><p>Saved online for the whole team. ' + (can ? 'Every change saves by itself.' : 'Only the raid lead and the officers can change it.') + '</p></div>' +
-        '<div class="sec"><div class="lab">Here now</div>' + ((d.here || []).length ? d.here.slice(0, 8).map((h) => '<div class="row"><span class="dt"></span><span class="nm" style="color:' + tpCol(h.n) + '">' + esc(h.n) + '</span><em>' + (h.n.toLowerCase() === me.toLowerCase() ? 'you' : h.w ? 'looking at ' + esc(h.w) : 'on the site') + '</em></div>').join('') : '<div class="pr">Nobody else right now.</div>') + '</div>' +
+        '<div class="sec"><div class="lab">Here now</div>' + ((d.here || []).length ? d.here.slice(0, 8).map((h) => '<div class="row"><span class="dt"></span><span class="nm" style="color:' + tpCol(h.n) + '">' + esc(h.n) + '</span><em>' + (me && h.n.toLowerCase() === me.toLowerCase() ? 'you' : h.w ? 'looking at ' + esc(h.w) : 'on the site') + '</em></div>').join('') : '<div class="pr">Nobody else right now.</div>') + '</div>' +
         '<div class="sec"><div class="lab">Can change it</div><div class="row"><span class="nm" style="color:' + tpCol(lead) + '">' + esc(lead) + '</span><em>' + (you && you.lead ? 'you · ' : '') + 'raid lead</em></div>' +
-        (d.officers || []).map((n) => '<div class="row"><span class="nm" style="color:' + tpCol(n) + '">' + esc(n) + '</span><em>' + (n.toLowerCase() === me.toLowerCase() ? 'you · ' : '') + 'officer' + (you && you.lead ? ' · <button type="button" class="lk q" data-tp="del" data-n="' + esc(n) + '">Remove</button>' : '') + '</em></div>').join('') +
-        (you && you.lead ? '<form data-tp="add"><input name="n" placeholder="Officer\'s character name" maxlength="24"><button>Add</button></form>' : '') + '</div>' +
-        '<div class="sec"><div class="lab">Today</div>' + ((d.log || []).slice(-8).reverse().map((x) => '<div class="ch"><span><b>' + esc(x.by === me ? 'You' : x.by) + '</b> ' + esc(x.sum) + ' · ' + tpAgo(x.at) + '</span>' + (can && x.undo ? '<button type="button" class="lk q" data-tp="undo" data-i="' + x.i + '">Undo</button>' : '') + '</div>').join('') || '<div class="pr">No changes yet today.</div>') +
+        (d.officers || []).map((n) => '<div class="row"><span class="nm" style="color:' + tpCol(n) + '">' + esc(n) + '</span><em>' + (me && n.toLowerCase() === me.toLowerCase() ? 'you · ' : '') + 'officer' + (you && you.lead ? ' · <button type="button" class="lk q" data-tp="del" data-n="' + esc(n) + '">Remove</button>' : '') + '</em></div>').join('') +
+        (you && you.lead ? '<form data-tp="add"><input name="n" list="tpOffL" placeholder="Pick a raider" maxlength="24" autocomplete="off"><datalist id="tpOffL">' + [...new Set(rostersGet().list.flatMap((r) => (r.players || []).map((q) => String(q.n).split('-')[0])))].filter((n) => n.toLowerCase() !== String(d.lead || '').toLowerCase() && !(d.officers || []).some((o) => o.toLowerCase() === n.toLowerCase())).sort((a, b) => a.localeCompare(b)).map((n) => '<option value="' + esc(n) + '">').join('') + '</datalist><button>Add</button></form>' : '') + '</div>' +
+        '<div class="sec"><div class="lab">Today</div>' + ((d.log || []).slice(-8).reverse().map((x) => '<div class="ch"><span><b>' + esc(me && x.by === me ? 'You' : x.by) + '</b> ' + esc(x.sum) + ' · ' + tpAgo(x.at) + '</span>' + (can && x.undo ? '<button type="button" class="lk q" data-tp="undo" data-i="' + x.i + '">Undo</button>' : '') + '</div>').join('') || '<div class="pr">No changes yet today.</div>') +
         (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>' + prac; }
     p.querySelectorAll('form').forEach((f) => (f.onsubmit = (e) => { e.preventDefault(); act(f.dataset.tp, (f.querySelector('input') || {}).value); }));
     p.querySelectorAll('button[data-tp]').forEach((b) => (b.onclick = () => act(b.dataset.tp, b.dataset.n || b.dataset.i)));

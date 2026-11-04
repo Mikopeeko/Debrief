@@ -397,6 +397,13 @@ const GDZ_CA_AXES = {
     pause: 'Freeze. The last axe: everyone still free of the debuff, plus immunities. Five is the minimum and four wipes, so this sends six.',
     do: ['Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity: *Turtle*, *Ice Block*. Four wipes, so *send six*.', 'Everyone in it: *Walk out 40 yards*. That was the last axe.'] },
 };
+// (a Gloombomb's 3 Soul Fragments: they drop 3 to 8 yards from where it went off (the logs, Nov 1), and the bombed player picks each up
+// or dies; returns when the last one is picked up)
+function gdzCaFrags(k, id, t, p) {
+  [[5, 0.6], [6, 2.7], [4.5, 4.6]].forEach(([r, a], i) => { const x = p[0] + Math.cos(a) * r, y = p[1] + Math.sin(a) * r, tp = t + 0.9 + i * 1;
+    k.ring({ x, y, r: 1.3, fx: 'zone', t0: t, dur: tp - t, color: '#c49bff', cn: 'Soul Fragment', legend: 'a Soul Fragment: the bombed player picks up all 3', label: false }); k.at(tp, id, x, y); });
+  return t + 2.9;
+}
 function gdzCaKicks(k, RA, MA) {
   k.boss('hm', 'Malacrass', 0, 18, 20).add('ar', 'Spiteful Soulcoiler', 0, RA[0], RA[1]).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
   k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 18, 14, 5.5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -12, -6, 7);
@@ -571,7 +578,8 @@ const GDZ_CA_M = {
   // Heroic, Gloombomb: marked players explode 15 yards around them; they run away from everyone first
   gloomH() {
     const L = 11, k = GDZ_CA_M.home2(gdzKit('The Coiled Altar', L), ['r1', 'm3']), MK = [['r1', [3, 2], [-24, -18]], ['m3', [17, 24], [34, -10]]];
-    MK.forEach(([id, p, q]) => { k.at(0, id, p[0], p[1]); k.ring({ on: id, r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 5.4, color: '#da3df2', cn: 'Gloombomb', label: 'Run out', legend: 'explodes 15 yards around them' }); k.hold(1, id).at(5.6, id, q[0], q[1]).hold(6.4, id).at(10.8, id, p[0], p[1]); });
+    MK.forEach(([id, p, q]) => { k.at(0, id, p[0], p[1]); k.ring({ on: id, r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 5.4, color: '#da3df2', cn: 'Gloombomb', label: 'Run out', legend: 'explodes 15 yards around them' }); k.hold(1, id).at(5.6, id, q[0], q[1]).hold(6.4, id); gdzCaFrags(k, id, 6.4, q); k.at(10.8, id, p[0], p[1]); });
+    k.call(6.5, 9.2, 'Pick up your 3 fragments', { x: -24, y: -6, color: '#c49bff', ink: '#14061f' });
     MK.forEach(([id]) => k.press(id, 'Defensive', 5, 6.6));
     k.ring1(MK.map((x) => x[0])).step(0.6).step(6);
     k.pause(5.6, 'Freeze. Both marked players are well away from everyone, so the blast hits nobody else.', { x: 4, y: 4, r: 30 });
@@ -655,15 +663,17 @@ const GDZ_CA_M = {
     k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'What they press' });
   },
   bombs(o) {
-    const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-32, -28], MA = [24, 8];
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-26, -22], MA = [24, 8]; /* (the ranged add a step in from the moon corner: room for a bomb on each side) */
     if (o && o.kick) return gdzCaKicks(k, RA, MA);
     k.boss('hm', 'Malacrass', 0, 18, 20).add('ar', 'Spiteful Soulcoiler', 0, RA[0], RA[1]).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
     k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m3', 'm4', 'm5', 'm6', 'm7'], 14, 31, 5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r3', 'r4', 'r5', 'r6', 'r7'], -4, 12, 6);
     k.at(0, ['m1', 'm2'], 18, 28, 2).at(0, ['r1', 'r2'], -16, -10, 2);
-    [['r1', RA, -1], ['r2', RA, 1], ['m1', MA, -1], ['m2', MA, 1]].forEach(([id, a, s]) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 1, at: 6, dur: 5, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' });
-      k.hold(1.4, id).at(4.4, id, a[0] + s * 8, a[1]).hold(6.6, id) /* (opposite sides of the add: the circles overlap on it, like a Venn diagram) */.at(9.6, id, k.posAt(id, 0)[0], k.posAt(id, 0)[1]); });
+    // (each pair about 12 yards out on opposite sides of its add: the 15-yard circles overlap only over the add, like a Venn diagram, and
+    // reach nobody else; then each picks up their 3 fragments and walks back)
+    [['r1', [RA[0] + 8.5, RA[1] - 8.5]], ['r2', [RA[0] - 8.5, RA[1] + 8.5]], ['m1', [MA[0] - 12, MA[1] - 3]], ['m2', [MA[0] + 12, MA[1] - 3]]].forEach(([id, p]) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 1, at: 6, dur: 5, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them' });
+      const b = k.posAt(id, 0); k.hold(1.4, id).at(4.4, id, p[0], p[1]).hold(6.4, id); const dn = gdzCaFrags(k, id, 6.4, p); k.at(Math.min(10.8, dn + 1.6), id, b[0], b[1]); });
     k.cast('ar', 'Wail of Terror', 0.5, 1.2, 'kick', 'Ranged 3').cast('am', 'Wail of Terror', 0.6, 1.3, 'kick', 'Ranged 4').cast('am', 'Wail of Terror', 7.6, 8.8, 'kick', 'Melee 3');
-    ['r1', 'r2', 'm1', 'm2'].forEach((id) => k.press(id, 'Defensive', 5, 6.8)); k.call(6.4, 7.5, 'Shields down: kill them', { x: -4, y: -2 });
+    ['r1', 'r2', 'm1', 'm2'].forEach((id) => k.press(id, 'Defensive', 5, 6.8)); k.call(6.4, 9.2, 'Pick up your 3 fragments', { x: RA[0], y: RA[1] + 12, color: '#c49bff', ink: '#14061f' }).call(9.3, 10.6, 'Shields down: kill them', { x: -4, y: -2 });
     k.ring1(['r1', 'r2', 'm1', 'm2']).step(1).step(1.6).step(6).step(7.6);
     k.pause(5.5, 'Freeze. Two bombs on each add, one on each side. Their circles overlap on the add, not on each other, and nobody else is inside.', { x: 24, y: 8, r: 17 }); return k.done({ title: 'Gloombombs on the adds', focus: { x: -4, y: -2, r: 20 }, hlLabel: 'players with a Gloombomb' });
   },
@@ -1127,12 +1137,12 @@ GDZ['The Coiled Altar'] = {
             k.pause(9.7, 'Freeze. The ghosts are piled in front of the boss and their players have stepped aside. Now the frontal takes them all.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Dreadmarch and Soul Sever', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
           } },
         { id: 'bombs', fail: GDZ_CA_FAIL.bombs, only: 'm', how: 1, name: 'Gloombomb (Add Bombs)', what: 'The two adds take almost no damage until 2 Gloombombs hit each one. Each time, 2 ranged and 2 melee get a bomb that explodes 15 yards around them.',
-          do: ['Kickers: *Kick both adds* the moment the *Gloombomb* cast shows, so they stand still.', 'Bombs: Ranged bombs go to the *ranged add*, melee bombs to the *melee add*. Stand *one on each side* of it and *press your best defensive*.', 'Everyone else: Stay *15 yards away*. The bombs break the shields. Now *kill the adds*.', 'Kickers: *Kick every Wail of Terror*. The melee add\'s *second kick* must be a melee.'],
+          do: ['Kickers: *Kick both adds* the moment the *Gloombomb* cast shows, so they stand still.', 'Bombs: Ranged bombs go to the *ranged add*, melee bombs to the *melee add*. Stand *one on each side* of it, so your circles overlap only on the add, and *press your best defensive*.', 'Bombs: When it goes off, *pick up your 3 Soul Fragments* around you. Everyone else stays *15 yards away*, then *kills the adds*.', 'Kickers: *Kick every Wail of Terror*. The melee add\'s *second kick* must be a melee.'],
           roles: ['td', 'd', '', 'td'],
           plan: ['One add is the ranged add and the other the melee add. One player marks the ranged add and calls where both are: marked means ranged kicks, unmarked means melee kicks.', 'Which is which, by where they spawn (the plan\'s rule): an add at the moon is always ranged; an add beside the stack spot is always melee.', 'Skull add: melee if the other is at the moon, ranged if the other is at the square or star. Star add: melee if the other is at the moon or skull, ranged if the other is at the square.', 'Every second set of adds is followed by Eternal Nightfall, so the adds must die before the next set but the shield comes first.', 'The last set before the intermission doesn\'t need bombs: their shields break at the transition. Just keep kicking.'],
           map: (d, o) => GDZ_CA_M.bombs(o) },
-        { id: 'gloomh', only: 'h', fail: GDZ_CA_FAIL.gloomH, how: 1, spell: 'Gloombomb', name: 'Gloombomb (Bombs)', what: 'Two players get a bomb that explodes 15 yards around them. Anyone it hits must pick up their Soul Fragments.',
-          do: ['Marked: *Run 15 yards from everyone* right away and *press a defensive*.', 'Everyone: *Stay away* from marked players. Hit by a bomb? *Pick up your Soul Fragments*.'],
+        { id: 'gloomh', only: 'h', fail: GDZ_CA_FAIL.gloomH, how: 1, spell: 'Gloombomb', name: 'Gloombomb (Bombs)', what: 'Two players get a bomb that explodes 15 yards around them. Each of them, and anyone else it hits, must pick up 3 Soul Fragments.',
+          do: ['Marked: *Run 15 yards from everyone* right away and *press a defensive*.', 'Marked: When it goes off, *pick up your 3 Soul Fragments* around you. Everyone else: *stay away* from marked players.'],
           roles: ['', ''],
           map: () => GDZ_CA_M.gloomH() },
         { id: 'nightfall', fail: GDZ_CA_FAIL.nightfall, how: 1, spell: 'Eternal Nightfall', name: 'Eternal Nightfall (Shield Break)', what: 'Malacrass shields himself and starts a cast that wipes the raid. Breaking the shield stops the cast. Then purple circles drop.',
