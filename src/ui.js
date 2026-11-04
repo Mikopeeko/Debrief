@@ -2027,7 +2027,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }], n: [
+  { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
@@ -7635,7 +7635,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 // saves it for the team once (signed in with Warcraft Logs); from then on every change saves by itself a few seconds after the last one,
 // and everyone on the team who opens Plan sees the same plan, a teammate's changes within about 20 seconds. Only the raid lead and the
 // officers they name can change it; everyone else reads it. Plan's own code is untouched: the pieces it keeps in this browser (each
-// boss's plans, Who plays, the nights, the markers, the alts) are mirrored to the team's file (the Worker's /api/team) and back. =====
+// boss's plans, Who plays, the nights, the markers, the alts) are mirrored to the team's file (the Worker's /api/teamplan) and back. =====
 const TP_KEYS = ['wla-rosters', 'wla-night', 'wla-nights', 'wla-plan-chosen', 'wla-plan-skip', 'wla-alts', 'wla-roster-no', 'wla-nicks', 'wla-ndz-extra'], TP_PRE = ['wla-rnote|', 'wla-pp|'];
 const tpIs = (k) => !!k && (TP_KEYS.includes(k) || TP_PRE.some((p) => k.startsWith(p)));
 const TP = { id: null, name: '', ver: null, base: null, doc: null, busy: false, sig: '', since: 0, chg: [] };
@@ -7645,7 +7645,7 @@ const tpTeam = () => { try { const tm = ndzBTeams(), cur = S.planRosTeam || stor
 const tpMe = () => { const m = meOf(); return m ? String(m.name).split('-')[0] : ''; };
 const tpSnap = () => { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (tpIs(k)) o[k] = localStorage.getItem(k); } } catch (e) { /* storage off */ } return o; };
 const tpAgo = (at) => { const m = Math.max(0, Math.round((Date.now() - at) / 60000)); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago'; };
-const tpApi = async (q, body) => { const r = await fetch('/api/team?' + q, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' }); return Object.assign(await r.json().catch(() => ({})), { _st: r.status }); };
+const tpApi = async (q, body) => { const r = await fetch('/api/teamplan?' + q, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin', cache: 'no-store' }); return Object.assign(await r.json().catch(() => ({})), { _st: r.status }); };
 // (the team's plan, read again: every 20 seconds while a page that shows it is open, and when the tab comes back into view)
 async function tpPull() {
   const t = tpTeam(); if (!t || TP.busy) return; const id = t.kind + ':' + t.id;
@@ -7689,12 +7689,12 @@ async function tpTick() {
     else if (r._st === 401 || r._st === 403) { TP.doc.you = Object.assign({}, TP.doc.you, { can: false }); tpChip(); }
   } catch (e) { /* (sent again on the next tick) */ } finally { TP.busy = false; }
 }
-setInterval(() => { try { tpTick(); } catch (e) { /* (next tick) */ } }, 1500);
+setInterval(() => { try { tpTick(); if (S.page === 'plan' && TP.doc && !document.querySelector('#view .bh-l1 .tp-wrap')) tpChip(); /* (Plan redrew part of itself: the chip comes back) */ } catch (e) { /* (next tick) */ } }, 1500);
 setInterval(() => { if (document.visibilityState === 'visible' && (S.page === 'plan' || TP.doc)) tpPull(); }, 20000);
 window.addEventListener('focus', () => { if (S.page === 'plan' || TP.doc) tpPull(); });
 // (a tab closed right after a change: what wasn't sent yet goes out as the page closes)
 window.addEventListener('pagehide', () => { try { if (!TP.base || !TP.doc || !(TP.doc.you && TP.doc.you.can)) return; const d = tpDirty(); if (!Object.keys(d).length) return; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
-  navigator.sendBeacon('/api/team?id=' + encodeURIComponent(TP.id), new Blob([JSON.stringify({ op: 'set', keys: d, sums, me: tpMe() })], { type: 'application/json' })); } catch (e) { /* closing */ } });
+  navigator.sendBeacon('/api/teamplan?id=' + encodeURIComponent(TP.id), new Blob([JSON.stringify({ op: 'set', keys: d, sums, me: tpMe() })], { type: 'application/json' })); } catch (e) { /* closing */ } });
 // ---- the header's chip and its pop-up ----
 const TP_CSS = String.raw`
 .tp-wrap { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; vertical-align: middle; }
@@ -33216,6 +33216,125 @@ function hdSeasonCard(c, chR, wait, wc, wkKill) {
     tile(wcw ? sk('2em') : kills(wc.mythic) + '<small>/' + nB + '</small>', 'Mythic bosses', wcw ? '&nbsp;' : [wkKill != null ? plural(wkKill, 'kill') + ' this week' : '', 'Heroic ' + kills(wc.heroic) + '/' + nB].filter(Boolean).join(' · ')) +
     tile(wcw ? sk('1.6em') : pM != null ? pM : '—', 'Mythic parse', wcw ? '&nbsp;' : (pM != null ? 'best average' : 'no Mythic kill yet') + (pH != null ? ' · Heroic <b style="color:' + hdPCol(pH) + '">' + pH + '</b>' : ''), pM != null ? hdPCol(pM) : '') + '</div></section>'; }
 // (the page)
+// ===== Your jobs on Home (Nov 4, Flex: "I think the my assignments/jobs would fit well in the homepage"). Your team's plan for the next
+// raid, read online (the team plan Plan saves for the team), one tile a boss in fight order with your first job; a tap shows every job of
+// yours on that boss, each with its picture and only you on it. A reminder, not a fix: nothing shows when your team has no plan online
+// for the next raid, or you're not in it. =====
+const HD_TP = new Map();
+// (the team's plan, read online at most every two minutes while Home is open)
+function hdTeamPlan(g, redraw) { const id = g.kind + ':' + g.id; if (!/^(team|guild):\d+$/.test(id)) return null; const o = HD_TP.get(id);
+  if ((!o || Date.now() - o.at > 120000) && !(o && o.busy)) { HD_TP.set(id, Object.assign({}, o || { at: 0, r: null }, { busy: true }));
+    tpApi(new URLSearchParams({ id })).then((r) => { const was = HD_TP.get(id); HD_TP.set(id, { at: Date.now(), r: r && r.exists && r.keys ? r : null }); if (!was || JSON.stringify((was.r || {}).ver) !== JSON.stringify(r && r.ver)) redraw(); })
+      .catch(() => HD_TP.set(id, { at: Date.now(), r: null })); }
+  return o && o.r; }
+const hdTpGet = (K, k) => { try { return JSON.parse((K[k] || {}).v || 'null'); } catch (e) { return null; } };
+// (the next raid night in the plan: the first one from today on, else the one Plan shows)
+function hdTpNight(K) { const cur = hdTpGet(K, NIGHT_K), N = hdTpGet(K, PN_NIGHTS_K) || {}, today = pnToday(), all = Object.entries(N.d || {}).map(([d, o]) => ({ ...o, date: d }));
+  if (cur && cur.date && !all.some((o) => o.date === cur.date)) all.push(cur); return all.filter((o) => o.date >= today).sort((a, b) => a.date.localeCompare(b.date))[0] || cur || null; }
+// (your jobs on a boss: its plan for the night's difficulty that names you, the one closest to the night's players first; each line that
+// names you is a job, by its label)
+function hdTpJobs(K, boss, night, me) { const o = hdTpGet(K, 'wla-rnote|' + boss), diff = night.diff === 'Heroic' ? 'Heroic' : 'Mythic', lo = me.toLowerCase(), on = ((night.on || {})[boss] || []).map((x) => String(x).split('-')[0].toLowerCase());
+  const L = ((o && o.list) || []).filter((n) => !n.example && pnNoteDiff(n) === diff), sc = (n) => on.filter((x) => noteHas(n.text, x)).length;
+  const n = L.filter((x) => noteHas(noteResolve(x.text), me)).sort((a, b) => sc(b) - sc(a) || (b.saved || 0) - (a.saved || 0))[0] || null;
+  let P = null; try { P = n ? E.parseNote(noteResolve(n.text)) : null; } catch (e) { P = null; }
+  const jobs = []; for (const l of (P && P.lines) || []) if (l.label && (l.words || []).some((w) => String(w).split('-')[0].toLowerCase() === lo) && !jobs.includes(l.label)) jobs.push(l.label);
+  // (your cooldown calls: each spell once among the jobs, every call with its time for the pop-up)
+  const cds = ((P && P.reminders) || []).filter((x) => (x.tags || []).some((t) => String(t).split('-')[0].toLowerCase() === lo)).map((x) => ({ nm: x.text || ndzSpellNm(+x.spellid) || 'Cooldown', ph: x.ph, t: x.time })).sort((a, b) => (a.ph || 0) - (b.ph || 0) || a.t - b.t);
+  for (const c of cds) if (!jobs.includes(c.nm)) jobs.push(c.nm);
+  return { note: n, has: L.length > 0, jobs, cds, sit: on.length > 0 && !on.includes(lo), diff }; }
+const HD_CAM = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="10" rx="2"/><circle cx="8" cy="8.5" r="2.5"/></svg>';
+function hdJobs(g, ch, gb, redraw) {
+  const me = ch && ch.name ? String(ch.name).split('-')[0] : ''; if (!me) return ''; const r = hdTeamPlan(g, redraw); if (!r) return '';
+  const K = r.keys, night = hdTpNight(K); if (!night) return '';
+  const R = (hdTpGet(K, PLAN_RK) || {}).list || [], ros = R.find((x) => x.id === night.rid) || R[0], mine = ros && (ros.players || []).find((p) => String(p.n).split('-')[0].toLowerCase() === me.toLowerCase());
+  if (!mine) return ''; /* (you're not on the team's roster for that night) */
+  const skip = night.skip || hdTpGet(K, PLAN_SKIP_K) || [], bosses = planBossesAll().filter((b) => !skip.includes(b)), role = mine.role === 'healer' ? 'Heal' : mine.role === 'tank' ? 'Tank' : '';
+  const day = new Date(night.date + 'T12:00:00'), dayN = isNaN(day) ? 'Next' : day.toLocaleDateString([], { weekday: 'long' }), upd = Math.max(0, ...Object.values(K).map((e) => e.at || 0));
+  HD_JOBS.ctx = { K, night, me, bosses, team: gName(g) };
+  const tiles = bosses.map((b, i) => { const J = hdTpJobs(K, b, night, me), art = BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy">' : '<span class="hj-ni"></span>';
+    const tag = J.sit ? '<span class="hj-no">Sitting this one</span>' : J.jobs.length ? '<span class="hj-tg">' + esc(J.jobs[0]) + '</span>' + (J.jobs.length > 1 ? '<span class="hj-more">+' + (J.jobs.length - 1) + '</span>' : '') : '<span class="hj-no">' + (J.has ? (role ? role + ' · no job' : 'No job') : 'No plan yet') + '</span>';
+    return '<button type="button" class="hj-t' + (J.sit ? ' sit' : '') + (b === gb ? ' goal' : '') + '" data-hdjob="' + esc(b) + '"' + (J.note && !J.sit ? '' : ' data-nojob="1"') + '>' + art + '<span class="hj-tx"><span class="hj-nm"><i>' + (i + 1) + '</i>' + esc(pnShort(b)) + '</span><span class="hj-jb">' + tag + '</span></span><span class="hj-pic" data-hjcam="' + esc(b) + '"></span></button>'; }).join('');
+  setTimeout(hdJobCams, 60);
+  return '<section class="hd-pn hd-jobs"><div class="hd-ph"><h3>Your jobs</h3><span class="m">' + esc(dayN) + '\'s raid</span><span class="hj-r"><span class="hj-src"><i class="hj-dot"></i>' + esc(gName(g)) + '\'s plan' + (upd ? ' · updated ' + tpAgo(upd) : '') + '</span><button type="button" class="hj-open" data-hdjplan="1">Open in Plan ›</button></span></div><div class="hj-g">' + tiles + '</div></section>';
+}
+const HD_JOBS = { ctx: null, sets: new Map() };
+// (a boss's pictures with you in them: the picture set Plan makes from that boss's plan, only the ones that name you)
+function hdJobSet(b) { const c = HD_JOBS.ctx; if (!c) return null; const J = hdTpJobs(c.K, b, c.night, c.me); if (!J.note || J.sit) return { J, cards: [] };
+  const key = b + '|' + J.note.id + '|' + (J.note.saved || 0); if (HD_JOBS.sets.has(key)) return HD_JOBS.sets.get(key);
+  let cards = [], set = null; try { const names = ndzNoteRoster(J.note) || [...new Set(noteNames(noteResolve(J.note.text)).map((x) => String(x).split('-')[0]))];
+    set = ppSet(ndzPlanRep({ pick: b, diff: J.diff, on: new Set(names) }, ndzSpecs()), J.note); const lo = c.me.toLowerCase();
+    cards = (set.cards || []).filter((cd) => cd.legend.some((G) => G.items.some((it) => String(it.name || '').split('-')[0].toLowerCase() === lo))); } catch (e) { cards = []; }
+  const o = { J, cards, set }; HD_JOBS.sets.set(key, o); return o; }
+// (the small camera on each tile, counted once the page is drawn, a boss at a time)
+function hdJobCams() { const l = [...document.querySelectorAll('#main .hj-pic[data-hjcam]:not([data-done])')]; let i = 0;
+  const one = () => { const el = l[i++]; if (!el) return; el.dataset.done = '1'; const o = hdJobSet(el.dataset.hjcam); if (o && o.cards.length) el.innerHTML = HD_CAM + o.cards.length; setTimeout(one, 30); }; one(); }
+const HJ_CSS = String.raw`
+.hd .hd-tcol { display: flex; flex-direction: column; gap: 16px; min-width: 0; } .hd .hd-tcol > .hd-pn { margin-top: 0; }
+.hd-jobs .hd-ph { flex-wrap: wrap; } .hd-jobs .hj-r { display: inline-flex; align-items: baseline; gap: 14px; margin-left: auto; font-size: 12.5px; color: var(--muted); }
+.hd-jobs .hj-dot { display: inline-block; width: 6px; height: 6px; margin-right: 6px; border-radius: 50%; background: #3fb950; transform: translateY(-1px); }
+.hd-jobs .hj-open { padding: 0; border: 0; background: none; color: var(--text); font: 600 12.5px var(--body); cursor: pointer; } .hd-jobs .hj-open:hover { color: var(--gold); }
+.hd-jobs .hj-g { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 10px -14px -12px; border-top: 1px solid var(--line); }
+.hd-jobs .hj-t { position: relative; display: flex; gap: 9px; align-items: flex-start; min-width: 0; padding: 10px 12px; border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.hd-jobs .hj-t:nth-child(5n) { border-right: 0; } .hd-jobs .hj-t:nth-last-child(-n+5) { border-bottom: 0; } .hd-jobs .hj-t:hover { background: rgba(255,255,255,.03); }
+.hd-jobs .hj-t[data-nojob] { cursor: default; } .hd-jobs .hj-t[data-nojob]:hover { background: none; }
+.hd-jobs .hj-t img, .hd-jobs .hj-ni { flex: none; width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line2, #2c343c); object-fit: cover; background: var(--raised); }
+.hd-jobs .hj-tx { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.hd-jobs .hj-nm { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd-jobs .hj-nm i { margin-right: 4px; font-style: normal; color: var(--faint); }
+.hd-jobs .hj-jb { display: flex; gap: 4px; align-items: center; margin-top: 3px; overflow: hidden; white-space: nowrap; }
+.hd-jobs .hj-tg { padding: 1px 5px; border-radius: 4px; background: #242a36; color: #e8c77a; font: 700 11px var(--body); overflow: hidden; text-overflow: ellipsis; } .hd-jobs .hj-more { font: 600 11px var(--body); color: var(--muted); }
+.hd-jobs .hj-no { font-size: 12.5px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; }
+.hd-jobs .hj-t.sit { background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(255,255,255,.018) 6px 12px); } .hd-jobs .hj-t.sit img { filter: grayscale(1); opacity: .55; }
+.hd-jobs .hj-t.goal { box-shadow: inset 0 2px 0 var(--gold); }
+.hd-jobs .hj-pic { position: absolute; top: 9px; right: 9px; display: flex; gap: 3px; align-items: center; font-size: 11px; color: var(--muted); } .hd-jobs .hj-pic svg { width: 12px; height: 12px; opacity: .8; }
+#hdJv { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-start; justify-content: center; padding: 72px 16px 16px; background: rgba(5,7,9,.72); }
+#hdJv .jv { width: 1120px; max-width: 100%; max-height: calc(100vh - 88px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+#hdJv .jv-h { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--line); } #hdJv .jv-h img { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line2, #2c343c); object-fit: cover; }
+#hdJv .jv-h b { font: 700 18px var(--head); color: var(--text); } #hdJv .jv-h span { font-size: 12.5px; color: var(--muted); }
+#hdJv .jv-x { margin-left: auto; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: 8px; background: none; color: var(--muted); font-size: 15px; cursor: pointer; } #hdJv .jv-x:hover { color: var(--text); border-color: var(--gold); }
+#hdJv .jv-b { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+#hdJv .jv-l { padding: 6px 0; border-right: 1px solid var(--line); }
+#hdJv .jv-r { display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 12px 14px; border: 0; border-left: 2px solid transparent; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+#hdJv .jv-r:hover { background: rgba(255,255,255,.03); } #hdJv .jv-r.on { background: #1a1f25; border-left-color: var(--gold); }
+#hdJv .jv-r .n { flex: none; display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: #242a36; color: #c9ced8; font: 700 11px var(--body); } #hdJv .jv-r.on .n { background: var(--gold); color: #14110a; }
+#hdJv .jv-r .t { font: 600 13.5px var(--body); color: var(--text); } #hdJv .jv-r .s { margin-top: 2px; font-size: 12.5px; color: var(--muted); } #hdJv .jv-r .ph { margin-top: 3px; font-size: 11px; color: var(--faint); }
+#hdJv .jv-p { padding: 14px; } #hdJv .jv-cd { display: flex; flex-direction: column; } #hdJv .jv-cd > div { display: flex; gap: 14px; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13.5px; } #hdJv .jv-cd b { min-width: 64px; color: var(--gold); font: 600 13px var(--body); font-variant-numeric: tabular-nums; } #hdJv .jv-p img { display: block; width: 100%; border-radius: 8px; } #hdJv .jv-p .sub { display: block; padding: 40px 0; text-align: center; }
+#hdJv .jv-f { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0 14px 14px; font-size: 12.5px; color: var(--muted); }
+#hdJv .jv-nx { padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; background: none; color: var(--text); font: 600 12.5px var(--body); cursor: pointer; } #hdJv .jv-nx:hover { border-color: var(--gold); }
+@media (max-width: 760px) {
+  .hd-jobs .hj-g { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hd-jobs .hj-t:nth-child(5n) { border-right: 1px solid var(--line); } .hd-jobs .hj-t:nth-child(2n) { border-right: 0; }
+  .hd-jobs .hj-t:nth-last-child(-n+5) { border-bottom: 1px solid var(--line); } .hd-jobs .hj-t:nth-last-child(-n+2) { border-bottom: 0; } .hd-jobs .hj-r { margin-left: 0; width: 100%; }
+  .hd2 .hd-tcol { display: contents; } .hd2 .hd-jobs { order: 2; }
+  #hdJv { padding: 0; } #hdJv .jv { max-height: 100vh; height: 100%; border-radius: 0; } #hdJv .jv-b { grid-template-columns: 1fr; } #hdJv .jv-l { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+`;
+(function () { if (typeof document === 'undefined' || document.getElementById('hj-css')) return; const st = document.createElement('style'); st.id = 'hj-css'; st.textContent = HJ_CSS; document.head.appendChild(st); })();
+// (a tile: every job of yours on that boss, a picture each with only you on it, and Next job)
+async function hdJobOpen(b) {
+  const c = HD_JOBS.ctx, o = hdJobSet(b); if (!c || !o || !o.J.note) return; const me = c.me, cards = o.cards, lo = me.toLowerCase();
+  const rows = cards.map((cd) => { const [nm, ins] = ppSplit(cd.title), ph = (PP_PH[cd.ph] || [''])[0], it = cd.legend.flatMap((G) => G.items.map((x) => ({ ...x, G }))).find((x) => String(x.name || '').split('-')[0].toLowerCase() === lo);
+      return { t: [ph, cd.when].filter(Boolean).join(' · ') || nm, s: ins || nm, ph: it ? (it.G.title + (it.job ? ' · ' + it.job : '')) : '', cd }; })
+    .concat(o.J.jobs.filter((j) => { const l = j.toLowerCase().replace(/^p\d\s+/, ''); return !o.J.cds.some((c) => c.nm === j) && !cards.some((cd) => { const bn = ppSplit(cd.title)[0].toLowerCase(), gt = cd.legend.filter((G) => G.items.some((it) => String(it.name || '').split('-')[0].toLowerCase() === lo)).map((G) => String(G.title || '').toLowerCase().replace(/\s*\(.*$/, '')).filter(Boolean);
+      return (cd.title + ' ' + (cd.when || '')).toLowerCase().includes(l) || (bn && (l.includes(bn) || bn.includes(l))) || gt.some((x) => l.includes(x)); }); }) /* (a line one of your pictures already shows: by its name, or your group on it) */.map((j) => ({ t: j, s: 'In the plan', ph: 'no picture for this one', cd: null })))
+    .concat(o.J.cds.length ? [{ t: 'Your cooldowns', s: [...new Set(o.J.cds.map((c) => c.nm))].join(', '), ph: plural(o.J.cds.length, 'call') + ' in the plan', cd: null, cds: o.J.cds }] : []);
+  if (!rows.length) return; let cur = 0;
+  document.querySelectorAll('#hdJv').forEach((x) => x.remove()); const box = document.createElement('div'); box.id = 'hdJv'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Your jobs on ' + b);
+  box.innerHTML = '<div class="jv"><div class="jv-h">' + (BOSS_ART[b] ? '<img src="' + artUrl(BOSS_ART[b][0]) + '" alt="">' : '') + '<b>' + esc(b) + '</b><span>your ' + plural(rows.length, 'job') + ' · ' + esc(o.J.diff) + '</span><button type="button" class="jv-x" aria-label="Close">✕</button></div>' +
+    '<div class="jv-b"><div class="jv-l">' + rows.map((x, i) => '<button type="button" class="jv-r" data-i="' + i + '"><span class="n">' + (i + 1) + '</span><span><span class="t" style="display:block">' + esc(x.t) + '</span><span class="s" style="display:block">' + esc(x.s) + '</span>' + (x.ph ? '<span class="ph" style="display:block">' + esc(x.ph) + '</span>' : '') + '</span></button>').join('') + '</div>' +
+    '<div><div class="jv-p"></div><div class="jv-f"><span>Only you are on these pictures. Your raid lead\'s plan has everyone.</span><button type="button" class="jv-nx">Next job ›</button></div></div></div></div>';
+  document.body.appendChild(box); document.body.classList.add('ndz-modal');
+  const close = () => { box.remove(); document.body.classList.remove('ndz-modal'); document.removeEventListener('keydown', key); }, key = (e) => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', key); box.onclick = (e) => { if (e.target === box || e.target.closest('.jv-x')) close(); };
+  const pic = box.querySelector('.jv-p'), PICS = new Map();
+  const show = async (i) => { cur = i; box.querySelectorAll('.jv-r').forEach((r) => r.classList.toggle('on', +r.dataset.i === i)); box.querySelector('.jv-nx').hidden = rows.length < 2; const x = rows[i];
+    if (x.cds) { pic.innerHTML = '<div class="jv-cd">' + x.cds.map((c) => '<div><b>' + ((c.ph % 1 ? 'Int ' : c.ph ? 'P' + c.ph + ' ' : '') + T(c.t)) + '</b><span>' + esc(c.nm) + '</span></div>').join('') + '</div>'; return; }
+    if (!x.cd) { pic.innerHTML = '<span class="sub">This job has no picture. It\'s in your raid\'s plan as "' + esc(x.t) + '".</span>'; return; }
+    pic.innerHTML = '<span class="sub">Drawing…</span>'; if (!PICS.has(i)) PICS.set(i, ppDraw(x.cd, b, o.J.diff, { only: me }).then((cv) => cv.toDataURL('image/png')).catch(() => null));
+    const url = await PICS.get(i); if (cur !== i || !box.isConnected) return; pic.innerHTML = url ? '<img alt="' + esc(x.cd.title) + '" src="' + url + '">' : '<span class="sub">Couldn\'t draw this one.</span>'; };
+  box.querySelectorAll('.jv-r').forEach((r) => (r.onclick = () => show(+r.dataset.i))); box.querySelector('.jv-nx').onclick = () => show((cur + 1) % rows.length); show(0);
+}
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-hdjob], [data-hdjplan]'); if (!t || !t.closest('#main')) return;
+  if (t.dataset.hdjplan) { planPage(); window.scrollTo(0, 0); return; } if (!t.dataset.nojob) hdJobOpen(t.dataset.hdjob); });
+
 function hdDash(X) {
   const { g, list, all, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, you, info } = X;
   const ch = you || (meOf() && groups().find((x) => x.kind === 'char' && x.gid === meOf().char)) || null, chSrv = ch ? String(ch.server || '').replace(/\s*\([A-Za-z]{2}\)\s*$/, '') : '';
@@ -33377,7 +33496,7 @@ function hdDash(X) {
     (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + (kLink ? '</button>' : '</div>'); /* (a key opens on the Mythic+ tab; while that's coming soon, not a link) */
   const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">newest first</span>' + (keysAll.length > 7 ? allB('keys') : '') + '</div>' + (wait ? skel(7) : keysAll.length ? hdList('keys', keysAll.slice(0, OPEN.keys ? keysAll.length : 7).map(kRow).join('')) : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
   return '<div class="home prog hd hd2" id="hdPage">' + (back ? '<div class="pg-links">' + back + '</div>' : '') + greet + pgMsg + meLd + liveStrip + sugg + meCard +
-    '<div class="hd-top">' + news + goal + '</div><div class="hd-team">' + trow + rkBox + team + pills + '<div class="hd-sg">' + sched + week + wnews + ladder + keys + '</div></div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
+    '<div class="hd-top">' + ((jobsH) => (jobsH ? '<div class="hd-tcol">' + news + jobsH + '</div>' : news))(g && g.kind !== 'char' && typeof hdJobs === 'function' ? hdJobs(g, ch, gb, redraw) : '') + goal + '</div><div class="hd-team">' + trow + rkBox + team + pills + '<div class="hd-sg">' + sched + week + wnews + ladder + keys + '</div></div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
 // (a character with no team: the greeting, Jump back in, a plain line with Add a team, then their week (vault, season, reset))
 function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [], first = hdSeen(c, null).at == null, chR0 = hdRioC(c, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); }), wait = !chR0, chR = chR0 && !chR0.none ? chR0 : null;
   const heal = /heal/i.test((chR && chR.role) || ''), WC = hdWcSeason(c, heal, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); });

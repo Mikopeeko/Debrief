@@ -1807,7 +1807,7 @@ export default {
     if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
-    if (url.pathname === '/api/team') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4) */
+    if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);

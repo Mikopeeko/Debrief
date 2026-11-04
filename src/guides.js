@@ -6491,13 +6491,17 @@ async function ppMapImg(fz) {
   } finally { box.remove(); }
 }
 const ppMarkImg = (k) => ppImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -11 22 22" width="44" height="44">' + gdzMarkSvg(k, 0, 0) + '</svg>'));
-async function ppDraw(card, boss, diff) {
+async function ppDraw(card, boss, diff, opt) {
+  // (opt.only: one player's name, for Home's Your jobs (Nov 4): the list and the map keep only them, their dot bigger and ringed in gold)
+  const only = opt && opt.only ? String(opt.only).split('-')[0].toLowerCase() : null;
+  if (only) card = { ...card, legend: card.legend.map((G) => ({ ...G, items: G.items.filter((it) => String(it.name || '').split('-')[0].toLowerCase() === only) })).filter((G) => G.items.length) };
   const W = 1200, H = 675, S2 = 2, cv = document.createElement('canvas'); cv.width = W * S2; cv.height = H * S2; const g = cv.getContext('2d'); g.scale(S2, S2);
   await Promise.all(['800 28px "Barlow Semi Condensed"', '700 16px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
   g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
   // (only the players the card's list names: nobody without a job in it shows (the user, Oct 26); a card that names nobody keeps everyone)
   const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
   const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))].filter((n) => !(card.map.out.ppNoName || []).some((x) => String(x).split('-')[0].toLowerCase() === n.toLowerCase())) } : card.map; /* (every named player keeps their name, but a big group's are in the list) */
+  if (only) { const me = fz.out.pts.find((p) => p.kind === 'player' && nmOf(p.name) === only); if (me) fz.out = { ...fz.out, hl: [...new Set((fz.out.hl || []).concat(me.guid))], cardRing: { guids: new Set([me.guid]), color: '#e6b450' } }; }
   const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
