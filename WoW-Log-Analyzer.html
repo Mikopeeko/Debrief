@@ -12374,25 +12374,15 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 /* (spec icons instead of typed specs: 18 px, 4 px corners, the class glyph until the picture loads; a small grey role icon on the team sheet) */
 .hd .hd-si { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex: none; border-radius: 4px; overflow: hidden; background: var(--raised); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .hd .hd-si svg { width: 18px; height: 18px; } .hd .hd-si img.oi { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 4px; opacity: 0; } .hd .hd-si.has img.oi { opacity: 1; } .hd .hd-si.has svg { visibility: hidden; }
-.hd .hd-ro { width: 13px; height: 13px; flex: none; color: var(--faint); } .hd .hd-ro .gl { stroke: currentColor; }
-.hd .hd-lr { gap: 8px; } .hd .hd-lr .hd-pl { flex: 1 1 0; width: auto; } .hd .hd-shr .c-s { display: inline-flex; align-items: center; gap: 6px; }
+.hd .hd-lr { gap: 8px; } .hd .hd-lr .hd-pl { flex: 1 1 0; width: auto; }
+.hd .hd-scroll { max-height: 408px; overflow-y: auto; overscroll-behavior: contain; } /* (a whole list opened in place: about 12 rows, then it scrolls) */
 .hd .hd-kl { width: 30px; flex: none; font: 700 13.5px var(--head); } .hd .hd-kn { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hd .hd-kw { max-width: 110px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd .hd-kw em { font-style: normal; color: var(--faint); font-weight: 500; }
 .hd .hd-kr .hd-g, .hd .hd-kr .hd-r { width: 62px; flex: none; text-align: right; font-size: 12px; }
 .hd .hd-sc2 { display: grid; grid-template-columns: 1fr 1fr; } .hd .hd-sc2 > div:first-child { border-right: 1px solid var(--line); } .hd .hd-sc2 .hd-lab { padding: 10px 14px 4px; }
-.hd .hd-sr .hd-pl { width: auto; flex: 1; } .hd .hd-gr { display: inline-flex; align-items: center; gap: 4px; } .hd .hd-sr .gchip, .hd .hd-shr .gchip { transform: scale(.9); }
+.hd .hd-sr .hd-pl { width: auto; flex: 1; } .hd .hd-gr { display: inline-flex; align-items: center; gap: 4px; } .hd .hd-sr .gchip { transform: scale(.9); }
 .hd .hd-foot { margin: 0; padding: 8px 14px 10px; border-top: 1px solid var(--line); color: var(--faint); font: 500 12px var(--head); } .hd .hd-foot:empty { display: none; }
 /* (the tabs and the team sheet) */
-.hd .hd-tabs { margin-top: 16px; } .hd .hd-tb { display: flex; gap: 18px; padding: 0 14px; border-bottom: 1px solid var(--line); }
-.hd .hd-tb button { padding: 10px 0 8px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font: 600 13.5px var(--head); cursor: pointer; }
-.hd .hd-tb button span { color: var(--faint); margin-left: 3px; } .hd .hd-tb button.on { color: var(--text); border-bottom-color: var(--gold); } .hd .hd-tb button:hover:not(.on) { color: var(--text); }
-.hd .hd-sheet { overflow-x: auto; }
-.hd .hd-shh, .hd .hd-shr { display: grid; grid-template-columns: 34px minmax(150px, 1.5fr) 44px 80px minmax(130px, 1fr) 80px minmax(200px, 1.6fr); align-items: center; gap: 0 10px; padding: 0 14px; min-height: 34px; }
-.hd .hd-shh { border-bottom: 1px solid var(--line); min-height: 32px; } .hd .hd-shr { border-bottom: 1px solid rgba(255,255,255,.035); font: 500 13px var(--head); } .hd .hd-shr:last-child { border-bottom: 0; }
-.hd .hd-th { padding: 0; border: 0; background: none; text-align: left; color: var(--faint); font: 600 11px var(--head); text-transform: uppercase; letter-spacing: .04em; cursor: pointer; white-space: nowrap; } .hd .hd-th.on, .hd .hd-th:hover { color: var(--text); }
-.hd .hd-shr .c-n { color: var(--faint); } .hd .hd-shr .c-s { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd .hd-shr em { font-style: normal; color: var(--faint); }
-.hd .hd-shr .c-i, .hd .hd-shr .c-m { font-weight: 700; } .hd .hd-shr .c-g { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; } .hd .hd-shr .c-k { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hd .hd-all { max-height: none; }
 .hd .hd-info { margin-top: 12px; color: var(--faint); font: 500 12px var(--head); } .hd .hd-info .sub { color: inherit; }
 .hd .hd-noteam { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding: 16px; } .hd .hd-noteam b { font: 700 13.5px var(--head); } .hd .hd-noteam .sub { flex: 1; min-width: 200px; }
 .hd .pg-rkbox { margin-top: 10px; }
@@ -12407,8 +12397,6 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
   .hd .hd-k:nth-child(2n + 3) { border-right: 0; } .hd .hd-k:nth-child(n + 4) { border-bottom: 0; } .hd .hd-k:last-child { border-right: 0; }
   .hd .hd-track { overflow-x: auto; grid-template-columns: repeat(10, 74px); } .hd .hd-now { flex-direction: column; gap: 10px; } .hd .hd-nb { width: auto; }
   .hd .hd-g3 { grid-template-columns: minmax(0, 1fr); } .hd .hd-g3 > :last-child { grid-column: auto; } .hd .hd-row .hd-pl { width: 110px; }
-  .hd .hd-shh { display: none; } .hd .hd-shr { grid-template-columns: 22px 18px minmax(0, 1fr) auto; grid-template-areas: "n s p m" "n . g k"; padding: 6px 14px; row-gap: 2px; column-gap: 8px; }
-  .hd .hd-shr .c-n { grid-area: n; } .hd .hd-shr .c-p { grid-area: p; } .hd .hd-shr .c-m { grid-area: m; text-align: right; } .hd .hd-shr .c-g { grid-area: g; } .hd .hd-shr .c-k { grid-area: k; text-align: right; font-size: 12px; } .hd .hd-shr .c-i, .hd .hd-shr .hd-ro { display: none; } .hd .hd-shr .c-s { grid-area: s; }
   .hd .hd-mm { right: auto; left: 0; width: min(280px, calc(100vw - 24px)); }
 }
 </style>
@@ -25396,7 +25384,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-03', h: [{ t: 'A new Home page', d: 'Home is one tidy page now: your progress on every boss, the last raid nights, everyone\'s Mythic+ score and the team\'s keys, with a team sheet you can sort. Pick your character at the top, and the page follows them.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
+  { d: '2026-11-03', h: [{ t: 'A new Home page', d: 'Home is one tidy page now: your progress on every boss, the last raid nights, everyone\'s Mythic+ score and the team\'s newest keys. Pick your character at the top, and the page follows them.' }, { t: 'A quick tour for new players', d: 'The first time you open Debrief Companion, it walks you through your season, the recap pop-up and every setting. Replay it any time from Settings › Setup.' }, { t: 'Your season in Debrief Companion', d: 'The Companion window now shows the character you\'re playing: item level, Raider.IO score, Mythic bosses killed, your best parse on each boss and your best keys. Log in on an alt and it switches to them.' }, { t: 'Your recap lives on your PC now', d: 'Debrief Companion\'s pop-up shows your Mythic+ keys the way the website does, you can drag it anywhere and resize it, and a new Settings window holds every setting with a live preview. The WoW addon now only keeps your combat log on, so there\'s no more /reload.' }], n: [
     "Debrief Companion: if WoW is in true Fullscreen, one press switches it to Windowed (Fullscreen), so your recap can show over the game. With WoW open, it switches the moment you close WoW.",
     "Debrief Companion: the pop-up still resizes, but it stops where your recap ends, so it never grows bigger than the card.",
     "Debrief Companion settings: four pages instead of five, with Raid view inside Your card. Pick Simple, Standard or Detailed, and the rest waits under Customize what shows. Each part has its own colour.",
@@ -54804,7 +54792,7 @@ const PAGE_TIPS = {
     { sel: '.hd-nights', t: 'Raid nights', p: 'The last six nights, newest first. Click one to go through it pull by pull.' },
     { sel: '.pc-diffs', t: 'Pick a difficulty', p: 'Every raid number on the page follows it.' },
     { sel: '#hdMe', t: 'Your character', p: 'Pick a character to see their team. They\'re marked YOU on the page.' },
-    { sel: '.hd-tabs', t: 'The team sheet', p: 'Everyone on the team, with their Mythic+ score, item level and parses. Click a column to sort it.' }],
+    { sel: '.hd-g3 .hd-pn', t: 'Mythic+', p: 'The team\'s Raider.IO scores and its newest keys. Show all opens the whole team.' }],
   team: [
     { sel: '#pgNow', t: 'What you\'re on now', p: 'The boss your team is working on, with your best pull and a dot for every pull. Open its last night from here.' },
     { sel: '#pgNights', t: 'Raid nights', p: 'Every raid night, newest first, with how far you got. Click one to go through it pull by pull.' },
@@ -56012,12 +56000,14 @@ let HD_DOC = false;
 // (a raider's spec as an icon (Flex, Nov 3: icons, not typed specs): the spec's own picture loaded at runtime, their class's glyph until it
 // loads or if it can't; the spec, class and role on hover. A spec Raider.IO doesn't give: the class icon)
 const hdRole = (r) => (/^heal/i.test(r || '') ? 'Healer' : /^tank/i.test(r || '') ? 'Tank' : r ? 'DPS' : '');
-const hdSpecTip = (c, m) => { const k = (m && m.cls) || hdClsKey((c || {}).cls), nm = [c && c.spec, (E.CLASSES[k] || [])[0]].filter(Boolean).join(' '), ro = hdRole(c && c.role); return nm ? '<b>' + esc(nm) + '</b>' + (ro ? ' · ' + ro : '') : ''; };
+const hdSpecTip = (c, m) => { const k = (m && m.cls) || hdClsKey((c || {}).cls), nm = [c && c.spec, (E.CLASSES[k] || [])[0]].filter(Boolean).join(' '), ro = hdRole(c && c.role); return nm ? '<b>' + esc(nm) + '</b>' + (ro ? ' · ' + ro : '') + (c && c.ilvl ? ' · item level ' + Math.round(c.ilvl) : '') : ''; };
+// (a panel's whole list, opened in place by its Show all / All ›: kept to about 12 rows, scrolling inside the panel)
+const hdList = (k, h) => ((S.hdOpen || {})[k] ? '<div class="hd-scroll">' + h + '</div>' : h);
+const hdOpenB = (k) => '<button class="hd-lk2" type="button" data-hdopen="' + k + '" aria-expanded="' + !!(S.hdOpen || {})[k] + '">' + ((S.hdOpen || {})[k] ? 'Fewer' : 'All ›') + '</button>';
 function hdSpecIc(c, m) { const k = (m && m.cls) || hdClsKey((c || {}).cls), sp = c && c.spec, sid = sp ? (Object.entries(E.SPECS).find(([, [n, kk]]) => kk === k && n === sp) || [])[0] : null;
   const ic = (sid && NDZ_SPECIC[+sid]) || (k ? 'classicon_' + k.toLowerCase() : null), nm = [sp, (E.CLASSES[k] || [])[0]].filter(Boolean).join(' '), ro = hdRole(c && c.role);
   return '<span class="hd-si" style="color:' + ((E.CLASSES[k] || [])[1] || 'var(--muted)') + '" role="img" aria-label="' + esc(nm + (ro ? ', ' + ro : '')) + '"' + (nm ? ' tabindex="0" data-tt="' + esc(hdSpecTip(c, m)) + '"' : '') + '>' +
     '<svg viewBox="0 0 24 24" aria-hidden="true"><g transform="translate(4.5 4.5) scale(.625)" class="gl em">' + G[CLASS_GLYPH[k] || 'orb'] + '</g></svg>' + (ic ? '<img class="oi" data-icon="' + esc(ic) + '" alt="">' : '') + '</span>'; }
-const hdRoleIc = (c) => { const ro = hdRole(c && c.role); return ro ? '<svg class="hd-ro" viewBox="0 0 24 24" aria-hidden="true"><g class="gl">' + G[ro === 'Tank' ? 'shield' : ro === 'Healer' ? 'heal' : 'sword'] + '</g></svg>' : ''; };
 // (the page)
 function hdDash(X) {
   const { g, list, order, diffs, cur, killedOn, bestOf, nightsL, nightOpen, diffName, sw, rkOk, team, pgMsg, meLd, liveStrip, sugg, meCard, back, openB, lastK, you, info } = X;
@@ -56073,44 +56063,28 @@ function hdDash(X) {
   const nRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = hdDay(n.at), sub = plural(n.main.l.length, 'pull') + (kill ? ' · killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ' · best ' + n.nb.label + (/%$/.test(n.nb.label) ? ' left' : '') : '') + (n.by.length > 1 ? ' · and ' + plural(n.by.length - 1, 'more boss').replace('bosss', 'bosses') : '');
     return '<button class="hd-row hd-nr" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '><span class="hd-dw">' + esc(d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()) + '</span><span class="hd-dt num">' + esc(hdDate(n.at)) + '</span>' +
       '<span class="hd-nn"><b>' + esc(n.main.boss) + '</b><em>' + esc(sub) + '</em></span>' + (kill ? '<span class="hd-tag k">Kill</span>' : '<span class="hd-p num">' + (n.nb && n.nb.left != null ? Math.floor(100 - n.nb.left) + '%' : '—') + '</span>') + '</button>'; };
-  const nights = '<section class="hd-pn hd-nights"><div class="hd-ph"><h3>Raid nights</h3><span class="m">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span><button class="hd-lk2" type="button" data-hdtab="nights">All ›</button></div>' + nightsL.slice(0, 6).map(nRow).join('') + '</section>';
+  const nights = '<section class="hd-pn hd-nights"><div class="hd-ph"><h3>Raid nights</h3><span class="m">' + plural(nightsL.length, 'night') + ' on ' + esc(diffName) + '</span>' + (nightsL.length > 6 ? hdOpenB('nights') : '') + '</div>' + hdList('nights', nightsL.slice(0, (S.hdOpen || {}).nights ? nightsL.length : 6).map(nRow).join('')) + '</section>';
   // (Mythic+: the ladder, recent keys)
   const ranked = R.map((m) => ({ m, c: rioOf(m.name) })).filter((x) => x.c && x.c.score != null).sort((x, y) => y.c.score - x.c.score);
-  const specOf = (c, m) => (c && c.spec ? c.spec + ' ' + (c.cls || '') : (E.CLASSES[m.cls] || [])[0] || '');
-  const ladder = '<section class="hd-pn"><div class="hd-ph"><h3>Mythic+ ladder</h3><span class="m">Raider.IO, this season</span></div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : ranked.length ? ranked.slice(0, 8).map((x, i) => '<div class="hd-row hd-lr' + (YOU(x.m.name) ? ' hd-mine" style="--cc:' + colOf(x.m.name, x.m.cls) : '') + '"><span class="hd-rk num">' + (i + 1) + '</span>' + hdSpecIc(x.c, x.m) + '<span class="hd-pl" style="color:' + colOf(x.m.name, x.m.cls) + '" data-tt="' + esc(hdSpecTip(x.c, x.m)) + '">' + esc(x.m.name) + YOU(x.m.name) + '</span><span class="hd-sc num" style="color:' + esc(x.c.col || 'var(--text)') + '">' + hdNum(x.c.score) + '</span></div>').join('') +
-      (ranked.length > 8 ? '<button class="hd-more" type="button" data-hdtab="sheet" data-hdsort="score">Show all ' + R.length + '</button>' : '') : '<p class="hd-none">Raider.IO doesn\'t have scores for this team yet.</p>') + '</section>';
+  const ladder = '<section class="hd-pn"><div class="hd-ph"><h3>Mythic+ ladder</h3><span class="m">Raider.IO, this season</span></div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : ranked.length ? hdList('ladder', ranked.slice(0, (S.hdOpen || {}).ladder ? ranked.length : 8).map((x, i) => '<div class="hd-row hd-lr' + (YOU(x.m.name) ? ' hd-mine" style="--cc:' + colOf(x.m.name, x.m.cls) : '') + '"><span class="hd-rk num">' + (i + 1) + '</span>' + hdSpecIc(x.c, x.m) + '<span class="hd-pl" style="color:' + colOf(x.m.name, x.m.cls) + '" data-tt="' + esc(hdSpecTip(x.c, x.m)) + '">' + esc(x.m.name) + YOU(x.m.name) + '</span><span class="hd-sc num" style="color:' + esc(x.c.col || 'var(--text)') + '">' + hdNum(x.c.score) + '</span></div>').join('')) +
+      (ranked.length > 8 ? '<button class="hd-more" type="button" data-hdopen="ladder" aria-expanded="' + !!(S.hdOpen || {}).ladder + '">' + ((S.hdOpen || {}).ladder ? 'Show the top 8' : 'Show all ' + ranked.length) + '</button>' : '') : '<p class="hd-none">Raider.IO doesn\'t have scores for this team yet.</p>') + '</section>';
   const keysAll = (() => { const m = new Map(); for (const x of runsOf('recent')) { const k = hdLc(x.d) + '|' + Math.round(x.at / 60000); const o = m.get(k); if (o) o.with.push(x); else m.set(k, { ...x, with: [x] }); } return [...m.values()].sort((a, b) => b.at - a.at); })();
   const kRow = (x) => '<div class="hd-row hd-kr"><span class="hd-dt num">' + esc(hdDate(x.at)) + '</span><span class="hd-kl num" style="color:' + (x.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + x.l + '</span><span class="hd-kn">' + esc(x.d) + '</span><span class="hd-kw" style="color:' + colOf(x.who, x.cls) + '">' + esc(x.who) + (x.with.length > 1 ? '<em> +' + (x.with.length - 1) + '</em>' : '') + '</span>' +
     (x.up > 0 ? '<span class="hd-g">timed +' + x.up + '</span>' : '<span class="hd-r">over time</span>') + '</div>'; /* (a key opens on the Mythic+ tab once that's live; until then not a link) */
-  const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">the team, newest first</span>' + (keysAll.length > 8 ? '<button class="hd-lk2" type="button" data-hdtab="keys">All ›</button>' : '') + '</div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : keysAll.length ? keysAll.slice(0, 8).map(kRow).join('') : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
+  const keys = '<section class="hd-pn"><div class="hd-ph"><h3>Recent keys</h3><span class="m">the team, newest first</span>' + (keysAll.length > 8 ? hdOpenB('keys') : '') + '</div>' + (wait ? [0, 1, 2, 3, 4].map(() => '<div class="hd-row">' + shim('100%') + '</div>').join('') : keysAll.length ? hdList('keys', keysAll.slice(0, (S.hdOpen || {}).keys ? keysAll.length : 8).map(kRow).join('')) : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</section>';
   // (Since last raid, smaller: got better and slipped by 2 points or more, 4 a side)
   const SL = hdSince(list), sl = (x) => '<div class="hd-row hd-sr"><span class="hd-pl" style="color:' + ((E.CLASSES[x.cls] || [])[1] || 'var(--text)') + '">' + esc(x.n) + '</span><span class="hd-gr">' + gradeChip(letterOf(x.was)) + '<span class="sub">→</span>' + gradeChip(letterOf(x.v)) + '</span>' + plTr(x.d) + '</div>';
   const lv = SL ? SL.rows.length - SL.up.length - SL.dn.length : 0, moreU = SL ? Math.max(0, SL.up.length - 4) : 0, moreD = SL ? Math.max(0, SL.dn.length - 4) : 0;
   const since = '<section class="hd-pn"><div class="hd-ph"><h3>Since last raid</h3><span class="m">' + (SL ? esc(SL.sub) + ' · report card grade' : 'report card grade') + '</span></div>' + (SL && SL.rows.length ? '<div class="hd-sc2"><div><div class="hd-lab hd-g">▲ Got better</div>' + (SL.up.length ? SL.up.slice(0, 4).map(sl).join('') : '<p class="hd-none">Nobody rose 2 points or more.</p>') + '</div>' +
       '<div><div class="hd-lab hd-r">▼ Slipped</div>' + (SL.dn.length ? SL.dn.slice(0, 4).map(sl).join('') : '<p class="hd-none">Nobody dropped 2 points or more.</p>') + '</div></div>' +
       '<p class="hd-foot">' + [moreU ? '+' + moreU + ' more got better' : '', moreD ? '+' + moreD + ' more slipped' : '', lv ? lv + ' about the same' : ''].filter(Boolean).join(' · ') + '</p>' : '<p class="hd-none">Two raid nights on the same boss with grades are needed to compare.</p>') + '</section>';
-  // (the tabs: the team sheet (sortable), every raid night, every key)
-  const tab = S.hdTab || 'sheet', so = S.hdSort || { k: 'score', d: -1 };
-  const rowsS = R.map((m) => { const c = rioOf(m.name), gB = SL && SL.b.get(m.name), gA = SL && SL.a.get(m.name), lk = c && c.recent && c.recent.slice().sort((a, b) => b.at - a.at)[0];
-    return { m, c, ilvl: c ? c.ilvl : null, score: c ? c.score : null, grade: gB ? gB.v : null, d: gB && gA ? gB.v - gA.v : null, lk }; });
-  const val = (r) => (so.k === 'name' ? hdLc(r.m.name) : so.k === 'spec' ? hdLc(specOf(r.c, r.m)) : so.k === 'ilvl' ? r.ilvl : so.k === 'grade' ? r.grade : so.k === 'key' ? (r.lk ? r.lk.l : null) : r.score);
-  rowsS.sort((a, b) => { const x = val(a), y = val(b); if (x == null && y == null) return hdLc(a.m.name) < hdLc(b.m.name) ? -1 : 1; if (x == null) return 1; if (y == null) return -1; return (x < y ? -1 : x > y ? 1 : 0) * so.d; });
-  const th = (k, t, cls) => '<button class="hd-th' + (cls ? ' ' + cls : '') + (so.k === k ? ' on' : '') + '" type="button" data-hdsort="' + k + '">' + t + (so.k === k ? (so.d > 0 ? ' ▲' : ' ▼') : '') + '</button>';
-  const sheet = '<div class="hd-sheet"><div class="hd-shh">' + th('rank', '#', 'c-n') + th('name', 'Raider', 'c-p') + th('spec', 'Spec', 'c-s') + th('ilvl', 'Item level', 'c-i') + th('grade', 'Raid grade', 'c-g') + th('score', 'Mythic+', 'c-m') + th('key', 'Latest key', 'c-k') + '</div>' +
-    rowsS.map((r, i) => '<div class="hd-shr' + (YOU(r.m.name) ? ' hd-mine" style="--cc:' + colOf(r.m.name, r.m.cls) : '') + '"><span class="c-n num">' + (i + 1) + '</span><span class="c-p hd-pl" style="color:' + colOf(r.m.name, r.m.cls) + '" data-tt="' + esc(hdSpecTip(r.c, r.m)) + '">' + esc(r.m.name) + YOU(r.m.name) + '</span>' +
-      '<span class="c-s">' + hdSpecIc(r.c, r.m) + hdRoleIc(r.c) + '</span><span class="c-i num">' + (wait ? shim('2em') : r.ilvl != null ? Math.round(r.ilvl) : '—') + '</span>' +
-      '<span class="c-g">' + (r.grade != null ? gradeChip(letterOf(r.grade)) + (r.d != null ? (Math.abs(r.d) < 2 ? '<em>about the same</em>' : plTr(r.d)) : '') : '<em>—</em>') + '</span>' +
-      '<span class="c-m num" style="color:' + esc((r.c && r.c.col) || 'var(--muted)') + '">' + (wait ? shim('3em') : hdNum(r.score)) + '</span>' +
-      '<span class="c-k">' + (wait ? shim('8em') : r.lk ? '<b class="num" style="color:' + (r.lk.up > 0 ? '#ff8000' : 'var(--faint)') + '">+' + r.lk.l + '</b> ' + esc(r.lk.d) + '<em> · ' + esc(hdDate(r.lk.at)) + '</em>' : '—') + '</span></div>').join('') + '</div>';
-  const tabs = '<section class="hd-pn hd-tabs"><div class="hd-tb" role="tablist">' + [['sheet', 'Team sheet', R.length], ['nights', 'Raid nights', nightsL.length], ['keys', 'Keys', keysAll.length]].map(([k, t, n]) => '<button type="button" role="tab" data-hdtab="' + k + '" aria-selected="' + (tab === k) + '"' + (tab === k ? ' class="on"' : '') + '>' + t + ' <span class="num">' + n + '</span></button>').join('') + '</div>' +
-    (tab === 'sheet' ? sheet : tab === 'nights' ? '<div class="hd-all">' + nightsL.map(nRow).join('') + '</div>' : '<div class="hd-all">' + (keysAll.length ? keysAll.map(kRow).join('') : '<p class="hd-none">No keys from the team on Raider.IO yet.</p>') + '</div>') + '</section>';
   return '<div class="home prog hd" id="hdPage">' + (back ? '<div class="pg-links">' + back + '</div>' : '') + head + rkBox + team + pgMsg + meLd + liveStrip + sugg + meCard + strip +
-    '<div class="hd-g2">' + prog + nights + '</div><div class="hd-g3">' + ladder + keys + since + '</div>' + tabs + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
+    '<div class="hd-g2">' + prog + nights + '</div><div class="hd-g3">' + ladder + keys + since + '</div>' + (info ? '<div class="hd-info">' + info + '</div>' : '') + '</div>'; }
 // (a character with no team: the header with the character menu, then a plain line)
 function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [];
   return '<div class="home prog hd" id="hdPage"><header class="hd-head"><div class="hd-crest">' + banner(c) + '</div><div class="hd-tt"><div class="hd-nm"><h1 style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</h1><span>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + '</span></div></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
     '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' + (rest || '') + '</div>'; }
-// (the page's own clicks: the character menu, the tabs and the sort, the boss track and the night chart)
+// (the page's own clicks: the character menu, Show all and All ›, the boss track and the night chart)
 function hdBind(ROOT) {
   const b = ROOT.querySelector('#hdMe'), m = ROOT.querySelector('#hdMeMenu');
   if (b && m) { const close = () => { m.hidden = true; b.setAttribute('aria-expanded', 'false'); };
@@ -56120,8 +56094,7 @@ function hdBind(ROOT) {
     hdParse(groups().find((x) => x.gid === b.dataset.gid));
     m.onkeydown = (e) => { if (e.key === 'Escape') { close(); b.focus(); } }; }
   ROOT.querySelectorAll('[data-hdaddteam]').forEach((x) => (x.onclick = () => gsStart()));
-  ROOT.querySelectorAll('[data-hdtab]').forEach((x) => (x.onclick = () => { S.hdTab = x.dataset.hdtab; if (x.dataset.hdsort) S.hdSort = { k: x.dataset.hdsort, d: -1 }; renderProgress(); const t = document.querySelector('#hdPage .hd-tabs'); if (t && x.closest('.hd-g2, .hd-g3')) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
-  ROOT.querySelectorAll('.hd-sheet [data-hdsort]').forEach((x) => (x.onclick = () => { const k = x.dataset.hdsort, o = S.hdSort || { k: 'score', d: -1 }; S.hdSort = { k, d: o.k === k ? -o.d : k === 'name' || k === 'spec' ? 1 : -1 }; renderProgress(); }));
+  ROOT.querySelectorAll('[data-hdopen]').forEach((x) => (x.onclick = () => { const k = x.dataset.hdopen; S.hdOpen = { ...(S.hdOpen || {}), [k]: !(S.hdOpen || {})[k] }; renderProgress(); const nb = document.querySelector('#hdPage [data-hdopen="' + k + '"]'); if (nb) nb.focus({ preventScroll: true }); }));
   ROOT.querySelectorAll('.hd-bt[data-code], .hd-cp[data-code], .hd-nr[data-code], #pnwGo').forEach((x) => (x.onclick = async () => { try { await openWcl({ code: x.dataset.code, fight: +x.dataset.fight || null }, await wclCreds()); } catch (e) { toast('<span>' + esc(e.message) + '</span>', 6000); } }));
 }
 function renderProgress(msg, msgErr) {

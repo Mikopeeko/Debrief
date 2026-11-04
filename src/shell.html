@@ -12374,25 +12374,15 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 /* (spec icons instead of typed specs: 18 px, 4 px corners, the class glyph until the picture loads; a small grey role icon on the team sheet) */
 .hd .hd-si { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex: none; border-radius: 4px; overflow: hidden; background: var(--raised); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .hd .hd-si svg { width: 18px; height: 18px; } .hd .hd-si img.oi { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 4px; opacity: 0; } .hd .hd-si.has img.oi { opacity: 1; } .hd .hd-si.has svg { visibility: hidden; }
-.hd .hd-ro { width: 13px; height: 13px; flex: none; color: var(--faint); } .hd .hd-ro .gl { stroke: currentColor; }
-.hd .hd-lr { gap: 8px; } .hd .hd-lr .hd-pl { flex: 1 1 0; width: auto; } .hd .hd-shr .c-s { display: inline-flex; align-items: center; gap: 6px; }
+.hd .hd-lr { gap: 8px; } .hd .hd-lr .hd-pl { flex: 1 1 0; width: auto; }
+.hd .hd-scroll { max-height: 408px; overflow-y: auto; overscroll-behavior: contain; } /* (a whole list opened in place: about 12 rows, then it scrolls) */
 .hd .hd-kl { width: 30px; flex: none; font: 700 13.5px var(--head); } .hd .hd-kn { flex: 1; min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hd .hd-kw { max-width: 110px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd .hd-kw em { font-style: normal; color: var(--faint); font-weight: 500; }
 .hd .hd-kr .hd-g, .hd .hd-kr .hd-r { width: 62px; flex: none; text-align: right; font-size: 12px; }
 .hd .hd-sc2 { display: grid; grid-template-columns: 1fr 1fr; } .hd .hd-sc2 > div:first-child { border-right: 1px solid var(--line); } .hd .hd-sc2 .hd-lab { padding: 10px 14px 4px; }
-.hd .hd-sr .hd-pl { width: auto; flex: 1; } .hd .hd-gr { display: inline-flex; align-items: center; gap: 4px; } .hd .hd-sr .gchip, .hd .hd-shr .gchip { transform: scale(.9); }
+.hd .hd-sr .hd-pl { width: auto; flex: 1; } .hd .hd-gr { display: inline-flex; align-items: center; gap: 4px; } .hd .hd-sr .gchip { transform: scale(.9); }
 .hd .hd-foot { margin: 0; padding: 8px 14px 10px; border-top: 1px solid var(--line); color: var(--faint); font: 500 12px var(--head); } .hd .hd-foot:empty { display: none; }
 /* (the tabs and the team sheet) */
-.hd .hd-tabs { margin-top: 16px; } .hd .hd-tb { display: flex; gap: 18px; padding: 0 14px; border-bottom: 1px solid var(--line); }
-.hd .hd-tb button { padding: 10px 0 8px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--muted); font: 600 13.5px var(--head); cursor: pointer; }
-.hd .hd-tb button span { color: var(--faint); margin-left: 3px; } .hd .hd-tb button.on { color: var(--text); border-bottom-color: var(--gold); } .hd .hd-tb button:hover:not(.on) { color: var(--text); }
-.hd .hd-sheet { overflow-x: auto; }
-.hd .hd-shh, .hd .hd-shr { display: grid; grid-template-columns: 34px minmax(150px, 1.5fr) 44px 80px minmax(130px, 1fr) 80px minmax(200px, 1.6fr); align-items: center; gap: 0 10px; padding: 0 14px; min-height: 34px; }
-.hd .hd-shh { border-bottom: 1px solid var(--line); min-height: 32px; } .hd .hd-shr { border-bottom: 1px solid rgba(255,255,255,.035); font: 500 13px var(--head); } .hd .hd-shr:last-child { border-bottom: 0; }
-.hd .hd-th { padding: 0; border: 0; background: none; text-align: left; color: var(--faint); font: 600 11px var(--head); text-transform: uppercase; letter-spacing: .04em; cursor: pointer; white-space: nowrap; } .hd .hd-th.on, .hd .hd-th:hover { color: var(--text); }
-.hd .hd-shr .c-n { color: var(--faint); } .hd .hd-shr .c-s { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .hd .hd-shr em { font-style: normal; color: var(--faint); }
-.hd .hd-shr .c-i, .hd .hd-shr .c-m { font-weight: 700; } .hd .hd-shr .c-g { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; } .hd .hd-shr .c-k { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hd .hd-all { max-height: none; }
 .hd .hd-info { margin-top: 12px; color: var(--faint); font: 500 12px var(--head); } .hd .hd-info .sub { color: inherit; }
 .hd .hd-noteam { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding: 16px; } .hd .hd-noteam b { font: 700 13.5px var(--head); } .hd .hd-noteam .sub { flex: 1; min-width: 200px; }
 .hd .pg-rkbox { margin-top: 10px; }
@@ -12407,8 +12397,6 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
   .hd .hd-k:nth-child(2n + 3) { border-right: 0; } .hd .hd-k:nth-child(n + 4) { border-bottom: 0; } .hd .hd-k:last-child { border-right: 0; }
   .hd .hd-track { overflow-x: auto; grid-template-columns: repeat(10, 74px); } .hd .hd-now { flex-direction: column; gap: 10px; } .hd .hd-nb { width: auto; }
   .hd .hd-g3 { grid-template-columns: minmax(0, 1fr); } .hd .hd-g3 > :last-child { grid-column: auto; } .hd .hd-row .hd-pl { width: 110px; }
-  .hd .hd-shh { display: none; } .hd .hd-shr { grid-template-columns: 22px 18px minmax(0, 1fr) auto; grid-template-areas: "n s p m" "n . g k"; padding: 6px 14px; row-gap: 2px; column-gap: 8px; }
-  .hd .hd-shr .c-n { grid-area: n; } .hd .hd-shr .c-p { grid-area: p; } .hd .hd-shr .c-m { grid-area: m; text-align: right; } .hd .hd-shr .c-g { grid-area: g; } .hd .hd-shr .c-k { grid-area: k; text-align: right; font-size: 12px; } .hd .hd-shr .c-i, .hd .hd-shr .hd-ro { display: none; } .hd .hd-shr .c-s { grid-area: s; }
   .hd .hd-mm { right: auto; left: 0; width: min(280px, calc(100vw - 24px)); }
 }
 </style>
