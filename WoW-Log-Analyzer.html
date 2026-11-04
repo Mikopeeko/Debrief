@@ -63702,6 +63702,12 @@ function mpWipe(p, n) { const dd = p.deaths.filter((x) => !x.gap).sort((a, b) =>
 // you'd save at its damage a second) and more to kill (the rest: more enemy health on your route; negative when you had less))
 const mpGd = (p) => Object.values(p.dmg || {}).reduce((a, v) => a + v, 0);
 const mpGrp = (ps) => { let D = 0, T = 0; for (const p of ps) { D += mpGd(p) * p.dur; T += p.dur; } return { D, T, r: T ? D / T : 0 }; };
+// (a key that was left (the studio, Nov 3: "a rate on a half-done boss reads as a judgement on something they never got to finish"): only the stretches
+// the group finished are set against the fast run, its pulls up to its last boss kill and the fast run's up to the same boss. null for a key
+// that was finished; no boss killed, nothing to set against it)
+const mpDone = (R, F) => { if (!(R.run.left || !R.run.timeMs)) return null; let i = -1; R.pulls.forEach((q, j) => { if (q.boss && q.kill) i = j; });
+  if (i < 0) return { y: [], f: [], b: '' }; const b = R.pulls[i].boss, fi = F ? F.pulls.findIndex((q) => q.boss === b && q.kill) : -1;
+  return { y: R.pulls.slice(0, i + 1), f: F && fi >= 0 ? F.pulls.slice(0, fi + 1) : [], b }; };
 const mpSplit = (y, f) => (y.T && f.T && f.r ? { low: y.T - y.D / f.r, more: y.D / f.r - f.T } : null);
 const mpGF = (v) => (v >= 1e6 ? (v / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'm' : Math.round(v / 1e3) + 'k');
 // (the polish pass's size rule for seconds behind: 60 s or more red, 20 to 59 amber, under 20 grey, ahead green)
@@ -63963,9 +63969,9 @@ function mpHtml(it, R, fx) {
   const thN = R.pulls.reduce((a, p) => a + p.through.length, 0), fT = FC ? FC.ck.time : null;
   /* (four tiles (the "easier on the eyes" round): deaths and standing are in the top box and the stretch rows, so Lust takes their place;
      group DPS joined them (Nov 2)) */
-  const LU = R.lust || [], yG = mpGrp(R.pulls), fGr = F ? mpGrp(F.pulls) : null, gdp = fGr && fGr.r ? Math.round(100 * (yG.r / fGr.r - 1)) : null;
+  const LD1 = mpDone(R, F), LU = R.lust || [], yG = mpGrp(LD1 && LD1.y.length ? LD1.y : R.pulls), fGr = F && (!LD1 || LD1.f.length) ? mpGrp(LD1 ? LD1.f : F.pulls) : null, gdp = fGr && fGr.r ? Math.round(100 * (yG.r / fGr.r - 1)) : null;
   // (layout v3: the numbers as one faint line under the verdict, bold numbers, instead of the tiles; the time and the gap are in the verdict)
-  const stats = '<p class="mpt-stl">' + [yG.r ? '<b>' + mpGF(yG.r) + '</b> group DPS' + (gdp == null ? (waiting ? ', ' + mpShim('9em') : '') : '<span class="mpt-fv' + mpFi() + '">, ' + (gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run') + '</span>') : '',
+  const stats = '<p class="mpt-stl">' + [yG.r ? '<b>' + mpGF(yG.r) + '</b> group DPS' + (gdp == null ? (waiting ? ', ' + mpShim('9em') : '') : '<span class="mpt-fv' + mpFi() + '">, ' + (gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run') + (LD1 ? ', up to where you left' : '') + '</span>') : '',
     '<b' + (thN ? ' class="mpt-bad"' : '') + '>' + thN + '</b> ' + (thN === 1 ? 'cast' : 'casts') + ' went off with a kick ready',
     LU.length ? 'Lust <b>' + plural(LU.length, 'time') + '</b> (' + esc([...new Set(LU.map((l) => mpPullName(R, l.pull)))].join(', ')) + ')' : 'No Lust'].filter(Boolean).join(' · ') + '</p>';
   /* (the tiles moved up under the banner, so the result is read first (the chapters round; it changes the round-3 order Flex approved, and he
@@ -64917,20 +64923,20 @@ function mpGroup(R, fx, waiting) {
       (cd ? '<span class="gbx-s mpt-gxn' + (cd.n ? '' : ' mpt-g0') + '" tabindex="0"' + mpT1(cd.tip) + '>' + cd.n + (cd.n ? ' <small>(' + cd.on + ')</small>' : '') + '</span>' : '<span class="gbx-s mpt-gxn mpt-g0">—</span>') +
       '<span class="mpt-gx2">' + facts + '</span></div>'; }).join('');
   // (your group, overall (Flex: "and overall"): its DPS while fighting against the typical fast run, and the sum of each column)
-  const F = fx && fx.R, yG = mpGrp(R.pulls), fG = F ? mpGrp(F.pulls) : null, half = (RR, b) => mpGrp(RR.pulls.filter((q) => !!q.boss === b));
+  const F = fx && fx.R, LD = mpDone(R, F), yP = LD && LD.y.length ? LD.y : R.pulls, fP = LD ? LD.f : F ? F.pulls : [], yG = mpGrp(yP), fG = F && fP.length ? mpGrp(fP) : null, half = (PP, b) => mpGrp(PP.filter((q) => !!q.boss === b));
   const S = (f) => ppl.reduce((a, p) => a + f(p), 0), cdS = ppl.reduce((a, p) => { const c = cdOf.get(p.name); return a + (c ? c.n : 0); }, 0);
   let tot = '';
   if (yG.r) { const dp = fG && fG.r ? Math.round(100 * (yG.r / fG.r - 1)) : null, fC = F && F.run.clock ? mpClock(F) : null;
-    const vsg = dp == null ? (waiting ? mpShim('5.5em') : '<span class="mpt-vs mpt-m">—</span>') : '<span class="mpt-vs ' + mpVs(dp) + '" tabindex="0"' + mpT1('Against the typical fast run' + (fC ? ' (' + mpMM(fC.ck.time) + ')' : '') + ': its group did <b>' + mpGF(fG.r) + '</b> DPS while fighting.') + '>' + (dp < 0 ? -dp + '% behind' : dp + '% ahead') + '</span>';
-    tot = '<div class="gbx-r mpt-gtot"><span class="gbx-n"><span class="mpt-si mpt-gi" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.6"/><circle cx="3.6" cy="7" r="2"/><circle cx="12.4" cy="7" r="2"/><path d="M3.5 14c0-2.7 2-4.4 4.5-4.4s4.5 1.7 4.5 4.4Z"/></svg></span><span class="mpt-gpn"><b class="mpt-nm">Your group</b><small>while fighting</small></span></span>' +
+    const vsg = dp == null ? (waiting ? mpShim('5.5em') : '<span class="mpt-vs mpt-m">—</span>') : '<span class="mpt-vs ' + mpVs(dp) + '" tabindex="0"' + mpT1('Against the typical fast run' + (fC ? ' (' + mpMM(fC.ck.time) + ')' : '') + (LD && LD.b ? ', up to ' + esc(LD.b) + ', the last boss your group killed' : '') + ': its group did <b>' + mpGF(fG.r) + '</b> DPS while fighting.') + '>' + (dp < 0 ? -dp + '% behind' : dp + '% ahead') + '</span>';
+    tot = '<div class="gbx-r mpt-gtot"><span class="gbx-n"><span class="mpt-si mpt-gi" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="5" r="2.6"/><circle cx="3.6" cy="7" r="2"/><circle cx="12.4" cy="7" r="2"/><path d="M3.5 14c0-2.7 2-4.4 4.5-4.4s4.5 1.7 4.5 4.4Z"/></svg></span><span class="mpt-gpn"><b class="mpt-nm">Your group</b><small>' + (LD && LD.y.length ? 'up to where you left' : 'while fighting') + '</small></span></span>' +
       '<span></span><b class="gbx-v">' + mpGF(yG.r) + '</b><span class="gbx-s mpt-gvs">' + vsg + '</span>' + num(S((p) => p.kicks)) + num(S((p) => p.stops)) + num(S(ccN)) + num(S((p) => p.dispels || 0)) + num(S((p) => p.deaths), 'mpt-gd') + num(S((p) => p.defs)) + num(S((p) => p.avoid)) + num(cdS) +
       '<span class="mpt-gx2">' + [plural(S((p) => p.kicks), 'kick'), plural(S((p) => p.stops), 'stop'), S(ccN) + ' CC', plural(S((p) => p.dispels || 0), 'dispel'), plural(S((p) => p.deaths), 'death'), plural(S((p) => p.defs), 'defensive'), S((p) => p.avoid) + ' avoidable', plural(cdS, 'big cooldown')].join(' · ') + '</span></div>'; }
   const hd = '<div class="gbx-r gbx-hd"><span>Player</span><span></span><span>DPS</span><span' + (runs.length ? ' tabindex="0"' + mpT1('<b>vs spec (DPS)</b><br>Damage per second, against the middle player of the same spec in the 20 fastest runs.') : '') + '>vs spec (DPS)</span>' +
     '<span class="mpt-gxn" tabindex="0"' + mpT1('<b>Kicks</b><br>Healers have no kick in Midnight, except Restoration Shamans.') + '>Kicks</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Stops</b><br>Crowd control that cut a cast short.') + '>Stops</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>CC</b><br>Every stun, disorient, fear, knockback or grip pressed on enemies, even when it didn\'t stop a cast: it takes a pack out of the fight for a moment.') + '>CC</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Dispels</b><br>Debuffs they took off players. In brackets: debuffs on the must-dispel list that stayed on longer than in the fast run while their dispel was ready.') + '>Dispels</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Deaths</b>') + '>Deaths</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Defensives</b><br>How many they pressed.') + '>Defensives</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Avoidable hits</b><br>Hits from mechanics the fastest groups dodge.') + '>Avoidable</span><span class="mpt-gxn" tabindex="0"' + mpT1('<b>Big cooldowns</b><br>How many they pressed, and in brackets how many went on the 3 biggest pulls.') + '>Big cooldowns</span></div>';
   // (the footnotes: the group's trash and bosses, the healer's damage, what the columns mean)
-  const tb = (b) => { const y = half(R, b), f = F ? half(F, b) : null; return y.r ? (b ? 'bosses ' : 'trash ') + mpGF(y.r) + (b ? '' : ' DPS') + (f && f.r ? ' (fast run ' + mpGF(f.r) + ')' : '') : ''; };
+  const tb = (b) => { const y = half(yP, b), f = fP.length ? half(fP, b) : null; return y.r ? (b ? 'bosses ' : 'trash ') + mpGF(y.r) + (b ? '' : ' DPS') + (f && f.r ? ' (fast run ' + mpGF(f.r) + ')' : '') : ''; };
   const hw = ''; /* (the healer's line lives in Your part now ("Did your damage time it?")) */ /* (one line (the cut): what each column means is in its header's hover) */
-  const foot = yG.r || hw ? '<p>' + (yG.r ? 'Your group: ' + [tb(false), tb(true)].filter(Boolean).join(', ') + '.' : '') + (hw ? ' ' + hw : '') + '</p>' : '';
+  const foot = yG.r || hw ? '<p>' + (yG.r ? 'Your group' + (LD && LD.y.length ? ', up to where you left' : '') + ': ' + [tb(false), tb(true)].filter(Boolean).join(', ') + '.' : '') + (hw ? ' ' + hw : '') + '</p>' : '';
   // (the headline: what went off, whether everyone pressed their big cooldowns, who was furthest behind their spec, the healer's damage)
   const never = (R.cdWho || []).filter((nm) => !((R.cds || {})[nm] || []).length), V = ppl.map((p) => ({ p, v: vs(p) })).filter((x) => x.v), low = V.slice().sort((a, b) => a.v.pct - b.v.pct)[0];
   const line = [t0 ? '<b class="mpt-ab">' + esc(t0.spell) + '</b> went off <b>' + (t0.n === 1 ? 'once' : t0.n + ' times') + '</b> with a kick ready.' : 'Nothing on the must-kick list went off with a kick ready.',
