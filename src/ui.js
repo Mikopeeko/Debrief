@@ -2028,6 +2028,7 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }], n: [
+    'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
     'Plan: Debrief spots your alts. Drag one in and it swaps out its main, so each player takes one spot.',
     'Plan: pictures for Discord show everyone\'s class icon, tidier lists, and labels that never cover anyone.',
@@ -13011,7 +13012,7 @@ function miniMap(mp, pmap) {
     s += ic(X(p), Y(p), (me ? '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="12.5" fill="rgba(230,180,80,.14)" stroke="#e6b450" stroke-width="2.5"/>' : '') + playerDot(X(p), Y(p), pl, on ? 7 : 6, ' class="pl' + (on && !mark ? ' k' : '') + '" style="opacity:' + (on ? 1 : 0.6) + '"', p.name) +
       (mark === 'good' ? okMark(X(p), Y(p)) : mark === 'bad' ? badMark(X(p), Y(p)) : mark === 'warn' ? warnMark(X(p), Y(p)) : ''));
     const nm0 = pl && pl.glyph ? p.name : String(p.name).split('-')[0]; /* (every player gets a name now, in their class colour (Oct 22); the others only where there's room) */
-    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 5.1, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) ? 3 : on ? 4 : 5, must: on,
+    nameL.push({ x: X(p), y: Y(p), ly: Y(p) - 17, w: (nm0.length + (tg ? String(tg).length + 1 : 0)) * 5.1, pri: me ? 0 : mark === 'bad' || bad.has(p.guid) ? 1 : mark === 'warn' ? 2 : hl.has(p.guid) || tg ? 3 : on ? 4 : 5, must: on || !!tg,
       mk: (ly) => '<text x="' + X(p) + '" y="' + (ly + 4) + '" class="ml mlp' + (on ? '' : ' mlo') + '" style="fill:' + col + '">' + esc(nm0) + (tg ? '<tspan fill="#f3d48a" font-weight="800"> ' + esc(tg) + '</tspan>' : '') + '</text>' });
   }
   if (mp.cardRing && mp.cardRing.guids && mp.cardRing.guids.size && mp.cardRing.color) { const c0 = mp.cardRing.color; for (const p of pts.filter((q) => q.kind === 'player')) { if (!mp.cardRing.guids.has(p.guid) || (meN && p.name === meN)) continue;
@@ -13061,7 +13062,20 @@ function miniMap(mp, pmap) {
   if ((gHit.size || gMiss.size) && !LL) leg.push([(x, y) => '<text x="' + (x - 3) + '" y="' + (y + 4) + '" fill="#9aa0ac" font-size="11">i</text>', 'Ghosts shown where they spawned']);
   for (const g of (lm.rings || []).filter((x, i, a) => a.findIndex((y) => (y.legend || y.label || '') === (x.legend || x.label || '')) === i)) leg.push([(x, y) => '<circle cx="' + x + '" cy="' + y + '" r="6" fill="' + (g.fill || (g.color ? 'rgba(126,224,143,.2)' : 'rgba(230,180,80,.2)')) + '" stroke="' + (g.color || '#e6b450') + '" stroke-dasharray="3 2"/>', (g.cn ? g.cn + ': ' : g.color === '#b65cff' ? 'Purple circle: ' : g.color ? 'Green circle: ' : 'Gold circle: ') + (g.legend || g.label || 'mechanic area') + (g.shrink === 'ichor' ? ' (shrinks from ~11 yd)' : '')]);
   { const atU = (g) => { const q = byG.get(g); return q ? [X(q), Y(q)] : null; }; /* (a guide's pop-up labels, debuff icons and dispel beams, on top (guides.js)) */
-    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue; s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : icl(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
+    // (a caption on a spot of floor marked free (guides.js, Nov 4): of a few spots around it, the one whose pill covers the fewest
+    // players while it shows, worked out once per map. A pill keeps its size on screen, so its size in yards comes from the opening view)
+    // (one on a player or boss goes above or below them. A pill keeps its size on screen, so its size in yards comes from the opening view)
+    const C0 = [[0, 0], [0, -1], [1, 0], [-1, 0], [0, 1], [1, -1], [-1, -1], [1, 1], [-1, 1], [0, -2], [2, 0], [-2, 0], [0, 2], [2, -1], [-2, -1], [2, 1], [-2, 1], [0, -3], [0, 3]].map(([x, y]) => [x, y, 0]);
+    const freeAt = (c) => { if (c._fa) return c._fa; const k0 = startVB[2] / 480, w = (String(c.text).length * 7.4 + 20) * k0, h = 21 * k0, gap = 16 * k0, r = 8 * k0, V0 = startVB;
+      const FR = (mp.frames || []).filter((f, i) => !(i % 2) && f.t >= c.t0 && f.t <= c.t1), at = (f) => { if (!c.on) return [X(c), Y(c)]; const q = f.pts.find((p) => p.guid === c.on); return q ? [X(q), Y(q)] : null; };
+      let best = null; for (const [ox, oy, up] of c.on ? [[0, 0, 0], [0, 0, 1]] : C0) { let n = 0, out = 0;
+        for (const f of FR) { const a = at(f); if (!a) continue; const x = a[0] + ox * w * 0.6, y = a[1] + oy * (h + gap), top = up ? y + gap : y - gap - h, bot = up ? y + gap + h : y - gap;
+          if (x - w / 2 < V0[0] || x + w / 2 > V0[0] + V0[2] || top < V0[1] || bot > V0[1] + V0[3]) out++;
+          for (const q of f.pts) if (q.kind === 'player' && q.guid !== c.on) { const px = X(q), py = Y(q); if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; } }
+        const v = n * 10 + out * 4 + Math.abs(ox) + Math.abs(oy) + up; if (!best || v < best[0]) best = [v, ox * w * 0.6, oy * (h + gap), up]; if (!n && !out) break; }
+      return (c._fa = { dx: best[1], dy: best[2], up: best[3] }); };
+    for (const c of mp.callouts || []) { if (ft < c.t0 || ft > c.t1) continue; const p = c.on ? byG.get(c.on) : c; if (!p) continue;
+      if (c.free && c.kind == null) { const q = freeAt(c), x = X(p) + q.dx, y = Y(p) + q.dy; s += icl(x, y, gdzCallSvg(q.up ? { ...c, up: 1 } : c, x, y, ft, atU)); continue; } s += c.kind === 'beam' || c.kind === 'spot' ? gdzCallSvg(c, X(p), Y(p), ft, atU, yd) : icl(X(p), Y(p), gdzCallSvg(c, X(p), Y(p), ft, atU)); } }
   s += micL.join('') + '</svg>';
   // legend strip attached under the map (outside the zoomed area, so it never moves or covers anything)
   const legend = '<div class="zleg">' + leg.map(([icn, t]) => '<span><svg width="16" height="16" viewBox="0 0 16 16">' + MAP_DEFS + icn(8, 8) + '</svg><span>' + esc(t) + '</span></span>').join('') + '</div>';
