@@ -2,7 +2,7 @@
 ## Title: Debrief
 ## Notes: Keeps your combat log on for Debrief Companion.
 ## Author: Debrief
-## Version: 0.6.0
+## Version: 0.6.1
 ## SavedVariables: DebriefDB
 ## Category: Combat
 ## IconTexture: Interface\AddOns\Debrief\Media\logo
