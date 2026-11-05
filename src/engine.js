@@ -3874,7 +3874,7 @@ function buildCoiledAltar(ev, r, h) {
   for (const e of mrSrc) { let x = mrEvents.find((m) => e.t - m.t >= 0 && e.t - m.t < 3); if (!x) mrEvents.push(x = { t: e.t, who: new Set(), amt: 0 }); x.who.add(e.dst); }
   for (const e of dmg('malevolent resonance')) { const x = mrEvents.find((m) => e.t >= m.t - 0.5 && e.t - m.t < 8); if (x) x.amt += e.amt; }
   for (const m of mrEvents) for (const g of m.who) M(m.t, pname(g), 'malevolent resonance', 'High', 'Their ghost touched another ghost' + (m.who.size > 1 ? ' (with ' + [...m.who].filter((x) => x !== g).map(pname).join(', ') + ')' : '') + ', causing Malevolent Resonance.', 'Only you can see your ghost on Mythic. Keep facing your ghost near the Soul Sever marker: it moves whenever you look away, so turning your back can walk it into another ghost.');
-  sections.push({ id: 'ghosts', title: 'Ghosts (Dreadmarch)', spell: S('dreadmarch'), mythicOnly: true,
+  sections.push({ id: 'ghosts', title: 'Manifestation of Dread (Ghosts)', spell: S('dreadmarch'), mythicOnly: true,
     verdict: mrEvents.length ? 'bad' : 'good', summary: pl(dm.length, 'Dreadmarch cast') + ', ' + pl(mrEvents.length, 'ghost collision') + ' (Malevolent Resonance).',
     cols: ['When', 'Ghosts touched', 'Damage taken'], rows: mrEvents.map((m) => [{ t: m.t }, { ps: [...m.who].map(pname) }, { n: m.amt }]) });
 
@@ -4579,7 +4579,7 @@ function buildCoiledAltar(ev, r, h) {
       const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
       for (const g of groups) { const nC = g.rows.filter((r0) => r0[0].txt === 'Ghost collision').length, nR = g.rows.filter((r0) => r0[0].txt === 'Ghost reached its player').length;
         g.sub = (nC ? pl(nC, 'ghost collision') : 'no ghost collisions') + (nR ? ' · ' + pl(nR, 'ghost') + ' reached ' + (nR === 1 ? 'its player' : 'their players') : ''); }
-      sections.push({ id: 'ghosts', title: 'Ghosts (Stare at yours)', place: 'Dreadmarch: the ghosts', spell: S('dreadmarch'), verdict: ghItems.length ? 'bad' : 'good',
+      sections.push({ id: 'ghosts', title: 'Manifestation of Dread (Stare at yours)', place: 'Dreadmarch: the ghosts', spell: S('dreadmarch'), verdict: ghItems.length ? 'bad' : 'good',
         summary: 'Each freed player gets a ghost that follows them and only moves while they aren\'t looking at it. It shows ghosts touching another ghost (Malevolent Resonance) and ghosts that reached their player and mind controlled them again. Maps show the ghosts where they spawned; the log has no later positions for them.',
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
     }
