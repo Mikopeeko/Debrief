@@ -7717,6 +7717,10 @@ const cellTxtRc = (c) => (c ? c.txt || '' : '');
 const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
 const rcOr = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
 /* (Nov 5, Flex: whose purple orb set off Venom Rupture: the one carrier then, or "one of A's or B's" when two or more held one, never a guess) */
+/* (one rule for whose purple orb went off (Nov 5): the purple-orb pickups (the orbs section's carry) at the first Venom Rupture death in [a, b];
+   Why we wiped, its reset and All pulls' "Carried the orb that burst" all use it) */
+const orbCarriers = (r, t) => [...new Set([].concat(...((r && r.module && r.module.sections) || []).filter((s) => s.id === 'orbs').map((s) => s.carry || [])).filter(([, s, e]) => t >= s - 0.2 && t <= e + 0.3).map(([n]) => n))];
+function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; return d ? orbCarriers(r, d.t) : []; }
 const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
 function rootCause(r, opts) {
   opts = opts || {};
@@ -7733,7 +7737,7 @@ function rootCause(r, opts) {
   const brezLeft = (t) => Math.max(0, 1 + Math.floor(t / (5400 / n)) - rez.filter((x) => x.t <= t).length);
   const deadAt = (t) => { const s = new Map(); for (const d of deaths) if (d.t <= t) s.set(d.p, d); for (const x of rez) if (x.t <= t && s.has(x.p) && s.get(x.p).t < x.t) s.delete(x.p); return [...s.values()]; };
   const w8 = (d) => (d.role === 'tank' ? 2 : 1), wsum = (l) => l.reduce((s, d) => s + w8(d), 0);
-  const orbCarry = [].concat(...sec('orbs').map((s) => s.carry || [])), carriersAt = (t) => [...new Set(orbCarry.filter(([, s, e]) => t >= s - 0.2 && t <= e + 0.3).map(([n]) => n))];
+  const carriersAt = (t) => orbCarriers(r, t);
   const ev = [];
   for (const q of r.mistakes || []) { if (/^wail of terror$/i.test(q.mechanic) && /got .*off/i.test(q.detail)) ev.push({ t: q.t, k: 'kick' }); else if (/^reclaim essence$/i.test(q.mechanic)) ev.push({ t: q.t, k: 'frag' }); }
   for (const s of sec('soakq')) for (const [, row] of rowsOf(s)) { const t = tOf(row), c = row.find((x) => x && x.t == null && /^\d+$/.test(String(x.txt || ''))); if (t != null && c && c.bad) ev.push({ t, k: 'soak', n: +c.txt }); }
@@ -7783,7 +7787,7 @@ function rootCause(r, opts) {
   const who3 = (l) => rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (new Set(l.map((d) => d.who)).size > 3 ? ' and ' + (new Set(l.map((d) => d.who)).size - 3) + ' more' : '');
   // ---- back through the chain ----
   const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt }), SEP = '\u0001'; /* (SEP: one more arrow inside a link) */
-  let cat = 'dead', sure = 0.35, orbBy = [];
+  let cat = 'dead', sure = 0.35, orbBy = [], orbAt = null;
   const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
     return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
   const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
@@ -7804,7 +7808,7 @@ function rootCause(r, opts) {
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      const fv = trig.find((d) => d.cat === 'orbs'); orbBy = carriersAt(fv ? fv.t : t0); say(cl ? cl.t : t0, 'orbs', orbSay(orbBy) + ' (' + T(cl ? cl.t : t0) + ')'); /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
+      const fv = trig.find((d) => d.ab === 'Venom Rupture') || trig.find((d) => d.cat === 'orbs'); orbAt = fv ? fv.t : t0; orbBy = carriersAt(orbAt); say(cl ? cl.t : t0, 'orbs', orbSay(orbBy) + ' (' + T(cl ? cl.t : t0) + ')'); /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
     else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time' + SEP + 'it killed ' + trig.filter((d) => d.cat === 'shield').length + ' (' + T(t0) + ')'); }
     else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' (' + T(t0) + ')'); } }
   else if (pre.length <= 6 && P.why === 'the end of the pull') {
@@ -7851,11 +7855,11 @@ function rootCause(r, opts) {
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ').split(SEP).join(' → ') + '.';
   const later = early ? phs.find((p) => p.start >= opts.cut - 1 && p.start > 1) : null;
   const earlyNote = early ? 'The wipe was called at ' + T(opts.cut) + ', but the raid played on' + (later ? ' into ' + ({ P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' })[later.name.split(' ')[0]] : '') + ', so this looks past the call.' : '';
-  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, sp: (RC_CAT[cat] && RC_CAT[cat].sp) || null, chain,
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, sp: (RC_CAT[cat] && RC_CAT[cat].sp) || null, orbBy: cat === 'orbs' ? orbBy : [], orbAt: cat === 'orbs' ? orbAt : null, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, short: RC_CAT[a.cat].nm.replace(/ \(.*$/, ''), who: a.who, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
-const api = { fzPack, fzRevive, fzKinds, rootCause, RC_CAT, rcCat, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { fzPack, fzRevive, fzKinds, rootCause, RC_CAT, rcCat, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

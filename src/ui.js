@@ -15073,7 +15073,7 @@ function coachSummary0(reps, name) {
             if (o.rc) { const rc = o.rc, t0 = ((rc.chain || []).find((c) => c.cat === rc.cat) || { t: rc.t }).t, isK = rc.cat === 'kick', isS = rc.cat === 'guil', isO = rc.cat === 'orbs';
               soak = soak || isS; kick = kick || isK; orb = orb || isO;
               if (isK || isS) { for (const m of r.mistakes) { if (m.player === 'Raid' || m.t < t0 - 20 || m.t > t0 + 3 || /^Soaked /.test(m.detail || '')) continue; const mk = lc0(m.mechanic); if (isK ? mk === 'kick assignment' : /guillotine assignment$/.test(mk)) add(isK ? 'Missed the kick' : 'Missed their soak', r, m.player); } }
-              else if (isO) { for (const m of r.mistakes) { if (m.player !== 'Raid' || lc0(m.mechanic) !== 'venom rupture' || m.t < t0 - 3 || m.t > rc.t + 10) continue; const w = String(m.detail || '').match(/at that moment: ([^.]+)\./); if (w) w[1].split(', ').forEach((v) => add('Carried the orb that burst', r, v)); } }
+              else if (isO) (rc.orbBy || []).forEach((v) => add('Carried the orb that burst', r, v)); /* (the root cause's own carriers: the one rule, E.orbBurstBy (Nov 5)) */
               else if (/^(dead|dps|push|shield|inter)$/.test(rc.cat)) return; /* (no one player is behind these: no names, and no "the log names no one") */
               else if (E.rcCat) { for (const d of r.deaths || []) if (d.t <= rc.t + 5 && E.rcCat(d.ability || d.killer) === rc.cat) add('Died to it', r, d.player); }
               if (cnt() === n0) unk++; return; }
@@ -15085,7 +15085,7 @@ function coachSummary0(reps, name) {
             if (o.how === 'own' && cnt() === n0 && o.d) add('Died to it', r, o.d.player);
             if (o.how === 'raid' || o.how === 'own') for (const m of r.mistakes) { if (m.player === 'Raid' || m.t < o.t - 20 || m.t > o.t + 3 || !/assignment$/i.test(m.mechanic) || /^Soaked /.test(m.detail || '')) continue; const mk = lc0(m.mechanic).replace(/ assignment$/, '');
               if (mk === mo || mo.endsWith(mk) && mk.length > 4) add(isSoak ? 'Missed their soak' : 'Missed their job', r, m.player); else if (isKick && mk === 'kick') add('Missed the kick', r, m.player); }
-            if (isOrb) for (const m of r.mistakes) { if (m.player !== 'Raid' || lc0(m.mechanic) !== 'venom rupture' || m.t < o.t - 3 || m.t > o.t + 10) continue; const w = String(m.detail || '').match(/at that moment: ([^.]+)\./); if (w) w[1].split(', ').forEach((v) => add('Carried the orb that burst', r, v)); }
+            if (isOrb && E.orbBurstBy) E.orbBurstBy(r, o.t - 3, o.t + 10).forEach((v) => add('Carried the orb that burst', r, v));
             if (cnt() === n0) unk++; });
           const gs = [...G].map(([l, g]) => ({ l, n: [...g].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([nm, c]) => [nm, c, col.get(nm) || '']) }));
           return { g: gs, unk, of: x.os.length, kind: orb ? 'orb' : soak ? 'soak' : kick ? 'kick' : '', nt: x.rs.some((r) => (r.mistakes || []).some((m) => /assignment$/i.test(m.mechanic))) }; };
