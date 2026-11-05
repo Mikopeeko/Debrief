@@ -7766,63 +7766,77 @@ function rootCause(r, opts) {
   const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1] || (b[0] === 'kick') - (a[0] === 'kick')); };
   const who3 = (l) => rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (new Set(l.map((d) => d.who)).size > 3 ? ' and ' + (new Set(l.map((d) => d.who)).size - 3) + ' more' : '');
   // ---- back through the chain ----
-  const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt });
+  const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt }), SEP = '\u0001'; /* (SEP: one more arrow inside a link) */
   let cat = 'dead', sure = 0.35;
-  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked at ' + T(k.t); const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
-    return 'Wail of Terror wasn\'t kicked at ' + T(k.t) + (ran.length >= l.length / 2 ? ', and feared players ran into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) + ' (' + l.length + ' died)' : ', and ' + l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
-  const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : ' (venom stacks, or no raid cooldowns stacked)') + ', and Dreadful Presence killed';
+  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
+    return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
+  const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
   if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12).pop();
-    if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked at ' + T(k.t) + ', so feared players couldn\'t watch their ghosts'); }
-    else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + ', so Malacrass cast another Dreadmarch'); }
+    if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + 'feared players lost sight of their ghosts'); }
+    else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + SEP + 'Malacrass cast another Dreadmarch'); }
     else { cat = 'mc'; sure = 0.6; }
-    say(P.t, 'mc', P.mc.length + ' ghosts reached their players at ' + T(P.t) + ', and the raid was mind controlled'); }
+    say(P.t, 'mc', P.mc.length + ' ghosts reached their players (' + T(P.t) + ')'); }
   else if (P.wave) {
     const top = tally(trig)[0], share = top[1] / wsum(trig), t0 = trig[0].t, wcat = trig.some((d) => d.cat === 'guil') && tally(trig.map((d) => Object.assign({}, d, { via: null })))[0][0] === 'guil' ? 'guil' : top[0];
     if (wcat === 'guil') { const sk = evIn('soak', t0 - 15, t0 + 1).pop(), gone = pre.filter((d) => d.t >= t0 - 40 && d.cat !== 'guil'), alive = n - deadAt(t0 - 0.5).length, gk = gone.filter((d) => d.via);
       const kg = gone.filter((d) => d.via && d.t >= (sk ? sk.t : t0) - 20), thin = kg.length > 0 || (alive < 15 && gone.length >= 3), ga = (trig.find((d) => d.cat === 'guil') || trig[0]).ab;
       if (thin) { const gt = tally(gone)[0][0]; cat = gt; sure = 0.65;
         if (kg.length) { cat = 'kick'; sure = 0.7; say(kg[0].via.t, 'kick', kickLine(kg[0].via, kg)); } else if (gt === 'kick') say(gk[0].via.t, 'kick', kickLine(gk[0].via, gk));
-        else say(gone[0].t, gt, who3(gone) + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' before the soak'); }
+        else say(gone[0].t, gt, who3(gone) + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' (' + T(gone[0].t) + ')'); }
       else { cat = 'guil'; sure = share >= 0.7 ? 0.9 : 0.7; }
-      if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak, and ' + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' at ' + T(t0));
-      else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length + ' at ' + T(t0)); } }
+      if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak' + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
+      else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      say(cl ? cl.t : t0, 'orbs', 'a purple orb\'s ring touched other orbs' + (cl ? ' after Toxic Deluge at ' + T(cl.t) : '')); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length + ' at ' + T(t0)); }
-    else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time, and it killed ' + trig.filter((d) => d.cat === 'shield').length + ' at ' + T(t0)); }
-    else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' at ' + T(t0)); } }
+      say(cl ? cl.t : t0, 'orbs', 'a purple orb\'s ring touched other orbs (' + T(cl ? cl.t : t0) + ')'); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
+    else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time' + SEP + 'it killed ' + trig.filter((d) => d.cat === 'shield').length + ' (' + T(t0) + ')'); }
+    else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' (' + T(t0) + ')'); } }
   else if (pre.length <= 6 && P.why === 'the end of the pull') {
     // (a pull that ended with few dead: the raid lead called it)
-    cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + ', so the raid lead called the wipe at ' + T(P.t) : 'the raid lead called the wipe at ' + T(P.t) + ' with ' + pre.length + ' dead'); }
+    cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + SEP + 'the raid lead called the wipe (' + T(P.t) + ')' : 'the raid lead called the wipe (' + T(P.t) + ') with ' + pre.length + ' dead'); }
   else {
     // (worn down: a fragment that reached Zul'jan in the intermission first; else the mechanic behind most of the deaths that got the raid here)
     const fr = evIn('frag', 0, P.t + 1).filter((e) => /^Int/.test(phaseAt(e.t))), tl = tally(pre), tot = wsum(pre), top = tl[0] || ['dead', 0];
-    if (fr.length && P.t - fr[0].t <= 40) { cat = 'inter'; sure = 0.6; say(fr[0].t, 'inter', (fr.length === 1 ? 'a Fragment of Malacrass' : fr.length + ' Fragments of Malacrass') + ' reached Zul\'jan in the intermission at ' + T(fr[0].t) + ' and healed him'); }
+    if (fr.length && P.t - fr[0].t <= 40) { cat = 'inter'; sure = 0.6; say(fr[0].t, 'inter', (fr.length === 1 ? 'a Fragment of Malacrass' : fr.length + ' Fragments of Malacrass') + ' reached Zul\'jan (' + T(fr[0].t) + ')'); }
     else if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; }
     else { cat = 'dead'; sure = 0.35; }
     const l = cat === 'inter' ? [] : pre.filter((d) => catOf(d) === cat);
     if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
-    else if (cat === 'push') say(l.length ? l[0].t : P.t, 'push', pushLine() + ' ' + l.length + ' from ' + T(l.length ? l[0].t : P.t));
-    else if (cat === 'dead') { const f = pre.find((d) => d.cat !== 'dead') || pre[0]; if (f) say(f.t, 'dead', 'first ' + f.who + ' died to ' + f.ab + ' at ' + T(f.t) + (tl.filter(([c]) => c !== catOf(f)).length ? ', then ' + rcAnd(tl.filter(([c]) => c !== catOf(f)).slice(0, 2).map(([c]) => RC_CAT[c].nm.replace(/ \(.*$/, ''))) + ' added up' : '')); }
-    else if (cat !== 'inter') say(l.length ? l[0].t : P.t, cat, who3(l) + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)));
+    else if (cat === 'push') say(l.length ? l[0].t : P.t, 'push', pushLine() + ' ' + l.length + ' (from ' + T(l.length ? l[0].t : P.t) + ')');
+    else if (cat === 'dead') { const f = pre.find((d) => d.cat !== 'dead') || pre[0]; if (f) say(f.t, 'dead', f.who + ' died to ' + f.ab + ' (' + T(f.t) + ')'); }
+    else if (cat !== 'inter') say(l.length ? l[0].t : P.t, cat, who3(l) + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + (l.length ? ' (' + T(l[0].t) + ')' : ''));
     // (end on what ended it: the last deaths before the point, and what they left the raid short for)
     const last = chain.length ? chain[chain.length - 1].t : 0, more = pre.filter((d) => d.t > last + 0.5);
-    say(P.t, 'dead', (more.length ? (more.length === 1 ? more[0].who + ' died' : more.length + ' more died') + ' by ' + T(more[more.length - 1].t) + ', and ' : '') + 'the raid had too few left for ' + nextOf(phaseAt(P.t))); }
+    say(P.t, 'dead', (more.length ? (more.length === 1 ? more[0].who + ' died' : more.length + ' more died') + ' by ' + T(more[more.length - 1].t) + SEP : '') + 'too few left for ' + nextOf(phaseAt(P.t))); }
   // (after the root: a Guillotine it left short, when the pull was lost in that wave)
   if ((P.wave || P.mc) && cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, P.t + 20)[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
-    if (sk && ex.length) { say(sk.t, 'guil', 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5'); say(ex[0].t, 'guil', ex[0].ab + ' killed ' + ex.length + ' at ' + T(ex[0].t)); } }
+    if (sk && ex.length) { say(sk.t, 'guil', 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')'); say(ex[0].t, 'guil', ex[0].ab + ' killed ' + ex.length); } }
   // ---- what else added up before it, biggest first ----
-  const also = new Map(), addA = (c, w, txt) => { if (c === cat || c === 'reset' || !RC_CAT[c]) return; const y = also.get(c) || { cat: c, w: 0, txt: [] }; y.w += w; if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
-  for (const d of deaths.filter((x) => x.t < P.t - 0.5 && !trig.includes(x))) addA(catOf(d), w8(d) * 2, d.who + ' died to ' + d.ab + ' at ' + T(d.t));
+  const inChain = new Set(chain.map((c) => c.cat)), also = new Map(), addA = (c, w, txt, who, tt) => { if (c === cat || inChain.has(c) || c === 'reset' || !RC_CAT[c]) return; const y = also.get(c) || { cat: c, w: 0, txt: [], who: '', ts: [] }; y.w += w; if (!y.who && who) y.who = who; if (tt != null) y.ts.push(tt); if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
+  for (const d of deaths.filter((x) => x.t < P.t - 0.5 && !trig.includes(x))) addA(catOf(d), w8(d) * 2, d.who + ' died to ' + d.ab + ' at ' + T(d.t), d.who, d.t);
   for (const e of ev.filter((x) => x.t != null && x.t < P.t - 0.5)) { const c = { kick: 'kick', soak: 'guil', collide: 'orbs', ghost: 'ghosts', reach: 'mc', fall: 'mc', shield: 'shield', frag: 'inter' }[e.k];
-    addA(c, e.k === 'frag' ? 3 : 1, { kick: 'Wail of Terror got off', soak: 'a Guillotine soak had ' + e.n + ' of 5', collide: 'orbs collided', ghost: 'ghosts touched', reach: 'a ghost reached its player', fall: 'a mind controlled player fell', shield: 'the shield broke late', frag: 'a fragment reached Zul\'jan' }[e.k] + ' at ' + T(e.t)); }
+    addA(c, e.k === 'frag' ? 3 : 1, { kick: 'Wail of Terror got off', soak: 'a Guillotine soak had ' + e.n + ' of 5', collide: 'orbs collided', ghost: 'ghosts touched', reach: 'a ghost reached its player', fall: 'a mind controlled player fell', shield: 'the shield broke late', frag: 'a fragment reached Zul\'jan' }[e.k] + ' at ' + T(e.t), '', e.t); }
   if (p2Long && cat !== 'dps' && cat !== 'push') addA('dps', 1, 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : ''));
   const alsoL = [...also.values()].filter((a) => a.w >= 2).sort((a, b) => b.w - a.w).slice(0, 3);
-  const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
+  // (the WHY in one short sentence: no names or times, the timeline below has them)
+  const phN = { P1: 'phase 1', P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' }, phP = phaseAt(P.t), widow = chain.some((c) => /didn't run out/.test(c.txt)), hasG = chain.some((c) => c.cat === 'guil');
+  const into = [...new Set(deaths.filter((d) => d.via && d.t <= P.t + 6 && /^(axes|orbs|pools)$/.test(d.cat)).map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))];
+  const short = ({ guil: widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
+    orbs: 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
+    kick: P.mc ? 'An unkicked Wail of Terror feared the raid, and the ghosts reached their players.' : 'An unkicked Wail of Terror feared players' + (into.length ? ' into ' + rcAnd(into) : '') + (hasG ? ' and left the Guillotine short.' : '.'),
+    mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : 'Mind controlled players died off the square.',
+    ghosts: 'Ghosts touched, and Malevolent Resonance killed players.', shield: 'Eternal Nightfall\'s shield wasn\'t broken in time.',
+    push: 'The push into phase 2 wasn\'t ready, and Dreadful Presence wore the raid down.',
+    dps: P.mc ? 'Phase 2 ran long, so Malacrass cast a Dreadmarch the raid couldn\'t handle.' : 'Phase 2 ran long, so the raid lead called the wipe.',
+    inter: 'A Fragment of Malacrass reached Zul\'jan in the intermission.', adds: 'Adds lived too long, and Retaliatory Malice killed players.',
+    bombs: 'Soul fragments weren\'t picked up, or Gloombombs missed the adds.', axes: 'Players died in the axes.', pools: 'Players stood in the pools.', frontal: 'The tank frontal hit players.',
+    dead: 'Too many died in ' + (phN[phP] || 'the pull') + (nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' to reach ' + nextOf(phP) + '.'), reset: 'The raid lead reset the pull.' })[cat] || '';
+  const marks = (chain.length ? [{ t: chain[0].t, k: 'root' }] : []).concat(...alsoL.map((a) => (a.ts || []).map((t) => ({ t, k: 'also' }))));
+  const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ').split(SEP).join(' → ') + '.';
   const later = early ? phs.find((p) => p.start >= opts.cut - 1 && p.start > 1) : null;
   const earlyNote = early ? 'The wipe was called at ' + T(opts.cut) + ', but the raid played on' + (later ? ' into ' + ({ P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' })[later.name.split(' ')[0]] : '') + ', so this looks past the call.' : '';
-  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, chain,
-    also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, chain,
+    also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, short: RC_CAT[a.cat].nm.replace(/ \(.*$/, ''), who: a.who, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
 const api = { fzPack, fzRevive, fzKinds, rootCause, RC_CAT, rcCat, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
