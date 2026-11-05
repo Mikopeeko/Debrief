@@ -7753,6 +7753,9 @@ function rootCause(r, opts) {
   // ---- the point of no return ----
   const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > 60);
   const cut = early ? null : opts.cut, PN = [];
+  /* (Nov 5, Flex: nothing after the wipe call counts, unless the call was early and the raid played on: a kick missed after the call explains no
+     death (Oct 29 pull 18 blamed a Wail missed a second after the call)) */
+  if (cut != null) for (const d of deaths) if (d.via && d.via.t > cut + 0.5) d.via = null;
   if (cut != null && cut < dur - 1) PN.push({ t: cut, why: 'the wipe call' });
   for (const d of deaths) { const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4 && !w.every((x) => x.cat === 'push')) { PN.push({ t: d.t, why: 'a wave', wave: w }); break; } }
   { const re = ev.filter((e) => e.k === 'reach'); for (const e of re) { const w = re.filter((x) => x.t >= e.t && x.t <= e.t + 3); if (w.length >= 4) { PN.push({ t: e.t, why: 'mass mind control', mc: w }); break; } } }
@@ -7765,7 +7768,11 @@ function rootCause(r, opts) {
   // ---- a reset: a purple orb set off once the pull was lost, with no missed kick to explain it ----
   let reset = null; const ow = PN.find((p) => p.wave && p.wave.filter((d) => d.ab === 'Venom Rupture').length >= p.wave.length * 0.6);
   if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (cut != null && ow.t > cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost }; }
-  const P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow).sort((a, b) => a.t - b.t)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
+  let P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow).sort((a, b) => a.t - b.t)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
+  /* (the wave that set off the call keeps only its deaths up to the call; fewer than 4 left: the call is the moment) */
+  if (cut != null && P.wave) { const w = P.wave.filter((d) => d.t <= cut + 0.5); P = w.length >= 4 ? Object.assign({}, P, { wave: w }) : { t: cut, why: 'the wipe call' }; } /* (fewer than 4 before the call: no wave of its own) */
+  /* (and a kick missed after the moment the pull was lost explains no death in it: the root cause comes from before that moment) */
+  for (const d of deaths) if (d.via && d.via.t > P.t + 0.5) d.via = null;
   const pre = deaths.filter((d) => d.t <= P.t + 0.5 && !(P.wave && P.wave.includes(d))), trig = P.wave ? P.wave : [];
   /* (a tie goes to the missed kick: it came first in the chain) */
   const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1] || (b[0] === 'kick') - (a[0] === 'kick')); };
@@ -7776,7 +7783,7 @@ function rootCause(r, opts) {
   const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
     return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
   const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
-  if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12).pop();
+  if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12 && (cut == null || e.t <= cut + 0.5)).pop();
     if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + 'feared players lost sight of their ghosts'); }
     else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + SEP + 'Malacrass cast another Dreadmarch'); }
     else { cat = 'mc'; sure = 0.6; }
