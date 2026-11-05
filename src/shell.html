@@ -10955,6 +10955,12 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-row{display:grid;grid-template-columns:22px minmax(0,1fr) 180px 84px;gap:14px;align-items:center;padding:8px 0;border-top:1px solid var(--line,#222930)}
 .nsm-sec .nsm-k + .nsm-row{border-top:0}
 .nsm-row.c2{grid-template-columns:22px minmax(0,1fr) auto}
+/* (Nov 4: the ranked rows) */ .nsm-rk{display:grid;grid-template-columns:16px 22px minmax(0,1fr) 140px 190px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#222930)}.nsm-sec .nsm-k + .nsm-rk{border-top:0}
+.nsm-n{font-weight:700;font-size:13px;color:var(--faint);text-align:right;font-variant-numeric:tabular-nums}.nsm-tx{min-width:0}.nsm-rk .nsm-t{font-size:15px}.nsm-rk .nsm-tag{margin-left:6px;vertical-align:1px}.nsm-rk:not(:has(> .nsm-noi)) .nsm-t .icw{display:none !important}
+.nsm-bar{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden}.nsm-bar i{display:block;height:100%;border-radius:3px}.nsm-bar.r i{background:#f0726a}.nsm-bar.y i{background:#e8a23a}
+.nsm-rk .nsm-v b{display:block;font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}.nsm-rk .nsm-v small{display:block;font-size:12px;color:var(--faint)}.nsm-rk .nsm-v small a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.nsm-rank:not(.nsm-also) .nsm-rk .nsm-v b{color:#f0726a}.nsm-foot{margin:6px 0 4px 28px;font-size:13px;color:var(--muted)}.nsm-foot b{color:var(--text)}.nsm-better{margin:0;padding:6px 18px 14px;font-size:13px;color:var(--muted)}.nsm-better b{color:#4fbf7a}
+@media (max-width:720px){.nsm-rk{grid-template-columns:14px 22px minmax(0,1fr) auto;row-gap:6px}.nsm-rk .nsm-bar{grid-column:3 / -1;grid-row:2}.nsm-foot{margin-left:0}}
 .nsm-row > .icw,.nsm-row > .cti,.nsm-row > .nsm-noi{width:22px!important;height:22px!important;justify-self:center}
 .nsm-row .icw img,.nsm-row .icw svg{width:22px!important;height:22px!important}
 .nsm-t{font-weight:700;font-size:15.5px;color:var(--text)}
@@ -14081,12 +14087,38 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     var focusLi = wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
     var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + (bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
       '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
-    if (fm) o += '<div class="nsm-focus">' + icon(focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' + (whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
-    if (wipL.length || alsoL.length) o += '<div class="nsm-sec"><span class="nsm-k">What wiped us</span>' + wipL.map(function (li) { var ps = (li.dataset.pulls || '').split(',').filter(Boolean).map(Number); return row(li, tx(li.querySelector('.cch-wn')), 'r', ps, []); }).join('') +
-      alsoL.map(function (li) { var pm = (tx(li.querySelector('.cch-wy')).match(/^Pull (\d+)/) || [])[1]; return row(li, 'Big mistake', 'y', [], pm ? [+pm] : []); }).join('') + '</div>';
-    var left = worseL.length ? ['Getting worse', worseL, 'r', '▼ Worse'] : upL.length ? ['Improving', upL, 'g', '▲ Better'] : null, right = upL.length && worseL.length ? ['Improving', upL, 'g', '▲ Better'] : wellL.length ? ['Done well', wellL, 'g', ''] : null;
-    var col = function (c) { return '<div class="nsm-sec"><span class="nsm-k">' + c[0] + '</span>' + c[1].map(function (li) { var tt = tx(li.querySelector('.cch-tt')); return row(li, c[3] ? (tt ? (c[2] === 'r' ? '▼ ' : '▲ ') + tt : c[3]) : '✓', c[2], null, null, true); }).join('') + '</div>'; };
-    if (left || right) o += '<div class="nsm-cols' + (left && right ? '' : ' one') + '">' + (left ? col(left) : '') + (right ? col(right) : '') + '</div>';
+    /* (Nov 4, Flex: "it doesnt really show the biggest issues in order of importance", then "Yes, build it" on the Design studio's mock:
+       one ranked list. What wiped us most by wipes caused, a footnote with the real counts, then everything else by how many pulls it hit) */
+    var NP = all.length || +pulls || 0, NW = all.length ? all.filter(function (p) { return !p.k; }).length : 0;
+    var lc = function (v) { return String(v).toLowerCase().replace(/\s*\(.*$/, '').trim(); }, key = function (nm) { return lc(nm).replace(/\s+(assignments?|jobs?|in the note)$/, ''); };
+    var why = function (li) { var wy = li && li.querySelector('.cch-wy'); return wy ? wy.innerHTML.replace(/Ghost collision: ghosts touched/g, 'the ghosts touched') : ''; };
+    var psOf = function (v) { return String(v || '').split(',').filter(Boolean).map(Number); };
+    var pl = function (ps) { ps = ps.slice().sort(function (a, b) { return a - b; }); return !ps.length ? '' : ps.length > 6 ? 'in ' + ps.length + ' pulls' : (ps.length === 1 ? 'pull ' : 'pulls ') + ps.map(function (n) { return '<a href="#" data-cchpull="' + n + '">' + n + '</a>'; }).join(', '); };
+    var bar = function (v, m, c) { return '<span class="nsm-bar ' + c + '"><i style="width:' + Math.max(4, Math.round(100 * v / Math.max(1, m))) + '%"></i></span>'; };
+    var TR = {}; [[worseL, '▼ ', 'r', 'Worse'], [upL, '▲ ', 'g', 'Better']].forEach(function (z) { z[0].forEach(function (li) { TR[key(nameOf(li))] = { t: z[1] + (tx(li.querySelector('.cch-tt')) || z[3]), c: z[2], li: li }; }); });
+    var ttag = function (nm) { var t = TR[key(nm)]; if (!t) return ''; t.used = 1; return ' <span class="nsm-tag ' + t.c + '">' + esc(t.t) + '</span>'; };
+    var rrow = function (n, li, title, sent, b, val, sub) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + n + '</span>' : '<span class="nsm-n"></span>') + icon(li) + '<div class="nsm-tx"><span class="nsm-t">' + esc(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
+    var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
+    var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
+    /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
+    var A = {}, AO = []; alsoL.forEach(function (li) { if (li.classList.contains('cch-also-more')) return; var nm = nameOf(li), k = key(nm); if (!k) return; var x = A[k]; if (!x) { x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [] }; AO.push(x); } psOf(li.dataset.ps).forEach(function (p) { if (x.ps.indexOf(p) < 0) x.ps.push(p); }); var w = why(li); if (w && x.s.indexOf(w) < 0) x.s.push(w); });
+    worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [why(li)].filter(Boolean) }; AO.push(x); });
+    AO = AO.filter(function (x) { var t = W1.filter(function (t) { return key(t.nm) === x.k; })[0]; if (!t) return true; x.s.forEach(function (w) { if (t.s.indexOf(w) < 0) t.s.push(w); }); return false; });
+    AO.sort(function (a, b) { return b.ps.length - a.ps.length; });
+    var focusLi = (top[0] && top[0].li) || wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
+    var mis = fm && top[0] && fm[1].toLowerCase().indexOf(lc(top[0].nm)) < 0 ? top[0] : null; /* (never a quiet mismatch: the focus names #1 or says that #1 is something else) */
+    if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
+      (mis ? '<p><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + '), so work on that one too.</p>' : whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
+    if (top.length) { var ended = {}; top.forEach(function (x) { x.ps.forEach(function (p) { ended[p] = 1; }); }); var en = Object.keys(ended).length, mx = top[0].w || 1, oth = NW - en;
+      o += '<div class="nsm-sec nsm-rank"><span class="nsm-k">What wiped us most' + (NP ? ' · ' + NP + ' pulls tonight, biggest first' : '') + '</span>' + top.map(function (x, i) { return rrow(i + 1, x.li, x.nm, x.s.join(' '), bar(x.w, mx, 'r'), x.w + (x.w === 1 ? ' wipe' : ' wipes'), pl(x.ps)); }).join('');
+      if (NW) o += '<p class="nsm-foot">' + (top.length === 1 ? 'This ended ' : (top.length === 2 ? 'These two' : top.length === 3 ? 'These three' : 'These ' + top.length) + ' ended ') + '<b>' + en + '</b> of the <b>' + NW + '</b> wipes.' +
+        (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm) + ' (' + x.w + ')'; }).join(', ') + ', or ' : '') + 'no single cause.' : '') + '</p>';
+      o += '</div>'; }
+    if (AO.length) { var am = Math.max(1, AO[0].ps.length);
+      o += '<div class="nsm-sec nsm-rank nsm-also"><span class="nsm-k">Also went wrong · didn\'t wipe us on its own</span>' + AO.map(function (x) { var n = x.ps.length; return rrow(0, x.li, x.nm, x.s.join(' '), n ? bar(n, am, 'y') : '<span class="nsm-bar y"></span>', n ? n + (n === 1 ? ' pull' : ' pulls') : '', n && NP ? 'of ' + NP : ''); }).join('') + '</div>'; }
+    var better = upL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
+    if (better.length) o += '<p class="nsm-better"><b>Better tonight:</b> ' + better.join(', ') + '</p>';
+    if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
   }
