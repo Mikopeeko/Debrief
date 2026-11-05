@@ -1680,6 +1680,21 @@ async function tier(req, env, url, ctx) {
   }
   return json({ error: 'Busy just now. It tries again later.' }, 409);
 }
+// (the Mythic+ Rotation tab's top players: each fast run's whole-run totals per check for one spec in one dungeon at one level, read once in the
+// first viewer's browser and kept here a week, so nobody else reads those runs again. k: dungeon:level:spec:class. Small and checked: 1 to 5 runs,
+// up to 80 checks each, numbers only; the first one in a week stays)
+const MPTOP_K = /^\d{3,7}:\d{1,2}:[a-z]{2,20}:[a-z]{4,20}$/, MPTOP_AGE = 7 * 86400000;
+async function mpTop(req, env, url) {
+  if (!env.debrief_nights) return json({ none: true });
+  const k = url.searchParams.get('k') || '', rk = (PRACTICE_HOST(url) ? 'p-mptop/' : 'mptop/') + k; if (!MPTOP_K.test(k)) return json({ error: 'That key isn\'t right.' }, 400);
+  const old = await env.debrief_nights.get(rk).then((o) => (o ? o.json() : null)).catch(() => null), fresh = old && Date.now() - (old.at || 0) < MPTOP_AGE;
+  if (req.method === 'GET') return fresh ? json({ at: old.at, lv: old.lv, runs: old.runs }) : json({ none: true });
+  if (req.method !== 'POST') return json({ error: 'Only the website saves these.' }, 405); if (fresh) return json({ kept: true });
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once.' }, 429);
+  const raw = await req.text(); if (raw.length > 60000) return json({ error: 'Too big.' }, 413); let b = null; try { b = JSON.parse(raw); } catch (e) { b = null; }
+  const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0 && x < 1e9, okT = (t) => t && typeof t === 'object' && Object.keys(t).length <= 80 && Object.entries(t).every(([lb, v]) => lb.length <= 80 && v && ['of', 'pct', 'wasted', 'n'].includes(v.k) && num(v.a) && num(v.b) && num(v.w));
+  if (!b || !Array.isArray(b.runs) || b.runs.length < 1 || b.runs.length > 5 || !b.runs.every((r) => r && num(r.dur) && r.dur > 0 && okT(r.t)) || !Array.isArray(b.lv) || !b.lv.every((l) => Number.isInteger(l) && l > 1 && l < 40)) return json({ error: 'That isn\'t right.' }, 400);
+  await env.debrief_nights.put(rk, JSON.stringify({ at: Date.now(), lv: b.lv, runs: b.runs.map((r) => ({ dur: r.dur, t: r.t })) }), { httpMetadata: { contentType: 'application/json' } }); return json({ saved: true }); }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -1894,6 +1909,7 @@ export default {
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
     if (url.pathname === '/api/wipecheck') return wipeCheck(req, env, url); /* (Flex's answer key for the analysis upgrade, practice links only (Nov 5)) */
     if (url.pathname === '/api/tier') return tier(req, env, url, ctx); /* (the Whole tier: every pull of a boss up to the first kill, Nov 5) */
+    if (url.pathname === '/api/mptop') return mpTop(req, env, url); /* (top players' Rotation numbers per spec, dungeon and level, kept a week (Nov 5)) */
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
