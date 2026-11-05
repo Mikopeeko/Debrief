@@ -13772,6 +13772,8 @@ html body #view .dbt-why .wrt-line { margin: 6px 0 2px; font: 400 15px/1.45 var(
 html body #view .dbt-why .wrt-line .wrt-ar { color: var(--gold); padding: 0 2px; }
 html body #view .dbt-why .wrt-also { margin: 4px 0 6px; font: 400 13.5px/1.45 var(--body); color: var(--muted); }
 html body #view .dbt-why .wrt-also b { color: var(--text); font-weight: 600; }
+html body #view .dbt-why .wrt-uns { display: inline-block; margin-left: 8px; padding: 1px 8px; border: 1px solid var(--line2); border-radius: 10px; font: 600 12.5px/1.4 var(--body); color: var(--muted); vertical-align: middle; }
+html body #view .dbt-why .wrt-early { color: var(--muted); }
 </style>
 <style id="wck-css">/* (Nov 5, analysis step 1: the wipe check page, practice links only; the site's colours, big taps for a phone) */
 body.wck-on > :not(#wck) { display: none !important; }
@@ -21495,20 +21497,24 @@ function coach(p, r, cut) {
 
 // ---- (Nov 5, analysis step 2) the root cause of a Coiled Altar wipe: follow the chain, not the death (Flex: "blame ... should follow the
 // chain, not the death"). One story of the pull in time order (deaths with role, battle res, kicks that got off, Guillotine soaks, orb
-// collisions, shields, mind control falls, ghosts), then the point of no return (the earliest of: the wipe call, a raid-killing wave, too
-// many down, two healers or both tanks down with no battle res), then back from it to the first preventable link. A purple orb set off
-// when the pull was already lost (the raid lead's reset) is never the cause. opts.cut: the site's wipe call (s). Null for a kill or another boss ----
+// collisions, fragments that reached Zul'jan, mind control falls, ghosts), then the point of no return (the earliest of: the site's wipe call,
+// unless the raid played on into the next phase or for another minute; a raid-killing wave; a mass mind control; too many down; half the
+// healers or both tanks down with no battle res), then back from it to the first preventable link, ending on what actually ended the pull.
+// A purple orb set off after the call (the raid lead's reset) is never the cause. Rules checked against notes/Guides/Bosses/7 The Coiled Altar.md:
+// only a purple orb's ring touching another orb sets off the raid-wide Venom Ruptures; a missed Wail of Terror fears players into whatever is
+// out (axes in phases 1 and 3, pools, orbs, other ghosts, the edge); Dreadful Presence deaths mean an unprepared push into phase 2 (stacks,
+// no raid cooldowns), never a raid-killer by itself; Retaliatory Malice is adds living too long. opts.cut: the site's wipe call (s) ----
 const RC_CAT = {
   guil: { nm: 'Guillotine (Soak)', flex: 'Guillotine soak short' }, orbs: { nm: 'Coalesced Venom (Orb Pops)', flex: 'Orbs touched' },
   kick: { nm: 'Wail of Terror (Kick)', flex: 'Soulcoiler kick missed' }, axes: { nm: 'Axegrinder (Rolling Axes)', flex: 'Axes' },
   mc: { nm: 'Dreadmarch (Mind Control)', flex: 'Mind controls in the wrong spot' }, ghosts: { nm: 'Malevolent Resonance (Ghost Collision)', flex: 'Ghosts touched' },
-  bombs: { nm: 'Gloombomb (Add Bombs)', flex: 'Bombs' }, shield: { nm: 'Eternal Nightfall (Shield Break)', flex: 'Shield not broken in time' },
-  push: { nm: 'Phase changes', flex: 'Pushed into phase 2 badly' }, dps: { nm: 'Not enough damage', flex: '' },
-  pools: { nm: 'Noxious Ground (Pools)', flex: '' }, frontal: { nm: 'Sever (Frontal)', flex: '' },
+  bombs: { nm: 'Gloombomb (Add Bombs)', flex: 'Bombs' }, adds: { nm: 'Spiteful Soulcoiler (Adds)', flex: 'Bombs' }, shield: { nm: 'Eternal Nightfall (Shield Break)', flex: 'Shield not broken in time' },
+  push: { nm: 'Phase 2 push', flex: 'Pushed into phase 2 badly' }, dps: { nm: 'Not enough damage', flex: 'Not enough damage' },
+  inter: { nm: 'Fragments of Malacrass (Intercepts)', flex: '' }, pools: { nm: 'Noxious Ground (Pools)', flex: '' }, frontal: { nm: 'Sever (Frontal)', flex: '' },
   dead: { nm: 'Too many dead', flex: 'Too many dead / healing ran out' }, reset: { nm: 'Reset on purpose', flex: 'Reset on purpose' } };
 const RC_BY = [[/^(execution|grim execution|widow's kiss|death's embrace|guillotine|grim guillotine)$/, 'guil'], [/^(venom rupture|coalesced venom|mutagenic venom|volatile venom|toxic deluge)$/, 'orbs'],
   [/^(axegrinder)$/, 'axes'], [/^(noxious ground|defiled ground|fangs of the coiled altar)$/, 'pools'], [/^(dreadmarch|manifestation of dread)$/, 'mc'], [/^(malevolent resonance)$/, 'ghosts'],
-  [/^(gloombomb|gravebound|retaliatory malice|spiritcackle)$/, 'bombs'], [/^(eternal nightfall)$/, 'shield'], [/^(dreadful presence)$/, 'dps'], [/^(sever|soul sever|blighted sever)$/, 'frontal'], [/^(wail of terror)$/, 'kick']];
+  [/^(gloombomb|gravebound)$/, 'bombs'], [/^(retaliatory malice|spiritcackle)$/, 'adds'], [/^(eternal nightfall)$/, 'shield'], [/^(dreadful presence)$/, 'push'], [/^(sever|soul sever|blighted sever)$/, 'frontal'], [/^(wail of terror)$/, 'kick']];
 const rcCat = (ab) => { const a = String(ab || '').toLowerCase(); for (const [re, c] of RC_BY) if (re.test(a)) return c; return 'dead'; };
 const cellTxtRc = (c) => (c ? c.txt || '' : '');
 const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
@@ -21516,7 +21522,9 @@ function rootCause(r, opts) {
   opts = opts || {};
   if (!r || !r.item || r.item.kill || r.item.boss !== 'The Coiled Altar' || !r.module || r.module.error) return null;
   const n = r.item.size || 20, dur = r.duration || r.item.duration || 0, nm = (p) => String(p || '').split('-')[0], T = fmtT;
-  const pl = [...r.players.values()], role = new Map(pl.map((p) => [p.name, p.role])), byGuid = new Map(pl.map((p) => [p.guid, p.name]));
+  const pl = [...r.players.values()], role = new Map(pl.map((p) => [p.name, p.role])), byGuid = new Map(pl.map((p) => [p.guid, p.name])), nHeal = Math.max(1, pl.filter((p) => p.role === 'healer').length);
+  const phs = (r.module.phases || []).slice().sort((a, b) => a.start - b.start), phaseAt = (t) => { let k = phs[0]; for (const p of phs) if (p.start <= t + 0.5) k = p; return k ? k.name.split(' ')[0] : ''; };
+  const nextOf = (ph) => ({ P1: 'phase 2', P2: 'the intermission', Intermission: 'phase 3', P3: 'the kill' })[ph] || 'the next phase';
   const secs = r.module.sections || [], sec = (id) => secs.filter((s) => s.id === id), rowsOf = (s) => (s.rows || []).map((row) => [null, row]).concat(...(s.groups || []).map((g) => (g.rows || []).map((row) => [g, row])));
   const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
   // ---- the story ----
@@ -21526,7 +21534,7 @@ function rootCause(r, opts) {
   const deadAt = (t) => { const s = new Map(); for (const d of deaths) if (d.t <= t) s.set(d.p, d); for (const x of rez) if (x.t <= t && s.has(x.p) && s.get(x.p).t < x.t) s.delete(x.p); return [...s.values()]; };
   const w8 = (d) => (d.role === 'tank' ? 2 : 1), wsum = (l) => l.reduce((s, d) => s + w8(d), 0);
   const ev = [];
-  for (const q of r.mistakes || []) if (/^wail of terror$/i.test(q.mechanic) && /got .*off/i.test(q.detail)) ev.push({ t: q.t, k: 'kick' });
+  for (const q of r.mistakes || []) { if (/^wail of terror$/i.test(q.mechanic) && /got .*off/i.test(q.detail)) ev.push({ t: q.t, k: 'kick' }); else if (/^reclaim essence$/i.test(q.mechanic)) ev.push({ t: q.t, k: 'frag' }); }
   for (const s of sec('soakq')) for (const [, row] of rowsOf(s)) { const t = tOf(row), c = row.find((x) => x && x.t == null && /^\d+$/.test(String(x.txt || ''))); if (t != null && c && c.bad) ev.push({ t, k: 'soak', n: +c.txt }); }
   for (const s of sec('orbs')) for (const [, row] of rowsOf(s)) if (row.some((c) => c && /collided/.test(c.txt || ''))) ev.push({ t: tOf(row), k: 'collide' });
   for (const s of sec('shield')) for (const [, row] of rowsOf(s)) if (row.some((c) => c && c.bad)) ev.push({ t: tOf(row), k: 'shield' });
@@ -21534,76 +21542,91 @@ function rootCause(r, opts) {
     if (/collision/i.test(w)) ev.push({ t, k: 'ghost', who: ((row[1] && row[1].ps) || []).map(nm) }); else if (/reached/i.test(w)) ev.push({ t, k: 'reach', who: [nm(row.find((c) => c && c.p) && row.find((c) => c && c.p).p)] }); else if (/fall/i.test(w)) ev.push({ t, k: 'fall', who: [nm(row[1] && row[1].p)] }); }
   ev.sort((a, b) => a.t - b.t);
   const evIn = (k, a, b) => ev.filter((e) => e.k === k && e.t != null && e.t >= a && e.t <= b);
-  const pushBad = sec('push').some((s) => rowsOf(s).some(([, row]) => /^Phase 1 push/.test((row[0] && row[0].txt) || '') && row.some((c) => c && c.bad)));
+  const pushRow = sec('push').map((s) => rowsOf(s).find(([, row]) => /^Phase 1 push/.test((row[0] && row[0].txt) || ''))).find(Boolean), pushWhy = pushRow ? pushRow[1].filter((c) => c && (c.bad || c.warn) && c.t == null).map(cellTxtRc).filter((x) => x && !/^ran long|^on time/.test(x)) : [];
   const p2Row = sec('push').map((s) => rowsOf(s).find(([, row]) => /^Phase 2/.test((row[0] && row[0].txt) || '') && row.some((c) => c && c.bad))).find(Boolean), p2Long = !!p2Row;
-  // (a missed kick fears the raid: the deaths in the next 12 s, to axes, pools, orbs or anything they ran into, follow from it)
+  const p2Len = p2Row ? (/\(([\d:]+)\)/.exec(String(cellTxtRc(p2Row[1][1]))) || [])[1] || '' : '';
+  // (a missed kick fears the raid: deaths in the next 12 s to whatever was out (axes, pools, an orb, another ghost, the edge) follow from it)
   const kickBefore = (t) => ev.filter((e) => e.k === 'kick' && e.t <= t + 0.5 && e.t >= t - 12).pop() || null;
-  for (const d of deaths) { const k = kickBefore(d.t); if (k && /^(axes|pools|orbs|bombs|dead|frontal|mc)$/.test(d.cat) && d.ab !== 'Venom Rupture') d.via = k; }
+  /* (Gravebound too: feared players can't pick up their soul fragments) */
+  for (const d of deaths) { const k = kickBefore(d.t); if (k && (/^(axes|pools|orbs|ghosts|mc|dead|frontal)$/.test(d.cat) || d.ab === 'Gravebound') && d.ab !== 'Venom Rupture') d.via = k; }
   // ---- the point of no return ----
-  const PN = [];
-  if (opts.cut != null && opts.cut < dur - 1) PN.push({ t: opts.cut, why: 'the wipe call' });
-  for (const d of deaths) { const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4) { PN.push({ t: d.t, why: 'a wave', wave: w }); break; } }
+  const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > 60);
+  const cut = early ? null : opts.cut, PN = [];
+  if (cut != null && cut < dur - 1) PN.push({ t: cut, why: 'the wipe call' });
+  for (const d of deaths) { const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4 && !w.every((x) => x.cat === 'push')) { PN.push({ t: d.t, why: 'a wave', wave: w }); break; } }
   { const re = ev.filter((e) => e.k === 'reach'); for (const e of re) { const w = re.filter((x) => x.t >= e.t && x.t <= e.t + 3); if (w.length >= 4) { PN.push({ t: e.t, why: 'mass mind control', mc: w }); break; } } }
   for (const d of deaths) { if (wsum(deadAt(d.t)) >= 7) { PN.push({ t: d.t, why: 'too many down' }); break; } }
   for (const d of deaths) { const dd = deadAt(d.t), h = dd.filter((x) => x.role === 'healer').length, tk = dd.filter((x) => x.role === 'tank').length;
-    if ((h >= 2 || tk >= 2) && brezLeft(d.t) === 0 && !rez.some((x) => x.t > d.t && x.t < d.t + 20)) { PN.push({ t: d.t, why: tk >= 2 ? 'both tanks down with no battle res' : 'two healers down with no battle res' }); break; } }
+    if ((h >= Math.max(2, Math.ceil(nHeal / 2)) || tk >= 2) && brezLeft(d.t) === 0 && !rez.some((x) => x.t > d.t && x.t < d.t + 20)) { PN.push({ t: d.t, why: tk >= 2 ? 'both tanks down with no battle res' : 'half the healers down with no battle res' }); break; } }
   PN.sort((a, b) => a.t - b.t);
   /* (a wave or a mass mind control that set off the wipe call is the moment, not the call a second later) */ { const c = PN.find((x) => x.why === 'the wipe call'), wv = PN.find((x) => x.wave || x.mc); if (c && wv && PN[0] === c && wv.t >= c.t - 0.01 && wv.t <= c.t + 1.5) { PN.splice(PN.indexOf(wv), 1); PN.unshift(wv); } }
   const pnr = PN[0] || { t: dur, why: 'the end of the pull' };
-  // ---- a reset: a purple orb set off when the pull was already lost, with no missed kick to explain it ----
+  // ---- a reset: a purple orb set off once the pull was lost, with no missed kick to explain it ----
   let reset = null; const ow = PN.find((p) => p.wave && p.wave.filter((d) => d.ab === 'Venom Rupture').length >= p.wave.length * 0.6);
-  if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (opts.cut != null && ow.t > opts.cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost }; }
-  const P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
+  if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (cut != null && ow.t > cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost }; }
+  const P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow).sort((a, b) => a.t - b.t)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
   const pre = deaths.filter((d) => d.t <= P.t + 0.5 && !(P.wave && P.wave.includes(d))), trig = P.wave ? P.wave : [];
-  const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1]); };
+  /* (a tie goes to the missed kick: it came first in the chain) */
+  const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1] || (b[0] === 'kick') - (a[0] === 'kick')); };
+  const who3 = (l) => rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (new Set(l.map((d) => d.who)).size > 3 ? ' and ' + (new Set(l.map((d) => d.who)).size - 3) + ' more' : '');
   // ---- back through the chain ----
   const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt });
   let cat = 'dead', sure = 0.35;
-  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked at ' + T(k.t); const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat)), pl0 = (x) => x + (l.length === 1 ? ' died' : ' died');
-    return 'Wail of Terror wasn\'t kicked at ' + T(k.t) + (ran.length >= l.length / 2 ? ', and feared players ran into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) + ' (' + pl0(l.length) + ')' : ', and ' + pl0(l.length) + ' while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
+  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked at ' + T(k.t); const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
+    return 'Wail of Terror wasn\'t kicked at ' + T(k.t) + (ran.length >= l.length / 2 ? ', and feared players ran into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) + ' (' + l.length + ' died)' : ', and ' + l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
+  const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : ' (venom stacks, or no raid cooldowns stacked)') + ', and Dreadful Presence killed';
   if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12).pop();
     if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked at ' + T(k.t) + ', so feared players couldn\'t watch their ghosts'); }
-    else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (/\(([\d:]+)\)/.test(String(cellTxtRc(p2Row[1]))) ? ' (' + /\(([\d:]+)\)/.exec(String(cellTxtRc(p2Row[1])))[1] + ')' : '') + ', so Malacrass cast another Dreadmarch'); }
+    else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + ', so Malacrass cast another Dreadmarch'); }
     else { cat = 'mc'; sure = 0.6; }
     say(P.t, 'mc', P.mc.length + ' ghosts reached their players at ' + T(P.t) + ', and the raid was mind controlled'); }
   else if (P.wave) {
-    const top = tally(trig)[0], share = top[1] / wsum(trig), t0 = trig[0].t, wcat = rcCat(trig[0].ab) === 'guil' || trig.some((d) => d.cat === 'guil') && tally(trig.map((d) => Object.assign({}, d, { via: null })))[0][0] === 'guil' ? 'guil' : top[0];
+    const top = tally(trig)[0], share = top[1] / wsum(trig), t0 = trig[0].t, wcat = trig.some((d) => d.cat === 'guil') && tally(trig.map((d) => Object.assign({}, d, { via: null })))[0][0] === 'guil' ? 'guil' : top[0];
     if (wcat === 'guil') { const sk = evIn('soak', t0 - 15, t0 + 1).pop(), gone = pre.filter((d) => d.t >= t0 - 40 && d.cat !== 'guil'), alive = n - deadAt(t0 - 0.5).length, gk = gone.filter((d) => d.via);
       const kg = gone.filter((d) => d.via && d.t >= (sk ? sk.t : t0) - 20), thin = kg.length > 0 || (alive < 15 && gone.length >= 3), ga = (trig.find((d) => d.cat === 'guil') || trig[0]).ab;
       if (thin) { const gt = tally(gone)[0][0]; cat = gt; sure = 0.65;
-        if (kg.length) { cat = 'kick'; sure = 0.7; say(kg[0].via.t, 'kick', kickLine(kg[0].via, kg)); } else if (gt === 'kick') say(gk[0].via.t, 'kick', kickLine(gk[0].via, gk)); else say(gone[0].t, gt, rcAnd([...new Set(gone.map((d) => d.who))].slice(0, 3)) + (gone.length > 3 ? ' and ' + (gone.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' before the soak'); }
+        if (kg.length) { cat = 'kick'; sure = 0.7; say(kg[0].via.t, 'kick', kickLine(kg[0].via, kg)); } else if (gt === 'kick') say(gk[0].via.t, 'kick', kickLine(gk[0].via, gk));
+        else say(gone[0].t, gt, who3(gone) + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' before the soak'); }
       else { cat = 'guil'; sure = share >= 0.7 ? 0.9 : 0.7; }
       if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak, and ' + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' at ' + T(t0));
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length + ' at ' + T(t0)); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      say(cl ? cl.t : t0, 'orbs', 'a purple orb touched other orbs' + (cl ? ' after Toxic Deluge at ' + T(cl.t) : '')); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length + ' at ' + T(t0)); }
+      say(cl ? cl.t : t0, 'orbs', 'a purple orb\'s ring touched other orbs' + (cl ? ' after Toxic Deluge at ' + T(cl.t) : '')); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length + ' at ' + T(t0)); }
     else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time, and it killed ' + trig.filter((d) => d.cat === 'shield').length + ' at ' + T(t0)); }
-    else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, rcAnd([...new Set(trig.map((d) => d.who))].slice(0, 3)) + (trig.length > 3 ? ' and ' + (trig.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' at ' + T(t0)); } }
+    else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' at ' + T(t0)); } }
   else if (pre.length <= 6 && P.why === 'the end of the pull') {
     // (a pull that ended with few dead: the raid lead called it)
-    cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long, so the raid lead called the wipe at ' + T(P.t) : 'the raid lead called the wipe at ' + T(P.t) + ' with ' + pre.length + ' dead'); }
+    cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + ', so the raid lead called the wipe at ' + T(P.t) : 'the raid lead called the wipe at ' + T(P.t) + ' with ' + pre.length + ' dead'); }
   else {
-    // (worn down: the mechanic behind most of the deaths that got the raid here)
-    const tl = tally(pre), tot = wsum(pre), top = tl[0] || ['dead', 0];
-    if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; } else { cat = 'dead'; sure = 0.35; }
-    if (cat === 'dps') cat = pushBad ? 'push' : 'dps';
-    const l = pre.filter((d) => catOf(d) === cat || (cat === 'push' && d.cat === 'dps'));
+    // (worn down: a fragment that reached Zul'jan in the intermission first; else the mechanic behind most of the deaths that got the raid here)
+    const fr = evIn('frag', 0, P.t + 1).filter((e) => /^Int/.test(phaseAt(e.t))), tl = tally(pre), tot = wsum(pre), top = tl[0] || ['dead', 0];
+    if (fr.length && P.t - fr[0].t <= 40) { cat = 'inter'; sure = 0.6; say(fr[0].t, 'inter', (fr.length === 1 ? 'a Fragment of Malacrass' : fr.length + ' Fragments of Malacrass') + ' reached Zul\'jan in the intermission at ' + T(fr[0].t) + ' and healed him'); }
+    else if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; }
+    else { cat = 'dead'; sure = 0.35; }
+    const l = cat === 'inter' ? [] : pre.filter((d) => catOf(d) === cat);
     if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
-    else if (cat !== 'dead') say(l.length ? l[0].t : P.t, cat, (cat === 'dps' ? (p2Long ? 'phase 2 ran long, and ' : '') + 'Dreadful Presence wore the raid down' : cat === 'push' ? 'phase 2 started badly, and Dreadful Presence wore the raid down' : rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2))) + ' (' + l.length + ' of ' + pre.length + ' deaths)');
-    say(P.t, 'dead', (cat === 'dead' && tl.length ? 'deaths added up from ' + rcAnd(tl.slice(0, 3).map(([c]) => RC_CAT[c].nm.replace(/ \(.*$/, ''))) + ', and ' : '') + (P.why === 'the wipe call' ? 'the wipe was called at ' : 'the raid had too few left at ') + T(P.t)); }
-  if ((P.wave || P.mc) && cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, Math.min(P.t + 20, opts.cut != null && opts.cut >= P.t ? opts.cut + 12 : P.t + 20))[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
+    else if (cat === 'push') say(l.length ? l[0].t : P.t, 'push', pushLine() + ' ' + l.length + ' from ' + T(l.length ? l[0].t : P.t));
+    else if (cat === 'dead') { const f = pre.find((d) => d.cat !== 'dead') || pre[0]; if (f) say(f.t, 'dead', 'first ' + f.who + ' died to ' + f.ab + ' at ' + T(f.t) + (tl.filter(([c]) => c !== catOf(f)).length ? ', then ' + rcAnd(tl.filter(([c]) => c !== catOf(f)).slice(0, 2).map(([c]) => RC_CAT[c].nm.replace(/ \(.*$/, ''))) + ' added up' : '')); }
+    else if (cat !== 'inter') say(l.length ? l[0].t : P.t, cat, who3(l) + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)));
+    // (end on what ended it: the last deaths before the point, and what they left the raid short for)
+    const last = chain.length ? chain[chain.length - 1].t : 0, more = pre.filter((d) => d.t > last + 0.5);
+    say(P.t, 'dead', (more.length ? (more.length === 1 ? more[0].who + ' died' : more.length + ' more died') + ' by ' + T(more[more.length - 1].t) + ', and ' : '') + 'the raid had too few left for ' + nextOf(phaseAt(P.t))); }
+  // (after the root: a Guillotine it left short, when the pull was lost in that wave)
+  if ((P.wave || P.mc) && cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, P.t + 20)[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
     if (sk && ex.length) { say(sk.t, 'guil', 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5'); say(ex[0].t, 'guil', ex[0].ab + ' killed ' + ex.length + ' at ' + T(ex[0].t)); } }
   // ---- what else added up before it, biggest first ----
-  const also = new Map(), addA = (c, w, txt) => { if (c === cat || c === 'reset') return; const y = also.get(c) || { cat: c, w: 0, txt: [] }; y.w += w; if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
+  const also = new Map(), addA = (c, w, txt) => { if (c === cat || c === 'reset' || !RC_CAT[c]) return; const y = also.get(c) || { cat: c, w: 0, txt: [] }; y.w += w; if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
   for (const d of deaths.filter((x) => x.t < P.t - 0.5 && !trig.includes(x))) addA(catOf(d), w8(d) * 2, d.who + ' died to ' + d.ab + ' at ' + T(d.t));
-  for (const e of ev.filter((x) => x.t != null && x.t < P.t - 0.5)) { const c = { kick: 'kick', soak: 'guil', collide: 'orbs', ghost: 'ghosts', reach: 'mc', fall: 'mc', shield: 'shield' }[e.k];
-    addA(c, 1, { kick: 'Wail of Terror got off', soak: 'a Guillotine soak had ' + e.n + ' of 5', collide: 'orbs collided', ghost: 'ghosts touched', reach: 'a ghost reached its player', fall: 'a mind controlled player fell', shield: 'the shield broke late' }[e.k] + ' at ' + T(e.t)); }
-  if (p2Long && cat !== 'dps' && cat !== 'push') addA('dps', 1, 'phase 2 ran long');
+  for (const e of ev.filter((x) => x.t != null && x.t < P.t - 0.5)) { const c = { kick: 'kick', soak: 'guil', collide: 'orbs', ghost: 'ghosts', reach: 'mc', fall: 'mc', shield: 'shield', frag: 'inter' }[e.k];
+    addA(c, e.k === 'frag' ? 3 : 1, { kick: 'Wail of Terror got off', soak: 'a Guillotine soak had ' + e.n + ' of 5', collide: 'orbs collided', ghost: 'ghosts touched', reach: 'a ghost reached its player', fall: 'a mind controlled player fell', shield: 'the shield broke late', frag: 'a fragment reached Zul\'jan' }[e.k] + ' at ' + T(e.t)); }
+  if (p2Long && cat !== 'dps' && cat !== 'push') addA('dps', 1, 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : ''));
   const alsoL = [...also.values()].filter((a) => a.w >= 2).sort((a, b) => b.w - a.w).slice(0, 3);
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
-  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, pnr: { t: pnr.t, why: pnr.why }, reset, line, chain,
-    also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
+  const later = early ? phs.find((p) => p.start >= opts.cut - 1 && p.start > 1) : null;
+  const earlyNote = early ? 'The wipe was called at ' + T(opts.cut) + ', but the raid played on' + (later ? ' into ' + ({ P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' })[later.name.split(' ')[0]] : '') + ', so this looks past the call.' : '';
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, chain,
+    also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
 const api = { rootCause, RC_CAT, rcCat, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
@@ -71621,7 +71644,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
   const wckQ = location.search + ' ' + (() => { try { return new URL(performance.getEntriesByType('navigation')[0].name).search; } catch (e) { return ''; } })();
   if (!/[?&]wipecheck\b/.test(wckQ) || !/-debrief\.[a-z0-9-]+\.workers\.dev$/.test(location.hostname)) return;
   const wE = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const WCK_C = ['Guillotine soak short', 'Orbs touched', 'Soulcoiler kick missed', 'Axes', 'Mind controls in the wrong spot', 'Ghosts touched', 'Bombs', 'Shield not broken in time', 'Pushed into phase 2 badly', 'Too many dead / healing ran out', 'Reset on purpose', 'Not sure'];
+  const WCK_C = ['Guillotine soak short', 'Orbs touched', 'Soulcoiler kick missed', 'Axes', 'Mind controls in the wrong spot', 'Ghosts touched', 'Bombs', 'Shield not broken in time', 'Pushed into phase 2 badly', 'Not enough damage', 'Too many dead / healing ran out', 'Reset on purpose', 'Not sure'];
   const box = document.createElement('div'); box.id = 'wck'; box.setAttribute('role', 'main'); document.body.appendChild(box); document.body.classList.add('wck-on');
   document.title = 'Wipe check · Debrief';
   let D = { stories: [], answers: {} }, err = '';
@@ -72172,15 +72195,18 @@ function scan() { r423soon(); /* round 373 heart card */ [].forEach.call(documen
       var L = [].slice.call(add.querySelectorAll(':scope > .dbt-addr')); L.sort(function (x, y) { var cx = x.querySelector('.r357-cc') ? -1 : lvOf(x), cy = y.querySelector('.r357-cc') ? -1 : lvOf(y); return cy - cx; }).forEach(function (x) { add.appendChild(x); }); if (!L.length) add.remove(); }
     var bh = T(document.querySelector('#bossHead')), hp = (bh.match(/Wipe(?: in [^·]*)?\s*·\s*(?:boss at\s*)?(\d+(?:\.\d+)?)%/) || [])[1], phw = (bh.match(/Wipe in (P\d|the intermission|Intermission)/i) || [])[1] || '', et = end ? (T(end.querySelector('.dbt-cht')).match(/\d+:\d\d/) || [''])[0] : '';
     var dn = (T(document.querySelector('#view .dbr-4')).match(/DEATHS\s*(\d+)/i) || [])[1];
-    if (end && hp) { var es = sOf(end); if (es) es.textContent = 'Boss at ' + Math.round(+hp) + '%.'; }
+    var sec2 = function (x) { var m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * m[1] + +m[2] : null; }, durS = sec2(T(document.querySelector('#bossHead .bh-dur'))), callEarly = et && durS != null && durS - sec2(et) > 5; /* (Nov 5: a call well before the end: the banner's health is the end's, not the call's) */
+    if (end && hp && !callEarly) { var es = sOf(end); if (es) es.textContent = 'Boss at ' + Math.round(+hp) + '%.'; }
     var ms = []; kept.forEach(function (r) { var n = T(r.querySelector(':scope > b')); if (!/^death$/i.test(n) && lvOf(r) >= 4 && ms.indexOf(n) < 0) ms.push(n); }); if (!ms.length) kept.forEach(function (r) { var n = T(r.querySelector(':scope > b')); if (!/^death$/i.test(n) && ms.indexOf(n) < 0) ms.push(n); });
-    ms = ms.slice(0, 2).map(function (n) { return /^phase changes$/i.test(n) ? 'a slow push' : n; }); var ph = phw || ((end && T(end.querySelector('.dbt-chp'))) || '');
+    ms = ms.slice(0, 2).map(function (n) { return /^phase changes$/i.test(n) ? 'a slow push' : n; }); var ph = ((end && T(end.querySelector('.dbt-chp'))) || '') || phw; /* (Nov 5: the phase at the call, as the timeline marks it, not where the pull ended) */
     /* (Nov 5, analysis step 2: the root cause leads, as one chain of what happened, then what else added up; the old headline when there's none) */
     var RT = null; try { RT = window.wipeRoot ? window.wipeRoot() : null; } catch (er) { RT = null; } var eR = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-    if (RT && RT.line && !w.querySelector('.wrt-line')) { h2.innerHTML = 'Root cause: <span class="r208-m">' + eR(RT.name) + '</span>'; var pl = document.createElement('p'); pl.className = 'wrt-line'; pl.innerHTML = eR(RT.line).replace(/ → /g, ' <span class="wrt-ar">→</span> ');
+    if (RT && RT.line && !w.querySelector('.wrt-line')) { h2.innerHTML = 'Root cause: <span class="r208-m">' + eR(RT.name) + '</span>' + (RT.unsure ? ' <span class="wrt-uns">not sure</span>' : ''); var pl = document.createElement('p'); pl.className = 'wrt-line'; pl.innerHTML = eR(RT.line).replace(/ → /g, ' <span class="wrt-ar">→</span> ');
+      if (RT.earlyNote) pl.innerHTML += ' <span class="wrt-early">' + eR(RT.earlyNote) + '</span>';
+      if (/^(dps|push)$/.test(RT.cat)) [].slice.call(w.querySelectorAll('.dbt-add > .dbt-addr')).forEach(function (x) { if (/^phase changes/i.test(T(x.querySelector(':scope > b')))) x.remove(); }); /* (said once: the root already is the phase) */
       h2.after(pl); if (RT.also && RT.also.length) { var pa = document.createElement('p'); pa.className = 'wrt-also'; pa.innerHTML = '<b>Also added up:</b> ' + RT.also.map(function (a) { return '<span class="r208-m">' + eR(a.name) + '</span>' + (a.txt && a.txt[0] ? ' (' + eR(a.txt[0]) + ')' : ''); }).join(', ') + '.'; pl.after(pa); } }
     if (ms.length && !(RT && RT.line)) h2.innerHTML = 'We wiped' + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') + ': <span class="r208-m">' + (ms.length > 1 ? ms[0] + ' and ' + ms[1] : ms[0]).replace(/[<>]/g, '') + '</span>.';
-    var sub = w.querySelector('.r208-sub'), facts = [et ? 'Wipe called at ' + et + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') : '', hp ? 'boss at ' + Math.round(+hp) + '%' : '', dn ? dn + ' dead' : ''].filter(Boolean).join(' · ');
+    var sub = w.querySelector('.r208-sub'), facts = [et ? 'Wipe called at ' + et + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') : '', hp && !callEarly ? 'boss at ' + Math.round(+hp) + '%' : '', dn ? dn + ' dead' : '', hp && callEarly ? 'the pull ended with the boss at ' + Math.round(+hp) + '%' : ''].filter(Boolean).join(' · ');
     if (facts) { if (!sub) { sub = document.createElement('p'); sub.className = 'r208-sub'; (w.querySelector('.wrt-also') || w.querySelector('.wrt-line') || h2).after(sub); } sub.textContent = facts.charAt(0).toUpperCase() + facts.slice(1); sub.classList.add('r357-facts'); } }); /* Nov 3 why rows (the Design studio's why-we-wiped.md; Flex: "yea"): every counted mistake has a row (a mechanic's repeats merge into one, "Soul Sever ×2", with each time and who), the badges count the rows, every row has an icon (a death: what killed them, or ☠), and a click on a row plays it on the Timeline replay */ if (!window.__whyRows) window.__whyRows = function (w) {
     var d = w.closest('.dbt'), M = d && d._M; if (!M || !M.length) return; var K = window.dbtMapKit ? window.dbtMapKit() : null, rep = K && K.S ? K.S.rep : null;
     var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, sx = function (s) { var m = String(s || '').match(/(\d+):(\d\d)/); return m ? +m[1] * 60 + +m[2] : null; }, mm = function (t) { t = Math.floor(t); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };

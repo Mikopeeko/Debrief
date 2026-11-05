@@ -131,8 +131,8 @@ function checkPull(key) {
 }
 
 // 4. the page's own code reads one number (the banner, the pull picker, the coach and Debriefing's lines)
-const MUST = [['the banner', "bossAtV(nowV)"], ['the pull picker', "'Wipe, ' + bossAtV(pc)"], ['the coach line', "'We wiped ' + dbfPre(at0) + at0"], ["Debriefing's raid lead line", 'dbfPre(dbfAt(nowLab))']];
-for (const [k, s] of MUST) if (!UI.includes(s)) say('the page code', 'health', k + ' no longer uses the one health number (expected `' + s + '` in src/ui.js)');
+const MUST = [['the Why we wiped facts line (the phase at the wipe call, from the timeline)', "(end && T(end.querySelector('.dbt-chp'))) || '') || phw", 'SH'], ['the banner', "bossAtV(nowV)"], ['the pull picker', "'Wipe, ' + bossAtV(pc)"], ['the coach line', "'We wiped ' + dbfPre(at0) + at0"], ["Debriefing's raid lead line", 'dbfPre(dbfAt(nowLab))']];
+for (const [k, s, f] of MUST) if (!(f === 'SH' ? H.SH : UI).includes(s)) say('the page code', 'health', k + ' no longer uses the one health number (expected `' + s + '` in src/ui.js)');
 for (const s of ["'Wipe in ' + pg.label", "% of the fight done'"]) if (UI.includes(s)) say('the page code', 'health', 'src/ui.js still shows a second health number: `' + s + '`');
 
 const t0 = Date.now(); let n = 0;

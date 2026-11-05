@@ -37382,7 +37382,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
   const wckQ = location.search + ' ' + (() => { try { return new URL(performance.getEntriesByType('navigation')[0].name).search; } catch (e) { return ''; } })();
   if (!/[?&]wipecheck\b/.test(wckQ) || !/-debrief\.[a-z0-9-]+\.workers\.dev$/.test(location.hostname)) return;
   const wE = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const WCK_C = ['Guillotine soak short', 'Orbs touched', 'Soulcoiler kick missed', 'Axes', 'Mind controls in the wrong spot', 'Ghosts touched', 'Bombs', 'Shield not broken in time', 'Pushed into phase 2 badly', 'Too many dead / healing ran out', 'Reset on purpose', 'Not sure'];
+  const WCK_C = ['Guillotine soak short', 'Orbs touched', 'Soulcoiler kick missed', 'Axes', 'Mind controls in the wrong spot', 'Ghosts touched', 'Bombs', 'Shield not broken in time', 'Pushed into phase 2 badly', 'Not enough damage', 'Too many dead / healing ran out', 'Reset on purpose', 'Not sure'];
   const box = document.createElement('div'); box.id = 'wck'; box.setAttribute('role', 'main'); document.body.appendChild(box); document.body.classList.add('wck-on');
   document.title = 'Wipe check · Debrief';
   let D = { stories: [], answers: {} }, err = '';
