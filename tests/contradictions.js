@@ -20,7 +20,9 @@ const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.
 
 // ---- the site's own helpers, taken out of ui.js by name (so the check reads exactly what the page shows) ----
 const H = require('./site-helpers.js'), UI = H.UI;
-const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml']);
+// (the All pulls card's line about a pull, from shell.html)
+const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n({ story })');
+const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----
 const readJ = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -47,7 +49,7 @@ const P = [], say = (pull, kind, msg) => P.push({ pull, kind, msg });
 const VERBS = /^(kill|pop|run|jump|aim|clear|drain|stop|swap|drop|hit|stare|push|grab|break|step|stay|keep|get|go|heal|save|feed|find|catch)$/i;
 const PLAIN = /^(avoidable damage|phase changes|interrupts|deaths|pace|raid checks)\b/i;
 const BADTXT = [[/\bundefined\b/, '"undefined"'], [/\bNaN\b/, '"NaN"'], [/\bnull\b/, '"null"'], [/\[object /, '"[object"'], [/\b(\d+ )?players? their\b/i, '"player their" (a broken possessive)'],
-  [/\b([A-Za-z]{3,})\s+\1\b/i, 'a doubled word']];
+  [/\b([A-Za-z]{3,})\s+\1\b/i, 'a doubled word'], [/\bat at\b/i, '"at at"'], [/boss at \d+%.*boss at \d+%/i, 'the boss health said twice']];
 const OKDOUBLE = /\b(that that|had had)\b/i;
 function clean(pull, where, t) {
   const s = String(t == null ? '' : t); if (!s) return;
@@ -85,6 +87,7 @@ function checkPull(key) {
     }
     if (pg && v != null && pg.left != null && Math.abs(pg.left - v) > 0.5) say(pull, 'health', 'the banner reads ' + pg.left.toFixed(1) + '% but the pull picker ' + v.toFixed(1) + '%');
     const a = SITE.dbfAt(SITE.pullShort(it)), line = 'We wiped ' + SITE.dbfPre(a) + a + '.';
+    { const q = SITE.aphOf([r]).p[0], st = q ? SHELL.story(q) : ''; clean(pull, 'All pulls card', 'Best pull: ' + it.pull + ' · ' + want + (st ? ' ' + st : '')); }
     if (/\b(at|in) (the )?boss at\b|\bat P\d|\bat Int/.test(line)) say(pull, 'text', 'the coach line reads "' + line + '"');
     clean(pull, 'coach line', line);
   }

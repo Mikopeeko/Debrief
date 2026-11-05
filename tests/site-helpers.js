@@ -4,10 +4,11 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
 const E = require(path.join(SRC, 'engine.js'));
-const UI = fs.readFileSync(path.join(SRC, 'ui.js'), 'utf8');
+const UI0 = fs.readFileSync(path.join(SRC, 'ui.js'), 'utf8'), UI = UI0, SH = fs.readFileSync(path.join(SRC, 'shell.html'), 'utf8');
 // (one declaration, from its keyword to its end: strings, template literals, comments and regex literals are skipped over)
-function grab(name) {
-  const m = new RegExp('(?:^|\\n)([ \\t]*(?:\\/\\*[^\\n]*?\\*\\/\\s*)*)(const|let|function)\\s+' + name.replace(/\$/g, '\\$') + '\\b').exec(UI);
+function grab(name, src) {
+  const UI = src || UI0; /* (src/ui.js, or another file's text: shell.html's small scripts) */
+  const m = new RegExp('(?:^|\\n)([ \\t]*(?:\\/\\*[^\\n]*?\\*\\/\\s*)*)(const|let|var|function)\\s+' + name.replace(/\$/g, '\\$') + '\\b').exec(UI);
   if (!m) throw new Error('ui.js has no ' + name);
   const start = m.index + m[0].length - (m[2].length + 1 + name.length), fn = m[2] === 'function';
   let i = start, depth = 0, prev = '', seenBody = false;
@@ -27,7 +28,7 @@ function grab(name) {
   throw new Error('could not read ' + name + ' out of ui.js');
 }
 function site(names) {
-  const code = names.map(grab).join('\n') + '\n({ ' + names.join(', ') + ' })';
+  const code = names.map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
   const ctx = vm.createContext({ E, C: E.compact, T: E.fmtT, CACHE: new Map(), S: { index: { bosses: [] } }, window: {} });
   const o = vm.runInContext(code, ctx); o.CACHE = ctx.CACHE; return o;
 }
@@ -43,4 +44,4 @@ function pullItems(code, r, W) {
   }
   return items;
 }
-module.exports = { grab, site, pullItems, UI, E };
+module.exports = { grab, site, pullItems, UI, SH, E };
