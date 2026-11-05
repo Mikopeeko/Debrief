@@ -13768,6 +13768,17 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
 .shd-bt-ax span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .shd-bt-x { margin: 2px 0 0 !important; font-size: 12.5px; color: #aeb6bf; }
 </style>
+<style id="wk-css">/* (Nov 5, analysis step 3: tonight vs last raid on the All pulls card) */
+html body .nsm-gbx.nsm-lrc .gbx-r { --gbx-cols: 22px 24px minmax(0,300px) minmax(0,1fr) 44px 52px 84px 18px; --gbx-cols-m: 18px 22px minmax(0,1fr) 28px 40px 66px 14px; }
+html body .nsm-lrv { text-align: right; white-space: nowrap; color: var(--muted); }
+html body .nsm-gbx.nsm-lrc .nsm-bl .nsm-tag { display: none; } /* (the Last raid column says it; the old trend tag measured something else) */
+html body .nsm-lrv i { font-style: normal; font-weight: 400; color: var(--faint); margin-right: 5px; }
+html body .nsm-lrv.good { color: var(--good); } html body .nsm-lrv.bad { color: var(--bad); }
+html body .nsm-lr { margin-left: 8px; font-size: 15px; font-weight: 600; white-space: nowrap; } html body .nsm-lr.up { color: var(--good); } html body .nsm-lr.dn { color: var(--bad); } html body .nsm-lr.eq { color: var(--muted); }
+html body .nsm-ros { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+html body .nsm-rosb { background: none; border: 0; padding: 0; color: var(--text); font: inherit; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+html body .nsm-rosn { color: var(--text); }
+</style>
 <style id="wrt-css">/* (Nov 5, analysis step 2: the root cause line in Why we wiped) */
 html body #view .dbt-why .wrt-line { margin: 6px 0 2px; font: 400 15px/1.45 var(--body); color: var(--text); }
 html body #view .dbt-why .wrt-line .wrt-ar { color: var(--gold); padding: 0 2px; }
@@ -14275,12 +14286,13 @@ html[data-theme="arcade"] body.refine #topbar{border-bottom:3px solid #ff5ea8}</
     /* (Nov 5, one health story: the boss's whole-fight health at the wipe, as the chart and the banner's bars, then the phase's own health:
        "Best pull: 24 · boss at 49% in phase 2") */
     var AP = null; try { AP = JSON.parse(s.dataset.aph || 'null'); } catch (e) { AP = null; } if (!AP || !AP.p) AP = null;
+    /* (Nov 5, step 3: last raid, from the night's saved summary) */ var WK = null; try { WK = JSON.parse(s.dataset.wk || 'null'); } catch (e) { WK = null; }
     var phN = function (k) { return k === 'Intermission' ? 'the intermission' : 'phase ' + String(k).replace(/^P/, ''); };
     /* (Nov 5, analysis step 1: one boss health number everywhere, the whole fight's, so the phase's own boss is no longer named: "in phase 2") */
     var story = function (q) { return q && q[2] && q[2] !== 'k' ? 'in ' + phN(q[2]) : ''; };
     var bestQ = null; if (AP) AP.p.forEach(function (q) { if (q[2] !== 'k' && q[1] != null && (!bestQ || q[1] < bestQ[1])) bestQ = q; });
     var hpS = function (v) { return Math.round(v) + '%'; };
-    var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + ((bm || !kill) && bestQ ? 'Best pull: ' + bestQ[0] + ' · boss at <b>' + hpS(bestQ[1]) + '</b>' + (story(bestQ) ? ' <span class="nsm-st">' + esc(story(bestQ)) + '</span>' : '') : bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
+    var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + ((bm || !kill) && bestQ ? 'Best pull: ' + bestQ[0] + ' · boss at <b>' + hpS(bestQ[1]) + '</b>' + (story(bestQ) ? ' <span class="nsm-st">' + esc(story(bestQ)) + '</span>' : '') + (WK && WK.best != null ? (function (d) { return ' <span class="nsm-lr ' + (d > 0.5 ? 'up' : d < -0.5 ? 'dn' : 'eq') + '">' + (d > 0.5 ? '▲' : d < -0.5 ? '▼' : '=') + ' last raid ' + (WK.best === 0 ? 'killed it' : hpS(WK.best)) + '</span>'; })(WK.best - bestQ[1]) : '') : bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
       '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
     /* (Nov 4, Flex: "it doesnt really show the biggest issues in order of importance", then "Yes, build it" on the Design studio's mock:
        one ranked list. What wiped us most by wipes caused, a footnote with the real counts, then everything else by how many pulls it hit) */
@@ -14300,9 +14312,9 @@ html[data-theme="arcade"] body.refine #topbar{border-bottom:3px solid #ff5ea8}</
     /* (Nov 5, Flex on the studio's mock: "I think visually, this makes the most sense. At a glance, with details. its also recognizable because
        people know warcraftlogs": each row is the Graphs tab's meter row (rank, icon, "Name (Nickname)", a 13 px bar in the cause's colour, the
        count), and a tap opens its sentence, who's behind it and its pulls. One row open at a time; the #1 row starts open) */
-    var brow = function (n, x, v, m, unit, col, dets, open) { var w = Math.max(4, Math.round(100 * v / Math.max(1, m)));
+    var brow = function (n, x, v, m, unit, col, dets, open, extra) { var w = Math.max(4, Math.round(100 * v / Math.max(1, m)));
       return '<div class="nsm-br' + (open ? ' open' : '') + '" style="--c:' + col + '"><div class="gbx-r nsm-bl" role="button" tabindex="0" aria-expanded="' + !!open + '"><span class="nsm-n">' + (n || '') + '</span>' + icon2(x.li, x.nm) +
-        '<span class="gbx-n nsm-t">' + tl(x.nm) + ttag(x.nm) + '</span><span class="gbx-b"><i style="width:' + w + '%"></i></span><span class="gbx-v">' + v + '</span><span class="gbx-s">' + unit + '</span><span class="nsm-ch" aria-hidden="true">' + (open ? '▾' : '▸') + '</span></div>' +
+        '<span class="gbx-n nsm-t">' + tl(x.nm) + ttag(x.nm) + '</span><span class="gbx-b"><i style="width:' + w + '%"></i></span><span class="gbx-v">' + v + '</span><span class="gbx-s">' + unit + '</span>' + (extra || '') + '<span class="nsm-ch" aria-hidden="true">' + (open ? '▾' : '▸') + '</span></div>' +
         '<div class="nsm-det"' + (open ? '' : ' hidden') + '>' + dets + '</div></div>'; };
     var pbs = function (ps, uns) { ps = ps.slice().sort(function (a, b) { return a - b; }); uns = uns || []; return ps.length ? '<div class="nsm-dl"><span class="nsm-dk">' + (ps.length === 1 ? 'Pull' : 'Pulls') + '</span><span class="nsm-dv">' + ps.map(function (n) { return '<a href="#" class="nsm-pb" data-cchpull="' + n + '" aria-label="Open pull ' + n + (uns.indexOf(n) >= 0 ? ', not sure of its root cause' : '') + '">' + n + (uns.indexOf(n) >= 0 ? '<span class="nsm-tag q">not sure</span>' : '') + '</a>'; }).join('') + '</span></div>' : ''; };
     var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
@@ -14373,11 +14385,14 @@ html[data-theme="arcade"] body.refine #topbar{border-bottom:3px solid #ff5ea8}</
       return gs.join('') + (w.unk ? '<p class="nsm-dq">' + (job ? 'Who missed ' + job + ' in the other ' + ow + ' shows once your note is loaded.' : 'The log names no one for the other ' + ow + '.') + '</p>' : ''); };
     var why1 = function (x) { var t = x.s.join(' '), eg = x.li && x.li.dataset && x.li.dataset.eg; return (t ? '<p class="nsm-dw">' + t + '</p>' : '') + (eg ? '<p class="nsm-dq nsm-eg">' + esc(eg) + '</p>' : ''); }; /* (eg: the latest wipe's chain of what happened, from the root cause (Nov 5)) */
     if (top.length) { var ended = {}; top.forEach(function (x) { x.ps.forEach(function (p) { ended[p] = 1; }); }); var en = Object.keys(ended).length, mx = top[0].w || 1, oth = NW - en;
-      o += '<div class="nsm-sec nsm-rank nsm-bars"><div class="nsm-bh"><span class="nsm-k">What wiped us most</span><span>' + (NP ? NP + ' pulls tonight · ' : '') + 'biggest first · tap a row for details</span></div><div class="gbx nsm-gbx">' +
-        '<div class="gbx-r gbx-hd nsm-gh" aria-hidden="true"><span></span><span></span><span>Mechanic</span><span></span><span class="gbx-v">Wipes</span><span></span><span></span></div>' +
-        top.map(function (x, i) { return brow(i + 1, x, x.w, mx, x.w === 1 ? 'wipe' : 'wipes', CC[i] || CO, why1(x) + whoH(x.li) + pbs(x.ps, psOf(x.li.dataset.uns)), i === 0); }).join('') + '</div>';
+      /* (Nov 5, step 3: a Last raid column when last raid's root causes are saved: "12 fewer", "5 same", "0 new") */ var LR = WK && WK.rc ? function (x) { var p = WK.rc[x.nm] || 0, k = x.w < p ? 'good' : x.w > p ? 'bad' : 'same'; return '<span class="nsm-lrv ' + k + '"><i>' + p + '</i>' + (x.w < p ? 'fewer' : x.w > p ? (p ? 'more' : 'new') : 'same') + '</span>'; } : null;
+      o += '<div class="nsm-sec nsm-rank nsm-bars"><div class="nsm-bh"><span class="nsm-k">What wiped us most</span><span>' + (NP ? NP + ' pulls tonight · ' : '') + 'biggest first · tap a row for details</span></div><div class="gbx nsm-gbx' + (LR ? ' nsm-lrc' : '') + '">' +
+        '<div class="gbx-r gbx-hd nsm-gh" aria-hidden="true"><span></span><span></span><span>Mechanic</span><span></span><span class="gbx-v">Wipes</span><span></span>' + (LR ? '<span class="nsm-lrv">Last raid</span>' : '') + '<span></span></div>' +
+        top.map(function (x, i) { return brow(i + 1, x, x.w, mx, x.w === 1 ? 'wipe' : 'wipes', CC[i] || CO, why1(x) + whoH(x.li) + pbs(x.ps, psOf(x.li.dataset.uns)), i === 0, LR ? LR(x) : ''); }).join('') + '</div>';
       if (NW) o += '<p class="nsm-foot">' + (top.length === 1 ? 'This ended ' : (top.length === 2 ? 'These two' : top.length === 3 ? 'These three' : 'These ' + top.length) + ' ended ') + '<b>' + en + '</b> of the <b>' + NW + '</b> wipes.' +
         (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm.replace(/ \([^)]*\)$/, '')) + ' (' + x.w + ')'; }).join(', ') + (rest.reduce(function (a, x) { return a + x.w; }, 0) >= oth ? '.' : ', or no single cause.') : 'no single cause.') : '') + '</p>';
+      /* (Nov 5, step 3: the roster against last raid, and the mechanic the same players went wrong on both nights, names on a tap) */
+      if (WK && WK.same != null) o += '<p class="nsm-ros">Same ' + WK.same + ' players as last raid' + (WK.sw ? ', ' + WK.sw + ' swapped' : '') + '.' + (WK.rep && WK.rep.names ? ' <button type="button" class="nsm-rosb" onclick="var n=this.nextElementSibling;n.hidden=!n.hidden">' + esc(WK.rep.t) + ' both nights: ' + WK.rep.names.length + ' players</button><span class="nsm-rosn" hidden>: ' + esc(WK.rep.names.join(', ')) + '</span>' : '') + '</p>';
       o += '</div>'; }
     if (AO.length) { var am = Math.max(1, AO[0].ps.length);
       o += '<div class="nsm-sec nsm-rank nsm-also nsm-bars"><div class="nsm-bh"><span class="nsm-k">Other mistakes</span><span>didn\'t wipe us on their own</span></div><div class="gbx nsm-gbx">' +
