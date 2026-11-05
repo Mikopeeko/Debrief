@@ -12651,10 +12651,11 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 .pg-altm > button:hover, .pg-altm > button:focus-visible { background: #262b35; outline: none; } .pg-altm > button .sub { margin-left: 4px; color: #9aa3ac; }
 @media (max-width: 760px) { html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page header.plan-bh .bh-l1 > .pg-one { flex-wrap: wrap; margin-left: 0; width: 100%; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page header.plan-bh .bh-l1 > .pg-one > .sub { flex: 1 1 100%; max-width: none; text-align: left; } }
 /* Plan round 5 (Nov 4): the job cards' names in an even grid (Flex: "the spacing on the names and icons feels off"), the job picker the same */
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn:not(.plb-rsub) { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 7px 18px !important; align-items: center; min-width: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rr > .plb-rn:not(.plb-rsub) { display: grid !important; grid-template-columns: repeat(auto-fill, 96px); justify-content: start; gap: 6px 12px !important; align-items: center; min-width: 0; } /* (fixed columns packed to the left, Flex Nov 4: "These names shouldnt be that spread": five fit on one line, and columns line up row to row) */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > .ndz-ac { display: flex !important; align-items: center; min-width: 0; margin: 0 !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > .ndz-ac > .nm { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > .ndz-ac > .nm > img.pnb-spi, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .ndz-p > img.pnb-spi { width: 14px !important; height: 14px !important; margin: 0 4px 0 0 !important; vertical-align: -2px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .ndz-p > img.pnb-spi { width: 14px !important; height: 14px !important; margin: 0 4px 0 0 !important; vertical-align: -2px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > .ndz-ac > .nm > img.pnb-spi { width: 14px !important; height: 14px !important; margin: 0 !important; vertical-align: -2px; } /* (the icon right by the name, Flex Nov 4: just the space after it) */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > em, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rn > .sub { white-space: nowrap; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .cl { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 7px 18px !important; align-items: center; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .cl > .ndz-p { min-width: 0; }
@@ -22534,19 +22535,20 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
 function buildOne(b, rep, same, W, L, cutN) {
-  const T = cutN ? (wipeOf(W, rep) || { t: Infinity }).t : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */
+  const WT = b.kill || b.id === 990001 || b.dungeon ? Infinity : (wipeOf(W, rep) || { t: Infinity }).t; /* (deaths count only up to the wipe call, in every version (Nov 4, Flex: "only show deaths before the wipe call")) */
+  const T = cutN ? WT : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */
   try { if (W.setCut) W.setCut(cutN ? 2 : 0); } catch (e) { /* fine */ }
   const dv = (d) => { try { return W.deathVerdict ? W.deathVerdict(rep, d) : null; } catch (e) { return null; } };
   // (your own lines say "your", not "their" (Oct 22 audit): "Malevolent Resonance: Your ghost touched another ghost")
   const youTxt = (s) => String(s).replace(/\bTheir\b/g, 'Your').replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\b([Tt])hey (didn't|did|were|weren't|stood|got|moved|took|had|died|ran|left|stayed|missed|soaked|dropped)\b/g, (m0, t, v) => (t === 'T' ? 'You ' : 'you ') + v);
   const pr = W.progressOf ? W.progressOf(rep) : null;
   const pct = b.id === 990001 ? '' : b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : ''; // (a practice pull on a dummy has no boss health)
-  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T) || (dv(d) && dv(d).late)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
+  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, WT)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
   const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
   const h = { boss: b.boss, diff: b.dungeon && b.key ? 'Mythic+ ' + b.key : DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration), dungeon: b.dungeon ? 1 : '', inst: b.inst || '',
     night: b.startMs ? new Date(b.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '', // (the raid night, from the PC's clock in the log: until 6 in the morning is the same night (Oct 27))
-    where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
+    where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).filter((d) => before(d.t, WT)).length };
 
   // ---- each player ----
   const key = L.name + '|' + b.id + '|' + b.diffId; if (!HIST.has(key)) HIST.set(key, new Map());
@@ -22706,7 +22708,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   const SHORT = { own: 'own mistake', fast: 'too fast', raid: "raid's mistake", ready: 'kit ready', nothing: 'nothing left', wipe: 'after the wipe' };
   for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player), V = dv(d); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), (d.ability || 'Unknown') + (V && SHORT[V.why] ? ' (' + SHORT[V.why] + ')' : '')]); }
   const extra = D.length - show.length;
-  if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';
+  if (extra > 0) raid.more = '+' + extra + ' more' + (isFinite(WT) ? ' before the wipe call.' : ' by ' + h.dur + '.');
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
   // (how each mechanic went, one line each, from the fight audit: worst first)
   raid.mech = [];
@@ -25662,6 +25664,7 @@ const PATCH_NOTES = [
     'Maps: an add\'s name is never covered by player names.',
     'Plan\'s names you can drag are now solid bars, all one size, and each role starts its own row.',
     'Grade letters are cleaner: solid tiles in three sizes.',
+    'Plan\'s job cards: the names sit closer together, each icon right by its name.',
     'Plan: the Whole week table is gone. Each Roster bar shows how many bosses that raider sits tonight, and the new Out tonight zone sits someone for every boss.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
