@@ -9762,6 +9762,20 @@ function planMarksCardH(boss, diff, noteId, num) { if (typeof ppConf !== 'functi
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-ppmarks]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation(); if (typeof ndzDcNote !== 'function' || typeof ppOpen !== 'function') return;
   let x = null; try { x = ndzDcNote(b.dataset.ppmarks); } catch (er) { x = null; } if (!x) { toast('Open the plan first, then edit its markers.', 3000); return; } ppOpen(x.r, x.u0, { marks: true });
   setTimeout(() => { const d = document.querySelector('#ppWin .pp-mkbox'); if (d && !d.open) { d.open = true; d.scrollIntoView({ block: 'start' }); } }, 60); }, true); /* (straight to the Markers map) */
+// (the job cards in two balanced columns (the studio, Nov 4, after Flex's "i dont want it to have that much empty space"): each card,
+// in card order, goes into whichever column is shorter so far; a phone keeps one column. Redone when the cards are drawn again and on resize)
+function pgJobCols(g) {
+  const cards = [...g.querySelectorAll(':scope > .plb-rc, :scope > .pgc-col > .plb-rc')]; if (!g.dataset.pgc) cards.forEach((c, i) => { c.dataset.pgo = i; });
+  cards.sort((a, b) => +a.dataset.pgo - +b.dataset.pgo); g.dataset.pgc = '1';
+  const one = matchMedia('(max-width: 760px)').matches || cards.length < 2;
+  if (one) { cards.forEach((c) => g.appendChild(c)); g.querySelectorAll(':scope > .pgc-col').forEach((x) => x.remove()); g.classList.remove('pgc2'); return; }
+  let cols = [...g.querySelectorAll(':scope > .pgc-col')]; if (cols.length !== 2) { cols.forEach((x) => x.remove()); cols = [0, 1].map(() => { const d = document.createElement('div'); d.className = 'pgc-col'; return d; }); }
+  g.classList.add('pgc2'); cols.forEach((d) => { d.textContent = ''; g.appendChild(d); });
+  for (const c of cards) (cols[0].offsetHeight <= cols[1].offsetHeight ? cols[0] : cols[1]).appendChild(c);
+}
+let PGC_T = 0;
+new MutationObserver(() => { if (S.page !== 'plan') return; document.querySelectorAll('#view .bj-jobs .plb-rcg:not([data-pgc])').forEach((g) => { try { pgJobCols(g); } catch (e) { /* (the cards stay as drawn) */ } }); }).observe(document.body, { childList: true, subtree: true });
+window.addEventListener('resize', () => { clearTimeout(PGC_T); PGC_T = setTimeout(() => document.querySelectorAll('#view .bj-jobs .plb-rcg[data-pgc]').forEach((g) => { try { pgJobCols(g); } catch (e) { /* fine */ } }), 150); });
 // (a new What changed box that landed off screen glides into view, Oct 26)
 let PLW_SEEN = '';
 new MutationObserver(() => { if (S.page !== 'plan') return; const bx = [...document.querySelectorAll('#view .plw')], k = bx.map((x) => x.textContent.length + ':' + x.textContent.slice(0, 80)).join('|'); if (k === PLW_SEEN) return; const fresh = k && k !== PLW_SEEN && bx.length; PLW_SEEN = k; if (!fresh) return;
