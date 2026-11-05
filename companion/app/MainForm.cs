@@ -216,12 +216,16 @@ namespace Debrief {
     [DllImport("user32.dll")] static extern bool UnregisterHotKey(IntPtr h, int id);
     const int HotkeyId = 0xD0B1;
     int hkMods, hkVk; bool hkOn, hkTaken, hkWant = true, hkFail, fgOk = true; string hkName = "";
+    // (in combat the key rests (Nov 4, Flex: "disable the popup keybind in combat"): the window says when a fight starts and ends, and repeats it each
+    // minute while it lasts; if it goes quiet for 3 minutes the key comes back by itself)
+    bool hkCombat; DateTime hkCombatAt; readonly Timer combatTimer = new Timer { Interval = 30000 };
+    bool InCombat { get { return hkCombat && (DateTime.UtcNow - hkCombatAt).TotalMinutes < 3; } }
     string HotkeyFile { get { return Path.Combine(here, "hotkey.txt"); } } // ("mods,vk,name": mods 1 Alt, 2 Ctrl, 4 Shift; e.g. "2,82,Ctrl + R")
     // (Ctrl + a letter, like Ctrl + R, is every browser's own key (refresh), so it's held only while WoW or one of Debrief's windows is in front
     // (Nov 3, the studio's settings-cleanup-brief.md); other keys work anywhere, as before)
     bool HkWowOnly { get { return hkMods == 2 && hkVk >= 65 && hkVk <= 90; } }
     void HkApply() {
-      bool want = hkWant && hkVk != 0 && (!HkWowOnly || fgOk);
+      bool want = hkWant && hkVk != 0 && !InCombat && (!HkWowOnly || fgOk);
       if (want && !hkOn) { hkOn = RegisterHotKey(Handle, HotkeyId, (uint)hkMods | 0x4000 /* MOD_NOREPEAT */, (uint)hkVk); hkFail = !hkOn; }
       else if (!want && hkOn) { UnregisterHotKey(Handle, HotkeyId); hkOn = false; }
     }
@@ -230,6 +234,10 @@ namespace Debrief {
       if (InvokeRequired) return (string)Invoke(new Func<string>(() => SetHotkey(mods, vk, name)));
       if (mods == -1) { hkWant = false; HkApply(); return ""; }
       if (mods == -2) { hkWant = true; HkApply(); return ""; }
+      if (mods == -3 || mods == -4) { // (-3: a fight is on; -4: it's over)
+        hkCombat = mods == -3; hkCombatAt = DateTime.UtcNow; HkApply();
+        if (hkCombat && !combatTimer.Enabled) { combatTimer.Tick -= CombatTick; combatTimer.Tick += CombatTick; combatTimer.Start(); } else if (!hkCombat) combatTimer.Stop();
+        return ""; }
       if ((mods & 7) == 0 || vk <= 0) return "needs"; // (a plain key: WoW uses those)
       if (hkOn) { UnregisterHotKey(Handle, HotkeyId); hkOn = false; }
       if (!RegisterHotKey(Handle, HotkeyId, (uint)mods | 0x4000, (uint)vk)) { hkWant = true; HkApply(); return "taken"; } // (the old one back)
@@ -238,9 +246,10 @@ namespace Debrief {
       HkApply(); // (a WoW-only key is let go again until WoW is in front)
       return "";
     }
+    void CombatTick(object s, EventArgs e) { if (!InCombat) { hkCombat = false; combatTimer.Stop(); HkApply(); } }
     public System.Collections.Generic.Dictionary<string, object> HotkeyInfo() {
-      bool working = hkOn || (hkWant && HkWowOnly && !fgOk && !hkFail); // (a WoW-only key waiting for WoW counts as on)
-      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", working }, { "chosen", File.Exists(HotkeyFile) }, { "taken", hkTaken }, { "wowOnly", HkWowOnly } };
+      bool working = hkOn || (hkWant && ((HkWowOnly && !fgOk) || InCombat) && !hkFail); // (a key resting until WoW is in front or the fight ends counts as on)
+      return new System.Collections.Generic.Dictionary<string, object> { { "name", hkName }, { "on", working }, { "chosen", File.Exists(HotkeyFile) }, { "taken", hkTaken }, { "wowOnly", HkWowOnly }, { "combat", InCombat } };
     }
     void LoadHotkey() {
       // (the recap key is the only way back to a recap since the card left WoW, so it starts as Ctrl + R when nothing else has it (Flex, Nov 3: "make

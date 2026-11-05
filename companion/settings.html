@@ -208,7 +208,7 @@ const clsCol = () => CLS[myCls()] || '#e6b450';
 function pageHtml() {
   if (PAGE === 'pop') {
     const k = HK && HK.name ? HK.name.split('+').map((x) => '<kbd>' + esc(x.trim()) + '</kbd>').join('+') : 'Not set';
-    const kd = HK && HK.wowOnly ? 'Shows or hides your recap while you\'re in WoW.' + (/^Ctrl \+ R$/.test(HK.name || '') ? ' WoW\'s own Ctrl + R (frame rate) won\'t work while Debrief runs.' : '') : 'Shows or hides your recap, even while you play.';
+    const kd = HK && HK.wowOnly ? 'Shows or hides your recap while you\'re in WoW, out of combat.' + (/^Ctrl \+ R$/.test(HK.name || '') ? ' WoW\'s own Ctrl + R (frame rate) won\'t work while Debrief runs.' : '') : 'Shows or hides your recap, out of combat.';
     return '<section class="pg on">' + head('pop', 'Pop-up', PVL) + '<div class="hint">How your recap window opens and where it sits.</div>' +
       '<div class="lab">When it opens</div>' +
       row('Pop up after each pull', 'A few seconds after every boss pull, and at the end of a key.', tg('pop', sw('pop', true)), '', ' data-tour="pop"') +

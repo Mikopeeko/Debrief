@@ -433,13 +433,13 @@ function renderPulls() {
 
 // ---------- live: wait for the log to grow (no timers, so it keeps up while minimized) ----------
 async function waitLoop() {
-  L.waiting = true; csWatch(L.size); /* (the character in the log you open with, too) */
+  L.waiting = true; csWatch(L.size); /* (the character in the log you open with, too) */ cbWatch(L.size); /* (where the log ends now: fights start after it) */
   while (L.live) {
     let x;
     try { x = await j('/wait?name=' + encodeURIComponent(L.name) + '&size=' + L.size + (L.dummy ? '&quick=1' : '')); } catch (e) { stat('Lost the companion: ' + e.message, 'err'); await new Promise((r) => setTimeout(r, 3000)); continue; }
     if (x.newfile) { await loadLogs(); continue; } // (a newer log: switch to it and keep watching)
     if (x.size !== L.size || L.dummy) {
-      csWatch(x.size); /* (who you're playing, from the newest lines (Nov 3)) */
+      csWatch(x.size); /* (who you're playing, from the newest lines (Nov 3)) */ cbWatch(x.size); /* (in combat: the recap key rests (Nov 4)) */
       try {
         const fresh = await scanMore(false);
         if (fresh.length && $('pop').checked) send(fresh[fresh.length - 1], false);
@@ -509,7 +509,7 @@ const setGet = () => store.get('dbf-set', null) || {};
 const HK = { listen: null };
 const hkName = (e) => [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : ''].filter(Boolean).concat([e.keyCode >= 112 && e.keyCode <= 123 ? 'F' + (e.keyCode - 111) : String.fromCharCode(e.keyCode)]).join(' + ');
 async function hkShow() { try { const x = await j('/hotkey'); $('hkBtn').textContent = x.name || 'Pick one'; $('hkLine').classList.toggle('bad', !!(x.chosen && !x.on));
-  $('hkLine').textContent = x.chosen ? (x.on ? x.name + (x.wowOnly ? ' shows or hides your recap while you\'re in WoW.' : ' shows or hides your recap over the game.') + ' Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
+  $('hkLine').textContent = x.chosen ? (x.on ? x.name + (x.wowOnly ? ' shows or hides your recap while you\'re in WoW, out of combat.' : ' shows or hides your recap over the game, out of combat.') + ' Play WoW in Windowed (Fullscreen) so it shows on top.' : x.name + ' is taken by another program right now. Press the button to pick another.') : '';
   if (!x.chosen) { $('hkAsk').hidden = false; if (x.taken) { $('hkUse').hidden = true; $('hkBig').textContent = 'Press your keys'; $('hkMsg').textContent = 'Ctrl + R is taken by another program on this PC. Press another key combination.'; } } } catch (e) { /* an older app: no hotkey */ } }
 async function hkSet(mods, vk, name) { const x = await j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods, vk, name }) });
   return x.ok ? '' : x.why === 'taken' ? 'Another program already uses ' + name + '. Press another combo.' : 'Use Ctrl, Alt or Shift with a letter, number or F key, so it never clashes with WoW.'; }
@@ -1241,6 +1241,19 @@ async function csWatch(size) {
     if (hit && csKey(hit) !== csKey(CS.cur)) csSet(hit, true);
   } catch (e) { /* (next time) */ }
 }
+// ---------- the recap key rests in combat (Nov 4, Flex: "disable the popup keybind in combat"): during a boss pull, or while you (or your pet) hit or
+// get hit by a creature (the newest lines, the last 6 s), the app lets go of the key so the press goes to WoW; it's back 6 s after the fighting stops ----------
+const CB = { at: 0, to: 0, file: '', on: null, sent: 0, timer: 0 };
+const CB_RE = /_(?:DAMAGE|MISSED),(?:[^,]+,"[^"]*",0x[0-9a-f]*(?:511|1111),[^,]*,(?:Creature|Vehicle)-|(?:Creature|Vehicle)-[^,]*,"[^"]*",0x[0-9a-f]+,[^,]*,[^,]+,"[^"]*",0x[0-9a-f]*(?:511|1111),)/i;
+async function cbWatch(size) {
+  if (CB.file !== L.name) { CB.file = L.name; CB.to = size; } /* (a log just opened: what's in it is over) */
+  if (size > CB.to) { const from = Math.max(CB.to, size - 262144);
+    try { const r = await fetch('/read?name=' + encodeURIComponent(L.name) + '&from=' + from + '&to=' + size); if (r.ok) { const t = new TextDecoder().decode(await r.arrayBuffer()); CB.to = size; if (CB_RE.test(t)) CB.at = Date.now(); } } catch (e) { /* (next time) */ } }
+  cbSend(); }
+function cbSend() {
+  const tail = L.items[L.items.length - 1], boss = !!(L.live && tail && !tail.endByte), on = boss || Date.now() - CB.at < 6000;
+  if (on !== CB.on || (on && Date.now() - CB.sent > 60000)) { CB.on = on; CB.sent = Date.now(); j('/hotkey', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mods: on ? -3 : -4 }) }).catch(() => {}); }
+  clearTimeout(CB.timer); if (on) CB.timer = setTimeout(cbSend, boss ? 30000 : Math.max(500, 6100 - (Date.now() - CB.at))); }
 // (your spec and role from your latest pull's own lines (COMBATANT_INFO), else Raider.IO's)
 function csLogSpec(c) {
   try { const reps = [...L.reps.values()].map((x) => x && x.rep).filter(Boolean); for (let i = reps.length - 1; i >= 0; i--) { for (const p of reps[i].players.values()) if (String(p.name || '').split('-')[0] === c.name && p.specId && W && W.E && W.E.SPECS && W.E.SPECS[p.specId]) return { spec: W.E.SPECS[p.specId][0], cls: W.E.SPECS[p.specId][1], role: p.role }; } } catch (e) { /* (no pull yet) */ }
