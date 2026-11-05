@@ -71475,7 +71475,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
         (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm) + ' (' + x.w + ')'; }).join(', ') + ', or ' : '') + 'no single cause.' : '') + '</p>';
       o += '</div>'; }
     if (AO.length) { var am = Math.max(1, AO[0].ps.length);
-      o += '<div class="nsm-sec nsm-rank nsm-also"><span class="nsm-k">Also went wrong · didn\'t wipe us on its own</span>' + AO.map(function (x) { var n = x.ps.length; return rrow(0, x.li, x.nm, x.s.join(' '), n ? bar(n, am, 'y') : '<span class="nsm-bar y"></span>', n ? n + (n === 1 ? ' pull' : ' pulls') : '', n && NP ? 'of ' + NP : ''); }).join('') + '</div>'; }
+      o += '<div class="nsm-sec nsm-rank nsm-also"><span class="nsm-k">Other mistakes · didn\'t wipe us on their own</span>' + AO.map(function (x) { var n = x.ps.length; return rrow(0, x.li, x.nm, x.s.join(' '), n ? bar(n, am, 'y') : '<span class="nsm-bar y"></span>', n ? n + (n === 1 ? ' pull' : ' pulls') : '', n && NP ? 'of ' + NP : ''); }).join('') + '</div>'; }
     var better = upL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
     if (better.length) o += '<p class="nsm-better"><b>Better tonight:</b> ' + better.join(', ') + '</p>';
     if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
