@@ -2028,6 +2028,8 @@ function openReport() {
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
+    "Debrief Companion: a raid reminder pops up on your PC 30 minutes before your team's raid. Click it for tonight's plan. Change it in Settings › Pop-up › Reminders.",
+    "Debrief Companion: your recap key rests in combat, so a press mid-fight goes to WoW. It works again a few seconds after the fighting stops.",
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
     'The Coiled Altar guide: Soul Sever (Frontal) has its own card and map, and Dreadmarch\'s map stops once the ghosts are frozen.',
     'The Coiled Altar guide on Mythic: the adds card says their shield only breaks after 2 Gloombombs hit each one, and its map shows it.',
