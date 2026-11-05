@@ -22721,7 +22721,7 @@ function specPage(o) {
       if (rest.length) { const ch = ['This boss', rest.map(blk)], si = o.LAYOUT.findIndex(([n]) => n === 'Stats'); if (si >= 0) o.LAYOUT.splice(si, 0, ch); else o.LAYOUT.push(ch); } } } }
   // (combat potions (Oct 25, your note: "combat potion usage should be included here, not healthstones/healthpots"): drunk against what the pull
   // allowed, one before or at the pull and one more every 5 minutes; in Prep with your other consumables, the potion-timing line with it)
-  if (o.per && o.LAYOUT) { let used = 0, poss = 0, pre = 0, nm = null, pin = 0, pinT = 0, pout = 0, poutT = 0; const ts0 = [], hl0 = o.P0 && o.P0.role === 'healer';
+  if (!SPC_KEY && o.per && o.LAYOUT) { /* (not on one Mythic+ pull: a key allows one every 5 minutes, saved for bosses and big pulls (Nov 5)) */ let used = 0, poss = 0, pre = 0, nm = null, pin = 0, pinT = 0, pout = 0, poutT = 0; const ts0 = [], hl0 = o.P0 && o.P0.role === 'healer';
     for (const x of o.per) { const p = x.p, t1 = Math.max(1, x.t1 || (x.r && x.r.duration) || 1), tsC = COMBAT_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1)).sort((a, b) => a - b), ts = tsC.concat(MANA_POTS.flatMap((n) => (p.byName.get(n) || []).filter((t) => t <= t1))).sort((a, b) => a - b);
       const b0 = [...p.buffs.values()].find((b) => (COMBAT_POTS.includes(String(b.name).toLowerCase()) || (E.COMBAT_POT_IDS || []).includes(+b.id)) && b.sp.some(([a]) => a < 0.5)), pp = b0 && !ts.some((t) => t < 3) ? 1 : 0;
       /* (each potion's 30 seconds against the rest of the pull: the potion window, here with the potions (Oct 25)) */

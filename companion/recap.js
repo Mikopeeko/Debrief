@@ -912,7 +912,7 @@ function rotRow(c, W, top, specIcon) {
   const howOf = () => shortTo(sentences(plain(c.how || '')).filter((x) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(x)).slice(0, 2).join(' '), 240);
   const momOf = () => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';');
   return [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : specIcon || ''), plain(c.label), num(c.v), top ? num(top) : '', c.tip ? plain(c.tip) : '',
-    (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(), howOf(), momOf()];
+    (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (/^(ok|g2|g3)$/.test(q.cls) ? 'g' : /^(bad|g0)$/.test(q.cls) ? 'b' : q.cls === 'g1' && /^p:/.test(c.k || '') ? 'g' : 'w')).join('') /* (graded squares too: a proc spent is green, wasted red (Nov 5)) */ : '', why(), howOf(), momOf()];
 }
 window.DBF_CARDBITS = { slipLine, spellId, rotBits, rotRow }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
 window.DBF_BUILD = (b, rep, same, W, L) => {
