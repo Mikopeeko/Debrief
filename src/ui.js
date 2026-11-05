@@ -3629,7 +3629,7 @@ function noteForRep(rep) {
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
   if (!u) return '';
-  if (u.how === 'game') return 'Note: from the game (' + u.game.s + (u.game.exact ? ', as loaded at pull ' + u.pull : ', the note it saved last') + ').';
+  if (u.how === 'game') return u.game.exact ? 'From the game: the ' + u.game.s + ' note loaded for this pull.' : 'From the game: ' + u.game.s + "'s last saved note. WoW saves it when you reload or log out."; /* (the studio's wording, Nov 5) */
   if (u.how === 'log') return 'Saved with this log.';
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';

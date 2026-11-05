@@ -828,26 +828,26 @@ const NICK = {
   'Ravage (Tanks swap)': 'Ravage (Tank Swap)', 'Mutilate (Soak in two groups)': 'Mutilate (Group Soak)', 'Tempest (Dodge the tornadoes)': 'Tempest (Tornadoes)', 'Venomous Surge (Save cysts for the winds)': 'Venomous Surge (Cysts)',
   'Intermission (A cyst for each wind)': 'Intermission (Winds)', 'Raging Crosswinds (Collide in the air)': 'Raging Crosswinds (Collisions)', "Serpent's Fury (Stack and pop it)": "Serpent's Fury (Stack)", 'Virulence (Spread out)': 'Virulence (Spread)',
   // Nymrissa Wavecaller
-  'Frost Orbs (Soak every orb)': 'Frost Orbs (Soaks)', 'Frost Burst (Soak one at a time)': 'Frost Burst (Soaks)', 'Murloc sets (Kill them before the bubble)': 'Murloc Sets (Adds)', 'Bubblefin Frostscales (Kill them first)': 'Bubblefin Frostscales (Big Adds)',
-  'Water Jet (Swap every jet)': 'Water Jet (Tank Swap)', 'Abyssal Rain (Cover it with cooldowns)': 'Abyssal Rain (Raid Cooldowns)', 'Whirlpools and Pop! (Find the gap, stay dry)': 'Whirlpools and Pop! (Dodge)',
+  'Frost Orbs (Soak every orb)': 'Frost Orbs (Soaks)', 'Frost Burst (Soak one at a time)': 'Frost Burst (Soak Order)', 'Murloc sets (Kill them before the bubble)': 'Murloc Sets (Adds)', 'Bubblefin Frostscales (Kill them first)': 'Bubblefin Frostscales (Big Adds)',
+  'Water Jet (Swap every jet)': 'Water Jet (Tank Swap)', 'Abyssal Rain (Cover it with cooldowns)': 'Abyssal Rain (Raid Cooldowns)', 'Whirlpools and Pop! (Find the gap, stay dry)': 'Whirlpools and Pop! (Dodges)',
   // Kith'ix
   'Voidswarm (Kill before the intermission)': 'Voidswarm (Adds)', 'Bomber Beetles (Pop one at a time)': 'Bomber Beetles (Bombs)', 'Extinguish (Grab a mote)': 'Extinguish (Motes)', 'Overwhelming Fear (Dispel one at a time)': 'Overwhelming Fear (Dispel)',
-  'Dark Devastation (Tank swap)': 'Dark Devastation (Tank Swap)', 'Abyssal Grasp (Heal it off)': 'Abyssal Grasp (Heal Absorb)', 'Eclipse Fragments (Catch them in turns)': 'Eclipse Fragments (Catches)', 'Null Gates (Dodge the shards)': 'Null Gates (Shards)',
-  'Last Light (Kill before the 8th Eclipse)': 'Last Light (Burn)',
+  'Dark Devastation (Tank swap)': 'Dark Devastation (Tank Swap)', 'Abyssal Grasp (Heal it off)': 'Abyssal Grasp (Heal Absorb)', 'Eclipse Fragments (Catch them in turns)': 'Eclipse Fragments (Intercepts)', 'Null Gates (Dodge the shards)': 'Null Gates (Shards)',
+  'Last Light (Kill before the 8th Eclipse)': 'Last Light (DPS Check)',
   // Nek'zali the Soulcoiler
   'Restless Amani (Kill before the well)': 'Restless Amani (Adds)', 'Soulcoil Ignition (Dodge the circles)': 'Soulcoil Ignition (Circles)', "Soulcoiler's Curse (Kicks)": "Soulcoiler's Curse (Kick)", 'Grasping Depths (Kill the Echo)': 'Grasping Depths (Echo)',
-  'Essence Rend (Dispel at the side)': 'Essence Rend (Dispel)', 'Possession Barrage (Tank steps away)': 'Possession Barrage (Tank Run)', 'Intermission (Soak the Pyres)': 'Intermission (Pyre Soaks)', 'Invoke (Stop casting)': 'Invoke (No Casting)',
+  'Essence Rend (Dispel at the side)': 'Essence Rend (Dispel)', 'Possession Barrage (Tank steps away)': 'Possession Barrage (Tank Kite)', 'Intermission (Soak the Pyres)': 'Intermission (Pyre Soaks)', 'Invoke (Stop casting)': 'Invoke (Cast Lockout)', "Energy (Don't feed her)": 'Energy (Energy Feed)',
   // Vashnik the Malignant
   'Imbibe (Fountains drained)': 'Imbibe (Fountains)', 'Living Venoms (Kill one at a time)': 'Living Venoms (Adds)', 'Malignant Totems (Clear before the next Imbibe)': 'Malignant Totems (Cleanup)', 'Plague Froth (Aim the lines at totems)': 'Plague Froth (Lines)',
   'Catalytic Bile (Soak every bile)': 'Catalytic Bile (Soaks)', 'Adaptive Infection (Dispel one at a time)': 'Adaptive Infection (Dispel)', 'Dripping Fangs (Tanks swap)': 'Dripping Fangs (Tank Swap)',
   // The Lost Explorers
   'Boxes (Pop early)': 'Boxes (Crates)', 'United Defense (Keep the bosses apart)': 'United Defense (Boss Spacing)', 'Final Ascension (Feed a fish in time)': 'Final Ascension (Fish)', 'Frostfire Volley (Swap patches)': 'Frostfire Volley (Patches)',
-  'Blink Nova (Target runs out)': 'Blink Nova (Run Out)', 'Mighty Thud (Soak every leap)': 'Mighty Thud (Leap Soak)', 'Explosive Surprise (Bounce over the wave)': 'Explosive Surprise (Bounce)', 'Tank stacks (Swap before too many)': 'Tank Stacks (Tank Swap)',
+  'Blink Nova (Target runs out)': 'Blink Nova (Bait)', 'Mighty Thud (Soak every leap)': 'Mighty Thud (Leap Soak)', 'Explosive Surprise (Bounce over the wave)': 'Explosive Surprise (Wave Jump)', 'Tank stacks (Swap before too many)': 'Tank Stacks (Tank Swap)',
   // Ula'tek (both the check's own titles and the site's renames)
   'Eggs (No Vipers)': 'Eggs (Hatching)', "Eggs (Don't let them hatch)": 'Eggs (Hatching)', 'Spectral Coils (Soak circles)': 'Spectral Coils (Soaks)', 'Spectral Coils (Soak the circles)': 'Spectral Coils (Soaks)',
-  'Caustic Waves (Dodge waves)': 'Caustic Waves (Dodge)', 'Caustic Waves (Dodge the waves)': 'Caustic Waves (Dodge)', 'Tanks (Tail tanking)': 'Tanks (Tail Tank)', 'Tanks (One on her, one on the tail)': 'Tanks (Tail Tank)',
+  'Caustic Waves (Dodge waves)': 'Caustic Waves (Dodges)', 'Caustic Waves (Dodge the waves)': 'Caustic Waves (Dodges)', 'Tanks (Tail tanking)': 'Tanks (Tail Tank)', 'Tanks (One on her, one on the tail)': 'Tanks (Tail Tank)',
   'Toxic Incubation (Beam)': 'Toxic Incubation (Beam)', 'Toxic Incubation (Off-tank soaks the beam)': 'Toxic Incubation (Beam)', 'Blightscale Wretch (Bubble)': 'Blightscale Wretch (Bubble)', 'Blightscale Wretch (Stand in its bubble)': 'Blightscale Wretch (Bubble)',
-  'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (Heart Burn)', 'Rage of the Shackled (Burst the heart)': 'Rage of the Shackled (Heart Burn)', 'Grasping Fangs (Tether breaks)': 'Grasping Fangs (Tether Breaks)',
+  'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (DPS Check)', 'Rage of the Shackled (Burst the heart)': 'Rage of the Shackled (DPS Check)', 'Grasping Fangs (Tether breaks)': 'Grasping Fangs (Tether Breaks)',
   'Wardens and Doomscales (Big adds)': 'Wardens and Doomscales (Big Adds)', 'Wardens and Doomscales (Kill fast)': 'Wardens and Doomscales (Big Adds)', "Serpent's Bite (Soak)": "Serpent's Bite (Soak)", "Serpent's Bite (Soak with 3)": "Serpent's Bite (Soak)",
   'Shriekers and Rawlings (Adds)': 'Shriekers and Rawlings (Adds)', 'Shriekers and Rawlings (Kill the adds)': 'Shriekers and Rawlings (Adds)', 'Mephitic Thrash (Get out of the slam)': 'Mephitic Thrash (Slam)',
   'Doomscale Warden (Kill it on the eggs)': 'Doomscale Warden (Big Add)', 'Blightscale Rawling (Kill the adds)': 'Blightscale Rawling (Adds)',
