@@ -404,15 +404,34 @@ function gdzCaFrags(k, id, t, p) {
     k.ring({ x, y, r: 1.3, fx: 'zone', t0: t, dur: tp - t, color: '#c49bff', cn: 'Soul Fragment', legend: 'a Soul Fragment: the bombed player picks up all 3', label: false }); k.at(tp, id, x, y); });
   return t + 2.9;
 }
-function gdzCaKicks(k, RA, MA) {
+// (sh: Mythic's shields: each add is shielded until 2 Gloombombs hit it, so the bombs come to the adds, the shield breaks, then the kill)
+function gdzCaKicks(k, RA, MA, sh) {
   k.boss('hm', 'Malacrass', 0, 18, 20).add('ar', 'Spiteful Soulcoiler', 0, RA[0], RA[1]).add('am', 'Spiteful Soulcoiler', 0, MA[0], MA[1]);
-  k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'], 18, 14, 5.5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -12, -6, 7);
+  k.at(0, 't1', 24, 26).at(0, 't2', 10, 22).at(0, ['m1', 'm2', 'm5', 'm6', 'm7'], 15, 27, 4.5).at(0, ['h1', 'h2', 'h3', 'h4'], 0, 30, 5).at(0, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7'], -12, -6, 7); /* (only the two melee kickers at the melee add; the other melee on Malacrass) */
   [[0.5, 'Ranged 3', 'r3'], [4.2, 'Ranged 6', 'r6'], [8, 'Ranged 3', 'r3']].forEach(([t, by, id]) => { k.cast('ar', 'Wail of Terror', t, t + 0.7, 'kick', by); k.press(id, 'Kick', t, t + 0.9); });
   [[0.6, 'Melee 3', 'm3'], [4.4, 'Melee 4', 'm4'], [8.2, 'Melee 3', 'm3']].forEach(([t, by, id]) => { k.cast('am', 'Wail of Terror', t, t + 0.7, 'kick', by); k.press(id, 'Kick', t, t + 0.9); });
+  // (the melee kickers stand at the melee add and follow it after each teleport, so each kick is in reach)
+  const P = [MA, [MA[0] - 5, MA[1] + 4], [MA[0] + 2, MA[1] + 8]];
+  k.at(0, 'm3', P[0][0] - 1.5, P[0][1] + 5).hold(1.6, 'm3').at(3.4, 'm3', P[1][0] - 1.5, P[1][1] + 5).hold(5.2, 'm3').at(7.4, 'm3', P[2][0] - 1.5, P[2][1] + 5).at(0, 'm4', P[0][0] - 1.5, P[0][1] - 5).hold(1.6, 'm4').at(3.4, 'm4', P[1][0] - 1.5, P[1][1] - 5); /* (beside it, not under it: its name stays clear) */
   const hop = (id, A, list) => { let p = A; list.forEach(([t, dx, dy]) => { k.add(id, 'Spiteful Soulcoiler', t, p[0], p[1]); p = [A[0] + dx, A[1] + dy]; k.add(id, 'Spiteful Soulcoiler', t + 0.05, p[0], p[1]); }); };
   hop('ar', RA, [[1.25, 6, 5], [4.95, -1, 9], [8.75, 5, 2]]); hop('am', MA, [[1.35, -5, 4], [5.15, 2, 8], [8.95, -3, 2]]); /* (a teleport: a jump, not a walk) */
   k.call(1.5, 4, 'Next kicker follows', { x: RA[0] + 3, y: RA[1] + 16 });
-  k.step(0.5).step(1.6).step(4.2).step(8);
+  if (sh) { const A = { ar: [RA[0] + 5, RA[1] + 2], am: [MA[0] - 3, MA[1] + 2] }; /* (where each stands after its last teleport) */
+    ['ar', 'am'].forEach((id) => k.ring({ on: id, r: 4.5, fx: 'debuff', t0: 0, dur: 13.9, color: '#7fd4ff', cn: 'Spirit Shield', legend: 'shield: almost no damage until 2 Gloombombs hit it', label: false }));
+    k.cast('hm', 'Gloombomb', 8, 8.8);
+    // (2 ranged bombs to the ranged add, 2 melee bombs to the melee add, each pair on opposite sides of it, about 12 yards out: the
+    // circles overlap on the add and reach nobody else; the melee kickers step back out of them)
+    const side = (a, to) => { const dx = to[0] - a[0], dy = to[1] - a[1], n = Math.hypot(dx, dy) || 1, px = -dy / n * 12, py = dx / n * 12; return [[a[0] + px, a[1] + py], [a[0] - px, a[1] - py]]; };
+    const [r1, r2] = side(A.ar, [-12, -6]), [m1, m2] = side(A.am, [15, 27]);
+    [['r1', r1, 12.6], ['r2', r2, 12.6], ['m1', m1, 12], ['m2', m2, 12]].forEach(([id, p, t]) => { k.ring({ on: id, r: 15, fx: 'burst', t0: 8.8, at: 13.8, dur: 5.2, color: '#da3df2', cn: 'Gloombomb', legend: 'explodes 15 yards around them', label: false });
+      k.hold(9, id).at(t, id, p[0], p[1]).hold(13.8, id).press(id, 'Defensive', 12.8, 14.2); });
+    k.hold(9, ['m3', 'm4']).at(11, 'm3', 13, 29).at(11, 'm4', 18, 30);
+    k.call(9, 12.6, 'Bombs to the adds', { x: -4, y: -20, color: '#e07bff', ink: '#14061f' });
+    ['ar', 'am'].forEach((id) => { k.call(13.9, 15.4, 'Shield down', { on: id, color: '#7fd4ff', ink: '#06202c' });
+      k.ring({ on: id, r: 5, fx: 'burst', t0: 15.8, at: 16.2, dur: 0.6, color: '#ffd23b', cn: 'Spiteful Soulcoiler dies', legend: 'the add dies', label: false }); k.show(id, 0, 16.3); });
+    k.call(15.5, 17, 'Kill them', { x: -4, y: -2 });
+    k.step(0.5).step(1.6).step(4.2).step(9).step(13.9);
+  } else k.step(0.5).step(1.6).step(4.2).step(8);
   k.pause(4.8, 'Freeze. No bombs on these adds. Their shields don\'t need breaking, so the raid just keeps kicking every Wail of Terror.'); return k.done({ title: 'The last adds: just kick them', focus: { x: -4, y: -2, r: 20 } });
 }
 // Axegrinder (from 5 top Mythic kills, Oct 20): Zul'jan throws 5 axes out at 0:14 and 5 more at 1:39, and each set rolls around the
@@ -603,8 +622,8 @@ const GDZ_CA_M = {
   },
   // Spiritcackle: the two Spiteful Soulcoilers and the kick order (the last adds' map, with its own freeze note)
   kicks(d) {
-    const k0 = gdzKit('The Coiled Altar', 11), mp = gdzCaKicks(d === 'h' ? k0.rot(90) : gdzCaMarks(k0), [-32, -28], [24, 8]);
-    if (mp && mp.frames) { mp.title = 'Spiritcackle: kick every Wail of Terror'; mp.pauses = mp.pauses.map((p) => ({ ...p, text: 'Freeze. A kick order on each add: every Wail of Terror is kicked, and the next kicker follows the add when it teleports.' })); }
+    const k0 = gdzKit('The Coiled Altar', d === 'h' ? 11 : 17.5), mp = gdzCaKicks(d === 'h' ? k0.rot(90) : gdzCaMarks(k0), [-32, -28], [30, 4], d !== 'h'); /* (the melee add a few steps from Malacrass: its name and the melee's don't pile up) */
+    if (mp && mp.frames) { mp.title = d === 'h' ? 'Spiritcackle: kick every Wail of Terror' : 'Spiritcackle: kick, bomb, then kill'; mp.pauses = mp.pauses.map((p) => ({ ...p, text: 'Freeze. A kick order on each add: every Wail of Terror is kicked, and the next kicker follows the add when it teleports.' })); }
     return mp;
   },
   // Defilement (phase 3): heal-absorb ground in place of Fangs, and Corrupted Toxin on the tank: the other tank taunts
@@ -1198,8 +1217,9 @@ GDZ['The Coiled Altar'] = {
         { id: 'kicks', fail: GDZ_CA_FAIL.kicks, how: 1, spell: 'Wail of Terror', name: 'Spiteful Soulcoiler (Adds)', what: 'Two adds come with each set. They cast Wail of Terror, a raid fear, and teleport after each kick. At full energy they can\'t be kicked.',
           do: ['Kickers: *Kick every Wail of Terror*. It\'s a raid-wide fear.', 'Kickers: The add *teleports* after each kick. The *next kicker* follows it.', 'Kickers: *Keep the order going* on both adds.', 'DPS: *Kill them* before they reach *full energy*.'],
           roles: ['td', 'td', 'td', 'd'],
-          m: { what: 'Two adds come with each set. They hit the raid every 3 seconds while alive and cast Wail of Terror, a raid fear.',
-            do: ['Raid lead: *Mark the ranged add*. Ranged kick the marked one, melee kick the other.', 'Kickers: *Kick every Wail of Terror*. The add *teleports* after each kick.', 'Kickers: The *next kicker* in the order takes the next cast, even after a teleport.', 'DPS: *Kill them fast*. They hit the raid while alive. *Warlocks*: Curse of Tongues on both.'] },
+          m: { what: 'Two adds come with each set. They hit the raid every 3 seconds while alive and cast Wail of Terror, a raid fear. A shield keeps each one almost unhurt until 2 Gloombombs hit it.',
+            do: ['Raid lead: *Mark the ranged add*. Ranged kick the marked one, melee kick the other.', 'Kickers: *Kick every Wail of Terror*. The add *teleports* after each kick.', 'Kickers: The *next kicker* in the order takes the next cast, even after a teleport.', 'Everyone: Each add has a *shield* and takes almost no damage until *2 Gloombombs* hit it. The bombs break the shield.', 'DPS: Once the shield is down, *kill them fast*. They hit the raid while alive. *Warlocks*: Curse of Tongues on both.'],
+            roles: ['', 'td', 'td', '', 'd'] },
           map: (d) => GDZ_CA_M.kicks(d) },
       ],
       tiles: [

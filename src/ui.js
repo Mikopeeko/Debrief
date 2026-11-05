@@ -2030,6 +2030,8 @@ const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
     'The Coiled Altar guide: Soul Sever (Frontal) has its own card and map, and Dreadmarch\'s map stops once the ghosts are frozen.',
+    'The Coiled Altar guide on Mythic: the adds card says their shield only breaks after 2 Gloombombs hit each one, and its map shows it.',
+    'Maps: an add\'s name is never covered by player names.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
     'Plan: Debrief spots your alts. Drag one in and it swaps out its main, so each player takes one spot.',
@@ -13122,6 +13124,8 @@ function miniMap(mp, pmap) {
     if (ring) addRes.push({ x, y, ly: y + 22, w: 140, pri: -1, html: '' }, { x, y, ly: y + 34, w: 140, pri: -1, html: '' }); // (its name and kick tag: no other name prints over them)
     const look = ADD_LOOK[p.name] || ADD_LOOK[String(p.name).replace(/ \(.*\)$/, '')]; // (kick maps name adds like "Spiteful Soulcoiler (Set 1 #2)")
     // an add with its own icon still gets the kick result: green ring = kicked, red = its cast got off, and it says so
+    // (its name takes its spot first, like a kicked add's: player names step around it, never print over it (the studio, Nov 4))
+    if (look && look.label && !crowd && !ring) addRes.push({ x, y, ly: y + look.r + 10, w: look.label.length * 6 + 10, pri: -1, html: '' });
     if (look) { const st = gAdd.has(p.guid) ? ' · kicked' : bAdd.has(p.guid) ? ' · cast got off' : ''; s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="' + (look.r + 6) + '" fill="none" stroke="' + ring + '" stroke-width="3.5"/>' : '') + (okAddNow.has(p.guid) ? addIcon(x, y, look, esc(p.name)).replace('fill="#ff3b3b"', 'fill="#2fd15a"') + '<circle cx="' + (x + look.r * 0.85) + '" cy="' + (y - look.r * 0.85) + '" r="4.5" fill="#2fd15a" stroke="#000" stroke-width="1"/><path d="M' + (x + look.r * 0.85 - 2.1) + ' ' + (y - look.r * 0.85) + 'l1.5 1.7l2.8-3.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' : addIcon(x, y, look, esc(p.name))) + (look.label && !crowd ? '<text x="' + x + '" y="' + (y + look.r + 14) + '" class="ml" style="font-size:10px' + (ring ? ';font-weight:800" fill="' + ring : '') + '">' + esc(look.label + st) + '</text>' : '') + castBar(p.guid, x, y + look.r + (look.label ? 18 : 6))); continue; }
     s += ic(x, y, (ring ? '<circle cx="' + x + '" cy="' + y + '" r="14" fill="none" stroke="' + ring + '" stroke-width="3"/>' : '') +
       '<rect x="' + (x - 8) + '" y="' + (y - 8) + '" width="16" height="16" transform="rotate(45 ' + x + ' ' + y + ')" fill="#b46bff" stroke="#000" stroke-width="1.5"><title>' + esc(p.name) + '</title></rect>' +
@@ -13227,7 +13231,8 @@ function miniMap(mp, pmap) {
       let best = null; for (const [ox, oy, up] of c.on ? [[0, 0, 0], [0, 0, 1]] : C0) { let n = 0, out = 0;
         for (const f of FR) { const a = at(f); if (!a) continue; const x = a[0] + ox * w * 0.6, y = a[1] + oy * (h + gap), top = up ? y + gap : y - gap - h, bot = up ? y + gap + h : y - gap;
           if (x - w / 2 < V0[0] || x + w / 2 > V0[0] + V0[2] || top < V0[1] || bot > V0[1] + V0[3]) out++;
-          for (const q of f.pts) if (q.kind === 'player' && q.guid !== c.on) { const px = X(q), py = Y(q); if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; } }
+          for (const q of f.pts) if (q.kind === 'player' && q.guid !== c.on) { const px = X(q), py = Y(q); if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; }
+            else if (q.kind === 'add') { const px = X(q), py = Y(q) + 22; if (px > x - w / 2 - r && px < x + w / 2 + r && py > top - r && py < bot + r) n++; } }
         const v = n * 10 + out * 4 + Math.abs(ox) + Math.abs(oy) + up; if (!best || v < best[0]) best = [v, ox * w * 0.6, oy * (h + gap), up]; if (!n && !out) break; }
       return (c._fa = { dx: best[1], dy: best[2], up: best[3] }); };
     const CO = (mp.callouts || []).filter((q) => q.kind === 'spot').concat((mp.callouts || []).filter((q) => q.kind !== 'spot')); /* (the freeze's ring first: a caption is never crossed by it) */
