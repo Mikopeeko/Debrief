@@ -13786,9 +13786,10 @@ html body #view .dbt-why .wrt-also { margin: 4px 0 6px; font: 400 13.5px/1.45 va
 html body #view .dbt-why .wrt-also b { color: var(--text); font-weight: 600; }
 html body #view .dbt-why .wrt-uns { display: inline-block; margin-left: 8px; padding: 1px 8px; border: 1px solid var(--line2); border-radius: 10px; font: 600 12.5px/1.4 var(--body); color: var(--muted); vertical-align: middle; }
 html body #view .dbt-why .wrt-early { color: var(--muted); }
-html body #view .dbt-why .wrt-tag { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; font: 600 12px/1.6 var(--body); vertical-align: 1px; white-space: nowrap; }
-html body #view .dbt-why .wrt-tag.root { color: var(--gold); background: rgba(230, 180, 80, .12); border: 1px solid rgba(230, 180, 80, .45); }
-html body #view .dbt-why .wrt-tag.also { color: var(--muted); border: 1px solid var(--line2); }
+html body #view .dbt-why .wrt-tag { display: inline-block; margin: 0 6px 0 2px; font: 600 12px/1.4 var(--body); white-space: nowrap; letter-spacing: .2px; }
+html body #view .dbt-why .wrt-tag.root { color: var(--gold); }
+html body #view .dbt-why .wrt-tag.also { color: var(--faint); font-weight: 400; }
+html body #view .dbt-why .wrt-rootrow { box-shadow: inset 3px 0 0 var(--gold); background: rgba(230, 180, 80, .06); border-radius: 6px; }
 </style>
 <style id="wck-css">/* (Nov 5, analysis step 1: the wipe check page, practice links only; the site's colours, big taps for a phone) */
 body.wck-on > :not(#wck) { display: none !important; }
@@ -72443,9 +72444,9 @@ function scan() { r423soon(); /* round 373 heart card */ [].forEach.call(documen
       if (/^(dps|push)$/.test(RT.cat)) [].slice.call(w.querySelectorAll('.dbt-add > .dbt-addr')).forEach(function (x) { if (/^phase changes/i.test(T(x.querySelector(':scope > b')))) x.remove(); }); /* (said once: the root already is the phase) */
       h2.after(pl); if (window.__wrtTag) window.__wrtTag(w, RT); }
     /* (Nov 5: How it went is the chain: the root cause's row, and the rows that added up, by their moment's time) */
-    if (!window.__wrtTag) window.__wrtTag = function (w, RT) { if (!w || !RT || !RT.marks) return; [].forEach.call(w.querySelectorAll('.wrt-tag'), function (x) { x.remove(); });
+    if (!window.__wrtTag) window.__wrtTag = function (w, RT) { if (!w || !RT || !RT.marks) return; [].forEach.call(w.querySelectorAll('.wrt-tag'), function (x) { x.remove(); }); [].forEach.call(w.querySelectorAll('.wrt-rootrow'), function (x) { x.classList.remove('wrt-rootrow'); });
       var secs = function (r) { var m = /(\d+):(\d\d)(?!\d)/.exec(((r.querySelector('.dbt-cht') || r).textContent) || ''); return m ? 60 * m[1] + +m[2] : null; }, rows = [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end), .dbt-add > .dbt-addr'));
-      var put = function (r, k) { var b = r.querySelector(':scope > b'), t = document.createElement('span'); t.className = 'wrt-tag ' + k; t.textContent = k === 'root' ? 'Root cause' : 'Added up'; if (b) b.before(t); else r.prepend(t); };
+      var put = function (r, k) { var b = r.querySelector(':scope > b'), t = document.createElement('span'); t.className = 'wrt-tag ' + k; t.textContent = k === 'root' ? 'Root cause' : 'added up'; if (b) b.after(t); else r.prepend(t); if (k === 'root') r.classList.add('wrt-rootrow'); };
       var rm = RT.marks.filter(function (m) { return m.k === 'root'; })[0], best = null, bd = 99; if (rm) rows.forEach(function (r) { var s0 = secs(r); if (s0 == null) return; var d = Math.abs(s0 - Math.floor(rm.t)); if (d <= 3 && d < bd) { bd = d; best = r; } }); if (best) put(best, 'root');
       rows.forEach(function (r) { if (r === best) return; var s0 = secs(r); if (s0 != null && RT.marks.some(function (m) { return m.k === 'also' && Math.abs(s0 - Math.floor(m.t)) <= 1; })) put(r, 'also'); }); };
     if (ms.length && !(RT && RT.line)) h2.innerHTML = 'We wiped' + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') + ': <span class="r208-m">' + (ms.length > 1 ? ms[0] + ' and ' + ms[1] : ms[0]).replace(/[<>]/g, '') + '</span>.';
