@@ -9202,6 +9202,8 @@ html body #view > .dbt.dbt .dbt-chp { margin-left: 6px; padding: 1px 5px; border
 html body #view > .dbt.dbt .dbt-chr > b { color: var(--text); font-weight: 700; white-space: nowrap; }
 html body #view > .dbt.dbt .dbt-chr .dbt-ic.x { display: inline-flex; align-items: center; justify-content: center; color: #f0726a; font-weight: 800; }
 @media (max-width: 760px) { html body #view > .dbt.dbt .dbt-chr { grid-template-columns: 70px 22px minmax(0, 1fr) auto; } html body #view > .dbt.dbt .dbt-chr > span:nth-of-type(3) { grid-column: 3 / 5; grid-row: 2; } }
+/* (Nov 5, phones: long mechanic names wrap instead of running into the badge) */
+@media (max-width: 760px) { html body #view > .dbt.dbt .dbt-chr > b, html body #view > .dbt.dbt .dbt-addr > b { white-space: normal; min-width: 0; } }
 html body #view > .dbt.dbt .dbt-lv { font: 700 11px 'Barlow Condensed', sans-serif; font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
 html body #view > .dbt.dbt .dbt-lv.l1, html body #view > .dbt.dbt .dbt-lv.l2 { color: #cdb35a; } html body #view > .dbt.dbt .dbt-lv.l3 { color: #e8a23a; } html body #view > .dbt.dbt .dbt-lv.l4, html body #view > .dbt.dbt .dbt-lv.l5 { color: #f0726a; }
 /* the Overview, refined (look only) */
