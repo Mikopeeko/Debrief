@@ -2035,6 +2035,7 @@ const PATCH_NOTES = [
     'The Coiled Altar guide on Mythic: the adds card says their shield only breaks after 2 Gloombombs hit each one, and its map shows it.',
     'Maps: an add\'s name is never covered by player names.',
     'Plan\'s names you can drag are now solid bars, all one size, and each role starts its own row.',
+    'Grade letters are cleaner: solid tiles in three sizes.',
     'Plan: the Whole week table is gone. Each Roster bar shows how many bosses that raider sits tonight, and the new Out tonight zone sits someone for every boss.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
@@ -29601,7 +29602,7 @@ const RCN_WHY = { mech: (a) => (a.mistakes ? plural(a.mistakes, 'mistake') + ' t
 // a rated card for every raider; a card opens that player's whole night. Built only on the Report card; the grades are
 // plData's, unchanged. A card's colour is where they rank in the raid tonight (the top tenth legendary orange, then epic
 // purple, rare blue, uncommon green), so every night has a spread even when most grades sit close together.
-const RCT_TIER = [[0.1, '#ff8000', 'The best grades tonight'], [0.35, '#b25ef5', 'Near the top tonight'], [0.7, '#2e8cff', 'The middle of the raid tonight'], [1.01, '#2ee62e', 'The rest of the raid tonight']];
+const RCT_TIER = [[0.1, '#ff9a3c', 'The best grades tonight'], [0.35, '#b98cf0', 'Near the top tonight'], [0.7, '#5aa2ff', 'The middle of the raid tonight'], [1.01, '#5fd46f', 'The rest of the raid tonight']]; /* (the grade colours, Nov 4) */
 const RCT_POS = { tank: 'Tank', healer: 'Healer', dps: 'DPS' };
 function rctFacts(c, F) {
   if (F._rct) return F._rct;

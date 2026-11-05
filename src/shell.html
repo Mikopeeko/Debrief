@@ -982,8 +982,10 @@ svg.trend.big .tw:hover { r: 6px; } .pc-legend.nc-leg2 { margin: 8px 0 0; font-s
 .grade.big { min-width: 58px; height: 58px; font-size: 32px; border-radius: 12px; border-width: 2px; }
 /* grades in WoW item-quality colours: S legendary, A epic, B rare, C uncommon, D common; F red (epic and rare a touch
    lighter than in game, so the letter reads on a dark panel) */
-.grade.g-S { color: #ff8000; background: rgba(255,128,0,.14); } .grade.g-A { color: #b25ef5; background: rgba(163,53,238,.16); } .grade.g-B { color: #2e8cff; background: rgba(0,112,221,.16); }
-.grade.g-C { color: #2ee62e; background: rgba(30,255,0,.10); } .grade.g-D { color: #f2f2f2; background: rgba(255,255,255,.08); } .grade.g-F { color: var(--bad); background: var(--bad-bg); }
+/* (the grade colours, softer (Nov 4): one set the badges, score numbers, bars, rings and night cards share) */
+:root { --gS: #ff9a3c; --gA: #b98cf0; --gB: #5aa2ff; --gC: #5fd46f; --gD: #c9cdd3; --gF: #ef6b63; }
+.grade.g-S { --gc: var(--gS); } .grade.g-A { --gc: var(--gA); } .grade.g-B { --gc: var(--gB); }
+.grade.g-C { --gc: var(--gC); } .grade.g-D { --gc: var(--gD); } .grade.g-F { --gc: var(--gF); }
 .nc-card { margin-top: 12px; display: flex; align-items: stretch; gap: 14px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .nc-all { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding-right: 14px; border-right: 1px solid var(--line); font-size: 13px; color: var(--muted); }
 .nc-cats { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px 16px; align-items: center; }
@@ -1444,7 +1446,7 @@ details.secd > summary .sechd b { font-size: 14px; font-weight: 600; }
 .plm { display: grid; grid-template-columns: 26px minmax(0, 1fr) 22px; gap: 8px; align-items: center; } .plm.na { display: block; font-size: 12px; }
 .plm .grade { min-width: 26px; height: 24px; padding: 0 4px; font-size: 14px; border-radius: 8px; border-width: 1px; }
 .plm-b { height: 5px; background: var(--line); border-radius: 2px; overflow: hidden; } .plm-b i { display: block; height: 100%; }
-.plm-b i.g-S { background: #ff8000; } .plm-b i.g-A { background: #a335ee; } .plm-b i.g-B { background: #0070dd; } .plm-b i.g-C { background: #1eff00; } .plm-b i.g-D { background: #f2f2f2; } .plm-b i.g-F { background: var(--bad); }
+.plm-b i.g-S { background: var(--gS); } .plm-b i.g-A { background: var(--gA); } .plm-b i.g-B { background: var(--gB); } .plm-b i.g-C { background: var(--gC); } .plm-b i.g-D { background: var(--gD); } .plm-b i.g-F { background: var(--gF); }
 .plm b { font-size: 13px; font-weight: 600; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 .plis { display: flex; align-items: center; gap: 8px; } .plis .sep { width: 1px; height: 20px; background: var(--line2); margin: 0 1px; }
 .pli { --ic: transparent; position: relative; flex: none; width: 24px; height: 24px; border-radius: 8px; box-shadow: 0 0 0 1px #000, 0 0 0 2.5px var(--ic); }
@@ -6055,10 +6057,10 @@ details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } de
 /* Report card, mockup B "Ranked roster" (your pick, Oct 19) */
 .rcb-k { font: 700 12px var(--head); letter-spacing: 1.6px; text-transform: uppercase; color: var(--muted); } .rcb-k.gold { color: var(--gold); }
 .rcb-v { display: inline-grid; place-items: center; min-width: 34px; height: 24px; padding: 0 6px; border-radius: 8px; font: 700 14px var(--head); background: rgba(255,255,255,.05); color: var(--muted); }
-.rcb-v.q5, .rcb-st > b.q5 { color: #ff8000; } .rcb-v.q4, .rcb-st > b.q4 { color: #b25ef5; } .rcb-v.q3, .rcb-st > b.q3 { color: #2e8cff; } .rcb-v.q2, .rcb-st > b.q2 { color: #2ee62e; } .rcb-v.q1 { color: #9d9d9d; }
+.rcb-v.q5, .rcb-st > b.q5 { color: var(--gS); } .rcb-v.q4, .rcb-st > b.q4 { color: var(--gA); } .rcb-v.q3, .rcb-st > b.q3 { color: var(--gB); } .rcb-v.q2, .rcb-st > b.q2 { color: var(--gC); } .rcb-v.q1 { color: #9d9d9d; }
 .rcb-si { width: 22px; height: 22px; border-radius: 4px; flex: none; }
 .rcb-ring { position: relative; display: inline-grid; place-items: center; } .rcb-ring svg { width: 100%; height: 100%; } .rcb-ring circle { fill: none; stroke-width: 7; } .rcb-ring .bg { stroke: rgba(255,255,255,.08); } .rcb-ring .fg { stroke-linecap: round; stroke: currentColor; }
-.rcb-ring .g-S { color: #ff8000; } .rcb-ring .g-A { color: #b25ef5; } .rcb-ring .g-B { color: #2e8cff; } .rcb-ring .g-C { color: #2ee62e; } .rcb-ring .g-D { color: #f2f2f2; } .rcb-ring .g-F { color: var(--bad); }
+.rcb-ring .g-S { color: var(--gS); } .rcb-ring .g-A { color: var(--gA); } .rcb-ring .g-B { color: var(--gB); } .rcb-ring .g-C { color: var(--gC); } .rcb-ring .g-D { color: var(--gD); } .rcb-ring .g-F { color: var(--gF); }
 .rcb-ring > span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; } .rcb-ring b { font: 800 46px/1 var(--head); } .rcb-ring small { font-size: 12px; color: var(--muted); }
 .rcb-ban { position: relative; overflow: hidden; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 20px; margin: 0 0 16px; padding: 24px 28px; border-radius: 16px; border: 1px solid var(--line2); box-shadow: 0 18px 40px rgba(0,0,0,.4); background: var(--panel); }
 .rcb-ban.win { border-color: rgba(255,128,0,.5); } .rcb-banbg { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; } .rcb-bansh { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(10,12,17,.97) 0%, rgba(10,12,17,.86) 45%, rgba(10,12,17,.55) 75%, rgba(10,12,17,.9) 100%); }
@@ -6068,7 +6070,7 @@ details.spc-tl[open] > summary::after { content: '▴'; color: var(--gold); } de
 .rcb-sec { margin: 0 0 16px; padding: 16px 18px; border-radius: 16px; } .rcb-sh { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 12px; } .rcb-sh h3 { margin: 0; font: 700 20px var(--head); color: var(--text); } .rcb-sh .rct-roles { margin-left: auto; }
 .rcb-subs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; } .rcb-st { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 12px; background: var(--raised); border: 1px solid var(--line); }
 .rcb-sth { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); } .rcb-sth .grade { margin-left: auto; } .rcb-st > b { font: 700 32px/1 var(--head); color: var(--text); } .rcb-st .sub { font-size: 12px; }
-.rcb-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,.06); } .rcb-bar i { display: block; height: 100%; border-radius: 4px; background: #9d9d9d; } .rcb-bar i.q5 { background: #ff8000; } .rcb-bar i.q4 { background: #a335ee; } .rcb-bar i.q3 { background: #2e8cff; } .rcb-bar i.q2 { background: #2ee62e; }
+.rcb-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,.06); } .rcb-bar i { display: block; height: 100%; border-radius: 4px; background: #9d9d9d; } .rcb-bar i.q5 { background: var(--gS); } .rcb-bar i.q4 { background: var(--gA); } .rcb-bar i.q3 { background: var(--gB); } .rcb-bar i.q2 { background: var(--gC); }
 .rcb-2 { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: start; } .rcb-2 > .rcb-sec { margin: 0; }
 .rcb-tr { display: grid; grid-template-columns: 30px minmax(150px, 1.6fr) 70px repeat(6, minmax(0, 1fr)) 52px; gap: 6px; align-items: center; width: 100%; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 14px; text-align: center; }
 button.rcb-tr { cursor: pointer; } button.rcb-tr:nth-of-type(even) { background: rgba(255,255,255,.02); } button.rcb-tr:hover { background: rgba(255,255,255,.05); }
@@ -6575,8 +6577,8 @@ header.fight.bh.bhx > .bgread[hidden] { display: none; }
 .rcb-tr.ds-bar .rcb-g { position: relative; isolation: isolate; justify-content: space-between; height: 24px; padding: 0 8px 0 4px; border-radius: 6px; background: rgba(255,255,255,.05); overflow: hidden; font-size: 14px; }
 .rcb-tr.ds-bar .rcb-g::before { content: ''; position: absolute; z-index: -1; left: 0; top: 0; bottom: 0; width: var(--p, 0%); border-radius: 6px; background: var(--bc, #2e8cff); opacity: .38; }
 .rcb-tr.ds-bar .rcb-g .grade { min-width: 20px; height: 18px; padding: 0 4px; font-size: 12.5px; border-width: 1px; border-radius: 5px; background: rgba(0,0,0,.35); }
-.rcb-tr.ds-bar:has(.g-S) .rcb-g { --bc: #ff8000; } .rcb-tr.ds-bar:has(.g-A) .rcb-g { --bc: #b25ef5; } .rcb-tr.ds-bar:has(.g-B) .rcb-g { --bc: #2e8cff; }
-.rcb-tr.ds-bar:has(.g-C) .rcb-g { --bc: #2ee62e; } .rcb-tr.ds-bar:has(.g-D) .rcb-g { --bc: #c9cfdc; } .rcb-tr.ds-bar:has(.g-F) .rcb-g { --bc: var(--bad); }
+.rcb-tr.ds-bar:has(.g-S) .rcb-g { --bc: var(--gS); } .rcb-tr.ds-bar:has(.g-A) .rcb-g { --bc: var(--gA); } .rcb-tr.ds-bar:has(.g-B) .rcb-g { --bc: var(--gB); }
+.rcb-tr.ds-bar:has(.g-C) .rcb-g { --bc: var(--gC); } .rcb-tr.ds-bar:has(.g-D) .rcb-g { --bc: var(--gD); } .rcb-tr.ds-bar:has(.g-F) .rcb-g { --bc: var(--gF); }
 .rcb-tr .rcb-v { min-width: 0; height: auto; padding: 0; border-radius: 0; background: none; font: 500 13px var(--body); color: var(--muted) !important; }
 .rcb-tr.sel .rcb-v, .rcb-tr:hover .rcb-v { color: var(--text) !important; }
 @media (max-width: 760px) { .rcb-tr { min-width: 0; grid-template-columns: 24px minmax(0, 1fr) minmax(120px, 1fr) 40px; } .rcb-tr .rcb-v, .rcb-th > button { display: none; } .rcb-tbl { overflow: visible; } }
@@ -13649,16 +13651,22 @@ document.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' && e
 </style>
 <style id="rcss-479">
 /* round 479 quick wins */
-html body .rcb-st:has(> b[data-g^="S"]) .rcb-bar > i{background:#ff9a3c !important}
-html body .rcb-st:has(> b[data-g^="A"]) .rcb-bar > i{background:#b981f5 !important}
-html body .rcb-st:has(> b[data-g^="B"]) .rcb-bar > i{background:#4f9dff !important}
-html body .rcb-st:has(> b[data-g^="C"]) .rcb-bar > i{background:#52d65a !important}
-html body .rcb-st:has(> b[data-g^="D"]) .rcb-bar > i{background:#c9cfd6 !important}
-html body .rcb-st:has(> b[data-g^="F"]) .rcb-bar > i{background:#e5534b !important}
+html body .rcb-st:has(> b[data-g^="S"]) .rcb-bar > i{background:var(--gS) !important}
+html body .rcb-st:has(> b[data-g^="A"]) .rcb-bar > i{background:var(--gA) !important}
+html body .rcb-st:has(> b[data-g^="B"]) .rcb-bar > i{background:var(--gB) !important}
+html body .rcb-st:has(> b[data-g^="C"]) .rcb-bar > i{background:var(--gC) !important}
+html body .rcb-st:has(> b[data-g^="D"]) .rcb-bar > i{background:var(--gD) !important}
+html body .rcb-st:has(> b[data-g^="F"]) .rcb-bar > i{background:var(--gF) !important}
 html body #view .dbn-bar.dbn-none{background:none !important;border-color:var(--line) !important;padding:7px 12px !important}
 html body #view .dbn-bar.dbn-none > span > b{color:var(--muted) !important;font-weight:600}
 html:not(.r456-pin) body .tabbar .tb-id{display:none !important}
 html body #tbPlan{display:none !important}
+/* (grade letters, solid tiles (Flex picked "Solid tile", Nov 4): the grade colour, a dark letter, three sizes only: small 22 for lists,
+   cells and inline; medium 30 for cards, tiles and night cards; large 58 for the header) */
+html body :is(*, #g#g#g#g#g#g) .grade.grade { box-sizing: border-box !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 30px !important; min-width: 30px !important; max-width: 30px !important; height: 30px !important; padding: 0 !important; border: 0 !important; border-radius: 6px !important; background: var(--gc, var(--gD)) !important; color: #111418 !important; font: 800 17px/1 var(--head) !important; letter-spacing: 0 !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.25) !important; transform: none !important; text-shadow: none !important; vertical-align: middle; flex: none; }
+html body :is(*, #g#g#g#g#g#g) :is(.nc-rc, .gcell, .plm, .lp-tk, .sgr, .rk-m, .ps-g, .rcb-g, .pl-g, .pl-det, .rs-n) .grade.grade, html body :is(*, #g#g#g#g#g#g) .rk-s header .grade.grade, html body :is(*, #g#g#g#g#g#g) .grade.grade.sm { width: 22px !important; min-width: 22px !important; max-width: 22px !important; height: 22px !important; font-size: 13px !important; border-radius: 5px !important; }
+html body :is(*, #g#g#g#g#g#g) .grade.grade.big { width: 58px !important; min-width: 58px !important; max-width: 58px !important; height: 58px !important; font-size: 32px !important; border-radius: 12px !important; }
+html body :is(*, #g#g#g#g#g#g) .grade.grade.g-na { background: transparent !important; box-shadow: none !important; border: 1px dashed var(--line2) !important; color: var(--faint) !important; font-weight: 600 !important; }
 </style>
 <style id="rcss-481">
 /* round 481 even tile rows */
