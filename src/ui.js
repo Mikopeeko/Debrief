@@ -573,11 +573,14 @@ function resChip(it) {
 // far through the whole encounter it got (a kill legendary orange), a star on tonight's best. More than one boss (or a Mythic+ key) tonight: the boss picker in the top bar switches.
 let ITEMS = [], STRIP_T = 0;
 const stripSoon = () => { clearTimeout(STRIP_T); STRIP_T = setTimeout(() => { renderList(); refreshHead(); }, 400); }; // (the banner's comparisons fill in too)
-// a pull's result in a few characters: "P2 · 71%", "Kill", "34%"
+// (Nov 5, one boss health number everywhere (analysis step 1): the boss's health left across the whole fight, all phases, as the pull
+// picker and the All pulls card measure it (pullPct), always said the same way, "boss at 33%"; the phase goes in front: "P3 · boss at 33%")
+const bossAtV = (v) => (v == null || !isFinite(v) ? '' : 'boss at ' + (v > 0 ? Math.max(1, Math.round(v)) : 0) + '%');
+// a pull's result in a few characters: "P2 · boss at 71%", "Kill", "boss at 34%"
 function pullShort(b) {
   if (b.kill) return 'Kill';
-  const p = pullProg(b); if (p && p.phase) { const m = /(\d+)%/.exec(p.label); return p.phase.replace('Intermission', 'Int') + (m ? ' · ' + m[1] + '%' : ''); }
-  const v = pullPct(b); return v != null ? Math.round(v) + '%' : 'Wipe';
+  const p = pullProg(b), at = bossAtV(pullPct(b)); if (p && p.phase) return p.phase.replace('Intermission', 'Int') + (at ? ' · ' + at : '');
+  return at || 'Wipe';
 }
 const CHEV = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
 function renderList() {
@@ -629,8 +632,8 @@ function renderList() {
         // (a pull that never moved the boss is a reset: an empty bar, not a "100%" that looks unread)
         const v = pullPct(b), unk = !b.kill && v == null, reset = !b.kill && !unk && v >= 99.95, done = b.kill ? 100 : unk || reset ? 0 : Math.max(3, 100 - v);
         const at = b.wallMs ? wallClock(b.wallMs) : clock(b.startMs), pg = pullProg(b);
-        const res = b.kill ? 'Kill' : unk ? (b.wcl || CACHE.has(b) ? 'Wipe' : 'Wipe (still reading this pull)') : reset ? 'Reset at 100%' : pg && pg.phase ? 'Wipe in ' + pg.label : 'Wipe, boss at ' + v.toFixed(1) + '% health';
-        const more = [T(b.duration), !b.kill && !unk && !reset ? Math.floor(100 - v) + '% of the fight done' : '', b === best && !b.kill ? 'best pull of the night' : ''].filter(Boolean).join(' · ');
+        const res = b.kill ? 'Kill' : unk ? (b.wcl || CACHE.has(b) ? 'Wipe' : 'Wipe (still reading this pull)') : reset ? 'Reset at 100%' : pg && pg.phase ? 'Wipe in ' + pg.phase + ' · ' + bossAtV(v) : 'Wipe · ' + bossAtV(v);
+        const more = [T(b.duration), b === best && !b.kill ? 'best pull of the night' : ''].filter(Boolean).join(' · '); /* (one number: "boss at 33%" (Nov 5), no "67% of the fight done" beside it) */
         const tt = '<div class="tt-h">Pull ' + b.pull + ' · ' + esc(at) + '</div><div>' + esc(res) + '</div><div class="tt-s">' + esc(more) + '</div>' + whyLine(b) + (lock ? '<div class="tt-s">This tab always covers every pull.</div>' : '');
         return '<button class="pull bhp-b' + (b.kill ? ' kill' : '') + (b === best && !b.kill ? ' best' : '') + (unk ? ' unk' : '') + (b === S.item && !allMode ? ' sel' : '') + '" type="button" data-i="' + add(b) + '" style="--h:' + done.toFixed(1) + '%;left:' + PX(i) + '%;top:' + PY(b).toFixed(1) + '%;--pc:' + (pullCol(b) || '#6aa8ff') + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + b.pull + ', ' + at + ': ' + res + ', ' + more) + '"' + (lock ? ' aria-disabled="true"' : '') + '><i></i></button>';
       };
@@ -1384,7 +1387,7 @@ const holdWait = (el) => (el < 4000 && (!!LIVE_T || livePending(true))) || (el <
 function holdStart() { try { liveRestore(); } catch (e) { /* (fetched again) */ } const R0 = document.documentElement; if (S.tab !== 'audit') { R0.classList.remove('dbr-holding'); return; } R0.classList.add('dbr-holding'); HOLD_0 = Date.now();
   bufStart(holdWait, 6500, (why) => { R0.classList.remove('dbr-holding'); try { liveSave(); } catch (e) { /* (not remembered) */ } if (why === 'ready') try { dbrReveal(); if (window.dsMo) window.dsMo.reveal(); } catch (e) { /* (no motion) */ } });
   BUF.snaps.forEach((g) => loadSet(g, 'Putting the page together…')); /* (the card says what it's waiting on) */ }
-/* round 333 all pulls list */ window.allPulls333 = () => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), G = [], by = new Map(); L.forEach((b, i) => { const k = b.id + ':' + b.diffId; let g = by.get(k); if (!g) { g = { k, label: b.boss + (b.diff ? ' · ' + b.diff : ''), cur: false, pulls: [] }; by.set(k, g); G.push(g); } const pc = b.kill ? null : (typeof pullPct === 'function' ? pullPct(b) : null); g.pulls.push({ i, pull: b.pull, kill: !!b.kill, txt: 'Pull ' + b.pull + ' · ' + (b.kill ? 'Kill' : pc != null ? 'Wipe at ' + Math.round(pc) + '%' : 'Wipe'), col: b.kill ? '#e6b450' : (typeof pullCol === 'function' ? pullCol(b) : '') || '', on: b === S.item }); if (S.item && b.id === S.item.id && b.diffId === S.item.diffId) g.cur = true; }); return G; };
+/* round 333 all pulls list */ window.allPulls333 = () => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), G = [], by = new Map(); L.forEach((b, i) => { const k = b.id + ':' + b.diffId; let g = by.get(k); if (!g) { g = { k, label: b.boss + (b.diff ? ' · ' + b.diff : ''), cur: false, pulls: [] }; by.set(k, g); G.push(g); } const pc = b.kill ? null : (typeof pullPct === 'function' ? pullPct(b) : null); g.pulls.push({ i, pull: b.pull, kill: !!b.kill, txt: 'Pull ' + b.pull + ' · ' + (b.kill ? 'Kill' : pc != null ? 'Wipe, ' + bossAtV(pc) : 'Wipe'), col: b.kill ? '#e6b450' : (typeof pullCol === 'function' ? pullCol(b) : '') || '', on: b === S.item }); if (S.item && b.id === S.item.id && b.diffId === S.item.diffId) g.cur = true; }); return G; };
 /* round 334 pick any boss */ window.setPullPickAt334 = (idxs) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), bs = (idxs || []).map((i) => L[i]).filter(Boolean); if (!bs.length) return; const b0 = bs[0], same = bs.filter((b) => b.id === b0.id && b.diffId === b0.diffId); S.pullPick = { k: b0.id + ':' + b0.diffId, s: new Set(same.map((b) => b.pull)) }; S.plData = null; setScope('all'); if (S.item && S.item.id === b0.id && S.item.diffId === b0.diffId) renderMain(); else select(same[same.length - 1]); };
 /* round 335 open all */ window.openAll335 = (i) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), b = L[i]; if (!b) return; S.pullPick = null; S.plData = null; setScope('all'); select(b); };
 window.openPull333 = (i) => { const L = ((S.index && S.index.bosses) || []).filter((b) => !b.run && b.kind !== 'run'), b = L[i]; if (!b) return; S.pullPick = null; if (S.scope === 'all') setScope('pull'); select(b); };
@@ -1896,7 +1899,7 @@ function headerHtml0(r, allMode) {
     const bestO = earlier.length ? earlier.reduce((m, o) => (o.v < m.v ? o : m)) : null, usesPh = !!PROGRESS[it.boss], delta = now != null && was != null ? was - now : null;
     const ds = keptDeaths(r).length;
     cls = it.kill ? 'good' : 'bad'; left = now; kick = [it.diff, raid];
-    big = it.kill ? 'Kill' : now != null ? (usesPh ? 'Wipe in ' : 'Wipe at ') + (pg ? pg.label : now.toFixed(1) + '%') : 'Wipe';
+    { const nowV = pullPct(it) != null ? pullPct(it) : now; big = it.kill ? 'Kill' : nowV != null ? (pg && pg.phase ? 'Wipe in ' + pg.phase + ' · ' : 'Wipe · ') + bossAtV(nowV) : 'Wipe'; } /* (the same number as the pull picker and the coach (Nov 5)) */
     stats = [['timer', 'Lasted ' + T(r.duration)] /* (easier to read (your note, Oct 23)) */, ['skull', plural(ds, 'death') + (cutInfo(r) ? ' by the call' : '')]]; /* round 140: no start time or player count (the user: "remove a few things") */
     const yet = !it.kill && now != null && everBest != null && now < everBest && (!bestO || now < bestO.v); // (further than every saved night too)
     // (a kill says how long it took tonight; "Boss down" only repeated the pill)
@@ -2027,7 +2030,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-05', h: [{ t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: [], f: [] },
+  { d: '2026-11-05', h: [{ t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ['Every pull shows one boss health number now, the whole fight\'s, said the same way everywhere: "boss at 33%". The banner, the pull picker, the coach and the Companion app agree.', 'The other nine bosses\' mechanics have short noun nicknames, the same as the Companion app\'s, like Extinguish (Motes) and Ravage (Tank Swap).', 'Some coach lines read as full sentences now, like "Zaffia\'s ghost reached them at 3:39, so they were mind controlled again."'], f: ['Kith\'ix: Extinguish showed green while it listed players without a mote. A player without a mote is amber now, and a death is red.', 'Venomfang, Avoidable damage, Coalesced Venom and the tank frontals could show green or red when their rows said otherwise. Each line\'s colour matches what it lists now.', 'Sszorak: the Ravage line said "died died".'] },
   { d: '2026-11-04', h: [{ t: 'All pulls shows what wiped you most, ranked', d: 'Debriefing on All pulls now opens with the three things that wiped you most, biggest first, with the pulls they ended. Everything else follows, ranked by how many pulls it hit, with a tag when it got worse or better.' }, { t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     "Debrief Companion: a raid reminder pops up on your PC 30 minutes before your team's raid. Click it for tonight's plan. Change it in Settings › Pop-up › Reminders.",
     "Debrief Companion: your recap key rests in combat, so a press mid-fight goes to WoW. It works again a few seconds after the fighting stops.",
@@ -11510,7 +11513,7 @@ function audit() {
       return T(d.t) + ' ' + d.player + ' died to ' + (d.ability || d.killer || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
     const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
-      for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
+      for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowSay(row) || gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
     // (a small map of that same worst moment, when its row has one (your note, Oct 18: raiders love the maps, so show them
     // off): zoomed to the mechanic, bigger on hover, and a click goes to the mechanic and its full map)
     const rowMap = (row) => { for (const c of row || []) { if (c.map) return c.map; if (c.maps && c.maps.length) return c.maps[0][1]; } return null; };
@@ -11535,7 +11538,7 @@ function audit() {
           alt = '<span class="mcx-alt mcx-ms"><span class="mcx-cap">Moments</span><span class="mcx-msb">' + all.map((e) => '<i class="' + sv(e.row) + '" style="left:' + Math.min(100, Math.max(0, 100 * (e.t - a) / span)).toFixed(1) + '%"></i>').join('') + '</span><span class="mcx-msx"><span>' + T(a) + '</span><span>' + plural(all.length, 'moment') + '</span><span>' + T(z) + '</span></span></span>'; }
         // (anything else with no map and no moments: its first few problems as short lines, so a tile is never blank)
         if (!alt) { const pr = rows.map((row) => ({ row, g: null })).concat(...groups.map((g) => g.rows.map((row) => ({ row, g })))).filter(({ row }) => row.some((c) => c.bad || c.warn)).slice(0, 4);
-          if (pr.length) alt = '<span class="mcx-alt mcx-gl"><span class="mcx-cap">Problems</span>' + pr.map(({ row, g }) => '<span class="mcx-gll ' + (row.some((c) => c.bad) ? 'bad' : 'warn') + '">' + esc((g ? gTitle(s, g.title) + ', ' : '') + rowText(s, row)) + '</span>').join('') + '</span>'; } }
+          if (pr.length) alt = '<span class="mcx-alt mcx-gl"><span class="mcx-cap">Problems</span>' + pr.map(({ row, g }) => '<span class="mcx-gll ' + (row.some((c) => c.bad) ? 'bad' : 'warn') + '">' + esc((g && !rowSay(row) ? gTitle(s, g.title) + ', ' : '') + rowText(s, row)) + '</span>').join('') + '</span>'; } }
       // (the faces of the players behind its mistakes: the names in its flagged cells, and who died; so you know who to talk to)
       const nm = new Set(), pick = (row) => { if (!row.some((c) => c.bad || c.warn)) return; for (const c of row) { if (!(c.bad || c.warn)) continue; if (c.p) nm.add(c.p); (c.ps || []).forEach((n) => nm.add(n)); (c.pt || []).forEach(([n]) => nm.add(n)); } if (row[0] && row[0].death) nm.add(row[0].death.player); };
       rows.forEach(pick); groups.forEach((g) => g.rows.forEach(pick)); const wl = [...nm].filter((n) => pmap.has(n));
@@ -12146,7 +12149,7 @@ function audit() {
       let dmg = 0; for (let i = 0; i < Math.min(dS.length, Math.ceil(endT)); i++) dmg += dS[i] || 0;
       const before = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && !b.kill).length;
       const pc0 = pullCol(it), res = '<b' + (pc0 ? ' style="color:' + pc0 + '"' : '') + '>' + esc(pullShort(it)) + '</b>'; /* (the pull's progress colour and words, as its card (Oct 21: it said 10% where the card said P3 · 22%)) */
-      const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : ' · wipe' + (it.endPct != null ? ' · ' + Math.round(100 - it.endPct) + '% of the fight done' : ''));
+      const resSub = T(r.duration) + (it.kill ? (before ? ' · after ' + plural(before, 'wipe') : ' · first try') : ' · wipe' + (pullPct(it) != null ? ' · ' + bossAtV(pullPct(it)) : ''));
       const all = m.sections.filter((s) => !s.info && s.id !== 'kicks' && (r.allPulls || (s.id !== 'deaths' && s.id !== 'avoid'))).map((s) => { const rs = s.rows.concat(...(s.groups || []).map((g) => g.rows)), nB = rs.filter(isBadRow).length, nW = rs.filter((row) => !isBadRow(row) && isWarnRow(row)).length, lc = lvlCounts(s.id, nB, nW, rs.length);
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
@@ -12164,7 +12167,7 @@ function audit() {
       top = top0 + '<div class="dbr-4 dbr-3 dbr-5' + (PS.tile ? ' dbr-6' : '') + '">' + sw378() + PS.tile + ((() => { try { return deathsTile(num, [r]); } catch (e) { return ''; } })() || num('Deaths', '<b>' + deathCount([r]).n + '</b>', '')) + RATE_T + '</div>'; /* (Deaths and the three rate tiles (Oct 23, your call: no Mechanics or Note jobs tiles)) */
       if (NJ) top = top.replace('<div class="dbr-4 dbr-3">', '<div class="dbr-4">'); /* (with a note: four tiles) */
       top = dbnBar(NJ, r) + top;
-      { const lab = it.kill ? 'kill' : 'wipe at ' + pullShort(it) + (it.endPct != null ? ' (' + Math.round(100 - it.endPct) + '% of the fight done)' : '');
+      { const lab = it.kill ? 'kill' : 'wipe ' + dbfPre(dbfAt(pullShort(it))) + dbfAt(pullShort(it));
         const L = ['**Pull ' + it.pull + ' · ' + it.boss + ' ' + (it.diff || '') + ' · ' + lab + '**'];
         S.dbCopy = L; S.dbCopyD = deaths; }
       /* (no Copy for Discord button (your call, Oct 23: "i dont want anything copied for discord")) */
@@ -13694,7 +13697,7 @@ function whySay0(o, pm, nth) {
        Volkovod. Then Malevolent Resonance took five more by 4:18.") */
     if (a) { const ai = a.indexOf(', and their '); return ai > 0 ? { h: cz(a.slice(0, ai)), s: 'Their ' + a.slice(ai + 12).replace(/\.$/, '') + ' at ' + T(o.t) + '.' + (th || end) } : { h: cz(a), s: (th || end).trim() }; }
     /* ("Malacrass took 3:33 (… never past 2:56), so he got …" → "Malacrass's phase ran past 2:56 at 4:44, longer than any kill took, so he got …") */
-    const tk = o.chk ? (String(o.detail || '').match(/^(.+?) took (\d+:\d\d) \(.*?never past (\d+:\d\d)\)(.*?)\.?$/) || ((m) => m ? [m[0], 'Malacrass', m[1], m[2], m[3] ? ', so he got ' + m[3] : ''] : null)(String(o.detail || '').match(/^Phase 2 (?:ran long:|went on for) (\d+:\d\d).*?never longer than (\d+:\d\d)\)\.(?: Because it ran long, Malacrass got (.+?)(?:, one more shield to break)?\.)?$/))) : null; /* round 433 plain push */
+    const tk = o.chk ? (String(o.detail || '').match(/^(.+?) took (\d+:\d\d) \(.*?never past (\d+:\d\d)\)(.*?)\.?$/) || ((m) => m ? [m[0], 'Malacrass', m[1], m[2], m[3] ? ', so he got ' + m[3] : ''] : null)(String(o.detail || '').match(/^Phase 2 (?:ran long:|took|went on for) (\d+:\d\d).*?never longer than (\d+:\d\d)\)\.(?: Because it ran long, Malacrass got (.+?)(?:, one more shield to break)?\.)?$/))) : null; /* round 433 plain push */
     if (tk) { const gave = String(tk[4] || '').replace(/^,?\s*so (?:he|she|it|they) got /, ''); return { h: cz('Not enough damage on ' + tk[1]), s: esc(tk[1] + '\'s phase took ' + tk[2] + ' (no top kill needed more than ' + tk[3] + ')' + (gave && gave !== tk[4] ? ', so ' + tk[1] + ' got ' + gave : '') + '.') }; }
     let sh0 = ''; try { sh0 = whyShort(o, pm).short; } catch (e) { sh0 = ''; }
     const pd = plain(o.detail), pd1 = (pd.match(/^.*?[.!?](?=\s|$)/) || [pd])[0];
@@ -14097,7 +14100,7 @@ function oaLayout(v, el) {
 // reps: the pulls (one pull = [r]); name: a player, or null for the raid. wrong[0] is the one answer (oaPlayerFix / oaRaidFix).
 // Rules: forgive once (2+ pulls on a night), nothing after the wipe filter, a death in 2 s or less isn't on the player (unless it
 // was their own mistake), overhealing never flagged, proc-driven Rotation lines never graded (only red/amber checks are used).
-const cHtml = (t) => String(t || '').replace(/<[^>]+>/g, '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+const cHtml = (t) => String(t || '').replace(/\b1 player their ghost\b/g, '1 player\'s ghost').replace(/\b(\d+) players their ghosts?\b/g, '$1 players\' ghosts').replace(/\bdied died\b/g, 'died').replace(/<[^>]+>/g, '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
 const cSec = (s) => shortT(s.title || '').replace(/\s*\(.*$/, '') || (s.spell && s.spell[1]) || '';
 // (does a mechanic line go by this name: its title, its short name or its spell, like Spiritcackle for the Soulcoiler adds)
 const cMatch = (s, l) => { const k = String(l || '').toLowerCase(); return !!k && [cSec(s), shortT(s.title || ''), dbfSecName(s), s.spell && s.spell[1]].filter(Boolean).some((x) => String(x).toLowerCase() === k); };
@@ -14820,7 +14823,7 @@ function killCall(reps, w0) {
   else if (first === true) bits.push((mythic ? '🎉 ' : '') + 'First ' + diff + ' kill on ' + it.boss + '! ' + (n > 1 ? plural(n, 'pull') + ' tonight, and we got it.' : 'On the first pull, too.'));
   else bits.push((again ? 'Boss down again! ' + plural(n, 'pull') + ' to get it tonight.' : 'Boss down! ' + plural(n, 'pull') + ' tonight, and we got it.'));
   // (the story: where pull 1 ended)
-  if (!farm && before.length >= 3 && !before[0].kill) { const a = dbfAt(pullShort(before[0])); if (a) bits.push('From wiping ' + (/^(P\d|Int)/i.test(a) ? 'in ' : 'at ') + a + ' on pull ' + before[0].pull + ' to the kill.'); }
+  if (!farm && before.length >= 3 && !before[0].kill) { const a = dbfAt(pullShort(before[0])); if (a) bits.push('From wiping ' + dbfPre(a) + a + ' on pull ' + before[0].pull + ' to the kill.'); }
   // (what clinched it: a mechanic that kept going wrong tonight and was clean on the kill)
   try { const ks = pullSections(kill), earlier = before.filter((b) => CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.module); let best = null;
     for (const [id, x] of ks) { if (id === 'deaths' || id === 'avoid' || x.st !== 'ok' || x.s.info) continue; const nb = earlier.filter((r) => { const y = pullSections(r).get(id); return y && (y.st === 'bad' || y.st === 'warn'); }).length; if (nb >= 2 && (!best || nb > best.n)) best = { n: nb, t: dbfPlain(x.s.title) }; }
@@ -14934,7 +14937,7 @@ function coachSummary0(reps, name) {
         const fixed = []; for (const [id, y] of pullSections(reps[0])) { if (y.st !== 'ok' || id === 'deaths' || id === 'avoid') continue; const lastR = prv.find((r) => pullSections(r).get(id)); const py = lastR && pullSections(lastR).get(id); if (py && (py.st === 'bad' || py.st === 'warn')) fixed.push(String(y.s.title).replace(/\s*\(.*$/, '')); }
         return fixed.length ? [{ t: lpAnd(fixed.slice(0, 3)) + (fixed.length === 1 ? ' was' : ' were') + ' done right this pull, after a mistake last pull.' }].concat(R0.filter((y) => !/ done right\.$/.test(y.t))).slice(0, 3) : R0; } catch (e) { return R0; } })();
     const who = name ? String(name).split('-')[0] : '', w0 = wrong[0];
-    const at0 = dbfAt(pullShort(it)), res = kill ? 'Boss down on pull ' + kill.item.pull : night ? reps.length + ' pulls tonight' : at0 === 'Wipe' ? ((it.duration || 0) < 10 ? 'This pull reset after a few seconds' : 'We wiped') : 'We wiped ' + (/^(P\d|Int)/i.test(at0) ? 'in ' : 'at ') + at0; /* (no boss health to name (an instant reset): it said "We wiped at Wipe." (Oct 26)) */
+    const at0 = dbfAt(pullShort(it)), res = kill ? 'Boss down on pull ' + kill.item.pull : night ? reps.length + ' pulls tonight' : at0 === 'Wipe' ? ((it.duration || 0) < 10 ? 'This pull reset after a few seconds' : 'We wiped') : 'We wiped ' + dbfPre(at0) + at0; /* (no boss health to name (an instant reset): it said "We wiped at Wipe." (Oct 26)) */
     /* (the first domino in a few words, for the raid's headline on one pull: "set 4's adds were still alive") */
     let why0 = ''; if (!night && !kill && !name) { try { const o = whyWiped(reps[0]); if (o) why0 = cHtml(whyShort(o, new Map()).short); } catch (e) { why0 = ''; } }
     const headline = name ? (w0 ? who + ', ' + (wrong.some((x) => x.sev === 'bad') ? (right.length ? 'some good things ' + (night ? 'tonight' : 'this pull') + ', and one thing to fix first.' : 'one thing to fix first.') : 'good ' + (night ? 'night' : 'pull') + ' from you, with one thing to sharpen.') + ' Your one fix: ' + String(w0.fix).replace(/\.?$/, '.') : who + ', ' + (night ? 'nothing you did twice tonight.' : 'clean pull from you.') + ' Keep doing exactly this.')
@@ -15149,8 +15152,8 @@ function mxaOpen(ph, id) { const k = ph.dataset.phk; try { dsUndock(ph); } catch
    across the night) with one line under it when it had mistakes ("Mistakes in 28 of 35 pulls."); a click opens it inside the card: the square
    for every pull, the facts and the mistakes by kind) */
 /* round 283 nicknames */ const NK283 = {"kill the echo":"Kill","break the shield":"Shield Break","soak every orb":"Soak","soak one at a time":"Soak","kill them before the bubble":"Kill","kill them first":"Kill","swap every jet":"Swap","cover it with cooldowns":"Cooldowns","find the gap, stay dry":"Dodge","kill before the third pop":"Pace","kill them together":"Balance","stay under the limit":"Stacks","soak in groups of 4":"Soak","heal the absorbs off":"Heal","one soak each":"Soak","cc breaks it":"CC","tank catches the circles":"Circle Soak","low enough before the last platform":"Pace","pair up and solve":"Pairs","clear circles in pairs":"Pairs","step on one each":"Soak","kill before the intermission":"Kill","soak with 8":"Soak","dispel fast":"Dispel","keep the floor clear":"Dodge","keep them even":"Balance","swap at each intermission":"Tank Swap","low enough at each intermission":"Pace","kill before the well":"Kill","dodge the circles":"Dodge","kill the echo, kick the curse":"Kill","dispel at the side":"Dispel","tank steps away":"Tank Spread","soak the pyres":"Soak","stop casting":"Stop","pop early":"Pop","keep the bosses apart":"Spread","feed a fish in time":"Fish","swap patches":"Swap","target runs out":"Run","soak every leap":"Soak","bounce over the wave":"Jump","swap before too many":"Tank Swap","kill in two turns":"Pace","fountains drained":"Drain","kill one at a time":"Kill","clear before the next imbibe":"Clear","aim the lines at totems":"Aim","soak every bile":"Soak","dispel one at a time":"Dispel","tanks swap":"Tank Swap","kill before imbibe 5":"Pace","soak in two groups":"Soak","dodge the tornadoes":"Dodge","save cysts for the winds":"Cysts","a cyst for each wind":"Cysts","collide in the air":"Collide","spread out":"Spread","kill before the enrage":"Pace","don't let them hatch":"Carry","soak the circles":"Soak","dodge the waves":"Dodge","always a tank on it":"Tank","off-tank soaks the beam":"Beam Soak","beam":"Beam Soak","stand in its bubble":"Bubble","burst the heart":"Burst","tether breaks":"Tether","kill fast":"Kill","kill the adds":"Kill","burst the heart on time":"Pace","pop one at a time":"Pop","tank swap":"Tank Swap","heal it off":"Heal","catch them in turns":"Catch","dodge the shards":"Dodge","kill before the 8th eclipse":"Pace","reach 25% before the third intermission":"Pace","pop the orbs with the frontals":"Orb Pops","frontal hits":"Frontal Hits","defensive on the second stack":"Frontal","soak with 5":"Soak","push on time":"Push","stack, then stand still":"Mind Control","kicks":"Kicks","drop it on the adds":"Drop","break and kick":"Break","stop the fragments":"Stop","kick":"Kick","one on her, one on the tail":"Tail Tanking","boss and tail":"Tail Tanking","tail tanking":"Tail Tanking"};
-/* round 346b nicknames */ const NK346 = { 'spiteful soulcoiler (kill fast)': 'Adds', /* round 411 */ 'dreadmarch (break your shield)': 'Mind Control', 'ghosts (stare at yours)': 'Fixate', 'soul sever (hit the ghosts)': 'Ghost Clear', /* round 369 ulatek nicknames */ 'rage of the shackled (burst the heart)': 'Heart Burn', 'wardens and doomscales (kill fast)': 'Adds', 'shriekers and rawlings (kill the adds)': 'Adds', /* round 426 */ 'doomscale warden (kill it on the eggs)': 'Add', 'weakened doomscales (kill them together)': 'Adds', 'blightscale rawling (kill the adds)': 'Adds', 'blightscale shrieker (kick and kill)': 'Kicks', 'mephitic thrash (get out of the slam)': 'Slam' };
-/* (Nov 4: the guide cards' noun nicknames by mechanic name come first, so every page names a mechanic the same way) */ const NKG = {"gloombomb":"Add Bombs","soul sever":"Frontal","ghosts":"Dreadmarch","spiteful soulcoiler":"Adds","wail of terror":"Kick","eternal nightfall":"Shield Break","coalesced venom":"Orb Pops","guillotine":"Soak","grim guillotine":"Soak","venomfang":"Dispel","sever":"Frontal","blighted sever":"Frontal","dreadmarch":"Mind Control","fragments of malacrass":"Intercepts","fangs of the coiled altar":"Pools","defilement":"Tank Swap","soulbound":"Linked Bosses","phase changes":""};
+/* round 346b nicknames */ const NK346 = { 'intermission (a cyst for each wind)': 'Winds', 'intermission (soak the pyres)': 'Pyre Soaks', 'intermission (stop the fragments)': 'Intercepts', 'tanks (swap at each intermission)': 'Tank Swap', 'tanks (tail tanking)': 'Tail Tank', 'tanks (one on her, one on the tail)': 'Tail Tank', /* (Nov 5: two bosses share these names) */ 'spiteful soulcoiler (kill fast)': 'Adds', /* round 411 */ 'dreadmarch (break your shield)': 'Mind Control', 'ghosts (stare at yours)': 'Fixate', 'soul sever (hit the ghosts)': 'Ghost Clear', /* round 369 ulatek nicknames */ 'rage of the shackled (burst the heart)': 'Heart Burn', 'wardens and doomscales (kill fast)': 'Adds', 'shriekers and rawlings (kill the adds)': 'Adds', /* round 426 */ 'doomscale warden (kill it on the eggs)': 'Add', 'weakened doomscales (kill them together)': 'Adds', 'blightscale rawling (kill the adds)': 'Adds', 'blightscale shrieker (kick and kill)': 'Kicks', 'mephitic thrash (get out of the slam)': 'Slam' };
+/* (Nov 4: the guide cards' noun nicknames by mechanic name come first, so every page names a mechanic the same way) */ const NKG = {"gloombomb":"Add Bombs","soul sever":"Frontal","ghosts":"Dreadmarch","spiteful soulcoiler":"Adds","wail of terror":"Kick","eternal nightfall":"Shield Break","coalesced venom":"Orb Pops","guillotine":"Soak","grim guillotine":"Soak","venomfang":"Dispel","sever":"Frontal","blighted sever":"Frontal","dreadmarch":"Mind Control","fragments of malacrass":"Intercepts","fangs of the coiled altar":"Pools","defilement":"Tank Swap","soulbound":"Linked Bosses","twin balance":"Even Health","eternal venom":"Stacks","ravenous feast":"Group Soak","tainted blood":"Heal Absorb","caustic globules":"Soaks","barbed bulwark":"CC Break","corrosive spit":"Lines","coiling ichor":"Puddles","stone breaker":"Tank Soak","helical toxins":"Pairs","shifting protovenom":"Circles","toxic droplets":"Soaks","venom coagulation":"Add","unstable miasma":"Soak","blighted blood":"Dispel","blood pools":"Puddles","marks":"Sides","boss balance":"Even Health","ravage":"Tank Swap","mutilate":"Group Soak","tempest":"Tornadoes","venomous surge":"Cysts","raging crosswinds":"Collisions","serpent's fury":"Stack","virulence":"Spread","frost orbs":"Soaks","frost burst":"Soaks","murloc sets":"Adds","bubblefin frostscales":"Big Adds","water jet":"Tank Swap","abyssal rain":"Raid Cooldowns","whirlpools and pop!":"Dodge","voidswarm":"Adds","bomber beetles":"Bombs","extinguish":"Motes","overwhelming fear":"Dispel","dark devastation":"Tank Swap","abyssal grasp":"Heal Absorb","eclipse fragments":"Catches","null gates":"Shards","last light":"Burn","restless amani":"Adds","soulcoil ignition":"Circles","soulcoiler's curse":"Kick","grasping depths":"Echo","essence rend":"Dispel","possession barrage":"Tank Run","invoke":"No Casting","energy":"Well Adds","imbibe":"Fountains","living venoms":"Adds","malignant totems":"Cleanup","plague froth":"Lines","catalytic bile":"Soaks","adaptive infection":"Dispel","dripping fangs":"Tank Swap","boxes":"Crates","united defense":"Boss Spacing","final ascension":"Fish","frostfire volley":"Patches","blink nova":"Run Out","mighty thud":"Leap Soak","explosive surprise":"Bounce","tank stacks":"Tank Swap","eggs":"Hatching","spectral coils":"Soaks","caustic waves":"Dodge","toxic incubation":"Beam","blightscale wretch":"Bubble","rage of the shackled":"Heart Burn","grasping fangs":"Tether Breaks","wardens and doomscales":"Big Adds","serpent's bite":"Soak","shriekers and rawlings":"Adds","mephitic thrash":"Slam","doomscale warden":"Big Add","blightscale rawling":"Adds","phase changes":""}; /* (Nov 5: the other nine bosses' nouns, the Companion's words) */
 function nkWord283(p, t) { const nm0 = String(t || '').replace(/<[^>]*>/g, '').replace(/\s*\(.*$/, '').trim().toLowerCase(); if (Object.prototype.hasOwnProperty.call(NKG, nm0)) return NKG[nm0]; const tk = NK346[String(t || '').trim().toLowerCase()]; if (tk) return tk; p = String(p || '').trim(); if (!p) return ''; const k = NK283[p.toLowerCase()]; if (k) return k; const w = p.split(/[\s,]+/).map((x) => x.replace(/[^\w'\u2019-]/g, '')).find((x) => x && !/^(don't|don\u2019t|do|one|two|always|a|an|the|every|each|all|its|their|your|low|keep|stay|stand|get|go|let|them|it)$/i.test(x)) || ''; return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; }
 /* round 286 shared nicknames */ try { window.nkWord283 = nkWord283; } catch (e) { /* (no window) */ }
 /* round 280 nicknames */ function NK280(q) { { const nmK = String((q && q.nm) || '').replace(/<[^>]*>/g, '').replace(/\s*\(.*$/, '').trim().toLowerCase(); if (Object.prototype.hasOwnProperty.call(NKG, nmK)) return NKG[nmK] ? '<span class="prw-nt prw-nk">' + esc(NKG[nmK]) + '</span>' : ''; } /* ("Phase changes" stays plain) */ /* (the guide cards' noun by the row's name (Nov 4)) */ const t = (q && q.x && q.x.s && q.x.s.title) || (q && q.nkSrc) || '', p = (String(t).match(/\(([^)]*)\)\s*$/) || [])[1] || ''; const w = nkWord283(p, t), nm0 = String(t).replace(/\s*\(.*$/, '').trim().toLowerCase(); if (w.toLowerCase() === nm0) return ''; return w.length > 1 ? '<span class="prw-nt prw-nk">' + esc(w) + '</span>' : ''; }
@@ -16061,7 +16064,10 @@ const ST_RANK = { bad: 3, warn: 2, ok: 1, na: 0 };
 const worstOf = (a) => a.reduce((m, x) => (ST_RANK[x] > ST_RANK[m] ? x : m), 'na');
 const cellTxt = (c) => c.txt || (c.s && c.s[1]) || c.p || (c.ps && lpAnd(c.ps)) || (c.pt && c.pt.map((x) => x[0]).join(', ')) || (c.n != null ? C(c.n) : '') || '';
 // a flagged row as one short line: its time and name, then the flagged values ("3:12 Dreadmarch #2: Result 2 ghosts touched")
+// (Nov 5: a row the engine wrote a whole sentence for says it as it is: "At 6:02, 1 fragment got through to Zul'jan.")
+const rowSay = (row) => { const c = (row || []).find((q) => q && q.say); return c ? String(c.say) : ''; };
 function rowText(s, row) {
+  const sy = rowSay(row); if (sy) return sy;
   const t = row.find((c) => c.t != null), first = row.find((c) => c.t == null && !c.map && !c.maps && !c.more);
   // (each flagged value says its column, unless it already does, and its note: "Target Arsyn (no protection)";
   // a one-word column the value repeats is left off: "2 touches", not "Touches 2 touches"; "Died" goes after the names,
@@ -16079,7 +16085,7 @@ function rowText(s, row) {
   const flat = (t) => String(t).replace(/\s*\(([^()]*)\)/g, ', $1');
   const bits = row.map((c, i) => ({ c, col: s.cols[i] || '' })).filter(({ c }) => (c.bad || c.warn) && c !== first && !c.map && !c.maps && !c.more)
     .map(({ c, col }) => { const v = String(cellTxt(c)), plain = /^(result|rating|notes?|what happened)$/i.test(col); return v ? (c.suf ? v + ' ' + c.suf /* (a cell can put its words after the names: "Optt, Hobbz hit by someone else's beam" (Oct 23)) */ : col && !c.s && !plain ? label(col, v) : v) + (c.sub && !/^(result|rating)$/i.test(col) ? ' (' + flat(c.sub) + ')' : '') : ''; }).filter(Boolean);
-  return ((t ? T(t.t) + ' ' : '') + (first ? cellTxt(first) : '')).trim() + (bits.length ? ': ' + bits.join(' · ') : '');
+  return (((t ? T(t.t) + ' ' : '') + (first ? cellTxt(first) : '')).trim() + (bits.length ? ': ' + bits.join(' · ') : '')).replace(/\b1 player their ghost\b/g, '1 player\'s ghost').replace(/\bdied died\b/g, 'died');
 }
 // every Fight audit mechanic across the pulls: per pull its status (up to the wipe filter), its problems as short lines,
 // and the players in the flagged rows; plus the phase it mostly happens in
@@ -16110,7 +16116,7 @@ function mechAcross(reps) {
       const lines = [], who = [];
       for (const g of groups) {
         const hit = g.rows.filter((row) => isB(row) || isW(row));
-        for (const row of hit) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: g.title + ', ' + rowText(s, row) });
+        for (const row of hit) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: rowSay(row) || g.title + ', ' + rowText(s, row) });
         if (!hit.length && (g.bad || g.warn)) lines.push({ st: g.bad ? 'bad' : 'warn', txt: g.title + (g.sub ? ': ' + g.sub : '') });
       }
       for (const row of srows) if (isB(row) || isW(row)) lines.push({ st: isB(row) ? 'bad' : 'warn', txt: rowText(s, row) });
@@ -16271,7 +16277,7 @@ function nightMechC(o) {
   // (each bar's tooltip says about the pull (your note, Oct 22: "these should have some tooltip information available about the pull"):
   // how it ended and how long it went, how this mechanic went, its first mistake and who was in it; a click still opens the pull)
   const barTip = (r, n) => { const p = r.x.per.get(n), st = p ? p.st : 'na', R = mByPull.get(n), it = R && R.item;
-    const head = 'Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe at ' + pullShort(it)) : ''), len = R && R.duration ? T(R.duration) + ' long' : '';
+    const head = 'Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe ' + dbfPre(dbfAt(pullShort(it))) + dbfAt(pullShort(it))) : ''), len = R && R.duration ? T(R.duration) + ' long' : '';
     const how = st === 'na' ? 'It didn\'t come up in this pull' + (R && cutT(R) < Infinity ? ' (before the wipe filter)' : '') + '.' : st === 'ok' ? 'Done right.' : Math.round(p.sc) + '% done right: ' + plural(p.nb + p.nw, 'moment') + ' with mistakes.';
     let first = ''; if (st !== 'na' && R && R.module && !R.module.error) { try { const cm = cutModule(R.module, cutT(R)).m, s = cm.sections.find((q) => q.id === r.x.id), sl = s && r.x.phName ? phSlices(cm, s).get(r.x.phName) : null; const all = s ? (sl ? sl.rows.concat(...sl.groups.map((g) => g.rows || [])) : (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))).filter(Array.isArray) : [];
       const sev = (rw) => (rw.some((c) => c && c.bad) ? 2 : rw.some((c) => c && c.warn) ? 1 : 0), pick = all.map((rw, i) => ({ rw, i })).sort((a, b) => sev(b.rw) - sev(a.rw) || a.i - b.i).slice(0, 3).sort((a, b) => sev(b.rw) - sev(a.rw) || a.i - b.i);
@@ -16372,7 +16378,7 @@ function nightMechC(o) {
     const dbars = '<span class="npc">' + pullNs.map((n) => { const x = byN.get(n); if (!x) return '<i class="npc-na" style="--h:0%"></i>'; const st = stOf(x);
       return '<i class="npc-' + st + '" data-npq="' + n + '" style="--h:' + (x.kept.length ? Math.max(12, 100 * x.kept.length / mx) : 8).toFixed(0) + '%" data-tt="' + esc((() => { const R = mByPull.get(n), it = R && R.item; /* (the pull's details on hover, like the mechanics' bars (Oct 22)) */
         const who = x.kept.slice(0, 5).map((d) => { const p = pm.get(d.player); return '<span' + (p ? ' style="color:' + p.color + '"' : '') + '>' + esc(String(d.player).split('-')[0]) + '</span>' + (d.ability ? ' <span class="sub">' + esc(d.ability) + '</span>' : ''); }).join('<br>');
-        return '<div class="tt-h">' + esc('Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe at ' + pullShort(it)) : '')) + '</div>' + (R && R.duration ? '<div class="sub">' + esc(T(R.duration) + ' long') + '</div>' : '') +
+        return '<div class="tt-h">' + esc('Pull ' + n + (it ? ' · ' + (it.kill ? 'Kill' : 'Wipe ' + dbfPre(dbfAt(pullShort(it))) + dbfAt(pullShort(it))) : '')) + '</div>' + (R && R.duration ? '<div class="sub">' + esc(T(R.duration) + ' long') + '</div>' : '') +
           '<div>' + esc((x.kept.length ? plural(x.kept.length, 'death') : 'Nobody died') + (x.late ? ' (' + x.late + ' more after the wipe filter)' : '')) + '</div>' + (who ? '<div>' + who + '</div>' : '') + '<div class="sub">Click to open this pull.</div>'; })()) + '"></i>'; }).join('') + '</span>';
     const cnt = (l, k) => { const m2 = new Map(); for (const d of l) { const v = k(d); m2.set(v, (m2.get(v) || 0) + 1); } return [...m2].sort((a, b) => b[1] - a[1]); };
     const kept = P.flatMap((x) => x.kept), causes = cnt(kept, causeOf).slice(0, 5), whoL = one ? [] : cnt(kept, (d) => d.player).slice(0, 6), firsts = cnt(P.filter((x) => x.kept.length).map((x) => x.kept[0]), causeOf);
@@ -17072,29 +17078,29 @@ const shortBoss = (n) => n.replace(/^Hex Lord /, '');
 function progressOf(r) {
   if (!r) return null;
   if (r.item.kill) return { left: 0, label: 'Kill' };
-  if (r.item.wcl) return wclProg(r.item) || (r.item.endPct != null ? { left: r.item.endPct, label: r.item.endPct.toFixed(1) + '%' } : null);
+  if (r.item.wcl) return wclProg(r.item) || (r.item.endPct != null ? { left: r.item.endPct, label: bossAtV(r.item.endPct) } : null);
   const cfg = PROGRESS[r.item.boss], ph = r.module && !r.module.error && r.module.phases;
   if (cfg && ph && ph.length) {
     const last = ph[ph.length - 1], key = last.name.split(' ')[0], names = cfg.boss[key] || [], U = [...(r.hpUnits || new Map()).values()];
     // (a boss's health since this phase began: Zul'jan's P1 health doesn't count in P3)
     const hpOf = (n, from) => { let v = null, at = -1; for (const u of U) if (u.name === n) for (const [t, f] of u.samples) if (t >= from - 0.5 && t > at) { at = t; v = f; } return v; };
     if (cfg.pool) { let v = null, at = -1; for (const u of U) if (cfg.pool.includes(u.name) && u.samples.length) { const s = u.samples[u.samples.length - 1]; if (s[0] > at) { at = s[0]; v = s[1]; } }
-      if (v != null && cfg.phases.includes(key)) return { left: encLeft(cfg, key, {}, v), phase: key, label: key + ' · ' + shortBoss(names[0] || r.item.boss) + ' ' + Math.round(100 * v) + '%' }; }
+      if (v != null && cfg.phases.includes(key)) { const lf = encLeft(cfg, key, {}, v); return { left: lf, phase: key, label: key + ' · ' + bossAtV(lf) }; } }
     else if (cfg.phases.includes(key)) {
       const hp = {}; for (const n of Object.keys(cfg.hp[key] || {})) { const v = hpOf(n, last.start); if (v != null) hp[n] = v; }
       const shown = names.map((n) => [n, hpOf(n, last.start)]).filter(([, v]) => v != null);
-      return { left: encLeft(cfg, key, hp), phase: key, label: key + (shown.length ? ' · ' + shown.map(([n, v]) => shortBoss(n) + ' ' + Math.round(100 * v) + '%').join(', ') : '') };
+      const lf = encLeft(cfg, key, hp); return { left: lf, phase: key, label: key + (shown.length && lf != null ? ' · ' + bossAtV(lf) : '') }; /* (one number (Nov 5): the whole fight's, not each boss's) */
     }
   }
   const v = r.item.endPct != null ? r.item.endPct : r.bossPct;
-  return v != null ? { left: v, label: v.toFixed(1) + '%' } : null;
+  return v != null ? { left: v, label: bossAtV(v) } : null;
 }
 // a Warcraft Logs pull's progress from its fight list (the phase it ended in and that phase's boss health), so it reads the
 // same as a local log's without downloading the pull
 function wclProg(b) {
   const cfg = PROGRESS[b.boss]; if (!cfg || !b.endPhase || b.endBoss == null || !cfg.phases.includes(b.endPhase)) return null;
   const k = b.endPhase, f = b.endBoss / 100, nm = (cfg.boss[k] || []).length === 1 ? shortBoss(cfg.boss[k][0]) + ' ' : '';
-  return { left: encLeft(cfg, k, {}, k === 'Intermission' && !cfg.pool ? 1 : f), phase: k, label: k + (k === 'Intermission' && !cfg.pool ? '' : ' · ' + nm + Math.round(b.endBoss) + '%') };
+  const lf = encLeft(cfg, k, {}, k === 'Intermission' && !cfg.pool ? 1 : f); return { left: lf, phase: k, label: k + ' · ' + bossAtV(lf) }; /* (nm: the phase's boss, no longer named: one number (Nov 5)) */
 }
 // a saved earlier night's pull, re-read from its label ("P2 · Malacrass 66%"), so nights saved before this measure agree
 function labelLeft(boss, label) {
@@ -17107,7 +17113,7 @@ function labelLeft(boss, label) {
 // (a local pull's progress once it's read; a Warcraft Logs pull's from the report's fight list)
 const pullProg = (b) => (b.wcl ? wclProg(b) : CACHE.has(b) ? progressOf(CACHE.get(b)) : null);
 const pullPct = (b) => { if (b.kill) return 0; if (PROGRESS[b.boss]) { const p = pullProg(b); if (p) return p.left; } return b.endPct != null ? b.endPct : CACHE.has(b) && CACHE.get(b).bossPct != null ? CACHE.get(b).bossPct : null; };
-const pullLabel = (b) => { const p = pullProg(b); return b.kill ? 'kill' : p ? p.label : pullPct(b) != null ? pullPct(b).toFixed(1) + '%' : 'wipe'; };
+const pullLabel = (b) => { const p = pullProg(b); return b.kill ? 'kill' : p ? p.label : pullPct(b) != null ? bossAtV(pullPct(b)) : 'wipe'; };
 // a pull's colour, WoW item quality by how far through the whole encounter it got: every 20% of the encounter's health is
 // one step (poor, common, uncommon, rare, epic), and a kill is legendary
 const PULL_Q = [[80, '#b25ef5'], [60, '#2e8cff'], [40, '#2ee62e'], [20, '#f2f2f2'], [0, '#9d9d9d']];
@@ -17258,7 +17264,7 @@ function drawProgress(reps) {
     const x = reps[+el.dataset.i];
     el.onmouseenter = () => {
       const d0 = x.deaths.slice().sort((a, b) => a.t - b.t)[0];
-      tip.innerHTML = '<b>Pull ' + x.item.pull + '</b> ' + (x.item.wallMs ? wallClock(x.item.wallMs) : clock(x.item.startMs)) + '<br>' + (x.item.kill ? '<span style="color:#7ee08f">Kill</span>' : 'Boss at ' + (x.bossPct != null ? x.bossPct.toFixed(1) + '%' : 'unknown')) +
+      tip.innerHTML = '<b>Pull ' + x.item.pull + '</b> ' + (x.item.wallMs ? wallClock(x.item.wallMs) : clock(x.item.startMs)) + '<br>' + (x.item.kill ? '<span style="color:#7ee08f">Kill</span>' : ((s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Boss health unknown'))(bossAtV(pullPct(x.item) != null ? pullPct(x.item) : x.bossPct))) +
         (x.module ? '<br>Reached ' + esc(x.module.reached) : '') + '<br>Length ' + T(x.duration) + '<br>' + x.deaths.length + (x.deaths.length === 1 ? ' death' : ' deaths') + (d0 ? '<br>First: ' + esc(d0.player) + ' at ' + T(d0.t) : '');
       tip.style.display = 'block';
       tip.style.left = Math.min(+el.getAttribute('x') + iw / n + 6, W - 170) + 'px'; tip.style.top = '8px';
@@ -30597,7 +30603,7 @@ const dbfNum = (v, l, d) => '<div class="dbf-n"><b>' + v + '</b><span>' + l + '<
 const dbfCard = (k, t, l, none) => '<div class="panel dbf-c dbf-' + k + '"><h3 class="nh"><span>' + t + '</span></h3>' + (l.length ? '<ul class="dbf-l">' + l.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="sub dbf-none">' + none + '</p>') + '</div>';
 // (a mechanic's first row that went wrong (else could be better), in words, and who was in the rows that went wrong)
 const dbfRow = (s) => { const all = (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])), bad = all.filter((row) => row.some((c) => c.bad)), row = bad[0] || all.find((row) => row.some((c) => c.warn)); if (!row) return null;
-  const g = (s.groups || []).find((q) => (q.rows || []).includes(row)); return { txt: (g && g.title ? g.title + ', ' : '') + rowText(s, row).replace(/^\d+:\d\d\s*/, ''), who: [...new Set((bad.length ? bad : [row]).flatMap((rr) => rr.filter((c) => (c.bad || c.warn) && c.p).map((c) => c.p)))] }; };
+  const g = (s.groups || []).find((q) => (q.rows || []).includes(row)); return { txt: rowSay(row) || (g && g.title ? g.title + ', ' : '') + rowText(s, row).replace(/^\d+:\d\d\s*/, ''), who: [...new Set((bad.length ? bad : [row]).flatMap((rr) => rr.filter((c) => (c.bad || c.warn) && c.p).map((c) => c.p)))] }; };
 // (a change: ▲ or ▼ in green when it's better, orange when it's worse)
 const dbfD = (txt, good) => '<span class="lp-d ' + (good ? 'up' : 'dn') + '">' + txt + '</span>';
 // ---- one pull ----
@@ -30612,7 +30618,9 @@ const dbfTo = (d) => (!d.ability || d.ability === 'Melee' ? (d.killer && d.kille
 // (a check's sentence with its counts: "2 of your 5 ...", and when every one counts, "Both of your ..." or "All 6 of your ...")
 const pairTxt = (t, ok, n) => { if (ok === n && n > 1) t = t.replace('{ok} of your {n}', (n === 2 ? 'both' : 'all ' + n) + ' of your'); t = t.replace('{ok}', String(ok)).replace('{n}', String(n)); return t.charAt(0).toUpperCase() + t.slice(1); };
 const dbfTimes = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
-const dbfAt = (l) => String(l || '').replace(' · ', ' at '); // (a pull's result inside a sentence: "P3 at 22%", not "P3 · 22%")
+const dbfAt = (l) => String(l || '').replace(/^boss at /, 'the boss at ').replace(/^Int(ermission)? · /, 'the intermission · ').replace(' · boss at ', ' with the boss at ').replace(' · ', ' at '); // (a pull's result inside a sentence: "P3 with the boss at 22%", not "P3 · boss at 22%")
+// (the word before it: "We wiped in P3 with the boss at 22%", "We wiped with the boss at 22%")
+const dbfPre = (a) => (/^(P\d|Int|the intermission)/i.test(a) ? 'in ' : /^the boss /.test(a) ? 'with ' : 'at ');
 // (the phase a label starts with, like "P2" in "P2 · Malacrass 66%": raid damage is only compared within the same phase)
 const dbfPhase = (lab) => { const m = String(lab || '').match(/^(P\d+|Int\w*)/i); return m ? m[1].toUpperCase() : ''; };
 // (Oct 19, your call: "as if you're the raid lead explaining what went wrong to the raid". "We" for the raid, a name and "you"
@@ -30681,7 +30689,7 @@ function dbfPull(o) {
   if (one) for (let i = bad.length - 1; i >= 0; i--) { const x = bad[i][1]; if (isAvoid(x)) { if (![...avoid.values()].some((y) => y.who.has(one))) bad.splice(i, 1); continue; } const g = gOf(x); if (!g || !g.who.has(one)) bad.splice(i, 1); }
   // ---- the short version: how it ended, what broke it, and the one thing to fix next pull ----
   const s1 = it.kill ? (isKey ? 'Key timed. Nice work, everyone.' : '<b>Boss down</b> on pull ' + it.pull + (it.pull > 1 ? ', after ' + plural(it.pull - 1, 'wipe') : '') + '. Nice work, everyone.')
-    : 'We wiped ' + (nowLab ? (/^\d/.test(nowLab) ? 'at' : 'in') + ' <b>' + esc(dbfAt(nowLab)) + '</b>' : 'after ' + T(A.dur)) + (isBest ? ', our best pull so far' : delta != null && delta > 0 ? ', further than last pull' : delta != null && delta < 0 ? ', not as far as last pull' : '') + '.';
+    : 'We wiped ' + (nowLab ? dbfPre(dbfAt(nowLab)) + '<b>' + esc(dbfAt(nowLab)) + '</b>' : 'after ' + T(A.dur)) + (isBest ? ', our best pull so far' : delta != null && delta > 0 ? ', further than last pull' : delta != null && delta < 0 ? ', not as far as last pull' : '') + '.';
   const raidCause = A.cause && !A.cause.who && (!A.first || A.cause.t <= A.first.t + 1) ? A.cause : null;
   // (a mass death, 4 or more within 5 seconds, reads as one: how many, when, and to what. When the first death was in one, that's
   // what broke the pull, and those deaths aren't "early" deaths)
@@ -30915,7 +30923,7 @@ async function recapData(tab, quiet) {
   const usesPh = !!PROGRESS[it.boss];
   const prg = (x, rep) => (x.wcl ? wclProg(x) : (rep || CACHE.has(x)) ? progressOf(rep || CACHE.get(x)) : null);
   const pct = (x, rep) => { if (x.kill) return 0; const rr = rep || (CACHE.has(x) ? CACHE.get(x) : null); if (usesPh) { const p = prg(x, rep); if (p) return p.left; } return x.endPct != null ? x.endPct : rr && rr.bossPct != null ? rr.bossPct : null; };
-  const lab = (x, rep, v) => { const p = usesPh ? prg(x, rep) : null; return p ? p.label : v != null ? v.toFixed(1) + '%' : ''; };
+  const lab = (x, rep, v) => { const p = usesPh ? prg(x, rep) : null; return p ? p.label : v != null ? bossAtV(v) : ''; };
   void latest; // (any pull has a recap (your call, Oct 19: "Enable single pulls for recap"), compared with the pull before it)
   if (!quiet) view(loadCard('Putting the recap together', 'Comparing it with the last pull and your best…', null));
   let prev = null; if (prevItem) { try { prev = await getRep(prevItem); } catch (e) { /* no comparison */ } }
@@ -31282,7 +31290,7 @@ async function pickLogFolder(msgEl, again) {
 // anything. `opened`: Debrief already switched to it (you were on the newest pull), so there's nothing to click.
 function pullAlert(nb, opened) {
   document.querySelectorAll('.np-card').forEach((x) => x.remove());
-  const lab = pullLabel(nb), res = nb.kill ? 'Kill!' : 'Wipe' + (lab && lab !== 'wipe' ? ' at ' + lab : '');
+  const lab = pullLabel(nb), res = nb.kill ? 'Kill!' : 'Wipe' + (lab && lab !== 'wipe' ? ' ' + dbfPre(dbfAt(lab)) + dbfAt(lab) : '');
   const t = document.createElement('div'); t.className = 'np-card' + (nb.kill ? ' kill' : ''); t.setAttribute('role', 'status');
   t.style.setProperty('--np-ms', (opened ? 7 : 12) + 's');
   t.innerHTML = '<div class="np-k">' + (opened ? 'New pull, now open' : 'New pull') + '</div><div class="np-t">' + esc(nb.boss) + ', pull ' + nb.pull + '</div>' +
@@ -33512,7 +33520,7 @@ function hdDash(X) {
     const bar = gp != null ? '<div class="hd-gbw"><div class="hd-gbl">' + marks.filter((m) => m.at < 82).map((m) => '<span style="left:' + m.at.toFixed(1) + '%">' + esc(m.p) + '</span>').join('') + '<span class="r">' + gp + '% of the fight</span></div><div class="hd-gbar"><u style="width:' + gp + '%"></u>' + marks.slice(1).map((m) => '<i style="left:' + m.at.toFixed(1) + '%"></i>').join('') + '</div></div>' : '';
     goal = '<section class="hd-pn hd-goal">' + art(gb) + '<div class="hd-gk">The goal · ' + dN + ' ' + (order.indexOf(gb) + 1) + ' of ' + order.length + (nerf ? '<button class="hd-ntag" type="button" data-hdnews="' + esc(nerf.u) + '">' + (nerfP ? 'Nerfed ' + esc(nerfP) + '%' : 'Nerfed') + ' · ' + esc(new Date(nerf.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</button>' : '') + '</div><h2>Kill ' + esc(gb) + '</h2>' +
       '<div class="hd-gr1"><span class="hd-gp"><span class="num">' + (gp != null ? gp + '%' : '—') + '</span></span>' + (newBest ? '<span class="hd-tag hd-tagp">New best ' + esc(hdWd(lastP.at)) + '</span>' : '') + spark + '</div>' +
-      ((t) => '<div class="hd-gline" title="' + esc(t) + '">' + esc(t) + '</div>')('best pull' + (gnb && gnb.label ? ' · ' + String(gnb.label).replace(/ · /g, ', ') + (/%$/.test(gnb.label) ? ' left' : '') : '') + (newBest ? ' · up from ' + prevMax + '% over ' + plural(gl.length, 'pull') : ' · ' + plural(gl.length, 'pull') + ' over ' + plural(per.size, 'night'))) + bar +
+      ((t) => '<div class="hd-gline" title="' + esc(t) + '">' + esc(t) + '</div>')('best pull' + (gnb && gnb.label ? ' · ' + String(gnb.label).replace(/ · /g, ', ') + (/%$/.test(gnb.label) && !/boss at/.test(gnb.label) ? ' left' : '') : '') + (newBest ? ' · up from ' + prevMax + '% over ' + plural(gl.length, 'pull') : ' · ' + plural(gl.length, 'pull') + ' over ' + plural(per.size, 'night'))) + bar +
       /* (no fixes on Home (Flex, Nov 3: "i dont want the homepage to have fixes on it … i want it more to be a home base"): fixes live on Debriefing and Rotation) */
       '<div class="hd-gbt">' + (gOp ? '<button class="hd-gb gold" id="pnwGo" type="button" data-code="' + esc(gOp.code) + '" data-fight="' + esc(String(gOp.fight)) + '">Open the last night ›</button>' : '') + guideB(gb) + '</div></section>'; }
   else { const kl = list.filter((v) => v.kill && v.dur), fast = kl.slice().sort((a, b) => a.dur - b.dur)[0], allK = order.length && killedOn(cur) === order.length;
@@ -33726,7 +33734,7 @@ function renderProgress(msg, msgErr) {
     return { k, at: l[0].at, by, main, kills: by.filter((x) => x.l.some((v) => v.kill)).map((x) => x.boss), nb: bestOf(main.l), op: nightOpen(main.l) || nightOpen(l) }; });
   const dayOf = (at) => new Date(at - 6 * 3600e3);
   const pnRow = (n) => { const kill = n.main.l.some((v) => v.kill), d = dayOf(n.at), others = n.by.filter((x) => x !== n.main).map((x) => x.boss), killO = n.kills.filter((b) => b !== n.main.boss);
-    const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label + (/%$/.test(n.nb.label) ? ' left' : '') : '') + /* (boss health left, beside the % done on the right (Oct 21)) */
+    const sub = plural(n.main.l.length, 'pull') + (kill ? ', killed on pull ' + n.main.l.find((v) => v.kill).pull : n.nb ? ', best ' + n.nb.label + (/%$/.test(n.nb.label) && !/boss at/.test(n.nb.label) ? ' left' : '') : '') + /* (boss health left, beside the % done on the right (Oct 21)) */
       (others.length ? ' · also ' + (killO.length ? 'killed ' + (killO.length === 1 ? killO[0] : killO.length + ' more') : others.length === 1 ? others[0] : others.length + ' more bosses') : ''); // (short: one boss by name, more as a count)
     return '<button class="pn-row' + (kill ? ' pn-k' : '') + '" type="button"' + (n.op ? ' data-code="' + esc(n.op.code) + '" data-fight="' + esc(String(n.op.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '>' +
       '<span class="pn-d"><b>' + esc(d.toLocaleDateString('en-US', { weekday: 'short' })) + '</b><span>' + esc(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span></span>' +
@@ -33749,7 +33757,7 @@ function renderProgress(msg, msgErr) {
     const col = bk.length ? '#ff8000' : nb ? qc(nb) : 'var(--muted)';
     nowHtml = '<section class="pg-now" id="pgNow" style="--ec:' + col + '">' + (BOSS_HERO[nowBoss] ? '<img class="pnw-art" src="https://wow.zamimg.com/uploads/guide/header/' + BOSS_HERO[nowBoss][0] + '.jpg" alt="" loading="lazy" style="object-position:' + BOSS_HERO[nowBoss][1] + '% 20%" onerror="this.remove()">' : '') +
       '<div class="pnw-t"><div><span class="pnw-k">' + (openB ? 'Now on' : 'Last kill') + ' · ' + esc(diffName) + '</span><h2>' + esc(nowBoss) + '</h2><span class="sub">' +
-        esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label + (/%$/.test(nb.label) ? ' left' : '') : 'No result yet') + '</span>' +
+        esc(bk.length ? 'Killed ' + nightLabel(bk[0].at) + ' on pull ' + bk[0].pull + ' of the night' : nb ? 'Best: ' + nb.label + (/%$/.test(nb.label) && !/boss at/.test(nb.label) ? ' left' : '') : 'No result yet') + '</span>' +
         '<div class="pnw-tiles">' + [[bk.length ? 'Pulls' : 'Pulls', pr.length], ['Nights', nts], ['Time on the boss', durH(time)]].map(([l, v]) => '<span class="pnw-ti"><em>' + l + '</em><b>' + esc(String(v)) + '</b></span>').join('') + '</div></div>' +
         '<div class="pnw-big" style="color:' + col + '">' + (bk.length ? 'Killed' : nb && nb.left != null ? Math.floor(100 - nb.left) + '%' : '—') + (bk.length ? '' : '<span>of the encounter done</span>') + '</div></div>' +
       /* (round 341 home polish: the best pull of each night) */ progChart(((m) => { pr.forEach((v) => { const k = nightOf(v.at), o = m.get(k); if (!o || (v.kill && !o.kill) || (!o.kill && !v.kill && v.left != null && (o.left == null || v.left < o.left))) m.set(k, v); }); return [...m.values()].sort((a, b) => a.at - b.at); })(new Map()), nowBoss, [1000, 170], true) +
@@ -36498,8 +36506,8 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     /* (Sszorak (Flex, Nov 2: "Yes, Sszorak next")) */
     var nth = function (R, i) { return R.length > 1 ? ['First', 'Second', 'Third', 'Fourth', 'Fifth'][i] + ' cast: ' : ''; }; /* (two casts in one moment: First cast: …, Second cast: …) */
     STORY['Sszorak'] = {
-      ravage: function (R) { return R.map(function (row, i) { var tk = psN(row, 2), up = c(row, 3), oth = c(row, 4), dd = c(row, 5); return nth(R, i) + (tk.length ? andL(tk.map(nmH)) + ' took it' : 'Nobody took it') + (dash(up) ? '' : ' with Ravage still up (' + E(up) + ')') + (dash(oth) ? '' : '; it also hit ' + colorize(E(oth))) + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Vegevi took it") */
-      mutilate: function (R) { return R.map(function (row, i) { var n = c(row, 2), hit = c(row, 5), gash = c(row, 3), dd = c(row, 4); return nth(R, i) + (n ? E(n.replace(/ soakers?$/, '')) + ' soaked it' : 'Nobody soaked it') + (hit ? ', ' + E(hit.replace(/ on each player$/, '')) + ' each' : '') + (dash(gash) ? '' : '; with Mutilated Gash: ' + colorize(E(gash))) + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("10 soaked it, 353k each") */
+      ravage: function (R) { return R.map(function (row, i) { var tk = psN(row, 2), up = c(row, 3), oth = c(row, 4), dd = c(row, 5); return nth(R, i) + (tk.length ? andL(tk.map(nmH)) + ' took it' : 'Nobody took it') + (dash(up) ? '' : ' with Ravage still up (' + E(up) + ')') + (dash(oth) ? '' : '; it also hit ' + colorize(E(oth))) + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Vegevi took it") */
+      mutilate: function (R) { return R.map(function (row, i) { var n = c(row, 2), hit = c(row, 5), gash = c(row, 3), dd = c(row, 4); return nth(R, i) + (n ? E(n.replace(/ soakers?$/, '')) + ' soaked it' : 'Nobody soaked it') + (hit ? ', ' + E(hit.replace(/ on each player$/, '')) + ' each' : '') + (dash(gash) ? '' : '; with Mutilated Gash: ' + colorize(E(gash))) + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("10 soaked it, 353k each") */
       tempest: function (R) { var T = [], dd = []; R.forEach(function (row) { var p = c(row, 0, 'p'); if (!p) return; var n = +((c(row, 2).match(/(\d+)/) || [])[1] || 1); T.push(nmH(p) + (n > 1 ? ' (' + n + ')' : '')); if (!dash(c(row, 3))) dd.push(nmH(p)); }); return T.length ? andL(T) + ' touched a tornado' + (dd.length ? '; ' + andL(dd) + ' died' : '') : 'Nobody touched a tornado'; }, /* ("Zorthar (2) and Esra touched a tornado") */
       cysts: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), n = c(row, 2), use = c(row, 3), sub = c(row, 3, 'sub'); if (!p) return ''; return nmH(p) + '\'s ' + E(n || 'cyst') + (use ? ': ' + E(use.charAt(0).toLowerCase() + use.slice(1)) + (sub ? ' (' + colorize(E(sub)) + ')' : '') : ''); }).filter(Boolean).join('. '); }, /* ("Bryon's cyst #1: wind 3 of intermission 1 (2:00, popped by Shoomon)") */
       winds: function (R) { return R.filter(function (row) { return /^Wind \d/.test(c(row, 0)); }).map(function (row) { var cy = c(row, 2), sub = c(row, 2, 'sub'), co = c(row, 3), dd = c(row, 4); return E(c(row, 0)) + ': ' + (cy ? colorize(E(cy)) + (sub ? ' (' + colorize(E(sub.replace(/^cyst #\d+,\s*/, ''))) + ')' : '') : 'no cyst') + (co ? ', ' + E(co) : '') + (dash(dd) ? '' : ', ' + colorize(E(dd)) + ' died'); }).join('; '); }, /* ("Wind 1: Chazh's cyst (popped by Chazh), 20 of 20 coated") */
@@ -36526,8 +36534,8 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
       nyburst: function (R) { var L = []; R.forEach(function (row) { var p = c(row, 0, 'p') || c(row, 0), res = c(row, 2), s = parseFloat((res.match(/([\d.]+) s after/) || [])[1]); if (!p) return; if (/same moment/.test(res) || (s && s < 3)) L.push(colorize(E(p)) + ' (' + (/same moment/.test(res) ? 'at the same moment as another' : s + ' s after the last') + ')'); }); return L.length ? 'Soaked too close to the last one: ' + L.join(', ') : 'Every orb soaked apart'; }, /* ("Soaked too close to the last one: Blueprínt (at the same moment as another), ...") */
       nyadds: function (R) { return R.map(function (row) { return E(c(row, 0)) + ': ' + E(c(row, 2)) + (c(row, 3) ? ' (' + E(c(row, 3)) + ')' : ''); }).join('. '); }, /* ("17 Shorerunners: all dead 29 s after they came") */
       nyscale: function (R) { return R.map(function (row) { var n = c(row, 3); return E(c(row, 0)) + ' ' + E(c(row, 2)) + (n ? ' (' + E(n) + ')' : ''); }).join('. '); }, /* ("Frostscale 1 dead 15 s after it came (13 of 17 Shorerunners still up)") */
-      nyjet: function (R) { return R.map(function (row) { var dd = c(row, 3); return 'Water Jet on ' + nmH(c(row, 0, 'p')) + ' (' + E(c(row, 2)) + ')' + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Water Jet on Zeforusdk (swapped)") */
-      nyrain: function (R) { return R.map(function (row) { var dm = c(row, 0, 'sub'), cd = c(row, 2), dd = c(row, 3); return E(c(row, 0)) + (dm ? ': ' + E(dm) : '') + (cd && !/^none/.test(cd) ? ', covered by ' + colorize(E(cd)) : ', no raid cooldowns') + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Rain 2: 21.60M damage on the raid, covered by Divine Hymn (Fistofpell)") */
+      nyjet: function (R) { return R.map(function (row) { var dd = c(row, 3); return 'Water Jet on ' + nmH(c(row, 0, 'p')) + ' (' + E(c(row, 2)) + ')' + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Water Jet on Zeforusdk (swapped)") */
+      nyrain: function (R) { return R.map(function (row) { var dm = c(row, 0, 'sub'), cd = c(row, 2), dd = c(row, 3); return E(c(row, 0)) + (dm ? ': ' + E(dm) : '') + (cd && !/^none/.test(cd) ? ', covered by ' + colorize(E(cd)) : ', no raid cooldowns') + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Rain 2: 21.60M damage on the raid, covered by Divine Hymn (Fistofpell)") */
       nypop: function (R) { var G = {}, GO = []; R.forEach(function (row) { var p = c(row, 0, 'p'), w = c(row, 2), dd = c(row, 3); if (!p) return; if (!G[w]) { G[w] = []; GO.push(w); } G[w].push(nmH(p) + (dash(dd) ? '' : ' (died)')); }); return GO.map(function (w) { return cap(E(w)) + ': ' + andL(G[w]); }).join('. '); }, /* ("Hit by a whirlpool: Drizzypink (died), Ninjaristic (died)") */
       pace: function (R) { return R.map(function (row) { var w = c(row, 0).split(' · ')[0], res = c(row, 2), top = c(row, 3); return E(w) + ': ' + E(res) + (top ? ' (' + E(top) + ')' : ''); }).join('. '); } };
     STORY['Nymrissa Wavecaller'].kicks = STORY['The Coiled Altar'].kicks;
@@ -36548,7 +36556,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     /* (Entombed Sentinels (Flex, Nov 2: "start sentinels, make every boss mechanic on every boss detailed like you did on ulatek")) */
     STORY['Entombed Sentinels'] = {
       coag: function (R) { return R.map(function (row) { var a = c(row, 0).replace(/ \(.*\)$/, ''), k = c(row, 2), d = c(row, 3), at = c(row, 4); return E(a) + ' ' + E(k || 'not killed') + (d ? ' (' + E(d) + ' from its Contaminate)' : '') + (at && !dash(at) ? ', ' + E(at) : ''); }).join('. '); }, /* ("Add 1 killed in 16 s (1.8M on the raid from its Contaminate), dead in time") */
-      miasma: function (R) { return R.map(function (row) { var p = c(row, 2, 'p'), n = c(row, 3), dd = c(row, 4); return E(c(row, 0)) + (p ? ' on ' + nmH(p) : '') + ': ' + E(n.replace(/^(\d+)/, '$1 soakers')) + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Soak 1 on Shoomon: 6 soakers (8 needed)") */
+      miasma: function (R) { return R.map(function (row) { var p = c(row, 2, 'p'), n = c(row, 3), dd = c(row, 4); return E(c(row, 0)) + (p ? ' on ' + nmH(p) : '') + ': ' + E(n.replace(/^(\d+)/, '$1 soakers')) + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Soak 1 on Shoomon: 6 soakers (8 needed)") */
       balance: function (R) { return R.map(function (row) { var g = c(row, 4), hb = c(row, 5); return E(c(row, 0)) + ': Breath at ' + E(c(row, 2)) + ', Blood at ' + E(c(row, 3)) + (g ? ' (' + E(g) + ' apart' + (hb ? ', ' + E(hb) : '') + ')' : ''); }).join('. '); }, /* ("Intermission 1: Breath at 59%, Blood at 85% (26.2 points apart, 41.8M healed back)") */
       tanks: function (R) { return R.map(function (row) { var a = c(row, 2, 'p'), b = c(row, 3, 'p'), sw = c(row, 4); return E(c(row, 0)) + ': ' + (a ? nmH(a) + ' on the Breath' : '') + (b ? (a ? ', ' : '') + nmH(b) + ' on the Blood' : '') + (sw && !dash(sw) ? ' (' + E(sw) + ')' : ''); }).join('. '); }, /* ("Cycle 2: Zeforusdk on the Breath, Vegevi on the Blood (swapped)") */
       pace: function (R) { return R.map(function (row) { var w = c(row, 0).split(' · ')[0], res = c(row, 2), top = c(row, 3); return E(w) + ': ' + E(res) + (top ? ' (' + E(top) + ')' : ''); }).join('. '); }, /* ("Intermission 1: up to 85% (top guilds: 76% or lower)") */
@@ -36569,14 +36577,14 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
       ascension: function (R) { return R.map(function (row) { var w = c(row, 0), res = c(row, 2), sub = c(row, 2, 'sub'), dd = c(row, 4); return E(w) + ' ' + E(res) + (sub ? ' (' + E(sub) + ')' : '') + (dash(dd) || !dd ? '' : ', ' + E(dd)); }).join('. '); }, /* ("Fish 1 fed"; "Final Ascension went off (20 players hit for 3.1 s), 1 death") */
       frostfire: function (R) { var G = {}, GO = []; R.forEach(function (row) { var p = c(row, 0, 'p'), d = c(row, 0, 'sub') || 'the DoT', res = c(row, 2), s = (res.match(/after ([\d.]+) s/) || [])[1]; if (!p) return; if (!G[d]) { G[d] = { ok: [], no: [] }; GO.push(d); } if (s) G[d].ok.push([+s, nmH(p) + ' (' + s + ' s)']); else G[d].no.push(nmH(p)); });
         return GO.map(function (d) { var g = G[d], ok = g.ok.sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; }); return E(d) + (ok.length ? ' cleared by ' + andL(ok) : '') + (g.no.length ? (ok.length ? '; ' : ': ') + 'not cleared by ' + andL(g.no) : ''); }).join('. '); }, /* ("Burning Flames cleared by Ashslash (1.5 s), Lowercaseg (2.0 s) and Bryon (3.0 s)") */
-      blink: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), dmg = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + ' took it' : 'It went off') + (dmg ? '; ' + E(dmg) : '') + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Warklaw took it; 449k each on average") */
+      blink: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), dmg = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + ' took it' : 'It went off') + (dmg ? '; ' + E(dmg) : '') + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Warklaw took it; 449k each on average") */
       thud: function (R) { return R.filter(function (row) { return /^Leap \d/.test(c(row, 0)); }).map(function (row) { var n = c(row, 2), dd = c(row, 3); return E(c(row, 0)) + ': ' + (n ? E(n.replace(/ soakers?$/, '')) + ' soaked' : 'nobody soaked') + (dash(dd) ? '' : ', ' + colorize(E(dd)) + ' died'); }).join('; '); }, /* ("Leap 1: 8 soaked; Leap 2: 8 soaked") */
-      tankstacks: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), d = c(row, 0, 'sub'), st = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + '\'s ' : '') + E(d || 'stacks') + ' dropped at ' + E(st.replace(/ before it dropped$/, '')) + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Zeforusdk's Steady Strikes dropped at 29 stacks") */
+      tankstacks: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), d = c(row, 0, 'sub'), st = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + '\'s ' : '') + E(d || 'stacks') + ' dropped at ' + E(st.replace(/ before it dropped$/, '')) + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Zeforusdk's Steady Strikes dropped at 29 stacks") */
       pace: function (R) { return R.map(function (row) { return E(c(row, 0).replace(/^Turn \d+ · /, '')); }).join('. '); } };
     STORY['The Lost Explorers'].kicks = STORY['The Coiled Altar'].kicks;
     /* (Vashnik the Malignant (Flex, Nov 2: "Yes, Vashnik next")) */
     STORY['Vashnik the Malignant'] = {
-      imbibe: function (R) { return R.map(function (row) { var dr = c(row, 2), dd = c(row, 3), hit = c(row, 4); return (dr ? 'He drained the ' + E(dr) : 'He drained the fountains') + (hit ? ', ' + E(hit) : '') + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("He drained the Flame and Shadow fountains, 150k on each player") */
+      imbibe: function (R) { return R.map(function (row) { var dr = c(row, 2), dd = c(row, 3), hit = c(row, 4); return (dr ? 'He drained the ' + E(dr) : 'He drained the fountains') + (hit ? ', ' + E(hit) : '') + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("He drained the Flame and Shadow fountains, 150k on each player") */
       venoms: function (R) { var G = {}, GO = [], N = []; R.forEach(function (row) { var nm = c(row, 0).replace(/\s*\d+$/, ''), res = c(row, 2), no = c(row, 3), many = (c(row, 0, 'sub').match(/(\d+) adds/) || [])[1]; if (!nm) return; if (many) { N.unshift('The ' + many + ' ' + E(c(row, 0)) + ' were ' + E(res)); return; } /* ("The 8 Shrouded Venoms were all dead after 4 s") */ if (!G[nm]) { G[nm] = []; GO.push(nm); } var s = (res.match(/after (\d+) s/) || [])[1]; G[nm].push(s ? +s : res); if (!dash(no)) N.push(E(c(row, 0)) + ': ' + colorize(E(no))); });
         return GO.map(function (nm) { var L = G[nm], num = L.filter(function (x) { return typeof x === 'number'; }).sort(function (a, b) { return a - b; }), oth = L.filter(function (x) { return typeof x !== 'number'; }); return (L.length > 1 ? E(nm) + 's' : E(nm)) + (num.length ? ' killed after ' + andL(num.map(String)) + ' s' : '') + (oth.length ? (num.length ? '; ' : ': ') + E(oth.join(', ')) : ''); }).concat(N).join('. '); }, /* ("Burning Venoms killed after 13, 21 and 34 s") */
       totems: function (R) { return R.map(function (row) { var w = c(row, 0), res = c(row, 2); return /^Totems up/i.test(w) ? E(res) + ' came up' : E(w.replace(/^Plague Froth at /, 'Plague Froth at ')) + ': ' + E(res); }).join('; '); }, /* ("24 totems came up"; "Plague Froth at 0:54: 17 totems cleared") */
@@ -36584,7 +36592,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
         return BO.length ? BO.map(function (k) { return (k === '?' ? 'A line' : nmH(k) + '\'s line') + ' hit ' + andL(B[k]); }).join('; ') : 'The lines hit nobody'; }, /* ("Jordodk's line hit Bobybigplays (430k) and Zorthar (541k)") */
       bile: function (R) { return R.map(function (row) { var res = c(row, 2), so = c(row, 3, 'sub'); return cap(E(res || 'the biles')) + (so ? ' (' + colorize(E(so)) + ')' : ''); }).join('. '); }, /* ("Every bile soaked (Ashslash, Lowercaseg, ...)") */
       infect: function (R) { return R.map(function (row) { var w = c(row, 0), p = c(row, 0, 'p'), sub = c(row, 0, 'sub'), res = c(row, 2), rs = c(row, 2, 'sub'), no = c(row, 3), ns = c(row, 3, 'sub'); if (!p && /Stygian/i.test(w)) return 'Stygian Infection on ' + colorize(E(sub)) + ': ' + E(res); if (!p) return ''; return nmH(p) + (sub ? ' (' + E(sub) + ')' : '') + ': ' + E(res) + (rs ? ' ' + colorize(E(rs)) : '') + (dash(no) ? '' : ', ' + colorize(E(no)) + (ns ? ' (' + E(ns) + ')' : '')); }).filter(Boolean).join('. '); }, /* ("Arzenal (Exploding Infection): dispelled after 2.2 s by Drizzypink") */
-      fangs: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), res = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + ' took it' : 'The tank took it') + (/first/i.test(res) ? ' first' : /swapped/i.test(res) ? ' (swapped in)' : res ? ' (' + E(res) + ')' : '') + (dash(dd) ? '' : '; ' + colorize(E(dd)) + ' died'); }).join('. '); }, /* ("Zeforusdk took it (swapped in)") */
+      fangs: function (R) { return R.map(function (row) { var p = c(row, 0, 'p'), res = c(row, 2), dd = c(row, 3); return (p ? nmH(p) + ' took it' : 'The tank took it') + (/first/i.test(res) ? ' first' : /swapped/i.test(res) ? ' (swapped in)' : res ? ' (' + E(res) + ')' : '') + (dash(dd) ? '' : '; ' + colorize(E(String(dd).replace(/(^|\s+)died\.?$/i, ''))) + ' died'); /* (the cell already reads "Kriaalis died": "died died" (Nov 5)) */ }).join('. '); }, /* ("Zeforusdk took it (swapped in)") */
       pace: function (R) { return R.map(function (row) { return E(c(row, 2)) + (c(row, 3) ? '; ' + E(c(row, 3)) : ''); }).join('. '); } };
     var story = function (m) { var SB = STORY[it0.boss], f = SB && SB[m.id]; if (!f) return ''; try { var R = rowsAt(m.id, m); if (!R.length && f.all) R = MS[m.id] || []; return R.length ? String(f(R) || '').replace(/\s+/g, ' ').trim() : ''; } catch (e) { return ''; } };
     var told = function (m, i) { if (m.death) { var g = GM[i]; if (g && g.length > 1) return E(g.map(function (j) { var q = M[j]; return ((q.who[0] || {}).n || '') + (q.cause ? ' to ' + q.cause : ''); }).filter(Boolean).join(', ')); var n0 = (m.who[0] || {}).n || ''; return E(String(m.lines[0] || 'died').replace(/\.$/, '').replace(n0 + ' ', '')); }
@@ -37309,4 +37317,51 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     box.addEventListener('mouseleave', function () { tip.classList.remove('on'); });
     window.addEventListener('scroll', function () { if (tip) tip.classList.remove('on'); }, { passive: true });
   };
+})();
+
+/* (Nov 5, analysis step 1: the wipe check, Flex's answer key. On a practice link only, /?wipecheck shows 20 real Coiled Altar wipes as short
+   stories in time order, without Debrief's own guess, and Flex taps what really wiped each one, plus anything else that added up. Every
+   tap saves right away (/api/wipecheck), so he can stop and come back; step 2 reads the answers) */
+(() => {
+  /* (the page tidies the address bar as it starts, so the address it was opened with is read too) */
+  const wckQ = location.search + ' ' + (() => { try { return new URL(performance.getEntriesByType('navigation')[0].name).search; } catch (e) { return ''; } })();
+  if (!/[?&]wipecheck\b/.test(wckQ) || !/-debrief\.[a-z0-9-]+\.workers\.dev$/.test(location.hostname)) return;
+  const wE = (x) => String(x == null ? '' : x).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const WCK_C = ['Guillotine soak short', 'Orbs touched', 'Soulcoiler kick missed', 'Axes', 'Mind controls in the wrong spot', 'Ghosts touched', 'Bombs', 'Shield not broken in time', 'Pushed into phase 2 badly', 'Too many dead / healing ran out', 'Reset on purpose', 'Not sure'];
+  const box = document.createElement('div'); box.id = 'wck'; box.setAttribute('role', 'main'); document.body.appendChild(box); document.body.classList.add('wck-on');
+  document.title = 'Wipe check · Debrief';
+  let D = { stories: [], answers: {} }, err = '';
+  const ans = (id) => D.answers[id] || (D.answers[id] = { main: '', also: [], note: '' });
+  const nMarked = () => D.stories.filter((s) => D.answers[s.id] && D.answers[s.id].main).length;
+  const top = () => { const n = nMarked(), N = D.stories.length; return '<div class="wck-top"><div class="wck-ti"><b>Wipe check</b><span class="wck-n">' + n + ' of ' + N + ' marked</span>' +
+    (n < N && N ? '<button type="button" class="wck-jump" data-jump="1">Next unmarked</button>' : '') + '</div><i class="wck-bar"><i style="width:' + (N ? Math.round(100 * n / N) : 0) + '%"></i></i></div>'; };
+  const line = (l) => '<li class="wck-l wck-' + wE(l.k) + '"><time>' + wE(l.t) + '</time><span>' + (l.mech ? '<b>' + wE(l.mech) + '</b> ' : '') +
+    (l.k === 'death' && l.who ? '<b class="wck-who"' + (l.c ? ' style="color:' + wE(l.c) + '"' : '') + '>' + wE(l.who) + '</b>' + wE(String(l.txt).slice(String(l.who).length)) : wE(l.txt)) + '</span></li>';
+  const chips = (s, g) => { const a = ans(s.id); return '<div class="wck-chips" data-g="' + g + '">' + WCK_C.filter((c) => g === 'main' || (c !== 'Not sure' && c !== a.main)).map((c) => { const on = g === 'main' ? a.main === c : a.also.includes(c);
+    return '<button type="button" class="wck-c' + (on ? ' on' : '') + '" data-v="' + wE(c) + '" aria-pressed="' + on + '">' + wE(c) + '</button>'; }).join('') + '</div>'; };
+  const card = (s, i) => { const a = ans(s.id); return '<section class="wck-card' + (a.main ? ' done' : '') + '" id="wck-' + i + '" data-id="' + wE(s.id) + '" data-i="' + i + '">' +
+    '<header class="wck-h"><b>Pull ' + wE(s.pull) + '</b><span>' + wE(s.date) + '</span><span class="wck-hs">' + wE([s.dur + ' long', s.phase, s.health, s.deaths + (s.deaths === 1 ? ' death' : ' deaths')].filter(Boolean).join(' · ')) + '</span></header>' +
+    '<ol class="wck-story">' + s.lines.map(line).join('') + '</ol>' +
+    '<div class="wck-q">What really wiped it?</div><div class="wck-main">' + chips(s, 'main') + '</div>' +
+    '<div class="wck-q">Anything else that added up? <small>Optional. Tap as many as you like.</small></div><div class="wck-also">' + chips(s, 'also') + '</div>' +
+    '<textarea class="wck-note" rows="2" placeholder="A note, if you want (optional)">' + wE(a.note || '') + '</textarea>' +
+    '<div class="wck-f"><span class="wck-st" aria-live="polite"></span>' + (i < D.stories.length - 1 ? '<button type="button" class="wck-next" data-next="' + (i + 1) + '">Next wipe ↓</button>' : '<span class="wck-end">That\'s the last one. Thank you!</span>') + '</div></section>'; };
+  const render = () => { box.innerHTML = top() + '<div class="wck-wrap"><p class="wck-intro">These are 20 of our real Coiled Altar wipes, each told in the order things happened. For each one, tap what really wiped it. Add anything else that added up, if you like. Every tap saves right away, so you can stop and come back.</p>' +
+    (err ? '<p class="wck-err">' + wE(err) + '</p>' : '') + (D.stories.length ? D.stories.map(card).join('') : err ? '' : '<p class="wck-intro">Loading the wipes…</p>') + '</div>'; };
+  const redraw = (cd) => { const s = D.stories[+cd.dataset.i], a = ans(s.id); cd.classList.toggle('done', !!a.main); cd.querySelector('.wck-main').innerHTML = chips(s, 'main'); cd.querySelector('.wck-also').innerHTML = chips(s, 'also');
+    const t = box.querySelector('.wck-top'); if (t) t.outerHTML = top(); };
+  const T0 = {}, status = (cd, t, k) => { const e = cd.querySelector('.wck-st'); if (e) { e.textContent = t; e.className = 'wck-st' + (k ? ' ' + k : ''); } };
+  const save = (cd, now) => { const id = cd.dataset.id; clearTimeout(T0[id]); status(cd, 'Saving…');
+    T0[id] = setTimeout(async () => { const a = ans(id); try { const r = await fetch('/api/wipecheck', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, main: a.main, also: a.also, note: a.note }) });
+      if (!r.ok) throw new Error(r.status); status(cd, 'Saved', 'ok'); } catch (e) { status(cd, 'Couldn\'t save. Trying again…', 'bad'); setTimeout(() => save(cd), 4000); } }, now ? 0 : 700); };
+  box.addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return;
+    if (b.dataset.jump) { const i = D.stories.findIndex((s) => !(D.answers[s.id] && D.answers[s.id].main)); const c = i >= 0 && document.getElementById('wck-' + i); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    if (b.dataset.next) { const c = document.getElementById('wck-' + b.dataset.next); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const cd = b.closest('.wck-card'), g = b.closest('.wck-chips'); if (!cd || !g || !b.dataset.v) return; const a = ans(cd.dataset.id), v = b.dataset.v;
+    if (g.dataset.g === 'main') { a.main = a.main === v ? '' : v; a.also = a.also.filter((x) => x !== a.main); } else a.also = a.also.includes(v) ? a.also.filter((x) => x !== v) : a.also.concat(v);
+    redraw(cd); save(cd, true); });
+  box.addEventListener('input', (ev) => { const t = ev.target; if (!t.classList || !t.classList.contains('wck-note')) return; const cd = t.closest('.wck-card'); ans(cd.dataset.id).note = t.value.slice(0, 800); save(cd); });
+  render();
+  fetch('/api/wipecheck').then((r) => r.json()).then((j) => { if (j.error) throw new Error(j.error); D = { stories: j.stories || [], answers: j.answers || {} }; err = D.stories.length ? '' : 'The wipes aren\'t here yet.'; render(); })
+    .catch((e) => { err = 'Couldn\'t load the wipes (' + e.message + '). Try again in a minute.'; render(); });
 })();

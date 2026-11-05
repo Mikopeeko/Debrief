@@ -1258,7 +1258,7 @@ function buildOne(b, rep, same, W, L, cutN) {
     const low = (s) => { const t = String(s || '').replace(/\.$/, ''), w = t.split(/\s+/)[0]; return names0.has(w) ? t : t.replace(/^./, (c) => c.toLowerCase()); };
     // (a kill opens with the raid lead's kill call from the site, without its "To tidy" line)
     let KC = ''; if (b.kill && b.id !== 990001 && !b.dungeon) { try { if (!rep.item) rep.item = b; const k = W.killCall ? W.killCall([rep], null) : null; KC = k && k.text ? plain(k.text).replace(/\s*To tidy[^.]*\.\s*$/, '').trim() : ''; } catch (e) { KC = ''; } }
-    Ld.push(KC || first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ' at ' + String(pr.label).split(',')[0] : '') + '.'));
+    Ld.push(KC || first1(raid.story) || (b.kill ? 'Boss down on pull ' + b.pull + '. Nice work, everyone.' : 'We wiped' + (pr && pr.label ? ((a) => (/^(P\d|Int)/.test(a) ? ' in ' : /^boss at/.test(a) ? ' with the ' : ' at ') + a.replace(' · boss at ', ' with the boss at ').replace(' · ', ' at '))(String(pr.label).split(',')[0]) : '') + '.'));
     if (!b.kill && b.id !== 990001 && !b.dungeon) {
       const ds = allDeaths, wave = (d) => ds.filter((x) => Math.abs(x.t - d.t) <= 5), d0 = ds[0];
       if (d0 && wave(d0).length >= 4) {

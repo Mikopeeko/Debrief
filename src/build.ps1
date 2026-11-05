@@ -51,4 +51,14 @@ New-Item -ItemType Directory -Force (Join-Path $root 'online') | Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'online\bot.js'), $bot, $utf8)
 # the design check (Oct 22): warns about new code that breaks notes/Guides/Design system.md; it never stops the build
 $dc = 0; try { $dc = & (Join-Path $src 'design-check.ps1') -src $src } catch { Write-Host "  the design check didn't run: $_" }
-"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length
+# the contradiction check (Nov 5, analysis step 1; notes/Guides/Contradiction check - how it works.md): runs the engine on saved test pulls and
+# lists every place the site contradicts itself (a green line that lists misses, counts that don't add up, two health numbers for one pull,
+# broken sentences, nicknames that aren't nouns). It never stops the build, but a failure prints in red: fix it before you push.
+# (about 20 s; skip it with $env:DEBRIEF_SKIP_CHECK = '1')
+$cc = 'skipped'; $ctest = Join-Path $root 'tests\contradictions.js'
+if ((Test-Path $node) -and (Test-Path $ctest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $cout = & $node --max-old-space-size=8192 $ctest; $ccode = $LASTEXITCODE
+  if ($ccode) { $cout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  CONTRADICTION CHECK FAILED: the site contradicts itself (the lines above). Fix it before you push.' -ForegroundColor Red; $cc = 'FAILED, see above' }
+  else { $cc = (($cout | Select-Object -Last 1) -replace '^Contradiction check: ', '') }
+}
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc

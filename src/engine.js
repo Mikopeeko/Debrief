@@ -2403,7 +2403,8 @@ function buildKithix(ev, r, h) {
       const rows = no.map((e) => { const d = diedNear(e.dst, e.t, 2);
         /* (Mechanics audit, Oct 24: every top kill had 1 to 4 players take it without a mote and live (a defensive does it), so living is a note) */
         M(e.t, pname(e.dst), 'Extinguish', d ? 'High' : 'Low', 'Took Extinguish without a Light\'s Embrace mote (' + fmtM(e.amt) + ')' + (d ? ', and died.' : '.'), 'Grab a Light\'s Embrace mote before Extinguish finishes casting. No mote left: use a defensive.');
-        return [{ p: pname(e.dst) }, { t: e.t }, { txt: 'no mote, took ' + fmtM(e.amt), bad: !!d, dim: !d }, d ? { txt: 'died', bad: true } : { txt: 'lived', dim: true }]; });
+        return [{ p: pname(e.dst) }, { t: e.t }, { txt: 'no mote, took ' + fmtM(e.amt), bad: !!d, warn: !d }, d ? { txt: 'died', bad: true } : { txt: 'lived', dim: true }]; });
+      /* (Nov 5: the verdict matches the facts: anyone without a mote is amber, a death red (it said green with 11 listed)) */
       return { title: 'Extinguish ' + (i + 1) + ' (' + phOf(c.t) + ')', t: c.t, bad: rows.some((x) => x[2].bad || x[3].bad), warn: rows.some((x) => x[2].warn), sub: no.length ? pl(no.length, 'player') + ' without a mote' : 'everyone had a mote', rows };
     });
     if (groups.length) sections.push({ id: 'kxext', title: "Extinguish (Grab a mote)", place: "Extinguish: everyone holding Light's Embrace", spell: [KX.extinguish, 'Extinguish'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn) ? 'warn' : 'good',
@@ -3583,7 +3584,7 @@ function avoidPanel(ev, r, h, list) {
   const rank = { High: 0, Medium: 1, Low: 2 };
   groups.sort((a, b) => rank[a.harm] - rank[b.harm] || b.amt - a.amt);
   const by = (k) => groups.filter((g) => g.harm === k && !g.secs).reduce((s, g) => s + g.nT, 0);
-  return { id: 'avoid', title: 'Avoidable damage', spell: [0, 'Avoidable damage'], verdict: groups.some((g) => g.bad) ? 'bad' : 'good',
+  return { id: 'avoid', title: 'Avoidable damage', spell: [0, 'Avoidable damage'], verdict: groups.some((g) => g.bad) ? 'bad' : groups.some((g) => g.warn || (g.rows || []).some((row) => row.some((c) => c && c.warn))) ? 'warn' : 'good', /* (Nov 5: a listed slip is amber, never green) */
     summary: 'Every avoidable damage source this pull, most harmful first, against what the fastest kills take by the same point of the fight. Amber: a bit more than most of their raiders. Red: twice that, a death to it, or a dangerous hit. Pools count the seconds you stood in them.' + (['High', 'Medium', 'Low'].some(by) ? ' ' + ['High', 'Medium', 'Low'].map((k) => by(k) ? by(k) + ' ' + HARM[k].toLowerCase() : '').filter(Boolean).join(', ') + ' hits.' : ''),
     cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups };
 }
@@ -3955,7 +3956,7 @@ function buildCoiledAltar(ev, r, h) {
   if (zjAtP3 != null) seRows.push([{ txt: 'Zul\'jan at P3' }, { t: p3 }, { txt: zjAtP3 + '% health', warn: zjAtP3 > 35, sub: 'under 35% is on pace for the kill' }, { txt: '' }]);
   // (fragments that got through with no soak round at all still get a row, so the panel says what happened)
   const notSoaked = reclaim.filter((t) => !rounds.some((rd, i) => t >= rd.t - 1 && t < (rounds[i + 1] ? rounds[i + 1].t : (p3 ?? dur))));
-  if (notSoaked.length) seRows.unshift([{ txt: 'Not blocked' }, { t: notSoaked[0] }, { txt: 'no Spirit Erasure', dim: true, sub: 'nobody stood in the way' }, { txt: notSoaked.length + ' got through', sub: 'each healed Zul\'jan ' + (mythic ? '10%' : r.item.diff === 'Heroic' ? '3%' : 'a little'), bad: mythic, warn: !mythic }]);
+  if (notSoaked.length) seRows.unshift([{ txt: 'Not blocked', say: 'At ' + h.fmtT(notSoaked[0]) + ', ' + notSoaked.length + (notSoaked.length === 1 ? ' fragment' : ' fragments') + ' got through to Zul\'jan with nobody in the way.' }, { t: notSoaked[0] }, { txt: 'no Spirit Erasure', dim: true, sub: 'nobody stood in the way' }, { txt: notSoaked.length + ' got through', sub: 'each healed Zul\'jan ' + (mythic ? '10%' : r.item.diff === 'Heroic' ? '3%' : 'a little'), bad: mythic, warn: !mythic }]);
   if (inter != null) sections.push({ id: 'inter', title: 'Intermission (Stop the fragments)', place: 'Intermission: blocking the Fragments', spell: S('soulbinding'),
     verdict: reclaim.length ? (mythic ? 'bad' : 'warn') : seRows.some((x) => x[2].warn || x[2].bad) ? 'warn' : 'good',
     summary: pl(rounds.length, 'soak round') + ', and ' + pl(reclaim.length, 'fragment') + ' reached Zul\'jan.',
@@ -3987,7 +3988,7 @@ function buildCoiledAltar(ev, r, h) {
     const why = (x.by ? nm0(x.by) + ' dispelled it after ' + took : 'Nobody dispelled it; it stayed on for ' + took) + (atOnce ? ' (' + (atOnce + 1) + ' landed at once)' : '') + (free.length ? '; ' + lst(free.slice(0, 3)) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : '; every dispeller had just used theirs') + (x.busy ? ', and it landed during ' + x.busy + ' with the healers on the raid' : '') + (x.soft ? ', so it isn\'t counted as a slip' : '') + '.';
     return { why, next: free.length ? free[0] + ' takes the next Venomfang as soon as it lands.' : atOnce ? 'Split the dispels: one dispeller per Venomfang when several land together.' : 'Keep one dispel free for Venomfang (it comes every 35 s or so).' }; };
   if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
-    verdict: slow.length > 2 ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red)
+    verdict: vfRows.some((x) => x.slow) ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red; Nov 5: one listed slip is amber, never green)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
@@ -4080,7 +4081,7 @@ function buildCoiledAltar(ev, r, h) {
     const len = p2End - p2, badAt = [dmT[4], p2 + 180].filter((t) => t != null && t < p2End), warnAt = [enT[1], p2 + 163].filter((t) => t != null && t < p2End);
     const bad = mythicT && badAt.length > 0, warn = mythicT && !bad && warnAt.length > 0, got = [enT.length >= 2 ? 'a second Eternal Nightfall' : '', dmT.length >= 5 ? 'a ' + dmT.length + 'th Dreadmarch' : ''].filter(Boolean);
     const at = bad || warn ? Math.min(...(bad ? badAt : warnAt)) : null;
-    if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Phase 2 ran long: ' + ms2(len) + '.' : 'Phase 2 went on for ' + ms2(len) + ' before the wipe.') + ' Top guilds finish it in ' + P2K.replace(', never', ' (never') + ').' + (got.length ? ' Because it ran long, Malacrass got ' + got.join(' and ') + (enT.length >= 2 ? ', one more shield to break' : '') + '.' : ''),
+    if (bad || warn) MT(at, bad ? 'High' : 'Medium', (inter != null ? 'Phase 2 took ' + ms2(len) : 'Phase 2 went on for ' + ms2(len) + ' before the wipe') + ', longer than the fastest kills (' + P2K + ').' + (got.length ? ' Because it ran long, Malacrass got ' + got.join(' and ') + (enT.length >= 2 ? ', one more shield to break' : '') + '.' : ''),
       'Get Malacrass to the intermission before his second Eternal Nightfall. Keep damage on him between add sets, and save cooldowns for his first shield.');
     return { len, dmN: dmT.length, enN: enT.length, bad, warn, at };
   })();
@@ -4448,6 +4449,7 @@ function buildCoiledAltar(ev, r, h) {
       return [{ txt: 'Deluge #' + (i + 1), sub: who }, { t: d }, cnt, res, map];
     });
     delete orbSec0.groups;
+    { /* (Nov 5: the rows are rebuilt here, so the colour follows them: a flagged Deluge is never under a green line) */ const fl = (k) => orbSec0.rows.some((row) => row.some((c) => c && c[k])); if (fl('bad')) orbSec0.verdict = 'bad'; else if (fl('warn') && orbSec0.verdict === 'good') orbSec0.verdict = 'warn'; }
     orbSec0.title = 'Venom orbs (Into the frontals)'; orbSec0.place = 'Venom orbs into the frontals'; orbSec0.mythicOnly = false;
     orbSec0.cols = ['Deluge', 'When', 'Orbs popped', 'Result', ''];
     orbSec0.fix = mythic ? 'Tanks, take turns and point each frontal at its own orbs: about 4 per frontal (the two frontals split each Toxic Deluge\'s 8), never 8 at once. Push Zul\'jan at 11 Venom Rupture stacks or fewer, under stacked raid cooldowns.' : 'Tanks, point each frontal at the orbs on the ground so it clears them.';
@@ -4559,7 +4561,10 @@ function buildCoiledAltar(ev, r, h) {
     }
     // 2) the ghosts: two ghosts touching (Malevolent Resonance), or a ghost reaching the player it follows. The log shows that as the
     // player mind controlled again: a Dreadmarch debuff with no Dreadmarch cast just before it
-    const ghItems = (sGh ? sGh.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, { txt: '' } /* round 424 no ghost maps */] }));
+    const andW = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
+    /* (Nov 5: each row says itself as one sentence: who, when, what happened) */
+    const ghSay = (r0) => { const ps = (r0[1].ps || []).filter(Boolean); return (ps.length > 1 ? andW(ps.map((n) => n + '\'s')) + ' ghosts touched' : ps.length ? ps[0] + '\'s ghost touched another ghost' : 'Two ghosts touched') + ' at ' + h.fmtT(r0[0].t) + ', and Malevolent Resonance hit the raid for ' + h.compact(r0[2].n) + ' damage.'; };
+    const ghItems = (sGh ? sGh.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Ghost collision', bad: true, say: ghSay(r0) }, { t: r0[0].t }, { ps: r0[1].ps }, { txt: 'ghosts touched (Malevolent Resonance), ' + h.compact(r0[2].n) + ' damage', bad: true }, { txt: '' } /* round 424 no ghost maps */] }));
     const reach = [];
     for (const e of auras('dreadmarch')) {
       if (e.op !== 'apply' || !h.isPlayer(e.dst) || dm.some((t) => e.t >= t - 1 && e.t <= t + 4) || !dm.some((t) => t < e.t)) continue;
@@ -4568,7 +4573,7 @@ function buildCoiledAltar(ev, r, h) {
     }
     for (const x of reach) {
       M(x.t, pname(x.g), 'manifestation of dread', 'Medium', 'Their ghost reached them and mind controlled them again.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
-      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { txt: '' }] });
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true, say: pname(x.g) + '\'s ghost reached them at ' + h.fmtT(x.t) + ', so they were mind controlled again.' }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { txt: '' }] });
     }
     if (dm.length && ghItems.length + (sGh ? 1 : 0) + reach.length) {
       const groups = perDm(ghItems, 'no ghosts touched or reached anyone');
@@ -4745,6 +4750,7 @@ function buildCoiledAltar(ev, r, h) {
         return [row[0], row[1], cell].concat(row.slice(2));
       });
       tf.rows = tf.rows.filter((x, i) => !used.has(i));
+      /* (Nov 5: the Soul Sever rows move to their own card above, so the tank frontals' colour follows the rows left: it stayed red with none failing) */ tf.verdict = tf.rows.some((x) => x.some((c) => c && c.bad)) ? 'bad' : tf.rows.some((x) => x.some((c) => c && c.warn)) ? 'warn' : 'good';
       if (ss.groups.some((g) => g.rows.some((row) => row[2] && row[2].bad))) ss.verdict = 'bad'; else if (ss.verdict !== 'bad' && ss.groups.some((g) => g.rows.some((row) => row[2] && row[2].warn))) ss.verdict = 'warn';
       for (const g of ss.groups) if (g.rows.some((row) => row[2] && row[2].bad)) g.bad = true;
       if (!tf.rows.length) sections.splice(sections.indexOf(tf), 1);

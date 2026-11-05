@@ -1595,6 +1595,24 @@ async function teamHere(id, me, w) {
   return Object.values(h);
 }
 const teamLog = (d) => (d.log || []).map((x, i) => ({ i, at: x.at, by: x.by, k: x.k, sum: x.sum, undo: x.prev !== undefined }));
+// (Nov 5, analysis step 1: the wipe check. Practice links only: the 20 wipe stories (practice-wipecheck/stories.json, put there with
+// tests/wipecheck-stories.js and wrangler r2) and what Flex marked as each one's real cause (practice-wipecheck/answers.json), saved as he
+// taps, for step 2 to read. Never on debriefme.io)
+const WCK_K = 'practice-wipecheck/';
+async function wipeCheck(req, env, url) {
+  if (!PRACTICE_HOST(url)) return json({ error: 'The wipe check is only on practice links.' }, 404);
+  if (!env.debrief_nights) return json({ error: 'There\'s no storage on this copy of Debrief.' }, 503);
+  const get = async (k) => { const o = await env.debrief_nights.get(WCK_K + k); if (!o) return null; try { return JSON.parse(await o.text()); } catch (e) { return null; } };
+  if (req.method === 'GET') { const s = await get('stories.json'); return json({ stories: (s && s.stories) || [], answers: (await get('answers.json')) || {} }); }
+  if (req.method !== 'POST') return json({ error: 'GET or POST only.' }, 405);
+  let b = null; try { b = await req.json(); } catch (e) { b = null; }
+  const id = String((b && b.id) || ''), cl = (v) => String(v == null ? '' : v).slice(0, 60);
+  if (!/^[A-Za-z0-9]{16}:\d{1,4}$/.test(id)) return json({ error: 'That pull is missing.' }, 400);
+  const A = (await get('answers.json')) || {};
+  A[id] = { main: cl(b.main), also: (Array.isArray(b.also) ? b.also : []).slice(0, 12).map(cl).filter(Boolean), note: String(b.note || '').slice(0, 800), at: new Date().toISOString() };
+  await env.debrief_nights.put(WCK_K + 'answers.json', JSON.stringify(A, null, 1), { httpMetadata: { contentType: 'application/json' } });
+  return json({ ok: true, marked: Object.values(A).filter((x) => x && x.main).length });
+}
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -1807,6 +1825,7 @@ export default {
     if (url.pathname === '/api/discord') return req.method !== 'POST' ? json({ error: 'Discord only.' }, 405) : env.BOT ? env.BOT.fetch(req) : discordClick(req, env, ctx); /* (Discord's address stays debriefme.io: the Discord helper's Worker answers) */
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
+    if (url.pathname === '/api/wipecheck') return wipeCheck(req, env, url); /* (Flex's answer key for the analysis upgrade, practice links only (Nov 5)) */
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
