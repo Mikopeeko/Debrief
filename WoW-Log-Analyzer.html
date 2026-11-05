@@ -12660,6 +12660,8 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .cl { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 7px 18px !important; align-items: center; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .cl > .ndz-p { min-width: 0; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-edit .cl > .ndz-p > .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* (a card with a row of five or more names spans both columns: the row fits on one line, Flex Nov 4 "Yes, one line") */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rcg > .plb-rc:has(.plb-rr > .plb-rn:not(.plb-rsub) > .ndz-ac ~ .ndz-ac ~ .ndz-ac ~ .ndz-ac ~ .ndz-ac), html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rcg > .plb-rc:has(.plb-edit .cl > .ndz-p ~ .ndz-p ~ .ndz-p ~ .ndz-p ~ .ndz-p) { column-span: all; }
 @media (max-width: 760px) { .pg-dp .pg-dpb i { display: none; } .pg-cdcalm { flex-wrap: wrap; } .pg-cdcalm span { flex-basis: 100%; } .pg-dpm { width: min(300px, calc(100vw - 32px)); } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl > .ndz-cth.pg-tb { position: relative; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl > .ndz-cth.pg-tb > .pg-more { position: static; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl > .ndz-cth.pg-tb > .pg-more > .pg-morel { left: 0; right: auto; top: 100%; width: min(270px, 100%); } }
 </style>
 
@@ -25664,7 +25666,7 @@ const PATCH_NOTES = [
     'Maps: an add\'s name is never covered by player names.',
     'Plan\'s names you can drag are now solid bars, all one size, and each role starts its own row.',
     'Grade letters are cleaner: solid tiles in three sizes.',
-    'Plan\'s job cards: the names sit closer together, each icon right by its name.',
+    'Plan\'s job cards: the names sit closer together, each icon right by its name, and a job with five names a row gets the full width so they fit on one line.',
     'Plan: the Whole week table is gone. Each Roster bar shows how many bosses that raider sits tonight, and the new Out tonight zone sits someone for every boss.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
