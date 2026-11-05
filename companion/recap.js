@@ -211,16 +211,22 @@ const RECIPES = {
     if (!ev.length) ev.push('In ' + lowF(plain(bad[0].title)) + ', ' + lowF(plain(bad[0].sub || 'a bomb missed.')).replace(/([^.])$/, '$1.'));
     return ev.slice(0, 2).join(' ') + (ev.length > 2 ? ' ' + plural(ev.length - 2, 'more bomb mistake') + '.' : '') + rest(sets.length - bad.length, 'The other set was clean.', 'The other # sets were clean.');
   },
-  // (Eternal Nightfall is two mechanics on the site since Nov 1: breaking the shield, and the kick after it)
-  'Eternal Nightfall (Break the shield)': ({ rows }) => {
+  // (Eternal Nightfall is two checks on the site since Nov 1, breaking the shield and the kick after it; on the card it's one row (Nov 4, the
+  // studio: one row per mechanic): "Both shields broke in time, with 5 and 1.7 seconds to spare, and @Larryg and @Schooty kicked every cast.")
+  'Eternal Nightfall (Break the shield)': ({ rows, secs, flag }) => {
     if (!rows.length) return null;
     const spare = (r) => parseFloat((ctxt(r[3]).match(/\(([\d.]+) s to spare/) || [])[1]);
+    const ks = (secs || []).find((x) => x.id === 'enkick'), kr = ks ? (ks.rows || []) : [], kMiss = kr.filter((r) => r[3] && r[3].bad), by = [...new Set(kr.map((r) => r[2] && r[2].p).filter(Boolean))];
+    const kick = kMiss.length ? ' ' + capF(ctxt(kMiss[0][0])) + at(kMiss[0]) + ' broke, but nobody kicked before the cast finished.' : '';
+    const kickedBy = !kMiss.length && kr.length && by.length ? andList(by.map((n) => '@' + n)) + ' kicked ' + (kr.length > 1 ? 'every cast' : 'the cast') : '';
+    const R0 = { bad: 0, warn: 1, ok: 2 }, kf = kMiss.length ? 'bad' : 'ok', worse = (f) => (R0[kf] < R0[f] ? kf : f);
     const fail = rows.filter((r) => /not broken/i.test(ctxt(r[3])));
-    if (fail.length) return capF(ctxt(fail[0][0])) + at(fail[0]) + " wasn't broken, so the cast finished." + rest(rows.length - fail.length, 'The other shield broke in time.', 'The other # shields broke in time.');
+    if (fail.length) return { t: capF(ctxt(fail[0][0])) + at(fail[0]) + " wasn't broken, so the cast finished." + rest(rows.length - fail.length, 'The other shield broke in time.', 'The other # shields broke in time.') + kick + (kickedBy ? ' ' + capF(kickedBy) + '.' : ''), f: worse(flag) };
     const tight = rows.filter((r) => spare(r) < 1.5);
-    if (tight.length) return capF(ctxt(tight[0][0])) + at(tight[0]) + ' broke with only ' + spare(tight[0]) + ' seconds to spare.' + rest(rows.length - 1, 'The other one broke in time.', 'The other # broke in time.');
+    if (tight.length) return { t: capF(ctxt(tight[0][0])) + at(tight[0]) + ' broke with only ' + spare(tight[0]) + ' seconds to spare.' + rest(rows.length - 1, 'The other one broke in time.', 'The other # broke in time.') + kick + (kickedBy ? ' ' + capF(kickedBy) + '.' : ''), f: worse(flag) };
     const sp = rows.map(spare).filter((x) => !isNaN(x));
-    return okT((rows.length > 1 ? allN(rows.length, 'shields') + ' broke in time' : 'The shield broke in time') + (sp.length ? ', with ' + andList(sp.map(String)) + (sp.length === 1 && sp[0] === 1 ? ' second' : ' seconds') + ' to spare' : '') + '.');
+    const t = (rows.length > 1 ? allN(rows.length, 'shields') + ' broke in time' : 'The shield broke in time') + (sp.length ? ', with ' + andList(sp.map(String)) + (sp.length === 1 && sp[0] === 1 ? ' second' : ' seconds') + ' to spare' : '') + (kickedBy ? ', and ' + kickedBy : '') + '.' + kick;
+    return { t, f: kf };
   },
   'Eternal Nightfall (Kicks)': ({ rows }) => {
     if (!rows.length) return null;
@@ -808,7 +814,7 @@ const NICK = {
   'Spiritcackle and Gloombombs (Adds)': 'Spiteful Soulcoiler (Adds)', 'Soulcoiler adds (Kill fast)': 'Spiteful Soulcoiler (Adds)', 'Spiteful Soulcoiler (Kill fast)': 'Spiteful Soulcoiler (Adds)',
   'Gloombombs (Drop them on the adds)': 'Gloombomb (Add Bombs)', 'Gloombomb (Drop it on the adds)': 'Gloombomb (Add Bombs)', 'Add execution (Shields)': 'Gloombomb (Add Bombs)',
   'Wail of Terror (Kicks)': 'Wail of Terror (Kick)', 'Intermission (Stop the fragments)': 'Fragments of Malacrass (Intercepts)', 'Venomfang (Dispel fast)': 'Venomfang (Dispel)', 'Phase changes (Push on time)': 'Phase changes',
-  'Eternal Nightfall (Break the shield)': 'Eternal Nightfall (Shield Break)', 'Eternal Nightfall (Kicks)': 'Eternal Nightfall (Kick)', 'Guillotine (Soak with 5)': 'Guillotine (Soak)',
+  'Eternal Nightfall (Break the shield)': 'Eternal Nightfall (Shield Break)', 'Eternal Nightfall (Kicks)': 'Eternal Nightfall (Shield Break)', 'Guillotine (Soak with 5)': 'Guillotine (Soak)',
   'Volatile Venom (near a green carrier)': 'Volatile Venom (Green Orb)', 'Mutagenic Venom (near a purple carrier)': 'Mutagenic Venom (Purple Orb)',
   // The Twin Fangs
   'Twin balance (Kill them together)': 'Twin Balance (Even Health)', 'Eternal Venom (Stay under the limit)': 'Eternal Venom (Stacks)', 'Ravenous Feast (Soak in groups of 4)': 'Ravenous Feast (Group Soak)',
@@ -859,6 +865,17 @@ const AVOID_INTO = { 'tank frontals on non-tanks': 'Sever (Frontal)', 'malevolen
 // and the site's "Shockabunga their ghost" is "Shockabunga's ghost")
 const NICK_RE = new RegExp(Object.keys(NICK).sort((a, c) => c.length - a.length).map((k) => k.replace(/[.*+?^$()|[\]\\{}]/g, '\\$&')).join('|'), 'g');
 const nickTxt = (v) => String(v).replace(NICK_RE, (k) => NICK[k]).replace(/\b(\d+ players?|[A-Z][^\s,:;.()]*) their ghost\b/g, "$1's ghost");
+// (never an empty icon square (Nov 4, the studio): a coach row with no spell takes the icon of the Boss mechanics or Top mistakes row of the same
+// mechanic, else the spell of that name, else the game's question mark)
+function fillIcons(card, W) {
+  const R = card && card.coach && card.coach.raid; if (!R) return;
+  const base = (t) => plain(t).replace(/\s*\(.*\)$/, '').toLowerCase(), ic = new Map();
+  for (const r of [].concat((card.raid && card.raid.mech) || [], (card.raid && card.raid.bad) || [])) if (r[1]) { if (!ic.has(r[2])) ic.set(r[2], r[1]); if (!ic.has(base(r[2]))) ic.set(base(r[2]), r[1]); }
+  const get = (lbl) => ic.get(lbl) || ic.get(nick(lbl)) || ic.get(base(lbl)) || ic.get(base(nick(lbl))) || spellId(W, base(lbl)) || 'inv_misc_questionmark';
+  for (const w of R.wrong || []) if (!w.id) w.id = get(w.label);
+  for (const a of (R.avoid && R.avoid.items) || []) if (!a.id) a.id = get(a.k);
+  for (const d of (R.deaths && R.deaths.items) || []) if (!d.id) d.id = get(d.ab);
+}
 function nickCoach(co) {
   if (!co) return co; const c = JSON.parse(JSON.stringify(co)), R = c.raid;
   const walk = (o) => { for (const k of Object.keys(o)) { const v = o[k]; if (typeof v === 'string') o[k] = nickTxt(v); else if (v && typeof v === 'object') walk(v); } };
@@ -899,13 +916,13 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
         if (coach && !b.kill && nd && W.setCut) for (let n = 0; n <= 1; n++) { try { W.setCut(n ? 2 : 0); const r = W.coachGame(rep, null); if (r) RAIDS[n] = r; } catch (e) { /* (that version keeps the shared one) */ } } /* (all of it, or up to the wipe call (Oct 23)) */
       } catch (e) { coach = null; } finally { if (!had) CA.delete(b); if (W.setCut && was != null) W.setCut(was); }
     }
-    m.coach = nickCoach(coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach); /* (nicknames and sentences (Nov 4)) */
+    m.coach = nickCoach(coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach); /* (nicknames and sentences (Nov 4)) */ fillIcons(m, W);
     // (the Report card's grade for this pull, for the card's "Report card grade" chip (Oct 22))
     if (W.gradeBoss && b.id !== 990001 && !b.dungeon) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
     if (b.kill || b.id === 990001 || b.dungeon || !nd) return m; // (a kill, a dummy or a dungeon boss always counts in full)
     // (two versions (Oct 23): the whole pull, and up to the website's wipe call; a pull never called lost has only the one)
     const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt };
-    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); m.cuts = [m, x];
+    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); fillIcons(x, W); m.cuts = [m, x];
     return m;
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
@@ -1149,6 +1166,7 @@ function buildOne(b, rep, same, W, L, cutN) {
         continue;
       }
       if (sec.id === 'ghosts' && secs.some((x) => x.id === 'dmghost')) continue; /* (the ghosts are in Dreadmarch's row (Nov 4)) */
+      if (sec.id === 'enkick' && secs.some((x) => x.id === 'shield' && (x.rows || []).length)) continue; /* (the kicks are in Eternal Nightfall's shield row (Nov 4)) */
       const gs = gs0.filter((g) => !empty(g));
       if (gs0.length && !gs.length && !rows.length) continue; // (nothing of it happened this pull, e.g. no adds)
       // (cut by the wipe filter: a mechanic that lost rows or sets is graded on what's left)
