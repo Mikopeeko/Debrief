@@ -21592,7 +21592,7 @@ function rootCause(r, opts) {
     if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
     else if (cat !== 'dead') say(l.length ? l[0].t : P.t, cat, (cat === 'dps' ? (p2Long ? 'phase 2 ran long, and ' : '') + 'Dreadful Presence wore the raid down' : cat === 'push' ? 'phase 2 started badly, and Dreadful Presence wore the raid down' : rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2))) + ' (' + l.length + ' of ' + pre.length + ' deaths)');
     say(P.t, 'dead', (cat === 'dead' && tl.length ? 'deaths added up from ' + rcAnd(tl.slice(0, 3).map(([c]) => RC_CAT[c].nm.replace(/ \(.*$/, ''))) + ', and ' : '') + (P.why === 'the wipe call' ? 'the wipe was called at ' : 'the raid had too few left at ') + T(P.t)); }
-  if (cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, P.t + 20)[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
+  if ((P.wave || P.mc) && cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, Math.min(P.t + 20, opts.cut != null && opts.cut >= P.t ? opts.cut + 12 : P.t + 20))[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
     if (sk && ex.length) { say(sk.t, 'guil', 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5'); say(ex[0].t, 'guil', ex[0].ab + ' killed ' + ex.length + ' at ' + T(ex[0].t)); } }
   // ---- what else added up before it, biggest first ----
   const also = new Map(), addA = (c, w, txt) => { if (c === cat || c === 'reset') return; const y = also.get(c) || { cat: c, w: 0, txt: [] }; y.w += w; if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
@@ -21605,6 +21605,7 @@ function rootCause(r, opts) {
   return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, pnr: { t: pnr.t, why: pnr.why }, reset, line, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
+
 const api = { rootCause, RC_CAT, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
