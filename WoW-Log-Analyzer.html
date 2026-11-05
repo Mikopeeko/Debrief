@@ -25264,8 +25264,8 @@ function rdBake(rep, ct) {
     bakeJudge(g); if (typeof g.recut === 'function' && isFinite(ct)) { try { const c = g.recut(ct); g._rc = { t: ct, c: c || null }; if (c) bakeJudge(c); } catch (e) { /* (no re-cut) */ } } } }
 /* (Nov 5, phones running out of memory on big nights: a pull the page reads itself is kept the way a reading worker hands one back: its live
    parts worked out at the wipe call, then let go. They held the fight audit's whole list of events, about 8 MB a pull. In place, without a copy) */
-function rdLite(rep) {
-  try { const it = rep.item; rdBake(rep, RD.ct(rep)); if (E.fzPack) E.fzPack(rep);
+async function rdLite(rep) { /* (a breath between the steps, so a phone keeps drawing) */
+  try { const it = rep.item; rdBake(rep, RD.ct(rep)); await anPause(); if (E.fzPack) E.fzPack(rep); await anPause();
     const seen = new WeakSet(), walk = (o) => { if (!o || typeof o !== 'object' || seen.has(o) || ArrayBuffer.isView(o) || o instanceof Date) return; seen.add(o);
       if (o instanceof Map) { for (const [k, v] of o) { if (typeof v === 'function') o.delete(k); else walk(v); } return; } if (o instanceof Set) { for (const v of o) walk(v); return; }
       if (Array.isArray(o)) { for (let i = 0; i < o.length; i++) { if (typeof o[i] === 'function') o[i] = undefined; else walk(o[i]); } return; }
@@ -25427,7 +25427,7 @@ async function readFresh(item) {
   // own combat logs: gear, stats and buffs come from each player's COMBATANT_INFO line (names and icons are looked up
   // when the Raid audit opens)
   if (!item.wcl && rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
-  rdLite(rep);
+  await rdLite(rep);
   applyNote(rep);
   ndzSpecSave(rep); /* (Plan with a roster: each raider's class, spec and role, remembered) */
   CACHE.set(item, rep); cacheTrim();
