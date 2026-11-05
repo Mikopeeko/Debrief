@@ -3563,8 +3563,41 @@ function noteFit(text, rep) {
 const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res.cds || []).filter((x) => /^(on time|late|early|missed)$/.test(x.status));
   const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
 const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
+// ---------- the raid note each pull had, from the game (Nov 5, the studio's auto-note-brief.md; Flex: "ok make it happen asap!") ----------
+// The addon copies the note NSRT or MRT has loaded at every pull; the Debrief PC app reads it (GET /log/notes) and Debriefing uses it by itself,
+// so nobody pastes a note. Until WoW saves the addon's copy (/reload, logout or quit), NSRT's or MRT's own saved note stands in for that night's
+// pulls of its boss. A note you pick or add yourself still wins. A shared night carries its notes with it.
+const GN = { data: null, at: 0, sig: '' };
+async function gnLoad() {
+  if (!FH.dir || FH.dir.kind !== 'helper' || Date.now() - GN.at < 60000) return; GN.at = Date.now();
+  try { const r = await fetch(HELPER_BASE + '/log/notes', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (!j || !Array.isArray(j.pulls)) return;
+    const sig = j.pulls.length + '|' + Object.keys(j.texts || {}).join(',') + '|' + ((j.fallback && j.fallback.at) || ''); if (sig === GN.sig) return;
+    GN.data = j; GN.sig = sig; if (S.rep) { try { renderMain(); } catch (e) { /* drawn next time */ } } } catch (e) { /* an older Debrief app: no notes */ }
+}
+function gameNoteFor(it) {
+  if (!it) return null;
+  if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
+  const g = GN.data; if (!g) return null;
+  const t = it.wallMs || 0, t1 = it.startMs || 0, same = (x) => (x.e != null ? +x.e === +it.id : x.b === it.boss) && (x.d == null || it.diffId == null || +x.d === +it.diffId);
+  // (the pull's own copy: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
+  let best = null;
+  for (const x of g.pulls || []) { if (!same(x)) continue; const dt = t ? Math.abs(x.t - t) : Math.min(...[...Array(29)].map((_, k) => Math.abs(x.t - t1 - (k - 14) * 3600e3)));
+    if (dt <= 120000 && (!best || dt < best.dt)) best = { x, dt }; }
+  if (best && g.texts && g.texts[best.x.h]) return { text: g.texts[best.x.h], s: best.x.s || 'NSRT', n: best.x.n || '', h: String(best.x.h), exact: true };
+  // (the stand-in: the note NSRT or MRT saved last, for its own boss and difficulty, on the night it was saved)
+  const fb = g.fallback, tt = t || t1; if (!fb || !fb.text || !tt || tt > fb.at + 60000 || fb.at - tt > 18 * 3600e3) return null;
+  const head = String(fb.text).split('\n').find((l) => /EncounterID:/i.test(l)) || '', enc = (head.match(/EncounterID:\s*(\d+)/i) || [])[1], dif = (head.match(/Difficulty:\s*([^;\s]+)/i) || [])[1];
+  if (enc && +enc !== +it.id) return null;
+  if (dif && it.diff && !new RegExp('^' + String(it.diff).split(' ')[0], 'i').test(dif) && !(+dif === +it.diffId)) return null;
+  return { text: fb.text, s: fb.s || 'NSRT', n: fb.n || '', h: 'fb' + (fb.at || ''), exact: false };
+}
 function noteForRep(rep) {
-  const o = notesOf(rep.item.boss, rep.item); if (!o.list.length) return null;
+  const o = notesOf(rep.item.boss, rep.item);
+  // (the game's note, unless you picked a note for this pull or every pull, or added one after this pull: yours wins)
+  { const mine0 = (o.byPull || {})[pullKey(rep.item)], t0 = rep.item.wallMs || rep.item.startMs || 0;
+    if (!(mine0 && o.list.some((n) => n.id === mine0)) && !(o.pick !== 'auto' && o.list.some((n) => n.id === o.pick)) && !o.list.some((n) => !n.example && (n.saved || 0) > t0)) {
+      const gn = gameNoteFor(rep.item); if (gn) { rep.noteMiss = null; return { id: 'game:' + gn.h, name: gn.n || gn.s + ' note', text: gn.text, saved: 0, auto: false, how: 'game', game: gn, pull: rep.item.pull }; } } }
+  if (!o.list.length) return null;
   // (the log's one note, used when it's a perfect match: every player it names was in this pull, and it's for this boss; the roster is the log's own)
   const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) { rep.noteMiss = null; return { ...one, auto: false, how: 'pull' }; }
   const ck = o.pick + '#' + o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) { rep.noteMiss = had.miss; return had.v; }
@@ -3596,6 +3629,7 @@ function noteForRep(rep) {
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
   if (!u) return '';
+  if (u.how === 'game') return 'Note: from the game (' + u.game.s + (u.game.exact ? ', as loaded at pull ' + u.pull : ', the note it saved last') + ').';
   if (u.how === 'log') return 'Saved with this log.';
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
@@ -4324,7 +4358,7 @@ function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) 
   if (NDZ_NEW()) return ndzPlanBoard(r, S.ndzPick || b); /* (Assignments is the plan only, version A: a boss's note, never the open log) */
   if (!u0) return NDZ_NEW() && r.noteMiss && notesOf(b).list.some((n) => !n.example) ? ndzBoard(r, null) : ''; /* (notes for this boss, none fitting this pull: Get started still leads) */ if (NDZ_NEW()) return ndzBoard(r, u0); /* (the makeover, test copy) */
   return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
-    '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + B('data-ndzdel="1"', 'Delete note') + '</div></div>' +
+    '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + (u0.how === 'game' ? '' : B('data-ndzdel="1"', 'Delete note')) + '</div></div>' +
     '<div class="ndz-card ndz-c2"><div class="ndz-ch">Make a note</div><div class="ndz-cs">From what your raid did' + (NDZ_SUG.has(b) ? ', or suggested by class' : '') + '.</div><div class="ndz-cb">' + (NDZ_FILL[b] ? B('data-ndz="1"', 'Draft from your pulls') : '<span class="sub">Not ready for this boss yet.</span>') + (NDZ_SUG.has(b) ? B('data-ndzsg="1"', 'Suggest assignments') : '') + B('data-ndzplan="1"', 'Plan with a roster') + '</div></div>' +
     '<div class="ndz-card ndz-c3"><div class="ndz-ch">Change it</div><div class="ndz-cs">Someone out tonight? Swap them in one go.</div><div class="ndz-cb">' + B('data-ndzsw="1"', 'Swap players') + '</div></div>' +
     '</div>' + ndzGapsH(r, u0) + '</div>'; }
@@ -10287,7 +10321,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
     const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
     top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nnew="1">+ Add a note</button><button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>') + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nnew="1">+ Add a note</button>' + (used.how === 'game' ? '' : '<button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>')) + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
       (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
     if (S.noteMade && S.noteMade.boss === boss) top += noteMadeBox(S.noteMade);
@@ -11296,11 +11330,11 @@ function dbnBar(NJ, r) {
   /* (Oct 24, your OK for a test version: the note box is one line. What the note checks moved into the name's tooltip; the switch between
      the mechanics and each raider's jobs sits here, so the page has one By player / By mechanic switch (the checks' one)) */
   const nl = plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + NJ.checkedL, pv = S.dbView === 'player';
-  return '<div class="dbn-bar dbn-one"><span class="dbn-t" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + esc(nl)) + '">' + emoIc('📜') + ' <span class="dbn-yn">Your note:</span> <b>' + esc(nm) + '</b></span>' +
+  return '<div class="dbn-bar dbn-one"><span class="dbn-t" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + esc(nl)) + '">' + emoIc('📜') + ' <span class="dbn-yn">Your note:</span> <b>' + esc(nm) + '</b></span>' + (NJ.used && NJ.used.how === 'game' ? '<span class="sub dbn-src">' + esc(noteWhy(NJ.used)) + '</span>' : '') + /* (the game's note, said quietly (Nov 5)) */
     (NDZ_ON() && !ASG_OFF() ? ndzPlanHere(NJ, r) : (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '')) +
     '<button type="button" class="btn sm dbn-vw' + (pv ? ' on' : '') + '" data-dbv="' + (pv ? 'mech' : 'player') + '" aria-pressed="' + pv + '" data-tt="' + esc(pv ? '<b>Back to the mechanics</b><br>Your note\'s jobs back on the mechanic they\'re about, phase by phase.' : '<b>Each raider\'s jobs</b><br>Your note\'s jobs listed per raider, missed first, in place of the phases.') + '">' + (pv ? '← Back to the mechanics' : 'Each raider\'s jobs') + '</button>' +
     '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') +
-    (NJ.used && !NJ.used.example ? '<button type="button" class="btn sm dbn-rm" data-ndzdel="1" data-tt="' + esc('<b>Remove note</b><br>Takes this note off ' + esc(r.item.boss) + '. Click twice to be sure.') + '">Remove note</button>' : '') + '</div>'; } /* (Remove note (the user, Oct 29)) */
+    (NJ.used && !NJ.used.example && NJ.used.how !== 'game' ? '<button type="button" class="btn sm dbn-rm" data-ndzdel="1" data-tt="' + esc('<b>Remove note</b><br>Takes this note off ' + esc(r.item.boss) + '. Click twice to be sure.') + '">Remove note</button>' : '') + '</div>'; } /* (Remove note (the user, Oct 29)) */
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
   return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
@@ -31233,7 +31267,7 @@ async function fileTick() {
     const nl = await newestLog(FH.dir);
     if (!nl) { if ($('#fhMsg')) $('#fhMsg').textContent = 'No WoWCombatLog file in that folder yet. Type /combatlog in game (with Advanced Combat Logging on).'; return; }
     if (nl.name !== FH.name) { FH.name = nl.name; FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); } // a new log file: start over on it
-    FH.hd = nl.hd; S.file = nl.f;
+    FH.hd = nl.hd; S.file = nl.f; if (FH.dir && FH.dir.kind === 'helper') gnLoad(); /* (the game's notes (Nov 5)) */
     // (a log can shrink only if WoW started it over: then read it from the start)
     if (nl.f.size < FH.size) { FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); }
     if (nl.f.size > FH.size) {
@@ -31569,9 +31603,9 @@ async function shrSend(step) {
     v.sent[shrIdent(b)] = { n, parts }; v.n = n + 1; shrKeep(v); } /* (kept after every pull, so a second press carries on where it stopped) */
   step(todo.length, todo.length, null);
   const prim = (b) => { const o = {}; for (const [k, x] of Object.entries(b)) if (['number', 'string', 'boolean'].includes(typeof x) && !['startByte', 'endByte', 'skip'].includes(k)) o[k] = x; return o; };
-  const sent = list.filter((b) => v.sent[shrIdent(b)]), bossN = [...new Set(sent.map((b) => b.boss + ' ' + b.diff))];
+  const sent = list.filter((b) => v.sent[shrIdent(b)]), bossN = [...new Set(sent.map((b) => b.boss + ' ' + b.diff))], gtexts = {}; /* (each pull's note from the game, its text once (Nov 5)) */
   const meta = { v: 1, at: Date.now(), by: (meOf() || {}).name || '', title: shrWhen(sent[0].startMs) + ' · ' + (bossN.length > 2 ? bossN.length + ' bosses' : bossN.join(', ')),
-    items: sent.map((b) => ({ ...prim(b), n: v.sent[shrIdent(b)].n, parts: v.sent[shrIdent(b)].parts })) };
+    items: sent.map((b) => { const g = gameNoteFor(b); if (g) gtexts[g.h] = g.text; return { ...prim(b), n: v.sent[shrIdent(b)].n, parts: v.sent[shrIdent(b)].parts, ...(g ? { gn: g.h, gns: g.s, gnn: g.n, gnx: g.exact ? 1 : 0 } : {}) }; }), gtexts };
   await put('/api/night?id=' + v.id, JSON.stringify(meta));
   v.done = v.n; shrKeep(v); return v.id;
 }
@@ -31615,7 +31649,7 @@ async function openShared(id, o) {
   if (!j.items.length) throw new Error('That shared night has no pulls.');
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); }
   S.file = null; S.wclCreds = null; S.wclCode = null; CACHE.clear();
-  S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' };
+  S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' }; S.shrNotes = j.gtexts || null;
   S.index = { bosses: j.items.filter((x) => x.kind !== 'run').map((x) => ({ ...x, run: null, shr: { id, n: x.n, parts: x.parts } })), runs: [],
     keys: mpLocalKeys(j.items.filter((x) => x.kind === 'run').map((x) => ({ ...x, shr: { id, n: x.n, parts: x.parts } }))) }; /* (a shared night's Mythic+ keys keep their tab (Nov 1)) */
   if (S.index.keys.length && (!S.index.bosses.length || o.tab === 'mplus')) { if (!S.index.bosses.length) $('.brand p').textContent = 'Shared night' + (j.title ? ': ' + j.title : ''); if (!o.quiet) { const want = o.pull != null ? S.index.keys.find((k) => k.shr.n === o.pull) : null; mpOpen(want || S.index.keys[S.index.keys.length - 1]); } return; }

@@ -26,10 +26,33 @@ end
 -- name just isn't a dummy)
 local function isDummy(u) local ok, r = pcall(function() local n = UnitExists and UnitExists(u) and not UnitIsPlayer(u) and UnitName(u); if not n or (issecretvalue and issecretvalue(n)) then return false end; return n:find("Dummy") ~= nil end); return ok and r == true end
 
+-- (the raid note at every pull (Nov 5, the studio's auto-note-brief.md; Flex: "ok make it happen asap!"): the note NSRT or MRT has loaded when a
+-- boss is pulled is copied here, so Debriefing uses the exact note each pull had and nobody pastes one. Each note's text is kept once (by its
+-- hash); the last 300 pulls. NSRT swaps notes only after a kill, so the note loaded at the pull is the one that pull used)
+local function noteHash(s) local h = 5381.0; for i = 1, #s do h = (h * 33.0 + s:byte(i)) % 2147483647.0 end; return string.format("%.0f", h) end
+local function loadedNote()
+  if type(NSRT) == "table" and type(NSRT.StoredSharedReminder) == "string" and NSRT.StoredSharedReminder ~= "" then return "NSRT", NSRT.StoredSharedReminder, NSRT.ActiveReminder end
+  if type(VMRT) == "table" and type(VMRT.Note) == "table" and type(VMRT.Note.Text1) == "string" and VMRT.Note.Text1 ~= "" then return "MRT", VMRT.Note.Text1 end
+end
+local function saveNote(encID, encName, diff)
+  if not DB then return end
+  local src, text, name = loadedNote(); if not text then return end
+  local sec = function(v) return issecretvalue and issecretvalue(v) end
+  if sec(text) then return end
+  if sec(encID) then encID = nil end; if sec(encName) then encName = nil end; if sec(diff) then diff = nil end
+  local h = noteHash(text)
+  DB.notes = DB.notes or {}; DB.noteText = DB.noteText or {}
+  DB.noteText[h] = text
+  table.insert(DB.notes, { e = encID, b = encName, d = diff, t = (time and time()) or 0, s = src, n = type(name) == "string" and name or nil, h = h })
+  while #DB.notes > 300 do table.remove(DB.notes, 1) end
+  local used = {}; for _, x in ipairs(DB.notes) do used[x.h] = true end; for k in pairs(DB.noteText) do if not used[k] then DB.noteText[k] = nil end end
+end
+
 local ev = CreateFrame("Frame")
-for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "PLAYER_REGEN_ENABLED", "READY_CHECK", "PLAYER_TARGET_CHANGED" }) do pcall(ev.RegisterEvent, ev, e) end
-ev:SetScript("OnEvent", function(self, e, arg)
-  if e == "ADDON_LOADED" and arg == ADDON then
+for _, e in ipairs({ "ADDON_LOADED", "PLAYER_LOGIN", "PLAYER_ENTERING_WORLD", "ZONE_CHANGED_NEW_AREA", "PLAYER_REGEN_ENABLED", "READY_CHECK", "PLAYER_TARGET_CHANGED", "ENCOUNTER_START" }) do pcall(ev.RegisterEvent, ev, e) end
+ev:SetScript("OnEvent", function(self, e, arg, ...)
+  if e == "ENCOUNTER_START" then saveNote(arg, ...)
+  elseif e == "ADDON_LOADED" and arg == ADDON then
     DebriefDB = DebriefDB or {}; DB = DebriefDB
     -- (the pulls saved for the card in WoW go, so WoW's save of this addon is small again; your settings stay for the PC app's carry-over)
     DB.pulls = nil; DB.cur = nil; DB.who = nil; DB.fromApp = nil

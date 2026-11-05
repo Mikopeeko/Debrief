@@ -49,7 +49,7 @@ namespace Debrief {
     }
     static void SendJson(HttpListenerResponse res, object o) { Send(res, Encoding.UTF8.GetBytes(Json.Serialize(o)), "application/json"); }
     static string Body(HttpListenerRequest req) { using (var r = new StreamReader(req.InputStream, Encoding.UTF8)) return r.ReadToEnd(); }
-    static long Ms(DateTime utc) { return (long)(utc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds; }
+    internal static long Ms(DateTime utc) { return (long)(utc - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds; }
 
     void Handle(HttpListenerContext ctx) {
       var req = ctx.Request; var res = ctx.Response;
@@ -69,7 +69,7 @@ namespace Debrief {
             res.AddHeader("Access-Control-Allow-Headers", req.Headers["Access-Control-Request-Headers"] ?? "*");
             res.AddHeader("Access-Control-Max-Age", "600"); res.StatusCode = 204; return;
           }
-          if (!(get && (path == "/log/info" || path == "/log/read" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
+          if (!(get && (path == "/log/info" || path == "/log/read" || path == "/log/notes" || path == "/app-version"))) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         }
         if (post && !string.IsNullOrEmpty(origin) && origin != "http://localhost:" + Port) { res.StatusCode = 403; Send(res, Encoding.UTF8.GetBytes("No"), "text/plain"); return; }
         if (!fromApp && (path == "/wait" || path == "/scan" || path == "/clip" || path == "/read" || path == "/archive" || path == "/popup" || path == "/hotkey" || path == "/addonflags" || path == "/addonpull" || path.StartsWith("/setup") || path == "/settings" || path == "/" || path == "/index.html")) {
@@ -113,6 +113,7 @@ namespace Debrief {
             Send(res, buf, "application/octet-stream");
           }
         }
+        else if (get && path == "/log/notes") SendJson(res, Notes.All(here)); // (the raid note each pull had, from the game (Nov 5))
         else if (get && path == "/log/info") {
           // (for the website: the newest combat log, its name and size, as start.bat's helper answers it)
           var d = Wow.FindLogsDir(here); var f = d == null ? null : Wow.NewestLog(d);
