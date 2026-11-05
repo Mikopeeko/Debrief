@@ -904,7 +904,17 @@ function nickCoach(co) {
   walk(c); return c;
 }
 
-window.DBF_CARDBITS = { slipLine, spellId, rotBits }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
+// (one Rotation check as the card's row (Nov 5): your number, the top players' (raid kills only), a square per moment, why, Next time, how it's judged
+// and the moments that slipped; the raid recap and the Mythic+ Rotation tab draw the same rows)
+function rotRow(c, W, top, specIcon) {
+  const num = (v) => plain(v).replace(/(\d)\s*\/\s*(\d)/g, '$1/$2');
+  const why = () => { const b = rotBits(c); return shortTo([b.what, b.why].filter(Boolean).join(' '), 300); };
+  const howOf = () => shortTo(sentences(plain(c.how || '')).filter((x) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(x)).slice(0, 2).join(' '), 240);
+  const momOf = () => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';');
+  return [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : specIcon || ''), plain(c.label), num(c.v), top ? num(top) : '', c.tip ? plain(c.tip) : '',
+    (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(), howOf(), momOf()];
+}
+window.DBF_CARDBITS = { slipLine, spellId, rotBits, rotRow }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
 window.DBF_BUILD = (b, rep, same, W, L) => {
   // (Rotation checks are the whole pull: worked out once, shared by every version)
   const memo = new Map(), W2 = Object.assign({}, W, { specRun: (...a) => { const k = a[0] + '|' + a[2]; if (!memo.has(k)) memo.set(k, W.specRun(...a)); return memo.get(k); } });
@@ -1004,8 +1014,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
         .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra).sort((a, c) => (WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)); /* (a window row with mistakes joins the fixes in its colour) */
       P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
-      P.rot = rotC.map((c) => [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : p.specIcon || '') /* (no "?" for a check without a spell (Oct 24)) */, plain(c.label), num(c.v), !b.dungeon && x.top && x.top[c.k] ? num(x.top[c.k]) : '' /* (the top players' numbers come from raid kills: not for a dungeon boss) */, c.tip ? plain(c.tip) : '',
-        (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (q.cls === 'ok' ? 'g' : q.cls === 'bad' ? 'b' : 'w')).join('') : '', why(c), howOf(c), momOf(c)]);
+      P.rot = rotC.map((c) => rotRow(c, W, !b.dungeon && x.top && x.top[c.k] ? x.top[c.k] : '' /* (the top players' numbers come from raid kills: not for a dungeon boss) */, p.specIcon)); /* (no "?" for a check without a spell (Oct 24)) */
       // (each ramp or burst window, from the Rotation tab's cards (Oct 24, the user: "classes with ramp windows/rotations with specific windows
       // that have specific button presses should have that detail included"): the ones that went wrong first, four at most, then in time order)
       let castL; const casts = () => { if (castL !== undefined) return castL; try { const c0 = W.castOf ? W.castOf(rep, p, 0, rep.duration || 1e9) : null; castL = c0 && c0.ab ? c0.ab.flatMap((a) => a.ts.map((u) => [u, a.name])).sort((u, v) => u[0] - v[0]) : null; } catch (e) { castL = null; } return castL; };

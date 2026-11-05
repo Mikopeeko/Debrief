@@ -1718,6 +1718,7 @@ function mpRwHtml(R) { const rw = R._rw, pick = MP.pp || '', ppl = (R.people || 
 function mpRwPaint(R) { const it = MP.item; if (!it || MP.R[mpK(it)] !== R || !MP_ROT_ON || MP_RK_OLD) return; const pick = MP.pp || '';
   document.querySelectorAll('.mpt-mdtv[data-v="you"] details[data-rwp]').forEach((d) => { const h = mpRwCard(R, +d.dataset.rwp, pick), sm = d.querySelector(':scope > summary'), bd = d.querySelector(':scope > .mpt-cfb'); if (sm) sm.innerHTML = h.sum; if (bd) bd.innerHTML = h.body; });
   const el = document.getElementById('mptRot'); if (el) el.outerHTML = mpRwHtml(R);
+  try { mpcRotPaint(); } catch (e) { /* (the pop-up's Rotation tab, when it's there) */ }
   try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 // (a pull chip: that pull in the card, its Rotation open, the map in view)
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rwgo]'); if (!b) return; e.preventDefault(); const i = b.dataset.rwgo; mpMapPick('you', [i]);
@@ -3356,8 +3357,66 @@ html.mpcard .mpcg-top>.mpcb{break-inside:avoid;margin:0 0 14px;min-width:0}
 html.mpcard .mpcg>.mpcb{min-width:0}
 html.mpcard .mpcg .mpt-chap{display:block;margin:0}
 html.mpcard .mpcb-note{grid-column:1/-1;margin:0;color:#8f98a1;font:400 13px var(--body)}
+html.mpcard details[data-rwp]{display:none}
+html.mpcard:not(.mpc-rot) #mpcRot{display:none} html.mpcard.mpc-rot #mptBody>.mpcg{display:none}
+.mpc-tabs{display:flex;gap:4px;margin:12px 0 0;background:#11141a;border:1px solid #262a33;border-radius:8px;padding:3px;width:max-content}
+.mpc-tabs button{all:unset;cursor:pointer;padding:3px 14px;border-radius:6px;font:700 14px Barlow Condensed,sans-serif;color:#8f98a1}.mpc-tabs button.on{background:#232733;color:#ece8df}
+#mpcRot{max-width:620px;padding-top:12px;font:14px/1.4 var(--body);color:#ece8df}
+.mpc-pk{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}.mpc-pk button{all:unset;cursor:pointer;padding:2px 9px;border-radius:5px;border:1px solid #2a2f39;background:#1d2129;color:#c9c4ba;font:600 13px Barlow Condensed,sans-serif}
+.mpc-pk button.ok{color:#7ee08f}.mpc-pk button.warn{color:#e8a23a}.mpc-pk button.bad{color:#ff8f87}.mpc-pk button.on{border-color:#e6b450;background:#2a2416}
+.mpc-pn{color:#6c757e;font-size:13px;margin:0 0 10px}
+.mpc-who{display:flex;align-items:center;gap:10px;margin:0 0 10px;font:700 15px Barlow Condensed,sans-serif}.mpc-who button{all:unset;cursor:pointer;color:#6c757e;padding:0 4px}.mpc-who .sp{color:#8f98a1;font-weight:600}
+.mpc-ring{margin-left:auto;width:40px;height:40px;border-radius:50%;display:grid;place-items:center}.mpc-ring b{width:32px;height:32px;border-radius:50%;background:#171a22;display:grid;place-items:center;font-size:15px;color:#ece8df}
+.mpc-h{display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-top:1px solid #262a33;font:700 13px Barlow Condensed,sans-serif;letter-spacing:.06em;color:#8f98a1}.mpc-h b{color:#ece8df}
+.mpc-rr{display:grid;grid-template-columns:10px 22px minmax(0,1fr);gap:0 9px;align-items:start;padding:6px 0;border-top:1px solid rgba(255,255,255,.04);cursor:pointer}.mpc-rr:first-of-type{border-top:0}
+.mpc-rr .kd{width:8px;height:8px;border-radius:50%;margin-top:6px}.mpc-rr .mpt-rki{width:22px;height:22px}
+.mpc-rr .krt{display:flex;gap:10px;align-items:baseline}.mpc-rr .krt b{font-size:14.5px}.mpc-rr:hover .krt b{color:#e6b450}.mpc-rr .krv{margin-left:auto;font-weight:700;font-size:14.5px;white-space:nowrap}.mpc-rr .krv small{color:#6c757e;font-weight:600;margin-left:6px;font-size:12px}
+.mpc-rr .kpl{margin-left:4px;color:#6c757e;font-style:normal}.mpc-rr .kwhy{margin:4px 0 2px;font-size:14px;color:#c9c4ba}.mpc-rr .ksq{display:flex;flex-wrap:wrap;gap:2px;margin:5px 0 2px}.mpc-rr .ksq i{width:8px;height:8px;display:block}
+.mpc-rr .knx{margin:3px 0 0;font-size:13.5px;color:#c9c4ba}.mpc-rr .knx b{color:#e6b450}.mpc-rr .kmo{margin:4px 0 0;font-size:13px;color:#8f98a1}.mpc-rr .khow{margin:5px 0 0;font-size:13px;color:#6c757e}
+.mpc-more{all:unset;cursor:pointer;color:#8f98a1;font-size:13.5px;padding:4px 0 2px 41px}.mpc-more:hover{color:#e6b450}
+.mpc-good{color:#7ee08f;font-size:14px;margin:6px 0 2px 4px}.mpc-wait{color:#8f98a1;font-size:13.5px}
 `;
 const mpcCols = (w) => (w >= 600 ? 2 : 1); /* (two at most (the studio's audit, Nov 3): wider only widens; the map below takes the extra width) */
+// ---- the pop-up's Rotation tab (Nov 5, Flex: "more like the raid rotation check"): the raid recap's rotation rows for one player, over the whole key or
+// one pull. A pull's rows are its own checks (the Rotation tab's, the same as the website); the whole key's are the fixes that came up most, with how
+// many pulls each came up on and a square per pull. Tap a row for why, the squares, Next time and how it's judged ----
+const MPC_COL = { bad: '#e5534b', warn: '#e8a23a', ok: '#45c15c' }, MPC_TXT = { bad: '#ff8f87', warn: '#e8a23a', ok: '#ece8df' }, MPC_SQ = { g: '#45c15c', w: '#e8a23a', b: '#e5534b' };
+const mpcIc = (id, label) => (+id ? '<span class="mpt-rki">' + spellIcon(+id, label) + '</span>' : id ? '<span class="mpt-rki"><span class="icw"><img class="oi" data-icon="' + esc(id) + '" alt=""></span></span>' : '<span class="mpt-rki"></span>');
+function mpcRotHtml(R) {
+  const rw = R._rw, CB = window.DBF_CARDBITS; if (!rw || !rw.done || !CB || !CB.rotRow) return '<p class="mpc-wait">' + (R._rwOff && !rw ? 'Open the key again to check the rotation.' : 'Checking everyone’s rotation…') + '</p>';
+  const ppl = (R.people || []).slice().sort(mpByRole); if (!ppl.length) return '';
+  let name = MP.cvp && ppl.some((p) => p.name === MP.cvp) ? MP.cvp : mpMine(R) || ppl[0].name; const me = ppl.find((p) => p.name === name);
+  const pi = MP.cvi != null && R.pulls[MP.cvi] ? MP.cvi : null;
+  const pk = '<div class="mpc-pk"><button type="button" data-mpcp="" class="' + (pi == null ? 'on' : '') + '">Whole key</button>' + R.pulls.map((o, i) => { const v = mpRwPv(R, i, name); return '<button type="button" data-mpcp="' + i + '" class="' + (v || '') + (pi === i ? ' on' : '') + '">' + (o.boss ? esc(o.boss) : mpNo(R, i + 1)) + '</button>'; }).join('') + '</div>';
+  let rows = [], good = [], score = null, note = '';
+  if (pi == null) { const sm = mpRwSum(R, name); score = sm.pct; good = sm.good.map(mpRwGood);
+    note = sm.seen.length ? 'The whole key: ' + sm.seen.length + ' of ' + R.pulls.length + ' pulls checked. Pick a pull to see only that pull.' : 'No pull long enough to judge.';
+    rows = sm.fix.map((a) => { const sq = sm.seen.map((x) => (a.pulls.includes(x.i) ? (a.st === 'bad' ? 'b' : 'w') : 'g')).join('');
+      return [a.st, a.f[1], a.f[2], a.tot ? mpRwVal(a.tot) : a.pulls.length + ' of ' + sm.seen.length + ' pulls', '', a.act || '', sq, [a.why, 'It came up on ' + a.pulls.length + ' of ' + sm.seen.length + ' pulls.'].filter(Boolean).join(' '), '', '']; }); }
+  else { const o = R.pulls[pi], cs = ((rw.all[o.n] || {})[name] || []).filter((c) => mpRwKeep(c, o)), R0 = { bad: 0, warn: 1, ok: 2 }; score = mpRwScore(R, pi, name);
+    rows = cs.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => R0[a.st] - R0[c.st] || (c.cost || 0) - (a.cost || 0)).map((c) => CB.rotRow(c, { E }, '', ''));
+    good = cs.filter((c) => c.st === 'ok').slice(0, 4).map((c) => mpPlain(c.label).trim());
+    note = cs.length ? (o.boss ? esc(o.boss) : 'Pull ' + mpNo(R, pi + 1)) + ' only.' : (o.boss ? esc(o.boss) : 'Pull ' + mpNo(R, pi + 1)) + ' was too short to judge.'; }
+  const sc = score != null ? Math.round(score) : null, scc = sc == null ? '#2a2e36' : sc >= 92 ? '#45c15c' : sc >= 72 ? '#e8a23a' : '#e5534b';
+  const ring = sc != null ? '<span class="mpc-ring" style="background:conic-gradient(' + scc + ' 0 ' + sc + '%,#2a2e36 ' + sc + '% 100%)"><b>' + sc + '</b></span>' : '';
+  const who = '<div class="mpc-who"><button type="button" data-mpcw="-1" aria-label="Previous player">‹</button>' + mpWho(R, name) + '<span class="sp">' + esc([(me && me.spec) || '', (me && ((E.CLASSES[me.cls] || [])[0] || me.cls)) || ''].filter(Boolean).join(' ')) + '</span><button type="button" data-mpcw="1" aria-label="Next player">›</button>' + ring + '</div>';
+  const open = MP.cvo || (MP.cvo = new Set(['0'])), all = !!MP.cvm, shown = all ? rows : rows.slice(0, 3);
+  const rr = (r, i) => { const k = String(i), o2 = open.has(k);
+    return '<div class="mpc-rr" data-mpco="' + k + '"><i class="kd" style="background:' + (MPC_COL[r[0]] || '#6c7381') + '"></i>' + mpcIc(r[1] || (/casting|pace|pressing/i.test(r[2]) ? 'spell_holy_borrowedtime' : ''), r[2]) + '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (MPC_TXT[r[0]] || '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span><i class="kpl">' + (o2 ? '–' : '+') + '</i></div>' +
+      (o2 ? (r[7] ? '<p class="kwhy">' + esc(r[7]) + '</p>' : '') + (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (MPC_SQ[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + esc(r[5]) + '</p>' : '') +
+        (r[9] ? '<p class="kmo">' + String(r[9]).split(';').map((m) => '• ' + esc(m)).join('<br>') + '</p>' : '') + (r[8] ? '<p class="khow">How it’s judged: ' + esc(r[8]) + '</p>' : '') : '') + '</div></div>'; };
+  return pk + '<p class="mpc-pn">' + note + '</p>' + who + '<div class="mpc-h"><span>ROTATION' + (sc != null ? ' · <b>' + sc + '</b>/100' : '') + '</span></div>' +
+    (rows.length ? shown.map(rr).join('') + (rows.length > 3 ? '<button type="button" class="mpc-more" data-mpcm="1">' + (all ? 'Show less' : 'Show ' + (rows.length - 3) + ' more') + '</button>' : '') : '<p class="mpc-good">Nothing to fix here.</p>') +
+    (good.length ? '<p class="mpc-good">Done right: ' + good.map(esc).join(', ') + '.</p>' : ''); }
+function mpcRotPaint() { if (!MPC_ON) return; const el = document.getElementById('mpcRot'), it = MP.item, R = it && MP.R[mpK(it)]; if (!el || !R) return; el.innerHTML = mpcRotHtml(R); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcv],[data-mpcp],[data-mpcw],[data-mpco],[data-mpcm]'); if (!t || !MPC_ON) return; e.preventDefault();
+  const it = MP.item, R = it && MP.R[mpK(it)];
+  if (t.dataset.mpcv) { MP.cv = t.dataset.mpcv; document.documentElement.classList.toggle('mpc-rot', MP.cv === 'rot'); document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => x.classList.toggle('on', x.dataset.mpcv === MP.cv)); mpcRotPaint(); return; }
+  if (t.dataset.mpcp != null && t.hasAttribute('data-mpcp')) { MP.cvi = t.dataset.mpcp === '' ? null : +t.dataset.mpcp; MP.cvo = new Set(['0']); MP.cvm = false; }
+  else if (t.dataset.mpcw && R) { const ppl = (R.people || []).slice().sort(mpByRole).map((p) => p.name), cur = MP.cvp && ppl.includes(MP.cvp) ? MP.cvp : mpMine(R) || ppl[0]; MP.cvp = ppl[(ppl.indexOf(cur) + (+t.dataset.mpcw) + ppl.length) % ppl.length]; MP.cvo = new Set(['0']); MP.cvm = false; }
+  else if (t.dataset.mpco != null) { const o = MP.cvo || (MP.cvo = new Set()); if (o.has(t.dataset.mpco)) o.delete(t.dataset.mpco); else o.add(t.dataset.mpco); }
+  else if (t.dataset.mpcm) MP.cvm = !MP.cvm;
+  mpcRotPaint(); });
 function mpcLay() {
   const b = document.getElementById('mptBody'), c1 = b && b.querySelector(':scope > #mptC1'); if (!c1 || c1.dataset.mpcDone) return; c1.dataset.mpcDone = '1'; /* (once per draw: moving the blocks is a change too) */
   const blk = (cls, nodes) => { nodes = nodes.filter(Boolean); if (!nodes.length) return null; const d = document.createElement('div'); d.className = 'mpcb ' + cls; for (const n of nodes) d.appendChild(n); return d; };
@@ -3372,6 +3431,8 @@ function mpcLay() {
   g.appendChild(top); { const m = blk('mpcb-map', [b.querySelector(':scope > #mptCM')]); if (m) g.appendChild(m); }
   if (note) g.insertAdjacentHTML('afterbegin', note);
   b.prepend(g);
+  g.insertAdjacentHTML('beforebegin', '<div class="mpc-tabs" role="tablist"><button type="button" data-mpcv="run" class="' + (MP.cv === 'rot' ? '' : 'on') + '">Run</button><button type="button" data-mpcv="rot" class="' + (MP.cv === 'rot' ? 'on' : '') + '">Rotation</button></div>');
+  g.insertAdjacentHTML('afterend', '<div id="mpcRot"></div>'); document.documentElement.classList.toggle('mpc-rot', MP.cv === 'rot'); try { mpcRotPaint(); } catch (e) { console.error(e); }
   try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ }
 }
 if (MPC_ON) {
