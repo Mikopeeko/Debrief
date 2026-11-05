@@ -867,6 +867,15 @@ const NICK_RE = new RegExp(Object.keys(NICK).sort((a, c) => c.length - a.length)
 const nickTxt = (v) => String(v).replace(NICK_RE, (k) => NICK[k]).replace(/\b(\d+ players?|[A-Z][^\s,:;.()]*) their ghost\b/g, "$1's ghost");
 // (never an empty icon square (Nov 4, the studio): a coach row with no spell takes the icon of the Boss mechanics or Top mistakes row of the same
 // mechanic, else the spell of that name, else the game's question mark)
+// (the raid lead's Deaths list stops at the wipe call too (Nov 4, Flex: "Yes, fix it"), like Who died: a death after the call isn't listed)
+function cutCoachDeaths(co, T) {
+  const D = co && co.raid && co.raid.deaths; if (!D || !isFinite(T)) return;
+  const sec = (s) => { const m = String(s || '').match(/^(\d+):(\d\d)$/); return m ? +m[1] * 60 + +m[2] : null; };
+  D.items = (D.items || []).filter((d) => { const t = sec(d.t); return t == null || t <= Math.floor(T); });
+  // (its header counts what's listed: "6 · 4 on the player", red ones being on the player; no "15 not counted")
+  const onN = D.items.filter((d) => ['own', 'ready', 'on'].includes(d.k)).length;
+  if (D.note) D.note = String(D.note).replace(/^\d+ of \d+ deaths? on the player/, onN + ' of ' + D.items.length + (D.items.length === 1 ? ' death' : ' deaths') + ' on the player').replace(/\s*\d+ more after[^.]*\./g, '');
+}
 function fillIcons(card, W) {
   const R = card && card.coach && card.coach.raid; if (!R) return;
   const base = (t) => plain(t).replace(/\s*\(.*\)$/, '').toLowerCase(), ic = new Map();
@@ -921,8 +930,8 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
     if (W.gradeBoss && b.id !== 990001 && !b.dungeon) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
     if (b.kill || b.id === 990001 || b.dungeon || !nd) return m; // (a kill, a dummy or a dungeon boss always counts in full)
     // (two versions (Oct 23): the whole pull, and up to the website's wipe call; a pull never called lost has only the one)
-    const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt };
-    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); fillIcons(x, W); m.cuts = [m, x];
+    const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt }; cutCoachDeaths(m.coach, WC.t);
+    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); fillIcons(x, W); cutCoachDeaths(x.coach, WC.t); m.cuts = [m, x];
     return m;
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
