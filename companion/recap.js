@@ -785,19 +785,20 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
 function buildOne(b, rep, same, W, L, cutN) {
-  const T = cutN ? (wipeOf(W, rep) || { t: Infinity }).t : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */
+  const WT = b.kill || b.id === 990001 || b.dungeon ? Infinity : (wipeOf(W, rep) || { t: Infinity }).t; /* (deaths count only up to the wipe call, in every version (Nov 4, Flex: "only show deaths before the wipe call")) */
+  const T = cutN ? WT : Infinity, t0 = Date.now(); /* (version 1: up to the wipe call (Oct 23)) */
   try { if (W.setCut) W.setCut(cutN ? 2 : 0); } catch (e) { /* fine */ }
   const dv = (d) => { try { return W.deathVerdict ? W.deathVerdict(rep, d) : null; } catch (e) { return null; } };
   // (your own lines say "your", not "their" (Oct 22 audit): "Malevolent Resonance: Your ghost touched another ghost")
   const youTxt = (s) => String(s).replace(/\bTheir\b/g, 'Your').replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\b([Tt])hey (didn't|did|were|weren't|stood|got|moved|took|had|died|ran|left|stayed|missed|soaked|dropped)\b/g, (m0, t, v) => (t === 'T' ? 'You ' : 'you ') + v);
   const pr = W.progressOf ? W.progressOf(rep) : null;
   const pct = b.id === 990001 ? '' : b.kill ? 0 : pr && pr.left != null ? Math.round(pr.left) : ''; // (a practice pull on a dummy has no boss health)
-  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, T) || (dv(d) && dv(d).late)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
+  const allDeaths = (rep.deaths || []).filter((d) => before(d.t, WT)).sort((a, c) => a.t - c.t), roleOf = new Map([...rep.players.values()].map((p) => [p.name, p.role]));
   // (deaths have their own lines; a tank's notes on hits tanks take on purpose aren't mistakes)
   const mist = [].concat(rep.mistakes || [], (rep.module && !rep.module.error && rep.module.mistakes) || []).filter((m) => m && m.mechanic !== 'Death' && !/only a note/i.test(m.detail || '') && !(m.tankJudged && roleOf.get(m.player) === 'tank') && before(m.t, T));
   const h = { boss: b.boss, diff: b.dungeon && b.key ? 'Mythic+ ' + b.key : DIFFN[b.diffId] || b.diff || '', pull: b.pull, kill: !!b.kill, pct, dur: mmss(b.duration || rep.duration), dungeon: b.dungeon ? 1 : '', inst: b.inst || '',
     night: b.startMs ? new Date(b.startMs - 6 * 3600e3).toISOString().slice(0, 10).replace(/-/g, '') : '', // (the raid night, from the PC's clock in the log: until 6 in the morning is the same night (Oct 27))
-    where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).length };
+    where: b.kill || b.id === 990001 || b.dungeon ? '' : pr && pr.phase ? String(pr.phase).replace(/^P(\d)$/, 'Phase $1') : '', deaths: (rep.deaths || []).filter((d) => before(d.t, WT)).length };
 
   // ---- each player ----
   const key = L.name + '|' + b.id + '|' + b.diffId; if (!HIST.has(key)) HIST.set(key, new Map());
@@ -957,7 +958,7 @@ function buildOne(b, rep, same, W, L, cutN) {
   const SHORT = { own: 'own mistake', fast: 'too fast', raid: "raid's mistake", ready: 'kit ready', nothing: 'nothing left', wipe: 'after the wipe' };
   for (const d of show) { const p = [...rep.players.values()].find((q) => q.name === d.player), V = dv(d); raid.died.push([mmss(d.t), d.player, (p && p.cls) || '', deathIcon(d), (d.ability || 'Unknown') + (V && SHORT[V.why] ? ' (' + SHORT[V.why] + ')' : '')]); }
   const extra = D.length - show.length;
-  if (extra > 0) raid.more = '+' + extra + ' more by ' + h.dur + '.';
+  if (extra > 0) raid.more = '+' + extra + ' more' + (isFinite(WT) ? ' before the wipe call.' : ' by ' + h.dur + '.');
   else if (b.kill && !D.length) raid.more = 'Nobody died.';
   // (how each mechanic went, one line each, from the fight audit: worst first)
   raid.mech = [];
