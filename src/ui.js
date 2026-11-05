@@ -11113,7 +11113,8 @@ function cutInfo(r) {
 const cutT = (r) => { const c = cutInfo(r); return c ? c.t : Infinity; };
 // (Nov 5, analysis step 2: the root cause of a Coiled Altar wipe, from the chain of events (E.rootCause, at the site's own wipe call): Debriefing's
 // Why we wiped leads with it, and All pulls can rank by it. { cat, name, line, also: [{ name, txt }], sure, t, why, reset } or null)
-const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; if (r._root !== undefined) return r._root; let o = null; try { const c = cutInfo(r); o = E.rootCause(r, { cut: c && c.auto ? c.t : null }); } catch (e) { o = null; } return (r._root = o); };
+/* (kept for this page only, never in a saved reading: a night saved by an earlier build gets today's answer, and a new wipe call its own) */ const WROOT = new WeakMap();
+const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; let c = null; try { c = cutInfo(r); } catch (e) { c = null; } const cut = c && c.auto ? c.t : null, k = WROOT.get(r); if (k && k.cut === cut) return k.o; let o = null; try { o = E.rootCause(r, { cut }); } catch (e) { o = null; } if ('_root' in r) delete r._root; WROOT.set(r, { cut, o }); return o; };
 try { window.wipeRoot = () => wipeRoot(S.rep); window.wipeRootOf = wipeRoot; } catch (e) { /* (no window) */ }
 const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
 /* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
