@@ -22,6 +22,8 @@ if (!URL0 || !EDGE) { console.log(!EDGE ? 'Mythic+ Rotation check: skipped (no E
   await cmd('Page.navigate', { url: new URL(URL0).origin + '/robots.txt' }); await sleep(1200); await ev("localStorage.setItem('wla-tour-done','1');1");
   await cmd('Page.navigate', { url: URL0 }); const bad = [], seen = { fix: 0, all: 0, tile: 0, chip: 0, grp: 0 };
   if (!(await until('!!document.querySelector("#mpcRot .mpc-pk") && !/Checking/.test(document.getElementById("mpcRot").innerText)', 300))) { console.log('Mythic+ Rotation check: the tab never finished loading'); process.exit(1); }
+  // (settled: no cooldown still being read (the checks run again once they're in) and the tab the same for 4 s in a row)
+  { let last = '', same = 0; for (let i = 0; i < 120 && same < 4; i++) { await sleep(1000); const t = await ev('(window.__wla && window.__wla.cdPending && window.__wla.cdPending() ? "pending" : "") + document.getElementById("mpcRot").innerText').catch(() => 'err'); same = t === last && !/^pending/.test(t) ? same + 1 : 0; last = t; } }
   // (the card's fix count: its rows and its "Show N more")
   const rowsN = '(() => { const c = document.getElementById("mpcRot"), r = [...c.querySelectorAll(".mpc-rr")].filter((x) => !x.closest("#mpvDet, .mpv-all")).length, m = [...c.querySelectorAll("[data-mpcm]")].map((b) => +((b.innerText.match(/Show (\\d+) more/) || [])[1] || 0)).reduce((a, b) => a + b, 0); return r + m; })()';
   // 3. the whole key
@@ -33,6 +35,7 @@ if (!URL0 || !EDGE) { console.log(!EDGE ? 'Mythic+ Rotation check: skipped (no E
     seen.tile++; if (/None/.test(said)) { /* (no pulls of that kind) */ } else if (n !== want) bad.push('Tile ' + k + ': says "' + said + '" but shows ' + n + ' rows.'); await click('[data-mpcf=' + k + ']'); await sleep(500); }
   // 1. and 4. each pull
   const chips = await ev('[...document.querySelectorAll("#mpcRot .mpc-pk [data-mpcp]")].filter((b) => b.dataset.mpcp !== "").map((b) => [b.dataset.mpcp, b.title])');
+  if (process.env.MPRC_DEBUG) console.log(chips.map((c) => c[1]).join(' | '));
   for (const [i, title] of chips) { if (/too short|not judged/.test(title)) continue; await click('#mpcRot [data-mpcp="' + i + '"]'); await sleep(700);
     const n = await ev(rowsN), m = title.match(/(\d+) to fix/), want = m ? +m[1] : /Clean$/.test(title) ? 0 : null;
     if (want != null) seen.chip++; if (want != null && n !== want) bad.push('Pull chip ' + title.split(' · ')[0] + ': says ' + (m ? want + ' to fix' : 'Clean') + ' but its card lists ' + n + '.');

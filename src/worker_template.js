@@ -1680,21 +1680,44 @@ async function tier(req, env, url, ctx) {
   }
   return json({ error: 'Busy just now. It tries again later.' }, 409);
 }
-// (the Mythic+ Rotation tab's top players: each fast run's whole-run totals per check for one spec in one dungeon at one level, read once in the
-// first viewer's browser and kept here a week, so nobody else reads those runs again. k: dungeon:level:spec:class. Small and checked: 1 to 5 runs,
-// up to 80 checks each, numbers only; the first one in a week stays)
-const MPTOP_K = /^\d{3,7}:\d{1,2}:[a-z]{2,20}:[a-z]{4,20}$/, MPTOP_AGE = 7 * 86400000;
-async function mpTop(req, env, url) {
+// (the Mythic+ Rotation tab's top players (Nov 5; locked down after Main's review): one fast run's whole-run totals per check for one player, worked
+// out in visitors' browsers (the checks live in the page) and kept here a week so later viewers don't read those runs again. Nothing one browser
+// sends is shown to anyone on its own:
+//  - only the Debrief website itself can save (Origin), a little at a time (fair);
+//  - the run must be a real fast run of that dungeon at the key's level or one either side (the site's own /api/mpfast list, the same one the
+//    page read), and the player must be in it with that spec and class;
+//  - k carries the page's own version (a hash of its code), so numbers from other code are never mixed in or shown;
+//  - a run's numbers are shown only once two different visitors (by a hash of their address, never the address) worked out exactly the same
+//    totals; a wrong save just never gets a match, and a later matching pair is what shows.
+// k: dungeon:level:spec:class:version. R2: mptop/<k> ({ at, runs: { id: [{ h, t, dur, by: [ip hashes] }] } }), p-mptop/ on practice links)
+const MPTOP_K = /^\d{3,7}:\d{1,2}:[a-z]{2,20}:[a-z]{4,20}:[a-z0-9]{6,12}$/, MPTOP_RUN = /^[A-Za-z0-9]{8,32}:\d{1,4}:[^\s:]{1,40}$/, MPTOP_AGE = 7 * 86400000;
+const mptopHash = async (s) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)))].slice(0, 8).map((x) => x.toString(16).padStart(2, '0')).join('');
+const mptopNorm = (x) => String(x || '').toLowerCase().replace(/[^a-z]/g, '');
+// (the trusted runs: each one's numbers that two different visitors agreed on; when two answers both have that, the one more agree on)
+const mptopTrusted = (d) => Object.entries((d && d.runs) || {}).map(([id, cs]) => { const c = cs.filter((x) => (x.by || []).length >= 2).sort((x, y) => y.by.length - x.by.length)[0]; /* (the answer most visitors agree on) */ return c ? { id, dur: c.dur, t: c.t, lv: c.lv } : null; }).filter(Boolean);
+async function mpTop(req, env, url, ctx) {
   if (!env.debrief_nights) return json({ none: true });
   const k = url.searchParams.get('k') || '', rk = (PRACTICE_HOST(url) ? 'p-mptop/' : 'mptop/') + k; if (!MPTOP_K.test(k)) return json({ error: 'That key isn\'t right.' }, 400);
-  const old = await env.debrief_nights.get(rk).then((o) => (o ? o.json() : null)).catch(() => null), fresh = old && Date.now() - (old.at || 0) < MPTOP_AGE;
-  if (req.method === 'GET') return fresh ? json({ at: old.at, lv: old.lv, runs: old.runs }) : json({ none: true });
-  if (req.method !== 'POST') return json({ error: 'Only the website saves these.' }, 405); if (fresh) return json({ kept: true });
-  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once.' }, 429);
-  const raw = await req.text(); if (raw.length > 60000) return json({ error: 'Too big.' }, 413); let b = null; try { b = JSON.parse(raw); } catch (e) { b = null; }
-  const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0 && x < 1e9, okT = (t) => t && typeof t === 'object' && Object.keys(t).length <= 80 && Object.entries(t).every(([lb, v]) => lb.length <= 80 && v && ['of', 'pct', 'wasted', 'n'].includes(v.k) && num(v.a) && num(v.b) && num(v.w));
-  if (!b || !Array.isArray(b.runs) || b.runs.length < 1 || b.runs.length > 5 || !b.runs.every((r) => r && num(r.dur) && r.dur > 0 && okT(r.t)) || !Array.isArray(b.lv) || !b.lv.every((l) => Number.isInteger(l) && l > 1 && l < 40)) return json({ error: 'That isn\'t right.' }, 400);
-  await env.debrief_nights.put(rk, JSON.stringify({ at: Date.now(), lv: b.lv, runs: b.runs.map((r) => ({ dur: r.dur, t: r.t })) }), { httpMetadata: { contentType: 'application/json' } }); return json({ saved: true }); }
+  const got = await env.debrief_nights.get(rk).then((o) => (o ? o.json() : null)).catch(() => null), d = got && Date.now() - (got.at || 0) < MPTOP_AGE ? got : { at: Date.now(), runs: {} };
+  if (req.method === 'GET') return json({ runs: mptopTrusted(d) });
+  if (req.method !== 'POST') return json({ error: 'Only the website saves these.' }, 405);
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can save these.' }, 403);
+  const ip = req.headers.get('CF-Connecting-IP') || 'x'; if (!fair(ip)) return json({ error: 'Too many requests at once.' }, 429);
+  const raw = await req.text(); if (raw.length > 30000) return json({ error: 'Too big.' }, 413); let b = null; try { b = JSON.parse(raw); } catch (e) { b = null; }
+  const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0 && x < 1e9, okT = (t) => t && typeof t === 'object' && Object.keys(t).length >= 1 && Object.keys(t).length <= 80 && Object.entries(t).every(([lb, v]) => lb.length <= 80 && v && ['of', 'pct', 'wasted', 'n'].includes(v.k) && num(v.a) && num(v.b) && num(v.w));
+  const [e, l, sp, cl] = k.split(':'), lv = parseInt(b && b.lv, 10);
+  if (!b || !MPTOP_RUN.test(String(b.id || '')) || !num(b.dur) || b.dur <= 0 || !okT(b.t) || !(Math.abs(lv - +l) <= 1)) return json({ error: 'That isn\'t right.' }, 400);
+  // (a real fast run of that dungeon and level, with that player as that spec: the site's own list, from the cache the page just read it through)
+  const [code, fight, who] = String(b.id).split(':'), lu = new Request(url.origin + '/api/mpfast?e=' + e + '&l=' + lv + '&v=3', { method: 'GET' });
+  let L = null; try { const hit = await caches.default.match(lu); L = hit ? await hit.json() : await mpFastOf((q, vars) => gql(env, q, vars), { e: +e, l: lv }); } catch (x) { L = null; }
+  const run = L && (L.runs || []).find((r) => r.code === code && r.fight === +fight), m = run && (run.ppl || []).find((p) => p.n === who && mptopNorm(p.s) === sp && mptopNorm(p.c) === cl);
+  if (!m) return json({ error: 'That isn\'t one of the fast runs.' }, 400);
+  // (one more visitor's numbers for that run: the same numbers count as a second visitor agreeing; up to 4 different answers kept a run)
+  const t = Object.fromEntries(Object.keys(b.t).sort().map((x) => [x, { k: b.t[x].k, a: Math.round(b.t[x].a * 1000) / 1000, b: b.t[x].b, w: Math.round(b.t[x].w * 1000) / 1000 }]));
+  const h = await mptopHash(JSON.stringify([Math.round(b.dur * 1000) / 1000, t])), me = await mptopHash('mptop|' + ip), cs = d.runs[b.id] || (d.runs[b.id] = []);
+  let c = cs.find((x) => x.h === h); if (!c) { if (cs.length >= 4 || Object.keys(d.runs).length >= 12 && !d.runs[b.id].length) return json({ kept: false }); c = { h, t, dur: b.dur, lv, by: [] }; cs.push(c); }
+  if (!c.by.includes(me) && c.by.length < 6) c.by.push(me);
+  await env.debrief_nights.put(rk, JSON.stringify(d), { httpMetadata: { contentType: 'application/json' } }); return json({ agreed: c.by.length >= 2 }); }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);

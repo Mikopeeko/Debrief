@@ -3382,35 +3382,43 @@ const mpTopNorm = (x) => String(x || '').toLowerCase().replace(/[^a-z]/g, '');
 const mpTopVal = (v) => { const t = mpPlain(v).trim(); let m; if ((m = t.match(/^(\d+)\s*\/\s*(\d+)$/)) || (m = t.match(/^(\d+) of (\d+)$/))) return { k: 'of', a: +m[1], b: +m[2] };
   if ((m = t.match(/^(\d+)%/))) return { k: 'pct', a: +m[1] }; if ((m = t.match(/^(\d+)(?: of \d+)? wasted$/))) return { k: 'wasted', a: +m[1] }; if ((m = t.match(/^(\d+)(?: times?)?$/))) return { k: 'n', a: +m[1] }; return null; };
 // (one fast run's totals for one player: { dur, t: { label: { k, a, b, w } } }, or null)
+// (this page's version for the kept numbers: a hash of its own code, so numbers worked out by other code are never mixed in)
+let MP_TOPVER = null; const mpTopVer = () => { if (MP_TOPVER) return MP_TOPVER; let big = ''; for (const sc of document.querySelectorAll('script:not([src])')) if (sc.textContent.length > big.length) big = sc.textContent;
+  let h = 0x811c9dc5; for (let i = 0; i < big.length; i++) { h ^= big.charCodeAt(i); h = Math.imul(h, 16777619); } return (MP_TOPVER = ('00000000' + (h >>> 0).toString(36)).slice(-8)); };
 async function mpTopRun(c, who) {
-  const key = MP_TOPV + c.code + ':' + c.fight + ':' + mpLc(who); try { const j = localStorage.getItem(key); if (j) return JSON.parse(j); } catch (e) { /* (read again) */ }
+  const key = MP_TOPV + mpTopVer() + ':' + c.code + ':' + c.fight + ':' + mpLc(who); try { const j = localStorage.getItem(key); if (j) return JSON.parse(j); } catch (e) { /* (read again) */ }
   const rep = await WCL.loadReport(S.wclCreds, c.code), fit = (rep.runs || []).find((x) => x.wcl.fight === c.fight); if (!fit || !fit.keyMs) return null;
   const R2 = await mpRead(fit); if (!R2 || !R2._txtGet || !window.DBF_MPLUS_ROT) return null; const text = await R2._txtGet();
   const all = {}; let cur = null; const lc = mpLc(who), mine = (n) => mpLc(String(n).replace(/-.*$/, '')) === lc;
   const E2 = Object.create(E); E2.analyze = (b, seg, o) => { cur = b.pull; const r = E.analyze(b, seg, o); if (r && R2.comb && !(r.combatants || []).length) r.combatants = R2.comb; return r; };
   const W = { E: E2, S, specRun: (sp, reps, n, one1) => { if (!mine(n) || !SPEC_CHECKS[sp]) return null; let x = null; try { x = SPEC_CHECKS[sp](reps, n, one1); } finally { for (const [k2, v2] of GEN_MEMO) if (v2 === x) GEN_MEMO.delete(k2); }
     if (x && x.checks && cur != null) all[cur] = x.checks.map((q) => ({ st: q.st, k: q.k, label: q.label, v: q.v, isMain: q.isMain })); return null; } }; /* (only this player's checks are kept; none of the run's own cards) */
-  const P0 = R2.pulls.map((o) => o.rot); try { await window.DBF_MPLUS_ROT(R2, text, W, { budget: 90000 }); } catch (e) { console.error(e); } R2.pulls.forEach((o, i) => { o.rot = P0[i]; }); for (const q of R2.people || []) delete q.rot;
+  const P0 = R2.pulls.map((o) => o.rot), pend = () => cdiQ.length > 0 || cdiBusy > 0 || [...CDI.values()].some((v) => v === undefined); let cut = false;
+  for (let k = 0; k < 2; k++) { const t0 = Date.now(); cut = false; for (const x of Object.keys(all)) delete all[x]; try { await window.DBF_MPLUS_ROT(R2, text, W, { budget: 90000 }); } catch (e) { console.error(e); cut = true; } if (Date.now() - t0 >= 89000) cut = true; /* (cut short: not used, not saved) */
+    if (k || !pend()) break; for (let j = 0; j < 50 && pend(); j++) await new Promise((r) => setTimeout(r, 300)); } /* (a cooldown still being read: wait, then once more, as the key's own checks do) */
+  if (pend()) cut = true; R2.pulls.forEach((o, i) => { o.rot = P0[i]; }); for (const q of R2.people || []) delete q.rot;
   if (!(MP.fastOf && MP.fastOf.R === R2)) delete MP.R[mpK(fit)]; /* (the run's text isn't kept: a phone holds only its totals) */
   const out = { dur: 0, t: {} }; for (const o of R2.pulls) { const L = (all[o.n] || []).filter((q) => mpRwKeep(q, o)); if (!L.length) continue; out.dur += o.dur || 0;
     for (const q of L) { const v = mpTopVal(q.v), lb = mpPlain(q.label).trim(); if (!v) continue; const a = out.t[lb] || (out.t[lb] = { k: v.k, a: 0, b: 0, w: 0 }); if (a.k !== v.k) continue;
       if (v.k === 'pct') { a.a += (o.dur || 1) * v.a; a.w += o.dur || 1; } else { a.a += v.a; a.b += v.b || 0; } } }
-  if (!out.dur) return null; try { localStorage.setItem(key, JSON.stringify(out)); } catch (e) { /* (kept for this visit only) */ } return out; }
+  if (!out.dur || cut) return null; out.id = c.code + ':' + c.fight + ':' + who; try { localStorage.setItem(key, JSON.stringify(out)); } catch (e) { /* (kept for this visit only) */ } return out; }
 // (the runs for a key and player: { st: 'wait' | 'ok' | 'none', runs, lv }), started once; the tab draws again when it's in)
 function mpTopFor(R, name) { const it = MP.item; if (!it || !it.id || !it.level || !WCL.mpFast) return { st: 'none', runs: [] };
   const me = (R.people || []).find((p) => p.name === name); if (!me) return { st: 'none', runs: [] };
   const C = MP.top || (MP.top = new Map()), key = mpK(it) + '|' + name; if (C.has(key)) return C.get(key);
   const T = { st: 'wait', runs: [], lv: [] }; C.set(key, T);
-  const base = window.WLA_API || (MPC_ON && location.hostname === 'localhost' ? 'https://debriefme.io' : ''), sk = it.id + ':' + it.level + ':' + mpTopNorm(me.spec) + ':' + mpTopNorm((E.CLASSES[me.cls] || [])[0] || me.cls);
   const sp = mpTopNorm(me.spec), cl = mpTopNorm((E.CLASSES[me.cls] || [])[0] || me.cls), has = (r) => (r.ppl || []).find((m) => mpTopNorm(m.s) === sp && mpTopNorm(m.c) === cl);
+  const base = window.WLA_API || (MPC_ON && location.hostname === 'localhost' ? 'https://debriefme.io' : ''), sk = it.id + ':' + it.level + ':' + sp + ':' + cl + ':' + mpTopVer(), url = base + '/api/mptop?k=' + encodeURIComponent(sk);
   const list = (l) => { const lk = it.id + ':' + l; if (!MP.fast[lk]) MP.fast[lk] = WCL.mpFast(S.wclCreds, { e: it.id, l }).catch((e) => ({ error: e.message, runs: [] })); return MP.fast[lk]; };
-  (async () => { try { const j = await (await fetch(base + '/api/mptop?k=' + encodeURIComponent(sk))).json(); if (j && Array.isArray(j.runs) && j.runs.length >= MP_TOPN) { T.runs = j.runs; T.lv = j.lv || []; T.st = 'ok'; T.kept = true; return; } } catch (e) { /* (read the runs) */ }
-    if (MPC_ON) { T.st = 'none'; return; } /* (the pop-up never reads runs itself) */
+  const add = (r, l) => { if (T.runs.length >= MP_TOPN || T.runs.some((x) => x.id === r.id)) return; T.runs.push(r); if (!T.lv.includes(l)) T.lv.push(l); };
+  (async () => { let kept = []; try { const j = await (await fetch(url)).json(); kept = Array.isArray(j && j.runs) ? j.runs : []; } catch (e) { kept = []; } /* (only runs two different visitors worked out the same) */
+    if (kept.length >= MP_TOPN || MPC_ON) { for (const r of kept) add(r, r.lv || it.level); T.kept = true; T.st = T.runs.length >= MP_TOPN ? 'ok' : 'none'; return; } /* (the pop-up never reads runs itself) */
     const pick = []; for (const l of [it.level, it.level - 1, it.level + 1]) { if (pick.length >= MP_TOPN + 2 || l < 2) continue; const L = await list(l), med = L.med || 0;
       for (const r of (L.runs || []).filter((r) => has(r) && !(it.wcl && r.code === it.wcl.code && r.fight === it.wcl.fight)).sort((a, b) => Math.abs(a.dur - med) - Math.abs(b.dur - med))) pick.push({ r, l, who: has(r).n }); }
-    for (const x of pick) { if (T.runs.length >= MP_TOPN) break; let got = null; try { got = await mpTopRun(x.r, x.who); } catch (e) { got = null; } if (got) { T.runs.push(got); if (!T.lv.includes(x.l)) T.lv.push(x.l); } }
-    T.st = T.runs.length >= MP_TOPN ? 'ok' : 'none';
-    if (T.st === 'ok') fetch(base + '/api/mptop?k=' + encodeURIComponent(sk), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lv: T.lv, runs: T.runs }) }).catch(() => {}); /* (kept a week for everyone) */ })().catch((e) => { console.error(e); T.st = 'none'; }).finally(() => { if (MP.item === it && (MPC_ON || MP.cv === 'rot')) mpcRotPaint(); });
+    for (const x of pick) { if (T.runs.length >= MP_TOPN) break; const id = x.r.code + ':' + x.r.fight + ':' + x.who, k0 = kept.find((r) => r.id === id); if (k0) { add(k0, x.l); continue; }
+      let got = null; try { got = await mpTopRun(x.r, x.who); } catch (e) { got = null; } if (!got) continue; add(got, x.l);
+      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: got.id, lv: x.l, dur: got.dur, t: got.t }) }).catch(() => {}); } /* (this visitor's numbers for that run: shown to others once a second visitor's match) */
+    T.st = T.runs.length >= MP_TOPN ? 'ok' : 'none'; })().catch((e) => { console.error(e); T.st = 'none'; }).finally(() => { if (MP.item === it && (MPC_ON || MP.cv === 'rot')) mpcRotPaint(); });
   return T; }
 // (a row's "top": the middle of the runs' totals for that check, when all of them have it, said the way your own value is)
 const mpTopOf = (T, lb, mineV, myDur) => { if (!T || T.st !== 'ok') return ''; const v = mpTopOf0(T, lb, mineV, myDur); return v ? v + ' (' + T.runs.length + ' runs)' : ''; };
