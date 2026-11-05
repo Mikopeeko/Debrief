@@ -1613,6 +1613,70 @@ async function wipeCheck(req, env, url) {
   await env.debrief_nights.put(WCK_K + 'answers.json', JSON.stringify(A, null, 1), { httpMetadata: { contentType: 'application/json' } });
   return json({ ok: true, marked: Object.values(A).filter((x) => x && x.main).length });
 }
+// ---- The Whole tier (Nov 5, Flex: "a button press/page thats like the all pulls page. But for every single pull of the boss across the whole
+// tier (up until the first kill if there is one) so you can analyze progress from pull 1 to current", then "Yes, build it" on the studio's
+// mock). Every pull a guild made on one boss and difficulty, up to its first kill, in one answer:
+// - the pulls from Warcraft Logs' list of the guild's reports in the boss's raid (each pull's report, fight, start, result, health and phase
+//   at the wipe; nothing downloaded), kept 10 minutes at the edge so new nights show up; the same pull logged twice is counted once
+//   (starts within 20 s);
+// - what wiped each pull, which the pages work out while they read a night as usual and send here: one small file per guild, boss and
+//   difficulty in R2 (debrief-nights), about 100 bytes a pull, merged by report and fight. Only pulls on that guild's list are kept, and a
+//   practice link keeps its own copy.
+const TIER_ZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+const TIER_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,limit:50,page:$p){has_more_pages data{code startTime fights(encounterID:$e,difficulty:$d){id kill startTime endTime fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}}}}}`;
+const tierK = (v, url) => (PRACTICE_HOST(url) ? 'practice-tier/' : 'tier/') + v.g + '/' + v.e + '-' + v.d + '.json';
+const tierV = (p) => { const g = parseInt(p.get('g'), 10), e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return g > 0 && g < 1e9 && e > 0 && e < 1e7 && [3, 4, 5].includes(d) ? { g, e, d } : null; };
+// (the pulls: [report, fight, start (ms), kill 1/0, whole-fight % left, phase boss % left, last phase, 1 when it ended in an intermission, length (s)])
+async function tierList(env, v, ctx) {
+  const c = caches.default, ck = new Request('https://debrief.cache/tier-list/' + v.g + '/' + v.e + '/' + v.d), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const z = await gql(env, TIER_ZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
+  const at = []; /* (50 reports a page: a hundred with these fields is more than Warcraft Logs answers in one go) */
+  for (let p = 1; p <= 8; p++) {
+    const d = await gql(env, TIER_Q, { g: v.g, z: zone, e: v.e, d: v.d, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) for (const f of rep.fights || []) {
+      at.push([rep.code, f.id, rep.startTime + f.startTime, f.kill ? 1 : 0, f.fightPercentage != null ? f.fightPercentage : null, f.bossPercentage != null ? f.bossPercentage : null, f.lastPhase || 0, f.lastPhaseIsIntermission ? 1 : 0, Math.round((f.endTime - f.startTime) / 1000)]); }
+    if (!R.has_more_pages) break;
+  }
+  at.sort((a, b) => a[2] - b[2]);
+  /* (a pull logged twice is the copy from the report with more of the night's pulls, so a night stays in one report where it can) */
+  const per = new Map(); for (const x of at) per.set(x[0], (per.get(x[0]) || 0) + 1);
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x[2] - l[2] < 20000) { if (per.get(x[0]) > per.get(l[0])) pulls[pulls.length - 1] = x; continue; } pulls.push(x); }
+  const k1 = pulls.findIndex((x) => x[3]); if (k1 >= 0) pulls.length = k1 + 1; /* (up to the first kill) */
+  const o = { g: v.g, e: v.e, d: v.d, pulls, at: Date.now() };
+  ctx.waitUntil(c.put(ck, new Response(JSON.stringify(o), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=600' } })).catch(() => {}));
+  return o;
+}
+async function tierGet(env, v, url) { const o = await env.debrief_nights.get(tierK(v, url)); if (!o) return null; return { doc: JSON.parse(await new Response(o.body.pipeThrough(new DecompressionStream('gzip'))).text()), etag: o.etag }; }
+async function tier(req, env, url, ctx) {
+  if (!env.debrief_nights) return json({ error: 'The whole tier isn\'t set up on this copy of Debrief.' }, 503);
+  const v = tierV(url.searchParams); if (!v) return json({ error: 'That boss is missing something.' }, 400);
+  if (req.method === 'GET') {
+    if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+    let L; try { L = await tierList(env, v, ctx); } catch (e) { const m = String((e && e.message) || e); return json({ error: /rate limit/i.test(m) ? m : 'Warcraft Logs didn\'t answer just now. Try again in a minute.', why: m.slice(0, 300) }, 502); }
+    const g = await tierGet(env, v, url).catch(() => null), C = (g && g.doc && g.doc.c) || {}, causes = {};
+    for (const p of L.pulls) { const k = p[0] + ':' + p[1]; if (C[k]) causes[k] = C[k]; }
+    return json({ ...L, causes });
+  }
+  if (req.method !== 'POST') return json({ error: 'GET or POST only.' }, 405);
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can add to the whole tier.' }, 403);
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
+  const raw = await req.arrayBuffer(); if (raw.byteLength > 128 * 1024) return json({ error: 'That\'s too much at once.' }, 413);
+  let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
+  if (!b || !Array.isArray(b.s) || !b.s.length || b.s.length > 400) return json({ error: 'That isn\'t right.' }, 400);
+  let L; try { L = await tierList(env, v, ctx); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now.' }, 502); }
+  const ok = new Set(L.pulls.map((p) => p[0] + ':' + p[1])), cl = (x, n) => String(x == null ? '' : x).slice(0, n), add = {};
+  for (const s of b.s) { const k = cl(s && s.c, 32) + ':' + (parseInt(s && s.f, 10) || 0); if (!ok.has(k)) continue; /* (only this guild's pulls of this boss) */
+    add[k] = { k: cl(s.k, 80), n: cl(s.n, 80), rc: /^[a-z]{1,12}$/.test(s.rc || '') ? s.rc : '', u: s.u ? 1 : 0, dd: Math.max(0, Math.min(40, parseInt(s.dd, 10) || 0)), v: cl(s.v, 24), at: Date.now() }; }
+  if (!Object.keys(add).length) return json({ ok: true, kept: 0 });
+  for (let tries = 0; tries < 4; tries++) {
+    const g = await tierGet(env, v, url).catch(() => null), doc = g ? g.doc : { g: v.g, e: v.e, d: v.d, c: {} };
+    Object.assign(doc.c, add);
+    const gz = await new Response(new Blob([JSON.stringify(doc)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+    const put = await env.debrief_nights.put(tierK(v, url), gz, { httpMetadata: { contentType: 'application/octet-stream' }, ...(g ? { onlyIf: { etagMatches: g.etag } } : {}) });
+    if (put) return json({ ok: true, kept: Object.keys(add).length }); /* (null: someone saved in between, so it reads again and merges) */
+  }
+  return json({ error: 'Busy just now. It tries again later.' }, 409);
+}
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -1826,6 +1890,7 @@ export default {
     if ((url.pathname === '/api/night' && !url.searchParams.has('code')) || url.pathname === '/api/night/part') return night(req, env, url); /* (a ?code= read is a raid night's pulls for a team import, not a shared night, Oct 22) */
     if (url.pathname === '/api/plan') return planShare(req, env, url); /* (shared plans, Oct 22) */
     if (url.pathname === '/api/wipecheck') return wipeCheck(req, env, url); /* (Flex's answer key for the analysis upgrade, practice links only (Nov 5)) */
+    if (url.pathname === '/api/tier') return tier(req, env, url, ctx); /* (the Whole tier: every pull of a boss up to the first kill, Nov 5) */
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);

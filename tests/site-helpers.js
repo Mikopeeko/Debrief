@@ -1,5 +1,5 @@
 // The site's own small helpers, taken out of src/ui.js by name and run in Node, so a test reads exactly what the page shows
-// (used by contradictions.js and wipecheck-stories.js). site(['pullPct', 'pullShort']) -> { pullPct, pullShort, CACHE }
+// (used by contradictions.js and wipecheck-stories.js). site(['pullPct', 'pullShort']) -> { pullPct, pullShort, CACHE }; extra: more of the page's globals (stand-ins)
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -27,9 +27,9 @@ function grab(name, src) {
   }
   throw new Error('could not read ' + name + ' out of ui.js');
 }
-function site(names) {
+function site(names, extra) {
   const code = names.map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
-  const ctx = vm.createContext({ E, C: E.compact, T: E.fmtT, CACHE: new Map(), S: { index: { bosses: [] } }, window: {} });
+  const ctx = vm.createContext({ E, C: E.compact, T: E.fmtT, CACHE: new Map(), S: { index: { bosses: [] } }, window: {}, ...(extra || {}) });
   const o = vm.runInContext(code, ctx); o.CACHE = ctx.CACHE; return o;
 }
 // (a Warcraft Logs report's boss pulls as wcl.js makes them: each boss and difficulty's pulls numbered in order of the night)

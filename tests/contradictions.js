@@ -24,6 +24,10 @@ const H = require('./site-helpers.js'), UI = H.UI;
 const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n' + H.grab('nsmFocusOf', H.SH) + '\n({ story, nsmFocusOf })');
 const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_FIRST, rcFirstLine })');
 const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
+/* (the Whole tier (Nov 5): its own numbers for a night, read with the page's code; the cut at the wipe call and the killing-blow verdict stand
+   in as "none" on both sides, so the tier and All pulls are compared on the same causes) */
+const TSITE = H.site(['esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
+const TIER_T = new Map(); /* (each test night's pulls of a boss: the tier's line, All pulls' cause and health) */
 const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----
@@ -124,6 +128,9 @@ function checkPull(key) {
     }
   }
   if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.cat !== 'reset') { const l = NIGHT_RC.get(code) || []; l.push(o); NIGHT_RC.set(code, l); } if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else { clean(pull, 'root cause', o.line); clean(pull, 'root cause, short', o.short); if (!o.short) say(pull, 'root', 'no short why sentence for ' + o.cat); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
+  { const f0 = rep.r.fights.find((x) => x.id === +fight); if (f0) { try { const gk = code + '|' + it.id + '|' + it.diffId, l = TIER_T.get(gk) || [], q = SITE.aphOf([r]).p[0], pc = TSITE.pullCauseOf(r);
+      l.push({ it, hp: q ? q[1] : null, ak: pc ? pc.k : '', sum: TSITE.tierSumOf(r), row: [code, f0.id, rep.r.startTime + f0.startTime, f0.kill ? 1 : 0, f0.fightPercentage != null ? f0.fightPercentage : null, f0.bossPercentage != null ? f0.bossPercentage : null, f0.lastPhase || 0, f0.lastPhaseIsIntermission ? 1 : 0, Math.round((f0.endTime - f0.startTime) / 1000)] }); TIER_T.set(gk, l); }
+    catch (e) { say(pull, 'tier', 'the Whole tier\'s line crashed: ' + e.message); } } }
   for (const q of r.mistakes || []) { clean(pull, 'mistake ' + q.mechanic, q.detail); clean(pull, 'mistake ' + q.mechanic + ' fix', q.fix); }
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once
@@ -148,9 +155,20 @@ for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) 
   if (f && f.first) { const m = /^In (\d+) of them, (.+) came first\.$/.exec(f.first), cat = m && Object.keys(RCX.RC_FIRST).find((k) => RCX.RC_FIRST[k] === m[2]); const n = cat ? rows[0].l.filter((o) => o.chain && o.chain[0] && o.chain[0].cat === cat).length : -1;
     if (!m || n !== +m[1]) say(night, 'focus', '"' + f.first + '" doesn\'t match the chains (' + n + ' start with it)'); }
   clean(night, 'focus band', (f ? f.fix + ' ' + f.nm + ' wiped us most. ' + f.first : '')); }
+// 6. the Whole tier reads each night as its All pulls card does: one night, the same best boss health, and the same count for every cause
+for (const [gk, l] of TIER_T) { const it0 = l[0].it, rows = l.slice().sort((a, b) => a.row[2] - b.row[2]), seen = new Map(rows.map((x) => [x.row[0] + ':' + x.row[1], x.sum])), night = 'night ' + gk.split('|')[0] + ', ' + it0.boss + ' ' + it0.diff + ' (Whole tier)';
+  let M = null; try { M = TSITE.tierModel({ pulls: rows.map((x) => x.row), causes: {} }, it0, seen); } catch (e) { say(night, 'tier', 'the Whole tier crashed: ' + e.message); continue; }
+  if (M.N.length !== 1) { say(night, 'tier', 'the Whole tier splits this one night into ' + M.N.length + ' nights'); continue; }
+  const W = rows.filter((x) => !x.it.kill && x.hp != null), b0 = W.length ? Math.min(...W.map((x) => x.hp)) : null, b1 = M.N[0].best ? M.N[0].best.hp : null;
+  if (b0 !== b1) say(night, 'tier', 'the Whole tier says the night\'s best was ' + b1 + '%, All pulls says ' + b0 + '%');
+  const want = new Map(); for (const x of rows) if (!x.it.kill && x.ak) want.set(x.ak, (want.get(x.ak) || 0) + 1);
+  const got = new Map(M.CR.map((c) => [c.k, c.per[0]]));
+  for (const [k, n] of want) if (got.get(k) !== n) say(night, 'tier', k + ': All pulls counts ' + n + ' wipes, the Whole tier ' + (got.get(k) || 0));
+  for (const [k, n] of got) if (!want.has(k)) say(night, 'tier', k + ': the Whole tier counts ' + n + ' wipes that All pulls doesn\'t');
+  for (const c of M.CR) clean(night, 'What wiped us most', c.nm); }
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }
 const total = new Set(P.map((x) => x.pull + x.msg)).size;
-console.log('\nContradiction check: ' + n + ' pull(s) in ' + Math.round((Date.now() - t0) / 1000) + ' s, ' + (total ? total + ' problem(s)' : 'no contradictions'));
+console.log('\nContradiction check: ' + n + ' pull(s) in ' + Math.round((Date.now() - t0) / 1000) + ' s (' + TIER_T.size + ' night(s) of a boss on the Whole tier), ' + (total ? total + ' problem(s)' : 'no contradictions'));
 process.exit(total ? 1 : 0);

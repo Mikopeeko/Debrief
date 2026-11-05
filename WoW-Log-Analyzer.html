@@ -11004,6 +11004,40 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-dv{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0;color:var(--muted)}.nsm-dv .nm{font-weight:700}
 .nsm-pb{display:inline-block;min-width:26px;padding:0 6px;border:1px solid var(--line2,#2c343c);border-radius:4px;font-size:12px;line-height:20px;text-align:center;color:var(--text);text-decoration:none;margin-right:-6px}.nsm-pb:hover,.nsm-pb:focus-visible{border-color:var(--gold);outline:none}
 .nsm-dq{margin:6px 0 0;font-size:12.5px;color:var(--faint)}
+/* (Nov 5: the Whole tier, All pulls' own page: the same card, every pull of the boss on one chart, night by night, and what wiped us most) */
+.nsm-facts .nsm-tier{align-self:center;white-space:nowrap}
+.nsm.tier .nsm-top{align-items:start}.tier .tier-back{white-space:nowrap}
+.tier-s{margin:5px 0 0;font-family:Barlow,sans-serif;font-size:13px;color:var(--muted)}.tier-s b{color:var(--text)}
+.tier-rd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:9px 18px;border-bottom:1px solid var(--line,#222930);font-family:Barlow,sans-serif;font-size:12.5px;color:var(--muted)}.tier-rd b{color:var(--text)}
+.tier-rb{flex:1 1 120px;max-width:240px;height:4px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}.tier-rb i{display:block;height:100%;background:#e6b450}
+.nsm .nsm-hp.tier-hp{height:240px}
+.nsm-hsv .nl{stroke:var(--line2,#2c343d)}
+.tier-hp.tier-d2 .nsm-hd{width:7px;height:7px;margin:-3.5px 0 0 -3.5px}.tier-hp.tier-d3 .nsm-hd{width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-width:1px}
+.tier-hp .nsm-hd.b{width:12px;height:12px;margin:-7.5px 0 0 -7.5px;border:2px solid var(--text)}
+.tier .nsm-hd.q{background:var(--panel,#13171b);border-color:#8a939c}
+.tier-mk{position:absolute;top:0;bottom:0;width:0;pointer-events:none;z-index:1}
+.tier-mk i{position:absolute;left:0;top:calc(var(--y) + 8px);bottom:17px;border-left:1px dashed rgba(201,206,216,.45)}
+.tier-mk b{position:absolute;bottom:0;left:0;transform:translateX(-50%);white-space:nowrap;padding:0 4px;border-radius:3px;background:var(--panel,#13171b);font-family:Barlow,sans-serif;font-size:11px;font-weight:600;line-height:16px;color:var(--text)}
+.tier-mk.l b{transform:none}.tier-mk.r b{transform:translateX(-100%)}.tier-mk.up b{bottom:17px}.tier-mk.up i{bottom:34px}.tier-mk.up2 b{bottom:34px}.tier-mk.up2 i{bottom:51px}.tier-mk.up3 b{bottom:51px}.tier-mk.up3 i{bottom:68px}
+.tier-hx span{white-space:nowrap;font-weight:600;color:var(--muted)}
+.nsm-hk s.q{background:var(--panel,#13171b);border:1.5px solid #8a939c;box-sizing:border-box}
+.tier-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:28px;padding:14px 18px 16px}
+.tier-col > .nsm-k{margin:0 0 8px}
+.tier-nights{display:flex;flex-direction:column}
+.nsm .tier-nr{display:grid;grid-template-columns:56px 62px minmax(0,1fr) 72px 96px;align-items:center;gap:10px;width:100%;min-height:30px;margin:0;padding:5px 8px;border:0;border-radius:3px;background:transparent;font:600 13px Barlow,sans-serif;color:var(--muted);text-align:left;cursor:pointer}
+.nsm .tier-nr:nth-child(odd){background:rgba(255,255,255,.02)}.nsm .tier-nr:hover,.nsm .tier-nr:focus-visible{background:rgba(255,255,255,.05);outline:none}.nsm .tier-nr:focus-visible{box-shadow:inset 0 0 0 1px var(--gold)}
+.tier-nr > b{color:var(--text)}.tier-nb b{color:var(--text)}.tier-nb b.k{color:#4fbf7a}.tier-n2{white-space:nowrap}
+.tier-bar{height:8px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}.tier-bar i{display:block;height:100%;background:#e6b450;opacity:.85}.tier-bar.k i{background:#4fbf7a}
+.tier-bh{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}.tier-bh > span:last-child{font-family:Barlow,sans-serif;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.nsm-gbx.tier-gbx .gbx-r{--gbx-cols:18px minmax(0,1fr) minmax(0,.7fr) 30px 116px 14px;--gbx-cols-m:16px minmax(0,1fr) 28px 14px;column-gap:10px}
+.tier-gbx .tier-per{font-size:12px;font-weight:600;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis}
+.tier .nsm-det{margin-left:28px}.tier .nsm-foot{margin:8px 0 0 28px}
+.tier-f{margin:10px 4px 0;font-family:Barlow,sans-serif;font-size:13px;color:var(--muted)}
+.tier-none{margin:0;padding:14px 18px;font-family:Barlow,sans-serif;color:var(--muted)}
+@media (max-width:720px){.nsm-facts{flex-wrap:wrap;row-gap:10px}.nsm.tier .nsm-top{grid-template-columns:1fr;gap:10px;padding:14px 12px}.tier .tier-back{justify-self:start}.tier-rd{padding:8px 12px}.nsm .nsm-hp.tier-hp{height:220px}.tier-mk b{font-size:10px}
+  .tier-g2{grid-template-columns:1fr;gap:18px;padding:12px}.nsm .tier-nr{grid-template-columns:50px 56px minmax(0,1fr) 64px;gap:8px;font-size:12.5px;padding:5px 4px}.tier-n2{display:none}}
+@media (max-width:699px){.nsm-gbx.tier-gbx .nsm-bl{grid-template-rows:auto 5px auto}.nsm-gbx.tier-gbx .nsm-bl .gbx-b{grid-column:2 / -1}.tier-gbx .nsm-bl .gbx-v{grid-row:1;grid-column:3}.tier-gbx .nsm-bl .nsm-ch{grid-row:1;grid-column:4}.tier-gbx .tier-per{grid-row:3;grid-column:2 / -1;text-align:left}
+  .tier .nsm-det,.tier .nsm-foot{margin-left:0}}
 .nsm-bars .nsm-foot{margin:8px 0 4px 66px}
 @media (max-width:699px){.nsm-gbx .nsm-bl{grid-template-rows:auto 5px;row-gap:5px;padding:6px 2px}.nsm-gbx .nsm-bl .gbx-n{flex-wrap:wrap;white-space:normal;row-gap:3px}.nsm-gbx .nsm-t .nsm-tag{margin-left:0}.nsm-gbx .nsm-bl .gbx-b{grid-column:3 / -1;grid-row:2;height:5px}.nsm-gbx .nsm-gh > span:nth-child(4){display:none}
   .nsm-det{margin-left:0}.nsm-dl{flex-wrap:wrap}.nsm-dk{width:100%}.nsm-bars .nsm-foot{margin-left:0}}
@@ -25513,7 +25547,7 @@ async function rwRead(item) {
   const rep = RD.revive(m.rep); rep.item = item;
   { const ct = RD.ct(rep); if (ct !== m.ct && !(Math.abs(ct - m.ct) <= 0.01)) { console.warn('A reading worker cut ' + item.boss + ' pull ' + item.pull + ' at ' + m.ct + ' s, the page at ' + ct + ' s: the page reads it'); return null; } }
   for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
-  applyNote(rep); ndzSpecSave(rep); CACHE.set(item, rep); cacheTrim(); histSave(rep); /* (the worker saved it) */
+  applyNote(rep); ndzSpecSave(rep); CACHE.set(item, rep); cacheTrim(); histSave(rep); tierNote(rep); /* (the worker saved it) */
   return rep;
 }
 /* (Oct 25 night: after an update to the checks a saved reading still opens at once; the pull is read again behind it (the one on screen first,
@@ -25540,7 +25574,7 @@ async function readRep(item) {
   { const saved = item._rdSkip ? null : await RD.get(item); /* round 285 stale reads */ if (saved && saved._stale) { try { const f = await readFresh(item); if (f) return f; } catch (e) { /* (the old reading below) */ } }
     if (saved) { saved.item = item;
       if (item.wcl) for (const a of item.wcl.abilities.values()) { const k = String(a.name || '').toLowerCase(); if (k && a.gameID > 1 && !E.SPELLID.has(k)) E.SPELLID.set(k, a.gameID); }
-      saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); if (saved._stale) rfQueue(item); return saved; } }
+      saved._saved = true; applyNote(saved); ndzSpecSave(saved); CACHE.set(item, saved); cacheTrim(); histSave(saved); tierNote(saved); if (saved._stale) rfQueue(item); return saved; } }
   return readFresh(item);
 }
 async function readFresh(item) {
@@ -25571,6 +25605,7 @@ async function readFresh(item) {
   ndzSpecSave(rep); /* (Plan with a roster: each raider's class, spec and role, remembered) */
   CACHE.set(item, rep); cacheTrim();
   histSave(rep);
+  tierNote(rep); /* (its line for the Whole tier) */
   RD.put(item, rep); /* (kept on this PC for the next reload) */
   return rep;
 }
@@ -26287,7 +26322,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-05', h: [{ t: 'Themes that reshape the boxes', d: 'Three bolder looks in Menu > Theme: Hardlight (sci-fi corners), Slate (flat cards with a strip) and Arcade (a retro game). Only the look changes.' }, { t: 'Three new themes', d: 'Menu > Theme has three new looks: Abyss (deep water and mint), Dusk Bloom (a warm sunset) and Ink (black and white, so mistakes stand out).' }, { t: 'Your raid note, straight from the game', d: 'Debriefing now checks each pull against the NSRT note your raid had loaded for it, with nothing to paste. If the note changes mid-raid, every pull keeps its own. Needs the newest Debrief Companion.' }, { t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: [
+  { d: '2026-11-05', h: [{ t: 'Whole tier: every pull from pull 1 to now, on one page', d: 'A Whole tier button on the All pulls card shows every pull of the boss across all your nights, up to your first kill: the boss health at each, what wiped it, your best night by night, and which causes got better or worse.' }, { t: 'Themes that reshape the boxes', d: 'Three bolder looks in Menu > Theme: Hardlight (sci-fi corners), Slate (flat cards with a strip) and Arcade (a retro game). Only the look changes.' }, { t: 'Three new themes', d: 'Menu > Theme has three new looks: Abyss (deep water and mint), Dusk Bloom (a warm sunset) and Ink (black and white, so mistakes stand out).' }, { t: 'Your raid note, straight from the game', d: 'Debriefing now checks each pull against the NSRT note your raid had loaded for it, with nothing to paste. If the note changes mid-raid, every pull keeps its own. Needs the newest Debrief Companion.' }, { t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: [
     "Debrief Companion: the raid recap reads in plain sentences, each mechanic once, with its nickname, and the worst first. A clean mechanic is always green.",
     "Debrief Companion: What wiped us names what started the wipe, the same as Debriefing, and the Deaths list stops at the wipe call.",'Every pull shows one boss health number now, the whole fight\'s, said the same way everywhere: "boss at 33%". The banner, the pull picker, the coach and the Companion app agree.', 'The other nine bosses\' mechanics have short noun nicknames, the same as the Companion app\'s, like Extinguish (Motes) and Ravage (Tank Swap).', 'Some coach lines read as full sentences now, like "Zaffia\'s ghost reached them at 3:39, so they were mind controlled again."'], f: ['Hardlight theme: the line on each cut corner now shows on top instead of hiding under the box.', 'Kith\'ix: Extinguish showed green while it listed players without a mote. A player without a mote is amber now, and a death is red.', 'Venomfang, Avoidable damage, Coalesced Venom and the tank frontals could show green or red when their rows said otherwise. Each line\'s colour matches what it lists now.', 'Sszorak: the Ravage line said "died died".'] },
   { d: '2026-11-04', h: [{ t: 'All pulls shows what wiped you most, ranked', d: 'Debriefing on All pulls now opens with the three things that wiped you most, biggest first, with the pulls they ended. Everything else follows, ranked by how many pulls it hit, with a tag when it got worse or better.' }, { t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
@@ -27577,7 +27612,8 @@ function renderMain0() {
   // (the whole night: Recap is the night's summary, Mechanics and Assignments their rows across the pulls; Rotation, Graphs
   // and Players have their own whole-night views)
   document.body.dataset.wip = WIP_TABS.has(S.tab) ? '1' : ''; // (the under-construction banner: drawn by the page's style, so a page that redraws itself keeps it)
-  if (allMode && (S.tab === 'live' || S.tab === 'audit' || S.tab === 'overview')) night({ live: null, audit: 'mech', overview: 'asg' }[S.tab]); else { const fail = (e) => { console.error(e); const v = $('#view'); if (v && !v.children.length) v.innerHTML = '<div class="panel" style="padding:18px"><b>This pull couldn\'t be shown.</b><p class="sub" style="margin:6px 0 0">Something in its data tripped us up. Try another pull, or report it from the menu so we can fix it.</p></div>'; }; /* (never a silent blank page (Nov 5)) */ try { const pv = VIEWS[S.tab](); if (pv && typeof pv.catch === 'function') pv.catch(fail); } catch (e) { fail(e); } }
+  if (!allMode || S.tab !== 'audit' || !tierCan()) S.tier = false; /* (the Whole tier: All pulls' own page) */
+  if (S.tier) tierPage(); else if (allMode && (S.tab === 'live' || S.tab === 'audit' || S.tab === 'overview')) night({ live: null, audit: 'mech', overview: 'asg' }[S.tab]); else { const fail = (e) => { console.error(e); const v = $('#view'); if (v && !v.children.length) v.innerHTML = '<div class="panel" style="padding:18px"><b>This pull couldn\'t be shown.</b><p class="sub" style="margin:6px 0 0">Something in its data tripped us up. Try another pull, or report it from the menu so we can fix it.</p></div>'; }; /* (never a silent blank page (Nov 5)) */ try { const pv = VIEWS[S.tab](); if (pv && typeof pv.catch === 'function') pv.catch(fail); } catch (e) { fail(e); } }
   // (opened from a Summary row: open that mechanic's or assignment's row on this pull and bring it into view)
   if (S.pendingSec) { const el = document.querySelector('#view [id^="' + CSS.escape(S.pendingSec) + '"]'); S.pendingSec = null;
     if (el) { if (el.tagName === 'DETAILS') { el.open = true; if (el.dataset.k) S.openSecs.add(el.dataset.k); } for (let e = el.parentElement; e; e = e.parentElement) if (e.tagName === 'DETAILS') e.open = true;
@@ -35385,6 +35421,14 @@ function rcFirstLine(rcs) { const n = new Map(); for (const o of rcs) { const c0
   const top = [...n].sort((a, b) => b[1] - a[1])[0]; return top && top[1] >= 2 && top[1] * 2 >= rcs.length ? 'In ' + top[1] + ' of them, ' + RC_FIRST[top[0]] + ' came first.' : ''; }
 const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; let c = null; try { c = cutInfo(r); } catch (e) { c = null; } const cut = c && c.auto ? c.t : null, k = WROOT.get(r); if (k && k.cut === cut) return k.o; let o = null; try { o = E.rootCause(r, { cut }); } catch (e) { o = null; } if ('_root' in r) delete r._root; WROOT.set(r, { cut, o }); return o; };
 try { window.wipeRoot = () => wipeRoot(S.rep); window.wipeRootOf = wipeRoot; } catch (e) { /* (no window) */ }
+/* (one wipe's cause as All pulls counts it, and the Whole tier with it (Nov 5): its root cause, following the chain (a reset on purpose is no
+   cause); on a boss without root causes, the killing-blow verdict. { k: what it's counted under, nm: its name, rc or o: the details }) */
+function pullCauseOf(r) { if (!r || !r.item || r.item.kill) return null;
+  let rc = null; try { rc = dbfReset(r.item) ? null : wipeRoot(r); } catch (e) { rc = null; }
+  if (rc) return rc.cat === 'reset' ? null : { k: 'rc:' + rc.cat, nm: rc.name, rc };
+  let o = null; try { o = whyWiped(r); } catch (e) { o = null; } if (!o) return null; const k = whyKey(o); if (k === '?') return null;
+  const nm = o.k === 'dmg' ? 'not enough damage' : o.how === 'wave' ? 'raid damage' : o.how === 'kit' ? 'unused defensives' : o.how === 'bleed' ? 'missed healing' : o.how === 'tank' ? 'tank deaths' : cHtml(o.how === 'raid' ? mech(o.mech, o.id) : o.l || (o.d && o.d.ability) || ''); if (!nm) return null;
+  return { k, nm, o }; }
 const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
 /* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
    E.strictView re-grades a reading's mistakes from its Medium list, so switching needs no re-read; Mythic raid bosses only) */
@@ -39271,12 +39315,8 @@ function coachSummary0(reps, name) {
       else { /* (Oct 23, your ask "very very clear and not muddled": every wipe's root cause, grouped and counted, worst first) */
         /* (Nov 5, analysis step 2: a Coiled Altar wipe counts under its root cause, following the chain, not the killing blow (Flex: "blame ...
            should follow the chain, not the death"); a reset on purpose counts as no cause. Other bosses keep the killing-blow verdict) */
-        const by = new Map(); for (const r of reps) { if (!r || !r.item || r.item.kill) continue;
-          let rc = null; try { rc = dbfReset(r.item) ? null : wipeRoot(r); } catch (e) { rc = null; }
-          if (rc) { if (rc.cat === 'reset') continue; const k = 'rc:' + rc.cat, x = by.get(k) || { nm: rc.name, n: 0, os: [], ps: [], rs: [] }; x.n++; x.os.push({ rc, t: rc.t, pull: r.item.pull }); x.ps.push(r.item.pull); x.rs.push(r); by.set(k, x); continue; }
-          let o = null; try { o = whyWiped(r); } catch (e) { o = null; } if (!o) continue; const k = whyKey(o); if (k === '?') continue;
-          const nm = o.k === 'dmg' ? 'not enough damage' : o.how === 'wave' ? 'raid damage' : o.how === 'kit' ? 'unused defensives' : o.how === 'bleed' ? 'missed healing' : o.how === 'tank' ? 'tank deaths' : cHtml(o.how === 'raid' ? mech(o.mech, o.id) : o.l || (o.d && o.d.ability) || ''); if (!nm) continue;
-          const x = by.get(k) || { nm, n: 0, os: [], ps: [], rs: [] }; x.n++; x.os.push(o); x.ps.push(r.item.pull); x.rs.push(r); by.set(k, x); } /* round 202 */
+        const by = new Map(); for (const r of reps) { const pc = pullCauseOf(r); if (!pc) continue; /* (one pull's cause, the same one the Whole tier counts) */
+          const x = by.get(pc.k) || { nm: pc.nm, n: 0, os: [], ps: [], rs: [] }; x.n++; x.os.push(pc.rc ? { rc: pc.rc, t: pc.rc.t, pull: r.item.pull } : pc.o); x.ps.push(r.item.pull); x.rs.push(r); by.set(pc.k, x); } /* round 202 */
         /* (Nov 5, Flex: "#1 yes need to know the culprits", "dont shorten the list of names, show all the names": who's behind each cause, counted
            only in the wipes it's ranked for and only before the wipe call. Their deaths to it, the jobs they missed in the note, the orb carrier
            the log names at the burst; a raid mistake's deaths (the lone soaker) are never blamed, and nothing is guessed) */
@@ -41466,6 +41506,180 @@ function aphOf(reps) {
   const ph = cfg && !cfg.pool ? cfg.phases.map((k) => { const w = 100 * phShare(cfg, k), o = [k, Math.round(100 - at)]; at += w; return w > 0.5 && o[1] < 99.5 ? o : null; }).filter(Boolean) : [];
   return { p, ph };
 }
+/* ===== The Whole tier (Nov 5, Flex: "a button press/page thats like the all pulls page. But for every single pull of the boss across the whole
+   tier (up until the first kill if there is one) so you can analyze progress from pull 1 to current", "It could be smaller thats fine", then
+   "Yes, build it" on the Design studio's mock). Every pull the guild made on this boss and difficulty, from its first to now (or to the first
+   kill), on one page opened from the All pulls card:
+   - each pull's boss health and phase come from Warcraft Logs' list of the guild's reports (the site's /api/tier; nothing downloaded) and are
+     read with the same numbers as the pull picker and All pulls (aphOf);
+   - what wiped each pull is All pulls' own cause (pullCauseOf), worked out while nights are read as usual and kept on the site, about 100
+     bytes a pull, in one file per guild, boss and difficulty;
+   - pulls nobody has read yet are read here in the background, one at a time: this PC's saved reading first, else the site's stored
+     download, with a rest after each download as long as it took. Never more than one pull in memory; leaving the page stops it, and what's
+     read is kept for everyone ===== */
+const TIER_DIFF = { 16: 5, 15: 4, 14: 3 };
+const tierKeyOf = (it) => (it && it.kind === 'boss' && !it.run && it.wcl && !it.wcl.key && it.gid > 0 && TIER_DIFF[it.diffId] ? { g: it.gid, e: it.id, d: TIER_DIFF[it.diffId] } : null);
+const tierQs = (tk) => 'g=' + tk.g + '&e=' + tk.e + '&d=' + tk.d;
+const tierCan = () => !!(WCL.HOSTED && S.item && tierKeyOf(S.item));
+const tierVer = () => { try { return String(RD.ver()).slice(0, 12); } catch (e) { return ''; } };
+// (one pull's line in the file: { c, f: its report and fight, k: what All pulls counts it under ('' for a kill or no single cause), n: its name, rc: the root cause's kind, u: 1 when not sure, dd: deaths })
+function tierSumOf(r) { const it = r.item, pc = pullCauseOf(r);
+  return { c: it.wcl.code, f: it.wcl.fight, k: pc ? pc.k : '', n: pc ? dbfCap(String(pc.nm)) : '', rc: pc && pc.rc ? pc.rc.cat : '', u: pc && pc.rc && pc.rc.unsure ? 1 : 0, dd: (r.deaths || []).length, v: tierVer() }; }
+// (each pull read as usual is noted when the page is idle, and sent a few seconds after the last one, a batch at a time)
+const TQ = { held: [], by: new Map(), seen: new Map(), t: 0, w: false };
+function tierNote(r) { try { const it = r && r.item; if (!it || it.foreign || !WCL.HOSTED || !tierKeyOf(it)) return; const id = it.wcl.code + ':' + it.wcl.fight; if (TQ.seen.has(id) || TQ.held.includes(r)) return;
+  TQ.held.push(r); if (!TQ.w) { TQ.w = true; (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(tierWork, { timeout: 5000 }); } } catch (e) { /* (not noted) */ } }
+function tierWork() { TQ.w = false; const L = TQ.held.splice(0); let mine = false;
+  for (const r of L) { try { const it = r.item, id = it.wcl.code + ':' + it.wcl.fight; if (TQ.seen.has(id)) continue; const s = tierSumOf(r), tk = tierKeyOf(it); TQ.seen.set(id, s); tierQueue(tk, [s]); if (TIER.k === tierQs(tk)) mine = true; } catch (e) { /* (left out) */ } }
+  if (mine) tierSoon(); }
+function tierQueue(tk, list) { const k = tierQs(tk); let q = TQ.by.get(k); if (!q) TQ.by.set(k, (q = [])); q.push(...list); clearTimeout(TQ.t); TQ.t = setTimeout(tierSend, 4000); }
+async function tierSend() { clearTimeout(TQ.t); for (const [k, q] of [...TQ.by]) { TQ.by.delete(k); for (let i = 0; i < q.length; i += 150) { try { await fetch('/api/tier?' + k, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ s: q.slice(i, i + 150) }) }); } catch (e) { /* (the next reading sends it again) */ } } } }
+// ---- the page's numbers, from the site's answer (pure, so the contradiction check reads them the same way) ----
+const TIER_CC = ['#ef6b63', '#b98cf0', '#e6b450', '#5aa2ff', '#4fbf9a'], TIER_CO = '#6b7682';
+const tierDay = (ms) => new Date(ms - 6 * 3600e3).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+// d: { pulls: [[report, fight, start, kill, whole-fight %, phase boss %, last phase, intermission, length]], causes: { 'report:fight': line } };
+// it0: this pull (the boss's name, number and difficulty); seen: lines worked out on this page since
+function tierModel(d, it0, seen) {
+  const cs = (d && d.causes) || {}, P = ((d && d.pulls) || []).map((p, i) => { const id = p[0] + ':' + p[1];
+    const it = { kind: 'boss', boss: it0.boss, id: it0.id, diffId: it0.diffId, diff: it0.diff, pull: i + 1, kill: !!p[3], endPct: p[3] ? 0 : p[4], endBoss: p[3] ? 0 : p[5], endPhase: p[3] || !p[6] ? null : p[7] ? 'Intermission' : 'P' + p[6], wcl: { code: p[0], fight: p[1] }, wallMs: p[2], duration: p[8] };
+    return { n: i + 1, id, code: p[0], f: p[1], t: p[2], kill: !!p[3], it, cs: (seen && seen.get(id)) || cs[id] || null, night: nightOf(p[2]) }; });
+  const A = aphOf(P.map((x) => ({ item: x.it }))); P.forEach((x, i) => { const q = A.p[i]; x.hp = q ? q[1] : null; x.ph = q ? q[2] : ''; });
+  const cfg = PROGRESS[it0.boss], order = cfg && !cfg.pool ? cfg.phases : [], rk = (k) => (k === 'k' ? 99 : order.indexOf(k)); /* (the boss guides' phases, as All pulls has them) */
+  const N = []; for (const x of P) { let g = N[N.length - 1]; if (!g || g.key !== x.night) N.push((g = { key: x.night, lab: tierDay(x.t), ps: [] })); g.ps.push(x); }
+  for (const g of N) { const w = g.ps.filter((x) => !x.kill && x.hp != null); g.best = w.length ? w.reduce((m, x) => (x.hp < m.hp ? x : m)) : null; g.kill = g.ps.find((x) => x.kill) || null;
+    const by = new Map(); for (const x of g.ps) { const c = by.get(x.code) || 0; by.set(x.code, c + 1); } g.code = [...by].sort((a, b) => b[1] - a[1])[0][0]; g.last = g.ps.filter((x) => x.code === g.code).pop(); }
+  const W = P.filter((x) => !x.kill && x.hp != null), best = W.length ? W.reduce((m, x) => (x.hp < m.hp ? x : m)) : null, kill = P.find((x) => x.kill) || null;
+  const phs = A.ph.map(([k, at]) => ({ k, at, first: P.find((x) => x.ph && rk(x.ph) >= rk(k)) || null }));
+  const C = new Map(); for (const x of P) { if (!x.cs || !x.cs.k || x.kill) continue; let c = C.get(x.cs.k); if (!c) C.set(x.cs.k, (c = { k: x.cs.k, nm: x.cs.n || '', rc: x.cs.rc || '', ps: [], uns: [] })); c.ps.push(x); if (x.cs.u) c.uns.push(x.n); }
+  const CR = [...C.values()].sort((a, b) => b.ps.length - a.ps.length || a.nm.localeCompare(b.nm));
+  const readW = (ix) => ix.reduce((s, i) => s + N[i].ps.filter((x) => x.cs && !x.kill).length, 0);
+  CR.forEach((c, i) => { c.col = i < TIER_CC.length ? TIER_CC[i] : TIER_CO; c.per = N.map((g) => c.ps.filter((x) => x.night === g.key).length);
+    /* (better or worse: its share of the wipes on the first two nights against the last two (one each with two or three nights), only when
+       it moved by a tenth or more and each side has at least 4 wipes read; a share, so a long night doesn't look worse for being long) */
+    const L = N.length; c.tr = null; if (L >= 2) { const a = L >= 4 ? [0, 1] : [0], b = L >= 4 ? [L - 2, L - 1] : [L - 1], na = a.reduce((s, i) => s + c.per[i], 0), nb = b.reduce((s, i) => s + c.per[i], 0), wa = readW(a), wb = readW(b);
+      if (wa >= 4 && wb >= 4 && Math.abs(nb / wb - na / wa) >= 0.1) c.tr = { up: nb / wb < na / wa, na, wa, nb, wb, two: L >= 4 }; } });
+  return { P, N, A, W, best, kill, phs, CR, read: P.filter((x) => x.cs || x.kill).length, wipesRead: P.filter((x) => x.cs && !x.kill).length, cfg };
+}
+const tierPh = (k) => (k === 'Intermission' ? 'intermission' : 'phase ' + String(k).replace(/^P/, ''));
+const tierNick = (nm) => { if (/\(/.test(nm)) return ''; let w = ''; try { w = nkWord283('', nm); } catch (e) { w = ''; } if (!w) w = { axegrinder: 'Rolling Axes' }[String(nm).toLowerCase()] || ''; return w && w.toLowerCase() !== String(nm).toLowerCase() ? w : ''; };
+const tierName = (nm) => esc(nm) + (tierNick(nm) ? ' <span class="nsm-nk">(' + esc(tierNick(nm)) + ')</span>' : '');
+// ---- the page ----
+let TIER = { k: '', tk: null, d: null, st: '', err: '', on: false, rd: null, open: '', at: 0, bad: new Set(), p: null };
+const tierHere = (k) => !!S.tier && S.page === 'pull' && S.tab === 'audit' && S.scope === 'all' && !!S.item && !!tierKeyOf(S.item) && tierQs(tierKeyOf(S.item)) === k;
+function tierOpen() { if (!tierCan()) return; S.tier = true; S.scope = 'all'; S.tab = 'audit'; renderMain(); try { navNote(); } catch (e) { /* (no address) */ } const v = document.getElementById('main'); if (v) v.scrollIntoView({ block: 'start' }); }
+function tierClose() { S.tier = false; TIER.on = false; renderMain(); try { navNote(); } catch (e) { /* (no address) */ } }
+let TIER_T = 0;
+const tierSoon = () => { if (TIER_T) return; TIER_T = setTimeout(() => { TIER_T = 0; if (TIER.on && TIER.d && tierHere(TIER.k)) tierDraw(); }, 1500); };
+async function tierPage() {
+  const it0 = S.item, tk = tierKeyOf(it0), k = tierQs(tk);
+  if (TIER.k !== k || TIER.st === 'err' || (TIER.st === 'ok' && Date.now() - TIER.at > 600000 && !TIER.rd)) {
+    TIER = { k, tk, d: null, st: 'loading', err: '', on: true, rd: null, open: TIER.k === k ? TIER.open : '', at: 0, bad: TIER.k === k ? TIER.bad : new Set(), p: null };
+    TIER.p = (async () => { const r = await fetch('/api/tier?' + k, { credentials: 'same-origin', cache: 'no-store' }), j = await r.json().catch(() => ({})); if (!r.ok || j.error) throw new Error(j.error || 'The site didn\'t answer just now.'); return j; })()
+      .then((j) => { if (TIER.k === k) { TIER.d = j; TIER.st = 'ok'; TIER.at = Date.now(); } }, (e) => { if (TIER.k === k) { TIER.st = 'err'; TIER.err = String((e && e.message) || e); } });
+  }
+  TIER.on = true;
+  if (TIER.st === 'loading') view(loadCard('Whole tier', 'Finding every pull of ' + it0.boss + ' on ' + it0.diff + '…', null));
+  await TIER.p; if (!tierHere(k)) return;
+  if (TIER.st === 'err') { view('<section class="panel nsm tier"><div class="nsm-top"><div><span class="nsm-k">Whole tier · ' + esc(it0.boss) + ' · ' + esc(it0.diff) + '</span><h2>The whole tier didn\'t load</h2><p class="tier-s">' + esc(TIER.err) + '</p></div><button type="button" class="btn tier-back">◂ Back to tonight</button></div></section>'); return; }
+  tierDraw(); tierRead();
+}
+function tierDraw() {
+  const it0 = S.item, M = tierModel(TIER.d, it0, TQ.seen), { P, N, best, kill, phs, CR } = M, hpS = (v) => Math.round(v) + '%';
+  const head = '<div class="nsm-top tier-top"><div><span class="nsm-k">Whole tier · ' + esc(it0.boss) + ' · ' + esc(it0.diff) + '</span><h2>' + plural(P.length, 'pull') + ' over ' + plural(N.length, 'night') + '</h2>' +
+    '<p class="tier-s">' + [kill ? '<b>Killed on pull ' + kill.n + '</b>, ' + esc(tierDay(kill.t)) : '', best && !kill ? 'Best: <b>pull ' + best.n + '</b>, boss at <b>' + hpS(best.hp) + '</b>' : ''].concat((() => { const L = []; for (const p of phs) { if (p.first) L.push('first ' + tierPh(p.k) + ' at pull ' + p.first.n); else { L.push('no ' + tierPh(p.k) + ' yet'); break; } } return L; })(), kill ? [] : ['no kill yet']).filter(Boolean).join(' · ') + '</p></div>' +
+    '<button type="button" class="btn tier-back">◂ Back to tonight</button></div>';
+  if (!P.length) { view('<section class="panel nsm tier">' + head + '<p class="tier-none">Warcraft Logs has no pulls of ' + esc(it0.boss) + ' on ' + esc(it0.diff) + ' in this guild\'s reports yet.</p></section>'); return; }
+  const R = TIER.rd, left = P.filter((x) => !x.cs && !x.kill && !TIER.bad.has(x.id)).length;
+  const rd = R && R.other ? '<div class="tier-rd">Another Debrief tab is reading the older pulls. Their causes show up here as they\'re read.</div>'
+    : R && R.of ? (() => { const n = R.n, el = Date.now() - R.t0, s = n >= 2 ? Math.round(el / n * (R.of - n) / 1000) : null; return '<div class="tier-rd"><span>Reading the older pulls for what wiped them: <b>' + n + '</b> of ' + R.of + (s == null ? '' : s < 60 ? ' · under a minute left' : ' · about ' + plural(Math.round(s / 60), 'minute') + ' left') + '</span><span class="tier-rb"><i style="width:' + Math.round(100 * n / R.of) + '%"></i></span></div>'; })()
+    : left ? '<div class="tier-rd">' + plural(left, 'pull') + ' not read yet' + (TIER.bad.size ? ' (' + TIER.bad.size + ' couldn\'t be opened)' : '') + '.</div>' : TIER.bad.size ? '<div class="tier-rd">' + plural(TIER.bad.size, 'pull') + ' couldn\'t be opened, so ' + (TIER.bad.size === 1 ? 'its cause isn\'t' : 'their causes aren\'t') + ' known.</div>' : '';
+  // the chart: the boss's whole-fight health at every pull, a dot each in the colour of what wiped it
+  const n0 = P.length, X = (x) => (x.n - 0.5) / n0 * 100, Y = (v) => 100 - Math.max(0, Math.min(100, v)), f = (v) => v.toFixed(2), col = new Map(CR.map((c) => [c.k, c.col]));
+  const Q = P.filter((x) => x.hp != null); let run = 101; const st = []; Q.forEach((x) => { if (x.hp < run) { if (st.length) st.push(f(X(x)) + ',' + f(Y(run))); run = x.hp; } st.push(f(X(x)) + ',' + f(Y(run))); });
+  const nl = N.slice(1).map((g) => '<line class="nl" x1="' + f((g.ps[0].n - 1) / n0 * 100) + '" x2="' + f((g.ps[0].n - 1) / n0 * 100) + '" y1="0" y2="100"/>').join('');
+  const svg = '<svg class="nsm-hsv" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + [25, 50, 75].map((v) => '<line class="g" x1="0" x2="100" y1="' + Y(v) + '" y2="' + Y(v) + '"/>').join('') + '<line class="z" x1="0" x2="100" y1="100" y2="100"/>' + nl +
+    M.A.ph.map((p) => '<line class="ph" x1="0" x2="100" y1="' + Y(p[1]) + '" y2="' + Y(p[1]) + '"/>').join('') + '<polyline class="bs" points="' + st.join(' ') + '"/><polyline class="pl" points="' + Q.map((x) => f(X(x)) + ',' + f(Y(x.hp))).join(' ') + '"/></svg>';
+  const yl = [[100, '100%'], [75, '75%'], [50, '50%'], [25, '25%'], [0, 'Kill']].filter((z) => !z[0] || !M.A.ph.some((p) => Math.abs(p[1] - z[0]) < 9)).map((z) => '<span class="nsm-hy" style="top:' + Y(z[0]) + '%">' + z[1] + '</span>').join('');
+  const phl = M.A.ph.map((p) => '<span class="nsm-hph" style="top:' + Y(p[1]) + '%" title="' + esc(dbfCap(tierPh(p[0]))) + ' starts at about ' + p[1] + '%">' + esc(p[0] === 'Intermission' ? 'Int' : p[0]) + ' · ' + p[1] + '%</span>').join('');
+  const dots = Q.map((x) => { const cs = x.cs, c = x.kill ? '#4fbf7a' : cs && cs.k ? col.get(cs.k) || TIER_CO : TIER_CO, q = !x.kill && !cs;
+    const tt = '<div class="tt-h">Pull ' + x.n + ' · ' + esc(tierDay(x.t)) + ' · ' + (x.kill ? 'kill' : 'wipe at ' + hpS(x.hp)) + '</div>' + (x.kill ? '' : '<div class="tt-s">' + (q ? (TIER.bad.has(x.id) ? 'Couldn\'t be opened, so what wiped it isn\'t known.' : 'Not read yet.') : cs.k ? tierName(cs.n) + (cs.u ? ' <span class="nsm-tag q">not sure</span>' : '') : 'No single cause') + '</div>') + '<div class="tt-s">Click to open this pull.</div>';
+    return '<button type="button" class="nsm-hd' + (x === best ? ' b' : '') + (x.kill ? ' k' : '') + (q ? ' q' : '') + '" style="left:' + f(X(x)) + '%;top:' + f(Y(x.hp)) + '%;--c:' + c + '" data-tierpull="' + esc(x.code) + ':' + x.f + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + x.n + ', ' + tierDay(x.t) + ', ' + (x.kill ? 'kill' : 'boss at ' + hpS(x.hp) + (cs && cs.k ? ', ' + cs.n : ''))) + '"></button>'; }).join('');
+  const bl = best ? '<span class="nsm-hbl tier-bl" style="left:' + f(X(best)) + '%;top:' + f(Y(best.hp)) + '%">Best: pull ' + best.n + ', ' + hpS(best.hp) + '</span>' : '';
+  const mk = phs.filter((p) => p.first && p.first.hp != null).map((p) => '<span class="tier-mk" style="left:' + f(X(p.first)) + '%;--y:' + f(Y(p.first.hp)) + '%"><i></i><b>First ' + esc(tierPh(p.k)) + ' · pull ' + p.first.n + '</b></span>').join('');
+  const xs = N.map((g) => '<span style="left:' + f(((g.ps[0].n - 1) + g.ps.length / 2) / n0 * 100) + '%">' + esc(g.lab) + '</span>').join('');
+  const key = CR.slice(0, TIER_CC.length).map((c) => '<span><s style="background:' + c.col + '"></s>' + esc(c.nm) + '</span>').join('') + '<span><s style="background:' + TIER_CO + '"></s>Other or no single cause</span>' + (left || TIER.bad.size ? '<span><s class="q"></s>Not read yet</span>' : '') + (kill ? '<span><s style="background:#4fbf7a"></s>Kill</span>' : '') + '<span><s class="ln"></s>Best so far</span>';
+  const ds = n0 > 160 ? ' tier-d3' : n0 > 80 ? ' tier-d2' : '';
+  const chart = '<div class="nsm-hc tier-hc"><div class="nsm-hh"><span class="nsm-k">Boss health at every pull</span></div><div class="nsm-hp tier-hp' + ds + '">' + yl + svg + phl + dots + mk + bl + '</div><div class="nsm-hx tier-hx" aria-hidden="true">' + xs + '</div><div class="nsm-hk no-ic">' + key + '</div></div>';
+  // night by night
+  const ph0 = phs[0], nights = '<div class="tier-col"><span class="nsm-k">Night by night</span><div class="tier-nights">' + N.map((g) => { const b = g.best, w = g.kill ? 100 : b ? Math.max(2, 100 - b.hp) : 0, n2 = ph0 ? g.ps.filter((x) => x.ph && (x.ph === 'k' || (M.cfg && M.cfg.phases.indexOf(x.ph) >= M.cfg.phases.indexOf(ph0.k)))).length : null;
+    return '<button type="button" class="tier-nr" data-tiernight="' + esc(g.code) + ':' + g.last.f + '" aria-label="' + esc('Open ' + g.lab + '\'s All pulls') + '"><b>' + esc(g.lab) + '</b><span>' + plural(g.ps.length, 'pull') + '</span><span class="tier-bar' + (g.kill ? ' k' : '') + '"><i style="width:' + w + '%"></i></span><span class="tier-nb">' + (g.kill ? '<b class="k">kill</b>' : b ? 'best <b>' + hpS(b.hp) + '</b>' : '') + '</span>' + (n2 != null ? '<span class="tier-n2">' + esc(tierPh(ph0.k)) + ' in ' + n2 + '</span>' : '') + '</button>'; }).join('') + '</div></div>';
+  // what wiped us most, across the tier, with the count each night
+  const per = (c) => { const a = c.per.length > 6 ? ['…'].concat(c.per.slice(-6)) : c.per; return a.join(' → '); }, mx = CR.length ? CR[0].ps.length : 1, top = CR.slice(0, 6), W0 = M.wipesRead;
+  const trT = (c) => (c.tr ? ' <span class="nsm-tag ' + (c.tr.up ? 'g' : 'r') + '" title="' + esc((c.tr.two ? 'First two nights: ' : 'First night: ') + c.tr.na + ' of ' + c.tr.wa + ' wipes. ' + (c.tr.two ? 'Last two: ' : 'Last night: ') + c.tr.nb + ' of ' + c.tr.wb + '.') + '">' + (c.tr.up ? '▲ Better' : '▼ Worse') + '</span>' : '');
+  const rows = top.map((c, i) => { const open = TIER.open ? TIER.open === c.k : i === 0, w = Math.max(4, Math.round(100 * c.ps.length / Math.max(1, mx)));
+    const pb = c.ps.map((x) => '<a href="#" class="nsm-pb" data-tierpull="' + esc(x.code) + ':' + x.f + '" aria-label="Open pull ' + x.n + (c.uns.includes(x.n) ? ', not sure of its root cause' : '') + '">' + x.n + (c.uns.includes(x.n) ? '<span class="nsm-tag q">not sure</span>' : '') + '</a>').join('');
+    return '<div class="nsm-br' + (open ? ' open' : '') + '" style="--c:' + c.col + '" data-tierk="' + esc(c.k) + '"><div class="gbx-r nsm-bl" role="button" tabindex="0" aria-expanded="' + open + '"><span class="nsm-n">' + (i + 1) + '</span>' +
+      '<span class="gbx-n nsm-t">' + tierName(c.nm) + trT(c) + '</span><span class="gbx-b"><i style="width:' + w + '%"></i></span><span class="gbx-v">' + c.ps.length + '</span><span class="gbx-s tier-per">' + per(c) + '</span><span class="nsm-ch" aria-hidden="true">' + (open ? '▾' : '▸') + '</span></div>' +
+      '<div class="nsm-det"' + (open ? '' : ' hidden') + '><p class="nsm-dw">Wiped us in <b>' + c.ps.length + '</b> of ' + plural(W0, 'wipe') + ' read' + (c.per.length > 1 ? ', night by night ' + c.per.join(', ') : '') + '.</p><div class="nsm-dl"><span class="nsm-dk">' + (c.ps.length === 1 ? 'Pull' : 'Pulls') + '</span><span class="nsm-dv">' + pb + '</span></div></div></div>'; }).join('');
+  const rest = CR.slice(top.length), foot = rest.length ? '<p class="nsm-foot">Also: ' + rest.map((c) => esc(c.nm) + ' (' + c.ps.length + ')').join(', ') + '.</p>' : '';
+  // one sentence, worked out: the top cause and how much of the tier it is, and the biggest change from the first nights to the last
+  const sent = (() => { const t = CR[0]; if (!t) return M.read ? 'No single cause stands out in the pulls read so far.' : ''; let s = esc(t.nm) + ' wiped us most, in ' + t.ps.length + ' of ' + plural(W0, 'wipe') + ' read';
+    const mv = CR.filter((c) => c.tr).sort((a, b) => Math.abs(b.tr.nb / b.tr.wb - b.tr.na / b.tr.wa) - Math.abs(a.tr.nb / a.tr.wb - a.tr.na / a.tr.wa))[0];
+    if (mv) s += ', and ' + (mv === t ? 'it' : esc(mv.nm)) + ' went from ' + mv.tr.na + ' of ' + mv.tr.wa + ' wipes on the ' + (mv.tr.two ? 'first two nights' : 'first night') + ' to ' + mv.tr.nb + ' of ' + mv.tr.wb + ' on the ' + (mv.tr.two ? 'last two' : 'last');
+    return s + '.'; })();
+  const why = '<div class="tier-col"><div class="nsm-bh tier-bh"><span class="nsm-k">What wiped us most</span><span>each night</span></div>' + (CR.length ? '<div class="gbx nsm-gbx tier-gbx">' + rows + '</div>' + foot : '<p class="tier-none">' + (M.read ? 'No single cause in the pulls read so far.' : 'Nothing read yet.') + '</p>') + (sent ? '<p class="tier-f no-ic">' + sent + '</p>' : '') + '</div>';
+  const y = window.scrollY; view('<section class="panel nsm tier">' + head + rd + chart + '<div class="tier-g2">' + nights + why + '</div></section>'); window.scrollTo({ top: y });
+  tierFit(); try { refreshIcons(); } catch (e) { /* (icons load when seen) */ }
+}
+// (labels that would sit on each other give way: night dates under the chart, the first-phase markers, and the Best label, which moves off any dot)
+function tierFit() { const hp = document.querySelector('.tier .tier-hp'); if (!hp) return; const box = (e) => e.getBoundingClientRect(), hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  let lastR = null; document.querySelectorAll('.tier .tier-hx > span').forEach((s) => { s.style.visibility = ''; const r = box(s); if (lastR && r.left < lastR.right + 8) s.style.visibility = 'hidden'; else lastR = r; });
+  const used = [], H0 = box(hp); hp.querySelectorAll('.tier-mk').forEach((m) => { m.classList.remove('up', 'up2', 'up3', 'l', 'r'); const b = m.querySelector('b'); if (!b) return;
+    { const r = box(b); if (r.left < H0.left) m.classList.add('l'); else if (r.right > H0.right) m.classList.add('r'); } /* (inside the chart: never over the axis labels) */ for (let k = 0; k < 3 && used.some((u) => hit(box(b), u)); k++) m.classList.add('up' + (k ? k + 1 : '')); used.push(box(b)); });
+  const bl = hp.querySelector('.tier-bl'); if (!bl) return; const dots = [...hp.querySelectorAll('.nsm-hd:not(.b)')].map(box);
+  for (const c of ['', 'up', 'r', 'r up', 'l', 'l up']) { bl.className = 'nsm-hbl tier-bl' + (c ? ' ' + c : ''); const r = box(bl), H = box(hp); if (r.left >= H.left - 50 && r.right <= H.right + 4 && !dots.some((d) => hit(r, d)) && !used.some((u) => hit(r, u))) return; }
+  bl.className = 'nsm-hbl tier-bl'; }
+window.addEventListener('resize', () => { if (document.querySelector('.tier .tier-hp')) { clearTimeout(tierFit.t); tierFit.t = setTimeout(tierFit, 150); } });
+// (opening a pull or a night from the page: this report's opens in place, another report's at its own address)
+function tierGo(code, fight, all) { const b = S.wclCode === code && S.index ? (S.index.bosses || []).find((x) => x.wcl && x.wcl.code === code && x.wcl.fight === fight) : null;
+  if (b && all) { tierClose(); return; } S.tier = false; TIER.on = false;
+  if (b) { S.scope = 'pull'; S.tab = 'audit'; select(b); return; }
+  location.href = '/?report=' + encodeURIComponent(code) + '&fight=' + fight + '&tab=audit' + (all ? '&all=1' : ''); }
+document.addEventListener('click', (e) => { const t = e.target && e.target.closest ? e.target : null; if (!t) return;
+  if (t.closest('.nsm-tier')) { e.preventDefault(); tierOpen(); return; }
+  if (!t.closest('.tier')) return;
+  if (t.closest('.tier-back')) { e.preventDefault(); tierClose(); return; }
+  const q = t.closest('[data-tierpull], [data-tiernight]'); if (q) { e.preventDefault(); e.stopPropagation(); const v = (q.dataset.tierpull || q.dataset.tiernight).split(':'); tierGo(v[0], +v[1], !!q.dataset.tiernight); return; }
+  const bl = t.closest('.nsm-bl'); if (bl) tierTog(bl); }, true);
+document.addEventListener('keydown', (e) => { const bl = e.target && e.target.closest && e.target.closest('.tier .nsm-bl'); if (bl && e.target === bl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tierTog(bl); } });
+function tierTog(bl) { const br = bl.parentElement, on = !br.classList.contains('open'), set = (r, v) => { r.classList.toggle('open', v); r.querySelector('.nsm-det').hidden = !v; r.querySelector('.nsm-bl').setAttribute('aria-expanded', String(v)); r.querySelector('.nsm-ch').textContent = v ? '▾' : '▸'; };
+  br.parentElement.querySelectorAll(':scope > .nsm-br.open').forEach((r) => { if (r !== br) set(r, false); }); set(br, on); TIER.open = on ? br.dataset.tierk : '-'; }
+// (the pulls nobody has read yet, one at a time, oldest first; one browser tab reads at a time. A pull that doesn't come back in time is
+// skipped as one that couldn't be opened, so one stuck download never stops the rest; the next visit tries it again)
+const tierCap = (p, ms) => Promise.race([p, new Promise((res) => setTimeout(() => res(null), ms))]);
+async function tierRead() {
+  const k = TIER.k, tk = TIER.tk; if (TIER.rd || !TIER.d || !RW.on()) return;
+  const M = tierModel(TIER.d, S.item, TQ.seen), miss = M.P.filter((x) => !x.cs && !x.kill && !TIER.bad.has(x.id)); if (!miss.length) return;
+  const me = Math.random().toString(36).slice(2), LK = 'wla-tier-rd', other = () => { try { const o = JSON.parse(localStorage.getItem(LK) || 'null'); return !!o && o.id !== me && Date.now() - o.at < 45000; } catch (e) { return false; } }, hold = () => { try { localStorage.setItem(LK, JSON.stringify({ id: me, at: Date.now() })); } catch (e) { /* (no lock) */ } };
+  if (other()) { const R0 = (TIER.rd = { other: true }); tierSoon(); setTimeout(() => { if (TIER.rd === R0) { TIER.rd = null; if (TIER.on && tierHere(k)) tierRead(); } }, 30000); return; }
+  hold(); const R = (TIER.rd = { n: 0, of: miss.length, t0: Date.now() }), out = [], live = () => TIER.k === k && TIER.on && tierHere(k);
+  const flush = async () => { if (!out.length) return; tierQueue(tk, out.splice(0)); await tierSend(); };
+  const byCode = new Map(); for (const x of miss) { let l = byCode.get(x.code); if (!l) byCode.set(x.code, (l = [])); l.push(x); }
+  tierSoon();
+  try {
+    for (const [code, list] of byCode) { if (!live()) break; let rp = null; try { rp = await tierCap(WCL.loadReport(S.wclCreds, code), 60000); } catch (e) { rp = null; }
+      for (const x of list) { if (!live()) break; hold();
+        const it = rp && (rp.bosses || []).find((b) => b.wcl && b.wcl.fight === x.f); let rep = null, rest = 120;
+        if (it) { try { rep = await tierCap(RD.get(it), 30000); if (rep) rep.item = it;
+            else { const t0 = Date.now(), m = await tierCap(RW.read(it, null), 150000); if (m && m.rep) { rep = RD.revive(m.rep); rep.item = it; } rest = Math.min(20000, Math.max(1500, Date.now() - t0)); } /* (a rest as long as the download took: half speed at most) */
+          } catch (e) { rep = null; } }
+        if (rep) { try { applyNote(rep); const s = tierSumOf(rep); TQ.seen.set(x.id, s); out.push(s); } catch (e) { TIER.bad.add(x.id); } } else TIER.bad.add(x.id);
+        rep = null; R.n++; tierSoon(); if (out.length >= 6) await flush();
+        await new Promise((res) => setTimeout(res, rest)); }
+      rp = null; }
+  } finally { await flush(); if (TIER.rd === R) TIER.rd = null; try { const o = JSON.parse(localStorage.getItem(LK) || 'null'); if (o && o.id === me) localStorage.removeItem(LK); } catch (e) { /* (no lock) */ } if (TIER.k === k) tierSoon(); }
+}
+try { Object.assign(window, { tierCan, tierOpen }); } catch (e) { /* (no window) */ }
 const pullCol = (b) => { if (b.kill) return '#ff8000'; const v = pullPct(b); return v == null ? null : PULL_Q.find(([lo]) => 100 - v >= lo)[1]; };
 // the dot colours, as a legend line (the Progress page and the Summary chart)
 const pullLegend = (cls) => '<div class="pc-legend' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><span>Each dot is a pull, by how far it got:</span>' + [...PULL_Q].reverse().map(([lo, c], i, a) => '<span><i style="background:' + c + '"></i>' + (i < a.length - 1 ? lo + '–' + (a[i + 1][0] - 1) + '%' : lo + '%+') + '</span>').join('') +
@@ -55780,7 +55994,7 @@ const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSe
 // (and back: a link's or a step's player goes onto its tab)
 function navApplySel(tab, p) { if (tab === 'hw') tab = 'player'; /* (old Homework links (Oct 22)) */ if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', sel: navSel(), ...(S.tab === 'me' && S.progMine ? { mine: 1, g: S.progView } : {}) /* (round 342 summary back) */ }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', ...(S.tier && S.scope === 'all' ? { tier: 1 } : {}), sel: navSel(), ...(S.tab === 'me' && S.progMine ? { mine: 1, g: S.progView } : {}) /* (round 342 summary back) */ }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
@@ -55793,11 +56007,11 @@ function navState() {
 const guideSlug = (n) => String(n).toLowerCase().replace(/['\u2019]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const GUIDE_PATH = /^\/guide\/([a-z0-9-]+)\/(heroic|mythic)\/?$/.exec(location.pathname);
 const PAGE_TITLE_SITE = 'Debrief: WoW raid log review for Mythic progression'; /* (the site's own tab title, Oct 27) */
-const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine, st.b, st.d].join('|') : ''); // (b, d: a guide's boss and Heroic or Mythic, so its address follows them (Oct 21))
+const navKey = (st) => (st ? [st.v, st.code, st.fight, st.bi, st.night, st.tab, st.scope, st.g, st.mine, st.b, st.d, st.tier].join('|') : ''); // (b, d: a guide's boss and Heroic or Mythic, so its address follows them (Oct 21))
 function navNote() {
   const st = navState(); if (!st) return;
   const cur = history.state && history.state.nav ? navKey(history.state) : null, k = navKey(st);
-  let url = WCL.HOSTED ? (st.v === 'mp' ? (st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.night ? '?night=' + st.night + '&pull=' + st.sn + '&tab=mplus' : location.pathname) : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'mf' ? '?mplus' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
+  let url = WCL.HOSTED ? (st.v === 'mp' ? (st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=mplus' : st.night ? '?night=' + st.night + '&pull=' + st.sn + '&tab=mplus' : location.pathname) : st.v === 'p' && st.night ? shrUrl(st) : st.v === 'p' && st.code ? '?report=' + st.code + '&fight=' + st.fight + '&tab=' + encodeURIComponent(st.tab || 'audit') + (st.scope === 'all' ? '&all=1' + (st.tier ? '&tier=1' : '') : '') + (st.sel ? '&p=' + encodeURIComponent(st.sel) : '') : st.v === 'gd' ? '?guides' + (st.b ? '&boss=' + encodeURIComponent(st.b) : '') + (st.d ? '&d=' + st.d : '') : st.v === 'ig' ? '?ingame' : st.v === 'mf' ? '?mplus' : st.v === 'pl' ? '?plan' : location.pathname) : location.pathname + location.search;
   if (WCL.HOSTED) { try { document.title = st.v === 'gd' && st.b ? st.b + ' ' + ((st.d || S.gdzDiff) === 'h' ? 'Heroic' : 'Mythic') + ' guide · Debrief' : PAGE_TITLE_SITE; } catch (e) { /* ignore */ } if (st.v === 'gd' && st.b) url = '/guide/' + guideSlug(st.b) + '/' + ((st.d || S.gdzDiff) === 'h' ? 'heroic' : 'mythic'); else if (url.startsWith('?')) url = '/' + url; else if (location.pathname.startsWith('/guide/')) url = '/'; } /* (guides at their own address, Oct 27) */
   const boot = NAV_BOOT; NAV_BOOT = false;
   // (the same page with another player picked on Rotation: the step is kept up to date for a reload, not a new step)
@@ -55816,7 +56030,7 @@ async function navGo(st) {
     else if (st.night && !st.own) { if (!S.shr || S.shr.id !== st.night) await openShared(st.night, { quiet: true }); b = S.index && S.index.bosses ? S.index.bosses.find((x) => x.shr && x.shr.n === st.sn) : null; } /* (a shared night (Oct 21); your own night, shared, reloads as before) */
     else if (S.index && S.index.bosses && st.bi >= 0) b = S.index.bosses[st.bi];
     if (!b) { home(); return; }
-    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; navApplySel(S.tab, st.sel); if (S.tab === 'me') { S.progMine = !!st.mine; if (st.mine && st.g != null) S.progView = st.g; }
+    S.tab = st.tab || S.tab; S.scope = st.scope || 'pull'; S.tier = !!st.tier; navApplySel(S.tab, st.sel); if (S.tab === 'me') { S.progMine = !!st.mine; if (st.mine && st.g != null) S.progView = st.g; }
     if (S.item !== b || !S.rep) await select(b); else renderMain();
   }
   window.scrollTo(0, 0);
@@ -58279,7 +58493,7 @@ if (WCL.HOSTED) {
   else if (GUIDE_PATH) setTimeout(() => { const b = GDZ_ORDER.find((n) => guideSlug(n) === GUIDE_PATH[1]); openGuides(b || null, GUIDE_PATH[2] === 'heroic' ? 'h' : 'm'); }, 0); /* (a boss guide's own address, /guide/<boss>/<heroic|mythic>, Oct 27) */
   else if (qp.has('guides') || qp.get('tab') === 'gdz') setTimeout(() => openGuides(qp.get('boss'), qp.get('d')), 0); /* (once the guides code below has loaded) */
   else if (nightLink) openShared(qp.get('night'), { pull: qp.has('pull') ? +qp.get('pull') : null, tab: qp.get('tab'), all: !!qp.get('all'), m: qp.get('m'), p: qp.get('p') }).catch((err) => { $('#main').innerHTML = '<div class="empty"><div class="drop"><h2>Couldn\'t open that shared night</h2><p class="muted">' + esc(err.message) + '</p></div></div>'; });
-  else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; else if (!tb && !['audit', 'rot', 'perf', 'player', 'cmp'].includes(S.tab)) S.tab = 'audit'; /* (no tab named: Debriefing, unless the remembered tab is a raid tab, never Home (Oct 26)) */ if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
+  else if (sharedLink) { { const tb = qp.get('tab'); if (tb && (tb === 'live' || TABS.some(([k]) => k === tb))) S.tab = tb; else if (!tb && !['audit', 'rot', 'perf', 'player', 'cmp'].includes(S.tab)) S.tab = 'audit'; /* (no tab named: Debriefing, unless the remembered tab is a raid tab, never Home (Oct 26)) */ if (tb || qp.get('all')) S.scope = qp.get('all') ? 'all' : 'pull'; S.tier = !!qp.get('all') && !!qp.get('tier'); navApplySel(S.tab, qp.get('p')); } /* (its tab, one pull or all, and its player (Oct 21)) */
     if (qp.get('m')) { S.tab = 'audit'; S.scope = 'pull'; S.pendingSec = 'sec-' + qp.get('m'); } /* (a link to one mechanic (Oct 20)) */
     if (qp.get('tab') === 'gdz') { setTimeout(() => openGuides(null, qp.get('d')), 0); } else /* (the first Guides links (Oct 20) open the guides page) */ $('#main').innerHTML = '<div class="empty">' + loadCard('Opening the report', 'Loading the report…', null, 'loadmsg') + '</div>'; openWcl({ code: qp.get('report'), fight: +qp.get('fight') || null }, null, false, !qp.get('fight')).catch((err) => hostedPanel(err.message)); }
   else { const t = homeTarget(); if (t) { store.set(GROUP_CUR, t.gid); progressPage(undefined, t.gid); window.scrollTo(0, 0); } else home(); } /* (the user, Oct 27: "I want the home tab to be the landing page for returning players": anyone with a character or team lands on Home; first-timers get the front page, which the logo still opens) */
@@ -72242,7 +72456,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var bestQ = null; if (AP) AP.p.forEach(function (q) { if (q[2] !== 'k' && q[1] != null && (!bestQ || q[1] < bestQ[1])) bestQ = q; });
     var hpS = function (v) { return Math.round(v) + '%'; };
     var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + ((bm || !kill) && bestQ ? 'Best pull: ' + bestQ[0] + ' · boss at <b>' + hpS(bestQ[1]) + '</b>' + (story(bestQ) ? ' <span class="nsm-st">' + esc(story(bestQ)) + '</span>' : '') + (WK && WK.best != null ? (function (d) { return ' <span class="nsm-lr ' + (d > 0.5 ? 'up' : d < -0.5 ? 'dn' : 'eq') + '">' + (d > 0.5 ? '▲' : d < -0.5 ? '▼' : '=') + ' last raid ' + (WK.best === 0 ? 'killed it' : hpS(WK.best)) + '</span>'; })(WK.best - bestQ[1]) : '') : bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
-      '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
+      '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + (window.tierCan && window.tierCan() ? '<button type="button" class="btn nsm-tier" title="Every pull of this boss, from your first to now">Whole tier <span aria-hidden="true">▸</span></button>' : '') + '</div></div>';
     /* (Nov 4, Flex: "it doesnt really show the biggest issues in order of importance", then "Yes, build it" on the Design studio's mock:
        one ranked list. What wiped us most by wipes caused, a footnote with the real counts, then everything else by how many pulls it hit) */
     var NP = all.length || +pulls || 0, NW = all.length ? all.filter(function (p) { return !p.k; }).length : 0;

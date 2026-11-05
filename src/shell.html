@@ -11004,6 +11004,40 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-dv{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0;color:var(--muted)}.nsm-dv .nm{font-weight:700}
 .nsm-pb{display:inline-block;min-width:26px;padding:0 6px;border:1px solid var(--line2,#2c343c);border-radius:4px;font-size:12px;line-height:20px;text-align:center;color:var(--text);text-decoration:none;margin-right:-6px}.nsm-pb:hover,.nsm-pb:focus-visible{border-color:var(--gold);outline:none}
 .nsm-dq{margin:6px 0 0;font-size:12.5px;color:var(--faint)}
+/* (Nov 5: the Whole tier, All pulls' own page: the same card, every pull of the boss on one chart, night by night, and what wiped us most) */
+.nsm-facts .nsm-tier{align-self:center;white-space:nowrap}
+.nsm.tier .nsm-top{align-items:start}.tier .tier-back{white-space:nowrap}
+.tier-s{margin:5px 0 0;font-family:Barlow,sans-serif;font-size:13px;color:var(--muted)}.tier-s b{color:var(--text)}
+.tier-rd{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:9px 18px;border-bottom:1px solid var(--line,#222930);font-family:Barlow,sans-serif;font-size:12.5px;color:var(--muted)}.tier-rd b{color:var(--text)}
+.tier-rb{flex:1 1 120px;max-width:240px;height:4px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}.tier-rb i{display:block;height:100%;background:#e6b450}
+.nsm .nsm-hp.tier-hp{height:240px}
+.nsm-hsv .nl{stroke:var(--line2,#2c343d)}
+.tier-hp.tier-d2 .nsm-hd{width:7px;height:7px;margin:-3.5px 0 0 -3.5px}.tier-hp.tier-d3 .nsm-hd{width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-width:1px}
+.tier-hp .nsm-hd.b{width:12px;height:12px;margin:-7.5px 0 0 -7.5px;border:2px solid var(--text)}
+.tier .nsm-hd.q{background:var(--panel,#13171b);border-color:#8a939c}
+.tier-mk{position:absolute;top:0;bottom:0;width:0;pointer-events:none;z-index:1}
+.tier-mk i{position:absolute;left:0;top:calc(var(--y) + 8px);bottom:17px;border-left:1px dashed rgba(201,206,216,.45)}
+.tier-mk b{position:absolute;bottom:0;left:0;transform:translateX(-50%);white-space:nowrap;padding:0 4px;border-radius:3px;background:var(--panel,#13171b);font-family:Barlow,sans-serif;font-size:11px;font-weight:600;line-height:16px;color:var(--text)}
+.tier-mk.l b{transform:none}.tier-mk.r b{transform:translateX(-100%)}.tier-mk.up b{bottom:17px}.tier-mk.up i{bottom:34px}.tier-mk.up2 b{bottom:34px}.tier-mk.up2 i{bottom:51px}.tier-mk.up3 b{bottom:51px}.tier-mk.up3 i{bottom:68px}
+.tier-hx span{white-space:nowrap;font-weight:600;color:var(--muted)}
+.nsm-hk s.q{background:var(--panel,#13171b);border:1.5px solid #8a939c;box-sizing:border-box}
+.tier-g2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.45fr);gap:28px;padding:14px 18px 16px}
+.tier-col > .nsm-k{margin:0 0 8px}
+.tier-nights{display:flex;flex-direction:column}
+.nsm .tier-nr{display:grid;grid-template-columns:56px 62px minmax(0,1fr) 72px 96px;align-items:center;gap:10px;width:100%;min-height:30px;margin:0;padding:5px 8px;border:0;border-radius:3px;background:transparent;font:600 13px Barlow,sans-serif;color:var(--muted);text-align:left;cursor:pointer}
+.nsm .tier-nr:nth-child(odd){background:rgba(255,255,255,.02)}.nsm .tier-nr:hover,.nsm .tier-nr:focus-visible{background:rgba(255,255,255,.05);outline:none}.nsm .tier-nr:focus-visible{box-shadow:inset 0 0 0 1px var(--gold)}
+.tier-nr > b{color:var(--text)}.tier-nb b{color:var(--text)}.tier-nb b.k{color:#4fbf7a}.tier-n2{white-space:nowrap}
+.tier-bar{height:8px;border-radius:2px;background:rgba(255,255,255,.06);overflow:hidden}.tier-bar i{display:block;height:100%;background:#e6b450;opacity:.85}.tier-bar.k i{background:#4fbf7a}
+.tier-bh{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}.tier-bh > span:last-child{font-family:Barlow,sans-serif;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.nsm-gbx.tier-gbx .gbx-r{--gbx-cols:18px minmax(0,1fr) minmax(0,.7fr) 30px 116px 14px;--gbx-cols-m:16px minmax(0,1fr) 28px 14px;column-gap:10px}
+.tier-gbx .tier-per{font-size:12px;font-weight:600;color:var(--muted);text-align:right;overflow:hidden;text-overflow:ellipsis}
+.tier .nsm-det{margin-left:28px}.tier .nsm-foot{margin:8px 0 0 28px}
+.tier-f{margin:10px 4px 0;font-family:Barlow,sans-serif;font-size:13px;color:var(--muted)}
+.tier-none{margin:0;padding:14px 18px;font-family:Barlow,sans-serif;color:var(--muted)}
+@media (max-width:720px){.nsm-facts{flex-wrap:wrap;row-gap:10px}.nsm.tier .nsm-top{grid-template-columns:1fr;gap:10px;padding:14px 12px}.tier .tier-back{justify-self:start}.tier-rd{padding:8px 12px}.nsm .nsm-hp.tier-hp{height:220px}.tier-mk b{font-size:10px}
+  .tier-g2{grid-template-columns:1fr;gap:18px;padding:12px}.nsm .tier-nr{grid-template-columns:50px 56px minmax(0,1fr) 64px;gap:8px;font-size:12.5px;padding:5px 4px}.tier-n2{display:none}}
+@media (max-width:699px){.nsm-gbx.tier-gbx .nsm-bl{grid-template-rows:auto 5px auto}.nsm-gbx.tier-gbx .nsm-bl .gbx-b{grid-column:2 / -1}.tier-gbx .nsm-bl .gbx-v{grid-row:1;grid-column:3}.tier-gbx .nsm-bl .nsm-ch{grid-row:1;grid-column:4}.tier-gbx .tier-per{grid-row:3;grid-column:2 / -1;text-align:left}
+  .tier .nsm-det,.tier .nsm-foot{margin-left:0}}
 .nsm-bars .nsm-foot{margin:8px 0 4px 66px}
 @media (max-width:699px){.nsm-gbx .nsm-bl{grid-template-rows:auto 5px;row-gap:5px;padding:6px 2px}.nsm-gbx .nsm-bl .gbx-n{flex-wrap:wrap;white-space:normal;row-gap:3px}.nsm-gbx .nsm-t .nsm-tag{margin-left:0}.nsm-gbx .nsm-bl .gbx-b{grid-column:3 / -1;grid-row:2;height:5px}.nsm-gbx .nsm-gh > span:nth-child(4){display:none}
   .nsm-det{margin-left:0}.nsm-dl{flex-wrap:wrap}.nsm-dk{width:100%}.nsm-bars .nsm-foot{margin-left:0}}
@@ -14303,7 +14337,7 @@ html[data-theme="arcade"] body.refine #topbar{border-bottom:3px solid #ff5ea8}</
     var bestQ = null; if (AP) AP.p.forEach(function (q) { if (q[2] !== 'k' && q[1] != null && (!bestQ || q[1] < bestQ[1])) bestQ = q; });
     var hpS = function (v) { return Math.round(v) + '%'; };
     var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + ((bm || !kill) && bestQ ? 'Best pull: ' + bestQ[0] + ' · boss at <b>' + hpS(bestQ[1]) + '</b>' + (story(bestQ) ? ' <span class="nsm-st">' + esc(story(bestQ)) + '</span>' : '') + (WK && WK.best != null ? (function (d) { return ' <span class="nsm-lr ' + (d > 0.5 ? 'up' : d < -0.5 ? 'dn' : 'eq') + '">' + (d > 0.5 ? '▲' : d < -0.5 ? '▼' : '=') + ' last raid ' + (WK.best === 0 ? 'killed it' : hpS(WK.best)) + '</span>'; })(WK.best - bestQ[1]) : '') : bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
-      '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
+      '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + (window.tierCan && window.tierCan() ? '<button type="button" class="btn nsm-tier" title="Every pull of this boss, from your first to now">Whole tier <span aria-hidden="true">▸</span></button>' : '') + '</div></div>';
     /* (Nov 4, Flex: "it doesnt really show the biggest issues in order of importance", then "Yes, build it" on the Design studio's mock:
        one ranked list. What wiped us most by wipes caused, a footnote with the real counts, then everything else by how many pulls it hit) */
     var NP = all.length || +pulls || 0, NW = all.length ? all.filter(function (p) { return !p.k; }).length : 0;
