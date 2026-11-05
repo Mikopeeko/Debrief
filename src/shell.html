@@ -13907,8 +13907,11 @@ html[data-theme="arcade"] body.refine .bh-name{font-family:'Silkscreen',var(--he
 html[data-theme="arcade"] body.refine .brand h1,html[data-theme="arcade"] body.refine #topbar .tb-brand b{font-family:'Silkscreen',var(--head)}
 html[data-theme="arcade"] body.refine ::selection{background:rgba(255,210,63,0.35)}
 
-html[data-theme="hardlight"] body.refine .panel,html[data-theme="hardlight"] body.refine header.fight.bh,html[data-theme="hardlight"] body.refine .r212-sb,html[data-theme="hardlight"] body.refine .dbt-p{border-radius:0 !important;border-color:transparent !important;
-  background-image:linear-gradient(135deg,#04060c 0 12px,#00e5ff 12px 14px,transparent 14px),linear-gradient(315deg,#04060c 0 12px,#00e5ff 12px 14px,transparent 14px),linear-gradient(180deg,rgba(0,229,255,.06),transparent 140px) !important;box-shadow:inset 0 0 0 1px rgba(0,229,255,.32),inset 0 0 40px -20px rgba(0,229,255,.5) !important}
+html[data-theme="hardlight"] body.refine .panel,html[data-theme="hardlight"] body.refine header.fight.bh,html[data-theme="hardlight"] body.refine .r212-sb,html[data-theme="hardlight"] body.refine .dbt-p{/* Hardlight corner cuts on top */border-radius:0 !important;border-color:transparent !important;
+  background-image:linear-gradient(180deg,rgba(0,229,255,.06),transparent 140px) !important;box-shadow:inset 0 0 0 1px rgba(0,229,255,.32),inset 0 0 40px -20px rgba(0,229,255,.5) !important}
+html[data-theme="hardlight"] body.refine :is(.panel:not(.pg-bar),.r212-sb,.dbt-p){position:relative}
+html[data-theme="hardlight"] body.refine :is(.panel:not(.pg-bar),.r212-sb,.dbt-p)::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:0;animation:none;background:linear-gradient(135deg,#04060c 0 12px,#00e5ff 12px 14px,transparent 14px),linear-gradient(315deg,#04060c 0 12px,#00e5ff 12px 14px,transparent 14px) !important}
+
 html[data-theme="hardlight"] body.refine .btn,html[data-theme="hardlight"] body.refine select{border-radius:0 !important}
 html[data-theme="hardlight"] body.refine .bh-name{text-transform:uppercase;letter-spacing:.08em;font-size:.9em;text-shadow:0 0 18px rgba(0,229,255,.7),0 0 40px rgba(255,61,242,.35)}
 html[data-theme="slate"] body.refine .panel,html[data-theme="slate"] body.refine header.fight.bh,html[data-theme="slate"] body.refine .r212-sb,html[data-theme="slate"] body.refine .dbt-p{border-radius:0 !important;border:0 !important;border-left:5px solid #6272ff !important;background-image:none !important;background-color:#15171d !important;box-shadow:0 1px 0 rgba(255,255,255,.04),0 12px 28px -18px #000 !important}
