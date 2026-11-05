@@ -22,7 +22,7 @@ const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.
 const H = require('./site-helpers.js'), UI = H.UI;
 // (the All pulls card's line about a pull, from shell.html)
 const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n' + H.grab('nsmFocusOf', H.SH) + '\n({ story, nsmFocusOf })');
-const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_FIRST, rcFirstLine })');
+const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_NEXT') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_NEXT, RC_FIRST, rcFirstLine })');
 const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
 /* (the Whole tier (Nov 5): its own numbers for a night, read with the page's code; the cut at the wipe call and the killing-blow verdict stand
    in as "none" on both sides, so the tier and All pulls are compared on the same causes) */
@@ -129,7 +129,7 @@ function checkPull(key) {
       else if (nk && (VERBS.test(nk) || nk.toLowerCase() === lc || nk.split(/\s+/).length > 2)) say(pull, 'title', '"' + base + ' (' + nk + ')" is not a 1-2 word noun nickname');
     }
   }
-  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.cat !== 'reset') { const l = NIGHT_RC.get(code) || []; l.push(o); NIGHT_RC.set(code, l); } if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else { clean(pull, 'root cause', o.line); clean(pull, 'root cause, short', o.short); if (!o.short) say(pull, 'root', 'no short why sentence for ' + o.cat); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
+  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.cat !== 'reset') { const l = NIGHT_RC.get(code) || []; l.push(o); NIGHT_RC.set(code, l); } if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else if (JSON.stringify(o.sp || null) !== JSON.stringify(E.RC_CAT[o.cat].sp || null)) say(pull, 'icon', 'the root cause ' + o.name + ' carries another icon'); else { clean(pull, 'root cause', o.line); clean(pull, 'root cause, short', o.short); if (!o.short) say(pull, 'root', 'no short why sentence for ' + o.cat); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
   { const f0 = rep.r.fights.find((x) => x.id === +fight); if (f0) { try { const gk = code + '|' + it.id + '|' + it.diffId, l = TIER_T.get(gk) || [], q = SITE.aphOf([r]).p[0], pc = TSITE.pullCauseOf(r);
       l.push({ it, hp: q ? q[1] : null, ak: pc ? pc.k : '', sum: TSITE.tierSumOf(r), row: [code, f0.id, rep.r.startTime + f0.startTime, f0.kill ? 1 : 0, f0.fightPercentage != null ? f0.fightPercentage : null, f0.bossPercentage != null ? f0.bossPercentage : null, f0.lastPhase || 0, f0.lastPhaseIsIntermission ? 1 : 0, Math.round((f0.endTime - f0.startTime) / 1000)] }); TIER_T.set(gk, l); }
     catch (e) { say(pull, 'tier', 'the Whole tier\'s line crashed: ' + e.message); } } }
@@ -150,6 +150,12 @@ function checkPull(key) {
 // 4. the page's own code reads one number (the banner, the pull picker, the coach and Debriefing's lines)
 const MUST = [['the Why we wiped facts line (the phase at the wipe call, from the timeline)', "(end && T(end.querySelector('.dbt-chp'))) || '') || phw", 'SH'], ['the banner', "bossAtV(nowV)"], ['the pull picker', "'Wipe, ' + bossAtV(pc)"], ['the coach line', "'We wiped ' + dbfPre(at0) + at0"], ["Debriefing's raid lead line", 'dbfPre(dbfAt(nowLab))']];
 for (const [k, s, f] of MUST) if (!(f === 'SH' ? H.SH : UI).includes(s)) say('the page code', 'health', k + ' no longer uses the one health number (expected `' + s + '` in src/ui.js)');
+// (Why we wiped's icon and Next time (Nov 5, Flex: "wrong icons"): each root cause's icon is its own mechanic's spell, and its Next time is its own;
+//  the page puts them on the heading, and the All pulls card never lends another row's icon)
+for (const [k, o] of Object.entries(E.RC_CAT)) { const fam = (s) => CHT.mechFams(s); if (o.sp) { const a = fam(o.sp[1]), b = fam(o.nm), same = [...a].some((x) => b.has(x));
+    if (!a.size || !b.size || !same) say('the page code', 'icon', o.nm + "'s icon is " + o.sp[1] + ' (' + o.sp[0] + '), not its own mechanic'); } else if (!/^(dps|dead|reset)$/.test(k)) say('the page code', 'icon', o.nm + ' has no icon spell of its own');
+  if (k !== 'reset') { const nx = RCX.RC_NEXT[k]; if (!nx) say('the page code', 'next', o.nm + ' has no Next time'); else { clean('the page code', 'Next time for ' + o.nm, nx); if (o.sp && !CHT.chainTitleFits(o.sp[1], nx) && !CHT.chainTitleFits(o.nm, nx)) say('the page code', 'next', 'Next time for ' + o.nm + ' is about something else: "' + nx + '"'); } } }
+for (const s of ["window.spellIcon(RT.sp ? RT.sp[0] : 0", "var nxt = window.rcNext ? window.rcNext(RT.cat) : ''", 'only lends its nickname']) if (!H.SH.includes(s)) say('the page code', 'icon', 'Why we wiped or the All pulls card borrows icons again (expected "' + s + '" in src/shell.html)');
 // (How it went: the title rule itself, on Flex's Nov 5 screenshot and the cases it must keep; and the page uses it)
 for (const [t, s, ok] of [['Wail of Terror', "Flëxørçïst's ghost touched Schooty's ghost, causing Malevolent Resonance", false], ['Manifestation of Dread', "Flëxørçïst's ghost touched Schooty's ghost, causing Malevolent Resonance", true],
   ['Soul Sever', 'Flëxørçïst died to Malevolent Resonance: ghosts touched each other', false], ['Death', 'Schooty died to Axegrinder', true], ['Coalesced Venom', 'Komo died to Venom Rupture: too many orb stacks at once', true],

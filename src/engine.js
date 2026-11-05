@@ -7700,13 +7700,14 @@ function coach(p, r, cut) {
 // only a purple orb's ring touching another orb sets off the raid-wide Venom Ruptures; a missed Wail of Terror fears players into whatever is
 // out (axes in phases 1 and 3, pools, orbs, other ghosts, the edge); Dreadful Presence deaths mean an unprepared push into phase 2 (stacks,
 // no raid cooldowns), never a raid-killer by itself; Retaliatory Malice is adds living too long. opts.cut: the site's wipe call (s) ----
+/* (sp: the root cause's own spell, for its icon (Nov 5, Flex: "wrong icons"); none for the causes that aren't one mechanic) */
 const RC_CAT = {
-  guil: { nm: 'Guillotine (Soak)', flex: 'Guillotine soak short' }, orbs: { nm: 'Coalesced Venom (Orb Pops)', flex: 'Orbs touched' },
-  kick: { nm: 'Wail of Terror (Kick)', flex: 'Soulcoiler kick missed' }, axes: { nm: 'Axegrinder (Rolling Axes)', flex: 'Axes' },
-  mc: { nm: 'Dreadmarch (Mind Control)', flex: 'Mind controls in the wrong spot' }, ghosts: { nm: 'Malevolent Resonance (Ghost Collision)', flex: 'Ghosts touched' },
-  bombs: { nm: 'Gloombomb (Add Bombs)', flex: 'Bombs' }, adds: { nm: 'Spiteful Soulcoiler (Adds)', flex: 'Bombs' }, shield: { nm: 'Eternal Nightfall (Shield Break)', flex: 'Shield not broken in time' },
-  push: { nm: 'Phase 2 push', flex: 'Pushed into phase 2 badly' }, dps: { nm: 'Not enough damage', flex: 'Not enough damage' },
-  inter: { nm: 'Fragments of Malacrass (Intercepts)', flex: '' }, pools: { nm: 'Noxious Ground (Pools)', flex: '' }, frontal: { nm: 'Sever (Frontal)', flex: '' },
+  guil: { nm: 'Guillotine (Soak)', flex: 'Guillotine soak short', sp: [1283489, 'Guillotine'] }, orbs: { nm: 'Coalesced Venom (Orb Pops)', flex: 'Orbs touched', sp: [1282403, 'Coalesced Venom'] },
+  kick: { nm: 'Wail of Terror (Kick)', flex: 'Soulcoiler kick missed', sp: [1286399, 'Wail of Terror'] }, axes: { nm: 'Axegrinder (Rolling Axes)', flex: 'Axes', sp: [1283832, 'Axegrinder'] },
+  mc: { nm: 'Dreadmarch (Mind Control)', flex: 'Mind controls in the wrong spot', sp: [1285643, 'Dreadmarch'] }, ghosts: { nm: 'Malevolent Resonance (Ghost Collision)', flex: 'Ghosts touched', sp: [1310732, 'Malevolent Resonance'] },
+  bombs: { nm: 'Gloombomb (Add Bombs)', flex: 'Bombs', sp: [1310882, 'Gloombomb'] }, adds: { nm: 'Spiteful Soulcoiler (Adds)', flex: 'Bombs', sp: [1286441, 'Spiritcackle'] }, shield: { nm: 'Eternal Nightfall (Shield Break)', flex: 'Shield not broken in time', sp: [1286918, 'Eternal Nightfall'] },
+  push: { nm: 'Phase 2 push', flex: 'Pushed into phase 2 badly', sp: [1288624, 'Dreadful Presence'] }, dps: { nm: 'Not enough damage', flex: 'Not enough damage' },
+  inter: { nm: 'Fragments of Malacrass (Intercepts)', flex: '', sp: [1287718, 'Reclaim Essence'] }, pools: { nm: 'Noxious Ground (Pools)', flex: '', sp: [1283290, 'Noxious Ground'] }, frontal: { nm: 'Sever (Frontal)', flex: '', sp: [1286620, 'Soul Sever'] },
   dead: { nm: 'Too many dead', flex: 'Too many dead / healing ran out' }, reset: { nm: 'Reset on purpose', flex: 'Reset on purpose' } };
 const RC_BY = [[/^(execution|grim execution|widow's kiss|death's embrace|guillotine|grim guillotine)$/, 'guil'], [/^(venom rupture|coalesced venom|mutagenic venom|volatile venom|toxic deluge)$/, 'orbs'],
   [/^(axegrinder)$/, 'axes'], [/^(noxious ground|defiled ground|fangs of the coiled altar)$/, 'pools'], [/^(dreadmarch|manifestation of dread)$/, 'mc'], [/^(malevolent resonance)$/, 'ghosts'],
@@ -7744,7 +7745,11 @@ function rootCause(r, opts) {
   // (a missed kick fears the raid: deaths in the next 12 s to whatever was out (axes, pools, an orb, another ghost, the edge) follow from it)
   const kickBefore = (t) => ev.filter((e) => e.k === 'kick' && e.t <= t + 0.5 && e.t >= t - 12).pop() || null;
   /* (Gravebound too: feared players can't pick up their soul fragments) */
-  for (const d of deaths) { const k = kickBefore(d.t); if (k && (/^(axes|pools|orbs|ghosts|mc|dead|frontal)$/.test(d.cat) || d.ab === 'Gravebound') && d.ab !== 'Venom Rupture') d.via = k; }
+  /* (Nov 5, the studio: only players the Wail really feared: the log's Wail of Terror debuff on them as they died into something (or up to 1.5 s
+     before), or any time since the cast for ghosts, mind controls and soul fragments. A log without the debuff keeps the 12 s window) */
+  const pBy = new Map(pl.map((p) => [p.name, p])), wailD = (p) => (p && p.debuffs && p.debuffs.get('Wail of Terror')) || null, anyFear = pl.some((p) => { const b = wailD(p); return !!(b && b.sp && b.sp.length); });
+  const fearOk = (d, k) => { if (!anyFear) return true; const b = wailD(pBy.get(d.p)), at = /^(axes|pools|orbs|frontal)$/.test(d.cat) && d.ab !== 'Gravebound'; return !!(b && b.sp && b.sp.some(([a, z]) => a >= k.t - 1 && a <= d.t + 0.2 && (!at || z == null || z >= d.t - 1.5))); };
+  for (const d of deaths) { const k = kickBefore(d.t); if (k && (/^(axes|pools|orbs|ghosts|mc|dead|frontal)$/.test(d.cat) || d.ab === 'Gravebound') && d.ab !== 'Venom Rupture' && fearOk(d, k)) d.via = k; }
   // ---- the point of no return ----
   const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > 60);
   const cut = early ? null : opts.cut, PN = [];
@@ -7835,7 +7840,7 @@ function rootCause(r, opts) {
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ').split(SEP).join(' → ') + '.';
   const later = early ? phs.find((p) => p.start >= opts.cut - 1 && p.start > 1) : null;
   const earlyNote = early ? 'The wipe was called at ' + T(opts.cut) + ', but the raid played on' + (later ? ' into ' + ({ P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' })[later.name.split(' ')[0]] : '') + ', so this looks past the call.' : '';
-  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, chain,
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, sp: (RC_CAT[cat] && RC_CAT[cat].sp) || null, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, short: RC_CAT[a.cat].nm.replace(/ \(.*$/, ''), who: a.who, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
