@@ -14212,7 +14212,7 @@ body.wck-on > :not(#wck) { display: none !important; }
         '<div class="nsm-det"' + (open ? '' : ' hidden') + '>' + dets + '</div></div>'; };
     var pbs = function (ps) { ps = ps.slice().sort(function (a, b) { return a - b; }); return ps.length ? '<div class="nsm-dl"><span class="nsm-dk">' + (ps.length === 1 ? 'Pull' : 'Pulls') + '</span><span class="nsm-dv">' + ps.map(function (n) { return '<a href="#" class="nsm-pb" data-cchpull="' + n + '" aria-label="Open pull ' + n + '">' + n + '</a>'; }).join('') + '</span></div>' : ''; };
     var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
-    var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
+    var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length).map(function (x) { return { nm: x.nm, w: x.w }; }); /* (and the causes past the coach's first five) */ try { var ul0 = wipL[0] && wipL[0].parentElement; JSON.parse((ul0 && ul0.dataset.rest) || '[]').forEach(function (z) { rest.push({ nm: z[0], w: z[1] }); }); } catch (e) { /* (the footnote says what it has) */ }
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
     var A = {}, AO = []; alsoL.forEach(function (li) { if (li.classList.contains('cch-also-more')) return; var nm = nameOf(li), k = key(nm); if (!k) return; var x = A[k]; if (!x) { x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [] }; AO.push(x); } psOf(li.dataset.ps).forEach(function (p) { if (x.ps.indexOf(p) < 0) x.ps.push(p); }); var w = why(li); if (w && x.s.indexOf(w) < 0) x.s.push(w); });
     /* (a getting-worse row carries the pulls with a mistake on it (Nov 5: it said "0 pulls"); one with none is never a row, its tag goes in the Worse tonight line) */
@@ -14274,13 +14274,13 @@ body.wck-on > :not(#wck) { display: none !important; }
       var job = !w.nt && { soak: 'their soak', kick: 'the kick' }[w.kind], ow = w.unk === 1 ? 'wipe' : w.unk + ' wipes';
       if (!gs.length) { var no = w.kind === 'orb' ? 'The logs don\'t tie these orb touches to one player yet.' : job ? 'Who missed ' + job + ' shows once your note is loaded.' : ''; return no ? '<p class="nsm-dq">' + no + '</p>' : ''; }
       return gs.join('') + (w.unk ? '<p class="nsm-dq">' + (job ? 'Who missed ' + job + ' in the other ' + ow + ' shows once your note is loaded.' : 'The log names no one for the other ' + ow + '.') + '</p>' : ''); };
-    var why1 = function (x) { var t = x.s.join(' '); return t ? '<p class="nsm-dw">' + t + '</p>' : ''; };
+    var why1 = function (x) { var t = x.s.join(' '), eg = x.li && x.li.dataset && x.li.dataset.eg; return (t ? '<p class="nsm-dw">' + t + '</p>' : '') + (eg ? '<p class="nsm-dq nsm-eg">' + esc(eg) + '</p>' : ''); }; /* (eg: the latest wipe's chain of what happened, from the root cause (Nov 5)) */
     if (top.length) { var ended = {}; top.forEach(function (x) { x.ps.forEach(function (p) { ended[p] = 1; }); }); var en = Object.keys(ended).length, mx = top[0].w || 1, oth = NW - en;
       o += '<div class="nsm-sec nsm-rank nsm-bars"><div class="nsm-bh"><span class="nsm-k">What wiped us most</span><span>' + (NP ? NP + ' pulls tonight · ' : '') + 'biggest first · tap a row for details</span></div><div class="gbx nsm-gbx">' +
         '<div class="gbx-r gbx-hd nsm-gh" aria-hidden="true"><span></span><span></span><span>Mechanic</span><span></span><span class="gbx-v">Wipes</span><span></span><span></span></div>' +
         top.map(function (x, i) { return brow(i + 1, x, x.w, mx, x.w === 1 ? 'wipe' : 'wipes', CC[i] || CO, why1(x) + whoH(x.li) + pbs(x.ps), i === 0); }).join('') + '</div>';
       if (NW) o += '<p class="nsm-foot">' + (top.length === 1 ? 'This ended ' : (top.length === 2 ? 'These two' : top.length === 3 ? 'These three' : 'These ' + top.length) + ' ended ') + '<b>' + en + '</b> of the <b>' + NW + '</b> wipes.' +
-        (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm) + ' (' + x.w + ')'; }).join(', ') + ', or ' : '') + 'no single cause.' : '') + '</p>';
+        (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm.replace(/ \([^)]*\)$/, '')) + ' (' + x.w + ')'; }).join(', ') + (rest.reduce(function (a, x) { return a + x.w; }, 0) >= oth ? '.' : ', or no single cause.') : 'no single cause.') : '') + '</p>';
       o += '</div>'; }
     if (AO.length) { var am = Math.max(1, AO[0].ps.length);
       o += '<div class="nsm-sec nsm-rank nsm-also nsm-bars"><div class="nsm-bh"><span class="nsm-k">Other mistakes</span><span>didn\'t wipe us on their own</span></div><div class="gbx nsm-gbx">' +
