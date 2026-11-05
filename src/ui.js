@@ -14274,18 +14274,20 @@ function weekOf(reps) {
   for (const r of reps) { if (r.item.kill) best = 0; else { const v = pullPct(r.item); if (v != null && (best == null || v < best)) best = v; let o = null; try { o = wipeRoot(r); } catch (e) { o = null; } if (o && o.cat !== 'reset') rc[o.name] = (rc[o.name] || 0) + 1; }
     for (const p of (r.players ? r.players.values() : [])) if (p && p.name) { const b = oaBase(p.name); seen.set(b, (seen.get(b) || 0) + 1); } }
   const ros = [...seen].filter(([, n]) => n >= reps.length / 2).map(([k]) => k);
-  return { v: 1, key: code + '|' + it.boss + '|' + it.diffId + '|' + Math.round(wkWhen(it) / 3600000), boss: it.boss, diffId: it.diffId, date: wkWhen(it), pulls: reps.length, kill: reps.some((r) => r.item.kill), mech, why, rc, best, ros };
+  return { v: 1, key: code + '|' + it.boss + '|' + it.diffId + '|' + Math.round(wkWhen(it) / 3600000), boss: it.boss, diffId: it.diffId, date: wkWhen(it), pulls: reps.length, kill: reps.some((r) => r.item.kill), mech, why, rc, best, ros, gid: it.gid || 0 };
 }
 function weekSave(reps, w0) { try { if (reps.length < 3 || !wkWhen(reps[0].item)) return; const w = w0 || weekOf(reps), L = wkAll().filter((x) => x.key !== w.key); L.push(w); L.sort((a, b) => a.date - b.date); store.set(WK_KEY, JSON.stringify(L.slice(-80))); } catch (e) { /* storage full or off */ } }
 // (the latest raid on this boss before this one: at least 12 hours earlier, so two reports of the same night don't count)
-const weekPrev = (it, date) => wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000).sort((a, b) => b.date - a.date)[0] || null;
+/* (the same team only (Main, Nov 5): the same guild when both nights know it, else half the smaller roster the same; a night with no roster saved can't be matched) */
+const wkSameTeam = (a, b) => { if (!a) return true; if (!b) return false; if (a.gid && b.gid) return a.gid === b.gid; const A = new Set(a.ros || []), B = b.ros || []; if (!A.size || !B.length) return false; return B.filter((x) => A.has(x)).length >= Math.min(A.size, B.length) / 2; };
+const weekPrev = (it, date, wn) => wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000 && wkSameTeam(wn, x)).sort((a, b) => b.date - a.date)[0] || null;
 /* (all the earlier raids on this boss as one: each mechanic's pulls and wrong pulls added up; lbl names them for the coach's lines) */
-const weekPrevAll = (it, date) => { const L = wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000); if (!L.length) return null;
+const weekPrevAll = (it, date, wn) => { const L = wkAll().filter((x) => x.boss === it.boss && x.diffId === it.diffId && x.date && x.date < date - 12 * 3600000 && wkSameTeam(wn, x)); if (!L.length) return null;
   const mech = {}; for (const w of L) for (const [id, m] of Object.entries(w.mech || {})) { const o = mech[id] || (mech[id] = { t: m.t, j: 0, w: 0, who: {} }); o.j += m.j; o.w += m.w; }
   const last = L.reduce((a, b) => (b.date > a.date ? b : a)); return { ...last, mech, n: L.length, pulls: L.reduce((s, w) => s + (w.pulls || 0), 0), lbl: L.length > 1 ? 'earlier nights' : null }; };
 // (Nov 5, step 3: what the All pulls card needs from last raid: its best pull, its root-cause counts by name, how many of tonight's players were
 // there, and the mechanic the most players went wrong on both nights (names on a tap); null until a last raid with root causes is saved)
-function wkCard(reps) { try { const it = reps[0].item, wn = weekOf(reps), wp = weekPrev(it, wkWhen(it)); if (!wp || !wp.rc || !Object.keys(wp.rc).length) return null;
+function wkCard(reps) { try { const it = reps[0].item, wn = weekOf(reps), wp = weekPrev(it, wkWhen(it), wn); if (!wp || !wp.rc || !Object.keys(wp.rc).length) return null;
   const pr = new Set(wp.ros || []), same = (wn.ros || []).filter((x) => pr.has(x)).length; let rep = null;
   for (const [id, m] of Object.entries(wn.mech || {})) { const pm = wp.mech && wp.mech[id]; if (!pm) continue; if (/^venomfang/i.test(m.t)) continue; /* (it flags who got the poison, not a mistake) */ const both = Object.keys(m.who || {}).filter((n) => (pm.who || {})[n]); if (both.length >= 2 && both.length <= 5 && (!rep || both.length > rep.names.length)) rep = { t: m.t, names: both }; }
   return { d: wkDate(wp), best: wp.best, rc: wp.rc, same: pr.size ? same : null, sw: pr.size ? (wn.ros || []).length - same : null, rep }; } catch (e) { return null; } }
@@ -14482,7 +14484,7 @@ function coachEnrich(list, reps, name) {
   const secs = new Map(); for (const r of reps) for (const [id, x] of pullSections(r)) if (!secs.has(id)) secs.set(id, x.s);
   const pn = reps.map((r) => r.item.pull).sort((a, b) => a - b), last = (k) => pn.slice(-k);
   // (the earlier pulls of this boss already read, for "first time tonight" / "3rd time tonight" on one pull)
-  let WKN = null, WKP = null; if (night) { try { WKN = weekOf(reps); WKP = weekPrev(it, wkWhen(reps[0].item)); } catch (e) { WKN = WKP = null; } } /* (week to week: tonight and the last raid on this boss) */
+  let WKN = null, WKP = null; if (night) { try { WKN = weekOf(reps); WKP = weekPrev(it, wkWhen(reps[0].item), WKN); } catch (e) { WKN = WKP = null; } } /* (week to week: tonight and the last raid on this boss) */
   const prev = night ? [] : ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
   return list.map((x0) => { const x = { ...x0 };
     if (!x.sec) { const s = [...secs.values()].find((s) => cMatch(s, x.label) || cMatch(s, x.cause) || cMatch(s, String(x.label).replace(/^Dying (slowly )?to /, ''))); if (s) x.sec = s.id; }
@@ -15098,8 +15100,8 @@ function coachSummary0(reps, name) {
       (all.length ? '<h5>What to work on, in order</h5><ol class="cch-ol">' + all.map(item).join('') + '</ol>' : '') + deaths + (AV && AV.list ? '<h5>Avoidable damage</h5>' + AV.list : '') +
       (allR.length ? '<h5>What went right</h5><ul class="cch-ul">' + allR.map((t) => '<li>' + esc(t) + '</li>').join('') + '</ul>' : '');
     /* (week to week: tonight is remembered, and the raid's coach says what changed since the last raid on this boss) */
-    let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item))); weekSave(reps, wn); } catch (e) { week = ''; } }
-    let TR = null; if (name) TR = coachTrendsMe(reps, name, right, wrongAll); else { try { const wn = night ? weekOf(reps) : null; TR = coachTrends(reps, right, wrongAll, wn, night ? weekPrevAll(it, wkWhen(reps[0].item)) : null); } catch (e) { TR = null; } }
+    let week = ''; if (night) { try { const wn = weekOf(reps); if (!name) week = weekLine(wn, weekPrev(it, wkWhen(reps[0].item), wn)); weekSave(reps, wn); } catch (e) { week = ''; } }
+    let TR = null; if (name) TR = coachTrendsMe(reps, name, right, wrongAll); else { try { const wn = night ? weekOf(reps) : null; TR = coachTrends(reps, right, wrongAll, wn, night ? weekPrevAll(it, wkWhen(reps[0].item), wn) : null); } catch (e) { TR = null; } }
     return { headline: headline2, wipes: WIPES, right, wrong, wrongAll, focus, full, name: name || null, night, kill: !!kill, deaths: DD, avoid: AV, kit: KT, week, trend: TR, reps }; }); }
 // (the short box, easier to read (your note, Oct 22: "make this more visually appealing/easier to read", "class color names when they
 // are mentioned"): the headline, then Focus as the big takeaway, the problems as numbered cards (what happened, Next time on its own
