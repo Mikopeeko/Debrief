@@ -3828,7 +3828,7 @@ function buildCoiledAltar(ev, r, h) {
       { txt: clipped.filter((c) => c.t >= d && c.t < end).length + ' clipped', bad: clipped.some((c) => c.t >= d && c.t < end) },
       { txt: leftover.some((x) => x.t === end) ? 'orb left at next Deluge' : bursts.some((b) => b.t >= d && b.t < end) ? 'orbs collided' : 'clean', bad: leftover.some((x) => x.t === end) || bursts.some((b) => b.t >= d && b.t < end) }];
   });
-  sections.push({ id: 'orbs', title: 'Orbs (Cleanup)', place: 'Orb cleanup', spell: S('virulent mutation'), mythicOnly: true,
+  sections.push({ id: 'orbs', title: 'Orbs (Cleanup)', place: 'Orb cleanup', spell: S('virulent mutation'), mythicOnly: true, carry: carry.map((c) => [pname(c.g), +c.s.toFixed(1), +c.e.toFixed(1)]), /* (who carried a purple orb when: the root cause names whose orb went off (Nov 5)) */
     verdict: bursts.length || leftover.length ? 'bad' : 'good', /* (fix 7: purple-carrier clips are judged in Avoidable damage) */
     summary: [pl(deluges.length, 'Toxic Deluge cycle'), pl(carry.length, 'purple orb pickup'), pl(clipped.length, 'player') + ' clipped by carriers', pl(bursts.length, 'orb collision'), pl(leftover.length, 'orb') + ' left at a Deluge'].join(', ') +
       (p2 != null ? '. Venom Rupture after the P1 push: up to ' + pushMax + ' stacks' + (pushMax > 11 ? ' (the plan is 9 to 11)' : '') + '.' : '.'),
@@ -7715,6 +7715,9 @@ const RC_BY = [[/^(execution|grim execution|widow's kiss|death's embrace|guillot
 const rcCat = (ab) => { const a = String(ab || '').toLowerCase(); for (const [re, c] of RC_BY) if (re.test(a)) return c; return 'dead'; };
 const cellTxtRc = (c) => (c ? c.txt || '' : '');
 const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
+const rcOr = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
+/* (Nov 5, Flex: whose purple orb set off Venom Rupture: the one carrier then, or "one of A's or B's" when two or more held one, never a guess) */
+const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
 function rootCause(r, opts) {
   opts = opts || {};
   if (!r || !r.item || r.item.kill || r.item.boss !== 'The Coiled Altar' || !r.module || r.module.error) return null;
@@ -7730,6 +7733,7 @@ function rootCause(r, opts) {
   const brezLeft = (t) => Math.max(0, 1 + Math.floor(t / (5400 / n)) - rez.filter((x) => x.t <= t).length);
   const deadAt = (t) => { const s = new Map(); for (const d of deaths) if (d.t <= t) s.set(d.p, d); for (const x of rez) if (x.t <= t && s.has(x.p) && s.get(x.p).t < x.t) s.delete(x.p); return [...s.values()]; };
   const w8 = (d) => (d.role === 'tank' ? 2 : 1), wsum = (l) => l.reduce((s, d) => s + w8(d), 0);
+  const orbCarry = [].concat(...sec('orbs').map((s) => s.carry || [])), carriersAt = (t) => [...new Set(orbCarry.filter(([, s, e]) => t >= s - 0.2 && t <= e + 0.3).map(([n]) => n))];
   const ev = [];
   for (const q of r.mistakes || []) { if (/^wail of terror$/i.test(q.mechanic) && /got .*off/i.test(q.detail)) ev.push({ t: q.t, k: 'kick' }); else if (/^reclaim essence$/i.test(q.mechanic)) ev.push({ t: q.t, k: 'frag' }); }
   for (const s of sec('soakq')) for (const [, row] of rowsOf(s)) { const t = tOf(row), c = row.find((x) => x && x.t == null && /^\d+$/.test(String(x.txt || ''))); if (t != null && c && c.bad) ev.push({ t, k: 'soak', n: +c.txt }); }
@@ -7767,7 +7771,7 @@ function rootCause(r, opts) {
   const pnr = PN[0] || { t: dur, why: 'the end of the pull' };
   // ---- a reset: a purple orb set off once the pull was lost, with no missed kick to explain it ----
   let reset = null; const ow = PN.find((p) => p.wave && p.wave.filter((d) => d.ab === 'Venom Rupture').length >= p.wave.length * 0.6);
-  if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (cut != null && ow.t > cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost }; }
+  if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (cut != null && ow.t > cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost, who: carriersAt((ow.wave.find((d) => d.ab === 'Venom Rupture') || ow).t) }; }
   let P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow).sort((a, b) => a.t - b.t)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
   /* (the wave that set off the call keeps only its deaths up to the call; fewer than 4 left: the call is the moment) */
   if (cut != null && P.wave) { const w = P.wave.filter((d) => d.t <= cut + 0.5); P = w.length >= 4 ? Object.assign({}, P, { wave: w }) : { t: cut, why: 'the wipe call' }; } /* (fewer than 4 before the call: no wave of its own) */
@@ -7779,7 +7783,7 @@ function rootCause(r, opts) {
   const who3 = (l) => rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (new Set(l.map((d) => d.who)).size > 3 ? ' and ' + (new Set(l.map((d) => d.who)).size - 3) + ' more' : '');
   // ---- back through the chain ----
   const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt }), SEP = '\u0001'; /* (SEP: one more arrow inside a link) */
-  let cat = 'dead', sure = 0.35;
+  let cat = 'dead', sure = 0.35, orbBy = [];
   const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
     return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
   const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
@@ -7800,7 +7804,7 @@ function rootCause(r, opts) {
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      say(cl ? cl.t : t0, 'orbs', 'a purple orb\'s ring touched other orbs (' + T(cl ? cl.t : t0) + ')'); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
+      const fv = trig.find((d) => d.cat === 'orbs'); orbBy = carriersAt(fv ? fv.t : t0); say(cl ? cl.t : t0, 'orbs', orbSay(orbBy) + ' (' + T(cl ? cl.t : t0) + ')'); /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
     else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time' + SEP + 'it killed ' + trig.filter((d) => d.cat === 'shield').length + ' (' + T(t0) + ')'); }
     else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' (' + T(t0) + ')'); } }
   else if (pre.length <= 6 && P.why === 'the end of the pull') {
@@ -7834,7 +7838,7 @@ function rootCause(r, opts) {
   const phN = { P1: 'phase 1', P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' }, phP = phaseAt(P.t), widow = chain.some((c) => /didn't run out/.test(c.txt)), hasG = chain.some((c) => c.cat === 'guil');
   const into = [...new Set(deaths.filter((d) => d.via && d.t <= P.t + 6 && /^(axes|orbs|pools)$/.test(d.cat)).map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))];
   const short = ({ guil: widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
-    orbs: 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
+    orbs: orbBy.length === 1 ? orbBy[0] + '\'s purple orb touched other orbs and set off Venom Rupture.' : orbBy.length > 1 ? 'One of ' + rcOr(orbBy.map((n) => n + '\'s')) + ' purple orbs touched other orbs and set off Venom Rupture.' : 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
     kick: P.mc ? 'An unkicked Wail of Terror feared the raid, and the ghosts reached their players.' : 'An unkicked Wail of Terror feared players' + (into.length ? ' into ' + rcAnd(into) : '') + (hasG ? ' and left the Guillotine short.' : '.'),
     mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : 'Mind controlled players died off the square.',
     ghosts: 'Ghosts touched, and Malevolent Resonance killed players.', shield: 'Eternal Nightfall\'s shield wasn\'t broken in time.',
