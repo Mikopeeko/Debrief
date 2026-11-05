@@ -10980,10 +10980,31 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-hx{position:relative;height:16px;margin:4px 4px 0 40px;font-family:Barlow,sans-serif;font-size:11px;color:var(--faint)}.nsm-hx span{position:absolute;transform:translateX(-50%)}
 .nsm-hk{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0 0 40px;font-family:Barlow,sans-serif;font-size:12px;color:var(--muted)}.nsm-hk span{display:inline-flex;align-items:center;gap:6px}
 .nsm-hk s{display:inline-block;width:9px;height:9px;border-radius:50%;text-decoration:none}.nsm-hk s.ln{width:16px;height:0;border-radius:0;border-top:2px dashed #e6b450}
-.nsm-who{display:block;margin-top:3px;font-family:Barlow,sans-serif;font-size:12.5px;line-height:1.5;color:var(--muted)}.nsm-who .nm{font-weight:700}.nsm-who.q,.nsm-who .q{color:var(--faint)}
-.nsm-rank:not(.nsm-also) .nsm-rk{grid-template-columns:26px 22px minmax(0,1fr) 140px 190px}.nsm-n .nsm-cd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
-.nsm-also .nsm-bar.y i{background:#7d8894}
-@media (max-width:720px){.nsm-hc{padding:12px 12px 8px}.nsm-hp{height:150px;margin-left:32px}.nsm-hy{left:-32px;width:26px;font-size:10px}.nsm-hx,.nsm-hk{margin-left:32px}.nsm-hd{width:7px;height:7px;margin:-3.5px 0 0 -3.5px}.nsm-hd.b{width:10px;height:10px;margin:-6.5px 0 0 -6.5px}.nsm-hph{font-size:10px}.nsm-rank:not(.nsm-also) .nsm-rk{grid-template-columns:24px 22px minmax(0,1fr) auto}}
+@media (max-width:720px){.nsm-hc{padding:12px 12px 8px}.nsm-hp{height:150px;margin-left:32px}.nsm-hy{left:-32px;width:26px;font-size:10px}.nsm-hx,.nsm-hk{margin-left:32px}.nsm-hd{width:7px;height:7px;margin:-3.5px 0 0 -3.5px}.nsm-hd.b{width:10px;height:10px;margin:-6.5px 0 0 -6.5px}.nsm-hph{font-size:10px}}
+/* (Nov 5: the ranked rows as the Graphs tab's meter rows (.gbx-*), a tap for details) */
+.nsm-bars .nsm-bh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0 0 6px}.nsm-bars .nsm-bh .nsm-k{display:inline}.nsm-bars .nsm-bh > span:last-child{font-family:Barlow,sans-serif;font-size:12.5px;color:var(--faint)}
+.nsm .nsm-gbx{max-width:none}
+.nsm-gbx .gbx-r{--gbx-cols:22px 24px minmax(0,300px) minmax(0,1fr) 44px 52px 18px;--gbx-cols-m:18px 22px minmax(0,1fr) 28px 40px 14px;column-gap:10px}
+.nsm-gbx .nsm-bl{min-height:30px;padding:5px 4px;cursor:pointer}
+.nsm-gbx > .nsm-br:nth-child(odd) > .nsm-bl{background:rgba(255,255,255,.02)}
+.nsm-gbx .nsm-bl:hover,.nsm-gbx .nsm-bl:focus-visible{background:rgba(255,255,255,.045);outline:none}.nsm-gbx .nsm-bl:focus-visible{box-shadow:inset 0 0 0 1px var(--gold)}
+.nsm-gbx .nsm-bl:hover .gbx-b > i{opacity:.95}
+.nsm-gbx .nsm-gh{min-height:0}.nsm-gbx .nsm-gh .gbx-v{font-weight:600;color:#7d8792}
+.nsm-gbx .nsm-n{font-size:11px;font-weight:700;color:var(--faint);text-align:right}
+.nsm-gbx .nsm-bl > .icw,.nsm-gbx .nsm-bl > .cti,.nsm-gbx .nsm-bl > .nsm-noi,.nsm-gbx .nsm-bl > .nsm-gl{width:20px!important;height:20px!important;justify-self:center}.nsm-gbx .nsm-bl .icw img,.nsm-gbx .nsm-bl .icw svg{width:20px!important;height:20px!important}
+.nsm-gbx .nsm-t{color:var(--text)}.nsm-gbx .nsm-t .icw{display:none!important}.nsm-gbx .nsm-t .nsm-nk{font-weight:500;color:var(--muted)}.nsm-gbx .nsm-t .nsm-tag{margin-left:8px}
+.nsm-gbx .nsm-bl .gbx-v{font-size:13px;font-weight:700}
+.nsm-ch{font-size:11px;color:var(--faint);text-align:center}
+.nsm-det{margin:2px 0 8px 66px;padding:10px 12px;border-left:2px solid var(--c);background:rgba(255,255,255,.025);border-radius:0 6px 6px 0;font-family:Barlow,sans-serif}.nsm-det[hidden]{display:none}
+.nsm-dw{margin:0 0 6px;font-size:13px;color:var(--text)}
+.nsm-dl{display:flex;align-items:baseline;gap:6px 10px;margin-top:5px;font-size:12.5px}
+.nsm-dk{flex:none;width:150px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#7d8792}
+.nsm-dv{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0;color:var(--muted)}.nsm-dv .nm{font-weight:700}
+.nsm-pb{display:inline-block;min-width:26px;padding:0 6px;border:1px solid var(--line2,#2c343c);border-radius:4px;font-size:12px;line-height:20px;text-align:center;color:var(--text);text-decoration:none;margin-right:-6px}.nsm-pb:hover,.nsm-pb:focus-visible{border-color:var(--gold);outline:none}
+.nsm-dq{margin:6px 0 0;font-size:12.5px;color:var(--faint)}
+.nsm-bars .nsm-foot{margin:8px 0 4px 66px}
+@media (max-width:699px){.nsm-gbx .nsm-bl{grid-template-rows:auto 5px;row-gap:5px;padding:6px 2px}.nsm-gbx .nsm-bl .gbx-n{flex-wrap:wrap;white-space:normal;row-gap:3px}.nsm-gbx .nsm-t .nsm-tag{margin-left:0}.nsm-gbx .nsm-bl .gbx-b{grid-column:3 / -1;grid-row:2;height:5px}.nsm-gbx .nsm-gh > span:nth-child(4){display:none}
+  .nsm-det{margin-left:0}.nsm-dl{flex-wrap:wrap}.nsm-dk{width:100%}.nsm-bars .nsm-foot{margin-left:0}}
 .nsm-row > .icw,.nsm-row > .cti,.nsm-row > .nsm-noi{width:22px!important;height:22px!important;justify-self:center}
 .nsm-row .icw img,.nsm-row .icw svg{width:22px!important;height:22px!important}
 .nsm-t{font-weight:700;font-size:15.5px;color:var(--text)}
@@ -14125,8 +14146,6 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     var lc = function (v) { return String(v).toLowerCase().replace(/\s*\(.*$/, '').trim(); }, key = function (nm) { return lc(nm).replace(/\s+(assignments?|jobs?|in the note)$/, ''); };
     var why = function (li) { var wy = li && li.querySelector('.cch-wy'); return wy ? wy.innerHTML.replace(/Ghost collision: ghosts touched/g, 'the ghosts touched') : ''; };
     var psOf = function (v) { return String(v || '').split(',').filter(Boolean).map(Number); };
-    var pl = function (ps) { ps = ps.slice().sort(function (a, b) { return a - b; }); return !ps.length ? '' : ps.length > 6 ? 'in ' + ps.length + ' pulls' : (ps.length === 1 ? 'pull ' : 'pulls ') + ps.map(function (n) { return '<a href="#" data-cchpull="' + n + '">' + n + '</a>'; }).join(', '); };
-    var bar = function (v, m, c, col) { return '<span class="nsm-bar ' + c + '"><i style="width:' + Math.max(4, Math.round(100 * v / Math.max(1, m))) + '%' + (col ? ';background:' + col : '') + '"></i></span>'; };
     var TR = {}; [[worseL, '▼ ', 'r', 'Worse'], [upL, '▲ ', 'g', 'Better']].forEach(function (z) { z[0].forEach(function (li) { TR[key(nameOf(li))] = { t: z[1] + (tx(li.querySelector('.cch-tt')) || z[3]), c: z[2], li: li }; }); });
     var ttag = function (nm) { var t = TR[key(nm)]; if (!t) return ''; t.used = 1; return ' <span class="nsm-tag ' + t.c + '">' + esc(t.t) + '</span>'; };
     /* (Nov 4, the studio's audit: "Name (Nickname)" from the breakdown's own rows, and its spell icon when the coach line has none) */
@@ -14136,7 +14155,14 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     var tl = function (nm) { var b = bk(nm), same = function (v) { return !v || key(v) === key(nm) || lc(v) === lc(nm); }, nk = [BK[key(nm)] && BK[key(nm)].nk, NK[key(nm)], (function () { try { return window.nkWord283 ? window.nkWord283('', nm) : ''; } catch (e) { return ''; } })()].filter(function (v) { return !same(v); })[0] || ''; /* (never "Dreadmarch (Dreadmarch)" (Nov 4)) */ if (/\(/.test(nm)) nk = ''; var t = esc(nm) + (nk ? ' <span class="nsm-nk">(' + esc(nk) + ')</span>' : ''); return t; };
     var icon2 = function (li, nm) { var h = icon(li); if (h.indexOf('nsm-noi') < 0) return h; var b = bk(nm); var GL = { 'raid damage': '💥', 'not enough damage': '⏱️', 'unused defensives': '🛡️', 'missed healing': '💚', 'tank deaths': '🛡️' }; if (!(b && b.sid) && GL[key(nm)]) return '<span class="nsm-gl" aria-hidden="true">' + GL[key(nm)] + '</span>';
     return b && b.sid ? '<span class="nsm-noi nsm-sic"><span class="sp mt" data-sid="' + esc(b.sid) + '" data-sn="' + esc(nm) + '">' + esc(nm) + '</span></span>' : h; };
-    var rrow = function (n, li, title, sent, b, val, sub, col) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + (col ? '<i class="nsm-cd" style="background:' + col + '"></i>' : '') + n + '</span>' : '<span class="nsm-n"></span>') + icon2(li, title) + '<div class="nsm-tx"><span class="nsm-t">' + tl(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
+    /* (Nov 5, Flex on the studio's mock: "I think visually, this makes the most sense. At a glance, with details. its also recognizable because
+       people know warcraftlogs": each row is the Graphs tab's meter row (rank, icon, "Name (Nickname)", a 13 px bar in the cause's colour, the
+       count), and a tap opens its sentence, who's behind it and its pulls. One row open at a time; the #1 row starts open) */
+    var brow = function (n, x, v, m, unit, col, dets, open) { var w = Math.max(4, Math.round(100 * v / Math.max(1, m)));
+      return '<div class="nsm-br' + (open ? ' open' : '') + '" style="--c:' + col + '"><div class="gbx-r nsm-bl" role="button" tabindex="0" aria-expanded="' + !!open + '"><span class="nsm-n">' + (n || '') + '</span>' + icon2(x.li, x.nm) +
+        '<span class="gbx-n nsm-t">' + tl(x.nm) + ttag(x.nm) + '</span><span class="gbx-b"><i style="width:' + w + '%"></i></span><span class="gbx-v">' + v + '</span><span class="gbx-s">' + unit + '</span><span class="nsm-ch" aria-hidden="true">' + (open ? '▾' : '▸') + '</span></div>' +
+        '<div class="nsm-det"' + (open ? '' : ' hidden') + '>' + dets + '</div></div>'; };
+    var pbs = function (ps) { ps = ps.slice().sort(function (a, b) { return a - b; }); return ps.length ? '<div class="nsm-dl"><span class="nsm-dk">' + (ps.length === 1 ? 'Pull' : 'Pulls') + '</span><span class="nsm-dv">' + ps.map(function (n) { return '<a href="#" class="nsm-pb" data-cchpull="' + n + '" aria-label="Open pull ' + n + '">' + n + '</a>'; }).join('') + '</span></div>' : ''; };
     var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
     var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
@@ -14192,22 +14218,32 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     /* (Nov 5, who's behind each cause: every name with a count, highest first, in class colour, never "and N more" (Flex: "dont shorten the
        list of names, show all the names")) */
     var whoH = function (li) { var w = null; try { w = JSON.parse(li.dataset.who || 'null'); } catch (e) { w = null; } if (!w) return '';
-      var gs = (w.g || []).map(function (g) { return esc(g.l) + ': ' + g.n.map(function (z) { return '<span class="nm" style="color:' + esc(z[2] || 'var(--text)') + '">' + esc(z[0]) + '</span> ' + z[1]; }).join(', '); });
+      var gs = (w.g || []).map(function (g) { return '<div class="nsm-dl"><span class="nsm-dk">' + esc(g.l) + '</span><span class="nsm-dv">' + g.n.map(function (z) { return '<span class="nsm-pp"><span class="nm" style="color:' + esc(z[2] || 'var(--text)') + '">' + esc(z[0]) + '</span> ' + z[1] + '</span>'; }).join('') + '</span></div>'; });
       var job = !w.nt && { soak: 'their soak', kick: 'the kick' }[w.kind], ow = w.unk === 1 ? 'wipe' : w.unk + ' wipes';
-      if (!gs.length) { var no = w.kind === 'orb' ? 'The logs don\'t tie these orb touches to one player yet.' : job ? 'Who missed ' + job + ' shows once your note is loaded.' : ''; return no ? '<span class="nsm-who q">' + no + '</span>' : ''; }
-      return '<span class="nsm-who">' + gs.join('<span class="q"> · </span>') + (w.unk ? '<span class="q">. ' + (job ? 'Who missed ' + job + ' in the other ' + ow + ' shows once your note is loaded.' : 'The log names no one for the other ' + ow + '.') + '</span>' : '') + '</span>'; };
+      if (!gs.length) { var no = w.kind === 'orb' ? 'The logs don\'t tie these orb touches to one player yet.' : job ? 'Who missed ' + job + ' shows once your note is loaded.' : ''; return no ? '<p class="nsm-dq">' + no + '</p>' : ''; }
+      return gs.join('') + (w.unk ? '<p class="nsm-dq">' + (job ? 'Who missed ' + job + ' in the other ' + ow + ' shows once your note is loaded.' : 'The log names no one for the other ' + ow + '.') + '</p>' : ''); };
+    var why1 = function (x) { var t = x.s.join(' '); return t ? '<p class="nsm-dw">' + t + '</p>' : ''; };
     if (top.length) { var ended = {}; top.forEach(function (x) { x.ps.forEach(function (p) { ended[p] = 1; }); }); var en = Object.keys(ended).length, mx = top[0].w || 1, oth = NW - en;
-      o += '<div class="nsm-sec nsm-rank"><span class="nsm-k">What wiped us most' + (NP ? ' · ' + NP + ' pulls tonight, biggest first' : '') + '</span>' + top.map(function (x, i) { var c = CC[i] || CO; return rrow(i + 1, x.li, x.nm, x.s.join(' ') + whoH(x.li), bar(x.w, mx, 'r', c), x.w + (x.w === 1 ? ' wipe' : ' wipes'), pl(x.ps), c); }).join('');
+      o += '<div class="nsm-sec nsm-rank nsm-bars"><div class="nsm-bh"><span class="nsm-k">What wiped us most</span><span>' + (NP ? NP + ' pulls tonight · ' : '') + 'biggest first · tap a row for details</span></div><div class="gbx nsm-gbx">' +
+        '<div class="gbx-r gbx-hd nsm-gh" aria-hidden="true"><span></span><span></span><span>Mechanic</span><span></span><span class="gbx-v">Wipes</span><span></span><span></span></div>' +
+        top.map(function (x, i) { return brow(i + 1, x, x.w, mx, x.w === 1 ? 'wipe' : 'wipes', CC[i] || CO, why1(x) + whoH(x.li) + pbs(x.ps), i === 0); }).join('') + '</div>';
       if (NW) o += '<p class="nsm-foot">' + (top.length === 1 ? 'This ended ' : (top.length === 2 ? 'These two' : top.length === 3 ? 'These three' : 'These ' + top.length) + ' ended ') + '<b>' + en + '</b> of the <b>' + NW + '</b> wipes.' +
         (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm) + ' (' + x.w + ')'; }).join(', ') + ', or ' : '') + 'no single cause.' : '') + '</p>';
       o += '</div>'; }
     if (AO.length) { var am = Math.max(1, AO[0].ps.length);
-      o += '<div class="nsm-sec nsm-rank nsm-also"><span class="nsm-k">Other mistakes · didn\'t wipe us on their own</span>' + AO.map(function (x) { var n = x.ps.length; return rrow(0, x.li, x.nm, x.s.join(' '), n ? bar(n, am, 'y') : '<span class="nsm-bar y"></span>', n ? n + (n === 1 ? ' pull' : ' pulls') : '', n && NP ? 'of ' + NP : ''); }).join('') + '</div>'; }
+      o += '<div class="nsm-sec nsm-rank nsm-also nsm-bars"><div class="nsm-bh"><span class="nsm-k">Other mistakes</span><span>didn\'t wipe us on their own</span></div><div class="gbx nsm-gbx">' +
+        '<div class="gbx-r gbx-hd nsm-gh" aria-hidden="true"><span></span><span></span><span>Mechanic</span><span></span><span class="gbx-v">Pulls</span><span></span><span></span></div>' +
+        AO.map(function (x) { var n = x.ps.length; return brow(0, x, n, am, n === 1 ? 'pull' : 'pulls', '#9aa3ad', why1(x) + pbs(x.ps), false); }).join('') + '</div></div>'; }
     var better = upL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
     if (better.length) o += '<p class="nsm-better"><b>Better tonight:</b> ' + better.join(', ') + '</p>';
     if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
+    /* (a tap, Enter or Space opens a row's details; one row open at a time) */
+    var nb = s.querySelector(':scope > .nsm'), tog = function (bl) { var br = bl.parentElement, on = !br.classList.contains('open'), set = function (r, v) { r.classList.toggle('open', v); r.querySelector('.nsm-det').hidden = !v; r.querySelector('.nsm-bl').setAttribute('aria-expanded', String(v)); r.querySelector('.nsm-ch').textContent = v ? '▾' : '▸'; };
+      [].forEach.call(nb.querySelectorAll('.nsm-br.open'), function (r) { if (r !== br) set(r, false); }); set(br, on); };
+    if (nb) { nb.addEventListener('click', function (e) { var bl = e.target.closest && e.target.closest('.nsm-bl'); if (bl && nb.contains(bl)) tog(bl); });
+      nb.addEventListener('keydown', function (e) { var bl = e.target.closest && e.target.closest('.nsm-bl'); if (bl && e.target === bl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tog(bl); } }); }
     /* (the chart's labels go where they cover no dot, measured once the card has a size, and again when it changes) */
     var hp = s.querySelector('.nsm-hp');
     if (hp) { var place = function () { if (!hp.isConnected) { if (ro) ro.disconnect(); window.removeEventListener('resize', place); return; } var W = hp.clientWidth, H = hp.clientHeight; if (!W || !H) return;
