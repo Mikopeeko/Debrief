@@ -13767,6 +13767,12 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
 .shd-bt-ax span { position: absolute; top: 3px; transform: translateX(-50%); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .shd-bt-x { margin: 2px 0 0 !important; font-size: 12.5px; color: #aeb6bf; }
 </style>
+<style id="wrt-css">/* (Nov 5, analysis step 2: the root cause line in Why we wiped) */
+html body #view .dbt-why .wrt-line { margin: 6px 0 2px; font: 400 15px/1.45 var(--body); color: var(--text); }
+html body #view .dbt-why .wrt-line .wrt-ar { color: var(--gold); padding: 0 2px; }
+html body #view .dbt-why .wrt-also { margin: 4px 0 6px; font: 400 13.5px/1.45 var(--body); color: var(--muted); }
+html body #view .dbt-why .wrt-also b { color: var(--text); font-weight: 600; }
+</style>
 <style id="wck-css">/* (Nov 5, analysis step 1: the wipe check page, practice links only; the site's colours, big taps for a phone) */
 body.wck-on > :not(#wck) { display: none !important; }
 #wck { position: fixed; inset: 0; overflow-y: auto; z-index: 9000; background: var(--bg); color: var(--text); font: 15px/1.5 var(--body); -webkit-overflow-scrolling: touch; }
@@ -21487,7 +21493,119 @@ function coach(p, r, cut) {
   return tips.sort((a, b) => b.w - a.w).slice(0, 4);
 }
 
-const api = { SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+// ---- (Nov 5, analysis step 2) the root cause of a Coiled Altar wipe: follow the chain, not the death (Flex: "blame ... should follow the
+// chain, not the death"). One story of the pull in time order (deaths with role, battle res, kicks that got off, Guillotine soaks, orb
+// collisions, shields, mind control falls, ghosts), then the point of no return (the earliest of: the wipe call, a raid-killing wave, too
+// many down, two healers or both tanks down with no battle res), then back from it to the first preventable link. A purple orb set off
+// when the pull was already lost (the raid lead's reset) is never the cause. opts.cut: the site's wipe call (s). Null for a kill or another boss ----
+const RC_CAT = {
+  guil: { nm: 'Guillotine (Soak)', flex: 'Guillotine soak short' }, orbs: { nm: 'Coalesced Venom (Orb Pops)', flex: 'Orbs touched' },
+  kick: { nm: 'Wail of Terror (Kick)', flex: 'Soulcoiler kick missed' }, axes: { nm: 'Axegrinder (Rolling Axes)', flex: 'Axes' },
+  mc: { nm: 'Dreadmarch (Mind Control)', flex: 'Mind controls in the wrong spot' }, ghosts: { nm: 'Malevolent Resonance (Ghost Collision)', flex: 'Ghosts touched' },
+  bombs: { nm: 'Gloombomb (Add Bombs)', flex: 'Bombs' }, shield: { nm: 'Eternal Nightfall (Shield Break)', flex: 'Shield not broken in time' },
+  push: { nm: 'Phase changes', flex: 'Pushed into phase 2 badly' }, dps: { nm: 'Not enough damage', flex: '' },
+  pools: { nm: 'Noxious Ground (Pools)', flex: '' }, frontal: { nm: 'Sever (Frontal)', flex: '' },
+  dead: { nm: 'Too many dead', flex: 'Too many dead / healing ran out' }, reset: { nm: 'Reset on purpose', flex: 'Reset on purpose' } };
+const RC_BY = [[/^(execution|grim execution|widow's kiss|death's embrace|guillotine|grim guillotine)$/, 'guil'], [/^(venom rupture|coalesced venom|mutagenic venom|volatile venom|toxic deluge)$/, 'orbs'],
+  [/^(axegrinder)$/, 'axes'], [/^(noxious ground|defiled ground|fangs of the coiled altar)$/, 'pools'], [/^(dreadmarch|manifestation of dread)$/, 'mc'], [/^(malevolent resonance)$/, 'ghosts'],
+  [/^(gloombomb|gravebound|retaliatory malice|spiritcackle)$/, 'bombs'], [/^(eternal nightfall)$/, 'shield'], [/^(dreadful presence)$/, 'dps'], [/^(sever|soul sever|blighted sever)$/, 'frontal'], [/^(wail of terror)$/, 'kick']];
+const rcCat = (ab) => { const a = String(ab || '').toLowerCase(); for (const [re, c] of RC_BY) if (re.test(a)) return c; return 'dead'; };
+const cellTxtRc = (c) => (c ? c.txt || '' : '');
+const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
+function rootCause(r, opts) {
+  opts = opts || {};
+  if (!r || !r.item || r.item.kill || r.item.boss !== 'The Coiled Altar' || !r.module || r.module.error) return null;
+  const n = r.item.size || 20, dur = r.duration || r.item.duration || 0, nm = (p) => String(p || '').split('-')[0], T = fmtT;
+  const pl = [...r.players.values()], role = new Map(pl.map((p) => [p.name, p.role])), byGuid = new Map(pl.map((p) => [p.guid, p.name]));
+  const secs = r.module.sections || [], sec = (id) => secs.filter((s) => s.id === id), rowsOf = (s) => (s.rows || []).map((row) => [null, row]).concat(...(s.groups || []).map((g) => (g.rows || []).map((row) => [g, row])));
+  const tOf = (row) => { const c = row.find((x) => x && x.t != null); return c ? c.t : null; };
+  // ---- the story ----
+  const deaths = (r.deaths || []).slice().sort((a, b) => a.t - b.t).map((d) => ({ t: d.t, p: d.player, who: nm(d.player), role: role.get(d.player) || 'dps', ab: d.ability || d.killer || 'something', cat: rcCat(d.ability || d.killer) }));
+  const rez = (r.rezzes || []).filter((x) => x.t > 1).sort((a, b) => a.t - b.t).map((x) => ({ t: x.t, p: byGuid.get(x.guid) || '' }));
+  const brezLeft = (t) => Math.max(0, 1 + Math.floor(t / (5400 / n)) - rez.filter((x) => x.t <= t).length);
+  const deadAt = (t) => { const s = new Map(); for (const d of deaths) if (d.t <= t) s.set(d.p, d); for (const x of rez) if (x.t <= t && s.has(x.p) && s.get(x.p).t < x.t) s.delete(x.p); return [...s.values()]; };
+  const w8 = (d) => (d.role === 'tank' ? 2 : 1), wsum = (l) => l.reduce((s, d) => s + w8(d), 0);
+  const ev = [];
+  for (const q of r.mistakes || []) if (/^wail of terror$/i.test(q.mechanic) && /got .*off/i.test(q.detail)) ev.push({ t: q.t, k: 'kick' });
+  for (const s of sec('soakq')) for (const [, row] of rowsOf(s)) { const t = tOf(row), c = row.find((x) => x && x.t == null && /^\d+$/.test(String(x.txt || ''))); if (t != null && c && c.bad) ev.push({ t, k: 'soak', n: +c.txt }); }
+  for (const s of sec('orbs')) for (const [, row] of rowsOf(s)) if (row.some((c) => c && /collided/.test(c.txt || ''))) ev.push({ t: tOf(row), k: 'collide' });
+  for (const s of sec('shield')) for (const [, row] of rowsOf(s)) if (row.some((c) => c && c.bad)) ev.push({ t: tOf(row), k: 'shield' });
+  for (const s of sec('dmghost').concat(sec('ghosts'))) for (const [, row] of rowsOf(s)) { const t = tOf(row), w = (row[0] && row[0].txt) || ''; if (t == null || !row.some((c) => c && c.bad)) continue;
+    if (/collision/i.test(w)) ev.push({ t, k: 'ghost', who: ((row[1] && row[1].ps) || []).map(nm) }); else if (/reached/i.test(w)) ev.push({ t, k: 'reach', who: [nm(row.find((c) => c && c.p) && row.find((c) => c && c.p).p)] }); else if (/fall/i.test(w)) ev.push({ t, k: 'fall', who: [nm(row[1] && row[1].p)] }); }
+  ev.sort((a, b) => a.t - b.t);
+  const evIn = (k, a, b) => ev.filter((e) => e.k === k && e.t != null && e.t >= a && e.t <= b);
+  const pushBad = sec('push').some((s) => rowsOf(s).some(([, row]) => /^Phase 1 push/.test((row[0] && row[0].txt) || '') && row.some((c) => c && c.bad)));
+  const p2Row = sec('push').map((s) => rowsOf(s).find(([, row]) => /^Phase 2/.test((row[0] && row[0].txt) || '') && row.some((c) => c && c.bad))).find(Boolean), p2Long = !!p2Row;
+  // (a missed kick fears the raid: the deaths in the next 12 s, to axes, pools, orbs or anything they ran into, follow from it)
+  const kickBefore = (t) => ev.filter((e) => e.k === 'kick' && e.t <= t + 0.5 && e.t >= t - 12).pop() || null;
+  for (const d of deaths) { const k = kickBefore(d.t); if (k && /^(axes|pools|orbs|bombs|dead|frontal|mc)$/.test(d.cat) && d.ab !== 'Venom Rupture') d.via = k; }
+  // ---- the point of no return ----
+  const PN = [];
+  if (opts.cut != null && opts.cut < dur - 1) PN.push({ t: opts.cut, why: 'the wipe call' });
+  for (const d of deaths) { const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4) { PN.push({ t: d.t, why: 'a wave', wave: w }); break; } }
+  { const re = ev.filter((e) => e.k === 'reach'); for (const e of re) { const w = re.filter((x) => x.t >= e.t && x.t <= e.t + 3); if (w.length >= 4) { PN.push({ t: e.t, why: 'mass mind control', mc: w }); break; } } }
+  for (const d of deaths) { if (wsum(deadAt(d.t)) >= 7) { PN.push({ t: d.t, why: 'too many down' }); break; } }
+  for (const d of deaths) { const dd = deadAt(d.t), h = dd.filter((x) => x.role === 'healer').length, tk = dd.filter((x) => x.role === 'tank').length;
+    if ((h >= 2 || tk >= 2) && brezLeft(d.t) === 0 && !rez.some((x) => x.t > d.t && x.t < d.t + 20)) { PN.push({ t: d.t, why: tk >= 2 ? 'both tanks down with no battle res' : 'two healers down with no battle res' }); break; } }
+  PN.sort((a, b) => a.t - b.t);
+  /* (a wave or a mass mind control that set off the wipe call is the moment, not the call a second later) */ { const c = PN.find((x) => x.why === 'the wipe call'), wv = PN.find((x) => x.wave || x.mc); if (c && wv && PN[0] === c && wv.t >= c.t - 0.01 && wv.t <= c.t + 1.5) { PN.splice(PN.indexOf(wv), 1); PN.unshift(wv); } }
+  const pnr = PN[0] || { t: dur, why: 'the end of the pull' };
+  // ---- a reset: a purple orb set off when the pull was already lost, with no missed kick to explain it ----
+  let reset = null; const ow = PN.find((p) => p.wave && p.wave.filter((d) => d.ab === 'Venom Rupture').length >= p.wave.length * 0.6);
+  if (ow && !kickBefore(ow.t)) { const lost = wsum(deadAt(ow.t - 0.5)); if (lost >= 5 || (opts.cut != null && ow.t > opts.cut + 2)) reset = { t: ow.t, n: ow.wave.length, lost }; }
+  const P = reset ? (PN.filter((p) => p.t < reset.t && p !== ow)[0] || { t: reset.t - 0.6, why: 'too many down' }) : pnr;
+  const pre = deaths.filter((d) => d.t <= P.t + 0.5 && !(P.wave && P.wave.includes(d))), trig = P.wave ? P.wave : [];
+  const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1]); };
+  // ---- back through the chain ----
+  const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt });
+  let cat = 'dead', sure = 0.35;
+  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked at ' + T(k.t); const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat)), pl0 = (x) => x + (l.length === 1 ? ' died' : ' died');
+    return 'Wail of Terror wasn\'t kicked at ' + T(k.t) + (ran.length >= l.length / 2 ? ', and feared players ran into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) + ' (' + pl0(l.length) + ')' : ', and ' + pl0(l.length) + ' while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
+  if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12).pop();
+    if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked at ' + T(k.t) + ', so feared players couldn\'t watch their ghosts'); }
+    else if (p2Long) { cat = 'dps'; sure = 0.55; say(P.t, 'dps', 'phase 2 ran long' + (/\(([\d:]+)\)/.test(String(cellTxtRc(p2Row[1]))) ? ' (' + /\(([\d:]+)\)/.exec(String(cellTxtRc(p2Row[1])))[1] + ')' : '') + ', so Malacrass cast another Dreadmarch'); }
+    else { cat = 'mc'; sure = 0.6; }
+    say(P.t, 'mc', P.mc.length + ' ghosts reached their players at ' + T(P.t) + ', and the raid was mind controlled'); }
+  else if (P.wave) {
+    const top = tally(trig)[0], share = top[1] / wsum(trig), t0 = trig[0].t, wcat = rcCat(trig[0].ab) === 'guil' || trig.some((d) => d.cat === 'guil') && tally(trig.map((d) => Object.assign({}, d, { via: null })))[0][0] === 'guil' ? 'guil' : top[0];
+    if (wcat === 'guil') { const sk = evIn('soak', t0 - 15, t0 + 1).pop(), gone = pre.filter((d) => d.t >= t0 - 40 && d.cat !== 'guil'), alive = n - deadAt(t0 - 0.5).length, gk = gone.filter((d) => d.via);
+      const kg = gone.filter((d) => d.via && d.t >= (sk ? sk.t : t0) - 20), thin = kg.length > 0 || (alive < 15 && gone.length >= 3), ga = (trig.find((d) => d.cat === 'guil') || trig[0]).ab;
+      if (thin) { const gt = tally(gone)[0][0]; cat = gt; sure = 0.65;
+        if (kg.length) { cat = 'kick'; sure = 0.7; say(kg[0].via.t, 'kick', kickLine(kg[0].via, kg)); } else if (gt === 'kick') say(gk[0].via.t, 'kick', kickLine(gk[0].via, gk)); else say(gone[0].t, gt, rcAnd([...new Set(gone.map((d) => d.who))].slice(0, 3)) + (gone.length > 3 ? ' and ' + (gone.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' before the soak'); }
+      else { cat = 'guil'; sure = share >= 0.7 ? 0.9 : 0.7; }
+      if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak, and ' + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' at ' + T(t0));
+      else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length + ' at ' + T(t0)); } }
+    else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
+    else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
+      say(cl ? cl.t : t0, 'orbs', 'a purple orb touched other orbs' + (cl ? ' after Toxic Deluge at ' + T(cl.t) : '')); say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length + ' at ' + T(t0)); }
+    else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time, and it killed ' + trig.filter((d) => d.cat === 'shield').length + ' at ' + T(t0)); }
+    else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; say(t0, wcat, rcAnd([...new Set(trig.map((d) => d.who))].slice(0, 3)) + (trig.length > 3 ? ' and ' + (trig.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' at ' + T(t0)); } }
+  else if (pre.length <= 6 && P.why === 'the end of the pull') {
+    // (a pull that ended with few dead: the raid lead called it)
+    cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long, so the raid lead called the wipe at ' + T(P.t) : 'the raid lead called the wipe at ' + T(P.t) + ' with ' + pre.length + ' dead'); }
+  else {
+    // (worn down: the mechanic behind most of the deaths that got the raid here)
+    const tl = tally(pre), tot = wsum(pre), top = tl[0] || ['dead', 0];
+    if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; } else { cat = 'dead'; sure = 0.35; }
+    if (cat === 'dps') cat = pushBad ? 'push' : 'dps';
+    const l = pre.filter((d) => catOf(d) === cat || (cat === 'push' && d.cat === 'dps'));
+    if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
+    else if (cat !== 'dead') say(l.length ? l[0].t : P.t, cat, (cat === 'dps' ? (p2Long ? 'phase 2 ran long, and ' : '') + 'Dreadful Presence wore the raid down' : cat === 'push' ? 'phase 2 started badly, and Dreadful Presence wore the raid down' : rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (l.length > 3 ? ' and ' + (l.length - 3) + ' more' : '') + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2))) + ' (' + l.length + ' of ' + pre.length + ' deaths)');
+    say(P.t, 'dead', (cat === 'dead' && tl.length ? 'deaths added up from ' + rcAnd(tl.slice(0, 3).map(([c]) => RC_CAT[c].nm.replace(/ \(.*$/, ''))) + ', and ' : '') + (P.why === 'the wipe call' ? 'the wipe was called at ' : 'the raid had too few left at ') + T(P.t)); }
+  if (cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, P.t + 20)[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
+    if (sk && ex.length) { say(sk.t, 'guil', 'the Guillotine soak at ' + T(sk.t) + ' had ' + sk.n + ' of 5'); say(ex[0].t, 'guil', ex[0].ab + ' killed ' + ex.length + ' at ' + T(ex[0].t)); } }
+  // ---- what else added up before it, biggest first ----
+  const also = new Map(), addA = (c, w, txt) => { if (c === cat || c === 'reset') return; const y = also.get(c) || { cat: c, w: 0, txt: [] }; y.w += w; if (txt && y.txt.length < 2 && !y.txt.includes(txt)) y.txt.push(txt); also.set(c, y); };
+  for (const d of deaths.filter((x) => x.t < P.t - 0.5 && !trig.includes(x))) addA(catOf(d), w8(d) * 2, d.who + ' died to ' + d.ab + ' at ' + T(d.t));
+  for (const e of ev.filter((x) => x.t != null && x.t < P.t - 0.5)) { const c = { kick: 'kick', soak: 'guil', collide: 'orbs', ghost: 'ghosts', reach: 'mc', fall: 'mc', shield: 'shield' }[e.k];
+    addA(c, 1, { kick: 'Wail of Terror got off', soak: 'a Guillotine soak had ' + e.n + ' of 5', collide: 'orbs collided', ghost: 'ghosts touched', reach: 'a ghost reached its player', fall: 'a mind controlled player fell', shield: 'the shield broke late' }[e.k] + ' at ' + T(e.t)); }
+  if (p2Long && cat !== 'dps' && cat !== 'push') addA('dps', 1, 'phase 2 ran long');
+  const alsoL = [...also.values()].filter((a) => a.w >= 2).sort((a, b) => b.w - a.w).slice(0, 3);
+  const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, pnr: { t: pnr.t, why: pnr.why }, reset, line, chain,
+    also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
+}
+const api = { rootCause, RC_CAT, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -22683,26 +22801,26 @@ const NICK = {
   'Ravage (Tanks swap)': 'Ravage (Tank Swap)', 'Mutilate (Soak in two groups)': 'Mutilate (Group Soak)', 'Tempest (Dodge the tornadoes)': 'Tempest (Tornadoes)', 'Venomous Surge (Save cysts for the winds)': 'Venomous Surge (Cysts)',
   'Intermission (A cyst for each wind)': 'Intermission (Winds)', 'Raging Crosswinds (Collide in the air)': 'Raging Crosswinds (Collisions)', "Serpent's Fury (Stack and pop it)": "Serpent's Fury (Stack)", 'Virulence (Spread out)': 'Virulence (Spread)',
   // Nymrissa Wavecaller
-  'Frost Orbs (Soak every orb)': 'Frost Orbs (Soaks)', 'Frost Burst (Soak one at a time)': 'Frost Burst (Soaks)', 'Murloc sets (Kill them before the bubble)': 'Murloc Sets (Adds)', 'Bubblefin Frostscales (Kill them first)': 'Bubblefin Frostscales (Big Adds)',
-  'Water Jet (Swap every jet)': 'Water Jet (Tank Swap)', 'Abyssal Rain (Cover it with cooldowns)': 'Abyssal Rain (Raid Cooldowns)', 'Whirlpools and Pop! (Find the gap, stay dry)': 'Whirlpools and Pop! (Dodge)',
+  'Frost Orbs (Soak every orb)': 'Frost Orbs (Soaks)', 'Frost Burst (Soak one at a time)': 'Frost Burst (Soak Order)', 'Murloc sets (Kill them before the bubble)': 'Murloc Sets (Adds)', 'Bubblefin Frostscales (Kill them first)': 'Bubblefin Frostscales (Big Adds)',
+  'Water Jet (Swap every jet)': 'Water Jet (Tank Swap)', 'Abyssal Rain (Cover it with cooldowns)': 'Abyssal Rain (Raid Cooldowns)', 'Whirlpools and Pop! (Find the gap, stay dry)': 'Whirlpools and Pop! (Dodges)',
   // Kith'ix
   'Voidswarm (Kill before the intermission)': 'Voidswarm (Adds)', 'Bomber Beetles (Pop one at a time)': 'Bomber Beetles (Bombs)', 'Extinguish (Grab a mote)': 'Extinguish (Motes)', 'Overwhelming Fear (Dispel one at a time)': 'Overwhelming Fear (Dispel)',
-  'Dark Devastation (Tank swap)': 'Dark Devastation (Tank Swap)', 'Abyssal Grasp (Heal it off)': 'Abyssal Grasp (Heal Absorb)', 'Eclipse Fragments (Catch them in turns)': 'Eclipse Fragments (Catches)', 'Null Gates (Dodge the shards)': 'Null Gates (Shards)',
-  'Last Light (Kill before the 8th Eclipse)': 'Last Light (Burn)',
+  'Dark Devastation (Tank swap)': 'Dark Devastation (Tank Swap)', 'Abyssal Grasp (Heal it off)': 'Abyssal Grasp (Heal Absorb)', 'Eclipse Fragments (Catch them in turns)': 'Eclipse Fragments (Intercepts)', 'Null Gates (Dodge the shards)': 'Null Gates (Shards)',
+  'Last Light (Kill before the 8th Eclipse)': 'Last Light (DPS Check)',
   // Nek'zali the Soulcoiler
   'Restless Amani (Kill before the well)': 'Restless Amani (Adds)', 'Soulcoil Ignition (Dodge the circles)': 'Soulcoil Ignition (Circles)', "Soulcoiler's Curse (Kicks)": "Soulcoiler's Curse (Kick)", 'Grasping Depths (Kill the Echo)': 'Grasping Depths (Echo)',
-  'Essence Rend (Dispel at the side)': 'Essence Rend (Dispel)', 'Possession Barrage (Tank steps away)': 'Possession Barrage (Tank Run)', 'Intermission (Soak the Pyres)': 'Intermission (Pyre Soaks)', 'Invoke (Stop casting)': 'Invoke (No Casting)',
+  'Essence Rend (Dispel at the side)': 'Essence Rend (Dispel)', 'Possession Barrage (Tank steps away)': 'Possession Barrage (Tank Kite)', 'Intermission (Soak the Pyres)': 'Intermission (Pyre Soaks)', 'Invoke (Stop casting)': 'Invoke (Cast Lockout)', "Energy (Don't feed her)": 'Energy (Energy Feed)',
   // Vashnik the Malignant
   'Imbibe (Fountains drained)': 'Imbibe (Fountains)', 'Living Venoms (Kill one at a time)': 'Living Venoms (Adds)', 'Malignant Totems (Clear before the next Imbibe)': 'Malignant Totems (Cleanup)', 'Plague Froth (Aim the lines at totems)': 'Plague Froth (Lines)',
   'Catalytic Bile (Soak every bile)': 'Catalytic Bile (Soaks)', 'Adaptive Infection (Dispel one at a time)': 'Adaptive Infection (Dispel)', 'Dripping Fangs (Tanks swap)': 'Dripping Fangs (Tank Swap)',
   // The Lost Explorers
   'Boxes (Pop early)': 'Boxes (Crates)', 'United Defense (Keep the bosses apart)': 'United Defense (Boss Spacing)', 'Final Ascension (Feed a fish in time)': 'Final Ascension (Fish)', 'Frostfire Volley (Swap patches)': 'Frostfire Volley (Patches)',
-  'Blink Nova (Target runs out)': 'Blink Nova (Run Out)', 'Mighty Thud (Soak every leap)': 'Mighty Thud (Leap Soak)', 'Explosive Surprise (Bounce over the wave)': 'Explosive Surprise (Bounce)', 'Tank stacks (Swap before too many)': 'Tank Stacks (Tank Swap)',
+  'Blink Nova (Target runs out)': 'Blink Nova (Bait)', 'Mighty Thud (Soak every leap)': 'Mighty Thud (Leap Soak)', 'Explosive Surprise (Bounce over the wave)': 'Explosive Surprise (Wave Jump)', 'Tank stacks (Swap before too many)': 'Tank Stacks (Tank Swap)',
   // Ula'tek (both the check's own titles and the site's renames)
   'Eggs (No Vipers)': 'Eggs (Hatching)', "Eggs (Don't let them hatch)": 'Eggs (Hatching)', 'Spectral Coils (Soak circles)': 'Spectral Coils (Soaks)', 'Spectral Coils (Soak the circles)': 'Spectral Coils (Soaks)',
-  'Caustic Waves (Dodge waves)': 'Caustic Waves (Dodge)', 'Caustic Waves (Dodge the waves)': 'Caustic Waves (Dodge)', 'Tanks (Tail tanking)': 'Tanks (Tail Tank)', 'Tanks (One on her, one on the tail)': 'Tanks (Tail Tank)',
+  'Caustic Waves (Dodge waves)': 'Caustic Waves (Dodges)', 'Caustic Waves (Dodge the waves)': 'Caustic Waves (Dodges)', 'Tanks (Tail tanking)': 'Tanks (Tail Tank)', 'Tanks (One on her, one on the tail)': 'Tanks (Tail Tank)',
   'Toxic Incubation (Beam)': 'Toxic Incubation (Beam)', 'Toxic Incubation (Off-tank soaks the beam)': 'Toxic Incubation (Beam)', 'Blightscale Wretch (Bubble)': 'Blightscale Wretch (Bubble)', 'Blightscale Wretch (Stand in its bubble)': 'Blightscale Wretch (Bubble)',
-  'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (Heart Burn)', 'Rage of the Shackled (Burst the heart)': 'Rage of the Shackled (Heart Burn)', 'Grasping Fangs (Tether breaks)': 'Grasping Fangs (Tether Breaks)',
+  'Rage of the Shackled (Damage windows)': 'Rage of the Shackled (DPS Check)', 'Rage of the Shackled (Burst the heart)': 'Rage of the Shackled (DPS Check)', 'Grasping Fangs (Tether breaks)': 'Grasping Fangs (Tether Breaks)',
   'Wardens and Doomscales (Big adds)': 'Wardens and Doomscales (Big Adds)', 'Wardens and Doomscales (Kill fast)': 'Wardens and Doomscales (Big Adds)', "Serpent's Bite (Soak)": "Serpent's Bite (Soak)", "Serpent's Bite (Soak with 3)": "Serpent's Bite (Soak)",
   'Shriekers and Rawlings (Adds)': 'Shriekers and Rawlings (Adds)', 'Shriekers and Rawlings (Kill the adds)': 'Shriekers and Rawlings (Adds)', 'Mephitic Thrash (Get out of the slam)': 'Mephitic Thrash (Slam)',
   'Doomscale Warden (Kill it on the eggs)': 'Doomscale Warden (Big Add)', 'Blightscale Rawling (Kill the adds)': 'Blightscale Rawling (Adds)',
@@ -25940,7 +26058,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-05', h: [{ t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ['Every pull shows one boss health number now, the whole fight\'s, said the same way everywhere: "boss at 33%". The banner, the pull picker, the coach and the Companion app agree.', 'The other nine bosses\' mechanics have short noun nicknames, the same as the Companion app\'s, like Extinguish (Motes) and Ravage (Tank Swap).', 'Some coach lines read as full sentences now, like "Zaffia\'s ghost reached them at 3:39, so they were mind controlled again."'], f: ['Kith\'ix: Extinguish showed green while it listed players without a mote. A player without a mote is amber now, and a death is red.', 'Venomfang, Avoidable damage, Coalesced Venom and the tank frontals could show green or red when their rows said otherwise. Each line\'s colour matches what it lists now.', 'Sszorak: the Ravage line said "died died".'] },
+  { d: '2026-11-05', h: [{ t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ['Every pull shows one boss health number now, the whole fight\'s, said the same way everywhere: "boss at 33%". The banner, the pull picker, the coach and the Companion app agree.', 'The other nine bosses\' mechanics have short noun nicknames, the same as the Companion app\'s, like Extinguish (Motes) and Ravage (Tank Swap).', 'Some coach lines read as full sentences now, like "Zaffia\'s ghost reached them at 3:39, so they were mind controlled again."'], f: ['Kith\'ix: Extinguish showed green while it listed players without a mote. A player without a mote is amber now, and a death is red.', 'Venomfang, Avoidable damage, Coalesced Venom and the tank frontals could show green or red when their rows said otherwise. Each line\'s colour matches what it lists now.', 'Sszorak: the Ravage line said "died died".'] },
   { d: '2026-11-04', h: [{ t: 'All pulls shows what wiped you most, ranked', d: 'Debriefing on All pulls now opens with the three things that wiped you most, biggest first, with the pulls they ended. Everything else follows, ranked by how many pulls it hit, with a tag when it got worse or better.' }, { t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     "Debrief Companion: a raid reminder pops up on your PC 30 minutes before your team's raid. Click it for tonight's plan. Change it in Settings › Pop-up › Reminders.",
     "Debrief Companion: your recap key rests in combat, so a press mid-fight goes to WoW. It works again a few seconds after the fighting stops.",
@@ -27473,8 +27591,41 @@ function noteFit(text, rep) {
 const noteJobs = (res) => { if (!res || res.error) return null; const cds = (res.cds || []).filter((x) => /^(on time|late|early|missed)$/.test(x.status));
   const ok = cds.filter((x) => x.status === 'on time').length, bad = (res.mistakes || []).filter((m) => m.severity !== 'Low').length; return { ok, bad, score: ok - bad }; };
 const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is saved, added or removed)
+// ---------- the raid note each pull had, from the game (Nov 5, the studio's auto-note-brief.md; Flex: "ok make it happen asap!") ----------
+// The addon copies the note NSRT or MRT has loaded at every pull; the Debrief PC app reads it (GET /log/notes) and Debriefing uses it by itself,
+// so nobody pastes a note. Until WoW saves the addon's copy (/reload, logout or quit), NSRT's or MRT's own saved note stands in for that night's
+// pulls of its boss. A note you pick or add yourself still wins. A shared night carries its notes with it.
+const GN = { data: null, at: 0, sig: '' };
+async function gnLoad() {
+  if (!FH.dir || FH.dir.kind !== 'helper' || Date.now() - GN.at < 60000) return; GN.at = Date.now();
+  try { const r = await fetch(HELPER_BASE + '/log/notes', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (!j || !Array.isArray(j.pulls)) return;
+    const sig = j.pulls.length + '|' + Object.keys(j.texts || {}).join(',') + '|' + ((j.fallback && j.fallback.at) || ''); if (sig === GN.sig) return;
+    GN.data = j; GN.sig = sig; if (S.rep) { try { renderMain(); } catch (e) { /* drawn next time */ } } } catch (e) { /* an older Debrief app: no notes */ }
+}
+function gameNoteFor(it) {
+  if (!it) return null;
+  if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
+  const g = GN.data; if (!g) return null;
+  const t = it.wallMs || 0, t1 = it.startMs || 0, same = (x) => (x.e != null ? +x.e === +it.id : x.b === it.boss) && (x.d == null || it.diffId == null || +x.d === +it.diffId);
+  // (the pull's own copy: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
+  let best = null;
+  for (const x of g.pulls || []) { if (!same(x)) continue; const dt = t ? Math.abs(x.t - t) : Math.min(...[...Array(29)].map((_, k) => Math.abs(x.t - t1 - (k - 14) * 3600e3)));
+    if (dt <= 120000 && (!best || dt < best.dt)) best = { x, dt }; }
+  if (best && g.texts && g.texts[best.x.h]) return { text: g.texts[best.x.h], s: best.x.s || 'NSRT', n: best.x.n || '', h: String(best.x.h), exact: true };
+  // (the stand-in: the note NSRT or MRT saved last, for its own boss and difficulty, on the night it was saved)
+  const fb = g.fallback, tt = t || t1; if (!fb || !fb.text || !tt || tt > fb.at + 60000 || fb.at - tt > 18 * 3600e3) return null;
+  const head = String(fb.text).split('\n').find((l) => /EncounterID:/i.test(l)) || '', enc = (head.match(/EncounterID:\s*(\d+)/i) || [])[1], dif = (head.match(/Difficulty:\s*([^;\s]+)/i) || [])[1];
+  if (enc && +enc !== +it.id) return null;
+  if (dif && it.diff && !new RegExp('^' + String(it.diff).split(' ')[0], 'i').test(dif) && !(+dif === +it.diffId)) return null;
+  return { text: fb.text, s: fb.s || 'NSRT', n: fb.n || '', h: 'fb' + (fb.at || ''), exact: false };
+}
 function noteForRep(rep) {
-  const o = notesOf(rep.item.boss, rep.item); if (!o.list.length) return null;
+  const o = notesOf(rep.item.boss, rep.item);
+  // (the game's note, unless you picked a note for this pull or every pull, or added one after this pull: yours wins)
+  { const mine0 = (o.byPull || {})[pullKey(rep.item)], t0 = rep.item.wallMs || rep.item.startMs || 0;
+    if (!(mine0 && o.list.some((n) => n.id === mine0)) && !(o.pick !== 'auto' && o.list.some((n) => n.id === o.pick)) && !o.list.some((n) => !n.example && (n.saved || 0) > t0)) {
+      const gn = gameNoteFor(rep.item); if (gn) { rep.noteMiss = null; return { id: 'game:' + gn.h, name: gn.n || gn.s + ' note', text: gn.text, saved: 0, auto: false, how: 'game', game: gn, pull: rep.item.pull }; } } }
+  if (!o.list.length) return null;
   // (the log's one note, used when it's a perfect match: every player it names was in this pull, and it's for this boss; the roster is the log's own)
   const mine = (o.byPull || {})[pullKey(rep.item)], one = mine && o.list.find((n) => n.id === mine); if (one) { rep.noteMiss = null; return { ...one, auto: false, how: 'pull' }; }
   const ck = o.pick + '#' + o.list.map((n) => n.id + ':' + (n.saved || 0)).join('|'), had = NFIT.get(rep); if (had && had.k === ck) { rep.noteMiss = had.miss; return had.v; }
@@ -27506,6 +27657,7 @@ function noteForRep(rep) {
 // (why a pull uses its note, in one plain sentence)
 function noteWhy(u) {
   if (!u) return '';
+  if (u.how === 'game') return u.game.exact ? 'From the game: the ' + u.game.s + ' note loaded for this pull.' : 'From the game: ' + u.game.s + "'s last saved note. WoW saves it when you reload or log out."; /* (the studio's wording, Nov 5) */
   if (u.how === 'log') return 'Saved with this log.';
   if (u.how === 'pull') return 'You picked it for this pull.';
   if (u.how === 'all') return 'You set it for every pull.';
@@ -28234,7 +28386,7 @@ function ndzTools(r) { const u0 = noteForRep(r), b = r.item.boss, B = (attr, l) 
   if (NDZ_NEW()) return ndzPlanBoard(r, S.ndzPick || b); /* (Assignments is the plan only, version A: a boss's note, never the open log) */
   if (!u0) return NDZ_NEW() && r.noteMiss && notesOf(b).list.some((n) => !n.example) ? ndzBoard(r, null) : ''; /* (notes for this boss, none fitting this pull: Get started still leads) */ if (NDZ_NEW()) return ndzBoard(r, u0); /* (the makeover, test copy) */
   return '<div class="ndz-tools">' + ndzHead('Note tools') + '<div class="ndz-cards">' +
-    '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + B('data-ndzdel="1"', 'Delete note') + '</div></div>' +
+    '<div class="ndz-card ndz-c1"><div class="ndz-ch">Your note</div><div class="ndz-cs"><b>' + esc(u0.name) + '</b>' + (u0.example ? ' (an example)' : '') + '. ' + esc(noteWhy(u0) || 'Checked on this pull.') + '</div><div class="ndz-cb">' + B('data-dbncopy="1"', 'Copy for the game') + B('data-nnew="1"', 'Add another note') + (u0.how === 'game' ? '' : B('data-ndzdel="1"', 'Delete note')) + '</div></div>' +
     '<div class="ndz-card ndz-c2"><div class="ndz-ch">Make a note</div><div class="ndz-cs">From what your raid did' + (NDZ_SUG.has(b) ? ', or suggested by class' : '') + '.</div><div class="ndz-cb">' + (NDZ_FILL[b] ? B('data-ndz="1"', 'Draft from your pulls') : '<span class="sub">Not ready for this boss yet.</span>') + (NDZ_SUG.has(b) ? B('data-ndzsg="1"', 'Suggest assignments') : '') + B('data-ndzplan="1"', 'Plan with a roster') + '</div></div>' +
     '<div class="ndz-card ndz-c3"><div class="ndz-ch">Change it</div><div class="ndz-cs">Someone out tonight? Swap them in one go.</div><div class="ndz-cb">' + B('data-ndzsw="1"', 'Swap players') + '</div></div>' +
     '</div>' + ndzGapsH(r, u0) + '</div>'; }
@@ -34197,7 +34349,7 @@ function assign(only, capture) { // (only: just the note, for the all-pulls NSRT
     const difN = { 14: 'Normal', 15: 'Heroic', 16: 'Mythic' }[hdN.difficulty] || hdN.difficulty || '', linesN = a && a.note ? a.note.lines.filter((l) => l.words && l.words.length).length : 0;
     const chipsN = [difN ? esc(capS(String(difN).toLowerCase())) : '', a && a.note && a.note.reminders.length ? plural(a.note.reminders.length, 'cooldown reminder') : '', linesN ? plural(linesN, 'assignment line') : ''].filter(Boolean);
     top += '<div class="panel nlib nl-cur' + (ex ? ' ex' : '') + '"><div class="nl-h"><span class="nb-t">' + icoWh('inv_inscription_scroll') + '<span class="nl-tt"><span class="nl-k">' + (ex ? 'Example note' : 'Your note') + '</span><b>' + esc(ex ? 'Made from this pull' : used.name) + '</b></span>' + chipsN.map((x) => '<span class="nl-chip">' + x + '</span>').join('') + '</span>' +
-      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nnew="1">+ Add a note</button><button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>') + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
+      '<span class="nl-hb">' + (ex ? '<button class="btn primary sm" id="noteExReal">Add your own note</button><button class="btn sm" id="noteExDel">Remove the example</button>' : '<button class="btn sm" type="button" data-nnew="1">+ Add a note</button>' + (used.how === 'game' ? '' : '<button class="btn sm" type="button" data-ndel="' + esc(used.id) + '">' + NOTE_TRASH + ' Delete note</button>')) + '</span></div>' + /* (your rule, Oct 19: a note is glued to its log; no editing or changing it, only deleting) */
       (why || back ? '<div class="nl-why sub">' + why + back + '</div>' : '') + '</div>';
     top += rosterOffer(r, used);
     if (S.noteMade && S.noteMade.boss === boss) top += noteMadeBox(S.noteMade);
@@ -34987,6 +35139,10 @@ function cutInfo(r) {
   return ds.length >= n ? { t: ds[n - 1].t, n, who: ds[n - 1].player } : null;
 }
 const cutT = (r) => { const c = cutInfo(r); return c ? c.t : Infinity; };
+// (Nov 5, analysis step 2: the root cause of a Coiled Altar wipe, from the chain of events (E.rootCause, at the site's own wipe call): Debriefing's
+// Why we wiped leads with it, and All pulls can rank by it. { cat, name, line, also: [{ name, txt }], sure, t, why, reset } or null)
+const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; if (r._root !== undefined) return r._root; let o = null; try { const c = cutInfo(r); o = E.rootCause(r, { cut: c && c.auto ? c.t : null }); } catch (e) { o = null; } return (r._root = o); };
+try { window.wipeRoot = () => wipeRoot(S.rep); window.wipeRootOf = wipeRoot; } catch (e) { /* (no window) */ }
 const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
 /* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
    E.strictView re-grades a reading's mistakes from its Medium list, so switching needs no re-read; Mythic raid bosses only) */
@@ -35206,11 +35362,11 @@ function dbnBar(NJ, r) {
   /* (Oct 24, your OK for a test version: the note box is one line. What the note checks moved into the name's tooltip; the switch between
      the mechanics and each raider's jobs sits here, so the page has one By player / By mechanic switch (the checks' one)) */
   const nl = plural(((a.note && a.note.lines) || []).length + ((a.note && a.note.reminders) || []).length, 'line') + ' · checks ' + NJ.checkedL, pv = S.dbView === 'player';
-  return '<div class="dbn-bar dbn-one"><span class="dbn-t" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + esc(nl)) + '">' + emoIc('📜') + ' <span class="dbn-yn">Your note:</span> <b>' + esc(nm) + '</b></span>' +
+  return '<div class="dbn-bar dbn-one"><span class="dbn-t" data-tt="' + esc('<b>' + esc(nm) + '</b><br>' + esc(nl)) + '">' + emoIc('📜') + ' <span class="dbn-yn">Your note:</span> <b>' + esc(nm) + '</b></span>' + (NJ.used && NJ.used.how === 'game' ? '<span class="sub dbn-src">' + esc(noteWhy(NJ.used)) + '</span>' : '') + /* (the game's note, said quietly (Nov 5)) */
     (NDZ_ON() && !ASG_OFF() ? ndzPlanHere(NJ, r) : (gone.length ? '<span class="dbn-gone">' + plural(gone.length, 'name') + ' in the note ' + (gone.length === 1 ? 'isn\'t' : 'aren\'t') + ' in this pull: ' + esc(gone.slice(0, 5).join(', ')) + (gone.length > 5 ? '…' : '') + '</span>' : '')) +
     '<button type="button" class="btn sm dbn-vw' + (pv ? ' on' : '') + '" data-dbv="' + (pv ? 'mech' : 'player') + '" aria-pressed="' + pv + '" data-tt="' + esc(pv ? '<b>Back to the mechanics</b><br>Your note\'s jobs back on the mechanic they\'re about, phase by phase.' : '<b>Each raider\'s jobs</b><br>Your note\'s jobs listed per raider, missed first, in place of the phases.') + '">' + (pv ? '← Back to the mechanics' : 'Each raider\'s jobs') + '</button>' +
     '<button type="button" class="btn sm" data-dbncopy="1">Copy for the game</button>' + (ASG_OFF() ? '' : '<button type="button" class="btn sm" data-dbnote="1">' + (NDZ_ON() ? 'Open the plan' : 'See the note') + '</button>') +
-    (NJ.used && !NJ.used.example ? '<button type="button" class="btn sm dbn-rm" data-ndzdel="1" data-tt="' + esc('<b>Remove note</b><br>Takes this note off ' + esc(r.item.boss) + '. Click twice to be sure.') + '">Remove note</button>' : '') + '</div>'; } /* (Remove note (the user, Oct 29)) */
+    (NJ.used && !NJ.used.example && NJ.used.how !== 'game' ? '<button type="button" class="btn sm dbn-rm" data-ndzdel="1" data-tt="' + esc('<b>Remove note</b><br>Takes this note off ' + esc(r.item.boss) + '. Click twice to be sure.') + '">Remove note</button>' : '') + '</div>'; } /* (Remove note (the user, Oct 29)) */
 // (Note jobs, the fifth number: the jobs that came up this pull, and how many were done)
 function dbnNum(NJ, num) { const j = NJ.secs.filter((o) => o.st !== 'na'), ok = j.filter((o) => o.st === 'ok').length, bad = j.filter((o) => o.st === 'bad').length, warn = j.length - ok - bad;
   return num('Note jobs', j.length ? '<b>' + ok + '</b><em> of ' + j.length + ' done</em>' : '<b>–</b>', j.length ? (bad || warn ? [bad ? bad + ' missed' : '', warn ? warn + ' with slips' : ''].filter(Boolean).join(' · ') : 'every job done') : 'none came up this pull').replace('class="dbr-n"', 'class="dbr-n dbn-n"'); }
@@ -55143,7 +55299,7 @@ async function fileTick() {
     const nl = await newestLog(FH.dir);
     if (!nl) { if ($('#fhMsg')) $('#fhMsg').textContent = 'No WoWCombatLog file in that folder yet. Type /combatlog in game (with Advanced Combat Logging on).'; return; }
     if (nl.name !== FH.name) { FH.name = nl.name; FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); } // a new log file: start over on it
-    FH.hd = nl.hd; S.file = nl.f;
+    FH.hd = nl.hd; S.file = nl.f; if (FH.dir && FH.dir.kind === 'helper') gnLoad(); /* (the game's notes (Nov 5)) */
     // (a log can shrink only if WoW started it over: then read it from the start)
     if (nl.f.size < FH.size) { FH.ix = E.liveIndexer({ keys: true }); FH.size = 0; LIVE.seen.clear(); CACHE.clear(); S.index = { bosses: [], runs: [] }; renderList(); }
     if (nl.f.size > FH.size) {
@@ -55479,9 +55635,9 @@ async function shrSend(step) {
     v.sent[shrIdent(b)] = { n, parts }; v.n = n + 1; shrKeep(v); } /* (kept after every pull, so a second press carries on where it stopped) */
   step(todo.length, todo.length, null);
   const prim = (b) => { const o = {}; for (const [k, x] of Object.entries(b)) if (['number', 'string', 'boolean'].includes(typeof x) && !['startByte', 'endByte', 'skip'].includes(k)) o[k] = x; return o; };
-  const sent = list.filter((b) => v.sent[shrIdent(b)]), bossN = [...new Set(sent.map((b) => b.boss + ' ' + b.diff))];
+  const sent = list.filter((b) => v.sent[shrIdent(b)]), bossN = [...new Set(sent.map((b) => b.boss + ' ' + b.diff))], gtexts = {}; /* (each pull's note from the game, its text once (Nov 5)) */
   const meta = { v: 1, at: Date.now(), by: (meOf() || {}).name || '', title: shrWhen(sent[0].startMs) + ' · ' + (bossN.length > 2 ? bossN.length + ' bosses' : bossN.join(', ')),
-    items: sent.map((b) => ({ ...prim(b), n: v.sent[shrIdent(b)].n, parts: v.sent[shrIdent(b)].parts })) };
+    items: sent.map((b) => { const g = gameNoteFor(b); if (g) gtexts[g.h] = g.text; return { ...prim(b), n: v.sent[shrIdent(b)].n, parts: v.sent[shrIdent(b)].parts, ...(g ? { gn: g.h, gns: g.s, gnn: g.n, gnx: g.exact ? 1 : 0 } : {}) }; }), gtexts };
   await put('/api/night?id=' + v.id, JSON.stringify(meta));
   v.done = v.n; shrKeep(v); return v.id;
 }
@@ -55525,7 +55681,7 @@ async function openShared(id, o) {
   if (!j.items.length) throw new Error('That shared night has no pulls.');
   if (FH.dir) { FH.dir = null; if (LIVE.on) setLive(false); }
   S.file = null; S.wclCreds = null; S.wclCode = null; CACHE.clear();
-  S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' };
+  S.shr = { id, at: j.at, by: j.by || '', title: j.title || '' }; S.shrNotes = j.gtexts || null;
   S.index = { bosses: j.items.filter((x) => x.kind !== 'run').map((x) => ({ ...x, run: null, shr: { id, n: x.n, parts: x.parts } })), runs: [],
     keys: mpLocalKeys(j.items.filter((x) => x.kind === 'run').map((x) => ({ ...x, shr: { id, n: x.n, parts: x.parts } }))) }; /* (a shared night's Mythic+ keys keep their tab (Nov 1)) */
   if (S.index.keys.length && (!S.index.bosses.length || o.tab === 'mplus')) { if (!S.index.bosses.length) $('.brand p').textContent = 'Shared night' + (j.title ? ': ' + j.title : ''); if (!o.quiet) { const want = o.pull != null ? S.index.keys.find((k) => k.shr.n === o.pull) : null; mpOpen(want || S.index.keys[S.index.keys.length - 1]); } return; }
@@ -72001,9 +72157,13 @@ function scan() { r423soon(); /* round 373 heart card */ [].forEach.call(documen
     if (end && hp) { var es = sOf(end); if (es) es.textContent = 'Boss at ' + Math.round(+hp) + '%.'; }
     var ms = []; kept.forEach(function (r) { var n = T(r.querySelector(':scope > b')); if (!/^death$/i.test(n) && lvOf(r) >= 4 && ms.indexOf(n) < 0) ms.push(n); }); if (!ms.length) kept.forEach(function (r) { var n = T(r.querySelector(':scope > b')); if (!/^death$/i.test(n) && ms.indexOf(n) < 0) ms.push(n); });
     ms = ms.slice(0, 2).map(function (n) { return /^phase changes$/i.test(n) ? 'a slow push' : n; }); var ph = phw || ((end && T(end.querySelector('.dbt-chp'))) || '');
-    if (ms.length) h2.innerHTML = 'We wiped' + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') + ': <span class="r208-m">' + (ms.length > 1 ? ms[0] + ' and ' + ms[1] : ms[0]).replace(/[<>]/g, '') + '</span>.';
+    /* (Nov 5, analysis step 2: the root cause leads, as one chain of what happened, then what else added up; the old headline when there's none) */
+    var RT = null; try { RT = window.wipeRoot ? window.wipeRoot() : null; } catch (er) { RT = null; } var eR = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    if (RT && RT.line && !w.querySelector('.wrt-line')) { h2.innerHTML = 'Root cause: <span class="r208-m">' + eR(RT.name) + '</span>'; var pl = document.createElement('p'); pl.className = 'wrt-line'; pl.innerHTML = eR(RT.line).replace(/ → /g, ' <span class="wrt-ar">→</span> ');
+      h2.after(pl); if (RT.also && RT.also.length) { var pa = document.createElement('p'); pa.className = 'wrt-also'; pa.innerHTML = '<b>Also added up:</b> ' + RT.also.map(function (a) { return '<span class="r208-m">' + eR(a.name) + '</span>' + (a.txt && a.txt[0] ? ' (' + eR(a.txt[0]) + ')' : ''); }).join(', ') + '.'; pl.after(pa); } }
+    if (ms.length && !(RT && RT.line)) h2.innerHTML = 'We wiped' + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') + ': <span class="r208-m">' + (ms.length > 1 ? ms[0] + ' and ' + ms[1] : ms[0]).replace(/[<>]/g, '') + '</span>.';
     var sub = w.querySelector('.r208-sub'), facts = [et ? 'Wipe called at ' + et + (ph ? ' in ' + (/^int/i.test(ph) ? 'the intermission' : ph) : '') : '', hp ? 'boss at ' + Math.round(+hp) + '%' : '', dn ? dn + ' dead' : ''].filter(Boolean).join(' · ');
-    if (facts) { if (!sub) { sub = document.createElement('p'); sub.className = 'r208-sub'; h2.after(sub); } sub.textContent = facts.charAt(0).toUpperCase() + facts.slice(1); sub.classList.add('r357-facts'); } }); /* Nov 3 why rows (the Design studio's why-we-wiped.md; Flex: "yea"): every counted mistake has a row (a mechanic's repeats merge into one, "Soul Sever ×2", with each time and who), the badges count the rows, every row has an icon (a death: what killed them, or ☠), and a click on a row plays it on the Timeline replay */ if (!window.__whyRows) window.__whyRows = function (w) {
+    if (facts) { if (!sub) { sub = document.createElement('p'); sub.className = 'r208-sub'; (w.querySelector('.wrt-also') || w.querySelector('.wrt-line') || h2).after(sub); } sub.textContent = facts.charAt(0).toUpperCase() + facts.slice(1); sub.classList.add('r357-facts'); } }); /* Nov 3 why rows (the Design studio's why-we-wiped.md; Flex: "yea"): every counted mistake has a row (a mechanic's repeats merge into one, "Soul Sever ×2", with each time and who), the badges count the rows, every row has an icon (a death: what killed them, or ☠), and a click on a row plays it on the Timeline replay */ if (!window.__whyRows) window.__whyRows = function (w) {
     var d = w.closest('.dbt'), M = d && d._M; if (!M || !M.length) return; var K = window.dbtMapKit ? window.dbtMapKit() : null, rep = K && K.S ? K.S.rep : null;
     var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, sx = function (s) { var m = String(s || '').match(/(\d+):(\d\d)/); return m ? +m[1] * 60 + +m[2] : null; }, mm = function (t) { t = Math.floor(t); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
     var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };

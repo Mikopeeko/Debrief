@@ -121,6 +121,7 @@ function checkPull(key) {
       else if (nk && (VERBS.test(nk) || nk.toLowerCase() === lc || nk.split(/\s+/).length > 2)) say(pull, 'title', '"' + base + ' (' + nk + ')" is not a 1-2 word noun nickname');
     }
   }
+  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else { clean(pull, 'root cause', o.line); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
   for (const q of r.mistakes || []) { clean(pull, 'mistake ' + q.mechanic, q.detail); clean(pull, 'mistake ' + q.mechanic + ' fix', q.fix); }
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once
