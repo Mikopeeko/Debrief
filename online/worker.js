@@ -1732,24 +1732,27 @@ async function wipeCheck(req, env, url) {
 //   difficulty in R2 (debrief-nights), about 100 bytes a pull, merged by report and fight. Only pulls on that guild's list are kept, and a
 //   practice link keeps its own copy.
 const TIER_ZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
-const TIER_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,limit:50,page:$p){has_more_pages data{code startTime fights(encounterID:$e,difficulty:$d){id kill startTime endTime fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}}}}}`;
+const TIER_Q = `query($g:Int!,$z:Int,$s:Float,$e:Int!,$d:Int!,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,startTime:$s,limit:50,page:$p){has_more_pages data{code startTime fights(encounterID:$e,difficulty:$d){id kill startTime endTime fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}}}}}`;
 const tierK = (v, url) => (PRACTICE_HOST(url) ? 'practice-tier/' : 'tier/') + v.g + '/' + v.e + '-' + v.d + '.json';
 const tierV = (p) => { const g = parseInt(p.get('g'), 10), e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return g > 0 && g < 1e9 && e > 0 && e < 1e7 && [3, 4, 5].includes(d) ? { g, e, d } : null; };
 // (the pulls: [report, fight, start (ms), kill 1/0, whole-fight % left, phase boss % left, last phase, 1 when it ended in an intermission, length (s)])
 async function tierList(env, v, ctx) {
-  const c = caches.default, ck = new Request('https://debrief.cache/tier-list/' + v.g + '/' + v.e + '/' + v.d), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const c = caches.default, ck = new Request('https://debrief.cache/tier-list3/' + v.g + '/' + v.e + '/' + v.d), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
   const z = await gql(env, TIER_ZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
-  const at = []; /* (50 reports a page: a hundred with these fields is more than Warcraft Logs answers in one go) */
-  for (let p = 1; p <= 8; p++) {
-    const d = await gql(env, TIER_Q, { g: v.g, z: zone, e: v.e, d: v.d, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
-    for (const rep of R.data || []) for (const f of rep.fights || []) {
-      at.push([rep.code, f.id, rep.startTime + f.startTime, f.kill ? 1 : 0, f.fightPercentage != null ? f.fightPercentage : null, f.bossPercentage != null ? f.bossPercentage : null, f.lastPhase || 0, f.lastPhaseIsIntermission ? 1 : 0, Math.round((f.endTime - f.startTime) / 1000)]); }
-    if (!R.has_more_pages) break;
-  }
+  const at = [], seen = new Map(); /* (50 reports a page: a hundred with these fields is more than Warcraft Logs answers in one go) */
+  const list = async (z, s0) => { for (let p = 1; p <= 8; p++) {
+    const d = await gql(env, TIER_Q, { g: v.g, z, s: s0, e: v.e, d: v.d, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) { if (seen.has(rep.code)) continue; seen.set(rep.code, seen.size); for (const f of rep.fights || []) {
+      at.push([rep.code, f.id, rep.startTime + f.startTime, f.kill ? 1 : 0, f.fightPercentage != null ? f.fightPercentage : null, f.bossPercentage != null ? f.bossPercentage : null, f.lastPhase || 0, f.lastPhaseIsIntermission ? 1 : 0, Math.round((f.endTime - f.startTime) / 1000)]); } }
+    if (!R.has_more_pages) break; } };
+  /* (the raid's reports, then every report of the guild since its first pull of the boss: Warcraft Logs files a log under the zone it starts in,
+     so a night that opened with a Mythic+ key (Wolfthorn's Nov 4) is under Mythic+, not the raid (Main's check, Nov 5)) */
+  await list(zone, null);
+  const t0 = at.length ? Math.min(...at.map((x) => x[2])) : null; await list(null, t0 != null ? t0 - 86400000 : null);
   at.sort((a, b) => a[2] - b[2]);
   /* (a pull logged twice is the copy from the report with more of the night's pulls, so a night stays in one report where it can) */
   const per = new Map(); for (const x of at) per.set(x[0], (per.get(x[0]) || 0) + 1);
-  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x[2] - l[2] < 20000) { if (per.get(x[0]) > per.get(l[0])) pulls[pulls.length - 1] = x; continue; } pulls.push(x); }
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x[2] - l[2] < 20000) { if (per.get(x[0]) > per.get(l[0]) || (per.get(x[0]) === per.get(l[0]) && seen.get(x[0]) < seen.get(l[0]))) pulls[pulls.length - 1] = x; continue; /* (a tie: the raid's own report, the same one for every pull of the night) */ } pulls.push(x); }
   const k1 = pulls.findIndex((x) => x[3]); if (k1 >= 0) pulls.length = k1 + 1; /* (up to the first kill) */
   const o = { g: v.g, e: v.e, d: v.d, pulls, at: Date.now() };
   ctx.waitUntil(c.put(ck, new Response(JSON.stringify(o), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=600' } })).catch(() => {}));
