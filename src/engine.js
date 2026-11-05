@@ -6350,6 +6350,56 @@ function resAt(p, f, a, t) {
 }
 
 // (analyzeSteps is the reading itself, in steps: it stops every couple of thousand lines and between its later passes.
+// ---- (Nov 5, phones running out of memory on big nights) a map's replay frames, packed: each frame was a list of small records (about
+// 25 units every quarter second, for every map of the pull: the Avoidable damage rows alone held about 8 MB a pull). Packed, they're number
+// lists (positions as hundredths, which is how they're rounded) and a list of the units; reading `frames` unpacks the very same records,
+// kept for a minute while a map uses them. A frames list that isn't in the usual shape stays as it is ----
+function fzPackOne(F) {
+  if (!Array.isArray(F) || !F.length || F.length > 65535) return null;
+  let np = 0;
+  for (const f of F) { if (!f || typeof f !== 'object' || Array.isArray(f)) return null; const ks = Object.keys(f); if (ks.length !== 2 || ks[0] !== 't' || ks[1] !== 'pts' || typeof f.t !== 'number' || !Array.isArray(f.pts) || f.pts.length > 65535) return null; np += f.pts.length; }
+  const um = new Map(), u = [], sm = new Map(), s = [], ts = new Float64Array(F.length), cnt = new Uint16Array(F.length), xs = new Int32Array(np), ys = new Int32Array(np), uix = new Uint16Array(np), own = new Int32Array(np);
+  const h100 = (v) => { if (typeof v !== 'number' || !Number.isFinite(v)) return null; const k = Math.round(v * 100); return Math.abs(k) < 2e9 && k / 100 === v && !Object.is(v, -0) ? k : null; };
+  let i = 0;
+  for (let n = 0; n < F.length; n++) { const f = F[n]; ts[n] = f.t; cnt[n] = f.pts.length;
+    for (const p of f.pts) { if (!p || typeof p !== 'object') return null; const ks = Object.keys(p), wo = ks.length === 6;
+      if (!(ks.length === 5 || wo) || ks[0] !== 'guid' || ks[1] !== 'name' || ks[2] !== 'x' || ks[3] !== 'y' || ks[4] !== 'kind' || (wo && ks[5] !== 'owner')) return null;
+      if (typeof p.guid !== 'string' || typeof p.name !== 'string' || typeof p.kind !== 'string') return null;
+      const x = h100(p.x), y = h100(p.y); if (x == null || y == null) return null;
+      const uk = p.guid + '\u0001' + p.name + '\u0001' + p.kind; let ui = um.get(uk); if (ui == null) { ui = u.length / 3; if (ui > 65535) return null; um.set(uk, ui); u.push(p.guid, p.name, p.kind); }
+      let o = -3; if (wo) { const v = p.owner; if (v === null) o = -1; else if (v === undefined) o = -2; else if (typeof v === 'string') { o = sm.get(v); if (o == null) { o = s.length; s.push(v); sm.set(v, o); } } else return null; }
+      xs[i] = x; ys[i] = y; uix[i] = ui; own[i] = o; i++; } }
+  return { n: F.length, ts, cnt, xs, ys, uix, own, u, s };
+}
+function fzOpen(z) {
+  const F = new Array(z.n); let i = 0;
+  for (let n = 0; n < z.n; n++) { const pts = new Array(z.cnt[n]);
+    for (let j = 0; j < pts.length; j++, i++) { const k = z.uix[i] * 3, p = { guid: z.u[k], name: z.u[k + 1], x: z.xs[i] / 100, y: z.ys[i] / 100, kind: z.u[k + 2] }, o = z.own[i];
+      if (o !== -3) p.owner = o === -1 ? null : o === -2 ? undefined : z.s[o]; pts[j] = p; }
+    F[n] = { t: z.ts[n], pts }; }
+  return F;
+}
+// (`frames` reads the packed list; setting it puts a plain list back)
+function fzLive(o) {
+  let F = null, tm = 0;
+  Object.defineProperty(o, 'frames', { configurable: true, enumerable: true,
+    get() { if (!F) { F = fzOpen(o._fz); clearTimeout(tm); tm = setTimeout(() => { F = null; }, 60000); } return F; },
+    set(v) { delete o._fz; Object.defineProperty(o, 'frames', { value: v, writable: true, configurable: true, enumerable: true }); } });
+}
+// (every map in a reading: the fight audit, the deaths and the mistakes)
+function fzWalk(rep, fn) {
+  const seen = new WeakSet(), walk = (o, d) => { if (!o || typeof o !== 'object' || d > 14 || ArrayBuffer.isView(o) || seen.has(o)) return; seen.add(o);
+    if (Array.isArray(o)) { for (const x of o) walk(x, d + 1); return; } if (o instanceof Map) { for (const v of o.values()) walk(v, d + 1); return; } if (o instanceof Set) return;
+    fn(o); for (const k of Object.keys(o)) if (k !== 'frames' && k !== '_fz') walk(o[k], d + 1); };
+  for (const k of ['module', 'deaths', 'mistakes']) walk(rep && rep[k], 0);
+  return rep;
+}
+function fzPack(rep) { const zc = new WeakMap(); /* (maps that share one frames list share its packed copy) */
+  return fzWalk(rep, (o) => { const d = Object.getOwnPropertyDescriptor(o, 'frames'); if (!d || !('value' in d) || !Array.isArray(d.value)) return; let z = zc.get(d.value); if (z === undefined) { z = fzPackOne(d.value); zc.set(d.value, z); } if (z) { o._fz = z; fzLive(o); } }); }
+// (a reading back from a worker or this PC's storage: its packed maps read their frames again)
+function fzRevive(rep) { return fzWalk(rep, (o) => { if (!o._fz) return; const d = Object.getOwnPropertyDescriptor(o, 'frames'); if (!d || !d.get) fzLive(o); }); }
+// (the kinds of unit a map's frames show, without unpacking them)
+function fzKinds(o) { const z = o && o._fz; return z ? z.u.filter((v, i) => i % 3 === 2) : null; }
 // analyze runs it straight through; analyzeAsync lets the page breathe (pause) every ~30 ms, so a long pull doesn't freeze
 // the page for seconds. Same code, same result. `text` may also be the log's lines, already split)
 function analyze(item, text, opts) { const g = analyzeSteps(item, text, opts); let s; do s = g.next(); while (!s.done); return s.value; }
@@ -7070,6 +7120,7 @@ function* analyzeSteps(item, text, opts) {
   try { deathHealGaps(r); } catch (e) { console.error(e); }
   try { deathSaves(r); } catch (e) { console.error(e); } // (would what they had ready have saved them (Oct 25)) // (healing gaps before deaths: extra, never block the pull)
   insights(r);
+  if (!(opts && opts.noFz)) { try { fzPack(r); } catch (e) { console.error(e); } } /* (the maps' frames packed: the reading's biggest part (Nov 5); noFz: a test's plain copy) */
   return r;
 }
 
@@ -7774,7 +7825,7 @@ function rootCause(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
-const api = { rootCause, RC_CAT, rcCat, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { fzPack, fzRevive, fzKinds, rootCause, RC_CAT, rcCat, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

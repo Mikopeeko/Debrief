@@ -206,7 +206,7 @@ const mapStems = (t) => new Set(String(t).replace(/<[^>]+>/g, ' ').toLowerCase()
 // exploding seconds after its set)
 // (a map that draws the mechanic itself, not only where players stood: the same test the engine uses to drop maps)
 const drawsMap = (mp) => !!mp && !!(mp.cone || (mp.cones || []).length || ['marks', 'lines', 'rings', 'cysts', 'arrows', 'links', 'goodAdd', 'badAdd', 'tags', 'ghostHit', 'ghostMiss'].some((f) => (mp[f] || []).length) || mp.hitOrbs ||
-  [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).some((ps) => ps.some((p) => p.kind && p.kind !== 'player' && p.kind !== 'boss')));
+  (mp._fz && E.fzKinds ? [(mp.pts || []).map((p) => p.kind), E.fzKinds(mp)] : [mp.pts || []].concat((mp.frames || []).map((f) => f.pts || [])).map((ps) => ps.map((p) => p.kind))).some((ks) => ks.some((k) => k && k !== 'player' && k !== 'boss')));
 // The map for a death (Pull recap's first death): its own when that draws what killed them; else the fight check's map of
 // the same mechanic at that moment (Blink Nova's circle, a frontal's cone), with the player who died marked on it; else its
 // own (where they died, and the 5 seconds before).
@@ -1150,13 +1150,26 @@ const analyzeSoft = (item, text, opts) => { const run = AN_Q.then(() => E.analyz
 function rdStrip(o, seen) { seen = seen || new WeakMap(); if (typeof o === 'function') return undefined; if (!o || typeof o !== 'object') return o; if (seen.has(o)) return seen.get(o);
   if (o instanceof Map) { const m = new Map(); seen.set(o, m); for (const [k, v] of o) m.set(k, rdStrip(v, seen)); return m; } if (o instanceof Set) { const s2 = new Set(); seen.set(o, s2); for (const v of o) s2.add(rdStrip(v, seen)); return s2; }
   if (Array.isArray(o)) { const a = []; seen.set(o, a); for (const x of o) a.push(rdStrip(x, seen)); return a; } if (o instanceof Date || ArrayBuffer.isView(o)) return o;
-  const c = {}; seen.set(o, c); for (const k of Object.keys(o)) { const v = rdStrip(o[k], seen); if (v !== undefined) c[k] = v; } return c; }
+  const c = {}; seen.set(o, c); for (const k of Object.keys(o)) { if (k === 'frames' && o._fz) { c[k] = null; continue; } /* (packed frames are kept packed, in their place (Nov 5)) */ const v = rdStrip(o[k], seen); if (v !== undefined) c[k] = v; } return c; }
 function rdBake(rep, ct) {
   const bakeJudge = (g) => { for (const j of g.judge || []) { if (typeof j.mk !== 'function') continue; const tl = (j.tl || []).filter((x) => x.t <= ct + 0.05); if (!tl.length) continue;
     const worst = tl.slice().sort((a, b) => (j.dt != null ? Math.abs(a.t - j.dt) - Math.abs(b.t - j.dt) : b.a - a.a))[0]; try { j._mkAt = worst.t; j._mkMap = j.mk(worst.t); } catch (e) { /* (no map) */ } } };
   for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
     if (typeof g.lim === 'function') { try { g._lim = g.lim(ct); } catch (e) { /* (the full-pull limits) */ } }
+    if (typeof g.cutSub === 'function' && isFinite(ct)) { try { g._cs = g.cutSub(ct); g._csT = ct; } catch (e) { /* (the whole pull's line) */ } } /* (a set's line counted up to the wipe call (Nov 5)) */
     bakeJudge(g); if (typeof g.recut === 'function' && isFinite(ct)) { try { const c = g.recut(ct); g._rc = { t: ct, c: c || null }; if (c) bakeJudge(c); } catch (e) { /* (no re-cut) */ } } } }
+/* (Nov 5, phones running out of memory on big nights: a pull the page reads itself is kept the way a reading worker hands one back: its live
+   parts worked out at the wipe call, then let go. They held the fight audit's whole list of events, about 8 MB a pull. In place, without a copy) */
+function rdLite(rep) {
+  try { const it = rep.item; rdBake(rep, RD.ct(rep)); if (E.fzPack) E.fzPack(rep);
+    const seen = new WeakSet(), walk = (o) => { if (!o || typeof o !== 'object' || seen.has(o) || ArrayBuffer.isView(o) || o instanceof Date) return; seen.add(o);
+      if (o instanceof Map) { for (const [k, v] of o) { if (typeof v === 'function') o.delete(k); else walk(v); } return; } if (o instanceof Set) { for (const v of o) walk(v); return; }
+      if (Array.isArray(o)) { for (let i = 0; i < o.length; i++) { if (typeof o[i] === 'function') o[i] = undefined; else walk(o[i]); } return; }
+      for (const k of Object.keys(o)) { if (k === 'frames' && o._fz) continue; const v = o[k]; if (typeof v === 'function') delete o[k]; else walk(v); } };
+    rep.item = null; walk(rep); rep.item = it; for (const k of Object.keys(rep)) if (k.startsWith('_')) delete rep[k]; RD.revive(rep);
+  } catch (e) { console.warn('A pull kept its live parts:', e); }
+  return rep;
+}
 /* (Oct 25 night: the saved readings' database. Version 2 adds 'at', when each reading was saved, so keeping the newest 120 reads only that
    small list; before, it loaded every saved reading on every save once a PC had more than 120) */
 function rdOpen() { return new Promise((res) => { try { const q = indexedDB.open('wla-reads', 2);
@@ -1183,7 +1196,7 @@ const RD = (() => { let dbp = null, ver = null;
   const strip = (o) => rdStrip(o), cutOf = (rep) => Math.min(cutT(rep), rep.duration || Infinity), bake = (rep) => rdBake(rep, cutOf(rep));
   const revive = (rep) => { for (const s of (rep.module && !rep.module.error && rep.module.sections) || []) for (const g of s.groups || []) {
     const live = (x) => { for (const j of x.judge || []) if (j._mkAt != null) j.mk = (t) => (Math.abs(t - j._mkAt) < 0.01 ? j._mkMap : null); };
-    live(g); if (g._lim) g.lim = () => g._lim; if (g._rc) { if (g._rc.c) live(g._rc.c); g.recut = (t) => (Math.abs(t - g._rc.t) < 0.05 ? g._rc.c : g); } } return rep; };
+    live(g); if (g._lim) g.lim = () => g._lim; if (g._cs != null) g.cutSub = (t) => (Math.abs(t - g._csT) < 0.05 ? g._cs : g.sub); if (g._rc) { if (g._rc.c) live(g._rc.c); g.recut = (t) => (Math.abs(t - g._rc.t) < 0.05 ? g._rc.c : g); } } if (E.fzRevive) E.fzRevive(rep); return rep; };
   return {
     /* (Oct 25 night: a reading saved before an update to the checks still opens (marked stale) and is read again in the background; one saved
        under the old key (with the version in it) is used when it's from this very version) */
@@ -1191,7 +1204,7 @@ const RD = (() => { let dbp = null, ver = null;
       if (!v || !v.rep) return null; const rep = revive(v.rep); if (v.ver !== version()) rep._stale = true; return rep; } catch (e) { return null; } },
     revive, ct: cutOf, key: (item) => keyOf(item), ver: () => version(),
     async has(item) { const d = await open(); if (!d) return false; const n = async (k) => new Promise((res) => { try { const q = d.transaction('reps').objectStore('reps').count(k); q.onsuccess = () => res(q.result > 0); q.onerror = () => res(false); } catch (e) { res(false); } }); return (await n(keyOf(item))) || n(keyOf(item, true)); },
-    put(item, rep) { const go = async () => { try { bake(rep); const v = { at: Date.now(), ver: version(), rep: strip(rep) }; v.rep.item = null; for (const k of Object.keys(v.rep)) if (k.startsWith('_')) delete v.rep[k]; /* (the page's own notes are redone) */ const d = await open(); if (d) await rdSave(d, keyOf(item), v, 120); } catch (e) { /* (not saved: it reads again next time) */ } };
+    put(item, rep) { const go = async () => { try { bake(rep); if (E.fzPack) E.fzPack(rep); const v = { at: Date.now(), ver: version(), rep: strip(rep) }; v.rep.item = null; for (const k of Object.keys(v.rep)) if (k.startsWith('_')) delete v.rep[k]; /* (the page's own notes are redone) */ const d = await open(); if (d) await rdSave(d, keyOf(item), v, 120); } catch (e) { /* (not saved: it reads again next time) */ } };
       (window.requestIdleCallback || ((f) => setTimeout(f, 1500)))(() => go(), { timeout: 8000 }); } }; })();
 /* (Oct 25 night, your note "this screen just took 2 minutes to load": the pulls of a Warcraft Logs night are read by background workers, up to 4
    at once (3 with 8 cores, 2 on a computer with little memory, 1 on a phone; they all share the tab's memory). Each downloads its pull, writes the log lines and reads them on its own core, so
@@ -1211,7 +1224,7 @@ function rwMain() {
           mastery: e.mastery, versatility: e.versatilityDamageDone, leech: e.leech, avoidance: e.avoidance, speed: e.speed, armor: e.armor } }));
       let text = WCL.translate(item, events); events = null; lap('write'); /* (the events go before the checks run: a long pull's are a few hundred MB) */
       const rep = E.analyze(item, text, m.opts); text = null; lap('read'); rep.combatants = comb;
-      const ct = Math.min(cutT(rep), rep.duration || Infinity); rdBake(rep, ct); lap('cut');
+      const ct = Math.min(cutT(rep), rep.duration || Infinity); rdBake(rep, ct); if (E.fzPack) E.fzPack(rep); lap('cut');
       rep.item = null; const out = rdStrip(rep); for (const k of Object.keys(out)) if (k.startsWith('_')) delete out[k]; lap('copy');
       if (m.saveOnly) { const d = m.key ? await (self.RD_DB || (self.RD_DB = rdOpen())) : null; const ok = d ? await rdSave(d, m.key, { at: Date.now(), ver: m.ver, rep: out }, 120) : false; self.postMessage({ id: m.id, saved: !!ok }); return; } /* (a re-read after an update: saved, nothing handed back) */
       self.postMessage({ id: m.id, rep: out, ct, tm }); lap('send');
@@ -1310,6 +1323,7 @@ async function readFresh(item) {
   // own combat logs: gear, stats and buffs come from each player's COMBATANT_INFO line (names and icons are looked up
   // when the Raid audit opens)
   if (!item.wcl && rep.combatantsRaw && rep.combatantsRaw.length) rep.combatants = rep.combatantsRaw.filter((c) => rep.players.has(c.guid)).map((c) => ({ name: rep.players.get(c.guid).name, gear: c.gear, auras: c.auras, self: c.guid, stats: c.stats, talents: c.talents || [] }));
+  rdLite(rep);
   applyNote(rep);
   ndzSpecSave(rep); /* (Plan with a roster: each raider's class, spec and role, remembered) */
   CACHE.set(item, rep); cacheTrim();
