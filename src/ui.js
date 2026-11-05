@@ -2036,7 +2036,7 @@ const PATCH_NOTES = [
     'Maps: an add\'s name is never covered by player names.',
     'Plan\'s names you can drag are now solid bars, all one size, and each role starts its own row.',
     'Grade letters are cleaner: solid tiles in three sizes.',
-    'Plan\'s job cards: the names sit closer together, each icon right by its name, and a job with five names a row gets the full width so they fit on one line.',
+    'Plan\'s job cards: the names sit closer together, each icon right by its name, so a row of five fits on one line in a half-width card.',
     'Plan: the Whole week table is gone. Each Roster bar shows how many bosses that raider sits tonight, and the new Out tonight zone sits someone for every boss.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
