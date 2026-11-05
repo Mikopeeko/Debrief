@@ -21,7 +21,9 @@ const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.
 // ---- the site's own helpers, taken out of ui.js by name (so the check reads exactly what the page shows) ----
 const H = require('./site-helpers.js'), UI = H.UI;
 // (the All pulls card's line about a pull, from shell.html)
-const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n({ story })');
+const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n' + H.grab('nsmFocusOf', H.SH) + '\n({ story, nsmFocusOf })');
+const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_FIRST, rcFirstLine })');
+const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
 const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----
@@ -121,7 +123,7 @@ function checkPull(key) {
       else if (nk && (VERBS.test(nk) || nk.toLowerCase() === lc || nk.split(/\s+/).length > 2)) say(pull, 'title', '"' + base + ' (' + nk + ')" is not a 1-2 word noun nickname');
     }
   }
-  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else { clean(pull, 'root cause', o.line); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
+  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.cat !== 'reset') { const l = NIGHT_RC.get(code) || []; l.push(o); NIGHT_RC.set(code, l); } if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else { clean(pull, 'root cause', o.line); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
   for (const q of r.mistakes || []) { clean(pull, 'mistake ' + q.mechanic, q.detail); clean(pull, 'mistake ' + q.mechanic + ' fix', q.fix); }
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once
@@ -138,6 +140,14 @@ for (const s of ["'Wipe in ' + pg.label", "% of the fight done'"]) if (UI.includ
 const t0 = Date.now(); let n = 0;
 if (!fs.existsSync(LIB) && !DIRS.length) { console.log('Contradiction check: skipped (no log library at ' + LIB + ')'); process.exit(0); }
 for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash', 'the check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } }
+// 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
+for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
+  const rows = [...g].sort((a, b) => b[1].length - a[1].length).map(([c, l]) => ({ nm: E.RC_CAT[c].nm, w: l.length, rc: c, fix: RCX.RC_FIX[c] || '', first: RCX.rcFirstLine(l), l })), f = SHELL.nsmFocusOf(rows), night = 'night ' + code + ' (All pulls)';
+  if (!rows.length) continue; if (!f || f.nm !== rows[0].nm.replace(/ \([^)]*\)$/, '')) say(night, 'focus', 'the focus band names ' + (f ? f.nm : 'nothing') + ', but What wiped us most has ' + rows[0].nm + ' first');
+  if (!f || !f.fix) say(night, 'focus', rows[0].nm + ' has no fix to focus on');
+  if (f && f.first) { const m = /^In (\d+) of them, (.+) came first\.$/.exec(f.first), cat = m && Object.keys(RCX.RC_FIRST).find((k) => RCX.RC_FIRST[k] === m[2]); const n = cat ? rows[0].l.filter((o) => o.chain && o.chain[0] && o.chain[0].cat === cat).length : -1;
+    if (!m || n !== +m[1]) say(night, 'focus', '"' + f.first + '" doesn\'t match the chains (' + n + ' start with it)'); }
+  clean(night, 'focus band', (f ? f.fix + ' ' + f.nm + ' wiped us most. ' + f.first : '')); }
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }

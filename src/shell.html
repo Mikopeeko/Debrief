@@ -14164,6 +14164,8 @@ body.wck-on > :not(#wck) { display: none !important; }
      notes/Debriefing polish mockups/all-pulls-summary.html): the All pulls box, rebuilt in the quiet list style from what the coach already
      says: the night in one line, the one thing to work on as a gold card, What wiped us as one ranked list (the other big mistakes in it,
      each with a strip of the pulls it hit), then Getting worse (or Improving) and Done well. Nothing is made up: every line is the coach's. */
+  /* (Nov 5, the studio: on All pulls the focus follows row #1 of What wiped us most, with its own fix; rows: { nm, w, rc, fix, first }) */
+  function nsmFocusOf(rows) { var x = rows && rows[0]; if (!x || !x.rc) return null; return { nm: String(x.nm).replace(/ \([^)]*\)$/, ''), w: x.w, fix: x.fix || '', first: x.first || '' }; }
   function nightBox(s) {
     if (s.querySelector(':scope > .nsm')) return;
     var nw = Date.now(); window.__nsmT = (window.__nsmT || []).filter(function (t) { return nw - t < 3000; }); if (window.__nsmT.length >= 8) return; window.__nsmT.push(nw); /* (a safety stop: never redraw it more than 8 times in 3 seconds) */
@@ -14239,8 +14241,11 @@ body.wck-on > :not(#wck) { display: none !important; }
       else if (n > 1 && /^\s*(?:<[^>]+>)*\s*(Pull\s*(?:<[^>]+>)*\s*\d+|\d+\s*(?:<\/[^>]+>)*\s*players?)/i.test(s0)) { var r0 = strip(s0); x.s = ['In <b>' + n + '</b> pulls: ' + r0.charAt(0).toLowerCase() + r0.slice(1)]; } });
     var focusLi = (top[0] && top[0].li) || wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
     var mis = fm && top[0] && fm[1].toLowerCase().indexOf(lc(top[0].nm)) < 0 ? top[0] : null; /* (never a quiet mismatch: the focus names #1 or says that #1 is something else) */
-    if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
-      (mis ? '<p><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + '), so work on that one too.</p>' : whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
+    var FO = nsmFocusOf(top.map(function (x) { var d = (x.li && x.li.dataset) || {}; return { nm: x.nm, w: x.w, rc: d.rc || '', fix: d.fix || '', first: d.first || '' }; }));
+    if (FO && FO.fix) o += '<div class="nsm-focus">' + icon2(top[0].li, top[0].nm) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(FO.fix) + '</h3></div>' +
+      '<p><b>' + esc(FO.nm) + '</b> wiped us most (<b>' + FO.w + '</b> ' + (FO.w === 1 ? 'time' : 'times') + ').' + (FO.first ? ' ' + esc(FO.first) : '') + '</p></div>';
+    else if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
+      (mis ? '<p><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + ').</p>' : whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
     /* (Nov 5, Flex: "a line graph would be better reflecting the total boss HP", then "Yes, build it" on the Design studio's mock: the boss's
        whole-fight health at each wipe, 100% at the top and the kill at the bottom, a dot per pull in the colour of what wiped it, the best pull
        ringed, the best so far as a dashed gold line that only steps down, and where each phase starts. A dot opens its pull) */
