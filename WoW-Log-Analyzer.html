@@ -71929,6 +71929,9 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
              above Why, the card as tall as its content and the play-by-play taking the rest) */
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dtm-ch{display:flex !important;flex-wrap:wrap;align-items:center;gap:6px 8px}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dtm-ch > div{flex:1 1 160px;min-width:0}',
           '.dtm-chr{display:flex;align-items:center;gap:8px;margin-left:auto;flex:none}.dtm-chr .dtm-step{display:inline-flex;align-items:center;gap:4px;margin:0}',
+          /* (Nov 5, Main: on a phone the row ran past the screen's edge (the stepper took the full width of the phone's top-row rule): under 760 px
+             it takes its own line and wraps, and the stepper is only as wide as "1 of 5") */
+          '@media (max-width:760px){.dtm-chr{flex:1 1 100%;flex-wrap:wrap;row-gap:6px;margin-left:0;min-width:0}.dtm-chr .dtm-step{width:auto;justify-content:flex-start}.dtm-chr .dtm-step span{min-width:0;padding:0 4px}}',
           '.dtm-watch{all:unset;cursor:pointer;font-size:12px;font-weight:600;padding:2px 9px;border:1px solid var(--line2);border-radius:999px;color:#aeb6bf;white-space:nowrap}.dtm-watch:hover{color:var(--gold);border-color:var(--gold)}',
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd .dbt-two{border-top:0 !important}html body #view > .dbt.dbt.dbx .dtm-bar.dtm-stepin .dtm-step{display:none !important}',
           'html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-pb{flex:1 1 auto;min-height:140px}html body #view > .dbt.dbt.dbx .dtm-rc > .dtm-vd{flex:0 1 auto}',
