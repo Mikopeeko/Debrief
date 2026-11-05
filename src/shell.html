@@ -10956,7 +10956,7 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-sec .nsm-k + .nsm-row{border-top:0}
 .nsm-row.c2{grid-template-columns:22px minmax(0,1fr) auto}
 /* (Nov 4: the ranked rows) */ .nsm-rk{display:grid;grid-template-columns:16px 22px minmax(0,1fr) 140px 190px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#222930)}.nsm-sec .nsm-k + .nsm-rk{border-top:0}
-.nsm-n{font-weight:700;font-size:13px;color:var(--faint);text-align:right;font-variant-numeric:tabular-nums}.nsm-tx{min-width:0}.nsm-rk .nsm-t{font-size:15px}.nsm-rk .nsm-tag{margin-left:6px;vertical-align:1px}.nsm-rk:not(:has(> .nsm-noi)) .nsm-t .icw{display:none !important}
+.nsm-n{font-weight:700;font-size:13px;color:var(--faint);text-align:right;font-variant-numeric:tabular-nums}.nsm-tx{min-width:0}.nsm-rk .nsm-t{font-size:15px}.nsm-rk .nsm-tag{margin-left:6px;vertical-align:1px}.nsm-rk .nsm-nk{font-weight:600;color:var(--muted)}.nsm-sic{display:inline-flex;width:22px;height:22px;align-items:center;justify-content:center;font-size:0}.nsm-sic .sp.mt{font-size:0}.nsm-sic .icw{display:inline-flex !important}.nsm-rk:not(:has(> .nsm-noi:not(.nsm-sic))) .nsm-t .icw{display:none !important}
 .nsm-bar{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden}.nsm-bar i{display:block;height:100%;border-radius:3px}.nsm-bar.r i{background:#f0726a}.nsm-bar.y i{background:#e8a23a}
 .nsm-rk .nsm-v b{display:block;font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}.nsm-rk .nsm-v small{display:block;font-size:12px;color:var(--faint)}.nsm-rk .nsm-v small a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .nsm-rank:not(.nsm-also) .nsm-rk .nsm-v b{color:#f0726a}.nsm-foot{margin:6px 0 4px 28px;font-size:13px;color:var(--muted)}.nsm-foot b{color:var(--text)}.nsm-better{margin:0;padding:6px 18px 14px;font-size:13px;color:var(--muted)}.nsm-better b{color:#4fbf7a}
@@ -14097,7 +14097,13 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     var bar = function (v, m, c) { return '<span class="nsm-bar ' + c + '"><i style="width:' + Math.max(4, Math.round(100 * v / Math.max(1, m))) + '%"></i></span>'; };
     var TR = {}; [[worseL, '▼ ', 'r', 'Worse'], [upL, '▲ ', 'g', 'Better']].forEach(function (z) { z[0].forEach(function (li) { TR[key(nameOf(li))] = { t: z[1] + (tx(li.querySelector('.cch-tt')) || z[3]), c: z[2], li: li }; }); });
     var ttag = function (nm) { var t = TR[key(nm)]; if (!t) return ''; t.used = 1; return ' <span class="nsm-tag ' + t.c + '">' + esc(t.t) + '</span>'; };
-    var rrow = function (n, li, title, sent, b, val, sub) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + n + '</span>' : '<span class="nsm-n"></span>') + icon(li) + '<div class="nsm-tx"><span class="nsm-t">' + esc(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
+    /* (Nov 4, the studio's audit: "Name (Nickname)" from the breakdown's own rows, and its spell icon when the coach line has none) */
+    var BK = {}; [].forEach.call(document.querySelectorAll('#view .prw-n'), function (n) { var sp = n.querySelector('.sp.mt'), nk = n.querySelector('.prw-nk'); if (sp) BK[key(sp.textContent)] = { nk: nk ? tx(nk) : '', sid: sp.dataset.sid || '' }; });
+    var NK = { axegrinder: 'Rolling Axes', ghosts: 'Dreadmarch', gloombomb: 'Add Bombs', 'wail of terror': 'Kick' }, AL = { ghosts: 'dreadmarch', 'wail of terror': 'spiteful soulcoiler' };
+    var SID = { ghosts: '1285643', dreadmarch: '1285643' }, bk = function (nm) { var k = key(nm); return BK[k] || BK[AL[k]] || (SID[k] ? { nk: '', sid: SID[k] } : null); };
+    var tl = function (nm) { var b = bk(nm), nk = (BK[key(nm)] && BK[key(nm)].nk) || NK[key(nm)] || ''; if (/\(/.test(nm)) nk = ''; var t = esc(nm) + (nk ? ' <span class="nsm-nk">(' + esc(nk) + ')</span>' : ''); return t; };
+    var icon2 = function (li, nm) { var h = icon(li); if (h.indexOf('nsm-noi') < 0) return h; var b = bk(nm); return b && b.sid ? '<span class="nsm-noi nsm-sic"><span class="sp mt" data-sid="' + esc(b.sid) + '" data-sn="' + esc(nm) + '" data-ic="1"></span></span>' : h; };
+    var rrow = function (n, li, title, sent, b, val, sub) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + n + '</span>' : '<span class="nsm-n"></span>') + icon2(li, title) + '<div class="nsm-tx"><span class="nsm-t">' + tl(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
     var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
     var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
@@ -14105,6 +14111,20 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [why(li)].filter(Boolean) }; AO.push(x); });
     AO = AO.filter(function (x) { var t = W1.filter(function (t) { return key(t.nm) === x.k; })[0]; if (!t) return true; x.s.forEach(function (w) { if (t.s.indexOf(w) < 0) t.s.push(w); }); return false; });
     AO.sort(function (a, b) { return b.ps.length - a.ps.length; });
+    /* (sentences that say what happened, and match the row's count: a wipe row covers several pulls, an Other mistakes row says how many) */
+    var strip = function (h) { return String(h || '').replace(/^\s*(?:<[^>]+>)*\s*Pull\s*(?:<[^>]+>)*\s*\d+\s*(?:<\/[^>]+>)*\s*:\s*/i, '').replace(/^\s*(?:<[^>]+>)*\s*\d+\s*(?:<\/[^>]+>)*\s*players?\s*(?:<\/[^>]+>)*\s*:\s*/i, ''); };
+    var plain = function (h) { return String(h || '').replace(/<[^>]+>/g, ''); };
+    top.forEach(function (x) { var k = key(x.nm), t = plain(x.s[0]), m = t.match(/^Only (\d+) soaked [^(]*\(needs (\d+)\)/i);
+      if (k === 'axegrinder' && /^Players died to it\.?$/i.test(t)) x.s[0] = 'Players ran into the rolling axes and died.';
+      else if (k === 'coalesced venom' && /orbs touched/i.test(t)) x.s[0] = 'Orbs touched each other and set off <b>Venom Ruptures</b>.';
+      else if (m && x.ps.length > 1) x.s[0] = 'Too few soaked: as few as <b>' + m[1] + '</b> when it needs <b>' + m[2] + '</b>.';
+      else if (/^Players died to it\.?$/i.test(t)) x.s[0] = 'Players were hit by it and died.'; });
+    var lastP = all.length ? all[all.length - 1].n : 0;
+    AO.forEach(function (x) { var k = key(x.nm), n = x.ps.length, tr = TR[x.k], ev = tr && tr.li ? why(tr.li) : '', s0 = x.s[0] || '', worst = (plain(s0).match(/^Pull (\d+):.*?([\d.]+[KM]) damage/i) || []), last = n ? Math.max.apply(null, x.ps) : 0;
+      if (k === 'ghosts') x.s = [((function (m) { return 'The ghosts touched in <b>' + n + '</b> pulls' + (m ? ', <b>' + m[1] + '</b> of the last ' + m[2] : '') + '.'; })(plain(ev).match(/(\d+) of the last (\d+)/))) + (worst[1] ? ' Worst: pull ' + worst[1] + ', <b>' + worst[2] + '</b> damage.' : '')];
+      else if (k === 'gloombomb') x.s = ['In <b>' + n + '</b> pulls, someone got clipped by another player\'s bomb and had to collect souls too.'];
+      else if (k === 'wail of terror') x.s = ['A Soulcoiler got its fear off in <b>' + n + '</b> ' + (n === 1 ? 'pull' : 'pulls') + '.' + (last && lastP > last ? ' None since pull ' + last + '.' : '')];
+      else if (n > 1 && /^\s*(?:<[^>]+>)*\s*(Pull\s*(?:<[^>]+>)*\s*\d+|\d+\s*(?:<\/[^>]+>)*\s*players?)/i.test(s0)) { var r0 = strip(s0); x.s = ['In <b>' + n + '</b> pulls: ' + r0.charAt(0).toLowerCase() + r0.slice(1)]; } });
     var focusLi = (top[0] && top[0].li) || wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
     var mis = fm && top[0] && fm[1].toLowerCase().indexOf(lc(top[0].nm)) < 0 ? top[0] : null; /* (never a quiet mismatch: the focus names #1 or says that #1 is something else) */
     if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
