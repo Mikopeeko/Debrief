@@ -10961,6 +10961,29 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-rk .nsm-v b{display:block;font-size:15px;color:var(--text);font-variant-numeric:tabular-nums}.nsm-rk .nsm-v small{display:block;font-size:12px;color:var(--faint)}.nsm-rk .nsm-v small a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
 .nsm-rank:not(.nsm-also) .nsm-rk .nsm-v b{color:#f0726a}.nsm-foot{margin:6px 0 4px 28px;font-size:13px;color:var(--muted)}.nsm-foot b{color:var(--text)}.nsm-better{margin:0;padding:6px 18px 14px;font-size:13px;color:var(--muted)}.nsm-better b{color:#4fbf7a}
 @media (max-width:720px){.nsm-rk{grid-template-columns:14px 22px minmax(0,1fr) auto;row-gap:6px}.nsm-rk .nsm-bar{grid-column:3 / -1;grid-row:2}.nsm-foot{margin-left:0}}
+/* (Nov 5: Boss health at each wipe, who's behind each cause, the cause colours on the ranked rows) */
+.nsm-top h2 .nsm-st{color:var(--muted);font-weight:600}
+.nsm-hc{padding:14px 18px 10px;border-bottom:1px solid var(--line,#222930)}
+.nsm-hh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:10px}.nsm-hh .nsm-k{display:inline}
+.nsm-hs{font-family:Barlow,sans-serif;font-size:12.5px;color:var(--muted)}.nsm-hs em{font-style:normal;font-weight:700;color:var(--text)}
+.nsm-hp{position:relative;height:170px;margin:6px 4px 0 40px}
+.nsm-hsv{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.nsm-hsv line,.nsm-hsv polyline{vector-effect:non-scaling-stroke;fill:none}
+.nsm-hsv .g{stroke:var(--line,#222930);stroke-dasharray:3 4}.nsm-hsv .z{stroke:var(--line2,#2c343d)}
+.nsm-hsv .ph{stroke:#5aa2ff;stroke-opacity:.45;stroke-dasharray:6 4}
+.nsm-hsv .bs{stroke:#e6b450;stroke-opacity:.6;stroke-width:1.5;stroke-dasharray:4 3}.nsm-hsv .pl{stroke:#c9ced8;stroke-opacity:.5;stroke-width:1.6}
+.nsm-hy{position:absolute;left:-40px;width:32px;transform:translateY(-50%);text-align:right;font-family:Barlow,sans-serif;font-size:11px;color:var(--faint)}
+.nsm-hph{position:absolute;transform:translateY(-100%);padding-bottom:3px;font-family:Barlow,sans-serif;font-size:11px;color:#7fb6ff;white-space:nowrap;pointer-events:none}.nsm-hph.r{right:2px}.nsm-hph.l{left:2px}.nsm-hph.first{transform:none;padding:2px 0 0;color:var(--faint)}
+.nsm .nsm-hp .nsm-hd{border-radius:50%!important}.nsm-hd{position:absolute;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;padding:0;min-width:0!important;min-height:0!important;border:1.5px solid var(--panel,#13171b);background:var(--c);cursor:pointer;box-sizing:content-box;z-index:1}
+.nsm-hd:hover,.nsm-hd:focus-visible{transform:scale(1.35);outline:none;z-index:3}.nsm-hd.b{width:12px;height:12px;margin:-7.5px 0 0 -7.5px;border:2px solid var(--text);z-index:2}
+.nsm-hbl{position:absolute;transform:translate(-50%,10px);font-family:Barlow,sans-serif;font-size:11.5px;font-weight:700;color:var(--text);white-space:nowrap;pointer-events:none}.nsm-hbl.r{transform:translate(-100%,10px)}.nsm-hbl.l{transform:translate(0,10px)}.nsm-hbl.up{margin-top:-34px}
+.nsm-hx{position:relative;height:16px;margin:4px 4px 0 40px;font-family:Barlow,sans-serif;font-size:11px;color:var(--faint)}.nsm-hx span{position:absolute;transform:translateX(-50%)}
+.nsm-hk{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0 0 40px;font-family:Barlow,sans-serif;font-size:12px;color:var(--muted)}.nsm-hk span{display:inline-flex;align-items:center;gap:6px}
+.nsm-hk s{display:inline-block;width:9px;height:9px;border-radius:50%;text-decoration:none}.nsm-hk s.ln{width:16px;height:0;border-radius:0;border-top:2px dashed #e6b450}
+.nsm-who{display:block;margin-top:3px;font-family:Barlow,sans-serif;font-size:12.5px;line-height:1.5;color:var(--muted)}.nsm-who .nm{font-weight:700}.nsm-who.q,.nsm-who .q{color:var(--faint)}
+.nsm-rank:not(.nsm-also) .nsm-rk{grid-template-columns:26px 22px minmax(0,1fr) 140px 190px}.nsm-n .nsm-cd{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.nsm-also .nsm-bar.y i{background:#7d8894}
+@media (max-width:720px){.nsm-hc{padding:12px 12px 8px}.nsm-hp{height:150px;margin-left:32px}.nsm-hy{left:-32px;width:26px;font-size:10px}.nsm-hx,.nsm-hk{margin-left:32px}.nsm-hd{width:7px;height:7px;margin:-3.5px 0 0 -3.5px}.nsm-hd.b{width:10px;height:10px;margin:-6.5px 0 0 -6.5px}.nsm-hph{font-size:10px}.nsm-rank:not(.nsm-also) .nsm-rk{grid-template-columns:24px 22px minmax(0,1fr) auto}}
 .nsm-row > .icw,.nsm-row > .cti,.nsm-row > .nsm-noi{width:22px!important;height:22px!important;justify-self:center}
 .nsm-row .icw img,.nsm-row .icw svg{width:22px!important;height:22px!important}
 .nsm-t{font-weight:700;font-size:15.5px;color:var(--text)}
@@ -25844,6 +25867,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-05', h: [{ t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. Each of the top causes now names everyone behind it, with how many times.' }], n: [], f: [] },
   { d: '2026-11-04', h: [{ t: 'All pulls shows what wiped you most, ranked', d: 'Debriefing on All pulls now opens with the three things that wiped you most, biggest first, with the pulls they ended. Everything else follows, ranked by how many pulls it hit, with a tag when it got worse or better.' }, { t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     "Debrief Companion: a raid reminder pops up on your PC 30 minutes before your team's raid. Click it for tonight's plan. Change it in Settings › Pop-up › Reminders.",
     "Debrief Companion: your recap key rests in combat, so a press mid-fight goes to WoW. It works again a few seconds after the fighting stops.",
@@ -38763,7 +38787,26 @@ function coachSummary0(reps, name) {
       else { /* (Oct 23, your ask "very very clear and not muddled": every wipe's root cause, grouped and counted, worst first) */
         const by = new Map(); for (const r of reps) { if (!r || !r.item || r.item.kill) continue; let o = null; try { o = whyWiped(r); } catch (e) { o = null; } if (!o) continue; const k = whyKey(o); if (k === '?') continue;
           const nm = o.k === 'dmg' ? 'not enough damage' : o.how === 'wave' ? 'raid damage' : o.how === 'kit' ? 'unused defensives' : o.how === 'bleed' ? 'missed healing' : o.how === 'tank' ? 'tank deaths' : cHtml(o.how === 'raid' ? mech(o.mech, o.id) : o.l || (o.d && o.d.ability) || ''); if (!nm) continue;
-          const x = by.get(k) || { nm, n: 0, os: [], ps: [] }; x.n++; x.os.push(o); x.ps.push(r.item.pull); by.set(k, x); } /* round 202 */
+          const x = by.get(k) || { nm, n: 0, os: [], ps: [], rs: [] }; x.n++; x.os.push(o); x.ps.push(r.item.pull); x.rs.push(r); by.set(k, x); } /* round 202 */
+        /* (Nov 5, Flex: "#1 yes need to know the culprits", "dont shorten the list of names, show all the names": who's behind each cause, counted
+           only in the wipes it's ranked for and only before the wipe call. Their deaths to it, the jobs they missed in the note, the orb carrier
+           the log names at the burst; a raid mistake's deaths (the lone soaker) are never blamed, and nothing is guessed) */
+        const whoOf = (x) => { const G = new Map(), col = new Map(), base = (v) => String(v || '').split('-')[0], add = (lab, r, nm) => { nm = base(nm); if (!nm || nm === 'Raid') return; let g = G.get(lab); if (!g) G.set(lab, g = new Map()); g.set(nm, (g.get(nm) || 0) + 1);
+            if (!col.has(nm)) for (const p of r.players.values()) if (base(p.name) === nm && p.color) { col.set(nm, p.color); break; } };
+          let unk = 0, soak = false, kick = false, orb = false; const cnt = () => [...G.values()].reduce((s, g) => s + [...g.values()].reduce((a, b) => a + b, 0), 0);
+          x.os.forEach((o, i) => { const r = x.rs[i], mo = lc0(o.mech || o.l || (o.d && o.d.ability)), n0 = cnt();
+            const isKick = !!o.kick || /\bkick|interrupt|got .+ off\b/i.test(o.detail || '') || /wail of terror|spiteful soulcoiler|eternal nightfall/.test(mo), isOrb = /coalesced venom|venom rupture/.test(mo), isSoak = /guillotine|soak/.test(mo) || /soak/i.test(o.detail || '');
+            soak = soak || isSoak; kick = kick || isKick; orb = orb || isOrb;
+            if (o.how === 'own') for (const d of o.all || []) { const pn = lc0(base(d.player)); if (lc0(d.ability) === mo || r.mistakes.some((m) => lc0(base(m.player)) === pn && lc0(m.mechanic) === mo && m.t >= d.t - 10 && m.t <= d.t + 2)) add('Died to it', r, d.player); }
+            else if (o.how === 'kit' && o.d) add('Died with a defensive ready', r, o.d.player);
+            else if (o.how === 'tank' && o.d) add('Tank died', r, o.d.player);
+            if (o.how === 'own' && cnt() === n0 && o.d) add('Died to it', r, o.d.player);
+            if (o.how === 'raid' || o.how === 'own') for (const m of r.mistakes) { if (m.player === 'Raid' || m.t < o.t - 20 || m.t > o.t + 3 || !/assignment$/i.test(m.mechanic) || /^Soaked /.test(m.detail || '')) continue; const mk = lc0(m.mechanic).replace(/ assignment$/, '');
+              if (mk === mo || mo.endsWith(mk) && mk.length > 4) add(isSoak ? 'Missed their soak' : 'Missed their job', r, m.player); else if (isKick && mk === 'kick') add('Missed the kick', r, m.player); }
+            if (isOrb) for (const m of r.mistakes) { if (m.player !== 'Raid' || lc0(m.mechanic) !== 'venom rupture' || m.t < o.t - 3 || m.t > o.t + 10) continue; const w = String(m.detail || '').match(/at that moment: ([^.]+)\./); if (w) w[1].split(', ').forEach((v) => add('Carried the orb that burst', r, v)); }
+            if (cnt() === n0) unk++; });
+          const gs = [...G].map(([l, g]) => ({ l, n: [...g].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([nm, c]) => [nm, c, col.get(nm) || '']) }));
+          return { g: gs, unk, of: x.os.length, kind: orb ? 'orb' : soak ? 'soak' : kick ? 'kick' : '', nt: x.rs.some((r) => (r.mistakes || []).some((m) => /assignment$/i.test(m.mechanic))) }; };
         /* (Oct 23, your ask "what about those things wiped us?": each cause with what went wrong in it, and who when it was people:
            "Dreadmarch · 4 wipes: Dashtoswirly ×2, Komo and Boltzzx didn't pick up their soul fragments") */
         const whyOf = (x) => { const os = x.os.slice().reverse(), o = os[0];
@@ -38773,7 +38816,7 @@ function coachSummary0(reps, name) {
             if (!r1) return wl ? wl + ' died to it' : ''; const pas = /^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|chained|tethered)\b/i.test(r1); return wl + ' ' + (pas ? (who.length > 1 ? 'were ' : 'was ') : '') + r1; }
           if (o.how === 'raid' && o.k !== 'dmg') { let s0 = ''; try { s0 = cHtml(whyShort(o, new Map()).short); } catch (e) { s0 = ''; } return s0; }
           let w0 = ''; try { w0 = cHtml(whySay(o, new Map(), 1).h).replace(/\.$/, ''); } catch (e) { w0 = ''; } return w0; };
-        const WL = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 5).map((x) => ({ nm: dbfCap(x.nm), n: x.n, ps: x.ps || [], why: dbfCap(String(whyOf(x) || '').replace(/,? and (?:died to it|it got (?:them|you))$/, '').replace(/ (?:were|was) still alive$/, ' lived too long')) }));
+        const WL = [...by.values()].sort((a, b) => b.n - a.n).slice(0, 5).map((x) => ({ nm: dbfCap(x.nm), n: x.n, ps: x.ps || [], who: (() => { try { return whoOf(x); } catch (e) { return null; } })(), why: dbfCap(String(whyOf(x) || '').replace(/,? and (?:died to it|it got (?:them|you))$/, '').replace(/ (?:were|was) still alive$/, ' lived too long')) }));
         if (WL.length) { WIPES = WL; talk = 'What wiped us: ' + WL.slice(0, 3).map((x) => x.nm + ' (' + plural(x.n, 'wipe') + ')' + (x.why ? ': ' + x.why.charAt(0).toLowerCase() + x.why.slice(1) : '')).join('; ') + '.'; } }
       if (night && !talk) { const hn = whyNight(reps, pmT), p = (hn.match(/<p>([\s\S]*?)<\/p>/) || [])[1]; if (p) { const q = p.replace(/^<b>[^<]*<\/b>\s*/, ''), m1 = q.match(/^(<b>[^<]+<\/b>) got us /); talk = m1 ? cHtml(m1[1]) + ' cost us the most.' : s1(q, 1); } /* (the headline names the big picture only: how often is in Went wrong and the fix in Next raid, so each says it once (Oct 23)) */ } } catch (e) { talk = ''; } }
     const headline2 = talk ? res + '. ' + talk : headline;
@@ -39429,7 +39472,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     /* round 401 none first */ const none = (cls, title, note, msg) => '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><p class="cch-tnone">' + msg + '</p></div>'; /* (an empty section says so: good news is news (Oct 23)) */
     const meW = c.name ? (() => { const L = W.slice(0, 3).map((x) => ({ nm: String(x.label).replace(/<[^>]+>/g, '').replace(/\s*\(.*$/, ''), tag: x.wipes ? (x.wipes === 1 ? (x.wipe1 ? 'caused the wipe' : 'caused a wipe') : 'caused ' + x.wipes + ' wipes') : x.led ? 'led to ' + plural(x.led, 'death') : '', sub: x.what ? cClip(tidyLine(String(x.what).replace(/<[^>]+>/g, '')), 110) : '', trH: trTag(trOf(String(x.label), x)) }));
       return L.length ? sec('wip', 'Your mistakes', '', L, '') : none('wip', 'Your mistakes', '', 'No mistakes from you.'); })() : '';
-    const wip = c.name ? meW : wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li data-pulls="' + (x.ps || []).join(',') + '"><b>' + esc(x.nm) + '</b>' + trTag(trOf(x.nm)) + '<span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>' + ((L) => (L.length ? '<div class="cch-tsh cch-also-h">Other big mistakes</div>' + alsoUl(L) : ''))(alsoOf(c.wipes.map((w) => w.nm).join(' | '))) + '</div>' : '');
+    const wip = c.name ? meW : wip1 || (c.wipes && c.wipes.length ? '<div class="cch-tsec wip"><div class="cch-tsh">What wiped us</div><ul class="cch-wl">' + c.wipes.map((x) => '<li data-pulls="' + (x.ps || []).join(',') + '"' + (x.who ? ' data-who="' + esc(JSON.stringify(x.who)) + '"' : '') + '><b>' + esc(x.nm) + '</b>' + trTag(trOf(x.nm)) + '<span class="cch-wn">' + plural(x.n, 'wipe') + '</span>' + (x.why ? '<span class="cch-wy">' + esc(x.why) + '</span>' : '') + '</li>').join('') + '</ul>' + ((L) => (L.length ? '<div class="cch-tsh cch-also-h">Other big mistakes</div>' + alsoUl(L) : ''))(alsoOf(c.wipes.map((w) => w.nm).join(' | '))) + '</div>' : '');
     return '<div class="cch-tgrid">' + wip + (c.name && !T0.well.length ? none('ok', 'What you did well', '', 'Nothing stood out yet.') : '') + sec('ok', c.name ? 'What you did well' : 'What we did well', '', T0.well.filter((x) => !(c.wipes || []).some((w) => String(w.nm).toLowerCase() === String(x.nm).toLowerCase())).map((x) => ({ ...x, trH: trTag(trOf(x.nm) || (/after a mistake on pull/i.test(x.sub || '') ? 'up' : '')) })) /* (what wiped us is never also "done well") */) + (single ? '' : !T0.worse.length && !T0.better.length ? '<p class="cch-tsame">' + (single ? 'About the same as last pull: nothing got better or worse.' : 'Nothing clearly got better or worse.') + '</p>' /* (one line, not two empty boxes (Oct 24, from the addon's recap)) */ : T0.worse.length ? sec('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, T0.worse, '') : none('bad', single ? 'Worse than last pull' : 'What\'s getting worse', single ? '' : T0.cmp, single ? 'Nothing got worse than last pull.' : 'Nothing got worse.')) +
       (single || (!T0.worse.length && !T0.better.length) ? '' : T0.better.length ? sec('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, T0.better, '') : none('up', single ? 'Better than last pull' : 'What\'s improving', single ? '' : T0.cmp, single ? 'Nothing improved on last pull.' : 'Nothing clearly improved.')) + '</div>' + sinceH() +
       (W.length && c.name /* (a pull: the red ones are up top, the rest under their bars (your call, Oct 24)) */ ? '<details class="cbr-more cch-tall" data-k="cch-tall"' + (S.openSecs && S.openSecs.has('cch-tall') ? ' open' : '') + '><summary>Every mistake, in detail <span>· ' + W.length + '</span></summary><ul class="cbr-l">' + W.map(briefLine).join('') + '</ul></details>' : ''); };
@@ -39439,7 +39482,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
   const dch = D ? (D.items && D.items.length ? D.items.map((it) => dchip(it)).join('') + (D.rest && D.rest.length ? '<span class="dch more" role="button" tabindex="0" data-ddmore>+' + D.rest.length + ' more</span>' + D.rest.map((it) => dchip(it, 1)).join('') : D.more ? '<span class="dch more">+' + D.more + ' more</span>' : '') : '<span class="cch-none">' + esc(D.line) + '</span>') + (D.note ? '<div class="cch-anote">' + esc(D.note) + '</div>' : '') : '';
   const achip = (it, x) => '<span class="ach' + (it.bad ? ' bad' : '') + (x ? ' ach-x' : '') + '"' + (it.avk ? ' data-avk="' + esc(it.avk) + '" role="button" tabindex="0"' : it.avn ? ' data-avn="' + esc(it.avn) + '" role="button" tabindex="0"' : '') + (x ? ' hidden' : '') + '><b>' + esc(it.k) + '</b>' + (it.who ? '<span>' + esc(it.who) + '</span>' : '') + '</span>';
   const ach = A ? (A.items && A.items.length ? A.items.map((it) => achip(it)).join('') + (A.rest && A.rest.length ? '<span class="ach more" role="button" tabindex="0" data-avmore>+' + A.rest.length + ' more</span>' + A.rest.map((it) => achip(it, 1)).join('') : A.more ? '<span class="ach more">+' + A.more + ' more</span>' : '') : '<span class="cch-none">' + esc(A.line) + '</span>') : '';
-  const html = '<section class="cch cch2' + (c.night ? ' cch-night' : '') + '"' + (c.night && c.reps ? ' data-allp="' + c.reps.filter((q) => q && q.item).map((q) => q.item.pull + (q.item.kill ? 'k' : '')).join(',') + '"' : '') + ' aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + strictTag() + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
+  const html = '<section class="cch cch2' + (c.night ? ' cch-night' : '') + '"' + (c.night && c.reps ? ' data-allp="' + c.reps.filter((q) => q && q.item).map((q) => q.item.pull + (q.item.kill ? 'k' : '')).join(',') + '" data-aph="' + esc(JSON.stringify(aphOf(c.reps))) + '"' : '') + ' aria-label="Coach"><div class="cch-hd"><span class="cch-k">' + esc(o.title || (c.name ? 'Your coach' : 'Coach')) + '</span>' + strictTag() + (pm ? '<span class="nm" style="color:' + pm.color + '">' + esc(c.name.split('-')[0]) + '</span>' : '') + '</div>' +
     (c.trend && !c.night && /Root cause:/.test(String(c.headline)) ? '<p class="cch-h">' + esc(String(c.headline).replace(/\s*Root cause:[\s\S]*$/, '')) + ' <span class="cch-hype">' + esc(coachHypeFix(c)) + '</span></p>' /* (the root cause sits in the grid (Oct 23)) */
       : c.wipes && c.wipes.length && c.trend ? '<p class="cch-h">' + (() => { /* (Oct 23, your note "raid lead awful quiet": the night in a breath, from the cards below: pulls and best, what wiped us most, the best news, what to watch) */
         const T0 = c.trend, B0 = (T0.well || []).find((x) => !x.id && /^Best pull$/.test(x.nm)), w = c.wipes[0], up = (T0.better || [])[0], dn = (T0.worse || [])[0], b = (t) => '<b>' + esc(t) + '</b>';
@@ -40908,6 +40951,15 @@ const pullLabel = (b) => { const p = pullProg(b); return b.kill ? 'kill' : p ? p
 // a pull's colour, WoW item quality by how far through the whole encounter it got: every 20% of the encounter's health is
 // one step (poor, common, uncommon, rare, epic), and a kill is legendary
 const PULL_Q = [[80, '#b25ef5'], [60, '#2e8cff'], [40, '#2ee62e'], [20, '#f2f2f2'], [0, '#9d9d9d']];
+// (Nov 5, the All pulls card's "Boss health at each wipe" line: each pull's whole-fight health left, as the banner's bars, the phase it
+// reached and its label ("P2 · Malacrass 21%"); and where each phase starts on that scale)
+function aphOf(reps) {
+  const p = reps.filter((q) => q && q.item).map((q) => { const b = q.item, g = b.kill ? null : progressOf(q), v = b.kill ? 0 : g ? g.left : pullPct(b);
+    return [b.pull, v == null ? null : Math.round(v * 10) / 10, b.kill ? 'k' : (g && g.phase) || '', (g && g.phase && g.label) || '']; });
+  const cfg = reps[0] && reps[0].item && PROGRESS[reps[0].item.boss]; let at = 0;
+  const ph = cfg && !cfg.pool ? cfg.phases.map((k) => { const w = 100 * phShare(cfg, k), o = [k, Math.round(100 - at)]; at += w; return w > 0.5 && o[1] < 99.5 ? o : null; }).filter(Boolean) : [];
+  return { p, ph };
+}
 const pullCol = (b) => { if (b.kill) return '#ff8000'; const v = pullPct(b); return v == null ? null : PULL_Q.find(([lo]) => 100 - v >= lo)[1]; };
 // the dot colours, as a legend line (the Progress page and the Summary chart)
 const pullLegend = (cls) => '<div class="pc-legend' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><span>Each dot is a pull, by how far it got:</span>' + [...PULL_Q].reverse().map(([lo, c], i, a) => '<span><i style="background:' + c + '"></i>' + (i < a.length - 1 ? lo + '–' + (a[i + 1][0] - 1) + '%' : lo + '%+') + '</span>').join('') +
@@ -71623,7 +71675,16 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var wipL = [].slice.call(g.querySelectorAll('.cch-tsec.wip ul.cch-wl:not(.cch-also) > li')), alsoL = [].slice.call(g.querySelectorAll('.cch-tsec.wip ul.cch-also > li'));
     var worseL = [].slice.call(g.querySelectorAll('.cch-tsec.bad > ul > li')), upL = [].slice.call(g.querySelectorAll('.cch-tsec.up > ul > li')), wellL = [].slice.call(g.querySelectorAll('.cch-tsec.ok > ul > li')).filter(function (li) { return !/^Best pull$/i.test(nameOf(li)); });
     var focusLi = wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
-    var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + (bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
+    /* (Nov 5, one health story: the boss's whole-fight health at the wipe, as the chart and the banner's bars, then the phase's own health:
+       "Best pull: 24 · boss at 49% · Malacrass at 21% in phase 2") */
+    var AP = null; try { AP = JSON.parse(s.dataset.aph || 'null'); } catch (e) { AP = null; } if (!AP || !AP.p) AP = null;
+    var phN = function (k) { return k === 'Intermission' ? 'the intermission' : 'phase ' + String(k).replace(/^P/, ''); };
+    var story = function (q) { var m = q && q[3] && q[3].match(/^(P\d|Intermission)(?: · (.*))?$/); if (!m) return '';
+      var ps = (m[2] || '').split(', ').filter(Boolean), named = ps.filter(function (x) { return / \d+%$/.test(x); }).map(function (x) { return x.replace(/ (\d+%)$/, ' at $1'); });
+      return named.length ? named.join(', ') + ' in ' + phN(m[1]) : ps.length ? phN(m[1]).charAt(0).toUpperCase() + phN(m[1]).slice(1) + ' at ' + ps[0] : 'Reached ' + phN(m[1]); };
+    var bestQ = null; if (AP) AP.p.forEach(function (q) { if (q[2] !== 'k' && q[1] != null && (!bestQ || q[1] < bestQ[1])) bestQ = q; });
+    var hpS = function (v) { return Math.round(v) + '%'; };
+    var o = '<div class="nsm"><div class="nsm-top"><div><span class="nsm-k">Tonight on ' + esc(boss) + '</span><h2>' + (bm && bestQ ? 'Best pull: ' + bestQ[0] + ' · boss at <b>' + hpS(bestQ[1]) + '</b>' + (story(bestQ) ? ' <span class="nsm-st">· ' + esc(story(bestQ)) + '</span>' : '') : bm ? 'Best pull: <b>' + esc(bm[2]) + '</b> (pull ' + esc(bm[1]) + ')' : esc(ht.split('. ')[0].replace(/\.$/, ''))) + '</h2></div>' +
       '<div class="nsm-facts">' + (pulls ? '<div><b>' + esc(pulls) + '</b><small>Pulls</small></div>' : '') + (onB ? '<div><b>' + esc(onB) + '</b><small>On the boss</small></div>' : '') + (bm && /^P\d/.test(bm[2]) ? '<div><b>' + esc(bm[2].split(' ')[0]) + '</b><small>Furthest</small></div>' : '') + '</div></div>';
     /* (Nov 4, Flex: "it doesnt really show the biggest issues in order of importance", then "Yes, build it" on the Design studio's mock:
        one ranked list. What wiped us most by wipes caused, a footnote with the real counts, then everything else by how many pulls it hit) */
@@ -71632,7 +71693,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var why = function (li) { var wy = li && li.querySelector('.cch-wy'); return wy ? wy.innerHTML.replace(/Ghost collision: ghosts touched/g, 'the ghosts touched') : ''; };
     var psOf = function (v) { return String(v || '').split(',').filter(Boolean).map(Number); };
     var pl = function (ps) { ps = ps.slice().sort(function (a, b) { return a - b; }); return !ps.length ? '' : ps.length > 6 ? 'in ' + ps.length + ' pulls' : (ps.length === 1 ? 'pull ' : 'pulls ') + ps.map(function (n) { return '<a href="#" data-cchpull="' + n + '">' + n + '</a>'; }).join(', '); };
-    var bar = function (v, m, c) { return '<span class="nsm-bar ' + c + '"><i style="width:' + Math.max(4, Math.round(100 * v / Math.max(1, m))) + '%"></i></span>'; };
+    var bar = function (v, m, c, col) { return '<span class="nsm-bar ' + c + '"><i style="width:' + Math.max(4, Math.round(100 * v / Math.max(1, m))) + '%' + (col ? ';background:' + col : '') + '"></i></span>'; };
     var TR = {}; [[worseL, '▼ ', 'r', 'Worse'], [upL, '▲ ', 'g', 'Better']].forEach(function (z) { z[0].forEach(function (li) { TR[key(nameOf(li))] = { t: z[1] + (tx(li.querySelector('.cch-tt')) || z[3]), c: z[2], li: li }; }); });
     var ttag = function (nm) { var t = TR[key(nm)]; if (!t) return ''; t.used = 1; return ' <span class="nsm-tag ' + t.c + '">' + esc(t.t) + '</span>'; };
     /* (Nov 4, the studio's audit: "Name (Nickname)" from the breakdown's own rows, and its spell icon when the coach line has none) */
@@ -71642,7 +71703,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var tl = function (nm) { var b = bk(nm), same = function (v) { return !v || key(v) === key(nm) || lc(v) === lc(nm); }, nk = [BK[key(nm)] && BK[key(nm)].nk, NK[key(nm)], (function () { try { return window.nkWord283 ? window.nkWord283('', nm) : ''; } catch (e) { return ''; } })()].filter(function (v) { return !same(v); })[0] || ''; /* (never "Dreadmarch (Dreadmarch)" (Nov 4)) */ if (/\(/.test(nm)) nk = ''; var t = esc(nm) + (nk ? ' <span class="nsm-nk">(' + esc(nk) + ')</span>' : ''); return t; };
     var icon2 = function (li, nm) { var h = icon(li); if (h.indexOf('nsm-noi') < 0) return h; var b = bk(nm); var GL = { 'raid damage': '💥', 'not enough damage': '⏱️', 'unused defensives': '🛡️', 'missed healing': '💚', 'tank deaths': '🛡️' }; if (!(b && b.sid) && GL[key(nm)]) return '<span class="nsm-gl" aria-hidden="true">' + GL[key(nm)] + '</span>';
     return b && b.sid ? '<span class="nsm-noi nsm-sic"><span class="sp mt" data-sid="' + esc(b.sid) + '" data-sn="' + esc(nm) + '">' + esc(nm) + '</span></span>' : h; };
-    var rrow = function (n, li, title, sent, b, val, sub) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + n + '</span>' : '<span class="nsm-n"></span>') + icon2(li, title) + '<div class="nsm-tx"><span class="nsm-t">' + tl(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
+    var rrow = function (n, li, title, sent, b, val, sub, col) { return '<div class="nsm-rk">' + (n ? '<span class="nsm-n">' + (col ? '<i class="nsm-cd" style="background:' + col + '"></i>' : '') + n + '</span>' : '<span class="nsm-n"></span>') + icon2(li, title) + '<div class="nsm-tx"><span class="nsm-t">' + tl(title) + ttag(title) + '</span>' + (sent ? '<span class="nsm-s">' + sent + '</span>' : '') + '</div>' + b + '<span class="nsm-v"><b>' + val + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; };
     var W1 = wipL.map(function (li) { return { li: li, nm: nameOf(li), w: parseInt(tx(li.querySelector('.cch-wn')), 10) || 0, ps: psOf(li.dataset.pulls), s: [why(li)].filter(Boolean) }; }).sort(function (a, b) { return b.w - a.w || b.ps.length - a.ps.length; });
     var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
@@ -71668,8 +71729,42 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var mis = fm && top[0] && fm[1].toLowerCase().indexOf(lc(top[0].nm)) < 0 ? top[0] : null; /* (never a quiet mismatch: the focus names #1 or says that #1 is something else) */
     if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
       (mis ? '<p><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + '), so work on that one too.</p>' : whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
+    /* (Nov 5, Flex: "a line graph would be better reflecting the total boss HP", then "Yes, build it" on the Design studio's mock: the boss's
+       whole-fight health at each wipe, 100% at the top and the kill at the bottom, a dot per pull in the colour of what wiped it, the best pull
+       ringed, the best so far as a dashed gold line that only steps down, and where each phase starts. A dot opens its pull) */
+    var CC = ['#ef6b63', '#b98cf0', '#e6b450', '#5aa2ff', '#4fbf9a'], CO = '#6b7682';
+    var causeOf = function (n) { for (var i = 0; i < W1.length; i++) if (W1[i].ps.indexOf(n) >= 0) return { i: i, nm: W1[i].nm, c: i < top.length ? CC[i] || CO : CO }; return null; };
+    var chart = function () {
+      var P = AP ? AP.p.filter(function (q) { return q[1] != null; }) : []; if (P.length < 2 || !P.some(function (q) { return q[2] !== 'k'; })) return '';
+      var N = AP.p.length, X = function (q) { return (AP.p.indexOf(q) + 0.5) / N * 100; }, Y = function (v) { return 100 - Math.max(0, Math.min(100, v)); }, f = function (v) { return v.toFixed(2); };
+      var rk = function (k) { return k === 'k' ? 99 : k === 'Intermission' ? 2.5 : +(String(k).match(/\d/) || [1])[0]; };
+      var run = 101, st = [], ln = P.map(function (q) { return f(X(q)) + ',' + f(Y(q[1])); }).join(' ');
+      P.forEach(function (q) { if (q[1] < run) { if (st.length) st.push(f(X(q)) + ',' + f(Y(run))); run = q[1]; } st.push(f(X(q)) + ',' + f(Y(run))); });
+      var hasK = P.some(function (q) { return q[2] === 'k'; }), side = function (y) { var l = 0, r = 0; P.forEach(function (q) { var dy = y - Y(q[1]); if (dy > -3 && dy < 16) { if (X(q) < 32) l++; if (X(q) > 68) r++; } }); return r > l ? 'l' : 'r'; };
+      var svg = '<svg class="nsm-hsv" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' + [25, 50, 75].map(function (v) { return '<line class="g" x1="0" x2="100" y1="' + Y(v) + '" y2="' + Y(v) + '"/>'; }).join('') + '<line class="z" x1="0" x2="100" y1="100" y2="100"/>' +
+        AP.ph.map(function (p) { return '<line class="ph" x1="0" x2="100" y1="' + Y(p[1]) + '" y2="' + Y(p[1]) + '"/>'; }).join('') + '<polyline class="bs" points="' + st.join(' ') + '"/><polyline class="pl" points="' + ln + '"/></svg>';
+      var yl = [[100, '100%'], [75, '75%'], [50, '50%'], [25, '25%'], [0, 'Kill']].map(function (z) { return '<span class="nsm-hy" style="top:' + Y(z[0]) + '%">' + z[1] + '</span>'; }).join('');
+      var phl = (AP.ph.length ? [['P1', 100]].concat(AP.ph) : []).map(function (p, j) { var y = j ? Y(p[1]) : 0; return '<span class="nsm-hph ' + side(y + (j ? 0 : 8)) + (j ? '' : ' first') + '" data-y="' + y + '" style="top:' + y + '%">' + (j ? esc(phN(p[0]).charAt(0).toUpperCase() + phN(p[0]).slice(1)) + ' starts (about ' + p[1] + '%)' : 'Phase 1') + '</span>'; }).join('');
+      var dots = P.map(function (q) { var k = q[2] === 'k', cz = k ? null : causeOf(q[0]), b = q === bestQ, sty = story(q), c = k ? '#4fbf7a' : cz ? cz.c : CO;
+        var tt = '<div class="tt-h">Pull ' + q[0] + ' · ' + (k ? 'Kill' : 'wipe at ' + hpS(q[1])) + '</div>' + (sty ? '<div>' + esc(sty) + '</div>' : '') + (k ? '' : '<div class="tt-s">' + (cz ? 'What wiped it: ' + esc(cz.nm) : 'No single cause') + '</div>') + '<div class="tt-s">Click to open this pull.</div>';
+        return '<button type="button" class="nsm-hd' + (b ? ' b' : '') + (k ? ' k' : '') + '" style="left:' + f(X(q)) + '%;top:' + f(Y(q[1])) + '%;--c:' + c + '" data-cchpull="' + q[0] + '" data-tt="' + esc(tt) + '" aria-label="' + esc('Pull ' + q[0] + ', ' + (k ? 'kill' : 'wipe at ' + hpS(q[1]) + (cz ? ', ' + cz.nm : ''))) + '"></button>'; }).join('');
+      var bx = bestQ ? X(bestQ) : 0, by = bestQ ? Y(bestQ[1]) : 0, bl = bestQ ? '<span class="nsm-hbl' + (bx > 85 ? ' r' : bx < 15 ? ' l' : '') + (by > 78 ? ' up' : '') + '" style="left:' + f(bx) + '%;top:' + f(by) + '%">Best: pull ' + bestQ[0] + ', ' + hpS(bestQ[1]) + '</span>' : '';
+      var xs = AP.p.map(function (q, i) { return q[0] === 1 || q[0] % 5 === 0 || i === N - 1 ? '<span style="left:' + f((i + 0.5) / N * 100) + '%">' + q[0] + '</span>' : ''; }).join('');
+      var reach = AP.ph.map(function (p) { var n = AP.p.filter(function (q) { return rk(q[2]) >= rk(p[0]); }).length; return phN(p[0]) + ' in <em>' + n + (n && p === AP.ph[0] ? ' of ' + N : '') + '</em>'; });
+      var hs = (bestQ ? 'Best: <em>pull ' + bestQ[0] + ', ' + hpS(bestQ[1]) + '</em>' : '') + (reach.length ? ' · reached ' + reach[0].replace(/<\/em>$/, '</em> pulls') + (reach.length > 1 ? ' · ' + reach.slice(1).join(' · ') : '') : '');
+      var key = top.map(function (x, i) { return '<span><s style="background:' + (CC[i] || CO) + '"></s>' + esc(x.nm) + '</span>'; }).join('') + '<span><s style="background:' + CO + '"></s>Other or no single cause</span>' + (hasK ? '<span><s style="background:#4fbf7a"></s>Kill</span>' : '') + '<span><s class="ln"></s>Best so far</span>';
+      return '<div class="nsm-hc"><div class="nsm-hh"><span class="nsm-k">Boss health at each wipe</span>' + (hs ? '<span class="nsm-hs">' + hs + '</span>' : '') + '</div>' +
+        '<div class="nsm-hp">' + yl + svg + phl + dots + bl + '</div><div class="nsm-hx" aria-hidden="true">' + xs + '</div><div class="nsm-hk">' + key + '</div></div>'; };
+    o += chart();
+    /* (Nov 5, who's behind each cause: every name with a count, highest first, in class colour, never "and N more" (Flex: "dont shorten the
+       list of names, show all the names")) */
+    var whoH = function (li) { var w = null; try { w = JSON.parse(li.dataset.who || 'null'); } catch (e) { w = null; } if (!w) return '';
+      var gs = (w.g || []).map(function (g) { return esc(g.l) + ': ' + g.n.map(function (z) { return '<span class="nm" style="color:' + esc(z[2] || 'var(--text)') + '">' + esc(z[0]) + '</span> ' + z[1]; }).join(', '); });
+      var job = !w.nt && { soak: 'their soak', kick: 'the kick' }[w.kind], ow = w.unk === 1 ? 'wipe' : w.unk + ' wipes';
+      if (!gs.length) { var no = w.kind === 'orb' ? 'The logs don\'t tie these orb touches to one player yet.' : job ? 'Who missed ' + job + ' shows once your note is loaded.' : ''; return no ? '<span class="nsm-who q">' + no + '</span>' : ''; }
+      return '<span class="nsm-who">' + gs.join('<span class="q"> · </span>') + (w.unk ? '<span class="q">. ' + (job ? 'Who missed ' + job + ' in the other ' + ow + ' shows once your note is loaded.' : 'The log names no one for the other ' + ow + '.') + '</span>' : '') + '</span>'; };
     if (top.length) { var ended = {}; top.forEach(function (x) { x.ps.forEach(function (p) { ended[p] = 1; }); }); var en = Object.keys(ended).length, mx = top[0].w || 1, oth = NW - en;
-      o += '<div class="nsm-sec nsm-rank"><span class="nsm-k">What wiped us most' + (NP ? ' · ' + NP + ' pulls tonight, biggest first' : '') + '</span>' + top.map(function (x, i) { return rrow(i + 1, x.li, x.nm, x.s.join(' '), bar(x.w, mx, 'r'), x.w + (x.w === 1 ? ' wipe' : ' wipes'), pl(x.ps)); }).join('');
+      o += '<div class="nsm-sec nsm-rank"><span class="nsm-k">What wiped us most' + (NP ? ' · ' + NP + ' pulls tonight, biggest first' : '') + '</span>' + top.map(function (x, i) { var c = CC[i] || CO; return rrow(i + 1, x.li, x.nm, x.s.join(' ') + whoH(x.li), bar(x.w, mx, 'r', c), x.w + (x.w === 1 ? ' wipe' : ' wipes'), pl(x.ps), c); }).join('');
       if (NW) o += '<p class="nsm-foot">' + (top.length === 1 ? 'This ended ' : (top.length === 2 ? 'These two' : top.length === 3 ? 'These three' : 'These ' + top.length) + ' ended ') + '<b>' + en + '</b> of the <b>' + NW + '</b> wipes.' +
         (oth > 0 ? ' The other ' + oth + ': ' + (rest.length ? rest.map(function (x) { return esc(x.nm) + ' (' + x.w + ')'; }).join(', ') + ', or ' : '') + 'no single cause.' : '') + '</p>';
       o += '</div>'; }
@@ -71680,6 +71775,20 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
+    /* (the chart's labels go where they cover no dot, measured once the card has a size, and again when it changes) */
+    var hp = s.querySelector('.nsm-hp');
+    if (hp) { var place = function () { if (!hp.isConnected) { if (ro) ro.disconnect(); window.removeEventListener('resize', place); return; } var W = hp.clientWidth, H = hp.clientHeight; if (!W || !H) return;
+      var D = [].map.call(hp.querySelectorAll('.nsm-hd'), function (d) { return [parseFloat(d.style.left) / 100 * W, parseFloat(d.style.top) / 100 * H]; }), used = [];
+      var free = function (x, y, w, h) { return x >= 0 && x + w <= W && D.every(function (p) { return p[0] < x - 7 || p[0] > x + w + 7 || p[1] < y - 6 || p[1] > y + h + 6; }) && used.every(function (u) { return x + w < u[0] || x > u[0] + u[2] || y + h < u[1] || y > u[1] + u[3]; }); };
+      var put = function (el, cands) { el.style.transform = 'none'; el.style.right = 'auto'; el.style.marginTop = '0'; var w = el.offsetWidth, h = el.offsetHeight, pick = null;
+        cands.some(function (c) { for (var i = 0; i < (c.scan ? Math.ceil(W / 8) : 1); i++) { var x = c.x(w) - i * 8 * (c.scan || 0); if (free(x, c.y(h), w, h)) { pick = [x, c.y(h)]; return true; } } return false; });
+        if (!pick) pick = [cands[0].x(w), cands[0].y(h)]; el.style.left = Math.round(pick[0]) + 'px'; el.style.top = Math.round(pick[1]) + 'px'; used.push([pick[0], pick[1], w, h]); };
+      var bl = hp.querySelector('.nsm-hbl'), bd = hp.querySelector('.nsm-hd.b');
+      if (bl && bd) { var bx = parseFloat(bd.style.left) / 100 * W, by = parseFloat(bd.style.top) / 100 * H, cl = function (w) { return Math.max(0, Math.min(W - w, bx - w / 2)); };
+        put(bl, [{ x: cl, y: function () { return by + 10; } }, { x: cl, y: function (h) { return by - 10 - h; } }, { x: function () { return bx + 10; }, y: function (h) { return by - h / 2; } }, { x: function (w) { return bx - 10 - w; }, y: function (h) { return by - h / 2; } }]); }
+      [].forEach.call(hp.querySelectorAll('.nsm-hph'), function (el) { var y = parseFloat(el.dataset.y) / 100 * H, first = el.classList.contains('first');
+        put(el, first ? [{ x: function (w) { return W - w - 2; }, y: function () { return y + 2; }, scan: 1 }] : [{ x: function (w) { return W - w - 2; }, y: function (h) { return y - h - 1; }, scan: 1 }, { x: function (w) { return W - w - 2; }, y: function () { return y + 2; }, scan: 1 }]); });
+    }, ro = window.ResizeObserver ? new ResizeObserver(function () { place(); }) : null; if (ro) ro.observe(hp); window.addEventListener('resize', place); [0, 700, 2500].forEach(function (ms) { setTimeout(place, ms); }); }
     /* (a row with no icon of its own borrows its spell's icon from elsewhere on the page, once it's drawn (Nov 4)) */
     var fillIc = function () { [].forEach.call(s.querySelectorAll('.nsm-sic'), function (b) { if (b.querySelector('.icw')) return; var sp = b.querySelector('.sp.mt'), id = sp && sp.dataset.sid, src = id && [].filter.call(document.querySelectorAll('#view .sp.mt[data-sid="' + id + '"] .icw'), function (e) { return !e.closest('.nsm'); })[0]; if (src) { b.innerHTML = ''; var c = src.cloneNode(true); c.style.fontSize = '22px'; b.appendChild(c); } }); };
     [0, 800, 2500].forEach(function (ms) { setTimeout(fillIc, ms); });
