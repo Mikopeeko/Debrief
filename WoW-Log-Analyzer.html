@@ -25621,6 +25621,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
+    'The Coiled Altar guide: Soul Sever (Frontal) has its own card and map, and Dreadmarch\'s map stops once the ghosts are frozen.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
     'Plan: Debrief spots your alts. Drag one in and it swaps out its main, so each player takes one spot.',
@@ -57932,6 +57933,7 @@ function gdzAxeDodge(k, ids, pos, n, t0, t1) {
       if (Math.hypot(nx, ny) > 0.3 && (inBad([b[0] + nx, b[1] + ny], t) || Math.max(Math.abs(b[0] + nx), Math.abs(b[1] + ny)) > 39)) { nx = ox * 0.4; ny = oy * 0.4; } /* (never into a pool, a bomb, a soak or off the edge) */
       if (Math.hypot(nx, ny) > 0.3 || Math.hypot(ox, oy) > 0.3) keys.push([t, b[0] + nx, b[1] + ny]); ox = nx; oy = ny; }
     keys.forEach(([t, x, y]) => k.at(t, id, x, y, 0, true)); } }
+const GDZ_CA_GH = [[30, 37, 1], [36, 33, 0], [39, 38, 0], [40, 19, 2], [25, 36, 2], [19, 38, 1]], GDZ_CA_FREED = [[20, 26], [16, 30], [22, 21]];
 const GDZ_CA_M = {
   // P1: purples at the far end of each frontal's triangle, greens between them and the boss; the entrance side first
   orbs() {
@@ -58118,28 +58120,52 @@ const GDZ_CA_M = {
     kit.step(1).step(1.6).step(21).step(21.6).step(41).step(41.6);
     return kit.done({ title: 'Grim Guillotine: star, then square, then square', focus: { x: 0, y: 22, r: 30 }, hlLabel: 'axe targets and the immunities', goodLabel: 'in the soak', tagLabel: 'What they press' });
   },
-  // P2: everyone stacks the mind controls on the square; ghosts land around them and get frozen apart; the frontal sweeps them
+  // P2: everyone stacks the mind controls on the square; ghosts land around them and get frozen apart, and their players step aside
+  // toward the raid, still looking at them (Soul Sever, its own card, sweeps them next)
   ghosts() {
-    const k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), SQ = [35, 33]; /* (by the square, on the stone: the ghosts land around the stack and must stay on the platform) */
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), SQ = [35, 33]; /* (by the square, on the stone: the ghosts land around the stack and must stay on the platform) */
     k.boss('hm', 'Malacrass', 0, 6, 4).boss('hm', 'Malacrass', 3, 16, 16);
-    k.at(0, 't1', 10, 4).at(3, 't1', 22, 18).hold(7, 't1').at(9.6, 't1', 36, 32).at(0, 't2', 2, 8).at(3, 't2', 8, 14)
+    k.at(0, 't1', 10, 4).at(3, 't1', 20, 18).at(0, 't2', 2, 8).at(3, 't2', 8, 14)
       .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 6, 12, 5).at(3, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], -8, 14, 4).at(3, ['h1', 'h3', 'h4'], 0, 24, 4)
       .at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -6, -6, 6).at(3, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6);
     k.at(0, 'r5', 10, 24).at(0, 'm4', 16, 22).at(0, 'h2', 4, 30);
     const mc = ['r5', 'm4', 'h2'], CC = [['m1', 'Ring of Peace', 4.6, [27, 27]], ['m2', 'Shockwave', 5.2, [31, 23]], ['m3', 'Chaos Nova', 5.8, [23, 31]]]; /* (in turns, one after another) */
     CC.forEach(([id, t, at, p]) => { k.hold(3, id).at(4.6, id, p[0], p[1]).press(id, t, at, at + 1.2).hold(7, id); });
     k.at(9.4, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5);
-    k.call(4.4, 6.2, 'Stun them in turns', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(6.3, 8, 'Look at your ghosts', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(8.1, 9.6, 'Line up the frontal', { on: 't1' });
-    mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); const [dx, dy] = gdzSpot(i, 3, 6); k.hold(1, id).at(4.4, id, SQ[0] - 3 + dx, SQ[1] - 3 + dy).hold(6.4, id); }); /* (apart on the square, a step in from its edge: each one's mark and name reads) */
-    // (they land around their player and are frozen on the spot by being looked at; the two outside the cone are let creep in)
-    const G = [[28, 34], [31, 26], [38, 38], [37, 25], [25, 28], [20, 38]], IN = { 5: [24, 32], 2: [36, 32] };
-    G.forEach(([x, y], q) => { const g = 'g' + q; k.obj(g, 'ghost', 6.2, x, y).show(g, 6.2, 12); if (IN[q]) k.obj(g, 'ghost', 8, x, y).obj(g, 'ghost', 9.6, IN[q][0], IN[q][1]); });
-    // (a dashed line from each freed player to their ghost while they look at it: a ghost only moves while its player looks away)
-    G.forEach((_, q) => { const own = mc[Math.floor(q / 2)], g = 'g' + q; if (IN[q]) k.link({ from: own, to: g, t0: 6.6, t1: 8, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }).link({ from: own, to: g, t0: 9.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); else k.link({ from: own, to: g, t0: 6.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); });
-    mc.forEach((id, i) => k.at(9.4, id, 12 - i * 3, 30 + i * 3));
-    k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g0', 'g1', 'g2', 'g3', 'g4', 'g5'] });
-    k.ring1(mc.concat('t1')).step(1).step(2).step(6.2).step(8).step(11);
-    k.pause(9.7, 'Freeze. Every ghost on its own spot, none touching, all in the frontal\'s path. The boss tank lines it up from the diamond side.', { x: 36, y: 34, r: 12 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 30, y: 30, r: 15 }, hlLabel: 'mind-controlled players and the boss tank', tagLabel: 'What they press' });
+    k.call(4.4, 6.2, 'Stun them in turns', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(6.3, 7.5, 'Look at your ghosts', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' }).call(7.6, 10.8, 'Keep looking, step aside', { x: 26, y: 12, color: '#c49bff', ink: '#14061f' });
+    mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); const [dx, dy] = gdzSpot(i, 3, 6); k.hold(1, id).at(4.4, id, SQ[0] - 3 + dx, SQ[1] - 3 + dy).hold(7.6, id).at(9.8, id, GDZ_CA_FREED[i][0], GDZ_CA_FREED[i][1]); }); /* (apart on the square, a step in from its edge; then aside toward the raid, out of the frontal's path) */
+    // (two ghosts land by each freed player and are frozen on the spot by being looked at, apart, none touching; a dashed line from each
+    // freed player to their ghost while they look at it: a ghost only moves while its player looks away)
+    GDZ_CA_GH.forEach(([x, y, own], q) => { const g = 'g' + q; k.obj(g, 'ghost', 6.2, x, y).show(g, 6.2, 11); k.link({ from: mc[own], to: g, t0: 6.6, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); });
+    k.ring1(mc).step(1).step(2).step(6.2).step(7.6);
+    k.pause(10.2, 'Freeze. Every ghost on its own spot, none touching. Their players stepped aside and keep looking at them.', { x: 33, y: 33, r: 10 }); return k.done({ title: 'Dreadmarch on Mythic: stack on square', focus: { x: 26, y: 28, r: 17 }, hlLabel: 'mind-controlled players', tagLabel: 'What they press' });
+  },
+  // P2: Soul Sever. The boss tank takes Malacrass to the diamond and stands by the square, so the frontal runs up through the frozen
+  // ghosts; one out east is let creep into its path. It hits the tank every time (the logs), so the tank picks up 3 Soul Fragments;
+  // the one ghost it missed is walked back toward the square for the next one
+  sever() {
+    const k = gdzCaMarks(gdzKit('The Coiled Altar', 12.5)), mc = ['r5', 'm4', 'h2'], T = [34, 27];
+    k.boss('hm', 'Malacrass', 0, 16, 16).boss('hm', 'Malacrass', 0.6, 16, 16).boss('hm', 'Malacrass', 3.4, 31, 11);
+    k.at(0, 't1', 20, 18).hold(0.4, 't1').at(3, 't1', 35, 8).hold(3.4, 't1').at(6.4, 't1', T[0], T[1]).at(0, 't2', 8, 14)
+      .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], 0, 24, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6);
+    mc.forEach((id, i) => k.at(0, id, GDZ_CA_FREED[i][0], GDZ_CA_FREED[i][1]));
+    k.press('t1', 'Defensive', 6.2, 7.8);
+    k.call(0.4, 3.2, 'Take him to the diamond', { on: 't1' }).call(1.5, 3.3, 'Let it creep in', { x: 41, y: 12, color: '#c49bff', ink: '#14061f' }).call(3.4, 6.2, 'Stand by the square', { on: 't1' })
+      .call(7.8, 10.4, 'Pick up your 3 fragments', { x: 34, y: 17, color: '#c49bff', ink: '#14061f' }).call(8.3, 12.3, 'Missed: walk it back', { x: 10, y: 40, color: '#c49bff', ink: '#14061f' });
+    // (the ghosts frozen where Dreadmarch left them; the one out east (g3) is let creep in: its player looks away for a moment)
+    const HIT = ['g0', 'g1', 'g2', 'g3', 'g4'];
+    GDZ_CA_GH.forEach(([x, y, own], q) => { const g = 'g' + q, by = mc[own], L = { color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' };
+      k.obj(g, 'ghost', 0, x, y);
+      if (q === 3) { k.obj(g, 'ghost', 1.6, x, y).obj(g, 'ghost', 3.2, 35, 19.7).show(g, 0, 7.8); k.link({ from: by, to: g, t0: 0, t1: 1.4, ...L }).link({ from: by, to: g, t0: 3.2, t1: 7.6, ...L }); }
+      else if (q === 5) { k.obj(g, 'ghost', 10, x, y).obj(g, 'ghost', 11.2, 23, 35).show(g, 0, 12.5); k.link({ from: by, to: g, t0: 0, t1: 10, ...L }).link({ from: by, to: g, t0: 11.2, t1: 12.5, ...L }); }
+      else { k.show(g, 0, 7.8); k.link({ from: by, to: g, t0: 0, t1: 7.6, ...L }); } });
+    k.cast('hm', 'Soul Sever', 6.4, 7.6).cone({ from: 'hm', to: 't1', at: 7.6, r: 32, hit: HIT });
+    k.hold(7.6, 't1'); gdzCaFrags(k, 't1', 7.6, T);
+    // (the missed ghost: its player walks round to the square side while looking at it, then looks away so it drifts after them)
+    k.hold(8.2, 'm4').at(9.8, 'm4', 27, 32);
+    k.ring1(['t1']).step(0.4).step(1.4).step(7.6).step(8.2);
+    k.pause(6.3, 'Freeze. Malacrass is at the diamond and the tank stands by the square. Five ghosts are frozen in the frontal\'s path.', { x: 30, y: 30, r: 10 });
+    return k.done({ title: 'Soul Sever on Mythic: from the diamond', focus: { x: 27, y: 24, r: 18 }, hlLabel: 'the boss tank', tagLabel: 'What they press' });
   },
   bombs(o) {
     const k = gdzCaMarks(gdzKit('The Coiled Altar', 11)), RA = [-26, -22], MA = [24, 8]; /* (the ranged add a step in from the moon corner: room for a bomb on each side) */
@@ -58319,17 +58345,17 @@ const GDZ_CA_BEATS = {
 // the real kill's order, by its clock (seconds): a mechanic of the guide (mech, with its own options) or a short scene (beat)
 // (how long each part lasts on the real kill's clock, for the written version's overlaps: an orb set from the circles to the second
 // frontal, an axe from the target to the eruption, the Fangs pools until they fade, a shield until it breaks)
-const GDZ_CA_DUR = { 'm:kicks': 12, 'm:gloomh': 10, 'm:grim': 13, 'm:grinder': 183, 'm:orbs': 27, 'm:axe': 13, 'm:dm': 12, 'm:bombs': 12, 'm:frags': 38, 'm:diamond': 15, 'b:venomfang': 5, 'b:fangs': 28, 'b:nightfall': 8, 'b:p3orbs': 14, 'b:defile': 6, 'b:transition': 12, 'b:p2end': 7, 'b:start': 2, 'b:kill': 0 };
+const GDZ_CA_DUR = { 'm:kicks': 12, 'm:gloomh': 10, 'm:grim': 13, 'm:grinder': 183, 'm:orbs': 27, 'm:axe': 13, 'm:dm': 12, 'm:sever': 5, 'm:bombs': 12, 'm:frags': 38, 'm:diamond': 15, 'b:venomfang': 5, 'b:fangs': 28, 'b:nightfall': 8, 'b:p3orbs': 14, 'b:defile': 6, 'b:transition': 12, 'b:p2end': 7, 'b:start': 2, 'b:kill': 0 };
 // (how dangerous a miss is: 3 can wipe the raid, 2 can kill players, 1 minor)
-const GDZ_CA_SEV = { 'm:kicks': 2, 'm:gloomh': 2, 'm:grim': 3, 'm:grinder': 2, 'm:orbs': 3, 'b:p3orbs': 3, 'm:diamond': 3, 'm:axe': 3, 'm:dm': 3, 'b:nightfall': 3, 'm:frags': 3, 'm:bombs': 2, 'b:fangs': 2, 'b:transition': 2, 'b:venomfang': 1, 'b:defile': 1, 'b:p2end': 1, 'b:start': 1, 'b:kill': 1 };
+const GDZ_CA_SEV = { 'm:kicks': 2, 'm:gloomh': 2, 'm:grim': 3, 'm:grinder': 2, 'm:orbs': 3, 'b:p3orbs': 3, 'm:diamond': 3, 'm:axe': 3, 'm:dm': 3, 'm:sever': 2, 'b:nightfall': 3, 'm:frags': 3, 'm:bombs': 2, 'b:fangs': 2, 'b:transition': 2, 'b:venomfang': 1, 'b:defile': 1, 'b:p2end': 1, 'b:start': 1, 'b:kill': 1 };
 const GDZ_CA_SIM = [
   { at: 0, beat: 'start', ph: 0 }, { at: 2, mech: 'orbs', ph: 0 }, { at: 12, mech: 'grinder', ph: 0 }, { at: 30, beat: 'venomfang', ph: 0 }, { at: 43, mech: 'axe', ph: 0 },
   { at: 45, mech: 'orbs', ph: 0 }, { at: 65, beat: 'venomfang', ph: 0, o: { on: ['r4', 'm5'] } }, { at: 85, beat: 'fangs', ph: 0 }, { at: 87, mech: 'orbs', ph: 0, label: 'Coalesced Venom (Orbs in the Lane)', o: { lane: true, do: ['Everyone: The pools are down, so the whole raid plays in the *lane* down the middle. *Warlocks* wait at the entrance end, *Mages* at the far end.', 'Everyone else: *Move the greens* out of the purple carriers\' way first. *Never touch a purple*.', 'Entrance side: Purples to the *tip*, greens between them and the boss. The raid *waits on the far side* of the boss.', 'Off-tank: *Taunt* right before *Sever*. It pops the entrance triangle, *about 4 orbs*.', 'Everyone: *Walk past the boss* to the entrance half. *Mages* bring their purples to the far tip.', 'Boss tank: *Taunt back* before the second Sever. It pops the far triangle.'] } },
   { at: 97, mech: 'grinder', ph: 0, label: 'Axegrinder 2 (Ten Axes)', o: { more: true, do: ['Melee: He throws *5 more axes*. With the first 5 still rolling, that\'s *10 at once*.', 'Everyone: Anyone they fly into is *knocked back* again.', 'Everyone: Until about 3:15, *watch for axes* all the time, also during soaks and orbs.', 'Everyone: Every touch *hurts*. They don\'t go away.'] } },
   { at: 115, beat: 'venomfang', ph: 0, o: { on: ['r7', 'm2'] } }, { at: 128, mech: 'axe', ph: 0, label: 'Guillotine 2 (Soak)', o: { soak: 2, do: GDZ_CA_AXES[2].do } }, { at: 130, mech: 'orbs', ph: 0 },
   { at: 150, beat: 'venomfang', ph: 0, o: { on: ['m6', 'r5'] } }, { at: 165, beat: 'transition', ph: 0 },
-  { at: 177, mech: 'dm', ph: 1 }, { at: 190, mech: 'bombs', ph: 1 }, { at: 219, mech: 'dm', ph: 1 }, { at: 223, mech: 'bombs', ph: 1 }, { at: 247, beat: 'nightfall', ph: 1 },
-  { at: 267, mech: 'dm', ph: 1 }, { at: 275, mech: 'bombs', ph: 1 }, { at: 304, mech: 'dm', ph: 1 }, { at: 308, mech: 'bombs', ph: 1 }, { at: 332, beat: 'nightfall', ph: 1 },
+  { at: 177, mech: 'dm', ph: 1 }, { at: 190, mech: 'bombs', ph: 1 }, { at: 203, mech: 'sever', ph: 1 }, { at: 219, mech: 'dm', ph: 1 }, { at: 223, mech: 'bombs', ph: 1 }, { at: 242, mech: 'sever', ph: 1 }, { at: 247, beat: 'nightfall', ph: 1 },
+  { at: 267, mech: 'dm', ph: 1 }, { at: 275, mech: 'bombs', ph: 1 }, { at: 293, mech: 'sever', ph: 1 }, { at: 304, mech: 'dm', ph: 1 }, { at: 308, mech: 'bombs', ph: 1 }, { at: 327, mech: 'sever', ph: 1 }, { at: 332, beat: 'nightfall', ph: 1 },
   { at: 352, mech: 'dm', ph: 1 }, { at: 360, mech: 'bombs', ph: 1, label: 'Spiteful Soulcoiler (Last Adds)', o: { kick: true, do: ['Everyone: The last adds before the intermission. *No bombs* this time.', 'Kickers: *Kick every Wail of Terror*. The add *teleports* after each kick.', 'Kickers: The *next kicker* follows it. Keep the order going on *both adds*.', 'Everyone: Their shields break at the transition. *Just keep kicking*.'] } }, { at: 385, beat: 'p2end', ph: 1 },
   { at: 392, mech: 'frags', ph: 2 },
   { at: 430, beat: 'defile', ph: 3 }, { at: 432, mech: 'diamond', ph: 3 }, { at: 446, mech: 'axe', ph: 3, o: { at: [35, -35], soak: 'g1', do: GDZ_CA_AXES.g1.do }, label: 'Grim Guillotine 1 (Soak)' }, { at: 467, beat: 'nightfall', ph: 3, o: { ph: 3 } },
@@ -58352,7 +58378,7 @@ const GDZ_CA_SIM_H = [
   { at: 0, beat: 'start', ph: 0 }, { at: 2, mech: 'orbs', ph: 0, label: 'Coalesced Venom 1', o: { near: 1 } }, { at: 12, mech: 'grinder', ph: 0 }, { at: 28, beat: 'venomfang', ph: 0 },
   { at: 43, mech: 'axe', ph: 0 }, { at: 45, mech: 'orbs', ph: 0, label: 'Coalesced Venom 2' }, { at: 62, beat: 'venomfang', ph: 0, o: { on: ['r4', 'm5'] } },
   { at: 85, beat: 'fangs', ph: 0 }, { at: 87, mech: 'orbs', ph: 0, label: 'Coalesced Venom 3 (Orbs in the Lane)', o: { lane: 1 } },
-  { at: 108, mech: 'dm', ph: 1, label: 'Dreadmarch 1' }, { at: 116, mech: 'kicks', ph: 1, label: 'Spiteful Soulcoiler 1' }, { at: 125, mech: 'gloomh', ph: 1, label: 'Gloombomb 1' },
+  { at: 108, mech: 'dm', ph: 1, label: 'Dreadmarch 1' }, { at: 116, mech: 'kicks', ph: 1, label: 'Spiteful Soulcoiler 1' }, { at: 125, mech: 'gloomh', ph: 1, label: 'Gloombomb 1' }, { at: 136, mech: 'sever', ph: 1 },
   { at: 145, mech: 'dm', ph: 1, label: 'Dreadmarch 2' }, { at: 149, mech: 'kicks', ph: 1, label: 'Spiteful Soulcoiler 2' }, { at: 163, mech: 'gloomh', ph: 1, label: 'Gloombomb 2' }, { at: 171, beat: 'p2end', ph: 1 },
   { at: 174, mech: 'frags', ph: 2 },
   { at: 212, beat: 'defile', ph: 3 }, { at: 215, mech: 'orbs', ph: 3, label: 'Coalesced Venom 4' }, { at: 230, mech: 'grim', ph: 3 }, { at: 239, mech: 'gloomh', ph: 3, label: 'Gloombomb 3' },
@@ -58515,7 +58541,7 @@ GDZ['The Coiled Altar'] = {
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
   h: { simRot: 90, sim: GDZ_CA_SIM_H, simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, beats: GDZ_CA_BEATS_H, simOverlay: (k, r, e) => gdzCaSimOverlay(k, r, e, GDZ_CA_SIM_H, 103), simAdd: gdzCaSimAdd,
     simAlways: ['Axegrinder: 5 axes roll around the room from 0:12 for about 3 minutes. Step out of their way: every touch hurts.', 'Orbs: never pop more than a handful at once, and pop them all before Zul\'jan dies.', 'From phase 3, Defilement ground stays down: stay out of it.'] },
-  m: { simRot: 90, sim: GDZ_CA_SIM, simSkip: [{ from: 267, to: 352, label: "The cycle repeats", text: "The same cycle plays again: two Dreadmarch and add sets, then Eternal Nightfall (5:32)." }, { from: 532, to: 611, label: "Phase 3, the same again", text: "The phase 3 cycle plays once more: Defilement and a tank swap (8:52), orbs by the circle marker, Eternal Nightfall (9:24), Dreadmarch (9:43) and the last adds, just kicked (9:49)." }], simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs never touch another orb, axe soakers are planned, ghosts never touch, and bombs go on the adds. This follows a plan that killed it; your raid may mark the room its own way.' },
+  m: { simRot: 90, sim: GDZ_CA_SIM, simSkip: [{ from: 267, to: 352, label: "The cycle repeats", text: "The same cycle plays again: two sets of Dreadmarch, adds and Soul Sever, then Eternal Nightfall (5:32)." }, { from: 532, to: 611, label: "Phase 3, the same again", text: "The phase 3 cycle plays once more: Defilement and a tank swap (8:52), orbs by the circle marker, Eternal Nightfall (9:24), Dreadmarch (9:43) and the last adds, just kicked (9:49)." }], simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs never touch another orb, axe soakers are planned, ghosts never touch, and bombs go on the adds. This follows a plan that killed it; your raid may mark the room its own way.' },
   facts: [['Phases', '3 + intermission'], ['Bloodlust', 'Intermission'], ['Healers', '4', 'h'], ['Healers', '5', 'm'], ['Hardest part', 'Orbs and ghosts', 'h'], ['Hardest part', 'Purple orbs', 'm']],
   phases: [
     { id: 'p1', name: 'Phase 1: Zul\'jan', sum: 'One boss. Gather the orbs in front of him, soak the axes, and dodge the axes rolling around the room.',
@@ -58590,17 +58616,17 @@ GDZ['The Coiled Altar'] = {
       m: { sum: 'Malacrass. Mind controls always stack on the square marker, ghosts get frozen apart and swept by the frontal, bombs go on the adds, and every second set brings the shield.' },
       mechs: [
         { id: 'dm', fail: GDZ_CA_FAIL.dmH, how: 1, name: 'Dreadmarch (Mind Control)', spell: 'Dreadmarch', what: 'A few players are mind controlled and walk to the edge with a big shield on. Once freed, two ghosts chase each of them. A ghost only moves while its player looks away.',
-          do: ['Mind controlled: *Press your cancel macro*. It drops your speed boosts and shields, so the raid can free you fast.', 'Everyone: Bring them to *one spot*. *Stun or root* them there, one after another, and *break their shields*.', 'Freed: *Stand still* until your ghosts spawn, two each. Then *face them*: a ghost only moves while you look away.', 'Freed: *Lead your ghosts* into one pile in front of the boss. Then *turn and look* at them so they freeze.', 'Boss tank: Aim *Soul Sever* through the pile. Anyone it hits: *pick up your 3 Soul Fragments* or you die.'],
-          roles: ['', '', '', '', 't'],
+          do: ['Mind controlled: *Press your cancel macro*. It drops your speed boosts and shields, so the raid can free you fast.', 'Everyone: Bring them to *one spot*. *Stun or root* them there, one after another, and *break their shields*.', 'Freed: *Stand still* until your ghosts spawn, two each. Then *face them*: a ghost only moves while you look away.', 'Freed: *Lead your ghosts* into one pile in front of the boss. Then *step aside* and *keep looking* at them, so they stay frozen.'],
+          roles: ['', '', '', ''],
           note: 'A ghost that reaches its player mind controls them again.',
           m: { fail: GDZ_CA_FAIL.dmM, name: 'Dreadmarch (Mind Control)', what: 'A few players are mind controlled with a big shield. Once freed, two ghosts chase each of them. Only you see your ghosts, and two ghosts touching kills both players.',
-            do: ['Arrow over your head: *Press your cancel macro*. Everyone *stacks on the square marker*.', 'CC players: *Stun or root* them on the square, one after another: *Ring of Peace*, *Shockwave*, *Chaos Nova*. Everyone *breaks the shields*.', 'Freed: *Stand still*. Your ghosts spawn where you stand, by the square. *Look at yours* right away.', 'Freed: Keep your ghosts *frozen and apart*. If yours is outside the frontal, *look away* for a moment and let it creep in.', 'Boss tank: *Step toward the diamond* or the circle, so *Soul Sever* hits the most ghosts.'],
-            roles: ['', 'd', '', '', 't'],
-            plan: ['The cancel macro removes your speed boosts and shields (Power Word: Shield, Void Shield and the like) so the stack can break you out fast. Press it only if you were picked.', 'Put an air-horn sound alert on the ghost fixate, so you turn and look right away.', 'A ghost the frontal missed is fine: walk it back toward the square for the next one.', 'One tank took every phase 2 frontal: a defensive on the odd ones, a big defensive and an external on the even ones. The stacks fall off before the third.', 'After the kicks, the other tank taunts the boss back to the square, so the Mages can hit the shields on the mind controls.', 'End of the phase: if your ghost is still up, keep looking at it and it vanishes at the transition. The transition knocks you back: stay off the edge.'],
+            do: ['Arrow over your head: *Press your cancel macro*. Everyone *stacks on the square marker*.', 'CC players: *Stun or root* them on the square, one after another: *Ring of Peace*, *Shockwave*, *Chaos Nova*. Everyone *breaks the shields*.', 'Freed: *Stand still*. Your ghosts spawn where you stand, by the square. *Look at yours* right away.', 'Freed: *Step aside* toward the raid, *still looking* at your ghosts, so they stay *frozen and apart*.'],
+            roles: ['', 'd', '', ''],
+            plan: ['The cancel macro removes your speed boosts and shields (Power Word: Shield, Void Shield and the like) so the stack can break you out fast. Press it only if you were picked.', 'Put an air-horn sound alert on the ghost fixate, so you turn and look right away.', 'After the kicks, the other tank taunts the boss back to the square, so the Mages can hit the shields on the mind controls.', 'End of the phase: if your ghost is still up, keep looking at it and it vanishes at the transition. The transition knocks you back: stay off the edge.'],
             note: 'Kicking Wail of Terror shows every ghost to everyone for a moment.' },
           map: (d) => {
             if (d === 'm') return GDZ_CA_M.ghosts();
-            const k = gdzKit('The Coiled Altar', 13);
+            const k = gdzKit('The Coiled Altar', 11.5);
             k.boss('hm', 'Malacrass', 0, 0, 10);
             k.at(0, 't1', 0, 3).at(0, 't2', 7, 7).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 0, 16, 6).at(0, ['h1', 'h3', 'h4'], 15, 14, 4).at(0, ['r1', 'r3', 'r4', 'r5', 'r6', 'r7'], 20, 0, 7);
             k.at(0, 'r2', -20, 2).at(0, 'm4', -4, 18).at(0, 'h2', -14, 14);
@@ -58608,12 +58634,32 @@ GDZ['The Coiled Altar'] = {
             [['m1', 'Leg Sweep', 4.4, [-11, -7]], ['m6', 'Shockwave', 5, [-21, -7]]].forEach(([id, t, at, p]) => { const b = k.posAt(id, 0); k.hold(1.4, id).at(4.2, id, p[0], p[1]).press(id, t, at, at + 1.2).hold(6.6, id).at(9.2, id, b[0], b[1]); });
             k.call(4.2, 6, 'Stun them, break shields', { x: -16, y: -24, color: '#c49bff', ink: '#14061f' }).call(6, 7.2, 'Freed: stand still', { x: -16, y: -24, color: '#c49bff', ink: '#14061f' }).call(7.3, 9.6, 'Lead them to the pile', { x: 6, y: -16, color: '#c49bff', ink: '#14061f' });
             mc.forEach((id, i) => { k.ring({ on: id, r: 3, fx: 'debuff', t0: 1, dur: 5, color: '#b65cff', cn: 'Dreadmarch', legend: 'mind controlled, shielded' }); k.tag(id, 'MC', 1, 6); const [dx, dy] = gdzSpot(i, 3, 2); k.hold(1, id).at(4.2, id, SP[0] + dx, SP[1] + dy).hold(6.6, id); });
-            mc.forEach((id, i) => { for (let j = 0; j < 2; j++) { const g = 'g' + i + j, p = k.posAt(id, 6), a = (i * 2 + j) * 1.1, q = i * 2 + j; k.obj(g, 'ghost', 6, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).show(g, 6, 12);
+            mc.forEach((id, i) => { for (let j = 0; j < 2; j++) { const g = 'g' + i + j, p = k.posAt(id, 6), a = (i * 2 + j) * 1.1, q = i * 2 + j; k.obj(g, 'ghost', 6, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).show(g, 6, 11.5);
               const [ex, ey] = gdzSpot(q, 6, 4); k.obj(g, 'ghost', 7, p[0] + Math.cos(a) * 6, p[1] + Math.sin(a) * 6).obj(g, 'ghost', 9.6, ex, -13 + ey); } });
-            mc.forEach((id, i) => { k.at(8.2, id, -3 + i * 3, -16).at(9.8, id, -14 + i * 2, -7 + i); for (let j = 0; j < 2; j++) k.link({ from: id, to: 'g' + i + j, t0: 9.7, t1: 11, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); }); /* (pile made: they turn and look, so the ghosts freeze) */
-            k.cast('hm', 'Soul Sever', 9.8, 11).cone({ from: 'hm', to: 't1', at: 11, r: 45, hit: ['g00', 'g01', 'g10', 'g11', 'g20', 'g21'] });
-            k.ring1(mc).step(1).step(2).step(6).step(7).step(11);
-            k.pause(9.7, 'Freeze. The ghosts are piled in front of the boss and their players have stepped aside. Now the frontal takes them all.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Dreadmarch and Soul Sever', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
+            mc.forEach((id, i) => { k.at(8.2, id, -3 + i * 3, -16).at(9.8, id, -14 + i * 2, -7 + i); for (let j = 0; j < 2; j++) k.link({ from: id, to: 'g' + i + j, t0: 9.7, t1: 11.5, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); }); /* (pile made: they turn and look, so the ghosts freeze) */
+            k.ring1(mc).step(1).step(2).step(6).step(7);
+            k.pause(10, 'Freeze. The ghosts are piled in front of the boss and frozen. Their players stepped aside and keep looking at them.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Dreadmarch', focus: { x: -4, y: -4, r: 18 }, hlLabel: 'mind-controlled players', tagLabel: 'Mind controlled, with a shield' });
+          } },
+        { id: 'sever', how: 1, spell: 'Soul Sever', name: 'Soul Sever (Frontal)', what: 'Malacrass\'s tank frontal. Every ghost it passes through is destroyed. Anyone it hits must pick up 3 Soul Fragments, and it always hits the boss tank.',
+          do: ['Boss tank: *Face Malacrass at the ghost pile*, so *Soul Sever* runs through it. *Press a defensive*.', 'Freed: *Keep looking* at your ghosts, so they stay *frozen in the pile*. Stand *out of its path*.', 'Hit by it: *Pick up your 3 Soul Fragments* around you, or you die. The boss tank is hit every time.', 'Off-tank: *Taunt* before the next one, so the tanks *swap* every Soul Sever.'],
+          roles: ['t', '', '', 't'],
+          m: { what: 'Malacrass\'s tank frontal, about 25 seconds after each Dreadmarch. Every ghost it passes through is destroyed. Anyone it hits must pick up 3 Soul Fragments, and it always hits the boss tank.',
+            do: ['Boss tank: *Take Malacrass to the diamond*, then stand *by the square*, so the frontal runs through the ghosts. Odd casts: *a defensive*. Even casts: *a defensive and 2 externals*.', 'Freed: *Keep looking* at your ghost, so it stays frozen in the line. Outside it? *Look away* for a moment and let it creep in.', 'Hit by it: *Pick up your 3 Soul Fragments* around you, or you die. The boss tank is hit every time.', 'Missed ghost: *Walk it back* toward the square, ready for the next frontal.'],
+            roles: ['t', '', '', ''],
+            plan: ['One tank takes every phase 2 frontal: a defensive on the odd ones, a defensive and 2 externals on the even ones. The stacks fall off before the third.', 'The diamond or the circle both work. Pick the one that puts the most ghosts in the line.', 'When Eternal Nightfall comes, Soul Sever lands just before it.'] },
+          map: (d) => {
+            if (d === 'm') return GDZ_CA_M.sever();
+            // (Heroic: the pile in front of the boss, where Dreadmarch left it; the frontal takes it all, then the tank's 3 fragments and the taunt)
+            const k = gdzKit('The Coiled Altar', 9.5), mc = ['r2', 'm4', 'h2'], G = [];
+            k.boss('hm', 'Malacrass', 0, 0, 10);
+            k.at(0, 't1', 0, 3).at(0, 't2', 7, 7).at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], -16, 18, 5) /* (the melee a step to the side: room above the boss for its Frontal label) */.at(0, ['h1', 'h3', 'h4'], 15, 14, 4).at(0, ['r1', 'r3', 'r4', 'r5', 'r6', 'r7'], 20, 0, 7);
+            mc.forEach((id, i) => { k.at(0, id, -14 + i * 2, -7 + i); for (let j = 0; j < 2; j++) { const g = 'g' + i + j, [ex, ey] = gdzSpot(i * 2 + j, 6, 4); G.push(g); k.obj(g, 'ghost', 0, ex, -13 + ey).show(g, 0, 4); k.link({ from: id, to: g, t0: 0, t1: 3.8, color: '#c49bff', dash: true, legend: 'looking at their ghost: it stays frozen' }); } });
+            k.press('t1', 'Defensive', 2.2, 4).press('t2', 'Taunt', 7, 8.2);
+            k.call(0.4, 2.4, 'Aim it at the pile', { x: -16, y: 22 }).call(1.2, 3.6, 'Keep looking', { x: -22, y: -14, color: '#c49bff', ink: '#14061f' }).call(3.9, 6.6, 'Pick up your 3 fragments', { x: 10, y: -4, color: '#c49bff', ink: '#14061f' }).call(7, 9.2, 'Off-tank: taunt for the next', { x: 14, y: -12 });
+            k.cast('hm', 'Soul Sever', 2.4, 3.8).cone({ from: 'hm', to: 't1', at: 3.8, r: 32, hit: G });
+            k.hold(3.8, 't1'); gdzCaFrags(k, 't1', 3.8, [0, 3]);
+            k.ring1(['t1', 't2']).step(0.4).step(1.2).step(3.8).step(7);
+            k.pause(2.3, 'Freeze. The ghosts are piled in front of the boss and frozen, and their players stand aside. The frontal takes them all.', { x: 0, y: -13, r: 9 }); return k.done({ title: 'Soul Sever', focus: { x: -2, y: -4, r: 18 }, hlLabel: 'the tanks', tagLabel: 'What they press' });
           } },
         { id: 'bombs', fail: GDZ_CA_FAIL.bombs, only: 'm', how: 1, name: 'Gloombomb (Add Bombs)', what: 'The two adds take almost no damage until 2 Gloombombs hit each one. Each time, 2 ranged and 2 melee get a bomb that explodes 15 yards around them.',
           do: ['Kickers: *Kick both adds* the moment the *Gloombomb* cast shows, so they stand still.', 'Bombs: Ranged bombs go to the *ranged add*, melee bombs to the *melee add*. Stand *one on each side* of it, so your circles overlap only on the add, and *press your best defensive*.', 'Bombs: When it goes off, *pick up your 3 Soul Fragments* around you. Everyone else stays *15 yards away*, then *kills the adds*.', 'Kickers: *Kick every Wail of Terror*. The melee add\'s *second kick* must be a melee.'],
@@ -58637,7 +58683,6 @@ GDZ['The Coiled Altar'] = {
           map: (d) => GDZ_CA_M.kicks(d) },
       ],
       tiles: [
-        { name: 'Soul Sever (Frontal)', do: 'The tank frontal. The other tank taunts after each one. Aim it through the ghosts.', m: { do: 'One tank can take them all: a defensive on odd casts, a big defensive and an external on even ones. Aim it through as many ghosts as you can.' } },
       ] },
     { id: 'int', name: 'Intermission: Soulbinding', sum: 'Zul\'jan comes back healing himself but taking double damage. Bloodlust here.',
       mechs: [
@@ -58697,7 +58742,7 @@ GDZ['The Coiled Altar'] = {
   },
 };
 GDZ['The Coiled Altar'].m.roles = {
-  t: ['Boss tank: a sturdy tank (Blood Death Knight, Guardian Druid or Protection Warrior) holds the boss.', 'Off-tank: a mobile tank runs purple orbs and taunts for the entrance frontal. Protection Paladin is best, but any mobile tank works.', 'Phase 2: one tank can take every Soul Sever (a big defensive and an external on the even ones); step to the diamond or circle to line it up with the ghosts.', 'Soak the second phase 1 axe with a defensive.'],
+  t: ['Boss tank: a sturdy tank (Blood Death Knight, Guardian Druid or Protection Warrior) holds the boss.', 'Off-tank: a mobile tank runs purple orbs and taunts for the entrance frontal. Protection Paladin is best, but any mobile tank works.', 'Phase 2: one tank can take every Soul Sever (a defensive on the odd ones, a defensive and 2 externals on the even ones); take Malacrass to the diamond or circle to line it up with the ghosts.', 'Soak the second phase 1 axe with a defensive.'],
   h: ['Five healers: lots of raid damage, and you hold damage often anyway.', 'Into phase 2 at 9 to 11 orb stacks: stack Spirit Link and raid cooldowns.', 'Intermission: mobile healers cover the four sides; save the big cooldowns for the 7-to-10 turn.', 'Mobile healers (Evoker especially) can carry purples between mechanics; in phase 3 the Evoker healer is a carrier.'],
   d: ['Greens only, unless you\'re assigned purples (Warlocks in phase 1, Mages all fight). Clear greens out of purple carriers\' way first.', 'Hunters: soak axe 1, then Turtle on axe 2. Rogues: Feint on axe 1, Cloak in phase 3.', 'Gloombomb: take it to your add (ranged to the ranged add, melee to the melee add) and use your best defensive.', 'Pool damage and cooldowns for every Eternal Nightfall shield; boss damage barely matters in phase 2.', 'Bloodlust in the intermission. Phase 3: kill Zul\'jan before his pool cast; don\'t over-damage Malacrass.'],
 };
@@ -62446,7 +62491,7 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
   S.rpAbout = 'Boss guides · ' + S.gdzBoss + ' · ' + (S.gdzDiff === 'm' ? 'Mythic' : 'Heroic') + ' · ' + b.dataset.about; openReport(); });
 // ---- From a pull to the guide (your ask, Oct 20): a Debriefing mechanic's "How to do it" opens the guide right at that mechanic ----
 // (Debriefing's sections, by id, to the guide's mechanic (its id) or tile (its name's start))
-const GDZ_SEC = { "Ula'tek": { eggs: 'eggs', coils: 'coils', waves: 'waves', tank: 'wrath', incub: 'wretch', wretch: 'wretch', amps: 'heart', fangs: 'fangs', doomscale: 'doomscales', kicks: 'doomscales', bite: 'bite', shriek: 'Blightscale Shrieker' }, 'The Coiled Altar': { orbs: 'orbs', soakq: 'axe', dmghost: 'dm', gloom: 'bombs', inter: 'frags', vf: 'venomfang', shield: 'nightfall', addsets: 'kicks', tankfront: 'Soul Sever' } };
+const GDZ_SEC = { "Ula'tek": { eggs: 'eggs', coils: 'coils', waves: 'waves', tank: 'wrath', incub: 'wretch', wretch: 'wretch', amps: 'heart', fangs: 'fangs', doomscale: 'doomscales', kicks: 'doomscales', bite: 'bite', shriek: 'Blightscale Shrieker' }, 'The Coiled Altar': { orbs: 'orbs', soakq: 'axe', dmghost: 'dm', gloom: 'bombs', inter: 'frags', vf: 'venomfang', shield: 'nightfall', addsets: 'kicks', tankfront: 'sever', soulsever: 'sever' } };
 // (Oct 21, every boss: a mechanic with no entry above finds the guide's mechanic of the same name ("Dreadmarch (…)" to "Dreadmarch (…)"),
 // and one with no match opens the boss's guide at the top: its jobs and what wipes us)
 function gdzTarget(b, secId, title) {

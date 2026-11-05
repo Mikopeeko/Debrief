@@ -2029,6 +2029,7 @@ function openReport() {
 const PATCH_NOTES = [
   { d: '2026-11-04', h: [{ t: 'Make the whole plan', d: 'One button picks who plays, places the cooldowns and fills every job and kick for a boss, or for every boss at once.' }, { t: 'Your team\'s plan, saved online', d: 'The raid lead saves the plan for the team once, and every change after that saves by itself. Officers can change it too, and everyone on the team sees the same plan.' }, { t: 'Your jobs on Home', d: 'Home shows your jobs for the next raid, one tile a boss. Tap one to see each job with its picture, with only you on it.' }], n: [
     'The Coiled Altar guide now says how to handle every mechanic, and the maps show players doing it.',
+    'The Coiled Altar guide: Soul Sever (Frontal) has its own card and map, and Dreadmarch\'s map stops once the ghosts are frozen.',
     'Boss guides are easier to read: the whole-fight video is up top, one slim bar, and the overview first.',
     'Plan: a boss only gets its green ✓ when everything is done, and the ready ring says what\'s left.',
     'Plan: Debrief spots your alts. Drag one in and it swaps out its main, so each player takes one spot.',
