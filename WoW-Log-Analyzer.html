@@ -10998,7 +10998,7 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-det{margin:2px 0 8px 66px;padding:10px 12px;border-left:2px solid var(--c);background:rgba(255,255,255,.025);border-radius:0 6px 6px 0;font-family:Barlow,sans-serif}.nsm-det[hidden]{display:none}
 .nsm-dw{margin:0 0 6px;font-size:13px;color:var(--text)}
 .nsm-dl{display:flex;align-items:baseline;gap:6px 10px;margin-top:5px;font-size:12.5px}
-.nsm-dk{flex:none;width:150px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#7d8792}
+.nsm-worse b{color:#f0726a!important}.nsm-dk{flex:none;width:180px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#7d8792}
 .nsm-dv{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0;color:var(--muted)}.nsm-dv .nm{font-weight:700}
 .nsm-pb{display:inline-block;min-width:26px;padding:0 6px;border:1px solid var(--line2,#2c343c);border-radius:4px;font-size:12px;line-height:20px;text-align:center;color:var(--text);text-decoration:none;margin-right:-6px}.nsm-pb:hover,.nsm-pb:focus-visible{border-color:var(--gold);outline:none}
 .nsm-dq{margin:6px 0 0;font-size:12.5px;color:var(--faint)}
@@ -38732,18 +38732,18 @@ function coachTrends(reps, right, wrongAll, WKN, WKP) {
     if (m) well.push(m.length > 2 ? { nm: m[1], sub: m[2] } : { nm: 'Best pull', sub: dbfCap(m[1].replace(/\.$/, '')) }); }
   let prvN = null; /* (how many earlier pulls this one was compared with: none means no "About the same" (Oct 24)) */
   if (night) {
-    const L = new Map(); for (const r of P) for (const [id, y] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || y.s.info) continue; const v = sc(y.st); if (v == null) continue; const o = L.get(id) || { nm: nmOf(y), ins: insOf(y), v: [] }; o.v.push(v); L.set(id, o); }
+    const L = new Map(); for (const r of P) for (const [id, y] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || y.s.info) continue; const v = sc(y.st); if (v == null) continue; const o = L.get(id) || { nm: nmOf(y), ins: insOf(y), v: [], ps: [] }; o.v.push(v); if (v > 0) o.ps.push(r.item.pull); L.set(id, o); } /* (ps: the pulls with a mistake on it, for the All pulls card's count (Nov 5)) */
     for (const [id, o] of L) { const ok = o.v.filter((v) => v === 0).length; if (o.v.length >= 3 && ok / o.v.length >= 0.8) well.push({ nm: o.nm, sub: 'done right in ' + ok + ' of ' + plural(o.v.length, 'pull'), k: ok / o.v.length + o.v.length / 1000 - ix(id) / 1e4, id }); }
     /* (Oct 24, your note "weird wording, not clear": one plain sentence with the real pull counts; the tag already says better or worse) */
     const cost = (id) => { const x = bySec.get(id); return x && x.led ? ' It cost us ' + plural(x.led, 'death') + '.' : ''; }, still = (w, j) => (w / Math.max(1, j) >= 0.5 ? ' Still mistakes in most pulls.' : ''), ld = (id, t) => { const o = L.get(id); return o && o.ins ? dbfCap(o.ins) + ': ' + t : dbfCap(t); };
     if (WKP && WKN) { const WL = WKP.lbl || wkDate(WKP); cmp = WKP.n > 1 ? 'vs your ' + WKP.n + ' earlier nights' : 'since ' + WL; const wasL = WKP.n > 1 ? 'on your earlier nights' : 'on ' + WL;
       for (const [id, m] of Object.entries(WKN.mech)) { const p = WKP.mech[id]; let kk = wkCmp(m, p); if (kk === 'again' && p) { const dd = m.w / m.j - p.w / p.j; if (Math.abs(dd) >= 0.1) kk = dd > 0 ? 'worse' : 'better'; } /* (10 points is a real change once nights are added up (Oct 23)) */ if (!kk || kk === 'again' || (kk === 'new' && (m.w < 2 || m.w / m.j < 0.15))) continue; const d = p ? pc(p.w, p.j) - pc(m.w, m.j) : -pc(m.w, m.j);
         const up = kk === 'better' || kk === 'fixed', nowP = pc(m.w, m.j), wasP = p ? pc(p.w, p.j) : 0, it = { nm: m.t, tag: howMuch(nowP - wasP),
-          sub: ld(id, (nowP === 0 ? 'done right every pull tonight' : 'mistakes in ' + m.w + ' of ' + plural(m.j, 'pull') + ' tonight') + ' (' + (kk === 'new' || !p || !p.w ? 'none ' + wasL : (nowP === 0 ? 'mistakes in ' : '') + p.w + ' of ' + p.j + ' ' + wasL) + ').') + (up ? (kk === 'fixed' ? '' : still(m.w, m.j)) : cost(id)), k: Math.abs(nowP - wasP), id };
+          sub: ld(id, (nowP === 0 ? 'done right every pull tonight' : 'mistakes in ' + m.w + ' of ' + plural(m.j, 'pull') + ' tonight') + ' (' + (kk === 'new' || !p || !p.w ? 'none ' + wasL : (nowP === 0 ? 'mistakes in ' : '') + p.w + ' of ' + p.j + ' ' + wasL) + ').') + (up ? (kk === 'fixed' ? '' : still(m.w, m.j)) : cost(id)), k: Math.abs(nowP - wasP), id, ps: (L.get(id) || {}).ps };
         (kk === 'worse' || kk === 'new' ? worse : better).push(it); } }
     else { cmp = 'during the night';
       for (const [id, o] of L) { if (o.v.length < 4) continue; const hf = Math.floor(o.v.length / 2), A = o.v.slice(0, hf).filter((v) => v > 0).length, Bn = o.v.slice(o.v.length - hf).filter((v) => v > 0).length, a = A / hf, b = Bn / hf;
-        if (Math.abs(b - a) < 0.3) continue; const it = { nm: o.nm, tag: howMuch(pc(Bn, hf) - pc(A, hf)), sub: ld(id, 'mistakes in ' + Bn + ' of the last ' + plural(hf, 'pull') + ' (' + A + ' of the first ' + hf + ').') + (b < a ? still(Bn, hf) : cost(id)), k: Math.abs(b - a), id }; (b > a ? worse : better).push(it); } }
+        if (Math.abs(b - a) < 0.3) continue; const it = { nm: o.nm, tag: howMuch(pc(Bn, hf) - pc(A, hf)), sub: ld(id, 'mistakes in ' + Bn + ' of the last ' + plural(hf, 'pull') + ' (' + A + ' of the first ' + hf + ').') + (b < a ? still(Bn, hf) : cost(id)), k: Math.abs(b - a), id, ps: o.ps }; (b > a ? worse : better).push(it); } }
   } else {
     cmp = 'than last pull'; const r = P[0], it0 = r.item, prv = ((S.index && S.index.bosses) || []).filter((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).sort((p, q) => q.item.pull - p.item.pull); prvN = prv.length;
     const okL = []; for (const [id, y] of pullSections(r)) { if (id === 'deaths' || id === 'avoid' || y.s.info) continue; const cur = sc(y.st); if (cur == null) continue;
@@ -39469,7 +39469,7 @@ function coachBox(c, o) { if (!c) return ''; o = o || {}; const k = 'cchfull-' +
     ''; /* (no Next pull box (Oct 23): each line's fix shows when it opens) */
   /* (Oct 23, your layout: What we did well, What's getting worse, What's improving, each like What wiped us; an empty one doesn't show;
      then every mistake in detail, folded closed, so nothing is lost and nothing is said twice up top) */
-  const trendH = () => { const T0 = c.trend, single = !c.night, sec = (cls, title, note, L, tag) => (L && L.length ? '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><ul class="cch-wl cch-twl">' + L.map((x) => '<li><b>' + esc(dbfCap(x.nm)) + '</b>' + (x.trH || '') + (x.tag ? '<span class="cch-tt">' + (tag || '') + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="cch-wy">' + esc(dbfCap(x.sub)) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
+  const trendH = () => { const T0 = c.trend, single = !c.night, sec = (cls, title, note, L, tag) => (L && L.length ? '<div class="cch-tsec ' + cls + '"><div class="cch-tsh">' + title + (note ? ' <span>· ' + esc(note) + '</span>' : '') + '</div><ul class="cch-wl cch-twl">' + L.map((x) => '<li' + (x.ps && x.ps.length ? ' data-ps="' + x.ps.join(',') + '"' : '') + '><b>' + esc(dbfCap(x.nm)) + '</b>' + (x.trH || '') + (x.tag ? '<span class="cch-tt">' + (tag || '') + esc(x.tag) + '</span>' : '') + (x.sub ? '<span class="cch-wy">' + esc(dbfCap(x.sub)) + '</span>' : '') + '</li>').join('') + '</ul></div>' : '');
     const W = (c.wrongAll && c.wrongAll.length ? c.wrongAll : c.wrong);
     /* (Oct 24, your note "those are big mistakes": the other red mistakes show up top too, under What wiped us (up to 3, no names, one line each);
        Every mistake, in detail keeps the full list with names) */
@@ -71734,7 +71734,9 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
     var A = {}, AO = []; alsoL.forEach(function (li) { if (li.classList.contains('cch-also-more')) return; var nm = nameOf(li), k = key(nm); if (!k) return; var x = A[k]; if (!x) { x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [] }; AO.push(x); } psOf(li.dataset.ps).forEach(function (p) { if (x.ps.indexOf(p) < 0) x.ps.push(p); }); var w = why(li); if (w && x.s.indexOf(w) < 0) x.s.push(w); });
-    worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [why(li)].filter(Boolean) }; AO.push(x); });
+    /* (a getting-worse row carries the pulls with a mistake on it (Nov 5: it said "0 pulls"); one with none is never a row, its tag goes in the Worse tonight line) */
+    worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: psOf(li.dataset.ps), s: [why(li)].filter(Boolean) }; AO.push(x); });
+    AO = AO.filter(function (x) { return x.ps.length; });
     AO = AO.filter(function (x) { var t = W1.filter(function (t) { return key(t.nm) === x.k; })[0]; if (!t) return true; x.s.forEach(function (w) { if (t.s.indexOf(w) < 0) t.s.push(w); }); return false; });
     AO.sort(function (a, b) { return b.ps.length - a.ps.length; });
     /* (sentences that say what happened, and match the row's count: a wipe row covers several pulls, an Other mistakes row says how many) */
@@ -71803,6 +71805,8 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
         AO.map(function (x) { var n = x.ps.length; return brow(0, x, n, am, n === 1 ? 'pull' : 'pulls', '#9aa3ad', why1(x) + pbs(x.ps), false); }).join('') + '</div></div>'; }
     var better = upL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
     if (better.length) o += '<p class="nsm-better"><b>Better tonight:</b> ' + better.join(', ') + '</p>';
+    var worse2 = worseL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
+    if (worse2.length) o += '<p class="nsm-better nsm-worse"><b>Worse tonight:</b> ' + worse2.join(', ') + '</p>';
     if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');

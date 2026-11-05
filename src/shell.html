@@ -10998,7 +10998,7 @@ html body #view section.cch-night.nsm-on{padding:0!important}
 .nsm-det{margin:2px 0 8px 66px;padding:10px 12px;border-left:2px solid var(--c);background:rgba(255,255,255,.025);border-radius:0 6px 6px 0;font-family:Barlow,sans-serif}.nsm-det[hidden]{display:none}
 .nsm-dw{margin:0 0 6px;font-size:13px;color:var(--text)}
 .nsm-dl{display:flex;align-items:baseline;gap:6px 10px;margin-top:5px;font-size:12.5px}
-.nsm-dk{flex:none;width:150px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#7d8792}
+.nsm-worse b{color:#f0726a!important}.nsm-dk{flex:none;width:180px;font-size:10.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#7d8792}
 .nsm-dv{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:0;color:var(--muted)}.nsm-dv .nm{font-weight:700}
 .nsm-pb{display:inline-block;min-width:26px;padding:0 6px;border:1px solid var(--line2,#2c343c);border-radius:4px;font-size:12px;line-height:20px;text-align:center;color:var(--text);text-decoration:none;margin-right:-6px}.nsm-pb:hover,.nsm-pb:focus-visible{border-color:var(--gold);outline:none}
 .nsm-dq{margin:6px 0 0;font-size:12.5px;color:var(--faint)}
@@ -14167,7 +14167,9 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
     var top = W1.filter(function (x, i) { return i < 3 || (W1[2] && x.w === W1[2].w && i < 5); }), rest = W1.slice(top.length);
     /* (the other mistakes, one row per mechanic: "Guillotine assignment" joins "Guillotine"; one that is already a wipe row adds its fact there) */
     var A = {}, AO = []; alsoL.forEach(function (li) { if (li.classList.contains('cch-also-more')) return; var nm = nameOf(li), k = key(nm); if (!k) return; var x = A[k]; if (!x) { x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [] }; AO.push(x); } psOf(li.dataset.ps).forEach(function (p) { if (x.ps.indexOf(p) < 0) x.ps.push(p); }); var w = why(li); if (w && x.s.indexOf(w) < 0) x.s.push(w); });
-    worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: [], s: [why(li)].filter(Boolean) }; AO.push(x); });
+    /* (a getting-worse row carries the pulls with a mistake on it (Nov 5: it said "0 pulls"); one with none is never a row, its tag goes in the Worse tonight line) */
+    worseL.forEach(function (li) { var nm = nameOf(li), k = key(nm); if (!k || A[k] || W1.some(function (t) { return key(t.nm) === k; })) return; var x = A[k] = { k: k, li: li, nm: nm, ps: psOf(li.dataset.ps), s: [why(li)].filter(Boolean) }; AO.push(x); });
+    AO = AO.filter(function (x) { return x.ps.length; });
     AO = AO.filter(function (x) { var t = W1.filter(function (t) { return key(t.nm) === x.k; })[0]; if (!t) return true; x.s.forEach(function (w) { if (t.s.indexOf(w) < 0) t.s.push(w); }); return false; });
     AO.sort(function (a, b) { return b.ps.length - a.ps.length; });
     /* (sentences that say what happened, and match the row's count: a wipe row covers several pulls, an Other mistakes row says how many) */
@@ -14236,6 +14238,8 @@ html body #view details.shd-one > .gbx { padding: 2px 0 10px 18px; }
         AO.map(function (x) { var n = x.ps.length; return brow(0, x, n, am, n === 1 ? 'pull' : 'pulls', '#9aa3ad', why1(x) + pbs(x.ps), false); }).join('') + '</div></div>'; }
     var better = upL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
     if (better.length) o += '<p class="nsm-better"><b>Better tonight:</b> ' + better.join(', ') + '</p>';
+    var worse2 = worseL.filter(function (li) { var t = TR[key(nameOf(li))]; return t && !t.used; }).map(function (li) { return esc(nameOf(li)); });
+    if (worse2.length) o += '<p class="nsm-better nsm-worse"><b>Worse tonight:</b> ' + worse2.join(', ') + '</p>';
     if (!top.length && !AO.length && wellL.length) o += '<div class="nsm-sec"><span class="nsm-k">Done well</span>' + wellL.map(function (li) { return row(li, '✓', 'g', null, null, true); }).join('') + '</div>';
     o += '</div>';
     s.insertAdjacentHTML('beforeend', o); s.classList.add('nsm-on');
