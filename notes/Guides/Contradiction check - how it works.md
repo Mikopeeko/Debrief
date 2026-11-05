@@ -14,6 +14,10 @@ real cause of a wipe, it must never contradict itself. This check catches that a
   row's line on Debriefing (the coach and Also hurt use them), every mistake and its fix.
 - **Titles.** Every mechanic is "Name (Nickname)" with the nickname from the site's one table (`NKG` in src/ui.js, or `NK346` for a
   title two bosses share), 1-2 words, never an order like Kill, Swap or Pop.
+- **How it went names the right mechanic.** A row's title is a mechanic its own sentence names, or one of that mechanic's family
+  (a ghost touch can be Manifestation of Dread, Dreadmarch or Malevolent Resonance; never Wail of Terror just because the kick was
+  the nearest mistake in time). The rule is `chainTitleFits` in src/ui.js, and the check makes sure How it went and Also hurt
+  still use it (Nov 5, Flex's screenshot). Also hurt never repeats a How it went moment (same mechanic or players within 2 s).
 
 The site's small helpers (pullPct, pullShort, rowText, nkWord283 and the rest) are read straight out of src/ui.js by
 `tests/site-helpers.js`, so the check reads exactly what the page shows.

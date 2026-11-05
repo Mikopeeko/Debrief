@@ -28,6 +28,8 @@ const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for 
    in as "none" on both sides, so the tier and All pulls are compared on the same causes) */
 const TSITE = H.site(['esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
 const TIER_T = new Map(); /* (each test night's pulls of a boss: the tier's line, All pulls' cause and health) */
+/* (How it went's titles (Nov 5): the page's own rule and wipe chain; the cut at the wipe call stands in as "none") */
+const CHT = H.site(['MECH_FAM', 'mechFams', 'chainTitleFits', 'wipeChain'], { cutInfo: () => null, cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] });
 const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----
@@ -131,6 +133,12 @@ function checkPull(key) {
   { const f0 = rep.r.fights.find((x) => x.id === +fight); if (f0) { try { const gk = code + '|' + it.id + '|' + it.diffId, l = TIER_T.get(gk) || [], q = SITE.aphOf([r]).p[0], pc = TSITE.pullCauseOf(r);
       l.push({ it, hp: q ? q[1] : null, ak: pc ? pc.k : '', sum: TSITE.tierSumOf(r), row: [code, f0.id, rep.r.startTime + f0.startTime, f0.kill ? 1 : 0, f0.fightPercentage != null ? f0.fightPercentage : null, f0.bossPercentage != null ? f0.bossPercentage : null, f0.lastPhase || 0, f0.lastPhaseIsIntermission ? 1 : 0, Math.round((f0.endTime - f0.startTime) / 1000)] }); TIER_T.set(gk, l); }
     catch (e) { say(pull, 'tier', 'the Whole tier\'s line crashed: ' + e.message); } } }
+  // 2b. How it went: a row's title is a mechanic its own sentence names (or one of its family), never just the nearest mistake in time
+  if (!it.kill) { let ch = null; try { ch = CHT.wipeChain(r); } catch (e) { say(pull, 'title', 'the wipe chain crashed: ' + e.message); }
+    const near = (r.mistakes || []).filter((q) => q.mechanic !== 'Death');
+    for (const x of (ch && ch.items) || []) { if (x.mech === 'Death') continue; clean(pull, 'How it went', x.txt);
+      const pick = near.filter((q) => Math.abs((q.from != null ? q.from : q.t) - x.t) <= 3 && CHT.chainTitleFits(q.mechanic, x.txt)).sort((a, b) => Math.abs(a.t - x.t) - Math.abs(b.t - x.t))[0], ttl = pick ? pick.mechanic : x.mech;
+      if (!CHT.chainTitleFits(ttl, x.txt)) say(pull, 'title', 'How it went at ' + E.fmtT(x.t) + ' is titled "' + ttl + '" but its sentence says "' + x.txt + '"'); } }
   for (const q of r.mistakes || []) { clean(pull, 'mistake ' + q.mechanic, q.detail); clean(pull, 'mistake ' + q.mechanic + ' fix', q.fix); }
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once
@@ -142,6 +150,13 @@ function checkPull(key) {
 // 4. the page's own code reads one number (the banner, the pull picker, the coach and Debriefing's lines)
 const MUST = [['the Why we wiped facts line (the phase at the wipe call, from the timeline)', "(end && T(end.querySelector('.dbt-chp'))) || '') || phw", 'SH'], ['the banner', "bossAtV(nowV)"], ['the pull picker', "'Wipe, ' + bossAtV(pc)"], ['the coach line', "'We wiped ' + dbfPre(at0) + at0"], ["Debriefing's raid lead line", 'dbfPre(dbfAt(nowLab))']];
 for (const [k, s, f] of MUST) if (!(f === 'SH' ? H.SH : UI).includes(s)) say('the page code', 'health', k + ' no longer uses the one health number (expected `' + s + '` in src/ui.js)');
+// (How it went: the title rule itself, on Flex's Nov 5 screenshot and the cases it must keep; and the page uses it)
+for (const [t, s, ok] of [['Wail of Terror', "Flëxørçïst's ghost touched Schooty's ghost, causing Malevolent Resonance", false], ['Manifestation of Dread', "Flëxørçïst's ghost touched Schooty's ghost, causing Malevolent Resonance", true],
+  ['Soul Sever', 'Flëxørçïst died to Malevolent Resonance: ghosts touched each other', false], ['Death', 'Schooty died to Axegrinder', true], ['Coalesced Venom', 'Komo died to Venom Rupture: too many orb stacks at once', true],
+  ['Spiteful Soulcoiler', 'Larryg died to Retaliatory Malice: adds were left alive', true], ['Wail of Terror', "Wail of Terror wasn't kicked, and feared players lost sight of their ghosts", true]])
+  if (CHT.chainTitleFits(t, s) !== ok) say('the page code', 'title', 'the title rule says "' + t + '" ' + (ok ? 'doesn\'t fit' : 'fits') + ' "' + s + '"');
+for (const s of ['if (it && !chainTitleFits(m.m, it.txt)) return;', 'if (b && !chainTitleFits(b.m.m, it.txt)) b = null;']) if (!UI.includes(s)) say('the page code', 'title', 'How it went no longer checks its titles (expected "' + s + '" in src/ui.js)');
+for (const s of ["var KR = kept.map(function (r) { return pk(r, '.dbt-cht'); })", "rows = function () { return [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')); }"]) if (!H.SH.includes(s)) say('the page code', 'repeat', 'Also hurt can repeat How it went again (expected "' + s + '" in src/shell.html)');
 for (const s of ["'Wipe in ' + pg.label", "% of the fight done'"]) if (UI.includes(s)) say('the page code', 'health', 'src/ui.js still shows a second health number: `' + s + '`');
 
 const t0 = Date.now(); let n = 0;
