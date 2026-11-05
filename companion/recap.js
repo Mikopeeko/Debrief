@@ -154,15 +154,16 @@ const RECIPES = {
   'Dreadmarch': ({ gs, secs, flag }) => {
     const gh = (secs || []).find((x) => x.id === 'ghosts'), gg = gh ? (gh.groups || []).filter((g) => (g.rows || []).length) : [], n = Math.max(gs.length, gg.length);
     if (!n) return null;
-    const ev = [], hit = new Set(), at2 = (r, g) => at(r) + ' in ' + dmN(g.title);
+    const ev = [], hit = new Set(), at2 = (r, g) => at(r) + ' in ' + dmN(g.title), dd = new Map(); /* (deaths in the same Dreadmarch are one sentence) */
     for (const x of rowsOf(gs)) { const r = x.r, w = ctxt(r[0]), p = r[2] && r[2].p; if (!r.some((c) => c && c.bad)) continue; hit.add(dmN(x.g.title));
       if (/Gravebound/i.test(w)) ev.push([1, tOf(r), (p ? '@' + p : 'Someone') + ' died to Gravebound' + at2(r, x.g) + ": their soul fragment wasn't picked up."]);
       else if (/collision/i.test(w)) ev.push([1, tOf(r), 'Two ghosts touched' + at2(r, x.g) + '.']);
-      else if (p) ev.push([0, tOf(r), '@' + p + ' died' + at2(r, x.g) + ' while mind controlled.']);
+      else if (p) { const k = dmN(x.g.title), d0 = dd.get(k) || { t: tOf(r), ps: [] }; d0.ps.push('@' + p); dd.set(k, d0); }
       else ev.push([2, tOf(r), capF(w) + at2(r, x.g) + '.']); }
+    for (const [k, d0] of dd) ev.push([0, d0.t, andList(d0.ps) + ' died' + (d0.t != null ? ' at ' + mmss(d0.t) : '') + ' while mind controlled in ' + k + '.']);
     for (const x of rowsOf(gg)) { const r = x.r, w = ctxt(r[0]); if (!r.some((c) => c && c.bad)) continue; hit.add(dmN(x.g.title));
       const ps = r[2] && r[2].ps ? r[2].ps : r[2] && r[2].p ? [r[2].p] : [], dmg = (ctxt(r[3]).match(/([\d.]+[KMB]) damage/i) || [])[1];
-      if (/collision/i.test(w)) ev.push([1, tOf(r), andList(ps.map((q) => '@' + q + "'s")) + ' ghosts touched' + at2(r, x.g) + (dmg ? ', and Malevolent Resonance hit for ' + dmg : '') + '.']);
+      if (/collision/i.test(w)) ev.push([1, tOf(r), (ps.length > 1 ? andList(ps.map((q) => '@' + q + "'s")) + ' ghosts touched' : ps.length ? '@' + ps[0] + "'s ghost touched another ghost" : 'Two ghosts touched') + at2(r, x.g) + (dmg ? ', and Malevolent Resonance hit for ' + dmg : '') + '.']);
       else if (/reached/i.test(w)) ev.push([2, tOf(r), (ps.length ? '@' + ps[0] + "'s ghost reached them" : 'A ghost reached its player') + at2(r, x.g) + ', so they were mind controlled again.']);
       else ev.push([2, tOf(r), capF(w.replace(/!$/, '')) + at2(r, x.g) + '.']); }
     const ghF = gh ? (gg.some((g) => g.bad) || gh.verdict === 'bad' ? 'bad' : gg.some((g) => g.warn) ? 'warn' : 'ok') : 'ok', R0 = { bad: 0, warn: 1, ok: 2 };
@@ -205,6 +206,8 @@ const RECIPES = {
       else if (/soul fragments?/i.test(r.map(ctxt).join(' ')) && /(\d+) of (\d+)/.test(r.map(ctxt).join(' '))) { const all = r.map(ctxt).join(' '), m = all.match(/(\d+) of (\d+)/), res = all; ev.push('In ' + set + ', ' + (p ? '@' + p : 'someone') + ' picked up only ' + m[1] + ' of ' + m[2] + ' soul fragments' + (/died/i.test(res) ? ' and died' : '') + at(r) + '.'); }
       else if (/clip/i.test(w)) ev.push((p ? '@' + p : 'Someone') + " was clipped by someone else's Gloombomb" + at(r) + '.');
       else ev.push('In ' + set + ', ' + lowF(rowLine(r, sec.cols))); }
+    for (const g of bad) { if (ev.length >= 2) break; const sub = plain(g.sub || ''), on = sub.match(/(\d+) of (\d+) on this set's adds/), nb = (sub.match(/not broken/g) || []).length; /* (a set judged from its line: "2 of 4 on this set's adds · Soulcoiler 1 not broken") */
+      if (on || nb) ev.push('In ' + lowF(plain(g.title)) + ', ' + (on && +on[1] < +on[2] ? 'only ' + on[1] + ' of ' + on[2] + ' Gloombombs landed on the adds' : 'the Gloombombs landed on the adds') + (nb ? (on && +on[1] < +on[2] ? ', and ' : ', but ') + (nb > 1 ? 'neither Spirit Shield was broken' : 'one Spirit Shield wasn\'t broken') : '') + '.'); }
     if (!ev.length) ev.push('In ' + lowF(plain(bad[0].title)) + ', ' + lowF(plain(bad[0].sub || 'a bomb missed.')).replace(/([^.])$/, '$1.'));
     return ev.slice(0, 2).join(' ') + (ev.length > 2 ? ' ' + plural(ev.length - 2, 'more bomb mistake') + '.' : '') + rest(sets.length - bad.length, 'The other set was clean.', 'The other # sets were clean.');
   },
