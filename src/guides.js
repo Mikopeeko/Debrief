@@ -412,7 +412,7 @@ function gdzCaKicks(k, RA, MA, sh) {
   [[0.6, 'Melee 3', 'm3'], [4.4, 'Melee 4', 'm4'], [8.2, 'Melee 3', 'm3']].forEach(([t, by, id]) => { k.cast('am', 'Wail of Terror', t, t + 0.7, 'kick', by); k.press(id, 'Kick', t, t + 0.9); });
   // (the melee kickers stand at the melee add and follow it after each teleport, so each kick is in reach)
   const P = [MA, [MA[0] - 5, MA[1] + 4], [MA[0] + 2, MA[1] + 8]];
-  k.at(0, 'm3', P[0][0] - 1.5, P[0][1] + 5).hold(1.6, 'm3').at(3.4, 'm3', P[1][0] - 1.5, P[1][1] + 5).hold(5.2, 'm3').at(7.4, 'm3', P[2][0] - 1.5, P[2][1] + 5).at(0, 'm4', P[0][0] - 1.5, P[0][1] - 5).hold(1.6, 'm4').at(3.4, 'm4', P[1][0] - 1.5, P[1][1] - 5); /* (beside it, not under it: its name stays clear) */
+  k.at(0, 'm3', P[0][0] - 1, P[0][1] + 6.5).hold(1.6, 'm3').at(3.4, 'm3', P[1][0] - 1, P[1][1] + 6.5).hold(5.2, 'm3').at(7.4, 'm3', P[2][0] - 1, P[2][1] + 6.5).at(0, 'm4', P[0][0] - 1, P[0][1] - 6.5).hold(1.6, 'm4').at(3.4, 'm4', P[1][0] - 1, P[1][1] - 6.5); /* (beside it, not under it: its name stays clear) */
   const hop = (id, A, list) => { let p = A; list.forEach(([t, dx, dy]) => { k.add(id, 'Spiteful Soulcoiler', t, p[0], p[1]); p = [A[0] + dx, A[1] + dy]; k.add(id, 'Spiteful Soulcoiler', t + 0.05, p[0], p[1]); }); };
   hop('ar', RA, [[1.25, 6, 5], [4.95, -1, 9], [8.75, 5, 2]]); hop('am', MA, [[1.35, -5, 4], [5.15, 2, 8], [8.95, -3, 2]]); /* (a teleport: a jump, not a walk) */
   k.call(1.5, 4, 'Next kicker follows', { x: RA[0] + 3, y: RA[1] + 16 });
@@ -430,7 +430,7 @@ function gdzCaKicks(k, RA, MA, sh) {
     ['ar', 'am'].forEach((id) => { k.call(13.9, 15.4, 'Shield down', { on: id, color: '#7fd4ff', ink: '#06202c' });
       k.ring({ on: id, r: 5, fx: 'burst', t0: 15.8, at: 16.2, dur: 0.6, color: '#ffd23b', cn: 'Spiteful Soulcoiler dies', legend: 'the add dies', label: false }); k.show(id, 0, 16.3); });
     k.call(15.5, 17, 'Kill them', { x: -4, y: -2 });
-    k.step(0.5).step(1.6).step(4.2).step(9).step(13.9);
+    k.step(0.5).step(1.6).step(9).step(13.9);
   } else k.step(0.5).step(1.6).step(4.2).step(8);
   k.pause(4.8, 'Freeze. No bombs on these adds. Their shields don\'t need breaking, so the raid just keeps kicking every Wail of Terror.'); return k.done({ title: 'The last adds: just kick them', focus: { x: -4, y: -2, r: 20 } });
 }
@@ -689,7 +689,7 @@ const GDZ_CA_M = {
       .at(0, ['m1', 'm2', 'm3', 'm5', 'm6', 'm7'], 12, 22, 5).at(0, ['h1', 'h3', 'h4'], 0, 24, 4).at(0, ['r1', 'r2', 'r3', 'r4', 'r6', 'r7'], -2, 6, 6);
     mc.forEach((id, i) => k.at(0, id, GDZ_CA_FREED[i][0], GDZ_CA_FREED[i][1]));
     k.press('t1', 'Defensive', 6.2, 7.8);
-    k.call(0.4, 3.2, 'Take him to the diamond', { on: 't1' }).call(1.5, 3.3, 'Let it creep in', { x: 41, y: 12, color: '#c49bff', ink: '#14061f' }).call(3.4, 6.2, 'Stand by the square', { on: 't1' })
+    k.call(0.4, 3.2, 'Pull him to the diamond', { on: 't1' }).call(1.5, 3.3, 'Let it creep in', { x: 41, y: 12, color: '#c49bff', ink: '#14061f' }).call(3.4, 6.2, 'Face him to the square', { on: 't1' })
       .call(7.8, 10.4, 'Pick up your 3 fragments', { x: 34, y: 17, color: '#c49bff', ink: '#14061f' }).call(8.3, 12.3, 'Missed: walk it back', { x: 10, y: 40, color: '#c49bff', ink: '#14061f' });
     // (the ghosts frozen where Dreadmarch left them; the one out east (g3) is let creep in: its player looks away for a moment)
     const HIT = ['g0', 'g1', 'g2', 'g3', 'g4'];
@@ -1183,7 +1183,7 @@ GDZ['The Coiled Altar'] = {
           do: ['Boss tank: *Face Malacrass at the ghost pile*, so *Soul Sever* runs through it. *Press a defensive*.', 'Freed: *Keep looking* at your ghosts, so they stay *frozen in the pile*. Stand *out of its path*.', 'Hit by it: *Pick up your 3 Soul Fragments* around you, or you die. The boss tank is hit every time.', 'Off-tank: *Taunt* before the next one, so the tanks *swap* every Soul Sever.'],
           roles: ['t', '', '', 't'],
           m: { what: 'Malacrass\'s tank frontal, about 25 seconds after each Dreadmarch. Every ghost it passes through is destroyed. Anyone it hits must pick up 3 Soul Fragments, and it always hits the boss tank.',
-            do: ['Boss tank: *Take Malacrass to the diamond*, then stand *by the square*, so the frontal runs through the ghosts. Odd casts: *a defensive*. Even casts: *a defensive and 2 externals*.', 'Freed: *Keep looking* at your ghost, so it stays frozen in the line. Outside it? *Look away* for a moment and let it creep in.', 'Hit by it: *Pick up your 3 Soul Fragments* around you, or you die. The boss tank is hit every time.', 'Missed ghost: *Walk it back* toward the square, ready for the next frontal.'],
+            do: ['Boss tank: *Pull Malacrass to the diamond* and *face him toward the square*, so the frontal runs through the ghosts. Odd casts: *a defensive*. Even casts: *a defensive and 2 externals*.', 'Freed: *Keep looking* at your ghost, so it stays frozen in the line. Outside it? *Look away* for a moment and let it creep in.', 'Hit by it: *Pick up your 3 Soul Fragments* around you, or you die. The boss tank is hit every time.', 'Missed ghost: *Walk it back* toward the square, ready for the next frontal.'],
             roles: ['t', '', '', ''],
             plan: ['One tank takes every phase 2 frontal: a defensive on the odd ones, a defensive and 2 externals on the even ones. The stacks fall off before the third.', 'The diamond or the circle both work. Pick the one that puts the most ghosts in the line.', 'When Eternal Nightfall comes, Soul Sever lands just before it.'] },
           map: (d) => {
@@ -1218,8 +1218,8 @@ GDZ['The Coiled Altar'] = {
           do: ['Kickers: *Kick every Wail of Terror*. It\'s a raid-wide fear.', 'Kickers: The add *teleports* after each kick. The *next kicker* follows it.', 'Kickers: *Keep the order going* on both adds.', 'DPS: *Kill them* before they reach *full energy*.'],
           roles: ['td', 'td', 'td', 'd'],
           m: { what: 'Two adds come with each set. They hit the raid every 3 seconds while alive and cast Wail of Terror, a raid fear. A shield keeps each one almost unhurt until 2 Gloombombs hit it.',
-            do: ['Raid lead: *Mark the ranged add*. Ranged kick the marked one, melee kick the other.', 'Kickers: *Kick every Wail of Terror*. The add *teleports* after each kick.', 'Kickers: The *next kicker* in the order takes the next cast, even after a teleport.', 'Everyone: Each add has a *shield* and takes almost no damage until *2 Gloombombs* hit it. The bombs break the shield.', 'DPS: Once the shield is down, *kill them fast*. They hit the raid while alive. *Warlocks*: Curse of Tongues on both.'],
-            roles: ['', 'td', 'td', '', 'd'] },
+            do: ['Raid lead: *Mark the ranged add*. Ranged kick the marked one, melee kick the other.', 'Kickers: *Kick every Wail of Terror*. The add *teleports* after each kick, and the *next kicker* in the order takes the next cast.', 'Everyone: Each add has a *shield* until *2 Gloombombs* hit it. Once it\'s down, *kill them fast*.', 'DPS: They hit the raid every 3 seconds while alive. *Warlocks*: Curse of Tongues on both.'],
+            roles: ['', 'td', '', 'd'] },
           map: (d) => GDZ_CA_M.kicks(d) },
       ],
       tiles: [
@@ -1282,7 +1282,7 @@ GDZ['The Coiled Altar'] = {
   },
 };
 GDZ['The Coiled Altar'].m.roles = {
-  t: ['Boss tank: a sturdy tank (Blood Death Knight, Guardian Druid or Protection Warrior) holds the boss.', 'Off-tank: a mobile tank runs purple orbs and taunts for the entrance frontal. Protection Paladin is best, but any mobile tank works.', 'Phase 2: one tank can take every Soul Sever (a defensive on the odd ones, a defensive and 2 externals on the even ones); take Malacrass to the diamond or circle to line it up with the ghosts.', 'Soak the second phase 1 axe with a defensive.'],
+  t: ['Boss tank: a sturdy tank (Blood Death Knight, Guardian Druid or Protection Warrior) holds the boss.', 'Off-tank: a mobile tank runs purple orbs and taunts for the entrance frontal. Protection Paladin is best, but any mobile tank works.', 'Phase 2: one tank can take every Soul Sever (a defensive on the odd ones, a defensive and 2 externals on the even ones); pull Malacrass to the diamond or circle and face him through the ghosts.', 'Soak the second phase 1 axe with a defensive.'],
   h: ['Five healers: lots of raid damage, and you hold damage often anyway.', 'Into phase 2 at 9 to 11 orb stacks: stack Spirit Link and raid cooldowns.', 'Intermission: mobile healers cover the four sides; save the big cooldowns for the 7-to-10 turn.', 'Mobile healers (Evoker especially) can carry purples between mechanics; in phase 3 the Evoker healer is a carrier.'],
   d: ['Greens only, unless you\'re assigned purples (Warlocks in phase 1, Mages all fight). Clear greens out of purple carriers\' way first.', 'Hunters: soak axe 1, then Turtle on axe 2. Rogues: Feint on axe 1, Cloak in phase 3.', 'Gloombomb: take it to your add (ranged to the ranged add, melee to the melee add) and use your best defensive.', 'Pool damage and cooldowns for every Eternal Nightfall shield; boss damage barely matters in phase 2.', 'Bloodlust in the intermission. Phase 3: kill Zul\'jan before his pool cast; don\'t over-damage Malacrass.'],
 };
