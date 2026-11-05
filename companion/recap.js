@@ -867,6 +867,11 @@ const NICK_RE = new RegExp(Object.keys(NICK).sort((a, c) => c.length - a.length)
 const nickTxt = (v) => String(v).replace(NICK_RE, (k) => NICK[k]).replace(/\b(\d+ players?|[A-Z][^\s,:;.()]*) their ghost\b/g, "$1's ghost");
 // (never an empty icon square (Nov 4, the studio): a coach row with no spell takes the icon of the Boss mechanics or Top mistakes row of the same
 // mechanic, else the spell of that name, else the game's question mark)
+// (the site's root cause in the raid lead's box: its name as the cause, its one chain sentence after it; "likely" when the site isn't sure)
+function rootInto(co, rc) {
+  const R = co && co.raid; if (!R || !rc) return;
+  R.root = { cause: capF(plain(rc.name)) + (rc.sure === false ? ' (likely)' : '') + '.', rest: plain(rc.line), tr: (R.root && R.root.tr) || '' };
+}
 // (the raid lead's Deaths list stops at the wipe call too (Nov 4, Flex: "Yes, fix it"), like Who died: a death after the call isn't listed)
 function cutCoachDeaths(co, T) {
   const D = co && co.raid && co.raid.deaths; if (!D || !isFinite(T)) return;
@@ -926,12 +931,16 @@ window.DBF_BUILD = (b, rep, same, W, L) => {
       } catch (e) { coach = null; } finally { if (!had) CA.delete(b); if (W.setCut && was != null) W.setCut(was); }
     }
     m.coach = nickCoach(coach && RAIDS[0] ? { raid: RAIDS[0], you: coach.you } : coach); /* (nicknames and sentences (Nov 4)) */ fillIcons(m, W);
+    // (the root cause of a wipe, as Debriefing leads with it (Nov 5, Flex: "yes"): "What wiped us" says what started the chain, not the killing blow;
+    // only where the site knows it (The Coiled Altar for now), else the box stays as it was)
+    let RC = null; if (!b.kill && b.id !== 990001 && !b.dungeon) { try { const ew = document.getElementById('eng'), f = ew && ew.contentWindow && ew.contentWindow.wipeRootOf; RC = f ? f(rep) : null; } catch (e) { RC = null; } if (RC && (RC.cat === 'reset' || !RC.line)) RC = null; }
+    rootInto(m.coach, RC);
     // (the Report card's grade for this pull, for the card's "Report card grade" chip (Oct 22))
     if (W.gradeBoss && b.id !== 990001 && !b.dungeon) { try { const g = W.gradeBoss([rep]); if (g && g.letter) m.grade = { letter: g.letter, score: Math.round(g.overall), cats: (g.cats || []).map((c) => c.label + ' ' + c.letter).join(' · ') }; } catch (e) { /* (no grade) */ } }
     if (b.kill || b.id === 990001 || b.dungeon || !nd) return m; // (a kill, a dummy or a dungeon boss always counts in full)
     // (two versions (Oct 23): the whole pull, and up to the website's wipe call; a pull never called lost has only the one)
     const WC = wipeOf(W, rep); if (!WC) return m; m.wc = { at: WC.at, txt: WC.txt }; cutCoachDeaths(m.coach, WC.t);
-    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); fillIcons(x, W); cutCoachDeaths(x.coach, WC.t); m.cuts = [m, x];
+    const x = buildOne(b, rep, same, W2, L, 1); x.coach = nickCoach(coach && RAIDS[1] ? { raid: RAIDS[1], you: coach.you } : coach); fillIcons(x, W); cutCoachDeaths(x.coach, WC.t); rootInto(x.coach, RC); m.cuts = [m, x];
     return m;
   } finally { try { if (W.setCut && was != null) W.setCut(was); } catch (e) { /* fine */ } if (!had0) CA0.delete(b); for (const x of lent) CA0.delete(x); if (S0) S0.index = idx0; }
 };
