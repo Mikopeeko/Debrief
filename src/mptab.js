@@ -3391,8 +3391,8 @@ function mpcRotHtml(R) {
   let rows = [], good = [], score = null, note = '';
   if (pi == null) { const sm = mpRwSum(R, name); score = sm.pct; good = sm.good.map(mpRwGood);
     note = sm.seen.length ? 'The whole key: ' + sm.seen.length + ' of ' + R.pulls.length + ' pulls checked. Pick a pull to see only that pull.' : 'No pull long enough to judge.';
-    rows = sm.fix.map((a) => { const sq = sm.seen.map((x) => (a.pulls.includes(x.i) ? (a.st === 'bad' ? 'b' : 'w') : 'g')).join('');
-      return [a.st, a.f[1], a.f[2], a.tot ? mpRwVal(a.tot) : a.pulls.length + ' of ' + sm.seen.length + ' pulls', '', a.act || '', sq, [a.why, 'It came up on ' + a.pulls.length + ' of ' + sm.seen.length + ' pulls.'].filter(Boolean).join(' '), '', '']; }); }
+    rows = sm.fix.map((a) => { const on = new Set(a.pulls.map(String)), sq = sm.seen.map((x) => (on.has(String(x.i)) ? (a.st === 'bad' ? 'b' : 'w') : 'g')).join(''), hit = sq.replace(/g/g, '').length; /* (the count is the squares' own: the two always agree (the studio's audit)) */
+      return [a.st, a.f[1], a.f[2], a.tot ? mpRwVal(a.tot) : hit + ' of ' + sq.length + ' pulls', '', a.act || '', sq, [a.why, 'It came up on ' + hit + ' of ' + sq.length + ' pulls' + (a.st === 'bad' ? ' (the red squares).' : ' (the amber squares).')].filter(Boolean).join(' '), '', '']; }); }
   else { const o = R.pulls[pi], cs = ((rw.all[o.n] || {})[name] || []).filter((c) => mpRwKeep(c, o)), R0 = { bad: 0, warn: 1, ok: 2 }; score = mpRwScore(R, pi, name);
     rows = cs.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => R0[a.st] - R0[c.st] || (c.cost || 0) - (a.cost || 0)).map((c) => CB.rotRow(c, { E }, '', ''));
     good = cs.filter((c) => c.st === 'ok').slice(0, 4).map((c) => mpPlain(c.label).trim());
