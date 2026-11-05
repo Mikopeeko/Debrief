@@ -72137,10 +72137,10 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var focusLi = (top[0] && top[0].li) || wipL.filter(function (li) { return fm && fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || wipL[0];
     var mis = fm && top[0] && fm[1].toLowerCase().indexOf(lc(top[0].nm)) < 0 ? top[0] : null; /* (never a quiet mismatch: the focus names #1 or says that #1 is something else) */
     var FO = nsmFocusOf(top.map(function (x) { var d = (x.li && x.li.dataset) || {}; return { nm: x.nm, w: x.w, rc: d.rc || '', fix: d.fix || '', first: d.first || '' }; }));
-    if (FO && FO.fix) o += '<div class="nsm-focus">' + icon2(top[0].li, top[0].nm) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(FO.fix) + '</h3></div>' +
-      '<p><b>' + esc(FO.nm) + '</b> wiped us most (<b>' + FO.w + '</b> ' + (FO.w === 1 ? 'time' : 'times') + ').' + (FO.first ? ' ' + esc(FO.first) : '') + '</p></div>';
-    else if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3>' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
-      (mis ? '<p><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + ').</p>' : whySent ? '<p>' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
+    if (FO && FO.fix) o += '<div class="nsm-focus">' + icon2(top[0].li, top[0].nm) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3 class="no-ic">' + esc(FO.fix) + '</h3></div>' +
+      '<p class="no-ic"><b>' + esc(FO.nm) + '</b> wiped us most (<b>' + FO.w + '</b> ' + (FO.w === 1 ? 'time' : 'times') + ').' + (FO.first ? ' ' + esc(FO.first) : '') + '</p></div>';
+    else if (fm) o += '<div class="nsm-focus">' + icon(mis ? wipL.filter(function (li) { return fm[1].toLowerCase().indexOf(nameOf(li).toLowerCase()) >= 0; })[0] || focusLi : focusLi) + '<div><div class="nsm-k">Next raid, focus on one thing</div><h3 class="no-ic">' + esc(fm[1].charAt(0).toUpperCase() + fm[1].slice(1)) + '</h3></div>' +
+      (mis ? '<p class="no-ic"><b>' + esc(mis.nm) + '</b> wiped us most (<b>' + mis.w + '</b> ' + (mis.w === 1 ? 'time' : 'times') + ').</p>' : whySent ? '<p class="no-ic">' + esc(whySent).replace(/(\d+) times/, '<b>$1</b> times') + '</p>' : '') + '</div>';
     /* (Nov 5, Flex: "a line graph would be better reflecting the total boss HP", then "Yes, build it" on the Design studio's mock: the boss's
        whole-fight health at each wipe, 100% at the top and the kill at the bottom, a dot per pull in the colour of what wiped it, the best pull
        ringed, the best so far as a dashed gold line that only steps down, and where each phase starts. A dot opens its pull) */
