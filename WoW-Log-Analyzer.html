@@ -33405,7 +33405,14 @@ function pgJobCols(g) {
   if (one) { cards.forEach((c) => g.appendChild(c)); g.querySelectorAll(':scope > .pgc-col').forEach((x) => x.remove()); g.classList.remove('pgc2'); return; }
   let cols = [...g.querySelectorAll(':scope > .pgc-col')]; if (cols.length !== 2) { cols.forEach((x) => x.remove()); cols = [0, 1].map(() => { const d = document.createElement('div'); d.className = 'pgc-col'; return d; }); }
   g.classList.add('pgc2'); cols.forEach((d) => { d.textContent = ''; g.appendChild(d); });
-  for (const c of cards) (cols[0].offsetHeight <= cols[1].offsetHeight ? cols[0] : cols[1]).appendChild(c);
+  // (each card's height at the column's width, then the split: the shorter column in card order, or, with up to 14 cards, the best of
+  // every split when it's clearly better (the studio, Nov 4: The Coiled Altar's tall last card left one column 425 px longer))
+  cards.forEach((c) => cols[0].appendChild(c)); const H = cards.map((c) => c.offsetHeight + 12), n = cards.length;
+  const side = []; { let l = 0, r = 0; H.forEach((h, i) => { if (l <= r) { side[i] = 0; l += h; } else { side[i] = 1; r += h; } }); }
+  const diffOf = (s) => Math.abs(H.reduce((t, h, i) => t + (s[i] ? -h : h), 0)); let best = side, bd = diffOf(side);
+  if (n <= 14) { const gd = bd; let md = gd, mm = null; for (let m = 0; m < 1 << (n - 1); m++) { let d = H[0]; for (let i = 1; i < n; i++) d += (m >> (i - 1)) & 1 ? -H[i] : H[i]; d = Math.abs(d); if (d < md) { md = d; mm = m; } }
+    if (mm != null && gd - md >= 40) { best = H.map((_, i) => (i ? (mm >> (i - 1)) & 1 : 0)); bd = md; } }
+  cards.forEach((c, i) => cols[best[i]].appendChild(c));
 }
 let PGC_T = 0;
 new MutationObserver(() => { if (S.page !== 'plan') return; document.querySelectorAll('#view .bj-jobs .plb-rcg:not([data-pgc])').forEach((g) => { try { pgJobCols(g); } catch (e) { /* (the cards stay as drawn) */ } }); }).observe(document.body, { childList: true, subtree: true });
