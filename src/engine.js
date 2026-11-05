@@ -3999,7 +3999,7 @@ function buildCoiledAltar(ev, r, h) {
   // (from the encounter journal: what positioning can avoid; raid-wide pulses and random-target hits are left out)
   {
     const sec = avoidPanel(ev, r, h, [
-      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a 200% damage-taken debuff', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', skip: (e) => role(e.dst) === 'tank' },
+      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a 200% damage-taken debuff', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', skip: (e) => role(e.dst) === 'tank' || !fKeep.has(e) || (!mythic && fTanks.has(e.dst)) }, /* (Nov 4: each frontal's first hit only, as in the mistakes: its ticks counted a healer 23 times) */
       { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time', fix: 'When the mind control breaks, stand still, so your ghost spawns in the clump and never touches another.' },
       { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5, fix: 'Stay out of the poison pools by the statues. When the second set fills the middle, cross it quickly.' },
       { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
