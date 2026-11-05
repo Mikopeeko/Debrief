@@ -1,0 +1,26 @@
+// Unit test of /api/mptop's rules with stand-ins for R2, the cache and the fast-run list (Nov 5). Usage: node tests/mptop-unit.mjs .  (from the project folder)
+import fs from 'fs';
+const src = fs.readFileSync(process.argv[2] + '/src/worker_template.js', 'utf8'), a = src.indexOf('const MPTOP_K'), b = src.indexOf('async function teamPlan');
+const store = new Map();
+const env = { debrief_nights: { get: async (k) => (store.has(k) ? { json: async () => JSON.parse(store.get(k)) } : null), put: async (k, v) => { store.set(k, v); } } };
+const json = (o, st) => ({ st: st || 200, o }), fair = () => true, PRACTICE_HOST = () => false;
+const LIST = { runs: [{ code: 'AbCdEfGh12345678', fight: 7, ppl: [{ n: 'Topheals', s: 'Holy', c: 'Paladin' }] }] };
+const caches = { default: { match: async () => ({ json: async () => LIST }) } }, mpFastOf = async () => LIST, gql = null;
+const mpTop = new Function('env', 'json', 'fair', 'PRACTICE_HOST', 'caches', 'mpFastOf', 'gql', src.slice(a, b) + '\nreturn mpTop;')(env, json, fair, PRACTICE_HOST, caches, mpFastOf, gql);
+const K = '12923:19:holy:paladin:abc12345', U = 'https://debriefme.io/api/mptop?k=' + K;
+const req = (method, ip, body, origin) => ({ method, headers: { get: (h) => (h === 'Origin' ? origin === undefined ? 'https://debriefme.io' : origin : h === 'CF-Connecting-IP' ? ip : null) }, text: async () => JSON.stringify(body) });
+const run = { id: 'AbCdEfGh12345678:7:Topheals', lv: 19, dur: 1200, t: { 'Holy Shock on cooldown': { k: 'pct', a: 86400, b: 0, w: 1200 } } };
+const go = async (r) => (await mpTop(r, env, new URL(U))).o;
+const out = [];
+out.push(['no Origin', await go(req('POST', '1.1.1.1', run, null))]);
+out.push(['not a fast run', await go(req('POST', '1.1.1.1', { ...run, id: 'AbCdEfGh12345678:8:Topheals' }))]);
+out.push(['wrong spec player', await go(req('POST', '1.1.1.1', { ...run, id: 'AbCdEfGh12345678:7:Someoneelse' }))]);
+out.push(['level too far', await go(req('POST', '1.1.1.1', { ...run, lv: 22 }))]);
+out.push(['first save', await go(req('POST', '1.1.1.1', run))]);
+out.push(['same visitor again', await go(req('POST', '1.1.1.1', run))]);
+out.push(['shown after one visitor', await go(req('GET', '1.1.1.1'))]);
+out.push(['planted numbers, 2nd visitor', await go(req('POST', '2.2.2.2', { ...run, t: { 'Holy Shock on cooldown': { k: 'pct', a: 1, b: 0, w: 1200 } } }))]);
+out.push(['shown after a mismatch', await go(req('GET', '1.1.1.1'))]);
+out.push(['matching 2nd visitor', await go(req('POST', '3.3.3.3', run))]);
+out.push(['shown after agreement', await go(req('GET', '1.1.1.1'))]);
+for (const [n, o] of out) console.log(n.padEnd(30), JSON.stringify(o).slice(0, 140));
