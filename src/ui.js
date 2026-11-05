@@ -22643,7 +22643,8 @@ function bossRot(o) {
 // Opener DPS (always higher than the pull's average, so it reads as good whatever you did), "Procs wasted in <burst window>" (the same
 // procs are already counted on their own row), Mana from others (not your doing), Casting pace during a cooldown (no target, and
 // "Casting in" says it better), and Past the falloff point when it only says that's fine)
-const SPC_CUT = (c) => /^(Opener DPS|Mana from others)$/.test(String(c.label)) || /^(Procs wasted in |Casting pace during )/.test(String(c.label)) || (String(c.label) === 'Past the falloff point' && c.st === 'na');
+let SPC_KEY = false; /* (a Mythic+ pull drawn on the Mythic+ tab: the checks the key card leaves out go here too (Nov 5)) */
+const SPC_CUT = (c) => (SPC_KEY && /^(Opener|Mana at the)|potion/i.test(String(c.label))) || /^(Opener DPS|Mana from others)$/.test(String(c.label)) || /^(Procs wasted in |Casting pace during )/.test(String(c.label)) || (String(c.label) === 'Past the falloff point' && c.st === 'na');
 // (row icons (your ask, Oct 23): the rows every spec shares get one icon each, the same on every spec page, instead of the spec's main spell
 // on four to six rows of one page: a clock for Always be casting, a list for Rotation priority, and so on. Rows that had no icon at all
 // (Weapon oil, Stealth, Full mana, Holy Power wasted) get one)

@@ -352,5 +352,14 @@ async function rotation(R, text, W, opts) {
 root.DBF_MPLUS = build;
 root.DBF_MPTIMER = TIMER; // (the main window's key timer (round 482): each dungeon's time limit in minutes)
 root.DBF_MPLUS_ROT = rotation;
+// (one pull read again, the same way rotation() reads each pull: the website's Rotation tab draws its full page from it (Nov 5))
+root.DBF_MPLUS_PULLREP = (text, R, i, W) => {
+  const E = W.E, o = R.pulls[i]; if (!o) return null; const lines = text.split('\n'), stamp = /^.*?(?=  )/; let t0 = null, i0 = -1, i1 = -1;
+  for (let k = 0; k < lines.length; k++) { const p = E.parseTs(lines[k]); if (!p) continue; if (t0 == null) t0 = p.ms; const t = (p.ms - t0) / 1000; if (i0 < 0 && t >= o.s - 1) i0 = k; if (t <= o.e + 1) i1 = k + 1; else if (i0 >= 0) break; }
+  if (i0 < 0 || i1 - i0 <= 50) return null; const pe = E.parseTs(lines[i0]); if (!pe) return null;
+  const st = (lines[i0].match(stamp) || [''])[0], seg = lines.filter((l) => l.indexOf('COMBATANT_INFO') > 0).map((l) => l.replace(stamp, st)).concat(lines.slice(i0, i1)).join('\n');
+  const b = { kind: 'pull', startMs: pe.ms, id: 990002, boss: o.boss || 'Pull ' + o.n, diffId: 8, kill: true, duration: o.dur, pull: o.n, dungeon: true };
+  try { const rep = E.analyze(b, seg, { packs: (W.S && W.S.packs) || E.PACKS, overrides: {} }); if (rep && !rep.item) rep.item = b; return rep; } catch (e) { return null; }
+};
 if (typeof module !== 'undefined') { module.exports = build; module.exports.rotation = rotation; }
 })(typeof window !== 'undefined' ? window : globalThis);
