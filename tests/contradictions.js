@@ -29,7 +29,7 @@ const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for 
 const TSITE = H.site(['esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
 const TIER_T = new Map(); /* (each test night's pulls of a boss: the tier's line, All pulls' cause and health) */
 /* (How it went's titles (Nov 5): the page's own rule and wipe chain; the cut at the wipe call stands in as "none") */
-const CHT = H.site(['MECH_FAM', 'mechFams', 'chainTitleFits', 'wipeChain'], { cutInfo: () => null, cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] });
+const CHT = H.site(['MECH_FAM', 'mechFams', 'chainTitleFits', 'deathBrief', 'wipeChain'], { deathVerdict: () => null, cutInfo: () => null, cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] });
 const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----

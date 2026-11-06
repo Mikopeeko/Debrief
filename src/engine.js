@@ -3695,6 +3695,7 @@ function buildCoiledAltar(ev, r, h) {
   const pname = (g) => h.name(g), role = (g) => h.role(g);
   const mistakes = [], sections = [], dur = r.duration;
   const M = (t, player, spell, severity, detail, fix) => mistakes.push({ t, player, mechanic: S(spell)[1], id: S(spell)[0], severity, detail, fix });
+  const caM = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
   // (every Soul Fragment pickup, [time, player, x, y]: the pickup hit (#1308330) lands where the fragment was. The Timeline replay draws each
   // fragment from its player's Gravebound until this moment (Nov 2, Flex: "Yes, do fragments"))
   r.fragPicks = dmg('gravebound').filter((e) => h.isPlayer(e.dst) && (e.id == null || +e.id === 1308330)).map((e) => { const q = e.x != null && e.x === e.x ? e : h.snap(e.t).find((p) => p.guid === e.dst); return q ? [+e.t.toFixed(2), e.dst, +(+q.x).toFixed(2), +(+q.y).toFixed(2)] : null; }).filter(Boolean);
@@ -4231,7 +4232,7 @@ function buildCoiledAltar(ev, r, h) {
   }
   /* (a non-tank in the frontal is one of its moments too: the coach names Sever when it kills someone, so its row can't read clean (Oct 27)) */
   for (const f of front) { const died = (r.deaths || []).some((d) => d.guid === f.dst && d.t >= f.t - 0.5 && d.t <= f.t + 3);
-    tfRows.push({ t: f.t, row: [{ t: f.t }, { s: S(L(f.spell)) }, { p: pname(f.dst) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: died ? 'a non-tank died in it' : 'a non-tank stood in it', bad: died || !f.soft, warn: !died && !!f.soft }].concat((() => { const mp = frontMap(f); return mp ? [{ map: mp }] : []; })()) }); }
+    tfRows.push({ t: f.t, row: [{ t: f.t }, { s: S(L(f.spell)) }, { p: pname(f.dst) }, { txt: '—', dim: true }, { txt: '—', dim: true }, { txt: died ? 'a non-tank died in it' : 'a non-tank stood in it', bad: died || !f.soft, warn: !died && !!f.soft, say: String(pname(f.dst)).split('-')[0] + (died ? ' died in the tank frontal, ' : ' stood in the tank frontal, ') + f.spell + ', for ' + caM(Math.max(f.amt, f.raw || 0)) + (died ? '.' : ', and picked up its 200% vulnerability.') /* (Nov 6, Flex: "sever hitting a non tank should say who") */ }].concat((() => { const mp = frontMap(f); return mp ? [{ map: mp }] : []; })()) }); }
   if (tfRows.length) sections.push({ id: 'tankfront', title: 'Tank frontals (Defensives on stack 2)', place: 'Tank frontals: stacks and defensives', spell: S('soul sever'),
     verdict: tfRows.some((x) => x.row.some((c) => c.bad)) ? 'bad' : tfRows.some((x) => x.row.some((c) => c.warn)) ? 'warn' : 'good',
     summary: pl(tfRows.length, 'tank frontal') + '. It shows who took each one, on which stack, and the defensives and externals they had up.',
@@ -4267,6 +4268,12 @@ function buildCoiledAltar(ev, r, h) {
       _shields.push({ n: i + 1, t, ph: phaseAt(t), brokeAt, spare, done: done != null, kicked: !!kick, dmg: dmgIn, secs: Math.max(0.1, to - t) }); }
     return [{ txt: 'Shield ' + (i + 1) }, { t }, { txt: phaseAt(t) }, breakCell, kickCell, res];
   });
+  /* (Nov 6, Flex: "eternal nightfall should say how far behind the raid was on the shield": a shield that held says how much of it was left
+     when the 17 s cast finished, measured against what broke this pull's other shields) */
+  { const absIn = (a, b) => ev.filter((e) => e.k === 'pdmg' && e.abs && mal.includes(e.dst) && e.t >= a && e.t <= b).reduce((s, e) => s + e.amt, 0);
+    const sizes = _shields.filter((x) => x.brokeAt != null).map((x) => absIn(x.t, x.brokeAt)).filter((v) => v > 0).sort((a, b) => a - b), size = sizes.length ? sizes[sizes.length >> 1] : 0;
+    enRows.forEach((row, i) => { const s = _shields[i]; if (!s || s.brokeAt != null || !s.done || !row[3]) return; const got = absIn(s.t, s.t + EN_CAST + 0.5), left = size && got < size ? Math.max(1, Math.round(100 * (1 - got / size))) : null;
+      row[3].say = 'Shield ' + s.n + ' wasn\'t broken, ' + (left != null ? 'with about ' + left + '% of it still up when the 17 s cast finished, after ' + caM(got) + ' of the about ' + caM(size) + ' it takes' : 'after ' + caM(got) + ' of damage into it before the 17 s cast finished') + '.'; }); }
   /* round 284 split: the kicks, only for shields that broke */ const enK = enRows.filter((x) => /^after /.test(x[3].txt || '')).map((x) => [x[0], x[1], x[4], x[5].txt === 'stopped' ? { txt: 'kicked' } : x[5]]);
   if (enK.length) sections.push({ id: 'enkick', title: 'Eternal Nightfall (Kicks)', place: 'Eternal Nightfall: kicked after the break', spell: S('eternal nightfall'), verdict: enK.some((x) => x[3].bad) ? 'bad' : 'good',
     summary: pl(enK.length, 'broken shield') + ', and ' + enK.filter((x) => x[3].txt === 'kicked').length + ' kicked before the cast finished.', cols: ['Shield', 'When', 'Kicked by', 'Result'], rows: enK });
@@ -4612,7 +4619,7 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
     }
     // 3) Soul Sever: the tank frontal destroys the ghosts it hits (a missed ghost is walked back for the next frontal (Oct 21): not a mistake)
-    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, r0[4].warn ? { txt: r0[4].txt + ' missed', warn: true, why: r0[4].why, next: r0[4].next } : { txt: r0[4].txt + ' missed', dim: true }, r0[5]] })); /* round 447: a missed ghost is a Moderate fail */
+    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, r0[4].warn ? { txt: r0[4].txt + ' missed', warn: true, why: r0[4].why, next: r0[4].next, ...(r0[4].why ? { say: r0[4].why } : {}) } : { txt: r0[4].txt + ' missed', dim: true }, r0[5]] })); /* round 447: a missed ghost is a Moderate fail */
     if (ssItems.length) {
       const groups = perDm(ssItems, 'no Soul Sever in this Dreadmarch');
       for (const g of groups) { const rm = g.rows.filter((r0) => r0[0].txt === 'Soul Sever'); let a = 0, b = 0; for (const r0 of rm) { const m = String(r0[2].txt).match(/^(\d+) of (\d+)/); if (m) { a += +m[1]; b = Math.max(b, +m[2]); } }
