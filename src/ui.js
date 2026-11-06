@@ -3625,7 +3625,7 @@ const NFIT = new WeakMap(); // (each pull's automatic pick, kept until a note is
 // pulls of its boss. A note you pick or add yourself still wins. A shared night carries its notes with it.
 const GN = { data: null, at: 0, sig: '' };
 async function gnLoad() {
-  if (!FH.dir || FH.dir.kind !== 'helper' || Date.now() - GN.at < 60000) return; GN.at = Date.now();
+  if (!(PC_ON || (FH.dir && FH.dir.kind === 'helper')) || Date.now() - GN.at < 60000) return; GN.at = Date.now(); /* (the app linked: any night, from this PC's log or Warcraft Logs (Nov 6)) */
   try { const r = await fetch(HELPER_BASE + '/log/notes', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (!j || !Array.isArray(j.pulls)) return;
     const sig = j.pulls.length + '|' + Object.keys(j.texts || {}).join(',') + '|' + ((j.fallback && j.fallback.at) || ''); if (sig === GN.sig) return;
     GN.data = j; GN.sig = sig; if (S.rep) { try { renderMain(); } catch (e) { /* drawn next time */ } } } catch (e) { /* an older Debrief app: no notes */ }
@@ -3633,7 +3633,7 @@ async function gnLoad() {
 function gameNoteFor(it) {
   if (!it) return null;
   if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
-  const g = GN.data; if (!g) return null;
+  const g = GN.data; if (!g) { if (PC_ON) gnLoad(); return null; } /* (asked once the page wants a note; drawn again when it's in) */
   const t = it.wallMs || 0, t1 = it.startMs || 0, same = (x) => (x.e != null ? +x.e === +it.id : x.b === it.boss) && (x.d == null || it.diffId == null || +x.d === +it.diffId);
   // (the pull's own copy: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
   let best = null;
@@ -34457,7 +34457,7 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
     fetch(base + '/log/info', { cache: 'no-store' }).then((r) => r.json()).then((j) => {
       if (ask) ask.remove();
       if (!j || j.error === 'nodir') return;
-      HELPER_BASE = base; PC_ON = true;
+      HELPER_BASE = base; PC_ON = true; gnLoad(); /* (the game's raid notes, for whatever night is open (Nov 6)) */
       const busy = S.rep || S.wclCode || FH.dir || S.file || sharedLink || nightLink || S.shr || reloadSt && reloadSt.code || document.querySelector('.ld, #ndD') || ['guides', 'plan', 'ingame', 'mplus'].some((k) => RQ.has(k));
       if (!busy) startFileLive(HELPER_LOG);
     }).catch(() => { if (ask) ask.remove(); /* the app isn't running (or Chrome was told no): the site works as always */ });
