@@ -34,6 +34,11 @@ $ts = [regex]::Match($wcl, '// <topspec>[\s\S]*?// </topspec>')
 if (-not $ts.Success) { throw 'wcl.js has no <topspec> block' }
 $w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
+# (Nov 5, faster loading: the website's copy without the notes in the code, ~0.4 MB less to download (src/strip-comments.js says what stays);
+# only when Node is on this PC, else the page goes as it is)
+if (Test-Path $node) { $tin = Join-Path $env:TEMP 'debrief-site-in.html'; $tout = Join-Path $env:TEMP 'debrief-site-out.html'; [IO.File]::WriteAllText($tin, $hosted, $utf8)
+  & $node (Join-Path $src 'strip-comments.js') $tin $tout; if ($LASTEXITCODE) { throw 'strip-comments.js failed: nothing was built' }
+  $hosted = [IO.File]::ReadAllText($tout); Remove-Item $tin, $tout -ErrorAction SilentlyContinue }
 $base = $w.Replace("`r`n", "`n")
 # the website's Worker: the app baked in, and no listener class (Cloudflare gives no practice links to a Worker that implements a Durable Object)
 # (the phone home-screen icon and favicons, Nov 3: src/icons baked into the website Worker as base64, by path)
