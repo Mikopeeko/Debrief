@@ -1853,12 +1853,12 @@ function bossArt(name) {
 function progBar(it, left, phase, col) {
   if (left == null) return '';
   const cfg = PROGRESS[it.boss], done = Math.max(0, Math.min(100, 100 - left)), st = col ? ' style="--pb:' + col + '"' : '';
-  if (!cfg || cfg.pool) return '<div class="phb one"' + st + '><span><i style="width:' + done.toFixed(1) + '%"></i></span></div>';
+  if (!cfg || cfg.pool) return '<div class="phb one hp"' + st + '><span><i style="width:' + (100 - done).toFixed(1) + '%"></i></span></div>'; /* (boss health left, Nov 6) */
   let acc = 0;
-  return '<div class="phb"' + st + '>' + cfg.phases.map((p) => {
+  return '<div class="phb hp"' + st + ' title="Boss health left">' + cfg.phases.map((p) => {
     const w = 100 * phShare(cfg, p), lo = acc; acc += w;
     const f = w > 0 ? Math.max(0, Math.min(1, (done - lo) / w)) : done > lo + 0.01 || phase === p ? 1 : 0;
-    return '<span title="' + esc(p) + '" style="flex:' + (w > 0 ? w.toFixed(1) + ' 1 0' : '0 0 26px') + '"><i style="width:' + Math.round(100 * f) + '%"></i><em>' + esc(p.replace('Intermission', 'Int')) + '</em></span>'; }).join('') + '</div>';
+    return '<span title="' + esc(p) + '" style="flex:' + (w > 0 ? w.toFixed(1) + ' 1 0' : '0 0 26px') + '"><i style="width:' + Math.round(100 * (1 - f)) + '%"></i><em>' + esc(p.replace('Intermission', 'Int')) + '</em></span>'; }).join('') + '</div>';
 }
 // The pinned tab bar's right end, once the banner has scrolled away (body.bh-off): the menu. (The "Pull 13 · Wipe" or
 // "Whole night" tag and its ‹ › that sat here are gone (your call, Oct 19): the pull cards above the tabs say it.)
