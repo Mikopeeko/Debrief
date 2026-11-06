@@ -7957,7 +7957,7 @@ function rootCauseGen(r, opts) {
     if (top[0] && !vague(top[0]) && top[1] >= 2 && top[1] >= pre.length * 0.4) { const ab = top[0], l = pre.filter((d) => d.ab === ab);
       causeM = KM.filter((m) => big(m) && m.t >= c0 && fits(m, ab)).sort((a, b) => raidFirst(a, b) || a.t - b.t)[0] || null; name = causeM ? causeM.mechanic : ab; sp = spOf(name, causeM && causeM.id);
       if (causeM && causeM.player === 'Raid' && !/^\d+ players? died (to|in|with) /i.test(causeM.detail || '')) say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')'); /* (a raid line that only counts the dead says nothing the names don't) */
-      say(l[0].t, who3(l) + ' died to ' + ab + ' (from ' + T(l[0].t) + ')'); next = causeM ? s1(causeM.fix) : ''; sure = 0.6; short = 'Most of the deaths were ' + ab + ' (' + l.length + ' of ' + pre.length + ').'; }
+      say(l[0].t, who3(l) + ' died to ' + ab + ' (from ' + T(l[0].t) + ')'); next = causeM ? s1(causeM.fix) : ''; sure = 0.6; short = causeM && lc(causeM.mechanic) !== lc(ab) ? s1(causeM.detail) + '.' : 'Most of the deaths were ' + ab + ' (' + l.length + ' of ' + pre.length + ').'; /* (Nov 6, Main: "Root cause: Caustic Globule" over "Most of the deaths were Eternal Venom": the line explains the root) */ }
     else if (late) { causeM = late; name = late.mechanic; sp = spOf(name, late.id); say(late.t, s1(late.detail) + ' (' + T(late.t) + ')'); next = s1(late.fix); sure = 0.6; short = s1(late.detail) + '.'; }
     else if (pre.length < 3) { /* (Nov 6, Main: Twin Fangs pull 14 read 1 death and "Too many individual mistakes": 1 or 2 deaths are never too many) */
       const nd = pre.length ? pre.length + ' dead' : 'nobody dead';
