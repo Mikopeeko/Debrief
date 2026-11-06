@@ -4342,7 +4342,7 @@ function buildCoiledAltar(ev, r, h) {
        more of them within 20 yd. Then it's the target's mistake, and the others' hits and deaths from it aren't theirs) */
     if (lp && tgt) { const sn = h.snap(hit).filter((p) => h.isPlayer(p.guid) && p.guid !== tgt && !s.who.includes(p.guid)), md = (a) => { const v = a.slice().sort((x, y) => x - y); return v.length ? v[v.length >> 1] : null; };
       const far = sn.length ? Math.hypot(md(sn.map((p) => p.x)) - lp.x, md(sn.map((p) => p.y)) - lp.y) : null, near = sn.filter((p) => Math.hypot(p.x - lp.x, p.y - lp.y) < 20).length;
-      if (far != null && far < 35 && near >= 3) { onRaid.push({ t: hit, end: hit + AXE_ERUPT_S + 2.5, by: pname(tgt), sp: S(s.n)[1], near });
+      if (far != null && far < 35 && near >= 3) { onRaid.push({ t: hit, end: hit + AXE_ERUPT_S + 2.5, by: pname(tgt), sp: S(s.n)[1], near, soak: s.who.map(pname) }); /* (its soakers run out on every drop: their eruption hits stay theirs) */
         MS(hit, pname(tgt), s.n, 'High', 'Dropped the ' + S(s.n)[1] + ' on the raid: ' + near + ' players who weren\'t soaking were within 20 yards when it landed, so ' + eName + ' caught the raid.', 'Run the axe out to your soak spot, away from the raid, before it lands.', map); } }
     // the target needs protection on every soak but the last Grim Guillotine (where the plan just over-sends)
     const needsProt = mythic && key !== 'gg3', tgtDied = tgt && s.died.includes(pname(tgt));
@@ -6998,7 +6998,7 @@ function* analyzeSteps(item, text, opts) {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
       try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
       /* (Nov 6: an axe dropped on the raid is its target's mistake: everyone else's Widow's Kiss, Death's Embrace and soak hits from it are kept, never counted) */
-      if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others) m.others = a.by + ' dropped the ' + a.sp + ' on the raid'; }
+      if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others && !(/^(widow's kiss|death's embrace)$/i.test(m.mechanic) && (a.soak || []).includes(String(m.player).split('-')[0]))) m.others = a.by + ' dropped the ' + a.sp + ' on the raid'; }
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
       for (const s of r.module.sections) s.how = s.how || (HOW[mod.encounter] || {})[s.id] || ''; /* round 426: a split card keeps its own */ // short strategy note per mechanic
       for (const s of r.module.sections) { const nt = (TITLE_FIX[mod.encounter] || {})[s.title]; if (nt) { if (!s.place) s.place = s.title; s.title = nt; } } /* (one name everywhere, see TITLE_FIX) */
@@ -7859,7 +7859,8 @@ function rootCause(r, opts) {
         else say(gone[0].t, gt, who3(gone) + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' (' + T(gone[0].t) + ')'); }
       else { cat = 'guil'; sure = share >= 0.7 ? 0.9 : 0.7; }
       const axR = (r.axeOnRaid || []).find((a) => t0 >= a.t - 0.5 && t0 <= a.end); /* (Nov 6: an axe dropped on the raid) */
-      if (axR && /widow's kiss|death's embrace/i.test(ga)) say(axR.t, 'guil', axR.by + ' dropped the ' + axR.sp + ' on the raid' + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
+      const axS = axR ? trig.filter((d) => d.ab === ga && (axR.soak || []).includes(d.who)).length : 0;
+      if (axR && /widow's kiss|death's embrace/i.test(ga)) say(axR.t, 'guil', axR.by + ' dropped the ' + axR.sp + ' on the raid' + (axS ? ', and ' + (axS === 1 ? 'one of its soakers' : axS + ' of its soakers') + ' didn\'t run out' : '') + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
       else if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak' + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
@@ -7911,7 +7912,7 @@ function rootCause(r, opts) {
   const into = [...new Set(deaths.filter((d) => d.via && d.t <= P.t + 6 && /^(axes|orbs|pools)$/.test(d.cat)).map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))];
   const t0s = (chain.find((c) => c.cat === 'shield') || { t: P.t }).t;
   const tooFew = nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' to reach ' + nextOf(phP) + '.', wornS = wornK ? (wornK.has('mc') && wornK.has('ghosts') ? 'Dreadmarch\'s mind controls and ghosts killed too many' : wornK.has('mc') ? 'Dreadmarch\'s mind controls killed too many' : 'Ghosts touching killed too many') + tooFew : '';
-  const short = ({ guil: dropT ? dropT.split(SEP)[0].replace(/^./, (x) => x.toUpperCase()) + ', and its eruption caught everyone near it.' : widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
+  const short = ({ guil: dropT ? dropT.split(SEP)[0].replace(/^./, (x) => x.toUpperCase()) + (/didn't run out/.test(dropT) ? '.' : ', and its eruption caught everyone near it.') : widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
     orbs: orbBy.length === 1 ? orbBy[0] + '\'s purple orb touched other orbs and set off Venom Rupture.' : orbBy.length > 1 ? 'One of ' + rcOr(orbBy.map((n) => n + '\'s')) + ' purple orbs touched other orbs and set off Venom Rupture.' : 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
     kick: P.mc ? 'An unkicked Wail of Terror feared the raid, and the ghosts reached their players.' : 'An unkicked Wail of Terror feared players' + (into.length ? ' into ' + rcAnd(into) : '') + (hasG ? ' and left the Guillotine short.' : '.'),
     mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : wornS || 'Mind controlled players died off the square.',
