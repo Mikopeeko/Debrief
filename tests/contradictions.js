@@ -29,7 +29,7 @@ const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for 
 const TSITE = H.site(['esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
 const TIER_T = new Map(); /* (each test night's pulls of a boss: the tier's line, All pulls' cause and health) */
 /* (How it went's titles (Nov 5): the page's own rule and wipe chain; the cut at the wipe call stands in as "none") */
-const CHT = H.site(['MECH_FAM', 'mechFams', 'chainTitleFits', 'deathBrief', 'wipeChain'], { deathVerdict: () => null, cutInfo: () => null, cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] });
+const CHT = H.site(['MECH_FAM', 'mechFams', 'chainTitleFits', 'deathBrief', 'collapseFrom', 'wipeChain'], { deathVerdict: () => null, cutInfo: () => null, cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] });
 const SITE = H.site(['esc', 'lpAnd', 'andList', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'pullLabel', 'pullShort', 'dbfAt', 'dbfPre', 'cellTxt', 'rowSay', 'rowText', 'cHtml', 'aphOf']);
 
 // ---- the pulls ----
@@ -159,6 +159,11 @@ function checkPull(key) {
     for (const x of (ch && ch.items) || []) { if (x.mech === 'Death') continue; clean(pull, 'How it went', x.txt);
       const pick = near.filter((q) => Math.abs((q.from != null ? q.from : q.t) - x.t) <= 3 && CHT.chainTitleFits(q.mechanic, x.txt)).sort((a, b) => Math.abs(a.t - x.t) - Math.abs(b.t - x.t))[0], ttl = pick ? pick.mechanic : x.mech;
       if (!CHT.chainTitleFits(ttl, x.txt)) say(pull, 'title', 'How it went at ' + E.fmtT(x.t) + ' is titled "' + ttl + '" but its sentence says "' + x.txt + '"'); } }
+  /* (Nov 6, Flex: "its saying the wipe happened across p1, p2 and p3": How it went is the collapse; "its also not listing a shield not being
+     broken as a wipe reason?": a shield that held in the collapse is one of its steps) */
+  { const ch3 = !it.kill ? CHT.wipeChain(r) : null; if (ch3 && ch3.items) { const endT = r.duration || 0;
+      for (const x of ch3.items) if (x.t < ch3.from - 0.5 || x.t < endT - 240) say(pull, 'collapse', 'How it went has a step at ' + E.fmtT(x.t) + ', before the collapse (' + E.fmtT(ch3.from) + ')');
+      for (const q of r.mistakes || []) if (/^Eternal Nightfall finished casting/.test(q.detail || '') && q.t - 17 >= ch3.from && q.t - 17 <= endT + 0.05 && !ch3.items.some((x) => /eternal nightfall/i.test(x.mech + ' ' + x.txt))) say(pull, 'collapse', 'Eternal Nightfall finished casting at ' + E.fmtT(q.t) + ' in the collapse, but How it went leaves it out'); } }
   /* (Nov 5, Flex: a mind-controlled fall says it fell; an orb collision says whose orbs) */
   { const ch2 = !it.kill ? CHT.wipeChain(r) : null; for (const x of (ch2 && ch2.items) || []) { const d = x.mech === 'Death' && (r.deaths || []).find((y) => Math.abs(y.t - x.t) < 0.05 && x.txt.startsWith(String(y.player).split('-')[0])); if (d && d.fell && !/ was mind controlled off the edge(:| with)/.test(x.txt)) say(pull, 'text', 'How it went says "' + x.txt + '", but they fell off the platform while mind controlled'); }
     for (const s of (m && m.sections) || []) for (const row of rowsOf(s)) for (const c of row) if (c && c.txt === 'orbs collided' && !/purple orb/.test(c.say || '')) say(pull, 'text', s.title + ': an orb collision doesn\'t say whose orbs'); }

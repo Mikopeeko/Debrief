@@ -15043,22 +15043,35 @@ function deathBrief(r, d) { let v = null; try { v = deathVerdict(r, d); } catch 
   const why = !v ? '' : v.why === 'mass' ? (mass ? 'one of ' + mass[1] + ' killed at once' : 'killed with several others at once') : v.why === 'forced' ? String(v.story || '').replace(/\s*\([^)]*\)\s*$/, '') : own ? (own[1].toLowerCase() === ab.toLowerCase() ? 'their own mistake' : 'right after their mistake on ' + own[1]) : v.why === 'ready' ? 'with a defensive still ready' : v.why === 'shared' ? 'while mind controlled' : '';
   return ' died to ' + ab + (how ? ', ' + how : '') + (why ? ': ' + why : ''); }
 try { window.deathBrief = deathBrief; } catch (e) { /* (no page: the tests) */ }
+/* (Nov 6, Flex: "its saying the wipe happened across p1, p2 and p3 which just doesnt make sense": the collapse starts where the deaths that
+   ended the pull began, walking back from the call while no two deaths are over 45 s apart; at least the last 35 s; 5 s of lead-in) */
+function collapseFrom(r, ct) { const end = isFinite(ct) ? ct : (r.duration || 0); let s = end; for (const t of keptDeaths(r).map((d) => d.t).filter((t) => t <= end + 0.05).sort((a, b) => b - a)) { if (s - t > 45) break; s = Math.min(s, t); } return Math.max(0, Math.min(s, end - 30) - 5); }
+try { window.collapseFrom = collapseFrom; } catch (e) { /* (no page: the tests) */ }
 function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; const ct = cutT(r), ci = cutInfo(r), s1 = (x) => { const m = String(x || '').match(/^(.{8,200}?[.!?])(\s|$)/); return (m ? m[1] : String(x || '')).replace(/\.$/, ''); };
   const seen = new Set(), items = [];
-  const KM = keptMistakes(r).filter((x) => x.mechanic !== 'Death' && !(x.avoidRule && !/died/i.test(x.detail || ''))), sevW = KM.some((x) => x.severity === 'High') ? 'High' : 'Medium';
+  const c0 = collapseFrom(r, ct), KM = keptMistakes(r).filter((x) => x.mechanic !== 'Death' && !(x.avoidRule && !/died/i.test(x.detail || '')) && (x.from != null ? x.from : x.t) >= c0 && !/^phase changes$/i.test(String(x.mechanic || ''))), sevW = KM.some((x) => x.severity === 'High') ? 'High' : 'Medium';
   for (const m of KM.filter((x) => x.severity === sevW).map((x) => ({ ...x, at: x.from != null ? x.from : x.t })).sort((a, b) => a.at - b.at)) { const k = String(m.mechanic).toLowerCase(); if (seen.has(k)) continue; seen.add(k);
     const who = m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d0 = s1(m.detail); items.push({ t: m.at, mech: m.mechanic, txt: who && !new RegExp(who, 'i').test(d0) && !/^(A|An|The|\d)\b/.test(d0) ? who + ' ' + d0.charAt(0).toLowerCase() + d0.slice(1) : d0, sev: m.severity, nm: !!who && !/^(A|An|The|\d)\b/.test(d0) }); }
-  for (const d of keptDeaths(r).slice().sort((a, b) => a.t - b.t).slice(0, 3)) if (!items.some((x) => Math.abs(x.t - d.t) < 2 && new RegExp(String(d.player).split('-')[0], 'i').test(x.txt))) items.push({ t: d.t, mech: 'Death', txt: String(d.player).split('-')[0] + (d.fell ? ' ' + (d.fellWhy || 'was mind controlled off the edge') : /^gravebound$/i.test(String(d.ability || '')) ? ' died to ' + d.ability : deathBrief(r, d)), sev: 'Death', nm: true });
+  /* (the collapse's deaths; several from one hit at one moment are one row: "Schooty, Hobbz and 8 more died to Venom Rupture at once") */
+  { const grp = []; for (const d of keptDeaths(r).filter((x) => x.t >= c0).sort((a, b) => a.t - b.t)) { const g = grp.find((x) => Math.abs(x[0].t - d.t) <= 1.5 && String(x[0].ability || '') === String(d.ability || '') && !x[0].fell && !d.fell); if (g) g.push(d); else grp.push([d]); }
+    const n0 = (x) => String(x.player).split('-')[0];
+    for (const g of grp) { const d = g[0]; if (items.some((x) => Math.abs(x.t - d.t) < 2 && g.every((y) => x.txt.indexOf(n0(y)) >= 0)) || (g.length === 1 && items.some((x) => x.t <= d.t + 1 && d.t - x.t <= 10 && /\bdied\b/i.test(x.txt) && x.txt.indexOf(n0(d)) >= 0))) continue;
+      items.push({ t: d.t, mech: 'Death', txt: g.length >= 3 ? n0(g[0]) + ', ' + n0(g[1]) + ' and ' + (g.length - 2) + ' more died to ' + (d.ability || 'damage') + ' at once' : g.length === 2 ? n0(g[0]) + ' and ' + n0(g[1]) + ' died to ' + (d.ability || 'damage') : n0(d) + (d.fell ? ' ' + (d.fellWhy || 'was mind controlled off the edge') : /^gravebound$/i.test(String(d.ability || '')) ? ' died to ' + d.ability : deathBrief(r, d)), sev: 'Death', nm: true }); } }
   /* (a Gravebound death says which it was (Nov 1, Design studio for Flex): all 3 soul fragments picked up and the last pickup's hit killed
      them, or fewer than 3 picked up (missed). Pickups are the Gravebound hits (#1308330) in their last 20 s) */
   for (const x of items) { const m = String(x.txt || '').match(/^(.+?) died to Gravebound\.?$/i); if (!m) continue;
     const d = r.deaths.find((y) => String(y.player).split('-')[0] === m[1] && Math.abs(y.t - x.t) < 5 && /^gravebound$/i.test(String(y.ability || ''))); if (!d) continue;
     const n = (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && (e.id == null || +e.id === 1308330) && e.t >= d.t - 20).length;
     x.txt = m[1] + ' died to Gravebound: ' + (n >= 3 ? 'picked up all 3 soul fragments, and the third one\'s hit killed them' : 'missed their soul fragments'); }
-  items.sort((a, b) => a.t - b.t); const L = items.slice(0, 4); if (!L.length) return null;
+  /* (Nov 6, Flex: "its also not listing a shield not being broken as a wipe reason?": a shield still up when its cast began before the call is a
+     step, even when the cast would have finished after the call) */
+  for (const q of r.mistakes || []) { if (!/^Eternal Nightfall finished casting/.test(q.detail || '')) continue; const t0 = q.t - 17, endT = isFinite(ct) ? ct : (r.duration || 0); if (t0 < c0 - 5 || t0 > endT + 0.05 || items.some((x) => /eternal nightfall/i.test(x.mech))) continue;
+    const lf = (String(q.detail).match(/about (\d+)% of it still up/) || [])[1], sn = (String(q.detail).match(/shield (\d+)/) || [])[1];
+    items.push({ t: t0, mech: 'Eternal Nightfall', txt: q.t > endT + 0.05 ? 'Eternal Nightfall\'s shield' + (sn ? ' ' + sn : '') + ' was still up when the wipe was called' + (lf ? ', about ' + lf + '% of it' : '') + ', and the cast would have finished at ' + T(q.t) : s1(q.detail), sev: 'High', nm: false }); }
+  items.sort((a, b) => a.t - b.t); const L = items.slice(0, 9); if (!L.length) return null;
   const callW = ci ? (ci.why === 'check' ? 'the damage check was missed' : ci.why === 'half' ? 'half the raid was dead' : ci.why === 'line' ? 'more were dead than any kill survived' : 'the wipe mechanic went off') : '';
   const txt = 'It started at ' + T(L[0].t) + ': ' + L[0].txt + '.' + L.slice(1).map((x) => ' Then at ' + T(x.t) + ': ' + (x.nm ? x.txt : x.txt.charAt(0).toLowerCase() + x.txt.slice(1)) + '.').join('') + (ci && isFinite(ct) ? ' The wipe was called at ' + T(ct) + ': ' + callW + '.' : '');
-  return { start: L[0], items: L, call: ci && isFinite(ct) ? { t: ct, why: callW } : null, txt }; }
+  return { from: c0, start: L[0], items: L, call: ci && isFinite(ct) ? { t: ct, why: callW } : null, txt }; }
 function coachSummary(reps, name) { const cs = coachSummary0(reps, name); if (cs && !cs.night && !cs.kill && !cs.chain && reps && reps.length === 1) { try { cs.chain = wipeChain(reps[0]); } catch (e) { cs.chain = null; } } return cs; }
 function coachSummary0(reps, name) {
   reps = (reps || []).filter((r) => r && r.players && !r.allPulls); if (!reps.length) return null;
