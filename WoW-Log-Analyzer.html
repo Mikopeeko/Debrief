@@ -41349,7 +41349,7 @@ async function nightPlayers(reps, still) {
       let a = pl.get(p.guid);
       if (!a) pl.set(p.guid, a = { p: who, pulls: 0, deaths: 0, high: 0, other: 0, mech: new Map(), mechH: new Map(), assignMiss: 0, ready: [], surv: [], log: [], pot: [0, 0], pre: 0, defReady: 0, kitReady: 0, oneShots: 0, calls: 0, silent: 0, stones: 0, hpots: 0, miss: new Map(), flask: [0, 0], food: [0, 0], rune: [0, 0], oil: [0, 0], last: null });
       const mm = ms.filter((x) => x.player === p.name || x.player === who.name), x = prep.get(p.guid), s = survivalOf(r, p), rs = x ? readyScore(x) : null;
-      a.pulls++; for (const d of r.deaths || []) { if (d.guid !== p.guid) continue; const v = deathVerdict(r, d); if (v.counts && v.why !== 'mass' && v.on) a.deaths++; } /* (Nov 5: their own deaths only, by the site's one rule) */
+      a.pulls++; for (const d of r.deaths || []) { if (d.guid !== p.guid) continue; const v = deathVerdict(r, d); if (v.counts && (v.why === 'own' || v.why === 'ready')) a.deaths++; } /* (Nov 5: their own deaths only, by the site's one rule) */
       // (execution counts the mechanic mistakes; the note's misses are in the assignment score instead, so they don't count twice)
       for (const m of mm) { if (m.severity === 'High') { a.high++; a.mechH.set(m.mechanic, (a.mechH.get(m.mechanic) || 0) + 1); } else a.other++; a.mech.set(m.mechanic, (a.mech.get(m.mechanic) || 0) + 1); if (m.fromNote) a.assignMiss++; else if (m.severity === 'High') a.highM = (a.highM || 0) + 1; else a.otherM = (a.otherM || 0) + 1; }
       { const c = credit.get(p.name) || credit.get(who.name); if (c) { a.asDid = (a.asDid || 0) + c.did; a.asOf = (a.asOf || 0) + c.of; } }
@@ -53482,11 +53482,20 @@ function deathVerdict(r, d) {
   const mine0 = dread0 ? new Set([...r.players.values()].map((q) => String(q.name || '').split('-')[0]).filter(Boolean)) : null;
   const how0 = !dread0 ? null : !dk || d.t - dk.t > 0.5 /* (a killing hit lands as they die) */ || /^falling$/i.test(dk.spell || '') ? 'edge' : dk.src && String(dk.src).split('-')[0] !== me0 && mine0.has(String(dk.src).split('-')[0]) ? 'ours' : 'boss';
   const dread = dread0 && (how0 === 'edge' || dmEnd >= d.t - 2), dreadHow = dread ? how0 : null; /* (a hit only counts while controlled or freed under 2 s before) */
-  const noCtrl = dread || ownL.some((l) => DEATH_NOCTRL.test(l.mechanic)), ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic));
+  const noCtrl = dread || ownL.some((l) => DEATH_NOCTRL.test(l.mechanic));
+  /* (Nov 5, Flex: "needs to be reviewed to see why people are getting blamed": a death a mechanic or someone else forced isn't theirs: feared by
+     an unkicked Wail of Terror (the missed kick), dying in a Guillotine soak too few soaked (the missing soakers), clipped by someone else's
+     Gloombomb, or killed by orbs someone else set off. Widow's Kiss stays theirs: running out is each player's job) */
+  const pl1 = (r.players.get && r.players.get(d.guid)) || [...r.players.values()].find((p) => p.guid === d.guid), dbOn = (nm, back) => { const b = pl1 && pl1.debuffs && pl1.debuffs.get(nm); return !!(b && b.sp && b.sp.some(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - back))); };
+  const soakNow = (() => { let best = null; for (const s of ((r.module && r.module.sections) || []).filter((x) => x.id === 'soakq')) for (const row of (s.rows || []).concat(...(s.groups || []).map((g0) => g0.rows || []))) { const tt = (row.find((c) => c && c.t != null) || {}).t, n = row.find((c) => c && c.t == null && /^\d+$/.test(String(c.txt || ''))); if (tt != null && n && tt <= d.t + 1 && d.t - tt < 15 && (!best || tt > best[0])) best = [tt, +n.txt]; } return best ? best[1] : null; })();
+  const soakL = (l) => /died in the guillotine soak/i.test(l.detail || ''), clipL = (l) => /clipped by someone else's gloombomb/i.test(l.detail || ''), shortSoak = ownL.some(soakL) && soakNow != null && soakNow < 5;
+  const ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic) && !clipL(l) && !(shortSoak && soakL(l)));
+  const forced = noCtrl ? '' : dbOn('Wail of Terror', 1.5) ? 'feared by an unkicked Wail of Terror: the missed kick, not them' : shortSoak ? 'died soaking a Guillotine only ' + soakNow + ' soaked: the missing soakers, not them'
+    : ownL.some(clipL) && /^(gloombomb|gravebound)$/.test(ab) ? 'clipped by someone else\'s Gloombomb, not their own' : /^(venom rupture|coalesced venom)$/.test(ab) && !ownM.some((l) => /venom|orb/i.test(l.mechanic)) ? 'killed by orbs someone else set off (' + (d.ability || 'Venom Rupture') + ')' : '';
   const ownSame = ownM.some((l) => lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab);
-  const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && (ownM.length > 0 || deathOwn(r, d));
+  const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && !forced && (ownM.length > 0 || deathOwn(r, d));
   const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.05;
-  const late = after && own && !r.item.kill && r.deaths.slice().sort((a, b) => a.t - b.t).indexOf(d) < Math.max(2, Math.round(raidSizeOf(r) / 4));
+  const late = false; /* (Nov 5, Flex: "it shouldnt count deaths after a wipe is called": no death after the call counts, their own or not) */
   const end = !!r.item.kill && (r.duration || 0) - d.t <= 20 && !own;
   const huge = (d.hitPct || 0) >= 150, av = d.available || [];
   const defs0 = (d.hitPct || 0) >= 500 ? [] : av.filter((a) => !DEATH_KIT.test(a) && !DEATH_RAIDCD.test(a) && (!huge || DEATH_IMM.test(a)));
@@ -53503,16 +53512,16 @@ function deathVerdict(r, d) {
   // by others over each 3 s, longer than top kills' survivors ever sat (3.5 s, 99 in 100). Not on them; it's the healing team's, or the
   // healer the note put on them)
   const noheal = !!g && (g.run40 || 0) >= 4 && (d.avoidPct || 0) < 10 && !d.ownAvoid && !defs0.length && !kit0.some((k) => k !== 'a healing potion') /* (a health potion isn't counted: we can't see who carries one) */ && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40);
-  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
+  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : forced ? 'forced' : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
   const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
-  const word = { noheal: 'not enough healing', wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
+  const word = { forced, noheal: 'not enough healing', wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
     shared: dread ? 'mind controlled by Dreadmarch (shared with the raid)' : noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + (raidL ? ' (' + raidL.mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
   // (the story: the engine's, but an own death says what went wrong, like Gravebound's missed fragments)
   const rw = why === 'own' && !ownM.length ? oaRowWhy(r, d) : null;
   const you = (t) => String(t).replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\bthey\b/g, 'you');
   // (Gravebound: each soul fragment picked up hits for about 208k, so the last one picked up while low is what killed them (Nov 1))
   const gb = ab === 'gravebound' ? (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && e.t >= d.t - 15).length : 0, rwy = rw && rw.why ? you(whyReason(rw.why)) : '';
-  const story = why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : why === 'own' && gb ? 'Gravebound: you picked up ' + (gb > 1 ? gb + ' soul fragments' : 'a soul fragment') + ', and the last one\'s hit killed you' : rwy ? (d.ability || rw.l) + ': ' + rwy
+  const story = why === 'forced' ? forced : why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : why === 'own' && gb ? 'Gravebound: you picked up ' + (gb > 1 ? gb + ' soul fragments' : 'a soul fragment') + ', and the last one\'s hit killed you' : rwy ? (d.ability || rw.l) + ': ' + rwy
     : why === 'own' && !d.ownAvoid ? (d.ability || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
     : dread ? (dreadHow === 'edge' ? 'mind controlled by Dreadmarch, then died with no killing hit (most likely off the edge)' : dreadHow === 'ours' ? 'mind controlled by Dreadmarch: our own damage on the shield killed them' : 'mind controlled by Dreadmarch when ' + (dk.spell || 'a hit') + ' killed them') : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
   const c0 = why === 'own' && ownM.length && lc(ownM[0].mechanic) !== ab ? ownM[0] : null;
@@ -54263,7 +54272,7 @@ function rcnFacts(c) {
   for (const a of data) { let used = 0, expect = 0, deaths = 0, dAll = 0, out = 0, outN = 0; const outs = [];
     /* (Nov 5, Flex: "its falsly flagging people": deaths by the site's one rule, as Debriefing judges them: after the call and mass wipe deaths count
        against no one; deaths is their own mistakes, dAll every death that counted) */
-    for (const g of a.per) { const s = sv(g.r, g.p); used += Math.min(s.used, s.expect); expect += s.expect; for (const d of g.r.deaths || []) { if (d.guid !== g.p.guid) continue; const v = deathVerdict(g.r, d); if (!v.counts || v.why === 'mass') continue; dAll++; if (v.on) deaths++; } const x = perfContext(g.r).per.get(g.p.name), v = x && x.tot > 0 ? x.ps : null; outs.push({ pull: g.r.item.pull, v }); if (v != null) { out += v; outN++; } }
+    for (const g of a.per) { const s = sv(g.r, g.p); used += Math.min(s.used, s.expect); expect += s.expect; for (const d of g.r.deaths || []) { if (d.guid !== g.p.guid) continue; const v = deathVerdict(g.r, d); if (!v.counts || v.why === 'mass') continue; dAll++; if (v.why === 'own' || v.why === 'ready') deaths++; } const x = perfContext(g.r).per.get(g.p.name), v = x && x.tot > 0 ? x.ps : null; outs.push({ pull: g.r.item.pull, v }); if (v != null) { out += v; outN++; } }
     pl.set(a.p.name, { used, expect, deaths, dAll, out: outN ? out / outN : null, outs, last: last && last.per.has(a.p.name) && nowN && nowN.per.has(a.p.name) ? nowN.per.get(a.p.name) - last.per.get(a.p.name) : null }); }
   // ---- the awards: each from the log, and left out when nobody earned it ----
   const ranked = data.filter((a) => a.ranked), best = (l, f) => l.slice().sort((u, v) => f(v) - f(u))[0];
