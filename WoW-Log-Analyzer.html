@@ -41663,7 +41663,7 @@ function labelLeft(boss, label) {
   return encLeft(cfg, m[1], hp, cfg.pool ? frac : Object.keys(hp).length ? null : m[1] === 'Intermission' ? 1 : frac);
 }
 // (a local pull's progress once it's read; a Warcraft Logs pull's from the report's fight list)
-const pullProg = (b) => (b.wcl ? wclProg(b) : CACHE.has(b) ? progressOf(CACHE.get(b)) : null);
+const pullProg = (b) => (b.wcl ? wclProg(b) || (CACHE.has(b) ? progressOf(CACHE.get(b)) : null) : CACHE.has(b) ? progressOf(CACHE.get(b)) : null); /* (a Warcraft Logs pull the fight list gave no end phase: the read pull's own health, as its banner shows (Nov 6)) */
 const pullPct = (b) => { if (b.kill) return 0; if (PROGRESS[b.boss]) { const p = pullProg(b); if (p) return p.left; } return b.endPct != null ? b.endPct : CACHE.has(b) && CACHE.get(b).bossPct != null ? CACHE.get(b).bossPct : null; };
 const pullLabel = (b) => { const p = pullProg(b); return b.kill ? 'kill' : p ? p.label : pullPct(b) != null ? bossAtV(pullPct(b)) : 'wipe'; };
 // a pull's colour, WoW item quality by how far through the whole encounter it got: every 20% of the encounter's health is
