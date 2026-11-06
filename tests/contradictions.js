@@ -159,6 +159,9 @@ function checkPull(key) {
     for (const x of (ch && ch.items) || []) { if (x.mech === 'Death') continue; clean(pull, 'How it went', x.txt);
       const pick = near.filter((q) => Math.abs((q.from != null ? q.from : q.t) - x.t) <= 3 && CHT.chainTitleFits(q.mechanic, x.txt)).sort((a, b) => Math.abs(a.t - x.t) - Math.abs(b.t - x.t))[0], ttl = pick ? pick.mechanic : x.mech;
       if (!CHT.chainTitleFits(ttl, x.txt)) say(pull, 'title', 'How it went at ' + E.fmtT(x.t) + ' is titled "' + ttl + '" but its sentence says "' + x.txt + '"'); } }
+  /* (Nov 5, Flex: a mind-controlled fall says it fell; an orb collision says whose orbs) */
+  { const ch2 = !it.kill ? CHT.wipeChain(r) : null; for (const x of (ch2 && ch2.items) || []) { const d = x.mech === 'Death' && (r.deaths || []).find((y) => Math.abs(y.t - x.t) < 0.05 && x.txt.startsWith(String(y.player).split('-')[0])); if (d && d.fell && !/ fell off the platform while mind controlled\. The raid didn't break their shield in time$/.test(x.txt)) say(pull, 'text', 'How it went says "' + x.txt + '", but they fell off the platform while mind controlled'); }
+    for (const s of (m && m.sections) || []) for (const row of rowsOf(s)) for (const c of row) if (c && c.txt === 'orbs collided' && !/purple orb/.test(c.say || '')) say(pull, 'text', s.title + ': an orb collision doesn\'t say whose orbs'); }
   for (const q of r.mistakes || []) { clean(pull, 'mistake ' + q.mechanic, q.detail); clean(pull, 'mistake ' + q.mechanic + ' fix', q.fix); }
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once

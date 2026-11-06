@@ -4338,11 +4338,12 @@ function buildCoiledAltar(ev, r, h) {
   const mcRows = [];
   for (const d of r.deaths) {
     const ph = phaseAt(d.t); if (ph !== 'P2' && ph !== 'P3') continue;
-    const lastHit = d.recap.filter((x) => !x.heal).pop();
+    const mcB = ([...r.players.values()].find((p) => p.guid === d.guid) || {}).debuffs, mcS = mcB && mcB.get('Dreadmarch'), mcOn = !!(mcS && mcS.sp && mcS.sp.some(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - 1.5)));
+    const lastHit = d.recap.filter((x) => !x.heal && !(mcOn && x.amount === 0)).pop(); /* (Nov 5: hits the mind control's shield soaked whole aren't damage: Oct 22 pull 14's falls had only 0 hits) */
     const fell = lastHit && /^falling$/i.test(lastHit.spell); // (the log's falling damage only: "Eternal Nightfall" isn't a fall (Oct 22))
     const noHit = !lastHit || d.t - lastHit.t > 4;
-    if (fell || noHit) {
-      M(d.t, d.player, 'dreadmarch', 'High', 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
+    if (fell || noHit) { if (mcOn) d.fell = true; /* (How it went says they fell) */
+      M(d.t, d.player, 'dreadmarch', 'High', mcOn ? 'Fell off the platform while mind controlled. The raid didn\'t break their shield in time.' : 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
       mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, lead: 8, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
     }
   }
@@ -4434,7 +4435,10 @@ function buildCoiledAltar(ev, r, h) {
       const aim = (x) => x.replace(/\s*\(hits empty ground\)/, ', into empty ground');
       const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(', then ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
         sub: 'aim for ' + (new Set(fs.map((f) => f.plan)).size === 1 ? (!many ? aim(fs[0].plan) : fs[0].plan.includes(' (') ? aim(fs[0].plan).replace(' (', ' each (') : aim(fs[0].plan) + ' each') : fs.map((f) => aim(f.plan)).join(', then ')) + (raidMax > 12 ? ' · the raid ended at ' + raidMax + ' stacks' : '') } : { txt: 'no frontal', dim: true };
-      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: a purple touched other orbs', bad: true, why: 'A purple orb touched other orbs: +' + coll.gain + ' Venom Rupture stacks on everyone at once.', next: 'Carry purple orbs on their own, away from the other orbs.' }
+      const cw = coll ? (() => { const d0 = (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= coll.t - 12 && x.t <= coll.t + 1).sort((a, b) => a.t - b.t)[0], tc = d0 ? d0.t : coll.t, pu = [...new Set(carriersAt(tc).map((c) => pname(c.g)))], gr = [...new Set(greenAt(tc).map(pname))].filter((n) => !pu.includes(n));
+        const and = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]), or = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
+        return (pu.length === 1 ? pu[0] + '\'s purple orb touched other orbs' : pu.length ? 'One of ' + or(pu.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'A purple orb touched other orbs') + (gr.length ? ' while ' + and(gr) + ' held green orbs' : ''); })() : ''; /* (Nov 5, Flex: "name who collided with what") */
+      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: ' + cw.charAt(0).toLowerCase() + cw.slice(1), say: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', bad: true, why: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', next: 'Carry purple orbs on their own, away from the other orbs.' }
         : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true, why: 'An orb was still out when the next Toxic Deluge came, and it erupted on the raid.', next: 'Pop every orb before the next Toxic Deluge.' }
         : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true, why: 'Orbs left on the ground detonated: +' + det[0].gain + ' Venom Rupture stacks at once.', next: 'Pop the orbs with the frontals before they detonate.' }
         : fBad ? { txt: 'too many in ' + (() => { const f = fs.find((x) => x.bad), n = f && f.tankG ? pname(f.tankG) : null; return n ? String(n).split('-')[0] + '\'s frontal' : 'one frontal'; })() /* (whose frontal: the tank it was aimed at (Oct 23)) */, bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' }; if (res.bad && /^too many in /.test(res.txt)) { const f0 = fs.find((x) => x.bad); res.why = (f0 ? f0.popped + ' orbs' : 'Too many orbs') + ' went into one frontal, and each is a Venom Rupture stack on everyone.'; res.next = 'Tanks take turns so each frontal pops about 4 orbs, never 8.'; } /* (round 185) */
