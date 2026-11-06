@@ -8809,8 +8809,8 @@ function pgRosterNew() { const R = planRoster(); if (!R || !R.players || !R.play
   /* (an alt counts only when it raids with the team from time to time: the latest raid night, or 2 of the last 8 (Flex, Nov 6)) */
   const wd = (k) => new Date(k + 'T12:00:00').getDay(), N0 = [...new Set([...nts.values()].flatMap((y) => [...y]))], perD = [0, 0, 0, 0, 0, 0, 0]; N0.forEach((k) => perD[wd(k)]++);
   const topD = Math.max(...perD), rd = new Set(perD.map((c, d) => (c && c * 2 >= topD ? d : -1)).filter((d) => d >= 0)); /* (the team's raid nights only: Wolfthorn's Wednesday and Thursday, Flex Nov 6) */
-  const allN = N0.filter((k) => rd.has(wd(k))).sort(), last8 = new Set(allN.slice(-8)), lastN = allN[allN.length - 1];
-  const often = (k) => { const y = nts.get(k); return !!y && (y.has(lastN) || [...y].filter((d) => last8.has(d)).length >= 2); };
+  const allN = N0.filter((k) => rd.has(wd(k))).sort(), last8 = new Set(allN.slice(-8)), last4 = new Set(allN.slice(-4));
+  const often = (k) => { const y = nts.get(k); return !!y && ([...y].some((d) => last4.has(d)) || [...y].filter((d) => last8.has(d)).length >= 2); }; /* (any of the last 4 raid nights, or 2 of the last 8) */
   const apart = (a, b) => !(seen.get(a) || []).some((s) => s.has(b)), add = [];
   for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (!nm || /^Player-/.test(x.name) || have.has(k) || off.has(k)) continue;
     const alt = often(k) && R.players.some((p) => pgAltLike(nm, String(p.n).split('-')[0]) && apart(k, lc(p.n))); if (alt || x.n >= need) add.push(nm); }
