@@ -14005,6 +14005,12 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
   <nav class="strip" id="strip" aria-label="Pulls"><div class="list" id="list"></div></nav>
   <main id="main"></main>
 </div>
+<!-- (Nov 5, faster loading: the page frame shows with this card while the rest of the site downloads (on a slow phone the top bar
+     came at 3 s and then the page stayed empty for about 16 s). The bar moves as each part arrives; the card goes as soon as the app
+     draws its first page. Never in the way: no clicks, under the menus) -->
+<div class="boot" id="boot" role="status" aria-live="polite"><div class="boot-c"><b class="boot-t">Getting Debrief ready</b><span class="boot-b"><i id="bootBar"></i></span><span class="boot-l" id="bootMsg">Downloading the site…</span></div></div>
+<style id="boot-css">.boot{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:2}.boot-c{display:grid;gap:10px;width:min(320px,80vw);padding:22px 24px;background:var(--panel);border:1px solid var(--line);border-radius:4px;text-align:center}.boot-t{font:600 18px var(--head);color:var(--text)}.boot-l{color:var(--muted);font-size:13px}.boot-b{display:block;height:6px;border-radius:4px;background:var(--raised);overflow:hidden}.boot-b i{display:block;height:100%;width:8%;border-radius:4px;background:var(--gold);transition:width .4s ease}</style>
+<script>window.__boot = function (p, m, slow) { var b = document.getElementById('bootBar'), l = document.getElementById('bootMsg'); if (b) { b.style.transition = slow ? 'width ' + slow + 's linear' : ''; b.style.width = p + '%'; } if (m && l) l.textContent = m; };</script>
 <script>
 // Fallback reload for the local helper: if the app's own script failed to load (a broken build), the page still
 // reloads itself when a new build lands. Once the app is running it handles reloads itself (window.__wlaUp).
@@ -14020,6 +14026,7 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
 <script>
 /*ENGINE*/
 </script>
+<script>window.__boot && __boot(20);</script>
 <script>
 /*MPLUS*/
 </script>
@@ -14029,9 +14036,11 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
 <script>
 /*WCL*/
 </script>
+<script>window.__boot && __boot(85, 'Downloading the site…', 14);</script>
 <script>
 /*UI*/
 </script>
+<script>window.__boot && __boot(100, 'Starting…');</script>
 <script>/* refined look: one corner size (Design studio round 170) */
 /* refined theme: two finishes the stylesheet can't reach on its own, kept up as the page redraws.
    1. One corner size: anything drawn rounder than 4px is squared to 4px, except small circles (dots, avatars) which stay round.
@@ -14850,6 +14859,10 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   var go = function () { new MutationObserver(soon).observe(document.body, { childList: true, subtree: true }); addEventListener('resize', soon, { passive: true }); soon(); };
   if (document.body) go(); else document.addEventListener('DOMContentLoaded', go);
 })();
+</script>
+<script>/* (Nov 5: the "Getting Debrief ready" card goes once the app has drawn into the page, 8 s at most) */
+(function () { var b = document.getElementById('boot'), m = document.getElementById('main'); if (!b) return; var done = function () { if (b.parentNode) b.remove(); };
+  if (!m || m.children.length) return done(); var mo = new MutationObserver(function () { if (m.children.length) { mo.disconnect(); done(); } }); mo.observe(m, { childList: true }); setTimeout(function () { mo.disconnect(); done(); }, 8000); })();
 </script>
 </body>
 </html>

@@ -209,6 +209,15 @@ async function fileBug(req, env, url) {
 }
 // (the page, with the report form switched on once the GitHub key is set, and Suggest an idea once the Discord bot's is)
 const HTML_FLAGS = {};
+/* (Nov 5, faster loading: the page carries a version stamp (ETag), made by the build from the page itself. A returning browser asks "is my
+   copy still current?" and gets a tiny "not changed" (304) instead of the whole 3.5 MB page, about 18 s on a slow phone; a new build has a new
+   stamp, so it's fetched fresh at once. Cloudflare's compression can mark the stamp weak (W/"..."): it's the same stamp.
+   Cloudflare removes ETags from web pages on this site (tested on a practice link), so the build time goes along as Last-Modified too:
+   a browser holding exactly this build sends it back (If-Modified-Since) and gets the same "not changed") */
+const APP_V = '__APPV__', APP_T = '__APPT__';
+function pageRes(req, key, make, status, headers) { const et = '"' + APP_V + '-' + key + '"', h = { ...headers, ETag: et, 'Last-Modified': APP_T }, inm = req.headers.get('If-None-Match') || '';
+  if (status === 200 && (inm.split(',').some((x) => x.trim().replace(/^W\//, '') === et) || req.headers.get('If-Modified-Since') === APP_T)) return new Response(null, { status: 304, headers: h });
+  return new Response(make(), { status, headers: h }); }
 const appHtml = (env) => { const k = (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : '');
   return HTML_FLAGS[k] || (HTML_FLAGS[k] = APP_HTML.replace('window.WLA_HOSTED = true;', 'window.WLA_HOSTED = true;' + (env.GITHUB_TOKEN ? ' window.WLA_REPORT = true;' : '') + (env.DISCORD_BOT_TOKEN ? ' window.WLA_IDEAS = true;' : ''))); };
 
@@ -1972,12 +1981,12 @@ export default {
     }
     // (search engines, Oct 27: the public pages are listed; raid logs, nights, plans and character pages are other guilds' logs and
     // people's names, so they stay out of search (robots.txt and a noindex header); practice and old addresses are never indexed)
-    { const gm = GUIDE_RX.exec(url.pathname); if (gm) { const g = GUIDE_PAGES[gm[1] + '/' + gm[2]]; return new Response(guidePage(env, g, url), { status: g ? 200 : 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoHeaders(url) } }); } } /* (a boss guide's own page, Oct 27) */
+    { const gm = GUIDE_RX.exec(url.pathname); if (gm) { const g = GUIDE_PAGES[gm[1] + '/' + gm[2]]; return pageRes(req, 'g-' + gm[1] + '-' + gm[2] + '-' + (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : ''), () => guidePage(env, g, url), g ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoHeaders(url) }); } } /* (a boss guide's own page, Oct 27) */
     { const ir = url.pathname.length < 40 && typeof ICONS === 'object' ? iconRes(url.pathname) : null; if (ir) return ir; } /* (the home-screen icon, favicons and manifest, Nov 3) */
     if (url.pathname === '/robots.txt') return new Response(url.hostname === HOME_HOST ? ROBOTS_TXT : 'User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
     if (url.pathname === '/sitemap.xml') return new Response(SITEMAP_XML, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
     const seoH = seoHeaders(url);
     if (PREVIEW_BOTS.test(req.headers.get('User-Agent') || '')) return new Response(await previewPage(env, url), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600', ...seoH } });
-    return new Response(appHtml(env), { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoH } });
+    return pageRes(req, 'a-' + (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : ''), () => appHtml(env), 200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoH }); /* (Nov 5: with its version stamp; see pageRes) */
   },
 };
