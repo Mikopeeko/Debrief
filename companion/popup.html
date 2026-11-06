@@ -362,16 +362,16 @@ function cardView() {
       const NPc = (D.night || []).filter((p) => p.boss === (H0.boss || '') + ' · ' + (H0.diff || ''));
       const twoCh = SH.chartNight === true && SH.chartLine === true && !!me && (document.documentElement.clientWidth || 0) >= 600;
       const cwid = Math.max(220, (document.documentElement.clientWidth || 460) - 28), chW = Math.round((twoCh ? (cwid - 10) / 2 : cwid) - 26);
-      const chart = (title, pts, fmt) => {
+      const chart = (title, pts, fmt, low) => { /* (low: lower is better, as boss health left) */
         if (pts.length < 2) return ''; /* (no empty chart box (Nov 1)) */
         let lo = Math.min(...pts.map((q) => q[1])), hi = Math.max(...pts.map((q) => q[1])), best = 0; if (hi === lo) hi = lo + 1;
-        pts.forEach((q, i) => { if (q[1] >= pts[best][1]) best = i; });
+        pts.forEach((q, i) => { if (low ? q[1] <= pts[best][1] : q[1] >= pts[best][1]) best = i; });
         const Wd = chW, Hh = 44, x = (i) => (10 + i * (Wd - 20) / (pts.length - 1)).toFixed(1), y = (v) => (Hh - 6 - (Hh - 14) * (v - lo) / (hi - lo)).toFixed(1);
         const mix = (i) => { const f = i / Math.max(1, pts.length - 1), a = [230, 180, 80], b = [95, 220, 122]; return 'rgb(' + a.map((c, j) => Math.round(c + (b[j] - c) * f)).join(',') + ')'; };
         let g = ''; for (let i = 1; i < pts.length; i++) g += '<line x1="' + x(i - 1) + '" y1="' + y(pts[i - 1][1]) + '" x2="' + x(i) + '" y2="' + y(pts[i][1]) + '" stroke="' + mix(i) + '" stroke-width="2.2" stroke-linecap="round"/>';
         g += pts.map((q, i) => '<circle cx="' + x(i) + '" cy="' + y(q[1]) + '" r="' + (q[2] ? 4.5 : 3) + '" fill="' + (q[2] ? '#5fdc7a' : mix(i)) + '"/>').join('');
         return '<div class="kch"><small>' + esc(title.toUpperCase()) + '</small><em>Best: pull ' + esc(pts[best][0]) + ' · ' + esc(fmt(pts[best][1])) + '</em><svg viewBox="0 0 ' + Wd + ' ' + Hh + '">' + g + '</svg></div>'; };
-      if (SH.chartNight === true) CH += chart('How far each pull got', NPc.map((p) => [p.pull, p.kill ? 100 : p.left != null ? 100 - p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v >= 100 ? 'kill' : Math.round(100 - v) + '% left'));
+      if (SH.chartNight === true) CH += chart('Boss health left each pull', NPc.map((p) => [p.pull, p.kill ? 0 : p.left != null ? p.left : null, p.cur]).filter((q) => q[1] != null), (v) => (v <= 0 ? 'kill' : Math.round(v) + '% left'), true); /* (boss health, falling toward the kill (Nov 6)) */
       if (SH.chartLine === true && me) { const k = short(me.name); CH += chart((me.role === 'healer' ? 'Your healing' : 'Your damage') + ' tonight', NPc.map((p) => [p.pull, p.v && p.v[k] ? pk(p.v[k]) : null, p.cur]).filter((q) => q[1] != null && q[1] > 0), (v) => (v >= 1000 ? (v / 1000).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + 'M' : Math.round(v) + 'k')); }
       if (CH) CH = '<div class="kchs' + (twoCh ? ' two' : '') + '">' + CH + '</div>';
     } }
