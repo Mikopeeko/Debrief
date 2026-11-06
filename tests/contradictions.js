@@ -239,10 +239,18 @@ for (const [gk, l] of TIER_T) { const it0 = l[0].it, rows = l.slice().sort((a, b
   for (const c of M.CR) clean(night, 'What wiped us most', c.nm); }
 // 7. one tier count (Nov 6, Flex: the PULLS tile said 157 where the Whole tier said 162): the PULLS tile (and the Pace chart, Compare, Home's
 //    goal card) counts with guildProgOf, the Whole tier with tierPullsOf; fed the same Warcraft Logs answers they agree, with the second
-//    half of the night in a report filed under Mythic+ (the zone's list doesn't have it) and its first pull logged twice
+//    half of the night in a report filed under Mythic+ (the zone's list doesn't have it) and its first pull logged twice; then the same night
+//    again the next morning (a minute after 06:00 UTC): on the first night the tile counts that night only, on the second the Whole tier's total
 const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0].it, rows = l.slice().sort((a, b) => a.row[2] - b.row[2]).map((x) => x.row), night = 'night ' + gk.split('|')[0] + ', ' + it0.boss + ' ' + it0.diff + ' (one tier count)';
     const h = Math.ceil(rows.length / 2), fight = (x) => ({ id: x[1], kill: !!x[3], startTime: x[2], endTime: x[2] + (x[8] || 60) * 1000, fightPercentage: x[4], bossPercentage: x[5], lastPhase: x[6], lastPhaseIsIntermission: !!x[7] });
     const A = { code: 'raidZone1', startTime: 0, fights: rows.slice(0, h).map(fight) }, B = { code: 'mplusZn1', startTime: 0, fights: rows.slice(h).map(fight) }, C = { code: 'twoLogd1', startTime: 0, fights: rows.slice(0, 1).map((x) => ({ ...fight(x), id: 900 + x[1], startTime: x[2] + 3000 })) };
+    const r0 = rows.findIndex((x) => x[3]) >= 0 ? rows.slice(0, rows.findIndex((x) => x[3])) : rows; /* (night two follows a night without its kill) */
+    const sh = (Math.floor((rows[0][2] - 216e5) / 864e5) + 1) * 864e5 + 216e5 + 60000 - rows[0][2], N2 = { code: 'nightTwo', startTime: 0, fights: r0.map((x) => ({ ...fight(x), id: 500 + x[1], startTime: x[2] + sh, endTime: x[2] + sh + (x[8] || 60) * 1000 })) };
+    const run2 = async (q, v) => /zone\{id\}/.test(q) ? { worldData: { encounter: { zone: { id: 1 } } } } : { reportData: { reports: { has_more_pages: false, data: v.z === 1 ? [{ ...A, fights: r0.slice(0, h).map(fight) }, N2] : [{ ...A, fights: r0.slice(0, h).map(fight) }, { ...B, fights: r0.slice(h).map(fight) }, N2] } } };
+    if (r0.length) { let t1 = null, t2 = null, tT = null; try { const L2 = await W.tierPullsOf(run2, { g: 1, e: it0.id, d: 5 }); tT = TSITE.tierModel({ pulls: L2, causes: {} }, it0, new Map()).P.length;
+        t1 = (await W.guildProgOf(run2, { g: 1, e: it0.id, d: 5, t: r0[r0.length - 1][2] })).pulls; t2 = (await W.guildProgOf(run2, { g: 1, e: it0.id, d: 5, t: r0[r0.length - 1][2] + sh })).pulls; } catch (e) { say(night, 'tier', 'the two-night tier count crashed: ' + e.message); }
+      if (t1 !== r0.length) say(night, 'tier', 'on the first of two nights the PULLS tile counts ' + t1 + ' pulls, the night has ' + r0.length);
+      if (t2 !== tT || tT !== 2 * r0.length) say(night, 'tier', 'on the second of two nights the PULLS tile counts ' + t2 + ', the Whole tier ' + tT + ', the two nights have ' + 2 * r0.length); }
     const run = async (q, v) => /zone\{id\}/.test(q) ? { worldData: { encounter: { zone: { id: 1 } } } } : { reportData: { reports: { has_more_pages: false, data: v.z === 1 ? [A, C] : [A, B, C] } } };
     const v = { g: 1, e: it0.id, d: 5 }; let tier = null, tile = null; try { tier = TSITE.tierModel({ pulls: await W.tierPullsOf(run, v), causes: {} }, it0, new Map()).P.length; tile = (await W.guildProgOf(run, { ...v, t: rows[rows.length - 1][2] })).pulls; } catch (e) { say(night, 'tier', 'the tier count crashed: ' + e.message); continue; }
     const want = rows.findIndex((x) => x[3]) >= 0 ? rows.findIndex((x) => x[3]) + 1 : rows.length;

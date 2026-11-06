@@ -199,7 +199,9 @@ async function tierPullsOf(run, v) {
   return pulls;
 }
 async function guildProgOf(run, v) {
-  /* (the Whole tier's list, up to the day of the pull asked about) */ const pulls = (await tierPullsOf(run, v)).filter((x) => x[2] <= v.t + 86400000).map((x) => ({ t: x[2], kill: !!x[3], left: x[4] }));
+  /* (the Whole tier's list, up to the end of the raid night of the pull asked about: a night is a day from 06:00 UTC, so a raid past midnight
+     stays one night and the next night's pulls never count (Main's check, Nov 6: Nov 4 read 164 with 2 of Nov 5's)) */
+  const night = (ms) => Math.floor((ms - 21600000) / 86400000), upTo = night(v.t); const pulls = (await tierPullsOf(run, v)).filter((x) => night(x[2]) <= upTo).map((x) => ({ t: x[2], kill: !!x[3], left: x[4] }));
   /* (each pull's boss health left, for the Debriefing pace chart (Oct 24)) */ const plOf = (L) => L.map((x) => [x.t, x.kill ? 0 : x.left == null ? null : Math.round(x.left * 10) / 10]);
   const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null, pl: plOf(pulls) };
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
@@ -278,7 +280,7 @@ async function playerAb(creds, v) {
   return playerAbOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
-  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t + '&v=2'); // (v=2: the Whole tier's list (Nov 6))
+  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t + '&v=3'); // (v=2: the Whole tier's list (Nov 6); v=3: up to the end of that night)
   return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
