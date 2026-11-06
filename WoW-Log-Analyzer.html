@@ -13401,6 +13401,11 @@ html body #view > .dbt.dbt.dbx .dbx-hp{position:absolute;left:0;top:0;width:100%
 html body #view > .dbt.dbt.dbx .dbx-hp polyline{fill:none;stroke:var(--gold);stroke-width:1.5;opacity:.55}
 html body #view > .dbt.dbt.dbx .dbx-after{position:absolute;top:0;right:0;background:repeating-linear-gradient(-45deg,rgba(255,255,255,.035) 0 6px,transparent 6px 12px)}
 html body #view > .dbt.dbt.dbx .dbx-cut{position:absolute;top:0;border-left:2px dashed #f0726a}
+/* (Nov 5: lust, a soft gold band behind the marks for its 40 s, "⚡ Lust" where it starts) */
+html body #view > .dbt.dbt.dbx .dbx-lust{position:absolute;top:0;z-index:0;background:rgba(232,192,90,.09);border-left:1px solid rgba(232,192,90,.55);cursor:default}
+html body #view > .dbt.dbt.dbx .dbx-lust > span{position:absolute;top:-1px;left:4px;font-size:10.5px;font-weight:700;line-height:14px;color:#e8c05a;white-space:nowrap;pointer-events:none}
+html body #view > .dbt.dbt.dbx .dbx-h .dbx-lu{color:#e8c05a;font-style:normal}
+.dtm-lust{position:absolute;top:-3px;bottom:-3px;z-index:0;background:repeating-linear-gradient(135deg,rgba(232,192,90,.42) 0 3px,rgba(232,192,90,.14) 3px 6px);box-shadow:inset 0 0 0 1px rgba(232,192,90,.75);border-radius:2px}
 html body #view > .dbt.dbt.dbx .dbx-cut span{position:absolute;right:6px;top:calc(100% + 3px);font-size:11px;line-height:1;color:#f0a19b;white-space:nowrap;font-style:normal}
 html body #view > .dbt.dbt.dbx .dbx-mk{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50% !important;cursor:pointer;font:800 10px/1 var(--body,sans-serif);color:#111;background:none;z-index:1}
 html body #view > .dbt.dbt.dbx .dbx-mk.g{width:11px;height:11px;background:#7ee08f;box-shadow:0 0 0 3px rgba(126,224,143,.14);cursor:default}
@@ -53147,6 +53152,17 @@ function rcdData0(r) {
   }
   const lust = [];
   for (const p of r.players.values()) if (named(p)) for (const n of LUSTS) { let last = -1e9; for (const t of (p.byName.get(n) || []).slice().sort((a, b) => a - b)) { if (t - last >= 12) lust.push({ p, name: n.replace(/\b\w/g, (c) => c.toUpperCase()), id: E.SPELLID.get(n) || 0, t, len: 40 }); last = t; } }
+  /* (Nov 5, the studio: a lust no player cast (a hunter pet's Primal Rage, drums) is the moment its Sated, Exhaustion, Temporal Displacement or
+     Fatigued debuff lands on most of the raid within 3 s (one already on at the pull is the last pull's). A lust buff alone isn't one: a buff named
+     Fury of the Aspects lands on part of the raid twice a pull with no Sated. The lust buff starting at that moment names it and its caster) */
+  { const ppl = [...r.players.values()].filter(named), need = Math.max(3, Math.ceil(ppl.length * 0.4)), st = [];
+    for (const n of ['Sated', 'Exhaustion', 'Temporal Displacement', 'Fatigued']) for (const p of ppl) { const b = p.debuffs && p.debuffs.get(n); if (b) for (const [a] of b.sp) if (a > 1) st.push(a); }
+    st.sort((x, y) => x - y);
+    for (let k = 0; k < st.length; k++) { const t0 = st[k], grp = st.filter((x) => x >= t0 && x <= t0 + 3); if (grp.length < need) continue; k += grp.length - 1;
+      if (lust.some((l) => Math.abs(l.t - t0) < 30)) continue; let nm = 'Lust', id = 0, by = '', best = 0;
+      for (const n of LUST_BUFFS) { let c = 0, b0 = null; const who = new Map(); for (const p of ppl) { const b = p.buffs && p.buffs.get(n); if (!b || !b.sp.some(([a]) => a >= t0 - 1 && a <= t0 + 3)) continue; c++; b0 = b0 || b; for (const [w, v] of b.by) who.set(w, (who.get(w) || 0) + v); }
+        if (c > best) { best = c; nm = n; id = (b0 && b0.id) || 0; by = ([...who].sort((x, y) => y[1] - x[1])[0] || [''])[0]; } }
+      lust.push({ p: by ? { name: by } : null, name: nm, id, t: t0, len: 40 }); } }
   uses.sort((a, b) => a.t - b.t); lust.sort((a, b) => a.t - b.t);
   // (two players lusting at once is one Bloodlust: the first)
   for (let i = lust.length - 1; i > 0; i--) if (lust[i].t - lust[i - 1].t < 30) lust.splice(i, 1);
@@ -70323,6 +70339,10 @@ function dsGuides() {
       var lvOf = function (m) { return m.st === 'ok' ? 'g' : m.death ? 'd' : svG(m); };
       var short = function (r) { return r.nk || String(r.m).split(/\s+/)[0].slice(0, 9); };
       var RH = 30, out = '';
+      /* (Nov 5, Flex: "lust should be shown on the debriefing timeline": its 40 s as a soft gold band behind the marks, "⚡ Lust" where it starts, the
+         caster on hover, and "⚡ Lust at 5:02" in the phase's header. Facts only, no judging) */
+      var LU = (function () { try { var K = window.dbtMapKit ? window.dbtMapKit() : {}, rp = K.S && K.S.rep; return rp && K.rcdData ? (K.rcdData(rp).lust || []).filter(function (l) { return l.t <= Math.max(LEN, lastT) + 1; }) : []; } catch (e) { return []; } })();
+      var luTip = function (l) { return '<b>⚡ ' + E(l.name) + '</b>' + (l.p && l.p.name ? ' by ' + E(String(l.p.name).split('-')[0]) : '') + ' at ' + mm(Math.round(l.t)) + ' · ' + (l.len || 40) + ' s'; };
       SP.forEach(function (S0, k) { var a = S0.a, b = S0.b, dur = Math.max(1, b - a), p = S0.p, last = k === SP.length - 1;
         var inS = M.map(function (m, i) { return [m, i]; }).filter(function (q) { return spOf(q[0].t) === k; });
         var isPF = function (m) { return /^phase change/i.test(String(m.m || '')) && inS.every(function (q) { return q[0].m !== m.m || q[0].st === 'ok'; }); }; /* (round 459: a phase change that went fine is a flag on the chart, not a row) */
@@ -70334,7 +70354,7 @@ function dsGuides() {
         var inW = !kill && WT != null && WT >= a && (last || WT < b);
         var h0 = p.hp0 != null && p.hp0 !== '' ? Math.round(+p.hp0) : null, h1 = p.hp1 != null && p.hp1 !== '' ? Math.round(+p.hp1) : null;
         var nm2 = SP.length === 1 && /^(mechanics)?$/i.test(String(p.n || '')) ? 'Whole fight' : p.n;
-        var head = '<div class="dbx-h"><b>' + E(nm2) + '</b><em>' + E(p.s || (mm(a) + '–' + mm(b))) + '</em>' + (h0 != null && h1 != null ? '<em>Boss ' + h0 + '% → ' + h1 + '%</em>' : '') +
+        var head = '<div class="dbx-h"><b>' + E(nm2) + '</b><em>' + E(p.s || (mm(a) + '–' + mm(b))) + '</em>' + (h0 != null && h1 != null ? '<em>Boss ' + h0 + '% → ' + h1 + '%</em>' : '') + LU.filter(function (l) { return l.t >= a && (last || l.t < b); }).map(function (l) { return '<em class="dbx-lu" data-tt="' + E(luTip(l)) + '">⚡ Lust at ' + mm(Math.round(l.t)) + '</em>'; }).join('') +
           '<span class="dbx-c">' + [nOk ? '<b class="g">✓ ' + nOk + '</b> done right' : '', nBad ? '<b class="y">' + nBad + '</b> mistake' + (nBad > 1 ? 's' : '') : '', nD ? '<b class="r">☠ ' + nD + '</b> death' + (nD > 1 ? 's' : '') : ''].filter(Boolean).join(' · ') + '</span>' +
           (inW ? '<span class="dbx-w">✕ The wipe</span>' : !nBad && !nD ? '<span class="dbx-ok">✓ Clean</span>' : '') + '</div>';
         /* (a row with only green dots is shorter, so long fights stay close to one screen) */
@@ -70346,6 +70366,7 @@ function dsGuides() {
         tr += '<span class="dbx-ax a0" style="top:' + (H + 5) + 'px">' + mm(a) + '</span>';
         var pts = HP.filter(function (q) { return q[0] >= a && (last ? q[0] <= b : q[0] < b); });
         if (pts.length > 1) tr += '<svg class="dbx-hp" viewBox="0 0 1000 100" preserveAspectRatio="none" style="height:' + H + 'px" aria-hidden="true"><polyline points="' + pts.map(function (q) { return (X(q[0]) * 10).toFixed(1) + ',' + (4 + (1 - Math.max(0, Math.min(100, q[1])) / 100) * 92).toFixed(1); }).join(' ') + '" vector-effect="non-scaling-stroke"/></svg>';
+        LU.forEach(function (l) { var la = Math.max(a, l.t), lb = Math.min(last ? Math.max(b, l.t + (l.len || 40)) : b, l.t + (l.len || 40)); if (lb <= la) return; tr += '<i class="dbx-lust" style="left:' + X(la) + '%;width:' + Math.max(0.6, X(lb) - X(la)) + '%;height:' + H + 'px" data-tt="' + E(luTip(l)) + '">' + (l.t >= a - 0.5 ? '<span>⚡ Lust</span>' : '') + '</i>'; });
         if (last && cut && !kill) { var xc = X(cut); tr += (xc < 99.5 ? '<i class="dbx-after" style="left:' + xc + '%;height:' + H + 'px"></i>' : '') + '<i class="dbx-cut" style="left:' + xc + '%;height:' + (H + 2) + 'px"><span>Wipe called</span></i>'; }
         var lastX = {};
         inS.forEach(function (q) { var m = q[0], i = q[1]; if (!vis(m) || DG[i] != null) return; var j = -1, gn = GM[i] ? GM[i].length : 1; rows.forEach(function (r, jj) { if (m.death ? r.d : !r.d && r.m === m.m) j = jj; }); if (j < 0 && !m.death && isPF(m)) { tr += '<button type="button" class="dbx-pf" data-mi="' + i + '" style="left:' + X(m.t) + '%;height:' + H + 'px" aria-label="' + E(mm(m.t) + ', ' + (m.nk || m.m)) + '"><span>' + E(m.nk || 'Phase change') + '</span></button>'; return; } if (j < 0) return;
@@ -71685,7 +71706,10 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     var end = Math.max(X.LEN, wipeT || 0, 1), topP1 = T ? Math.round((T.p1[0] + T.p1[1]) / 2) : 0, topP2 = T ? topP1 + T.p2[0] : 0, axEnd = Math.max(60, Math.ceil(end * 1.12 / 15) * 15); box._axEnd = axEnd; box._end = end;
     var XP = function (t) { return Math.max(0, Math.min(100, t / axEnd * 100)); };
     var pcls = function (n) { var g = String(n || '').match(/^P(\d)/i); return g ? 'p' + g[1] : /inter/i.test(n) ? 'int' : 'p1'; };
-    var you = SP.map(function (S0) { var b = Math.min(S0.b, end); return '<span class="dtm-blk ' + pcls(S0.p.n) + '" style="left:' + XP(S0.a) + '%;width:' + (XP(b) - XP(S0.a)) + '%" data-tt="' + E('<b>' + E(S0.p.n) + '</b><br>' + mm(S0.a) + '–' + mm(b) + ' · ' + mm(b - S0.a) + (S0.p.hp0 != null && S0.p.hp1 != null && S0.p.hp0 !== '' && S0.p.hp1 !== '' ? '<br>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%' : '') + '<br>Click to move the replay here.') + '">' + E(String(S0.p.n || '').split(/\s+/)[0]) + '</span>'; }).join('');
+    var LU2 = []; try { LU2 = ((W().rcdData && rep ? W().rcdData(rep) : {}).lust || []); } catch (e) { LU2 = []; } /* (the phase's hover says when lust landed in it (Nov 5)) */
+    var luIn = function (S0, b) { return LU2.filter(function (l) { return l.t >= S0.a && l.t < Math.max(b, S0.a + 0.5); }).map(function (l) { return '<br>⚡ ' + E(l.name) + ' at ' + mm(Math.round(l.t)); }).join(''); };
+    var you = SP.map(function (S0) { var b = Math.min(S0.b, end); return '<span class="dtm-blk ' + pcls(S0.p.n) + '" style="left:' + XP(S0.a) + '%;width:' + (XP(b) - XP(S0.a)) + '%" data-tt="' + E('<b>' + E(S0.p.n) + '</b><br>' + mm(S0.a) + '–' + mm(b) + ' · ' + mm(b - S0.a) + (S0.p.hp0 != null && S0.p.hp1 != null && S0.p.hp0 !== '' && S0.p.hp1 !== '' ? '<br>Boss ' + Math.round(+S0.p.hp0) + '% → ' + Math.round(+S0.p.hp1) + '%' : '') + luIn(S0, b) + '<br>Click to move the replay here.') + '">' + E(String(S0.p.n || '').split(/\s+/)[0]) + '</span>'; }).join('');
+    try { ((W().rcdData && rep ? W().rcdData(rep) : {}).lust || []).forEach(function (l) { if (l.t > end) return; var b2 = Math.min(end, l.t + (l.len || 40)); you += '<span class="dtm-lust" style="left:' + XP(l.t) + '%;width:' + Math.max(0.5, XP(b2) - XP(l.t)) + '%" data-tt="' + E('<b>⚡ ' + E(l.name) + '</b>' + (l.p && l.p.name ? ' by ' + E(String(l.p.name).split('-')[0]) : '') + ' at ' + mm(Math.round(l.t)) + ' · ' + (l.len || 40) + ' s') + '"></span>'; }); } catch (e) { /* (no lust shown) */ } /* (Nov 5: lust's 40 s behind the marks) */
     bad.forEach(function (i) { var m = M[i], lv = lvOf(m); if (lv === 'n') return; you += '<button type="button" class="dtm-m lv-' + lv + '" data-ti="' + i + '" style="left:' + XP(m.t) + '%" data-tt="' + E('<b>' + E(m.death ? (GM[i] && GM[i].length > 1 ? GM[i].length + ' deaths' : 'Death: ' + nameOf(m, i)) : nameOf(m, i)) + '</b><br>' + mm(m.t) + (hp(m.t) ? ' · boss at ' + hp(m.t) : '') + '<br><span class="lc lv-' + lv + '">' + E(LV(m)) + '</span>') + '">' + (m.death ? '☠' : '!') + '</button>'; });
     var lust = []; try { lust = ((W().rcdData && rep ? W().rcdData(rep) : {}).lust || []).filter(function (l) { return l.t <= end; }); } catch (e) { lust = []; }
     lust.forEach(function (l) { you += '<span class="dtm-m lust" style="left:' + XP(l.t) + '%" data-tt="' + E('<b>⚡ ' + E(l.name) + '</b><br>' + mm(Math.round(l.t)) + (l.p && l.p.name ? ' · ' + E(l.p.name) : '')) + '"></span>'; });
