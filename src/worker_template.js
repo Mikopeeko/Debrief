@@ -1589,6 +1589,11 @@ async function teamWho(req, env, url) {
     if (n) return { uid: 'p:' + n.toLowerCase(), name: n, chars: [n.toLowerCase()], practice: true }; }
   const s = await sessOf(req, env); return s && s.uid ? { uid: 'w:' + s.uid, name: s.name, t: s.t } : null;
 }
+// (the guilds a signed-in raider belongs to on Warcraft Logs, kept an hour; a practice login has none)
+async function teamGuilds(who) { if (!who || !who.t) return []; const c = caches.default, ck = new Request('https://debrief.cache/team-guilds/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { guilds { id } } } }' }) });
+    l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).guilds || []; l = l.map((g) => +g.id).filter(Boolean); } catch (e) { l = []; }
+  await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l; }
 async function teamChars(who) {
   if (who.chars) return who.chars; const c = caches.default, ck = new Request('https://debrief.cache/team-chars/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
   let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { characters { name } } } }' }) });
@@ -1736,7 +1741,8 @@ async function gnote(req, env, url) {
   let rep = null; try { const hit = await caches.default.match(new Request(url.origin + '/api/report?code=' + code, { method: 'GET' })); rep = hit ? await hit.json() : null; if (!rep || !rep.fights) { const d = await gql(env, REPORT_Q, { code }); rep = d && d.reportData && d.reportData.report; } } catch (e) { rep = null; }
   if (!rep || !rep.fights) return json({ error: 'That report couldn\'t be read.' }, 502);
   const fights = new Set(rep.fights.filter((f) => f.encounterID > 0).map((f) => f.id)), names = new Set(((rep.masterData && rep.masterData.actors) || []).filter((a) => a.type === 'Player').map((a) => String(a.name || '').toLowerCase()));
-  if (!(await teamChars(who)).some((n) => names.has(n))) return json({ error: 'Only raiders in that night can share its raid note.' }, 403);
+  const gid = rep.guild && +rep.guild.id; /* (a character in that night, or the report's guild on your Warcraft Logs account: a raider on an alt counts (Nov 6)) */
+  if (!(await teamChars(who)).some((n) => names.has(n)) && !(gid && (await teamGuilds(who)).includes(gid))) return json({ error: 'Only raiders of that night or its guild can share its raid note.' }, 403);
   if (!pulls.every((p) => fights.has(p.f))) return json({ error: 'That isn\'t one of the night\'s pulls.' }, 400);
   for (let k = 0; k < 3; k++) { const g = await gnoteGet(env, code, url).catch(() => null), doc = g ? g.doc : { pulls: {}, texts: {} }; let add = 0;
     for (const p of pulls) { if (doc.pulls[p.f]) continue; doc.pulls[p.f] = { h: String(p.h), s: p.s || 'NSRT', by: who.name || '' }; doc.texts[p.h] = texts[p.h]; add++; } /* (the first note saved for a pull stays) */
