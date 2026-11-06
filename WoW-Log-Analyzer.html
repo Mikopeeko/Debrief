@@ -28167,18 +28167,36 @@ async function gnLoad() {
   if (!(PC_ON || (FH.dir && FH.dir.kind === 'helper')) || Date.now() - GN.at < 60000) return; GN.at = Date.now(); /* (the app linked: any night, from this PC's log or Warcraft Logs (Nov 6)) */
   try { const r = await fetch(HELPER_BASE + '/log/notes', { cache: 'no-store' }); if (!r.ok) return; const j = await r.json(); if (!j || !Array.isArray(j.pulls)) return;
     const sig = j.pulls.length + '|' + Object.keys(j.texts || {}).join(',') + '|' + ((j.fallback && j.fallback.at) || ''); if (sig === GN.sig) return;
-    GN.data = j; GN.sig = sig; if (S.rep) { try { renderMain(); } catch (e) { /* drawn next time */ } } } catch (e) { /* an older Debrief app: no notes */ }
+    GN.data = j; GN.sig = sig; gnSend(); gnReapply(null); } catch (e) { /* an older Debrief app: no notes */ }
 }
-function gameNoteFor(it) {
-  if (!it) return null;
-  if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
-  const g = GN.data; if (!g) { if (PC_ON) gnLoad(); return null; } /* (asked once the page wants a note; drawn again when it's in) */
+const GNS = { code: null, doc: null, busy: false, sent: new Set() };
+// (notes that came in after the pulls were read: each pull already read takes its note again (a note you picked still wins), then the page draws)
+const gnReapply = (code) => { for (const rep of CACHE.values()) if (rep && rep.item && rep.item.kind === 'boss' && (!code || (rep.item.wcl && rep.item.wcl.code === code))) { try { applyNote(rep); } catch (e) { /* that pull keeps its note */ } } if (S.rep) { try { renderMain(); } catch (e) { /* drawn next time */ } } };
+function gnShared(code) { if (!WCL.HOSTED || !code || GNS.code === code || GNS.busy) return; GNS.busy = true;
+  fetch('/api/gnote?code=' + encodeURIComponent(code), { cache: 'no-store' }).then((r) => r.json()).then((j) => { GNS.code = code; GNS.doc = j && j.pulls ? j : { pulls: {}, texts: {} }; GNS.busy = false; gnSend(); if (Object.keys(GNS.doc.pulls).length) gnReapply(code); })
+    .catch(() => { GNS.busy = false; GNS.code = code; GNS.doc = { pulls: {}, texts: {} }; }); }
+// (this PC's notes for the open night's pulls, to the site: once its shared copy is read, only the pulls it doesn't have)
+function gnSend() { const code = S.wclCode; if (!WCL.HOSTED || !GN.data || !code || GNS.code !== code || !GNS.doc || GNS.sent.has(code)) return;
+  const pulls = [], texts = {}; for (const it of (S.index && S.index.bosses) || []) { if (!it.wcl || it.wcl.code !== code || GNS.doc.pulls[it.wcl.fight]) continue; const x = gnExact(it); if (!x) continue;
+    pulls.push({ f: it.wcl.fight, h: String(x.h), s: x.s === 'MRT' ? 'MRT' : 'NSRT' }); texts[x.h] = x.text; }
+  if (!pulls.length) return; GNS.sent.add(code);
+  fetch('/api/gnote?code=' + encodeURIComponent(code), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pulls, texts }) }).then((r) => r.json()).then((j) => {
+    if (j && j.ok && j.added) { for (const p of pulls) GNS.doc.pulls[p.f] = { h: p.h, s: p.s }; Object.assign(GNS.doc.texts, texts); } }).catch(() => {}); }
+// (the pull's own copy from this PC's Companion: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
+function gnExact(it) { const g = GN.data; if (!g) return null;
   const t = it.wallMs || 0, t1 = it.startMs || 0, same = (x) => (x.e != null ? +x.e === +it.id : x.b === it.boss) && (x.d == null || it.diffId == null || +x.d === +it.diffId);
-  // (the pull's own copy: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
   let best = null;
   for (const x of g.pulls || []) { if (!same(x)) continue; const dt = t ? Math.abs(x.t - t) : Math.min(...[...Array(29)].map((_, k) => Math.abs(x.t - t1 - (k - 14) * 3600e3)));
     if (dt <= 120000 && (!best || dt < best.dt)) best = { x, dt }; }
-  if (best && g.texts && g.texts[best.x.h]) return { text: g.texts[best.x.h], s: best.x.s || 'NSRT', n: best.x.n || '', h: String(best.x.h), exact: true };
+  return best && g.texts && g.texts[best.x.h] ? { text: g.texts[best.x.h], s: best.x.s || 'NSRT', n: best.x.n || '', h: String(best.x.h), exact: true } : null; }
+function gameNoteFor(it) {
+  if (!it) return null;
+  if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
+  if (it.wcl && it.wcl.code) gnShared(it.wcl.code); /* (the night's notes shared by its raiders (Nov 6)) */
+  const own = gnExact(it); if (own) return own;
+  { const d = it.wcl && GNS.code === it.wcl.code && GNS.doc, p = d && d.pulls[it.wcl.fight]; if (p && d.texts[p.h]) return { text: d.texts[p.h], s: p.s || 'NSRT', n: '', h: String(p.h), exact: true, shared: true }; }
+  const g = GN.data; if (!g) { if (PC_ON) gnLoad(); return null; } /* (asked once the page wants a note; drawn again when it's in) */
+  const t = it.wallMs || 0, t1 = it.startMs || 0;
   // (the stand-in: the note NSRT or MRT saved last, for its own boss and difficulty, on the night it was saved)
   const fb = g.fallback, tt = t || t1; if (!fb || !fb.text || !tt || tt > fb.at + 60000 || fb.at - tt > 18 * 3600e3) return null;
   const head = String(fb.text).split('\n').find((l) => /EncounterID:/i.test(l)) || '', enc = (head.match(/EncounterID:\s*(\d+)/i) || [])[1], dif = (head.match(/Difficulty:\s*([^;\s]+)/i) || [])[1];
@@ -33330,8 +33348,8 @@ function pgRosterNew() { const R = planRoster(); if (!R || !R.players || !R.play
   /* (an alt counts only when it raids with the team from time to time: the latest raid night, or 2 of the last 8 (Flex, Nov 6)) */
   const wd = (k) => new Date(k + 'T12:00:00').getDay(), N0 = [...new Set([...nts.values()].flatMap((y) => [...y]))], perD = [0, 0, 0, 0, 0, 0, 0]; N0.forEach((k) => perD[wd(k)]++);
   const topD = Math.max(...perD), rd = new Set(perD.map((c, d) => (c && c * 2 >= topD ? d : -1)).filter((d) => d >= 0)); /* (the team's raid nights only: Wolfthorn's Wednesday and Thursday, Flex Nov 6) */
-  const allN = N0.filter((k) => rd.has(wd(k))).sort(), last8 = new Set(allN.slice(-8)), lastN = allN[allN.length - 1];
-  const often = (k) => { const y = nts.get(k); return !!y && (y.has(lastN) || [...y].filter((d) => last8.has(d)).length >= 2); };
+  const allN = N0.filter((k) => rd.has(wd(k))).sort(), last8 = new Set(allN.slice(-8)), last4 = new Set(allN.slice(-4));
+  const often = (k) => { const y = nts.get(k); return !!y && ([...y].some((d) => last4.has(d)) || [...y].filter((d) => last8.has(d)).length >= 2); }; /* (any of the last 4 raid nights, or 2 of the last 8) */
   const apart = (a, b) => !(seen.get(a) || []).some((s) => s.has(b)), add = [];
   for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (!nm || /^Player-/.test(x.name) || have.has(k) || off.has(k)) continue;
     const alt = often(k) && R.players.some((p) => pgAltLike(nm, String(p.n).split('-')[0]) && apart(k, lc(p.n))); if (alt || x.n >= need) add.push(nm); }
