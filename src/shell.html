@@ -12555,6 +12555,10 @@ html body #view#view#view#view .sub { margin-bottom: 12px !important; }
 .hd .hd-gbl { position: relative; height: 16px; font: 600 11.5px var(--head); color: var(--faint); } .hd .hd-gbl span { position: absolute; top: 0; } .hd .hd-gbl .r { right: 0; color: #cdb4f5; }
 .hd .hd-gbar { position: relative; height: 8px; margin-top: 3px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; } .hd .hd-gbar > u { display: block; height: 100%; background: #9b6be0; text-decoration: none; }
 .hd .hd-gbar > i { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--panel); }
+/* (progression as boss health left, Flex Nov 6: the bar keeps the health left at its right end, by the kill; the sparkline falls to the kill line) */
+.hd .hd-gbar.hd-gbhp > u { margin-left: auto; } .hd .hd-gp small { display: block; margin-top: 4px; font: 500 12px/1.2 var(--head); color: var(--muted); white-space: nowrap; }
+.hd .hd-spark line.k { stroke: var(--line2); stroke-width: 1; stroke-dasharray: 3 3; } .hd .hd-spark text.k { fill: var(--faint); font: 600 9px var(--head); text-anchor: end; }
+.hd .hd-cd b small { display: block; font: 500 10px/1 var(--head); opacity: .75; margin-bottom: 1px; }
 .hd .hd-gbt { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
 .hd .hd-gb { display: inline-flex; align-items: center; height: 32px; padding: 0 14px; border: 1px solid #3a4150; border-radius: 4px; background: rgba(13,15,20,.6); color: var(--text); font: 600 13.5px var(--head); cursor: pointer; text-decoration: none; } .hd .hd-gb:hover { border-color: var(--faint); }
 .hd .hd-gb.gold { background: var(--gold); border-color: var(--gold); color: #1b1408; } .hd .hd-gb.gold:hover { filter: brightness(1.08); }
