@@ -6998,7 +6998,7 @@ function* analyzeSteps(item, text, opts) {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
       try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
       /* (Nov 6: an axe dropped on the raid is its target's mistake: everyone else's Widow's Kiss, Death's Embrace and soak hits from it are kept, never counted) */
-      if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others && !(/^(widow's kiss|death's embrace)$/i.test(m.mechanic) && (a.soak || []).includes(String(m.player).split('-')[0]))) m.others = a.by + ' dropped the ' + a.sp + ' on the raid'; }
+      if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others) m.others = a.by /* (Flex, Nov 6: "if its a bad drop they should not be blamed", soakers too) */ + ' dropped the ' + a.sp + ' on the raid'; }
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
       for (const s of r.module.sections) s.how = s.how || (HOW[mod.encounter] || {})[s.id] || ''; /* round 426: a split card keeps its own */ // short strategy note per mechanic
       for (const s of r.module.sections) { const nt = (TITLE_FIX[mod.encounter] || {})[s.title]; if (nt) { if (!s.place) s.place = s.title; s.title = nt; } } /* (one name everywhere, see TITLE_FIX) */
@@ -7859,7 +7859,7 @@ function rootCause(r, opts) {
         else say(gone[0].t, gt, who3(gone) + ' died to ' + rcAnd([...new Set(gone.map((d) => d.ab))].slice(0, 2)) + ' (' + T(gone[0].t) + ')'); }
       else { cat = 'guil'; sure = share >= 0.7 ? 0.9 : 0.7; }
       const axR = (r.axeOnRaid || []).find((a) => t0 >= a.t - 0.5 && t0 <= a.end); /* (Nov 6: an axe dropped on the raid) */
-      const axS = axR ? trig.filter((d) => d.ab === ga && (axR.soak || []).includes(d.who)).length : 0;
+      const axS = 0; /* (Flex, Nov 6: a bad drop is the drop alone, soakers included) */
       if (axR && /widow's kiss|death's embrace/i.test(ga)) say(axR.t, 'guil', axR.by + ' dropped the ' + axR.sp + ' on the raid' + (axS ? ', and ' + (axS === 1 ? 'one of its soakers' : axS + ' of its soakers') + ' didn\'t run out' : '') + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
       else if (/widow's kiss|death's embrace/i.test(ga)) say(t0, 'guil', 'players didn\'t run out after the Guillotine soak' + SEP + ga + ' killed ' + trig.filter((d) => d.ab === ga).length + ' (' + T(t0) + ')');
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
