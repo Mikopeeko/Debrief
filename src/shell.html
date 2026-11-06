@@ -13849,7 +13849,7 @@ html body #view .dbt-why .wrt-uns { display: inline-block; margin-left: 8px; pad
 html body #view .dbt-why .wrt-early { color: var(--muted); }
 html body #view .dbt-why .wrt-rootrow > b::after, html body #view .dbt-why .wrt-alsorow > b::after { display: inline-block; margin: 0 0 0 8px; font: 600 12px/1.4 var(--body); white-space: nowrap; letter-spacing: .2px; }
 html body #view .dbt-why .wrt-rootrow > b::after { content: 'Root cause'; color: var(--gold); }
-html body #view .dbt-why .wrt-alsorow > b::after { content: 'added up'; color: var(--faint); font-weight: 400; }
+html body #view .dbt-why .wrt-alsorow > b::after { content: none; display: none; } /* (Nov 6, Flex: "Yes, drop it": How it went is only the collapse now, so every row added up and the tag said nothing; Root cause stays) */
 html body #view .rcb-d .rcb-dall { color: var(--faint); font-weight: 400; font-size: 12px; white-space: nowrap; } /* (Nov 5: "· 11 in all" muted beside their own deaths) */
 /* (Nov 5, Flex: "what are these numbers for theres no title?": the grade's letter and number sit together under GRADE, the Deaths column fits
    its "· N in all", and the header row stays on screen under the tab bar while the table scrolls) */
