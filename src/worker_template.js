@@ -1711,6 +1711,39 @@ async function mpTop(req, env, url, ctx) {
   let c = cs.find((x) => x.h === h); if (!c) { if (cs.length >= 4 || Object.keys(d.runs).length >= 12 && !d.runs[b.id].length) return json({ kept: false }); c = { h, t, dur: b.dur, lv, by: [] }; cs.push(c); }
   if (!c.by.includes(me) && c.by.length < 6) c.by.push(me);
   await env.debrief_nights.put(rk, JSON.stringify(d), { httpMetadata: { contentType: 'application/json' } }); return json({ agreed: c.by.length >= 2 }); }
+// (the raid note the game had loaded for each pull of a night, shared with the roster (Nov 6, Flex: "Yes, share it"): a raider whose Debrief
+// Companion has the notes sends them once; anyone opening that night's Debriefing then gets them, no Companion needed. Kept per report, each pull
+// by its fight; the first note saved for a pull stays (another raider's copy of the same note changes nothing). Only the Debrief website can save
+// (Origin), only someone signed in with a character in that night's roster, only for that report's own boss fights, and small (like /api/tier).
+// R2: team/gnote-<code>.json (practice links: practice-team/), gzipped: { at, pulls: { fight: { h, s, by } }, texts: { h: text } })
+const gnoteK = (code, url) => (PRACTICE_HOST(url) ? 'practice-team/' : 'team/') + 'gnote-' + code + '.json';
+async function gnoteGet(env, code, url) { const o = await env.debrief_nights.get(gnoteK(code, url)); if (!o) return null; return { doc: JSON.parse(await new Response(o.body.pipeThrough(new DecompressionStream('gzip'))).text()), etag: o.etag }; }
+async function gnotePut(env, code, doc, etag, url) { const gz = await new Response(new Blob([JSON.stringify(doc)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  return env.debrief_nights.put(gnoteK(code, url), gz, { httpMetadata: { contentType: 'application/octet-stream' }, ...(etag ? { onlyIf: { etagMatches: etag } } : {}) }); }
+async function gnote(req, env, url) {
+  if (!env.debrief_nights) return json({ none: true });
+  const code = url.searchParams.get('code') || ''; if (!CODE.test(code)) return json({ error: 'That report code isn\'t right.' }, 400);
+  if (req.method === 'GET') { const g = await gnoteGet(env, code, url).catch(() => null); return g ? json({ pulls: g.doc.pulls || {}, texts: g.doc.texts || {} }) : json({ none: true }); }
+  if (req.method !== 'POST') return json({ error: 'Only the website saves these.' }, 405);
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can save these.' }, 403);
+  if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once.' }, 429);
+  const who = await teamWho(req, env, url); if (!who) return json({ error: 'Sign in to share the raid note.', signin: true }, 401);
+  const raw = await req.text(); if (raw.length > 300000) return json({ error: 'Too big.' }, 413); let b = null; try { b = JSON.parse(raw); } catch (e) { b = null; }
+  const H = /^[0-9A-Za-z_-]{1,24}$/, texts = b && b.texts && typeof b.texts === 'object' ? b.texts : null, pulls = b && Array.isArray(b.pulls) ? b.pulls : null;
+  if (!texts || !pulls || pulls.length > 100 || Object.keys(texts).length > 8 || !Object.entries(texts).every(([h, t]) => H.test(h) && typeof t === 'string' && t.length > 0 && t.length <= 30000)
+    || !pulls.every((p) => p && Number.isInteger(p.f) && p.f > 0 && H.test(String(p.h)) && texts[p.h] != null && /^(NSRT|MRT)$/.test(String(p.s || 'NSRT')))) return json({ error: 'That isn\'t right.' }, 400);
+  // (that report, as the site read it: its boss fights and its players)
+  let rep = null; try { const hit = await caches.default.match(new Request(url.origin + '/api/report?code=' + code, { method: 'GET' })); rep = hit ? await hit.json() : null; if (!rep || !rep.fights) { const d = await gql(env, REPORT_Q, { code }); rep = d && d.reportData && d.reportData.report; } } catch (e) { rep = null; }
+  if (!rep || !rep.fights) return json({ error: 'That report couldn\'t be read.' }, 502);
+  const fights = new Set(rep.fights.filter((f) => f.encounterID > 0).map((f) => f.id)), names = new Set(((rep.masterData && rep.masterData.actors) || []).filter((a) => a.type === 'Player').map((a) => String(a.name || '').toLowerCase()));
+  if (!(await teamChars(who)).some((n) => names.has(n))) return json({ error: 'Only raiders in that night can share its raid note.' }, 403);
+  if (!pulls.every((p) => fights.has(p.f))) return json({ error: 'That isn\'t one of the night\'s pulls.' }, 400);
+  for (let k = 0; k < 3; k++) { const g = await gnoteGet(env, code, url).catch(() => null), doc = g ? g.doc : { pulls: {}, texts: {} }; let add = 0;
+    for (const p of pulls) { if (doc.pulls[p.f]) continue; doc.pulls[p.f] = { h: String(p.h), s: p.s || 'NSRT', by: who.name || '' }; doc.texts[p.h] = texts[p.h]; add++; } /* (the first note saved for a pull stays) */
+    if (!add) return json({ ok: true, added: 0 });
+    if (Object.keys(doc.texts).length > 16) return json({ error: 'Too many different notes for one night.' }, 400);
+    doc.at = Date.now(); const r = await gnotePut(env, code, doc, g && g.etag, url).catch(() => null); if (r) return json({ ok: true, added: add }); }
+  return json({ error: 'Someone else was saving at the same moment. Try again.' }, 409); }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -1926,6 +1959,7 @@ export default {
     if (url.pathname === '/api/wipecheck') return wipeCheck(req, env, url); /* (Flex's answer key for the analysis upgrade, practice links only (Nov 5)) */
     if (url.pathname === '/api/tier') return tier(req, env, url, ctx); /* (the Whole tier: every pull of a boss up to the first kill, Nov 5) */
     if (url.pathname === '/api/mptop') return mpTop(req, env, url); /* (top players' Rotation numbers per spec, dungeon and level, kept a week (Nov 5)) */
+    if (url.pathname === '/api/gnote') return gnote(req, env, url); /* (the game's raid note per pull, shared with the roster (Nov 6)) */
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
