@@ -7784,7 +7784,7 @@ function rootCause(r, opts) {
   const pre = deaths.filter((d) => d.t <= P.t + 0.5 && !(P.wave && P.wave.includes(d))), trig = P.wave ? P.wave : [];
   /* (a tie goes to the missed kick: it came first in the chain) */
   const catOf = (d) => (d.via ? 'kick' : d.cat), tally = (l) => { const m = new Map(); for (const d of l) m.set(catOf(d), (m.get(catOf(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1] || (b[0] === 'kick') - (a[0] === 'kick')); };
-  const who3 = (l) => rcAnd([...new Set(l.map((d) => d.who))].slice(0, 3)) + (new Set(l.map((d) => d.who)).size > 3 ? ' and ' + (new Set(l.map((d) => d.who)).size - 3) + ' more' : '');
+  const who3 = (l) => { const u = [...new Set(l.map((d) => d.who))]; return u.length > 3 ? u.slice(0, 3).join(', ') + ' and ' + (u.length - 3) + ' more' : rcAnd(u); }; /* ("A, B, C and 2 more", not "A, B and C and 2 more") */
   // ---- back through the chain ----
   const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt }), SEP = '\u0001'; /* (SEP: one more arrow inside a link) */
   let cat = 'dead', sure = 0.35, orbBy = [], orbAt = null;
@@ -7816,17 +7816,22 @@ function rootCause(r, opts) {
     cat = p2Long ? 'dps' : 'reset'; sure = 0.5; say(P.t, cat, p2Long ? 'phase 2 ran long' + (p2Len ? ' (' + p2Len + ')' : '') + SEP + 'the raid lead called the wipe (' + T(P.t) + ')' : 'the raid lead called the wipe (' + T(P.t) + ') with ' + pre.length + ' dead'); }
   else {
     // (worn down: a fragment that reached Zul'jan in the intermission first; else the mechanic behind most of the deaths that got the raid here)
-    const fr = evIn('frag', 0, P.t + 1).filter((e) => /^Int/.test(phaseAt(e.t))), tl = tally(pre), tot = wsum(pre), top = tl[0] || ['dead', 0];
+    /* (Nov 5, Flex on a pull worn down by mind controls and ghosts: "it could even say dreadmarch was root cause because too many died": the mind
+       controls and the ghosts touching are one mechanic here, Dreadmarch's ghosts, so they're counted together; the cause is the bigger of the two
+       (the first to happen on a tie), and the chain still ends on too few left) */
+    const fam = (d) => (catOf(d) === 'ghosts' ? 'mc' : catOf(d)), tl = (() => { const m = new Map(); for (const d of pre) m.set(fam(d), (m.get(fam(d)) || 0) + w8(d)); return [...m].sort((a, b) => b[1] - a[1] || (b[0] === 'kick') - (a[0] === 'kick')); })();
+    const fr = evIn('frag', 0, P.t + 1).filter((e) => /^Int/.test(phaseAt(e.t))), tot = wsum(pre); let top = tl[0] || ['dead', 0];
+    if (top[0] === 'mc') { const g = pre.filter((d) => fam(d) === 'mc'), nM = wsum(g.filter((d) => catOf(d) === 'mc')), nG = wsum(g.filter((d) => catOf(d) === 'ghosts')); top = [nM > nG || (nM === nG && catOf(g[0]) === 'mc') ? 'mc' : 'ghosts', top[1]]; }
     if (fr.length && P.t - fr[0].t <= 40) { cat = 'inter'; sure = 0.6; say(fr[0].t, 'inter', (fr.length === 1 ? 'a Fragment of Malacrass' : fr.length + ' Fragments of Malacrass') + ' reached Zul\'jan (' + T(fr[0].t) + ')'); }
     else if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; }
     else { cat = 'dead'; sure = 0.35; }
-    const l = cat === 'inter' ? [] : pre.filter((d) => catOf(d) === cat);
+    const l = cat === 'inter' ? [] : pre.filter((d) => (cat === 'mc' || cat === 'ghosts' ? fam(d) === 'mc' : catOf(d) === cat));
     if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
     else if (cat === 'push') say(l.length ? l[0].t : P.t, 'push', pushLine() + ' ' + l.length + ' (from ' + T(l.length ? l[0].t : P.t) + ')');
     else if (cat === 'dead') { const f = pre.find((d) => d.cat !== 'dead') || pre[0]; if (f) say(f.t, 'dead', f.who + ' died to ' + f.ab + ' (' + T(f.t) + ')'); }
     else if (cat !== 'inter') say(l.length ? l[0].t : P.t, cat, who3(l) + ' died to ' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + (l.length ? ' (' + T(l[0].t) + ')' : ''));
     // (end on what ended it: the last deaths before the point, and what they left the raid short for)
-    const last = chain.length ? chain[chain.length - 1].t : 0, more = pre.filter((d) => d.t > last + 0.5);
+    const last = chain.length ? chain[chain.length - 1].t : 0, more = pre.filter((d) => d.t > last + 0.5 && (cat === 'dead' || !l.includes(d))); /* (the deaths the cause's own line named aren't counted again) */
     say(P.t, 'dead', (more.length ? (more.length === 1 ? more[0].who + ' died' : more.length + ' more died') + ' by ' + T(more[more.length - 1].t) + SEP : '') + 'too few left for ' + nextOf(phaseAt(P.t))); }
   // (after the root: a Guillotine it left short, when the pull was lost in that wave)
   if ((P.wave || P.mc) && cat !== 'guil' && !chain.some((c) => c.cat === 'guil')) { const sk = evIn('soak', P.t - 2, P.t + 20)[0], ex = sk && deaths.filter((d) => d.cat === 'guil' && d.t >= sk.t && d.t <= sk.t + 10);
