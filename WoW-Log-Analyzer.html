@@ -188,6 +188,17 @@ main { min-width: 0; overflow-y: auto; }
 .seg button { background: none; border: 0; color: var(--muted); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 500; }
 .seg button:hover { color: var(--text); }
 .seg button.on { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--gold); }
+/* (Nov 6: Debriefing's phase filter, the site's segmented control, slim; on a phone it scrolls sideways in one line) */
+#view > .phf { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 10px; order: -100; } /* (first, above everything it filters: the page orders its parts with CSS) */
+#view > .phf .phf-seg { margin: 0; padding: 3px; flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+#view > .phf .phf-seg::-webkit-scrollbar { display: none; }
+#view > .phf .phf-seg button { padding: 5px 12px; font-size: 13px; white-space: nowrap; flex: none; }
+#view > .phf .phf-seg button .n { margin-left: 6px; font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
+#view > .phf .phf-seg button.on .n { color: var(--muted); }
+#view > .phf .phf-note { font-size: 12.5px; color: var(--muted); }
+#view .phf-x { display: none !important; }
+#view .phf-none { margin: 4px 0 0; font-size: 12.5px; color: var(--faint); }
+@media (max-width: 700px) { #view > .phf { flex-wrap: wrap; } #view > .phf .phf-seg { width: 100%; } }
 .seg .n { font-size: 12px; color: var(--faint); margin-left: 4px; }
 .seg .n.bad { background: var(--bad-bg); color: #ff8f87; border-radius: 8px; padding: 0 6px; }
 .howto { color: var(--muted); font-size: 14px; margin: -6px 0 10px; }
@@ -73516,5 +73527,63 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 (function () { var b = document.getElementById('boot'), m = document.getElementById('main'); if (!b) return; var done = function () { if (b.parentNode) b.remove(); };
   if (!m || m.children.length) return done(); var mo = new MutationObserver(function () { if (m.children.length) { mo.disconnect(); done(); } }); mo.observe(m, { childList: true }); setTimeout(function () { mo.disconnect(); done(); }, 8000); })();
 </script>
+<script>/* (Nov 6, Flex: "I think debriefing should have a set of filters on it, filter phases and other things", then "Maybe just a phase filter then for
+   overview"; the studio's design): on Debriefing's Overview (and All pulls), one slim row of phase chips under the pull picker, "All · P1 · P2 ·
+   Intermission · P3", each with its mistakes and deaths. A phase shows only that phase's block, and the How it went and Also hurt lines inside
+   its time; the tiles stay whole-pull, and a muted line says so. Remembered per boss on this PC, and in the link (&ph=p2). The Timeline layout
+   has its own phase lanes and Filters, so it's left as it is) */
+(function () {
+  var KEY = 'wla-phf', T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
+  var sx = function (s) { var m = String(s || '').match(/(\d+):(\d\d)/); return m ? +m[1] * 60 + +m[2] : null; };
+  var load = function () { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
+  var save = function (b, v) { try { var o = load(); if (v) o[b] = v; else delete o[b]; localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* (not remembered) */ } };
+  var fromUrl = (function () { try { return (new URLSearchParams(location.search).get('ph') || '').toLowerCase(); } catch (e) { return ''; } })(), urlUsed = false;
+  var boss = function () { return T(document.querySelector('#bossHead .bh-name')) || 'boss'; };
+  /* (the phases, from the phase blocks themselves: the same list the Timeline uses) */
+  var labOf = function (nm) { return /^intermission/i.test(nm) ? 'Intermission' : (nm.match(/^(P\d+)/i) || [])[1] || nm.split(' ')[0]; };
+  /* (All pulls: the night's phase blocks, a name each and no time range) */
+  var nightPh = function (v) { return [].slice.call(v.querySelectorAll('.nmc details.phase.rw2-ph')).map(function (d) { var nm = T(d.querySelector(':scope > summary > b')); if (!nm) return null; var lab = labOf(nm); return { d: d, nm: nm, lab: lab, key: lab.toLowerCase(), a: null, b: null }; }).filter(Boolean); };
+  var phasesOf = function (v) { if (v.querySelector('.nmc details.phase')) return nightPh(v); return [].slice.call(v.querySelectorAll(':scope > .ds-l > details.phase')).map(function (d) { var s = d.querySelector(':scope > summary'), m = T(s).match(/^(.*?)\s+(\d+:\d\d)\s*[–-]\s*(\d+:\d\d)/); if (!m) return null;
+    var nm = m[1].trim(), lab = /^intermission/i.test(nm) ? 'Intermission' : (nm.match(/^(P\d+)/i) || [])[1] || nm.split(' ')[0]; return { d: d, nm: nm, lab: lab, key: lab.toLowerCase(), a: sx(m[2]), b: sx(m[3]) }; }).filter(Boolean); };
+  /* (each phase's mistakes and deaths: the Timeline's own count for it when the page has it, else the lines in its time) */
+  var countOf = function (v, P, rows) { if (P.a == null) return 0; /* (All pulls: no count, the night's blocks have their own) */ var h = [].slice.call(v.querySelectorAll('.dbx-wrap .dbx-h')).filter(function (x) { return T(x.querySelector('b')) === P.nm; })[0];
+    if (h) { var c = T(h.querySelector('.dbx-c')), mi = +((c.match(/(\d+)\s*mistakes?/) || [])[1] || 0), de = +((c.match(/☠\s*(\d+)/) || [])[1] || 0); return mi + de; }
+    return rows.filter(function (r) { return inP(r, P); }).length; };
+  var timesOf = function (r) { var L = []; var t0 = parseFloat(r.getAttribute('data-r482t')); if (!isNaN(t0)) L.push(t0); (T(r).match(/\b\d+:\d\d\b/g) || []).forEach(function (x) { L.push(sx(x)); }); return L; };
+  var inP = function (r, P, last) { if (P.a == null) return true; return timesOf(r).some(function (t) { return t >= P.a - 0.5 && (last ? t <= P.b + 2 : t < P.b); }); };
+  function apply() {
+    var v = document.getElementById('view'); if (!v) return;
+    var on = v.classList.contains('dbt-full') || !!v.querySelector('.nmc details.phase'), P = on ? phasesOf(v) : [];
+    var row = v.querySelector(':scope > .phf');
+    if (P.length < 2) { if (row) row.remove(); v.classList.remove('phf-on'); return; }
+    var b = boss(), want = load()[b] || '';
+    if (fromUrl && !urlUsed) { urlUsed = true; if (P.some(function (p) { return p.key === fromUrl; })) { want = fromUrl; save(b, want); } }
+    if (want && !P.some(function (p) { return p.key === want; })) want = '';
+    var rows = [].slice.call(v.querySelectorAll('.dbt-why .dbt-chn > .dbt-chr, .dbt-why .dbt-add > .dbt-addr'));
+    var sig = b + '|' + P.map(function (p) { return p.key + p.a; }).join(',') + '|' + want;
+    if (!row || row._sig !== sig) {
+      if (!row) { row = document.createElement('div'); row.className = 'phf'; v.insertBefore(row, v.firstChild); }
+      row._sig = sig;
+      row.innerHTML = '<div class="seg phf-seg" role="tablist" aria-label="Show a phase"><button type="button" data-phf=""' + (!want ? ' class="on"' : '') + '>All</button>' +
+        P.map(function (p) { var n = countOf(v, p, rows); return '<button type="button" data-phf="' + p.key + '"' + (want === p.key ? ' class="on"' : '') + ' title="' + p.nm.replace(/"/g, '&quot;') + '">' + p.lab + (n ? '<span class="n">' + n + '</span>' : '') + '</button>'; }).join('') + '</div>' +
+        (want ? '<span class="phf-note">Showing ' + (want === 'intermission' ? 'the intermission' : 'phase ' + want.replace(/^p/, '')) + ' only. The numbers count the whole ' + (P[0].a == null ? 'night' : 'pull') + '.</span>' : '');
+    }
+    var cur = want ? P.filter(function (p) { return p.key === want; })[0] : null, last = cur && cur === P[P.length - 1];
+    v.classList.toggle('phf-on', !!cur);
+    P.forEach(function (p) { p.d.classList.toggle('phf-x', !!cur && p !== cur); });
+    [].forEach.call(v.querySelectorAll(':scope > .ds-l > details.phase, .nmc details.phase'), function (d) { if (!P.some(function (p) { return p.d === d; })) d.classList.toggle('phf-x', !!cur); }); /* (a block that isn't one phase, like the whole fight's, steps aside too) */
+    rows.forEach(function (r) { r.classList.toggle('phf-x', !!cur && !inP(r, cur, last)); });
+    [].forEach.call(v.querySelectorAll('.dbt-why .dbt-chn, .dbt-why .dbt-add'), function (box) { var any = !cur || [].some.call(box.querySelectorAll(':scope > .dbt-chr, :scope > .dbt-addr'), function (r) { return !r.classList.contains('phf-x'); });
+      var q = box.querySelector(':scope > .phf-none'); if (!any && !q) { q = document.createElement('p'); q.className = 'phf-none'; q.textContent = 'Nothing here in this phase.'; box.appendChild(q); } else if (any && q) q.remove(); });
+  }
+  var t = 0, soon = function () { if (t) return; t = setTimeout(function () { t = 0; try { apply(); } catch (e) { console.warn('phase filter', e); } }, 120); };
+  document.addEventListener('click', function (e) { var c = e.target && e.target.closest && e.target.closest('.phf [data-phf]'); if (!c) return; e.preventDefault();
+    var b = boss(), k = c.getAttribute('data-phf'); save(b, k);
+    try { var u = new URL(location.href); if (k) u.searchParams.set('ph', k); else u.searchParams.delete('ph'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (er) { /* (no address) */ }
+    apply(); });
+  /* (the page's main area stays; the view inside it is made afresh for each pull) */
+  var start = function () { var m = document.getElementById('main'); if (!m) { setTimeout(start, 300); return; } new MutationObserver(soon).observe(m, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); soon(); };
+  start();
+})();</script>
 </body>
 </html>
