@@ -7787,7 +7787,7 @@ function rootCause(r, opts) {
   const who3 = (l) => { const u = [...new Set(l.map((d) => d.who))]; return u.length > 3 ? u.slice(0, 3).join(', ') + ' and ' + (u.length - 3) + ' more' : rcAnd(u); }; /* ("A, B, C and 2 more", not "A, B and C and 2 more") */
   // ---- back through the chain ----
   const chain = [], say = (t, cat, txt) => chain.push({ t, cat, txt }), SEP = '\u0001'; /* (SEP: one more arrow inside a link) */
-  let cat = 'dead', sure = 0.35, orbBy = [], orbAt = null;
+  let cat = 'dead', sure = 0.35, orbBy = [], orbAt = null, wornK = null; /* (wornK: on a pull worn down by Dreadmarch, which of its kinds the deaths were) */
   const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
     return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
   const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
@@ -7825,7 +7825,7 @@ function rootCause(r, opts) {
     if (fr.length && P.t - fr[0].t <= 40) { cat = 'inter'; sure = 0.6; say(fr[0].t, 'inter', (fr.length === 1 ? 'a Fragment of Malacrass' : fr.length + ' Fragments of Malacrass') + ' reached Zul\'jan (' + T(fr[0].t) + ')'); }
     else if (top[1] / Math.max(1, tot) >= 0.4 && top[0] !== 'dead') { cat = top[0]; sure = 0.5; }
     else { cat = 'dead'; sure = 0.35; }
-    const l = cat === 'inter' ? [] : pre.filter((d) => (cat === 'mc' || cat === 'ghosts' ? fam(d) === 'mc' : catOf(d) === cat));
+    const l = cat === 'inter' ? [] : pre.filter((d) => (cat === 'mc' || cat === 'ghosts' ? fam(d) === 'mc' : catOf(d) === cat)); if (cat === 'mc' || cat === 'ghosts') wornK = new Set(l.map(catOf));
     if (cat === 'kick') { const k = l[0].via; say(k.t, 'kick', kickLine(k, l)); }
     else if (cat === 'push') say(l.length ? l[0].t : P.t, 'push', pushLine() + ' ' + l.length + ' (from ' + T(l.length ? l[0].t : P.t) + ')');
     else if (cat === 'dead') { const f = pre.find((d) => d.cat !== 'dead') || pre[0]; if (f) say(f.t, 'dead', f.who + ' died to ' + f.ab + ' (' + T(f.t) + ')'); }
@@ -7846,11 +7846,12 @@ function rootCause(r, opts) {
   // (the WHY in one short sentence: no names or times, the timeline below has them)
   const phN = { P1: 'phase 1', P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' }, phP = phaseAt(P.t), widow = chain.some((c) => /didn't run out/.test(c.txt)), hasG = chain.some((c) => c.cat === 'guil');
   const into = [...new Set(deaths.filter((d) => d.via && d.t <= P.t + 6 && /^(axes|orbs|pools)$/.test(d.cat)).map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))];
+  const tooFew = nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' to reach ' + nextOf(phP) + '.', wornS = wornK ? (wornK.has('mc') && wornK.has('ghosts') ? 'Dreadmarch\'s mind controls and ghosts killed too many' : wornK.has('mc') ? 'Dreadmarch\'s mind controls killed too many' : 'Ghosts touching killed too many') + tooFew : '';
   const short = ({ guil: widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
     orbs: orbBy.length === 1 ? orbBy[0] + '\'s purple orb touched other orbs and set off Venom Rupture.' : orbBy.length > 1 ? 'One of ' + rcOr(orbBy.map((n) => n + '\'s')) + ' purple orbs touched other orbs and set off Venom Rupture.' : 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
     kick: P.mc ? 'An unkicked Wail of Terror feared the raid, and the ghosts reached their players.' : 'An unkicked Wail of Terror feared players' + (into.length ? ' into ' + rcAnd(into) : '') + (hasG ? ' and left the Guillotine short.' : '.'),
-    mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : 'Mind controlled players died off the square.',
-    ghosts: 'Ghosts touched, and Malevolent Resonance killed players.', shield: 'Eternal Nightfall\'s shield wasn\'t broken in time.',
+    mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : wornS || 'Mind controlled players died off the square.',
+    ghosts: wornS || 'Ghosts touched, and Malevolent Resonance killed players.', shield: 'Eternal Nightfall\'s shield wasn\'t broken in time.',
     push: 'The push into phase 2 wasn\'t ready, and Dreadful Presence wore the raid down.',
     dps: P.mc ? 'Phase 2 ran long, so Malacrass cast a Dreadmarch the raid couldn\'t handle.' : 'Phase 2 ran long, so the raid lead called the wipe.',
     inter: 'A Fragment of Malacrass reached Zul\'jan in the intermission.', adds: 'Adds lived too long, and Retaliatory Malice killed players.',
