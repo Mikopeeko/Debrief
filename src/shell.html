@@ -11759,6 +11759,7 @@ html body #view .ds-rcard.r321 .rqc-row { display: grid !important; grid-templat
 html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) { display: contents !important; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-i { grid-column: 1; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-nm { grid-column: 2; font-size: 13px !important; font-weight: 600; color: #e8eaed; display: inline-flex; align-items: center; gap: 8px; margin: 0 !important; min-width: 0; overflow: hidden; white-space: nowrap; } /* (Nov 6, Flex: "inconsistencies": one name column, so every note starts in the same place) */
+html body #view .ds-rcard.r321 .rqc-row .rqc-nm { flex-wrap: wrap; row-gap: 1px; } html body #view .ds-rcard.r321 .rqc-row .rqc-nm .rqc-q { flex-basis: 100%; padding-left: 26px; font-size: 12px; font-weight: 400; color: #868f99; white-space: normal; line-height: 1.25; } /* (Nov 6, Main: a qualifier like "(near a green carrier)" sits on its own line, never cut off into the notes) */
 html body #view .ds-rcard.r321 .rqc-row small { grid-column: 3; font-size: 12px !important; color: #868f99 !important; margin: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-bar { grid-column: 4; height: 6px !important; margin: 0 !important; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-pc { grid-column: 5; font-size: 12px !important; text-align: right; margin: 0 !important; }
