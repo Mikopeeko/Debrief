@@ -7799,7 +7799,7 @@ function rootCause(r, opts) {
   const fearOk = (d, k) => { if (!anyFear) return true; const b = wailD(pBy.get(d.p)), at = /^(axes|pools|orbs|frontal)$/.test(d.cat) && d.ab !== 'Gravebound'; return !!(b && b.sp && b.sp.some(([a, z]) => a >= k.t - 1 && a <= d.t + 0.2 && (!at || z == null || z >= d.t - 1.5))); };
   for (const d of deaths) { const k = kickBefore(d.t); if (k && (/^(axes|pools|orbs|ghosts|mc|dead|frontal)$/.test(d.cat) || d.ab === 'Gravebound') && d.ab !== 'Venom Rupture' && fearOk(d, k)) d.via = k; }
   // ---- the point of no return ----
-  const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > 60);
+  const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > Math.min(60, Math.max(20, opts.cut)) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */);
   const cut = early ? null : opts.cut, PN = [];
   /* (Nov 5, Flex: nothing after the wipe call counts, unless the call was early and the raid played on: a kick missed after the call explains no
      death (Oct 29 pull 18 blamed a Wail missed a second after the call)) */
@@ -7926,7 +7926,7 @@ function rootCause(r, opts) {
 function rootCauseGen(r, opts) {
   opts = opts || {}; if (!r || !r.item || r.item.kill) return null;
   const dur = r.duration || r.item.duration || 0, T = fmtT, nm = (p) => String(p || '').split('-')[0], lc = (s) => String(s || '').toLowerCase();
-  const early = opts.cut != null && dur - opts.cut > 60, end = opts.cut != null && !early ? opts.cut : dur;
+  const early = opts.cut != null && dur - opts.cut > Math.min(60, Math.max(20, opts.cut)) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */, end = opts.cut != null && !early ? opts.cut : dur;
   const deaths = (r.deaths || []).filter((d) => d.t <= end + 0.5).slice().sort((a, b) => a.t - b.t).map((d) => ({ t: d.t, who: nm(d.player), ab: d.ability || d.killer || 'something' }));
   const KM = (r.mistakes || []).filter((m) => m.mechanic && m.mechanic !== 'Death' && !/^(pace|phase changes)$/i.test(m.mechanic) && m.t <= end + 0.5 && !m.others), big = (m) => /^(High|Medium)$/.test(m.severity);
   const fits = (m, ab) => { const a = lc(ab), k = lc(m.mechanic); return !!a && (k === a || a.includes(k) || k.includes(a) || lc(m.detail).includes(a)); };
@@ -7956,9 +7956,20 @@ function rootCauseGen(r, opts) {
     const pre = deaths.filter((d) => d.t >= c0), top = tally(pre)[0] || [null, 0], late = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= end - 25).pop();
     if (top[0] && !vague(top[0]) && top[1] >= 2 && top[1] >= pre.length * 0.4) { const ab = top[0], l = pre.filter((d) => d.ab === ab);
       causeM = KM.filter((m) => big(m) && m.t >= c0 && fits(m, ab)).sort((a, b) => raidFirst(a, b) || a.t - b.t)[0] || null; name = causeM ? causeM.mechanic : ab; sp = spOf(name, causeM && causeM.id);
-      if (causeM && causeM.player === 'Raid') say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')');
+      if (causeM && causeM.player === 'Raid' && !/^\d+ players? died (to|in|with) /i.test(causeM.detail || '')) say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')'); /* (a raid line that only counts the dead says nothing the names don't) */
       say(l[0].t, who3(l) + ' died to ' + ab + ' (from ' + T(l[0].t) + ')'); next = causeM ? s1(causeM.fix) : ''; sure = 0.6; short = 'Most of the deaths were ' + ab + ' (' + l.length + ' of ' + pre.length + ').'; }
     else if (late) { causeM = late; name = late.mechanic; sp = spOf(name, late.id); say(late.t, s1(late.detail) + ' (' + T(late.t) + ')'); next = s1(late.fix); sure = 0.6; short = s1(late.detail) + '.'; }
+    else if (pre.length < 3) { /* (Nov 6, Main: Twin Fangs pull 14 read 1 death and "Too many individual mistakes": 1 or 2 deaths are never too many) */
+      const nd = pre.length ? pre.length + ' dead' : 'nobody dead';
+      if (opts.why === 'check') { cat = 'dps'; name = 'Not enough damage'; say(end, 'the boss wasn\'t pushed fast enough, and the wipe was called at the damage check (' + T(end) + ', ' + nd + ')'); next = 'Bring more damage: burst cooldowns on time, and nobody dead early.'; short = 'The boss wasn\'t pushed fast enough for the damage check.'; sure = 0.6; }
+      else if (opts.why === 'mech' && opts.mn) { name = opts.mn; sp = spOf(name); say(opts.at != null ? opts.at : end, opts.mn + (opts.ms ? ': ' + opts.ms : ' went off') + ' (' + T(opts.at != null ? opts.at : end) + ')'); short = opts.mn + (opts.ms ? ': ' + opts.ms : ' went off') + '.'; sure = 0.6; }
+      else if (pre.length && opts.why) { /* (the kill line called it: no kill had this many dead this early. Twin Fangs pull 2: the tank to Concentrated Spittle at 0:06, a second at 0:10) */
+        const tkOf = (d) => { const p = [...((r.players && r.players.values()) || [])].find((q) => nm(q.name) === d.who); return !!(p && p.role === 'tank'); };
+        const l = pre.slice().sort((a, b) => (tkOf(b) ? 1 : 0) - (tkOf(a) ? 1 : 0) || a.t - b.t), d0 = l.find((d) => !vague(d.ab));
+        name = d0 ? d0.ab : 'Early deaths'; sp = d0 ? spOf(name) : null; next = d0 ? '' : 'Stay alive early: press a defensive before the big hits.';
+        say(pre[0].t, pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab + ' (' + T(d.t) + ')').join(', then ')); say(end, 'no kill of this boss had ' + (pre.length > 1 ? 'that many' : 'anyone') + ' dead this early');
+        short = pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab).join(', then ') + ' at ' + T(pre[pre.length - 1].t) + ', and no kill of this boss had ' + (pre.length > 1 ? 'that many' : 'anyone') + ' dead this early.'; sure = 0.6; }
+      else { cat = 'reset'; name = 'Reset on purpose'; say(end, 'the raid lead called the wipe (' + T(end) + ') with ' + nd); short = 'The raid lead called the wipe with ' + nd + '.'; sure = 0.5; } }
     else if (pre.length) { cat = 'dead'; name = 'Too many individual mistakes'; say(pre[0].t, pre.length + ' died to separate mistakes from ' + T(pre[0].t) + ' (' + tally(pre).slice(0, 3).map(([a, k]) => k + ' to ' + a).join(', ') + ')'); short = 'Deaths from different mistakes added up, and too few were left to finish the boss.'; sure = 0.45; }
     else return null;
   }
