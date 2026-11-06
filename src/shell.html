@@ -6,6 +6,20 @@
 <script>/* round 429 themes: the saved theme, before the page draws */(function(){try{var k=localStorage.getItem('wla-theme');if(!k||k==='default')return;document.documentElement.setAttribute('data-theme',k);var f={"aurora":"Sora:wght@600;700","aurora-gold":"Sora:wght@600;700","raid-frame":"Cinzel:wght@700;800","ember-crown":"Cinzel:wght@700;800","glass":"Outfit:wght@600;700","midnight":"Sora:wght@600;700","forge":"Oswald:wght@600;700","death-knight":"Cinzel:wght@700;800","demon-hunter":"Cinzel:wght@700;800","druid":"Cinzel:wght@700;800","evoker":"Cinzel:wght@700;800","hunter":"Cinzel:wght@700;800","mage":"Cinzel:wght@700;800","monk":"Cinzel:wght@700;800","paladin":"Cinzel:wght@700;800","priest":"Cinzel:wght@700;800","rogue":"Cinzel:wght@700;800","shaman":"Cinzel:wght@700;800","warlock":"Cinzel:wght@700;800","warrior":"Cinzel:wght@700;800","abyss":"Space+Grotesk:wght@600;700","dusk-bloom":"Fraunces:opsz,wght@9..144,600;9..144,700","ink":"Unbounded:wght@600;700","hardlight":"Orbitron:wght@600;700","slate":"Archivo+Black","arcade":"Silkscreen:wght@400;700"}[k];if(f){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f+'&display=swap';document.head.appendChild(l);}}catch(e){}})();</script>
 <title>Debrief: WoW raid log review for Mythic progression</title>
 <script>document.documentElement.classList.add('js')</script>
+<script>/* (Nov 5, Flex: "the map replay is so choppy": while it plays, the replay changes its map, raid frames, clock and time bar about 900 times a
+   second, and every page-wide tidier watching the page woke up and walked the whole page each time: 6 to 10 frames a second on a long pull. Changes
+   inside the replay ([data-live]) that only move things (attributes, text, and anything inside the map, raid frames, clock, health bar and time
+   marks) are left out of every page watcher; new content in the replay (its card, its play-by-play) is still seen. A watcher set on something inside
+   the replay still sees everything there) */
+(function () { var MO = window.MutationObserver; if (!MO || MO.__live) return;
+  var LIVE = '[data-live]', MOVE = 'svg, .ztime, .dtm-clk, .dtm-hp, .dtm-rf, .dtm-rff, .dtm-tmk, .dtm-head, .dtm-tlh';
+  var skip = function (m) { var t = m.target, e = t && (t.nodeType === 1 ? t : t.parentElement); if (!e || !e.closest || !e.closest(LIVE)) return false; return m.type !== 'childList' || !!e.closest(MOVE); };
+  var inLive = function (t) { var e = t && (t.nodeType === 1 ? t : t.parentElement); return !!(e && e.closest && e.closest(LIVE)); };
+  function W(cb) { var self = this, ins = []; this._ins = ins; this._mo = new MO(function (L) { var keep = L; if (!ins.some(inLive)) { keep = L.filter(function (m) { return !skip(m); }); if (!keep.length) return; } cb.call(self, keep, self); }); }
+  W.prototype.observe = function (t, o) { if (this._ins.indexOf(t) < 0) this._ins.push(t); return this._mo.observe(t, o); };
+  W.prototype.disconnect = function () { this._ins.length = 0; return this._mo.disconnect(); };
+  W.prototype.takeRecords = function () { var L = this._mo.takeRecords(); return this._ins.some(inLive) ? L : L.filter(function (m) { return !skip(m); }); };
+  W.__live = true; window.MutationObserver = W; })();</script>
 <meta name="description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic.">
 <meta property="og:site_name" content="Debrief"><meta property="og:type" content="website"><meta property="og:title" content="Debrief: WoW raid log review for Mythic progression">
 <meta property="og:description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic."><meta property="og:url" content="https://debriefme.io/"><meta property="og:image" content="https://debriefme.io/og.png">
@@ -13405,6 +13419,7 @@ html body #view > .dbt.dbt.dbx .dbx-cut{position:absolute;top:0;border-left:2px 
 html body #view > .dbt.dbt.dbx .dbx-lust{position:absolute;top:0;z-index:0;background:rgba(232,192,90,.09);border-left:1px solid rgba(232,192,90,.55);cursor:default}
 html body #view > .dbt.dbt.dbx .dbx-lust > span{position:absolute;top:-1px;left:4px;font-size:10.5px;font-weight:700;line-height:14px;color:#e8c05a;white-space:nowrap;pointer-events:none}
 html body #view > .dbt.dbt.dbx .dbx-h .dbx-lu{color:#e8c05a;font-style:normal}
+html.dtm-playing, html.dtm-playing body{overflow-anchor:none}
 .dtm-lust{position:absolute;top:-3px;bottom:-3px;z-index:0;background:repeating-linear-gradient(135deg,rgba(232,192,90,.42) 0 3px,rgba(232,192,90,.14) 3px 6px);box-shadow:inset 0 0 0 1px rgba(232,192,90,.75);border-radius:2px}
 html body #view > .dbt.dbt.dbx .dbx-cut span{position:absolute;right:6px;top:calc(100% + 3px);font-size:11px;line-height:1;color:#f0a19b;white-space:nowrap;font-style:normal}
 html body #view > .dbt.dbt.dbx .dbx-mk{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50% !important;cursor:pointer;font:800 10px/1 var(--body,sans-serif);color:#111;background:none;z-index:1}

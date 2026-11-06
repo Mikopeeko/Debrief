@@ -6,6 +6,20 @@
 <script>/* round 429 themes: the saved theme, before the page draws */(function(){try{var k=localStorage.getItem('wla-theme');if(!k||k==='default')return;document.documentElement.setAttribute('data-theme',k);var f={"aurora":"Sora:wght@600;700","aurora-gold":"Sora:wght@600;700","raid-frame":"Cinzel:wght@700;800","ember-crown":"Cinzel:wght@700;800","glass":"Outfit:wght@600;700","midnight":"Sora:wght@600;700","forge":"Oswald:wght@600;700","death-knight":"Cinzel:wght@700;800","demon-hunter":"Cinzel:wght@700;800","druid":"Cinzel:wght@700;800","evoker":"Cinzel:wght@700;800","hunter":"Cinzel:wght@700;800","mage":"Cinzel:wght@700;800","monk":"Cinzel:wght@700;800","paladin":"Cinzel:wght@700;800","priest":"Cinzel:wght@700;800","rogue":"Cinzel:wght@700;800","shaman":"Cinzel:wght@700;800","warlock":"Cinzel:wght@700;800","warrior":"Cinzel:wght@700;800","abyss":"Space+Grotesk:wght@600;700","dusk-bloom":"Fraunces:opsz,wght@9..144,600;9..144,700","ink":"Unbounded:wght@600;700","hardlight":"Orbitron:wght@600;700","slate":"Archivo+Black","arcade":"Silkscreen:wght@400;700"}[k];if(f){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f+'&display=swap';document.head.appendChild(l);}}catch(e){}})();</script>
 <title>Debrief: WoW raid log review for Mythic progression</title>
 <script>document.documentElement.classList.add('js')</script>
+<script>/* (Nov 5, Flex: "the map replay is so choppy": while it plays, the replay changes its map, raid frames, clock and time bar about 900 times a
+   second, and every page-wide tidier watching the page woke up and walked the whole page each time: 6 to 10 frames a second on a long pull. Changes
+   inside the replay ([data-live]) that only move things (attributes, text, and anything inside the map, raid frames, clock, health bar and time
+   marks) are left out of every page watcher; new content in the replay (its card, its play-by-play) is still seen. A watcher set on something inside
+   the replay still sees everything there) */
+(function () { var MO = window.MutationObserver; if (!MO || MO.__live) return;
+  var LIVE = '[data-live]', MOVE = 'svg, .ztime, .dtm-clk, .dtm-hp, .dtm-rf, .dtm-rff, .dtm-tmk, .dtm-head, .dtm-tlh';
+  var skip = function (m) { var t = m.target, e = t && (t.nodeType === 1 ? t : t.parentElement); if (!e || !e.closest || !e.closest(LIVE)) return false; return m.type !== 'childList' || !!e.closest(MOVE); };
+  var inLive = function (t) { var e = t && (t.nodeType === 1 ? t : t.parentElement); return !!(e && e.closest && e.closest(LIVE)); };
+  function W(cb) { var self = this, ins = []; this._ins = ins; this._mo = new MO(function (L) { var keep = L; if (!ins.some(inLive)) { keep = L.filter(function (m) { return !skip(m); }); if (!keep.length) return; } cb.call(self, keep, self); }); }
+  W.prototype.observe = function (t, o) { if (this._ins.indexOf(t) < 0) this._ins.push(t); return this._mo.observe(t, o); };
+  W.prototype.disconnect = function () { this._ins.length = 0; return this._mo.disconnect(); };
+  W.prototype.takeRecords = function () { var L = this._mo.takeRecords(); return this._ins.some(inLive) ? L : L.filter(function (m) { return !skip(m); }); };
+  W.__live = true; window.MutationObserver = W; })();</script>
 <meta name="description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic.">
 <meta property="og:site_name" content="Debrief"><meta property="og:type" content="website"><meta property="og:title" content="Debrief: WoW raid log review for Mythic progression">
 <meta property="og:description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic."><meta property="og:url" content="https://debriefme.io/"><meta property="og:image" content="https://debriefme.io/og.png">
@@ -13405,6 +13419,7 @@ html body #view > .dbt.dbt.dbx .dbx-cut{position:absolute;top:0;border-left:2px 
 html body #view > .dbt.dbt.dbx .dbx-lust{position:absolute;top:0;z-index:0;background:rgba(232,192,90,.09);border-left:1px solid rgba(232,192,90,.55);cursor:default}
 html body #view > .dbt.dbt.dbx .dbx-lust > span{position:absolute;top:-1px;left:4px;font-size:10.5px;font-weight:700;line-height:14px;color:#e8c05a;white-space:nowrap;pointer-events:none}
 html body #view > .dbt.dbt.dbx .dbx-h .dbx-lu{color:#e8c05a;font-style:normal}
+html.dtm-playing, html.dtm-playing body{overflow-anchor:none}
 .dtm-lust{position:absolute;top:-3px;bottom:-3px;z-index:0;background:repeating-linear-gradient(135deg,rgba(232,192,90,.42) 0 3px,rgba(232,192,90,.14) 3px 6px);box-shadow:inset 0 0 0 1px rgba(232,192,90,.75);border-radius:2px}
 html body #view > .dbt.dbt.dbx .dbx-cut span{position:absolute;right:6px;top:calc(100% + 3px);font-size:11px;line-height:1;color:#f0a19b;white-space:nowrap;font-style:normal}
 html body #view > .dbt.dbt.dbx .dbx-mk{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;margin:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50% !important;cursor:pointer;font:800 10px/1 var(--body,sans-serif);color:#111;background:none;z-index:1}
@@ -37831,12 +37846,20 @@ function bindZoom(box) {
     const k = vb[2] / 480; // 1 at the mechanic view
     for (const g of svg.querySelectorAll('g.ic')) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); }
     // (labels that would hang off an edge slide in just enough to show in full)
-    const SR = svg.getBoundingClientRect(); if (SR.width) { const u = vb[2] / SR.width, m = 4;
-      for (const g of svg.querySelectorAll('g.icl')) { const b = g.getBoundingClientRect(); if (!b.width) continue; let dx = 0, dy = 0;
+    /* (Nov 5, Flex: "the map replay is so choppy": every label is measured first, then the ones off an edge are moved. Measuring a label right
+       after moving the one before it made the page lay out again for every label, every frame of a replay) */
+    /* (and each label is measured once, its size and where it sits from its point, at this zoom; after that it's worked out from its point, so a
+       replay doesn't measure the page while it plays) */
+    if (!box._srOn) { box._srOn = 1; const clr = () => { box._sr = null; if (box._lc) box._lc.clear(); }; if (window.ResizeObserver) new ResizeObserver(clr).observe(svg); window.addEventListener('scroll', clr, { passive: true, capture: true }); } /* (the map's box, remembered until the page is resized or scrolled) */
+    const SR = box._sr || (box._sr = svg.getBoundingClientRect()); if (SR.width) { const u = vb[2] / SR.width, m = 4, LB = [...svg.querySelectorAll('g.icl')], LC = box._lc || (box._lc = new Map()), kk = k.toFixed(3);
+      const RB = LB.map((g) => { const ax = SR.left + (+g.dataset.x - vb[0]) / u, ay = SR.top + (+g.dataset.y - vb[1]) / u, key = g.textContent + '|' + kk; let c = LC.get(key);
+        if (!c) { const r = g.getBoundingClientRect(); if (!r.width) return r; c = [r.left - ax, r.top - ay, r.width, r.height]; if (LC.size > 4000) LC.clear(); LC.set(key, c); }
+        return { left: ax + c[0], top: ay + c[1], right: ax + c[0] + c[2], bottom: ay + c[1] + c[3], width: c[2] }; });
+      for (let li = 0; li < LB.length; li++) { const g = LB[li], b = RB[li]; if (!b.width) continue; let dx = 0, dy = 0;
         if (b.width < SR.width - 2 * m) { if (b.left < SR.left + m) dx = SR.left + m - b.left; else if (b.right > SR.right - m) dx = SR.right - m - b.right; }
         if (b.top < SR.top + m) dy = SR.top + m - b.top; else if (b.bottom > SR.bottom - m) dy = SR.bottom - m - b.bottom;
         if (dx || dy) { const x = +g.dataset.x, y = +g.dataset.y; g.setAttribute('transform', 'translate(' + (x + dx * u).toFixed(2) + ' ' + (y + dy * u).toFixed(2) + ') scale(' + k + ') translate(' + -x + ' ' + -y + ')'); } } }
-    const w = svg.getBoundingClientRect().width || 480; if (bar) bar.style.width = (10 * yd * w / vb[2]).toFixed(1) + 'px';
+    const w = SR.width || 480; if (bar) bar.style.width = (10 * yd * w / vb[2]).toFixed(1) + 'px'; /* (the map's size doesn't change with what's inside it) */
     const f = box.querySelector('.zfocus'), u = box.querySelector('.zfull');
     if (f) { const atFull = vb[2] >= full[2] * 0.95; f.classList.toggle('on', !atFull); u.classList.toggle('on', atFull); }
   };
@@ -71505,6 +71528,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
     else if (P.fkey !== key + '|' + (SS.mechP || '')) { P.fkey = key + '|' + (SS.mechP || ''); P.pick = null; P.clip = null; P.lastXo = F.xo; P.keep = P.mt != null; }
     d.classList.add('dtm-on');
     var box = d.querySelector(':scope > .dtm'); if (!box) { box = document.createElement('div'); box.className = 'dtm dbt-p'; d.insertBefore(box, d.querySelector(':scope > .dbx-wrap')); }
+    box.setAttribute('data-live', ''); /* (its moving parts don't wake the page's watchers: see the note at the top of the page (Nov 5)) */
     box._X = X;
     var SP = X.phs.filter(function (p) { return p.s; }).map(function (p, k, a) { var tm = String(p.s).match(/(\d+:\d\d)\s*[–-]\s*(\d+:\d\d)/), sx = function (s) { var q = s.split(':'); return +q[0] * 60 + +q[1]; }; var a0 = tm ? sx(tm[1]) : p.t, b0 = tm ? sx(tm[2]) : a[k + 1] ? a[k + 1].t : X.LEN; return { p: p, a: a0, b: b0 }; });
     if (!SP.length) SP = [{ p: { n: 'Whole fight' }, a: 0, b: X.LEN }];
@@ -72138,7 +72162,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
           /* (one slim line per unit (name, bar, %), so the corner stays small and the players there still show) */
           if (!el) { el = document.createElement('div'); el.className = 'dtm-hp'; el.style.cssText = 'position:absolute;left:8px;top:8px;z-index:3;width:236px;max-width:56%;padding:4px 8px;border-radius:4px;background:rgba(10,12,16,.72);border:1px solid rgba(255,255,255,.08);pointer-events:none;font-size:12px;line-height:17px'; mw.appendChild(el); }
           /* (inside the map's own top-left corner, under the bar with the replay's speed buttons (Flex, Nov 3: "its covering up the speed of the video")) */
-          var sv = mw.querySelector('svg.zmap'), tp = sv ? Math.max(8, Math.round(sv.getBoundingClientRect().top - mw.getBoundingClientRect().top) + 8) + 'px' : '46px'; if (el.style.top !== tp) el.style.top = tp;
+          var tp = mw._hpTp; if (!tp) { var sv = mw.querySelector('svg.zmap'); tp = sv ? Math.max(8, Math.round(sv.getBoundingClientRect().top - mw.getBoundingClientRect().top) + 8) + 'px' : '46px'; mw._hpTp = tp; if (!mw._hpRO && window.ResizeObserver) { mw._hpRO = new ResizeObserver(function () { mw._hpTp = null; }); mw._hpRO.observe(mw); } } if (el.style.top !== tp) el.style.top = tp; /* (its place, remembered until the map's box changes size: no measuring every frame (Nov 5)) */
           el.style.display = ''; var row = function (x, boss) { var pc = x.v * 100, tx = pc >= 10 ? Math.round(pc) + '%' : pc.toFixed(1) + '%';
             return '<div style="display:flex;align-items:center;gap:7px"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (boss ? '#e6e6e6' : '#aeb6bf') + ';font-weight:' + (boss ? 600 : 400) + '">' + E(x.n) + '</span>' +
               '<span style="flex:0 0 56px;height:' + (boss ? 5 : 4) + 'px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden"><span style="display:block;height:100%;width:' + Math.max(0, Math.min(100, pc)).toFixed(1) + '%;background:' + (boss ? '#e5534b' : '#e8a23a') + '"></span></span>' +
@@ -72232,7 +72256,8 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
           if (!el) { el = document.createElement('div'); el.className = 'dtm-rf'; el.innerHTML = '<div class="dtm-rfh" title="Drag to move the raid frames"></div><div class="dtm-rfg">' + RFL.map(function (p) { var cc = (typeof CC !== 'undefined' && CC[p.name]) || '#7a8090';
               return '<div class="dtm-rff" data-pn="' + E(p.name) + '" title="' + E(p.name) + ' (click to follow)"><i style="background-color:' + cc + ';width:100%"></i><em></em><span class="rfn">' + E(p.name) + '</span><span class="rfd"></span><u></u><s></s></div>'; }).join('') + '</div>';
             mw.appendChild(el); rfDrag(mw, el); el._fr = [].slice.call(el.querySelectorAll('.dtm-rff')); }
-          if (!el._placed || el._W !== mw.clientWidth) { el._placed = 1; el._W = mw.clientWidth; rfPlace(mw, el); }
+          if (mw._cw == null) { mw._cw = mw.clientWidth; if (!mw._cwRO && window.ResizeObserver) { mw._cwRO = new ResizeObserver(function () { mw._cw = null; }); mw._cwRO.observe(mw); } } /* (the box's width, remembered until it changes size: no measuring every frame (Nov 5)) */
+          if (!el._placed || el._W !== mw._cw) { el._placed = 1; el._W = mw._cw; rfPlace(mw, el); }
           var pbn = box.querySelector('.zplay'), playing = !!pbn && /Pause/.test(pbn.textContent);
           var fol = SS.mechP || '', icn = false; RFL.forEach(function (p, i) { var fr = el._fr[i]; if (!fr) return; var hv = rfHp(p.guid, ft), ds = RFD[p.guid] || [], dt = null; ds.forEach(function (t) { if (t <= ft + 0.05 && (dt == null || t > dt)) dt = t; });
             var dead = dt != null && !(hv[1] > dt + 0.5 && hv[0] > 0.01), pc = dead ? 0 : Math.max(0, Math.min(1, hv[0])) * 100;
@@ -72250,7 +72275,7 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
             /* (round 2: the major defensive or external up on them, the latest one) */
             var df = dead ? null : rfDef(p, ft), u = fr.children[4], dk = df ? df.n + '|' + (df.by ? 1 : 0) : ''; if (u && u._k !== dk) { u._k = dk; u.className = df ? (df.by ? 'ext' : 'own') : ''; u.innerHTML = df && w.spellIcon ? w.spellIcon(df.id, df.n) : ''; if (df) icn = true; }
             /* (round 2: a big hit while playing, 30% or more within a second: a 0.6 s red flash, not again within 1.5 s) */
-            if (playing && !dead && (fr._hitT == null || ft - fr._hitT > 1.5 || ft < fr._hitT)) { var dr = rfDrop(p.guid, ft); if (dr >= 0.3) { fr._hitT = ft; fr._hitTx = 'Took ' + Math.round(dr * 100) + '% in one second at ' + rfT(ft) + (function (n) { return n ? ' (' + n + ')' : ''; })(rfHitBy(p, ft)); fr.classList.remove('hit'); void fr.offsetWidth; fr.classList.add('hit'); (function (f0) { setTimeout(function () { f0.classList.remove('hit'); }, 650); })(fr); } }
+            if (playing && !dead && (fr._hitT == null || ft - fr._hitT > 1.5 || ft < fr._hitT)) { var dr = rfDrop(p.guid, ft); if (dr >= 0.3) { fr._hitT = ft; fr._hitTx = 'Took ' + Math.round(dr * 100) + '% in one second at ' + rfT(ft) + (function (n) { return n ? ' (' + n + ')' : ''; })(rfHitBy(p, ft)); fr.classList.remove('hit'); (function (f1) { requestAnimationFrame(function () { f1.classList.add('hit'); }); })(fr); /* (the flash restarts on the next frame, without forcing a layout (Nov 5)) */ (function (f0) { setTimeout(function () { f0.classList.remove('hit'); }, 650); })(fr); } }
             if (fr._hitT != null && (ft < fr._hitT - 0.5 || ft > fr._hitT + 6)) { fr._hitT = null; fr._hitTx = ''; }
             /* (the hover says it all: debuffs, a dispel, the defensive with who and how long, the last big hit) */
             var tt = p.name + (ic.length ? ': ' + ic.map(function (x) { return x[1]; }).join(', ') : '') + (dsp ? ' (' + dsp[1] + ' can be dispelled)' : '') + (df ? '. ' + df.n + (df.by ? ' from ' + df.by : '') + (df.z != null ? ' (' + Math.max(0, Math.ceil(df.z - ft)) + ' s left)' : '') : '') + (fr._hitTx ? '. ' + fr._hitTx : '') + ' (click to follow)';
@@ -72373,8 +72398,9 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
         var seekT = P.mt != null ? P.mt : at; var rg = mb.querySelector('.zrange'); if (rg) { rg.value = Math.max(0, Math.min(fr.length - 1, Math.round(seekT / STEP))); rg.dispatchEvent(new Event('input')); } grow(); fade(seekT); crack(seekT); banner(seekT); hpBars(seekT); rfFrames(seekT); tlm(seekT); tl3Clk(seekT); tl3Marks(); tl3Card(); cam(true, seekT);
         if (FOLLOW) { var sv0 = mb.querySelector('svg.zmap'), pdn = null; if (sv0) { sv0.addEventListener('pointerdown', function (e) { pdn = [e.clientX, e.clientY]; }); sv0.addEventListener('pointerup', function (e) { if (pdn && Math.hypot(e.clientX - pdn[0], e.clientY - pdn[1]) > 5) P.camFree = true; pdn = null; }); }
           [].slice.call(mb.querySelectorAll('.zin, .zout, .zfull, .zfocus')).forEach(function (b0) { b0.addEventListener('click', function () { P.camFree = true; }); }); }
-        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); tl3Clk(ft); tl3Marks(); tl3Card(); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
+        mb._onFrame = function (ft) { P.mt = ft; grow(); fade(ft); crack(ft); banner(ft); hpBars(ft); rfFrames(ft); tlm(ft); tl3Clk(ft); if (!mb._mkT || Date.now() - mb._mkT > 1000) { mb._mkT = Date.now(); tl3Marks(); } /* (the slider's marks follow the layout, not the clock: once a second, so playing doesn't measure the page every frame (Nov 5)) */ tl3Card(); cam(false, ft); var hd = box.querySelector('.dtm-head'); if (hd) hd.style.left = XP(ft) + '%'; var nw = box.querySelector('.dtm-now'); if (nw) { var N1 = nowOf(ft); nw.className = 'dtm-now lv-' + N1.lv; nw.innerHTML = N1.html; }
           var pb = mb.querySelector('.zplay'), playing = !!pb && /Pause/.test(pb.textContent);
+          { var rt0 = document.documentElement; if (!rt0.classList.contains('dtm-playing')) rt0.classList.add('dtm-playing'); clearTimeout(rt0._dtmT); rt0._dtmT = setTimeout(function () { rt0.classList.remove('dtm-playing'); }, 400); } /* (while frames are drawn, and 0.4 s after the last, no scroll anchoring: it nudged the page about 8 times a second on a phone, and every nudge woke the page's scroll watchers (Nov 5)) */
           if (P.clip) { if (playing && ft >= P.clip.to) { P.clip = null; P.auto = true; pb.click(); P.auto = false; } return; } /* (a picked moment plays in from 4 s before and stops just after it) */
           if (!playing) { if (!P.seek) return; P.seek = false; } /* (the play-by-play follows while it plays, and after a jump: a click on the strip, a drag on the slider) */
           var e0 = lastAt(ft); if (e0 && e0.k !== P.pick) setCur(e0.k, true); };
