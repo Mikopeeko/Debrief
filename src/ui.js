@@ -11154,7 +11154,7 @@ const RC_NEXT = { guil: 'Get 5 into every Guillotine soak, each with a defensive
 /* (Nov 5, the studio, from the guide: on a pull worn down by Dreadmarch, Next time follows what killed people: deaths to the mind control itself
    get the mind-controlled players' job, the ghosts touching get the ghosts' job, both get both. "Face your ghost" stays for ghosts reaching players) */
 const RC_NEXT_MC = 'If you\'re mind-controlled in Dreadmarch, press your cancel macro and stay stacked on the square, so the raid can CC you and break your shield.';
-const rcNextOf = (c, o) => { const k = o && o.kinds; if ((c === 'mc' || c === 'ghosts') && k && k.length) return [k.includes('mc') ? RC_NEXT_MC : '', k.includes('ghosts') ? RC_NEXT.ghosts : ''].filter(Boolean).join(' '); return RC_NEXT[c] || ''; };
+const rcNextOf = (c, o) => { if (c === 'dead' && o && o.nextCat) c = o.nextCat; /* (individual mistakes: the fix for what most were) */ const k = o && o.kinds; if ((c === 'mc' || c === 'ghosts') && k && k.length) return [k.includes('mc') ? RC_NEXT_MC : '', k.includes('ghosts') ? RC_NEXT.ghosts : ''].filter(Boolean).join(' '); return RC_NEXT[c] || ''; };
 try { window.rcNext = (c, o) => rcNextOf(c, o); window.spellIcon = spellIcon; window.refreshIcons = refreshIcons; window.rcSpells = (() => { const o = {}; for (const c of Object.values(E.RC_CAT || {})) if (c.sp) { o[c.nm.toLowerCase()] = String(c.sp[0]); o[c.nm.replace(/\s*\(.*$/, '').toLowerCase()] = String(c.sp[0]); o[String(c.sp[1]).toLowerCase()] = String(c.sp[0]); } return o; })(); } catch (e) { /* (no page: the tests) */ }
 const RC_FIRST = { guil: 'a short Guillotine soak', kick: 'a missed Wail of Terror kick', orbs: 'an orb touch', axes: 'deaths to the axes', mc: 'a mind control', ghosts: 'a ghost collision', bombs: 'a Gloombomb',
   adds: 'the adds', inter: 'a Fragment reaching Zul\'jan', shield: 'a late shield break', push: 'a bad push into phase 2', dps: 'phase 2 running long', pools: 'deaths in the pools', frontal: 'a Sever hit', dead: 'deaths adding up' };
@@ -15079,7 +15079,9 @@ function coachSummary0(reps, name) {
               soak = soak || isS; kick = kick || isK; orb = orb || isO;
               if (isK || isS) { for (const m of r.mistakes) { if (m.player === 'Raid' || m.t < t0 - 20 || m.t > t0 + 3 || /^Soaked /.test(m.detail || '')) continue; const mk = lc0(m.mechanic); if (isK ? mk === 'kick assignment' : /guillotine assignment$/.test(mk)) add(isK ? 'Missed the kick' : 'Missed their soak', r, m.player); } }
               else if (isO) (rc.orbBy || []).forEach((v) => add('Carried the orb that burst', r, v)); /* (the root cause's own carriers: the one rule, E.orbBurstBy (Nov 5)) */
-              else if (/^(dead|dps|push|shield|inter)$/.test(rc.cat)) return; /* (no one player is behind these: no names, and no "the log names no one") */
+              else if (rc.cat === 'dead') { (rc.most || []).forEach((m) => { for (let i = 0; i < m.n; i++) add('What added up', r, m.nm); }); return; } /* (individual mistakes: what they were, never one name) */
+              else if (/^(dps|push|shield|inter)$/.test(rc.cat)) return; /* (no one player is behind these: no names, and no "the log names no one") */
+              else if (rc.cat === 'adds' && (rc.bombBy || []).length) rc.bombBy.forEach((v) => add('Their Gloombomb missed the add', r, v));
               else if (E.rcCat) { for (const d of r.deaths || []) if (d.t <= rc.t + 5 && E.rcCat(d.ability || d.killer) === rc.cat) add('Died to it', r, d.player); }
               if (cnt() === n0) unk++; return; }
             const isKick = !!o.kick || /\bkick|interrupt|got .+ off\b/i.test(o.detail || '') || /wail of terror|spiteful soulcoiler|eternal nightfall/.test(mo), isOrb = /coalesced venom|venom rupture/.test(mo), isSoak = /guillotine|soak/.test(mo) || /soak/i.test(o.detail || '');

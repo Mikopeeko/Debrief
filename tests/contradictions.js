@@ -137,6 +137,11 @@ function checkPull(key) {
       const vr = (deaths) => deaths.find((d) => /^venom rupture$/i.test(d.ability || '') && d.t >= o.chain[0].t - 0.5);
       if (o.cat === 'orbs' && o.chain[0] && o.chain[0].cat === 'orbs') { const fv = vr(r.deaths.slice().sort((a, b) => a.t - b.t)), want = fv ? at(fv.t) : []; if (want.length && !want.every((n) => o.short.includes(n) && o.line.includes(n))) say(pull, 'root', 'the orb root cause doesn\'t name its carrier (' + want.join(', ') + '): "' + o.short + '"'); }
       if (o.reset && !Array.isArray(o.reset.who)) say(pull, 'root', 'the reset doesn\'t say whose orb it was');
+      /* (Nov 5, Flex: individual mistakes never point at one person; a single personal mistake is the cause only when it hit the raid at once) */
+      if (o.cat === 'dead') { if ((o.marks || []).some((m) => m.k === 'root')) say(pull, 'root', 'Too many individual mistakes tags one death as the root cause');
+        const nD = (r.deaths || []).filter((d) => d.t <= o.t + 0.5).length, nM = (o.most || []).reduce((s, m) => s + m.n, 0); if (nM > nD) say(pull, 'count', 'what added up counts ' + nM + ' deaths, but only ' + nD + ' died by ' + E.fmtT(o.t)); }
+      if (/^(axes|pools|frontal|ghosts|mc|bombs|orbs)$/.test(o.cat) && !/^(a wave|mass mind control)$/.test(o.why) && !o.early) say(pull, 'root', o.name + ' is the one cause of a pull worn down by separate deaths (' + o.why + ')');
+      if (o.cat === 'adds' && (o.bombBy || []).some((n) => !o.short.includes(n))) say(pull, 'root', 'the add wipe doesn\'t name whose Gloombomb missed');
       /* (Main, Nov 5: All pulls' "Carried the orb that burst" lists the root cause's own carriers, the same rule as the sentence) */
       if (o.cat === 'orbs') { const ob = o.orbBy || [], want = o.orbAt != null ? E.orbBurstBy(r, o.orbAt - 0.01, o.orbAt + 0.01) : [];
         if (JSON.stringify(ob) !== JSON.stringify(want)) say(pull, 'root', 'the orb root cause names ' + (ob.join(', ') || 'no one') + ', but the one rule at ' + E.fmtT(o.orbAt || 0) + ' gives ' + (want.join(', ') || 'no one'));
