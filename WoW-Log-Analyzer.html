@@ -23987,18 +23987,33 @@ async function topKillsOf(run, v) {
 // after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
 // same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
 // one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
-const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime fightPercentage}}}}}`;
-const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+// (Nov 6, Flex: the PULLS tile read 157 while Whole tier read 162: the tile listed only the reports filed under the boss's raid, and a night
+// that opened with a Mythic+ key is filed under Mythic+. Now every count of a guild's pulls of a boss is this one list, the Whole tier's.)
+// The guild's pulls of a boss up to its first kill: [report, fight, start (ms), kill 1/0, whole-fight % left, phase boss % left, last phase,
+// 1 when it ended in an intermission, length (s)]. v: { g: guild, e, d }
+const TIER_ZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+const TIER_Q = `query($g:Int!,$z:Int,$s:Float,$e:Int!,$d:Int!,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,startTime:$s,limit:50,page:$p){has_more_pages data{code startTime fights(encounterID:$e,difficulty:$d){id kill startTime endTime fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}}}}}`;
+async function tierPullsOf(run, v) {
+  const z = await run(TIER_ZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
+  const at = [], seen = new Map(); /* (50 reports a page: a hundred with these fields is more than Warcraft Logs answers in one go) */
+  const list = async (z, s0) => { for (let p = 1; p <= 8; p++) {
+    const d = await run(TIER_Q, { g: v.g, z, s: s0, e: v.e, d: v.d, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) { if (seen.has(rep.code)) continue; seen.set(rep.code, seen.size); for (const f of rep.fights || []) {
+      at.push([rep.code, f.id, rep.startTime + f.startTime, f.kill ? 1 : 0, f.fightPercentage != null ? f.fightPercentage : null, f.bossPercentage != null ? f.bossPercentage : null, f.lastPhase || 0, f.lastPhaseIsIntermission ? 1 : 0, Math.round((f.endTime - f.startTime) / 1000)]); } }
+    if (!R.has_more_pages) break; } };
+  /* (the raid's reports, then every report of the guild since its first pull of the boss: Warcraft Logs files a log under the zone it starts in,
+     so a night that opened with a Mythic+ key (Wolfthorn's Nov 4) is under Mythic+, not the raid (Main's check, Nov 5)) */
+  await list(zone, null);
+  const t0 = at.length ? Math.min(...at.map((x) => x[2])) : null; await list(null, t0 != null ? t0 - 86400000 : null);
+  at.sort((a, b) => a[2] - b[2]);
+  /* (a pull logged twice is the copy from the report with more of the night's pulls, so a night stays in one report where it can) */
+  const per = new Map(); for (const x of at) per.set(x[0], (per.get(x[0]) || 0) + 1);
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x[2] - l[2] < 20000) { if (per.get(x[0]) > per.get(l[0]) || (per.get(x[0]) === per.get(l[0]) && seen.get(x[0]) < seen.get(l[0]))) pulls[pulls.length - 1] = x; continue; /* (a tie: the raid's own report, the same one for every pull of the night) */ } pulls.push(x); }
+  const k1 = pulls.findIndex((x) => x[3]); if (k1 >= 0) pulls.length = k1 + 1; /* (up to the first kill) */
+  return pulls;
+}
 async function guildProgOf(run, v) {
-  const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
-  const at = [];
-  for (let p = 1; p <= 4; p++) {
-    const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
-    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill, left: f.fightPercentage != null ? f.fightPercentage : null });
-    if (!R.has_more_pages) break;
-  }
-  at.sort((a, b) => a.t - b.t);
-  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; if (x.left != null && (l.left == null || x.left < l.left)) l.left = x.left; continue; } pulls.push({ ...x }); }
+  /* (the Whole tier's list, up to the day of the pull asked about) */ const pulls = (await tierPullsOf(run, v)).filter((x) => x[2] <= v.t + 86400000).map((x) => ({ t: x[2], kill: !!x[3], left: x[4] }));
   /* (each pull's boss health left, for the Debriefing pace chart (Oct 24)) */ const plOf = (L) => L.map((x) => [x.t, x.kill ? 0 : x.left == null ? null : Math.round(x.left * 10) / 10]);
   const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null, pl: plOf(pulls) };
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
@@ -24077,7 +24092,7 @@ async function playerAb(creds, v) {
   return playerAbOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
-  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
+  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t + '&v=2'); // (v=2: the Whole tier's list (Nov 6))
   return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
@@ -24496,7 +24511,7 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, tierPullsOf, guildProgOf, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
 
@@ -26569,6 +26584,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-06', h: [], n: ['Debriefing: pick a phase (All · P1 · P2 · Intermission · P3) to see only that phase, on one pull or All pulls. Each chip shows the mistakes and deaths in that phase.', 'Debriefing: Phase changes says how long each phase took next to top kills, like "Phase 2 took 2:57, about 0:27 slower than top kills", instead of a %.'], f: ['The Pulls number on Debriefing, the Pace chart and Home now count every night, the same as Whole tier. A night whose log started with a Mythic+ key was left out before.', 'Debriefing: Eternal Nightfall no longer shows twice in phase 2. The second one is its kicks: Eternal Nightfall (Kicks).'] },
   { d: '2026-11-05', h: [{ t: 'Mythic+: a Rotation tab for every key', d: 'Every key has a Run tab and a Rotation tab, on the website and in Debrief Companion. Rotation shows each player\'s fixes for the whole key or one pull, like the raid recap, with every pull\'s biggest fix beside it.' }, { t: 'Whole tier: every pull from pull 1 to now, on one page', d: 'A Whole tier button on the All pulls card shows every pull of the boss across all your nights, up to your first kill: the boss health at each, what wiped it, your best night by night, and which causes got better or worse.' }, { t: 'Themes that reshape the boxes', d: 'Three bolder looks in Menu > Theme: Hardlight (sci-fi corners), Slate (flat cards with a strip) and Arcade (a retro game). Only the look changes.' }, { t: 'Three new themes', d: 'Menu > Theme has three new looks: Abyss (deep water and mint), Dusk Bloom (a warm sunset) and Ink (black and white, so mistakes stand out).' }, { t: 'Your raid note, straight from the game', d: 'Debriefing now checks each pull against the NSRT note your raid had loaded for it, with nothing to paste. If the note changes mid-raid, every pull keeps its own. Needs the newest Debrief Companion.' }, { t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ["The site opens much faster when you come back: your browser keeps it until there's a new version (on a slow phone a return visit went from about 20 s to 2 s), and while it loads for the first time you see a Getting Debrief ready card instead of an empty page. A first visit also downloads about 12% less.", 
     "Debrief Companion: the Mythic+ pop-up has its Rotation tab now, each player's fixes for the whole key or one pull. Update Debrief Companion to see it.",'The default look has glowing gold edges and cut corners on every box, like the Hardlight theme.', 
     "Debrief Companion: the raid recap reads in plain sentences, each mechanic once, with its nickname, and the worst first. A clean mechanic is always green.",
@@ -40196,6 +40212,13 @@ function guildHist(it0) { if (!it0 || !it0.gid || !WCL.guildProg) return null; c
   if (G === undefined) { GHIST.set(key, null); Promise.resolve(WCL.guildProg(S.wclCreds, { g: it0.gid, e: it0.id, d: WCL_DIFF_OF[it0.diffId] || 5, t: it0.wallMs || it0.startMs || Date.now() } /* (the real date: startMs is the log's own clock) */)).then((o) => { GHIST.set(key, o && o.pl && o.pl.length ? o : false); if (o && o.pl && o.pl.length && S.tab === 'audit' && S.item) liveRedraw(); }).catch(() => GHIST.set(key, false)); return null; }
   if (!G) return null; const by = new Map(); for (const [t, left] of G.pl) { const n = nightOf(t); if (!by.has(n)) by.set(n, []); by.get(n).push({ at: t, left, kill: left === 0 }); }
   return { earlier: [...by].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([n, list]) => ({ n, label: nightLabel(list[0].at), list, kill: list.find((x) => x.kill) || null })), guild: true }; }
+/* (Nov 6: Home's goal card counts the boss's pulls from the same list as the PULLS tile and Whole tier: the team's own on Warcraft Logs, up to now.
+   Until it comes (or with no Warcraft Logs id), the nights saved on this PC) */
+const HDTIER = new Map();
+function hdTierOf(g, v, redraw) { if (!g || g.kind === 'char' || !(+g.id > 0) || !v || !v.id || !WCL.guildProg) return null; const d = WCL_DIFF_OF[v.diffId] || 5, k = g.id + '|' + v.id + '|' + d, o = HDTIER.get(k);
+  if (o === undefined) { HDTIER.set(k, null); const t = Math.floor(Date.now() / 36e5) * 36e5; /* (the hour: one answer an hour, shared through the site) */
+    Promise.resolve(WCL.guildProg(S.wclCreds, { g: +g.id, e: v.id, d, t })).then((x) => { const pl = (x && x.pl) || []; HDTIER.set(k, pl.length ? { n: x.pulls, nn: x.nights || new Set(pl.map((p) => nightOf(p[0]))).size } : false); if (pl.length) redraw(); }).catch(() => HDTIER.set(k, false)); return null; }
+  return o || null; }
 /* (the guild's Warcraft Logs history for this boss: 'loading', 'ok', 'failed', or 'none' when the log has no guild) */
 const ghState = (it0) => { if (!it0 || !it0.gid || !WCL.guildProg) return 'none'; const v = GHIST.get(it0.gid + '|' + it0.id + '|' + it0.diffId + '|' + Math.floor((it0.wallMs || it0.startMs || 0) / 864e5)); return v === undefined || v === null ? 'loading' : v === false ? 'failed' : 'ok'; };
 function paceTile(num, it0, reps, nT, kl, onT) { let PANEL = ''; const tile = (() => {
@@ -58413,6 +58436,7 @@ function hdDash(X) {
   // (3. the goal: the boss you're on, its best pull, each night's best, the phases, and the one fix for the next pull; on farm, what's next)
   const gl = gb ? list.filter((v) => v.boss === gb).sort((a, b) => a.at - b.at) : [], gnb = bestOf(gl), gp = pctOf(gnb);
   const per = new Map(); for (const v of gl) { const k = nightOf(v.at), o = per.get(k); if (!o || (v.left != null && (o.left == null || v.left < o.left))) per.set(k, v); }
+  const gT = gb ? hdTierOf(g, gl[gl.length - 1], redraw) : null, gTn = gT ? gT.n : gl.length, gTnn = gT ? gT.nn : per.size; /* (the tier's own count, as on the PULLS tile and Whole tier) */
   const pts = [...per.values()].sort((a, b) => a.at - b.at).slice(-10), dn = (v) => (v.left != null ? pctOf(v) : 100), lastP = pts[pts.length - 1];
   const prevMax = pts.length > 1 ? Math.min(...pts.slice(0, -1).map(dn)) : null, newBest = !!lastP && prevMax != null && dn(lastP) < prevMax, gTime = gl.reduce((s, v) => s + (v.dur || 0), 0);
   const gN = gb ? nightsL.find((n) => n.by.some((x) => x.boss === gb)) : null, gOp = gN ? nightOpen(gN.by.find((x) => x.boss === gb).l) : null;
@@ -58425,7 +58449,7 @@ function hdDash(X) {
     const bar = gp != null ? '<div class="hd-gbw"><div class="hd-gbl">' + marks.filter((m) => m.at < 82).map((m) => '<span style="left:' + m.at.toFixed(1) + '%">' + esc(m.p) + '</span>').join('') + '<span class="r">Kill</span></div><div class="hd-gbar hd-gbhp"><u style="width:' + gp + '%"></u>' + marks.slice(1).map((m) => '<i style="left:' + m.at.toFixed(1) + '%"></i>').join('') + '</div></div>' : '';
     goal = '<section class="hd-pn hd-goal">' + art(gb) + '<div class="hd-gk">The goal · ' + dN + ' ' + (order.indexOf(gb) + 1) + ' of ' + order.length + (nerf ? '<button class="hd-ntag" type="button" data-hdnews="' + esc(nerf.u) + '">' + (nerfP ? 'Nerfed ' + esc(nerfP) + '%' : 'Nerfed') + ' · ' + esc(new Date(nerf.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</button>' : '') + '</div><h2>Kill ' + esc(gb) + '</h2>' +
       '<div class="hd-gr1"><span class="hd-gp"><span class="num">' + (gp != null ? gp + '%' : '—') + '</span><small>boss health left · best pull</small></span>' + (newBest ? '<span class="hd-tag hd-tagp">New best ' + esc(hdWd(lastP.at)) + '</span>' : '') + spark + '</div>' +
-      ((t) => '<div class="hd-gline" title="' + esc(t) + '">' + esc(t) + '</div>')('Best: boss at ' + gp + '%' + ((/P\d/.exec(String(gnb && gnb.label || '')) || [])[0] ? ' in ' + /P\d/.exec(gnb.label)[0] : '') + (newBest ? ' · down from ' + prevMax + '% over ' + plural(gl.length, 'pull') : ' · ' + plural(gl.length, 'pull') + ' over ' + plural(per.size, 'night'))) + bar +
+      ((t) => '<div class="hd-gline" title="' + esc(t) + '">' + esc(t) + '</div>')('Best: boss at ' + gp + '%' + ((/P\d/.exec(String(gnb && gnb.label || '')) || [])[0] ? ' in ' + /P\d/.exec(gnb.label)[0] : '') + (newBest ? ' · down from ' + prevMax + '% over ' + plural(gTn, 'pull') : ' · ' + plural(gTn, 'pull') + ' over ' + plural(gTnn, 'night'))) + bar +
       /* (no fixes on Home (Flex, Nov 3: "i dont want the homepage to have fixes on it … i want it more to be a home base"): fixes live on Debriefing and Rotation) */
       '<div class="hd-gbt">' + (gOp ? '<button class="hd-gb gold" id="pnwGo" type="button" data-code="' + esc(gOp.code) + '" data-fight="' + esc(String(gOp.fight)) + '">Open the last night ›</button>' : '') + guideB(gb) + '</div></section>'; }
   else { const kl = list.filter((v) => v.kill && v.dur), fast = kl.slice().sort((a, b) => a.dur - b.dur)[0], allK = order.length && killedOn(cur) === order.length;

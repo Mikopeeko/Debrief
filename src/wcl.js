@@ -173,18 +173,33 @@ async function topKillsOf(run, v) {
 // after the kill in the rankings (that kill may be a later, faster one), every pull of the boss on that difficulty, the
 // same pull logged by two members counted once (starts within 20 s), and a night as a day (a raid past midnight stays
 // one night: days start at 06:00 UTC). v: { g: guild, e, d, t: the ranked kill's report start (ms) }
-const GUILDPROG_Q = `query($g:Int!,$z:Int,$e:Int!,$d:Int!,$end:Float,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,endTime:$end,limit:100,page:$p){has_more_pages data{startTime fights(encounterID:$e,difficulty:$d){kill startTime fightPercentage}}}}}`;
-const ENCZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+// (Nov 6, Flex: the PULLS tile read 157 while Whole tier read 162: the tile listed only the reports filed under the boss's raid, and a night
+// that opened with a Mythic+ key is filed under Mythic+. Now every count of a guild's pulls of a boss is this one list, the Whole tier's.)
+// The guild's pulls of a boss up to its first kill: [report, fight, start (ms), kill 1/0, whole-fight % left, phase boss % left, last phase,
+// 1 when it ended in an intermission, length (s)]. v: { g: guild, e, d }
+const TIER_ZONE_Q = `query($e:Int!){worldData{encounter(id:$e){zone{id}}}}`;
+const TIER_Q = `query($g:Int!,$z:Int,$s:Float,$e:Int!,$d:Int!,$p:Int!){reportData{reports(guildID:$g,zoneID:$z,startTime:$s,limit:50,page:$p){has_more_pages data{code startTime fights(encounterID:$e,difficulty:$d){id kill startTime endTime fightPercentage bossPercentage lastPhase lastPhaseIsIntermission}}}}}`;
+async function tierPullsOf(run, v) {
+  const z = await run(TIER_ZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
+  const at = [], seen = new Map(); /* (50 reports a page: a hundred with these fields is more than Warcraft Logs answers in one go) */
+  const list = async (z, s0) => { for (let p = 1; p <= 8; p++) {
+    const d = await run(TIER_Q, { g: v.g, z, s: s0, e: v.e, d: v.d, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
+    for (const rep of R.data || []) { if (seen.has(rep.code)) continue; seen.set(rep.code, seen.size); for (const f of rep.fights || []) {
+      at.push([rep.code, f.id, rep.startTime + f.startTime, f.kill ? 1 : 0, f.fightPercentage != null ? f.fightPercentage : null, f.bossPercentage != null ? f.bossPercentage : null, f.lastPhase || 0, f.lastPhaseIsIntermission ? 1 : 0, Math.round((f.endTime - f.startTime) / 1000)]); } }
+    if (!R.has_more_pages) break; } };
+  /* (the raid's reports, then every report of the guild since its first pull of the boss: Warcraft Logs files a log under the zone it starts in,
+     so a night that opened with a Mythic+ key (Wolfthorn's Nov 4) is under Mythic+, not the raid (Main's check, Nov 5)) */
+  await list(zone, null);
+  const t0 = at.length ? Math.min(...at.map((x) => x[2])) : null; await list(null, t0 != null ? t0 - 86400000 : null);
+  at.sort((a, b) => a[2] - b[2]);
+  /* (a pull logged twice is the copy from the report with more of the night's pulls, so a night stays in one report where it can) */
+  const per = new Map(); for (const x of at) per.set(x[0], (per.get(x[0]) || 0) + 1);
+  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x[2] - l[2] < 20000) { if (per.get(x[0]) > per.get(l[0]) || (per.get(x[0]) === per.get(l[0]) && seen.get(x[0]) < seen.get(l[0]))) pulls[pulls.length - 1] = x; continue; /* (a tie: the raid's own report, the same one for every pull of the night) */ } pulls.push(x); }
+  const k1 = pulls.findIndex((x) => x[3]); if (k1 >= 0) pulls.length = k1 + 1; /* (up to the first kill) */
+  return pulls;
+}
 async function guildProgOf(run, v) {
-  const z = await run(ENCZONE_Q, { e: v.e }), zone = z && z.worldData && z.worldData.encounter && z.worldData.encounter.zone ? z.worldData.encounter.zone.id : null;
-  const at = [];
-  for (let p = 1; p <= 4; p++) {
-    const d = await run(GUILDPROG_Q, { g: v.g, z: zone, e: v.e, d: v.d, end: v.t + 86400000, p }), R = d && d.reportData && d.reportData.reports; if (!R) break;
-    for (const rep of R.data || []) for (const f of rep.fights || []) at.push({ t: rep.startTime + f.startTime, kill: !!f.kill, left: f.fightPercentage != null ? f.fightPercentage : null });
-    if (!R.has_more_pages) break;
-  }
-  at.sort((a, b) => a.t - b.t);
-  const pulls = []; for (const x of at) { const l = pulls[pulls.length - 1]; if (l && x.t - l.t < 20000) { l.kill = l.kill || x.kill; if (x.left != null && (l.left == null || x.left < l.left)) l.left = x.left; continue; } pulls.push({ ...x }); }
+  /* (the Whole tier's list, up to the day of the pull asked about) */ const pulls = (await tierPullsOf(run, v)).filter((x) => x[2] <= v.t + 86400000).map((x) => ({ t: x[2], kill: !!x[3], left: x[4] }));
   /* (each pull's boss health left, for the Debriefing pace chart (Oct 24)) */ const plOf = (L) => L.map((x) => [x.t, x.kill ? 0 : x.left == null ? null : Math.round(x.left * 10) / 10]);
   const k = pulls.findIndex((x) => x.kill); if (k < 0) return { pulls: pulls.length, nights: null, kill: null, pl: plOf(pulls) };
   const days = new Set(pulls.slice(0, k + 1).map((x) => Math.floor((x.t - 21600000) / 86400000)));
@@ -263,7 +278,7 @@ async function playerAb(creds, v) {
   return playerAbOf((q, vars) => gql(creds, q, vars), v);
 }
 async function guildProg(creds, v) {
-  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t);
+  if (HOSTED) return api('/api/guildprog?g=' + v.g + '&e=' + v.e + '&d=' + v.d + '&t=' + v.t + '&v=2'); // (v=2: the Whole tier's list (Nov 6))
   return guildProgOf((q, vars) => gql(creds, q, vars), v);
 }
 
@@ -682,6 +697,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, tierPullsOf, guildProgOf, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);
