@@ -13963,6 +13963,21 @@ html[data-theme="arcade"] body.refine .panel,html[data-theme="arcade"] body.refi
 html[data-theme="arcade"] body.refine .btn,html[data-theme="arcade"] body.refine select{border-radius:0 !important;border-width:2px !important;box-shadow:3px 3px 0 #05020d !important}
 html[data-theme="arcade"] body.refine .bh-name{font-weight:700;text-transform:uppercase;letter-spacing:.02em;font-size:.82em;text-shadow:4px 4px 0 #7b3cff}
 html[data-theme="arcade"] body.refine #topbar{border-bottom:3px solid #ff5ea8}</style>
+<style>
+/* Nov 5 default glow: Hardlight's glowing edges in the default gold */
+html:not([data-theme]) body.refine :is(.panel,header.fight.bh,.r212-sb,.dbt-p){border-color:rgba(230,180,80,.30) !important;box-shadow:inset 0 0 0 1px rgba(230,180,80,.10),inset 0 0 40px -22px rgba(230,180,80,.42),0 0 0 1px rgba(230,180,80,.06),0 12px 34px -20px rgba(230,180,80,.38) !important}
+html:not([data-theme]) body.refine header.fight.bh{box-shadow:0 0 0 1px rgba(230,180,80,.22),0 14px 40px -18px rgba(230,180,80,.5) !important}
+html:not([data-theme]) body.refine #topbar{border-bottom:1px solid rgba(230,180,80,.34);box-shadow:0 8px 24px -16px rgba(230,180,80,.75)}
+html:not([data-theme]) body.refine .tabbar{border-bottom-color:rgba(230,180,80,.24)}
+html:not([data-theme]) body.refine .bh-name{text-shadow:0 0 26px rgba(230,180,80,.42)}
+html:not([data-theme]) body.refine .tabbar :is(.tab.on,button.on,.on){text-shadow:0 0 14px rgba(230,180,80,.55)}
+html:not([data-theme]) body.refine .btn.primary{box-shadow:0 0 18px -4px rgba(230,180,80,.55)}
+/* Hardlight's shape, in the default gold (no grid: Flex "the grid background is ugly") */
+html:not([data-theme]) body.refine :is(.panel,header.fight.bh,.r212-sb,.dbt-p){border-radius:0 !important}
+html:not([data-theme]) body.refine :is(.panel:not(.pg-bar),.r212-sb,.dbt-p){position:relative}
+html:not([data-theme]) body.refine :is(.panel:not(.pg-bar),.r212-sb,.dbt-p)::after{content:"";position:absolute;inset:0;z-index:6;pointer-events:none;background:linear-gradient(135deg,var(--bg) 0 12px,#e6b450 12px 14px,transparent 14px),linear-gradient(315deg,var(--bg) 0 12px,#e6b450 12px 14px,transparent 14px)}
+html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
