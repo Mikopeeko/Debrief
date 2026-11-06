@@ -33285,20 +33285,25 @@ const PG_ALT = { k: '', v: null }; let PG_ALT_LOAD = false;
 const pgFold = (s) => String(s).toLowerCase().replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
 function pgAltLike(a, b) { const A = pgFold(a), B = pgFold(b); if (A.length < 3 || B.length < 3) return false; if (A.slice(0, 3) === B.slice(0, 3)) return true; for (let i = 0; i + 4 <= A.length; i++) if (B.includes(A.slice(i, i + 4))) return true; return false; }
 const pgAltPair = (a, b) => [String(a).toLowerCase(), String(b).toLowerCase()].sort().join('|');
-function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split('-')[0].toLowerCase(), L = [...new Set(names.map((x) => String(x).split('-')[0]))].sort(), k = L.join('|') + '#' + HIST.mem.size + '#' + (cfg.split || []).join(',');
+function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split('-')[0].toLowerCase(), L = [...new Set(names.map((x) => String(x).split('-')[0]))].sort(), k = L.join('|') + '#' + HIST.mem.size + '#' + (cfg.split || []).join(',') + '#' + JSON.stringify(cfg.link || []);
   if (PG_ALT.k === k) return PG_ALT.v;
   if (!HIST.mem.size && !PG_ALT_LOAD) { PG_ALT_LOAD = true; HIST.load().then(() => { if (HIST.mem.size && S.page === 'plan') { PG_ALT.k = ''; PG_RDY.clear(); planAssign(); } }).catch(() => { /* (no saved pulls: no alts) */ }); }
   const idx = new Map(L.map((n) => [lc(n), n])), P = [], by = new Map(), all = new Map(); let ai = 0;
   for (const v of HIST.mem.values()) { const s = new Set(); for (const x of v.players || []) { const c = idx.get(lc(x)); if (c) s.add(c); } if (!s.size) continue; ai++; for (const c of s) { let x = all.get(c); if (!x) all.set(c, (x = new Set())); x.add(ai); } if (s.size >= 5) P.push({ s, k: nightOf(v.at) }); }
   P.forEach((p, i) => { for (const c of p.s) { let x = by.get(c); if (!x) by.set(c, (x = new Set())); x.add(i); } });
   const nights = [...new Set(P.map((p) => p.k))].sort(), last3 = new Set(nights.slice(-3)), sp = new Set(cfg.split || []);
+  /* (linked for sure: a player's own characters, from their Warcraft Logs sign-in (Nov 6); they stay out of the name guesses) */
+  const LKG = new Map(); for (const [m0, a0] of cfg.link || []) { if (!idx.has(lc(m0)) || !idx.has(lc(a0))) continue; const mk = idx.get(lc(m0)); if (!LKG.has(mk)) LKG.set(mk, new Set()); LKG.get(mk).add(idx.get(lc(a0))); }
+  const LK = new Set([...LKG].flatMap(([m0, s]) => [lc(m0), ...[...s].map(lc)]));
   const apart = (a, b) => { const A = all.get(a), B = all.get(b); if (!A || !B) return false; for (const i of A) if (B.has(i)) return false; return true; }; /* (both seen in a saved pull, never in the same one) */
-  const G = []; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; if (sp.has(pgAltPair(a, b)) || !pgAltLike(a, b) || !apart(a, b)) continue;
+  const G = []; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; if (LK.has(lc(a)) || LK.has(lc(b)) || sp.has(pgAltPair(a, b)) || !pgAltLike(a, b) || !apart(a, b)) continue;
     const ga = G.find((g) => g.includes(a)), gb = G.find((g) => g.includes(b)); if (ga && ga === gb) continue; const m = (ga || [a]).concat(gb || [b]);
     if (!m.every((x, xi) => m.every((y, yi) => yi <= xi || (apart(x, y) && !sp.has(pgAltPair(x, y)))))) continue; if (ga) G.splice(G.indexOf(ga), 1); if (gb) G.splice(G.indexOf(gb), 1); G.push(m); }
+  const FG = new Set(); for (const [m0, s] of LKG) { const g = [m0, ...s]; G.push(g); FG.add(g); }
   const sc = (n) => { const X = [...(by.get(n) || [])]; return [X.filter((i) => last3.has(P[i].k)).length, X.length, X.reduce((m, i) => (P[i].k > m ? P[i].k : m), '')]; };
   const cmp = (a, b) => { const A = sc(a), B = sc(b); return B[0] - A[0] || B[1] - A[1] || (B[2] > A[2] ? 1 : B[2] < A[2] ? -1 : 0) || a.localeCompare(b); };
-  const main = new Map(), alts = new Map(); for (const g of G) { g.sort(cmp); alts.set(lc(g[0]), g.slice(1)); for (const x of g.slice(1)) main.set(lc(x), g[0]); }
+  let ME_LC = ''; try { ME_LC = typeof meOf === 'function' && meOf() ? lc(meOf().name) : ''; } catch (e) { ME_LC = ''; }
+  const main = new Map(), alts = new Map(); for (const g of G) { if (!FG.has(g)) { g.sort(cmp); const mi = g.findIndex((x) => lc(x) === ME_LC); if (mi > 0) g.unshift(g.splice(mi, 1)[0]); } /* (you're the main of your own group, Nov 6) */ alts.set(lc(g[0]), g.slice(1)); for (const x of g.slice(1)) main.set(lc(x), g[0]); }
   const v = { main, alts, n: main.size, sig: G.map((g) => g.join('+')).sort().join(',') }; PG_ALT.k = k; PG_ALT.v = v; return v; }
 const pgAltsR = (R) => (R ? pgAlts(R.players.map((p) => p.n), R.alts) : { main: new Map(), alts: new Map(), n: 0, sig: '' });
 // (Who plays' people: an alt only while it plays a boss in its main's place (all of them for the boss page's chips); a main knows its alts)
@@ -33330,6 +33335,13 @@ function pgRosterNew() { const R = planRoster(); if (!R || !R.players || !R.play
   const apart = (a, b) => !(seen.get(a) || []).some((s) => s.has(b)), add = [];
   for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (!nm || /^Player-/.test(x.name) || have.has(k) || off.has(k)) continue;
     const alt = often(k) && R.players.some((p) => pgAltLike(nm, String(p.n).split('-')[0]) && apart(k, lc(p.n))); if (alt || x.n >= need) add.push(nm); }
+  /* (your own characters, from your Warcraft Logs sign-in: one that raids with the team from time to time joins, linked to you (Nov 6)) */
+  let mine = new Set(); try { const W = typeof wclMe === 'function' ? wclMe() : null; mine = new Set(((W && W.chars) || []).map((c) => String(c.n || '').toLowerCase())); } catch (e) { mine = new Set(); }
+  for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (nm && mine.has(k) && !have.has(k) && !off.has(k) && often(k) && !add.includes(nm)) add.push(nm); }
+  const me0 = typeof meOf === 'function' && meOf() ? String(meOf().name).split('-')[0] : '', meK = me0.toLowerCase(), names2 = R.players.map((p) => String(p.n).split('-')[0]).concat(add);
+  if (meK && mine.has(meK) && names2.some((n) => n.toLowerCase() === meK)) { const meN = names2.find((n) => n.toLowerCase() === meK), want = names2.filter((n) => n.toLowerCase() !== meK && mine.has(n.toLowerCase())).map((n) => [meN, n]);
+    const cur = (R.alts && R.alts.link) || [], miss = want.filter(([m0, a0]) => !cur.some(([m1, a1]) => m1.toLowerCase() === m0.toLowerCase() && a1.toLowerCase() === a0.toLowerCase()));
+    if (miss.length) { const o1 = rostersGet(), R1 = o1.list.find((x) => x.id === R.id); if (R1) { R1.alts = Object.assign({}, R1.alts || {}); R1.alts.link = cur.filter(([, a1]) => !miss.some(([, a0]) => a0.toLowerCase() === a1.toLowerCase())).concat(miss); if (!add.length) { rostersSet(o1); PLAN_RC = null; if (typeof PG_ALT !== 'undefined') PG_ALT.k = ''; return; } else { R.alts = R1.alts; rostersSet(o1); } } } }
   if (!add.length) return; const o = rostersGet(), R2 = o.list.find((x) => x.id === R.id); if (!R2) return; const sp = planSp();
   for (const n of add) { const i = planInfo(sp, { n }); R2.players.push({ n, cls: i.cls || null, sid: i.sid || 0, role: i.role || 'dps', bench: false }); }
   rostersSet(o); PLAN_RC = null; if (typeof PG_ALT !== 'undefined') PG_ALT.k = ''; }
