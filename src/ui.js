@@ -30432,7 +30432,7 @@ function mechNight(per, p) { const { mm } = mechTally(per, p.name); let cost = 0
   return Math.max(0, 100 - cost); }
 // (the checklist's Mechanics: worst first, the clean ones on one line, and what they're judged against said once (the studio's mock))
 function rqcMechSec(l, t, row, n) { const nb = l.filter((y) => y.s === 'bad').length, chk = l.filter((y) => y.s !== 'na').length, cl = [...new Set(l.filter((y) => y.s === 'ok' && !y.xo).map((y) => y.l.replace(/\s*\(.*$/, '')))];
-  return '<div class="rqc-sec rqc-mech"><h5><span>' + t + '</span><span>' + (nb ? nb + ' to fix · ' : '') + chk + ' checked</span></h5>' + l.filter((y) => y.s !== 'ok' || y.xo).map(row).join('') +
+  return '<div class="rqc-sec rqc-mech" data-ok="' + l.filter((y) => y.s === 'ok' || y.s === 'n').length + '" data-n="' + chk + '"><h5><span>' + t + '</span><span>' + (nb ? nb + ' to fix · ' : '') + chk + ' checked</span></h5>' + l.filter((y) => y.s !== 'ok' || y.xo).map(row).join('') +
     (cl.length ? '<p class="rqc-clean"><b>✓ Clean' + (n > 1 ? ' every pull' : '') + ':</b> ' + cl.map(esc).join(' · ') + '</p>' : '') +
     (l.some((y) => y.top) ? '<p class="rqc-foot">Judged against how the best raids do on this boss, so a mechanic everyone struggles with isn\'t marked red.</p>' : '') + '</div>'; }
 if (window.__wla) window.__wla.mechRows = () => { const c = S.plData; if (!c || !c.data) return null; const F = rcnFacts(c); return c.data.map((a) => ({ n: a.p.name, role: a.p.role, pulls: a.n, mech: a.mech, mAvg: a.mAvg, score: a.score, sOld: a.sOld, rows: rqcOf(c, F, a).rows.mech.map((y) => [y.s, y.l, y.note]) })); }; /* (practice links only: every raider's Mechanics rows, for checking) */
@@ -36399,7 +36399,7 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
     const f = document.createElement('div'); f.className = 'r437-fix'; f.innerHTML = '<span class="r437-k">Fix first</span><b>' + esc(lab.trim()) + '</b>' + (val.trim() ? '<span class="r437-v">' + esc(val.replace(/\s*▾\s*$/, '').trim()) + '</span>' : '') + (goal ? '<span class="r437-g">' + (isNote ? '' : 'Goal: ') + esc(goal.trim()) + '</span>' : '');
     f.addEventListener('click', () => { fix.r.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (fix.r.tagName === 'SUMMARY') fix.r.parentElement.open = true; }); hd.after(f); }
   // (a box per list)
-  const t = document.createElement('div'); t.className = 'r437-tiles'; secs.forEach((s) => { const m = cnt(s).match(/([0-9]+) of ([0-9]+)/), a = m ? +m[1] : 0, b = m ? +m[2] : 0, c = !b || a === b ? 'g' : a / b >= 0.6 ? 'y' : 'r';
+  const t = document.createElement('div'); t.className = 'r437-tiles'; secs.forEach((s) => { const m = s.dataset.n != null ? [0, s.dataset.ok, s.dataset.n] : cnt(s).match(/([0-9]+) of ([0-9]+)/), a = m ? +m[1] : 0, b = m ? +m[2] : 0, /* (Mechanics carries its own counts: its header says "1 to fix · 15 checked") */ c = !b || a === b ? 'g' : a / b >= 0.6 ? 'y' : 'r';
     const x = document.createElement('button'); x.type = 'button'; x.className = 'r437-t ' + c; x.innerHTML = '<span>' + esc(title(s)) + '</span><b>' + a + '<small> of ' + b + '</small></b><i style="width:' + (b ? Math.round(100 * a / b) : 100) + '%"></i>';
     x.addEventListener('click', () => s.scrollIntoView({ block: 'start', behavior: 'smooth' })); t.append(x); });
   (g.querySelector('.r437-fix') || hd).after(t); }); }
