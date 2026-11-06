@@ -3366,7 +3366,7 @@ function renderMain0() {
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } if (b.dataset.t === 'me') { const h = meHomeChar(); if (h) meSwitch(h.gid, true); } S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } if (b.dataset.t === 'me') { home(); return; } /* (the one Home: the same as the logo and the front page (Flex, Nov 6)) */ S.tab = b.dataset.t; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
