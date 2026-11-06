@@ -7365,7 +7365,7 @@ function planPage() { if (S.page !== 'plan' || !planPage.done) { planPage.done =
   planAssign(); refreshIcons(); if (y != null) window.scrollTo({ top: y });
   if (!PLAN_HIST) { PLAN_HIST = true; HIST.load().then(histTidy).then(() => { PLAN_RC = null; if (S.page === 'plan' && !S.noteBuild) planAssign(); }); } }
 // (what's on it: the switch, then a boss's plan, your rosters or all your notes; the guided pages fill it while they're open)
-function planAssign() { const box = $('#assignBox'); if (!box) return; setTimeout(planHist, 0); try { if (typeof pgAltClean === 'function') pgAltClean(); } catch (e) { /* (alts stay as they are) */ } /* (Back and Forward, Oct 23) */ const boss = planBoss(), r = planRep(boss);
+function planAssign() { const box = $('#assignBox'); if (!box) return; setTimeout(planHist, 0); try { if (typeof pgRosterNew === 'function') pgRosterNew(); } catch (e) { /* (the roster stays as it is) */ } try { if (typeof pgAltClean === 'function') pgAltClean(); } catch (e) { /* (alts stay as they are) */ } /* (Back and Forward, Oct 23) */ const boss = planBoss(), r = planRep(boss);
   if (S.noteBuild && !S.noteEdit) { ndzBuildView(r); return; }
   if (S.notePlan && !S.noteEdit) { ndzPlanView(r); return; }
   if (S.noteDraft && !S.noteEdit) { ndzView(r); return; }
@@ -8778,6 +8778,16 @@ setInterval(() => { if (S.page !== 'plan' || document.hidden) return; const R = 
   let sig = ''; try { sig = pgAltsR(R).sig; } catch (e) { return; } if (PG_ALT_SIG === null) { PG_ALT_SIG = sig; return; } if (sig === PG_ALT_SIG) return; PG_ALT_SIG = sig;
   if (S.planRosEd || S.noteBuild || S.pgEdit || PG_DRAG || document.querySelector('#pgAltMenu:not([hidden])')) return; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); }, 4000);
 // (an alt playing with its main leaves: the spot goes to a bench player with the same role, and the plan hands the alt's jobs over)
+// (new characters join the roster: an alt of a roster member at any night count, or a regular by now; never one taken off by hand (Nov 6))
+function pgRosterNew() { const R = planRoster(); if (!R || !R.players || !R.players.length) return; let P = null; try { P = planPool(); } catch (e) { return; } const g = P && P.team; if (!g) return;
+  const T = planTeamAll(g); if (!T.list.length) return; const lc = (s) => String(s).split('-')[0].toLowerCase(), have = new Set(R.players.map((p) => lc(p.n))), off = new Set((R.off || []).map(lc)), need = T.nights < 2 ? T.nights : Math.max(2, Math.ceil(T.nights / 2));
+  const seen = new Map(); for (const v of HIST.mem.values()) { if (!pullGroups(v).includes(g.gid)) continue; const s = new Set((v.players || []).map(lc)); for (const n of s) { let x = seen.get(n); if (!x) seen.set(n, (x = [])); x.push(s); } }
+  const apart = (a, b) => !(seen.get(a) || []).some((s) => s.has(b)), add = [];
+  for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (!nm || /^Player-/.test(x.name) || have.has(k) || off.has(k)) continue;
+    const alt = R.players.some((p) => pgAltLike(nm, String(p.n).split('-')[0]) && apart(k, lc(p.n))); if (alt || x.n >= need) add.push(nm); }
+  if (!add.length) return; const o = rostersGet(), R2 = o.list.find((x) => x.id === R.id); if (!R2) return; const sp = planSp();
+  for (const n of add) { const i = planInfo(sp, { n }); R2.players.push({ n, cls: i.cls || null, sid: i.sid || 0, role: i.role || 'dps', bench: false }); }
+  rostersSet(o); PLAN_RC = null; if (typeof PG_ALT !== 'undefined') PG_ALT.k = ''; }
 function pgAltClean() { const R = planRoster(); if (!R) return; const A = pgAltsR(R); if (!A.n) return; const o = pnGet(); if (!o || !o.on) return; const lc = (s) => String(s).toLowerCase(), ps = pnPeople(o), away = new Set((o.away || []).map(lc)), said = []; let ch = false;
   const plays = (nm) => planBosses().filter((b) => (o.on[b] || []).includes(nm)).length;
   for (const b of planBosses()) { const L = (o.on[b] || []).slice(), byG = new Map();
@@ -9758,7 +9768,7 @@ document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.c
   if (t.closest('[data-tnnew]')) { e.preventDefault(); S.plRosBack = 'tonight'; /* (Cancel or Save comes back to Tonight, Oct 24) */ S.planV = 'ros'; store.set(PLAN_VK, 'ros'); S.planOpen = false; S.planRosEd = null; planAssign(); window.scrollTo({ top: 0 }); setTimeout(() => { const nb = document.querySelector('#assignBox [data-plrnew]'); if (nb) nb.click(); }, 0); return; }
   const ed = t.closest('[data-tnedit]'); if (ed) { e.preventDefault(); S.tnEdit = ed.dataset.tnedit !== '0'; if (!S.tnEdit) { S.tnSavedAt = null; S.tnAddName = ''; } redraw(); if (ed.dataset.tnedit === 'add') setTimeout(() => { const i = document.getElementById('tnAddName'); if (i) { i.focus(); i.scrollIntoView({ block: 'center' }); } }, 0); return; }
   const rm = t.closest('[data-tnrm]'); if (rm) { e.preventDefault(); e.stopPropagation(); if (rm.closest('.tn-sppop')) { tnSpecPopX(); S.tnSpecFor = null; } /* (from the raider's pop-up, Oct 27) */ const nm = rm.dataset.tnrm, { o, R } = rosOf(); if (!R) return; const i = R.players.findIndex((p) => p.n === nm); if (i < 0) return;
-    const n = pnGet(); S.tnUndo = { rid: R.id, p: R.players[i], i, on: JSON.parse(JSON.stringify(n.on || {})), away: (n.away || []).slice() }; R.players.splice(i, 1); saved(o, R);
+    const n = pnGet(); S.tnUndo = { rid: R.id, p: R.players[i], i, on: JSON.parse(JSON.stringify(n.on || {})), away: (n.away || []).slice() }; R.off = [...new Set([...(R.off || []), String(R.players[i].n)])]; R.players.splice(i, 1); saved(o, R);
     const short = []; for (const b of planBossesAll()) { const l = n.on[b] || [], j = l.indexOf(nm); if (j >= 0) { l.splice(j, 1); n.on[b] = l; n.man[b] = true; if (planBosses().includes(b)) short.push(b); } } n.away = (n.away || []).filter((x) => x !== nm); pnSet(n);
     redraw(); toastOk('Took ' + esc(nm) + ' off ' + esc(R.name) + (short.length ? ': ' + (short.length === 1 ? esc(pnShort(short[0])) + ' is' : short.length + ' bosses are') + ' one short now. <button class="btn sm" type="button" data-ntfill="1">✨ Fill them</button>' : '.') + ' <button class="btn sm" type="button" data-tnundo="1">Undo</button>', 7000); return; }
   if (t.closest('[data-tnundo]')) { const U = S.tnUndo; S.tnUndo = null; if (!U) return; const o = rostersGet(), R = o.list.find((x) => x.id === U.rid); if (!R) return; R.players.splice(Math.min(U.i, R.players.length), 0, U.p); saved(o, R); const n = pnGet(); n.on = U.on; n.away = U.away; pnSet(n); redraw(); toastOk('Back on the team: ' + esc(U.p.n) + '.', 3000); return; }
