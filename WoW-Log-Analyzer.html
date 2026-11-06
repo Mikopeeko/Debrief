@@ -11755,10 +11755,10 @@ html body #view .r321-tiles .r321-big { font-size: 22px; font-weight: 700; color
 html body #view .r321-tiles .r321-dl .sub { margin: 2px 0 0 !important; font-size: 12px; color: #868f99; }
 html body #view .r321-tiles .rcw-ok { margin-top: 8px !important; display: flex; flex-wrap: wrap; gap: 6px; }
 /* (the checklist: one line per check) */
-html body #view .ds-rcard.r321 .rqc-row { display: grid !important; grid-template-columns: 22px minmax(120px, auto) minmax(0, 1fr) 72px 44px 92px !important; align-items: center !important; column-gap: 12px !important; padding: 6px 6px !important; min-height: 0 !important; border-bottom: 1px solid rgba(255,255,255,.05); }
+html body #view .ds-rcard.r321 .rqc-row { display: grid !important; grid-template-columns: 22px 230px minmax(0, 1fr) 72px 44px 92px !important; align-items: center !important; column-gap: 12px !important; padding: 6px 6px !important; min-height: 0 !important; border-bottom: 1px solid rgba(255,255,255,.05); }
 html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) { display: contents !important; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-i { grid-column: 1; }
-html body #view .ds-rcard.r321 .rqc-row .rqc-nm { grid-column: 2; font-size: 13px !important; font-weight: 600; color: #e8eaed; display: inline-flex; align-items: center; gap: 8px; margin: 0 !important; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-nm { grid-column: 2; font-size: 13px !important; font-weight: 600; color: #e8eaed; display: inline-flex; align-items: center; gap: 8px; margin: 0 !important; min-width: 0; overflow: hidden; white-space: nowrap; } /* (Nov 6, Flex: "inconsistencies": one name column, so every note starts in the same place) */
 html body #view .ds-rcard.r321 .rqc-row small { grid-column: 3; font-size: 12px !important; color: #868f99 !important; margin: 0 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-bar { grid-column: 4; height: 6px !important; margin: 0 !important; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-pc { grid-column: 5; font-size: 12px !important; text-align: right; margin: 0 !important; }
@@ -17787,9 +17787,13 @@ function buildCoiledAltar(ev, r, h) {
       if (!(r.players.get(e.dst) || {}).specId) { const l = hitAt.get(e.dst) || []; if (!l.some((t) => Math.abs(t - e.t) < 8)) l.push(e.t); hitAt.set(e.dst, l); } }
     if (!mythic) for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
   }
-  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && fKeep.has(e) && (mythic || !fTanks.has(e.dst)))
+  /* (Nov 6, tonight's log: Hobbz in Divine Shield and Volkovod in Aspect of the Turtle took a frontal for 0 and read as Serious. A hit an
+     immunity took whole is a plan, not a mistake) */
+  const IMM_B = /^(divine shield|aspect of the turtle|ice block|cloak of shadows|netherwalk|blessing of spellwarding|blessing of protection|anti-magic shell)$/i;
+  const immHit = (e) => { if (e.amt > 0) return false; const p = (r.players.get && r.players.get(e.dst)) || [...r.players.values()].find((q) => q.guid === e.dst), bf = p && p.buffs; if (!bf) return false; for (const [k, b] of bf) if (IMM_B.test(k) && b && b.sp && b.sp.some(([a, z]) => a <= e.t + 0.2 && (z == null || z >= e.t - 0.2))) return true; return false; };
+  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && fKeep.has(e) && !immHit(e) && (mythic || !fTanks.has(e.dst)))
     front.push(mythic ? e : { ...e, soft: !(r.deaths || []).some((d) => d.guid === e.dst && d.t >= e.t - 0.5 && d.t <= e.t + 3) });
-  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(e.amt).toLocaleString('en-US') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
+  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(Math.max(e.amt, e.raw || 0)).toLocaleString('en-US') + (e.amt > 0 || !(e.raw > 0) ? '' : ' (a shield took it)') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
   sections.push({ id: 'front', title: 'Tank frontals (Raid hits)', place: 'Tank frontals hitting the raid', spell: S('sever'),
     verdict: front.length ? 'bad' : 'good', summary: front.length ? pl(front.length, 'non-tank hit') + ' from Sever, Soul Sever and Blighted Sever.' : 'Only tanks were hit by the frontals.',
     cols: ['When', 'Player', 'Frontal', 'Damage'], rows: front.map((e) => [{ t: e.t }, { p: pname(e.dst) }, { s: S(L(e.spell)) }, { n: e.amt }]) });
@@ -17829,12 +17833,12 @@ function buildCoiledAltar(ev, r, h) {
   for (const e of dmg('mutagenic venom').sort((a, b) => a.t - b.t)) {
     if (!h.isPlayer(e.dst) || carriersAt(e.t).some((c) => c.g === e.dst)) continue;
     const who = carriersAt(e.t).map((c) => pname(c.g)), last = clipBy.get(e.dst);
-    if (last && e.t - last.end <= 2.5) { last.end = e.t; last.n++; last.amt += e.amt; for (const w of who) if (!last.who.includes(w)) last.who.push(w); continue; }
-    const c = { ...e, who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
+    if (last && e.t - last.end <= 2.5) { last.end = e.t; last.n++; last.amt += Math.max(e.amt, e.raw || 0); for (const w of who) if (!last.who.includes(w)) last.who.push(w); continue; }
+    const c = { ...e, amt: Math.max(e.amt, e.raw || 0), who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
   }
   // (one brush is minor: carriers walk through the raid too; hit two times or more, it's a medium mistake)
   /* (Coiled Altar fix 7, Oct 24: one tick happened 93 times in 11 top kills; one tick is nothing, 2+ Low, 4+ Medium) */
-  for (const c of clipped.filter((x) => x.n >= 2)) { M(c.t, pname(c.dst), 'mutagenic venom', c.n >= 4 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
+  for (const c of clipped.filter((x) => x.n >= 2 && x.amt > 0)) { M(c.t, pname(c.dst), 'mutagenic venom', c.n >= 4 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
   // mass Venom Rupture: a player jumping 8+ stacks within 2s means a purple orb touched other orbs
   const vr = auras('venom rupture').filter((e) => h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
   const lastSt = new Map(), hist = new Map(), bursts = [];
@@ -29119,7 +29123,7 @@ function ndzWhoC(text, boss) {
 }
 // (by ability: the note's mechanics in its own order, each with its icon and its groups; then the cooldowns by time)
 // (each note page's icon by spell ID, from the boss guides and the logs: shown without needing a log that has the spell)
-const NDZ_ICON_ID = { 'wail of terror': 1286399, guillotine: 1283489, 'grim guillotine': 1299267, 'virulent mutation': 1310544, dreadmarch: 1285643, 'curse of tongues': 1714, 'ravenous feast': 1290516,
+const NDZ_ICON_ID = { 'manifestation of dread': 1285911, 'wail of terror': 1286399, guillotine: 1283489, 'grim guillotine': 1299267, 'virulent mutation': 1310544, dreadmarch: 1285643, 'curse of tongues': 1714, 'ravenous feast': 1290516,
   'rouse the brood': 1308356, 'caustic deluge': 1289192, mutilate: 1277027, "serpent's fury": 1297367, 'viscous cyst': 1287205, 'grasping depths': 1293212, 'hungering pyre': 1289855, 'essence rend': 1287426,
   'death grip': 49576, 'exploding infection': 1295173, 'catalytic bile': 1282602, 'chilling frost': 1313393, 'mark of blood': 1284503, 'unstable miasma': 1288232, 'toxic droplets': 1284434, 'blighted blood': 1284471,
   'disgusting fish': 1292490, 'throw junk': 1291933, 'icebound flames': 1286921, malice: 1290779, 'spectral coils': 1287265, 'malignant shell': 1295360, "serpent's bite": 1295905, 'toxic incubation': 1299759,
@@ -54760,11 +54764,11 @@ function rqcOf(c, F, a) {
      (m.others: dying in a soak too few soaked, a bomb that went off in the raid, a mind control the raid didn't break) is never theirs; red
      is for a death or a habit (a quarter of the pulls or more, more than small hits), else a slip; each line says what happened) */
   const mm = new Map(), mo = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { if (m.others) { mo.set(m.mechanic, (mo.get(m.mechanic) || 0) + 1); continue; }
-    const o = mm.get(m.mechanic) || { s: new Set(), died: new Set(), big: false }; o.s.add(g.r.item.pull); if (/\b(died|killed)\b/i.test(m.detail || '') || /off the edge/i.test(m.detail || '')) o.died.add(g.r.item.pull); if (m.severity !== 'Low') o.big = true; mm.set(m.mechanic, o); }
+    const o = mm.get(m.mechanic) || { s: new Set(), died: new Set(), big: false, at: {} }; o.s.add(g.r.item.pull); { const pl0 = g.r.item.pull, t0 = m.from != null ? m.from : m.t; if (o.at[pl0] == null || t0 < o.at[pl0]) o.at[pl0] = t0; } const tD = m.from != null ? m.from : m.t; if (/\b(died|killed)\b/i.test(m.detail || '') || /off the edge/i.test(m.detail || '') || (g.r.deaths || []).some((d) => String(d.player).split('-')[0] === String(nm).split('-')[0] && d.t >= tD - 0.5 && d.t <= m.t + 4 && String(d.ability || '').toLowerCase() === String(m.mechanic).toLowerCase())) o.died.add(g.r.item.pull); if (m.severity !== 'Low') o.big = true; mm.set(m.mechanic, o); }
   const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()], [...mo.keys()]))];
   for (const k of names) { const o = mm.get(k), q = o ? o.s.size : 0, dd = o ? o.died.size : 0, xo = mo.get(k) || 0, st = !q ? 'ok' : dd || (o.big && q >= Math.max(2, n / 4)) ? 'bad' : 'w';
-    const y = add('mech', st, k, 'no mistakes', !q ? 'clean' : ''); y.f = n ? (n - q) / n : 1; if (o) y.pulls = [...o.s].sort((u, v) => u - v);
-    y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : 'In ' + q + ' of ' + plural(n, 'pull') + (dd ? ', died to it in ' + dd : !o.big ? ', small hits' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
+    const y = add('mech', st, k, 'no mistakes', !q ? 'clean' : ''); { const base = k.replace(/\s*\(.*$/, ''), ic = spellIcon(0, base), sid = (String(ic).match(/data-sid="(\d+)"/) || [])[1]; if (sid) y.lh = '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(base) + '">' + ic + esc(base) + '</span>' + (base !== k ? ' ' + esc(k.slice(base.length).trim()) : ''); } y.f = n ? (n - q) / n : 1; if (o) { y.pulls = [...o.s].sort((u, v) => u - v); y.pt = o.at; y.pn = {}; for (const k2 of Object.keys(o.at)) y.pn[k2] = 'at ' + Math.floor(o.at[k2] / 60) + ':' + String(Math.floor(o.at[k2] % 60)).padStart(2, '0'); }
+    y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : 'In ' + q + ' of ' + plural(n, 'pull') + (dd ? ', died to it in ' + dd : st === 'bad' ? ', a habit' : !o.big ? ', small hits' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
   // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
   const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
   for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
@@ -54807,9 +54811,9 @@ function rqcOf(c, F, a) {
 // the picked raider's checklist, under the raid's report card
 function rqcCard(c, F) {
   const x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, o = rqcOf(c, F, a), B = rcbFacts(c, F), rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
-  const ic = { ok: '✓', w: '!', bad: '✕', na: '–' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed', na: 'not graded' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + (y.note ? '<small class="rqc-note">' + esc(y.note) + '</small>' : '<small>Goal: ' + esc(y.rule) + '</small>') + '</span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
+  const ic = { ok: '✓', w: '!', bad: '✕', na: '–' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed', na: 'not graded' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + (y.lh || esc(y.l)) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + (y.note ? '<small class="rqc-note">' + esc(y.note) + '</small>' : '<small>Goal: ' + esc(y.rule) + '</small>') + '</span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
   // (a line with mistakes opens to the pulls they happened in; a pull opens on Debriefing with this raider picked (Oct 23, your idea))
-  const row = (y) => (y.pulls && y.pulls.length && y.s !== 'ok' ? '<details class="rqc-dd"><summary class="rqc-row">' + inner(y, true) + '</summary><div class="rqc-pl"><span class="sub">Open the pull:</span>' + y.pulls.map((n) => '<button type="button" class="btn sm" data-rqcpull="' + n + '" data-rqcp="' + esc(p.name) + '">Pull ' + n + (y.pn && y.pn[n] ? ' · ' + esc(y.pn[n]) : '') + ' ›</button>').join('') + '</div></details>'
+  const row = (y) => (y.pulls && y.pulls.length && y.s !== 'ok' ? '<details class="rqc-dd"><summary class="rqc-row">' + inner(y, true) + '</summary><div class="rqc-pl"><span class="sub">Open the pull:</span>' + y.pulls.map((n) => '<button type="button" class="btn sm" data-rqcpull="' + n + '" data-rqcp="' + esc(p.name) + '"' + (y.pt && y.pt[n] != null ? ' data-rqct="' + (+y.pt[n]).toFixed(1) + '"' : '') + '>Pull ' + n + (y.pn && y.pn[n] ? ' · ' + esc(y.pn[n]) : '') + ' ›</button>').join('') + '</div></details>'
     : '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '>' + inner(y) + '</div>');
   const sec = ([k, t]) => { const l = o.rows[k]; if (!l.length) return ''; return '<div class="rqc-sec"><h5><span>' + t + '</span><span>' + l.filter((y) => y.s === 'ok').length + ' of ' + l.filter((y) => y.s !== 'na' && (!y.bonus || y.s === 'ok')).length + '</span></h5>' /* (a missed bonus isn't counted, same as the grade) */ + l.map(row).join('') + '</div>'; };
   return '<section class="rqc" style="--cc:' + p.color + '"><div class="rqc-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><div><div class="rcb-k">Checklist</div><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><div class="sub">' + esc(p.specName || '') + ' · ' + plural(a.n, 'pull') + ' · #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + (rkR ? ' · #' + rkR.m.get(x) + ' of ' + rkR.n + ' ' + RN[x.role] : '') + '</div>' +
@@ -54831,7 +54835,12 @@ function bindRcn(c) {
   v.querySelectorAll('[data-rcbp]').forEach((b) => (b.onclick = () => { const n = b.dataset.rcbp, open = b.classList.contains('sel') && S.rqcOpen !== null; S.rqcOpen = open ? null : n; setOneP(n); again(); })); /* (a second tap on the open row closes it) */
   v.querySelectorAll('[data-rqcgear]').forEach((b) => (b.onclick = () => { S.rctOpen = b.dataset.rqcgear; S.rcnGear = b.dataset.rqcgear; again(); }));
   // (a pull from a checklist line opens that pull on Debriefing with the raider picked (Oct 23))
-  v.querySelectorAll('[data-rqcpull]').forEach((b) => (b.onclick = () => { const it0 = S.rep && S.rep.item, it = it0 && ITEMS.find((x) => x.kind === 'boss' && x.id === it0.id && x.diffId === it0.diffId && x.pull === +b.dataset.rqcpull); if (!it) return; setOneP(b.dataset.rqcp); S.tab = 'audit'; setScope('pull'); select(it); window.scrollTo(0, 0); }));
+  v.querySelectorAll('[data-rqcpull]').forEach((b) => (b.onclick = () => { const it0 = S.rep && S.rep.item, it = it0 && ITEMS.find((x) => x.kind === 'boss' && x.id === it0.id && x.diffId === it0.diffId && x.pull === +b.dataset.rqcpull); if (!it) return; setOneP(b.dataset.rqcp); S.tab = 'audit'; setScope('pull'); const pr = select(it); window.scrollTo(0, 0);
+    /* (Nov 6, Flex: "When i click on the pull count it doesnt even take me to the correct mechanic": the replay opens at that mechanic) */
+    const t = b.dataset.rqct != null ? +b.dataset.rqct : null; if (t == null) return; let tries = 0;
+    const go = () => { const d = document.querySelector('#view .dbt'), tb = d && d.querySelector('.dbt-vt [data-dbt="tl"]'); if (tb && !tb.classList.contains('on')) tb.click(); const box = document.querySelector('#view .dtm'); if (!box || !box._jumpTo || !box.offsetHeight) { if (tries++ < 80) setTimeout(go, 150); return; }
+      const tg = box.querySelector('.dtm-grid') || box, bar = document.querySelector('.tabbar'), off = (bar ? bar.getBoundingClientRect().height : 46) + 12; window.scrollTo({ top: Math.max(0, tg.getBoundingClientRect().top + window.scrollY - off), behavior: 'smooth' }); box._jumpTo(null, t, 2); };
+    Promise.resolve(pr).then(() => setTimeout(go, 300), () => {}); }));
   v.querySelectorAll('[data-rcngear]').forEach((b) => (b.onclick = () => { S.rcnGear = S.rcnGear === b.dataset.rcngear ? null : b.dataset.rcngear; again(); }));
   v.querySelectorAll('.rcco-more').forEach((d) => d.addEventListener('toggle', () => { S.rccoOpen = d.open; })); // (the full coaching stays open when the page redraws)
   // (Escape closes an open card)

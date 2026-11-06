@@ -3732,9 +3732,13 @@ function buildCoiledAltar(ev, r, h) {
       if (!(r.players.get(e.dst) || {}).specId) { const l = hitAt.get(e.dst) || []; if (!l.some((t) => Math.abs(t - e.t) < 8)) l.push(e.t); hitAt.set(e.dst, l); } }
     if (!mythic) for (const [g, l] of hitAt) if (l.length >= 2) fTanks.add(g);
   }
-  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && fKeep.has(e) && (mythic || !fTanks.has(e.dst)))
+  /* (Nov 6, tonight's log: Hobbz in Divine Shield and Volkovod in Aspect of the Turtle took a frontal for 0 and read as Serious. A hit an
+     immunity took whole is a plan, not a mistake) */
+  const IMM_B = /^(divine shield|aspect of the turtle|ice block|cloak of shadows|netherwalk|blessing of spellwarding|blessing of protection|anti-magic shell)$/i;
+  const immHit = (e) => { if (e.amt > 0) return false; const p = (r.players.get && r.players.get(e.dst)) || [...r.players.values()].find((q) => q.guid === e.dst), bf = p && p.buffs; if (!bf) return false; for (const [k, b] of bf) if (IMM_B.test(k) && b && b.sp && b.sp.some(([a, z]) => a <= e.t + 0.2 && (z == null || z >= e.t - 0.2))) return true; return false; };
+  for (const n of ['sever', 'soul sever', 'blighted sever']) for (const e of dmg(n)) if (role(e.dst) !== 'tank' && fKeep.has(e) && !immHit(e) && (mythic || !fTanks.has(e.dst)))
     front.push(mythic ? e : { ...e, soft: !(r.deaths || []).some((d) => d.guid === e.dst && d.t >= e.t - 0.5 && d.t <= e.t + 3) });
-  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(e.amt).toLocaleString('en-US') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
+  for (const e of front) { M(e.t, pname(e.dst), L(e.spell), e.soft ? 'Medium' : 'High', 'Stood in ' + e.spell + ' (tank frontal) for ' + Math.round(Math.max(e.amt, e.raw || 0)).toLocaleString('en-US') + (e.amt > 0 || !(e.raw > 0) ? '' : ' (a shield took it)') + ' and picked up its 200% vulnerability.', 'Only the tank belongs in front of the boss. Stay out of the cone unless you are placing orbs or ghosts for it and step out before it lands.'); mistakes[mistakes.length - 1].avoid = true; }
   sections.push({ id: 'front', title: 'Tank frontals (Raid hits)', place: 'Tank frontals hitting the raid', spell: S('sever'),
     verdict: front.length ? 'bad' : 'good', summary: front.length ? pl(front.length, 'non-tank hit') + ' from Sever, Soul Sever and Blighted Sever.' : 'Only tanks were hit by the frontals.',
     cols: ['When', 'Player', 'Frontal', 'Damage'], rows: front.map((e) => [{ t: e.t }, { p: pname(e.dst) }, { s: S(L(e.spell)) }, { n: e.amt }]) });
@@ -3774,12 +3778,12 @@ function buildCoiledAltar(ev, r, h) {
   for (const e of dmg('mutagenic venom').sort((a, b) => a.t - b.t)) {
     if (!h.isPlayer(e.dst) || carriersAt(e.t).some((c) => c.g === e.dst)) continue;
     const who = carriersAt(e.t).map((c) => pname(c.g)), last = clipBy.get(e.dst);
-    if (last && e.t - last.end <= 2.5) { last.end = e.t; last.n++; last.amt += e.amt; for (const w of who) if (!last.who.includes(w)) last.who.push(w); continue; }
-    const c = { ...e, who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
+    if (last && e.t - last.end <= 2.5) { last.end = e.t; last.n++; last.amt += Math.max(e.amt, e.raw || 0); for (const w of who) if (!last.who.includes(w)) last.who.push(w); continue; }
+    const c = { ...e, amt: Math.max(e.amt, e.raw || 0), who, end: e.t, n: 1 }; clipped.push(c); clipBy.set(e.dst, c);
   }
   // (one brush is minor: carriers walk through the raid too; hit two times or more, it's a medium mistake)
   /* (Coiled Altar fix 7, Oct 24: one tick happened 93 times in 11 top kills; one tick is nothing, 2+ Low, 4+ Medium) */
-  for (const c of clipped.filter((x) => x.n >= 2)) { M(c.t, pname(c.dst), 'mutagenic venom', c.n >= 4 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
+  for (const c of clipped.filter((x) => x.n >= 2 && x.amt > 0)) { M(c.t, pname(c.dst), 'mutagenic venom', c.n >= 4 ? 'Medium' : 'Low', 'Stood within 6 yards of a purple orb carrier' + (c.who.length ? ' (' + c.who.join(', ') + ')' : '') + ': hit ' + (c.n > 1 ? c.n + ' times' : 'once') + ' for ' + Math.round(c.amt).toLocaleString('en-US') + '.', 'Purple carriers have right of way. Stay more than 6 yards from anyone carrying Mutagenic Venom (the purple circle on the map).'); mistakes[mistakes.length - 1].avoid = true; }
   // mass Venom Rupture: a player jumping 8+ stacks within 2s means a purple orb touched other orbs
   const vr = auras('venom rupture').filter((e) => h.isPlayer(e.dst)).sort((a, b) => a.t - b.t);
   const lastSt = new Map(), hist = new Map(), bursts = [];
