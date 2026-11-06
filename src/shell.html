@@ -13846,6 +13846,15 @@ html body #view .dbt-why .wrt-rootrow > b::after, html body #view .dbt-why .wrt-
 html body #view .dbt-why .wrt-rootrow > b::after { content: 'Root cause'; color: var(--gold); }
 html body #view .dbt-why .wrt-alsorow > b::after { content: 'added up'; color: var(--faint); font-weight: 400; }
 html body #view .rcb-d .rcb-dall { color: var(--faint); font-weight: 400; font-size: 12px; white-space: nowrap; } /* (Nov 5: "· 11 in all" muted beside their own deaths) */
+/* (Nov 5, Flex: "what are these numbers for theres no title?": the grade's letter and number sit together under GRADE, the Deaths column fits
+   its "· N in all", and the header row stays on screen under the tab bar while the table scrolls) */
+html body #view .rcb-tbl .rcb-th { position: sticky; top: var(--tbH, 46px); z-index: 5; background: rgba(12, 16, 22, .94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+html body #view .rcb-tbl .rcb-th > button[data-rcbs="score"] { text-align: left; padding-left: 4px; }
+html body #view .rcb-tr .rcb-g, html body #view .rcb-tr.ds-bar .rcb-g { justify-content: flex-start; gap: 8px; }
+html body #view .rcb-tr .rcb-d { white-space: nowrap; }
+html body #view .rcb-tr { grid-template-columns: 30px minmax(150px, 1.3fr) minmax(110px, 1.1fr) repeat(6, minmax(0, .55fr)) 96px; }
+@media (max-width: 760px) { html body #view .rcb-tr { grid-template-columns: 24px minmax(0, 1fr) minmax(96px, 1fr) 54px; } html body #view .rcb-dall .rcb-dw { display: none; } html body #view .rcb-tr > span:has(> .rcb-v) { display: none; } html body #view .rcb-tbl .rcb-th > button[data-rcbs="score"] { display: block; } }
+</style><script>/* (the sticky roster header sits under the tab bar's real height, which is taller on phones (Nov 5)) */ (function () { var cur = null, set = function (t) { document.documentElement.style.setProperty('--tbH', Math.round(t.offsetHeight) + 'px'); }, ro = window.ResizeObserver ? new ResizeObserver(function () { if (cur) set(cur); }) : null; var f = function () { var t = document.querySelector('.tabbar'); if (!t) return; if (t !== cur) { if (ro) { if (cur) ro.unobserve(cur); ro.observe(t); } cur = t; } if (!ro) set(t); }; addEventListener('resize', f); addEventListener('load', f); document.addEventListener('DOMContentLoaded', f); setInterval(f, 2000); })();</script><style>
 @media (max-width: 760px) { html body #view .dbt-why .wrt-rootrow > b::after, html body #view .dbt-why .wrt-alsorow > b::after { display: block; margin: 1px 0 0; } }
 html body #view .dbt-why .wrt-rootrow { box-shadow: inset 3px 0 0 var(--gold); background: rgba(230, 180, 80, .06); border-radius: 6px; }
 </style>
