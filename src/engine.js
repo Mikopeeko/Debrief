@@ -3861,7 +3861,10 @@ function buildCoiledAltar(ev, r, h) {
   const need = mythic ? 5 : 3;
   soaks.forEach((s, i) => {
     if (s.who.length && s.who.length < need) M(s.t, 'Raid', s.n, 'High', S(s.n)[1] + ' was soaked by only ' + pl2e(s.who.length, 'player') + ' (' + s.who.map(pname).join(', ') + '); it needs ' + need + '.', 'Over-send: put more than ' + need + ' players in every soak so one late player can\'t wipe it.');
-    for (const d of s.died) M(s.t, d, s.n, 'High', 'Died in the ' + S(s.n)[1] + ' soak.', 'Soakers need a personal defensive or an immunity, and the target needs an external.');
+    /* (Nov 5, Flex: "wildly innaccurate in how its assessing the individual": a soaker who died in a soak too few soaked did their job; the
+       missing soaker is the mistake. m.others: someone else's mistake, kept for the record and never counted against them) */
+    const shortS = s.who.length > 0 && s.who.length < need;
+    for (const d of s.died) { M(s.t, d, s.n, 'High', shortS ? 'Died in the ' + S(s.n)[1] + ' soak, which had only ' + s.who.length + ' of ' + need + ': the missing soaker, not them.' : 'Died in the ' + S(s.n)[1] + ' soak.', shortS ? 'Over-send: put more than ' + need + ' players in every soak so one late player can\'t wipe it.' : 'Soakers need a personal defensive or an immunity, and the target needs an external.'); if (shortS) mistakes[mistakes.length - 1].others = 'the soak was short'; }
   });
   // (soak counts and deaths are shown in the combined Guillotine panel further down)
 
@@ -3921,7 +3924,13 @@ function buildCoiledAltar(ev, r, h) {
   const gbAt = (t) => gbWin.filter((c) => t >= c.s - 0.2 && t <= c.e + 0.3), clipAt = (t) => gbClip.filter((e) => Math.abs(e.t - t) <= 1.5).map((e) => e.dst);
   /* (Coiled Altar fix 8, Oct 24: 6 of 11 top kills had 1 to 5 clips and nobody died: Low; Gravebound killing them is High) */
   const gbGrave = (e) => r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 16 && /^gravebound$/i.test(String(d.ability || '')));
-  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
+  /* (Nov 5, Flex: "wildly innaccurate in how its assessing the individual": Nov 4 pull 12, one bomb that missed its add clipped 10 players and
+     each was charged with it. A bomb that clipped 3 or more went off in the raid: its carrier's mistake (their own row says it missed the add),
+     not each player's. Every row names whose bomb it was) */
+  const gbOwn = (e) => { const c = gbWin.filter((x) => x.g !== e.dst && Math.abs(x.e - e.t) <= 1.5).sort((a, b) => Math.abs(a.e - e.t) - Math.abs(b.e - e.t))[0]; return c ? c.g : null; };
+  for (const e of gbClip) { const o = gbOwn(e), nC = new Set(clipAt(e.t)).size, whose = o ? pname(o) + '\'s' : 'someone else\'s';
+    M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by ' + whose + ' Gloombomb' + (nC >= 3 ? ', which hit ' + nC + ' players' : '') + ', so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
+    if (nC >= 3) mistakes[mistakes.length - 1].others = whose + ' Gloombomb went off in the raid'; }
   sections.push({ id: 'adds', title: 'Spiritcackle and Gloombombs (Adds)', place: 'Spiritcackle adds and Gloombombs', spell: S('spiritcackle'),
     verdict: setRows.some((r2) => r2[4].bad) ? 'bad' : gbClip.length ? 'warn' : 'good',
     summary: pl(sc.length, 'add set') + ', and ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. The kicks on each add are under Interrupts below.',
@@ -4335,6 +4344,10 @@ function buildCoiledAltar(ev, r, h) {
     cols: ['When', 'Soak', 'In circle', 'Soakers', 'Target', 'Corner', 'Died', ''], rows: qRows });
 
   // ---- mind controls: deaths by falling in P2/P3 ----
+  /* (Nov 5, the studio for Flex: a mind-controlled fall says the log's own reason. The stuns, roots and grips that land on mind-controlled
+     players in the logs, and the buffs a cancel macro takes off: movement speed and their own shields) */
+  const MC_CC = /^(shockwave|chaos nova|leg sweep|ring of peace|ursol's vortex|gorefiend's grasp|death grip|capacitor totem|static charge|binding shot|storm bolt|hammer of justice|kidney shot|cheap shot|blind|shadowfury|mighty bash|incapacitating roar|intimidating shout|psychic scream|ring of frost|frost nova|mass entanglement|entangling roots|earthgrab totem|asphyxiate|blinding sleet|tail swipe|wing buffet|sleep walk|paralysis|dragon's breath|mortal coil|howl of terror|fear|intimidation|freezing trap|polymorph|repentance|blinding light|landslide|typhoon|thunderstorm|imprison|sigil of misery|fel eruption|axe toss|charge)$/i;
+  const MC_KEEP = /^(aspect of the cheetah|burning rush|sprint|tiger dash|dash|stampeding roar|wind rush|angelic feather|body and soul|divine steed|ghost wolf|hover|momentum|tactical retreat|speed of light|ice barrier|blazing barrier|prismatic barrier|power word: shield)$/i;
   const mcRows = [];
   for (const d of r.deaths) {
     const ph = phaseAt(d.t); if (ph !== 'P2' && ph !== 'P3') continue;
@@ -4343,7 +4356,14 @@ function buildCoiledAltar(ev, r, h) {
     const fell = lastHit && /^falling$/i.test(lastHit.spell); // (the log's falling damage only: "Eternal Nightfall" isn't a fall (Oct 22))
     const noHit = !lastHit || d.t - lastHit.t > 4;
     if (fell || noHit) { if (mcOn) d.fell = true; /* (How it went says they fell) */
-      M(d.t, d.player, 'dreadmarch', 'High', mcOn ? 'Fell off the platform while mind controlled. The raid didn\'t break their shield in time.' : 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
+      /* (the reason, from the log: a speed buff or their own shield still on from the start of the mind control (theirs: the cancel macro takes it
+         off), or the raid didn't break the shield in time, with or without a stun or grip on them first (the raid's). Without the Dreadmarch
+         debuff the log can't tell, so it blames no one) */
+      const mcP = [...r.players.values()].find((p) => p.guid === d.guid) || {}, mcA = mcOn ? Math.max(...mcS.sp.filter(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - 1.5)).map(([a]) => a)) : d.t;
+      const mcCC = mcOn ? [...(mcP.debuffs || new Map())].filter(([k, b]) => MC_CC.test(k) && b && b.sp && b.sp.some(([a]) => a >= mcA - 0.5 && a <= d.t)).map(([k]) => k) : [];
+      const mcKept = mcOn ? [...(mcP.buffs || new Map())].filter(([k, b]) => MC_KEEP.test(k) && b && b.sp && b.sp.some(([a, z]) => a <= mcA + 0.5 && (z == null || z >= d.t - 1))).map(([k]) => k) : [];
+      if (mcOn) { d.fellOwn = mcKept.length > 0; d.fellWhy = mcKept.length ? 'was mind controlled off the edge with ' + mcKept[0] + ' still on: the cancel macro takes it off' : mcCC.length ? 'was mind controlled off the edge: ' + mcCC.slice(0, 2).join(' and ') + ' stopped them, but the raid didn\'t break their shield in time' : 'was mind controlled off the edge: no one stunned or gripped them, and the raid didn\'t break their shield in time'; }
+      M(d.t, d.player, 'dreadmarch', 'High', mcOn ? d.fellWhy.charAt(0).toUpperCase() + d.fellWhy.slice(1) + '.' : 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.'); if (mcOn && !d.fellOwn) mistakes[mistakes.length - 1].others = 'the raid didn\'t break their shield in time';
       mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, lead: 8, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
     }
   }

@@ -13848,6 +13848,10 @@ html body #view .dbt-why .wrt-alsorow > b::after { content: 'added up'; color: v
 html body #view .rcb-d .rcb-dall { color: var(--faint); font-weight: 400; font-size: 12px; white-space: nowrap; } /* (Nov 5: "· 11 in all" muted beside their own deaths) */
 /* (Nov 5, Flex: "what are these numbers for theres no title?": the grade's letter and number sit together under GRADE, the Deaths column fits
    its "· N in all", and the header row stays on screen under the tab bar while the table scrolls) */
+/* (Nov 5, Main: "Mistakes that cost points 204" ran under the next tile at about 1180 px: the label wraps, the number never shrinks) */
+html body #view .rcb-bst > .tile.rcb-bt { min-width: 0; }
+html body #view .rcb-bst > .tile.rcb-bt > .l { white-space: normal; min-width: 0; flex: 1 1 auto; line-height: 1.2; }
+html body #view .rcb-bst > .tile.rcb-bt > .v { flex: none; white-space: nowrap; }
 html body #view .rcb-tbl .rcb-th { position: sticky; top: var(--tbH, 46px); z-index: 5; background: rgba(12, 16, 22, .94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 html body #view .rcb-tbl .rcb-th > button[data-rcbs="score"] { text-align: left; padding-left: 4px; }
 html body #view .rcb-tr .rcb-g, html body #view .rcb-tr.ds-bar .rcb-g { justify-content: flex-start; gap: 8px; }
@@ -17912,7 +17916,10 @@ function buildCoiledAltar(ev, r, h) {
   const need = mythic ? 5 : 3;
   soaks.forEach((s, i) => {
     if (s.who.length && s.who.length < need) M(s.t, 'Raid', s.n, 'High', S(s.n)[1] + ' was soaked by only ' + pl2e(s.who.length, 'player') + ' (' + s.who.map(pname).join(', ') + '); it needs ' + need + '.', 'Over-send: put more than ' + need + ' players in every soak so one late player can\'t wipe it.');
-    for (const d of s.died) M(s.t, d, s.n, 'High', 'Died in the ' + S(s.n)[1] + ' soak.', 'Soakers need a personal defensive or an immunity, and the target needs an external.');
+    /* (Nov 5, Flex: "wildly innaccurate in how its assessing the individual": a soaker who died in a soak too few soaked did their job; the
+       missing soaker is the mistake. m.others: someone else's mistake, kept for the record and never counted against them) */
+    const shortS = s.who.length > 0 && s.who.length < need;
+    for (const d of s.died) { M(s.t, d, s.n, 'High', shortS ? 'Died in the ' + S(s.n)[1] + ' soak, which had only ' + s.who.length + ' of ' + need + ': the missing soaker, not them.' : 'Died in the ' + S(s.n)[1] + ' soak.', shortS ? 'Over-send: put more than ' + need + ' players in every soak so one late player can\'t wipe it.' : 'Soakers need a personal defensive or an immunity, and the target needs an external.'); if (shortS) mistakes[mistakes.length - 1].others = 'the soak was short'; }
   });
   // (soak counts and deaths are shown in the combined Guillotine panel further down)
 
@@ -17972,7 +17979,13 @@ function buildCoiledAltar(ev, r, h) {
   const gbAt = (t) => gbWin.filter((c) => t >= c.s - 0.2 && t <= c.e + 0.3), clipAt = (t) => gbClip.filter((e) => Math.abs(e.t - t) <= 1.5).map((e) => e.dst);
   /* (Coiled Altar fix 8, Oct 24: 6 of 11 top kills had 1 to 5 clips and nobody died: Low; Gravebound killing them is High) */
   const gbGrave = (e) => r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= e.t + 16 && /^gravebound$/i.test(String(d.ability || '')));
-  for (const e of gbClip) M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by someone else\'s Gloombomb, so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
+  /* (Nov 5, Flex: "wildly innaccurate in how its assessing the individual": Nov 4 pull 12, one bomb that missed its add clipped 10 players and
+     each was charged with it. A bomb that clipped 3 or more went off in the raid: its carrier's mistake (their own row says it missed the add),
+     not each player's. Every row names whose bomb it was) */
+  const gbOwn = (e) => { const c = gbWin.filter((x) => x.g !== e.dst && Math.abs(x.e - e.t) <= 1.5).sort((a, b) => Math.abs(a.e - e.t) - Math.abs(b.e - e.t))[0]; return c ? c.g : null; };
+  for (const e of gbClip) { const o = gbOwn(e), nC = new Set(clipAt(e.t)).size, whose = o ? pname(o) + '\'s' : 'someone else\'s';
+    M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by ' + whose + ' Gloombomb' + (nC >= 3 ? ', which hit ' + nC + ' players' : '') + ', so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
+    if (nC >= 3) mistakes[mistakes.length - 1].others = whose + ' Gloombomb went off in the raid'; }
   sections.push({ id: 'adds', title: 'Spiritcackle and Gloombombs (Adds)', place: 'Spiritcackle adds and Gloombombs', spell: S('spiritcackle'),
     verdict: setRows.some((r2) => r2[4].bad) ? 'bad' : gbClip.length ? 'warn' : 'good',
     summary: pl(sc.length, 'add set') + ', and ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. The kicks on each add are under Interrupts below.',
@@ -18386,6 +18399,10 @@ function buildCoiledAltar(ev, r, h) {
     cols: ['When', 'Soak', 'In circle', 'Soakers', 'Target', 'Corner', 'Died', ''], rows: qRows });
 
   // ---- mind controls: deaths by falling in P2/P3 ----
+  /* (Nov 5, the studio for Flex: a mind-controlled fall says the log's own reason. The stuns, roots and grips that land on mind-controlled
+     players in the logs, and the buffs a cancel macro takes off: movement speed and their own shields) */
+  const MC_CC = /^(shockwave|chaos nova|leg sweep|ring of peace|ursol's vortex|gorefiend's grasp|death grip|capacitor totem|static charge|binding shot|storm bolt|hammer of justice|kidney shot|cheap shot|blind|shadowfury|mighty bash|incapacitating roar|intimidating shout|psychic scream|ring of frost|frost nova|mass entanglement|entangling roots|earthgrab totem|asphyxiate|blinding sleet|tail swipe|wing buffet|sleep walk|paralysis|dragon's breath|mortal coil|howl of terror|fear|intimidation|freezing trap|polymorph|repentance|blinding light|landslide|typhoon|thunderstorm|imprison|sigil of misery|fel eruption|axe toss|charge)$/i;
+  const MC_KEEP = /^(aspect of the cheetah|burning rush|sprint|tiger dash|dash|stampeding roar|wind rush|angelic feather|body and soul|divine steed|ghost wolf|hover|momentum|tactical retreat|speed of light|ice barrier|blazing barrier|prismatic barrier|power word: shield)$/i;
   const mcRows = [];
   for (const d of r.deaths) {
     const ph = phaseAt(d.t); if (ph !== 'P2' && ph !== 'P3') continue;
@@ -18394,7 +18411,14 @@ function buildCoiledAltar(ev, r, h) {
     const fell = lastHit && /^falling$/i.test(lastHit.spell); // (the log's falling damage only: "Eternal Nightfall" isn't a fall (Oct 22))
     const noHit = !lastHit || d.t - lastHit.t > 4;
     if (fell || noHit) { if (mcOn) d.fell = true; /* (How it went says they fell) */
-      M(d.t, d.player, 'dreadmarch', 'High', mcOn ? 'Fell off the platform while mind controlled. The raid didn\'t break their shield in time.' : 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.');
+      /* (the reason, from the log: a speed buff or their own shield still on from the start of the mind control (theirs: the cancel macro takes it
+         off), or the raid didn't break the shield in time, with or without a stun or grip on them first (the raid's). Without the Dreadmarch
+         debuff the log can't tell, so it blames no one) */
+      const mcP = [...r.players.values()].find((p) => p.guid === d.guid) || {}, mcA = mcOn ? Math.max(...mcS.sp.filter(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - 1.5)).map(([a]) => a)) : d.t;
+      const mcCC = mcOn ? [...(mcP.debuffs || new Map())].filter(([k, b]) => MC_CC.test(k) && b && b.sp && b.sp.some(([a]) => a >= mcA - 0.5 && a <= d.t)).map(([k]) => k) : [];
+      const mcKept = mcOn ? [...(mcP.buffs || new Map())].filter(([k, b]) => MC_KEEP.test(k) && b && b.sp && b.sp.some(([a, z]) => a <= mcA + 0.5 && (z == null || z >= d.t - 1))).map(([k]) => k) : [];
+      if (mcOn) { d.fellOwn = mcKept.length > 0; d.fellWhy = mcKept.length ? 'was mind controlled off the edge with ' + mcKept[0] + ' still on: the cancel macro takes it off' : mcCC.length ? 'was mind controlled off the edge: ' + mcCC.slice(0, 2).join(' and ') + ' stopped them, but the raid didn\'t break their shield in time' : 'was mind controlled off the edge: no one stunned or gripped them, and the raid didn\'t break their shield in time'; }
+      M(d.t, d.player, 'dreadmarch', 'High', mcOn ? d.fellWhy.charAt(0).toUpperCase() + d.fellWhy.slice(1) + '.' : 'Died ' + (fell ? 'from falling' : 'with no damage in the seconds before') + ' in ' + ph + ', most likely mind controlled off the platform.', 'Cancel shields and absorbs when mind controlled, and keep a stun plus a grip or ring ready for every Dreadmarch.'); if (mcOn && !d.fellOwn) mistakes[mistakes.length - 1].others = 'the raid didn\'t break their shield in time';
       mcRows.push([{ t: d.t }, { p: d.player }, { txt: ph }, { txt: fell ? 'falling damage' : 'no damage before death', dim: true }, { map: { t: d.t - 1, lead: 8, hl: [d.guid], bad: [d.guid], badLabel: 'mind controlled off the edge', title: d.player + ' just before dying' } }]);
     }
   }
@@ -39416,7 +39440,7 @@ function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; const ct 
   const KM = keptMistakes(r).filter((x) => x.mechanic !== 'Death' && !(x.avoidRule && !/died/i.test(x.detail || ''))), sevW = KM.some((x) => x.severity === 'High') ? 'High' : 'Medium';
   for (const m of KM.filter((x) => x.severity === sevW).map((x) => ({ ...x, at: x.from != null ? x.from : x.t })).sort((a, b) => a.at - b.at)) { const k = String(m.mechanic).toLowerCase(); if (seen.has(k)) continue; seen.add(k);
     const who = m.player && m.player !== 'Raid' ? String(m.player).split('-')[0] : '', d0 = s1(m.detail); items.push({ t: m.at, mech: m.mechanic, txt: who && !new RegExp(who, 'i').test(d0) && !/^(A|An|The|\d)\b/.test(d0) ? who + ' ' + d0.charAt(0).toLowerCase() + d0.slice(1) : d0, sev: m.severity, nm: !!who && !/^(A|An|The|\d)\b/.test(d0) }); }
-  for (const d of keptDeaths(r).slice().sort((a, b) => a.t - b.t).slice(0, 3)) if (!items.some((x) => Math.abs(x.t - d.t) < 2 && new RegExp(String(d.player).split('-')[0], 'i').test(x.txt))) items.push({ t: d.t, mech: 'Death', txt: String(d.player).split('-')[0] + (d.fell ? ' fell off the platform while mind controlled. The raid didn\'t break their shield in time' : ' died to ' + (d.ability || 'damage')), sev: 'Death', nm: true });
+  for (const d of keptDeaths(r).slice().sort((a, b) => a.t - b.t).slice(0, 3)) if (!items.some((x) => Math.abs(x.t - d.t) < 2 && new RegExp(String(d.player).split('-')[0], 'i').test(x.txt))) items.push({ t: d.t, mech: 'Death', txt: String(d.player).split('-')[0] + (d.fell ? ' ' + (d.fellWhy || 'was mind controlled off the edge') : ' died to ' + (d.ability || 'damage')), sev: 'Death', nm: true });
   /* (a Gravebound death says which it was (Nov 1, Design studio for Flex): all 3 soul fragments picked up and the last pickup's hit killed
      them, or fewer than 3 picked up (missed). Pickups are the Gravebound hits (#1308330) in their last 20 s) */
   for (const x of items) { const m = String(x.txt || '').match(/^(.+?) died to Gravebound\.?$/i); if (!m) continue;
@@ -53514,18 +53538,18 @@ function deathVerdict(r, d) {
   const mine0 = dread0 ? new Set([...r.players.values()].map((q) => String(q.name || '').split('-')[0]).filter(Boolean)) : null;
   const how0 = !dread0 ? null : !dk || d.t - dk.t > 0.5 /* (a killing hit lands as they die) */ || /^falling$/i.test(dk.spell || '') ? 'edge' : dk.src && String(dk.src).split('-')[0] !== me0 && mine0.has(String(dk.src).split('-')[0]) ? 'ours' : 'boss';
   const dread = dread0 && (how0 === 'edge' || dmEnd >= d.t - 2), dreadHow = dread ? how0 : null; /* (a hit only counts while controlled or freed under 2 s before) */
-  const noCtrl = dread || ownL.some((l) => DEATH_NOCTRL.test(l.mechanic));
+  const noCtrl = (dread || ownL.some((l) => DEATH_NOCTRL.test(l.mechanic))) && !d.fellOwn; /* (Nov 5: a fall with their own speed buff or shield still on is theirs) */
   /* (Nov 5, Flex: "needs to be reviewed to see why people are getting blamed": a death a mechanic or someone else forced isn't theirs: feared by
      an unkicked Wail of Terror (the missed kick), dying in a Guillotine soak too few soaked (the missing soakers), clipped by someone else's
      Gloombomb, or killed by orbs someone else set off. Widow's Kiss stays theirs: running out is each player's job) */
   const pl1 = (r.players.get && r.players.get(d.guid)) || [...r.players.values()].find((p) => p.guid === d.guid), dbOn = (nm, back) => { const b = pl1 && pl1.debuffs && pl1.debuffs.get(nm); return !!(b && b.sp && b.sp.some(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - back))); };
   const soakNow = (() => { let best = null; for (const s of ((r.module && r.module.sections) || []).filter((x) => x.id === 'soakq')) for (const row of (s.rows || []).concat(...(s.groups || []).map((g0) => g0.rows || []))) { const tt = (row.find((c) => c && c.t != null) || {}).t, n = row.find((c) => c && c.t == null && /^\d+$/.test(String(c.txt || ''))); if (tt != null && n && tt <= d.t + 1 && d.t - tt < 15 && (!best || tt > best[0])) best = [tt, +n.txt]; } return best ? best[1] : null; })();
-  const soakL = (l) => /died in the guillotine soak/i.test(l.detail || ''), clipL = (l) => /clipped by someone else's gloombomb/i.test(l.detail || ''), shortSoak = ownL.some(soakL) && soakNow != null && soakNow < 5;
+  const soakL = (l) => /died in the guillotine soak/i.test(l.detail || ''), clipL = (l) => /got clipped by .{1,40}?'s gloombomb/i.test(l.detail || ''), shortSoak = ownL.some(soakL) && soakNow != null && soakNow < 5;
   const ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic) && !clipL(l) && !(shortSoak && soakL(l)));
   const forced = noCtrl ? '' : dbOn('Wail of Terror', 1.5) ? 'feared by an unkicked Wail of Terror: the missed kick, not them' : shortSoak ? 'died soaking a Guillotine only ' + soakNow + ' soaked: the missing soakers, not them'
     : ownL.some(clipL) && /^(gloombomb|gravebound)$/.test(ab) ? 'clipped by someone else\'s Gloombomb, not their own' : /^(venom rupture|coalesced venom)$/.test(ab) && !ownM.some((l) => /venom|orb/i.test(l.mechanic)) ? 'killed by orbs someone else set off (' + (d.ability || 'Venom Rupture') + ')' : '';
   const ownSame = ownM.some((l) => lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab);
-  const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && !forced && (ownM.length > 0 || deathOwn(r, d));
+  const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && !forced && (ownM.length > 0 || deathOwn(r, d) || !!d.fellOwn);
   const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.05;
   const late = false; /* (Nov 5, Flex: "it shouldnt count deaths after a wipe is called": no death after the call counts, their own or not) */
   const end = !!r.item.kill && (r.duration || 0) - d.t <= 20 && !own;
@@ -54732,9 +54756,15 @@ function rqcOf(c, F, a) {
     add('prep', x.emptySockets ? 'bad' : 'ok', 'Gems', 'every socket filled', x.emptySockets ? plural(x.emptySockets, 'empty socket') : 'all');
     if (x.ilvl) add('prep', x.lowIlvl ? 'w' : 'ok', 'Item level', 'no more than 5 under the raid', Math.round(x.ilvl) + (x.raidIlvl ? ' (raid ' + Math.round(x.raidIlvl) + ')' : '')); }
   // mechanics: every mechanic the raid made mistakes on tonight, and how many pulls this raider got it wrong in
-  const mm = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { const s = mm.get(m.mechanic) || new Set(); s.add(g.r.item.pull); mm.set(m.mechanic, s); }
-  const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()]))];
-  for (const k of names) { const s = mm.get(k), q = s ? s.size : 0; add('mech', !q ? 'ok' : q === 1 ? 'w' : 'bad', k, 'no mistakes', !q ? 'clean' : '').f = n ? (n - q) / n : 1; if (s) rows.mech[rows.mech.length - 1].pulls = [...s].sort((u, v) => u - v); }
+  /* (Nov 5, Flex: "This section is still wildly innaccurate in how its assessing the individual. Treeflex for example": someone else's mistake
+     (m.others: dying in a soak too few soaked, a bomb that went off in the raid, a mind control the raid didn't break) is never theirs; red
+     is for a death or a habit (a quarter of the pulls or more, more than small hits), else a slip; each line says what happened) */
+  const mm = new Map(), mo = new Map(); for (const g of a.per) for (const m of keptMistakes(g.r)) if (m.player === nm && m.mechanic !== 'Death') { if (m.others) { mo.set(m.mechanic, (mo.get(m.mechanic) || 0) + 1); continue; }
+    const o = mm.get(m.mechanic) || { s: new Set(), died: new Set(), big: false }; o.s.add(g.r.item.pull); if (/\b(died|killed)\b/i.test(m.detail || '') || /off the edge/i.test(m.detail || '')) o.died.add(g.r.item.pull); if (m.severity !== 'Low') o.big = true; mm.set(m.mechanic, o); }
+  const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()], [...mo.keys()]))];
+  for (const k of names) { const o = mm.get(k), q = o ? o.s.size : 0, dd = o ? o.died.size : 0, xo = mo.get(k) || 0, st = !q ? 'ok' : dd || (o.big && q >= Math.max(2, n / 4)) ? 'bad' : 'w';
+    const y = add('mech', st, k, 'no mistakes', !q ? 'clean' : ''); y.f = n ? (n - q) / n : 1; if (o) y.pulls = [...o.s].sort((u, v) => u - v);
+    y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : 'In ' + q + ' of ' + plural(n, 'pull') + (dd ? ', died to it in ' + dd : !o.big ? ', small hits' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
   // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
   const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
   for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
@@ -54777,7 +54807,7 @@ function rqcOf(c, F, a) {
 // the picked raider's checklist, under the raid's report card
 function rqcCard(c, F) {
   const x = rcbSel(c, F); if (!x) return ''; const a = x.a, p = a.p, o = rqcOf(c, F, a), B = rcbFacts(c, F), rkR = B.rkRole[x.role], RN = { tank: 'tanks', healer: 'healers', dps: 'damage dealers' };
-  const ic = { ok: '✓', w: '!', bad: '✕', na: '–' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed', na: 'not graded' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + '<small>Goal: ' + esc(y.rule) + '</small></span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
+  const ic = { ok: '✓', w: '!', bad: '✕', na: '–' }, inner = (y, dd) => '<span class="rqc-i ' + y.s + '" aria-label="' + ({ ok: 'passed', w: 'slipped', bad: 'failed', na: 'not graded' }[y.s]) + '">' + ic[y.s] + '</span><span><span class="rqc-nm">' + esc(y.l) + '</span>' + (y.f != null ? '<span class="rqc-bar"><i class="' + y.s + '" style="width:' + Math.max(2, Math.round(100 * y.f)) + '%"></i></span><em class="rqc-pc ' + y.s + '">' + Math.round(100 * y.f) + '%</em>' : '') + (y.note ? '<small class="rqc-note">' + esc(y.note) + '</small>' : '<small>Goal: ' + esc(y.rule) + '</small>') + '</span><b>' + esc(y.v) + (dd ? (y.v ? ' ' : '') + '<i class="rqc-dv">' + (y.v ? '' : 'See pulls ') + '<span class="rqc-ar">▾</span></i>' : '') + '</b>';
   // (a line with mistakes opens to the pulls they happened in; a pull opens on Debriefing with this raider picked (Oct 23, your idea))
   const row = (y) => (y.pulls && y.pulls.length && y.s !== 'ok' ? '<details class="rqc-dd"><summary class="rqc-row">' + inner(y, true) + '</summary><div class="rqc-pl"><span class="sub">Open the pull:</span>' + y.pulls.map((n) => '<button type="button" class="btn sm" data-rqcpull="' + n + '" data-rqcp="' + esc(p.name) + '">Pull ' + n + (y.pn && y.pn[n] ? ' · ' + esc(y.pn[n]) : '') + ' ›</button>').join('') + '</div></details>'
     : '<div class="rqc-row"' + (y.tt ? ' data-tt="' + esc(y.tt) + '"' : '') + '>' + inner(y) + '</div>');
@@ -70287,7 +70317,7 @@ function dsGuides() {
       var who0 = M.reduce(function (a, m) { return a.concat(m.who); }, []), lwhy0 = sm && sm.why && sm.why !== sm.lab ? sm.why : '', nx0 = sw && (sw.how || sw.fix) ? sw.how || sw.fix : sm && sm.next ? sm.next : '';
       var phT = function (t, m) { var p = m ? phs.filter(function (q) { return q.k === m.ph; })[0] : null; if (!p) { try { var r0 = window.dbtMapKit && window.dbtMapKit().S.rep, MP0 = (r0 && r0.module && r0.module.phases) || [], q0 = MP0.filter(function (q) { return q.start <= t + 0.5 && t < q.end + 0.5; })[0]; if (q0 && q0.name) p = { n: q0.name }; } catch (e0) { /* (the page's own phases) */ } } /* (the fight's own phase times first (Nov 3): with one player picked the page has only their phases) */ if (!p) { var tp = phs.filter(function (q) { return q.s && q.t <= t + 0.5; }); p = tp[tp.length - 1] || null; } if (!p || !p.n) return ''; var n = p.n, g = n.match(/^P(\d+)/i); return '<i class="dbt-chp">' + (g ? 'P' + g[1] : /^intermission/i.test(n) ? 'Int' : /^whole/i.test(n) ? '' : E(n.split(/\s+/)[0])) + '</i>'; }; /* (the phase, short: P1, P2, Int) */
       var row = function (x, k) { var m = x.b ? x.b.m : null, lv = m ? (m.dead ? 5 : m.sev || (/high/i.test(x.it.sev || '') ? 4 : 3)) : (/high/i.test(x.it.sev || '') ? 4 : 3);
-        return '<button type="button" class="dbt-chr"' + (x.b ? ' data-jump="' + x.b.i + '"' : '') + '><span class="dbt-cht">' + mm(Math.floor(x.it.t)) + phT(x.it.t, m) + '</span><span class="dbt-ic">' + ((m && m.icon) || '') + '</span><b class="no-ic">' + E(x.ttl || (m ? m.m : x.it.mech || '')) + '</b><span>' + chips(E(String(x.it.txt || '').replace(/\.\s*$/, '')), who0) + '.</span>' + LVf(lv) + '</button>'; };
+        return '<button type="button" class="dbt-chr"' + (x.b ? ' data-jump="' + x.b.i + '"' : '') + '><span class="dbt-cht">' + mm(Math.floor(x.it.t)) + phT(x.it.t, m) + '</span><span class="dbt-ic">' + (x.ttl && window.spellIcon ? window.spellIcon(0, x.ttl, true) : (m && m.icon) || '') + '</span><b class="no-ic">' + E(x.ttl || (m ? m.m : x.it.mech || '')) + '</b><span>' + chips(E(String(x.it.txt || '').replace(/\.\s*$/, '')), who0) + '.</span>' + LVf(lv) + '</button>'; };
       var chain = its.length > 1 || CH.call ? '<div class="dbt-chn"><span class="dbt-k">How it went</span>' + its.map(row).join('') + (CH.call ? '<div class="dbt-chr end"><span class="dbt-cht">' + mm(Math.floor(CH.call.t)) + phT(CH.call.t, null) + '</span><span class="dbt-ic x">✕</span><b>Wipe called</b><span>' + E(String(CH.call.why || '').replace(/^./, function (c) { return c.toUpperCase(); }).replace(/\.?\s*$/, '.')) + '</span></div>' : '') + '</div>' : '';
       h += '<div class="dbt-p dbt-why"><span class="dbt-k">Why we wiped</span><div class="dbt-wb"><span class="dbt-ic">' + ((sm && sm.icon) || '') + '</span><div><h2>It started at ' + mm(Math.floor(CH.start.t)) + ': ' + chips(E(String(CH.start.txt).replace(/\.\s*$/, '')), who0) + '.</h2>' +
         (lwhy0 ? '<div class="dbt-ln"><span>WHY</span><span>' + E(lwhy0) + '</span></div>' : '') + (nx0 ? '<div class="dbt-ln"><span>NEXT TIME</span><span>' + E(sent(nx0, 2)) + '</span></div>' : '') + chain +
@@ -71082,8 +71112,8 @@ function r437Card() { document.querySelectorAll('.rqc-under').forEach((g) => { i
   const ORD = ['staying alive', 'mechanics', 'ready to raid', 'performance'], rank = (s) => { const i = ORD.indexOf(title(s).toLowerCase()); return i < 0 ? 9 : i; };
   let fix = null; for (const s of secs.slice().sort((a, b) => rank(a) - rank(b))) { const rows = [...s.querySelectorAll('.rqc-row')].filter((r) => r.querySelector('.rqc-i.bad') && !/bonus/i.test((r.querySelector('small') || {}).textContent || ''));
     if (!rows.length) continue; const pc = (r) => { const m = ((r.querySelector('.rqc-pc') || {}).textContent || '').match(/[0-9]+/); return m ? +m[0] : 101; }; fix = { s, r: rows.sort((a, b) => pc(a) - pc(b))[0] }; break; }
-  if (fix) { const lab = (fix.r.querySelector('.rqc-nm') || {}).textContent || '', val = (fix.r.querySelector(':scope > b, :scope > span > b') || fix.r.querySelector('b') || {}).textContent || '', goal = ((fix.r.querySelector('small') || {}).textContent || '').replace(/^Goal:\s*/, '');
-    const f = document.createElement('div'); f.className = 'r437-fix'; f.innerHTML = '<span class="r437-k">Fix first</span><b>' + esc(lab.trim()) + '</b>' + (val.trim() ? '<span class="r437-v">' + esc(val.replace(/\s*▾\s*$/, '').trim()) + '</span>' : '') + (goal ? '<span class="r437-g">Goal: ' + esc(goal.trim()) + '</span>' : '');
+  if (fix) { const lab = (fix.r.querySelector('.rqc-nm') || {}).textContent || '', val = (fix.r.querySelector(':scope > b, :scope > span > b') || fix.r.querySelector('b') || {}).textContent || '', goal = ((fix.r.querySelector('small') || {}).textContent || '').replace(/^Goal:\s*/, ''), isNote = !!fix.r.querySelector('small.rqc-note');
+    const f = document.createElement('div'); f.className = 'r437-fix'; f.innerHTML = '<span class="r437-k">Fix first</span><b>' + esc(lab.trim()) + '</b>' + (val.trim() ? '<span class="r437-v">' + esc(val.replace(/\s*▾\s*$/, '').trim()) + '</span>' : '') + (goal ? '<span class="r437-g">' + (isNote ? '' : 'Goal: ') + esc(goal.trim()) + '</span>' : '');
     f.addEventListener('click', () => { fix.r.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (fix.r.tagName === 'SUMMARY') fix.r.parentElement.open = true; }); hd.after(f); }
   // (a box per list)
   const t = document.createElement('div'); t.className = 'r437-tiles'; secs.forEach((s) => { const m = cnt(s).match(/([0-9]+) of ([0-9]+)/), a = m ? +m[1] : 0, b = m ? +m[2] : 0, c = !b || a === b ? 'g' : a / b >= 0.6 ? 'y' : 'r';

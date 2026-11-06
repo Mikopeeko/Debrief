@@ -13848,6 +13848,10 @@ html body #view .dbt-why .wrt-alsorow > b::after { content: 'added up'; color: v
 html body #view .rcb-d .rcb-dall { color: var(--faint); font-weight: 400; font-size: 12px; white-space: nowrap; } /* (Nov 5: "· 11 in all" muted beside their own deaths) */
 /* (Nov 5, Flex: "what are these numbers for theres no title?": the grade's letter and number sit together under GRADE, the Deaths column fits
    its "· N in all", and the header row stays on screen under the tab bar while the table scrolls) */
+/* (Nov 5, Main: "Mistakes that cost points 204" ran under the next tile at about 1180 px: the label wraps, the number never shrinks) */
+html body #view .rcb-bst > .tile.rcb-bt { min-width: 0; }
+html body #view .rcb-bst > .tile.rcb-bt > .l { white-space: normal; min-width: 0; flex: 1 1 auto; line-height: 1.2; }
+html body #view .rcb-bst > .tile.rcb-bt > .v { flex: none; white-space: nowrap; }
 html body #view .rcb-tbl .rcb-th { position: sticky; top: var(--tbH, 46px); z-index: 5; background: rgba(12, 16, 22, .94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 html body #view .rcb-tbl .rcb-th > button[data-rcbs="score"] { text-align: left; padding-left: 4px; }
 html body #view .rcb-tr .rcb-g, html body #view .rcb-tr.ds-bar .rcb-g { justify-content: flex-start; gap: 8px; }
