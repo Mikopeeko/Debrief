@@ -7764,7 +7764,7 @@ function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /
 const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
 function rootCause(r, opts) {
   opts = opts || {};
-  if (!r || !r.item || r.item.kill || r.item.boss !== 'The Coiled Altar' || !r.module || r.module.error) return null;
+  if (!r || !r.item || r.item.kill) return null; if (r.item.boss !== 'The Coiled Altar') return rootCauseGen(r, opts); /* (Nov 6: every other boss) */ if (!r.module || r.module.error) return null;
   const n = r.item.size || 20, dur = r.duration || r.item.duration || 0, nm = (p) => String(p || '').split('-')[0], T = fmtT;
   const pl = [...r.players.values()], role = new Map(pl.map((p) => [p.name, p.role])), byGuid = new Map(pl.map((p) => [p.guid, p.name])), nHeal = Math.max(1, pl.filter((p) => p.role === 'healer').length);
   const phs = (r.module.phases || []).slice().sort((a, b) => a.start - b.start), phaseAt = (t) => { let k = phs[0]; for (const p of phs) if (p.start <= t + 0.5) k = p; return k ? k.name.split(' ')[0] : ''; };
@@ -7918,7 +7918,60 @@ function rootCause(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, short: RC_CAT[a.cat].nm.replace(/ \(.*$/, ''), who: a.who, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, nextCat, most: mostL, bombBy, kinds: wornK ? [...wornK] : null, /* (a pull worn down by Dreadmarch: mc (deaths to the mind control), ghosts (ghosts touching), or both) */ brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
-const api = { fzPack, fzRevive, fzKinds, rootCause, RC_CAT, rcCat, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+/* (Nov 6, Flex picked "Other bosses' wipe logic": every boss gets a root cause from what its own checks logged, the same shape as The Coiled
+   Altar's. The point is the first wave (4+ deaths within 5 s), else the wipe call. A wave's cause is the check that set it off (a High or Medium
+   mistake on the same mechanic in the 25 s before, the raid's own first), else what killed most in it; with no wave, what most of the collapse's
+   deaths were (40% or more), else a raid failure in the last 25 s (a missed check, an enrage), else "Too many individual mistakes". What else
+   added up: the raid's other High mistakes and other causes of 2+ deaths in the collapse. Next time is the check's own fix) */
+function rootCauseGen(r, opts) {
+  opts = opts || {}; if (!r || !r.item || r.item.kill) return null;
+  const dur = r.duration || r.item.duration || 0, T = fmtT, nm = (p) => String(p || '').split('-')[0], lc = (s) => String(s || '').toLowerCase();
+  const early = opts.cut != null && dur - opts.cut > 60, end = opts.cut != null && !early ? opts.cut : dur;
+  const deaths = (r.deaths || []).filter((d) => d.t <= end + 0.5).slice().sort((a, b) => a.t - b.t).map((d) => ({ t: d.t, who: nm(d.player), ab: d.ability || d.killer || 'something' }));
+  const KM = (r.mistakes || []).filter((m) => m.mechanic && m.mechanic !== 'Death' && !/^(pace|phase changes)$/i.test(m.mechanic) && m.t <= end + 0.5 && !m.others), big = (m) => /^(High|Medium)$/.test(m.severity);
+  const fits = (m, ab) => { const a = lc(ab), k = lc(m.mechanic); return !!a && (k === a || a.includes(k) || k.includes(a) || lc(m.detail).includes(a)); };
+  const s1 = (x) => { const mm = String(x || '').match(/^(.{8,220}?[.!?])(\s|$)/); return (mm ? mm[1] : String(x || '')).replace(/\.$/, '').trim(); };
+  const spOf = (n, id) => { const i = id || SPELLID.get(lc(n)); return i ? [i, n] : null; };
+  const tally = (l) => { const m = new Map(); for (const d of l) m.set(d.ab, (m.get(d.ab) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
+  const who3 = (l) => { const u = [...new Set(l.map((d) => d.who))]; return u.length > 3 ? u.slice(0, 3).join(', ') + ' and ' + (u.length - 3) + ' more' : u.length > 1 ? u.slice(0, -1).join(', ') + ' and ' + u[u.length - 1] : u[0] || ''; };
+  const raidFirst = (a, b) => (a.player === 'Raid' ? 0 : 1) - (b.player === 'Raid' ? 0 : 1);
+  let wave = null; for (const d of deaths) { const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4) { wave = w; break; } }
+  let c0 = wave ? wave[0].t : end; for (const d of deaths.slice().reverse()) { if (d.t > c0) continue; if (c0 - d.t > 45) break; c0 = d.t; } c0 = Math.max(0, Math.min(c0, end - 30) - 5);
+  const chain = [], say = (t, txt) => chain.push({ t, cat: 'gen', txt });
+  let cat = 'gen', name = null, sp = null, next = '', short = '', sure = 0.5, causeM = null; const P = wave ? wave[0].t : end;
+  const vague = (ab) => /^(melee|something|unknown|damage)$/i.test(String(ab || ''));
+  let mixC = null; if (wave && (tally(wave)[0][1] < 2 || vague(tally(wave)[0][0]))) { mixC = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= wave[0].t - 25 && m.t <= wave[0].t + 1).pop() || null; if (!mixC) wave = null; } /* (no raid failure before a mixed wave: what most of the collapse's deaths were) */
+  if (wave && mixC) { /* (Nov 6: a wave of mixed hits isn't one mechanic (Kith'ix pull 2 read "Melee"): a raid failure just before it, else separate mistakes) */
+    causeM = mixC; const hits = tally(wave).map(([a]) => a).filter((a) => !vague(a)).slice(0, 3);
+    if (causeM) { name = causeM.mechanic; sp = spOf(name, causeM.id); say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')'); next = s1(causeM.fix); sure = 0.6; short = s1(causeM.detail) + '.'; }
+    say(wave[0].t, wave.length + ' died within 5 s' + (hits.length ? ' to ' + (hits.length > 1 ? hits.slice(0, -1).join(', ') + ' and ' + hits[hits.length - 1] : hits[0]) : '') + ' (' + T(wave[0].t) + ')'); }
+  else if (wave) {
+    const [ab, n] = tally(wave)[0];
+    causeM = KM.filter((m) => big(m) && m.t >= wave[0].t - 25 && m.t <= wave[0].t + 1 && fits(m, ab)).sort((a, b) => raidFirst(a, b) || b.t - a.t)[0] || KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= wave[0].t - 25 && m.t <= wave[0].t + 1 && /\b(died|killed|dead)\b/i.test(m.detail || '')).pop() || null; /* (Nov 6: or the raid failure just before whose line says players died) */
+    name = causeM ? causeM.mechanic : ab; sp = spOf(name, causeM && causeM.id);
+    if (causeM) say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')');
+    say(wave[0].t, (n >= 2 ? ab + ' killed ' + n + ' at once' : wave.length + ' died at once') + ' (' + T(wave[0].t) + ')');
+    next = causeM ? s1(causeM.fix) : ''; sure = causeM ? 0.8 : 0.6; short = causeM ? s1(causeM.detail) + '.' : n + ' died to ' + ab + ' at once.';
+  } else {
+    const pre = deaths.filter((d) => d.t >= c0), top = tally(pre)[0] || [null, 0], late = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= end - 25).pop();
+    if (top[0] && !vague(top[0]) && top[1] >= 2 && top[1] >= pre.length * 0.4) { const ab = top[0], l = pre.filter((d) => d.ab === ab);
+      causeM = KM.filter((m) => big(m) && m.t >= c0 && fits(m, ab)).sort((a, b) => raidFirst(a, b) || a.t - b.t)[0] || null; name = causeM ? causeM.mechanic : ab; sp = spOf(name, causeM && causeM.id);
+      if (causeM && causeM.player === 'Raid') say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')');
+      say(l[0].t, who3(l) + ' died to ' + ab + ' (from ' + T(l[0].t) + ')'); next = causeM ? s1(causeM.fix) : ''; sure = 0.6; short = 'Most of the deaths were ' + ab + ' (' + l.length + ' of ' + pre.length + ').'; }
+    else if (late) { causeM = late; name = late.mechanic; sp = spOf(name, late.id); say(late.t, s1(late.detail) + ' (' + T(late.t) + ')'); next = s1(late.fix); sure = 0.6; short = s1(late.detail) + '.'; }
+    else if (pre.length) { cat = 'dead'; name = 'Too many individual mistakes'; say(pre[0].t, pre.length + ' died to separate mistakes from ' + T(pre[0].t) + ' (' + tally(pre).slice(0, 3).map(([a, k]) => k + ' to ' + a).join(', ') + ')'); short = 'Deaths from different mistakes added up, and too few were left to finish the boss.'; sure = 0.45; }
+    else return null;
+  }
+  const also = [], seen = new Set([lc(name)]);
+  for (const m of KM.filter((x) => x.player === 'Raid' && x.severity === 'High' && x.t >= c0)) { if (seen.has(lc(m.mechanic)) || (causeM && m === causeM)) continue; seen.add(lc(m.mechanic)); also.push({ cat: 'gen', name: m.mechanic, short: m.mechanic, t: m.t }); }
+  for (const [ab, k] of tally(deaths.filter((d) => d.t >= c0))) { if (k < 2 || vague(ab) || seen.has(lc(ab)) || (causeM && fits(causeM, ab)) || lc(ab) === lc(name) || (wave && causeM && wave.some((d) => d.ab === ab))) continue; seen.add(lc(ab)); also.push({ cat: 'gen', name: ab, short: ab, t: (deaths.find((d) => d.ab === ab && d.t >= c0) || {}).t }); }
+  const alsoL = also.slice(0, 3), marks = (cat === 'dead' ? deaths.filter((d) => d.t >= c0).map((d) => ({ t: d.t, k: 'also' })) : (chain.length ? [{ t: chain[0].t, k: 'root' }] : [])).concat(cat === 'dead' ? [] : alsoL.filter((a) => a.t != null).map((a) => ({ t: a.t, k: 'also' })));
+  const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
+  return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short, marks, sp, orbBy: [], orbAt: null, chain,
+    also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
+}
+
+const api = { fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, RC_CAT, rcCat, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

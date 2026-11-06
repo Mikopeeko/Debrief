@@ -164,6 +164,8 @@ function checkPull(key) {
   { const ch3 = !it.kill ? CHT.wipeChain(r) : null; if (ch3 && ch3.items) { const endT = r.duration || 0;
       for (const x of ch3.items) if (x.t < ch3.from - 0.5 || x.t < endT - 240) say(pull, 'collapse', 'How it went has a step at ' + E.fmtT(x.t) + ', before the collapse (' + E.fmtT(ch3.from) + ')');
       for (const q of r.mistakes || []) if (/^Eternal Nightfall finished casting/.test(q.detail || '') && q.t - 17 >= ch3.from && q.t - 17 <= endT + 0.05 && !ch3.items.some((x) => /eternal nightfall/i.test(x.mech + ' ' + x.txt))) say(pull, 'collapse', 'Eternal Nightfall finished casting at ' + E.fmtT(q.t) + ' in the collapse, but How it went leaves it out'); } }
+  /* (Nov 6, Flex picked "Other bosses' wipe logic": every boss's wipe gets a root cause, never one named Melee) */
+  if (E.rootCause && it.boss !== 'The Coiled Altar' && !it.kill && (r.deaths || []).length >= 4) { const og = E.rootCause(r); if (!og || !og.line) say(pull, 'root', 'no root cause for this wipe'); else if (/^(melee|something)$/i.test(og.name || '')) say(pull, 'root', 'the root cause is named ' + og.name); }
   /* (Nov 6 read-through: Spirit Erasure is its own cause, never "Too many individual mistakes") */
   if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o6 = E.rootCause(r), se = (r.deaths || []).filter((d) => /^spirit erasure$/i.test(d.ability || '')).length; if (o6 && o6.cat === 'dead' && se >= 3 && se >= (r.deaths || []).length / 2) say(pull, 'root', 'most deaths were Spirit Erasure, but the root cause says too many individual mistakes'); }
   /* (Nov 5, Flex: a mind-controlled fall says it fell; an orb collision says whose orbs) */
