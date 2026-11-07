@@ -7048,7 +7048,7 @@ function pvWrap(h, pb, got) {
   if (/<div class="panel pls pls-slim"/.test(h)) tag(/<div class="panel pls pls-slim"[^>]*>/, 'plans');
   else { let sv = ''; try { sv = L.length && typeof planSavedStripH === 'function' ? planSavedStripH(pb, L) : ''; } catch (e) { sv = ''; }
     h += sv ? sv.replace('<div class="panel pls pls-slim"', '<div data-pv="plans" class="panel pls pls-slim pv-own"') : '<div data-pv="plans" class="panel pls pv-own pv-none"><b>No saved plans for ' + esc(pnShort(pb)) + ' yet.</b><span class="sub">✨ Make the whole plan saves one, or Import a note.</span></div>'; }
-  if (L.length >= 2) { const ids = (S.pvCmp && S.pvCmp.pb === pb ? S.pvCmp.ids : null) || L.slice(0, 2).map((x) => x.id); h = h.replace(/(<div data-pv="plans"[^>]*>)/, '$1' + pvCmpH(pb, L, ids)); }
+  if (false && L.length >= 2) { /* (Compare two plans is off (Flex, Nov 7: "what the hell is this as well?"); pvCmpH stays for now) */ const ids =(S.pvCmp && S.pvCmp.pb === pb ? S.pvCmp.ids : null) || L.slice(0, 2).map((x) => x.id); h = h.replace(/(<div data-pv="plans"[^>]*>)/, '$1' + pvCmpH(pb, L, ids)); }
   /* (each tab's count: the readiness parts the ring is made of) */
   let r = null; try { r = pgRdy(pnGet(), pb); } catch (e) { r = null; } const row = (k) => ((r && r.rows) || []).find((x) => x[0] === k);
   const on = (() => { try { return (pnGet().on[pb] || []).length; } catch (e) { return 0; } })();
@@ -7480,7 +7480,7 @@ const planBosses = () => { const all = planBossesAll(), sk = planSkipGet(), l = 
 function planBoss() { const l = planBosses(); let b = S.ndzPick || store.get(PLAN_BK);
   if (!l.includes(b)) b = (PROG_BACK && l.includes(PROG_BACK.boss) ? PROG_BACK.boss : null) || l.find((x) => notesOf(x).list.some((n) => !n.example)) || l[0];
   return b; }
-const planV0 = () => { const v = S.planV || store.get(PLAN_VK); return v === 'ros' || v === 'notes' || v === 'plans' || v === 'night' ? v : 'tonight'; }; /* (Tonight is home, Into the game folded into it, Oct 24) */ /* (+ Into the game, Oct 23) */ /* (Night is the first page, Oct 22) */
+const planV0 = () => { let v = S.planV || store.get(PLAN_VK); if (v === 'ros' && !S.planV && rostersGet().list.length) v = 'tonight'; if (v === 'night') v = 'tonight'; /* (the Who plays grid is gone too (Flex, Nov 7: "this should also be gone"): each boss's Roster tab picks who plays, Out that night sits someone for every boss) */ /* (a reload never lands on Your rosters while you have one: the Roster tab is where it lives (Flex, Nov 7: "this shouldnt exist anymore")) */ return v === 'ros' || v === 'notes' || v === 'plans' || v === 'night' ? v : 'tonight'; }; /* (Tonight is home, Into the game folded into it, Oct 24) */ /* (+ Into the game, Oct 23) */ /* (Night is the first page, Oct 22) */
 // (your rosters: { list: [{ id, name, players: [{ n, cls, role, bench }], saved }], cur }; the one in use fills new plans)
 const rostersGet = () => { try { const o = JSON.parse(store.get(PLAN_RK) || 'null'); return o && Array.isArray(o.list) ? o : { list: [], cur: null }; } catch (e) { return { list: [], cur: null }; } };
 const rostersSet = (o) => store.set(PLAN_RK, JSON.stringify(o));
@@ -8238,6 +8238,9 @@ function planAutoRoster() { let P = null; try { P = planPool(); } catch (e) { re
 
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.ptr-ros [data-plred]'); if (!b || S.page !== 'plan') return; e.preventDefault(); e.stopPropagation(); const Rr = rostersGet().list.find((x) => x.id === b.dataset.plred); if (!Rr) return;
   S.planV = 'ros'; store.set(PLAN_VK, 'ros'); S.planOpen = false; S.plRosBack = 'tonight'; S.planRosEd = { id: Rr.id, name: Rr.name, on: new Map(Rr.players.map((q) => [q.n.toLowerCase(), { ...q }])) }; planAssign(); window.scrollTo({ top: 0 }); }, true); /* (Edit from any step, Oct 23) */
+/* (Nov 7, Flex on Your rosters: "this shouldnt exist anymore": an Edit or Make one link opens the roster in use in its editor, and Cancel or Save comes back to Plan; the list page is only for having no roster yet) */
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-planv="ros"]'); if (!b || S.page !== 'plan') return; const o = rostersGet(); if (!o.list.length) return; const Rr = planRoster() || o.list[0]; if (!Rr) return;
+  e.preventDefault(); e.stopPropagation(); S.planV = 'ros'; S.planOpen = false; S.plRosBack = 'tonight'; S.planRosEd = { id: Rr.id, name: Rr.name, on: new Map(Rr.players.map((q) => [q.n.toLowerCase(), { ...q }])) }; planAssign(); window.scrollTo({ top: 0 }); }, true);
 
 function planAutoRetry(n) { if (S.page !== 'plan' || rostersGet().list.length || S.planRosEd || n > (PG_READ ? 130 : 8)) return; /* (while the team's nights are read, up to 90 s more) */
   if (n === 3 && !PG_READ) { let g = null; try { g = planPool().team; } catch (e) { g = null; } if (g && g.id && g.kind !== 'char') { let T = null; try { T = planTeamRegs(g); } catch (e) { T = null; } if (!(T && T.reg.length)) pgTeamRead(g); } } /* (nothing to make it from: read the team's nights, Nov 4) */
