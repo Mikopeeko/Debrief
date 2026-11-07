@@ -18380,7 +18380,7 @@ function auraKind(n) { const l = String(n || '').toLowerCase(); if (!AU_SETS) AU
 function auOk(card, name) { const k = (S.gbAuK || {})[card] || '', q = String((S.gbAuQ || {})[card] || '').toLowerCase(); return (!k || card !== 'b' || auraKind(name) === k) && (!q || String(name).toLowerCase().includes(q)); }
 const AU_NONE = '<p class="muted gb-aun">Nothing matches this filter.</p>';
 function auTool(card, kinds) { const k0 = (S.gbAuK || {})[card] || '', q0 = (S.gbAuQ || {})[card] || '', L = [['', 'All']].concat(kinds || []);
-  return '<div class="gb-aut">' + (L.length > 2 ? '<span class="seg gb-by gb-auk" role="tablist" aria-label="Kind">' + L.map(([k, l]) => '<button type="button" role="tab" data-gauk="' + card + ':' + k + '" aria-selected="' + (k === k0) + '"' + (k === k0 ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</span>' : '') +
+  return '<div class="gb-aut">' + (L.length > 2 ? '<span class="gb-auk" role="tablist" aria-label="Kind">' + L.map(([k, l]) => '<button type="button" role="tab" data-gauk="' + card + ':' + k + '" aria-selected="' + (k === k0) + '"' + (k === k0 ? ' class="on"' : '') + '>' + esc(l) + '</button>').join('') + '</span>' : '') +
     '<input type="search" class="gb-auq" data-gauq="' + card + '" placeholder="Search ' + (card === 'b' ? 'buffs' : 'debuffs') + '" aria-label="Search" value="' + esc(q0) + '"></div>'; }
 if (typeof document !== 'undefined' && typeof window !== 'undefined' && !window.__auF) { window.__auF = 1; let tq = 0;
   document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-gauk]'); if (!b) return; const [c, k] = b.dataset.gauk.split(':'); (S.gbAuK || (S.gbAuK = {}))[c] = k; const y = scrollY; renderMain(); window.scrollTo({ top: y }); });
