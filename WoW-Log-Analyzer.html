@@ -32467,7 +32467,7 @@ function tpChip() {
   const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpWho().toLowerCase()).slice(0, 4);
   const av = here.length ? '<span class="tp-av" title="' + esc(here.map((h) => h.n).join(', ')) + ' ' + (here.length > 1 ? 'are' : 'is') + ' here">' + here.map((h) => '<span style="background:' + tpCol(h.n) + '">' + esc(h.n.charAt(0).toUpperCase()) + '</span>').join('') + '</span>' : '';
   const can = d.you && d.you.can;
-  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, Math.min(d.you.rank, 4))) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : d.ranks && d.you && d.you.lead ? 'Raid lead<span>· can edit</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
+  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, Math.min(d.you.rank, 4))) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : d.you && d.you.why === 'admin' && !d.you.lead ? 'Site admin<span>· can edit</span>' : d.ranks && d.you && d.you.lead ? 'Raid lead<span>· can edit</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
     : '<button type="button" class="tp-chip tp-save" title="Save this plan online for your whole team">Save it for the team</button>');
   w.querySelector('.tp-chip').onclick = (e) => { e.stopPropagation(); tpPop(w.querySelector('.tp-chip')); };
   tpDeco();
@@ -32516,7 +32516,7 @@ const RK_NAMES = ['Guild Master', 'Officer', 'Raider', 'Trial', 'Social'], RK_DE
 const RK_WORD = { edit: 'Edit', see: 'See', none: 'None' };
 const rkName = (R, r) => (R && R.names && R.names[r]) || RK_NAMES[r] || 'Rank ' + r;
 // (the pop-up's lines: which ranks edit and which see, or the lead's way in)
-function tpRanksH(d) { const you = d.you || {}, R = d.ranks, mayEdit = you.lead || (you.why === 'rank' && you.rank === 0);
+function tpRanksH(d) { const you = d.you || {}, R = d.ranks, mayEdit = you.lead || you.why === 'admin' || (you.why === 'rank' && you.rank === 0);
   if (!R) return mayEdit ? '<div class="sec"><div class="lab">By guild rank</div><div class="pr">Let the guild\'s ranks decide who can edit and who can see. Promotions and leavers follow by themselves.</div><form data-tp="ranks"><button>Set it up</button></form></div>' : '';
   const grp = (a) => [0, 1, 2, 3, 4].filter((r) => (R.acc || {})[r] === a).map((r) => rkName(R, r));
   return '<div class="sec"><div class="lab">By guild rank · ' + esc(R.guild.name) + '</div>' +

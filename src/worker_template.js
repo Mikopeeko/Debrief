@@ -1600,7 +1600,20 @@ async function teamChars(who) {
     l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).characters || []; l = l.map((x) => String(x.name || '').toLowerCase()).filter(Boolean); } catch (e) { l = []; }
   await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l;
 }
-const teamCan = async (doc, who) => { if (!who) return false; if (doc.owner.uid === who.uid) return true; const of = (doc.officers || []).map((x) => x.toLowerCase()); if (!of.length) return false; return (await teamChars(who)).some((n) => of.includes(n)); };
+// (the site admin (Flex, Nov 6: "make sure i always have full access to every team as site admin"): full access to every team's plan, whatever
+// its ranks or officers say. Proven, never by a typed name: the Warcraft Logs account that owns Flëxørçïst (character 103132319), or the
+// Battle.net link with Flëxørçïst on Thrall. On a practice link, testing as Flëxørçïst counts too (practice copies only))
+const ADMIN_WCL_CHARS = [103132319], ADMIN_BNET = ['flëxørçïst-thrall'];
+async function wclCharIds(who) { if (!who || !who.t) return []; const c = caches.default, ck = new Request('https://debrief.cache/team-charids/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { characters { id } } } }' }) });
+    l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).characters || []; l = l.map((x) => +x.id).filter(Boolean); } catch (e) { l = []; }
+  await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l; }
+async function siteAdmin(who, env, url) {
+  if (!who) return false; if (who.practice) return ADMIN_BNET.some((k) => k.split('-')[0] === String(who.name || '').toLowerCase());
+  if ((await wclCharIds(who)).some((id) => ADMIN_WCL_CHARS.includes(id))) return true;
+  if (env && url) { const L = await bnetGet(env, who.uid, url); if (L && !L.mock && (L.chars || []).some((c) => ADMIN_BNET.includes(bnetKey(c)))) return true; }
+  return false; }
+const teamCan = async (doc, who) => { if (!who) return false; if (doc.owner.uid === who.uid || (await siteAdmin(who))) return true; const of = (doc.officers || []).map((x) => x.toLowerCase()); if (!of.length) return false; return (await teamChars(who)).some((n) => of.includes(n)); };
 // (who has the plan open: each open page says so every 20 seconds; kept a minute at the edge, nothing written to storage)
 async function teamHere(id, me, w) {
   const c = caches.default, ck = new Request('https://debrief.cache/team-here/' + id), now = Date.now(); let h = {}; try { const r = await c.match(ck); if (r) h = await r.json(); } catch (e) { h = {}; }
@@ -1794,6 +1807,7 @@ async function teamAccess(env, url, d, who) {
   if (!who) return { acc: R ? 'none' : 'see', why: 'signin' };
   if (!d) return { acc: 'see', why: 'new' };
   if (d.owner.uid === who.uid) return { acc: 'edit', why: 'lead' };
+  if (await siteAdmin(who, env, url)) return { acc: 'edit', why: 'admin' };
   let link = null;
   if (R && R.guild) { link = await bnetGet(env, who.uid, url); const rk = await guildRankOf(env, url, R.guild, link);
     if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: RANK_ACC.test(R.acc[row] || '') ? R.acc[row] : 'none', why: 'rank', rank: rk, rankName: R.names[row] || '' }; } }
@@ -1886,12 +1900,12 @@ async function teamPlan(req, env, url) {
       const sid = +m.sid || 0, role = [66, 73, 104, 250, 268, 581].includes(sid) ? 'tank' : [65, 105, 256, 257, 264, 270, 1468].includes(sid) ? 'healer' : 'dps';
       R.players = (R.players || []).concat([{ n: m.n, cls: m.cls || null, sid, role, bench: false }]); const prev = (d.keys['wla-rosters'] || {}).v || null, v = JSON.stringify(o);
       d.keys['wla-rosters'] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: 'wla-rosters', sum: m.n + ' joined the roster (' + [m.spec, (m.cls || '').charAt(0) + (m.cls || '').slice(1).toLowerCase()].filter(Boolean).join(' ') + ')', prev }); }
-    else if (b.op === 'ranks') { const A = await teamAccess(env, url, d, who); if (!(A.why === 'lead' || (A.why === 'rank' && A.rank === 0))) return json({ error: 'Only the raid lead or the Guild Master sets who can edit and see.' }, 403);
+    else if (b.op === 'ranks') { const A = await teamAccess(env, url, d, who); if (!(A.why === 'lead' || A.why === 'admin' || (A.why === 'rank' && A.rank === 0))) return json({ error: 'Only the raid lead or the Guild Master sets who can edit and see.' }, 403);
       if (b.clear) { delete d.ranks; d.log.push({ at: now, by: me, k: '', sum: 'turned off access by guild rank' }); }
       else { const T = await teamRanks(env, url, d, who); if (!T.counts) return json({ error: T.why }, 400);
         const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
         d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
-    else { if (d.owner.uid !== who.uid) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
+    else { if (d.owner.uid !== who.uid && !(await siteAdmin(who, env, url))) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
       const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
       const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
     d.ver = (d.ver || 0) + 1; d.log = d.log.filter((x) => now - x.at < 36 * 3600e3).slice(-60);
