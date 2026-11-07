@@ -1,5 +1,6 @@
 (function () {
 'use strict';
+const BN_Q = new URLSearchParams(location.search).get('bnet'); /* (back from Link Battle.net: read before the page's first draw rewrites the address) */
 const E = window.ENGINE;
 // (a spell's name, never "Spell 12345" (Oct 22): the name we have, our cooldown names, else plain words)
 const spNm = (id, nm, alt) => nm || (E && E.cdName && E.cdName(id)) || alt || 'their cooldown';
@@ -32948,8 +32949,8 @@ async function wclSignBack() {
   try { p = JSON.parse(sessionStorage.getItem(WCL_SIGN.pk) || 'null'); sessionStorage.removeItem(WCL_SIGN.pk); } catch (e) { /* storage off */ }
   try { history.replaceState(null, '', '/'); } catch (e) { /* ignore */ }
   let after = null; try { after = sessionStorage.getItem('wla-wcl-after'); sessionStorage.removeItem('wla-wcl-after'); } catch (e) { /* storage off */ }
-  if (after === 'alts' || after === 'night') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
-    if (after === 'night') { nightDlg(); return; } S.yuOpen = true; openMyPage(); return; }
+  if (after === 'alts' || after === 'night' || after === 'acct') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
+    if (after === 'night') { nightDlg(); return; } if (after === 'acct') { openAccounts(); return; } S.yuOpen = true; openMyPage(); return; }
   gsStart(); if (!GS) return;
   if (!code || !p || p.st !== st) { GS.note = WCL_CB.get('error') ? 'Sign-in was cancelled. You can try again, or type your character below.' : 'That sign-in didn\'t finish. Try again, or type your character below.'; gsDraw(); return; }
   GS.signing = true; gsDraw();
@@ -32959,6 +32960,85 @@ async function wclSignBack() {
   } catch (e) { if (GS) GS.note = String(e.message || e) + ' You can try again, or type your character below.'; }
   if (GS) { GS.signing = false; gsDraw(); }
 }
+// ---- whoAmI (Nov 6, Link Battle.net; Flex: "Yes, build it"): the one answer every page asks for: who is this (Warcraft Logs), which
+// characters are theirs (Battle.net, when linked), which one is the main, and their guild rank. The Worker answers (/api/whoami); pages never
+// work it out on their own. WHO.now is the last answer, for drawing; whoAmI(true) asks again after a link, an unlink or a new main.
+const WHO = { now: null }; let WHO_P = null;
+function whoAmI(fresh) {
+  if (!WCL.HOSTED) return Promise.resolve(null);
+  if (WHO_P && !fresh) return WHO_P;
+  WHO_P = fetch('/api/whoami', { credentials: 'same-origin', cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+    .then((j) => { WHO.now = j; try { document.dispatchEvent(new CustomEvent('whoami', { detail: j })); } catch (e) { /* old browser */ } return j; });
+  return WHO_P;
+}
+const bnKey = (c) => String(c.n || '').toLowerCase() + '-' + String(c.slug || '');
+// (your characters, main first: Battle.net's list without the hidden ones when linked; [] when not linked)
+const whoChars = () => { const b = WHO.now && WHO.now.bnet; if (!b || !b.linked) return []; const hid = new Set(b.hidden || []);
+  return (b.chars || []).filter((c) => !hid.has(bnKey(c))).sort((x, y) => (bnKey(y) === b.main) - (bnKey(x) === b.main)); };
+const whoMain = () => whoChars()[0] || null;
+// (the Battle.net link's own page, from the menu: Warcraft Logs on top, Battle.net under it (optional), then "Your characters" once linked)
+const BN_BACK = { linked: 'Linked. Pick your main, then Save.', synced: 'Your characters are up to date.', cancel: 'Linking was cancelled. Nothing changed.', err: 'Battle.net didn\'t finish the link. Try again.', signin: 'Sign in with Warcraft Logs first, then link Battle.net.', off: 'Battle.net linking isn\'t switched on yet.', busy: 'Too many tries at once. Wait a minute and try again.' };
+const BN_PRIVACY = 'Debrief only reads your character list (names, realms, classes, levels) so it knows which characters are yours. It never sees your email or password, doesn\'t keep your Battle.net sign-in, and you can unlink any time.';
+function openAccounts(note) {
+  if ($('#bnBox')) return;
+  const el = document.createElement('div'); el.id = 'bnBox'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Your characters');
+  const A = { note: note || '', busy: false, pick: null, region: 'us' };
+  const ago = (t) => { const d = Math.floor((Date.now() - t) / 864e5); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
+  const ico = (c) => whIcon(c.sid && NDZ_SPECIC[c.sid] ? NDZ_SPECIC[c.sid] : 'classicon_' + ((E.CLASSES[c.cls] || [])[2] || 'warrior'));
+  const draw = () => {
+    const W = WHO.now || {}, w = W.wcl, b = W.bnet || {}, prac = !!W.practice;
+    if (b.linked && !A.pick) A.pick = { main: b.main, hidden: new Set(b.hidden || []) };
+    const wRow = '<div class="bn-row"><div class="bn-l">Warcraft Logs</div>' + (w ? '<div class="bn-ok">✓ ' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.name || 'you') + '</b></div>'
+      : prac ? '<form class="bn-test" data-bn="test"><input name="n" placeholder="Character name" maxlength="24" aria-label="Character name"><button class="btn">Test as</button></form>'
+      : '<button class="btn primary" type="button" data-bn="wcl">Sign in with Warcraft Logs</button>') + '</div>';
+    const bBody = !W.can ? '<span class="bn-dim">Coming soon</span>'
+      : b.linked ? '<div class="bn-ok">✓ Linked · ' + esc(String(b.region || '').toUpperCase()) + ' · synced ' + ago(b.syncedAt || b.linkedAt) + '</div>'
+      : '<div class="bn-go"><select data-bn="reg" aria-label="Region"><option value="us"' + (A.region === 'us' ? ' selected' : '') + '>US</option><option value="eu"' + (A.region === 'eu' ? ' selected' : '') + '>EU</option></select><button class="btn bn-link" type="button" data-bn="link"' + (w ? '' : ' disabled title="Sign in with Warcraft Logs first"') + '><span class="bn-b">B</span>Link Battle.net</button></div>';
+    const bRow = '<div class="bn-row bn-col"><div class="bn-rt"><div class="bn-l">Battle.net</div>' + bBody + '</div>' +
+      (b.linked ? '<div class="bn-acts"><button class="lk" type="button" data-bn="link">Refresh my characters</button><button class="lk bad" type="button" data-bn="unlink">Unlink</button></div>'
+        : '<p class="bn-sub">Optional. Lets Debrief know every character on your account, so your alts are never mixed up.' + (w || !W.can ? '' : ' Sign in with Warcraft Logs first.') + '</p>') +
+      (prac && w ? '<div class="bn-acts"><button class="lk" type="button" data-bn="mock">Practice: link a made-up account</button></div>' : '') + '</div>';
+    let pick = '';
+    if (b.linked) { const P = A.pick, cs = (b.chars || []).slice();
+      pick = '<div class="bn-pick"><div class="bn-ph"><h3>Your characters</h3><span>From Battle.net · ' + esc(String(b.region || '').toUpperCase()) + ' · Level 90' + (b.mock ? ' · practice account' : '') + '</span></div>' +
+        (cs.length ? cs.map((c) => { const k = bnKey(c), main = P.main === k, hid = P.hidden.has(k), cc = (E.CLASSES[c.cls] || [])[1] || 'var(--text)';
+          return '<div class="bn-c' + (hid ? ' hid' : '') + (main ? ' main' : '') + '"><button class="bn-r" type="button" data-bn="main" data-k="' + esc(k) + '" aria-label="Make ' + esc(c.n) + ' your main"' + (hid ? ' disabled' : '') + '></button>' +
+            '<img src="' + ico(c) + '" alt=""><div class="bn-cn"><b style="color:' + cc + '">' + esc(c.n) + '</b><span>' + esc([c.spec, (E.CLASSES[c.cls] || [])[0]].filter(Boolean).join(' ')) + ' · ' + esc(c.realm) + (c.g ? ' · &lt;' + esc(c.g) + '&gt;' : '') + '</span></div>' +
+            '<div class="bn-il">' + (c.ilvl ? 'ilvl ' + c.ilvl : '') + '</div>' +
+            '<div class="bn-tag">' + (main ? '<span class="bn-main">Main</span>' : hid ? '<button class="lk" type="button" data-bn="show" data-k="' + esc(k) + '">Show</button>' : '<span class="bn-alt">Alt</span><button class="bn-hide" type="button" data-bn="hide" data-k="' + esc(k) + '" aria-label="Hide ' + esc(c.n) + '">Hide ×</button>') + '</div></div>'; }).join('')
+          : '<p class="bn-sub">No level 90 characters on this Battle.net account in ' + esc(String(b.region || '').toUpperCase()) + '.</p>') +
+        '<div class="bn-pf"><span>Pick your main. Characters under level 90 are left out. Unlink any time.</span><button class="btn primary" type="button" data-bn="save"' + (A.busy ? ' disabled' : '') + '>Save</button></div></div>'; }
+    el.innerHTML = '<div class="panel pnz-sheet bn-sheet"><div class="pnz-top"><div><h2>Your characters</h2><p>Which characters are yours, for Plan, Home, the Report card and the Companion app.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
+      (A.note ? '<div class="bn-note">' + esc(A.note) + '</div>' : '') + '<div class="bn-rows">' + wRow + bRow + '</div>' + pick +
+      '<p class="pnz-foot">' + esc(BN_PRIVACY) + '</p></div>';
+  };
+  const save = async (method, body) => { A.busy = true; draw();
+    try { const r = await fetch('/api/bnet', { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }), j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'That didn\'t save. Try again.'); A.note = method === 'DELETE' ? 'Unlinked. Debrief no longer keeps your character list.' : 'Saved. Every page now follows your main.'; A.pick = null; await whoAmI(true);
+    } catch (e) { A.note = String(e.message || e); }
+    A.busy = false; draw(); };
+  el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x')) return close(); const t = e.target.closest('[data-bn]'); if (!t || t.disabled) return; const k = t.dataset.bn;
+    if (k === 'wcl') { try { sessionStorage.setItem('wla-wcl-after', 'acct'); } catch (x) { /* storage off */ } wclSignIn(); }
+    else if (k === 'link') location.href = '/auth/bnet/start?region=' + (((WHO.now || {}).bnet || {}).region || A.region);
+    else if (k === 'mock') location.href = '/auth/bnet/start?test=1&region=us';
+    else if (k === 'unlink') { if (confirm('Unlink Battle.net? Debrief deletes your character list right away.')) save('DELETE'); }
+    else if (k === 'main') { A.pick.main = t.dataset.k; A.pick.hidden.delete(t.dataset.k); draw(); }
+    else if (k === 'hide') { A.pick.hidden.add(t.dataset.k); draw(); }
+    else if (k === 'show') { A.pick.hidden.delete(t.dataset.k); draw(); }
+    else if (k === 'save') save('POST', { main: A.pick.main, hidden: [...A.pick.hidden] }); };
+  el.onchange = (e) => { const t = e.target.closest('[data-bn="reg"]'); if (t) A.region = t.value; };
+  el.onsubmit = async (e) => { const f = e.target.closest('[data-bn="test"]'); if (!f) return; e.preventDefault(); const n = String(f.n.value || '').trim(); if (!n) return;
+    document.cookie = 'dbp=' + encodeURIComponent(n) + '; Path=/; Secure; SameSite=Lax; Max-Age=86400'; A.pick = null; await whoAmI(true); draw(); };
+  document.body.appendChild(el); document.body.classList.add('touring');
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { openAccounts.closed = true; document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  document.addEventListener('keydown', key, true);
+  draw(); whoAmI(true).then(() => { if (el.isConnected) draw(); });
+}
+// (the menu row says what it does: "Link Battle.net" until linked, then "Your characters")
+const bnMenuLabel = () => { const b = $('#tbBnet'); if (!b) return; if (!WCL.HOSTED) { b.hidden = true; return; } const B = (WHO.now || {}).bnet;
+  b.hidden = false; b.innerHTML = B && B.linked ? 'Your characters<span>Battle.net linked · pick your main</span>' : 'Link Battle.net<span>optional: Debrief knows every character is yours</span>'; };
+document.addEventListener('whoami', bnMenuLabel);
 // (step 1: the sign-in button, or once signed in, your characters to tap; newest first)
 function gsSignHtml() {
   if (!WCL.HOSTED) return '';
@@ -34514,6 +34594,9 @@ else if (!$('#main').innerHTML.trim()) home();
 if (!tourDone() && !sharedLink) { if (S.item) S.tourAfterPull = true; else setTimeout(() => { if (!tourDone() && !$('#tour')) startTour(0); }, 700); }
 // (?patchnotes, the link in the Discord's patch-notes post, opens the Patch notes page over the front page)
 if (WCL_CB) setTimeout(wclSignBack, 300); // (back from Sign in with Warcraft Logs)
+{ const q = BN_Q; if (q && WCL.HOSTED) { try { history.replaceState(null, '', '/'); } catch (e) { /* ignore */ } const go = (n) => { if (openAccounts.closed) return; if (!$('#bnBox')) openAccounts(BN_BACK[q] || ''); if (n) setTimeout(() => go(n - 1), 1500); }; setTimeout(() => go(3), 800); } } /* (again after the first page draws, which can clear it) */ // (back from Link Battle.net)
+if ($('#tbBnet')) { bnMenuLabel(); $('#tbBnet').onclick = () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; openAccounts(); }; }
+whoAmI();
 if (RQ.has('patchnotes')) { try { history.replaceState(history.state, '', location.pathname); } catch (e) { /* ignore */ } setTimeout(openPatchNotes, 900); }
 // The Debrief PC app (Oct 21, your ask: tonight's logs on debriefme.io while Warcraft Logs is down). It answers this PC's newest combat
 // log on localhost:8772, to debriefme.io only. The site looks for it only once the app has sent you here (its "See pulls on the website"

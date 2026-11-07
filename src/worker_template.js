@@ -1786,6 +1786,100 @@ async function teamPlan(req, env, url) {
   return json({ error: 'Someone else saved at the same moment. Try again.' }, 409);
 }
 
+// ---- Link Battle.net (Nov 6, Flex: "Yes, build it"). Optional, next to Sign in with Warcraft Logs: Blizzard's sign-in (scope wow.profile,
+// US or EU) hands back a key that reads the account's character list once; the Worker keeps only the level-90 characters (name, realm, class,
+// spec, level, faction, item level, guild) and drops the key: no refresh key, nothing else stored. The list lives in R2 under the Warcraft Logs
+// account (bnet/<uid>.json; practice links: practice-bnet/), with the main and the hidden ones the raider picked. Unlink deletes it at once.
+// On practice links, /auth/bnet/start?test=1 (and every link before BNET_CLIENT_ID is set) signs in with a made-up account, so the pages can be
+// tested without anyone's Battle.net password; it never runs on debriefme.io.
+const BNET_REG = /^(us|eu)$/, BNET_LVL = 90, BNET_CLS = [null, 'WARRIOR', 'PALADIN', 'HUNTER', 'ROGUE', 'PRIEST', 'DEATHKNIGHT', 'SHAMAN', 'MAGE', 'WARLOCK', 'MONK', 'DRUID', 'DEMONHUNTER', 'EVOKER'];
+const bnetK = (uid, url) => (PRACTICE_HOST(url) ? 'practice-bnet/' : 'bnet/') + String(uid).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.json';
+const bnetMock = (env, url) => !env.BNET_CLIENT_ID && PRACTICE_HOST(url);
+const bnetKey = (c) => String(c.n || '').toLowerCase() + '-' + String(c.slug || '');
+async function bnetGet(env, uid, url) { if (!env.debrief_nights || !uid) return null; try { const o = await env.debrief_nights.get(bnetK(uid, url)); return o ? await o.json() : null; } catch (e) { return null; } }
+const bnetPut = (env, uid, d, url) => env.debrief_nights.put(bnetK(uid, url), JSON.stringify(d), { httpMetadata: { contentType: 'application/json' } });
+const bnetGo = (url, q) => Response.redirect(url.origin + '/?bnet=' + q, 302);
+const bnetSt = (req) => { const m = (req.headers.get('Cookie') || '').match(/(?:^|;\s*)dbbn=([a-f0-9]{32})\.(us|eu)(?:;|$)/); return m ? { st: m[1], r: m[2] } : null; };
+const bnetStCookie = (v, secs) => 'dbbn=' + v + '; Path=/auth/bnet; HttpOnly; Secure; SameSite=Lax; Max-Age=' + secs;
+// (the made-up account for practice links before the Blizzard client exists: Flex's two characters plus two examples)
+const BNET_MOCK = [
+  { n: 'Flëxørçïst', realm: 'Thrall', slug: 'thrall', cls: 'PALADIN', sid: 65, spec: 'Holy', lvl: 90, fac: 'H', ilvl: 332, g: 'Wolfthorn', gs: 'thrall' },
+  { n: 'Trëèflêx', realm: 'Thrall', slug: 'thrall', cls: 'DRUID', sid: 105, spec: 'Restoration', lvl: 90, fac: 'H', ilvl: 328, g: 'Wolfthorn', gs: 'thrall' },
+  { n: 'Exampleshaman', realm: 'Thrall', slug: 'thrall', cls: 'SHAMAN', sid: 264, spec: 'Restoration', lvl: 90, fac: 'H', ilvl: 309, g: 'Wolfthorn', gs: 'thrall' },
+  { n: 'Examplemage', realm: 'Area 52', slug: 'area-52', cls: 'MAGE', sid: 64, spec: 'Frost', lvl: 90, fac: 'H', ilvl: 286, g: '', gs: '' }];
+// (Blizzard's app key for public data (guild rosters, gear, Mythic+), kept at the edge until shortly before it runs out)
+async function bnetAppToken(env, r) {
+  if (!env.BNET_CLIENT_ID || !env.BNET_CLIENT_SECRET) return null;
+  const c = caches.default, ck = new Request('https://debrief.cache/bnet-app/' + r), hit = await c.match(ck).catch(() => null); if (hit) return (await hit.json()).t;
+  const t = await fetch('https://oauth.battle.net/token', { method: 'POST', headers: { Authorization: 'Basic ' + btoa(env.BNET_CLIENT_ID + ':' + env.BNET_CLIENT_SECRET), 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'grant_type=client_credentials' }).then((x) => x.json()).catch(() => ({}));
+  if (!t.access_token) return null;
+  await c.put(ck, new Response(JSON.stringify({ t: t.access_token }), { headers: { 'Cache-Control': 'max-age=' + Math.max(60, Math.min(43200, (t.expires_in || 3600) - 300)) } })).catch(() => {});
+  return t.access_token;
+}
+const bnetApi = (r, path, tok, ns) => fetch('https://' + r + '.api.blizzard.com' + path + (path.includes('?') ? '&' : '?') + 'namespace=' + (ns || 'profile') + '-' + r + '&locale=en_US', { headers: { Authorization: 'Bearer ' + tok } }).then((x) => (x.ok ? x.json() : null)).catch(() => null);
+// (one character's public summary: spec, item level, guild)
+async function bnetSummary(r, c, tok) {
+  const s = await bnetApi(r, '/profile/wow/character/' + c.slug + '/' + encodeURIComponent(c.n.toLowerCase()), tok); if (!s) return c;
+  return { ...c, sid: (s.active_spec && s.active_spec.id) || 0, spec: (s.active_spec && s.active_spec.name) || '', ilvl: s.equipped_item_level || s.average_item_level || 0,
+    g: (s.guild && s.guild.name) || '', gs: (s.guild && s.guild.realm && s.guild.realm.slug) || '' };
+}
+async function bnetStart(req, env, url) {
+  const who = await teamWho(req, env, url); if (!who) return bnetGo(url, 'signin');
+  if (!env.BNET_CLIENT_ID && !bnetMock(env, url)) return bnetGo(url, 'off');
+  const r = BNET_REG.test(url.searchParams.get('region') || '') ? url.searchParams.get('region') : 'us', a = new Uint8Array(16); crypto.getRandomValues(a);
+  const st = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), cb = url.origin + '/auth/bnet/callback';
+  const to = bnetMock(env, url) || (PRACTICE_HOST(url) && url.searchParams.get('test') === '1') ? cb + '?code=practice&state=' + st : 'https://oauth.battle.net/authorize?' + new URLSearchParams({ client_id: env.BNET_CLIENT_ID, redirect_uri: cb, response_type: 'code', scope: 'wow.profile', state: st });
+  return new Response(null, { status: 302, headers: { Location: to, 'Set-Cookie': bnetStCookie(st + '.' + r, 600), 'Cache-Control': 'no-store' } });
+}
+async function bnetCallback(req, env, url) {
+  const p = url.searchParams, s = bnetSt(req), done = (q) => { const res = bnetGo(url, q), h = new Headers(res.headers); h.append('Set-Cookie', bnetStCookie('', 0)); return new Response(null, { status: 302, headers: h }); };
+  if (p.get('error')) return done('cancel');
+  if (!s || p.get('state') !== s.st || !p.get('code')) return done('err');
+  const who = await teamWho(req, env, url); if (!who) return done('signin');
+  if (!env.debrief_nights) return done('off');
+  let chars;
+  const mock = bnetMock(env, url) || (PRACTICE_HOST(url) && p.get('code') === 'practice'); /* (a practice link's made-up account: ?test=1 on start) */
+  if (mock) chars = BNET_MOCK.map((c) => ({ ...c }));
+  else {
+    if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return done('busy');
+    const t = await fetch('https://oauth.battle.net/token', { method: 'POST', headers: { Authorization: 'Basic ' + btoa(env.BNET_CLIENT_ID + ':' + (env.BNET_CLIENT_SECRET || '')), 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'authorization_code', code: p.get('code'), redirect_uri: url.origin + '/auth/bnet/callback' }) }).then((x) => x.json()).catch(() => ({}));
+    if (!t.access_token) return done('err');
+    const u = await bnetApi(s.r, '/profile/user/wow', t.access_token); if (!u) return done('err');
+    const all = (u.wow_accounts || []).flatMap((a) => a.characters || []).filter((c) => c && c.level >= BNET_LVL && c.realm && c.realm.slug).slice(0, 24)
+      .map((c) => ({ n: c.name, realm: c.realm.name || c.realm.slug, slug: c.realm.slug, cls: BNET_CLS[(c.playable_class || {}).id] || '', sid: 0, spec: '', lvl: c.level, fac: c.faction && c.faction.type === 'ALLIANCE' ? 'A' : 'H', ilvl: 0, g: '', gs: '' }));
+    chars = await Promise.all(all.map((c) => bnetSummary(s.r, c, t.access_token))); /* (the key is used for these and then forgotten) */
+  }
+  const old = await bnetGet(env, who.uid, url), keys = new Set(chars.map(bnetKey));
+  chars.sort((a, b) => (b.ilvl || 0) - (a.ilvl || 0));
+  const main = old && keys.has(old.main) ? old.main : chars.length ? bnetKey(chars[0]) : '';
+  const d = { region: s.r, chars, main, hidden: ((old && old.hidden) || []).filter((k) => keys.has(k)), linkedAt: (old && old.linkedAt) || Date.now(), syncedAt: Date.now(), by: who.name || '', mock: mock || undefined };
+  await bnetPut(env, who.uid, d, url);
+  return done(old ? 'synced' : 'linked');
+}
+const bnetOut = (d) => (d ? { linked: true, region: d.region, chars: d.chars, main: d.main, hidden: d.hidden || [], linkedAt: d.linkedAt, syncedAt: d.syncedAt || d.linkedAt, mock: !!d.mock } : { linked: false });
+async function bnetRoute(req, env, url) {
+  if (!env.debrief_nights) return json({ linked: false, off: true });
+  const who = await teamWho(req, env, url);
+  if (req.method === 'GET') return json(who ? bnetOut(await bnetGet(env, who.uid, url)) : { linked: false, signin: true });
+  if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can change this.' }, 403);
+  if (!who) return json({ error: 'Sign in with Warcraft Logs first.', signin: true }, 401);
+  if (req.method === 'DELETE') { await env.debrief_nights.delete(bnetK(who.uid, url)); return json({ linked: false }); }
+  if (req.method !== 'POST') return json({ error: 'GET, POST or DELETE only.' }, 405);
+  const d = await bnetGet(env, who.uid, url); if (!d) return json({ error: 'Link Battle.net first.' }, 404);
+  let b = null; try { b = await req.json(); } catch (e) { b = null; }
+  const keys = new Set(d.chars.map(bnetKey)); if (!b || !keys.has(b.main)) return json({ error: 'Pick one of your characters as your main.' }, 400);
+  d.main = b.main; d.hidden = (Array.isArray(b.hidden) ? b.hidden : []).filter((k) => keys.has(k) && k !== b.main).slice(0, 24);
+  await bnetPut(env, who.uid, d, url); return json(bnetOut(d));
+}
+// (whoAmI on the server: the one answer every page asks for: who is this (Warcraft Logs), which characters (Battle.net), which main, and
+// (step 2) which guild rank)
+async function whoAmIRoute(req, env, url) {
+  const who = await teamWho(req, env, url); if (!who) return json({ wcl: null, bnet: { linked: false }, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
+  const d = await bnetGet(env, who.uid, url);
+  return json({ wcl: { name: who.name, practice: !!who.practice }, bnet: bnetOut(d), practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
+}
+
 // ---- The instant listener (Oct 26, the owner's ask: "the whole point of a bot is to make it quick").
 // Discord tells a bot about a new message only over a connection the bot keeps open (the "gateway"). A Worker can't keep one, so this small Durable
 // Object does: it holds the connection all day, hears every message, and answers a tag from the owner or a moderator in about a second. The
@@ -1966,6 +2060,10 @@ export default {
     if (url.pathname === '/api/tier') return tier(req, env, url, ctx); /* (the Whole tier: every pull of a boss up to the first kill, Nov 5) */
     if (url.pathname === '/api/mptop') return mpTop(req, env, url); /* (top players' Rotation numbers per spec, dungeon and level, kept a week (Nov 5)) */
     if (url.pathname === '/api/gnote') return gnote(req, env, url); /* (the game's raid note per pull, shared with the roster (Nov 6)) */
+    if (url.pathname === '/auth/bnet/start') return bnetStart(req, env, url); /* (Link Battle.net, Nov 6) */
+    if (url.pathname === '/auth/bnet/callback') return bnetCallback(req, env, url);
+    if (url.pathname === '/api/bnet') return bnetRoute(req, env, url);
+    if (url.pathname === '/api/whoami') return whoAmIRoute(req, env, url);
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
