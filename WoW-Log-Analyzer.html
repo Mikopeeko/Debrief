@@ -12953,12 +12953,38 @@ html body #assignBox .gr-t:last-child { border-right: 0; } html body #assignBox 
 html body #assignBox .gr-t > span { color: var(--faint); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; } html body #assignBox .gr-t > b { font: 700 24px/1.1 var(--head); } html body #assignBox .gr-t > small { color: var(--faint); font-size: 12.5px; }
 html body #assignBox .gr-t.bad > b { color: #e8604c; } html body #assignBox .gr-t.warn > b { color: #f0b45a; } html body #assignBox .gr-t.ok > b { color: #5fd07a; }
 html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
+/* (Roster's Ready strip: problems only, three columns (Nov 7)) */
+html body #assignBox .panel.pg-roster:has(> .rs-strip) .gr-sum { display: none; }
+html body #assignBox .panel.pg-roster:has(> .rs-strip):not(.rs-kiton) > details.ds-buffs { display: none !important; }
+html body #assignBox .rs-strip { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.6fr 1fr; margin: 6px 0 10px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+html body #assignBox .rs-strip[style*="--rs-n: 2"] { grid-template-columns: 1.6fr 1fr; }
+html body #assignBox .rs-strip[style*="--rs-n: 1"] { grid-template-columns: 1fr; }
+html body #assignBox .rs-col { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 10px 14px; border-right: 1px solid var(--line); }
+html body #assignBox .rs-col:last-child { border-right: 0; }
+html body #assignBox .rs-ch { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+html body #assignBox .rs-ch > span { color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
+html body #assignBox .rs-ch > b { font: 700 24px/1 var(--head); } html body #assignBox .rs-ch > small { color: var(--faint); font-size: 13px; }
+html body #assignBox .rs-ch > b.bad { color: #e8604c; } html body #assignBox .rs-ch > b.warn { color: #f0b45a; } html body #assignBox .rs-ch > b.ok { color: #5fd07a; }
+html body #assignBox .rs-r { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; width: 100%; min-height: 0; padding: 5px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
+html body #assignBox .rs-ch + .rs-r { border-top: 0; }
+html body #assignBox .rs-r:hover > b { text-decoration: underline; text-underline-offset: 3px; }
+html body #assignBox .rs-r > b { font-weight: 700; } html body #assignBox .rs-r > em { font-style: normal; color: var(--muted); }
+html body #assignBox .rs-r > .rs-fx { margin-left: auto; color: var(--faint); font-size: 13.5px; }
+html body #assignBox .rs-dot { flex: none; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
+html body #assignBox .rs-ok { margin-top: 6px; color: #5fd07a; font-size: 14px; } html body #assignBox .rs-ok > span:not(.rs-rd) { color: var(--muted); }
+html body #assignBox .rs-rd { border-bottom: 1px dotted currentColor; cursor: help; }
+html body #assignBox .rs-col > .rs-more { align-self: flex-start; margin-top: auto !important; min-height: 0 !important; padding: 8px 0 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--gold) !important; font: 600 13px var(--body) !important; cursor: pointer; }
+html body #assignBox .rs-col > .rs-more:hover { text-decoration: underline; text-underline-offset: 3px; }
+html body #assignBox .pg-rc:has(> .gr-dot.bad) { outline: 2px solid #e8604c; outline-offset: 1px; }
+html body #assignBox .pg-rc:has(> .gr-dot.warn) { outline: 2px solid #f0b45a; outline-offset: 1px; }
+@media (max-width: 820px) { html body #assignBox .rs-strip, html body #assignBox .rs-strip[style] { grid-template-columns: 1fr; } html body #assignBox .rs-col { border-right: 0; border-bottom: 1px solid var(--line); } html body #assignBox .rs-col:last-child { border-bottom: 0; } }
 html body #assignBox .bfr-r[data-grjump] { cursor: pointer; border-radius: 3px; } html body #assignBox .bfr-r[data-grjump]:hover { background: var(--raised); }
 html body #assignBox .pg-rc.gr-flash { animation: grFlash 1.5s ease-out; } @keyframes grFlash { 0%, 40% { box-shadow: 0 0 0 3px #f0b45a; } 100% { box-shadow: 0 0 0 0 rgba(240,180,90,0); } }
 /* (Out that night under the Bench, beside Playing) */
 html body #assignBox .panel.pg-roster > .pg-zone:nth-child(1 of .pg-zone) { grid-column: 1; grid-row: span 2; }
 html body #assignBox .panel.pg-roster > .pg-zone:nth-child(2 of .pg-zone):not(.pg-zout) { grid-column: 2; }
 html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 2 !important; align-self: start; }
+@media (max-width: 760px) { html body #assignBox .panel.pg-roster:has(> .pg-zone) { grid-template-columns: minmax(0, 1fr) !important; } html body #assignBox .panel.pg-roster > .pg-zone, html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 1 / -1 !important; grid-row: auto !important; } } /* (phones: one column; the second-column rule squeezed the roster to a sliver (Nov 7)) */
 /* (Healing cooldowns: big hits nobody covers, pinned under the header) */
 html body #assignBox .pv-unc { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
 html body #assignBox .pv-unch { margin-right: 4px; color: #e8604c; font-size: 13.5px; font-weight: 600; }
@@ -32250,7 +32276,7 @@ function planJumpWrap(h, pb, n) { if (S.page !== 'plan') return h; if (pb && typ
 // with its tab (data-pv); the tab bar's data-cur picks which show (CSS), so a switch needs no redraw. A panel with no tag shows on every tab
 /* ("you" on Plan: your chip, your cooldowns and your jobs marked; and My cooldowns (Nov 7). Re-marked after every draw of Plan) */
 const pvMeLo = () => { try { const m = meOf(); return m ? String(m.name).split('-')[0].toLowerCase() : ''; } catch (e) { return ''; } };
-function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; const me = pvMeLo(); if (!me) return;
+function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; try { pvReady(); } catch (e) { /* (the next draw) */ } const me = pvMeLo(); if (!me) return;
   const hasMe = (s) => String(s || '').split(/,| and |&/).some((x) => x.trim().split('-')[0].toLowerCase() === me);
   box.querySelectorAll('.pg-rc[data-pgsit]').forEach((c) => { const on = String(c.dataset.pgsit).split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
   box.querySelectorAll('[data-pv="jobs"] .nm[title]').forEach((c) => { const on = String(c.title).split(' · ')[0].split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
@@ -32272,7 +32298,37 @@ function pvUnc(tl, hd) { let P = tl.querySelector('.pv-unc'); const D = typeof N
   P.innerHTML = '<span class="pv-unch">' + plural(red.length, 'big hit') + ' with no raid cooldown</span>' + red.map(({ x, i }) => x.fix && D.noteId
     ? '<button type="button" class="pv-ur" data-ndzcover="' + i + '" title="Cover it: ' + esc(x.fix.name) + ' · ' + esc(x.fix.who) + '">' + esc(at(x).replace(/^P\d+ /, '')) + ' ' + esc(x.hit || 'Big hit') + '<i>+</i></button>'
     : '<span class="pv-ur off" title="Nobody has a raid cooldown ready">' + esc(at(x).replace(/^P\d+ /, '')) + ' ' + esc(x.hit || 'Big hit') + '</span>').join(''); }
-let PV_MO = null; const pvMarkSoon = () => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
+/* (Roster's Ready strip (Flex, Nov 7: "Yes, build it" on the problems-only mock): gear, raid kit and what's left to set, each column listing only
+   what needs doing; what's fine is one green line. The full gear list and the 12 raid kit boxes stay one click away) */
+let PV_KIT = false;
+const pvOr = (a) => (a.length < 2 ? a[0] || '' : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
+function pvWhoBrings(nm) { const lo = String(nm).toLowerCase(); for (const g of NDZ_BUFFS) for (const [n, cl, sp] of g[2]) if (n.toLowerCase() === lo) {
+  const S2 = (E && E.SPECS) || {}; return sp && sp.length ? sp.map((id) => (S2[id] ? S2[id][0] + ' ' + ndzClsName(S2[id][1]) : '')).filter(Boolean) : cl.map(ndzClsName).filter(Boolean); } return []; }
+function pvReady() { if (S.page !== 'plan') return; const ros = document.querySelector('#view #pg-roster'), hd = ros && ros.querySelector(':scope > .ndz-dph'); if (!ros || !hd) return;
+  const F = BFR.F || null, kit = ros.querySelector(':scope > details.ds-buffs'), dec = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&amp;/g, '&'), cols = [];
+  const col = (lab, n, cls, sub, body) => '<div class="rs-col"><div class="rs-ch"><span>' + lab + '</span><b class="' + cls + '">' + n + '</b><small>' + sub + '</small></div>' + body + '</div>';
+  if (F) { const n = F.rows.length, bad = F.rows.some((r) => r.k === 'bad');
+    cols.push(col('Gear', n || '✓', n ? (bad ? 'bad' : 'warn') : 'ok', n ? 'to fix' : 'all set', F.rows.map((r) => '<button type="button" class="rs-r" data-grjump="' + esc(r.x.n) + '" title="Show on the roster"><i class="rs-dot ' + r.k + '"></i><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b><em>' + esc(r.parts.join(' · ')) + '</em></button>').join('') +
+      (F.fine ? '<div class="rs-ok">✓ <span class="rs-rd" title="' + esc(F.okL.map((x) => x.n).join(', ')) + '">' + F.fine + ' ready</span><span> · from Battle.net</span></div>' : '') +
+      '<button type="button" class="lk rs-more" data-bfr="all" aria-expanded="' + !!BFR.all + '">' + (BFR.all ? 'Hide the details ▴' : 'All the details ▾') + '</button>')); }
+  if (kit) { const rows = [], fine = [], set = []; let miss = 0;
+    kit.querySelectorAll('.ndz-dag').forEach((d) => { const lab = ((d.querySelector('.ndz-dagn') || {}).textContent || '').trim(), em = ((d.querySelector('summary em') || {}).textContent || '').trim(); if (!lab) return;
+      if (/^kicks$/i.test(lab)) { const m = /(\d+)\s*\/\s*(\d+)/.exec(em); if (m && +m[1] < +m[2]) set.push([lab, m[1] + ' of ' + m[2] + ' have a kick']); return; }
+      if (/talents/i.test(lab)) { if (/to set/i.test(em)) set.push([lab, em]); return; }
+      const off = [...d.querySelectorAll('.ndz-bfi.off, .ndz-bfi.no')].map((b) => { const m = /<b>([^<]*)<\/b>/.exec(b.dataset.tt || ''); return m ? dec(m[1]) : ''; }).filter(Boolean);
+      if (!off.length) { fine.push(lab); return; } miss += off.length; const who = [...new Set(off.flatMap(pvWhoBrings))];
+      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (d.querySelector('.ndz-bfi.no') ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + esc(pvOr(who)) + '</span>' : '') + '</button>'); });
+    cols.push(col('Raid kit', miss || '✓', miss ? (rows.some((r) => r.includes('rs-dot bad')) ? 'bad' : 'warn') : 'ok', miss ? 'missing' : 'all covered', rows.join('') + (fine.length ? '<div class="rs-ok">✓ ' + esc(andL(fine)) + '<span> · all covered</span></div>' : '') +
+      '<button type="button" class="lk rs-more" data-rskit="" aria-expanded="' + PV_KIT + '">' + (PV_KIT ? 'Hide the raid kit ▴' : 'The whole raid kit ▾') + '</button>'));
+    cols.push(col('To set', set.length || '✓', set.length ? 'warn' : 'ok', set.length ? 'before the pull' : 'all set', set.map(([l, t]) => '<button type="button" class="rs-r" data-rskit="' + esc(l) + '"><i class="rs-dot warn"></i><b>' + esc(l) + '</b><em>' + esc(t) + '</em></button>').join('') + (set.length ? '' : '<div class="rs-ok">✓ Kicks and healer talents<span> · all set</span></div>'))); }
+  let R = ros.querySelector(':scope > .rs-strip'); if (!cols.length) { if (R) R.remove(); return; }
+  if (!R) { R = document.createElement('div'); R.className = 'rs-strip'; } if (R.previousElementSibling !== hd) hd.insertAdjacentElement('afterend', R);
+  const html = cols.join(''); if (R.dataset.h !== html) { R.dataset.h = html; R.innerHTML = html; } if (R.style.getPropertyValue('--rs-n') !== String(cols.length)) R.style.setProperty('--rs-n', cols.length);
+  if (ros.classList.contains('rs-kiton') !== PV_KIT) ros.classList.toggle('rs-kiton', PV_KIT); }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rskit]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nm = b.dataset.rskit, ros = document.querySelector('#view #pg-roster'); if (!ros) return;
+  PV_KIT = nm ? true : !PV_KIT; pvReady(); const det = ros.querySelector(':scope > details.ds-buffs'); if (!det || !nm) return; det.open = true;
+  const d = [...det.querySelectorAll('.ndz-dag')].find((x) => ((x.querySelector('.ndz-dagn') || {}).textContent || '').trim() === nm); if (d) { if (d.tagName === 'DETAILS') d.open = true; d.scrollIntoView({ block: 'center' }); } });
+let PV_MO = null; const pvMarkSoon =() => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
 setTimeout(() => { const v = document.getElementById('main') || document.body; if (!v || PV_MO || !window.MutationObserver) return; /* (the page area: #view is drawn anew) */ PV_MO = new MutationObserver(pvMarkSoon); PV_MO.observe(v, { childList: true, subtree: true }); pvMarkSoon(); }, 0);
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pvmine]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-pv-mine', b.dataset.pvmine); } catch (x) { /* (this visit) */ } pvMark(); });
 const PV_TABS = [['roster', 'Roster'], ['cds', 'Healing cooldowns'], ['jobs', 'Assignments'], ['plans', 'Plans'], ['all', 'All on one page']];
@@ -33335,7 +33391,7 @@ function openRanks() {
 // missing enchants and empty gem sockets, item level under the raid's, an officer view (item level, Mythic+ score, keys this week, linked),
 // and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts
 // when most of the raid has one there.
-const BFR = { key: '', list: null, busy: false, err: '', off: false, all: true }; /* (the list opens by itself (Flex, Nov 7: "the text should always be expanded by default")) */
+const BFR = { key: '', list: null, busy: false, err: '', off: false, all: false }; /* (the Ready strip lists the fixes; All the details opens the full list and the officer view (Nov 7)) */
 // (the slots that take an enchant in 12.1.5 (Nov 6, the studio: 9 of 10 "to fix" were Hands): every one of 16 top US Mythic raiders on Battle.net has a
 // real enchant on these, and none on Back, Wrists, Belt, Neck or Trinkets. Hands showed only on 5 of 16, and that was "Ancient Hash'ey Battle Art", a
 // special bonus, not an enchant. An off hand is left out: Blizzard's gear data doesn't say whether it's a weapon)
@@ -33388,16 +33444,11 @@ function bfrDraw() {
   sum.innerHTML = (!F ? (BFR.err ? '<span class="gr-l">The gear check didn\'t load · <button class="lk" type="button" data-bfr="again">Try again</button></span>' : '<span class="gr-l">Checking gear…</span>')
     : !F.rows.length ? '<span class="gr-ok">✓ Gear: everyone\'s ready</span>' + (can ? ' · ' + all : '')
     : '<span class="gr-l">Gear for the next raid:</span> ' + [bad ? '<b class="gr-bad">' + bad + ' to fix</b>' : '', low ? '<b class="gr-warn">' + low + ' under item level</b>' : '', F.fine ? '<span class="gr-ok">✓ ' + F.fine + ' ready</span>' : ''].filter(Boolean).join(' · ') + ' · ' + all) + join;
-  /* (Ready for the next raid as four tiles (Flex, Nov 7, the sub-tabs mock): gear to fix, under item level, ready, and the raid kit) */
-  { let T = ros.querySelector('.gr-tiles'); if (!F || !F.rows.length && !F.fine) { if (T) T.remove(); } else {
-      if (!T) { T = document.createElement('div'); T.className = 'gr-tiles'; hd.insertAdjacentElement('afterend', T); }
-      let kit = null; try { const pbx = (view.querySelector('.pg-tabs') || {}).dataset; const rr = pbx && pbx.pvboss ? pgRdy(pnGet(), pbx.pvboss) : null; kit = rr && (rr.rows || []).find((x) => x[0] === 'Raid kit'); } catch (x) { kit = null; }
-      const tot = F.rows.length + F.fine, tile = (lab, v, sub2, cls) => '<button type="button" class="gr-t' + (cls ? ' ' + cls : '') + '" data-bfr="all" aria-expanded="' + !!BFR.all + '"><span>' + lab + '</span><b>' + v + '</b><small>' + sub2 + '</small></button>';
-      T.innerHTML = tile('Gear to fix', bad, bad ? 'missing enchants or gems' : 'nothing missing', bad ? 'bad' : 'ok') + tile('Under item level', low, F.mid ? '5 or more under ' + Math.round(F.mid) : 'under the raid', low ? 'warn' : 'ok') +
-        tile('Ready', F.fine, 'of ' + tot + ' on the roster', F.fine === tot ? 'ok' : '') + (kit ? tile('Raid kit', kit[1] ? '✓' : '!', kit[2], kit[1] ? 'ok' : 'warn') : ''); } }
+  /* (Nov 7, Flex: "Yes, build it" on the problems-only mock: the tiles became the Ready strip (pvReady), which reads these) */
+  BFR.F = F; BFR.can = can; { const T0 = ros.querySelector('.gr-tiles'); if (T0) T0.remove(); } try { pvReady(); } catch (x) { /* (the next draw) */ }
   // (the full list, in place under the header)
   let L = ros.querySelector('.gr-list');
-  if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; } { const at = ros.querySelector('.gr-tiles') || hd; if (at.nextElementSibling !== L) at.insertAdjacentElement('afterend', L); } /* (under the tiles (Flex, Nov 7: "the boxes should be above the text")) */
+  if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; } { const at = ros.querySelector(':scope > .rs-strip') || hd; if (at.nextElementSibling !== L) at.insertAdjacentElement('afterend', L); } /* (under the tiles (Flex, Nov 7: "the boxes should be above the text")) */
     const mid = F.mid, off = can ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
       BFR.list.filter((x) => !x.none).sort((p, q) => q.il - p.il).map((x) => '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>').join('') +
       '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';

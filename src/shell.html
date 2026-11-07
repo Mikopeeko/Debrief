@@ -12953,12 +12953,38 @@ html body #assignBox .gr-t:last-child { border-right: 0; } html body #assignBox 
 html body #assignBox .gr-t > span { color: var(--faint); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; } html body #assignBox .gr-t > b { font: 700 24px/1.1 var(--head); } html body #assignBox .gr-t > small { color: var(--faint); font-size: 12.5px; }
 html body #assignBox .gr-t.bad > b { color: #e8604c; } html body #assignBox .gr-t.warn > b { color: #f0b45a; } html body #assignBox .gr-t.ok > b { color: #5fd07a; }
 html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
+/* (Roster's Ready strip: problems only, three columns (Nov 7)) */
+html body #assignBox .panel.pg-roster:has(> .rs-strip) .gr-sum { display: none; }
+html body #assignBox .panel.pg-roster:has(> .rs-strip):not(.rs-kiton) > details.ds-buffs { display: none !important; }
+html body #assignBox .rs-strip { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.6fr 1fr; margin: 6px 0 10px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+html body #assignBox .rs-strip[style*="--rs-n: 2"] { grid-template-columns: 1.6fr 1fr; }
+html body #assignBox .rs-strip[style*="--rs-n: 1"] { grid-template-columns: 1fr; }
+html body #assignBox .rs-col { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 10px 14px; border-right: 1px solid var(--line); }
+html body #assignBox .rs-col:last-child { border-right: 0; }
+html body #assignBox .rs-ch { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+html body #assignBox .rs-ch > span { color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
+html body #assignBox .rs-ch > b { font: 700 24px/1 var(--head); } html body #assignBox .rs-ch > small { color: var(--faint); font-size: 13px; }
+html body #assignBox .rs-ch > b.bad { color: #e8604c; } html body #assignBox .rs-ch > b.warn { color: #f0b45a; } html body #assignBox .rs-ch > b.ok { color: #5fd07a; }
+html body #assignBox .rs-r { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; width: 100%; min-height: 0; padding: 5px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
+html body #assignBox .rs-ch + .rs-r { border-top: 0; }
+html body #assignBox .rs-r:hover > b { text-decoration: underline; text-underline-offset: 3px; }
+html body #assignBox .rs-r > b { font-weight: 700; } html body #assignBox .rs-r > em { font-style: normal; color: var(--muted); }
+html body #assignBox .rs-r > .rs-fx { margin-left: auto; color: var(--faint); font-size: 13.5px; }
+html body #assignBox .rs-dot { flex: none; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
+html body #assignBox .rs-ok { margin-top: 6px; color: #5fd07a; font-size: 14px; } html body #assignBox .rs-ok > span:not(.rs-rd) { color: var(--muted); }
+html body #assignBox .rs-rd { border-bottom: 1px dotted currentColor; cursor: help; }
+html body #assignBox .rs-col > .rs-more { align-self: flex-start; margin-top: auto !important; min-height: 0 !important; padding: 8px 0 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--gold) !important; font: 600 13px var(--body) !important; cursor: pointer; }
+html body #assignBox .rs-col > .rs-more:hover { text-decoration: underline; text-underline-offset: 3px; }
+html body #assignBox .pg-rc:has(> .gr-dot.bad) { outline: 2px solid #e8604c; outline-offset: 1px; }
+html body #assignBox .pg-rc:has(> .gr-dot.warn) { outline: 2px solid #f0b45a; outline-offset: 1px; }
+@media (max-width: 820px) { html body #assignBox .rs-strip, html body #assignBox .rs-strip[style] { grid-template-columns: 1fr; } html body #assignBox .rs-col { border-right: 0; border-bottom: 1px solid var(--line); } html body #assignBox .rs-col:last-child { border-bottom: 0; } }
 html body #assignBox .bfr-r[data-grjump] { cursor: pointer; border-radius: 3px; } html body #assignBox .bfr-r[data-grjump]:hover { background: var(--raised); }
 html body #assignBox .pg-rc.gr-flash { animation: grFlash 1.5s ease-out; } @keyframes grFlash { 0%, 40% { box-shadow: 0 0 0 3px #f0b45a; } 100% { box-shadow: 0 0 0 0 rgba(240,180,90,0); } }
 /* (Out that night under the Bench, beside Playing) */
 html body #assignBox .panel.pg-roster > .pg-zone:nth-child(1 of .pg-zone) { grid-column: 1; grid-row: span 2; }
 html body #assignBox .panel.pg-roster > .pg-zone:nth-child(2 of .pg-zone):not(.pg-zout) { grid-column: 2; }
 html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 2 !important; align-self: start; }
+@media (max-width: 760px) { html body #assignBox .panel.pg-roster:has(> .pg-zone) { grid-template-columns: minmax(0, 1fr) !important; } html body #assignBox .panel.pg-roster > .pg-zone, html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 1 / -1 !important; grid-row: auto !important; } } /* (phones: one column; the second-column rule squeezed the roster to a sliver (Nov 7)) */
 /* (Healing cooldowns: big hits nobody covers, pinned under the header) */
 html body #assignBox .pv-unc { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
 html body #assignBox .pv-unch { margin-right: 4px; color: #e8604c; font-size: 13.5px; font-weight: 600; }
