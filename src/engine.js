@@ -6682,7 +6682,8 @@ function* analyzeSteps(item, text, opts) {
         noteSchool(id, f[10]);
         if (owner) {
           const p = P(owner, pet ? null : sn);
-          p.healing += eff; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, eff, over, crit, t); bump(r.healS, t, eff); bump(p.healS, t, eff); if (over > 0) { bump(r.ohS || (r.ohS = []), t, over); bump(p.ohS || (p.ohS = []), t, over); } /* round 308 overheal per second */
+          const effH = eff + Math.max(0, num(f[s0 + 3])); /* (Nov 7, Flex: "Yes, count them": healing a heal absorb ate is the healer's healing, as Warcraft Logs counts it) */
+          p.healing += effH; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, effH, over, crit, t); bump(r.healS, t, effH); bump(p.healS, t, effH); if (over > 0) { bump(r.ohS || (r.ohS = []), t, over); bump(p.ohS || (p.ohS = []), t, over); } /* round 308 overheal per second */
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
           if (!pet && spell === 'Flash of Light') { if (!p.folEv) p.folEv = []; if (p.folEv.length < 3000) p.folEv.push([t, eff, over]); } if (!pet && spell === 'Living Flame') { if (!p.lfEv) p.lfEv = []; if (p.lfEv.length < 3000) p.lfEv.push([t, eff]); } if (!pet && ev === 'SPELL_PERIODIC_HEAL' && eff > 0) { if (!p.hotS) p.hotS = []; const i0 = Math.floor(t); if (i0 >= 0 && i0 < 7200) p.hotS[i0] = (p.hotS[i0] || 0) + eff; } /* (each Flash of Light, for the tier set card (Oct 25)) */
