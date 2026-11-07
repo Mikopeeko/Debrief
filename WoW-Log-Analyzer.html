@@ -14185,6 +14185,14 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh{background:n
 html:not([data-theme]) body #view .rck :is(.rcx-sec,.rcx-strip){border-color:rgba(230,180,80,.2) !important;box-shadow:inset 0 0 34px -24px rgba(230,180,80,.35)}
 html:not([data-theme]) body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh{border-bottom-color:rgba(230,180,80,.16)}
 </style>
+<style>
+/* Nov 7 Rotation boxes depth */
+html body #view .rck .rcx-sec{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 90px),var(--panel) !important;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -20px #000 !important}
+html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh{background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 10%,transparent),transparent 70%) !important}
+html body #view .rck .rcx-strip{background:linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--panel) !important;box-shadow:0 14px 30px -22px #000 !important}
+html:not([data-theme]) body #view .rck .rcx-sec{box-shadow:inset 0 0 34px -24px rgba(230,180,80,.35),0 14px 30px -20px #000 !important}
+html:not([data-theme]) body #view .rck .rcx-sec::after{content:"";position:absolute;inset:-1px;z-index:6;pointer-events:none;background:linear-gradient(135deg,var(--bg) 0 10px,#e6b450 10px 11.5px,transparent 11.5px),linear-gradient(315deg,var(--bg) 0 10px,#e6b450 10px 11.5px,transparent 11.5px)}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
