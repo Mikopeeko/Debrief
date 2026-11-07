@@ -7940,7 +7940,7 @@ function openRanks() {
     el.innerHTML = '<div class="panel pnz-sheet gk-sheet"><div class="pnz-top"><div><h2>Who can edit, who can see</h2><p>' + (I && I.guild ? esc(I.guild.name) + ' · from the guild roster' : 'From your guild\'s ranks in game') + '</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
       (!I ? '<p class="bn-sub">Reading the guild roster…</p>' : !I.counts ? '<div class="bn-note">' + esc(I.why || 'The guild roster isn\'t there just now.') + '</div>' + (I.guild ? '' : '<button class="btn bn-link" type="button" data-rk="bnet"><span class="bn-b">B</span>Link Battle.net</button>') :
         '<div class="gk-l">' + rows.map((r) => { const a = A.acc[r];
-          return '<div class="gk-r"><div class="gk-n"><input value="' + esc(A.names[r]) + '" data-rkn="' + r + '" maxlength="24" aria-label="Name of rank ' + r + '"><span>rank ' + (r === 4 && I.hi > 4 ? '4–' + I.hi : r) + '</span></div><div class="gk-c">' + (I.counts[r] || 0) + '</div>' +
+          return '<div class="gk-r"><div class="gk-n"><input value="' + esc(A.names[r]) + '" data-rkn="' + r + '" maxlength="24" aria-label="Name of rank ' + r + '"><i class="gk-pen" aria-hidden="true">✎</i><span>rank ' + (r === 4 && I.hi > 4 ? '4–' + I.hi : r) + '</span></div><div class="gk-c">' + (I.counts[r] || 0) + '</div>' +
             '<div class="gk-seg" role="radiogroup" aria-label="' + esc(A.names[r]) + '">' + ['edit', 'see', 'none'].map((k) => '<button type="button" role="radio" aria-checked="' + (a === k) + '" class="' + (a === k ? 'on' : '') + '" data-rk="acc" data-r="' + r + '" data-a="' + k + '">' + RK_WORD[k] + '</button>').join('') + '</div></div>'; }).join('') + '</div>' +
         '<p class="gk-why"><b>Edit:</b> change Plan, the roster and notes, and send notes to the team. <b>See:</b> the plan, their own jobs and the note.<br>Promotions, demotions and people leaving the guild update by themselves. Blizzard gives rank numbers, so you name each rank once.</p>' +
         (A.err ? '<div class="bn-note">' + esc(A.err) + '</div>' : '') +
@@ -7961,6 +7961,70 @@ function openRanks() {
   tpApi('id=' + encodeURIComponent(TP.id) + '&ranks=1').then((r) => { A.info = r; for (let i = 0; i <= 4; i++) { A.names[i] = (r.names && r.names[i]) || RK_NAMES[i]; A.acc[i] = (r.acc && r.acc[i]) || RK_DEF[i]; } if (el.isConnected) draw(); })
     .catch(() => { A.info = { why: 'The guild roster didn\'t load. Try again in a minute.' }; draw(); });
 }
+// ---- Battle.net step 4: "Ready for the raid?" on Plan, from public Battle.net data, so it works for everyone on the roster, linked or not:
+// missing enchants and empty gem sockets, item level under the raid's, an officer view (item level, Mythic+ score, keys this week, linked),
+// and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts
+// when most of the raid has one there.
+const BFR = { key: '', list: null, busy: false, err: '', off: false };
+const BFR_SLOT = { HEAD: 'Head', NECK: 'Neck', SHOULDER: 'Shoulders', BACK: 'Back', CHEST: 'Chest', WRIST: 'Wrists', HANDS: 'Hands', WAIST: 'Belt', LEGS: 'Legs', FEET: 'Feet', FINGER_1: 'Ring 1', FINGER_2: 'Ring 2', TRINKET_1: 'Trinket 1', TRINKET_2: 'Trinket 2', MAIN_HAND: 'Weapon', OFF_HAND: 'Off hand' };
+function bfrWhere() { const t = tpTeam(); if (!t) return null; const sv = String(t.server || t.realm || ''), rg = ((/\((\w{2})\)\s*$/.exec(sv) || [])[1] || t.region || 'us').toLowerCase();
+  return { realm: srvSlug(sv.replace(/\s*\(\w{2}\)\s*$/, '')), r: /^(us|eu)$/.test(rg) ? rg : 'us', team: t }; }
+function bfrNames() { const R = planRoster(); if (!R) return []; let A = null; try { A = pgAltsR(R); } catch (e) { A = null; }
+  return R.players.filter((p) => !(A && A.main.has(String(p.n).toLowerCase()))).map((p) => String(p.n)); }
+async function bfrLoad() {
+  const W = bfrWhere(), N = bfrNames(); if (!W || !W.realm || !N.length || BFR.busy) return; const key = W.r + '|' + W.realm + '|' + N.join(',');
+  if (BFR.key === key && (BFR.list || BFR.err)) return; Object.assign(BFR, { key, list: null, err: '', busy: true });
+  const out = []; try { for (let i = 0; i < N.length; i += 10) { const c = N.slice(i, i + 10).map((n) => { const [nm, rl] = n.split('-'); return (rl ? srvSlug(rl) : W.realm) + ':' + nm; }).join(',');
+      const r = await fetch('/api/raiders?r=' + W.r + '&c=' + encodeURIComponent(c) + (TP_PRACTICE && store.get('wla-bfr-mock') ? '&mock=1' : '') /* (practice links: made-up gear for made-up rosters) */), j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Battle.net didn\'t answer just now.'); out.push(...(j.list || [])); }
+    BFR.list = out; } catch (e) { BFR.err = String(e.message || e); } BFR.busy = false; if (BFR.key === key) bfrDraw(); }
+function bfrFacts(L) {
+  const ok = L.filter((x) => !x.none && x.il), ils = ok.map((x) => x.il).sort((a, b) => a - b), mid = ils.length ? ils[Math.floor(ils.length / 2)] : 0, need = new Set(), cnt = {};
+  for (const x of ok) for (const [s, , en] of x.items || []) { cnt[s] = cnt[s] || [0, 0]; cnt[s][1]++; if (en) cnt[s][0]++; }
+  for (const [s, [a, b]] of Object.entries(cnt)) if (b >= 3 && a / b >= 0.6) need.add(s); /* (a slot most of the raid enchants) */
+  const rows = []; let fine = 0;
+  for (const x of ok) { const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s), low = mid && x.il <= mid - 5;
+    if (miss.length) rows.push({ k: 'bad', x, t: (miss.length > 1 ? ' is missing ' + miss.length + ' enchants' : ' is missing an enchant'), w: miss.join(', ') });
+    if (gem.length) rows.push({ k: 'bad', x, t: (gem.length > 1 ? ' has ' + gem.length + ' empty gem sockets' : ' has an empty gem socket'), w: gem.join(', ') });
+    if (low) rows.push({ k: 'warn', x, t: ' is ' + Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')', w: 'ilvl' });
+    if (!miss.length && !gem.length && !low) fine++; }
+  return { rows, fine, mid, none: L.filter((x) => x.none).map((x) => x.n) };
+}
+const bfrCol = (x) => (E.CLASSES[x.cls] || [])[1] || 'var(--text)';
+const BFR_IC = { bad: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M7 7l6 6M13 7l-6 6"/></svg>', warn: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M10 5.5v6M10 14v.5"/></svg>', ok: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M6.5 10.2l2.4 2.4 4.6-5"/></svg>' };
+function bfrDraw() {
+  if (S.page !== 'plan') return; const view = $('#view'); if (!view) return; let el = view.querySelector('#bfrBox');
+  const W = bfrWhere(), N = bfrNames(); if (!W || !N.length || !WCL.HOSTED) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('section'); el.id = 'bfrBox'; el.className = 'panel bfr'; view.appendChild(el); }
+  const d = TP.doc || {}, you = d.you || {}, can = !!you.can, mineOn = new Set(N.map((n) => meBase(n))), onRoster = meNames().some((n) => mineOn.has(meBase(n))), linked = whoChars().length > 0;
+  const nm = (n) => { const b = String(n).toLowerCase(); return ((TP.doc && TP.doc.bn) || []).some((g) => g.some((x) => String(x).toLowerCase() === b)) || whoChars().some((c) => meBase(c.n) === meBase(n)); };
+  const join = d.exists && !onRoster && !can && WHO.now && WHO.now.wcl && WHO.now.can ? '<div class="bfr-join"><button class="btn bn-link" type="button" data-bfr="join"><span class="bn-b">B</span>' + (linked ? 'Join ' : 'Link Battle.net and join ') + esc(TP.name || W.team.name) + '</button><span>' + (linked && whoMain() ? 'Adds you to the team roster as ' + esc(whoMain().n) + ' (' + esc([whoMain().spec, (E.CLASSES[whoMain().cls] || [])[0]].filter(Boolean).join(' ')) + '). Your raid lead sees you right away.' : 'Adds you to the team roster with your main\'s spec and role. Your raid lead sees you right away.') + '</span></div>' : '';
+  let body = '';
+  if (BFR.busy || (!BFR.list && !BFR.err)) body = '<p class="bfr-f">Checking everyone\'s gear on Battle.net…</p>';
+  else if (BFR.err) body = '<p class="bfr-f">' + esc(BFR.err) + ' <button class="lk" type="button" data-bfr="again">Try again</button></p>';
+  else { const F = bfrFacts(BFR.list), nFix = F.rows.length;
+    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + esc(r.t) + '</span><span class="w">' + esc(r.w) + '</span></div>').join('') +
+      (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t">' + (F.rows.length ? F.fine + ' other' + (F.fine > 1 ? 's are' : ' is') : (F.fine > 1 ? 'All ' + F.fine + ' are' : 'Everyone is')) + ' enchanted, gemmed and at raid item level</span></div>' : '') +
+      (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
+      '<p class="bfr-f">Checked from public gear data, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>';
+    el.dataset.n = nFix; }
+  const off = can && BFR.list && !BFR.err ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
+    BFR.list.filter((x) => !x.none).sort((a, b) => b.il - a.il).map((x) => { const mid = bfrFacts(BFR.list).mid; return '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>'; }).join('') +
+    '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
+  const day = (() => { try { const o = pnGet(); const k = o && o.date; return k ? new Date(k + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }) : ''; } catch (e) { return ''; } })();
+  el.innerHTML = '<div class="bfr-h"><h2>Ready for ' + esc(day || 'the raid') + '?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'thing') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
+  const o = el.querySelector('.bfr-off'); if (o) o.ontoggle = () => { BFR.off = o.open; };
+}
+document.addEventListener('click', async (e) => { const b = e.target.closest && e.target.closest('[data-bfr]'); if (!b) return; const k = b.dataset.bfr;
+  if (k === 'again') { BFR.key = ''; bfrLoad(); bfrDraw(); return; }
+  if (k === 'join') { if (!whoChars().length) { try { sessionStorage.setItem('wla-bn-join', TP.id); } catch (x) { /* storage off */ } location.href = '/auth/bnet/start?region=' + ((bfrWhere() || {}).r || 'us'); return; } bfrJoin(); } });
+async function bfrJoin() { const id = TP.id; if (!id) return; const r = await tpApi('id=' + encodeURIComponent(id), { op: 'join', me: (whoMain() || {}).n || tpWho() }).catch(() => ({ error: 'That didn\'t save. Try again.' }));
+  if (!r.ok) { toast(esc(r.error || 'That didn\'t save. Try again.'), 5000); return; } TP.ver = null; await tpPull(); toast(r.already ? 'You\'re already on the roster.' : 'You\'re on ' + esc(TP.name) + '\'s roster. Your raid lead sees you now.', 4000); }
+// (back from linking with "join" pending: join once the link is saved)
+document.addEventListener('whoami', () => { let j = null; try { j = sessionStorage.getItem('wla-bn-join'); } catch (e) { j = null; } if (!j || !whoChars().length) return; try { sessionStorage.removeItem('wla-bn-join'); } catch (e) { /* storage off */ }
+  setTimeout(async () => { if (TP.id !== j) { const t = tpTeam(); if (!t || t.kind + ':' + t.id !== j) return; } await tpPull(); bfrJoin(); }, 1500); });
+(function () { const p0 = planPage; planPage = function () { const r = p0.apply(this, arguments); try { bfrDraw(); bfrLoad(); } catch (e) { /* (Plan works on its own) */ } return r; }; })();
+setInterval(() => { try { if (S.page === 'plan' && WCL.HOSTED && !document.querySelector('#view #bfrBox') && bfrNames().length) bfrDraw(); } catch (e) { /* (next tick) */ } }, 1500); /* (Plan redrew part of itself: the panel comes back) */
 // (every time Plan is drawn: the chip, the tags, and a read of the team's plan when the team changed or nothing's been read yet)
 (function () { const p0 = planPage; planPage = function () { const r = p0.apply(this, arguments); try { tpChip(); const t = tpTeam(); if (t && (t.kind + ':' + t.id !== TP.id || !TP.doc)) tpPull(); } catch (e) { /* (Plan works on its own) */ } return r; }; })();
 
@@ -8922,7 +8986,7 @@ function pgAltClean() { const R = planRoster(); if (!R) return; const A = pgAlts
 function pgAltListT(A) { return [...A.alts].map(([k, al]) => andL(al) + (al.length > 1 ? ' are ' : ' is ') + (A.main.get(String(al[0]).toLowerCase()) || k) + '\'s' + (A.sure && A.sure.has(String(al[0]).toLowerCase()) ? ' (✓ Battle.net)' : ' (guessed)')).join('; '); }
 function pgAltLineH() { const R = planRoster(); if (!R) return ''; const A = pgAltsR(R); if (!A.n || (R.alts && R.alts.seen === A.sig)) return '';
   const said = (S.pgAltSaid || []).filter((x) => x.by).slice(0, 2).map((x) => ' ' + esc(x.x) + ' is ' + esc(x.m) + '\'s alt, so <b>' + esc(x.by) + '</b> plays instead.').join('');
-  return '<div class="pg-altl"><span><b>' + (A.n === 1 ? '1 alt' : A.n + ' alts') + ' spotted:</b> ' + esc(pgAltListT(A)) + '. Dragging one in sits its main, so each player has one spot.' + said + '</span><button type="button" class="pg-altno" data-pgaltno="1">Not right?</button><button type="button" class="pg-altx" data-pgaltx="1" aria-label="Hide this line" data-tt="Hide this line">✕</button></div>'; }
+  return '<div class="pg-altl"><span><b>' + (A.n === 1 ? '1 alt' : A.n + ' alts') + ' spotted:</b> ' + esc(pgAltListT(A)) + '. Dragging one in sits its main, so each player has one spot.' + said + '</span>' + ([...A.main.keys()].every((k) => A.sure && A.sure.has(k)) ? '' : '<button type="button" class="pg-altno" data-pgaltno="1">Not right?</button>') + '<button type="button" class="pg-altx" data-pgaltx="1" aria-label="Hide this line" data-tt="Hide this line">✕</button></div>'; }
 function pgAltMenuAt(at, items) { let m = document.getElementById('pgAltMenu'); if (!m) { m = document.createElement('div'); m.id = 'pgAltMenu'; m.className = 'pg-altm'; m.setAttribute('role', 'menu'); document.body.appendChild(m); }
   m.innerHTML = items.join(''); m.hidden = false; const r = at.getBoundingClientRect(), w = m.offsetWidth; m.style.left = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + window.scrollX) + 'px'; m.style.top = Math.round(r.bottom + 6 + window.scrollY) + 'px'; }
 const pgAltMenuOff = () => { const m = document.getElementById('pgAltMenu'); if (m) m.hidden = true; };
@@ -33062,11 +33126,12 @@ function openAccounts(note) {
     let pick = '';
     if (b.linked) { const P = A.pick, cs = (b.chars || []).slice();
       pick = '<div class="bn-pick"><div class="bn-ph"><h3>Your characters</h3><span>From Battle.net · ' + esc(String(b.region || '').toUpperCase()) + ' · Level 90' + (b.mock ? ' · practice account' : '') + '</span></div>' +
-        (cs.length ? cs.map((c) => { const k = bnKey(c), main = P.main === k, hid = P.hidden.has(k), cc = (E.CLASSES[c.cls] || [])[1] || 'var(--text)';
+        (cs.length ? cs.filter((c) => A.showHid || !P.hidden.has(bnKey(c))).map((c) => { const k = bnKey(c), main = P.main === k, hid = P.hidden.has(k), cc = (E.CLASSES[c.cls] || [])[1] || 'var(--text)';
           return '<div class="bn-c' + (hid ? ' hid' : '') + (main ? ' main' : '') + '"><button class="bn-r" type="button" data-bn="main" data-k="' + esc(k) + '" aria-label="Make ' + esc(c.n) + ' your main"' + (hid ? ' disabled' : '') + '></button>' +
             '<img src="' + ico(c) + '" alt=""><div class="bn-cn"><b style="color:' + cc + '">' + esc(c.n) + '</b><span>' + esc([c.spec, (E.CLASSES[c.cls] || [])[0]].filter(Boolean).join(' ')) + ' · ' + esc(c.realm) + (c.g ? ' · &lt;' + esc(c.g) + '&gt;' : '') + '</span></div>' +
             '<div class="bn-il">' + (c.ilvl ? 'ilvl ' + c.ilvl : '') + '</div>' +
-            '<div class="bn-tag">' + (main ? '<span class="bn-main">Main</span>' : hid ? '<button class="lk" type="button" data-bn="show" data-k="' + esc(k) + '">Show</button>' : '<span class="bn-alt">Alt</span><button class="bn-hide" type="button" data-bn="hide" data-k="' + esc(k) + '" aria-label="Hide ' + esc(c.n) + '">Hide ×</button>') + '</div></div>'; }).join('')
+            '<div class="bn-tag">' + (main ? '<span class="bn-main">Main</span>' : hid ? '<button class="lk" type="button" data-bn="show" data-k="' + esc(k) + '">Show</button>' : '<span class="bn-alt">Alt</span><button class="bn-hide" type="button" data-bn="hide" data-k="' + esc(k) + '" aria-label="Hide ' + esc(c.n) + '">Hide ✕</button>') + '</div></div>'; }).join('') +
+          (P.hidden.size && !A.showHid ? '<div class="bn-hidl">Hidden: ' + P.hidden.size + ' · <button class="lk" type="button" data-bn="showhid">show</button></div>' : '')
           : '<p class="bn-sub">No level 90 characters on this Battle.net account in ' + esc(String(b.region || '').toUpperCase()) + '.</p>') +
         '<div class="bn-pf"><span>Pick your main. Characters under level 90 are left out. Unlink any time.</span><button class="btn primary" type="button" data-bn="save"' + (A.busy ? ' disabled' : '') + '>Save</button></div></div>'; }
     el.innerHTML = '<div class="panel pnz-sheet bn-sheet"><div class="pnz-top"><div><h2>Your characters</h2><p>Which characters are yours, for Plan, Home, the Report card and the Companion app.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
@@ -33086,6 +33151,7 @@ function openAccounts(note) {
     else if (k === 'main') { A.pick.main = t.dataset.k; A.pick.hidden.delete(t.dataset.k); draw(); }
     else if (k === 'hide') { A.pick.hidden.add(t.dataset.k); draw(); }
     else if (k === 'show') { A.pick.hidden.delete(t.dataset.k); draw(); }
+    else if (k === 'showhid') { A.showHid = true; draw(); }
     else if (k === 'save') save('POST', { main: A.pick.main, hidden: [...A.pick.hidden] }); };
   el.onchange = (e) => { const t = e.target.closest('[data-bn="reg"]'); if (t) A.region = t.value; };
   el.onsubmit = async (e) => { const f = e.target.closest('[data-bn="test"]'); if (!f) return; e.preventDefault(); const n = String(f.n.value || '').trim(); if (!n) return;
