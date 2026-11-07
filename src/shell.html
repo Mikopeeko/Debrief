@@ -14177,6 +14177,468 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
 <script>/* (Nov 7, Flex: "fold it in": the Power Infusion panel opens inside its checklist row) */ (function () { if (window.__piFold) return; window.__piFold = 1;
   document.addEventListener('click', function (e) { var row = e.target.closest && e.target.closest('#view .rcx-row[data-k="pi"]'); if (!row) return;
     setTimeout(function () { var d = row.nextElementSibling; if (!d || !d.classList.contains('rcx-open')) return; var p = document.querySelector('#view section.spc-pi') || window.__piP; if (!p || d.contains(p)) return; window.__piP = p; p.classList.add('rcx-pi'); d.appendChild(p); }, 0); }, true); })();</script>
+<style id="signature-default-theme">
+/* Nov 7, Flex: "a brand new default theme", "super professional, refined, polished".
+   One complete default finish. Existing layouts, data colours and named themes stay intact.
+   Layered important declarations outrank the older unlayered skins without selector duplication. */
+@layer defaultTheme {
+  html:not([data-theme]) {
+    background: #101214 !important;
+    scrollbar-color: #42484c #101214 !important;
+    scrollbar-width: thin;
+  }
+  html:not([data-theme]) body.refine {
+    --bg: #101214 !important;
+    --panel: #191c1f !important;
+    --raised: #22272b !important;
+    --line: #2c3236 !important;
+    --line2: #3b4348 !important;
+    --text: #f0eee8 !important;
+    --muted: #b0b5b8 !important;
+    --faint: #8e989d !important;
+    --gold: #d4b77d !important;
+    --gold-ink: #19160f !important;
+    --r: 4px !important;
+    --ds-box: 4px !important;
+    --ds-card: 4px !important;
+    --ds-label: #a3acb1 !important;
+    --ds-ls: .04em !important;
+    --head: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important;
+    --body: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important;
+    --mono: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important;
+    background: var(--bg) !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+  }
+  html:not([data-theme]) body.refine ::selection {
+    color: #f0eee8;
+    background: rgba(212,183,125,.26);
+  }
+  /* A quiet frame, with the brand and the active destination doing the work. */
+  html:not([data-theme]) body.refine #topbar {
+    background: #15181a !important;
+    border-bottom: 1px solid var(--line) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  html:not([data-theme]) body.refine .brand h1 {
+    color: var(--gold) !important;
+    background: none !important;
+    font-family: var(--head) !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    letter-spacing: .04em !important;
+  }
+  html:not([data-theme]) body.refine .brand p {
+    color: var(--faint) !important;
+    font-size: 12.5px !important;
+    line-height: 1.5 !important;
+  }
+  html:not([data-theme]) body.refine :is(.tabbar, .r300-tabs) {
+    background: var(--bg) !important;
+    border-bottom: 1px solid var(--line) !important;
+    box-shadow: none !important;
+    gap: 2px !important;
+  }
+  html:not([data-theme]) body.refine .tabbar .tab {
+    min-height: 42px !important;
+    padding: 10px 14px !important;
+    border-radius: 4px 4px 0 0 !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    font-family: var(--body) !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .01em !important;
+    text-transform: none !important;
+    text-shadow: none !important;
+    transition: color .16s ease, background-color .16s ease;
+  }
+  html:not([data-theme]) body.refine .tabbar .tab:not(.tab-off):hover {
+    color: var(--text) !important;
+    background: var(--panel) !important;
+  }
+  html:not([data-theme]) body.refine .tabbar .tab.on {
+    color: var(--gold) !important;
+    background: #211f1a !important;
+    border-bottom: 2px solid var(--gold) !important;
+  }
+  html:not([data-theme]) body.refine .tabbar .tab.tab-off {
+    color: var(--faint) !important;
+  }
+  /* Solid surfaces and one radius. The boss art and all meaningful chart colours remain. */
+  html:not([data-theme]) body.refine #main :is(.panel, .r212-sb, .dbt-p, .rcb-sec, .rcb-ban, .rcb-yp, .rcw-strip, .rcw-you, .spc-card, .spc-hero, .spc-chd, .rcc, .rgx-c, .hwk-c, .dbf-c, .gb-card, .cch, .cch2.dt-box, .fpn-t) {
+    background-color: var(--panel) !important;
+    background-image: none !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    min-width: 0;
+  }
+  html:not([data-theme]) body.refine #main :is(.panel:not(.pg-bar), .r212-sb, .dbt-p)::after {
+    background: none !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine :is(#bossHead .bh, header.fight.bh) {
+    background-color: var(--panel) !important;
+    border: 1px solid var(--line2) !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine .bh::after {
+    border: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine .bh-name {
+    color: var(--text) !important;
+    font-family: var(--head) !important;
+    font-weight: 700 !important;
+    letter-spacing: -.01em !important;
+    text-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine .bh-l0 .bh-k {
+    color: var(--muted) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em !important;
+  }
+  html:not([data-theme]) body.refine .panel.shr-bar {
+    padding: 14px 20px !important;
+    background: var(--panel) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine .panel.shr-bar::after {
+    background: none !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine .shr-bar .btn.primary {
+    background: var(--raised) !important;
+    border-color: var(--line2) !important;
+    color: var(--text) !important;
+  }
+  /* The same well-defined control in filters, toolbars and the body of a card. */
+  html:not([data-theme]) body.refine :is(.btn, select, .seg > button, .gb-auk > button) {
+    min-height: 32px !important;
+    border: 1px solid var(--line2) !important;
+    border-radius: 4px !important;
+    background: var(--raised) !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .01em !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    transition: background-color .16s ease, border-color .16s ease, color .16s ease;
+  }
+  html:not([data-theme]) body.refine .btn {
+    padding: 7px 12px !important;
+  }
+  html:not([data-theme]) body.refine .btn.sm {
+    padding: 5px 10px !important;
+    font-size: 12.5px !important;
+  }
+  html:not([data-theme]) body.refine :is(.btn, .seg > button, .gb-auk > button):not(:disabled):not([aria-disabled="true"]):hover {
+    background: #2b3136 !important;
+    border-color: #626d75 !important;
+    color: var(--text) !important;
+    transform: none !important;
+  }
+  html:not([data-theme]) body.refine .btn.primary {
+    background: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: var(--gold-ink) !important;
+    font-weight: 700 !important;
+  }
+  html:not([data-theme]) body.refine .btn.primary:not(:disabled):hover {
+    background: #e2c68e !important;
+    border-color: #e2c68e !important;
+    color: var(--gold-ink) !important;
+  }
+  html:not([data-theme]) body.refine :is(.seg > button.on, .gb-auk > button.on) {
+    color: var(--gold) !important;
+    background: #2a261e !important;
+    border-color: #6c5d3d !important;
+  }
+  html:not([data-theme]) body.refine :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]), textarea) {
+    background: #121518 !important;
+    border: 1px solid var(--line2) !important;
+    border-radius: 4px !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine :is(input, textarea)::placeholder {
+    color: var(--faint) !important;
+    opacity: 1 !important;
+  }
+  html:not([data-theme]) body.refine :is(input[type="checkbox"], input[type="radio"], input[type="range"]) {
+    accent-color: var(--gold);
+  }
+  html:not([data-theme]) body.refine :is(button, a, input, select, textarea, summary):focus-visible {
+    outline: 2px solid var(--gold) !important;
+    outline-offset: 3px !important;
+  }
+  html:not([data-theme]) body.refine .tabbar .tab:focus-visible {
+    outline-offset: -3px !important;
+  }
+  /* Quiet labels, readable secondary text and consistent numerical typography. */
+  html:not([data-theme]) body.refine #view :is(.dbr-k, .dbr-h, .dbt-k, .mcx-cap, .dbd-phh, .brw-al, .rcb-k, .rcc-n, .tile .l, .cch-sh) {
+    color: var(--muted) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em !important;
+  }
+  html:not([data-theme]) body.refine #view :is(.sub, .muted, .cgl-s, .tile .s) {
+    color: var(--muted) !important;
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+  }
+  html:not([data-theme]) body.refine #view :is(.tile .v, .rpc-v, .dsum > div > b, .dbr-n > b) {
+    font-family: var(--head) !important;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em !important;
+  }
+  html:not([data-theme]) body.refine #view :is(h2, h3.nh, .rcb-sh h3) {
+    color: var(--text) !important;
+    font-family: var(--head) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0 !important;
+    line-height: 1.35 !important;
+    text-transform: none !important;
+  }
+  /* The coach reads as a single, considered answer; details have their own rhythm. */
+  html:not([data-theme]) body.refine #view .cch:not(.dt-box) {
+    background: #1e1e1a !important;
+    border-color: #494235 !important;
+    padding: 20px 24px !important;
+  }
+  html:not([data-theme]) body.refine #view .cch .cch-k {
+    color: var(--gold) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em !important;
+  }
+  html:not([data-theme]) body.refine #view .cch .cch-h {
+    font-family: var(--body) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    line-height: 1.55 !important;
+    margin-top: 12px !important;
+  }
+  html:not([data-theme]) body.refine #view :is(.cch .cch-tsame, .cch .cch-tgrid, .dbt-main) {
+    border-color: var(--line) !important;
+  }
+  html:not([data-theme]) body.refine #view :is(.cch2 summary.cgl, .cch2 .cch-ab > summary) {
+    padding: 14px 16px !important;
+    background: transparent !important;
+    border-color: var(--line) !important;
+  }
+  html:not([data-theme]) body.refine #view .cch2 .cgl-n {
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .02em !important;
+  }
+  html:not([data-theme]) body.refine #view .cch2 .cgl-p {
+    font-family: var(--head) !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Data tables: steady rows, crisp alignment and class colours left intact. */
+  html:not([data-theme]) body.refine #view table {
+    border-collapse: collapse !important;
+    font-family: var(--body) !important;
+    font-size: 13.5px !important;
+    font-variant-numeric: tabular-nums;
+  }
+  html:not([data-theme]) body.refine #view table th {
+    background: #15181b !important;
+    color: var(--muted) !important;
+    border-bottom: 1px solid var(--line2) !important;
+    padding: 10px 12px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em !important;
+  }
+  html:not([data-theme]) body.refine #view table td {
+    padding: 9px 12px !important;
+    border-bottom: 1px solid var(--line) !important;
+    vertical-align: middle !important;
+    line-height: 1.4 !important;
+  }
+  html:not([data-theme]) body.refine #view table tbody tr:hover {
+    background: #24292d !important;
+  }
+  html:not([data-theme]) body.refine #view table tfoot {
+    background: var(--raised) !important;
+    color: var(--text) !important;
+    font-weight: 700 !important;
+  }
+  html:not([data-theme]) body.refine #view :is(.gb-card, .spc-card, .rcb-sec) {
+    padding: 18px 20px !important;
+  }
+  html:not([data-theme]) body.refine #view .gb-card + .gb-card {
+    margin-top: 0 !important;
+  }
+  html:not([data-theme]) body.refine #view .seg.gb-tabs > button {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--muted) !important;
+    padding: 8px 10px !important;
+    font-weight: 400 !important;
+    text-align: left !important;
+  }
+  html:not([data-theme]) body.refine #view .seg.gb-tabs > button:not(.on):hover {
+    background: var(--raised) !important;
+    border-color: var(--line) !important;
+    color: var(--text) !important;
+  }
+  html:not([data-theme]) body.refine #view .seg.gb-tabs > button.on {
+    background: #28251e !important;
+    border-color: #5e523b !important;
+    color: var(--gold) !important;
+    font-weight: 600 !important;
+  }
+  html:not([data-theme]) body.refine #view .pf-row.cb.gb-row {
+    min-height: 36px !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    border-bottom: 1px solid var(--line) !important;
+    border-radius: 0 !important;
+    font-size: 13.5px !important;
+  }
+  html:not([data-theme]) body.refine #view .pf-row.cb.gb-row:hover {
+    background: var(--raised) !important;
+  }
+  html:not([data-theme]) body.refine #view .gb-rows .cb-f i.m {
+    background: var(--c, #8e989d) !important;
+    box-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine #view .pf-row.cb.cb-h {
+    min-height: 34px !important;
+    border-bottom: 1px solid var(--line2) !important;
+    color: var(--muted) !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: .04em !important;
+  }
+  /* The public homepage keeps its content and composition, with an editorial finish. */
+  html:not([data-theme]) body.refine #main .home.fpn {
+    background: transparent !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-hero {
+    padding-top: 56px !important;
+    padding-bottom: 40px !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-hero h1 {
+    color: var(--text) !important;
+    font-family: var(--head) !important;
+    letter-spacing: -.025em !important;
+    line-height: 1.04 !important;
+    text-shadow: none !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-hero h1 span {
+    color: var(--gold) !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-lead {
+    max-width: 620px !important;
+    color: #c1c5c6 !important;
+    font-size: 18px !important;
+    line-height: 1.65 !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-cta {
+    gap: 14px !important;
+    margin-top: 28px !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-main {
+    min-height: 48px !important;
+    padding: 12px 24px !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    letter-spacing: .01em !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-sub {
+    color: var(--muted) !important;
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+  }
+  html:not([data-theme]) body.refine #main :is(.fpn-alt, .fpn-mp, .fpn-th em) {
+    color: var(--faint) !important;
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-tiles {
+    gap: 16px !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-t {
+    padding: 18px !important;
+    transition: background-color .16s ease, border-color .16s ease;
+  }
+  html:not([data-theme]) body.refine #main .fpn-t:hover {
+    background-color: var(--raised) !important;
+    border-color: #68716d !important;
+    transform: none !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-t b {
+    color: var(--text) !important;
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
+  }
+  html:not([data-theme]) body.refine #main .fpn-t p {
+    color: var(--muted) !important;
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+  }
+  /* Floating UI is the one surface with a shadow, so it stays distinct from content. */
+  html:not([data-theme]) body.refine :is(.tbm-pop, .dialog, .modal, .spc-tt, .rtv-pop) {
+    background-color: #202529 !important;
+    color: var(--text) !important;
+    border: 1px solid #495157 !important;
+    border-radius: 4px !important;
+    box-shadow: 0 16px 48px rgba(0,0,0,.5) !important;
+  }
+  @media (max-width: 760px) {
+    html:not([data-theme]) body.refine .tabbar .tab {
+      min-height: 40px !important;
+      padding: 10px 12px !important;
+    }
+    html:not([data-theme]) body.refine #view :is(.cch:not(.dt-box), .gb-card, .spc-card, .rcb-sec) {
+      padding: 16px !important;
+    }
+    html:not([data-theme]) body.refine #view table :is(th, td) {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+    }
+    html:not([data-theme]) body.refine #main .fpn-hero {
+      padding-top: 32px !important;
+      padding-bottom: 28px !important;
+    }
+    html:not([data-theme]) body.refine #main .fpn-lead {
+      font-size: 18px !important;
+      line-height: 1.55 !important;
+    }
+    html:not([data-theme]) body.refine #main .fpn-t {
+      padding: 16px !important;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html:not([data-theme]) body.refine :is(.tab, .btn, .fpn-t, .seg > button, .gb-auk > button) {
+      transition: none !important;
+    }
+  }
+}
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
