@@ -4947,8 +4947,8 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 /* (Battle.net step 4: Plan's "Ready for the raid?": a row per thing to fix, then the officer table) */
 .bfr { margin-top: 16px; padding: 16px 18px; } .bfr-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
 .bfr-h h2 { margin: 0; font: 700 20px var(--head); color: var(--text); } .bfr-h .m { color: var(--muted); font-size: 13px; }
-.bfr-r { display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; } .bfr-r svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
-.bfr-r.bad svg { color: var(--bad); } .bfr-r.warn svg { color: var(--warn); } .bfr-r.ok svg { color: var(--good); } .bfr-r .t { color: var(--text); } .bfr-r .w { color: var(--muted); font-size: 13px; text-align: right; }
+.bfr-r { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; } .bfr-r svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.bfr-r.bad svg { color: var(--bad); } .bfr-r.warn svg { color: var(--warn); } .bfr-r.ok svg { color: var(--good); } .bfr-r .t { color: var(--text); line-height: 1.45; } .bfr-p { color: var(--muted); } .bfr-r .w { color: var(--muted); font-size: 13px; text-align: right; }
 .bfr-f { margin: 10px 0 0; color: var(--muted); font-size: 13px; } .bfr-f .lk { background: none; border: 0; padding: 0; color: var(--gold); cursor: pointer; font-size: 13px; }
 .bfr-join { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); } .bfr-join span { color: var(--muted); font-size: 13px; flex: 1 1 240px; }
 .bfr-off { margin-top: 12px; } .bfr-off > summary { cursor: pointer; color: var(--gold); font: 600 13px var(--body); letter-spacing: .08em; text-transform: uppercase; list-style: none; } .bfr-off > summary::-webkit-details-marker { display: none; }
@@ -32576,10 +32576,10 @@ function bfrFacts(L) {
   for (const [s, [a, b]] of Object.entries(cnt)) if (b >= 3 && a / b >= 0.6) need.add(s); /* (a slot most of the raid enchants) */
   const rows = []; let fine = 0;
   for (const x of ok) { const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s), low = mid && x.il <= mid - 5;
-    if (miss.length) rows.push({ k: 'bad', x, t: (miss.length > 1 ? ' is missing ' + miss.length + ' enchants' : ' is missing an enchant'), w: miss.join(', ') });
-    if (gem.length) rows.push({ k: 'bad', x, t: (gem.length > 1 ? ' has ' + gem.length + ' empty gem sockets' : ' has an empty gem socket'), w: gem.join(', ') });
-    if (low) rows.push({ k: 'warn', x, t: ' is ' + Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')', w: 'ilvl' });
-    if (!miss.length && !gem.length && !low) fine++; }
+    const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'empty gem socket') + ' (' + gem.join(', ') + ')' : '',
+      low ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
+    if (parts.length) rows.push({ k: miss.length || gem.length ? 'bad' : 'warn', x, parts, w: miss.length + gem.length * 1 + (low ? 0.5 : 0) }); else fine++; }
+  rows.sort((a, b) => (a.k === b.k ? 0 : a.k === 'bad' ? -1 : 1) || b.w - a.w || a.x.n.localeCompare(b.x.n));
   return { rows, fine, mid, none: L.filter((x) => x.none).map((x) => x.n) };
 }
 const bfrCol = (x) => (E.CLASSES[x.cls] || [])[1] || 'var(--text)';
@@ -32595,7 +32595,7 @@ function bfrDraw() {
   if (BFR.busy || (!BFR.list && !BFR.err)) body = '<p class="bfr-f">Checking everyone\'s gear on Battle.net…</p>';
   else if (BFR.err) body = '<p class="bfr-f">' + esc(BFR.err) + ' <button class="lk" type="button" data-bfr="again">Try again</button></p>';
   else { const F = bfrFacts(BFR.list), nFix = F.rows.length;
-    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + esc(r.t) + '</span><span class="w">' + esc(r.w) + '</span></div>').join('') +
+    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
       (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t">' + (F.rows.length ? F.fine + ' other' + (F.fine > 1 ? 's are' : ' is') : (F.fine > 1 ? 'All ' + F.fine + ' are' : 'Everyone is')) + ' enchanted, gemmed and at raid item level</span></div>' : '') +
       (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
       '<p class="bfr-f">Checked from public gear data, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>';
@@ -32604,7 +32604,7 @@ function bfrDraw() {
     BFR.list.filter((x) => !x.none).sort((a, b) => b.il - a.il).map((x) => { const mid = bfrFacts(BFR.list).mid; return '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>'; }).join('') +
     '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
   const day = (() => { try { const o = pnGet(); const k = o && o.date; return k ? new Date(k + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }) : ''; } catch (e) { return ''; } })();
-  el.innerHTML = '<div class="bfr-h"><h2>Ready for ' + esc(day || 'the raid') + '?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'thing') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
+  el.innerHTML = '<div class="bfr-h"><h2>Ready for ' + esc(day || 'the raid') + '?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'raider') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
   const o = el.querySelector('.bfr-off'); if (o) o.ontoggle = () => { BFR.off = o.open; };
 }
 document.addEventListener('click', async (e) => { const b = e.target.closest && e.target.closest('[data-bfr]'); if (!b) return; const k = b.dataset.bfr;

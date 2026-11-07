@@ -7984,10 +7984,10 @@ function bfrFacts(L) {
   for (const [s, [a, b]] of Object.entries(cnt)) if (b >= 3 && a / b >= 0.6) need.add(s); /* (a slot most of the raid enchants) */
   const rows = []; let fine = 0;
   for (const x of ok) { const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s), low = mid && x.il <= mid - 5;
-    if (miss.length) rows.push({ k: 'bad', x, t: (miss.length > 1 ? ' is missing ' + miss.length + ' enchants' : ' is missing an enchant'), w: miss.join(', ') });
-    if (gem.length) rows.push({ k: 'bad', x, t: (gem.length > 1 ? ' has ' + gem.length + ' empty gem sockets' : ' has an empty gem socket'), w: gem.join(', ') });
-    if (low) rows.push({ k: 'warn', x, t: ' is ' + Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')', w: 'ilvl' });
-    if (!miss.length && !gem.length && !low) fine++; }
+    const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'empty gem socket') + ' (' + gem.join(', ') + ')' : '',
+      low ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
+    if (parts.length) rows.push({ k: miss.length || gem.length ? 'bad' : 'warn', x, parts, w: miss.length + gem.length * 1 + (low ? 0.5 : 0) }); else fine++; }
+  rows.sort((a, b) => (a.k === b.k ? 0 : a.k === 'bad' ? -1 : 1) || b.w - a.w || a.x.n.localeCompare(b.x.n));
   return { rows, fine, mid, none: L.filter((x) => x.none).map((x) => x.n) };
 }
 const bfrCol = (x) => (E.CLASSES[x.cls] || [])[1] || 'var(--text)';
@@ -8003,7 +8003,7 @@ function bfrDraw() {
   if (BFR.busy || (!BFR.list && !BFR.err)) body = '<p class="bfr-f">Checking everyone\'s gear on Battle.net…</p>';
   else if (BFR.err) body = '<p class="bfr-f">' + esc(BFR.err) + ' <button class="lk" type="button" data-bfr="again">Try again</button></p>';
   else { const F = bfrFacts(BFR.list), nFix = F.rows.length;
-    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + esc(r.t) + '</span><span class="w">' + esc(r.w) + '</span></div>').join('') +
+    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
       (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t">' + (F.rows.length ? F.fine + ' other' + (F.fine > 1 ? 's are' : ' is') : (F.fine > 1 ? 'All ' + F.fine + ' are' : 'Everyone is')) + ' enchanted, gemmed and at raid item level</span></div>' : '') +
       (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
       '<p class="bfr-f">Checked from public gear data, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>';
@@ -8012,7 +8012,7 @@ function bfrDraw() {
     BFR.list.filter((x) => !x.none).sort((a, b) => b.il - a.il).map((x) => { const mid = bfrFacts(BFR.list).mid; return '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>'; }).join('') +
     '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
   const day = (() => { try { const o = pnGet(); const k = o && o.date; return k ? new Date(k + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }) : ''; } catch (e) { return ''; } })();
-  el.innerHTML = '<div class="bfr-h"><h2>Ready for ' + esc(day || 'the raid') + '?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'thing') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
+  el.innerHTML = '<div class="bfr-h"><h2>Ready for ' + esc(day || 'the raid') + '?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'raider') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
   const o = el.querySelector('.bfr-off'); if (o) o.ontoggle = () => { BFR.off = o.open; };
 }
 document.addEventListener('click', async (e) => { const b = e.target.closest && e.target.closest('[data-bfr]'); if (!b) return; const k = b.dataset.bfr;
