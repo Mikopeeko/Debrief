@@ -1818,7 +1818,11 @@ async function teamPlan(req, env, url) {
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
     if (!g) return json({ exists: false, here, you: you(null, false) });
     const d = g.doc, A = await teamAccess(env, url, d, who), shut = A.acc === 'none'; /* (None: the plan stays closed, only who leads it shows) */
-    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), locked: shut, keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
+    if (who && !shut) { const L = await bnetGet(env, who.uid, url), hid = new Set((L && L.hidden) || []), was = (d.bn || {})[who.uid] || null; /* (Battle.net step 3: your characters join the team's list of who's whose) */
+      const mine = L ? { main: ((L.chars || []).find((c) => bnetKey(c) === L.main) || {}).n || '', chars: (L.chars || []).filter((c) => !hid.has(bnetKey(c))).map((c) => c.n) } : null;
+      if (JSON.stringify(was && { main: was.main, chars: was.chars }) !== JSON.stringify(mine)) { d.bn = { ...(d.bn || {}) }; if (mine) d.bn[who.uid] = { ...mine, at: Date.now() }; else delete d.bn[who.uid]; await teamPut(env, id, d, g.etag, url).catch(() => null); } }
+    const bn = shut ? [] : Object.values(d.bn || {}).map((x) => [x.main, ...x.chars.filter((n) => n !== x.main)]).filter((x) => x[0] && x.length > 1);
+    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), bn, locked: shut, keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
   }
   if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
@@ -1905,7 +1909,7 @@ async function bnetCallback(req, env, url) {
   if (!env.debrief_nights) return done('off');
   let chars;
   const mock = bnetMock(env, url) || (PRACTICE_HOST(url) && p.get('code') === 'practice'); /* (a practice link's made-up account: ?test=1 on start) */
-  if (mock) chars = /^fl[eë]x/i.test(who.name || '') ? BNET_MOCK.map((c) => ({ ...c })) : [{ ...BNET_MOCK[2], n: String(who.name || 'Tester').slice(0, 24) }, { ...BNET_MOCK[3] }];
+  if (mock) chars = /^fl[eë]x/i.test(who.name || '') ? BNET_MOCK.map((c) => ({ ...c })) : [{ ...BNET_MOCK[2], n: String(who.name || 'Tester').slice(0, 24) }, { ...BNET_MOCK[3], n: String(who.name || 'Tester').slice(0, 20) + 'mage' }];
   else {
     if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return done('busy');
     const t = await fetch('https://oauth.battle.net/token', { method: 'POST', headers: { Authorization: 'Basic ' + btoa(env.BNET_CLIENT_ID + ':' + (env.BNET_CLIENT_SECRET || '')), 'Content-Type': 'application/x-www-form-urlencoded' },

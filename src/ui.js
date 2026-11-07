@@ -7873,7 +7873,7 @@ function tpChip() {
   const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpWho().toLowerCase()).slice(0, 4);
   const av = here.length ? '<span class="tp-av" title="' + esc(here.map((h) => h.n).join(', ')) + ' ' + (here.length > 1 ? 'are' : 'is') + ' here">' + here.map((h) => '<span style="background:' + tpCol(h.n) + '">' + esc(h.n.charAt(0).toUpperCase()) + '</span>').join('') + '</span>' : '';
   const can = d.you && d.you.can;
-  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, Math.min(d.you.rank, 4))) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
+  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, Math.min(d.you.rank, 4))) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : d.ranks && d.you && d.you.lead ? 'Raid lead<span>· can edit</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
     : '<button type="button" class="tp-chip tp-save" title="Save this plan online for your whole team">Save it for the team</button>');
   w.querySelector('.tp-chip').onclick = (e) => { e.stopPropagation(); tpPop(w.querySelector('.tp-chip')); };
   tpDeco();
@@ -8826,8 +8826,12 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const PG_ALT = { k: '', v: null }; let PG_ALT_LOAD = false;
 const pgFold = (s) => String(s).toLowerCase().replace(/ø/g, 'o').replace(/æ/g, 'ae').replace(/œ/g, 'oe').replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th').replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]/g, '');
 function pgAltLike(a, b) { const A = pgFold(a), B = pgFold(b); if (A.length < 3 || B.length < 3) return false; if (A.slice(0, 3) === B.slice(0, 3)) return true; for (let i = 0; i + 4 <= A.length; i++) if (B.includes(A.slice(i, i + 4))) return true; return false; }
+// (Battle.net step 3: a linked raider's characters are one player for sure, main first: the team's linked raiders come with its plan online
+// (/api/teamplan's bn), and your own from whoAmI. They replace the name guesses and the old sign-in links for those players)
+const pgBnGroups = () => { const G = ((TP.doc && TP.doc.bn) || []).map((g) => g.slice()), mine = whoChars().map((c) => c.n), lo = (x) => String(x).toLowerCase();
+  if (mine.length > 1) { for (let i = G.length - 1; i >= 0; i--) if (G[i].some((n) => mine.some((m) => lo(m) === lo(n)))) G.splice(i, 1); G.push(mine); } return G.filter((g) => g.length > 1); };
 const pgAltPair = (a, b) => [String(a).toLowerCase(), String(b).toLowerCase()].sort().join('|');
-function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split('-')[0].toLowerCase(), L = [...new Set(names.map((x) => String(x).split('-')[0]))].sort(), k = L.join('|') + '#' + HIST.mem.size + '#' + (cfg.split || []).join(',') + '#' + JSON.stringify(cfg.link || []);
+function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split('-')[0].toLowerCase(), L = [...new Set(names.map((x) => String(x).split('-')[0]))].sort(), k = L.join('|') + '#' + HIST.mem.size + '#' + (cfg.split || []).join(',') + '#' + JSON.stringify(cfg.link || []) + '#' + JSON.stringify(pgBnGroups());
   if (PG_ALT.k === k) return PG_ALT.v;
   if (!HIST.mem.size && !PG_ALT_LOAD) { PG_ALT_LOAD = true; HIST.load().then(() => { if (HIST.mem.size && S.page === 'plan') { PG_ALT.k = ''; PG_RDY.clear(); planAssign(); } }).catch(() => { /* (no saved pulls: no alts) */ }); }
   const idx = new Map(L.map((n) => [lc(n), n])), P = [], by = new Map(), all = new Map(); let ai = 0;
@@ -8836,6 +8840,9 @@ function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split
   const nights = [...new Set(P.map((p) => p.k))].sort(), last3 = new Set(nights.slice(-3)), sp = new Set(cfg.split || []);
   /* (linked for sure: a player's own characters, from their Warcraft Logs sign-in (Nov 6); they stay out of the name guesses) */
   const LKG = new Map(); for (const [m0, a0] of cfg.link || []) { if (!idx.has(lc(m0)) || !idx.has(lc(a0))) continue; const mk = idx.get(lc(m0)); if (!LKG.has(mk)) LKG.set(mk, new Set()); LKG.get(mk).add(idx.get(lc(a0))); }
+  const SURE = new Set(); for (const g0 of pgBnGroups()) { const inR = g0.filter((n) => idx.has(lc(n))).map((n) => idx.get(lc(n))); if (inR.length < 2) continue; /* (Battle.net over any other link for these characters) */
+    for (const n of inR) for (const [k2, s2] of [...LKG]) { if (lc(k2) === lc(n)) LKG.delete(k2); else s2.delete(n); }
+    LKG.set(inR[0], new Set(inR.slice(1))); inR.forEach((n) => SURE.add(lc(n))); }
   const LK = new Set([...LKG].flatMap(([m0, s]) => [lc(m0), ...[...s].map(lc)]));
   const apart = (a, b) => { const A = all.get(a), B = all.get(b); if (!A || !B) return false; for (const i of A) if (B.has(i)) return false; return true; }; /* (both seen in a saved pull, never in the same one) */
   const G = []; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; if (LK.has(lc(a)) || LK.has(lc(b)) || sp.has(pgAltPair(a, b)) || !pgAltLike(a, b) || !apart(a, b)) continue;
@@ -8846,11 +8853,11 @@ function pgAlts(names, cfg) { cfg = cfg || {}; const lc = (s) => String(s).split
   const cmp = (a, b) => { const A = sc(a), B = sc(b); return B[1] - A[1] || B[0] - A[0] || /* (the main is the one played most, Nov 6) */ (B[2] > A[2] ? 1 : B[2] < A[2] ? -1 : 0) || a.localeCompare(b); };
   let ME_LC = ''; try { ME_LC = typeof meOf === 'function' && meOf() ? lc(meOf().name) : ''; } catch (e) { ME_LC = ''; }
   const main = new Map(), alts = new Map(); for (const g of G) { if (!FG.has(g)) g.sort(cmp); alts.set(lc(g[0]), g.slice(1)); for (const x of g.slice(1)) main.set(lc(x), g[0]); }
-  const v = { main, alts, n: main.size, sig: G.map((g) => g.join('+')).sort().join(',') }; PG_ALT.k = k; PG_ALT.v = v; return v; }
-const pgAltsR = (R) => (R ? pgAlts(R.players.map((p) => p.n), R.alts) : { main: new Map(), alts: new Map(), n: 0, sig: '' });
+  const v = { main, alts, n: main.size, sure: SURE, sig: G.map((g) => g.join('+')).sort().join(',') }; PG_ALT.k = k; PG_ALT.v = v; return v; }
+const pgAltsR = (R) => (R ? pgAlts(R.players.map((p) => p.n), R.alts) : { main: new Map(), alts: new Map(), n: 0, sure: new Set(), sig: '' });
 // (Who plays' people: an alt only while it plays a boss in its main's place (all of them for the boss page's chips); a main knows its alts)
 function pgAltMark(R, o, L, all) { let A = null; try { A = pgAltsR(R); } catch (e) { A = null; } if (!A || !A.n) return L; const lc = (s) => String(s).toLowerCase(), onAny = new Set(Object.values((o && o.on) || {}).flat().map(lc));
-  return L.filter((p) => { const m = A.main.get(lc(p.n)); if (m) { p.alt = m; return all || onAny.has(lc(p.n)); } const al = A.alts.get(lc(p.n)); if (al) p.alts = al; return true; }); }
+  return L.filter((p) => { const m = A.main.get(lc(p.n)); p.altSure = !!(A.sure && A.sure.has(lc(p.n))); if (m) { p.alt = m; return all || onAny.has(lc(p.n)); } const al = A.alts.get(lc(p.n)); if (al) p.alts = al; return true; }); }
 // (one character for another in a boss's plan: their jobs by name; their cooldowns only for the same class, else those lines come off)
 function pgNoteSwap(boss, id, from, to, sameCls) { const o = notesOf(boss), n = o.list.find((x) => x.id === id); if (!n) return 0; const lc = (v) => String(v).split('-')[0].toLowerCase(); let cut = 0;
   let t = String(n.text); if (!sameCls) t = t.split('\n').filter((l) => { if (!/^\s*time:/i.test(l)) return true; const m = /(?:^|;)\s*tag:\s*([^;]*)/i.exec(l); if (!m || !m[1].trim().split(/\s+/).some((x) => lc(x) === lc(from))) return true; cut++; return false; }).join('\n');
@@ -8878,13 +8885,13 @@ function pgRosterNew() { const R = planRoster(); if (!R || !R.players || !R.play
   for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (!nm || /^Player-/.test(x.name) || have.has(k) || off.has(k)) continue;
     const alt = often(k) && R.players.some((p) => pgAltLike(nm, String(p.n).split('-')[0]) && apart(k, lc(p.n))); if (alt || x.n >= need) add.push(nm); }
   /* (your own characters, from your Warcraft Logs sign-in: one that raids with the team from time to time joins, linked to you (Nov 6)) */
-  let mine = new Set(); try { const W = typeof wclMe === 'function' ? wclMe() : null; mine = new Set(((W && W.chars) || []).map((c) => String(c.n || '').toLowerCase())); } catch (e) { mine = new Set(); }
+  let mine = new Set(); const bnL = whoChars().length > 0; try { const W = typeof wclMe === 'function' ? wclMe() : null; mine = new Set((bnL ? whoChars() : (W && W.chars) || []).map((c) => String(c.n || '').toLowerCase())); } catch (e) { mine = new Set(); } /* (Battle.net when linked (step 3)) */
   for (const x of T.list) { const nm = String(x.name || '').split('-')[0], k = nm.toLowerCase(); if (nm && mine.has(k) && !have.has(k) && !off.has(k) && often(k) && !add.includes(nm)) add.push(nm); }
   const me0 = typeof meOf === 'function' && meOf() ? String(meOf().name).split('-')[0] : '', meK = me0.toLowerCase(), names2 = R.players.map((p) => String(p.n).split('-')[0]).concat(add);
   const own = names2.filter((n) => mine.has(n.toLowerCase())).sort((a, b) => ((nts.get(b.toLowerCase()) || new Set()).size - (nts.get(a.toLowerCase()) || new Set()).size)), cur0 = (R.alts && R.alts.link) || [], linked = (n) => cur0.some(([m1, a1]) => m1.toLowerCase() === n.toLowerCase() || a1.toLowerCase() === n.toLowerCase());
   const picked = !!(R.alts && R.alts.picked), isOwn = (n) => own.some((o) => o.toLowerCase() === String(n).toLowerCase());
   const wantAll = own.length > 1 ? own.slice(1).map((n) => [own[0], n]) : [], same = wantAll.every(([m0, a0]) => cur0.some(([m1, a1]) => m1.toLowerCase() === m0.toLowerCase() && a1.toLowerCase() === a0.toLowerCase()));
-  if (meK !== undefined && own.length > 1 && (picked ? !own.every(linked) : !same)) { const meN = picked && own.find(linked) ? (cur0.find(([m1]) => isOwn(m1)) || [own[0]])[0] : own[0], want = picked ? own.filter((n) => n.toLowerCase() !== meN.toLowerCase() && !linked(n)).map((n) => [meN, n]) : wantAll;
+  if (!bnL && own.length > 1 && (picked ? !own.every(linked) : !same)) { const meN = picked && own.find(linked) ? (cur0.find(([m1]) => isOwn(m1)) || [own[0]])[0] : own[0], want = picked ? own.filter((n) => n.toLowerCase() !== meN.toLowerCase() && !linked(n)).map((n) => [meN, n]) : wantAll;
     const cur = picked ? cur0 : cur0.filter(([m1, a1]) => !isOwn(m1) && !isOwn(a1)), miss = want;
     if (miss.length) { const o1 = rostersGet(), R1 = o1.list.find((x) => x.id === R.id); if (R1) { R1.alts = Object.assign({}, R1.alts || {}); R1.alts.link = cur.filter(([, a1]) => !miss.some(([, a0]) => a0.toLowerCase() === a1.toLowerCase())).concat(miss); if (!add.length) { rostersSet(o1); PLAN_RC = null; if (typeof PG_ALT !== 'undefined') PG_ALT.k = ''; return; } else { R.alts = R1.alts; rostersSet(o1); } } } }
   if (!add.length) return; const o = rostersGet(), R2 = o.list.find((x) => x.id === R.id); if (!R2) return; const sp = planSp();
@@ -8904,7 +8911,7 @@ function pgAltClean() { const R = planRoster(); if (!R) return; const A = pgAlts
   if (!ch) return; pnSet(o); PG_RDY.clear(); const seen = new Set(); S.pgAltSaid = said.filter((s) => { const k = s.x + '>' + s.by; if (seen.has(k)) return false; seen.add(k); return true; }); }
 // (who's whose, the first time and again when new alts turn up: one plain line in the Roster panel and the roster editor; ✕ hides it
 // for this team; Not an alt? splits one off)
-function pgAltListT(A) { return [...A.alts].map(([k, al]) => andL(al) + (al.length > 1 ? ' are ' : ' is ') + (A.main.get(String(al[0]).toLowerCase()) || k) + '\'s').join('; '); }
+function pgAltListT(A) { return [...A.alts].map(([k, al]) => andL(al) + (al.length > 1 ? ' are ' : ' is ') + (A.main.get(String(al[0]).toLowerCase()) || k) + '\'s' + (A.sure && A.sure.has(String(al[0]).toLowerCase()) ? ' (✓ Battle.net)' : ' (guessed)')).join('; '); }
 function pgAltLineH() { const R = planRoster(); if (!R) return ''; const A = pgAltsR(R); if (!A.n || (R.alts && R.alts.seen === A.sig)) return '';
   const said = (S.pgAltSaid || []).filter((x) => x.by).slice(0, 2).map((x) => ' ' + esc(x.x) + ' is ' + esc(x.m) + '\'s alt, so <b>' + esc(x.by) + '</b> plays instead.').join('');
   return '<div class="pg-altl"><span><b>' + (A.n === 1 ? '1 alt' : A.n + ' alts') + ' spotted:</b> ' + esc(pgAltListT(A)) + '. Dragging one in sits its main, so each player has one spot.' + said + '</span><button type="button" class="pg-altno" data-pgaltno="1">Not right?</button><button type="button" class="pg-altx" data-pgaltx="1" aria-label="Hide this line" data-tt="Hide this line">✕</button></div>'; }
@@ -10025,7 +10032,7 @@ function planRosterH(pb) { const team = planTeamH(), o = pnGet(), ps = pnPeople(
   let FAIR = null; try { FAIR = pnFairOf(ps0, sitsOf, isAway, avg0); } catch (e) { FAIR = null; }
   const hiOf = (p) => { const n = sitsOf(p.n); return !!(FAIR && n && !p.bench && !isAway(p.n) && n >= Math.ceil(FAIR(p).n) + 1); }, NT0 = pnNightsGet(), NW = (NT0.sel || pnToday()) === pnToday() ? 'tonight' : 'that night';
   const snH = (p) => { const n = isAway(p.n) ? 0 : sitsOf(p.n); return n ? '<span class="pg-sn' + (hiOf(p) ? ' hi' : '') + '">' + n + '</span>' : ''; };
-  const chip = (p) => { const s = !on.has(lc(p.n)), a = away.has(lc(p.n)), col = (E.CLASSES[p.cls] || [])[1] || '#888', sN = a ? 0 : sitsOf(p.n); return '<button type="button" class="pg-rc' + (s ? ' sit' : '') + (a ? ' out' : '') + (p.bench ? ' bench' : '') + '" draggable="true" data-pgsit="' + esc(p.n) + '" aria-pressed="' + !s + '" style="--cc:' + col + ';--bc:' + (p.cls ? pgBarCol(col) : '#9aa0ac') + '" data-tt="' + esc('<b>' + p.n + '</b>' + (p.spec ? ' · ' + p.spec : '') + '<br>' + (p.cls ? '' : 'No class yet: tap ? to set the class. ') + (p.alt ? p.alt + '\'s alt: playing them sits ' + p.alt + '. ' : p.alts ? 'Alts: ' + p.alts.join(', ') + '. ' : '') /* (Nov 4) */ + (p.bench ? 'Benched this week. ' : '') + (sN ? 'Sits ' + sN + ' of ' + BS.length + (BS.length === 1 ? ' boss' : ' bosses') + ' ' + NW + (hiOf(p) ? ', more than most of their role' : '') + '. ' : '') + (a ? 'Out ' + NW + ': sits every boss. Tap, or drag them out of here, to bring them back.' : (s ? 'Sits ' + pnShort(pb) + '. Tap, or drag to Playing, to play them.' : 'Plays ' + pnShort(pb) + '. Tap, or drag to Bench, to sit them.') + ' Drag to Out ' + NW + ' to sit them for every boss.')) + '"><span class="pg-spc" data-tnspc="' + esc(p.n) + '" data-tt="' + esc(p.cls ? '<b>Change spec</b><br>' + p.n + (p.spec ? ' is ' + p.spec + ' now.' : '') : '<b>' + p.n + ' has no class yet</b><br>Tap to pick their class and spec.') + '">' + (p.cls ? pnIcH(p) : '<i class="pg-noc" aria-hidden="true">?</i>') + '</span><span class="pg-nm">' + esc(p.n) + '</span>' + (p.alt ? '<span class="pg-alt">alt</span>' : '') + snH(p) + '</button>'; }; /* (the icon changes the spec, the user, Oct 26) */
+  const chip = (p) => { const s = !on.has(lc(p.n)), a = away.has(lc(p.n)), col = (E.CLASSES[p.cls] || [])[1] || '#888', sN = a ? 0 : sitsOf(p.n); return '<button type="button" class="pg-rc' + (s ? ' sit' : '') + (a ? ' out' : '') + (p.bench ? ' bench' : '') + '" draggable="true" data-pgsit="' + esc(p.n) + '" aria-pressed="' + !s + '" style="--cc:' + col + ';--bc:' + (p.cls ? pgBarCol(col) : '#9aa0ac') + '" data-tt="' + esc('<b>' + p.n + '</b>' + (p.spec ? ' · ' + p.spec : '') + '<br>' + (p.cls ? '' : 'No class yet: tap ? to set the class. ') + (p.alt ? p.alt + '\'s alt' + (p.altSure ? ' (✓ Battle.net)' : ' (guessed)') + ': playing them sits ' + p.alt + '. ' : p.alts ? 'Alts: ' + p.alts.join(', ') + (p.altSure ? ' (✓ Battle.net)' : ' (guessed)') + '. ' : '') /* (Nov 4) */ + (p.bench ? 'Benched this week. ' : '') + (sN ? 'Sits ' + sN + ' of ' + BS.length + (BS.length === 1 ? ' boss' : ' bosses') + ' ' + NW + (hiOf(p) ? ', more than most of their role' : '') + '. ' : '') + (a ? 'Out ' + NW + ': sits every boss. Tap, or drag them out of here, to bring them back.' : (s ? 'Sits ' + pnShort(pb) + '. Tap, or drag to Playing, to play them.' : 'Plays ' + pnShort(pb) + '. Tap, or drag to Bench, to sit them.') + ' Drag to Out ' + NW + ' to sit them for every boss.')) + '"><span class="pg-spc" data-tnspc="' + esc(p.n) + '" data-tt="' + esc(p.cls ? '<b>Change spec</b><br>' + p.n + (p.spec ? ' is ' + p.spec + ' now.' : '') : '<b>' + p.n + ' has no class yet</b><br>Tap to pick their class and spec.') + '">' + (p.cls ? pnIcH(p) : '<i class="pg-noc" aria-hidden="true">?</i>') + '</span><span class="pg-nm">' + esc(p.n) + '</span>' + (p.alt ? '<span class="pg-alt">alt</span>' : '') + snH(p) + '</button>'; }; /* (the icon changes the spec, the user, Oct 26) */
   const G = [['tank', 'Tanks'], ['healer', 'Healers'], ['melee', 'Melee'], ['ranged', 'Ranged']].map(([k, l]) => [l, play.filter((p) => p.kind === k)]).concat([['Other', play.filter((p) => !(p.kind in RK))]]).filter(([, L]) => L.length); /* (the Playing zone by role, Oct 27) */
   const RG = pnRange(pb, o.diff), off = play.length > RG[1] ? '⚠ ' + play.length + ' playing: ' + pnShort(pb) + ' takes ' + (RG[0] === RG[1] ? 'exactly ' : 'up to ') + RG[1] + ', sit ' + (play.length - RG[1]) + ' · ' : play.length < RG[0] ? '⚠ ' + play.length + ' playing: ' + pnShort(pb) + ' needs ' + (RG[0] === RG[1] ? 'exactly ' : 'at least ') + RG[0] + ', add ' + (RG[0] - play.length) + ' · ' : ''; /* (too many or too few, Oct 26) */
   let G0 = null; try { G0 = typeof pnGap === 'function' ? pnGap(o, pb) : null; } catch (e) { G0 = null; } const J0 = G0 ? G0.out.reduce((s, a) => { let j = []; try { j = ndzJobsOf(G0.n.text, a) || []; } catch (e) { j = []; } return s + j.length; }, 0) : 0; /* (a sit inside the plan, Oct 27) */
@@ -11403,7 +11410,7 @@ function topPick() {
   const ps = [...S.rep.players.values()].filter((p) => p.name && !/^Player-/.test(p.name)), role = (p) => p.role || 'dps';
   // (Rotation picks you, or your saved character, before its page is drawn, so the pick here names the same player as the page)
   const has = (n) => !!n && ps.some((p) => p.name === n), me = meOf();
-  const rotCur = () => (has(S.specSel) ? S.specSel : me && has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find(has) || null);
+  const rotCur = () => (has(S.specSel) ? S.specSel : meFrom(ps.map((p) => p.name)) || groups().filter((g) => g.kind === 'char').map((g) => g.name).find(has) || null);
   const cur = S.tab === 'rot' ? rotCur() : S.tab === 'player' ? S.plSel : S.mechP, pc = cur ? ps.find((p) => p.name === cur) : null;
   const grp = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'DPS']].map(([k, l]) => [l, ps.filter((p) => role(p) === k).sort((a, b) => a.name.localeCompare(b.name))]).filter(([, xs]) => xs.length);
   return '<div class="op-pick' + (pc ? ' on' : '') + '" data-tt="Show one player: only their part, on every tab">' + (pc ? avatar(pc, true) : SN_I.users) +
@@ -27276,7 +27283,7 @@ function rotShot(b) {
 function specView(reps, one) {
   SPC_REPS = reps;
   const pm = new Map(); for (const r of reps) for (const p of r.players.values()) if (p.name && !/^Player-/.test(p.name) && SPEC_CHECKS[p.specName]) pm.set(p.name, p);
-  const ps = [...pm.values()], me = meOf(), meN = me && pm.has(me.name) ? me.name : groups().filter((g) => g.kind === 'char').map((g) => g.name).find((n) => pm.has(n)) || null, byN = (a, b) => a.name.localeCompare(b.name);
+  const ps = [...pm.values()], me = meOf(), meN = meFrom(pm.keys()) || groups().filter((g) => g.kind === 'char').map((g) => g.name).find((n) => pm.has(n)) || null, byN = (a, b) => a.name.localeCompare(b.name);
   if (!ps.length) return '<div class="panel"><p class="muted" style="margin:0">None of these players\' specs has a Rotation page yet. Rotation covers every spec that\'s common in Mythic raids.</p></div>';
   const ROLES = [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']], inRole = (k) => ps.filter((p) => (p.role || 'dps') === k).sort(byN);
   // (you're not in these pulls (Oct 20): pick a raider, as on Homework, instead of opening on the first name in the list)
@@ -27434,7 +27441,7 @@ const cmpPs = (r) => [...r.players.values()].filter((p) => p.name && !/^Player-/
 const cmpKind = (p) => (p.role === 'healer' ? 'heal' : 'dmg');
 const cmpRate = (r, p, k) => rateIn(r, p, p[k === 'heal' ? 'healS' : 'dmgS'] || [], 0, perfContext(r).end) || 0;
 const cmpAlive = (r, p) => Math.max(1, aliveSecs(r, p, 0, perfContext(r).end));
-const cmpIsMe = (p) => { const me = meOf(); return !!(me && me.name === p.name); };
+const cmpIsMe = (p) => meIs(p.name);
 // (a spec as Warcraft Logs names it, "DeathKnight|Frost", and back to words and its class colour)
 const cmpKey = (p) => { const s = E.SPECS[p.specId]; return s ? E.CLASSES[s[1]][0].replace(/ /g, '') + '|' + s[0].replace(/ /g, '') : null; };
 const cmpKeyName = (k) => { const [c, s] = k.split('|'), cl = Object.values(E.CLASSES).find((x) => x[0].replace(/ /g, '') === c); return { txt: s.replace(/([a-z])([A-Z])/g, '$1 $2') + ' ' + (cl ? cl[0] : c), col: cl ? cl[1] : 'var(--text)' }; };
@@ -28722,7 +28729,7 @@ function cmpMyProg(it) {
 }
 function cmp() {
   const r = S.rep, ps = cmpPs(r), me = meOf();
-  const p = ps.find((x) => x.name === S.cmpMe) || (me && ps.find((x) => x.name === me.name)) || ps.find((x) => x.name === S.mechP) || ps.slice().sort((a, b) => a.name.localeCompare(b.name))[0];
+  const p = ps.find((x) => x.name === S.cmpMe) || ps.find((x) => x.name === meFrom(ps.map((q) => q.name))) || ps.find((x) => x.name === S.mechP) || ps.slice().sort((a, b) => a.name.localeCompare(b.name))[0];
   if (!p) { view(cmpMsg('Nobody to compare in this pull.')); return; }
   const mode = CMP_MODES.some(([k]) => k === S.cmpMode) ? S.cmpMode : CMP_MODES[0][0], all = S.scope === 'all' && r.item.kind === 'boss';
   // (the status line, as on Players: which pull, and on the whole night the kill or best pull a click away)
@@ -30057,7 +30064,7 @@ function plPlayer(a, one, reps, mvpL, data) {
   // (Change player, as on Rotation: everyone graded, grouped by role, the one shown greyed out)
   const me = meOf(), byN = (u, v) => u.p.name.localeCompare(v.p.name);
   const pick = '<select class="rot-sel pl-sel" aria-label="Change player"><option value="" selected disabled>Change player</option>' + [['tank', 'Tanks'], ['healer', 'Healers'], ['dps', 'Damage dealers']].map(([k, l]) => { const l2 = data.filter((b) => (b.p.role || 'dps') === k).sort(byN); return l2.length ? '<optgroup label="' + l + '">' +
-    l2.map((b) => '<option value="' + esc(b.p.name) + '"' + (b === a ? ' disabled' : '') + '>' + esc(b.p.name) + (me && me.name === b.p.name ? ' (you)' : '') + ' · ' + esc(b.p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
+    l2.map((b) => '<option value="' + esc(b.p.name) + '"' + (b === a ? ' disabled' : '') + '>' + esc(b.p.name) + (meIs(b.p.name) ? ' (you)' : '') + ' · ' + esc(b.p.specName || '') + '</option>').join('') + '</optgroup>' : ''; }).join('') + '</select>';
   let h = '<h3 class="nh">' + avatar(a.p, true) + ' <span class="nm" style="color:' + a.p.color + '">' + esc(a.p.name) + '</span>' + pick + '<small>' + esc(a.p.specName || '') + (one ? '' : ' · ' + plural(a.n, 'pull')) + (mvpL ? ' · ' + esc(mvpL) : '') + '</small><span class="pl-big">' + plGr(a.score) + '<b>' + Math.round(a.score) + '</b></span><button class="btn sm" id="plClose" type="button">Show the raid</button></h3>';
   // (their page, or their gear: what they're wearing, for anyone curious)
   const x0 = a.last.x, gearOn = S.plView === 'gear' && !!x0;
@@ -30324,13 +30331,13 @@ function rcbTable(c, F) {
   const cols = [['score', 'Grade']].concat(RCB_SUBJ.map(([k, l]) => [k, l]));
   const head = '<div class="rcb-tr rcb-th"><span>#</span><span>Raider</span>' + cols.map(([k, l]) => '<button type="button" data-rcbs="' + k + '"' + (sk === k ? ' class="on"' : '') + '>' + l + (sk === k ? ' ▾' : '') + '</button>').join('') + '<span>Deaths</span></div>';
   const rows = list.map((x, i) => { const p = x.a.p, L = letterOf(x.score), n = (sk === 'score' ? B.rk.score : B.rk[sk]).m.get(x) || i + 1;
-    return '<button type="button" class="rcb-tr' + (sel === x ? ' sel' : '') + (me && me.name === p.name ? ' me' : '') + '" data-rcbp="' + esc(p.name) + '"><i class="rcb-rk' + (n <= 3 ? ' r' + n : '') + '">' + n + '</i><span class="rcb-who"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 1px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><span><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><small>' + esc(p.specName || '') + '</small></span></span>' +
+    return '<button type="button" class="rcb-tr' + (sel === x ? ' sel' : '') + (meIs(p.name) ? ' me' : '') + '" data-rcbp="' + esc(p.name) + '"><i class="rcb-rk' + (n <= 3 ? ' r' + n : '') + '">' + n + '</i><span class="rcb-who"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 1px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><span><b class="nm" style="color:' + p.color + '">' + esc(p.name) + '</b><small>' + esc(p.specName || '') + '</small></span></span>' +
       '<span class="rcb-g">' + gradeChip(L) + Math.round(x.score) + '</span>' + RCB_SUBJ.map(([k]) => '<span>' + rcbV(x[k]) + '</span>').join('') + '<span class="rcb-d" data-tt="' + esc(rcbDeathTip(x.deaths, x.dAll)) + '">' + (x.deaths ? x.deaths : '<em>none</em>') + (x.dAll > x.deaths ? ' <small class="rcb-dall">· ' + x.dAll + '<span class="rcb-dw"> in all</span></small>' : '') + '</span></button>' +
       /* (the picked raider's checklist and their night open right under their row (Oct 23, your ask: "show under the name, not at the top")) */
       (sel === x && S.rqcOpen !== null ? '<div class="rqc-under">' + rqcCard(c, F) + rcwRaider(c, F) + '</div>' : ''); }).join('');
   return '<section class="panel rcb-sec rcb-tbl"><div class="rcb-sh"><h3>Ranked roster</h3>' + rcbI('Ranked by ' + (sk === 'score' ? 'grade' : RCB_SUBJ.find(([k]) => k === sk)[1].toLowerCase()) + '. Click a column to rank by it, or a raider for their report card.') + roles + '</div>' + head + rows + '</section>'; }
 // (the raider on the card: the one you picked, else you, else the top of the raid)
-function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || (me && B.rows.find((x) => x.a.p.name === me.name)) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
+function rcbSel(c, F) { const B = rcbFacts(c, F), me = meOf(); return B.rows.find((x) => x.a.p.name === S.rcbSel) || B.rows.find((x) => x.a.p.name === meFrom(B.rows.map((y) => y.a.p.name))) || B.rows.slice().sort((u, v) => v.score - u.score)[0]; }
 // the picked raider's report card: their grade, their place in the raid and in their role, each subject with its place, their best and their room to grow
 // (every death on the card, counted or not (your ask, Oct 21: "didn't I die a lot?"): how many times, in how many pulls, how many counted
 // and why, and that the rest came in the wipe)
@@ -30438,7 +30445,7 @@ function rcwRaider(c, F) {
   // (what they fixed and "Ready at the pull" as small green ticks under Went well, as Homework had them)
   /* ("No boss mistakes" only when there were none at all (Oct 23, your report: it showed next to Guillotine in 4 pulls)) */
   const ticks = hwFix.map((o) => '✓ ' + esc(o.t) + ' (fixed)').concat(!mm.size ? ['✓ No boss mistakes'] : [], a.prep != null && a.prep >= 95 ? ['✓ Ready at the pull'] : []);
-  { const me = meOf(); if (me && String(nm).split('-')[0].toLowerCase() === String(me.name).split('-')[0].toLowerCase()) hwSave(a, (one ? [one] : []).concat(hwTop), S.rep.item); }
+  { if (meIs(nm)) hwSave(a, (one ? [one] : []).concat(hwTop), S.rep.item); }
   const more = hwRest.length ? '<details class="rcw-more"><summary>' + plural(hwRest.length, 'smaller thing') + ' to work on</summary>' + hwRest.map((o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>').join('') + '</details>' : '';
   const li = (l) => '<ul>' + l.slice(0, 4).map((t) => '<li>' + capS(t) + '</li>').join('') + '</ul>';
   return '<section class="rcw-you" style="--cc:' + p.color + '"><div><div class="rcb-k">Their night</div><div class="rcw-hd"><img src="' + whIcon(pIcon(p)) + '" alt="" style="box-shadow:0 0 0 2px ' + p.color + '" onerror="this.style.visibility=\'hidden\'"><b class="nm" style="color:' + p.color + '">' + esc(nm) + '</b><span class="sub">' + esc(p.specName || '') + ' · ' + gradeChip(L) + ' #' + B.rk.score.m.get(x) + ' of ' + B.rk.score.n + '</span></div>' +
@@ -30829,8 +30836,8 @@ const hwWhen = (o) => (o.n === 1 ? 'This pull' : 'In ' + o.k + ' of ' + o.n + ' 
 const hwTr = (o) => (o.tr === 'up' ? '<span class="hwk-tr up">▲ getting better</span>' : o.tr === 'dn' ? '<span class="hwk-tr dn">▼ getting worse</span>' : '');
 function hwPage(c) {
   const it = S.rep.item, me = meOf(), base = (s) => String(s || '').split('-')[0].toLowerCase();
-  const pick = S.hwSel || S.mechP || (me && me.name), a = pick ? c.data.find((x) => x.p.name === pick) || c.data.find((x) => base(x.p.name) === base(pick)) : null;
-  const opts = c.data.slice().sort((u, v) => u.p.name.localeCompare(v.p.name)).map((x) => '<option value="' + esc(x.p.name) + '"' + (a && x === a ? ' selected' : '') + '>' + esc(x.p.name) + (me && base(x.p.name) === base(me.name) ? ' (you)' : '') + '</option>').join('');
+  const pick = S.hwSel || S.mechP || meFrom(c.data.map((x) => x.p.name)) || (me && me.name), a = pick ? c.data.find((x) => x.p.name === pick) || c.data.find((x) => base(x.p.name) === base(pick)) : null;
+  const opts = c.data.slice().sort((u, v) => u.p.name.localeCompare(v.p.name)).map((x) => '<option value="' + esc(x.p.name) + '"' + (a && x === a ? ' selected' : '') + '>' + esc(x.p.name) + (meIs(x.p.name) ? ' (you)' : '') + '</option>').join('');
   const sel = '<label class="hwk-who"><span class="sub">Showing</span><select id="hwkSel">' + (a ? '' : '<option value="">Pick a raider…</option>') + opts + '</select></label>';
   if (!a) return '<section class="panel hwk hwk-empty"><div class="hwk-ek">Your homework</div><p class="hwk-eq">' + (me ? esc(me.name) + ' isn\'t in these pulls. Pick a raider to see their homework.' : 'Pick yourself to see your homework for ' + esc(it.boss) + '.') + '</p>' + sel + '</section>'; // (a main box, design system round 2)
   /* (#1 is the one answer, the same fix Debriefing and the Report card show (Oct 22); the next two follow it) */
@@ -30844,7 +30851,7 @@ function hwPage(c) {
     '<p>' + esc(hwOne(o, o.mech ? o.det || o.x : o.x)) + '</p>' + (o.mech && o.x && o.det ? '<div class="hwk-fix"><span>Next pull:</span> ' + esc(o.x) + '</div>' : '') +
     '<div class="hwk-ft"><span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span><span class="sub">' + esc(hwWhen(o)) + '</span>' + hwTr(o) + '</div></div>';
   const mini = (o) => '<div class="hwk-m">' + hwIc(o, true) + '<span><b>' + esc(o.t) + '</b><span class="sub"> · ' + esc(hwWhen(o).replace(/^In /, 'in ')) + '</span></span>' + hwTr(o) + '<span class="hwk-pill ' + o.sev + '">' + esc(o.cat[0]) + '</span></div>';
-  const head = '<div class="hwk-h"><h2>' + (me && base(a.p.name) === base(me.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2>' + '<span class="rcb-i" tabindex="0" role="note" aria-label="How it works" data-tt="From every pull of this boss tonight, up to the wipe filter, biggest gain first. Red came up in half the pulls or more. Something you stopped doing in your last pulls moves to the green ticks.">ⓘ</span><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
+  const head = '<div class="hwk-h"><h2>' + (meIs(a.p.name) ? 'Your homework' : esc(a.p.name) + '\'s homework') + '</h2>' + '<span class="rcb-i" tabindex="0" role="note" aria-label="How it works" data-tt="From every pull of this boss tonight, up to the wipe filter, biggest gain first. Red came up in half the pulls or more. Something you stopped doing in your last pulls moves to the green ticks.">ⓘ</span><span class="sub"><b style="color:' + (a.p.color || 'inherit') + '">' + esc(a.p.name) + '</b> · ' + esc(a.p.specName || '') + ' · ' + esc(it.boss) + ' ' + esc(it.diff || '') + ' · ' + plural(a.n, 'pull') + (dd.length ? ' · ' + plural(dd.length, 'death') : '') + '</span>' + sel + '</div>';
   const oneC = one1 ? '<div class="hwk-c bad hwk-one"><div class="hwk-ct"><span class="hwk-n">1</span><i class="hwk-ic">' + plIco(one1.kind === 'rot' ? 'spell_holy_borrowedtime' : 'spell_shadow_plaguecloud') + '</i><b>' + esc(dbfCap(one1.label)) + '</b></div><p>' + esc(one1.fix) + '</p><div class="hwk-ft"><span class="hwk-pill bad">Your one fix</span><span class="sub">' + (one1.n >= 2 ? 'In ' + one1.n + ' of ' + one1.of + ' pulls' : 'Tonight') + '</span></div></div>' : '';
   const body = top.length || oneC ? '<div class="hwk-3">' + oneC + top.map((o, i) => card(o, one1 ? i + 1 : i)).join('') + '</div>' + (rest.length ? '<details class="hwk-more" open><summary>' + plural(rest.length, 'smaller thing') + '</summary>' + rest.map(mini).join('') + '</details>' : '')
     : '<p class="hwk-clean">Nothing to work on from these pulls. Keep it up.</p>';
@@ -30853,7 +30860,7 @@ function hwPage(c) {
     '</section>';
 }
 // (your top three, kept for My Page: only your own, the latest boss you opened)
-function hwSave(a, top, it) { const me = meOf(); if (!me || String(a.p.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return;
+function hwSave(a, top, it) { const me = meOf(); if (!meIs(a.p.name)) return;
   store.set(HW_KEY, JSON.stringify({ name: a.p.name, boss: it.boss, diff: it.diff || '', n: a.n, at: Date.now(), code: (S.rep && S.rep.item && (S.rep.item.code || '')) || '', items: top.map((o) => ({ t: o.t, x: o.mech && o.det ? o.x : '', w: o.mech ? o.det || o.x : o.x, sev: o.sev, cat: o.cat, id: o.id, when: hwWhen(o) })) })); }
 function hw() {
   const r = S.rep, it = r.item;
@@ -30871,7 +30878,7 @@ function hw() {
 }
 // (Home: your to-do list from the last boss you opened (the Report card's raider view writes it), and a button to the Report card)
 function hwMyPanel() { let o = null; try { o = JSON.parse(store.get(HW_KEY) || 'null'); } catch (e) { o = null; } const me = meOf();
-  if (!o || !o.items || !me || String(o.name).split('-')[0].toLowerCase() !== String(me.name).split('-')[0].toLowerCase()) return null;
+  if (!o || !o.items || !meIs(o.name)) return null;
   const open = S.rep && S.rep.item && S.rep.item.boss === o.boss && S.rep.item.kind !== 'run';
   const sec = document.createElement('section'); sec.className = 'panel hwk hwk-my';
   sec.innerHTML = '<div class="hwk-h"><h2>Your to-do list</h2><span class="sub">' + esc(o.boss) + ' ' + esc(o.diff) + ' · ' + plural(o.n, 'pull') + ' · ' + esc(new Date(o.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })) + '</span>' + (open ? '<button type="button" class="btn sm" id="hwkGo">Open Report card</button>' : '') + '</div>' +
@@ -33085,6 +33092,11 @@ function openAccounts(note) {
 const bnMenuLabel = () => { const b = $('#tbBnet'); if (!b) return; if (!WCL.HOSTED) { b.hidden = true; return; } const B = (WHO.now || {}).bnet;
   b.hidden = false; b.innerHTML = B && B.linked ? 'Your characters<span>Battle.net linked · pick your main</span>' : 'Link Battle.net<span>optional: Debrief knows every character is yours</span>'; };
 document.addEventListener('whoami', bnMenuLabel);
+document.addEventListener('whoami', () => { try { if (S.page === 'plan' && whoChars().length && !S.planRosEd && !S.noteBuild && !S.pgEdit) { PG_ALT.k = ''; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } }); /* (Plan again once your Battle.net characters are known) */
+// (Battle.net step 3: "Which one is you?" follows the linked main, so pages and Debrief Companion (it reads the same pick) follow it too;
+// a new main picked in Your characters moves it)
+document.addEventListener('whoami', () => { try { const m = whoMain(); if (!m) return; const cur = meOf(); if (cur && cur.bn === bnKey(m)) return;
+  store.set(ME_KEY, JSON.stringify(Object.assign({}, cur && meBase(cur.name) === meBase(m.n) ? cur : {}, { name: m.n, cls: m.cls || null, bn: bnKey(m), at: Date.now() }))); } catch (e) { /* (kept as it was) */ } });
 // (step 1: the sign-in button, or once signed in, your characters to tap; newest first)
 function gsSignHtml() {
   if (!WCL.HOSTED) return '';
@@ -33536,6 +33548,12 @@ const ME_KEY = 'wla-me';
 // (a question on a team's or character's page as a pop-up: pick, or Skip)
 const pgDlg = (id, inner) => '<div class="pg-dim" id="' + id + 'D"><div class="pg-dlg" role="dialog" aria-modal="true" aria-labelledby="' + id + 'T">' + inner + '</div></div>';
 const meOf = () => { try { const m = JSON.parse(store.get(ME_KEY) || 'null'); return m && m.name ? m : null; } catch (e) { return null; } };
+// (Battle.net step 3: "you" on every page is any of your characters: your linked Battle.net ones, main first (whoAmI), then the one you
+// picked here ("Which one is you?"). meIs: is this player you; meFrom: which of these names is you (your main if it's there, else an alt))
+const meBase = (n) => String(n || '').split('-')[0].toLowerCase();
+const meNames = () => { const L = (typeof whoChars === 'function' ? whoChars() : []).map((c) => c.n), m = meOf(); if (m && m.name && !L.some((n) => meBase(n) === meBase(m.name))) L.push(String(m.name)); return L; };
+const meIs = (n) => !!n && meNames().some((x) => meBase(x) === meBase(n));
+const meFrom = (names) => { const L = [...names]; for (const m of meNames()) { const hit = L.find((n) => meBase(n) === meBase(m)); if (hit) return hit; } return null; };
 const srvSlug = (x) => String(x || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
 // (picking yourself on a team: you're remembered, and your own character page is added too, found by name and server)
 async function meAdd(g, m) {
@@ -33994,11 +34012,16 @@ function hdSeasonCard(c, chR, wait, wc, wkKill) {
   const sid = chR && chR.spec ? (Object.entries(E.SPECS).find(([, [n, k]]) => k === hdClsKey(chR.cls) && n === chR.spec) || [])[0] : null, rk = sid && chR.rk ? chR.rk['spec_' + sid] : null;
   const sk = (w) => '<span class="hd-shim" style="width:' + w + ';height:22px"></span>', wcw = !wc;
   const tile = (v, k, sub, col) => '<div class="hd-sr2"><span class="l"><b>' + k + '</b><em title="' + esc(hdPlain(sub)) + '">' + sub + '</em></span><span class="v num"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</span></div>';
+  const mc = whoChars(), mcH = mc.length > 1 ? '<div class="hd-mych"><span class="l">Your characters</span>' + mc.map((x, i) => '<span class="hd-myc"><b style="color:' + ((E.CLASSES[x.cls] || [])[1] || 'var(--text)') + '">' + esc(x.n) + '</b>' + (x.ilvl ? ' <span class="num">' + x.ilvl + '</span>' : '') + (i ? '' : ' <em>main</em>') + '</span>').join('') + '</div>'
+    : WCL.HOSTED && WHO.now && WHO.now.can && WHO.now.wcl && !(WHO.now.bnet || {}).linked ? '<div class="hd-mych"><span class="l">Missing a character?</span><button type="button" class="hd-bnl" data-hdbnet="1">Link Battle.net</button></div>' : '';
   return '<section class="hd-pn hd-season"><div class="hd-ph"><h3>Your season</h3><span class="m">' + esc(spec.trim()) + '</span><span class="hd-sres">week resets in <b class="num">' + (dd ? dd + 'd ' + hh + 'h' : hh ? hh + 'h ' + mi + 'm' : mi + 'm') + '</b></span></div><div class="hd-srs">' +
     tile(wait ? sk('2em') : il != null ? il : '—', 'Item level', wait ? '&nbsp;' : il != null ? 'equipped' : 'not on Raider.IO yet') +
     tile(wait ? sk('3em') : score ? hdNum(score) : '—', 'Raider.IO score', wait ? '&nbsp;' : rk ? '#' + rk + ' ' + esc(spec.trim()) + ' on ' + esc(realm) : score ? 'this season' : 'no keys this season', score && chR.col ? chR.col : '') +
     tile(wcw ? sk('2em') : kills(wc.mythic) + '<small>/' + nB + '</small>', 'Mythic bosses', wcw ? '&nbsp;' : [wkKill != null ? plural(wkKill, 'kill') + ' this week' : '', 'Heroic ' + kills(wc.heroic) + '/' + nB].filter(Boolean).join(' · ')) +
-    tile(wcw ? sk('1.6em') : pM != null ? pM : '—', 'Mythic parse', wcw ? '&nbsp;' : (pM != null ? 'best average' : 'no Mythic kill yet') + (pH != null ? ' · Heroic <b style="color:' + hdPCol(pH) + '">' + pH + '</b>' : ''), pM != null ? hdPCol(pM) : '') + '</div></section>'; }
+    tile(wcw ? sk('1.6em') : pM != null ? pM : '—', 'Mythic parse', wcw ? '&nbsp;' : (pM != null ? 'best average' : 'no Mythic kill yet') + (pH != null ? ' · Heroic <b style="color:' + hdPCol(pH) + '">' + pH + '</b>' : ''), pM != null ? hdPCol(pM) : '') + '</div>' + mcH + '</section>'; }
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-hdbnet]')) openAccounts(); });
+// (Home again once whoAmI answers, so Your season, Your jobs and "you" follow the Battle.net link)
+document.addEventListener('whoami', () => { try { if (S.page === 'prog' && $('#main .hd-season')) { const y = window.scrollY; renderProgress(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } });
 // (the page)
 // ===== Your jobs on Home (Nov 4, Flex: "I think the my assignments/jobs would fit well in the homepage"). Your team's plan for the next
 // raid, read online (the team plan Plan saves for the team), one tile a boss in fight order with your first job; a tap shows every job of
@@ -34029,9 +34052,11 @@ function hdTpJobs(K, boss, night, me) { const o = hdTpGet(K, 'wla-rnote|' + boss
 const hdBossFace = (b, cls) => { const H = BOSS_HERO[b]; return H ? '<img class="' + cls + '" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 28%" onerror="this.remove()">' : BOSS_ART[b] ? '<img class="' + cls + '" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy">' : '<span class="hj-ni"></span>'; };
 const HD_CAM = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="10" rx="2"/><circle cx="8" cy="8.5" r="2.5"/></svg>';
 function hdJobs(g, ch, gb, redraw) {
-  const me = ch && ch.name ? String(ch.name).split('-')[0] : ''; if (!me) return ''; const r = hdTeamPlan(g, redraw); if (!r) return '';
+  let me = ch && ch.name ? String(ch.name).split('-')[0] : ''; if (!me && !whoChars().length) return ''; const r = hdTeamPlan(g, redraw); if (!r) return '';
   const K = r.keys, night = hdTpNight(K); if (!night) return '';
-  const R = (hdTpGet(K, PLAN_RK) || {}).list || [], ros = R.find((x) => x.id === night.rid) || R[0], mine = ros && (ros.players || []).find((p) => String(p.n).split('-')[0].toLowerCase() === me.toLowerCase());
+  const R = (hdTpGet(K, PLAN_RK) || {}).list || [], ros = R.find((x) => x.id === night.rid) || R[0];
+  if (ros && whoChars().length) me = String(meFrom((ros.players || []).map((p) => String(p.n).split('-')[0])) || me); /* (Battle.net step 3: whichever of your characters is on the roster) */
+  const mine = ros && (ros.players || []).find((p) => String(p.n).split('-')[0].toLowerCase() === me.toLowerCase());
   if (!mine) return ''; /* (you're not on the team's roster for that night) */
   const skip = night.skip || hdTpGet(K, PLAN_SKIP_K) || [], bosses = planBossesAll().filter((b) => !skip.includes(b)), role = mine.role === 'healer' ? 'Heal' : mine.role === 'tank' ? 'Tank' : '';
   const day = new Date(night.date + 'T12:00:00'), dayN = isNaN(day) ? 'Next' : day.toLocaleDateString([], { weekday: 'long' }), upd = Math.max(0, ...Object.values(K).map((e) => e.at || 0));
