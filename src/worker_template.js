@@ -1834,6 +1834,7 @@ async function raiderOne(env, r, realm, n, tok) {
 }
 async function raidersRoute(req, env, url) {
   const p = url.searchParams, r = BNET_REG.test(p.get('r') || '') ? p.get('r') : 'us', L = (p.get('c') || '').split(',').filter((x) => RAIDER_C.test(x)).slice(0, 10);
+  if (req.headers.get('Origin') !== url.origin && req.headers.get('Sec-Fetch-Site') !== 'same-origin') return json({ error: 'Only the Debrief website can ask for this.' }, 403); /* (not a free Blizzard proxy for other sites, Main Nov 6; a same-site GET sends no Origin, so Sec-Fetch-Site too) */
   if (!L.length) return json({ list: [] });
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   const tok = await bnetAppToken(env, r);

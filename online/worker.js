@@ -340,7 +340,7 @@ const HTML_FLAGS = {};
    stamp, so it's fetched fresh at once. Cloudflare's compression can mark the stamp weak (W/"..."): it's the same stamp.
    Cloudflare removes ETags from web pages on this site (tested on a practice link), so the build time goes along as Last-Modified too:
    a browser holding exactly this build sends it back (If-Modified-Since) and gets the same "not changed") */
-const APP_V = '2753d02b828c8713', APP_T = 'Sat, 07 Nov 2026 00:37:25 GMT';
+const APP_V = '2753d02b828c8713', APP_T = 'Sat, 07 Nov 2026 00:39:13 GMT';
 function pageRes(req, key, make, status, headers) { const et = '"' + APP_V + '-' + key + '"', h = { ...headers, ETag: et, 'Last-Modified': APP_T }, inm = req.headers.get('If-None-Match') || '';
   if (status === 200 && (inm.split(',').some((x) => x.trim().replace(/^W\//, '') === et) || req.headers.get('If-Modified-Since') === APP_T)) return new Response(null, { status: 304, headers: h });
   return new Response(make(), { status, headers: h }); }
@@ -1960,6 +1960,7 @@ async function raiderOne(env, r, realm, n, tok) {
 }
 async function raidersRoute(req, env, url) {
   const p = url.searchParams, r = BNET_REG.test(p.get('r') || '') ? p.get('r') : 'us', L = (p.get('c') || '').split(',').filter((x) => RAIDER_C.test(x)).slice(0, 10);
+  if (req.headers.get('Origin') !== url.origin && req.headers.get('Sec-Fetch-Site') !== 'same-origin') return json({ error: 'Only the Debrief website can ask for this.' }, 403); /* (not a free Blizzard proxy for other sites, Main Nov 6; a same-site GET sends no Origin, so Sec-Fetch-Site too) */
   if (!L.length) return json({ list: [] });
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   const tok = await bnetAppToken(env, r);
