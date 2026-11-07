@@ -27199,7 +27199,7 @@ const GEN_SPECS = {
       { k: 'dtaw', a: 'Divine Toll', not: 'Sentinel', b: ['Avenging Wrath'], pre: 3, post: 3, orBuf: 'Avenging Wrath', blk: 'Avenging Wrath', ok: 0.6, warn: 0.4, label: 'Divine Toll with Avenging Wrath', txt: '{ok} of your {n} Divine Tolls went out with Avenging Wrath.', why: 'Wowhead: sync Divine Toll with Avenging Wrath when you can. The SimulationCraft list presses it in Avenging Wrath. Divine Toll comes back twice as often, so about half is the goal.', tip: 'Press Divine Toll right with Avenging Wrath.' }],
     ups: [{ n: 'Shield of the Righteous', tank: true, ok: 0.7, warn: 0.55, why: 'Both guides: Shield of the Righteous is your active mitigation. Keep it up nearly all the time by spending Holy Power on it, without capping at 5.' }, { n: 'Consecration', ok: 0.55, warn: 0.4, upTxt: 'You stood in your Consecration', why: 'Icy Veins: keep Consecration under you. It powers your Mastery and the Season 2 set.' }],
     rot: [{ n: 'Holy Armaments', names: ['Holy Bulwark', 'Sacred Weapon'], hero: 'Lightsmith', cd: 60, ch: 2, ok: 0.8, warn: 0.65, why: 'Both guides, as Lightsmith: Holy Bulwark and Sacred Weapon about once a minute (Holy Armaments has 2 charges). Sacred Weapon is a big part of your damage and Holy Bulwark of your defense.' }, { n: "Avenger's Shield", cd: 15, h: true, ok: 0.8, warn: 0.65, why: "Both guides: Avenger's Shield on cooldown." }, { n: 'Judgment', cd: 6, h: true, chT: [["Crusader's Judgment", 2]], ok: 0.8, warn: 0.65, why: 'Judgment on cooldown. It builds Holy Power.' }, { n: 'Blessed Hammer', cd: 5, h: true, ch: 3, ok: 0.8, warn: 0.65, why: 'Both guides: Blessed Hammer on cooldown.' }],
-    procs: [{ n: 'Shining Light', use: ['Word of Glory'], max: 2, why: 'Shining Light makes Word of Glory free. Spend it.' }],
+    procs: [{ n: 'Shining Light', use: ['Word of Glory'], max: 2, why: 'Shining Light makes Word of Glory free. Spend it when you need the healing. Not graded: the top tanks let most of it go when they are healthy.' }],
     res: { ty: '9', n: 'Holy Power', why: 'Both guides: never sit at 5 Holy Power. Spend it on Shield of the Righteous.' },
     cds: [{ n: 'Avenging Wrath', names: ['Avenging Wrath', 'Sentinel'], cd: 120, ok: 0.85, warn: 0.7, why: 'Both guides: your wings on cooldown.' }, { n: 'Divine Toll', cd: 60, ok: 0.85, warn: 0.7, why: 'Both guides: Divine Toll on cooldown, for Holy Power.' }],
     lead: { pre: 'An aura on, and a weapon oil (Templar) or Rite (Lightsmith).', ups: 'Keep Shield of the Righteous up and stand in your Consecration.', rot: "Judgment, Avenger's Shield and Blessed Hammer on cooldown.", res: "Don't sit at 5 Holy Power.", cds: 'Your wings and Divine Toll on cooldown, together.' } },
@@ -27310,24 +27310,24 @@ const GEN_SPECS = {
 // this fight with half their mana, so mana isn't graded for them. abc, res, mana: [good, could be better]; set: a line's own values.
 const GEN_TUNE = {
   'Arcane Mage': { abc: [0.72, 0.62], set: { 'p:Clearcasting': { okW: 0.25, warnW: 0.35 }, 'p:Prismatic Bolt!': { okW: 0.2, warnW: 0.3 } } },
-  'Shadow Priest': { abc: [0.74, 0.65], drop: ['res'], set: { 'dot:Shadow Word: Madness': { ok: 0.9, warn: 0.8 }, 'cd:mind blast': { info: true, infoWhy: 'it is still being checked against the top Shadow Priests' } } }, /* (Nov 7: Mind Blast shown again, ungraded) */
+  'Shadow Priest': { abc: [0.74, 0.65], set: { 'dot:Shadow Word: Madness': { ok: 0.9, warn: 0.8 }, 'cd:mind blast': { ok: 0.62, warn: 0.5 } } }, /* (Nov 7, top guilds: Insanity wasted 0-2%; Mind Blast 63-77% of its chances) */
   'Marksmanship Hunter': { abc: [0.76, 0.68], set: { 'p:Precise Shots': { okW: 0.15, warnW: 0.25 } } },
   'Havoc Demon Hunter': { abc: [0.69, 0.6], res: [0.19, 0.27], set: { 'cd:immolation aura': { h: false, ok: 0.6, warn: 0.45 }, 'cd:essence break': { ok: 0.8, warn: 0.65 } } },
   'Balance Druid': { abc: [0.83, 0.74] },
-  'Retribution Paladin': { abc: [0.7, 0.62], drop: ['res'], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
+  /* (Nov 7, top guilds' Mythic kills: Holy Power wasted 17-31%, mostly Crusading Strikes' free Holy Power landing just before a builder) */ 'Retribution Paladin': { abc: [0.7, 0.62], res: [0.28, 0.36], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
   'Holy Priest': { abc: [0.72, 0.62], drop: ['mana'] }, /* (Nov 7, Flex 'Yes, grade it': Surge of Light is graded again now that Benediction counts as a spend) */
-  'Frost Death Knight': { abc: [0.64, 0.55], res: [0.15, 0.22], set: { 'p:Rime': { okW: 0.1, warnW: 0.18 }, 'p:Killing Machine': { info: true } } }, /* (Nov 7: Killing Machine shown again, ungraded, until checked against top Frost) */
-  'Blood Death Knight': { abc: [0.74, 0.66], set: { 'cd:blood boil': { ok: 0.6, warn: 0.45 }, 'dot:Blood Plague': { info: true } } }, /* (Nov 7: Blood Plague shown again, ungraded, until it's checked against top tanks) */
+  'Frost Death Knight': { abc: [0.64, 0.55], res: [0.15, 0.22], set: { 'p:Rime': { okW: 0.1, warnW: 0.18 }, 'p:Killing Machine': { okW: 0.22, warnW: 0.3 } } }, /* (Nov 7, top guilds: 14-23% of Killing Machine arrives while already at 2) */
+  'Blood Death Knight': { abc: [0.74, 0.66], set: { 'cd:blood boil': { ok: 0.6, warn: 0.45 }, 'dot:Blood Plague': { ok: 0.6, warn: 0.45 } } }, /* (Nov 7, top guilds: Blood Plague 59-100% of the time tanking; adds and swaps keep it lower on some bosses) */
   'Windwalker Monk': { abc: [0.74, 0.65], set: { 'cd:whirling dragon punch': { ok: 0.6, warn: 0.45 }, 'cd:zenith': { ok: 0.75, warn: 0.6 }, 'cd:invoke xuen, the white tiger': { ok: 0.75, warn: 0.6 }, 'cd:celestial conduit': { ok: 0.75, warn: 0.6 } } },
   'Arms Warrior': { abc: [0.74, 0.65], set: { 'cd:colossus smash': { ok: 0.8, warn: 0.65 }, 'cd:avatar': { ok: 0.8, warn: 0.65 } } },
-  'Protection Paladin': { abc: [0.66, 0.58], res: [0.12, 0.18], set: { 'p:Shining Light': { info: true }, /* (Nov 7: shown again, ungraded: the free buff is now read on its own) */ "cd:avenger's shield": { ok: 0.62, warn: 0.5 }, 'cd:blessed hammer': { ok: 0.6, warn: 0.5 }, 'up:Shield of the Righteous': { ok: 0.9, warn: 0.8 }, 'cd:divine toll': { ok: 0.8, warn: 0.65 } } },
+  'Protection Paladin': { abc: [0.66, 0.58], res: [0.2, 0.28], set: { 'p:Shining Light': { info: true }, /* (Nov 7, top guilds: Holy Power wasted 6-23%, so the old 12% bar failed most of them; Shining Light stays ungraded: top tanks let 61-85% of it go, so it's no mistake) */ "cd:avenger's shield": { ok: 0.62, warn: 0.5 }, 'cd:blessed hammer': { ok: 0.6, warn: 0.5 }, 'up:Shield of the Righteous': { ok: 0.9, warn: 0.8 }, 'cd:divine toll': { ok: 0.8, warn: 0.65 } } },
   'Restoration Shaman': { abc: [0.7, 0.6], set: { 'cd:ascendance': { ok: 0.5, warn: 0.3 }, 'cd:spirit link totem': { ok: 0.5, warn: 0.3 }, 'cd:healing tide totem': { ok: 0.5, warn: 0.3 } } },
   'Frost Mage': { abc: [0.8, 0.72] },
   'Devourer Demon Hunter': { abc: [0.6, 0.52] },
   'Devastation Evoker': { abc: [0.6, 0.5], set: { 'cd:eternity surge': { ok: 0.7, warn: 0.55 }, 'p:Essence Burst': { okW: 0.1, warnW: 0.2 } } },
   'Elemental Shaman': { abc: [0.82, 0.74], set: { 'cd:stormkeeper': { ok: 0.75, warn: 0.6 } } },
   'Mistweaver Monk': { abc: [0.7, 0.6], mana: [0.45, 0.6], set: { 'cd:thunder focus tea': { ok: 0.7, warn: 0.55 }, "cd:invoke yu'lon, the jade serpent": { ok: 0.7, warn: 0.5 } } },
-  'Subtlety Rogue': { drop: ['res'], set: { 'cd:shadow blades': { ok: 0.75, warn: 0.6 } } },
+  /* (Nov 7, top guilds: combo points wasted 5-24%) */ 'Subtlety Rogue': { res: [0.22, 0.3], set: { 'cd:shadow blades': { ok: 0.75, warn: 0.6 } } },
   'Augmentation Evoker': { abc: [0.73, 0.64], set: { 'p:Essence Burst': { okW: 0.15, warnW: 0.25 }, 'up:Ebon Might': { ok: 0.88, warn: 0.78 }, 'cd:breath of eons': { ok: 0.75, warn: 0.55 } } },
   'Affliction Warlock': { abc: [0.68, 0.6], set: { 'p:Nightfall': { okW: 0.2, warnW: 0.3 }, 'cd:haunt': { ok: 0.8, warn: 0.65 }, 'cd:dark harvest': { ok: 0.8, warn: 0.65 }, 'dot:Agony': { ok: 0.9, warn: 0.8, w: 3 }, 'dot:Wither': { ok: 0.8, warn: 0.65 } } },
   'Beast Mastery Hunter': { abc: [0.76, 0.68], res: [0.15, 0.22] },
@@ -27336,7 +27336,7 @@ const GEN_TUNE = {
   'Destruction Warlock': { abc: [0.77, 0.68], set: { 'cd:soul fire': { ok: 0.7, warn: 0.55 } } },
   'Unholy Death Knight': { abc: [0.75, 0.66], res: [0.12, 0.2] },
   'Guardian Druid': { abc: [0.66, 0.56], set: { 'up:Ironfur': { ok: 0.8, warn: 0.65 } } },
-  'Enhancement Shaman': { abc: [0.71, 0.62], drop: ['p:Maelstrom Weapon'] },
+  'Enhancement Shaman': { abc: [0.71, 0.62], set: { 'p:Maelstrom Weapon': { okW: 0.08, warnW: 0.15 } } }, /* (Nov 7, top guild on The Coiled Altar: 5% of Maelstrom Weapon wasted; one player so far, so the bar is kind) */
   'Protection Warrior': { abc: [0.71, 0.62], set: { 'up:Shield Block': { ok: 0.85, warn: 0.75 } } },
   'Brewmaster Monk': { abc: [0.76, 0.68], set: { 'cd:blackout kick': { ok: 0.65, warn: 0.5 }, 'up:Shuffle': { ok: 0.95, warn: 0.85 }, 'cd:invoke niuzao, the black ox': { ok: 0.8, warn: 0.65 }, 'cd:exploding keg': { ok: 0.55, warn: 0.4 } } },
 };
