@@ -14754,6 +14754,13 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-s
   /* (note lines stay plain text: the shaded band is for headers only (the studio, Nov 7)) */
   html:not([data-theme]) body.refine #main .cutbar { background: transparent !important; border: 0 !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important; color: var(--muted) !important; }
 }
+
+@layer defaultTheme {
+  /* (job card header: the edit and copy buttons are icons; their words stay hidden so they never spill over the next button (the studio, Nov 7)) */
+  html body #assignBox .bj-jobs .plb-rch > :is(.plb-rcx, .btn[data-dssheetcard]) { font-size: 0 !important; overflow: hidden !important; }
+  /* (the boss strip never wider than the page on a phone (Main, Nov 7)) */
+  html body #assignBox > .panel.pg-bar { box-sizing: border-box !important; max-width: 100% !important; min-width: 0 !important; }
+}
 </style>
 </head>
 <body class="refine">
@@ -35580,7 +35587,7 @@ function pnNightGo(k) { const N = pnNightKeep(pnNightsGet()); if (N.sel === k &&
   const RO = rostersGet(); if (o.rid && RO.list.some((x) => x.id === o.rid) && RO.cur !== o.rid) { RO.cur = o.rid; rostersSet(RO); } PLAN_RC = null; S.tnPlanIt = null; if (S.ndzPick && typeof planOpenIdFor === 'function') S.ndzPlanId = planOpenIdFor(o, S.ndzPick); /* (the open boss: that night's plan, not the last night's, Oct 26) */ }
 // (once a visit: tonight if it's a raid night or set up, else the next one in two weeks; your setup from before nights becomes that night)
 async function pnNightOpen() { if (S.pnOpened) return; S.pnOpened = true; try { await HIST.load(); } catch (e) { /* (no saved pulls) */ } pnRaidDays.c = null;
-  const N = pnNightsGet(), today = pnToday(), RD = pnRaidDays(); let k = null; for (let i = 0; i < 14 && !k; i++) { const d = pnAddDays(today, i); if (N.d[d] || RD.has(pnDateOf(d).getDay())) k = d; } k = k || today;
+  const N = pnNightsGet(), today = pnToday(), RD = pnRaidDays(); let k = null; for (let i = 0; i < 14 && !k; i++) { const d = pnAddDays(today, i); if (RD.has(pnDateOf(d).getDay())) k = d; } /* (the next raid day first (the studio, Nov 7: it opened on Sat 7 because a night was set up for today)) */ for (let i = 0; i < 14 && !k; i++) { const d = pnAddDays(today, i); if (N.d[d]) k = d; } k = k || today;
   if (!N.sel) { let o = null; try { o = JSON.parse(store.get(NIGHT_K) || 'null'); } catch (e) { o = null; } N.sel = k; if (o) { N.d[k] = Object.assign(o, { date: k, skip: planSkipGet() }); try { store.set(NIGHT_K, JSON.stringify(N.d[k])); } catch (e) { /* (this visit only) */ } } pnNightsSet(N); }
   else if (N.sel !== k && !S.pnTouched && !(() => { try { return sessionStorage.getItem('wla-pn-touched'); } catch (e) { return null; } })()) pnNightGo(k); /* (a reload in this tab keeps the night you picked, Oct 26) */
   if (S.page === 'plan' && (S.planV || 'tonight') === 'tonight' && !S.planOpen) { const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } }

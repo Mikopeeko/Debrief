@@ -14754,6 +14754,13 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-s
   /* (note lines stay plain text: the shaded band is for headers only (the studio, Nov 7)) */
   html:not([data-theme]) body.refine #main .cutbar { background: transparent !important; border: 0 !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important; color: var(--muted) !important; }
 }
+
+@layer defaultTheme {
+  /* (job card header: the edit and copy buttons are icons; their words stay hidden so they never spill over the next button (the studio, Nov 7)) */
+  html body #assignBox .bj-jobs .plb-rch > :is(.plb-rcx, .btn[data-dssheetcard]) { font-size: 0 !important; overflow: hidden !important; }
+  /* (the boss strip never wider than the page on a phone (Main, Nov 7)) */
+  html body #assignBox > .panel.pg-bar { box-sizing: border-box !important; max-width: 100% !important; min-width: 0 !important; }
+}
 </style>
 </head>
 <body class="refine">
