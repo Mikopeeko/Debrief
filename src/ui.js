@@ -8053,7 +8053,7 @@ function openRanks() {
 // missing enchants and empty gem sockets, item level under the raid's, an officer view (item level, Mythic+ score, keys this week, linked),
 // and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts
 // when most of the raid has one there.
-const BFR = { key: '', list: null, busy: false, err: '', off: false };
+const BFR = { key: '', list: null, busy: false, err: '', off: false, all: true }; /* (the list opens by itself (Flex, Nov 7: "the text should always be expanded by default")) */
 // (the slots that take an enchant in 12.1.5 (Nov 6, the studio: 9 of 10 "to fix" were Hands): every one of 16 top US Mythic raiders on Battle.net has a
 // real enchant on these, and none on Back, Wrists, Belt, Neck or Trinkets. Hands showed only on 5 of 16, and that was "Ancient Hash'ey Battle Art", a
 // special bonus, not an enchant. An off hand is left out: Blizzard's gear data doesn't say whether it's a weapon)
@@ -8115,7 +8115,7 @@ function bfrDraw() {
         tile('Ready', F.fine, 'of ' + tot + ' on the roster', F.fine === tot ? 'ok' : '') + (kit ? tile('Raid kit', kit[1] ? '✓' : '!', kit[2], kit[1] ? 'ok' : 'warn') : ''); } }
   // (the full list, in place under the header)
   let L = ros.querySelector('.gr-list');
-  if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; hd.insertAdjacentElement('afterend', L); }
+  if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; } { const at = ros.querySelector('.gr-tiles') || hd; if (at.nextElementSibling !== L) at.insertAdjacentElement('afterend', L); } /* (under the tiles (Flex, Nov 7: "the boxes should be above the text")) */
     const mid = F.mid, off = can ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
       BFR.list.filter((x) => !x.none).sort((p, q) => q.il - p.il).map((x) => '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>').join('') +
       '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
@@ -35956,7 +35956,7 @@ function dsGuides() {
 // (Oct 27, round 81: the panel moves under the Roster into a fold whose summary lists the gaps.) Owner: the Design studio chat. =====
 (function () {
   if (typeof document === 'undefined') return;
-  var busy = false, openNow = false;
+  var busy = false, openNow = true; /* (open by itself (Flex, Nov 7: "always be expanded")) */
   var E = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   function dsBuffs() {
     if (busy) return; busy = true;
@@ -35971,6 +35971,8 @@ function dsGuides() {
         var sum = document.createElement('summary'); sum.className = 'ds-bsumm'; det.appendChild(sum); det.appendChild(p);
         var anchor = ros.querySelector(':scope > details.pg-week, :scope > .tn-add'); if (anchor) ros.insertBefore(det, anchor); else ros.appendChild(det);
         det.addEventListener('toggle', function () { openNow = det.open; }); }
+      /* (above the players, under the gear tiles and list (Flex, Nov 7: "move this to above the roster")) */
+      if (ros && det && det.parentElement === ros) { var z0 = ros.querySelector(':scope > .pg-zone'); if (z0 && det.nextElementSibling !== z0) ros.insertBefore(det, z0); }
       // the gaps
       var gaps = [], miss = [];
       p.querySelectorAll(':scope > .ndz-dag').forEach(function (d) {
