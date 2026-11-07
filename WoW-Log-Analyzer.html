@@ -57852,7 +57852,7 @@ document.addEventListener('whoami', bnMenuLabel);
    practice test name (Main, Nov 6: Flex was signed in and saw no Sign out); drawn at load, on whoAmI and each time the menu opens) */
 const signedIn = () => (WCL.HOSTED ? ((WHO.now || {}).wcl || wclMe() || null) : null);
 const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; if (!WCL.HOSTED) { o.hidden = true; return; } const W = (WHO.now || {}).wcl, w = signedIn(); o.hidden = false; o.dataset.acct = w ? 'out' : 'in';
-  const me = meOf(); o.innerHTML = w ? 'Sign out<span>' + (W && W.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>' : 'Sign in with Warcraft Logs<span>' + (me ? 'not signed in · you\'re ' + esc(String(me.name).split('-')[0]) + ' on this PC' : 'brings in your characters and guilds') + '</span>'; };
+  const me = meOf(); o.innerHTML = w ? 'Sign out<span>' + (W && W.practice ? 'testing as ' : 'signed in as ') + esc(W && W.practice ? (w.name || 'you') : me ? String(me.name).split('-')[0] : (w.name || 'you')) + '</span>' : 'Sign in with Warcraft Logs<span>' + (me ? 'not signed in · you\'re ' + esc(String(me.name).split('-')[0]) + ' on this PC' : 'brings in your characters and guilds') + '</span>'; };
 // (Sign in from the menu or Home: Warcraft Logs' own sign-in; a practice link can't use it, so it opens Your characters to test as a name)
 const signInNow = () => { if (TP_PRACTICE) { openAccounts(); return; } try { sessionStorage.setItem('wla-wcl-after', 'acct'); } catch (e) { /* storage off */ } wclSignIn(); };
 document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-hdsign]')) signInNow(); });
@@ -57866,8 +57866,13 @@ if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); 
   location.href = '/'; };
 // (signed in again: the teams and "which one is you" that stepped aside at Sign out come back)
 const OUT_KEYS = [GROUPS_KEY, GROUP_CUR, 'wla-me']; /* ('wla-me' is ME_KEY, set further down) */
-document.addEventListener('whoami', () => { try { if (!(WHO.now && WHO.now.wcl) || localStorage.getItem(GROUPS_KEY + '-out') == null) return; let back = false;
-  for (const k of OUT_KEYS) { const v = localStorage.getItem(k + '-out'); if (v == null) continue; const cur = localStorage.getItem(k); if (cur == null || (k === GROUPS_KEY && cur === '[]')) { localStorage.setItem(k, v); back = true; } localStorage.removeItem(k + '-out'); }
+document.addEventListener('whoami', () => { try { if (!(WHO.now && WHO.now.wcl) || !OUT_KEYS.some((k) => localStorage.getItem(k + '-out') != null)) return; let back = false;
+  for (const k of OUT_KEYS) { const v = localStorage.getItem(k + '-out'); if (v == null) continue; localStorage.removeItem(k + '-out'); back = true;
+    if (k !== GROUPS_KEY) { localStorage.setItem(k, v); continue; } /* (the team and "you" picked before Sign out win (Flex, Nov 6: "its very bugged")) */
+    let a = [], b = []; try { a = JSON.parse(v) || []; } catch (e) { a = []; } try { b = JSON.parse(localStorage.getItem(k) || '[]') || []; } catch (e) { b = []; }
+    const by = new Map(); for (const g of a) if (g && g.gid) by.set(g.gid, g); /* (the saved list, merged with one made while signed out: each team once, the opened pulls of both) */
+    for (const g of b) { if (!g || !g.gid) continue; const o = by.get(g.gid); if (!o) by.set(g.gid, g); else if (g.done) o.done = Object.assign({}, o.done || {}, g.done); }
+    localStorage.setItem(k, JSON.stringify([...by.values()])); }
   if (back) location.href = '/'; /* (not a reload: a reload reopens the page you were on, the signed-out front page) */ } catch (e) { /* storage off */ } });
 document.addEventListener('whoami', () => { try { if (S.page === 'plan' && whoChars().length && !S.planRosEd && !S.noteBuild && !S.pgEdit) { PG_ALT.k = ''; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } }); /* (Plan again once your Battle.net characters are known) */
 // (Battle.net step 3: "Which one is you?" follows the linked main, so pages and Debrief Companion (it reads the same pick) follow it too;
