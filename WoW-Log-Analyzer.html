@@ -14803,12 +14803,13 @@ window.__ahGroup = function (w) { try {
   var titleOf = function (r) { var b = r.querySelector(':scope > b'); if (!b) return ''; var c = b.cloneNode(true); [].forEach.call(c.querySelectorAll('.r482-x'), function (x) { x.remove(); }); return T(c); };
   var xOf = function (r) { var m = /\u00d7\s*(\d+)/.exec(T(r.querySelector(':scope > b'))); return m ? +m[1] : 1; };
   var spOf = function (r) { return r.querySelector(':scope > span:not(.dbt-ic)'); };
-  var chain = T(w.querySelector('.dbt-chn'));
+  var chain = T(w.querySelector('.dbt-chn')); var RT0 = null; try { RT0 = window.wipeRoot ? window.wipeRoot() : null; } catch (e0) { RT0 = null; } var fitsR = window.chainTitleFits || function (x, y) { x = x.toLowerCase(); y = y.toLowerCase(); return y.indexOf(x) >= 0 || x.indexOf(y.split(' (')[0]) >= 0; };
   var fixOf = function (r) { var it = r.dataset.jump != null ? document.querySelector('#view .dbt-it[data-i="' + r.dataset.jump + '"]') : null; if (!it) return ''; var nx = [].slice.call(it.querySelectorAll('*')).filter(function (e) { return e.children.length < 3 && /^next time/i.test(T(e)); })[0]; if (!nx) return ''; var t = T(nx).replace(/^next time\s*/i, ''); return t; };
   var mech = [], slow = [], dead = [], seen = {};
   rows.forEach(function (r) { if (r.classList.contains('ahg-slow')) { slow.push(r); return; } var tt = titleOf(r), sp = spOf(r), st = T(sp), hasWho = !!(sp && sp.querySelector('.dbt-chip, .r423'));
     if (!hasWho && /\b(raid )?peak \d+ stacks?\b/i.test(st) && !fixOf(r)) { r.remove(); return; } /* (a stat with no one and no fix) */
     var tm = (/(\d+:\d\d)/.exec(st) || [])[1]; if (tm && chain.indexOf(tm) >= 0 && chain.toLowerCase().indexOf(tt.toLowerCase()) >= 0 && !/^death$/i.test(tt)) { r.remove(); return; } /* (already in How it went) */
+    if (RT0 && RT0.name && !/^death$/i.test(tt) && fitsR(tt, String(RT0.name)) && (st.match(/\d+:\d\d/g) || []).some(function (x) { var v = sx(x); return RT0.t != null && v >= RT0.t - 30 && v <= RT0.t + 5; })) { r.remove(); return; } /* (Nov 7, Main: the root cause itself is How it went's, never Also hurt's) */
     if (/^death$/i.test(tt)) { var k = st.replace(/^\s*\d+:\d\d:\s*/, ''); if (seen['d' + k] || (tm && chain.indexOf(tm) >= 0 && chain.indexOf(k.split(' ')[0]) >= 0)) { r.remove(); return; } seen['d' + k] = 1; dead.push(r); return; }
     if (/^(phase changes|pace|push|phase \d)/i.test(tt) || /\b(push|took \d+:\d\d|ran long)\b/i.test(st)) { slow.push(r); return; }
     var key = tt.toLowerCase(); var same = mech.filter(function (x) { return titleOf(x).toLowerCase() === key; })[0];
