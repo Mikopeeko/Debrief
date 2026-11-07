@@ -912,7 +912,7 @@ function rotRow(c, W, top, specIcon) {
   const howOf = () => shortTo(sentences(plain(c.how || '')).filter((x) => !/\b(Wowhead|Icy Veins|guide|SimulationCraft|APL)\b/i.test(x)).slice(0, 2).join(' '), 240);
   const momOf = () => (c.bx || []).filter((q) => q.cls && q.cls !== 'ok' && q.tip).slice(0, 5).map((q) => shortTo(sentences(plain(q.tip).replace(/;/g, ','))[0] || plain(q.tip), 110)).join(';');
   return [c.st, spellId(W, c.ic) || (/casting|pace/i.test(c.label || '') ? 'spell_holy_borrowedtime' : specIcon || ''), plain(c.label), num(c.v), top ? num(top) : '', c.tip ? plain(c.tip) : '',
-    (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (/^(ok|g2|g3)$/.test(q.cls) ? 'g' : /^(bad|g0)$/.test(q.cls) ? 'b' : q.cls === 'g1' && /^p:/.test(c.k || '') ? 'g' : 'w')).join('') /* (graded squares too: a proc spent is green, wasted red (Nov 5)) */ : '', why(), howOf(), momOf()];
+    (c.bx || []).length >= 2 ? c.bx.slice(0, 40).map((q) => (/^(ok|g2|g3)$/.test(q.cls) ? 'g' : /^(bad|g0)$/.test(q.cls) ? 'b' : q.cls === 'g1' && /^p:/.test(c.k || '') ? 'g' : 'w')).join('') /* (graded squares too: a proc spent is green, wasted red (Nov 5)) */ : '', why(), howOf(), momOf(), (c.cost || 0) >= 20000 ? Math.round(c.cost) + '|' + (c.costP != null ? Math.round(1000 * c.costP) / 10 : '') : '' /* (Nov 7: what it cost, healing or damage, and its share of yours; the rows come costliest first) */];
 }
 window.DBF_CARDBITS = { slipLine, spellId, rotBits, rotRow }; // (the Mythic+ run recap's Rotation per pull says each fix the card's way (Nov 1))
 window.DBF_BUILD = (b, rep, same, W, L) => {
@@ -1012,7 +1012,7 @@ function buildOne(b, rep, same, W, L, cutN) {
       P.rs = { score: x.score != null ? Math.round(x.score) : '', good: x.checks.filter((c) => c.st === 'ok' && c.isMain).slice(0, 4).map((c) => plain(c.label)) };
       // (and the spec's ramp or burst windows even when they went fine (Oct 24): up to 2 more checks with window cards, after the fixes)
       const WR0 = { bad: 0, warn: 1, ok: 2 }, extra = x.checks.filter((c) => !focus.includes(c) && c.st !== 'na' && !/^boss:/.test(c.k) && x.wins && x.wins[c.k])
-        .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra).sort((a, c) => (WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)); /* (a window row with mistakes joins the fixes in its colour) */
+        .sort((a, c) => ((WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)) || (c.cost || 0) - (a.cost || 0)).slice(0, 2), rotC = focus.concat(extra).sort((a, c) => (((c.cost || 0) >= 20000) - ((a.cost || 0) >= 20000)) || ((c.cost || 0) >= 20000 ? (c.cost || 0) - (a.cost || 0) : 0) || (WR0[a.st] != null ? WR0[a.st] : 3) - (WR0[c.st] != null ? WR0[c.st] : 3)); /* (Nov 7, Flex: the fix that cost the most first) */ /* (a window row with mistakes joins the fixes in its colour) */
       P.rs.good = P.rs.good.filter((g) => !extra.some((c) => plain(c.label) === g)); /* (a window row isn't said twice) */
       P.rot = rotC.map((c) => rotRow(c, W, !b.dungeon && x.top && x.top[c.k] ? x.top[c.k] : '' /* (the top players' numbers come from raid kills: not for a dungeon boss) */, p.specIcon)); /* (no "?" for a check without a spell (Oct 24)) */
       // (each ramp or burst window, from the Rotation tab's cards (Oct 24, the user: "classes with ramp windows/rotations with specific windows
