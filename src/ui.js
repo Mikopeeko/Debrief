@@ -7837,7 +7837,7 @@ async function tpTick() {
     else if (r._st === 401 || r._st === 403) { TP.doc.you = Object.assign({}, TP.doc.you, { can: false }); tpChip(); }
   } catch (e) { /* (sent again on the next tick) */ } finally { TP.busy = false; }
 }
-setInterval(() => { try { tpTick(); if (S.page === 'plan' && TP.doc && !document.querySelector('#view .bh-l1 .tp-wrap')) tpChip(); /* (Plan redrew part of itself: the chip comes back) */ } catch (e) { /* (next tick) */ } }, 1500);
+setInterval(() => { try { tpTick(); if (S.page === 'plan' && TP.doc && !document.querySelector('#view header.plan-bh .tp-wrap')) tpChip(); /* (Plan redrew part of itself: the chip comes back) */ } catch (e) { /* (next tick) */ } }, 1500);
 setInterval(() => { if (document.visibilityState === 'visible' && (S.page === 'plan' || TP.doc)) tpPull(); }, 20000);
 window.addEventListener('focus', () => { if (S.page === 'plan' || TP.doc) tpPull(); });
 // (a tab closed right after a change: what wasn't sent yet goes out as the page closes)
@@ -7868,7 +7868,7 @@ const TP_CSS = String.raw`
 `;
 const tpCol = (n) => { try { const p = [...((rostersGet().list || []).flatMap((r) => r.players || []))].find((x) => String(x.n).split('-')[0].toLowerCase() === String(n).toLowerCase()); return (p && p.cls && E.CLASSES[p.cls] && E.CLASSES[p.cls][1]) || '#c9ced8'; } catch (e) { return '#c9ced8'; } };
 function tpChip() {
-  if (S.page !== 'plan') return; const host = document.querySelector('#view .bh-l1'); if (!host) return;
+  if (S.page !== 'plan') return; const host = document.querySelector('#view header.plan-bh .bh-l2') || document.querySelector('#view .bh-l1'); if (!host) return; /* (on the quiet line under the name, Nov 6) */
   if (!document.getElementById('tp-css')) { const st = document.createElement('style'); st.id = 'tp-css'; st.textContent = TP_CSS; document.head.appendChild(st); }
   let w = host.querySelector('.tp-wrap'); if (!w) { w = document.createElement('span'); w.className = 'tp-wrap'; host.appendChild(w); }
   const d = TP.doc; if (!d || !TP.id) { w.innerHTML = ''; return; }
@@ -8842,8 +8842,8 @@ function pgHeadFix(h, pb) { if (S.page !== 'plan' || !pb) return h; const o = pn
   h = h.replace(/<span class="bh-big">✓ (<span title="[^"]*">[^<]*<\/span>)<\/span>/, (m0, nm) => (r.k === 'ok' ? m0 : '<span class="bh-big pg-nrdy">' + nm + (r.left.length ? '<i class="pg-left">' + esc(r.left.slice(0, 2).join(' · ')) + '</i>' : '') + '</span>'));
   if (!NDZ_BUILD[pb] || !planRoster() || r.k === 'ok' || !(r.none || r.fix) || pgDry(pb, r)) return h;
   const left = planBosses().filter((b) => { if (!NDZ_BUILD[b]) return false; try { const x = pgRdy(o, b); return x.k !== 'ok' && (x.none || x.fix) && !pgDry(b, x); } catch (e) { return false; } }).length;
-  const one = '<span class="pg-one"><span class="sub">Picks who plays, then fills every cooldown, job and kick the way the fastest kills do.</span><button type="button" class="btn primary" data-pgwhole="' + esc(pb) + '" data-tt="' + esc('<b>Make the whole plan</b><br>' + (r.none ? 'Makes this boss\'s plan for the players on the Roster: every cooldown, job and kick.' : 'Fills only what\'s missing (' + esc(andL(r.left.filter((x) => !/buff/.test(x)))) + '). Your own picks stay.') + ' Undo is in the message.') + '">✨ Make the whole plan</button>' + (left > 1 ? '<button type="button" class="btn" data-tnmiss="1" data-pgevery="1" data-tt="' + esc('<b>Every boss</b><br>Makes the missing plans and finishes the started ones, the way the fastest kills do. One Undo for all of them.') + '">Every boss · ' + left + ' left</button>' : '') + '</span>';
-  const i = h.indexOf('</div><div class="bh-l2">'); if (i < 0) return h; h = h.slice(0, i) + one + h.slice(i);
+  const one = '<div class="pg-one"><button type="button" class="btn primary" data-pgwhole="' + esc(pb) + '" data-tt="' + esc('<b>Make the whole plan</b><br>' + (r.none ? 'Makes this boss\'s plan for the players on the Roster: every cooldown, job and kick.' : 'Fills only what\'s missing (' + esc(andL(r.left.filter((x) => !/buff/.test(x)))) + '). Your own picks stay.') + ' Undo is in the message.') + '">✨ Make the whole plan</button>' + (left > 1 ? '<button type="button" class="btn" data-tnmiss="1" data-pgevery="1" data-tt="' + esc('<b>Every boss</b><br>Makes the missing plans and finishes the started ones, the way the fastest kills do. One Undo for all of them.') + '">Every boss · ' + left + ' left</button>' : '') + '<span class="sub">Fills every cooldown, job and kick the way the fastest kills do.</span></div>';
+  const i0 = h.indexOf('<div class="bh-l2">'), i = i0 < 0 ? -1 : h.indexOf('</div>', i0); if (i < 0) return h; h = h.slice(0, i + 6) + one + h.slice(i + 6); /* (its own row under the quiet line, Nov 6) */
   return h.replace('class="btn sm primary pg-tbauto"', 'class="btn sm pg-tbauto pg-tbq"').replace('class="btn sm primary" data-pgcdauto="1">', 'class="btn sm pg-tbq" data-pgcdauto="1">').replace('class="btn sm primary" data-pgcdauto="1" data-tt=', 'class="btn sm pg-tbq" data-pgcdauto="1" data-tt='); } /* (and the empty chart's own one, and the no-cooldowns header's, the studio's audits) */ /* (one gold button per view: Plan them for me goes plain) */
 // (✨ Make the whole plan: a boss with no plan gets one (Pick who plays first when the number playing is wrong); a started plan keeps every
 // pick and gets only what's missing: its empty job spots, picked the way ✨ Fill this card picks them, and cooldowns for the big hits
