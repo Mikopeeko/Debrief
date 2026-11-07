@@ -57762,7 +57762,7 @@ async function wclSignBack() {
   GS.signing = true; gsDraw();
   try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json();
     if (!r.ok || !j || !j.chars) throw new Error((j && j.error) || 'Warcraft Logs didn\'t send your characters.');
-    store.set(WCL_SIGN.key, JSON.stringify(j));
+    store.set(WCL_SIGN.key, JSON.stringify(j)); whoAmI(true); /* (signed in from the front page too: the team and "you" saved at Sign out come back now, not "Add your character?" again (Flex, Nov 6)) */
   } catch (e) { if (GS) GS.note = String(e.message || e) + ' You can try again, or type your character below.'; }
   if (GS) { GS.signing = false; gsDraw(); }
 }
