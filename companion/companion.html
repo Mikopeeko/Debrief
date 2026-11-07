@@ -1346,8 +1346,16 @@ function rrPlan(nights) {
   for (const x of nights || []) { const a = +x[0], b = +x[1] || a; if (!a || now - a > 28 * 864e5) continue; const d = rrDay(a), k = d.toDateString(), m0 = new Date(k).getTime(), o = N.get(k), s = (a - m0) / 60000, e = (b - m0) / 60000;
     if (!o) N.set(k, { wd: d.getDay(), a: s, b: e }); else { o.a = Math.min(o.a, s); o.b = Math.max(o.b, e); } }
   if (!N.size) return null; const L = [...N.values()], cnt = [0, 0, 0, 0, 0, 0, 0]; for (const x of L) cnt[x.wd]++; const max = Math.max(...cnt);
+  /* (the website's rule (Nov 6): a weekday raided in most of the weeks the team raided in the last 4, and on at least half as many nights as its busiest
+     weekday; the lead's Raid days from Plan win) */
+  const wks = new Set(), byW = {}; for (const [k, x] of N) { const wk = Math.floor((now - new Date(k).getTime()) / (7 * 864e5)); wks.add(wk); (byW[x.wd] = byW[x.wd] || new Set()).add(wk); }
+  const need = wks.size >= 2 ? Math.floor(wks.size / 2) + 1 : 1, lead = rrLeadDays();
   const med = (l) => { const s = l.slice().sort((p, q) => p - q); return s[Math.floor((s.length - 1) / 2)]; }, r15 = (v) => Math.round(v / 15) * 15;
-  return { days: [1, 2, 3, 4, 5, 6, 0].filter((wd) => cnt[wd] >= (max >= 2 ? 2 : 1)), start: r15(med(L.map((x) => x.a))), end: r15(med(L.map((x) => x.b))) }; }
+  return { days: lead || [1, 2, 3, 4, 5, 6, 0].filter((wd) => byW[wd] && byW[wd].size >= need && cnt[wd] * 2 >= max), start: r15(med(L.map((x) => x.a))), end: r15(med(L.map((x) => x.b))) }; }
+// (the lead's Raid days, as Plan saved them on this PC ('wla-raiddays', the same key the website uses), or null)
+function rrLeadDays() { try { const o = JSON.parse(localStorage.getItem('wla-raiddays') || 'null'); const d = o && Array.isArray(o.d) ? o.d.filter((x) => x >= 0 && x <= 6) : []; return d.length ? d : null; } catch (e) { return null; } }
+// (the website's own days and times, written by its Home in this app, while fresh (two weeks): the reminder follows them exactly)
+const rrSite = (R) => (R && R.site && Date.now() - R.site < 14 * 864e5 && Array.isArray(R.days) && R.days.length && R.start != null && R.end != null ? { days: R.days, start: +R.start, end: +R.end } : null);
 // (the next raid: the next usual day whose end is still ahead, as Home's countdown)
 function rrNext(p) { if (!p || !p.days.length) return null; const now = Date.now(), t0 = new Date(); t0.setHours(0, 0, 0, 0);
   for (let i = -1; i < 8; i++) { const d = new Date(t0); d.setDate(t0.getDate() + i); if (!p.days.includes(d.getDay())) continue; const s = d.getTime() + p.start * 60000, e = d.getTime() + p.end * 60000; if (now < e) return { key: d.toDateString(), start: s, end: e }; }
@@ -1362,8 +1370,8 @@ async function rrLoad() {
   return mine ? { id, team: team || C.team, nights: C.nights } : null; }
 async function rrTick() {
   try { localStorage.setItem('wla-app-seen', String(Date.now())); } catch (e) { /* (not kept) */ }
-  const set = rrSets(), T = await rrLoad(), p = T && rrPlan(T.nights), nx = rrNext(p), R = store.get(RR_KEY, null) || {};
-  store.set(RR_KEY, Object.assign({}, R, { on: set.on, mins: set.mins, app: true }, T ? { team: R.team || T.team, teamId: R.teamId || T.id } : {}, nx ? { next: nx.start, start: p.start, end: p.end, days: p.days } : {}));
+  const set = rrSets(), R = store.get(RR_KEY, null) || {}, own = rrSite(R), T = await rrLoad(), p = own || (T && rrPlan(T.nights)), nx = rrNext(p);
+  store.set(RR_KEY, Object.assign({}, R, { on: set.on, mins: set.mins, app: true }, T ? { team: R.team || T.team, teamId: R.teamId || T.id } : {}, nx ? (own ? { next: nx.start } : { next: nx.start, start: p.start, end: p.end, days: p.days }) : {})); /* (the website's days are never written over) */
   if (!set.on || !nx) return; const now = Date.now(); if (now < nx.start - set.mins * 60000 || now >= nx.start) return;
   if (store.get('dbf-raid-reminded', '') === nx.key) return; store.set('dbf-raid-reminded', nx.key); /* (once a raid night) */
   const R2 = store.get(RR_KEY, null) || {}, left = Math.max(1, Math.round((nx.start - now) / 60000));
