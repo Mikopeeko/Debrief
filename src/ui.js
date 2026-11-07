@@ -33187,7 +33187,16 @@ const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; const w = WC
 document.addEventListener('whoami', outMenuLabel);
 if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); if (p) p.hidden = true;
   try { await fetch('/api/signout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { /* (the page starts over either way) */ }
-  try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0'; location.reload(); };
+  try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0';
+  /* (Flex: "the sign out button didnt do anything": the sign-in ended, but the page came back on your team's Home. Now your teams and "which one
+     is you" step aside too, so it lands on the signed-out front page; they come back when you sign in again. Saved pulls and plans stay) */
+  try { for (const k of OUT_KEYS) { const v = localStorage.getItem(k); if (v != null) { localStorage.setItem(k + '-out', v); localStorage.removeItem(k); } } } catch (e) { /* storage off */ }
+  location.href = '/'; };
+// (signed in again: the teams and "which one is you" that stepped aside at Sign out come back)
+const OUT_KEYS = [GROUPS_KEY, GROUP_CUR, 'wla-me']; /* ('wla-me' is ME_KEY, set further down) */
+document.addEventListener('whoami', () => { try { if (!(WHO.now && WHO.now.wcl) || localStorage.getItem(GROUPS_KEY + '-out') == null) return; let back = false;
+  for (const k of OUT_KEYS) { const v = localStorage.getItem(k + '-out'); if (v == null) continue; const cur = localStorage.getItem(k); if (cur == null || (k === GROUPS_KEY && cur === '[]')) { localStorage.setItem(k, v); back = true; } localStorage.removeItem(k + '-out'); }
+  if (back) location.href = '/'; /* (not a reload: a reload reopens the page you were on, the signed-out front page) */ } catch (e) { /* storage off */ } });
 document.addEventListener('whoami', () => { try { if (S.page === 'plan' && whoChars().length && !S.planRosEd && !S.noteBuild && !S.pgEdit) { PG_ALT.k = ''; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } }); /* (Plan again once your Battle.net characters are known) */
 // (Battle.net step 3: "Which one is you?" follows the linked main, so pages and Debrief Companion (it reads the same pick) follow it too;
 // a new main picked in Your characters moves it)
