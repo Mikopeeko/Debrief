@@ -6986,8 +6986,10 @@ function pvUnc(tl, hd) { let P = tl.querySelector('.pv-unc'); const D = typeof N
   if (!red.length) { if (P) P.remove(); return; } if (P && P.dataset.k === key) return;
   if (!P) { P = document.createElement('div'); P.className = 'pv-unc'; hd.insertAdjacentElement('afterend', P); } P.dataset.k = key;
   const at = (x) => (x.ph % 1 ? 'Int' : 'P' + x.ph) + ' ' + Math.floor(x.rel / 60) + ':' + String(Math.round(x.rel % 60)).padStart(2, '0');
-  P.innerHTML = '<span class="pv-unch">Not covered yet · ' + plural(red.length, 'big hit') + '</span>' + red.map(({ x, i }) => '<div class="pv-ur"><b>' + esc(at(x)) + ' · ' + esc(x.hit || 'Big hit') + '</b><span>no raid cooldown on it</span>' +
-    (x.fix && D.noteId ? '<button type="button" class="btn sm primary" data-ndzcover="' + i + '">Cover it: ' + esc(x.fix.name) + ' · ' + esc(x.fix.who) + '</button>' : '<span class="pv-unn">nobody has one ready</span>') + '</div>').join(''); }
+  /* (one quiet line, Flex Nov 7: "I hate this a lot, its too much": the count, then each hit as a small chip; a click covers it with the chart's pick, named on hover) */
+  P.innerHTML = '<span class="pv-unch">' + plural(red.length, 'big hit') + ' with no raid cooldown</span>' + red.map(({ x, i }) => x.fix && D.noteId
+    ? '<button type="button" class="pv-ur" data-ndzcover="' + i + '" title="Cover it: ' + esc(x.fix.name) + ' · ' + esc(x.fix.who) + '">' + esc(at(x).replace(/^P\d+ /, '')) + ' ' + esc(x.hit || 'Big hit') + '<i>+</i></button>'
+    : '<span class="pv-ur off" title="Nobody has a raid cooldown ready">' + esc(at(x).replace(/^P\d+ /, '')) + ' ' + esc(x.hit || 'Big hit') + '</span>').join(''); }
 let PV_MO = null; const pvMarkSoon = () => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
 setTimeout(() => { const v = document.getElementById('main') || document.body; if (!v || PV_MO || !window.MutationObserver) return; /* (the page area: #view is drawn anew) */ PV_MO = new MutationObserver(pvMarkSoon); PV_MO.observe(v, { childList: true, subtree: true }); pvMarkSoon(); }, 0);
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pvmine]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-pv-mine', b.dataset.pvmine); } catch (x) { /* (this visit) */ } pvMark(); });
@@ -8954,7 +8956,7 @@ function pgRdyTip(r, boss) { return '<div class="pg-rdc"><b class="pg-rdh">' + r
 function pgJcH(B) { let J = null; try { J = pgJobsOf(B); } catch (e) { J = null; } return J && J.of ? '<span class="pg-jc' + (J.done >= J.of ? ' ok' : '') + '">' + J.done + ' of ' + J.of + ' filled</span>' : ''; }
 // (the boss header: no ✓ until ready and what's left after the plan name; while it isn't ready, ✨ Make the whole plan)
 function pgHeadFix(h, pb) { if (S.page !== 'plan' || !pb) return h; const o = pnGet(); let r = null; try { r = pgRdy(o, pb); } catch (e) { return h; }
-  const ob = /<button type="button" class="btn pg-othb"[^>]*>⇄ Other plans<\/button>/.exec(h), oth = ob ? ob[0] : ''; if (oth) h = h.replace(oth, ''); /* (⇄ Other plans sits in row 3, beside the gold button, Nov 6) */
+  const ob = /<button type="button" class="btn pg-othb"[^>]*>⇄ Other plans<\/button>/.exec(h), oth = ''; if (ob) h = h.replace(ob[0], ''); /* (⇄ Other plans is gone: the Plans tab holds the boss's saved plans (Flex, Nov 7: "this can be removed now that we have a plan tab")) */
   const row3 = (hh, inner) => { const i0 = hh.indexOf('<div class="bh-l2">'), i = i0 < 0 ? -1 : hh.indexOf('</div>', i0); return i < 0 ? hh : hh.slice(0, i + 6) + inner + hh.slice(i + 6); };
   h = h.replace(/<span class="bh-big">✓ (<span title="[^"]*">[^<]*<\/span>)<\/span>/, (m0, nm) => (r.k === 'ok' ? m0 : '<span class="bh-big pg-nrdy">' + nm + (r.left.length ? '<i class="pg-left">' + esc(r.left.slice(0, 2).join(' · ')) + '</i>' : '') + '</span>'));
   if (!NDZ_BUILD[pb] || !planRoster() || r.k === 'ok' || !(r.none || r.fix) || pgDry(pb, r)) return oth ? row3(h, '<div class="pg-one">' + oth + '</div>') : h;

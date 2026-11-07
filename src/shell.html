@@ -12959,10 +12959,12 @@ html body #assignBox .panel.pg-roster > .pg-zone:nth-child(1 of .pg-zone) { grid
 html body #assignBox .panel.pg-roster > .pg-zone:nth-child(2 of .pg-zone):not(.pg-zout) { grid-column: 2; }
 html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 2 !important; align-self: start; }
 /* (Healing cooldowns: big hits nobody covers, pinned under the header) */
-html body #assignBox .pv-unc { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 10px; }
-html body #assignBox .pv-unch { color: var(--faint); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; }
-html body #assignBox .pv-ur { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 7px 10px; border: 1px solid rgba(232,96,76,.35); border-radius: 4px; background: rgba(232,96,76,.06); }
-html body #assignBox .pv-ur > b { color: #e8604c; } html body #assignBox .pv-ur > span { color: var(--muted); font-size: 13px; } html body #assignBox .pv-ur > .btn { margin-left: auto; } html body #assignBox .pv-ur > .pv-unn { margin-left: auto; color: var(--faint); }
+html body #assignBox .pv-unc { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+html body #assignBox .pv-unch { margin-right: 4px; color: #e8604c; font-size: 13.5px; font-weight: 600; }
+html body #assignBox .pv-ur { display: inline-flex; align-items: center; gap: 5px; min-height: 0; padding: 2px 8px; border: 1px solid var(--line2); border-radius: 4px; background: none; color: var(--muted); font: 500 13px var(--body); cursor: pointer; white-space: nowrap; }
+html body #assignBox .pv-ur > i { color: var(--gold); font-style: normal; font-weight: 700; }
+html body #assignBox button.pv-ur:hover { border-color: var(--gold); color: var(--text); }
+html body #assignBox .pv-ur.off { cursor: default; opacity: .6; }
 /* (Plans: compare two) */
 html body #assignBox .pv-cmp { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
 html body #assignBox .pv-cmph { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; } html body #assignBox .pv-cmph > span { color: var(--faint); } html body #assignBox .pv-cmph select { max-width: 240px; }
