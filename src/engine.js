@@ -7776,6 +7776,13 @@ const rcCat = (ab) => { const a = String(ab || '').toLowerCase(); for (const [re
 const cellTxtRc = (c) => (c ? c.txt || '' : '');
 const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
 const rcOr = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
+/* (Nov 7, Flex: "we need to know who caused the wipe when possible": the players the log flags for the root cause's own mechanic, from 3 s before
+   it to 1.5 s after; 4 or more is the raid, not one person, so no names; and never a guess) */
+function rcBy(r, mech, t) { /* (a person flagged for failing that mechanic then) */ if (!mech || t == null) return []; const lc = (s) => String(s || '').toLowerCase(), k = lc(mech), nm = (p) => String(p || '').split('-')[0];
+  const L = ((r && r.mistakes) || []).filter((m) => m.player && m.player !== 'Raid' && m.mechanic && m.mechanic !== 'Death' && m.t >= t - 3 && m.t <= t + 1.5 && (lc(m.mechanic) === k || lc(m.mechanic).includes(k) || k.includes(lc(m.mechanic))) && /(missed|didn't|did not|failed|forgot|never|no kick|wasn't|without)/i.test(m.detail || '') && !/(died|killed|dead|ran into|hit by|knocked)/i.test(m.detail || '')); /* (only a player who failed the job, never one who died to it or ran into it (Nov 7)) */
+  const u = [...new Set(L.map((m) => nm(m.player)))]; return u.length && u.length <= 3 ? u : []; }
+const rcBySay = (by, one) => (by && by.length ? 'Caused by ' + (one && by.length > 1 ? 'one of ' + rcOr(by) : by.length > 1 ? by.slice(0, -1).join(', ') + ' and ' + by[by.length - 1] : by[0]) + '.' : '');
+const rcWithBy = (short, by, one) => { const s = String(short || ''); return by && by.length && !by.every((n) => s.includes(n)) ? s.replace(/\.?\s*$/, '.') + ' ' + rcBySay(by, one) : s; };
 /* (Nov 5, Flex: whose purple orb set off Venom Rupture: the one carrier then, or "one of A's or B's" when two or more held one, never a guess) */
 /* (one rule for whose purple orb went off (Nov 5): the purple-orb pickups (the orbs section's carry) at the first Venom Rupture death in [a, b];
    Why we wiped, its reset and All pulls' "Carried the orb that burst" all use it) */
@@ -7933,11 +7940,12 @@ function rootCause(r, opts) {
     inter: 'A Fragment of Malacrass reached Zul\'jan in the intermission.', erasure: 'The raid\'s Spirit Erasure stacks ran too high in the intermission, with too few raid cooldowns.', adds: bombBy.length === 1 ? bombBy[0] + '\'s Gloombomb missed the add, so its shield held and Retaliatory Malice killed players.' : bombBy.length > 1 ? 'Gloombombs from ' + rcAnd(bombBy) + ' missed the adds, so their shields held and Retaliatory Malice killed players.' : 'Adds lived too long, and Retaliatory Malice killed players.',
     bombs: 'Soul fragments weren\'t picked up, or Gloombombs missed the adds.', axes: 'Players died in the axes.', pools: 'Players stood in the pools.', frontal: 'The tank frontal hit players.',
     dead: (nextCat && mostL[0] ? 'Most were ' + mostL[0].nm + ' (' + mostL[0].n + ' of ' + pre.length + ' deaths), and too few were left' : 'Deaths from different mistakes added up, and too few were left') + (nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' for ' + nextOf(phP) + '.'), reset: 'The raid lead reset the pull.' })[cat] || '';
+  const byL = cat === 'orbs' ? orbBy : cat === 'adds' ? bombBy : /^(dead|reset|dps|push|inter|erasure)$/.test(cat) ? [] : rcBy(r, RC_CAT[cat] && RC_CAT[cat].sp ? RC_CAT[cat].sp[1] : '', chain.length ? chain[0].t : null), byOne = cat === 'orbs' && orbBy.length > 1;
   const marks = cat === 'dead' ? pre.map((d) => ({ t: d.t, k: 'also' })) /* (individual mistakes: every death added up, no one person's row is the cause) */ : (chain.length ? [{ t: chain[0].t, k: 'root' }] : []).concat(...alsoL.map((a) => (a.ts || []).map((t) => ({ t, k: 'also' }))));
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ').split(SEP).join(' → ') + '.';
   const later = early ? phs.find((p) => p.start >= opts.cut - 1 && p.start > 1) : null;
   const earlyNote = early ? 'The wipe was called at ' + T(opts.cut) + ', but the raid played on' + (later ? ' into ' + ({ P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' })[later.name.split(' ')[0]] : '') + ', so this looks past the call.' : '';
-  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short, marks, sp: (RC_CAT[cat] && RC_CAT[cat].sp) || null, orbBy: cat === 'orbs' ? orbBy : [], orbAt: cat === 'orbs' ? orbAt : null, chain,
+  return { cat, name: RC_CAT[cat].nm, flex: RC_CAT[cat].flex, t: P.t, why: P.why, phase: phaseAt(P.t), early, earlyNote, pnr: { t: pnr.t, why: pnr.why }, reset, line, short: rcWithBy(short, byL, byOne), by: byL, byOne, bySay: rcBySay(byL, byOne), marks, sp: (RC_CAT[cat] && RC_CAT[cat].sp) || null, orbBy: cat === 'orbs' ? orbBy : [], orbAt: cat === 'orbs' ? orbAt : null, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: RC_CAT[a.cat].nm, short: RC_CAT[a.cat].nm.replace(/ \(.*$/, ''), who: a.who, flex: RC_CAT[a.cat].flex, txt: a.txt })), sure, unsure: sure < 0.5, nextCat, most: mostL, bombBy, kinds: wornK ? [...wornK] : null, /* (a pull worn down by Dreadmarch: mc (deaths to the mind control), ghosts (ghosts touching), or both) */ brezLeft: brezLeft(P.t), dead: deadAt(P.t).length };
 }
 
@@ -7999,9 +8007,10 @@ function rootCauseGen(r, opts) {
   const also = [], seen = new Set([lc(name)]);
   for (const m of KM.filter((x) => x.player === 'Raid' && x.severity === 'High' && x.t >= c0)) { if (seen.has(lc(m.mechanic)) || (causeM && m === causeM)) continue; seen.add(lc(m.mechanic)); also.push({ cat: 'gen', name: m.mechanic, short: m.mechanic, t: m.t }); }
   for (const [ab, k] of tally(deaths.filter((d) => d.t >= c0))) { if (k < 2 || vague(ab) || seen.has(lc(ab)) || (causeM && fits(causeM, ab)) || lc(ab) === lc(name) || (wave && causeM && wave.some((d) => d.ab === ab))) continue; seen.add(lc(ab)); also.push({ cat: 'gen', name: ab, short: ab, t: (deaths.find((d) => d.ab === ab && d.t >= c0) || {}).t }); }
+  const nmP = (p) => String(p || '').split('-')[0], byL = causeM && /^(gen)$/.test(cat) ? (causeM.player && causeM.player !== 'Raid' ? [nmP(causeM.player)] : rcBy(r, causeM.mechanic, causeM.t)) : [];
   const alsoL = also.slice(0, 3), marks = (cat === 'dead' ? deaths.filter((d) => d.t >= c0).map((d) => ({ t: d.t, k: 'also' })) : (chain.length ? [{ t: chain[0].t, k: 'root' }] : [])).concat(cat === 'dead' ? [] : alsoL.filter((a) => a.t != null).map((a) => ({ t: a.t, k: 'also' })));
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
-  return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short, marks, sp, orbBy: [], orbAt: null, chain,
+  return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short: rcWithBy(short, byL, false), by: byL, byOne: false, bySay: rcBySay(byL, false), marks, sp, orbBy: [], orbAt: null, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 

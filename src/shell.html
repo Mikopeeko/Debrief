@@ -14792,6 +14792,7 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-s
   html body #assignBox > .panel.pg-bar { box-sizing: border-box !important; max-width: 100% !important; min-width: 0 !important; }
 }
 </style>
+<style>/* (Nov 7: who caused the wipe, on the root-cause row) */ html body #view .dbt-why .wrt-by { font-style: normal; font-weight: 600; color: #e8eaed; }</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -15437,6 +15438,8 @@ function scan() { r423soon(); try { if (window.__ahDedupe) [].forEach.call(docum
       var put = function (r, k) { r.classList.add(k === 'root' ? 'wrt-rootrow' : 'wrt-alsorow'); /* (CSS writes the words after the name: a cell of their own pushed the badge to a second line, and text inside the name changed the name other tidiers read) */ };
       var rm = RT.marks.filter(function (m) { return m.k === 'root'; })[0], best = rm ? near(rows(), rm.t) : null;
       if (rm && !best && chn) { var ad = [].slice.call(w.querySelectorAll('.dbt-add > .dbt-addr')); ad.forEach(function (a) { a._t = sx(T(a.querySelector(':scope > span:not(.dbt-ic)'))); }); var a0 = near(ad, rm.t); if (a0) best = up(a0); } if (best) put(best, 'root');
+      /* (Nov 7, Flex: "who caused the wipe": the root-cause row names them, when the log shows it and the row doesn't already) */
+      if (best && RT.bySay && (RT.by || []).length) { var bsp = best.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic):not(.dbt-lv)'), have = T(best); if (bsp && !RT.by.every(function (n) { return have.indexOf(n) >= 0; }) && !bsp.querySelector('.wrt-by')) { var by = document.createElement('em'); by.className = 'wrt-by'; by.textContent = ' ' + RT.bySay; bsp.appendChild(by); } }
       rows().forEach(function (r) { if (r === best) return; var s0 = secs(r); if (s0 != null && RT.marks.some(function (m) { return m.k === 'also' && Math.abs(s0 - Math.floor(m.t)) <= 1; })) put(r, 'also'); });
       if (window.__ahDedupe) window.__ahDedupe(w); /* (the row that moved up may repeat an Also hurt row) */
       var add = w.querySelector('.dbt-add'); if (add && !add.querySelector('.dbt-addr')) add.remove(); /* (nothing else hurt: no empty Also hurt) */ };
