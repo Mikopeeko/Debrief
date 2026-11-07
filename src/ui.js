@@ -33108,6 +33108,8 @@ async function wclSignBack() {
   let after = null; try { after = sessionStorage.getItem('wla-wcl-after'); sessionStorage.removeItem('wla-wcl-after'); } catch (e) { /* storage off */ }
   if (after === 'alts' || after === 'night' || after === 'acct') { if (code && p && p.st === st) try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* the panel offers typing */ }
     if (after === 'night') { nightDlg(); return; } if (after === 'acct') { openAccounts(); return; } S.yuOpen = true; openMyPage(); return; }
+  if (code && p && p.st === st && outSaved()) { try { const r = await fetch('/api/wcl-me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code, verifier: p.v }) }), j = await r.json(); if (r.ok && j && j.chars) store.set(WCL_SIGN.key, JSON.stringify(j)); } catch (e) { /* (Home says Not signed in, with Sign in) */ }
+    outBack(); location.href = '/'; return; } /* (a team saved at Sign out: straight back to it, no "Add your character?" (Flex, Nov 6)) */
   gsStart(); if (!GS) return;
   if (!code || !p || p.st !== st) { GS.note = WCL_CB.get('error') ? 'Sign-in was cancelled. You can try again, or type your character below.' : 'That sign-in didn\'t finish. Try again, or type your character below.'; gsDraw(); return; }
   GS.signing = true; gsDraw();
@@ -33217,13 +33219,15 @@ if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); 
   location.href = '/'; };
 // (signed in again: the teams and "which one is you" that stepped aside at Sign out come back)
 const OUT_KEYS = [GROUPS_KEY, GROUP_CUR, 'wla-me']; /* ('wla-me' is ME_KEY, set further down) */
-document.addEventListener('whoami', () => { try { if (!(WHO.now && WHO.now.wcl) || !OUT_KEYS.some((k) => localStorage.getItem(k + '-out') != null)) return; let back = false;
+const outSaved = () => { try { return OUT_KEYS.some((k) => localStorage.getItem(k + '-out') != null); } catch (e) { return false; } };
+function outBack() { let back = false; try {
   for (const k of OUT_KEYS) { const v = localStorage.getItem(k + '-out'); if (v == null) continue; localStorage.removeItem(k + '-out'); back = true;
     if (k !== GROUPS_KEY) { localStorage.setItem(k, v); continue; } /* (the team and "you" picked before Sign out win (Flex, Nov 6: "its very bugged")) */
     let a = [], b = []; try { a = JSON.parse(v) || []; } catch (e) { a = []; } try { b = JSON.parse(localStorage.getItem(k) || '[]') || []; } catch (e) { b = []; }
     const by = new Map(); for (const g of a) if (g && g.gid) by.set(g.gid, g); /* (the saved list, merged with one made while signed out: each team once, the opened pulls of both) */
     for (const g of b) { if (!g || !g.gid) continue; const o = by.get(g.gid); if (!o) by.set(g.gid, g); else if (g.done) o.done = Object.assign({}, o.done || {}, g.done); }
-    localStorage.setItem(k, JSON.stringify([...by.values()])); }
+    localStorage.setItem(k, JSON.stringify([...by.values()])); } } catch (e) { /* storage off */ } return back; }
+document.addEventListener('whoami', () => { try { if (!(WHO.now && WHO.now.wcl) || !outSaved()) return; const back = outBack();
   if (back) location.href = '/'; /* (not a reload: a reload reopens the page you were on, the signed-out front page) */ } catch (e) { /* storage off */ } });
 document.addEventListener('whoami', () => { try { if (S.page === 'plan' && whoChars().length && !S.planRosEd && !S.noteBuild && !S.pgEdit) { PG_ALT.k = ''; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } }); /* (Plan again once your Battle.net characters are known) */
 // (Battle.net step 3: "Which one is you?" follows the linked main, so pages and Debrief Companion (it reads the same pick) follow it too;
