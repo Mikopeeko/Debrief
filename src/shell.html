@@ -12883,7 +12883,7 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 .dtm-fsx:fullscreen, .dtm-fsx.dtm-fsfake { box-sizing: border-box; width: 100%; height: 100%; max-width: none !important; margin: 0 !important; padding: 16px 20px !important; overflow: auto; background: var(--bg, #0b0d12) !important; }
 .dtm-fsx:-webkit-full-screen { box-sizing: border-box; width: 100%; height: 100%; padding: 16px 20px !important; overflow: auto; background: var(--bg, #0b0d12) !important; }
 .dtm-fsx.dtm-fsfake { position: fixed !important; inset: 0; z-index: 9990; }
-html.dtm-fslock, html.dtm-fslock body { overflow: hidden !important; }
+html.dtm-fslock:has(.dtm-fsx), html.dtm-fslock:has(.dtm-fsx) body { overflow: hidden !important; } html.dtm-fslock:has(.dtm-fsx) .ndz-ask { display: none !important; } /* (only while a replay fills the window: a lock left behind (the replay redrawn, Esc) never stops the page scrolling (Nov 6)) */ /* (the note question waits while the replay fills the window (Nov 6)) */
 .dtm-fsx::backdrop { background: var(--bg, #0b0d12); }
 /* (Plan's night menu: Raid days (Nov 6)) */
 .pg-dpm .pg-rdd { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 4px 10px 8px; color: #9aa3ac; font-size: 12.5px; }
@@ -12891,6 +12891,25 @@ html.dtm-fslock, html.dtm-fslock body { overflow: hidden !important; }
 .pg-dpm .pg-rdd > button { min-width: 34px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: none; color: #9aa3ac; font: 600 12px var(--head); cursor: pointer; }
 .pg-dpm .pg-rdd > button.on { border-color: rgba(230,180,80,.6); background: rgba(230,180,80,.12); color: var(--gold, #e6b450); }
 .pg-dpm .pg-rdd > button.pg-rda { min-width: 0; border-style: dashed; }
+/* (Nov 6, Flex: "The map should be the biggest part in full screen mode": its own layout. The map takes the full height and about three
+   quarters of the width, its names grow with it; the play by play and the card share a slim column on the right; the play bar stays along
+   the map's bottom; the raid frames sit at the map's bottom left; the phase timeline stays along the bottom; You/Top guilds steps aside) */
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx { display: flex !important; flex-direction: column; padding: 12px 14px !important; overflow: hidden !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx > :not(.dtm-grid):not(.dtm-tlm) { display: none !important; } /* (the phase timeline stays along the bottom (Flex, Nov 6)) */
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx > .dtm-tlm { flex: none; margin-top: 10px; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx > .dtm-grid { flex: 1 1 auto; min-height: 0; grid-template-columns: minmax(0, 3fr) minmax(300px, 1fr) !important; align-items: stretch !important; padding: 0 !important; gap: 12px !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-left { min-height: 0; height: 100%; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-left > :not(.dtm-map) { display: none !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-map { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-map > .dtm-mm, html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-mm > .zwrap, html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-mm .zbox { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; height: auto !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-map svg.zmap { flex: 1 1 auto; min-height: 0; height: 100% !important; max-height: none !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-mm .zanim { flex: none; position: relative !important; } /* (the time bar's mistake marks sit on the bar itself, however tall the map is) */
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-map .zctl { bottom: 72px !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rf { top: auto !important; bottom: 62px !important; left: 10px !important; right: auto !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc { height: 100% !important; min-height: 0; max-height: none !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-pb { flex: 1 1 55% !important; max-height: none !important; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-vd { flex: 1 1 45% !important; min-height: 0; overflow: auto; }
+html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-card { min-height: 0 !important; }
 </style>
 
 
