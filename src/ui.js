@@ -7992,34 +7992,48 @@ function bfrFacts(L) {
       low ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
     if (parts.length) rows.push({ k: miss.length || gem.length ? 'bad' : 'warn', x, parts, w: miss.length + gem.length * 1 + (low ? 0.5 : 0) }); else { fine++; okL.push(x); } }
   rows.sort((a, b) => (a.k === b.k ? 0 : a.k === 'bad' ? -1 : 1) || b.w - a.w || a.x.n.localeCompare(b.x.n));
-  return { rows, fine, okL: okL.sort((a, b) => a.n.localeCompare(b.n)), mid, none: L.filter((x) => x.none).map((x) => x.n) };
+  return { rows, fine, okL: okL.sort((a, b) => a.n.localeCompare(b.n)), mid, need, none: L.filter((x) => x.none).map((x) => x.n) };
 }
 const bfrCol = (x) => (E.CLASSES[x.cls] || [])[1] || 'var(--text)';
 const BFR_IC = { bad: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M7 7l6 6M13 7l-6 6"/></svg>', warn: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M10 5.5v6M10 14v.5"/></svg>', ok: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M6.5 10.2l2.4 2.4 4.6-5"/></svg>' };
+// (where it lives (Flex: "Yes, build it" on the studio's mock, Nov 6): no panel of its own. A dot on each raider's chip whose gear needs fixing (red: a
+// missing enchant or an empty socket; amber: item level under the raid), one slim line in the Roster header, and "see all" opens the list in place)
 function bfrDraw() {
-  if (S.page !== 'plan') return; const view = $('#view'); if (!view) return; let el = view.querySelector('#bfrBox');
-  const W = bfrWhere(), N = bfrNames(); if (!W || !N.length || !WCL.HOSTED) { if (el) el.remove(); return; }
-  if (!el) { el = document.createElement('section'); el.id = 'bfrBox'; el.className = 'panel bfr'; view.appendChild(el); }
+  if (S.page !== 'plan') return; const view = $('#view'); if (!view) return; { const old = view.querySelector('#bfrBox'); if (old) old.remove(); }
+  const ros = view.querySelector('#pg-roster'), hd = ros && ros.querySelector('.ndz-dph'); if (!ros || !hd) return;
+  const W = bfrWhere(), N = bfrNames(); let sum = hd.querySelector('.gr-sum');
+  if (!W || !N.length || !WCL.HOSTED) { if (sum) sum.remove(); return; }
+  if (!sum) { sum = document.createElement('span'); sum.className = 'gr-sum'; const sp = hd.querySelector('.tn-sp'); hd.insertBefore(sum, sp ? sp.nextSibling : null); }
   const d = TP.doc || {}, you = d.you || {}, can = !!you.can, mineOn = new Set(N.map((n) => meBase(n))), onRoster = meNames().some((n) => mineOn.has(meBase(n))), linked = whoChars().length > 0;
-  const nm = (n) => { const b = String(n).toLowerCase(); return ((TP.doc && TP.doc.bn) || []).some((g) => g.some((x) => String(x).toLowerCase() === b)) || whoChars().some((c) => meBase(c.n) === meBase(n)); };
-  const join = d.exists && !onRoster && !can && WHO.now && WHO.now.wcl && WHO.now.can ? '<div class="bfr-join"><button class="btn bn-link" type="button" data-bfr="join"><span class="bn-b">B</span>' + (linked ? 'Join ' : 'Link Battle.net and join ') + esc(TP.name || W.team.name) + '</button><span>' + (linked && whoMain() ? 'Adds you to the team roster as ' + esc(whoMain().n) + ' (' + esc([whoMain().spec, (E.CLASSES[whoMain().cls] || [])[0]].filter(Boolean).join(' ')) + '). Your raid lead sees you right away.' : 'Adds you to the team roster with your main\'s spec and role. Your raid lead sees you right away.') + '</span></div>' : '';
-  let body = '';
-  if (BFR.busy || (!BFR.list && !BFR.err)) body = '<p class="bfr-f">Checking everyone\'s gear on Battle.net…</p>';
-  else if (BFR.err) body = '<p class="bfr-f">' + esc(BFR.err) + ' <button class="lk" type="button" data-bfr="again">Try again</button></p>';
-  else { const F = bfrFacts(BFR.list), nFix = F.rows.length;
-    body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
-      (F.fine ? '<details class="bfr-r ok bfr-okd"><summary>' + BFR_IC.ok + '<span class="t"><b>' + plural(F.fine, 'raider') + ' ready</b>: enchanted, gemmed and at raid item level <span class="bfr-tap">Show who</span></span></summary><div class="bfr-okl">' + F.okL.map((x) => '<b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b>').join(', ') + '</div></details>' : '') +
+  const nm = (n) => { const lo = String(n).toLowerCase(); return ((TP.doc && TP.doc.bn) || []).some((g) => g.some((x) => String(x).toLowerCase() === lo)) || whoChars().some((c) => meBase(c.n) === meBase(n)); };
+  const join = d.exists && !onRoster && !can && WHO.now && WHO.now.wcl && WHO.now.can ? ' · <button class="lk gr-join" type="button" data-bfr="join">' + (linked ? 'Join ' : 'Link Battle.net and join ') + esc(TP.name || W.team.name) + '</button>' : '';
+  const F = BFR.list && !BFR.err ? bfrFacts(BFR.list) : null;
+  if (F && F.need.size) try { store.set('wla-gear-ref', JSON.stringify({ need: [...F.need], mid: F.mid, at: Date.now() })); } catch (e) { /* (Home falls back) */ }
+  const bad = F ? F.rows.filter((r) => r.k === 'bad').length : 0, low = F ? F.rows.length - bad : 0, all = '<button class="lk gr-all" type="button" data-bfr="all" aria-expanded="' + !!BFR.all + '">' + (BFR.all ? 'hide ▴' : 'see all ▾') + '</button>';
+  sum.innerHTML = (!F ? (BFR.err ? '<span class="gr-l">The gear check didn\'t load · <button class="lk" type="button" data-bfr="again">Try again</button></span>' : '<span class="gr-l">Checking gear…</span>')
+    : !F.rows.length ? '<span class="gr-ok">✓ Gear: everyone\'s ready</span>' + (can ? ' · ' + all : '')
+    : '<span class="gr-l">Gear for the next raid:</span> ' + [bad ? '<b class="gr-bad">' + bad + ' to fix</b>' : '', low ? '<b class="gr-warn">' + low + ' under item level</b>' : '', F.fine ? '<span class="gr-ok">✓ ' + F.fine + ' ready</span>' : ''].filter(Boolean).join(' · ') + ' · ' + all) + join;
+  // (the full list, in place under the header)
+  let L = ros.querySelector('.gr-list');
+  if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; hd.insertAdjacentElement('afterend', L); }
+    const mid = F.mid, off = can ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
+      BFR.list.filter((x) => !x.none).sort((p, q) => q.il - p.il).map((x) => '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>').join('') +
+      '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
+    L.innerHTML = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
+      (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t"><b>' + plural(F.fine, 'raider') + ' ready</b>: ' + F.okL.map((x) => '<b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b>').join(', ') + '</span></div>' : '') +
       (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
-      '<p class="bfr-f">Checked from public gear data, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>';
-    el.dataset.n = nFix; }
-  const off = can && BFR.list && !BFR.err ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
-    BFR.list.filter((x) => !x.none).sort((a, b) => b.il - a.il).map((x) => { const mid = bfrFacts(BFR.list).mid; return '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>'; }).join('') +
-    '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
-  el.innerHTML = '<div class="bfr-h"><h2>Ready for the next raid?</h2><span class="m">From Battle.net gear' + (el.dataset.n && BFR.list ? ' · ' + (+el.dataset.n ? plural(+el.dataset.n, 'raider') + ' to fix' : 'nothing to fix') : '') + '</span></div>' + join + body + off;
-  const o = el.querySelector('.bfr-off'); if (o) o.ontoggle = () => { BFR.off = o.open; };
+      '<p class="bfr-f">From public Battle.net gear, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>' + off;
+    const o = L.querySelector('.bfr-off'); if (o) o.ontoggle = () => { BFR.off = o.open; }; }
+  else if (L) L.remove();
+  // (the dots on the chips)
+  const byN = new Map(); if (F) for (const r of F.rows) byN.set(meBase(r.x.n), r);
+  for (const c of ros.querySelectorAll('.pg-rc[data-pgsit]')) { const r = byN.get(meBase(c.dataset.pgsit)); let dot = c.querySelector('.gr-dot');
+    if (!r) { if (dot) dot.remove(); continue; } if (!dot) { dot = document.createElement('i'); c.appendChild(dot); }
+    dot.className = 'gr-dot ' + r.k; dot.setAttribute('aria-label', r.x.n + ': ' + r.parts.join(', ')); dot.dataset.tt = '<b>' + esc(r.x.n) + '</b> · ' + r.parts.map(esc).join(' · '); }
 }
 document.addEventListener('click', async (e) => { const b = e.target.closest && e.target.closest('[data-bfr]'); if (!b) return; const k = b.dataset.bfr;
   if (k === 'again') { BFR.key = ''; bfrLoad(); bfrDraw(); return; }
+  if (k === 'all') { BFR.all = !BFR.all; bfrDraw(); return; }
   if (k === 'join') { if (!whoChars().length) { try { sessionStorage.setItem('wla-bn-join', TP.id); } catch (x) { /* storage off */ } location.href = '/auth/bnet/start?region=' + ((bfrWhere() || {}).r || 'us'); return; } bfrJoin(); } });
 async function bfrJoin() { const id = TP.id; if (!id) return; const r = await tpApi('id=' + encodeURIComponent(id), { op: 'join', me: (whoMain() || {}).n || tpWho() }).catch(() => ({ error: 'That didn\'t save. Try again.' }));
   if (!r.ok) { toast(esc(r.error || 'That didn\'t save. Try again.'), 5000); return; } TP.ver = null; await tpPull(); toast(r.already ? 'You\'re already on the roster.' : 'You\'re on ' + esc(TP.name) + '\'s roster. Your raid lead sees you now.', 4000); }
@@ -8027,7 +8041,7 @@ async function bfrJoin() { const id = TP.id; if (!id) return; const r = await tp
 document.addEventListener('whoami', () => { let j = null; try { j = sessionStorage.getItem('wla-bn-join'); } catch (e) { j = null; } if (!j || !whoChars().length) return; try { sessionStorage.removeItem('wla-bn-join'); } catch (e) { /* storage off */ }
   setTimeout(async () => { if (TP.id !== j) { const t = tpTeam(); if (!t || t.kind + ':' + t.id !== j) return; } await tpPull(); bfrJoin(); }, 1500); });
 (function () { const p0 = planPage; planPage = function () { const r = p0.apply(this, arguments); try { bfrDraw(); bfrLoad(); } catch (e) { /* (Plan works on its own) */ } return r; }; })();
-setInterval(() => { try { if (S.page === 'plan' && WCL.HOSTED && !document.querySelector('#view #bfrBox') && bfrNames().length) bfrDraw(); } catch (e) { /* (next tick) */ } }, 1500); /* (Plan redrew part of itself: the panel comes back) */
+setInterval(() => { try { if (S.page === 'plan' && WCL.HOSTED && document.querySelector('#view #pg-roster') && (!document.querySelector('#view #pg-roster .gr-sum') || (BFR.list && !document.querySelector('#view #pg-roster .gr-dot') && bfrFacts(BFR.list).rows.length)) && bfrNames().length) bfrDraw(); } catch (e) { /* (next tick) */ } }, 1500); /* (Plan redrew part of itself: the panel comes back) */
 // (every time Plan is drawn: the chip, the tags, and a read of the team's plan when the team changed or nothing's been read yet)
 (function () { const p0 = planPage; planPage = function () { const r = p0.apply(this, arguments); try { tpChip(); const t = tpTeam(); if (t && (t.kind + ':' + t.id !== TP.id || !TP.doc)) tpPull(); } catch (e) { /* (Plan works on its own) */ } return r; }; })();
 
@@ -34163,6 +34177,20 @@ function hdTpJobs(K, boss, night, me) { const o = hdTpGet(K, 'wla-rnote|' + boss
   return { note: n, has: L.length > 0, jobs, cds, sit: on.length > 0 && !on.includes(lo), diff }; }
 const hdBossFace = (b, cls) => { const H = BOSS_HERO[b]; return H ? '<img class="' + cls + '" src="https://wow.zamimg.com/uploads/guide/header/' + H[0] + '.jpg" alt="" loading="lazy" style="object-position:' + H[1] + '% 28%" onerror="this.remove()">' : BOSS_ART[b] ? '<img class="' + cls + '" src="' + artUrl(BOSS_ART[b][0]) + '" alt="" loading="lazy">' : '<span class="hj-ni"></span>'; };
 const HD_CAM = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="10" rx="2"/><circle cx="8" cy="8.5" r="2.5"/></svg>';
+// (Your gear under Your jobs (the studio's mock, Nov 6): the raider's own public Battle.net gear against the raid's, a red line only when it needs fixing.
+// The enchanted slots and the raid's item level come from Plan's last check; before one, the slots the raid's gear shows enchanted on Midnight)
+const HD_GEAR = new Map(), HD_GEAR_NEED = ['HEAD', 'SHOULDER', 'CHEST', 'HANDS', 'LEGS', 'FEET', 'FINGER_1', 'FINGER_2', 'MAIN_HAND'];
+async function hdGear(g, me) {
+  const box = $('#main .hj-gear'); if (!box || !me || !WCL.HOSTED) return; const k = g.gid + '|' + me.toLowerCase();
+  let x = HD_GEAR.get(k);
+  if (x === undefined) { HD_GEAR.set(k, null); try { const sv = String(g.server || ''), rg = ((/\((\w{2})\)\s*$/.exec(sv) || [])[1] || 'us').toLowerCase(), mine = whoChars().find((c) => meBase(c.n) === meBase(me));
+      const realm = mine ? mine.slug : (await bfrRealms(g).catch(() => new Map())).get(me.toLowerCase()) || srvSlug(sv.replace(/\s*\(\w{2}\)\s*$/, ''));
+      const j = await (await fetch('/api/raiders?r=' + (/^(us|eu)$/.test(rg) ? rg : 'us') + '&c=' + encodeURIComponent(String(realm).replace(/[:,]/g, '') + ':' + me))).json(); x = (j.list || [])[0] || null; } catch (e) { x = null; } HD_GEAR.set(k, x); }
+  if (!x || x.none) return; let ref = null; try { ref = JSON.parse(store.get('wla-gear-ref') || 'null'); } catch (e) { ref = null; }
+  const need = new Set((ref && ref.need) || HD_GEAR_NEED), mid = ref && ref.mid;
+  const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s);
+  const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'an empty gem socket') + ' (' + gem.join(', ') + ')' : '', mid && x.il <= mid - 5 ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
+  if (!parts.length) return; box.hidden = false; box.innerHTML = '<b>Your gear: ' + esc(parts.join(' · ')) + '.</b><span>Fix it before the next raid.</span>'; }
 function hdJobs(g, ch, gb, redraw) {
   let me = ch && ch.name ? String(ch.name).split('-')[0] : ''; if (!me && !whoChars().length) return ''; const r = hdTeamPlan(g, redraw); if (!r) return '';
   const K = r.keys, night = hdTpNight(K); if (!night) return '';
@@ -34176,8 +34204,8 @@ function hdJobs(g, ch, gb, redraw) {
   const tiles = bosses.map((b, i) => { const J = hdTpJobs(K, b, night, me), art = hdBossFace(b, 'hj-face');
     const tag = J.sit ? '<span class="hj-no">Sitting this one</span>' : J.jobs.length ? '<span class="hj-tg">' + esc(J.jobs[0]) + '</span>' + (J.jobs.length > 1 ? '<span class="hj-more">+' + (J.jobs.length - 1) + '</span>' : '') : '<span class="hj-no">' + (J.has ? (role ? role + ' · no job' : 'No job') : 'No plan yet') + '</span>';
     return '<button type="button" class="hj-t' + (J.sit ? ' sit' : '') + (b === gb ? ' goal' : '') + '" data-hdjob="' + esc(b) + '"' + (J.note && !J.sit ? '' : ' data-nojob="1"') + '>' + art + '<span class="hj-tx"><span class="hj-nm"><i>' + (i + 1) + '</i>' + esc(pnShort(b)) + '</span><span class="hj-jb">' + tag + '</span></span><span class="hj-pic" data-hjcam="' + esc(b) + '"></span></button>'; }).join('');
-  setTimeout(hdJobCams, 60);
-  return '<section class="hd-pn hd-jobs"><div class="hd-ph"><h3>Your jobs</h3><span class="m">' + esc(dayN) + '\'s raid</span><span class="hj-r"><span class="hj-src"><i class="hj-dot"></i>' + esc(gName(g)) + '\'s plan' + (upd ? ' · updated ' + tpAgo(upd) : '') + '</span><button type="button" class="hj-open" data-hdjplan="1">Open in Plan ›</button></span></div><div class="hj-g">' + tiles + '</div></section>';
+  setTimeout(hdJobCams, 60); setTimeout(() => hdGear(g, me), 80);
+  return '<section class="hd-pn hd-jobs"><div class="hd-ph"><h3>Your jobs</h3><span class="m">' + esc(dayN) + '\'s raid</span><span class="hj-r"><span class="hj-src"><i class="hj-dot"></i>' + esc(gName(g)) + '\'s plan' + (upd ? ' · updated ' + tpAgo(upd) : '') + '</span><button type="button" class="hj-open" data-hdjplan="1">Open in Plan ›</button></span></div><div class="hj-g">' + tiles + '</div><div class="hj-gear" hidden></div></section>';
 }
 const HD_JOBS = { ctx: null, sets: new Map() };
 // (a boss's pictures with you in them: the picture set Plan makes from that boss's plan, only the ones that name you)

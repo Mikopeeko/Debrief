@@ -4950,6 +4950,13 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .bfr-h h2 { margin: 0; font: 700 20px var(--head); color: var(--text); } .bfr-h .m { color: var(--muted); font-size: 13px; }
 .bfr-r { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; } .bfr-r svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .bfr-r.bad svg { color: var(--bad); } .bfr-r.warn svg { color: var(--warn); } .bfr-r.ok svg { color: var(--good); } .bfr-r .t { color: var(--text); line-height: 1.45; } .bfr-p { color: var(--muted); } .bfr-r .w { color: var(--muted); font-size: 13px; text-align: right; }
+/* (the gear check in the Roster header and on the chips, Nov 6) */
+.gr-sum { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; margin-left: auto; padding: 4px 10px; border: 1px solid var(--line); border-radius: 4px; font-size: 13px; color: var(--muted); }
+.gr-sum .gr-bad { color: var(--bad); } .gr-sum .gr-warn { color: var(--warn); } .gr-sum .gr-ok { color: var(--good); } .gr-sum .lk { background: none; border: 0; padding: 0; color: var(--gold); font-size: 13px; cursor: pointer; } .gr-sum .gr-all { color: var(--muted); text-decoration: underline dotted; }
+.gr-list { margin: 8px 0 12px; padding: 4px 12px 8px; border: 1px solid var(--line); border-radius: 6px; }
+html body #view .pg-ros > .pg-rc { position: relative; } .gr-dot { position: absolute; top: 2px; right: 2px; width: 9px; height: 9px; border-radius: 50% !important; border: 1.5px solid var(--panel); box-shadow: 0 0 0 1px rgba(0,0,0,.35); background: var(--bad); cursor: help; } .gr-dot.warn { background: var(--warn); }
+@media (max-width: 760px) { .gr-sum { margin-left: 0; width: 100%; } }
+.hj-gear { margin-top: 10px; padding: 8px 12px; border-left: 3px solid var(--bad); background: rgba(229,83,75,.08); font-size: 14px; } .hj-gear b { display: block; color: #ff8f87; font-weight: 600; } .hj-gear span { color: var(--muted); font-size: 13px; }
 .bfr-okd { display: block; } .bfr-okd > summary { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 10px; cursor: pointer; list-style: none; } .bfr-okd > summary::-webkit-details-marker { display: none; }
 .bfr-okd > summary svg { width: 20px; height: 20px; fill: none; stroke: var(--good); stroke-width: 1.6; stroke-linecap: round; } .bfr-tap { margin-left: 6px; color: var(--gold); font-size: 13px; } .bfr-okd[open] .bfr-tap { display: none; }
 .bfr-okl { padding: 8px 0 2px 30px; font-size: 13px; line-height: 1.6; color: var(--muted); } .bfr-okl b { font-weight: 600; }
