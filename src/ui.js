@@ -18367,7 +18367,7 @@ function nightPlayers(NP) {
 // (Nov 6, Main: with the wipe filter off a line said "each up to its wipe filter": it says whole pulls then)
 // (Nov 6, Flex: "the deaths in graphs are definitely counting things that happened during the wipe": a death counts on Graphs as everywhere else, before the
 // call and not in a mass wipe (deathVerdict); the others are "during the wipe")
-function gbDeathOk(r, d) { try { const v = deathVerdict(r, d); return !!(v && v.counts && v.why !== 'mass'); } catch (e) { return true; } }
+function gbDeathOk(r, d) { try { const v = deathVerdict(r, d); return !!(v && v.counts && v.on); } catch (e) { return false; } } /* (Flex, Nov 6: "all I want graph deaths to show are the shitters that messed up and cost them their life": their own mistake only, the Report card's Deaths on you) */
 function wfTxt() { return deathCutN() ? 'each up to its wipe filter' : 'whole pulls'; }
 function graphsBoard(r, end, NP) {
   const night = !!(NP && NP.length > 1);
