@@ -12926,6 +12926,7 @@ html body #assignBox .pg-tab { display: inline-flex; align-items: center; gap: 8
 html body #assignBox .pg-tab:hover { color: var(--text); }
 html body #assignBox .pg-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: rgba(212,183,125,.07); }
 html body #assignBox .pg-tab.pg-taball { margin-left: auto; font-size: 13.5px; }
+html body #assignBox .pg-tab.pg-taball[aria-selected="true"]::after { content: "✕"; margin-left: 2px; font-size: 12px; opacity: .75; } /* (on: a second press turns it off, Nov 7) */
 html body #assignBox .pg-tabn { padding: 1px 7px; border-radius: 999px; background: var(--raised); color: var(--muted); font: 600 12.5px var(--body); }
 html body #assignBox .pg-tabn.warn { color: #f0b45a; background: rgba(240,180,90,.12); } html body #assignBox .pg-tabn.ok { color: #5fd07a; background: rgba(95,208,122,.12); }
 html body #assignBox:has(> .pg-tabs[data-cur="roster"]) [data-pv]:not([data-pv="roster"]),

@@ -7040,7 +7040,10 @@ function pvCmpBody(L, ids) { const A = L.find((x) => x.id === ids[0]), B = L.fin
 document.addEventListener('change', (e) => { const s = e.target.closest && e.target.closest('[data-pvcmp]'); if (!s || S.page !== 'plan') return; const w = s.closest('.pv-cmp'), pb = w && w.dataset.pvcmpboss; if (!pb) return;
   const ids = [...w.querySelectorAll('[data-pvcmp]')].map((x) => x.value), L = notesOf(pb).list.filter((x) => !x.example); S.pvCmp = { pb, ids }; const body = w.querySelector('.pv-cmpb'); if (body) body.innerHTML = pvCmpBody(L, ids); });
 /* (a tab: shown at once, kept for this boss and in the address; the bar stays in view) */
-document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pgpv]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nav = b.closest('.pg-tabs'), v = b.dataset.pgpv, pb = nav && nav.dataset.pvboss; if (!nav || !pvOk(v)) return;
+document.addEventListener('click', (e) => { let b = e.target.closest && e.target.closest('[data-pgpv]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nav = b.closest('.pg-tabs'), pb = nav && nav.dataset.pvboss; let v = b.dataset.pgpv; if (!nav || !pvOk(v)) return;
+  /* (All on one page is an on/off switch: pressed again, it goes back to the tab you were on (Flex, Nov 7: "theres no way to disable this once you enable it")) */
+  if (v === 'all' && nav.dataset.cur === 'all') { let back = 'roster'; try { const p = store.get('wla-pv-prev|' + pb); if (pvOk(p) && p !== 'all') back = p; } catch (x) { /* (Roster) */ } v = back; b = nav.querySelector('[data-pgpv="' + v + '"]') || b; }
+  else if (v === 'all' && nav.dataset.cur !== 'all') { try { store.set('wla-pv-prev|' + pb, nav.dataset.cur); } catch (x) { /* (this visit) */ } }
   nav.dataset.cur = v; nav.querySelectorAll('[data-pgpv]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
   try { if (pb) store.set('wla-pv|' + pb, v); const q = new URLSearchParams(location.search); q.set('pv', v); history.replaceState(history.state, '', location.pathname + '?' + q.toString().replace(/=(&|$)/g, '$1') + location.hash); } catch (x) { /* (this visit only) */ }
   const top = nav.getBoundingClientRect().top; if (top < 0) window.scrollTo({ top: Math.max(0, window.scrollY + top - 8) }); });
