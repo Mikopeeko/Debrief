@@ -6994,8 +6994,12 @@ function pvUnc(tl, hd) { let P = tl.querySelector('.pv-unc'); const D = typeof N
    what needs doing; what's fine is one green line. The full gear list and the 12 raid kit boxes stay one click away) */
 let PV_KIT = false;
 const pvOr = (a) => (a.length < 2 ? a[0] || '' : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
-function pvWhoBrings(nm) { const lo = String(nm).toLowerCase(); for (const g of NDZ_BUFFS) for (const [n, cl, sp] of g[2]) if (n.toLowerCase() === lo) {
-  const S2 = (E && E.SPECS) || {}; return sp && sp.length ? sp.map((id) => (S2[id] ? S2[id][0] + ' ' + ndzClsName(S2[id][1]) : '')).filter(Boolean) : cl.map(ndzClsName).filter(Boolean); } return []; }
+/* (a missing tool: who on the roster could bring it (the bench, or someone of that class in another spec); a key buff or debuff shows even when nobody can) */
+function pvWhoBrings(nm, ppl) { const lo = String(nm).toLowerCase(); for (const g of NDZ_BUFFS) for (const [n, cl, sp] of g[2]) if (n.toLowerCase() === lo) {
+  const S2 = (E && E.SPECS) || {}, key = g[1] === 'need', hasSp = !!(sp && sp.length);
+  const who = (ppl || []).filter((p) => cl.includes(p.cls)).map((p) => { const fit = !hasSp || sp.includes(+p.sid), sn = !fit && S2[sp[0]] ? S2[sp[0]][0] : ''; return { t: p.n + (p.bench ? ' (bench)' : '') + (sn ? ' as ' + sn : ''), fit }; }).sort((a, b) => b.fit - a.fit).map((x) => x.t);
+  const gen = hasSp ? sp.map((id) => (S2[id] ? S2[id][0] + ' ' + ndzClsName(S2[id][1]) : '')).filter(Boolean) : cl.map(ndzClsName).filter(Boolean);
+  return { key, show: key || who.length > 0, who: who.length ? who : gen }; } return { key: false, show: false, who: [] }; }
 function pvReady() { if (S.page !== 'plan') return; const ros = document.querySelector('#view #pg-roster'), hd = ros && ros.querySelector(':scope > .ndz-dph'); if (!ros || !hd) return;
   const F = BFR.F || null, kit = ros.querySelector(':scope > details.ds-buffs'), dec = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&amp;/g, '&'), cols = [];
   const col = (lab, n, cls, sub, body) => '<div class="rs-col"><div class="rs-ch"><span>' + lab + '</span><b class="' + cls + '">' + n + '</b><small>' + sub + '</small></div>' + body + '</div>';
@@ -7003,13 +7007,16 @@ function pvReady() { if (S.page !== 'plan') return; const ros = document.querySe
     cols.push(col('Gear', n || '✓', n ? (bad ? 'bad' : 'warn') : 'ok', n ? 'to fix' : 'all set', F.rows.map((r) => '<button type="button" class="rs-r" data-grjump="' + esc(r.x.n) + '" title="Show on the roster"><i class="rs-dot ' + r.k + '"></i><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b><em>' + esc(r.parts.join(' · ')) + '</em></button>').join('') +
       (F.fine ? '<div class="rs-ok">✓ <span class="rs-rd" title="' + esc(F.okL.map((x) => x.n).join(', ')) + '">' + F.fine + ' ready</span><span> · from Battle.net</span></div>' : '') +
       '<button type="button" class="lk rs-more" data-bfr="all" aria-expanded="' + !!BFR.all + '">' + (BFR.all ? 'Hide the details ▴' : 'All the details ▾') + '</button>')); }
-  if (kit) { const rows = [], fine = [], set = []; let miss = 0;
+  if (kit) { const rows = [], fine = [], set = []; let miss = 0; const ppl = (() => { try { return pnPeople(pnGet()); } catch (e) { return []; } })();
     kit.querySelectorAll('.ndz-dag').forEach((d) => { const lab = ((d.querySelector('.ndz-dagn') || {}).textContent || '').trim(), em = ((d.querySelector('summary em') || {}).textContent || '').trim(); if (!lab) return;
       if (/^kicks$/i.test(lab)) { const m = /(\d+)\s*\/\s*(\d+)/.exec(em); if (m && +m[1] < +m[2]) set.push([lab, m[1] + ' of ' + m[2] + ' have a kick']); return; }
       if (/talents/i.test(lab)) { if (/to set/i.test(em)) set.push([lab, em]); return; }
-      const off = [...d.querySelectorAll('.ndz-bfi.off, .ndz-bfi.no')].map((b) => { const m = /<b>([^<]*)<\/b>/.exec(b.dataset.tt || ''); return m ? dec(m[1]) : ''; }).filter(Boolean);
-      if (!off.length) { fine.push(lab); return; } miss += off.length; const who = [...new Set(off.flatMap(pvWhoBrings))];
-      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (d.querySelector('.ndz-bfi.no') ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + esc(pvOr(who)) + '</span>' : '') + '</button>'); });
+      const off0 = [...d.querySelectorAll('.ndz-bfi.off, .ndz-bfi.no')].map((b) => { const m = /<b>([^<]*)<\/b>/.exec(b.dataset.tt || ''); return m ? dec(m[1]) : ''; }).filter(Boolean);
+      if (!off0.length) { fine.push(lab); return; }
+      /* (only what someone on the roster could bring, but a key raid buff or debuff always (Flex, Nov 7: "should only pull from whats available on the current roster unless its a key raid buff")) */
+      const its = off0.map((nm) => [nm, pvWhoBrings(nm, ppl)]).filter((x) => x[1].show); if (!its.length) return;
+      const off = its.map((x) => x[0]), key = its.some((x) => x[1].key), who0 = [...new Set(its.flatMap((x) => x[1].who))], who = who0.length > 3 ? who0.slice(0, 3).concat([(who0.length - 3) + ' more']) : who0; miss += off.length;
+      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (key ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + esc(pvOr(who)) + '</span>' : '') + '</button>'); });
     cols.push(col('Raid kit', miss || '✓', miss ? (rows.some((r) => r.includes('rs-dot bad')) ? 'bad' : 'warn') : 'ok', miss ? 'missing' : 'all covered', rows.join('') + (fine.length ? '<div class="rs-ok">✓ ' + esc(andL(fine)) + '<span> · all covered</span></div>' : '') +
       '<button type="button" class="lk rs-more" data-rskit="" aria-expanded="' + PV_KIT + '">' + (PV_KIT ? 'Hide the raid kit ▴' : 'The whole raid kit ▾') + '</button>'));
     cols.push(col('To set', set.length || '✓', set.length ? 'warn' : 'ok', set.length ? 'before the pull' : 'all set', set.map(([l, t]) => '<button type="button" class="rs-r" data-rskit="' + esc(l) + '"><i class="rs-dot warn"></i><b>' + esc(l) + '</b><em>' + esc(t) + '</em></button>').join('') + (set.length ? '' : '<div class="rs-ok">✓ Kicks and healer talents<span> · all set</span></div>'))); }
