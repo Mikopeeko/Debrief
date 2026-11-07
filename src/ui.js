@@ -37269,9 +37269,14 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
           if (t1 == null && how.debuff) { var last = null; r.players.forEach(function (p) { var v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(how.debuff) : null; if (v && v.sp) v.sp.forEach(function (s) { if (s[0] > t0 && s[0] <= t0 + (how.within || 20) && (last == null || s[0] > last)) last = +s[0]; }); }); if (last != null) t1 = last + 0.5; }
           if (t1 == null) t1 = t0 + 25; lives.push({ guid: x.g, name: how.as || nm, kind: 'add', t0: t0, t1: t1, x: x.p[1], y: x.p[2] }); }); });
       Object.keys(LF.ghosts || {}).forEach(function (nm) { var deb = LF.ghosts[nm], GO = r.ghostOwner || {};
-        r.positions.forEach(function (u, g) { if (((un && un.get(g)) || u.name) !== nm || !u.pts.length) return; var t0 = u.pts[0][0], ends = [];
-          (GO[g] || []).forEach(function (w) { var p = r.players.get(w[1]), v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(deb) : null; if (v && v.sp) v.sp.forEach(function (s) { if (s[0] <= w[0] + 1.5 && (s[1] == null || s[1] >= w[0] - 0.5)) ends.push(s[1] == null ? w[0] + 6 : +s[1]); }); });
-          lives.push({ guid: g, name: nm, kind: 'ghost', t0: t0, t1: Math.min(ends.length ? Math.max.apply(0, ends) : u.pts[u.pts.length - 1][0] + 6, phEnd(t0)), pts: u.pts }); }); });
+        /* (Nov 6: the game reuses a ghost's id later in the fight, so each stretch of its spots (a new one after a 15 s gap) is its own ghost) */
+        r.positions.forEach(function (u0, g) { if (((un && un.get(g)) || u0.name) !== nm || !u0.pts.length) return; var cl = [[u0.pts[0]]]; for (var ci = 1; ci < u0.pts.length; ci++) { if (u0.pts[ci][0] - u0.pts[ci - 1][0] > 15) cl.push([]); cl[cl.length - 1].push(u0.pts[ci]); }
+        cl.forEach(function (cp, k) { var u = { pts: cp }, t0 = cp[0][0], nx = k + 1 < cl.length ? cl[k + 1][0][0] : Infinity, ends = [], GW = (GO[g] || []).filter(function (w) { return w[0] >= t0 - 1 && w[0] < nx; }), HT = ((r.ghostHit && r.ghostHit[g]) || []).filter(function (h) { return h >= t0 - 0.5 && h < nx; })[0];
+          GW.forEach(function (w) { var p = r.players.get(w[1]), v = p && p.debuffs && p.debuffs.get ? p.debuffs.get(deb) : null; if (v && v.sp) v.sp.forEach(function (s) { if (s[0] <= w[0] + 1.5 && (s[1] == null || s[1] >= w[0] - 0.5)) ends.push(s[1] == null ? w[0] + 6 : +s[1]); }); });
+          /* (Nov 6, Flex: "a few ghosts not being removed from the map": a ghost goes when its player dies; the log never takes Unnerving Fixation off
+             a dead player, so it stayed until the phase ended. Its player is the last one it fixated) */
+          var od = Infinity, wl = GW[GW.length - 1]; if (wl) (r.deaths || []).forEach(function (q) { if (q && q.guid === wl[1] && q.t >= wl[0] - 0.5 && q.t < od) od = +q.t; });
+          lives.push({ guid: g, name: nm, kind: 'ghost', t0: t0, t1: Math.min(ends.length ? Math.max.apply(0, ends) : cp[cp.length - 1][0] + 6, phEnd(t0), od, HT != null ? HT + 0.4 : Infinity, nx - 0.05), pts: cp }); }); }); }); /* (or a Sever hit it, even before it fixated anyone) */
       /* (eggs in hand (Ula'tek, Nov 2): a small egg rides with each carrier from the pickup until the shell comes off; and an egg the log
          never places (the big Doomscale Egg) sits where its carrier later picked it up, from when it appeared (Flex: "egg locations are
          trackable because people pick them up")) */
