@@ -6571,6 +6571,7 @@ function* analyzeSteps(item, text, opts) {
       continue;
     }
     if (f.length < 8) continue;
+    if (f[8] === '182104' && f[9] === 'Shining Light') f[9] = 'Shining Light (stacks)'; /* (Nov 7: Protection's stack counter shares its name with the free Word of Glory buff (327510); kept apart so the proc check reads only the free one) */
     const sg = f[0], sn = f[1], dg = f[4], dn = f[5];
     seen(sg, t, sn); seen(dg, t, dn); mark(sg, f[3], t); mark(dg, f[7], t);
     // (an enemy's spell: from a hostile unit that isn't a player's or their pet's)
