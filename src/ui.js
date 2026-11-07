@@ -23347,7 +23347,7 @@ function specPage(o) {
     if (tg) { c.ic = tg.ic; c.joined = true; rg.l.push(c); } } /* (Oct 25) */
   const checklist = '<section class="rck"><h3 class="rck-h">Your checklist <span class="ds-i" tabindex="0" role="note" data-tt="Green is done right, yellow is a few mistakes, red is failed. Open a ring to see its checks.">ⓘ</span></h3>' +
     ckCats() + '</section>';
-  const ckNa = checks.filter((c) => c.st === 'na' && !c.joined);
+  const ckNa = checks.filter((c) => c.st === 'na' && !c.joined && /^saves/.test(String(c.k))); /* (Nov 7, Flex: the checklist shows every other ungraded number; Gear and extras keeps only Saves, which it leaves out) */
   const ckNums = ckNa.length ? '<section class="rck-nums"><h3 class="rck-h">Your numbers <span class="sub">not graded</span></h3><div class="rck-ts">' + ckNa.map((c) => '<details class="rck-t" id="spc-r-' + slug(c.k) + '"><summary><span class="rck-tl no-ic">' + icB(c.ic) + '<span>' + esc(c.label) + '</span></span><b>' + c.v + '</b>' + (ckShort(c) ? '<span class="rck-tx">' + esc(ckShort(c)) + '</span>' : '') + '</summary>' + ckBody(c) + '</details>').join('') + '</div></section>' : '';
   // (Tyr's Deliverance (your ask, Oct 24): its own heals and what its buff added to your Holy Light, Flash of Light and Holy Shock on its targets
   // (+10% for 12 seconds in 12.1.5; effective healing, no overhealing, absorbs don't get it), at the very bottom, only with it pressed or talented)

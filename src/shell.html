@@ -14172,6 +14172,7 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
 <style>/* (Nov 6: Graphs' "+N during the wipe", muted) */ html body #view .gb-wd { color: #6b737d; font-size: 12.5px; }</style>
 <style>/* (Nov 7: Graphs' Buffs and Debuffs filters) */ html body #view .gb-aut { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 2px 0 10px; } html body #view .gb-auq { background: #13171b; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 6px 10px; color: #e8eaed; font-size: 13px; min-width: 200px; } html body #view .gb-auq:focus { outline: none; border-color: rgba(243,201,105,.5); } html body #view .gb-aun { padding: 10px 4px; margin: 0; } html body #view .gb-auk { display: flex; flex-wrap: wrap; gap: 6px; } html body #view .gb-auk > button { background: none; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 3px 10px; font: 600 12.5px var(--head, inherit); color: #9aa3ad; line-height: 1.5; cursor: pointer; box-shadow: none; min-height: 0; } html body #view .gb-auk > button:hover { color: #e8eaed; border-color: rgba(255,255,255,.2); } html body #view .gb-auk > button.on { color: #f3c969; border-color: rgba(243,201,105,.45); background: rgba(243,201,105,.08); } html body #view .gb-auq { padding: 4px 10px; font-size: 12.5px; } @media (max-width: 699px) { html body #view .gb-auq { flex: 1 1 100%; min-width: 0; } }</style>
 <style>/* (Nov 7: a switch inside a card title: both words the same size) */ html body #view .gb-card .nh .seg.gb-by > button, html body #view .gb-card .nh .seg.gb-by > button.on { font-size: 12.5px !important; }</style>
+<style>/* (Nov 7: one button, one row: its other numbers on a small line) */ html body #view .rcx-al { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: #868f99; } html body #view .rcx-al i { font-style: normal; } html body #view .rcx-al i.r { color: #ef6b63; } html body #view .rcx-al i.y { color: #e3a94b; } html body #view .rcx-alsod { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); } html body #view .rcx-alsod > b { display: block; margin-bottom: 4px; font-size: 13px; color: #e8eaed; }</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -14308,6 +14309,7 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
     if (ks.some(function (k) { return /^pre:/.test(k) || k === 'potn'; }) || /^(before the pull|potions)$/i.test(sec)) return 'pre';
     if (/opener/i.test(sec) || ks.some(function (k) { return /^open/.test(k); })) return 'open';
     if (ks.some(function (k) { return /^st:/.test(k); }) || /stats/i.test(sec)) return 'st';
+    if (RES.test(sec) || ks.some(function (k) { return k === 'mana'; })) return 'res'; /* (Nov 7: a Mana group with an "Innervate uses" row is still Resources) */
     if (ks.some(function (k) { return /^(win:|boss:)/.test(k); }) || ls.some(function (l) { return / (uses|windows?)$|in bloodlust|into big damage|inside /i.test(l); }) || /other cooldowns|big damage|heavy damage/i.test(sec)) return 'cd'; /* (a button kept on cooldown, like Haunt or Blood Boil, is the rotation; a big cooldown's uses and windows are Cooldowns) */
     if (RES.test(sec) || ks.some(function (k) { return k === 'hp' || k === 'mana' || /waste/.test(k); })) return 'res';
     return 'rot';
@@ -14337,9 +14339,17 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
     var old = sec.querySelector('.rck-ovw'); if (!old) return;
     var key = (D.name || '') + '|' + D.checks.length + '|' + D.checks.map(function (c) { return c.st; }).join(''); if (sec.dataset.rcx === key && sec.querySelector('.rcx')) return;
     var C = D.checks.filter(function (c) { return !SKIP[c.k]; });
+    /* (Nov 7, Flex: one button, one row: "X uses", "X on yourself", "X ramp", "X with your cooldowns", "X on big damage", "X set up" and a plain "X"
+       become one row. The uses row leads, the rest ride on a small line, the dot takes the worst colour, and opening it shows every part) */
+    (function () { var SUF = / (uses|on yourself|ramp|with your cooldowns|on big damage|set up)$/i, baseOf = function (l) { return String(l).replace(SUF, ''); }, RK = { bad: 0, warn: 1, ok: 2, na: 3 }, by = {};
+      C.forEach(function (c) { var b = baseOf(c.label); (by[b] = by[b] || []).push(c); });
+      Object.keys(by).forEach(function (b) { var l = by[b]; if (l.length < 2 || !l.some(function (c) { return SUF.test(c.label); })) return;
+        var lead = l.filter(function (c) { return / uses$/i.test(c.label); })[0] || l.slice().sort(function (x, y) { return RK[x.st] - RK[y.st]; })[0], worst = l.reduce(function (m, c) { return RK[c.st] < RK[m] ? c.st : m; }, 'na');
+        var m = Object.assign({}, lead, { label: b, st: worst, labels0: l.map(function (c) { return String(c.label); }), alsoC: l.filter(function (c) { return c !== lead; }) });
+        C = C.map(function (c) { return c === lead ? m : c; }).filter(function (c) { return m.alsoC.indexOf(c) < 0; }); }); })();
     var secs = []; C.forEach(function (c) { if (secs.indexOf(c.sec) < 0) secs.push(c.sec); });
     var heal = /^(Holy|Discipline|Restoration|Mistweaver|Preservation)\b/.test(D.spec || '');
-    var bySec = {}; secs.forEach(function (s) { var cs = C.filter(function (c) { return c.sec === s; }); bySec[s] = phaseOf(s, cs.map(function (c) { return String(c.k); }), cs.map(function (c) { return String(c.label); })); });
+    var bySec = {}; secs.forEach(function (s) { var cs = C.filter(function (c) { return c.sec === s; }); bySec[s] = phaseOf(s, cs.map(function (c) { return String(c.k); }), [].concat.apply([], cs.map(function (c) { return c.labels0 || [String(c.label)]; }))); });
     var ORD = { bad: 0, warn: 1, ok: 2, na: 3 };
     var graded = function (l) { return l.filter(function (c) { return c.st !== 'na'; }); };
     var col = function (st) { return st === 'bad' ? 'r' : st === 'warn' ? 'y' : st === 'ok' ? 'g' : 'n'; };
@@ -14354,7 +14364,7 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
     PH.forEach(function (p) { if (p[0] === 'open' && heal) return; var ss = secs.filter(function (s) { return bySec[s] === p[0]; }); var l = C.filter(function (c) { return bySec[c.sec] === p[0]; }); if (!l.length) return; var g = graded(l), ok = g.filter(function (c) { return c.st === 'ok'; }).length;
       h += '<div class="rcx-sec" data-ph="' + p[0] + '"><div class="rcx-sh"><b>' + p[1] + '</b><span>' + p[2] + '</span><em>' + (g.length ? ok + ' of ' + g.length + ' done right' : 'not graded') + '</em></div>';
       ss.forEach(function (s) { var r = C.filter(function (c) { return c.sec === s; }).sort(function (a, b) { return ORD[a.st] - ORD[b.st]; }); if (ss.length > 1 || s !== p[1]) h += '<div class="rcx-grp">' + E(s) + '</div>';
-        r.forEach(function (c) { h += '<div class="rcx-row ' + col(c.st) + '" data-k="' + E(c.k) + '" role="button" tabindex="0"><i class="d ' + col(c.st) + '"></i>' + iconFor(c, old) + '<span class="l">' + E(c.label) + '</span><span class="s">' + nums(strip(c.sub), c.st) + '</span><span class="v">' + c.v + '</span></div>'; }); });
+        r.forEach(function (c) { h += '<div class="rcx-row ' + col(c.st) + '" data-k="' + E(c.k) + '" role="button" tabindex="0"><i class="d ' + col(c.st) + '"></i>' + iconFor(c, old) + '<span class="l">' + E(c.label) + '</span><span class="s">' + nums(strip(c.sub), c.st) + (c.alsoC ? '<em class="rcx-al">' + c.alsoC.map(function (o) { var sx = String(o.label).slice(String(c.label).length).trim(); return '<i class="' + col(o.st) + '">' + E(sx || 'procs') + ' ' + E(strip(o.v)) + '</i>'; }).join(' · ') + '</em>' : '') + '</span><span class="v">' + c.v + '</span></div>'; }); });
       h += '</div>'; });
     h += '</div>';
     var prev = sec.querySelector('.rcx'); if (prev) prev.remove();
@@ -14365,7 +14375,7 @@ html:not([data-theme]) body.refine :is(.btn,select){border-radius:0 !important}
       var row = ev.target.closest('.rcx-row, .rcx-fr'); if (!row || ev.target.closest('.rcx-open')) return;
       var nx = row.nextElementSibling; if (nx && nx.classList.contains('rcx-open')) { nx.remove(); row.classList.remove('on'); return; }
       var c = C.filter(function (x) { return String(x.k) === row.dataset.k; })[0]; if (!c) return;
-      var d = document.createElement('div'); d.className = 'rcx-open'; d.innerHTML = detailFor(c, old); row.after(d); row.classList.add('on');
+      var d = document.createElement('div'); d.className = 'rcx-open'; d.innerHTML = detailFor(c, old) + (c.alsoC || []).map(function (o) { return '<div class="rcx-alsod"><b>' + E(o.label) + ' · ' + E(strip(o.v)) + '</b>' + detailFor(o, old) + '</div>'; }).join(''); row.after(d); row.classList.add('on');
       /* once it is on the page: no second title, no repeat of the row's sentence, and the guides' why when nothing else shows */
       var said = strip(c.sub).trim(); [].forEach.call(d.querySelectorAll('.rck-mgh'), function (x) { x.remove(); }); [].forEach.call(d.querySelectorAll('p'), function (p) { if (said && p.offsetHeight && p.textContent.trim() === said) p.remove(); });
       if (!d.innerText.trim()) d.innerHTML = c.how ? '<p class="rcx-how">' + E(c.how) + '</p>' : '<p>' + E(strip(c.sub)) + '</p>';
