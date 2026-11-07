@@ -3638,10 +3638,12 @@ function gnShared(code) { if (!WCL.HOSTED || !code || GNS.code === code || GNS.b
     .catch(() => { GNS.busy = false; GNS.code = code; GNS.doc = { pulls: {}, texts: {} }; }); }
 // (this PC's notes for the open night's pulls, to the site: once its shared copy is read, only the pulls it doesn't have)
 function gnSend() { const code = S.wclCode; if (!WCL.HOSTED || !GN.data || !code || GNS.code !== code || !GNS.doc || GNS.sent.has(code)) return;
+  if (!(S.index && S.index.bosses || []).some((it) => it.wcl && it.wcl.code === code && gnExact(it))) { GNS.sent.add(code); console.info('[Debrief] raid note for ' + code + ': Debrief Companion has no note for this night\'s pulls'); return; }
   const pulls = [], texts = {}; for (const it of (S.index && S.index.bosses) || []) { if (!it.wcl || it.wcl.code !== code || GNS.doc.pulls[it.wcl.fight]) continue; const x = gnExact(it); if (!x) continue;
     pulls.push({ f: it.wcl.fight, h: String(x.h), s: x.s === 'MRT' ? 'MRT' : 'NSRT' }); texts[x.h] = x.text; }
   if (!pulls.length) return; GNS.sent.add(code);
   fetch('/api/gnote?code=' + encodeURIComponent(code), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pulls, texts }) }).then((r) => r.json()).then((j) => {
+    console.info('[Debrief] raid note for ' + code + ': ' + (j && j.ok ? (j.added ? 'shared ' + j.added + ' pull(s) with the roster' : 'the site already had it') : 'not shared: ' + ((j && j.error) || 'no answer') + (j && j.why ? ' (' + j.why + ')' : ''))); GNS.res = j; /* (why, for next time) */
     if (j && j.ok && j.added) { for (const p of pulls) GNS.doc.pulls[p.f] = { h: p.h, s: p.s }; Object.assign(GNS.doc.texts, texts); } }).catch(() => {}); }
 // (the pull's own copy from this PC's Companion: same boss and difficulty, started within 2 minutes; a log without its time zone is matched to the hour)
 function gnExact(it) { const g = GN.data; if (!g) return null;
@@ -3653,7 +3655,7 @@ function gnExact(it) { const g = GN.data; if (!g) return null;
 function gameNoteFor(it) {
   if (!it) return null;
   if (it.gn && S.shrNotes && S.shrNotes[it.gn]) return { text: S.shrNotes[it.gn], s: it.gns || 'NSRT', n: it.gnn || '', h: it.gn, exact: !!it.gnx };
-  if (it.wcl && it.wcl.code) gnShared(it.wcl.code); /* (the night's notes shared by its raiders (Nov 6)) */
+  if (it.wcl && it.wcl.code) { gnShared(it.wcl.code); if (!PC_ON && !GNS.said) { GNS.said = true; console.info('[Debrief] raid notes: Debrief Companion is not linked on this browser, so this PC shares none (any shared ones still show)'); } } /* (the night's notes shared by its raiders (Nov 6)) */
   const own = gnExact(it); if (own) return own;
   { const d = it.wcl && GNS.code === it.wcl.code && GNS.doc, p = d && d.pulls[it.wcl.fight]; if (p && d.texts[p.h]) return { text: d.texts[p.h], s: p.s || 'NSRT', n: '', h: String(p.h), exact: true, shared: true }; }
   const g = GN.data; if (!g) { if (PC_ON) gnLoad(); return null; } /* (asked once the page wants a note; drawn again when it's in) */

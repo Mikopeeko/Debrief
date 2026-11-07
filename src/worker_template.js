@@ -1742,9 +1742,14 @@ async function gnote(req, env, url) {
   if (!rep || !rep.fights) return json({ error: 'That report couldn\'t be read.' }, 502);
   const fights = new Set(rep.fights.filter((f) => f.encounterID > 0).map((f) => f.id)), names = new Set(((rep.masterData && rep.masterData.actors) || []).filter((a) => a.type === 'Player').map((a) => String(a.name || '').toLowerCase()));
   const gid = rep.guild && +rep.guild.id; /* (a character in that night, or the report's guild on your Warcraft Logs account: a raider on an alt counts (Nov 6)) */
-  const tg = gid ? await teamGet(env, 'guild:' + gid, url).catch(() => null) : null; /* (Battle.net step 2: a guild with ranks set up decides by rank; the old rule stays for the rest) */
-  if (tg && tg.doc && tg.doc.ranks) { if ((await teamAccess(env, url, tg.doc, who)).acc === 'none') return json({ error: 'Only ranks your raid lead picked can share that guild\'s raid note.' }, 403); }
-  else if (!(await teamChars(who)).some((n) => names.has(n)) && !(gid && (await teamGuilds(who)).includes(gid))) return json({ error: 'Only raiders of that night or its guild can share its raid note.' }, 403);
+  const mine = await teamChars(who), tg = gid ? await teamGet(env, 'guild:' + gid, url).catch(() => null) : null, d = tg && tg.doc; let ok = '';
+  /* (Battle.net step 2: a guild with ranks set up decides by rank; the rules below stay for the rest) */
+  if (d && d.ranks) { if ((await teamAccess(env, url, d, who)).acc === 'none') return json({ error: 'Only ranks your raid lead picked can share that guild\'s raid note.', why: 'signed in as ' + (who.name || '?') + '; the guild\'s ranks decide, and yours can\'t share' }, 403); ok = 'rank'; }
+  if (!ok) ok = mine.some((n) => names.has(n)) ? 'roster' : gid && (await teamGuilds(who)).includes(gid) ? 'guild' : '';
+  if (!ok && d) { /* (the guild's team plan: its lead and officers, and its linked alts) */
+    if (d && (await teamCan(d, who))) ok = 'lead';
+    else if (d) { let gs = []; try { gs = JSON.parse((d.keys && d.keys['wla-alts'] && d.keys['wla-alts'].v) || '[]'); } catch (e) { gs = []; } if (Array.isArray(gs) && gs.some((g) => Array.isArray(g) && g.some((n) => mine.includes(String(n).toLowerCase())) && g.some((n) => names.has(String(n).toLowerCase())))) ok = 'alt'; } }
+  if (!ok) return json({ error: 'Only raiders of that night (or their linked alts), its guild or its team lead can share its raid note.', why: 'signed in as ' + (who.name || '?') + ' (' + (mine.join(', ') || 'no characters') + '), none in that night; not in its guild' + (gid ? ' (' + gid + ')' : '') + '; not its team plan lead or officer' }, 403);
   if (!pulls.every((p) => fights.has(p.f))) return json({ error: 'That isn\'t one of the night\'s pulls.' }, 400);
   for (let k = 0; k < 3; k++) { const g = await gnoteGet(env, code, url).catch(() => null), doc = g ? g.doc : { pulls: {}, texts: {} }; let add = 0;
     for (const p of pulls) { if (doc.pulls[p.f]) continue; doc.pulls[p.f] = { h: String(p.h), s: p.s || 'NSRT', by: who.name || '' }; doc.texts[p.h] = texts[p.h]; add++; } /* (the first note saved for a pull stays) */

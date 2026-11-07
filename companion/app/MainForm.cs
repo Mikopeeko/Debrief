@@ -77,10 +77,17 @@ namespace Debrief {
     [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
     [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int cmd);
     [DllImport("user32.dll")] static extern bool BringWindowToTop(IntPtr h);
+    // (the website linked to this app, once: debriefme.io/?pc=<port> in your browser the first time the window opens, so the site can read this PC's
+    // raid notes and tonight's log by itself (Nov 6). A file in the app's folder remembers it; delete it to link another browser)
+    void LinkSiteOnce() {
+      try { var mk = Path.Combine(here, "site-linked"); if (File.Exists(mk)) return; File.WriteAllText(mk, DateTime.Now.ToString("s"));
+        Program.Log("linking debriefme.io to this app"); var t = new System.Threading.Thread(() => { System.Threading.Thread.Sleep(2500); OpenOutside("https://debriefme.io/?pc=" + port); }) { IsBackground = true }; t.Start(); }
+      catch (Exception e) { Program.Log("site link: " + e.Message); }
+    }
     public void ShowInFront() {
       if (InvokeRequired) { BeginInvoke(new Action(ShowInFront)); return; }
       if (Program.EdgeFallback) { Program.OpenEdge(port); return; }
-      wantShow = true;
+      wantShow = true; LinkSiteOnce();
       if (Environment.GetEnvironmentVariable("DBF_DEV") != null) Program.Log("show (visible " + Visible + ")");
       if (!Visible) Show();
       if (WindowState == FormWindowState.Minimized) ShowWindow(Handle, 9); // (SW_RESTORE)
