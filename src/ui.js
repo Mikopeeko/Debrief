@@ -33163,6 +33163,12 @@ function openAccounts(note) {
 const bnMenuLabel = () => { const b = $('#tbBnet'); if (!b) return; if (!WCL.HOSTED) { b.hidden = true; return; } const B = (WHO.now || {}).bnet;
   b.hidden = false; b.innerHTML = B && B.linked ? 'Your characters<span>Battle.net linked · pick your main</span>' : 'Link Battle.net<span>optional: Debrief knows every character is yours</span>'; };
 document.addEventListener('whoami', bnMenuLabel);
+// (Menu > Sign out: only while signed in; it ends the sign-in on Debrief (and a practice link's test name) and starts the page over (Flex, Nov 6))
+const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; const w = WCL.HOSTED && (WHO.now || {}).wcl; o.hidden = !w; if (w) o.innerHTML = 'Sign out<span>' + (w.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>'; };
+document.addEventListener('whoami', outMenuLabel);
+if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); if (p) p.hidden = true;
+  try { await fetch('/api/signout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { /* (the page starts over either way) */ }
+  try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0'; location.reload(); };
 document.addEventListener('whoami', () => { try { if (S.page === 'plan' && whoChars().length && !S.planRosEd && !S.noteBuild && !S.pgEdit) { PG_ALT.k = ''; PG_RDY.clear(); const y = window.scrollY; planAssign(); window.scrollTo({ top: y }); } } catch (e) { /* (next draw) */ } }); /* (Plan again once your Battle.net characters are known) */
 // (Battle.net step 3: "Which one is you?" follows the linked main, so pages and Debrief Companion (it reads the same pick) follow it too;
 // a new main picked in Your characters moves it)
