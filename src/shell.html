@@ -4943,6 +4943,14 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .bn-main { color: var(--gold); } .bn-alt { color: var(--muted); } .bn-hide { display: none; background: none; border: 0; padding: 0; color: var(--muted); font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
 .bn-c:hover .bn-alt, .bn-c:focus-within .bn-alt { display: none; } .bn-c:hover .bn-hide, .bn-c:focus-within .bn-hide { display: inline; } @media (hover: none) { .bn-alt { display: none; } .bn-hide { display: inline; } }
 html body .bn-sheet button.bn-r { border-radius: 50% !important; }
+/* ---- Guild ranks (Nov 6): the raid lead's "Who can edit, who can see" panel: a row per rank, its name once, how many hold it, Edit / See / None */
+.gk-sheet { width: min(560px, 100%); } .gk-l { border-top: 1px solid var(--line); } .gk-r { display: grid; grid-template-columns: 1fr 40px 220px; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.gk-n { display: flex; align-items: baseline; gap: 8px; min-width: 0; } .gk-n input { width: 130px; min-width: 0; padding: 4px 6px; border: 1px solid transparent; border-radius: 4px; background: none; color: var(--text); font: 700 15px var(--body); } .gk-n input:hover, .gk-n input:focus { border-color: var(--line2); background: var(--raised); outline: 0; }
+.gk-n span { color: var(--muted); font-size: 13px; white-space: nowrap; } .gk-c { color: var(--muted); font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.gk-seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; } .gk-seg button { height: 30px; border: 0; border-left: 1px solid var(--line2); background: none; color: var(--muted); font: 600 13px var(--body); cursor: pointer; } .gk-seg button:first-child { border-left: 0; }
+.gk-seg button.on { background: rgba(230,180,80,.16); color: var(--gold); font-weight: 700; } .gk-seg button:hover:not(.on) { color: var(--text); }
+.gk-why { margin: 12px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; } .gk-why b { color: var(--text); } .gk-f { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; } .gk-f .lk { background: none; border: 0; padding: 0; color: var(--muted); font-size: 13px; cursor: pointer; }
+@media (max-width: 600px) { .gk-r { grid-template-columns: 1fr 32px; } .gk-seg { grid-column: 1 / -1; } }
 .bn-pf { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; } .bn-pf span { color: var(--muted); font-size: 13px; }
 @media (max-width: 600px) { .bn-c { grid-template-columns: 20px 28px 1fr auto; } .bn-il { display: none; } .bn-c img { width: 28px; height: 28px; } .bn-pf { flex-direction: column; align-items: stretch; } }
 /* Debrief in game (the menu's page, ?ingame): the downloads, who needs what, the three steps after a pull, pictures and commands */

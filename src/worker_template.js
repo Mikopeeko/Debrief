@@ -1742,7 +1742,9 @@ async function gnote(req, env, url) {
   if (!rep || !rep.fights) return json({ error: 'That report couldn\'t be read.' }, 502);
   const fights = new Set(rep.fights.filter((f) => f.encounterID > 0).map((f) => f.id)), names = new Set(((rep.masterData && rep.masterData.actors) || []).filter((a) => a.type === 'Player').map((a) => String(a.name || '').toLowerCase()));
   const gid = rep.guild && +rep.guild.id; /* (a character in that night, or the report's guild on your Warcraft Logs account: a raider on an alt counts (Nov 6)) */
-  if (!(await teamChars(who)).some((n) => names.has(n)) && !(gid && (await teamGuilds(who)).includes(gid))) return json({ error: 'Only raiders of that night or its guild can share its raid note.' }, 403);
+  const tg = gid ? await teamGet(env, 'guild:' + gid, url).catch(() => null) : null; /* (Battle.net step 2: a guild with ranks set up decides by rank; the old rule stays for the rest) */
+  if (tg && tg.doc && tg.doc.ranks) { if ((await teamAccess(env, url, tg.doc, who)).acc === 'none') return json({ error: 'Only ranks your raid lead picked can share that guild\'s raid note.' }, 403); }
+  else if (!(await teamChars(who)).some((n) => names.has(n)) && !(gid && (await teamGuilds(who)).includes(gid))) return json({ error: 'Only raiders of that night or its guild can share its raid note.' }, 403);
   if (!pulls.every((p) => fights.has(p.f))) return json({ error: 'That isn\'t one of the night\'s pulls.' }, 400);
   for (let k = 0; k < 3; k++) { const g = await gnoteGet(env, code, url).catch(() => null), doc = g ? g.doc : { pulls: {}, texts: {} }; let add = 0;
     for (const p of pulls) { if (doc.pulls[p.f]) continue; doc.pulls[p.f] = { h: String(p.h), s: p.s || 'NSRT', by: who.name || '' }; doc.texts[p.h] = texts[p.h]; add++; } /* (the first note saved for a pull stays) */
@@ -1750,21 +1752,80 @@ async function gnote(req, env, url) {
     if (Object.keys(doc.texts).length > 16) return json({ error: 'Too many different notes for one night.' }, 400);
     doc.at = Date.now(); const r = await gnotePut(env, code, doc, g && g.etag, url).catch(() => null); if (r) return json({ ok: true, added: add }); }
   return json({ error: 'Someone else was saving at the same moment. Try again.' }, 409); }
+// ---- Guild ranks (Battle.net step 2): who can edit or see a team's plan follows the guild's ranks in game. Blizzard's public guild roster
+// (client credentials, kept an hour at the edge) gives each member's rank number; the raid lead names the ranks once and picks Edit, See or
+// None for each (saved in the team plan's file as ranks: { guild, names, acc }). Edit = Plan, the roster and notes, and sending notes to the
+// team; See = the plan, your own jobs and the note; None = nothing. Promotions, demotions and leavers follow by themselves. A raider counts by
+// their linked Battle.net characters; anyone not linked (or a guild that hasn't set ranks up) falls back to the old rules: the raid lead and
+// named officers edit, and with ranks set, someone in the guild on Warcraft Logs can still see.
+const RANK_ACC = /^(edit|see|none)$/, RANK_TOP = 4; /* (ranks 4 and up share one row, like the game's social ranks) */
+const guildSlug = (n) => String(n || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
+// (practice links: a made-up Wolfthorn roster, with test names for each rank (Officertest, Raidertest, Trialtest, Socialtest))
+function guildMockRoster() {
+  const m = [['Flëxørçïst', 0], ['Officertest', 1], ['Trëèflêx', 2], ['Exampleshaman', 2], ['Raidertest', 2], ['Trialtest', 3], ['Socialtest', 5]];
+  for (let i = 1; i <= 3; i++) m.push(['Officer' + 'abc'[i - 1], 1]); for (let i = 1; i <= 16; i++) m.push(['Raider' + i, 2]); for (let i = 1; i <= 2; i++) m.push(['Trial' + i, 3]); for (let i = 1; i <= 40; i++) m.push(['Social' + i, 4 + (i % 6)]);
+  return { at: Date.now(), mock: true, members: m.map(([n, rank]) => ({ k: n.toLowerCase() + '-thrall', n, rank })) };
+}
+async function guildRoster(env, url, g) {
+  if (!g || !BNET_REG.test(g.region || '') || !/^[a-z0-9-]{1,60}$/.test(g.realm || '') || !g.name) return null;
+  if (g.mock && PRACTICE_HOST(url)) return guildMockRoster();
+  const c = caches.default, ck = new Request('https://debrief.cache/guild-roster/' + g.region + '/' + g.realm + '/' + encodeURIComponent(guildSlug(g.name))), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const tok = await bnetAppToken(env, g.region); if (!tok) return null;
+  const r = await bnetApi(g.region, '/data/wow/guild/' + g.realm + '/' + encodeURIComponent(guildSlug(g.name)) + '/roster', tok); if (!r || !Array.isArray(r.members)) return null;
+  const o = { at: Date.now(), members: r.members.map((x) => ({ k: String((x.character || {}).name || '').toLowerCase() + '-' + (((x.character || {}).realm || {}).slug || ''), n: (x.character || {}).name, rank: x.rank })) };
+  await c.put(ck, new Response(JSON.stringify(o), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {});
+  return o;
+}
+const rankRow = (rk) => Math.min(rk, RANK_TOP);
+// (one raider's rank in a guild, from their linked characters: the best (lowest) rank any of them holds)
+async function guildRankOf(env, url, g, link) {
+  if (!link || !g) return null; const R = await guildRoster(env, url, g); if (!R) return null;
+  const mine = new Set((link.chars || []).map(bnetKey)), rs = R.members.filter((m) => mine.has(m.k)).map((m) => m.rank);
+  return rs.length ? Math.min(...rs) : -1; /* (-1: linked, but none of their characters is in that guild) */
+}
+// (what this person may do with this team's plan: { acc: edit | see | none, why, rank, rankName })
+async function teamAccess(env, url, d, who) {
+  const R = d && d.ranks;
+  if (!who) return { acc: R ? 'none' : 'see', why: 'signin' };
+  if (!d) return { acc: 'see', why: 'new' };
+  if (d.owner.uid === who.uid) return { acc: 'edit', why: 'lead' };
+  let link = null;
+  if (R && R.guild) { link = await bnetGet(env, who.uid, url); const rk = await guildRankOf(env, url, R.guild, link);
+    if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: RANK_ACC.test(R.acc[row] || '') ? R.acc[row] : 'none', why: 'rank', rank: rk, rankName: R.names[row] || '' }; } }
+  if (await teamCan(d, who)) return { acc: 'edit', why: 'officer' };
+  if (!R) return { acc: 'see', why: 'open' };
+  const gm = /^guild:(\d+)$/.exec(d.id); if (gm && (await teamGuilds(who)).includes(+gm[1])) return { acc: 'see', why: 'wcl-guild' };
+  return { acc: 'none', why: link ? 'not-in-guild' : 'unlinked' };
+}
+// (the lead's panel: the guild's ranks and how many hold each, from the saved guild or the lead's linked main's guild)
+async function teamRanks(env, url, d, who) {
+  let g = d && d.ranks && d.ranks.guild;
+  if (!g && who) { const link = await bnetGet(env, who.uid, url), m = link && ((link.chars || []).find((c) => bnetKey(c) === link.main) || (link.chars || []).find((c) => c.g));
+    if (m && m.g) g = { region: link.region, realm: m.gs || m.slug, name: m.g, mock: !!link.mock || undefined }; }
+  if (!g) return { guild: null, why: 'Link Battle.net first, with a character in your guild, so Debrief can read its ranks.' };
+  const R = await guildRoster(env, url, g); if (!R) return { guild: g, why: 'Blizzard didn\'t send ' + g.name + '\'s roster just now. Try again in a minute.' };
+  const counts = {}; for (const m of R.members) { const k = rankRow(m.rank); counts[k] = (counts[k] || 0) + 1; }
+  const hi = Math.max(0, ...R.members.map((m) => m.rank));
+  return { guild: g, counts, hi, names: (d && d.ranks && d.ranks.names) || null, acc: (d && d.ranks && d.ranks.acc) || null };
+}
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
-  const who = await teamWho(req, env, url), you = (d, can) => (who ? { name: who.name, can, lead: !!d && d.owner.uid === who.uid, practice: !!who.practice } : null);
+  const who = await teamWho(req, env, url), you = (d, can, A) => (who ? { name: who.name, can, lead: !!d && d.owner.uid === who.uid, practice: !!who.practice, acc: A ? A.acc : can ? 'edit' : 'see', why: A ? A.why : '', rank: A && A.rank != null ? A.rank : null, rankName: (A && A.rankName) || '' } : null);
+  const rankPub = (d) => (d.ranks ? { guild: { name: d.ranks.guild.name, realm: d.ranks.guild.realm, region: d.ranks.guild.region }, names: d.ranks.names, acc: d.ranks.acc, at: d.ranks.at, by: d.ranks.by } : null);
   if (req.method === 'GET') {
+    if (url.searchParams.get('ranks') === '1') { const g0 = await teamGet(env, id, url).catch(() => null); return json(await teamRanks(env, url, g0 && g0.doc, who)); } /* (the lead's ranks panel) */
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
     if (!g) return json({ exists: false, here, you: you(null, false) });
-    const d = g.doc; return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: teamLog(d), here, you: you(d, await teamCan(d, who)), keys: url.searchParams.get('v') === String(d.ver) ? null : d.keys });
+    const d = g.doc, A = await teamAccess(env, url, d, who), shut = A.acc === 'none'; /* (None: the plan stays closed, only who leads it shows) */
+    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), locked: shut, keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
   }
   if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   if (!who) return json({ error: 'Sign in with Warcraft Logs to change the team plan.', signin: true }, 401);
   const raw = await req.arrayBuffer(); if (raw.byteLength > 3 * 1024 * 1024) return json({ error: 'That plan is too big to save.' }, 413);
   let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
-  if (!b || !['create', 'set', 'officer', 'undo'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
+  if (!b || !['create', 'set', 'officer', 'undo', 'ranks'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
   const me = String(b.me || '').trim().slice(0, 24) || who.name, keys = b.keys && typeof b.keys === 'object' ? b.keys : {};
   for (const [k, v] of Object.entries(keys)) if (!TEAM_KEY.test(k) || (v !== null && (typeof v !== 'string' || v.length > 600 * 1024))) return json({ error: 'That change isn\'t right.' }, 400);
   for (let tries = 0; tries < 4; tries++) {
@@ -1772,11 +1833,16 @@ async function teamPlan(req, env, url) {
     if (b.op === 'create') { if (d) return json({ error: 'This team already has a plan saved online.', exists: true }, 409);
       d = { id, name: String(b.name || '').slice(0, 60), owner: { uid: who.uid, char: me }, officers: [], keys: {}, ver: 0, log: [] }; }
     else if (!d) return json({ error: 'This team has no plan saved online yet.' }, 404);
-    else if (!(await teamCan(d, who))) return json({ error: 'Only the raid lead and the officers can change the team plan.' }, 403);
+    else if (b.op === 'set' || b.op === 'undo') { const A = await teamAccess(env, url, d, who); if (A.acc !== 'edit') return json({ error: d.ranks ? 'Your guild rank can see this plan but not change it. Ask your raid lead.' : 'Only the raid lead and the officers can change the team plan.' }, 403); }
     const put = (k, v, sum) => { const prev = d.keys[k] ? d.keys[k].v : null; if (prev === v) return; d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k, sum: String(sum || 'changed the plan').slice(0, 140), prev }); };
     if (b.op === 'create') { for (const [k, v] of Object.entries(keys)) if (v !== null) d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'saved the whole plan for the team' }); }
     else if (b.op === 'set') { const sums = b.sums && typeof b.sums === 'object' ? b.sums : {}; for (const [k, v] of Object.entries(keys)) put(k, v, sums[k]); }
     else if (b.op === 'undo') { const e = d.log[+b.i]; if (!e || e.prev === undefined || !e.k) return json({ error: 'That change can\'t be undone.' }, 400); put(e.k, e.prev, 'undid "' + e.sum + '"'); }
+    else if (b.op === 'ranks') { const A = await teamAccess(env, url, d, who); if (!(A.why === 'lead' || (A.why === 'rank' && A.rank === 0))) return json({ error: 'Only the raid lead or the Guild Master sets who can edit and see.' }, 403);
+      if (b.clear) { delete d.ranks; d.log.push({ at: now, by: me, k: '', sum: 'turned off access by guild rank' }); }
+      else { const T = await teamRanks(env, url, d, who); if (!T.counts) return json({ error: T.why }, 400);
+        const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
+        d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
     else { if (d.owner.uid !== who.uid) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
       const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
       const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
@@ -1839,7 +1905,7 @@ async function bnetCallback(req, env, url) {
   if (!env.debrief_nights) return done('off');
   let chars;
   const mock = bnetMock(env, url) || (PRACTICE_HOST(url) && p.get('code') === 'practice'); /* (a practice link's made-up account: ?test=1 on start) */
-  if (mock) chars = BNET_MOCK.map((c) => ({ ...c }));
+  if (mock) chars = /^fl[eë]x/i.test(who.name || '') ? BNET_MOCK.map((c) => ({ ...c })) : [{ ...BNET_MOCK[2], n: String(who.name || 'Tester').slice(0, 24) }, { ...BNET_MOCK[3] }];
   else {
     if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return done('busy');
     const t = await fetch('https://oauth.battle.net/token', { method: 'POST', headers: { Authorization: 'Basic ' + btoa(env.BNET_CLIENT_ID + ':' + (env.BNET_CLIENT_SECRET || '')), 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -1876,8 +1942,11 @@ async function bnetRoute(req, env, url) {
 // (step 2) which guild rank)
 async function whoAmIRoute(req, env, url) {
   const who = await teamWho(req, env, url); if (!who) return json({ wcl: null, bnet: { linked: false }, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
-  const d = await bnetGet(env, who.uid, url);
-  return json({ wcl: { name: who.name, practice: !!who.practice }, bnet: bnetOut(d), practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
+  const d = await bnetGet(env, who.uid, url); let guild = null, team = null;
+  const m = d && ((d.chars || []).find((c) => bnetKey(c) === d.main) || null);
+  if (m && m.g) { const g = { region: d.region, realm: m.gs || m.slug, name: m.g, mock: !!d.mock }, rk = await guildRankOf(env, url, g, d).catch(() => null); guild = { name: m.g, realm: g.realm, rank: rk != null && rk >= 0 ? rk : null }; }
+  const tid = url.searchParams.get('team') || ''; if (TEAM_ID.test(tid) && env.debrief_nights) { const tg = await teamGet(env, tid, url).catch(() => null); if (tg) { const A = await teamAccess(env, url, tg.doc, who); team = { id: tid, acc: A.acc, why: A.why, rank: A.rank != null ? A.rank : null, rankName: A.rankName || '' }; } }
+  return json({ wcl: { name: who.name, practice: !!who.practice }, bnet: bnetOut(d), guild, team, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
 }
 
 // ---- The instant listener (Oct 26, the owner's ask: "the whole point of a bot is to make it quick").
