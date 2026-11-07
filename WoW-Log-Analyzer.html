@@ -32467,7 +32467,7 @@ function tpChip() {
   const here = (d.here || []).filter((h) => h.n && h.n.toLowerCase() !== tpWho().toLowerCase()).slice(0, 4);
   const av = here.length ? '<span class="tp-av" title="' + esc(here.map((h) => h.n).join(', ')) + ' ' + (here.length > 1 ? 'are' : 'is') + ' here">' + here.map((h) => '<span style="background:' + tpCol(h.n) + '">' + esc(h.n.charAt(0).toUpperCase()) + '</span>').join('') + '</span>' : '';
   const can = d.you && d.you.can;
-  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, Math.min(d.you.rank, 4))) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : d.you && d.you.why === 'admin' && !d.you.lead ? 'Site admin<span>· can edit</span>' : d.ranks && d.you && d.you.lead ? 'Raid lead<span>· can edit</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
+  w.innerHTML = av + (d.exists ? '<button type="button" class="tp-chip' + (can ? '' : ' tp-ro') + '"><i></i>' + (d.locked ? esc(TP.name) + '\'s plan<span>· closed to your rank</span>' : d.ranks && d.you && d.you.why === 'rank' ? esc(d.you.rankName || rkName(d.ranks, d.you.rank)) + '<span>· can ' + (can ? 'edit' : 'see') + '</span>' : d.you && d.you.why === 'admin' && !d.you.lead ? 'Site admin<span>· can edit</span>' : d.ranks && d.you && d.you.lead ? 'Raid lead<span>· can edit</span>' : can ? 'Saved for the team<span>· officers can edit</span>' : esc(TP.name) + '\'s plan<span>· view only</span>') + '</button>'
     : '<button type="button" class="tp-chip tp-save" title="Save this plan online for your whole team">Save it for the team</button>');
   w.querySelector('.tp-chip').onclick = (e) => { e.stopPropagation(); tpPop(w.querySelector('.tp-chip')); };
   tpDeco();
@@ -32512,27 +32512,27 @@ function tpPop(anchor) {
 }
 // ---- Guild ranks (Battle.net step 2): the raid lead's one panel, "Who can edit, who can see". The Worker reads the guild's roster from
 // Blizzard and enforces the picks (/api/teamplan); this only shows them and saves the lead's choice.
-const RK_NAMES = ['Guild Master', 'Officer', 'Raider', 'Trial', 'Social'], RK_DEF = ['edit', 'edit', 'see', 'see', 'none'];
+const RK_NAMES = ['Guild Master', 'Officer', 'Raider', 'Trial', 'Social'], RK_DEF = (r) => (r < 2 ? 'edit' : r < 4 ? 'see' : 'none'), RK_ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; /* (every rank its own row (Flex, Nov 6)) */
 const RK_WORD = { edit: 'Edit', see: 'See', none: 'None' };
 const rkName = (R, r) => (R && R.names && R.names[r]) || RK_NAMES[r] || 'Rank ' + r;
 // (the pop-up's lines: which ranks edit and which see, or the lead's way in)
 function tpRanksH(d) { const you = d.you || {}, R = d.ranks, mayEdit = you.lead || you.why === 'admin' || (you.why === 'rank' && you.rank === 0);
   if (!R) return mayEdit ? '<div class="sec"><div class="lab">By guild rank</div><div class="pr">Let the guild\'s ranks decide who can edit and who can see. Promotions and leavers follow by themselves.</div><form data-tp="ranks"><button>Set it up</button></form></div>' : '';
-  const grp = (a) => [0, 1, 2, 3, 4].filter((r) => (R.acc || {})[r] === a).map((r) => rkName(R, r));
+  const grp = (a) => RK_ALL.filter((r) => (R.acc || {})[r] === a).map((r) => rkName(R, r));
   return '<div class="sec"><div class="lab">By guild rank · ' + esc(R.guild.name) + '</div>' +
     '<div class="row"><span class="nm">Edit</span><em>' + esc(grp('edit').join(', ') || 'nobody') + '</em></div><div class="row"><span class="nm">See</span><em>' + esc(grp('see').join(', ') || 'nobody') + '</em></div>' +
-    (you.why === 'rank' ? '<div class="pr">You\'re ' + esc(you.rankName || rkName(R, Math.min(you.rank, 4))) + ' in ' + esc(R.guild.name) + ', so you can ' + (you.acc === 'edit' ? 'edit' : you.acc === 'see' ? 'see' : 'not open') + ' this plan.</div>'
+    (you.why === 'rank' ? '<div class="pr">You\'re ' + esc(you.rankName || rkName(R, you.rank)) + ' in ' + esc(R.guild.name) + ', so you can ' + (you.acc === 'edit' ? 'edit' : you.acc === 'see' ? 'see' : 'not open') + ' this plan.</div>'
       : you.why === 'unlinked' || (you.why === 'wcl-guild') ? '<div class="pr">Link Battle.net so Debrief knows your rank. <button type="button" class="lk" data-tp="bnet">Link it</button></div>' : '') +
     (mayEdit ? '<form data-tp="ranks"><button>Change who can edit</button></form>' : '') + '</div>'; }
 function openRanks() {
   if ($('#rkBox') || !TP.id) return;
   const el = document.createElement('div'); el.id = 'rkBox'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Who can edit, who can see');
   const A = { info: null, names: {}, acc: {}, err: '', busy: false };
-  const draw = () => { const I = A.info, rows = I && I.counts ? [0, 1, 2, 3, 4].filter((r) => r <= Math.min(I.hi, 4)) : [];
+  const draw = () => { const I = A.info, rows = I && I.counts ? RK_ALL.filter((r) => I.counts[r]) : []; /* (the ranks the guild has, by number) */
     el.innerHTML = '<div class="panel pnz-sheet gk-sheet"><div class="pnz-top"><div><h2>Who can edit, who can see</h2><p>' + (I && I.guild ? esc(I.guild.name) + ' · from the guild roster' : 'From your guild\'s ranks in game') + '</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
       (!I ? '<p class="bn-sub">Reading the guild roster…</p>' : !I.counts ? '<div class="bn-note">' + esc(I.why || 'The guild roster isn\'t there just now.') + '</div>' + (I.guild ? '' : '<button class="btn bn-link" type="button" data-rk="bnet"><span class="bn-b">B</span>Link Battle.net</button>') :
         '<div class="gk-l">' + rows.map((r) => { const a = A.acc[r];
-          return '<div class="gk-r"><div class="gk-n"><input value="' + esc(A.names[r]) + '" data-rkn="' + r + '" maxlength="24" aria-label="Name of rank ' + r + '"><i class="gk-pen" aria-hidden="true">✎</i><span>rank ' + (r === 4 && I.hi > 4 ? '4–' + I.hi : r) + '</span></div><div class="gk-c">' + (I.counts[r] || 0) + '</div>' +
+          return '<div class="gk-r"><div class="gk-n"><input value="' + esc(A.names[r]) + '" data-rkn="' + r + '" maxlength="24" aria-label="Name of rank ' + r + '"><i class="gk-pen" aria-hidden="true">✎</i><span>rank ' + r + '</span></div><div class="gk-c">' + (I.counts[r] || 0) + '</div>' +
             '<div class="gk-seg" role="radiogroup" aria-label="' + esc(A.names[r]) + '">' + ['edit', 'see', 'none'].map((k) => '<button type="button" role="radio" aria-checked="' + (a === k) + '" class="' + (a === k ? 'on' : '') + '" data-rk="acc" data-r="' + r + '" data-a="' + k + '">' + RK_WORD[k] + '</button>').join('') + '</div></div>'; }).join('') + '</div>' +
         '<p class="gk-why"><b>Edit:</b> change Plan, the roster and notes, and send notes to the team. <b>See:</b> the plan, their own jobs and the note.<br>Promotions, demotions and people leaving the guild update by themselves. Blizzard gives rank numbers, so you name each rank once.</p>' +
         (A.err ? '<div class="bn-note">' + esc(A.err) + '</div>' : '') +
@@ -32550,7 +32550,7 @@ function openRanks() {
   const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
   const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
   document.addEventListener('keydown', key, true); draw();
-  tpApi('id=' + encodeURIComponent(TP.id) + '&ranks=1').then((r) => { A.info = r; for (let i = 0; i <= 4; i++) { A.names[i] = (r.names && r.names[i]) || RK_NAMES[i]; A.acc[i] = (r.acc && r.acc[i]) || RK_DEF[i]; } if (el.isConnected) draw(); })
+  tpApi('id=' + encodeURIComponent(TP.id) + '&ranks=1').then((r) => { A.info = r; for (const i of RK_ALL) { A.names[i] = (r.names && r.names[i]) || RK_NAMES[i] || 'Rank ' + i; A.acc[i] = (r.acc && r.acc[i]) || RK_DEF(i); } if (el.isConnected) draw(); })
     .catch(() => { A.info = { why: 'The guild roster didn\'t load. Try again in a minute.' }; draw(); });
 }
 // ---- Battle.net step 4: "Ready for the raid?" on Plan, from public Battle.net data, so it works for everyone on the roster, linked or not:

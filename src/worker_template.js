@@ -1776,7 +1776,9 @@ async function gnote(req, env, url) {
 // team; See = the plan, your own jobs and the note; None = nothing. Promotions, demotions and leavers follow by themselves. A raider counts by
 // their linked Battle.net characters; anyone not linked (or a guild that hasn't set ranks up) falls back to the old rules: the raid lead and
 // named officers edit, and with ranks set, someone in the guild on Warcraft Logs can still see.
-const RANK_ACC = /^(edit|see|none)$/, RANK_TOP = 4; /* (ranks 4 and up share one row, like the game's social ranks) */
+const RANK_ACC = /^(edit|see|none)$/, RANK_TOP = 9; /* (every rank its own row, 0 to 9 (Flex, Nov 6: "theres ranks missing"; until then 4 and up shared one row)) */
+// (one rank's setting: its own; a plan saved when 4 and up shared one row keeps that row's pick for 5 to 9 until the lead changes them)
+const rankAcc = (R, rk) => (RANK_ACC.test((R.acc || {})[rk] || '') ? R.acc[rk] : rk > 4 && RANK_ACC.test((R.acc || {})[4] || '') && !R.v2 ? R.acc[4] : 'none');
 const guildSlug = (n) => String(n || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
 // (practice links: a made-up Wolfthorn roster, with test names for each rank (Officertest, Raidertest, Trialtest, Socialtest))
 function guildMockRoster() {
@@ -1794,7 +1796,7 @@ async function guildRoster(env, url, g) {
   await c.put(ck, new Response(JSON.stringify(o), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {});
   return o;
 }
-const rankRow = (rk) => Math.min(rk, RANK_TOP);
+const rankRow = (rk) => Math.max(0, Math.min(rk, RANK_TOP));
 // (one raider's rank in a guild, from their linked characters: the best (lowest) rank any of them holds)
 async function guildRankOf(env, url, g, link) {
   if (!link || !g) return null; const R = await guildRoster(env, url, g); if (!R) return null;
@@ -1810,7 +1812,7 @@ async function teamAccess(env, url, d, who) {
   if (await siteAdmin(who, env, url)) return { acc: 'edit', why: 'admin' };
   let link = null;
   if (R && R.guild) { link = await bnetGet(env, who.uid, url); const rk = await guildRankOf(env, url, R.guild, link);
-    if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: RANK_ACC.test(R.acc[row] || '') ? R.acc[row] : 'none', why: 'rank', rank: rk, rankName: R.names[row] || '' }; } }
+    if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: rankAcc(R, row), why: 'rank', rank: rk, rankName: (R.names || {})[row] || '' }; } }
   if (await teamCan(d, who)) return { acc: 'edit', why: 'officer' };
   if (!R) return { acc: 'see', why: 'open' };
   const gm = /^guild:(\d+)$/.exec(d.id); if (gm && (await teamGuilds(who)).includes(+gm[1])) return { acc: 'see', why: 'wcl-guild' };
@@ -1819,13 +1821,14 @@ async function teamAccess(env, url, d, who) {
 // (the lead's panel: the guild's ranks and how many hold each, from the saved guild or the lead's linked main's guild)
 async function teamRanks(env, url, d, who) {
   let g = d && d.ranks && d.ranks.guild;
+  { const q = url.searchParams.get('guild') || ''; if (PRACTICE_HOST(url) && /^[a-z0-9-]{1,40}:[^:]{2,40}$/.test(q)) { const [realm, name] = q.split(':'); g = { region: BNET_REG.test(url.searchParams.get('region') || '') ? url.searchParams.get('region') : 'us', realm, name }; } }
   if (!g && who) { const link = await bnetGet(env, who.uid, url), m = link && ((link.chars || []).find((c) => bnetKey(c) === link.main) || (link.chars || []).find((c) => c.g));
     if (m && m.g) g = { region: link.region, realm: m.gs || m.slug, name: m.g, mock: !!link.mock || undefined }; }
   if (!g) return { guild: null, why: 'Link Battle.net first, with a character in your guild, so Debrief can read its ranks.' };
   const R = await guildRoster(env, url, g); if (!R) return { guild: g, why: 'Blizzard didn\'t send ' + g.name + '\'s roster just now. Try again in a minute.' };
   const counts = {}; for (const m of R.members) { const k = rankRow(m.rank); counts[k] = (counts[k] || 0) + 1; }
   const hi = Math.max(0, ...R.members.map((m) => m.rank));
-  return { guild: g, counts, hi, names: (d && d.ranks && d.ranks.names) || null, acc: (d && d.ranks && d.ranks.acc) || null };
+  return { guild: g, counts, hi, names: (d && d.ranks && d.ranks.names) || null, acc: d && d.ranks ? Object.fromEntries([...Array(RANK_TOP + 1).keys()].map((r) => [r, rankAcc(d.ranks, r)])) : null };
 }
 // ---- Battle.net step 4: public data for every rostered character, linked or not (client credentials): item level, the gear's enchants and
 // gems, Mythic+ score and this week's keys. Each character is kept an hour at the edge; a page asks for up to 10 at a time.
@@ -1859,7 +1862,7 @@ async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
   const who = await teamWho(req, env, url), you = (d, can, A) => (who ? { name: who.name, can, lead: !!d && d.owner.uid === who.uid, practice: !!who.practice, acc: A ? A.acc : can ? 'edit' : 'see', why: A ? A.why : '', rank: A && A.rank != null ? A.rank : null, rankName: (A && A.rankName) || '' } : null);
-  const rankPub = (d) => (d.ranks ? { guild: { name: d.ranks.guild.name, realm: d.ranks.guild.realm, region: d.ranks.guild.region }, names: d.ranks.names, acc: d.ranks.acc, at: d.ranks.at, by: d.ranks.by } : null);
+  const rankPub = (d) => (d.ranks ? { guild: { name: d.ranks.guild.name, realm: d.ranks.guild.realm, region: d.ranks.guild.region }, names: d.ranks.names, acc: Object.fromEntries([...Array(RANK_TOP + 1).keys()].map((r) => [r, rankAcc(d.ranks, r)])), at: d.ranks.at, by: d.ranks.by } : null);
   if (req.method === 'GET') {
     if (url.searchParams.get('ranks') === '1') { const g0 = await teamGet(env, id, url).catch(() => null); return json(await teamRanks(env, url, g0 && g0.doc, who)); } /* (the lead's ranks panel) */
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
@@ -1903,8 +1906,8 @@ async function teamPlan(req, env, url) {
     else if (b.op === 'ranks') { const A = await teamAccess(env, url, d, who); if (!(A.why === 'lead' || A.why === 'admin' || (A.why === 'rank' && A.rank === 0))) return json({ error: 'Only the raid lead or the Guild Master sets who can edit and see.' }, 403);
       if (b.clear) { delete d.ranks; d.log.push({ at: now, by: me, k: '', sum: 'turned off access by guild rank' }); }
       else { const T = await teamRanks(env, url, d, who); if (!T.counts) return json({ error: T.why }, 400);
-        const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
-        d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
+        const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : d.ranks ? rankAcc(d.ranks, r) : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
+        d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, v2: 1, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
     else { if (d.owner.uid !== who.uid && !(await siteAdmin(who, env, url))) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
       const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
       const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
