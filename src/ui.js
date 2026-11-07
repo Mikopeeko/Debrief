@@ -7963,6 +7963,10 @@ function openRanks() {
 // and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts
 // when most of the raid has one there.
 const BFR = { key: '', list: null, busy: false, err: '', off: false };
+// (the slots that take an enchant in 12.1.5 (Nov 6, the studio: 9 of 10 "to fix" were Hands): every one of 16 top US Mythic raiders on Battle.net has a
+// real enchant on these, and none on Back, Wrists, Belt, Neck or Trinkets. Hands showed only on 5 of 16, and that was "Ancient Hash'ey Battle Art", a
+// special bonus, not an enchant. An off hand is left out: Blizzard's gear data doesn't say whether it's a weapon)
+const GEAR_ENCH = ['HEAD', 'SHOULDER', 'CHEST', 'LEGS', 'FEET', 'FINGER_1', 'FINGER_2', 'MAIN_HAND'];
 const BFR_SLOT = { HEAD: 'Head', NECK: 'Neck', SHOULDER: 'Shoulders', BACK: 'Back', CHEST: 'Chest', WRIST: 'Wrists', HANDS: 'Hands', WAIST: 'Belt', LEGS: 'Legs', FEET: 'Feet', FINGER_1: 'Ring 1', FINGER_2: 'Ring 2', TRINKET_1: 'Trinket 1', TRINKET_2: 'Trinket 2', MAIN_HAND: 'Weapon', OFF_HAND: 'Off hand' };
 function bfrWhere() { const t = tpTeam(); if (!t) return null; const sv = String(t.server || t.realm || ''), rg = ((/\((\w{2})\)\s*$/.exec(sv) || [])[1] || t.region || 'us').toLowerCase();
   return { realm: srvSlug(sv.replace(/\s*\(\w{2}\)\s*$/, '')), r: /^(us|eu)$/.test(rg) ? rg : 'us', team: t }; }
@@ -7983,9 +7987,7 @@ async function bfrLoad() {
       if (!r.ok) throw new Error(j.error || 'Battle.net didn\'t answer just now.'); out.push(...(j.list || [])); }
     BFR.list = out; } catch (e) { BFR.err = String(e.message || e); } BFR.busy = false; if (BFR.key === key) bfrDraw(); }
 function bfrFacts(L) {
-  const ok = L.filter((x) => !x.none && x.il), ils = ok.map((x) => x.il).sort((a, b) => a - b), mid = ils.length ? ils[Math.floor(ils.length / 2)] : 0, need = new Set(), cnt = {};
-  for (const x of ok) for (const [s, , en] of x.items || []) { cnt[s] = cnt[s] || [0, 0]; cnt[s][1]++; if (en) cnt[s][0]++; }
-  for (const [s, [a, b]] of Object.entries(cnt)) if (b >= 3 && a / b >= 0.6) need.add(s); /* (a slot most of the raid enchants) */
+  const ok = L.filter((x) => !x.none && x.il), ils = ok.map((x) => x.il).sort((a, b) => a - b), mid = ils.length ? ils[Math.floor(ils.length / 2)] : 0, need = new Set(GEAR_ENCH);
   const rows = [], okL = []; let fine = 0;
   for (const x of ok) { const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s), low = mid && x.il <= mid - 5;
     const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'empty gem socket') + ' (' + gem.join(', ') + ')' : '',
@@ -34179,7 +34181,7 @@ const hdBossFace = (b, cls) => { const H = BOSS_HERO[b]; return H ? '<img class=
 const HD_CAM = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="1.5" y="3.5" width="13" height="10" rx="2"/><circle cx="8" cy="8.5" r="2.5"/></svg>';
 // (Your gear under Your jobs (the studio's mock, Nov 6): the raider's own public Battle.net gear against the raid's, a red line only when it needs fixing.
 // The enchanted slots and the raid's item level come from Plan's last check; before one, the slots the raid's gear shows enchanted on Midnight)
-const HD_GEAR = new Map(), HD_GEAR_NEED = ['HEAD', 'SHOULDER', 'CHEST', 'HANDS', 'LEGS', 'FEET', 'FINGER_1', 'FINGER_2', 'MAIN_HAND'];
+const HD_GEAR = new Map();
 async function hdGear(g, me) {
   const box = $('#main .hj-gear'); if (!box || !me || !WCL.HOSTED) return; const k = g.gid + '|' + me.toLowerCase();
   let x = HD_GEAR.get(k);
@@ -34187,7 +34189,7 @@ async function hdGear(g, me) {
       const realm = mine ? mine.slug : (await bfrRealms(g).catch(() => new Map())).get(me.toLowerCase()) || srvSlug(sv.replace(/\s*\(\w{2}\)\s*$/, ''));
       const j = await (await fetch('/api/raiders?r=' + (/^(us|eu)$/.test(rg) ? rg : 'us') + '&c=' + encodeURIComponent(String(realm).replace(/[:,]/g, '') + ':' + me))).json(); x = (j.list || [])[0] || null; } catch (e) { x = null; } HD_GEAR.set(k, x); }
   if (!x || x.none) return; let ref = null; try { ref = JSON.parse(store.get('wla-gear-ref') || 'null'); } catch (e) { ref = null; }
-  const need = new Set((ref && ref.need) || HD_GEAR_NEED), mid = ref && ref.mid;
+  const need = new Set(GEAR_ENCH), mid = ref && ref.mid;
   const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s);
   const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'an empty gem socket') + ' (' + gem.join(', ') + ')' : '', mid && x.il <= mid - 5 ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
   if (!parts.length) return; box.hidden = false; box.innerHTML = '<b>Your gear: ' + esc(parts.join(' · ')) + '.</b><span>Fix it before the next raid.</span>'; }

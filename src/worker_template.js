@@ -1851,12 +1851,13 @@ function raiderMock(realm, n) { let h = 0; for (const ch of n) h = (h * 31 + ch.
   return { n, realm, cls: BNET_CLS[1 + (h % 13)], spec: '', sid: 0, il, score: 1800 + (h % 1700), wk: r(3) % 9, mock: true,
     items: slots.map((s, i) => [s, il + ((h >>> i) % 5) - 2, ['BACK', 'CHEST', 'WRIST', 'LEGS', 'FEET', 'FINGER_1', 'FINGER_2', 'MAIN_HAND'].includes(s) ? (s === 'FINGER_2' && r(5) < 3 ? 0 : 1) : 0, s === 'NECK' || s === 'FINGER_1' || s === 'FINGER_2' ? 1 : 0, s === 'NECK' && r(9) < 3 ? 0 : s === 'NECK' || s === 'FINGER_1' || s === 'FINGER_2' ? 1 : 0]) }; }
 async function raiderOne(env, r, realm, n, tok) {
-  const c = caches.default, ck = new Request('https://debrief.cache/raider/' + r + '/' + realm + '/' + encodeURIComponent(n.toLowerCase())), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const c = caches.default, ck = new Request('https://debrief.cache/raider2/' + r + '/' + realm + '/' + encodeURIComponent(n.toLowerCase())), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
   const base = '/profile/wow/character/' + realm + '/' + encodeURIComponent(n.toLowerCase());
   const [s, eq, mk] = await Promise.all([bnetApi(r, base, tok), bnetApi(r, base + '/equipment', tok), bnetApi(r, base + '/mythic-keystone-profile', tok)]);
   const o = !s ? { n, realm, none: true } : { n: s.name || n, realm, cls: BNET_CLS[(s.character_class || {}).id] || '', spec: (s.active_spec || {}).name || '', sid: (s.active_spec || {}).id || 0, il: s.equipped_item_level || 0,
     items: ((eq && eq.equipped_items) || []).filter((i) => i.slot && !['SHIRT', 'TABARD'].includes(i.slot.type)).map((i) => [i.slot.type, (i.level || {}).value || 0,
-      (i.enchantments || []).some((e) => e.enchantment_slot && e.enchantment_slot.type === 'PERMANENT') ? 1 : 0, (i.sockets || []).length, (i.sockets || []).filter((x) => x.item).length]),
+      (i.enchantments || []).some((e) => e.enchantment_slot && e.enchantment_slot.type === 'PERMANENT') ? 1 : 0, (i.sockets || []).length, (i.sockets || []).filter((x) => x.item).length,
+      ((i.enchantments || []).find((e) => e.enchantment_slot && e.enchantment_slot.type === 'PERMANENT') || {}).display_string ? String((i.enchantments || []).find((e) => e.enchantment_slot && e.enchantment_slot.type === 'PERMANENT').display_string).replace(/|[cCrRAa][^|]*/g, '').slice(0, 60) : '']), /* (the enchant's own name too, to tell a real enchant from a crafted bonus) */
     score: Math.round(((mk && mk.current_mythic_rating) || {}).rating || 0), wk: (((mk && mk.current_period) || {}).best_runs || []).length };
   await c.put(ck, new Response(JSON.stringify(o), { headers: { 'Cache-Control': 'max-age=' + (o.none ? 600 : 3600) } })).catch(() => {});
   return o;
