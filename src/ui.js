@@ -18368,6 +18368,7 @@ function nightPlayers(NP) {
 // (Nov 6, Flex: "the deaths in graphs are definitely counting things that happened during the wipe": a death counts on Graphs as everywhere else, before the
 // call and not in a mass wipe (deathVerdict); the others are "during the wipe")
 function gbDeathOk(r, d) { try { const v = deathVerdict(r, d); return !!(v && v.counts && v.on); } catch (e) { return false; } } /* (Flex, Nov 6: "all I want graph deaths to show are the shitters that messed up and cost them their life": their own mistake only, the Report card's Deaths on you) */
+var DBT_NOTMECH = /^(power infusion|innervate|combat potions?|potions?|healthstones?|defensives?|big cooldowns|cooldowns on big damage|divine hymn|.*\bon big damage)\b/i; /* (rows that aren't mechanics: Debriefing's Why we wiped leaves them out (Nov 7)) */
 function wfTxt() { return deathCutN() ? 'each up to its wipe filter' : 'whole pulls'; }
 function graphsBoard(r, end, NP) {
   const night = !!(NP && NP.length > 1);
@@ -36010,7 +36011,7 @@ function dsGuides() {
     var old = v.querySelector(':scope > .dbt'); if (!cs || !L || !L.querySelector('details.phase details.secd')) { if (old) { dbtMapsHome(); old.remove(); } v.classList.remove('dbt-on', 'dbt-full'); return; }
     if (old && old._cs === cs) return; if (old) { dbtMapsHome(); old.remove(); }
     var hb = (document.getElementById('bossHead') || document.body).textContent, cm = hb.match(/Wipe called at (\d+:\d\d)/), cut = cm ? sx(cm[1]) : 0;
-    var M = moments(v, cs, cut); if (!M.length) return;
+    var M = moments(v, cs, cut).filter(function (m) { return !DBT_NOTMECH.test(String(m.m || '')) && !/^cch-ab/.test(String(m.id || '')); }); if (!M.length) return; /* (Nov 7, Flex: only mechanics here; rotation, cooldown and raid-check rows stay on Rotation, the Report card and Raid checks) */
     var phs = [].slice.call(L.querySelectorAll(':scope > details.phase')).map(function (ph) { var s = ph.querySelector(':scope > summary'), tm = (s.textContent.match(/(\d+:\d\d)\s*[–-]\s*(\d+:\d\d)/) || []); return { k: ph.dataset.phk, n: ((s.querySelector('b') || {}).textContent || '').trim(), s: tm[0] || '', t: tm[1] ? sx(tm[1]) : 0, hp0: ph.dataset.bhp0 != null && ph.dataset.bhp0 !== '' ? ph.dataset.bhp0 : ph.dataset.hp0, hp1: ph.dataset.bhp1 != null && ph.dataset.bhp1 !== '' ? ph.dataset.bhp1 : ph.dataset.hp1, hps: ph.dataset.bhps || ph.dataset.hps || '', own: !!ph.dataset.bhps, whps: ph.dataset.hps || '', bn: ph.dataset.bhn || '' }; /* (the phase's own boss first, the whole fight's health if not) */ });
     if (phs.some(function (p) { return p.s; })) phs = phs.filter(function (p) { return p.s; }); /* (untimed sections get no marker when there are timed phases) */
     /* (boss health over the pull, from each phase's samples) */
