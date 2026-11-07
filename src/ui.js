@@ -25668,7 +25668,7 @@ function genRun0(spec, D, reps, name, one) {
   // (procs)
   const procN = D.procN || nmB(procs, 'Procs'), gP = grp(procN);
   for (const q of procs) { const l = rows.map((s) => s.pr[q.n]).filter(Boolean); if (!l.length) continue; const x = { gained: 0, wasted: 0, ran: 0, lost: 0, cap: 1, by: new Map() }; for (const o of l) { x.gained += o.gained; x.wasted += o.wasted; x.ran += o.ran; x.lost += o.lost; x.cap = Math.max(x.cap, o.cap || 1); for (const [k, v] of o.by) x.by.set(k, (x.by.get(k) || 0) + v); } if (!x.gained) continue;
-    const st = x.wasted <= Math.max(1, mins / 3, (q.okW || 0.05) * x.gained) ? 'ok' : x.wasted <= Math.max(2, 2 * mins / 3, (q.warnW || 0.12) * x.gained) || D.unitN === 'healing' ? 'warn' : 'bad', sp = [...x.by].sort((a, b) => b[1] - a[1]);
+    const st = q.info ? 'na' : x.wasted <= Math.max(1, mins / 3, (q.okW || 0.05) * x.gained) ? 'ok' : x.wasted <= Math.max(2, 2 * mins / 3, (q.warnW || 0.12) * x.gained) || D.unitN === 'healing' ? 'warn' : 'bad', sp = [...x.by].sort((a, b) => b[1] - a[1]);
     // (the count first, "3 of 8 wasted", out of the charges when a proc carries several; then what made up the waste (uses that ran out, and procs
     // replaced while still held); with none wasted, what they went on)
     const spT = sp.reduce((v, y) => v + y[1], 0), chg = spT > x.gained /* (charges: more uses than procs) */, tot = Math.max(x.gained, spT + x.wasted);
@@ -27065,7 +27065,7 @@ const GEN_SPECS = {
     abcWhy: 'A healer can\'t always be pressing, so the scale is gentle.',
     rot: [{ n: 'Holy Word: Serenity', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Your Holy Words are your strongest spells, and your other heals bring them back faster. Don\'t sit on full charges.' }, { n: 'Holy Word: Sanctify', cd: 60, chT: [['Miracle Worker', 2]], ok: 0.75, warn: 0.6, why: 'Holy Word: Sanctify, your group heal, as often as it\'s ready when healing is needed.' },
       { n: 'Prayer of Mending', cd: 12, h: true, ok: 0.8, warn: 0.6, why: 'Press Prayer of Mending on cooldown.' }, { n: 'Halo', hero: 'Archon', cd: 60, ok: 0.8, warn: 0.6, why: 'As Archon, press Halo on cooldown, when healing is needed.' }],
-    procs: [{ n: 'Surge of Light', use: ['Flash Heal', 'Prayer of Healing'], max: 2, why: 'Surge of Light makes your next Flash Heal (or, as Archon with Spiritwell, Prayer of Healing) instant and half the mana. Both guides: spend it before it caps at 2.' }, { n: 'Benediction', use: ['Benediction'], max: 2, okW: 0.2, warnW: 0.4, why: 'Wowhead: do not let Benediction cap at 2 stacks. Each one is a stronger Flash Heal with a Cosmic Ripple.' },
+    procs: [{ n: 'Surge of Light', use: ['Flash Heal', 'Prayer of Healing'], max: 2, why: 'Surge of Light makes your next Flash Heal (or, as Archon with Spiritwell, Prayer of Healing) instant and half the mana. Both guides: spend it before it caps at 2. Not graded: the log does not always show what a Surge of Light was spent on, so a few counted as wasted may have been used.' }, { n: 'Benediction', use: ['Benediction'], max: 2, okW: 0.2, warnW: 0.4, why: 'Wowhead: do not let Benediction cap at 2 stacks. Each one is a stronger Flash Heal with a Cosmic Ripple.' },
       { n: 'Epiphany', tal: 'Epiphany', use: ['Prayer of Mending'], max: 1, okW: 0.1, warnW: 0.25, why: 'Epiphany: your Holy Words sometimes make your next Prayer of Mending skip its cooldown. Icy Veins: when it comes, cast Prayer of Mending next, not a second Holy Word. Don\'t let it run out.' },
       { n: 'Divinity', tal: 'Divinity', use: ['Prayer of Healing'], max: 3, okW: 0.1, warnW: 0.25, why: 'Divinity: pressing Apotheosis makes your next 3 Prayers of Healing instant and 25% stronger. Both guides: use them inside Apotheosis. Don\'t let them run out.' }],
     cds: [{ n: 'Apotheosis', cd: 120, ok: 0.6, warn: 0.3, why: 'Use Apotheosis for heavy damage.' }, { n: 'Divine Hymn', info: true, chan: 8, cd: 180, cdT: [['Seraphic Crescendo', 120]], ok: 0.6, warn: 0.3, why: 'Use Divine Hymn when your raid note calls for it.' },
@@ -27313,7 +27313,7 @@ const GEN_TUNE = {
   'Havoc Demon Hunter': { abc: [0.69, 0.6], res: [0.19, 0.27], set: { 'cd:immolation aura': { h: false, ok: 0.6, warn: 0.45 }, 'cd:essence break': { ok: 0.8, warn: 0.65 } } },
   'Balance Druid': { abc: [0.83, 0.74] },
   'Retribution Paladin': { abc: [0.7, 0.62], drop: ['p:Art of War', 'res'], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
-  'Holy Priest': { abc: [0.72, 0.62], drop: ['p:Surge of Light', 'mana'] },
+  'Holy Priest': { abc: [0.72, 0.62], drop: ['mana'], set: { 'p:Surge of Light': { info: true } } }, /* (Nov 7, Flex 'Yes, ungraded': Surge of Light shows its numbers, not graded) */
   'Frost Death Knight': { abc: [0.64, 0.55], res: [0.15, 0.22], drop: ['p:Killing Machine'], set: { 'p:Rime': { okW: 0.1, warnW: 0.18 } } },
   'Blood Death Knight': { abc: [0.74, 0.66], drop: ['dot:Blood Plague'], set: { 'cd:blood boil': { ok: 0.6, warn: 0.45 } } },
   'Windwalker Monk': { abc: [0.74, 0.65], set: { 'cd:whirling dragon punch': { ok: 0.6, warn: 0.45 }, 'cd:zenith': { ok: 0.75, warn: 0.6 }, 'cd:invoke xuen, the white tiger': { ok: 0.75, warn: 0.6 }, 'cd:celestial conduit': { ok: 0.75, warn: 0.6 } } },
