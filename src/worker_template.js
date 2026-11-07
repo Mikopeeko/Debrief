@@ -1827,8 +1827,12 @@ async function teamRanks(env, url, d, who) {
   if (!g) return { guild: null, why: 'Link Battle.net first, with a character in your guild, so Debrief can read its ranks.' };
   const R = await guildRoster(env, url, g); if (!R) return { guild: g, why: 'Blizzard didn\'t send ' + g.name + '\'s roster just now. Try again in a minute.' };
   const counts = {}; for (const m of R.members) { const k = rankRow(m.rank); counts[k] = (counts[k] || 0) + 1; }
+  // (who holds each rank, so the lead can tell which rank is which (Flex, Nov 6: Blizzard gives numbers, not the rank names): up to 4
+  // names a rank, the team's own raiders first)
+  let known = new Set(); try { const o = JSON.parse(((d && d.keys && d.keys['wla-rosters']) || {}).v || 'null'); known = new Set(((o && o.list) || []).flatMap((x) => (x.players || []).map((p) => String(p.n).split('-')[0].toLowerCase()))); } catch (e) { known = new Set(); }
+  const hold = {}; for (const m of R.members.slice().sort((a, b) => known.has(String(b.n).toLowerCase()) - known.has(String(a.n).toLowerCase()) || String(a.n).localeCompare(String(b.n)))) { const k = rankRow(m.rank); (hold[k] = hold[k] || []); if (hold[k].length < 4 && m.n && !hold[k].includes(m.n)) hold[k].push(m.n); }
   const hi = Math.max(0, ...R.members.map((m) => m.rank));
-  return { guild: g, counts, hi, names: (d && d.ranks && d.ranks.names) || null, acc: d && d.ranks ? Object.fromEntries([...Array(RANK_TOP + 1).keys()].map((r) => [r, rankAcc(d.ranks, r)])) : null };
+  return { guild: g, counts, who: hold, hi, names: (d && d.ranks && d.ranks.names) || null, acc: d && d.ranks ? Object.fromEntries([...Array(RANK_TOP + 1).keys()].map((r) => [r, rankAcc(d.ranks, r)])) : null };
 }
 // ---- Battle.net step 4: public data for every rostered character, linked or not (client credentials): item level, the gear's enchants and
 // gems, Mythic+ score and this week's keys. Each character is kept an hour at the edge; a page asks for up to 10 at a time.
