@@ -236,6 +236,10 @@ for (const s of ["% of the fight</span>", "+ '% of the fight'", "<small class=\"
 for (const s of ["left: it.kill ? 0 : pg ? pg.left :", "left: p.kill ? 0 : pg ? pg.left :", "const pctOf = (b) => (b && b.left != null ? (b.kill || b.left <= 0 ? 0 : Math.max(1, Math.round(b.left))) : null);"]) if (!UI.includes(s)) say('the page code', 'progress', 'Home\'s best pull no longer takes the pull picker\'s whole-fight boss health (expected "' + s + '" in src/ui.js)');
 
 const t0 = Date.now(); let n = 0;
+/* (Nov 6: every PATCH_NOTES day needs a valid date; a stray line showed "Invalid Date" on the Patch notes page and feeds the daily Discord post) */
+{ const src = fs.readFileSync(path.join(SRC, 'ui.js'), 'utf8'), i = src.indexOf('const PATCH_NOTES = ['), j = src.indexOf('\n];', i); let PN = null; try { PN = require('vm').runInNewContext(src.slice(i + 'const PATCH_NOTES = '.length, j + 3)); } catch (e) { console.log('Contradiction: PATCH_NOTES could not be read (' + e.message + ')'); process.exit(1); }
+  const bad = PN.filter((x) => !x || typeof x !== 'object' || !/^\d{4}-\d\d-\d\d$/.test(x.d || '') || isNaN(Date.parse(x.d)));
+  if (bad.length) { console.log('Contradiction: ' + bad.length + ' PATCH_NOTES day(s) without a valid date, e.g. ' + JSON.stringify(bad[0]).slice(0, 100)); process.exit(1); } }
 if (!fs.existsSync(LIB) && !DIRS.length) { console.log('Contradiction check: skipped (no log library at ' + LIB + ')'); process.exit(0); }
 for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash', 'the check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
