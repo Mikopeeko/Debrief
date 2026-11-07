@@ -26339,7 +26339,7 @@ const GEN_SPECS = {
     win: { n: 'Avenging Wrath', names: ['Avenging Wrath', 'Crusade'], with: [['Execution Sentence'], ['Divine Toll']], dur: 20, why: 'Avenging Wrath is your burst, every minute: more damage and crit, and Judgment becomes Hammer of Wrath. Both guides: use it before your other cooldowns, with Execution Sentence, Wake of Ashes and Divine Toll inside, and your potion and trinkets.', lead: 'Press Avenging Wrath with Execution Sentence and Divine Toll, together and on cooldown.' },
     rot: [{ n: 'Wake of Ashes', cd: 30, ok: 0.85, warn: 0.7, why: 'Both guides: Wake of Ashes on cooldown. It gives 3 Holy Power and hits hard.' },
       { n: 'Blade of Justice', cd: 12, h: true, chT: [['Improved Blade of Justice', 2]], ok: 0.8, warn: 0.65, why: 'Blade of Justice is your strongest builder. Keep it on cooldown.' }],
-    procs: [{ n: 'Art of War', use: ['Blade of Justice'], max: 2, why: 'Both guides: Art of War resets Blade of Justice; at 2 stacks, use it right away. The apex talent makes these procs stronger.' },
+    procs: [{ n: 'Art of War', use: ['Blade of Justice', 'Hammer of Wrath', 'Divine Toll'], max: 2, /* (Nov 7: the log shows Hammer of Wrath and Divine Toll using it up too; those had counted as wasted, so every top Retribution failed it) */ why: 'Both guides: Art of War resets Blade of Justice; at 2 stacks, use it right away. The apex talent makes these procs stronger.' },
       { n: 'Divine Purpose', use: ['Final Verdict', "Templar's Verdict", 'Divine Storm', "Justicar's Vengeance"], why: 'Divine Purpose makes your next spender free. Use it before it runs out. Icy Veins: with the tier set, weave a Divine Storm after it on one target.' }],
     res: { ty: '9', n: 'Holy Power', fine: 'came from talents and procs, not your builders', from: /^(Blade of Justice|Judgment|Hammer of Wrath|Wake of Ashes|Crusader Strike|Templar Strike|Templar Slash|Divine Toll)$/, why: "Icy Veins: don't keep building at 5 Holy Power just to put a builder on cooldown. Some waste can't be avoided. Crusading Strikes' automatic Holy Power isn't counted." },
     cds: [{ n: 'Avenging Wrath', names: ['Avenging Wrath', 'Crusade'], cd: 60, ok: 0.85, warn: 0.7, why: 'Both guides: Avenging Wrath on cooldown, first of your cooldowns.' },
@@ -27314,7 +27314,7 @@ const GEN_TUNE = {
   'Marksmanship Hunter': { abc: [0.76, 0.68], set: { 'p:Precise Shots': { okW: 0.15, warnW: 0.25 } } },
   'Havoc Demon Hunter': { abc: [0.69, 0.6], res: [0.19, 0.27], set: { 'cd:immolation aura': { h: false, ok: 0.6, warn: 0.45 }, 'cd:essence break': { ok: 0.8, warn: 0.65 } } },
   'Balance Druid': { abc: [0.83, 0.74] },
-  'Retribution Paladin': { abc: [0.7, 0.62], drop: ['p:Art of War', 'res'], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
+  'Retribution Paladin': { abc: [0.7, 0.62], drop: ['res'], set: { 'cd:blade of justice': { ok: 0.72, warn: 0.6 } } },
   'Holy Priest': { abc: [0.72, 0.62], drop: ['mana'] }, /* (Nov 7, Flex 'Yes, grade it': Surge of Light is graded again now that Benediction counts as a spend) */
   'Frost Death Knight': { abc: [0.64, 0.55], res: [0.15, 0.22], drop: ['p:Killing Machine'], set: { 'p:Rime': { okW: 0.1, warnW: 0.18 } } },
   'Blood Death Knight': { abc: [0.74, 0.66], drop: ['dot:Blood Plague'], set: { 'cd:blood boil': { ok: 0.6, warn: 0.45 } } },
