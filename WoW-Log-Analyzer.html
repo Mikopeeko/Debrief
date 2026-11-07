@@ -4962,6 +4962,7 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 html body .bn-sheet button.bn-r { border-radius: 50% !important; }
 /* (Battle.net step 3: Your season's line of all your characters, or a quiet "Missing a character? Link Battle.net") */
 .hd-mych { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 13px; } .hd-mych .l { color: var(--muted); font: 600 12px var(--body); letter-spacing: .08em; text-transform: uppercase; }
+.hd-nosign { color: var(--faint); white-space: nowrap; } /* (Home's greeting when nobody is signed in, Nov 6) */
 .hd-myc b { font-weight: 600; } .hd-myc .num { color: var(--muted); } .hd-myc em { font-style: normal; color: var(--gold); font-size: 12px; } .hd-bnl { background: none; border: 0; padding: 0; color: var(--gold); font: 600 13px var(--body); cursor: pointer; }
 /* ---- Guild ranks (Nov 6): the raid lead's "Who can edit, who can see" panel: a row per rank, its name once, how many hold it, Edit / See / None */
 .gk-sheet { width: min(560px, 100%); } .gk-l { border-top: 1px solid var(--line); } .gk-r { display: grid; grid-template-columns: 1fr 40px 220px; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -57826,9 +57827,14 @@ document.addEventListener('whoami', bnMenuLabel);
 // (Menu > Sign out: only while signed in; it ends the sign-in on Debrief (and a practice link's test name) and starts the page over (Flex, Nov 6))
 /* (signed in by any route: the server's session (whoAmI), this browser's Warcraft Logs sign-in (wla-wcl-me, kept even after the server's session runs out), or a
    practice test name (Main, Nov 6: Flex was signed in and saw no Sign out); drawn at load, on whoAmI and each time the menu opens) */
-const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; const W = WCL.HOSTED ? (WHO.now || {}).wcl : null, L = WCL.HOSTED ? wclMe() : null, w = W || L; o.hidden = !w; if (w) o.innerHTML = 'Sign out<span>' + (W && W.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>'; };
-document.addEventListener('whoami', outMenuLabel); outMenuLabel(); { const m = $('#tbMenu'); if (m) m.addEventListener('click', outMenuLabel); }
-if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); if (p) p.hidden = true;
+const signedIn = () => (WCL.HOSTED ? ((WHO.now || {}).wcl || wclMe() || null) : null);
+const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; if (!WCL.HOSTED) { o.hidden = true; return; } const W = (WHO.now || {}).wcl, w = signedIn(); o.hidden = false; o.dataset.acct = w ? 'out' : 'in';
+  const me = meOf(); o.innerHTML = w ? 'Sign out<span>' + (W && W.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>' : 'Sign in with Warcraft Logs<span>' + (me ? 'not signed in · you\'re ' + esc(String(me.name).split('-')[0]) + ' on this PC' : 'brings in your characters and guilds') + '</span>'; };
+// (Sign in from the menu or Home: Warcraft Logs' own sign-in; a practice link can't use it, so it opens Your characters to test as a name)
+const signInNow = () => { if (TP_PRACTICE) { openAccounts(); return; } try { sessionStorage.setItem('wla-wcl-after', 'acct'); } catch (e) { /* storage off */ } wclSignIn(); };
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-hdsign]')) signInNow(); });
+document.addEventListener('whoami', outMenuLabel); setTimeout(outMenuLabel, 0); /* (after the rest of the page's code has loaded: meOf comes later) */ { const m = $('#tbMenu'); if (m) m.addEventListener('click', outMenuLabel); }
+if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); if (p) p.hidden = true; if ($('#tbOut').dataset.acct !== 'out') { signInNow(); return; }
   try { await fetch('/api/signout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { /* (the page starts over either way) */ }
   try { localStorage.removeItem(WCL_SIGN.key); sessionStorage.removeItem(WCL_SIGN.pk); sessionStorage.removeItem('wla-bn-join'); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0'; WHO.now = null; S.wclCreds = null;
   /* (Flex: "the sign out button didnt do anything": the sign-in ended, but the page came back on your team's Home. Now your teams and "which one
@@ -58913,7 +58919,7 @@ function hdDash(X) {
   const seen = hdSeen(ch, g), first = seen.at == null, T0 = first ? Date.now() - 7 * 864e5 : seen.at, chCol = ch ? ((E.CLASSES[ch.cls] || [])[1] || 'var(--text)') : 'var(--text)';
   const sinceW = first ? '' : hdSinceW(seen.at);
   const greet = '<header class="hd-head hd-greet">' + (ch ? '<span class="hd-gface">' + hdFace(ch) + '</span>' : '') + '<div class="hd-tt"><h1>' + (first ? 'Welcome, ' : 'Welcome back, ') + '<span style="color:' + chCol + '">' + esc(ch ? gName(ch) : gName(g)) + '</span></h1>' +
-    '<p>' + (first ? 'Here\'s your team at a glance.' : 'Here\'s what happened since you were last here, ' + esc(sinceW) + '.') + '</p></div><div class="hd-ctl">' + sw + hdMeMenu(ch) + '</div></header>';
+    '<p>' + (first ? 'Here\'s your team at a glance.' : 'Here\'s what happened since you were last here, ' + esc(sinceW) + '.') + (WCL.HOSTED && !signedIn() ? ' <span class="hd-nosign">Not signed in · <button type="button" class="hd-bnl" data-hdsign="1">Sign in with Warcraft Logs</button></span>' : '') + '</p></div><div class="hd-ctl">' + sw + hdMeMenu(ch) + '</div></header>';
   // (2. What's new: only real events since your last visit (the last 7 days on a first one). Each has a kind for the filter row: team, you, news)
   const evs = [], dN = esc(diffName), firstKill = new Map(); for (const v of list) if (v.kill && (!firstKill.has(v.boss) || v.at < firstKill.get(v.boss).at)) firstKill.set(v.boss, v);
   const pctOf = (b) => (b && b.left != null ? (b.kill || b.left <= 0 ? 0 : Math.max(1, Math.round(b.left))) : null); /* (boss health left, Flex Nov 6: progression is boss health, lower is better) */
@@ -59064,7 +59070,7 @@ function hdDash(X) {
 // (a character with no team: the greeting, Jump back in, a plain line with Add a team, then their week (vault, season, reset))
 function hdNoTeam(c, rest) { const k = E.CLASSES[c.cls] || [], first = hdSeen(c, null).at == null, chR0 = hdRioC(c, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); }), wait = !chR0, chR = chR0 && !chR0.none ? chR0 : null;
   const heal = /heal/i.test((chR && chR.role) || ''), WC = hdWcSeason(c, heal, () => { if (S.page === 'prog' && S.progView === c.gid && document.querySelector('#main .hd-noteam')) renderProgress(); });
-  return '<div class="home prog hd hd2" id="hdPage"><header class="hd-head hd-greet"><span class="hd-gface">' + hdFace(c) + '</span><div class="hd-tt"><h1>' + (first ? 'Welcome, ' : 'Welcome back, ') + '<span style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</span></h1><p>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + '</p></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
+  return '<div class="home prog hd hd2" id="hdPage"><header class="hd-head hd-greet"><span class="hd-gface">' + hdFace(c) + '</span><div class="hd-tt"><h1>' + (first ? 'Welcome, ' : 'Welcome back, ') + '<span style="color:' + (k[1] || 'var(--text)') + '">' + esc(gName(c)) + '</span></h1><p>' + esc([k[0], String(c.server || '')].filter(Boolean).join(' · ')) + (WCL.HOSTED && !signedIn() ? ' <span class="hd-nosign">Not signed in · <button type="button" class="hd-bnl" data-hdsign="1">Sign in with Warcraft Logs</button></span>' : '') + '</p></div><div class="hd-ctl">' + hdMeMenu(c) + '</div></header>' +
     '<section class="hd-pn hd-noteam"><b>Not on a team yet</b><span class="sub">Add your team, and this page shows its progress, raid nights and Mythic+.</span><button class="btn primary" type="button" data-hdaddteam="1">Add a team</button></section>' +
     hdSeasonCard(c, chR, wait, WC, null) + (rest || '') + '</div>'; }
 // (the Companion app's own window marks this browser storage as seen (its page, /app); Home's Next raid card reads it)
