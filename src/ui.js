@@ -7857,7 +7857,6 @@ const TP_CSS = String.raw`
 .tp-pop .lab { margin-bottom: 6px; font: 700 11px var(--body); letter-spacing: .05em; text-transform: uppercase; color: var(--faint); }
 .tp-pop .row { display: flex; align-items: center; gap: 8px; padding: 4px 0; } .tp-pop .row em { margin-left: auto; font-style: normal; font-size: 12.5px; color: var(--muted); }
 .tp-pop .row .nm { font-weight: 600; } .tp-pop .row .dt { width: 6px; height: 6px; border-radius: 50%; background: #3fb950; }
-.tp-pop .ch { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; font-size: 12.5px; color: var(--muted); } .tp-pop .ch b { color: var(--text); font-weight: 600; } .tp-pop .ch span { flex: 1; }
 .tp-pop button.lk { padding: 0; border: 0; background: none; color: var(--gold); font: 600 12.5px var(--body); cursor: pointer; } .tp-pop button.lk:hover { text-decoration: underline; } .tp-pop button.lk.q { color: var(--muted); font-weight: 400; }
 .tp-pop form { display: flex; gap: 6px; margin-top: 6px; } .tp-pop input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg, #0f1117); color: var(--text); font: 400 13px var(--body); }
 .tp-pop form button { padding: 5px 10px; border: 0; border-radius: 6px; background: var(--gold); color: #1a1408; font: 700 12.5px var(--body); cursor: pointer; }
@@ -7897,8 +7896,7 @@ function tpPop(anchor) {
         tpRanksH(d) + '<div class="sec"><div class="lab">Can change it</div><div class="row"><span class="nm" style="color:' + tpCol(lead) + '">' + esc(lead) + '</span><em>' + (you && you.lead ? 'you · ' : '') + 'raid lead</em></div>' +
         (d.officers || []).map((n) => '<div class="row"><span class="nm" style="color:' + tpCol(n) + '">' + esc(n) + '</span><em>' + (me && n.toLowerCase() === me.toLowerCase() ? 'you · ' : '') + 'officer' + (you && you.lead ? ' · <button type="button" class="lk q" data-tp="del" data-n="' + esc(n) + '">Remove</button>' : '') + '</em></div>').join('') +
         (you && you.lead ? '<form data-tp="add"><input name="n" list="tpOffL" placeholder="Pick a raider" maxlength="24" autocomplete="off"><datalist id="tpOffL">' + [...new Set(rostersGet().list.flatMap((r) => (r.players || []).map((q) => String(q.n).split('-')[0])))].filter((n) => n.toLowerCase() !== String(d.lead || '').toLowerCase() && !(d.officers || []).some((o) => o.toLowerCase() === n.toLowerCase())).sort((a, b) => a.localeCompare(b)).map((n) => '<option value="' + esc(n) + '">').join('') + '</datalist><button>Add</button></form>' : '') + '</div>' +
-        '<div class="sec"><div class="lab">Today</div>' + ((d.log || []).slice(-8).reverse().map((x) => '<div class="ch"><span><b>' + esc(me && x.by === me ? 'You' : x.by) + '</b> ' + esc(x.sum) + ' · ' + tpAgo(x.at) + '</span>' + (can && x.undo ? '<button type="button" class="lk q" data-tp="undo" data-i="' + x.i + '">Undo</button>' : '') + '</div>').join('') || '<div class="pr">No changes yet today.</div>') +
-        (err ? '<div class="err">' + esc(err) + '</div>' : '') + '</div>' + prac; }
+        (err ? '<div class="sec"><div class="err">' + esc(err) + '</div></div>' : '') + prac; } /* (no Today list of changes: each change's own message has its Undo (Flex, Nov 6)) */
     p.querySelectorAll('form').forEach((f) => (f.onsubmit = (e) => { e.preventDefault(); act(f.dataset.tp, (f.querySelector('input') || {}).value); }));
     p.querySelectorAll('button[data-tp]').forEach((b) => (b.onclick = () => act(b.dataset.tp, b.dataset.n || b.dataset.i)));
   };
@@ -7910,9 +7908,8 @@ function tpPop(anchor) {
       let r;
       if (k === 'mk') { r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'create', name: TP.name, keys: tpSnap(), me }); if (r.ok) { TP.base = tpSnap(); TP.ver = r.ver; } }
       else if (k === 'add' || k === 'del') { if (!String(v || '').trim()) return; r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'officer', [k]: String(v).trim(), me }); }
-      else if (k === 'undo') r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'undo', i: +v, me });
       if (r && !r.ok) return draw(r.error || 'That didn\'t save. Try again.');
-      TP.ver = k === 'undo' ? null : TP.ver; await tpPull(); tpPop(anchor);
+      await tpPull(); tpPop(anchor);
     } catch (e) { draw('That didn\'t save. Try again.'); }
   };
   draw(); document.body.appendChild(p); const r = anchor.getBoundingClientRect(); p.style.top = Math.round(r.bottom + window.scrollY + 8) + 'px'; p.style.left = Math.round(Math.max(12, Math.min(r.left, window.innerWidth - p.offsetWidth - 12))) + 'px';
