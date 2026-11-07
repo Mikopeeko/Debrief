@@ -279,6 +279,16 @@ const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0]
     const v = { g: 1, e: it0.id, d: 5 }; let tier = null, tile = null; try { tier = TSITE.tierModel({ pulls: await W.tierPullsOf(run, v), causes: {} }, it0, new Map()).P.length; tile = (await W.guildProgOf(run, { ...v, t: rows[rows.length - 1][2] })).pulls; } catch (e) { say(night, 'tier', 'the tier count crashed: ' + e.message); continue; }
     const want = rows.findIndex((x) => x[3]) >= 0 ? rows.findIndex((x) => x[3]) + 1 : rows.length;
     if (tile !== tier || tier !== want) say(night, 'tier', 'the PULLS tile counts ' + tile + ' pulls, the Whole tier ' + tier + ', the night has ' + want); } };
+// 8. raid days (Nov 6, Flex: Home said "Friday's raid", Plan marked Thu and Fri, Wolfthorn raids only Wed and Thu): one rule for Home and Plan
+{ const RD = H.site(['RD_ORDER', 'raidDaysRule', 'raidDaysSet', 'raidDaysOf', 'hdRaidDays'], { store: { get: () => null } }), now = Date.UTC(2026, 10, 7, 2), day = 864e5;
+  const at = (daysAgo, h) => now - daysAgo * day + (h || 0) * 3600e3; /* (Nov 6 is a Friday: 2 days ago = Wed, 1 = Thu) */
+  const ats = []; for (let w = 0; w < 4; w++) ats.push(at(2 + 7 * w), at(1 + 7 * w)); ats.push(at(0.2), at(3), at(10), at(4)); /* (one Friday, a Tuesday twice, a Monday once) */
+  const PL = ats.map((x) => ({ at: x, diffId: 16 })).concat([3, 10, 17, 24].map((d) => ({ at: at(d), diffId: 15 }))); /* (and an alt's Heroic every Tuesday) */
+  if (String(RD.raidDaysRule(PL, now)) !== '3,4') say('raid days', 'days', 'a Heroic night every Tuesday makes Tuesday a raid day: ' + RD.raidDaysRule(PL, now));
+  const want = '3,4', got = String(RD.raidDaysRule(ats, now)), home = String(RD.hdRaidDays(ats.map((x) => ({ at: x }))));
+  if (got !== want) say('raid days', 'days', 'Wed + Thu every week with a few odd nights should be raid days ' + want + ', the rule says ' + got);
+  if (home !== String(RD.raidDaysOf(ats))) say('raid days', 'days', 'Home\'s raid days (' + home + ') and Plan\'s (' + RD.raidDaysOf(ats) + ') disagree');
+  if (String(RD.raidDaysOf(ats, [4, 3])) !== '3,4' || String(RD.raidDaysOf(ats, [5])) !== '5') say('raid days', 'days', 'the lead\'s Raid days don\'t win over the rule'); }
 tierCount().then(() => {
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
