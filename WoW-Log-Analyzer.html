@@ -12910,6 +12910,41 @@ html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc { height: 100% !important; m
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-pb { flex: 1 1 55% !important; max-height: none !important; }
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-vd { flex: 1 1 45% !important; min-height: 0; overflow: auto; }
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-card { min-height: 0 !important; }
+/* (Plan's sub-tabs (Flex, Nov 7)) */
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) .panel.ndz-dal,
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) .panel.ndz-dal,
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) .panel.ndz-dal { display: none !important; } /* (the plan alerts, moved in after the page draws: Assignments) */
+
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="roster"])),
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="cds"])),
+html body #assignBox:has(> .pg-tabs[data-cur="jobs"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="jobs"])),
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="plans"])) { display: none !important; }
+
+html body #assignBox > .pg-tabs { position: sticky; top: 0; z-index: 30; display: flex; align-items: stretch; gap: 2px; margin: 12px 0 4px; padding: 0 4px; border-bottom: 1px solid var(--line); background: var(--bg); overflow-x: auto; scrollbar-width: none; }
+html body #assignBox > .pg-tabs::-webkit-scrollbar { display: none; }
+html body #assignBox .pg-tab { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 11px 15px 9px; border: 0; border-bottom: 2px solid transparent; border-radius: 4px 4px 0 0; background: none; color: var(--muted); font: 600 15px var(--head); cursor: pointer; white-space: nowrap; }
+html body #assignBox .pg-tab:hover { color: var(--text); }
+html body #assignBox .pg-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: rgba(212,183,125,.07); }
+html body #assignBox .pg-tab.pg-taball { margin-left: auto; font-size: 13.5px; }
+html body #assignBox .pg-tabn { padding: 1px 7px; border-radius: 999px; background: var(--raised); color: var(--muted); font: 600 12.5px var(--body); }
+html body #assignBox .pg-tabn.warn { color: #f0b45a; background: rgba(240,180,90,.12); } html body #assignBox .pg-tabn.ok { color: #5fd07a; background: rgba(95,208,122,.12); }
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) [data-pv]:not([data-pv="roster"]),
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) [data-pv]:not([data-pv="cds"]),
+html body #assignBox:has(> .pg-tabs[data-cur="jobs"]) [data-pv]:not([data-pv="jobs"]),
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) [data-pv]:not([data-pv="plans"]) { display: none !important; }
+
+html body #assignBox .pls.pv-none { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; } html body #assignBox .pls.pv-none .sub { color: var(--muted); }
+html body #assignBox .pls.pv-own { margin-top: 12px; }
+@media (max-width: 640px) { html body #assignBox .pg-tab { padding: 10px 11px 8px; font-size: 14px; } html body #assignBox .pg-tab .pg-tabn:not(.warn) { display: none; } html body #assignBox .pg-tab .pg-tabn.warn { font-size: 0; width: 8px; height: 8px; padding: 0; background: #f0b45a; } html body #assignBox .pg-tab.pg-taball { margin-left: 0; } }
+/* (Plan: "you" marked, and My cooldowns (Nov 7)) */
+html body #assignBox .pg-rc.pv-me { box-shadow: 0 0 0 2px var(--gold, #d4b77d), 0 0 0 3px rgba(0,0,0,.6) !important; }
+html body #assignBox [data-pv="jobs"] .nm.pv-me { box-shadow: 0 0 0 1.5px var(--gold, #d4b77d); border-radius: 4px; padding: 0 4px; }
+html body #assignBox #ndzTl .btl-c.pv-me { outline: 2px solid var(--gold, #d4b77d); outline-offset: 1px; z-index: 3; }
+html body #assignBox #ndzTl.pv-only .btl-c:not(.pv-me) { opacity: .16; }
+html body #assignBox #ndzTl.pv-only .btl-c:not(.pv-me):hover { opacity: .6; }
+html body #assignBox .pv-mine { display: inline-flex; margin-left: 10px; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; vertical-align: middle; }
+html body #assignBox .pv-mine > button { padding: 3px 10px; border: 0; background: none; color: var(--muted); font: 600 13px var(--head); cursor: pointer; }
+html body #assignBox .pv-mine > button[aria-pressed="true"] { background: var(--gold, #d4b77d); color: var(--gold-ink, #19160f); }
 </style>
 
 
@@ -27292,7 +27327,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
-  { d: '2026-11-07', h: [{ t: 'A new look', d: 'Debrief has a cleaner, calmer finish: graphite boxes with fine borders, one corner shape everywhere, soft shading behind headers, and gold only where it matters. The old look is still in Menu > Theme as Classic.' }], n: [], f: [] },
+  { d: '2026-11-07', h: [{ t: 'Plan in tabs', d: 'Each boss on Plan has tabs: Roster, Healing cooldowns, Assignments and Plans, each with what is left to do. Your chip, your cooldowns and your jobs have a gold edge, and healers can show only their own cooldowns.' }, { t: 'A new look', d: 'Debrief has a cleaner, calmer finish: graphite boxes with fine borders, one corner shape everywhere, soft shading behind headers, and gold only where it matters. The old look is still in Menu > Theme as Classic.' }], n: [], f: [] },
   { d: '2026-11-06', h: [{ t: 'Link Battle.net, and Plan by guild rank', d: 'Link your Battle.net in the menu and Debrief knows every character is yours. Raid leads pick which guild ranks can edit or see the plan, and it follows promotions and leavers by itself.' }], n: ["Debrief Companion: your raid reminder uses the same raid days as Home and Plan. The app also links debriefme.io by itself the first time you open it, so your raid note from the game is shared with the roster. Update Debrief Companion to get it.", 'Debriefing: Full screen on the replay makes the map the biggest thing on the screen, with the play by play and the card in a column on the right and the phase timeline along the bottom.', 'Raid days are the same everywhere: Home and Plan both use the weekdays your team raids most weeks at its main difficulty, so an alt night or a one-off is not counted. Raid leads can set them in the night menu on Plan.', 'Debriefing: the Timeline replay has a Full screen button beside Raid frames. Esc or the button again brings you back.', 'A new theme, Emerald, in Menu > Theme: the logo\'s gold and emerald, with glowing green edges and gold corners.', 'Plan: rename a saved plan with the pen beside its name. A plan saved for other players has one Import button that brings in its players and its note together, with Undo.', 'Rotation: Holy, Discipline and Shadow Priests get a Power Infusion check. Each cast says who got it and what it lined up with, against the casts the fight allowed.', "Debrief Companion: the pop-up's chart is now Boss health left each pull. The line falls toward the kill, and your best pull is the lowest. Update Debrief Companion to see it.", 'Report card: Mechanics are judged against how the best raids do on each boss. A mechanic everyone gets clipped by is never marked red, one or two slips in a night cost very little, and the clean ones sit on one line.', 'Debriefing: pick a phase (All · P1 · P2 · Intermission · P3) to see only that phase, on one pull or All pulls. Each chip shows the mistakes and deaths in that phase.', 'Debriefing: Phase changes says how long each phase took next to top kills, like "Phase 2 took 2:57, about 0:27 slower than top kills", instead of a %.'], f: ["Opening a big night no longer crashes the page (Chrome's Aw, Snap): the other pulls of the night are read one at a time in the background, never two at once, and each reader gives its memory back straight after. A 21-pull night peaked at 3.1 GB, now 1.8 GB.", "Debriefing on phones no longer loads and then reloads: a pull shows once, finished, instead of being rebuilt once or twice as late numbers came in (each rebuild froze the page for about 10 s). Late numbers show the next time you switch tab or pull.", "Big nights use far less memory: a pull the page reads itself no longer keeps its whole combat log (about 150 MB) in memory afterwards. Going round the tabs on a 20-pull night used to pile up over 2 GB; now under 1 GB, so phones stop running out.", 'The Pulls number on Debriefing, the Pace chart and Home now count every night, the same as Whole tier. A night whose log started with a Mythic+ key was left out before.', 'Debriefing: Eternal Nightfall no longer shows twice in phase 2. The second one is its kicks: Eternal Nightfall (Kicks).'] },
   { d: '2026-11-05', h: [{ t: 'Mythic+: a Rotation tab for every key', d: 'Every key has a Run tab and a Rotation tab, on the website and in Debrief Companion. Rotation shows each player\'s fixes for the whole key or one pull, like the raid recap, with every pull\'s biggest fix beside it.' }, { t: 'Whole tier: every pull from pull 1 to now, on one page', d: 'A Whole tier button on the All pulls card shows every pull of the boss across all your nights, up to your first kill: the boss health at each, what wiped it, your best night by night, and which causes got better or worse.' }, { t: 'Themes that reshape the boxes', d: 'Three bolder looks in Menu > Theme: Hardlight (sci-fi corners), Slate (flat cards with a strip) and Arcade (a retro game). Only the look changes.' }, { t: 'Three new themes', d: 'Menu > Theme has three new looks: Abyss (deep water and mint), Dusk Bloom (a warm sunset) and Ink (black and white, so mistakes stand out).' }, { t: 'Your raid note, straight from the game', d: 'Debriefing now checks each pull against the NSRT note your raid had loaded for it, with nothing to paste. If the note changes mid-raid, every pull keeps its own. Needs the newest Debrief Companion.' }, { t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ["The site opens much faster when you come back: your browser keeps it until there's a new version (on a slow phone a return visit went from about 20 s to 2 s), and while it loads for the first time you see a Getting Debrief ready card instead of an empty page. A first visit also downloads about 12% less.", 
     "Debrief Companion: the Mythic+ pop-up has its Rotation tab now, each player's fixes for the whole key or one pull. Update Debrief Companion to see it.",'The default look has glowing gold edges and cut corners on every box, like the Hardlight theme.', 
@@ -32173,8 +32208,59 @@ function ndzPlanBoard(r, pb) { let l = notesOf(pb).list.filter((n) => !n.example
 // (a boss plan page's "On this page" line and the panels it jumps to, mock B, Oct 26)
 function planJumpWrap(h, pb, n) { if (S.page !== 'plan') return h; if (pb && typeof planBarH === 'function') { const ring = (/<span class="ndz-dring"[^>]*><span>[^<]*<\/span><\/span>/.exec(h) || [''])[0]; h = planBarH(pb, n, ring) + h; } if (pb && typeof pgHeadFix === 'function') h = pgHeadFix(h, pb); /* (the header says what's left; the whole-plan buttons, Nov 4) */ /* (the one-page bar, Oct 26) */ const P = [['pg-ready', 'Raid kit', '<header class="fight bh plan-bh'], ['pg-roster', 'Roster', '<div class="panel pg-roster'], ['pg-cds', 'Cooldowns', '<div class="ndz-cth pg-tb'], ['pg-jobs', 'Jobs', '<div class="panel ndz-dpan bj-jobs']], got = [];
   for (const [id, , at] of P) { const i = h.indexOf(at); if (i < 0) continue; if (h.indexOf('id="' + id + '"') < 0) h = h.slice(0, i) + at.replace(/^<(\w+) class=/, '<$1 id="' + id + '" class=') + h.slice(i + at.length); got.push(id); }
-  if (!got.length) return h; const nav = '<nav class="pg-jump" aria-label="On this page"><span>On this page:</span>' + P.filter(([id]) => got.includes(id)).map(([id, l]) => '<a href="#' + id + '" data-pgjump="' + id + '">' + l + '</a>').join('') + '</nav>', i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i)));
+  if (!got.length) return h; if (pb) return pvWrap(h, pb, got); /* (sub-tabs in place of "On this page", Nov 7) */ const nav = '<nav class="pg-jump" aria-label="On this page"><span>On this page:</span>' + P.filter(([id]) => got.includes(id)).map(([id, l]) => '<a href="#' + id + '" data-pgjump="' + id + '">' + l + '</a>').join('') + '</nav>', i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i)));
   return h.slice(0, i0) + nav + h.slice(i0); }
+// ---- Plan's sub-tabs (Flex, Nov 7: "separate each section of the plan tab, into a sub tab", "just make it"). Every panel of a boss's plan is tagged
+// with its tab (data-pv); the tab bar's data-cur picks which show (CSS), so a switch needs no redraw. A panel with no tag shows on every tab
+/* ("you" on Plan: your chip, your cooldowns and your jobs marked; and My cooldowns (Nov 7). Re-marked after every draw of Plan) */
+const pvMeLo = () => { try { const m = meOf(); return m ? String(m.name).split('-')[0].toLowerCase() : ''; } catch (e) { return ''; } };
+function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; const me = pvMeLo(); if (!me) return;
+  const hasMe = (s) => String(s || '').split(/,| and |&/).some((x) => x.trim().split('-')[0].toLowerCase() === me);
+  box.querySelectorAll('.pg-rc[data-pgsit]').forEach((c) => { const on = String(c.dataset.pgsit).split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
+  box.querySelectorAll('[data-pv="jobs"] .nm[title]').forEach((c) => { const on = String(c.title).split(' · ')[0].split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
+  let mine = 0; box.querySelectorAll('#ndzTl .btl-c[data-tt]').forEach((c) => { const m = /<\/b>\s*·\s*([^<]+)/.exec(c.dataset.tt || ''), on = !!m && hasMe(m[1]); if (on) mine++; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
+  const tl = box.querySelector('#ndzTl'), hd = tl && tl.querySelector('.ndz-cth'); if (!tl || !hd) return;
+  let sw = hd.querySelector('.pv-mine'); if (!mine) { if (sw) sw.remove(); tl.classList.remove('pv-only'); return; }
+  const only = (() => { try { return store.get('wla-pv-mine') === '1'; } catch (e) { return false; } })();
+  if (!sw) { sw = document.createElement('span'); sw.className = 'pv-mine'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Whose cooldowns'); sw.innerHTML = '<button type="button" data-pvmine="0">Everyone</button><button type="button" data-pvmine="1">My cooldowns</button>'; hd.appendChild(sw); }
+  sw.querySelectorAll('[data-pvmine]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.pvmine === '1') === only))); if (tl.classList.contains('pv-only') !== only) tl.classList.toggle('pv-only', only); }
+let PV_MO = null; const pvMarkSoon = () => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
+setTimeout(() => { const v = document.getElementById('main') || document.body; if (!v || PV_MO || !window.MutationObserver) return; /* (the page area: #view is drawn anew) */ PV_MO = new MutationObserver(pvMarkSoon); PV_MO.observe(v, { childList: true, subtree: true }); pvMarkSoon(); }, 0);
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pvmine]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-pv-mine', b.dataset.pvmine); } catch (x) { /* (this visit) */ } pvMark(); });
+const PV_TABS = [['roster', 'Roster'], ['cds', 'Healing cooldowns'], ['jobs', 'Assignments'], ['plans', 'Plans'], ['all', 'All on one page']];
+const pvOk = (v) => PV_TABS.some((x) => x[0] === v);
+/* (your tab for this boss: the address (&pv=), else the one you picked last for this boss, else Healing cooldowns for a healer, Roster for everyone else) */
+function pvGet(pb) { try { const q = new URLSearchParams(location.search).get('pv'); if (pvOk(q)) return q; const v = store.get('wla-pv|' + pb); if (pvOk(v)) return v; } catch (e) { /* (the default) */ }
+  try { const me = meOf(), lo = me && String(me.name).split('-')[0].toLowerCase(), p = lo && pnPeople(pnGet()).find((x) => String(x.n).split('-')[0].toLowerCase() === lo); if (p && p.role === 'healer') return 'cds'; } catch (e) { /* (Roster) */ }
+  return 'roster'; }
+function pvWrap(h, pb, got) {
+  const tag = (re, v) => { const m = re.exec(h); if (m) h = h.slice(0, m.index) + m[0].replace(/^<(\w+)/, '<$1 data-pv="' + v + '"') + h.slice(m.index + m[0].length); };
+  tag(/<div id="pg-roster"[^>]*>|<div class="panel pg-roster[^"]*"[^>]*>/, 'roster');
+  tag(/<div class="panel ndz-dpan ndz-dtl[^"]*"[^>]*>/, 'cds');
+  tag(/<div id="pg-jobs"[^>]*>|<div class="panel ndz-dpan bj-jobs[^"]*"[^>]*>/, 'jobs');
+  h = h.replace(/<div class="panel ndz-dal/g, '<div data-pv="jobs" class="panel ndz-dal'); /* (the plan's alerts, like raiders with no job: Assignments) */
+  /* (the saved plans: the slim strip when it's there, else the boss's saved plans as a panel of their own) */
+  const L = (() => { try { return notesOf(pb).list.filter((x) => !x.example); } catch (e) { return []; } })();
+  if (/<div class="panel pls pls-slim"/.test(h)) tag(/<div class="panel pls pls-slim"[^>]*>/, 'plans');
+  else { let sv = ''; try { sv = L.length && typeof planSavedStripH === 'function' ? planSavedStripH(pb, L) : ''; } catch (e) { sv = ''; }
+    h += sv ? sv.replace('<div class="panel pls pls-slim"', '<div data-pv="plans" class="panel pls pls-slim pv-own"') : '<div data-pv="plans" class="panel pls pv-own pv-none"><b>No saved plans for ' + esc(pnShort(pb)) + ' yet.</b><span class="sub">✨ Make the whole plan saves one, or Import a note.</span></div>'; }
+  /* (each tab's count: the readiness parts the ring is made of) */
+  let r = null; try { r = pgRdy(pnGet(), pb); } catch (e) { r = null; } const row = (k) => ((r && r.rows) || []).find((x) => x[0] === k);
+  const on = (() => { try { return (pnGet().on[pb] || []).length; } catch (e) { return 0; } })();
+  const W = row('Who plays'), K = row('Raid kit'), C = row('Cooldowns'), J = row('Jobs');
+  const badge = { roster: W ? (!W[1] ? [W[2], 'warn'] : K && !K[1] ? [K[2], 'warn'] : [W[2], 'ok']) : [on + ' playing', ''],
+    cds: C ? [C[2], C[1] ? 'ok' : 'warn'] : ['no plan yet', ''], jobs: J ? [J[2], J[1] ? 'ok' : 'warn'] : ['no plan yet', ''], plans: [L.length + ' saved', ''], all: null };
+  const cur = pvGet(pb);
+  const nav = '<nav class="pg-tabs" role="tablist" aria-label="Plan sections" data-cur="' + cur + '" data-pvboss="' + esc(pb) + '">' + PV_TABS.map(([k, l]) => { const b = badge[k];
+    return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '">' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
+  /* (the tab bar goes under the boss header) */
+  const hi = h.indexOf('</header>', h.indexOf('<header class="fight bh plan-bh')); if (hi < 0) { const i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i))); return h.slice(0, i0) + nav + h.slice(i0); }
+  return h.slice(0, hi + 9) + nav + h.slice(hi + 9); }
+/* (a tab: shown at once, kept for this boss and in the address; the bar stays in view) */
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pgpv]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nav = b.closest('.pg-tabs'), v = b.dataset.pgpv, pb = nav && nav.dataset.pvboss; if (!nav || !pvOk(v)) return;
+  nav.dataset.cur = v; nav.querySelectorAll('[data-pgpv]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+  try { if (pb) store.set('wla-pv|' + pb, v); const q = new URLSearchParams(location.search); q.set('pv', v); history.replaceState(history.state, '', location.pathname + '?' + q.toString().replace(/=(&|$)/g, '$1') + location.hash); } catch (x) { /* (this visit only) */ }
+  const top = nav.getBoundingClientRect().top; if (top < 0) window.scrollTo({ top: Math.max(0, window.scrollY + top - 8) }); });
 document.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('[data-pgjump]'); if (!a || S.page !== 'plan') return; e.preventDefault(); const el = (a.dataset.pgjump === 'pg-ready' && document.querySelector('#view details.ds-buffs')) || document.getElementById(a.dataset.pgjump); /* (Raid kit: the line under the roster, Nov 3) */ if (el) window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - 72) }); }); /* (an instant jump: smooth scrolling doesn't run here) */ /* (jumps without touching the address, Oct 26) */
 // (the pickers: another boss, or another note for it)
 document.addEventListener('change', (e) => { const s = e.target.closest && e.target.closest('[data-ndzpbs], [data-ndzpns]'); if (!s || !ndzR()) return; if (s.dataset.ndzpbs) { S.ndzPick = s.value; store.set(PLAN_BK, s.value); S.ndzPlanId = null; } else S.ndzPlanId = s.value; S.ndzPickRep = ndzR().item.boss; renderMain(); });

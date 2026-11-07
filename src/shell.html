@@ -12910,6 +12910,41 @@ html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc { height: 100% !important; m
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-pb { flex: 1 1 55% !important; max-height: none !important; }
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-rc > .dtm-vd { flex: 1 1 45% !important; min-height: 0; overflow: auto; }
 html body #view > .dbt.dbt.dbx .dtm.dtm-fsx .dtm-card { min-height: 0 !important; }
+/* (Plan's sub-tabs (Flex, Nov 7)) */
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) .panel.ndz-dal,
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) .panel.ndz-dal,
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) .panel.ndz-dal { display: none !important; } /* (the plan alerts, moved in after the page draws: Assignments) */
+
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="roster"])),
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="cds"])),
+html body #assignBox:has(> .pg-tabs[data-cur="jobs"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="jobs"])),
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) :is(.ndz-dash, .ndz-dcol):not(:has(.panel:not([data-pv]):not(.ndz-dal))):not(:has([data-pv="plans"])) { display: none !important; }
+
+html body #assignBox > .pg-tabs { position: sticky; top: 0; z-index: 30; display: flex; align-items: stretch; gap: 2px; margin: 12px 0 4px; padding: 0 4px; border-bottom: 1px solid var(--line); background: var(--bg); overflow-x: auto; scrollbar-width: none; }
+html body #assignBox > .pg-tabs::-webkit-scrollbar { display: none; }
+html body #assignBox .pg-tab { display: inline-flex; align-items: center; gap: 8px; flex: none; padding: 11px 15px 9px; border: 0; border-bottom: 2px solid transparent; border-radius: 4px 4px 0 0; background: none; color: var(--muted); font: 600 15px var(--head); cursor: pointer; white-space: nowrap; }
+html body #assignBox .pg-tab:hover { color: var(--text); }
+html body #assignBox .pg-tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); background: rgba(212,183,125,.07); }
+html body #assignBox .pg-tab.pg-taball { margin-left: auto; font-size: 13.5px; }
+html body #assignBox .pg-tabn { padding: 1px 7px; border-radius: 999px; background: var(--raised); color: var(--muted); font: 600 12.5px var(--body); }
+html body #assignBox .pg-tabn.warn { color: #f0b45a; background: rgba(240,180,90,.12); } html body #assignBox .pg-tabn.ok { color: #5fd07a; background: rgba(95,208,122,.12); }
+html body #assignBox:has(> .pg-tabs[data-cur="roster"]) [data-pv]:not([data-pv="roster"]),
+html body #assignBox:has(> .pg-tabs[data-cur="cds"]) [data-pv]:not([data-pv="cds"]),
+html body #assignBox:has(> .pg-tabs[data-cur="jobs"]) [data-pv]:not([data-pv="jobs"]),
+html body #assignBox:has(> .pg-tabs[data-cur="plans"]) [data-pv]:not([data-pv="plans"]) { display: none !important; }
+
+html body #assignBox .pls.pv-none { display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; } html body #assignBox .pls.pv-none .sub { color: var(--muted); }
+html body #assignBox .pls.pv-own { margin-top: 12px; }
+@media (max-width: 640px) { html body #assignBox .pg-tab { padding: 10px 11px 8px; font-size: 14px; } html body #assignBox .pg-tab .pg-tabn:not(.warn) { display: none; } html body #assignBox .pg-tab .pg-tabn.warn { font-size: 0; width: 8px; height: 8px; padding: 0; background: #f0b45a; } html body #assignBox .pg-tab.pg-taball { margin-left: 0; } }
+/* (Plan: "you" marked, and My cooldowns (Nov 7)) */
+html body #assignBox .pg-rc.pv-me { box-shadow: 0 0 0 2px var(--gold, #d4b77d), 0 0 0 3px rgba(0,0,0,.6) !important; }
+html body #assignBox [data-pv="jobs"] .nm.pv-me { box-shadow: 0 0 0 1.5px var(--gold, #d4b77d); border-radius: 4px; padding: 0 4px; }
+html body #assignBox #ndzTl .btl-c.pv-me { outline: 2px solid var(--gold, #d4b77d); outline-offset: 1px; z-index: 3; }
+html body #assignBox #ndzTl.pv-only .btl-c:not(.pv-me) { opacity: .16; }
+html body #assignBox #ndzTl.pv-only .btl-c:not(.pv-me):hover { opacity: .6; }
+html body #assignBox .pv-mine { display: inline-flex; margin-left: 10px; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; vertical-align: middle; }
+html body #assignBox .pv-mine > button { padding: 3px 10px; border: 0; background: none; color: var(--muted); font: 600 13px var(--head); cursor: pointer; }
+html body #assignBox .pv-mine > button[aria-pressed="true"] { background: var(--gold, #d4b77d); color: var(--gold-ink, #19160f); }
 </style>
 
 
