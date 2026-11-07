@@ -33183,11 +33183,13 @@ const bnMenuLabel = () => { const b = $('#tbBnet'); if (!b) return; if (!WCL.HOS
   b.hidden = false; b.innerHTML = B && B.linked ? 'Your characters<span>Battle.net linked · pick your main</span>' : 'Link Battle.net<span>optional: Debrief knows every character is yours</span>'; };
 document.addEventListener('whoami', bnMenuLabel);
 // (Menu > Sign out: only while signed in; it ends the sign-in on Debrief (and a practice link's test name) and starts the page over (Flex, Nov 6))
-const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; const w = WCL.HOSTED && (WHO.now || {}).wcl; o.hidden = !w; if (w) o.innerHTML = 'Sign out<span>' + (w.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>'; };
-document.addEventListener('whoami', outMenuLabel);
+/* (signed in by any route: the server's session (whoAmI), this browser's Warcraft Logs sign-in (wla-wcl-me, kept even after the server's session runs out), or a
+   practice test name (Main, Nov 6: Flex was signed in and saw no Sign out); drawn at load, on whoAmI and each time the menu opens) */
+const outMenuLabel = () => { const o = $('#tbOut'); if (!o) return; const W = WCL.HOSTED ? (WHO.now || {}).wcl : null, L = WCL.HOSTED ? wclMe() : null, w = W || L; o.hidden = !w; if (w) o.innerHTML = 'Sign out<span>' + (W && W.practice ? 'testing as ' : 'signed in as ') + esc(w.name || 'you') + '</span>'; };
+document.addEventListener('whoami', outMenuLabel); outMenuLabel(); { const m = $('#tbMenu'); if (m) m.addEventListener('click', outMenuLabel); }
 if ($('#tbOut')) $('#tbOut').onclick = async () => { const p = $('#tbMenuPop'); if (p) p.hidden = true;
   try { await fetch('/api/signout', { method: 'POST', credentials: 'same-origin' }); } catch (e) { /* (the page starts over either way) */ }
-  try { localStorage.removeItem(WCL_SIGN.key); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0';
+  try { localStorage.removeItem(WCL_SIGN.key); sessionStorage.removeItem(WCL_SIGN.pk); sessionStorage.removeItem('wla-bn-join'); } catch (e) { /* storage off */ } document.cookie = 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0'; WHO.now = null; S.wclCreds = null;
   /* (Flex: "the sign out button didnt do anything": the sign-in ended, but the page came back on your team's Home. Now your teams and "which one
      is you" step aside too, so it lands on the signed-out front page; they come back when you sign in again. Saved pulls and plans stay) */
   try { for (const k of OUT_KEYS) { const v = localStorage.getItem(k); if (v != null) { localStorage.setItem(k + '-out', v); localStorage.removeItem(k); } } } catch (e) { /* storage off */ }
