@@ -12871,6 +12871,12 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 .bn-sheet .bn-safe { flex: 1 1 100%; color: #8fa6bf; font-size: 12px; text-align: right; }
 @media (max-width: 640px) { .bn-sheet .bn-go { flex-basis: 100%; } .bn-sheet .bn-safe { text-align: left; } }
 .tbm-pop .tbm-out { margin-top: 4px; border-top: 1px solid var(--line); color: #f0a39b; } .tbm-pop .tbm-out:hover { color: #ffb4ab; } /* (Sign out, Nov 6) */
+/* (Debriefing replay: Full screen (Flex, Nov 6)) */
+.dtm-fsx:fullscreen, .dtm-fsx.dtm-fsfake { box-sizing: border-box; width: 100%; height: 100%; max-width: none !important; margin: 0 !important; padding: 16px 20px !important; overflow: auto; background: var(--bg, #0b0d12) !important; }
+.dtm-fsx:-webkit-full-screen { box-sizing: border-box; width: 100%; height: 100%; padding: 16px 20px !important; overflow: auto; background: var(--bg, #0b0d12) !important; }
+.dtm-fsx.dtm-fsfake { position: fixed !important; inset: 0; z-index: 9990; }
+html.dtm-fslock, html.dtm-fslock body { overflow: hidden !important; }
+.dtm-fsx::backdrop { background: var(--bg, #0b0d12); }
 </style>
 
 
