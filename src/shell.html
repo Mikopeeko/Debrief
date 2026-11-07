@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>/* round 429 themes: the saved theme, before the page draws */(function(){try{var k=localStorage.getItem('wla-theme');if(!k||k==='default')return;document.documentElement.setAttribute('data-theme',k);var f={"classic":"Barlow+Condensed:wght@500;600;700","emerald":"Barlow+Condensed:wght@600;700","aurora":"Sora:wght@600;700","aurora-gold":"Sora:wght@600;700","raid-frame":"Cinzel:wght@700;800","ember-crown":"Cinzel:wght@700;800","glass":"Outfit:wght@600;700","midnight":"Sora:wght@600;700","forge":"Oswald:wght@600;700","death-knight":"Cinzel:wght@700;800","demon-hunter":"Cinzel:wght@700;800","druid":"Cinzel:wght@700;800","evoker":"Cinzel:wght@700;800","hunter":"Cinzel:wght@700;800","mage":"Cinzel:wght@700;800","monk":"Cinzel:wght@700;800","paladin":"Cinzel:wght@700;800","priest":"Cinzel:wght@700;800","rogue":"Cinzel:wght@700;800","shaman":"Cinzel:wght@700;800","warlock":"Cinzel:wght@700;800","warrior":"Cinzel:wght@700;800","abyss":"Space+Grotesk:wght@600;700","dusk-bloom":"Fraunces:opsz,wght@9..144,600;9..144,700","ink":"Unbounded:wght@600;700","hardlight":"Orbitron:wght@600;700","slate":"Archivo+Black","arcade":"Silkscreen:wght@400;700"}[k];if(f){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f+'&display=swap';document.head.appendChild(l);}}catch(e){}})();</script>
+<script>/* round 429 themes: the saved theme, before the page draws */try{window.WLA_PV0=new URLSearchParams(location.search).get("pv")}catch(e){}/* (Plan's tab from a link, before the page tidies its address, Nov 7) */(function(){try{var k=localStorage.getItem('wla-theme');if(!k||k==='default')return;document.documentElement.setAttribute('data-theme',k);var f={"classic":"Barlow+Condensed:wght@500;600;700","emerald":"Barlow+Condensed:wght@600;700","aurora":"Sora:wght@600;700","aurora-gold":"Sora:wght@600;700","raid-frame":"Cinzel:wght@700;800","ember-crown":"Cinzel:wght@700;800","glass":"Outfit:wght@600;700","midnight":"Sora:wght@600;700","forge":"Oswald:wght@600;700","death-knight":"Cinzel:wght@700;800","demon-hunter":"Cinzel:wght@700;800","druid":"Cinzel:wght@700;800","evoker":"Cinzel:wght@700;800","hunter":"Cinzel:wght@700;800","mage":"Cinzel:wght@700;800","monk":"Cinzel:wght@700;800","paladin":"Cinzel:wght@700;800","priest":"Cinzel:wght@700;800","rogue":"Cinzel:wght@700;800","shaman":"Cinzel:wght@700;800","warlock":"Cinzel:wght@700;800","warrior":"Cinzel:wght@700;800","abyss":"Space+Grotesk:wght@600;700","dusk-bloom":"Fraunces:opsz,wght@9..144,600;9..144,700","ink":"Unbounded:wght@600;700","hardlight":"Orbitron:wght@600;700","slate":"Archivo+Black","arcade":"Silkscreen:wght@400;700"}[k];if(f){var l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+f+'&display=swap';document.head.appendChild(l);}}catch(e){}})();</script>
 <title>Debrief: WoW raid log review for Mythic progression</title>
 <script>document.documentElement.classList.add('js')</script>
 <script>/* (Nov 5, Flex: "the map replay is so choppy": while it plays, the replay changes its map, raid frames, clock and time bar about 900 times a
@@ -12945,6 +12945,32 @@ html body #assignBox #ndzTl.pv-only .btl-c:not(.pv-me):hover { opacity: .6; }
 html body #assignBox .pv-mine { display: inline-flex; margin-left: 10px; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; vertical-align: middle; }
 html body #assignBox .pv-mine > button { padding: 3px 10px; border: 0; background: none; color: var(--muted); font: 600 13px var(--head); cursor: pointer; }
 html body #assignBox .pv-mine > button[aria-pressed="true"] { background: var(--gold, #d4b77d); color: var(--gold-ink, #19160f); }
+/* (Plan in tabs, the rest (Nov 7)) */
+html body #assignBox .gr-tiles { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 6px 0 10px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+html body #assignBox .gr-t { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 9px 12px; border: 0; border-right: 1px solid var(--line); background: none; color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+html body #assignBox .gr-t:last-child { border-right: 0; } html body #assignBox .gr-t:hover { background: var(--raised); }
+html body #assignBox .gr-t > span { color: var(--faint); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; } html body #assignBox .gr-t > b { font: 700 24px/1.1 var(--head); } html body #assignBox .gr-t > small { color: var(--faint); font-size: 12.5px; }
+html body #assignBox .gr-t.bad > b { color: #e8604c; } html body #assignBox .gr-t.warn > b { color: #f0b45a; } html body #assignBox .gr-t.ok > b { color: #5fd07a; }
+html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
+html body #assignBox .bfr-r[data-grjump] { cursor: pointer; border-radius: 3px; } html body #assignBox .bfr-r[data-grjump]:hover { background: var(--raised); }
+html body #assignBox .pg-rc.gr-flash { animation: grFlash 1.5s ease-out; } @keyframes grFlash { 0%, 40% { box-shadow: 0 0 0 3px #f0b45a; } 100% { box-shadow: 0 0 0 0 rgba(240,180,90,0); } }
+/* (Out that night under the Bench, beside Playing) */
+html body #assignBox .panel.pg-roster > .pg-zone:nth-child(1 of .pg-zone) { grid-column: 1; grid-row: span 2; }
+html body #assignBox .panel.pg-roster > .pg-zone:nth-child(2 of .pg-zone):not(.pg-zout) { grid-column: 2; }
+html body #assignBox .panel.pg-roster > .pg-zone.pg-zout { grid-column: 2 !important; align-self: start; }
+/* (Healing cooldowns: big hits nobody covers, pinned under the header) */
+html body #assignBox .pv-unc { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 10px; }
+html body #assignBox .pv-unch { color: var(--faint); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase; }
+html body #assignBox .pv-ur { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 7px 10px; border: 1px solid rgba(232,96,76,.35); border-radius: 4px; background: rgba(232,96,76,.06); }
+html body #assignBox .pv-ur > b { color: #e8604c; } html body #assignBox .pv-ur > span { color: var(--muted); font-size: 13px; } html body #assignBox .pv-ur > .btn { margin-left: auto; } html body #assignBox .pv-ur > .pv-unn { margin-left: auto; color: var(--faint); }
+/* (Plans: compare two) */
+html body #assignBox .pv-cmp { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+html body #assignBox .pv-cmph { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; } html body #assignBox .pv-cmph > span { color: var(--faint); } html body #assignBox .pv-cmph select { max-width: 240px; }
+html body #assignBox .pv-cmpt { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+html body #assignBox .pv-cmpr { display: grid; grid-template-columns: minmax(110px, 22%) 1fr 1fr; gap: 10px; padding: 6px 10px; border-bottom: 1px solid var(--line); font-size: 13.5px; } html body #assignBox .pv-cmpr:last-child { border-bottom: 0; }
+html body #assignBox .pv-cmpr > span:first-child { color: var(--muted); font-weight: 600; } html body #assignBox .pv-cmpr .chg { color: #f0b45a; } html body #assignBox .pv-cmpth { background: var(--band, #1f2327); }
+@media (max-width: 760px) { html body #assignBox .gr-tiles { grid-template-columns: 1fr 1fr; } html body #assignBox .gr-t:nth-child(2) { border-right: 0; } html body #assignBox .gr-t:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  html body #assignBox .panel.pg-roster > .pg-zone { grid-column: 1 / -1 !important; grid-row: auto !important; } html body #assignBox .pv-cmpr { grid-template-columns: 1fr 1fr; } html body #assignBox .pv-cmpr > span:first-child { grid-column: 1 / -1; } }
 </style>
 
 

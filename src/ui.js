@@ -6974,17 +6974,28 @@ function pvMark() { const box = document.getElementById('assignBox'); if (!box |
   box.querySelectorAll('[data-pv="jobs"] .nm[title]').forEach((c) => { const on = String(c.title).split(' · ')[0].split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
   let mine = 0; box.querySelectorAll('#ndzTl .btl-c[data-tt]').forEach((c) => { const m = /<\/b>\s*·\s*([^<]+)/.exec(c.dataset.tt || ''), on = !!m && hasMe(m[1]); if (on) mine++; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
   const tl = box.querySelector('#ndzTl'), hd = tl && tl.querySelector('.ndz-cth'); if (!tl || !hd) return;
+  pvUnc(tl, hd);
   let sw = hd.querySelector('.pv-mine'); if (!mine) { if (sw) sw.remove(); tl.classList.remove('pv-only'); return; }
   const only = (() => { try { return store.get('wla-pv-mine') === '1'; } catch (e) { return false; } })();
   if (!sw) { sw = document.createElement('span'); sw.className = 'pv-mine'; sw.setAttribute('role', 'group'); sw.setAttribute('aria-label', 'Whose cooldowns'); sw.innerHTML = '<button type="button" data-pvmine="0">Everyone</button><button type="button" data-pvmine="1">My cooldowns</button>'; hd.appendChild(sw); }
   sw.querySelectorAll('[data-pvmine]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.pvmine === '1') === only))); if (tl.classList.contains('pv-only') !== only) tl.classList.toggle('pv-only', only); }
+/* (Healing cooldowns: the big hits nobody covers, pinned under the header, each with Cover it (the chart's own action) (Nov 7)) */
+function pvUnc(tl, hd) { let P = tl.querySelector('.pv-unc'); const D = typeof NDZ_TL !== 'undefined' ? NDZ_TL : null;
+  const red = D && D.hits ? D.hits.map((x, i) => ({ x, i })).filter((o) => o.x.c === 'red') : [];
+  const key = red.map((o) => o.i + ':' + (o.x.fix ? o.x.fix.who + o.x.fix.t : '')).join('|') + '|' + (D && D.noteId);
+  if (!red.length) { if (P) P.remove(); return; } if (P && P.dataset.k === key) return;
+  if (!P) { P = document.createElement('div'); P.className = 'pv-unc'; hd.insertAdjacentElement('afterend', P); } P.dataset.k = key;
+  const at = (x) => (x.ph % 1 ? 'Int' : 'P' + x.ph) + ' ' + Math.floor(x.rel / 60) + ':' + String(Math.round(x.rel % 60)).padStart(2, '0');
+  P.innerHTML = '<span class="pv-unch">Not covered yet · ' + plural(red.length, 'big hit') + '</span>' + red.map(({ x, i }) => '<div class="pv-ur"><b>' + esc(at(x)) + ' · ' + esc(x.hit || 'Big hit') + '</b><span>no raid cooldown on it</span>' +
+    (x.fix && D.noteId ? '<button type="button" class="btn sm primary" data-ndzcover="' + i + '">Cover it: ' + esc(x.fix.name) + ' · ' + esc(x.fix.who) + '</button>' : '<span class="pv-unn">nobody has one ready</span>') + '</div>').join(''); }
 let PV_MO = null; const pvMarkSoon = () => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
 setTimeout(() => { const v = document.getElementById('main') || document.body; if (!v || PV_MO || !window.MutationObserver) return; /* (the page area: #view is drawn anew) */ PV_MO = new MutationObserver(pvMarkSoon); PV_MO.observe(v, { childList: true, subtree: true }); pvMarkSoon(); }, 0);
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pvmine]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-pv-mine', b.dataset.pvmine); } catch (x) { /* (this visit) */ } pvMark(); });
 const PV_TABS = [['roster', 'Roster'], ['cds', 'Healing cooldowns'], ['jobs', 'Assignments'], ['plans', 'Plans'], ['all', 'All on one page']];
 const pvOk = (v) => PV_TABS.some((x) => x[0] === v);
 /* (your tab for this boss: the address (&pv=), else the one you picked last for this boss, else Healing cooldowns for a healer, Roster for everyone else) */
-function pvGet(pb) { try { const q = new URLSearchParams(location.search).get('pv'); if (pvOk(q)) return q; const v = store.get('wla-pv|' + pb); if (pvOk(v)) return v; } catch (e) { /* (the default) */ }
+const PV_URL0 = (() => { try { return window.WLA_PV0 || new URLSearchParams(location.search).get('pv'); } catch (e) { return null; } })(); /* (the link's tab, read before the page tidies its address) */
+function pvGet(pb) { try { const q = new URLSearchParams(location.search).get('pv'); if (pvOk(q)) return q; if (pvOk(PV_URL0) && !pvGet.used) { pvGet.used = true; try { store.set('wla-pv|' + pb, PV_URL0); } catch (x) { /* (this visit) */ } return PV_URL0; } const v = store.get('wla-pv|' + pb); if (pvOk(v)) return v; } catch (e) { /* (the default) */ }
   try { const me = meOf(), lo = me && String(me.name).split('-')[0].toLowerCase(), p = lo && pnPeople(pnGet()).find((x) => String(x.n).split('-')[0].toLowerCase() === lo); if (p && p.role === 'healer') return 'cds'; } catch (e) { /* (Roster) */ }
   return 'roster'; }
 function pvWrap(h, pb, got) {
@@ -6998,6 +7009,7 @@ function pvWrap(h, pb, got) {
   if (/<div class="panel pls pls-slim"/.test(h)) tag(/<div class="panel pls pls-slim"[^>]*>/, 'plans');
   else { let sv = ''; try { sv = L.length && typeof planSavedStripH === 'function' ? planSavedStripH(pb, L) : ''; } catch (e) { sv = ''; }
     h += sv ? sv.replace('<div class="panel pls pls-slim"', '<div data-pv="plans" class="panel pls pls-slim pv-own"') : '<div data-pv="plans" class="panel pls pv-own pv-none"><b>No saved plans for ' + esc(pnShort(pb)) + ' yet.</b><span class="sub">✨ Make the whole plan saves one, or Import a note.</span></div>'; }
+  if (L.length >= 2) { const ids = (S.pvCmp && S.pvCmp.pb === pb ? S.pvCmp.ids : null) || L.slice(0, 2).map((x) => x.id); h = h.replace(/(<div data-pv="plans"[^>]*>)/, '$1' + pvCmpH(pb, L, ids)); }
   /* (each tab's count: the readiness parts the ring is made of) */
   let r = null; try { r = pgRdy(pnGet(), pb); } catch (e) { r = null; } const row = (k) => ((r && r.rows) || []).find((x) => x[0] === k);
   const on = (() => { try { return (pnGet().on[pb] || []).length; } catch (e) { return 0; } })();
@@ -7010,6 +7022,21 @@ function pvWrap(h, pb, got) {
   /* (the tab bar goes under the boss header) */
   const hi = h.indexOf('</header>', h.indexOf('<header class="fight bh plan-bh')); if (hi < 0) { const i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i))); return h.slice(0, i0) + nav + h.slice(i0); }
   return h.slice(0, hi + 9) + nav + h.slice(hi + 9); }
+/* (Plans: compare two saved plans: who plays in one and not the other, the job lines that differ, and how many cooldowns each has (Nov 7)) */
+function pvCmpH(pb, L, ids) { const opt = (sel) => L.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === sel ? ' selected' : '') + '>' + esc(planNm(x)) + '</option>').join('');
+  return '<div class="pv-cmp" data-pvcmpboss="' + esc(pb) + '"><div class="pv-cmph"><b>Compare</b><select data-pvcmp="0" aria-label="First plan">' + opt(ids[0]) + '</select><span>with</span><select data-pvcmp="1" aria-label="Second plan">' + opt(ids[1]) + '</select></div><div class="pv-cmpb">' + pvCmpBody(L, ids) + '</div></div>'; }
+function pvCmpBody(L, ids) { const A = L.find((x) => x.id === ids[0]), B = L.find((x) => x.id === ids[1]); if (!A || !B) return ''; if (A === B) return '<p class="sub">Pick two different plans.</p>';
+  const who = (n) => { try { return new Set((ndzNoteRoster(n) || noteNames(noteResolve(n.text))).map((x) => String(x).split('-')[0])); } catch (e) { return new Set(); } };
+  const jobs = (n) => { const m = new Map(); let cds = 0; for (const ln of String(n.text || '').split('\n')) { if (/spellid|\{spell:/i.test(ln)) { cds++; continue; } const k = /^\s*([^:{};\n]{2,40}?)\s*:\s*(.+)$/.exec(ln); if (k && !/^(EncounterID|Difficulty|Name|boss)\b/i.test(k[1])) m.set(k[1].trim(), k[2].replace(/\{[^}]*\}/g, '').replace(/\s+/g, ' ').trim()); } return { m, cds }; };
+  const wa = who(A), wb = who(B), ja = jobs(A), jb = jobs(B), rows = [];
+  const onlyA = [...wa].filter((x) => !wb.has(x)), onlyB = [...wb].filter((x) => !wa.has(x));
+  if (onlyA.length || onlyB.length) rows.push(['Who plays', onlyA.length ? esc(andL(onlyA)) + ' play' + (onlyA.length === 1 ? 's' : '') : 'the same players', onlyB.length ? esc(andL(onlyB)) + ' play' + (onlyB.length === 1 ? 's' : '') : 'the same players']);
+  for (const k of new Set([...ja.m.keys(), ...jb.m.keys()])) { const a = ja.m.get(k) || '', b = jb.m.get(k) || ''; if (a !== b) rows.push([k, a ? esc(a) : '<span class="sub">not in this plan</span>', b ? esc(b) : '<span class="sub">not in this plan</span>']); }
+  if (ja.cds !== jb.cds) rows.push(['Cooldowns', plural(ja.cds, 'cooldown'), plural(jb.cds, 'cooldown')]);
+  if (!rows.length) return '<p class="sub">These two plans are the same.</p>';
+  return '<div class="pv-cmpt"><div class="pv-cmpr pv-cmpth"><span></span><b>' + esc(planNm(A)) + '</b><b>' + esc(planNm(B)) + '</b></div>' + rows.slice(0, 24).map((r) => '<div class="pv-cmpr"><span>' + esc(r[0]) + '</span><span>' + r[1] + '</span><span class="chg">' + r[2] + '</span></div>').join('') + (rows.length > 24 ? '<p class="sub">and ' + plural(rows.length - 24, 'more difference') + '</p>' : '') + '</div>'; }
+document.addEventListener('change', (e) => { const s = e.target.closest && e.target.closest('[data-pvcmp]'); if (!s || S.page !== 'plan') return; const w = s.closest('.pv-cmp'), pb = w && w.dataset.pvcmpboss; if (!pb) return;
+  const ids = [...w.querySelectorAll('[data-pvcmp]')].map((x) => x.value), L = notesOf(pb).list.filter((x) => !x.example); S.pvCmp = { pb, ids }; const body = w.querySelector('.pv-cmpb'); if (body) body.innerHTML = pvCmpBody(L, ids); });
 /* (a tab: shown at once, kept for this boss and in the address; the bar stays in view) */
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pgpv]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nav = b.closest('.pg-tabs'), v = b.dataset.pgpv, pb = nav && nav.dataset.pvboss; if (!nav || !pvOk(v)) return;
   nav.dataset.cur = v; nav.querySelectorAll('[data-pgpv]').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
@@ -8074,13 +8101,20 @@ function bfrDraw() {
   sum.innerHTML = (!F ? (BFR.err ? '<span class="gr-l">The gear check didn\'t load · <button class="lk" type="button" data-bfr="again">Try again</button></span>' : '<span class="gr-l">Checking gear…</span>')
     : !F.rows.length ? '<span class="gr-ok">✓ Gear: everyone\'s ready</span>' + (can ? ' · ' + all : '')
     : '<span class="gr-l">Gear for the next raid:</span> ' + [bad ? '<b class="gr-bad">' + bad + ' to fix</b>' : '', low ? '<b class="gr-warn">' + low + ' under item level</b>' : '', F.fine ? '<span class="gr-ok">✓ ' + F.fine + ' ready</span>' : ''].filter(Boolean).join(' · ') + ' · ' + all) + join;
+  /* (Ready for the next raid as four tiles (Flex, Nov 7, the sub-tabs mock): gear to fix, under item level, ready, and the raid kit) */
+  { let T = ros.querySelector('.gr-tiles'); if (!F || !F.rows.length && !F.fine) { if (T) T.remove(); } else {
+      if (!T) { T = document.createElement('div'); T.className = 'gr-tiles'; hd.insertAdjacentElement('afterend', T); }
+      let kit = null; try { const pbx = (view.querySelector('.pg-tabs') || {}).dataset; const rr = pbx && pbx.pvboss ? pgRdy(pnGet(), pbx.pvboss) : null; kit = rr && (rr.rows || []).find((x) => x[0] === 'Raid kit'); } catch (x) { kit = null; }
+      const tot = F.rows.length + F.fine, tile = (lab, v, sub2, cls) => '<button type="button" class="gr-t' + (cls ? ' ' + cls : '') + '" data-bfr="all" aria-expanded="' + !!BFR.all + '"><span>' + lab + '</span><b>' + v + '</b><small>' + sub2 + '</small></button>';
+      T.innerHTML = tile('Gear to fix', bad, bad ? 'missing enchants or gems' : 'nothing missing', bad ? 'bad' : 'ok') + tile('Under item level', low, F.mid ? '5 or more under ' + Math.round(F.mid) : 'under the raid', low ? 'warn' : 'ok') +
+        tile('Ready', F.fine, 'of ' + tot + ' on the roster', F.fine === tot ? 'ok' : '') + (kit ? tile('Raid kit', kit[1] ? '✓' : '!', kit[2], kit[1] ? 'ok' : 'warn') : ''); } }
   // (the full list, in place under the header)
   let L = ros.querySelector('.gr-list');
   if (BFR.all && F) { if (!L) { L = document.createElement('div'); L.className = 'gr-list'; hd.insertAdjacentElement('afterend', L); }
     const mid = F.mid, off = can ? '<details class="bfr-off"' + (BFR.off ? ' open' : '') + '><summary>Officer view</summary><div class="bfr-tw"><table class="bfr-t"><thead><tr><th>Raider</th><th class="n">ilvl</th><th class="n">M+ score</th><th class="n">Keys this week</th><th class="n">Linked</th></tr></thead><tbody>' +
       BFR.list.filter((x) => !x.none).sort((p, q) => q.il - p.il).map((x) => '<tr><td><b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b></td><td class="n' + (mid && x.il <= mid - 5 ? ' lo' : '') + '">' + Math.round(x.il) + '</td><td class="n">' + (x.score ? x.score.toLocaleString() : '–') + '</td><td class="n' + (x.wk ? x.wk >= 8 ? ' hi' : '' : ' lo') + '">' + x.wk + (x.wk ? ' · ' + (x.wk >= 8 ? 3 : x.wk >= 4 ? 2 : 1) + (x.wk >= 4 ? ' vault slots' : ' vault slot') : '') + '</td><td class="n">' + (nm(x.n) ? '<span class="ok">✓</span>' : '–') + '</td></tr>').join('') +
       '</tbody></table></div><p class="bfr-f">Keys this week: the dungeons each raider has run since the reset, from their public Mythic+ profile. Raid vault progress isn\'t in Blizzard\'s data, so it isn\'t shown.</p></details>' : '';
-    L.innerHTML = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
+    L.innerHTML = F.rows.map((r) => '<div class="bfr-r ' + r.k + '" data-grjump="' + esc(r.x.n) + '" title="Show on the roster">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
       (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t"><b>' + plural(F.fine, 'raider') + ' ready</b>: ' + F.okL.map((x) => '<b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b>').join(', ') + '</span></div>' : '') +
       (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
       '<p class="bfr-f">From public Battle.net gear, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>' + off;
@@ -8092,6 +8126,8 @@ function bfrDraw() {
     if (!r) { if (dot) dot.remove(); continue; } if (!dot) { dot = document.createElement('i'); c.appendChild(dot); }
     dot.className = 'gr-dot ' + r.k; dot.setAttribute('aria-label', r.x.n + ': ' + r.parts.join(', ')); dot.dataset.tt = '<b>' + esc(r.x.n) + '</b> · ' + r.parts.map(esc).join(' · '); }
 }
+document.addEventListener('click', (e) => { const r = e.target.closest && e.target.closest('[data-grjump]'); if (!r || S.page !== 'plan') return; const lo = meBase(r.dataset.grjump), c = [...document.querySelectorAll('#pg-roster .pg-rc[data-pgsit]')].find((x) => meBase(x.dataset.pgsit) === lo); if (!c) return; /* (a fix line: its raider's chip, flashed (Nov 7)) */
+  c.scrollIntoView({ block: 'center' }); c.classList.remove('gr-flash'); void c.offsetWidth; c.classList.add('gr-flash'); setTimeout(() => c.classList.remove('gr-flash'), 1600); });
 document.addEventListener('click', async (e) => { const b = e.target.closest && e.target.closest('[data-bfr]'); if (!b) return; const k = b.dataset.bfr;
   if (k === 'again') { BFR.key = ''; bfrLoad(); bfrDraw(); return; }
   if (k === 'all') { BFR.all = !BFR.all; bfrDraw(); return; }
@@ -9575,7 +9611,7 @@ function bjTlH(D) {
   const CP = pack(cds.map((c) => ({ ...c, _i: c._i != null ? c._i : D.cds.indexOf(c) })).concat((D.calls || []).filter((c) => c.ph === cur).map((c) => ({ t: c.t, who: 'Everyone', call: c.k, txt: c.txt, _ci: c._i != null ? c._i : (D.calls || []).indexOf(c), dur: c.k === 'def' ? 8 : 0 }))).sort((a, b) => a.t - b.t), cw) /* (every cooldown with its name and bar again; raid calls in the same rows, Oct 23) */, cRows = true /* (every lane, the user, Oct 27) */ ? Math.max(1, ...CP.map((c) => c.r + 1)) : Math.min(3, Math.max(1, ...CP.map((c) => c.r + 1))) /* (at most 3 lanes, Oct 27) */, ms1 = ms.filter((m, i) => !ms.slice(0, i).some((o) => o.label === m.label && Math.abs(o.rel - m.rel) < 6)) /* (one icon for repeats within 6 s) */, MP = ((P) => P.map((m) => ({ ...m, r: m.r % 2 })))(pack(ms1.map((m) => ({ ...m, t: m.rel })), () => 23)) /* (at most 2 rows) */, mRows = bon && MP.length ? Math.max(...MP.map((m) => m.r + 1)) : 0;
   const HH = 30, MH = 22, CH = 22, AX = 18, top0 = HH + (mRows ? mRows * MH + 13 : 4) /* (the slimmer chart, Oct 27) */ /* (a little room under the boss band, the user, Oct 27; even padding round its icons) */, dTop = top0 + cRows * CH + 8, H = dTop + 110 + AX; /* (Oct 23: the names in their own band, 150 px of damage under them; 210 was too tall, the user: "little bit too tall") */
   // (raid damage behind it all, one scale for the fight, green calm to red the worst of this phase)
-  const dv = D.dmg && D.dmg[cur], dmax = dv && dv.length ? Math.max(1, ...dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4)) : D.dmg ? Math.max(1, ...Object.values(D.dmg).map((a) => Math.max(0, ...a))) : 1 /* (the scale tops out at this view's biggest damage, your call, Oct 23) */, sv = dv ? ((s0) => { const L0 = Math.round(len); if (!s0.length || !L0 || Math.abs(s0.length - L0) <= Math.max(2, L0 * 0.03)) return s0; return Array.from({ length: L0 }, (_, j) => s0[Math.min(s0.length - 1, Math.floor(j * s0.length / L0))]); })(dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4)) : null; /* (stretched to the phase's length: the damage line fills the timeline, Nov 6) */
+  const dv = D.dmg && D.dmg[cur], dmax = dv && dv.length ? Math.max(1, ...dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4)) : D.dmg ? Math.max(1, ...Object.values(D.dmg).map((a) => Math.max(0, ...a))) : 1 /* (the scale tops out at this view's biggest damage, your call, Oct 23) */, sv = dv ? ((s0) => { const L0 = Math.round(len); if (!s0.length || !L0 || Math.abs(s0.length - L0) <= Math.max(2, L0 * 0.03)) return s0; return Array.from({ length: L0 }, (_, j) => { const x = L0 > 1 ? j * (s0.length - 1) / (L0 - 1) : 0, i = Math.floor(x), f = x - i; return s0[i] + ((s0[Math.min(s0.length - 1, i + 1)] - s0[i]) * f); }); /* (blended between samples, not repeated: smooth, Flex Nov 7) */ })(dv.map((v, i) => (dv[Math.max(0, i - 1)] + 2 * v + dv[Math.min(dv.length - 1, i + 1)]) / 4)) : null; /* (stretched to the phase's length: the damage line fills the timeline, Nov 6) */
   let bg = ''; if (sv && sv.length > 2) { const lo = Math.min(...sv), hi = Math.max(...sv), G = NDZ_DGC, cOf = (v) => { const t = Math.max(0, Math.min(1, (v - lo) / Math.max(1e-9, hi - lo))); let i = 0; while (i < G.length - 2 && t > G[i + 1][0]) i++; const [a, ca] = G[i], [b, cb] = G[i + 1], f = Math.max(0, Math.min(1, (t - a) / (b - a))); return 'rgb(' + ca.map((c, k) => Math.round(c + (cb[k] - c) * f)).join(',') + ')'; };
     const id = 'btlDg' + (NDZ_DGN = (NDZ_DGN || 0) + 1), hb = H - AX - dTop;
     bg = '<svg class="btl-dmg" style="top:' + dTop + 'px;height:' + hb + 'px;width:' + W + 'px" viewBox="0 0 ' + W + ' 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="' + W + '" y2="0">' + sv.map((v, i) => '<stop offset="' + Math.min(1, X(i * 2 + 1) / W).toFixed(4) + '" stop-color="' + cOf(v) + '"/>').join('') + '</linearGradient></defs>' +
