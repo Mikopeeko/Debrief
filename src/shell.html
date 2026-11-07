@@ -4950,6 +4950,9 @@ details.secd > summary .kbrank + .sst { margin-left: 0; }
 .bfr-h h2 { margin: 0; font: 700 20px var(--head); color: var(--text); } .bfr-h .m { color: var(--muted); font-size: 13px; }
 .bfr-r { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; } .bfr-r svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .bfr-r.bad svg { color: var(--bad); } .bfr-r.warn svg { color: var(--warn); } .bfr-r.ok svg { color: var(--good); } .bfr-r .t { color: var(--text); line-height: 1.45; } .bfr-p { color: var(--muted); } .bfr-r .w { color: var(--muted); font-size: 13px; text-align: right; }
+.bfr-okd { display: block; } .bfr-okd > summary { display: grid; grid-template-columns: 20px 1fr; align-items: center; gap: 10px; cursor: pointer; list-style: none; } .bfr-okd > summary::-webkit-details-marker { display: none; }
+.bfr-okd > summary svg { width: 20px; height: 20px; fill: none; stroke: var(--good); stroke-width: 1.6; stroke-linecap: round; } .bfr-tap { margin-left: 6px; color: var(--gold); font-size: 13px; } .bfr-okd[open] .bfr-tap { display: none; }
+.bfr-okl { padding: 8px 0 2px 30px; font-size: 13px; line-height: 1.6; color: var(--muted); } .bfr-okl b { font-weight: 600; }
 .bfr-f { margin: 10px 0 0; color: var(--muted); font-size: 13px; } .bfr-f .lk { background: none; border: 0; padding: 0; color: var(--gold); cursor: pointer; font-size: 13px; }
 .bfr-join { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--line); } .bfr-join span { color: var(--muted); font-size: 13px; flex: 1 1 240px; }
 .bfr-off { margin-top: 12px; } .bfr-off > summary { cursor: pointer; color: var(--gold); font: 600 13px var(--body); letter-spacing: .08em; text-transform: uppercase; list-style: none; } .bfr-off > summary::-webkit-details-marker { display: none; }

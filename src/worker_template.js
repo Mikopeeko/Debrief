@@ -1837,7 +1837,15 @@ async function teamRanks(env, url, d, who) {
 // ---- Battle.net step 4: public data for every rostered character, linked or not (client credentials): item level, the gear's enchants and
 // gems, Mythic+ score and this week's keys. Each character is kept an hour at the edge; a page asks for up to 10 at a time.
 // GET /api/raiders?r=us&c=realm-slug:Name,realm-slug:Name  ->  { list: [{ n, realm, cls, spec, sid, il, items: [[slot, ilvl, enchanted, sockets, filled]], score, wk }] }
-const RAIDER_C = /^[a-z0-9-]{1,40}:[^\s:,]{2,24}$/u;
+const RAIDER_C = /^[\p{L}0-9' -]{1,40}:[^\s:,]{2,24}$/u;
+// (each raider's own realm, as Warcraft Logs writes it ("Area52", "Kel'Thuzad"), turned into Blizzard's slug ("area-52", "kelthuzad") with
+// Blizzard's own realm list, kept a day (Main, Nov 6: 17 of 25 Wolfthorn raiders were looked up on the team's realm and not found))
+const realmNorm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+async function realmSlugs(r, tok) {
+  const c = caches.default, ck = new Request('https://debrief.cache/realm-index/' + r), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const j = await bnetApi(r, '/data/wow/realm/index', tok, 'dynamic'), m = {}; for (const x of (j && j.realms) || []) { m[realmNorm(x.name)] = x.slug; m[realmNorm(x.slug)] = x.slug; }
+  if (Object.keys(m).length) await c.put(ck, new Response(JSON.stringify(m), { headers: { 'Cache-Control': 'max-age=86400' } })).catch(() => {});
+  return m; }
 function raiderMock(realm, n) { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; const r = (k) => ((h >>> k) & 15);
   const slots = ['HEAD', 'NECK', 'SHOULDER', 'BACK', 'CHEST', 'WRIST', 'HANDS', 'WAIST', 'LEGS', 'FEET', 'FINGER_1', 'FINGER_2', 'TRINKET_1', 'TRINKET_2', 'MAIN_HAND'], il = 318 + (h % 16);
   return { n, realm, cls: BNET_CLS[1 + (h % 13)], spec: '', sid: 0, il, score: 1800 + (h % 1700), wk: r(3) % 9, mock: true,
@@ -1860,7 +1868,8 @@ async function raidersRoute(req, env, url) {
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   const tok = await bnetAppToken(env, r);
   if (!tok || (PRACTICE_HOST(url) && p.get('mock') === '1')) return PRACTICE_HOST(url) ? json({ list: L.map((x) => raiderMock(...x.split(':'))), mock: true }) : json({ error: 'Battle.net isn\'t set up on this copy of Debrief.' }, 503);
-  return json({ list: await Promise.all(L.map((x) => { const [realm, n] = x.split(':'); return raiderOne(env, r, realm, n, tok).catch(() => ({ n, realm, none: true })); })) });
+  const RS = await realmSlugs(r, tok).catch(() => ({})), slug = (s) => RS[realmNorm(s)] || String(s).toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
+  return json({ list: await Promise.all(L.map((x) => { const [realm0, n] = x.split(':'), realm = slug(realm0); return raiderOne(env, r, realm, n, tok).catch(() => ({ n, realm, none: true })); })) });
 }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);

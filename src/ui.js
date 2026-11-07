@@ -7968,10 +7968,17 @@ function bfrWhere() { const t = tpTeam(); if (!t) return null; const sv = String
   return { realm: srvSlug(sv.replace(/\s*\(\w{2}\)\s*$/, '')), r: /^(us|eu)$/.test(rg) ? rg : 'us', team: t }; }
 function bfrNames() { const R = planRoster(); if (!R) return []; let A = null; try { A = pgAltsR(R); } catch (e) { A = null; }
   return R.players.filter((p) => !(A && A.main.has(String(p.n).toLowerCase()))).map((p) => String(p.n)); }
+async function bfrRealms(t) {
+  if (!HIST.mem.size) await HIST.load().catch(() => null); /* (the saved pulls may not be read yet) */
+  const codes = [...HIST.mem.values()].filter((v) => v.wcl && v.wcl.code && pullGroups(v).includes(t.gid)).sort((a, b) => b.at - a.at).map((v) => v.wcl.code), M = new Map();
+  for (const code of [...new Set(codes)].slice(0, 4)) { try { const j = await (await fetch('/api/report?code=' + encodeURIComponent(code))).json(), rep = j.reportData ? j.reportData.report : j;
+      for (const a of ((rep && rep.masterData) || {}).actors || []) if (a.type === 'Player' && a.server && !M.has(String(a.name).toLowerCase())) M.set(String(a.name).toLowerCase(), a.server); } catch (e) { /* (that report: skipped) */ } }
+  return M; }
 async function bfrLoad() {
   const W = bfrWhere(), N = bfrNames(); if (!W || !W.realm || !N.length || BFR.busy) return; const key = W.r + '|' + W.realm + '|' + N.join(',');
   if (BFR.key === key && (BFR.list || BFR.err)) return; Object.assign(BFR, { key, list: null, err: '', busy: true });
-  const out = []; try { for (let i = 0; i < N.length; i += 10) { const c = N.slice(i, i + 10).map((n) => { const [nm, rl] = n.split('-'); return (rl ? srvSlug(rl) : W.realm) + ':' + nm; }).join(',');
+  const out = []; try { const RM = await bfrRealms(W.team).catch(() => new Map());
+    for (let i = 0; i < N.length; i += 10) { const c = N.slice(i, i + 10).map((n) => { const [nm, rl] = n.split('-'); return String(rl || RM.get(nm.toLowerCase()) || W.realm).replace(/[:,]/g, '') + ':' + nm; }).join(',');
       const r = await fetch('/api/raiders?r=' + W.r + '&c=' + encodeURIComponent(c) + (TP_PRACTICE && store.get('wla-bfr-mock') ? '&mock=1' : '') /* (practice links: made-up gear for made-up rosters) */), j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || 'Battle.net didn\'t answer just now.'); out.push(...(j.list || [])); }
     BFR.list = out; } catch (e) { BFR.err = String(e.message || e); } BFR.busy = false; if (BFR.key === key) bfrDraw(); }
@@ -7979,13 +7986,13 @@ function bfrFacts(L) {
   const ok = L.filter((x) => !x.none && x.il), ils = ok.map((x) => x.il).sort((a, b) => a - b), mid = ils.length ? ils[Math.floor(ils.length / 2)] : 0, need = new Set(), cnt = {};
   for (const x of ok) for (const [s, , en] of x.items || []) { cnt[s] = cnt[s] || [0, 0]; cnt[s][1]++; if (en) cnt[s][0]++; }
   for (const [s, [a, b]] of Object.entries(cnt)) if (b >= 3 && a / b >= 0.6) need.add(s); /* (a slot most of the raid enchants) */
-  const rows = []; let fine = 0;
+  const rows = [], okL = []; let fine = 0;
   for (const x of ok) { const miss = (x.items || []).filter(([s, , en]) => need.has(s) && !en).map(([s]) => BFR_SLOT[s] || s), gem = (x.items || []).filter(([, , , so, fi]) => so > fi).map(([s]) => BFR_SLOT[s] || s), low = mid && x.il <= mid - 5;
     const parts = [miss.length ? (miss.length > 1 ? miss.length + ' missing enchants' : 'missing an enchant') + ' (' + miss.join(', ') + ')' : '', gem.length ? (gem.length > 1 ? gem.length + ' empty gem sockets' : 'empty gem socket') + ' (' + gem.join(', ') + ')' : '',
       low ? Math.round(mid - x.il) + ' item levels under the raid (' + Math.round(x.il) + ' vs ' + Math.round(mid) + ')' : ''].filter(Boolean);
-    if (parts.length) rows.push({ k: miss.length || gem.length ? 'bad' : 'warn', x, parts, w: miss.length + gem.length * 1 + (low ? 0.5 : 0) }); else fine++; }
+    if (parts.length) rows.push({ k: miss.length || gem.length ? 'bad' : 'warn', x, parts, w: miss.length + gem.length * 1 + (low ? 0.5 : 0) }); else { fine++; okL.push(x); } }
   rows.sort((a, b) => (a.k === b.k ? 0 : a.k === 'bad' ? -1 : 1) || b.w - a.w || a.x.n.localeCompare(b.x.n));
-  return { rows, fine, mid, none: L.filter((x) => x.none).map((x) => x.n) };
+  return { rows, fine, okL: okL.sort((a, b) => a.n.localeCompare(b.n)), mid, none: L.filter((x) => x.none).map((x) => x.n) };
 }
 const bfrCol = (x) => (E.CLASSES[x.cls] || [])[1] || 'var(--text)';
 const BFR_IC = { bad: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M7 7l6 6M13 7l-6 6"/></svg>', warn: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M10 5.5v6M10 14v.5"/></svg>', ok: '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="8.5"/><path d="M6.5 10.2l2.4 2.4 4.6-5"/></svg>' };
@@ -8001,7 +8008,7 @@ function bfrDraw() {
   else if (BFR.err) body = '<p class="bfr-f">' + esc(BFR.err) + ' <button class="lk" type="button" data-bfr="again">Try again</button></p>';
   else { const F = bfrFacts(BFR.list), nFix = F.rows.length;
     body = F.rows.map((r) => '<div class="bfr-r ' + r.k + '">' + BFR_IC[r.k] + '<span class="t"><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b>' + r.parts.map((p) => '<span class="bfr-p"> · ' + esc(p) + '</span>').join('') + '</span></div>').join('') +
-      (F.fine ? '<div class="bfr-r ok">' + BFR_IC.ok + '<span class="t">' + (F.rows.length ? F.fine + ' other' + (F.fine > 1 ? 's are' : ' is') : (F.fine > 1 ? 'All ' + F.fine + ' are' : 'Everyone is')) + ' enchanted, gemmed and at raid item level</span></div>' : '') +
+      (F.fine ? '<details class="bfr-r ok bfr-okd"><summary>' + BFR_IC.ok + '<span class="t"><b>' + plural(F.fine, 'raider') + ' ready</b>: enchanted, gemmed and at raid item level <span class="bfr-tap">Show who</span></span></summary><div class="bfr-okl">' + F.okL.map((x) => '<b style="color:' + bfrCol(x) + '">' + esc(x.n) + '</b>').join(', ') + '</div></details>' : '') +
       (F.none.length ? '<p class="bfr-f">Not found on Battle.net: ' + esc(andL(F.none)) + ' (another realm, or renamed).</p>' : '') +
       '<p class="bfr-f">Checked from public gear data, so it works for everyone on the roster, linked or not.' + (BFR.list.some((x) => x.mock) ? ' (Practice: made-up gear.)' : '') + '</p>';
     el.dataset.n = nFix; }
