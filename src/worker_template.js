@@ -1454,13 +1454,15 @@ const WCL_SIGN_ID = '01a15a39-b1bf-7242-8b34-414c13c35511';
 // team's private nights. Signing out deletes both.
 const SESS_DAYS = 30;
 const cookieOf = (req, k) => { const m = (req.headers.get('Cookie') || '').match(new RegExp('(?:^|;\\s*)' + k + '=([a-f0-9]{48})')); return m ? m[1] : null; };
-async function sessOf(req, env) { const id = cookieOf(req, 'dbs'); if (!id || !env.DEBRIEF_KV) return null; const s = await env.DEBRIEF_KV.get('sess:' + id, 'json').catch(() => null); return s && s.t && s.exp > Date.now() ? s : null; }
+async function sessOf(req, env) { const id = cookieOf(req, 'dbs'); if (!id || !env.DEBRIEF_KV) return null; const s = await env.DEBRIEF_KV.get('sess:' + id, 'json').catch(() => null); return s && (s.t || s.bid) && s.exp > Date.now() ? s : null; }
+/* (Nov 8, Battle.net-only sign-in: a raider's own Warcraft Logs pass, only when they connected it (or an old Warcraft Logs sign-in that hasn't moved yet)) */
+const userTok = (s) => (!s ? null : s.bid ? (s.wt && !(s.wexp < Date.now()) ? s.wt : null) : s.t || null), userUid = (s) => (!s ? null : s.bid ? (userTok(s) ? s.wuid : null) : s.uid || null);
 const sessCookie = (id, secs) => 'dbs=' + id + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=' + Math.max(0, Math.round(secs));
 async function signOut(req, env) { const id = cookieOf(req, 'dbs'); if (id && env.DEBRIEF_KV) await env.DEBRIEF_KV.delete('sess:' + id).catch(() => {}); const res = json({ ok: true }); res.headers.append('Set-Cookie', sessCookie('0'.repeat(48), 0)); return res; }
 // (Your logs: the reports you uploaded, private ones too, newest first)
 async function myReports(req, env) {
-  const s = await sessOf(req, env); if (!s || !s.uid) return json({ error: 'Sign in with Warcraft Logs again to see your logs.' }, 401);
-  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:25){data{code title startTime visibility zone{name}}}}}', { uid: s.uid }, s.t);
+  const s = await sessOf(req, env); if (!userTok(s) || !userUid(s)) return json({ error: 'Connect Warcraft Logs to see your own logs, private ones too.', connect: true }, 401);
+  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:25){data{code title startTime visibility zone{name}}}}}', { uid: userUid(s) }, userTok(s));
     const l = (((d || {}).reportData || {}).reports || {}).data || [];
     return json({ reports: l.map((r) => ({ code: r.code, title: r.title, startTime: r.startTime, vis: r.visibility, zone: r.zone ? r.zone.name : '' })) });
   } catch (e) { return json({ error: 'Couldn\'t get your logs from Warcraft Logs.' }, 502); }
@@ -1468,9 +1470,9 @@ async function myReports(req, env) {
 // (Live now: your own newest uploads, private ones too, so Debrief follows your log before anyone else's on the team.
 // Yours alone, so not kept for others; your account number comes back so the page can spot your log in the team's list.)
 async function myLive(req, env) {
-  const s = await sessOf(req, env); if (!s || !s.uid) return json({ error: 'Not signed in.' }, 401);
-  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:3){data{code title startTime endTime owner{id name}}}}}', { uid: s.uid }, s.t);
-    return json({ uid: s.uid, reports: (((d || {}).reportData || {}).reports || {}).data || [] });
+  const s = await sessOf(req, env); if (!userTok(s) || !userUid(s)) return json({ error: 'Not connected to Warcraft Logs.', connect: true }, 401);
+  try { const d = await gql(env, 'query($uid:Int){reportData{reports(userID:$uid,limit:3){data{code title startTime endTime owner{id name}}}}}', { uid: userUid(s) }, userTok(s));
+    return json({ uid: userUid(s), reports: (((d || {}).reportData || {}).reports || {}).data || [] });
   } catch (e) { return json({ error: 'Couldn\'t get your logs from Warcraft Logs.' }, 502); }
 }
 async function wclSignIn(req, env) {
@@ -1491,9 +1493,10 @@ async function wclSignIn(req, env) {
       chars: (u.characters || []).map((c) => ({ id: c.id, n: c.name, cls: c.classID, srv: c.server ? c.server.name : '', slug: c.server ? c.server.slug : '', reg: reg(c.server) })),
       guilds: (u.guilds || []).map((g) => ({ id: g.id, n: g.name, srv: g.server ? g.server.name : '', reg: reg(g.server) })) };
     const res = json(out);
-    if (env.DEBRIEF_KV) { const a = new Uint8Array(24); crypto.getRandomValues(a); const id = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), secs = Math.min(SESS_DAYS * 86400, tj.expires_in || 86400);
-      await env.DEBRIEF_KV.put('sess:' + id, JSON.stringify({ t: tj.access_token, uid: u.id, name: u.name, exp: Date.now() + secs * 1000 }), { expirationTtl: Math.max(60, secs) });
-      res.headers.append('Set-Cookie', sessCookie(id, secs)); }
+    /* (Nov 8: Battle.net is the sign-in; this only connects Warcraft Logs to it, for private reports, Your logs and your own Live now) */
+    if (env.DEBRIEF_KV) { const sid = cookieOf(req, 'dbs'), cur = sid ? await env.DEBRIEF_KV.get('sess:' + sid, 'json').catch(() => null) : null;
+      if (!cur || !cur.bid || !(cur.exp > Date.now())) return json({ error: 'Sign in with Battle.net first, then connect Warcraft Logs.', signin: true }, 401);
+      await env.DEBRIEF_KV.put('sess:' + sid, JSON.stringify({ ...cur, wt: tj.access_token, wuid: u.id, wname: u.name, wexp: Date.now() + (tj.expires_in || 86400) * 1000 }), { expirationTtl: Math.max(60, Math.round((cur.exp - Date.now()) / 1000)) }); }
     return res;
   } catch (e) { return json({ error: 'Couldn\'t reach Warcraft Logs.' }, 502); }
 }
@@ -1584,18 +1587,26 @@ async function teamPut(env, id, doc, etag, url) { const gz = await new Response(
 // (practice links only, never debriefme.io: a test officer by name, so two browsers can try the team plan without Warcraft Logs (its
 // sign-in only comes back to debriefme.io))
 const PRACTICE_HOST = (u) => /-debrief\.[a-z0-9-]+\.workers\.dev$/.test(u.hostname);
+const isMe = (who, uid) => !!who && !!uid && (who.uid === uid || (who.ids || []).includes(uid));
 async function teamWho(req, env, url) {
+  const s0 = await sessOf(req, env); /* (Nov 8: a Battle.net session is who you are, on practice links too) */
+  if (s0 && s0.bid) { const uid = 'b:' + s0.bid, L = await bnetGet(env, uid, url); return { uid, ids: [uid].concat((L && L.olds) || []), bid: s0.bid, tag: s0.tag || '', name: s0.name || String(s0.tag || '').split('#')[0] || 'you', t: userTok(s0), practice: PRACTICE_HOST(url) && !!s0.mock }; }
   if (PRACTICE_HOST(url)) { const m = (req.headers.get('Cookie') || '').match(/(?:^|;\s*)dbp=([^;]{1,80})/); let n = ''; try { n = m ? decodeURIComponent(m[1]).trim().slice(0, 24) : ''; } catch (e) { n = ''; }
-    if (n) return { uid: 'p:' + n.toLowerCase(), name: n, chars: [n.toLowerCase()], practice: true }; }
-  const s = await sessOf(req, env); return s && s.uid ? { uid: 'w:' + s.uid, name: s.name, t: s.t } : null;
+    if (n) return { uid: 'p:' + n.toLowerCase(), ids: ['p:' + n.toLowerCase()], name: n, chars: [n.toLowerCase()], practice: true }; }
+  const s = s0; return s && s.uid ? { uid: 'w:' + s.uid, ids: ['w:' + s.uid], name: s.name, t: s.t, legacy: true } : null; /* (an old Warcraft Logs sign-in: works until it moves to Battle.net) */
 }
 // (the guilds a signed-in raider belongs to on Warcraft Logs, kept an hour; a practice login has none)
-async function teamGuilds(who) { if (!who || !who.t) return []; const c = caches.default, ck = new Request('https://debrief.cache/team-guilds/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+/* (Nov 8: the Warcraft Logs guilds your Battle.net characters are in: each guild's number found by name and realm with Debrief's key, kept a day) */
+async function bnGuildIds(env, url, who) { const L = await bnetGet(env, who.uid, url); if (!L || L.mock) return []; const gs = [...new Map((L.chars || []).filter((c) => c.g).map((c) => [String(c.g).toLowerCase() + '|' + (c.gs || c.slug), { n: c.g, s: c.gs || c.slug }])).values()].slice(0, 6), out = [];
+  for (const g of gs) { const c = caches.default, ck = new Request('https://debrief.cache/wcl-guild/' + L.region + '/' + encodeURIComponent(g.s) + '/' + encodeURIComponent(g.n.toLowerCase())), hit = await c.match(ck).catch(() => null); let id = 0;
+    if (hit) id = +(await hit.text()) || 0; else { try { const d = await gql(env, 'query($n:String,$s:String,$r:String){guildData{guild(name:$n,serverSlug:$s,serverRegion:$r){id}}}', { n: g.n, s: g.s, r: L.region }); id = +((((d || {}).guildData || {}).guild || {}).id) || 0; } catch (e) { id = 0; } await c.put(ck, new Response(String(id), { headers: { 'Cache-Control': 'max-age=86400' } })).catch(() => {}); }
+    if (id) out.push(id); } return out; }
+async function teamGuilds(who, env, url) { if (who && who.bid && env) return bnGuildIds(env, url, who); if (!who || !who.t) return []; const c = caches.default, ck = new Request('https://debrief.cache/team-guilds/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
   let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { guilds { id } } } }' }) });
     l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).guilds || []; l = l.map((g) => +g.id).filter(Boolean); } catch (e) { l = []; }
   await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l; }
-async function teamChars(who) {
-  if (who.chars) return who.chars; const c = caches.default, ck = new Request('https://debrief.cache/team-chars/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+async function teamChars(who, env, url) {
+  if (who.chars) return who.chars; if (who.bid && env) { const L = await bnetGet(env, who.uid, url); return ((L && L.chars) || []).map((c) => String(c.n || '').toLowerCase()); } /* (Nov 8: your Battle.net characters) */ const c = caches.default, ck = new Request('https://debrief.cache/team-chars/' + who.uid), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
   let l = []; try { const r = await fetch('https://www.warcraftlogs.com/api/v2/user', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + who.t }, body: JSON.stringify({ query: '{ userData { currentUser { characters { name } } } }' }) });
     l = (((((await r.json()) || {}).data || {}).userData || {}).currentUser || {}).characters || []; l = l.map((x) => String(x.name || '').toLowerCase()).filter(Boolean); } catch (e) { l = []; }
   await c.put(ck, new Response(JSON.stringify(l), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {}); return l;
@@ -1613,7 +1624,9 @@ async function siteAdmin(who, env, url) {
   if ((await wclCharIds(who)).some((id) => ADMIN_WCL_CHARS.includes(id))) return true;
   if (env && url) { const L = await bnetGet(env, who.uid, url); if (L && !L.mock && (L.chars || []).some((c) => ADMIN_BNET.includes(bnetKey(c)))) return true; }
   return false; }
-const teamCan = async (doc, who) => { if (!who) return false; if (doc.owner.uid === who.uid || (await siteAdmin(who))) return true; const of = (doc.officers || []).map((x) => x.toLowerCase()); if (!of.length) return false; return (await teamChars(who)).some((n) => of.includes(n)); };
+/* (Nov 8: the lead is the owner id, an old id this Battle.net account took over, or Battle.net proving they own the lead character) */
+async function leadByChar(env, url, d, who) { if (!who || !who.bid || !d || !d.owner || !d.owner.char) return false; const L = await bnetGet(env, who.uid, url), lc = (x) => String(x || '').split('-')[0].toLowerCase(); return ((L && L.chars) || []).some((c) => lc(c.n) === lc(d.owner.char)); }
+const teamCan = async (doc, who, env, url) => { if (!who) return false; if (isMe(who, doc.owner.uid) || (await siteAdmin(who, env, url))) return true; const of = (doc.officers || []).map((x) => x.toLowerCase()); if (!of.length) return false; return (await teamChars(who, env, url)).some((n) => of.includes(n)); };
 // (who has the plan open: each open page says so every 20 seconds; kept a minute at the edge, nothing written to storage)
 async function teamHere(id, me, w) {
   const c = caches.default, ck = new Request('https://debrief.cache/team-here/' + id), now = Date.now(); let h = {}; try { const r = await c.match(ck); if (r) h = await r.json(); } catch (e) { h = {}; }
@@ -1808,14 +1821,14 @@ async function teamAccess(env, url, d, who) {
   const R = d && d.ranks;
   if (!who) return { acc: R ? 'none' : 'see', why: 'signin' };
   if (!d) return { acc: 'see', why: 'new' };
-  if (d.owner.uid === who.uid) return { acc: 'edit', why: 'lead' };
+  if (isMe(who, d.owner.uid) || (await leadByChar(env, url, d, who))) return { acc: 'edit', why: 'lead' };
   if (await siteAdmin(who, env, url)) return { acc: 'edit', why: 'admin' };
   let link = null;
   if (R && R.guild) { link = await bnetGet(env, who.uid, url); const rk = await guildRankOf(env, url, R.guild, link);
     if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: rankAcc(R, row), why: 'rank', rank: rk, rankName: (R.names || {})[row] || '' }; } }
-  if (await teamCan(d, who)) return { acc: 'edit', why: 'officer' };
+  if (await teamCan(d, who, env, url)) return { acc: 'edit', why: 'officer' };
   if (!R) return { acc: 'see', why: 'open' };
-  const gm = /^guild:(\d+)$/.exec(d.id); if (gm && (await teamGuilds(who)).includes(+gm[1])) return { acc: 'see', why: 'wcl-guild' };
+  const gm = /^guild:(\d+)$/.exec(d.id); if (gm && (await teamGuilds(who, env, url)).includes(+gm[1])) return { acc: 'see', why: 'wcl-guild' };
   return { acc: 'none', why: link ? 'not-in-guild' : 'unlinked' };
 }
 // (the lead's panel: the guild's ranks and how many hold each, from the saved guild or the lead's linked main's guild)
@@ -1877,13 +1890,15 @@ async function raidersRoute(req, env, url) {
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
-  const who = await teamWho(req, env, url), you = (d, can, A) => (who ? { name: who.name, can, lead: !!d && d.owner.uid === who.uid, practice: !!who.practice, acc: A ? A.acc : can ? 'edit' : 'see', why: A ? A.why : '', rank: A && A.rank != null ? A.rank : null, rankName: (A && A.rankName) || '' } : null);
+  const who = await teamWho(req, env, url), you = (d, can, A) => (who ? { name: who.name, can, lead: !!d && (isMe(who, d.owner.uid) || !!(A && A.why === 'lead')), practice: !!who.practice, acc: A ? A.acc : can ? 'edit' : 'see', why: A ? A.why : '', rank: A && A.rank != null ? A.rank : null, rankName: (A && A.rankName) || '' } : null);
   const rankPub = (d) => (d.ranks ? { guild: { name: d.ranks.guild.name, realm: d.ranks.guild.realm, region: d.ranks.guild.region }, names: d.ranks.names, acc: Object.fromEntries([...Array(RANK_TOP + 1).keys()].map((r) => [r, rankAcc(d.ranks, r)])), at: d.ranks.at, by: d.ranks.by } : null);
   if (req.method === 'GET') {
     if (url.searchParams.get('ranks') === '1') { const g0 = await teamGet(env, id, url).catch(() => null); return json(await teamRanks(env, url, g0 && g0.doc, who)); } /* (the lead's ranks panel) */
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
     if (!g) return json({ exists: false, here, you: you(null, false) });
     const d = g.doc, A = await teamAccess(env, url, d, who), shut = A.acc === 'none'; /* (None: the plan stays closed, only who leads it shows) */
+    if (who && who.bid && !shut) { let ch = false; const old = d.owner.uid; if (A.why === 'lead' && old !== who.uid) { d.owner = { ...d.owner, uid: who.uid, was: old }; ch = true; } /* (Nov 8: the plan moves to the lead's Battle.net id) */
+      for (const o of who.ids || []) if (o !== who.uid && d.bn && d.bn[o]) { d.bn = { ...d.bn }; delete d.bn[o]; ch = true; } if (ch) { const w2 = await teamPut(env, id, d, g.etag, url).catch(() => null); if (w2 && w2.etag) g.etag = w2.etag; } }
     if (who && !shut) { const L = await bnetGet(env, who.uid, url), hid = new Set((L && L.hidden) || []), was = (d.bn || {})[who.uid] || null; /* (Battle.net step 3: your characters join the team's list of who's whose) */
       const mine = L ? { main: ((L.chars || []).find((c) => bnetKey(c) === L.main) || {}).n || '', chars: (L.chars || []).filter((c) => !hid.has(bnetKey(c))).map((c) => c.n) } : null;
       if (JSON.stringify(was && { main: was.main, chars: was.chars }) !== JSON.stringify(mine)) { d.bn = { ...(d.bn || {}) }; if (mine) d.bn[who.uid] = { ...mine, at: Date.now() }; else delete d.bn[who.uid]; await teamPut(env, id, d, g.etag, url).catch(() => null); } }
@@ -1892,7 +1907,7 @@ async function teamPlan(req, env, url) {
   }
   if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
-  if (!who) return json({ error: 'Sign in with Warcraft Logs to change the team plan.', signin: true }, 401);
+  if (!who) return json({ error: 'Sign in with Battle.net to change the team plan.', signin: true }, 401);
   const raw = await req.arrayBuffer(); if (raw.byteLength > 3 * 1024 * 1024) return json({ error: 'That plan is too big to save.' }, 413);
   let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
   if (!b || !['create', 'set', 'officer', 'undo', 'ranks', 'join'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
@@ -1910,7 +1925,7 @@ async function teamPlan(req, env, url) {
     else if (b.op === 'undo') { const e = d.log[+b.i]; if (!e || e.prev === undefined || !e.k) return json({ error: 'That change can\'t be undone.' }, 400); put(e.k, e.prev, 'undid "' + e.sum + '"'); }
     else if (b.op === 'join') { /* (Battle.net step 4: "Link Battle.net and join": your main joins the team's roster with its spec and role; only yourself, and only
          for someone the team lets see its plan: by rank once ranks are set, else a member of the guild on Warcraft Logs) */
-      const A = await teamAccess(env, url, d, who), gm = /^guild:(\d+)$/.exec(id), inG = who.practice || (gm && (await teamGuilds(who)).includes(+gm[1]));
+      const A = await teamAccess(env, url, d, who), gm = /^guild:(\d+)$/.exec(id), inG = who.practice || (gm && (await teamGuilds(who, env, url)).includes(+gm[1]));
       if (d.ranks ? A.acc === 'none' : !(A.acc === 'edit' || inG)) return json({ error: d.ranks ? (A.why === 'unlinked' ? 'Link Battle.net first, so Debrief knows your guild rank.' : 'Your guild rank can\'t join this team\'s plan. Ask your raid lead.') : 'Only members of this guild can join its roster.' }, 403);
       const L = await bnetGet(env, who.uid, url), m = L && (L.chars || []).find((c) => bnetKey(c) === L.main); if (!m) return json({ error: 'Link Battle.net and pick your main first.', bnet: true }, 400);
       let o = null; try { o = JSON.parse((d.keys['wla-rosters'] || {}).v || 'null'); } catch (e) { o = null; } const R = o && Array.isArray(o.list) ? o.list.find((x) => x.id === o.cur) || o.list[0] : null;
@@ -1924,7 +1939,7 @@ async function teamPlan(req, env, url) {
       else { const T = await teamRanks(env, url, d, who); if (!T.counts) return json({ error: T.why }, 400);
         const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : d.ranks ? rankAcc(d.ranks, r) : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
         d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, v2: 1, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
-    else { if (d.owner.uid !== who.uid && !(await siteAdmin(who, env, url))) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
+    else { if (!isMe(who, d.owner.uid) && !(await leadByChar(env, url, d, who)) && !(await siteAdmin(who, env, url))) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
       const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
       const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
     d.ver = (d.ver || 0) + 1; d.log = d.log.filter((x) => now - x.at < 36 * 3600e3).slice(-60);
@@ -1971,38 +1986,49 @@ async function bnetSummary(r, c, tok) {
     g: (s.guild && s.guild.name) || '', gs: (s.guild && s.guild.realm && s.guild.realm.slug) || '' };
 }
 async function bnetStart(req, env, url) {
-  const who = await teamWho(req, env, url); if (!who) return bnetGo(url, 'signin');
+  /* (Nov 8: Battle.net is the sign-in, so it starts signed out too) */
   if (!env.BNET_CLIENT_ID && !bnetMock(env, url)) return bnetGo(url, 'off');
   const r = BNET_REG.test(url.searchParams.get('region') || '') ? url.searchParams.get('region') : 'us', a = new Uint8Array(16); crypto.getRandomValues(a);
   const st = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), cb = url.origin + '/auth/bnet/callback';
-  const to = bnetMock(env, url) || (PRACTICE_HOST(url) && url.searchParams.get('test') === '1') ? cb + '?code=practice&state=' + st : 'https://oauth.battle.net/authorize?' + new URLSearchParams({ client_id: env.BNET_CLIENT_ID, redirect_uri: cb, response_type: 'code', scope: 'wow.profile', state: st });
+  const to = bnetMock(env, url) || (PRACTICE_HOST(url) && url.searchParams.get('test') === '1') ? cb + '?code=practice&state=' + st + '&as=' + encodeURIComponent(String(url.searchParams.get('as') || '').slice(0, 24)) : 'https://oauth.battle.net/authorize?' + new URLSearchParams({ client_id: env.BNET_CLIENT_ID, redirect_uri: cb, response_type: 'code', scope: 'openid wow.profile', state: st });
   return new Response(null, { status: 302, headers: { Location: to, 'Set-Cookie': bnetStCookie(st + '.' + r, 600), 'Cache-Control': 'no-store' } });
 }
 async function bnetCallback(req, env, url) {
   const p = url.searchParams, s = bnetSt(req), done = (q) => { const res = bnetGo(url, q), h = new Headers(res.headers); h.append('Set-Cookie', bnetStCookie('', 0)); return new Response(null, { status: 302, headers: h }); };
   if (p.get('error')) return done('cancel');
   if (!s || p.get('state') !== s.st || !p.get('code')) return done('err');
-  const who = await teamWho(req, env, url); if (!who) return done('signin');
-  if (!env.debrief_nights) return done('off');
-  let chars;
+  const prev = await teamWho(req, env, url); /* (Nov 8: signed in before, the old Warcraft Logs way or as a practice test name: this Battle.net account takes it over) */
+  if (!env.debrief_nights || !env.DEBRIEF_KV) return done('off');
+  let chars, bid = '', tag = '';
   const mock = bnetMock(env, url) || (PRACTICE_HOST(url) && p.get('code') === 'practice'); /* (a practice link's made-up account: ?test=1 on start) */
-  if (mock) chars = /^fl[eë]x/i.test(who.name || '') ? BNET_MOCK.map((c) => ({ ...c })) : [{ ...BNET_MOCK[2], n: String(who.name || 'Tester').slice(0, 24) }, { ...BNET_MOCK[3], n: String(who.name || 'Tester').slice(0, 20) + 'mage' }];
+  if (mock) { const as = String(p.get('as') || (prev && !prev.bid && prev.name) || (prev && prev.name) || 'Flëxørçïst').slice(0, 24); chars = /^fl[eë]x/i.test(as) ? BNET_MOCK.map((c) => ({ ...c })) : [{ ...BNET_MOCK[2], n: as }, { ...BNET_MOCK[3], n: as.slice(0, 20) + 'mage' }];
+    bid = 'mock-' + as.toLowerCase().replace(/[^a-z0-9\u00c0-\u024f]+/g, '-'); tag = as + '#0000'; }
   else {
     if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return done('busy');
     const t = await fetch('https://oauth.battle.net/token', { method: 'POST', headers: { Authorization: 'Basic ' + btoa(env.BNET_CLIENT_ID + ':' + (env.BNET_CLIENT_SECRET || '')), 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ grant_type: 'authorization_code', code: p.get('code'), redirect_uri: url.origin + '/auth/bnet/callback' }) }).then((x) => x.json()).catch(() => ({}));
     if (!t.access_token) return done('err');
+    const ui = await fetch('https://oauth.battle.net/userinfo', { headers: { Authorization: 'Bearer ' + t.access_token } }).then((x) => (x.ok ? x.json() : null)).catch(() => null); /* (the account's number and BattleTag) */
     const u = await bnetApi(s.r, '/profile/user/wow', t.access_token); if (!u) return done('err');
+    bid = String((ui && (ui.id || ui.sub)) || u.id || ''); tag = (ui && ui.battletag) || ''; if (!/^[0-9a-z-]{1,40}$/i.test(bid)) return done('err');
     const all = (u.wow_accounts || []).flatMap((a) => a.characters || []).filter((c) => c && c.level >= BNET_LVL && c.realm && c.realm.slug).slice(0, 24)
       .map((c) => ({ n: c.name, realm: c.realm.name || c.realm.slug, slug: c.realm.slug, cls: BNET_CLS[(c.playable_class || {}).id] || '', sid: 0, spec: '', lvl: c.level, fac: c.faction && c.faction.type === 'ALLIANCE' ? 'A' : 'H', ilvl: 0, g: '', gs: '' }));
     chars = await Promise.all(all.map((c) => bnetSummary(s.r, c, t.access_token))); /* (the key is used for these and then forgotten) */
   }
-  const old = await bnetGet(env, who.uid, url), keys = new Set(chars.map(bnetKey));
+  const uid = 'b:' + bid, moving = !!prev && !prev.bid, old0 = await bnetGet(env, uid, url), oldP = moving ? await bnetGet(env, prev.uid, url) : null, old = old0 || oldP, keys = new Set(chars.map(bnetKey));
   chars.sort((a, b) => (b.ilvl || 0) - (a.ilvl || 0));
   const main = old && keys.has(old.main) ? old.main : chars.length ? bnetKey(chars[0]) : '';
-  const d = { region: s.r, chars, main, hidden: ((old && old.hidden) || []).filter((k) => keys.has(k)), linkedAt: (old && old.linkedAt) || Date.now(), syncedAt: Date.now(), by: who.name || '', mock: mock || undefined };
-  await bnetPut(env, who.uid, d, url);
-  return done(old ? 'synced' : 'linked');
+  const olds = [...new Set(((old0 && old0.olds) || []).concat(moving ? [prev.uid] : []))].slice(-8); /* (the ids this account took over: plans saved under them stay yours) */
+  const d = { region: s.r, chars, main, hidden: ((old && old.hidden) || []).filter((k) => keys.has(k)), linkedAt: (old && old.linkedAt) || Date.now(), syncedAt: Date.now(), by: tag || '', bid, tag, olds, mock: mock || undefined };
+  await bnetPut(env, uid, d, url);
+  /* (the session: Battle.net is who you are; a Warcraft Logs pass from an old sign-in comes along as connected) */
+  const ps = await sessOf(req, env), a = new Uint8Array(24); crypto.getRandomValues(a); const id = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), secs = SESS_DAYS * 86400, mc = chars.find((c) => bnetKey(c) === main);
+  const sess = { bid, tag, name: (mc && mc.n) || String(tag).split('#')[0] || 'you', exp: Date.now() + secs * 1000, mock: mock || undefined };
+  if (userTok(ps)) Object.assign(sess, { wt: userTok(ps), wuid: userUid(ps), wname: ps.wname || (ps.bid ? '' : ps.name || ''), wexp: ps.wexp || ps.exp });
+  await env.DEBRIEF_KV.put('sess:' + id, JSON.stringify(sess), { expirationTtl: secs });
+  { const oid = cookieOf(req, 'dbs'); if (oid && oid !== id) await env.DEBRIEF_KV.delete('sess:' + oid).catch(() => {}); }
+  const res = done(prev && prev.bid ? 'synced' : moving ? 'moved' : 'signedin'), h = new Headers(res.headers); h.append('Set-Cookie', sessCookie(id, secs)); if (PRACTICE_HOST(url)) h.append('Set-Cookie', 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0');
+  return new Response(null, { status: 302, headers: h });
 }
 const bnetOut = (d) => (d ? { linked: true, region: d.region, chars: d.chars, main: d.main, hidden: d.hidden || [], linkedAt: d.linkedAt, syncedAt: d.syncedAt || d.linkedAt, mock: !!d.mock } : { linked: false });
 async function bnetRoute(req, env, url) {
@@ -2010,7 +2036,8 @@ async function bnetRoute(req, env, url) {
   const who = await teamWho(req, env, url);
   if (req.method === 'GET') return json(who ? bnetOut(await bnetGet(env, who.uid, url)) : { linked: false, signin: true });
   if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can change this.' }, 403);
-  if (!who) return json({ error: 'Sign in with Warcraft Logs first.', signin: true }, 401);
+  if (!who) return json({ error: 'Sign in with Battle.net first.', signin: true }, 401);
+  if (req.method === 'DELETE' && who.bid) return json({ error: 'Your characters come with your Battle.net sign-in. Sign out instead.' }, 400);
   if (req.method === 'DELETE') { await env.debrief_nights.delete(bnetK(who.uid, url)); return json({ linked: false }); }
   if (req.method !== 'POST') return json({ error: 'GET, POST or DELETE only.' }, 405);
   const d = await bnetGet(env, who.uid, url); if (!d) return json({ error: 'Link Battle.net first.' }, 404);
@@ -2022,12 +2049,12 @@ async function bnetRoute(req, env, url) {
 // (whoAmI on the server: the one answer every page asks for: who is this (Warcraft Logs), which characters (Battle.net), which main, and
 // (step 2) which guild rank)
 async function whoAmIRoute(req, env, url) {
-  const who = await teamWho(req, env, url); if (!who) return json({ wcl: null, bnet: { linked: false }, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
+  const who = await teamWho(req, env, url); if (!who) return json({ me: null, wcl: null, bnet: { linked: false }, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
   const d = await bnetGet(env, who.uid, url); let guild = null, team = null;
   const m = d && ((d.chars || []).find((c) => bnetKey(c) === d.main) || null);
   if (m && m.g) { const g = { region: d.region, realm: m.gs || m.slug, name: m.g, mock: !!d.mock }, rk = await guildRankOf(env, url, g, d).catch(() => null); guild = { name: m.g, realm: g.realm, rank: rk != null && rk >= 0 ? rk : null }; }
   const tid = url.searchParams.get('team') || ''; if (TEAM_ID.test(tid) && env.debrief_nights) { const tg = await teamGet(env, tid, url).catch(() => null); if (tg) { const A = await teamAccess(env, url, tg.doc, who); team = { id: tid, acc: A.acc, why: A.why, rank: A.rank != null ? A.rank : null, rankName: A.rankName || '' }; } }
-  return json({ wcl: { name: who.name, practice: !!who.practice }, bnet: bnetOut(d), guild, team, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
+  return json({ me: { name: who.name, tag: who.tag || '', practice: !!who.practice, legacy: !!who.legacy }, wcl: who.t ? { connected: true } : null, bnet: bnetOut(d), guild, team, practice: PRACTICE_HOST(url), can: !!(env.BNET_CLIENT_ID || bnetMock(env, url)) });
 }
 
 // ---- The instant listener (Oct 26, the owner's ask: "the whole point of a bot is to make it quick").
@@ -2228,7 +2255,7 @@ export default {
       // (signed in with Warcraft Logs (Oct 20): a team's or character's list of nights uses your pass, so private nights come in
       // too; anything else tries the site's key first (shared through the cache), then your pass when it's private. An answer
       // got with your pass is never cached or shared)
-      const hasC = !!cookieOf(req, 'dbs'), mine = hasC && USER_LISTS.has(url.pathname), sess = mine ? await sessOf(req, env) : null;
+      const hasC = !!cookieOf(req, 'dbs'), mine = hasC && USER_LISTS.has(url.pathname), sess0 = mine ? await sessOf(req, env) : null, sess = userTok(sess0) ? sess0 : null; /* (Nov 8: only with Connect Warcraft Logs) */
       const cache = caches.default, key = new Request(url.toString(), { method: 'GET' });
       if (!sess) { const hit = await cache.match(key); if (hit) return hit; }
       const r2k = !sess && R2_ROUTES.has(url.pathname) && route.raw ? r2Key(url.pathname, v) : null; /* (kept once for everyone, worldwide (Oct 26)) */
@@ -2241,11 +2268,11 @@ export default {
         if (r.out && r.out.error) return json({ error: r.out.error }, r.out.status || 400);
         const res = priv ? json(r.out, 200) : json(r.out, 200, age); if (!priv) ctx.waitUntil(cache.put(key, res.clone())); return res; };
       try {
-        if (sess) return send(await run(sess.t), true);
+        if (sess) return send(await run(userTok(sess)), true);
         let r = null, err = null; try { r = await run(); } catch (e) { err = e; }
-        if (hasC && !route.run && (err || (r && r.out && r.out.error))) { const s2 = await sessOf(req, env); if (s2) { try { return send(await run(s2.t), true); } catch (e2) { /* the first answer stands */ } } }
+        if (hasC && !route.run && (err || (r && r.out && r.out.error))) { const s2 = await sessOf(req, env); if (userTok(s2)) { try { return send(await run(userTok(s2)), true); } catch (e2) { /* the first answer stands */ } } }
         if (err) throw err;
-        if (!hasC && r.out && r.out.error && url.pathname === '/api/report') r.out.error += ' If it\'s your log or your guild\'s, sign in with Warcraft Logs (Start now, or Home) to open it.';
+        if (r.out && r.out.error && url.pathname === '/api/report' && !(hasC && userTok(await sessOf(req, env)))) r.out.error += ' If it\'s your log or your guild\'s and it\'s private, connect Warcraft Logs (Menu > Your characters) to open it.';
         return send(r, false);
       } catch (err) {
         const msg = String(err && err.message || err), down = msg === WCL_DOWN; // (Warcraft Logs out of service: said at once, so the page doesn't try 4 times (Oct 21))
