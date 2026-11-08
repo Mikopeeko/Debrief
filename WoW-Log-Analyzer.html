@@ -15403,7 +15403,7 @@ const PACKS = [
   { type: 'avoidable', spellIds: [1296667], name: 'Caustic Residue', severity: 'Low', ticks: true, escalate: { touches: 8, severity: 'Medium' }, difficulties: ['Heroic', 'Mythic'], tip: 'Step out of the Caustic Residue puddles. The tank moves Sszorak to a clean part of the room.' },
 ]},
 { encounter: 'The Twin Fangs', sources: SRC, rules: [
-  { type: 'stacks', name: 'Eternal Venom', severity: 'Medium', threshold: 6,
+  { type: 'stacks', name: 'Eternal Venom', severity: 'Medium', threshold: 7, lethal: 10, /* (Nov 8, audit M4: amber from 8, red at 10) */
     sources: { unavoidable: ['Venomous Emergence'], soak: ['Caustic Globule', 'Tainted Blood'], avoidable: ['Stir the Depths'] }, tip: 'Dodge mechanics to avoid extra venom stacks and clear some at Ravenous Feast. Stacks become lethal at 11 on Normal and 10 on Heroic and Mythic.' },
   // Sanguine Storm is damage only (no venom stacks): minor
   { type: 'avoidable', name: 'Sanguine Storm', severity: 'Low', tip: 'Avoid the Sanguine Storm swirlies, and on Heroic and Mythic the puddles they leave behind.' },
@@ -21398,7 +21398,7 @@ class Mech {
     const T = ['avoidable', 'debuff', 'interrupt', 'bossbuff', 'stacks', 'raidfail'];
     this.ids = {}; this.names = {};
     for (const k of T) { this.ids[k] = new Map(); this.names[k] = new Map(); }
-    this.avoid = new Map(); this.debuffs = new Map(); this.stk = new Map(); this.raid = []; this.fails = new Map(); this.casts = [];
+    this.avoid = new Map(); this.debuffs = new Map(); this.stk = new Map(); this.raid = []; this.fails = new Map(); this.casts = []; this.item = item; /* (Nov 8, audit M4: a kill's last minute) */
     const names = new Set(item.kind === 'run' ? item.bosses.map((b) => b.boss) : [item.boss]);
     const diff = item.kind === 'run' ? 'Mythic' : item.diff;
     this.packs = packs.filter((p) => names.has(p.encounter) || (p.aliases || []).some((a) => names.has(a)));
@@ -21459,8 +21459,9 @@ class Mech {
       detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : '.'), fix: a.r.tip });
     for (const a of this.debuffs.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity, pos: true,
       detail: 'Got ' + a.r.name + ' ' + (a.n === 1 ? 'once' : a.n === 2 ? 'twice' : a.n + ' times') + '.', fix: a.r.tip });
-    for (const a of this.stk.values()) if (a.max > a.r.threshold) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity,
-      detail: 'Reached ' + a.max + ' stacks (aim to stay at or under ' + a.r.threshold + ').', fix: a.r.tip });
+    for (const a of this.stk.values()) { if (a.max <= a.r.threshold) continue; const lethal = a.r.lethal && a.max >= a.r.lethal;
+      if (!lethal && this.item && this.item.kill && this.item.duration && a.t > this.item.duration - 60) continue; /* (Nov 8, audit M4: stacks climbing in a kill's last minute are nothing) */
+      out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: lethal ? 'High' : a.r.severity, detail: 'Reached ' + a.max + ' stacks (aim to stay at or under ' + a.r.threshold + (a.r.lethal ? '; lethal at ' + a.r.lethal : '') + ').', fix: a.r.tip }); }
     return out;
   }
 }
@@ -51469,7 +51470,7 @@ function genRun0(spec, D, reps, name, one) {
         if (ch === 1 && a && !q.noSeen) { const sc = seenCd(r, p, a.name, cd); if (sc) cd = sc; const mg = Math.min(Infinity, ...ts.slice(1).map((t, i) => t - ts[i])); if (mg >= 0.75 * cd && mg < cd) cd = mg; }
         // (what the spell itself did, by its own name: its damage and its healing)
         const own = (m) => [...(m || new Map()).values()].filter((y) => nms.includes(lc(String(y.name)))).reduce((v, y) => v + (y.total || 0), 0);
-        const sim = cdSim(ts, cd, ch, 0, t1, forced, q.soonOk, keyTrash(r) ? EOP_N() : 0); s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
+        const sim = cdSim(ts, cd, ch, 0, r && r.item && !r.item.kill && t1 > 40 ? t1 - 20 : t1, forced, q.soonOk, keyTrash(r) ? EOP_N() : 0); /* (Nov 8, audit R2: on a wipe, a window that opened under 20 s before the end isn't a possible use) */ s.cdu[n] = { n: ts.length, poss: Math.max(ts.length, sim.poss + sim.early), cap: sim.cap, cd, ch, ch0, capL: sim.capL, dmg: own(p.dmgAb), heal: own(p.healAb) }; } }
     // (the rotation check: each cast against the priority list)
     if (D.apl) s.apl = genAplRun(x, s, D.apl, { hasteF, pressed: (n) => per.some(({ p: pp, t1: tt }) => (pp.byName.get(lc(n)) || []).some((t) => t <= tt)), tal, heroN, ctxRes: res ? res.ty : null, ctxB: D.apl.ctx || procs.map((q) => q.n) });
     // (procs: each one spent with the spell it's for, or wasted: run out, or replaced while still up)
@@ -51684,7 +51685,8 @@ function genRun0(spec, D, reps, name, one) {
     return D.unitN === 'healing' && hl >= 1000 ? ' It healed ' + C(hl) + ea(hl) + '.' : dm >= 1000 ? ' It did ' + C(dm) + ' damage' + ea(dm) + '.' : hl >= 1000 ? ' It healed ' + C(hl) + ea(hl) + '.' : ''; };
   const cdLine = (g, q, okF, warnF) => { const n = lc(q.n), l = rows.map((s) => s.cdu[n]).filter(Boolean), u = q.once ? l.filter((y) => y.n > 0).length : l.reduce((v, y) => v + y.n, 0), poss = q.once ? l.length : Math.max(u, l.reduce((v, y) => v + y.poss, 0)); if (!poss) return; const f = Math.min(1, u / poss), cap = q.once ? 0 : l.reduce((v, y) => v + y.cap, 0); /* (round 190: once a pull for a gift like Innervate) */
     for (const s of rows) if (s.cdu[n]) s.m['cd:' + n] = q.once ? (s.cdu[n].n > 0 ? [] : [[Math.min(s.len || 60, 60), null]]) : (s.cdu[n].capL || []).filter(([a, b]) => b - a >= s.cdu[n].cd); /* (once a pull: a pull without it is one moment, a minute in) */
-    add(g, q.info ? 'na' : f >= okF ? 'ok' : f >= warnF ? 'warn' : 'bad', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (q.once ? (poss === 1 ? (u ? 'You used it this pull.' : 'You didn\'t use it this pull.') : 'You used it in ' + u + ' of ' + poss + ' pulls.') : u ? 'You used it ' + u + ' of ' + poss + ' possible ' + (poss === 1 ? 'time' : 'times') + '.' : 'You never used it (' + poss + ' possible).') + (cap >= 1 ? ' It waited unused for ' + durW(cap) + '.' : '') + ownT(l, u), 'cd:' + n,
+    const miss = poss - u; /* (Nov 8, audit R2: one miss out of 4 or fewer is amber at most; red needs 2 or more misses and 10 points or more behind the top players) */
+    add(g, q.info ? 'na' : f >= okF ? 'ok' : f < warnF && miss >= 2 && f <= okF - 0.1 ? 'bad' : 'warn', q.ic || q.n, q.label || q.n + (q.big ? ' uses' : ' on cooldown'), u + '<span>/' + poss + '</span>', (q.once ? (poss === 1 ? (u ? 'You used it this pull.' : 'You didn\'t use it this pull.') : 'You used it in ' + u + ' of ' + poss + ' pulls.') : u ? 'You used it ' + u + ' of ' + poss + ' possible ' + (poss === 1 ? 'time' : 'times') + '.' : 'You never used it (' + poss + ' possible).') + (cap >= 1 ? ' It waited unused for ' + durW(cap) + '.' : '') + ownT(l, u), 'cd:' + n,
       (q.why ? q.why + ' ' : '') + (q.info ? 'It isn\'t graded, because ' + (q.infoWhy || 'your raid note decides when it goes out') + '. The times listed are when it sat ready long enough for one more use.' : okP(okF) + ' The times listed are when it sat ready long enough for one more use.'));
     // (its damage or healing each time, for the cooldown table, and what to do next time, at its longest wait)
     const cc = g.l[g.l.length - 1]; if (cc && q.w != null && q.w <= 0.5) cc.minor = 1; const dmT = l.reduce((v, y) => v + (y.dmg || 0), 0), hlT = l.reduce((v, y) => v + (y.heal || 0), 0), vv = D.unitN === 'healing' && hlT >= 1000 ? hlT : dmT >= 1000 ? dmT : hlT; if (u && vv >= 1000) cc.ext = C(vv / u) + ' each';

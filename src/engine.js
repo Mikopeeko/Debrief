@@ -236,7 +236,7 @@ const PACKS = [
   { type: 'avoidable', spellIds: [1296667], name: 'Caustic Residue', severity: 'Low', ticks: true, escalate: { touches: 8, severity: 'Medium' }, difficulties: ['Heroic', 'Mythic'], tip: 'Step out of the Caustic Residue puddles. The tank moves Sszorak to a clean part of the room.' },
 ]},
 { encounter: 'The Twin Fangs', sources: SRC, rules: [
-  { type: 'stacks', name: 'Eternal Venom', severity: 'Medium', threshold: 6,
+  { type: 'stacks', name: 'Eternal Venom', severity: 'Medium', threshold: 7, lethal: 10, /* (Nov 8, audit M4: amber from 8, red at 10) */
     sources: { unavoidable: ['Venomous Emergence'], soak: ['Caustic Globule', 'Tainted Blood'], avoidable: ['Stir the Depths'] }, tip: 'Dodge mechanics to avoid extra venom stacks and clear some at Ravenous Feast. Stacks become lethal at 11 on Normal and 10 on Heroic and Mythic.' },
   // Sanguine Storm is damage only (no venom stacks): minor
   { type: 'avoidable', name: 'Sanguine Storm', severity: 'Low', tip: 'Avoid the Sanguine Storm swirlies, and on Heroic and Mythic the puddles they leave behind.' },
@@ -6231,7 +6231,7 @@ class Mech {
     const T = ['avoidable', 'debuff', 'interrupt', 'bossbuff', 'stacks', 'raidfail'];
     this.ids = {}; this.names = {};
     for (const k of T) { this.ids[k] = new Map(); this.names[k] = new Map(); }
-    this.avoid = new Map(); this.debuffs = new Map(); this.stk = new Map(); this.raid = []; this.fails = new Map(); this.casts = [];
+    this.avoid = new Map(); this.debuffs = new Map(); this.stk = new Map(); this.raid = []; this.fails = new Map(); this.casts = []; this.item = item; /* (Nov 8, audit M4: a kill's last minute) */
     const names = new Set(item.kind === 'run' ? item.bosses.map((b) => b.boss) : [item.boss]);
     const diff = item.kind === 'run' ? 'Mythic' : item.diff;
     this.packs = packs.filter((p) => names.has(p.encounter) || (p.aliases || []).some((a) => names.has(a)));
@@ -6292,8 +6292,9 @@ class Mech {
       detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : '.'), fix: a.r.tip });
     for (const a of this.debuffs.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity, pos: true,
       detail: 'Got ' + a.r.name + ' ' + (a.n === 1 ? 'once' : a.n === 2 ? 'twice' : a.n + ' times') + '.', fix: a.r.tip });
-    for (const a of this.stk.values()) if (a.max > a.r.threshold) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity,
-      detail: 'Reached ' + a.max + ' stacks (aim to stay at or under ' + a.r.threshold + ').', fix: a.r.tip });
+    for (const a of this.stk.values()) { if (a.max <= a.r.threshold) continue; const lethal = a.r.lethal && a.max >= a.r.lethal;
+      if (!lethal && this.item && this.item.kill && this.item.duration && a.t > this.item.duration - 60) continue; /* (Nov 8, audit M4: stacks climbing in a kill's last minute are nothing) */
+      out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: lethal ? 'High' : a.r.severity, detail: 'Reached ' + a.max + ' stacks (aim to stay at or under ' + a.r.threshold + (a.r.lethal ? '; lethal at ' + a.r.lethal : '') + ').', fix: a.r.tip }); }
     return out;
   }
 }
