@@ -8321,6 +8321,20 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
 }
+/* plan review 8 + 9 + 10 + 12 (Nov 8) */
+html body #assignBox:has(> .pg-tabs[data-cur="mine"]) .panel.ndz-dal { display: none !important; } /* (the no-job warning belongs to Assignments) */
+:root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pg-roster { order: 1 !important; }
+:root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pv-grid { order: 2 !important; }
+:root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .ndz-dash { order: 3 !important; }
+:root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pv-mn { order: 4 !important; }
+:root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pls { order: 5 !important; }
+html body #view.plan-page #assignBox .pls .pv-fresh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+html body #view.plan-page .pv-copy { position: relative; display: inline-flex; }
+html body #view.plan-page .pv-copym { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; display: flex; flex-direction: column; min-width: 220px; padding: 4px; border: 1px solid var(--line2); border-radius: 6px; background: var(--panel); box-shadow: 0 10px 28px rgba(0,0,0,.45); }
+html body #view.plan-page .pv-copym[hidden] { display: none; }
+html body #view.plan-page .pv-copym > .pp-btn { display: none !important; } /* (was hidden in the header before; Copy all images does its job) */
+html body #view.plan-page .pv-copym > .btn { justify-content: flex-start; width: 100%; margin: 0; border: 0; border-radius: 4px; background: none; color: var(--text); font-weight: 600; box-shadow: none; }
+html body #view.plan-page .pv-copym > .btn:hover { background: var(--raised); color: var(--gold); }
 /* plan night header + difficulty in the bar (Plan review 5 + 6, Nov 8) */
 html body #view.plan-page #assignBox > .pv-nighth { display: none; }
 html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > .pv-nighth { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 4px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
