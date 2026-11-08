@@ -6,7 +6,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const H = require('./site-helpers.js'), E = H.E, W = require(path.join(__dirname, '..', 'src', 'wcl.js'));
-const SITE = H.site(['PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'wipeCharges']);
+const SITE = H.site(['deathHit', 'deathHitId', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'wipeCharges']);
 const [dir, out, list] = process.argv.slice(2);
 if (!dir || !out || !list) { console.log('usage: node tests/wipecheck-stories.js <folder> <out.json> code:fight,...'); process.exit(1); }
 const T = E.fmtT, nm = (n) => String(n || '').split('-')[0];

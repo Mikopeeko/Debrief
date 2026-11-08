@@ -101,7 +101,7 @@ const DEFENSIVES = {
   MONK: [['Fortifying Brew', 115203, 360, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
   DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 60, [104], false],
     ['Frenzied Regeneration', 22842, 36, [102, 103, 105], false, 'heal'], ['Renewal', 108238, 90, null, false, 'heal']],
-  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 300, null, false]],
+  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 180, null, false] /* (Nov 8, audit P1: 3 minutes, as the planner and the note checks say) */],
   EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false, 'heal']],
 };
 // (racial ones, for every class: only once the player is seen using them, like a talent)
@@ -6232,7 +6232,7 @@ class Mech {
       if (r.difficulties && r.difficulties.length && !r.difficulties.includes(diff)) continue;
       const k = String(r.type).toLowerCase(); if (!this.ids[k]) continue;
       for (const id of r.spellIds || []) this.ids[k].set(+id, r);
-      for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r);
+      if (!(r.spellIds || []).length) for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r); /* (Nov 8, audit M1: a rule with spell ids matches by id only; the splash of a soaked Catalytic Bile is called Catalytic Bile too) */
     }
   }
   get(k, id, name) { return this.ids[k].get(id) || (name ? this.names[k].get(name.toLowerCase()) : undefined); }
@@ -7006,8 +7006,8 @@ function* analyzeSteps(item, text, opts) {
   if (mod) {
     const helpers = { name: (g) => (r.players.get(g) || {}).name || g, role: (g) => (r.players.get(g) || {}).role, isPlayer, fmtT, unitName: (g) => unitNames.get(g), compact, snap: snapAt, frames: framesAt };
     try {
-      r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
-      try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
+      r.module = mod.build(modEv, r, helpers); for (const m of r.module.mistakes || []) m.mod = true; r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t); dedupeMistakes(r); /* (Nov 8, audit M2: one event, one row) */
+      try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */ dedupeMistakes(r); /* (Nov 8, audit M2: the avoid panel's "Hit by ... and died" row and the module's touch row are one) */
       /* (Nov 8, audit W5: a hit or a position mistake while feared by an unkicked Wail of Terror is the missed kick's, not theirs: the same debuff window the deaths use (on them up to 0.2 s after, or gone less than 1.5 s before); kept for the record as someone else's, never counted) */
       try { const byName = new Map([...r.players.values()].map((p) => [String(p.name || '').split('-')[0], p]));
         const feared = (nm0, t) => { const p = byName.get(String(nm0 || '').split('-')[0]), b = p && p.debuffs && p.debuffs.get('Wail of Terror'); return !!(b && b.sp && b.sp.some(([a, z]) => a <= t + 0.2 && (z == null || z >= t - 1.5))); };
@@ -7565,12 +7565,32 @@ function deathHealGaps(r) {
     d.gap = { starved, run: best, run40: b40, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
   }
 }
+// (Nov 8, audit D3: does a mistake of theirs explain a death to `kill`? Only when its mechanic is that hit, its text names it, or it is a known chain to it:
+//  Soul Sever or a soul fragment -> Gravebound, a ghost touch -> Malevolent Resonance, an egg or Caustic Waves -> a hatched Viper's bite, an axe or soak they stood in -> its hit,
+//  no Light's Embrace mote -> Extinguish, Suffocating Darkness -> Suffocation. A stack-count note ("reached 7 stacks") never owns a death: it is a count, not the cause.
+//  Rows the verdict reads for what someone else did to them (mind control, a clip, a short soak, a fear) always stay linked)
+const DEATH_CHAIN = [[/^gravebound$/, /soul sever|soul fragment|gravebound/], [/^malevolent resonance$/, /ghost|malevolent resonance|dreadmarch/], [/viper|noxious shell|malignant shell|venomous bite/, /viper|egg|yolk|caustic waves|hatch/],
+  [/^(execution|grim execution|guillotine|grim guillotine|death's embrace|widow's kiss)$/, /guillotine|execution|axe|widow|embrace|soak/], [/^extinguish$/, /extinguish|mote|embrace/], [/^suffocation$/, /suffocat/]];
+function deathLinkOk(m, kill) { const lc = (s) => String(s || '').toLowerCase(), k = lc(kill), mech = lc(m && m.mechanic), det = lc(m && m.detail);
+  if (/mind control|controlled|dreadmarch|clipped by|in the guillotine soak|feared by/.test(det + ' ' + mech)) return true;
+  if (!k || !mech || k === 'melee') return false;
+  if (/\b\d+ stacks?\b/.test(det) && !/^(hit by|took|stood|soaked)/.test(det)) return false;
+  if (mech === k || (k.length > 3 && (mech.includes(k) || det.includes(k)))) return true;
+  return DEATH_CHAIN.some(([kr, mr]) => kr.test(k) && (mr.test(mech) || mr.test(det))); }
+// (Nov 8, audit M2: the same event logged twice (the pack's Final Ascension and the module's, two Frost Burst rows, a ghost touch and its Malevolent Resonance hit) is one row:
+//  the same player and mechanic within 2 s (8 s for a ghost touch) keeps the more serious row, the module's on a tie, and takes the other's fix when it has none)
+function dedupeMistakes(r) { const L = r.mistakes || [], rank = { High: 3, Medium: 2, Low: 1 }, lc = (s) => String(s || '').toLowerCase(), drop = new Set();
+  for (let i = 0; i < L.length; i++) { const a = L[i]; if (drop.has(a) || a.mechanic === 'Death') continue; const mr = /malevolent resonance/i.test(a.mechanic || '');
+    for (let j = i + 1; j < L.length && L[j].t - a.t <= 8; j++) { const b = L[j]; if (drop.has(b) || b.mechanic === 'Death' || b.player !== a.player || lc(b.mechanic) !== lc(a.mechanic)) continue;
+      if (b.t - a.t > (mr && /^hit by/im.test((a.detail || '') + '\n' + (b.detail || '')) ? 8 : 2)) continue; /* (a ghost touch and its hit within 8 s; anything else within 2 s) */
+      const ra = (rank[a.severity] || 0) + (a.mod ? 0.5 : 0), rb = (rank[b.severity] || 0) + (b.mod ? 0.5 : 0), k = rb > ra ? b : a, x = k === a ? b : a; if (!k.fix && x.fix) k.fix = x.fix; drop.add(x); if (x === a) break; } }
+  if (drop.size) { const keep = L.filter((m) => !drop.has(m)); L.length = 0; L.push(...keep); } }
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
   // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;
   // a source with a skip (tank frontals on a tank, a carrier's own orb) needs to know who, so only the rule pack counts there)
   const avP = new Map(); for (const g of ((((r.module && r.module.sections) || []).find((q) => q.id === 'avoid') || {}).groups || [])) if (!g.skip && g.judge) for (const n of g.names || []) avP.set(n, { type: 'avoidable', name: g.label, tip: '' });
-  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) || avP.get(String(e.spell).toLowerCase()) || null;
+  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (!(x.spellIds || []).length && x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) /* (Nov 8, audit M1: by id when the rule has ids) */ || avP.get(String(e.spell).toLowerCase()) || null;
   // boss spells can log with no source (e.g. Caustic Globule), so 'Environment' alone doesn't mean room damage
   const mod = MODULES.find((m) => m.encounter === r.item.boss), modSpells = new Set(mod ? mod.spells.map((x) => String(x).toLowerCase()) : []);
   const isRoom = (t) => /^environment$/i.test(t.src || '') && !ruleFor({ id: t.id, spell: t.name }) && !modSpells.has(String(t.name).toLowerCase()) && !(mod && mod.ids && mod.ids.includes(t.id));
@@ -7581,6 +7601,9 @@ function explainDeaths(r) {
     const dmg = hits.reduce((n, e) => n + e.amount, 0), heal = heals.reduce((n, e) => n + e.amount, 0);
     const by = new Map(); for (const e of hits) { const k = e.spell || 'Melee'; let o = by.get(k); if (!o) by.set(k, o = { name: k, id: e.id, src: e.src, amt: 0, n: 0 }); o.amt += e.amount; o.n++; }
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
+    // (Nov 8, audit D2: the hit that killed them is the biggest of their last 4 s when it was well over the finishing tick (a 527k Venom Rupture, then a 20k venom tick), else the last hit; every verdict below reads it)
+    const lastHit = hits[hits.length - 1] || null, big0 = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null), bigOk = !!(big0 && lastHit && big0 !== lastHit && big0.amount >= 1.5 * lastHit.amount && big0.amount >= 0.1 * ((r.pMax && r.pMax.get(d.guid)) || 0)); /* (and a tenth of their health: an 11k orb tick is not the hit that killed them) */
+    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0);
     // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed
     // from the last moment they were at 50%+, not 90% (deaths research, Oct 22). Tanks sit at half health on purpose: from 90%+, as before)
     const hl0 = (r.php && r.php.get(d.guid)) || []; let l50 = null; for (const [ts, fr] of hl0) { if (ts > d.t) break; if (fr >= 0.5) l50 = ts; }
@@ -7594,15 +7617,16 @@ function explainDeaths(r) {
     const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 15 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
     const defs = (d.available || []).filter((a) => !/^(Healthstone|a healing potion)$/.test(a)), cons = (d.available || []).filter((a) => /^(Healthstone|a healing potion)$/.test(a));
     // the player's own mechanic mistakes just before dying (the fix text says what to do instead)
-    const mine = r.mistakes.filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5).sort((a, b) => (b.severity === 'High') - (a.severity === 'High') || b.t - a.t);
+    const mine0 = r.mistakes.filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5).sort((a, b) => (b.severity === 'High') - (a.severity === 'High') || b.t - a.t);
+    const mine = mine0.filter((m) => deathLinkOk(m, d.kill)); /* (Nov 8, audit D3: only a mistake about the hit that killed them, or a known chain to it; a stack-count note never owns a death) */
     // avoidable boss spells in the damage that killed them
     const avoid = []; for (const t of top) { const x = ruleFor({ id: t.id, spell: t.name }); if (x && x.type === 'avoidable' && !avoid.some((a) => a.x === x)) avoid.push({ x, amt: t.amt }); }
     const env = top.find(isRoom);
     // why
     const why = [];
-    const killer = d.ability || d.killer || 'an unknown hit';
+    const killer = d.kill || 'an unknown hit';
     why.push(killer + ' finished them' + (d.healthy && d.window > 0 ? ', from ' + Math.round(d.startHp) + '% health to 0 in ' + d.window.toFixed(1) + ' s' + (fast ? ' (a burst, with little time to react)' : '') : '') + '.');
-    if (top.length > 1 || (top[0] && top[0].name !== d.ability)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
+    if (top.length > 1 || (top[0] && top[0].name !== killer)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
     if (dmg && slow && heal < dmg * 0.2) why.push('Very little healing came in (' + pct(heal, dmg) + '% of the damage taken) over ' + d.window.toFixed(0) + 's.');
     for (const m of mine.slice(0, 2)) why.push('Just before: ' + m.detail.replace(/\.$/, '') + '.');
     for (const a of avoid.slice(0, 2)) if (!mine.some((m) => m.mechanic === a.x.name) && pct(a.amt, dmg) >= 20) why.push(a.x.name + ' is avoidable and made up ' + pct(a.amt, dmg) + '% of the damage.');
@@ -7646,11 +7670,12 @@ function explainDeaths(r) {
     // one: a 447k globule explosion, then a 59k tick "finished" them), the mistakes linked to it (their own in the last
     // 10 seconds, and the raid's within 4 seconds, like a globule exploding on everyone), damage taken and healing
     // received in the last 5 seconds, and whether there was time to press something
-    const lastHit = hits[hits.length - 1] || null, big = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null);
-    d.last = lastHit ? { t: lastHit.t, spell: lastHit.spell || killer, id: lastHit.id, amount: lastHit.amount } : null;
-    d.big = big && lastHit && big !== lastHit && big.amount >= 1.5 * lastHit.amount ? { t: big.t, spell: big.spell, id: big.id, amount: big.amount, hp: big.hp } : null;
+    d.last = lastHit ? { t: lastHit.t, spell: lastHit.spell || d.ability || d.killer || 'Melee', id: lastHit.id, amount: lastHit.amount } : null;
+    d.big = bigOk ? { t: big0.t, spell: big0.spell || 'Melee', id: big0.id, amount: big0.amount, hp: big0.hp } : null;
     const raidM = r.mistakes.filter((m) => m.player === 'Raid' && m.mechanic !== 'Death' && m.t >= d.t - 4 && m.t <= d.t + 0.5);
-    d.links = mine.concat(raidM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, raid: m.player === 'Raid' }));
+    /* (Nov 8, audit D4: another player's Serious miss that IS the killing hit, within 4 s (the tank's missed Stone Breaker slam hitting the raid), is the raid's cause of this death, with their name) */
+    const othersM = r.mistakes.filter((m) => m.player && m.player !== 'Raid' && m.player !== d.player && m.mechanic !== 'Death' && m.severity === 'High' && !m.others && !m.fromNote && m.t >= d.t - 4 && m.t <= d.t + 0.5 && String(m.mechanic).toLowerCase() === String(d.kill).toLowerCase() && /^(missed|dropped|let |lost |didn't|did not|failed|popped|set off|broke|carried|pulled|taunted|no )|hit \d+ players|on the raid|into the raid|the whole raid/i.test(m.detail || ''));
+    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}) }));
     d.taken5 = hits.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.healed5 = heals.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.react = !fast; // (false: from 50%+ to dead in 2 s or less, too fast to press anything)
@@ -7658,13 +7683,14 @@ function explainDeaths(r) {
   // (a mass death: 3+ of us dead within 1.5 s to the same hit is one raid event, like an orb exploding into the pile, not 14 mistakes.
   // Not a mechanic that kills each player outright for their own miss (Gravebound), and not their own death when their own mistake
   // was that hit (they stood in that Sever). Deaths research, Oct 22: 51 of 105 counted deaths on the Oct 21 night)
-  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(d.ability || d.killer);
+  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(d.kill || d.ability || d.killer); /* (Nov 8, audit D2: the killing hit) */
   for (const d of r.deaths) { const ab = abOf(d); d.mass = 0; if (!ab || (d.hitPct || 0) >= 500) continue;
     const near = r.deaths.filter((x) => Math.abs(x.t - d.t) <= 1.5 && abOf(x) === ab && (x.hitPct || 0) < 500); if (near.length < 3) continue;
     d.mass = near.length;
-    if ((d.links || []).some((l) => !l.raid && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab)) continue;
-    d.story = 'one of ' + near.length + ' of us killed by ' + (d.ability || d.killer) + ' at once';
-    d.prevent = ['Not on you: ' + (d.ability || d.killer) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
+    const raidK = (d.links || []).some((l) => l.raid && (lc(l.mechanic) === ab || (ab.length > 3 && lc(l.detail).includes(ab)))); /* (Nov 8, audit D4: the raid's miss on that very hit beats their own dodging) */
+    if (!raidK && ((d.links || []).some((l) => !l.raid && !l.others && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab))) continue;
+    d.story = 'one of ' + near.length + ' of us killed by ' + (d.kill || d.ability || d.killer) + ' at once';
+    d.prevent = ['Not on you: ' + (d.kill || d.ability || d.killer) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
 }
 // (the buttons that can save a hit bigger than your health: immunities and full resets)
 const DEATH_IMMUNE = /^(Ice Block|Divine Shield|Aspect of the Turtle|Netherwalk|Cloak of Shadows|Dispersion|Alter Time)$/;
@@ -8044,7 +8070,7 @@ function rootCauseGen(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
-const api = { fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

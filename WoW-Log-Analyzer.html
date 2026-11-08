@@ -15268,7 +15268,7 @@ const DEFENSIVES = {
   MONK: [['Fortifying Brew', 115203, 360, null, true], ['Diffuse Magic', 122783, 90, null, false], ['Dampen Harm', 122278, 120, null, false], ['Zen Meditation', 115176, 300, [268], false], ['Touch of Karma', 122470, 90, [269], false]],
   DRUID: [['Barkskin', 22812, 60, null, true], ['Survival Instincts', 61336, 180, [103, 104], false], ['Rage of the Sleeper', 200851, 60, [104], false],
     ['Frenzied Regeneration', 22842, 36, [102, 103, 105], false, 'heal'], ['Renewal', 108238, 90, null, false, 'heal']],
-  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 300, null, false]],
+  DEMONHUNTER: [['Blur', 198589, 60, [577, 1480], true], ['Netherwalk', 196555, 180, [577], false], ['Fiery Brand', 204021, 60, [581], false], ['Metamorphosis', 187827, 120, [581], true], ['Darkness', 196718, 180, null, false] /* (Nov 8, audit P1: 3 minutes, as the planner and the note checks say) */],
   EVOKER: [['Obsidian Scales', 363916, 90, null, true], ['Renewing Blaze', 374348, 90, null, false, 'heal']],
 };
 // (racial ones, for every class: only once the player is seen using them, like a talent)
@@ -21399,7 +21399,7 @@ class Mech {
       if (r.difficulties && r.difficulties.length && !r.difficulties.includes(diff)) continue;
       const k = String(r.type).toLowerCase(); if (!this.ids[k]) continue;
       for (const id of r.spellIds || []) this.ids[k].set(+id, r);
-      for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r);
+      if (!(r.spellIds || []).length) for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r); /* (Nov 8, audit M1: a rule with spell ids matches by id only; the splash of a soaked Catalytic Bile is called Catalytic Bile too) */
     }
   }
   get(k, id, name) { return this.ids[k].get(id) || (name ? this.names[k].get(name.toLowerCase()) : undefined); }
@@ -22173,8 +22173,8 @@ function* analyzeSteps(item, text, opts) {
   if (mod) {
     const helpers = { name: (g) => (r.players.get(g) || {}).name || g, role: (g) => (r.players.get(g) || {}).role, isPlayer, fmtT, unitName: (g) => unitNames.get(g), compact, snap: snapAt, frames: framesAt };
     try {
-      r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
-      try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
+      r.module = mod.build(modEv, r, helpers); for (const m of r.module.mistakes || []) m.mod = true; r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t); dedupeMistakes(r); /* (Nov 8, audit M2: one event, one row) */
+      try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */ dedupeMistakes(r); /* (Nov 8, audit M2: the avoid panel's "Hit by ... and died" row and the module's touch row are one) */
       /* (Nov 8, audit W5: a hit or a position mistake while feared by an unkicked Wail of Terror is the missed kick's, not theirs: the same debuff window the deaths use (on them up to 0.2 s after, or gone less than 1.5 s before); kept for the record as someone else's, never counted) */
       try { const byName = new Map([...r.players.values()].map((p) => [String(p.name || '').split('-')[0], p]));
         const feared = (nm0, t) => { const p = byName.get(String(nm0 || '').split('-')[0]), b = p && p.debuffs && p.debuffs.get('Wail of Terror'); return !!(b && b.sp && b.sp.some(([a, z]) => a <= t + 0.2 && (z == null || z >= t - 1.5))); };
@@ -22732,12 +22732,32 @@ function deathHealGaps(r) {
     d.gap = { starved, run: best, run40: b40, heal: Math.round(100 * inn(d.t - 15, d.t) / mx), alive: alive.length, healers: others.length, dist: ds.length ? Math.round(Math.min(...ds)) : null, busy };
   }
 }
+// (Nov 8, audit D3: does a mistake of theirs explain a death to `kill`? Only when its mechanic is that hit, its text names it, or it is a known chain to it:
+//  Soul Sever or a soul fragment -> Gravebound, a ghost touch -> Malevolent Resonance, an egg or Caustic Waves -> a hatched Viper's bite, an axe or soak they stood in -> its hit,
+//  no Light's Embrace mote -> Extinguish, Suffocating Darkness -> Suffocation. A stack-count note ("reached 7 stacks") never owns a death: it is a count, not the cause.
+//  Rows the verdict reads for what someone else did to them (mind control, a clip, a short soak, a fear) always stay linked)
+const DEATH_CHAIN = [[/^gravebound$/, /soul sever|soul fragment|gravebound/], [/^malevolent resonance$/, /ghost|malevolent resonance|dreadmarch/], [/viper|noxious shell|malignant shell|venomous bite/, /viper|egg|yolk|caustic waves|hatch/],
+  [/^(execution|grim execution|guillotine|grim guillotine|death's embrace|widow's kiss)$/, /guillotine|execution|axe|widow|embrace|soak/], [/^extinguish$/, /extinguish|mote|embrace/], [/^suffocation$/, /suffocat/]];
+function deathLinkOk(m, kill) { const lc = (s) => String(s || '').toLowerCase(), k = lc(kill), mech = lc(m && m.mechanic), det = lc(m && m.detail);
+  if (/mind control|controlled|dreadmarch|clipped by|in the guillotine soak|feared by/.test(det + ' ' + mech)) return true;
+  if (!k || !mech || k === 'melee') return false;
+  if (/\b\d+ stacks?\b/.test(det) && !/^(hit by|took|stood|soaked)/.test(det)) return false;
+  if (mech === k || (k.length > 3 && (mech.includes(k) || det.includes(k)))) return true;
+  return DEATH_CHAIN.some(([kr, mr]) => kr.test(k) && (mr.test(mech) || mr.test(det))); }
+// (Nov 8, audit M2: the same event logged twice (the pack's Final Ascension and the module's, two Frost Burst rows, a ghost touch and its Malevolent Resonance hit) is one row:
+//  the same player and mechanic within 2 s (8 s for a ghost touch) keeps the more serious row, the module's on a tie, and takes the other's fix when it has none)
+function dedupeMistakes(r) { const L = r.mistakes || [], rank = { High: 3, Medium: 2, Low: 1 }, lc = (s) => String(s || '').toLowerCase(), drop = new Set();
+  for (let i = 0; i < L.length; i++) { const a = L[i]; if (drop.has(a) || a.mechanic === 'Death') continue; const mr = /malevolent resonance/i.test(a.mechanic || '');
+    for (let j = i + 1; j < L.length && L[j].t - a.t <= 8; j++) { const b = L[j]; if (drop.has(b) || b.mechanic === 'Death' || b.player !== a.player || lc(b.mechanic) !== lc(a.mechanic)) continue;
+      if (b.t - a.t > (mr && /^hit by/im.test((a.detail || '') + '\n' + (b.detail || '')) ? 8 : 2)) continue; /* (a ghost touch and its hit within 8 s; anything else within 2 s) */
+      const ra = (rank[a.severity] || 0) + (a.mod ? 0.5 : 0), rb = (rank[b.severity] || 0) + (b.mod ? 0.5 : 0), k = rb > ra ? b : a, x = k === a ? b : a; if (!k.fix && x.fix) k.fix = x.fix; drop.add(x); if (x === a) break; } }
+  if (drop.size) { const keep = L.filter((m) => !drop.has(m)); L.length = 0; L.push(...keep); } }
 function explainDeaths(r) {
   const pack = PACKS.find((p) => p.encounter === r.item.boss), rules = pack ? pack.rules : [];
   // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;
   // a source with a skip (tank frontals on a tank, a carrier's own orb) needs to know who, so only the rule pack counts there)
   const avP = new Map(); for (const g of ((((r.module && r.module.sections) || []).find((q) => q.id === 'avoid') || {}).groups || [])) if (!g.skip && g.judge) for (const n of g.names || []) avP.set(n, { type: 'avoidable', name: g.label, tip: '' });
-  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) || avP.get(String(e.spell).toLowerCase()) || null;
+  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (!(x.spellIds || []).length && x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) /* (Nov 8, audit M1: by id when the rule has ids) */ || avP.get(String(e.spell).toLowerCase()) || null;
   // boss spells can log with no source (e.g. Caustic Globule), so 'Environment' alone doesn't mean room damage
   const mod = MODULES.find((m) => m.encounter === r.item.boss), modSpells = new Set(mod ? mod.spells.map((x) => String(x).toLowerCase()) : []);
   const isRoom = (t) => /^environment$/i.test(t.src || '') && !ruleFor({ id: t.id, spell: t.name }) && !modSpells.has(String(t.name).toLowerCase()) && !(mod && mod.ids && mod.ids.includes(t.id));
@@ -22748,6 +22768,9 @@ function explainDeaths(r) {
     const dmg = hits.reduce((n, e) => n + e.amount, 0), heal = heals.reduce((n, e) => n + e.amount, 0);
     const by = new Map(); for (const e of hits) { const k = e.spell || 'Melee'; let o = by.get(k); if (!o) by.set(k, o = { name: k, id: e.id, src: e.src, amt: 0, n: 0 }); o.amt += e.amount; o.n++; }
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
+    // (Nov 8, audit D2: the hit that killed them is the biggest of their last 4 s when it was well over the finishing tick (a 527k Venom Rupture, then a 20k venom tick), else the last hit; every verdict below reads it)
+    const lastHit = hits[hits.length - 1] || null, big0 = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null), bigOk = !!(big0 && lastHit && big0 !== lastHit && big0.amount >= 1.5 * lastHit.amount && big0.amount >= 0.1 * ((r.pMax && r.pMax.get(d.guid)) || 0)); /* (and a tenth of their health: an 11k orb tick is not the hit that killed them) */
+    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0);
     // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed
     // from the last moment they were at 50%+, not 90% (deaths research, Oct 22). Tanks sit at half health on purpose: from 90%+, as before)
     const hl0 = (r.php && r.php.get(d.guid)) || []; let l50 = null; for (const [ts, fr] of hl0) { if (ts > d.t) break; if (fr >= 0.5) l50 = ts; }
@@ -22761,15 +22784,16 @@ function explainDeaths(r) {
     const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 15 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
     const defs = (d.available || []).filter((a) => !/^(Healthstone|a healing potion)$/.test(a)), cons = (d.available || []).filter((a) => /^(Healthstone|a healing potion)$/.test(a));
     // the player's own mechanic mistakes just before dying (the fix text says what to do instead)
-    const mine = r.mistakes.filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5).sort((a, b) => (b.severity === 'High') - (a.severity === 'High') || b.t - a.t);
+    const mine0 = r.mistakes.filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5).sort((a, b) => (b.severity === 'High') - (a.severity === 'High') || b.t - a.t);
+    const mine = mine0.filter((m) => deathLinkOk(m, d.kill)); /* (Nov 8, audit D3: only a mistake about the hit that killed them, or a known chain to it; a stack-count note never owns a death) */
     // avoidable boss spells in the damage that killed them
     const avoid = []; for (const t of top) { const x = ruleFor({ id: t.id, spell: t.name }); if (x && x.type === 'avoidable' && !avoid.some((a) => a.x === x)) avoid.push({ x, amt: t.amt }); }
     const env = top.find(isRoom);
     // why
     const why = [];
-    const killer = d.ability || d.killer || 'an unknown hit';
+    const killer = d.kill || 'an unknown hit';
     why.push(killer + ' finished them' + (d.healthy && d.window > 0 ? ', from ' + Math.round(d.startHp) + '% health to 0 in ' + d.window.toFixed(1) + ' s' + (fast ? ' (a burst, with little time to react)' : '') : '') + '.');
-    if (top.length > 1 || (top[0] && top[0].name !== d.ability)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
+    if (top.length > 1 || (top[0] && top[0].name !== killer)) why.push('Most of the damage in their last seconds: ' + top.slice(0, 3).map((t) => t.name + ' ' + pct(t.amt, dmg) + '%').join(', ') + '.');
     if (dmg && slow && heal < dmg * 0.2) why.push('Very little healing came in (' + pct(heal, dmg) + '% of the damage taken) over ' + d.window.toFixed(0) + 's.');
     for (const m of mine.slice(0, 2)) why.push('Just before: ' + m.detail.replace(/\.$/, '') + '.');
     for (const a of avoid.slice(0, 2)) if (!mine.some((m) => m.mechanic === a.x.name) && pct(a.amt, dmg) >= 20) why.push(a.x.name + ' is avoidable and made up ' + pct(a.amt, dmg) + '% of the damage.');
@@ -22813,11 +22837,12 @@ function explainDeaths(r) {
     // one: a 447k globule explosion, then a 59k tick "finished" them), the mistakes linked to it (their own in the last
     // 10 seconds, and the raid's within 4 seconds, like a globule exploding on everyone), damage taken and healing
     // received in the last 5 seconds, and whether there was time to press something
-    const lastHit = hits[hits.length - 1] || null, big = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null);
-    d.last = lastHit ? { t: lastHit.t, spell: lastHit.spell || killer, id: lastHit.id, amount: lastHit.amount } : null;
-    d.big = big && lastHit && big !== lastHit && big.amount >= 1.5 * lastHit.amount ? { t: big.t, spell: big.spell, id: big.id, amount: big.amount, hp: big.hp } : null;
+    d.last = lastHit ? { t: lastHit.t, spell: lastHit.spell || d.ability || d.killer || 'Melee', id: lastHit.id, amount: lastHit.amount } : null;
+    d.big = bigOk ? { t: big0.t, spell: big0.spell || 'Melee', id: big0.id, amount: big0.amount, hp: big0.hp } : null;
     const raidM = r.mistakes.filter((m) => m.player === 'Raid' && m.mechanic !== 'Death' && m.t >= d.t - 4 && m.t <= d.t + 0.5);
-    d.links = mine.concat(raidM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, raid: m.player === 'Raid' }));
+    /* (Nov 8, audit D4: another player's Serious miss that IS the killing hit, within 4 s (the tank's missed Stone Breaker slam hitting the raid), is the raid's cause of this death, with their name) */
+    const othersM = r.mistakes.filter((m) => m.player && m.player !== 'Raid' && m.player !== d.player && m.mechanic !== 'Death' && m.severity === 'High' && !m.others && !m.fromNote && m.t >= d.t - 4 && m.t <= d.t + 0.5 && String(m.mechanic).toLowerCase() === String(d.kill).toLowerCase() && /^(missed|dropped|let |lost |didn't|did not|failed|popped|set off|broke|carried|pulled|taunted|no )|hit \d+ players|on the raid|into the raid|the whole raid/i.test(m.detail || ''));
+    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}) }));
     d.taken5 = hits.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.healed5 = heals.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.react = !fast; // (false: from 50%+ to dead in 2 s or less, too fast to press anything)
@@ -22825,13 +22850,14 @@ function explainDeaths(r) {
   // (a mass death: 3+ of us dead within 1.5 s to the same hit is one raid event, like an orb exploding into the pile, not 14 mistakes.
   // Not a mechanic that kills each player outright for their own miss (Gravebound), and not their own death when their own mistake
   // was that hit (they stood in that Sever). Deaths research, Oct 22: 51 of 105 counted deaths on the Oct 21 night)
-  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(d.ability || d.killer);
+  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(d.kill || d.ability || d.killer); /* (Nov 8, audit D2: the killing hit) */
   for (const d of r.deaths) { const ab = abOf(d); d.mass = 0; if (!ab || (d.hitPct || 0) >= 500) continue;
     const near = r.deaths.filter((x) => Math.abs(x.t - d.t) <= 1.5 && abOf(x) === ab && (x.hitPct || 0) < 500); if (near.length < 3) continue;
     d.mass = near.length;
-    if ((d.links || []).some((l) => !l.raid && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab)) continue;
-    d.story = 'one of ' + near.length + ' of us killed by ' + (d.ability || d.killer) + ' at once';
-    d.prevent = ['Not on you: ' + (d.ability || d.killer) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
+    const raidK = (d.links || []).some((l) => l.raid && (lc(l.mechanic) === ab || (ab.length > 3 && lc(l.detail).includes(ab)))); /* (Nov 8, audit D4: the raid's miss on that very hit beats their own dodging) */
+    if (!raidK && ((d.links || []).some((l) => !l.raid && !l.others && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab))) continue;
+    d.story = 'one of ' + near.length + ' of us killed by ' + (d.kill || d.ability || d.killer) + ' at once';
+    d.prevent = ['Not on you: ' + (d.kill || d.ability || d.killer) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
 }
 // (the buttons that can save a hit bigger than your health: immunities and full resets)
 const DEATH_IMMUNE = /^(Ice Block|Divine Shield|Aspect of the Turtle|Netherwalk|Cloak of Shadows|Dispersion|Alter Time)$/;
@@ -23211,7 +23237,7 @@ function rootCauseGen(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
-const api = { fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -37892,7 +37918,7 @@ function audit() {
     const gTitle = (s, t) => { const n = s.title.split(': ')[0].replace(/ \([^)]*\)/, ''); if (!t.toLowerCase().startsWith(n.toLowerCase() + ' ')) return t; const x = t.slice(n.length + 1); return /^\d/.test(x) ? '#' + x : x; };
     // (a death says it short: "3:20 Kargaryen died to Dreadful Presence, with Healthstone still ready"; the rest is in Deaths)
     const deathLine = (d) => { const v0 = dvR(d), ready = v0 ? (v0.why === 'ready' ? d.available || [] : []) : d.react !== false && d.available && d.available.length ? d.available : []; /* (the one death rule (Oct 22)) */
-      return T(d.t) + ' ' + d.player + ' died to ' + (d.ability || d.killer || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
+      return T(d.t) + ' ' + d.player + ' died to ' + (deathHit(d) || 'something') + (ready.length ? ', with ' + ready[0] + (ready.length > 1 ? ' and more' : '') + ' still ready' : ''); };
     const firstProb = (s, b) => { const want = (row) => (b ? row.some((c) => c.bad) : row.some((c) => c.warn));
       if (s.id === 'deaths') { const row = (s.rows || []).find(want); if (row && row[0] && row[0].death) return deathLine(row[0].death); }
       for (const row of s.rows || []) if (want(row)) return rowText(s, row); for (const g of s.groups || []) for (const row of g.rows || []) if (want(row)) return rowSay(row) || gTitle(s, g.title) + ', ' + rowText(s, row); return ''; };
@@ -38203,7 +38229,7 @@ function audit() {
   // have helped, and every event on demand
   const secOf = new Map(); for (const s of m.sections) { const n = (s.spell && s.spell[1]) || ''; if (n && !secOf.has(n.toLowerCase())) secOf.set(n.toLowerCase(), s.id); const tt = String(s.title || '').split(':')[0].toLowerCase(); if (tt && !secOf.has(tt)) secOf.set(tt, s.id); }
   const allDeaths = r.deaths.slice().sort((a, b) => a.t - b.t);
-  const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || d.ability || d.killer || 'an unknown hit');
+  const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || deathHit(d) || 'an unknown hit');
   // Deaths, simple: one line per death (when, who, what killed them, the one thing that would have helped), the first one
   // open; opening a death shows the last 5 seconds in one line, its linked mistakes, the three biggest hits as bars, and
   // the Map and Every event buttons
@@ -38819,7 +38845,7 @@ const kfmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.rou
 // them, the fix; an opened death starts with the same verdict, why, the fix and what they had ready ----
 const deathRep = (r, d) => { if (r && r.deaths && r.deaths.includes(d)) return r; if (S.rep && S.rep.deaths && S.rep.deaths.includes(d)) return S.rep; for (const x of CACHE.values()) if (x && x.deaths && x.deaths.includes(d)) return x; return null; };
 // (what they did wrong, in a few words: "walked into Axegrinder once", "stood in Sever (tank frontal)")
-function deathWhat(d, v) { const l = (d.links || []).find((x) => !x.raid && !DEATH_NOCTRL.test(x.mechanic));
+function deathWhat(d, v) { const l = (d.links || []).find((x) => !x.raid && !x.others && !DEATH_NOCTRL.test(x.mechanic));
   if (l) { let s = String(l.detail || '').replace(/( for [\d,.]+|, causing |, leaving | and |: |\. |; ).*$/, '').replace(/\.$/, '').trim(); if (!s) return 'their mistake on ' + l.mechanic; s = s.replace(/[ ]*[(]with [^)]*[)]/, '');
     if (!s.toLowerCase().includes(String(l.mechanic).toLowerCase())) s = /\bit\b/.test(s) ? s.replace(/\bit\b/, l.mechanic) : s + ' (' + l.mechanic + ')';
     return s.charAt(0).toLowerCase() + s.slice(1); }
@@ -38827,12 +38853,15 @@ function deathWhat(d, v) { const l = (d.links || []).find((x) => !x.raid && !DEA
 // (a mechanic's name as its section calls it: "Soulcoiler adds" rather than the check's inside name)
 const deathMech = (r, name) => { const lc = (s) => String(s || '').toLowerCase(), n = lc(name), secs = (r && r.module && r.module.sections) || [];
   const s = secs.find((x) => (x.spell && lc(x.spell[1]) === n) || lc(x.title).startsWith(n)); return s && s.title ? String(s.title).replace(/\s*\(.*$/, '') : name; };
+// (Nov 8, audit D2: the hit that killed them: the engine's d.kill (the biggest hit of their last 4 s when it was well over the finishing tick), else the big hit of a saved reading, else the last hit)
+const deathHit = (d) => (d && (d.kill || (d.big && d.big.spell) || d['ability'] || d['killer'])) || '';
+const deathHitId = (d) => (d && d.kill ? d.killId || 0 : d && d.big && d.big.spell ? d.big.id || 0 : d ? d.abilityId || 0 : 0);
 const deathKit = (a) => (a === 'a healing potion' ? 'a health potion' : a === 'Healthstone' ? 'a Healthstone' : a);
 // (the verdict as a pill and one plain sentence: k is bad (on them), warn (half) or na (not on them))
 function deathTag(r, d) { const rr = deathRep(r, d); if (!rr) return null; const v = deathVerdict(rr, d);
   const k = v.why === 'heal' ? (v.on ? 'warn' : 'na') : { own: 'bad', ready: 'bad', shared: 'warn', nothing: 'warn' }[v.why] || 'na';
   const p = k === 'bad' ? 'On them' : k === 'warn' ? 'Half on them' : v.why === 'wipe' || v.why === 'end' ? 'Doesn\'t count' : 'Not on them';
-  const ready = v.kit.concat(v.defs).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = d.ability || d.killer || 'a hit';
+  const ready = v.kit.concat(v.defs).slice(0, 2).map(deathKit), raidL = (d.links || []).find((l) => l.raid), ab = deathHit(d) || 'a hit';
   const h = v.why === 'own' ? capS(deathWhat(d, v)) + '.'
     : v.why === 'ready' ? 'Had ' + andList(ready) + ' ready and didn\'t press ' + (ready.length > 1 ? 'them' : 'it') + '.'
     : v.why === 'shared' ? (v.dread ? capS(v.story) + '.' : /mind controlled/.test(v.word) ? 'Mind controlled off the edge.' : (raidL ? 'Partly the raid\'s fault (' + deathMech(rr, raidL.mechanic) + ')' : 'Partly the raid\'s fault') + ', but they had ' + andList(ready) + ' ready.')
@@ -38871,7 +38900,7 @@ function deathCause(r, d) { const m = ((r && r.mistakes) || []).filter((x) => x.
 // (the collapsed section's lines: up to 5, a mass death as one line)
 function deathLines(r, ds, who) { if (!ds.length) return ''; const used = new Set(), out = [];
   for (const d of ds.slice().sort((a, b) => a.t - b.t)) { if (used.has(d)) continue; const tg = deathTag(r, d); if (!tg) continue;
-    const ab = d.ability || d.killer || 'a hit', grp = tg.v.why === 'mass' ? ds.filter((x) => !used.has(x) && (x.ability || x.killer) === ab && Math.abs(x.t - d.t) <= 1.5 && (deathTag(r, x) || {}).v && deathTag(r, x).v.why === 'mass') : [d];
+    const ab = deathHit(d) || 'a hit', grp = tg.v.why === 'mass' ? ds.filter((x) => !used.has(x) && (deathHit(x)) === ab && Math.abs(x.t - d.t) <= 1.5 && (deathTag(r, x) || {}).v && deathTag(r, x).v.why === 'mass') : [d];
     if (!grp.length) grp.push(d); grp.forEach((x) => used.add(x));
     out.push('<span class="ddl ' + tg.k + '"><i class="ddl-t">' + T(d.t) + '</i><span class="ddl-w">' + (grp.length > 1 ? '<b class="ddl-n">' + grp.length + ' of us</b>' : who(d.player)) + '</span><span class="ddl-k">to ' + esc(ab) + (grp.length > 1 ? ' at once' : '') + '</span>' +
       '<span class="ddp ' + tg.k + '">' + esc(tg.p) + '</span>' + (grp.length > 1 ? '' : '<span class="ddl-v">' + esc(tg.h) + '</span>') + (tg.fix ? '<span class="ddl-f"><b>Next time:</b> ' + esc(tg.fix) + '</span>' : '') + '</span>'); }
@@ -39046,7 +39075,7 @@ function deathSection(r) {
     how: 'Every player death this pull, in order. Pick one on the left. It says what did it (the biggest hit of their last seconds, which isn\'t always the one that finished them), the mistakes linked to it (theirs, or the raid\'s at that moment, like a globule exploding on everyone), their health over the last 15 seconds with each hit, the biggest hits, and what they still had ready. Ready only counts against them when there was time to press it: from over 50% to dead in 2 seconds or less is too fast. Deaths from the same hit are grouped. "Every event" lists everything in their last 10 seconds.',
     cols: ['When', 'Player', 'Killed by', 'What would have helped', 'Still had ready', ''],
     // (the first cell carries the death itself: the Mechanics tab draws deaths as a list and a detail pane from it)
-    rows: ds.map((d) => [{ t: d.t, death: d }, { p: d.player }, { txt: d.ability || d.killer, bad: true, sub: d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 in ' + d.window.toFixed(1) + 's' : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10s' : '' },
+    rows: ds.map((d) => [{ t: d.t, death: d }, { p: d.player }, { txt: deathHit(d), bad: true, sub: d.healthy && d.window > 0 ? Math.round(d.startHp) + '% to 0 in ' + d.window.toFixed(1) + 's' : d.startHp > 0 ? 'never above ' + Math.round(d.startHp) + '% in the last 10s' : '' },
       // (still had ready only counts against them when there was time to press it)
       { txt: deathFixes(r, d)[0] || '—', dim: true }, d.available && d.available.length ? (deathVerdict(r, d).why !== 'ready' ? { txt: andList(d.available) + ' (' + deathVerdict(r, d).word + ')', dim: true } : { txt: andList(d.available), warn: true }) : { txt: 'nothing left', dim: true },
       { more: recap(d), label: 'Why + recap', dg: d.guid + '@' + d.t.toFixed(2) }]) };
@@ -40062,16 +40091,16 @@ function whySay(o, pm, nth) { const r = whySay0(o, pm, nth); try {
   const ok = (o.how === 'raid' && !o.k && !o.chk) || (o.how === 'own' && o.l) || !['raid', 'own', 'none', 'wave', 'kit', 'bleed', 'tank'].includes(o.how);
   if (!r || !ok) return r; const all = (o.all || []).filter((x) => x && x.t != null).sort((a, b) => a.t - b.t), t0 = o.t != null ? o.t : (all[0] && all[0].t); if (t0 == null) return r;
   const from = all.filter((x) => x.t >= t0 - 2), near = from.filter((x) => x.t <= t0 + 5), dead = new Set(from.map((x) => x.player)).size;
-  const causes = new Set(from.map((x) => String(x.ability || x.killer || '').toLowerCase()).filter(Boolean)); if (dead < 3 || near.length >= 3 || causes.size < 2) return r;
+  const causes = new Set(from.map((x) => String(deathHit(x) || '').toLowerCase()).filter(Boolean)); if (dead < 3 || near.length >= 3 || causes.size < 2) return r;
   const plainT = (t) => String(t || '').replace(/<[^>]+>/g, '').trim(), last = from[from.length - 1], d0 = from[0], unclear = /^unclear/i.test(plainT(r.h));
-  const first = unclear ? (d0 && (d0.ability || d0.killer) ? plainT(d0.ability || d0.killer) : '') : plainT(r.h).replace(/\s*\(\w+ time tonight\)/, '').replace(/[.!]+$/, '');
+  const first = unclear ? (d0 && (deathHit(d0)) ? plainT(deathHit(d0)) : '') : plainT(r.h).replace(/\s*\(\w+ time tonight\)/, '').replace(/[.!]+$/, '');
   const why1 = unclear ? null : (plainT(r.s).match(/^.*?[.!?](?=\s|$)/) || [null])[0];
-  const by = new Map(); for (const q of from.filter((x) => x.t > t0 + 5)) { const k = plainT(q.ability || q.killer); if (k && k.toLowerCase() !== first.toLowerCase()) by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((a, b) => b[1] - a[1])[0];
+  const by = new Map(); for (const q of from.filter((x) => x.t > t0 + 5)) { const k = plainT(deathHit(q)); if (k && k.toLowerCase() !== first.toLowerCase()) by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((a, b) => b[1] - a[1])[0];
   const num = (n) => WHY_NUM[n] || String(n);
   void why1; /* (one sentence: the coach keeps only the first) */ return { h: 'Too many deaths.', s: dbfCap(num(dead)) + ' of us died between ' + T(t0) + ' and ' + T(last.t) + (first ? ', starting with ' + esc(first) : '') + (top && top[1] >= 2 ? ', then ' + esc(top[0]) + ' took ' + num(top[1]) + ' more' : '') + '.' };
 } catch (e) { return r; } }
 function whySay0(o, pm, nth) {
-  const who = (d) => dbfWho(d.player, pm), lc = (x) => String(x || '').toLowerCase(), ab = (d) => (d.ability || d.killer ? dbfTo(d) : 'a hit');
+  const who = (d) => dbfWho(d.player, pm), lc = (x) => String(x || '').toLowerCase(), ab = (d) => (deathHit(d) ? dbfTo(d) : 'a hit');
   const names = (l) => lpAnd([...new Set(l.map((d) => d.player))].map((p) => dbfWho(p, pm)));
   /* (a mechanic's own note, made plain: no bracketed asides or damage numbers, a semicolon becomes a full stop, "players" are "us", one or two short sentences) */
   const plain = (t) => { let x = String(t || '').trim(); for (let i = 0; i < 3; i++) x = x.replace(/\s*\([^()]*\)/g, '');
@@ -40093,7 +40122,7 @@ function whySay0(o, pm, nth) {
   const addsSay = (x, t, nm) => { const m = String(x || '').match(/^(?:One|\d+) of us died to (.+?) while (set \d+'s adds|the adds) (?:were|was) alive\.?$/); if (!m) return null;
     const ds = all.filter((q) => Math.abs(q.t - t) <= 2 && lc(q.ability) === lc(m[1])); return m[2].replace(/adds$/, (nm ? nm + ' ' : '') + 'adds') + ' lived too long, and their ' + esc(m[1]) + ' killed ' + (ds.length ? names(ds) : 'one of us') + '.'; };
   /* (the rest of the story up to the wipe call: the hit that took the most of us after the first domino, "Then Malevolent Resonance took 5 more by 4:18.") */
-  const thenSay = (t, ab0) => { const after = all.filter((q) => q.t > t + 5), by = new Map(); for (const q of after) { const k = q.ability || q.killer || ''; if (!k || lc(k) === lc(ab0)) continue; by.set(k, (by.get(k) || []).concat(q)); }
+  const thenSay = (t, ab0) => { const after = all.filter((q) => q.t > t + 5), by = new Map(); for (const q of after) { const k = deathHit(q) || ''; if (!k || lc(k) === lc(ab0)) continue; by.set(k, (by.get(k) || []).concat(q)); }
     const top = [...by].sort((a, b) => b[1].length - a[1].length)[0]; return top && top[1].length >= 2 ? ' Then ' + esc(top[0]) + ' took ' + (WHY_NUM[top[1].length] || top[1].length) + ' more by ' + T(top[1][top[1].length - 1].t) + '.' : ''; };
   const same = near.filter((x) => x !== d && d && d.ability && lc(x.ability) === lc(d.ability)), group = d ? [d].concat(same) : [];
   if (o.how === 'raid') { const nmH = mech(o.mech, o.id), a = o.k === 'dmg' ? null : addsSay(plain(o.detail), o.t, nmH), d1 = all.find((q) => Math.abs(q.t - o.t) <= 2), th = o.k === 'dmg' ? '' : thenSay(o.t, d1 && d1.ability);
@@ -40134,7 +40163,7 @@ function whyLine(r, pm, prev) { let o = null; try { o = whyWiped(r); } catch (e)
 // (the first domino in a few words, for the one line: "Lost to Dreadmarch at 3:07", "Boltzzx didn't pick up their soul fragments")
 function whyShort(o, pm) {
   const lc = (x) => String(x || '').toLowerCase(), who = (d) => dbfWho(d.player, pm), at = o.t != null ? ' at ' + T(o.t) : '', d = o.d;
-  const ab = (x) => (x && (x.ability || x.killer) ? dbfTo(x) : 'a hit'), all = o.all || [], t0 = o.t != null ? o.t : 0;
+  const ab = (x) => (x && (deathHit(x)) ? dbfTo(x) : 'a hit'), all = o.all || [], t0 = o.t != null ? o.t : 0;
   const near = all.filter((x) => x.t >= t0 - 2 && x.t <= t0 + 5), same = d ? [d].concat(near.filter((x) => x !== d && d.ability && lc(x.ability) === lc(d.ability))) : [];
   const names = (l) => { const a = [...new Set(l.map((x) => x.player))].map((p) => dbfWho(p, pm)); return a.length > 3 ? a.length + ' of us' : lpAnd(a); };
   const clip = (x) => { let s = String(x || '').trim().replace(/[.!]+$/, ''); const c = s.indexOf(': '); if (c > 12) s = s.slice(0, c); return s; };
@@ -40523,7 +40552,7 @@ function coachMine(reps, name) { return oaCache(reps, 'c:' + name, () => {
     const ms = keptMistakes(r).filter((m) => m.player === p.name && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 2);
     const m = ms.find((x) => lc(x.mechanic) === lc(d.ability)) || ms.find((x) => x.severity !== 'Low') || null;
     const rw = !own && !m ? oaRowWhy(r, d) : null;
-    const key = own ? own.mechanic : m ? m.mechanic : rw ? rw.l : d.ability || 'a hit', slow = !own && !ow && kit;
+    const key = own ? own.mechanic : m ? m.mechanic : rw ? rw.l : deathHit(d) || 'a hit', slow = !own && !ow && kit;
     const rc = slow ? keptMistakes(r).filter((q) => q.player === 'Raid' && q.severity !== 'Low' && q.mechanic !== 'Death' && q.t >= d.t - 20 && q.t <= d.t + 1).sort((a, b) => b.t - a.t)[0] : null; /* (a raid mistake just before a slow death: what caused it) */
     const g = dG.get(lc(key)) || { key, pulls: new Set(), d, slow, fix: '', how: '', causedBy: rc ? rc.mechanic : '' }; g.pulls.add(r.item.pull);
     if (!g.fix) g.fix = (rw && oaFlip(rw.why)) || (m && m.fix && dbfTip1(m.fix)) || fixer(key, p.name) || (slow ? 'When ' + key + ' keeps ticking you down, press ' + dbfKit(d)[0].replace(/^an? /, 'your ') + ' before it\'s too late.' : '') || (ow && !own && !m ? 'Stay out of ' + key + ': it\'s dodgeable.' : '') /* (a dodgeable death says so, not "press a defensive" (Oct 22)) */ || dbfTip1((d.prevent || []).find((x) => !/^No (clear )?mistake/i.test(x)) || '');
@@ -40826,7 +40855,7 @@ function coachEnrich(list, reps, name) {
     const s = x.sec ? secs.get(x.sec) : null, keys = s ? [dbfSecName(s), s.spell && s.spell[1], cSec(s)].filter(Boolean).map(lc) : [lc(x.cause || x.label)];
     // (what happened)
     if (!x.what) {
-      if (x.kind === 'death' && x.d) x.what = 'Died ' + (night ? 'in pull' + (x.pulls.length > 1 ? 's ' + lpAnd(x.pulls.slice(0, 4).map(String)) : ' ' + x.pulls[0]) : 'at ' + T(x.d.t)) + ' to ' + (x.d.ability || x.d.killer || 'a hit') + (x.causedBy ? ', right after a ' + x.causedBy + ' mistake' : '') + '.';
+      if (x.kind === 'death' && x.d) x.what = 'Died ' + (night ? 'in pull' + (x.pulls.length > 1 ? 's ' + lpAnd(x.pulls.slice(0, 4).map(String)) : ' ' + x.pulls[0]) : 'at ' + T(x.d.t)) + ' to ' + (deathHit(x.d) || 'a hit') + (x.causedBy ? ', right after a ' + x.causedBy + ' mistake' : '') + '.';
       else if (x.kind === 'raid' && !night) { try { const o = whyWiped(reps[0]); if (o) { const w = whyShort(o, new Map()); x.what = cHtml(w.label) + ': ' + cHtml(w.short) + '.'; } } catch (e) { /* (no line) */ } }
       else if (x.kind === 'raid') { x.what = 'It wiped us ' + (x.n === 2 ? 'twice' : x.n + ' times') + ' tonight.';
         /* (mostly done right but still the wipe: say both, so it doesn't read against the card's "98% done right" (Oct 22)) */
@@ -40924,7 +40953,7 @@ function coachDeaths(reps, name) {
   for (const r of reps) { const p = mine ? (mine.find((x) => x.r === r) || {}).p : null; if (mine && !p) continue;
     for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) { if (p && d.guid !== p.guid && d.player !== p.name) continue;
       const v = deathVerdict(r, d); L.push({ r, d, v, after: !v.counts, why: { k: v.why, t: v.word } }); } } /* (the site's one death rule (Oct 22)) */
-  const kept = L.filter((x) => !x.after), nAfter = L.length - kept.length, ab = (d) => d.ability || d.killer || 'a hit';
+  const kept = L.filter((x) => !x.after), nAfter = L.length - kept.length, ab = (d) => deathHit(d) || 'a hit';
   const onThem = kept.filter((x) => x.v.on).length;
   const top = (l) => { const m = new Map(); for (const x of l) m.set(ab(x.d), (m.get(ab(x.d)) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
   let line;
@@ -41335,7 +41364,7 @@ function chainTitleFits(title, txt) { const t = String(title || '').replace(/\s*
   if (s.toLowerCase().indexOf(t.toLowerCase()) >= 0) return true; const a = mechFams(t), b = mechFams(s); if (!a.size || !b.size) return true; for (const f of a) if (b.has(f)) return true; return false; }
 try { window.chainTitleFits = chainTitleFits; window.mechFams = mechFams; } catch (e) { /* (no page: the tests) */ }
 /* (Nov 6, Flex: "Deaths should briefly describe the death": how fast it went and whose it was, from the site's one death rule) */
-function deathBrief(r, d) { let v = null; try { v = deathVerdict(r, d); } catch (e) { v = null; } const ab = d.ability || 'damage', ds = String(d.story || ''), sp = ds.match(/from (\d+)% to dead in ([\d.]+) s/), slow = ds.match(/a slow slide over (\d+) s/), mass = ds.match(/one of (\d+) of us killed/);
+function deathBrief(r, d) { let v = null; try { v = deathVerdict(r, d); } catch (e) { v = null; } const ab = deathHit(d) || 'damage', ds = String(d.story || ''), sp = ds.match(/from (\d+)% to dead in ([\d.]+) s/), slow = ds.match(/a slow slide over (\d+) s/), mass = ds.match(/one of (\d+) of us killed/);
   const how = sp ? 'from ' + sp[1] + '% health in ' + sp[2] + ' s' : slow ? 'slowly, over ' + slow[1] + ' s' : '', own = v && v.why === 'own' && /^right after a mistake on (.+)$/.exec(String(v.story || ''));
   const why = !v ? '' : v.why === 'mass' ? (mass ? 'one of ' + mass[1] + ' killed at once' : 'killed with several others at once') : v.why === 'forced' ? String(v.story || '').replace(/\s*\([^)]*\)\s*$/, '') : own ? (own[1].toLowerCase() === ab.toLowerCase() ? 'their own mistake' : 'right after their mistake on ' + own[1]) : v.why === 'ready' ? 'with a defensive still ready' : v.why === 'shared' ? 'while mind controlled' : '';
   return ' died to ' + ab + (how ? ', ' + how : '') + (why ? ': ' + why : ''); }
@@ -41357,11 +41386,11 @@ function wipeChain(r) { if (!r || !r.item || r.item.kill) return null; /* (Nov 6
   { const grp = []; for (const d of (early ? (r.deaths || []).filter((x) => x.t <= ct + 0.05) : keptDeaths(r)).filter((x) => x.t >= c0).sort((a, b) => a.t - b.t)) { const g = grp.find((x) => Math.abs(x[0].t - d.t) <= 1.5 && String(x[0].ability || '') === String(d.ability || '') && !x[0].fell && !d.fell); if (g) g.push(d); else grp.push([d]); }
     const n0 = (x) => String(x.player).split('-')[0];
     for (const g of grp) { const d = g[0]; if (items.some((x) => Math.abs(x.t - d.t) < 2 && g.every((y) => x.txt.indexOf(n0(y)) >= 0)) || (g.length === 1 && items.some((x) => x.t <= d.t + 1 && d.t - x.t <= 10 && /\bdied\b/i.test(x.txt) && x.txt.indexOf(n0(d)) >= 0))) continue;
-      items.push({ t: d.t, mech: 'Death', txt: g.length >= 3 ? n0(g[0]) + ', ' + n0(g[1]) + ' and ' + (g.length - 2) + ' more died to ' + (d.ability || 'damage') + ' at once' : g.length === 2 ? n0(g[0]) + ' and ' + n0(g[1]) + ' died to ' + (d.ability || 'damage') : n0(d) + (d.fell ? ' ' + (d.fellWhy || 'was mind controlled off the edge') : /^gravebound$/i.test(String(d.ability || '')) ? ' died to ' + d.ability : deathBrief(r, d)), sev: 'Death', nm: true }); } }
+      items.push({ t: d.t, mech: 'Death', txt: g.length >= 3 ? n0(g[0]) + ', ' + n0(g[1]) + ' and ' + (g.length - 2) + ' more died to ' + (deathHit(d) || 'damage') + ' at once' : g.length === 2 ? n0(g[0]) + ' and ' + n0(g[1]) + ' died to ' + (deathHit(d) || 'damage') : n0(d) + (d.fell ? ' ' + (d.fellWhy || 'was mind controlled off the edge') : /^gravebound$/i.test(String(d.ability || '')) ? ' died to ' + d.ability : deathBrief(r, d)), sev: 'Death', nm: true }); } }
   /* (a Gravebound death says which it was (Nov 1, Design studio for Flex): all 3 soul fragments picked up and the last pickup's hit killed
      them, or fewer than 3 picked up (missed). Pickups are the Gravebound hits (#1308330) in their last 20 s) */
   for (const x of items) { const m = String(x.txt || '').match(/^(.+?) died to Gravebound\.?$/i); if (!m) continue;
-    const d = r.deaths.find((y) => String(y.player).split('-')[0] === m[1] && Math.abs(y.t - x.t) < 5 && /^gravebound$/i.test(String(y.ability || ''))); if (!d) continue;
+    const d = r.deaths.find((y) => String(y.player).split('-')[0] === m[1] && Math.abs(y.t - x.t) < 5 && /^gravebound$/i.test(String(deathHit(y) || ''))); if (!d) continue;
     const n = (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && (e.id == null || +e.id === 1308330) && e.t >= d.t - 20).length;
     x.txt = m[1] + ' died to Gravebound: ' + (n >= 3 ? 'picked up all 3 soul fragments, and the third one\'s hit killed them' : 'missed their soul fragments'); }
   /* (Nov 6, Flex: "its also not listing a shield not being broken as a wipe reason?": a shield still up when its cast began before the call is a
@@ -41416,7 +41445,7 @@ function coachSummary0(reps, name) {
               else if (/^(dps|push|shield|inter)$/.test(rc.cat)) return; /* (no one player is behind these: no names, and no "the log names no one") */
               else if (rc.cat === 'adds' && (rc.bombBy || []).length) rc.bombBy.forEach((v) => add('Their Gloombomb missed the add', r, v));
               else if (rc.gen && (rc.by || []).length) rc.by.forEach((v) => add(/kick|interrupt/i.test(rc.name || '') ? 'Missed the kick' : 'Caused it', r, v)); /* (Nov 8, audit W13: the other bosses' named cause, the card's own) */
-              else if (E.rcCat) { for (const d of r.deaths || []) if (d.t <= rc.t + 5 && E.rcCat(d.ability || d.killer) === rc.cat) add('Died to it', r, d.player); }
+              else if (E.rcCat) { for (const d of r.deaths || []) if (d.t <= rc.t + 5 && E.rcCat(deathHit(d)) === rc.cat) add('Died to it', r, d.player); }
               if (cnt() === n0) unk++; return; }
             const isKick = !!o.kick || /\bkick|interrupt|got .+ off\b/i.test(o.detail || '') || /wail of terror|spiteful soulcoiler|eternal nightfall/.test(mo), isOrb = /coalesced venom|venom rupture/.test(mo), isSoak = /guillotine|soak/.test(mo) || /soak/i.test(o.detail || '');
             soak = soak || isSoak; kick = kick || isKick; orb = orb || isOrb;
@@ -41456,7 +41485,7 @@ function coachSummary0(reps, name) {
     const all = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name).slice(0, 6), allR = coachRight(reps, name, RD.S2);
     const item = (x, i) => '<li class="cch-' + x.sev + '"><b>' + (i + 1) + '. ' + esc(dbfCap(x.label)) + '</b> ' + coachTag(x, night, true) /* (every tag here) */ + (x.what ? '<br><span class="sub">What happened: ' + esc(x.what) + '</span>' : '') + '<br><span class="cch-fx">Next time: ' + esc(x.fix) + '</span>' + (x.kbLine ? '<br><span class="sub">Against top guilds: ' + esc(x.kbLine) + '</span>' : '') + (x.wkLine ? '<br><span class="sub">' + esc(x.wkLine) + '</span>' : '') + (x.guide ? ' ' + x.guide : '') + (x.how && cHtml(x.how) !== cHtml(x.fix) ? '<br><span class="sub">How: ' + esc(x.how) + '</span>' : '') + '</li>';
     let deaths = ''; if (name) { const L = []; for (const { r, p } of oaMine(reps, name)) for (const d of r.deaths.filter((q) => q.guid === p.guid).sort((a, b) => a.t - b.t)) { const v = deathVerdict(r, d), after = !v.counts; void dbfFast;
-        L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(d.ability || d.killer || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
+        L.push('<li>' + (night ? 'Pull ' + r.item.pull + ', ' : '') + T(d.t) + ': ' + esc(deathHit(d) || 'a hit') + ' · <span class="sub">' + (after ? 'after the wipe filter, doesn\'t count' : !v.on ? 'not on you: ' + v.word : v.why === 'nothing' ? 'counts half: nothing left to press' : 'counts: ' + v.word) + '</span></li>'); }
       deaths = L.length ? '<h5>Your deaths</h5><ul class="cch-ul">' + L.slice(0, 12).join('') + (L.length > 12 ? '<li class="sub">and ' + (L.length - 12) + ' more</li>' : '') + '</ul>' : ''; }
     const DD = coachDeaths(reps, name), AV = coachAvoid(reps, name); let KT = null; try { KT = coachKit(reps, name); } catch (e) { KT = null; } if (!name && DD.list) deaths = '<h5>Deaths</h5>' + DD.list;
     const full = (whyFull ? '<h5>' + (night ? 'The night, as a raid lead would say it' : 'Why we wiped') + '</h5>' + whyFull : '') +
@@ -41721,7 +41750,7 @@ function deathsTile(num, reps) { const L = (reps || []).filter((r) => r && r.ite
   const say = p == null ? '' : '<b class="' + parseCls(p) + '">' + (p >= 95 ? 'Fewer deaths than almost every top kill' : p >= 75 ? 'Fewer deaths than most top kills' : p >= 50 ? 'About as many as top kills' : p >= 25 ? 'More deaths than top kills' : 'Far more deaths than top kills') + '</b> · they had ' + mid;
   let pic = ''; if (one) { const r = L[0], dur = Math.max(1, r.duration || 1), ks = new Set(kept.get(r)); pic = '<span class="dbr-dd" aria-hidden="true">' + r.deaths.map((x) => '<i class="' + (ks.has(x) ? '' : 'ms') + '" style="left:' + Math.min(100, 100 * x.t / dur).toFixed(1) + '%" title="' + esc(String(x.player).split('-')[0] + ' · ' + T(x.t)) + '"></i>').join('') + '</span>'; }
   else { const S2 = L.slice().sort((a, b) => a.item.pull - b.item.pull), mx = Math.max(1, ...S2.map((r) => kept.get(r).length)); pic = '<span class="dbr-db" aria-hidden="true">' + S2.map((r) => { const n = kept.get(r).length; return '<i class="' + (n ? '' : 'z') + '" style="height:' + (n ? Math.max(15, Math.round(100 * n / mx)) : 8) + '%" title="' + esc('Pull ' + r.item.pull + ': ' + plural(n, 'death')) + '"></i>'; }).join('') + '</span>'; }
-  const fl = one ? (first ? 'First: ' + esc(String(first.player).split('-')[0]) + ' to ' + esc(first.ability || first.killer || 'a hit') + ' at ' + T(first.t) : 'Nobody died') : (ours / L.length).toFixed(1).replace(/\.0$/, '') + ' a pull';
+  const fl = one ? (first ? 'First: ' + esc(String(first.player).split('-')[0]) + ' to ' + esc(deathHit(first) || 'a hit') + ' at ' + T(first.t) : 'Nobody died') : (ours / L.length).toFixed(1).replace(/\.0$/, '') + ' a pull';
   void say; void pic; void fl; /* (Nov 6, Main: a big "0" next to "12 dead at the call": every death up to the wipe call first, as Why we wiped and the replay count them; their own mistakes small under it) */
   let all = 0, own = 0; for (const r of L) { all += deadAtCall(r); const ct = cutT(r), end = isFinite(ct) ? ct : r.duration || 0; for (const x of r.deaths) { if (x.t > end + 0.5) continue; let v = null; try { v = deathVerdict(r, x); } catch (e) { v = null; } if (v && v.counts && v.on) own++; } }
   return num('Deaths', '<b>' + all + '</b>', all ? (own ? plural(own, 'own mistake') : 'none their fault') : 'nobody died'); /* (just the number: the details are below it (your call, Oct 23)) */ /* (just the count, the dots and who died first: no top-kill comparison (your call, Oct 23)) */ }
@@ -42291,7 +42320,7 @@ function cblDeathsP(reps, who) {
   for (const r of reps) for (const d of (r.deaths || []).slice().sort((a, b) => a.t - b.t)) { if (who && oaBase(d.player) !== oaBase(who)) continue; let v; try { v = deathVerdict(r, d); } catch (e) { continue; }
     const k = v.on && v.w < 1 ? 'half' : v.on && v.why !== 'own' && v.why !== 'ready' ? 'on' : v.why, st = !v.counts ? '' : /^(own|ready|on)$/.test(k) ? 'bad' : /^(half|nothing)$/.test(k) ? 'warn' : '';
     let o = per.get(d.player); if (!o) per.set(d.player, o = { p: d.player, n: 0, late: 0, on: 0, st: '', list: [] }); if (v.counts && v.why === 'mass') o.mass = (o.mass || 0) + 1; else if (v.counts) o.n++; else o.late++; /* (a mass wipe isn't one of theirs (Oct 23)) */ if (v.on && v.counts) o.on++; if (CBL_RK[st] < CBL_RK[o.st]) o.st = st;
-    o.list.push({ amt: (d.recap || []).filter((e) => !e.heal).reduce((s, e) => s + (e.amount || 0), 0), pull: r.item.pull, t: d.t, ab: d.ability || d.killer || 'a hit', word: v.counts ? v.word || '' : 'after the wipe filter', mass: v.counts && v.why === 'mass', st, k: v.counts ? k : 'n', dg: d.guid + '@' + d.t.toFixed(2), late: !v.counts }); }
+    o.list.push({ amt: (d.recap || []).filter((e) => !e.heal).reduce((s, e) => s + (e.amount || 0), 0), pull: r.item.pull, t: d.t, ab: deathHit(d) || 'a hit', word: v.counts ? v.word || '' : 'after the wipe filter', mass: v.counts && v.why === 'mass', st, k: v.counts ? k : 'n', dg: d.guid + '@' + d.t.toFixed(2), late: !v.counts }); }
   return [...per.values()].sort((a, b) => b.n - a.n || b.on - a.on || b.late - a.late).map((o) => ({ key: 'p:' + o.p, label: cblNm(o.p), p: pm.get(o.p), st: o.st, n: Math.max(o.n, o.late || o.mass ? 0.35 : 0),
     v: o.n ? '×' + o.n : '—', sub: o.on ? o.on + ' on them' : o.n ? 'not on them' : o.mass ? o.mass + ' mass' : o.late + ' late',
     body: cblMini(o.list.filter((x) => !x.late).map((x) => ({ label: (night ? 'P' + x.pull : T(x.t)) + ' · ' + x.ab + (x.mass ? ' · mass wipe' : ''), icon: spellIcon(0, x.ab), st: x.st, amt: Math.max(1, x.amt || 0), vt: x.amt ? C(x.amt) : '', ddg: x.dg, after: '<span class="dch" data-ddg="' + esc(x.dg) + '" hidden></span>' })), '') + (o.late ? '<p class="cbl-calm">+' + o.late + ' after the wipe filter, not counted</p>' : '') })); }
@@ -42846,7 +42875,7 @@ function nightMechC(o) {
   // wipe filter), what killed people most, who died most, and each pull's first death with a › to that pull's Deaths)
   const deathsLine = () => { const reps = (o.reps || []).slice().sort((a, b) => a.item.pull - b.item.pull); if (!reps.length) return '';
     const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
-    const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || d.ability || d.killer || 'an unknown hit');
+    const causeOf = (d) => (d.big ? d.big.spell : (d.last && d.last.spell) || deathHit(d) || 'an unknown hit');
     const P = reps.map((r) => { const all = r.deaths.filter(isMe).sort((a, b) => a.t - b.t), kept = all.filter((d) => deathVerdict(r, d).counts) /* (the site's one death rule, so this line, the tile and the coach say the same number (Oct 22)) */; return { r, n: r.item.pull, all, kept, late: all.length - kept.length }; });
     const stOf = (x) => (!x.kept.length ? 'ok' : x.kept.length >= 3 ? 'bad' : 'warn'), nAll = P.reduce((s, x) => s + x.kept.length, 0), nLate = P.reduce((s, x) => s + x.late, 0);
     const nBadP = P.filter((x) => stOf(x) === 'bad').length, nSome = P.filter((x) => x.kept.length).length, lv = !nSome ? 'clean' : nBadP * 2 >= P.length ? 'major' : 'minor';
@@ -44917,7 +44946,7 @@ function graphsBoard(r, end, NP) {
         const lab = { dmg: 'Damage per second', heal: 'Healing per second', taken: 'Damage taken per second' }[k];
         const zk = (r9.item && (r9.item.code || '') + ':' + r9.item.pull) || '', zz = S.gbZoom && S.gbZoom.k === zk ? S.gbZoom : null;
         try { return '<section class="panel gb-card gb-chart249' + MKCLS269() + '" data-zk="' + esc(zk) + '" data-zend="' + Math.ceil(end) + '" data-zdur="' + Math.max(1, r9.duration || end) + '"><div class="gb-hd">' + (zz ? '<button type="button" class="btn sm r264-reset">Reset zoom (' + T(zz.a) + '–' + T(zz.b) + ')</button>' : '<span class="r264-hint">' + ((document.documentElement.clientWidth || 1000) < 700 ? 'two fingers on the chart to zoom' : 'drag across the chart to zoom') + '</span>') + '<span class="gb-lbl">' + lab + '</span><span class="gb-hs">' + (sel ? '<span style="color:' + (sel.color || 'var(--text)') + ';font-weight:700">' + esc(sel.name) + '</span> · ' + C(ser.reduce((v, x) => v + (x || 0), 0) / Math.max(1, ser.length)) + '/s average · open another player below to switch' : 'Whole raid · ' + ((document.documentElement.clientWidth || 1000) < 700 ? 'two fingers to zoom' : 'drag to zoom') + '<i class="r297-hs"></i>') + '</span></div>' + (sel ? '' : pick265(k)) + ((sel && stack250(sel, k, end, r9)) || (!sel && S.gbLines && S.gbLines.size ? lines265(r9, k, end, S.gbLines, zz) : '') || perfChart(r9, ser, end, sel || null, zz ? [zz.a, zz.b] : (PH && (!PH.zoom || PH === LU294) ? [W0, W1] : null) /* round 311 chart window */, k, chartPx(false), k === 'heal' ? ((sel ? sel.ohS : r9.ohS) || []).slice(0, Math.ceil(end)) : null)) + MKBAR269(!sel && !(S.gbLines && S.gbLines.size)) + '</section>'; } catch (e) { return ''; } };
-      /* (Nov 7, Flex: Deaths by mechanic: what killed them (their own mistakes), for the phase picked) */ const dthBy = (() => { const m = new Map(); for (const p of ps) for (const d of deaths(p)) { const k = d.ability || 'Melee', o = m.get(k) || { n: 0, who: new Map(), id: d.abilityId || 0 }; o.n++; o.who.set(p.name, { p, n: ((o.who.get(p.name) || {}).n || 0) + 1 }); m.set(k, o); } const L = [...m].sort((a, b) => b[1].n - a[1].n); if (!L.length) return ''; const mx = L[0][1].n;
+      /* (Nov 7, Flex: Deaths by mechanic: what killed them (their own mistakes), for the phase picked) */ const dthBy = (() => { const m = new Map(); for (const p of ps) for (const d of deaths(p)) { const k = deathHit(d) || 'Melee', o = m.get(k) || { n: 0, who: new Map(), id: deathHitId(d) || 0 }; o.n++; o.who.set(p.name, { p, n: ((o.who.get(p.name) || {}).n || 0) + 1 }); m.set(k, o); } const L = [...m].sort((a, b) => b[1].n - a[1].n); if (!L.length) return ''; const mx = L[0][1].n;
         return '<section class="panel pf-bars gb-card" data-k="dthm"><h3 class="nh"><span>What killed them</span><small>their own mistakes' + (PH ? ', ' + esc(PH.name) : '') + '</small></h3><div class="gb-rows">' + L.map(([k, o], i) => '<details class="gb-bfd">' + cbRow({ tag: 'summary', cls: ' nb', k: i + 1, color: '#e5534b', icon: spellIcon(o.id, k), name: esc(k), segs: [[Math.max(1.5, 100 * o.n / mx), 'm']], v: String(o.n), sub: plural(o.who.size, 'player') }) + '<div class="gb-bfb">' + [...o.who.values()].sort((a, b) => b.n - a.n).map((w) => '<div class="gb-br"><span class="gb-bn">' + avatar(w.p, true) + '<span style="color:' + (w.p.color || 'var(--text)') + '">' + esc(w.p.name) + '</span></span><span class="gb-bx">' + w.n + '×</span></div>').join('') + '</div></details>').join('') + '</div></section>'; })();
       const TB = [['dmg', 'Damage', ['dmg'], ['spells', 'tgt']], ['heal', 'Healing', ['heal'], []], ['taken', 'Damage taken', ['taken'], ['src']], /* round 255 no mitigation */ ['surv', 'Defensives & heals', [H.get('svdef') ? 'svdef' : H.get('svheal') ? 'svheal' : 'surv'], [H.get('svdef') && H.get('svheal') ? 'svheal' : '', H.get('svcp') ? 'svcp' : '', 'svtl'].filter(Boolean)], ['death', 'Deaths', ['death'], []], ['kick', 'Interrupts', ['kick'], []], ['disp', 'Dispels', ['disp'], []], ['cpm', 'Casts', ['cpm'], []], ['buff', 'Buffs', [], []], ['debuff', 'Debuffs', [], []]]
         .map(([k, l, m, s]) => [k, l, k === 'buff' ? bf : k === 'debuff' ? dbf : (m.some((x) => H.get(x)) ? gbChart249(k) : '') + m.map((x) => H.get(x) || '').join(''), k === 'death' ? dthBy : s.map((x) => H.get(x) || '').join('')]).filter((x) => x[2]);
@@ -55489,10 +55518,10 @@ function deathOwn(r, d) {
   for (const s of m.sections) { if (own) break;
     // (died on a hit the avoidable damage panel judged, and that dodgeable damage did a quarter or more of what killed them: a small
     // tick at the end of a raid wipe isn't their own death (deaths research, Oct 22: an 8% axe tick made a wipe Flëxørçïst's own))
-    if (s.id === 'avoid') { const kb = String(d.ability || '').toLowerCase(); /* round 425 avoidable killing blow: the spell that killed them is on their avoidable list, so it's theirs (Flex, Oct 31) */ own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && ((x.dt != null && Math.abs(x.dt - d.t) < 0.6) || (g.names || []).includes(kb)))); continue; }
+    if (s.id === 'avoid') { const kb = String(deathHit(d) || '').toLowerCase(); /* round 425 avoidable killing blow: the spell that killed them is on their avoidable list, so it's theirs (Flex, Oct 31) */ own = (s.groups || []).some((g) => (g.judge || []).some((x) => x.p === d.player && !x.tank && ((x.dt != null && Math.abs(x.dt - d.t) < 0.6) || (g.names || []).includes(kb)))); continue; }
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { const tc = row.find((c) => c && c.t != null);
       if (tc && Math.abs(tc.t - d.t) <= 1.5 && row.some((c) => c && (c.p === d.player || (c.ps || []).includes(d.player))) && row.some((c) => c && c.bad)) { own = true; break; } } }
-  if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && Math.abs(x.t - d.t) <= 1.5);
+  if (!own) own = (m.mistakes || []).some((x) => x.player === d.player && x.mechanic !== 'Death' && !x.others && Math.abs(x.t - d.t) <= 1.5 && (E.deathLinkOk ? E.deathLinkOk(x, deathHit(d)) : String(x.mechanic).toLowerCase() === String(deathHit(d)).toLowerCase())); /* (Nov 8, audit D3: only a row about the hit that killed them) */
   r._dOwn.set(k, own); return own;
 }
 // ---- One death verdict for the whole site (your ask, Oct 22: "make sure the death logic is applied everywhere on the site") ----
@@ -55519,9 +55548,11 @@ const DEATH_IMM = /^(Ice Block|Divine Shield|Aspect of the Turtle|Netherwalk|Clo
 // (the share of their last 15 s of damage from these spells (lower-case names))
 const deathShare = (d, names) => { const hs = (d.recap || []).filter((e) => !e.heal), tot = hs.reduce((n, e) => n + e.amount, 0); if (!tot || !names) return 0;
   return Math.round(100 * hs.filter((e) => names.includes(String(e.spell || '').toLowerCase())).reduce((n, e) => n + e.amount, 0) / tot); };
+// (Nov 8, audit D4: the raid's miss that killed them, in a few words from its row: "a Caustic Globule nobody soaked exploded on the raid: the raid's miss, not them", "Ironvan missed Stone Breaker circle 1: their miss, not them")
+const deathRaidSay = (l, short) => { let s = String(l.detail || '').split(/[:.;](?:\s|$)/)[0].replace(/\s*\([^)]*\)/g, '').trim() || 'the raid\'s ' + l.mechanic; s = s.charAt(0).toLowerCase() + s.slice(1); if (l.by) s = l.by + ' ' + s; return short ? s : s + (l.by ? ': their miss, not them' : ': the raid\'s miss, not them'); };
 function deathVerdict(r, d) {
   const ct = cutT(r); if (d._dv && d._dv.ct === ct) return d._dv.v;
-  const lc = (s) => String(s || '').toLowerCase(), ab = lc(d.ability || d.killer), ownL = (d.links || []).filter((l) => !l.raid);
+  const lc = (s) => String(s || '').toLowerCase(), ab = lc(deathHit(d)), ownL = (d.links || []).filter((l) => !l.raid);
   // (mind controlled by Dreadmarch with no row for it: the Dreadmarch debuff on them in the 6 s before they died (Nov 1, Flex: a death read as
   // "Too fast: Refraction"; Boltzzx was freed 4.3 s before he died with no killing hit, off the edge). How it killed them: dreadHow)
   const dmEnd = ownL.some((l) => DEATH_NOCTRL.test(l.mechanic)) ? null : (() => { const pl = (r.players.get && r.players.get(d.guid)) || [...r.players.values()].find((p) => p.guid === d.guid), dm = pl && pl.debuffs && pl.debuffs.get('Dreadmarch');
@@ -55539,11 +55570,13 @@ function deathVerdict(r, d) {
   const pl1 = (r.players.get && r.players.get(d.guid)) || [...r.players.values()].find((p) => p.guid === d.guid), dbOn = (nm, back) => { const b = pl1 && pl1.debuffs && pl1.debuffs.get(nm); return !!(b && b.sp && b.sp.some(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - back))); };
   const soakNow = (() => { let best = null; for (const s of ((r.module && r.module.sections) || []).filter((x) => x.id === 'soakq')) for (const row of (s.rows || []).concat(...(s.groups || []).map((g0) => g0.rows || []))) { const tt = (row.find((c) => c && c.t != null) || {}).t, n = row.find((c) => c && c.t == null && /^\d+$/.test(String(c.txt || ''))); if (tt != null && n && tt <= d.t + 1 && d.t - tt < 15 && (!best || tt > best[0])) best = [tt, +n.txt]; } return best ? best[1] : null; })();
   const soakL = (l) => /died in the guillotine soak/i.test(l.detail || ''), clipL = (l) => /got clipped by .{1,40}?'s gloombomb/i.test(l.detail || ''), shortSoak = ownL.some(soakL) && soakNow != null && soakNow < 5;
-  const ownM = ownL.filter((l) => !DEATH_NOCTRL.test(l.mechanic) && !clipL(l) && !(shortSoak && soakL(l)));
+  const ownM = ownL.filter((l) => !l.others && !DEATH_NOCTRL.test(l.mechanic) && !clipL(l) && !(shortSoak && soakL(l))); /* (Nov 8, audit D3: a row that is someone else's never makes it their own) */
   /* (Nov 6, Flex: "it is there fault if the mechanic is dropped in the right spot and they still get hit by widows kiss": only an axe its target dropped on the raid takes the blame off) */
   const axD = /^(widow's kiss|death's embrace|guillotine|grim guillotine|execution|grim execution)$/.test(ab) ? ((r.module && r.module.axeOnRaid) || []).find((a) => d.t >= a.t - 0.5 && d.t <= a.end && a.by !== String(d.player).split('-')[0]) /* (Flex, Nov 6: "if its a bad drop they should not be blamed", soakers too) */ : null;
-  const forced = noCtrl ? '' : axD ? axD.by + ' dropped the ' + axD.sp + ' on the raid: not them' : dbOn('Wail of Terror', 1.5) ? 'feared by an unkicked Wail of Terror: the missed kick, not them' : shortSoak ? 'died soaking a Guillotine only ' + soakNow + ' soaked: the missing soakers, not them'
-    : ownL.some(clipL) && /^(gloombomb|gravebound)$/.test(ab) ? 'clipped by someone else\'s Gloombomb, not their own' : /^(venom rupture|coalesced venom)$/.test(ab) && !ownM.some((l) => /venom|orb/i.test(l.mechanic)) ? 'killed by orbs someone else set off (' + (d.ability || 'Venom Rupture') + ')' : '';
+  const forced0 = noCtrl ? '' : axD ? axD.by + ' dropped the ' + axD.sp + ' on the raid: not them' : dbOn('Wail of Terror', 1.5) ? 'feared by an unkicked Wail of Terror: the missed kick, not them' : shortSoak ? 'died soaking a Guillotine only ' + soakNow + ' soaked: the missing soakers, not them'
+    : ownL.some(clipL) && /^(gloombomb|gravebound)$/.test(ab) ? 'clipped by someone else\'s Gloombomb, not their own' : /^(venom rupture|coalesced venom)$/.test(ab) && !ownM.some((l) => /venom|orb/i.test(l.mechanic)) ? 'killed by orbs someone else set off (' + (deathHit(d) || 'Venom Rupture') + ')' : '';
+  /* (Nov 8, audit D4: a raid miss (or another player's Serious miss) that IS the killing hit, within 4 s, is the raid's cause of this death, before their own dodging and before "too fast") */
+  const raidK = (d.links || []).find((l) => l.raid && (lc(l.mechanic) === ab || (ab.length > 3 && lc(l.detail || '').includes(ab)))) || null, forced = forced0 || (raidK && !noCtrl ? deathRaidSay(raidK) : '');
   const ownSame = ownM.some((l) => lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab);
   const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && !forced && (ownM.length > 0 || deathOwn(r, d) || !!d.fellOwn);
   const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.05;
@@ -55573,11 +55606,11 @@ function deathVerdict(r, d) {
   const you = (t) => String(t).replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\bthey\b/g, 'you');
   // (Gravebound: each soul fragment picked up hits for about 208k, so the last one picked up while low is what killed them (Nov 1))
   const gb = ab === 'gravebound' ? (d.recap || []).filter((e) => !e.heal && /^gravebound$/i.test(e.spell || '') && e.t >= d.t - 15).length : 0, rwy = rw && rw.why ? you(whyReason(rw.why)) : '';
-  const story = why === 'forced' ? forced : why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : why === 'own' && gb ? 'Gravebound: you picked up ' + (gb > 1 ? gb + ' soul fragments' : 'a soul fragment') + ', and the last one\'s hit killed you' : rwy ? (d.ability || rw.l) + ': ' + rwy
-    : why === 'own' && !d.ownAvoid ? (d.ability || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
+  const story = why === 'forced' ? forced : why === 'own' && ownM.length ? 'right after a mistake on ' + ownM[0].mechanic : why === 'own' && gb ? 'Gravebound: you picked up ' + (gb > 1 ? gb + ' soul fragments' : 'a soul fragment') + ', and the last one\'s hit killed you' : rwy ? (deathHit(d) || rw.l) + ': ' + rwy
+    : why === 'own' && !d.ownAvoid ? (deathHit(d) || 'a hit') + ', which you can dodge, finished you (' + String(d.story || '').replace(/, too fast to react$/, '') + ')'
     : dread ? (dreadHow === 'edge' ? 'mind controlled by Dreadmarch, then died with no killing hit (most likely off the edge)' : dreadHow === 'ours' ? 'mind controlled by Dreadmarch: our own damage on the shield killed them' : 'mind controlled by Dreadmarch when ' + (dk.spell || 'a hit') + ' killed them') : noCtrl ? 'mind controlled off the edge by ' + ownL.find((l) => DEATH_NOCTRL.test(l.mechanic)).mechanic : d.story || '';
   const c0 = why === 'own' && ownM.length && lc(ownM[0].mechanic) !== ab ? ownM[0] : null;
-  const v = { dread, dreadHow, dreadKill: dk ? dk.spell : null, cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' || why === 'noheal' ? g : null, healer: why === 'noheal' ? deathHealerOf(r, d) : null };
+  const v = { dread, dreadHow, dreadKill: dk ? dk.spell : null, cause: c0 ? { mech: c0.mechanic, t: c0.t } : null, raidBy: raidK ? deathRaidSay(raidK, true) : forced0 ? forced0.replace(/:? not them$/, '').replace(/, not them$/, '') : null, why, w, on: w > 0, counts: (!after || late) && why !== 'end', late, fast, own, raid, mass, defs, kit, word, story, gap: why === 'heal' || why === 'noheal' ? g : null, healer: why === 'noheal' ? deathHealerOf(r, d) : null };
   d._dv = { ct, v }; v.fix = deathFix(r, d, v, ownM, rw, raidL); return v; }
 // (the healer the pull's note put on this player, if any: a note line without a {spell} or {time} tag that names them and exactly one of the
 //  raid's healers, like "Holypal: Tankone Tanktwo". "Not enough healing" then goes to that healer rather than the healing team)
@@ -55590,13 +55623,13 @@ function deathHealerOf(r, d) { let pick = null; try { pick = noteForRep(r); } ca
 // (the one coaching line for a death, from its verdict: the fix of the mistake that killed them, never "press a defensive" for a death
 // that was their mistake, too fast or the raid's)
 function deathFix(r, d, v, ownM, rw, raidL) {
-  const k = d.ability || d.killer || 'that hit', pv = (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x));
+  const k = deathHit(d) || 'that hit', pv = (d.prevent || []).filter((x) => !/^No (clear )?mistake|^Too fast|^Not on you/i.test(x));
   if (v.why === 'own') { const lc = (s) => String(s || '').toLowerCase(), ms = (r.mistakes || []).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 1.5);
     const m = ms.find((x) => lc(x.mechanic) === lc(k)) || ms.find((x) => ownM.some((l) => l.mechanic === x.mechanic && Math.abs(l.t - x.t) < 0.1)) || null;
     if (/^gravebound$/i.test(k)) return 'Get healed or use a defensive before you pick up the last soul fragment.';
     return (m && m.fix && dbfTip1(m.fix)) || (rw && oaFlip(rw.why)) || (d.ownAvoid && pv[0] && dbfTip1(pv[0])) || 'Stay out of ' + k + ': it\'s dodgeable.'; }
   if (v.why === 'ready') { const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), first = v.kit.length ? v.kit[0] : v.defs[0], sv = d.saves && d.saves[first];
-    const nm = first === 'a healing potion' ? 'health potion' : first, after = d.ability ? ' to survive the ' + d.ability + ' that followed' : ' to survive what followed';
+    const nm = first === 'a healing potion' ? 'health potion' : first, after = deathHit(d) ? ' to survive the ' + deathHit(d) + ' that followed' : ' to survive what followed';
     if (sv && sv.amt) return (v.kit.length || sv.heal ? 'Use your ' + nm + ' when you drop under half: it heals about ' + kf(sv.amt) + ', enough' : 'Press ' + nm + ' when you drop under half: it takes about ' + kf(sv.amt) + ' off, enough') + after + '.';
     if (sv && sv.imm) return 'Press ' + nm + ' when you drop under half: it stops the hits' + after.replace(' to survive', ', so you survive') + '.';
     return v.defs.length && !v.kit.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? plural(Math.round(d.lowFor), 'second') + '' : 'time') + '.'; }
@@ -55604,7 +55637,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   if (v.why === 'noheal') return 'You did your part. Little healing came in for ' + deathSecs(v.gap.run40) + ' s while you were under 40%.';
   if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
-  if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once. Fix what set it off as a raid.';
+  if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once' + (v.raidBy ? ' (' + v.raidBy + ')' : '') + '. Fix what set it off as a raid.';
   if (v.why === 'raid') return 'Not on you: the raid\'s fault (' + (raidL ? raidL.mechanic : k) + ').';
   if (v.why === 'shared' && v.dread) return 'Raid: break the Dreadmarch shield before it ends. You: press your cancel macro the moment you\'re mind controlled.';
   if (v.why === 'shared') return /mind controlled/.test(v.word) ? 'Press your cancel macro the moment you\'re mind controlled; the CC team stops you.' : (v.defs.length ? 'Press ' + v.defs[0] : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.';
@@ -55814,7 +55847,7 @@ function cardOf(r, p) {
   // (wording that never contradicts itself (Oct 23, "could have stopped" next to "too fast to react"): an own-mistake death says so plainly
   // and drops the speed story; the others keep their 15-second story and the verdict's word)
   { const cnt = sv.dieList.filter((x) => x.w > 0), ownAll = cnt.length && cnt.every((x) => deathVerdict(r, x.d).why === 'own');
-    const whyD = (x) => { const v = deathVerdict(r, x.d), k = x.d.ability || x.d.killer || 'a hit'; return T(x.d.t) + ' to ' + k + (v.why === 'own' ? ': your own mistake' + (x.d.ownAvoid ? ' (it\'s dodgeable)' : '') : (x.d.story && !v.fast ? ', ' + x.d.story : '') + (x.w < 1 ? ' (counts half: ' + v.word + ')' : ' (' + v.word + ')')); }; /* (the site's one rule (Oct 22)) */
+    const whyD = (x) => { const v = deathVerdict(r, x.d), k = deathHit(x.d) || 'a hit'; return T(x.d.t) + ' to ' + k + (v.why === 'own' ? ': your own mistake' + (x.d.ownAvoid ? ' (it\'s dodgeable)' : '') : (x.d.story && !v.fast ? ', ' + x.d.story : '') + (x.w < 1 ? ' (counts half: ' + v.word + ')' : ' (' + v.word + ')')); }; /* (the site's one rule (Oct 22)) */
     add('alive', { k: 'died', label: 'Deaths', sc: sv.die, w: 80, num: sv.dieN, nt: 'sum', word: 'death',
       html: cnt.length ? '<b>' + plural(cnt.length, 'death') + '</b> that counted: ' + esc(cnt.map(whyD).join(', ')) + (sv.deaths > cnt.length ? '<span class="sub"> · ' + (sv.deaths - cnt.length) + ' more not on you (too fast, a mass death, or the raid\'s mistake)</span>' : '') : sv.deaths ? 'No deaths that counted<span class="sub"> · ' + plural(sv.deaths, 'death') + ' too fast, a mass death or the raid\'s mistake</span>' : 'Stayed alive',
       fix: cnt.length ? { t: ownAll ? 'Avoid what killed you' : 'Stay alive', x: (cnt.length === 1 ? 'One death was on you' : cnt.length + ' deaths were on you') + (ownAll ? ', from your own mistake' : '') + '. ' + cnt.map((y) => capS(whyD(y)) + '.').join(' ') + (deathVerdict(r, cnt[0].d).fix ? ' Next time: ' + deathVerdict(r, cnt[0].d).fix : '') + ' A death costs the raid your damage or healing for the rest of the pull.' } : null }); }
@@ -56045,7 +56078,7 @@ function deaths() {
   const r = S.rep, ds = r.deaths.slice().sort((a, b) => a.t - b.t);
   if (!ds.length) { view('<div class="panel">Nobody died on this pull.</div>'); return; }
   const d = ds[Math.min(S.death, ds.length - 1)];
-  const list = ds.map((x, i) => '<button class="mrowp' + (x === d ? ' sel' : '') + '" data-i="' + i + '">' + avatar(x, true) + '<div class="main"><div class="line1"><span><span class="nm" style="color:' + x.color + '">' + esc(x.player) + '</span> <span class="sub">' + esc(x.ability || x.killer) + '</span></span><span class="val">' + T(x.t) + '</span></div></div></button>').join('');
+  const list = ds.map((x, i) => '<button class="mrowp' + (x === d ? ' sel' : '') + '" data-i="' + i + '">' + avatar(x, true) + '<div class="main"><div class="line1"><span><span class="nm" style="color:' + x.color + '">' + esc(x.player) + '</span> <span class="sub">' + esc(deathHit(x)) + '</span></span><span class="val">' + T(x.t) + '</span></div></div></button>').join('');
   const rec = d.recap.map((e) => '<div class="ev"><span class="muted">' + T(e.t) + '</span><span class="' + (e.heal ? 'heal' : 'dmg') + '">' + (e.heal ? '+' : '−') + C(e.amount) + '</span><span>' + spell(e.id, e.spell) + ' <span class="sub">' + esc(e.src) + '</span></span><span class="muted">' + (e.hp >= 0 ? Math.round(e.hp) + '% hp' : '') + '</span></div>').join('');
   view('<div class="meters"><div class="panel"><h3>Deaths <small>in order</small></h3>' + list + '</div><div class="panel"><h3>' + esc(d.player) + ' <small>last 15 seconds before dying at ' + T(d.t) + '</small></h3>' +
     (d.available && d.available.length ? '<div class="note">Still available: ' + esc(andList(d.available)) + '</div>' : '') +
@@ -56684,7 +56717,7 @@ function rccoRaid(c, F) {
   // ---- the full coaching ----
   const arc = k ? '<p>Early on (pulls ' + P[0].it.pull + ' to ' + P[k - 1].it.pull + ') we averaged ' + early.toFixed(1) + ' deaths a pull; in the middle ' + dp(P.slice(k, n - k)).toFixed(1) + '; late (pulls ' + P[n - k].it.pull + ' to ' + P[n - 1].it.pull + ') ' + late.toFixed(1) + '.' + (best && !kill ? ' Our best was pull ' + best.it.pull + ', at ' + esc(best.label) + '.' : '') + '</p>' : '';
   const mech = M.length ? '<ul class="rcco-ml">' + M.slice().sort((u, v) => (pullsWith(v) >= n / 2) - (pullsWith(u) >= n / 2) || pullsWith(v) - pullsWith(u) || v.pts - u.pts).map((o) => { const pw = pullsWith(o), red = pw >= n / 2; return '<li><i class="rcco-fl ' + (red ? 'r' : 'y') + '"></i><div><b>' + esc(o.n) + '</b> <span class="sub">' + (red ? 'Failed' : 'Some mistakes') + ' · wrong in ' + pw + ' of ' + n + ' pulls, ' + plural(o.tot, 'time') + (o.who.size ? ' · ' + who(o, 3).join(', ') : '') + '</span>' + (o.fix ? '<div class="rcco-fx">' + esc(o.fix) + '</div>' : '') + '<div class="rcco-why"><b>Why it matters:</b> ' + rccoWhyM(o.n) + '</div></div></li>'; }).join('') + '</ul>' : '<p class="okv">No mechanic mistakes that cost points all night.</p>';
-  const killers = rccoTop(allD.map((d) => d.ability || 'unknown'));
+  const killers = rccoTop(allD.map((d) => deathHit(d) || 'unknown'));
   const alive = '<p>' + plural(allD.length, 'death') + ' counted over ' + plural(n, 'pull') + ' (up to the wipe filter).' + (killers.length ? ' What killed us most: ' + andList(killers.map(([a, x]) => esc(a) + ' (' + x + ')')) + '.' : '') +
     (dRdy.length ? ' In ' + dRdy.length + ' of them the player went down slowly with a defensive still ready' + (() => { const t = rccoTop(allD.filter((d) => rccoDefs([d]).length).map((d) => d.player), 3); return t.length ? ', most often ' + andList(t.map(([w, x]) => esc(w) + ' (' + x + ')')) : ''; })() + '.' : '') + '</p>' + (dRdy.length ? '<p class="rcco-fx">' + RCCO_HOW_DEF('your defensive') + '</p>' : '');
   const potLow = c.data.map((a) => ({ a, f: F.pl.get(a.p.name) })).filter((x) => x.f.expect && x.f.used / x.f.expect < 0.7).sort((u, v) => u.f.used / u.f.expect - v.f.used / v.f.expect).slice(0, 4);
@@ -56804,7 +56837,7 @@ function rqcOf(c, F, a) {
   const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
   for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
   // (the rule under each line is the goal, and the number beside it is what happened, from the same count as the flag (Oct 23: "why the exclamation point?"))
-  const onN = {}; for (const y of DO.on) onN[y.pull] = (onN[y.pull] ? onN[y.pull] + ', ' : '') + (y.d.ability || 'a hit'); const onP = [...new Set(DO.on.map((y) => y.pull))].sort((u, v) => u - v);
+  const onN = {}; for (const y of DO.on) onN[y.pull] = (onN[y.pull] ? onN[y.pull] + ', ' : '') + (deathHit(y.d) || 'a hit'); const onP = [...new Set(DO.on.map((y) => y.pull))].sort((u, v) => u - v);
   add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'no deaths on you (too fast, mass deaths and the wipe don\'t count)', on ? on + ' of ' + DO.n : '0 of ' + plural(DO.n, 'death')).f = n ? (n - onP.length) / n : 1; if (onP.length) Object.assign(rows.alive[rows.alive.length - 1], { pulls: onP, pn: onN }); /* (what killed them shows on each pull button) */
   add('alive', !defR ? 'ok' : defR === 1 ? 'w' : 'bad', 'Defensive before dying', 'never die with a defensive still ready', defR ? plural(defR, 'death') + ' with one ready' : 'none');
   add('alive', !kitR ? 'ok' : kitR === 1 ? 'w' : 'bad', 'Healthstone or health potion', 'use one when you sit low', kitR ? plural(kitR, 'death') + ' with one unused' : 'none missed');
@@ -57402,7 +57435,7 @@ const dbfD = (txt, good) => '<span class="lp-d ' + (good ? 'up' : 'dn') + '">' +
 // (a pull that never moved the boss, or ended in its first 15 seconds, is a reset: not compared, not counted)
 const dbfReset = (it) => !!it && !it.kill && ((pullPct(it) != null && pullPct(it) >= 99.95) || (it.duration != null && it.duration < 15));
 // (what a death was to, in words: the ability, or whose melee)
-const dbfTo = (d) => (!d.ability || d.ability === 'Melee' ? (d.killer && d.killer !== 'Unknown' ? esc(d.killer) + '\'s melee' : 'a melee hit') : mech(d.ability, d.abilityId));
+const dbfTo = (d) => { const a = deathHit(d); return !a || a === 'Melee' ? (d.killer && d.killer !== 'Unknown' ? esc(d.killer) + '\'s melee' : 'a melee hit') : mech(a, deathHitId(d)); }; /* (Nov 8, audit D2: the killing hit) */
 // (a check's sentence with its counts: "2 of your 5 ...", and when every one counts, "Both of your ..." or "All 6 of your ...")
 const pairTxt = (t, ok, n) => { if (ok === n && n > 1) t = t.replace('{ok} of your {n}', (n === 2 ? 'both' : 'all ' + n) + ' of your'); t = t.replace('{ok}', String(ok)).replace('{n}', String(n)); return t.charAt(0).toUpperCase() + t.slice(1); };
 const dbfTimes = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
@@ -57458,7 +57491,7 @@ function dbfPull(o) {
   // (the fixes come from this pull's mistakes first, then from the other pulls of this boss already read, so a death to something
   // nobody got a mistake for this pull still gets its fix)
   const others = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b !== it && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players);
-  const at = (d) => (d.ability || d.killer ? ' to ' + dbfTo(d) : '') + ' at ' + T(d.t), fix1 = dbfFixer([r]), fixAll = dbfFixer(others), fixFor = (n, w) => fix1(n, w) || fixAll(n, w);
+  const at = (d) => (deathHit(d) ? ' to ' + dbfTo(d) : '') + ' at ' + T(d.t), fix1 = dbfFixer([r]), fixAll = dbfFixer(others), fixFor = (n, w) => fix1(n, w) || fixAll(n, w);
   // ---- a reset: one line ----
   if (dbfReset(it)) {
     const by = new Map(); for (const d of A.ds) { const k = dbfTo(d); by.set(k, (by.get(k) || 0) + 1); } const top = [...by].sort((x, y) => y[1] - x[1])[0], U = dbfUs(A.ds.length);
@@ -57494,7 +57527,7 @@ function dbfPull(o) {
   const secFix = (x) => { if (isAvoid(x) && avoid.size) { const y = [...avoid.values()][0]; return fixFor(y.m.mechanic, one); } const g = gOf(x); return fixFor(g ? g.m.mechanic : dbfSecName(x.s), one); };
   // (a death's own mistake: one of theirs in the 10 seconds before it, the one on what killed them first)
   // (a minor one counts too when it's on what killed them, like walking into an axe)
-  const ownM = (d) => { const ab = String(d.ability || '').toLowerCase(), l = keptMistakes(r).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5 && (m.severity !== 'Low' || String(m.mechanic).toLowerCase() === ab));
+  const ownM = (d) => { const ab = String(deathHit(d) || '').toLowerCase(), l = keptMistakes(r).filter((m) => m.player === d.player && m.mechanic !== 'Death' && m.t >= d.t - 10 && m.t <= d.t + 0.5 && (m.severity !== 'Low' || String(m.mechanic).toLowerCase() === ab));
     return l.find((m) => String(m.mechanic).toLowerCase() === ab) || l[0] || null; };
   // (the Next pull line says the first Fix card's fix (Oct 21: it said the axes while the first card was Dreadmarch); a deaths card keeps the death's own fix)
   const pf1 = !it.kill && S.pfix1 && S.pfix1.r === r && S.pfix1.id && S.pfix1.id !== 'deaths' ? P.get(S.pfix1.id) : null;
@@ -57559,7 +57592,7 @@ function dbfPull(o) {
   const avoidAb = new Set([r].concat(others).flatMap((x) => keptMistakes(x)).filter((q) => q.avoidRule).map((q) => String(q.mechanic).toLowerCase()));
   { const pk = E.PACKS.find((p) => p.encounter === it.boss); for (const x of (pk && pk.rules) || []) if (x.type === 'avoidable' && x.name) avoidAb.add(String(x.name).toLowerCase()); }
   const d0 = !it.kill && !raidCause && !w0 ? A.first : null;
-  if (d0) { const who0 = dbfWho(d0.player, pm), kit = dbfKit(d0), av = ownM(d0) || avoidAb.has(String(d0.ability || '').toLowerCase());
+  if (d0) { const who0 = dbfWho(d0.player, pm), kit = dbfKit(d0), av = ownM(d0) || avoidAb.has(String(deathHit(d0) || '').toLowerCase());
     W2.push('The wipe started when ' + who0 + ' died' + at(d0) + (av ? ', and that one could have been avoided.' : dbfFast(d0) ? ', too fast for anyone to react.' : kit.length ? ' with ' + lpAnd(kit.slice(0, 2).map(esc)) + ' still ready.' : ' with nothing left to press.')); }
   if (A.ds.length) L2.push(dbfGoL('sec-deaths-', 'Who died'));
   const drN = A.defReady.filter((p) => !A.ds.some((d) => d.player === p && ownM(d)) && (!d0 || p !== d0.player)).length;
