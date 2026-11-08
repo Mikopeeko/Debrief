@@ -16095,5 +16095,81 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
   var start = function () { var m = document.getElementById('main'); if (!m) { setTimeout(start, 300); return; } new MutationObserver(soon).observe(m, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] }); soon(); };
   start();
 })();</script>
+<style>/* (Nov 8 Also hurt tidy: Flex, "very jumbled partly because of the space"; the Design studio's mock m34) */
+html body #view .dbt-addr .ah-ln { display: block; }
+html body #view .dbt-addr .ah-sep { display: none; }
+html body #view .dbt-addr .ah-ln.ah-nx { color: var(--muted, #9aa3ad); margin-top: 3px; }
+html body #view .dbt-addr .ah-ln.ah-nx::before { content: 'Next time: '; }
+html body #view .dbt-addr .ah-more { cursor: pointer; }
+html body #view .dbt-addr .ah-more.shut > .ah-rest { display: none; }
+html body #view .dbt-addr .ah-more.shut::after { content: attr(data-more); color: var(--gold, #d4b77d); white-space: nowrap; }
+html body #view .dbt-addr .ah-more.shut:hover::after { text-decoration: underline; }
+@media (max-width: 760px) {
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row.r236-row { grid-template-columns: minmax(0, 1fr) auto !important; row-gap: 2px !important; align-items: start !important; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row > b { grid-column: 1; grid-row: 1; text-align: left !important; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row > i.dbt-lv { grid-column: 2; grid-row: 1; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row > span { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (min-width: 761px) {
+  html body #view .r236-two.r236-on.r236-on { grid-template-columns: minmax(0, 1fr) !important; row-gap: 18px !important; }
+  html body #view#view .dbt-add .dbt-addr.dbt-addr { grid-template-columns: 20px 210px minmax(0, 1fr) 84px !important; column-gap: 14px !important; align-items: start !important; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row.r236-row { grid-template-columns: 20px 210px minmax(0, 1fr) 84px !important; column-gap: 14px !important; align-items: start !important; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row > b { grid-column: 2; position: relative; text-align: left !important; justify-self: start !important; }
+  html body #view#view .r236-two .r236-rc > .dbt-addr.r236-row > b .icw:first-child { position: absolute; left: -34px; top: 0; }
+  html body #view#view :is(.dbt-add, .r236-rc) .dbt-addr > i.dbt-lv { justify-self: end; }
+  html body #view#view :is(.dbt-add, .r236-rc) .dbt-addr > .dbt-ic { align-self: start; }
+}
+</style>
+<script>/* (Nov 8 Also hurt tidy) */
+(function () {
+  var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
+  var TIME = /^\s*(?:Set \d+, )?\d{1,2}:\d\d/;
+  var colours = function () { var C = {}; [].forEach.call(document.querySelectorAll('#view [style*="color"]'), function (e) {
+      if (e.children.length || e.closest('.sp, .dbt-lv')) return; var t = e.textContent.trim(), c = e.style.color;
+      if (c && /^[^\s,.()0-9:]{3,14}$/.test(t)) C[t] = c; });
+    [].forEach.call(document.querySelectorAll('#view .dbt-chip'), function (e) { var t = e.textContent.trim(), c = e.style.getPropertyValue('--cc').trim(); if (c && /^[^\s,.()0-9:]{3,14}$/.test(t)) C[t] = c; }); return C; };
+  var paint = function (sp, C) { var k = Object.keys(C).sort(function (a, b) { return b.length - a.length; }); if (!k.length) return;
+    var re = new RegExp('(^|[^\\p{L}])(' + k.map(function (x) { return x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')(?=[^\\p{L}]|$)', 'gu');
+    var w = document.createTreeWalker(sp, NodeFilter.SHOW_TEXT), tn = []; while (w.nextNode()) tn.push(w.currentNode);
+    tn.forEach(function (t) { if (t.parentElement.closest('[style*="color"], .sp, .ah-more, .dbt-chip')) return; re.lastIndex = 0; if (!re.test(t.textContent)) return; re.lastIndex = 0;
+      var d = document.createElement('span'); d.innerHTML = t.textContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(re, function (m, a, nm) { return a + '<b class="ah-pn" style="color:' + C[nm] + '">' + nm + '</b>'; });
+      var f = document.createDocumentFragment(); while (d.firstChild) f.appendChild(d.firstChild); t.parentNode.replaceChild(f, t); }); };
+  var isName = function (n) { return n.nodeType === 1 && (n.classList.contains('dbt-chip') || /color/.test(n.getAttribute('style') || '')) && !n.classList.contains('sp'); };
+  var shorten = function (ln) { var kids = [].slice.call(ln.childNodes), nm = kids.filter(isName); if (nm.length <= 4) return;
+    var from = kids.indexOf(nm[2]) + 1, to = kids.indexOf(nm[nm.length - 1]); var more = document.createElement('span'); more.className = 'ah-more shut'; more.setAttribute('data-more', ' and ' + (nm.length - 3) + ' more \u203a'); more.title = 'Show everyone';
+    var rest = document.createElement('span'); rest.className = 'ah-rest'; more.appendChild(rest); ln.insertBefore(more, kids[from]); for (var i = from; i <= to; i++) rest.appendChild(kids[i]); };
+  var wrapLines = function (sp, stopAt) { /* split the nodes before stopAt into lines at " · " text that starts a new time */
+    var nodes = [].slice.call(sp.childNodes); var end = stopAt ? nodes.indexOf(stopAt) : nodes.length; if (end < 0) end = nodes.length;
+    var lines = [[]];
+    for (var i = 0; i < end; i++) { var n = nodes[i]; if (n.nodeType === 3 && n.textContent.indexOf(' \u00b7 ') >= 0) { var parts = n.textContent.split(' \u00b7 '); var cur = parts[0];
+        for (var j = 1; j < parts.length; j++) { var nextText = parts[j] || (nodes[i + 1] ? T(nodes[i + 1]) : ''); if (TIME.test(parts[j]) || (!parts[j] && TIME.test(nextText))) { if (cur) lines[lines.length - 1].push(document.createTextNode(cur)); lines.push(['SEP']); lines.push([]); cur = parts[j]; } else cur += ' \u00b7 ' + parts[j]; }
+        if (cur) lines[lines.length - 1].push(document.createTextNode(cur)); n.parentNode.removeChild(n); } else lines[lines.length - 1].push(n); }
+    if (lines.length < 2) { var one = document.createElement('span'); one.className = 'ah-ln'; for (var a = 0; a < end; a++) one.appendChild(nodes[a]); sp.insertBefore(one, stopAt && stopAt.parentNode === sp ? stopAt : null); shorten(one); return; }
+    var frag = document.createDocumentFragment();
+    lines.forEach(function (l) { if (l[0] === 'SEP') { var s0 = document.createElement('span'); s0.className = 'ah-sep'; s0.textContent = ' \u00b7 '; frag.appendChild(s0); return; } var e = document.createElement('span'); e.className = 'ah-ln'; l.forEach(function (x) { e.appendChild(x); }); frag.appendChild(e); shorten(e); });
+    sp.insertBefore(frag, stopAt && stopAt.parentNode === sp ? stopAt : null); };
+  var cooldowns = function (sp) { /* Raid checks: "A (x at 0:04), B (y at 2:28), ... and 7 more missed. Turn on ..." */
+    var h = sp.innerHTML, m = /^([\s\S]*?)( and (\d+) more missed\.)\s*([\s\S]*)$/.exec(h); if (!m) return false; var items = m[1].split(/\),\s/); if (items.length < 2) return false;
+    var shown = Math.min(3, items.length), out = '';
+    for (var i = 0; i < shown; i++) out += (i ? '<span class="ah-sep">, </span>' : '') + '<span class="ah-ln">' + items[i] + (i < items.length - 1 ? ')' : '') + '</span>';
+    var rest = items.slice(shown).map(function (x, j, a) { return x + (shown + j < items.length - 1 ? ')' : ''); });
+    out += '<span class="ah-ln"><span class="ah-more shut" data-more="and ' + (rest.length + +m[3]) + ' more \u203a" title="Show the rest"><span class="ah-rest">' + (rest.length ? ', ' + rest.join(', ') : '') + m[2] + ' </span></span></span>';
+    if (T({ textContent: m[4].replace(/<[^>]*>/g, '') })) out += '<span class="ah-ln ah-nx">' + m[4] + '</span>';
+    sp.innerHTML = out; return true; };
+  var tidy = function () { try {
+    var rows = [].slice.call(document.querySelectorAll('#view .dbt-add .dbt-addr, #view .r236-rc .dbt-addr')); if (!rows.length) return; var C = null;
+    rows.forEach(function (r) { var sp = r.querySelector(':scope > span:not(.dbt-ic)'); if (!sp) return; var sig = T(sp); if (sp.getAttribute('data-ah2') === sig) return;
+      if (sp.querySelector('.ah-ln')) { sp.setAttribute('data-ah2', sig); return; }
+      C = C || colours(); paint(sp, C);
+      if (r.closest('.r236-rc')) { if (!cooldowns(sp)) wrapLines(sp, null); }
+      else { var nx = sp.querySelector(':scope > .ahg-nx'); wrapLines(sp, nx); }
+      sp.setAttribute('data-ah2', T(sp)); });
+  } catch (e) { console.error(e); } };
+  var q = 0, soon = function () { if (q) return; q = requestAnimationFrame(function () { q = 0; tidy(); }); };
+  document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('#view .ah-more'); if (!m) return; e.preventDefault(); e.stopPropagation(); m.classList.toggle('shut'); }, true);
+  var start = function () { var m = document.getElementById('main') || document.body; new MutationObserver(soon).observe(m, { childList: true, subtree: true }); soon(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
 </body>
 </html>
