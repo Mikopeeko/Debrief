@@ -340,7 +340,7 @@ const HTML_FLAGS = {};
    stamp, so it's fetched fresh at once. Cloudflare's compression can mark the stamp weak (W/"..."): it's the same stamp.
    Cloudflare removes ETags from web pages on this site (tested on a practice link), so the build time goes along as Last-Modified too:
    a browser holding exactly this build sends it back (If-Modified-Since) and gets the same "not changed") */
-const APP_V = '8d103c7812951058', APP_T = 'Sun, 08 Nov 2026 15:37:14 GMT';
+const APP_V = '8d103c7812951058', APP_T = 'Sun, 08 Nov 2026 15:38:13 GMT';
 function pageRes(req, key, make, status, headers) { const et = '"' + APP_V + '-' + key + '"', h = { ...headers, ETag: et, 'Last-Modified': APP_T }, inm = req.headers.get('If-None-Match') || '';
   if (status === 200 && (inm.split(',').some((x) => x.trim().replace(/^W\//, '') === et) || req.headers.get('If-Modified-Since') === APP_T)) return new Response(null, { status: 304, headers: h });
   return new Response(make(), { status, headers: h }); }
