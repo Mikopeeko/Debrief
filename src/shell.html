@@ -12961,6 +12961,14 @@ html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
 html body #assignBox [data-planv="night"] { display: none !important; } /* (the Who plays grid is gone (Nov 7): no links to it) */
 html body #assignBox #ndzTl .btl > span.btl-x { border-left: 1px dashed rgba(255,255,255,.75); z-index: 6; } /* (the hover line, top to bottom (Nov 7)) */
 html body #view.plan-page #assignBox .pg-rc { border-radius: 3px !important; } html body #view.plan-page #assignBox .panel.pg-roster > .pg-zone { border-radius: 4px !important; } /* (squarer name chips and boxes, the new look (Flex, Nov 7: "the corners on the name boxes is too round")) */
+/* (view only, made plain (Nov 7)) */
+html body #assignBox > .pv-ronote { margin: 8px 0 4px; padding: 8px 12px; border: 1px solid var(--line2); border-left: 3px solid var(--faint); border-radius: 4px; background: rgba(255,255,255,.03); color: var(--muted); font-size: 14px; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox#assignBox.pv-ro .plb-rcs.plb-rcs[data-ndzbuild] { display: inline-flex !important; pointer-events: none; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox#assignBox.pv-ro :is([data-pgwhole],[data-pgfill],[data-ppmarks],[data-pgmkset],[data-plren],[data-plandel],[data-plnew],[data-ndzwiz],.plb-rcx,[data-ntrepick],[data-tnedit],[data-pgcdauto],[data-pgcdrefill],[data-pgcddrag],[data-cdx],[data-ccx],[data-plred],[data-pluse],[data-plimp],[data-ndzbuild],[data-pgaltno],[data-plrdel],[data-ndzundo],.plb-fill,.pg-tbsep), html body #assignBox.pv-ro #ndzTl .btl-tray { display: none !important; }
+html body #assignBox [data-pv="jobs"] > .ndz-dph > .sub { display: none; } /* (Assignments: "✎ Edit opens that job right here" said what the button already says (Nov 7)) */
+html body #assignBox .pv-urm { min-height: 0; padding: 2px 8px; border: 0; background: none; color: var(--gold); font: 600 13px var(--body); cursor: pointer; } html body #assignBox .pv-urm:hover { text-decoration: underline; }
+html body #assignBox.pv-ro .pv-ur { pointer-events: none; } html body #assignBox.pv-ro .pv-ur > i { display: none; }
+html body #assignBox.pv-ro .pg-rc[data-pgsit] { cursor: default; }
 /* (Edit roster, tidied (Flex, Nov 7: "can we improve the design of this page? its not bad but could be tidy/polished")) */
 html body #assignBox .panel.plan-red { padding: 18px 20px 0; }
 html body #assignBox .panel.plan-red > .ndz-dph { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 0 0 12px; border-bottom: 1px solid var(--line); background: none; }
