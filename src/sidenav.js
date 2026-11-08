@@ -12,7 +12,9 @@ const SN_IC = { home: '<path d="M3.5 10.5 12 4l8.5 6.5V20h-5.5v-5.5h-6V20H3.5Z"/
 const SN_SECS = [['home', 'Home'], ['plan', 'Plan'], ['guides', 'Guides'], ['raid', 'Raid review'], ['mplus', 'Mythic+']];
 const snIco = (k) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + SN_IC[k] + '</svg>';
 const snFold = () => store.get(SN_FOLD_K) === '1';
-const snOn = () => !!SN_MQ.matches;
+// (not on the front page a new visitor sees, with nothing added yet: its one button does the work there (Flex, Nov 8: "it probably shouldnt show on the home page"); Home with a team or character keeps it)
+const snLanding = () => { if (S.page !== "home") return false; try { return !groups().length; } catch (e) { return false; } };
+const snOn = () => !!SN_MQ.matches && !snLanding();
 let SN_LAST = null, SN_KEY = '', SN_JOBS = { n: 0, boss: '', at: 0 };
 // (which section the page on screen belongs to)
 function snSec() { const p = S.page; if (p === 'plan') return 'plan'; if (p === 'guides') return 'guides'; if (p === 'mplus' || p === 'mpfind') return 'mplus';
@@ -141,7 +143,7 @@ document.addEventListener('keydown', (e) => { if (!snOn() || e.defaultPrevented 
   if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && sec === 'raid') { const bx = document.querySelector('section.dbt.dtm-on .dtm'); if (bx && bx._keys) { const r0 = bx.getBoundingClientRect(); if (r0.bottom >= 80 && r0.top <= innerHeight - 80) return; } /* (the replay on screen keeps its own steps) */
     e.preventDefault(); snStep(e.key === 'ArrowLeft' ? -1 : 1); } });
 // ---- keeping it in step ----
-function snTick() { try { if (!$('#sideNav')) snMount(); if (!snOn()) return; if (S.page === 'pull' && S.item && TAB_ORDER.includes(S.tab)) { SN_LAST = S.item; store.set(SN_SUB_K, S.tab); }
+function snTick() { try { if (!$('#sideNav')) snMount(); if (document.body.classList.contains('snv-on') !== snOn()) snPlace(); if (!snOn()) return; if (S.page === 'pull' && S.item && TAB_ORDER.includes(S.tab)) { SN_LAST = S.item; store.set(SN_SUB_K, S.tab); }
   snDraw(); snKeys(); snCtx(); snAfter(); snThin(); snGsub(); } catch (e) { if (!snTick.warned) { snTick.warned = 1; console.warn('side menu', e); } } }
 SN_MQ.addEventListener && SN_MQ.addEventListener('change', () => { snPlace(); snDraw(true); snTick(); });
 try { snMount(); if (HIST && HIST.load) HIST.load().then(() => snDraw(true)).catch(() => {}); } catch (e) { console.warn('side menu', e); }
