@@ -254,6 +254,7 @@ if (!UI.includes("data-cost=\"' + esc(costT) + '\"") || !H.SH.includes('rpx-cost
 if (!UI.includes("data-cost=\"' + esc(costT) + '\"") || !H.SH.includes('rpx-cost')) say('the page code', 'rotation', 'What to fix lost its costs again');
 if (!H.SH.includes('wrt-by')) say('the page code', 'debriefing', 'the root-cause row lost who caused it');
 if (!H.SH.includes('window.__ahGroup = function')) say('the page code', 'debriefing', 'Also hurt lost its groups');
+if (!UI.includes("filter((x) => !(x.kind === 'note' && x.label === 'Note cooldowns'))")) say('the page code', 'debriefing', 'Note cooldowns shows up among the mistakes again');
 if (UI.includes('deaths += s.deaths;')) say('the page code', 'deaths', 'the Report card adds up every death up to the call again (mass wipe deaths and not-their-fault ones included)');
 for (const s of ['if (it && !chainTitleFits(m.m, it.txt)) return;', 'if (b && !chainTitleFits(b.m.m, it.txt)) b = null;']) if (!UI.includes(s)) say('the page code', 'title', 'How it went no longer checks its titles (expected "' + s + '" in src/ui.js)');
 for (const s of ["KR = [].map.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)'), function (r) { return pk(r, '.dbt-cht'); })", "function (w) { window.__ahDedupe(w); if (window.__ahGroup) window.__ahGroup(w); }", "rows = function () { return [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')); }"]) if (!H.SH.includes(s)) say('the page code', 'repeat', 'Also hurt can repeat How it went again (expected "' + s + '" in src/shell.html)');

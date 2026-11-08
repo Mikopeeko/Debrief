@@ -40850,7 +40850,7 @@ function coachSummary0(reps, name) {
   return oaCache(reps, 'cs:' + (name || ''), () => {
     const night = reps.length > 1, it = reps[reps.length - 1].item, kill = reps.find((r) => r.item.kill);
     let wrongAll = []; /* (every mistake, for the coach box's Went wrong; wrong stays the top 3 for the other tabs) */
-    const RD = coachRaid(reps), wrong = (wrongAll = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name)).slice(0, 3), right = (() => { const R0 = coachRight(reps, name, RD.S2).slice(0, 2).map((t) => ({ t }));
+    const RD = coachRaid(reps), wrong = (wrongAll = coachEnrich(name ? coachMine(reps, name) : RD.list, reps, name).filter((x) => !(x.kind === 'note' && x.label === 'Note cooldowns')) /* (Nov 7, Flex: healing cooldown issues go in Raid checks, not the mistakes) */).slice(0, 3), right = (() => { const R0 = coachRight(reps, name, RD.S2).slice(0, 2).map((t) => ({ t }));
       /* (Oct 23: on one pull, a mechanic done right after going wrong on the last pull that reached it is a win) */
       if (reps.length !== 1 || name) return R0; try { const it0 = reps[0].item, prv = ((S.index && S.index.bosses) || []).filter((b) => b.id === it0.id && b.diffId === it0.diffId && b.pull < it0.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).sort((p, q) => q.item.pull - p.item.pull);
         const fixed = []; for (const [id, y] of pullSections(reps[0])) { if (y.st !== 'ok' || id === 'deaths' || id === 'avoid') continue; const lastR = prv.find((r) => pullSections(r).get(id)); const py = lastR && pullSections(lastR).get(id); if (py && (py.st === 'bad' || py.st === 'warn')) fixed.push(String(y.s.title).replace(/\s*\(.*$/, '')); }
