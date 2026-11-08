@@ -21171,7 +21171,8 @@ function castOf(r, p, w0, w1, lite) {
   const mcw = C0.mc.get(p.name) || [], idle = rcIdle(r, p), cut = (l) => l.reduce((s, [a, b]) => s + Math.max(0, Math.min(b, t1) - Math.max(a, w0)), 0);
   // (per minute alive, less any time mind controlled: the same way Warcraft Logs counts the top logs it's measured against,
   // so the whole fight, transitions included)
-  const al = Math.max(0, aliveSecs(r, p, w0, t1) - cut(mcw)), inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05;
+  const idleAl = idle.reduce((s, [x, y]) => { const lo = Math.max(x, w0), hi = Math.min(y, t1); return hi > lo ? s + aliveSecs(r, p, lo, hi) : s; }, 0); /* (Nov 8, audit R1: the raid's waits and run-outs aren't counted, as the row says) */
+  const al = Math.max(0, aliveSecs(r, p, w0, t1) - cut(mcw) - idleAl), inW = (t) => t >= w0 - 0.05 && t <= t1 + 0.05;
   const ab = [], all = [], procs = new Map(); let auto = 0;
   for (const a of p.castAb.values()) { const ln = a.name.toLowerCase(), ts0 = (p.byName.get(ln) || []).filter(inW); if (!ts0.length) continue;
     if (AUTO_N.has(ln) || a.id === 1 || a.id === 6603 || a.id === 75) { auto += ts0.length; continue; }
@@ -22344,7 +22345,7 @@ function hpalChecks(reps, name, one) {
         'Aura Mastery raises Devotion Aura from 3% to 12% less damage taken for 8 seconds. The first part is what that extra 9% prevented, from the raid\'s damage taken in those seconds.' + (roth ? ' With Ringing of the Heavens it also casts a Divine Toll at 200%, 5 Holy Shocks at double strength. The second part is their healing, told apart from your own Divine Tolls by their timing.' : '') + ' Each card is one press. It isn\'t graded, because when to press it is your raid note\'s call.'); } }
   { const al = sum((s) => (s.abc != null ? s.abcL : 0)), ac = rows.reduce((v, s) => v + (s.abc != null ? s.abc * s.abcL : 0), 0); if (al >= 10) { const f = ac / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
     add(g4, f >= 0.75 ? 'ok' : f >= 0.6 ? 'warn' : 'bad', 'Holy Light', 'Always be casting', pct(f), 'You were casting ' + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + plural(Math.round(gp.len), 'second') + ', at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
-      'This is the share of your time alive that you spent casting or on a global cooldown. A healer can\'t always be pressing, so the scale is gentle. 75% or more is good, and under 60% is a lot of time doing nothing. Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
+      'This is the share of your time alive that you spent casting or on a global cooldown. A healer can\'t always be pressing, so the scale is gentle. 75% or more is good, and under 60% is a lot of time doing nothing. Time spent dead, or while the whole raid waits or runs for a mechanic together, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
   const g6 = grp('From your talents');
   if (lotm && hsN) { const n = sum((s) => s.hsLm), f = n / hsN; add(g6, f >= 0.8 ? 'ok' : f >= 0.6 ? 'warn' : 'bad', 'Light of the Martyr', 'Holy Shock with Light of the Martyr', pct(f), n + ' of your ' + hsN + ' Holy Shocks got it. Above ' + (bestow ? 70 : 80) + '% health, Holy Shock heals 20% more' + (bestow ? ', and Bestow Light adds up to 15%.' : '.'), 'lm',
     'With Light of the Martyr, while you\'re above ' + (bestow ? '70% health (Bestow Light lowers it from 80%)' : '80% health') + ', Holy Shock heals 20% more.' + (bestow ? ' Bestow Light adds 5% more for every 5 seconds it\'s up, up to 15%.' : '') + ' Staying healthy is healing. The times listed are the Holy Shocks without it.'); }
@@ -24592,7 +24593,7 @@ function rdruChecks(reps, name, one) {
       if (c.al >= 10) { al += c.al; busy += Math.min(bz, c.al); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); } }
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       add(gC, f >= 0.72 ? 'ok' : f >= 0.6 ? 'warn' : 'bad', 'Rejuvenation', 'Always be casting', pct(f), 'You were casting ' + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + plural(Math.round(gp.len), 'second') + ', at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
-        'This is the share of your time alive that you spent casting, channeling or on a global cooldown. A healer can\'t always be pressing, so the scale is gentle. 72% or more is good (the top players on this boss sit around 82%), and under 60% is a lot of time doing nothing.' + (master ? ' In real downtime, Wrath gives mana back through Master Shapeshifter, for more Wild Growths later.' : '') + ' Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
+        'This is the share of your time alive that you spent casting, channeling or on a global cooldown. A healer can\'t always be pressing, so the scale is gentle. 72% or more is good (the top players on this boss sit around 82%), and under 60% is a lot of time doing nothing.' + (master ? ' In real downtime, Wrath gives mana back through Master Shapeshifter, for more Wild Growths later.' : '') + ' Time spent dead, or while the whole raid waits or runs for a mechanic together, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
   { const l = rows.filter((s) => s.mast != null), hh = l.reduce((v, s) => v + s.mastH, 0); if (hh) { const m = l.reduce((v, s) => v + s.mast * s.mastH, 0) / hh;
     add(gC, 'na', 'Lifebloom', 'HoTs per heal (Mastery)', m.toFixed(1), 'On average, ' + m.toFixed(1) + ' of your HoTs were on each person you healed, weighted by how much you healed them.', 'mast',
       'Your Mastery, Harmony, makes each of your heals stronger for every HoT of yours on its target: Lifebloom, Rejuvenation, Germination, the Regrowth HoT, Wild Growth' + (ws ? ' and Symbiotic Blooms' : '') + ', the first two counting the most. In raid you will usually average 2 to 3. It isn\'t graded. It shows how well your HoTs line up with your heals.'); } }
@@ -24982,7 +24983,7 @@ function pevkChecks(reps, name, one) {
       if (c.al >= 10) { al += c.al; busy += Math.min(bz, c.al); s.abcTop = (c.gaps || []).find((g) => g.t > 1) || null; s.m.abc = (c.gaps || []).filter((g) => g.len >= 4).sort((a, b) => a.t - b.t).map((g) => [g.t, g.t + g.len]); } }
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       add(gC, f >= 0.64 ? 'ok' : f >= 0.52 ? 'warn' : 'bad', 'Living Flame', 'Always be casting', pct(f), 'You were casting ' + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + plural(Math.round(gp.len), 'second') + ', at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
-        'This is the share of your time alive that you spent casting, charging a breath or on a global cooldown. In quiet moments, Living Flame on the boss can bring Essence Bursts. Most of your spells are instant, so less of your time is spent casting than for other healers. 64% or more is good (the top players on this boss sit around 67%), and under 52% is a lot of time doing nothing. Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
+        'This is the share of your time alive that you spent casting, charging a breath or on a global cooldown. In quiet moments, Living Flame on the boss can bring Essence Bursts. Most of your spells are instant, so less of your time is spent casting than for other healers. 64% or more is good (the top players on this boss sit around 67%), and under 52% is a lot of time doing nothing. Time spent dead, or while the whole raid waits or runs for a mechanic together, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
   { const n = sum((s) => s.lfN), al2 = sum((s) => s.lfAlly); if (n) add(gC, al2 / n <= 0.2 ? 'ok' : al2 / n <= 0.4 ? 'warn' : 'bad', 'Living Flame', 'Living Flame on enemies', (n - al2) + '<span>/' + n + '</span>', ofYour(n - al2, n, 'Living Flame', 'Living Flames') + ' went on an enemy.' + (al2 ? ' ' + al2 + (al2 === 1 ? ' went' : ' went') + ' on an ally.' : ''), 'lfa',
       'Cast on an enemy, Living Flame can bring Essence Bursts (a 20% chance), so it\'s your filler in quiet moments. On an ally it\'s a weak, expensive heal. The guides keep that for real emergencies. Up to 1 in 5 on allies is fine. The times listed are the ones on an ally.'); }
   // (Echo and Temporal Anomaly)
@@ -25299,7 +25300,7 @@ function pdemChecks(reps, name, one) {
   { const al = sum((s) => (s.abcAl >= 10 ? s.abcAl : 0)), busy = sum((s) => (s.abcAl >= 10 ? s.abcBusy : 0));
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       add(gC, f >= K.abcOk ? 'ok' : f >= K.abcW ? 'warn' : 'bad', 'Shadow Bolt', 'Always be casting', pct(f), 'You were casting ' + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + plural(Math.round(gp.len), 'second') + ', at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
-        'This is the share of your time alive that you spent casting or on a global cooldown. Your demons only come from what you cast, so every gap is demons you never summon. When you have to move, use the instant Demonbolts your Demonic Cores give, Demonic Circle and Burning Rush. ' + Math.round(100 * K.abcOk) + '% or more is good. Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
+        'This is the share of your time alive that you spent casting or on a global cooldown. Your demons only come from what you cast, so every gap is demons you never summon. When you have to move, use the instant Demonbolts your Demonic Cores give, Demonic Circle and Burning Rush. ' + Math.round(100 * K.abcOk) + '% or more is good. Time spent dead, or while the whole raid waits or runs for a mechanic together, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.'); } }
   // (the rotation check: the share of casts that were the list's best button then, and the slips)
   const gA = grp('Your priority'), aplSl = aplAdd(rows, PDEM_APL, add, gA, 'Demonbolt');
   // (Demonic Tyrant)
@@ -25977,7 +25978,7 @@ function genRun0(spec, D, reps, name, one) {
     if (al >= 10) { const f = busy / al, gp = rows.flatMap((s) => (s.abcTop ? [{ ...s.abcTop, pull: s.pull }] : [])).sort((a, b) => b.len - a.len)[0];
       const mel = per.some(({ p: pm }) => NDZ_MELEE.has(+pm.specId) || pm.role === 'tank'); /* (melee and tanks press, they don't cast (Oct 26)) */
       add(gC, D.abcInfo ? 'na' : f >= K.abc[0] ? 'ok' : f >= K.abc[1] ? 'warn' : 'bad', D.ic, mel ? 'Always be pressing' : 'Always be casting', pct(f), (mel ? 'You were pressing buttons ' : 'You were casting ') + pct(f) + ' of the time.' + (gp ? ' Your longest gap was ' + plural(Math.round(gp.len), 'second') + ', at ' + (one ? '' : 'pull ' + gp.pull + ', ') + T(gp.t) + (gp.mv ? ', while moving.' : '.') : ''), 'abc',
-        'This is the share of your time alive that you spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + (D.abcInfo ? '' : okP(K.abc[0]) + ' ') + 'Time spent dead, or while the whole raid waits, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.');
+        'This is the share of your time alive that you spent casting or on a global cooldown. ' + (D.abcWhy ? D.abcWhy + ' ' : '') + (D.abcInfo ? '' : okP(K.abc[0]) + ' ') + 'Time spent dead, or while the whole raid waits or runs for a mechanic together, isn\'t counted. The times listed are the stretches of 4 seconds or more with nothing pressed.');
       if (!D.abcInfo && f < K.abc[0]) gC.l[gC.l.length - 1].tip = D.abcTip || 'Press something every global cooldown. When you have to move, use an instant spell instead of stopping.'; } }
   // (melee uptime: only the time when you alone were off the boss is graded, 10% or less of the time is good and over 20% is red (top Mythic kills: 5% to 9%); the time
   // when most of the melee were off too was a mechanic or the boss moving)
@@ -31087,10 +31088,10 @@ const TOP_MECH = {
 const topMechOf = (it, mech, role) => { const b = it && TOP_MECH[it.boss] && TOP_MECH[it.boss][it.diffId]; if (!b) return null; const y = b.m[mech] || [0, 0, 0, 0, 0, 0], i = role === 'tank' ? 0 : role === 'healer' ? 1 : 2; return { f: y[i], d: y[i + 3] }; };
 // (one mechanic's row: P = the share of the raider's pulls with a mistake of their own, T = the best raids' share. Red for a death, or 3+ real
 // mistakes 10 points or more behind them; amber a little behind (5 points); a grey dot at about their level, "Most raids get clipped by this
-// too" when they slip on it often. Without numbers for the boss: red for a death or a habit (a quarter of the pulls), else amber)
+// too" when they slip on it often. Without numbers for the boss: red for a death, else a grey "not judged against top raids yet" (Nov 8, audit M5))
 const mechJudge = (top, q, n, dd, big) => { const P = n ? 100 * q / n : 0, T = top ? top.f : null, gap = T == null ? null : P - T;
-  const st = !q ? 'ok' : dd ? 'bad' : T == null ? (big && q >= Math.max(2, n / 4) ? 'bad' : 'w') : big && q >= 3 && gap >= 10 ? 'bad' : gap >= 5 ? 'w' : 'n';
-  return { st, P, T, gap, like: T != null && T >= 10 && st === 'n' }; };
+  const st = !q ? 'ok' : dd ? 'bad' : T == null ? 'n' /* (Nov 8, audit M5: no top-kill numbers for this boss or difficulty yet: not judged, and the row says so) */ : big && q >= 3 && gap >= 10 ? 'bad' : gap >= 5 ? 'w' : 'n';
+  return { st, P, T, gap, like: T != null && T >= 10 && st === 'n', unjudged: T == null && q > 0 && !dd }; };
 // (a raider's own mistakes per mechanic over their pulls: the pulls, the pulls they died to it, real (not small) hits, the bosses; someone
 // else's mistake (m.others) is counted apart and never theirs)
 function mechTally(per, nm) {
@@ -31101,7 +31102,7 @@ function mechTally(per, nm) {
 // costs by how much more often than the best raids it got them, gently for a slip or two, fully from a quarter of the pulls; a death to it
 // costs the most. 100 less every mechanic's cost)
 function mechNight(per, p) { const { mm } = mechTally(per, p.name); let cost = 0;
-  for (const [k, o] of mm) { const nB = per.filter((g) => o.bs.has(g.r.item.boss)).length || per.length, t = topMechOf(o.it, k, p.role), e = Math.max(0, o.s.size / nB - (t ? t.f : 0) / 100), ed = Math.max(0, o.died.size / nB - (t ? t.d : 0) / 100);
+  for (const [k, o] of mm) { const nB = per.filter((g) => o.bs.has(g.r.item.boss)).length || per.length, t = topMechOf(o.it, k, p.role), e = t ? Math.max(0, o.s.size / nB - t.f / 100) : 0 /* (Nov 8, audit M5: not judged without top numbers; a death to it still costs) */, ed = Math.max(0, o.died.size / nB - (t ? t.d : 0) / 100);
     cost += 30 * e * Math.min(1, e / 0.25) * (o.big ? 1 : 0.5) + 40 * ed; }
   return Math.max(0, 100 - cost); }
 // (the checklist's Mechanics: worst first, the clean ones on one line, and what they're judged against said once (the studio's mock))
@@ -31131,7 +31132,7 @@ function rqcOf(c, F, a) {
   const names = [...new Set((Array.isArray(F.mech) ? F.mech.map((m) => m.n) : [...F.mech.keys()]).filter(Boolean).concat([...mm.keys()], [...mo.keys()]))];
   for (const k of names) { const o = mm.get(k), q = o ? o.s.size : 0, dd = o ? o.died.size : 0, xo = mo.get(k) || 0, nB = o ? (a.per.filter((g) => o.bs.has(g.r.item.boss)).length || n) : n, J = mechJudge(o ? topMechOf(o.it, k, role) : null, q, nB, dd, !!(o && o.big)), st = J.st; /* (Nov 6: judged against the best raids, never shown) */
     const y = add('mech', st, k, 'no mistakes', !q ? 'clean' : ''); { const base = k.replace(/\s*\(.*$/, ''), ic = spellIcon(0, base), sid = (String(ic).match(/data-sid="(\d+)"/) || [])[1]; if (sid) y.lh = '<span class="sp mt" data-sid="' + sid + '" data-sn="' + esc(base) + '">' + ic + esc(base) + '</span>' + (base !== k ? '<span class="rqc-q">' + esc(k.slice(base.length).trim()) + '</span>' : ''); } y.f = nB ? (nB - q) / nB : 1; y.gap = J.gap; y.P = J.P; y.top = J.T != null; y.xo = xo; if (o) { y.pulls = [...o.s].sort((u, v) => u - v); y.pt = o.at; y.pn = {}; for (const k2 of Object.keys(o.at)) y.pn[k2] = 'at ' + Math.floor(o.at[k2] / 60) + ':' + String(Math.floor(o.at[k2] % 60)).padStart(2, '0'); }
-    y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : (q === 1 && nB > 1 ? 'Once in ' + plural(nB, 'pull') : 'In ' + q + ' of ' + plural(nB, 'pull')) + (dd ? (q === 1 ? ', and died to it' : ', died to it in ' + dd) : st === 'bad' ? (q >= Math.max(2, nB / 4) ? ', a habit' : ', more often than most raids') : !o.big ? ', small hits' : '') + (J.like ? '. Most raids get clipped by this too' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
+    y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : (q === 1 && nB > 1 ? 'Once in ' + plural(nB, 'pull') : 'In ' + q + ' of ' + plural(nB, 'pull')) + (dd ? (q === 1 ? ', and died to it' : ', died to it in ' + dd) : st === 'bad' ? (q >= Math.max(2, nB / 4) ? ', a habit' : ', more often than most raids') : !o.big ? ', small hits' : '') + (J.like ? '. Most raids get clipped by this too' : J.unjudged ? '. Not judged against top raids yet: no top-kill numbers for this boss' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
   { const RK = { bad: 0, w: 1, n: 2, ok: 3, na: 4 }; rows.mech.sort((u, v) => RK[u.s] - RK[v.s] || ((v.gap != null ? v.gap : v.P || 0) - (u.gap != null ? u.gap : u.P || 0))); } /* (worst first: furthest behind the best raids) */
   // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
   const DO = deathsOf(a.per.map((g) => g.r), nm), onW = DO.on.filter((x) => x.v.w >= 1).length, on = onW + (DO.on.length - onW) / 2 /* (Nov 8, audit D7: halves count half) */; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
@@ -31476,7 +31477,7 @@ function aliveSecs(r, p, a, b) { let s = Math.max(0, b - a); for (const [d0, d1]
 // two casts counts up to 2.5 s; null when they cast nothing. The tiles and the player's own line use this same number.
 // (the raid's forced downtime, perfContext's idle stretches, is left out the same way for DPS and tanks: time they couldn't
 // press anything)
-const rcIdle = (r, p) => { const C0 = perfContext(r), x = C0.per.get(p.name); return x && x.role === 'healer' ? [] : C0.idle; };
+const rcIdle = (r, p) => { const C0 = perfContext(r), x = C0.per.get(p.name); return x && x.role === 'healer' ? (C0.rgaps || []) : C0.idle; }; /* (Nov 8, audit R1: healers get the raid's run-outs too, not the boss-away waits they heal through) */
 function activityIn(r, p, a, b) {
   const ts = [...p.castTimes.values()].flat().filter((t) => t >= a && t <= b).sort((u, v) => u - v); if (!ts.length) return null;
   const C0 = perfContext(r), mcw = C0.mc.get(p.name) || [], forced = mcw.reduce((s, [x, y]) => s + Math.max(0, Math.min(y, b) - Math.max(x, a)), 0);
@@ -31515,7 +31516,15 @@ function perfContext(r) {
   for (const x of per.values()) { if (x.role === 'healer') continue; const on = new Uint8Array(N); for (const ts of x.p.castTimes.values()) for (const t of ts) { if (t < 0 || t > end) continue; for (let s = Math.max(0, Math.floor(t - 1)); s <= Math.min(N - 1, Math.floor(t + 1)); s++) on[s] = 1; }
     for (let s = 0; s < N; s++) if (!x.ds.some(([a, b]) => s >= a && s < b)) { alv[s]++; if (on[s]) act[s]++; } }
   for (let s = 0, a = -1; s <= N; s++) { const off = s < N && alv[s] >= 4 && act[s] <= 0.5 * alv[s]; if (off && a < 0) a = s; else if (!off && a >= 0) { if (s - a >= 3) idle.push([a, s]); a = -1; } }
-  r._pc = { ct, end, per, roles, roleMed, roleAvoid, addAvg, lust: lust.length ? Math.min(...lust) : null, mc, idle };
+  // (Nov 8, audit R1: a stretch of 4 s or more where half the raid or more (healers too) sat in a 4 s+ casting gap of their own, like everyone running out for a Guillotine, is the raid's
+  //  movement, not 13 personal gaps: it joins the waits above, so nobody's casting is judged there and each row names the next gap that was theirs alone)
+  const gapN = new Array(N).fill(0), alvA = new Array(N).fill(0);
+  for (const x of per.values()) { const ts = [...x.p.castTimes.values()].flat().filter((t) => t >= 0 && t <= end).sort((u, v) => u - v), dead = (s) => x.ds.some(([a, b]) => s >= a && s < b);
+    for (let s = 0; s < N; s++) if (!dead(s)) alvA[s]++;
+    for (let i = 1; i < ts.length; i++) if (ts[i] - ts[i - 1] >= 4) for (let s = Math.ceil(ts[i - 1]); s < ts[i] && s < N; s++) if (!dead(s)) gapN[s]++; }
+  const rgaps = []; for (let s = 0, a = -1; s <= N; s++) { const off = s < N && alvA[s] >= 4 && gapN[s] >= 0.5 * alvA[s]; if (off && a < 0) a = s; else if (!off && a >= 0) { if (s - a >= 4) rgaps.push([a, s]); a = -1; } }
+  const idleAll = idle.concat(rgaps).sort((u, v) => u[0] - v[0]);
+  r._pc = { ct, end, per, roles, roleMed, roleAvoid, addAvg, lust: lust.length ? Math.min(...lust) : null, mc, idle: idleAll, rgaps };
   return r._pc;
 }
 // one player's output feedback this pull: [status, html] lines, worst-to-fix first after the output line, plus the
