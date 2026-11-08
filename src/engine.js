@@ -6344,7 +6344,10 @@ const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['r
   ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
   ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
   ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]],
-  ['spell reflection', [0.2, true]], ['defensive stance', [0.2]]]); // (Oct 27: both take 20% off (Spell Reflection magic damage only, for 5 s; Defensive Stance everything while it's on). Warcraft Logs' own table for a real Midnight kill (TP7H64vChZqzA3yk fight 23, Arms Warrior: Spell Reflection 1.01M over 35 s, Defensive Stance 699k) fits 20%, not the tooltips' 25% / 15% found on the web)
+  ['spell reflection', [0.2, true]], ['defensive stance', [0.2]],
+  /* (Nov 8, audit D8: the rest of DEFENSIVES, from the tooltips, so no button is quietly dropped as unknown: a share of damage taken off, ['abs', share of their health] for an absorb, a second flag for melee-or-magic-only (counted as half the damage), 0 for one that saves nothing) */
+  ['greater invisibility', [0.6]], ['mirror image', [0.2]], ['touch of karma', ['abs', 0.5]], ['evasion', [0.9, true]], ['vampiric blood', [0.3]], ['dancing rune weapon', [0.4, true]],
+  ['eye of tyr', [0.25]], ['shield of vengeance', ['abs', 0.3]], ['fiery brand', [0.4]], ['metamorphosis', [0.2]], ['fireblood', [0]]]); // (Oct 27: both take 20% off (Spell Reflection magic damage only, for 5 s; Defensive Stance everything while it's on). Warcraft Logs' own table for a real Midnight kill (TP7H64vChZqzA3yk fight 23, Arms Warrior: Spell Reflection 1.01M over 35 s, Defensive Stance 699k) fits 20%, not the tooltips' 25% / 15% found on the web)
 // externals and Zephyr, by the buff on the player it covers: [reduction, magic only, area damage only] (tooltips, about)
 const EXT_DR = new Map([['pain suppression', [0.4]], ['ironbark', [0.2]], ['blessing of sacrifice', [0.3]], ['zephyr', [0.2, false, true]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
@@ -7535,7 +7538,8 @@ function triageSaves(r) {
 // Defensives: PERS_DR (Aspect of the Turtle takes about 30% off: on Coiled Altar our hunter took 1.36M through it, so it isn't an
 // immunity there); Ice Block, Divine Shield and Netherwalk stop the hits. Anything else isn't claimed. -> d.saves { name: { ok, amt } }, d.saveT
 const SAVE_HEAL = { healthstone: 0.25, 'demonic healthstone': 0.31, 'a healing potion': 0.46, exhilaration: 0.3, 'desperate prayer': 0.25, 'death pact': 0.5, 'mortal coil': 0.2,
-  'lay on hands': 1, 'crimson vial': 0.2, 'frenzied regeneration': 0.3, renewal: 0.3, 'bitter immunity': 0.2, 'enraged regeneration': 0.3, 'gift of the naaru': 0.2 };
+  'lay on hands': 1, 'crimson vial': 0.2, 'frenzied regeneration': 0.3, renewal: 0.3, 'bitter immunity': 0.2, 'enraged regeneration': 0.3, 'gift of the naaru': 0.2,
+  'renewing blaze': 0.4, 'alter time': 0.4, 'last stand': 0.3, 'fortitude of the bear': 0.2, lichborne: 0.1 }; /* (Nov 8, audit D8: Renewing Blaze and Alter Time give about 40% back, Last Stand 30% more health, Fortitude of the Bear 20%, Lichborne's leech 10%) */
 const SAVE_IMM = new Set(['ice block', 'divine shield', 'netherwalk']);
 function deathSaves(r) {
   for (const d of r.deaths) { const av = d.available || [], mx = (r.pMax && r.pMax.get(d.guid)) || 0, l = (r.php && r.php.get(d.guid)) || []; d.saves = {}; d.saveT = null;
@@ -7548,7 +7552,7 @@ function deathSaves(r) {
     for (const a of av) { const k = a.toLowerCase(), hp = SAVE_HEAL[k], dr = PERS_DR.get(k);
       if (hp != null) d.saves[a] = { ok: hp * mx > need, amt: Math.round(hp * mx), heal: true };
       else if (SAVE_IMM.has(k)) d.saves[a] = { ok: true, amt: dmg, imm: true };
-      else if (dr && dr[0] === 'abs') d.saves[a] = { ok: 0.3 * mx > need, amt: Math.round(0.3 * mx) };
+      else if (dr && dr[0] === 'abs') { const sh = typeof dr[1] === 'number' ? dr[1] : 0.3; d.saves[a] = { ok: sh * mx > need, amt: Math.round(sh * mx) }; } /* (Nov 8, audit D8: an absorb's own size) */
       else if (dr && typeof dr[0] === 'number') d.saves[a] = { ok: (dr[1] ? 0.5 : 1) * dmg * dr[0] > need, amt: Math.round(dmg * dr[0]) };
       else d.saves[a] = { ok: false, amt: 0, unknown: true }; } }
 }

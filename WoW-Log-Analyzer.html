@@ -21511,7 +21511,10 @@ const PERS_DR = new Map([['barkskin', [0.2]], ['survival instincts', [0.5]], ['r
   ['dispersion', [0.75]], ['stoneform', [0.1]], ['ice cold', [0.7]], ['zen meditation', [0.6]], ['stone bulwark totem', ['abs']],
   ['anti-magic shell', ['abs']], ['dark pact', ['abs']], ['ice barrier', ['abs']], ['prismatic barrier', ['abs']], ['blazing barrier', ['abs']],
   ['ice block', [1]], ['divine shield', [1]], ['cloak of shadows', [1, true]], ['netherwalk', [1]],
-  ['spell reflection', [0.2, true]], ['defensive stance', [0.2]]]); // (Oct 27: both take 20% off (Spell Reflection magic damage only, for 5 s; Defensive Stance everything while it's on). Warcraft Logs' own table for a real Midnight kill (TP7H64vChZqzA3yk fight 23, Arms Warrior: Spell Reflection 1.01M over 35 s, Defensive Stance 699k) fits 20%, not the tooltips' 25% / 15% found on the web)
+  ['spell reflection', [0.2, true]], ['defensive stance', [0.2]],
+  /* (Nov 8, audit D8: the rest of DEFENSIVES, from the tooltips, so no button is quietly dropped as unknown: a share of damage taken off, ['abs', share of their health] for an absorb, a second flag for melee-or-magic-only (counted as half the damage), 0 for one that saves nothing) */
+  ['greater invisibility', [0.6]], ['mirror image', [0.2]], ['touch of karma', ['abs', 0.5]], ['evasion', [0.9, true]], ['vampiric blood', [0.3]], ['dancing rune weapon', [0.4, true]],
+  ['eye of tyr', [0.25]], ['shield of vengeance', ['abs', 0.3]], ['fiery brand', [0.4]], ['metamorphosis', [0.2]], ['fireblood', [0]]]); // (Oct 27: both take 20% off (Spell Reflection magic damage only, for 5 s; Defensive Stance everything while it's on). Warcraft Logs' own table for a real Midnight kill (TP7H64vChZqzA3yk fight 23, Arms Warrior: Spell Reflection 1.01M over 35 s, Defensive Stance 699k) fits 20%, not the tooltips' 25% / 15% found on the web)
 // externals and Zephyr, by the buff on the player it covers: [reduction, magic only, area damage only] (tooltips, about)
 const EXT_DR = new Map([['pain suppression', [0.4]], ['ironbark', [0.2]], ['blessing of sacrifice', [0.3]], ['zephyr', [0.2, false, true]]]);
 const CD_DR = new Map([['power word: barrier', ['Power Word: Barrier', 0.20]], ['spirit link totem', ['Spirit Link Totem', 0.10]], ['anti-magic zone', ['Anti-Magic Zone', 0.15, true]]]);
@@ -22702,7 +22705,8 @@ function triageSaves(r) {
 // Defensives: PERS_DR (Aspect of the Turtle takes about 30% off: on Coiled Altar our hunter took 1.36M through it, so it isn't an
 // immunity there); Ice Block, Divine Shield and Netherwalk stop the hits. Anything else isn't claimed. -> d.saves { name: { ok, amt } }, d.saveT
 const SAVE_HEAL = { healthstone: 0.25, 'demonic healthstone': 0.31, 'a healing potion': 0.46, exhilaration: 0.3, 'desperate prayer': 0.25, 'death pact': 0.5, 'mortal coil': 0.2,
-  'lay on hands': 1, 'crimson vial': 0.2, 'frenzied regeneration': 0.3, renewal: 0.3, 'bitter immunity': 0.2, 'enraged regeneration': 0.3, 'gift of the naaru': 0.2 };
+  'lay on hands': 1, 'crimson vial': 0.2, 'frenzied regeneration': 0.3, renewal: 0.3, 'bitter immunity': 0.2, 'enraged regeneration': 0.3, 'gift of the naaru': 0.2,
+  'renewing blaze': 0.4, 'alter time': 0.4, 'last stand': 0.3, 'fortitude of the bear': 0.2, lichborne: 0.1 }; /* (Nov 8, audit D8: Renewing Blaze and Alter Time give about 40% back, Last Stand 30% more health, Fortitude of the Bear 20%, Lichborne's leech 10%) */
 const SAVE_IMM = new Set(['ice block', 'divine shield', 'netherwalk']);
 function deathSaves(r) {
   for (const d of r.deaths) { const av = d.available || [], mx = (r.pMax && r.pMax.get(d.guid)) || 0, l = (r.php && r.php.get(d.guid)) || []; d.saves = {}; d.saveT = null;
@@ -22715,7 +22719,7 @@ function deathSaves(r) {
     for (const a of av) { const k = a.toLowerCase(), hp = SAVE_HEAL[k], dr = PERS_DR.get(k);
       if (hp != null) d.saves[a] = { ok: hp * mx > need, amt: Math.round(hp * mx), heal: true };
       else if (SAVE_IMM.has(k)) d.saves[a] = { ok: true, amt: dmg, imm: true };
-      else if (dr && dr[0] === 'abs') d.saves[a] = { ok: 0.3 * mx > need, amt: Math.round(0.3 * mx) };
+      else if (dr && dr[0] === 'abs') { const sh = typeof dr[1] === 'number' ? dr[1] : 0.3; d.saves[a] = { ok: sh * mx > need, amt: Math.round(sh * mx) }; } /* (Nov 8, audit D8: an absorb's own size) */
       else if (dr && typeof dr[0] === 'number') d.saves[a] = { ok: (dr[1] ? 0.5 : 1) * dmg * dr[0] > need, amt: Math.round(dmg * dr[0]) };
       else d.saves[a] = { ok: false, amt: 0, unknown: true }; } }
 }
@@ -55605,7 +55609,9 @@ function deathVerdict(r, d) {
   // by others over each 3 s, longer than top kills' survivors ever sat (3.5 s, 99 in 100). Not on them; it's the healing team's, or the
   // healer the note put on them)
   const noheal = !!g && (g.run40 || 0) >= 4 && (d.avoidPct || 0) < 10 && !d.ownAvoid && !defs0.length && !kit0.some((k) => k !== 'a healing potion') /* (a health potion isn't counted: we can't see who carries one) */ && g.healers > 0 && g.alive >= Math.ceil(g.healers / 2) && (g.dist == null || g.dist <= 40);
-  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : forced ? (raidK && !forced0 && raidK.taker && has && d.reactable ? 'shared' /* (Nov 8, audit D6: another player's missed swap killed them, but a defensive or external was ready: half on them) */ : 'forced') : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
+  /* (Nov 8, audit D10: a death to the pull's wipe mechanic (the unbroken shield's Eternal Nightfall) is the raid's: Why we wiped already blames the raid for it) */
+  const wipeK = (() => { try { const w = typeof wipeMech === 'function' ? wipeMech(r) : null; return !!(w && w.n && ab && (lc(w.n) === ab || ab.includes(lc(w.n)) || lc(w.n).includes(ab))); } catch (e) { return false; } })();
+  const why = after && !late ? 'wipe' : end ? 'end' : mass ? 'mass' : noCtrl ? 'shared' : forced ? (raidK && !forced0 && raidK.taker && has && d.reactable ? 'shared' /* (Nov 8, audit D6: another player's missed swap killed them, but a defensive or external was ready: half on them) */ : 'forced') : wipeK && !ownSame ? 'raid' /* (their own mistake on that very mechanic, like no mote for Extinguish, stays theirs) */ : own ? 'own' : fast ? 'fast' : raid ? (has && d.reactable ? 'shared' : 'raid') : noheal ? 'noheal' : gap ? 'heal' : has ? 'ready' : nosave ? 'nosave' : 'nothing';
   const w = why === 'heal' ? (has ? 0.5 : 0) : { own: 1, ready: 1, nothing: 0.5, shared: 0.5 }[why] || 0, items = andList((defs.length ? defs : kit).slice(0, 2));
   const word = { forced, noheal: 'not enough healing', wipe: 'after the pull was lost', end: 'in the last seconds of the kill', mass: 'a mass death, ' + (d.mass || 0) + ' of us at once', own: 'their own mistake', fast: 'too fast to react', raid: 'the raid\'s mistake', ready: items + ' still ready', nothing: 'nothing left to press', nosave: 'nothing they had would have saved them', heal: 'a healing gap: little healing for ' + Math.round(g ? g.starved : 0) + ' s' + (has ? ', with ' + items + ' ready' : ''),
     shared: dread ? 'mind controlled by Dreadmarch (shared with the raid)' : noCtrl ? 'mind controlled off the edge (shared with the CC team)' : 'the raid\'s mistake' + ((raidK || raidL) ? ' (' + ((raidK || raidL).by ? (raidK || raidL).by + '\'s ' : '') + (raidK || raidL).mechanic + ')' : '') + ', but ' + items + ((defs.length ? defs : kit).slice(0, 2).length > 1 ? ' were' : ' was') + ' ready' }[why];
@@ -55647,7 +55653,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
   if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
   if (v.why === 'fast') return 'Nothing to fix on your side: ' + k + ' was too fast to react to.';
   if (v.why === 'mass') return 'Not on you: ' + k + ' killed ' + d.mass + ' of us at once' + (v.raidBy ? ' (' + v.raidBy + ')' : '') + '. Fix what set it off as a raid.';
-  if (v.why === 'raid') return 'Not on you: the raid\'s fault (' + (raidL ? raidL.mechanic : k) + ').';
+  if (v.why === 'raid') return 'Not on you: the raid\'s fault (' + (raidL ? raidL.mechanic : k) + ')' + (raidL ? '.' : ': the pull was already lost to it.'); /* (Nov 8, audit D10) */
   if (v.why === 'shared' && v.dread) return 'Raid: break the Dreadmarch shield before it ends. You: press your cancel macro the moment you\'re mind controlled.';
   if (v.why === 'shared') return /mind controlled/.test(v.word) ? 'Press your cancel macro the moment you\'re mind controlled; the CC team stops you.' : (v.defs.length ? 'Press ' + v.defs[0] : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.';
   if (v.why === 'nothing') return 'You had nothing left to press. ' + (d.healPct != null && d.healPct < 30 ? 'Little healing came in: stay in range and call for an external.' : 'Save a defensive for this point next time.');
