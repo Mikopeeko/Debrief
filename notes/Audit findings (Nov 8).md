@@ -196,3 +196,64 @@ Sweep: every death on Thursday Nov 5 `2r1KzqygWAFHkZT3` (22 pulls, 429 deaths, 2
 3. D6 (the taunting tank) with area 3's tank-swap rows.
 4. D8 (save models for every button), D5, D10.
 5. The wording set: D9, D11; then D12 (the checklist).
+
+## 3. Mechanics
+
+How the site judges mechanics today: `engine.js PACKS` (~182-290, the generic rules per boss: avoidable / debuff / interrupt / bossBuff / stacks / raidFail, matched by spell ID or by name) and `MODULES` (~694-780, one `build*()` per boss with its sections, maps, Pace card and a `diag` Data check). Every mistake goes through `M()` into `r.mistakes`; `strictView()` (~3640) regrades by strictness; `ui.js keptMistakes()` cuts at the wipe call; the Report card judges each mechanic against `TOP_MECH` (~30988, `mechJudge` / `mechTally` / `mechNight`), the avoidable panel against `AVOID_BASE` (kill bars by time), the Deaths and kit tiles against `RATE_BASE`, the wipe call against `WIPE_LINE` / `WIPE_MECH`.
+Sweep: the same 60 pulls (Thursday Coiled Altar ×22, the 10-boss log ×30 with 9 kills, Twin Fangs ×8 with 1 kill) through the real engine (scratch `audit3.js` → mistakes, sections, Data check per pull; in the shared notes folder, deaths-audit/). No module errors on any pull; every boss builds its sections.
+
+### M1. Every soaked Catalytic Bile on Vashnik is logged as a miss (S, analysis chat)
+- What's wrong: the pack rule `raidFail 1282616` ("landed with nobody under it and hit the whole raid") also matches by NAME, and the soaked bile's splash (1282602, the players within 6 yards) is called Catalytic Bile too. So every soak logs "Catalytic Bile went off and hit 5 players for 760K" (Low), while the module's own Catalytic Bile section on the same pull says every impact was covered (verdict good). The Data check shows 1282616 appeared 0 times on the kill; `STRICT_NOTE` already lists this row as one "more than half the top-100 kills have too".
+- Where: 10-boss log, Vashnik kill fight 43: 6 of them (0:42, 1:21, 2:06, 2:45, 3:30, 4:09), one per Malignant Catalyst.
+- Rule it should be: a rule with spell IDs matches by ID only (`ruleFor`'s name fallback is for rules without IDs); the module's Catalytic Bile section is the one judge. Same hazard for every pack rule whose IDs are the hit but whose name is also the cast (Final Ascension 1292780 vs 1292779, Frost Burst, Noxious Blast).
+- File: `engine.js` PACKS Vashnik, `ruleFor` / the pack matcher (~6220).
+
+### M2. The same event is logged twice (M, analysis chat)
+- What's wrong: several events produce two mistakes, so Also hurt (before its DOM dedupe), the Report card's Mechanics rows, "Nth time tonight" and the Debriefing counts all double them. Final Ascension: the pack's raidFail and the module's row (Lost Explorers kill fight 48, 3:06 ×2 High). Frost Burst: the module logs "1 player died to Frost Burst…" twice at 2:45 (Nymrissa kill fight 62). Revenge: "A Weakened Doomscale gained Revenge at 5:10" twice (Ula'tek kill fight 25). Malevolent Resonance: two High rows per player for one collision ("Their ghost touched another ghost" + "Hit by Malevolent Resonance (1.2M), and died"; Thursday pull 24 at 4:34/4:39 Phartsy, pull 29 at 8:32 ×2 players). Guillotine target: two High rows (D5).
+- Rule it should be: one event, one mistake. `M()` drops a mistake with the same mechanic, player and moment (within 2 s) as one already logged; pack raidFail rules a module also covers are removed from the pack (Final Ascension, Catalytic Bile, Noxious Blast, Shatter, Pulsing Tides, Unending Tides, Malignant Burst) and the module's row keeps the pack's tip.
+- File: `engine.js M()`, PACKS, `buildNymrissa` (~2186), `buildUlatek` (~5297), `buildLostExplorers` (~3104), Coiled Altar ghosts (~3936).
+
+### M3. One mechanic, three names (S, analysis chat)
+- What's wrong: a missed Visceral Burst kick on Twin Fangs is the mechanic "Missed interrupt" (the generic `r.kicks` path, ~7326), while the Coiled Altar's is "Wail of Terror" and Nek'zali's "Soulcoiler's Curse" (pack interrupt rules). A whirlpool death at Pop! on Nymrissa is "Wild Bite" for one player and "Swirling Whirlpools" for the next, same second, same detail ("Died to Swirling Whirlpools at Pop! 1"). Nek'zali's "Soul Transfer High: Got hit once." has no amount (the hit was absorbed) next to "Got hit once, for 954,587 avoidable damage".
+- Where: 10-boss log Twin Fangs kill fight 58 at 4:24; Nymrissa kill fight 62 at 1:57 (Drizzypink) and 1:58 (Ninjaristic); Nek'zali kill fight 5 at 1:48.
+- Rule it should be: the mechanic is always the boss spell ("Visceral Burst", with "(Kick)" in the card title), so W2's shared "who missed this job" lookup and the Report card rows work the same on every boss; one name per event; an absorbed hit reads "Got hit once (absorbed)".
+- File: `engine.js` ~7326 (`'Missed interrupt'`), `buildNymrissa` Pop! rows, the avoidable detail builder.
+
+### M4. Eternal Venom's "Reached 7 stacks" marks half the raid Medium at the end of every kill (M, analysis chat)
+- What's wrong: the stacks rule's threshold is 6, so at the end of both kills 10-11 of 20 raiders carry a Medium "Reached 7 stacks (aim to stay at or under 6)". The guide says stacks are lethal at 10 on Mythic (11 Normal) and are cleared at Ravenous Feast; the top-kill table itself says 38-47% of top raiders get this row. 106 of these over 10 Twin Fangs pulls, the most of any mechanic on the site. And they own deaths they have nothing to do with (D3).
+- Where: 10-boss log Twin Fangs kill fight 58 at 4:12-4:35 (10 players); Twin Fangs kill pull 37 at 5:46-6:01 (11 players).
+- Rule it should be: judge stacks by time like the avoidable bars (the 20 fastest kills' stacks at each minute, `AVOID_BASE` style): amber above the bar, red at 10 or a death to the venom; the first 6-7 stacks in the last minute of a kill are nothing. Flex's hold list (`mechanics-fix-queue` item 12, "Eternal Venom 8-9 yellow") is the same ask.
+- File: `engine.js` PACKS Twin Fangs (`stacks`, threshold 6), the stacks rule (~6289), `TOP_MECH`.
+
+### M5. Four bosses (and every Heroic) are judged without the top-kill tables (M/L, analysis chat)
+- What's wrong: `TOP_MECH` has Mythic tables for six bosses only (Nymrissa, Twin Fangs, Coiled Altar, Nek'zali, Ula'tek, Kith'ix). Sszorak, Vashnik, Entombed Sentinels and The Lost Explorers, and every Heroic pull, fall back to `mechJudge`'s stricter rule (red for a death or a quarter of the pulls, amber for anything else), so a Sszorak kill with 12 Tempest Medium rows marks 12 raiders amber with no "most raids get clipped by this too". `RATE_BASE` (the Deaths tile's and the kit tiles' top-kill parses) exists for The Coiled Altar Mythic only. `AVOID_BASE` is Mythic only, so Heroic raiders are judged against Mythic kill bars (the Boss coverage table's ❌ column). Flex's rule (`all-ten-bosses-rule`): nothing boss-specific is done until all 10 have it.
+- Where: 10-boss log Sszorak kill fight 53 (Tempest ×12 Medium, Virulence ×6), Vashnik kill fight 43 (29 Low rows), Entombed Sentinels kill fight 40 (39 rows).
+- Rule it should be: build the three tables for all 10 bosses on Heroic and Mythic with the recipes already written (`tm/topmech.js` + `gen_top.js`, `kit/kitbase.js`, `av/genbase.js`, memory `mechanics-judging-vs-top`, `kill-baselines`); until a boss has them, its Mechanics rows say "not judged against top raids yet" instead of amber.
+- File: `ui.js TOP_MECH / RATE_BASE / mechJudge`, `engine.js AVOID_BASE`, `notes/Guides/Boss coverage.md`.
+
+### M6. Tank-swap rows blame the tank who took the hit, on every boss (M, analysis chat; same fix as D6)
+- What's wrong: "Took a second Ravage with the first one's debuff still up" (Twin Fangs ~1858), "Took Dark Devastation with Devastated still on" (Kith'ix ~2438), "Took a second Dripping Fangs" (Vashnik ~2985), Water Jet "right after Water Jet" (Nymrissa ~2260), "Died to Blighted Sever on stack 3" (Coiled Altar) all land on the tank holding the boss. The guides say the other tank taunts before the hit (Coiled Altar: "the off-tank taunts just before the frontal"; Twin Fangs: "Swap after each set"; Kith'ix: "Devastation swaps").
+- Rule it should be: the row names the tank who should have taunted (the other tank, alive and without the debuff), with the fix "Taunt before the next <spell>"; the tank who took it is named only when no other tank was alive. Deaths read the same (D6).
+- File: the five tank-swap checks above, `ui.js deathVerdict()`.
+
+### M7. Four ghosts missing one Soul Sever is four player mistakes (S, analysis chat; check against the guide)
+- What's wrong: "Their ghost wasn't in Soul Sever at 5:04, so it stayed alive" is logged Medium for every player whose ghost the frontal missed; when 3-4 ghosts miss the same cast at once it is the frontal's aim, not four players. 55 such rows on Thursday (the most common Medium of the night).
+- Where: Thursday pull 12 at 5:04 (Dragooned, Volkovod, Trëèflêx, Phartsy at once), pull 11 at 3:05 / 3:36.
+- Rule it should be: one or two ghosts missed → the players' rows as now; three or more in one cast → one row for the cast ("Soul Sever at 5:04 missed 4 ghosts: aim it through the cluster") on the tank who aimed it, and the players' rows become notes. The guide's "aim it through the cluster" line is about Sever's orbs; confirm with Flex how Wolfthorn aims Soul Sever before building.
+- File: `engine.js` Coiled Altar `soulsever` section.
+
+### M8. Tracked spells never seen in a real pull (S, analysis chat)
+- What's wrong: the brief's rule is that every tracked spell ID appears in a real 12.1.5 pull. Across the 60 pulls these never did: Ula'tek Malignant Shell 1295360, Mother's Boon 1299764, Calcified Corpse 1306119 (10 pulls and a kill; the wipe rule uses a different ID for the same thing, `WIPE_MECH` "Serpent's Bite" 1318329); Vashnik Catalytic Bile (unsoaked) 1282616; The Lost Explorers Relic Rupture 1310028, Explosive Surprise 1297625, Bounce 1299854; Sszorak Unbound Ferocity 1296898; Nymrissa Shatter 1313456, Pulsing Tides 1258894 / 1271380; Entombed Sentinels Cultivated Burst 1284941; Nek'zali Swirling Spirit 1300239, Uncoiled Rage 1284034. Most are fail-only spells a kill never shows, so this is "unconfirmed", not "wrong".
+- Rule it should be: confirm each against a wipe in the log library (the saved `*/ev` folders hold hundreds of pulls) and mark the ones no pull ever contained as unverified in the Data check and in the guide's research note; settle Calcified Corpse on one ID.
+- File: `engine.js` module ID tables (UL_IDS, VS_IDS, LE_IDS, SZ_IDS, NY_IDS, ES_IDS, NZ_IDS), `ui.js WIPE_MECH`.
+
+### M9. The Guillotine target's two rows and the soaker's "own" (see D5) and the venom stacks owning deaths (see D3) (cross-reference, no new fix)
+
+### M10. For the record (no fix)
+- 60 pulls, 10 bosses, no module errors or "undefined"; every boss has a Data check, maps, a Pace or push check on 8 bosses, and the soak tolerances follow the agreed rule (Unstable Miasma "6 had 5 soakers, Mythic needs 8" is Medium, not red). Kith'ix: Extinguish without a mote is Low when they lived and High when they died, Light's Embrace motes are counted. Stone Breaker's tank row ("Missed Stone Breaker circle 1: it hit 17 players", fix "Tank: stand in each of the three circles in order") is right; its victims' deaths are D4. Also hurt, the Report card rows and the Timeline marks all read the same `keptMistakes` at the same strictness, so they agree except where M2 doubles an event (Also hurt hides the double in the DOM; the others don't).
+
+### Order to fix (my call)
+1. M1 + M2 (false and doubled mistakes): small, and they change counts on every tab.
+2. M5 (the tables for all 10 bosses, Heroic too): the biggest fairness gap.
+3. M4 (Eternal Venom by time) and M6 (the taunting tank, with D6).
+4. M3 (one name per mechanic, needed by W2's lookup), M7 (after Flex confirms), M8 (confirm the IDs).
