@@ -35765,7 +35765,11 @@ document.addEventListener('click', (e) => { const h = e.target.closest && e.targ
 /* (audit P7, Nov 8: the Defensives calls Debrief made itself carry the hit's name ("Defensive (Venom Rupture)"); a re-plan drops them so the new
    rule's calls replace them, and keeps every call a person added by hand (no hit name). Healthstone and potion calls stay) */
 const PG_AUTODEF = /^\s*time:\d+;ph:[\d.]+;tag:everyone;text:Defensive \([^)]*\);?\s*$/i;
-function pgCallsReset(text) { return String(text).split('\n').filter((l) => !PG_AUTODEF.test(l)).join('\n'); }
+const PG_PLAINDEF = /^\s*time:(\d+);ph:([\d.]+);tag:everyone;text:Defensive;?\s*$/i;
+function pgCallsReset(text) { const D = typeof NDZ_TL !== 'undefined' && NDZ_TL ? (NDZ_TL._orig || NDZ_TL) : null, hits = (D && D.hits) || [];
+  /* (older builds wrote their auto calls with no hit name: one that sits exactly 2 s before a big hit is the old planner's, not a person's) */
+  const oldAuto = (l) => { const m = PG_PLAINDEF.exec(l); return !!m && hits.some((h) => String(h.ph) === m[2] && Math.abs(+m[1] - (Math.round(h.rel) - 2)) <= 1); };
+  return String(text).split('\n').filter((l) => !PG_AUTODEF.test(l) && !oldAuto(l)).join('\n'); }
 function pgCdAdds(text, sug) {
   const have = new Set(String(text).split('\n').map((l) => l.trim())), O = btlOffs(), f0 = (l) => { const g = {}; for (const kv of l.split(';')) { const j = kv.indexOf(':'); if (j > 0) g[kv.slice(0, j).trim().toLowerCase()] = kv.slice(j + 1).trim(); } return g; };
   const adds = sug.filter((l) => { if (have.has(l)) return false; const g = f0(l), abs = btlAbs({ ph: +g.ph || 1, t: +g.time || 0 }, O); if (/^everyone$/i.test(g.tag || '')) { const k = /^healthstone/i.test(g.text || '') ? 'hs' : /^defensive/i.test(g.text || '') ? 'def' : 'pot'; return !btlCallClash(k, abs, -1, O); } return !btlClash(g.tag || '', +g.spellid || 0, abs, -1, O); }); /* (never one that clashes with yours, Oct 27) */
