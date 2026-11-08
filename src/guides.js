@@ -5899,10 +5899,10 @@ function ppCardsCA(J, M, U, P) {
 }
 // ===== Ula'tek, Mythic (Oct 26, the user: "Exact same setup" as The Coiled Altar; Plan's Jobs cards in 2caefe9) =====
 // (the note's jobs, in the lines Plan writes: "Egg Carriers:" (or by area: "Egg Melee:", "Egg Left:", "Egg Right:", "Egg Far:", "Egg Backup:"), "Egg Shields:", "Team 1:" / "Team 2:" (Spectral Coils), the intstart kick lines
-// (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite Melee:" / "Bite Ranged:" / "Bite Healers:",
+// (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite 1:" / "Backup Bite 1:" (to 3; Mythic) or "Bite Melee:" / "Bite Ranged:" / "Bite Healers:" (Heroic's groups),
 // "Incubation Beam:", "Clutch Grips:", "Freedom:")
 function ppReadUL(N, P) {
-  const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [] }, beam: '', grips: [], freedom: [] };
+  const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [], sets: [[], [], []], back: [[], [], []] }, beam: '', grips: [], freedom: [] };
   let blk = '';
   for (const l of N.lines) {
     const lab = l.label.toLowerCase(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name), w0 = (l.words[0] || '').toLowerCase(); let m;
@@ -5911,6 +5911,7 @@ function ppReadUL(N, P) {
     if (!who.length) continue;
     if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) J.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) J.eggs = who; else if (/egg shields?/.test(lab)) J.shields = who;
     else if ((m = /^team\s*(\d)/.exec(lab))) J.teams[+m[1] - 1 ? 1 : 0] = who;
+    else if ((m = /^(backup\s*)?bite\s*([123])\b/.exec(lab))) J.bite[m[1] ? 'back' : 'sets'][+m[2] - 1] = who; /* (Mythic's sets since Oct 6, J1) */
     else if ((m = /bite\s*(melee|ranged|healers?)/.exec(lab))) J.bite[m[1].startsWith('heal') ? 'healers' : m[1]] = who;
     else if (/incubation|beam/.test(lab)) J.beam = who[0]; else if (/grip/.test(lab)) J.grips = who; else if (/freedom/.test(lab)) J.freedom = who;
   }
@@ -5978,8 +5979,18 @@ function ppCardsUL(J, M, U, P) {
     cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), noNames: true, labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
       legend: G.map((ids, g) => ppG('Group ' + (g + 1) + ': soaks ' + list(nums(g)), C3[g], J.trans[g].map((n) => ppI(P, n)))),
       foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
-  // Serpent's Bite: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)
-  if (J.bite.melee.length || J.bite.ranged.length || J.bite.healers.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
+  // Serpent's Bite, Mythic: the three targets stack and the set's three soakers stand in all three circles (set 1 drawn; the backups with the rest)
+  if (J.bite.sets.some((s) => s.length)) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
+    const c = [-10, 20], TG = [['m7', 'Melee target', [1.6, 0.9]], ['h4', 'Healer target', [-1.6, 0.9]], ['r7', 'Ranged target', [0, -1.6]]], lab = [];
+    TG.forEach(([s, nm, d]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0] + d[0], c[1] + d[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false }); });
+    const ids = J.bite.sets[0].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i, ids.length, 3.4); k.at(0, q, c[0] + d[0], c[1] + d[1]); });
+    lab.push([ids.concat(TG.map((x) => x[0])), 'Bite 1', R, '#fff', 7, false]);
+    const T = GDZ_RAID.filter((s) => s[0] === 't' && !put.has(s)); T.forEach((s, i) => { put.add(s); k.at(0, s, 26 + i * 3, 22 - i * 3); }); rest(k, put, [10, 4], 6);
+    cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Your set stands in all three circles)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
+      legend: J.bite.sets.map((s, i) => ppG('Bite ' + (i + 1) + (J.bite.back[i].length ? ' · backup: ' + J.bite.back[i].join(', ') : ''), R, s.map((n) => ppI(P, n)))).concat([ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stack on one spot toward the middle.')]),
+      foot: 'The three targets stack and the set\'s three soakers stand in all three circles at once. A big defensive as it ends, then personals for 18 seconds; spread at once and send your wave away from the raid.' }); }
+  // Serpent's Bite, Heroic: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)
+  else if (J.bite.melee.length || J.bite.ranged.length || J.bite.healers.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
     const TG = [['melee', 'Melee target', [20, 18], 'm7'], ['healers', 'Healer target', [-10, 20], 'h4'], ['ranged', 'Ranged target', [-30, 28], 'r7']], lab = [];
     TG.forEach(([g, nm, c, s]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0], c[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false });
       const ids = J.bite[g].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i + 1, ids.length + 1, 4.2); k.at(0, q, c[0] + d[0], c[1] + d[1]); }); lab.push([ids.concat(s), nm.replace(' target', ''), R, '#fff', 7, g === 'healers']); });

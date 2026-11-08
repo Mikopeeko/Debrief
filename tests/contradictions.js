@@ -261,6 +261,12 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
 { const m = /const CD_REAL = (\{[^}]*\})/.exec(UI), CR = m ? require('vm').runInNewContext('(' + m[1] + ')') : null;
   if (!CR || CR['Divine Hymn'] !== 120 || CR.Rewind !== 180 || CR.Darkness !== 180 || CR['Anti-Magic Zone'] !== 180) say('the page code', 'cooldowns', 'CD_REAL is missing or has the wrong lengths (Divine Hymn 2:00, Rewind 3:00, Darkness 3:00, Anti-Magic Zone 3:00 from the logs)');
   for (const t of ['NDZ_CDK', 'NDZ_CDRECH', 'NDZ_CDPOW', 'RCD_CD']) if (!UI.includes('cdReal(' + t + ',')) say('the page code', 'cooldowns', t + ' no longer reads its lengths from CD_REAL: the same cooldown would have two lengths on two tabs'); }
+/* (audit J1, Nov 8: Ula'tek's Serpent's Bite is planned as the Guides tab says since Oct 6: three sets with a backup each, never "target plus 4") */
+{ const GJ = fs.readFileSync(path.join(SRC, 'guides.js'), 'utf8');
+  if (/target plus 4/i.test(UI)) say('the page code', 'jobs', 'the Plan still says "target plus 4" for Serpent\'s Bite; the Guides tab says three soakers, stacked, since Oct 6');
+  for (const l of ['Bite 1', 'Backup Bite 1', 'Bite 3', 'Backup Bite 3']) if (!UI.includes("label: '" + l + "'")) say('the page code', 'jobs', 'the Serpent\'s Bite card has no "' + l + '" slot');
+  if (!GJ.includes('bite\\s*([123])')) say('the page code', 'jobs', 'the Guides tab\'s picture plan does not read the "Bite 1/2/3" lines the Plan writes');
+  if (!UI.includes("'Bite Melee', want: 'all', heroic: true")) say('the page code', 'jobs', 'Heroic\'s Serpent\'s Bite groups are not whole-raid groups (want all, Heroic only)'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
