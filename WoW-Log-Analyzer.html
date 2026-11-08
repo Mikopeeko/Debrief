@@ -12961,6 +12961,37 @@ html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
 html body #assignBox [data-planv="night"] { display: none !important; } /* (the Who plays grid is gone (Nov 7): no links to it) */
 html body #assignBox #ndzTl .btl > span.btl-x { border-left: 1px dashed rgba(255,255,255,.75); z-index: 6; } /* (the hover line, top to bottom (Nov 7)) */
 html body #view.plan-page #assignBox .pg-rc { border-radius: 3px !important; } html body #view.plan-page #assignBox .panel.pg-roster > .pg-zone { border-radius: 4px !important; } /* (squarer name chips and boxes, the new look (Flex, Nov 7: "the corners on the name boxes is too round")) */
+/* (Edit roster, tidied (Flex, Nov 7: "can we improve the design of this page? its not bad but could be tidy/polished")) */
+html body #assignBox .panel.plan-red { padding: 18px 20px 0; }
+html body #assignBox .panel.plan-red > .ndz-dph { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 0 0 12px; border-bottom: 1px solid var(--line); background: none; }
+html body #assignBox .panel.plan-red > .ndz-dph > b { font: 700 19px var(--head); }
+html body #assignBox .panel.plan-red > .ndz-dph > .sub { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; }
+html body #assignBox .panel.plan-red .plan-lab { display: block; margin: 0 0 4px; color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
+html body #assignBox .panel.plan-red #planRosName { width: 100%; max-width: 360px; height: 34px; }
+html body #assignBox .panel.plan-red .ndz-pd { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
+html body #assignBox .panel.plan-red .ndz-pd > .sub:first-child { margin-right: 4px; color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
+html body #assignBox .panel.plan-red .ndz-pd > :is(.btn, select, input) { height: 34px !important; min-height: 34px !important; padding-top: 0 !important; padding-bottom: 0 !important; font-size: 14px !important; }
+html body #assignBox .panel.plan-red .pg-altn { margin: 10px 0 4px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 4px; background: rgba(255,255,255,.02); font-size: 14px; }
+html body #assignBox .panel.plan-red .plan-ecol { margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); }
+html body #assignBox .panel.plan-red .plan-ecol > h4 { margin: 0 0 6px; color: var(--text); font: 700 14px var(--head); letter-spacing: .04em; text-transform: uppercase; }
+html body #assignBox .panel.plan-red .ndz-drg { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: start; gap: 8px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); }
+html body #assignBox .panel.plan-red .ndz-drg:first-of-type { border-top: 0; }
+html body #assignBox .panel.plan-red .ndz-drl { padding-top: 5px; color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
+html body #assignBox .panel.plan-red .ndz-drn { display: flex; flex-wrap: wrap; gap: 5px; }
+html body #assignBox .panel.plan-red .plan-ech { width: 140px !important; min-width: 0; height: 24px; padding: 0 6px !important; border-radius: 3px !important; font-size: 13.5px; } /* (compact chips (Flex, Nov 7: "why are the chips so big")) */
+html body #assignBox .panel.plan-red .plan-ech > .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #assignBox .panel.plan-red .plan-ech { display: flex !important; align-items: center; gap: 6px; }
+html body #assignBox .panel.plan-red .plan-ech > .plan-eb[data-plrspec] { order: -1; flex: none; width: 18px !important; min-width: 18px !important; height: 18px !important; margin: 0 !important; opacity: 1 !important; padding: 0 !important; overflow: hidden; background: none !important; border: 0 !important; border-radius: 3px; }
+html body #assignBox .panel.plan-red .plan-ech > .plan-eb[data-plrspec] img { display: block; width: 18px; height: 18px; } /* (the spec icon always shows, like the chips below (Nov 7)) */
+html body #assignBox .panel.plan-red .plan-out .plan-ech { opacity: .62; } html body #assignBox .panel.plan-red .plan-out .plan-ech:hover { opacity: 1; }
+html body #assignBox .panel.plan-red .plan-bench > .sub, html body #assignBox .panel.plan-red .plan-ecol > p.sub { margin: 4px 0 0; color: var(--faint); }
+html body #assignBox .panel.plan-red .plan-add { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); }
+html body #assignBox .panel.plan-red .plan-add > b { display: block; color: var(--text); font: 700 14px var(--head); letter-spacing: .04em; text-transform: uppercase; }
+html body #assignBox .panel.plan-red .plan-add .ndz-pd { margin-top: 8px; } html body #assignBox .panel.plan-red #planAddN { width: 200px; }
+html body #assignBox .panel.plan-red .plan-paste { margin: 10px 0 14px; } html body #assignBox .panel.plan-red .plan-paste > summary { color: var(--gold); font-size: 14px; cursor: pointer; }
+html body #assignBox .panel.plan-red .ndz-wfoot { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 12px; margin: 0 -20px; padding: 12px 20px; border-top: 1px solid var(--line); background: var(--panel); }
+html body #assignBox .panel.plan-red .ndz-wfoot > .btn { height: 36px; min-height: 36px; } html body #assignBox .panel.plan-red .ndz-wfoot > #planRosMsg { margin-left: auto; } html body #assignBox .panel.plan-red .ndz-wfoot > #planRosOk { margin-left: 0; }
+@media (max-width: 640px) { html body #assignBox .panel.plan-red .ndz-drg { grid-template-columns: 1fr; } html body #assignBox .panel.plan-red .ndz-drn { grid-template-columns: repeat(2, minmax(0, 1fr)); } html body #assignBox .panel.plan-red > .ndz-dph { flex-wrap: wrap; } html body #assignBox .panel.plan-red > .ndz-dph > .sub { margin-left: 0; } }
 /* (Kicks: just how many of each (Flex, Nov 7)) */
 html body #assignBox details.bj-kickd.pv-kc > :not(summary) { display: none !important; }
 html body #assignBox details.bj-kickd.pv-kc > summary { pointer-events: none; }
