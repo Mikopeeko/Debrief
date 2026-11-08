@@ -22,6 +22,23 @@ Graphs meter row ([graphs-tab-bars-rule]). Nothing copies their look, and nothin
 | B5 | **Name tip gets stuck.** After clicking a name, its hover box ("click for the breakdown") stays on screen over the open breakdown. | Damage list |
 | B6 | **Boss % doesn't match.** Debrief: "Wipe, boss at 11%". The log's pull list: "24% P3". Worth one look at which boss/number each uses. | Pull picker, banner |
 | B7 | **The side menu jumps.** Opening Deaths or Damage taken adds a sub-item ("What killed them", "Mechanic damage") that pushes every item below it down, so the next click lands on the wrong item. | Graphs side menu |
+| B8 | **On a kill, Deaths and Dispels are missing from the menu.** Twin Fangs kill (Oct 14): the Health list shows 3 deaths (Hobbz, Ironvan, Tyralien), but there's no Deaths item to open. | Graphs side menu, kill pulls |
+
+### Second check: Flex's Twin Fangs Mythic kill (Oct 14, report 9DRWhKnZbHtQgf4a, fight 37)
+
+Flex asked that his own kill be used too. The same checks on a kill, Healing first:
+- **Item levels are wrong here too (B2 confirmed):** Tyralien 309 (log 328), Ironvan 301 (log 319), Arsyn 310 (log 329).
+  It's about 19 lower for some players every time, so it looks like one bug, maybe gear read at the wrong moment.
+- **The raid chart has no hover box (confirmed).** The Healing chart shows nothing on hover, on a kill as well.
+- **Kills do show a Parse column** (healers: Huservoker 59, Flëxørçïst 69, Optt 21, Ashdknight 19, close to the log's numbers).
+  The gap is only that wipes have no parse column. The log shows a parse on wipes too.
+- **Healing totals are a bit higher than the log's** (Flëxørçïst 156.6M vs 152.6M; overheal 39.5% vs 40.3%). That's small,
+  but worth one look at what each counts (absorbs or pets).
+- **The pill names fit the fight** ("Both Fangs", "One Fang left"), which is better than the log's stage names.
+- **The log only:** clicking a name in the chart legend adds that player's own line next to the total, with a second scale. Our "Compare
+  players" does the same job.
+- **The log only:** a plain note under the chart says what's left out ("damage to Brooding of Ithraz is excluded").
+  We should say the same when adds are left out of a total.
 
 ---
 
@@ -62,7 +79,7 @@ Size: **S** under a day, **M** a day or two, **L** bigger.
 | Feature | WCL | Debrief now | Gap | Value | Size |
 |---|---|---|---|---|---|
 | Ranked list: total, %, DPS, ilvl, active | Yes, plus parse % and ilvl % | Total, DPS, %, ilvl, active | Parse % column on the pull | Must | M |
-| Parse % on the pull | Parse % per player + hover with spec and count | Parses exist elsewhere on the site | Show it as a plain number column on Damage and Healing (it's a number, not a verdict) | Must | M |
+| Parse % on the pull | Parse % per player on kills **and wipes** + hover with spec and how many parses | Parse column on kills (checked on the Twin Fangs kill); none on wipes | Add parse on wipes, and a hover with spec + how many parses | Nice | M |
 | Damage to one enemy | Pick any enemy or add set | "Target: All enemies" picker + By target | Have it | — | — |
 | By ability (whole raid) | Yes | Yes | Have it | — | — |
 | Spell columns | Casts, avg cast, hits, avg hit, crit %, **uptime %**, **miss %**, **DPS** per spell | Share, casts, avg cast, hits, avg hit, crit % | Add uptime % (DoTs) and per-spell DPS | Nice | S |
@@ -126,14 +143,14 @@ Size: **S** under a day, **M** a day or two, **L** bigger.
 
 ## Top 10 to build first
 
-1. **Fix the deaths list (B1) and item levels (B2).** Raiders will trust nothing else on the page if the death count is wrong.
+1. **Fix the deaths list (B1) and item levels (B2, seen on both pulls).** Raiders will trust nothing else on the page if the death count is wrong.
 2. **Line-by-line death recap with buff icons.** "What killed me and was my defensive up" is the first thing every raider opens after a wipe.
 3. **Cast timeline per player (icons per spell, hover for time and target).** It's the main thing raiders use to see when cooldowns went out, and we have nothing like it on Graphs.
 4. **Hover box on the raid chart.** The player chart already has a great one; the raid chart shows nothing, which feels broken.
 5. **Hit/crit/min/max hover on spell bars.** It's the most-used hover on their site and costs very little.
 6. **"Watch this moment" from Graphs into our replay.** One click from a death or a spike to the map answers "where was I standing".
 7. **Biggest hit, hits and mitigated % on Damage taken.** "What one-shot me" is asked every night.
-8. **Parse % column on Damage and Healing for the pull.** Raiders look at it first, and it's a plain number, not a verdict.
+8. **Show Deaths in the menu on kills (B8), and add parse % on wipes.** Kills hide the Deaths view even when people died, and wipes have no parse column, though raiders look at both first.
 9. **Drag-to-zoom recounts every list, with a Reset button.** Lets people check one burn window, like Bloodlust in P3.
 10. **Easy-to-hit death dots, with a hover line.** Right now 18 dots pile up in the last second and you can't pick one.
 
