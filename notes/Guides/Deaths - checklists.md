@@ -5,55 +5,57 @@ Three checklists for judging deaths the same way every time. The research and th
 
 ---
 
-## A. Judging one death (in this order; the first line that fits wins)
+## A. Judging one death (in this order; the first line that fits wins) — the Nov 8 audit's rules
 
-1. **After the wipe filter?** (later than the Nth death, default 2) → *wipe*, not graded.
-   Exception: their own avoidable death while fewer than a quarter of the raid is dead (5 of 20) → still counts.
+0. **The hit that killed them** is the biggest hit of their last 4 seconds when it was well over the finishing tick (1.5 times it and a tenth of
+   their health), else the last hit. Every rule below reads that hit (D2). Time Dilation's held-back damage reads as the hit it held back (D11).
+1. **After the wipe call?** (later than the call + 0.5 s, the same cut as the Deaths tile and the mistakes) → *wipe*, not graded. No exceptions (Nov 5).
 2. **Last 20 s of a kill?** → info only (unless it's their own mistake).
-3. **Mass death?** 3+ of us dead within 1.5 s to the same hit → *the raid's event*, weight 0.
-   Exception: the player whose own mistake *was that hit* (stood in that Sever, their ghost touched another).
-4. **Mind-controlled off the edge** (Dreadmarch aura on, fell or no damage) → *shared*, half.
-   Also without a Dreadmarch row (Nov 1, Flex: Boltzzx read "Too fast: Refraction"): the Dreadmarch debuff on them in their last 6 s
-   (started within 20 s) and no killing hit (no hit of 10%+ of their health from someone else as they died, or a fall); or a killing
-   hit while still controlled or freed under 2 s before. The card says how: off the edge, our own damage on the shield, or a boss hit.
-5. **Their own mistake?** One of these, about the hit that killed them:
-   - a mechanic mistake of theirs in the last 10 s (a soak they missed, Gravebound fragments, ghost collision, Sever cone);
-   - dodgeable damage did 50%+ of their last 15 s;
-   - the avoid panel judged their last hit avoidable **and** dodgeable damage did 25%+ of their last 15 s.
-   → *own*, weight 1. A tiny dodgeable tick at the end is not enough.
-6. **Too fast?** From 50%+ health to dead in 2 s or less (tanks: from 90%+) → not on them, weight 0.
-7. **The raid's mistake** linked within 4 s (adds alive too long, missed soak, Eternal Nightfall cast)?
-   → weight 0; but if they also sat at or under 35% for 2+ s with kit ready → *shared*, half.
-7a. **Not enough healing?** (Oct 26, the user: "the player did what they could but healers simply did not heal them enough") All of:
-   no avoidable damage (under 10% of their last 15 s), no defensive, Healthstone or self-heal of theirs left unused (pressed, or none
-   ready; a health potion isn't counted, we can't see who carries one), and 4 s or more in a row under 40% health while healing from
-   others over each 3 s was under 10% of their health (`d.gap.run40`), with half the healers or more alive and one within 40 yards.
-   Top Coiled Altar kills: survivors sat like that 3.5 s at most in 99 of 100 low stretches (2,161 stretches, 19 kills), and no top
-   kill death qualifies. → *noheal*, not on them: the healing team's, or the healer a note line puts on them ("Holypal: Tankone").
-   Healer Report cards show it as a fact, never graded. Oct 22 + Oct 21 Coiled Altar and a Twin Fangs night: 1 death of 495 counted.
-7b. **A healing gap?** (Oct 22, the user: "is it the healers fault?") In their last 15 s, 5 s or more under 50% health while
-   healing from others over each 3 s was under 10% of their health (`d.gap.starved`), AND half the healers or more alive, one
-   within 40 yards, AND no raid-wide damage (under 4 of the pull's top-20% damage seconds) → *heal*: half on them if something
-   was still ready (step 8), otherwise not on them. Blame the healers as a team, never one named healer. Top guilds' survivors
-   almost never sit 5 s+ like that; on Oct 21 one death did, and it was the player's own Axegrinder (step 5 wins).
-8. **Something still ready that would have helped?**
-   - a personal defensive (section C) that was off cooldown → *ready*, weight 1;
-   - a Healthstone or health potion **and** 2+ s at or under 35% first → *ready*, weight 1;
-   - a hit bigger than 1.5× their health: only an immunity counts as "would have helped".
-9. Otherwise → *nothing left to press*, half.
+3. **Mass death?** 3+ of us dead within 1.5 s to the same killing hit → *the raid's event*, weight 0, and the line names the cause when it is
+   known ("Soul Sever killed 3 of us at once (Tyralien didn't taunt before Soul Sever)").
+   Exception: the player whose own mistake *was that hit* (stood in that Sever, their ghost touched another), unless a raid miss on that very hit is
+   logged too (nobody soaked the Globule): then it is the raid's.
+4. **Mind-controlled off the edge** (Dreadmarch aura on, fell or no damage) → *shared*, half; the card says how (edge, our damage, a boss hit).
+5. **Forced by someone else or by the raid?** → *forced*, not on them, in the verdict's own words, and the fix is the raid's (D1, D4, D6):
+   feared by an unkicked Wail of Terror (the missed kick); a short Guillotine soak (the missing soakers); clipped by someone else's Gloombomb;
+   orbs someone else set off; an axe dropped on the raid (the target); a raid miss or another player's Serious miss that IS the killing hit within
+   4 s ("Ironvan missed Stone Breaker circle 2", "a Caustic Globule nobody soaked exploded on the raid"); a tank swap that didn't happen (the
+   tank who should have taunted is named; the tank who took it is *shared* when a defensive or external was ready, otherwise *forced*).
+5a. **The pull's wipe mechanic?** A death to the mechanic Why we wiped names (the unbroken shield's Eternal Nightfall) → *raid*, weight 0, unless
+   their own mistake was that very mechanic (no mote for Extinguish stays theirs) (D10).
+6. **Their own mistake?** Only a mistake of theirs *about the hit that killed them*, or a known chain to it (Soul Sever → Gravebound, a ghost
+   touch → Malevolent Resonance, an egg → a Viper, a soak or axe they stood in, no mote → Extinguish, Suffocating Darkness → Suffocation);
+   or dodgeable damage did 50%+ of their last 15 s; or the avoid panel judged the killing hit avoidable. A stack-count note ("reached 7 stacks")
+   or an unrelated mistake in the last 10 s never owns a death (D3). → *own*, weight 1.
+   The Guillotine target with no external → *shared* (an immunity or a big defensive was theirs to press; the external is the raid's plan); a
+   soaker who died in a full soak → *own* with a defensive or Healthstone ready, else *nothing left to press* (D5).
+7. **Too fast?** From 50%+ health to dead in 2 s or less (tanks: from 90%+), or a hit bigger than their health with no health history → not
+   on them, weight 0.
+8. **The raid's mistake** linked within 4 s (adds alive too long, a missed soak)? → weight 0; *shared*, half, if something of theirs was ready.
+8a. **Not enough healing?** (Oct 26) no avoidable damage, nothing of theirs left unused, 4 s or more under 40% with under 10% of their health
+   healed by others over each 3 s, half the healers alive and one in range → *noheal*, the healing team's (or the healer a note line puts on them).
+8b. **A healing gap?** (Oct 22) 5 s or more under half health with little healing from others, healers alive and in range, no raid-wide damage →
+   *heal*: half on them if something was still ready, otherwise not on them.
+9. **Something still ready that would have saved them?** Every defensive has a save model (D8): a heal share, a damage share, an absorb or an
+   immunity, read against the damage that followed; a hit bigger than 1.5× their health needs an immunity. → *ready*, weight 1; the words and
+   the fix name the same button, the cheapest save that works first (D9).
+10. Otherwise → *nothing left to press* (half), or *nothing they had would have saved them* (not on them).
+
+One count everywhere (D7): dead at the call (the big number), on the player (own + ready whole, halves as ½), mass deaths and deaths after the call
+as the small print; one cut, the call + 0.5 s, for deaths and mistakes alike.
 
 ## B. What the death line says (coaching follows the verdict)
 
 | Verdict | Say | Never say |
 |---|---|---|
 | own | the fix for the mistake that killed them ("walk over every soul fragment", "only the tank in front") | "press a defensive" |
-| ready | what was ready and how long they had ("98% to dead over 14 s with Unending Resolve ready") | — |
+| ready | what was ready and how long they had ("98% to dead over 14 s with Unending Resolve ready"); the same button in the words and the fix | — |
 | fast | "Too fast to react: X took you from 91% to dead in 0.4 s." | any button advice |
-| mass | "Not on you: X killed 14 of us at once." + what caused it, if known | "press Ice Block" |
-| shared | both halves, one sentence each | — |
-| nothing / raid | what hit them; the raid's fix | blame |
-
-Voice: raid lead, "you"/"we", short, fix first. One name per mechanic. No guide or site names.
+| mass | "Not on you: X killed 14 of us at once (what set it off, when known)." | "press Ice Block" |
+| forced | the verdict's own words ("Feared by an unkicked Wail of Terror: the missed kick, not them.") and the raid's fix (kick every Wail, 5 into every soak, the tank's circles, taunt before the next Sever) | "after the pull was lost" |
+| shared | both halves, one sentence each ("the raid's mistake (Tyralien's Soul Sever), but Divine Shield was ready") | — |
+| raid / nothing / noheal / nosave | what hit them; the raid's fix ("Not on you: the raid's fault (Eternal Nightfall): the pull was already lost to it") | blame |
+| no hit logged | "died with no logged hit" and no verdict word | a killer's name |
 
 ## C. Kit per class (what can count as "ready")
 

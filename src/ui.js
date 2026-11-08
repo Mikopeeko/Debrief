@@ -29935,7 +29935,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
     const m = ms.find((x) => lc(x.mechanic) === lc(k)) || ms.find((x) => ownM.some((l) => l.mechanic === x.mechanic && Math.abs(l.t - x.t) < 0.1)) || null;
     if (/^gravebound$/i.test(k)) return 'Get healed or use a defensive before you pick up the last soul fragment.';
     return (m && m.fix && dbfTip1(m.fix)) || (rw && oaFlip(rw.why)) || (d.ownAvoid && pv[0] && dbfTip1(pv[0])) || 'Stay out of ' + k + ': it\'s dodgeable.'; }
-  if (v.why === 'ready') { const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), first = v.kit.length ? v.kit[0] : v.defs[0], sv = d.saves && d.saves[first];
+  if (v.why === 'ready') { const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k'), first = (v.defs.length ? v.defs : v.kit)[0] /* (Nov 8, audit D9: the same order as the verdict's words, the cheapest save that works first) */, sv = d.saves && d.saves[first];
     const nm = first === 'a healing potion' ? 'health potion' : first, after = deathHit(d) ? ' to survive the ' + deathHit(d) + ' that followed' : ' to survive what followed';
     if (sv && sv.amt) return (v.kit.length || sv.heal ? 'Use your ' + nm + ' when you drop under half: it heals about ' + kf(sv.amt) + ', enough' : 'Press ' + nm + ' when you drop under half: it takes about ' + kf(sv.amt) + ' off, enough') + after + '.';
     if (sv && sv.imm) return 'Press ' + nm + ' when you drop under half: it stops the hits' + after.replace(' to survive', ', so you survive') + '.';
@@ -31756,7 +31756,7 @@ const dbfD = (txt, good) => '<span class="lp-d ' + (good ? 'up' : 'dn') + '">' +
 // (a pull that never moved the boss, or ended in its first 15 seconds, is a reset: not compared, not counted)
 const dbfReset = (it) => !!it && !it.kill && ((pullPct(it) != null && pullPct(it) >= 99.95) || (it.duration != null && it.duration < 15));
 // (what a death was to, in words: the ability, or whose melee)
-const dbfTo = (d) => { const a = deathHit(d); return !a || a === 'Melee' ? (d.killer && d.killer !== 'Unknown' ? esc(d.killer) + '\'s melee' : 'a melee hit') : mech(a, deathHitId(d)); }; /* (Nov 8, audit D2: the killing hit) */
+const dbfTo = (d) => { const a = deathHit(d); return !a ? (d.killer && d.killer !== 'Unknown' ? esc(d.killer) + '\'s melee' : 'no logged hit') /* (Nov 8, audit D11) */ : a === 'Melee' ? (d.killer && d.killer !== 'Unknown' ? esc(d.killer) + '\'s melee' : 'a melee hit') : mech(a, deathHitId(d)); }; /* (Nov 8, audit D2: the killing hit) */
 // (a check's sentence with its counts: "2 of your 5 ...", and when every one counts, "Both of your ..." or "All 6 of your ...")
 const pairTxt = (t, ok, n) => { if (ok === n && n > 1) t = t.replace('{ok} of your {n}', (n === 2 ? 'both' : 'all ' + n) + ' of your'); t = t.replace('{ok}', String(ok)).replace('{n}', String(n)); return t.charAt(0).toUpperCase() + t.slice(1); };
 const dbfTimes = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');

@@ -2288,7 +2288,8 @@ function buildNymrissa(ev, r, h) {
       const who = [...new Set([...wi.keys(), ...bi.keys()])];
       const rows = who.map((g) => {
         const tw = wi.get(g), tb = bi.get(g), t1 = tw ?? tb, d = r.deaths.find((x) => x.guid === g && x.t >= t1 - 0.2 && x.t <= p + 15 && /whirlpool|wild bite|pop!/i.test(x.ability || ''));
-        if (d) M(d.t, pname(g), tb != null ? 'Wild Bite' : 'Swirling Whirlpools', tb != null ? NY.bite : NY.whirlHit, 'High', 'Died to ' + d.ability + ' at Pop! ' + (i + 1) + '.', tb != null ? 'Stand where Pop!\'s knockback keeps you on land, and get out of the water at once.' : 'Find the one gap in the whirlpools and stand in it before they surge in.');
+        if (d) { const byAb = /whirl/i.test(d.ability || '') ? 'Swirling Whirlpools' : /wild bite/i.test(d.ability || '') ? 'Wild Bite' : tb != null ? 'Wild Bite' : 'Swirling Whirlpools'; /* (Nov 8, audit M3: one name per death, the spell that killed them) */
+          M(d.t, pname(g), byAb, byAb === 'Wild Bite' ? NY.bite : NY.whirlHit, 'High', 'Died to ' + (d.ability || byAb) + ' at Pop! ' + (i + 1) + '.', byAb === 'Wild Bite' ? 'Stand where Pop!\'s knockback keeps you on land, and get out of the water at once.' : 'Find the one gap in the whirlpools and stand in it before they surge in.'); }
         const nth = (popN.get(g) || 0) + 1; popN.set(g, nth);
         const pWhy = d ? { why: pname(g) + (tw != null ? ' was hit by a whirlpool' : '') + (tw != null && tb != null ? ' and then' : '') + (tb != null ? ' knocked into the water' : '') + ' at Pop! ' + (i + 1) + (nth > 1 ? ' (their ' + nth + (nth === 2 ? 'nd' : nth === 3 ? 'rd' : 'th') + ' time)' : '') + ', and died to ' + (d.ability || 'it') + '.', next: tb != null ? 'Stand where the knockback keeps you on land (back to the bubble), and get out of the water at once.' : 'Find the one gap in the whirlpools and stand in it before they surge in.' } : {};
         return [{ p: pname(g), ...pWhy }, { t: t1 }, { txt: [tw != null ? 'hit by a whirlpool' : '', tb != null ? 'knocked into the water' : ''].filter(Boolean).join(' and '), dim: !d, sub: nth > 1 ? 'again (' + nth + ' times)' : '' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }];
@@ -4567,7 +4568,9 @@ function buildCoiledAltar(ev, r, h) {
       note: removed.length + ' of ' + out.length + ' ghosts removed' + (missed.length ? ', ' + missed.length + ' missed' : '') + (est ? ' (estimated from spawn spots; Blighted Sever hits on ghosts are not always logged)' : ''),
       title: S(f.n)[1] + ' at ' + h.fmtT(f.t) + ': ghosts where they most likely were (estimated: the log only places a ghost where it spawned). Green ring = removed, red X = missed' };
     /* (Coiled Altar fix 7, Oct 24: 9 of 11 top kills; a missed ghost is walked back for the next frontal) */
-    if (!est) for (const g of missed) { const ow = owner447(g.guid); MS(f.t, ow ? pname(ow) : 'Raid', f.n, 'Medium', (ow ? 'Their ghost' : 'A ghost') + ' wasn\'t in ' + S(f.n)[1] + ' at ' + h.fmtT(f.t) + ', so it stayed alive.', 'Stare at your ghost so it stays where the tank aims Soul Sever, or walk it back into the frontal before the next one.', map); } /* round 447 ghost spots: a missed ghost is a Moderate fail (Flex, Nov 1) */
+    /* (Nov 8, audit M7: three or more ghosts missed by one cast is the frontal's aim, one row on the tank who took it; one or two stay the players') */
+    if (!est && missed.length >= 3) { MS(f.t, tankG ? pname(tankG) : 'Raid', f.n, 'Medium', S(f.n)[1] + ' at ' + h.fmtT(f.t) + ' missed ' + missed.length + ' ghosts (' + missed.map((g) => { const ow = owner447(g.guid); return ow ? String(pname(ow)).split('-')[0] + '\'s' : 'one'; }).join(', ') + ').', 'Aim ' + S(f.n)[1] + ' through the cluster of ghosts, and call where you will take it.', map); }
+    else if (!est) for (const g of missed) { const ow = owner447(g.guid); MS(f.t, ow ? pname(ow) : 'Raid', f.n, 'Medium', (ow ? 'Their ghost' : 'A ghost') + ' wasn\'t in ' + S(f.n)[1] + ' at ' + h.fmtT(f.t) + ', so it stayed alive.', 'Stare at your ghost so it stays where the tank aims Soul Sever, or walk it back into the frontal before the next one.', map); } /* round 447 ghost spots: a missed ghost is a Moderate fail (Flex, Nov 1) */
     ssRows.push([{ t: f.t }, { s: S(f.n), sub: est ? 'estimate' : '' }, { txt: String(out.length) }, { txt: String(removed.length) }, { txt: String(missed.length), warn: !est && missed.length > 0, ...(!est && missed.length ? { why: missed.map((g) => { const ow = owner447(g.guid); return ow ? String(pname(ow)).split('-')[0] + '\'s ghost' : 'a ghost'; }).join(', ').replace(/^./, (c) => c.toUpperCase()) + (missed.length === 1 ? ' wasn\'t' : ' weren\'t') + ' in ' + S(f.n)[1] + ', so ' + (missed.length === 1 ? 'it' : 'they') + ' stayed alive.', next: 'Stare at your ghost so it stays where the tank aims Soul Sever.' } : {}) }, { map }]);
   }
   if (ssRows.length) sections.push({ id: 'soulsever', title: 'Soul Sever (Frontal)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'),
@@ -6289,7 +6292,7 @@ class Mech {
       detail: f.r.name + ' went off and hit ' + f.hit.size + (f.hit.size === 1 ? ' player' : ' players') + ' for ' + (f.dmg >= 1e6 ? (f.dmg / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : f.dmg >= 1e4 ? Math.round(f.dmg / 1e3) + 'K' : Math.round(f.dmg)) + '.', fix: f.r.tip });
     for (const a of this.avoid.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.escalate && a.touches >= a.r.escalate.touches ? a.r.escalate.severity : a.r.severity, dmg: a.dmg, pos: true,
       avoidRule: true, touches: a.touches, ruleIds: a.r.spellIds || [], tankJudged: !!a.r.tankJudged, // (for going easier on tanks, after roles are known)
-      detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : '.'), fix: a.r.tip });
+      detail: (a.r.ticks ? 'Walked into it ' + (a.touches === 1 ? 'once' : a.touches === 2 ? 'twice' : a.touches + ' times') : 'Got hit ' + (a.hits === 1 ? 'once' : a.hits === 2 ? 'twice' : a.hits + ' times')) + (a.dmg >= 1 ? ', for ' + Math.round(a.dmg).toLocaleString('en-US') + ' avoidable damage.' : ' (absorbed).'), fix: a.r.tip }); /* (Nov 8, audit M3) */
     for (const a of this.debuffs.values()) out.push({ t: a.t, player: a.p, mechanic: a.r.name, id: a.id, severity: a.r.severity, pos: true,
       detail: 'Got ' + a.r.name + ' ' + (a.n === 1 ? 'once' : a.n === 2 ? 'twice' : a.n + ' times') + '.', fix: a.r.tip });
     for (const a of this.stk.values()) { if (a.max <= a.r.threshold) continue; const lethal = a.r.lethal && a.max >= a.r.lethal;
@@ -7339,7 +7342,7 @@ function kickReport(r, casts, mech, starts) {
     if (ruleIds.has(m.id) || ruleNames.has(String(m.spell).toLowerCase())) continue;
     const who = [...new Set(m.before.map((k) => k.player))];
     // Visceral Burst (a Twin Fangs Broodling) hits the whole raid every second with a stacking DoT: the fight's main wipe cause
-    r.mistakes.push({ t: m.t, player: 'Raid', mechanic: 'Missed interrupt', id: m.id, severity: /^visceral burst$/i.test(m.spell) ? 'High' : 'Medium',
+    r.mistakes.push({ t: m.t, player: 'Raid', mechanic: m.spell || 'Missed interrupt', kick: true /* (Nov 8, audit M3: the mechanic is the boss spell, like every other kick row) */, id: m.id, severity: /^visceral burst$/i.test(m.spell) ? 'High' : 'Medium',
       detail: m.label + ' got ' + m.spell + ' off with no kick.' + (who.length ? ' Kicked earlier by ' + who.join(', ') + '.' : ''),
       fix: 'Keep a kick rotation on every add that casts this, with a backup kicker. The Breakdown tab shows a map of who was nearby.' });
   }
@@ -7610,6 +7613,9 @@ function explainDeaths(r) {
   for (const d of r.deaths) {
     const p = r.players.get(d.guid), rc = d.recap || [];
     const hits = rc.filter((e) => !e.heal), heals = rc.filter((e) => e.heal);
+    /* (Nov 8, audit D11: Time Dilation logs the damage it held back as its own: it reads as the hit it held back) */
+    { let lastReal = null; for (const e of hits) { if (/^time dilation$/i.test(e.spell || '')) { if (lastReal) e.spell = lastReal + ', held back by Time Dilation'; } else if (e.spell) lastReal = e.spell; }
+      if (/^time dilation$/i.test(d.ability || '')) { const lh = hits.filter((e) => e.t <= d.t + 0.05).pop(); if (lh && lh.spell) d.ability = lh.spell; } }
     const dmg = hits.reduce((n, e) => n + e.amount, 0), heal = heals.reduce((n, e) => n + e.amount, 0);
     const by = new Map(); for (const e of hits) { const k = e.spell || 'Melee'; let o = by.get(k); if (!o) by.set(k, o = { name: k, id: e.id, src: e.src, amt: 0, n: 0 }); o.amt += e.amount; o.n++; }
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
@@ -7623,7 +7629,7 @@ function explainDeaths(r) {
     d.t50 = l50 == null ? null : Math.round(10 * (d.t - l50)) / 10;
     // (the biggest hit of their last 1.5 s against their health: over 150% only an immunity helps; 500% and up is a mechanic that kills outright, like Gravebound)
     d.hitPct = mxHp ? Math.round(100 * hits.filter((e) => e.t >= d.t - 1.5).reduce((m, e) => Math.max(m, e.amount), 0) / mxHp) : null;
-    const fast = tank || d.t50 == null ? old2 : d.t50 <= 2, slow = d.window >= 5, low = !d.healthy && d.startHp > 0 && d.startHp < 35;
+    const fast = (tank || d.t50 == null ? old2 : d.t50 <= 2) || (d.t50 == null && (d.hitPct || 0) >= 100) /* (Nov 8, audit D11: a hit bigger than their health with no health history is a one-shot) */, slow = d.window >= 5, low = !d.healthy && d.startHp > 0 && d.startHp < 35;
     d.fast = fast; const huge = (d.hitPct || 0) >= 150, scripted = (d.hitPct || 0) >= 500;
     // kickable casts that got off in their last 15 seconds and hit them (e.g. Visceral Burst from a Broodling)
     const gotOff = (r.kicks || []).map((k) => ({ k, at: k.missedAt.filter((m) => m.t >= d.t - 15 && m.t <= d.t + 0.2) })).filter((x) => x.at.length && by.has(x.k.name));
