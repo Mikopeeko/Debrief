@@ -6150,7 +6150,8 @@ function ndzCdPlan(B, pr) {
   if (!bigs.length) return typeof ndzCdPlanV1 === 'function' ? ndzCdPlanV1(B, pr) : null;
   const byV = bigs.slice().sort((a, b) => b.v - a.v || a.T - b.T); byV.forEach((x, i) => { x.rank = i + 1; });
   const med = ((v) => v[Math.floor(v.length / 2)])(bigs.map((x) => x.v).sort((a, b) => a - b)) || 1;
-  for (const x of bigs) x.need = x.v >= 2.5 * med ? 3 : x.v >= 1.5 * med ? 2 : 1;
+  bigs.forEach((x) => { const r = (x.rank - 1) / bigs.length; x.cls = r < 1 / 3 ? 'vh' : r < 2 / 3 ? 'h' : 'm'; }); /* (Very heavy / Heavy / Medium by rank, as the Big hits table splits them (audit P8, Nov 8)) */
+  for (const x of bigs) x.need = x.cls === 'vh' ? Math.max(2, x.v >= 2.5 * med ? 3 : 2) : x.cls === 'h' ? (x.v >= 1.5 * med ? 2 : 1) : 1;
   // 7. the fixed timing
   const lead = (h) => (h.P.k === 'back' || h.P.after ? -1 : h.P.k === 'heal' || h.P.k === 'hp' ? 1 : 2);
   const pressAt = (h, x) => { let t = Math.max(0, x.T - lead(h)); for (let k = 0; k < 6 && t < L && phOf[Math.min(L, t)] !== x.ph; k++) t++; return Math.max(0, Math.min(L - 1, t)); }; /* (into the hit's own phase, at most 6 s later, Oct 23) */
@@ -6169,30 +6170,38 @@ function ndzCdPlan(B, pr) {
   slots.sort((p, q) => q.sh - p.sh || p.T - q.T);
   const busy = (h, t) => rows0.some((r) => r.h.who === h.who && Math.abs(r.t - t) <= 5); /* (one player, two cooldowns within 5 s: only when nobody else can, Oct 24) */
   const readyBy = (h, T) => { for (let t = T; t <= Math.min(L - 1, T + 20); t++) if (ready(h, t)) return t; return null; }; /* (not back yet: up to 20 s later, since our kills are faster than theirs, Oct 24) */
-  const topPass = (list) => { for (const sl of list) { if (rows0.some((r) => r.h.n === sl.n && Math.abs(r.t - sl.T) <= 8)) continue; const hs = have.filter((h) => h.n === sl.n).map((h) => [h, readyBy(h, sl.T)]).filter((q) => q[1] != null).sort((p, q) => (p[1] - sl.T) - (q[1] - sl.T) || busy(p[0], p[1]) - busy(q[0], q[1]) || p[0].used.length - q[0].used.length); if (!hs.length) continue;
+  const topPass = (list) => { for (const sl of list) { if (rows0.some((r) => r.h.n === sl.n && Math.abs(r.t - sl.T) <= 8)) continue; const hs = have.filter((h) => h.n === sl.n).map((h) => [h, readyBy(h, sl.T)]).filter((q) => q[1] != null && !blocks(q[0], q[1], near(q[1]))).sort((p, q) => (p[1] - sl.T) - (q[1] - sl.T) || busy(p[0], p[1]) - busy(q[0], q[1]) || p[0].used.length - q[0].used.length); if (!hs.length) continue;
     place(hs[0][0], near(hs[0][1]), hs[0][1], 'top'); rows0[rows0.length - 1].sh = sl.sh; rows0[rows0.length - 1].late = hs[0][1] - sl.T; } };
-  topPass(slots.filter((q) => q.sh >= 0.5)); /* (what at least half of top players do, first; the rest after the bare hits, Oct 24) */
   // 4. where top raids stack big cooldowns: about as many of ours there, the strongest ready one filling in for any we don't have
   const MO = []; for (const [n, l] of Object.entries(HB)) { if (NDZ_ONCD.has(n) || n === 'Vampiric Embrace') continue; for (const [ph, rel, sh] of l) { const T = slotT(ph, rel); if (T == null || T > L - 1) continue; let m = MO.find((q) => Math.abs(q.T - T) <= 6); if (!m) { m = { T, w: 0, ns: [] }; MO.push(m); } m.w += sh; m.ns.push(n); } }
   const ourAt = (T) => rows0.filter((r) => !isThr(r.h) && Math.abs(r.t - T) <= 8);
-  for (const m of MO.sort((p, q) => q.w - p.w)) { if (m.w < 1.5) continue; const want = Math.min(4, Math.round(m.w)); /* (only where top raids stack 2 or more, Oct 24) */ const x = near(m.T, 10);
-    for (let k = 0; k < 4 && ourAt(m.T).length < want; k++) { const here = ourAt(m.T), c = raid.filter((h) => !here.some((r) => r.h.n === h.n)).map((h) => [h, x ? pressAt(h, x) : m.T]).filter(([h, t]) => ready(h, t) && t <= L - 1).sort((p, q) => busy(p[0], p[1]) - busy(q[0], q[1]) || worth(q[0].P, q[1]) - worth(p[0].P, p[1]))[0];
-      if (!c) break; place(c[0], x, c[1], 'sub'); rows0[rows0.length - 1].m = m; } }
+  const subPass = () => { for (const m of MO.sort((p, q) => q.w - p.w)) { if (m.w < 1.5) continue; const want = Math.min(4, Math.round(m.w)); /* (only where top raids stack 2 or more, Oct 24) */ const x = near(m.T, 10);
+    for (let k = 0; k < 4 && ourAt(m.T).length < want; k++) { const here = ourAt(m.T), c = raid.filter((h) => !here.some((r) => r.h.n === h.n)).map((h) => [h, x ? pressAt(h, x) : m.T]).filter(([h, t]) => ready(h, t) && t <= L - 1 && !blocks(h, t, x)).sort((p, q) => busy(p[0], p[1]) - busy(q[0], q[1]) || worth(q[0].P, q[1]) - worth(p[0].P, p[1]))[0];
+      if (!c) break; place(c[0], x, c[1], 'sub'); rows0[rows0.length - 1].m = m; } } };
   // (the strongest first for the leftovers, with top raids' habits as a nudge)
   const strong = (x) => raid.map((h) => { const t = pressAt(h, x); return [h, worth(h.P, t) * (1 + 0.5 * habit(h.n, t)), busy(h, t)]; }).sort((p, q) => p[2] - q[2] || q[1] - p[1]).map((q) => q[0]);
-  const fits = (h, x) => { const t = pressAt(h, x); return ready(h, t) && !x.got.some((o) => o.n === h.n) && t <= L - 1; };
+  const fits = (h, x) => { const t = pressAt(h, x); return ready(h, t) && !x.got.some((o) => o.n === h.n) && t <= L - 1 && !blocks(h, t, x); };
   const raidN = (x) => x.got.filter((o) => !isThr(o)).length;
+  /* (audit P8: a cooldown pressed on a Medium hit, or on no hit, must not be on cooldown when a Very heavy hit that is still short comes) */
+  const blocks = (h, t, x) => (!x || x.cls === 'm') && !isThr(h) && bigs.some((y) => y.cls === 'vh' && y.T > t && y.T - t < h.cd + 5 && raidN(y) < y.need && !y.got.includes(h));
+  const needPass = () => { for (const x of byV) { if (x.cls !== 'vh') continue; for (const h of strong(x)) { if (raidN(x) >= 2) break; if (fits(h, x)) place(h, x, pressAt(h, x), 'need'); } } }; /* (the Very heavy hits first, two raid cooldowns each (audit P8)) */
+  needPass(); topPass(slots.filter((q) => q.sh >= 0.5)); subPass(); /* (then what at least half of top players do, then where they stack; the rest after the bare hits, Oct 24) */
   // 5. no bare hits
   const covered = (x) => rows0.some((r) => phOf[Math.min(L, r.t)] === x.ph && r.t <= x.T + 4 && (r.t >= x.T - 6 || r.t + (r.h.P.dur || 0) >= x.T)); /* (as the chart counts it, Oct 24) */
   const winT = (h, x) => { const pa = pressAt(h, x), c = [pa]; for (let d = 1; d <= 6; d++) c.push(pa - d, pa + d); for (const t of c) if (t >= 0 && t <= L - 1 && phOf[Math.min(L, t)] === x.ph && t <= x.T + 4 && t >= x.T - 6 && ready(h, t)) return t; return null; }; /* (anywhere the chart counts it, Oct 24) */
   const bareP = (list) => { for (const x of list) { if (covered(x)) continue; let ok = false;
-    for (const h of strong(x)) { if (x.got.some((o) => o.n === h.n)) continue; const t = winT(h, x); if (t != null) { place(h, x, t, 'bare'); ok = true; break; } }
+    for (const h of strong(x)) { if (x.got.some((o) => o.n === h.n)) continue; const t = winT(h, x); if (t != null && !blocks(h, t, x)) { place(h, x, t, 'bare'); ok = true; break; } }
     if (!ok) { const c = thr.map((h) => [h, winT(h, x)]).filter((q) => q[1] != null).sort((p, q) => busy(p[0], p[1]) - busy(q[0], q[1]) || worth(q[0].P, q[1]) - worth(p[0].P, p[1]))[0]; if (c) place(c[0], x, c[1], 'bare'); } } }; /* (no raid cooldown left: a healing one, Oct 24) */
   bareP(byV); topPass(slots.filter((q) => q.sh < 0.5)); /* (the heavier half first, then the weaker habits, then the rest, Oct 24) */
   // 6. nothing unused: a cooldown that's back goes on the heaviest hit with the fewest, up to one more than its need
   for (let pass = 0; pass < 12; pass++) { let added = 0;
     for (const x of bigs.slice().sort((p, q) => raidN(p) / p.need - raidN(q) / q.need || q.v - p.v)) { if (raidN(x) >= x.need + 1) continue;
       for (const h of strong(x)) { if (raidN(x) >= x.need + 1) break; if (fits(h, x)) { place(h, x, pressAt(h, x), 'extra'); added++; break; } } }
+    if (!added) break; }
+  // 6b. (audit P8) the guard above held some cooldowns back for Very heavy hits; whatever is still ready now goes on the heaviest hit with the fewest, so no use is lost
+  for (let pass = 0; pass < 12; pass++) { let added = 0;
+    for (const x of bigs.slice().sort((p, q) => raidN(p) / p.need - raidN(q) / q.need || q.v - p.v)) { if (raidN(x) >= x.need + 1) continue;
+      for (const h of strong(x)) { if (raidN(x) >= x.need + 1) break; const t = pressAt(h, x); if (ready(h, t) && !x.got.some((o) => o.n === h.n) && t <= L - 1) { place(h, x, t, 'extra'); added++; break; } } }
     if (!added) break; }
   // 7. throughput cooldowns' other uses: the next big hit once it's back, at most 2 on one hit
   for (const h of thr) for (const x of bigs.slice().sort((p, q) => p.T - q.T)) { const t = pressAt(h, x); if (ready(h, t) && t <= L - 1 && !busy(h, t) && !x.got.some((o) => o.n === h.n) && x.got.filter(isThr).length < 2) place(h, x, t, 'thr'); }
@@ -8706,7 +8715,14 @@ function ndzPersFill(B) { const SD = NDZ_CDSTART[B.pick] || {}, sd = SD[B.diff] 
   const hits = sd.pk.map(([ph, rel, v, hit]) => ({ ph, rel: Math.round(rel), v, hit })).sort((a, b) => b.v - a.v), put = (h, k) => { const key = h.ph + '|' + h.rel; B.calls[key] = { ...(B.calls[key] || { hit: h.hit }), [k]: true }; };
   B.calls = {};
   for (const k of ['hs']) for (const h of hits) /* (Defensives and the Healthstone only, your call Oct 22) */ { const key = h.ph + '|' + h.rel; if (ndzCallOk(B, key, k).ok) put(h, k); }
-  for (const h of hits) { const key = h.ph + '|' + h.rel; put(h, 'def'); if (Object.values(ndzDefReady(B)).some((x) => x.n < 0.75 * x.of)) { delete B.calls[key].def; if (!B.calls[key].hs && !B.calls[key].pot) delete B.calls[key]; } } }
+  /* (audit P7, Nov 8: a Defensives call only on a Very heavy hit, or a Heavy one with no raid cooldown on it; never in the first 15 s, never two
+     within 90 s, at most about one per 2 minutes of fight. Personal defensives come back every 1.5-3 minutes, so a call on every hit can't be followed) */
+  const abs = (h) => { const a = ndzAbsT(B, h.ph, h.rel); return a == null ? h.ph * 100000 + h.rel : a; }, vs = hits.map((h) => h.v);
+  const cls = (h) => { const r = vs.filter((x) => x > h.v).length / Math.max(1, vs.length); return r < 1 / 3 ? 'vh' : r < 2 / 3 ? 'h' : 'm'; };
+  const covered = (h) => (B.cds || []).some((c) => c.ph === h.ph && c.t <= h.rel + 4 && c.t >= h.rel - 6);
+  const fightLen = Math.max(...hits.map(abs)) + 30, maxCalls = Math.max(1, Math.round(fightLen / 120)), defAt = [];
+  for (const h of hits) { if (defAt.length >= maxCalls) break; const c = cls(h); if (c === 'm' || (c === 'h' && covered(h))) continue; const T = abs(h); if (T < 15 || defAt.some((t) => Math.abs(t - T) < 90)) continue;
+    const key = h.ph + '|' + h.rel; put(h, 'def'); if (Object.values(ndzDefReady(B)).some((x) => x.n < 0.75 * x.of)) { delete B.calls[key].def; if (!B.calls[key].hs && !B.calls[key].pot) delete B.calls[key]; continue; } defAt.push(T); } }
 // (an external: when that giver has it back, from their other times with it)
 function ndzExtCd(id) { const n = ndzSpellNm(+id) || ((ndzExtList().find((x) => x[3] === +id) || [])[0]) || ''; for (const l of Object.values(typeof RC_EXT === 'object' ? RC_EXT : {})) for (const [m, cd] of l) if (m === n) return cd; if (n === 'Power Infusion') return 120; return ndzRech(id); }
 function ndzExtBack(B, who, id, ph, t, skip) { const cd = ndzExtCd(id), T = ndzAbsT(B, ph, t); if (!cd || T == null) return 0; let back = 0;
