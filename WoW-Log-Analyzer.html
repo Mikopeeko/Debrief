@@ -8311,6 +8311,16 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti :is(.icw, img, .ico) { width: 22px !important; height: 22px !important; border-radius: 5px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:hover, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:focus-visible { box-shadow: 0 0 0 2px rgba(230,180,80,.75); outline: 0; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-tray .btl-trr > .btl-ti:active { cursor: grabbing; }
+/* plan tray beside the chart (Plan review 2, Nov 8: Flex "Yes, build those"; the side menu frees the width, so a drag never needs scrolling) */
+@media (min-width: 1280px) {
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) { display: grid; grid-template-columns: minmax(0, 1fr) 248px; column-gap: 14px; align-items: start; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > * { grid-column: 1 / -1; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-wrap { grid-column: 1; min-width: 0; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray { grid-column: 2; position: sticky; top: 52px; margin: 0; max-height: calc(100vh - 68px); overflow-y: auto; overscroll-behavior: contain; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray > .btl-trl { flex-direction: column; align-items: flex-start; gap: 5px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
+}
 /* the chart while dragging */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c[data-cdk] { cursor: grab; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c.drag { opacity: .5; }
@@ -35642,7 +35652,9 @@ let NDZ_BTLV = null;
 let BTL_PX = 6; /* (pixels a second: a 2:30 phase is 900 px wide; Fit sets it so the whole view fits, Oct 27) */
 const btlFitNoName = () => S.page === 'plan' && btlZoomOf() === 'fit' && BTL_PX < 6; /* (Fit: icons only, the user, Oct 27) */
 const btlZoomOf = () => { if (S.btlZm == null) { try { S.btlZm = store.get('wla-btlzm') || 'fit'; } catch (e) { S.btlZm = 'fit'; } } return S.btlZm; };
-function btlPxFor(len) { if (S.page !== 'plan' || btlZoomOf() !== 'fit' || !len) return 6; const sc = document.querySelector('#ndzTl .btl-sc'), el = document.getElementById('ndzTl'), w = sc && sc.clientWidth ? sc.clientWidth - 12 : (el && el.clientWidth ? el.clientWidth - 40 : 960); return Math.max(0.5, Math.min(6, w / len)); } /* (the chart's own box less 12 px, Oct 27) */ /* (the panel's width less the side scale; the user, Oct 27: "the fit one is a bit too short") */
+// (Plan review 2, Nov 8: the tray sits beside the chart on the Healing cooldowns tab at 1280 px and up: the first draw leaves it room)
+const btlSideTray = () => { try { return S.page === 'plan' && window.matchMedia('(min-width: 1280px)').matches && !!document.querySelector('#assignBox > .pg-tabs[data-cur="cds"]'); } catch (e) { return false; } };
+function btlPxFor(len) { if (S.page !== 'plan' || btlZoomOf() !== 'fit' || !len) return 6; const sc = document.querySelector('#ndzTl .btl-sc'), el = document.getElementById('ndzTl'), w = sc && sc.clientWidth ? sc.clientWidth - 12 : (el && el.clientWidth ? el.clientWidth - 40 - (btlSideTray() ? 262 : 0) : 960); return Math.max(0.5, Math.min(6, w / len)); } /* (the chart's own box less 12 px, Oct 27) */ /* (the panel's width less the side scale; the user, Oct 27: "the fit one is a bit too short") */
 /* (the roomy chart: Plan's Cooldowns tab on its own page, 1100 px wide or more; All on one page and phones keep the compact one (Nov 7)) */
 function btlBig(D) { try { return S.page === 'plan' && window.innerWidth >= 1100 && typeof pvGet === 'function' && pvGet(D.boss) === 'cds'; } catch (e) { return false; } }
 function bjTlH(D) {

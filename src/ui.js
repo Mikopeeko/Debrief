@@ -9911,7 +9911,9 @@ let NDZ_BTLV = null;
 let BTL_PX = 6; /* (pixels a second: a 2:30 phase is 900 px wide; Fit sets it so the whole view fits, Oct 27) */
 const btlFitNoName = () => S.page === 'plan' && btlZoomOf() === 'fit' && BTL_PX < 6; /* (Fit: icons only, the user, Oct 27) */
 const btlZoomOf = () => { if (S.btlZm == null) { try { S.btlZm = store.get('wla-btlzm') || 'fit'; } catch (e) { S.btlZm = 'fit'; } } return S.btlZm; };
-function btlPxFor(len) { if (S.page !== 'plan' || btlZoomOf() !== 'fit' || !len) return 6; const sc = document.querySelector('#ndzTl .btl-sc'), el = document.getElementById('ndzTl'), w = sc && sc.clientWidth ? sc.clientWidth - 12 : (el && el.clientWidth ? el.clientWidth - 40 : 960); return Math.max(0.5, Math.min(6, w / len)); } /* (the chart's own box less 12 px, Oct 27) */ /* (the panel's width less the side scale; the user, Oct 27: "the fit one is a bit too short") */
+// (Plan review 2, Nov 8: the tray sits beside the chart on the Healing cooldowns tab at 1280 px and up: the first draw leaves it room)
+const btlSideTray = () => { try { return S.page === 'plan' && window.matchMedia('(min-width: 1280px)').matches && !!document.querySelector('#assignBox > .pg-tabs[data-cur="cds"]'); } catch (e) { return false; } };
+function btlPxFor(len) { if (S.page !== 'plan' || btlZoomOf() !== 'fit' || !len) return 6; const sc = document.querySelector('#ndzTl .btl-sc'), el = document.getElementById('ndzTl'), w = sc && sc.clientWidth ? sc.clientWidth - 12 : (el && el.clientWidth ? el.clientWidth - 40 - (btlSideTray() ? 262 : 0) : 960); return Math.max(0.5, Math.min(6, w / len)); } /* (the chart's own box less 12 px, Oct 27) */ /* (the panel's width less the side scale; the user, Oct 27: "the fit one is a bit too short") */
 /* (the roomy chart: Plan's Cooldowns tab on its own page, 1100 px wide or more; All on one page and phones keep the compact one (Nov 7)) */
 function btlBig(D) { try { return S.page === 'plan' && window.innerWidth >= 1100 && typeof pvGet === 'function' && pvGet(D.boss) === 'cds'; } catch (e) { return false; } }
 function bjTlH(D) {
