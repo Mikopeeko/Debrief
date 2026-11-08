@@ -879,6 +879,8 @@ function setsOf(list, gap) {
 
 
 
+// (Nov 8, audit D6/M6: a tank swap that didn't happen is the other tank's miss: the tank who should have taunted, alive at t and without the debuff (debOn), never the tank who took the hit unless no other tank could)
+const otherTank = (r, g, t, debOn) => { for (const p of r.players.values()) { if (p.role !== 'tank' || p.guid === g) continue; if ((r.deaths || []).some((d) => d.guid === p.guid && d.t <= t + 0.2 && d.t >= t - 60)) continue; if (debOn && debOn(p.guid)) continue; return p.guid; } return null; };
 function buildTwinFangs(ev, r, h) {
   // Same panel shape as The Coiled Altar. Mechanics are matched by spell ID (TF above) or by name (TF_SPELLS).
   // Mistakes for plain avoidable hits and venom stacks already come from the rule pack, so this module adds
@@ -1855,7 +1857,8 @@ function buildSszorak(ev, r, h) {
     const who = [...new Set(ravHits.filter((e) => e.t >= t - 0.3 && e.t <= t + 1.2).map((e) => e.dst))];
     const tanks = who.filter(isTank), others = who.filter((g) => !isTank(g)), dbl = who.filter((g) => upAt(SZ.ravageDeb, g, t, 25)), died = who.map((g) => diedNear(g, t, 3)).filter(Boolean);
     for (const g of others) M(t, pname(g), 'Ravage', 'High', 'Hit by Ravage, the tank frontal.', 'Ravage is aimed at the tank: stay out of its cone. Tanks take it at the edge, away from the raid.');
-    for (const g of dbl) M(t, pname(g), 'Ravage', 'High', 'Took a second Ravage with the first one\'s debuff still up' + (died.some((d) => d.guid === g) ? ', and died.' : '.'), 'Taunt between the two Ravages of every tank combo, so each tank takes one.');
+    for (const g of dbl) { const o = otherTank(r, g, t, (q) => upAt(SZ.ravageDeb, q, t, 25)); /* (Nov 8, audit D6/M6: the tank who should have taunted) */
+      M(t, pname(o || g), 'Ravage', 'High', o ? 'Didn\'t taunt between the two Ravages: ' + pname(g) + ' took both' + (died.some((d) => d.guid === g) ? ', and died.' : '.') : 'Took a second Ravage with the first one\'s debuff still up' + (died.some((d) => d.guid === g) ? ', and died.' : '.'), 'Taunt between the two Ravages of every tank combo, so each tank takes one.'); if (o) mistakes[mistakes.length - 1].taker = pname(g); }
     return { t, row: [{ txt: 'Ravage' }, { t }, tanks.length ? { ps: tanks.map(pname) } : { txt: 'nobody', warn: true }, dbl.length ? { ps: dbl.map(pname), bad: true } : { txt: '—', dim: true },
       others.length ? { ps: others.map(pname), bad: true } : { txt: '—', dim: true }, died.length ? { txt: died.map((d) => d.player).join(', ') + ' died', bad: true } : { txt: '—', dim: true }] };
   });
@@ -2255,7 +2258,7 @@ function buildNymrissa(ev, r, h) {
   // ---- Water Jet: the tank's beam (+20% per tick), so the tanks swap on every one ----
   { const jt = ev.filter((e) => e.k === 'aura' && e.id === NY.jetTank && e.op === 'apply' && h.isPlayer(e.dst)).sort((a, b) => a.t - b.t).filter((e, i, a) => !i || e.t - a[i - 1].t > 3);
     const rows = jt.map((e, i) => { const again = i && jt[i - 1].dst === e.dst, d = r.deaths.find((x) => x.guid === e.dst && x.t >= e.t && x.t <= e.t + 6);
-      if (again) mistakes.push({ t: e.t, player: pname(e.dst), mechanic: 'Water Jet', id: NY.jet, severity: 'Medium', detail: 'Took two Water Jets in a row.', fix: 'Swap tanks on every Water Jet: it hits harder with every tick.' });
+      if (again) { const o = otherTank(r, e.dst, e.t, null); /* (Nov 8, audit D6/M6) */ mistakes.push({ t: e.t, player: pname(o || e.dst), mechanic: 'Water Jet', id: NY.jet, severity: 'Medium', detail: o ? 'Didn\'t taunt before Water Jet ' + (i + 1) + ': ' + pname(e.dst) + ' took two in a row.' : 'Took two Water Jets in a row.', fix: o ? 'Taunt before each Water Jet so the other tank takes it: it hits harder with every tick.' : 'Swap tanks on every Water Jet: it hits harder with every tick.', ...(o ? { taker: pname(e.dst) } : {}) }); }
       const jWhy = d ? { why: pname(e.dst) + ' died ' + (d.t - e.t).toFixed(1) + ' s into Water Jet ' + (i + 1) + (again ? ', their second jet in a row' : '') + (d.ability && !/water jet/i.test(d.ability) ? ' (' + d.ability + ')' : '') + '.', next: again ? 'Swap tanks on every Water Jet: it hits harder with every tick.' : 'Use a defensive or get an external for each Water Jet, and aim it over the ice puddles.' }
         : again ? { why: pname(e.dst) + ' took Water Jet ' + (i + 1) + ' right after Water Jet ' + i + ', so its ticks kept growing on the same tank.', next: 'Taunt before each Water Jet so the other tank takes it.' } : {};
       return [{ p: pname(e.dst), ...jWhy }, { t: e.t }, again ? { txt: 'took two in a row', warn: true } : { txt: i ? 'swapped' : 'first' }, d ? { txt: 'died', bad: true } : { txt: '—', dim: true }]; });
@@ -2435,7 +2438,7 @@ function buildKithix(ev, r, h) {
     const rows = castT([KX.devCast], 5).map((t) => {
       const on = da.find((e) => e.op === 'apply' && e.t >= t - 0.5 && e.t <= t + 8), again = on && da.some((e) => e.dst === on.dst && e.t < on.t - 1 && e.op !== 'remove') && upAt(da, on.dst, on.t - 0.3);
       const by = raidHit.filter((e) => e.t >= t && e.t <= t + 8), d = on && diedNear(on.dst, on.t, 4);
-      if (again) M(on.t, pname(on.dst), 'Dark Devastation', 'High', 'Took Dark Devastation with Devastated still on (150% more damage taken).', 'Taunt-swap on every Dark Devastation.');
+      if (again) { const o = otherTank(r, on.dst, on.t, (q) => upAt(da, q, on.t - 0.3)); /* (Nov 8, audit D6/M6) */ M(on.t, pname(o || on.dst), 'Dark Devastation', 'High', o ? 'Didn\'t taunt before Dark Devastation: ' + pname(on.dst) + ' took it with Devastated still on (150% more damage taken).' : 'Took Dark Devastation with Devastated still on (150% more damage taken).', 'Taunt-swap on every Dark Devastation.'); if (o) mistakes[mistakes.length - 1].taker = pname(on.dst); }
       if (by.length) M(by[0].t, 'Raid', 'Dark Devastation', 'Medium', pl(new Set(by.map((e) => e.dst)).size, 'other player') + ' caught in the Dark Devastation circle.', 'The tank takes the 15-yard circle away from the raid.');
       return [{ p: on ? pname(on.dst) : '?' }, { t: on ? on.t : t }, again ? { txt: 'took two in a row', bad: true } : { txt: 'swapped' }, d ? { txt: 'died', bad: true } : by.length ? { txt: pl(new Set(by.map((e) => e.dst)).size, 'other player') + ' hit', warn: true } : { txt: '—', dim: true }];
     });
@@ -2982,7 +2985,7 @@ function buildVashnik(ev, r, h) {
     const fa = aur(VS.fangsDeb).filter((e) => e.op === 'apply' && h.isPlayer(e.dst));
     const rows = castOk(VS.fangs).map((t, i) => {
       const on = fa.find((e) => Math.abs(e.t - t) < 0.6), prev = on && fa.filter((e) => e.t < t - 1).pop(), again = on && prev && prev.dst === on.dst && t - prev.t < 32;
-      if (again) M(t, pname(on.dst), 'Dripping Fangs', 'High', 'Took a second Dripping Fangs with the first one\'s debuff still up (100% more physical damage).', 'Taunt-swap on every Dripping Fangs.');
+      if (again) { const o = otherTank(r, on.dst, t, (q) => fa.some((x) => x.dst === q && x.t < t - 1 && t - x.t < 32)); /* (Nov 8, audit D6/M6) */ M(t, pname(o || on.dst), 'Dripping Fangs', 'High', o ? 'Didn\'t taunt before Dripping Fangs: ' + pname(on.dst) + ' took a second one with the first one\'s debuff still up (100% more physical damage).' : 'Took a second Dripping Fangs with the first one\'s debuff still up (100% more physical damage).', 'Taunt-swap on every Dripping Fangs.'); if (o) mistakes[mistakes.length - 1].taker = pname(on.dst); }
       return [{ p: on ? pname(on.dst) : '?' }, { t }, again ? { txt: 'took two in a row', bad: true } : { txt: i ? 'swapped' : 'first' }, { txt: diedNear(on && on.dst, t, 5) ? 'died' : '—', bad: !!(on && diedNear(on.dst, t, 5)), dim: !(on && diedNear(on.dst, t, 5)) }];
     });
     if (rows.length) sections.push({ id: 'fangs', title: 'Dripping Fangs (Tanks swap)', place: 'Dripping Fangs (tank buster): a swap every time', spell: [VS.fangs, 'Dripping Fangs'], verdict: rows.some((x) => x[2].bad || x[3].bad) ? 'bad' : 'good',
@@ -4223,9 +4226,12 @@ function buildCoiledAltar(ev, r, h) {
     const died = r.deaths.find((d) => d.guid === g && d.t >= hit.t - 0.2 && d.t <= hit.t + 3);
     const ph = phaseAt(hit.t), lowCover = st >= 2 && !exts.length && !IMMUNE.some((x) => has(g, x, hit.t)) && pers.length < 2; /* (covered: an external, an immunity, or two defensives (top kills, Oct 24)) */
     const bad = !!died || st >= 3, warn = !bad && ((ph === 'P1' && st >= 2) || lowCover || (!pers.length && !exts.length && st >= 2));
-    if (died) M(hit.t, pname(g), n, 'High', 'Died to ' + S(n)[1] + ' on stack ' + st + '.', st >= 2 ? 'On the second stack, use a big defensive and get an external, or swap.' : 'Use a defensive for the frontal.');
-    else if (st >= 3) M(hit.t, pname(g), n, 'High', 'Took ' + S(n)[1] + ' on stack ' + st + '.', 'Let the stacks drop (or swap) before a third frontal.');
-    else if (warn) M(hit.t, pname(g), n, 'Low', 'Took ' + S(n)[1] + ' on stack ' + st + (exts.length ? ' with ' + exts.length + ' external' + (exts.length === 1 ? '' : 's') : ' with no external') + (ph === 'P1' ? ' (P1 swaps every frontal)' : '') + '.', ph === 'P1' ? 'Taunt before each Sever so every frontal lands on a fresh tank.' : 'On the second stack, use a big defensive and get an external.');
+    /* (Nov 8, audit D6/M6: a second stack that killed, a third stack, or any P1 double is the other tank's missed taunt; the taker is named only when no other tank could taunt) */
+    const swapO = ((died && st >= 2) || st >= 3 || (ph === 'P1' && st >= 2)) ? otherTank(r, g, hit.t, (q) => { const l = auras(n).filter((e) => e.dst === q && e.t <= hit.t); return !!l.length && l[l.length - 1].op !== 'remove'; }) : null, nmN = S(n)[1];
+    if (swapO) { M(hit.t, pname(swapO), n, died || st >= 3 ? 'High' : 'Medium', 'Didn\'t taunt before ' + nmN + ': ' + pname(g) + ' took it on stack ' + st + (died ? ' and died.' : '.'), 'Taunt before the next ' + nmN + ' so it lands on a fresh tank.'); mistakes[mistakes.length - 1].taker = pname(g); }
+    if (died && !swapO) M(hit.t, pname(g), n, 'High', 'Died to ' + S(n)[1] + ' on stack ' + st + '.', st >= 2 ? 'On the second stack, use a big defensive and get an external, or swap.' : 'Use a defensive for the frontal.');
+    else if (st >= 3 && !swapO) M(hit.t, pname(g), n, 'High', 'Took ' + S(n)[1] + ' on stack ' + st + '.', 'Let the stacks drop (or swap) before a third frontal.');
+    else if (warn && !died && !(swapO && ph === 'P1')) M(hit.t, pname(g), n, 'Low', 'Took ' + S(n)[1] + ' on stack ' + st + (exts.length ? ' with ' + exts.length + ' external' + (exts.length === 1 ? '' : 's') : ' with no external') + (ph === 'P1' ? ' (P1 swaps every frontal)' : '') + '.', ph === 'P1' ? 'Taunt before each Sever so every frontal lands on a fresh tank.' : 'On the second stack, use a big defensive and get an external.');
     tfRows.push({ t: hit.t, row: [{ t: hit.t }, { s: S(n) }, { p: pname(g) }, { txt: 'stack ' + st, bad: st >= 3, warn: ph === 'P1' && st >= 2 },
       { txt: [...new Set([...pers, ...exts])].map((x) => SHORT_CD[x] || x.replace(/\b\w/g, (c) => c.toUpperCase())).join(', ') || 'nothing up', sub: st >= 2 ? (!lowCover ? 'covered' : 'plan: a big defensive and an external') : '', warn: lowCover || (!pers.length && !exts.length && st >= 2), dim: st < 2 && !pers.length && !exts.length },
       { txt: died ? 'died' : 'lived', bad: !!died }] });
@@ -7011,7 +7017,7 @@ function* analyzeSteps(item, text, opts) {
       /* (Nov 8, audit W5: a hit or a position mistake while feared by an unkicked Wail of Terror is the missed kick's, not theirs: the same debuff window the deaths use (on them up to 0.2 s after, or gone less than 1.5 s before); kept for the record as someone else's, never counted) */
       try { const byName = new Map([...r.players.values()].map((p) => [String(p.name || '').split('-')[0], p]));
         const feared = (nm0, t) => { const p = byName.get(String(nm0 || '').split('-')[0]), b = p && p.debuffs && p.debuffs.get('Wail of Terror'); return !!(b && b.sp && b.sp.some(([a, z]) => a <= t + 0.2 && (z == null || z >= t - 1.5))); };
-        for (const m of r.mistakes) { if (m.player === 'Raid' || m.others || m.fromNote || m.mechanic === 'Death' || !(m.pos || m.avoidRule || m.avoid) || /wail of terror/i.test(m.mechanic || '') || !feared(m.player, m.t)) continue;
+        for (const m of r.mistakes) { if (m.player === 'Raid' || m.others || m.fromNote || m.mechanic === 'Death' || !(m.pos || m.avoidRule || m.avoid || m.taker) || /wail of terror/i.test(m.mechanic || '') || !feared(m.player, m.t)) continue; /* (Nov 8, audit D6: a tank the Wail feared couldn't taunt) */
           m.others = 'feared by an unkicked Wail of Terror'; m.feared = true; m.severity = 'Low'; m.avAmber = false; m.detail = String(m.detail || '').replace(/\.?\s*$/, '.') + ' Feared by an unkicked Wail of Terror: the missed kick, not them.'; } } catch (e) { console.error(e); }
       /* (Nov 6: an axe dropped on the raid is its target's mistake: everyone else's Widow's Kiss, Death's Embrace and soak hits from it are kept, never counted) */
       if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others) m.others = a.by /* (Flex, Nov 6: "if its a bad drop they should not be blamed", soakers too) */ + ' dropped the ' + a.sp + ' on the raid'; }
@@ -7674,8 +7680,8 @@ function explainDeaths(r) {
     d.big = bigOk ? { t: big0.t, spell: big0.spell || 'Melee', id: big0.id, amount: big0.amount, hp: big0.hp } : null;
     const raidM = r.mistakes.filter((m) => m.player === 'Raid' && m.mechanic !== 'Death' && m.t >= d.t - 4 && m.t <= d.t + 0.5);
     /* (Nov 8, audit D4: another player's Serious miss that IS the killing hit, within 4 s (the tank's missed Stone Breaker slam hitting the raid), is the raid's cause of this death, with their name) */
-    const othersM = r.mistakes.filter((m) => m.player && m.player !== 'Raid' && m.player !== d.player && m.mechanic !== 'Death' && m.severity === 'High' && !m.others && !m.fromNote && m.t >= d.t - 4 && m.t <= d.t + 0.5 && String(m.mechanic).toLowerCase() === String(d.kill).toLowerCase() && /^(missed|dropped|let |lost |didn't|did not|failed|popped|set off|broke|carried|pulled|taunted|no )|hit \d+ players|on the raid|into the raid|the whole raid/i.test(m.detail || ''));
-    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, fix: m.fix, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}) }));
+    const othersM = r.mistakes.filter((m) => m.player && m.player !== 'Raid' && m.player !== d.player && m.mechanic !== 'Death' && m.severity === 'High' && !m.others && !m.fromNote && m.t >= d.t - 4 && m.t <= d.t + 0.5 && String(m.mechanic).toLowerCase() === String(d.kill).toLowerCase() && (!m.taker || String(m.taker).split('-')[0] === String(d.player).split('-')[0]) /* (a missed taunt explains the taker's death only) */ && /^(missed|dropped|let |lost |didn't|did not|failed|popped|set off|broke|carried|pulled|taunted|no )|hit \d+ players|on the raid|into the raid|the whole raid/i.test(m.detail || ''));
+    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, fix: m.fix, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}), ...(m.taker ? { taker: String(m.taker).split('-')[0] } : {}) }));
     d.taken5 = hits.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.healed5 = heals.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.react = !fast; // (false: from 50%+ to dead in 2 s or less, too fast to press anything)
