@@ -343,3 +343,51 @@ What was read: the Plan tab's healing-cooldown planner (`ui.js ndzCdPlan` / `ndz
 
 ## Done so far (Nov 8)
 Areas 1-5 written: W1-W16 (wipes, Main on Fable, morning), D1-D13 (deaths), M1-M10 (mechanics), R1-R8 (rotations), P1-P5 (planning, short). Sweeps: 60 pulls / 995 deaths on the three test logs through the real engine in node (scripts in the shared notes folder, deaths-audit/: audit2.js deaths, audit3.js mechanics, audit4.js rotations, sum.js / msum.js to read them). No browser screenshots were needed: every finding has a pull and a time to open on the site.
+
+## 5b. Automated planning, the browser sitting (Flex: "make it happen i need this perfect")
+
+Done on the practice link (next-debrief) with Wolfthorn's 20 raiders from Thursday's log, Mythic, "✨ Make the whole plan" on Nymrissa and The Coiled Altar, then the Healing cooldowns (chart + Big hits), Assignments and My note panels read in full; the live site's Plan tab was read with the Wolfthorn team imported through "Add my Warcraft Logs team" (Schooty, Sargeras). The guide for every call below is `notes/Guides/Bosses/7 The Coiled Altar.md`.
+
+### P6. The Coiled Altar soak groups break the fight's own rules (L, website builder)
+- What's wrong: the auto Guillotine groups put the same five raiders (Volkovod, Schooty, Larryg, Zaffia, Fourinches) on P1 Guillotine 1, P3 Guillotine 1 and P3 Guillotine 3, and Volkovod and Schooty on P1 Guillotine 2 as well. The guide: Guillotined (+500% to the next) is permanent on Mythic, so a raider soaks once unless an immunity covers them; immune classes soak the first so they can't be targeted by the next; Mythic needs at least 5 in every soak. Larryg (Arms, no immunity) is sent to three axes, Fourinches (Unholy, Anti-Magic Shell is magic only) to three, Zaffia (Cloak, magic only) to a P1 physical axe. P1 Guillotine 2 has only 4 soakers (Vandagos, Tyralien, Volkovod, Schooty), and two of them are the tanks, who hold the boss and take Sever at that time. P1 Guillotine 1 has 7. The site's own Mechanics rule would call Guillotine 2 "soaked by only 4: Execution".
+- Where: practice link, The Coiled Altar Mythic, Assignments 2 (Guillotine soaks) and 3 (P3 Grim Guillotines), from "Make the whole plan" with Thursday's roster.
+- Rule it should be: one soak per raider for the whole fight unless they can immune it (Divine Shield, Ice Block, Turtle, Netherwalk for any; Cloak / Anti-Magic Shell / Spellwarding only for the P3 shadow axes); five distinct groups across the 5 axes (2 in P1, 3 in P3) with 5-6 each, immunities on the first so they aren't targeted next, tanks never in a soak, the target's external and Zephyr from players not in that soak; when the roster can't fill five groups, the plan says so ("5 axes need 25 soaks; you have 20 raiders and 6 immunities: short by N") instead of reusing people. The planner's "What changed and why" box explains each pick (memory `auto-buttons-explain-swaps`).
+- File: `ui.js` Coiled Altar job picks (`ndz-flow` / the `soakq` job, ~6374 area), `NDZ_*` Coiled Altar block.
+
+### P7. Seven "Defensives" calls in four minutes (M, website builder)
+- What's wrong: on Nymrissa Mythic the planner adds a raid-wide "Defensive · a call for everyone" at 0:10, 0:44, 1:03, 1:40, 2:40, 3:25 and 3:48, and on The Coiled Altar at 0:06 (a Medium hit, 6 s into the pull), 1:06, 1:52, 2:15, 2:29, 3:33, 4:17, 4:47, 5:25, 6:16, 6:54 and 8:04. Personal defensives come back every 1.5-3 minutes, so a call every 20-60 s can't be followed and teaches raiders to ignore the calls. The memory rule says raid calls are Defensives and Healthstones for everyone; it doesn't say every hit.
+- Where: practice link, Nymrissa and The Coiled Altar Healing cooldowns → Big hits.
+- Rule it should be: a Defensives call only on Very heavy hits (or a Heavy one with no raid cooldown on it), never two within 90 s, never in the first 15 s, at most about one per 2 minutes of fight; the Healthstone call once a pull on the worst bare moment (today it is once, at 3:29 / 2:15: right).
+- File: `ui.js ndzCdPlan` (the `Defensive` / `Healthstone` call rows).
+
+### P8. The heaviest hit gets the fewest cooldowns (M, website builder)
+- What's wrong: Nymrissa Mythic: the Medium hit at 0:12 (2.0M/s) gets Zephyr, Rewind, Convoke and a Defensives call; the Very heavy hit at 2:02 (3.8M/s, the fight's worst) gets one Anti-Magic Zone; the Very heavy 1:30 and 3:39 get a Convoke each. On The Coiled Altar the Very heavy Venom Rupture at 1:52 gets one cooldown and the Medium Coalesced Venom at 0:06 gets one plus a Defensives call. The Oct 23 rule was "more uses first, then score", and the "spread" rule keeps a hit from hoarding; together they let early Medium hits take 3-minute cooldowns that a Very heavy hit two minutes later needed.
+- Where: practice link, Nymrissa Healing cooldowns → Big hits (0:12 vs 2:02), The Coiled Altar (0:06 vs 1:52).
+- Rule it should be: fill the Very heavy hits first (two or more cooldowns each, as the top raids do: 4.3 on the last P1 Venom Rupture, memory `healing-cd-power-research`), then Heavy, then Medium with what is left or already back; a 3-minute cooldown is never spent on a Medium hit when a Very heavy hit is inside its recharge; "more uses first" keeps holding, so the total stays the same.
+- File: `ui.js ndzCdPlan` (the DP score: weight by the hit's class).
+
+### P9. "Make the whole plan" plans one boss (S, website builder)
+- What's wrong: the button on each boss page says "Make the whole plan" and the night strip calls it the whole night, but it builds only the open boss: after running it on Nymrissa, The Coiled Altar still said "No plan yet · 0 saved", and running it there saved "1".
+- Rule it should be: either the night page's button plans every boss checked for the week (one "What changed" box per boss) and the boss page's button says "Plan this boss", or the name changes to match what it does.
+- File: `ui.js` Plan night/boss buttons (`ndzBuildStart`, the "✨ Make the whole plan" label).
+
+### P10. The orb carriers don't follow the guide's fourth carrier (S, website builder; check with Flex)
+- What's wrong: the guide's Mythic plan says "Orb carriers: both Mages, off-tank, Evoker healer"; the auto picks give Boltzzx, Dragooned (the Mages), Tyralien (off-tank) and Komo (Affliction), with both Preservation Evokers as "Orb Helpers". Either the pick is right for Wolfthorn (then the guide line is stale) or the picker ignores the guide's class order.
+- Where: practice link, The Coiled Altar Assignments 4 and 5.
+- Rule it should be: the picker follows the guide's class list in order and says why when it can't ("no Evoker healer on tonight's roster: Komo carries"); the "What changed and why" box shows it.
+- File: `ui.js` Coiled Altar orb picks (`NDZ_*` orbs), `notes/Guides/Bosses/7 The Coiled Altar.md` line 78.
+
+### P11. Small things seen on the way (S)
+- "Between hits" appears as a big hit ("2:22 Between hits · Very heavy", "3:49 Between hits · Medium") in the Big hits table: a filler window named like a mechanic. Name it "sustained damage" or fold it into the hit before it.
+- The live Plan's Raid kit "Could swap" lists the same raider twice as two specs ("Optt (Disc) · Optt", "Fourinches · Raiyvenz · Fourinches (Blood)"): one line per raider, "Fourinches as Blood".
+- The practice copy's plan night defaulted to "Sun 8" (today) with the Wolfthorn roster loaded; the live site shows "Wed 11". The night should be the next raid day as soon as the team's days are known (the raid-day rule exists; the practice copy didn't have the team's override).
+- Planned cooldowns read "back after 1:00" for Convoke the Spirits and "back after 3:00" for Anti-Magic Zone; both go through P1's one-table fix and a tooltip check (Convoke is 2:00 unless talented, Anti-Magic Zone 2:00 baseline).
+- "Pick who you are on Home first" blocks My note on a fresh copy: fine, but the line could offer the Home link.
+
+### P12. For the record (no fix)
+- The team import works in three steps with no typing beyond a character name; the roster groups by role and marks the alt (Trëèflêx as Flëxørçïst's, "guessed", honest). Kicks: 4 kickers per Spiteful Soulcoiler, no healers; Dreadmarch CC order is the guide's classes (Windwalker, Druid, Warrior ×2); raid markers match the guide (Phase 3 axe 1 at Star, 2 and 3 at Square, Dreadmarch at Square); Fragments soakers and curses are filled; Healthstone call once a pull; Spirit Erasure gets 5 cooldowns, as the top raids stack it. Nymrissa's planned hits are the real ones (Abyssal Rain, Frost Burst, Pop!) with plain tooltips.
+
+### Order to fix (my call)
+1. P6 (the soak groups): a plan that kills the raid is worse than no plan.
+2. P7 + P8 (calls and the heaviest hits first) in one pass through `ndzCdPlan`.
+3. P9, P10, P11.
