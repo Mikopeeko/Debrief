@@ -287,6 +287,10 @@ if (!UI.includes("dif = (o && o.diff) || (k && N0.d && N0.d[k] && N0.d[k].diff) 
   if (!UI.includes("key: 'kicks', mythic: true, nofill: true, title: 'Broodling kicks'")) say('the page code', 'jobs', 'the Twin Fangs kick card can be topped up with non-kickers again (K1/K13)');
   if (!UI.includes('const PG_FILLOK = (pg, sl) =>') || !UI.includes('if (room() && (rule || PG_FILLOK(pg, sl)))')) say('the page code', 'jobs', 'the card top-up fills any slot from the free pool again (K13)');
   if (!UI.includes("'Knocked right: soaks the first orb.'")) say('the page code', 'jobs', 'the Twin Fangs Feast order is not the guide\'s (right first, left second, front last; K2)'); }
+/* (audit K5/K6, Nov 8: Sentinels' Miasma is the whole Blood side; Vashnik's shadow-add grips come only from gathering spells, with a Far Add CC on Mythic) */
+{ if (!UI.includes("const mi = G.Blood.slice()")) say('the page code', 'jobs', 'Miasma no longer takes the whole Blood side (K5)');
+  if (/\['Ring of Peace', 3\]|\['Thunderstorm', 2\]/.test(UI)) say('the page code', 'jobs', 'Ring of Peace or Thunderstorm count as a mass grip again: they scatter adds (K6)');
+  if (!UI.includes("label: 'Far Add CC', want: 1, mythic: true") || !UI.includes("[/^Shadow Add Grips/, (p) => true, ['massgrip'], 'strict']")) say('the page code', 'jobs', 'Vashnik lost the Far Add CC slot or the strict gatherers-only rule (K6)'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
