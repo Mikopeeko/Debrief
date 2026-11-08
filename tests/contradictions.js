@@ -282,6 +282,11 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
   if (!UI.includes('The right-hand coil always goes first')) say('the page code', 'jobs', 'the Spectral Coils teams lost the guide\'s placement sentence (J6)'); }
 /* (Main, Nov 8: one difficulty on the Plan page: the night strip reads the live Who plays difficulty, the one the planner builds with) */
 if (!UI.includes("dif = (o && o.diff) || (k && N0.d && N0.d[k] && N0.d[k].diff) || 'Mythic'")) say('the page code', 'plan', 'the Plan night strip reads a saved copy of the difficulty, not the live one the planner uses: the two can disagree');
+/* (audit K1/K13/K2, Nov 8: the Twin Fangs kick card is the guide's ten spots and never topped up; the top-up fills only groups, teams and sides; the Feast order is right, left, front) */
+{ for (const l of ['Front Left', 'Front Right', 'Left close', 'Left far', 'Right close', 'Right far']) if (!UI.includes("label: '" + l + "', order: true")) say('the page code', 'jobs', 'the Twin Fangs kick card has no "' + l + '" spot (K1)');
+  if (!UI.includes("key: 'kicks', mythic: true, nofill: true, title: 'Broodling kicks'")) say('the page code', 'jobs', 'the Twin Fangs kick card can be topped up with non-kickers again (K1/K13)');
+  if (!UI.includes('const PG_FILLOK = (pg, sl) =>') || !UI.includes('if (room() && (rule || PG_FILLOK(pg, sl)))')) say('the page code', 'jobs', 'the card top-up fills any slot from the free pool again (K13)');
+  if (!UI.includes("'Knocked right: soaks the first orb.'")) say('the page code', 'jobs', 'the Twin Fangs Feast order is not the guide\'s (right first, left second, front last; K2)'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');

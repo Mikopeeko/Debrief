@@ -6007,7 +6007,7 @@ function ppCardsUL(J, M, U, P) {
 }
 // ===== The Twin Fangs, Mythic (Oct 26, the same setup again; Plan's Jobs cards in b2e86a2). Every picture is on the south-east platform,
 // as the guide's cards are (the room picture cuts off the north tip); the sets repeat on every platform =====
-// (the note's jobs, in the lines Plan writes: "Left:" / "Right:" / "Center:" (Ravenous Feast groups), "Front Melee:", "Left Melee:",
+// (the note's jobs, in the lines Plan writes: "Left:" / "Right:" / "Center:" (Ravenous Feast groups), "Front Left:" / "Front Right:" (or the old "Front Melee:"), "Left close:" / "Left far:" (or "Left Melee:" / "Left Range:"),
 // "Right Melee:", "Left Range:", "Right Range:", "Backup Kicker:" (Broodling kick areas), "Odd set Orbs:" / "Even set Orbs:" (globule CC),
 // "CC Set 1 Front Left:" … "CC Set 2 Back Right:" (area crowd control by quadrant for each alternating set, Plan's orbq job))
 function ppReadTF(N, P) {
@@ -6016,7 +6016,7 @@ function ppReadTF(N, P) {
     const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
     if ((m = /^cc\s+(?:set\s*([12])\s+)?(front|back)\s+(left|right)/.exec(lab))) J.quad[m[1] === '2' ? 1 : 0][m[2][0] + m[3][0]] = who;
     else if ((m = /^(left|right|center|centre)$/.exec(lab))) J.feast[m[1] === 'centre' ? 'center' : m[1]] = who;
-    else if ((m = /^(front|left|right)\s+(melee|range)/.exec(lab))) J.kicks[m[1] === 'front' ? 'front' : m[1][0] + (m[2] === 'melee' ? 'm' : 'r')] = who;
+    else if ((m = /^front\s+(melee|left|right)/.exec(lab))) J.kicks.front = J.kicks.front.concat(who); else if ((m = /^(left|right)\s+(melee|close|range|far)/.exec(lab))) J.kicks[m[1][0] + (m[2] === 'melee' || m[2] === 'close' ? 'm' : 'r')] = who; /* (the spot names since K1: Front Left/Right, Left/Right close and far; the old Melee/Range names still read) */
     else if (/backup/.test(lab)) J.kicks.backup = who; else if (/\bodd\b/.test(lab)) J.cc[0] = who; else if (/\beven\b/.test(lab)) J.cc[1] = who;
   }
   return J;
