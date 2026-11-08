@@ -267,6 +267,11 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
   for (const l of ['Bite 1', 'Backup Bite 1', 'Bite 3', 'Backup Bite 3']) if (!UI.includes("label: '" + l + "'")) say('the page code', 'jobs', 'the Serpent\'s Bite card has no "' + l + '" slot');
   if (!GJ.includes('bite\\s*([123])')) say('the page code', 'jobs', 'the Guides tab\'s picture plan does not read the "Bite 1/2/3" lines the Plan writes');
   if (!UI.includes("'Bite Melee', want: 'all', heroic: true")) say('the page code', 'jobs', 'Heroic\'s Serpent\'s Bite groups are not whole-raid groups (want all, Heroic only)'); }
+/* (audit J2/J4/J7, Nov 8: Freedom only from spells that remove the slow; each egg zone its own pool; shield breakers and Freedom never topped up with a filler) */
+{ const m = /const NDZF_FREEDOM = (\{[^}]*\})/.exec(UI), FR = m ? m[1] : '';
+  if (!FR || /Rescue|Stampeding|Wind Rush/.test(FR) || !/Blessing of Freedom/.test(FR)) say('the page code', 'jobs', 'NDZF_FREEDOM lists a spell that does not remove the slow (Rescue, Stampeding Roar, Wind Rush Totem), or lost Blessing of Freedom');
+  for (const z of ['Egg Melee', 'Egg Far', 'Egg (Left|Right)', 'Egg Backup', 'Egg Shields']) if (!UI.includes('[/^' + z + '/,')) say('the page code', 'jobs', 'the egg card has no fit rule of its own for ' + z + ': one shared pool scrambles the zones (J2)');
+  if (!UI.includes("['freedom'], 'strict']") || !UI.includes("['shield'], 'explain strict']")) say('the page code', 'jobs', 'Freedom and Egg Shields are not strict jobs: a 0-fit filler could be topped up into them (J4/J7)'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
