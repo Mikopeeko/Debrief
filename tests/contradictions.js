@@ -276,6 +276,10 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
 { for (const l of ['P2 Left Solo Break', 'P2 Left Breakers', 'P2 Left Doomscale Egg', 'P2 Right Doomscale Egg', 'P2 Gateway']) if (!UI.includes("label: '" + l + "'")) say('the page code', 'jobs', 'the Ula\'tek P2 card has no "' + l + '" slot (J3)');
   if (UI.includes("{ key: 'side', mythic: true, title: 'P2 sides'") || UI.includes("{ key: 'eggs', mythic: true, title: 'Egg carriers'")) say('the page code', 'jobs', 'Ula\'tek\'s P2 or egg card is Mythic-only again: Heroic has eggs and two ledges too (J5)');
   if (!UI.includes('const sidesOf = (x) => (x.split ?') || !UI.includes("side|P2 Left Side'] || {}).n || [], r = (B.sel['side|P2 Right Side']")) say('the page code', 'cooldowns', 'ndzCdPlan no longer plans Ula\'tek\'s phase 2 per ledge (J8)'); }
+/* (audit J6, Nov 8: the Ula'tek soak teams follow the guide's placement and an even split never says "1 more needed" on an odd roster) */
+{ if (!UI.includes("{ label: 'Soak Group 1', want: 'all', block: 'trans' }")) say('the page code', 'jobs', 'the intermission groups carry a size flag again (they are uneven by design, J6)');
+  if (!UI.includes("wantN = (typeof sl.want === 'number' ? sl.want : 0) - (sl.approx ? 1 : 0)")) say('the page code', 'jobs', 'the Plan row flags an even split that is one short (19 raiders can\'t split 10/10, J6)');
+  if (!UI.includes('The right-hand coil always goes first')) say('the page code', 'jobs', 'the Spectral Coils teams lost the guide\'s placement sentence (J6)'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
