@@ -291,6 +291,10 @@ if (!UI.includes("dif = (o && o.diff) || (k && N0.d && N0.d[k] && N0.d[k].diff) 
 { if (!UI.includes("const mi = G.Blood.slice()")) say('the page code', 'jobs', 'Miasma no longer takes the whole Blood side (K5)');
   if (/\['Ring of Peace', 3\]|\['Thunderstorm', 2\]/.test(UI)) say('the page code', 'jobs', 'Ring of Peace or Thunderstorm count as a mass grip again: they scatter adds (K6)');
   if (!UI.includes("label: 'Far Add CC', want: 1, mythic: true") || !UI.includes("[/^Shadow Add Grips/, (p) => true, ['massgrip'], 'strict']")) say('the page code', 'jobs', 'Vashnik lost the Far Add CC slot or the strict gatherers-only rule (K6)'); }
+/* (audit K3/K4/K9/K10/K12, Nov 8: Nymrissa's immune orb soakers and squads, Sszorak's Fury Stack and pingers, Kith'ix's Circle Scar; knockbacks are no grip) */
+{ for (const l of ["label: 'Orb Soak ' + i, want: 1, mythic: true", "label: 'Orb Soaks', want: 1, heroic: true", "label: 'Left Squad', want: 3, mythic: true", "label: 'Frostscale Grip', want: 1, mythic: true", "label: 'Fury Stack', want: 14", "label: 'Crosswinds Pingers', want: 0, show: true", "label: 'Circle Scar', want: 2"]) if (!UI.includes(l)) say('the page code', 'jobs', 'a batch-3 slot is missing: ' + l);
+  if (/Ring of Peace', 1\]|Thunderstorm', 1\]|Wing Buffet', 1\]/.test(UI) || /MONK: 'Ring of Peace' \}/.test(UI)) say('the page code', 'jobs', 'a knockback counts as a grip again (Ring of Peace, Thunderstorm, Wing Buffet)');
+  if (!UI.includes("slw = cls === 'DEMONHUNTER' && sid !== 581 ? null : NDZF_SLOWS[cls]")) say('the page code', 'jobs', 'a Havoc Demon Hunter gets Sigil of Chains as a slow again'); }
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
