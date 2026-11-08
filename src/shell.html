@@ -15105,6 +15105,16 @@ window.__ahGroup = function (w) { try {
   :root body.snv-on.snv-on .snv-gsub .snv-keys { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--faint, var(--muted)); }
   :root body.snv-on.snv-on .snv-gsub .snv-keys kbd { font: 600 12px var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
   :root body.snv-on.snv-on #view .gdz-hero .gdz-diff { display: none !important; }
+  /* polish (Nov 8): things that stick while you scroll sit under the sub tabs (and the thin banner), not behind them */
+  :root body.snv-on { --snv-st: 50px; }
+  :root body.snv-on.snv-thin { --snv-st: 96px; }
+  :root body.snv-on.snv-on #view .ds-grail { top: calc(var(--snv-st) + 12px) !important; }
+  :root body.snv-on.snv-on #view .pf-row.cb-h { top: calc(var(--snv-st) - 1px) !important; }
+  :root body.snv-on.snv-on #view .rcb-tr.rcb-th { top: var(--snv-st) !important; }
+  :root body.snv-on.snv-on #view .rcb-yp { top: calc(var(--snv-st) + 42px) !important; }
+  /* the reading-pulls bubble clears the menu; an empty numbers strip is hidden */
+  :root body.snv-on.snv-on > #bgRead.bgread { left: calc(var(--sn-w) + 14px) !important; }
+  :root body.snv-on.snv-on #view .dbt-nums:not(:has(> :not(i:empty))) { display: none !important; }
 }
 @media (max-width: 899px) { #sideNav, #snThin { display: none !important; } }
 body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
