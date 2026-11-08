@@ -8321,6 +8321,15 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
 }
+/* plan night header + difficulty in the bar (Plan review 5 + 6, Nov 8) */
+html body #view.plan-page #assignBox > .pv-nighth { display: none; }
+html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > .pv-nighth { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 4px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > .pv-nighth > b { font: 700 22px var(--head); color: var(--text); }
+html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > .pv-nighth > .pv-nhs { font-size: 14px; color: var(--muted); }
+html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > header.plan-bh { display: none !important; }
+:root body.snv-on.snv-on #view.plan-page > #assignBox > .pv-nighth { order: -3 !important; }
+html body #view.plan-page .pg-bar .pg-bdiff { flex: none; display: inline-flex; }
+html body #view.plan-page .pg-bar .pg-bdiff > button { padding: 4px 11px; font-size: 13px; }
 /* plan laptop grid width (Plan review 4: the compact grid rules live in the theme layer, so this one does too) */
 @layer defaultTheme { @media (min-width: 641px) and (max-width: 1180px) { html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid table.nt-g { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh { width: 100% !important; min-width: 0 !important; }
