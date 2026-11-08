@@ -16121,6 +16121,26 @@ html body #view .dbt-addr .ah-more.shut:hover::after { text-decoration: underlin
   html body #view#view :is(.dbt-add, .r236-rc) .dbt-addr > .dbt-ic { align-self: start; }
 }
 </style>
+<style>/* (Nov 8 Also hurt tidy, box widths: Main, "at 964 px every line wraps one or two words at a time") */
+html body #view .dbt-add, html body #view .r236-rc { container-type: inline-size; }
+html body #view#view#view .r236-two.r236-on.r236-on.r236-on { grid-template-columns: minmax(0, 1fr) !important; row-gap: 18px !important; }
+@container (max-width: 860px) {
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr.dbt-addr { grid-template-columns: 20px 160px minmax(0, 1fr) 84px !important; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row.r236-row.r236-row { grid-template-columns: 20px 160px minmax(0, 1fr) 84px !important; }
+}
+@container (max-width: 700px) {
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr.dbt-addr { grid-template-columns: 20px minmax(0, 1fr) auto !important; row-gap: 3px !important; column-gap: 10px !important; align-items: start !important; }
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr > .dbt-ic { grid-column: 1; grid-row: 1; }
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr > b { grid-column: 2; grid-row: 1; }
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr > i.dbt-lv { grid-column: 3; grid-row: 1; }
+  html body #view#view#view .dbt-add .dbt-addr.dbt-addr > span:not(.dbt-ic) { grid-column: 2 / -1; grid-row: 2; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row.r236-row.r236-row { grid-template-columns: 20px minmax(0, 1fr) auto !important; row-gap: 3px !important; column-gap: 10px !important; align-items: start !important; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b { grid-column: 2; grid-row: 1; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > i.dbt-lv { grid-column: 3; grid-row: 1; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > span { grid-column: 2 / -1; grid-row: 2; }
+  html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b .icw:first-child { position: absolute; left: -30px; top: 0; }
+}
+</style>
 <script>/* (Nov 8 Also hurt tidy) */
 (function () {
   var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
