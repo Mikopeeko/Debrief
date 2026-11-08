@@ -76100,9 +76100,16 @@ html body #view#view#view .r236-two.r236-on.r236-on.r236-on { grid-template-colu
       var d = document.createElement('span'); d.innerHTML = t.textContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(re, function (m, a, nm) { return a + '<b class="ah-pn" style="color:' + C[nm] + '">' + nm + '</b>'; });
       var f = document.createDocumentFragment(); while (d.firstChild) f.appendChild(d.firstChild); t.parentNode.replaceChild(f, t); }); };
   var isName = function (n) { return n.nodeType === 1 && (n.classList.contains('dbt-chip') || /color/.test(n.getAttribute('style') || '')) && !n.classList.contains('sp'); };
-  var shorten = function (ln) { var kids = [].slice.call(ln.childNodes), nm = kids.filter(isName); if (nm.length <= 4) return;
-    var from = kids.indexOf(nm[2]) + 1, to = kids.indexOf(nm[nm.length - 1]); var more = document.createElement('span'); more.className = 'ah-more shut'; more.setAttribute('data-more', ' and ' + (nm.length - 3) + ' more \u203a'); more.title = 'Show everyone';
-    var rest = document.createElement('span'); rest.className = 'ah-rest'; more.appendChild(rest); ln.insertBefore(more, kids[from]); for (var i = from; i <= to; i++) rest.appendChild(kids[i]); };
+  var shorten = function (ln) { /* (Nov 8 Also hurt polish: only the run of names "A, B, C, D ..." is shortened; the words after it stay) */
+    var kids = [].slice.call(ln.childNodes), SEPR = /^\s*(,|,?\s*and)\s*$/, best = null, cur = null;
+    for (var i = 0; i < kids.length; i++) { if (!isName(kids[i])) continue;
+      if (cur && (i === cur.last + 1 || (i === cur.last + 2 && kids[i - 1].nodeType === 3 && SEPR.test(kids[i - 1].textContent)))) { cur.n.push(i); cur.last = i; }
+      else { cur = { n: [i], last: i }; }
+      if (!best || cur.n.length > best.n.length) best = cur; }
+    if (!best || best.n.length <= 4) return;
+    var from = best.n[2] + 1, to = best.n[best.n.length - 1];
+    var more = document.createElement('span'); more.className = 'ah-more shut'; more.setAttribute('data-more', ' and ' + (best.n.length - 3) + ' more ›'); more.title = 'Show everyone';
+    var rest = document.createElement('span'); rest.className = 'ah-rest'; more.appendChild(rest); ln.insertBefore(more, kids[from]); for (var j = from; j <= to; j++) rest.appendChild(kids[j]); };
   var wrapLines = function (sp, stopAt) { /* split the nodes before stopAt into lines at " · " text that starts a new time */
     var nodes = [].slice.call(sp.childNodes); var end = stopAt ? nodes.indexOf(stopAt) : nodes.length; if (end < 0) end = nodes.length;
     var lines = [[]];
@@ -76128,10 +76135,33 @@ html body #view#view#view .r236-two.r236-on.r236-on.r236-on { grid-template-colu
       C = C || colours(); paint(sp, C);
       if (r.closest('.r236-rc')) { if (!cooldowns(sp)) wrapLines(sp, null); }
       else { var nx = sp.querySelector(':scope > .ahg-nx'); wrapLines(sp, nx); }
-      sp.setAttribute('data-ah2', T(sp)); });
+      [].forEach.call(sp.querySelectorAll('.ahg-ln'), shorten); sp.setAttribute('data-ah2', T(sp)); });
   } catch (e) { console.error(e); } };
   var q = 0, soon = function () { if (q) return; q = requestAnimationFrame(function () { q = 0; tidy(); }); };
   document.addEventListener('click', function (e) { var m = e.target.closest && e.target.closest('#view .ah-more'); if (!m) return; e.preventDefault(); e.stopPropagation(); m.classList.toggle('shut'); }, true);
+  var start = function () { var m = document.getElementById('main') || document.body; new MutationObserver(soon).observe(m, { childList: true, subtree: true }); soon(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+<style>/* (Nov 8 Also hurt polish: Flex via Main, Thursday pull 20) */
+html body #view .dbt-chr:has(> .dbt-ic .icw) > span > .sp:first-child > .icw:first-child { display: none !important; }
+html body #view .dbt-add .ahg.ah-ord { display: flex; flex-direction: column; }
+html body #view .dbt-add .ahg.ah-ord > .ahg-h { order: 0; }
+html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b { position: relative; }
+html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b:not(:has(.icw))::before { content: ''; position: absolute; left: -34px; top: 0; width: 20px; height: 20px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='.5' y='.5' width='23' height='23' rx='4.5' fill='%234d6a8a'/%3E%3Cpath d='M8 5.5h8v13H8z M10.2 9h3.6 M10.2 12h3.6 M10.2 15h2.4' fill='none' stroke='white' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 20px 20px no-repeat; }
+@container (max-width: 700px) { html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b:not(:has(.icw))::before { left: -30px; } }
+</style>
+<script>/* (Nov 8 Also hurt polish: an "X assignment" row sits right after the row about the same mechanic) */
+(function () {
+  var key = function (b) { var c = b.cloneNode(true); [].forEach.call(c.querySelectorAll('.r482-x'), function (x) { x.remove(); }); return c.textContent.replace(/\s+/g, ' ').replace(/×\s*\d+/g, '').trim().toLowerCase(); };
+  var run = function () { try { [].forEach.call(document.querySelectorAll('#view .dbt-add .ahg'), function (g) {
+      var rows = [].filter.call(g.children, function (x) { return x.classList && x.classList.contains('dbt-addr'); });
+      var asg = rows.filter(function (r) { var b = r.querySelector(':scope > b'); return b && / assignment$/.test(key(b)); }); if (!asg.length) return;
+      g.classList.add('ah-ord'); rows.forEach(function (r, i) { var o = String(i * 10 + 10); if (r.style.order !== o) r.style.order = o; });
+      asg.forEach(function (x) { var base = key(x.querySelector(':scope > b')).replace(/ assignment$/, ''), last = base.split(' ').pop();
+        var fam = rows.filter(function (r) { if (r === x) return false; var b = r.querySelector(':scope > b'); if (!b) return false; var k = key(b); return !/ assignment$/.test(k) && (k === base || k.split(' ').pop() === last); }); if (!fam.length) return;
+        var o = +fam[0].style.order; var set = function (r, v) { v = String(v); if (r.style.order !== v) r.style.order = v; }; set(x, o + 1); fam.slice(1).forEach(function (r, k) { set(r, o + 2 + k); }); }); }); } catch (e) { console.error(e); } };
+  var q = 0, soon = function () { if (q) return; q = requestAnimationFrame(function () { q = 0; run(); }); };
   var start = function () { var m = document.getElementById('main') || document.body; new MutationObserver(soon).observe(m, { childList: true, subtree: true }); soon(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
