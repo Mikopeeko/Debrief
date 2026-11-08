@@ -32405,8 +32405,11 @@ function pvWhoBrings(nm, ppl) { const lo = String(nm).toLowerCase(); for (const 
   const gen = hasSp ? sp.map((id) => (S2[id] ? S2[id][0] + ' ' + ndzClsName(S2[id][1]) : '')).filter(Boolean) : cl.map(ndzClsName).filter(Boolean);
   return { key, show: key || who.length > 0, ros: who.length > 0, who: who.length ? who : gen }; } return { key: false, show: false, ros: false, who: [] }; }
 function pvReady() { if (S.page !== 'plan') return; const ros = document.querySelector('#view #pg-roster'), hd = ros && ros.querySelector(':scope > .ndz-dph'); if (!ros || !hd) return;
-  const F = BFR.F || null, kit = ros.querySelector(':scope > details.ds-buffs'), dec = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&amp;/g, '&'), cols = [];
+  const F0 = BFR.F || null, kit = ros.querySelector(':scope > details.ds-buffs'), dec = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&amp;/g, '&'), cols = [];
   const col = (lab, n, cls, sub, body) => '<div class="rs-col"><div class="rs-ch"><span>' + lab + '</span><b class="' + cls + '">' + n + '</b><small>' + sub + '</small></div>' + body + '</div>';
+  /* (only raiders still on the roster: someone taken off the team takes their checks with them (Flex, Nov 7)) */
+  const onR = (() => { try { const L = pnPeople(pnGet()); return L.length ? new Set(L.map((p) => String(p.n).split('-')[0].toLowerCase())) : null; } catch (e) { return null; } })(), keep = (x) => !onR || onR.has(String(x.n).split('-')[0].toLowerCase());
+  const F = F0 && onR ? { ...F0, rows: F0.rows.filter((r) => keep(r.x)), okL: F0.okL.filter(keep), fine: F0.okL.filter(keep).length } : F0;
   if (F) { const n = F.rows.length, bad = F.rows.some((r) => r.k === 'bad');
     cols.push(col('Gear', n || '✓', n ? (bad ? 'bad' : 'warn') : 'ok', n ? 'to fix' : 'all set', F.rows.map((r) => '<button type="button" class="rs-r" data-grjump="' + esc(r.x.n) + '" title="Show on the roster"><i class="rs-dot ' + r.k + '"></i><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b><em>' + esc(r.parts.join(' · ')) + '</em></button>').join('') +
       (F.fine ? '<div class="rs-ok">✓ <span class="rs-rd" title="' + esc(F.okL.map((x) => x.n).join(', ')) + '">' + F.fine + ' ready</span><span> · from Battle.net</span></div>' : '') +
@@ -33550,7 +33553,8 @@ function bfrDraw() {
   const d = TP.doc || {}, you = d.you || {}, can = !!you.can, mineOn = new Set(N.map((n) => meBase(n))), onRoster = meNames().some((n) => mineOn.has(meBase(n))), linked = whoChars().length > 0;
   const nm = (n) => { const lo = String(n).toLowerCase(); return ((TP.doc && TP.doc.bn) || []).some((g) => g.some((x) => String(x).toLowerCase() === lo)) || whoChars().some((c) => meBase(c.n) === meBase(n)); };
   const join = d.exists && !onRoster && !can && WHO.now && WHO.now.wcl && WHO.now.can ? ' · <button class="lk gr-join" type="button" data-bfr="join">' + (linked ? 'Join ' : 'Link Battle.net and join ') + esc(TP.name || W.team.name) + '</button>' : '';
-  const F = BFR.list && !BFR.err ? bfrFacts(BFR.list) : null;
+  const onR0 = (() => { try { const L0 = pnPeople(pnGet()); return L0.length ? new Set(L0.map((p) => String(p.n).split('-')[0].toLowerCase())) : null; } catch (e) { return null; } })(); /* (raiders taken off the team leave the gear check too (Flex, Nov 7)) */
+  const F = BFR.list && !BFR.err ? bfrFacts(onR0 ? BFR.list.filter((x) => onR0.has(String(x.n).split('-')[0].toLowerCase())) : BFR.list) : null;
   if (F && F.need.size) try { store.set('wla-gear-ref', JSON.stringify({ need: [...F.need], mid: F.mid, at: Date.now() })); } catch (e) { /* (Home falls back) */ }
   const bad = F ? F.rows.filter((r) => r.k === 'bad').length : 0, low = F ? F.rows.length - bad : 0, all = '<button class="lk gr-all" type="button" data-bfr="all" aria-expanded="' + !!BFR.all + '">' + (BFR.all ? 'hide ▴' : 'see all ▾') + '</button>';
   sum.innerHTML = (!F ? (BFR.err ? '<span class="gr-l">The gear check didn\'t load · <button class="lk" type="button" data-bfr="again">Try again</button></span>' : '<span class="gr-l">Checking gear…</span>')
