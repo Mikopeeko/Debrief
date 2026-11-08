@@ -6261,6 +6261,7 @@ function ppReadVA(N, P) {
   const isN = (w) => P.has(String(w).toLowerCase()), J = { fire: [], banish: '', shadow: [], disp: [], bile: [] };
   for (const l of N.lines) { const lab = l.label.toLowerCase().trim(), who = l.words.filter(isN).map((w) => P.get(w.toLowerCase()).name); let m; if (!who.length) continue;
     if (/fire.*grip/.test(lab)) J.fire = who; else if (/shadow.*grip/.test(lab)) J.shadow = who; else if (/banish/.test(lab)) J.banish = who[0];
+    else if ((m = /dispel\s*pair\s*(\d)/.exec(lab))) { J.pair = true; J.disp[+m[1] - 1] = who[0]; if (who[1]) J.disp[+m[1] + 1] = who[1]; } /* (Mythic's two pairs, K7) */
     else if ((m = /dispel\s*(\d)/.exec(lab))) J.disp[+m[1] - 1] = who[0]; else if (/backup dispel/.test(lab)) J.disp[2] = who[0]; else if (/bile/.test(lab)) J.bile = who; }
   return J;
 }
@@ -6284,9 +6285,9 @@ function ppCardsVA(J, M, U, P) {
       legend: [ppG('Bile soakers', '#8fe36a', J.bile.map((n, i) => ppI(P, n, i < ids.length ? 'A circle' : 'Spare'))), ppG('Everyone else', GO, [], 'Spread round the room before the cast; walk off the boss to take yours.')],
       foot: 'A circle with nobody in it hits the whole raid.' }); }
   // Exploding Infection: the targets run out first, then the note's dispellers clear them one at a time (the guide's map)
-  if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; ['h1', 'h2', 'h4'].forEach((s, i) => { if (!J.disp[i]) return; fix[s] = J.disp[i]; ids.push(s); tags.push([s, i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
+  if (J.disp.filter(Boolean).length) { const fix = {}, ids = [], tags = []; (J.pair ? ['h1', 'h2', 'h3', 'h4'] : ['h1', 'h2', 'h4']).forEach((s, i) => { if (!J.disp[i]) return; fix[s] = J.disp[i]; ids.push(s); tags.push([s, J.pair ? 'Pair ' + ((i % 2) + 1) : i === 2 ? 'Backup' : 'Dispel ' + (i + 1)]); });
     cards.push({ id: 'disp', ph: 1, when: 'Every Infection', title: 'Exploding Infection (Run out, then dispel)', map: ppFreeze(VA_M.infect(false, 'm'), 7, ppSeat(P, fix), P, M, { hl: ids, named: ids, tags, focus: VA_VIEW }),
-      legend: [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'One at a time, once the target is out.'), ppG('Targets', OR, [ppI(P, ppAny('Whoever gets it'))], 'Run out first.')],
+      legend: (J.pair ? [ppG('Pair 1', '#7fd8ff', [J.disp[0], J.disp[2]].filter(Boolean).map((n) => ppI(P, n)), 'The first two infections of a set, one at a time.'), ppG('Pair 2', '#7fd8ff', [J.disp[1], J.disp[3]].filter(Boolean).map((n) => ppI(P, n)), 'The last two.')] : [ppG('Dispels', '#7fd8ff', [J.disp[0] && ppI(P, J.disp[0], 'Dispel 1'), J.disp[1] && ppI(P, J.disp[1], 'Dispel 2'), J.disp[2] && ppI(P, J.disp[2], 'Backup')], 'One at a time, once the target is out.')]).concat([ppG('Targets', OR, [ppI(P, ppAny('Whoever gets it'))], 'Run out first.')]),
       foot: 'Every dispel blasts the raid, less the farther away. Never right before Imbibe 4 or 5.' }); }
   return cards;
 }
