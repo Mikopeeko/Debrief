@@ -12959,6 +12959,15 @@ html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
   html body #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl .btl-trl > * { min-height: 36px; align-items: center; }
 }
 html body #assignBox [data-planv="night"] { display: none !important; } /* (the Who plays grid is gone (Nov 7): no links to it) */
+html body #assignBox #ndzTl .btl > span.btl-x { border-left: 1px dashed rgba(255,255,255,.75); z-index: 6; } /* (the hover line, top to bottom (Nov 7)) */
+/* (Add a cooldown's kind filter (Nov 7)) */
+html body #assignBox #ndzTl .btl-trh { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+html body #assignBox #ndzTl .pv-trf { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; }
+html body #assignBox #ndzTl .pv-trf > button { min-height: 0; padding: 3px 10px; border: 0; border-right: 1px solid var(--line2); border-radius: 0; background: none; color: var(--muted); font: 600 13px var(--body); cursor: pointer; }
+html body #assignBox #ndzTl .pv-trf > button:last-child { border-right: 0; }
+html body #assignBox #ndzTl .pv-trf > button:hover { color: var(--text); }
+html body #assignBox #ndzTl .pv-trf > button[aria-pressed="true"] { background: var(--gold, #d4b77d); color: var(--gold-ink, #19160f); }
+html body #assignBox #ndzTl .btl-trr[hidden], html body #assignBox #ndzTl .btl-ti[hidden] { display: none !important; }
 /* (Roster's Ready strip: problems only, three columns (Nov 7)) */
 html body #assignBox .panel.pg-roster:has(> .rs-strip) .gr-sum { display: none; }
 html body #assignBox .panel.pg-roster:has(> .rs-strip):not(.rs-kiton) > details.ds-buffs { display: none !important; }

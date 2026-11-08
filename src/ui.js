@@ -6968,7 +6968,7 @@ function planJumpWrap(h, pb, n) { if (S.page !== 'plan') return h; if (pb && typ
 // with its tab (data-pv); the tab bar's data-cur picks which show (CSS), so a switch needs no redraw. A panel with no tag shows on every tab
 /* ("you" on Plan: your chip, your cooldowns and your jobs marked; and My cooldowns (Nov 7). Re-marked after every draw of Plan) */
 const pvMeLo = () => { try { const m = meOf(); return m ? String(m.name).split('-')[0].toLowerCase() : ''; } catch (e) { return ''; } };
-function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; try { pvReady(); } catch (e) { /* (the next draw) */ } const me = pvMeLo(); if (!me) return;
+function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; try { pvReady(); } catch (e) { /* (the next draw) */ } try { pvTrayF(); } catch (e) { /* (the next draw) */ } const me = pvMeLo(); if (!me) return;
   const hasMe = (s) => String(s || '').split(/,| and |&/).some((x) => x.trim().split('-')[0].toLowerCase() === me);
   box.querySelectorAll('.pg-rc[data-pgsit]').forEach((c) => { const on = String(c.dataset.pgsit).split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
   box.querySelectorAll('[data-pv="jobs"] .nm[title]').forEach((c) => { const on = String(c.title).split(' · ')[0].split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
@@ -6992,6 +6992,20 @@ function pvUnc(tl, hd) { let P = tl.querySelector('.pv-unc'); const D = typeof N
     : '<span class="pv-ur off" title="Nobody has a raid cooldown ready">' + esc(at(x).replace(/^P\d+ /, '')) + ' ' + esc(x.hit || 'Big hit') + '</span>').join(''); }
 /* (Roster's Ready strip (Flex, Nov 7: "Yes, build it" on the problems-only mock): gear, raid kit and what's left to set, each column listing only
    what needs doing; what's fine is one green line. The full gear list and the 12 raid kit boxes stay one click away) */
+/* (Add a cooldown, filtered by kind (Flex, Nov 7: "should have filters to only show certain things like Raid healing CD, Externals, Movement Speed")) */
+const PV_TRF = [['all', 'All'], ['heal', 'Raid healing'], ['def', 'Raid defensives'], ['ext', 'Externals'], ['move', 'Movement'], ['call', 'Calls']];
+function pvTrKind(nm, role, call) { if (call) return 'call'; const lo = String(nm).toLowerCase(), G = (lab) => (NDZ_BUFFS.find((g) => g[0] === lab) || [0, 0, []])[2].some((x) => x[0].toLowerCase() === lo);
+  if (G('Externals')) return 'ext'; if (G('Movement')) return 'move'; if (G('Raid cooldowns')) return 'def'; if (G('Healer cooldowns') || role === 'healer') return 'heal'; return 'other'; }
+function pvTrayF() { const tr = document.querySelector('#assignBox #ndzTl .btl-tray'); if (!tr) return; const hd = tr.querySelector('.btl-trh'); if (!hd) return;
+  let f = 'all'; try { const v = store.get('wla-trf'); if (PV_TRF.some((x) => x[0] === v)) f = v; } catch (e) { /* (All) */ }
+  let bar = hd.querySelector('.pv-trf'); if (!bar) { bar = document.createElement('span'); bar.className = 'pv-trf'; bar.setAttribute('role', 'group'); bar.setAttribute('aria-label', 'Show'); bar.innerHTML = PV_TRF.map(([k, l]) => '<button type="button" data-trf="' + k + '">' + l + '</button>').join(''); const b0 = hd.querySelector('b'); if (b0) b0.insertAdjacentElement('afterend', bar); else hd.prepend(bar); }
+  bar.querySelectorAll('[data-trf]').forEach((b) => { const on = String(b.dataset.trf === f); if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on); });
+  let role = null; const roleOf = (n) => { if (!role) { role = new Map(); try { for (const p of pnPeople(pnGet())) role.set(String(p.n).split('-')[0].toLowerCase(), p.role); } catch (e) { /* (no roles) */ } } return role.get(String(n).split('-')[0].toLowerCase()) || ''; };
+  tr.querySelectorAll('.btl-trr').forEach((r) => { const who = ((r.querySelector('.btl-trn') || {}).textContent || '').trim(); let any = false;
+    r.querySelectorAll('.btl-ti').forEach((b) => { if (!b.dataset.trk) { const m = /<b>([^<]*)<\/b>/.exec(b.dataset.tt || ''); b.dataset.trk = pvTrKind(m ? m[1].replace(/&#39;/g, '\'').replace(/&amp;/g, '&') : (b.dataset.trn || ''), roleOf(who), !!b.dataset.trcall); }
+      const show = f === 'all' || b.dataset.trk === f; if (b.hidden !== !show) b.hidden = !show; if (show) any = true; });
+    if (r.hidden !== !any) r.hidden = !any; }); }
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-trf]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-trf', b.dataset.trf); } catch (x) { /* (this visit) */ } pvTrayF(); });
 let PV_KIT = false;
 const pvOr = (a) => (a.length < 2 ? a[0] || '' : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
 /* (a missing tool: who on the roster could bring it (the bench, or someone of that class in another spec); a key buff or debuff shows even when nobody can) */
@@ -9729,7 +9743,7 @@ const btlHover = (e) => { const b = e.target.closest && e.target.closest('#ndzTl
   const R0 = b.getBoundingClientRect(), x = e.clientX - R0.left, t = Math.max(0, Math.min(V.len, x / BTL_PX)), ln = b.querySelector('.btl-x'), q = b.querySelector('.btl-q'); if (!ln || !q) return;
   const mm = (s0) => Math.floor(s0 / 60) + ':' + String(Math.floor(s0 % 60)).padStart(2, '0'), fm = (k) => (k >= 1000 ? (k / 1000).toFixed(1) + 'M' : Math.round(k) + 'K'), v = V.sv && t < V.sv.length * 2 ? V.sv[Math.floor(t / 2)] : null;
   const hit = V.hits.find((h) => Math.abs(h.rel - t) <= 3), up = V.cds.filter((c) => t >= c.t && t <= c.t + Math.max(c.dur || 0, 1.5)), mech = [...new Set(V.ms.filter((m) => (m.dur ? t >= m.rel && t <= m.rel + m.dur : Math.abs(t - m.rel) <= 1.5)).map((m) => m.label))];
-  ln.hidden = false; ln.style.left = x + 'px'; ln.style.top = V.HH + 'px'; ln.style.height = V.hb + 'px';
+  ln.hidden = false; ln.style.left = x + 'px'; if (S.page === 'plan') { ln.style.top = '0px'; ln.style.height = Math.max(0, (parseFloat(b.style.height) || V.HH + V.hb + 18) - 18) + 'px'; } /* (Plan: the line runs the whole chart, the ruler through the boss row and the cooldowns to the damage, to see what lines up (Flex, Nov 7)) */ else { ln.style.top = V.HH + 'px'; ln.style.height = V.hb + 'px'; }
   q.innerHTML = '<div class="t">' + mm(t) + '</div>' + (v != null ? '<div>Raid damage: <b>' + fm(v) + '</b> a second</div>' : '') + (hit ? '<div class="h ' + hit.c + '">' + esc(hit.hit) + (hit.c === 'red' ? ' (no raid cooldown)' : '') + '</div>' : '') + (mech.length ? '<div class="m">Boss: ' + esc(mech.join(', ')) + '</div>' : '') +
     (up.length ? up.map((c) => '<div class="c" style="color:' + V.col(c.who) + '">' + esc(ndzSpellNm(c.id) || 'Cooldown') + ' · ' + esc(c.who) + '</div>').join('') : '<div class="n">No cooldown up</div>');
   q.hidden = false; const w = q.offsetWidth, sc = b.parentNode, left = x + 14 + w > sc.scrollLeft + sc.clientWidth ? x - w - 14 : x + 14; q.style.left = Math.max(sc.scrollLeft + 4, left) + 'px'; q.style.top = (V.HH + 6) + 'px'; };
