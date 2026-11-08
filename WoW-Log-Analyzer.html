@@ -29995,16 +29995,46 @@ function ndzSuggest(d, r) {
   const g2imm = ((out.find((o) => o.label === 'Guillotine 2') || { names: [] }).names.map((y) => y.n)).filter((n) => { const p = P(n); return p && imm(p, NDZ_IMMUNE); });
   soakRow('Guillotine 1', 7, pl.filter((p) => g2imm.includes(p.n)).concat(pl.filter((p) => p.role !== 'tank' && wall(p) && !imm(p, NDZ_IMMUNE) && !orbs.includes(p.n)).sort((a, b) => wRank(a) - wRank(b)), pl.filter((p) => imm(p, NDZ_IMMUNE) && !busy(p))),
     (p) => (g2imm.includes(p.n) ? 'immunes soak 2, so not its target' : wall(p) || NDZ_IMMUNE[p.cls]), 'the soak 2 immunities first, then strong walls');
-  // P3, as top raids did it: soak 1's group takes axes 1 and 3 again, the other players axe 2 (two groups that alternate all fight);
-  // immunities can do two axes when they're back in time (Cloak of Shadows, 2 min, does axes 1 and 3)
-  const P3T = [21.69, 86.13, 186.13], IMCD = { HUNTER: 180, PALADIN: 300, MAGE: 240, ROGUE: 120 }, inRow = (lab) => (out.find((o) => o.label === lab) || { names: [] }).names.map((y) => y.n), A = inRow('Guillotine 1'), usedAt = new Map();
-  for (const k of [1, 2, 3]) { const lab = 'P3 Guillotine ' + k, x = find(lab); if (!x && k > 2 && d.rows.length) continue;
-    const prev = out.filter((o) => /^P3 Guillotine [12]$/.test(o.label) && +o.label.slice(-1) === k - 1).flatMap((o) => o.names.map((y) => y.n)), ready = (p) => !busy(p) && imm(p, NDZ_IMMUNE3) && (!usedAt.has(p.n) || P3T[k - 1] - usedAt.get(p.n) >= IMCD[p.cls]);
-    const inA = (p) => A.includes(p.n), free = (p) => !busy(p) && p.role !== 'tank' && !prev.includes(p.n);
-    const pool = k === 2 ? pl.filter((p) => ready(p) && !inA(p)).concat(pl.filter((p) => free(p) && !inA(p) && wall(p)), pl.filter((p) => free(p) && !inA(p)), pl.filter(ready)) : A.map(P).filter((p) => p && (free(p) || ready(p))).concat(pl.filter(ready), pl.filter((p) => free(p) && wall(p)), pl.filter(free));
-    soakRow(lab, 5, pool, (p) => (inA(p) && k !== 2 ? 'soak 1\'s group' : ready(p) ? NDZ_IMMUNE3[p.cls] : wall(p) || 'free then'),
-      (k === 2 ? 'the other group (top raids alternate two groups all fight): immunities that are back, then players not in soak 1' : 'soak 1\'s group again, as top raids do') + (k === 3 ? '. Last axe: send anyone else free too' : ''));
-    for (const n of inRow(lab)) { const p = P(n); if (p && imm(p, NDZ_IMMUNE3)) usedAt.set(n, P3T[k - 1]); } }
+  const perm = d.diff !== 'Heroic'; /* (Mythic: Guillotined is permanent (the guide); Heroic: it wears off, two groups alternate) */
+  if (perm) {
+    /* (audit P6, Nov 8: one soak per raider for the whole fight unless an immunity covers them. After P1, soak 1's and soak 2's players are
+       Guillotined for good; P1's immunities are back by P3 (the P1 axes are 6+ minutes before it). The three P3 axes are planned together:
+       Cloak of Shadows (2 min) can do axes 1 and 3, so Rogues go on axe 1; the one-shot immunities (Turtle, Divine Shield, Ice Block) go on
+       axe 2 after the players not sent yet; axe 3 gets everyone still free and every immunity back (the top raids over-send it). If an axe is
+       still short and soak 1 had 7, soak 1 drops to 6 (the guide allows 6-7) so one more player is free for P3) */
+    const P3T = [21.69, 86.13, 186.13], IMCD = { HUNTER: 180, PALADIN: 300, MAGE: 240, ROGUE: 120 }, gapTo3 = P3T[2] - P3T[0];
+    const isImm = (p) => !busy(p) && imm(p, NDZ_IMMUNE3), twice = (p) => isImm(p) && IMCD[p.cls] <= gapTo3; /* (an immunity that can take axes 1 and 3) */
+    const plan = (sent0) => { const sent = new Set(sent0), usedAt = new Map(), rows = [], short = [];
+      const back = (p, k) => isImm(p) && (!usedAt.has(p.n) || P3T[k - 1] - usedAt.get(p.n) >= IMCD[p.cls]), free = (p) => p.role !== 'tank' && !busy(p) && !sent.has(p.n) && !isImm(p);
+      for (const k of [1, 2, 3]) { const lab = 'P3 Guillotine ' + k, x = find(lab);
+        if (good(x) && x.names.length >= 4) { rows.push({ keep: x }); for (const y of x.names) { const p = P(y.n); if (!p) continue; if (isImm(p)) usedAt.set(p.n, P3T[k - 1]); else sent.add(p.n); } continue; }
+        const fr = pl.filter(free).sort((p, q) => (wall(q) ? 1 : 0) - (wall(p) ? 1 : 0) || wRank(p) - wRank(q)), im = pl.filter((p) => back(p, k));
+        const pool = k === 1 ? im.filter(twice).concat(fr, im.filter((p) => !twice(p))) : k === 2 ? fr.concat(im.filter((p) => !twice(p)), im.filter(twice)) : fr.concat(im);
+        const want = k < 3 ? 5 : Math.max(5, fr.length + im.length);
+        const picks = fill(want, pool, (p) => (isImm(p) ? NDZ_IMMUNE3[p.cls] + (twice(p) && k === 1 ? ', back for axe 3' : ', back in time') : wall(p) || 'not Guillotined yet'));
+        if (picks.length < 5) short.push([lab, 5 - picks.length]); rows.push({ x, lab, picks, k });
+        for (const y of picks) { const p = P(y.n); if (!p) continue; if (isImm(p)) usedAt.set(p.n, P3T[k - 1]); else sent.add(p.n); } }
+      return { rows, short, n: short.reduce((s, x) => s + x[1], 0) }; };
+    const sentOf = () => out.filter((o) => /^Guillotine [12]$/.test(o.label)).flatMap((o) => o.names.map((y) => y.n));
+    let R3 = plan(sentOf()); const g1 = out.find((o) => o.label === 'Guillotine 1');
+    if (R3.n && g1 && g1.tag !== 'kept' && g1.names.length >= 7) { const drop = g1.names[g1.names.length - 1], R3b = plan(sentOf().filter((n) => n !== drop.n));
+      if (R3b.n < R3.n) { g1.names.pop(); g1.why += '. Six this time, not seven: ' + drop.n + ' is needed on a P3 axe'; R3 = R3b; } }
+    for (const r0 of R3.rows) { if (r0.keep) { keep(r0.keep); continue; } const { x, lab, picks, k } = r0;
+      row(x, 'Guillotine soaks', lab, picks, 'sug', (k === 1 ? 'Cloak of Shadows first (it is back for axe 3), then players not Guillotined yet, walls first' : k === 2 ? 'players not Guillotined yet, then the one-use immunities (Turtle, Divine Shield, Ice Block)' : 'the last axe: everyone still free, plus every immunity that is back (over-send)') + (picks.length < 5 ? '. SHORT by ' + (5 - picks.length) + ': fewer than 5 is an Execution' : '') + ': ' + picks.map((a) => a.n + ' (' + a.why + ')').join(', ')); }
+    if (R3.short.length) { const nI = pl.filter(isImm).length, nF = pl.filter((p) => p.role !== 'tank').length;
+      row(null, 'Guillotine soaks', 'Not enough soakers', [], 'sug', 'Five axes need about 26 soaks (soak 1 takes 6-7). You have ' + plural(nF, 'non-tank raider') + ' and ' + (nI === 1 ? '1 immunity' : nI + ' immunities') + ' (purple-orb carriers keep theirs for the orbs), so ' + andL(R3.short.map(([l, n]) => l + ' is short by ' + n)) + '. Bring an immunity class, or free a Mage from the orbs for the last axe.'); }
+  } else {
+    // P3, as top raids did it: soak 1's group takes axes 1 and 3 again, the other players axe 2 (two groups that alternate all fight);
+    // immunities can do two axes when they're back in time (Cloak of Shadows, 2 min, does axes 1 and 3)
+    const P3T = [21.69, 86.13, 186.13], IMCD = { HUNTER: 180, PALADIN: 300, MAGE: 240, ROGUE: 120 }, inRow = (lab) => (out.find((o) => o.label === lab) || { names: [] }).names.map((y) => y.n), A = inRow('Guillotine 1'), usedAt = new Map();
+    for (const k of [1, 2, 3]) { const lab = 'P3 Guillotine ' + k, x = find(lab); if (!x && k > 2 && d.rows.length) continue;
+      const prev = out.filter((o) => /^P3 Guillotine [12]$/.test(o.label) && +o.label.slice(-1) === k - 1).flatMap((o) => o.names.map((y) => y.n)), ready = (p) => !busy(p) && imm(p, NDZ_IMMUNE3) && (!usedAt.has(p.n) || P3T[k - 1] - usedAt.get(p.n) >= IMCD[p.cls]);
+      const inA = (p) => A.includes(p.n), free = (p) => !busy(p) && p.role !== 'tank' && !prev.includes(p.n);
+      const pool = k === 2 ? pl.filter((p) => ready(p) && !inA(p)).concat(pl.filter((p) => free(p) && !inA(p) && wall(p)), pl.filter((p) => free(p) && !inA(p)), pl.filter(ready)) : A.map(P).filter((p) => p && (free(p) || ready(p))).concat(pl.filter(ready), pl.filter((p) => free(p) && wall(p)), pl.filter(free));
+      soakRow(lab, 5, pool, (p) => (inA(p) && k !== 2 ? 'soak 1\'s group' : ready(p) ? NDZ_IMMUNE3[p.cls] : wall(p) || 'free then'),
+        (k === 2 ? 'the other group (top raids alternate two groups all fight): immunities that are back, then players not in soak 1' : 'soak 1\'s group again, as top raids do') + (k === 3 ? '. Last axe: send anyone else free too' : ''));
+      for (const n of inRow(lab)) { const p = P(n); if (p && imm(p, NDZ_IMMUNE3)) usedAt.set(n, P3T[k - 1]); } }
+  }
   // the target's help: Blessing of Protection (a Paladin who isn't tanking, healers first) and Zephyr (an Evoker; 2 minutes, so one per drop)
   const pals = pl.filter((p) => p.cls === 'PALADIN').sort((a, b) => (a.role === 'tank') - (b.role === 'tank') || (b.role === 'healer') - (a.role === 'healer')), evo = pl.filter((p) => p.cls === 'EVOKER');
   for (const k of [1, 2]) {
@@ -30525,9 +30555,9 @@ const NDZ_BUILD = {
   'The Coiled Altar': [
     { key: 'kicks', title: 'Spiteful Soulcoiler kicks', icon: 'Wail of Terror', explain: 'In P2 and P3 two Spiteful Soulcoilers come in each set. Kick their Wail of Terror (a raid-wide fear) in order. The raid marks the ranged add; the unmarked one is the melee add.', tip: 'Melee kick the unmarked add (its 2nd kick is always a melee); ranged kick the marked add. Healers can\'t kick, except a Restoration Shaman.',
       slots: [{ label: 'Unmarked add', kick: 'P20', order: true, want: 4 }, { label: 'Marked add', kick: 'P21', order: true, want: 4 }] },
-    { key: 'g', title: 'Guillotine soaks', icon: 'Guillotine', explain: 'Two axes in P1. Each needs at least 5 players in the circle, and anyone hit can\'t soak the next one (Guillotined), so soak 1 and soak 2 are different groups.', tip: 'Put everyone with an immunity in soak 1 (Turtle, Divine Shield, Ice Block): immune, they can soak both. Soak 2 is exactly 5 with the axe\'s target.',
+    { key: 'g', title: 'Guillotine soaks', icon: 'Guillotine', explain: 'Two axes in P1. Each needs at least 5 players in the circle (fewer is an Execution), and anyone hit is Guillotined (+500% to the next; permanent on Mythic), so soak 1 and soak 2 are different groups.', tip: 'Soak 1 (6-7): the players who will immune soak 2 go in now so they cannot be its target, plus strong walls. Soak 2: both tanks on personals and the Turtles, exactly 5 with the axe\'s target, who gets Blessing of Protection.',
       slots: [{ label: 'Guillotine 1', want: 7 }, { label: 'Guillotine 2', want: 4 }, { label: 'External Guillotine 1', want: 1 }, { label: 'External Guillotine 2', want: 1 }, { label: 'Zephyr Guillotine 1', want: 1 }, { label: 'Zephyr Guillotine 2', want: 1 }] },
-    { key: 'g3', title: 'P3 Grim Guillotines', icon: 'Grim Guillotine', explain: 'Three more axes in P3, and this hit is magic, so Cloak of Shadows counts as an immunity too.', tip: 'Guillotined wears off after 2 minutes. Axe 2 comes a minute after axe 1, so it needs other players; axe 3 comes almost 3 minutes after axe 1, so axe 1\'s group takes it again.',
+    { key: 'g3', title: 'P3 Grim Guillotines', icon: 'Grim Guillotine', explain: 'Three more axes in P3, and this hit is magic, so Cloak of Shadows counts as an immunity too.', tip: 'On Mythic, Guillotined is permanent: a raider soaks one axe in the whole fight unless an immunity covers them (Turtle, Divine Shield, Ice Block, and Cloak of Shadows here since the hit is magic). Each axe takes players not sent yet; the last axe gets everyone still free. On Heroic it wears off and two groups alternate.',
       slots: [{ label: 'P3 Guillotine 1', want: 5 }, { label: 'P3 Guillotine 2', want: 5 }, { label: 'P3 Guillotine 3', want: 5 }] },
     { key: 'orbs', mythic: true, title: 'Orb carriers', icon: 'Virulent Mutation', head: 'Orb Carriers', explain: 'Purple orbs must never touch another orb: four hard-assigned carriers, one per marker (cross, square, triangle, diamond, in that order). Two carry the green orbs (star, skull), two take the side greens, and the helpers clear the rest.', tip: 'Warlocks (gateway, circle), Mages (Blink), the off-tank, then a mobile healer.',
       slots: [{ label: 'Purple Orbs', want: 4 }, { label: 'Green Orbs', want: 2 }, { label: 'Side Green Orbs', want: 2 }, { label: 'Orb Helpers', want: 4 }], exclusive: true }, /* (greens and helpers, WoWUtils gap, Oct 26) */
@@ -30604,8 +30634,8 @@ document.addEventListener('click', (e) => { const b = e.target.closest && e.targ
 const NDZ_BUILD_WHY = {
   'The Coiled Altar': {
     kicks: 'Melee kick the unmarked add so it stays put by them; ranged kick the marked add. Players with the shortest kick go first, and nobody carrying a purple orb is picked if someone else can do it.',
-    g: 'Immunity players (Turtle, Divine Shield, Ice Block) go in soak 1: immune, they take no Guillotined and can soak again. Soak 2 is the tanks and players with strong defensives. A Paladin puts Blessing of Protection on each target, and an Evoker uses Zephyr on each soak.',
-    g3: 'Two groups take turns: axe 1\'s group takes axe 3 too, and other players take axe 2. Guillotined wears off after 2 minutes, axe 2 comes a minute after axe 1, and axe 3 almost 3 minutes after it. Immunities first (Cloak of Shadows counts, the hit is magic), then strong defensives.',
+    g: 'Soak 1 takes the players who will immune soak 2 (so they cannot be its target) and strong walls; soak 2 is both tanks on personals and the Turtles, exactly 5 with the target. A Paladin puts Blessing of Protection on each target, and an Evoker uses Zephyr on each soak.',
+    g3: 'Guillotined is permanent on Mythic, so each axe takes players who have not soaked yet (strong defensives first), then immunities that are back (Cloak of Shadows counts, the hit is magic); the last axe gets everyone still free. On Heroic two groups alternate.',
     orbs: 'Warlocks and Mages carry purples first: Gateway, Blink and their immunities make the run safe. Players already kicking are picked last.',
     mc: 'Each mind-controlled player needs a CC that doesn\'t break on damage. The order follows who has the best one, with a fourth as a backup.',
     curse: 'A Warlock puts Curse of Tongues on each add so its casts are slower and easier to kick.',
