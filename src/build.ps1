@@ -9,14 +9,14 @@ $wcl = & $read 'wcl.js'
 # (a syntax error would break the page for everyone with it open: check each script first, when Node is on this PC, and
 # stop without writing anything)
 $node = 'C:\Program Files\nodejs\node.exe'
-if (Test-Path $node) { foreach ($f in 'engine.js', 'wcl.js', 'ui.js', 'guides.js', 'mptab.js', 'worker_template.js') {
+if (Test-Path $node) { foreach ($f in 'engine.js', 'wcl.js', 'ui.js', 'guides.js', 'mptab.js', 'sidenav.js', 'worker_template.js') {
   $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP 'debrief-worker-check.mjs'; [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
   & $node --check $p; if ($LASTEXITCODE) { throw "$f has a syntax error: nothing was built" } } }
 # (the Mythic+ tab (Nov 1): the PC app's own key reader, companion/mplus.js, in its own script, and the tab, src/mptab.js, inside ui.js)
 $mplus = [IO.File]::ReadAllText((Join-Path $root 'companion\mplus.js'))
 # (and the app's card helpers, companion/recap.js (Nov 2): the tab's Rotation says each check the app's way)
 $recap = [IO.File]::ReadAllText((Join-Path $root 'companion\recap.js'))
-$html =(& $read 'shell.html').Replace('/*ENGINE*/', (& $read 'engine.js')).Replace('/*MPLUS*/', $mplus).Replace('/*RECAP*/', $recap).Replace('/*WCL*/', $wcl).Replace('/*UI*/', (& $read 'ui.js').Replace('/*GUIDES*/', (& $read 'guides.js')).Replace('/*MPTAB*/', (& $read 'mptab.js'))).Replace("`r`n", "`n")
+$html =(& $read 'shell.html').Replace('/*ENGINE*/', (& $read 'engine.js')).Replace('/*MPLUS*/', $mplus).Replace('/*RECAP*/', $recap).Replace('/*WCL*/', $wcl).Replace('/*UI*/', (& $read 'ui.js').Replace('/*GUIDES*/', (& $read 'guides.js')).Replace('/*MPTAB*/', (& $read 'mptab.js')).Replace('/*SIDENAV*/', (& $read 'sidenav.js'))).Replace("`r`n", "`n")
 [IO.File]::WriteAllText((Join-Path $root 'WoW-Log-Analyzer.html'), $html, $utf8)
 
 # the Worker: every query the site may run (const NAME_Q = `...`; in wcl.js), then the hosted page itself

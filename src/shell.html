@@ -14992,6 +14992,123 @@ window.__ahGroup = function (w) { try {
 } catch (e) { console.error(e); } };
 </script>
 <style>/* (Nov 7: Also hurt, grouped, the quiet list style) */ html body #view .dbt-add .ahg { margin-top: 8px; } html body #view .dbt-add .ahg + .ahg { margin-top: 14px; } html body #view .dbt-add .ahg-h { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #9aa3ad; margin: 0 0 4px 2px; } html body #view .dbt-add .ahg-nx { display: block; font-style: normal; font-size: 12.5px; color: #9aa3ad; margin-top: 2px; }</style>
+<style id="sidenav-css">/* (Nov 8: the side menu, sub tabs and context bar, the Design studio's mock m33. Desktop only (900px and wider): body.snv-on. In the default look's own layer, so its important rules win over the older skins; tokens only, so every theme colours it) */
+@layer defaultTheme {
+  #sideNav, #snThin { display: none !important; }
+  :root body.snv-on { --snv-w: 232px; }
+  :root body.snv-on.snv-fold { --snv-w: 64px; }
+  :root body.snv-on.snv-on .app { margin-left: var(--snv-w) !important; }
+  :root body.snv-on.snv-on #sideNav { display: flex !important; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; width: var(--snv-w); box-sizing: border-box; padding: 16px 12px 12px; background: var(--panel) !important; border-right: 1px solid var(--line); z-index: 35; font-family: var(--body); }
+  :root body.snv-on #sideNav button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+  :root body.snv-on #sideNav .snv-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 18px; color: var(--gold); font: 700 19px var(--head); letter-spacing: .08em; text-transform: uppercase; }
+  :root body.snv-on #sideNav .snv-brand svg { width: 28px; height: 28px; flex: none; }
+  :root body.snv-on #sideNav .snv-nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overflow-x: hidden; min-height: 0; flex: 1 1 auto; }
+  :root body.snv-on #sideNav .snv-nav > *, :root body.snv-on #sideNav .snv-sub > * { flex: none; }
+  :root body.snv-on #sideNav .snv-i { position: relative; display: flex; align-items: center; gap: 11px; width: 100%; padding: 9px 10px; border-radius: 4px; color: var(--muted); font-size: 15px; font-weight: 600; }
+  :root body.snv-on #sideNav .snv-i svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  :root body.snv-on #sideNav .snv-i:hover { color: var(--text); background: color-mix(in srgb, var(--raised) 60%, transparent); }
+  :root body.snv-on #sideNav .snv-i.on { color: var(--text); background: var(--raised); box-shadow: inset 2px 0 0 var(--gold); }
+  :root body.snv-on #sideNav .snv-i.off { opacity: .55; cursor: default; }
+  :root body.snv-on #sideNav .snv-b { margin-left: auto; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 4px; white-space: nowrap; color: var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
+  :root body.snv-on #sideNav .snv-b.warn { color: var(--warn, #e6b450); background: color-mix(in srgb, var(--warn, #e6b450) 14%, transparent); }
+  :root body.snv-on #sideNav .snv-b.ok { color: var(--good, #5fd46f); background: color-mix(in srgb, var(--good, #5fd46f) 12%, transparent); }
+  :root body.snv-on #sideNav .snv-sub { margin: 2px 0 10px 19px; padding-left: 14px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+  :root body.snv-on #sideNav .snv-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint, var(--muted)); margin: 8px 0 3px 6px; }
+  :root body.snv-on #sideNav .snv-n { display: block; width: 100%; padding: 4px 6px; border-radius: 4px; font-size: 13.5px; color: var(--muted); }
+  :root body.snv-on #sideNav .snv-n b { display: block; font-weight: 600; }
+  :root body.snv-on #sideNav .snv-n small { display: block; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on #sideNav button.snv-n:hover { color: var(--text); background: color-mix(in srgb, var(--raised) 60%, transparent); }
+  :root body.snv-on #sideNav .snv-n.cur { color: var(--text); background: color-mix(in srgb, var(--gold) 9%, transparent); }
+  :root body.snv-on #sideNav .snv-n:disabled { opacity: .6; cursor: default; }
+  :root body.snv-on #sideNav .snv-foot { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  :root body.snv-on #sideNav .snv-who { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; min-width: 0; }
+  :root body.snv-on #sideNav .snv-av { --cc: var(--gold); width: 30px; height: 30px; flex: none; border-radius: 50% !important; display: grid; place-items: center; text-align: center; font-weight: 700; font-size: 13px; color: var(--cc); background: color-mix(in srgb, var(--cc) 14%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 55%, transparent); position: relative; }
+  :root body.snv-on #sideNav .snv-wt { min-width: 0; display: flex; flex-direction: column; font-size: 13.5px; }
+  :root body.snv-on #sideNav .snv-wt b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  :root body.snv-on #sideNav .snv-wt small { font-size: 12px; color: var(--faint, var(--muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :root body.snv-on #sideNav .snv-tools { display: flex; align-items: center; gap: 6px; }
+  :root body.snv-on #sideNav .snv-tools .tb-disc { height: 30px !important; padding: 0 9px !important; font-size: 13px !important; }
+  :root body.snv-on #sideNav .snv-tools .tb-disc span { display: none !important; }
+  :root body.snv-on #sideNav .snv-tools .tbm-b { width: 32px !important; height: 30px !important; }
+  :root body.snv-on #sideNav .snv-tools .tbm-pop { top: auto !important; bottom: calc(100% + 8px) !important; left: 0 !important; right: auto !important; max-height: calc(100vh - 120px); overflow-y: auto; }
+  :root body.snv-on #sideNav .snv-hide { margin-left: auto; font-size: 12.5px; color: var(--faint, var(--muted)); padding: 4px 6px; border-radius: 4px; position: relative; }
+  :root body.snv-on #sideNav .snv-hide:hover { color: var(--text); }
+  /* folded to icons: the name on hover */
+  :root body.snv-on.snv-fold #sideNav { padding: 16px 8px 12px; align-items: center; }
+  :root body.snv-on.snv-fold #sideNav .snv-l, :root body.snv-on.snv-fold #sideNav .snv-b, :root body.snv-on.snv-fold #sideNav .snv-wt { display: none !important; }
+  :root body.snv-on.snv-fold #sideNav .snv-brand { padding: 2px 0 18px; justify-content: center; }
+  :root body.snv-on.snv-fold #sideNav .snv-nav { overflow: visible; width: 100%; }
+  :root body.snv-on.snv-fold #sideNav .snv-i { justify-content: center; padding: 10px 0; }
+  :root body.snv-on.snv-fold #sideNav .snv-foot { flex-direction: column; justify-content: center; width: 100%; }
+  :root body.snv-on.snv-fold #sideNav .snv-who { justify-content: center; flex: none; }
+  :root body.snv-on.snv-fold #sideNav .snv-tools { flex-direction: column; }
+  :root body.snv-on.snv-fold #sideNav .snv-hide { margin: 0; }
+  :root body.snv-on.snv-fold #sideNav [data-tip]:hover::after { content: attr(data-tip); position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); z-index: 60; white-space: nowrap; padding: 5px 9px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line2, var(--line)); color: var(--text); font: 600 13px var(--body); pointer-events: none; }
+  /* the top bar: its brand, Discord and menu are in the side menu; it stays only for what it still holds (live logging, the loading line) */
+  :root body.snv-on.snv-on #topbar { padding: 0 !important; min-height: 0 !important; border: 0 !important; background: transparent !important; gap: 0 !important; }
+  :root body.snv-on.snv-on #topbar > :not(#prog):not(#liveBar):not(#cutSide):not(#bossPick) { display: none !important; }
+  :root body.snv-on.snv-on #topbar > #liveBar:not([hidden]) { padding: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)); }
+  :root body.snv-on.snv-on #topbar #prog { position: fixed !important; top: 0 !important; left: var(--snv-w) !important; right: 0 !important; z-index: 40; }
+  /* sub tabs: the section buttons are in the menu, so only the section's own tabs; one look on every section (Champagne underline on the open one) */
+  :root body.snv-on.snv-on #main > .pg-tabbar { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-me, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-plan, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-gdz,
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tsep, :root body.snv-on.snv-on #main > .tabbar .tabs > .mpt-tab, :root body.snv-on.snv-on #main > .tabbar .tb-id { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar { margin-top: 0 !important; align-items: center !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab { font-size: 15px !important; font-weight: 600 !important; padding: 13px 14px 12px !important; gap: 0 !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab .tab-ic, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab > svg { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar .snv-keys { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on #main > .tabbar .snv-keys kbd { font: 600 12px var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+  :root body.snv-on.snv-thin #main > .tabbar { top: 46px !important; }
+  /* the context bar: Night, the arrows, Pull, Player, then the wipe call and the strictness at the right */
+  :root body.snv-on.snv-on #main > .r300-tb .snv-ctx { order: -3; display: inline-flex; align-items: center; gap: 10px; }
+  :root body.snv-on.snv-on #main > .r300-tb .r300-pull { order: -1; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel { display: inline-flex; align-items: center; height: 32px; padding: 0 0 0 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); box-sizing: border-box; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel span { font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel select { height: 30px; border: 0; background: transparent; color: var(--text); font: 600 13.5px var(--body); padding: 0 8px; cursor: pointer; max-width: 260px; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel select option { background: var(--panel); color: var(--text); }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr { display: inline-flex; gap: 4px; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr button { width: 30px; height: 32px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); color: var(--muted); font: 600 16px var(--body); cursor: pointer; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr button:hover { color: var(--text); border-color: var(--line2, var(--line)); }
+  /* the boss banner as one thin line once it has scrolled away */
+  :root body.snv-on.snv-thin #snThin { display: flex !important; align-items: center; gap: 12px; position: fixed; top: 0; left: var(--snv-w); right: 0; height: 46px; box-sizing: border-box; padding: 0 max(var(--gmin, 16px), calc((100% - var(--snv-w) - var(--wrap, 1240px)) / 2)); background: var(--panel); border-bottom: 1px solid var(--line); z-index: 7; font-family: var(--body); }
+  :root body.snv-on #snThin b { font: 700 18px var(--head); color: var(--text); }
+  :root body.snv-on #snThin .snv-tdf { font-size: 12px; font-weight: 700; padding: 1px 7px; border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); color: var(--gold); border-radius: 3px; }
+  :root body.snv-on #snThin .snv-tbg { font-size: 13px; font-weight: 600; color: var(--muted); }
+  :root body.snv-on #snThin .snv-tbg.kill { color: var(--good, #5fd46f); }
+  /* Summary: the answer first (Why we wiped, with How it went), then the numbers, then the rest */
+  :root body.snv-on.snv-on #view.dbt-on:has(> section.dbt > .dbt-why) { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt:has(> .dbt-why) { display: contents !important; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt:has(> .dbt-why) > * { margin-bottom: 12px; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt > .dbt-why { order: -12 !important; margin-bottom: 14px !important; }
+  :root body.snv-on.snv-on #view.dbt-on:has(> section.dbt > .dbt-why) > .r212-sb { order: -11 !important; }
+  :root body.snv-on #view .snv-after { padding: 2px 0 0; }
+  :root body.snv-on #view .snv-aft { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 0 4px; background: none; border: 0; color: var(--muted); font: 400 14px var(--body); cursor: pointer; text-align: left; }
+  :root body.snv-on #view .snv-aft u { text-decoration: none; color: var(--gold); }
+  :root body.snv-on #view .snv-aft .snv-ak { width: 24px; flex: none; }
+  :root body.snv-on #view .snv-afl { display: grid; gap: 2px; padding: 2px 0 6px 34px; }
+  :root body.snv-on #view .snv-afl[hidden] { display: none; }
+  :root body.snv-on #view .snv-afr { display: flex; gap: 10px; font-size: 13.5px; color: var(--muted); }
+  :root body.snv-on #view .snv-afr .snv-at { width: 40px; color: var(--faint, var(--muted)); font-variant-numeric: tabular-nums; }
+  :root body.snv-on #view .snv-afr b { font-weight: 600; }
+  /* Plan: the boss header, then the sub tabs, then the boss and night strip (its context bar), then the page */
+  :root body.snv-on.snv-on #view.plan-page > #assignBox:has(> nav.pg-tabs) { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > header.plan-bh { order: -3 !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > nav.pg-tabs { order: -2 !important; margin-bottom: 12px !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > .pg-bar { order: -1 !important; }
+  /* the sub tab look on Plan, Guides and Mythic+ too */
+  :root body.snv-on.snv-on #view .pg-tabs, :root body.snv-on.snv-on .snv-gsub, :root body.snv-on.snv-on .mpc-tabs { display: flex !important; align-items: center; gap: 4px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab, :root body.snv-on.snv-on .snv-gsub > button, :root body.snv-on.snv-on .mpc-tabs > button { font: 600 15px var(--body) !important; color: var(--muted) !important; background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; margin-bottom: -1px !important; padding: 12px 14px 11px !important; box-shadow: none !important; cursor: pointer; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab:hover, :root body.snv-on.snv-on .snv-gsub > button:hover, :root body.snv-on.snv-on .mpc-tabs > button:hover { color: var(--text) !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab[aria-selected="true"], :root body.snv-on.snv-on .snv-gsub > button.on, :root body.snv-on.snv-on .mpc-tabs > button.on { color: var(--text) !important; border-bottom-color: var(--gold) !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-taball { margin-left: auto !important; font-size: 13.5px !important; }
+  :root body.snv-on.snv-on .snv-gsub { margin: 0 max(var(--gmin, 16px), calc((100% - var(--wrap, 1240px)) / 2)) 4px; }
+  :root body.snv-on.snv-on .snv-gsub .snv-keys { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on .snv-gsub .snv-keys kbd { font: 600 12px var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+  :root body.snv-on.snv-on #view .gdz-hero .gdz-diff { display: none !important; }
+}
+@media (max-width: 899px) { #sideNav, #snThin { display: none !important; } }
+body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>

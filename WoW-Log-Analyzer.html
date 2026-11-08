@@ -14992,6 +14992,123 @@ window.__ahGroup = function (w) { try {
 } catch (e) { console.error(e); } };
 </script>
 <style>/* (Nov 7: Also hurt, grouped, the quiet list style) */ html body #view .dbt-add .ahg { margin-top: 8px; } html body #view .dbt-add .ahg + .ahg { margin-top: 14px; } html body #view .dbt-add .ahg-h { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #9aa3ad; margin: 0 0 4px 2px; } html body #view .dbt-add .ahg-nx { display: block; font-style: normal; font-size: 12.5px; color: #9aa3ad; margin-top: 2px; }</style>
+<style id="sidenav-css">/* (Nov 8: the side menu, sub tabs and context bar, the Design studio's mock m33. Desktop only (900px and wider): body.snv-on. In the default look's own layer, so its important rules win over the older skins; tokens only, so every theme colours it) */
+@layer defaultTheme {
+  #sideNav, #snThin { display: none !important; }
+  :root body.snv-on { --snv-w: 232px; }
+  :root body.snv-on.snv-fold { --snv-w: 64px; }
+  :root body.snv-on.snv-on .app { margin-left: var(--snv-w) !important; }
+  :root body.snv-on.snv-on #sideNav { display: flex !important; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; width: var(--snv-w); box-sizing: border-box; padding: 16px 12px 12px; background: var(--panel) !important; border-right: 1px solid var(--line); z-index: 35; font-family: var(--body); }
+  :root body.snv-on #sideNav button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+  :root body.snv-on #sideNav .snv-brand { display: flex; align-items: center; gap: 10px; padding: 2px 8px 18px; color: var(--gold); font: 700 19px var(--head); letter-spacing: .08em; text-transform: uppercase; }
+  :root body.snv-on #sideNav .snv-brand svg { width: 28px; height: 28px; flex: none; }
+  :root body.snv-on #sideNav .snv-nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overflow-x: hidden; min-height: 0; flex: 1 1 auto; }
+  :root body.snv-on #sideNav .snv-nav > *, :root body.snv-on #sideNav .snv-sub > * { flex: none; }
+  :root body.snv-on #sideNav .snv-i { position: relative; display: flex; align-items: center; gap: 11px; width: 100%; padding: 9px 10px; border-radius: 4px; color: var(--muted); font-size: 15px; font-weight: 600; }
+  :root body.snv-on #sideNav .snv-i svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  :root body.snv-on #sideNav .snv-i:hover { color: var(--text); background: color-mix(in srgb, var(--raised) 60%, transparent); }
+  :root body.snv-on #sideNav .snv-i.on { color: var(--text); background: var(--raised); box-shadow: inset 2px 0 0 var(--gold); }
+  :root body.snv-on #sideNav .snv-i.off { opacity: .55; cursor: default; }
+  :root body.snv-on #sideNav .snv-b { margin-left: auto; font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 4px; white-space: nowrap; color: var(--muted); background: color-mix(in srgb, var(--muted) 12%, transparent); }
+  :root body.snv-on #sideNav .snv-b.warn { color: var(--warn, #e6b450); background: color-mix(in srgb, var(--warn, #e6b450) 14%, transparent); }
+  :root body.snv-on #sideNav .snv-b.ok { color: var(--good, #5fd46f); background: color-mix(in srgb, var(--good, #5fd46f) 12%, transparent); }
+  :root body.snv-on #sideNav .snv-sub { margin: 2px 0 10px 19px; padding-left: 14px; border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+  :root body.snv-on #sideNav .snv-k { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--faint, var(--muted)); margin: 8px 0 3px 6px; }
+  :root body.snv-on #sideNav .snv-n { display: block; width: 100%; padding: 4px 6px; border-radius: 4px; font-size: 13.5px; color: var(--muted); }
+  :root body.snv-on #sideNav .snv-n b { display: block; font-weight: 600; }
+  :root body.snv-on #sideNav .snv-n small { display: block; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on #sideNav button.snv-n:hover { color: var(--text); background: color-mix(in srgb, var(--raised) 60%, transparent); }
+  :root body.snv-on #sideNav .snv-n.cur { color: var(--text); background: color-mix(in srgb, var(--gold) 9%, transparent); }
+  :root body.snv-on #sideNav .snv-n:disabled { opacity: .6; cursor: default; }
+  :root body.snv-on #sideNav .snv-foot { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  :root body.snv-on #sideNav .snv-who { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; min-width: 0; }
+  :root body.snv-on #sideNav .snv-av { --cc: var(--gold); width: 30px; height: 30px; flex: none; border-radius: 50% !important; display: grid; place-items: center; text-align: center; font-weight: 700; font-size: 13px; color: var(--cc); background: color-mix(in srgb, var(--cc) 14%, transparent); border: 1px solid color-mix(in srgb, var(--cc) 55%, transparent); position: relative; }
+  :root body.snv-on #sideNav .snv-wt { min-width: 0; display: flex; flex-direction: column; font-size: 13.5px; }
+  :root body.snv-on #sideNav .snv-wt b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  :root body.snv-on #sideNav .snv-wt small { font-size: 12px; color: var(--faint, var(--muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :root body.snv-on #sideNav .snv-tools { display: flex; align-items: center; gap: 6px; }
+  :root body.snv-on #sideNav .snv-tools .tb-disc { height: 30px !important; padding: 0 9px !important; font-size: 13px !important; }
+  :root body.snv-on #sideNav .snv-tools .tb-disc span { display: none !important; }
+  :root body.snv-on #sideNav .snv-tools .tbm-b { width: 32px !important; height: 30px !important; }
+  :root body.snv-on #sideNav .snv-tools .tbm-pop { top: auto !important; bottom: calc(100% + 8px) !important; left: 0 !important; right: auto !important; max-height: calc(100vh - 120px); overflow-y: auto; }
+  :root body.snv-on #sideNav .snv-hide { margin-left: auto; font-size: 12.5px; color: var(--faint, var(--muted)); padding: 4px 6px; border-radius: 4px; position: relative; }
+  :root body.snv-on #sideNav .snv-hide:hover { color: var(--text); }
+  /* folded to icons: the name on hover */
+  :root body.snv-on.snv-fold #sideNav { padding: 16px 8px 12px; align-items: center; }
+  :root body.snv-on.snv-fold #sideNav .snv-l, :root body.snv-on.snv-fold #sideNav .snv-b, :root body.snv-on.snv-fold #sideNav .snv-wt { display: none !important; }
+  :root body.snv-on.snv-fold #sideNav .snv-brand { padding: 2px 0 18px; justify-content: center; }
+  :root body.snv-on.snv-fold #sideNav .snv-nav { overflow: visible; width: 100%; }
+  :root body.snv-on.snv-fold #sideNav .snv-i { justify-content: center; padding: 10px 0; }
+  :root body.snv-on.snv-fold #sideNav .snv-foot { flex-direction: column; justify-content: center; width: 100%; }
+  :root body.snv-on.snv-fold #sideNav .snv-who { justify-content: center; flex: none; }
+  :root body.snv-on.snv-fold #sideNav .snv-tools { flex-direction: column; }
+  :root body.snv-on.snv-fold #sideNav .snv-hide { margin: 0; }
+  :root body.snv-on.snv-fold #sideNav [data-tip]:hover::after { content: attr(data-tip); position: absolute; left: calc(100% + 10px); top: 50%; transform: translateY(-50%); z-index: 60; white-space: nowrap; padding: 5px 9px; border-radius: 4px; background: var(--raised); border: 1px solid var(--line2, var(--line)); color: var(--text); font: 600 13px var(--body); pointer-events: none; }
+  /* the top bar: its brand, Discord and menu are in the side menu; it stays only for what it still holds (live logging, the loading line) */
+  :root body.snv-on.snv-on #topbar { padding: 0 !important; min-height: 0 !important; border: 0 !important; background: transparent !important; gap: 0 !important; }
+  :root body.snv-on.snv-on #topbar > :not(#prog):not(#liveBar):not(#cutSide):not(#bossPick) { display: none !important; }
+  :root body.snv-on.snv-on #topbar > #liveBar:not([hidden]) { padding: 8px max(var(--gmin), calc((100% - var(--wrap)) / 2)); }
+  :root body.snv-on.snv-on #topbar #prog { position: fixed !important; top: 0 !important; left: var(--snv-w) !important; right: 0 !important; z-index: 40; }
+  /* sub tabs: the section buttons are in the menu, so only the section's own tabs; one look on every section (Champagne underline on the open one) */
+  :root body.snv-on.snv-on #main > .pg-tabbar { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-me, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-plan, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab-gdz,
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tsep, :root body.snv-on.snv-on #main > .tabbar .tabs > .mpt-tab, :root body.snv-on.snv-on #main > .tabbar .tb-id { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar { margin-top: 0 !important; align-items: center !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab { font-size: 15px !important; font-weight: 600 !important; padding: 13px 14px 12px !important; gap: 0 !important; }
+  :root body.snv-on.snv-on #main > .tabbar .tabs > .tab .tab-ic, :root body.snv-on.snv-on #main > .tabbar .tabs > .tab > svg { display: none !important; }
+  :root body.snv-on.snv-on #main > .tabbar .snv-keys { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on #main > .tabbar .snv-keys kbd { font: 600 12px var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+  :root body.snv-on.snv-thin #main > .tabbar { top: 46px !important; }
+  /* the context bar: Night, the arrows, Pull, Player, then the wipe call and the strictness at the right */
+  :root body.snv-on.snv-on #main > .r300-tb .snv-ctx { order: -3; display: inline-flex; align-items: center; gap: 10px; }
+  :root body.snv-on.snv-on #main > .r300-tb .r300-pull { order: -1; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel { display: inline-flex; align-items: center; height: 32px; padding: 0 0 0 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); box-sizing: border-box; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel span { font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel select { height: 30px; border: 0; background: transparent; color: var(--text); font: 600 13.5px var(--body); padding: 0 8px; cursor: pointer; max-width: 260px; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel select option { background: var(--panel); color: var(--text); }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr { display: inline-flex; gap: 4px; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr button { width: 30px; height: 32px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); color: var(--muted); font: 600 16px var(--body); cursor: pointer; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-arr button:hover { color: var(--text); border-color: var(--line2, var(--line)); }
+  /* the boss banner as one thin line once it has scrolled away */
+  :root body.snv-on.snv-thin #snThin { display: flex !important; align-items: center; gap: 12px; position: fixed; top: 0; left: var(--snv-w); right: 0; height: 46px; box-sizing: border-box; padding: 0 max(var(--gmin, 16px), calc((100% - var(--snv-w) - var(--wrap, 1240px)) / 2)); background: var(--panel); border-bottom: 1px solid var(--line); z-index: 7; font-family: var(--body); }
+  :root body.snv-on #snThin b { font: 700 18px var(--head); color: var(--text); }
+  :root body.snv-on #snThin .snv-tdf { font-size: 12px; font-weight: 700; padding: 1px 7px; border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent); color: var(--gold); border-radius: 3px; }
+  :root body.snv-on #snThin .snv-tbg { font-size: 13px; font-weight: 600; color: var(--muted); }
+  :root body.snv-on #snThin .snv-tbg.kill { color: var(--good, #5fd46f); }
+  /* Summary: the answer first (Why we wiped, with How it went), then the numbers, then the rest */
+  :root body.snv-on.snv-on #view.dbt-on:has(> section.dbt > .dbt-why) { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt:has(> .dbt-why) { display: contents !important; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt:has(> .dbt-why) > * { margin-bottom: 12px; }
+  :root body.snv-on.snv-on #view.dbt-on > section.dbt > .dbt-why { order: -12 !important; margin-bottom: 14px !important; }
+  :root body.snv-on.snv-on #view.dbt-on:has(> section.dbt > .dbt-why) > .r212-sb { order: -11 !important; }
+  :root body.snv-on #view .snv-after { padding: 2px 0 0; }
+  :root body.snv-on #view .snv-aft { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 0 4px; background: none; border: 0; color: var(--muted); font: 400 14px var(--body); cursor: pointer; text-align: left; }
+  :root body.snv-on #view .snv-aft u { text-decoration: none; color: var(--gold); }
+  :root body.snv-on #view .snv-aft .snv-ak { width: 24px; flex: none; }
+  :root body.snv-on #view .snv-afl { display: grid; gap: 2px; padding: 2px 0 6px 34px; }
+  :root body.snv-on #view .snv-afl[hidden] { display: none; }
+  :root body.snv-on #view .snv-afr { display: flex; gap: 10px; font-size: 13.5px; color: var(--muted); }
+  :root body.snv-on #view .snv-afr .snv-at { width: 40px; color: var(--faint, var(--muted)); font-variant-numeric: tabular-nums; }
+  :root body.snv-on #view .snv-afr b { font-weight: 600; }
+  /* Plan: the boss header, then the sub tabs, then the boss and night strip (its context bar), then the page */
+  :root body.snv-on.snv-on #view.plan-page > #assignBox:has(> nav.pg-tabs) { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > header.plan-bh { order: -3 !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > nav.pg-tabs { order: -2 !important; margin-bottom: 12px !important; }
+  :root body.snv-on.snv-on #view.plan-page > #assignBox > .pg-bar { order: -1 !important; }
+  /* the sub tab look on Plan, Guides and Mythic+ too */
+  :root body.snv-on.snv-on #view .pg-tabs, :root body.snv-on.snv-on .snv-gsub, :root body.snv-on.snv-on .mpc-tabs { display: flex !important; align-items: center; gap: 4px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: transparent !important; padding: 0 !important; box-shadow: none !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab, :root body.snv-on.snv-on .snv-gsub > button, :root body.snv-on.snv-on .mpc-tabs > button { font: 600 15px var(--body) !important; color: var(--muted) !important; background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; margin-bottom: -1px !important; padding: 12px 14px 11px !important; box-shadow: none !important; cursor: pointer; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab:hover, :root body.snv-on.snv-on .snv-gsub > button:hover, :root body.snv-on.snv-on .mpc-tabs > button:hover { color: var(--text) !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-tab[aria-selected="true"], :root body.snv-on.snv-on .snv-gsub > button.on, :root body.snv-on.snv-on .mpc-tabs > button.on { color: var(--text) !important; border-bottom-color: var(--gold) !important; }
+  :root body.snv-on.snv-on #view .pg-tabs > .pg-taball { margin-left: auto !important; font-size: 13.5px !important; }
+  :root body.snv-on.snv-on .snv-gsub { margin: 0 max(var(--gmin, 16px), calc((100% - var(--wrap, 1240px)) / 2)) 4px; }
+  :root body.snv-on.snv-on .snv-gsub .snv-keys { margin-left: auto; white-space: nowrap; font-size: 12px; color: var(--faint, var(--muted)); }
+  :root body.snv-on.snv-on .snv-gsub .snv-keys kbd { font: 600 12px var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; margin: 0 1px; }
+  :root body.snv-on.snv-on #view .gdz-hero .gdz-diff { display: none !important; }
+}
+@media (max-width: 899px) { #sideNav, #snThin { display: none !important; } }
+body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
+</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -27039,7 +27156,7 @@ function cacheTrim() {
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Debriefing'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['gdz', 'Guides'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Summary'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
 const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'cmp']; /* (Homework is part of each raider's Report card now (your call, Oct 22)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
@@ -27602,6 +27719,7 @@ function openReport() {
 // fixes) as plain lines. To add a round, add to today's date, or add a new date at the top. t is an optional headline.
 // Plain player-facing words: no code terms, no guide or site names. (The user's call, Oct 20: highlight the big new things.)
 const PATCH_NOTES = [
+  { d: '2026-11-08', h: [{ t: 'A side menu, and tabs on top', d: "On a computer, Home, Plan, Guides, Raid review and Mythic+ sit in a menu on the left, with each section's tabs across the top and your night, pull and player just under them. The menu shows tonight's raid and your last nights, folds to icons, and keys 1 to 5 switch tabs while the arrow keys change the pull." }], n: ['Debriefing is called Summary now, and it opens with Why we wiped. Deaths after the wipe call fold into one line you can open.', 'The boss banner shrinks to one thin line as you scroll.'] },
   { d: '2026-11-07', h: [{ t: 'My note: your own reminders', d: 'Plan has a My note tab for every raider. Add your own reminders for each boss (a defensive before a big hit, where to stand), see them against the big hits, take a suggestion, and copy them out for NSRT. Only you see it.' }, { t: 'Plan in tabs', d: 'Each boss on Plan has tabs: Roster, Healing cooldowns, Assignments and Plans, each with what is left to do. Your chip, your cooldowns and your jobs have a gold edge, and healers can show only their own cooldowns.' }, { t: 'A new look', d: 'Debrief has a cleaner, calmer finish: graphite boxes with fine borders, one corner shape everywhere, soft shading behind headers, and gold only where it matters. The old look is still in Menu > Theme as Classic.' }], n: [], f: [] },
   { d: '2026-11-06', h: [{ t: 'Link Battle.net, and Plan by guild rank', d: 'Link your Battle.net in the menu and Debrief knows every character is yours. Raid leads pick which guild ranks can edit or see the plan, and it follows promotions and leavers by itself.' }], n: ["Debrief Companion: your raid reminder uses the same raid days as Home and Plan. The app also links debriefme.io by itself the first time you open it, so your raid note from the game is shared with the roster. Update Debrief Companion to get it.", 'Debriefing: Full screen on the replay makes the map the biggest thing on the screen, with the play by play and the card in a column on the right and the phase timeline along the bottom.', 'Raid days are the same everywhere: Home and Plan both use the weekdays your team raids most weeks at its main difficulty, so an alt night or a one-off is not counted. Raid leads can set them in the night menu on Plan.', 'Debriefing: the Timeline replay has a Full screen button beside Raid frames. Esc or the button again brings you back.', 'A new theme, Emerald, in Menu > Theme: the logo\'s gold and emerald, with glowing green edges and gold corners.', 'Plan: rename a saved plan with the pen beside its name. A plan saved for other players has one Import button that brings in its players and its note together, with Undo.', 'Rotation: Holy, Discipline and Shadow Priests get a Power Infusion check. Each cast says who got it and what it lined up with, against the casts the fight allowed.', "Debrief Companion: the pop-up's chart is now Boss health left each pull. The line falls toward the kill, and your best pull is the lowest. Update Debrief Companion to see it.", 'Report card: Mechanics are judged against how the best raids do on each boss. A mechanic everyone gets clipped by is never marked red, one or two slips in a night cost very little, and the clean ones sit on one line.', 'Debriefing: pick a phase (All · P1 · P2 · Intermission · P3) to see only that phase, on one pull or All pulls. Each chip shows the mistakes and deaths in that phase.', 'Debriefing: Phase changes says how long each phase took next to top kills, like "Phase 2 took 2:57, about 0:27 slower than top kills", instead of a %.'], f: ["Opening a big night no longer crashes the page (Chrome's Aw, Snap): the other pulls of the night are read one at a time in the background, never two at once, and each reader gives its memory back straight after. A 21-pull night peaked at 3.1 GB, now 1.8 GB.", "Debriefing on phones no longer loads and then reloads: a pull shows once, finished, instead of being rebuilt once or twice as late numbers came in (each rebuild froze the page for about 10 s). Late numbers show the next time you switch tab or pull.", "Big nights use far less memory: a pull the page reads itself no longer keeps its whole combat log (about 150 MB) in memory afterwards. Going round the tabs on a 20-pull night used to pile up over 2 GB; now under 1 GB, so phones stop running out.", 'The Pulls number on Debriefing, the Pace chart and Home now count every night, the same as Whole tier. A night whose log started with a Mythic+ key was left out before.', 'Debriefing: Eternal Nightfall no longer shows twice in phase 2. The second one is its kicks: Eternal Nightfall (Kicks).'] },
   { d: '2026-11-05', h: [{ t: 'Mythic+: a Rotation tab for every key', d: 'Every key has a Run tab and a Rotation tab, on the website and in Debrief Companion. Rotation shows each player\'s fixes for the whole key or one pull, like the raid recap, with every pull\'s biggest fix beside it.' }, { t: 'Whole tier: every pull from pull 1 to now, on one page', d: 'A Whole tier button on the All pulls card shows every pull of the boss across all your nights, up to your first kill: the boss health at each, what wiped it, your best night by night, and which causes got better or worse.' }, { t: 'Themes that reshape the boxes', d: 'Three bolder looks in Menu > Theme: Hardlight (sci-fi corners), Slate (flat cards with a strip) and Arcade (a retro game). Only the look changes.' }, { t: 'Three new themes', d: 'Menu > Theme has three new looks: Abyss (deep water and mint), Dusk Bloom (a warm sunset) and Ink (black and white, so mistakes stand out).' }, { t: 'Your raid note, straight from the game', d: 'Debriefing now checks each pull against the NSRT note your raid had loaded for it, with nothing to paste. If the note changes mid-raid, every pull keeps its own. Needs the newest Debrief Companion.' }, { t: 'The real cause of a wipe', d: 'On The Coiled Altar, Why we wiped now follows the chain of what happened back to the first mistake, like a missed kick that feared players into orbs and left the Guillotine short. What else added up is listed under it.' }, { t: 'All pulls: boss health at each wipe, and who\'s behind each cause', d: 'A line shows how far the boss got on every pull, coloured by what wiped it, with your best pull and each phase marked. What wiped you is now a bar graph: tap a bar to see who\'s behind it, with how many times, and the pulls it ended.' }], n: ["The site opens much faster when you come back: your browser keeps it until there's a new version (on a slow phone a return visit went from about 20 s to 2 s), and while it loads for the first time you see a Getting Debrief ready card instead of an empty page. A first visit also downloads about 12% less.", 
@@ -71113,6 +71231,156 @@ if (MPC_ON) {
   };
 }
  // (and src/mptab.js, the Mythic+ tab (Nov 1))
+// ===== The side menu, sub tabs and context bar (Nov 8, the Design studio's mock m33; Flex: "wow i think this looks so much better", "Yes, send it") =====
+// Desktop (900px and wider): a left menu for the five sections (Home · Plan · Guides · Raid review · Mythic+), each section's own tabs across the top
+// (Raid review: Summary · Rotation · Graphs · Report card · Compare), and under them the section's pickers (Night ‹ › Pull Player). Nothing is
+// taken away: every page still draws its own tab bar; on a desktop the section buttons in it are hidden because the menu has them, and on a phone
+// everything stays as it was (the ☰ sheet). The menu shows status (the open night, the last 3 nights, jobs left on the plan), folds to icons
+// (remembered), and keys 1-5 pick a sub tab, ← → the pull.
+const SN_MQ = window.matchMedia ? window.matchMedia('(min-width: 900px)') : { matches: true, addEventListener() {} };
+const SN_FOLD_K = 'wla-snv-fold', SN_SUB_K = 'wla-snv-raid';
+const SN_IC = { home: '<path d="M3.5 10.5 12 4l8.5 6.5V20h-5.5v-5.5h-6V20H3.5Z"/>', plan: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8.5h6M9 12.5h6M9 16.5h3.5"/>',
+  guides: '<path d="M3.5 5.5h7.5v14H3.5zM13 5.5h7.5v14H13z"/>', raid: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  mplus: '<circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/>' };
+const SN_SECS = [['home', 'Home'], ['plan', 'Plan'], ['guides', 'Guides'], ['raid', 'Raid review'], ['mplus', 'Mythic+']];
+const snIco = (k) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + SN_IC[k] + '</svg>';
+const snFold = () => store.get(SN_FOLD_K) === '1';
+const snOn = () => !!SN_MQ.matches;
+let SN_LAST = null, SN_KEY = '', SN_JOBS = { n: 0, boss: '', at: 0 };
+// (which section the page on screen belongs to)
+function snSec() { const p = S.page; if (p === 'plan') return 'plan'; if (p === 'guides') return 'guides'; if (p === 'mplus' || p === 'mpfind') return 'mplus';
+  if (p === 'pull') return S.tab === 'me' ? 'home' : S.tab === 'overview' ? 'plan' : 'raid'; return 'home'; }
+const snSubGet = () => { const t = store.get(SN_SUB_K); return TAB_ORDER.includes(t) ? t : 'audit'; };
+const snDay = (ms) => new Date(ms - 6 * 3600e3);
+const snDate = (d, wk) => d.toLocaleDateString('en-US', wk ? { weekday: 'short', month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric' });
+// (your raid nights, newest first: from the pulls saved on this PC, your team's when you have one)
+function snNights() { const mem = HIST && HIST.mem; if (!mem || !mem.size) return [];
+  let L = [...mem.values()].filter((v) => v && v.at && v.boss && v.kind !== 'run' && !v.run);
+  try { const g = homeTarget(); if (g) { const f = groupFilter(g), m = L.filter((v) => { try { return f(v); } catch (e) { return false; } }); if (m.length) L = m; } } catch (e) { /* (every night) */ }
+  const wo = (v) => v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: null } : null);
+  const by = new Map(); for (const v of L) { const k = nightOf(v.at); if (!by.has(k)) by.set(k, []); by.get(k).push(v); }
+  return [...by].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([k, l]) => { const cnt = new Map(); for (const v of l) cnt.set(v.boss, (cnt.get(v.boss) || 0) + 1);
+    const boss = [...cnt].sort((a, b) => b[1] - a[1])[0][0], ml = l.filter((v) => v.boss === boss), at = Math.min(...l.map((v) => v.at));
+    const op = ml.filter(wo).sort((p, q) => (q.kill ? 1 : 0) - (p.kill ? 1 : 0) || (p.left ?? 101) - (q.left ?? 101))[0] || l.find(wo);
+    return { k, boss, n: ml.length, kill: ml.some((v) => v.kill), day: snDay(at), code: op ? wo(op).code : null, fight: op ? wo(op).fight : null }; }); }
+// (the open night: its boss, date and which pull of how many)
+function snOpen() { const it = S.page === 'pull' ? S.item : null; if (!it || it.kind === 'run' || it.run) return null;
+  const all = (S.index && S.index.bosses) || [], same = all.filter((b) => b.boss === it.boss && b.diffId === it.diffId), i = same.indexOf(it);
+  const ms = it.wallMs || it.startMs || 0;
+  return { it, boss: it.boss, day: ms ? snDay(ms) : null, n: i + 1, of: same.length, k: ms ? nightOf(ms) : '', code: it.wcl ? it.wcl.code : null }; }
+// (jobs nobody has yet on the plan's boss, worked out now and then: the plan's own readiness count)
+function snJobs() { const now = Date.now(); if (now - SN_JOBS.at < 45000 && !(S.page === 'plan' && now - SN_JOBS.at > 5000)) return SN_JOBS;
+  SN_JOBS.at = now; try { const b = S.ndzPick || store.get(PLAN_BK); if (!b) { SN_JOBS.n = 0; return SN_JOBS; } const r = pgRdy(pnGet(), b); SN_JOBS.boss = b; SN_JOBS.none = !r || !!r.none; SN_JOBS.n = r && r.jobs && !r.none ? Math.max(0, (r.jobs.of || 0) - (r.jobs.done || 0)) : 0; } catch (e) { SN_JOBS.n = 0; }
+  return SN_JOBS; }
+function snWho() { const me = meOf(); let g = null; try { g = homeTarget(); } catch (e) { g = null; }
+  const team = g && g.kind !== 'char' ? gName(g) : '', k = me && me.cls && E.CLASSES && E.CLASSES[me.cls];
+  return { name: me ? String(me.name).split('-')[0] : '', col: k ? k[1] : '', team }; }
+// ---- drawing the menu ----
+function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nights = snNights(), jobs = snJobs();
+  const last = op ? null : nights[0];
+  const tip = { raid: op ? 'Raid review · ' + (op.day ? snDate(op.day) + ', ' : '') + 'pull ' + op.n : last ? 'Raid review · last night ' + snDate(last.day) : 'Raid review', plan: 'Plan' + (jobs.n ? ' · ' + plural(jobs.n, 'job') + ' left' : '') };
+  const badge = { plan: jobs.n ? '<span class="snv-b warn">' + plural(jobs.n, 'job') + ' left</span>' : '', raid: sec !== 'raid' && (SN_LAST || last) ? '<span class="snv-b ok">' + esc(SN_LAST && SN_LAST.wallMs ? snDate(snDay(SN_LAST.wallMs)) : last ? snDate(last.day) : '') + '</span>' : '' };
+  let h = '';
+  for (const [k, l] of SN_SECS) { const soon = k === 'mplus' && typeof mpSoon === 'function' && mpSoon();
+    h += '<button type="button" class="snv-i' + (sec === k ? ' on' : '') + (soon ? ' off' : '') + '" data-sn="' + k + '" data-tip="' + esc(tip[k] || l) + '"' + (sec === k ? ' aria-current="page"' : '') + (soon ? ' aria-disabled="true"' : '') + '>' + snIco(k) + '<span class="snv-l">' + esc(l) + '</span>' + (badge[k] || '') + (soon ? '<span class="snv-b">Soon</span>' : '') + '</button>';
+    if (fold) continue;
+    if (k === 'raid' && sec === 'raid') { const others = nights.filter((n) => !(op && ((op.code && n.code === op.code) || n.k === op.k))).slice(0, 3);
+      h += '<div class="snv-sub">' + (op ? '<div class="snv-k">' + (op.k === nightOf(Date.now()) ? 'Tonight' : 'Open now') + '</div><div class="snv-n cur"><b>' + esc(op.boss) + '</b><small>' + esc([op.day ? snDate(op.day, 1) : '', op.of ? 'pull ' + op.n + ' of ' + op.of : ''].filter(Boolean).join(' · ')) + '</small></div>' : '') +
+        (others.length ? '<div class="snv-k">Last nights</div>' + others.map((n) => '<button type="button" class="snv-n"' + (n.code ? ' data-code="' + esc(n.code) + '" data-fight="' + esc(String(n.fight == null ? '' : n.fight)) + '"' : ' disabled title="This night is only in your combat log"') + '><b>' + esc(snDate(n.day, 1)) + '</b><small>' + esc(pnShortB(n.boss) + ' · ' + plural(n.n, 'pull') + (n.kill ? ' · Kill' : '')) + '</small></button>').join('') : '') + '</div>'; }
+    if (k === 'plan' && sec === 'plan' && jobs.boss) h += '<div class="snv-sub"><div class="snv-k">This week</div><div class="snv-n cur"><b>' + esc(jobs.boss) + '</b><small>' + (jobs.none ? 'No plan yet' : jobs.n ? plural(jobs.n, 'job') + ' not filled' : 'Every job filled') + '</small></div></div>'; }
+  return h; }
+const pnShortB = (b) => String(b).replace(/^The /, '');
+function snWhoHtml() { const w = snWho(), fold = snFold(), ini = (w.name || '?').charAt(0).toUpperCase();
+  return '<button type="button" class="snv-av" data-sn="me" data-tip="' + esc(w.name || 'Home') + '"' + (w.col ? ' style="--cc:' + w.col + '"' : '') + '>' + esc(ini) + '</button>' +
+    (fold ? '' : '<span class="snv-wt"><b' + (w.col ? ' style="color:' + w.col + '"' : '') + '>' + esc(w.name || 'Who are you?') + '</b><small>' + esc(w.team || (w.name ? 'Your character' : 'Pick your character on Home')) + '</small></span>'); }
+function snMount() { if ($('#sideNav')) return;
+  const a = document.createElement('aside'); a.id = 'sideNav'; a.className = 'sn'; a.setAttribute('aria-label', 'Sections');
+  const logo = $('#brandHome svg.logo'); a.innerHTML = '<button type="button" class="snv-brand" data-sn="home" data-tip="Home" aria-label="Debrief home">' + (logo ? logo.outerHTML : '') + '<span class="snv-l">Debrief</span></button>' +
+    '<nav class="snv-nav" id="snNav"></nav><div class="snv-foot"><div class="snv-who" id="snWho"></div><div class="snv-tools" id="snTools"></div><button type="button" class="snv-hide" id="snHide"></button></div>';
+  document.body.insertBefore(a, document.body.firstChild);
+  a.addEventListener('click', snClick); snPlace(); }
+// (the Discord button and the ☰ menu live in the side menu on a desktop, in the top bar on a phone)
+function snPlace() { const on = snOn(), tools = $('#snTools'), tb = $('#topbar'), menu = tb ? tb.querySelector('.tbmenu') || (tools && tools.querySelector('.tbmenu')) : null, disc = $('#tbDisc');
+  document.body.classList.toggle('snv-on', on); if (!tools || !tb) return;
+  if (on) { if (disc && disc.parentElement !== tools) tools.appendChild(disc); if (menu && menu.parentElement !== tools) tools.appendChild(menu); }
+  else { const pr = $('#prog'); if (menu && menu.parentElement !== tb) tb.insertBefore(menu, pr); if (disc && disc.parentElement !== tb) tb.insertBefore(disc, menu || pr); } }
+function snDraw(force) { if (!$('#sideNav')) snMount(); const fold = snFold(), sec = snSec(), jobs = snJobs(), op = snOpen();
+  const k = [sec, S.page, S.tab, op ? op.boss + op.n + op.of : '', SN_LAST ? SN_LAST.boss : '', HIST && HIST.mem ? HIST.mem.size : 0, fold, jobs.n, jobs.boss, (meOf() || {}).name || ''].join('|');
+  document.body.classList.toggle('snv-fold', fold); document.body.dataset.snSec = sec;
+  if (!force && k === SN_KEY) return; SN_KEY = k;
+  $('#snNav').innerHTML = snNavHtml(); $('#snWho').innerHTML = snWhoHtml();
+  const hb = $('#snHide'); hb.textContent = fold ? '»' : '« hide'; hb.setAttribute('aria-label', fold ? 'Show the menu' : 'Fold the menu to icons'); hb.dataset.tip = fold ? 'Show the menu' : 'Fold the menu'; }
+async function snClick(e) { const t = e.target.closest && e.target.closest('button'); if (!t || t.disabled) return;
+  if (t.id === 'snHide') { store.set(SN_FOLD_K, snFold() ? '0' : '1'); snDraw(true); return; }
+  if (t.dataset.code) { t.disabled = true; try { S.tab = snSubGet(); await openWcl({ code: t.dataset.code, fight: +t.dataset.fight || null }, await wclCreds()); } catch (err) { t.disabled = false; toast('<span>' + esc(err.message) + '</span>', 6000); } return; }
+  const k = t.dataset.sn; if (!k || t.classList.contains('off')) return;
+  if (k === 'home' || k === 'me') { home(); window.scrollTo(0, 0); }
+  else if (k === 'plan') { if (S.page !== 'plan') { planPage(); window.scrollTo(0, 0); } }
+  else if (k === 'guides') { if (S.page !== 'guides') openGuides(); }
+  else if (k === 'mplus') { if (S.page !== 'mplus' && S.page !== 'mpfind') mpOpen(); }
+  else if (k === 'raid') await snRaid();
+  snDraw(true); }
+// (Raid review: back to the night you had open, on the sub tab you used last; else your newest night; else the ways to open one)
+async function snRaid() { if (snSec() === 'raid') { window.scrollTo({ top: 0 }); return; }
+  const bs = (S.index && S.index.bosses) || [], b = SN_LAST && bs.includes(SN_LAST) ? SN_LAST : PROG_BACK && bs.includes(PROG_BACK) ? PROG_BACK : null, tab = snSubGet();
+  if (b) { S.tab = tab; if (S.item === b && S.rep) { S.page = 'pull'; renderMain(); } else await select(b); window.scrollTo(0, 0); return; }
+  const n = snNights().find((x) => x.code); if (n) { S.tab = tab; try { await openWcl({ code: n.code, fight: n.fight || null }, await wclCreds()); } catch (err) { toast('<span>' + esc(err.message) + '</span>', 6000); } return; }
+  const m = $('#tbMenu'); if (m) { m.click(); toast('Open a Warcraft Logs report or your combat log to review a raid.', 5000); } }
+// ---- each page's extras on a desktop ----
+// (the keys, at the right of Raid review's sub tabs)
+function snKeys() { const bar = $('#main > .tabbar:not(.pg-tabbar)'); if (!bar || bar.querySelector('.snv-keys')) return;
+  bar.insertAdjacentHTML('beforeend', '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>5</kbd> sub tabs · <kbd>←</kbd><kbd>→</kbd> pulls</span>'); }
+// (the context bar: the night picker and ‹ › in front of the pull and player pickers)
+function snCtx() { const tb = $('#main > .r300-tb'); if (!tb || S.page !== 'pull') return; const op = snOpen(); if (!op) return;
+  let box = tb.querySelector('.snv-ctx'); const nights = snNights(), key = op.k + '|' + nights.length + '|' + (op.code || '');
+  if (box && box.dataset.k === key) return; if (box) box.remove();
+  const cur = nights.find((n) => (op.code && n.code === op.code) || n.k === op.k), opts = (cur ? [] : ['<option value="" selected>' + esc((op.day ? snDate(op.day, 1) : 'This night') + ' · ' + pnShortB(op.boss)) + '</option>'])
+    .concat(nights.slice(0, 20).map((n) => '<option value="' + (n.code ? esc(n.code + '|' + (n.fight == null ? '' : n.fight)) : '') + '"' + (n === cur ? ' selected' : '') + (n.code || n === cur ? '' : ' disabled') + '>' + esc(snDate(n.day, 1) + ' · ' + pnShortB(n.boss) + ' · ' + plural(n.n, 'pull')) + '</option>'));
+  box = document.createElement('div'); box.className = 'snv-ctx'; box.dataset.k = key;
+  box.innerHTML = '<label class="snv-sel"><span>Night</span><select class="snv-night" aria-label="Pick a night">' + opts.join('') + '</select></label><span class="snv-arr"><button type="button" data-snstep="-1" aria-label="Earlier pull" title="Earlier pull (←)">‹</button><button type="button" data-snstep="1" aria-label="Later pull" title="Later pull (→)">›</button></span>';
+  tb.insertBefore(box, tb.firstChild);
+  box.querySelector('.snv-night').addEventListener('change', async (e) => { const v = e.target.value; if (!v) return; const [code, f] = v.split('|'); try { await openWcl({ code, fight: +f || null }, await wclCreds()); } catch (err) { toast('<span>' + esc(err.message) + '</span>', 6000); } });
+  box.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-snstep]'); if (b) snStep(+b.dataset.snstep); }); }
+// (the night's earlier or later pull, on the same sub tab)
+function snStep(d) { const bs = (S.index && S.index.bosses) || [], i = bs.indexOf(S.item), b = i < 0 ? null : bs[i + d]; if (!b) return;
+  if (S.scope === 'all' && S.tab !== 'player') S.scope = 'pull'; select(b); }
+// (Summary: deaths after the wipe call, folded into one line under How it went)
+function snAfter() { if (S.page !== 'pull' || S.tab !== 'audit' || !S.rep || S.scope === 'all') return; const end = $('#view .dbt-why .dbt-chn .dbt-chr.end'); if (!end || end.nextElementSibling && end.nextElementSibling.classList.contains('snv-after')) return;
+  let ds = []; try { const t = cutT(S.rep); if (isFinite(t)) ds = S.rep.deaths.filter((x) => x.t > t + 0.05).sort((a, b) => a.t - b.t); } catch (e) { ds = []; } if (!ds.length) return;
+  const el = document.createElement('div'); el.className = 'snv-after';
+  el.innerHTML = '<button type="button" class="snv-aft" aria-expanded="false"><span class="snv-ak"></span><span>' + ds.length + ' more died as the raid went down · <u>show</u></span></button><div class="snv-afl" hidden>' +
+    ds.map((x) => '<div class="snv-afr"><span class="snv-at">' + esc(T(x.t)) + '</span><b' + (x.color ? ' style="color:' + esc(x.color) + '"' : '') + '>' + esc(String(x.player || '').split('-')[0]) + '</b><span>' + esc(x.ability || x.killer || '') + '</span></div>').join('') + '</div>';
+  end.after(el); const bt = el.querySelector('.snv-aft'); bt.addEventListener('click', (e) => { e.stopPropagation(); const l = el.querySelector('.snv-afl'), o = l.hidden; l.hidden = !o; bt.setAttribute('aria-expanded', String(o)); bt.querySelector('u').textContent = o ? 'hide' : 'show'; }); }
+// (the boss banner as one thin line once it scrolls away)
+function snThin() { let th = $('#snThin'); const h = $('#bossHead header.fight'), on = snOn() && S.page === 'pull' && !!h && h.getBoundingClientRect().bottom < 52;
+  document.body.classList.toggle('snv-thin', on); if (!on) return; if (!th) { th = document.createElement('div'); th.id = 'snThin'; th.setAttribute('aria-hidden', 'true'); document.body.appendChild(th); }
+  const g = (s) => { const e = h.querySelector(s); return e ? e.textContent.trim() : ''; }, k = [g('.r308-df'), g('.bh-name'), g('.bh-big')].join('|');
+  if (th.dataset.k !== k) { th.dataset.k = k; const [df, nm, big] = k.split('|'); th.innerHTML = (df ? '<span class="snv-tdf">' + esc(df) + '</span>' : '') + '<b>' + esc(nm) + '</b>' + (big ? '<span class="snv-tbg' + (/Kill/.test(big) ? ' kill' : '') + '">' + esc(big) + '</span>' : ''); } }
+window.addEventListener('scroll', () => { if (snOn()) snThin(); }, { passive: true });
+// ---- keys: 1-5 a sub tab, ← → the pull (never while typing) ----
+const SN_SUBSEL = { raid: '#main > .tabbar:not(.pg-tabbar) .tabs > .tab', plan: '#view .pg-tabs > .pg-tab', guides: '#main .snv-gsub > button', mplus: '#main .mpc-tabs > button' };
+// (Guides: Heroic · Mythic as the section's sub tabs; they press the guide's own switch, which stays the one that does the work)
+function snGsub() { if (S.page !== 'guides') return; const top = $('#main > .gdz-pagetop'), sw = $('#view .gdz-diff'); if (!top || !sw) return;
+  let nav = $('#main > .snv-gsub'); if (!nav) { nav = document.createElement('nav'); nav.className = 'snv-gsub'; nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Difficulty');
+    nav.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-snd]'); if (!b) return; const o = $('#view .gdz-diff [data-d="' + b.dataset.snd + '"]'); if (o) o.click(); setTimeout(snGsub, 0); }); }
+  if (nav.previousElementSibling !== top) top.after(nav);
+  const cur = (sw.querySelector('button.on') || {}).dataset || {}, k = cur.d || ''; if (nav.dataset.k === k) return; nav.dataset.k = k;
+  nav.innerHTML = [...sw.querySelectorAll('button[data-d]')].map((b) => '<button type="button" role="tab" data-snd="' + esc(b.dataset.d) + '" class="' + (b.dataset.d === k ? 'on' : '') + '" aria-selected="' + (b.dataset.d === k) + '">' + esc(b.textContent.trim()) + '</button>').join('') + '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>2</kbd></span>'; }
+document.addEventListener('keydown', (e) => { if (!snOn() || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  const a = document.activeElement, tg = a && a.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || (a && a.isContentEditable)) return;
+  if ($('#gs') || $('.tour') || $$('[role="dialog"]:not([hidden])').some((d) => d.offsetParent !== null && d.getBoundingClientRect().width > 0)) return;
+  const sec = snSec();
+  if (/^[1-9]$/.test(e.key)) { const L = $$(SN_SUBSEL[sec] || '#none').filter((b) => b.offsetParent !== null && !b.classList.contains('tab-off') && b.getAttribute('aria-disabled') !== 'true'), b = L[+e.key - 1]; if (b) { e.preventDefault(); b.click(); } return; }
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && sec === 'raid') { const bx = document.querySelector('section.dbt.dtm-on .dtm'); if (bx && bx._keys) { const r0 = bx.getBoundingClientRect(); if (r0.bottom >= 80 && r0.top <= innerHeight - 80) return; } /* (the replay on screen keeps its own steps) */
+    e.preventDefault(); snStep(e.key === 'ArrowLeft' ? -1 : 1); } });
+// ---- keeping it in step ----
+function snTick() { try { if (!$('#sideNav')) snMount(); if (!snOn()) return; if (S.page === 'pull' && S.item && TAB_ORDER.includes(S.tab)) { SN_LAST = S.item; store.set(SN_SUB_K, S.tab); }
+  snDraw(); snKeys(); snCtx(); snAfter(); snThin(); snGsub(); } catch (e) { if (!snTick.warned) { snTick.warned = 1; console.warn('side menu', e); } } }
+SN_MQ.addEventListener && SN_MQ.addEventListener('change', () => { snPlace(); snDraw(true); snTick(); });
+try { snMount(); if (HIST && HIST.load) HIST.load().then(() => snDraw(true)).catch(() => {}); } catch (e) { console.warn('side menu', e); }
+setInterval(snTick, 300);
+{ const mo = new MutationObserver(() => { clearTimeout(snTick.t); snTick.t = setTimeout(snTick, 0); }); const m = $('#main'); if (m) mo.observe(m, { childList: true }); const v = () => { const w = $('#view'); if (w && w !== snTick.vw) { snTick.vw = w; mo.observe(w, { childList: true }); } }; setInterval(v, 1000); v(); }
+ // (and src/sidenav.js, the side menu, sub tabs and context bar (Nov 8))
 })();
 
 // ===== Design studio round 3 (Oct 25): bars. Reads the scores other chats already draw and sets --p (and a fold) so the CSS can draw one bar language.
