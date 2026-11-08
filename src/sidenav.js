@@ -23,7 +23,7 @@ const snSubGet = () => { const t = store.get(SN_SUB_K); return TAB_ORDER.include
 const snDay = (ms) => new Date(ms - 6 * 3600e3);
 const snDate = (d, wk) => d.toLocaleDateString('en-US', wk ? { weekday: 'short', month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric' });
 // (your raid nights, newest first: from the pulls saved on this PC, your team's when you have one)
-function snNights() { const mem = HIST && HIST.mem; if (!mem || !mem.size) return [];
+function snNights() { const mem = HIST && HIST.mem; if (!mem || !mem.size) return []; if (WCL.HOSTED && WHO.now && !WHO.now.me) return []; /* (Nov 8: signed out, no one's raid nights) */
   let L = [...mem.values()].filter((v) => v && v.at && v.boss && v.kind !== 'run' && !v.run);
   try { const g = homeTarget(); if (g) { const f = groupFilter(g), m = L.filter((v) => { try { return f(v); } catch (e) { return false; } }); if (m.length) L = m; } } catch (e) { /* (every night) */ }
   const wo = (v) => v.wcl || (/^wcl:/.test(v.src || '') ? { code: v.src.slice(4), fight: null } : null);
