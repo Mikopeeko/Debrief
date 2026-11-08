@@ -11779,7 +11779,7 @@ function pullCauseOf(r) { if (!r || !r.item || r.item.kill) return null;
   let o = null; try { o = whyWiped(r); } catch (e) { o = null; } if (!o) return null; const k = whyKey(o); if (k === '?') return null;
   const nm = o.k === 'dmg' ? 'not enough damage' : o.how === 'wave' ? 'raid damage' : o.how === 'kit' ? 'unused defensives' : o.how === 'bleed' ? 'missed healing' : o.how === 'tank' ? 'tank deaths' : cHtml(o.how === 'raid' ? mech(o.mech, o.id) : o.l || (o.d && o.d.ability) || ''); if (!nm) return null;
   return { k, nm, o }; }
-const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.05); };
+const keptDeaths = (r) => { const t = cutT(r); return r.deaths.filter((d) => d.t <= t + 0.5); }; /* (Nov 8, audit D7: one cut everywhere, the call + 0.5 s, as deadAtCall) */
 /* (Oct 27, the strictness setting (the user: "lets apply the strictness setting"): Light / Medium / Strict, per viewer, remembered here.
    E.strictView re-grades a reading's mistakes from its Medium list, so switching needs no re-read; Mythic raid bosses only) */
 /* (Oct 28, the user: "remove it from the live site until i refine it more": only practice links and the local page show it) */
@@ -11795,7 +11795,7 @@ const strictTag = () => { const lv = strictLv(); return lv === 'medium' || !S.it
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-sl],[data-sltag]'); if (!b) return;
   if (b.dataset.sltag) { const sw = document.querySelector('.sl-sw'); if (sw) { sw.scrollIntoView({ block: 'center', behavior: 'smooth' }); sw.classList.remove('flash'); void sw.offsetWidth; sw.classList.add('flash'); } return; }
   const lv = b.dataset.sl; if (lv === strictLv()) return; store.set('wla-strict', lv); for (const r of CACHE.values()) strictOn(r); if (S.rep) { const y = window.scrollY; renderMain(); refreshIcons(); window.scrollTo(0, y); } });
-const keptMistakes = (r) => { strictOn(r); const t = cutT(r); return r.mistakes.filter((m) => m.t <= t + 0.05); };
+const keptMistakes = (r) => { strictOn(r); const t = cutT(r); return r.mistakes.filter((m) => m.t <= t + 0.5); }; /* (Nov 8, audit D7: the same cut) */
 // The module's results with everything after the cutoff removed: timed rows, sets, and phases that start after it.
 // (Rows without a time, e.g. a player's peak stacks, are whole-pull totals and stay.)
 function cutModule(m, t) {
@@ -12863,7 +12863,7 @@ function audit() {
         return { s, nB, nW, lc, lv: lvlOf(lc) }; });
       const nC = all.filter((x) => x.lv === 'clean').length, nM = all.filter((x) => x.lv === 'minor').length, nF = all.length - nC - nM;
       const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
-      void res; void resSub; let RATE_T = ''; const top0 = top; top += '<div class="dbr-4 dbr-3 dbr-5">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).n + '</b>', (() => { const c = deathCount([r]); return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + (c.mass ? ' · ' + c.mass + ' in a mass wipe' : '') : c.mass ? c.mass + ' in a mass wipe' : 'nobody died'; })()) +
+      void res; void resSub; let RATE_T = ''; const top0 = top; top += '<div class="dbr-4 dbr-3 dbr-5">' + num( /* (no Result tile: the banner and the coach say it (Oct 22)) */'Deaths', '<b>' + deathCount([r]).dead + '</b>', (() => { const c = deathCount([r]); const onS = c.onStr !== '0' ? ' \u00b7 ' + c.onStr + ' on players' : ''; return c.first ? 'first at ' + T(c.first.t) + ' (' + esc(String(c.first.player).split('-')[0]) + ')' + onS + (c.mass ? ' \u00b7 ' + c.mass + ' in a mass death' : '') : c.dead ? ((c.mass ? c.mass + ' in a mass death' : '') + onS).replace(/^ \u00b7 /, '') : 'nobody died'; /* (Nov 8, audit D7) */ })()) +
         num('Mechanics', '<b class="' + (nC ? 'dbr-ok' : 'dbr-z') + '">' + nC + '</b><em> clean</em> <b class="' + (nM ? 'dbr-w' : 'dbr-z') + '">' + nM + '</b><em> with mistakes</em> <b class="' + (nF ? 'dbr-b' : 'dbr-z') + '">' + nF + '</b><em> failed</em>', 'of ' + plural(all.length, 'mechanic')) +
         (() => { /* (Oct 23, your ask: Raid DPS, DTPS and HPS scored against top guilds, phase by phase over what this pull reached) */
           const sumA = (a) => { let t = 0; for (let i = 0; i < Math.min((a || []).length, Math.ceil(endT)); i++) t += a[i] || 0; return t / Math.max(1, endT); };
@@ -12873,7 +12873,7 @@ function audit() {
           R378 = r; const F381 = cal381(r) || { dps: 1, hps: 1, dtps: 1 }, short0 = !it.kill && (dbfReset(it) || endT < 45); /* (Nov 6, Main: a 1 s reset read "100% behind · behind all 92": a reset or a pull under 45 s to the wipe call isn't compared with whole kills) */ const tile = (k, lab, hiGood) => short0 ? num(lab, '<b>—</b>', 'Too short to compare') : rateTile(num, lab, our[k], exp(k) != null ? exp(k) * F381[k] : null, RN && RN.per[k] && RN.per[k].map((v) => (v == null ? v : v * F381[k])), hiGood, (B && B.n) || 20, B && B.live ? (B.heal ? 'the typical ' + B.heal + '-healer kill' : 'the typical kill') : '', undefined, (() => { try { return rateRows([r], k); } catch (e) { return null; } })());
           return (RATE_T = tile('dps', 'Raid DPS', true) + (short0 ? '' : (() => { try { return bossDmgTile(num, [r]); } catch (e) { return ''; } })()) + tile('dtps', 'DTPS', false) + tile('hps', 'HPS', true)); })() + (NJ ? dbnNum(NJ, num) : '') + '</div>';
       const PS = (() => { try { const tn = ((S.index && S.index.bosses) || []).filter((b) => b.id === it.id && b.diffId === it.diffId && b.pull < it.pull && CACHE.has(b)).map((b) => CACHE.get(b)).filter((x) => x && x.players).concat([r]); return paceTile(num, it, tn, it.pull, !!it.kill, ''); } catch (e) { return { tile: '', panel: '' }; } })();
-      top = top0 + '<div class="dbr-4 dbr-3 dbr-5' + (PS.tile ? ' dbr-6' : '') + '">' + sw378() + PS.tile + ((() => { try { return deathsTile(num, [r]); } catch (e) { return ''; } })() || num('Deaths', '<b>' + deathCount([r]).n + '</b>', '')) + RATE_T + '</div>'; /* (Deaths and the three rate tiles (Oct 23, your call: no Mechanics or Note jobs tiles)) */
+      top = top0 + '<div class="dbr-4 dbr-3 dbr-5' + (PS.tile ? ' dbr-6' : '') + '">' + sw378() + PS.tile + ((() => { try { return deathsTile(num, [r]); } catch (e) { return ''; } })() || num('Deaths', '<b>' + deathCount([r]).dead + '</b>', '')) + RATE_T + '</div>'; /* (Deaths and the three rate tiles (Oct 23, your call: no Mechanics or Note jobs tiles)) */
       if (NJ) top = top.replace('<div class="dbr-4 dbr-3">', '<div class="dbr-4">'); /* (with a note: four tiles) */
       top = dbnBar(NJ, r) + top;
       { const lab = it.kill ? 'kill' : 'wipe ' + dbfPre(dbfAt(pullShort(it))) + dbfAt(pullShort(it));
@@ -15249,7 +15249,7 @@ function coachDeaths(reps, name) {
     for (const d of r.deaths.slice().sort((a, b) => a.t - b.t)) { if (p && d.guid !== p.guid && d.player !== p.name) continue;
       const v = deathVerdict(r, d); L.push({ r, d, v, after: !v.counts, why: { k: v.why, t: v.word } }); } } /* (the site's one death rule (Oct 22)) */
   const kept = L.filter((x) => !x.after), nAfter = L.length - kept.length, ab = (d) => deathHit(d) || 'a hit';
-  const onThem = kept.filter((x) => x.v.on).length;
+  const onThem = kept.reduce((s, x) => s + (x.v.on ? (x.v.w >= 1 ? 1 : 0.5) : 0), 0); /* (Nov 8, audit D7: halves count half, printed as ½) */
   const top = (l) => { const m = new Map(); for (const x of l) m.set(ab(x.d), (m.get(ab(x.d)) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
   let line;
   if (!kept.length) line = name ? (L.length ? 'You only died after the pull was lost (' + plural(nAfter, 'death') + ' after the wipe filter, not counted).' : night ? 'You stayed alive in every pull.' : 'You stayed alive.')
@@ -15260,8 +15260,8 @@ function coachDeaths(reps, name) {
       parts.push(g.length > 1 ? g.length + ' of us at ' + T(x.d.t) + ' to ' + ab(x.d) + ' at once (not on anyone)' : (name ? 'You' : String(x.d.player).split('-')[0]) + ' at ' + T(x.d.t) + ' to ' + ab(x.d) + ' (' + x.why.t + ')'); }
     line = parts.slice(0, 3).join('; ') + (parts.length > 3 ? '; and ' + (parts.length - 3) + ' more' : '') + '.' + (nAfter ? ' ' + plural(nAfter, 'more death') + ' after the wipe filter, not counted.' : ''); }
   else { const t3 = top(kept).slice(0, 3).map(([a, n]) => a + ' ×' + n).join(', '), pulls = new Set(kept.map((x) => x.r.item.pull)).size;
-    line = name ? 'You died in ' + pulls + ' of ' + plural(reps.length, 'pull') + ': ' + t3 + '. ' + (onThem ? onThem + (onThem === 1 ? ' was' : ' were') + ' on you (your own mistake, or a slow death you could have stopped).' : 'None were on you.')
-      : plural(kept.length, 'death') + ' before the wipe filter (' + (kept.length / reps.length).toFixed(1) + ' a pull), most to ' + t3 + '. ' + onThem + ' of them ' + (onThem === 1 ? 'was' : 'were') + ' on the player (their own mistake, or a slow death they could have stopped).'; }
+    line = name ? 'You died in ' + pulls + ' of ' + plural(reps.length, 'pull') + ': ' + t3 + '. ' + (onThem ? fmtHalf(onThem) + (onThem === 1 ? ' was' : ' were') + ' on you (your own mistake, or a slow death you could have stopped).' : 'None were on you.')
+      : plural(kept.length, 'death') + ' before the wipe filter (' + (kept.length / reps.length).toFixed(1) + ' a pull), most to ' + t3 + '. ' + fmtHalf(onThem) + ' of them ' + (onThem === 1 ? 'was' : 'were') + ' on the player (their own mistake, or a slow death they could have stopped).'; }
   const li = (x) => '<li>' + (night ? 'Pull ' + x.r.item.pull + ', ' : '') + T(x.d.t) + ': ' + (name ? '' : '<b>' + esc(String(x.d.player).split('-')[0]) + '</b> ') + 'to ' + esc(ab(x.d)) + ' · <span class="sub">' + (x.after ? 'after the wipe was called, not counted' : esc(x.why.t)) + '</span></li>';
   const list = L.length ? '<ul class="cch-ul">' + L.slice(0, 16).map(li).join('') + (L.length > 16 ? '<li class="sub">and ' + (L.length - 16) + ' more</li>' : '') + '</ul>' : '';
   /* (chips: each death on one pull, the causes with counts on a night; the line stays for the full coaching and the empty case) */
@@ -16047,8 +16047,8 @@ function deathsTile(num, reps) { const L = (reps || []).filter((r) => r && r.ite
   else { const S2 = L.slice().sort((a, b) => a.item.pull - b.item.pull), mx = Math.max(1, ...S2.map((r) => kept.get(r).length)); pic = '<span class="dbr-db" aria-hidden="true">' + S2.map((r) => { const n = kept.get(r).length; return '<i class="' + (n ? '' : 'z') + '" style="height:' + (n ? Math.max(15, Math.round(100 * n / mx)) : 8) + '%" title="' + esc('Pull ' + r.item.pull + ': ' + plural(n, 'death')) + '"></i>'; }).join('') + '</span>'; }
   const fl = one ? (first ? 'First: ' + esc(String(first.player).split('-')[0]) + ' to ' + esc(deathHit(first) || 'a hit') + ' at ' + T(first.t) : 'Nobody died') : (ours / L.length).toFixed(1).replace(/\.0$/, '') + ' a pull';
   void say; void pic; void fl; /* (Nov 6, Main: a big "0" next to "12 dead at the call": every death up to the wipe call first, as Why we wiped and the replay count them; their own mistakes small under it) */
-  let all = 0, own = 0; for (const r of L) { all += deadAtCall(r); const ct = cutT(r), end = isFinite(ct) ? ct : r.duration || 0; for (const x of r.deaths) { if (x.t > end + 0.5) continue; let v = null; try { v = deathVerdict(r, x); } catch (e) { v = null; } if (v && v.counts && v.on) own++; } }
-  return num('Deaths', '<b>' + all + '</b>', all ? (own ? plural(own, 'own mistake') : 'none their fault') : 'nobody died'); /* (just the number: the details are below it (your call, Oct 23)) */ /* (just the count, the dots and who died first: no top-kill comparison (your call, Oct 23)) */ }
+  let all = 0, own = 0; for (const r of L) { all += deadAtCall(r); const ct = cutT(r), end = isFinite(ct) ? ct : r.duration || 0; for (const x of r.deaths) { if (x.t > end + 0.5) continue; let v = null; try { v = deathVerdict(r, x); } catch (e) { v = null; } if (v && v.counts && v.on) own += v.w >= 1 ? 1 : 0.5; } } /* (Nov 8, audit D7: halves as ½) */
+  return num('Deaths', '<b>' + all + '</b>', all ? (own ? fmtHalf(own) + ' on players' : 'none their fault') : 'nobody died'); /* (just the number: the details are below it (your call, Oct 23)) */ /* (just the count, the dots and who died first: no top-kill comparison (your call, Oct 23)) */ }
 /* round 222 kit parses: the five details tiles (Avoidable damage, Deaths, Healthstones and potions, Defensives, Combat potions) as a parse
    against the top guilds' kills over the same part of the fight (the user: "do that for the top and bottom rows"). From every kill in the log library
    (737 kills since each boss's last nerf; Mythic 39-67 a boss, Heroic about 20) (Oct 29, the real engine, kit/kitbase.js): per kill, every 30 s and at its end, the share in % of
@@ -17232,7 +17232,7 @@ function nightMechC(o) {
   try {
     const reps = o.reps || [], pulls = o.pulls || [], kill = o.kill, bestP = o.bestP, onBoss = pulls.reduce((s, b) => s + (b.duration || 0), 0);
     const isMe = (d) => !one || d.player === one || String(d.player).split('-')[0] === one.split('-')[0];
-    const dC = deathCount(reps, one), nD = dC.n /* (one count everywhere (Oct 23): the coach's Deaths panel and the Report card show this same number) */, nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
+    const dC = deathCount(reps, one), nD = dC.dead /* (one count everywhere (Oct 23; Nov 8, audit D7): deaths up to the wipe call, as the Debriefing tile and the coach count them) */, nC = tot('clean'), nM = tot('minor'), nF = all.length - nC - nM;
     const num = (k, v, sub) => '<div class="dbr-n"><span class="dbr-k">' + k + '</span><span class="dbr-v">' + v + '</span><span class="dbr-s">' + sub + '</span></div>';
     void kill; void bestP; void nC; void nM; void nF;
     const RT = (() => { const tot = { t: 0, dps: 0, dtps: 0, hps: 0 }, ex = { dps: [0, 0], dtps: [0, 0], hps: [0, 0] }; let cutAny = false;
@@ -17244,7 +17244,7 @@ function nightMechC(o) {
       if (!tot.t) return '';
       R378 = null; const tile = (k, lab, hiGood) => rateTile(num, lab, tot[k] / tot.t, ex[k][1] ? ex[k][0] / ex[k][1] : null, pk[k].map((v, i) => (pt[k][i] ? v / pt[k][i] : null)), hiGood, nK, (() => { const b0 = reps[0] && reps[0].item ? rateBase(reps[0]) : null; return b0 && b0.live ? (b0.heal ? 'the typical ' + b0.heal + '-healer kill' : 'the typical kill') : ''; })(), PP[k], (() => { try { return rateRows(reps, k); } catch (e) { return null; } })());
       void cutAny; return tile('dps', 'Raid DPS', true) + (() => { try { return bossDmgTile(num, reps); } catch (e) { return ''; } })() + tile('dtps', 'DTPS', false) + tile('hps', 'HPS', true); })();
-    const nR = reps.length || 1, dSub = (nD / nR).toFixed(1).replace(/\.0$/, '') + ' a pull' + (dC.mass ? ' · ' + dC.mass + ' more after the wipe was called' : '');
+    const nR = reps.length || 1, dSub = (nD / nR).toFixed(1).replace(/\.0$/, '') + ' a pull' + (dC.onStr !== '0' ? ' · ' + dC.onStr + ' on players' : '') + (dC.mass ? ' · ' + dC.mass + ' in mass deaths' : '') + (dC.afterCall ? ' · ' + dC.afterCall + ' after the call' : ''); /* (Nov 8, audit D7) */
     const it0P = pulls[0] || (reps[0] && reps[0].item), PTo = it0P ? paceTile(num, it0P, reps, kill ? kill.pull : pulls.length, !!kill, durH(onBoss) + ' tonight') : { tile: num('Pulls', '<b>' + pulls.length + '</b>', durH(onBoss) + ' on the boss'), panel: '' }, PT = PTo.tile, PACEP = PTo.panel;
     /* (Oct 23, your call: four tiles on All pulls, Pulls and the three rates; one player picked keeps their Deaths) */
     top += '<div class="dbr-4 dbr-3 dbr-5' + (RT && one ? ' dbr-6' : '') + '">' + sw378() + PT +
@@ -18710,7 +18710,7 @@ function nightPlayers(NP) {
 // (Nov 6, Main: with the wipe filter off a line said "each up to its wipe filter": it says whole pulls then)
 // (Nov 6, Flex: "the deaths in graphs are definitely counting things that happened during the wipe": a death counts on Graphs as everywhere else, before the
 // call and not in a mass wipe (deathVerdict); the others are "during the wipe")
-function gbDeathOk(r, d) { try { const v = deathVerdict(r, d); return !!(v && v.counts && v.on); } catch (e) { return false; } } /* (Flex, Nov 6: "all I want graph deaths to show are the shitters that messed up and cost them their life": their own mistake only, the Report card's Deaths on you) */
+function gbDeathOk(r, d) { try { const v = deathVerdict(r, d); return !!(v && v.counts && v.w >= 1); } catch (e) { return false; } } /* (Nov 8, audit D7: whole "on them" only, Flex's rule) */ /* (Flex, Nov 6: "all I want graph deaths to show are the shitters that messed up and cost them their life": their own mistake only, the Report card's Deaths on you) */
 var DBT_NOTMECH = /^(power infusion|innervate|combat potions?|potions?|healthstones?|defensives?|big cooldowns|cooldowns on big damage|divine hymn|.*\bon big damage)\b/i; /* (rows that aren't mechanics: Debriefing's Why we wiped leaves them out (Nov 7)) */
 // (Nov 7, Flex: "the buffs and debuffs ones especially could use some filter love": a kind filter and a search box on Graphs' Buffs and Debuffs)
 const AU_KINDS = [['def', 'Defensives'], ['ext', 'Externals'], ['cds', 'Cooldowns'], ['raid', 'Raid cooldowns'], ['cons', 'Consumables'], ['other', 'Procs & other']];
@@ -29874,7 +29874,7 @@ function deathVerdict(r, d) {
   const raidK = (d.links || []).find((l) => l.raid && (lc(l.mechanic) === ab || (ab.length > 3 && lc(l.detail || '').includes(ab)))) || null, forced = forced0 || (raidK && !noCtrl ? deathRaidSay(raidK) : '');
   const ownSame = ownM.some((l) => lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab);
   const mass = (d.mass || 0) >= 3 && !ownSame, own = !mass && !noCtrl && !forced && (ownM.length > 0 || deathOwn(r, d) || !!d.fellOwn);
-  const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.05;
+  const raidL = (d.links || []).find((l) => l.raid), raid = !own && !!raidL, fast = deathFast(d), after = isFinite(ct) && d.t > ct + 0.5; /* (Nov 8, audit D7: the same cut as deadAtCall) */
   const late = false; /* (Nov 5, Flex: "it shouldnt count deaths after a wipe is called": no death after the call counts, their own or not) */
   const end = !!r.item.kill && (r.duration || 0) - d.t <= 20 && !own;
   const huge = (d.hitPct || 0) >= 150, av = d.available || [];
@@ -29928,7 +29928,7 @@ function deathFix(r, d, v, ownM, rw, raidL) {
     if (sv && sv.amt) return (v.kit.length || sv.heal ? 'Use your ' + nm + ' when you drop under half: it heals about ' + kf(sv.amt) + ', enough' : 'Press ' + nm + ' when you drop under half: it takes about ' + kf(sv.amt) + ' off, enough') + after + '.';
     if (sv && sv.imm) return 'Press ' + nm + ' when you drop under half: it stops the hits' + after.replace(' to survive', ', so you survive') + '.';
     return v.defs.length && !v.kit.length ? 'Press ' + v.defs[0] + ' when you drop under half health. It was ready.' : 'Use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion') + ' when you sit low. You had ' + (d.lowFor ? plural(Math.round(d.lowFor), 'second') + '' : 'time') + '.'; }
-  if (v.why === 'forced') { const f = String(v.word || ''); return v.raidFix || (/wail of terror/i.test(f) ? RC_NEXT.kick : /guillotine/i.test(f) ? RC_NEXT.guil : /gloombomb/i.test(f) ? RC_NEXT.bombs : /orbs/i.test(f) ? RC_NEXT.orbs : /dropped the/i.test(f) ? RC_NEXT.axes : 'Not on you: ' + f + '.'); } /* (Nov 8, audit D1: the raid's fix, never a defensive) */
+  if (v.why === 'forced') { const f = String(v.word || ''); return v.raidFix || (/dropped the/i.test(f) ? 'Guillotine targets: take it to its spot before it lands, away from the raid.' : /wail of terror/i.test(f) ? RC_NEXT.kick : /guillotine/i.test(f) ? RC_NEXT.guil : /gloombomb/i.test(f) ? RC_NEXT.bombs : /orbs/i.test(f) ? RC_NEXT.orbs : 'Not on you: ' + f + '.'); } /* (Nov 8, audit D1: the raid's fix, never a defensive) */
   if (v.why === 'nosave') return 'Nothing you had would have saved this.';
   if (v.why === 'noheal') return 'You did your part. Little healing came in for ' + deathSecs(v.gap.run40) + ' s while you were under 40%.';
   if (v.why === 'heal') return 'Healers: top up anyone who sits under half health.' + (v.defs.length || v.kit.length ? ' You: ' + (v.defs.length ? 'press ' + v.defs[0] : 'use your ' + (v.kit[0] === 'Healthstone' ? 'Healthstone' : 'health potion')) + ' when you drop low.' : '');
@@ -29945,11 +29945,15 @@ const dvR = (d) => { const r0 = S.rep; if (r0 && r0.deaths && r0.deaths.includes
 // (one death count everywhere (Oct 23, "numbers that agree"): n = deaths that count (deathVerdict) minus mass wipes (many of us at once, nobody's
 // own), on = of those, on the player; mass and after (the wipe call) are the small second numbers. The Debriefing tile, the coach's Deaths panel
 // and the Report card banner all show n)
-function deathCount(reps, who) { let n = 0, on = 0, mass = 0, after = 0, first = null;
-  for (const r of reps || []) for (const d of r.deaths || []) { if (who && oaBase(d.player) !== oaBase(who)) continue; const v = deathVerdict(r, d);
-    if (!v.counts) after++; else if (v.why === 'mass') mass++; else { n++; if (v.on) on++; if (!first || (reps.length === 1 && d.t < first.t)) first = d; } }
-  return { n, on, mass, after, first }; }
-const deathSub = (c, you) => [(c.n ? c.on + (you ? ' on you' : ' on the player') : ''), c.mass ? c.mass + ' in mass wipes' : '', !c.n && !c.mass ? 'nobody died' : ''].filter(Boolean).join(' · ');
+// (Nov 8, audit D7: one count set, read everywhere: dead = deaths up to the wipe call (+0.5 s; a kill's last seconds too), whole = on the player in full (their own mistake, or
+//  something ready), half = half on them, mass = mass deaths, afterCall = after the call; onStr prints whole and halves together, "2½")
+const fmtHalf = (x) => (x % 1 ? (Math.floor(x) || '') + '\u00bd' : String(x));
+function deathCount(reps, who) { let n = 0, on = 0, mass = 0, after = 0, first = null, dead = 0, whole = 0, half = 0, afterCall = 0;
+  for (const r of reps || []) { const ct = cutT(r), end = isFinite(ct) ? ct : (r.duration || 0); for (const d of r.deaths || []) { if (who && oaBase(d.player) !== oaBase(who)) continue; const v = deathVerdict(r, d);
+    if (d.t <= end + 0.5) dead++; else if (isFinite(ct)) afterCall++;
+    if (!v.counts) after++; else if (v.why === 'mass') mass++; else { n++; if (v.on) on++; if (v.w >= 1) whole++; else if (v.w > 0) half++; if (!first || (reps.length === 1 && d.t < first.t)) first = d; } } }
+  return { n, on, mass, after, first, dead, whole, half, afterCall, onStr: fmtHalf(whole + half / 2) }; }
+const deathSub = (c, you) => [(c.dead && c.onStr !== '0' ? c.onStr + (you ? ' on you' : ' on players') : ''), c.mass ? c.mass + ' in mass deaths' : '', c.afterCall ? c.afterCall + ' after the call' : '', !c.dead ? 'nobody died' : ''].filter(Boolean).join(' · '); /* (Nov 8, audit D7) */
 function deathsOf(reps, name) { const all = []; for (const r of reps) for (const d of r.deaths) if (d.player === name) all.push({ r, d, v: deathVerdict(r, d), pull: r.item.pull });
   const counted = all.filter((x) => x.v.counts); return { all, n: all.length, counted, on: counted.filter((x) => x.v.on), w: counted.reduce((s, x) => s + x.v.w, 0), wipe: all.length - counted.length }; }
 // (kept per pull and player, for as long as the wipe filter stays the same: the Report card asks for it more than once (Oct 21))
@@ -31130,11 +31134,11 @@ function rqcOf(c, F, a) {
     y.note = (!q ? 'Clean' + (n > 1 ? ' every pull' : '') : (q === 1 && nB > 1 ? 'Once in ' + plural(nB, 'pull') : 'In ' + q + ' of ' + plural(nB, 'pull')) + (dd ? (q === 1 ? ', and died to it' : ', died to it in ' + dd) : st === 'bad' ? (q >= Math.max(2, nB / 4) ? ', a habit' : ', more often than most raids') : !o.big ? ', small hits' : '') + (J.like ? '. Most raids get clipped by this too' : '')) + (xo ? '. ' + plural(xo, 'time') + ' it was someone else\'s mistake, not counted' : ''); }
   { const RK = { bad: 0, w: 1, n: 2, ok: 3, na: 4 }; rows.mech.sort((u, v) => RK[u.s] - RK[v.s] || ((v.gap != null ? v.gap : v.P || 0) - (u.gap != null ? u.gap : u.P || 0))); } /* (worst first: furthest behind the best raids) */
   // staying alive: the site's one death rule, then what they had ready, close calls and (tanks) big defensives
-  const DO = deathsOf(a.per.map((g) => g.r), nm), on = DO.on.length; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
+  const DO = deathsOf(a.per.map((g) => g.r), nm), onW = DO.on.filter((x) => x.v.w >= 1).length, on = onW + (DO.on.length - onW) / 2 /* (Nov 8, audit D7: halves count half) */; let defR = 0, kitR = 0, silent = 0, cdU = 0, cdP = 0;
   for (const g of a.per) { try { const sv = survivalOf(g.r, g.p); defR += sv.defReady || 0; kitR += sv.kitReady || 0; silent += sv.silent || 0; cdU += sv.cdUsed || 0; cdP += sv.cdPoss || 0; } catch (e) { /* (not graded) */ } }
   // (the rule under each line is the goal, and the number beside it is what happened, from the same count as the flag (Oct 23: "why the exclamation point?"))
   const onN = {}; for (const y of DO.on) onN[y.pull] = (onN[y.pull] ? onN[y.pull] + ', ' : '') + (deathHit(y.d) || 'a hit'); const onP = [...new Set(DO.on.map((y) => y.pull))].sort((u, v) => u - v);
-  add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'no deaths on you (too fast, mass deaths and the wipe don\'t count)', on ? on + ' of ' + DO.n : '0 of ' + plural(DO.n, 'death')).f = n ? (n - onP.length) / n : 1; if (onP.length) Object.assign(rows.alive[rows.alive.length - 1], { pulls: onP, pn: onN }); /* (what killed them shows on each pull button) */
+  add('alive', !on ? 'ok' : on <= Math.max(2, Math.floor(n / 8)) ? 'w' : 'bad', 'Deaths on you', 'no deaths on you (too fast, mass deaths and the wipe don\'t count)', on ? fmtHalf(on) + ' of ' + DO.n : '0 of ' + plural(DO.n, 'death')).f = n ? (n - onP.length) / n : 1; if (onP.length) Object.assign(rows.alive[rows.alive.length - 1], { pulls: onP, pn: onN }); /* (what killed them shows on each pull button) */
   add('alive', !defR ? 'ok' : defR === 1 ? 'w' : 'bad', 'Defensive before dying', 'never die with a defensive still ready', defR ? plural(defR, 'death') + ' with one ready' : 'none');
   add('alive', !kitR ? 'ok' : kitR === 1 ? 'w' : 'bad', 'Healthstone or health potion', 'use one when you sit low', kitR ? plural(kitR, 'death') + ' with one unused' : 'none missed');
   add('alive', !silent ? 'ok' : silent <= 2 ? 'w' : 'bad', 'Close calls answered', 'press something when you sit low', silent ? silent + ' with nothing pressed' : 'all answered');
