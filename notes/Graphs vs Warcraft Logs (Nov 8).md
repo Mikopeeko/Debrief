@@ -58,7 +58,7 @@ Size: **S** under a day, **M** a day or two, **L** bigger.
 | Click a spell: split into parts | Arrow opens sub-rows (Dread Plague vs Dread Plague (Erupt), pet spells under the pet) | Flat list | Fold parts under one parent row, click to open | Nice | M |
 | Hover the parse number | "72% for all Unholy Death Knights (1,148 parses)" | No parse column on the Damage list for a pull | See "Parse %" below | — | — |
 | Hover a death on the deaths chart | "7:04 Volkovod dies from Zul'jan's Venom Rupture" | Dots are crowded at the end and hard to hit; no hover line | Hover line per dot; spread dots that land on the same second | Must | S |
-| Click any moment → see the map | Every row in a death recap has an arrow that jumps the Replay to that exact second | Debriefing has its own Timeline replay, but Graphs never opens it | "Watch this moment" from a death, a chart point or a spike, opening our replay at that second | Must | M |
+| Click any moment → see the map | Every row in a death recap has an arrow that jumps the Replay to that exact second | **Summary already has this** (Flex, Nov 8): each death there has a map of where they died and the 5 seconds before, and each mechanic has a map with Play. Graphs never opens those maps | Reuse Summary's death map on Graphs' deaths (a "Map" button), and from a chart spike open the map at that second | Must | S |
 | Cast icons on a timeline, hover for details | One row per spell, an icon at every cast; hover: "05.374 Fourinches casts Necrotic Coil on Zul'jan" | Casts tab = casts a minute + spell count list | Cast timeline per player (one row per spell, icons, hover for time + target) | Must | M |
 | Click a buff → its own view | Opens: stacks over time chart, who had it, uptime strips, "stacked/normal" toggle | Buff rows with uptime strips (good); no drill-in | Click a buff row: stacks chart + who had it | Nice | M |
 | Pin a spell to the chart | "+" on any row adds that spell as its own chart above (several pins at once) | Can compare players; can't add one spell | Click a spell to draw just that spell's line on the chart | Nice | M |
@@ -110,7 +110,7 @@ Size: **S** under a day, **M** a day or two, **L** bigger.
 | Feature | WCL | Debrief now | Gap | Value | Size |
 |---|---|---|---|---|---|
 | Death list | Time, name, killing blow, overkill, last 3 hits, damage taken, healing received | One row per player: count, time, killed by (and **bug B1**) | Fix B1; add "last 3 hits" and "healing in the last 10s" columns | Must | S |
-| Death recap: event by event | Every hit, heal and shield in the last ~10 s; HP after each line; source → target; overkill | Grouped bars ("10 heals +883k", "Venom Rupture −428k") with health % | Let the recap open into a full line-by-line list (time, what, amount, health after, who) | Must | M |
+| Death recap: event by event | Every hit, heal and shield in the last ~10 s; HP after each line; source → target; overkill | Graphs: grouped bars ("10 heals +883k", "Venom Rupture −428k") with health %. **Summary already has an "Every event" list** (last 40 hits and heals, time, amount, spell, who, health after) | Reuse Summary's "Every event" list on Graphs; buff icons and overkill are the only new parts | Must | S |
 | Buffs up at each hit | A row of buff icons on every hit (was a defensive up?) | Not shown | Small icons for defensives/externals active at each hit | Must | M |
 | Health chart for the last seconds | HP line for the dying player | Health tab has the raid line, not per death | Small health line inside the recap | Nice | S |
 
@@ -144,11 +144,11 @@ Size: **S** under a day, **M** a day or two, **L** bigger.
 ## Top 10 to build first
 
 1. **Fix the deaths list (B1) and item levels (B2, seen on both pulls).** Raiders will trust nothing else on the page if the death count is wrong.
-2. **Line-by-line death recap with buff icons.** "What killed me and was my defensive up" is the first thing every raider opens after a wipe.
+2. **Line-by-line death recap with buff icons** (start from Summary's "Every event" list, which already exists). "What killed me and was my defensive up" is the first thing every raider opens after a wipe.
 3. **Cast timeline per player (icons per spell, hover for time and target).** It's the main thing raiders use to see when cooldowns went out, and we have nothing like it on Graphs.
 4. **Hover box on the raid chart.** The player chart already has a great one; the raid chart shows nothing, which feels broken.
 5. **Hit/crit/min/max hover on spell bars.** It's the most-used hover on their site and costs very little.
-6. **"Watch this moment" from Graphs into our replay.** One click from a death or a spike to the map answers "where was I standing".
+6. **A "Map" button on Graphs' deaths, reusing Summary's death map.** Summary already draws it; Graphs just needs to open it, so "where was I standing" is one click away.
 7. **Biggest hit, hits and mitigated % on Damage taken.** "What one-shot me" is asked every night.
 8. **Show Deaths in the menu on kills (B8), and add parse % on wipes.** Kills hide the Deaths view even when people died, and wipes have no parse column, though raiders look at both first.
 9. **Drag-to-zoom recounts every list, with a Reset button.** Lets people check one burn window, like Bloodlust in P3.
