@@ -257,3 +257,57 @@ Sweep: the same 60 pulls (Thursday Coiled Altar ×22, the 10-boss log ×30 with 
 2. M5 (the tables for all 10 bosses, Heroic too): the biggest fairness gap.
 3. M4 (Eternal Venom by time) and M6 (the taunting tank, with D6).
 4. M3 (one name per mechanic, needed by W2's lookup), M7 (after Flex confirms), M8 (confirm the IDs).
+
+## 4. Rotations
+
+How the Rotation tab judges today: `ui.js GEN_SPECS` (~26465, one entry per spec: pre-pull, opener, priority list, cooldowns, DoTs, procs, windows) run by `genRun()` (~25594) and graded against `SPEC_TOP` (~21288, the top players' middle per boss) and `GEN_TUNE` (~27577); four specs are hand-written (`hpalChecks`, `rdruChecks`, `pevkChecks`, `pdemChecks`). All 40 raid specs have a check set and all 40 have a guide in `notes/Guides/Classes`. The coach (`spcCoach`) orders fixes red → real cost (20K and 1% of output) → weight, as the Oct 22 importance pass set.
+Sweep: the Nov 2 night `zZEe97dQPwLRjEiy8v4ZUw` pull 1 (8:04 Coiled Altar Mythic wipe), all 20 raiders through the real `__wla.specRun` in node (the `tops/uiload.js` recipe, memory `rotation-checks-offline`; the scratch script is `audit4.js` in the shared notes, deaths-audit/). The saved night has no combatant info, so hero trees come from `heroBy` guesses and the unknown-cooldown `wait` flag is on; the row logic is the same as on the site. 20 specs covered: Affliction ×2, Arcane, Arms, Augmentation, Balance ×2, Blood, Devourer, Elemental, Holy Paladin, Holy Priest, Marksmanship, Mistweaver, Preservation, Protection Paladin, Restoration Shaman, Retribution, Subtlety, Unholy.
+
+### R1. A forced raid-wide gap counts against everyone's "Always be casting" (M, Rotation helper)
+- What's wrong: 13 of 20 raiders carry a warn or red Always be casting / pressing row whose longest gap is the same moment, 2:01-2:23 "while moving" (the second Guillotine's run-out before the phase change at 2:29). Movement the fight forces on the whole raid is read as 13 personal gaps; Stepxo's row is red (60% vs 75%) on it. The priority list already excuses "the boss out of reach" (nobody in the raid hitting the boss for 6 s, Oct 22); the casting check doesn't.
+- Where: Nov 2 pull 1: Najbolji 9 s at 2:06, Stepxo 9 s at 2:10, Avoka 17 s at 2:14, Contagis 13 s at 2:17, Lthi 13 s at 2:19, Belitemare 11 s at 2:23, Ameriö 4 s at 2:01, and six more.
+- Rule it should be: a gap is excused when half the raid or more also stopped for 4 s+ in the same window (the raid was moving or the boss was away), the way `rcIdle` / "boss out of reach" already excuse the priority list; the row then names the next-longest gap that was theirs alone ("Your longest gap alone was…" exists as `gy` for the "stay on the boss" tip and should drive the grade too).
+- File: `ui.js genRun0` abc (~25900), `activityIn()`, `rcIdle()`.
+
+### R2. One missed cooldown out of three is red (S, Rotation helper)
+- What's wrong: `cd:` rows grade uses / possible against the top players' rate with the usual bars, so 2 of 3 Summon Darkglare (67% vs top 80%) and 4 of 6 Arcane Surge are red while the pull ended in a wipe at 8:04 (the "possible" count assumes the pull's full length). One missed press on a 2-3 minute cooldown is normal in a wipe. The importance pass already said small samples are never red for healers' "cooldowns into the big hits" (under 3); the same honesty is missing here.
+- Where: Nov 2 pull 1: Ataxophobia Summon Darkglare 2/3 and Malevolence 4/6 (red), Simione Arcane Surge 4/6 (red), Najbolji Summon Darkglare 3/4 (warn).
+- Rule it should be: with 4 or fewer possible uses, one miss is amber at most; red needs 2+ misses and 10+ points behind the top players (the `proc-reliant-not-major` rule's "never red within 10 points"). On a wipe, the last window that opened under 20 s before the end isn't a possible use.
+- File: `ui.js genRun0` cooldown rows (~25890, `poss`).
+
+### R3. "Guardian Spirit on a tank" is red when both went on raiders (S, Rotation helper)
+- What's wrong: Holy Priest's `tgt` check `gstank` wants 50% of Guardian Spirits on a tank and is red at 0 of 2. The guide says "best on a tank before big damage; coordinate", not "only on tanks", and the site's externals rule (Oct 22-23, `externals-by-need`) is that an external is judged on the moments someone was in danger, never by who got it. A Guardian Spirit that saved a raider at 20% is right play and reads red.
+- Where: Nov 2 pull 1, Adelyne: 0/2, red; score 89.
+- Rule it should be: judge each Guardian Spirit on need (the target was under 35% or took a 50%+ hit within 3 s, or a tank before a tank hit) like the Report card's externals; the "on a tank" share becomes a note ("2 on raiders, 0 on tanks"), never red.
+- File: `ui.js GEN_SPECS['Holy Priest'].tgt` (~27342).
+
+### R4. A healer's wasted procs are red on Preservation Evoker (S, Rotation helper; decide)
+- What's wrong: the importance pass set "healers' wasted procs are never red (Holy Paladin's Infusion of Light is the exception)" and the shared engine follows it (`D.unitN === 'healing'` → warn at most). The hand-written Preservation page marks Essence Burst red (19 of 111 wasted, 6.64M, 4% of healing). The Preservation guide does say "never waste Essence or Essence Burst", so this may be a second exception; today the two healers' pages follow different rules without saying so.
+- Where: Nov 2 pull 1, Speedlord: `p:Essence Burst` red; Bordrin (Mistweaver) Spiritfont 8 of 35 wasted: warn.
+- Rule it should be: one rule, written in the importance guide: either Preservation joins Holy Paladin as a named exception (and the row's "how" says why), or it follows the healer rule (amber).
+- File: `ui.js pevkChecks`, `notes/Guides/Rotation check importance - all specs.md`.
+
+### R5. Five specs still have no top-player numbers, and their rows don't say so (M, Rotation helper)
+- What's wrong: `SPEC_TOP` has only the score key for Fire Mage, Fury Warrior, Feral Druid, Survival Hunter and Outlaw Rogue (6-7 bosses, 1 key), so every one of their rows is graded on default bars (the Oct 25 audit's Group 1, unchanged since); Destruction and Enhancement have 7 bosses, Guardian / Unholy / Vengeance 8. A row graded on a default bar looks exactly like one graded against the top players.
+- Rule it should be: run the marks recipe (`rotation-marks-from-library`: specscan.js → marks2.js → patch_top.js, ~5 min a spec) for the five, then the thin ones; until then a row with no top value says "no top-player number yet" in its line and is never red (the checklist bar line is already missing for them; make the words match).
+- File: `ui.js SPEC_TOP`, `genRun0` (the `top` line).
+
+### R6. Grey rows carry their reason only in the opened detail (S, Rotation helper)
+- What's wrong: ungraded rows say why they're ungraded in their `how` text ("Not graded: the top tanks let most of it go when they are healthy", "It is not graded…"), which shows only when the row is opened; the collapsed line reads like a judged row with no colour: "Aura Mastery uses 2/3 · top 100%", "Divine Hymn uses 3/4 · top 80%", "Life Cocoon uses 9/10", "Spirit Link Totem uses 2/3", "Shining Light 18 of 34 wasted", Balance's "Refreshed too early 28/37, throwing away about 204 seconds of damage over time" (ungraded through `clipInfo`, while Elemental's same row is red at 10/14).
+- Where: Nov 2 pull 1: Ameriö, Adelyne, Bordrin, Zips, Dernsblade, Shudidruid.
+- Rule it should be: the brief's "grey rows are honest about why": the collapsed line ends with the reason in five words or fewer ("· judged on the big hits", "· not graded: top tanks let it go", "· Eclipse refreshes are planned"), and a raid cooldown's row says it is judged in "Cooldowns into the big hits" instead.
+- File: `ui.js genRun0` (`add(..., 'na', ...)` rows, ~25890-26070), the checklist renderer `rck-r`.
+
+### R7. Tank active-mitigation bars are still defaults (S, Rotation helper)
+- What's wrong: Protection Paladin's "Shield of the Righteous uptime 70% of the time you were tanking" is red with no top value on the row; the Oct 25 audit moved mitigation to tanking time but left `GEN_TUNE`'s bars from whole-fight top numbers ("re-measure while tanking when top kills are next gathered"). Not re-measured since.
+- Where: Nov 2 pull 1, Dernsblade: `up:Shield of the Righteous` red, no top.
+- Rule it should be: measure the six tanks' mitigation uptime while tanking on the saved top kills (`probe.js` with `tank: true` ups) and set the bars from them; until then amber at most.
+- File: `ui.js GEN_TUNE`, `GEN_SPECS` tank `ups`.
+
+### R8. For the record (no fix)
+- 20 of 20 raiders get a page with a score, no errors or NaN; one card per spell holds (the four Incarnation rows merge in `spcGroupTiles`); costs read "(under 1% of yours)" when small and never lead the order; Power Infusion rows follow the PI rules (3 casts on the Affliction Warlock, each "with Summon Darkglare"); Innervate / Source of Magic are never red; the Protection Paladin opener's Hand of Reckoning step matches the guide; Mana at the end is ungraded on a wipe and says so; Augmentation's support damage rows are facts, not grades. The Oct 25 class-guide audit's open items (14 yellow, the remaining missing checks) stand as written there and aren't repeated here.
+
+### Order to fix (my call)
+1. R1 (forced raid-wide gaps): it touches 13 of 20 raiders on one pull.
+2. R5 (top numbers for the five specs) and R7 (tank bars): honest grades on the thin specs.
+3. R2, R3, R6; then R4 once Flex decides.
