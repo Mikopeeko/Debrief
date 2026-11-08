@@ -7008,6 +7008,11 @@ function* analyzeSteps(item, text, opts) {
     try {
       r.module = mod.build(modEv, r, helpers); r.mistakes.push(...r.module.mistakes); r.mistakes.sort((a, b) => a.t - b.t);
       try { avoidMistakes(r); } catch (e) { console.error(e); } /* (the avoid panel's verdict is the one answer (Oct 22)) */
+      /* (Nov 8, audit W5: a hit or a position mistake while feared by an unkicked Wail of Terror is the missed kick's, not theirs: the same debuff window the deaths use (on them up to 0.2 s after, or gone less than 1.5 s before); kept for the record as someone else's, never counted) */
+      try { const byName = new Map([...r.players.values()].map((p) => [String(p.name || '').split('-')[0], p]));
+        const feared = (nm0, t) => { const p = byName.get(String(nm0 || '').split('-')[0]), b = p && p.debuffs && p.debuffs.get('Wail of Terror'); return !!(b && b.sp && b.sp.some(([a, z]) => a <= t + 0.2 && (z == null || z >= t - 1.5))); };
+        for (const m of r.mistakes) { if (m.player === 'Raid' || m.others || m.fromNote || m.mechanic === 'Death' || !(m.pos || m.avoidRule || m.avoid) || /wail of terror/i.test(m.mechanic || '') || !feared(m.player, m.t)) continue;
+          m.others = 'feared by an unkicked Wail of Terror'; m.feared = true; m.severity = 'Low'; m.avAmber = false; m.detail = String(m.detail || '').replace(/\.?\s*$/, '.') + ' Feared by an unkicked Wail of Terror: the missed kick, not them.'; } } catch (e) { console.error(e); }
       /* (Nov 6: an axe dropped on the raid is its target's mistake: everyone else's Widow's Kiss, Death's Embrace and soak hits from it are kept, never counted) */
       if (r.axeOnRaid && r.axeOnRaid.length) { r.module.axeOnRaid = r.axeOnRaid; for (const a of r.axeOnRaid) for (const m of r.mistakes) if (m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace|guillotine|grim guillotine)$/i.test(m.mechanic) && !m.others) m.others = a.by /* (Flex, Nov 6: "if its a bad drop they should not be blamed", soakers too) */ + ' dropped the ' + a.sp + ' on the raid'; }
       if (mod.encounter === 'The Coiled Altar') r.module.pools = caPools(modEv); // (for the maps: the Fangs pools as they really were)
