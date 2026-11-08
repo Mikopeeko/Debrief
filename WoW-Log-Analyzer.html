@@ -12977,12 +12977,12 @@ html body #assignBox .panel.plan-red .plan-ecol > h4 { margin: 0 0 6px; color: v
 html body #assignBox .panel.plan-red .ndz-drg { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: start; gap: 8px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,.04); }
 html body #assignBox .panel.plan-red .ndz-drg:first-of-type { border-top: 0; }
 html body #assignBox .panel.plan-red .ndz-drl { padding-top: 5px; color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
-html body #assignBox .panel.plan-red .ndz-drn { display: flex; flex-wrap: wrap; gap: 5px; }
-html body #assignBox .panel.plan-red .plan-ech { width: 140px !important; min-width: 0; height: 24px; padding: 0 6px !important; border-radius: 3px !important; font-size: 13.5px; } /* (compact chips (Flex, Nov 7: "why are the chips so big")) */
+html body #assignBox .panel.plan-red .ndz-drn { display: flex; flex-wrap: wrap; gap: 6px 5px; }
+html body #view.plan-page #assignBox .panel.plan-red .plan-ech { width: 112px !important; min-width: 0; height: 22px !important; padding: 0 5px 0 3px !important; gap: 5px !important; border-radius: 3px !important; font: 700 12.5px/12.5px var(--body) !important; } /* (the same chip as the Roster tab: 112 x 22 (Flex, Nov 7: "just make the chips match the shape and size of the roster screen")) */
 html body #assignBox .panel.plan-red .plan-ech > .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 html body #assignBox .panel.plan-red .plan-ech { display: flex !important; align-items: center; gap: 6px; }
-html body #assignBox .panel.plan-red .plan-ech > .plan-eb[data-plrspec] { order: -1; flex: none; width: 18px !important; min-width: 18px !important; height: 18px !important; margin: 0 !important; opacity: 1 !important; padding: 0 !important; overflow: hidden; background: none !important; border: 0 !important; border-radius: 3px; }
-html body #assignBox .panel.plan-red .plan-ech > .plan-eb[data-plrspec] img { display: block; width: 18px; height: 18px; } /* (the spec icon always shows, like the chips below (Nov 7)) */
+html body #assignBox .panel.plan-red .plan-ech > :is(.plan-eb[data-plrspec], img.pnb-spi) { order: -1; flex: none; width: 16px !important; min-width: 16px !important; height: 16px !important; margin: 0 !important; opacity: 1 !important; padding: 0 !important; overflow: hidden; background: none !important; border: 0 !important; border-radius: 3px; }
+html body #assignBox .panel.plan-red .plan-ech > .plan-eb[data-plrspec] img { display: block; width: 16px; height: 16px; border-radius: 3px; } /* (the spec icon always shows, like the chips below (Nov 7)) */
 html body #assignBox .panel.plan-red .plan-out .plan-ech { opacity: .62; } html body #assignBox .panel.plan-red .plan-out .plan-ech:hover { opacity: 1; }
 html body #assignBox .panel.plan-red .plan-bench > .sub, html body #assignBox .panel.plan-red .plan-ecol > p.sub { margin: 4px 0 0; color: var(--faint); }
 html body #assignBox .panel.plan-red .plan-add { margin: 18px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); }
