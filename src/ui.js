@@ -11583,7 +11583,7 @@ const WIPE_LINE = {
   "Kith'ix|H": { s: [3.2, 4, 4, 7, 8.7, 12, 12, 12], stop: 205, m: 0, k: 40 },
   "Kith'ix|M": { s: [1.6, 1.6, 1.7, 2.7, 2.7, 2.7, 2.7, 4.8, 10, 10, 10, 10], stop: 304, m: 0, k: 40 }
 };
-const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead', mech: 'a wipe mechanic went off' };
+const WIPE_WHY = { line: 'more dead than any kill survived', check: 'the damage check was missed', half: 'half the raid was dead', mech: 'a wipe mechanic went off', 'played on': 'the raid played on past the wipe call' };
 function wipeLine(r) { const it = r && r.item; if (!it || it.kind !== 'boss') return null; const d = /mythic/i.test(it.diff || '') || it.diffId === 16 ? 'M' : /heroic/i.test(it.diff || '') || it.diffId === 15 ? 'H' : '';
   if (!d && (it.diffId === 14 || it.diffId === 17 || /normal|lfr|finder/i.test(it.diff || ''))) return WIPE_OPEN; /* (Normal and LFR: raids there win with many dead, so only half the raid dead or a missed damage check calls it (Oct 23)) */
   return WIPE_LINE[it.boss + '|' + d] || null; }
@@ -11650,8 +11650,8 @@ function wipeAt(r) {
   const v = call ? { t: call.t, why: call.why, auto: true, n: r.deaths.filter((x) => x.t <= call.t + 0.05).length, who: call.d ? call.d.player : '', nd: call.nd, tk: call.tk, ch: call.ch, max: call.max, at: call.at, mn: call.mn, ms: call.ms, kn: call.kn } : null;
   r._wipe = { k: r.deaths.length, v }; return v; }
 // (how a page names the cut: "when the wipe was called (more dead than any kill survived)", or the old "2nd death (Name)")
-const wipeSay = (c) => (c.why === 'mech' && c.mn ? c.mn + ' at ' + T(c.at != null ? c.at : c.t) + ': ' + c.ms + (c.kn ? ', and ' + c.kn + ' died' : '') + '. No kill of this boss ever survived that' : c.why === 'line' && c.nd != null ? c.nd + ' dead' + (c.tk ? (c.tk > 1 ? ' (both tanks, each counts as 2)' : ' (a tank, who counts as 2)') : '') + (c.ch ? ' with ' + c.ch + (c.ch > 1 ? ' battle rezzes' : ' battle rez') + ' up' : '') + ', and no kill of this boss survived more than ' + c.max + ' at this point' : WIPE_WHY[c.why]);
-const cutLbl = (c) => (c && c.auto ? 'when the wipe was called: ' + wipeSay(c) : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
+const wipeSay = (c) => (c.why === 'played on' && c.call ? 'the raid played on past the wipe call at ' + T(c.callT) + ' (' + wipeSay(c.call) + '), to the end of the pull' : c.why === 'mech' && c.mn ? c.mn + ' at ' + T(c.at != null ? c.at : c.t) + ': ' + c.ms + (c.kn ? ', and ' + c.kn + ' died' : '') + '. No kill of this boss ever survived that' : c.why === 'line' && c.nd != null ? c.nd + ' dead' + (c.tk ? (c.tk > 1 ? ' (both tanks, each counts as 2)' : ' (a tank, who counts as 2)') : '') + (c.ch ? ' with ' + c.ch + (c.ch > 1 ? ' battle rezzes' : ' battle rez') + ' up' : '') + ', and no kill of this boss survived more than ' + c.max + ' at this point' : WIPE_WHY[c.why]);
+const cutLbl = (c) => (c && c.auto && c.why === 'played on' ? 'the end of the pull: ' + wipeSay(c) : c && c.auto ? 'when the wipe was called: ' + wipeSay(c) : c ? 'the ' + ordinal(c.n) + ' death (' + esc(c.who) + ')' : '');
 // (the picture: this pull's dead count (white) against the most any kill survived at each moment, battle rezzes counted (blue, dashed);
 //  the wipe is called where white goes over blue; after it is faded. Only for a boss with a kill line.)
 function wipePic(r, c) { const L = wipeLine(r); if (!L || L.open || !c || !c.auto) return ''; const n = raidSizeOf(r) || 20, dur = Math.max(1, r.duration), W = 320, H = 56, P = 3;
@@ -11666,11 +11666,15 @@ function wipePic(r, c) { const L = wipeLine(r); if (!L || L.open || !c || !c.aut
     '<span class="wpic-key"><i class="wk-d"></i>dead' + (r.deaths.some((d) => wt(d.guid) > 1) ? ' (a tank counts as 2)' : '') + ' <i class="wk-k"></i>most any kill survived, plus battle rezzes up</span></span>'; }
 function cutInfo(r) {
   const n = deathCutN(); if (!n || !r || r.item.kill) return null;
-  const w = wipeAt(r); if (w !== undefined) return w; /* (the wipe call (Oct 23); a boss without a kill line yet keeps the old Nth death) */
+  const w = wipeAt(r); if (w !== undefined) return w && w.auto ? playedOn(r, w) : w; /* (the wipe call (Oct 23); a boss without a kill line yet keeps the old Nth death) */
   const ds = r.deaths.slice().sort((a, b) => a.t - b.t);
   return ds.length >= n ? { t: ds[n - 1].t, n, who: ds[n - 1].player } : null;
 }
 const cutT = (r) => { const c = cutInfo(r); return c ? c.t : Infinity; };
+/* (Nov 8, audit W1: the raid played on past the call, by the root cause's own rule: the cut is the pull's end, and call keeps the call) */
+function playedOn(r, w) { const dur = r.duration || 0, phs = (r.item && r.item.boss === 'The Coiled Altar' && r.module && !r.module.error && r.module.phases) || [];
+  const on = phs.some((p) => p.start >= w.t - 1 && p.start > 1) || dur - w.t > Math.min(60, Math.max(20, w.t)); if (!on) return w;
+  return { ...w, t: dur, callT: w.t, call: w, why: 'played on', n: (r.deaths || []).length, who: '', d: null }; }
 // (Nov 5, analysis step 2: the root cause of a Coiled Altar wipe, from the chain of events (E.rootCause, at the site's own wipe call): Debriefing's
 // Why we wiped leads with it, and All pulls can rank by it. { cat, name, line, also: [{ name, txt }], sure, t, why, reset } or null)
 /* (kept for this page only, never in a saved reading: a night saved by an earlier build gets today's answer, and a new wipe call its own) */ const WROOT = new WeakMap();
@@ -11701,8 +11705,8 @@ const RC_FIRST = { guil: 'a short Guillotine soak', kick: 'a missed Wail of Terr
 /* (one sentence, only when it's true from the chains: in most of a cause's wipes (2 or more), the chain started with something else) */
 function rcFirstLine(rcs) { const n = new Map(); for (const o of rcs) { const c0 = o && o.chain && o.chain[0]; if (c0 && c0.cat && c0.cat !== o.cat && RC_FIRST[c0.cat]) n.set(c0.cat, (n.get(c0.cat) || 0) + 1); }
   const top = [...n].sort((a, b) => b[1] - a[1])[0]; return top && top[1] >= 2 && top[1] * 2 >= rcs.length ? 'In ' + top[1] + ' of them, ' + RC_FIRST[top[0]] + ' came first.' : ''; }
-const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; let c = null; try { c = cutInfo(r); } catch (e) { c = null; } const cut = c && c.auto ? c.t : null, k = WROOT.get(r); if (k && k.cut === cut) return k.o; let o = null; try { o = E.rootCause(r, c && c.auto ? { cut, why: c.why, at: c.at, mn: c.mn, ms: c.ms } : { cut }); } catch (e) { o = null; } /* (Nov 6: the call's reason too, for a wipe with 1 or 2 deaths) */ if ('_root' in r) delete r._root; WROOT.set(r, { cut, o }); return o; };
-try { window.wipeRoot = () => wipeRoot(S.rep); window.wipeRootOf = wipeRoot; } catch (e) { /* (no window) */ }
+const wipeRoot = (r) => { if (!r || !r.item || r.item.kill || r.allPulls || !E.rootCause) return null; let c = null; try { c = cutInfo(r); } catch (e) { c = null; } const c0 = c && c.call ? c.call : c, cut = c0 && c0.auto ? c0.t : null, k = WROOT.get(r); if (k && k.cut === cut) return k.o; let o = null; try { o = E.rootCause(r, c0 && c0.auto ? { cut, why: c0.why, at: c0.at, mn: c0.mn, ms: c0.ms } : { cut }); } catch (e) { o = null; } /* (Nov 6: the call's reason too, for a wipe with 1 or 2 deaths) */ if ('_root' in r) delete r._root; WROOT.set(r, { cut, o }); return o; };
+try { window.wipeRoot = () => wipeRoot(S.rep); window.wipeRootOf = wipeRoot; window.cutInfoOf = cutInfo; /* (Nov 8, W1: the header reads the call and the end) */ } catch (e) { /* (no window) */ }
 /* (one wipe's cause as All pulls counts it, and the Whole tier with it (Nov 5): its root cause, following the chain (a reset on purpose is no
    cause); on a boss without root causes, the killing-blow verdict. { k: what it's counted under, nm: its name, rc or o: the details }) */
 function pullCauseOf(r) { if (!r || !r.item || r.item.kill) return null;
