@@ -15123,7 +15123,7 @@ window.__ahGroup = function (w) { try {
 @media (max-width: 899px) { #sideNav, #snThin { display: none !important; } }
 body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
 </style>
-<style>/* (Nov 8, audit W14: a reset pull is one line; the tidiers that re-add Also hurt or the chain are kept out) */ html body #view .dbt-why.wrt-reset .dbt-add, html body #view .dbt-why.wrt-reset .dbt-chn, html body #view .dbt-why.wrt-reset .dbt-ln, html body #view .dbt-why.wrt-reset .r208-sub, html body #view .dbt-why.wrt-reset .wrt-line, html body #view .dbt-why.wrt-reset .r236-two { display: none !important; }</style>
+<style>/* (Nov 8, audit W14: a reset pull is one line; the tidiers that re-add Also hurt or the chain are kept out) */ html body #view .dbt-why.wrt-reset .dbt-add, html body #view .dbt-why.wrt-reset .dbt-chn, html body #view .dbt-why.wrt-reset .dbt-ln, html body #view .dbt-why.wrt-reset .r208-sub, html body #view .dbt-why.wrt-reset .wrt-line, html body #view .dbt-why.wrt-reset .r236-two, html body #view .dbt-why.wrt-reset .dbt-c5w { display: none !important; }</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
@@ -15748,7 +15748,7 @@ function scan() { r423soon(); try { if (window.__ahDedupe) [].forEach.call(docum
     var RT = null; try { RT = window.wipeRoot ? window.wipeRoot() : null; } catch (er) { RT = null; } var eR = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     /* (Nov 8, audit W14: a reset pull is one line, nothing else) */
     var rsL = ''; try { var Kr = window.dbtMapKit && window.dbtMapKit(), rpR = Kr && Kr.S && Kr.S.rep; rsL = rpR && window.resetLineOf ? window.resetLineOf(rpR) : ''; } catch (eRs) { rsL = ''; }
-    if (rsL) { h2.textContent = rsL; w.classList.add('wrt-reset'); [].forEach.call(w.querySelectorAll('.wrt-line, .dbt-wb .dbt-ln, .dbt-add, .dbt-chn, .r208-sub, .wrt-tag'), function (x) { x.remove(); }); return; }
+    if (rsL) { h2.textContent = rsL; w.classList.add('wrt-reset'); [].forEach.call(w.querySelectorAll('.wrt-line, .dbt-wb .dbt-ln, .dbt-add, .dbt-chn, .r208-sub, .wrt-tag, .dbt-c5w'), function (x) { x.remove(); }); return; }
     if (RT && RT.line && !w.querySelector('.wrt-line')) { h2.innerHTML = 'Root cause: <span class="r208-m">' + eR(RT.name) + '</span>' + (RT.unsure ? ' <span class="wrt-uns">not sure</span>' : ''); var pl = document.createElement('p'); pl.className = 'wrt-line'; pl.textContent = RT.short || ''; /* (the WHY in a sentence; How it went below is the chain, tagged) */
       if (/^(dps|push)$/.test(RT.cat)) [].slice.call(w.querySelectorAll('.dbt-add > .dbt-addr')).forEach(function (x) { if (/^phase changes/i.test(T(x.querySelector(':scope > b')))) x.remove(); }); /* (said once: the root already is the phase) */
       h2.after(pl);
