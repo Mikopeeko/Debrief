@@ -6335,7 +6335,7 @@ function newPlayer(guid) {
 function addAb(m, name, id, amt, over, crit, t) { /* round 250: t, the second it landed: each spell's amount per second in a.s */
   let a = m.get(name);
   if (!a) m.set(name, a = { name, id, total: 0, over: 0, hits: 0, crits: 0, max: 0 });
-  a.total += amt; a.over += over; a.hits++; if (crit) a.crits++; if (amt > a.max) a.max = amt; if (t != null && amt) { if (!a.s) a.s = []; const k = Math.max(0, Math.floor(t)); a.s[k] = (a.s[k] || 0) + amt; }
+  a.total += amt; a.over += over; a.hits++; if (crit) { a.crits++; a.critT = (a.critT || 0) + amt; } if (amt > a.max) a.max = amt; if (amt > 0 && (a.min == null || amt < a.min)) a.min = amt; /* (Nov 8: crit total and smallest hit, for Graphs' spell hover) */ if (t != null && amt) { if (!a.s) a.s = []; const k = Math.max(0, Math.floor(t)); a.s[k] = (a.s[k] || 0) + amt; }
 }
 // battle resses and externals: who they went on (the Performance tab's Utility view)
 const HELP_CAST = new Set(['rebirth', 'raise ally', 'intercession', 'soulstone', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'blessing of sacrifice', 'blessing of protection', 'blessing of spellwarding', 'time dilation', 'rescue', 'power infusion']);
