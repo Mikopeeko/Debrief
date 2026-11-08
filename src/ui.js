@@ -6978,7 +6978,7 @@ function pvRoMark(box) { const ro = pvRO(); if (box.classList.contains('pv-ro') 
 const pvRoStop = (e) => { if (S.page !== 'plan') return; const box = document.getElementById('assignBox'); if (!box || !box.classList.contains('pv-ro')) return; const t = e.target.closest && e.target.closest(PV_EDIT); if (!t || !box.contains(t)) return;
   e.preventDefault(); e.stopImmediatePropagation(); if (e.type === 'click') toast('Only officers can change ' + esc(TP.name || 'the team') + '\'s plan.', 3500); };
 document.addEventListener('click', pvRoStop, true); document.addEventListener('dragstart', pvRoStop, true); document.addEventListener('pointerdown', (e) => { const box = document.getElementById('assignBox'); if (box && box.classList.contains('pv-ro') && e.target.closest && e.target.closest('#assignBox [data-cdk], #assignBox [data-cck], #assignBox .btl-ti')) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
-function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; try { pvRoMark(box); } catch (e) { /* (the next draw) */ } try { pvReady(); } catch (e) { /* (the next draw) */ } try { pvTrayF(); } catch (e) { /* (the next draw) */ } const me = pvMeLo(); if (!me) return;
+function pvMark() { const box = document.getElementById('assignBox'); if (!box || S.page !== 'plan') return; try { pvRoMark(box); } catch (e) { /* (the next draw) */ } try { pvMyNote(box); } catch (e) { if (window.console) console.warn('My note:', e); /* (the next draw) */ } try { pvReady(); } catch (e) { /* (the next draw) */ } try { pvTrayF(); } catch (e) { /* (the next draw) */ } const me = pvMeLo(); if (!me) return;
   const hasMe = (s) => String(s || '').split(/,| and |&/).some((x) => x.trim().split('-')[0].toLowerCase() === me);
   box.querySelectorAll('.pg-rc[data-pgsit]').forEach((c) => { const on = String(c.dataset.pgsit).split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
   box.querySelectorAll('[data-pv="jobs"] .nm[title]').forEach((c) => { const on = String(c.title).split(' · ')[0].split('-')[0].toLowerCase() === me; if (c.classList.contains('pv-me') !== on) c.classList.toggle('pv-me', on); });
@@ -7066,10 +7066,61 @@ function pvReady() { if (S.page !== 'plan') return; const ros = document.querySe
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rskit]'); if (!b || S.page !== 'plan') return; e.preventDefault(); const nm = b.dataset.rskit, ros = document.querySelector('#view #pg-roster'); if (!ros) return;
   PV_KIT = nm ? true : !PV_KIT; pvReady(); const det = ros.querySelector(':scope > details.ds-buffs'); if (!det || !nm) return; det.open = true;
   const d = [...det.querySelectorAll('.ndz-dag')].find((x) => ((x.querySelector('.ndz-dagn') || {}).textContent || '').trim() === nm); if (d) { if (d.tagName === 'DETAILS') d.open = true; d.scrollIntoView({ block: 'center' }); } });
-let PV_MO = null; const pvMarkSoon =() => { if (pvMarkSoon.t) return; pvMarkSoon.t = requestAnimationFrame(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }); };
+let PV_MO = null; const pvMarkSoon =() => { if (pvMarkSoon.t) return; pvMarkSoon.t = setTimeout(() => { pvMarkSoon.t = 0; try { pvMark(); } catch (e) { /* (next draw) */ } }, 30); }; /* (a timer, not the next paint: a page that isn't painting held the marks back for good (Nov 7)) */
 setTimeout(() => { const v = document.getElementById('main') || document.body; if (!v || PV_MO || !window.MutationObserver) return; /* (the page area: #view is drawn anew) */ PV_MO = new MutationObserver(pvMarkSoon); PV_MO.observe(v, { childList: true, subtree: true }); pvMarkSoon(); }, 0);
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-pvmine]'); if (!b || S.page !== 'plan') return; e.preventDefault(); try { store.set('wla-pv-mine', b.dataset.pvmine); } catch (x) { /* (this visit) */ } pvMark(); });
-const PV_TABS = [['roster', 'Roster'], ['cds', 'Healing cooldowns'], ['jobs', 'Assignments'], ['plans', 'Plans'], ['all', 'All on one page']];
+const PV_TABS = [['roster', 'Roster'], ['cds', 'Healing cooldowns'], ['jobs', 'Assignments'], ['mine', 'My note'], ['plans', 'Plans'], ['all', 'All on one page']];
+// ---- My note (Flex, Nov 7: "Add a tab for personal NSRT notes, where the user can assign anything they want for themselves not for the raid"; "Yes, build it"
+// on the mock). Your own reminders per boss, kept in this browser, shown against the big hits, copied out as NSRT lines tagged with your name
+const pvMnKey = (pb) => 'wla-mynote|' + pb;
+function pvMnGet(pb) { try { const v = JSON.parse(store.get(pvMnKey(pb)) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function pvMnSet(pb, L) { try { store.set(pvMnKey(pb), JSON.stringify(L)); } catch (e) { toast('Your note couldn\'t be saved in this browser.', 4000); } }
+const pvMnT = (s) => Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0');
+const pvMnPh = (ph) => (+ph % 1 ? 'Int' : 'P' + ph);
+function pvMnMe() { try { const m = meOf(); if (!m) return null; const n = String(m.name).split('-')[0], lo = n.toLowerCase(); let sid = 0; try { const p = pnPeople(pnGet()).find((x) => String(x.n).split('-')[0].toLowerCase() === lo); if (p) sid = +p.sid || 0; } catch (e) { /* (no spec) */ } return { n, cls: m.cls, sid }; } catch (e) { return null; } }
+/* (your buttons: your own defensives, shortest cooldown first (the suggestion uses the first), no racials; then Healthstone and a potion; then your raid buttons) */
+const PV_RACIAL = /^(Gift of the Naaru|Stoneform|Fireblood|Shadowmeld|Arcane Torrent|Will to Survive|Every Man for Himself|Escape Artist|Darkflight|War Stomp|Blood Fury|Berserking|Quaking Palm|Bag of Tricks|Ancestral Call|Arcane Pulse|Light's Judgment|Spatial Rift|Haymaker|Rocket Jump|Rocket Barrage|Hyper Organic Light Originator|Regeneratin'|Bull Rush|Tail Swipe|Wing Buffet|Azerite Surge|Sharpen Blade)$/i;
+function pvMnSpells(me) { const L = []; if (me && me.cls) L.push(...((E.DEFENSIVES || {})[me.cls] || []).filter((d) => !PV_RACIAL.test(d[0]) && (!d[3] || !me.sid || d[3].includes(me.sid))).sort((a, b) => (+a[2] || 999) - (+b[2] || 999)).slice(0, 4).map((d) => [d[0], d[1]]));
+  L.push(['Healthstone', 6262], ['Health potion', 431416]);
+  for (const g of NDZ_BUFFS) for (const [nm, cl, sp, sid] of g[2]) if (me && cl.includes(me.cls) && (!sp || !me.sid || sp.includes(me.sid)) && /Healer cooldowns|Raid cooldowns|Externals/.test(g[0]) && !L.some((x) => x[0] === nm)) L.push([nm, sid]);
+  return L.slice(0, 10); }
+function pvMnLine(me, r) { return 'time:' + Math.max(0, Math.round(r.t)) + ';ph:' + r.ph + ';tag:' + me.n + ';' + (r.id ? 'spellid:' + r.id + ';' : '') + 'text:' + String(r.txt).replace(/;/g, ',') + ';'; }
+function pvMyNote(box) { const P = box.querySelector('[data-pv="mine"].pv-mn'); if (!P) return; const pb = P.dataset.mnboss, me = pvMnMe();
+  const D = typeof NDZ_TL !== 'undefined' && NDZ_TL && NDZ_TL.boss === pb ? NDZ_TL : null, O = D ? (D._orig || D) : null, phs = O ? O.phs.slice().sort((a, b) => a.ph - b.ph) : [{ ph: 1, len: 300 }];
+  const st = {}; let acc = 0; for (const p of phs) { st[p.ph] = acc; acc += +p.len || 0; } const tot = Math.max(60, acc), L = pvMnGet(pb).slice().sort((a, b) => (st[a.ph] || 0) + a.t - ((st[b.ph] || 0) + b.t));
+  const hits = O ? O.hits.map((x) => ({ ...x, abs: (st[x.ph] || 0) + x.rel })) : [], mine = O && me ? [...new Map(O.cds.filter((c) => String(c.who).split('-')[0].toLowerCase() === me.n.toLowerCase()).map((c) => [c.id + '|' + c.ph + '|' + c.t, c])).values()] : [];
+  const sp = pvMnSpells(me), def = sp[0];
+  const key = JSON.stringify([pb, L, hits.length, mine.length, me && me.n, phs.length]); if (P.dataset.k === key) return; P.dataset.k = key;
+  if (!me) { P.innerHTML = '<div class="pv-mnh"><b>My note</b></div><p class="sub">Pick who you are on Home first, and your own reminders for each boss go here.</p>'; return; }
+  const X = (abs) => (100 * Math.max(0, Math.min(tot, abs)) / tot).toFixed(2) + '%';
+  /* (the strip: the big hits as diamonds, your raid cooldowns faint, your reminders as chips; a second row when two would touch) */
+  let last = [-99, -99]; const chip = (abs, html, cls) => { const x = 100 * abs / tot, row = x - last[0] > 9 ? 0 : x - last[1] > 9 ? 1 : 0; last[row] = x; return '<span class="pv-mnc ' + cls + (row ? ' r2' : '') + '" style="left:' + X(abs) + '">' + html + '</span>'; };
+  const ticks = []; for (let t = 0; t <= tot; t += 60) ticks.push('<span style="left:' + X(t) + '">' + pvMnT(t) + '</span>');
+  const strip = '<div class="pv-mnt">' + hits.map((x) => '<i class="pv-mnd ' + (x.c || '') + '" style="left:' + X(x.abs) + '" title="' + esc((x.hit || 'Big hit') + ' at ' + pvMnPh(x.ph) + ' ' + pvMnT(x.rel)) + '"></i>').join('') +
+    mine.map((c) => chip((st[c.ph] || 0) + c.t, spellIcon(c.id, ndzSpellNm(c.id) || '') + '<em>' + esc(ndzSpellNm(c.id) || 'Cooldown') + '</em>', 'raid')).join('') +
+    L.map((r) => chip((st[r.ph] || 0) + r.t, (r.id ? spellIcon(r.id, r.txt) : '') + '<b>' + esc(r.txt) + '</b>', 'me')).join('') + '<div class="pv-mnax">' + ticks.join('') + '</div></div>';
+  const near = (r) => { const a = (st[r.ph] || 0) + r.t, h = hits.filter((x) => Math.abs(x.abs - a) <= 8).sort((p, q) => Math.abs(p.abs - a) - Math.abs(q.abs - a))[0]; return h ? (h.abs >= a ? 'before ' : 'after ') + (h.hit || 'a big hit') + ' at ' + pvMnT(h.rel) : 'your own'; };
+  const rows = L.length ? L.map((r) => '<div class="pv-mnr"><span class="t">' + pvMnPh(r.ph) + ' ' + pvMnT(r.t) + '</span>' + (r.id ? spellIcon(r.id, r.txt) : '<span class="pv-mni"></span>') + '<span class="w"><b>' + esc(r.txt) + '</b><span>' + esc(near(r)) + '</span></span><button type="button" class="pv-mnx" data-mnx="' + esc(JSON.stringify([r.ph, r.t, r.txt])) + '" aria-label="Remove">✕</button></div>').join('') : '<p class="sub pv-mn0">No reminders yet. Add one below, or take a suggestion.</p>';
+  /* (suggested: a big hit nobody covers where nothing of yours is up, and your raid cooldowns that the raid note already reminds you of) */
+  const has = (abs) => L.some((r) => Math.abs((st[r.ph] || 0) + r.t - abs) <= 8) || mine.some((c) => abs >= (st[c.ph] || 0) + c.t - 2 && abs <= (st[c.ph] || 0) + c.t + Math.max(+c.dur || 0, 8));
+  const sug = def ? hits.filter((x) => x.c === 'red' && !has(x.abs)).slice(0, 3).map((x) => '<div class="pv-mns"><span>⚠</span><span><b>' + esc(x.hit || 'Big hit') + ' at ' + pvMnPh(x.ph) + ' ' + pvMnT(x.rel) + '</b><em> · no raid cooldown, and nothing of yours up</em></span><button type="button" class="btn sm" data-mnadd="' + esc(JSON.stringify({ ph: x.ph, t: Math.max(0, x.rel - 3), id: def[1], txt: def[0] })) + '">+ ' + esc(def[0]) + '</button></div>').join('') : '';
+  const inRaid = [...new Set(mine.map((c) => ndzSpellNm(c.id) || 'Cooldown'))].map((n) => '<div class="pv-mns"><span>✓</span><span><b>' + esc(n) + '</b><em> · already in the raid note, so it isn\'t added twice</em></span></div>').join('');
+  const code = L.map((r) => pvMnLine(me, r)).join('\n');
+  P.innerHTML = '<div class="pv-mnh"><b>My note</b><span class="sub">Your own reminders for ' + esc(pnShort(pb)) + '. Only you see them; the raid note stays as it is.</span>' + (L.length ? '<button type="button" class="btn sm" data-mncopy="1">🎮 Copy for the game</button>' : '') + '</div>' +
+    '<div class="pv-mng"><div>' + (D ? strip : '<p class="sub">Open Healing cooldowns once to see your reminders against the big hits.</p>') + '<p class="pv-mnl">Reminders <span>· ' + L.length + '</span></p><div class="pv-mnrs">' + rows + '</div>' +
+    '<div class="pv-mna"><select data-mnph aria-label="Phase">' + phs.map((p) => '<option value="' + p.ph + '">' + pvMnPh(p.ph) + '</option>').join('') + '</select><input data-mnt placeholder="0:43" aria-label="Time (minutes:seconds)" inputmode="numeric"><input data-mntx list="pvMnSp" placeholder="A spell or your own words" aria-label="Reminder"><datalist id="pvMnSp">' + sp.map((s) => '<option value="' + esc(s[0]) + '">').join('') + '</datalist><button type="button" class="btn sm primary" data-mngo="1">Add</button></div>' +
+    '<div class="pv-mnq"><span>Your buttons</span>' + sp.map((s) => '<button type="button" data-mnq="' + esc(s[0]) + '">' + spellIcon(s[1], s[0]) + esc(s[0]) + '</button>').join('') + '</div></div>' +
+    '<div>' + (sug || inRaid ? '<p class="pv-mnl">Suggested for you</p><div class="pv-mnsg">' + sug + inRaid + '</div>' : '') + (L.length ? '<p class="pv-mnl">For the game <span>· NSRT lines with your name</span></p><pre class="pv-mncode">' + esc(code) + '</pre>' : '') + '<p class="sub pv-mnf">Kept in this browser. Officers can\'t see or change it.</p></div></div>';
+  setTimeout(() => { try { hydrateIcons(); } catch (e) { /* (stand-in icons) */ } }, 30); }
+document.addEventListener('click', (e) => { if (S.page !== 'plan' || !e.target.closest) return; const P = e.target.closest('[data-pv="mine"].pv-mn'); if (!P) return; const pb = P.dataset.mnboss, sp = pvMnSpells(pvMnMe());
+  const redo = () => { P.dataset.k = ''; const box = document.getElementById('assignBox'); if (box) pvMyNote(box); const n = document.querySelector('.pg-tabs [data-pgpv="mine"] .pg-tabn'); if (n) n.textContent = pvMnGet(pb).length || 'none yet'; };
+  const q = e.target.closest('[data-mnq]'); if (q) { const i = P.querySelector('[data-mntx]'); if (i) { i.value = q.dataset.mnq; P.querySelector('[data-mnt]')?.focus(); } return; }
+  const a = e.target.closest('[data-mnadd]'); if (a) { const r = JSON.parse(a.dataset.mnadd); pvMnSet(pb, pvMnGet(pb).concat([r])); redo(); return; }
+  const x = e.target.closest('[data-mnx]'); if (x) { const [ph, t, txt] = JSON.parse(x.dataset.mnx); pvMnSet(pb, pvMnGet(pb).filter((r) => !(String(r.ph) === String(ph) && r.t === t && r.txt === txt))); redo(); return; }
+  const c = e.target.closest('[data-mncopy]'); if (c) { const me = pvMnMe(); if (me) copyBtn(c, pvMnGet(pb).map((r) => pvMnLine(me, r)).join('\n')); return; }
+  if (e.target.closest('[data-mngo]')) { const tx = (P.querySelector('[data-mntx]').value || '').trim(), tm = (P.querySelector('[data-mnt]').value || '').trim(), ph = P.querySelector('[data-mnph]').value, m = /^(\d+):(\d{1,2})$/.exec(tm) || /^(\d+)$/.exec(tm);
+    if (!tx) { toast('Type a reminder or pick one of your buttons.', 3500); return; } if (!m) { toast('Type the time as minutes:seconds, like 0:43.', 3500); return; }
+    const t = m[2] != null ? +m[1] * 60 + +m[2] : +m[1], s = sp.find((x0) => x0[0].toLowerCase() === tx.toLowerCase()); pvMnSet(pb, pvMnGet(pb).concat([{ ph: +ph, t, id: s ? s[1] : 0, txt: s ? s[0] : tx }])); redo(); } });
 const pvOk = (v) => PV_TABS.some((x) => x[0] === v);
 /* (your tab for this boss: the address (&pv=), else the one you picked last for this boss, else Healing cooldowns for a healer, Roster for everyone else) */
 const PV_URL0 = (() => { try { return window.WLA_PV0 || new URLSearchParams(location.search).get('pv'); } catch (e) { return null; } })(); /* (the link's tab, read before the page tidies its address) */
@@ -7087,13 +7138,14 @@ function pvWrap(h, pb, got) {
   if (/<div class="panel pls pls-slim"/.test(h)) tag(/<div class="panel pls pls-slim"[^>]*>/, 'plans');
   else { let sv = ''; try { sv = L.length && typeof planSavedStripH === 'function' ? planSavedStripH(pb, L) : ''; } catch (e) { sv = ''; }
     h += sv ? sv.replace('<div class="panel pls pls-slim"', '<div data-pv="plans" class="panel pls pls-slim pv-own"') : '<div data-pv="plans" class="panel pls pv-own pv-none"><b>No saved plans for ' + esc(pnShort(pb)) + ' yet.</b><span class="sub">✨ Make the whole plan saves one, or Import a note.</span></div>'; }
+  h += '<div data-pv="mine" class="panel pv-mn" data-mnboss="' + esc(pb) + '"></div>'; /* (My note: filled after the draw by pvMyNote, Nov 7) */
   if (false && L.length >= 2) { /* (Compare two plans is off (Flex, Nov 7: "what the hell is this as well?"); pvCmpH stays for now) */ const ids =(S.pvCmp && S.pvCmp.pb === pb ? S.pvCmp.ids : null) || L.slice(0, 2).map((x) => x.id); h = h.replace(/(<div data-pv="plans"[^>]*>)/, '$1' + pvCmpH(pb, L, ids)); }
   /* (each tab's count: the readiness parts the ring is made of) */
   let r = null; try { r = pgRdy(pnGet(), pb); } catch (e) { r = null; } const row = (k) => ((r && r.rows) || []).find((x) => x[0] === k);
   const on = (() => { try { return (pnGet().on[pb] || []).length; } catch (e) { return 0; } })();
   const W = row('Who plays'), K = row('Raid kit'), C = row('Cooldowns'), J = row('Jobs');
   const badge = { roster: W ? (!W[1] ? [W[2], 'warn'] : K && !K[1] ? [K[2], 'warn'] : [W[2], 'ok']) : [on + ' playing', ''],
-    cds: C ? [C[2], C[1] ? 'ok' : 'warn'] : ['no plan yet', ''], jobs: J ? [J[2], J[1] ? 'ok' : 'warn'] : ['no plan yet', ''], plans: [L.length + ' saved', ''], all: null };
+    cds: C ? [C[2], C[1] ? 'ok' : 'warn'] : ['no plan yet', ''], jobs: J ? [J[2], J[1] ? 'ok' : 'warn'] : ['no plan yet', ''], plans: [L.length + ' saved', ''], mine: ((n) => [n ? String(n) : 'none yet', ''])(pvMnGet(pb).length), all: null };
   const cur = pvGet(pb);
   const nav = '<nav class="pg-tabs" role="tablist" aria-label="Plan sections" data-cur="' + cur + '" data-pvboss="' + esc(pb) + '">' + PV_TABS.map(([k, l]) => { const b = badge[k];
     return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '">' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
