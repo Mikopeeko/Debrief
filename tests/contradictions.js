@@ -280,6 +280,8 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
 { if (!UI.includes("{ label: 'Soak Group 1', want: 'all', block: 'trans' }")) say('the page code', 'jobs', 'the intermission groups carry a size flag again (they are uneven by design, J6)');
   if (!UI.includes("wantN = (typeof sl.want === 'number' ? sl.want : 0) - (sl.approx ? 1 : 0)")) say('the page code', 'jobs', 'the Plan row flags an even split that is one short (19 raiders can\'t split 10/10, J6)');
   if (!UI.includes('The right-hand coil always goes first')) say('the page code', 'jobs', 'the Spectral Coils teams lost the guide\'s placement sentence (J6)'); }
+/* (Main, Nov 8: one difficulty on the Plan page: the night strip reads the live Who plays difficulty, the one the planner builds with) */
+if (!UI.includes("dif = (o && o.diff) || (k && N0.d && N0.d[k] && N0.d[k].diff) || 'Mythic'")) say('the page code', 'plan', 'the Plan night strip reads a saved copy of the difficulty, not the live one the planner uses: the two can disagree');
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
 if (!H.SH.includes("audit W4: the row carrying the Root cause tag is always Serious")) say('the page code', 'wipes', 'the root-cause row can read Moderate again (audit W4)');
