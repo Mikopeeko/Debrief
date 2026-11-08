@@ -6232,7 +6232,7 @@ class Mech {
       if (r.difficulties && r.difficulties.length && !r.difficulties.includes(diff)) continue;
       const k = String(r.type).toLowerCase(); if (!this.ids[k]) continue;
       for (const id of r.spellIds || []) this.ids[k].set(+id, r);
-      if (!(r.spellIds || []).length) for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r); /* (Nov 8, audit M1: a rule with spell ids matches by id only; the splash of a soaked Catalytic Bile is called Catalytic Bile too) */
+      if (k !== 'raidfail' || !(r.spellIds || []).length) for (const n of r.names || [r.name]) this.names[k].set(String(n).toLowerCase(), r); /* (Nov 8, audit M1: a raidFail rule with spell ids matches by id only, since the splash of a soaked Catalytic Bile is called Catalytic Bile too; every other kind matches by name as well, a cast's id isn't its debuff's (Wail of Terror)) */
     }
   }
   get(k, id, name) { return this.ids[k].get(id) || (name ? this.names[k].get(name.toLowerCase()) : undefined); }
@@ -7580,8 +7580,8 @@ function deathLinkOk(m, kill) { const lc = (s) => String(s || '').toLowerCase(),
 // (Nov 8, audit M2: the same event logged twice (the pack's Final Ascension and the module's, two Frost Burst rows, a ghost touch and its Malevolent Resonance hit) is one row:
 //  the same player and mechanic within 2 s (8 s for a ghost touch) keeps the more serious row, the module's on a tie, and takes the other's fix when it has none)
 function dedupeMistakes(r) { const L = r.mistakes || [], rank = { High: 3, Medium: 2, Low: 1 }, lc = (s) => String(s || '').toLowerCase(), drop = new Set();
-  for (let i = 0; i < L.length; i++) { const a = L[i]; if (drop.has(a) || a.mechanic === 'Death') continue; const mr = /malevolent resonance/i.test(a.mechanic || '');
-    for (let j = i + 1; j < L.length && L[j].t - a.t <= 8; j++) { const b = L[j]; if (drop.has(b) || b.mechanic === 'Death' || b.player !== a.player || lc(b.mechanic) !== lc(a.mechanic)) continue;
+  for (let i = 0; i < L.length; i++) { const a = L[i]; if (drop.has(a) || a.mechanic === 'Death' || a.kick) continue; const mr = /malevolent resonance/i.test(a.mechanic || '');
+    for (let j = i + 1; j < L.length && L[j].t - a.t <= 8; j++) { const b = L[j]; if (drop.has(b) || b.mechanic === 'Death' || b.kick || b.player !== a.player || lc(b.mechanic) !== lc(a.mechanic)) continue;
       if (b.t - a.t > (mr && /^hit by/im.test((a.detail || '') + '\n' + (b.detail || '')) ? 8 : 2)) continue; /* (a ghost touch and its hit within 8 s; anything else within 2 s) */
       const ra = (rank[a.severity] || 0) + (a.mod ? 0.5 : 0), rb = (rank[b.severity] || 0) + (b.mod ? 0.5 : 0), k = rb > ra ? b : a, x = k === a ? b : a; if (!k.fix && x.fix) k.fix = x.fix; drop.add(x); if (x === a) break; } }
   if (drop.size) { const keep = L.filter((m) => !drop.has(m)); L.length = 0; L.push(...keep); } }
@@ -7590,7 +7590,7 @@ function explainDeaths(r) {
   // (and every source in the boss's Avoidable damage panel, so a death to Noxious Ground or a Deluge circle reads as dodgeable too;
   // a source with a skip (tank frontals on a tank, a carrier's own orb) needs to know who, so only the rule pack counts there)
   const avP = new Map(); for (const g of ((((r.module && r.module.sections) || []).find((q) => q.id === 'avoid') || {}).groups || [])) if (!g.skip && g.judge) for (const n of g.names || []) avP.set(n, { type: 'avoidable', name: g.label, tip: '' });
-  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (!(x.spellIds || []).length && x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) /* (Nov 8, audit M1: by id when the rule has ids) */ || avP.get(String(e.spell).toLowerCase()) || null;
+  const ruleFor = (e) => rules.find((x) => (x.spellIds || []).includes(e.id) || (x.type !== 'raidFail' && x.name && x.name.toLowerCase() === String(e.spell).toLowerCase())) /* (Nov 8, audit M1: a raidFail rule by id only) */ || avP.get(String(e.spell).toLowerCase()) || null;
   // boss spells can log with no source (e.g. Caustic Globule), so 'Environment' alone doesn't mean room damage
   const mod = MODULES.find((m) => m.encounter === r.item.boss), modSpells = new Set(mod ? mod.spells.map((x) => String(x).toLowerCase()) : []);
   const isRoom = (t) => /^environment$/i.test(t.src || '') && !ruleFor({ id: t.id, spell: t.name }) && !modSpells.has(String(t.name).toLowerCase()) && !(mod && mod.ids && mod.ids.includes(t.id));
