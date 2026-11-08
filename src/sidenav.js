@@ -43,7 +43,9 @@ function snJobs() { const now = Date.now(); if (now - SN_JOBS.at < 45000 && !(S.
   return SN_JOBS; }
 function snWho() { const me = meOf(); let g = null; try { g = homeTarget(); } catch (e) { g = null; }
   const team = g && g.kind !== 'char' ? gName(g) : '', k = me && me.cls && E.CLASSES && E.CLASSES[me.cls];
-  return { name: me ? String(me.name).split('-')[0] : '', col: k ? k[1] : '', team }; }
+  /* (Nov 8, live bug: the line says whether you're signed in; st: in (Battle.net), old (an old Warcraft Logs sign-in), out, or '' before the site has answered) */
+  const W = WCL.HOSTED ? WHO.now : null, st = !WCL.HOSTED ? '' : !W ? '' : W.me ? (W.me.legacy ? 'old' : 'in') : 'out';
+  return { name: me ? String(me.name).split('-')[0] : '', col: k ? k[1] : '', team, st }; }
 // ---- drawing the menu ----
 function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nights = snNights(), jobs = snJobs();
   const last = op ? null : nights[0];
@@ -59,9 +61,14 @@ function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nigh
     if (k === 'plan' && sec === 'plan' && jobs.boss) h += '<div class="snv-sub"><div class="snv-k">This week</div><div class="snv-n cur"><b>' + esc(jobs.boss) + '</b><small>' + (jobs.none ? 'No plan yet' : jobs.n ? plural(jobs.n, 'job') + ' not filled' : 'Every job filled') + '</small></div></div>'; }
   return h; }
 const pnShortB = (b) => String(b).replace(/^The /, '');
-function snWhoHtml() { const w = snWho(), fold = snFold(), ini = (w.name || '?').charAt(0).toUpperCase();
-  return '<button type="button" class="snv-av" data-sn="me" data-tip="' + esc(w.name || 'Home') + '"' + (w.col ? ' style="--cc:' + w.col + '"' : '') + '>' + esc(ini) + '</button>' +
-    (fold ? '' : '<span class="snv-wt"><b' + (w.col ? ' style="color:' + w.col + '"' : '') + '>' + esc(w.name || 'Who are you?') + '</b><small>' + esc(w.team || (w.name ? 'Your character' : 'Pick your character on Home')) + '</small></span>'); }
+function snWhoHtml() { const w = snWho(), fold = snFold(), out = w.st === 'out', ini = out && !w.name ? '?' : (w.name || '?').charAt(0).toUpperCase();
+  /* (Nov 8, live bug (Flex: "it still has me saved/logged in after pressing logout"): signed out reads as signed out; a remembered character is grey, "Viewing as") */
+  const io = (k, t) => '<button type="button" class="snv-io" data-snio="' + k + '" style="all:unset;cursor:pointer;font-size:12px;color:var(--gold);text-decoration:underline;text-underline-offset:2px">' + t + '</button>';
+  const tip = out ? 'Not signed in' + (w.name ? ' · viewing as ' + w.name : '') : w.st === 'old' ? (w.name || 'You') + ' · old sign-in' : (w.name || 'Home') + (w.st === 'in' ? ' · signed in' : '');
+  const nm = out ? 'Not signed in' : esc(w.name || 'Who are you?'), sub = out ? io('in', 'Sign in with Battle.net') + (w.name ? '<br>Viewing as ' + esc(w.name) : '')
+    : w.st === 'old' ? 'Old sign-in · ' + io('out', 'Sign out') : w.st === 'in' ? (w.team ? esc(w.team) + '<br>' : '') + io('out', 'Sign out') : esc(w.team || (w.name ? 'Your character' : 'Pick your character on Home'));
+  return '<button type="button" class="snv-av" data-sn="me" data-tip="' + esc(tip) + '"' + (out ? ' style="--cc:var(--muted);opacity:.65"' : w.col ? ' style="--cc:' + w.col + '"' : '') + '>' + esc(ini) + '</button>' +
+    (fold ? '' : '<span class="snv-wt" data-st="' + (w.st || '') + '"><b' + (out ? ' style="color:var(--muted)"' : w.col ? ' style="color:' + w.col + '"' : '') + '>' + nm + '</b><small' + (w.st ? ' style="white-space:normal;line-height:1.35"' : '') + '>' + sub + '</small></span>'); }
 function snMount() { if ($('#sideNav')) return;
   const a = document.createElement('aside'); a.id = 'sideNav'; a.className = 'sn'; a.setAttribute('aria-label', 'Sections');
   const logo = $('#brandHome svg.logo'); a.innerHTML = '<button type="button" class="snv-brand" data-sn="home" data-tip="Home" aria-label="Debrief home">' + (logo ? logo.outerHTML : '') + '<span class="snv-l">Debrief</span></button>' +
@@ -74,12 +81,14 @@ function snPlace() { const on = snOn(), tools = $('#snTools'), tb = $('#topbar')
   if (on) { if (disc && disc.parentElement !== tools) tools.appendChild(disc); if (menu && menu.parentElement !== tools) tools.appendChild(menu); }
   else { const pr = $('#prog'); if (menu && menu.parentElement !== tb) tb.insertBefore(menu, pr); if (disc && disc.parentElement !== tb) tb.insertBefore(disc, menu || pr); } }
 function snDraw(force) { if (!$('#sideNav')) snMount(); const fold = snFold(), sec = snSec(), jobs = snJobs(), op = snOpen();
-  const k = [sec, S.page, S.tab, op ? op.boss + op.n + op.of : '', SN_LAST ? SN_LAST.boss : '', HIST && HIST.mem ? HIST.mem.size : 0, fold, jobs.n, jobs.boss, (meOf() || {}).name || ''].join('|');
+  const k = [sec, S.page, S.tab, op ? op.boss + op.n + op.of : '', SN_LAST ? SN_LAST.boss : '', HIST && HIST.mem ? HIST.mem.size : 0, fold, jobs.n, jobs.boss, (meOf() || {}).name || '', snWho().st].join('|'); /* (the sign-in state too, Nov 8) */
   document.body.classList.toggle('snv-fold', fold); document.body.dataset.snSec = sec;
   if (!force && k === SN_KEY) return; SN_KEY = k;
   $('#snNav').innerHTML = snNavHtml(); $('#snWho').innerHTML = snWhoHtml();
   const hb = $('#snHide'); hb.textContent = fold ? '»' : '« hide'; hb.setAttribute('aria-label', fold ? 'Show the menu' : 'Fold the menu to icons'); hb.dataset.tip = fold ? 'Show the menu' : 'Fold the menu'; }
+document.addEventListener('whoami', () => { try { if ($('#sideNav')) snDraw(true); } catch (e) { /* (next draw) */ } }); /* (Nov 8: redrawn once the site says who's signed in) */
 async function snClick(e) { const t = e.target.closest && e.target.closest('button'); if (!t || t.disabled) return;
+  if (t.dataset.snio) { e.stopPropagation(); if (t.dataset.snio === 'out') signOutNow(); else signInNow(); return; } /* (Nov 8: Sign in / Sign out on the account line) */
   if (t.id === 'snHide') { store.set(SN_FOLD_K, snFold() ? '0' : '1'); snDraw(true); return; }
   if (t.dataset.code) { t.disabled = true; try { S.tab = snSubGet(); await openWcl({ code: t.dataset.code, fight: +t.dataset.fight || null }, await wclCreds()); } catch (err) { t.disabled = false; toast('<span>' + esc(err.message) + '</span>', 6000); } return; }
   const k = t.dataset.sn; if (!k || t.classList.contains('off')) return;
