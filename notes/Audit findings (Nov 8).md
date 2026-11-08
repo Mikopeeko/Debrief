@@ -311,3 +311,35 @@ Sweep: the Nov 2 night `zZEe97dQPwLRjEiy8v4ZUw` pull 1 (8:04 Coiled Altar Mythic
 1. R1 (forced raid-wide gaps): it touches 13 of 20 raiders on one pull.
 2. R5 (top numbers for the five specs) and R7 (tank bars): honest grades on the thin specs.
 3. R2, R3, R6; then R4 once Flex decides.
+
+## 5. Automated planning (a shorter sitting: code and rules, no browser sweep)
+
+What was read: the Plan tab's healing-cooldown planner (`ui.js ndzCdPlan` / `ndzCdPlanV1`, data `NDZ_CDSTART` big hits, `NDZ_TLDMG` damage profiles, `NDZ_CDHAB` top-raid habits, `NDZ_CDPOW` power, `NDZ_CDK` kinds and lengths, `NDZ_CDRECH`, `ndzCdBack`), the job picks (`ndzKickOf`, `NDZ_KICK_PLUS`, the Twin Fangs / Coiled Altar pickers), the gear check (`GEAR_ENCH`), the Report card's raid-cooldown and externals tables (`RCD_CD`, `RCD_SPEC`, `HEAL_CD_BY`), the raid-day rule (`raidDaysRule`, fixed Nov 6), and the kill-estimate pace chart (`pcx`, ~16140-16250).
+
+### P1. The same cooldown has three lengths on three tabs (S, website builder + analysis chat)
+- What's wrong: the Plan tab plans with `NDZ_CDK` / `NDZ_CDPOW` (Divine Hymn 120 s, Rewind 180, Darkness 180, Anti-Magic Zone 180), the Report card counts "uses of possible" and "ready" externals with `RCD_CD` (Divine Hymn 180, Rewind 240, Darkness 300, Anti-Magic Zone 120), and the Deaths rules' `DEFENSIVES` has Darkness at 300. Memory `healing-cd-logic` already notes the real gaps from logs are Divine Hymn 2:00 and Rewind 3:00 and that "RCD_CD elsewhere is wrong". So a Holy Priest's "Divine Hymn uses 3/4" on the Report card and the Plan's four planned Hymns in an 8-minute pull can't both be right.
+- Where: every pull with those spells; Nov 2 pull 1 Adelyne "Divine Hymn uses 3/4 · top 80%" (8:04 pull: 4 fits 120 s, 3 fits 180 s).
+- Rule it should be: one cooldown table (the engine's `CD_NAMES` / `cdName`, which both tabs already import), each length taken from the spell's tooltip or the shortest real gap in the log library and written once; `RCD_CD`, `NDZ_CDK[..][2]`, `NDZ_CDPOW[..].cd` and `DEFENSIVES` read from it. The helper verifies the four spells above first.
+- File: `ui.js RCD_CD` (~29450), `NDZ_CDK` (~5707), `NDZ_CDPOW` (~5828), `ndzCdBack()` (~5636), `engine.js DEFENSIVES` (Darkness), `CD_NAMES`.
+
+### P2. The Companion app's raid reminder still guesses its own raid days (S, In-game addon chat)
+- What's wrong: Home and Plan share `raidDaysRule` plus the lead's override since Nov 6 (Wolfthorn: Wed + Thu); the Companion reminder keeps its own guess (memory `wolfthorn-raid-days`), so one place can still say Tue or Fri.
+- Rule it should be: the Companion reads the team's raid days from the site (the override first, then `raidDaysRule`) and never guesses alone; one rule, three places.
+- File: Companion reminder code; `/api/teamplan` or a small `/api/raiddays`.
+
+### P3. The Deaths and Mechanics fixes change what the Plan automation reads (cross-reference, no new fix)
+- "Draft a note from your pulls", the auto job picks' "in 9 of 11 pulls" counts, the Report card's Mechanics and Deaths tiles and the Companion card all read `keptMistakes` / `deathVerdict`. D2-D4, D7, M1-M3 and M6 change those inputs: a doubled Final Ascension or a "Missed interrupt" row named differently from "Wail of Terror" (M3) is what the note drafter counts. Land areas 2-3 first, then re-run the draft-note tests (`draft-note/` in the shared notes).
+
+### P4. For the record (no fix)
+- Kicks: healers are never given a kick except a Restoration Shaman (`ndzKickOf`, spec 264), and Protection Paladin / Warrior get their extra kick utility named (`NDZ_KICK_PLUS`). The planner's big hits, damage profiles and top-raid habits cover all 10 bosses on Heroic and Mythic (`NDZ_CDSTART` 7-19 big hits a boss, phases per boss). The gear check's enchant slots were verified on Nov 6 against 16 top US Mythic raiders (`GEAR_ENCH`: head, shoulders, chest, legs, feet, both rings, main hand; the off hand is left out on purpose). Raid days: one rule for Home and Plan since Nov 6.
+
+### P5. Not audited in this sitting (say so, don't guess)
+- The planner's placement quality on real nights (cover / amber / red per big hit, stacking vs spreading), "Make the whole plan" and the job picks against each guide, "Pick who plays for me" and the bench, the Ready strip ("Could swap", kick counts, healer talents), NSRT import / export round trips, the My note lines' format, the Report card's letter grades and the kill-estimate curve, the Mythic+ run recap, and the Companion pop-up card's numbers. Each needs a browser pass on the practice link with a real roster and note (recipe: `plan-tab-round-recipe`, `plan-test-as-built`); about one sitting on its own. The brief's three questions for each (would a top Mythic raid lead accept the pick, does it say why, does it contradict another tab) still stand.
+
+### Order to fix (my call)
+1. P1 (one cooldown table): small, and it fixes a tab-to-tab contradiction raiders can see tonight.
+2. P2 with the next Companion release.
+3. P3 is the order of work, not a fix; P5 is the next audit sitting.
+
+## Done so far (Nov 8)
+Areas 1-5 written: W1-W16 (wipes, Main on Fable, morning), D1-D13 (deaths), M1-M10 (mechanics), R1-R8 (rotations), P1-P5 (planning, short). Sweeps: 60 pulls / 995 deaths on the three test logs through the real engine in node (scripts in the shared notes folder, deaths-audit/: audit2.js deaths, audit3.js mechanics, audit4.js rotations, sum.js / msum.js to read them). No browser screenshots were needed: every finding has a pull and a time to open on the site.
