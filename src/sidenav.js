@@ -83,12 +83,14 @@ async function snClick(e) { const t = e.target.closest && e.target.closest('butt
   if (t.id === 'snHide') { store.set(SN_FOLD_K, snFold() ? '0' : '1'); snDraw(true); return; }
   if (t.dataset.code) { t.disabled = true; try { S.tab = snSubGet(); await openWcl({ code: t.dataset.code, fight: +t.dataset.fight || null }, await wclCreds()); } catch (err) { t.disabled = false; toast('<span>' + esc(err.message) + '</span>', 6000); } return; }
   const k = t.dataset.sn; if (!k || t.classList.contains('off')) return;
-  if (k === 'home' || k === 'me') { home(); window.scrollTo(0, 0); }
+  if (k === 'home' || k === 'me') { snHome(); }
   else if (k === 'plan') { if (S.page !== 'plan') { planPage(); window.scrollTo(0, 0); } }
   else if (k === 'guides') { if (S.page !== 'guides') openGuides(); }
   else if (k === 'mplus') { if (S.page !== 'mplus' && S.page !== 'mpfind') mpOpen(); }
   else if (k === 'raid') await snRaid();
   snDraw(true); }
+// (Home: your team's page, the Home tab; the welcome page only for someone with nothing added yet or signed out (Flex, Nov 8: "clicking on this should take you to the home tab not the home screen"). The same as coming back to the site)
+function snHome() { const t = homeTarget(); if (t) { store.set(GROUP_CUR, t.gid); progressPage(undefined, t.gid); } else home(); window.scrollTo(0, 0); }
 // (Raid review: back to the night you had open, on the sub tab you used last; else your newest night; else the ways to open one)
 async function snRaid() { if (snSec() === 'raid') { window.scrollTo({ top: 0 }); return; }
   const bs = (S.index && S.index.bosses) || [], b = SN_LAST && bs.includes(SN_LAST) ? SN_LAST : PROG_BACK && bs.includes(PROG_BACK) ? PROG_BACK : null, tab = snSubGet();
