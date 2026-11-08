@@ -538,3 +538,6 @@ Done on the practice copy (next-debrief) with the same Main roster of 20 as sect
 2. K2 (Twin Fangs soak order), K5 (Sentinels Miasma), K6 (Vashnik "pulls together"): wrong plays a raid would follow.
 3. K3 + K4 (Nymrissa), K12 (Heroic words), K9 (Sszorak stack), K10 (Kith'ix tank sweep).
 4. K7, K8, K11.
+
+### Re-check on the rebuilt practice copy (e5e394bf, same as live plus Ula'tek J6 + J9)
+Main asked for a re-run on the fresh build (reloaded with a new query, saved plans cleared, Who plays on Mythic then Heroic, every card read by script). All eight bosses came out name for name and reason for reason the same as above, so K1-K14 stand and nothing in them is already fixed. Ula'tek on the same run shows the section 6 fixes in place (three Bite sets with backups, egg zones by role with the Mages far, P2 solo breakers / Doomscale Egg carriers / Gateway, Freedom from Blessing of Freedom and Tiger's Lust, the coils and transition groups in the guide's shape).
