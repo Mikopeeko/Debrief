@@ -55,6 +55,7 @@ corners, star and square in the far corners, diamond in the middle of the far wa
   if they're further back. 5-6 orbs per frontal (7 is healable, never 8+); every orb is one stack, purple or green.
   Warlocks wait for greens on their path to be picked up before Demonic Circle-porting. Carrying a green past a carried purple is allowed.
   Off-tank taunts right before every Sever (2 stacks survivable only with 2 externals; avoid in P1). Time Spiral (2 Evokers) for the orb runners.
+  4 purples since the Oct 13 tuning: both Mages, the off-tank and an Evoker healer carry them (very mobile; Flex, Nov 8), Warlocks only when there's no Evoker healer. Debrief's picks follow this order.
 - **P1 Guillotine**: 2 in P1, 3 in P3. Gate INTO the soak (Warlock gate to the back corner), never out: orbs spawn on the path right after.
   Externals + Zephyr on the target. Soak 1 = 6-7 players: everyone who'll immune soak 2 must be in soak 1 (so they can't be
   targeted for soak 2), plus tanky ones (Shadow Dispersion, Warrior walls since P1 is physical, Rogue Feint). Soak 2 = exactly 5:
