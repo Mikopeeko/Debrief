@@ -30765,7 +30765,18 @@ function ndzBuildStart(B) {
   if (B.cdFrom === 'plan') { for (const x of sug.filter((y) => y.rem && y.kind === 'dpscd')) B.cds.push({ ph: x.rem.ph, t: x.rem.time, id: x.rem.id || null, text: x.rem.text, who: x.names.map((y) => y.n).join(' ') }); } /* (the damage cooldowns and Bloodlust from the boss's own plan, Oct 22) */
   /* (no extra pass here any more: the planner already uses each cooldown as often as it's back, with a cushion across phase changes, Oct 22; the button still runs ndzCdMore) */
   ndzSrcFill(B, pr);
+  if (typeof ndzStrictCap === 'function') ndzStrictCap(B, [...pr.players.values()]); /* (Plan review 1, Nov 8) */
 }
+// (Plan review 1, Nov 8: a strict job asks only for the players the roster can give it: the ones it allows, who fit, and who have no other job on the card)
+function ndzStrictCap(B, ps) { const F = typeof NDZF_FIT !== 'undefined' ? NDZF_FIT[B.pick] : null; if (!F || !B.pages || !B.sel) return;
+  for (const pg of B.pages) { const J = F[pg.key]; if (!J) continue;
+    for (const sl of pg.slots) { const rule = J.s.find(([re]) => re.test(sl.label)); if (!rule || !/\bstrict\b/.test(String(rule[3] || '')) || typeof sl.want !== 'number' || sl.want <= 0) continue;
+      const k = pg.key + '|' + sl.label, cur = ((B.sel[k] || {}).n || []), others = new Set(pg.slots.filter((s2) => s2 !== sl).flatMap((s2) => ((B.sel[pg.key + '|' + s2.label] || {}).n || [])));
+      const free = ps.filter((p) => !cur.includes(p.name) && !others.has(p.name) && rule[1](p) && ndzFitOf(p, rule[2]).n > 0).length, cap = cur.length + free;
+      if (cap >= sl.want) continue;
+      sl.wantFull = sl.want; sl.want = cap; sl.capped = true; if (!cap) sl.show = true;
+      const v = B.sel[k] || (B.sel[k] = { n: [], why: '' }), add = cur.length ? 'Nobody else on the roster can do this job, so ' + cur.length + ' is enough.' : 'Nobody on the roster can do this job.';
+      if (!String(v.why || '').includes(add)) v.why = (v.why ? String(v.why).replace(/\s*$/, ' ') : '') + add; } } }
 // (the note from the builder: kick block, headed sections or plain lines, then the reminders)
 // (what's left to fix before saving: a job with nobody, a group that's short, someone in two groups of one page)
 function ndzBuildIssues(B) { const out = []; (B.pages || []).forEach((pg, i) => { const seen = new Map();
