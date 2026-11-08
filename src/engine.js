@@ -4283,12 +4283,12 @@ function buildCoiledAltar(ev, r, h) {
       { const mk = left != null && mistakes.find((m) => m.player === 'Raid' && /^Eternal Nightfall finished casting, because the shield/.test(m.detail || '') && m.t >= s.t && m.t <= s.t + 30); if (mk) mk.detail = 'Eternal Nightfall finished casting because shield ' + s.n + ' wasn\'t broken, with about ' + left + '% of it still up.'; }
       row[3].say = 'Shield ' + s.n + ' wasn\'t broken, ' + (left != null ? 'with about ' + left + '% of it still up when the 17 s cast finished, after ' + caM(got) + ' of the about ' + caM(size) + ' it takes' : 'after ' + caM(got) + ' of damage into it before the 17 s cast finished') + '.'; }); }
   /* round 284 split: the kicks, only for shields that broke */ const enK = enRows.filter((x) => /^after /.test(x[3].txt || '')).map((x) => [x[0], x[1], x[4], x[5].txt === 'stopped' ? { txt: 'kicked' } : x[5]]);
-  if (enK.length) sections.push({ id: 'enkick', title: 'Eternal Nightfall (Kicks)', place: 'Eternal Nightfall: kicked after the break', spell: S('eternal nightfall'), verdict: enK.some((x) => x[3].bad) ? 'bad' : 'good',
+  if (enK.length) sections.push({ id: 'enkick', title: 'Eternal Nightfall (Kick after the break)', place: 'Eternal Nightfall: kicked after the break', spell: S('eternal nightfall'), verdict: enK.some((x) => x[3].bad) ? 'bad' : 'good',
     summary: pl(enK.length, 'broken shield') + ', and ' + enK.filter((x) => x[3].txt === 'kicked').length + ' kicked before the cast finished.', cols: ['Shield', 'When', 'Kicked by', 'Result'], rows: enK });
   const enB = enRows.map((x) => [x[0], x[1], { txt: x[2].txt }, x[3]]);
   if (enRows.length) sections.push({ id: 'shield', title: 'Eternal Nightfall (Break the shield)', place: 'Eternal Nightfall (boss shield): broken in time', spell: S('eternal nightfall'),
     verdict: enB.some((x) => x[3].bad) ? 'bad' : enB.some((x) => x[3].warn) ? 'warn' : 'good',
-    summary: pl(enRows.length, 'shield') + ', and ' + enB.filter((x) => /^after /.test(x[3].txt || '')).length + ' broken in time. The kicks are in Eternal Nightfall (Kicks).',
+    summary: pl(enRows.length, 'shield') + ', and ' + enB.filter((x) => /^after /.test(x[3].txt || '')).length + ' broken in time. The kicks are in Eternal Nightfall (Kick after the break).',
     cols: ['Shield', 'Cast started', 'Phase', 'Broken', 'Kicked by', 'Result'], rows: enB });
 
   // ---- Guillotine protection ----
@@ -4593,8 +4593,8 @@ function buildCoiledAltar(ev, r, h) {
   // Dreadmarch in three panels (round 411 dreadmarch split): the mind controls, the ghosts and Soul Sever, each grouped per Dreadmarch
   {
     const sDm = take('dmstack'), sGh = take('ghosts'), sMc = take('mc'), sSs = take('soulsever');
-    const perDm = (items, clean) => {
-      const groups = dm.map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
+    const perDm = (items, clean, lim) => {
+      const groups = dm.filter((t) => lim == null || t < lim).map((t, i) => ({ title: 'Dreadmarch #' + (i + 1), t, from: t - 1, to: (dm[i + 1] ?? dur + 1) - 1, rows: [], tg: sDm && sDm.rows[i] ? sDm.rows[i][1].ps : [] }));
       const other = { title: 'Other', t: 0, rows: [] };
       for (const it of items.slice().sort((a, b) => a.t - b.t)) (groups.find((g) => it.t >= g.from && it.t < g.to) || other).rows.push(it.row);
       if (other.rows.length) groups.push(other);
@@ -4637,9 +4637,13 @@ function buildCoiledAltar(ev, r, h) {
         cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
     }
     // 3) Soul Sever: the tank frontal destroys the ghosts it hits (a missed ghost is walked back for the next frontal (Oct 21): not a mistake)
-    const ssItems = (sSs ? sSs.rows : []).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, r0[4].warn ? { txt: r0[4].txt + ' missed', warn: true, why: r0[4].why, next: r0[4].next, ...(r0[4].why ? { say: r0[4].why } : {}) } : { txt: r0[4].txt + ' missed', dim: true }, r0[5]] })); /* round 447: a missed ghost is a Moderate fail */
+    /* (Nov 8, Flex: Soul Sever never casts in P3 (26 saved pulls); the ghosts a P3 Blighted Sever cleared sit on that frontal's own Tank frontals row, with its map) */
+    { const tf0 = sections.find((s) => s.id === 'tankfront'); for (const r0 of (sSs ? sSs.rows : []).filter((r0) => r0[1] && r0[1].s && /^blighted sever$/i.test(String(r0[1].s[1] || '')))) {
+      const row = tf0 && tf0.rows.find((x) => x[1] && x[1].s && /^blighted sever$/i.test(String(x[1].s[1] || '')) && /^stack /.test(String((x[3] || {}).txt || '')) && Math.abs(x[0].t - r0[0].t) <= 2); if (!row) continue;
+      row[5].sub = (row[5].sub ? row[5].sub + ' \u00b7 ' : '') + r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed (estimated)'; if (!row[6] || !row[6].map) row[6] = r0[5]; } }
+    const ssItems = (sSs ? sSs.rows : []).filter((r0) => !(r0[1] && r0[1].s && /^blighted sever$/i.test(String(r0[1].s[1] || '')))).map((r0) => ({ t: r0[0].t, row: [{ txt: 'Soul Sever' }, { t: r0[0].t }, { txt: r0[3].txt + ' of ' + r0[2].txt + ' ghosts removed' }, r0[4].warn ? { txt: r0[4].txt + ' missed', warn: true, why: r0[4].why, next: r0[4].next, ...(r0[4].why ? { say: r0[4].why } : {}) } : { txt: r0[4].txt + ' missed', dim: true }, r0[5]] })); /* round 447: a missed ghost is a Moderate fail */
     if (ssItems.length) {
-      const groups = perDm(ssItems, 'no Soul Sever in this Dreadmarch');
+      const groups = perDm(ssItems, 'no Soul Sever in this Dreadmarch', p3); /* (Nov 8, Flex: no Soul Sever card in P3) */
       for (const g of groups) { const rm = g.rows.filter((r0) => r0[0].txt === 'Soul Sever'); let a = 0, b = 0; for (const r0 of rm) { const m = String(r0[2].txt).match(/^(\d+) of (\d+)/); if (m) { a += +m[1]; b = Math.max(b, +m[2]); } }
         g.sub = rm.length ? pl(rm.length, 'Soul Sever') + ' · ' + a + ' ghost' + (a === 1 ? '' : 's') + ' removed' : 'no Soul Sever'; }
       sections.push({ id: 'soulsever', title: 'Soul Sever (Hit the ghosts)', place: 'Soul Sever: ghosts in the frontal', spell: S('soul sever'), verdict: ssItems.some((x) => x.row[3].warn) ? 'warn' : 'good',
