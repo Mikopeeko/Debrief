@@ -8345,7 +8345,7 @@ html body #view.plan-page #assignBox:has(> .pg-tabs[data-cur="roster"]) > header
 html body #view.plan-page .pg-bar .pg-bdiff { flex: none; display: inline-flex; }
 html body #view.plan-page .pg-bar .pg-bdiff > button { padding: 4px 11px; font-size: 13px; }
 /* plan laptop grid width (Plan review 4: the compact grid rules live in the theme layer, so this one does too) */
-@layer defaultTheme { @media (min-width: 641px) and (max-width: 1180px) { html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid table.nt-g { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
+@layer defaultTheme { @media (min-width: 641px) and (max-width: 1365px) { html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid table.nt-g { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh { width: 100% !important; min-width: 0 !important; }
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh > b { white-space: normal !important; text-align: center !important; line-height: 1.05 !important; max-height: 2.2em; overflow: hidden !important; padding: 0 1px !important; } } }
 /* plan laptop widths (Plan review 3 + 4, Nov 8: at 964 px with the side menu open every tab shows, the bosses get their own row, and Who plays fits ten bosses) */
@@ -8358,6 +8358,9 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-bosses > .pg-boss { width: auto !important; min-width: 0 !important; height: 42px !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-bosses > .pg-boss > b { white-space: normal !important; font-size: 12px !important; line-height: 1.1 !important; padding: 2px 4px 3px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip !important; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .ndz-dring { margin-left: auto; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-rdy { white-space: nowrap; }
+}
+/* plan laptop grid (Plan review 4: up to 1365 px, where ten boss columns at full size no longer fit beside the side menu) */
+@media (min-width: 641px) and (max-width: 1365px) {
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g :is(td.pl, th.pl) { width: 132px !important; min-width: 0 !important; position: sticky; left: 0; z-index: 3; background: var(--panel) !important; overflow: hidden; text-overflow: ellipsis; }
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g thead th.pl { z-index: 4; }
 html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g tr.grp td { position: sticky; left: 0; }
