@@ -7675,7 +7675,7 @@ function explainDeaths(r) {
     const raidM = r.mistakes.filter((m) => m.player === 'Raid' && m.mechanic !== 'Death' && m.t >= d.t - 4 && m.t <= d.t + 0.5);
     /* (Nov 8, audit D4: another player's Serious miss that IS the killing hit, within 4 s (the tank's missed Stone Breaker slam hitting the raid), is the raid's cause of this death, with their name) */
     const othersM = r.mistakes.filter((m) => m.player && m.player !== 'Raid' && m.player !== d.player && m.mechanic !== 'Death' && m.severity === 'High' && !m.others && !m.fromNote && m.t >= d.t - 4 && m.t <= d.t + 0.5 && String(m.mechanic).toLowerCase() === String(d.kill).toLowerCase() && /^(missed|dropped|let |lost |didn't|did not|failed|popped|set off|broke|carried|pulled|taunted|no )|hit \d+ players|on the raid|into the raid|the whole raid/i.test(m.detail || ''));
-    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}) }));
+    d.links = mine.concat(raidM, othersM).sort((a, b) => a.t - b.t).map((m) => ({ t: m.t, mechanic: m.mechanic, severity: m.severity, detail: m.detail, fix: m.fix, others: !!m.others, raid: m.player === 'Raid' || othersM.includes(m), ...(othersM.includes(m) ? { by: String(m.player).split('-')[0] } : {}) }));
     d.taken5 = hits.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.healed5 = heals.filter((e) => e.t >= d.t - 5).reduce((n, e) => n + e.amount, 0);
     d.react = !fast; // (false: from 50%+ to dead in 2 s or less, too fast to press anything)
