@@ -35967,7 +35967,7 @@ function dsGuides() {
     } catch (e) { /* (the page stays as rendered) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsTonight, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -35983,7 +35983,7 @@ function dsGuides() {
     } catch (e) { /* (the box stays where it was drawn) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsNoJob, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36000,7 +36000,7 @@ function dsGuides() {
     } catch (e) { /* (the page stays as rendered) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsRosterFirst, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36043,7 +36043,7 @@ function dsGuides() {
     } catch (e) { /* (the tiles stay as rendered) */ } finally { busy = false; }
   }
   var t = 0, kick = function () { clearTimeout(t); t = setTimeout(dsBuffs, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36057,7 +36057,7 @@ function dsGuides() {
     open = !open; mark();
   }, true);
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 30); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36086,7 +36086,7 @@ function dsGuides() {
     } catch (e) { /* (the editor stays as drawn) */ } finally { busy = false; }
   }
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 30); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36098,7 +36098,7 @@ function dsGuides() {
     document.querySelectorAll('#view.plan-page .bj-jobs .plb-rch > [data-dssheetcard]:not([aria-label])').forEach(function (b) { b.setAttribute('aria-label', 'Copy these pictures'); });
   };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
@@ -36113,7 +36113,7 @@ function dsGuides() {
     sc.parentNode.insertBefore(k, sc.nextSibling); /* round 116: under the chart, out of the header */
   };
   var tm = 0, kick = function () { clearTimeout(tm); tm = setTimeout(mark, 40); };
-  var start = function () { var v = document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); };
+  var start = function () { var v = document.getElementById('main') || document.getElementById('view'); if (!v) return setTimeout(start, 300); new MutationObserver(kick).observe(v, { childList: true, subtree: true }); kick(); }; /* (#main, not #view: #view is drawn anew and took the watcher with it (Nov 7)) */
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
 
