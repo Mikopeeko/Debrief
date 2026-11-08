@@ -14254,6 +14254,13 @@ const WHY_K = { mistake: ['A mistake', 'bad'], dmg: ['Not enough damage', 'dmg']
 function whyWiped(r) {
   if (!r || !r.item || r.item.kill || r.allPulls || dbfReset(r.item) || !r.deaths || !r.mistakes) return null;
   const ct = cutT(r); if (r._why && r._whyCt === ct) return r._why; r._whyCt = ct; /* (only what came before the wipe filter (Oct 22): it said "Lost to Grim Guillotine at 6:53" over "Counted up to 4:59") */
+  /* (Nov 8, audit W11: the root cause the Debriefing card shows answers here too, so the dots, tooltips, night summary and "again" counts agree with it) */
+  { let rc = null; try { rc = wipeRoot(r); } catch (e) { rc = null; }
+    if (rc && rc.cat) { const cat = rc.cat, all0 = r.deaths.filter((d) => d.t <= ct + 0.05).sort((x, y) => x.t - y.t), t0 = rc.chain && rc.chain.length && rc.chain[0].t != null ? rc.chain[0].t : rc.t;
+      let fx = ''; try { fx = rcNextOf(cat, rc); } catch (e) { fx = ''; }
+      const o = { k: /^(dps|shield|push)$/.test(cat) ? 'dmg' : cat === 'erasure' ? 'heal' : cat === 'reset' ? 'unclear' : 'mistake', t: t0, mech: cat === 'dead' ? 'Deaths from different mistakes' : String(rc.name || '').replace(/\s*\(.*$/, ''), id: rc.sp ? +rc.sp[0] || 0 : 0,
+        detail: rc.short || '', fix: fx, how: 'raid', rc, all: all0, pull: r.item.pull, size: r.players ? r.players.size : 20 };
+      return (r._why = o); } }
   const lc = (x) => String(x || '').toLowerCase(), nm = (x) => lc(String(x || '').split('-')[0]), all = r.deaths.filter((d) => d.t <= ct + 0.05).sort((a, b) => a.t - b.t), ms = r.mistakes.filter((m) => m.mechanic !== 'Death' && m.t <= ct + 0.05);
   const av = new Set(ms.filter((m) => m.avoidRule).map((m) => lc(m.mechanic)));
   { const pk = E.PACKS.find((p) => p.encounter === r.item.boss); for (const x of (pk && pk.rules) || []) if (x.type === 'avoidable' && x.name) av.add(lc(x.name)); }
