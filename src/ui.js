@@ -7022,19 +7022,27 @@ function pvReady() { if (S.page !== 'plan') return; const ros = document.querySe
     cols.push(col('Gear', n || '✓', n ? (bad ? 'bad' : 'warn') : 'ok', n ? 'to fix' : 'all set', F.rows.map((r) => '<button type="button" class="rs-r" data-grjump="' + esc(r.x.n) + '" title="Show on the roster"><i class="rs-dot ' + r.k + '"></i><b style="color:' + bfrCol(r.x) + '">' + esc(r.x.n) + '</b><em>' + esc(r.parts.join(' · ')) + '</em></button>').join('') +
       (F.fine ? '<div class="rs-ok">✓ <span class="rs-rd" title="' + esc(F.okL.map((x) => x.n).join(', ')) + '">' + F.fine + ' ready</span><span> · from Battle.net</span></div>' : '') +
       '<button type="button" class="lk rs-more" data-bfr="all" aria-expanded="' + !!BFR.all + '">' + (BFR.all ? 'Hide the details ▴' : 'All the details ▾') + '</button>')); }
-  if (kit) { const rows = [], fine = [], set = []; let miss = 0; const ppl = (() => { try { return pnPeople(pnGet()); } catch (e) { return []; } })();
+  if (kit) { const rows = [], fine = [], set = []; let miss = 0, kicks = null; const ppl = (() => { try { return pnPeople(pnGet()); } catch (e) { return []; } })();
     kit.querySelectorAll('.ndz-dag').forEach((d) => { const lab = ((d.querySelector('.ndz-dagn') || {}).textContent || '').trim(), em = ((d.querySelector('summary em') || {}).textContent || '').trim(); if (!lab) return;
-      if (/^kicks$/i.test(lab)) { const m = /(\d+)\s*\/\s*(\d+)/.exec(em); if (m && +m[1] < +m[2]) set.push([lab, m[1] + ' of ' + m[2] + ' have a kick']); return; }
+      if (/^kicks$/i.test(lab)) { /* (just how many of each (Flex, Nov 7: "it should just say how many of each we have"): healers have no kick, so it's never a gap) */
+        const cnt = (re) => { const h = [...d.querySelectorAll('.ndz-dkh')].find((x) => re.test(x.textContent)); const m = h && /(\d+)/.exec(h.textContent); return m ? +m[1] : 0; }; kicks = [cnt(/melee/i), cnt(/ranged/i)];
+        if (!d.classList.contains('pv-kc')) d.classList.add('pv-kc'); let c = d.querySelector(':scope > summary .pv-kcn'); const t = kicks[0] + ' melee · ' + kicks[1] + ' ranged';
+        if (!c) { c = document.createElement('span'); c.className = 'pv-kcn'; const s = d.querySelector(':scope > summary'); if (s) s.appendChild(c); } if (c && c.textContent !== t) c.textContent = t; return; }
       if (/talents/i.test(lab)) { if (/to set/i.test(em)) set.push([lab, em]); return; }
       const off0 = [...d.querySelectorAll('.ndz-bfi.off, .ndz-bfi.no')].map((b) => { const m = /<b>([^<]*)<\/b>/.exec(b.dataset.tt || ''); return m ? dec(m[1]) : ''; }).filter(Boolean);
-      if (!off0.length) { fine.push(lab); return; }
-      /* (only what someone on the roster could bring, but a key raid buff or debuff always (Flex, Nov 7: "should only pull from whats available on the current roster unless its a key raid buff")) */
-      const its = off0.map((nm) => [nm, pvWhoBrings(nm, ppl)]).filter((x) => x[1].show); if (!its.length) return;
-      const off = its.map((x) => x[0]), key = its.some((x) => x[1].key), who0 = [...new Set(its.flatMap((x) => x[1].who))], who = who0.length > 3 ? who0.slice(0, 3).concat(['+' + (who0.length - 3)]) : who0; miss += off.length;
-      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (key ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + (its.some((x) => x[1].ros) ? 'Could swap: ' : 'Brought by: ') + esc(who.join(' · ')) + '</span>' : '') + '</button>'); });
-    cols.push(col('Raid kit', miss || '✓', miss ? (rows.some((r) => r.includes('rs-dot bad')) ? 'bad' : 'warn') : 'ok', miss ? 'missing' : 'all covered', rows.join('') + (fine.length ? '<div class="rs-ok">✓ ' + esc(andL(fine)) + '<span> · all covered</span></div>' : '') +
+      /* (essentials only (Flex, Nov 7: "This should only include essentials, its impossible to have every single thing in a raid group"): every raid buff and debuff,
+         Bloodlust and a battle res; any other kind counts as covered when the group has at least one of it) */
+      const G0 = NDZ_BUFFS.find((g) => g[0] === lab), need = !!(G0 && G0[1] === 'need'), util = /^utility$/i.test(lab), none = !need && !util && !d.querySelector('.ndz-bfi.ok, .ndz-bfi.maybe');
+      const off1 = need ? off0 : util ? off0.filter((n) => /^(bloodlust|battle res)$/i.test(n)) : none ? off0 : [];
+      if (!off1.length) { fine.push(lab); return; }
+      /* (who on the roster could bring it; a key buff, debuff or a kind the group has none of shows even when nobody can) */
+      const its = off1.map((nm) => [nm, pvWhoBrings(nm, ppl)]).map((x) => (x[1].show || none || util ? x : null)).filter(Boolean); if (!its.length) return;
+      const off = its.map((x) => x[0]), key = need || util || its.some((x) => x[1].key), who0 = [...new Set(its.flatMap((x) => x[1].who))], who = who0.length > 3 ? who0.slice(0, 3).concat(['+' + (who0.length - 3)]) : who0; miss += none ? 1 : off.length;
+      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (key ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>' + (none ? 'none in the group' : 'no ' + esc(pvOr(off))) + '</em>' +(who.length ? '<span class="rs-fx">' + (its.some((x) => x[1].ros) ? 'Could swap: ' : 'Brought by: ') + esc(who.join(' · ')) + '</span>' : '') + '</button>'); });
+    cols.push(col('Raid kit', miss || '✓', miss ? (rows.some((r) => r.includes('rs-dot bad')) ? 'bad' : 'warn') : 'ok', miss ? 'missing' : 'all covered', rows.join('') + (fine.length ? '<div class="rs-ok" title="' + esc(andL(fine)) + '">✓ ' + (rows.length ? 'Everything else' : 'Every raid buff and debuff, Bloodlust, a battle res') + '<span> · ' + (rows.length ? 'covered' : 'and some of every kind') + '</span></div>' : '') +
+      (kicks ? '<div class="rs-info">Kicks: <b>' + kicks[0] + '</b> melee · <b>' + kicks[1] + '</b> ranged</div>' : '') +
       '<button type="button" class="lk rs-more" data-rskit="" aria-expanded="' + PV_KIT + '">' + (PV_KIT ? 'Hide the raid kit ▴' : 'The whole raid kit ▾') + '</button>'));
-    cols.push(col('To set', set.length || '✓', set.length ? 'warn' : 'ok', set.length ? 'before the pull' : 'all set', set.map(([l, t]) => '<button type="button" class="rs-r" data-rskit="' + esc(l) + '"><i class="rs-dot warn"></i><b>' + esc(l) + '</b><em>' + esc(t) + '</em></button>').join('') + (set.length ? '' : '<div class="rs-ok">✓ Kicks and healer talents<span> · all set</span></div>'))); }
+    cols.push(col('To set', set.length || '✓', set.length ? 'warn' : 'ok', set.length ? 'before the pull' : 'all set', set.map(([l, t]) => '<button type="button" class="rs-r" data-rskit="' + esc(l) + '"><i class="rs-dot warn"></i><b>' + esc(l) + '</b><em>' + esc(t) + '</em></button>').join('') + (set.length ? '' : '<div class="rs-ok">✓ Healer talents<span> · all set</span></div>'))); }
   let R = ros.querySelector(':scope > .rs-strip'); if (!cols.length) { if (R) R.remove(); return; }
   if (!R) { R = document.createElement('div'); R.className = 'rs-strip'; } if (R.previousElementSibling !== hd) hd.insertAdjacentElement('afterend', R);
   const html = cols.join(''); if (R.dataset.h !== html) { R.dataset.h = html; R.innerHTML = html; } if (R.style.getPropertyValue('--rs-n') !== String(cols.length)) R.style.setProperty('--rs-n', cols.length);
@@ -36028,7 +36036,7 @@ function dsGuides() {
       if (ros && det && det.parentElement === ros) { var z0 = ros.querySelector(':scope > .pg-zone'); if (z0 && det.nextElementSibling !== z0) ros.insertBefore(det, z0); }
       // the gaps
       var gaps = [], miss = [];
-      p.querySelectorAll(':scope > .ndz-dag').forEach(function (d) {
+      p.querySelectorAll(':scope > .ndz-dag').forEach(function (d) { if (d.classList.contains('bj-kickd')) return; /* (kicks are a count, not a gap: healers have none (Flex, Nov 7)) */
         var em = d.querySelector('summary em'), et = (em && em.textContent || '').trim(), m = /(\d+)\s*\/\s*(\d+)/.exec(et), full = !!(m && +m[1] >= +m[2]) || /^set$/i.test(et), name = (d.querySelector('.ndz-dagn') || {}).textContent || '';
         if (d.classList.contains('ds-full') !== full) d.classList.toggle('ds-full', full);
         if (d.classList.contains('st-bad')) { d.querySelectorAll('.ndz-bfi.no').forEach(function (b) { var t = /<b>([^<]*)<\/b>/.exec(b.getAttribute('data-tt') || ''); if (t) miss.push(t[1].replace(/&amp;/g, '&')); }); }

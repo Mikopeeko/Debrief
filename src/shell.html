@@ -12961,6 +12961,15 @@ html body #assignBox .panel.pg-roster:has(.gr-tiles) .gr-sum { display: none; }
 html body #assignBox [data-planv="night"] { display: none !important; } /* (the Who plays grid is gone (Nov 7): no links to it) */
 html body #assignBox #ndzTl .btl > span.btl-x { border-left: 1px dashed rgba(255,255,255,.75); z-index: 6; } /* (the hover line, top to bottom (Nov 7)) */
 html body #view.plan-page #assignBox .pg-rc { border-radius: 3px !important; } html body #view.plan-page #assignBox .panel.pg-roster > .pg-zone { border-radius: 4px !important; } /* (squarer name chips and boxes, the new look (Flex, Nov 7: "the corners on the name boxes is too round")) */
+/* (Kicks: just how many of each (Flex, Nov 7)) */
+html body #assignBox details.bj-kickd.pv-kc > :not(summary) { display: none !important; }
+html body #assignBox details.bj-kickd.pv-kc > summary { pointer-events: none; }
+html body #assignBox details.bj-kickd.pv-kc > summary em, html body #assignBox details.bj-kickd.pv-kc > summary .ndz-dagbar, html body #assignBox details.bj-kickd.pv-kc > summary .ndz-dagch { display: none !important; }
+html body #assignBox details.bj-kickd.pv-kc > summary .pv-kcn { margin-left: auto; color: #7ee08f; font: 700 11px/1.2 var(--body); white-space: nowrap; }
+html body #assignBox details.bj-kickd.pv-kc { grid-column: auto !important; }
+html body #assignBox .panel.pg-roster:has(> .rs-strip) > details.ds-buffs > summary.ds-bsumm { display: none !important; } /* (the strip is the summary; "4 of 7" read as a gap) */
+html body #assignBox .panel.pg-roster:has(> .rs-strip) > details.ds-buffs:not([open]) > .ndz-dpan { display: grid !important; }
+html body #assignBox .rs-info { margin-top: 4px; color: var(--muted); font-size: 14px; } html body #assignBox .rs-info b { color: var(--text); }
 /* (Add a cooldown's kind filter (Nov 7)) */
 html body #assignBox #ndzTl .btl-trh { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
 html body #assignBox #ndzTl .pv-trf { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line2); border-radius: 4px; overflow: hidden; }
