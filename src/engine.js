@@ -212,7 +212,7 @@ const PACKS = [
 // (Vashnik: spell IDs checked against real Mythic pulls, 2026-10; Malignant Burst and Malignance weren't in them, so they
 // match by name. The fight module covers the adds, totems, soaks, dispels and tank swaps.)
 { encounter: 'Vashnik the Malignant', sources: ['the encounter journal', 'raid strategy guides', 'real Mythic logs'], rules: [
-  { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'A living venom reached the Malignant Cavity. Kill or control every venom add before it gets to the middle. More than one usually wipes.' },
+  { type: 'raidFail', name: 'Malignant Burst', severity: 'High', tip: 'Kill or control every Living Venom before it reaches the Malignant Cavity; more than one reaching it usually wipes.' },
   { type: 'raidFail', spellIds: [1282616], name: 'Catalytic Bile', severity: 'Low', tip: 'A Catalytic Bile landed with nobody under it and hit the whole raid. Spread so every impact has someone within 6 yards.' },
   { type: 'avoidable', spellIds: [1295798], name: 'Plague Wave', severity: 'High', tip: 'Stay off the four lines (north, south, east and west) through every Plague Froth target as it ends.' },
   { type: 'avoidable', spellIds: [1286737], name: 'Umbral Ejection', severity: 'Medium', tip: 'Step out of the circles a Shrouded Venom leaves when it dies.' },
@@ -252,8 +252,8 @@ const PACKS = [
 // (Ula'tek: spell IDs checked against real Heroic and Mythic pulls, 2026-10; the fight module covers the rest)
 { encounter: "Ula'tek", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic and Mythic logs'], rules: [
   { type: 'avoidable', spellIds: [1292403], name: 'Caustic Waves', severity: 'Medium', tip: "Dodge the venom waves from Ula'tek and her tail. On Stage 1 she lifts a wing first to show the side." },
-  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'Medium', diedSeverity: 'High', tip: 'Nobody was in reach of the tail (Gore Rattle), so it slammed the raid. Keep a tank on the tail at all times.' },
-  { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'Medium', diedSeverity: 'High', tip: "Nobody was in melee of Ula'tek, so she hit the raid. Keep her tanked through swaps and when she resurfaces." },
+  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'Medium', diedSeverity: 'High', tip: 'Keep a tank on the tail (Gore Rattle) at all times, so Rattler Slam never hits the raid.' },
+  { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'Medium', diedSeverity: 'High', tip: "Keep a tank in Ula'tek's reach at all times, through swaps and when she resurfaces; if both tanks are away, a melee steps in." },
   { type: 'raidFail', spellIds: [1290991], name: 'Malice', severity: 'High', tip: "A Doomscale Warden's Malice went off on the raid. Interrupt it the moment it starts." },
   { type: 'interrupt', spellIds: [1290779], name: 'Malice', severity: 'High', tip: "Interrupt the Doomscale Warden's Malice." },
   { type: 'interrupt', spellIds: [1305650], name: 'Anguished Cry', severity: 'High', tip: "Interrupt the Weakened Doomscale's Anguished Cry." },
@@ -7781,6 +7781,8 @@ const rcCat = (ab) => { const a = String(ab || '').toLowerCase(); for (const [re
 const cellTxtRc = (c) => (c ? c.txt || '' : '');
 const rcAnd = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]);
 const rcOr = (a) => (a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' or ' + a[a.length - 1]);
+/* (Nov 8, audit W6: where feared players ran: the axes, orbs, the pools or the tank's Sever, the biggest first) */
+const RC_INTO = { axes: 'the axes', orbs: 'orbs', pools: 'the pools', frontal: 'the tank\'s Sever' }, rcIntoL = (l) => { const c = new Map(); for (const d of l) if (RC_INTO[d.cat]) c.set(d.cat, (c.get(d.cat) || 0) + 1); return [...c].sort((a, b) => b[1] - a[1]).map(([k]) => RC_INTO[k]); };
 /* (Nov 7, Flex: "we need to know who caused the wipe when possible": the players the log flags for the root cause's own mechanic, from 3 s before
    it to 1.5 s after; 4 or more is the raid, not one person, so no names; and never a guess) */
 function rcBy(r, mech, t) { /* (a person flagged for failing that mechanic then) */ if (!mech || t == null) return []; const lc = (s) => String(s || '').toLowerCase(), k = lc(mech), nm = (p) => String(p || '').split('-')[0];
@@ -7793,6 +7795,7 @@ function rcJobBy(r, cat, t) { if (t == null) return []; const lc = (s) => String
   const L = ((r && r.mistakes) || []).filter((m) => m.player && m.player !== 'Raid' && m.t >= t - 20 && m.t <= t + 3 && !/^Soaked /.test(m.detail || '') && (cat === 'kick' ? lc(m.mechanic) === 'kick assignment' : cat === 'guil' ? /guillotine assignment$/.test(lc(m.mechanic)) : false));
   return [...new Set(L.map((m) => nm(m.player)))]; }
 const RC_DODGE = 'Each player dodges it on their own, so no one person caused it.'; /* (Nov 8, audit W13) */
+const RC_RAID_PUSH = 'It came down to how the raid pushed (stacks and cooldowns), not one player.'; /* (Nov 8, audit W7) */
 const RC_RAID_DMG = 'It came down to the raid\'s damage, not one player.', RC_RAID_STK = 'It came down to the raid\'s stacks and cooldowns, not one player.';
 const rcNoBy = (short, by, why) => (by && by.length || !why ? short : String(short || '').replace(/\.?\s*$/, '.') + ' ' + why); /* (Nov 7: why no one is named, when it's known) */
 const rcWithBy = (short, by, one) => { const s = String(short || ''); return by && by.length && !by.every((n) => s.includes(n)) ? s.replace(/\.?\s*$/, '.') + ' ' + rcBySay(by, one) : s; };
@@ -7873,8 +7876,8 @@ function rootCause(r, opts) {
   const addsBomb = (t) => { const bm = bombMiss(t); if (!bm.length) return; bombBy = [...new Set(bm.map((x) => x.who))]; say(bm[0].t, 'adds', (bombBy.length === 1 ? bombBy[0] + '\'s Gloombomb missed the add' : 'Gloombombs from ' + rcAnd(bombBy) + ' missed the adds') + ' (' + T(bm[0].t) + ')' + SEP + (bombBy.length === 1 ? 'its shield held' : 'their shields held')); }; /* (wornK: on a pull worn down by Dreadmarch, which of its kinds the deaths were) */
   /* (Nov 6: Spirit Erasure deaths say the stacks the raid reached first, from the intermission's own row) */
   const eraseSay = (t) => { const se = (r.mistakes || []).filter((q) => /^spirit erasure$/i.test(q.mechanic) && q.t <= t + 1 && q.t >= t - 40).pop(); if (se) say(se.t, 'erasure', String(se.detail || '').replace(/\.\s*$/, '').replace(/^The raid/, 'the raid') + ' (' + T(se.t) + ')'); };
-  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools)$/.test(d.cat));
-    return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd([...new Set(ran.map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))]) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
+  const kickLine = (k, l) => { if (!l || !l.length) return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')'; const ran = l.filter((d) => /^(axes|orbs|pools|frontal)$/.test(d.cat));
+    return 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + (ran.length >= l.length / 2 ? l.length + ' feared into ' + rcAnd(rcIntoL(ran)) : l.length + ' died while feared (' + rcAnd([...new Set(l.map((d) => d.ab))].slice(0, 2)) + ')'); };
   const pushLine = () => 'the push into phase 2 wasn\'t ready' + (pushWhy.length ? ' (' + pushWhy.slice(0, 2).join(', ') + ')' : '') + SEP + 'Dreadful Presence killed';
   if (P.mc) { const k = ev.filter((e) => e.k === 'kick' && e.t <= P.t + 0.5 && e.t >= P.t - 12 && (cut == null || e.t <= cut + 0.5)).pop();
     if (k) { cat = 'kick'; sure = 0.75; say(k.t, 'kick', 'Wail of Terror wasn\'t kicked (' + T(k.t) + ')' + SEP + 'feared players lost sight of their ghosts'); }
@@ -7940,7 +7943,7 @@ function rootCause(r, opts) {
   const alsoL = [...also.values()].filter((a) => a.w >= 2).sort((a, b) => b.w - a.w).slice(0, 3);
   // (the WHY in one short sentence: no names or times, the timeline below has them)
   const phN = { P1: 'phase 1', P2: 'phase 2', Intermission: 'the intermission', P3: 'phase 3' }, phP = phaseAt(P.t), widow = chain.some((c) => /didn't run out/.test(c.txt)), dropT = (chain.find((c) => / dropped the (grim )?guillotine on the raid/i.test(c.txt)) || {}).txt, hasG = chain.some((c) => c.cat === 'guil');
-  const into = [...new Set(deaths.filter((d) => d.via && d.t <= P.t + 6 && /^(axes|orbs|pools)$/.test(d.cat)).map((d) => ({ axes: 'axes', orbs: 'orbs', pools: 'pools' })[d.cat]))];
+  const into = rcIntoL(deaths.filter((d) => d.via && d.t <= P.t + 6));
   const t0s = (chain.find((c) => c.cat === 'shield') || { t: P.t }).t;
   const tooFew = nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' to reach ' + nextOf(phP) + '.', wornS = wornK ? (wornK.has('mc') && wornK.has('ghosts') ? 'Dreadmarch\'s mind controls and ghosts killed too many' : wornK.has('mc') ? 'Dreadmarch\'s mind controls killed too many' : 'Ghosts touching killed too many') + tooFew : '';
   const short = ({ guil: dropT ? dropT.split(SEP)[0].replace(/^./, (x) => x.toUpperCase()) + (/didn't run out/.test(dropT) ? '.' : ', and its eruption caught everyone near it.') : widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
@@ -7952,9 +7955,9 @@ function rootCause(r, opts) {
     dps: 'Phase 2 ran long' + (deadAt(P.t).length >= 2 ? ' with ' + deadAt(P.t).length + ' players dead' : '') + (P.mc ? ', so Malacrass cast a Dreadmarch the raid couldn\'t handle.' : ', so the raid lead called the wipe.'),
     inter: 'A Fragment of Malacrass reached Zul\'jan in the intermission.', erasure: 'The raid\'s Spirit Erasure stacks ran too high in the intermission, with too few raid cooldowns.', adds: bombBy.length === 1 ? bombBy[0] + '\'s Gloombomb missed the add, so its shield held and Retaliatory Malice killed players.' : bombBy.length > 1 ? 'Gloombombs from ' + rcAnd(bombBy) + ' missed the adds, so their shields held and Retaliatory Malice killed players.' : 'Adds lived too long, and Retaliatory Malice killed players.',
     bombs: 'Soul fragments weren\'t picked up, or Gloombombs missed the adds.', axes: 'Players died in the axes.', pools: 'Players stood in the pools.', frontal: 'The tank frontal hit players.',
-    dead: (nextCat && mostL[0] ? 'Most were ' + mostL[0].nm + ' (' + mostL[0].n + ' of ' + pre.length + ' deaths), and too few were left' : 'Deaths from different mistakes added up, and too few were left') + (nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' for ' + nextOf(phP) + '.'), reset: 'The raid lead reset the pull.' })[cat] || '';
+    dead: (nextCat && mostL[0] && mostL[0].n >= 2 && mostL[0].n * 2 > pre.length ? 'Most were ' + mostL[0].nm + ' (' + mostL[0].n + ' of ' + pre.length + ' deaths), and too few were left' : nextCat && mostL[0] && pre.some((d) => d.role === 'tank' && fam(d) === nextCat) ? 'Deaths from different mistakes added up, including a tank death to ' + mostL[0].nm + ', and too few were left' : 'Deaths from different mistakes added up, and too few were left') /* (Nov 8, audit W3: a majority by count, or the tank death that weighed double, never "Most were X (1 of 3)") */ + (nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' for ' + nextOf(phP) + '.'), reset: 'The raid lead reset the pull.' })[cat] || '';
   const manyDodge = /^(axes|pools|frontal)$/.test(cat) && deaths.filter((d) => d.cat === cat && d.t <= P.t + 5).length >= 3; /* (Nov 8, audit W13: a dodge that killed 3 or more is no one person's) */
-  const hasCarry = secs.some((s) => s.id === 'orbs' && (s.carry || []).length), noBy = cat === 'orbs' && !orbBy.length && hasCarry ? 'No one was carrying it: it was a dropped orb on the ground.' : /^(shield|dps|push)$/.test(cat) ? RC_RAID_DMG : cat === 'erasure' ? RC_RAID_STK : manyDodge ? RC_DODGE : '';
+  const hasCarry = secs.some((s) => s.id === 'orbs' && (s.carry || []).length), noBy = cat === 'orbs' && !orbBy.length && hasCarry ? 'No one was carrying it: it was a dropped orb on the ground.' : /^(shield|dps)$/.test(cat) ? RC_RAID_DMG : cat === 'push' ? RC_RAID_PUSH : cat === 'erasure' ? RC_RAID_STK : manyDodge ? RC_DODGE : '';
   const t0c = chain.length ? chain[0].t : null, jobBy = /^(kick|guil)$/.test(cat) ? rcJobBy(r, cat, t0c) : []; /* (Nov 8, audit W2: the note's kick or soak miss names the owner) */
   const byL = cat === 'orbs' ? orbBy : cat === 'adds' ? bombBy : /^(dead|reset|dps|push|inter|erasure)$/.test(cat) || manyDodge ? [] : jobBy.length ? jobBy : rcBy(r, RC_CAT[cat] && RC_CAT[cat].sp ? RC_CAT[cat].sp[1] : '', t0c), byOne = (cat === 'orbs' && orbBy.length > 1) || (cat === 'kick' && byL.length > 1);
   const marks = cat === 'dead' ? pre.map((d) => ({ t: d.t, k: 'also' })) /* (individual mistakes: every death added up, no one person's row is the cause) */ : (chain.length ? [{ t: chain[0].t, k: 'root' }] : []).concat(...alsoL.map((a) => (a.ts || []).map((t) => ({ t, k: 'also' }))));
@@ -8014,8 +8017,8 @@ function rootCauseGen(r, opts) {
         const tkOf = (d) => { const p = [...((r.players && r.players.values()) || [])].find((q) => nm(q.name) === d.who); return !!(p && p.role === 'tank'); };
         const l = pre.slice().sort((a, b) => (tkOf(b) ? 1 : 0) - (tkOf(a) ? 1 : 0) || a.t - b.t), d0 = l.find((d) => !vague(d.ab));
         name = d0 ? d0.ab : 'Early deaths'; sp = d0 ? spOf(name) : null; next = d0 ? '' : 'Stay alive early: press a defensive before the big hits.';
-        say(pre[0].t, pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab + ' (' + T(d.t) + ')').join(', then ')); say(end, 'no kill of this boss had ' + (pre.length > 1 ? 'that many' : 'anyone') + ' dead this early');
-        short = pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab).join(', then ') + ' at ' + T(pre[pre.length - 1].t) + ', and no kill of this boss had ' + (pre.length > 1 ? 'that many' : 'anyone') + ' dead this early.'; sure = 0.6; }
+        say(pre[0].t, pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab + ' (' + T(d.t) + ')').join(', then ')); say(end, deaths.length > 1 ? deaths.length + ' dead by ' + T(end) + ', more than any kill of this boss had this early' : 'no kill of this boss had anyone dead this early'); /* (Nov 8, audit W8: every death at the call, as the header counts) */
+        short = pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + ' died to ' + d.ab).join(', then ') + ' at ' + T(pre[pre.length - 1].t) + (deaths.length > 1 ? ': ' + deaths.length + ' dead by ' + T(end) + ', more than any kill of this boss had this early.' : ', and no kill of this boss had anyone dead this early.'); sure = 0.6; }
       else { cat = 'reset'; name = 'Reset on purpose'; say(end, 'the raid lead called the wipe (' + T(end) + ') with ' + nd); short = 'The raid lead called the wipe with ' + nd + '.'; sure = 0.5; } }
     else if (pre.length) { cat = 'dead'; name = 'Too many individual mistakes'; say(pre[0].t, pre.length + ' died to separate mistakes from ' + T(pre[0].t) + ' (' + tally(pre).slice(0, 3).map(([a, k]) => k + ' to ' + a).join(', ') + ')'); short = 'Deaths from different mistakes added up, and too few were left to finish the boss.'; sure = 0.45; }
     else return null;
@@ -8030,6 +8033,10 @@ function rootCauseGen(r, opts) {
   const kickBy = causeM && cat === 'gen' && (causeM.kick || /kick|interrupt/i.test(causeM.mechanic || '')) ? rcJobBy(r, 'kick', causeM.t) : [];
   const dodgeNo = cat === 'gen' && !!causeM && dTo.length >= 3 && !isJob(causeM) && (!!causeM.avoidRule || (!!causeM.player && causeM.player !== 'Raid' && !theirs(causeM)));
   const byL = !causeM || cat !== 'gen' || dodgeNo ? [] : causeM.player && causeM.player !== 'Raid' ? (isJob(causeM) || theirs(causeM) ? [nmP(causeM.player)] : []) : kickBy.length ? kickBy : rcBy(r, causeM.mechanic, causeM.t), byOneG = byL.length > 1 && byL === kickBy, noByG = cat === 'dps' ? RC_RAID_DMG : dodgeNo ? RC_DODGE : '';
+  /* (Nov 8, audit W9: one player's own mistake as the root leads with their name, plainly: "Zorthar was hit by Caustic Waves twice and died to it.") */
+  const ownSay = (nm0, d0) => { let x = s1(d0).replace(/\s*\([^()]*\)/g, '').replace(/,? more than (?:9 in 10 raiders|the typical raider)[^,.]*/i, '').replace(/,\s+and died/, ' and died').replace(/\s+,/g, ',').trim(); x = x.charAt(0).toLowerCase() + x.slice(1); return nm0 + (/^(hit|caught|clipped|struck|knocked|pulled|feared|stunned|grabbed|targeted|marked|mind controlled)\b/i.test(x) ? ' was ' : ' ') + x + '.'; };
+  if (byL.length === 1 && causeM && causeM.player && causeM.player !== 'Raid' && nmP(causeM.player) === byL[0] && short === s1(causeM.detail) + '.') short = ownSay(byL[0], causeM.detail);
+  else if (causeM && causeM.player && causeM.player !== 'Raid' && !byL.length && short === s1(causeM.detail) + '.') short = dTo.length ? who3(dTo) + ' died to ' + name + '.' : name + ' hit the raid, and ' + who3(wave || deaths.filter((d) => d.t >= c0)) + ' died.'; /* (W13 named no one: one player's detail isn't the raid's sentence) */
   const alsoL = also.slice(0, 3), marks = (cat === 'dead' ? deaths.filter((d) => d.t >= c0).map((d) => ({ t: d.t, k: 'also' })) : (chain.length ? [{ t: chain[0].t, k: 'root' }] : [])).concat(cat === 'dead' ? [] : alsoL.filter((a) => a.t != null).map((a) => ({ t: a.t, k: 'also' })));
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
   return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short: rcNoBy(rcWithBy(short, byL, byOneG), byL, noByG), by: byL, byOne: byOneG, bySay: rcBySay(byL, byOneG), noBy: !byL.length ? noByG : '', marks, sp, orbBy: [], orbAt: null, chain,
