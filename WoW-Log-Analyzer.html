@@ -12981,12 +12981,13 @@ html body #assignBox .rs-ch { display: flex; align-items: baseline; gap: 8px; ma
 html body #assignBox .rs-ch > span { color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
 html body #assignBox .rs-ch > b { font: 700 24px/1 var(--head); } html body #assignBox .rs-ch > small { color: var(--faint); font-size: 13px; }
 html body #assignBox .rs-ch > b.bad { color: #e8604c; } html body #assignBox .rs-ch > b.warn { color: #f0b45a; } html body #assignBox .rs-ch > b.ok { color: #5fd07a; }
-html body #assignBox .rs-r { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; width: 100%; min-height: 0; padding: 5px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
+html body #assignBox .rs-r { display: grid; grid-template-columns: 8px max-content minmax(0, 1fr); align-items: baseline; gap: 2px 8px; width: 100%; min-height: 0; padding: 7px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
 html body #assignBox .rs-ch + .rs-r { border-top: 0; }
 html body #assignBox .rs-r:hover > b { text-decoration: underline; text-underline-offset: 3px; }
 html body #assignBox .rs-r > b { font-weight: 700; } html body #assignBox .rs-r > em { font-style: normal; color: var(--muted); }
-html body #assignBox .rs-r > .rs-fx { margin-left: auto; color: var(--faint); font-size: 13.5px; }
-html body #assignBox .rs-dot { flex: none; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
+html body #assignBox .rs-r > em { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #assignBox .rs-r > .rs-fx { grid-column: 2 / -1; color: var(--faint); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* (one pattern for every line: the tool and what's missing, then who could swap under it (Flex, Nov 7: "this looks so sloppy")) */
+html body #assignBox .rs-dot { flex: none; align-self: center; grid-row: 1; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
 html body #assignBox .rs-ok { margin-top: 6px; color: #5fd07a; font-size: 14px; } html body #assignBox .rs-ok > span:not(.rs-rd) { color: var(--muted); }
 html body #assignBox .rs-rd { border-bottom: 1px dotted currentColor; cursor: help; }
 html body #assignBox .rs-col > .rs-more { align-self: flex-start; margin-top: auto !important; min-height: 0 !important; padding: 8px 0 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--gold) !important; font: 600 13px var(--body) !important; cursor: pointer; }
@@ -32390,9 +32391,10 @@ const pvOr = (a) => (a.length < 2 ? a[0] || '' : a.slice(0, -1).join(', ') + ' o
 /* (a missing tool: who on the roster could bring it (the bench, or someone of that class in another spec); a key buff or debuff shows even when nobody can) */
 function pvWhoBrings(nm, ppl) { const lo = String(nm).toLowerCase(); for (const g of NDZ_BUFFS) for (const [n, cl, sp] of g[2]) if (n.toLowerCase() === lo) {
   const S2 = (E && E.SPECS) || {}, key = g[1] === 'need', hasSp = !!(sp && sp.length);
-  const who = (ppl || []).filter((p) => cl.includes(p.cls)).map((p) => { const fit = !hasSp || sp.includes(+p.sid), sn = !fit && S2[sp[0]] ? S2[sp[0]][0] : ''; return { t: p.n + (p.bench ? ' (bench)' : '') + (sn ? ' as ' + sn : ''), fit }; }).sort((a, b) => b.fit - a.fit).map((x) => x.t);
+  const SHORT = { Restoration: 'Resto', Discipline: 'Disc', Vengeance: 'Veng', Protection: 'Prot', Retribution: 'Ret', Elemental: 'Ele', Enhancement: 'Enh', Augmentation: 'Aug', Preservation: 'Pres', Devastation: 'Dev' };
+  const who = (ppl || []).filter((p) => cl.includes(p.cls)).map((p) => { const fit = !hasSp || sp.includes(+p.sid), sn = !fit && S2[sp[0]] ? S2[sp[0]][0] : ''; return { t: p.n + (p.bench ? ' (bench)' : '') + (sn ? ' (' + (SHORT[sn] || sn) + ')' : ''), fit }; }).sort((a, b) => b.fit - a.fit).map((x) => x.t);
   const gen = hasSp ? sp.map((id) => (S2[id] ? S2[id][0] + ' ' + ndzClsName(S2[id][1]) : '')).filter(Boolean) : cl.map(ndzClsName).filter(Boolean);
-  return { key, show: key || who.length > 0, who: who.length ? who : gen }; } return { key: false, show: false, who: [] }; }
+  return { key, show: key || who.length > 0, ros: who.length > 0, who: who.length ? who : gen }; } return { key: false, show: false, ros: false, who: [] }; }
 function pvReady() { if (S.page !== 'plan') return; const ros = document.querySelector('#view #pg-roster'), hd = ros && ros.querySelector(':scope > .ndz-dph'); if (!ros || !hd) return;
   const F = BFR.F || null, kit = ros.querySelector(':scope > details.ds-buffs'), dec = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&amp;/g, '&'), cols = [];
   const col = (lab, n, cls, sub, body) => '<div class="rs-col"><div class="rs-ch"><span>' + lab + '</span><b class="' + cls + '">' + n + '</b><small>' + sub + '</small></div>' + body + '</div>';
@@ -32408,8 +32410,8 @@ function pvReady() { if (S.page !== 'plan') return; const ros = document.querySe
       if (!off0.length) { fine.push(lab); return; }
       /* (only what someone on the roster could bring, but a key raid buff or debuff always (Flex, Nov 7: "should only pull from whats available on the current roster unless its a key raid buff")) */
       const its = off0.map((nm) => [nm, pvWhoBrings(nm, ppl)]).filter((x) => x[1].show); if (!its.length) return;
-      const off = its.map((x) => x[0]), key = its.some((x) => x[1].key), who0 = [...new Set(its.flatMap((x) => x[1].who))], who = who0.length > 3 ? who0.slice(0, 3).concat([(who0.length - 3) + ' more']) : who0; miss += off.length;
-      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (key ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + esc(pvOr(who)) + '</span>' : '') + '</button>'); });
+      const off = its.map((x) => x[0]), key = its.some((x) => x[1].key), who0 = [...new Set(its.flatMap((x) => x[1].who))], who = who0.length > 3 ? who0.slice(0, 3).concat(['+' + (who0.length - 3)]) : who0; miss += off.length;
+      rows.push('<button type="button" class="rs-r" data-rskit="' + esc(lab) + '"><i class="rs-dot ' + (key ? 'bad' : 'warn') + '"></i><b>' + esc(lab) + '</b><em>no ' + esc(pvOr(off)) + '</em>' + (who.length ? '<span class="rs-fx">' + (its.some((x) => x[1].ros) ? 'Could swap: ' : 'Brought by: ') + esc(who.join(' · ')) + '</span>' : '') + '</button>'); });
     cols.push(col('Raid kit', miss || '✓', miss ? (rows.some((r) => r.includes('rs-dot bad')) ? 'bad' : 'warn') : 'ok', miss ? 'missing' : 'all covered', rows.join('') + (fine.length ? '<div class="rs-ok">✓ ' + esc(andL(fine)) + '<span> · all covered</span></div>' : '') +
       '<button type="button" class="lk rs-more" data-rskit="" aria-expanded="' + PV_KIT + '">' + (PV_KIT ? 'Hide the raid kit ▴' : 'The whole raid kit ▾') + '</button>'));
     cols.push(col('To set', set.length || '✓', set.length ? 'warn' : 'ok', set.length ? 'before the pull' : 'all set', set.map(([l, t]) => '<button type="button" class="rs-r" data-rskit="' + esc(l) + '"><i class="rs-dot warn"></i><b>' + esc(l) + '</b><em>' + esc(t) + '</em></button>').join('') + (set.length ? '' : '<div class="rs-ok">✓ Kicks and healer talents<span> · all set</span></div>'))); }

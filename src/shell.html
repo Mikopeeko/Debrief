@@ -12981,12 +12981,13 @@ html body #assignBox .rs-ch { display: flex; align-items: baseline; gap: 8px; ma
 html body #assignBox .rs-ch > span { color: var(--faint); font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase; }
 html body #assignBox .rs-ch > b { font: 700 24px/1 var(--head); } html body #assignBox .rs-ch > small { color: var(--faint); font-size: 13px; }
 html body #assignBox .rs-ch > b.bad { color: #e8604c; } html body #assignBox .rs-ch > b.warn { color: #f0b45a; } html body #assignBox .rs-ch > b.ok { color: #5fd07a; }
-html body #assignBox .rs-r { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; width: 100%; min-height: 0; padding: 5px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
+html body #assignBox .rs-r { display: grid; grid-template-columns: 8px max-content minmax(0, 1fr); align-items: baseline; gap: 2px 8px; width: 100%; min-height: 0; padding: 7px 0; border: 0; border-top: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); font: 500 14.5px/1.35 var(--body); text-align: left; cursor: pointer; }
 html body #assignBox .rs-ch + .rs-r { border-top: 0; }
 html body #assignBox .rs-r:hover > b { text-decoration: underline; text-underline-offset: 3px; }
 html body #assignBox .rs-r > b { font-weight: 700; } html body #assignBox .rs-r > em { font-style: normal; color: var(--muted); }
-html body #assignBox .rs-r > .rs-fx { margin-left: auto; color: var(--faint); font-size: 13.5px; }
-html body #assignBox .rs-dot { flex: none; align-self: center; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
+html body #assignBox .rs-r > em { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #assignBox .rs-r > .rs-fx { grid-column: 2 / -1; color: var(--faint); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* (one pattern for every line: the tool and what's missing, then who could swap under it (Flex, Nov 7: "this looks so sloppy")) */
+html body #assignBox .rs-dot { flex: none; align-self: center; grid-row: 1; width: 8px; height: 8px; border-radius: 50%; background: #f0b45a; } html body #assignBox .rs-dot.bad { background: #e8604c; }
 html body #assignBox .rs-ok { margin-top: 6px; color: #5fd07a; font-size: 14px; } html body #assignBox .rs-ok > span:not(.rs-rd) { color: var(--muted); }
 html body #assignBox .rs-rd { border-bottom: 1px dotted currentColor; cursor: help; }
 html body #assignBox .rs-col > .rs-more { align-self: flex-start; margin-top: auto !important; min-height: 0 !important; padding: 8px 0 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; color: var(--gold) !important; font: 600 13px var(--body) !important; cursor: pointer; }
