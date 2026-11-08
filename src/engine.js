@@ -4353,7 +4353,8 @@ function buildCoiledAltar(ev, r, h) {
     // the target needs protection on every soak but the last Grim Guillotine (where the plan just over-sends)
     const needsProt = mythic && key !== 'gg3', tgtDied = tgt && s.died.includes(pname(tgt));
     /* (Coiled Altar fix 5, Oct 24: top guilds often give the target nothing and it lives; only a target who died unprotected is a mistake) */
-    if (needsProt && tgt && !tag(tgt) && tgtDied) MS(s.t, pname(tgt), s.n, 'High', 'Was the ' + S(s.n)[1] + ' target with no external or immunity and died.', 'The target gets an external (Blessing of Protection on the 2nd Guillotine, Spellwarding on Grim Guillotine 2).', map);
+    if (needsProt && tgt && !tag(tgt) && tgtDied) { const i0 = mistakes.findIndex((m) => m.player === pname(tgt) && m.mechanic === S(s.n)[1] && Math.abs(m.t - s.t) < 0.6 && /^Died in the /.test(m.detail || '')); if (i0 >= 0) mistakes.splice(i0, 1); /* (Nov 8, audit D5: one mistake per death: the target's row is this one) */
+      MS(s.t, pname(tgt), s.n, 'High', 'Was the ' + S(s.n)[1] + ' target with no external or immunity and died.', 'The target gets an external (Blessing of Protection on the 2nd Guillotine, Spellwarding on Grim Guillotine 2).', map); }
     // one row per drop: what the plan wanted, who was in the circle (and what they had up), target, corner, deaths
     // soakers as player chips with a short badge for what they had up (the plan per soak is in How it works)
     const kind = (g) => { const tg = tag(g); return tg ? [SHORT[tg.replace(/^(immune|external): /, '').split('/')[0]] || tg.replace(/^(immune|external): /, ''), /^immune/.test(tg) ? 'imm' : /^external/.test(tg) ? 'ext' : 'tank'] : personal(g, hit) ? ['Personal', 'pers'] : ['', '']; };
