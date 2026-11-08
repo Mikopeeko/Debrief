@@ -197,3 +197,8 @@ top players of their spec (DEF_TOP, built in). The Guilds like us switch doesn't
   - Top players have a defensive up on only about 1 in 5 of their own biggest hits.
   - So "press before X" can only be soft advice, except planned jobs in the NSRT note.
   - Source: notes/Guides/Defensives and healthstones - how to judge them.md.
+
+## Graphs: parse % on wipes (on hold, Nov 8)
+- Flex: "skip it for now". Warcraft Logs gives no parses for wipe pulls, so it would be an estimate from the spec's kill rankings
+  (about 4 ranking pages per spec, cached a day; needs /api/specrank to return the ranking count). Kills already show real parses.
+- Build it only if raiders ask for wipe parses.
