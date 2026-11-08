@@ -15703,11 +15703,12 @@ function coachSummary0(reps, name) {
             /* (a root cause: the missed kick or soak from the note, the orb carrier the log names, or the deaths to it up to the point of no return) */
             if (o.rc) { const rc = o.rc, t0 = ((rc.chain || []).find((c) => c.cat === rc.cat) || { t: rc.t }).t, isK = rc.cat === 'kick', isS = rc.cat === 'guil', isO = rc.cat === 'orbs';
               soak = soak || isS; kick = kick || isK; orb = orb || isO;
-              if (isK || isS) { for (const m of r.mistakes) { if (m.player === 'Raid' || m.t < t0 - 20 || m.t > t0 + 3 || /^Soaked /.test(m.detail || '')) continue; const mk = lc0(m.mechanic); if (isK ? mk === 'kick assignment' : /guillotine assignment$/.test(mk)) add(isK ? 'Missed the kick' : 'Missed their soak', r, m.player); } }
+              if (isK || isS) { ((E.rcJobBy && E.rcJobBy(r, rc.cat, t0)) || []).forEach((v) => add(isK ? 'Missed the kick' : 'Missed their soak', r, v)); } /* (Nov 8, audit W2: the one job-owner rule, shared with the card) */
               else if (isO) (rc.orbBy || []).forEach((v) => add('Carried the orb that burst', r, v)); /* (the root cause's own carriers: the one rule, E.orbBurstBy (Nov 5)) */
               else if (rc.cat === 'dead') { (rc.most || []).forEach((m) => { for (let i = 0; i < m.n; i++) add('What added up', r, m.nm); }); return; } /* (individual mistakes: what they were, never one name) */
               else if (/^(dps|push|shield|inter)$/.test(rc.cat)) return; /* (no one player is behind these: no names, and no "the log names no one") */
               else if (rc.cat === 'adds' && (rc.bombBy || []).length) rc.bombBy.forEach((v) => add('Their Gloombomb missed the add', r, v));
+              else if (rc.gen && (rc.by || []).length) rc.by.forEach((v) => add(/kick|interrupt/i.test(rc.name || '') ? 'Missed the kick' : 'Caused it', r, v)); /* (Nov 8, audit W13: the other bosses' named cause, the card's own) */
               else if (E.rcCat) { for (const d of r.deaths || []) if (d.t <= rc.t + 5 && E.rcCat(d.ability || d.killer) === rc.cat) add('Died to it', r, d.player); }
               if (cnt() === n0) unk++; return; }
             const isKick = !!o.kick || /\bkick|interrupt|got .+ off\b/i.test(o.detail || '') || /wail of terror|spiteful soulcoiler|eternal nightfall/.test(mo), isOrb = /coalesced venom|venom rupture/.test(mo), isSoak = /guillotine|soak/.test(mo) || /soak/i.test(o.detail || '');
