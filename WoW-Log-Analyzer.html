@@ -8321,6 +8321,32 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
 }
+/* plan laptop grid width (Plan review 4: the compact grid rules live in the theme layer, so this one does too) */
+@layer defaultTheme { @media (min-width: 641px) and (max-width: 1180px) { html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid table.nt-g { min-width: 0 !important; width: 100% !important; table-layout: fixed !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh { width: 100% !important; min-width: 0 !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh > b { white-space: normal !important; text-align: center !important; line-height: 1.05 !important; max-height: 2.2em; overflow: hidden !important; padding: 0 1px !important; } } }
+/* plan laptop widths (Plan review 3 + 4, Nov 8: at 964 px with the side menu open every tab shows, the bosses get their own row, and Who plays fits ten bosses) */
+@media (min-width: 641px) and (max-width: 1180px) {
+:root body #view.plan-page #assignBox > nav.pg-tabs.pg-tabs > .pg-tab.pg-tab { padding: 11px 9px 10px !important; gap: 5px !important; font-size: 14px !important; }
+:root body #view.plan-page #assignBox > nav.pg-tabs.pg-tabs > .pg-tab.pg-tab.pg-taball { font-size: 13px !important; }
+:root body #view.plan-page #assignBox > nav.pg-tabs.pg-tabs > .pg-tab.pg-tab .pg-tabn:not(.warn) { display: none !important; }
+:root body #view.plan-page #assignBox > nav.pg-tabs.pg-tabs > .pg-tab.pg-tab .pg-tabn.warn { font-size: 0 !important; width: 8px; height: 8px; padding: 0 !important; background: #f0b45a !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-bosses { order: 3; flex: 1 1 100% !important; overflow: visible !important; display: grid !important; grid-template-columns: repeat(auto-fit, minmax(52px, 1fr)); gap: 5px !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-bosses > .pg-boss { width: auto !important; min-width: 0 !important; height: 42px !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-bosses > .pg-boss > b { white-space: normal !important; font-size: 12px !important; line-height: 1.1 !important; padding: 2px 4px 3px !important; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-overflow: clip !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .ndz-dring { margin-left: auto; } html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .pg-bar.pg-bar > .pg-rdy { white-space: nowrap; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g :is(td.pl, th.pl) { width: 132px !important; min-width: 0 !important; position: sticky; left: 0; z-index: 3; background: var(--panel) !important; overflow: hidden; text-overflow: ellipsis; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g thead th.pl { z-index: 4; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g tr.grp td { position: sticky; left: 0; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g :is(th, td):not(.pl):not(:last-child) { width: auto !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g th:last-child, html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g td:last-child { width: 34px !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh { width: 100% !important; min-width: 0 !important; max-width: 84px; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g :is(th, td).c, html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-g thead th:not(.pl):not(.nt-sits) { min-width: 0 !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh img { height: 24px !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh > b { font-size: 12px !important; line-height: 1.1 !important; white-space: normal !important; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding: 0 2px; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-bh .nt-st { font-size: 12px !important; }
+html body #view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid.pv-grid .nt-pl .nm { max-width: 92px; }
+}
 /* the chart while dragging */
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c[data-cdk] { cursor: grab; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .ndz-dtl .btl-c.drag { opacity: .5; }
@@ -33065,7 +33091,7 @@ function pvWrap(h, pb, got) {
     cds: C ? [C[2], C[1] ? 'ok' : 'warn'] : ['no plan yet', ''], jobs: J ? [J[2], J[1] ? 'ok' : 'warn'] : ['no plan yet', ''], plans: [L.length + ' saved', ''], mine: ((n) => [n ? String(n) : 'none yet', ''])(pvMnGet(pb).length), all: null };
   const cur = pvGet(pb);
   const nav = '<nav class="pg-tabs" role="tablist" aria-label="Plan sections" data-cur="' + cur + '" data-pvboss="' + esc(pb) + '">' + PV_TABS.map(([k, l]) => { const b = badge[k];
-    return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '">' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
+    return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '"' + (b ? ' title="' + esc(l + ': ' + b[0]) + '"' : '') + '>' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
   /* (the tab bar goes under the boss header) */
   const hi = h.indexOf('</header>', h.indexOf('<header class="fight bh plan-bh')); if (hi < 0) { const i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i))); return h.slice(0, i0) + nav + h.slice(i0); }
   return h.slice(0, hi + 9) + nav + h.slice(hi + 9); }

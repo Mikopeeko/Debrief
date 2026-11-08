@@ -7321,7 +7321,7 @@ function pvWrap(h, pb, got) {
     cds: C ? [C[2], C[1] ? 'ok' : 'warn'] : ['no plan yet', ''], jobs: J ? [J[2], J[1] ? 'ok' : 'warn'] : ['no plan yet', ''], plans: [L.length + ' saved', ''], mine: ((n) => [n ? String(n) : 'none yet', ''])(pvMnGet(pb).length), all: null };
   const cur = pvGet(pb);
   const nav = '<nav class="pg-tabs" role="tablist" aria-label="Plan sections" data-cur="' + cur + '" data-pvboss="' + esc(pb) + '">' + PV_TABS.map(([k, l]) => { const b = badge[k];
-    return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '">' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
+    return '<button type="button" role="tab" class="pg-tab' + (k === 'all' ? ' pg-taball' : '') + '" data-pgpv="' + k + '" aria-selected="' + (k === cur) + '"' + (b ? ' title="' + esc(l + ': ' + b[0]) + '"' : '') + '>' + esc(l) + (b ? '<span class="pg-tabn' + (b[1] ? ' ' + b[1] : '') + '">' + esc(b[0]) + '</span>' : '') + '</button>'; }).join('') + '</nav>';
   /* (the tab bar goes under the boss header) */
   const hi = h.indexOf('</header>', h.indexOf('<header class="fight bh plan-bh')); if (hi < 0) { const i0 = Math.min(...got.map((id) => h.indexOf('id="' + id + '"')).map((i) => h.lastIndexOf('<', i))); return h.slice(0, i0) + nav + h.slice(i0); }
   return h.slice(0, hi + 9) + nav + h.slice(hi + 9); }
