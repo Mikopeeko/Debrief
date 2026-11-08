@@ -11699,10 +11699,12 @@ function wipeAt(r) {
   const L = wipeLine(r); if (!L) return undefined;
   const n = raidSizeOf(r) || 20, ev = r.deaths.map((d) => [d.t, 1, d.guid, d]).concat((r.rezzes || []).map((z) => [z.t, -1, z.guid, null])).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const dead = new Set(), boss = (t) => { const s = r.bossS || []; return s.length ? s[Math.max(0, Math.min(s.length - 1, Math.floor(t)))] : null; }, near = (t) => { const b = boss(t); if (b == null || b > 10) return false; const re = WIPE_LAST[r.item.boss]; if (!re) return true; const ph = ((r.module && !r.module.error && r.module.phases) || []).find((p) => t >= p.start && t <= p.end); return !!(ph && re.test(ph.name)); }, wt = wipeWeights(r), wsum = () => { let x = 0; for (const g of dead) x += wt(g); return x; }, cover = (c) => [...dead].map(wt).sort((a, b) => b - a).slice(0, c).reduce((a, b) => a + b, 0); /* (Nov 6, Main: Twin Fangs pull 14 was called at 0:01 when a tank died with a battle rez up (and was rezzed 2 s later): a rez brings back the heaviest of the dead, a tank's 2) */
+  /* (Nov 8, the kill-line tightening (W1's leftover, Main): a moment the raid recovered from is no call: a battle rez within 15 s of it, or no further death for the next 60 s of a pull that went on) */
+  const dur0 = r.duration || 0, recovered = (t) => { const nd2 = ev.find(([t2, s2]) => s2 > 0 && t2 > t + 0.5); const clean = (!nd2 || nd2[0] > t + 60) && dur0 > t + 60; const rez = (r.rezzes || []).some((z) => z.t > t && z.t <= t + 15); return clean || rez; };
   let used = 0, call = null;
   for (const [t, s, g, d] of ev) { if (s < 0) { if (dead.delete(g)) used++; continue; } dead.add(g);
     const nd = dead.size, w = wsum(), charges = wipeCharges(t, n, used), lim = wipeLim(L, t), b = boss(t);
-    if ((w - cover(charges)) * 20 / n > lim && !near(t)) { call = { t, why: 'line', d, nd, tk: [...dead].filter((x) => wt(x) > 1).length, ch: charges, max: Math.floor((lim - (L.m ?? 0)) * n / 20 + 1e-9) }; break; }
+    if ((w - cover(charges)) * 20 / n > lim && !near(t)) { if (recovered(t)) continue; call = { t, why: 'line', d, nd, tk: [...dead].filter((x) => wt(x) > 1).length, ch: charges, max: Math.floor((lim - (L.m ?? 0)) * n / 20 + 1e-9) }; break; }
     if (nd >= Math.ceil(n / 2)) { call = { t, why: 'half', d }; break; } }
   // (the damage check: "took 3:33 (… never past 2:56)" at its end → went late at end − 3:33 + 2:56)
   const mss = (x) => { const m = /(\d+):(\d\d)/.exec(x || ''); return m ? 60 * +m[1] + +m[2] : null; };
