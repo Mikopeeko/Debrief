@@ -110,3 +110,89 @@ How the site decides a wipe today (so the fixes land in the right place):
 3. W2 + W13 (who caused it: name the job owner, never a dodger) — Flex's "who caused the wipe" ask.
 4. W5 (feared players forgiven everywhere) and W4 (root row always Serious).
 5. The wording set: W3, W6, W7, W8, W9, W10, W15; and W14, W12.
+
+## 2. Deaths
+
+How the site judges a death today: `engine.js explainDeaths()` (~7563) reads each death's last 15 s (recap, `d.ability` = the LAST damaging hit, `d.big` = the biggest hit of the last 4 s when it is 1.5× the last, `d.links` = their own mistakes in the 10 s before and Raid mistakes within 4 s, `d.ownAvoid`, `d.fast`, `d.mass`), `survivability()` (~7395) what was ready (`d.available`, `d.reactable`), `deathSaves()` whether it would have saved them, `deathHealGaps()` the healing gaps. `ui.js deathVerdict()` (~29764) is the one verdict (wipe / end / mass / shared / forced / own / fast / raid / noheal / heal / ready / nosave / nothing), `deathFix()` the coaching line, `deathTag()` (~13084) the Debriefing line, `deathCount()` / `deathsOf()` / `deadAtCall()` the numbers, `survivalOf0()` (~29870) the Report card's Staying alive grade, `rcnPlayer()` (~30600) the player page, `gbDeathOk()` (~18633) Graphs.
+Sweep: every death on Thursday Nov 5 `2r1KzqygWAFHkZT3` (22 pulls, 429 deaths, 232 before the call), the 10-boss log `xH3JNdbQ74wBDPAv` (30 pulls, 422 deaths, 119 before the call) and Twin Fangs `9DRWhKnZbHtQgf4a` (8 pulls, 144 deaths, 84 before the call), run through the real engine and the real `deathVerdict` in node (the recipe in memory `deaths-audit-recipe`; the script is `audit2.js` in the shared notes folder, deaths-audit/). Verdicts before the call: Thursday mass 153, forced 34, own 26, shared 6, fast 5, ready 4, raid 2, heal 1, nothing 1; 10 bosses own 40, mass 39, fast 27, raid 5, shared 2, forced 2, nothing 2, ready 1, nosave 1; Twin Fangs mass 53, own 15, fast 12, ready 2, heal 1, nosave 1.
+
+### D1. A death someone else forced reads "Not on them: After the pull was lost" on Debriefing (S, analysis chat)
+- What's wrong: `deathTag()` has no line for the `forced` verdict (feared by an unkicked Wail, a short Guillotine soak, someone else's Gloombomb, orbs someone else set off, an axe dropped on the raid), so it falls through to the last branch, "After the pull was lost." The verdict itself is right ("not them"); the sentence is wrong. 34 of Thursday's 232 counted deaths are `forced`.
+- Where: Thursday pull 12 at 4:57 (Schooty, Hobbz: feared into Gloombomb), pull 20 at 0:54 (6 players: "Turkhan dropped the Guillotine on the raid"), pull 24 at 7:00-7:06 (6 players: orbs someone else set off).
+- Rule now: `deathTag` h → the final else. → Rule it should be: `forced` gets its own line, the verdict's own words with a capital: "Feared by an unkicked Wail of Terror: the missed kick, not them." Same gap in `rcnPlayer`'s `dTag` fallback, which prints the word plus ": not on you" → "…the missed kick, not them: not on you" (say it once). `deathFix` returns '' for `forced`; give it the raid's fix ("Kick every Wail of Terror", "Send 5 to every Guillotine").
+- File: `ui.js deathTag()`, `rcnPlayer()` dTag, `deathFix()`.
+
+### D2. The verdict judges the last tick, not the hit that killed them (M, analysis chat)
+- What's wrong: `d.ability` is the last damaging event before UNIT_DIED. When a 500k-900k hit lands and a 20k tick follows a moment later, every rule (own / forced / mass grouping / "Killed by" / the fix) reads the tick. The engine already finds the real hit (`d.big`) but only the Deaths panel uses it.
+- Where: Thursday pull 32 at 7:04 Komo: Venom Rupture 527k 0.1 s before, read as "Mutagenic Venom: their own mistake · Stay out of Mutagenic Venom: it's dodgeable". Pull 13 at 2:13 Dashtoswirly: Execution 754k (the short Guillotine soak), read as "killed by orbs someone else set off (Venom Rupture)". Pull 23 at 7:29 Schooty: Venom Rupture 809k 1.4 s before, read as Gravebound "picked up the last soul fragment". Pull 24 at 7:02 Shockabunga: Venom Rupture 827k, read as Coalesced Venom. 10-boss log Coiled Altar fight 14 at 2:13 Blueprínt: Guillotine 909k, read as Venom Rupture. Twin Fangs pull 29 at 1:16 Flëxørçïst: Caustic Deluge 753k, read as "Caustic Globule: their own mistake". Pull 34 at 5:38 Ashdknight / Ironvan: Stone Breaker 590k / 552k, read as Deadly Venom / Toxic Fumes.
+- Rule it should be: the killing hit is `d.big` when it exists (the biggest hit of the last 4 s, 1.5× the last tick), else the last hit. `ab`, `ownSame`, `mass` grouping (`abOf`), `forced`, `deathOwn`'s avoidable check, "Killed by", `coachDeaths`' and `deathNightItems`' grouping all use it. Keep Flex's Gravebound rule (Nov 1) only when the Gravebound hit itself is the big one.
+- File: `engine.js explainDeaths()` (`d.big`, the mass loop's `abOf`), `ui.js deathVerdict()`, `deathOwn()`, `deathTag()`, `coachDeaths()`.
+
+### D3. Any mistake of theirs in the 10 s before makes a death "their own", related or not (M, analysis chat)
+- What's wrong: `d.links` keeps every own mistake from the last 10 s and `deathVerdict` says `own` when `ownM.length > 0`; `deathOwn` also takes any mistake within 1.5 s. A "Reached 7 stacks" note or a Low "Hit by Volatile Venom 3 times" then owns a death to something else, and the fix talks about the note, not the death.
+- Where: Twin Fangs pull 29 at 4:18 Tyralien (tank): killed by Stone Breaker (69% of his damage), read as "right after a mistake on Eternal Venom · Dodge mechanics to avoid extra venom stacks". Pull 14 at 5:37 Badbunny: Melee death, link "Eternal Venom reached 7 stacks" → own. Pull 9 at 2:56 Earthday: killed by an unsoaked Caustic Globule (a Raid mistake), own because of "Reached 7 stacks" at the same second. Thursday pull 26 at 1:39 Dragooned: Axegrinder death, fix "Give green orb carriers 5 yards of room" (the Low Volatile Venom link 4 s earlier).
+- Rule it should be (the checklist's step 5 already says "about the hit that killed them"): an own link counts only when its mechanic is the killing hit, or a known chain to it (Soul Sever → Gravebound, ghost touch → Malevolent Resonance, Caustic Waves → a hatched Viper, a soak they stood in, Extinguish without a mote, Suffocating Darkness → Suffocation). Stack-count and "more than 9 in 10 raiders" notes never own a death. `deathOwn`'s "any mistake within 1.5 s" fallback goes the same way.
+- File: `engine.js explainDeaths()` (`mine`, `d.links`), `ui.js deathVerdict()` (`ownM`), `deathOwn()`.
+
+### D4. A raid-wide failure that IS the killing hit still reads "their own mistake" or "too fast, nothing to fix" (M, analysis chat)
+- What's wrong: the avoidable list is checked before the Raid mistake. An unsoaked Caustic Globule exploding on 19 players (a Raid High mistake) kills two → "their own mistake", because Caustic Globule is on the avoidable list. Stone Breaker is a tank mechanic (the guide: the tank stands in each slam; missed = raid damage), so 17 raiders hit read "Too fast to react: nothing to fix on your side" while the tank's "Missed Stone Breaker circle 1: it hit 17 players" is logged separately.
+- Where: Twin Fangs pull 9 at 2:56 Volkovod and Earthday (own), pull 16 at 4:03 Hobbz and Dragooned ("Stone Breaker was too fast to react to"), pull 14 at 5:37 (6 Stone Breaker deaths, tank Ironvan's missed slam). Thursday pull 32 at 7:04 Komo (the orb collapse, D2).
+- Rule it should be: when a Raid mistake (or another player's High mistake) names the killing hit within 4 s before, the death is `raid` / `forced` with that player's name, before the avoidable list and before `fast`: "Not on you: nobody soaked the Caustic Globule." / "Not on you: Ironvan missed Stone Breaker slam 1." One shared "who missed this job" lookup with W2 / W13.
+- File: `ui.js deathVerdict()` (the order of `forced` / `own` / `raid`), `engine.js` Twin Fangs module (Stone Breaker: the tank's miss as the raid's cause).
+
+### D5. The Guillotine target who dies with no external is "their own mistake" twice (S, analysis chat)
+- What's wrong: the target of a full 5-soak gets two High mistakes at once ("Died in the Guillotine soak." and "Was the Guillotine target with no external or immunity and died."), and the death is `own` in full with the fix "Soakers need a personal defensive or an immunity, and the target needs an external." The guide says the target gets BoP / Spellwarding / an immunity plan (the raid's job); the soakers' defensive is theirs.
+- Where: Thursday pull 11 at 2:13 Komo, pull 21 at 2:13 Dashtoswirly, pull 29 at 7:32 Larryg (all a first Guillotine, dead in 0.5 s to a 64-98% hit).
+- Rule it should be: one mistake per death. A target with no external: `shared` (half: they could immune or press a defensive) and the external's owner named from the note when there is one; a soaker who dies in a full soak with a defensive ready: `own`, fix "Press a defensive for the soak"; with nothing ready: `nothing`.
+- File: `engine.js` Coiled Altar soaks (~3867-3872), `ui.js deathVerdict()`.
+
+### D6. The tank who takes the second frontal is blamed; the guide says the other tank taunts (M, analysis chat)
+- What's wrong: a tank dying on stack 2-3 of Sever / Soul Sever / Blighted Sever reads "their own mistake · On the second stack, use a big defensive and get an external, or swap." The Coiled Altar guide: "the off-tank taunts just before the frontal" and "2 stacks survivable only with 2 externals". The same pattern on every boss: Twin Fangs "Took a second Ravage with the first one's debuff still up", Kith'ix "Took Dark Devastation with Devastated still on", Twin Fangs "Took a second Dripping Fangs", Nymrissa's Water Jet are all logged on the tank who took the hit, never on the tank who didn't taunt.
+- Where: Thursday pull 29 at 8:22 Vandagos (Blighted Sever stack 3, 44% → dead in 0.4 s, no defensive left: own), pull 18 at 6:43 Tyralien (stack 2, Divine Shield and Lay on Hands ready: own is fair there).
+- Rule it should be: a second-stack frontal names the tank who should have taunted (the other tank, alive, without the debuff) as the mistake; the tank who died is `shared` when a defensive or external was ready and `raid` (the swap's) when not. Deaths and the Mechanics rows use the same rule (see area 3).
+- File: `engine.js` tank-swap checks (Coiled Altar `tankfront`, Twin Fangs Ravage ~1858, Kith'ix ~2438, Dripping Fangs ~2985, Nymrissa ~2260), `ui.js deathVerdict()`.
+
+### D7. Three death counts for the same pull (M, analysis chat)
+- What's wrong: the Debriefing Deaths tile shows every death up to the call (`deadAtCall`, ≤ call + 0.5 s), the Report card banner shows `deathCount().n` (counted deaths minus mass deaths), Graphs shows `v.counts && v.on` (on the player, halves included), the Report card's execution score counts `own` and `ready` only, the player page's "N on them" counts halves, and the coach's night line counts `kept.length` (mass included). `deathVerdict` cuts at call + 0.05 s while `deadAtCall` cuts at + 0.5 s.
+- Where: Thursday pull 23: tile 19, Report card 6 (with "13 in mass wipes"), Graphs 3. Over the night: coach "232 deaths before the wipe filter", Report card 79.
+- Rule it should be: one count set, written once (`deathCount`) and read everywhere: dead at the call (the big number), on the player (the second number: `own` + `ready` whole, halves as "½"), mass deaths and after-the-call as the small print. One cut: call + 0.5 s (the brief's rule) in `deathVerdict`, `keptDeaths`, `keptMistakes` and `deadAtCall`.
+- File: `ui.js deathsTile()`, `deathCount()`, `coachDeaths()`, `gbDeathOk()`, the Report card (~17586, ~17615), `rcnPlayer()`.
+
+### D8. Sixteen defensives have no "would it have saved them" model, so they never count as ready (M, analysis chat)
+- What's wrong: `deathSaves` marks a defensive `unknown` (never ok) when it is in neither `SAVE_HEAL` nor `PERS_DR`: Renewing Blaze, Alter Time, Greater Invisibility, Mirror Image, Touch of Karma, Evasion, Vampiric Blood, Dancing Rune Weapon, Last Stand, Eye of Tyr, Shield of Vengeance, Fortitude of the Bear, Lichborne, Fiery Brand, Metamorphosis (Vengeance), Fireblood. A player who sat low with one of those ready reads "nothing they had would have saved them" or "nothing left to press" (half) instead of `ready`. Evokers' only self-heal and Windwalkers' main defensive are among them.
+- Where: Thursday pull 16 at 5:13 Phartsy (Touch of Karma "no?"; `ready` only because of the Healthstone), pull 16 at 5:09 and pull 12 at 5:00 Dragooned (Alter Time "no?"), Twin Fangs pull 16 at 4:08 Badbunny (Evasion "no?").
+- Rule it should be: every `DEFENSIVES` entry has a save model from the spell's own data (the helper looks each up the way PERS_DR was built: a heal share, a damage share, an absorb, or an immunity; Evasion counts against melee only); `unknown` goes away, so no button is quietly dropped.
+- File: `engine.js SAVE_HEAL / PERS_DR / deathSaves()`.
+
+### D9. "Ready" names one button, the fix another (S, analysis chat)
+- What's wrong: the verdict word lists defensives first ("Crimson Vial and Cloak of Shadows still ready"), `deathFix` takes the Healthstone first ("Use your Healthstone when you drop under half…").
+- Where: Twin Fangs pull 16 at 4:08 Badbunny; Thursday pull 16 at 5:13 Phartsy.
+- Rule it should be: one order, the cheapest save that works first (the engine's heals-first sort, `svH`), used by the word, the Debriefing line and the fix.
+- File: `ui.js deathVerdict()` (`items`), `deathFix()`.
+
+### D10. A death to the pull's wipe mechanic is half on the player (S, analysis chat)
+- What's wrong: Eternal Nightfall (the unbroken shield, the pull's root cause and wipe call) killed two before the call; both read "the raid's mistake (Phase changes), but Ice Block / Crimson Vial was ready" (shared, half).
+- Where: Thursday pull 31 at 5:23 Dragooned and Zaffia.
+- Rule it should be: a death to the mechanic `wipeMech()` / `rootCause` names is `raid` (weight 0): Why we wiped already blames the raid for it.
+- File: `ui.js deathVerdict()` (the `raid` branch), `wipeMech()`.
+
+### D11. Odd killers: "Killed by Time Dilation", "by " and a melee one-shot at 0:01 that "nothing would have saved" (S, analysis chat)
+- What's wrong: Time Dilation (an Evoker external) logs the damage it held back as its own, so a tank reads "Killed by Time Dilation". A death with no hit in the recap reads "by " (empty). A 105% melee hit at 0:01 with no health history reads `nosave` instead of `fast`.
+- Where: Thursday pull 16 at 5:15 Vandagos (Time Dilation); 10-boss log Sszorak fight 51 at 0:01 Jordodk (empty); Twin Fangs pull 12 at 0:01 Kargaryen (nosave).
+- Rule it should be: Time Dilation damage is read as the hit it held back ("Soul Sever, held back by Time Dilation"); no hit logged → "died with no hit logged" and no verdict word; a hit of 100%+ with no health history is `fast`.
+- File: `engine.js explainDeaths()` (`d.ability`, `d.fast`), `ui.js deathVerdict()`.
+
+### D12. The Deaths checklist (the gospel) no longer matches the code (S, docs, analysis chat)
+- What's wrong: `notes/Guides/Deaths - checklists.md` step 1 still has "their own avoidable death after the wipe filter still counts while fewer than a quarter are dead" (removed Nov 5, `late = false`), and step 5 says "a tiny dodgeable tick at the end is not enough" while the Oct 31 rule makes any avoidable killing blow their own (`deathOwn`, "round 425"). The `forced`, `noheal` and `nosave` verdicts aren't in section B's table.
+- Rule it should be: the checklist is updated with the decided rules (and with D2-D4 once built), so the next audit has one truth.
+- File: `notes/Guides/Deaths - checklists.md`.
+
+### D13. For the record (no fix)
+- 995 deaths over 60 pulls and 10 bosses: no errors, no "undefined". Mass deaths (3+ in 1.5 s to the same hit) read as one raid event everywhere, with the cause ("because a purple orb exploded into other orbs"). Mind-controlled deaths read "shared with the CC team", and the guide confirms the cancel macro is the player's part. Healthstone and potion are "ready" only after 2+ s at or under 35%; Dreadful Presence slides are flagged with the stone ready (pull 16 at 5:13); a 10 s slide with Lay on Hands ready is a healing gap "with Lay on Hands ready" (pull 24 at 5:21). Kills: the last 20 s don't count (Kith'ix kill fight 31: 8 Nullify deaths at 4:17-4:32, info only); earlier kill deaths are judged like a wipe's. Caustic Waves, Noxious Ground, Toxic Deluge, Twisted Appendage, Whirlpool and Extinguish-without-a-mote deaths read as their own with the right fix.
+
+### Order to fix (my call)
+1. D2 + D3 + D4 together (what killed them, which mistake counts, the raid's failure first): they change most verdicts and must land as one rule.
+2. D1 (the wrong sentence on 34 deaths a night) and D7 (one death count).
+3. D6 (the taunting tank) with area 3's tank-swap rows.
+4. D8 (save models for every button), D5, D10.
+5. The wording set: D9, D11; then D12 (the checklist).
