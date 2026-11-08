@@ -15115,6 +15115,10 @@ window.__ahGroup = function (w) { try {
   /* the reading-pulls bubble clears the menu; an empty numbers strip is hidden */
   :root body.snv-on.snv-on > #bgRead.bgread { left: calc(var(--sn-w) + 14px) !important; }
   :root body.snv-on.snv-on #view .dbt-nums:not(:has(> :not(i:empty))) { display: none !important; }
+  /* the Night picker: one box with its label inside (no second box around the menu) */
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel select.snv-night { height: 30px !important; min-height: 0 !important; border: 0 !important; border-radius: 0 !important; background-color: transparent !important; box-shadow: none !important; outline-offset: 2px; padding: 0 28px 0 8px !important; margin: 0 !important; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel:hover { border-color: var(--line2, var(--line)) !important; }
+  :root body.snv-on.snv-on #main > .r300-tb .snv-sel:focus-within { border-color: var(--gold) !important; }
 }
 @media (max-width: 899px) { #sideNav, #snThin { display: none !important; } }
 body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
