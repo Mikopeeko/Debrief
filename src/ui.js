@@ -8581,7 +8581,7 @@ function openJoin() {
   const A = { pick: new Set(jnFound().map((t) => t.id)), busy: false, err: '', done: null };
   const draw = () => { const F = jnFound(), G = jnGuild();
     let h = '', b = '';
-    if (A.done) { h = 'You\'re on ' + esc(jnAnd(A.done)); b = '<div class="su-done"><i class="su-ok" aria-hidden="true">✓</i><p class="su-p">' + (A.done.length > 1 ? 'Their plans' : 'Its plan') + ', your jobs and the raid note are on Plan. Nothing else to set up.</p><div class="su-f"><button class="su-lk" type="button" data-jn="close">Close</button><button class="btn primary" type="button" data-jn="plan">Open Plan ›</button></div></div>'; }
+    if (A.done) { h = 'You\'re on ' + esc(jnAnd(A.done)); b = '<div class="su-done"><i class="su-ok" aria-hidden="true">✓</i><p class="su-p">' + (A.done.length > 1 ? 'Their plans' : 'Its plan') + ', your jobs and the raid note are on Plan.' + (A.ros && A.ros.length ? ' You\'re on the roster as ' + esc(jnAnd([...new Set(A.ros)])) + ', from the raid logs.' : '') + ' Nothing else to set up.</p><div class="su-f"><button class="su-lk" type="button" data-jn="close">Close</button><button class="btn primary" type="button" data-jn="plan">Open Plan ›</button></div></div>'; }
     else {
       h = F.length === 1 ? 'You raid with ' + esc(F[0].name) : F.length === 2 ? 'You raid with two teams' : F.length ? 'You raid with ' + F.length + ' teams' : 'Join your team';
       if (F.length) b += (F.length === 1 ? '<p class="su-p">Debrief found you in its raid logs: <b>' + F[0].n + '</b> of its last <b>' + (F[0].nights || F[0].n) + '</b> raid nights. Join the team?</p>' :
@@ -8594,7 +8594,7 @@ function openJoin() {
     el.innerHTML = '<div class="panel pnz-sheet jn-sheet"><div class="pnz-top"><div><h2>' + h + '</h2></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' + b + '</div>'; };
   const send = (id, body) => tpApi('id=' + encodeURIComponent(id), Object.assign({ op: 'member', me: (whoMain() || {}).n || '' }, body)).catch(() => ({ error: 'That didn\'t save. Try again.' }));
   const yes = async () => { const F = jnFound(); if (A.busy || !F.length) return; A.busy = true; A.err = ''; draw(); const ok = [];
-    for (const t of F) { const r = await send(t.id, { yes: A.pick.has(t.id) }); if (r && r.ok && A.pick.has(t.id)) ok.push(t); else if (r && !r.ok) A.err = r.error || 'That didn\'t save. Try again.'; }
+    for (const t of F) { const r = await send(t.id, { yes: A.pick.has(t.id) }); if (r && r.ok && A.pick.has(t.id)) { ok.push(t); if (r.roster) A.ros = (A.ros || []).concat([r.roster]); } else if (r && !r.ok) A.err = r.error || 'That didn\'t save. Try again.'; }
     for (const t of ok) { try { await groupAdd('https://www.warcraftlogs.com/guild/id/' + t.id.split(':')[1]); } catch (e) { /* (it comes in with the next sign-in) */ } }
     if (ok.length) store.set(GROUP_CUR, 'g' + ok[0].id.split(':')[1]);
     await jnMine(true); A.busy = false; if (ok.length) A.done = ok.map((t) => t.name); draw(); };

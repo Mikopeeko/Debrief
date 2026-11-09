@@ -139,12 +139,13 @@ env.BNET_CLIENT_ID = 'b'; env.BNET_CLIENT_SECRET = 's'; const RK = 'https://debr
 BLIZ = [['Leadone', 'zuljin', 1], ['Raidone', 'zuljin', 3], ['Gmone', 'zuljin', 0], ['Newone', 'zuljin', 3]].concat([...Array(8).keys()].map((i) => ['Alt' + i, 'zuljin', 7])); fresh();
 const S1 = { lead: sign('Leadone', [{ n: 'Leadone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), gm: sign('Gmone', [{ n: 'Gmone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), nw: sign('Newone', [{ n: 'Newone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE) };
 { const [st] = await call(S1.lead, '/api/teamplan?id=team:555', { op: 'setup', me: 'Leadone' }); ok(st === 200, 'Leadone (rank 1) sets up Testteam'); }
+await call(S1.lead, '/api/teamplan?id=team:555', { op: 'set', keys: { 'wla-rosters': JSON.stringify({ list: [{ id: 'r1', name: 'Testteam', players: [{ n: 'Leadone', cls: 'PALADIN', sid: 65, role: 'healer', bench: false }] }], cur: 'r1' }) }, me: 'Leadone' });
 { const [st] = await call(S1.nw, '/api/teamplan?id=team:555', { op: 'member', yes: true, ask: true, me: 'Newone' }); ok(st === 200, 'Newone (not in the logs yet) asks to join'); }
 await call(S1.gm, '/api/teamplan?id=team:555'); /* (the guild master has opened the plan) */
 actors.push({ id: 5, name: 'Newone', server: "Zul'jin", icon: 'Priest-Holy' }); NIGHTS.n4 = [1, 2, 5]; REPS.unshift({ code: 'n4', startTime: T0 + 5 * day, zone: { name: 'The Venomous Abyss' } }); /* (a new raid night, Newone in it) */
 BLIZ = BLIZ.filter((m) => m[0] !== 'Leadone'); fresh(); /* (and Leadone leaves the guild) */
 { const r = await W.teamRecheck(env, new URL(SITE), 'team:555'); ok(r.saved && r.added.includes('Newone'), 'the daily re-check finds Newone in the new night: ' + r.added.join(', '));
-  ok(r.joined.includes('Newone'), 'Newone, who had asked, is let in by themselves'); ok(r.lead === 'Gmone', 'Leadone left the guild, so the guild master leads it now: ' + r.lead); }
+  ok(r.joined.includes('Newone'), 'Newone, who had asked, is let in by themselves'); ok((r.roster || []).includes('Newone'), 'and goes on the roster, from the raid logs'); ok(r.lead === 'Gmone', 'Leadone left the guild, so the guild master leads it now: ' + r.lead); }
 { const [, a] = await call(S1.gm, '/api/teamplan?id=team:555'), [, b] = await call(S1.lead, '/api/teamplan?id=team:555'), [, c] = await call(S1.nw, '/api/teamplan?id=team:555');
   ok(a.you.lead && a.lead === 'Gmone', 'Gmone is the lead'); ok(!b.you.lead && b.access === 'see' && b.why === 'regular', 'Leadone isn\'t the lead any more; still in the logs, they can see it (' + b.why + ')');
   ok(c.joined, 'Newone is on the team'); ok(/left Testguild, so Gmone \(the guild master\) leads Testteam now/.test(a.alog.map((x) => x.sum).join('|')), 'the access history says why'); }
@@ -166,4 +167,17 @@ P.Strangertest = sign('Strangertest', [{ n: 'Strangertest', slug: 'illidan', rea
   const [s3] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'invite', me: 'Officertest' }); const [, o2] = await call(P.Officertest, '/api/teamplan?id=guild:6956');
   const [s4, j4] = await call(P.Newtest, '/api/teamplan?id=team:796679', { op: 'member', yes: true, inv: o.inv, me: 'Newtest' });
   ok(s3 === 200 && o2.inv && o2.inv !== o.inv && s4 === 403, 'a new link replaces the old one: ' + j4.error); }
+console.log('11. Joining puts you on the roster when the raid logs match (Flex: "If it matches their raid history yes")');
+const rosterOf = async (P0, id) => { const [, d] = await call(P0, '/api/teamplan?id=' + id); const o = JSON.parse(((d.keys || {})['wla-rosters'] || {}).v || 'null'); return o ? (o.list.find((x) => x.id === o.cur) || o.list[0]).players.map((p) => p.n) : []; };
+await call(P.Gmtest, '/api/teamplan?id=team:796679', { op: 'set', keys: { 'wla-rosters': JSON.stringify({ list: [{ id: 'r1', name: 'Lai Dou Lai Le', players: [{ n: 'Gmtest', cls: 'MONK', sid: 270, role: 'healer', bench: false }] }], cur: 'r1' }) }, me: 'Gmtest' });
+P.Raider13 = sign('Raider13', [{ n: 'Raider13', slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall', cls: 'MAGE', sid: 63 }, { n: 'Raider13alt', slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall' }], PRAC);
+{ const [st, j] = await call(P.Raider13, '/api/teamplan?id=team:796679', { op: 'member', yes: true, me: 'Raider13' }); const ros = await rosterOf(P.Gmtest, 'team:796679');
+  ok(st === 200 && j.roster === 'Raider13' && ros.includes('Raider13') && !ros.includes('Raider13alt'), 'Yes, that\'s me: Raider13 (in the logs) goes on the roster with the character the logs show: ' + ros.join(', '));
+  const [, d] = await call(P.Gmtest, '/api/teamplan?id=team:796679'); ok(/Raider13 joined the roster \(in the raid logs\)/.test((d.log || []).map((x) => x.sum).join('|')), 'and the plan\'s change list says so (the lead can undo it)'); }
+{ await call(P.Raider13, '/api/teamplan?id=team:796679', { op: 'member', yes: true, me: 'Raider13' }); const ros = await rosterOf(P.Gmtest, 'team:796679'); ok(ros.filter((n) => n === 'Raider13').length === 1, 'saying Yes again doesn\'t add them twice'); }
+{ const [, g] = await call(P.Gmtest, '/api/teamplan?id=team:796679'); P.Invitee = sign('Invitee', [{ n: 'Invitee', slug: 'illidan', realm: 'Illidan', g: '', gs: '' }], PRAC);
+  const [st] = await call(P.Invitee, '/api/teamplan?id=team:796679', { op: 'member', yes: true, inv: g.inv, me: 'Invitee' }); const ros = await rosterOf(P.Gmtest, 'team:796679');
+  ok(st === 200 && !ros.includes('Invitee'), 'someone who joins with the invite link (not in the logs) is on the team but not put on the roster'); }
+{ const [st] = await call(P.Newtest, '/api/teamplan?id=team:796679', { op: 'member', yes: true, ask: true, me: 'Newtest' }); const [, o] = await call(P.Gmtest, '/api/teamplan?id=team:796679'); const a = (o.asks || []).find((x) => x.main === 'Newtest');
+  await call(P.Gmtest, '/api/teamplan?id=team:796679', { op: 'okay', uid: a && a.uid, yes: true, me: 'Gmtest' }); const ros = await rosterOf(P.Gmtest, 'team:796679'); ok(st === 200 && a && !ros.includes('Newtest'), 'someone an officer lets in (not in the logs) isn\'t put on the roster either'); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);
