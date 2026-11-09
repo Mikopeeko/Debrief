@@ -1754,7 +1754,7 @@ async function gnotePut(env, code, doc, etag, url) { const gz = await new Respon
 async function gnote(req, env, url) {
   if (!env.debrief_nights) return json({ none: true });
   const code = url.searchParams.get('code') || ''; if (!CODE.test(code)) return json({ error: 'That report code isn\'t right.' }, 400);
-  if (req.method === 'GET') { const g = await gnoteGet(env, code, url).catch(() => null); return g ? json({ pulls: g.doc.pulls || {}, texts: g.doc.texts || {} }) : json({ none: true }); }
+  if (req.method === 'GET') { if (!(await teamWho(req, env, url))) return json({ none: true, signin: true }); /* (Nov 8: a raid's own note, for signed-in raiders only) */ const g = await gnoteGet(env, code, url).catch(() => null); return g ? json({ pulls: g.doc.pulls || {}, texts: g.doc.texts || {} }) : json({ none: true }); }
   if (req.method !== 'POST') return json({ error: 'Only the website saves these.' }, 405);
   if (req.headers.get('Origin') !== url.origin) return json({ error: 'Only the Debrief website can save these.' }, 403);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once.' }, 429);
@@ -1819,7 +1819,7 @@ async function guildRankOf(env, url, g, link) {
 // (what this person may do with this team's plan: { acc: edit | see | none, why, rank, rankName })
 async function teamAccess(env, url, d, who) {
   const R = d && d.ranks;
-  if (!who) return { acc: R ? 'none' : 'see', why: 'signin' };
+  if (!who) return { acc: 'none', why: 'signin' }; /* (Nov 8, Flex: "a true log in log out": no team plan without a Battle.net sign-in) */
   if (!d) return { acc: 'see', why: 'new' };
   if (isMe(who, d.owner.uid) || (await leadByChar(env, url, d, who))) return { acc: 'edit', why: 'lead' };
   if (await siteAdmin(who, env, url)) return { acc: 'edit', why: 'admin' };
@@ -1827,10 +1827,16 @@ async function teamAccess(env, url, d, who) {
   if (R && R.guild) { link = await bnetGet(env, who.uid, url); const rk = await guildRankOf(env, url, R.guild, link);
     if (rk != null && rk >= 0) { const row = rankRow(rk); return { acc: rankAcc(R, row), why: 'rank', rank: rk, rankName: (R.names || {})[row] || '' }; } }
   if (await teamCan(d, who, env, url)) return { acc: 'edit', why: 'officer' };
-  if (!R) return { acc: 'see', why: 'open' };
   const gm = /^guild:(\d+)$/.exec(d.id); if (gm && (await teamGuilds(who, env, url)).includes(+gm[1])) return { acc: 'see', why: 'wcl-guild' };
+  if (!R) return (await teamMember(env, url, d, who)) ? { acc: 'see', why: 'member' } : { acc: 'none', why: 'not-member' }; /* (Nov 8: members read: one of your characters is on the team) */
   return { acc: 'none', why: link ? 'not-in-guild' : 'unlinked' };
 }
+/* (Nov 8: on the team: one of your characters is on its roster, in its list of who's whose, its lead or an officer) */
+async function teamMember(env, url, d, who) { if (!who || !d) return false; const lc = (x) => String(x || '').split('-')[0].toLowerCase();
+  let mine = who.chars ? who.chars.map(lc) : []; if (!mine.length) { const L = await bnetGet(env, who.uid, url); mine = ((L && L.chars) || []).map((c) => lc(c.n)); } if (!mine.length && who.t) mine = (await teamChars(who, env, url)).map(lc);
+  const set = new Set(mine.filter(Boolean)); if (!set.size) return false; let ros = [];
+  try { const o = JSON.parse(((d.keys || {})['wla-rosters'] || {}).v || 'null'); ros = ((o && o.list) || []).flatMap((x) => (x.players || []).map((p) => lc(p.n))); } catch (e) { ros = []; }
+  const bn = Object.values(d.bn || {}).flatMap((x) => [x.main].concat(x.chars || [])).map(lc); return ros.concat(bn, [lc(d.owner && d.owner.char)], (d.officers || []).map(lc)).some((n) => n && set.has(n)); }
 // (the lead's panel: the guild's ranks and how many hold each, from the saved guild or the lead's linked main's guild)
 async function teamRanks(env, url, d, who) {
   let g = d && d.ranks && d.ranks.guild;
@@ -1896,6 +1902,7 @@ async function teamPlan(req, env, url) {
     if (url.searchParams.get('ranks') === '1') { const g0 = await teamGet(env, id, url).catch(() => null); return json(await teamRanks(env, url, g0 && g0.doc, who)); } /* (the lead's ranks panel) */
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
     if (!g) return json({ exists: false, here, you: you(null, false) });
+    if (!who) return json({ exists: true, locked: true, signin: true, name: g.doc.name, access: 'none', why: 'signin', you: null, keys: null }, 401); /* (Nov 8, Flex: "a true log in log out": nothing of a team's plan without a sign-in) */
     const d = g.doc, A = await teamAccess(env, url, d, who), shut = A.acc === 'none'; /* (None: the plan stays closed, only who leads it shows) */
     if (who && who.bid && !shut) { let ch = false; const old = d.owner.uid; if (A.why === 'lead' && old !== who.uid) { d.owner = { ...d.owner, uid: who.uid, was: old }; ch = true; } /* (Nov 8: the plan moves to the lead's Battle.net id) */
       for (const o of who.ids || []) if (o !== who.uid && d.bn && d.bn[o]) { d.bn = { ...d.bn }; delete d.bn[o]; ch = true; } if (ch) { const w2 = await teamPut(env, id, d, g.etag, url).catch(() => null); if (w2 && w2.etag) g.etag = w2.etag; } }
@@ -2019,7 +2026,7 @@ async function bnetCallback(req, env, url) {
   chars.sort((a, b) => (b.ilvl || 0) - (a.ilvl || 0));
   const main = old && keys.has(old.main) ? old.main : chars.length ? bnetKey(chars[0]) : '';
   const olds = [...new Set(((old0 && old0.olds) || []).concat(moving ? [prev.uid] : []))].slice(-8); /* (the ids this account took over: plans saved under them stay yours) */
-  const d = { region: s.r, chars, main, hidden: ((old && old.hidden) || []).filter((k) => keys.has(k)), linkedAt: (old && old.linkedAt) || Date.now(), syncedAt: Date.now(), by: tag || '', bid, tag, olds, mock: mock || undefined };
+  const d = { region: s.r, chars, main, hidden: ((old && old.hidden) || []).filter((k) => keys.has(k)), linkedAt: (old && old.linkedAt) || Date.now(), syncedAt: Date.now(), by: tag || '', bid, tag, olds, teams: (old && Array.isArray(old.teams)) ? old.teams : undefined, teamCur: (old && old.teamCur) || undefined, mock: mock || undefined }; /* (Nov 8: your teams list stays) */
   await bnetPut(env, uid, d, url);
   /* (the session: Battle.net is who you are; a Warcraft Logs pass from an old sign-in comes along as connected) */
   const ps = await sessOf(req, env), a = new Uint8Array(24); crypto.getRandomValues(a); const id = [...a].map((x) => x.toString(16).padStart(2, '0')).join(''), secs = SESS_DAYS * 86400, mc = chars.find((c) => bnetKey(c) === main);
@@ -2030,7 +2037,9 @@ async function bnetCallback(req, env, url) {
   const res = done(prev && prev.bid ? 'synced' : moving ? 'moved' : 'signedin'), h = new Headers(res.headers); h.append('Set-Cookie', sessCookie(id, secs)); if (PRACTICE_HOST(url)) h.append('Set-Cookie', 'dbp=; Path=/; Secure; SameSite=Lax; Max-Age=0');
   return new Response(null, { status: 302, headers: h });
 }
-const bnetOut = (d) => (d ? { linked: true, region: d.region, chars: d.chars, main: d.main, hidden: d.hidden || [], linkedAt: d.linkedAt, syncedAt: d.syncedAt || d.linkedAt, mock: !!d.mock } : { linked: false });
+const bnetOut = (d) => (d ? { linked: true, region: d.region, chars: d.chars, main: d.main, hidden: d.hidden || [], linkedAt: d.linkedAt, syncedAt: d.syncedAt || d.linkedAt, mock: !!d.mock, teams: Array.isArray(d.teams) ? d.teams : null, teamCur: d.teamCur || '' } : { linked: false }); /* (Nov 8: teams = your teams list, kept on your account) */
+/* (Nov 8: a teams list from the website, cleaned: up to 40 team, guild and character pages, each its Warcraft Logs number and names) */
+const bnetTeams = (l) => (Array.isArray(l) ? l : []).filter((t) => t && /^[cg]\d{1,12}$/.test(String(t.gid)) && /^(char|team|guild)$/.test(t.kind) && +t.id > 0).slice(0, 40).map((t) => ({ gid: String(t.gid), kind: t.kind, id: +t.id, name: String(t.name || '').slice(0, 60), server: String(t.server || '').slice(0, 60), ...(t.label ? { label: String(t.label).slice(0, 40) } : {}) }));
 async function bnetRoute(req, env, url) {
   if (!env.debrief_nights) return json({ linked: false, off: true });
   const who = await teamWho(req, env, url);
@@ -2042,6 +2051,7 @@ async function bnetRoute(req, env, url) {
   if (req.method !== 'POST') return json({ error: 'GET, POST or DELETE only.' }, 405);
   const d = await bnetGet(env, who.uid, url); if (!d) return json({ error: 'Link Battle.net first.' }, 404);
   let b = null; try { b = await req.json(); } catch (e) { b = null; }
+  if (b && Array.isArray(b.teams)) { d.teams = bnetTeams(b.teams); d.teamCur = /^[cg]\d{1,12}$/.test(String(b.teamCur || '')) ? String(b.teamCur) : ''; await bnetPut(env, who.uid, d, url); return json(bnetOut(d)); } /* (Nov 8: your teams list) */
   const keys = new Set(d.chars.map(bnetKey)); if (!b || !keys.has(b.main)) return json({ error: 'Pick one of your characters as your main.' }, 400);
   d.main = b.main; d.hidden = (Array.isArray(b.hidden) ? b.hidden : []).filter((k) => keys.has(k) && k !== b.main).slice(0, 24);
   await bnetPut(env, who.uid, d, url); return json(bnetOut(d));

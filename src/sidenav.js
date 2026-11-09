@@ -38,7 +38,7 @@ function snOpen() { const it = S.page === 'pull' ? S.item : null; if (!it || it.
   const ms = it.wallMs || it.startMs || 0;
   return { it, boss: it.boss, day: ms ? snDay(ms) : null, n: i + 1, of: same.length, k: ms ? nightOf(ms) : '', code: it.wcl ? it.wcl.code : null }; }
 // (jobs nobody has yet on the plan's boss, worked out now and then: the plan's own readiness count)
-function snJobs() { const now = Date.now(); if (now - SN_JOBS.at < 45000 && !(S.page === 'plan' && now - SN_JOBS.at > 5000)) return SN_JOBS;
+function snJobs() { if (WCL.HOSTED && WHO.now && !WHO.now.me) { SN_JOBS.n = 0; SN_JOBS.boss = null; SN_JOBS.none = true; return SN_JOBS; } /* (Nov 8: signed out, no team jobs) */ const now = Date.now(); if (now - SN_JOBS.at < 45000 && !(S.page === 'plan' && now - SN_JOBS.at > 5000)) return SN_JOBS;
   SN_JOBS.at = now; try { const b = S.ndzPick || store.get(PLAN_BK); if (!b) { SN_JOBS.n = 0; return SN_JOBS; } const r = pgRdy(pnGet(), b); SN_JOBS.boss = b; SN_JOBS.none = !r || !!r.none; SN_JOBS.n = r && r.jobs && !r.none ? Math.max(0, (r.jobs.of || 0) - (r.jobs.done || 0)) : 0; } catch (e) { SN_JOBS.n = 0; }
   return SN_JOBS; }
 function snWho() { const me = meOf(); let g = null; try { g = homeTarget(); } catch (e) { g = null; }
