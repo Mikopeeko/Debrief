@@ -16118,7 +16118,7 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
         .sort(function (a, b2) { return a[1] - b2[1] || a[2] - b2[2]; }).map(function (x) { return x[0]; }); /* (in the order they show: Deaths is moved last with CSS order) */
       jobs.push({ box: box, top: top, tiles: tiles, gap: parseFloat(cs.columnGap) || 0, w: box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0) }); });
     jobs.forEach(function (j) { var n = j.tiles.length; if (n < 2 || j.w <= 0) return;
-      var cols = Math.max(1, Math.floor((j.w + j.gap) / (MIN + j.gap))), R = rowsOf(n, cols), L = lcm(R), i = 0;
+      var one = !!j.box.closest('.r212-sb') && ((j.w + j.gap) / n - j.gap) >= 118; /* (Nov 8 numbers grid: one even row on Summary's numbers block) */ var cols = one ? n : Math.max(1, Math.floor((j.w + j.gap) / (MIN + j.gap))), R = rowsOf(n, cols), L = lcm(R), i = 0;
       if (j.top && !j.box.classList.contains('t481g')) j.box.classList.add('t481g');
       set(j.box, 'grid-template-columns', 'repeat(' + L + ', minmax(0, 1fr))');
       R.forEach(function (c) { for (var k = 0; k < c; k++) set(j.tiles[i++], 'grid-column', 'span ' + (L / c)); }); });
@@ -16499,6 +16499,36 @@ html body #view#view .gb.gb-tb .gb-card .gb-rows > .pf-row.gb-row:hover { backgr
 html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot > .cb-b, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot > .cb-b > * { background: none !important; box-shadow: none !important; }
 html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot { border-top: 1px solid var(--line) !important; }
 html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-f, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-in { background: none !important; box-shadow: none !important; } html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-f { visibility: hidden; }
+}
+</style>
+<style>/* (Nov 8 numbers grid: Flex, "very visually buggy since it was created") */
+@layer defaultTheme {
+html body #view#view .r212-sb { container-type: inline-size; }
+/* both grids: the same 1 px hairline grid, tiles stretched to one height */
+html body #view#view .r212-sb .oa-tiles, html body #view#view .r212-sb section.cch2.dt-box { gap: 1px !important; background: var(--line) !important; align-items: stretch !important; }
+html body #view#view .r212-sb .oa-tiles > .r378-sw { background: var(--raised) !important; }
+html body #view#view .r212-sb .oa-tiles > .dbr-n, html body #view#view .r212-sb section.cch2.dt-box .cch-ab { min-height: 86px !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; background: var(--panel) !important; box-sizing: border-box !important; position: relative; }
+html body #view#view .r212-sb section.cch2.dt-box .cch-ab > summary { min-height: 86px !important; height: 100%; box-sizing: border-box !important; }
+html body #view#view .r212-sb .oa-tiles > .dbr-n:not(.r218-gone) { display: flex !important; flex-direction: column; justify-content: flex-start; padding: 12px 14px !important; }
+html body #view#view .r212-sb .oa-tiles > .dbr-n.r218-gone { display: none !important; }
+/* one label style */
+html body #view#view .r212-sb .oa-tiles > .dbr-n .dbr-k, html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-n { font: 700 10.5px var(--body) !important; letter-spacing: .08em !important; text-transform: uppercase !important; color: var(--faint) !important; padding-right: 0 !important; max-width: calc(100% - 66px) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-n { max-width: 100% !important; }
+/* the dropdown link: the same top-right spot on every tile */
+html body #view#view .r212-sb .oa-tiles > .dbr-n .pcx-open { position: absolute !important; top: 11px !important; right: 12px !important; left: auto !important; bottom: auto !important; margin: 0 !important; font: 600 11.5px var(--body) !important; color: var(--gold) !important; white-space: nowrap; }
+/* "VS TOP PLAYERS" and the like: a small line under the number, never squeezed in after it */
+html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-p[data-tag]::after { display: block !important; margin: 2px 0 0 !important; padding: 0 !important; font: 700 10px var(--body) !important; letter-spacing: .08em !important; text-transform: uppercase !important; color: var(--faint) !important; position: static !important; }
+html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-p ~ [class*="vs"], html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-tag, html body #view#view .r212-sb section.cch2.dt-box .cch-ab .r-vs { display: block !important; margin: 2px 0 0 !important; }
+@container (max-width: 900px) {
+  html body #view#view .r212-sb .oa-tiles > .dbr-n { padding: 10px 11px !important; }
+  html body #view#view .r212-sb .oa-tiles > .dbr-n .dbr-k, html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-n { font-size: 10px !important; letter-spacing: .05em !important; max-width: calc(100% - 16px) !important; }
+  html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-n { max-width: 100% !important; }
+  html body #view#view .r212-sb .oa-tiles > .dbr-n .dbr-v b { font-size: 19px !important; }
+  html body #view#view .r212-sb .oa-tiles > .dbr-n .dbr-s, html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-dt { font-size: 11.5px !important; white-space: normal !important; line-height: 1.25; }
+  html body #view#view .r212-sb .oa-tiles > .dbr-n .pcx-open { font-size: 0 !important; top: 9px !important; right: 9px !important; }
+  html body #view#view .r212-sb .oa-tiles > .dbr-n .pcx-open::after { content: '\25BE'; font-size: 13px; color: var(--gold); }
+  html body #view#view .r212-sb section.cch2.dt-box .cch-ab .cgl-p { font-size: 19px !important; }
+}
 }
 </style>
 </body>
