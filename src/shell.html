@@ -14206,7 +14206,8 @@ html body #view#view .dbr-n .dbr-s .r378-p.p468-w{color:var(--warn,#e8a23a) !imp
 html body #view#view .dbr-n .dbr-s .r378-p.p468-b{color:var(--badT,#ff8f87) !important}
 html body #view#view .dbr-n .dbr-v .u492{font-size:12px !important;font-weight:600 !important;color:var(--muted,#8b95a0) !important;margin-left:4px;letter-spacing:0;text-transform:none;vertical-align:baseline;line-height:1 !important}
 /* (Nov 9, Flex OK'd the mock: the verdict line on top of the grid, the trend line under a number, the Defensives who-count) */
-html body #view#view .dbr-4 > .r493-vd{grid-column:1 / -1;margin:0 0 2px;font-size:12.5px;line-height:1.4;color:var(--muted,#8b95a0)}
+html body #view#view .dbr-4 > .r493-vd{grid-column:1 / -1;margin:0 0 2px;padding:14px 0 0;font-size:12.5px;line-height:1.4;color:var(--muted,#8b95a0)} /* (Nov 9: room for the Compared-with switch on the top edge) */
+@media (max-width: 760px) { html body #view#view .dbr-4 > .r493-vd{padding-top:0} }
 html body #view#view .dbr-4 > .r493-vd b{font-weight:600}
 html body #view#view .dbr-4 > .r493-vd b.g{color:#5fdc7a}
 html body #view#view .dbr-4 > .r493-vd b.b{color:#ff8f87}
