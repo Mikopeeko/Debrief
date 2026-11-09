@@ -433,3 +433,93 @@ practice build: the Guardian reads 96 with no "on cooldown" rows marked on packs
 - Restoration Shaman: "Unleash Life on cooldown" has no Farseer gate (Totemic can take it as an option).
 - Devastation: Deep Breath has no hold; the one top Devastation in the data takes 5 slips a kill for it.
 - From earlier parts, unchanged: Heroic untested; the top players' marks for every `topNew` row need a fresh read (a data job); Frost Mage's guide note on Fingers of Frost is out of date (the site is right); Outlaw's window bar is unmeasured.
+
+
+## Part 11: Every spec and hero tree on top players' logs (round 8)
+
+Flex: "Just get it all done". Until now the proof came from one boss's fastest kills, so some specs had zero to two players. This round ran the real
+Rotation page on **2,229 top-player pages from 348 Mythic kills since Oct 6, all ten bosses**, straight from the log library (no downloads). Every spec
+has 34 to 65 players. Three runs: before the fixes, after, and with the final rules.
+
+Scripts (shared notes folder, `rotation-audit-nov9/lib/`): `select2.js` picks the kills, `libj.js` runs them, `tsum.js` reads them (`cover`, `rows`,
+`slips`, `tal`, `vals`, `gaps`), `one.js` and `probe.js` open one player, `marks.js` writes the top players' marks back into the app.
+
+### What the logs showed that reading the guides did not
+
+**1. Priority steps all top players break (slips a kill, players)**
+
+| Spec | The slip | Why it was wrong | Fix | Priority, before to after |
+|---|---|---|---|---|
+| Protection Paladin | Blessed Hammer "with a Judgment charge", 36 a kill, 55 of 55 | They keep a charge banked; in wings Judgment's button is Hammer of Wrath and spends the same charges; Divine Toll waits for 0 Holy Power (Wowhead) | Judgment only at 2 charges, Hammer of Wrath shares them, Divine Toll at 0. Bar back to 80% | 76% to 93% |
+| Brewmaster | Keg Smash or Breath of Fire "with Blackout Kick ready", 40 a kill, 45 of 45 | They press Blackout Kick every 5.7 s, not every 4: the tier set wants Breath of Fire into Keg Smash | Either counts as right. Niuzao held 10 s. Blackout Kick row bar 50% | 88% to 97% |
+| Discipline | Smite "with Mind Blast ready", 20 a kill, 52 of 52 | Mind Blast is timed for the Rift and the ramp | Smite counts as right | 92% to 98% |
+| Fury | Rampage wanted "with no Enrage" without its 80 Rage; Bloodbath and Crushing Blow before Rampage; Odyn's Fury had no cooldown written | 40 of 41 top Slayers | Rampage needs 80 Rage, the lit-up buttons count, Odyn's Fury is 45 s and held 10 s at most | 85% to 94%, lowest 47% to 89% |
+| Beast Mastery | Cobra Shot "with Howl of the Pack Leader ready", 13 a kill, 61 of 61 | The 30-second timer and "ready" are two auras with one name | New rule: only while that stretch of the buff has had no Kill Command. Kill Command saved for Bestial Wrath | 90% to 93% |
+| Vengeance | Soul Cleave "with Sigil of Spite ready", 13 a kill, 47 of 47 | Both guides spend first so the Sigil's Souls and Fury aren't lost | Soul Cleave and Spirit Bomb count as right | 92% to 96% |
+| Blood, Deathbringer | Heart Strike "with Exterminate up", 29 a kill, 5 of 5 | Both guides: on one target Exterminate is a low-priority filler | Fillers count as right | 80% to 89% |
+| Protection Warrior | Anything "with Demoralizing Shout ready", up to 36 a kill as Colossus | A defensive held for the hits; its uses row grades it | Not in the priority. Demolish held 10 s | Colossus 84% to 90% |
+| Shadow, Voidweaver | "Mind Blast was ready", Shadowy Insight "wasted", 6 of 6 | Void Blast takes Mind Blast's place in the Rift and shares its charges | Void Blast counts | 87% to 94% |
+| Balance, Keeper of the Grove | Wrath "within 20 Astral Power of full", 10 a kill, 17 of 18 | Their bar holds 140, not 100 | Read as a share of the bar | 90% to 95% |
+| Survival | Boomstick "ready" without Tip of the Spear; Takedown "at 0 Tip" | Boomstick is always Tipped (Icy Veins); nobody presses Takedown at 0 Tip | Boomstick waits for Tip; Kill Command before Takedown counts | 93% to 94%, score 82 to 94 |
+| Fire | Scorch "with Pyroclasm", 8 a kill | Scorch is the moving and execute cast | Counts as right | 93% to 95% |
+| Frost, Frostfire | Ice Lance "with Glacial Spike ready", 7 a kill, 11 of 11 | Fingers of Frost and Thermal Void go first | Counts as right | 89% to 90% |
+| Enhancement, Affliction | Ascendance, Summon Darkglare "ready" while held | 2-minute cooldowns held for the burst | Held 10 s at most | Enhancement 90% to 95% |
+
+**2. Two rules that were wrong for every raid fight**
+- The pack list was used whenever 3 bosses were alive, stacked or not. Fury took 8 "Whirlwind buff down" slips a kill, Arms 9 for Cleave, Assassination
+  9 for Fan of Knives, Subtlety 7 for Shuriken Storm. Now it is the enemies you are hitting yourself. Assassination's lowest tenth went from 68% to 82%.
+- "The boss was under 35%" read the lowest boss in the room. It now reads the boss you are on.
+
+**3. Openers.** Survival (31 of 37 failed, 20 red), Brewmaster (42 of 45), Blood as San'layn (36 of 58) and Frost Mage (21 of 52 red) had a fixed
+order nobody follows. Each is now the same buttons in any order, read from what the top players press in their first 15 seconds.
+
+**4. Rows most top players fail on every boss.** A new table, `ROW_SOFT`, marks a row "shown, not graded" or "amber at most", by spec and hero tree.
+Shown, not graded: Survival's Takedown at 0 Tip (35 of 37), Elemental's Elemental Blast before Ascendance and Maelstrom saved for it, Restoration
+Druid's Regrowths against Rejuvenations (58 of 60), Restoration Shaman's Ascendance set up, Vengeance's Fel Devastation on cooldown, Holy Priest's
+Guardian Spirit uses, Balance's Fury of Elune and Force of Nature right before the cooldown, Discipline's Ultimate Penitence ramps (38 of 44),
+Enhancement's melee uptime (54 of 55: Ascendance turns swings into Windlash), the Shamans' shield at the pull. Amber at most: Preservation's Temporal
+Anomaly before the pull, Holy Paladin's Aura Mastery inside Beacon of Virtue, Restoration Druid's Swiftmend on yourself, mana at the kill for Holy
+Paladin and Discipline, Devourer's Void Ray count.
+
+**5. Hero trees and talents (the talent walk).** For every talent some top players take and others don't, each row's pass rate was compared.
+- Havoc, Fel-Scarred: Eye Beam is cast as Abyssal Gaze in Metamorphosis, so "Eye Beam on cooldown" failed 6 of 8. Now counted: 8 of 8 pass.
+- Protection Warrior, Colossus: Thunder Clap is pressed about half as often (7 of 8 failed). It has its own bar.
+- Balance, Keeper of the Grove: Ascendant Fires read red for 16 of 18 (they fill with Wrath). Not graded for that tree.
+- Frost, Frostfire: "Ray of Frost in Bloodlust" was red for 9 of 9 who don't take Ray of Frost; "Ice Lances on 12 Freezing" failed 7 of 11.
+- Blood, Deathbringer: the Dancing Rune Weapon window is San'layn's. Not graded for Deathbringer.
+- Devourer, Void-Scarred: Void Ray count in Metamorphosis is lower than Annihilator's. Not graded for that tree.
+- Brewmaster with Fluidity of Motion (5 of 5 failed Blackout Kick on cooldown), Feral with Rampant Ferocity, Assassination's movement build: softened.
+
+**6. Bars read from the top players** (green near their lowest quarter, amber near their lowest tenth): Survival's pressing and Focus, Arms' Bladestorm in
+Colossus Smash, Elemental's Voltaic Blaze and Stormkeeper pairs, Restoration Shaman's Riptide on new targets and Nature's Swiftness, Outlaw's Adrenaline
+Rush at low combo points, Enhancement's Maelstrom Weapon and Voltaic Blaze, Devourer's Soul Immolation, Vengeance's Fury, Fire's Heat Shimmer,
+Balance's Astral Power going into Incarnation.
+
+**7. Top players' marks.** Every row whose rule changed has its mark read again from these kills: 845 marks and 275 scores across all ten bosses.
+The `topNew` lists are gone. Six marks on The Twin Fangs were dropped where fewer than 3 new players had the row.
+
+### Keys
+- The open table in Part 7 is closed with `keyNa`: Feral (finishers at 5, Apex Predator's Craving), Fury (Odyn's Fury), Arms (Bladestorm in Colossus
+  Smash), Arcane (Touch of the Magi after a Barrage), Protection Paladin (Holy Armaments), Elemental (Stormkeeper before Ascendance), Havoc (Exergy).
+- Fire, Frost Mage, Affliction and Devastation are in none of about 470 fast timed runs (+15 to +20, all eight dungeons). There is nothing to test them on.
+- Augmentation: one fast +17. It reads 92. Ebon Might uptime is marked on 6 of 8 trash pulls; one run is too few to change the rule.
+
+### Tested
+- Final rules on all 2,229 pages: no errors. Rows that 55% or more of top players still fail: mana at the kill (amber, healers on short kills) and one
+  Soul Harvester row with 13 players.
+- The site itself (practice build) gives the same numbers as the test harness on a library kill: Discipline 93 and 97%, Brewmaster 98 and 97%.
+- The 31 pulls from earlier rounds, 629 pages, against the start of the day: 630 rows fairer, 4 stricter. The stricter ones: two Protection Paladins at
+  75% priority now read amber (the bar went back to 80% once the list stopped blaming top players), one Demonology at 80%, and one opener on a saved
+  night that has no talent list.
+
+### Still open
+- Hero trees no top raider plays can't be proven on logs: Stormbringer Elemental, Totemic Enhancement, Farseer Restoration Shaman, Flameshaper
+  Devastation (2), Diabolist Destruction (1), Deathstalker Rogues, Colossus Arms, Mountain Thane Fury (1), Templar Protection Paladin (1), Lightsmith
+  Holy Paladin (1), Master of Harmony Mistweaver (1), Shado-Pan Windwalker (1), Rider of the Apocalypse (2), Soul Harvester Demonology, Pack Leader
+  Survival (2), Dark Ranger. Their rules are read against the guides only.
+- Beast Mastery: Cobra Shot with Nature's Ally up and a Kill Command charge, 6 a kill for all 61. Not understood yet.
+- Arms: Mortal Strike before Heroic Strike with Master of Warfare, 4.5 a kill; both guides put Heroic Strike first, so the rule stays.
+- Unholy: Soul Reaper under 35%, about 10 a kill; both guides press it, so the rule stays.
+- Mistweaver with Chi-Ji (4 players) reads 79% priority: the list is the Yu'lon raid build's.
+- Devastation: 11 players on one build miss the opener (2 of 6 steps). Not looked at.
+- Not rotation, but on the same page: "Stat order" reads amber for 54 to 98% of top players in 14 specs. Worth its own look.
