@@ -1942,13 +1942,14 @@ async function teamClaim(env, url, id, who) { const gm = /^guild:(\d+)$/.exec(id
 // and the team remembers who did it and keeps a short history of access changes. Teams saved before this (Wolfthorn) work as they did.
 const SETUP_ZONE = /venomous abyss/i, SETUP_NIGHTS = 12;
 const setupDay = (t) => new Date(t - 10 * 3600e3).toISOString().slice(0, 10); /* (a raid night: an evening raid that runs past midnight stays one night) */
+const inviteCode = () => [...crypto.getRandomValues(new Uint8Array(9))].map((x) => x.toString(16).padStart(2, '0')).join(''); /* (the invite link's key, Nov 9) */
 const alogAdd = (d, by, sum) => { d.alog = (d.alog || []).concat([{ at: Date.now(), by: String(by || '').slice(0, 24), sum: String(sum).slice(0, 140) }]).slice(-100); }; /* (the access history: kept, not undoable) */
 // (a Warcraft Logs answer kept at the edge: one read for everyone)
-async function wclKeep(env, key, q, vars, secs) { const c = caches.default, ck = new Request('https://debrief.cache/setup/' + key), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
-  const d = await gql(env, q, vars); await c.put(ck, new Response(JSON.stringify(d), { headers: { 'Cache-Control': 'max-age=' + secs } })).catch(() => {}); return d; }
+async function wclKeep(env, key, q, vars, secs, ut) { const c = caches.default, ck = new Request('https://debrief.cache/setup/' + key), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const d = await gql(env, q, vars, ut); await c.put(ck, new Response(JSON.stringify(d), { headers: { 'Cache-Control': 'max-age=' + secs } })).catch(() => {}); return d; }
 // (one raid report's players: everyone in at least one boss pull, with their realm and class-spec; a finished report is kept a month)
-async function nightPlayers(env, code) { const c = caches.default, ck = new Request('https://debrief.cache/setup-night/' + code), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
-  const d = await gql(env, NIGHT_Q, { code }), R = d && d.reportData && d.reportData.report; if (!R) return [];
+async function nightPlayers(env, code, ut, pk) { const c = caches.default, ck = new Request('https://debrief.cache/setup-night/' + code + (pk ? '/' + pk : '')), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const d = await gql(env, NIGHT_Q, { code }, ut), R = d && d.reportData && d.reportData.report; if (!R) return [];
   const A = new Map(((R.masterData || {}).actors || []).map((a) => [a.id, a])), ids = new Set(); for (const f of R.fights || []) for (const i of f.friendlyPlayers || []) ids.add(i);
   const out = [...ids].map((i) => A.get(i)).filter(Boolean).map((a) => ({ n: a.name, s: a.server || '', i: a.icon || a.subType || '' }));
   await c.put(ck, new Response(JSON.stringify(out), { headers: { 'Cache-Control': 'max-age=' + (Date.now() - (R.endTime || 0) > 2 * 3600e3 ? 30 * 86400 : 600) } })).catch(() => {}); return out; }
@@ -1960,16 +1961,19 @@ function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], [
   const L = id === 'guild:6956' ? A : id === 'team:796679' ? B : [], hs = (n) => { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
   return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => { const cls = BNET_CLS[1 + (hs(n) % 13)]; return { k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls, spec: { WARRIOR: 'Fury', PALADIN: 'Holy', HUNTER: 'Marksmanship', ROGUE: 'Outlaw', PRIEST: 'Shadow', DEATHKNIGHT: 'Frost', SHAMAN: 'Restoration', MAGE: 'Fire', WARLOCK: 'Destruction', MONK: 'Mistweaver', DRUID: 'Balance', DEMONHUNTER: 'Havoc', EVOKER: 'Devastation' }[cls] || '', c }; }).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
 // (a team's raiders: who was in its boss pulls on its last 12 raid nights this tier, and on how many of them)
-async function teamRegs(env, url, id, region) {
+// (ut, pk: read with someone's own Warcraft Logs connection, for a team whose reports are private; kept at the edge for that person only)
+async function teamRegs(env, url, id, region, ut, pk) {
   if (PRACTICE_HOST(url) && SETUP_MOCK[id]) return setupMockRegs(id);
-  const wid = +id.split(':')[1], reps = ((((await wclKeep(env, 'team-reps/' + wid, TEAM_REPORTS_Q, { id: wid, page: 1 }, 1800)) || {}).reportData || {}).reports || {}).data || [], nights = new Map();
+  const pv = ut && pk ? String(pk).replace(/[^a-z0-9]+/gi, '-') : '', wid = +id.split(':')[1], reps = ((((await wclKeep(env, 'team-reps/' + wid + (pv ? '/' + pv : ''), TEAM_REPORTS_Q, { id: wid, page: 1 }, 1800, pv ? ut : undefined)) || {}).reportData || {}).reports || {}).data || [], nights = new Map();
   for (const r of reps) { if (!r.zone || !SETUP_ZONE.test(r.zone.name)) continue; const day = setupDay(r.startTime); if (!nights.has(day)) nights.set(day, []); nights.get(day).push(r.code); }
   const last = [...nights.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, SETUP_NIGHTS), reg = BNET_REG.test(region || '') ? region : 'us';
   const tok = await bnetAppToken(env, reg), RS = tok ? await realmSlugs(reg, tok).catch(() => ({})) : {}, slug = (s) => RS[realmNorm(s)] || guildSlug(s), P = new Map();
   for (const [day, codes] of last) { const seen = new Set();
-    for (const code of codes.slice(0, 3)) for (const p of await nightPlayers(env, code).catch(() => [])) { const s = slug(p.s), k = String(p.n).toLowerCase() + '-' + s; if (seen.has(k)) continue; seen.add(k);
+    for (const code of codes.slice(0, 3)) for (const p of await nightPlayers(env, code, pv ? ut : undefined, pv).catch(() => [])) { const s = slug(p.s), k = String(p.n).toLowerCase() + '-' + s; if (seen.has(k)) continue; seen.add(k);
       const [c0, sp] = String(p.i || '').split('-'), o = P.get(k) || { k, n: p.n, s, cls: String(c0 || '').toUpperCase(), spec: sp || '', c: 0, last: day }; o.c++; if (sp && !o.spec) o.spec = sp; P.set(k, o); } }
-  return { at: Date.now(), nights: last.length, last: last.length ? last[0][0] : '', list: [...P.values()].sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
+  return { at: Date.now(), nights: last.length, last: last.length ? last[0][0] : '', list: [...P.values()].sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)), ...(pv ? { private: true } : {}) }; }
+// (a team's raiders for its setup: the public reports, or, when there are none and the officer has connected Warcraft Logs, their private ones)
+async function setupRegs(env, url, id, region, who) { let R = await teamRegs(env, url, id, region); if (!R.nights && who && who.t) { const P = await teamRegs(env, url, id, region, who.t, who.uid).catch(() => null); if (P && P.nights) R = P; } return R; }
 // (the teams your own characters raid with this tier, from Warcraft Logs: each team's number, name, kind and how many nights you were there)
 async function charTeams(env, url, L) {
   if (!L) return []; const names = new Set((L.chars || []).map((c) => String(c.n).toLowerCase()));
@@ -2072,9 +2076,9 @@ async function setupRoute(req, env, url) {
   if (url.searchParams.get('step') !== 'regs') return json(await setupFind(env, url, who));
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
   const S = await setupCheck(env, url, who, id); if (S.error) return json({ error: S.error, set: !!S.set }, 403);
-  const L = await bnetGet(env, who.uid, url), G = S.team.guild; let R = null; try { R = await teamRegs(env, url, id, (L && L.region) || 'us'); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
+  const L = await bnetGet(env, who.uid, url), G = S.team.guild; let R = null; try { R = await setupRegs(env, url, id, (L && L.region) || 'us', who); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
   const roster = G ? await guildRoster(env, url, G) : null, rk = new Map(((roster && roster.members) || []).map((m) => [m.k, m.rank]));
-  return json({ team: S.team, nights: R.nights, last: R.last, list: R.list.map((p) => ({ ...p, rank: rk.has(p.k) ? rk.get(p.k) : null })), ranks: roster ? rankSuggest(roster, R, S.team.name) : [], roster: !!roster }); }
+  return json({ team: S.team, nights: R.nights, last: R.last, private: !!R.private, wcl: !!who.t, list: R.list.map((p) => ({ ...p, rank: rk.has(p.k) ? rk.get(p.k) : null })), ranks: roster ? rankSuggest(roster, R, S.team.name) : [], roster: !!roster }); }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -2093,14 +2097,14 @@ async function teamPlan(req, env, url) {
       const mine = L ? { main: ((L.chars || []).find((c) => bnetKey(c) === L.main) || {}).n || '', chars: (L.chars || []).filter((c) => !hid.has(bnetKey(c))).map((c) => c.n) } : null;
       if (JSON.stringify(was && { main: was.main, chars: was.chars }) !== JSON.stringify(mine)) { d.bn = { ...(d.bn || {}) }; if (mine) d.bn[who.uid] = { ...mine, at: Date.now() }; else delete d.bn[who.uid]; await teamPut(env, id, d, g.etag, url).catch(() => null); } }
     const bn = shut ? [] : Object.values(d.bn || {}).map((x) => [x.main, ...x.chars.filter((n) => n !== x.main)]).filter((x) => x[0] && x.length > 1);
-    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, leadLeft: !!d.owner.left, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), bn, locked: shut, setup: d.setup ? { by: d.setup.by, at: d.setup.at, guild: d.setup.guild.name } : null, regs: d.regs && !shut ? { at: d.regs.at, nights: d.regs.nights, n: d.regs.list.length } : null, alog: A.acc === 'edit' ? (d.alog || []).slice(-40) : [], asks: A.acc === 'edit' ? Object.entries(d.asks || {}).map(([uid, x]) => ({ uid, main: x.main, at: x.at })) : [], joined: !!(d.join && d.join[who.uid]), keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
+    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, leadLeft: !!d.owner.left, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), bn, locked: shut, setup: d.setup ? { by: d.setup.by, at: d.setup.at, guild: d.setup.guild.name } : null, regs: d.regs && !shut ? { at: d.regs.at, nights: d.regs.nights, n: d.regs.list.length } : null, alog: A.acc === 'edit' ? (d.alog || []).slice(-40) : [], asks: A.acc === 'edit' ? Object.entries(d.asks || {}).map(([uid, x]) => ({ uid, main: x.main, at: x.at })) : [], joined: !!(d.join && d.join[who.uid]), inv: A.acc === 'edit' && d.setup ? d.inv || null : null, keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
   }
   if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   if (!who) return json({ error: 'Sign in with Battle.net to change the team plan.', signin: true }, 401);
   const raw = await req.arrayBuffer(); if (raw.byteLength > 3 * 1024 * 1024) return json({ error: 'That plan is too big to save.' }, 413);
   let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
-  if (!b || !['create', 'set', 'officer', 'undo', 'ranks', 'join', 'setup', 'handover', 'member', 'okay'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
+  if (!b || !['create', 'set', 'officer', 'undo', 'ranks', 'join', 'setup', 'handover', 'member', 'okay', 'invite'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
   const me = String(b.me || '').trim().slice(0, 24) || who.name, keys = b.keys && typeof b.keys === 'object' ? b.keys : {};
   for (const [k, v] of Object.entries(keys)) if (!TEAM_KEY.test(k) || (v !== null && (typeof v !== 'string' || v.length > 600 * 1024))) return json({ error: 'That change isn\'t right.' }, 400);
   for (let tries = 0; tries < 4; tries++) {
@@ -2112,14 +2116,14 @@ async function teamPlan(req, env, url) {
     else if (b.op === 'setup') { /* (Nov 9: an officer's setup, claimed once) */
       if (d) return json({ error: (d.name || 'This team') + ' is already set up by ' + ((d.setup && d.setup.by) || (d.owner && d.owner.char) || 'an officer') + '. Ask an officer for access.', exists: true }, 409);
       const S = await setupCheck(env, url, who, id); if (S.error) return json({ error: S.error, set: !!S.set }, 403);
-      const L = await bnetGet(env, who.uid, url), t = S.team, G = t.guild; let R = null; try { R = await teamRegs(env, url, id, (L && L.region) || 'us'); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
+      const L = await bnetGet(env, who.uid, url), t = S.team, G = t.guild; let R = null; try { R = await setupRegs(env, url, id, (L && L.region) || 'us', who); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
       const roster = G ? await guildRoster(env, url, G) : null; if (!roster) return json({ error: 'Blizzard didn\'t send ' + (G ? G.name : 'the guild') + '\'s roster just now. Try again in a minute.' }, 502);
       const keep = Array.isArray(b.players) ? new Set(b.players.map((x) => String(x).toLowerCase())) : null, cs = (L && L.chars) || [], nOf = (c) => (R.list.find((p) => p.k === bnetKey(c)) || {}).c || 0;
       const best = cs.slice().sort((x, y) => nOf(y) - nOf(x))[0], oc = best && nOf(best) ? best : cs.find((c) => bnetKey(c) === L.main) || cs[0] || null; /* (the lead: your character that raids with the team most, else your main) */
       const sug = rankSuggest(roster, R, t.name), names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { const x = sug.find((y) => y.r === r); names[r] = String((b.names || {})[r] || (x && x.name) || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : x ? x.acc : r < 2 ? 'edit' : 'none'; }
       const by = (oc && oc.n) || me, g0 = { region: G.region, realm: G.realm, name: G.name, ...(G.mock ? { mock: true } : {}) };
       d = { id, name: String(t.name || b.name || '').slice(0, 60), owner: oc ? { uid: who.uid, char: oc.n, realm: oc.slug } : { uid: who.uid, char: me }, officers: [], keys: {}, ver: 0, log: [],
-        setup: { by, uid: who.uid, at: now, guild: g0 }, ranks: { guild: g0, names, acc, v2: 1, at: now, by },
+        setup: { by, uid: who.uid, at: now, guild: g0 }, inv: inviteCode(), ranks: { guild: g0, names, acc, v2: 1, at: now, by },
         regs: { at: R.at, nights: R.nights, last: R.last, list: R.list.filter((p) => !keep || keep.has(p.k)).map((p) => ({ k: p.k, n: p.n, c: p.c })), out: keep ? R.list.filter((p) => !keep.has(p.k)).map((p) => p.k).slice(0, 80) : [] } };
       alogAdd(d, by, 'set up ' + d.name + ' for ' + G.name + ', with ' + d.regs.list.length + ' raiders from the logs'); await teamIdxAdd(env, url, g0, id, d.name); await teamListAdd(env, url, id); }
     else if (!d) return json({ error: 'This team has no plan saved online yet.' }, 404);
@@ -2132,12 +2136,16 @@ async function teamPlan(req, env, url) {
       const m = youMain(L, who), ks = new Set((L.chars || []).map(bnetKey));
       if (b.yes === false) { L.teamNo = [...new Set((L.teamNo || []).concat([id]))].slice(-20); await bnetPut(env, who.uid, L, url); return json({ ok: true, no: true }); }
       if (d.join && d.join[who.uid]) return json({ ok: true, already: true, ver: d.ver });
+      if (b.inv) { if (!d.inv || String(b.inv) !== d.inv) return json({ error: 'That invite link has been replaced. Ask an officer for the new one.' }, 403); /* (an invite link: in at once, in the guild or not) */
+        d.join = { ...(d.join || {}), [who.uid]: { main: m, at: now, how: 'invite' } }; if (d.asks && d.asks[who.uid]) { d.asks = { ...d.asks }; delete d.asks[who.uid]; } alogAdd(d, m, 'joined with the invite link'); }
+      else {
       const inLogs = ((d.regs && d.regs.list) || []).some((p) => ks.has(p.k)) || (await charTeams(env, url, L).catch(() => [])).some((t) => t.id === id && t.n >= 1);
       if (inLogs) { d.join = { ...(d.join || {}), [who.uid]: { main: m, at: now, how: 'logs' } }; if (d.asks && d.asks[who.uid]) { d.asks = { ...d.asks }; delete d.asks[who.uid]; } alogAdd(d, m, 'joined the team'); if (L.teamNo && L.teamNo.includes(id)) { L.teamNo = L.teamNo.filter((x) => x !== id); await bnetPut(env, who.uid, L, url); } }
       else if (!b.ask) return json({ error: 'Debrief didn\'t find you in ' + d.name + '\'s raid logs. Ask to join instead: an officer okays it.' }, 403);
       else { const rk = await guildRankOf(env, url, d.setup.guild, L); if (rk == null) return json({ error: 'Blizzard didn\'t send ' + d.setup.guild.name + '\'s roster just now. Try again in a minute.' }, 502);
         if (rk < 0) return json({ error: 'Only members of ' + d.setup.guild.name + ' can ask to join ' + d.name + '. If you raid with them, Debrief asks you after your first logged raid.' }, 403);
-        if (d.asks && d.asks[who.uid]) return json({ ok: true, asked: true, ver: d.ver }); d.asks = { ...(d.asks || {}), [who.uid]: { main: m, at: now } }; alogAdd(d, m, 'asked to join'); } }
+        if (d.asks && d.asks[who.uid]) return json({ ok: true, asked: true, ver: d.ver }); d.asks = { ...(d.asks || {}), [who.uid]: { main: m, at: now } }; alogAdd(d, m, 'asked to join'); } } }
+    else if (b.op === 'invite') { const A = await teamAccess(env, url, d, who); if (A.acc !== 'edit' || !d.setup) return json({ error: 'Only the raid lead and the officers make the invite link.' }, 403); d.inv = inviteCode(); alogAdd(d, me, 'made a new invite link (the old one stops working)'); }
     else if (b.op === 'okay') { /* (an officer lets a request in, or says no, in one click) */
       const A = await teamAccess(env, url, d, who); if (A.acc !== 'edit') return json({ error: 'Only the raid lead and the officers answer requests to join.' }, 403);
       const x = (d.asks || {})[b.uid]; if (!x) return json({ error: 'That request has already been answered.' }, 404); d.asks = { ...d.asks }; delete d.asks[b.uid];

@@ -1,4 +1,4 @@
-// Automatic team setup, chunks 1 to 4 (Nov 9): the Worker's own code against a fake storage, a fake Warcraft Logs and a made-up guild, on this PC only.
+// Automatic team setup, chunks 1 to 5 (Nov 9): the Worker's own code against a fake storage, a fake Warcraft Logs and a made-up guild, on this PC only.
 //   node tests/team-setup.mjs
 // Checks: the guild roster's last good copy, a team's raiders from its raid nights, rank names, which teams an officer can set up,
 // the setup save (claimed once, "set up by"), handing over (guild master or site admin only), and the access history.
@@ -7,7 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url)), SRC = path.join(here,
 let code = fs.readFileSync(SRC, 'utf8').replace("import { WorkerEntrypoint } from 'cloudflare:workers';", 'class WorkerEntrypoint {}').replace(/\b__[A-Z_]+__\b/g, '""');
 code = code.replace('const NIGHT_Q = "";', 'const NIGHT_Q = "fights(killType";').replace('const TEAM_REPORTS_Q = "";', 'const TEAM_REPORTS_Q = "reports(guildID";')
   .replace('const CHAR_INFO_Q = "";', 'const CHAR_INFO_Q = "characterInfo";').replace('const CHAR_REPORTS_Q = "";', 'const CHAR_REPORTS_Q = "recentReports";').replace('const TEAM_INFO_Q = "";', 'const TEAM_INFO_Q = "guildInfo";');
-code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess, teamRecheck, teamCron };\n';
+code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess, teamRecheck, teamCron, setupRegs };\n';
 const tmp = path.join(os.tmpdir(), 'debrief-team-setup-' + process.pid + '.mjs'); fs.writeFileSync(tmp, code);
 
 // ---- the edge cache, storage (R2), KV and Warcraft Logs, all fake
@@ -27,7 +27,7 @@ const NIGHTS = { n1a: [1, 2], n1b: [1, 2, 3], n2: [1, 2], n3: [1, 3] };
 globalThis.fetch = async (u, o) => { const url = String(u);
   if (url.includes('/oauth/token')) return new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 }));
   if (url.includes('warcraftlogs.com/api/v2')) { const b = JSON.parse(o.body), q = b.query, v = b.variables || {};
-    if (q.includes('reports(guildID')) return new Response(JSON.stringify({ data: { reportData: { reports: { data: v.id === 555 ? REPS : [] } } } }));
+    if (q.includes('reports(guildID')) return new Response(JSON.stringify({ data: { reportData: { reports: { data: v.id === 555 ? REPS : v.id === 777 && o.headers.Authorization === 'Bearer usertok' ? REPS.slice(0, 3) : [] } } } }));
     if (q.includes('fights(killType')) return new Response(JSON.stringify({ data: { reportData: { report: { endTime: T0, fights: [{ id: 1, friendlyPlayers: NIGHTS[v.code] }, { id: 2, friendlyPlayers: [] }], masterData: { actors } } } } }));
     if (q.includes('characterInfo')) return new Response(JSON.stringify({ data: { characterData: { character: v.name === 'Leadone' ? { id: 9001 } : v.name === 'Raidone' ? { id: 9002 } : null } } }));
     if (q.includes('recentReports')) return new Response(JSON.stringify({ data: { characterData: { character: { recentReports: { data: REPS.filter((r) => r.code !== 'mp').map((r) => ({ ...r, guild: { id: 555, name: 'Testteam' } })) } } } } }));
@@ -152,4 +152,18 @@ BLIZ = null; fresh(); { const [, a] = await call(S1.gm, '/api/teamplan?id=team:5
 { const before = JSON.parse(new TextDecoder().decode(R2.get('team-list.json').data)); ok(before.some((x) => x.id === 'team:555'), 'the set-up team is on the daily list');
   before.forEach((x) => { x.chk = 0; }); R2.set('team-list.json', { data: new TextEncoder().encode(JSON.stringify(before)), etag: 'l' }); await W.teamCron(env);
   const after = JSON.parse(new TextDecoder().decode(R2.get('team-list.json').data)); ok(after.filter((x) => x.chk > 0).length === 1, 'each 10-minute run re-checks one team that is due'); }
+console.log('10. Edge cases (chunk 5)');
+{ const R0 = await W.setupRegs(env, new URL(SITE), 'team:777', 'us', { uid: 'b:x' }), R1 = await W.setupRegs(env, new URL(SITE), 'team:777', 'us', { uid: 'b:x', t: 'usertok' });
+  ok(R0.nights === 0 && !R0.private, 'a team with private logs shows no nights to everyone'); ok(R1.nights === 2 && R1.private, 'with the officer\'s own Warcraft Logs connection, its private nights are read: ' + R1.nights); }
+P.Strangertest = sign('Strangertest', [{ n: 'Strangertest', slug: 'illidan', realm: 'Illidan', g: '', gs: '' }], PRAC);
+{ const [, o] = await call(P.Officertest, '/api/teamplan?id=guild:6956'), [, r] = await call(P.Twotest, '/api/teamplan?id=guild:6956');
+  ok(/^[a-f0-9]{18}$/.test(o.inv || '') && !r.inv, 'the officers get the invite link; a raider doesn\'t');
+  const [s0] = await call(P.Strangertest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, inv: 'abcdefabcdef', me: 'Strangertest' }); ok(s0 === 403, 'a wrong invite key doesn\'t let anyone in');
+  const [, a] = await call(P.Strangertest, '/api/teamplan?id=guild:6956'); ok(a.access === 'none', 'Strangertest (not in the guild, not in the logs) can\'t open Honestly');
+  const [s1] = await call(P.Strangertest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, inv: o.inv, me: 'Strangertest' }); const [, b] = await call(P.Strangertest, '/api/teamplan?id=guild:6956');
+  ok(s1 === 200 && b.joined && b.access === 'see', 'the invite link lets Strangertest in at once');
+  const [s2] = await call(P.Twotest, '/api/teamplan?id=guild:6956', { op: 'invite', me: 'Twotest' }); ok(s2 === 403, 'a raider can\'t make a new invite link');
+  const [s3] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'invite', me: 'Officertest' }); const [, o2] = await call(P.Officertest, '/api/teamplan?id=guild:6956');
+  const [s4, j4] = await call(P.Newtest, '/api/teamplan?id=team:796679', { op: 'member', yes: true, inv: o.inv, me: 'Newtest' });
+  ok(s3 === 200 && o2.inv && o2.inv !== o.inv && s4 === 403, 'a new link replaces the old one: ' + j4.error); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);

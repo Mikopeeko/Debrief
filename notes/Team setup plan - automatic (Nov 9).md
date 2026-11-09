@@ -102,3 +102,10 @@ own, and reported to Main as "Done, pushed <commit>". Nothing goes live without 
 - No logs yet: set up with an empty roster and add raiders by hand, or share an invite link until the first logged raid.
 - Private Warcraft Logs reports: setup says the team needs "Connect Warcraft Logs" to read them.
 - The guild's own page and a separate team page both work; several teams in one guild each set up once.
+
+**Status (Nov 9, the build chat):** all five chunks built, tested on the "setup" test copy and pushed to GitHub (not live until Flex says "push it"):
+chunk 1 a0589657, chunk 2 dc6ba814, chunk 3 cecf59c1, chunk 4 ef7547a6, chunk 5 in the commit after it. Tests: tests/team-setup.mjs (75 checks) and
+tests/team-access.mjs. The daily re-check only runs once deployed (the site Worker's 10-minute run); on a test copy, /api/teamsetup?step=recheck&id=.
+Left for later: officers' and raiders' access on teams saved before (Wolfthorn) is unchanged by design; Wolfthorn can use the new setup only if its
+lead chooses to (not built: no forced re-setup). Someone who leaves the guild but keeps raiding with the team still sees it as a regular until they
+drop out of its last 12 raid nights.
