@@ -14928,11 +14928,11 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-s
     color: var(--gold) !important;
     font-weight: 600 !important;
   }
-  html:not([data-theme]) body.refine #view .pf-row.cb.gb-row { /* (Nov 8, Flex: "spaced way too far": slim rows again, 26 px like By ability; it was 36) */
-    min-height: 26px !important;
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-    border-bottom: 1px solid var(--line) !important;
+  html:not([data-theme]) body.refine #view .pf-row.cb.gb-row, html:not([data-theme]) body.refine #view .gb-tmain .pf-row.cb.nb.gb-r8:not(.cb-h):not(.r263-tot) { /* (Nov 8, Flex: "spaced way too far": slim rows again; Nov 9, Flex: "separating lines a little more thin and subtle so the bars are packed together": 24 px, a faint line; By ability the same) */
+    min-height: 24px !important;
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, .04) !important;
     border-radius: 0 !important;
     font-size: 13.5px !important;
   }
