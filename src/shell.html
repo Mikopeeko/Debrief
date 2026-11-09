@@ -8321,6 +8321,8 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
 }
+/* page tips: the dark layer stays see-through, so the cut-out shows the part it points at (Flex via Main, Nov 8: the tips framed an empty box on a black page; the theme's pop-up panel rule listed .ptip and painted the whole layer solid) */
+@layer defaultTheme { html body #ptip.ptip { background: transparent !important; background-image: none !important; border: 0 !important; box-shadow: none !important; } }
 /* plan review 8 + 9 + 10 + 12 (Nov 8) */
 html body #assignBox:has(> .pg-tabs[data-cur="mine"]) .panel.ndz-dal { display: none !important; } /* (the no-job warning belongs to Assignments) */
 :root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pg-roster { order: 1 !important; }

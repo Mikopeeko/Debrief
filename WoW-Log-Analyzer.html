@@ -8321,6 +8321,8 @@ html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr { flex-wrap: wrap; row-gap: 2px; }
 html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox:has(> .pg-tabs[data-cur="cds"]) #ndzTl:not(.big):has(> .btl-wrap + .btl-tray) > .btl-tray .btl-trr > .btl-trn { min-width: 84px; }
 }
+/* page tips: the dark layer stays see-through, so the cut-out shows the part it points at (Flex via Main, Nov 8: the tips framed an empty box on a black page; the theme's pop-up panel rule listed .ptip and painted the whole layer solid) */
+@layer defaultTheme { html body #ptip.ptip { background: transparent !important; background-image: none !important; border: 0 !important; box-shadow: none !important; } }
 /* plan review 8 + 9 + 10 + 12 (Nov 8) */
 html body #assignBox:has(> .pg-tabs[data-cur="mine"]) .panel.ndz-dal { display: none !important; } /* (the no-job warning belongs to Assignments) */
 :root body.snv-on.snv-on #view.plan-page > #assignBox:has(> .pg-tabs[data-cur="all"]) > .pg-roster { order: 1 !important; }
@@ -59153,7 +59155,11 @@ const TIPS_V = { home: 2, live: 2, perf: 5, audit: 3, overview: 5, team: 2, rot:
 const TIPS_KEY = (k) => 'wla-tips-' + k + (TIPS_V[k] ? '-v' + TIPS_V[k] : '');
 // (which page is up: a pull's tab, the teams page, or a team's page)
 const tipsPage = () => (S.page === 'ingame' && $('#main .igm-page') ? 'ingame' : $('#main .pg-hub') && !S.hubHome ? 'hub' : $('#main .home.hd') ? 'home' : $('#pgEdit') ? 'team' : S.rep && $('#view') ? (S.tab === 'rot' && $('#view .rot-pick') ? 'rotpick' : S.tab) : null);
-const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4) return e; } return null; };
+// (a tip's target: on screen, not hidden, and showing something: a few words of text or a picture, icon or chart. An empty or still-loading card is skipped (Flex via Main, Nov 8: the Home tips spotlighted an empty "The goal" box for a new visitor))
+const tipFilled = (e) => { const cs = getComputedStyle(e); if (cs.visibility === 'hidden' || +cs.opacity < 0.05) return false; if (e.closest('[aria-busy="true"], .sk, .skel, .skeleton')) return false;
+  const txt = String(e.innerText || '').replace(/\s+/g, ' ').trim(); if (txt.length >= 12) return true;
+  for (const m of e.querySelectorAll('img, svg, canvas, video, picture')) { const r = m.getBoundingClientRect(); if (r.width > 12 && r.height > 12 && getComputedStyle(m).visibility !== 'hidden') return true; } return false; };
+const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4 && tipFilled(e)) return e; } return null; };
 let TIPS_WAIT = null;
 function pageTips(k, force) {
   if (!k || !PAGE_TIPS[k] || $('#tour') || $('#ptip') || (!force && (store.get(TIPS_KEY(k)) === '1' || !tourDone() || (S.gsPoint && (k === 'hub' || k === 'team'))))) return;
@@ -59194,10 +59200,12 @@ function runTips(k, steps) {
     bub.style.top = top + 'px'; bub.style.left = left + 'px'; bub.dataset.side = side; bub.style.setProperty('--ax', Math.max(18, Math.min(bw - 18, b.left + Math.min(b.width / 2, 60) - left)) + 'px'); };
   const follow = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(place); };
   const finish = (seen) => { if (seen !== false) store.set(TIPS_KEY(k), '1'); removeEventListener('scroll', follow, true); removeEventListener('resize', follow); document.removeEventListener('keydown', key, true); ov.classList.add('out'); setTimeout(() => ov.remove(), 220); };
-  const draw = () => { const s = steps[i], last = i === steps.length - 1, e = tipVis(s.sel);
+  let dir = 1; /* (the way the reader is going: a step that emptied out is skipped in that direction) */
+  const draw = () => { if (!tipVis(steps[i].sel)) { let j = i; while (j >= 0 && j < steps.length && !tipVis(steps[j].sel)) j += dir; if (j < 0 || j >= steps.length) { j = i; while (j >= 0 && j < steps.length && !tipVis(steps[j].sel)) j -= dir; } if (j < 0 || j >= steps.length) { finish(); return; } i = j; } /* (never frame a blank box, Nov 8) */
+    const s = steps[i], last = i === steps.length - 1, e = tipVis(s.sel);
     bub.innerHTML = '<div class="pt-k">' + (i + 1) + ' of ' + steps.length + '</div><b>' + esc(s.t) + '</b><p>' + esc(s.p) + '</p><div class="pt-nav">' + (i ? '<button class="btn" data-p="back" type="button">Back</button>' : '<button class="linkbtn pt-tour" data-p="tour" type="button">Take the tour</button>') +
       '<button class="btn primary" data-p="' + (last ? 'done' : 'next') + '" type="button">' + (last ? 'Got it' : 'Next') + '</button></div>';
-    bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { i++; draw(); } else if (a === 'back') { i--; draw(); } else if (a === 'tour') { finish(); startTour(0); } else finish(); }));
+    bub.querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => { const a = b.dataset.p; if (a === 'next') { dir = 1; i++; draw(); } else if (a === 'back') { dir = -1; i--; draw(); } else if (a === 'tour') { finish(); startTour(0); } else finish(); }));
     bub.classList.remove('in'); void bub.offsetWidth; bub.classList.add('in');
     if (e) { const b = e.getBoundingClientRect();
       // (taller than most of the screen, like the debrief on a phone: its top comes into view, below the tabs)
@@ -59205,7 +59213,7 @@ function runTips(k, steps) {
     place(); const f = bub.querySelector('.btn.primary'); if (f) f.focus();
     /* round 431 first visit */ const at = i; [700, 1600, 3000].forEach((ms) => setTimeout(() => { if (at !== i || !ov.isConnected) return; const x = tipVis(steps[i].sel); if (!x) return; const q = x.getBoundingClientRect(); if (q.top < 60 || q.top > innerHeight - 80) { x.style.scrollMarginTop = '150px'; x.scrollIntoView({ block: q.height > innerHeight * 0.35 ? 'start' : 'center' }); place(); } }, ms)); };
   // (Enter or → for next, ← for back; Escape doesn't skip it)
-  const key = (e) => { if (!document.body.contains(ov)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < steps.length - 1) { i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { i--; draw(); } };
+  const key = (e) => { if (!document.body.contains(ov)) return; if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); } else if (e.key === 'ArrowRight' && i < steps.length - 1) { dir = 1; i++; draw(); } else if (e.key === 'ArrowLeft' && i > 0) { dir = -1; i--; draw(); } };
   addEventListener('scroll', follow, true); addEventListener('resize', follow); document.addEventListener('keydown', key, true);
   draw();
 }

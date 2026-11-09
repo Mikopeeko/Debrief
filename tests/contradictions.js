@@ -301,6 +301,8 @@ if (!UI.includes("dif = (o && o.diff) || (k && N0.d && N0.d[k] && N0.d[k].diff) 
   if (!UI.includes("[/^Crates/, (p) => ndzIsT(p) || ndzIsR(p), ['tank', 'move', 'ranged'], 'explain']")) say('the page code', 'jobs', 'the fit pass re-ranks the crate pairs again: both tanks can land on Crates 1 (K8)');
   if ((UI.match(/\['grip'\], 'strict'\]/g) || []).length < 4) say('the page code', 'jobs', 'a grip row is not strict: a non-gripper can fill it'); }
 /* (Plan review 1, Nov 8: a strict job never asks for more players than the roster can give it, so a fresh plan is not left with a job nobody can fill) */
+/* (Nov 8: the page tips never spotlight an empty or loading card) */
+if (!UI.includes('const tipVis = (sel) => { for (const e of document.querySelectorAll(sel)) { const b = e.getBoundingClientRect(); if (b.width > 4 && b.height > 4 && tipFilled(e)) return e; } return null; };')) say('the page code', 'tips', 'the page tips no longer check that a target shows something: an empty card can be spotlighted');
 if (!UI.includes("if (typeof ndzStrictCap === 'function') ndzStrictCap(B, [...pr.players.values()]);")) say('the page code', 'jobs', 'the build no longer caps strict jobs: a grip row with no gripper left says "1 more needed" forever');
 if (!UI.includes('audit W11: the root cause the Debriefing card shows answers here too')) say('the page code', 'wipes', 'why we wiped has two rule sets again (audit W11)');
 if (typeof (H.E && H.E.rcJobBy) !== 'function' || !UI.includes('E.rcJobBy && E.rcJobBy(r, rc.cat, t0)')) say('the page code', 'wipes', 'who missed a job has two rules again (audit W2)');
