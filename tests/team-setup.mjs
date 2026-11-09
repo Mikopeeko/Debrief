@@ -66,7 +66,7 @@ ok(rs[3].name === 'Trial' && rs[3].acc === 'see', 'rank 3: "' + rs[3].name + '",
 ok(rs[7].name === 'Alt / Social' && rs[7].acc === 'none', 'rank 7: "' + rs[7].name + '", None (' + rs[7].why + ')');
 
 console.log('4. Which teams each person can set up (test copy, made-up guild)');
-const P = {}; for (const n of ['Officertest', 'Raidertest', 'Gmtest', 'Pugtest', 'Newtest', 'Twotest', 'Flëxørçïst']) P[n] = sign(n, [{ n, slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall' }], PRAC);
+const P = {}; for (const n of ['Officertest', 'Raidertest', 'Gmtest', 'Pugtest', 'Newtest', 'Twotest', 'Officera', 'Flëxørçïst']) P[n] = sign(n, [{ n, slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall' }], PRAC);
 const F = {}; for (const n of Object.keys(P)) F[n] = (await call(P[n], '/api/teamsetup?step=find'))[1];
 const tl = (n) => F[n].teams.map((t) => t.name + (t.can ? ' (can)' : '')).join(', ') || 'none';
 ok(F.Officertest.can && F.Officertest.teams.length === 1 && F.Officertest.teams[0].can, 'Officertest (rank 1): ' + tl('Officertest'));
@@ -104,4 +104,24 @@ await call(P.Raidertest, '/api/teamplan?id=guild:6956'); /* (Raidertest has open
 
 console.log('7. A team with no guild and the old way still work');
 { const [st] = await call(P.Pugtest, '/api/teamplan?id=team:12345', { op: 'create', name: 'Community', me: 'Pugtest' }); ok(st === 200, 'anyone saves a team with no guild first, as before'); }
+console.log('8. Raiders join (chunk 3)');
+{ const [st] = await call(P.Gmtest, '/api/teamplan?id=team:796679', { op: 'setup', me: 'Gmtest' }); ok(st === 200, 'Gmtest sets up Lai Dou Lai Le too'); }
+const mine = async (n) => (await call(P[n], '/api/teamsetup?step=mine'))[1], names = (l) => (l || []).map((t) => t.name + (t.joined ? ' (joined)' : t.no ? ' (not me)' : t.asked ? ' (asked)' : '')).join(', ') || 'none';
+{ const m = await mine('Raidertest'); ok(m.teams.length === 1 && m.teams[0].name === 'Honestly' && m.teams[0].n === 11 && m.teams[0].joined, 'Raidertest (Honestly\'s lead since the hand-over) isn\'t asked to join their own team: ' + names(m.teams)); }
+{ const m = await mine('Officera'); ok(m.teams.length === 1 && m.teams[0].name === 'Honestly' && m.teams[0].n === 12 && !m.teams[0].joined, 'Officera is asked about Honestly (12 nights): ' + names(m.teams)); }
+{ const m = await mine('Twotest'); ok(m.teams.length === 2, 'Twotest is asked about both: ' + names(m.teams)); }
+{ const m = await mine('Newtest'); ok(m.teams.length === 0 && m.guild.length === 2, 'Newtest (not in the logs): no prompt, and can ask to join ' + names(m.guild)); }
+{ const [, a] = await call(P.Pugtest, '/api/teamplan?id=guild:6956'); ok(a.access === 'none', 'Pugtest (not in the guild) can\'t open Honestly before joining');
+  const [st] = await call(P.Pugtest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, me: 'Pugtest' }); const [, b] = await call(P.Pugtest, '/api/teamplan?id=guild:6956');
+  ok(st === 200 && b.access === 'see' && b.why === 'joined' && b.joined, 'Yes, that\'s me: Pugtest joins (in the logs) and can see the plan'); }
+{ const [st, j] = await call(P.Newtest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, me: 'Newtest' }); ok(st === 403, 'Newtest can\'t just join (not in the logs): ' + j.error); }
+{ const [st, j] = await call(P.Pugtest, '/api/teamplan?id=team:796679', { op: 'member', yes: true, ask: true, me: 'Pugtest' }); ok(st === 403, 'Pugtest can\'t ask to join a team they don\'t raid with, outside the guild: ' + j.error); }
+{ const [st] = await call(P.Newtest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, ask: true, me: 'Newtest' }); const m = await mine('Newtest'); ok(st === 200 && m.guild.find((t) => t.name === 'Honestly').asked, 'Newtest asks to join Honestly: ' + names(m.guild)); }
+{ const [, o] = await call(P.Officertest, '/api/teamplan?id=guild:6956'); const a = (o.asks || [])[0]; ok(a && a.main === 'Newtest', 'the officer sees the request: ' + (a && a.main));
+  const [, r] = await call(P.Twotest, '/api/teamplan?id=guild:6956'); ok(r.access === 'see' && (r.asks || []).length === 0, 'a raider (Twotest, See) doesn\'t see requests'); /* (Raidertest leads it since the hand-over above) */
+  const [st] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'okay', uid: a.uid, yes: true, me: 'Officertest' }); const [, n] = await call(P.Newtest, '/api/teamplan?id=guild:6956');
+  ok(st === 200 && n.joined, 'the officer okays it in one click: Newtest is on the team');
+  const [, h] = await call(P.Officertest, '/api/teamplan?id=guild:6956'); ok(/let Newtest join/.test(h.alog.map((x) => x.sum).join('|')) && /Pugtest/.test(h.alog.map((x) => x.by).join('|')), 'the access history has the joins'); }
+{ const [st] = await call(P.Twotest, '/api/teamplan?id=team:796679', { op: 'member', yes: false, me: 'Twotest' }); const m = await mine('Twotest'); ok(st === 200 && m.teams.find((t) => t.name === 'Lai Dou Lai Le').no, 'Not me: Twotest isn\'t asked about Lai Dou Lai Le again: ' + names(m.teams)); }
+{ const [st] = await call(P.Raidertest, '/api/teamplan?id=team:12345', { op: 'member', yes: true, me: 'Raidertest' }); ok(st === 400, 'a team saved the old way can\'t be joined like this'); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);
