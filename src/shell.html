@@ -16467,5 +16467,39 @@ html body #view .gb-chart249 .pfc .pfc-l, html body #view .gb-chart249 .pfc .pfc
 html body #view .gb-chart249 .pfc-mki { position: relative; } html body #view .gb-chart249 .pfc-mkn { position: absolute; right: -4px; bottom: -5px; min-width: 14px; height: 14px; padding: 0 3px; font: 700 9.5px var(--body); line-height: 14px; text-align: center; color: #111; background: var(--gold, #d4b77d); }
 html body #view .gb-chart249 .pfc-mki { position: absolute; }
 </style>
+<style>/* (Nov 8 Graphs polish 2: Flex, "weird alignment", "background shading"; inside the theme layer, so its rules win over the theme) */
+@layer defaultTheme {
+/* every switch in a card header is 28 px tall and sits on one line */
+html body #view#view .gb.gb-tb .gb-card .gb-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 48px; padding: 8px 14px !important; }
+html body #view#view .gb.gb-tb .gb-card .gb-hd > .r308-ctl, html body #view#view .gb-chart249 .gb-hd.r308-hd > .r308-ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 0 auto !important; padding: 0 !important; border: 0 !important; flex: 0 1 auto; }
+html body #view#view .gb-chart249 .gb-hd.r308-hd > .r308-ctl { flex: 0 1 auto; justify-content: flex-end; }
+html body #view#view .gb-chart249 .gb-hd.r308-hd > .gb-lbl, html body #view#view .gb-chart249 .gb-hd.r308-hd > .gb-hs { align-self: center; }
+html body #view#view .gb.gb-tb .r295-when .pfph, html body #view#view .gb.gb-tb .r295-when .gb-dur, html body #view#view .gb.gb-tb .r295-view .gb-by, html body #view#view .gb.gb-tb .gb-tool .gb-by, html body #view#view .gb.gb-tb .gb-card .gb-hd .gb-by { display: inline-flex !important; align-items: stretch; height: 28px; gap: 0 !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--line) !important; border-radius: 2px !important; background: var(--panel) !important; box-sizing: border-box; overflow: hidden; }
+html body #view#view .gb.gb-tb .r295-when button, html body #view#view .gb.gb-tb .r295-view .gb-by button, html body #view#view .gb.gb-tb .r295-when .gb-dur button, html body #view#view .gb.gb-tb .gb-tool .gb-by button, html body #view#view .gb.gb-tb .gb-card .gb-hd .gb-by button { height: 26px !important; min-height: 0 !important; line-height: 26px !important; padding: 0 11px !important; margin: 0 !important; border: 0 !important; border-right: 1px solid var(--line) !important; border-radius: 0 !important; background: none !important; color: var(--muted) !important; font: 600 12.5px var(--body) !important; text-decoration: none !important; box-shadow: none !important; }
+html body #view#view .gb.gb-tb .r295-when button:last-child, html body #view#view .gb.gb-tb .r295-view .gb-by button:last-child, html body #view#view .gb.gb-tb .r295-when .gb-dur button:last-child, html body #view#view .gb.gb-tb .gb-tool .gb-by button:last-child, html body #view#view .gb.gb-tb .gb-card .gb-hd .gb-by button:last-child { border-right: 0 !important; }
+html body #view#view .gb.gb-tb .r295-when button.on, html body #view#view .gb.gb-tb .r295-view .gb-by button.on, html body #view#view .gb.gb-tb .r295-when .gb-dur button.on, html body #view#view .gb.gb-tb .gb-tool .gb-by button.on, html body #view#view .gb.gb-tb .gb-card .gb-hd .gb-by button.on { color: var(--gold) !important; background: rgba(212, 183, 125, .12) !important; }
+html body #view#view .gb-chart249 details.r292-cmp > summary { height: 28px; box-sizing: border-box; padding: 0 11px; display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 2px; background: var(--panel); color: var(--muted); font: 600 12.5px var(--body); }
+html body #view#view .gb.gb-tb .gb-card .gb-hd select, html body #view#view .gb.gb-tb .gb-card .gb-hd .r308-ctl select { height: 28px !important; min-height: 0 !important; padding: 0 26px 0 10px !important; border: 1px solid var(--line) !important; border-radius: 2px !important; background-color: var(--panel) !important; font: 600 12.5px var(--body) !important; color: var(--text) !important; box-shadow: none !important; }
+html body #view#view .gb.gb-tb .gb-card .gb-hd .r295-view::before, html body #view#view .gb.gb-tb .gb-card .gb-hd .r308-ctl .r294-dl, html body #view#view .gb.gb-tb .gb-card .gb-hd .r308-ctl .pft-lb { display: none !important; }
+html body #view#view .gb.gb-tb .gb-card .gb-hd .r308-ctl .r295-view, html body #view#view .gb.gb-tb .gb-card .gb-hd .r308-ctl > * { margin: 0 !important; padding: 0 !important; border: 0 !important; }
+/* no underline on the During buttons (they were drawn as spell names) */
+html body #view#view .gb.gb-tb .r295-when .gb-dur button, html body #view#view .gb.gb-tb .r295-when .gb-dur button * { text-decoration: none !important; border-bottom: 0 !important; }
+html body #view#view .gb.gb-tb .r295-when .gb-dur button .sp, html body #view#view .gb.gb-tb .r295-when .gb-dur button span { border: 0 !important; background: none !important; }
+/* every group 28 px: no inner padding on the segmented wrappers */
+html body #view#view .gb.gb-tb .gb-card .gb-hd .seg, html body #view#view .gb.gb-tb .gb-card .gb-hd .seg.gb-by, html body #view#view .gb.gb-tb .gb-tool .seg.gb-by { padding: 0 !important; height: 28px !important; min-height: 0 !important; box-sizing: border-box !important; }
+html body #view#view .gb-chart249 details.r292-cmp, html body #view#view .gb-chart249 details.r292-cmp > summary { height: 28px !important; min-height: 0 !important; box-sizing: border-box !important; line-height: 26px; }
+/* breathing room at both ends of every row and the column names (the last column touched the card edge) */
+html body #view#view .gb.gb-tb .gb-card .pf-row.cb { padding-left: 8px !important; padding-right: 12px !important; box-sizing: border-box !important; }
+/* no shadow behind the word Total */
+html body #view#view .gb.gb-tb .gb-card .pf-row.cb .cb-in::before { content: none !important; display: none !important; } /* (no dark band behind the names either) */
+/* no striped rows */
+html body #view#view .gb.gb-tb .gb-card .gb-rows > .pf-row:nth-child(even), html body #view#view .gb.gb-tb .gb-card .gb-rows > .pf-row:nth-child(odd) { background: none !important; }
+html body #view#view .gb.gb-tb .gb-card .gb-rows > .pf-row.gb-row:hover { background: rgba(255, 255, 255, .035) !important; }
+/* the Total row: no band behind the word */
+html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot > .cb-b, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot > .cb-b > * { background: none !important; box-shadow: none !important; }
+html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot { border-top: 1px solid var(--line) !important; }
+html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-f, html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-in { background: none !important; box-shadow: none !important; } html body #view#view .gb.gb-tb .gb-card .pf-row.r263-tot .cb-f { visibility: hidden; }
+}
+</style>
 </body>
 </html>
