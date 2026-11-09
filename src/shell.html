@@ -17996,5 +17996,12 @@ html body .mpf-s3more { all: unset; display: block; margin: 12px auto 2px; paddi
 @media (max-width: 760px) { html body .mpf-s3r { grid-template-columns: 46px minmax(0,1fr) 80px 12px; } html body .mpf-s3th, html body .mpf-s3tm { display: none; } html body .mpf-s3id h1 { font-size: 30px !important; } html body .mpf-s3h { padding: 18px 16px 10px; } html body .mpf-s3rt .mpf-s2r b { font-size: 52px !important; } }
 }
 </style>
+<style>/* (Nov 9: the tips close button) */
+@layer defaultTheme {
+html body .ptip .pt-bub { padding-right: 34px !important; }
+html body .ptip .pt-x { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--muted); font: 600 14px/1 var(--body); cursor: pointer; border-radius: 4px; }
+html body .ptip .pt-x:hover { color: var(--text); background: rgba(255,255,255,.06); }
+}
+</style>
 </body>
 </html>
