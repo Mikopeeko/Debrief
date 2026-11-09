@@ -27,7 +27,7 @@ const NIGHTS = { n1a: [1, 2], n1b: [1, 2, 3], n2: [1, 2], n3: [1, 3] };
 globalThis.fetch = async (u, o) => { const url = String(u);
   if (url.includes('/oauth/token')) return new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 }));
   if (url.includes('warcraftlogs.com/api/v2')) { const b = JSON.parse(o.body), q = b.query, v = b.variables || {};
-    if (q.includes('reports(guildID')) return new Response(JSON.stringify({ data: { reportData: { reports: { data: v.id === 555 ? REPS : v.id === 777 && o.headers.Authorization === 'Bearer usertok' ? REPS.slice(0, 3) : [] } } } }));
+    if (q.includes('reports(guildID')) return new Response(JSON.stringify({ data: { reportData: { reports: { data: v.id === 555 || v.id === 556 || v.id === 557 ? REPS : v.id === 777 && o.headers.Authorization === 'Bearer usertok' ? REPS.slice(0, 3) : [] } } } }));
     if (q.includes('fights(killType')) return new Response(JSON.stringify({ data: { reportData: { report: { endTime: T0, fights: [{ id: 1, friendlyPlayers: NIGHTS[v.code] }, { id: 2, friendlyPlayers: [] }], masterData: { actors } } } } }));
     if (q.includes('characterInfo')) return new Response(JSON.stringify({ data: { characterData: { character: v.name === 'Leadone' ? { id: 9001 } : v.name === 'Raidone' ? { id: 9002 } : null } } }));
     if (q.includes('recentReports')) return new Response(JSON.stringify({ data: { characterData: { character: { recentReports: { data: REPS.filter((r) => r.code !== 'mp').map((r) => ({ ...r, guild: { id: 555, name: 'Testteam' } })) } } } } }));
@@ -35,9 +35,11 @@ globalThis.fetch = async (u, o) => { const url = String(u);
     return new Response(JSON.stringify({ data: {} })); }
   if (url.includes('oauth.battle.net/token')) return new Response(JSON.stringify({ access_token: 'btok', expires_in: 3600 }));
   if (url.includes('api.blizzard.com/data/wow/realm/index')) return new Response(JSON.stringify({ realms: [{ name: "Zul'jin", slug: 'zuljin' }, { name: 'Illidan', slug: 'illidan' }] }));
+  if (url.includes('api.blizzard.com/profile/wow/character/')) { const n = decodeURIComponent(url.split('/profile/wow/character/')[1].split('?')[0].split('/')[1] || ''); const gd = !COMMUNITY && { leadone: 1, raidone: 1, newone: 1, gmone: 1 }[n];
+    return new Response(JSON.stringify({ name: n, guild: gd ? { name: 'Testguild', realm: { slug: 'zuljin' } } : undefined })); }
   if (url.includes('api.blizzard.com/data/wow/guild/zuljin/testguild/roster')) return BLIZ ? new Response(JSON.stringify({ members: BLIZ.map(([n, slug, rank]) => ({ character: { name: n, realm: { slug } }, rank })) })) : new Response('down', { status: 503 });
   throw new Error('no network in this test: ' + url); };
-let BLIZ = null;
+let BLIZ = null, COMMUNITY = false;
 const W = await import(pathToFileURL(tmp).href); fs.unlinkSync(tmp);
 let bad = 0; const ok = (c, msg) => { console.log((c ? '  ok   ' : '  FAIL ') + msg); if (!c) bad++; };
 const SITE = 'https://debriefme.io', PRAC = 'https://setup-debrief.example.workers.dev';
@@ -107,7 +109,8 @@ await call(P.Raidertest, '/api/teamplan?id=guild:6956'); /* (Raidertest has open
   ok(st === 200 && j.you.lead && j.lead === 'Raidertest', 'the guild master hands it to Raidertest, who now leads it'); ok(/handed the team from Officertest to Raidertest/.test(j.alog.map((x) => x.sum).join('|')), 'and the access history says so'); }
 
 console.log('7. A team with no guild and the old way still work');
-{ const [st] = await call(P.Pugtest, '/api/teamplan?id=team:12345', { op: 'create', name: 'Community', me: 'Pugtest' }); ok(st === 200, 'anyone saves a team with no guild first, as before'); }
+{ const [st, j] = await call(P.Pugtest, '/api/teamplan?id=team:12345', { op: 'create', name: 'Community', me: 'Pugtest' }); ok(st === 403, 'a Warcraft Logs team page with no raid logs can\'t be claimed by just anyone: ' + j.error);
+  const [s2] = await call(P['Flëxørçïst'], '/api/teamplan?id=team:12345', { op: 'create', name: 'Community', me: 'Flëxørçïst' }); ok(s2 === 200, 'the site admin can save it (the old way, no setup)'); }
 console.log('8. Raiders join (chunk 3)');
 { const [st] = await call(P.Gmtest, '/api/teamplan?id=team:796679', { op: 'setup', me: 'Gmtest' }); ok(st === 200, 'Gmtest sets up Lai Dou Lai Le too'); }
 const mine = async (n) => (await call(P[n], '/api/teamsetup?step=mine'))[1], names = (l) => (l || []).map((t) => t.name + (t.joined ? ' (joined)' : t.no ? ' (not me)' : t.asked ? ' (asked)' : '')).join(', ') || 'none';
@@ -180,4 +183,22 @@ P.Raider13 = sign('Raider13', [{ n: 'Raider13', slug: 'thrall', realm: 'Thrall',
   ok(st === 200 && !ros.includes('Invitee'), 'someone who joins with the invite link (not in the logs) is on the team but not put on the roster'); }
 { const [st] = await call(P.Newtest, '/api/teamplan?id=team:796679', { op: 'member', yes: true, ask: true, me: 'Newtest' }); const [, o] = await call(P.Gmtest, '/api/teamplan?id=team:796679'); const a = (o.asks || []).find((x) => x.main === 'Newtest');
   await call(P.Gmtest, '/api/teamplan?id=team:796679', { op: 'okay', uid: a && a.uid, yes: true, me: 'Gmtest' }); const ros = await rosterOf(P.Gmtest, 'team:796679'); ok(st === 200 && a && !ros.includes('Newtest'), 'someone an officer lets in (not in the logs) isn\'t put on the roster either'); }
+console.log('12. Claiming a Warcraft Logs team page (team:N) follows the guild rule');
+BLIZ = [['Raidone', 'zuljin', 3], ['Gmone', 'zuljin', 0], ['Newone', 'zuljin', 3], ['Offtwo', 'zuljin', 1]].concat([...Array(8).keys()].map((i) => ['Alt' + i, 'zuljin', 7])); fresh();
+const S2 = { raid: sign('Raidone', [{ n: 'Raidone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), off: sign('Offtwo', [{ n: 'Offtwo', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE),
+  out: sign('Outsider', [{ n: 'Outsider', slug: 'illidan', realm: 'Illidan', g: 'Elsewhere', gs: 'illidan' }], SITE), pug: sign('Pugone', [{ n: 'Pugone', slug: 'illidan', realm: 'Illidan', g: '', gs: '' }], SITE),
+  admin: sign('Flëxørçïst', [{ n: 'Flëxørçïst', slug: 'thrall', realm: 'Thrall', g: 'Adequate', gs: 'zuljin' }], SITE) };
+{ const [, c] = await call(S2.raid, '/api/teamplan?id=team:556&claim=1'); ok(c.claim === 'Only the guild master or an officer can set up this team.', 'Testguild\'s team page: a raider (rank 3) is told "' + c.claim + '"');
+  const [st] = await call(S2.raid, '/api/teamplan?id=team:556', { op: 'create', name: 'Guildteam', me: 'Raidone' }); ok(st === 403, '... and the save is refused by the site, not just hidden');
+  const [s2] = await call(S2.out, '/api/teamplan?id=team:556', { op: 'create', name: 'Guildteam', me: 'Outsider' }); ok(s2 === 403, 'someone outside the guild can\'t claim it');
+  const [s3] = await call(S2.pug, '/api/teamplan?id=team:556', { op: 'create', name: 'Guildteam', me: 'Pugone' }); ok(s3 === 403, 'a regular from outside the guild (2 nights) can\'t claim a guild\'s team either');
+  const [, c2] = await call(S2.off, '/api/teamplan?id=team:556&claim=1'); ok(c2.claim === '', 'an officer (rank 1) of the guild may save it');
+  const [s4] = await call(S2.off, '/api/teamplan?id=team:556', { op: 'create', name: 'Guildteam', me: 'Offtwo' }); ok(s4 === 200, '... and does'); }
+{ const [, c] = await call(S2.admin, '/api/teamplan?id=team:558&claim=1'); ok(c.claim === '', 'the site admin may save any team page'); }
+COMMUNITY = true;
+{ const [, a] = await call(S2.pug, '/api/teamplan?id=team:557&claim=1'), [, b] = await call(S2.out, '/api/teamplan?id=team:557&claim=1'), [, c] = await call(S2.raid, '/api/teamplan?id=team:557&claim=1');
+  ok(a.claim === '', 'a team with no guild: someone who raids with it on 2 nights (Pugone) may save it');
+  ok(b.claim === 'Only someone who raids with this team can set it up.', 'someone who doesn\'t raid with it can\'t: "' + b.claim + '"'); ok(c.claim === '', 'Raidone (3 nights) may too'); }
+COMMUNITY = false;
+{ const [st] = await call(S2.raid, '/api/teamplan?id=team:555', { op: 'create', name: 'x', me: 'Raidone' }); const [, d] = await call(S2.raid, '/api/teamplan?id=team:555'); ok(st === 409 && d.lead === 'Gmone', 'a team already saved stays as it is: saving over it is refused (409), its lead unchanged'); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);

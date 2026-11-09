@@ -1942,11 +1942,34 @@ async function raidersRoute(req, env, url) {
 const rankBoss = (A) => !!A && (A.why === 'lead' || A.why === 'admin' || (A.why === 'rank' && A.rank != null && A.rank >= 0 && A.rank <= 1 && !A.away)); /* (an officer of a set-up team they don't raid with: no) */
 /* (Nov 9: only the guild master or an officer (rank 0 or 1 on Blizzard's roster) sets up a guild's team ("guild:N"), or the site admin.
    Teams with no guild (communities) keep the old rule: whoever saves first leads it. Gives the reason it can't, or '') */
-async function teamClaim(env, url, id, who) { const gm = /^guild:(\d+)$/.exec(id); if (!gm) return ''; if (await siteAdmin(who, env, url)) return '';
+async function teamClaim(env, url, id, who) { const gm = /^guild:(\d+)$/.exec(id); if (!gm && !/^team:\d+$/.test(id)) return ''; if (await siteAdmin(who, env, url)) return '';
+  if (!gm) return teamPageClaim(env, url, id, who);
   const no = 'Only the guild master or an officer can set up this guild\'s team.'; if (!who.bid) return no;
   const G = await bnGuildFor(env, url, who, gm[1]); if (!G) return no + ' None of your Battle.net characters is in it.';
   const rk = await guildRankOf(env, url, G, await bnetGet(env, who.uid, url)); if (rk == null) return 'Blizzard didn\'t send ' + G.name + '\'s roster just now. Try again in a minute.';
   return rk >= 0 && rk <= 1 ? '' : no; }
+
+// (Nov 9, Flex: "it needs to be fixed": a Warcraft Logs team page (team:N) is claimed like a guild's: by the guild master or an officer (rank 0 or 1)
+// of the guild it raids in, or the site admin. Its guild is the one most of its regular raiders are in (Blizzard's character profiles of its 8 most
+// regular raiders, kept a day). A team with no guild found: someone whose characters raid with it on 2 nights or more. Gives the reason it can't, or '')
+async function teamGuildOf(env, url, id, region) {
+  if (PRACTICE_HOST(url) && SETUP_MOCK[id]) return { g: { region: 'us', realm: 'thrall', name: 'Wolfthorn', mock: true }, R: setupMockRegs(id) };
+  const reg = BNET_REG.test(region || '') ? region : 'us', R = await teamRegs(env, url, id, reg).catch(() => null); if (!R || !R.nights) return { g: null, R };
+  const c = caches.default, ck = new Request('https://debrief.cache/team-guild/' + id), hit = await c.match(ck).catch(() => null); if (hit) return { g: (await hit.json()).g, R };
+  const tok = await bnetAppToken(env, reg); if (!tok) return { g: null, R, unknown: true };
+  const tally = new Map(); let seen = 0;
+  for (const p of R.list.filter((x) => x.c >= 2).slice(0, 8)) { const pr = await bnetApi(reg, '/profile/wow/character/' + p.s + '/' + encodeURIComponent(String(p.n).toLowerCase()), tok); if (!pr) continue; seen++;
+    const gn = pr.guild && pr.guild.name, gs = pr.guild && pr.guild.realm && pr.guild.realm.slug; if (!gn || !gs) continue; const k = gn.toLowerCase() + '|' + gs, o = tally.get(k) || { name: gn, realm: gs, n: 0 }; o.n++; tally.set(k, o); }
+  if (!seen) return { g: null, R, unknown: true }; /* (Blizzard didn't answer: not kept, asked again next time) */
+  const best = [...tally.values()].sort((a, b) => b.n - a.n)[0], g = best && best.n >= 2 && best.n * 2 >= seen ? { region: reg, realm: best.realm, name: best.name } : null;
+  await c.put(ck, new Response(JSON.stringify({ g }), { headers: { 'Cache-Control': 'max-age=86400' } })).catch(() => {}); return { g, R }; }
+async function teamPageClaim(env, url, id, who) {
+  const no = 'Only the guild master or an officer can set up this team.'; if (!who || !who.bid) return no;
+  const L = await bnetGet(env, who.uid, url), T = await teamGuildOf(env, url, id, (L && L.region) || 'us');
+  if (T.unknown) return 'Blizzard didn\'t answer just now, so Debrief can\'t check this team\'s guild. Try again in a minute.';
+  if (T.g) { const rk = await guildRankOf(env, url, T.g, L); if (rk == null) return 'Blizzard didn\'t send ' + T.g.name + '\'s roster just now. Try again in a minute.'; return rk >= 0 && rk <= 1 ? '' : no; }
+  const ks = new Set(((L && L.chars) || []).map(bnetKey)); if (((T.R && T.R.list) || []).some((p) => ks.has(p.k) && p.c >= 2)) return ''; /* (no guild: a raider of the team) */
+  return T.R && T.R.nights ? 'Only someone who raids with this team can set it up.' : 'Debrief can\'t tell who this team belongs to until it has a logged raid this tier. Then its guild master or an officer can set it up.'; }
 
 // ---- Automatic team setup (Nov 9, Flex: "Ok, lets do it"; the plan: notes/Team setup plan - automatic (Nov 9).md). A team's raiders come
 // from its Warcraft Logs raid nights (who was in its boss pulls; never who uploaded the log), a guild master or officer sets the team up once,
@@ -2032,7 +2055,7 @@ async function setupCheck(env, url, who, id) {
   if (!t) return { error: F.admin ? 'None of your characters raid with that team, and it isn\'t your guild\'s page.' : 'Only the guild master or an officer who raids with this team can set it up.' };
   if (t.set) return { error: t.name + ' is already set up by ' + (t.set.by || 'an officer') + '. Ask an officer for access.', set: true };
   if (!t.can) return { error: 'Only the guild master or an officer can set up ' + t.name + '.' };
-  if (t.kind === 'guild' && !F.admin) { const no = await teamClaim(env, url, id, who); if (no && !(PRACTICE_HOST(url) && t.guild && t.guild.mock)) return { error: no }; } /* (a guild's own page: rank 0 or 1 of that very guild) */
+  if (!F.admin) { const no = await teamClaim(env, url, id, who); if (no && !(t.kind === 'guild' && PRACTICE_HOST(url) && t.guild && t.guild.mock)) return { error: no }; } /* (a guild's own page: rank 0 or 1 of that very guild; a team page: of the guild it raids in) */
   return { team: t, admin: F.admin }; }
 // (each guild's set-up teams, so a raider not in the logs yet can ask to join one: written at setup)
 const teamIdxK = (g, url) => (PRACTICE_HOST(url) ? 'practice-team-guild/' : 'team-guild/') + g.region + '-' + g.realm + '-' + encodeURIComponent(guildSlug(g.name)) + '.json';
@@ -2099,7 +2122,7 @@ async function teamPlan(req, env, url) {
   if (req.method === 'GET') {
     if (url.searchParams.get('ranks') === '1') { const g0 = await teamGet(env, id, url).catch(() => null); return json(await teamRanks(env, url, g0 && g0.doc, who)); } /* (the lead's ranks panel) */
     const g = await teamGet(env, id, url).catch(() => null), here = await teamHere((PRACTICE_HOST(url) ? 'p-' : '') + id, (url.searchParams.get('me') || '').slice(0, 24), (url.searchParams.get('w') || '').slice(0, 40));
-    if (!g) return json({ exists: false, here, you: you(null, false) });
+    if (!g) return json({ exists: false, here, you: you(null, false), ...(url.searchParams.get('claim') === '1' && who ? { claim: await teamClaim(env, url, id, who) } : {}) }); /* (claim: '' = you may save it for the team, else why not) */
     if (!who) return json({ exists: true, locked: true, signin: true, name: g.doc.name, access: 'none', why: 'signin', you: null, keys: null }, 401); /* (Nov 8, Flex: "a true log in log out": nothing of a team's plan without a sign-in) */
     const d = g.doc, A = await teamAccess(env, url, d, who), shut = A.acc === 'none'; /* (None: the plan stays closed, only who leads it shows) */
     if (who && who.bid && !shut) { let ch = false; const old = d.owner.uid; if (A.why === 'lead' && old !== who.uid) { d.owner = { ...d.owner, uid: who.uid, was: old }; ch = true; } /* (Nov 8: the plan moves to the lead's Battle.net id) */

@@ -45,7 +45,7 @@ console.log('3. Setting up a guild\'s team (guild:N)');
 // (Warcraft Logs guild 555 = Testguild: the id the Worker keeps at the edge)
 C.set('https://debrief.cache/wcl-guild/us/zuljin/testguild', '555'); C.set('https://debrief.cache/wcl-guild/us/zuljin/otherguild', '777');
 for (const [k, want] of [['gm', ''], ['off', ''], ['raid', 'no'], ['out', 'no']]) { const r = await W.teamClaim(env, url, 'guild:555', who[k]); ok(!!r === !!want, k + ': ' + (r || 'may set it up')); }
-ok((await W.teamClaim(env, url, 'team:9', who.out)) === '', 'a team with no guild: anyone may set it up (as before)');
+ok((await W.teamClaim(env, url, 'team:9', who.out)) !== '', 'a Warcraft Logs team page can\'t be claimed by just anyone any more (Nov 9: same rule as a guild\'s; tests/team-setup.mjs section 12 has the rest)');
 ok((await W.teamClaim(env, url, 'guild:555', { uid: 'w:9', name: 'x' })) !== '', 'no Battle.net sign-in: can\'t');
 
 // ---- Wolfthorn, from copies of the real records (dry run)
