@@ -33787,7 +33787,7 @@ function openAccounts(note) {
     /* (your account: one card. Signed in: who + Refresh. Not yet: the Battle.net log-in, as before) */
     let acct;
     if (!W.can) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at">Battle.net sign-in<small>Coming soon</small></div></div>';
-    else if (bnIn) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at"><span class="bn2-ok">✓</span>' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.tag && !w.practice ? w.tag : (w.name || 'you')) + '</b>' +
+    else if (bnIn) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at"><span class="bn2-ok">✓</span>' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.name || 'you') + '</b>' + (w.tag && !w.practice ? ' <span class="bn2-tag">' + esc(w.tag) + '</span>' : '') +
         '<small>Battle.net' + (b.linked ? ' · ' + RG + ' · updated ' + ago(b.syncedAt || b.linkedAt) : '') + '</small></div>' +
         '<button class="bn2-rf" type="button" data-bn="link"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button></div>';
     else acct = '<div class="bn2-acct bn2-in">' + bnLogo + '<div class="bn2-at">' + (leg ? 'Your Warcraft Logs sign-in is ending' : 'Sign in with Battle.net') +

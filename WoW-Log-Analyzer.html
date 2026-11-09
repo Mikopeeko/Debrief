@@ -59617,7 +59617,7 @@ function openAccounts(note) {
     /* (your account: one card. Signed in: who + Refresh. Not yet: the Battle.net log-in, as before) */
     let acct;
     if (!W.can) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at">Battle.net sign-in<small>Coming soon</small></div></div>';
-    else if (bnIn) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at"><span class="bn2-ok">✓</span>' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.tag && !w.practice ? w.tag : (w.name || 'you')) + '</b>' +
+    else if (bnIn) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at"><span class="bn2-ok">✓</span>' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.name || 'you') + '</b>' + (w.tag && !w.practice ? ' <span class="bn2-tag">' + esc(w.tag) + '</span>' : '') +
         '<small>Battle.net' + (b.linked ? ' · ' + RG + ' · updated ' + ago(b.syncedAt || b.linkedAt) : '') + '</small></div>' +
         '<button class="bn2-rf" type="button" data-bn="link"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button></div>';
     else acct = '<div class="bn2-acct bn2-in">' + bnLogo + '<div class="bn2-at">' + (leg ? 'Your Warcraft Logs sign-in is ending' : 'Sign in with Battle.net') +
@@ -76564,5 +76564,6 @@ html body #view#view#view .r236-two .r236-rc > .dbt-addr.r236-row.r236-row > b:n
 #bnBox .bn-sheet.bn2 .bn2-hidl button.lk { color: var(--muted, #a9afb3) !important; margin-left: auto !important; }
 @media (max-width: 560px) { #bnBox .bn-sheet.bn2 .bn2-r { grid-template-columns: 32px minmax(0, 1fr) auto; } #bnBox .bn-sheet.bn2 .bn2-ril { display: none; } #bnBox .bn-sheet.bn2 .bn2-pv { margin-left: 0; } }
 </style>
+<style>/* (Nov 8 Your characters v2: the BattleTag beside the name) */ #bnBox .bn-sheet.bn2 .bn2-tag { color: var(--faint, #7f898e); font-weight: 500; margin-left: 2px; }</style>
 </body>
 </html>
