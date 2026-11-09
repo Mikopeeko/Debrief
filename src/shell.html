@@ -16244,7 +16244,9 @@ html body #view#view#view .r236-two.r236-on.r236-on.r236-on { grid-template-colu
 (function () {
   var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); };
   var TIME = /^\s*(?:Set \d+, )?\d{1,2}:\d\d/;
-  var colours = function () { var C = {}; [].forEach.call(document.querySelectorAll('#view [style*="color"]'), function (e) {
+  var colours = function () { var C = {}; /* (Nov 8, Main: the pull's roster first, so a name shown nowhere else (Raid checks' Optt, Komo) is coloured too) */
+    try { Array.from(window.dbtMapKit().S.rep.players.values()).forEach(function (p) { var n = String((p && p.name) || '').split('-')[0]; if (p && p.color && /^[^\s,.()0-9:]{3,14}$/.test(n)) C[n] = p.color; }); } catch (e0) { /* (no pull open) */ }
+    [].forEach.call(document.querySelectorAll('#view [style*="color"]'), function (e) {
       if (e.children.length || e.closest('.sp, .dbt-lv')) return; var t = e.textContent.trim(), c = e.style.color;
       if (c && /^[^\s,.()0-9:]{3,14}$/.test(t)) C[t] = c; });
     [].forEach.call(document.querySelectorAll('#view .dbt-chip'), function (e) { var t = e.textContent.trim(), c = e.style.getPropertyValue('--cc').trim(); if (c && /^[^\s,.()0-9:]{3,14}$/.test(t)) C[t] = c; }); return C; };
