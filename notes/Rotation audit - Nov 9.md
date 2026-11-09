@@ -224,3 +224,60 @@ when nobody needs healing, your globals go to damage."
 3. **Protection Paladin, Divine Toll held for wings** (R10 OPEN).
 4. **The Restoration Druid guide note** (Innervate 25%, Everbloom 6): correct the note file?
 5. **Outlaw's 85% window bar**, and tighter resource bars for Unholy, Devourer and Assassination, once the library has enough of them.
+
+## Part 7. Keys, second round (Flex: "Yes, build it", "do everything you can to make sure the feedback the site gives for rotations is very accurate")
+
+**How keys were tested.** The site's own list of fast timed runs (`WCL.mpFast`, +18 to +20, all eight dungeons, 268 runs) gave real keys
+for every spec that appears in them. Nine were opened on the practice copy and every player's "Every check across the key" was read:
+which rows a fast-run player is "fine" on for half the pulls or fewer. Runs used: `DnJpvGkZ3qTCymdQ:7`, `qcjV9YwC4RJa3TL7:1`,
+`6ZkhwvxdLQKHpaRX:1`, `wXmTt9pQRYBqhJHk:2`, `m8c9yhgPNHtMFfRx:11`, `6fnNb9vpT1adL2qz:15`, `YKGvdxPny8Lm6fH9:23`, `41p2v96fFCZrVhYJ:3`,
+`Cn1rQVz4df79hwDv:93`, plus Flex's `bYNMLX6nD3aPtKvg:1`. 30 specs seen. Not in any fast run at these levels: Fire, Frost Mage,
+Affliction, Devastation, Augmentation.
+
+### K0. Healers: the raid healing rules don't hold in a 5-player group. FIXED
+- Restoration Druid, timed +20 (Zuckles): 28 checks, 7 clean. "Swiftmend on yourself" fine on 1 of 10 pulls, "Wild Growth into damage"
+  1 of 9, "Lifebloom on you" 1 of 10, "Regrowths against Rejuvenations" 0 of 10, "Abundance uptime" 2 of 10, "Convoke the Spirits set
+  up" 2 of 8, "Tranquility ramp" 1 of 4.
+- Restoration Shaman, timed +20 (Milkytotems): "Riptide on new targets" fine on 0 of 11 pulls (94 of 206; the three fastest runs: 108).
+- Holy Priest, timed +20 (Pititpeluche): "Prayer of Mending on players without Renew" 2 of 24, "Apotheosis windows" fine on 1 of 7.
+- Holy Paladin (Flex, +19): Infusion of Light 49 wasted, Empyrean Legacy 47 wasted, Judgment while Holy Shock was full 65 times.
+- **Fix:** on a key pull a healer's healing rows are shown, not graded, with "In a key this isn't graded: how much healing a pull needs
+  decides it, and when nobody needs healing your globals go to damage." Still graded: the priority row (it already judges the damage
+  buttons when nobody needs healing), always be casting, cancelled casts, what was on at the pull, Power Infusion.
+- **After, same keys:** Zuckles 25 checks, 23 clean, then only the graded rows; Flex's key: trash pulls clean, 1 boss pull to fix
+  (priority), 80 -> 96. Raid pages: 0 differences on 60 pages.
+
+### K1. A big cooldown still cooling down from the pack before. FIXED
+- "Uses" on boss pulls read fine on 0 or 1 of 3-4 for Havoc (Metamorphosis 4 of 6), Guardian (Lunar Beam 12 of 14), Protection
+  Paladin (Divine Toll 8 of 10), Brewmaster (Niuzao 4 of 6), Feral (Berserk 5 of 7), Elemental (Ascendance 7 of 9).
+- **Why:** each pull was counted as if the cooldown were ready at its first second.
+- **Fix:** in a key, one use fewer is possible on each pull for a cooldown of 45 s or more.
+
+### K2. Tanks' and Feral's wasted resource. FIXED (shown, not graded in a key)
+- Fine on 0 of 11 pulls for Feral (Energy 20%), 1 of 11 Vengeance (Fury 22%), 2 of 10 Protection Warrior (Rage 8%), 4 of 16 Blood
+  (Runic Power 18%), and Guardian's Rage on 4 of 7 trash pulls. Packs fill the bar faster than one enemy does.
+
+### K5. Hunter's Mark at the pull, on every trash pack. FIXED
+- A fast +20 Beast Mastery Hunter read it fine on 4 of 12 pulls. Not judged on a key's trash packs.
+
+### Still OPEN in keys (rows a fast-run player fails on half the pulls or more; each needs its pack rule)
+| Spec | Row | Fine on |
+|---|---|---|
+| Guardian (two players) | Thrash on cooldown (360 of 582), Mangle on cooldown (313 of 517; 329 of 534), Lunar Beam uses | 5/10, 4/10, 3/11, 1/4 |
+| Enhancement | Maelstrom Weapon, 538 wasted; Voltaic Blaze on cooldown | 0/10, 4/10 |
+| Feral | Apex Predator's Craving, 79 wasted; Finishers at 5 combo points 85% | 3/11, 4/11 |
+| Fury | Rotation priority 82%; Odyn's Fury on cooldown | 4/11, 4/10 |
+| Arms | Bladestorm in Colossus Smash, 26 of 39 | 1/11 |
+| Arcane | Touch of the Magi after a Barrage, 20 of 24 | 4/8 |
+| Protection Paladin | Holy Armaments on cooldown, 25 of 40 | 3/12 |
+| Elemental | Stormkeeper before Ascendance; Maelstrom saved for Ascendance | 1/3, 5/10 |
+| Havoc | Exergy uptime 89% | 5/10 |
+The common thread: "X on cooldown" and "X inside Y" rows are single-target rules, and on packs the priority list already tells the
+player to press something else. The clean fix is to stop grading a row on a pack pull when the spec's own pack list ranks another button
+first; that is a per-spec job.
+
+### What this round did not do
+- Heroic raid: not tested. One raid boss carries most of the raid evidence (The Coiled Altar).
+- 35 specs still not read line by line against their guides. Guide notes not re-read against the live guide pages.
+- The Mythic+ tab's own "top X (3 runs)" numbers are shown beside each row but don't colour it. Using them the way the raid rule (R9)
+  uses the top marks would settle most of the OPEN table at once. That code is in `src/mptab.js`, the Mythic+ chat's file.
