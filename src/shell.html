@@ -17837,5 +17837,16 @@ html body .mpf-svk i:first-child { margin-left: 0 !important; }
 html body .mpf-svk span { margin-left: auto !important; color: var(--faint) !important; }
 }
 </style>
+<style>/* (Nov 9: Mythic+ prep pop-up) */
+@layer defaultTheme {
+html body .mpf-prepb { all: unset; margin-left: 10px; padding: 1px 8px; border: 1px solid var(--line2, #2a2e36); border-radius: 4px; font: 600 11.5px var(--body); color: var(--muted); cursor: pointer; }
+html body .mpf-prepb:hover { color: var(--text); border-color: var(--gold, #e6b450); }
+html body .mpf-prepgo { all: unset; margin-left: 4px; font: 600 13px var(--body); color: var(--gold, #e6b450); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+html body .mpf-prepgo:hover { color: var(--text); }
+html body #mpPrep .mpf-prep { max-width: 980px !important; width: min(980px, calc(100vw - 32px)) !important; max-height: calc(100vh - 60px) !important; overflow: auto !important; }
+html body #mpPrep .mpt .mpt-sec { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html body #mpPrep .mpt .mpt-sh { margin: 0 0 14px !important; }
+}
+</style>
 </body>
 </html>

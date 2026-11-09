@@ -409,7 +409,7 @@ function mpfByDungeon(rows, id, people) { const showWho = !!(people && people.le
     const pb = (L.filter((r) => r.it.timed && r.it.keyMs).sort((a, c) => mpfBetter(a.it, c.it))[0] || {}).it;
     const trend = '<span class="mpf-trend" aria-label="Last keys, oldest first">' + L.filter((r) => r.it.wallMs).sort((a, c) => a.it.wallMs - c.it.wallMs).slice(-5).map((r) => { const k = r.it, sec = k.keyMs ? k.keyMs / 1000 : 0, tm = (window.DBF_MPTIMER || {})[mpLc(k.boss)];
       return '<i class="' + (sec && k.timed ? ((k.up || mpUp(k)) >= 2 ? 'g' : 'a') : 'm') + '"' + mpT1(new Date(k.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · +' + k.level + ' · ' + (sec ? mpMM(sec) + (tm ? ' of ' + tm + ':00' : '') : 'left early') + (k === pb ? ' · your best' : '')) + '>' + k.level + (k === pb ? '<b class="mpf-pb" aria-label="your best">★</b>' : '') + '</i>'; }).join('') + '</span>';
-    return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b>' + trend + '<span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
+    return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b>' + mpPrepB(d, 'mpf-prepb', 'Prep') + trend + '<span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
       '<div class="mpf-kl">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf, showWho)).join('') + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '') + '</div></details>'; }).join('') + (none.length && none.length < MP_DUNGEONS.length ? '<p class="mpf-none">No keys yet: ' + none.map(esc).join(', ') + '</p>' : ''); }
 // (a character's own keys, one row each)
 function mpkOwn(c, J) { const m = new Map(); for (const k of ((J.chars[c.id] || {}).keys || [])) { const it = { ...k, wcl: { code: k.code, fight: k.fight } }, id = mpkId(it), o = m.get(id); if (o) o.n++; else m.set(id, { it, n: 1, who: [c.name] }); } return [...m.values()]; }
@@ -429,6 +429,14 @@ function mpfCard(c, J, on) { const rows = mpkOwn(c, J), cls = (E.CLASSES || {})[
     '<span class="tt-g">' + esc([cls ? cls[0] : '', c.guild ? '‹' + c.guild + '›' : c.server || ''].filter(Boolean).join(' · ')) + '</span><span class="tt-strip mpf-strip">' + strip + '</span>' +
     (top ? '<span class="tt-l">Best <b>+' + top.t.it.level + ' ' + esc(top.d) + '</b> · ' + nT + ' of 8 dungeons timed</span>' : '') + l2 + '</span>' + (c.added ? '<button type="button" class="mpf-x" data-mpx="' + esc(String(c.id)) + '" aria-label="Remove ' + esc(c.name) + '">×</button>' : '') + '</div>'; }
 const mpfPickId = () => { try { return localStorage.getItem('mpt-pick') || ''; } catch (e) { return MPK.pick || ''; } };
+// (Nov 9, Flex: "Yes, do it": a dungeon's prep, before the key: its Know this dungeon in a pop-up)
+const mpPrepOk = (d) => !!MP_KNOW[mpLc(d)], mpPrepB = (d, cls, txt) => (mpPrepOk(d) ? '<button type="button" class="' + cls + '" data-mpprep="' + esc(d) + '">' + txt + '</button>' : '');
+function mpPrepOpen(d) { const h = mpKnowHtml({ run: { dungeon: d }, pulls: [], tiers: {}, spam: [], _prep: true }, true); if (!h) return; const o = document.getElementById('mpPrep'); if (o) o.remove();
+  const el = document.createElement('div'); el.id = 'mpPrep'; el.className = 'tour pnz-wrap'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Prep for ' + d);
+  el.innerHTML = '<div class="panel pnz-sheet mpf-prep"><div class="pnz-top"><div><h2>Prep: ' + esc(d) + '</h2><p>Every boss, the trash, and what to kick, dispel and purge, before your key.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div><div class="mpt">' + h + '</div></div>';
+  const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } }, close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); };
+  el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x')) close(); }; document.addEventListener('keydown', key, true); document.body.appendChild(el); document.body.classList.add('touring'); }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpprep]'); if (!t) return; e.preventDefault(); e.stopPropagation(); mpPrepOpen(t.dataset.mpprep); }, true);
 // (Nov 9, Flex: "Build it": the season at a glance, above the keys by dungeon, from the same rows the list shows)
 function mpfSeason(rows) { const K = rows.map((r) => r.it).filter((k) => k && k.boss); if (K.length < 3) return '';
   const dt = (ms) => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), par = (d) => ((window.DBF_MPTIMER || {})[mpLc(d)] || 30) * 60;
@@ -443,7 +451,7 @@ function mpfSeason(rows) { const K = rows.map((r) => r.it).filter((k) => k && k.
   const ps = T.map((x) => x.b.p), hiP = ps.length ? Math.max(...ps) : 1, loP = ps.length ? Math.max(300, Math.min(...ps) - 40) : 0;
   const dRows = best.slice().sort((a, c) => (c.b ? c.b.p : 0) - (a.b ? a.b.p : 0)).map((x) => { const w = x.b ? Math.max(4, 100 * (x.b.p - loP) / Math.max(1, hiP - loP)) : 0, up = x.b ? (x.b.k.up || mpUp(x.b.k) || 1) : 0, lw = T.length && x === low && gain > 0;
     return '<div class="mpf-svr' + (lw ? ' low' : '') + '"' + mpT1(esc(x.d) + ': ' + (x.b ? '+' + x.b.k.level + ', ' + mpMM(x.b.spare) + ' to spare, about ' + Math.round(x.b.p) + ' points' : x.u ? 'best +' + x.u.level + ', not timed' : 'no key yet')) + '><span class="mpf-svn">' + esc(x.d.replace(/^The /, '')) + '</span><span class="mpf-svb"><i class="u' + up + '" style="width:' + w + '%"></i></span><span class="mpf-svv">' + (x.b ? '<b>+' + x.b.k.level + '</b><small>' + Math.round(x.b.p) + '</small>' : '<small>' + (x.u ? 'not timed' : 'no key') + '</small>') + '</span></div>'; }).join('');
-  const next = !T.length ? '' : gain > 0 ? '<p class="mpf-svx">Your next points: <b>' + esc(low.d) + '</b>. A +' + hiLv + ' in time there adds about <b class="g">+' + gain + '</b>, the most of any dungeon.</p>' : '<p class="mpf-svx">Every dungeon is at your best level. A +' + (hiLv + 1) + ' in time anywhere adds about <b class="g">+15</b>.</p>';
+  const next = !T.length ? '' : gain > 0 ? '<p class="mpf-svx">Your next points: <b>' + esc(low.d) + '</b>. A +' + hiLv + ' in time there adds about <b class="g">+' + gain + '</b>, the most of any dungeon. ' + mpPrepB(low.d, 'mpf-prepgo', 'Prep for ' + esc(low.d) + ' ›') + '</p>' : '<p class="mpf-svx">Every dungeon is at your best level. A +' + (hiLv + 1) + ' in time anywhere adds about <b class="g">+15</b>.</p>';
   // (your best key each week, from the Tuesday reset)
   const W0 = Date.UTC(2026, 8, 15, 15), WK = 7 * 864e5, wk = new Map(); for (const k of K) { if (!k.wallMs) continue; const w = Math.floor((k.wallMs - W0) / WK), o = wk.get(w) || { n: 0, b: null }; o.n++; if (k.timed && k.keyMs && (!o.b || k.level > o.b.level || (k.level === o.b.level && (k.up || mpUp(k)) > (o.b.up || mpUp(o.b))))) o.b = k; wk.set(w, o); }
   const ws = [...wk.keys()].sort((a, b) => a - b), WL = []; if (ws.length) for (let w = Math.max(ws[0], ws[ws.length - 1] - 19); w <= ws[ws.length - 1]; w++) WL.push(w); /* (the last 20 weeks at most) */
@@ -2001,7 +2009,7 @@ function mpKnowHtml(R, inCh) {
   const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [mpLc(s), v])), SP = new Map((R.spam || []).map((x) => [mpLc(x.spell), x]));
   const tier = (s) => TB.get(mpLc(s)) || 'high', list = (a) => a.map((s) => esc(s)).join(', ').replace(/, ([^,]*)$/, ' and $1');
   /* (a low-danger spell never counts as gone off: its line says how many you kicked instead) */
-  const kicks = K.k.map((s) => { const n = off.get(mpLc(s)) || 0, tr = tier(s), sp = SP.get(mpLc(s));
+  const kicks = K.k.map((s) => { const n = off.get(mpLc(s)) || 0, tr = tier(s), sp = SP.get(mpLc(s)); if (R._prep) return '<li><b class="mpt-ab">' + esc(s) + '</b></li>'; /* (Nov 9: prep has no key to count from) */
     return '<li><b class="mpt-ab">' + esc(s) + '</b>' + (tr === 'low' ? ' <span class="mpt-m">low danger' + (sp ? ': kicked ' + sp.kicked + ' of ' + sp.casts : '') + '</span>'
       : n ? ' <span class="' + (tr === 'high' ? 'mpt-bad' : 'mpt-m') + '">went off ' + (n === 1 ? 'once' : n + ' times') + ' with a kick ready' + (tr === 'high' ? '' : ' (' + tr + ' danger)') + '</span>' : ' <span class="mpt-g">never went off</span>') + '</li>'; }).join('');
   /* (the polish pass: spells in the spell colour, enemies and stats in bold; trash across the full width in two columns, its title trash blue) */
@@ -2010,7 +2018,7 @@ function mpKnowHtml(R, inCh) {
     '<div class="mpt-kl3"><div><p class="mpt-k">Kick</p><ul>' + kicks + '</ul></div>' + (K.d.length ? '<div><p class="mpt-k">Dispel</p><p>' + list(K.d) + '</p></div>' : '') + (K.p.length ? '<div><p class="mpt-k">Purge or soothe</p><p>' + list(K.p) + '</p></div>' : '') + '</div>' +
     '<p class="mpt-sm">Healers have no kick in Midnight, except Restoration Shamans.</p>';
   const W = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'], cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, 'mptKnow', { fold: true, noTitle: !!inCh });
+  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, R._prep ? '' : 'mptKnow', { fold: !R._prep, noTitle: !!inCh });
 }
 
 // ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
