@@ -17672,5 +17672,14 @@ html body #view#view .rtv .rtv-note.lv1 { --nc: #e6cc6a; }
 html body #view#view .rtv .rtv-note:hover { background: rgba(32, 35, 42, .98) !important; }
 }
 </style>
+<style>/* (Nov 9: Rotation Timeline, Filters above when the notes need the room) */
+@layer defaultTheme {
+html body #view#view .rtv-lay.rtv-stack { flex-direction: column !important; }
+html body #view#view .rtv-lay.rtv-stack > .rtv-fside { position: static !important; width: 100% !important; order: -1 !important; }
+html body #view#view .rtv-lay.rtv-stack > .rtv-fside .rtv-fsb { width: auto !important; column-count: 3 !important; column-gap: 24px !important; }
+html body #view#view .rtv-lay.rtv-stack > .rtv-wrap { width: 100% !important; }
+}
+</style>
+<script>/* (Nov 9: Filters goes above the Rotation timeline when the timeline and its notes don't fit beside it) */ (function () { var t = function () { var lay = document.querySelector('#view .rtv-lay'); if (!lay) return; var body = lay.querySelector('.rtv-body'), fs = lay.querySelector('.rtv-fside'); if (!body || !fs) return; var c = (getComputedStyle(body).gridTemplateColumns || '').split(' ').map(parseFloat); if (c.length < 3) return; var need = c[0] + c[1] + 200 + 8, avail = lay.clientWidth - 214 - 14, st = need > avail; if (lay.classList.contains('rtv-stack') !== st) lay.classList.toggle('rtv-stack', st); }; setInterval(t, 700); window.addEventListener('resize', t); })();</script>
 </body>
 </html>
