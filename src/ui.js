@@ -15946,7 +15946,16 @@ function chainFolds(r, L, rc) {
   const rm = (rc.marks || []).find((m) => m.k === 'root'), a0 = Math.min(rc.t != null ? rc.t : Infinity, rm ? rm.t : Infinity); if (!isFinite(a0)) return [];
   const idx = L.map((x, i) => i), out = [], used = new Set(), first = idx.find((i) => L[i].t >= a0 - 3 && fits(L[i])); if (first == null) return [];
   let rootEnd = L[first].t; used.add(first);
-  if (L[first].dz) { const bi = idx.filter((i) => L[i].dz && fits(L[i]) && L[i].ab === L[first].ab && L[i].t >= L[first].t && L[i].t <= L[first].t + 2);
+  const by1 = rc.did && (rc.by || []).length === 1 && rc.didT != null ? rc.by[0] : '';
+  if (by1) { /* (Nov 9, Flex on Twin Fangs pull 27, "should these not all be merged?": Tyralien's missed circle 1, his missed circle 2 and the deaths it caused are one row) */
+    const mechL = lc(rootN), abL = lc(rc.didAb), lead = idx.filter((i) => !L[i].dz && !L[i].full && lc(L[i].mech) === mechL && String(L[i].txt || '').indexOf(by1 + ' ') === 0 && L[i].t >= rc.didT - 10.5 && L[i].t < rc.didT - 0.5);
+    const dead = idx.filter((i) => L[i].dz && !own(L[i]) && !L[i].dz.some((d) => d.fell) && lc(L[i].ab) === abL && L[i].t >= rc.didT - 0.1 && L[i].t <= rc.didT + 5.1), ks = lead.concat(dead).sort((a, b) => a - b);
+    if (ks.length >= 2) { const nN = rc.didK || [...new Set([].concat(...dead.map((i) => L[i].dz.map(nmD))))].length, dd = (s) => String(s || '').slice(by1.length + 1).split(/:\s/)[0].replace(/\.\s*$/, '').trim(), ld = lead.length ? dd(L[lead[lead.length - 1]].txt) : '', p1 = /^(.*\S)\s+(\d+)$/.exec(ld), p2 = /^(.*\S)\s+(\d+)$/.exec(rc.did);
+      const what = !ld ? rc.did : p1 && p2 && p1[1] === p2[1] ? p2[1] + 's ' + p1[2] + ' and ' + p2[2] : ld + ', then ' + rc.did, who = p1 && p2 && p1[1] === p2[1] ? p2[1].split(/\s+/).pop() + ' ' + p2[2] : lc(rc.did).indexOf(abL) >= 0 ? 'it' : rc.didAb;
+      out.push({ k: 'same', kids: ks, t: L[ks[0]].t, tEnd: Math.max(...ks.map((i) => L[i].t)), mech: rootN, who: [by1], txt: by1 + ' ' + what + ', and ' + who + ' killed ' + nN + (nN === 1 ? ' player' : ' players') });
+      ks.forEach((i) => used.add(i)); rootEnd = Math.max(...ks.map((i) => L[i].t)); } }
+
+  if (L[first].dz && !out.length) { const bi = idx.filter((i) => L[i].dz && fits(L[i]) && L[i].ab === L[first].ab && L[i].t >= L[first].t && L[i].t <= L[first].t + 2);
     if (bi.length >= 2) { const ppl = [...new Set([].concat(...bi.map((i) => L[i].dz.map(nmD))))], ab = L[first].ab, by = rc.cat === 'orbs' && (rc.orbBy || []).length === 1 ? rc.orbBy[0] : '';
       out.push({ k: 'same', kids: bi, t: L[first].t, mech: rootN, who: ppl, txt: by ? by + ' set off ' + ab + ' and killed ' + ppl.length + ' players' : rc.did && (rc.by || []).length === 1 ? rc.by[0] + ' ' + rc.did + ', and ' + (lc(rc.did).indexOf(lc(ab)) >= 0 ? 'it' : ab) + ' killed ' + ppl.length + ' players' : ppl.length + ' players died to ' + ab + ' at once' });
       bi.forEach((i) => used.add(i)); rootEnd = Math.max(...bi.map((i) => L[i].t)); } }
