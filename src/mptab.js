@@ -289,9 +289,8 @@ function mpFinder() {
   for (const id of ['#list', '#bossHead', '#bossPick']) { const el = $(id); if (el) el.innerHTML = ''; }
   { const oa = $('#oaTop'); if (oa) { oa.innerHTML = ''; oa.hidden = true; } }
   const I = typeof TH_ICO !== 'undefined' ? TH_ICO : {};
-  const hero = '<section class="th-hero"><h1>Every key, <span class="mpf-gold">explained.</span></h1><p class="th-lead">Pick a character to see their keys, or open any key.</p>' +
-    '<div class="th-box">' + (I.link || '') + '<input id="mpfIn" placeholder="Paste a Warcraft Logs report with a key in it" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="mpfGo" type="button">Open</button></div>' +
-    '<div class="th-links"><button type="button" data-mpf-file="1">' + (I.file || '') + 'Open a log file</button><button type="button" data-mpf-real="1">' + (I.play || '') + 'See a real +19 key</button></div>' +
+  const hero = '<section class="th-hero mpf-bar"><div class="mpf-bt"><h1>Mythic+</h1><span>every key, explained</span></div><div class="mpf-bo"><div class="th-box">' + (I.link || '') + '<input id="mpfIn" placeholder="Paste a Warcraft Logs report with a key in it" autocomplete="off" aria-label="Warcraft Logs report link"><button class="btn primary" id="mpfGo" type="button">Open</button></div>' +
+    '<div class="th-links"><button type="button" data-mpf-file="1">' + (I.file || '') + 'Open a log file</button><button type="button" data-mpf-real="1">' + (I.play || '') + 'See a real +19 key</button></div></div>' +
     '<div class="th-msg"><span class="fp-msg" id="mpfMsg"></span></div></section>';
   const add = '<form class="mpf-f mpf-addf" id="mpfAddForm" autocomplete="off" hidden><label><span>Character</span><input name="n" required spellcheck="false" aria-label="Character"></label>' +
     '<label><span>Realm</span><input name="s" required spellcheck="false" aria-label="Realm"></label><label><span>Region</span><select name="r" aria-label="Region"><option>US</option><option>EU</option><option>KR</option><option>TW</option></select></label>' +
@@ -438,23 +437,23 @@ function mpPrepOpen(d) { const h = mpKnowHtml({ run: { dungeon: d }, pulls: [], 
   el.onclick = (e) => { if (e.target === el || e.target.closest('.pnz-x')) close(); }; document.addEventListener('keydown', key, true); document.body.appendChild(el); document.body.classList.add('touring'); }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpprep]'); if (!t) return; e.preventDefault(); e.stopPropagation(); mpPrepOpen(t.dataset.mpprep); }, true);
 // (Nov 9, Flex: "Build it": the season at a glance, above the keys by dungeon, from the same rows the list shows)
-// (Nov 9, Flex: "make the season page look even better you can do much more", "give me your best mock", "i think the bottom could be organized
-// better", then "Build it": the season page v2. Top: your rating big with how much it rose in two weeks, three chips and four highlights, beside a
-// curve of your rating since every dungeon had a timed key (each step a new best; hover a dot for the key). Then "Push next": the dungeon whose
-// timed best is lowest, what your best level in time there would add, and its Prep. Then a card per dungeon with its art, best first: the best key,
-// a timer bar with the +2 and +3 marks, time to spare, points and keys, and Prep. The rating is an estimate on the key pages' own points formula.)
-function mpfSeason(rows, pick) { const K = rows.map((r) => r.it).filter((k) => k && k.boss && k.wallMs).sort((a, b) => a.wallMs - b.wallMs); if (K.length < 3) return '';
+// (Nov 9, Flex: "giving you creative freedom with the whole page. Blow me away", then "Build it": the Mythic+ page, whole. Under the slim top
+// bar: the character hero over your best dungeon's art (crest, name, your characters to switch, the rating big with the last two weeks, chips,
+// the rating curve), four highlight cards, Push next, a card per dungeon (a click filters your keys), then Your keys: newest first by week,
+// or highest, by dungeon, timed only; each row opens its key. The rating is an estimate on the key pages' own points formula.)
+const MPF_KF = { d: '', timed: false, sort: 'new', n: 12 };
+function mpfSeason(rows, pick, cs) { const K = rows.map((r) => r.it).filter((k) => k && k.boss && k.wallMs).sort((a, b) => a.wallMs - b.wallMs);
   const par = (d) => ((window.DBF_MPTIMER || {})[mpLc(d)] || 30) * 60, dt = (ms) => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), upOf = (k) => k.up || mpUp(k) || 1, nm0 = (d) => String(d).replace(/^The /, '');
+  const art = (d) => (MP_ART[mpLc(d)] ? 'url(https://wow.zamimg.com/uploads/guide/' + MP_ART[mpLc(d)] + '.jpg)' : 'none'), cls = pick && (E.CLASSES || {})[pick.cls], cc = (cls && cls[1]) || '#e6b450';
   // (the rating after each key: the sum of the best timed key in each dungeon)
   const bestBy = {}, curve = []; for (const k of K) { if (!(k.timed && k.keyMs)) continue; const p = mpPts(k.level, k.keyMs / 1000, par(k.boss)), d = mpLc(k.boss); if (!bestBy[d] || p > bestBy[d].p) { bestBy[d] = { p, k }; curve.push({ t: k.wallMs, r: Object.values(bestBy).reduce((v, x) => v + x.p, 0), k, n: Object.keys(bestBy).length }); } }
-  const R = curve.length ? curve[curve.length - 1].r : 0, t1 = K[K.length - 1].wallMs, rAgo = (curve.filter((c) => c.t <= t1 - 14 * 864e5).pop() || { r: 0 }).r, d14 = Math.round(R - rAgo);
+  const t1 = K.length ? K[K.length - 1].wallMs : Date.now(), R = curve.length ? curve[curve.length - 1].r : 0, rAgo = (curve.filter((c) => c.t <= t1 - 14 * 864e5).pop() || { r: 0 }).r, d14 = Math.round(R - rAgo);
   const best = MP_DUNGEONS.map((d) => { const L = K.filter((k) => mpLc(k.boss) === mpLc(d)); return { d, n: L.length, b: bestBy[mpLc(d)] || null, nT: L.filter((k) => k.timed).length, top: L.slice().sort((a, c) => c.level - a.level)[0] || null }; });
   const T = best.filter((x) => x.b), hiLv = T.length ? Math.max(...T.map((x) => x.b.k.level)) : 0, topD = T.slice().sort((a, c) => c.b.p - a.b.p)[0] || null, nTk = K.filter((k) => k.timed).length;
   const low = T.length ? best.slice().sort((a, c) => (a.b ? a.b.p : 0) - (c.b ? c.b.p : 0))[0] : null, gain = low ? Math.round(mpPts(hiLv, 1, 1) - (low.b ? low.b.p : 0)) : 0;
-  const cls = pick && (E.CLASSES || {})[pick.cls], cc = (cls && cls[1]) || '#e6b450';
-  // (the curve: from the day every dungeon had a timed key, or the first one, so the climb shows)
+  // (the curve, from the day every dungeon had a timed key (or the first), so the climb shows)
   let svg = '<p class="mpf-s2no">Your rating starts with your first timed key.</p>';
-  if (curve.length) { const full = curve.find((c) => c.n >= MP_DUNGEONS.length) || curve[0], W = 640, H = 170, pL = 44, pB = 22, pT = 12, tA = full.t, rMin = Math.max(0, Math.floor((full.r - 100) / 250) * 250), rMax = Math.max(rMin + 250, Math.ceil((R + 50) / 250) * 250);
+  if (curve.length) { const full = curve.find((c) => c.n >= MP_DUNGEONS.length) || curve[0], W = 640, H = 150, pL = 44, pB = 22, pT = 12, tA = full.t, rMin = Math.max(0, Math.floor((full.r - 100) / 250) * 250), rMax = Math.max(rMin + 250, Math.ceil((R + 50) / 250) * 250);
     const x = (t) => pL + (W - pL - 8) * (Math.max(t, tA) - tA) / Math.max(1, t1 - tA), y = (r) => pT + (H - pT - pB) * (1 - (Math.max(r, rMin) - rMin) / (rMax - rMin));
     const C2 = curve.filter((c) => c.t >= tA); let line = 'M' + x(tA) + ',' + y(full.r).toFixed(1); for (const c of C2) line += ' H' + x(c.t).toFixed(1) + ' V' + y(c.r).toFixed(1); line += ' H' + x(t1);
     const steps = []; for (let r = rMin; r <= rMax; r += 250) steps.push(r);
@@ -465,33 +464,59 @@ function mpfSeason(rows, pick) { const K = rows.map((r) => r.it).filter((k) => k
     const dots = big.map((c) => '<circle cx="' + x(c.t).toFixed(1) + '" cy="' + y(c.r).toFixed(1) + '" r="3.5"><title>' + esc(dt(c.t) + ': +' + c.k.level + ' ' + c.k.boss + ' in time, rating about ' + Math.round(c.r).toLocaleString('en-US')) + '</title></circle>').join('');
     svg = '<svg class="mpf-s2cv" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="Your rating this season"><defs><linearGradient id="mpfS2g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e6b450" stop-opacity=".45"/><stop offset="1" stop-color="#e6b450" stop-opacity="0"/></linearGradient></defs>' + grid + mlab +
       '<path d="' + line + ' V' + y(rMin) + ' H' + x(tA) + ' Z" fill="url(#mpfS2g)"/><path d="' + line + '" class="ln"/>' + dots + '<text x="' + (x(lastC.t) - 8) + '" y="' + (y(lastC.r) - 9) + '" text-anchor="end" class="lb">+' + lastC.k.level + ' ' + esc(lastC.k.boss) + '</text></svg>'; }
+  // (the hero: crest, name, your characters, finding-keys progress; the rating; the curve)
+  const per = MPK.busy && MPK.per && pick && MPK.per[pick.id], pct = per && per.of ? Math.round(100 * per.n / per.of) : 0;
+  const busy = per ? '<p class="mpf-s3busy">' + (per.of > per.n ? 'Finding keys: ' + per.n + ' of ' + per.of + ' uploads (' + pct + '%)' : 'Finding keys…') + '<span class="mpf-prog"><i style="width:' + Math.max(4, pct) + '%"></i></span></p>' : '';
+  const chars = (cs || []).map((c) => { const c1 = (E.CLASSES || {})[c.cls]; return '<span class="mpf-s3ch' + (c === pick ? ' on' : '') + '" style="--c:' + ((c1 && c1[1]) || '#ccc') + '"><button type="button" data-mpc="' + esc(String(c.id)) + '">' + esc(c.name) + '</button>' + (c.added ? '<button type="button" class="x" data-mpx="' + esc(String(c.id)) + '" aria-label="Remove ' + esc(c.name) + '">×</button>' : '') + '</span>'; }).join('') + '<button type="button" class="mpf-s3ch mpf-s3add" data-mpadd="1">+ Add a character</button>';
+  const sub = [cls ? cls[0] : '', pick && pick.guild ? '‹' + pick.guild + '›' : pick && pick.server ? pick.server : ''].filter(Boolean).join(' · ');
+  const rate = T.length ? '<div class="mpf-s2r"><b>' + Math.round(R).toLocaleString('en-US') + '</b><span' + mpT1('About: the best timed key in each dungeon, on the points each key level and its time to spare are worth. The game\'s own number can differ a little.') + '>rating, about</span></div>' +
+    '<p class="mpf-s2d">' + (d14 > 0 ? '<b>▲ ' + d14 + '</b> in the last two weeks' : 'No change in the last two weeks') + '</p>' : '<div class="mpf-s2r"><b>—</b><span>no key timed yet</span></div>';
+  const chips = '<div class="mpf-s2c"><span><b>' + (topD ? '+' + topD.b.k.level : '—') + '</b> best key</span><span><b>' + T.length + '/' + MP_DUNGEONS.length + '</b> dungeons timed</span><span><b>' + (K.length ? Math.round(100 * nTk / K.length) : 0) + '%</b> of ' + plural(K.length, 'key') + ' timed</span></div>';
+  const hero = '<section class="mpf-s3h" style="--cc:' + cc + ';--art:' + (topD ? art(topD.d) : 'none') + '"><div class="mpf-s3t"><div class="mpf-s3id"><div class="mpf-s3cr">' + (pick ? banner(pick) : '') + '</div><div><h1>' + esc(pick ? pick.name : '') + '</h1><p>' + esc(sub) + '</p><div class="mpf-s3chs">' + chars + '</div>' + busy + (MPK.err ? '<p class="mpf-msg mpt-bad">' + esc(MPK.err) + '</p>' : '') + '</div></div>' +
+    '<div class="mpf-s3rt">' + rate + chips + '</div></div>' + (K.length >= 3 ? '<div class="mpf-s3cv"><p class="mpf-s2sh">Your rating this season<span>' + (curve.some((c) => c.n >= MP_DUNGEONS.length) ? 'since you first timed all ' + MP_DUNGEONS.length + ' dungeons; each step is a new best' : 'each step is a new best') + '</span></p>' + svg + '</div>' : '') + '</section>';
+  if (K.length < 3) return hero + mpfKeyList(rows, best);
   // (highlights)
   const closest = K.filter((k) => k.timed && k.keyMs && k.level >= hiLv - 1).map((k) => ({ k, s: par(k.boss) - k.keyMs / 1000 })).sort((a, b) => a.s - b.s)[0];
   const cleanest = K.filter((k) => k.timed && k.keyMs && k.level >= hiLv - 2).map((k) => ({ k, f: k.keyMs / 1000 / par(k.boss) })).sort((a, b) => a.f - b.f)[0];
   const most = best.slice().sort((a, c) => c.n - a.n)[0], WK = 7 * 864e5, W0 = Date.UTC(2026, 8, 15, 15), wk = new Map(); for (const k of K) { const w = Math.floor((k.wallMs - W0) / WK); wk.set(w, (wk.get(w) || 0) + 1); }
   const bw = [...wk].sort((a, b) => b[1] - a[1])[0];
-  const hls = [['Closest call', closest ? '+' + closest.k.level + ' ' + nm0(closest.k.boss) : '—', closest ? 'timed with ' + mpMM(closest.s) + ' to spare, ' + dt(closest.k.wallMs) : 'no key timed yet'],
-    ['Cleanest run', cleanest ? '+' + cleanest.k.level + ' ' + nm0(cleanest.k.boss) : '—', cleanest ? 'done in ' + Math.round(100 * cleanest.f) + '% of the timer' : ''],
-    ['Most played', nm0(most.d), plural(most.n, 'key') + ', ' + most.nT + ' in time'], ['Busiest week', bw ? dt(W0 + bw[0] * WK) : '—', bw ? plural(bw[1], 'key') : '']]
-    .map((h) => '<div class="mpf-s2h"><small>' + h[0] + '</small><b>' + esc(h[1]) + '</b><span>' + esc(h[2]) + '</span></div>').join('');
-  const hero = '<div class="mpf-s2top" style="--cc:' + cc + '"><div class="mpf-s2l"><small>This season' + (pick ? ' · ' + esc(pick.name) : '') + '</small><div class="mpf-s2r"><b>' + (T.length ? Math.round(R).toLocaleString('en-US') : '—') + '</b><span' + mpT1('About: the best timed key in each dungeon, on the points each key level and its time to spare are worth. The game\'s own number can differ a little.') + '>rating, about</span></div>' +
-    '<p class="mpf-s2d">' + (d14 > 0 ? '<b>▲ ' + d14 + '</b> in the last two weeks' : 'No change in the last two weeks') + '</p>' +
-    '<div class="mpf-s2c"><span><b>' + (topD ? '+' + topD.b.k.level : '—') + '</b> best key</span><span><b>' + T.length + '/' + MP_DUNGEONS.length + '</b> dungeons timed</span><span><b>' + Math.round(100 * nTk / K.length) + '%</b> of ' + plural(K.length, 'key') + ' timed</span></div>' +
-    '<div class="mpf-s2hs">' + hls + '</div></div>' +
-    '<div class="mpf-s2cw"><p class="mpf-s2sh">Your rating this season<span>' + (curve.length && curve.some((c) => c.n >= MP_DUNGEONS.length) ? 'since you first timed all ' + MP_DUNGEONS.length + ' dungeons; each step is a new best' : 'each step is a new best') + '</span></p>' + svg + '</div></div>';
+  const hl = '<div class="mpf-s3hl">' + [['⏱', 'Closest call', closest ? '+' + closest.k.level + ' ' + nm0(closest.k.boss) : '—', closest ? 'timed with ' + mpMM(closest.s) + ' to spare, ' + dt(closest.k.wallMs) : 'no key timed yet'],
+    ['✦', 'Cleanest run', cleanest ? '+' + cleanest.k.level + ' ' + nm0(cleanest.k.boss) : '—', cleanest ? 'done in ' + Math.round(100 * cleanest.f) + '% of the timer' : ''],
+    ['★', 'Most played', nm0(most.d), plural(most.n, 'key') + ', ' + most.nT + ' in time'], ['▦', 'Busiest week', bw ? dt(W0 + bw[0] * WK) : '—', bw ? plural(bw[1], 'key') : '']]
+    .map((h) => '<div class="mpf-s2h"><i class="mpf-s3g" aria-hidden="true">' + h[0] + '</i><small>' + h[1] + '</small><b>' + esc(h[2]) + '</b><span>' + esc(h[3]) + '</span></div>').join('') + '</div>';
   // (push next)
-  const art = (d) => (MP_ART[mpLc(d)] ? 'url(https://wow.zamimg.com/uploads/guide/' + MP_ART[mpLc(d)] + '.jpg)' : 'none');
   const push = low && gain > 0 ? '<div class="mpf-s2p" style="--art:' + art(low.d) + '"><div class="mpf-s2pl"><small>Push next</small><b>' + esc(low.d) + '</b><span>' + (low.b ? 'Your best here is <b>+' + low.b.k.level + '</b> with ' + mpMM(par(low.d) - low.b.k.keyMs / 1000) + ' to spare. ' : 'You haven\'t timed a key here yet. ') + 'Time a <b>+' + hiLv + '</b> and your rating goes up about <b class="g">+' + gain + '</b>, more than anywhere else.</span></div>' +
     (mpPrepOk(low.d) ? '<div class="mpf-s2pr">' + mpPrepB(low.d, 'mpf-s2pb', 'Prep for ' + esc(low.d) + ' ›') + '<small>bosses, trash and what to kick</small></div>' : '') + '</div>'
     : T.length ? '<div class="mpf-s2p mpf-s2p0"><div class="mpf-s2pl"><small>Push next</small><b>Every dungeon is at +' + hiLv + '</b><span>A +' + (hiLv + 1) + ' in time anywhere adds about <b class="g">+15</b>.</span></div></div>' : '';
-  // (a card per dungeon, best first)
+  // (a card per dungeon, best first; a click shows its keys below)
   const cards = best.slice().sort((a, c) => (c.b ? c.b.p : -1) - (a.b ? a.b.p : -1) || c.n - a.n).map((x) => { const b = x.b, p = par(x.d), used = b ? b.k.keyMs / 1000 : 0, up = b ? upOf(b.k) : 0, isLow = x === low && gain > 0, isTop = x === topD;
-    return '<div class="mpf-s2dc' + (isLow ? ' low' : '') + '" style="--art:' + art(x.d) + '"><div class="mpf-s2dh"><b>' + esc(nm0(x.d)) + '</b>' + mpPrepB(x.d, 'mpf-s2db', 'Prep') + '</div>' +
+    return '<div class="mpf-s2dc' + (isLow ? ' low' : '') + (MPF_KF.d === x.d ? ' sel' : '') + '" role="button" tabindex="0" data-mpsd="' + esc(x.d) + '" aria-label="' + esc('Show my ' + x.d + ' keys') + '" style="--art:' + art(x.d) + '"><div class="mpf-s2dh"><b>' + esc(nm0(x.d)) + '</b>' + mpPrepB(x.d, 'mpf-s2db', 'Prep') + '</div>' +
       (isLow ? '<span class="mpf-s2rb">Push next</span>' : isTop ? '<span class="mpf-s2rb b">Your best</span>' : '') +
       '<div class="mpf-s2lv">' + (b ? '+' + b.k.level : '—') + '<i class="u' + up + '">' + (b ? '+' + up : x.top ? 'not timed' : 'no key') + '</i></div>' +
       '<div class="mpf-s2tb"' + (b ? mpT1(mpMM(used) + ' of ' + mpMM(p) + '. +2 under ' + mpMM(p * 0.8) + ', +3 under ' + mpMM(p * 0.6) + '.') : '') + '><i class="u' + up + '" style="width:' + (b ? Math.min(100, 100 * used / p).toFixed(1) : 0) + '%"></i><s style="left:60%"></s><s style="left:80%"></s></div>' +
       '<div class="mpf-s2df"><span>' + (b ? '<b>' + mpMM(p - used) + '</b> to spare' : x.top ? 'best +' + x.top.level + ', over time' : 'no key yet') + '</span><span>' + (b ? Math.round(b.p) + ' pts · ' : '') + plural(x.n, 'key') + '</span></div></div>'; }).join('');
-  return '<section class="mpf-s2">' + hero + '<p class="mpf-s2sh mpf-s2sh2">Your dungeons<span>your best key in each, and how close it was to the timer</span></p>' + push + '<div class="mpf-s2w">' + cards + '</div></section>'; }
+  return hero + hl + push + '<p class="mpf-s2sh mpf-s2sh2">Your dungeons<span>your best key in each, and how close it was to the timer; click one for its keys</span></p><div class="mpf-s2w">' + cards + '</div>' + mpfKeyList(rows, best);
+}
+// (Your keys: newest first, by week, or highest; by dungeon; timed only; each row opens its key (MPF.view, as the old list did))
+function mpfKeyList(rows, best) { const F = MPF_KF, par = (d) => ((window.DBF_MPTIMER || {})[mpLc(d)] || 30) * 60, art = (d) => (MP_ART[mpLc(d)] ? 'url(https://wow.zamimg.com/uploads/guide/' + MP_ART[mpLc(d)] + '.jpg)' : 'none');
+  const all = rows.filter((r) => r.it && r.it.boss && r.it.wallMs).sort((a, b) => b.it.wallMs - a.it.wallMs); let L = all.filter((r) => (!F.d || mpLc(r.it.boss) === mpLc(F.d)) && (!F.timed || r.it.timed));
+  if (F.sort === 'high') L = L.slice().sort((a, b) => b.it.level - a.it.level || (b.it.timed - a.it.timed) || b.it.wallMs - a.it.wallMs);
+  const W0 = Date.UTC(2026, 8, 15, 15), WK = 7 * 864e5, wkOf = (t) => Math.floor((t - W0) / WK), now = wkOf(Date.now()), wkName = (w) => (w === now ? 'This week' : w === now - 1 ? 'Last week' : 'Week of ' + new Date(W0 + w * WK).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+  const row = (r) => { const k = r.it, i = MPF.view.push(r) - 1, p = par(k.boss), s = k.keyMs ? k.keyMs / 1000 : 0, up = k.timed && s ? (k.up || mpUp(k) || 1) : 0, res = !s ? ['Left early', 'l'] : k.timed ? ['Timed +' + up, up >= 2 ? 'g' : 'a'] : ['Over time', 'r'];
+    return '<button type="button" class="mpf-s3r" data-mpfv="' + i + '"' + (r.n > 1 ? ' data-tt="Same key in ' + r.n + ' uploads, shown once."' : '') + '><span class="mpf-s3th" style="background-image:' + art(k.boss) + '"></span><span class="mpf-s3lv ' + res[1] + '">+' + k.level + '</span>' +
+      '<span class="mpf-s3dn"><b>' + esc(String(k.boss).replace(/^The /, '')) + '</b><small>' + new Date(k.wallMs).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + (r.tag ? ' · ' + esc(r.tag) : '') + '</small></span>' +
+      '<span class="mpf-s3tm"><span class="mpf-s3tb"><i class="' + res[1] + '" style="width:' + (s ? Math.min(100, 100 * s / p).toFixed(1) : 0) + '%"></i><s style="left:60%"></s><s style="left:80%"></s></span><small>' + (s ? mpMM(s) + ' of ' + mpMM(p) + (k.timed ? ' · <b>' + mpMM(p - s) + '</b> to spare' : ' · ' + mpMM(s - p) + ' over') : 'left early, ' + mpMM(k.duration || 0) + ' played') + '</small></span>' +
+      '<span class="mpf-s3res ' + res[1] + '">' + res[0] + '</span><span class="mpf-s3go" aria-hidden="true">›</span></button>'; };
+  let body = '', lastW = null; for (const r of L.slice(0, F.n)) { if (F.sort === 'new') { const w = wkOf(r.it.wallMs); if (w !== lastW) { const n = L.filter((x) => wkOf(x.it.wallMs) === w); body += '<p class="mpf-s3wk"><b>' + wkName(w) + '</b><span>' + plural(n.length, 'key') + ' · ' + n.filter((x) => x.it.timed).length + ' in time · best +' + Math.max(...n.map((x) => x.it.level)) + '</span></p>'; lastW = w; } } body += row(r); }
+  const chips = ['', ...MP_DUNGEONS].map((d) => '<button type="button" class="mpf-s3c' + (F.d === d ? ' on' : '') + '" data-mpsd="' + esc(d) + '">' + (d ? esc(d.replace(/^The /, '')) : 'All dungeons') + '<i>' + (d ? all.filter((r) => mpLc(r.it.boss) === mpLc(d)).length : all.length) + '</i></button>').join('');
+  return '<section class="mpf-s3k" id="mpfKeyList"><div class="mpf-s3kh"><h2>Your keys<span>' + plural(L.length, 'key') + (F.d ? ' in ' + esc(F.d) : ' this season') + '</span></h2><div class="mpf-s3sw"><button type="button" class="' + (F.sort === 'new' ? 'on' : '') + '" data-mpss="new">Newest</button><button type="button" class="' + (F.sort === 'high' ? 'on' : '') + '" data-mpss="high">Highest</button><label><input type="checkbox" data-mpst="1"' + (F.timed ? ' checked' : '') + '> Timed only</label></div></div>' +
+    '<div class="mpf-s3cs">' + chips + '</div><div class="mpf-s3l">' + (body || '<p class="mpf-msg">No keys here yet.</p>') + '</div>' + (L.length > F.n ? '<button type="button" class="mpf-s3more" data-mpsm="1">Show ' + Math.min(24, L.length - F.n) + ' more<span>' + (L.length - F.n) + ' left</span></button>' : '') + '</section>'; }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpsd],[data-mpss],[data-mpsm]'); if (!t || S.page !== 'mpfind' || e.target.closest('[data-mpprep]')) return; e.preventDefault();
+  const card = t.classList.contains('mpf-s2dc');
+  if (t.dataset.mpss) MPF_KF.sort = t.dataset.mpss; else if (t.dataset.mpsm) { MPF_KF.n += 24; } else { MPF_KF.d = card && MPF_KF.d === t.dataset.mpsd ? '' : t.dataset.mpsd; }
+  if (!t.dataset.mpsm) MPF_KF.n = 12; mpfDraw(); if (card) { const l = $('#mpfKeyList'); if (l) l.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('mpf-s2dc')) { e.preventDefault(); e.target.click(); } });
+document.addEventListener('change', (e) => { if (e.target.matches && e.target.matches('[data-mpst]') && S.page === 'mpfind') { MPF_KF.timed = e.target.checked; MPF_KF.n = 12; mpfDraw(); } });
 // (the page: the cards, then the picked character's keys; redrawn as keys come in)
 function mpfDraw() { if (S.page !== 'mpfind') return; MPF.view = []; const J = mpkGet(), cs = mpkChars().filter((c) => !(J.chars[c.id] || {}).none);
   const cards = $('#mpfCards'), keys = $('#mpfKeys'), ago = $('#mpfAgo'); if (!cards || !keys) return;
@@ -500,11 +525,11 @@ function mpfDraw() { if (S.page !== 'mpfind') return; MPF.view = []; const J = m
     '<div class="tt-card tt-add mpf-addc" role="button" tabindex="0" data-mpadd="1"><span class="tt-plus" aria-hidden="true">+</span><span class="tt-n">Add a character</span><span class="tt-l">Any character by name and realm, just for Mythic+. Your raid teams aren\'t touched.</span></div></div>' +
     (MPK.err ? '<p class="mpf-msg mpt-bad">' + esc(MPK.err) + '</p>' : '');
   if (ago) { const m = J.at ? Math.round((Date.now() - J.at) / 60000) : null; ago.textContent = MPK.busy ? 'finding new keys…' : m == null ? '' : 'checked ' + (m < 1 ? 'just now' : m < 60 ? plural(m, 'minute') + ' ago' : 'earlier'); }
+  { const hm = $('.mpf-home'); if (hm) hm.classList.toggle('mpf-haspick', !!pick); } /* (Nov 9: the hero switches characters) */
   if (!pick) { keys.innerHTML = '<p class="mpf-msg">Add a character to see their keys, or open any key above.</p>'; return; }
   const extra = []; for (const k of J.added) extra.push({ it: { ...k, wcl: { code: k.code, fight: k.fight } }, n: 1, who: [], tag: 'added' }); for (const it of mpKeys()) if (!it.wcl && it.wallMs) extra.push({ it, n: 1, who: [], tag: 'from your PC', local: true });
   const own = mpkOwn(pick, J), ids = new Set(own.map((r) => mpkId(r.it))), rows = own.concat(extra.filter((r) => !ids.has(mpkId(r.it)))), cls = (E.CLASSES || {})[pick.cls];
-  keys.innerHTML = mpfSeason(rows, pick) + '<div class="th-h"><h2' + (cls ? ' style="color:' + cls[1] + '"' : '') + '>' + esc(pick.name) + '\'s keys</h2><span class="sub">this season, by dungeon · highest first</span></div>' +
-    '<div class="mpf-keys">' + mpfByDungeon(rows, 'mptK', null) + '</div>';
+  void cls; keys.innerHTML = mpfSeason(rows, pick, cs); /* (Nov 9: the whole page; the per-dungeon lists became Your keys) */
   try { mpFoldRestore(); } catch (e) { /* (folds as drawn) */ } }
 const mpfPaste = () => { const v = $('#mpfIn').value.trim(); if (!v) return; MPF.addNext = true; openReportLink(v, $('#mpfMsg')); }; /* (its keys join the list (mpOpen)) */
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpx],[data-mpc],[data-mpadd],[data-mpfv],[data-mpk],[data-mpfm],[data-mpf-more],[data-mpf-open],[data-mpf-paste],[data-mpf-file],[data-mpf-real],#mpfGo'); if (!t) return;
