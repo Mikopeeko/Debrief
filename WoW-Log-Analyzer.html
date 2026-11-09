@@ -74603,9 +74603,13 @@ function dsGuides() {
       var mw = title.match(/^Missed:\s*(.+?)\s+(uptime|on you|up)$/i), sp = +mk.dataset.sp || 0, t0 = +mk.dataset.t || 0;
       /* (only the spells a buff really changes are counted (Flex: "wild growth isnt affected by abundance"): Abundance changes Regrowth only; a buff with no entry just says how long it was down) */
       /* (Abundance, reworked in 12.1 (notes/Guides/Classes/Restoration Druid.md): with 5+ Rejuvenations active, Regrowth gets +60% crit and -60% mana cost; Rejuvenation keeps it up, only Regrowth gains (Flex)) */
-      var BUFFS = { 'abundance': { aff: ['Regrowth'], why: 'fewer than 5 Rejuvenations', tip: 'Keep 5 Rejuvenations out, and hold Regrowth until Abundance is back.' } };
+      var BUFFS = { 'abundance': { aff: ['Regrowth'], why: 'fewer than 5 Rejuvenations', tip: 'Keep 5 Rejuvenations out, and hold Regrowth until Abundance is back.' },
+        /* (Nov 9, Flex: a Lifebloom gap inside Convoke is its own big mistake: Convoke's Swiftmends bloom Lifebloom 3 times each with Everbloom (guide)) */
+        'lifebloom': { inCd: { 'convoke the spirits': { title: 'No Lifebloom during Convoke', why: 'its Swiftmends couldn\u2019t bloom Lifebloom (Everbloom), a big healing loss.', tip: 'Put Lifebloom on yourself before you press Convoke.' } } } };
       if (mw && sp > 0) { var bn = mw[1], B0 = BUFFS[bn.toLowerCase()] || {}, aff = B0.aff || [], n0 = 0; title = bn + ' fell off'; ((typeof md !== 'undefined' && md && md.C) || []).forEach(function (c) { if (c.t >= t0 && c.t <= t0 + sp && aff.indexOf(c.n) >= 0) n0++; });
-        var dur = Math.round(sp * 10) / 10; mo = (/on you/i.test(mw[2]) ? 'Off you for ' + dur + ' s' : 'Down ' + dur + ' s') + (B0.why ? ' (' + B0.why + ')' : '') + (aff.length && n0 ? ': you cast ' + aff[0] + ' \u00d7' + n0 + ' without it.' : '.'); if (B0.tip) nx = B0.tip; tm = ''; }
+        var dur = Math.round(sp * 10) / 10; mo = (/on you/i.test(mw[2]) ? 'Off you for ' + dur + ' s' : 'Down ' + dur + ' s') + (B0.why ? ' (' + B0.why + ')' : '') + (aff.length && n0 ? ': you cast ' + aff[0] + ' \u00d7' + n0 + ' without it.' : '.'); if (B0.tip) nx = B0.tip; tm = '';
+        var inE = tmp.querySelector('.rtv-in'), inM = inE ? (inE.textContent || '').match(/Inside (.+?) window \(([^)]+)\)/) : null, IC = inM && B0.inCd ? B0.inCd[inM[1].toLowerCase()] : null;
+        if (IC) { title = IC.title; mo = (/on you/i.test(mw[2]) ? 'Off you for ' : 'Down ') + dur + ' s, through ' + inM[1] + ' (' + inM[2] + '): ' + IC.why; nx = IC.tip; } }
       else if (!whole && !nx) nx = body; /* (a whole-pull figure isn't said at a moment) */
       var lv = /\blv3\b/.test(mk.className) ? 'lv3' : /\blv2\b/.test(mk.className) ? 'lv2' : 'lv1', d = document.createElement('div'); d.className = 'rtv-note ' + lv; d.dataset.nt = mk.dataset.nt;
       d.innerHTML = '<b>' + E(title) + (tm ? '<em>\u00d7' + E(tm) + '</em>' : '') + '</b>' + (mo ? '<span class="rtv-nmo">' + E(mo) + '</span>' : '') + (nx ? '<span>' + E(nx) + '</span>' : ''); var top = Math.max(parseFloat(mk.style.top) - 6, lastB + 4); d.style.top = top + 'px'; sd.appendChild(d); lastB = top + d.offsetHeight; }); });
