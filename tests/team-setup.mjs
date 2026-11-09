@@ -7,7 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url)), SRC = path.join(here,
 let code = fs.readFileSync(SRC, 'utf8').replace("import { WorkerEntrypoint } from 'cloudflare:workers';", 'class WorkerEntrypoint {}').replace(/\b__[A-Z_]+__\b/g, '""');
 code = code.replace('const NIGHT_Q = "";', 'const NIGHT_Q = "fights(killType";').replace('const TEAM_REPORTS_Q = "";', 'const TEAM_REPORTS_Q = "reports(guildID";')
   .replace('const CHAR_INFO_Q = "";', 'const CHAR_INFO_Q = "characterInfo";').replace('const CHAR_REPORTS_Q = "";', 'const CHAR_REPORTS_Q = "recentReports";').replace('const TEAM_INFO_Q = "";', 'const TEAM_INFO_Q = "guildInfo";');
-code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess, teamRecheck, teamCron, setupRegs };\n';
+code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess, teamRecheck, teamCron, setupRegs, bnetRoute, whoAmIRoute };\n';
 const tmp = path.join(os.tmpdir(), 'debrief-team-setup-' + process.pid + '.mjs'); fs.writeFileSync(tmp, code);
 
 // ---- the edge cache, storage (R2), KV and Warcraft Logs, all fake
@@ -201,4 +201,18 @@ COMMUNITY = true;
   ok(b.claim === 'Only someone who raids with this team can set it up.', 'someone who doesn\'t raid with it can\'t: "' + b.claim + '"'); ok(c.claim === '', 'Raidone (3 nights) may too'); }
 COMMUNITY = false;
 { const [st] = await call(S2.raid, '/api/teamplan?id=team:555', { op: 'create', name: 'x', me: 'Raidone' }); const [, d] = await call(S2.raid, '/api/teamplan?id=team:555'); ok(st === 409 && d.lead === 'Gmone', 'a team already saved stays as it is: saving over it is refused (409), its lead unchanged'); }
+console.log('13. View as a raider: the site admin\'s own switch');
+const sw = async (P0, on) => { const r = await W.bnetRoute(new Request(P0.host + '/api/bnet', { method: 'POST', headers: { Cookie: P0.cookie, 'Content-Type': 'application/json', Origin: P0.host }, body: JSON.stringify({ asRaider: on }) }), env, new URL(P0.host + '/api/bnet')); return [r.status, await r.json()]; };
+const whoIs = async (P0) => (await W.whoAmIRoute(new Request(P0.host + '/api/whoami', { headers: { Cookie: P0.cookie } }), env, new URL(P0.host + '/api/whoami'))).json();
+await call(S2.admin, '/api/teamplan?id=team:558', { op: 'create', name: 'Adminteam', me: 'Flëxørçïst' });
+{ const [, a] = await call(S2.admin, '/api/teamplan?id=team:558'); ok(a.you.lead && a.access === 'edit', 'off: the site admin leads their own team and edits it'); ok((await whoIs(S2.admin)).raider === false, 'the switch is offered to the site admin (off)'); }
+{ ok((await whoIs(S2.raid)).raider === null, 'nobody else gets the switch'); const [st] = await sw(S2.raid, true); ok(st === 403, '... and nobody else can turn it on'); }
+{ const [st, j] = await sw(S2.admin, true); ok(st === 200 && j.asRaider, 'the site admin turns it on');
+  const [, a] = await call(S2.admin, '/api/teamplan?id=team:558'); ok(!a.you.lead && a.access === 'see' && a.why === 'member', 'on: not the lead of their own team; they see it as a member, like any raider (' + a.access + ', ' + a.why + ')');
+  const [s2] = await call(S2.admin, '/api/teamplan?id=team:558', { op: 'set', keys: { 'wla-alts': '{"a":1}' }, me: 'Flëxørçïst' }); ok(s2 === 403, '... and can\'t edit it');
+  const [s3] = await call(S2.admin, '/api/teamplan?id=team:558', { op: 'officer', add: 'Raidone', me: 'Flëxørçïst' }); ok(s3 === 403, '... or add an officer');
+  const [, c] = await call(S2.admin, '/api/teamplan?id=team:559&claim=1'); ok(c.claim !== '', 'no site admin: can\'t claim a team page they don\'t raid with');
+  const [, x] = await call(S2.admin, '/api/teamplan?id=team:555'); ok(x.access === 'none' && x.why !== 'admin', 'no site admin on other teams either (' + x.access + ', ' + x.why + ')');
+  ok((await whoIs(S2.admin)).raider === true, 'whoami says it\'s on (the page shows the strip)'); }
+{ const [st, j] = await sw(S2.admin, false); const [, a] = await call(S2.admin, '/api/teamplan?id=team:558'); ok(st === 200 && !j.asRaider && a.you.lead && a.access === 'edit', 'it always turns off again: lead and site admin, and the team\'s owner never changed'); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);

@@ -4994,6 +4994,8 @@ html body .bn-sheet button.bn-r { border-radius: 50% !important; }
    gold only where Debrief is talking (the strip, the step you're on, the picked team) */
 .su-bar { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 10px var(--gut); background: linear-gradient(90deg, rgba(230,180,80,.14), rgba(230,180,80,.05)); border-bottom: 1px solid rgba(230,180,80,.35); color: var(--text); font-size: 14px; line-height: 1.45; }
 .su-bar-t b { color: var(--gold); } .su-bar-a { display: flex; align-items: center; gap: 12px; flex: none; } .su-bar .btn { height: 32px; padding: 0 14px; font-size: 14px; }
+.rv-bar { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; padding: 8px var(--gut); background: rgba(106,168,255,.1); border-bottom: 1px solid rgba(106,168,255,.38); color: var(--text); font-size: 14px; line-height: 1.45; }
+.rv-bar b { color: var(--blue); } .rv-bar .btn { height: 30px; padding: 0 14px; font-size: 13px; } /* (View as a raider, Nov 9: blue, a setting) */
 .su-lk { background: none; border: 0; padding: 6px 2px; color: var(--muted); font: 600 14px var(--body); cursor: pointer; } .su-lk:hover { color: var(--text); }
 .su-sheet { width: min(840px, 100%); }
 .su-wrap { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 24px; margin-top: 4px; }
@@ -34734,6 +34736,18 @@ async function openInvite(v) {
   const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
   const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); if (A.done) { try { sessionStorage.removeItem(INV_K); } catch (err) { /* fine */ } try { if (!$('#tbHome') || S.page === 'home' || S.page === 'prog') home(); } catch (err) { /* (next visit) */ } } };
   document.body.appendChild(el); document.body.classList.add('touring'); document.addEventListener('keydown', key, true); draw(); }
+// ---- View as a raider (Nov 9, Flex: "make me follow the real rules of the website", "I want to test the way raiders will see the website"): the
+// site admin's own switch, in the menu; while it's on, a strip on every page says so with Turn off, and the Worker treats him like any raider
+// (no site admin, no raid lead; his real guild rank still counts). whoami's raider: null = not the site admin, true / false = on / off
+async function rvSet(on) { try { const r = await fetch('/api/bnet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asRaider: !!on }) }); if (!r.ok) throw new Error(String(r.status)); location.reload(); }
+  catch (e) { toast('That didn\'t switch. Try again.', 3000); } }
+function rvUi() { const W = WHO.now || {}, has = W.raider === true || W.raider === false, m = $('#tbMenuPop');
+  if (m) { let b = $('#tbRaider'); if (!has) { if (b) b.remove(); } else { const html = W.raider ? 'Back to your own view<span>site admin and raid lead again</span>' : 'View as a raider<span>see Debrief the way raiders do</span>';
+    if (!b) { const out = $('#tbOut'), h = '<button class="tbm-i" id="tbRaider" type="button"></button>'; if (out && out.parentElement === m) out.insertAdjacentHTML('beforebegin', h); else m.insertAdjacentHTML('beforeend', h); b = $('#tbRaider'); } /* (above Sign out) */ b.innerHTML = html; b.onclick = () => { m.hidden = true; rvSet(!W.raider); }; } }
+  const cur = $('#rvBar'), tb = $('#topbar'); if (W.raider !== true || !tb) { if (cur) cur.remove(); return; } if (cur) return;
+  tb.insertAdjacentHTML('afterend', '<div class="rv-bar" id="rvBar" role="status"><span><b>Viewing as a raider.</b> Debrief treats you like any raider: no site admin and no raid lead. Your guild rank still counts.</span><button class="btn" type="button">Turn off</button></div>');
+  $('#rvBar button').onclick = () => rvSet(false); }
+document.addEventListener('whoami', () => { try { rvUi(); } catch (e) { /* (next page) */ } });
 // ---- Battle.net step 4: "Ready for the raid?" on Plan, from public Battle.net data, so it works for everyone on the roster, linked or not:
 // missing enchants and empty gem sockets, item level under the raid's, an officer view (item level, Mythic+ score, keys this week, linked),
 // and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts

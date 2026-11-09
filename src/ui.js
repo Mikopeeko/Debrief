@@ -8641,6 +8641,18 @@ async function openInvite(v) {
   const key = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
   const close = () => { document.removeEventListener('keydown', key, true); el.classList.add('out'); document.body.classList.remove('touring'); setTimeout(() => el.remove(), 260); if (A.done) { try { sessionStorage.removeItem(INV_K); } catch (err) { /* fine */ } try { if (!$('#tbHome') || S.page === 'home' || S.page === 'prog') home(); } catch (err) { /* (next visit) */ } } };
   document.body.appendChild(el); document.body.classList.add('touring'); document.addEventListener('keydown', key, true); draw(); }
+// ---- View as a raider (Nov 9, Flex: "make me follow the real rules of the website", "I want to test the way raiders will see the website"): the
+// site admin's own switch, in the menu; while it's on, a strip on every page says so with Turn off, and the Worker treats him like any raider
+// (no site admin, no raid lead; his real guild rank still counts). whoami's raider: null = not the site admin, true / false = on / off
+async function rvSet(on) { try { const r = await fetch('/api/bnet', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ asRaider: !!on }) }); if (!r.ok) throw new Error(String(r.status)); location.reload(); }
+  catch (e) { toast('That didn\'t switch. Try again.', 3000); } }
+function rvUi() { const W = WHO.now || {}, has = W.raider === true || W.raider === false, m = $('#tbMenuPop');
+  if (m) { let b = $('#tbRaider'); if (!has) { if (b) b.remove(); } else { const html = W.raider ? 'Back to your own view<span>site admin and raid lead again</span>' : 'View as a raider<span>see Debrief the way raiders do</span>';
+    if (!b) { const out = $('#tbOut'), h = '<button class="tbm-i" id="tbRaider" type="button"></button>'; if (out && out.parentElement === m) out.insertAdjacentHTML('beforebegin', h); else m.insertAdjacentHTML('beforeend', h); b = $('#tbRaider'); } /* (above Sign out) */ b.innerHTML = html; b.onclick = () => { m.hidden = true; rvSet(!W.raider); }; } }
+  const cur = $('#rvBar'), tb = $('#topbar'); if (W.raider !== true || !tb) { if (cur) cur.remove(); return; } if (cur) return;
+  tb.insertAdjacentHTML('afterend', '<div class="rv-bar" id="rvBar" role="status"><span><b>Viewing as a raider.</b> Debrief treats you like any raider: no site admin and no raid lead. Your guild rank still counts.</span><button class="btn" type="button">Turn off</button></div>');
+  $('#rvBar button').onclick = () => rvSet(false); }
+document.addEventListener('whoami', () => { try { rvUi(); } catch (e) { /* (next page) */ } });
 // ---- Battle.net step 4: "Ready for the raid?" on Plan, from public Battle.net data, so it works for everyone on the roster, linked or not:
 // missing enchants and empty gem sockets, item level under the raid's, an officer view (item level, Mythic+ score, keys this week, linked),
 // and "Link Battle.net and join <team>" for a raider who isn't on the roster yet. Which slots need an enchant isn't guessed: a slot counts
