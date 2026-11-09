@@ -11790,9 +11790,12 @@ html body #view .g8-bfr { cursor: pointer; border-radius: 3px; padding: 0 4px; m
 html body #view .g8-bfr.on { background: rgba(230,180,80,.10); box-shadow: inset 2px 0 0 #e6b450; } html body #view .g8-bfr:focus-visible { outline: 2px solid #e6b450; outline-offset: 1px; }
 html body #view .g8-bfl.g8-bf6 { max-width: 660px; } html body #view .g8-bfl.g8-bf6 .g8-tr { grid-template-columns: 16px 190px minmax(0, 1fr) 48px 40px 70px; } html body #view .g8-stc { color: #ece8df; font-weight: 600; } /* (Nov 9, Flex: average stacks as its own column on the right) */
 html body #view .pf-row.cb.g8-son { box-shadow: inset 2px 0 0 #e6b450; background: rgba(230,180,80,.06); }
-html body #view .g8-bch { position: sticky; top: var(--g8-stick, 54px); z-index: 6; box-shadow: 0 8px 18px rgba(0,0,0,.35); }
+html body #view .g8-bch { position: relative; } /* (Nov 9, Flex: it slid over the page tabs when scrolling; it scrolls with the page now) */
 html body #view .g8-bch .gb-hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } html body #view .g8-bch .gb-lbl { display: inline-flex; align-items: center; gap: 6px; } html body #view .g8-bch .g8-bfx { margin-left: auto; }
 html body #view .g8-bsv { display: block; width: 100%; height: 150px; }
+html body #view .g8-uch .g8-dtl { display: none; } html body #view .g8-uch.dt-on .g8-dtl { display: inline; } /* (Nov 9: damage taken on or off from the legend) */
+html body #view .g8-blg .g8-dtt { display: inline-flex; align-items: center; gap: 6px; padding: 1px 8px; margin-left: auto; background: none; border: 1px solid #353b49; border-radius: 4px; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; } html body #view .g8-blg .g8-dtt[aria-pressed="true"] { color: var(--text); border-color: rgba(229,83,75,.6); background: rgba(229,83,75,.10); } html body #view .g8-blg .g8-dtt[aria-pressed="false"] i { opacity: .3 !important; }
+html body #view .g8-uch .g8-blg { margin-right: 10px; }
 html body #view .g8-blg { display: flex; gap: 16px; margin: 4px 0 0 52px; font-size: 12px; color: var(--muted); } html body #view .g8-blg span { display: inline-flex; align-items: center; gap: 6px; }
 html body #view .g8-blg i { display: inline-block; width: 12px; height: 8px; border-radius: 2px; } html body #view .g8-blg .g8-bk1 { background: rgba(230,180,80,.35); box-shadow: inset 0 2px 0 rgba(230,180,80,.9); }
 @layer defaultTheme {
@@ -11819,7 +11822,8 @@ body .gb-tip.g8-rich { width: 384px; max-width: calc(100vw - 16px); min-width: 0
 .g8-rich .g8-tb { height: 9px; background: rgba(255,255,255,.04); border-radius: 2px; overflow: hidden; } .g8-rich .g8-tb i { display: block; height: 100%; border-radius: 2px; background: var(--c); } /* (Nov 9, Flex: the same shape as the list bars, only smaller: a solid class-colour fill, 2 px corners, a faint track; the second part the same colour at 45%) */
 .g8-rich .g8-tr.b .g8-tb i { background: var(--c); opacity: .45; } .g8-rich .g8-tr.o .g8-tb i { background: #5c6270; } .g8-rich .g8-tr.o .g8-tn { color: #8a939c; }
 .g8-rich .g8-tr > b { text-align: right; font-weight: 600; color: #ece8df; font-variant-numeric: tabular-nums; } .g8-rich .g8-tp { text-align: right; color: #8a939c; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.g8-rich .g8-ti .av { width: 15px !important; height: 15px !important; border-width: 1px !important; } /* (Nov 9, Flex: player pictures as small as the spell icons) */
+.g8-rich .g8-ti .av { width: 15px !important; height: 15px !important; border-width: 1px !important; } .g8-rich .g8-ti .icw { width: 15px !important; height: 15px !important; } .g8-inl .g8-ti .icw, .g8-inl .g8-ti .sp, .g8-inl .g8-ti img, .g8-inl .g8-ti svg { width: 16px !important; height: 16px !important; } /* (Nov 9, Flex: the icon wrapper was 20 px and spilled over the rows) */
+html body #view .g8-svl .g8-tr { grid-template-columns: 16px 190px minmax(0, 1fr) 48px 84px; } /* (Nov 9, Flex: player pictures as small as the spell icons) */
 .g8-inl { max-width: 520px; margin: 2px 0 6px; } .g8-inl .g8-tt { margin-top: 0; } .g8-inl .g8-tr { grid-template-columns: 16px 120px minmax(0, 1fr) 56px 44px; min-height: 20px; line-height: 20px; gap: 8px; } .g8-inl .g8-tb { height: 11px; } .g8-inl .g8-ti .av { width: 16px !important; height: 16px !important; } /* (Nov 9, Flex: "so much empty space": narrow, 20 px rows, one header line) */ /* (the click list in the list's own bar shape) */
 .g8-rich .g8-tf { margin-top: 8px; padding-top: 6px; border-top: 1px solid #2c3236; font-size: 12px; color: #6f7882; }
 html body #view .gb-chart249 .r254-tip, html body #view .g8-dw .g8-dtip { background: #191c1f; border-color: #353b49; border-radius: 6px; box-shadow: 0 10px 28px rgba(0,0,0,.5); font-size: 12.5px; }
