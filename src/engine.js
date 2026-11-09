@@ -6894,6 +6894,7 @@ function* analyzeSteps(item, text, opts) {
         const ca = p.castAb.get(spell); if (ca) ca.n++; else p.castAb.set(spell, { name: spell, id, n: 1 });
         let tl = p.castTimes.get(id); if (!tl) p.castTimes.set(id, tl = []); tl.push(t);
         if (dg && dg !== sg && isPlayer(dg)) { if (!p.castTo) p.castTo = new Map(); let to = p.castTo.get(id); if (!to) p.castTo.set(id, to = []); if (to.length < 400) to.push([t, String(f[5] || '').replace(/\x22/g, '').split('-')[0]]); } /* (round 157: who a cast on another player went on) */
+        { if (!p.castL) { p.castL = []; p.castN = []; } if (p.castL.length < 4000) { const tg = dg && dg !== sg && dg !== '0000000000000000' && dn && dn !== 'nil' ? shortName(dg, String(dn).replace(/\x22/g, '')) : ''; let ni = tg ? p.castN.indexOf(tg) : -1; if (tg && ni < 0 && p.castN.length < 120) ni = p.castN.push(tg) - 1; p.castL.push([Math.round(t * 10) / 10, +id || 0, ni]); } } /* (Nov 9: each cast with its target, for Graphs' spell hover) */
         const ln = spell.toLowerCase();
         let bl = p.byName.get(ln); if (!bl) p.byName.set(ln, bl = []); bl.push(t);
         { const pq = POT_ID.get(+id), pn = pq && pq.n.toLowerCase(); if (pn && pn !== ln) { let bq = p.byName.get(pn); if (!bq) p.byName.set(pn, bq = []); bq.push(t); } } /* (a potion under its English name too (Oct 26)) */
