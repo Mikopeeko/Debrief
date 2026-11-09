@@ -166,7 +166,7 @@ setInterval(snTick, 300);
 function snImport() { let o = document.getElementById('snImp'); if (o) { o.querySelector('input').focus(); return; }
   o = document.createElement('div'); o.id = 'snImp'; o.className = 'snimp'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-labelledby', 'snImpT');
   o.innerHTML = '<div class="snimp-box"><div class="snimp-h"><b id="snImpT">Open a Warcraft Logs report</b><button type="button" class="snimp-x" aria-label="Close">✕</button></div>' +
-    '<div class="snimp-r"><input type="text" spellcheck="false" autocomplete="off" aria-label="Warcraft Logs link or report code" placeholder="Paste a Warcraft Logs link or report code"><button type="button" class="btn primary snimp-go">Open</button></div><p class="snimp-m" aria-live="polite"></p></div>';
+    '<div class="snimp-r"><input type="text" spellcheck="false" autocomplete="off" aria-label="Warcraft Logs link or report code" placeholder="Paste a Warcraft Logs link or report code"><button type="button" class="btn primary snimp-go">Open</button></div><p class="snimp-m" aria-live="polite"></p>' + snRecentH() + '</div>';
   document.body.appendChild(o);
   const inp = o.querySelector('input'), go = o.querySelector('.snimp-go'), msg = o.querySelector('.snimp-m');
   const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
@@ -177,7 +177,17 @@ function snImport() { let o = document.getElementById('snImp'); if (o) { o.query
   const open = async () => { const link = WCL.parseLink(inp.value);
     if (!link) { msg.className = 'snimp-m no'; msg.textContent = "That doesn't look like a Warcraft Logs link."; inp.focus(); return; }
     msg.className = 'snimp-m'; msg.textContent = 'Opening the report…'; go.disabled = true; inp.disabled = true;
-    try { await openWcl(link, null, false, true); close(); } catch (err) { go.disabled = false; inp.disabled = false; msg.className = 'snimp-m no'; msg.textContent = err && err.message ? err.message : "That report couldn't be opened."; inp.focus(); } };
-  go.onclick = open; inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); open(); } };
+    try { await openWcl(link, null, false, true); snRecentAdd(link); close(); } catch (err) { go.disabled = false; inp.disabled = false; msg.className = 'snimp-m no'; msg.textContent = err && err.message ? err.message : "That report couldn't be opened."; inp.focus(); } };
+  go.onclick = open; o.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-snrec]'); if (!b) return; inp.value = b.dataset.snrec; open(); }); inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); open(); } };
   inp.oninput = () => { if (msg.classList.contains('no')) { msg.className = 'snimp-m'; msg.textContent = ''; } };
   setTimeout(() => inp.focus(), 0); }
+
+/* (Nov 9, Flex: "it shouldnt get saved to their profile, its just a one time import", and a "recent log" section): the last 5 logs opened
+   from Import a log, in this browser only. A log on this list is one-time: Plan doesn't learn its raiders unless it's your own raid. */
+const SN_REC_K = 'wla-recent-logs';
+const snRecent = () => { try { const v = JSON.parse(store.get(SN_REC_K) || '[]'); return Array.isArray(v) ? v.filter((x) => x && x.code) : []; } catch (e) { return []; } };
+window.snOnce = (code) => snRecent().some((x) => x.code === code);
+function snRecentAdd(link) { try { const t = (($('.brand p') || {}).textContent || '').replace(/^Warcraft Logs:\s*/, '').trim(); const L = snRecent().filter((x) => x.code !== link.code); L.unshift({ code: link.code, fight: link.fight || null, title: t && t !== link.code ? t : '', at: Date.now() }); store.set(SN_REC_K, JSON.stringify(L.slice(0, 5))); } catch (e) { /* (fine without) */ } }
+function snRecentH() { const L = snRecent(); if (!L.length) return '';
+  const d = (ms) => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return '<div class="snimp-rh">Recent</div><div class="snimp-rl">' + L.map((x) => '<button type="button" class="snimp-ri" data-snrec="' + esc('https://www.warcraftlogs.com/reports/' + x.code + (x.fight ? '#fight=' + x.fight : '')) + '"><b>' + esc(x.title || x.code) + '</b><span>' + d(x.at) + '</span></button>').join('') + '</div>'; }
