@@ -15,11 +15,22 @@
   var LIVE = '[data-live]', MOVE = 'svg, .ztime, .dtm-clk, .dtm-hp, .dtm-rf, .dtm-rff, .dtm-tmk, .dtm-head, .dtm-tlh';
   var skip = function (m) { var t = m.target, e = t && (t.nodeType === 1 ? t : t.parentElement); if (!e || !e.closest || !e.closest(LIVE)) return false; return m.type !== 'childList' || !!e.closest(MOVE); };
   var inLive = function (t) { var e = t && (t.nodeType === 1 ? t : t.parentElement); return !!(e && e.closest && e.closest(LIVE)); };
-  function W(cb) { var self = this, ins = []; this._ins = ins; this._mo = new MO(function (L) { var keep = L; if (!ins.some(inLive)) { keep = L.filter(function (m) { return !skip(m); }); if (!keep.length) return; } cb.call(self, keep, self); }); }
-  W.prototype.observe = function (t, o) { if (this._ins.indexOf(t) < 0) this._ins.push(t); return this._mo.observe(t, o); };
-  W.prototype.disconnect = function () { this._ins.length = 0; return this._mo.disconnect(); };
-  W.prototype.takeRecords = function () { var L = this._mo.takeRecords(); return this._ins.some(inLive) ? L : L.filter(function (m) { return !skip(m); }); };
-  W.__live = true; window.MutationObserver = W; })();</script>
+  /* (Nov 9, speed pass: a class or attribute set to the value it already had is still reported as a change. Several tidiers set a class
+     that was already there each time they ran, which woke the other watchers, which woke them again: on an idle Summary that loop ran
+     about 30 page-wide passes every 150 ms forever. A real change reaches every watcher at once, as before; a batch of changes that left
+     every value as it was reaches a watcher at most once a second instead. (Some tidiers lean on that loop to catch what they don't watch,
+     like the Summary's answer box being un-hidden, so it slows down rather than stops.) Every watcher of attributes gets the old value to
+     compare; a real change always keeps at least one record.) */
+  var BEAT = 1000, same = function (m) { if (m.type !== 'attributes') return false; var t = m.target; if (!t || !t.getAttribute) return false; return m.oldValue === (m.attributeNamespace ? t.getAttributeNS(m.attributeNamespace, m.attributeName) : t.getAttribute(m.attributeName)); };
+  function W(cb) { var self = this, ins = [], last = 0, held = null, tm = 0; this._ins = ins;
+    var give = function (L) { last = Date.now(); held = null; if (tm) { clearTimeout(tm); tm = 0; } cb.call(self, L, self); };
+    this._drop = function () { held = null; if (tm) { clearTimeout(tm); tm = 0; } };
+    this._mo = new MO(function (L) { var live = ins.some(inLive), ok = L.filter(function (m) { return live || !skip(m); }); if (!ok.length) return; var keep = ok.filter(function (m) { return !same(m); }); if (keep.length) { give(keep); return; }
+      var gap = Date.now() - last; if (gap >= BEAT) { give(ok); return; } held = ok; if (!tm) tm = setTimeout(function () { tm = 0; if (held) give(held); }, BEAT - gap); }); }
+  W.prototype.observe = function (t, o) { if (this._ins.indexOf(t) < 0) this._ins.push(t); if (o && o.attributes !== false && (o.attributes || o.attributeFilter) && !o.attributeOldValue) o = Object.assign({}, o, { attributeOldValue: true }); return this._mo.observe(t, o); };
+  W.prototype.disconnect = function () { this._ins.length = 0; this._drop(); return this._mo.disconnect(); };
+  W.prototype.takeRecords = function () { var L = this._mo.takeRecords(), live = this._ins.some(inLive); return L.filter(function (m) { return !same(m) && (live || !skip(m)); }); };
+  W.__live = true; window.__MO0 = MO; window.MutationObserver = W; })();</script>
 <meta name="description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic.">
 <meta property="og:site_name" content="Debrief"><meta property="og:type" content="website"><meta property="og:title" content="Debrief: WoW raid log review for Mythic progression">
 <meta property="og:description" content="Paste a Warcraft Logs report and see what wiped you, who missed mechanics, and what to fix before the next pull. Boss guides, rotation checks and raid planning for Mythic."><meta property="og:url" content="https://debriefme.io/"><meta property="og:image" content="https://debriefme.io/og.png">
@@ -15794,7 +15805,26 @@ function scan() { r423soon(); try { if (window.__ahDedupe) [].forEach.call(docum
     var snap = function (px) { return px < 1 ? px /* (text hidden on purpose stays hidden: icon buttons, round 5) */ : px < 11.75 ? 11 : px < 12.75 ? 12.5 : px < 13.25 ? 13 : px < 16 ? 13.5 : px < 20 ? 18 : px <= 24 ? 22 : px; }, wt = function (w) { w = +w || 400; return w < 500 ? 400 : w < 650 ? 600 : 700; }, n = 0;
     var sig = function (e) { var ST = /^(on|sel|open|active|rd+-on)$/, cl = [].slice.call(e.classList), own = cl.filter(function (x) { return !ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''), st = cl.filter(function (x) { return ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''), tg = e.tagName.toLowerCase(), pe = e.parentElement, pf = pe && [].slice.call(pe.classList).filter(function (x) { return !ST.test(x); })[0];
       if (own) return (pf ? '.' + CSS.escape(pf) + ' > ' : '') + tg + own + st; var path = tg + (st || ':not([class])'), p = pe; for (var d = 0; d < 3 && p; d++) { var pc = [].slice.call(p.classList).filter(function (x) { return !ST.test(x); }).map(function (x) { return '.' + CSS.escape(x); }).join(''); if (pc) return pc + ' > ' + path; path = p.tagName.toLowerCase() + ' > ' + path; p = p.parentElement; } return ''; };
-    var todo = []; [].forEach.call(document.querySelectorAll('#view *, #main .home *, #bossHead *, main#main > .r300-tb *'), function (e) { if (W.seen.has(e) || n > 4000) return; W.seen.add(e); n++; if (e.closest('svg') || e.closest('.dtm-rf')) return; /* (the replay's raid frames keep their small names: Flex's call, Nov 3) */ var t = ''; for (var i = 0; i < e.childNodes.length; i++) if (e.childNodes[i].nodeType === 3) t += e.childNodes[i].textContent; if (!/[A-Za-z0-9\u00C0-\u024F]/.test(t)) return; todo.push(e); });
+    /* (Nov 9, speed pass: this walked every piece of the page (about 30,000 on a Summary) each time anything was added, about 85 times while a pull
+       opens, only to skip the ones it had seen. A tracker now notes what was added since the last look, and only those (with everything inside them) are
+       walked, in page order: the same pieces in the same order as before. A whole walk still happens the first time, after a look that stopped at its
+       4000-piece limit, and when a piece becomes #view, #main, #bossHead, .home or .r300-tb without being added (a class or id change).) */
+    var SC359 = '#view *, #main .home *, #bossHead *, main#main > .r300-tb *', cand;
+    if (!W.trk && window.__MO0) { W.full = true; W.add = []; var tok = function (c, k) { return (' ' + (c || '') + ' ').replace(/\s+/g, ' ').indexOf(' ' + k + ' ') >= 0; };
+      W.rec = function (L) { for (var i = 0; i < L.length; i++) { var m = L[i]; if (m.type === 'childList') { for (var j = 0; j < m.addedNodes.length; j++) if (m.addedNodes[j].nodeType === 1) W.add.push(m.addedNodes[j]); }
+          else if (m.attributeName === 'id') W.full = true; else { var c1 = m.target.getAttribute('class'); if (tok(m.oldValue, 'home') !== tok(c1, 'home') || tok(m.oldValue, 'r300-tb') !== tok(c1, 'r300-tb')) W.full = true; } }
+        if (W.add.length > 20000) { W.full = true; W.add = []; } };
+      W.trk = new window.__MO0(function (L) { W.rec(L); }); W.trk.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'id'], attributeOldValue: true }); }
+    if (W.trk) { var pend = W.trk.takeRecords(); if (pend.length) W.rec(pend); }
+    if (!W.trk || W.full) { if (W.trk) { W.full = false; W.add = []; } cand = document.querySelectorAll(SC359); }
+    else { var r0 = W.add, seenR = new Set(); W.add = []; r0 = r0.filter(function (e) { if (seenR.has(e) || !e.isConnected) return false; seenR.add(e); return true; });
+      r0 = r0.filter(function (e) { for (var p = e.parentElement; p; p = p.parentElement) if (seenR.has(p)) return false; return true; }); /* (a piece inside another added piece comes with it) */
+      r0.sort(function (a, b) { return a === b ? 0 : (a.compareDocumentPosition(b) & 4) ? -1 : 1; }); cand = [];
+      r0.forEach(function (e) { if (e.matches(SC359)) { cand.push(e); var d = e.getElementsByTagName('*'); for (var q = 0; q < d.length; q++) cand.push(d[q]); } else { var d2 = e.querySelectorAll(SC359); for (var q2 = 0; q2 < d2.length; q2++) cand.push(d2[q2]); } }); }
+
+
+    var todo = []; [].forEach.call(cand, function (e) { if (W.seen.has(e) || n > 4000) return; W.seen.add(e); n++; if (e.closest('svg') || e.closest('.dtm-rf')) return; /* (the replay's raid frames keep their small names: Flex's call, Nov 3) */ var t = ''; for (var i = 0; i < e.childNodes.length; i++) if (e.childNodes[i].nodeType === 3) t += e.childNodes[i].textContent; if (!/[A-Za-z0-9\u00C0-\u024F]/.test(t)) return; todo.push(e); });
+    if (n > 4000 && W.trk) W.full = true;
     if (!todo.length) return; /* round 403 batched: every read, then every write */
     var inl = todo.filter(function (e) { return e.style.getPropertyValue('font-size') || e.style.getPropertyValue('font-weight'); }).map(function (e) { var c = getComputedStyle(e); return [e, parseFloat(c.fontSize), c.fontWeight]; });
     inl.forEach(function (x) { var e = x[0], p1 = x[1], q1 = snap(p1), w1 = wt(x[2]); if (Math.abs(q1 - p1) > 0.05) e.style.setProperty('font-size', q1 + 'px', 'important'); if (e.style.getPropertyValue('font-weight') && String(w1) !== String(x[2])) e.style.setProperty('font-weight', String(w1), 'important'); });
