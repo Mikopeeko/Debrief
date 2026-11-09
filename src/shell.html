@@ -17800,5 +17800,42 @@ html body #rkBox .gk-more { all: unset; cursor: pointer; font: 600 12px var(--bo
 html body #rkBox .gk-more:hover { color: var(--text); }
 }
 </style>
+<style>/* (Nov 9: the Mythic+ season view) */
+@layer defaultTheme {
+html body .mpf-sv { margin: 0 0 22px !important; padding: 18px 20px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: var(--panel, #171a22) !important; }
+html body .mpf-svh { margin: 0 0 12px !important; font: 800 19px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html body .mpf-svh span, html body .mpf-svs span { margin-left: 8px !important; font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html body .mpf-svts { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; border: 1px solid var(--line) !important; border-radius: 4px !important; margin-bottom: 18px !important; overflow: hidden !important; }
+html body .mpf-svt { padding: 12px 14px !important; box-shadow: -1px 0 0 var(--line) !important; min-width: 0 !important; }
+html body .mpf-svt small { display: block !important; font: 600 11px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html body .mpf-svt b { display: block !important; margin: 4px 0 2px !important; font: 800 24px/1.05 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html body .mpf-svt b.g { color: #7ee08f !important; } html body .mpf-svt b.a { color: #f2c46b !important; }
+html body .mpf-svt span { display: block !important; font: 500 12px var(--body) !important; color: var(--muted) !important; }
+html body .mpf-svg { display: grid !important; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr) !important; gap: 28px !important; }
+@media (max-width: 760px) { html body .mpf-svg { grid-template-columns: minmax(0,1fr) !important; } }
+html body .mpf-svs { margin: 0 0 10px !important; font: 800 15px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html body .mpf-svr { display: grid !important; grid-template-columns: 130px minmax(0,1fr) 72px !important; align-items: center !important; gap: 10px !important; height: 26px !important; }
+html body .mpf-svn { font: 600 13px var(--body) !important; color: var(--mpt-soft, #c9ced8) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html body .mpf-svr.low .mpf-svn { color: #f2c46b !important; }
+html body .mpf-svb { height: 10px !important; background: rgba(255,255,255,.04) !important; }
+html body .mpf-svb i { display: block !important; height: 100% !important; }
+html body .mpf-sv i.u0 { background: #59606b !important; } html body .mpf-sv i.u1 { background: #b8913f !important; } html body .mpf-sv i.u2, html body .mpf-sv i.u3 { background: #4f9a63 !important; }
+html body .mpf-svr.low .mpf-svb { box-shadow: 0 0 0 1px rgba(242,196,107,.5) !important; }
+html body .mpf-svv { text-align: right !important; font: 700 14px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; white-space: nowrap !important; }
+html body .mpf-svv small { margin-left: 4px !important; font: 500 11.5px var(--body) !important; color: var(--muted) !important; }
+html body .mpf-svx { margin: 12px 0 0 !important; padding: 8px 10px !important; border-left: 2px solid #f2c46b !important; background: rgba(242,196,107,.06) !important; font: 500 13px var(--body) !important; color: var(--mpt-soft, #c9ced8) !important; }
+html body .mpf-svx b { color: var(--text) !important; } html body .mpf-svx b.g { color: #7ee08f !important; }
+html body .mpf-svws { display: flex !important; gap: 6px !important; height: 200px !important; }
+html body .mpf-svw { flex: 1 1 0 !important; min-width: 0 !important; display: flex !important; flex-direction: column !important; justify-content: flex-end !important; position: relative !important; padding-bottom: 32px !important; }
+html body .mpf-svw i { display: block !important; flex: none !important; }
+html body .mpf-svl { text-align: center !important; font: 700 12.5px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; margin-bottom: 3px !important; }
+html body .mpf-svw em { position: absolute !important; bottom: 14px !important; left: -4px !important; right: -4px !important; text-align: center !important; font: 500 10.5px var(--body) !important; font-style: normal !important; color: var(--faint) !important; white-space: nowrap !important; overflow: hidden !important; }
+html body .mpf-svw small { position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important; text-align: center !important; font: 500 10.5px var(--body) !important; color: var(--muted) !important; }
+html body .mpf-svk { display: flex !important; align-items: center !important; gap: 6px !important; margin: 8px 0 0 !important; font: 500 12px var(--body) !important; color: var(--muted) !important; }
+html body .mpf-svk i { display: inline-block !important; width: 10px !important; height: 10px !important; margin-left: 8px !important; }
+html body .mpf-svk i:first-child { margin-left: 0 !important; }
+html body .mpf-svk span { margin-left: auto !important; color: var(--faint) !important; }
+}
+</style>
 </body>
 </html>
