@@ -6,10 +6,10 @@
 // (remembered), and keys 1-5 pick a sub tab, ← → the pull.
 const SN_MQ = window.matchMedia ? window.matchMedia('(min-width: 900px)') : { matches: true, addEventListener() {} };
 const SN_FOLD_K = 'wla-snv-fold', SN_SUB_K = 'wla-snv-raid';
-const SN_IC = { home: '<path d="M3.5 10.5 12 4l8.5 6.5V20h-5.5v-5.5h-6V20H3.5Z"/>', plan: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8.5h6M9 12.5h6M9 16.5h3.5"/>',
+const SN_IC = { imp: '<path d="M12 4v10M8 10.5l4 4 4-4"/><path d="M4.5 14.5V19.5h15v-5"/>', home: '<path d="M3.5 10.5 12 4l8.5 6.5V20h-5.5v-5.5h-6V20H3.5Z"/>', plan: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M9 8.5h6M9 12.5h6M9 16.5h3.5"/>',
   guides: '<path d="M3.5 5.5h7.5v14H3.5zM13 5.5h7.5v14H13z"/>', raid: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
   mplus: '<circle cx="8" cy="12" r="4.5"/><path d="M12.5 12h9M18.5 12v3.5M15.5 12v2.5"/>' };
-const SN_SECS = [['home', 'Home'], ['plan', 'Plan'], ['guides', 'Guides'], ['raid', 'Raid review'], ['mplus', 'Mythic+']];
+const SN_SECS = [['home', 'Home'], ['plan', 'Plan'], ['guides', 'Guides'], ['raid', 'Raid review'], ['mplus', 'Mythic+'], ['imp', 'Import a log']]; /* (Nov 9: Import a log, a popup) */
 const snIco = (k) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + SN_IC[k] + '</svg>';
 const snFold = () => store.get(SN_FOLD_K) === '1';
 // (not on the front page a new visitor sees, with nothing added yet: its one button does the work there (Flex, Nov 8: "it probably shouldnt show on the home page"); Home with a team or character keeps it)
@@ -91,7 +91,7 @@ async function snClick(e) { const t = e.target.closest && e.target.closest('butt
   if (t.dataset.snio) { e.stopPropagation(); if (t.dataset.snio === 'out') signOutNow(); else signInNow(); return; } /* (Nov 8: Sign in / Sign out on the account line) */
   if (t.id === 'snHide') { store.set(SN_FOLD_K, snFold() ? '0' : '1'); snDraw(true); return; }
   if (t.dataset.code) { t.disabled = true; try { S.tab = snSubGet(); await openWcl({ code: t.dataset.code, fight: +t.dataset.fight || null }, await wclCreds()); } catch (err) { t.disabled = false; toast('<span>' + esc(err.message) + '</span>', 6000); } return; }
-  const k = t.dataset.sn; if (!k || t.classList.contains('off')) return;
+  const k = t.dataset.sn; if (!k || t.classList.contains('off')) return; if (k === 'imp') { snImport(); return; } /* (Nov 9) */
   if (k === 'home' || k === 'me') { snHome(); }
   else if (k === 'plan') { if (S.page !== 'plan') { planPage(); window.scrollTo(0, 0); } }
   else if (k === 'guides') { if (S.page !== 'guides') openGuides(); }
@@ -160,3 +160,24 @@ SN_MQ.addEventListener && SN_MQ.addEventListener('change', () => { snPlace(); sn
 try { snMount(); if (HIST && HIST.load) HIST.load().then(() => snDraw(true)).catch(() => {}); } catch (e) { console.warn('side menu', e); }
 setInterval(snTick, 300);
 { const mo = new MutationObserver(() => { clearTimeout(snTick.t); snTick.t = setTimeout(snTick, 0); }); const m = $('#main'); if (m) mo.observe(m, { childList: true }); const v = () => { const w = $('#view'); if (w && w !== snTick.vw) { snTick.vw = w; mo.observe(w, { childList: true }); } }; setInterval(v, 1000); v(); }
+
+/* (Nov 9, Flex: "it can just be a popup window not an entirely new page"): Import a log. The same path as Home's box: WCL.parseLink, then
+   openWcl, which opens Raid review for a raid report and Mythic+ for a key */
+function snImport() { let o = document.getElementById('snImp'); if (o) { o.querySelector('input').focus(); return; }
+  o = document.createElement('div'); o.id = 'snImp'; o.className = 'snimp'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-modal', 'true'); o.setAttribute('aria-labelledby', 'snImpT');
+  o.innerHTML = '<div class="snimp-box"><div class="snimp-h"><b id="snImpT">Open a Warcraft Logs report</b><button type="button" class="snimp-x" aria-label="Close">✕</button></div>' +
+    '<div class="snimp-r"><input type="text" spellcheck="false" autocomplete="off" aria-label="Warcraft Logs link or report code" placeholder="Paste a Warcraft Logs link or report code"><button type="button" class="btn primary snimp-go">Open</button></div><p class="snimp-m" aria-live="polite"></p></div>';
+  document.body.appendChild(o);
+  const inp = o.querySelector('input'), go = o.querySelector('.snimp-go'), msg = o.querySelector('.snimp-m');
+  const onKey = (e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } };
+  const close = () => { document.removeEventListener('keydown', onKey, true); o.remove(); };
+  document.addEventListener('keydown', onKey, true);
+  o.addEventListener('mousedown', (e) => { if (e.target === o) close(); });
+  o.querySelector('.snimp-x').onclick = close;
+  const open = async () => { const link = WCL.parseLink(inp.value);
+    if (!link) { msg.className = 'snimp-m no'; msg.textContent = "That doesn't look like a Warcraft Logs link."; inp.focus(); return; }
+    msg.className = 'snimp-m'; msg.textContent = 'Opening the report…'; go.disabled = true; inp.disabled = true;
+    try { await openWcl(link, null, false, true); close(); } catch (err) { go.disabled = false; inp.disabled = false; msg.className = 'snimp-m no'; msg.textContent = err && err.message ? err.message : "That report couldn't be opened."; inp.focus(); } };
+  go.onclick = open; inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); open(); } };
+  inp.oninput = () => { if (msg.classList.contains('no')) { msg.className = 'snimp-m'; msg.textContent = ''; } };
+  setTimeout(() => inp.focus(), 0); }

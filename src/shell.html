@@ -17553,5 +17553,19 @@ html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 :root body.snv-on.snv-on:not(.snv-fold) { --snv-w: 200px; }
 :root body.snv-on.snv-on #sideNav { padding-left: 10px !important; padding-right: 10px !important; }
 </style>
+<style>/* (Nov 9: Import a log, the popup) */
+#snImp.snimp { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: flex-start; justify-content: center; padding: 18vh 16px 0; background: rgba(6, 8, 10, .62); }
+#snImp .snimp-box { width: 460px; max-width: 100%; box-sizing: border-box; padding: 14px 16px 12px; background: var(--panel, #191c1f); border: 1px solid var(--line2, #3b4348); border-radius: 0; box-shadow: 0 14px 44px rgba(0, 0, 0, .55); }
+#snImp .snimp-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 12px; }
+#snImp .snimp-h b { font: 600 15px var(--body); color: var(--text, #e8eaee); }
+#snImp .snimp-x { width: 26px; height: 26px; padding: 0; display: grid; place-items: center; border: 1px solid var(--line2, #3b4348); border-radius: 0; background: transparent; color: var(--muted, #aeb6bf); font-size: 12px; cursor: pointer; }
+#snImp .snimp-x:hover { color: var(--text, #e8eaee); border-color: var(--muted, #aeb6bf); }
+#snImp .snimp-r { display: flex; gap: 8px; }
+#snImp .snimp-r input { flex: 1 1 auto; min-width: 0; height: 34px; box-sizing: border-box; padding: 0 10px; border: 1px solid var(--line2, #3b4348); border-radius: 0; background: var(--bg, #121417); color: var(--text, #e8eaee); font: 13px var(--body); outline: 0; }
+#snImp .snimp-r input:focus { border-color: var(--gold, #d4b77d); }
+#snImp .snimp-go { flex: none; height: 34px; padding: 0 16px; border-radius: 0; }
+#snImp .snimp-m { min-height: 16px; margin: 8px 0 0; font: 12.5px var(--body); color: var(--muted, #aeb6bf); }
+#snImp .snimp-m.no { color: #ef6b63; }
+</style>
 </body>
 </html>
