@@ -1590,7 +1590,7 @@ const PRACTICE_HOST = (u) => /-debrief\.[a-z0-9-]+\.workers\.dev$/.test(u.hostna
 const isMe = (who, uid) => !!who && !!uid && (who.uid === uid || (who.ids || []).includes(uid));
 async function teamWho(req, env, url) {
   const s0 = await sessOf(req, env); /* (Nov 8: a Battle.net session is who you are, on practice links too) */
-  if (s0 && s0.bid) { const uid = 'b:' + s0.bid, L = await bnetGet(env, uid, url); return { uid, ids: [uid].concat((L && L.olds) || []), bid: s0.bid, tag: s0.tag || '', name: s0.name || String(s0.tag || '').split('#')[0] || 'you', t: userTok(s0), practice: PRACTICE_HOST(url) && !!s0.mock }; }
+  if (s0 && s0.bid) { const uid = 'b:' + s0.bid, L = await bnetGet(env, uid, url); return { uid, ids: [uid].concat((L && L.olds) || []), bid: s0.bid, tag: s0.tag || '', name: (((L && L.chars) || []).find((c) => bnetKey(c) === L.main) || {}).n || s0.name || String(s0.tag || '').split('#')[0] || 'you' /* (Nov 8: the saved main, not the name at sign-in) */, t: userTok(s0), practice: PRACTICE_HOST(url) && !!s0.mock }; }
   if (PRACTICE_HOST(url)) { const m = (req.headers.get('Cookie') || '').match(/(?:^|;\s*)dbp=([^;]{1,80})/); let n = ''; try { n = m ? decodeURIComponent(m[1]).trim().slice(0, 24) : ''; } catch (e) { n = ''; }
     if (n) return { uid: 'p:' + n.toLowerCase(), ids: ['p:' + n.toLowerCase()], name: n, chars: [n.toLowerCase()], practice: true }; }
   const s = s0; return s && s.uid ? { uid: 'w:' + s.uid, ids: ['w:' + s.uid], name: s.name, t: s.t, legacy: true } : null; /* (an old Warcraft Logs sign-in: works until it moves to Battle.net) */
