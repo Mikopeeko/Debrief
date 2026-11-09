@@ -17162,5 +17162,55 @@ html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 }
 
 </style>
+<style>/* (Nov 8: Summary, the timeline labels, Overview folded, one timeline) */
+@layer defaultTheme {
+/* ===== (1) the labels under the timeline, side by side ===== */
+html body #view#view .dtm-ln .dtm-cmp { position: static !important; height: auto !important; display: flex !important; flex-wrap: wrap !important; gap: 6px 28px !important; margin: 8px 0 0 74px !important; }
+html body #view#view .dtm-ln .dtm-cmp > div { position: static !important; left: auto !important; transform: none !important; display: flex !important; align-items: baseline !important; gap: 6px !important; text-align: left !important; white-space: nowrap !important; padding-left: 10px !important; border-left: 2px solid rgba(255, 255, 255, .18) !important; }
+html body #view#view .dtm-ln .dtm-cmp > div b { display: inline !important; }
+/* ===== (3) one timeline: wider names, a row per mechanic ===== */
+html body #view#view .dtm-ln.dtm-rows .dtm-lr { grid-template-columns: 170px minmax(0, 1fr) !important; }
+html body #view#view .dtm-ln.dtm-rows .dtm-ax { margin-left: 180px !important; }
+html body #view#view .dtm-ln.dtm-rows .dtm-cmp { margin-left: 180px !important; }
+html body #view#view .dtm-ln.dtm-rows .dtm-key { padding-left: 180px !important; }
+html body #view#view section.dbt .dtm-tlm { display: none !important; }
+html body #view#view .dtm-ln .dtm-lsec { display: flex !important; align-items: center !important; gap: 10px !important; margin: 10px 0 2px !important; font: 700 10.5px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--faint, #868f99) !important; }
+html body #view#view .dtm-ln .dtm-lsec span { font: 500 11.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk { height: 26px !important; margin: 0 !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk > b { display: flex !important; align-items: center !important; gap: 7px !important; min-width: 0 !important; font: 600 12.5px var(--body) !important; color: var(--muted, #aeb6bf) !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk > b > span { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk > b :is(.icw, img, svg) { flex: none !important; width: 18px !important; height: 18px !important; border-radius: 2px !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk > b .dtm-dk { flex: none !important; width: 18px !important; text-align: center !important; font-style: normal !important; color: #f0726a !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk > .dtm-tr { position: relative !important; height: 26px !important; background: none !important; border-top: 1px solid rgba(255, 255, 255, .05) !important; border-radius: 0 !important; overflow: visible !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk .dtm-vl { position: absolute !important; top: 0 !important; bottom: 0 !important; width: 0 !important; border-left: 1px solid rgba(125, 151, 207, .55) !important; pointer-events: none !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk .dtm-vl.cut { border-left: 2px dashed #f0726a !important; }
+html body #view#view .dtm-ln .dtm-lr.dtm-mk .dtm-head { top: 0 !important; bottom: 0 !important; height: auto !important; }
+html body #view#view .dtm-ln .dtm-mm2 { position: absolute !important; top: 50% !important; width: 12px !important; height: 12px !important; min-width: 0 !important; min-height: 0 !important; margin: -6px 0 0 -6px !important; padding: 0 !important; display: grid !important; place-items: center !important; border: 0 !important; border-radius: 0 !important; font: 800 9px/1 var(--body) !important; color: #15171c !important; background: #e8a23a !important; cursor: pointer !important; z-index: 2 !important; transform: none !important; }
+html body #view#view .dtm-ln .dtm-mm2.lv-g { width: 8px !important; height: 8px !important; margin: -4px 0 0 -4px !important; background: rgba(95, 212, 111, .6) !important; }
+html body #view#view .dtm-ln .dtm-mm2.lv-s { background: #f0726a !important; }
+html body #view#view .dtm-ln .dtm-mm2:is(.lv-d, .lv-q) { width: 14px !important; height: 14px !important; margin: -7px 0 0 -7px !important; background: none !important; color: #f0726a !important; font-size: 12px !important; }
+html body #view#view .dtm-ln .dtm-mm2:hover { outline: 1.5px solid var(--gold, #d4b77d) !important; outline-offset: 2px !important; }
+/* ===== (2) Overview: problems first, the clean rows folded ===== */
+html body #view#view .prw.prw-fold:not(.prw-open) > .prw-i.prw-okr { display: none !important; }
+html body #view#view .prw.prw-fold > .mx-okl { display: none !important; }
+html body #view#view .prw > .prw-okt { display: flex !important; align-items: center !important; gap: 10px !important; min-width: 0 !important; margin: 0 !important; padding: 9px 0 4px !important; border-top: 1px solid rgba(255, 255, 255, .05) !important; cursor: pointer !important; font: 500 12.5px var(--body) !important; color: var(--faint, #868f99) !important; }
+html body #view#view .prw > .prw-okt:first-child { border-top: 0 !important; padding-top: 2px !important; }
+html body #view#view .prw > .prw-okt b { flex: none !important; font: 700 13px var(--body) !important; color: #5fd46f !important; }
+html body #view#view .prw > .prw-okt em { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-style: normal !important; }
+html body #view#view .prw > .prw-okt u { flex: none !important; margin-left: auto !important; text-decoration: none !important; font-weight: 700 !important; color: var(--gold, #d4b77d) !important; }
+html body #view#view .prw > .prw-okt:hover em, html body #view#view .prw > .prw-okt:hover u { color: var(--text, #e8eaee) !important; }
+html body #view#view .prw > .prw-i:not(.prw-okr):not(.prw-nj) .prw-l { display: grid !important; grid-template-columns: minmax(0, 1fr) 160px !important; column-gap: 18px !important; align-items: center !important; }
+html body #view#view .prw > .prw-i:not(.prw-okr):not(.prw-nj) .prw-t { grid-column: 2 !important; grid-row: 1 !important; display: block !important; height: 6px !important; margin: 0 !important; border-radius: 0 !important; }
+html body #view#view .prw > .prw-i:not(.prw-okr):not(.prw-nj) .prw-t i { border-radius: 0 !important; min-width: 3px !important; }
+html body #view#view .prw > .prw-i:not(.prw-okr) .prw-s { grid-column: 1 / -1 !important; }
+html body #view#view .phr-chev { visibility: hidden !important; }
+html body #view#view .prw.prw-fold { display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+html body #view#view .prw.prw-fold > .prw-okt { order: 5 !important; }
+html body #view#view .prw > .prw-i[data-phjump="deaths"] .prw-t { visibility: hidden !important; }
+html body #view#view .prw > .prw-okt :is(.icw, img, svg) { display: none !important; }
+html body #view#view .prw > .prw-okt .sp { border: 0 !important; text-decoration: none !important; font-weight: 500 !important; color: inherit !important; }
+}
+
+</style>
 </body>
 </html>
