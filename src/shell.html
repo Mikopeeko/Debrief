@@ -17711,5 +17711,26 @@ html body #view#view#view .rtv-body, html body #view#view#view .rtv-hd { justify
 html body #view#view#view .rtv-lay.rtv-ox > .rtv-wrap { overflow-x: auto !important; scrollbar-width: thin !important; }
 }
 </style>
+<style>/* (Nov 9: Mythic+, the top three) */
+@layer defaultTheme {
+/* 2. Your part as tiles */
+html body .mpt .mpt-prows.mpt-ptiles { display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 6px !important; }
+html body .mpt .mpt-ptiles > .mpt-prow { grid-template-columns: 14px minmax(0,1fr) !important; grid-template-rows: auto auto !important; align-items: center !important; column-gap: 6px !important; row-gap: 3px !important; min-height: 0 !important; padding: 7px 9px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; }
+html body .mpt .mpt-ptiles > .mpt-prow .mpt-pic { font-size: 11px !important; }
+html body .mpt .mpt-ptiles > .mpt-prow .mpt-ypl { font: 600 11.5px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html body .mpt .mpt-ptiles > .mpt-prow .mpt-ypv { grid-column: 1 / -1 !important; text-align: left !important; white-space: normal !important; font-size: 14px !important; line-height: 1.3 !important; }
+html body .mpt .mpt-ptiles > .mpt-prow .mpt-ypv small { font-size: 11.5px !important; }
+html body .mpt .mpt-ptiles > .mpt-prow.mpt-ptb { border-color: rgba(255,143,135,.45) !important; background: rgba(255,143,135,.06) !important; }
+html body .mpt .mpt-ptiles > .mpt-prow.mpt-pta { border-color: rgba(242,196,107,.4) !important; background: rgba(242,196,107,.05) !important; }
+html body .mpt .mpt-ptiles > .mpt-prow2 { grid-column: 1 / -1 !important; grid-template-rows: auto !important; }
+html body .mpt .mpt-ptiles > .mpt-prow2 .mpt-ypv2 { grid-column: 1 / -1 !important; }
+html body .mpt .mpt-ptiles > button.mpt-prow:hover { border-color: var(--faint) !important; }
+/* 1. the map's pull card: the link to its Rotation */
+html body .mpt .mpt-rgo { display: inline-flex !important; align-items: center !important; gap: 4px !important; margin: 10px 0 2px !important; padding: 0 !important; background: none !important; border: 0 !important; font: 600 13px var(--body) !important; color: var(--gold) !important; cursor: pointer !important; }
+html body .mpt .mpt-rgo:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
+/* 3. the cooldown strip up top: a little room under the tiles */
+html body #mpcRot .mpv-cds { margin: 14px 0 16px !important; }
+}
+</style>
 </body>
 </html>

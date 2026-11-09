@@ -1792,7 +1792,7 @@ function mpPartHtml(R, fx, pick) {
   else if (v && v.pct < -5) nt = 'Push ' + (own ? 'your' : 'their') + ' damage. ' + (own ? 'You were ' : esc(name) + ' was ') + (-v.pct) + '% behind top ' + esc(p.spec) + ' ' + esc(cn) + 's.';
   const ntH = nt ? '<p class="mpt-nt' + (v && !dd.length && !th.length && !miss.length && !avN ? mpFi() : '') + '"><b>Next time</b> ' + nt + '</p>' : wt ? '<p class="mpt-nt">' + mpShimT('Next time push your damage. You were 10% behind top players.') + '</p>' : '';
   return '<div id="mptPart" data-for="' + esc(pick || '') + '"><p class="mpt-k mpt-pth">' + (own ? 'Your part · ' : '') + '<span style="color:' + mpCC(p.cls) + '">' + esc(name) + '</span>' + (own ? '' : '\'s part') + ' <span class="mpt-m">(' + esc(p.spec) + ')</span></p>' +
-    '<div class="mpt-prows">' + rows.join('') + '</div>' + ntH + '</div>'; }
+    '<div class="mpt-prows' + (MPC_ON ? '' : ' mpt-ptiles') + '">' + (MPC_ON ? rows : rows.map((h, k) => ({ h, k, r: /mpt-prow2/.test(h) ? 9 : /class="(mpt-bad|mpt-rwc-b)[\s"]/.test(h) ? 0 : /class="(mpt-a|mpt-rwc-w|mpt-t2k)[\s"]/.test(h) ? 1 : 2 })).sort((a, b) => a.r - b.r || a.k - b.k).map((x) => (x.r < 2 ? x.h.replace('class="mpt-prow"', 'class="mpt-prow ' + (x.r ? 'mpt-pta' : 'mpt-ptb') + '"') : x.h))).join('') + '</div>' + ntH + '</div>'; } /* (Nov 9: tiles, the worst first) */
 // (a player against the same spec in the fastest runs with a public log at this level: healers by their DPS when the runs have it, else HPS)
 function mpSpecVs(p, runs) { const heal = p.role === 'healer', same = (m) => mpNorm(m.s) === mpNorm(p.spec) && mpNorm(m.c) === mpNorm(p.cls) && (m.r === 'healer') === heal;
   let a = [], dps = true; for (const r of runs) for (const m of r.ppl || []) if (same(m) && (heal ? m.d : m.a)) a.push(heal ? m.d : m.a);
@@ -2511,7 +2511,7 @@ function mpMapHtml(R, F, tl) {
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
         (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>', '', !rotOpen); })();
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b>' + (run === 'you' ? '<i class="mpt-mca">Most mistakes</i>' : '') + '<span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
-      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died; };
+      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MPC_ON ? '<button type="button" class="mpt-rgo" data-mpcgo="' + i + '">See this pull’s rotation <span aria-hidden="true">›</span></button>' : '') /* (Nov 9, Flex: the Run page and Rotation linked pull by pull) */ + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died; };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   // (one thin line a tile (Nov 3): the badge, the time, the icons; the name and the forces are in the hover)
@@ -3521,13 +3521,13 @@ function mpcRotHtml(R) {
         (r[9] ? '<p class="kmo">' + String(r[9]).split(';').map((m) => '• ' + esc(m)).join('<br>') + '</p>' : '') + (r[8] ? '<p class="khow">How it’s judged: ' + esc(r[8]) + '</p>' : '') : '') + '</div></div>'; };
   const tiles = wide && pi == null ? '<div class="mpv-tiles">' + [['trash', 'Trash pulls'], ['boss', 'Bosses']].map(([k, lb]) => { const x = mpvSide(R, name, k === 'boss'), t0 = x.fx[0];
     return '<button type="button" class="mpv-tile' + (MP.cvf === k ? ' on' : '') + '" data-mpcf="' + k + '"><small>' + lb + '</small><b class="' + (x.fx.some((a) => a.st === 'bad') ? 'bad' : x.fx.length ? 'warn' : 'ok') + '">' + (x.n ? (x.fx.length ? x.fx.length + ' to fix' : 'Clean') : 'None') + '</b><i>' + (t0 ? esc(t0.f[2]) + ', on ' + t0.ps.length + ' of ' + x.n : x.n ? 'nothing came up' : '') + '</i></button>'; }).join('') + '</div>' : '';
-  const card = who + tiles + '<div class="mpc-h"><span>ROTATION' + (sc != null ? ' · <b>' + sc + '</b>/100' : '') + '</span></div>' +
+  const card = who + tiles + (wide && pi == null ? mpvCdStrip(R, name) : '') /* (Nov 9: up under the score) */ + '<div class="mpc-h"><span>ROTATION' + (sc != null ? ' · <b>' + sc + '</b>/100' : '') + '</span></div>' +
     (rows.length ? shown.map(rr).join('') + (rows.length > 3 ? '<button type="button" class="mpc-more" data-mpcm="1">' + (all ? 'Show less' : 'Show ' + (rows.length - 3) + ' more') + '</button>' : '') : '<p class="mpc-good">Nothing to fix here.</p>') +
     (good.length ? '<p class="mpc-good">Done right: ' + good.map(esc).join(', ') + '.</p>' : '');
   if (!wide) return pk + '<p class="mpc-pn">' + note + '</p>' + card;
   // (the website: the same card, one column, under the key's banner; each pull chip says that pull's biggest fix on hover (Nov 5, Flex: "Isnt this kind of redundant"))
   const det = pi != null ? '<div id="mpvDet" data-k="' + esc(name + '|' + pi) + '"><p class="mpc-wait">Reading this pull’s checklist…</p></div>' : '<p class="mpc-pn mpv-hint">Pick a pull above for its full checklist and timeline.</p>';
-  return pk + ppk + (side || !plainN ? '<p class="mpc-pn">' + note + '</p>' : '') + card + (side ? '' : topLn) + (side ? '' : allH) + (pi == null ? mpvCdStrip(R, name) : '') + det;
+  return pk + ppk + (side || !plainN ? '<p class="mpc-pn">' + note + '</p>' : '') + card + (side ? '' : topLn) + (side ? '' : allH) + det;
 }
 function mpcRotPaint() { const el = document.getElementById('mpcRot'), it = MP.item, R = it && MP.R[mpK(it)]; if (!el || !R) return; R._cdWait = false; el.innerHTML = mpcRotHtml(R);
   if (R._cdWait && (R._cdTry = (R._cdTry || 0) + 1) <= 5) setTimeout(() => { if (MP.R[mpK(MP.item || {})] === R) mpcRotPaint(); }, 1500); /* (a cooldown's length still being read: drawn again once it's in) */ try { refreshIcons(); } catch (e) { /* (icons load later) */ } if (!MPC_ON) mpvDetLoad(R); }
@@ -3568,6 +3568,9 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   else if (t.dataset.mpco != null) { const o = MP.cvo || (MP.cvo = new Set()); if (o.has(t.dataset.mpco)) o.delete(t.dataset.mpco); else o.add(t.dataset.mpco); }
   else if (t.dataset.mpcm) MP.cvm = !MP.cvm;
   mpcRotPaint(); });
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcgo]'); if (!t) return; e.preventDefault(); /* (Nov 9: a pull on the map opens its Rotation) */
+  MP.cv = 'rot'; MP.cvi = +t.dataset.mpcgo; MP.cvf = null; MP.cvo = new Set(['0']); MP.cvm = false; document.documentElement.classList.add('mpc-rot'); document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => x.classList.toggle('on', x.dataset.mpcv === 'rot'));
+  mpvUrl(); mpcRotPaint(); const tb = document.querySelector('.mpc-tabs'); if (tb) window.scrollTo({ top: Math.max(0, tb.getBoundingClientRect().top + window.scrollY - 70) }); });
 document.addEventListener('change', (e) => { const t = e.target; if (!t || !t.matches || !t.matches('[data-mpcsel]')) return; MP.cvp = t.value; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); mpcRotPaint(); }); /* (Nov 9: the player picker) */
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('mpv-all')) MP.cvAll = e.target.open; }, true); /* (kept open across redraws) */
 function mpcLay() {
