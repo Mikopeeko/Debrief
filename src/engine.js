@@ -4470,6 +4470,31 @@ function buildCoiledAltar(ev, r, h) {
       const pf = planFor(s);
       return { s, popped, raidMax, tankG, ground, hit, cone, plan: pf.txt, bad: popped >= (pf.badAt ?? 8) || raidMax > 12, warn: pf.warnAt != null && popped >= pf.warnAt };
     };
+    /* (Nov 8, Flex: "it should be able to know who did it by the location of the orb and the player". At the moment Venom Rupture hits the raid (the first
+       stack of the wave), each purple carrier's distance to the nearest other orb: every orb still on the floor from the whole pull (an orb stays until
+       someone picks it up; Thursday pull 22's green had lain there since 6:13), the other carriers' orbs and carried greens. A carrier who blinked or
+       leapt (12+ yd between two samples under a second apart) is measured at both spots, so a blink into an orb counts. One carrier is named only when
+       they alone were within ring range (6 yd, plus 1.5 for the log's position error) and every other carrier was 10 yd or more from any orb, with
+       every spot under 1.5 s old; when several were close, only the close ones stay (orbRefine); r.orbPick keeps it for Why we wiped and All pulls) */
+    { const RING = 7.5, CLEAR = 10, T0 = new Map(inst.map((i) => [i.guid, i.t0]));
+      const sampAt = (g, t) => { const u = r.positions && r.positions.get(g); if (!u) return null; let b = null, a = null; for (const p of u.pts) { if (p[0] <= t) b = p; else { a = p; break; } } return { b: b && t - b[0] <= 1.5 ? b : null, a: a && a[0] - t <= 1 ? a : null }; };
+      const whereAt = (g, t, fr) => { const s = sampAt(g, t), q = fr.find((p) => p.guid === g), pts = []; if (!s) return { pts, leap: false }; const leap = !!(s.b && s.a && s.a[0] - s.b[0] <= 1 && Math.hypot(s.a[1] - s.b[1], s.a[2] - s.b[2]) > 12);
+        if (leap) pts.push([s.b[1], s.b[2]], [s.a[1], s.a[2]]); else if (q) pts.push([q.x, q.y]); else if (s.b) pts.push([s.b[1], s.b[2]]); return { pts, leap }; };
+      const vrT = vr.filter((e) => e.op === 'apply' || e.op === 'dose' || e.op === 'rdose').map((e) => e.t);
+      const waveAt = (t) => { const w = vrT.filter((x) => x >= t - 2.5 && x <= t + 0.5).sort((a, b) => a - b); for (let i = 0; i < w.length; i++) if (w.filter((x) => x >= w[i] && x <= w[i] + 0.3).length >= 5) return w[i]; return t; };
+      const vrd = (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '')).map((x) => x.t).sort((x, y) => x - y).filter((t, i, l) => !i || t - l[i - 1] > 10);
+      r.orbPick = [...new Set(bursts.map((b) => b.t).concat(vrd).map(waveAt).map((t) => +t.toFixed(2)))].map((tc) => { try {
+        const fr = (h.frames(tc, tc, 0.2)[0] || { pts: [] }).pts, pu = [...new Set(carriersAt(tc).map((c) => c.g))]; if (pu.length < 2) return null;
+        const spots = new Map(pu.map((g) => [g, whereAt(g, tc, fr)])); if (pu.some((g) => !spots.get(g).pts.length)) return { t: tc, stale: true };
+        /* (the orbs on the floor: this phase's (the P1 push and the phase changes clear the rest), minus the ones a frontal cone popped, like the replay) */
+        const ph0 = p3 != null && tc >= p3 ? p3 : p2 != null && tc >= p2 ? p2 : 0, popped = new Set(); for (const sv of severs) { if (sv.t >= ph0 && sv.t < tc) try { for (const o of frontOf(sv, ph0).hit) popped.add(o.guid); } catch (e) { /* (no cone) */ } }
+        const gnd = objs(tc, ph0).filter((o) => o.kind !== 'ghost' && !popped.has(o.guid) && (T0.get(o.guid) == null || T0.get(o.guid) <= tc - 0.1)).map((o) => ({ x: o.x, y: o.y, k: o.kind === 'porb' ? 'a purple orb on the ground' : 'a green orb on the ground' }));
+        const grn = greenAt(tc).filter((g) => !pu.includes(g)).map((g) => { const w = whereAt(g, tc, fr).pts[0]; return w ? { x: w[0], y: w[1], k: String(pname(g)).split('-')[0] + '\'s green orb' } : null; }).filter(Boolean);
+        const dist = {}, what = {}, leap = {}; for (const g of pu) { const mine = spots.get(g).pts, others = gnd.concat(grn, pu.filter((o) => o !== g).flatMap((o) => spots.get(o).pts.map((w) => ({ x: w[0], y: w[1], k: String(pname(o)).split('-')[0] + '\'s purple orb' }))));
+          let best = Infinity, bk = ''; for (const o of others) for (const m of mine) { const d = Math.hypot(o.x - m[0], o.y - m[1]); if (d < best) { best = d; bk = o.k; } } dist[pname(g)] = best; what[pname(g)] = bk; leap[pname(g)] = spots.get(g).leap; }
+        const names = Object.keys(dist), close = names.filter((n) => dist[n] <= RING), clear = close.length > 0 && names.filter((n) => !close.includes(n)).every((n) => dist[n] >= CLEAR), one = clear && close.length === 1 ? close[0] : null;
+        return { t: tc, dist: Object.fromEntries(names.map((n) => [n, isFinite(dist[n]) ? +dist[n].toFixed(1) : null])), what: one ? what[one] : '', leap: one ? !!leap[one] : false, one, close: clear ? close : null };
+      } catch (e) { return null; } }).filter(Boolean); }
     orbSec0.rows = deluges.map((d, i) => {
       const end = deluges[i + 1] ?? (p2 != null && d < p2 ? p2 : dur);
       const picks = carry.filter((c) => c.s >= d && c.s < end), cl = clipped.filter((c) => c.t >= d && c.t < end).length;
@@ -4482,7 +4507,7 @@ function buildCoiledAltar(ev, r, h) {
       const aim = (x) => x.replace(/\s*\(hits empty ground\)/, ', into empty ground');
       const cnt = fs.length ? { txt: fs.map((f) => f.popped).join(', then ') + (fs.length === 1 && fs[0].popped === 1 ? ' orb' : ' orbs'), bad: fBad, warn: fWarn,
         sub: 'aim for ' + (new Set(fs.map((f) => f.plan)).size === 1 ? (!many ? aim(fs[0].plan) : fs[0].plan.includes(' (') ? aim(fs[0].plan).replace(' (', ' each (') : aim(fs[0].plan) + ' each') : fs.map((f) => aim(f.plan)).join(', then ')) + (raidMax > 12 ? ' · the raid ended at ' + raidMax + ' stacks' : '') } : { txt: 'no frontal', dim: true };
-      const cw = coll ? (() => { const d0 = (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= coll.t - 12 && x.t <= coll.t + 1).sort((a, b) => a.t - b.t)[0], tc = d0 ? d0.t : coll.t, pu = [...new Set(carriersAt(tc).map((c) => pname(c.g)))], gr = [...new Set(greenAt(tc).map(pname))].filter((n) => !pu.includes(n));
+      const cw = coll ? (() => { const d0 = (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= coll.t - 12 && x.t <= coll.t + 1).sort((a, b) => a.t - b.t)[0], tc = d0 ? d0.t : coll.t, pu = orbRefine(r, tc, [...new Set(carriersAt(tc).map((c) => pname(c.g)))]), gr = [...new Set(greenAt(tc).map(pname))].filter((n) => !pu.includes(n));
         const and = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]), or = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' or ' + l[l.length - 1]);
         return (pu.length === 1 ? pu[0] + '\'s purple orb touched other orbs' : pu.length ? 'One of ' + or(pu.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'A purple orb touched other orbs') + (gr.length ? ' while ' + and(gr) + ' held green orbs' : ''); })() : ''; /* (Nov 5, Flex: "name who collided with what") */
       const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: ' + cw.charAt(0).toLowerCase() + cw.slice(1), say: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', bad: true, why: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', next: 'Carry purple orbs on their own, away from the other orbs.' }
@@ -7854,7 +7879,13 @@ const rcWithBy = (short, by, one) => { const s = String(short || ''); return by 
 /* (one rule for whose purple orb went off (Nov 5): the purple-orb pickups (the orbs section's carry) at the first Venom Rupture death in [a, b];
    Why we wiped, its reset and All pulls' "Carried the orb that burst" all use it) */
 const orbCarriers = (r, t) => [...new Set([].concat(...((r && r.module && r.module.sections) || []).filter((s) => s.id === 'orbs').map((s) => s.carry || [])).filter(([, s, e]) => t >= s - 0.2 && t <= e + 0.3).map(([n]) => n))];
-function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; return d ? orbCarriers(r, d.t) : []; }
+/* (Nov 8: whose orb by position (r.orbPick): the one carrier next to another orb, or only the close ones; else the names as they were. Never a guess) */
+const orbPickAt = (r, t) => ((r && r.orbPick) || []).filter((x) => !x.stale && Math.abs(x.t - t) <= 2.5).sort((a, b) => Math.abs(a.t - t) - Math.abs(b.t - t))[0] || null;
+function orbRefine(r, t, names) { if (!names || names.length < 2) return names; const op = orbPickAt(r, t); if (!op) return names; const base = (n) => String(n).split('-')[0], has = (n) => names.some((x) => base(x) === base(n));
+  if (op.one && has(op.one)) return names.filter((x) => base(x) === base(op.one)); if (op.close && op.close.length < names.length && op.close.every(has)) return names.filter((x) => op.close.some((n) => base(n) === base(x))); return names; }
+const orbNoteAt = (r, t, who) => { const op = orbPickAt(r, t); if (!op || !op.one || !who || who.length !== 1) return ''; const d = op.dist || {}, me = d[op.one], rest = Object.entries(d).filter(([n]) => n !== op.one).map(([, v]) => v).filter((v) => v != null);
+  return me == null || !rest.length ? '' : String(op.one).split('-')[0] + ' was the only carrier next to another orb: ' + Math.max(1, Math.round(me)) + ' yd from ' + (op.what || 'another orb') + (op.leap ? ', right after a blink or leap' : '') + '. The other carriers were ' + Math.round(Math.min(...rest)) + ' yd or more from any orb.'; };
+function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; return d ? orbRefine(r, d.t, orbCarriers(r, d.t)) : []; }
 const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
 function rootCause(r, opts) {
   opts = opts || {};
@@ -7950,7 +7981,7 @@ function rootCause(r, opts) {
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      const fv = trig.find((d) => d.ab === 'Venom Rupture') || trig.find((d) => d.cat === 'orbs'); orbAt = fv ? fv.t : t0; orbBy = carriersAt(orbAt); { const ot = cl && orbAt - cl.t <= 6 ? cl.t : orbAt; say(ot, 'orbs', orbSay(orbBy) + ' (' + T(ot) + ')'); } /* (Nov 6: the burst, unless the touch logged is within 6 s of it) */ /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
+      const fv = trig.find((d) => d.ab === 'Venom Rupture') || trig.find((d) => d.cat === 'orbs'); orbAt = fv ? fv.t : t0; orbBy = orbRefine(r, orbAt, carriersAt(orbAt)); /* (Nov 8: by position, when it's clear) */ { const ot = cl && orbAt - cl.t <= 6 ? cl.t : orbAt; say(ot, 'orbs', orbSay(orbBy) + ' (' + T(ot) + ')'); } /* (Nov 6: the burst, unless the touch logged is within 6 s of it) */ /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
     else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; const chkN = deadAt(t0 - 0.5).length; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time' + (chkN >= 2 ? ' with ' + chkN + ' already dead' : '') + SEP + 'it killed ' + trig.filter((d) => d.cat === 'shield').length + ' (' + T(t0) + ')'); }
     else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; if (cat === 'adds') addsBomb(t0); if (cat === 'erasure') eraseSay(t0); say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' (' + T(t0) + ')'); } }
   /* (Nov 6: pull 6 was called at the missed damage check with one death: a shield still up when the wipe was called (or finished just
@@ -7998,7 +8029,7 @@ function rootCause(r, opts) {
   const t0s = (chain.find((c) => c.cat === 'shield') || { t: P.t }).t;
   const tooFew = nextOf(phP) === 'the kill' ? ' to finish the boss.' : ' to reach ' + nextOf(phP) + '.', wornS = wornK ? (wornK.has('mc') && wornK.has('ghosts') ? 'Dreadmarch\'s mind controls and ghosts killed too many' : wornK.has('mc') ? 'Dreadmarch\'s mind controls killed too many' : 'Ghosts touching killed too many') + tooFew : '';
   const short = ({ guil: dropT ? dropT.split(SEP)[0].replace(/^./, (x) => x.toUpperCase()) + (/didn't run out/.test(dropT) ? '.' : ', and its eruption caught everyone near it.') : widow ? 'Players didn\'t run out after the Guillotine soak.' : 'The Guillotine soak was short, so Execution hit the raid.',
-    orbs: orbBy.length === 1 ? orbBy[0] + '\'s purple orb touched other orbs and set off Venom Rupture.' : orbBy.length > 1 ? 'One of ' + rcOr(orbBy.map((n) => n + '\'s')) + ' purple orbs touched other orbs and set off Venom Rupture.' : 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
+    orbs: orbBy.length === 1 ? orbBy[0] + '\'s purple orb touched other orbs and set off Venom Rupture.' + (orbNoteAt(r, orbAt, orbBy) ? ' ' + orbNoteAt(r, orbAt, orbBy) : '') : orbBy.length > 1 ? 'One of ' + rcOr(orbBy.map((n) => n + '\'s')) + ' purple orbs touched other orbs and set off Venom Rupture.' : 'A purple orb\'s ring touched other orbs and set off Venom Rupture.',
     kick: P.mc ? 'An unkicked Wail of Terror feared the raid, and the ghosts reached their players.' : 'An unkicked Wail of Terror feared players' + (into.length ? ' into ' + rcAnd(into) : '') + (hasG ? ' and left the Guillotine short.' : '.'),
     mc: P.mc ? 'The ghosts reached their players, and the raid was mind controlled.' : wornS || 'Mind controlled players died off the square.',
     ghosts: wornS || 'Ghosts touched, and Malevolent Resonance killed players.', shield: 'Eternal Nightfall\'s shield wasn\'t broken in time' + (deadAt(t0s - 0.5).length >= 2 ? ', with ' + deadAt(t0s - 0.5).length + ' players already dead.' : '.'),
