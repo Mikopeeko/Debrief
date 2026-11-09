@@ -621,8 +621,8 @@ function mpGdTags(R, F, yp, fp, trash, ypAll, fpAll) {
   const more = sp.more >= 1 ? ['More to kill ' + mpMM(sp.more), sp.more, '<b>More to kill</b><br>Your group did ' + pc(y.D, f.D) + '% more damage in all here.' + cnt, '']
     : sp.more <= -1 ? ['Less to kill ' + mpMM(sp.more), -sp.more, '<b>Less to kill</b><br>Your group did ' + pc(y.D, f.D) + '% less damage in all here.' + cnt, 'mpt-m'] : null;
   const yN = mpChainN(R, yp), fN = mpChainN(F, fp), many = trash && yN > fN ? ' You pulled ' + yN + ' times; the fast run ' + (fN === 1 ? 'pulled it all at once' : 'pulled ' + fN + ' times') + ', so every AoE hit more enemies.' : '';
-  const low = sp.low >= 1 ? ['Lower damage ' + mpMM(sp.low), sp.low, '<b>Lower damage</b><br>Your group did ' + pc(y.r, f.r) + '% less damage a second here.' + many, '']
-    : sp.low <= -1 ? ['Higher damage ' + mpMM(sp.low), -sp.low, '<b>Higher damage</b><br>Your group did ' + pc(y.r, f.r) + '% more damage a second here.', 'mpt-m'] : null;
+  const low = sp.low >= 1 ? ['Lower damage ' + mpMM(sp.low), sp.low, '<b>Lower damage</b><br>Your group did ' + pc(y.r, f.r) + '% less damage per second here.' + many, '']
+    : sp.low <= -1 ? ['Higher damage ' + mpMM(sp.low), -sp.low, '<b>Higher damage</b><br>Your group did ' + pc(y.r, f.r) + '% more damage per second here.', 'mpt-m'] : null;
   const parts = [more, low].filter(Boolean).sort((a, b) => b[1] - a[1]);
   return '<p class="mpt-gt">' + parts.map(([t, , tip, c]) => '<span class="mpt-gtc' + (c ? ' ' + c : '') + '" tabindex="0"' + mpT1(tip) + '>' + t + '</span>').concat('Group DPS ' + mpGF(y.r) + ' · fast run ' + mpGF(f.r)).join(' · ') + '</p>';
 }
@@ -826,13 +826,13 @@ function mpHtml(it, R, fx) {
     /* (with group DPS, the longer fighting is two pieces: more to kill and lower damage, from the pulls themselves) */
     const yG = mpGrp(R.pulls), fG = mpGrp(F.pulls), spl = mpSplit(yG, fG), dp = spl ? Math.round(100 * (yG.r / fG.r - 1)) : 0, pc = (a, b) => Math.round(100 * Math.abs(a / b - 1));
     const fight = spl ? [['fm', 'More to kill', spl.more, 'Your group did ' + pc(yG.D, fG.D) + '% ' + (yG.D >= fG.D ? 'more' : 'less') + ' damage in all while fighting. You took ' + plural(R.pulls.length, 'pull') + ', the fast run took ' + F.pulls.length + '.', 'Less to kill'],
-      ['fl', 'Lower damage', spl.low, 'Your group did ' + mpGF(yG.r) + ' damage a second while fighting, the fast run ' + mpGF(fG.r) + '.', 'Higher damage']]
+      ['fl', 'Lower damage', spl.low, 'Your group did ' + mpGF(yG.r) + ' damage per second while fighting, the fast run ' + mpGF(fG.r) + '.', 'Higher damage']]
       : [['f', 'Longer fighting', gap - dD - dS, 'You took ' + plural(R.pulls.length, 'pull') + ', the fast run took ' + F.pulls.length + '.', 'Shorter fighting']];
     const all = fight.concat([['s', 'Standing between pulls', dS, 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.', 'Standing between pulls'],
       ['d', 'Deaths', dD, 'Your ' + plural(ck.deaths, 'death') + ' put ' + mpMM(ck.deathCost) + ' on the timer.' + (FC.ck.deathCost ? ' The fast run\'s put ' + mpMM(FC.ck.deathCost) + '.' : ''), 'Deaths']]);
     const parts = all.filter((x) => x[2] >= 1), less = all.filter((x) => x[2] <= -1); /* (one you did better than the fast run: in the key, green, so the numbers add up to the gap) */
     const sum = parts.reduce((a, x) => a + x[2], 0); if (!sum) return '';
-    const line = !spl ? '' : (Math.abs(dp) <= 7 ? 'Your group\'s damage was close to the fast run\'s: ' + (dp ? Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' a second' : 'the same a second') + ' while fighting.' : 'Your group did ' + Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' damage a second than the fast run while fighting.') + ' ' +
+    const line = !spl ? '' : (Math.abs(dp) <= 7 ? 'Your group\'s damage was close to the fast run\'s: ' + (dp ? Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' per second' : 'the same per second') + ' while fighting.' : 'Your group did ' + Math.abs(dp) + '% ' + (dp < 0 ? 'less' : 'more') + ' damage per second than the fast run while fighting.') + ' ' +
       /* (the studio's audit: when lower damage is the cause and the route had less or about as much to kill, the cost first, then the route) */
       (spl.low > spl.more && spl.more < 15 ? 'That cost ' + mpMM(spl.low) + '. Your route was fine: you had ' + (spl.more <= -1 ? 'less' : 'about as much') + ' to kill ' + (spl.more <= -1 ? 'than' : 'as') + ' the fast run.'
         : spl.low <= 0 ? 'Your damage was higher, so your extra fighting was more to kill.' : spl.more >= spl.low ? 'Most of your extra fighting was more to kill.' : 'Most of your extra fighting was lower damage.');
@@ -1861,7 +1861,7 @@ function mpHealWorth(R, p) {
   const ck = R.run.clock; if (!ck || !(ck.up > 0)) return '';
   const lim = ck.up === 3 ? ck.par * 0.6 : ck.up === 2 ? ck.par * 0.8 : ck.par, spare = lim - ck.time, h = mpHealT(R, p);
   if (!(h.worth > spare && spare > 0)) return '';
-  return '<p class="mpt-hw" tabindex="0"' + mpT1('<b>Healer damage</b><br>' + esc(p.name) + ' did ' + mpGF(h.rh) + ' damage a second while fighting. Without it, the same fighting would have taken about ' + mpMM(h.worth) + ' longer.') + '>' + mpWho(R, p.name) + '\'s damage timed this key: it was worth <b>' + mpMM(h.worth) + '</b> of fighting, and you had <b>' + mpMM(spare) + '</b> to spare.</p>';
+  return '<p class="mpt-hw" tabindex="0"' + mpT1('<b>Healer damage</b><br>' + esc(p.name) + ' did ' + mpGF(h.rh) + ' damage per second while fighting. Without it, the same fighting would have taken about ' + mpMM(h.worth) + ' longer.') + '>' + mpWho(R, p.name) + '\'s damage timed this key: it was worth <b>' + mpMM(h.worth) + '</b> of fighting, and you had <b>' + mpMM(spare) + '</b> to spare.</p>';
 }
 
 // ---------- what Season 2 Mythic+ knows (Nov 2, Flex: "use your new knowledge to make this page even better", creative freedom) ----------
@@ -2481,7 +2481,7 @@ function mpMapHtml(R, F, tl) {
     const dps = !ppl.length ? '' : fold('d', '<b>DPS</b>' + (dl[0] && (p.dmg || {})[dl[0].name] ? ' · ' + mpWho(RR, dl[0].name) + ' ' + mpGF((p.dmg || {})[dl[0].name]) : '') + (gd ? ' · group ' + mpGF(gd) : ''),
       '<div class="mpt-mlh' + (cdc ? '' : ' no-cd') + '"><span>DPS</span>' + (cdc ? '<small>Big cooldown</small>' : '') + '</div><div class="gbx mpt-gbd' + (cdc ? '' : ' no-cd') + '">' + dl.map((x) => { const d = (p.dmg || {})[x.name] || 0, cc = mpCC(x.cls);
         return '<div class="gbx-r" data-who="' + esc(x.name) + '" style="--c:' + cc + '"><span class="gbx-n" style="color:' + cc + '">' + esc(x.name) + '</span><span class="gbx-b"><i style="width:' + (100 * d / mx).toFixed(1) + '%"></i></span><b class="gbx-v">' + mpGF(d) + '</b>' + (cdc ? cdCell(x.name) : '') + '</div>'; }).join('') + '</div>' +
-      ppl.filter((x) => x.role === 'healer' && (p.heal || {})[x.name]).map((x) => '<p class="mpt-mcf" data-who="' + esc(x.name) + '">' + mpWho(RR, x.name) + ' healed ' + mpGF(p.heal[x.name]) + ' a second.</p>').join('') +
+      ppl.filter((x) => x.role === 'healer' && (p.heal || {})[x.name]).map((x) => '<p class="mpt-mcf" data-who="' + esc(x.name) + '">' + mpWho(RR, x.name) + ' healed ' + mpGF(p.heal[x.name]) + ' per second.</p>').join('') +
       (cdc && q.chained && !dl.some((x) => mine(x.name).length) ? '<p class="mpt-mcf">No big cooldowns here: chained onto the pull before, where they went out.</p>' : ''));
     // (how each player died: the killing blow and its source, and whether a defensive was used, on the line; the last hits, what was ready and the
     // Healthstone inside)

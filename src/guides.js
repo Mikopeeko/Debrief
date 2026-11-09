@@ -1226,10 +1226,10 @@ GDZ['The Coiled Altar'] = {
       ] },
     { id: 'int', name: 'Intermission: Soulbinding', sum: 'Zul\'jan comes back healing himself but taking double damage. Bloodlust here.',
       mechs: [
-        { id: 'frags', fail: GDZ_CA_FAIL.frags, how: 1, name: 'Fragments of Malacrass (Intercepts)', what: 'Zul\'jan comes back healing 2% a second for 35 seconds, but he takes double damage. Fragments walk to him, and each one that gets there heals him about 10%. Each stop hits the whole raid.',
+        { id: 'frags', fail: GDZ_CA_FAIL.frags, how: 1, name: 'Fragments of Malacrass (Intercepts)', what: 'Zul\'jan comes back healing 2% per second for 35 seconds, but he takes double damage. Fragments walk to him, and each one that gets there heals him about 10%. Each stop hits the whole raid.',
           do: ['Everyone: *Bloodlust* now, plus potions and every damage cooldown. Zul\'jan takes *double damage*.', 'Assigned players: *Watch your side*. Fragments walk in from the edges toward him.', 'Assigned players: *Step into a fragment\'s path* to stop it. Each stop *hits the whole raid*.', 'Healers: Stops come *a couple at a time*, spread out. Keep *healing cooldowns* ready for them.'],
           roles: ['', '', '', 'h'],
-          m: { name: 'Fragments of Malacrass (Intercepts)', what: 'Zul\'jan heals 2% a second but takes double damage. Each fragment that reaches him heals him about 10%. Each stop hits the raid and makes the next one 20% stronger for 2 seconds.',
+          m: { name: 'Fragments of Malacrass (Intercepts)', what: 'Zul\'jan heals 2% per second but takes double damage. Each fragment that reaches him heals him about 10%. Each stop hits the raid and makes the next one 20% stronger for 2 seconds.',
             do: ['Everyone: *Bloodlust*, potions, every cooldown. You held damage at the end of phase 2 for this.', 'Mobile healers and off-tank: *Cover your side* of the room. The rest *circle the boss*. One fragment spawns on the inner ring.', 'Assigned players: *Stop 3 to 5* by stepping in their path. Then *let the stacks drop*.', 'Assigned players: Again *3 to 5*, wait, repeat. About *five rounds*.', 'Healers: Near the end, *stack raid cooldowns* in the middle. The raid stops *7 to 10 at once*.'],
             roles: ['', 'ht', '', '', 'h'],
             plan: ['Spots: the mobile healers spread to the four sides, the priests stay near the melee (they\'re less mobile), and the off-tank soaks far fragments.', 'The Augmentation Evoker, the Hunters and the Warlocks stand together on one side, so the Augmentation buffs land on the right people for the burn.', 'Melee play defence: you\'re the most mobile, so make sure none get in.', 'Getting Zul\'jan under about 35% here puts the kill within reach.'] },
@@ -3944,12 +3944,12 @@ const NY_M = {
   rain(fail, d, o) {
     o = o || {}; const L = 13, k = gdzKit(NY, L); nyBoss(k, 0); nyHome(k, 0); if (!o.nob) nyBubble(k, 0, L);
     k.cast('ny', 'Abyssal Rain', 0.4, 2.4);
-    for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, one a second' });
+    for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, one per second' });
     Object.keys(NY_HOME).forEach((id) => k.ring({ on: id, r: 2.2, fx: 'debuff', t0: 6.4, dur: L - 6.4, color: '#5ab8ff', cn: 'Abyssal Rain damage over time', legend: 'the Abyssal Rain damage over time: a small hit every 2 seconds for 24 seconds' }));
     k.call(1.2, 3.8, 'Raid cooldown', { on: 'h2', color: '#45d16b', ink: '#04140a' }); k.call(3, 5.6, 'Personal if low', { on: 'r1', color: '#45d16b', ink: '#04140a' });
     k.call(6.6, 9.8, 'Damage over time: 24 seconds', { x: 0, y: 14, color: '#5ab8ff', ink: '#06131c' }); k.call(7, 11, '+5% damage', { on: 'ny', color: '#ff8a5a', ink: '#1a0a04' });
     k.step(0.4).step(2.4).step(6.4).step(7);
-    k.pause(3.6, 'Four raid hits, one a second: a raid cooldown for them, and a personal if you are low.', { x: -12, y: -6, r: 32 });
+    k.pause(3.6, 'Four raid hits, one per second: a raid cooldown for them, and a personal if you are low.', { x: -12, y: -6, r: 32 });
     return k.done({ title: 'Abyssal Rain: four hits, then damage over time', focus: { x: -12, y: -6, r: 36 }, full: { x: -12, y: -6, r: 44 } });
   },
   // Lingering Frost: each soaked orb leaves ice that hurts (100k every second) and makes you slide. Heroic: the ice sits in one corner at the
@@ -3960,7 +3960,7 @@ const NY_M = {
     const ICE = myth ? NY_ORB : [198, 222, 240].flatMap((a) => [0, 1, 2].map((i) => nzAdd([0, 0], a - 3.2 + i * 3.2, 43))), CE = nzAdd([0, 0], 222, 43);
     if (!myth) { const CLR = 9;
       ICE.forEach((p, i) => nyPuddle(k, p, 0.6 + i * 0.25, CLR - 0.6 - i * 0.25));
-      k.call(2.8, 6.6, 'Ice: 100k a second', { x: CE[0] + 5, y: CE[1] + 7, color: '#bfefff', ink: '#06131c' });
+      k.call(2.8, 6.6, 'Ice: 100k per second', { x: CE[0] + 5, y: CE[1] + 7, color: '#bfefff', ink: '#06131c' });
       k.ring({ x: 0, y: 0, r: 62, fx: 'burst', t0: CLR - 0.6, at: CLR, dur: 0.8, color: '#7fd8ff', cn: 'Pop!', legend: 'Pop!: its wave washes the ice away (it throws everyone back too: see Pop!)' });
       k.call(CLR, CLR + 2.4, 'The Pop washes it away', { x: -30, y: -26, color: '#7fd8ff', ink: '#06131c' });
       k.step(0.6).step(2.8).step(4.4).step(CLR - 0.6);
@@ -3973,7 +3973,7 @@ const NY_M = {
     for (let t = JS; t < JE - 0.01; t += 0.5) { const e = nzAdd(NY_BH, 39 + th(t + 0.25), 75); k.link({ from: 'ny', toYd: { x: e[0], y: e[1] }, t0: t, t1: t + 0.5, color: '#7fd8ff', legend: 'Water Jet: a line through the tank, right across the island' }); }
     ICE.forEach((p, i) => { const v = [p[0] - NY_BH[0], p[1] - NY_BH[1]], tp = Math.atan2(v[0] * NY_N[0] + v[1] * NY_N[1], v[0] * NY_U[0] + v[1] * NY_U[1]) * 180 / Math.PI, t0 = 0.6 + i * 0.25;
       let tc = L; for (let t = JS; t <= JE; t += 0.1) if (th(t) <= tp) { tc = t + 0.3; break; } nyPuddle(k, p, t0, tc - t0); });
-    k.call(2.8, 6.4, 'Ice: 100k a second', { x: NY_ORB[4][0] + 7, y: NY_ORB[4][1] - 7, color: '#bfefff', ink: '#06131c' });
+    k.call(2.8, 6.4, 'Ice: 100k per second', { x: NY_ORB[4][0] + 7, y: NY_ORB[4][1] - 7, color: '#bfefff', ink: '#06131c' });
     k.call(JS + 0.4, JS + 3.4, 'Water Jet', { x: NY_ORB[4][0] + 7, y: NY_ORB[4][1] - 7, color: '#7fd8ff', ink: '#06131c' });
     k.ring1([TK]).step(0.6).step(2.8).step(JS).step(JE - 1.4);
     k.pause(4.4, 'The ice lies in the lane where the orbs were soaked. Nobody stands in it: it hurts every second and makes you slide.', { x: NY_ORB[4][0], y: NY_ORB[4][1], r: 14 });
@@ -4067,7 +4067,7 @@ const NY_FAIL = {
   rain: { name: 'No cooldown on a late Rain', what: 'She is stronger with every Abyssal Rain. Late in the fight nobody uses a healing cooldown, and the four hits kill the lowest players.',
     do: ['A late Abyssal Rain: she is stronger now.', 'Nobody uses a healing cooldown.', 'The four hits kill the lowest players.'],
     map: () => { const L = 9, k = gdzKit(NY, L); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, L); k.cast('ny', 'Abyssal Rain', 0.4, 2.4);
-      for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, one a second' });
+      for (let i = 0; i < 4; i++) k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.6, color: '#5ab8ff', cn: 'Abyssal Rain', legend: 'Abyssal Rain: four raid hits, one per second' });
       k.call(1.2, 4, 'No cooldown', { on: 'h2', color: '#ff3b3b', ink: '#fff' });
       gdzFailBlast(k, 5.6, 'The lowest players die', -12, 14, ['r3', 'm5', 'r6'], 'Abyssal Rain');
       k.step(0.4).step(1.2).step(5.6); return k.done({ title: 'Mistake: no cooldown on a late Rain', focus: { x: -12, y: -6, r: 36 }, full: { x: -12, y: -6, r: 44 }, badLabel: 'dies' }); } },
@@ -4079,7 +4079,7 @@ const NY_FAIL = {
       const q = ICE[Math.floor(ICE.length / 2)], who = Object.keys(NY_HOME).filter((id) => id[0] === 'r').sort((a, b) => { const A = k.posAt(a, 0), B = k.posAt(b, 0); return Math.hypot(A[0] - q[0], A[1] - q[1]) - Math.hypot(B[0] - q[0], B[1] - q[1]); })[0];
       const p0 = k.posAt(who, 0), dt = Math.min(6, Math.max(1.5, Math.hypot(q[0] - p0[0], q[1] - p0[1]) / 7));
       k.hold(2, who).at(2 + dt, who, q[0], q[1]); const t = 2 + dt + 0.6;
-      ulHit(k, who, t, 'Ice: 100k a second'); ulHit(k, who, t + 1.4, 'Ice: 100k a second'); k.oops(who, t + 2.6);
+      ulHit(k, who, t, 'Ice: 100k per second'); ulHit(k, who, t + 1.4, 'Ice: 100k per second'); k.oops(who, t + 2.6);
       k.step(0.6).step(2).step(t); return k.done({ title: 'Mistake: standing on the ice', focus: { x: q[0] * 0.6, y: q[1] * 0.6, r: 30 }, full: { x: -12, y: -6, r: 44 }, badLabel: 'on the ice' }); } },
   murlocsH: { name: 'A pack nobody took', what: 'Nobody stops or kills one side pack: it walks into the bubble and becomes Berserkers that hit the whole raid until they die.', do: ['The packs come out.', 'The squads go, but one pack is left alone.', 'Berserkers at the bubble.'], map: () => NY_M.murlocs(true, 'h') },
   murlocsM: { name: 'The Frostscale left in the pack', what: 'Nobody grips the Frostscale out: its shield gives the whole pack 99% less damage, nothing dies, and they walk on into the bubble.', do: ['The big pack arrives.', 'Nobody grips the Frostscale: nothing dies.', 'On to the bubble: Berserkers.'], map: () => NY_M.murlocs(true, 'm') },
@@ -4126,7 +4126,7 @@ function nySimH(c) { const L = [{ at: 0, beat: 'start' }], n = (a, mech, label, 
   (c.iceblade || []).forEach((at, i) => L.push({ at, beat: 'iceblade', label: 'Iceblade Flurry ' + (i + 1) })); n(c.orbs, 'orbs', 'Chilling Frost'); n(c.whirl, 'whirl', 'Swirling Whirlpools', { cut: true }); n(c.pop, 'pop', 'Pop!');
   L.push({ at: c.kill, beat: 'kill' }); return L.sort((a, b) => a.at - b.at); }
 // (Heroic's own scene: Iceblade Flurry, five ramping hits on her tank (a 2-second cast, then 375k a second for 5 seconds, each harder than the last): a defensive for the last two, then the other tank taunts)
-const NY_BEATS_H = { ...NY_BEATS, iceblade: { name: 'Iceblade Flurry (A defensive, then swap)', do: ['She casts Iceblade Flurry on her tank: 2 seconds.', 'Five ramping hits, one a second.', 'A defensive for the last two hits.', 'The other tank taunts and takes over.'],
+const NY_BEATS_H = { ...NY_BEATS, iceblade: { name: 'Iceblade Flurry (A defensive, then swap)', do: ['She casts Iceblade Flurry on her tank: 2 seconds.', 'Five ramping hits, one per second.', 'A defensive for the last two hits.', 'The other tank taunts and takes over.'],
   run() { const k = gdzKit(NY, 9); nyBoss(k, 0); nyHome(k, 0); nyBubble(k, 0, 9); k.cast('ny', 'Iceblade Flurry', 0.4, 2.4);
     k.ring({ on: 't1', r: 2.6, fx: 'debuff', t0: 2.4, dur: 5, color: '#9fe6ff', cn: 'Iceblade Flurry', legend: 'Iceblade Flurry: five ramping hits on her tank' });
     for (let i = 0; i < 5; i++) k.ring({ on: 't1', r: 3.4, fx: 'burst', t0: 2.2 + i, at: 2.4 + i, dur: 0.5, color: '#9fe6ff', cn: 'Iceblade hit', legend: 'one of the five hits, each harder than the last' });
@@ -4158,8 +4158,8 @@ GDZ['Nymrissa Wavecaller'] = {
     { id: 'loop', name: 'The loop: every 110 seconds', sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. Rinse and repeat.',
       m: { sum: 'Abyssal Rain, then her bubble and a murloc set, Chilling Frost and its orbs, a second murloc set and orbs, then the whirlpools and the Pop. A Water Jet comes about every 22 seconds all the way through. Rinse and repeat.' },
       mechs: [
-        { id: 'rain', fail: NY_FAIL.rain, spell: 'Abyssal Rain', name: 'Abyssal Rain (Healing cooldowns, it ramps)', what: 'She casts it 8 seconds in and then twice a loop: four raid hits, one a second, then damage over time for 24 seconds. She gets 5% stronger with every cast, so later ones need bigger cooldowns.',
-          do: ['She casts Abyssal Rain: 2 seconds.', 'Four raid hits, one a second: a raid cooldown, personals if you\'re low.', 'Then damage over time on the raid for 24 seconds.', 'She is 5% stronger after every cast.'],
+        { id: 'rain', fail: NY_FAIL.rain, spell: 'Abyssal Rain', name: 'Abyssal Rain (Healing cooldowns, it ramps)', what: 'She casts it 8 seconds in and then twice a loop: four raid hits, one per second, then damage over time for 24 seconds. She gets 5% stronger with every cast, so later ones need bigger cooldowns.',
+          do: ['She casts Abyssal Rain: 2 seconds.', 'Four raid hits, one per second: a raid cooldown, personals if you\'re low.', 'Then damage over time on the raid for 24 seconds.', 'She is 5% stronger after every cast.'],
           map: (d, o) => NY_M.rain(false, d, o) },
         { id: 'murlocs', spell: 'Alluring Bubble', map: (d, o) => (o && o.burn ? NY_M.burnset(d) : NY_M.murlocs(false, d)),
           h: { fail: NY_FAIL.murlocsH, name: 'Alluring Bubble (Kill the murlocs before they reach it)', what: 'She forms a giant bubble in the middle of the island; pools in the water round the edge show how many murlocs come from each (1 to 5). Any that reach the bubble become Berserkers that hit the raid until they die.',

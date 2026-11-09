@@ -336,6 +336,29 @@ if (!UI.includes('var names = (who || []).concat(ROS)')) say('the page code', 'w
 { const SH2 = require('fs').readFileSync(require('path').join(SRC, 'shell.html'), 'utf8'); if (!SH2.includes("var colours = function () { var C = {}; /* (Nov 8, Main: the pull's roster first")) say('the page code', 'wipes', 'Raid checks names lose their class colour again (Main, Nov 8)'); }
 { const SH3 = require('fs').readFileSync(require('path').join(SRC, 'shell.html'), 'utf8'); if (!SH3.includes('@layer defaultTheme { html:not([data-theme]) body.refine .op-pick select#opP')) say('the page code', 'looks', 'the Everyone chip\'s dropdown draws its own border again (Flex, Nov 8)'); }
 { const SH4 = require('fs').readFileSync(require('path').join(SRC, 'shell.html'), 'utf8'); if (!UI.includes('function unit492(') || !SH4.includes('.cgl-dt .p469-g')) say('the page code', 'looks', 'Summary\'s number boxes lost the number-first layout (Flex, Nov 9)'); if (/damage a second to the boss|' a second on the kill|' a second' \+ \(med/.test(UI)) say('the page code', 'wording', 'a Summary hover says "a second" again (Flex, Nov 9: per second, DPS, HPS, DTPS)'); }
+/* (Flex, Nov 9: a rate is "per second" or its unit (DPS, HPS, DTPS, rDPS), never "a second". Every string the page shows, in ui.js
+   (the patch notes left alone), guides.js and mptab.js; comments and regular expressions don't count) */
+{
+  const lits = (js) => { const out = []; let i = 0; const n = js.length;
+    const isRe = () => { let k = i - 1; while (k >= 0 && /\s/.test(js[k])) k--; if (k < 0) return true; const c = js[k]; if ('(,=:[!&|?{};+-*%<>~^'.includes(c)) return true; if (')]}'.includes(c)) return false;
+      const w = /[A-Za-z_$][\w$]*$/.exec(js.slice(Math.max(0, k - 12), k + 1)); return !!w && /^(return|typeof|case|do|else|in|void|delete|instanceof|new|throw)$/.test(w[0]); };
+    while (i < n) { const c = js[i], d = js[i + 1];
+      if (c === '/' && d === '/') { while (i < n && js[i] !== '\n') i++; continue; }
+      if (c === '/' && d === '*') { const j = js.indexOf('*/', i + 2); i = j < 0 ? n : j + 2; continue; }
+      if (c === '"' || c === "'") { const s0 = i + 1; for (i++; i < n && js[i] !== c; i++) if (js[i] === '\\') i++; out.push([s0, i]); i++; continue; }
+      if (c === '`') { let s0 = i + 1, depth = 0; for (i++; i < n; i++) { if (js[i] === '\\') { i++; continue; } if (!depth && js[i] === '`') break;
+          if (!depth && js[i] === '$' && js[i + 1] === '{') { out.push([s0, i]); depth = 1; i++; continue; } if (depth && js[i] === '{') depth++; if (depth && js[i] === '}') { depth--; if (!depth) s0 = i + 1; } }
+        out.push([s0, i]); i++; continue; }
+      if (c === '/' && isRe()) { let cls = false; for (i++; i < n; i++) { if (js[i] === '\\') { i++; continue; } if (js[i] === '[') cls = true; else if (js[i] === ']') cls = false; else if ((js[i] === '/' && !cls) || js[i] === '\n') break; } i++; while (/[a-z]/i.test(js[i] || '')) i++; continue; }
+      i++; }
+    return out; };
+  const RATE = /(^ ?a second\b(?=\s*$|\s*[<),.;:(]|\s(?:of|while|this|by|with|more|lately|between|over|against|from|in|here|than|for)\b))|((?:\b(?:damage|healing|Damage|Healing|Output|output|one|the same)|\d[\d.,]*\s?[KMk%]?) a second\b)|((?:<\/b>|<small>|<span>) ?a second\b)/;
+  for (const f of ['ui.js', 'guides.js', 'mptab.js']) {
+    const js = fs.readFileSync(path.join(SRC, f), 'utf8'); const a = f === 'ui.js' ? js.indexOf('const PATCH_NOTES = [') : -1, b = a < 0 ? -1 : js.indexOf('\n];', a) + 3;
+    for (const [s0, e0] of lits(js)) { if (a >= 0 && s0 >= a && s0 < b) continue; const lit = js.slice(s0, e0);
+      if (lit.includes('a second') && RATE.test(lit)) say('the page code', 'wording', f + ' line ' + js.slice(0, s0).split('\n').length + ' says "a second" for a rate (it is "per second" or the unit: DPS, HPS, DTPS, rDPS): ' + lit.slice(Math.max(0, lit.indexOf('a second') - 50), lit.indexOf('a second') + 20).replace(/\n/g, ' ')); }
+  }
+}
 if (UI.includes('deaths += s.deaths;')) say('the page code', 'deaths', 'the Report card adds up every death up to the call again (mass wipe deaths and not-their-fault ones included)');
 for (const s of ['if (it && !chainTitleFits(m.m, it.txt)) return;', 'if (b && !chainTitleFits(b.m.m, it.txt)) b = null;']) if (!UI.includes(s)) say('the page code', 'title', 'How it went no longer checks its titles (expected "' + s + '" in src/ui.js)');
 for (const s of ["KR = [].map.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)'), function (r) { return pk(r, '.dbt-cht'); })", "function (w) { window.__ahDedupe(w); if (window.__ahGroup) window.__ahGroup(w); }", "rows = function () { return [].slice.call(w.querySelectorAll('.dbt-chn > .dbt-chr:not(.end)')); }"]) if (!H.SH.includes(s)) say('the page code', 'repeat', 'Also hurt can repeat How it went again (expected "' + s + '" in src/shell.html)');
