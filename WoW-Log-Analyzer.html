@@ -11827,24 +11827,32 @@ html body #view .g8-dview { padding: 10px 12px 14px 16px; border-bottom: 1px sol
 html body #view .g8-dvs { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: #c9cfd6; }
 html body #view .g8-dvs b { color: #ece8df; font-weight: 600; }
 html body #view .g8-dvbs { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
-html body #view .g8-dvb { position: relative; height: 18px; }
-html body #view .g8-dvb > span { position: absolute; top: 0; height: 18px; display: flex; align-items: center; gap: 4px; padding: 0 4px; overflow: hidden; white-space: nowrap; font-size: 12px; color: #ece8df; background: rgba(230,180,80,.16); box-shadow: inset 2px 0 0 #e6b450; min-width: 18px; }
-html body #view .g8-dvb > span.g8-dvk-ext { background: rgba(106,168,255,.16); box-shadow: inset 2px 0 0 #6aa8ff; }
-html body #view .g8-dvb > span.g8-dvk-raid { background: rgba(76,195,138,.16); box-shadow: inset 2px 0 0 #4cc38a; }
-html body #view .g8-dvb > span em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
-html body #view .g8-dvb .icw, html body #view .g8-dvb img { width: 14px !important; height: 14px !important; flex: none; }
+html body #view .g8-dvb { position: relative; height: 19px; }
+html body #view .g8-dvb > i { position: absolute; bottom: 1px; height: 5px; background: #e6b450; opacity: .85; }
+html body #view .g8-dvb.g8-dvk-ext > i { background: #6aa8ff; }
+html body #view .g8-dvb.g8-dvk-raid > i { background: #4cc38a; }
+html body #view .g8-dvb > .g8-dvbn { position: absolute; top: 0; display: flex; align-items: center; gap: 4px; height: 13px; font-size: 12px; line-height: 13px; color: #c9cfd6; white-space: nowrap; pointer-events: none; }
+html body #view .g8-dvb > .g8-dvbn em { font-style: normal; }
+html body #view .g8-dvb .icw, html body #view .g8-dvb img { width: 12px !important; height: 12px !important; flex: none; }
 html body #view .g8-dvc svg { display: block; width: 100%; height: 150px; }
 html body #view .g8-dv3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin: 12px 0 6px; }
 html body #view .g8-dvh { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; padding-bottom: 4px; border-bottom: 1px solid #353b49; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #8a939c; }
 html body #view .g8-dvh small { font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #6c7381; }
-html body #view .g8-dvr { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(30px, 1fr) 54px 26px; gap: 8px; align-items: center; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
+html body #view .g8-dvr { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(32px, 1fr) 52px 24px; gap: 8px; align-items: center; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
 html body #view .g8-dvr > b { text-align: right; font-weight: 600; color: #ece8df; font-variant-numeric: tabular-nums; }
 html body #view .g8-dvr > b.g8-dvn { color: #868f99; font-weight: 400; }
-html body #view .g8-dvd { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
+html body #view .g8-dvd { display: grid; grid-template-columns: minmax(0, 1fr) auto 50px; align-items: center; gap: 10px; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
 html body #view .g8-dvw { flex: none; font-size: 12px; color: #868f99; }
 html body #view .g8-dvw.g8-dvw0 { color: #e6b450; font-weight: 600; }
 html body #view .g8-dvw.g8-dvw1 { color: #46a758; font-weight: 600; }
 html body #view .g8-dview .g8-dlx { margin-top: 8px; }
+html body #view .g8-dvla { font-size: 12px; color: #868f99; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html body #view .g8-dvtop { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+html body #view .g8-dvtop.g8-dv1 { grid-template-columns: minmax(0, 1fr); }
+html body #view .g8-dvp .cbl-mini { margin: 0; }
+html body #view .gb.gb-tb .gb-tl .g8-dvp .cbl-mrow.pf-row.cb.cb { grid-template-columns: 0 minmax(0, 1fr) 46px !important; gap: 8px !important; min-height: 22px !important; padding: 0 !important; } /* (the play by play takes Graphs' meter row: label, then the health bar) */
+html body #view .g8-dvm { margin: 2px 0 0; font-size: 12px; }
+@media (max-width: 1250px) { html body #view .g8-dvtop { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
 html body #view .g8-dvc { position: relative; }
 html body #view .g8-dvl { position: absolute; display: flex; align-items: center; gap: 5px; padding: 2px 6px; font-size: 12px; white-space: nowrap; color: #ece8df; background: rgba(14,16,20,.88); border: 1px solid rgba(229,83,75,.55); pointer-events: none; }
 html body #view .g8-dvl em { font-style: normal; }
@@ -39552,7 +39560,7 @@ const deathSp = (id, n) => { const sid = id || DEATH_DEF_ID.get(n) || sidOf(n) |
 // ultimately", "the bar should represent their health bar", "make it MUCH more simple with the graph progression"): their last 10 s,
 // hits of one spell within 2 s as one row and all healing (absorbs too) between two hits as one row; tiny hits under 1% of their health
 // left out; the last 7 rows. Each bar is their health after the event, the chunk just lost shaded red; then one plain result box)
-function deathTimeline(d, rr, vv) {
+function deathTimeline(d, rr, vv, rowsOnly) { /* (rowsOnly, Nov 9: Graphs' opened death shows just the rows) */
   const kf = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'k' : String(Math.round(n)));
   const hl = (rr && rr.php && rr.php.get(d.guid)) || [], hpAt = (t) => { let v = null; for (const [x, fr] of hl) { if (x > t + 0.01) break; v = fr; } return v; };
   const mxh = (rr && rr.pMax && rr.pMax.get(d.guid)) || 0;
@@ -39581,6 +39589,7 @@ function deathTimeline(d, rr, vv) {
   const whyL = [before != null && before >= 0.5 ? 'too big without a defensive' : before != null && before < 0.2 ? 'the hits before did the damage' : '', g && g.starved >= 5 ? 'little healing for ' + Math.round(g.starved) + ' s' : ''].filter(Boolean).join(' · ');
   const cz = vv && vv.cause ? '<div><b>Cause:</b> ' + spn(0, vv.cause.mech) + (vv.cause.t != null ? ' (' + T(vv.cause.t) + ')' : '') + ' → ' + spn(kill && kill.id, (kill && kill.spell) || 'Melee') + '</div>' : '';
   const res = vv && vv.dread && vv.dreadHow !== 'boss' ? '<div><b>Killed by:</b> ' + (vv.dreadHow === 'ours' && kill ? spn(kill.id, kill.spell || 'Melee') + ' (ours) while mind controlled by ' + spn(1285643, 'Dreadmarch') : spn(1285643, 'Dreadmarch') + ' (Mind Control) · off the edge') + '</div>' : !kill ? '' : '<div><b>Killed by:</b> ' + spn(kill.id, kill.spell || 'Melee') + ' · ' + kf(kill.amount) + ' in one hit' + (before != null ? ' at ' + Math.max(1, Math.round(100 * before)) + '%' : '') + '</div>' + cz + (whyL ? '<div><b>Why:</b> ' + whyL + '</div>' : '');
+  if (rowsOnly) return '<div class="cbl-mini">' + html + '</div>';
   const span = d.t - rows[0].t0;
   return '<div class="ddv-tl"><p class="ddv-tlh"><b>' + esc(String(d.player).split('-')[0]) + '</b> died at ' + T(d.t) + ' · over ' + secS(Math.max(0.1, span)) + ' s</p><div class="cbl-mini">' + html + '</div>' + (res ? '<div class="ddv-resbox">' + res + '</div>' : '') + '</div>';
 }
@@ -45915,8 +45924,9 @@ function graphsBoard(r, end, NP) {
             if (pb && big && mxh && big.amount >= 0.12 * mxh) { let tb = top(pb.y); if (tk != null && Math.abs(tb - tk) < 24) tb = tk > 40 ? tk - 26 : tk + 26; lb += lbl(big, 'g8-dvl-b', (pb.x > 330 ? 'right:' + (100 - pb.x / 10 + 0.9).toFixed(2) + '%' : 'left:' + (pb.x / 10 + 0.9).toFixed(2) + '%') + ';top:' + Math.max(2, tb).toFixed(0) + 'px'); }
             /* (what was up on them: defensives, externals, raid cooldowns and tank mitigation, as bands above the chart on the same time scale) */
             const BF = [...((p.buffs && p.buffs.values()) || [])].filter((b) => b && b.sp && b.sp.length && (['def', 'ext', 'raid'].includes(auraKind(b.name)) || G8_MITI.has(String(b.name).toLowerCase())));
-            const bands = []; for (const b of BF) for (const [a, c] of b.sp) { const c2 = c == null ? d.t : c; if (c2 >= w0 && a <= d.t + 0.05) bands.push({ n: b.name, a: Math.max(w0, a), c: Math.min(d.t, c2), k: auraKind(b.name) || 'def' }); }
-            bands.sort((u, v) => u.a - v.a); const bh = bands.slice(0, 6).map((b) => '<div class="g8-dvb"><span class="g8-dvk-' + esc(b.k) + '" style="left:' + (X(b.a) / 10).toFixed(2) + '%;width:' + Math.max(1.2, (X(b.c) - X(b.a)) / 10).toFixed(2) + '%" title="' + esc(b.n + ' · up from −' + (d.t - b.a).toFixed(1) + ' s' + (b.c < d.t - 0.05 ? ' to −' + (d.t - b.c).toFixed(1) + ' s' : ' to the end')) + '">' + spIc(b.n) + '<em>' + esc(b.n) + '</em></span></div>').join('');
+            const BR = []; for (const b of BF) { const sg = []; for (const [a, c] of b.sp) { const c2 = c == null ? d.t : c; if (c2 >= w0 && a <= d.t + 0.05) sg.push([Math.max(w0, a), Math.min(d.t, c2)]); } if (sg.length) BR.push({ n: b.name, sg, k: auraKind(b.name) || 'def', up: sg.reduce((v, q) => v + q[1] - q[0], 0) }); }
+            BR.sort((u, v) => u.sg[0][0] - v.sg[0][0]); const bh = BR.slice(0, 4).map((b) => { const lg = b.sg.reduce((m, q) => (q[1] - q[0] > m[1] - m[0] ? q : m), b.sg[0]), lx = X(lg[0]) / 10, rx = X(lg[1]) / 10;
+              return '<div class="g8-dvb g8-dvk-' + esc(b.k) + '" title="' + esc(b.n + ' · up ' + b.up.toFixed(1) + ' s of their last 10') + '">' + b.sg.map((q) => '<i style="left:' + (X(q[0]) / 10).toFixed(2) + '%;width:' + Math.max(0.6, (X(q[1]) - X(q[0])) / 10).toFixed(2) + '%"></i>').join('') + '<span class="g8-dvbn" style="' + (lx > 70 ? 'right:' + Math.max(0, 100 - rx).toFixed(2) + '%' : 'left:' + lx.toFixed(2) + '%') + '">' + spIc(b.n) + '<em>' + esc(b.n) + '</em></span></div>'; }).join('') + (BR.length > 4 ? '<p class="sub g8-dvm">and ' + (BR.length - 4) + ' more up on them</p>' : '');
             /* (the damage by ability and the healing by healer in those 10 seconds) */
             const grp = (A, kf) => { const m = new Map(); for (const e of A) { const k = kf(e), o = m.get(k) || { k, v: 0, n: 0, src: new Map() }; o.v += e.amount; o.n++; if (e.src) o.src.set(nmOf(e.src), (o.src.get(nmOf(e.src)) || 0) + e.amount); m.set(k, o); } return [...m.values()].sort((a, b) => b.v - a.v); };
             const dmg = grp(x.hits, abN), hlr = grp(x.heals, (e) => nmOf(e.src) || 'Unknown'), dmx = dmg.length ? dmg[0].v : 1, hmx = hlr.length ? hlr[0].v : 1;
@@ -45924,18 +45934,18 @@ function graphsBoard(r, end, NP) {
             const hRow = (o) => { const q = byNm.get(o.k), c2 = (q && q.color) || '#46a758'; return '<div class="g8-dvr"><span class="g8-dn2">' + (q ? avatar(q, true) : '') + '<span style="color:' + c2 + '">' + esc(o.k) + '</span></span><span class="g8-cbr"><i style="width:' + Math.max(1, 100 * o.v / hmx).toFixed(1) + '%;background:' + c2 + '"></i></span><b>' + C(o.v) + '</b><b class="g8-dvn">' + o.n + '</b></div>'; };
             /* (each of their defensives at that moment: up, ready, or used and how long before; Healthstone and potion the same) */
             const bOn = (n) => { const b = [...((p.buffs && p.buffs.values()) || [])].find((y) => y && String(y.name).toLowerCase() === String(n).toLowerCase()); return !!(b && b.sp && b.sp.some(([a, c]) => a <= d.t + 0.05 && (c == null || c >= d.t - 0.3))); };
-            const av = new Set((d.available || []).map((n) => String(n).toLowerCase())), DF = [];
+            const av = new Set((d.available || []).map((n) => String(n).toLowerCase())), DF = [], agoS = (lu) => { if (lu == null) return 'not used'; const a = Math.max(0, d.t - lu); return a < 60 ? '−' + (a < 10 ? a.toFixed(1) : Math.round(a)) + ' s' : '−' + Math.floor(a / 60) + ':' + String(Math.round(a % 60)).padStart(2, '0'); };
             for (const df of p.defs || []) { const u = (df.uses || []).filter((t) => t <= d.t + 0.05), lu = u.length ? u[u.length - 1] : null, up = bOn(df.name);
-              DF.push({ n: df.name, o: up ? 0 : av.has(df.name.toLowerCase()) ? 1 : 2, w: up ? 'Up' : av.has(df.name.toLowerCase()) ? 'Ready' + (lu != null ? ' · last used ' + Math.round(d.t - lu) + ' s before' : ' · not used yet') : lu != null ? 'Used ' + (d.t - lu < 10 ? (d.t - lu).toFixed(1) : Math.round(d.t - lu)) + ' s before' : 'Not ready' }); }
-            const cons = (nm0, label, A) => { const u = (A || []).map((z) => (z && z.t != null ? z.t : z)).filter((t) => t <= d.t + 0.05), lu = u.length ? u[u.length - 1] : null; if (av.has(nm0)) DF.push({ n: label, o: 1, w: 'Ready' }); else if (lu != null) DF.push({ n: label, o: 2, w: 'Used ' + Math.round(d.t - lu) + ' s before' }); };
+              DF.push({ n: df.name, o: up ? 0 : av.has(df.name.toLowerCase()) ? 1 : 2, w: up ? 'Up' : av.has(df.name.toLowerCase()) ? 'Ready' : 'Not ready', l: agoS(lu) }); }
+            const cons = (nm0, label, A) => { const u = (A || []).map((z) => (z && z.t != null ? z.t : z)).filter((t) => t <= d.t + 0.05), lu = u.length ? u[u.length - 1] : null; if (av.has(nm0)) DF.push({ n: label, o: 1, w: 'Ready', l: agoS(lu) }); else if (lu != null) DF.push({ n: label, o: 2, w: 'Not ready', l: agoS(lu) }); };
             cons('healthstone', 'Healthstone', p.cons && p.cons.healthstone); cons('a healing potion', 'Healing Potion', p.cons && p.cons.healpot); DF.sort((a, b) => a.o - b.o);
-            const dfH = DF.length ? DF.map((o) => '<div class="g8-dvd"><span class="g8-dn2">' + spIc(o.n) + '<span class="sp">' + esc(o.n) + '</span></span><span class="g8-dvw g8-dvw' + o.o + '">' + esc(o.w) + '</span></div>').join('') : '<p class="sub">No defensives read for this class.</p>';
+            const dfH = DF.length ? DF.map((o) => '<div class="g8-dvd"><span class="g8-dn2">' + spIc(o.n) + '<span class="sp">' + esc(o.n) + '</span></span><span class="g8-dvw g8-dvw' + o.o + '">' + esc(o.w) + '</span><span class="g8-dvla" title="Last pressed">' + esc(o.l || '') + '</span></div>').join('') : '<p class="sub">No defensives read for this class.</p>';
             const kb = x.kill ? abN(x.kill) : d.ability || 'Melee', sen = esc(nmOf(p.name || d.player)) + ' died at ' + T(d.t) + ' to <b>' + esc(kb) + '</b>' + (x.kill ? ' (' + C(x.kill.amount) + (x.kill.src ? ' from ' + esc(nmOf(x.kill.src)) : '') + ')' : '') + '. ' + (d.healthy && d.window < 0.35 ? 'One hit took them from ' + Math.round(d.startHp || 100) + '% to dead.' : d.window > 0 ? 'They went from ' + Math.round(d.startHp || 0) + '% to dead in ' + d.window.toFixed(1) + ' s.' : '') + ' In their last 10 seconds they took <b class="g8-dvt">' + C(x.taken) + '</b>' + (mxh ? ' (' + Math.round(100 * x.taken / mxh) + '% of their health)' : '') + ' and got <b class="g8-dvh2">' + C(x.healed) + '</b> healing' + (x.shields ? ' and shields' : '') + (mxh ? ' (' + Math.round(100 * x.healed / mxh) + '%)' : '') + '.';
-            let ev = ''; try { ev = g8DeathLines(r, d); } catch (e2) { ev = ''; }
-            return '<p class="g8-dvs">' + sen + '</p>' + (bh ? '<div class="g8-dvbs">' + bh + '</div>' : '') + '<div class="g8-dvc"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' + esc(nmOf(p.name || d.player)) + ' health, last 10 seconds">' + g + '</svg>' + lb + '</div>' +
-              '<div class="g8-dv3"><div><h4 class="g8-dvh">Damage taken<small>by ability · hits</small></h4>' + (dmg.length ? dmg.slice(0, 6).map(dRow).join('') + (dmg.length > 6 ? '<p class="sub">and ' + (dmg.length - 6) + ' more</p>' : '') : '<p class="sub">None</p>') + '</div>' +
-              '<div><h4 class="g8-dvh">Healing and shields<small>by healer · heals</small></h4>' + (hlr.length ? hlr.slice(0, 6).map(hRow).join('') + (hlr.length > 6 ? '<p class="sub">and ' + (hlr.length - 6) + ' more</p>' : '') : '<p class="sub">None</p>') + '</div>' +
-              '<div><h4 class="g8-dvh">Their defensives<small>at the moment they died</small></h4>' + dfH + '</div></div>' + ev; };
+            let ev = ''; try { ev = g8DeathLines(r, d); } catch (e2) { ev = ''; } let pbp = ''; try { pbp = deathTimeline(d, r, null, true); } catch (e3) { pbp = ''; }
+            return '<p class="g8-dvs">' + sen + '</p><div class="g8-dvtop' + (pbp ? '' : ' g8-dv1') + '"><div>' + (bh ? '<div class="g8-dvbs">' + bh + '</div>' : '') + '<div class="g8-dvc"><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' + esc(nmOf(p.name || d.player)) + ' health, last 10 seconds">' + g + '</svg>' + lb + '</div></div>' + (pbp ? '<div class="g8-dvp"><h4 class="g8-dvh">Play by play<small>bar: their health after</small></h4>' + pbp + '</div>' : '') + '</div>' +
+              '<div class="g8-dv3"><div><h4 class="g8-dvh">Damage taken<small>by ability · hits</small></h4>' + (dmg.length ? dmg.slice(0, 4).map(dRow).join('') + (dmg.length > 4 ? '<p class="sub g8-dvm">and ' + (dmg.length - 4) + ' more</p>' : '') : '<p class="sub">None</p>') + '</div>' +
+              '<div><h4 class="g8-dvh">Healing and shields<small>by healer · heals</small></h4>' + (hlr.length ? hlr.slice(0, 4).map(hRow).join('') + (hlr.length > 4 ? '<p class="sub g8-dvm">and ' + (hlr.length - 4) + ' more</p>' : '') : '<p class="sub">None</p>') + '</div>' +
+              '<div><h4 class="g8-dvh">Their defensives<small>when they died · last pressed</small></h4>' + dfH + '</div></div>' + ev; };
           const row = (d) => { const pp = r.players.get(d.guid) || { name: d.player }, x = info(d), k = key(d), op = S.g8DOpen === k, kb = x.kill ? abN(x.kill) : d.ability || 'Melee', ok = AL && gbDeathOk(r, d);
             return '<details class="gb-bfd g8-dd2 g8-dth"' + (op ? ' open' : '') + '><summary class="g8-dr2 g8-dt3" data-g8dk="' + esc(k) + '" data-g8dp="' + esc(pp.name || d.player || '') + '"><span class="g8-dk">' + T(d.t) + '</span><span class="g8-dn2">' + (pp.guid ? avatar(pp, true) : '') + '<span style="color:' + (pp.color || 'var(--text)') + '">' + esc(nmOf(pp.name || d.player)) + '</span>' + (ok ? '<em class="g8-own">own mistake</em>' : '') + '</span>' +
               '<span class="g8-dn2">' + spIc(kb) + '<span class="sp">' + esc(kb) + '</span></span><b>' + (x.kill ? C(x.kill.amount) : '') + '</b><b title="' + esc(fastT(d)) + '">' + fast(d) + '</b><span class="g8-l3">' + x.l3.map((o) => '<span title="' + esc(o.n + (o.k > 1 ? ' ×' + o.k : '')) + '">' + spIc(o.n) + (o.k > 1 ? '<small>' + o.k + '</small>' : '') + '</span>').join('') + '</span><b class="g8-dvt" title="' + esc(shrT(x.taken, d, 'taken')) + '">' + shr(x.taken, d) + '</b><b class="g8-dvh2" title="' + esc(shrT(x.healed, d, 'healing and shields')) + '">' + shr(x.healed, d) + '</b></summary>' + (op ? '<div class="g8-dview">' + view(d, x, pp) + '</div>' : '') + '</details>'; };

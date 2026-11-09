@@ -11827,24 +11827,32 @@ html body #view .g8-dview { padding: 10px 12px 14px 16px; border-bottom: 1px sol
 html body #view .g8-dvs { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: #c9cfd6; }
 html body #view .g8-dvs b { color: #ece8df; font-weight: 600; }
 html body #view .g8-dvbs { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
-html body #view .g8-dvb { position: relative; height: 18px; }
-html body #view .g8-dvb > span { position: absolute; top: 0; height: 18px; display: flex; align-items: center; gap: 4px; padding: 0 4px; overflow: hidden; white-space: nowrap; font-size: 12px; color: #ece8df; background: rgba(230,180,80,.16); box-shadow: inset 2px 0 0 #e6b450; min-width: 18px; }
-html body #view .g8-dvb > span.g8-dvk-ext { background: rgba(106,168,255,.16); box-shadow: inset 2px 0 0 #6aa8ff; }
-html body #view .g8-dvb > span.g8-dvk-raid { background: rgba(76,195,138,.16); box-shadow: inset 2px 0 0 #4cc38a; }
-html body #view .g8-dvb > span em { font-style: normal; overflow: hidden; text-overflow: ellipsis; }
-html body #view .g8-dvb .icw, html body #view .g8-dvb img { width: 14px !important; height: 14px !important; flex: none; }
+html body #view .g8-dvb { position: relative; height: 19px; }
+html body #view .g8-dvb > i { position: absolute; bottom: 1px; height: 5px; background: #e6b450; opacity: .85; }
+html body #view .g8-dvb.g8-dvk-ext > i { background: #6aa8ff; }
+html body #view .g8-dvb.g8-dvk-raid > i { background: #4cc38a; }
+html body #view .g8-dvb > .g8-dvbn { position: absolute; top: 0; display: flex; align-items: center; gap: 4px; height: 13px; font-size: 12px; line-height: 13px; color: #c9cfd6; white-space: nowrap; pointer-events: none; }
+html body #view .g8-dvb > .g8-dvbn em { font-style: normal; }
+html body #view .g8-dvb .icw, html body #view .g8-dvb img { width: 12px !important; height: 12px !important; flex: none; }
 html body #view .g8-dvc svg { display: block; width: 100%; height: 150px; }
 html body #view .g8-dv3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin: 12px 0 6px; }
 html body #view .g8-dvh { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; padding-bottom: 4px; border-bottom: 1px solid #353b49; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #8a939c; }
 html body #view .g8-dvh small { font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #6c7381; }
-html body #view .g8-dvr { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(30px, 1fr) 54px 26px; gap: 8px; align-items: center; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
+html body #view .g8-dvr { display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(32px, 1fr) 52px 24px; gap: 8px; align-items: center; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
 html body #view .g8-dvr > b { text-align: right; font-weight: 600; color: #ece8df; font-variant-numeric: tabular-nums; }
 html body #view .g8-dvr > b.g8-dvn { color: #868f99; font-weight: 400; }
-html body #view .g8-dvd { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
+html body #view .g8-dvd { display: grid; grid-template-columns: minmax(0, 1fr) auto 50px; align-items: center; gap: 10px; min-height: 22px; font-size: 12.5px; border-bottom: 1px solid rgba(255,255,255,.04); }
 html body #view .g8-dvw { flex: none; font-size: 12px; color: #868f99; }
 html body #view .g8-dvw.g8-dvw0 { color: #e6b450; font-weight: 600; }
 html body #view .g8-dvw.g8-dvw1 { color: #46a758; font-weight: 600; }
 html body #view .g8-dview .g8-dlx { margin-top: 8px; }
+html body #view .g8-dvla { font-size: 12px; color: #868f99; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+html body #view .g8-dvtop { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+html body #view .g8-dvtop.g8-dv1 { grid-template-columns: minmax(0, 1fr); }
+html body #view .g8-dvp .cbl-mini { margin: 0; }
+html body #view .gb.gb-tb .gb-tl .g8-dvp .cbl-mrow.pf-row.cb.cb { grid-template-columns: 0 minmax(0, 1fr) 46px !important; gap: 8px !important; min-height: 22px !important; padding: 0 !important; } /* (the play by play takes Graphs' meter row: label, then the health bar) */
+html body #view .g8-dvm { margin: 2px 0 0; font-size: 12px; }
+@media (max-width: 1250px) { html body #view .g8-dvtop { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
 html body #view .g8-dvc { position: relative; }
 html body #view .g8-dvl { position: absolute; display: flex; align-items: center; gap: 5px; padding: 2px 6px; font-size: 12px; white-space: nowrap; color: #ece8df; background: rgba(14,16,20,.88); border: 1px solid rgba(229,83,75,.55); pointer-events: none; }
 html body #view .g8-dvl em { font-style: normal; }
