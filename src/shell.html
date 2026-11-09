@@ -17526,5 +17526,32 @@ html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-bym .btl-lns .btl-pnl.alt { background: rgba(255, 255, 255, .055) !important; }
 }
 </style>
+<style>/* (Nov 9: the empty chart's start, smaller buttons and icons) */
+@layer defaultTheme {
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-empty { position: absolute !important; left: 10px !important; z-index: 6 !important; display: flex !important; align-items: center !important; gap: 8px !important; padding: 6px 8px 6px 12px !important; background: rgba(20, 22, 27, .94) !important; border: 1px solid var(--line, #2c3236) !important; border-radius: 0 !important; white-space: nowrap !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-empty b { font: 600 12.5px var(--body) !important; color: var(--text, #e8eaee) !important; margin-right: 4px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-empty .btn { height: 26px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; border-radius: 0 !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl.ndz-dtl > .ndz-cth.pg-tb > :is(.pg-tbdrag, .pg-tbauto) { height: 26px !important; min-height: 0 !important; padding: 0 10px !important; font-size: 12px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-m :is(.icw, img, .ico) { width: 20px !important; height: 20px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-m { margin-top: 2px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-c { height: 20px !important; min-width: 20px !important; margin-top: 5px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-c > .icw, html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-c > .icw :is(img, svg, .ico) { width: 18px !important; height: 18px !important; }
+}
+</style>
+<style>/* (Nov 9: the ✨ by the names, the switch clear of the first row) */
+@layer defaultTheme {
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh:has(.btl-byvs) { transform: translateY(-3px) !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh .btl-byvs { height: 18px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh .btl-byvs button { height: 18px !important; line-height: 16px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh .btl-spark { flex: none !important; width: 20px !important; height: 18px !important; margin: 0 0 0 6px !important; padding: 0 !important; display: grid !important; place-items: center !important; font-size: 11px !important; line-height: 1 !important; border: 1px solid var(--gold, #d4b77d) !important; border-radius: 0 !important; background: color-mix(in srgb, var(--gold, #d4b77d) 22%, transparent) !important; cursor: pointer !important; pointer-events: auto !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh .btl-spark:hover { background: var(--gold, #d4b77d) !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh:has(.btl-byvs) { white-space: nowrap !important; gap: 6px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-prh .btl-byvs button { padding: 0 5px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-empty span { font: 500 12px var(--body) !important; color: var(--muted, #aeb6bf) !important; }
+}
+/* (Nov 9, Flex: the side menu "could get tightened up horizontally") */
+:root body.snv-on.snv-on:not(.snv-fold) { --snv-w: 200px; }
+:root body.snv-on.snv-on #sideNav { padding-left: 10px !important; padding-right: 10px !important; }
+</style>
 </body>
 </html>
