@@ -17904,5 +17904,44 @@ html body #mpPrep .mpt .mpt-sec { margin: 0 !important; padding: 0 !important; b
 html body #mpPrep .mpt .mpt-sh { margin: 0 0 14px !important; }
 }
 </style>
+<style>/* (Nov 9: the Mythic+ season page v2) */
+@layer defaultTheme {
+html body .mpf-s2 { margin: 0 0 22px !important; }
+html body .mpf-s2top { position: relative !important; display: grid !important; grid-template-columns: minmax(260px, .85fr) minmax(0, 1.6fr) !important; gap: 26px !important; padding: 22px 24px 18px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; overflow: hidden !important; background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--cc) 16%, transparent), transparent 55%), linear-gradient(180deg, rgba(255,255,255,.025), transparent 70%), var(--panel, #171a22) !important; }
+html body .mpf-s2top::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--cc); }
+html body .mpf-s2l > small { display: block; font: 600 11.5px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+html body .mpf-s2r { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 2px; }
+html body .mpf-s2r b { font: 800 56px/1 'Barlow Condensed', sans-serif; color: #f0cf7a; text-shadow: 0 0 24px rgba(230,180,80,.25); }
+html body .mpf-s2r span { font: 500 13px var(--body); color: var(--muted); cursor: help; }
+html body .mpf-s2d { margin: 0 0 14px !important; font: 500 13px var(--body) !important; color: var(--muted) !important; } html body .mpf-s2d b { color: #7ee08f; }
+html body .mpf-s2c { display: flex; flex-wrap: wrap; gap: 6px; } html body .mpf-s2c span { padding: 5px 9px; border: 1px solid var(--line); background: rgba(0,0,0,.18); font: 500 12px var(--body); color: var(--muted); } html body .mpf-s2c b { margin-right: 3px; font: 700 14px 'Barlow Condensed', sans-serif; color: var(--text); }
+html body .mpf-s2hs { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px 14px; margin: 14px 0 0; }
+html body .mpf-s2h { padding-left: 10px; box-shadow: inset 2px 0 0 rgba(255,255,255,.1); min-width: 0; } html body .mpf-s2h small { display: block; font: 600 10.5px var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--faint); } html body .mpf-s2h b { display: block; margin: 2px 0 1px; font: 700 14.5px 'Barlow Condensed', sans-serif; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } html body .mpf-s2h span { font: 500 12px var(--body); color: var(--muted); }
+html body .mpf-s2sh { margin: 0 0 8px !important; font: 800 15px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; } html body .mpf-s2sh span { margin-left: 8px; font: 500 12.5px var(--body); color: var(--muted); }
+html body .mpf-s2sh2 { margin: 22px 0 10px !important; font-size: 19px !important; }
+html body .mpf-s2cv { display: block; width: 100%; height: 170px; } html body .mpf-s2cv text { font: 500 10.5px var(--body); fill: var(--faint, #6c7381); } html body .mpf-s2cv text.lb { fill: #f0cf7a; font-weight: 700; } html body .mpf-s2cv line.g { stroke: rgba(255,255,255,.06); } html body .mpf-s2cv line.m { stroke: rgba(255,255,255,.08); stroke-dasharray: 2 4; }
+html body .mpf-s2cv .ln { fill: none; stroke: #e6b450; stroke-width: 2; vector-effect: non-scaling-stroke; } html body .mpf-s2cv circle { fill: #171a22; stroke: #f0cf7a; stroke-width: 2; vector-effect: non-scaling-stroke; cursor: help; }
+html body .mpf-s2no { margin: 40px 0 0; font: 500 13px var(--body); color: var(--muted); }
+html body .mpf-s2p { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin: 0 0 10px; padding: 16px 18px; border: 1px solid rgba(242,196,107,.55); border-radius: 4px; overflow: hidden; background: linear-gradient(90deg, rgba(14,16,21,.96) 0%, rgba(14,16,21,.82) 45%, rgba(14,16,21,.55) 100%), var(--art) center / cover no-repeat, #171a22; box-shadow: 0 8px 24px rgba(242,196,107,.07); }
+html body .mpf-s2p.mpf-s2p0 { border-color: var(--line); background: var(--panel, #171a22); box-shadow: none; }
+html body .mpf-s2p::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #f2c46b; }
+html body .mpf-s2pl { min-width: 0; flex: 1 1 320px; } html body .mpf-s2pl small { display: block; font: 700 11px var(--body); letter-spacing: .08em; text-transform: uppercase; color: #f2c46b; } html body .mpf-s2pl > b { display: block; margin: 2px 0 4px; font: 800 26px/1.05 'Barlow Condensed', sans-serif; color: #fff; } html body .mpf-s2pl span { font: 500 13.5px var(--body); color: #c9ced8; } html body .mpf-s2pl span b { color: #fff; } html body .mpf-s2pl span b.g { color: #7ee08f; }
+html body .mpf-s2pr { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; } html body .mpf-s2pr small { font: 500 11.5px var(--body); color: #9aa1ab; }
+html body .mpf-s2pb { all: unset; padding: 8px 14px; background: #e6b450; color: #1a1406; font: 700 13px var(--body); cursor: pointer; } html body .mpf-s2pb:hover { background: #f0cf7a; }
+html body .mpf-s2w { display: grid !important; grid-template-columns: repeat(4, minmax(0,1fr)) !important; gap: 10px !important; }
+html body .mpf-s2dc { position: relative; min-height: 150px; padding: 12px 13px 11px; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; display: flex; flex-direction: column; background: linear-gradient(180deg, rgba(14,16,21,.55) 0%, rgba(14,16,21,.88) 55%, #111419 100%), var(--art) center / cover no-repeat, #171a22; transition: border-color .15s, transform .15s; }
+html body .mpf-s2dc:hover { border-color: rgba(230,180,80,.45); transform: translateY(-1px); } html body .mpf-s2dc.low { border-color: rgba(242,196,107,.55); }
+html body .mpf-s2dh { display: flex; align-items: center; justify-content: space-between; gap: 8px; } html body .mpf-s2dh b { font: 700 14px 'Barlow Condensed', sans-serif; color: #fff; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body .mpf-s2db { all: unset; flex: none; padding: 1px 8px; border: 1px solid rgba(255,255,255,.22); background: rgba(0,0,0,.35); font: 600 11px var(--body); color: #e8e3d8; cursor: pointer; } html body .mpf-s2db:hover { border-color: #e6b450; color: #fff; }
+html body .mpf-s2rb { position: absolute; top: 34px; left: 13px; padding: 1px 7px; background: #f2c46b; color: #1a1406; font: 700 11px var(--body); } html body .mpf-s2rb.b { background: rgba(126,224,143,.9); }
+html body .mpf-s2lv { margin: auto 0 6px; display: flex; align-items: baseline; gap: 8px; font: 800 38px/1 'Barlow Condensed', sans-serif; color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.6); }
+html body .mpf-s2lv i { font: 700 12px var(--body); font-style: normal; padding: 1px 6px; border: 1px solid currentColor; } html body .mpf-s2lv i.u1 { color: #f2c46b; } html body .mpf-s2lv i.u2, html body .mpf-s2lv i.u3 { color: #7ee08f; } html body .mpf-s2lv i.u0 { color: var(--muted); }
+html body .mpf-s2tb { position: relative; height: 6px; background: rgba(255,255,255,.1); margin: 0 0 6px; cursor: help; } html body .mpf-s2tb i { display: block; height: 100%; } html body .mpf-s2tb i.u1 { background: #e0b04f; } html body .mpf-s2tb i.u2, html body .mpf-s2tb i.u3 { background: #59c172; }
+html body .mpf-s2tb s { position: absolute; top: -3px; bottom: -3px; width: 1px; background: rgba(255,255,255,.45); }
+html body .mpf-s2df { display: flex; justify-content: space-between; gap: 6px; font: 500 11.5px var(--body); color: #d9dde3; } html body .mpf-s2df b { color: #fff; } html body .mpf-s2df span:last-child { color: #8f96a0; white-space: nowrap; }
+@media (max-width: 1100px) { html body .mpf-s2w { grid-template-columns: repeat(2, minmax(0,1fr)) !important; } html body .mpf-s2top { grid-template-columns: minmax(0,1fr) !important; } }
+@media (max-width: 560px) { html body .mpf-s2w { grid-template-columns: minmax(0,1fr) !important; } html body .mpf-s2r b { font-size: 44px; } html body .mpf-s2top { padding: 16px !important; } }
+}
+</style>
 </body>
 </html>
