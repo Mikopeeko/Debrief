@@ -17732,5 +17732,65 @@ html body .mpt .mpt-rgo:hover { text-decoration: underline !important; text-unde
 html body #mpcRot .mpv-cds { margin: 14px 0 16px !important; }
 }
 </style>
+<style>/* (Nov 9: the Mythic+ Run tab redesign) */
+@layer defaultTheme {
+/* 1. the scoreboard */
+html:not(.mpcard) body #view#view .mpt-sbd { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important; margin: 4px 0 6px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: rgba(255,255,255,.015) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view .mpt-sbc { min-width: 0 !important; padding: 12px 14px !important; box-shadow: -1px 0 0 var(--line) !important; }
+html:not(.mpcard) body #view#view .mpt-sbc small { display: block !important; font: 600 11px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view .mpt-sbc > b { display: block !important; margin: 4px 0 2px !important; font: 800 24px/1.05 'Barlow Condensed', sans-serif !important; color: var(--text) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view .mpt-sbc > b.g { color: #7ee08f !important; } html:not(.mpcard) body #view#view .mpt-sbc > b.a { color: #f2c46b !important; } html:not(.mpcard) body #view#view .mpt-sbc > b.r { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view .mpt-sbc > span { display: block !important; font: 500 12px/1.3 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view .mpt-sbl { margin: 0 0 4px !important; font: 500 12.5px var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view .mpt-sbl .mpt-vd2 { color: inherit !important; }
+/* 2. the time story first and wide, Your part beside it */
+@media (min-width: 701px) {
+html:not(.mpcard) body #view#view .mpt .mpt-band:not(.mpt-band1):not(:has(#mptPart:empty)) { grid-template-columns: minmax(0,1.45fr) minmax(0,1fr) !important; margin-top: 14px !important; }
+html:not(.mpcard) body #view#view .mpt-band:not(.mpt-band1):not(:has(#mptPart:empty)) > .mpt-br { order: -1 !important; padding: 0 22px 0 0 !important; border-right: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view .mpt-band:not(.mpt-band1):not(:has(#mptPart:empty)) > .mpt-bl { padding: 0 0 0 22px !important; border-right: 0 !important; }
+}
+html:not(.mpcard) body #view#view #mptBand .mpt-br > p.mpt-chk, html:not(.mpcard) body #view#view #mptBand .mpt-fxsay { display: none !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxh h2 { font-size: 20px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-sbar { height: 10px !important; border-radius: 2px !important; margin-top: 8px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-sk { display: flex !important; flex-wrap: wrap !important; gap: 4px 14px !important; font-size: 12px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxr { display: grid !important; grid-template-columns: 24px minmax(0,1fr) auto !important; column-gap: 12px !important; align-items: start !important; padding: 11px 0 !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxr > div { grid-column: 2 !important; grid-row: 1 !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxr > .mpt-fxs { grid-column: 3 !important; grid-row: 1 !important; width: auto !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxs b { font-size: 20px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxgo { font-size: 0 !important; margin-left: 6px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-fxgo::after { content: 'map'; font: 600 11.5px var(--body); color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+/* (Your part: slim tiles, full labels, no icons) */
+html:not(.mpcard) body #view#view #mptPart .mpt-ptiles { gap: 5px !important; }
+html:not(.mpcard) body #view#view #mptPart .mpt-ptiles > .mpt-prow { padding: 6px 9px !important; row-gap: 1px !important; }
+html:not(.mpcard) body #view#view #mptPart .mpt-ptiles > .mpt-prow .mpt-pic { display: none !important; }
+html:not(.mpcard) body #view#view #mptPart .mpt-ptiles > .mpt-prow .mpt-ypl { grid-column: 1 / -1 !important; white-space: normal !important; overflow: visible !important; font-size: 11px !important; }
+html:not(.mpcard) body #view#view #mptPart .mpt-ptiles > .mpt-prow .mpt-ypv { font-size: 13.5px !important; }
+/* 4. every chapter opens with a title and one plain line */
+html:not(.mpcard) body #view#view .mpt-chap > p.mpt-chk { font: 800 19px 'Barlow Condensed', sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; margin: 0 0 12px !important; }
+html:not(.mpcard) body #view#view .mpt-chap > p.mpt-chk > span { display: block !important; margin: 2px 0 0 !important; font: 500 13px var(--body) !important; color: var(--muted) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-pth { font: 800 16px 'Barlow Condensed', sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; margin: 0 0 8px !important; }
+html:not(.mpcard) body #view#view #mptBand .mpt-pth > span { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+/* 3. the map: its own line under the title, the strip on top as the pull picker, no tile grid, the map as tall as the pull card */
+html:not(.mpcard) body #view#view #mptCM > p.mpt-chk > span, html:not(.mpcard) body #view#view #mptCM p.mpt-rpl.mpt-meta, html:not(.mpcard) body #view#view #mptCM ol.mpt-mfl { display: none !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mph { margin: -10px 0 10px !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mph h2 { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt { display: flex !important; flex-direction: column !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt > .mpt-mbar { order: 0 !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt > .mpt-mstrip { order: 1 !important; margin: 12px 0 0 !important; padding: 10px 12px 4px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: rgba(255,255,255,.015) !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt > .mpt-mstrip::after { content: 'Click a pull on the strip to see it on the map.'; display: block; margin: 2px 0 4px; font: 500 12px var(--body); color: var(--faint); }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt > .mpt-mdtv { order: 2 !important; margin-top: 12px !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdt > .mpt-ex { order: 3 !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-blk { cursor: pointer !important; }
+@media (min-width: 701px) {
+html:not(.mpcard) body #view#view #mptCM .mpt-mgrid { align-items: stretch !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mleft { display: flex !important; flex-direction: column !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mwrap { flex: 1 1 auto !important; height: auto !important; }
+html:not(.mpcard) body #view#view #mptCM .mpt-mdtm { aspect-ratio: auto !important; height: 100% !important; min-height: 300px !important; }
+}
+/* 5. Your group: three short callouts */
+html:not(.mpcard) body #view#view #mptC4 .mpt-hl { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view #mptC4 .mpt-co { padding: 5px 10px !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; font: 500 13px var(--body) !important; color: var(--mpt-soft) !important; }
+}
+</style>
 </body>
 </html>
