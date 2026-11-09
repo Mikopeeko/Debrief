@@ -26,6 +26,8 @@ function mpLocalKeys(runs) {
 }
 const mpMM = (s) => { const neg = s < 0; s = Math.round(Math.abs(s)); return (neg ? '−' : '') + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const mpCC = (cls) => ((E.CLASSES || {})[cls] || [])[1] || 'var(--text)';
+/* (Nov 9: tips for a key, not the raid's) */
+const MP_LOAD_TIPS = ['Click a pull on the map to see its mistakes, kicks and DPS.', 'Rotation checks each player for the whole key, or one pull at a time.', 'Fix these first compares your key with a typical fast run of the same dungeon.', 'Your group shows everyone\'s kicks, stops, dispels and deaths side by side.', 'Add a character on the Mythic+ page to find all their keys this season.'];
 const mpWho = (R, n) => { const p = (R.people || []).find((x) => x.name === n); return '<b class="mpt-nm" style="color:' + (p ? mpCC(p.cls) : 'var(--text)') + '">' + esc(n) + '</b>'; };
 const MP_ROLE = { tank: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M8 1.5 13.5 3.6v4.1c0 3.2-2.4 5.6-5.5 6.8C4.9 13.3 2.5 10.9 2.5 7.7V3.6Z"/></svg>', healer: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M6.3 2h3.4v4.3H14v3.4H9.7V14H6.3V9.7H2V6.3h4.3Z"/></svg>', dps: '<svg viewBox="0 0 16 16" class="mpt-ro" aria-hidden="true"><path d="M12.8 1.6 14.4 3.2 6.9 10.7l1.1 1.1-1.2 1.2-1.6-1.6-2.4 2.4-1.3-1.3 2.4-2.4-1.6-1.6 1.2-1.2 1.1 1.1Z"/></svg>' };
 const MP_ORDER = ['tank', 'healer', 'dps'], mpByRole = (a, b) => MP_ORDER.indexOf(a.role) - MP_ORDER.indexOf(b.role);
@@ -252,7 +254,7 @@ function mpOpen(it) {
   try { navNote(); } catch (e) { /* (no address) */ } window.scrollTo(0, 0);
   const k = mpK(it), body = () => (MP.item === it && S.page === 'mplus' ? $('#mptBody') : null);
   if (MP.R[k]) { mpDraw(); return; }
-  const b0 = body(); if (b0) b0.innerHTML = '<div class="mpt-load">' + loadCard('Opening your key', 'Downloading the key…', 0, 'mptLd') + '</div>';
+  const b0 = body(); if (b0) b0.innerHTML = '<div class="mpt-load">' + loadCard('Opening your key', 'Downloading the key…', 0, 'mptLd', MP_LOAD_TIPS) + '</div>';
   delete MP.err[k];
   mpRead(it, (line, frac) => { const b = body(); if (b && typeof loadSet === 'function') loadSet(b, line, frac); }).then(() => { if (body()) mpDraw(); })
     .catch((err) => { MP.err[k] = err.message; const b = body(); if (b) b.innerHTML = '<div class="mpt-err"><b>Couldn\'t read this key.</b> ' + esc(err.message) + '</div>'; });
@@ -398,16 +400,17 @@ function mpNewBest(it, R, timed) { const me = mpMine(R); if (!me || !it.wallMs |
 function mpLastTime(it, R) { const me = mpMine(R); if (!me || !it.wallMs) return ''; const g = mpkChars().find((c) => mpLc(c.name) === mpLc(me)); if (!g) return '';
   const d = mpLc(mpDung(it.boss)), w = it.wcl || {}, prev = (((mpkGet().chars[g.id] || {}).keys) || []).filter((k) => mpLc(k.boss) === d && k.wallMs < it.wallMs - 60e3 && !(k.code === w.code && k.fight === w.fight)).sort((a, b) => b.wallMs - a.wallMs)[0];
   if (!prev) return ''; const now = mpResWords({ ...it, boss: mpDung(it.boss) });
-  return '<p class="mpt-vd2">Last time on ' + esc(mpDung(it.boss)) + ' (+' + prev.level + ', ' + new Date(prev.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '): ' + mpResWords(prev) + '. This one: +' + it.level + (/^timed with /.test(now) ? now.slice(5) : ', ' + now) + '.</p>'; }
+  return ' <span class="mpt-vd2">Last time here (+' + prev.level + ', ' + new Date(prev.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '): ' + mpResWords(prev) + '.</span>'; } /* (Nov 9: on the verdict line, said once) */
 function mpfByDungeon(rows, id, people) { const showWho = !!(people && people.length > 1), cc = new Map((people || []).map((p) => [p.name, p.cls ? mpCC(p.cls) : ''])), ccOf = (n) => cc.get(n);
-  return MP_DUNGEONS.map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)).sort((a, b) => mpfRank(a.it) - mpfRank(b.it) || b.it.level - a.it.level || b.it.wallMs - a.it.wallMs), sid = id + '-' + d.toLowerCase().replace(/[^a-z]+/g, ''), more = MPK.more.has(sid);
+  const none = MP_DUNGEONS.filter((d) => !rows.some((r) => mpLc(r.it.boss) === mpLc(d))); /* (Nov 9: dungeons with no keys, one line at the bottom) */
+  return MP_DUNGEONS.filter((d) => none.length === MP_DUNGEONS.length || !none.includes(d)).map((d) => { const L = rows.filter((r) => mpLc(r.it.boss) === mpLc(d)).sort((a, b) => mpfRank(a.it) - mpfRank(b.it) || b.it.level - a.it.level || b.it.wallMs - a.it.wallMs), sid = id + '-' + d.toLowerCase().replace(/[^a-z]+/g, ''), more = MPK.more.has(sid);
     const b = (L.find((r) => r.it.timed && r.it.keyMs) || L[0] || {}).it, br = b && mpfRes(b);
     if (!L.length) return '<div class="mpf-dgh mpf-dg0"><div class="mpf-dsum"><b>' + esc(d) + '</b><span class="mpt-m">No keys yet</span></div></div>';
     const pb = (L.filter((r) => r.it.timed && r.it.keyMs).sort((a, c) => mpfBetter(a.it, c.it))[0] || {}).it;
     const trend = '<span class="mpf-trend" aria-label="Last keys, oldest first">' + L.filter((r) => r.it.wallMs).sort((a, c) => a.it.wallMs - c.it.wallMs).slice(-5).map((r) => { const k = r.it, sec = k.keyMs ? k.keyMs / 1000 : 0, tm = (window.DBF_MPTIMER || {})[mpLc(k.boss)];
       return '<i class="' + (sec && k.timed ? ((k.up || mpUp(k)) >= 2 ? 'g' : 'a') : 'm') + '"' + mpT1(new Date(k.wallMs).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · +' + k.level + ' · ' + (sec ? mpMM(sec) + (tm ? ' of ' + tm + ':00' : '') : 'left early') + (k === pb ? ' · your best' : '')) + '>' + k.level + (k === pb ? '<b class="mpf-pb" aria-label="your best">★</b>' : '') + '</i>'; }).join('') + '</span>';
     return '<details class="mpf-dgh" id="' + sid + '" open><summary class="mpf-dsum"><b>' + esc(d) + '</b>' + trend + '<span><b class="' + br.c + '">+' + b.level + ' · ' + br.t + '</b> <span class="mpt-m">' + plural(L.length, 'key') + '</span></span></summary>' +
-      '<div class="mpf-kl">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf, showWho)).join('') + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '') + '</div></details>'; }).join(''); }
+      '<div class="mpf-kl">' + L.slice(0, more ? L.length : 3).map((r) => mpfRow2(r, ccOf, showWho)).join('') + (L.length > 3 ? '<button type="button" class="linkbtn mpf-showm" data-mpfm="' + sid + '">' + (more ? 'Show fewer' : 'Show ' + (L.length - 3) + ' more') + '</button>' : '') + '</div></details>'; }).join('') + (none.length && none.length < MP_DUNGEONS.length ? '<p class="mpf-none">No keys yet: ' + none.map(esc).join(', ') + '</p>' : ''); }
 // (a character's own keys, one row each)
 function mpkOwn(c, J) { const m = new Map(); for (const k of ((J.chars[c.id] || {}).keys || [])) { const it = { ...k, wcl: { code: k.code, fight: k.fight } }, id = mpkId(it), o = m.get(id); if (o) o.n++; else m.set(id, { it, n: 1, who: [c.name] }); } return [...m.values()]; }
 // (a character's tile, Home's tt-card: the crest, the name in class colour, the class and guild, one square per dungeon (green timed +2/+3, amber +1,
@@ -844,7 +847,7 @@ function mpHtml(it, R, fx) {
   // from the timer and the first row of Where your time went)
   const keyLine = (() => { const lim0 = ck.up === 3 ? P * 0.6 : ck.up === 2 ? P * 0.8 : P; let v = ck.up > 0 ? 'Timed +' + ck.up + ' with <b>' + mpMM(lim0 - T) + '</b> to spare.' : 'Over time by <b>' + mpMM(T - P) + '</b>.';
     if (!F || !FC) return '<p class="mpt-vd">' + v + (waiting ? ' ' + mpShimT('You were 0:00 behind a typical fast run, the biggest part (0:00) on the trash between ' + esc(mpStretches(R, C).map((x) => x.name.replace(' → ', ' and ')).sort((x, y) => y.length - x.length)[0] || 'the two bosses') + '.') : '') /* (the placeholder as long as the key's longest stretch, so it wraps like the real line) */ + '</p>'; const gap = T - FC.ck.time;
-    if (gap > 5) { const ST = mpStretches(R, C), fBy = new Map(mpStretches(F, FC).map((x) => [x.boss, x])), L = [];
+    if (gap > 5 && !went) { const ST = mpStretches(R, C), fBy = new Map(mpStretches(F, FC).map((x) => [x.boss, x])), L = [];
       for (const x of ST) { const y = fBy.get(x.boss); if (!y) continue; L.push({ s: x.trash - y.trash, w: x.name.startsWith('Start → ') ? 'on the trash before ' + esc(x.boss) : 'on the trash between ' + esc(x.name.split(' → ')[0]) + ' and ' + esc(x.boss) }, { s: x.bossT - y.bossT, w: 'on ' + esc(x.boss) }); }
       L.push({ s: ck.between - FC.ck.between, w: 'standing between pulls' }, { s: ck.deathCost - FC.ck.deathCost, w: 'on deaths' });
       const top = L.filter((x) => x.s >= 15).sort((a, b) => b.s - a.s)[0];
@@ -876,7 +879,7 @@ function mpHtml(it, R, fx) {
   const bh = {}, behindH = mpBehind(R, C, F, FC, fx, waiting, bh); /* (the map-first round: the map is chapter 2, with the timeline lanes under it) */
   // (layout v3: a band in the key's panel, Your part on the left and Fix these first on the right, shown once; the old chapter below the map is gone)
   const band = mpBand(R, fx, '<p class="mpt-chk' + (behind ? ' mpt-chk-' + behind : '') + '">Fix these first' + (F ? '<span>against a typical fast run</span>' : '') + '</p>' + fixes + behindH);
-  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine + stats + mpLastTime(it, R) + '</div>' + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
+  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
@@ -905,7 +908,7 @@ function mpRPFold(R, F, map, wait) {
 }
 // (the band: Your part beside Fix these first (layout v3); Your part alone when the key has no timer)
 const mpBand = (R, fx, right) => '<div class="mpt-band' + (right ? '' : ' mpt-band1') + '" id="mptBand"><div class="mpt-bl">' + mpPartHtml(R, fx, MP.pp) + '</div>' + (right ? '<div class="mpt-br">' + right + '</div>' : '') + '</div>';
-const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptBand', 'Debrief'], ['mptCM', 'Map'], MP_ROT_ON ? ['mptCR', 'Rotation'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
+const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptBand', 'Summary'], ['mptCM', 'Map'], MP_ROT_ON ? ['mptCR', 'Rotation'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return; if (b.dataset.mptj === 'mptCR') mpRkGo();
   if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */
   else { const f = s.querySelectorAll(':scope > details.mpt-fold'); if (f.length === 1 && s.children.length === 2) f[0].open = true; } /* (a chapter that's one folded part, Know this dungeon, opens it) */
@@ -2347,7 +2350,7 @@ function mpSkCard(RR, s, F) {
 const mpSkOf = (R, t) => (R.skips || []).findIndex((s) => s.died.some((x) => Math.abs(x.t - t) < 1));
 const mpDWhere = (R, d) => { if (!d.gap) return esc(mpPN(R, d.pull)); const k = mpSkOf(R, d.t); return k >= 0 ? 'the ' + mpSkTitle(R, R.skips[k]).replace(/^S/, 's') : 'after ' + esc(mpPN(R, d.pull)); };
 function mpMapHtml(R, F, tl) {
-  const rt = R.route, strip = tl ? '<div class="mpt-mstrip">' + tl + '</div>' + (rt && rt.ok ? '<p class="mpt-ex">Enemy counts from <a href="https://raider.io" target="_blank" rel="noopener">Raider.IO</a>.</p>' : '') : '';
+  const rt = R.route, strip = tl ? '<div class="mpt-mstrip">' + tl + '</div>' + (rt && rt.ok ? '<p class="mpt-ex">Enemy counts from Raider.IO.</p>' : '') : '';
   if (!rt || !rt.floors || !R.units || !R.units.length) return strip;
   const pc = (v) => 100 * v / rt.full, fmt = (v) => (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '') + '%';
   const W = 1002, H = 668, runs = [['you', R], F && F.units && F.units.length && F.route && F.route.full === rt.full ? ['fast', F] : null].filter(Boolean);
@@ -3482,13 +3485,13 @@ function mpcRotHtml(R) {
   const nFix = (o) => ((rw.all[o.n] || {})[name] || []).filter((c) => mpRwKeep(c, o) && (c.st === 'bad' || c.st === 'warn')).length; /* (the card's own count for that pull) */
   const chipT = (o, i) => { const r = o.rot && o.rot[name], f = r && r.fix && r.fix[0], n = r ? nFix(o) : 0, nm = o.boss ? o.boss : 'Pull ' + mpNo(R, i + 1);
     return nm + ' · ' + (!r ? (o.rot && Object.keys(o.rot).length ? 'not judged' : 'too short to judge') : f ? mpPlain(f[2]) + (f[3] ? ' ' + mpRwVal(f[3]) : '') + ' · ' + n + ' to fix' : 'Clean'); };
-  const pk = '<div class="mpc-pk"><button type="button" data-mpcp="" class="' + (pi == null ? 'on' : '') + '">Whole key</button>' + R.pulls.map((o, i) => { const v = pst(i), tt = esc(chipT(o, i)); return '<button type="button" data-mpcp="' + i + '" class="' + (v || 'na') + (pi === i ? ' on' : '') + '" title="' + tt + '" aria-label="' + tt + '">' + (o.boss ? esc(o.boss) : mpNo(R, i + 1)) + '</button>'; }).join('') + '</div>';
-  let rows = [], good = [], score = null, note = '';
+  const pk = (wide ? '<div class="mpv-bar"><button type="button" class="mpv-st" data-mpcs="-1" aria-label="Previous pull" title="Previous pull">‹</button>' : '') + '<div class="mpc-pk"><button type="button" data-mpcp="" class="' + (pi == null ? 'on' : '') + '"' + (wide ? ' title="Every pull together"' : '') + '>Whole key</button>' + R.pulls.map((o, i) => { const v = pst(i), tt = esc(chipT(o, i)); return '<button type="button" data-mpcp="' + i + '" class="' + (v || 'na') + (pi === i ? ' on' : '') + '" title="' + tt + '" aria-label="' + tt + '">' + (o.boss ? esc(o.boss) : mpNo(R, i + 1)) + '</button>'; }).join('') + '</div>' + (wide ? '<button type="button" class="mpv-st" data-mpcs="1" aria-label="Next pull" title="Next pull">›</button></div>' : '');
+  let rows = [], good = [], score = null, note = '', plainN = false; /* (Nov 9: on the website the bar says which pull; the note only when it adds something) */
   const side = wide && pi == null && MP.cvf ? mpvSide(R, name, MP.cvf === 'boss') : null;
   const TOP = pi == null && (MPC_ON || MP.cv === 'rot') ? mpTopFor(R, name) : null; let topLn = '';
   let allH = '';
   if (pi == null) { const sm = mpRwSum(R, name); score = sm.pct; good = sm.good.map(mpRwGood); const myDur = sm.seen.reduce((a, x) => a + (x.o.dur || 0), 0); if (wide) allH = mpvAllHtml(R, name, TOP, myDur);
-    note = sm.seen.length ? 'The whole key: ' + sm.seen.length + ' of ' + R.pulls.length + ' pulls checked. Pick a pull to see only that pull.' : 'No pull long enough to judge.';
+    note = sm.seen.length ? 'The whole key: ' + sm.seen.length + ' of ' + R.pulls.length + ' pulls checked. Pick a pull to see only that pull.' : 'No pull long enough to judge.'; plainN = !!sm.seen.length;
     rows = sm.fix.map((a) => { let pts = 0, cost = 0; for (const i2 of a.pulls) { const o2 = R.pulls[i2], c2 = o2 && ((rw.all[o2.n] || {})[name] || []).find((y) => mpPlain(y.label).trim() === a.f[2]); if (c2) { pts += (c2.share || 0) * (c2.st === 'bad' ? 1 : c2.st === 'warn' ? 0.5 : 0); cost += c2.cost || 0; } } /* (how much it cost: the score points it lost over the key, as the Rotation tab ranks its fixes (the studio's audit), then healing or damage, then how often) */ const on = new Set(a.pulls.map(String)), sq = sm.seen.map((x) => (on.has(String(x.i)) ? (a.st === 'bad' ? 'b' : 'w') : 'g')).join(''), hit = sq.replace(/g/g, '').length; /* (the count is the squares' own: the two always agree (the studio's audit)) */
       const st = a.st === 'bad' && hit * 3 >= sq.length ? 'bad' : 'warn', sq2 = st === 'bad' ? sq : sq.replace(/b/g, 'w'), o0 = R.pulls[a.i0], c0 = o0 && ((rw.all[o0.n] || {})[name] || []).find((y) => mpPlain(y.label).trim() === a.f[2]);
       let what = ''; try { what = c0 ? mpRwTxt(CB.rotBits(c0, 0).what) : ''; } catch (e) { what = ''; } const at0 = o0 ? (o0.boss ? o0.boss : 'pull ' + mpNo(R, a.i0 + 1)) : '';
@@ -3499,14 +3502,14 @@ function mpcRotHtml(R) {
   else { const o = R.pulls[pi], cs = ((rw.all[o.n] || {})[name] || []).filter((c) => mpRwKeep(c, o)), R0 = { bad: 0, warn: 1, ok: 2 }; score = mpRwScore(R, pi, name);
     rows = cs.filter((c) => c.st === 'bad' || c.st === 'warn').sort((a, c) => R0[a.st] - R0[c.st] || (c.cost || 0) - (a.cost || 0)).map((c) => CB.rotRow(c, { E }, '', ''));
     good = cs.filter((c) => c.st === 'ok').slice(0, 4).map((c) => mpPlain(c.label).trim());
-    note = (o.boss ? esc(o.boss) : 'Pull ' + mpNo(R, pi + 1)) + (cs.length ? ' only.' : ' was too short to judge.'); }
+    note = (o.boss ? esc(o.boss) : 'Pull ' + mpNo(R, pi + 1)) + (cs.length ? ' only.' : ' was too short to judge.'); plainN = !!cs.length; }
   const sc = score != null ? Math.round(score) : null, scc = sc == null ? '#2a2e36' : sc >= 92 ? '#45c15c' : sc >= 72 ? '#e8a23a' : '#e5534b';
   const ring = sc != null ? '<span class="mpc-ring" style="background:conic-gradient(' + scc + ' 0 ' + sc + '%,#2a2e36 ' + sc + '% 100%)"><b>' + sc + '</b></span>' : '';
   const spec = esc([(me && me.spec) || '', (me && ((E.CLASSES[me.cls] || [])[0] || me.cls)) || ''].filter(Boolean).join(' '));
   // (who: ‹ › in the pop-up; on the website the group's five names, in class colours)
-  const who = wide ? '<div class="mpc-who">' + mpWho(R, name) + '<span class="sp">' + spec + '</span>' + ring + '</div>'
+  const who = wide ? '<div class="mpc-who"><select class="mpv-psel" data-mpcsel="1" aria-label="Player" style="color:' + (me ? mpCC(me.cls) : 'var(--text)') + '">' + ppl.map((p) => '<option value="' + esc(p.name) + '" style="color:' + mpCC(p.cls) + '"' + (p.name === name ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select><span class="sp">' + spec + '</span>' + ring + '</div>'
     : '<div class="mpc-who"><button type="button" data-mpcw="-1" aria-label="Previous player">‹</button>' + mpWho(R, name) + '<span class="sp">' + spec + '</span><button type="button" data-mpcw="1" aria-label="Next player">›</button>' + ring + '</div>';
-  const ppk = wide ? '<div class="mpc-ppl">' + ppl.map((p) => '<button type="button" data-mpcn="' + esc(p.name) + '" class="' + (p.name === name ? 'on' : '') + '">' + mpWho(R, p.name) + '</button>').join('') + '</div>' : '';
+  const ppk = false ? '<div class="mpc-ppl">' + ppl.map((p) => '<button type="button" data-mpcn="' + esc(p.name) + '" class="' + (p.name === name ? 'on' : '') + '">' + mpWho(R, p.name) + '</button>').join('') + '</div>' : '';
   if (TOP && !(MPC_ON && TOP.st !== 'ok')) { const me = (R.people || []).find((p) => p.name === name), sp = me ? esc(me.spec + ' ' + ((E.CLASSES[me.cls] || [])[0] || '')) : 'player', lv = TOP.lv.slice().sort((a, b) => a - b).map((l) => '+' + l), lvs = lv.length > 1 ? lv[0] + ' to ' + lv[lv.length - 1] : lv[0] || '';
     topLn = '<p class="mpv-top">' + (TOP.st === 'wait' ? 'Reading fast runs with a ' + sp + ' for the top players’ numbers…' : TOP.st === 'ok' ? '<b>top</b> is the middle of ' + TOP.runs.length + ' fast ' + lvs + ' runs of this dungeon with a ' + sp + ', counts scaled to your pulls’ length.' : 'No top players’ numbers: fewer than ' + MP_TOPN + ' fast runs of this dungeon had a ' + sp + '.') + '</p>'; }
   if (side) { rows = side.rows; note = (MP.cvf === 'boss' ? 'Bosses' : 'Trash pulls') + ' only: ' + side.n + ' of ' + R.pulls.length + ' pulls. Tap the tile again for the whole key.'; }
@@ -3524,7 +3527,7 @@ function mpcRotHtml(R) {
   if (!wide) return pk + '<p class="mpc-pn">' + note + '</p>' + card;
   // (the website: the same card, one column, under the key's banner; each pull chip says that pull's biggest fix on hover (Nov 5, Flex: "Isnt this kind of redundant"))
   const det = pi != null ? '<div id="mpvDet" data-k="' + esc(name + '|' + pi) + '"><p class="mpc-wait">Reading this pull’s checklist…</p></div>' : '<p class="mpc-pn mpv-hint">Pick a pull above for its full checklist and timeline.</p>';
-  return pk + ppk + '<p class="mpc-pn">' + note + '</p>' + card + (side ? '' : topLn) + (side ? '' : allH) + (pi == null ? mpvCdStrip(R, name) : '') + det;
+  return pk + ppk + (side || !plainN ? '<p class="mpc-pn">' + note + '</p>' : '') + card + (side ? '' : topLn) + (side ? '' : allH) + (pi == null ? mpvCdStrip(R, name) : '') + det;
 }
 function mpcRotPaint() { const el = document.getElementById('mpcRot'), it = MP.item, R = it && MP.R[mpK(it)]; if (!el || !R) return; R._cdWait = false; el.innerHTML = mpcRotHtml(R);
   if (R._cdWait && (R._cdTry = (R._cdTry || 0) + 1) <= 5) setTimeout(() => { if (MP.R[mpK(MP.item || {})] === R) mpcRotPaint(); }, 1500); /* (a cooldown's length still being read: drawn again once it's in) */ try { refreshIcons(); } catch (e) { /* (icons load later) */ } if (!MPC_ON) mpvDetLoad(R); }
@@ -3552,18 +3555,20 @@ function mpvUrl() { if (MPC_ON) return; try { const u = new URL(location.href); 
 function mpvLay(b) { if (MPC_ON || !b || b.querySelector('.mpc-tabs')) return; const ban = b.querySelector(':scope > #mptC1 > .mpt-ban');
   (ban || b).insertAdjacentHTML(ban ? 'afterend' : 'afterbegin', '<div class="mpc-tabs" role="tablist"><button type="button" data-mpcv="run" class="' + (MP.cv === 'rot' ? '' : 'on') + '">Run</button><button type="button" data-mpcv="rot" class="' + (MP.cv === 'rot' ? 'on' : '') + '">Rotation</button></div>');
   b.insertAdjacentHTML('beforeend', '<div id="mpcRot"></div>'); document.documentElement.classList.toggle('mpc-rot', MP.cv === 'rot'); mpcRotPaint(); }
-document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcv],[data-mpcp],[data-mpcw],[data-mpco],[data-mpcm],[data-mpcn],[data-mpcf]'); if (!t) return; e.preventDefault();
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcv],[data-mpcp],[data-mpcs],[data-mpcw],[data-mpco],[data-mpcm],[data-mpcn],[data-mpcf]'); if (!t) return; e.preventDefault();
   const it = MP.item, R = it && MP.R[mpK(it)];
   if (t.dataset.mpcv) { MP.cv = t.dataset.mpcv; document.documentElement.classList.toggle('mpc-rot', MP.cv === 'rot'); document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => x.classList.toggle('on', x.dataset.mpcv === MP.cv));
     mpvUrl();
     mpcRotPaint(); return; }
   if (t.hasAttribute('data-mpcp')) { MP.cvi = t.dataset.mpcp === '' ? null : +t.dataset.mpcp; MP.cvo = new Set(['0']); MP.cvm = false; }
+  else if (t.dataset.mpcs && R) { const n = R.pulls.length, d = +t.dataset.mpcs, i = MP.cvi == null ? (d > 0 ? 0 : n - 1) : MP.cvi + d; MP.cvi = i < 0 || i >= n ? null : i; MP.cvo = new Set(['0']); MP.cvm = false; }
   else if (t.dataset.mpcf) { MP.cvf = MP.cvf === t.dataset.mpcf ? null : t.dataset.mpcf; MP.cvo = new Set(['0']); MP.cvm = false; }
   else if (t.dataset.mpcn) { MP.cvp = t.dataset.mpcn; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); }
   else if (t.dataset.mpcw && R) { const ppl = (R.people || []).slice().sort(mpByRole).map((p) => p.name), cur = MP.cvp && ppl.includes(MP.cvp) ? MP.cvp : mpMine(R) || ppl[0]; MP.cvp = ppl[(ppl.indexOf(cur) + (+t.dataset.mpcw) + ppl.length) % ppl.length]; MP.cvo = new Set(['0']); MP.cvm = false; }
   else if (t.dataset.mpco != null) { const o = MP.cvo || (MP.cvo = new Set()); if (o.has(t.dataset.mpco)) o.delete(t.dataset.mpco); else o.add(t.dataset.mpco); }
   else if (t.dataset.mpcm) MP.cvm = !MP.cvm;
   mpcRotPaint(); });
+document.addEventListener('change', (e) => { const t = e.target; if (!t || !t.matches || !t.matches('[data-mpcsel]')) return; MP.cvp = t.value; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); mpcRotPaint(); }); /* (Nov 9: the player picker) */
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('mpv-all')) MP.cvAll = e.target.open; }, true); /* (kept open across redraws) */
 function mpcLay() {
   const b = document.getElementById('mptBody'), c1 = b && b.querySelector(':scope > #mptC1'); if (!c1 || c1.dataset.mpcDone) return; c1.dataset.mpcDone = '1'; /* (once per draw: moving the blocks is a change too) */
