@@ -388,3 +388,48 @@ A tight band at the top is what a correct priority row looks like; a wide one (H
 ### Where the count stands
 Read line by line: 15 of 40 (adds Subtlety, Marksmanship, Holy Priest, Windwalker). Every spec's priority row: checked against what the
 top players press. Still not read line by line: 25.
+
+
+## Part 10: The last specs, read line by line (round 7)
+
+Flex: "Keep going until youre done with them all". Every raid spec's rules have now been read next to its class guide: the 36 shared pages rule by rule,
+and the four hand-built pages (Holy Paladin, Restoration Druid, Preservation, Demonology) by their priority lists and what the top players slip on.
+Read in this pass: Assassination, Outlaw, Feral, Enhancement, Survival, Devourer, Arcane, Fire, Frost Mage, Affliction, Destruction, Devastation,
+Augmentation, Balance, Elemental, Demonology, Restoration Shaman, Mistweaver, Brewmaster, Protection Warrior, Blood, Guardian, Vengeance, Holy Paladin,
+Preservation.
+
+### What was wrong, most misleading first
+
+| # | Where | What a raider saw | Why it was wrong | Fix |
+|---|---|---|---|---|
+| S1 | Every spec with a "refresh it in its last 30%" step (Affliction, Destruction, Assassination, Feral, Balance, Elemental, Guardian, Arms) | "You pressed Shadow Bolt while Agony was in its last 5.4 seconds", many times a pull | The 30% window is when a refresh loses nothing. It is not a deadline. Top Affliction Warlocks cast a filler with Agony at 4 or 5 seconds left 8 to 15 times a kill and never dropped it | The step is wanted only in the last 3 seconds, or once the DoT is off. Refreshing earlier in the window still counts as right |
+| S2 | Same steps | The same slip while the player was on an add | The uptime rows already leave out your time on another enemy; the priority row didn't | The priority row leaves it out too (12 seconds or more with every hit on something that isn't the boss) |
+| S3 | Balance | "You pressed Starfire in Eclipse with Astral Power to spend", about 12 times a kill for all 9 top Balance Druids | Wowhead spends inside Eclipse for the first three (Ascendant Eclipses), procs, capping and movement, then Starfire. The 4-piece wants spenders at an Eclipse's start and end | Step removed, single target and packs. Capping, free procs and Eclipse at 2 charges are still judged |
+| S4 | Blood | "You pressed Heart Strike with Blood Boil at 2 charges", about 22 times a kill for all 17 top Blood Death Knights | On one target Heart Strike spends the Runes that would cap; the log has no Rune count to tell | Heart Strike and Vampiric Strike count as right on one target. On a pack the step stays |
+| S5 | Protection Warrior | "You pressed Revenge while Execute was usable", about 22 times a kill for both top Warriors | Icy Veins: Execute "if you don't need the Rage"; the tier set wants a free Revenge inside 5 seconds | Revenge counts as right |
+| S6 | Elemental | "You pressed Lava Burst with both tier buffs up" | 4 of 5 top Elementals Lava Burst first, so Master of the Elements is on the spender (Wowhead's order) | Lava Burst counts as right |
+| S7 | Feral | "You pressed Regrowth, not Ferocious Bite" | Regrowth is a heal | Regrowth is never judged. Energy bar 15% / 22% (Wowhead: a little waste is fine; top Ferals lose 11 to 13%) |
+| S8 | Mistweaver | Rushing Wind Kick before Renewing Mist at full charges, or Mana Tea at 20 | The two guides disagree on the order | Either order counts |
+| S9 | Guardian, Restoration Shaman | Uses counted on the base cooldown | 12.1.5 tooltips: Lunation takes 20 seconds off Lunar Beam; First Ascendant takes a minute off Ascendance and Healing Tide Totem | The talent's cooldown is used when the talent is taken |
+| S10 | Guardian and Enhancement in keys | "Thrash on cooldown", "Mangle on cooldown", "Lunar Beam uses", Maelstrom Weapon wasted, "Voltaic Blaze on cooldown" marked on packs | Single-target habits that the fastest key runs break on every pack | Shown, not graded, in a key (`keyNa` on the spec) |
+| S11 | Fire, Arcane (wording only) | Fire's pack step for Pyroclasm had the Hot Streak tip. Arcane said to cast Prismatic Bolt "quickly" | Pyroclasm is spent on a hard cast (12.1.5 tooltip: Pyroblast or Flamestrike). Prismatic Bolt lasts a minute and both guides hold it for Cumulative Power with the 4-piece | Text corrected |
+
+### Read with nothing to change
+Outlaw, Survival, Devourer, Frost Mage, Destruction, Devastation, Augmentation, Demonology, Brewmaster, Vengeance, Holy Paladin, Preservation, Restoration
+Shaman's priority (top players 86 to 100%).
+
+### Tested
+All 31 test pulls again (19 fastest Mythic Coiled Altar kills, ten bosses, two Wolfthorn pulls), 629 player pages, against the start of the day:
+**412 rows fairer, 0 worse, 267 scores up, none down.** Top players' priority, start of day to now: Balance 86 to 93%, Blood 90 to 95%, Affliction 87 to 90%,
+Assassination 81 to 85%, Destruction 82 to 91%, Feral 88 to 96%, Elemental 90 to 94%, Protection Warrior 93 to 96%. A fast +20 Den of Nalorakk run on the
+practice build: the Guardian reads 96 with no "on cooldown" rows marked on packs.
+
+### Still open (none of these blame right play as far as the data shows)
+- Affliction: four of 28 top Warlocks still take 11 to 49 "Agony missing" slips a kill. They look like players assigned to a target that isn't a boss unit. Needs a look at their pulls.
+- Assassination 82 to 89% for the two top Rogues: Kingsbane held with Envenom up (26 slips), and Mutilate at 5 combo points. Two players is too few to change a rule on.
+- Balance: free-proc steps (Touch the Cosmos, Starweaver's Warp) are the top slips left, 3 to 6 a kill. The guides say spend them; left as is.
+- Blood Boil at 2 charges on a pack is still judged; no fast-run evidence yet that it shouldn't be.
+- Augmentation: the 2-piece takes 10 seconds off Upheaval; the row uses the cooldown the log shows, so it is lenient at worst.
+- Restoration Shaman: "Unleash Life on cooldown" has no Farseer gate (Totemic can take it as an option).
+- Devastation: Deep Breath has no hold; the one top Devastation in the data takes 5 slips a kill for it.
+- From earlier parts, unchanged: Heroic untested; the top players' marks for every `topNew` row need a fresh read (a data job); Frost Mage's guide note on Fingers of Frost is out of date (the site is right); Outlaw's window bar is unmeasured.
