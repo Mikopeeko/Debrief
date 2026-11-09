@@ -340,7 +340,7 @@ const HTML_FLAGS = {};
    stamp, so it's fetched fresh at once. Cloudflare's compression can mark the stamp weak (W/"..."): it's the same stamp.
    Cloudflare removes ETags from web pages on this site (tested on a practice link), so the build time goes along as Last-Modified too:
    a browser holding exactly this build sends it back (If-Modified-Since) and gets the same "not changed") */
-const APP_V = 'f1a36f9a9789121c', APP_T = 'Mon, 09 Nov 2026 20:52:52 GMT';
+const APP_V = 'f1a36f9a9789121c', APP_T = 'Mon, 09 Nov 2026 20:55:15 GMT';
 function pageRes(req, key, make, status, headers) { const et = '"' + APP_V + '-' + key + '"', h = { ...headers, ETag: et, 'Last-Modified': APP_T }, inm = req.headers.get('If-None-Match') || '';
   if (status === 200 && (inm.split(',').some((x) => x.trim().replace(/^W\//, '') === et) || req.headers.get('If-Modified-Since') === APP_T)) return new Response(null, { status: 304, headers: h });
   return new Response(make(), { status, headers: h }); }
@@ -1759,11 +1759,12 @@ const lcN = (x) => String(x || '').split('-')[0].toLowerCase();
 function leadMatch(d, chars) { const o = (d && d.owner) || {}; if (!o.char || !Array.isArray(chars)) return false;
   if (o.realm) { const k = lcN(o.char) + '-' + o.realm; return chars.some((c) => bnetKey(c) === k); }
   const G = d.ranks && d.ranks.guild, same = chars.filter((c) => lcN(c.n) === lcN(o.char)); if (!G) return same.length > 0;
-  return same.some((c) => String(c.g || '').toLowerCase() === String(G.name || '').toLowerCase() && (c.gs || c.slug) === G.realm); }
+  return same.some((c) => String(c.g || '').toLowerCase() === String(G.name || '').toLowerCase() && String(c.gs || c.slug || '').toLowerCase() === String(G.realm || '').toLowerCase()); }
 /* (the owner's realm, for a team saved before realms were kept: the lead's own character of that name, the one in the team's guild first) */
 function ownerRealm(d, chars) { const o = (d && d.owner) || {}, G = d && d.ranks && d.ranks.guild, same = (chars || []).filter((c) => lcN(c.n) === lcN(o.char));
   const c = (G && same.find((x) => String(x.g || '').toLowerCase() === String(G.name || '').toLowerCase() && (x.gs || x.slug) === G.realm)) || (same.length === 1 ? same[0] : null); return c ? c.slug : ''; }
-async function leadByChar(env, url, d, who) { if (!who || !who.bid || !d || !d.owner || !d.owner.char) return false; const L = await bnetGet(env, who.uid, url); return leadMatch(d, (L && L.chars) || []); }
+/* (only while the plan hasn't moved to a Battle.net account yet (owner "w:" or "p:"): once the owner is a "b:" id, that account alone leads) */
+async function leadByChar(env, url, d, who) { if (!who || !who.bid || !d || !d.owner || !d.owner.char || !/^[wp]:/.test(String(d.owner.uid || ''))) return false; const L = await bnetGet(env, who.uid, url); return leadMatch(d, (L && L.chars) || []); }
 /* (Nov 9: the Blizzard guild behind a Warcraft Logs guild id (team "guild:N"), from your own linked characters' guilds. Practice links: the
    made-up account's guild) */
 async function bnGuildFor(env, url, who, wid) { const L = await bnetGet(env, who.uid, url); if (!L) return null;

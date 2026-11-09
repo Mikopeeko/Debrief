@@ -24,7 +24,7 @@ roster(G, [['Gmone', 'zuljin', 0], ['Offone', 'zuljin', 1], ['Raidone', 'zuljin'
 const people = { gm: [ch('Gmone', 'zuljin', 'Testguild', 'zuljin')], off: [ch('Offone', 'zuljin', 'Testguild', 'zuljin')], raid: [ch('Raidone', 'zuljin', 'Testguild', 'zuljin')], out: [ch('Stranger', 'zuljin', 'Otherguild', 'zuljin')],
   lead: [ch('Leadchar', 'illidan', 'Testguild', 'zuljin')], twin: [ch('Leadchar', 'stormrage', '', '')] };
 const who = {}; for (const [k, cs] of Object.entries(people)) { who[k] = { uid: 'b:' + k, ids: ['b:' + k], bid: k, name: cs[0].n }; link('b:' + k, cs); }
-const team = { id: 'team:1', owner: { uid: 'b:someoneelse', char: 'Leadchar', realm: 'illidan' }, officers: [], ranks: { guild: G, acc: { 0: 'edit', 1: 'edit', 2: 'see', 3: 'see' }, v2: 1 } };
+const team = { id: 'team:1', owner: { uid: 'w:someoneelse', char: 'Leadchar', realm: 'illidan' }, officers: [], ranks: { guild: G, acc: { 0: 'edit', 1: 'edit', 2: 'see', 3: 'see' }, v2: 1 } };
 
 console.log('1. Who can change "Who can edit, who can see"');
 for (const [k, want] of [['gm', true], ['off', true], ['raid', false], ['out', false]]) { const A = await W.teamAccess(env, url, team, who[k]); ok(W.rankBoss(A) === want, k + ' (' + (A.rank != null ? 'rank ' + A.rank : A.why) + ') ' + (want ? 'can' : "can't")); }
@@ -38,6 +38,8 @@ const old = { ...team, owner: { uid: 'w:1', char: 'Leadchar' } };
 ok(await W.leadByChar(env, url, old, who.lead), 'old team (no realm, guild ranks set): Leadchar in the guild is the lead');
 ok(!(await W.leadByChar(env, url, old, who.twin)), 'old team: the same-named character outside the guild is not');
 ok(W.ownerRealm(old, people.lead) === 'illidan', 'the realm is filled in from the lead\'s own character');
+ok(!(await W.leadByChar(env, url, { ...team, owner: { ...team.owner, uid: 'b:someoneelse' } }, who.lead)), 'once the plan has moved to a Battle.net account, only that account leads (no character match)');
+ok((await W.teamAccess(env, url, { ...team, owner: { ...team.owner, uid: 'b:lead' } }, who.lead)).why === 'lead', '... and that account is still the lead');
 
 console.log('3. Setting up a guild\'s team (guild:N)');
 // (Warcraft Logs guild 555 = Testguild: the id the Worker keeps at the edge)
