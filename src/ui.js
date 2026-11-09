@@ -33775,34 +33775,53 @@ function openAccounts(note) {
   const A = { note: note || '', busy: false, pick: null, region: 'us' };
   const ago = (t) => { const d = Math.floor((Date.now() - t) / 864e5); return d <= 0 ? 'today' : d === 1 ? 'yesterday' : d + ' days ago'; };
   const ico = (c) => whIcon(c.sid && NDZ_SPECIC[c.sid] ? NDZ_SPECIC[c.sid] : 'classicon_' + ((E.CLASSES[c.cls] || [])[2] || 'warrior'));
-  const draw = () => {
+  const draw = () => { /* (Nov 8 Your characters v2: the Design studio's mock m41) */
     const W = WHO.now || {}, w = W.me, b = W.bnet || {}, prac = !!W.practice, leg = !!(w && w.legacy), bnIn = !!w && !leg;
     if (b.linked && !A.pick) A.pick = { main: b.main, hidden: new Set(b.hidden || []) };
-    /* (Nov 8: Battle.net on top, it's the sign-in; Warcraft Logs under it, optional, only for private logs) */
+    const RG = esc(String(b.region || '').toUpperCase());
     const reg = '<select data-bn="reg" aria-label="Battle.net region"><option value="us"' + (A.region === 'us' ? ' selected' : '') + '>US</option><option value="eu"' + (A.region === 'eu' ? ' selected' : '') + '>EU</option></select>';
-    const lock = '<svg class="bn-lk" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9zm3 4a1.6 1.6 0 0 1 .8 3v2h-1.6v-2A1.6 1.6 0 0 1 12 14z"/></svg>';
-    const bRow = '<div class="bn-row bn-col"><div class="bn-rt"><div class="bn-l">Battle.net</div>' + (!W.can ? '<span class="bn-dim">Coming soon</span>'
-      : bnIn ? '<div class="bn-ok">✓ ' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.name || 'you') + '</b>' + (w.tag && !w.practice ? ' · ' + esc(w.tag) : '') + (b.linked ? ' · ' + esc(String(b.region || '').toUpperCase()) + ' · synced ' + ago(b.syncedAt || b.linkedAt) : '') + '</div>'
-      : '<div class="bn-go">' + reg + '<button class="btn primary bn-link" type="button" data-bn="link">' + lock + 'Log in with Battle.net</button></div><div class="bn-safe">You sign in on battle.net itself. Debrief never sees your password.</div>') + '</div>' +
-      (bnIn ? '<div class="bn-acts"><button class="lk" type="button" data-bn="link">Refresh my characters</button></div>'
-        : '<p class="bn-sub">' + (leg ? 'Your Warcraft Logs sign-in is ending. Sign in with Battle.net to keep your team and plans: they come with you.' : 'Your sign-in for Debrief. It brings in every character on your account, so Home, Plan, your team and the Report card know which ones are yours.') + '</p>') +
-      (prac && !bnIn ? '<div class="bn-acts"><button class="lk" type="button" data-bn="mock">Practice: sign in with a made-up account</button></div><form class="bn-test" data-bn="test"><input name="n" placeholder="Or test as a name" maxlength="24" aria-label="Character name"><button class="btn">Test as</button></form>' : '') + '</div>';
-    const wcl = W.wcl, wRow = bnIn ? '<div class="bn-row bn-col"><div class="bn-rt"><div class="bn-l">Warcraft Logs</div>' + (wcl ? '<div class="bn-ok">✓ Connected</div>' : '<span class="bn-dim">Not needed</span>') + '</div>' +
-      '<p class="bn-sub">' + (wcl ? 'Connected for private logs, Your logs and your own Live now.' : 'Every log works without it. Only if you want private logs: <button class="lk" type="button" data-bn="wcl">connect Warcraft Logs</button>.') + '</p></div>' : '';
+    const lock = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 0 1 6 0v3H9z"/></svg>';
+    const bnLogo = '<span class="bn2-bn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3c2.4 0 4.3 1.6 5 3.8 2.3.4 4 2.4 4 4.8 0 1.6-.8 3-2 3.9.1 2.6-2 4.7-4.6 4.7-1 0-1.8-.3-2.4-.8-.7.5-1.5.8-2.4.8-2.6 0-4.7-2.1-4.6-4.7-1.2-.9-2-2.3-2-3.9 0-2.4 1.7-4.4 4-4.8C7.7 4.6 9.6 3 12 3zm0 4.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9z"/></svg></span>';
+    const okNote = /^(saved|signed in|linked|your characters are up to date|unlinked)/i.test(A.note || '');
+    const note = A.note ? '<div class="bn2-note' + (okNote ? ' ok' : '') + '"><i>' + (okNote ? '✓' : '!') + '</i>' + esc(A.note) + '</div>' : '';
+    /* (your account: one card. Signed in: who + Refresh. Not yet: the Battle.net log-in, as before) */
+    let acct;
+    if (!W.can) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at">Battle.net sign-in<small>Coming soon</small></div></div>';
+    else if (bnIn) acct = '<div class="bn2-acct">' + bnLogo + '<div class="bn2-at"><span class="bn2-ok">✓</span>' + (w.practice ? 'Testing as ' : 'Signed in as ') + '<b>' + esc(w.tag && !w.practice ? w.tag : (w.name || 'you')) + '</b>' +
+        '<small>Battle.net' + (b.linked ? ' · ' + RG + ' · updated ' + ago(b.syncedAt || b.linkedAt) : '') + '</small></div>' +
+        '<button class="bn2-rf" type="button" data-bn="link"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Refresh</button></div>';
+    else acct = '<div class="bn2-acct bn2-in">' + bnLogo + '<div class="bn2-at">' + (leg ? 'Your Warcraft Logs sign-in is ending' : 'Sign in with Battle.net') +
+        '<small>' + (leg ? 'Sign in with Battle.net to keep your team and plans: they come with you.' : 'It brings in every character on your account, so Home, Plan, your team and the Report card know which ones are yours.') + '</small></div></div>' +
+        '<div class="bn2-go">' + reg + '<button class="btn primary bn-link" type="button" data-bn="link">' + lock + 'Log in with Battle.net</button><span>You sign in on battle.net itself. Debrief never sees your password.</span></div>' +
+        (prac ? '<div class="bn2-prac"><button class="lk" type="button" data-bn="mock">Practice: sign in with a made-up account</button><form class="bn-test" data-bn="test"><input name="n" placeholder="Or test as a name" maxlength="24" aria-label="Character name"><button class="btn">Test as</button></form></div>' : '');
+    /* (your main, front and centre; the alts in a list under it with Make main / Hide; what changed beside Save) */
     let pick = '';
-    if (b.linked) { const P = A.pick, cs = (b.chars || []).slice();
-      pick = '<div class="bn-pick"><div class="bn-ph"><h3>Your characters</h3><span>From Battle.net · ' + esc(String(b.region || '').toUpperCase()) + ' · Level 90' + (b.mock ? ' · practice account' : '') + '</span></div>' +
-        (cs.length ? cs.filter((c) => A.showHid || !P.hidden.has(bnKey(c))).map((c) => { const k = bnKey(c), main = P.main === k, hid = P.hidden.has(k), cc = (E.CLASSES[c.cls] || [])[1] || 'var(--text)';
-          return '<div class="bn-c' + (hid ? ' hid' : '') + (main ? ' main' : '') + '"><button class="bn-r" type="button" data-bn="main" data-k="' + esc(k) + '" aria-label="Make ' + esc(c.n) + ' your main"' + (hid ? ' disabled' : '') + '></button>' +
-            '<img src="' + ico(c) + '" alt=""><div class="bn-cn"><b style="color:' + cc + '">' + esc(c.n) + '</b><span>' + esc([c.spec, (E.CLASSES[c.cls] || [])[0]].filter(Boolean).join(' ')) + ' · ' + esc(c.realm) + (c.g ? ' · &lt;' + esc(c.g) + '&gt;' : '') + '</span></div>' +
-            '<div class="bn-il">' + (c.ilvl ? 'ilvl ' + c.ilvl : '') + '</div>' +
-            '<div class="bn-tag">' + (main ? '<span class="bn-main">Main</span>' : hid ? '<button class="lk" type="button" data-bn="show" data-k="' + esc(k) + '">Show</button>' : '<span class="bn-alt">Alt</span><button class="bn-hide" type="button" data-bn="hide" data-k="' + esc(k) + '" aria-label="Hide ' + esc(c.n) + '">Hide ✕</button>') + '</div></div>'; }).join('') +
-          (P.hidden.size && !A.showHid ? '<div class="bn-hidl">Hidden: ' + P.hidden.size + ' · <button class="lk" type="button" data-bn="showhid">show</button></div>' : '')
-          : '<p class="bn-sub">No level 90 characters on this Battle.net account in ' + esc(String(b.region || '').toUpperCase()) + '.</p>') +
-        '<div class="bn-pf"><span>Pick your main. Characters under level 90 are left out. Unlink any time.</span><button class="btn primary" type="button" data-bn="save"' + (A.busy ? ' disabled' : '') + '>' + (A.busy ? 'Saving…' : 'Save') + '</button></div></div>'; }
-    el.innerHTML = '<div class="panel pnz-sheet bn-sheet"><div class="pnz-top"><div><h2>Your characters</h2><p>Which characters are yours, for Plan, Home, the Report card and the Companion app.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
-      (A.note ? '<div class="bn-note">' + esc(A.note) + '</div>' : '') + '<div class="bn-rows">' + bRow + wRow + '</div>' + pick +
-      '<p class="pnz-foot">' + esc(BN_PRIVACY) + '</p></div>';
+    if (b.linked) { const P = A.pick, cs = (b.chars || []).slice(), byK = {}; cs.forEach((c) => { byK[bnKey(c)] = c; });
+      const ccOf = (c) => (E.CLASSES[c.cls] || [])[1] || 'var(--text)', specOf = (c) => esc([c.spec, (E.CLASSES[c.cls] || [])[0]].filter(Boolean).join(' '));
+      const line = (c) => specOf(c) + ' <i>·</i> ' + esc(c.realm) + (c.g ? ' <i>·</i> &lt;' + esc(c.g) + '&gt;' : '');
+      const mc = byK[P.main];
+      const hero = mc ? '<div class="bn2-hero" style="--cc:' + ccOf(mc) + '"><span class="bn2-mt">Main</span><img src="' + ico(mc) + '" alt=""><div class="bn2-hn"><b>' + esc(mc.n) + '</b><span>' + line(mc) + '</span></div>' +
+          (mc.ilvl ? '<div class="bn2-hil"><b>' + mc.ilvl + '</b><small>Item level</small></div>' : '') + '</div>'
+        : '<div class="bn2-hero bn2-none"><div class="bn2-hn"><b>Pick your main</b><span>Press Make main on one of your characters below.</span></div></div>';
+      const alts = cs.filter((c) => bnKey(c) !== P.main), shownAlts = alts.filter((c) => A.showHid || !P.hidden.has(bnKey(c))), hidAlts = alts.filter((c) => P.hidden.has(bnKey(c)));
+      const rows = shownAlts.map((c) => { const k = esc(bnKey(c)), hid = P.hidden.has(bnKey(c));
+        return '<div class="bn2-r' + (hid ? ' hid' : '') + '"><img src="' + ico(c) + '" alt=""><div class="bn2-rn"><b style="color:' + ccOf(c) + '">' + esc(c.n) + '</b><span>' + line(c) + '</span></div>' +
+          '<div class="bn2-ril">' + (c.ilvl || '') + '</div><div class="bn2-ac">' + (hid ? '<button class="bn2-b2" type="button" data-bn="show" data-k="' + k + '">Show</button>'
+            : '<button class="bn2-b1" type="button" data-bn="main" data-k="' + k + '" aria-label="Make ' + esc(c.n) + ' your main">Make main</button><button class="bn2-b2" type="button" data-bn="hide" data-k="' + k + '" aria-label="Hide ' + esc(c.n) + '">Hide</button>') + '</div></div>'; }).join('');
+      const hidRow = hidAlts.length && !A.showHid ? '<div class="bn2-hidl"><span class="bn2-av">' + hidAlts.slice(0, 3).map((c) => '<img src="' + ico(c) + '" alt="">').join('') + '</span><span>' + hidAlts.length + ' hidden</span><button class="lk" type="button" data-bn="showhid">Show</button></div>' : '';
+      const was = new Set(b.hidden || []), ch = [];
+      if ((P.main || '') !== (b.main || '') && mc) ch.push('Main is now ' + esc(mc.n));
+      P.hidden.forEach((k) => { if (!was.has(k) && byK[k]) ch.push(esc(byK[k].n) + ' hidden'); }); was.forEach((k) => { if (!P.hidden.has(k) && byK[k]) ch.push(esc(byK[k].n) + ' shown'); });
+      pick = '<div class="bn2-sec"><span>Your main</span></div>' + hero +
+        (cs.length > 1 || hidAlts.length ? '<div class="bn2-sec"><span>Alts</span><em>' + shownAlts.filter((c) => !P.hidden.has(bnKey(c))).length + ' shown · level 90 only</em></div><div class="bn2-list">' + (rows || '<div class="bn2-empty">Every alt is hidden.</div>') + hidRow + '</div>' : '') +
+        (cs.length ? '' : '<p class="bn2-empty">No level 90 characters on this Battle.net account in ' + RG + '.</p>') +
+        '<div class="bn2-foot"><span class="bn2-chg">' + (ch.length ? '<b>' + ch.length + ' change' + (ch.length > 1 ? 's' : '') + '</b> · ' + ch.slice(0, 2).join(', ') + (ch.length > 2 ? ' and more' : '') : 'Characters under level 90 are left out.') + '</span>' +
+        (ch.length ? '<button class="bn2-undo" type="button" data-bn="undo">Undo</button>' : '') +
+        '<button class="btn primary bn2-save" type="button" data-bn="save"' + (A.busy ? ' disabled' : '') + '>' + (A.busy ? 'Saving…' : 'Save') + '</button></div>'; }
+    const wcl = W.wcl, wl = bnIn ? '<div class="bn2-wcl"><span class="bn2-w" aria-hidden="true">W</span>' + (wcl ? '<span><b class="bn2-ok">✓</b> Warcraft Logs connected, for private logs</span>' : '<span>Private logs? <button class="lk" type="button" data-bn="wcl">Connect Warcraft Logs</button></span>') +
+      '<span class="bn2-pv" title="' + esc(BN_PRIVACY) + '">' + lock + 'Only your character list is read. Never your password.</span></div>' : '<p class="bn2-pvf">' + esc(BN_PRIVACY) + '</p>';
+    el.innerHTML = '<div class="panel pnz-sheet bn-sheet bn2"><div class="bn2-top"><div><h2>Your characters</h2><p>Home, Plan, the Report card and the Companion app follow your main.</p></div><button class="pnz-x" type="button" aria-label="Close">×</button></div>' +
+      note + acct + pick + wl + '</div>';
   };
   const save = async (method, body) => { A.busy = true; draw();
     try { const r = await fetch('/api/bnet', { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }), j = await r.json().catch(() => ({}));
@@ -33820,6 +33839,7 @@ function openAccounts(note) {
     else if (k === 'hide') { A.pick.hidden.add(t.dataset.k); draw(); }
     else if (k === 'show') { A.pick.hidden.delete(t.dataset.k); draw(); }
     else if (k === 'showhid') { A.showHid = true; draw(); }
+    else if (k === 'undo') { A.pick = null; draw(); }
     else if (k === 'save') save('POST', { main: A.pick.main, hidden: [...A.pick.hidden] }); };
   el.onchange = (e) => { const t = e.target.closest('[data-bn="reg"]'); if (t) A.region = t.value; };
   el.onsubmit = async (e) => { const f = e.target.closest('[data-bn="test"]'); if (!f) return; e.preventDefault(); const n = String(f.n.value || '').trim(); if (!n) return;
