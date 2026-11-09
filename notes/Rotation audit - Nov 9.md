@@ -320,3 +320,71 @@ rules judge, while the spec's rules never mention that talent: 172 hits, each re
 Read line by line: 11 of 40 (Restoration Druid, Beast Mastery, Shadow, Protection Paladin, Discipline, Havoc, Frost Death Knight, Arms,
 Retribution, Fury, Unholy). All 36 shared-module specs: cooldown cross-check, talent scan, top-kill test (38 specs), fast-key test (30).
 Not read line by line yet: 29, the four hand-built pages' full text among them (Holy Paladin, Preservation, Demonology in full).
+
+## Part 9. The priority row: slips every top player makes (Flex: "Keep going")
+
+**Method.** For each spec, every priority slip ("you pressed A, but B was better") was counted over the 19 fastest Mythic Coiled Altar
+kills (`slips.js`). A slip that nearly every top player makes many times a kill was read against the guide. Three kinds came out.
+
+### P1. A cooldown the raid holds counted a slip for every second it was held. FIXED
+- The step "X was ready" kept firing until X was pressed. A raid that holds a cooldown 30 s for a phase took 20 slips for one decision,
+  on top of the "uses" row that already shows it. The option for this existed (`hold: 10`, wanted for 10 s after it's ready) on one
+  step, Unholy's Army of the Dead.
+- Slips a kill among top players: Avenging Wrath 28 (8 of 8 Retribution), Halo 22 (19 of 19 Shadow), Goremaw's Bite 21 (20 of 20
+  Subtlety), Dragonrage 19 (5 of 5 Devastation), Reaper's Mark 14 (9 of 9 Frost DK), Breath of Eons 14 (11 of 14 Augmentation), Volley
+  10 (27 of 28 Marksmanship), Dark Harvest 6 and Malevolence 5 (Affliction).
+- **Fix:** those steps (and Destruction's Malevolence and Blood's Reaper's Mark, the same steps) are wanted for 10 s after they're ready.
+
+### P2. Havoc: "Reaver's Glaive as soon as you have it". FIXED (step removed)
+- All 16 top Havoc Demon Hunters broke it, about 79 times a kill (1,264 slips). The ones who hold the Glaive read 59-72% on priority;
+  the ones who don't read 91-97%.
+- The guide: "Hold Reaver's Glaive for adds to funnel." The pack list already had no such step, and the row's own text admitted "a held
+  Glaive may be on purpose".
+
+### P3. One guide's order, where the other guide puts another button first. FIXED (the other button counts as right)
+- **Affliction, Haunt before Agony.** Wowhead: "Haunt -> Agony -> Wither". Icy Veins: "maintain Agony + Corruption/Wither -> ... ->
+  Haunt". Refreshing Agony, Wither or Corruption while Haunt is ready is no longer a slip. 28 of 28 top players, about 13 a kill.
+- **Elemental, Flame Shock refresh before Lava Burst.** Wowhead puts Lava Burst first. 10 of 12 top players, about 10 a kill.
+- **Vengeance, Fel Devastation before Soul Cleave.** The guide's order is "Soul Cleave with 1+ Souls -> Fel Devastation (50+ Fury)".
+  2 of 2 top players, 47 a kill.
+- **Windwalker, Celestial Conduit.** In the guide's own sequence it comes after Strike of the Windlord, Fists of Fury, Rising Sun Kick
+  and Whirling Dragon Punch ("Don't cast Conduit too early"). 11 of 11 top players, about 10 a kill.
+- **Windwalker, Spinning Crane Kick with Unbroken Rhythm on one target.** The guide's step is "with Dance of Chi-Ji and Unbroken
+  Rhythm"; Unbroken Rhythm alone is the pack rule. 11 of 11 top players, about 17 a kill. The one-target step now needs both.
+- **Preservation, spending an Essence Burst before Temporal Anomaly or Merithra's Blessing.** Temporal Anomaly on cooldown is the
+  guide's second priority and Merithra's Blessing goes out "when damage hits". 15 of 15 and 11 of 15 top players.
+
+### Read and left as they are (the guide backs the rule, so it stands)
+- Blood, "Blood Boil sat at 2 charges": all 17 top players, 22 a kill. Both guides: "never cap Blood Boil charges".
+- Arms, "Heroic Strike before Mortal Strike": 22 of 22, 8 a kill. Both guides put Heroic Strike first.
+- Balance, "Starsurge before Starfire inside Eclipse": 24 of 24, 13 a kill. The guide's inside-Eclipse order.
+- Marksmanship, "Explosive Shot on cooldown": 26 of 28, 8 a kill. The guide: on cooldown.
+- Subtlety read line by line: nothing found.
+
+### OPEN from this pass
+- Elemental: "Elemental Blast with both tier buffs / near full Maelstrom" before Lava Burst (9-10 of 12 top players, 5 a kill each).
+- Shadow: "Shadow Word: Madness about to fall off / near full" before Void Volley (19 of 19, 6 a kill).
+- Affliction: "Agony refresh" before Shadow Bolt (23 of 28, 9 a kill): likely a Nightfall Shadow Bolt.
+
+### P4. Top marks read with the old rules. FIXED (left out until the top players are read again)
+- The saved top-player marks were read before today's changes. An old priority mark (Havoc about 80% with the Reaver's Glaive step,
+  Protection Paladin 63% with the Consecration step) is lower than what the same players score now (Havoc 90-99%, Protection Paladin
+  65-85%). Beside the row "top X" was out of date, and "matches the top players on this boss" (R9) came too easily.
+- **Fix:** each row whose rule changed today is on its spec's `topNew` list, the switch that already existed for this: priority for
+  Havoc, Protection Paladin, Vengeance, Discipline, Affliction, Augmentation, Devastation, Marksmanship, Subtlety, Windwalker,
+  Retribution, Elemental, Shadow and Preservation; the opener for Protection Paladin and Blood; Hunter's Mark; Shadow's Madness uptime
+  and Voidform windows.
+- **Data job, OPEN:** read the top players again from the log library so these rows get their marks back. Damage-over-time marks on
+  fights with a split (The Coiled Altar) are a little low for the same reason.
+- Two bars set from the top players once the old marks were out: Shadow Word: Madness uptime 87% (19 top Shadow Priests, counted on any
+  enemy: 86-96%), Protection Paladin priority 62% (16 top players: 65-85%).
+- Mistweaver wording: "never sit at 3 charges of Renewing Mist" said 3 to everyone; it is 2, or 3 with Pool of Mists.
+
+### After this round, against where the day started (219 of the same pages)
+149 rows fairer, 0 worse, 96 scores up, none down. Top players' priority rows now sit close together: Havoc 90-99%, Windwalker 93-98%,
+Subtlety 91-99%, Augmentation 95-99%, Devastation 94-99%, Affliction 82-96%, Marksmanship 84-97%, Elemental 86-99%, Retribution 83-94%.
+A tight band at the top is what a correct priority row looks like; a wide one (Havoc was 59-97%) meant the rule was judging a choice.
+
+### Where the count stands
+Read line by line: 15 of 40 (adds Subtlety, Marksmanship, Holy Priest, Windwalker). Every spec's priority row: checked against what the
+top players press. Still not read line by line: 25.
