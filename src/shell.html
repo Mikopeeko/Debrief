@@ -17637,5 +17637,28 @@ html body #view#view .rgx-pn .rgx-ex .rck-t > summary { padding: 6px 2px !import
 }
 @media (max-width: 900px) { html body #view#view .rcx, html body #view#view .rgx-pn { grid-template-columns: minmax(0, 1fr) !important; } html body #view#view .rcx > .rcx-sec[data-ph="rot"] { column-count: 1 !important; } }
 </style>
+<style>/* (Nov 9: Rotation Timeline polish) */
+@layer defaultTheme {
+html body #view#view .pf-inl > .rtl-vt { order: 2 !important; }
+html body #view#view .pf-inl > section.rtl { order: 2 !important; }
+html body #view#view .rtv-lay { gap: 14px !important; }
+html body #view#view .rtv-lay > .rtv-wrap { flex: 1 1 auto !important; min-width: 0 !important; width: auto !important; }
+html body #view#view .rtv-wrap > .rtv { width: auto !important; max-width: 100% !important; min-width: 0 !important; }
+html body #view#view .rtv .rtv-body, html body #view#view .rtv .rtv-hd { width: auto !important; justify-content: center !important; }
+html body #view#view .rtv .rtv-top, html body #view#view .rtv .r338-ov, html body #view#view .rtv .r350-row { width: auto !important; }
+html body #view#view .rtv .rtv-top { padding-top: 8px !important; padding-bottom: 8px !important; }
+html body #view#view .rtv .r350-row { padding-top: 6px !important; padding-bottom: 6px !important; row-gap: 4px !important; }
+html body #view#view .rtv .r338-ov { padding-top: 8px !important; padding-bottom: 8px !important; }
+html body #view#view .rtv .rtv-hd { top: calc(48px + var(--rtv-ovh, 104px)) !important; }
+}
+@media (max-width: 1180px) {
+  html body #view#view .rtv-lay { flex-direction: column !important; }
+  html body #view#view .rtv-lay > .rtv-fside { position: static !important; width: 100% !important; order: -1 !important; }
+  html body #view#view .rtv-lay > .rtv-fside .rtv-fsb { width: auto !important; column-count: 3 !important; column-gap: 24px !important; }
+  html body #view#view .rtv-lay > .rtv-wrap { width: 100% !important; }
+}
+@media (max-width: 760px) { html body #view#view .rtv-lay > .rtv-fside .rtv-fsb { column-count: 1 !important; } }
+</style>
+<script>/* (Nov 9: the Timeline's column titles stick just under the whole-fight strip) */ (function () { var t = function () { var ov = document.querySelector('#view .rtv .r338-ov'); if (!ov) return; var r = ov.closest('.rtv'), h = Math.round(ov.getBoundingClientRect().height) + 'px'; if (r.style.getPropertyValue('--rtv-ovh') !== h) r.style.setProperty('--rtv-ovh', h); }; setInterval(t, 800); window.addEventListener('resize', t); })();</script>
 </body>
 </html>
