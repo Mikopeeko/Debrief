@@ -340,7 +340,7 @@ const HTML_FLAGS = {};
    stamp, so it's fetched fresh at once. Cloudflare's compression can mark the stamp weak (W/"..."): it's the same stamp.
    Cloudflare removes ETags from web pages on this site (tested on a practice link), so the build time goes along as Last-Modified too:
    a browser holding exactly this build sends it back (If-Modified-Since) and gets the same "not changed") */
-const APP_V = '6f08f81694f62b9e', APP_T = 'Mon, 09 Nov 2026 22:00:24 GMT';
+const APP_V = '6f08f81694f62b9e', APP_T = 'Mon, 09 Nov 2026 22:03:54 GMT';
 function pageRes(req, key, make, status, headers) { const et = '"' + APP_V + '-' + key + '"', h = { ...headers, ETag: et, 'Last-Modified': APP_T }, inm = req.headers.get('If-None-Match') || '';
   if (status === 200 && (inm.split(',').some((x) => x.trim().replace(/^W\//, '') === et) || req.headers.get('If-Modified-Since') === APP_T)) return new Response(null, { status: 304, headers: h });
   return new Response(make(), { status, headers: h }); }
@@ -2080,9 +2080,9 @@ async function nightPlayers(env, code, ut, pk) { const c = caches.default, ck = 
   const out = [...ids].map((i) => A.get(i)).filter(Boolean).map((a) => ({ n: a.name, s: a.server || '', i: a.icon || a.subType || '' }));
   await c.put(ck, new Response(JSON.stringify(out), { headers: { 'Cache-Control': 'max-age=' + (Date.now() - (R.endTime || 0) > 2 * 3600e3 ? 30 * 86400 : 600) } })).catch(() => {}); return out; }
 // (practice links: two real Warcraft Logs teams stand in for the made-up guild's teams, with made-up raiders: Officertest and Raidertest raid with
-// Honestly, Gmtest with Lai Dou Lai Le, Twotest with both, Pugtest (not in the guild) with Honestly, Newtest with neither)
+// Honestly, Gmtest with Lai Dou Lai Le, Twotest with both, Pugtest (not in the guild) with Honestly, Newtest with neither; none of the practice account's own characters (Flëxørçïst, Trëèflêx, Exampleshaman), so other chats testing as Flëxørçïst are never asked to join)
 const SETUP_MOCK = { 'guild:6956': { name: 'Honestly', server: 'Frostmourne', kind: 'guild' }, 'team:796679': { name: 'Lai Dou Lai Le', server: 'Barthilas', kind: 'team' } };
-function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], ['Raidertest', 11], ['Trëèflêx', 10], ['Pugtest', 10], ['Exampleshaman', 9], ['Twotest', 7], ['Trialtest', 3], ['Trial1', 2], ['Social3', 1]];
+function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], ['Raidertest', 11], ['Pugtest', 10], ['Twotest', 7], ['Trialtest', 3], ['Trial1', 2], ['Social3', 1]];
   for (let i = 1; i <= 12; i++) A.push(['Raider' + i, 12 - (i % 5)]); const B = [['Gmtest', 11], ['Officerb', 12], ['Twotest', 9], ['Raider9', 5], ['Trial2', 4]]; for (let i = 13; i <= 16; i++) B.push(['Raider' + i, 10]);
   const L = id === 'guild:6956' ? A : id === 'team:796679' ? B : [], hs = (n) => { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
   return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => { const cls = BNET_CLS[1 + (hs(n) % 13)]; return { k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls, spec: { WARRIOR: 'Fury', PALADIN: 'Holy', HUNTER: 'Marksmanship', ROGUE: 'Outlaw', PRIEST: 'Shadow', DEATHKNIGHT: 'Frost', SHAMAN: 'Restoration', MAGE: 'Fire', WARLOCK: 'Destruction', MONK: 'Mistweaver', DRUID: 'Balance', DEMONHUNTER: 'Havoc', EVOKER: 'Devastation' }[cls] || '', c }; }).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }

@@ -93,9 +93,9 @@ console.log('5. Setting it up: claimed once');
 { const [st, j] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'setup', me: 'Officertest', players: W.setupMockRegs('guild:6956').list.filter((p) => p.n !== 'Social3').map((p) => p.k), names: { 2: 'Honestly raider' }, keys: { 'wla-rosters': '{"list":[],"cur":null}' } });
   ok(st === 200 && j.ok, 'Officertest sets up Honestly'); }
 { const [, j] = await call(P.Officertest, '/api/teamplan?id=guild:6956'); ok(j.setup && j.setup.by === 'Officertest' && j.setup.guild === 'Wolfthorn', '"Set up by ' + (j.setup && j.setup.by) + '" for ' + (j.setup && j.setup.guild));
-  ok(j.you && j.you.lead && j.access === 'edit', 'Officertest leads it and edits'); ok(j.regs && j.regs.n === 21, 'the raiders kept: ' + (j.regs && j.regs.n) + ' (Social3 unticked)');
+  ok(j.you && j.you.lead && j.access === 'edit', 'Officertest leads it and edits'); ok(j.regs && j.regs.n === 19, 'the raiders kept: ' + (j.regs && j.regs.n) + ' (Social3 unticked)');
   ok(j.ranks && j.ranks.acc[2] === 'see' && j.ranks.acc[0] === 'edit' && j.ranks.acc[7] === 'none', 'access picked: rank 0 Edit, rank 2 See, rank 7 None');
-  ok(j.alog.length === 1 && /set up Honestly for Wolfthorn, with 21 raiders/.test(j.alog[0].sum), 'access history: "' + (j.alog[0] || {}).sum + '"'); }
+  ok(j.alog.length === 1 && /set up Honestly for Wolfthorn, with 19 raiders/.test(j.alog[0].sum), 'access history: "' + (j.alog[0] || {}).sum + '"'); }
 { const [st, j] = await call(P.Gmtest, '/api/teamplan?id=guild:6956', { op: 'setup', me: 'Gmtest' }); ok(st === 403 || st === 409, 'a second setup is refused: ' + j.error); }
 { const [, j] = await call(P.Raidertest, '/api/teamplan?id=guild:6956'); ok(j.access === 'see' && j.alog.length === 0, 'Raidertest (rank 2) sees it, without the access history'); }
 
