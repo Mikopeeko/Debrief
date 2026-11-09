@@ -50,7 +50,7 @@ function snWho() { const me = meOf(); let g = null; try { g = homeTarget(); } ca
 function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nights = snNights(), jobs = snJobs();
   const last = op ? null : nights[0];
   const tip = { raid: op ? 'Raid review · ' + (op.day ? snDate(op.day) + ', ' : '') + 'pull ' + op.n : last ? 'Raid review · last night ' + snDate(last.day) : 'Raid review', plan: 'Plan' + (jobs.n ? ' · ' + plural(jobs.n, 'job') + ' left' : '') };
-  const badge = { plan: jobs.n ? '<span class="snv-b warn">' + plural(jobs.n, 'job') + ' left</span>' : '', raid: sec !== 'raid' && (SN_LAST || last) ? '<span class="snv-b ok">' + esc(SN_LAST && SN_LAST.wallMs ? snDate(snDay(SN_LAST.wallMs)) : last ? snDate(last.day) : '') + '</span>' : '' };
+  const badge = {}, badge0 = { plan: jobs.n ? '<span class="snv-b warn">' + plural(jobs.n, 'job') + ' left</span>' : '', raid: sec !== 'raid' && (SN_LAST || last) ? '<span class="snv-b ok">' + esc(SN_LAST && SN_LAST.wallMs ? snDate(snDay(SN_LAST.wallMs)) : last ? snDate(last.day) : '') + '</span>' : '' };
   let h = '';
   for (const [k, l] of SN_SECS) { const soon = k === 'mplus' && typeof mpSoon === 'function' && mpSoon();
     h += '<button type="button" class="snv-i' + (sec === k ? ' on' : '') + (soon ? ' off' : '') + '" data-sn="' + k + '" data-tip="' + esc(tip[k] || l) + '"' + (sec === k ? ' aria-current="page"' : '') + (soon ? ' aria-disabled="true"' : '') + '>' + snIco(k) + '<span class="snv-l">' + esc(l) + '</span>' + (badge[k] || '') + (soon ? '<span class="snv-b">Soon</span>' : '') + '</button>';

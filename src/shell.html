@@ -17470,5 +17470,31 @@ html body #view#view section.dbt .dtm .dtm-pr.cur { box-shadow: inset 2px 0 0 va
 }
 
 </style>
+<style>/* (Nov 9: Cooldowns by mechanic or by player, the coverage strip) */
+@layer defaultTheme {
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cvb { position: absolute !important; left: 0 !important; height: 20px !important; background: rgba(255, 255, 255, .025) !important; pointer-events: none !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv { position: absolute !important; z-index: 3 !important; transform: translateX(-50%) !important; height: 18px !important; min-width: 30px !important; padding: 0 5px !important; box-sizing: border-box !important; display: grid !important; place-items: center !important; border-radius: 0 !important; font: 700 10.5px/1 var(--body) !important; font-variant-numeric: tabular-nums !important; color: #14161a !important; background: var(--cvc) !important; cursor: default !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv.cv-ok { --cvc: #5fd46f; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv.cv-thin { --cvc: #e6b450; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv.cv-none { --cvc: #ef6b63; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv.cv-much { --cvc: #6ea8fe; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl .btl-cv:hover { outline: 1px solid var(--text, #e8eaee) !important; outline-offset: 1px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-lns .btl-cvl { height: 18px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl.btl-hlw .btl-c:not(.hlw) { opacity: .28 !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl.btl-hlw .btl-c.hlw { outline: 1px solid var(--cc) !important; outline-offset: 1px !important; z-index: 4 !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-vw.btl-byv { margin-left: 8px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-rows .btl-m :is(.icw, img, .ico) { width: 24px !important; height: 24px !important; }
+/* (Flex, Nov 9: "Is there a way to compact some of this to save space? Gets a little crowded on smaller screens"): the empty card is one slim
+   line, the two filter rows sit side by side when they fit, with smaller buttons, and their hints go below 1500 px */
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .pg-cdcalm { padding: 6px 10px !important; margin: 6px 0 6px !important; min-height: 0 !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .pg-cdcalm .btn { height: 28px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf { display: inline-flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px 8px !important; width: auto !important; max-width: 100% !important; margin: 0 18px 6px 0 !important; padding: 0 !important; min-height: 0 !important; vertical-align: top !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf .btl-tyl { width: auto !important; min-width: 0 !important; flex: none !important; margin: 0 !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf .btl-tys button { height: 24px !important; padding: 0 8px !important; font-size: 11.5px !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf .btl-tyh { margin-left: 0 !important; }
+html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf.btl-cdf { margin-top: 0 !important; }
+@media (max-width: 1499px) { html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .ndz-dtl .btl-tyf .btl-tyhint { display: none !important; } }
+}
+</style>
 </body>
 </html>
