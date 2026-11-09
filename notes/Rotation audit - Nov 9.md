@@ -281,3 +281,42 @@ first; that is a per-spec job.
 - 35 specs still not read line by line against their guides. Guide notes not re-read against the live guide pages.
 - The Mythic+ tab's own "top X (3 runs)" numbers are shown beside each row but don't colour it. Using them the way the raid rule (R9)
   uses the top marks would settle most of the OPEN table at once. That code is in `src/mptab.js`, the Mythic+ chat's file.
+
+## Part 8. Talents, and the next specs read line by line (Flex: "Yes, carry on")
+
+### The talent scan (all 36 shared-module specs)
+For every 12.1.5 talent whose text replaces a button, casts it for you, or changes its cooldown or charges, and names a spell the spec's
+rules judge, while the spec's rules never mention that talent: 172 hits, each read. Script: `talscan.js`.
+
+- **TL1. Retribution, Radiant Glory. FIXED.** 12.1.5 (458359): "Avenging Wrath is replaced with Radiant Glory. Wake of Ashes activates
+  Avenging Wrath for 8 sec." The guide's Mythic+ build takes it. The rules never knew it, so a player with it kept an "Avenging Wrath
+  uses" row for a button they don't have, plus the opener step and the window. All four now switch off with Radiant Glory. Not seen on a
+  real log yet (the Retribution Paladins in the fast keys play Avenging Wrath).
+- **How cooldowns are read, for the record.** "Uses" and "on cooldown" rows take a spell's base cooldown from the game by its id, then a
+  talent override where one is written (`cdT`), then what the log shows. So Combustion without Kindling (2 min) and Meteor without Blast
+  Zone (45 s) are counted right on the site. The node test falls back to the written number, so it can differ from the site there.
+- **TL2. OPEN: priority steps use a written cooldown as it is.** Three assume a talent: Beast Mastery's Bestial Wrath at 30 s (needs The
+  Beast Within, -60 s), Enhancement's Ascendance at 2 min (needs Thorim's Invocation, -60 s) and Totemic's Lava Lash at 7.2 s (Molten
+  Assault, Ashen Catalyst, Hot Hand). Without the talent the step says "it was ready" while it was cooling down. Top players all take
+  them, so nobody was seen blamed. Gating a step on a passive talent switches the step off when a log has no talent list, so this needs
+  a per-step cooldown-by-talent option first.
+- **TL3. NOTE:** every other hit shortens a cooldown or adds a charge, where the row then expects fewer uses than were possible. That is
+  lenient, never blame.
+
+### Read line by line this round: Havoc, Frost Death Knight, Arms, Retribution, Fury, Unholy
+- **Arms, packs. FIXED.** The pack list had Mortal Strike before the plain Overpower. The guide (Slayer AoE): "Cleave -> Overpower at 2
+  charges -> Execute -> Overpower -> Mortal Strike -> Slam", and the step's own tip says "once Cleave and Overpower are spent". Swapped.
+- **Havoc. FIXED (wording).** Essence Break "for 4 seconds": 6 with 4 pieces of the tier set (guide: "4 s, 6 s with tier").
+- **Unholy. FIXED (wording).** Two pack steps for Epidemic carried Death Coil's tip ("Death Coil with Sudden Doom...").
+- **Frost Death Knight:** nothing found. Rules match both guides, the 4-or-more Glacial Advance line and the Rider and Deathbringer split.
+- **Fury. OPEN:** Odyn's Fury is a priority step for both hero trees. The guide's Mountain Thane lists don't have it (only the pack
+  opener). A fast-run Fury read "Odyn's Fury on cooldown" fine on 4 of 10 pulls and priority on 4 of 11.
+- **Havoc. OPEN:** "Eye Beam on cooldown" counts 30 s; Cycle of Hatred brings it to 20 s (lenient). The Hunt's tip says "as Aldrachi
+  Reaver" to Fel-Scarred players too.
+- **Arms. OPEN (keys):** "Bladestorm in Colossus Smash" on packs (fine on 1 of 11 pulls for a fast-run Arms): Sudden Death brings
+  Bladestorm back faster than Colossus Smash there.
+
+### Where the count stands
+Read line by line: 11 of 40 (Restoration Druid, Beast Mastery, Shadow, Protection Paladin, Discipline, Havoc, Frost Death Knight, Arms,
+Retribution, Fury, Unholy). All 36 shared-module specs: cooldown cross-check, talent scan, top-kill test (38 specs), fast-key test (30).
+Not read line by line yet: 29, the four hand-built pages' full text among them (Holy Paladin, Preservation, Demonology in full).
