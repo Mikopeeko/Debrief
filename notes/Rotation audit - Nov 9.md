@@ -523,3 +523,35 @@ The `topNew` lists are gone. Six marks on The Twin Fangs were dropped where fewe
 - Mistweaver with Chi-Ji (4 players) reads 79% priority: the list is the Yu'lon raid build's.
 - Devastation: 11 players on one build miss the opener (2 of 6 steps). Not looked at.
 - Not rotation, but on the same page: "Stat order" reads amber for 54 to 98% of top players in 14 specs. Worth its own look.
+
+
+## Part 12: The stat rows (round 9)
+
+Flex: "Yes" to looking at Stat order. Same 2,229 top-player pages.
+
+**What was wrong.** "Stat order" read amber for **840 of 2,218 top players**. The row takes the guide's stat priority and marks you when you wear more of
+a lower stat than a higher one. But a guide's priority is what each point is worth, not how much of each stat the best gear ends up with. The site's
+orders match the guide notes; the top players simply don't wear them in that order:
+
+| Spec | Guide | What top players wear | Amber before |
+|---|---|---|---|
+| Retribution | Mastery > Haste > Crit | Crit over Haste, 98% | 60 of 61 |
+| Holy Priest | Crit = Haste > Vers = Mastery | Mastery over Haste, 90% | 55 of 62 |
+| Subtlety | Mastery > Haste > Vers = Crit | Crit over Haste, 88% | 56 of 65 |
+| Guardian | Haste > Vers > Crit = Mastery | Crit over Vers 85%, Mastery over Vers 77% | 48 of 53 |
+| Protection Warrior | Haste > Crit = Vers > Mastery | Mastery over Vers, 80% | 39 of 45 |
+| Enhancement | Crit = Mastery > Haste | Haste over Crit, 75% | 40 of 55 |
+| Frost Mage | Mastery > Crit > Haste | Crit over Mastery, 61 to 73% | 38 of 52 |
+| Marksmanship | Crit > Mastery > Vers > Haste | Haste over Vers, 61% | 46 of 64 |
+
+**Fix.** A new table, `STAT_TOP`, holds which stat a quarter or more of the top players of each spec (and hero tree, where it differs) wear ahead of
+which. The row no longer marks a stat you wear ahead when they wear it ahead too. Everything else is still marked: a Retribution Paladin with more
+Versatility than Mastery still reads amber. The row's explanation says so. Made by `lib/stattop.js`; read it again when gear changes.
+
+**The other stat rows.** Shown, not graded (`ROW_SOFT`), where most top players miss them:
+- "Past the falloff point" was amber for every top player past the guide's stop point: Affliction 21, Augmentation 27, Discipline 18, Restoration
+  Druid 23, Vengeance 28.
+- Elemental's Mastery goal, 47 of 59.
+- A stat "kept low": Protection Warrior's Mastery 36 of 45, Marksmanship's Haste 39 of 64, Restoration Druid's Crit 35 of 60.
+
+**Result, same 2,229 pages:** Stat order amber 840 to 290 (13%), falloff point 126 to 9, kept low 258 to 148. No spec has more than 28% of its top players amber on Stat order now.
