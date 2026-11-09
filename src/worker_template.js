@@ -1813,7 +1813,7 @@ const rankAcc = (R, rk) => (RANK_ACC.test((R.acc || {})[rk] || '') ? R.acc[rk] :
 const guildSlug = (n) => String(n || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
 // (practice links: a made-up Wolfthorn roster, with test names for each rank (Gmtest, Officertest, Raidertest, Trialtest, Socialtest))
 function guildMockRoster() {
-  const m = [['Flëxørçïst', 0], ['Gmtest', 0], ['Officertest', 1], ['Trëèflêx', 2], ['Exampleshaman', 2], ['Raidertest', 2], ['Trialtest', 3], ['Socialtest', 5], ['Newtest', 3], ['Twotest', 2]]; /* (Nov 9: Newtest isn't in the logs, Twotest raids with two teams; Pugtest raids but isn't in the guild) */
+  const m = [['Flëxørçïst', 0], ['Gmtest', 0], ['Officertest', 1], ['Trëèflêx', 2], ['Exampleshaman', 2], ['Raidertest', 2], ['Trialtest', 3], ['Socialtest', 5], ['Newtest', 3], ['Twotest', 2], ['Leadtest', 1]]; for (let i = 17; i <= 26; i++) m.push(['Raider' + i, 2]); /* (Leadtest: a raid leader who is an officer, for first-sign-in walkthroughs, Nov 9) (Nov 9: Newtest isn't in the logs, Twotest raids with two teams; Pugtest raids but isn't in the guild) */
   for (let i = 1; i <= 3; i++) m.push(['Officer' + 'abc'[i - 1], 1]); for (let i = 1; i <= 16; i++) m.push(['Raider' + i, 2]); for (let i = 1; i <= 2; i++) m.push(['Trial' + i, 3]); for (let i = 1; i <= 40; i++) m.push(['Social' + i, 4 + (i % 6)]);
   return { at: Date.now(), mock: true, members: m.map(([n, rank]) => ({ k: n.toLowerCase() + '-thrall', n, rank })) };
 }
@@ -1957,7 +1957,7 @@ async function nightPlayers(env, code, ut, pk) { const c = caches.default, ck = 
 // Honestly, Gmtest with Lai Dou Lai Le, Twotest with both, Pugtest (not in the guild) with Honestly, Newtest with neither; none of the practice account's own characters (Flëxørçïst, Trëèflêx, Exampleshaman), so other chats testing as Flëxørçïst are never asked to join)
 const SETUP_MOCK = { 'guild:6956': { name: 'Honestly', server: 'Frostmourne', kind: 'guild' }, 'team:796679': { name: 'Lai Dou Lai Le', server: 'Barthilas', kind: 'team' } };
 function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], ['Raidertest', 11], ['Pugtest', 10], ['Twotest', 7], ['Trialtest', 3], ['Trial1', 2], ['Social3', 1]];
-  for (let i = 1; i <= 12; i++) A.push(['Raider' + i, 12 - (i % 5)]); const B = [['Gmtest', 11], ['Officerb', 12], ['Twotest', 9], ['Raider9', 5], ['Trial2', 4]]; for (let i = 13; i <= 16; i++) B.push(['Raider' + i, 10]);
+  for (let i = 1; i <= 12; i++) A.push(['Raider' + i, 12 - (i % 5)]); const B = [['Leadtest', 12], ['Gmtest', 11], ['Officerb', 12], ['Twotest', 9], ['Raider9', 5], ['Trial2', 4]]; for (let i = 13; i <= 26; i++) B.push(['Raider' + i, 12 - (i % 4)]);
   const L = id === 'guild:6956' ? A : id === 'team:796679' ? B : [], hs = (n) => { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
   return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => { const cls = BNET_CLS[1 + (hs(n) % 13)]; return { k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls, spec: { WARRIOR: 'Fury', PALADIN: 'Holy', HUNTER: 'Marksmanship', ROGUE: 'Outlaw', PRIEST: 'Shadow', DEATHKNIGHT: 'Frost', SHAMAN: 'Restoration', MAGE: 'Fire', WARLOCK: 'Destruction', MONK: 'Mistweaver', DRUID: 'Balance', DEMONHUNTER: 'Havoc', EVOKER: 'Devastation' }[cls] || '', c }; }).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
 // (a team's raiders: who was in its boss pulls on its last 12 raid nights this tier, and on how many of them)
@@ -2073,6 +2073,7 @@ async function setupRoute(req, env, url) {
   if (req.method !== 'GET') return json({ error: 'GET only.' }, 405);
   if (url.searchParams.get('step') === 'mine') return json(await setupMine(env, url, who));
   if (url.searchParams.get('step') === 'recheck' && PRACTICE_HOST(url)) return json(await teamRecheck(env, url, url.searchParams.get('id') || '')); /* (practice links: the daily re-check, now) */
+  if (url.searchParams.get('step') === 'reset' && PRACTICE_HOST(url)) { const rid = url.searchParams.get('id') || ''; if (!SETUP_MOCK[rid]) return json({ error: 'Only the made-up practice teams can be reset.' }, 400); await env.debrief_nights.delete(teamK(rid, url)); return json({ ok: true, reset: rid }); } /* (practice links only: a made-up team back to "not set up", for walkthroughs) */
   if (url.searchParams.get('step') !== 'regs') return json(await setupFind(env, url, who));
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
   const S = await setupCheck(env, url, who, id); if (S.error) return json({ error: S.error, set: !!S.set }, 403);
