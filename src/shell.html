@@ -17660,5 +17660,17 @@ html body #view#view .rtv .rtv-hd { top: calc(48px + var(--rtv-ovh, 104px)) !imp
 @media (max-width: 760px) { html body #view#view .rtv-lay > .rtv-fside .rtv-fsb { column-count: 1 !important; } }
 </style>
 <script>/* (Nov 9: the Timeline's column titles stick just under the whole-fight strip) */ (function () { var t = function () { var ov = document.querySelector('#view .rtv .r338-ov'); if (!ov) return; var r = ov.closest('.rtv'), h = Math.round(ov.getBoundingClientRect().height) + 'px'; if (r.style.getPropertyValue('--rtv-ovh') !== h) r.style.setProperty('--rtv-ovh', h); }; setInterval(t, 800); window.addEventListener('resize', t); })();</script>
+<style>/* (Nov 9: Rotation Timeline, notes beside the mistakes) */
+@layer defaultTheme {
+html body #view#view .rtv .rtv-note { position: absolute !important; left: 34px !important; right: 4px !important; z-index: 4 !important; padding: 4px 8px 5px !important; background: rgba(20, 22, 27, .94) !important; border-left: 2px solid var(--nc) !important; border-radius: 0 !important; font: 12px/1.35 var(--body) !important; color: var(--muted, #aeb6bf) !important; cursor: default !important; }
+html body #view#view .rtv .rtv-note b { display: block !important; font-weight: 700 !important; color: var(--text, #e8eaee) !important; }
+html body #view#view .rtv .rtv-note b em { font-style: normal !important; font-weight: 600 !important; color: var(--nc) !important; margin-left: 6px !important; }
+html body #view#view .rtv .rtv-note span { display: block !important; }
+html body #view#view .rtv .rtv-note.lv3 { --nc: #ef6b63; }
+html body #view#view .rtv .rtv-note.lv2 { --nc: #e6a23c; }
+html body #view#view .rtv .rtv-note.lv1 { --nc: #e6cc6a; }
+html body #view#view .rtv .rtv-note:hover { background: rgba(32, 35, 42, .98) !important; }
+}
+</style>
 </body>
 </html>
