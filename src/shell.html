@@ -15250,6 +15250,13 @@ window.__ahGroup = function (w) { try {
 body:not(.snv-on) .snv-keys, body:not(.snv-on) .snv-ctx, body:not(.snv-on) .snv-gsub, body:not(.snv-on) .snv-after { display: none !important; } /* (a phone keeps today's page) */
 </style>
 <style>/* (Nov 8, audit W14: a reset pull is one line; the tidiers that re-add Also hurt or the chain are kept out) */ html body #view .dbt-why.wrt-reset .dbt-add, html body #view .dbt-why.wrt-reset .dbt-chn, html body #view .dbt-why.wrt-reset .dbt-ln, html body #view .dbt-why.wrt-reset .r208-sub, html body #view .dbt-why.wrt-reset .wrt-line, html body #view .dbt-why.wrt-reset .r236-two, html body #view .dbt-why.wrt-reset .dbt-c5w { display: none !important; }</style>
+<style id="hiw-root">/* (Nov 9, Flex: "the root cause row should 100% stand out", "I liked how you had the backdrop and border of it different ... it was just the tag being in the wrong spot slightly": How it went's Root cause row on a darker backdrop with a dashed green border and green words, as the fold row first showed it; the row is 13px wider so its tag ends where every other row's tag ends) */
+html body #view .dbt-why .dbt-chn .dbt-chr.wrt-rootrow { background: var(--bg, #0f1117); border: 1px dashed rgba(95, 207, 120, 0.4); border-radius: 4px; padding-left: 12px; padding-right: 12px; width: calc(100% + 13px); color: rgb(159, 220, 176); }
+html body #view .dbt-why .dbt-chn .dbt-chr.wrt-rootrow:hover { border-style: solid; }
+@media (max-width: 760px) { html body #view .dbt-why .dbt-chn .dbt-chr.wrt-rootrow { width: 100%; } }
+/* (Flex: "is this intended to show two root causes?": a row opened under the merged row is its detail, so it never wears the Root cause look) */
+html body #view .dbt-why .dbt-chn .dbt-chr.hiw-kid.wrt-rootrow { background: none; border: 0; box-shadow: none; padding-left: 14px; padding-right: 0; width: 100%; color: inherit; }
+html body #view .dbt-why .dbt-chn .dbt-chr.hiw-kid.wrt-rootrow > b::after { content: none; display: none; }</style>
 </head>
 <body class="refine">
 <noscript><h1>Debrief: WoW raid log review for Mythic progression</h1><p>Debrief reads your World of Warcraft raid logs, from a Warcraft Logs report or your own combat log, and explains every pull: which mechanics were missed and by whom, why each player died, how your rotation compared with the top players, and what to fix before the next pull.</p><p>It also has Heroic and Mythic boss guides for every boss in the raid, a raid cooldown planner that reads Northern Sky Raid Tools (NSRT) notes, and an in-game addon. Debrief needs JavaScript turned on.</p></noscript>
