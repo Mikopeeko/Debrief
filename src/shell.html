@@ -17350,5 +17350,65 @@ html body #view#view .r212-sb > .dbr-4 > .r378-sw .r378-seg button { height: 20p
 }
 }
 </style>
+<style>/* (Nov 9: Summary > Timeline tidy) */
+@layer defaultTheme {
+/* ===== Summary > Timeline, tidy (Nov 9, Flex OK'd the mock) ===== */
+/* the map card: square, its overlays on one 10px inset, one look */
+html body #view#view section.dbt .dtm .dtm-map, html body #view#view section.dbt .dtm .dtm-mm, html body #view#view section.dbt .dtm .zwrap, html body #view#view section.dbt .dtm .zbox { border-radius: 0 !important; }
+html body #view#view section.dbt .dtm .dtm-mh { flex-wrap: nowrap !important; height: 38px !important; padding: 0 10px !important; display: flex !important; align-items: center !important; border-bottom: 1px solid var(--line, #2c3236) !important; }
+html body #view#view section.dbt .dtm .dtm-mh .dtm-pull { display: flex !important; flex-wrap: nowrap !important; align-items: baseline !important; gap: 12px !important; min-width: 0 !important; flex: 1 1 auto !important; overflow: hidden !important; white-space: nowrap !important; font-size: 12.5px !important; }
+html body #view#view section.dbt .dtm .dtm-mh .dtm-tb { flex: none !important; font: 700 10.5px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--faint, #868f99) !important; }
+html body #view#view section.dbt .dtm .dtm-mh .dtm-tb em { font: 700 13px var(--body) !important; letter-spacing: 0 !important; color: var(--text, #e8eaee) !important; margin-left: 6px !important; font-style: normal !important; }
+html body #view#view section.dbt .dtm .dtm-mh .dtm-cn { min-width: 0 !important; overflow: hidden !important; white-space: nowrap !important; text-overflow: ellipsis !important; }
+html body #view#view section.dbt .dtm .dtm-mh .dtm-fb { flex: none !important; height: 26px !important; border-radius: 0 !important; margin-left: auto !important; }
+html body #view#view section.dbt .dtm .dtm-hp, html body #view#view section.dbt .dtm .znorth, html body #view#view section.dbt .dtm .zkeyb, html body #view#view section.dbt .dtm .zin, html body #view#view section.dbt .dtm .zout, html body #view#view section.dbt .dtm .dtm-rf { background: rgba(11, 13, 18, .84) !important; border: 1px solid rgba(255, 255, 255, .09) !important; border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important; }
+html body #view#view section.dbt .dtm .dtm-hp { left: 10px !important; top: 48px !important; height: 26px !important; padding: 0 9px !important; display: flex !important; align-items: center !important; box-sizing: border-box !important; }
+html body #view#view section.dbt .dtm .dtm-hp > div { gap: 8px !important; font-size: 12px !important; }
+html body #view#view section.dbt .dtm .zkey { top: 10px !important; right: 46px !important; }
+html body #view#view section.dbt .dtm .zkeyb { height: 26px !important; padding: 0 10px !important; font-size: 12px !important; }
+html body #view#view section.dbt .dtm .znorth { top: 10px !important; right: 10px !important; height: 26px !important; min-width: 30px !important; padding: 0 6px !important; display: grid !important; place-items: center !important; font-size: 11px !important; box-sizing: border-box !important; }
+html body #view#view section.dbt .dtm .zctl { right: 10px !important; bottom: 54px !important; gap: 0 !important; display: flex !important; flex-direction: column !important; }
+html body #view#view section.dbt .dtm .zin, html body #view#view section.dbt .dtm .zout { width: 26px !important; height: 26px !important; font-size: 15px !important; }
+html body #view#view section.dbt .dtm .zout { border-top: 0 !important; }
+/* raid frames: smaller and quieter (still draggable; the script places them 10px from the corner) */
+html body #view#view section.dbt .dtm .dtm-rf { padding: 3px !important; }
+html body #view#view section.dbt .dtm .dtm-rfh { height: 5px !important; }
+html body #view#view section.dbt .dtm .dtm-rfg { gap: 2px !important; padding: 0 !important; grid-template-columns: repeat(4, 44px) !important; }
+html body #view#view section.dbt .dtm .dtm-rff { width: 44px !important; height: 15px !important; background: rgba(255, 255, 255, .04) !important; overflow: hidden !important; }
+html body #view#view section.dbt .dtm .dtm-rff > i { top: 0 !important; bottom: 0 !important; left: 0 !important; height: auto !important; opacity: .42 !important; background-image: none !important; }
+html body #view#view section.dbt .dtm .dtm-rff > .rfn { top: 0 !important; left: 3px !important; right: 2px !important; height: 15px !important; line-height: 15px !important; font-size: 8.5px !important; font-weight: 600 !important; color: rgba(255, 255, 255, .88) !important; text-shadow: 0 1px 1px rgba(0, 0, 0, .7) !important; overflow: hidden !important; white-space: nowrap !important; text-overflow: clip !important; width: auto !important; }
+html body #view#view section.dbt .dtm .dtm-rff > :is(s, u) { top: 2px !important; right: 2px !important; left: auto !important; width: 10px !important; height: 10px !important; }
+/* one control bar */
+html body #view#view section.dbt .dtm .dtm-left { container-type: inline-size !important; }
+html body #view#view section.dbt .dtm .zanim { height: 44px !important; padding: 0 10px !important; gap: 10px !important; display: flex !important; align-items: center !important; border-top: 1px solid var(--line, #2c3236) !important; background: var(--panel, #191c1f) !important; }
+html body #view#view section.dbt .dtm .zanim .zplay { height: 28px !important; padding: 0 12px !important; border-radius: 0 !important; font: 700 12.5px var(--body) !important; background: var(--gold, #d4b77d) !important; border-color: var(--gold, #d4b77d) !important; color: #15171c !important; flex: none !important; }
+html body #view#view section.dbt .dtm .zanim .zrange { flex: 1 1 auto !important; width: auto !important; min-width: 120px !important; margin: 0 !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-clk { flex: none !important; font: 600 12px var(--body) !important; font-variant-numeric: tabular-nums !important; color: var(--muted, #aeb6bf) !important; min-width: 70px !important; text-align: center !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl { flex: none !important; display: flex !important; align-items: center !important; gap: 8px !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button { height: 28px !important; min-width: 0 !important; margin: 0 !important; padding: 0 9px !important; border-radius: 0 !important; border: 1px solid var(--line2, #3b4348) !important; background: transparent !important; color: var(--muted, #aeb6bf) !important; font: 600 12px var(--body) !important; box-shadow: none !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button[data-spd] + button[data-spd] { margin-left: -9px !important; border-left: 0 !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button.on { background: rgba(255, 255, 255, .08) !important; color: var(--text, #e8eaee) !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button:hover { color: var(--text, #e8eaee) !important; }
+@container (max-width: 560px) {
+html body #view#view section.dbt .dtm .zanim { gap: 7px !important; padding: 0 8px !important; }
+html body #view#view section.dbt .dtm .zanim .zplay { padding: 0 10px !important; }
+html body #view#view section.dbt .dtm .zanim .zrange { min-width: 60px !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-clk { min-width: 0 !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl { gap: 6px !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button { padding: 0 7px !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button[data-spd] + button[data-spd] { margin-left: -6px !important; }
+html body #view#view section.dbt .dtm .zanim .dtm-ctl button:is(.dtm-rft, .dtm-fsb) > span { display: none !important; }
+}
+/* the list and the mistake card: one panel, a fixed header, the list starts on a whole row */
+html body #view#view section.dbt .dtm .dtm-rc { gap: 0 !important; background: var(--panel, #191c1f) !important; border: 1px solid var(--line, #2c3236) !important; border-radius: 0 !important; overflow: hidden !important; }
+html body #view#view section.dbt .dtm .dtm-rc > .dtm-card.dtm-pb { border: 0 !important; border-radius: 0 !important; background: transparent !important; padding: 0 10px 8px !important; margin: 0 !important; }
+html body #view#view section.dbt .dtm .dtm-rc > .dtm-vd { border: 0 !important; border-top: 1px solid var(--line, #2c3236) !important; border-radius: 0 !important; background: rgba(255, 255, 255, .015) !important; margin: 0 !important; padding: 12px 14px 14px !important; }
+html body #view#view section.dbt .dtm .dtm-pbh { position: sticky !important; top: 0 !important; z-index: 3 !important; margin: 0 -10px 4px !important; padding: 0 14px !important; height: 38px !important; display: flex !important; align-items: center !important; gap: 10px !important; background: var(--panel, #191c1f) !important; border-bottom: 1px solid var(--line, #2c3236) !important; font: 700 10.5px var(--body) !important; text-transform: uppercase !important; color: var(--faint, #868f99) !important; }
+html body #view#view section.dbt .dtm .dtm-pbh > span { margin-left: auto !important; font: 500 11.5px var(--body) !important; text-transform: none !important; letter-spacing: 0 !important; color: var(--faint, #868f99) !important; }
+html body #view#view section.dbt .dtm .dtm-pr { border-radius: 0 !important; }
+html body #view#view section.dbt .dtm .dtm-pr.cur { box-shadow: inset 2px 0 0 var(--gold, #d4b77d) !important; }
+}
+
+</style>
 </body>
 </html>
