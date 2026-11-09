@@ -1,4 +1,4 @@
-// Automatic team setup, chunk 1 (Nov 9): the Worker's own code against a fake storage, a fake Warcraft Logs and a made-up guild, on this PC only.
+// Automatic team setup, chunks 1 to 4 (Nov 9): the Worker's own code against a fake storage, a fake Warcraft Logs and a made-up guild, on this PC only.
 //   node tests/team-setup.mjs
 // Checks: the guild roster's last good copy, a team's raiders from its raid nights, rank names, which teams an officer can set up,
 // the setup save (claimed once, "set up by"), handing over (guild master or site admin only), and the access history.
@@ -7,7 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url)), SRC = path.join(here,
 let code = fs.readFileSync(SRC, 'utf8').replace("import { WorkerEntrypoint } from 'cloudflare:workers';", 'class WorkerEntrypoint {}').replace(/\b__[A-Z_]+__\b/g, '""');
 code = code.replace('const NIGHT_Q = "";', 'const NIGHT_Q = "fights(killType";').replace('const TEAM_REPORTS_Q = "";', 'const TEAM_REPORTS_Q = "reports(guildID";')
   .replace('const CHAR_INFO_Q = "";', 'const CHAR_INFO_Q = "characterInfo";').replace('const CHAR_REPORTS_Q = "";', 'const CHAR_REPORTS_Q = "recentReports";').replace('const TEAM_INFO_Q = "";', 'const TEAM_INFO_Q = "guildInfo";');
-code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess };\n';
+code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess, teamRecheck, teamCron };\n';
 const tmp = path.join(os.tmpdir(), 'debrief-team-setup-' + process.pid + '.mjs'); fs.writeFileSync(tmp, code);
 
 // ---- the edge cache, storage (R2), KV and Warcraft Logs, all fake
@@ -33,7 +33,11 @@ globalThis.fetch = async (u, o) => { const url = String(u);
     if (q.includes('recentReports')) return new Response(JSON.stringify({ data: { characterData: { character: { recentReports: { data: REPS.filter((r) => r.code !== 'mp').map((r) => ({ ...r, guild: { id: 555, name: 'Testteam' } })) } } } } }));
     if (q.includes('guildInfo')) return new Response(JSON.stringify({ data: { guildData: { guild: { id: v.id, type: 1, server: { name: "Zul'jin" } } } } }));
     return new Response(JSON.stringify({ data: {} })); }
+  if (url.includes('oauth.battle.net/token')) return new Response(JSON.stringify({ access_token: 'btok', expires_in: 3600 }));
+  if (url.includes('api.blizzard.com/data/wow/realm/index')) return new Response(JSON.stringify({ realms: [{ name: "Zul'jin", slug: 'zuljin' }, { name: 'Illidan', slug: 'illidan' }] }));
+  if (url.includes('api.blizzard.com/data/wow/guild/zuljin/testguild/roster')) return BLIZ ? new Response(JSON.stringify({ members: BLIZ.map(([n, slug, rank]) => ({ character: { name: n, realm: { slug } }, rank })) })) : new Response('down', { status: 503 });
   throw new Error('no network in this test: ' + url); };
+let BLIZ = null;
 const W = await import(pathToFileURL(tmp).href); fs.unlinkSync(tmp);
 let bad = 0; const ok = (c, msg) => { console.log((c ? '  ok   ' : '  FAIL ') + msg); if (!c) bad++; };
 const SITE = 'https://debriefme.io', PRAC = 'https://setup-debrief.example.workers.dev';
@@ -111,7 +115,7 @@ const mine = async (n) => (await call(P[n], '/api/teamsetup?step=mine'))[1], nam
 { const m = await mine('Officera'); ok(m.teams.length === 1 && m.teams[0].name === 'Honestly' && m.teams[0].n === 12 && !m.teams[0].joined, 'Officera is asked about Honestly (12 nights): ' + names(m.teams)); }
 { const m = await mine('Twotest'); ok(m.teams.length === 2, 'Twotest is asked about both: ' + names(m.teams)); }
 { const m = await mine('Newtest'); ok(m.teams.length === 0 && m.guild.length === 2, 'Newtest (not in the logs): no prompt, and can ask to join ' + names(m.guild)); }
-{ const [, a] = await call(P.Pugtest, '/api/teamplan?id=guild:6956'); ok(a.access === 'none', 'Pugtest (not in the guild) can\'t open Honestly before joining');
+{ const [, a] = await call(P.Pugtest, '/api/teamplan?id=guild:6956'); ok(a.access === 'see' && a.why === 'regular', 'Pugtest (not in the guild, 10 of 12 nights) sees Honestly as a regular, before joining');
   const [st] = await call(P.Pugtest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, me: 'Pugtest' }); const [, b] = await call(P.Pugtest, '/api/teamplan?id=guild:6956');
   ok(st === 200 && b.access === 'see' && b.why === 'joined' && b.joined, 'Yes, that\'s me: Pugtest joins (in the logs) and can see the plan'); }
 { const [st, j] = await call(P.Newtest, '/api/teamplan?id=guild:6956', { op: 'member', yes: true, me: 'Newtest' }); ok(st === 403, 'Newtest can\'t just join (not in the logs): ' + j.error); }
@@ -124,4 +128,28 @@ const mine = async (n) => (await call(P[n], '/api/teamsetup?step=mine'))[1], nam
   const [, h] = await call(P.Officertest, '/api/teamplan?id=guild:6956'); ok(/let Newtest join/.test(h.alog.map((x) => x.sum).join('|')) && /Pugtest/.test(h.alog.map((x) => x.by).join('|')), 'the access history has the joins'); }
 { const [st] = await call(P.Twotest, '/api/teamplan?id=team:796679', { op: 'member', yes: false, me: 'Twotest' }); const m = await mine('Twotest'); ok(st === 200 && m.teams.find((t) => t.name === 'Lai Dou Lai Le').no, 'Not me: Twotest isn\'t asked about Lai Dou Lai Le again: ' + names(m.teams)); }
 { const [st] = await call(P.Raidertest, '/api/teamplan?id=team:12345', { op: 'member', yes: true, me: 'Raidertest' }); ok(st === 400, 'a team saved the old way can\'t be joined like this'); }
+console.log('9. Keeping it right (chunk 4)');
+P.Officerb = sign('Officerb', [{ n: 'Officerb', slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall' }], PRAC);
+{ const [, a] = await call(P.Officerb, '/api/teamplan?id=guild:6956'), [, b] = await call(P.Officerb, '/api/teamplan?id=team:796679');
+  ok(a.access === 'see' && a.you.away && b.access === 'edit', 'Officerb (rank 1) edits Lai Dou Lai Le, which they raid with, and only sees Honestly, which they don\'t');
+  const [st, j] = await call(P.Officerb, '/api/teamplan?id=guild:6956', { op: 'ranks', names: {}, acc: {}, me: 'Officerb' }); ok(st === 403, '... and can\'t change who can edit Honestly: ' + j.error); }
+{ const [, a] = await call(P.Gmtest, '/api/teamplan?id=guild:6956'); ok(a.access === 'edit' && a.why === 'rank' && a.you.rank === 0, 'the guild master (Gmtest) edits Honestly though they don\'t raid with it'); }
+// (the real way: Testteam (team:555) in Testguild, with Blizzard and Warcraft Logs faked)
+env.BNET_CLIENT_ID = 'b'; env.BNET_CLIENT_SECRET = 's'; const RK = 'https://debrief.cache/guild-roster/us/zuljin/testguild', fresh = () => { C.delete(RK); C.delete('https://debrief.cache/setup/team-reps/555'); };
+BLIZ = [['Leadone', 'zuljin', 1], ['Raidone', 'zuljin', 3], ['Gmone', 'zuljin', 0], ['Newone', 'zuljin', 3]].concat([...Array(8).keys()].map((i) => ['Alt' + i, 'zuljin', 7])); fresh();
+const S1 = { lead: sign('Leadone', [{ n: 'Leadone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), gm: sign('Gmone', [{ n: 'Gmone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), nw: sign('Newone', [{ n: 'Newone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE) };
+{ const [st] = await call(S1.lead, '/api/teamplan?id=team:555', { op: 'setup', me: 'Leadone' }); ok(st === 200, 'Leadone (rank 1) sets up Testteam'); }
+{ const [st] = await call(S1.nw, '/api/teamplan?id=team:555', { op: 'member', yes: true, ask: true, me: 'Newone' }); ok(st === 200, 'Newone (not in the logs yet) asks to join'); }
+await call(S1.gm, '/api/teamplan?id=team:555'); /* (the guild master has opened the plan) */
+actors.push({ id: 5, name: 'Newone', server: "Zul'jin", icon: 'Priest-Holy' }); NIGHTS.n4 = [1, 2, 5]; REPS.unshift({ code: 'n4', startTime: T0 + 5 * day, zone: { name: 'The Venomous Abyss' } }); /* (a new raid night, Newone in it) */
+BLIZ = BLIZ.filter((m) => m[0] !== 'Leadone'); fresh(); /* (and Leadone leaves the guild) */
+{ const r = await W.teamRecheck(env, new URL(SITE), 'team:555'); ok(r.saved && r.added.includes('Newone'), 'the daily re-check finds Newone in the new night: ' + r.added.join(', '));
+  ok(r.joined.includes('Newone'), 'Newone, who had asked, is let in by themselves'); ok(r.lead === 'Gmone', 'Leadone left the guild, so the guild master leads it now: ' + r.lead); }
+{ const [, a] = await call(S1.gm, '/api/teamplan?id=team:555'), [, b] = await call(S1.lead, '/api/teamplan?id=team:555'), [, c] = await call(S1.nw, '/api/teamplan?id=team:555');
+  ok(a.you.lead && a.lead === 'Gmone', 'Gmone is the lead'); ok(!b.you.lead && b.access === 'see' && b.why === 'regular', 'Leadone isn\'t the lead any more; still in the logs, they can see it (' + b.why + ')');
+  ok(c.joined, 'Newone is on the team'); ok(/left Testguild, so Gmone \(the guild master\) leads Testteam now/.test(a.alog.map((x) => x.sum).join('|')), 'the access history says why'); }
+BLIZ = null; fresh(); { const [, a] = await call(S1.gm, '/api/teamplan?id=team:555'); ok(a.access === 'edit', 'Blizzard down: the saved roster keeps the guild master in'); }
+{ const before = JSON.parse(new TextDecoder().decode(R2.get('team-list.json').data)); ok(before.some((x) => x.id === 'team:555'), 'the set-up team is on the daily list');
+  before.forEach((x) => { x.chk = 0; }); R2.set('team-list.json', { data: new TextEncoder().encode(JSON.stringify(before)), etag: 'l' }); await W.teamCron(env);
+  const after = JSON.parse(new TextDecoder().decode(R2.get('team-list.json').data)); ok(after.filter((x) => x.chk > 0).length === 1, 'each 10-minute run re-checks one team that is due'); }
 console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);
