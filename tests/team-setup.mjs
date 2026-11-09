@@ -1,0 +1,107 @@
+// Automatic team setup, chunk 1 (Nov 9): the Worker's own code against a fake storage, a fake Warcraft Logs and a made-up guild, on this PC only.
+//   node tests/team-setup.mjs
+// Checks: the guild roster's last good copy, a team's raiders from its raid nights, rank names, which teams an officer can set up,
+// the setup save (claimed once, "set up by"), handing over (guild master or site admin only), and the access history.
+import fs from 'fs'; import path from 'path'; import os from 'os'; import { pathToFileURL, fileURLToPath } from 'url';
+const here = path.dirname(fileURLToPath(import.meta.url)), SRC = path.join(here, '..', 'src', 'worker_template.js');
+let code = fs.readFileSync(SRC, 'utf8').replace("import { WorkerEntrypoint } from 'cloudflare:workers';", 'class WorkerEntrypoint {}').replace(/\b__[A-Z_]+__\b/g, '""');
+code = code.replace('const NIGHT_Q = "";', 'const NIGHT_Q = "fights(killType";').replace('const TEAM_REPORTS_Q = "";', 'const TEAM_REPORTS_Q = "reports(guildID";')
+  .replace('const CHAR_INFO_Q = "";', 'const CHAR_INFO_Q = "characterInfo";').replace('const CHAR_REPORTS_Q = "";', 'const CHAR_REPORTS_Q = "recentReports";').replace('const TEAM_INFO_Q = "";', 'const TEAM_INFO_Q = "guildInfo";');
+code += '\nexport { teamPlan, setupRoute, rankSuggest, teamRegs, setupFind, guildRoster, rosterK, guildMockRoster, setupMockRegs, teamAccess };\n';
+const tmp = path.join(os.tmpdir(), 'debrief-team-setup-' + process.pid + '.mjs'); fs.writeFileSync(tmp, code);
+
+// ---- the edge cache, storage (R2), KV and Warcraft Logs, all fake
+const C = new Map(); globalThis.caches = { default: { match: async (r) => (C.has(r.url) ? new Response(C.get(r.url)) : undefined), put: async (r, res) => { C.set(r.url, await res.text()); } } };
+const R2 = new Map(); let etagN = 0;
+const bucket = { get: async (k) => { if (!R2.has(k)) return null; const v = R2.get(k); return { etag: v.etag, body: new Response(v.data).body, json: async () => JSON.parse(new TextDecoder().decode(v.data)) }; },
+  put: async (k, data, o) => { if (o && o.onlyIf && o.onlyIf.etagMatches && (!R2.has(k) || R2.get(k).etag !== o.onlyIf.etagMatches)) return null; const buf = typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data); const etag = 'e' + ++etagN; R2.set(k, { data: buf, etag }); return { etag }; },
+  delete: async (k) => R2.delete(k) };
+const KV = new Map(); const kv = { get: async (k, t) => (KV.has(k) ? (t === 'json' ? JSON.parse(KV.get(k)) : KV.get(k)) : null), put: async (k, v) => KV.set(k, v), delete: async (k) => KV.delete(k) };
+const env = { debrief_nights: bucket, DEBRIEF_KV: kv, WCL_CLIENT_ID: 'id', WCL_CLIENT_SECRET: 'secret' };
+// (Warcraft Logs: a team (id 555, "Testteam") with three raid nights and one Mythic+ key; a player only in trash doesn't count)
+const T0 = Date.UTC(2026, 10, 5, 1, 0); const day = 864e5;
+const REPS = [{ code: 'n1a', startTime: T0, zone: { name: 'The Venomous Abyss' } }, { code: 'n1b', startTime: T0 + 2 * 3600e3, zone: { name: 'The Venomous Abyss' } }, { code: 'n2', startTime: T0 + day, zone: { name: 'The Venomous Abyss' } },
+  { code: 'n3', startTime: T0 + 3 * day, zone: { name: 'The Venomous Abyss' } }, { code: 'mp', startTime: T0 + 4 * day, zone: { name: 'Mythic+ Season 2' } }];
+const actors = [{ id: 1, name: 'Leadone', server: "Zul'jin", icon: 'Paladin-Holy' }, { id: 2, name: 'Raidone', server: "Zul'jin", icon: 'Mage-Fire' }, { id: 3, name: 'Pugone', server: 'Illidan', icon: 'Warrior-Arms' }, { id: 4, name: 'Trashonly', server: "Zul'jin", icon: 'Rogue' }];
+const NIGHTS = { n1a: [1, 2], n1b: [1, 2, 3], n2: [1, 2], n3: [1, 3] };
+globalThis.fetch = async (u, o) => { const url = String(u);
+  if (url.includes('/oauth/token')) return new Response(JSON.stringify({ access_token: 'tok', expires_in: 3600 }));
+  if (url.includes('warcraftlogs.com/api/v2')) { const b = JSON.parse(o.body), q = b.query, v = b.variables || {};
+    if (q.includes('reports(guildID')) return new Response(JSON.stringify({ data: { reportData: { reports: { data: v.id === 555 ? REPS : [] } } } }));
+    if (q.includes('fights(killType')) return new Response(JSON.stringify({ data: { reportData: { report: { endTime: T0, fights: [{ id: 1, friendlyPlayers: NIGHTS[v.code] }, { id: 2, friendlyPlayers: [] }], masterData: { actors } } } } }));
+    if (q.includes('characterInfo')) return new Response(JSON.stringify({ data: { characterData: { character: v.name === 'Leadone' ? { id: 9001 } : v.name === 'Raidone' ? { id: 9002 } : null } } }));
+    if (q.includes('recentReports')) return new Response(JSON.stringify({ data: { characterData: { character: { recentReports: { data: REPS.filter((r) => r.code !== 'mp').map((r) => ({ ...r, guild: { id: 555, name: 'Testteam' } })) } } } } }));
+    if (q.includes('guildInfo')) return new Response(JSON.stringify({ data: { guildData: { guild: { id: v.id, type: 1, server: { name: "Zul'jin" } } } } }));
+    return new Response(JSON.stringify({ data: {} })); }
+  throw new Error('no network in this test: ' + url); };
+const W = await import(pathToFileURL(tmp).href); fs.unlinkSync(tmp);
+let bad = 0; const ok = (c, msg) => { console.log((c ? '  ok   ' : '  FAIL ') + msg); if (!c) bad++; };
+const SITE = 'https://debriefme.io', PRAC = 'https://setup-debrief.example.workers.dev';
+// (a signed-in person: a session in KV and their Battle.net characters in storage)
+let sid = 0; const sign = (name, chars, host) => { const bid = 'b-' + name.toLowerCase(), hex = (++sid).toString(16).padStart(48, 'a'); KV.set('sess:' + hex, JSON.stringify({ bid, exp: Date.now() + 3600e3, mock: host === PRAC || undefined }));
+  const pre = host === PRAC ? 'practice-bnet/' : 'bnet/'; R2.set(pre + ('b:' + bid).replace(/[^a-z0-9]+/g, '-') + '.json', { data: new TextEncoder().encode(JSON.stringify({ region: 'us', chars, main: chars[0].n.toLowerCase() + '-' + chars[0].slug, mock: host === PRAC || undefined })), etag: 'x' });
+  return { cookie: 'dbs=' + hex, host }; };
+const call = async (P, path, body) => { const r = await (path.startsWith('/api/teamsetup') ? W.setupRoute : W.teamPlan)(new Request(P.host + path, { method: body ? 'POST' : 'GET', headers: { Cookie: P.cookie, 'Content-Type': 'application/json', 'CF-Connecting-IP': '1.2.3.' + Math.floor(Math.random() * 250) }, body: body ? JSON.stringify(body) : undefined }), env, new URL(P.host + path)); return [r.status, await r.json()]; };
+
+console.log('1. The guild roster: the last good copy when Blizzard does not answer');
+const TG = { region: 'us', realm: 'zuljin', name: 'Testguild' };
+R2.set(W.rosterK(TG, new URL(SITE)), { data: new TextEncoder().encode(JSON.stringify({ at: Date.now() - 3 * day, members: [{ k: 'leadone-zuljin', n: 'Leadone', rank: 1 }, { k: 'raidone-zuljin', n: 'Raidone', rank: 3 }, { k: 'gmone-zuljin', n: 'Gmone', rank: 0 }].concat([...Array(8).keys()].map((i) => ({ k: 'alt' + i + '-zuljin', n: 'Alt' + i, rank: 7 }))) })), etag: 'r' });
+{ const r = await W.guildRoster(env, new URL(SITE), TG); ok(r && r.old && r.members.length === 11, 'Blizzard down: the 3-day-old copy is used (' + (r ? r.members.length + ' members' : 'nothing') + ')'); }
+{ const g2 = { ...TG, name: 'Oldguild' }; R2.set(W.rosterK(g2, new URL(SITE)), { data: new TextEncoder().encode(JSON.stringify({ at: Date.now() - 20 * day, members: [] })), etag: 'r' }); ok((await W.guildRoster(env, new URL(SITE), g2)) === null, 'a copy older than two weeks is not used'); }
+
+console.log('2. A team\'s raiders, from its raid nights');
+const R = await W.teamRegs(env, new URL(SITE), 'team:555', 'us');
+ok(R.nights === 3, 'three raid nights (two reports on one night count once, the Mythic+ key is left out): ' + R.nights);
+const by = Object.fromEntries(R.list.map((p) => [p.k, p]));
+ok(by['leadone-zuljin'] && by['leadone-zuljin'].c === 3 && by['raidone-zuljin'].c === 2 && by['pugone-illidan'].c === 2, 'nights each: Leadone 3, Raidone 2, Pugone 2');
+ok(!by['trashonly-zuljin'], 'someone only in trash pulls is not a raider');
+ok(by['leadone-zuljin'].cls === 'PALADIN' && by['leadone-zuljin'].spec === 'Holy', 'class and spec from the log: ' + by['leadone-zuljin'].cls + ' ' + by['leadone-zuljin'].spec);
+
+console.log('3. Rank names, from who raids with the team');
+const S = W.rankSuggest(W.guildMockRoster(), W.setupMockRegs('guild:6956'), 'Honestly'), rs = Object.fromEntries(S.map((x) => [x.r, x]));
+ok(rs[0].name === 'Guild Master' && rs[0].acc === 'edit', 'rank 0: Guild Master, Edit');
+ok(rs[1].name === 'Officer' && rs[1].acc === 'edit', 'rank 1: Officer, Edit');
+ok(rs[2].name === 'Honestly raider' && rs[2].acc === 'see', 'rank 2: "' + rs[2].name + '", See (' + rs[2].why + ')');
+ok(rs[3].name === 'Trial' && rs[3].acc === 'see', 'rank 3: "' + rs[3].name + '", See (' + rs[3].why + ')');
+ok(rs[7].name === 'Alt / Social' && rs[7].acc === 'none', 'rank 7: "' + rs[7].name + '", None (' + rs[7].why + ')');
+
+console.log('4. Which teams each person can set up (test copy, made-up guild)');
+const P = {}; for (const n of ['Officertest', 'Raidertest', 'Gmtest', 'Pugtest', 'Newtest', 'Twotest', 'Flëxørçïst']) P[n] = sign(n, [{ n, slug: 'thrall', realm: 'Thrall', g: 'Wolfthorn', gs: 'thrall' }], PRAC);
+const F = {}; for (const n of Object.keys(P)) F[n] = (await call(P[n], '/api/teamsetup?step=find'))[1];
+const tl = (n) => F[n].teams.map((t) => t.name + (t.can ? ' (can)' : '')).join(', ') || 'none';
+ok(F.Officertest.can && F.Officertest.teams.length === 1 && F.Officertest.teams[0].can, 'Officertest (rank 1): ' + tl('Officertest'));
+ok(F.Gmtest.can && F.Gmtest.teams.length === 1 && F.Gmtest.teams[0].name === 'Lai Dou Lai Le' && F.Gmtest.teams[0].can, 'Gmtest (rank 0): ' + tl('Gmtest'));
+ok(!F.Raidertest.can && F.Raidertest.teams.every((t) => !t.can), 'Raidertest (rank 2): sees ' + tl('Raidertest') + ', can set up none');
+ok(!F.Pugtest.can, 'Pugtest (not in the guild): can set up none');
+ok(F.Newtest.teams.length === 0, 'Newtest (not in the logs): no teams found');
+ok(F.Twotest.teams.length === 2 && !F.Twotest.can, 'Twotest (rank 2, two teams): ' + tl('Twotest'));
+{ const [st, j] = await call(P.Raidertest, '/api/teamsetup?step=regs&id=guild:6956'); ok(st === 403, 'Raidertest can\'t read a team\'s raiders for setup: ' + j.error); }
+{ const [st, j] = await call(P.Officertest, '/api/teamsetup?step=regs&id=guild:6956'); ok(st === 200 && j.list.length > 15 && j.ranks.length > 4, 'Officertest gets Honestly\'s ' + j.list.length + ' raiders over ' + j.nights + ' nights and ' + j.ranks.length + ' ranks named');
+  ok(j.list.find((p) => p.n === 'Pugtest').rank === null && j.list.find((p) => p.n === 'Raidertest').rank === 2, 'raiders show their guild rank, and Pugtest shows as not in the guild'); }
+
+{ const lead = sign('Leadone', [{ n: 'Leadone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE), raid = sign('Raidone', [{ n: 'Raidone', slug: 'zuljin', realm: "Zul'jin", g: 'Testguild', gs: 'zuljin' }], SITE);
+  const [, a] = await call(lead, '/api/teamsetup?step=find'), [, b] = await call(raid, '/api/teamsetup?step=find'), t = (a.teams || [])[0] || {};
+  ok(t.id === 'team:555' && t.kind === 'team' && t.n === 3 && t.can, 'the real way (Warcraft Logs, Blizzard roster from its saved copy): Leadone (rank 1) finds Testteam, 3 nights, can set it up');
+  ok((b.teams || []).length === 1 && !b.teams[0].can, 'Raidone (rank 3) finds it too, but can\'t set it up'); }
+
+console.log('5. Setting it up: claimed once');
+{ const [st, j] = await call(P.Raidertest, '/api/teamplan?id=guild:6956', { op: 'setup', me: 'Raidertest' }); ok(st === 403, 'Raidertest can\'t: ' + j.error); }
+{ const [st, j] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'setup', me: 'Officertest', players: W.setupMockRegs('guild:6956').list.filter((p) => p.n !== 'Social3').map((p) => p.k), names: { 2: 'Honestly raider' }, keys: { 'wla-rosters': '{"list":[],"cur":null}' } });
+  ok(st === 200 && j.ok, 'Officertest sets up Honestly'); }
+{ const [, j] = await call(P.Officertest, '/api/teamplan?id=guild:6956'); ok(j.setup && j.setup.by === 'Officertest' && j.setup.guild === 'Wolfthorn', '"Set up by ' + (j.setup && j.setup.by) + '" for ' + (j.setup && j.setup.guild));
+  ok(j.you && j.you.lead && j.access === 'edit', 'Officertest leads it and edits'); ok(j.regs && j.regs.n === 21, 'the raiders kept: ' + (j.regs && j.regs.n) + ' (Social3 unticked)');
+  ok(j.ranks && j.ranks.acc[2] === 'see' && j.ranks.acc[0] === 'edit' && j.ranks.acc[7] === 'none', 'access picked: rank 0 Edit, rank 2 See, rank 7 None');
+  ok(j.alog.length === 1 && /set up Honestly for Wolfthorn, with 21 raiders/.test(j.alog[0].sum), 'access history: "' + (j.alog[0] || {}).sum + '"'); }
+{ const [st, j] = await call(P.Gmtest, '/api/teamplan?id=guild:6956', { op: 'setup', me: 'Gmtest' }); ok(st === 403 || st === 409, 'a second setup is refused: ' + j.error); }
+{ const [, j] = await call(P.Raidertest, '/api/teamplan?id=guild:6956'); ok(j.access === 'see' && j.alog.length === 0, 'Raidertest (rank 2) sees it, without the access history'); }
+
+console.log('6. Handing it over: the guild master or the site admin only');
+await call(P.Raidertest, '/api/teamplan?id=guild:6956'); /* (Raidertest has opened it) */
+{ const [st, j] = await call(P.Officertest, '/api/teamplan?id=guild:6956', { op: 'handover', to: 'Raidertest', me: 'Officertest' }); ok(st === 403, 'the officer who set it up can\'t: ' + j.error); }
+{ const [st, j] = await call(P.Gmtest, '/api/teamplan?id=guild:6956', { op: 'handover', to: 'Newtest', me: 'Gmtest' }); ok(st === 400, 'someone who never opened it: ' + j.error); }
+{ const [st] = await call(P.Gmtest, '/api/teamplan?id=guild:6956', { op: 'handover', to: 'Raidertest', me: 'Gmtest' }); const [, j] = await call(P.Raidertest, '/api/teamplan?id=guild:6956');
+  ok(st === 200 && j.you.lead && j.lead === 'Raidertest', 'the guild master hands it to Raidertest, who now leads it'); ok(/handed the team from Officertest to Raidertest/.test(j.alog.map((x) => x.sum).join('|')), 'and the access history says so'); }
+
+console.log('7. A team with no guild and the old way still work');
+{ const [st] = await call(P.Pugtest, '/api/teamplan?id=team:12345', { op: 'create', name: 'Community', me: 'Pugtest' }); ok(st === 200, 'anyone saves a team with no guild first, as before'); }
+console.log(bad ? bad + ' failed' : 'all passed'); process.exit(bad ? 1 : 0);

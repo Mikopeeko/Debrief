@@ -1813,7 +1813,7 @@ const rankAcc = (R, rk) => (RANK_ACC.test((R.acc || {})[rk] || '') ? R.acc[rk] :
 const guildSlug = (n) => String(n || '').toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-');
 // (practice links: a made-up Wolfthorn roster, with test names for each rank (Gmtest, Officertest, Raidertest, Trialtest, Socialtest))
 function guildMockRoster() {
-  const m = [['Flëxørçïst', 0], ['Gmtest', 0], ['Officertest', 1], ['Trëèflêx', 2], ['Exampleshaman', 2], ['Raidertest', 2], ['Trialtest', 3], ['Socialtest', 5]];
+  const m = [['Flëxørçïst', 0], ['Gmtest', 0], ['Officertest', 1], ['Trëèflêx', 2], ['Exampleshaman', 2], ['Raidertest', 2], ['Trialtest', 3], ['Socialtest', 5], ['Newtest', 3], ['Twotest', 2]]; /* (Nov 9: Newtest isn't in the logs, Twotest raids with two teams; Pugtest raids but isn't in the guild) */
   for (let i = 1; i <= 3; i++) m.push(['Officer' + 'abc'[i - 1], 1]); for (let i = 1; i <= 16; i++) m.push(['Raider' + i, 2]); for (let i = 1; i <= 2; i++) m.push(['Trial' + i, 3]); for (let i = 1; i <= 40; i++) m.push(['Social' + i, 4 + (i % 6)]);
   return { at: Date.now(), mock: true, members: m.map(([n, rank]) => ({ k: n.toLowerCase() + '-thrall', n, rank })) };
 }
@@ -1821,12 +1821,18 @@ async function guildRoster(env, url, g) {
   if (!g || !BNET_REG.test(g.region || '') || !/^[a-z0-9-]{1,60}$/.test(g.realm || '') || !g.name) return null;
   if (g.mock && PRACTICE_HOST(url)) return guildMockRoster();
   const c = caches.default, ck = new Request('https://debrief.cache/guild-roster/' + g.region + '/' + g.realm + '/' + encodeURIComponent(guildSlug(g.name))), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
-  const tok = await bnetAppToken(env, g.region); if (!tok) return null;
-  const r = await bnetApi(g.region, '/data/wow/guild/' + g.realm + '/' + encodeURIComponent(guildSlug(g.name)) + '/roster', tok); if (!r || !Array.isArray(r.members)) return null;
+  const tok = await bnetAppToken(env, g.region), r = tok ? await bnetApi(g.region, '/data/wow/guild/' + g.realm + '/' + encodeURIComponent(guildSlug(g.name)) + '/roster', tok) : null;
+  if (!r || !Array.isArray(r.members)) { /* (Nov 9: Blizzard didn't answer: the last good copy, up to two weeks old, so nobody is locked out mid-raid; asked again in 5 minutes) */
+    const old = await rosterOld(env, g, url); if (!old || Date.now() - (old.at || 0) > 14 * 864e5) return null;
+    old.old = true; await c.put(ck, new Response(JSON.stringify(old), { headers: { 'Cache-Control': 'max-age=300' } })).catch(() => {}); return old; }
   const o = { at: Date.now(), members: r.members.map((x) => ({ k: String((x.character || {}).name || '').toLowerCase() + '-' + (((x.character || {}).realm || {}).slug || ''), n: (x.character || {}).name, rank: x.rank })) };
   await c.put(ck, new Response(JSON.stringify(o), { headers: { 'Cache-Control': 'max-age=3600' } })).catch(() => {});
+  if (env.debrief_nights) await env.debrief_nights.put(rosterK(g, url), JSON.stringify(o), { httpMetadata: { contentType: 'application/json' } }).catch(() => {});
   return o;
 }
+/* (Nov 9: each guild's last good roster, kept in storage: at most one save an hour a guild, when the edge copy runs out) */
+const rosterK = (g, url) => (PRACTICE_HOST(url) ? 'practice-guild-roster/' : 'guild-roster/') + g.region + '-' + g.realm + '-' + encodeURIComponent(guildSlug(g.name)) + '.json';
+async function rosterOld(env, g, url) { if (!env.debrief_nights) return null; try { const o = await env.debrief_nights.get(rosterK(g, url)); return o ? await o.json() : null; } catch (e) { return null; } }
 const rankRow = (rk) => Math.max(0, Math.min(rk, RANK_TOP));
 // (one raider's rank in a guild, from their linked characters: the best (lowest) rank any of them holds)
 async function guildRankOf(env, url, g, link) {
@@ -1921,6 +1927,99 @@ async function teamClaim(env, url, id, who) { const gm = /^guild:(\d+)$/.exec(id
   const G = await bnGuildFor(env, url, who, gm[1]); if (!G) return no + ' None of your Battle.net characters is in it.';
   const rk = await guildRankOf(env, url, G, await bnetGet(env, who.uid, url)); if (rk == null) return 'Blizzard didn\'t send ' + G.name + '\'s roster just now. Try again in a minute.';
   return rk >= 0 && rk <= 1 ? '' : no; }
+
+// ---- Automatic team setup (Nov 9, Flex: "Ok, lets do it"; the plan: notes/Team setup plan - automatic (Nov 9).md). A team's raiders come
+// from its Warcraft Logs raid nights (who was in its boss pulls; never who uploaded the log), a guild master or officer sets the team up once,
+// and the team remembers who did it and keeps a short history of access changes. Teams saved before this (Wolfthorn) work as they did.
+const SETUP_ZONE = /venomous abyss/i, SETUP_NIGHTS = 12;
+const setupDay = (t) => new Date(t - 10 * 3600e3).toISOString().slice(0, 10); /* (a raid night: an evening raid that runs past midnight stays one night) */
+const alogAdd = (d, by, sum) => { d.alog = (d.alog || []).concat([{ at: Date.now(), by: String(by || '').slice(0, 24), sum: String(sum).slice(0, 140) }]).slice(-100); }; /* (the access history: kept, not undoable) */
+// (a Warcraft Logs answer kept at the edge: one read for everyone)
+async function wclKeep(env, key, q, vars, secs) { const c = caches.default, ck = new Request('https://debrief.cache/setup/' + key), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const d = await gql(env, q, vars); await c.put(ck, new Response(JSON.stringify(d), { headers: { 'Cache-Control': 'max-age=' + secs } })).catch(() => {}); return d; }
+// (one raid report's players: everyone in at least one boss pull, with their realm and class-spec; a finished report is kept a month)
+async function nightPlayers(env, code) { const c = caches.default, ck = new Request('https://debrief.cache/setup-night/' + code), hit = await c.match(ck).catch(() => null); if (hit) return hit.json();
+  const d = await gql(env, NIGHT_Q, { code }), R = d && d.reportData && d.reportData.report; if (!R) return [];
+  const A = new Map(((R.masterData || {}).actors || []).map((a) => [a.id, a])), ids = new Set(); for (const f of R.fights || []) for (const i of f.friendlyPlayers || []) ids.add(i);
+  const out = [...ids].map((i) => A.get(i)).filter(Boolean).map((a) => ({ n: a.name, s: a.server || '', i: a.icon || a.subType || '' }));
+  await c.put(ck, new Response(JSON.stringify(out), { headers: { 'Cache-Control': 'max-age=' + (Date.now() - (R.endTime || 0) > 2 * 3600e3 ? 30 * 86400 : 600) } })).catch(() => {}); return out; }
+// (practice links: two real Warcraft Logs teams stand in for the made-up guild's teams, with made-up raiders: Officertest and Raidertest raid with
+// Honestly, Gmtest with Lai Dou Lai Le, Twotest with both, Pugtest (not in the guild) with Honestly, Newtest with neither)
+const SETUP_MOCK = { 'guild:6956': { name: 'Honestly', server: 'Frostmourne', kind: 'guild' }, 'team:796679': { name: 'Lai Dou Lai Le', server: 'Barthilas', kind: 'team' } };
+function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], ['Raidertest', 11], ['Trëèflêx', 10], ['Pugtest', 10], ['Exampleshaman', 9], ['Twotest', 7], ['Trialtest', 3], ['Trial1', 2], ['Social3', 1]];
+  for (let i = 1; i <= 12; i++) A.push(['Raider' + i, 12 - (i % 5)]); const B = [['Gmtest', 11], ['Officerb', 12], ['Twotest', 9], ['Raider9', 5], ['Trial2', 4]]; for (let i = 13; i <= 16; i++) B.push(['Raider' + i, 10]);
+  const L = id === 'guild:6956' ? A : id === 'team:796679' ? B : [], hs = (n) => { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
+  return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => ({ k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls: BNET_CLS[1 + (hs(n) % 13)], spec: '', c })).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
+// (a team's raiders: who was in its boss pulls on its last 12 raid nights this tier, and on how many of them)
+async function teamRegs(env, url, id, region) {
+  if (PRACTICE_HOST(url) && SETUP_MOCK[id]) return setupMockRegs(id);
+  const wid = +id.split(':')[1], reps = ((((await wclKeep(env, 'team-reps/' + wid, TEAM_REPORTS_Q, { id: wid, page: 1 }, 1800)) || {}).reportData || {}).reports || {}).data || [], nights = new Map();
+  for (const r of reps) { if (!r.zone || !SETUP_ZONE.test(r.zone.name)) continue; const day = setupDay(r.startTime); if (!nights.has(day)) nights.set(day, []); nights.get(day).push(r.code); }
+  const last = [...nights.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, SETUP_NIGHTS), reg = BNET_REG.test(region || '') ? region : 'us';
+  const tok = await bnetAppToken(env, reg), RS = tok ? await realmSlugs(reg, tok).catch(() => ({})) : {}, slug = (s) => RS[realmNorm(s)] || guildSlug(s), P = new Map();
+  for (const [day, codes] of last) { const seen = new Set();
+    for (const code of codes.slice(0, 3)) for (const p of await nightPlayers(env, code).catch(() => [])) { const s = slug(p.s), k = String(p.n).toLowerCase() + '-' + s; if (seen.has(k)) continue; seen.add(k);
+      const [c0, sp] = String(p.i || '').split('-'), o = P.get(k) || { k, n: p.n, s, cls: String(c0 || '').toUpperCase(), spec: sp || '', c: 0, last: day }; o.c++; if (sp && !o.spec) o.spec = sp; P.set(k, o); } }
+  return { at: Date.now(), nights: last.length, last: last.length ? last[0][0] : '', list: [...P.values()].sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
+// (the teams your own characters raid with this tier, from Warcraft Logs: each team's number, name, kind and how many nights you were there)
+async function charTeams(env, url, L) {
+  if (!L) return []; const names = new Set((L.chars || []).map((c) => String(c.n).toLowerCase()));
+  if (L.mock) { if (!PRACTICE_HOST(url)) return []; return Object.entries(SETUP_MOCK).map(([id, t]) => { const by = {}; let n = 0; for (const p of setupMockRegs(id).list) if (names.has(p.n.toLowerCase())) { by[p.k] = p.c; n = Math.max(n, p.c); } return { id, ...t, n, by }; }).filter((t) => t.n > 0); }
+  const reg = L.region || 'us', T = new Map();
+  for (const c of (L.chars || []).slice(0, 6)) { let id = 0, rr = null;
+    try { const ci = await wclKeep(env, 'char/' + reg + '/' + c.slug + '/' + encodeURIComponent(String(c.n).toLowerCase()), CHAR_INFO_Q, { name: c.n, srv: c.slug, reg }, 86400); id = +((((ci || {}).characterData || {}).character || {}).id) || 0; } catch (e) { id = 0; }
+    if (!id) continue; try { rr = await wclKeep(env, 'char-reps/' + id, CHAR_REPORTS_Q, { id, page: 1 }, 3600); } catch (e) { rr = null; }
+    for (const r of (((((rr || {}).characterData || {}).character || {}).recentReports || {}).data) || []) { if (!r.guild || !r.guild.id || !r.zone || !SETUP_ZONE.test(r.zone.name)) continue;
+      const o = T.get(r.guild.id) || { wid: r.guild.id, name: r.guild.name, days: new Set(), by: {} }; o.days.add(setupDay(r.startTime)); (o.by[bnetKey(c)] = o.by[bnetKey(c)] || new Set()).add(setupDay(r.startTime)); T.set(r.guild.id, o); } }
+  const out = []; for (const o of T.values()) { let info = null; try { info = (((await wclKeep(env, 'team-info/' + o.wid, TEAM_INFO_Q, { id: o.wid }, 86400)) || {}).guildData || {}).guild; } catch (e) { info = null; }
+    out.push({ id: (info && info.type === 1 ? 'team:' : 'guild:') + o.wid, name: o.name, server: (info && info.server && info.server.name) || '', kind: info && info.type === 1 ? 'team' : 'guild', n: o.days.size, by: Object.fromEntries(Object.entries(o.by).map(([k, s]) => [k, s.size])) }); }
+  return out.sort((a, b) => b.n - a.n); }
+// (your guilds and your best rank in each, from your Battle.net characters)
+async function myGuilds(env, url, L) { const m = new Map(); for (const c of (L && L.chars) || []) if (c.g) { const g = { region: L.region || 'us', realm: c.gs || c.slug, name: c.g, mock: !!L.mock || undefined }, k = g.name.toLowerCase() + '|' + g.realm; if (!m.has(k)) m.set(k, g); }
+  const out = []; for (const g of [...m.values()].slice(0, 4)) out.push({ ...g, rank: await guildRankOf(env, url, g, L).catch(() => null) }); return out; }
+// (step 1 of setup: the teams you could set up, each with the guild it would belong to and whether it's set up already)
+async function setupFind(env, url, who) {
+  const L = await bnetGet(env, who.uid, url); if (!L) return { teams: [], guilds: [], can: false, why: 'Sign in with Battle.net first.' };
+  const admin = await siteAdmin(who, env, url), G = await myGuilds(env, url, L), boss = G.filter((g) => g.rank != null && g.rank >= 0 && g.rank <= 1), gk = (g) => g.name.toLowerCase() + '|' + g.realm;
+  const T = await charTeams(env, url, L), byKey = new Map((L.chars || []).map((c) => [bnetKey(c), c]));
+  if (!L.mock) for (const p of await bnGuildPairs(env, url, L).catch(() => [])) { const g = boss.find((x) => x.name.toLowerCase() === String(p.n).toLowerCase() && x.realm === p.s); if (g && !T.some((t) => t.id === 'guild:' + p.id)) T.push({ id: 'guild:' + p.id, name: p.n, server: '', kind: 'guild', n: 0, by: {}, page: true }); } /* (your guild's own page too) */
+  const teams = []; for (const t of T.slice(0, 8)) {
+    const nightsIn = {}; for (const [k, n] of Object.entries(t.by || {})) { const c = byKey.get(k); if (c && c.g) { const kk = String(c.g).toLowerCase() + '|' + (c.gs || c.slug); nightsIn[kk] = (nightsIn[kk] || 0) + n; } }
+    const g = (t.page ? boss.find((x) => x.name.toLowerCase() === t.name.toLowerCase()) : null) || boss.slice().sort((a, b) => (nightsIn[gk(b)] || 0) - (nightsIn[gk(a)] || 0))[0] || (admin ? G.slice().sort((a, b) => (nightsIn[gk(b)] || 0) - (nightsIn[gk(a)] || 0))[0] : null) || null;
+    const doc = await teamGet(env, t.id, url).catch(() => null), d = doc && doc.doc;
+    teams.push({ id: t.id, name: t.name, server: t.server, kind: t.kind, n: t.n, page: !!t.page, guild: g ? { region: g.region, realm: g.realm, name: g.name, rank: g.rank, mock: g.mock } : null,
+      can: !d && !!g && (admin || (g.rank != null && g.rank >= 0 && g.rank <= 1)), set: d ? { by: (d.setup && d.setup.by) || (d.owner && d.owner.char) || '', at: (d.setup && d.setup.at) || 0 } : null }); }
+  return { teams, guilds: G.map((g) => ({ name: g.name, realm: g.realm, rank: g.rank })), can: admin || boss.length > 0, admin }; }
+// (the ranks named for the officer: rank 0 and 1 by Blizzard's defaults, the rest by who in them raids with this team and how often)
+function rankSuggest(roster, R, team) {
+  const inT = new Map((R.list || []).map((p) => [p.k, p.c])), N = Math.max(1, R.nights || 0), by = {};
+  for (const m of (roster && roster.members) || []) { const r = rankRow(m.rank), o = by[r] || (by[r] = { r, count: 0, team: 0, nights: 0, who: [], rest: [] }); o.count++;
+    if (inT.has(m.k)) { o.team++; o.nights += inT.get(m.k); o.who.push([m.n, inT.get(m.k)]); } else if (o.rest.length < 4) o.rest.push(m.n); }
+  return Object.values(by).sort((a, b) => a.r - b.r).map((o) => { const share = o.team / o.count, avg = o.team ? o.nights / o.team / N : 0, raid = o.team + ' of ' + o.count + ' raid with ' + team;
+    const [name, acc, why] = o.r === 0 ? ['Guild Master', 'edit', 'Rank 0 is always the guild master.'] : o.r === 1 ? ['Officer', 'edit', 'Rank 1 is the officers by default.']
+      : o.team >= 2 && share >= 0.4 && avg >= 0.5 ? [team + ' raider', 'see', raid + ', most nights.'] : o.team >= 1 && share >= 0.3 ? ['Trial', 'see', raid + ', on a few nights.']
+      : o.team >= 1 && avg >= 0.5 ? ['Raider', 'see', raid + '.'] : o.count >= 5 ? ['Alt / Social', 'none', o.team ? raid + ', rarely.' : 'None of the ' + o.count + ' raid with ' + team + '.'] : ['Rank ' + o.r, 'none', o.team ? raid + ', rarely.' : 'None of them raid with ' + team + '.'];
+    return { r: o.r, count: o.count, team: o.team, name, acc, why, who: o.who.sort((a, b) => b[1] - a[1]).map((x) => x[0]).concat(o.rest).slice(0, 4) }; }); }
+// (what an officer's setup can do for this team, or why not)
+async function setupCheck(env, url, who, id) {
+  if (!who || !who.bid) return { error: 'Sign in with Battle.net to set up a team.' };
+  const F = await setupFind(env, url, who), t = F.teams.find((x) => x.id === id);
+  if (!t) return { error: F.admin ? 'None of your characters raid with that team, and it isn\'t your guild\'s page.' : 'Only the guild master or an officer who raids with this team can set it up.' };
+  if (t.set) return { error: t.name + ' is already set up by ' + (t.set.by || 'an officer') + '. Ask an officer for access.', set: true };
+  if (!t.can) return { error: 'Only the guild master or an officer can set up ' + t.name + '.' };
+  if (t.kind === 'guild' && !F.admin) { const no = await teamClaim(env, url, id, who); if (no && !(PRACTICE_HOST(url) && t.guild && t.guild.mock)) return { error: no }; } /* (a guild's own page: rank 0 or 1 of that very guild) */
+  return { team: t, admin: F.admin }; }
+// (GET /api/teamsetup: step=find, the teams; step=regs&id=, that team's raiders and the ranks named for it)
+async function setupRoute(req, env, url) {
+  if (!env.debrief_nights) return json({ error: 'Team setup isn\'t on this copy of Debrief.' }, 503);
+  const who = await teamWho(req, env, url); if (!who || !who.bid) return json({ error: 'Sign in with Battle.net to set up a team.', signin: true }, 401);
+  if (req.method !== 'GET') return json({ error: 'GET only.' }, 405);
+  if (url.searchParams.get('step') !== 'regs') return json(await setupFind(env, url, who));
+  const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
+  const S = await setupCheck(env, url, who, id); if (S.error) return json({ error: S.error, set: !!S.set }, 403);
+  const L = await bnetGet(env, who.uid, url), G = S.team.guild; let R = null; try { R = await teamRegs(env, url, id, (L && L.region) || 'us'); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
+  const roster = G ? await guildRoster(env, url, G) : null, rk = new Map(((roster && roster.members) || []).map((m) => [m.k, m.rank]));
+  return json({ team: S.team, nights: R.nights, last: R.last, list: R.list.map((p) => ({ ...p, rank: rk.has(p.k) ? rk.get(p.k) : null })), ranks: roster ? rankSuggest(roster, R, S.team.name) : [], roster: !!roster }); }
 async function teamPlan(req, env, url) {
   if (!env.debrief_nights) return json({ error: 'Team plans aren\'t set up on this copy of Debrief.' }, 503);
   const id = url.searchParams.get('id') || ''; if (!TEAM_ID.test(id)) return json({ error: 'That team is missing something.' }, 400);
@@ -1939,14 +2038,14 @@ async function teamPlan(req, env, url) {
       const mine = L ? { main: ((L.chars || []).find((c) => bnetKey(c) === L.main) || {}).n || '', chars: (L.chars || []).filter((c) => !hid.has(bnetKey(c))).map((c) => c.n) } : null;
       if (JSON.stringify(was && { main: was.main, chars: was.chars }) !== JSON.stringify(mine)) { d.bn = { ...(d.bn || {}) }; if (mine) d.bn[who.uid] = { ...mine, at: Date.now() }; else delete d.bn[who.uid]; await teamPut(env, id, d, g.etag, url).catch(() => null); } }
     const bn = shut ? [] : Object.values(d.bn || {}).map((x) => [x.main, ...x.chars.filter((n) => n !== x.main)]).filter((x) => x[0] && x.length > 1);
-    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), bn, locked: shut, keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
+    return json({ exists: true, ver: d.ver, name: d.name, lead: d.owner.char, officers: d.officers || [], log: shut ? [] : teamLog(d), here: shut ? [] : here, you: you(d, A.acc === 'edit', A), access: A.acc, why: A.why, ranks: rankPub(d), bn, locked: shut, setup: d.setup ? { by: d.setup.by, at: d.setup.at, guild: d.setup.guild.name } : null, regs: d.regs && !shut ? { at: d.regs.at, nights: d.regs.nights, n: d.regs.list.length } : null, alog: A.acc === 'edit' ? (d.alog || []).slice(-40) : [], keys: shut || url.searchParams.get('v') === String(d.ver) ? null : d.keys });
   }
   if (req.method !== 'POST') return json({ error: 'Change the team plan from the website.' }, 405);
   if (!fair(req.headers.get('CF-Connecting-IP') || 'x')) return json({ error: 'Too many requests at once. Wait a minute and try again.' }, 429);
   if (!who) return json({ error: 'Sign in with Battle.net to change the team plan.', signin: true }, 401);
   const raw = await req.arrayBuffer(); if (raw.byteLength > 3 * 1024 * 1024) return json({ error: 'That plan is too big to save.' }, 413);
   let b = null; try { b = JSON.parse(new TextDecoder().decode(raw)); } catch (e) { b = null; }
-  if (!b || !['create', 'set', 'officer', 'undo', 'ranks', 'join'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
+  if (!b || !['create', 'set', 'officer', 'undo', 'ranks', 'join', 'setup', 'handover'].includes(b.op)) return json({ error: 'That change isn\'t right.' }, 400);
   const me = String(b.me || '').trim().slice(0, 24) || who.name, keys = b.keys && typeof b.keys === 'object' ? b.keys : {};
   for (const [k, v] of Object.entries(keys)) if (!TEAM_KEY.test(k) || (v !== null && (typeof v !== 'string' || v.length > 600 * 1024))) return json({ error: 'That change isn\'t right.' }, 400);
   for (let tries = 0; tries < 4; tries++) {
@@ -1955,10 +2054,31 @@ async function teamPlan(req, env, url) {
       const no = await teamClaim(env, url, id, who); if (no) return json({ error: no }, 403);
       const L = await bnetGet(env, who.uid, url), cs = (L && L.chars) || [], oc = cs.find((c) => lcN(c.n) === lcN(me)) || cs.find((c) => bnetKey(c) === L.main) || null; /* (Nov 9: the lead's character with its realm) */
       d = { id, name: String(b.name || '').slice(0, 60), owner: oc ? { uid: who.uid, char: oc.n, realm: oc.slug } : { uid: who.uid, char: me }, officers: [], keys: {}, ver: 0, log: [] }; }
+    else if (b.op === 'setup') { /* (Nov 9: an officer's setup, claimed once) */
+      if (d) return json({ error: (d.name || 'This team') + ' is already set up by ' + ((d.setup && d.setup.by) || (d.owner && d.owner.char) || 'an officer') + '. Ask an officer for access.', exists: true }, 409);
+      const S = await setupCheck(env, url, who, id); if (S.error) return json({ error: S.error, set: !!S.set }, 403);
+      const L = await bnetGet(env, who.uid, url), t = S.team, G = t.guild; let R = null; try { R = await teamRegs(env, url, id, (L && L.region) || 'us'); } catch (e) { return json({ error: 'Warcraft Logs didn\'t answer just now. Try again in a minute.' }, 502); }
+      const roster = G ? await guildRoster(env, url, G) : null; if (!roster) return json({ error: 'Blizzard didn\'t send ' + (G ? G.name : 'the guild') + '\'s roster just now. Try again in a minute.' }, 502);
+      const keep = Array.isArray(b.players) ? new Set(b.players.map((x) => String(x).toLowerCase())) : null, cs = (L && L.chars) || [], nOf = (c) => (R.list.find((p) => p.k === bnetKey(c)) || {}).c || 0;
+      const best = cs.slice().sort((x, y) => nOf(y) - nOf(x))[0], oc = best && nOf(best) ? best : cs.find((c) => bnetKey(c) === L.main) || cs[0] || null; /* (the lead: your character that raids with the team most, else your main) */
+      const sug = rankSuggest(roster, R, t.name), names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { const x = sug.find((y) => y.r === r); names[r] = String((b.names || {})[r] || (x && x.name) || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : x ? x.acc : r < 2 ? 'edit' : 'none'; }
+      const by = (oc && oc.n) || me, g0 = { region: G.region, realm: G.realm, name: G.name, ...(G.mock ? { mock: true } : {}) };
+      d = { id, name: String(t.name || b.name || '').slice(0, 60), owner: oc ? { uid: who.uid, char: oc.n, realm: oc.slug } : { uid: who.uid, char: me }, officers: [], keys: {}, ver: 0, log: [],
+        setup: { by, uid: who.uid, at: now, guild: g0 }, ranks: { guild: g0, names, acc, v2: 1, at: now, by },
+        regs: { at: R.at, nights: R.nights, last: R.last, list: R.list.filter((p) => !keep || keep.has(p.k)).map((p) => ({ k: p.k, n: p.n, c: p.c })), out: keep ? R.list.filter((p) => !keep.has(p.k)).map((p) => p.k).slice(0, 80) : [] } };
+      alogAdd(d, by, 'set up ' + d.name + ' for ' + G.name + ', with ' + d.regs.list.length + ' raiders from the logs'); }
     else if (!d) return json({ error: 'This team has no plan saved online yet.' }, 404);
     else if (b.op === 'set' || b.op === 'undo') { const A = await teamAccess(env, url, d, who); if (A.acc !== 'edit') return json({ error: d.ranks ? 'Your guild rank can see this plan but not change it. Ask your raid lead.' : 'Only the raid lead and the officers can change the team plan.' }, 403); }
     const put = (k, v, sum) => { const prev = d.keys[k] ? d.keys[k].v : null; if (prev === v) return; d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k, sum: String(sum || 'changed the plan').slice(0, 140), prev }); };
-    if (b.op === 'create') { for (const [k, v] of Object.entries(keys)) if (v !== null) d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'saved the whole plan for the team' }); }
+    if (b.op === 'create' || b.op === 'setup') { for (const [k, v] of Object.entries(keys)) if (v !== null) d.keys[k] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: b.op === 'setup' ? 'set up the team' : 'saved the whole plan for the team' }); }
+    else if (b.op === 'handover') { /* (Nov 9: only the guild master or the site admin hands a team to someone else) */
+      const G = (d.setup && d.setup.guild) || (d.ranks && d.ranks.guild), adm = await siteAdmin(who, env, url), rk = G ? await guildRankOf(env, url, G, await bnetGet(env, who.uid, url)) : null;
+      if (!adm && rk !== 0) return json({ error: 'Only the guild master can hand ' + (d.name || 'the team') + ' over.' }, 403);
+      const to = lcN(b.to), e = Object.entries(d.bn || {}).find(([, x]) => [x.main].concat(x.chars || []).some((n) => lcN(n) === to)); if (!to) return json({ error: 'Pick who takes the team over.' }, 400);
+      if (!e) return json({ error: (String(b.to).slice(0, 24) || 'They') + ' hasn\'t opened this team\'s plan yet. They sign in once first, then try again.' }, 400);
+      const L2 = await bnetGet(env, e[0], url), c2 = ((L2 && L2.chars) || []).filter((c) => lcN(c.n) === to).sort((x, y) => (G && String(y.g || '').toLowerCase() === String(G.name).toLowerCase()) - (G && String(x.g || '').toLowerCase() === String(G.name).toLowerCase()))[0];
+      if (!c2) return json({ error: 'That character isn\'t on their Battle.net account any more.' }, 400);
+      const was = d.owner.char; d.owner = { uid: e[0], char: c2.n, realm: c2.slug }; d.log.push({ at: now, by: me, k: '', sum: 'handed the team to ' + c2.n }); alogAdd(d, me, 'handed the team from ' + was + ' to ' + c2.n); }
     else if (b.op === 'set') { const sums = b.sums && typeof b.sums === 'object' ? b.sums : {}; for (const [k, v] of Object.entries(keys)) put(k, v, sums[k]); }
     else if (b.op === 'undo') { const e = d.log[+b.i]; if (!e || e.prev === undefined || !e.k) return json({ error: 'That change can\'t be undone.' }, 400); put(e.k, e.prev, 'undid "' + e.sum + '"'); }
     else if (b.op === 'join') { /* (Battle.net step 4: "Link Battle.net and join": your main joins the team's roster with its spec and role; only yourself, and only
@@ -1973,13 +2093,13 @@ async function teamPlan(req, env, url) {
       R.players = (R.players || []).concat([{ n: m.n, cls: m.cls || null, sid, role, bench: false }]); const prev = (d.keys['wla-rosters'] || {}).v || null, v = JSON.stringify(o);
       d.keys['wla-rosters'] = { v, at: now, by: me }; d.log.push({ at: now, by: me, k: 'wla-rosters', sum: m.n + ' joined the roster (' + [m.spec, (m.cls || '').charAt(0) + (m.cls || '').slice(1).toLowerCase()].filter(Boolean).join(' ') + ')', prev }); }
     else if (b.op === 'ranks') { const A = await teamAccess(env, url, d, who); if (!rankBoss(A)) return json({ error: 'Only the raid lead, the guild master or an officer sets who can edit and see.' }, 403);
-      if (b.clear) { delete d.ranks; d.log.push({ at: now, by: me, k: '', sum: 'turned off access by guild rank' }); }
+      if (b.clear) { delete d.ranks; d.log.push({ at: now, by: me, k: '', sum: 'turned off access by guild rank' }); alogAdd(d, me, 'turned off access by guild rank'); }
       else { const T = await teamRanks(env, url, d, who); if (!T.counts) return json({ error: T.why }, 400);
         const names = {}, acc = {}; for (let r = 0; r <= RANK_TOP; r++) { names[r] = String((b.names || {})[r] || '').trim().slice(0, 24); acc[r] = RANK_ACC.test((b.acc || {})[r] || '') ? b.acc[r] : d.ranks ? rankAcc(d.ranks, r) : r < 2 ? 'edit' : r < RANK_TOP ? 'see' : 'none'; }
-        d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, v2: 1, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); } }
+        d.ranks = { guild: d.ranks ? d.ranks.guild : T.guild, names, acc, v2: 1, at: now, by: me }; d.log.push({ at: now, by: me, k: '', sum: 'set who can edit and see by guild rank' }); alogAdd(d, me, 'changed who can edit and see'); } }
     else { if (!isMe(who, d.owner.uid) && !(await leadByChar(env, url, d, who)) && !(await siteAdmin(who, env, url))) return json({ error: 'Only the raid lead adds or removes officers.' }, 403);
       const n = String(b.add || b.del || '').trim().slice(0, 24); if (!n) return json({ error: 'Give the officer\'s character name.' }, 400);
-      const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); }
+      const l = (d.officers || []).filter((x) => x.toLowerCase() !== n.toLowerCase()); if (b.add) l.push(n); d.officers = l; d.log.push({ at: now, by: me, k: '', sum: (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer') }); alogAdd(d, me, (b.add ? 'made ' : 'removed ') + n + (b.add ? ' an officer' : ' as an officer')); }
     d.ver = (d.ver || 0) + 1; d.log = d.log.filter((x) => now - x.at < 36 * 3600e3).slice(-60);
     if (await teamPut(env, id, d, g ? g.etag : null, url)) return json({ ok: true, ver: d.ver, officers: d.officers, log: teamLog(d), you: you(d, true) });
   }
@@ -2283,7 +2403,7 @@ export default {
     if (url.pathname === '/api/bnet') return bnetRoute(req, env, url);
     if (url.pathname === '/api/whoami') return whoAmIRoute(req, env, url);
     if (url.pathname === '/api/raiders') return raidersRoute(req, env, url); /* (Battle.net step 4: public gear, item level and Mythic+) */
-    if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
+    if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); if (url.pathname === '/api/teamsetup') return setupRoute(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);
     if (url.pathname === '/api/signout') return req.method === 'POST' ? signOut(req, env) : json({ error: 'Sign out from the website.' }, 405);
     if (url.pathname === '/api/myreports') return myReports(req, env);
