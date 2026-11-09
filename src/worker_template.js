@@ -1949,7 +1949,7 @@ const SETUP_MOCK = { 'guild:6956': { name: 'Honestly', server: 'Frostmourne', ki
 function setupMockRegs(id) { const A = [['Officertest', 12], ['Officera', 12], ['Raidertest', 11], ['Trëèflêx', 10], ['Pugtest', 10], ['Exampleshaman', 9], ['Twotest', 7], ['Trialtest', 3], ['Trial1', 2], ['Social3', 1]];
   for (let i = 1; i <= 12; i++) A.push(['Raider' + i, 12 - (i % 5)]); const B = [['Gmtest', 11], ['Officerb', 12], ['Twotest', 9], ['Raider9', 5], ['Trial2', 4]]; for (let i = 13; i <= 16; i++) B.push(['Raider' + i, 10]);
   const L = id === 'guild:6956' ? A : id === 'team:796679' ? B : [], hs = (n) => { let h = 0; for (const ch of n) h = (h * 31 + ch.codePointAt(0)) >>> 0; return h; };
-  return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => ({ k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls: BNET_CLS[1 + (hs(n) % 13)], spec: '', c })).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
+  return { at: Date.now(), nights: L.length ? 12 : 0, last: setupDay(Date.now()), mock: true, list: L.map(([n, c]) => { const cls = BNET_CLS[1 + (hs(n) % 13)]; return { k: n.toLowerCase() + '-thrall', n, s: 'thrall', cls, spec: { WARRIOR: 'Fury', PALADIN: 'Holy', HUNTER: 'Marksmanship', ROGUE: 'Outlaw', PRIEST: 'Shadow', DEATHKNIGHT: 'Frost', SHAMAN: 'Restoration', MAGE: 'Fire', WARLOCK: 'Destruction', MONK: 'Mistweaver', DRUID: 'Balance', DEMONHUNTER: 'Havoc', EVOKER: 'Devastation' }[cls] || '', c }; }).sort((a, b) => b.c - a.c || (a.n < b.n ? -1 : 1)) }; }
 // (a team's raiders: who was in its boss pulls on its last 12 raid nights this tier, and on how many of them)
 async function teamRegs(env, url, id, region) {
   if (PRACTICE_HOST(url) && SETUP_MOCK[id]) return setupMockRegs(id);
