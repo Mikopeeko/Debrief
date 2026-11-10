@@ -12,7 +12,7 @@
    marks) are left out of every page watcher; new content in the replay (its card, its play-by-play) is still seen. A watcher set on something inside
    the replay still sees everything there) */
 (function () { var MO = window.MutationObserver; if (!MO || MO.__live) return;
-  var LIVE = '[data-live]', MOVE = 'svg, .ztime, .dtm-clk, .dtm-hp, .dtm-rf, .dtm-rff, .dtm-tmk, .dtm-head, .dtm-tlh';
+  var LIVE = '[data-live]', MOVE = 'svg, .ztime, .dtm-clk, .dtm-hp, .dtm-rf, .dtm-rff, .dtm-tmk, .dtm-head, .dtm-tlh, .dtm-cu, .dtm-pc';
   var skip = function (m) { var t = m.target, e = t && (t.nodeType === 1 ? t : t.parentElement); if (!e || !e.closest || !e.closest(LIVE)) return false; return m.type !== 'childList' || !!e.closest(MOVE); };
   var inLive = function (t) { var e = t && (t.nodeType === 1 ? t : t.parentElement); return !!(e && e.closest && e.closest(LIVE)); };
   /* (Nov 9, speed pass: a class or attribute set to the value it already had is still reported as a change. Several tidiers set a class
