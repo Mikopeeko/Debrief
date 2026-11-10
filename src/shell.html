@@ -18968,6 +18968,32 @@ html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rcg.
   html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rcg.pg-sheet > .plb-rc > .plb-what { margin-left: 0 !important; }
 }
 }
+/* ===== Plan › Orb maps (Nov 10) ===== */
+@layer defaultTheme {
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rc > .pom { display: grid !important; grid-template-columns: 300px minmax(0, 1fr); margin: 14px 0 6px 34px; max-width: 920px; background: #07090c; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; overflow: hidden; }
+html body #assignBox .pom .pom-leg { display: flex; flex-direction: column; gap: 11px; padding: 14px 16px; border-right: 1px solid rgba(255,255,255,.12); background: linear-gradient(180deg, #0f1217, #0a0c10); min-width: 0; }
+html body #assignBox .pom .pom-top { display: flex; align-items: center; gap: 8px; }
+html body #assignBox .pom .pom-t { font: 700 19px/1.1 var(--head); color: var(--text, #ece8df); }
+html body #assignBox .pom .pom-pg { margin-left: auto; display: inline-flex; gap: 4px; }
+html body #assignBox .pom .pom-pg > button { min-width: 26px !important; height: 26px !important; padding: 0 7px !important; font: 700 13px/1 var(--head) !important; color: var(--muted, #9aa3aa) !important; background: transparent !important; border: 1px solid rgba(255,255,255,.16) !important; border-radius: 2px !important; box-shadow: none !important; cursor: pointer; }
+html body #assignBox .pom .pom-pg > button.on { color: #1a1405 !important; background: var(--gold, #e6b450) !important; border-color: var(--gold, #e6b450) !important; }
+html body #assignBox .pom .pom-pg > button:not(.on):is(:hover, :focus-visible) { color: var(--text, #ece8df) !important; border-color: var(--gold, #e6b450) !important; }
+html body #assignBox .pom p { margin: 0; font: 500 12.5px/1.45 var(--body); color: var(--muted, #9aa3aa); }
+html body #assignBox .pom .pom-s { font-size: 13px; }
+html body #assignBox .pom .pom-g h4 { margin: 0 0 5px; font: 700 12px/1 var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #9aa3aa); }
+html body #assignBox .pom .pom-g h4.pu { color: #d6a8ff; } html body #assignBox .pom .pom-g h4.gr { color: #7fe8a0; }
+html body #assignBox .pom .pom-g p { margin-top: 5px; }
+html body #assignBox .pom .pom-who { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
+html body #assignBox .pom .pom-p { display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+html body #assignBox .pom .pom-p > b { font: 600 14px/1.3 var(--body); overflow: hidden; text-overflow: ellipsis; }
+html body #assignBox .pom .pom-p > small { font: 700 10px/1 var(--head); letter-spacing: .08em; text-transform: uppercase; color: var(--faint, #6b747b); }
+html body #assignBox .pom .pom-mk { width: 14px; height: 14px; flex: none; }
+html body #assignBox .pom .pom-dot { width: 8px; height: 8px; margin: 0 3px; border-radius: 50%; background: #c9ced8; flex: none; }
+html body #assignBox .pom .pom-f { margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(255,255,255,.08); }
+html body #assignBox .pom .pom-map { min-width: 0; }
+html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: auto; }
+@media (max-width: 760px) { html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rc > .pom { grid-template-columns: minmax(0, 1fr); margin-left: 0; } html body #assignBox .pom .pom-leg { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.12); } }
+}
 </style>
 </body>
 </html>

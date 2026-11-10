@@ -5703,6 +5703,101 @@ function ppJmH(u0, c, b, d) { const out = [], seen = new Set(); let txt = ''; tr
     const k = ppJmKey(lab); if (seen.has(k)) continue; seen.add(k); const def = pgMkK(ms[0][1]), cur = (c.jm && c.jm[k]) || def, job = lab.replace(PG_MK_RE, '').replace(/\s+/g, ' ').trim().replace(/\s+at$/i, '');
     out.push('<label class="pp-use pp-jm"><span>' + esc(job) + ' ' + (val ? '<b>' + esc(val) + '</b>' : '<em class="pp-jm0">nobody yet</em>') + '</span><select data-jm="' + esc(k) + '" data-jmdef="' + def + '" aria-label="' + esc(job + ', ' + val + ': marker') + '">' + PP_MKS.map((m) => '<option value="' + m + '"' + (m === cur ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('') + '</select></label>'); }
   return out.length ? '<div class="sub pp-jmh">Jobs on markers</div>' + out.join('') : ''; }
+// ===== Plan › Orb maps (Nov 10, Flex: "create your own maps, that will auto put those players on the map, you have creative freedom to make
+// them accurate"; on the mock: "these look substancially better than the old ones", "build them"). The Coiled Altar Mythic's two orb jobs as
+// maps, after the team's own plan (P1 one page; P3 one page per orb set), checked against the 15 fastest Mythic kills: where Zul'jan stood when
+// each frontal landed, its aim, and where the orbs it popped lay. Room yards from the middle, north up, as in the logs (log x - 2, y - 1156);
+// the floor is the Markers map's. The plan's carriers land on their spots (each by their marker, the raid's own spot when it's placed) =====
+const POM_DEF = { cross: [-37, 37], triangle: [37, 37], square: [-37, -37], diamond: [37, -37], star: [0, 40.5], skull: [0, -40.5], circle: [-40.5, 0], moon: [40.5, 0] };
+const POM_KEEP = { star: [13, 37], skull: [-13, -37] }, POM_HELP = [[-13, 9], [13, 9], [-13, -9], [13, -9]], POM_SIDE = [[-35, 0], [35, 0]];
+const pomAt = (b, dir, along, side) => { const a = dir * Math.PI / 180; return [b[0] + along * Math.cos(a) - (side || 0) * Math.sin(a), b[1] + along * Math.sin(a) + (side || 0) * Math.cos(a)]; };
+const pomSq = (c, h) => [[c[0] - h, c[1] - h, 'p'], [c[0] + h, c[1] - h, 'p'], [c[0] - h, c[1] + h, 'p'], [c[0] + h, c[1] + h, 'p']];
+const pomPair = (b, dir, along, h) => [[...pomAt(b, dir, along, -h), 'p'], [...pomAt(b, dir, along, h), 'p']];
+const POM_PAGES = (() => { const B1 = [14, -20], B2a = [12, -10], B2b = [-4, -12], B3 = [0, -22];
+  return {
+    // Phase 1, every set: one frontal straight south from just south of the middle, one straight north; 2 purples ~30 yd out, 2-3 greens ~17 yd
+    orbs: [{ t: 'Phase 1 orbs', s: 'One frontal down, one up: two purples and two or three greens in each', gk: 1,
+      bosses: [[[-2, 0]]], cones: [{ b: [-2, -2], dir: -90, r: 35, lab: 'Frontal 1' }, { b: [-2, 2], dir: 90, r: 35, lab: 'Frontal 2', flip: 1 }],
+      orbs: [[-6.5, -30, 'p'], [2.5, -30, 'p'], [-6.5, 30, 'p'], [2.5, 30, 'p'], [-5, -17, 'g'], [1, -17, 'g'], [-5, 17, 'g'], [1, 17, 'g']],
+      rp: 'Take the purple nearest your corner. Two side by side about 30 yards out in each frontal, no further back than shown.',
+      rg: 'Two or three greens at the front of each frontal, about 17 yards out. Goalkeepers clear the purple area first.',
+      f: 'In the top kills every frontal pops 2 purples and 2 or 3 greens, and up to 4 greens with the last one of set 3.' }],
+    // Phase 3 (Blighted Sever, 45 yd): set 1 from the south-east through the middle (all 4 purples); set 2 into the east wall, then the south
+    // wall (2 purples each, no greens); set 3 from the south edge up the middle (all 4 purples, no greens)
+    orbs3: [
+      { t: 'Orb set 1 · Frontal 1', s: 'Clear all: Zul\'jan south-east of the middle, aiming north-west through it', noHelp: 1,
+        bosses: [[B1]], cones: [{ b: B1, dir: 129, r: 45, lab: 'Frontal 1', flip: 1 }], orbs: pomSq([-1, -1.5], 4.6).concat([[...pomAt(B1, 129, 10, -3), 'g'], [...pomAt(B1, 129, 10, 3), 'g']]),
+        rp: 'All four in a square in the middle circle, inside the frontal.', rg: 'One or two greens just in front of Zul\'jan. Leave the rest.',
+        f: 'In the top kills this frontal pops all 4 purples every time, with 0 to 3 greens.' },
+      { t: 'Orb set 2 · At the edge', s: 'Two frontals into the walls: east first, then south. Purples only', noHelp: 1, side: [[-35, 0], [22, 24]],
+        bosses: [[B2a, 'Frontal 2'], [B2b, 'Frontal 3', 1]], cones: [{ b: B2a, dir: -10, r: 45, lab: 'Frontal 2' }, { b: B2b, dir: -70, r: 45, lab: 'Frontal 3', dim: 1, flip: 1, lf: 0.3 }],
+        orbs: pomPair(B2a, -10, 28, 4.6).concat(pomPair(B2b, -70, 25.5, 4.6)),
+        rp: 'Two purples at the east wall for Frontal 2, two at the south wall for Frontal 3.', rg: 'No greens in these frontals: keep them out of both.',
+        f: 'In the top kills each frontal pops 2 purples and almost never a green.' },
+      { t: 'Orb set 3 · Frontal 4', s: 'Purple only: Zul\'jan at the south edge, aiming north through the middle', noHelp: 1,
+        bosses: [[B3]], cones: [{ b: B3, dir: 96, r: 45, lab: 'Frontal 4', flip: 1 }],
+        orbs: pomSq([-2.4, -2.6], 4.6).concat([[-24, 14, 'g', 1], [24, 14, 'g', 1], [-26, -20, 'g', 1], [26, -18, 'g', 1]]),
+        rp: 'All four in a square in the middle circle.', rg: 'Leave the greens where they are (faded): after this set every orb is ignored.',
+        f: 'In the top kills this frontal pops all 4 purples and no greens. Then kill Zul\'jan, or the Fangs cast kills the raid.' } ] }; })();
+const POM_MK = { star: '<polygon points="0,-9 2.6,-2.9 9,-2.8 4.1,1.4 5.6,8 0,4.4 -5.6,8 -4.1,1.4 -9,-2.8 -2.6,-2.9" fill="#f5d33a" stroke="#5a4708" stroke-width=".8"/>',
+  circle: '<circle r="8" fill="#ff8b2e" stroke="#5a2c06" stroke-width=".8"/>', diamond: '<polygon points="0,-10 8,0 0,10 -8,0" fill="#c86bff" stroke="#3d1660" stroke-width=".8"/>',
+  triangle: '<polygon points="0,-9 9,7.5 -9,7.5" fill="#4fd35a" stroke="#123d16" stroke-width=".8"/>', moon: '<path d="M2.5 -8.5A8.8 8.8 0 1 0 8.2 4 7.2 7.2 0 0 1 2.5 -8.5z" fill="#dfe5ea" stroke="#3a4148" stroke-width=".8"/>',
+  square: '<rect x="-7.5" y="-7.5" width="15" height="15" fill="#3d8bff" stroke="#0d2a5c" stroke-width=".8"/>', cross: '<path d="M-7 -7L7 7M7 -7L-7 7" stroke="#ff4d4d" stroke-width="4.4" stroke-linecap="round"/>',
+  skull: '<circle cy="-1.5" r="7.6" fill="#f4f4f4"/><rect x="-4.6" y="4" width="9.2" height="5" rx="1.4" fill="#f4f4f4"/><circle cx="-2.9" cy="-1.5" r="2.1" fill="#15181d"/><circle cx="2.9" cy="-1.5" r="2.1" fill="#15181d"/>' };
+// (one page's map: the floor, the raid's markers, the frontals as true 60 degree cones, the orbs where the kills popped them, the carriers, Zul'jan)
+function pomSvg(pg, O, P, M) {
+  const X = (x) => (340 + x * 4.14).toFixed(1), Y = (y) => (240 - y * 4.14).toFixed(1), R = (r) => (r * 4.14).toFixed(1), col = (n) => ((P && P.get(String(n).toLowerCase())) || {}).color || '#c9ced8';
+  // (the jobs' markers: the raid's own spot when it's placed; one it hasn't placed goes to the free corner or wall nearest its usual spot,
+  // never onto a marker the raid did place (the test plan has square and star in the corners cross and triangle usually take))
+  const used = [...new Set(O.purple.concat(O.green).map((q) => q[0]).filter((k) => POM_MK[k]))], pos = {}, taken = [];
+  for (const k of used) if (M && Array.isArray(M[k])) { pos[k] = M[k]; taken.push(M[k]); }
+  const SLOTS = [[-37, 37], [37, 37], [-37, -37], [37, -37], [-40, 20], [40, 20], [-40, -20], [40, -20]]; /* (corners, then high and low on the side walls: never the north and south walls the frontals reach, nor the side greens' middle) */
+  for (const k of used) { if (pos[k]) continue; const d0 = POM_DEF[k] || [0, 0]; const free = SLOTS.filter((q) => taken.every((t) => Math.hypot(t[0] - q[0], t[1] - q[1]) > 12)).sort((a, b) => Math.hypot(a[0] - d0[0], a[1] - d0[1]) - Math.hypot(b[0] - d0[0], b[1] - d0[1]));
+    pos[k] = free[0] || d0; taken.push(pos[k]); }
+  const mkAt = (k) => pos[k] || POM_DEF[k];
+  let s = '<svg viewBox="149.6 49.6 380.8 380.8" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(pg.t) + '"><image href="https://wow.zamimg.com/images/wow/maps/enus/original/16915-4.jpg" x="-2090.2" y="-2255.8" width="4843.75" height="3229.17" opacity=".55"/><image href="https://cdn.raidplan.io/raid/wow.venomabyss/map/07.bargained-ort-v108.jpg" x="0" y="49.6" width="680" height="380.8"/><rect x="149.6" y="49.6" width="380.8" height="380.8" fill="#000" fill-opacity=".18"/>';
+  for (const k of used) { const m = mkAt(k); s += '<g transform="translate(' + X(m[0]) + ' ' + Y(m[1]) + ') scale(1.35)"><circle r="12" fill="#0b0d11" fill-opacity=".55"/>' + POM_MK[k] + '</g>'; }
+  for (const c of pg.cones) { const a = c.dir * Math.PI / 180, h = Math.PI / 6, p = (t) => [c.b[0] + Math.cos(a + t) * c.r, c.b[1] + Math.sin(a + t) * c.r], [x1, y1] = p(-h), [x2, y2] = p(h);
+    s += '<path d="M' + X(c.b[0]) + ' ' + Y(c.b[1]) + ' L' + X(x1) + ' ' + Y(y1) + ' A' + R(c.r) + ' ' + R(c.r) + ' 0 0 0 ' + X(x2) + ' ' + Y(y2) + ' Z" fill="rgba(255,255,255,.075)" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"' + (c.dim ? ' stroke-dasharray="5 4" opacity=".75"' : '') + '/>';
+    const lf = c.lf || 0.5, [lx, ly] = pomAt(c.b, c.dir, c.r * lf, (c.r * lf * Math.tan(h) + 3.2) * (c.flip ? -1 : 1)); let ang = -c.dir; if (ang > 90) ang -= 180; if (ang < -90) ang += 180;
+    s += '<g transform="translate(' + X(lx) + ' ' + Y(ly) + ') rotate(' + ang.toFixed(1) + ')"><rect x="-31" y="-8.5" width="62" height="17" rx="2" fill="#0b0d11" fill-opacity=".88"/><text text-anchor="middle" y="4.6" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="13" fill="#fff">' + esc(c.lab) + '</text></g>'; }
+  for (const [x, y, k, dim] of pg.orbs) s += k === 'p'
+    ? '<g' + (dim ? ' opacity=".4"' : '') + '><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + R(6) + '" fill="rgba(182,92,255,.16)" stroke="#c88bff" stroke-width="1.4" stroke-dasharray="4 3"/><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="6.4" fill="#b65cff" stroke="#f1dcff" stroke-width="1.4"/></g>'
+    : '<g' + (dim ? ' opacity=".35"' : '') + '><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + R(2.6) + '" fill="rgba(63,212,106,.14)" stroke="#5fe28a" stroke-width="1"/><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="5.4" fill="#3fd46a" stroke="#d9ffe6" stroke-width="1.2"/></g>';
+  const tok = (n, x, y) => '<g><circle cx="' + X(x) + '" cy="' + (+Y(y) + 1.2) + '" r="13.5" fill="#000" fill-opacity=".45"/><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="13" fill="' + col(n) + '" stroke="#0b0d11" stroke-width="1.6"/><text x="' + X(x) + '" y="' + (+Y(y) + 3.9) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#0d1014">' + esc([...String(n)].slice(0, 4).join('')) + '</text><title>' + esc(n) + '</title></g>';
+  const near = (k, keep) => { if (!(M && Array.isArray(M[k])) && keep && POM_KEEP[k] && pos[k] && pos[k][0] === POM_DEF[k][0] && pos[k][1] === POM_DEF[k][1]) return POM_KEEP[k]; const m = mkAt(k); if (!m) return null; const d = Math.hypot(m[0], m[1]) || 1; return [m[0] * (d - 8) / d, m[1] * (d - 8) / d]; };
+  O.purple.forEach(([k, n], i) => { const at = near(k) || [[-29, 29], [29, 29], [-29, -29], [29, -29]][i % 4]; s += tok(n, at[0], at[1]); });
+  let si = 0; O.green.forEach(([k, n]) => { if (!n) return; const at = k && k !== 'side' && near(k, 1) || (pg.side || POM_SIDE)[si++ % 2]; s += tok(n, at[0], at[1]); });
+  if (!pg.noHelp) O.helpers.slice(0, 4).forEach((n, i) => { s += tok(n, POM_HELP[i][0], POM_HELP[i][1]); });
+  for (const [b, lab, dim] of pg.bosses) s += '<g' + (dim ? ' opacity=".8"' : '') + '><circle cx="' + X(b[0]) + '" cy="' + Y(b[1]) + '" r="16" fill="#2a1d0c" stroke="#e6b450" stroke-width="2"/><image href="https://wow.zamimg.com/modelviewer/live/webthumbs/npc/136/142472.webp" x="' + (+X(b[0]) - 14) + '" y="' + (+Y(b[1]) - 14) + '" width="28" height="28" clip-path="circle(14px)"/><text x="' + X(b[0]) + '" y="' + (+Y(b[1]) + 27) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">' + esc(lab || 'Zul\'jan') + '</text></g>';
+  return s + '<text x="522" y="424" text-anchor="end" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#e6b450" letter-spacing="1.2">DEBRIEF</text></svg>';
+}
+// (the block in the job card: the page's title, who carries what (marker, name in class colour), the rules, and the map; P3 has a page per set)
+function pomH(key, O, P, M, i) {
+  const pages = POM_PAGES[key], pg = pages[i], col = (n) => ((P && P.get(String(n).toLowerCase())) || {}).color || '#c9ced8';
+  const mk = (k) => (POM_MK[k] ? '<svg class="pom-mk" viewBox="-11 -11 22 22" aria-hidden="true">' + POM_MK[k] + '</svg>' : '<i class="pom-dot"></i>');
+  const chip = (n, k, tag) => '<span class="pom-p">' + mk(k) + '<b style="color:' + col(n) + '">' + esc(n) + '</b>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span>';
+  const greens = O.green.filter(([, n]) => n);
+  return '<div class="pom-leg"><div class="pom-top"><b class="pom-t">' + esc(pg.t) + '</b>' + (pages.length > 1 ? '<span class="pom-pg">' + pages.map((p, j) => '<button type="button" data-pomp="' + j + '"' + (j === i ? ' class="on" aria-current="true"' : '') + ' aria-label="Orb set ' + (j + 1) + '">' + (j + 1) + '</button>').join('') + '</span>' : '') + '</div><p class="pom-s">' + esc(pg.s) + '</p>' +
+    '<div class="pom-g"><h4 class="pu">Purple orbs</h4><div class="pom-who">' + O.purple.map(([k, n]) => chip(n, k)).join('') + '</div><p>' + esc(pg.rp) + '</p></div>' +
+    (greens.length ? '<div class="pom-g"><h4 class="gr">Green orbs</h4><div class="pom-who">' + greens.map(([k, n]) => chip(n, k === 'side' ? '' : k, k === 'side' ? 'side' : pg.gk ? 'keeper' : '')).join('') + '</div><p>' + esc(pg.rg) + '</p></div>' : '') +
+    (O.helpers.length ? '<div class="pom-g"><h4>Orb helpers</h4><div class="pom-who">' + O.helpers.map((n) => chip(n)).join('') + '</div></div>' : '') +
+    '<p class="pom-f">' + esc(pg.f) + '</p></div><div class="pom-map">' + pomSvg(pg, O, P, M) + '</div>';
+}
+// (the Orb carriers and P3 orb carriers job cards on Plan get their map, filled from the plan's note; drawn again when the card is)
+function pomJobs() {
+  for (const el of document.querySelectorAll('.bj-jobs .plb-rc:not([data-pom])')) {
+    const pics = el.querySelector(':scope > .pj-pics'), key = pics && pics.dataset.mech; el.dataset.pom = '1'; if (key !== 'orbs' && key !== 'orbs3') continue;
+    const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'); if (!ch) continue;
+    let set = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); } catch (e) { set = null; }
+    if (!set || !set.cf || set.boss !== 'The Coiled Altar' || set.diff !== 'Mythic' || !set.J) continue;
+    const O = (set.J.orbs || [])[key === 'orbs' ? 0 : 1]; if (!O || !O.purple.length) continue;
+    const box = document.createElement('div'); box.className = 'pom'; box._pom = { key, O, P: set.P, M: set.cf.marks || {} }; box.innerHTML = pomH(key, O, set.P, box._pom.M, 0);
+    const after = el.querySelector(':scope > .plb-rrs'); if (after) after.after(box); else el.appendChild(box);
+  }
+}
+if (typeof document !== 'undefined') document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pom [data-pomp]'); if (!b) return; e.preventDefault(); e.stopPropagation();
+  const box = b.closest('.pom'), d = box && box._pom; if (!d) return; box.innerHTML = pomH(d.key, d.O, d.P, d.M, +b.dataset.pomp); }, true);
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
   if (C.mver && s.mver !== C.mver) delete s.marks; /* (spots saved before the boss's markers changed: the new ones show, the mechanic picks stay) */
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
@@ -6782,7 +6877,7 @@ function ppSet(r, u0) {
   if (cf.jm && Object.keys(cf.jm).length) { try { N = E.parseNote(ppJmText(noteResolve(u0.text), cf.jm)); } catch (e) { /* (as written) */ } } /* (each marker job on the marker the raid lead picked) */
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses, cf.jm]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
-  const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P).filter((cd) => !/^kicks/.test(cd.id)) /* (no pictures for interrupt jobs, the user's call (Nov 10): "remove the image generation from interupt mechanics"; the kick jobs stay in the rows and the note) */, pics: new Map() };
+  const J0 = cf.C.read(N, P), set = { key, boss, diff, cf, J: J0, P, cards: cf.C.cards(J0, cf.marks, cf.uses, P).filter((cd) => !/^kicks/.test(cd.id)) /* (no pictures for interrupt jobs, the user's call (Nov 10): "remove the image generation from interupt mechanics"; the kick jobs stay in the rows and the note) */, pics: new Map() };
   set.pic = (cd) => { const pk = cd.id + '|' + JSON.stringify(ppEdOf(boss, diff, cd.id)); if (!set.pics.has(pk)) set.pics.set(pk, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(pk); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
   return set;
@@ -7005,7 +7100,7 @@ async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btn
 // (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
 // same note's pictures; and the Jobs cards' small pictures)
 if (typeof document !== 'undefined') {
-  const ppAdd = () => { if (!PP_ON() || PP_PICS_OFF) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
+  const ppAdd = () => { try { pomJobs(); } catch (e) { console.warn('Orb maps:', e); } if (!PP_ON() || PP_PICS_OFF) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
     b.insertAdjacentHTML('afterend', '<button class="btn' + (b.dataset.ndzpcopy ? '' : ' sm') + ' pp-btn" type="button" data-ppnote="' + esc(b.dataset.ndzdc || b.dataset.ndzpcopy) + '" data-tt="' + esc('<b>Pictures for Discord</b><br>One picture for each mechanic, with everyone on their spot.') + '">🖼 Pictures</button>'); });
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
