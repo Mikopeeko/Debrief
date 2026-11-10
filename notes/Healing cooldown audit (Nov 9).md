@@ -268,6 +268,27 @@ they are pressed twice. The strip's "Doubled up" now shows only when another hit
 
 **Cost.** "Plan them for me" takes longer: about 0.1 s for a usual fight, up to 0.5 s for a 20-player roster on the longest fight (was 0.06 s).
 
+### Used by hand: not-ready checks, and the lengths (Flex, Nov 9: "test the planner by using it moving things around")
+
+**How.** The built app in local mode has no sign-in wall, so the Plan page opens: a tiny server (`planserve.js`, preview "hcd-plan-test",
+localhost:8831), a 20-player roster typed into Plan's own roster form, then Healing cooldowns on Nymrissa and The Coiled Altar.
+
+**Not ready.** 60 plans (10 Mythic bosses, phases 1x, 1.2x, 1.5x, two rosters; `hcd/readytest.js`), 2,450 presses: none before it is back, by
+my own count and by the chart's own "Not ready" check. On the page: five tries to put a cooldown where it isn't back (dragged earlier, dragged
+later, dragged in from the icons, across a phase change twice) were all refused with the reason, for example "Dashtoswirly's Darkness is still
+coming back until Int · 0:16 (pressed at P1 · 2:13, 3:00 cooldown). It stays where it was." Allowed moves went through, and the coverage strip
+followed at once. One real slip found by the count: a press between hits skipped the "doesn't stack" check, so two Rallying Cries could sit
+9 s apart (3 cases in 60 plans). Fixed.
+
+**Lengths (found on the page).** The chart said Rallying Cry "lasts 16 s"; the planner timed it as 10. The chart's bars come from `NDZ_CDLEN`
+(each buff's usual full length in real kills), the planner had the class guides' older numbers: Rallying Cry 10/16, Anti-Magic Zone 6/8,
+Avenging Wrath 20/24, Apotheosis 20/32, Evangelism 15/24, Ascendance 18/15, Dream Flight 15/6. The planner now uses the chart's. Judged with
+the real lengths (20 Mythic plans): hits with their full need 296 to 303 of 320, short 15 to 8; long hills whose second half had no raid
+cooldown 16 to 7. After "Plan them for me" on Nymrissa, no icon was left that could still be added except one Anti-Magic Zone.
+
+**Speed.** Main timed the button at 0.38 s (Coiled Altar) and 0.51 s (Ula'tek). Running sums in place of loops: about a fifth faster, plans
+identical. More would need the whole search redone.
+
 ### The push after: twin hits, and your own phase times (Flex, Nov 9: "Do 1 and 2")
 
 **1. A hit left bare while others had extras.** Coiled Altar Mythic, Wolfthorn's roster: Fangs of the Coiled Altar at 1:32 had nothing, while
