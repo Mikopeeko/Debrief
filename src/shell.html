@@ -18005,5 +18005,133 @@ html body .ptip .pt-x { position: absolute; top: 8px; right: 8px; width: 24px; h
 html body .ptip .pt-x:hover { color: var(--text); background: rgba(255,255,255,.06); }
 }
 </style>
+<style>/* (Nov 9: the guide windows v2) */
+@layer defaultTheme {
+/* ===== Guide windows v2, "briefing cards" (Nov 9, Flex: "this is the first thing people see when they enter the site it needs to look good", "it looks good", "finish the intro stuff first") ===== */
+html body :is(#suBox, #jnBox).pnz-wrap { background: rgba(6,8,12,.76) !important; backdrop-filter: blur(3px); }
+html body :is(#suBox, #jnBox) .gw2 { position: relative !important; padding: 0 !important; border-radius: 4px !important; border: 1px solid rgba(255,255,255,.09) !important; background: #14171d !important; box-shadow: 0 30px 80px rgba(0,0,0,.65), 0 0 0 1px rgba(0,0,0,.5) !important; overflow: hidden !important; animation: gw-in .2s cubic-bezier(.2,.8,.2,1) both; }
+html body :is(#suBox, #jnBox).out .gw2 { animation: gw-out .16s ease-in both; }
+@keyframes gw-in { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes gw-out { to { opacity: 0; transform: translateY(6px) scale(.99); } }
+html body #jnBox .jn-sheet.gw2 { width: min(560px, 100%) !important; } html body #suBox .su-sheet.gw2 { width: min(820px, 100%) !important; }
+/* (the cinematic header: raid art, a gold eyebrow, the big title, a boss on the right, a square ✕) */
+html body :is(#suBox, #jnBox) .gw2 > .gw-hero { position: relative !important; display: flex !important; align-items: flex-end !important; min-height: 148px !important; margin: 0 !important; padding: 22px 24px !important; border: 0 !important; overflow: hidden !important;
+  background: linear-gradient(90deg, rgba(12,14,19,.97) 0%, rgba(12,14,19,.82) 45%, rgba(12,14,19,.35) 100%), linear-gradient(0deg, #14171d 0%, rgba(20,23,29,0) 60%), var(--art) center 40% / cover, #14171d !important; }
+html body :is(#suBox, #jnBox) .gw-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 120% at 0% 0%, rgba(230,180,80,.2), transparent 60%); pointer-events: none; }
+html body :is(#suBox, #jnBox) .gw-hero::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: linear-gradient(90deg, #e6b450, rgba(230,180,80,.2) 70%, transparent); }
+html body :is(#suBox, #jnBox) .gw-boss { position: absolute; right: -10px; bottom: -30px; height: 200px; opacity: .92; filter: drop-shadow(0 10px 20px rgba(0,0,0,.7)); -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%); mask-image: linear-gradient(90deg, transparent, #000 35%); pointer-events: none; }
+html body :is(#suBox, #jnBox) .gw-ht { position: relative; }
+html body :is(#suBox, #jnBox) .gw-eb { display: block; margin-bottom: 6px; font: 700 11px var(--body); letter-spacing: .14em; text-transform: uppercase; color: #e6b450; }
+html body :is(#suBox, #jnBox) .gw-hero h2 { margin: 0 !important; font: 800 34px/1 'Barlow Condensed', sans-serif !important; color: #f6f2ea !important; text-shadow: 0 2px 16px rgba(0,0,0,.7); }
+html body :is(#suBox, #jnBox) .gw-hero p { margin: 6px 0 0 !important; font: 500 13.5px var(--body) !important; color: #c9ced8 !important; }
+html body :is(#suBox, #jnBox) .gw-hero .pnz-x { position: absolute !important; top: 14px !important; right: 14px !important; z-index: 2; width: 30px !important; height: 30px !important; display: grid !important; place-items: center !important; border: 1px solid rgba(255,255,255,.18) !important; border-radius: 3px !important; background: rgba(10,12,16,.55) !important; color: #cfd3da !important; font: 500 14px/1 var(--body) !important; backdrop-filter: blur(4px); }
+html body :is(#suBox, #jnBox) .gw-hero .pnz-x:hover { border-color: #e6b450 !important; color: #f0cf7a !important; }
+/* (the body) */
+html body #jnBox .jn-sheet.gw2 > :not(.pnz-top) { margin-left: 24px !important; margin-right: 24px !important; }
+html body #jnBox .jn-sheet.gw2 > .pnz-top + * { margin-top: 20px !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-p { margin: 0 0 14px !important; font: 500 14px/1.55 var(--body) !important; color: #c3c8d0 !important; } html body :is(#suBox, #jnBox) .gw2 .su-p b { color: #f0cf7a !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-h { margin: 0 0 4px !important; font: 800 22px/1.1 'Barlow Condensed', sans-serif !important; color: #f4f1ea !important; }
+html body :is(#suBox, #jnBox) .gw2 .jn-sub, html body #suBox .gw2 .su-why { font: 500 12.5px/1.5 var(--body) !important; color: #7f8691 !important; }
+/* (the raid nights: a big number and a bar of nights) */
+html body :is(#suBox, #jnBox) .gw-stat { display: flex; align-items: center; gap: 18px; padding: 14px 16px; margin-bottom: 14px; border: 1px solid rgba(230,180,80,.25); border-radius: 4px; background: linear-gradient(90deg, rgba(230,180,80,.08), transparent); }
+html body :is(#suBox, #jnBox) .gw-big { flex: none; display: flex; align-items: baseline; gap: 6px; } html body :is(#suBox, #jnBox) .gw-big b { font: 800 46px/1 'Barlow Condensed', sans-serif; color: #f0cf7a; } html body :is(#suBox, #jnBox) .gw-big span { font: 600 14px var(--body); color: #c9ced8; }
+html body :is(#suBox, #jnBox) .gw-sx p { margin: 0 0 8px; font: 500 13.5px/1.45 var(--body); color: #c3c8d0; } html body :is(#suBox, #jnBox) .gw-sx p b { color: #f4f1ea; }
+html body :is(#suBox, #jnBox) .gw-cells { display: flex; gap: 3px; flex-wrap: wrap; } html body :is(#suBox, #jnBox) .gw-cells i { width: 22px; height: 6px; background: rgba(255,255,255,.1); } html body :is(#suBox, #jnBox) .gw-cells i.on { background: #e6b450; }
+/* (what you get: three tiles) */
+html body :is(#suBox, #jnBox) .gw-gets { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-bottom: 4px; }
+html body :is(#suBox, #jnBox) .gw-gets > div { padding: 12px; border: 1px solid rgba(255,255,255,.08); border-radius: 4px; background: rgba(255,255,255,.02); }
+html body :is(#suBox, #jnBox) .gw-gets span { display: grid; place-items: center; width: 30px; height: 30px; margin-bottom: 8px; border: 1px solid rgba(230,180,80,.4); border-radius: 3px; background: rgba(230,180,80,.08); }
+html body :is(#suBox, #jnBox, .su-bar) svg.gw-i { width: 16px; height: 16px; fill: none; stroke: #f0cf7a; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+html body :is(#suBox, #jnBox) .gw-gets b { display: block; font: 700 15px 'Barlow Condensed', sans-serif; color: #f4f1ea; } html body :is(#suBox, #jnBox) .gw-gets em { font: 500 12px var(--body); font-style: normal; color: #9aa1ab; }
+/* (the footer: back on the left, the step in the middle, the one gold button on the right) */
+html body :is(#suBox, #jnBox) .gw2 .su-f { position: relative; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 14px !important; margin: 18px -24px 0 !important; padding: 14px 24px !important; border-top: 1px solid rgba(255,255,255,.07) !important; background: rgba(0,0,0,.18) !important; }
+html body #jnBox .jn-sheet.gw2 > .su-f { margin: 18px 0 0 !important; } html body #jnBox .jn-sheet.gw2 .su-done .su-f { margin: 18px -24px 0 !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-f .btn { border-radius: 3px !important; height: 40px !important; padding: 0 18px !important; font: 800 14px var(--body) !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-f .btn.primary { background: linear-gradient(180deg, #f0c766, #d9a440) !important; border-color: #d9a440 !important; color: #1a1406 !important; box-shadow: 0 8px 24px rgba(230,180,80,.22), inset 0 1px 0 rgba(255,255,255,.35) !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-f .btn.primary[disabled] { opacity: .45 !important; box-shadow: none !important; }
+html body :is(#suBox, #jnBox) .gw2 .gw-ar { display: inline-block; margin-left: 8px; transition: transform .15s; } html body :is(#suBox, #jnBox) .gw2 .btn:hover .gw-ar { transform: translateX(3px); }
+html body :is(#suBox, #jnBox) .gw2 .su-lk { font: 600 13px var(--body) !important; color: #9aa1ab !important; } html body :is(#suBox, #jnBox) .gw2 .su-lk:hover { color: #f4f1ea !important; }
+html body #suBox .su-sheet.gw2 .su-f::after { position: absolute; left: 50%; transform: translateX(-50%); font: 600 12px var(--body); color: #7f8691; pointer-events: none; }
+html body #suBox .su-sheet.gw2[data-step="1"] .su-f::after { content: "Step 1 of 4"; } html body #suBox .su-sheet.gw2[data-step="2"] .su-f::after { content: "Step 2 of 4"; } html body #suBox .su-sheet.gw2[data-step="3"] .su-f::after { content: "Step 3 of 4"; }
+/* (setup: the steps across the top, the step below) */
+html body #suBox .su-sheet.gw2 .su-wrap { display: block !important; margin: 0 !important; padding: 0 !important; }
+html body #suBox .su-sheet.gw2 .su-steps { display: flex !important; margin: 0 !important; padding: 0 24px !important; border: 0 !important; border-bottom: 1px solid rgba(255,255,255,.07) !important; }
+html body #suBox .su-sheet.gw2 .su-steps li { flex: 1; position: relative; gap: 10px !important; padding: 12px 0 13px !important; font: 600 13px var(--body) !important; color: #6f7682 !important; }
+html body #suBox .su-sheet.gw2 .su-steps li::after { content: ""; position: absolute; left: 0; right: 8px; bottom: -1px; height: 2px; background: transparent; }
+html body #suBox .su-sheet.gw2 .su-steps li.on { color: #f4f1ea !important; } html body #suBox .su-sheet.gw2 .su-steps li.on::after { background: #e6b450; }
+html body #suBox .su-sheet.gw2 .su-steps li.ok { color: #9aa1ab !important; } html body #suBox .su-sheet.gw2 .su-steps li.ok::after { background: rgba(126,224,143,.5); }
+html body #suBox .su-sheet.gw2 .su-steps li i { width: 24px !important; height: 24px !important; border-radius: 3px !important; border: 1px solid rgba(255,255,255,.15) !important; background: transparent !important; color: #6f7682 !important; font: 700 12px var(--body) !important; }
+html body #suBox .su-sheet.gw2 .su-steps li.on i { background: #e6b450 !important; border-color: #e6b450 !important; color: #1a1406 !important; box-shadow: 0 0 0 4px rgba(230,180,80,.15) !important; }
+html body #suBox .su-sheet.gw2 .su-steps li.ok i { border-color: rgba(126,224,143,.55) !important; color: #7ee08f !important; background: rgba(69,193,92,.1) !important; }
+html body #suBox .su-sheet.gw2 .su-main { padding: 20px 24px 0 !important; }
+/* (choices and raider rows) */
+html body #suBox .gw2 .su-tl { gap: 6px !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-t { border-radius: 4px !important; border: 1px solid rgba(255,255,255,.1) !important; background: rgba(255,255,255,.02) !important; padding: 12px 14px !important; transition: border-color .12s, background .12s; }
+html body :is(#suBox, #jnBox) .gw2 .su-t:hover:not([disabled]) { border-color: rgba(230,180,80,.45) !important; }
+html body #suBox .gw2 .su-t.on { border-color: #e6b450 !important; background: rgba(230,180,80,.07) !important; box-shadow: inset 3px 0 0 #e6b450 !important; }
+html body #suBox .gw2 .su-rad { width: 16px !important; height: 16px !important; border-radius: 3px !important; border: 1px solid rgba(255,255,255,.3) !important; } html body #suBox .gw2 .su-t.on .su-rad { border-color: #e6b450 !important; background: radial-gradient(circle, #e6b450 0 4px, transparent 4.5px) !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-tn b { font: 700 15px 'Barlow Condensed', sans-serif !important; color: #f4f1ea !important; } html body :is(#suBox, #jnBox) .gw2 .su-tn em { font: 500 12px var(--body) !important; font-style: normal !important; color: #9aa1ab !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-tag, html body :is(#suBox, #jnBox) .gw2 .su-rk { border-radius: 3px !important; }
+html body #suBox .gw2 .su-rl { border: 1px solid rgba(255,255,255,.07) !important; border-radius: 4px !important; }
+html body :is(#suBox, #jnBox) .gw2 .su-r { min-height: 38px !important; padding: 6px 10px !important; border-bottom: 1px solid rgba(255,255,255,.04) !important; border-radius: 0 !important; } html body :is(#suBox, #jnBox) .gw2 .su-r:hover { background: rgba(255,255,255,.025) !important; }
+html body #suBox .gw2 .su-r.off { opacity: .4 !important; } html body :is(#suBox, #jnBox) .gw2 input[type="checkbox"] { accent-color: #e6b450; }
+html body #suBox .gw2 .su-nb { height: 4px !important; border-radius: 0 !important; background: rgba(255,255,255,.08) !important; } html body #suBox .gw2 .su-nb i { border-radius: 0 !important; background: #e6b450 !important; }
+html body #suBox .gw2 .su-nm b { font: 700 14.5px 'Barlow Condensed', sans-serif !important; }
+html body #jnBox .gw2 .jn-r { border: 1px solid rgba(255,255,255,.1) !important; border-radius: 4px !important; margin-bottom: 6px !important; }
+html body #suBox .gw2 .gk-seg button { border-radius: 0 !important; } html body #suBox .gw2 .su-k { border-radius: 4px !important; }
+/* (done: a glowing seal and the numbers) */
+html body :is(#suBox, #jnBox) .gw2 .gw-done { display: grid !important; grid-template-columns: 92px minmax(0,1fr) !important; align-items: center !important; column-gap: 24px !important; padding-top: 6px !important; text-align: left !important; }
+html body :is(#suBox, #jnBox) .gw2 .gw-done > .su-f { grid-column: 1 / -1; }
+html body :is(#suBox, #jnBox) .gw-seal { position: relative; width: 92px; height: 92px; display: grid; place-items: center; }
+html body :is(#suBox, #jnBox) .gw-seal svg.gw-i { position: absolute; inset: 0; width: 92px; height: 92px; stroke-width: 1.1; fill: rgba(230,180,80,.1); filter: drop-shadow(0 0 18px rgba(230,180,80,.35)); }
+html body :is(#suBox, #jnBox) .gw-seal i { position: relative; font: 800 34px/1 var(--body); font-style: normal; color: #f0cf7a; }
+html body :is(#suBox, #jnBox) .gw-dn { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 12px; } html body :is(#suBox, #jnBox) .gw-dn div { padding: 10px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 4px; background: rgba(255,255,255,.02); }
+html body :is(#suBox, #jnBox) .gw-dn b { display: block; font: 800 26px/1 'Barlow Condensed', sans-serif; color: #f0cf7a; } html body :is(#suBox, #jnBox) .gw-dn span { font: 500 12px var(--body); color: #9aa1ab; }
+html body #jnBox .gw2 .su-done:not(.gw-done) .su-ok { width: 44px !important; height: 44px !important; border-radius: 4px !important; border: 1px solid rgba(126,224,143,.55) !important; background: rgba(69,193,92,.1) !important; color: #7ee08f !important; display: grid !important; place-items: center !important; font-style: normal !important; margin: 0 0 12px !important; }
+html body :is(#suBox, #jnBox) .gw2 .bn-note { border-radius: 4px !important; }
+/* ===== the strip: "<Team> isn't on Debrief yet" ===== */
+html body .su-bar { position: relative !important; justify-content: flex-start !important; gap: 14px !important; padding: 10px 58px 10px 18px !important; background: linear-gradient(90deg, rgba(230,180,80,.16), rgba(230,180,80,.05) 50%, rgba(20,23,29,.9)), #14171d !important; border-top: 1px solid rgba(230,180,80,.3) !important; border-bottom: 1px solid rgba(230,180,80,.35) !important; animation: gw-strip .22s ease-out both; }
+@keyframes gw-strip { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+html body .su-bar .gw-sic { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(230,180,80,.5); border-radius: 3px; background: rgba(230,180,80,.12); }
+html body .su-bar .su-bar-t { flex: 1; font: 500 13.5px var(--body) !important; color: #d6d9de !important; } html body .su-bar .su-bar-t b { color: #f0cf7a !important; font-weight: 700 !important; }
+html body .su-bar .su-bar-a { gap: 14px !important; }
+html body .su-bar .btn.primary { height: 32px !important; padding: 0 14px !important; border-radius: 3px !important; background: linear-gradient(180deg, #f0c766, #d9a440) !important; border-color: #d9a440 !important; color: #1a1406 !important; font: 800 13px var(--body) !important; box-shadow: 0 6px 18px rgba(230,180,80,.2) !important; }
+html body .su-bar .su-lk { font: 600 12.5px var(--body) !important; color: #9aa1ab !important; } html body .su-bar .su-lk:hover { color: #f4f1ea !important; }
+html body .su-bar .gw-sx2 { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 3px; background: rgba(10,12,16,.4); color: #cfd3da; font: 500 12px/1 var(--body); cursor: pointer; }
+html body .su-bar .gw-sx2:hover { border-color: #e6b450; color: #f0cf7a; }
+/* ===== the first-visit tips: a reticle on the target, dashes for the steps ===== */
+html body .ptip .pt-hole { border-radius: 0 !important; outline: 0 !important; box-shadow: 0 0 0 9999px rgba(6,8,12,.72), 0 0 0 1px rgba(230,180,80,.35), 0 0 30px rgba(230,180,80,.18) !important; animation: gw-pulse 2.4s ease-in-out infinite; }
+@keyframes gw-pulse { 0%, 100% { box-shadow: 0 0 0 9999px rgba(6,8,12,.72), 0 0 0 1px rgba(230,180,80,.35), 0 0 24px rgba(230,180,80,.14); } 50% { box-shadow: 0 0 0 9999px rgba(6,8,12,.72), 0 0 0 1px rgba(230,180,80,.55), 0 0 36px rgba(230,180,80,.28); } }
+html body .ptip .pt-hole i { position: absolute; width: 14px; height: 14px; border: 2px solid #e6b450; }
+html body .ptip .pt-hole i:nth-child(1) { left: -5px; top: -5px; border-right: 0; border-bottom: 0; } html body .ptip .pt-hole i:nth-child(2) { right: -5px; top: -5px; border-left: 0; border-bottom: 0; }
+html body .ptip .pt-hole i:nth-child(3) { left: -5px; bottom: -5px; border-right: 0; border-top: 0; } html body .ptip .pt-hole i:nth-child(4) { right: -5px; bottom: -5px; border-left: 0; border-top: 0; }
+html body .ptip .pt-bub { border-radius: 4px !important; border: 1px solid rgba(255,255,255,.1) !important; border-top: 0 !important; background: linear-gradient(180deg, #1e222b, #16191f) !important; padding: 14px 16px 14px !important; padding-right: 16px !important; box-shadow: 0 20px 60px rgba(0,0,0,.65) !important; }
+html body .ptip .pt-bub::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: #e6b450; }
+html body .ptip .pt-bub.in { animation: gw-tip .18s cubic-bezier(.2,.8,.2,1) both !important; }
+@keyframes gw-tip { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+html body .ptip .pt-bub::before { background: #e6b450 !important; border: 0 !important; width: 10px !important; height: 10px !important; }
+html body .ptip .pt-bub[data-side="b"]::before { top: -6px !important; } html body .ptip .pt-bub[data-side="t"]::before { bottom: -6px !important; background: #16191f !important; border-right: 1px solid rgba(255,255,255,.1) !important; border-bottom: 1px solid rgba(255,255,255,.1) !important; }
+html body .ptip .pt-prog { display: flex; gap: 4px; margin: 0 40px 10px 0; } html body .ptip .pt-prog i { width: 16px; height: 3px; background: rgba(255,255,255,.12); } html body .ptip .pt-prog i.on { background: #e6b450; }
+html body .ptip .pt-k { font: 700 10.5px var(--body) !important; letter-spacing: .12em !important; text-transform: uppercase !important; color: #e6b450 !important; }
+html body .ptip .pt-bub > b { margin: 3px 0 4px !important; font: 800 21px/1.1 'Barlow Condensed', sans-serif !important; color: #f6f2ea !important; }
+html body .ptip .pt-bub p { margin: 0 !important; font: 500 13.5px/1.5 var(--body) !important; color: #c3c8d0 !important; }
+html body .ptip .pt-nav { justify-content: space-between !important; align-items: center !important; margin-top: 12px !important; }
+html body .ptip .pt-nav .btn.primary { margin-left: auto; height: 32px !important; padding: 0 14px !important; border-radius: 3px !important; background: linear-gradient(180deg, #f0c766, #d9a440) !important; border-color: #d9a440 !important; color: #1a1406 !important; font: 800 13px var(--body) !important; box-shadow: 0 6px 18px rgba(230,180,80,.2) !important; }
+html body .ptip .pt-nav .pt-tour, html body .ptip .pt-nav .btn:not(.primary) { font: 600 13px var(--body) !important; color: #9aa1ab !important; background: none !important; border: 0 !important; padding: 0 !important; height: auto !important; box-shadow: none !important; }
+html body .ptip .pt-nav .btn:not(.primary):hover, html body .ptip .pt-nav .pt-tour:hover { color: #f4f1ea !important; }
+html body .ptip .gw-ar { display: inline-block; margin-left: 8px; transition: transform .15s; } html body .ptip .btn:hover .gw-ar { transform: translateX(3px); }
+html body .ptip .pt-x { position: absolute; top: 9px !important; right: 9px !important; width: 26px !important; height: 26px !important; display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 3px !important; background: transparent; color: #cfd3da; font: 500 12px/1 var(--body) !important; cursor: pointer; }
+html body .ptip .pt-x:hover { color: #f0cf7a !important; border-color: rgba(230,180,80,.6) !important; }
+/* (the Rotation timeline's tour, in the same style) */
+html body .rtv-tour { border-radius: 4px !important; border: 1px solid rgba(255,255,255,.1) !important; background: linear-gradient(180deg, #1e222b, #16191f) !important; box-shadow: 0 20px 60px rgba(0,0,0,.65) !important; animation: gw-tip .18s cubic-bezier(.2,.8,.2,1) both; overflow: hidden; }
+html body .rtv-tour::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: #e6b450; }
+html body .rtv-tour .rtv-tourn { font: 700 10.5px var(--body) !important; letter-spacing: .12em !important; text-transform: uppercase; color: #e6b450 !important; }
+html body .rtv-tour b { font: 800 20px/1.15 'Barlow Condensed', sans-serif !important; color: #f6f2ea !important; }
+html body .rtv-tour .rtv-toura button { border-radius: 3px !important; } html body .rtv-tour .rtv-toura button.go { background: linear-gradient(180deg, #f0c766, #d9a440) !important; border-color: #d9a440 !important; color: #1a1406 !important; font-weight: 800 !important; }
+html body .rtv-tourhi { outline: 2px solid #e6b450 !important; outline-offset: 3px !important; box-shadow: 0 0 0 8px rgba(230,180,80,.12), 0 0 30px rgba(230,180,80,.2) !important; }
+@media (max-width: 640px) { html body :is(#suBox, #jnBox) .gw-gets { grid-template-columns: minmax(0,1fr); } html body :is(#suBox, #jnBox) .gw-hero h2 { font-size: 28px !important; } html body #suBox .su-sheet.gw2 .su-steps li span { display: none; } html body :is(#suBox, #jnBox) .gw-boss { opacity: .45; } }
+}
+
+</style>
 </body>
 </html>
