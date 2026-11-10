@@ -1626,6 +1626,32 @@ async function wclCharIds(who) { if (!who || !who.t) return []; const c = caches
 const adminLink = (L, url) => !!L && (!L.mock || PRACTICE_HOST(url)) && (L.chars || []).some((c) => ADMIN_BNET.includes(bnetKey(c)));
 const raiderView = (L, url) => !!(L && L.asRaider) && adminLink(L, url);
 const realAdmin = (who, env, url) => siteAdmin(who ? { ...who, plain: false } : who, env, url);
+
+// ---- Ask the Paladin (Nov 9): a site helper named Debrief, on Claude Haiku 5.5. Only the site admin while it's new (ASK_OPEN), 40 questions a
+// person a day (counted in this data centre's cache), the key only in Cloudflare (ANTHROPIC_API_KEY). The question and the last few turns are sent;
+// nothing is saved. ----
+const ASK_OPEN = false, ASK_DAY = 40, ASK_SYS = "You are Debrief, the helper on debriefme.io, a website for World of Warcraft raid teams (Midnight, Mythic progression). You speak as a friendly paladin: a short \"Light be with you\" style greeting is fine once, but answers are plain, short and practical.\n\nWhat the site has (only describe these; never invent features, buttons or menus):\n- Home: your team's goal boss and best pull, each night's best pull, the next raid with a countdown and whether the night's plan is ready, every boss of the tier, your jobs for the next raid, your season (item level, Raider.IO score, Mythic bosses, parse), the team's Mythic+ ladder and keys, and WoW news.\n- Plan (for raid leads and officers; raiders see their jobs): pick the night and the boss at the top. Tabs: Roster (who plays each boss), Healing cooldowns (a timeline of the boss's big hits; drag cooldowns onto it, or press the sparkle button to fill them), Assignments (every mechanic's jobs), My note (your own jobs), Plans (saved plans; import one). \"Copy for the game\" copies the plan as a note; in game open the NSRT addon's Shared Notes and press Import. Officers can save the plan for the team so raiders see their jobs on Home.\n- Guides: boss guides for every boss of the raid, Heroic and Mythic, with maps of each mechanic and a whole-fight video.\n- Raid review: open a raid night (paste a Warcraft Logs report link, or import a WoWCombatLog.txt file). Tabs: Summary (why the pull wiped, how it went, mistakes, deaths), Rotation (each player's checklist and score), Graphs (damage, healing, deaths), Report card (grades for the whole raid), Compare.\n- Mythic+: your keys, each run explained pull by pull, your rating and each dungeon's best from Raider.IO, and prep for each dungeon.\n- The Companion app (for the PC) saves your pulls by itself and can remind you before raid.\n- Sign in with Battle.net. A guild master or officer can set up the team in about a minute; raiders get asked to join.\n\nRules:\n- Answer in 1 to 4 short sentences or a short list. Plain words; no jargon the player wouldn't use.\n- If you don't know, or it isn't on the site, say so plainly and suggest the closest real feature.\n- Don't give links to other websites. Don't make up numbers about the player's logs: you can't see their data.\n- For general WoW questions (a class, a boss), answer briefly and point to the matching page (Guides, Rotation).";
+async function askRoute(req, env, url) {
+  const who = await teamWho(req, env, url); const on = !!who && (ASK_OPEN || (await siteAdmin(who, env, url)));
+  if (req.method === 'GET') return json({ on, ready: on && !!env.ANTHROPIC_API_KEY });
+  if (req.method !== 'POST') return json({ error: 'Ask from the website.' }, 405);
+  if (!who) return json({ error: 'Sign in to ask Debrief.', signin: true }, 401); if (!on) return json({ error: 'Debrief isn\'t open yet.' }, 403);
+  let b = null; try { b = await req.json(); } catch (e) { b = null; } const q = String((b && b.q) || '').trim().slice(0, 600); if (!q) return json({ error: 'Type a question first.' }, 400);
+  if (!env.ANTHROPIC_API_KEY) return json({ a: 'I\'m not switched on yet: the site needs its Claude key in Cloudflare first. Once it\'s in, ask me again.', notSet: true });
+  const day = new Date().toISOString().slice(0, 10), ck = new Request('https://debrief.cache/ask/' + encodeURIComponent(who.uid || who.name || 'x') + '/' + day), hit = await caches.default.match(ck).catch(() => null), n = hit ? +(await hit.text()) || 0 : 0;
+  if (n >= ASK_DAY) return json({ a: 'That\'s all my questions for today. Ask me again tomorrow.', limit: true });
+  await caches.default.put(ck, new Response(String(n + 1), { headers: { 'Cache-Control': 'max-age=90000' } })).catch(() => {});
+  const hist = (Array.isArray(b.hist) ? b.hist : []).slice(-6).filter((m) => m && (m.r === 'user' || m.r === 'assistant') && typeof m.t === 'string' && m.t.trim()).map((m) => ({ role: m.r, content: m.t.slice(0, 1500) }));
+  while (hist.length && hist[0].role !== 'user') hist.shift(); const msgs = []; for (const m of hist) { if (msgs.length && msgs[msgs.length - 1].role === m.role) msgs[msgs.length - 1].content += '\n' + m.content; else msgs.push(m); }
+  if (msgs.length && msgs[msgs.length - 1].role === 'user') msgs.pop(); msgs.push({ role: 'user', content: q });
+  let res; try { res = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2026-10-21' },
+    body: JSON.stringify({ model: 'claude-haiku-5-5', max_tokens: 1000, output_config: { effort: 'low' }, system: [{ type: 'text', text: ASK_SYS, cache_control: { type: 'ephemeral' } }], messages: msgs }) }); }
+  catch (e) { return json({ a: 'I couldn\'t reach my answers just now. Try again in a moment.', err: true }); }
+  if (res.status === 429 || res.status === 529 || res.status >= 500) return json({ a: 'I\'m a bit busy right now. Try again in a moment.', err: true });
+  let j = null; try { j = await res.json(); } catch (e) { j = null; } if (!res.ok || !j) return json({ a: 'Something on my side didn\'t work. Try again, and if it keeps happening tell Flex.', err: true });
+  if (j.stop_reason === 'refusal') return json({ a: 'I can\'t help with that one. Ask me about Debrief, your raid or your plan.' });
+  const a = (j.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n').trim();
+  return json({ a: a || 'I don\'t have an answer for that. Try asking another way.' }); }
 async function siteAdmin(who, env, url) {
   if (!who) return false; if (who.plain) return false; if (who.practice) return ADMIN_BNET.some((k) => k.split('-')[0] === String(who.name || '').toLowerCase());
   if ((await wclCharIds(who)).some((id) => ADMIN_WCL_CHARS.includes(id))) return true;
@@ -2526,6 +2552,7 @@ export default {
     if (url.pathname === '/auth/bnet/callback') return bnetCallback(req, env, url);
     if (url.pathname === '/api/bnet') return bnetRoute(req, env, url);
     if (url.pathname === '/api/whoami') return whoAmIRoute(req, env, url);
+    if (url.pathname === '/api/ask') return askRoute(req, env, url); /* (Ask the Paladin, Nov 9) */
     if (url.pathname === '/api/raiders') return raidersRoute(req, env, url); /* (Battle.net step 4: public gear, item level and Mythic+) */
     if (url.pathname === '/api/teamplan') return teamPlan(req, env, url); if (url.pathname === '/api/teamsetup') return setupRoute(req, env, url); /* (the team plan, saved online, Nov 4; /api/team is a team's members) */
     if (url.pathname === '/api/idea') return req.method === 'POST' ? fileIdea(req, env, url) : json({ error: 'Send ideas with the website\'s form.' }, 405);

@@ -18363,5 +18363,61 @@ html:not([data-theme]) body.refine :is(#view, #main) :is(.panel, .dt-box, .dbt-p
 html:not([data-theme]) body.refine :is(#view, #main, .modal, [role="dialog"]) .btn.primary:not(:disabled) { background-image: linear-gradient(180deg, #f8d77e, #dfa83e) !important; border-color: #ecb954 !important; color: #1a1406 !important; box-shadow: 0 8px 24px rgba(240,190,80,.3), inset 0 1px 0 rgba(255,255,255,.5) !important; }
 }
 </style>
+<style>/* (Nov 9: Ask the Paladin) */
+@layer defaultTheme {
+html body #askBox.ak { position: fixed !important; right: 22px !important; bottom: 22px !important; z-index: 9000 !important; font-family: var(--body, 'Barlow', sans-serif) !important; color: #f3efe6 !important; }
+html body #askBox .ak-bub { position: relative !important; display: block !important; width: 62px !important; height: 62px !important; margin: 0 0 0 auto !important; padding: 0 !important; border: 0 !important; background: none !important; cursor: pointer !important; }
+html body #askBox .ak-bub .ak-pa { border: 1px solid rgba(230,180,80,.7) !important; }
+html body #askBox .ak-bub:hover .ak-pa { border-color: #ffd98a !important; }
+html body #askBox .ak-ham { position: absolute !important; right: -7px !important; bottom: -7px !important; width: 24px !important; height: 24px !important; display: grid !important; place-items: center !important; background: #e6b450 !important; border: 2px solid #0b0d12 !important; }
+html body #askBox .ak-pa { position: relative !important; display: block !important; overflow: hidden !important; flex: none !important; background: #1a1008 !important; border: 1px solid rgba(230,180,80,.55) !important; animation: akGlow 3.2s ease-in-out infinite !important; }
+html body #askBox .ak-img { position: absolute !important; inset: 0 !important; background-repeat: no-repeat !important; transform-origin: 45% 35% !important; animation: akKb 9s ease-in-out infinite alternate !important; }
+html body #askBox .ak-fl { position: absolute !important; transform: translate(-50%,-50%) !important; border-radius: 50% !important; background: radial-gradient(closest-side, rgba(255,190,70,.8), rgba(255,120,20,.25) 60%, rgba(255,120,20,0)) !important; mix-blend-mode: screen !important; animation: akFl 1.6s ease-in-out infinite alternate !important; pointer-events: none !important; }
+html body #askBox .ak-fl.b { animation-duration: 1.9s !important; animation-delay: -.6s !important; }
+html body #askBox .ak-lid { position: absolute !important; transform: translate(-50%,-50%) scaleY(0) !important; border-radius: 50% !important; background: radial-gradient(closest-side, #e8d8bf 70%, #cdb895) !important; animation: akBlink 4.6s infinite !important; }
+html body #askBox .ak-em { position: absolute !important; bottom: -6px !important; width: 3px !important; height: 3px !important; border-radius: 50% !important; background: #ffd36b !important; box-shadow: 0 0 6px 2px rgba(255,170,50,.8) !important; animation: akEm linear infinite !important; pointer-events: none !important; }
+html body #askBox .ak-sw { position: absolute !important; inset: 0 !important; background: linear-gradient(105deg, rgba(255,255,255,0) 38%, rgba(255,240,200,.35) 50%, rgba(255,255,255,0) 62%) !important; transform: translateX(-120%) !important; animation: akSw 6s ease-in-out infinite !important; mix-blend-mode: screen !important; pointer-events: none !important; }
+html body #askBox .ak-panel { position: absolute !important; right: 0 !important; bottom: 78px !important; width: 380px !important; max-width: calc(100vw - 32px) !important; display: flex !important; flex-direction: column !important; max-height: min(560px, calc(100vh - 120px)) !important; border: 1px solid rgba(230,180,80,.35) !important; background: #12151b !important; box-shadow: 0 24px 60px rgba(0,0,0,.6) !important; }
+html body #askBox .ak-panel::before { content: "" !important; display: block !important; flex: none !important; height: 2px !important; background: linear-gradient(90deg, #f0c35a, rgba(240,195,90,.1)) !important; }
+html body #askBox .ak-ph { display: flex !important; flex: none !important; gap: 12px !important; align-items: center !important; padding: 10px 12px !important; border-bottom: 1px solid rgba(255,255,255,.07) !important; background: radial-gradient(80% 140% at 0 0, rgba(230,180,80,.12), rgba(230,180,80,0) 70%) !important; }
+html body #askBox .ak-pt { flex: 1 !important; min-width: 0 !important; }
+html body #askBox .ak-pt small { display: block !important; font: 800 10px var(--body, 'Barlow', sans-serif) !important; letter-spacing: .14em !important; text-transform: uppercase !important; color: #e6b450 !important; }
+html body #askBox .ak-pt b { display: block !important; font: 800 20px/1.05 'Barlow Condensed', sans-serif !important; color: #f3efe6 !important; }
+html body #askBox .ak-pt span { font: 500 11.5px var(--body, 'Barlow', sans-serif) !important; color: #8a909b !important; }
+html body #askBox .ak-x { padding: 4px 6px !important; border: 0 !important; background: none !important; color: #8a909b !important; font-size: 14px !important; cursor: pointer !important; }
+html body #askBox .ak-x:hover { color: #f3efe6 !important; }
+html body #askBox .ak-msgs { flex: 1 !important; min-height: 160px !important; overflow-y: auto !important; display: flex !important; flex-direction: column !important; gap: 8px !important; padding: 12px !important; }
+html body #askBox .ak-m { max-width: 88% !important; padding: 8px 10px !important; font: 500 13.5px/1.4 var(--body, 'Barlow', sans-serif) !important; color: #e8e4dc !important; white-space: normal !important; word-wrap: break-word !important; }
+html body #askBox .ak-m.bot { align-self: flex-start !important; background: #1b1f28 !important; border-left: 2px solid #e6b450 !important; }
+html body #askBox .ak-m.me { align-self: flex-end !important; background: rgba(230,180,80,.14) !important; border: 1px solid rgba(230,180,80,.3) !important; }
+html body #askBox .ak-m.err { border-left-color: #e5534b !important; color: #c9ced8 !important; }
+html body #askBox .ak-m b { color: #ffd98a !important; }
+html body #askBox .ak-typ { align-self: flex-start !important; display: flex !important; gap: 4px !important; padding: 10px 12px !important; background: #1b1f28 !important; border-left: 2px solid #e6b450 !important; }
+html body #askBox .ak-typ i { width: 6px !important; height: 6px !important; border-radius: 50% !important; background: #e6b450 !important; animation: akDot .9s infinite !important; }
+html body #askBox .ak-typ i:nth-child(2) { animation-delay: .15s !important; }
+html body #askBox .ak-typ i:nth-child(3) { animation-delay: .3s !important; }
+html body #askBox .ak-in { display: flex !important; flex: none !important; gap: 8px !important; margin: 0 !important; padding: 10px 12px !important; border-top: 1px solid rgba(255,255,255,.07) !important; }
+html body #askBox .ak-in input { flex: 1 !important; min-width: 0 !important; height: 36px !important; padding: 0 10px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 0 !important; background: #0b0d12 !important; color: #f3efe6 !important; font: 500 13.5px var(--body, 'Barlow', sans-serif) !important; outline: none !important; }
+html body #askBox .ak-in input:focus { border-color: rgba(230,180,80,.6) !important; }
+html body #askBox .ak-in button { height: 36px !important; padding: 0 16px !important; border: 0 !important; border-radius: 0 !important; background: linear-gradient(180deg, #f8d77e, #dfa83e) !important; color: #1a1406 !important; font: 800 13px var(--body, 'Barlow', sans-serif) !important; cursor: pointer !important; }
+html body #askBox .ak-in button:disabled, html body #askBox .ak-in input:disabled { opacity: .55 !important; cursor: default !important; }
+
+
+
+
+
+
+
+@media (prefers-reduced-motion: reduce) { html body #askBox .ak-img, html body #askBox .ak-fl, html body #askBox .ak-em, html body #askBox .ak-sw, html body #askBox .ak-lid, html body #askBox .ak-pa { animation: none !important; } }
+
+}
+@keyframes akKb { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.06) translate(-1.5%,1%); } }
+@keyframes akGlow { 0%, 100% { box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 10px rgba(255,180,60,.25); } 50% { box-shadow: 0 8px 22px rgba(0,0,0,.5), 0 0 24px rgba(255,180,60,.6); } }
+@keyframes akFl { 0% { opacity: .35; transform: translate(-50%,-50%) scale(.92,1); } 40% { opacity: .8; } 70% { opacity: .5; transform: translate(-50%,-54%) scale(1.04,1.1); } 100% { opacity: .9; transform: translate(-50%,-52%) scale(.98,1.04); } }
+@keyframes akBlink { 0%, 90%, 100% { transform: translate(-50%,-50%) scaleY(0); } 93% { transform: translate(-50%,-50%) scaleY(1); } 96% { transform: translate(-50%,-50%) scaleY(0); } }
+@keyframes akEm { 0% { transform: translate(0,0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate(var(--dx), -80px); opacity: 0; } }
+@keyframes akSw { 0%, 60% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+@keyframes akDot { 50% { transform: translateY(-3px); opacity: .5; } }
+</style>
 </body>
 </html>

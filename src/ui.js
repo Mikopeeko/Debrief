@@ -36426,6 +36426,36 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
   }
 }
 /*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
+
+// ===== Ask the Paladin (Nov 9): the bubble bottom right, the chat, Debrief's animated portrait (Flex's own YouTube picture with his cat Jinx, loaded
+// when the page opens, never saved on the site; embers, flickering flames, a light sweep, Jinx blinking). Only shown when /api/ask says this person
+// can use it (the site admin for now). =====
+const ASK_YT = 'https://yt3.googleusercontent.com/1a-Jg3QbON_Nt22mxlOfQoA7WeiCtHUXQxPID0kTd65GLgCgZ76SVVtF3P8ZOwd8xadqjlC0bQ=s900-c-k-c0x00ffffff-no-rj';
+const ASK = { on: false, open: false, busy: false, hist: [] };
+function askPortrait(W, live) { const small = W < 90, k = small ? 1.75 : 1.3, px = small ? .62 : .55, py = small ? .12 : .08, bs = W * k, ox = (W - bs) * px, oy = (W - bs) * py;
+  const X = (f) => (ox + f * bs).toFixed(1) + 'px', Y = (f) => (oy + f * bs).toFixed(1) + 'px', lid = (fx) => '<i class="ak-lid" style="left:' + X(fx) + ';top:' + Y(0.205) + ';width:' + (bs * .05).toFixed(1) + 'px;height:' + (bs * .05).toFixed(1) + 'px"></i>';
+  let em = ''; if (live) for (let i = 0; i < (small ? 3 : 8); i++) em += '<i class="ak-em" style="left:' + (8 + ((i * 37) % 84)) + '%;animation-delay:-' + ((i * 0.83) % 6).toFixed(2) + 's;animation-duration:' + (3.6 + (i % 4) * 0.7).toFixed(2) + 's;--dx:' + (((i * 13) % 30) - 15) + 'px"></i>';
+  return '<span class="ak-pa" style="width:' + W + 'px;height:' + W + 'px"><span class="ak-img" style="background-image:url(' + ASK_YT + ');background-size:' + bs + 'px ' + bs + 'px;background-position:' + ox + 'px ' + oy + 'px">' +
+    (live ? '<i class="ak-fl" style="left:' + X(.13) + ';top:' + Y(.30) + ';width:' + bs * .28 + 'px;height:' + bs * .4 + 'px"></i><i class="ak-fl b" style="left:' + X(.92) + ';top:' + Y(.28) + ';width:' + bs * .26 + 'px;height:' + bs * .4 + 'px"></i>' : '') + (live && W >= 56 ? lid(.59) + lid(.662) : '') + '</span>' + em + (live ? '<i class="ak-sw"></i>' : '') + '</span>'; }
+function askMsgH(m) { const t = esc(m.t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); return '<div class="ak-m ' + (m.r === 'user' ? 'me' : 'bot') + (m.err ? ' err' : '') + '">' + t + '</div>'; }
+function askDraw() { let el = document.getElementById('askBox'); if (!ASK.on) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'askBox'; document.body.appendChild(el); }
+  const me = (() => { try { return (WHO.now && WHO.now.me && WHO.now.me.name) || ''; } catch (e) { return ''; } })();
+  const greet = { r: 'assistant', t: 'Light be with you' + (me ? ', ' + me.split('#')[0] : '') + '. I\'m Debrief. Ask me anything about the site: plans, raid nights, guides, your rotation.' };
+  el.className = 'ak' + (ASK.open ? ' open' : '');
+  el.innerHTML = (ASK.open ? '<div class="ak-panel" role="dialog" aria-label="Ask the Paladin"><div class="ak-ph">' + askPortrait(56, true) + '<div class="ak-pt"><small>Ask the Paladin</small><b>Debrief</b><span>Answers about Debrief</span></div><button type="button" class="ak-x" data-akx="1" aria-label="Close">✕</button></div>' +
+    '<div class="ak-msgs" id="askMsgs">' + [greet].concat(ASK.hist).map(askMsgH).join('') + (ASK.busy ? '<div class="ak-typ"><i></i><i></i><i></i></div>' : '') + '</div>' +
+    '<form class="ak-in" id="askForm"><input id="askQ" type="text" maxlength="600" placeholder="Ask a question…" autocomplete="off"' + (ASK.busy ? ' disabled' : '') + '><button type="submit"' + (ASK.busy ? ' disabled' : '') + '>Ask</button></form></div>' : '') +
+    '<button type="button" class="ak-bub" data-akopen="1" aria-label="' + (ASK.open ? 'Close Ask the Paladin' : 'Ask the Paladin') + '" aria-expanded="' + ASK.open + '">' + askPortrait(60, true) + '<span class="ak-ham" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><rect x="7" y="6" width="2.4" height="9" fill="#1a1406"/><rect x="2.5" y="1.5" width="11" height="5.5" fill="#1a1406"/></svg></span></button>';
+  const ms = document.getElementById('askMsgs'); if (ms) ms.scrollTop = ms.scrollHeight; const q = document.getElementById('askQ'); if (q && ASK.open && !ASK.busy) q.focus(); }
+async function askAsk(q) { if (ASK.busy || !q) return; ASK.hist.push({ r: 'user', t: q }); ASK.busy = true; askDraw();
+  let a = null, err = false; try { const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, hist: ASK.hist.slice(0, -1).filter((m) => !m.err).slice(-6) }) }); const j = await r.json(); a = j.a || j.error || null; err = !!(j.err || j.error); } catch (e) { a = null; }
+  ASK.busy = false; ASK.hist.push({ r: 'assistant', t: a || 'I couldn\'t reach my answers just now. Try again in a moment.', err: err || !a }); if (ASK.hist.length > 30) ASK.hist = ASK.hist.slice(-30); askDraw(); }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-akopen],[data-akx]'); if (!t) return; e.preventDefault(); ASK.open = t.dataset.akx ? false : !ASK.open; askDraw(); });
+document.addEventListener('submit', (e) => { if (e.target && e.target.id === 'askForm') { e.preventDefault(); const q = document.getElementById('askQ'); const v = q ? q.value.trim() : ''; if (v) askAsk(v); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ASK.open) { ASK.open = false; askDraw(); } });
+async function askCheck() { if (typeof WCL === 'undefined' || !WCL.HOSTED) return; try { const j = await (await fetch('/api/ask', { credentials: 'same-origin' })).json(); ASK.on = !!(j && j.on); } catch (e) { ASK.on = false; } askDraw(); }
+setTimeout(askCheck, 2500); document.addEventListener('whoami', () => setTimeout(askCheck, 300));
 /*MPTAB*/ // (and src/mptab.js, the Mythic+ tab (Nov 1))
 /*SIDENAV*/ // (and src/sidenav.js, the side menu, sub tabs and context bar (Nov 8))
 })();
