@@ -5810,7 +5810,9 @@ const UL_GC = { Y: ['#f5d33a', 'Yellow', 'star'], P: ['#c86bff', 'Purple', 'diam
 const UL_PAT = [[['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y'], ['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P']],
   [['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P'], ['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y']],
   [['WNW', 'Y'], ['SSE', 'P'], ['SSW', 'B'], ['NNE', 'Y'], ['ENE', 'P'], ['WSW', 'B'], ['NNW', 'Y'], ['ESE', 'P']]];
-const UL_VB = { mid: [234.8, 127.7, 220.8], L: [7.7, 50.6, 375], R: [307.7, 50.6, 375] };
+const UL_VB = { mid: [234.8, 127.7, 220.8], L: [7.7, 50.6, 375], R: [307.7, 50.6, 375], L2: [145.2, 54.8, 83.4], R2: [461.8, 54.8, 83.4] };
+// (Phase 2's small eggs: fixed spots at each ledge's north end, picked up 3:33-3:46 in the 10 fastest kills: 7 on the west ledge, 8 on the east)
+const UL_EGGS = { L: [[-90.9, 57.5], [-74.9, 71.3], [-74.1, 66.8], [-69.7, 66.8], [-68.9, 71.4], [-68.3, 78.4], [-62.7, 71.8]], R: [[85.7, 59.6], [81.5, 63.7], [75, 71.5], [73.2, 66.6], [68.7, 67.5], [67.9, 73.9], [63.6, 80], [61.9, 72.1]] };
 // (the plan's Ula'tek jobs from its note: eggs by area, the coil teams, the intermission's soak groups, each side's Phase 2 jobs)
 function ulRead(txt) {
   const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], trans: [], side: { L: {}, R: {} } }; let eggs = [], blk = '';
@@ -5830,8 +5832,8 @@ const ulHas = (key, D) => (key === 'eggs' ? Object.values(D.ez).some((x) => x.le
 const UL_PAGES = {
   eggs: [{ t: 'Pick up eggs', s: 'Eight eggs land at random: take the one in your quadrant', vb: 'mid',
       draw: (D, g) => { g.line(-46, 46, 46, -46); g.line(-46, -46, 46, 46); g.boss([0, 47], 'Ula\'tek');
-        [['Melee', 9, 23], ['Left', -23, 9], ['Right', 23, -9], ['Far', -9, -23]].forEach(([t, x, y]) => g.tag(x, y, t));
-        const Q = { melee: [[0, 15], [0, 31]], left: [[-15, 0], [-31, 0]], right: [[15, 0], [31, 0]], far: [[0, -15], [0, -31]] };
+        [['Melee', 10, 25], ['Left', -27, 9], ['Right', 27, -9], ['Far', -10, -27]].forEach(([t, x, y]) => g.tag(x, y, t));
+        const Q = { melee: [[0, 14], [0, 35]], left: [[-14, 0], [-41, 0]], right: [[14, 0], [41, 0]], far: [[0, -14], [0, -40]] }; /* (the team's plan: the centre person about 14 yards in, the edge person at the rim) */
         for (const [z, sp] of Object.entries(Q)) D.ez[z].slice(0, 2).forEach((n, i) => g.tok(n, sp[i][0], sp[i][1])); },
       leg: (D, L) => { L.grp('Melee (by her)', '#3af2a8', D.ez.melee, ['centre', 'edge']); L.grp('Left', '#3af2a8', D.ez.left, ['centre', 'edge']); L.grp('Right', '#3af2a8', D.ez.right, ['centre', 'edge']); L.grp('Far', '#3af2a8', D.ez.far, ['centre', 'edge']);
         if (D.ez.backup.length) L.grp('Backup', '#c9ced8', D.ez.backup); if (D.shields.length) L.grp('Egg shields', '#e6e0c8', D.shields);
@@ -5844,19 +5846,20 @@ const UL_PAGES = {
         L.f('In the top kills burst 1 lands on the side the first coils come from (the tank brings the Wretch there), burst 3 on either side; 2 is at the north, 4 at the south.'); } }],
   coils: [['First coils · west', 'The first pair lands west or east at random: here west', [['WNW', 'WSW']]], ['First coils · east', 'The first pair lands west or east at random: here east', [['ESE', 'ENE']]], ['Second coils · south', 'The second pair always lands south', [['SSW', 'SSE']]]].map(([t, s, P]) => ({ t, s, vb: 'mid',
     draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const [a, b] = P[0]; [[a, b, 0, '1st · Team 1', '#24f2cb'], [b, a, 1, '2nd · Team 2', '#7fd8ff']].forEach(([k, o, ti, lab, c]) => { const p = UL_SOAK0[k], q = UL_SOAK0[o], dx = p[0] - q[0], dy = p[1] - q[1], dd = Math.hypot(dx, dy) || 1; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 10, c, true); g.cluster(D.teams[ti], p, 7.2); g.tag(p[0] + dx / dd * 14.5, p[1] + dy / dd * 14.5, lab, c); }); },
-    leg: (D, L) => { L.grp('Team 1: the first coil', '#24f2cb', D.teams[0]); L.grp('Team 2: the second coil', '#7fd8ff', D.teams[1]); L.p('The tail slams from the edge and the coil lands about 25 yards in from it. Everyone in a coil splits its hit; Soul Constrictor stops you soaking the next one.');
+    leg: (D, L) => { L.grp('Team 1: the first coil', '#24f2cb', D.teams[0]); L.grp('Team 2: the second coil', '#7fd8ff', D.teams[1]); L.p('The 1st coil lands by the cross (west), the moon (east) or, in the second pair, the triangle; the 2nd by the square, the skull or the diamond. The tail slams from the edge and the coil lands about 25 yards in from it. Everyone in a coil splits its hit; Soul Constrictor stops you soaking the next one.');
       L.f('In the top kills the first pair lands west in 6 of 10 kills (east in 4), always 1st then 2nd about 2.5 seconds apart; the second pair (about 2:15) is always south.'); } })),
-  side: [['L', 'Left ledge', -1], ['R', 'Right ledge', 1]].map(([k, t, sx]) => ({ t, s: 'Phase 2 on the ' + (sx < 0 ? 'west' : 'east') + ' ledge, as you face her', vb: k,
-    draw: (D, g) => { const S = D.side[k] || {}; g.ellipse(72 * sx, 69, 15, 11, '#f5d33a'); g.tag(72 * sx, 83.5, 'Small eggs · 3:40'); g.add(80 * sx, 50, 'Warden');
-      (S.eggs || []).forEach((n, i) => { const c = 6, r = Math.floor(i / c), q = i % c; g.tok(n, 72 * sx + (q - (Math.min(c, (S.eggs || []).length - r * c) - 1) / 2) * 5.6, 72 - r * 6); });
-      g.egg(63 * sx, -75); g.tag(63 * sx, -84, 'Big egg · 4:12'); const big = S['doomscale egg'] || S['doomscale eggs'] || []; if (big[0]) g.tok(big[0], 63 * sx + 6 * -sx, -75); },
-    leg: (D, L) => { const S = D.side[k] || {}; L.grp('Small eggs', '#f5d33a', S.eggs || []); L.grp('Big (Doomscale) egg', '#e6b450', S['doomscale egg'] || S['doomscale eggs'] || []);
+  side: [['L', 'Left ledge', -1], ['R', 'Right ledge', 1]].map(([k, t, sx]) => ({ t, s: 'Phase 2: the small eggs at the north end of the ' + (sx < 0 ? 'west' : 'east') + ' ledge, as you face her', vb: k + '2',
+    draw: (D, g) => { const S = D.side[k] || {}, who = S.eggs || [], E = UL_EGGS[k]; g.tag(sx * 76, 84, 'Small eggs · pick up 3:40', '#f5d33a');
+      E.forEach((p, i) => { g.egg(p[0], p[1]); const n = who[i], q = [p[0] + 3.4 * sx, p[1] + 1.4]; if (n) g.tok(n, q[0], q[1], 1); else g.num(q[0], q[1], i + 1); }); },
+    leg: (D, L) => { const S = D.side[k] || {}, big = S['doomscale egg'] || S['doomscale eggs'] || []; L.grp('Small eggs, in the numbered order', '#f5d33a', S.eggs || []); L.grp('Big (Doomscale) egg', '#e6b450', big);
       if ((S.breakers || []).length) L.grp('Breakers', '#e6e0c8', S.breakers); if ((S['solo break'] || []).length) L.grp('Solo break', '#e6e0c8', S['solo break']); if ((S.helper || []).length) L.grp('Helper', '#c9ced8', S.helper); if ((S.side || []).length) L.grp('On this side', '#c9ced8', S.side);
-      L.p('Small eggs: pick up at about 3:40 and drop them as you cross back. The big egg at the south end: pick up at about 4:12.'); L.f('In the top kills the small eggs are picked up from 3:33 to 3:46 at the north end of each ledge, the big ones at 4:12 to 4:16 at the south end.'); } })),
+      L.p('Small eggs: each carrier takes the egg by their spot at about 3:45 and drops it as the raid crosses to the other side. The big egg lies at this ledge\'s south end: run back to it at about 4:10, pick it up at 4:20 and drop it at 4:32.');
+      L.f('In the top kills the small eggs sit on these spots every pull (picked up 3:33 to 3:46); the big eggs are at the ledges\' south ends.'); } })),
   trans: [{ t: 'Groups', s: 'Pre-place by your group\'s mark; soak the coils in your area', vb: 'mid',
-      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); for (const k of Object.keys(UL_SOAK)) g.circle(UL_SOAK[k][0], UL_SOAK[k][1], 8, 'rgba(255,255,255,.55)', false, true);
-        [['Y', [3, 31]], ['P', [16, -27]], ['B', [-30, -1]]].forEach(([gk, c], gi) => { g.cluster(D.trans[gi] || [], c, 6); g.tag(c[0], c[1] + 9, UL_GC[gk][1] + ' group', UL_GC[gk][0]); }); },
-      leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1], UL_GC[gk][0], D.trans[gi] || [])); L.p('The tails rise round the room and slam eight coils, about 2.5 seconds apart. The pattern (1, 2 or 3) is called by the macro: see its page.');
+      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const AREA = { NNW: 'Y', NNE: 'Y', ENE: 'Y', WNW: 'B', WSW: 'B', ESE: 'P', SSW: 'P', SSE: 'P' }; /* (the team's Generic page: each coil coloured by the group whose area it's in) */
+        for (const k of Object.keys(UL_SOAK)) g.circle(UL_SOAK[k][0], UL_SOAK[k][1], 8, UL_GC[AREA[k]][0], true, true);
+        [['Y', 'star', [-15, 35]], ['P', 'diamond', [15, -35]], ['B', 'square', [-35, -15]]].forEach(([gk, key, d0], gi) => { const m = g.mark(key) || d0, dd = Math.hypot(m[0], m[1]) || 1, c = [m[0] * (dd - 12) / dd, m[1] * (dd - 12) / dd]; g.cluster(D.trans[gi] || [], c, 6); g.tag(c[0], c[1] + (c[1] >= 0 ? -10.5 : 10.5), UL_GC[gk][1] + ' group', UL_GC[gk][0]); }); },
+      leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1], UL_GC[gk][0], D.trans[gi] || [])); L.p('Six in each group, pre-placed by your group\'s mark. The tails rise round the room and slam eight coils, about 2.5 seconds apart. The pattern (1, 2 or 3) is called by the macro: see its page.');
         L.f('In the top kills the eight slams always come in one of three orders, about 5:31 to 5:50; each coil takes 6 or 7 players.'); } }].concat(UL_PAT.map((pat, pi) => ({ t: 'Pattern ' + (pi + 1), s: 'The coils in order; your group soaks its colour', vb: 'mid',
     draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); pat.forEach(([k, gk], i) => { const p = UL_SOAK[k], c = UL_GC[gk][0]; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 8, c, true); g.big(p[0], p[1], i + 1, c); }); },
     leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => { const ns = pat.map(([, x], i) => (x === gk ? i + 1 : 0)).filter(Boolean); L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1] + ': coils ' + ns.join(', '), UL_GC[gk][0], D.trans[gi] || []); });
@@ -5872,6 +5875,7 @@ function ulSvg(pg, D, P, M) {
   if (pg.vb === 'mid') for (const [key, m] of Object.entries(mk)) if (POM_MK[key] && Array.isArray(m)) s += '<g transform="translate(' + X(m[0]) + ' ' + Y(m[1]) + ') scale(' + (0.8 * k).toFixed(2) + ')"><circle r="12" fill="#0b0d11" fill-opacity=".55"/>' + POM_MK[key] + '</g>';
   const top = [];
   const g = {
+    mark: (key) => (Array.isArray(mk[key]) ? mk[key] : null),
     line: (x1, y1, x2, y2) => { s += '<line x1="' + X(x1) + '" y1="' + Y(y1) + '" x2="' + X(x2) + '" y2="' + Y(y2) + '" stroke="#fff" stroke-opacity=".75" stroke-width="' + (1.4 * k).toFixed(2) + '"/>'; },
     circle: (x, y, r, c, fill, dash) => { s += '<circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + R(r) + '" fill="' + (fill ? c : 'none') + '" fill-opacity="' + (fill ? '.16' : '0') + '" stroke="' + c + '" stroke-width="' + (1.5 * k).toFixed(2) + '"' + (dash ? ' stroke-dasharray="' + (4 * k).toFixed(1) + ' ' + (3 * k).toFixed(1) + '"' : '') + '/>'; },
     ellipse: (x, y, rx, ry, c) => { s += '<ellipse cx="' + X(x) + '" cy="' + Y(y) + '" rx="' + R(rx) + '" ry="' + R(ry) + '" fill="' + c + '" fill-opacity=".14" stroke="' + c + '" stroke-width="' + (1.5 * k).toFixed(2) + '" stroke-dasharray="' + (4 * k).toFixed(1) + ' ' + (3 * k).toFixed(1) + '"/>'; },
