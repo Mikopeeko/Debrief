@@ -5701,7 +5701,7 @@ function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
   const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && k in s.marks ? s.marks[k] : B.marks[k]) || null;
   const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
-  return { C, base, marks, uses, saved: !!(s.marks || s.uses), jm: s.jm && typeof s.jm === 'object' ? { ...s.jm } : {} }; }
+  return { C, base, marks, uses, saved: !!(s.marks || s.uses), jm: s.jm && typeof s.jm === 'object' ? { ...s.jm } : {}, ed: s.ed && typeof s.ed === 'object' ? s.ed : null }; }
 const ppSave = (b, d, v) => { const C = GDZ_PP[b] && GDZ_PP[b][d]; store.set(ppKey(b, d), JSON.stringify(C && C.mver ? { ...v, mver: C.mver } : v)); };
 // (a group's list has no stand-in rows ("Whoever gets the axe"): the group says in a sentence who the fight picks, Plan round 5)
 const PP_ANYT = { 'Whoever gets the axe': 'The boss picks one player.', 'Random players': 'The boss picks them.', 'Whoever gets a bite': 'The boss picks them.', 'Whoever gets Chilling Frost': 'The boss picks them.', 'Whoever gets Rend': 'The boss picks them.', 'Whoever gets it': 'The boss picks them.', 'Whoever gets a fear': 'The boss picks them.' };
@@ -6594,8 +6594,8 @@ function ppDeclutter(sv, out) {
   const dG = ds * PP_GROW.pl;
   sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * dG;
     if (true) { const tg = String((t.querySelector('tspan') || {}).textContent || '').trim(), ch = /^backup$/i.test(tg) ? 'B' : ((/\d+/.exec(tg) || [])[0] || (tg.length <= 2 ? tg : '')); /* (badges: a gold number on the dot, no name) */
-      if (ch) { const bx0 = X + 5.2 * dG, by0 = Y - 5.2 * dG; sv.insertAdjacentHTML('beforeend', '<circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * dG).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * dG).toFixed(2) + '"/>' +
-        '<text x="' + bx0.toFixed(1) + '" y="' + (by0 + 2 * dG).toFixed(1) + '" text-anchor="middle" style="font:800 ' + (5.8 * dG).toFixed(2) + 'px Barlow, sans-serif" fill="#1a1405">' + esc(ch) + '</text>'); } t.remove(); return; }
+      if (ch) { const bx0 = X + 5.2 * dG, by0 = Y - 5.2 * dG; sv.insertAdjacentHTML('beforeend', '<g data-ebn="' + esc(String((g.querySelector('.pl title') || {}).textContent || '')) + '"><circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * dG).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * dG).toFixed(2) + '"/>' +
+        '<text x="' + bx0.toFixed(1) + '" y="' + (by0 + 2 * dG).toFixed(1) + '" text-anchor="middle" style="font:800 ' + (5.8 * dG).toFixed(2) + 'px Barlow, sans-serif" fill="#1a1405">' + esc(ch) + '</text></g>'); } t.remove(); return; }
     t.style.fontSize = (12 * f * PP_GROW.nm).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
     // (the four sides close in, then the four corners, then the four sides a step further out)
     const h = 12 * f * PP_GROW.nm, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
@@ -6613,13 +6613,58 @@ function ppDeclutter(sv, out) {
     for (const l of n.lines) { y += sz(l.size) * 1.1; sv.insertAdjacentHTML('beforeend', '<text x="' + SX(n.x) + '" y="' + y.toFixed(1) + '" text-anchor="' + (n.anchor || 'middle') + '" style="font:600 ' + sz(l.size).toFixed(2) + 'px Barlow, sans-serif;paint-order:stroke;stroke:#0f1117;stroke-width:' + (2.6 * f).toFixed(2) + 'px">' +
       l.parts.map((p) => '<tspan fill="' + p.c + '"' + (p.w ? ' font-weight="' + p.w + '"' : '') + '>' + esc(p.t) + '</tspan>').join('') + '</text>');
       { const tx = sv.lastElementChild; if (SCR && tx) { const r = tx.getBoundingClientRect(), u = (SCR.x1 - SCR.x0) / (vb.width - 6), an = n.anchor || 'middle', w = (r.right - r.left) * PP_FW, L = r.left - (an === 'end' ? w : an === 'middle' ? w / 2 : 0), R = r.right + (an === 'start' ? w : an === 'middle' ? w / 2 : 0), d = L < SCR.x0 ? SCR.x0 - L : R > SCR.x1 ? SCR.x1 - R : 0; if (d) tx.setAttribute('x', (+tx.getAttribute('x') + d / u).toFixed(1)); } } /* (a note stays inside the picture, round 5) */ y += sz(l.size) * 0.15; } } }
+/* ---- Edit picture (Nov 10, Flex: "for someone to be able to edit the image ... move the elements around ... add text or edit text"): a raid
+   lead's own changes to one picture, kept with the markers (wla-pp|boss|diff, ed: { card id: { mv, tx, hide, add } }). mv: a thing moved (map
+   units), tx: new words, hide: things taken off, add: their own text { id, x, y, t, c }. Once the map is laid out each thing gets a key: p: a
+   player, n: their name, m: a raid marker, l: a label, u: an add or a boss, o: a note, a: an area (its circles), x: a text the raid lead added */
+const PP_EDC = ['#f3c969', '#e9e4d6', '#ff8a6a', '#5aa0ff', '#7cf07c', '#c49bff'];
+const ppEdRaw = (b, d) => { try { return JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { return {}; } };
+const ppEdOf = (b, d, id) => { const e = (ppEdRaw(b, d).ed || {})[id]; return e && typeof e === 'object' ? e : null; };
+const ppEdNone = (E) => !E || !((E.mv && Object.keys(E.mv).length) || (E.tx && Object.keys(E.tx).length) || (E.hide && E.hide.length) || (E.add && E.add.length));
+function ppEdSave(b, d, id, E) { const raw = ppEdRaw(b, d), C0 = GDZ_PP[b] && GDZ_PP[b][d]; if (C0 && C0.mver && raw.mver !== C0.mver) delete raw.marks;
+  const ed = raw.ed && typeof raw.ed === 'object' ? { ...raw.ed } : {}; if (ppEdNone(E)) delete ed[id]; else ed[id] = E; if (Object.keys(ed).length) raw.ed = ed; else delete raw.ed; ppSave(b, d, raw); }
+const ppEls = (sv, k) => [...sv.querySelectorAll('[data-ek]')].filter((el) => el.dataset.ek === k);
+function ppEdTag(sv) { const seen = new Map(), K = (k) => { const n = (seen.get(k) || 0) + 1; seen.set(k, n); return n > 1 ? k + '~' + n : k; }, T = (el) => String((el && el.textContent) || '').replace(/\s+/g, ' ').trim().slice(0, 60), P = new Map();
+  const G = [...sv.querySelectorAll('g.ic')], tok = new Map();
+  for (const q of G) { if (q.dataset.ek) continue;
+    if (q.classList.contains('icl')) { q.dataset.ek = K('l:' + T(q)); q.dataset.et = '1'; continue; }
+    const pl = q.querySelector('.pl'); if (pl) { const nm = T(pl.querySelector('title')) || 'player'; q.dataset.ek = K('p:' + nm); P.set(q.dataset.ek, [+q.dataset.x, +q.dataset.y]); const t = q.querySelector('text.mlp'); if (t) t.dataset.ek = K('n:' + nm); continue; }
+    const ti = [...q.querySelectorAll('title')].map(T).find(Boolean); if (ti) { q.dataset.ek = K((/ marker$/.test(ti) ? 'm:' : 'u:') + ti); if (!tok.has(ti)) tok.set(ti, q.dataset.ek); } }
+  /* (a unit's name goes with it (a boss's name under its token); other words on their own can be moved and changed; empty ones are left be) */
+  for (const q of G) { if (q.dataset.ek || q.dataset.ef) continue; const t = T(q.querySelector('text')); if (!t) continue; if (tok.has(t)) { q.dataset.ef = tok.get(t); continue; } q.dataset.ek = K('u:' + t); q.dataset.et = '1'; }
+  sv.querySelectorAll(':scope > text').forEach((t) => { if (!t.dataset.ek && T(t)) { t.dataset.ek = K('o:' + T(t)); t.dataset.et = '1'; } });
+  /* (an area: the circles drawn round one spot, small soak rings too) */
+  sv.querySelectorAll('circle').forEach((c) => { if (c.dataset.ek || c.closest('g.ic, [data-ebn], defs, mask, clipPath')) return; const r = +c.getAttribute('r'), x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); if (!(r > 0) || !isFinite(x) || !isFinite(y)) return; c.dataset.ek = 'a:' + Math.round(x) + ',' + Math.round(y); });
+  sv.querySelectorAll('[data-ebn]').forEach((b) => { b.dataset.ef = 'p:' + String(b.dataset.ebn).slice(0, 60); });
+  sv.querySelectorAll('line').forEach((l) => { if (l.closest('g.ic, defs')) return; const o = ['x1', 'y1', 'x2', 'y2'].map((a) => +l.getAttribute(a)); if (o.some((v) => !isFinite(v))) return; l.dataset.l0 = o.join(',');
+    for (const [k, [x, y]] of P) { if (!l.dataset.ea && Math.hypot(o[0] - x, o[1] - y) < 13) l.dataset.ea = k; if (!l.dataset.eb && Math.hypot(o[2] - x, o[3] - y) < 2) l.dataset.eb = k; } }); }
+/* (a thing moved: everything with its key, a player's number badge with them, and the ends of their lines) */
+function ppEdMove(sv, k, dx, dy) { for (const el of sv.querySelectorAll('[data-ek], [data-ef]')) { if (el.dataset.ek !== k && el.dataset.ef !== k) continue; if (el.dataset.et0 == null) el.dataset.et0 = el.getAttribute('transform') || '';
+    const t = ((dx || dy) ? 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ') ' : '') + el.dataset.et0; if (t.trim()) el.setAttribute('transform', t.trim()); else el.removeAttribute('transform'); el.dataset.ex = dx.toFixed(2); el.dataset.ey = dy.toFixed(2); }
+  sv.querySelectorAll('line[data-l0]').forEach((l) => { if (l.dataset.ea !== k && l.dataset.eb !== k) return; const o = l.dataset.l0.split(',').map(Number);
+    if (l.dataset.ea === k) { l.setAttribute('x1', (o[0] + dx).toFixed(1)); l.setAttribute('y1', (o[1] + dy).toFixed(1)); } if (l.dataset.eb === k) { l.setAttribute('x2', (o[2] + dx).toFixed(1)); l.setAttribute('y2', (o[3] + dy).toFixed(1)); } }); }
+/* (a label's pill fits its new words; the picture's font is about a fifth wider than the page's, so the pill is measured that much wider) */
+function ppEdFit(q) { const r = q.querySelector('g > rect') || q.querySelector('rect'), t = q.querySelector('g > text') || q.querySelector('text'); if (!r || !t) return; let b; try { b = t.getBBox(); } catch (e) { return; } if (!b || !b.width) return;
+  const w = b.width * (1 + PP_FW) + 20, cx = +t.getAttribute('x'); if (!isFinite(cx)) return; r.setAttribute('x', (cx - w / 2).toFixed(1)); r.setAttribute('width', w.toFixed(1)); }
+function ppEdText(sv, k, v) { v = String(v).slice(0, 80);
+  for (const el of ppEls(sv, k)) { if (el.classList.contains('icl')) { const t = el.querySelector('g > text') || el.querySelector('text'); if (t) t.textContent = k.startsWith('x:') ? v : v.toUpperCase(); ppEdFit(el); continue; }
+    if (el.tagName.toLowerCase() === 'text') { const ts = el.querySelector('tspan'), c = (ts && (ts.getAttribute('fill') || ts.style.fill)) || el.getAttribute('fill'); el.textContent = v; if (c) el.style.fill = c; continue; }
+    const t = el.querySelector('text'); if (t) t.textContent = v; } }
+function ppEdApply(sv, E) { if (!E) return; const vb = sv.viewBox.baseVal, fl = Math.min(1, vb.width * 0.024 / 12) * PP_GROW.lab;
+  for (const a of E.add || []) { const x = a ? +a.x : NaN, y = a ? +a.y : NaN; if (!a || !a.id || !isFinite(x) || !isFinite(y)) continue; const col = PP_EDC.includes(a.c) ? a.c : PP_EDC[0];
+    sv.insertAdjacentHTML('beforeend', '<g class="ic icl ppadd" data-ek="x:' + esc(String(a.id)) + '" data-et="1" data-x="' + x.toFixed(1) + '" data-y="' + y.toFixed(1) + '"><g transform="translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ') scale(' + fl.toFixed(3) + ') translate(' + (-x).toFixed(1) + ' ' + (-y).toFixed(1) + ')">' +
+      '<rect x="' + (x - 40).toFixed(1) + '" y="' + (y - 10.5).toFixed(1) + '" width="80" height="21" rx="5" fill="' + col + '" stroke="#000" stroke-width="1.4"/><text x="' + x.toFixed(1) + '" y="' + (y + 4.5).toFixed(1) + '" text-anchor="middle" style="font:800 12.5px var(--head,sans-serif);letter-spacing:.04em" fill="#14100a">' + esc(String(a.t || '').slice(0, 80)) + '</text></g></g>');
+    ppEdFit(sv.lastElementChild); }
+  for (const [k, v] of Object.entries(E.tx || {})) ppEdText(sv, k, v);
+  for (const [k, d] of Object.entries(E.mv || {})) if (Array.isArray(d)) ppEdMove(sv, k, +d[0] || 0, +d[1] || 0);
+  const H = new Set(E.hide || []); if (H.size) { sv.querySelectorAll('[data-ek], [data-ef]').forEach((el) => { if (H.has(el.dataset.ek) || H.has(el.dataset.ef)) el.setAttribute('display', 'none'); }); sv.querySelectorAll('line[data-l0]').forEach((l) => { if (H.has(l.dataset.ea) || H.has(l.dataset.eb)) l.setAttribute('display', 'none'); }); } }
 async function ppMapImg(fz) {
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:700px;pointer-events:none'; box.className = 'pp-off'; box.innerHTML = miniMap(fz.out, fz.pm); document.body.appendChild(box);
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
-    ppDeclutter(sv, fz.out);
+    ppDeclutter(sv, fz.out); try { ppEdTag(sv); if (fz.ed) ppEdApply(sv, fz.ed); } catch (e) { console.warn('Picture edits:', e); }
     /* (where the action is, as parts of the frame: the players and labels; the Jobs cards' small pictures zoom in on it (Nov 10)) */
-    let foc = null; try { const vb = sv.viewBox.baseVal, P = [...sv.querySelectorAll('g.ic')].filter((g) => g.classList.contains('icl') || g.querySelector('.pl')).map((g) => [+g.dataset.x, +g.dataset.y]).filter(([x, y]) => isFinite(x) && isFinite(y));
+    let foc = null; try { const vb = sv.viewBox.baseVal, P = [...sv.querySelectorAll('g.ic')].filter((g) => (g.classList.contains('icl') || g.querySelector('.pl')) && g.getAttribute('display') !== 'none').map((g) => [+g.dataset.x + (+g.dataset.ex || 0), +g.dataset.y + (+g.dataset.ey || 0)]).filter(([x, y]) => isFinite(x) && isFinite(y));
       if (P.length && vb && vb.width && vb.height) { const xs = P.map((q) => (q[0] - vb.x) / vb.width), ys = P.map((q) => (q[1] - vb.y) / vb.height); foc = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }; } } catch (e) { foc = null; }
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
     walk(sv, cl); cl.removeAttribute('style');
@@ -6628,7 +6673,7 @@ async function ppMapImg(fz) {
       '<radialGradient id="ppVig" cx=".5" cy=".5" r=".75"><stop offset=".5" stop-color="#05070b" stop-opacity="0"/><stop offset="1" stop-color="#05070b" stop-opacity=".45"/></radialGradient></defs>');
     cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '1'; im.setAttribute('opacity', '1'); im.setAttribute('filter', 'url(#ppFloor)');
       im.insertAdjacentHTML('afterend', '<rect x="' + im.getAttribute('x') + '" y="' + im.getAttribute('y') + '" width="' + im.getAttribute('width') + '" height="' + im.getAttribute('height') + '"' + (im.getAttribute('transform') ? ' transform="' + im.getAttribute('transform') + '"' : '') + ' fill="url(#ppVig)" style="fill:url(#ppVig)"/>'); } });
-    try { const vb = sv.viewBox.baseVal, U = vb.width, P = [...cl.querySelectorAll('g.ic')].filter((q) => q.classList.contains('icl') || q.querySelector('.pl')).map((q) => [+q.dataset.x, +q.dataset.y]).filter(([x, y]) => isFinite(x) && isFinite(y));
+    try { const vb = sv.viewBox.baseVal, U = vb.width, P = [...cl.querySelectorAll('g.ic')].filter((q) => (q.classList.contains('icl') || q.querySelector('.pl')) && q.getAttribute('display') !== 'none').map((q) => [+q.dataset.x + (+q.dataset.ex || 0), +q.dataset.y + (+q.dataset.ey || 0)]).filter(([x, y]) => isFinite(x) && isFinite(y));
       if (P.length && U) { const C = []; for (const p of P) { const c = C.find((c0) => Math.hypot(c0.x - p[0], c0.y - p[1]) < U * 0.13); if (c) { c.pts.push(p); c.x = c.pts.reduce((s, q) => s + q[0], 0) / c.pts.length; c.y = c.pts.reduce((s, q) => s + q[1], 0) / c.pts.length; } else C.push({ x: p[0], y: p[1], pts: [p] }); }
         const holes = C.map((c) => { const r = Math.max(...c.pts.map((q) => Math.hypot(q[0] - c.x, q[1] - c.y))) + U * 0.09; return '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="url(#ppSpotG)"/>'; }).join('');
         const vig = [...cl.querySelectorAll('rect')].reverse().find((r) => /ppVig/.test(r.getAttribute('fill') || '')), sh = '<defs><radialGradient id="ppSpotG"><stop offset=".62" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient><mask id="ppSpot" maskUnits="userSpaceOnUse" x="' + vb.x + '" y="' + vb.y + '" width="' + vb.width + '" height="' + vb.height + '"><rect x="' + vb.x + '" y="' + vb.y + '" width="' + vb.width + '" height="' + vb.height + '" fill="#fff"/>' + holes + '</mask></defs>' +
@@ -6642,7 +6687,7 @@ async function ppMapImg(fz) {
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
     if (!cl.querySelector('#pclip')) cl.insertAdjacentHTML('afterbegin', '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>');
     await Promise.all([...cl.querySelectorAll('image')].map(async (im) => { const d = await ppData(ppArt(im.getAttribute('href'))); if (d) im.setAttribute('href', d); else im.remove(); }));
-    const im0 = await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' }))); if (im0) im0._foc = foc; return im0;
+    const im0 = await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' }))); if (im0) { im0._foc = foc; if (fz.keepSvg) im0._svg = new XMLSerializer().serializeToString(cl); } return im0;
   } finally { box.remove(); }
 }
 const ppMarkImg = (k) => ppImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -11 22 22" width="44" height="44">' + gdzMarkSvg(k, 0, 0) + '</svg>'));
@@ -6657,7 +6702,7 @@ async function ppDraw(card, boss, diff, opt) {
   const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
   const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))].filter((n) => !(card.map.out.ppNoName || []).some((x) => String(x).split('-')[0].toLowerCase() === n.toLowerCase())) } : card.map; /* (every named player keeps their name, but a big group's are in the list) */
   if (only) { const me = fz.out.pts.find((p) => p.kind === 'player' && nmOf(p.name) === only); if (me) fz.out = { ...fz.out, hl: [...new Set((fz.out.hl || []).concat(me.guid))], cardRing: { guids: new Set([me.guid]), color: '#e6b450' } }; }
-  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg({ ...fz, ed: opt && opt.ed !== undefined ? opt.ed : ppEdOf(boss, diff, card.id), keepSvg: !!(opt && opt.svg) }); g.save(); g.beginPath(); g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map && !(opt && opt.noMap)) g.drawImage(map, M0, M0, MS, MS); g.restore();
   { g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 1; g.strokeRect(M0 + 0.5, M0 + 0.5, MS - 1, MS - 1); const k = 16; g.strokeStyle = '#e6b450'; g.lineWidth = 2; g.beginPath();
     [[M0, M0, 1, 1], [M0 + MS, M0, -1, 1], [M0, M0 + MS, 1, -1], [M0 + MS, M0 + MS, -1, -1]].forEach(([x, y, a, b]) => { g.moveTo(x + a * k, y + b * 1); g.lineTo(x + a * 1, y + b * 1); g.lineTo(x + a * 1, y + b * k); }); g.stroke(); } /* (Nov 10: a square frame, hairline edge, gold corner ticks) */
   { const f = map && map._foc; let k = 1, cx = 0.5, cy = 0.5; if (f) { k = Math.min(1, Math.max(0.4, Math.max(f.x1 - f.x0, f.y1 - f.y0) + 0.2)); cx = Math.min(1 - k / 2, Math.max(k / 2, (f.x0 + f.x1) / 2)); cy = Math.min(1 - k / 2, Math.max(k / 2, (f.y0 + f.y1) / 2)); }
@@ -6693,7 +6738,7 @@ async function ppDraw(card, boss, diff, opt) {
     if (draw) { g.fillStyle = '#2a2f3b'; g.fillRect(X0, FOOT, CW, 1); g.font = '500 ' + F(12) + 'px Barlow, sans-serif'; g.fillStyle = '#98a0ad'; wrap(card.foot || '', CW - 90).slice(0, 2).forEach((l, i) => g.fillText(l, X0, FOOT + F(16) + i * F(16)));
       g.font = '800 ' + F(14) + 'px "Barlow Semi Condensed", sans-serif'; g.fillStyle = '#e6b450'; g.fillText('DEBRIEF', W - 24 - g.measureText('DEBRIEF').width, H - 14); }
     return { y, lost }; };
-  const s = [1.35, 1.25, 1.15, 1.05, 1].find((v) => { const r = side(v, false); return !r.lost && r.y <= FOOT + 4; }) || 1; side(s, true); cv._scale = s;
+  const s = [1.35, 1.25, 1.15, 1.05, 1].find((v) => { const r = side(v, false); return !r.lost && r.y <= FOOT + 4; }) || 1; side(s, true); cv._scale = s; cv._svg = map && map._svg; cv._box = [M0, MS];
   return cv;
 }
 
@@ -6731,7 +6776,7 @@ function ppSet(r, u0) {
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses, cf.jm]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
   const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P), pics: new Map() };
-  set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
+  set.pic = (cd) => { const pk = cd.id + '|' + JSON.stringify(ppEdOf(boss, diff, cd.id)); if (!set.pics.has(pk)) set.pics.set(pk, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(pk); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
   return set;
 }
@@ -6742,6 +6787,68 @@ const ppNear = (mp, T, g, re, kind, ex) => { const fr = mp.frames.reduce((a, b) 
 const ppSplit = (t) => { const m = /^(.*?)\s*\((.*)\)\s*$/.exec(t); return m ? [m[1], m[2]] : [t, '']; };
 // (the raid lead moved a marker: the Jobs cards' small pictures are drawn again from the new spots)
 const ppStale = () => document.querySelectorAll('.plb-rc[data-pj]').forEach((el) => { const p = el.querySelector(':scope > .pj-pics'); if (p) { if (p.dataset.mech) p.innerHTML = ''; else p.remove(); } el.classList.remove('pj-has', 'pj-3'); delete el.dataset.pj; }); /* (Plan's own empty row stays, emptied) */
+// The editor (Edit on a picture): the picture full size, its map live over it (in its own shadow root, so the page's styles stay off it and
+// its words show in the picture's own font); every change is saved and the picture drawn again, so what you see is what gets pasted
+function ppEdit(cd, boss, diff, onDone) {
+  const old = $('#ppEd'); if (old) old.remove();
+  let E = JSON.parse(JSON.stringify(ppEdOf(boss, diff, cd.id) || {})), sv = null, sel = null, gen = 0, changed = false, drag = null, inp = null; const hist = [];
+  const box = document.createElement('div'); box.id = 'ppEd'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Edit picture');
+  box.innerHTML = '<div class="pp-edwin"><div class="pp-edbar"><div class="pp-edti"><span class="pp-edk">Edit picture</span><b>' + esc(cd.title) + '</b></div>' +
+    '<div class="pp-edtools"><button class="btn sm" type="button" data-edadd>+ Add text</button><span class="pp-edcol" hidden>' + PP_EDC.map((c) => '<button type="button" data-edc="' + c + '" style="background:' + c + '" aria-label="Text colour"></button>').join('') + '</span>' +
+    '<button class="btn sm" type="button" data-edundo disabled>Undo</button><button class="btn sm" type="button" data-edreset>Reset</button></div>' +
+    '<span class="sub pp-edmsg" aria-live="polite"></span><button class="btn sm primary" type="button" data-eddone>Done</button></div>' +
+    '<div class="pp-edstage"><div class="pp-edbg"><span class="sub">Drawing…</span></div><div class="pp-edmap"></div><div class="pp-edsel" hidden></div></div>' +
+    '<p class="sub pp-edhint">Drag anything to move it. Double-click words to change them. Delete takes off what you picked. Your changes save as you go, for the whole team.</p></div>';
+  document.body.appendChild(box);
+  const stage = box.querySelector('.pp-edstage'), host = box.querySelector('.pp-edmap'), selBox = box.querySelector('.pp-edsel'), msgEl = box.querySelector('.pp-edmsg'), undoB = box.querySelector('[data-edundo]'), root = host.attachShadow({ mode: 'open' });
+  const CSS0 = '<style>:host{display:block}svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none}svg text,svg tspan{font-family:sans-serif!important}[data-ek]{cursor:grab}[data-ek]:hover{filter:brightness(1.3)}.ppdrag,.ppdrag *{cursor:grabbing!important}</style>';
+  const msg = (t) => { msgEl.textContent = t || ''; };
+  const push = () => { hist.push(JSON.stringify(E)); if (hist.length > 60) hist.shift(); };
+  const save = () => { ppEdSave(boss, diff, cd.id, E); changed = true; undoB.disabled = !hist.length; msg('Saved ✓'); };
+  const els = (k) => (sv ? ppEls(sv, k) : []);
+  const addOf = (k) => (k && k.startsWith('x:') ? (E.add || []).find((q) => 'x:' + q.id === k) : null);
+  const selShow = () => { const L = sel ? els(sel) : [], a = addOf(sel), col = box.querySelector('.pp-edcol'); col.hidden = !a; if (a) col.querySelectorAll('[data-edc]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.edc === (a.c || PP_EDC[0]))));
+    const S0 = stage.getBoundingClientRect(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const el of L) { const r = el.getBoundingClientRect(); if (!r.width && !r.height) continue; x0 = Math.min(x0, r.left); y0 = Math.min(y0, r.top); x1 = Math.max(x1, r.right); y1 = Math.max(y1, r.bottom); }
+    if (x0 > x1) { selBox.hidden = true; return; } Object.assign(selBox.style, { left: (x0 - S0.left - 4) + 'px', top: (y0 - S0.top - 4) + 'px', width: (x1 - x0 + 8) + 'px', height: (y1 - y0 + 8) + 'px' }); selBox.hidden = false; };
+  const render = async () => { const my = ++gen; let c = null; try { c = await ppDraw(cd, boss, diff, { ed: E, svg: true, noMap: true }); } catch (e) { console.warn('Edit picture:', e); } if (my !== gen || !box.isConnected) return;
+    if (!c || !c._svg) { msg('Couldn\'t draw this picture.'); return; } const bg = box.querySelector('.pp-edbg'); bg.innerHTML = ''; bg.appendChild(c); const [M0, MS] = c._box;
+    Object.assign(host.style, { left: (M0 / 12) + '%', top: (M0 / 6.75) + '%', width: (MS / 12) + '%', height: (MS / 6.75) + '%' }); root.innerHTML = CSS0 + c._svg; sv = root.querySelector('svg'); if (sel && !els(sel).length) sel = null; selShow(); };
+  // (dragging: the thing follows the mouse in its own frame's units; let go and it's saved)
+  const off = (k) => (k.startsWith('x:') ? [0, 0] : (E.mv && E.mv[k]) || [0, 0]);
+  const loc = (el, x, y) => { const m = (el.parentNode && el.parentNode.getScreenCTM && el.parentNode.getScreenCTM()) || sv.getScreenCTM(), p = sv.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(m.inverse()); };
+  host.addEventListener('pointerdown', (e) => { if (e.button !== 0 || !sv) return; if (inp) inp.blur(); const t0 = e.composedPath()[0], el = t0 && t0.closest ? t0.closest('[data-ek]') : null;
+    if (!el) { sel = null; selShow(); return; } e.preventDefault(); sel = el.dataset.ek; drag = { k: sel, el, a: loc(el, e.clientX, e.clientY), o: off(sel), moved: false, x: e.clientX, y: e.clientY, d: null };
+    try { host.setPointerCapture(e.pointerId); } catch (er) { /* (no capture) */ } sv.classList.add('ppdrag'); selShow(); });
+  host.addEventListener('pointermove', (e) => { if (!drag || !sv) return; if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 3) return; drag.moved = true; const b = loc(drag.el, e.clientX, e.clientY); drag.d = [b.x - drag.a.x, b.y - drag.a.y]; ppEdMove(sv, drag.k, drag.o[0] + drag.d[0], drag.o[1] + drag.d[1]); selShow(); });
+  const up = () => { if (!drag) return; const d = drag; drag = null; if (sv) sv.classList.remove('ppdrag'); if (!d.moved || !d.d) return; push();
+    const a = addOf(d.k); if (a) { a.x = +(a.x + d.d[0]).toFixed(1); a.y = +(a.y + d.d[1]).toFixed(1); } else { E.mv = { ...(E.mv || {}) }; E.mv[d.k] = [+(d.o[0] + d.d[0]).toFixed(1), +(d.o[1] + d.d[1]).toFixed(1)]; } save(); render(); };
+  host.addEventListener('pointerup', up); host.addEventListener('pointercancel', up);
+  // (words: a box over the thing; Enter keeps them, Esc doesn't; empty takes the thing off)
+  const edit = (k) => { const L = els(k); if (!L.length || !L[0].dataset.et) return; const el = L[0], S0 = stage.getBoundingClientRect(), r = el.getBoundingClientRect(), a = addOf(k);
+    const cur = a ? String(a.t || '') : E.tx && k in E.tx ? E.tx[k] : String((el.tagName.toLowerCase() === 'text' ? el : el.querySelector('text') || el).textContent || '').trim();
+    if (inp) inp.remove(); const me = document.createElement('input'); inp = me; me.className = 'pp-edin'; me.value = cur; me.maxLength = 80; me.setAttribute('aria-label', 'Words');
+    const w = Math.max(180, Math.min(S0.width - 8, r.width + 48)); Object.assign(me.style, { left: Math.max(4, Math.min(S0.width - w - 4, r.left - S0.left + r.width / 2 - w / 2)) + 'px', top: Math.max(4, Math.min(S0.height - 40, r.top - S0.top + r.height / 2 - 17)) + 'px', width: w + 'px' });
+    stage.appendChild(me); me.focus(); me.select(); let done = false;
+    const fin = (ok) => { if (done) return; done = true; const v = me.value.trim(); if (inp === me) inp = null; me.remove(); if (!ok || v === cur) return; push();
+      if (a) { if (v) a.t = v; else { E.add = (E.add || []).filter((q) => q !== a); sel = null; } } else if (v) E.tx = { ...(E.tx || {}), [k]: v }; else { E.hide = [...new Set([...(E.hide || []), k])]; sel = null; }
+      save(); render(); };
+    me.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); fin(true); } else if (e.key === 'Escape') { e.preventDefault(); fin(false); } }); me.addEventListener('blur', () => fin(true)); };
+  host.addEventListener('dblclick', () => { if (sel) edit(sel); }); /* (the double-click lands on the map's box while it holds the mouse: the thing picked on the press is the one) */
+  const undo = () => { if (!hist.length) return; E = JSON.parse(hist.pop()); save(); render(); };
+  const close = () => { if (inp) inp.blur(); box.remove(); document.removeEventListener('keydown', onKey, true); window.removeEventListener('resize', selShow); if (changed && onDone) onDone(); };
+  const onKey = (e) => { if (!box.isConnected) { document.removeEventListener('keydown', onKey, true); return; } if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); e.stopPropagation(); undo(); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && sel) { e.preventDefault(); e.stopPropagation(); push(); if (addOf(sel)) E.add = (E.add || []).filter((q) => 'x:' + q.id !== sel); else E.hide = [...new Set([...(E.hide || []), sel])]; sel = null; save(); render(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); if (sel) { sel = null; selShow(); } else close(); } };
+  document.addEventListener('keydown', onKey, true); window.addEventListener('resize', selShow);
+  box.querySelector('[data-eddone]').onclick = close; box.addEventListener('pointerdown', (e) => { if (e.target === box) close(); });
+  undoB.onclick = undo;
+  box.querySelector('[data-edreset]').onclick = () => { if (ppEdNone(E)) { msg('This is Debrief\'s layout.'); return; } push(); E = {}; sel = null; save(); msg('Back to Debrief\'s layout. Undo brings yours back.'); render(); };
+  box.querySelector('[data-edadd]').onclick = async () => { if (!sv) return; push(); const vb = sv.viewBox.baseVal, id = Date.now().toString(36); E.add = [...(E.add || []), { id, x: +(vb.x + vb.width / 2).toFixed(1), y: +(vb.y + vb.height / 2).toFixed(1), t: 'New text', c: PP_EDC[0] }]; sel = 'x:' + id; save(); await render(); edit(sel); };
+  box.querySelectorAll('[data-edc]').forEach((b) => { b.onclick = () => { const a = addOf(sel); if (!a || a.c === b.dataset.edc) return; push(); a.c = b.dataset.edc; save(); render(); }; });
+  undoB.disabled = true; render();
+}
 // The window: every picture with Copy and Download, Download all and the Markers editor; or, from a Jobs card's small picture, one
 // picture big (pp-one) with the ones before and after it and a way to all of them (Design studio's mock, Oct 26)
 function ppOpen(r, u0, opt) {
@@ -6766,6 +6873,7 @@ function ppOpen(r, u0, opt) {
     const file = ('Debrief - ' + boss + ' - ' + cd.title).replace(/[\\/:*?"<>|]+/g, '') + '.png';
     el.querySelector('.pp-pic').innerHTML = '<img class="ndz-shotimg" alt="' + esc(cd.title) + '" src="' + p.url + '">';
     el.querySelector('[data-ppdl]').onclick = () => { const a = document.createElement('a'); a.href = p.url; a.download = file; a.click(); };
+    el.querySelector('[data-pped]').onclick = () => ppEdit(cd, boss, diff, () => redo());
     el.querySelector('[data-ppcp]').onclick = () => p.cv.toBlob(async (b) => { const m = el.querySelector('.pp-msg'); try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': b })]); m.textContent = '✓ Copied. Paste it in Discord.'; } catch (e) { m.textContent = 'Your browser didn\'t allow it: use Download.'; } }); };
   // (the heading, the one-picture line and its buttons, and which card is showing)
   // (the job a picture belongs to: the Jobs card its small button sits on, for this note)
@@ -6780,7 +6888,7 @@ function ppOpen(r, u0, opt) {
   const copyAll = box.querySelector('[data-ppcopyall]');
   const draw = async () => { const my = ++gen; all.disabled = true; copyAll.disabled = true;
     if (!set.cards.length) { host.innerHTML = '<p class="sub">' + (set.cf.C.markersOnly ? 'This boss has one picture: the raid markers. Move them on the Markers map above.' : 'This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).') + '</p>'; return; }
-    host.innerHTML = set.cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '" data-ph="' + (cd.ph >= 3 ? '3' : cd.ph >= 2.5 ? 'int' : cd.ph >= 2 ? '2' : '1') + '" data-when="' + esc(cd.when || '') + '" data-legend="' + esc(JSON.stringify(cd.legend.map((G) => ({ title: G.title, color: G.color, sub: G.sub || '', items: G.items.map((it) => ({ name: it.name, color: it.color, specIcon: it.specIcon, job: it.job || '', any: !!it.any })) })))) + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
+    host.innerHTML = set.cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '" data-ph="' + (cd.ph >= 3 ? '3' : cd.ph >= 2.5 ? 'int' : cd.ph >= 2 ? '2' : '1') + '" data-when="' + esc(cd.when || '') + '" data-legend="' + esc(JSON.stringify(cd.legend.map((G) => ({ title: G.title, color: G.color, sub: G.sub || '', items: G.items.map((it) => ({ name: it.name, color: it.color, specIcon: it.specIcon, job: it.job || '', any: !!it.any })) })))) + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm pp-edb" type="button" data-pped>✎ Edit</button><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
     show(); if (one) return; for (let i = 0; i < set.cards.length; i++) { await fill(i, my); if (my !== gen) return; } all.disabled = false; copyAll.disabled = false; };
   box.querySelector('[data-ppprev]').onclick = () => { if (cur > 0) { cur--; show(); } };
   box.querySelector('[data-ppnext]').onclick = () => { if (cur < set.cards.length - 1) { cur++; show(); } };
@@ -6797,7 +6905,7 @@ function ppOpen(r, u0, opt) {
     const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, [cx, cy] = ppMid(mp);
     const toPx = ([rx, ry]) => { const R = sv.getBoundingClientRect(), L = lay.getBoundingClientRect(); return [((cx + rx - x0) * yd - vb.x) / vb.width * R.width + R.left - L.left, ((-(cy + ry) - y0) * yd - vb.y) / vb.height * R.height + R.top - L.top]; };
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
-    const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses, jm: cc.jm });
+    const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses, jm: cc.jm, ...(cc.ed ? { ed: cc.ed } : {}) });
     lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move, right-click to change the mark" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('');
     { const t0 = mhost.querySelector('.pp-mktray'); if (t0) t0.remove(); } const offL = PP_MKS.filter((m) => !c.marks[m]);
     mhost.insertAdjacentHTML('beforeend', '<div class="pp-mktray"><span class="pp-mkth">' + (offL.length ? 'Off the map: drag one onto the room' : 'Drag a marker here, or point at it and press Delete, to take it off the map') + '</span>' + offL.map((m) => '<button type="button" class="pp-mktr" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag it onto the room" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('') + '</div>');
@@ -6836,8 +6944,8 @@ function ppOpen(r, u0, opt) {
       const jm = raw.jm && typeof raw.jm === 'object' ? { ...raw.jm } : {}; if (s.value === s.dataset.jmdef) delete jm[s.dataset.jm]; else jm[s.dataset.jm] = s.value; raw.jm = jm; ppSave(boss, diff, raw); PG_JM_C = null; mkDraw(); redo();
       if (typeof planAssign === 'function' && S.page === 'plan') { const y = window.scrollY; try { planAssign(); } catch (e) { /* (the page catches up next draw) */ } window.scrollTo({ top: y }); } }; });
     uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; keep(cc); mkDraw(); redo(); }; });
-    uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide', jm: ppConf(boss, diff).jm }); mkDraw(); redo(); };
-    const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid', jm: ppConf(boss, diff).jm }); mkDraw(); redo(); }; };
+    uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide', jm: ppConf(boss, diff).jm, ...(ppConf(boss, diff).ed ? { ed: ppConf(boss, diff).ed } : {}) }); mkDraw(); redo(); };
+    const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid', jm: ppConf(boss, diff).jm, ...(ppConf(boss, diff).ed ? { ed: ppConf(boss, diff).ed } : {}) }); mkDraw(); redo(); }; };
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
   if (opt.marks) { const d = box.querySelector('.pp-mkbox'); d.open = true; setTimeout(() => d.scrollIntoView({ block: 'start' }), 60); } /* (straight to the Markers map: the Raid markers card) */
   draw();

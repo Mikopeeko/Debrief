@@ -18860,5 +18860,27 @@ html body #view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan
 #ppWin .pp-jm span b { margin-left: 6px; font-weight: 600; color: #ece8df; }
 html body #ppWin .pp-mkuse > .sub.pp-jmh { margin: 12px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 </style>
+<style>/* (Nov 10: Plan › Edit picture) */
+#ppEd { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(6,8,12,.82); }
+#ppEd .pp-edwin { width: min(1240px, 100%); max-height: 100%; overflow: auto; background: #12151c; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 14px 16px 12px; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+#ppEd .pp-edbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+#ppEd .pp-edti { display: flex; flex-direction: column; gap: 2px; min-width: 0; margin-right: auto; }
+#ppEd .pp-edk { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #8e94a0; }
+#ppEd .pp-edti b { font-size: 17px; font-weight: 700; color: #ece8df; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ppEd .pp-edtools { display: flex; align-items: center; gap: 8px; }
+#ppEd .pp-edcol { display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; border-left: 1px solid rgba(255,255,255,.1); border-right: 1px solid rgba(255,255,255,.1); }
+#ppEd .pp-edcol[hidden] { display: none; }
+#ppEd .pp-edcol button { width: 18px; height: 18px; min-width: 0; padding: 0; border: 1px solid rgba(0,0,0,.55); border-radius: 3px; cursor: pointer; box-shadow: none; }
+#ppEd .pp-edcol button[aria-pressed="true"] { outline: 2px solid #ece8df; outline-offset: 1px; }
+#ppEd .pp-edmsg { min-width: 64px; text-align: right; font-size: 12px; color: #8e94a0; }
+#ppEd .pp-edstage { position: relative; width: 100%; aspect-ratio: 1200 / 675; border-radius: 6px; overflow: hidden; background: #0c0e13; }
+#ppEd .pp-edbg, #ppEd .pp-edbg canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#ppEd .pp-edbg > .sub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+#ppEd .pp-edmap { position: absolute; }
+#ppEd .pp-edsel { position: absolute; pointer-events: none; border: 1.5px dashed #e6b450; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 12px rgba(230,180,80,.25); }
+#ppEd .pp-edsel[hidden] { display: none; }
+#ppEd .pp-edin { position: absolute; z-index: 2; height: 34px; padding: 4px 10px; font: 600 14px Barlow, sans-serif; color: #ece8df; background: #0a0c11; border: 1px solid #e6b450; border-radius: 4px; outline: none; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
+#ppEd .pp-edhint { margin: 9px 2px 0; font-size: 12px; color: #8e94a0; }
+</style>
 </body>
 </html>
