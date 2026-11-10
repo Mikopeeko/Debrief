@@ -6775,7 +6775,7 @@ function ppSet(r, u0) {
   if (cf.jm && Object.keys(cf.jm).length) { try { N = E.parseNote(ppJmText(noteResolve(u0.text), cf.jm)); } catch (e) { /* (as written) */ } } /* (each marker job on the marker the raid lead picked) */
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses, cf.jm]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
-  const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P), pics: new Map() };
+  const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P).filter((cd) => !/^kicks/.test(cd.id)) /* (no pictures for interrupt jobs, the user's call (Nov 10): "remove the image generation from interupt mechanics"; the kick jobs stay in the rows and the note) */, pics: new Map() };
   set.pic = (cd) => { const pk = cd.id + '|' + JSON.stringify(ppEdOf(boss, diff, cd.id)); if (!set.pics.has(pk)) set.pics.set(pk, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(pk); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
   return set;
@@ -6887,7 +6887,7 @@ function ppOpen(r, u0, opt) {
   // the finished pictures; the button here only waits until they're drawn)
   const copyAll = box.querySelector('[data-ppcopyall]');
   const draw = async () => { const my = ++gen; all.disabled = true; copyAll.disabled = true;
-    if (!set.cards.length) { host.innerHTML = '<p class="sub">' + (set.cf.C.markersOnly ? 'This boss has one picture: the raid markers. Move them on the Markers map above.' : 'This note has no jobs a picture can show yet (soaks, orb carriers, kick lines, crowd control).') + '</p>'; return; }
+    if (!set.cards.length) { host.innerHTML = '<p class="sub">' + (set.cf.C.markersOnly ? 'This boss has one picture: the raid markers. Move them on the Markers map above.' : 'This note has no jobs a picture can show yet (soaks, orb carriers, crowd control).') + '</p>'; return; }
     host.innerHTML = set.cards.map((cd, i) => '<div class="pp-card" data-i="' + i + '" data-ph="' + (cd.ph >= 3 ? '3' : cd.ph >= 2.5 ? 'int' : cd.ph >= 2 ? '2' : '1') + '" data-when="' + esc(cd.when || '') + '" data-legend="' + esc(JSON.stringify(cd.legend.map((G) => ({ title: G.title, color: G.color, sub: G.sub || '', items: G.items.map((it) => ({ name: it.name, color: it.color, specIcon: it.specIcon, job: it.job || '', any: !!it.any })) })))) + '"><div class="pp-ph sub">' + esc(cd.title) + '</div><div class="pp-pic"><span class="sub">Drawing…</span></div><div class="pp-act"><span class="sub pp-msg"></span><button class="btn sm pp-edb" type="button" data-pped>✎ Edit</button><button class="btn sm" type="button" data-ppdl>Download</button><button class="btn sm primary" type="button" data-ppcp>Copy</button></div></div>').join('');
     show(); if (one) return; for (let i = 0; i < set.cards.length; i++) { await fill(i, my); if (my !== gen) return; } all.disabled = false; copyAll.disabled = false; };
   box.querySelector('[data-ppprev]').onclick = () => { if (cur > 0) { cur--; show(); } };
