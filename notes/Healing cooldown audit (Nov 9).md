@@ -24,8 +24,8 @@ So every placement is judged on three things together:
 | | Mythic (20 plans) | Heroic (20 plans) |
 |---|---|---|
 | Big hits the planner knows | 222 | 126 |
-| Marked not covered | 24 | 11 |
-| ...of those, with a healer's big cooldown on them | 19 | 1 |
+| Marked ✕, nothing on it | 5 | 10 |
+| Marked short with only a healer's own cooldown on it | 19 | 1 |
 | Not covered or short while a raid cooldown was free | 4 | 3 |
 | Lighter-half hits with 3 or more raid cooldowns | 4 | 12 |
 | Uses of what the fight allows | 72% | 75% |
@@ -64,11 +64,19 @@ nothing planned. Coiled Altar's stops at 8:14; Wolfthorn's longest pull ran 8:44
 The top third of hits need 2 raid cooldowns and the rest 1, whatever they hit for. Nymrissa Mythic: Abyssal Rain at 0:46 hits for 2,610K and "needs 1";
 Frost Burst at 1:42 hits for 2,650K and "needs 2". Coiled Altar Heroic: Spirit Erasure hits twice as hard as anything else (3,122K against 1,833K) and
 needs the same 2 as the next one down. The planner and the coverage strip share this rule, so the marks repeat it.
+**Fixed in the first push:** a hit only counts as lighter when it is more than 5% lighter, so hits of the same size share a class (one rule for the
+planner, the strip, the Big hits table and the Defensives calls). Nymrissa's five 2.6M to 3.1M hits all need 2 now.
 
-### S4. "Not covered" ignores a healer's own big cooldown, and Tranquility
-The strip only counts "raid cooldowns". Apotheosis, Avenging Wrath, Yu'lon, Celestial Conduit, Evangelism, Convoke and **Tranquility** are left out.
-19 of the 24 Mythic hits marked ✕ have one of them on it, and the tooltip says "nothing pressed near it". Tranquility is pressed by 100% of top
-Restoration Druids at 90% of possible and measured at 3.6M a press, the same as Rewind; it is a raid cooldown.
+### S2b. A longer phase stretches the hits instead of adding more (found while fixing)
+When your phase runs longer than the fastest kills', the chart multiplies every hit's time by the difference (Nov 6). Boss abilities run on fixed
+timers: a phase 20% longer has more casts, at the same times as before, not the same casts 20% later. A hit at 2:00 is drawn at 2:24.
+
+### S4. Tranquility is counted as a healer's burst, not a raid cooldown
+The strip counts "raid cooldowns" toward a hit's need. Apotheosis, Avenging Wrath, Yu'lon, Celestial Conduit, Evangelism, Convoke and **Tranquility**
+don't count: a hit with only one of those reads "1 short" in amber (19 Mythic hits). That is fair for a healer's own burst. It is not for Tranquility:
+every top Restoration Druid presses it, at 90% of possible, and it measures 3.6M a press, the same as Rewind. It is a raid cooldown.
+(Corrected Nov 9: the first version of this list said those 19 hits read ✕. They read "short"; 5 Mythic hits read ✕.)
+**Fixed in the first push:** Tranquility is planned and counted as a raid cooldown.
 
 ### S5. Uses are left on the table
 Mythic plans use 72% of the presses the fight allows (Heroic 75%). The "nothing unused" step stops at one more than a hit's need, and with half the
@@ -169,7 +177,7 @@ points or more. Most change: Ula'tek Mythic (9 new, mainly Evangelism) and Coile
 **8. The Coiled Altar** (plan 8:14, uses 69% / 71%)
 - 8.1 Spirit Erasure gets 5 raid cooldowns (7 for the top roster); the heaviest hit, Venom Rupture at P1 2:15 (3,801K), gets 2. Top kills: 1.8 on
   Spirit Erasure.
-- 8.2 Fangs of the Coiled Altar at 1:32 and Dreadful Presence at P2 1:30 read ✕ with Apotheosis on them (S4). Top roster: 5 hits bare.
+- 8.2 Fangs of the Coiled Altar at 1:32 and Dreadful Presence at P2 1:30 get only Apotheosis and read "1 short". Top roster: 5 hits short or bare.
 - 8.3 Not in the plan: Venom Rupture at P1 1:56 and 2:29 (100% of top kills; 2:29 is their heaviest at 15.4M), six Dreadful Presences late in
   phase 2, Spirit Erasure at Int 0:14, Death's Whisper in phase 3.
 - 8.4 Dreadful Presence gets 0.8 a time; top kills 0.2 and none on 80%. Those presses are better spent on the Venom Ruptures.
