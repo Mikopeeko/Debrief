@@ -216,7 +216,7 @@ function gdzMarkSvg(kind, x, y) {
   else if (kind === 'cross') g = '<path d="M' + (x - 6) + ' ' + (y - 6) + 'L' + (x + 6) + ' ' + (y + 6) + 'M' + (x + 6) + ' ' + (y - 6) + 'L' + (x - 6) + ' ' + (y + 6) + '" stroke="#000" stroke-width="6" stroke-linecap="round"/><path d="M' + (x - 6) + ' ' + (y - 6) + 'L' + (x + 6) + ' ' + (y + 6) + 'M' + (x + 6) + ' ' + (y - 6) + 'L' + (x - 6) + ' ' + (y + 6) + '" stroke="' + c + '" stroke-width="3.6" stroke-linecap="round"/>';
   else if (kind === 'star') { const q = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 3.8 : 9; q.push([Math.cos(a) * r, Math.sin(a) * r]); } g = P(q); }
   else if (kind === 'circle') g = '<circle cx="' + x + '" cy="' + y + '" r="7.5"' + o + '/>';
-  else if (kind === 'moon') g = '<path d="M' + (x + 3) + ' ' + (y - 8) + 'A8 8 0 1 0 ' + (x + 3) + ' ' + (y + 8) + 'A6 6 0 1 1 ' + (x + 3) + ' ' + (y - 8) + 'Z"' + o + '/>';
+  else if (kind === 'moon') g = '<path d="M' + (x + 3) + ' ' + (y - 7.4) + 'A8 8 0 1 0 ' + (x + 3) + ' ' + (y + 7.4) + 'A9 9 0 0 1 ' + (x + 3) + ' ' + (y - 7.4) + 'Z"' + o + '/>';
   else g = '<circle cx="' + x + '" cy="' + (y - 1.5) + '" r="7"' + o + '/><rect x="' + (x - 3.5) + '" y="' + (y + 3) + '" width="7" height="5" rx="1"' + o + '/><circle cx="' + (x - 2.6) + '" cy="' + (y - 2) + '" r="1.7" fill="#111"/><circle cx="' + (x + 2.6) + '" cy="' + (y - 2) + '" r="1.7" fill="#111"/>';
   return '<g opacity=".95">' + g + '<title>' + esc(n) + ' marker</title></g>';
 }
@@ -6534,6 +6534,8 @@ const PP_CSS = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacit
 // no dot, marker, pill or other name, and a name with no free side is left off: the list beside the map names everyone)
 // (a pasted picture has no Barlow: its names fall back to a plain font about a fifth wider, so they're placed as if that much wider)
 const PP_FW = 0.2;
+/* (how much bigger each kind of thing is in a Plan picture than in a guide map: the picture shows the whole room in about 640 px) */
+const PP_GROW = { pl: 1.3, lab: 1.05, img: 1.25, mk: 1.4, nm: 1.25 };
 function ppDeclutter(sv, out) {
   const vb = sv.viewBox.baseVal; if (!vb || !vb.width) return; out = out || {};
   const [ox, oy] = (sv.dataset.o || '0,0').split(',').map(Number), yu = +sv.dataset.yd || 1, SX = (x) => ((x - ox) * yu).toFixed(1), SY = (y) => ((-y - oy) * yu).toFixed(1); /* (map yards to the picture's units) */
@@ -6543,38 +6545,59 @@ function ppDeclutter(sv, out) {
   const SCR = (() => { try { const m = sv.getScreenCTM(), pt = (x, y) => { const p = sv.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(m); }, a = pt(vb.x, vb.y), b = pt(vb.x + vb.width, vb.y + vb.height), u = Math.abs(b.x - a.x) / vb.width; return { x0: Math.min(a.x, b.x) + 3 * u, y0: Math.min(a.y, b.y) + 3 * u, x1: Math.max(a.x, b.x) - 3 * u, y1: Math.max(a.y, b.y) - 3 * u }; } catch (e) { return null; } })(); /* (the picture's frame on the screen: inside it, whatever turns the map, round 5) */
   const outside = (el, an) => { if (!SCR) return false; let r; try { r = el.getBoundingClientRect(); } catch (e) { return false; } const w = (r.right - r.left) * PP_FW, L = r.left - (an === 'end' ? w : an === 'middle' ? w / 2 : 0), R = r.right + (an === 'start' ? w : an === 'middle' ? w / 2 : 0); return L < SCR.x0 || R > SCR.x1 || r.top < SCR.y0 || r.bottom > SCR.y1; };
   sv.querySelectorAll('g.icl').forEach((g) => { const x = +g.dataset.x, y = +g.dataset.y + (g.querySelector('[data-up]') ? 8 : -8); let b; try { b = g.getBBox(); } catch (e) { return; } /* (y: the pointer's tip) */
-    if (f < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + f.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
-    const q = bx(x + (b.x - x) * f, y + (b.y - y) * f, x + (b.x + b.width - x) * f, y + (b.y + b.height - y) * f);
+    const fl = f * PP_GROW.lab; g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + fl.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
+    const q = bx(x + (b.x - x) * fl, y + (b.y - y) * fl, x + (b.x + b.width - x) * fl, y + (b.y + b.height - y) * fl);
     // (a bubble past the left or right edge slides its body back inside; its pointer stays on the thing)
     const dx = q.x0 < vb.x + 2 ? vb.x + 2 - q.x0 : q.x1 > vb.x + vb.width - 2 ? vb.x + vb.width - 2 - q.x1 : 0;
-    if (dx) { g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (dx / f).toFixed(1) + ' 0)')); q.x0 += dx; q.x1 += dx; } g._q = q; g._f = f; g._dx = dx; taken.push(q); });
+    if (dx) { g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (dx / fl).toFixed(1) + ' 0)')); q.x0 += dx; q.x1 += dx; } g._q = q; g._f = fl; g._dx = dx; taken.push(q); });
   // (every icon: players, adds like the Broodlings, bosses, about 0.6 in a platform-sized frame; raid markers no smaller than three quarters;
   // players' class icons 70% of that, so they don't hide the spots)
   const ds = Math.min(1, Math.max(0.5, f * 1.15)), isMk = (g) => [...g.querySelectorAll('title')].some((t) => / marker$/.test(t.textContent));
   sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (g.querySelector('text.ml')) return; let b; try { b = g.getBBox(); } catch (e) { return; } if (!b.width || b.width > 160 || b.height > 160) return; /* (cast bars shrink with their unit too) */
-    const x = +g.dataset.x, y = +g.dataset.y, k = isMk(g) ? (ds < 1 ? Math.max(ds, 0.75) : 1) : g.querySelector('.pl') ? Math.max(0.35, ds * 0.7) : ds; if (k < 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
-    icons.push({ x, y, mk: isMk(g), b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
+    const x = +g.dataset.x, y = +g.dataset.y, k = isMk(g) ? (ds < 1 ? Math.max(ds, 0.75) : 1) * PP_GROW.mk : g.querySelector('.pl') ? Math.max(0.35, ds * 0.7) * PP_GROW.pl : ds * PP_GROW.img; if (k !== 1) g.setAttribute('transform', 'translate(' + x + ' ' + y + ') scale(' + k.toFixed(3) + ') translate(' + -x + ' ' + -y + ')');
+    icons.push({ g, x, y, mk: isMk(g), b: bx(x + (b.x - 1 - x) * k, y + (b.y - 1 - y) * k, x + (b.x + b.width + 1 - x) * k, y + (b.y + b.height + 1 - y) * k) }); });
+  { const Pl = icons.filter((o) => o.g && o.g.querySelector('.pl')), Mk = icons.filter((o) => o.mk), par = Pl.map((_, i) => i), fd = (i) => (par[i] === i ? i : (par[i] = fd(par[i])));
+    const near = (a, b) => hit(a.b, b.b) || Math.hypot(a.x - b.x, a.y - b.y) < (a.b.x1 - a.b.x0) * 1.08;
+    for (let i = 0; i < Pl.length; i++) for (let j = i + 1; j < Pl.length; j++) if (near(Pl[i], Pl[j])) par[fd(i)] = fd(j);
+    const GR = new Map(); Pl.forEach((o, i) => { const r = fd(i); if (!GR.has(r)) GR.set(r, []); GR.get(r).push(o); });
+    for (const L of GR.values()) { const mk = Mk.filter((m) => L.some((o) => hit(o.b, m.b) || Math.hypot(o.x - m.x, o.y - m.y) < (m.b.x1 - m.b.x0))); if (L.length < 2 && !mk.length) continue;
+      /* (Flex: "make sure the icons arent overlapping but still be in the circle more importantly": the soak ring stays; the players sit on a circle
+         between the marker and the ring's edge, evenly apart; if they don't fit, the icons get a little smaller rather than leave the ring; the ring only
+         grows when even small icons can't fit) */
+      let s = Math.max(...L.map((o) => o.b.x1 - o.b.x0)); const n = L.length, gx = L.reduce((a, o) => a + o.x, 0) / n, gy = L.reduce((a, o) => a + o.y, 0) / n;
+      let ring = null; sv.querySelectorAll('circle').forEach((c) => { if (c.closest('g.ic')) return; const r0 = +c.getAttribute('r'), ccx = +c.getAttribute('cx'), ccy = +c.getAttribute('cy'); if (!isFinite(ccx) || !(r0 > s * 0.8) || r0 > s * 14) return;
+        const dd = Math.hypot(ccx - gx, ccy - gy); if (dd > r0) return; if (!ring || dd / r0 < ring.dd / ring.r) ring = { c, r: r0, x: ccx, y: ccy, dd }; });
+      const one = mk.length === 1, cx = ring ? ring.x : one ? mk[0].x : gx, cy = ring ? ring.y : one ? mk[0].y : gy, mr = one ? Math.max(mk[0].b.x1 - mk[0].b.x0, mk[0].b.y1 - mk[0].b.y0) / 2 + Math.hypot(mk[0].x - cx, mk[0].y - cy) : 0;
+      const fit = (sz) => (n > 1 ? (sz * 0.54) / Math.sin(Math.PI / n) : 0); let k2 = 1, R;
+      if (ring) { const lo = (sz) => (one || n > 1 ? Math.max(mr + sz * 0.56, fit(sz)) : 0), hi = (sz) => ring.r - sz * 0.56; while (k2 > 0.6 && lo(s * k2) > hi(s * k2)) k2 -= 0.05; const sk = s * k2;
+        R = lo(sk) <= hi(sk) ? (n === 1 && !one ? 0 : Math.min(hi(sk), Math.max(lo(sk), (lo(sk) + hi(sk)) / 2))) : lo(sk); if (lo(sk) > hi(sk)) ring.c.setAttribute('r', (R + sk * 0.62).toFixed(1)); s = sk; }
+      else R = Math.max(fit(s), one ? mr + s * 0.62 : n > 1 ? s * 0.6 : 0);
+      L.sort((a, b) => Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx)); const a0 = n === 1 ? Math.atan2(L[0].y - cy, L[0].x - cx) : -Math.PI / 2;
+      L.forEach((o, i) => { const a = a0 + (i * 2 * Math.PI) / n, nx = cx + Math.cos(a) * R, ny = cy + Math.sin(a) * R, dx = nx - o.x, dy = ny - o.y, h = (o.b.x1 - o.b.x0) * k2 / 2;
+        o.g.setAttribute('transform', 'translate(' + dx.toFixed(2) + ' ' + dy.toFixed(2) + ')' + (k2 < 1 ? ' translate(' + o.x + ' ' + o.y + ') scale(' + k2.toFixed(3) + ') translate(' + -o.x + ' ' + -o.y + ')' : '') + ' ' + (o.g.getAttribute('transform') || '')); o.g._mx = (o.g._mx || 0) + dx; o.g._my = (o.g._my || 0) + dy;
+        if (o.ox == null) { o.ox = o.x; o.oy = o.y; } o.x = nx; o.y = ny; o.b = bx(nx - h, ny - h, nx + h, ny + h); }); } }
   { const pill = sv.querySelector('g.icl'); sv.querySelectorAll('g.ic:not(.icl)').forEach((g) => { if (isMk(g)) sv.insertBefore(g, pill && pill.parentNode === sv ? pill : null); }); } /* (raid markers over the icons, under the labels: the spot always shows) */
   // (a label's body slides off a raid marker it would cover, so the marker shows; its pointer stays on its thing (Dreadmarch's circle, round 5))
-  sv.querySelectorAll('g.icl').forEach((g) => { const q = g._q; if (!q) return; for (const m of icons) { if (!m.mk || !hit(q, m.b)) continue; const w = q.x1 - q.x0, ok = (d) => Math.abs(d) <= w * 0.6 && q.x0 + d >= vb.x + 2 && q.x1 + d <= vb.x + vb.width - 2, d = [m.b.x0 - q.x1 - 1, m.b.x1 - q.x0 + 1].filter(ok).sort((a, b) => Math.abs(a) - Math.abs(b))[0]; if (d == null) continue;
-    g._dx = (g._dx || 0) + d; q.x0 += d; q.x1 += d; g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (g._dx / g._f).toFixed(1) + ' 0)')); } });
+  sv.querySelectorAll('g.icl').forEach((g) => { const q = g._q; if (!q) return; for (const m of icons) { if (!hit(q, m.b)) continue; const w = q.x1 - q.x0, ok = (d) => Math.abs(d) <= w * 0.6 && q.x0 + d >= vb.x + 2 && q.x1 + d <= vb.x + vb.width - 2, d = [m.b.x0 - q.x1 - 1, m.b.x1 - q.x0 + 1].filter(ok).sort((a, b) => Math.abs(a) - Math.abs(b))[0]; if (d == null) continue;
+    g._dx = (g._dx || 0) + d; q.x0 += d; q.x1 += d; g.querySelectorAll('rect, text').forEach((e) => e.setAttribute('transform', 'translate(' + (g._dx / g._f).toFixed(1) + ' 0)')); } if (Math.abs(g._dx || 0) > (q.x1 - q.x0) * 0.6 || icons.some((m) => hit(q, m.b))) g.remove(); });
   sv.querySelectorAll('text.ml:not(.mlp)').forEach((t) => { const g = t.parentNode; if (!g || !g.dataset || g.dataset.y == null) return; const Y = +g.dataset.y, y0 = +t.getAttribute('y');
-    t.style.fontSize = (11 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); try { const b = t.getBBox(); if (b.width) taken.push(bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1)); } catch (e) { /* (not measured) */ } }); /* (a unit's own name (the Soulcoiler, Zul'jan) is taken too: players' names go round it, round 5) */
-  sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * ds;
-    if (out.ppBadges) { const tg = String((t.querySelector('tspan') || {}).textContent || '').trim(), ch = /^backup$/i.test(tg) ? 'B' : tg; /* (badges: a gold number on the dot, no name) */
-      if (ch) { const bx0 = X + 5.2 * ds, by0 = Y - 5.2 * ds; sv.insertAdjacentHTML('beforeend', '<circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * ds).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * ds).toFixed(2) + '"/>' +
-        '<text x="' + bx0.toFixed(1) + '" y="' + (by0 + 2 * ds).toFixed(1) + '" text-anchor="middle" style="font:800 ' + (5.8 * ds).toFixed(2) + 'px Barlow, sans-serif" fill="#1a1405">' + esc(ch) + '</text>'); } t.remove(); return; }
-    t.style.fontSize = (12 * f).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
+    t.style.fontSize = (11 * f * PP_GROW.nm).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px'; if (isFinite(y0)) t.setAttribute('y', (Y + (y0 - Y) * ds).toFixed(1)); try { const b = t.getBBox(); if (b.width) taken.push(bx(b.x - 1, b.y - 1, b.x + b.width + 1, b.y + b.height + 1)); } catch (e) { /* (not measured) */ } }); /* (a unit's own name (the Soulcoiler, Zul'jan) is taken too: players' names go round it, round 5) */
+  const dG = ds * PP_GROW.pl;
+  sv.querySelectorAll('text.mlp').forEach((t) => { const g = t.parentNode, X = +g.dataset.x, Y = +g.dataset.y, r = 9 * dG;
+    if (true) { const tg = String((t.querySelector('tspan') || {}).textContent || '').trim(), ch = /^backup$/i.test(tg) ? 'B' : ((/\d+/.exec(tg) || [])[0] || (tg.length <= 2 ? tg : '')); /* (badges: a gold number on the dot, no name) */
+      if (ch) { const bx0 = X + 5.2 * dG, by0 = Y - 5.2 * dG; sv.insertAdjacentHTML('beforeend', '<circle cx="' + bx0.toFixed(1) + '" cy="' + by0.toFixed(1) + '" r="' + (4.6 * dG).toFixed(2) + '" fill="#f3c969" stroke="#000" stroke-width="' + (0.9 * dG).toFixed(2) + '"/>' +
+        '<text x="' + bx0.toFixed(1) + '" y="' + (by0 + 2 * dG).toFixed(1) + '" text-anchor="middle" style="font:800 ' + (5.8 * dG).toFixed(2) + 'px Barlow, sans-serif" fill="#1a1405">' + esc(ch) + '</text>'); } t.remove(); return; }
+    t.style.fontSize = (12 * f * PP_GROW.nm).toFixed(2) + 'px'; t.style.strokeWidth = (3 * f).toFixed(2) + 'px';
     // (the four sides close in, then the four corners, then the four sides a step further out)
-    const h = 12 * f, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
-    const e = 7 * ds, E = 12 * ds, C = side(r).concat([['start', X + e, Y - e], ['end', X - e, Y - e], ['start', X + e, Y + e + 0.7 * h], ['end', X - e, Y + e + 0.7 * h]], side(r + 6 * ds),
-      [['start', X + E, Y - E], ['end', X - E, Y - E], ['start', X + E, Y + E + 0.7 * h], ['end', X - E, Y + E + 0.7 * h]], side(r + 13 * ds), side(r + 20 * ds), side(r + 28 * ds), side(r + 36 * ds)); /* (two steps further out, so a crowd's names and tags spread instead of piling up, round 5) */
+    const h = 12 * f * PP_GROW.nm, side = (d) => [['middle', X, Y - d - 0.15 * h], ['middle', X, Y + d + 0.85 * h], ['start', X + d, Y + 0.35 * h], ['end', X - d, Y + 0.35 * h]];
+    const e = 7 * dG, E = 12 * dG, C = side(r).concat([['start', X + e, Y - e], ['end', X - e, Y - e], ['start', X + e, Y + e + 0.7 * h], ['end', X - e, Y + e + 0.7 * h]], side(r + 6 * dG),
+      [['start', X + E, Y - E], ['end', X - E, Y - E], ['start', X + E, Y + E + 0.7 * h], ['end', X - E, Y + E + 0.7 * h]], side(r + 13 * dG), side(r + 20 * dG), side(r + 28 * dG), side(r + 36 * dG)); /* (two steps further out, so a crowd's names and tags spread instead of piling up, round 5) */
     let best = null; const put = (c, q, i) => { const [an, x, y] = c; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); taken.push(q);
-      if (i >= 4) { const lx = Math.max(q.x0, Math.min(X, q.x1)), ly = Math.max(q.y0, Math.min(Y, q.y1)), d = Math.hypot(lx - X, ly - Y) || 1, sx = X + (lx - X) / d * 7 * ds, sy = Y + (ly - Y) / d * 7 * ds;
-        t.insertAdjacentHTML('beforebegin', '<line x1="' + sx.toFixed(1) + '" y1="' + sy.toFixed(1) + '" x2="' + lx.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="#e9e4d6" stroke-opacity=".8" stroke-width="' + (0.9 * ds).toFixed(2) + '"/>'); } }; /* (a line back to the dot) */
-    for (let i = 0; i < C.length; i++) { const [an, x, y] = C[i]; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); let b; try { b = t.getBBox(); } catch (e) { return; }
+      if (i >= 4) { const lx = Math.max(q.x0, Math.min(X, q.x1)), ly = Math.max(q.y0, Math.min(Y, q.y1)), d = Math.hypot(lx - X, ly - Y) || 1, sx = X + (lx - X) / d * 7 * dG, sy = Y + (ly - Y) / d * 7 * dG;
+        t.insertAdjacentHTML('beforebegin', '<line x1="' + sx.toFixed(1) + '" y1="' + sy.toFixed(1) + '" x2="' + lx.toFixed(1) + '" y2="' + ly.toFixed(1) + '" stroke="#e9e4d6" stroke-opacity=".8" stroke-width="' + (0.9 * dG).toFixed(2) + '"/>'); } }; /* (a line back to the dot) */
+    for (let i = 0; i < C.length; i++) { const [an, x, y] = C[i]; t.style.textAnchor = an; t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); let b; try { b = t.getBBox(); } catch (e) { return; } if (g._mx || g._my) b = { x: b.x + (g._mx || 0), y: b.y + (g._my || 0), width: b.width, height: b.height };
       const ex = b.width * PP_FW, q = bx(b.x - 1 - (an === 'end' ? ex : an === 'middle' ? ex / 2 : 0), b.y - 1, b.x + b.width + 1 + (an === 'start' ? ex : an === 'middle' ? ex / 2 : 0), b.y + b.height + 1); if (q.x0 < vb.x + 3 || q.x1 > vb.x + vb.width - 3 || q.y0 < vb.y + 3 || q.y1 > vb.y + vb.height - 3 || outside(t, an)) continue; /* (a small margin inside the picture, for the wider font too) */
-      const n = taken.filter((o) => hit(o, q)).length + icons.filter((o) => (Math.abs(o.x - X) > 0.5 || Math.abs(o.y - Y) > 0.5) && hit(o.b, q)).length; if (!n) { put(C[i], q, i); return; } if (!best || n < best.n) best = { c: C[i], q, i, n }; }
+      const n = taken.filter((o) => hit(o, q)).length + icons.filter((o) => (Math.abs((o.ox == null ? o.x : o.ox) - X) > 0.5 || Math.abs((o.oy == null ? o.y : o.oy) - Y) > 0.5) && hit(o.b, q)).length; if (!n) { put(C[i], q, i); return; } if (!best || n < best.n) best = { c: C[i], q, i, n }; }
     if (best) put(best.c, best.q, best.i); else t.remove(); });
   // (notes beside the map: a block of lines in colour (an area's name, then its kickers in order), centred on its spot)
   for (const n of out.ppNotes || []) { const sz = (k) => (12 * f * (k || 1)), H = n.lines.reduce((a, l) => a + sz(l.size) * 1.25, 0); let y = +SY(n.y) - H / 2;
@@ -6586,13 +6609,31 @@ async function ppMapImg(fz) {
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
     ppDeclutter(sv, fz.out);
+    /* (where the action is, as parts of the frame: the players and labels; the Jobs cards' small pictures zoom in on it (Nov 10)) */
+    let foc = null; try { const vb = sv.viewBox.baseVal, P = [...sv.querySelectorAll('g.ic')].filter((g) => g.classList.contains('icl') || g.querySelector('.pl')).map((g) => [+g.dataset.x, +g.dataset.y]).filter(([x, y]) => isFinite(x) && isFinite(y));
+      if (P.length && vb && vb.width && vb.height) { const xs = P.map((q) => (q[0] - vb.x) / vb.width), ys = P.map((q) => (q[1] - vb.y) / vb.height); foc = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }; } } catch (e) { foc = null; }
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
     walk(sv, cl); cl.removeAttribute('style');
-    cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '0.55'; im.setAttribute('opacity', '0.55'); } }); /* (the arena at 55%: icons, names and labels stand out, round 5) */ cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
+    /* (Nov 10, Flex: "make them look good": the room as a dark, cool, low-colour floor under a soft vignette, so the players, markers and labels carry the colour) */
+    cl.insertAdjacentHTML('afterbegin', '<defs><filter id="ppFloor" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="1"/><feComponentTransfer><feFuncR type="linear" slope="0.92" intercept="0"/><feFuncG type="linear" slope="0.92" intercept="0"/><feFuncB type="linear" slope="0.94" intercept="0.005"/></feComponentTransfer></filter>' +
+      '<radialGradient id="ppVig" cx=".5" cy=".5" r=".75"><stop offset=".5" stop-color="#05070b" stop-opacity="0"/><stop offset="1" stop-color="#05070b" stop-opacity=".45"/></radialGradient></defs>');
+    cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '1'; im.setAttribute('opacity', '1'); im.setAttribute('filter', 'url(#ppFloor)');
+      im.insertAdjacentHTML('afterend', '<rect x="' + im.getAttribute('x') + '" y="' + im.getAttribute('y') + '" width="' + im.getAttribute('width') + '" height="' + im.getAttribute('height') + '"' + (im.getAttribute('transform') ? ' transform="' + im.getAttribute('transform') + '"' : '') + ' fill="url(#ppVig)" style="fill:url(#ppVig)"/>'); } });
+    try { const vb = sv.viewBox.baseVal, U = vb.width, P = [...cl.querySelectorAll('g.ic')].filter((q) => q.classList.contains('icl') || q.querySelector('.pl')).map((q) => [+q.dataset.x, +q.dataset.y]).filter(([x, y]) => isFinite(x) && isFinite(y));
+      if (P.length && U) { const C = []; for (const p of P) { const c = C.find((c0) => Math.hypot(c0.x - p[0], c0.y - p[1]) < U * 0.13); if (c) { c.pts.push(p); c.x = c.pts.reduce((s, q) => s + q[0], 0) / c.pts.length; c.y = c.pts.reduce((s, q) => s + q[1], 0) / c.pts.length; } else C.push({ x: p[0], y: p[1], pts: [p] }); }
+        const holes = C.map((c) => { const r = Math.max(...c.pts.map((q) => Math.hypot(q[0] - c.x, q[1] - c.y))) + U * 0.09; return '<circle cx="' + c.x.toFixed(1) + '" cy="' + c.y.toFixed(1) + '" r="' + r.toFixed(1) + '" fill="url(#ppSpotG)"/>'; }).join('');
+        const vig = [...cl.querySelectorAll('rect')].reverse().find((r) => /ppVig/.test(r.getAttribute('fill') || '')), sh = '<defs><radialGradient id="ppSpotG"><stop offset=".62" stop-color="#000"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient><mask id="ppSpot" maskUnits="userSpaceOnUse" x="' + vb.x + '" y="' + vb.y + '" width="' + vb.width + '" height="' + vb.height + '"><rect x="' + vb.x + '" y="' + vb.y + '" width="' + vb.width + '" height="' + vb.height + '" fill="#fff"/>' + holes + '</mask></defs>' +
+          '<rect x="' + vb.x + '" y="' + vb.y + '" width="' + vb.width + '" height="' + vb.height + '" fill="#04060a" fill-opacity=".38" mask="url(#ppSpot)" style="fill:#04060a;fill-opacity:.38"/>';
+        if (vig) vig.insertAdjacentHTML('afterend', sh); } } catch (e) { /* (no spotlight) */ }
+    /* (labels: a dark pill edged in the label's colour, its words in that colour; the pointer stays solid colour) */
+    cl.querySelectorAll('g.icl > g').forEach((b) => { const r = b.querySelector(':scope > rect'), tx = b.querySelector(':scope > text'), pt = b.querySelector(':scope > path'); if (!r) return; const col = r.getAttribute('fill') || '#f3c969';
+      r.style.fill = '#0a0c11'; r.style.fillOpacity = '0.86'; r.style.stroke = col; r.style.strokeOpacity = '0.55'; r.style.strokeWidth = '1'; r.setAttribute('rx', '2');
+      if (tx) { tx.style.fill = col; tx.style.fontWeight = '600'; tx.style.letterSpacing = '0.06em'; } if (pt) { pt.style.fill = col; pt.style.fillOpacity = '0.85'; pt.style.stroke = 'none'; } });
+    cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1400); cl.setAttribute('height', 1400);
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
     if (!cl.querySelector('#pclip')) cl.insertAdjacentHTML('afterbegin', '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>');
     await Promise.all([...cl.querySelectorAll('image')].map(async (im) => { const d = await ppData(ppArt(im.getAttribute('href'))); if (d) im.setAttribute('href', d); else im.remove(); }));
-    return await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' })));
+    const im0 = await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' }))); if (im0) im0._foc = foc; return im0;
   } finally { box.remove(); }
 }
 const ppMarkImg = (k) => ppImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -11 22 22" width="44" height="44">' + gdzMarkSvg(k, 0, 0) + '</svg>'));
@@ -6602,12 +6643,16 @@ async function ppDraw(card, boss, diff, opt) {
   if (only) card = { ...card, legend: card.legend.map((G) => ({ ...G, items: G.items.filter((it) => String(it.name || '').split('-')[0].toLowerCase() === only) })).filter((G) => G.items.length) };
   const W = 1200, H = 675, S2 = 2, cv = document.createElement('canvas'); cv.width = W * S2; cv.height = H * S2; const g = cv.getContext('2d'); g.scale(S2, S2);
   await Promise.all(['800 28px "Barlow Semi Condensed"', '700 16px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
-  g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
+  { const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#151922'); bg.addColorStop(1, '#0c0e13'); g.fillStyle = bg; g.fillRect(0, 0, W, H); } /* (Nov 10: a quiet gradient ground) */
   // (only the players the card's list names: nobody without a job in it shows (the user, Oct 26); a card that names nobody keeps everyone)
   const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
   const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))].filter((n) => !(card.map.out.ppNoName || []).some((x) => String(x).split('-')[0].toLowerCase() === n.toLowerCase())) } : card.map; /* (every named player keeps their name, but a big group's are in the list) */
   if (only) { const me = fz.out.pts.find((p) => p.kind === 'player' && nmOf(p.name) === only); if (me) fz.out = { ...fz.out, hl: [...new Set((fz.out.hl || []).concat(me.guid))], cardRing: { guids: new Set([me.guid]), color: '#e6b450' } }; }
-  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  { g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 1; g.strokeRect(M0 + 0.5, M0 + 0.5, MS - 1, MS - 1); const k = 16; g.strokeStyle = '#e6b450'; g.lineWidth = 2; g.beginPath();
+    [[M0, M0, 1, 1], [M0 + MS, M0, -1, 1], [M0, M0 + MS, 1, -1], [M0 + MS, M0 + MS, -1, -1]].forEach(([x, y, a, b]) => { g.moveTo(x + a * k, y + b * 1); g.lineTo(x + a * 1, y + b * 1); g.lineTo(x + a * 1, y + b * k); }); g.stroke(); } /* (Nov 10: a square frame, hairline edge, gold corner ticks) */
+  { const f = map && map._foc; let k = 1, cx = 0.5, cy = 0.5; if (f) { k = Math.min(1, Math.max(0.4, Math.max(f.x1 - f.x0, f.y1 - f.y0) + 0.2)); cx = Math.min(1 - k / 2, Math.max(k / 2, (f.x0 + f.x1) / 2)); cy = Math.min(1 - k / 2, Math.max(k / 2, (f.y0 + f.y1) / 2)); }
+    cv._thumb = { x: M0 + (cx - k / 2) * MS, y: M0 + (cy - k / 2) * MS, s: k * MS }; } /* (the small picture's square: the action with a margin, at least 40% of the room) */
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
   const icons = new Map(); await Promise.all(card.legend.flatMap((G) => G.items).map(async (it) => { if (it.specIcon && !icons.has(it.specIcon)) icons.set(it.specIcon, await ppImg(await ppData('https://wow.zamimg.com/images/wow/icons/medium/' + it.specIcon + '.jpg'))); }));
@@ -6676,7 +6721,7 @@ function ppSet(r, u0) {
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
   const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P), pics: new Map() };
-  set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png') })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
+  set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
   return set;
 }
@@ -6744,6 +6789,15 @@ function ppOpen(r, u0, opt) {
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
     const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses });
     lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move, right-click to change the mark" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('');
+    { const t0 = mhost.querySelector('.pp-mktray'); if (t0) t0.remove(); } const offL = PP_MKS.filter((m) => !c.marks[m]);
+    mhost.insertAdjacentHTML('beforeend', '<div class="pp-mktray"><span class="pp-mkth">' + (offL.length ? 'Off the map: drag one onto the room' : 'Drag a marker here, or point at it and press Delete, to take it off the map') + '</span>' + offL.map((m) => '<button type="button" class="pp-mktr" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag it onto the room" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('') + '</div>');
+    const tray = mhost.querySelector('.pp-mktray'), offMap = (ev) => { const R = sv.getBoundingClientRect(), T = tray.getBoundingClientRect(); return (ev.clientX >= T.left && ev.clientX <= T.right && ev.clientY >= T.top && ev.clientY <= T.bottom) || ev.clientX < R.left || ev.clientX > R.right || ev.clientY < R.top || ev.clientY > R.bottom; };
+    const takeOff = (mk) => { const cc = ppConf(boss, diff); cc.marks[mk] = null; for (const u of Object.keys(cc.uses)) if (cc.uses[u] === mk) cc.uses[u] = ''; keep(cc); box._mkHov = null; mkDraw(); redo(); }; box._mkOff = takeOff;
+    tray.querySelectorAll('.pp-mktr').forEach((t) => { t.onpointerdown = (e) => { if (e.button === 2) return; e.preventDefault(); try { t.setPointerCapture(e.pointerId); } catch (x) { /* (fine without) */ } const gh = t.cloneNode(true); gh.className = 'pp-mktr pp-mkghost'; document.body.appendChild(gh);
+      const mv = (ev) => { gh.style.left = ev.clientX + 'px'; gh.style.top = ev.clientY + 'px'; gh.classList.toggle('off', offMap(ev)); }; mv(e);
+      t.onpointermove = mv; t.onpointerup = (ev) => { t.onpointermove = t.onpointerup = null; gh.remove(); if (offMap(ev)) return; const q = toYd(ev.clientX, ev.clientY), lim = c.C.room.lim; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1])); const cc = ppConf(boss, diff); cc.marks[t.dataset.mk] = q; keep(cc); mkDraw(); redo(); }; }; });
+    lay.querySelectorAll('.pp-mkdot').forEach((b) => { b.addEventListener('mouseenter', () => { box._mkHov = b.dataset.mk; }); b.addEventListener('mouseleave', () => { if (box._mkHov === b.dataset.mk) box._mkHov = null; }); b.addEventListener('keydown', (e) => { if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); takeOff(b.dataset.mk); } }); });
+    if (!box._mkKey) { box._mkKey = 1; document.addEventListener('keydown', (e) => { if ((e.key !== 'Delete' && e.key !== 'Backspace') || !box.isConnected || !box._mkHov || !box._mkOff) return; const a = document.activeElement; if (a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return; e.preventDefault(); e.stopPropagation(); box._mkOff(box._mkHov); }, true); }
     const place = () => lay.querySelectorAll('.pp-mkdot').forEach((b) => { const m = ppConf(boss, diff).marks[b.dataset.mk]; if (!m) return; const [px, py] = toPx(m); b.style.left = px + 'px'; b.style.top = py + 'px'; });
     requestAnimationFrame(place); if (mhost._ro) mhost._ro.disconnect(); if (window.ResizeObserver) (mhost._ro = new ResizeObserver(() => place())).observe(mhost); /* (the dots follow the map when the window or phone turns) */
     // (right-click a marker (hold it on a phone): the eight marks in a row, this one lit; picking another swaps the two marks, so no mark
@@ -6759,15 +6813,15 @@ function ppOpen(r, u0, opt) {
     lay.querySelectorAll('.pp-mkdot').forEach((b) => { b.oncontextmenu = (e) => { e.preventDefault(); pick(b); };
       b.onpointerdown = (e) => { if (e.button === 2) return; e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on'); const x0p = e.clientX, y0p = e.clientY; let moved = false, held = false;
         const hold = e.pointerType === 'touch' ? setTimeout(() => { held = true; b.classList.remove('on'); pick(b); }, 550) : 0;
-        const move = (ev) => { if (held) return; if (!moved && Math.hypot(ev.clientX - x0p, ev.clientY - y0p) < 6) return; moved = true; clearTimeout(hold); const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; };
-        const up = (ev) => { clearTimeout(hold); b.onpointermove = b.onpointerup = null; b.classList.remove('on'); if (held || !moved) return; const q = toYd(ev.clientX, ev.clientY), lim = c.C.room.lim; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
+        const move = (ev) => { if (held) return; if (!moved && Math.hypot(ev.clientX - x0p, ev.clientY - y0p) < 6) return; moved = true; clearTimeout(hold); const L = lay.getBoundingClientRect(); b.style.left = (ev.clientX - L.left) + 'px'; b.style.top = (ev.clientY - L.top) + 'px'; b.classList.toggle('off', offMap(ev)); };
+        const up = (ev) => { clearTimeout(hold); b.onpointermove = b.onpointerup = null; b.classList.remove('on'); if (held || !moved) return; if (offMap(ev)) { takeOff(b.dataset.mk); return; } const q = toYd(ev.clientX, ev.clientY), lim = c.C.room.lim; q[0] = Math.max(-lim, Math.min(lim, q[0])); q[1] = Math.max(-lim, Math.min(lim, q[1]));
           const cc = ppConf(boss, diff); cc.marks[b.dataset.mk] = q; keep(cc); place(); redo(); mkDraw(); };
         b.onpointermove = move; b.onpointerup = up; }; });
     const uses = box.querySelector('.pp-mkuse'), opt0 = (v) => '<option value=""' + (v ? '' : ' selected') + '>The spot shown (no marker)</option>' + PP_MKS.map((m) => '<option value="' + m + '"' + (v === m ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('');
     uses.innerHTML = '<div class="sub">Where each mechanic happens</div>' + c.C.uses.map(([id, label]) => '<label class="pp-use"><span>' + esc(label) + '</span><select data-use="' + id + '">' + opt0(c.uses[id]) + '</select></label>').join('') +
       '<div class="pp-mkbase"><button class="btn sm" type="button" data-ppreset' + (c.base === 'guide' && !c.saved ? ' disabled' : '') + '>Back to the guide\'s spots</button>' +
       (c.C.raid ? '<button class="btn sm" type="button" data-ppraid' + (c.base === 'raid' && !c.saved ? ' disabled' : '') + '>Use your raid\'s spots</button>' : '') + '</div>' +
-      (c.C.mkTip ? '<p class="sub"><b>' + esc(c.C.mkTip) + '</b></p>' : '') + '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
+      (c.C.mkTip ? '<p class="sub"><b>' + esc(c.C.mkTip) + '</b></p>' : '') + '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; drag it off the room (or point at it and press Delete) to take it off; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
     uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; keep(cc); mkDraw(); redo(); }; });
     uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide' }); mkDraw(); redo(); };
     const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid' }); mkDraw(); redo(); }; };
@@ -6787,7 +6841,7 @@ function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return P
   if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus, full: c.C.room.full }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
     const [cx, cy] = ppMid(mp); fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = c.C.room.keep;
     const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
-    g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, W - 2 * M0, W - 2 * M0, 12) : g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
+    g.save(); g.beginPath(); g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); /* (square, like the other pictures (Nov 10)) */ g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
   if (PP_MKPIC.size > 6) PP_MKPIC.delete(PP_MKPIC.keys().next().value); return PP_MKPIC.get(key); }
 function ppJobs() {
   const els = document.querySelectorAll('.bj-jobs .plb-rc:not([data-pj])'); if (!els.length) return;
@@ -6816,7 +6870,9 @@ function ppJobs() {
     el._pics = pics; if (!window.IntersectionObserver) { ppThumbs(pics); return; } /* (the card is watched, not its row, which is hidden when every picture went beside its job) */
     (PP_IO = PP_IO || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { PP_IO.unobserve(e.target); ppThumbs(e.target._pics); } }), { rootMargin: '300px' })).observe(el); });
 }
-async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btns || pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.url; } }
+/* (a Jobs card's small picture: the action's square of the picture, 240 px, as a JPEG (Nov 10)) */
+const ppThumbUrl = (cv) => { try { const t = cv._thumb; if (!t) return ''; const u = cv.width / 1200, N = 240, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(cv, t.x * u, t.y * u, t.s * u, t.s * u, 0, 0, N, N); return c.toDataURL('image/jpeg', 0.88); } catch (e) { return ''; } };
+async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btns || pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.thumb || p.url; } }
 // (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
 // same note's pictures; and the Jobs cards' small pictures)
 if (typeof document !== 'undefined') {
