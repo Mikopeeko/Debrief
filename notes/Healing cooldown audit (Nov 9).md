@@ -218,3 +218,31 @@ Each is a small push, tested before and after on Wolfthorn's roster and a top-gu
 4. **Longer fights and every use** (S2, S5): the last phase's pattern carries on to your own phase times, and spare presses go to the next hit.
 5. **Cooldowns a raider may not have** (S9): Darkness, Anti-Magic Zone and Zephyr only when the raider has pressed one in their logs, or marked "if talented".
 6. **lorrgs refresh** (S10).
+
+## Part 5: What was fixed (Nov 9, saved to main, not live until the next build)
+
+All numbers are the same 40 plans, as the coverage strip marks them.
+
+| Push | What | Result |
+|---|---|---|
+| 241a0af4 | Hits of the same size share a class; Tranquility is a raid cooldown (S3, S4) | Nymrissa's five 2.6M to 3.1M hits all need 2 |
+| d5763a38 | Heaviest hits first; stacks capped; no doubling up a player on a spare press; end-of-phase hits (S6, S7, S8) | Mythic covered 188 to 216 of 222, doubled up 10 to 0. Heroic covered 104 to 116 of 122, bare 10 to 2 |
+| 64e6b23b | Fuller hit lists on every boss; each cooldown timed over the whole fight (S1, S5) | Mythic hits known 222 to 320, covered 268. Heroic 122 to 162, covered 144. Presses near no listed hit 63 to 29 |
+| edd40382 | With your own longer phase times, the planner uses the chart's hit times (S2b) | With every phase 22% longer: hits with a cooldown on them 160 to 239 of 241 |
+| (this push) | Top-raid moments from today's lorrgs (S10) | 26 new strong moments, 12 gone. It moves a handful of the lightest hits either way; the totals stay level |
+
+Start to end, Mythic: hits known 222 to 320; hits with their full need 188 to 272; hits with more than they need 10 to 8; presses near no listed
+hit 63 to 21; one player given two cooldowns at once 26 to 11; pressed before it is back 0 throughout.
+
+**Still open, and why**
+- **Uses are 74% (were 72%).** Every press now lands on a listed hit, and no hit takes more than one over its need, so some presses have no place
+  left. Going higher means stacking more on hits that are already covered. Top healers on lorrgs sit at 70 to 90% by the same count.
+- **A longer phase has more hits, not later ones (S2).** Boss abilities run on timers. The chart stretches the fastest kills' hits along a longer
+  phase (Flex's call for the damage line, Oct 24, extended Nov 6), and the planner now follows the chart so the two agree. Drawing the extra hits
+  instead needs the chart changed too, and the hits past the fastest kill's end are already measured (`hits.js`). Flex's call.
+- **Darkness, Anti-Magic Zone, Zephyr (S9).** The planner can't see who has talented them: it gets the roster, not logs. Options: leave it (the
+  raider removes it), a per-raider "has it" switch on the roster, or only after it shows in that raider's logs. Flex's call.
+- **About 40 lighter Mythic hits stay short or bare.** The raid has fewer cooldowns than Ula'tek has hits (29). Those are where a Defensives call goes.
+- **The chart was not opened in a browser by the audit** (Plan needs a sign-in). The planner was tested by running the site's own code.
+- Mechanics seen in top kills and left out on purpose, to check against the guides: Noxious Blast (Sentinels), Malignance (Vashnik), Extinguish
+  (Kith'ix), Rouse the Brood (Twin Fangs), Circling Prey (Ula'tek).
