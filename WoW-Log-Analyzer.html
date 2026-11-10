@@ -33894,7 +33894,7 @@ function pvWrap(h, pb, got) {
   tag(/<div id="pg-roster"[^>]*>|<div class="panel pg-roster[^"]*"[^>]*>/, 'roster');
   tag(/<div class="panel ndz-dpan ndz-dtl[^"]*"[^>]*>/, 'cds');
   tag(/<div id="pg-jobs"[^>]*>|<div class="panel ndz-dpan bj-jobs[^"]*"[^>]*>/, 'jobs');
-  h = h.replace(/<div class="panel ndz-dal/g, '<div data-pv="jobs" class="panel ndz-dal'); /* (the plan's alerts, like raiders with no job: Assignments) */
+  h = h.replace(/<div class="panel ndz-dal\b/g, '<div data-pv="jobs" class="panel ndz-dal'); /* (the plan's alerts, like raiders with no job: Assignments) */
   /* (the saved plans: the slim strip when it's there, else the boss's saved plans as a panel of their own) */
   const L = (() => { try { return notesOf(pb).list.filter((x) => !x.example); } catch (e) { return []; } })();
   if (/<div class="panel pls pls-slim"/.test(h)) { tag(/<div class="panel pls pls-slim"[^>]*>/, 'plans-old'); try { h += '<div data-pv="plans" class="panel pls pv-own plc">' + plcH(pb, L) + '</div>'; } catch (e) { /* (the old list stays) */ } }
