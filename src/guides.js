@@ -5827,6 +5827,9 @@ function ulRead(txt) {
   if (!Object.values(D.ez).some((x) => x.length) && eggs.length) D.ez = { melee: eggs.slice(0, 2), left: eggs.slice(2, 4), right: eggs.slice(4, 6), far: eggs.slice(6, 8), backup: eggs.slice(8) };
   return D;
 }
+// (the Fester Burst spots, clockwise from the top: Melee top and top right, Right right and bottom right, Far bottom and bottom left, Left left and top left; a backup fills a gap)
+const UL_BURST_AT = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖']; /* (arrows: short enough that every name fits the legend) */
+const ulBurst = (D) => { const bk = (D.ez.backup || []).slice(), P = []; for (const z of ['melee', 'right', 'far', 'left']) for (let i = 0; i < 2; i++) P.push((D.ez[z] || [])[i] || bk.shift() || null); return P; };
 const ulHas = (key, D) => (key === 'eggs' ? Object.values(D.ez).some((x) => x.length) : key === 'coils' ? D.teams.some((x) => x.length) : key === 'trans' ? D.trans.some((x) => x && x.length) : key === 'side' ? Object.keys(D.side.L).length + Object.keys(D.side.R).length > 0 : false);
 // the pages: each draws on the floor in room yards; tokens are [name, x, y]
 const UL_PAGES = {
@@ -5841,9 +5844,10 @@ const UL_PAGES = {
         L.f('In the top kills the eggs land all over the platform, at about 0:20 and again at 1:35.'); } },
     { t: 'Fester Burst spread', s: 'Stand inside the Wretch\'s bubble, spread so egg rings never touch', vb: 'mid',
       draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); [[[26, -4], 'Burst 1 · 0:37', 1], [[-26, -2], 'Burst 3 · 1:48', 11]].forEach(([w, t, n0]) => { g.circle(w[0], w[1], 10, '#ff8a3d', true); g.add(w[0], w[1], 'Wretch');
-        for (let i = 0; i < 8; i++) { const a = Math.PI / 2 - (i * Math.PI) / 4; g.num(w[0] + Math.cos(a) * 8, w[1] + Math.sin(a) * 8, n0 + i); } /* (eight spots in a ring round the Wretch, none under it (Flex, Nov 10: "bugged")) */
+        const who = ulBurst(D); for (let i = 0; i < 8; i++) { const a = Math.PI / 2 - (i * Math.PI) / 4, x = w[0] + Math.cos(a) * 8, y = w[1] + Math.sin(a) * 8; if (who[i]) g.tok(who[i], x, y, 1); else g.num(x, y, n0 + i); } /* (eight spots in a ring round the Wretch, none under it; each carrier on their spot (Flex, Nov 10: "bugged not showing whos in the assignments")) */
         const s = w[0] < 0 ? 1 : -1, q = g.pick([[w[0], w[1] + 13.5], [w[0], w[1] - 13.5], [w[0] + s * 5, w[1] + 13.5], [w[0] + s * 5, w[1] - 13.5], [w[0] + s * 9, w[1] + 13.5], [w[0] + s * 9, w[1] - 13.5]], (x, y) => g.tagBox(t, x, y)); g.tag(q[0], q[1], t); }); },
-      leg: (D, L) => { L.p('Fester Burst hits everyone outside the Wretch\'s 10-yard bubble: all in for bursts 1 and 3 (2 and 4 come when the raid is already on it). Egg carriers spread to the numbered spots so their 3-yard rings never touch.');
+      leg: (D, L) => { const who = ulBurst(D), on = who.map((n, i) => [n, UL_BURST_AT[i]]).filter(([n]) => n); if (on.length) L.grp('Your spot in the bubble (both bursts)', '#ff8a3d', on.map(([n]) => n), on.map(([, t]) => t));
+        L.p('Fester Burst hits everyone outside the Wretch\'s 10-yard bubble: all in for bursts 1 and 3 (2 and 4 come when the raid is already on it). Egg carriers spread round the edge of the bubble on the side of their quadrant (top is the side nearest Ula\'tek), so their 3-yard rings never touch; everyone else stands inside the bubble too.');
         L.f('In the top kills burst 1 lands on the side the first coils come from (the tank brings the Wretch there), burst 3 on either side; 2 is at the north, 4 at the south.'); } }],
   coils: [['First coils · west', 'The first pair lands west or east at random: here west', [['WNW', 'WSW']]], ['First coils · east', 'The first pair lands west or east at random: here east', [['ESE', 'ENE']]], ['Second coils · south', 'The second pair always lands south', [['SSW', 'SSE']]]].map(([t, s, P]) => ({ t, s, vb: 'mid',
     draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const [a, b] = P[0], TG = []; [[a, b, 0, '1st · Team 1', '#24f2cb'], [b, a, 1, '2nd · Team 2', '#7fd8ff']].forEach(([k, o, ti, lab, c]) => { const p = UL_SOAK0[k], q = UL_SOAK0[o], dx = p[0] - q[0], dy = p[1] - q[1], dd = Math.hypot(dx, dy) || 1; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 10, c, true); g.cluster(D.teams[ti], p, 7.2); TG.push([p, dx / dd, dy / dd, lab, c]); });
