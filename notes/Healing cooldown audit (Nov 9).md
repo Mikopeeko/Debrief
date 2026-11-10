@@ -70,6 +70,7 @@ planner, the strip, the Big hits table and the Defensives calls). Nymrissa's fiv
 ### S2b. A longer phase stretches the hits instead of adding more (found while fixing)
 When your phase runs longer than the fastest kills', the chart multiplies every hit's time by the difference (Nov 6). Boss abilities run on fixed
 timers: a phase 20% longer has more casts, at the same times as before, not the same casts 20% later. A hit at 2:00 is drawn at 2:24.
+**Fixed in the last push (Flex: "Yes, add extra hits"):** see Part 5.
 
 ### S4. Tranquility is counted as a healer's burst, not a raid cooldown
 The strip counts "raid cooldowns" toward a hit's need. Apotheosis, Avenging Wrath, Yu'lon, Celestial Conduit, Evangelism, Convoke and **Tranquility**
@@ -229,7 +230,42 @@ All numbers are the same 40 plans, as the coverage strip marks them.
 | d5763a38 | Heaviest hits first; stacks capped; no doubling up a player on a spare press; end-of-phase hits (S6, S7, S8) | Mythic covered 188 to 216 of 222, doubled up 10 to 0. Heroic covered 104 to 116 of 122, bare 10 to 2 |
 | 64e6b23b | Fuller hit lists on every boss; each cooldown timed over the whole fight (S1, S5) | Mythic hits known 222 to 320, covered 268. Heroic 122 to 162, covered 144. Presses near no listed hit 63 to 29 |
 | edd40382 | With your own longer phase times, the planner uses the chart's hit times (S2b) | With every phase 22% longer: hits with a cooldown on them 160 to 239 of 241 |
-| (this push) | Top-raid moments from today's lorrgs (S10) | 26 new strong moments, 12 gone. It moves a handful of the lightest hits either way; the totals stay level |
+| 50ce1bb4 | Top-raid moments from today's lorrgs (S10) | 26 new strong moments, 12 gone. It moves a handful of the lightest hits either way; the totals stay level |
+| (the push after) | A longer phase gets its extra hits, nothing is stretched; the chart's damage line drawn at its own times (S2, S2b) | With every phase 22% longer, Mythic: hits that really land with a cooldown on them 128 to 174 of 186; presses near no hit 85 to 13. Heroic: 58 to 83 of 86; 83 to 15 |
+
+### The last push: extra hits in a longer phase (Flex, Nov 9: "Yes, add extra hits")
+
+**What changed.** When your phase runs more than 5% longer than the fastest kills', every hit and boss mechanic now stays at its own time, and
+the phase gets the hits that come after. The planner ("Plan them for me") and the chart use the same list. The stretch from Nov 6 (and the
+planner's copy of it from edd40382) is gone.
+
+**Where the extra hits come from.** Measured, not guessed: the 16 top kills plus the 14 longest Mythic kills a boss in the log library (137 more
+kills read, no downloads), with the same test as the list's own hits (the mechanic is raid-wide by the guide, it lands at the same time into its
+phase in 60% or more of the kills still in that phase, four kills or more). 51 extra hits on Mythic. How far each phase was measured:
+Nymrissa 4:10 to 7:25, Sentinels 4:35 to 7:00, Vashnik 4:37 to 7:04, Sszorak 4:56 to 6:30, Twin Fangs 5:32 to 7:07, Nek'zali P1 1:22 to 3:07 and
+P2 1:36 to 3:07, Lost Explorers P3 0:49 to 2:04, Coiled Altar P1 2:24 to 2:56, P2 2:33 to 3:33, P3 2:39 to 3:31, Ula'tek P3 3:31 to 3:48,
+Kith'ix P4 0:48 to 1:03. Ula'tek's and Kith'ix's other phases end on a timer, so they never run longer. The raid's damage past the old end
+of the damage line comes from the same kills.
+
+**Why not guess past the measured part.** Tried first: carry each mechanic's own timer on, and find one repeat for the whole phase. Checked
+against the 51 measured hits, the timers found 15 and put a third of their guesses where nothing lands (bosses run several timers that push
+each other around). So past the measured part a phase shows nothing, which is honest, instead of hits that are wrong more often than right.
+
+**The damage line was drawn at twice its width (found while doing this).** Since Nov 6 the Plan chart read its 2-second damage samples as
+seconds: the first half of a phase's damage was spread over the whole chart and the second half piled on the right edge, so the peaks sat
+away from the hits. It is on the live site. Fixed here: every 2 seconds of damage sits at its own time.
+
+**Seen at last.** The chart was drawn without a sign-in by running the site's own planner and chart code and taking a picture in a headless
+browser (`hcd/shot.js`): Coiled Altar Mythic phase 1 at 20% longer, before and after. After: damage peaks sit on the hits, and the two
+measured Venom Ruptures at 2:30 and 2:48 are on the chart with cooldowns on them.
+
+**Limits.**
+- Heroic: the library only has fast Heroic kills, so a longer Heroic phase is measured for a few seconds past its end (3 extra hits in
+  all). Past that it shows no hits. Needs 14 or so longer Heroic kills a boss saved to the library, then `mkhits.js` again.
+- Past the measured part on Mythic (for example Coiled Altar phase 1 after 2:56) the same: no hits shown. The chart's data has `known` on such a
+  phase (where the measuring stops), if the Design studio wants to mark it.
+- The boss lane gets a mark only for an extra hit whose mechanic is already on the lane. The lane's other mechanics (soaks, adds) are not
+  measured past the fastest kills' end.
 
 Start to end, Mythic: hits known 222 to 320; hits with their full need 188 to 272; hits with more than they need 10 to 8; presses near no listed
 hit 63 to 21; one player given two cooldowns at once 26 to 11; pressed before it is back 0 throughout.
@@ -237,12 +273,11 @@ hit 63 to 21; one player given two cooldowns at once 26 to 11; pressed before it
 **Still open, and why**
 - **Uses are 74% (were 72%).** Every press now lands on a listed hit, and no hit takes more than one over its need, so some presses have no place
   left. Going higher means stacking more on hits that are already covered. Top healers on lorrgs sit at 70 to 90% by the same count.
-- **A longer phase has more hits, not later ones (S2).** Boss abilities run on timers. The chart stretches the fastest kills' hits along a longer
-  phase (Flex's call for the damage line, Oct 24, extended Nov 6), and the planner now follows the chart so the two agree. Drawing the extra hits
-  instead needs the chart changed too, and the hits past the fastest kill's end are already measured (`hits.js`). Flex's call.
+- **A longer Heroic phase** has its extra hits for a few seconds only (see the last push above): the library needs longer Heroic kills.
 - **Darkness, Anti-Magic Zone, Zephyr (S9).** The planner can't see who has talented them: it gets the roster, not logs. Options: leave it (the
   raider removes it), a per-raider "has it" switch on the roster, or only after it shows in that raider's logs. Flex's call.
 - **About 40 lighter Mythic hits stay short or bare.** The raid has fewer cooldowns than Ula'tek has hits (29). Those are where a Defensives call goes.
-- **The chart was not opened in a browser by the audit** (Plan needs a sign-in). The planner was tested by running the site's own code.
+- **The Plan page itself was not opened by the audit** (it needs a sign-in). The planner and the chart were tested by running the site's own
+  code, and the chart was pictured from that (`hcd/shot.js`).
 - Mechanics seen in top kills and left out on purpose, to check against the guides: Noxious Blast (Sentinels), Malignance (Vashnik), Extinguish
   (Kith'ix), Rouse the Brood (Twin Fangs), Circling Prey (Ula'tek).
