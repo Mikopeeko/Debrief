@@ -286,6 +286,27 @@ Avenging Wrath 20/24, Apotheosis 20/32, Evangelism 15/24, Ascendance 18/15, Drea
 the real lengths (20 Mythic plans): hits with their full need 296 to 303 of 320, short 15 to 8; long hills whose second half had no raid
 cooldown 16 to 7. After "Plan them for me" on Nymrissa, no icon was left that could still be added except one Anti-Magic Zone.
 
+**Lengths, checked again (Flex: "you should double check those numbers, Avenging wrath for holy paladins with certain talents is 30 seconds
+long").** He was right, and the chart's table was wrong for his spec. `NDZ_CDLEN` keeps one length a name, the commonest over every spec:
+Avenging Wrath read 24 s, which is Retribution's (481 presses); every Holy Paladin's ran 30 s (298 of 298 presses, 113 kills). Measured press
+by press in the raw events of 160 top Mythic kills (`hcd/buffs.js`, `bufsum.js`, `buffs2.js` for zones and totems: the buff's apply to its
+removal, no downloads):
+
+| Cooldown | Chart had | Measured | Now |
+|---|---|---|---|
+| Avenging Wrath, Holy Paladin | 24 s | 30 s (298 of 298) | 30 |
+| Rallying Cry | 16 s | 16 s Arms and Fury (164), 13 s Protection (21 of 28) | 16, Protection 13 |
+| Zephyr | 8 s | 8 s Preservation and Devastation (131), 10 s Augmentation (113) | 8, Augmentation 10 |
+| Ascendance, Restoration Shaman | 15 s | 18 s (133); 24 s when stretched mid-fight (48, the same players' others ran 18) | 18 |
+| Tranquility | 6 s | 4 s (86), 3 s (36): a channel, shorter with haste | 4 |
+| Divine Hymn | 5 s | 4 s (244) | 4 |
+| Celestial Conduit, Mistweaver | 4 s | 2 to 3 s | 3 |
+| Apotheosis 32, Aura Mastery 8, Anti-Magic Zone 8, Spirit Link Totem 6, Vampiric Embrace 12, Yu'lon 25, Ultimate Penitence 7 | same | same | unchanged |
+
+The new table is `NDZ_CDLEN_SPEC` (by the presser's spec), read by the planner and by the Plan chart's bars (`ndzCdLenFor`). Not measured:
+Darkness (no buff shows in the events; 8 s by its text) and Evangelism (its buff ran anything from 15 to 32 s). One raider's own talents are
+not known to the planner: these are what nearly every top player of the spec runs.
+
 **Speed.** Main timed the button at 0.38 s (Coiled Altar) and 0.51 s (Ula'tek). Running sums in place of loops: about a fifth faster, plans
 identical. More would need the whole search redone.
 
