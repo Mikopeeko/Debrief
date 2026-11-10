@@ -332,6 +332,26 @@ length. On the Plan chart a cooldown's hover now says where its length comes fro
 Rallying Cry and a 13 s one). Open: the planner does not know one raider's own talents (a Death Knight without Assimilation has a 6 s zone
 that is back in 4 minutes, not 3); the cooldown times it uses assume the usual build too.
 
+**Hero talents, and every other talent (Flex: "did you check hero talents?").** Not at first: only each spell's "Modified by" list, and two
+of those were empty. Then all of them: the class tree, the spec tree and both hero trees of the 19 specs that bring these cooldowns, 1,755
+talent tooltips (`tips/tipsall.js`; talent lists from Raidbots' talents.json), kept where the tooltip names one of the cooldowns (76 do).
+- **Apotheosis is 32 s because of Eternal Sanctity** (Holy Priest spec talent: "Increases the duration of Apotheosis by 12 sec"). I had "no
+  talent found". (A search engine's AI summary Flex sent gave Ultimate Serenity as the cause: its tooltip says nothing about Apotheosis.)
+- Hero talents that touch a length or a time back: **Archon, Sustained Potency** (each Halo adds 1 s to Apotheosis, up to 6 s stored: not
+  planned for); **Keeper of the Grove, Control of the Dream** (Convoke back up to 15 s sooner). Hero talents that change what a cooldown does
+  but not how long: Herald of the Sun (Avenging Wrath), Conduit of the Celestials (Celestial Conduit is its own button; Unity Within, Jade
+  Sanctuary), Totemic (Healing Tide Totem), Keeper of the Grove's Sylvan Beckoning (a Dryad casts a small Tranquility: in logs these look like
+  the Druid's own Tranquility 12 s apart, 51 of 208 "repeat presses"; they are not presses).
+- Talents that set a time back, and what the plan assumes (`hcd/gaps.js`: how soon top players press again): Anti-Magic Zone 3 min with
+  Assimilation (4 without), Darkness 3 min with Pitch Black (5 without), Rewind 3 min with Temporal Artificer (4), Divine Hymn 2 min with
+  Seraphic Crescendo (3), Convoke 1 min with Cenarius' Guidance (2): assumed, and nobody in 160 top kills pressed sooner or later than that.
+  Aura Mastery 30 s sooner with Unwavering Spirit, Revival and Restoral 30 s sooner with Uplifted Spirits, Ascendance and Healing Tide Totem
+  1 min sooner with First Ascendant: not assumed (3% and 4% of repeat presses use them), the safe side.
+- The chart's hover now also says which talent a time back rests on: "Back in 3 min with Assimilation, 4 without."
+- Open: a raider without the assumed talent (a Demon Hunter without Pitch Black has a 5-minute Darkness) is planned too often; the planner
+  has no per-raider talents. Sylvan Beckoning's Dryad casts may be inflating Tranquility in the top-raid moments (NDZ_CDTOP) and in the
+  engine's cooldown counts: not checked.
+
 **Speed.** Main timed the button at 0.38 s (Coiled Altar) and 0.51 s (Ula'tek). Running sums in place of loops: about a fifth faster, plans
 identical. More would need the whole search redone.
 
