@@ -36614,11 +36614,43 @@ function askPortrait(W, live) { const small = W < 90, k = small ? 1.75 : 1.3, px
   let em = ''; if (live) for (let i = 0; i < (small ? 3 : 8); i++) em += '<i class="ak-em" style="left:' + (8 + ((i * 37) % 84)) + '%;animation-delay:-' + ((i * 0.83) % 6).toFixed(2) + 's;animation-duration:' + (3.6 + (i % 4) * 0.7).toFixed(2) + 's;--dx:' + (((i * 13) % 30) - 15) + 'px"></i>';
   return '<span class="ak-pa" style="width:' + W + 'px;height:' + W + 'px"><span class="ak-img" style="background-image:url(' + ASK_YT + ');background-size:' + bs + 'px ' + bs + 'px;background-position:' + ox + 'px ' + oy + 'px">' +
     (live ? '<i class="ak-fl" style="left:' + X(.13) + ';top:' + Y(.30) + ';width:' + bs * .28 + 'px;height:' + bs * .4 + 'px"></i><i class="ak-fl b" style="left:' + X(.92) + ';top:' + Y(.28) + ';width:' + bs * .26 + 'px;height:' + bs * .4 + 'px"></i>' : '') + (live && W >= 56 ? lid(.59) + lid(.662) : '') + '</span>' + em + (live ? '<i class="ak-sw"></i>' : '') + '</span>'; }
+
+// (Ask Debrief v2: what the page in front of you already shows, as plain text for Debrief (never raw logs), a few KB at most; and the site help from
+// PATCH_NOTES, newest first, so new things are known without editing the helper)
+const askTx = (el, max) => { if (!el) return ''; const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let t = '', top = null, n;
+  while ((n = tw.nextNode())) { const v = n.nodeValue.replace(/[\s\u00a0]+/g, ' ').trim(); if (!v) continue; const pe = n.parentElement; if (!pe || pe.closest('script,style,[hidden],[aria-hidden=true]')) continue; const r = pe.getBoundingClientRect(); if (!r.width && !r.height) continue;
+    t += top === null ? v : Math.abs(r.top - top) > 6 ? '\n' + v : ' ' + v; top = r.top; if (max && t.length > max) return t.slice(0, max) + ' …'; } return t.trim(); };
+function askCtx() { const v = document.getElementById('view') || document.getElementById('main'); if (!v) return null; const out = [], add = (lab, t) => { if (t) out.push(lab + ':\n' + t); };
+  const picks = [...document.querySelectorAll('#main select, #view select')].filter((s, i, a) => a.indexOf(s) === i).map((s) => (s.options[s.selectedIndex] || {}).text).filter(Boolean).slice(0, 4), head = askTx(document.getElementById('bossHead') || v.querySelector('header.fight'), 400);
+  const all = (sel) => [...v.querySelectorAll(sel)].filter((e, i, a) => !a.some((o) => o !== e && o.contains(e)));
+  let page = '';
+  if (S.page === 'plan') { page = 'Plan · ' + ((askTx(document.querySelector('#view .pg-tabs .on, #view [role=tab][aria-selected=true]'), 60).split('\n')[0]) || 'plan');
+    add('The boss and the plan', head); add('Night and difficulty', picks.join(' · '));
+    try { const D = typeof NDZ_TL !== 'undefined' && NDZ_TL ? (NDZ_TL._orig || NDZ_TL) : null; if (D && D.hits) { const O = typeof btlOffs === 'function' ? btlOffs() : [];
+      const when = (x) => { try { return btlWhen(btlAbs(x, O), O); } catch (e) { return ''; } };
+      add('Big hits and cooldown coverage (red = no raid cooldown)', D.hits.slice(0, 60).map((h) => when({ ph: h.ph, t: h.rel }) + ' ' + h.hit + (h.c === 'red' ? ' (not covered)' : '')).join('\n'));
+      add('Cooldowns placed', (D.cds || []).slice(0, 60).map((c) => when(c) + ' ' + c.who + ': ' + (ndzSpellNm(+c.id) || 'cooldown')).join('\n')); } } catch (e) { /* (the chart's facts when it's drawn) */ }
+    add('On the page', askTx(document.getElementById('assignBox'), 3000)); }
+  else if ((S.tab === 'audit' || v.querySelector('.dbt-p, .dbt-why')) && v.querySelector('.dbt-p, .cch2, .r212-sb')) { page = 'Raid review · Summary'; add('Pull', head); add('Picked (night, pull, player)', picks.join(' · '));
+    const why = v.querySelector('.dbt-why'); add('Why we wiped, how it went, what else hurt', askTx(why, 2800)); add('Numbers (against guilds like us)', askTx(v.querySelector('.r212-sb'), 700));
+    all('.cch2, .dbt-p, .dt-box').filter((e) => e !== why && !(why && (e.contains(why) || why.contains(e)))).slice(0, 2).forEach((e) => add(e.classList.contains('cch2') ? 'The night' : 'The pull, mechanic by mechanic', askTx(e, 1100))); }
+  else if (v.querySelector('.rpc')) { page = 'Raid review · Rotation'; add('Pull', head); add('Picked', picks.join(' · ')); all('.rot-pickp, .rpc').slice(0, 3).forEach((e) => add('Rotation', askTx(e, 3500))); }
+  else if (v.querySelector('.rcb-sec, .rcb-ban')) { page = 'Raid review · Report card'; add('Night', head); add('Picked', picks.join(' · ')); all('.rcb-ban, .rcw-strip, .rcb-sec').slice(0, 4).forEach((e) => add('Report card', askTx(e, 1800))); }
+  else if (v.querySelector('.gb-card, .pf-bars')) { page = 'Raid review · Graphs'; add('Pull', head); add('Picked', picks.join(' · ')); all('.gb-card, .pf-bars').slice(0, 2).forEach((e) => add('Graph (top rows)', askTx(e, 2200))); }
+  else if (v.querySelector('.cmp-hps')) { page = 'Raid review · Compare'; add('Pull', head); add('Picked', picks.join(' · ')); add('Compare', askTx(v.querySelector('.cmp-hps'), 3000)); }
+  else if (v.querySelector('.dbt-p, .cch2, .r212-sb')) { page = 'Raid review · Summary'; add('Pull', head); add('Picked (night, pull, player)', picks.join(' · ')); add('Numbers', askTx(v.querySelector('.r212-sb'), 900));
+    all('.dbt-why, .dbt-p, .cch2, .dt-box').slice(0, 4).forEach((e) => add(e.classList.contains('cch2') ? 'The night' : 'Why and how it went', askTx(e, 2600))); }
+  else if (document.getElementById('hdPage')) { page = 'Home'; add('Home', askTx(document.getElementById('hdPage'), 3000)); }
+  else if (S.page === 'mpfind') { page = 'Mythic+'; add('Mythic+', askTx(document.getElementById('mpfKeys') || v, 3000)); }
+  let t = out.join('\n\n'); if (t.length > 6500) t = t.slice(0, 6500) + ' …'; return t ? { page, ctx: t } : null; }
+function askHelp() { try { if (typeof PATCH_NOTES === 'undefined') return ''; const L = [], cut = (x) => { x = String(x || '').replace(/<[^>]+>/g, ''); return x.length > 200 ? x.slice(0, 200) + ' …' : x; }; let n = 0;
+  for (const e of PATCH_NOTES) { const rows = ['[' + e.d + ']'].concat((e.h || []).map((h) => 'New: ' + h.t + ': ' + cut(h.d)), ((N, F) => { const o = []; for (let i = 0; i < Math.max(N.length, F.length); i++) { if (N[i]) o.push('Better: ' + cut(N[i])); if (F[i]) o.push('Fixed: ' + cut(F[i])); } return o; })(e.n || [], e.f || []));
+    for (const r of rows) { if (n + r.length > 13000) return L.join('\n'); L.push(r); n += r.length + 1; } } return L.join('\n'); } catch (e) { return ''; } }
 function askMsgH(m) { const t = esc(m.t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'); return '<div class="ak-m ' + (m.r === 'user' ? 'me' : 'bot') + (m.err ? ' err' : '') + '">' + t + '</div>'; }
 function askDraw() { let el = document.getElementById('askBox'); if (!ASK.on) { if (el) el.remove(); return; }
   if (!el) { el = document.createElement('div'); el.id = 'askBox'; document.body.appendChild(el); }
   const me = (() => { try { return (WHO.now && WHO.now.me && WHO.now.me.name) || ''; } catch (e) { return ''; } })();
-  const greet = { r: 'assistant', t: 'Light be with you' + (me ? ', ' + me.split('#')[0] : '') + '. I\'m Debrief. Ask me anything about the site: plans, raid nights, guides, your rotation.' };
+  const greet = { r: 'assistant', t: 'Light be with you' + (me ? ', ' + me.split('#')[0] : '') + '. I\'m Debrief. Ask me about the page you\'re on ("Summarize this pull", "Why did we wipe?", "What should I fix?") or anything about the site.' };
   el.className = 'ak' + (ASK.open ? ' open' : '');
   el.innerHTML = (ASK.open ? '<div class="ak-panel" role="dialog" aria-label="Ask the Paladin"><div class="ak-ph">' + askPortrait(56, true) + '<div class="ak-pt"><small>Ask the Paladin</small><b>Debrief</b><span>Answers about Debrief</span></div><button type="button" class="ak-x" data-akx="1" aria-label="Close">✕</button></div>' +
     '<div class="ak-msgs" id="askMsgs">' + [greet].concat(ASK.hist).map(askMsgH).join('') + (ASK.busy ? '<div class="ak-typ"><i></i><i></i><i></i></div>' : '') + '</div>' +
@@ -36626,7 +36658,7 @@ function askDraw() { let el = document.getElementById('askBox'); if (!ASK.on) { 
     '<button type="button" class="ak-bub" data-akopen="1" aria-label="' + (ASK.open ? 'Close Ask the Paladin' : 'Ask the Paladin') + '" aria-expanded="' + ASK.open + '">' + askPortrait(60, true) + '<span class="ak-ham" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><rect x="7" y="6" width="2.4" height="9" fill="#1a1406"/><rect x="2.5" y="1.5" width="11" height="5.5" fill="#1a1406"/></svg></span></button>';
   const ms = document.getElementById('askMsgs'); if (ms) ms.scrollTop = ms.scrollHeight; const q = document.getElementById('askQ'); if (q && ASK.open && !ASK.busy) q.focus(); }
 async function askAsk(q) { if (ASK.busy || !q) return; ASK.hist.push({ r: 'user', t: q }); ASK.busy = true; askDraw();
-  let a = null, err = false; try { const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ q, hist: ASK.hist.slice(0, -1).filter((m) => !m.err).slice(-6) }) }); const j = await r.json(); a = j.a || j.error || null; err = !!(j.err || j.error); } catch (e) { a = null; }
+  let a = null, err = false; try { const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ q, hist: ASK.hist.slice(0, -1).filter((m) => !m.err).slice(-6), help: askHelp() }, (() => { try { return askCtx() || {}; } catch (e) { return {}; } })())) }); const j = await r.json(); a = j.a || j.error || null; err = !!(j.err || j.error); } catch (e) { a = null; }
   ASK.busy = false; ASK.hist.push({ r: 'assistant', t: a || 'I couldn\'t reach my answers just now. Try again in a moment.', err: err || !a }); if (ASK.hist.length > 30) ASK.hist = ASK.hist.slice(-30); askDraw(); }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-akopen],[data-akx]'); if (!t) return; e.preventDefault(); ASK.open = t.dataset.akx ? false : !ASK.open; askDraw(); });
 document.addEventListener('submit', (e) => { if (e.target && e.target.id === 'askForm') { e.preventDefault(); const q = document.getElementById('askQ'); const v = q ? q.value.trim() : ''; if (v) askAsk(v); } });
