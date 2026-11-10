@@ -18881,6 +18881,27 @@ html body #ppWin .pp-mkuse > .sub.pp-jmh { margin: 12px 0 2px; font-size: 11px; 
 #ppEd .pp-edsel[hidden] { display: none; }
 #ppEd .pp-edin { position: absolute; z-index: 2; height: 34px; padding: 4px 10px; font: 600 14px Barlow, sans-serif; color: #ece8df; background: #0a0c11; border: 1px solid #e6b450; border-radius: 4px; outline: none; box-shadow: 0 8px 24px rgba(0,0,0,.55); }
 #ppEd .pp-edhint { margin: 9px 2px 0; font-size: 12px; color: #8e94a0; }
+@layer defaultTheme { /* (inside the default look's layer, where the rules these replace live: an unlayered !important loses to a layered one) */
+/* (Plan job cards, Nov 10 (Flex: "the edit button looks bugged", "I need this to look visually flawless"): Edit and Fill are the same 24 px squares
+   as the status tag beside them; Edit is only its drawn pencil (a later 12 px font put the word "Edit" back, under the icon, cut off) */
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > :is(.plb-rcx:not([data-pgmkset]), .plb-fill) { width: 24px !important; min-width: 24px !important; max-width: 24px !important; height: 24px !important; padding: 0 !important; place-items: center !important; place-content: center !important; border: 1px solid var(--line2) !important; border-radius: 2px !important; background: rgba(255,255,255,.03) !important; box-shadow: none !important; overflow: hidden !important; opacity: 1 !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > .plb-rcx:not([data-pgmkset]) { font-size: 0 !important; line-height: 0 !important; color: var(--muted) !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > .plb-rcx:not([data-pgmkset])::before { width: 13px !important; height: 13px !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > .plb-fill { font-size: 12px !important; line-height: 1 !important; color: var(--gold) !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > :is(.plb-rcx:not([data-pgmkset]), .plb-fill):is(:hover, :focus-visible) { border-color: var(--gold) !important; background: rgba(230,180,80,.1) !important; color: var(--text) !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > .plb-rcx[data-pgmkset] { width: auto !important; min-width: 0 !important; max-width: none !important; height: 24px !important; padding: 0 10px !important; font: 600 12px/1 var(--body) !important; border-radius: 2px !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rch > .plb-rcx[data-pgmkset]::before { content: none !important; }
+/* (the Raid markers card: each marker's own shape, not a dot) */
+html body #assignBox .plb-mk.plb-mks { display: inline-flex; align-items: center; gap: 7px; } html body #assignBox .plb-mk.plb-mks > i { display: none !important; } html body #assignBox .plb-mk.plb-mks > svg.pg-mk { width: 16px; height: 16px; flex: none; }
+/* (the Markers list's jobs nobody is on yet) */
+html body #assignBox .pp-jm .pp-jm0 { font-style: normal; font-weight: 500; color: var(--muted); }
+/* (Plan › Plans list: rename and delete as 32 px squares beside Use again / Import, same edge and box; delete turns red to confirm) */
+html body #view#view#view#view.plan-page #assignBox#assignBox .plc-rr > :is(.plx-pen, .plan-ovdel) { display: inline-grid; place-items: center; box-sizing: border-box !important; width: 32px !important; min-width: 32px !important; height: 32px !important; padding: 0 !important; margin: 0 !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; color: var(--muted) !important; box-shadow: none !important; line-height: 1 !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .plc-rr > :is(.plx-pen, .plan-ovdel) svg { width: 14px !important; height: 14px !important; vertical-align: 0 !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .plc-rr > .plx-pen:is(:hover, :focus-visible) { border-color: var(--gold) !important; background: rgba(230,180,80,.1) !important; color: var(--gold) !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .plc-rr > .plan-ovdel:is(:hover, :focus-visible) { border-color: rgba(229,83,75,.55) !important; background: rgba(229,83,75,.08) !important; color: #ff8a80 !important; }
+html body #view#view#view#view.plan-page #assignBox#assignBox .plc-rr > .plan-ovdel.bad { display: inline-flex; gap: 6px; width: auto !important; padding: 0 10px !important; font: 600 12px/1 var(--body) !important; white-space: nowrap; color: #fff !important; background: #b8322b !important; border-color: #e5534b !important; }
+}
 </style>
 </body>
 </html>
