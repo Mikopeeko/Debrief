@@ -18331,5 +18331,30 @@ html body #hdPage.hd3 .hd-season .hd-mych { align-items: stretch !important; } h
 
 }
 </style>
+<style>/* (Nov 9: premium polish, every page) */
+@layer defaultTheme {
+/* ===== Premium polish, every page (Nov 9, Flex: "could we make every page have the premium look as you described without re-designing them?", "yes start the premium polish on every page"). Looks only: no layout, size or shape changes. ===== */
+/* (1. the page: a faint warm light from the top right, behind everything) */
+html:not([data-theme]) body.refine { background-image: radial-gradient(1100px 520px at 85% -8%, rgba(230,180,80,.055), rgba(230,180,80,0) 62%), radial-gradient(900px 600px at 0% 0%, rgba(90,120,200,.035), rgba(90,120,200,0) 60%) !important; background-attachment: fixed !important; }
+/* (2. the main boxes on every page: light from the top, a soft drop shadow, a short gold mark at the top left, a calmer edge) */
+html:not([data-theme]) body.refine :is(#view, #main) :is(.panel, .dt-box, .dbt-p, .rpc, .gb-card, .pf-bars, .gdz-tl, .gdz-wipe, .gdz-job, .ndz-dpan, .ndz-dal, .pv-mn, .pls, .pg-roster, .pv-grid, .cch2, .r212-sb, .rcb-ban, .rcw-strip):not(.pg-bar):not(.hd-pn) {
+  background-image: linear-gradient(#e6b450, #e6b450), linear-gradient(90deg, rgba(230,180,80,.45), rgba(230,180,80,0) 55%), radial-gradient(70% 160px at 0% 0%, rgba(230,180,80,.07), rgba(230,180,80,0) 70%), linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,0) 160px) !important;
+  background-size: 44px 2px, 100% 1px, 100% 100%, 100% 100% !important; background-position: 0 0, 0 0, 0 0, 0 0 !important; background-repeat: no-repeat !important;
+  border-color: rgba(255,255,255,.075) !important; box-shadow: 0 18px 44px rgba(0,0,0,.34), 0 2px 6px rgba(0,0,0,.2) !important; }
+/* (boxes inside boxes keep their own look: no second gold mark or shadow) */
+html:not([data-theme]) body.refine :is(#view, #main) :is(.panel, .dt-box, .dbt-p, .rpc, .gb-card, .pf-bars, .gdz-tl, .gdz-wipe, .gdz-job, .cch2, .r212-sb, .rcb-ban, .rcw-strip) :is(.panel, .dt-box, .dbt-p, .rpc, .gb-card, .pf-bars, .gdz-tl, .gdz-wipe, .gdz-job, .cch2, .r212-sb, .rcb-ban, .rcw-strip) { background-image: none !important; box-shadow: none !important; }
+/* (3. box titles: heavier, a touch of spacing) */
+html:not([data-theme]) body.refine :is(#view, #main) :is(.panel, .dt-box, .dbt-p, .rpc, .gb-card, .pf-bars, .gdz-tl, .gdz-wipe, .gdz-job, .cch2, .r212-sb, .rcb-ban, .rcw-strip) :is(h2, h3) { font-weight: 800 !important; letter-spacing: .01em !important; }
+/* (4. the main buttons: a gold face with a highlight; plain buttons get a quiet glass edge) */
+html:not([data-theme]) body.refine :is(#view, #main, .modal, [role="dialog"]) .btn.primary:not(:disabled) { background-image: linear-gradient(180deg, #f3cb6c, #d69f3c) !important; border-color: #e0ab48 !important; color: #1a1406 !important; box-shadow: 0 8px 22px rgba(230,180,80,.2), inset 0 1px 0 rgba(255,255,255,.38) !important; text-shadow: none !important; }
+html:not([data-theme]) body.refine :is(#view, #main, .modal, [role="dialog"]) .btn.primary:not(:disabled):hover { filter: brightness(1.07) !important; }
+html:not([data-theme]) body.refine :is(#view, #main) .btn:not(.primary):not(:disabled):hover { border-color: rgba(230,180,80,.45) !important; }
+/* (5. the tab rows: the open tab's gold line glows) */
+html:not([data-theme]) body.refine :is(#view, #main) :is([role="tab"][aria-selected="true"], .tab.on, .tabs .on) { text-shadow: 0 0 18px rgba(230,180,80,.35) !important; }
+/* (6. drop-downs and pickers: a hint of glass) */
+html:not([data-theme]) body.refine :is(#view, #main) select { background-color: rgba(255,255,255,.03) !important; }
+
+}
+</style>
 </body>
 </html>
