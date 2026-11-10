@@ -5683,6 +5683,9 @@ gdzUnlock();
 // raid markers) get a picture; mechanics nobody is assigned to stay in the Boss guides (your call, Oct 26). Open to everyone since Oct 26; built per boss and
 // difficulty in GDZ_PP, The Coiled Altar Mythic first. Plan's code is untouched: the buttons are added beside its own.
 const PP_MKS = ['star', 'circle', 'diamond', 'triangle', 'moon', 'square', 'cross', 'skull'];
+/* (Plan's pictures are off for now (the user, Nov 10: "just remove all maps from the assignments tab for now we will re-visit them at another
+   time"): false brings back the Jobs cards' pictures, the Raid markers picture and the Pictures buttons) */
+const PP_PICS_OFF = true;
 const PP_ON = () => true; /* (open to everyone (your call, Oct 26: "push this live please"); put the owner check back here to hide it again) */
 const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
@@ -6862,7 +6865,8 @@ function ppOpen(r, u0, opt) {
   const close = () => { box.remove(); if (!$('#ndzWiz') && !$('#ndzGuide') && !$('#ndzNoteView') && !$('#ndzShot')) document.body.classList.remove('ndz-modal'); };
   const head = '<div class="ndz-whead"><span class="sub">Pictures for Discord</span><button class="ndz-ex" type="button" data-ppx aria-label="Close">✕</button></div>';
   if (!set.cf) { box.innerHTML = '<div class="ndz-wbox">' + head + '<h2>Pictures for Discord</h2><p class="sub">Pictures are ready on Mythic for every boss. The other bosses come next.</p></div>'; box.querySelector('[data-ppx]').onclick = close; box.onclick = (e) => { if (e.target === box) close(); }; return; }
-  box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + head + '<h2 class="pp-h2"></h2>' +
+  if (PP_PICS_OFF) { box.classList.add('pp-mkonly'); set = { ...set, cards: [] }; } /* (pictures off: only the Markers map, and nothing drawn behind it) */
+  box.innerHTML = '<div class="ndz-wbox ndz-shotbox pp-win">' + (PP_PICS_OFF ? head.replace('Pictures for Discord</span>', 'Plan</span>') + '<h2 class="pp-mkh">Raid markers</h2>' : head) + '<h2 class="pp-h2"></h2>' +
     '<div class="pp-nav"><span class="sub pp-navt"></span><button class="btn sm" type="button" data-ppprev></button><button class="btn sm" type="button" data-ppnext></button><button class="btn sm" type="button" data-ppallv></button></div>' +
     '<p class="sub pp-intro">One picture for each mechanic your note gives jobs for, with everyone on their spot. Copy one and paste it in Discord (Ctrl+V), or download it.</p>' +
     '<div class="pp-all"><button class="btn sm primary" type="button" data-ppcopyall disabled>Copy all</button><button class="btn sm" type="button" data-ppall disabled>Download all</button><span class="sub pp-allmsg">Copy all makes one picture of them all, ready to paste in Discord. Download all saves each one in a zip.</span></div>' +
@@ -6968,7 +6972,7 @@ function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return P
     const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
     g.save(); g.beginPath(); g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); /* (square, like the other pictures (Nov 10)) */ g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
   if (PP_MKPIC.size > 6) PP_MKPIC.delete(PP_MKPIC.keys().next().value); return PP_MKPIC.get(key); }
-function ppJobs() {
+function ppJobs() { if (PP_PICS_OFF) return;
   const els = document.querySelectorAll('.bj-jobs .plb-rc:not([data-pj])'); if (!els.length) return;
   els.forEach((el) => { el.dataset.pj = '1';
     // (the Raid markers card: one picture of the marks, in Plan's empty div.pj-pics[data-mech="marks"] (added here until it's there); a tap
@@ -7001,7 +7005,7 @@ async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btn
 // (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
 // same note's pictures; and the Jobs cards' small pictures)
 if (typeof document !== 'undefined') {
-  const ppAdd = () => { if (!PP_ON()) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
+  const ppAdd = () => { if (!PP_ON() || PP_PICS_OFF) return; document.querySelectorAll('[data-ndzdc],[data-ndzpcopy]').forEach((b) => { if (b.nextElementSibling && b.nextElementSibling.hasAttribute('data-ppnote')) return;
     b.insertAdjacentHTML('afterend', '<button class="btn' + (b.dataset.ndzpcopy ? '' : ' sm') + ' pp-btn" type="button" data-ppnote="' + esc(b.dataset.ndzdc || b.dataset.ndzpcopy) + '" data-tt="' + esc('<b>Pictures for Discord</b><br>One picture for each mechanic, with everyone on their spot.') + '">🖼 Pictures</button>'); });
     try { ppJobs(); } catch (e) { console.warn('Picture plan:', e); } };
   let ppT = 0; new MutationObserver(() => { if (!ppT) ppT = setTimeout(() => { ppT = 0; ppAdd(); }, 60); }).observe(document.documentElement, { childList: true, subtree: true }); /* (a few times a second at most; a timer, not a frame, so a tab that isn't painting still fills) */
