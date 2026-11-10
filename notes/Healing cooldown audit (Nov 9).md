@@ -235,6 +235,39 @@ All numbers are the same 40 plans, as the coverage strip marks them.
 | 54db9304 | The reason on a planned cooldown as a ratio ("1 in 3 top Holy Paladins press it here"), wording only | No cooldown moved |
 | (the push after) | A cooldown counts for every hit it is really up for; phase times fill in from the raid's own pulls (Flex: "Do 1 and 2") | Mythic, 20 plans: hits with their full need 272 to 289 of 320, bare 25 to 19, more than they need 8 to 2, one player two cooldowns at once 11 to 6 |
 
+### Later still: each cooldown's length, and every press the fight allows (Flex, Nov 9)
+
+Flex, looking at the live chart: "the cooldown assignments dont seem to be taking into consideration the duration of the cooldown when auto
+assigning it ... especially in regards to the damage patterns", and "i dont feel it tries to utilize the maximum amount of uses of each cooldown".
+Both were right, measured on the 20 Mythic plans (`hcd/durtest.js`):
+
+| | Before | After |
+|---|---|---|
+| Raid cooldowns that would catch 15% or more damage at another second, still up for their hit | 84 of 379 | 42 of 387 |
+| The fight's heaviest seconds (1.5x the phase's middle or more) that fall under a raid cooldown | 74% | 86% |
+| Damage of the hills around the big hits that falls under a raid cooldown | 62% | 73% |
+| Presses planned, of those that could land on real damage | 637 of 774 (82%) | 701 of 777 (90%) |
+| Hits with their full need / short / bare (of 320) | 291 / 10 / 19 | 300 / 11 / 9 |
+
+**Length.** Every cooldown was pressed 1 or 2 s before the hit's heaviest 4 seconds, whatever its length. A hit sits on a hill of damage that
+often builds before it (Venom Rupture runs 11 s and peaks at the end), so an 8 s Zephyr pressed 2 s before the peak spent half its time after
+it. Now each is pressed at the second where its own length catches the most damage, among the seconds that keep it up for the hit. Damage
+another raid cooldown already runs on counts half, so two cooldowns on a long hill spread along it and still overlap on the peak.
+
+**Uses.** Two things held presses back. The planner stopped at one cooldown over a hit's need and only pressed on listed hits. And a press in
+the middle of a fight costs a use: on Nymrissa (4:10) a 3-minute cooldown gets two presses only if the first is in the first 70 s and the
+second in the last 70, yet Aura Mastery, Rallying Cry, Anti-Magic Zone and Darkness were each pressed once, mid-fight. Now, after the hits
+that are short, every further press counts (on a hit, or between hits on damage above the phase's middle, never on calm damage). Then each
+cooldown with presses left gets its fullest run, the others take over the hits it left without giving up a press, and that is kept only when
+no hit ends up shorter and more presses are planned. A healer's own burst is pressed again the same way.
+"If every cooldown were pressed the second it is back" is not a fair top mark (864): a 2-minute cooldown on a 4:10 fight would need its third
+press at 4:05, after the last hit. Against presses that can land on real damage the plans are at 90%.
+
+**What it looks like.** The first minute and the last minute of a short fight get most of the 3-minute cooldowns, because that is the only way
+they are pressed twice. The strip's "Doubled up" now shows only when another hit is short (its hint is "One could move to another hit").
+
+**Cost.** "Plan them for me" takes longer: about 0.1 s for a usual fight, up to 0.5 s for a 20-player roster on the longest fight (was 0.06 s).
+
 ### The push after: twin hits, and your own phase times (Flex, Nov 9: "Do 1 and 2")
 
 **1. A hit left bare while others had extras.** Coiled Altar Mythic, Wolfthorn's roster: Fangs of the Coiled Altar at 1:32 had nothing, while
