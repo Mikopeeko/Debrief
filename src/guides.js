@@ -5798,19 +5798,119 @@ function pomRead(txt) {
     else if (/green/.test(lab)) who.forEach((n, j) => O.green.push([/side/.test(lab) ? 'side' : mks[j] || mks[0] || '', n])); }
   return sets;
 }
+// ===== Plan › Ula'tek maps (Nov 10, Flex: "Yes, all five", after the team's wowutils page: Pick up Egg, Egg Clear (the coil soaks), Fester
+// Burst spreads, Side Egg Pickups and the intermission's three tentacle patterns). Spots from the 10 fastest Mythic kills: the coil slams'
+// rim spots and their soaks (lag 0), the intermission's three slam orders, the Wretch at each Fester Burst, where the eggs were picked up.
+// Room yards from the platform's middle (log x/100, y/100 - 1554), x east, y north; RaidPlan's Ula'tek floor (2448 x 1371 px, centre at
+// log (-2.5, 1553.1), 7.5 px a yard) drawn 680 units wide: 2.083 units a yard =====
+const UL_RIM = { NNW: [-18, 44], NNE: [19, 45], ENE: [44, 18.5], ESE: [44, -18], SSE: [20, -44], SSW: [-17.5, -44], WSW: [-42, -20], WNW: [-45, 18.5] };
+const UL_SOAK = { NNW: [-9.7, 24.2], NNE: [10.2, 23.3], ENE: [22.4, 11], ESE: [22.1, -9.4], SSE: [10.3, -22.5], SSW: [-7.2, -23.8], WSW: [-20.9, -8.6], WNW: [-23, 7.5] };
+const UL_GC = { Y: ['#f5d33a', 'Yellow', 'star'], P: ['#c86bff', 'Purple', 'diamond'], B: ['#3d8bff', 'Blue', 'square'] };
+// (the team's three patterns: the slam order (from the kills) and which group soaks each (the team's plan))
+const UL_PAT = [[['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y'], ['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P']],
+  [['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P'], ['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y']],
+  [['WNW', 'Y'], ['SSE', 'P'], ['SSW', 'B'], ['NNE', 'Y'], ['ENE', 'P'], ['WSW', 'B'], ['NNW', 'Y'], ['ESE', 'P']]];
+const UL_VB = { mid: [234.8, 127.7, 220.8], L: [7.7, 50.6, 375], R: [307.7, 50.6, 375] };
+// (the plan's Ula'tek jobs from its note: eggs by area, the coil teams, the intermission's soak groups, each side's Phase 2 jobs)
+function ulRead(txt) {
+  const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], trans: [], side: { L: {}, R: {} } }; let eggs = [], blk = '';
+  const names = (s) => String(s).replace(PG_MK_RE, ' ').split(/[\s,]+/).filter((w) => w && /^[^{(\d][^{}()]*$/.test(w));
+  for (const raw of String(txt || '').split('\n')) { const l = raw.trim(); if (!l) continue; const w0 = l.split(/[\s:]/)[0].toLowerCase();
+    if (w0 === 'transitionstart' || w0 === 'intstart') { blk = w0; continue; } if (w0 === 'transitionend' || w0 === 'intend') { blk = ''; continue; }
+    const ci = l.indexOf(':'), lab = ci < 0 ? '' : l.slice(0, ci).toLowerCase(), who = names(ci < 0 ? l : l.slice(ci + 1)); if (!who.length) continue; let m;
+    if (blk === 'transitionstart') { if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who; else D.trans.push(who); continue; } if (blk || ci < 0) continue;
+    if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) D.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) eggs = who; else if (/egg shields?/.test(lab)) D.shields = who;
+    else if ((m = /^team\s*(\d)/.exec(lab))) D.teams[+m[1] - 1 ? 1 : 0] = who; else if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who;
+    else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) D.side[m[1] === 'left' ? 'L' : 'R'][m[2].trim() || 'side'] = who; }
+  if (!Object.values(D.ez).some((x) => x.length) && eggs.length) D.ez = { melee: eggs.slice(0, 2), left: eggs.slice(2, 4), right: eggs.slice(4, 6), far: eggs.slice(6, 8), backup: eggs.slice(8) };
+  return D;
+}
+const ulHas = (key, D) => (key === 'eggs' ? Object.values(D.ez).some((x) => x.length) : key === 'coils' ? D.teams.some((x) => x.length) : key === 'trans' ? D.trans.some((x) => x && x.length) : key === 'side' ? Object.keys(D.side.L).length + Object.keys(D.side.R).length > 0 : false);
+// the pages: each draws on the floor in room yards; tokens are [name, x, y]
+const UL_PAGES = {
+  eggs: [{ t: 'Pick up eggs', s: 'Eight eggs land at random: take the one in your quadrant', vb: 'mid',
+      draw: (D, g) => { g.line(-46, 46, 46, -46); g.line(-46, -46, 46, 46); g.boss([0, 47], 'Ula\'tek');
+        [['Melee', 9, 23], ['Left', -23, 9], ['Right', 23, -9], ['Far', -9, -23]].forEach(([t, x, y]) => g.tag(x, y, t));
+        const Q = { melee: [[0, 15], [0, 31]], left: [[-15, 0], [-31, 0]], right: [[15, 0], [31, 0]], far: [[0, -15], [0, -31]] };
+        for (const [z, sp] of Object.entries(Q)) D.ez[z].slice(0, 2).forEach((n, i) => g.tok(n, sp[i][0], sp[i][1])); },
+      leg: (D, L) => { L.grp('Melee (by her)', '#3af2a8', D.ez.melee, ['centre', 'edge']); L.grp('Left', '#3af2a8', D.ez.left, ['centre', 'edge']); L.grp('Right', '#3af2a8', D.ez.right, ['centre', 'edge']); L.grp('Far', '#3af2a8', D.ez.far, ['centre', 'edge']);
+        if (D.ez.backup.length) L.grp('Backup', '#c9ced8', D.ez.backup); if (D.shields.length) L.grp('Egg shields', '#e6e0c8', D.shields);
+        L.p('Quadrants as you face her. The centre person takes the inner egg, the edge person the outer one; with only one egg in your quadrant, the centre person finds one somewhere else. Never let your 3-yard ring touch another carrier\'s.');
+        L.f('In the top kills the eggs land all over the platform, at about 0:20 and again at 1:35.'); } },
+    { t: 'Fester Burst spread', s: 'Stand inside the Wretch\'s bubble, spread so egg rings never touch', vb: 'mid',
+      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); [[[26, -4], 'Burst 1 · 0:37', 1], [[-26, -2], 'Burst 3 · 1:48', 11]].forEach(([w, t, n0]) => { g.circle(w[0], w[1], 10, '#ff8a3d', true); g.add(w[0], w[1], 'Wretch');
+        [[-6, 4], [0, 6.5], [6, 4], [-6.5, -2], [6.5, -2], [-3.5, -7], [3.5, -7], [0, -2.5]].forEach((d, i) => g.num(w[0] + d[0], w[1] + d[1], n0 + i)); g.tag(w[0], w[1] + 13.5, t); }); },
+      leg: (D, L) => { L.p('Fester Burst hits everyone outside the Wretch\'s 10-yard bubble: all in for bursts 1 and 3 (2 and 4 come when the raid is already on it). Egg carriers spread to the numbered spots so their 3-yard rings never touch.');
+        L.f('In the top kills burst 1 lands on the side the first coils come from (the tank brings the Wretch there), burst 3 on either side; 2 is at the north, 4 at the south.'); } }],
+  coils: [['First coils · west', 'The first pair lands west or east at random: here west', [['WNW', 'WSW']]], ['First coils · east', 'The first pair lands west or east at random: here east', [['ESE', 'ENE']]], ['Second coils · south', 'The second pair always lands south', [['SSW', 'SSE']]]].map(([t, s, P]) => ({ t, s, vb: 'mid',
+    draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const [a, b] = P[0]; [[a, b, 0, '1st · Team 1', '#24f2cb'], [b, a, 1, '2nd · Team 2', '#7fd8ff']].forEach(([k, o, ti, lab, c]) => { const p = UL_SOAK0[k], q = UL_SOAK0[o], dx = p[0] - q[0], dy = p[1] - q[1], dd = Math.hypot(dx, dy) || 1; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 10, c, true); g.cluster(D.teams[ti], p, 7.2); g.tag(p[0] + dx / dd * 14.5, p[1] + dy / dd * 14.5, lab, c); }); },
+    leg: (D, L) => { L.grp('Team 1: the first coil', '#24f2cb', D.teams[0]); L.grp('Team 2: the second coil', '#7fd8ff', D.teams[1]); L.p('The tail slams from the edge and the coil lands about 25 yards in from it. Everyone in a coil splits its hit; Soul Constrictor stops you soaking the next one.');
+      L.f('In the top kills the first pair lands west in 6 of 10 kills (east in 4), always 1st then 2nd about 2.5 seconds apart; the second pair (about 2:15) is always south.'); } })),
+  side: [['L', 'Left ledge', -1], ['R', 'Right ledge', 1]].map(([k, t, sx]) => ({ t, s: 'Phase 2 on the ' + (sx < 0 ? 'west' : 'east') + ' ledge, as you face her', vb: k,
+    draw: (D, g) => { const S = D.side[k] || {}; g.ellipse(72 * sx, 69, 15, 11, '#f5d33a'); g.tag(72 * sx, 83.5, 'Small eggs · 3:40'); g.add(80 * sx, 50, 'Warden');
+      (S.eggs || []).forEach((n, i) => { const c = 6, r = Math.floor(i / c), q = i % c; g.tok(n, 72 * sx + (q - (Math.min(c, (S.eggs || []).length - r * c) - 1) / 2) * 5.6, 72 - r * 6); });
+      g.egg(63 * sx, -75); g.tag(63 * sx, -84, 'Big egg · 4:12'); const big = S['doomscale egg'] || S['doomscale eggs'] || []; if (big[0]) g.tok(big[0], 63 * sx + 6 * -sx, -75); },
+    leg: (D, L) => { const S = D.side[k] || {}; L.grp('Small eggs', '#f5d33a', S.eggs || []); L.grp('Big (Doomscale) egg', '#e6b450', S['doomscale egg'] || S['doomscale eggs'] || []);
+      if ((S.breakers || []).length) L.grp('Breakers', '#e6e0c8', S.breakers); if ((S['solo break'] || []).length) L.grp('Solo break', '#e6e0c8', S['solo break']); if ((S.helper || []).length) L.grp('Helper', '#c9ced8', S.helper); if ((S.side || []).length) L.grp('On this side', '#c9ced8', S.side);
+      L.p('Small eggs: pick up at about 3:40 and drop them as you cross back. The big egg at the south end: pick up at about 4:12.'); L.f('In the top kills the small eggs are picked up from 3:33 to 3:46 at the north end of each ledge, the big ones at 4:12 to 4:16 at the south end.'); } })),
+  trans: [{ t: 'Groups', s: 'Pre-place by your group\'s mark; soak the coils in your area', vb: 'mid',
+      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); for (const k of Object.keys(UL_SOAK)) g.circle(UL_SOAK[k][0], UL_SOAK[k][1], 8, 'rgba(255,255,255,.55)', false, true);
+        [['Y', [3, 31]], ['P', [16, -27]], ['B', [-30, -1]]].forEach(([gk, c], gi) => { g.cluster(D.trans[gi] || [], c, 6); g.tag(c[0], c[1] + 9, UL_GC[gk][1] + ' group', UL_GC[gk][0]); }); },
+      leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1], UL_GC[gk][0], D.trans[gi] || [])); L.p('The tails rise round the room and slam eight coils, about 2.5 seconds apart. The pattern (1, 2 or 3) is called by the macro: see its page.');
+        L.f('In the top kills the eight slams always come in one of three orders, about 5:31 to 5:50; each coil takes 6 or 7 players.'); } }].concat(UL_PAT.map((pat, pi) => ({ t: 'Pattern ' + (pi + 1), s: 'The coils in order; your group soaks its colour', vb: 'mid',
+    draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); pat.forEach(([k, gk], i) => { const p = UL_SOAK[k], c = UL_GC[gk][0]; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 8, c, true); g.big(p[0], p[1], i + 1, c); }); },
+    leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => { const ns = pat.map(([, x], i) => (x === gk ? i + 1 : 0)).filter(Boolean); L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1] + ': coils ' + ns.join(', '), UL_GC[gk][0], D.trans[gi] || []); });
+      L.f('Seen in ' + ['4', '3', '3'][pi] + ' of the 10 fastest kills.'); } }))) };
+const UL_SOAK0 = { WNW: [-27.8, 8.5], WSW: [-21.9, -11.3], ESE: [25, -8.5], ENE: [23.9, 12.4], SSW: [-7.9, -25.1], SSE: [10.2, -25] }; /* (Phase 1's soaks, a little further in than the intermission's) */
+// one page's map
+function ulSvg(pg, D, P, M) {
+  const X = (x) => +(340 + (x + 2.5) * 2.083).toFixed(1), Y = (y) => +(240 - (y + 0.9) * 2.083).toFixed(1), R = (r) => +(r * 2.083).toFixed(1);
+  const vb = UL_VB[pg.vb] || UL_VB.mid, k = vb[2] / 380, col = (n) => ((P && P.get(String(n).toLowerCase())) || {}).color || '#c9ced8';
+  let s = '<svg viewBox="' + vb[0] + ' ' + vb[1] + ' ' + vb[2] + ' ' + vb[2] + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(pg.t) + '"><rect x="-40" y="0" width="760" height="480" fill="#0c120e"/><image href="https://cdn.raidplan.io/raid/wow.venomabyss/map/08.ulatek-ort-full-v185.jpg" x="0" y="49.6" width="680" height="380.8"/><rect x="-40" y="0" width="760" height="480" fill="#000" fill-opacity=".16"/>';
+  const font = (sz) => 'font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="' + (sz * k).toFixed(1) + '"';
+  const mk = Object.assign({}, POM_DEF, { star: [-15, 35], circle: [15, 35], skull: [35, 15], moon: [35, -15], diamond: [15, -35], triangle: [-15, -35], square: [-35, -15], cross: [-35, 15] }, M || {});
+  if (pg.vb === 'mid') for (const [key, m] of Object.entries(mk)) if (POM_MK[key] && Array.isArray(m)) s += '<g transform="translate(' + X(m[0]) + ' ' + Y(m[1]) + ') scale(' + (0.8 * k).toFixed(2) + ')"><circle r="12" fill="#0b0d11" fill-opacity=".55"/>' + POM_MK[key] + '</g>';
+  const top = [];
+  const g = {
+    line: (x1, y1, x2, y2) => { s += '<line x1="' + X(x1) + '" y1="' + Y(y1) + '" x2="' + X(x2) + '" y2="' + Y(y2) + '" stroke="#fff" stroke-opacity=".75" stroke-width="' + (1.4 * k).toFixed(2) + '"/>'; },
+    circle: (x, y, r, c, fill, dash) => { s += '<circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + R(r) + '" fill="' + (fill ? c : 'none') + '" fill-opacity="' + (fill ? '.16' : '0') + '" stroke="' + c + '" stroke-width="' + (1.5 * k).toFixed(2) + '"' + (dash ? ' stroke-dasharray="' + (4 * k).toFixed(1) + ' ' + (3 * k).toFixed(1) + '"' : '') + '/>'; },
+    ellipse: (x, y, rx, ry, c) => { s += '<ellipse cx="' + X(x) + '" cy="' + Y(y) + '" rx="' + R(rx) + '" ry="' + R(ry) + '" fill="' + c + '" fill-opacity=".14" stroke="' + c + '" stroke-width="' + (1.5 * k).toFixed(2) + '" stroke-dasharray="' + (4 * k).toFixed(1) + ' ' + (3 * k).toFixed(1) + '"/>'; },
+    egg: (x, y) => { s += '<circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (7 * k).toFixed(1) + '" fill="#d9c27a" stroke="#fff5cc" stroke-width="' + (1.4 * k).toFixed(2) + '"/>'; },
+    slam: (x, y) => { s += '<g><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (5 * k).toFixed(1) + '" fill="#24f2cb" fill-opacity=".85" stroke="#0b0d11" stroke-width="' + (1.2 * k).toFixed(2) + '"/><title>The tail slams here</title></g>'; },
+    boss: (p, lab) => { top.push('<g><circle cx="' + X(p[0]) + '" cy="' + Y(p[1]) + '" r="' + (13 * k).toFixed(1) + '" fill="#1d2a1a" stroke="#e6b450" stroke-width="' + (2 * k).toFixed(2) + '"/><text x="' + X(p[0]) + '" y="' + (Y(p[1]) + 3.6 * k).toFixed(1) + '" text-anchor="middle" ' + font(9.5) + ' fill="#e6b450">' + esc(lab) + '</text></g>'); },
+    add: (x, y, lab) => { top.push('<g><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (9 * k).toFixed(1) + '" fill="#3a0f0f" stroke="#ff6b5e" stroke-width="' + (1.6 * k).toFixed(2) + '"/><text x="' + X(x) + '" y="' + (Y(y) + 3 * k).toFixed(1) + '" text-anchor="middle" ' + font(8) + ' fill="#ffb3ab">' + esc(lab) + '</text></g>'); },
+    tag: (x, y, t, c) => { const w = (String(t).length * 5.4 + 12) * k; top.push('<g><rect x="' + (X(x) - w / 2).toFixed(1) + '" y="' + (Y(y) - 8 * k).toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + (15 * k).toFixed(1) + '" rx="' + (2 * k).toFixed(1) + '" fill="#0b0d11" fill-opacity=".88"' + (c ? ' stroke="' + c + '" stroke-width="' + (1 * k).toFixed(2) + '"' : '') + '/><text x="' + X(x) + '" y="' + (Y(y) + 3.6 * k).toFixed(1) + '" text-anchor="middle" ' + font(11) + ' fill="' + (c || '#fff') + '">' + esc(t) + '</text></g>'); },
+    num: (x, y, n) => { s += '<g><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (6.5 * k).toFixed(1) + '" fill="#0b0d11" fill-opacity=".8" stroke="#fff" stroke-opacity=".7" stroke-width="' + (1 * k).toFixed(2) + '" stroke-dasharray="' + (2.5 * k).toFixed(1) + ' ' + (2 * k).toFixed(1) + '"/><text x="' + X(x) + '" y="' + (Y(y) + 3.2 * k).toFixed(1) + '" text-anchor="middle" ' + font(9) + ' fill="#fff">' + n + '</text></g>'; },
+    big: (x, y, n, c) => { top.push('<g><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (10 * k).toFixed(1) + '" fill="' + c + '" stroke="#0b0d11" stroke-width="' + (1.6 * k).toFixed(2) + '"/><text x="' + X(x) + '" y="' + (Y(y) + 4.6 * k).toFixed(1) + '" text-anchor="middle" ' + font(14) + ' fill="#0d1014">' + n + '</text></g>'); },
+    tok: (n, x, y, sm) => { const tr = sm ? 7.2 : 13, tf = sm ? 6.6 : 11; top.push('<g><circle cx="' + X(x) + '" cy="' + (Y(y) + 1.2 * k).toFixed(1) + '" r="' + ((tr + 0.5) * k).toFixed(1) + '" fill="#000" fill-opacity=".45"/><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="' + (tr * k).toFixed(1) + '" fill="' + col(n) + '" stroke="#0b0d11" stroke-width="' + (1.3 * k).toFixed(2) + '"/><text x="' + X(x) + '" y="' + (Y(y) + tf * 0.35 * k).toFixed(1) + '" text-anchor="middle" ' + font(tf) + ' fill="#0d1014">' + esc([...String(n)].slice(0, 4).join('')) + '</text><title>' + esc(n) + '</title></g>'); },
+    cluster: (names, c, rmax) => { const L = (names || []).filter(Boolean), n = L.length; L.forEach((nm, i) => { let x = c[0], y = c[1]; if (n > 1) { const inner = n > 7 ? Math.min(3, n) : 0, ring = i < inner ? 0 : 1, cnt = ring ? n - inner : inner, j = ring ? i - inner : i, r = ring ? rmax : rmax * 0.42, a = (j / cnt) * Math.PI * 2 + (ring ? 0 : 0.6); x += Math.cos(a) * r; y += Math.sin(a) * r; } g.tok(nm, x, y, 1); }); } };
+  pg.draw(D, g);
+  return s + top.join('') + '<text x="' + (vb[0] + vb[2] - 6 * k).toFixed(1) + '" y="' + (vb[1] + vb[2] - 6 * k).toFixed(1) + '" text-anchor="end" ' + font(10) + ' fill="#e6b450" letter-spacing="1.2">DEBRIEF</text></svg>';
+}
+// (the block: the page's title and its legend, beside the map)
+function ulH(key, D, P, M, i) {
+  const pages = UL_PAGES[key], pg = pages[i], col = (n) => ((P && P.get(String(n).toLowerCase())) || {}).color || '#c9ced8'; let leg = '';
+  const L = { grp: (h, c, names, tags) => { leg += '<div class="pom-g"><h4 style="color:' + c + '">' + esc(h) + '</h4><div class="pom-who">' + ((names || []).length ? names.map((n, j) => '<span class="pom-p"><i class="pom-dot" style="background:' + col(n) + '"></i><b style="color:' + col(n) + '">' + esc(n) + '</b>' + (tags && tags[j] ? '<small>' + esc(tags[j]) + '</small>' : '') + '</span>').join('') : '<span class="pom-p"><small>nobody yet</small></span>') + '</div></div>'; },
+    p: (t) => { leg += '<p>' + esc(t) + '</p>'; }, f: (t) => { leg += '<p class="pom-f">' + esc(t) + '</p>'; } };
+  pg.leg(D, L);
+  return '<div class="pom-leg"><div class="pom-top"><b class="pom-t">' + esc(pg.t) + '</b>' + (pages.length > 1 ? '<span class="pom-pg">' + pages.map((p, j) => '<button type="button" data-pomp="' + j + '"' + (j === i ? ' class="on" aria-current="true"' : '') + ' title="' + esc(p.t) + '" aria-label="' + esc(p.t) + '">' + (j + 1) + '</button>').join('') + '</span>' : '') + '</div><p class="pom-s">' + esc(pg.s) + '</p>' + leg + '</div><div class="pom-map">' + ulSvg(pg, D, P, M) + '</div>';
+}
 // (the Orb carriers and P3 orb carriers job cards on Plan get their map, filled from the plan's note; drawn again when the card is)
 function pomJobs() {
   for (const el of document.querySelectorAll('.bj-jobs .plb-rc:not([data-pom])')) {
-    const pics = el.querySelector(':scope > .pj-pics'), key = pics && pics.dataset.mech; el.dataset.pom = '1'; if (key !== 'orbs' && key !== 'orbs3') continue;
+    const pics = el.querySelector(':scope > .pj-pics'), key = pics && pics.dataset.mech; el.dataset.pom = '1'; if (key !== 'orbs' && key !== 'orbs3' && !UL_PAGES[key]) continue;
     const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'); if (!ch) continue;
     let set = null, O = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); O = c && pomRead(noteResolve(c.u0.text))[key === 'orbs' ? 0 : 1]; } catch (e) { set = null; }
+    if (set && set.cf && set.diff === 'Mythic' && set.boss === 'Ula\'tek' && UL_PAGES[key]) { let U = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); U = c && ulRead(noteResolve(c.u0.text)); } catch (e) { U = null; }
+      if (U && ulHas(key, U)) { const box = document.createElement('div'); box.className = 'pom pom-ul'; box._pom = { ul: 1, key, U, P: set.P, M: set.cf.marks || {} }; box.innerHTML = ulH(key, U, set.P, box._pom.M, 0); const after = el.querySelector(':scope > .plb-rrs'); if (after) after.after(box); else el.appendChild(box); }
+      continue; }
     if (!set || !set.cf || set.boss !== 'The Coiled Altar' || set.diff !== 'Mythic' || !O || !(O.purple.length || O.green.length)) continue;
     const box = document.createElement('div'); box.className = 'pom'; box._pom = { key, O, P: set.P, M: set.cf.marks || {} }; box.innerHTML = pomH(key, O, set.P, box._pom.M, 0);
     const after = el.querySelector(':scope > .plb-rrs'); if (after) after.after(box); else el.appendChild(box);
   }
 }
 if (typeof document !== 'undefined') document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('.pom [data-pomp]'); if (!b) return; e.preventDefault(); e.stopPropagation();
-  const box = b.closest('.pom'), d = box && box._pom; if (!d) return; box.innerHTML = pomH(d.key, d.O, d.P, d.M, +b.dataset.pomp); }, true);
+  const box = b.closest('.pom'), d = box && box._pom; if (!d) return; box.innerHTML = d.ul ? ulH(d.key, d.U, d.P, d.M, +b.dataset.pomp) : pomH(d.key, d.O, d.P, d.M, +b.dataset.pomp); }, true);
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
   if (C.mver && s.mver !== C.mver) delete s.marks; /* (spots saved before the boss's markers changed: the new ones show, the mechanic picks stay) */
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
