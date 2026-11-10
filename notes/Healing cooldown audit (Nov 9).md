@@ -307,6 +307,31 @@ The new table is `NDZ_CDLEN_SPEC` (by the presser's spec), read by the planner a
 Darkness (no buff shows in the events; 8 s by its text) and Evangelism (its buff ran anything from 15 to 32 s). One raider's own talents are
 not known to the planner: these are what nearly every top player of the spec runs.
 
+**Lengths, done properly: the tooltip and its talents (Flex: "you cant factor duration purely based on logs, because haste reduces the cast
+time or channel of certain spells", "you need to go based off of tooltip information and how talents affect them").** The table above was
+read off logs, which is the wrong way round (spell data first). A log shows one player's build and haste at one moment: Tranquility "ran 4 s"
+because top druids have that much haste, and 3 s under Bloodlust; its channel is 6 s. Redone from the game's tooltips (Wowhead's tooltip data
+for each spell and for the talents on its "Modified by" list), with the logs only saying which build people run:
+
+| Cooldown | Tooltip | Talents that change it | Planned as |
+|---|---|---|---|
+| Avenging Wrath | 20 s | Sanctified Wrath (Holy): 50% longer. Divine Wrath: +4 s. Call of the Righteous: 5 s shorter, back 30 s sooner | Holy 30 s (298 of 298 presses ran 30), Retribution 24 |
+| Rallying Cry | 10 s | Inspiring Presence +3 s. Battlefield Commander +3 s | Arms, Fury 16 s; Protection 13 s |
+| Anti-Magic Zone | 6 s, back in 4 min | Assimilation: +2 s and back in 3 min | 8 s, back in 3 min (70 of 100 ran 8) |
+| Darkness | 8 s, back in 5 min | Long Night +3 s. Pitch Black: back in 3 min | 8 s, back in 3 min |
+| Zephyr | 8 s | Augmentation's Mastery: Timewalker lengthens its helpful auras | 8 s; Augmentation 10 |
+| Ascendance (Restoration) | 15 s | Preeminence +3 s | 18 s |
+| Apotheosis | 20 s | none found | 32 s: all 355 presses ran 32, the tooltip's 20 was never seen. The one length here that rests on logs |
+| Rewind | back in 4 min | Temporal Artificer: back in 3 min | back in 3 min |
+| Tranquility, Divine Hymn, Celestial Conduit, Convoke, Ultimate Penitence | channels of 6, 5, 4, 4 and 6 s | haste shortens them | their full channel time, and never timed by it |
+
+In code: `NDZ_CDTIP` (tooltip seconds, channel or not, and by spec the seconds with the usual talents plus the arithmetic in words),
+`ndzCdLenFor`, `ndzCdChan`, `ndzCdLenWhy`. A channel keeps its usual second (1 s before the hit): it heals from the first tick whatever its
+length. On the Plan chart a cooldown's hover now says where its length comes from: "lasts 30 s (20 s, 30 with Sanctified Wrath)", "lasts 5 s
+(a 5 s channel, shorter with haste)". Also fixed on the way: two cooldowns that don't stack are compared by the first one's own length (a 16 s
+Rallying Cry and a 13 s one). Open: the planner does not know one raider's own talents (a Death Knight without Assimilation has a 6 s zone
+that is back in 4 minutes, not 3); the cooldown times it uses assume the usual build too.
+
 **Speed.** Main timed the button at 0.38 s (Coiled Altar) and 0.51 s (Ula'tek). Running sums in place of loops: about a fifth faster, plans
 identical. More would need the whole search redone.
 
