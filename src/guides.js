@@ -6586,13 +6586,25 @@ async function ppMapImg(fz) {
   try { const sv = box.querySelector('svg.zmap') || box.querySelector('svg'); if (!sv) return null;
     sv.querySelectorAll('text.mlp').forEach((t) => { if (!fz.keep.some((n) => t.textContent === n || t.textContent.startsWith(n + ' '))) t.remove(); });
     ppDeclutter(sv, fz.out);
+    /* (where the action is, as parts of the frame: the players and labels; the Jobs cards' small pictures zoom in on it (Nov 10)) */
+    let foc = null; try { const vb = sv.viewBox.baseVal, P = [...sv.querySelectorAll('g.ic')].filter((g) => g.classList.contains('icl') || g.querySelector('.pl')).map((g) => [+g.dataset.x, +g.dataset.y]).filter(([x, y]) => isFinite(x) && isFinite(y));
+      if (P.length && vb && vb.width && vb.height) { const xs = P.map((q) => (q[0] - vb.x) / vb.width), ys = P.map((q) => (q[1] - vb.y) / vb.height); foc = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }; } } catch (e) { foc = null; }
     const cl = sv.cloneNode(true), walk = (a, b) => { const cs = getComputedStyle(a); b.setAttribute('style', PP_CSS.map((k) => k + ':' + cs.getPropertyValue(k)).join(';')); for (let i = 0; i < a.children.length; i++) walk(a.children[i], b.children[i]); };
     walk(sv, cl); cl.removeAttribute('style');
-    cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '0.55'; im.setAttribute('opacity', '0.55'); } }); /* (the arena at 55%: icons, names and labels stand out, round 5) */ cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1000); cl.setAttribute('height', 1000);
+    /* (Nov 10, Flex: "make them look good": the room as a dark, cool, low-colour floor under a soft vignette, so the players, markers and labels carry the colour) */
+    cl.insertAdjacentHTML('afterbegin', '<defs><filter id="ppFloor" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0.2"/><feComponentTransfer><feFuncR type="linear" slope="0.56" intercept="0.018"/><feFuncG type="linear" slope="0.6" intercept="0.024"/><feFuncB type="linear" slope="0.7" intercept="0.036"/></feComponentTransfer></filter>' +
+      '<radialGradient id="ppVig" cx=".5" cy=".5" r=".75"><stop offset=".5" stop-color="#05070b" stop-opacity="0"/><stop offset="1" stop-color="#05070b" stop-opacity=".72"/></radialGradient></defs>');
+    cl.querySelectorAll('image[preserveAspectRatio="none"]').forEach((im) => { if (parseFloat(im.getAttribute('width') || 0) > 150) { im.style.opacity = '1'; im.setAttribute('opacity', '1'); im.setAttribute('filter', 'url(#ppFloor)');
+      im.insertAdjacentHTML('afterend', '<rect x="' + im.getAttribute('x') + '" y="' + im.getAttribute('y') + '" width="' + im.getAttribute('width') + '" height="' + im.getAttribute('height') + '"' + (im.getAttribute('transform') ? ' transform="' + im.getAttribute('transform') + '"' : '') + ' fill="url(#ppVig)" style="fill:url(#ppVig)"/>'); } });
+    /* (labels: a dark pill edged in the label's colour, its words in that colour; the pointer stays solid colour) */
+    cl.querySelectorAll('g.icl > g').forEach((b) => { const r = b.querySelector(':scope > rect'), tx = b.querySelector(':scope > text'), pt = b.querySelector(':scope > path'); if (!r) return; const col = r.getAttribute('fill') || '#f3c969';
+      r.style.fill = '#0d1016'; r.style.fillOpacity = '0.94'; r.style.stroke = col; r.style.strokeWidth = '1.4'; r.setAttribute('rx', '3');
+      if (tx) tx.style.fill = col; if (pt) { pt.style.fill = col; pt.style.stroke = '#0d1016'; pt.style.strokeWidth = '1'; } });
+    cl.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); cl.setAttribute('width', 1400); cl.setAttribute('height', 1400);
     // (the round clip for spec icons lives in the page's shared defs: the picture gets its own copy)
     if (!cl.querySelector('#pclip')) cl.insertAdjacentHTML('afterbegin', '<defs><clipPath id="pclip" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>');
     await Promise.all([...cl.querySelectorAll('image')].map(async (im) => { const d = await ppData(ppArt(im.getAttribute('href'))); if (d) im.setAttribute('href', d); else im.remove(); }));
-    return await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' })));
+    const im0 = await ppImg(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(cl)], { type: 'image/svg+xml' }))); if (im0) im0._foc = foc; return im0;
   } finally { box.remove(); }
 }
 const ppMarkImg = (k) => ppImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -11 22 22" width="44" height="44">' + gdzMarkSvg(k, 0, 0) + '</svg>'));
@@ -6602,12 +6614,16 @@ async function ppDraw(card, boss, diff, opt) {
   if (only) card = { ...card, legend: card.legend.map((G) => ({ ...G, items: G.items.filter((it) => String(it.name || '').split('-')[0].toLowerCase() === only) })).filter((G) => G.items.length) };
   const W = 1200, H = 675, S2 = 2, cv = document.createElement('canvas'); cv.width = W * S2; cv.height = H * S2; const g = cv.getContext('2d'); g.scale(S2, S2);
   await Promise.all(['800 28px "Barlow Semi Condensed"', '700 16px Barlow', '500 13px Barlow'].map((f) => document.fonts.load(f).catch(() => null)));
-  g.fillStyle = '#12141b'; g.fillRect(0, 0, W, H);
+  { const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#151922'); bg.addColorStop(1, '#0c0e13'); g.fillStyle = bg; g.fillRect(0, 0, W, H); } /* (Nov 10: a quiet gradient ground) */
   // (only the players the card's list names: nobody without a job in it shows (the user, Oct 26); a card that names nobody keeps everyone)
   const nmOf = (v) => String(v || '').split('-')[0].toLowerCase(), who = new Set(card.legend.flatMap((G) => G.items.map((it) => nmOf(it.name))));
   const fz = who.size ? { ...card.map, out: { ...card.map.out, pts: card.map.out.pts.filter((p) => p.kind !== 'player' || who.has(nmOf(p.name))) }, keep: [...new Set(card.legend.flatMap((G) => G.items.filter((it) => !it.any).map((it) => String(it.name).split('-')[0])).concat(card.map.keep || []))].filter((n) => !(card.map.out.ppNoName || []).some((x) => String(x).split('-')[0].toLowerCase() === n.toLowerCase())) } : card.map; /* (every named player keeps their name, but a big group's are in the list) */
   if (only) { const me = fz.out.pts.find((p) => p.kind === 'player' && nmOf(p.name) === only); if (me) fz.out = { ...fz.out, hl: [...new Set((fz.out.hl || []).concat(me.guid))], cardRing: { guids: new Set([me.guid]), color: '#e6b450' } }; }
-  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, MS, MS, 12) : g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  const M0 = 18, MS = H - M0 * 2, map = await ppMapImg(fz); g.save(); g.beginPath(); g.rect(M0, M0, MS, MS); g.clip(); g.fillStyle = '#0b0d12'; g.fillRect(M0, M0, MS, MS); if (map) g.drawImage(map, M0, M0, MS, MS); g.restore();
+  { g.strokeStyle = 'rgba(255,255,255,.1)'; g.lineWidth = 1; g.strokeRect(M0 + 0.5, M0 + 0.5, MS - 1, MS - 1); const k = 16; g.strokeStyle = '#e6b450'; g.lineWidth = 2; g.beginPath();
+    [[M0, M0, 1, 1], [M0 + MS, M0, -1, 1], [M0, M0 + MS, 1, -1], [M0 + MS, M0 + MS, -1, -1]].forEach(([x, y, a, b]) => { g.moveTo(x + a * k, y + b * 1); g.lineTo(x + a * 1, y + b * 1); g.lineTo(x + a * 1, y + b * k); }); g.stroke(); } /* (Nov 10: a square frame, hairline edge, gold corner ticks) */
+  { const f = map && map._foc; let k = 1, cx = 0.5, cy = 0.5; if (f) { k = Math.min(1, Math.max(0.4, Math.max(f.x1 - f.x0, f.y1 - f.y0) + 0.2)); cx = Math.min(1 - k / 2, Math.max(k / 2, (f.x0 + f.x1) / 2)); cy = Math.min(1 - k / 2, Math.max(k / 2, (f.y0 + f.y1) / 2)); }
+    cv._thumb = { x: M0 + (cx - k / 2) * MS, y: M0 + (cy - k / 2) * MS, s: k * MS }; } /* (the small picture's square: the action with a margin, at least 40% of the room) */
   const X0 = M0 * 2 + MS + 6, CW = W - X0 - 24, fit = (t, w) => { if (g.measureText(t).width <= w) return t; let s = t; while (s.length > 1 && g.measureText(s + '…').width > w) s = s.slice(0, -1); return s + '…'; };
   const wrap = (t, w) => { const out = []; let line = ''; for (const wd of String(t).split(' ')) { const tr = line ? line + ' ' + wd : wd; if (g.measureText(tr).width > w && line) { out.push(line); line = wd; } else line = tr; } if (line) out.push(line); return out; };
   const icons = new Map(); await Promise.all(card.legend.flatMap((G) => G.items).map(async (it) => { if (it.specIcon && !icons.has(it.specIcon)) icons.set(it.specIcon, await ppImg(await ppData('https://wow.zamimg.com/images/wow/icons/medium/' + it.specIcon + '.jpg'))); }));
@@ -6676,7 +6692,7 @@ function ppSet(r, u0) {
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
   const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P), pics: new Map() };
-  set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png') })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
+  set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
   return set;
 }
@@ -6787,7 +6803,7 @@ function ppMarksPic(boss, diff) { const c = ppConf(boss, diff); if (!c) return P
   if (!PP_MKPIC.has(key)) PP_MKPIC.set(key, (async () => { const k = gdzKit(boss, 1); c.C.room.scene(k); const mp = k.done({ title: '', focus: c.C.room.focus, full: c.C.room.full }), fz = ppFreeze(mp, 0, {}, new Map(), {}, {});
     const [cx, cy] = ppMid(mp); fz.out.wmarks = PP_MKS.filter((m) => c.marks[m]).map((m) => ({ k: m, x: cx + c.marks[m][0], y: cy + c.marks[m][1] })); fz.keep = c.C.room.keep;
     const map = await ppMapImg(fz); if (!map) return null; const W = 600, M0 = 16, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'); g.fillStyle = '#12141b'; g.fillRect(0, 0, W, W);
-    g.save(); g.beginPath(); g.roundRect ? g.roundRect(M0, M0, W - 2 * M0, W - 2 * M0, 12) : g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
+    g.save(); g.beginPath(); g.rect(M0, M0, W - 2 * M0, W - 2 * M0); g.clip(); /* (square, like the other pictures (Nov 10)) */ g.drawImage(map, M0, M0, W - 2 * M0, W - 2 * M0); g.restore(); return cv.toDataURL('image/png'); })().catch((e) => { console.warn('Picture plan:', e); return null; }));
   if (PP_MKPIC.size > 6) PP_MKPIC.delete(PP_MKPIC.keys().next().value); return PP_MKPIC.get(key); }
 function ppJobs() {
   const els = document.querySelectorAll('.bj-jobs .plb-rc:not([data-pj])'); if (!els.length) return;
@@ -6816,7 +6832,9 @@ function ppJobs() {
     el._pics = pics; if (!window.IntersectionObserver) { ppThumbs(pics); return; } /* (the card is watched, not its row, which is hidden when every picture went beside its job) */
     (PP_IO = PP_IO || new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { PP_IO.unobserve(e.target); ppThumbs(e.target._pics); } }), { rootMargin: '300px' })).observe(el); });
 }
-async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btns || pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.url; } }
+/* (a Jobs card's small picture: the action's square of the picture, 240 px, as a JPEG (Nov 10)) */
+const ppThumbUrl = (cv) => { try { const t = cv._thumb; if (!t) return ''; const u = cv.width / 1200, N = 240, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(cv, t.x * u, t.y * u, t.s * u, t.s * u, 0, 0, N, N); return c.toDataURL('image/jpeg', 0.88); } catch (e) { return ''; } };
+async function ppThumbs(pics) { const set = pics._set; for (const b of pics._btns || pics.querySelectorAll('.pj-pic')) { const cd = set.cards.find((x) => x.id === b.dataset.pj), p = cd && await set.pic(cd), im = b.querySelector('img'); if (p && im && im.isConnected) im.src = p.thumb || p.url; } }
 // (a Pictures button beside every Copy for Discord button Plan shows, and beside the plan header's Copy for the game, opening the
 // same note's pictures; and the Jobs cards' small pictures)
 if (typeof document !== 'undefined') {
