@@ -18422,5 +18422,16 @@ html body #askBox .ak-in button:disabled, html body #askBox .ak-in input:disable
 <style>/* (Nov 9: Delete removes a cooldown) */
 @layer defaultTheme { html body #ndzTl :is(.btl, .bhl) .btl-ksel { outline: 2px solid #e6b450 !important; outline-offset: 1px !important; box-shadow: 0 0 12px rgba(230,180,80,.55) !important; z-index: 8 !important; } }
 </style>
+<style>/* (Nov 9: Clear all on the cooldown planner) */
+@layer defaultTheme {
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl .btl-clr { margin-left: 6px !important; padding: 2px 7px !important; height: 22px !important; border: 1px solid rgba(255,255,255,.14) !important; border-radius: 0 !important; background: transparent !important; color: #9aa0aa !important; font: 600 11px var(--body) !important; cursor: pointer !important; white-space: nowrap !important; }
+html body #assignBox.pv-ro #ndzTl .btl-clr { display: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #ndzTl .btl-clr:hover { border-color: rgba(229,83,75,.6) !important; color: #f0b3ae !important; }
+html body #btlClrAsk { position: absolute !important; z-index: 9500 !important; display: flex !important; flex-direction: column !important; gap: 4px !important; width: 270px !important; padding: 11px 12px 12px !important; border: 1px solid rgba(229,83,75,.45) !important; background: #14171e !important; box-shadow: 0 16px 40px rgba(0,0,0,.6) !important; color: #f3efe6 !important; }
+html body #btlClrAsk b { font: 700 13.5px/1.3 var(--body) !important; } html body #btlClrAsk span { font: 500 12px var(--body) !important; color: #9aa0aa !important; }
+html body #btlClrAsk div { display: flex !important; gap: 6px !important; margin-top: 6px !important; }
+html body #btlClrAsk [data-btlclrgo="yes"] { background: #b8403a !important; border-color: #d1564f !important; color: #fff !important; }
+}
+</style>
 </body>
 </html>
