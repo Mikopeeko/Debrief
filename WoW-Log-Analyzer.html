@@ -68770,7 +68770,7 @@ function pomSvg(pg, O, P, M) {
   const tok = (n, x, y) => '<g><circle cx="' + X(x) + '" cy="' + (+Y(y) + 1.2) + '" r="13.5" fill="#000" fill-opacity=".45"/><circle cx="' + X(x) + '" cy="' + Y(y) + '" r="13" fill="' + col(n) + '" stroke="#0b0d11" stroke-width="1.6"/><text x="' + X(x) + '" y="' + (+Y(y) + 3.9) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#0d1014">' + esc([...String(n)].slice(0, 4).join('')) + '</text><title>' + esc(n) + '</title></g>';
   const near = (k, keep) => { if (!(M && Array.isArray(M[k])) && keep && POM_KEEP[k] && pos[k] && pos[k][0] === POM_DEF[k][0] && pos[k][1] === POM_DEF[k][1]) return POM_KEEP[k]; const m = mkAt(k); if (!m) return null; const d = Math.hypot(m[0], m[1]) || 1; return [m[0] * (d - 8) / d, m[1] * (d - 8) / d]; };
   O.purple.forEach(([k, n], i) => { const at = near(k) || [[-29, 29], [29, 29], [-29, -29], [29, -29]][i % 4]; s += tok(n, at[0], at[1]); });
-  let si = 0; O.green.forEach(([k, n]) => { if (!n) return; const at = k && k !== 'side' && near(k, 1) || (pg.side || POM_SIDE)[si++ % 2]; s += tok(n, at[0], at[1]); });
+  let si = 0, ki = 0; O.green.forEach(([k, n]) => { if (!n) return; const at = k === 'side' ? (pg.side || POM_SIDE)[si++ % 2] : (k && near(k, 1)) || [POM_KEEP.star, POM_KEEP.skull][ki++ % 2]; s += tok(n, at[0], at[1]); });
   if (!pg.noHelp) O.helpers.slice(0, 4).forEach((n, i) => { s += tok(n, POM_HELP[i][0], POM_HELP[i][1]); });
   for (const [b, lab, dim] of pg.bosses) s += '<g' + (dim ? ' opacity=".8"' : '') + '><circle cx="' + X(b[0]) + '" cy="' + Y(b[1]) + '" r="16" fill="#2a1d0c" stroke="#e6b450" stroke-width="2"/><image href="https://wow.zamimg.com/modelviewer/live/webthumbs/npc/136/142472.webp" x="' + (+X(b[0]) - 14) + '" y="' + (+Y(b[1]) - 14) + '" width="28" height="28" clip-path="circle(14px)"/><text x="' + X(b[0]) + '" y="' + (+Y(b[1]) + 27) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#fff" stroke="#000" stroke-width="2.4" paint-order="stroke">' + esc(lab || 'Zul\'jan') + '</text></g>';
   return s + '<text x="522" y="424" text-anchor="end" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="11" fill="#e6b450" letter-spacing="1.2">DEBRIEF</text></svg>';
@@ -68782,19 +68782,32 @@ function pomH(key, O, P, M, i) {
   const chip = (n, k, tag) => '<span class="pom-p">' + mk(k) + '<b style="color:' + col(n) + '">' + esc(n) + '</b>' + (tag ? '<small>' + esc(tag) + '</small>' : '') + '</span>';
   const greens = O.green.filter(([, n]) => n);
   return '<div class="pom-leg"><div class="pom-top"><b class="pom-t">' + esc(pg.t) + '</b>' + (pages.length > 1 ? '<span class="pom-pg">' + pages.map((p, j) => '<button type="button" data-pomp="' + j + '"' + (j === i ? ' class="on" aria-current="true"' : '') + ' aria-label="Orb set ' + (j + 1) + '">' + (j + 1) + '</button>').join('') + '</span>' : '') + '</div><p class="pom-s">' + esc(pg.s) + '</p>' +
-    '<div class="pom-g"><h4 class="pu">Purple orbs</h4><div class="pom-who">' + O.purple.map(([k, n]) => chip(n, k)).join('') + '</div><p>' + esc(pg.rp) + '</p></div>' +
+    '<div class="pom-g"><h4 class="pu">Purple orbs</h4><div class="pom-who">' + (O.purple.length ? O.purple.map(([k, n]) => chip(n, k)).join('') : '<span class="pom-p"><small>nobody yet</small></span>') + '</div><p>' + esc(pg.rp) + '</p></div>' +
     (greens.length ? '<div class="pom-g"><h4 class="gr">Green orbs</h4><div class="pom-who">' + greens.map(([k, n]) => chip(n, k === 'side' ? '' : k, k === 'side' ? 'side' : pg.gk ? 'keeper' : '')).join('') + '</div><p>' + esc(pg.rg) + '</p></div>' : '') +
     (O.helpers.length ? '<div class="pom-g"><h4>Orb helpers</h4><div class="pom-who">' + O.helpers.map((n) => chip(n)).join('') + '</div></div>' : '') +
     '<p class="pom-f">' + esc(pg.f) + '</p></div><div class="pom-map">' + pomSvg(pg, O, P, M) + '</div>';
+}
+// (the note's orb jobs, both ways they're written: "Purple Orbs: A B C D" (the plan maker: one line a job, every name on it) and
+// "Purple Orb {cross}: A" (a marker a line); a "P3" line, or any line under a "P3 Orb Carriers" heading, is Phase 3)
+function pomRead(txt) {
+  const sets = [null, null], get = (i) => (sets[i] = sets[i] || { purple: [], green: [], helpers: [] }); let cur = 0;
+  for (const raw of String(txt || '').split('\n')) { const l = raw.trim(); if (!l) continue; const ci = l.indexOf(':');
+    if (ci < 0) { if (/orb carriers?/i.test(l)) cur = /\bp3\b|phase 3/i.test(l) ? 1 : 0; continue; }
+    const lab = l.slice(0, ci).toLowerCase(); if (!/orb|helper/.test(lab) || /^(encounterid|time)\b/.test(lab)) continue;
+    const who = l.slice(ci + 1).replace(PG_MK_RE, ' ').trim().split(/\s+/).filter((w) => w && !/^[{(]/.test(w)); if (!who.length) continue;
+    const O = get(/\bp3\b/.test(lab) ? 1 : /\bp1\b/.test(lab) ? 0 : cur), mks = [...lab.matchAll(PG_MK_RE)].map((m) => pgMkK(m[1]));
+    if (/help/.test(lab)) O.helpers.push(...who);
+    else if (/purple/.test(lab)) who.forEach((n, j) => O.purple.push([mks[j] || mks[0] || '', n]));
+    else if (/green/.test(lab)) who.forEach((n, j) => O.green.push([/side/.test(lab) ? 'side' : mks[j] || mks[0] || '', n])); }
+  return sets;
 }
 // (the Orb carriers and P3 orb carriers job cards on Plan get their map, filled from the plan's note; drawn again when the card is)
 function pomJobs() {
   for (const el of document.querySelectorAll('.bj-jobs .plb-rc:not([data-pom])')) {
     const pics = el.querySelector(':scope > .pj-pics'), key = pics && pics.dataset.mech; el.dataset.pom = '1'; if (key !== 'orbs' && key !== 'orbs3') continue;
     const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'); if (!ch) continue;
-    let set = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); } catch (e) { set = null; }
-    if (!set || !set.cf || set.boss !== 'The Coiled Altar' || set.diff !== 'Mythic' || !set.J) continue;
-    const O = (set.J.orbs || [])[key === 'orbs' ? 0 : 1]; if (!O || !O.purple.length) continue;
+    let set = null, O = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); O = c && pomRead(noteResolve(c.u0.text))[key === 'orbs' ? 0 : 1]; } catch (e) { set = null; }
+    if (!set || !set.cf || set.boss !== 'The Coiled Altar' || set.diff !== 'Mythic' || !O || !(O.purple.length || O.green.length)) continue;
     const box = document.createElement('div'); box.className = 'pom'; box._pom = { key, O, P: set.P, M: set.cf.marks || {} }; box.innerHTML = pomH(key, O, set.P, box._pom.M, 0);
     const after = el.querySelector(':scope > .plb-rrs'); if (after) after.after(box); else el.appendChild(box);
   }
