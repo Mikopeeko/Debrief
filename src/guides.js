@@ -5687,12 +5687,21 @@ const PP_ON = () => true; /* (open to everyone (your call, Oct 26: "push this li
 const ppKey = (b, d) => 'wla-pp|' + b + '|' + d;
 // (the raid lead's markers for a boss: { marks: { cross: [x, y], … }, uses: { axe: 'moon', … } }, over the boss's starting ones)
 // (base: 'guide', the strategy's spots, or 'raid', the raid's own from its pulls; the raid lead's moves and picks go on top)
+/* (a marker job's key: its label with the marker written one way, lower case; and the note with each job's picked marker swapped in) */
+const ppJmKey = (lab) => String(lab).trim().toLowerCase().replace(PG_MK_RE, (m, k) => '{' + pgMkK(k) + '}').replace(/\s+/g, ' ');
+function ppJmText(t, jm) { if (!jm || !Object.keys(jm).length) return t; return String(t).split('\n').map((line) => { const ci = line.indexOf(':'); if (ci < 0 || /^\s*time:/i.test(line)) return line; const lab = line.slice(0, ci), to = jm[ppJmKey(lab)]; return to ? lab.replace(PG_MK_RE, '{' + to + '}') + line.slice(ci) : line; }).join('\n'); }
+/* (the Markers section's list: each job the note puts on a marker, its player, and the marker to pick; the orb carriers stay off (Flex)) */
+function ppJmH(u0, c) { const out = [], seen = new Set(); let txt = ''; try { txt = noteResolve(u0.text); } catch (e) { txt = String((u0 && u0.text) || ''); }
+  for (const raw of String(txt).split('\n')) { const l = raw.trim(), ci = l.indexOf(':'); if (ci < 0 || /^time:/i.test(l)) continue; const lab = l.slice(0, ci), val = l.slice(ci + 1).trim(), ms = [...lab.matchAll(PG_MK_RE)]; if (!ms.length || !val || /orbs?/i.test(lab)) continue;
+    const k = ppJmKey(lab); if (seen.has(k)) continue; seen.add(k); const def = pgMkK(ms[0][1]), cur = (c.jm && c.jm[k]) || def, job = lab.replace(PG_MK_RE, '').replace(/\s+/g, ' ').trim().replace(/\s+at$/i, '');
+    out.push('<label class="pp-use pp-jm"><span>' + esc(job) + ' <b>' + esc(val) + '</b></span><select data-jm="' + esc(k) + '" data-jmdef="' + def + '" aria-label="' + esc(job + ', ' + val + ': marker') + '">' + PP_MKS.map((m) => '<option value="' + m + '"' + (m === cur ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('') + '</select></label>'); }
+  return out.length ? '<div class="sub pp-jmh">Jobs on markers</div>' + out.join('') : ''; }
 function ppConf(b, d) { const C = GDZ_PP[b] && GDZ_PP[b][d]; if (!C) return null; let s = {}; try { s = JSON.parse(store.get(ppKey(b, d)) || '{}') || {}; } catch (e) { s = {}; }
   if (C.mver && s.mver !== C.mver) delete s.marks; /* (spots saved before the boss's markers changed: the new ones show, the mechanic picks stay) */
   const base = s.base === 'raid' && C.raid ? 'raid' : 'guide', B = base === 'raid' ? C.raid : { marks: C.marks, stack: C.stack, uses: Object.fromEntries(C.uses.map(([id, , def]) => [id, def])) };
   const marks = { _stack: B.stack }; for (const k of PP_MKS) marks[k] = (s.marks && k in s.marks ? s.marks[k] : B.marks[k]) || null;
   const uses = {}; for (const [id] of C.uses) uses[id] = s.uses && id in s.uses ? s.uses[id] : B.uses[id];
-  return { C, base, marks, uses, saved: !!(s.marks || s.uses) }; }
+  return { C, base, marks, uses, saved: !!(s.marks || s.uses), jm: s.jm && typeof s.jm === 'object' ? { ...s.jm } : {} }; }
 const ppSave = (b, d, v) => { const C = GDZ_PP[b] && GDZ_PP[b][d]; store.set(ppKey(b, d), JSON.stringify(C && C.mver ? { ...v, mver: C.mver } : v)); };
 // (a group's list has no stand-in rows ("Whoever gets the axe"): the group says in a sentence who the fight picks, Plan round 5)
 const PP_ANYT = { 'Whoever gets the axe': 'The boss picks one player.', 'Random players': 'The boss picks them.', 'Whoever gets a bite': 'The boss picks them.', 'Whoever gets Chilling Frost': 'The boss picks them.', 'Whoever gets Rend': 'The boss picks them.', 'Whoever gets it': 'The boss picks them.', 'Whoever gets a fear': 'The boss picks them.' };
@@ -6718,7 +6727,8 @@ function ppSet(r, u0) {
   const boss = r && r.item && r.item.boss; let N = { header: {}, reminders: [], lines: [] }; try { N = E.parseNote(noteResolve(u0.text)); } catch (e) { /* (an unreadable note draws nothing) */ }
   const hd = N.header || {}, diff = /heroic|15/i.test(String(hd.difficulty || '')) ? 'Heroic' : /mythic|16/i.test(String(hd.difficulty || '')) ? 'Mythic' : ((r && r.item.diff) || 'Mythic'), cf = boss && ppConf(boss, diff);
   if (!cf) return { boss, diff, cards: [] };
-  const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
+  if (cf.jm && Object.keys(cf.jm).length) { try { N = E.parseNote(ppJmText(noteResolve(u0.text), cf.jm)); } catch (e) { /* (as written) */ } } /* (each marker job on the marker the raid lead picked) */
+  const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses, cf.jm]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
   const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
   const set = { key, boss, diff, cf, cards: cf.C.cards(cf.C.read(N, P), cf.marks, cf.uses, P), pics: new Map() };
   set.pic = (cd) => { if (!set.pics.has(cd.id)) set.pics.set(cd.id, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(cd.id); };
@@ -6787,7 +6797,7 @@ function ppOpen(r, u0, opt) {
     const sv = mhost.querySelector('svg.zmap'), lay = mhost.querySelector('.pp-mklay'); if (!sv) return; const vb = sv.viewBox.baseVal, [x0, y0] = (sv.dataset.o || '0,0').split(',').map(Number), yd = +sv.dataset.yd || 1, [cx, cy] = ppMid(mp);
     const toPx = ([rx, ry]) => { const R = sv.getBoundingClientRect(), L = lay.getBoundingClientRect(); return [((cx + rx - x0) * yd - vb.x) / vb.width * R.width + R.left - L.left, ((-(cy + ry) - y0) * yd - vb.y) / vb.height * R.height + R.top - L.top]; };
     const toYd = (px, py) => { const R = sv.getBoundingClientRect(); const X = vb.x + (px - R.left) / R.width * vb.width, Y = vb.y + (py - R.top) / R.height * vb.height; return [Math.round((X / yd + x0 - cx) * 2) / 2, Math.round((-(Y / yd + y0) - cy) * 2) / 2]; };
-    const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses });
+    const dot = (m) => '<svg viewBox="-11 -11 22 22" width="26" height="26">' + gdzMarkSvg(m, 0, 0) + '</svg>', keep = (cc) => ppSave(boss, diff, { base: cc.base, marks: cc.marks, uses: cc.uses, jm: cc.jm });
     lay.innerHTML = PP_MKS.filter((m) => c.marks[m]).map((m) => '<button type="button" class="pp-mkdot" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag to move, right-click to change the mark" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('');
     { const t0 = mhost.querySelector('.pp-mktray'); if (t0) t0.remove(); } const offL = PP_MKS.filter((m) => !c.marks[m]);
     mhost.insertAdjacentHTML('beforeend', '<div class="pp-mktray"><span class="pp-mkth">' + (offL.length ? 'Off the map: drag one onto the room' : 'Drag a marker here, or point at it and press Delete, to take it off the map') + '</span>' + offL.map((m) => '<button type="button" class="pp-mktr" data-mk="' + m + '" title="' + esc(GDZ_WM[m][1]) + ': drag it onto the room" aria-label="' + esc(GDZ_WM[m][1]) + '">' + dot(m) + '</button>').join('') + '</div>');
@@ -6818,13 +6828,16 @@ function ppOpen(r, u0, opt) {
           const cc = ppConf(boss, diff); cc.marks[b.dataset.mk] = q; keep(cc); place(); redo(); mkDraw(); };
         b.onpointermove = move; b.onpointerup = up; }; });
     const uses = box.querySelector('.pp-mkuse'), opt0 = (v) => '<option value=""' + (v ? '' : ' selected') + '>The spot shown (no marker)</option>' + PP_MKS.map((m) => '<option value="' + m + '"' + (v === m ? ' selected' : '') + '>' + esc(GDZ_WM[m][1]) + '</option>').join('');
-    uses.innerHTML = '<div class="sub">Where each mechanic happens</div>' + c.C.uses.map(([id, label]) => '<label class="pp-use"><span>' + esc(label) + '</span><select data-use="' + id + '">' + opt0(c.uses[id]) + '</select></label>').join('') +
+    uses.innerHTML = '<div class="sub">Where each mechanic happens</div>' + c.C.uses.map(([id, label]) => '<label class="pp-use"><span>' + esc(label) + '</span><select data-use="' + id + '">' + opt0(c.uses[id]) + '</select></label>').join('') + ppJmH(u0, c) +
       '<div class="pp-mkbase"><button class="btn sm" type="button" data-ppreset' + (c.base === 'guide' && !c.saved ? ' disabled' : '') + '>Back to the guide\'s spots</button>' +
       (c.C.raid ? '<button class="btn sm" type="button" data-ppraid' + (c.base === 'raid' && !c.saved ? ' disabled' : '') + '>Use your raid\'s spots</button>' : '') + '</div>' +
       (c.C.mkTip ? '<p class="sub"><b>' + esc(c.C.mkTip) + '</b></p>' : '') + '<p class="sub">' + (c.base === 'raid' ? 'Started from where your raid stood in your own pulls.' : 'Started from the guide\'s spots.') + ' Drag a marker to move it; drag it off the room (or point at it and press Delete) to take it off; right-click it (hold it on a phone) to change which mark it is. Saved in this browser.</p>';
+    uses.querySelectorAll('select[data-jm]').forEach((s) => { s.onchange = () => { /* (only the pick is saved: the guide's spots stay the guide's) */ let raw = {}; try { raw = JSON.parse(store.get(ppKey(boss, diff)) || '{}') || {}; } catch (e) { raw = {}; } const C0 = GDZ_PP[boss] && GDZ_PP[boss][diff]; if (C0 && C0.mver && raw.mver !== C0.mver) delete raw.marks;
+      const jm = raw.jm && typeof raw.jm === 'object' ? { ...raw.jm } : {}; if (s.value === s.dataset.jmdef) delete jm[s.dataset.jm]; else jm[s.dataset.jm] = s.value; raw.jm = jm; ppSave(boss, diff, raw); PG_JM_C = null; mkDraw(); redo();
+      if (typeof planAssign === 'function' && S.page === 'plan') { const y = window.scrollY; try { planAssign(); } catch (e) { /* (the page catches up next draw) */ } window.scrollTo({ top: y }); } }; });
     uses.querySelectorAll('select[data-use]').forEach((s) => { s.onchange = () => { const cc = ppConf(boss, diff); cc.uses[s.dataset.use] = s.value; keep(cc); mkDraw(); redo(); }; });
-    uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide' }); mkDraw(); redo(); };
-    const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid' }); mkDraw(); redo(); }; };
+    uses.querySelector('[data-ppreset]').onclick = () => { ppSave(boss, diff, { base: 'guide', jm: ppConf(boss, diff).jm }); mkDraw(); redo(); };
+    const rb = uses.querySelector('[data-ppraid]'); if (rb) rb.onclick = () => { ppSave(boss, diff, { base: 'raid', jm: ppConf(boss, diff).jm }); mkDraw(); redo(); }; };
   box.querySelector('.pp-mkbox').addEventListener('toggle', (e) => { if (e.target.open) mkDraw(); });
   if (opt.marks) { const d = box.querySelector('.pp-mkbox'); d.open = true; setTimeout(() => d.scrollIntoView({ block: 'start' }), 60); } /* (straight to the Markers map: the Raid markers card) */
   draw();
