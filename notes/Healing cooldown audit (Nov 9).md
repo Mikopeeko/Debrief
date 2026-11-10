@@ -231,7 +231,28 @@ All numbers are the same 40 plans, as the coverage strip marks them.
 | 64e6b23b | Fuller hit lists on every boss; each cooldown timed over the whole fight (S1, S5) | Mythic hits known 222 to 320, covered 268. Heroic 122 to 162, covered 144. Presses near no listed hit 63 to 29 |
 | edd40382 | With your own longer phase times, the planner uses the chart's hit times (S2b) | With every phase 22% longer: hits with a cooldown on them 160 to 239 of 241 |
 | 50ce1bb4 | Top-raid moments from today's lorrgs (S10) | 26 new strong moments, 12 gone. It moves a handful of the lightest hits either way; the totals stay level |
-| (the push after) | A longer phase gets its extra hits, nothing is stretched; the chart's damage line drawn at its own times (S2, S2b) | With every phase 22% longer, Mythic: hits that really land with a cooldown on them 128 to 174 of 186; presses near no hit 85 to 13. Heroic: 58 to 83 of 86; 83 to 15 |
+| b8712445 | A longer phase gets its extra hits, nothing is stretched; the chart's damage line drawn at its own times (S2, S2b) | With every phase 22% longer, Mythic: hits that really land with a cooldown on them 128 to 174 of 186; presses near no hit 85 to 13. Heroic: 58 to 83 of 86; 83 to 15 |
+| 54db9304 | The reason on a planned cooldown as a ratio ("1 in 3 top Holy Paladins press it here"), wording only | No cooldown moved |
+| (the push after) | A cooldown counts for every hit it is really up for; phase times fill in from the raid's own pulls (Flex: "Do 1 and 2") | Mythic, 20 plans: hits with their full need 272 to 289 of 320, bare 25 to 19, more than they need 8 to 2, one player two cooldowns at once 11 to 6 |
+
+### The push after: twin hits, and your own phase times (Flex, Nov 9: "Do 1 and 2")
+
+**1. A hit left bare while others had extras.** Coiled Altar Mythic, Wolfthorn's roster: Fangs of the Coiled Altar at 1:32 had nothing, while
+the Venom Ruptures at 1:52 and 1:58 (two peaks of one Venom Rupture) each had their own two cooldowns. The planner counted a cooldown only for
+the hit it was placed for. Now a cooldown counts for every hit it is really up for: a cut or a health cooldown pressed before the hit and
+still running 2 s into it; a healing one pressed from 6 s before to 2 s after, or still running; Rewind, Revival and Restoral in the 5 s
+after. And when pressing a cut a little later (never after the first hit starts) keeps it up for a second hit within 8 s, it is pressed
+then, with a reason line that says so. Fangs now gets Aura Mastery. No plan got worse; 8 of the 20 Mythic plans got better. Honest limit:
+the first 2:26 of that fight asks for 13 cooldowns and the roster brings 12, so this only works because one cooldown now covers both peaks.
+
+**2. Phase times from the raid's own pulls.** Phase times were typed by hand on each plan, so most plans ran on the fastest kills' times.
+Now every saved pull remembers how long its phases lasted (`phs`), and a plan with no times of its own uses the middle of the raid's last 6
+pulls that finished each phase (two pulls or more, or one kill; a wipe inside a phase says nothing about its length; the last phase and
+one-phase fights count on kills only). Typed times still win; a plan can be told to keep the fastest kills' times. The Phase times button
+says which it is using. Checked on made-up pulls of every phase layout and on real kills of five bosses read through the engine.
+Limits: pulls saved before this have no phase times until their night is opened again; a one-phase boss the raid has not killed has no
+time of its own yet; The Lost Explorers' fourth turn is not in the plan's phases at all (the fastest kills end in the third), so a slower
+raid's last turn has no hits or cooldowns planned.
 
 ### The last push: extra hits in a longer phase (Flex, Nov 9: "Yes, add extra hits")
 
