@@ -6156,7 +6156,7 @@ function ppCardsCA(J, M, U, P) {
 }
 // ===== Ula'tek, Mythic (Oct 26, the user: "Exact same setup" as The Coiled Altar; Plan's Jobs cards in 2caefe9) =====
 // (the note's jobs, in the lines Plan writes: "Egg Carriers:" (or by area: "Egg Melee:", "Egg Left:", "Egg Right:", "Egg Far:", "Egg Backup:"), "Egg Shields:", "Team 1:" / "Team 2:" (Spectral Coils), the intstart kick lines
-// (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite 1:" / "Backup Bite 1:" (to 3; Mythic) or "Bite Melee:" / "Bite Ranged:" / "Bite Healers:" (Heroic's groups),
+// (left ledge, then right), the transitionStart groups (intermission soaks 1 to 3), "Bite 1:" / "Backup Bite 1:" (to 3; Mythic) or "Bite Melee:" / "Bite Ranged:" (Heroic's groups; an old note's "Bite Healers:" joins the ranged),
 // "Incubation Beam:", "Clutch Grips:", "Freedom:")
 function ppReadUL(N, P) {
   const isN = (w) => P.has(String(w).toLowerCase()), J = { eggs: [], ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], kicks: [], trans: [], bite: { melee: [], ranged: [], healers: [], sets: [[], [], []], back: [[], [], []] }, beam: '', grips: [], freedom: [] };
@@ -6238,22 +6238,22 @@ function ppCardsUL(J, M, U, P) {
       foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
   // Serpent's Bite, Mythic: the three targets stack and the set's three soakers stand in all three circles (set 1 drawn; the backups with the rest)
   if (J.bite.sets.some((s) => s.length)) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
-    const c = [-10, 20], TG = [['m7', 'Melee target', [1.6, 0.9]], ['h4', 'Healer target', [-1.6, 0.9]], ['r7', 'Ranged target', [0, -1.6]]], lab = [];
+    const c = [-10, 20], TG = [['m7', 'Melee target', [1.6, 0.6]], ['r7', 'Ranged target', [-1.6, -0.6]]], lab = []; /* (two bites since the Nov 6 hotfix) */
     TG.forEach(([s, nm, d]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0] + d[0], c[1] + d[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false }); });
     const ids = J.bite.sets[0].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i, ids.length, 3.4); k.at(0, q, c[0] + d[0], c[1] + d[1]); });
     lab.push([ids.concat(TG.map((x) => x[0])), 'Bite 1', R, '#fff', 7, false]);
     const T = GDZ_RAID.filter((s) => s[0] === 't' && !put.has(s)); T.forEach((s, i) => { put.add(s); k.at(0, s, 26 + i * 3, 22 - i * 3); }); rest(k, put, [10, 4], 6);
     cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Your set stands in both circles)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
       legend: J.bite.sets.map((s, i) => ppG('Bite ' + (i + 1) + (J.bite.back[i].length ? ' · backup: ' + J.bite.back[i].join(', ') : ''), R, s.map((n) => ppI(P, n)))).concat([ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stack on one spot toward the middle.')]),
-      foot: 'The three targets stack and the set\'s three soakers stand in all three circles at once. A big defensive as it ends, then personals for 18 seconds; spread at once and send your wave away from the raid.' }); }
-  // Serpent's Bite, Heroic: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)
+      foot: 'The two targets stack and the set\'s three soakers stand in both circles at once. A big defensive as it ends, then personals for 18 seconds; spread at once and send your wave away from the raid.' }); }
+  // Serpent's Bite, Heroic: each group on its own target's red circle (melee on her quarter; ranged and healers on the next one counter-clockwise). Two bites since the Nov 6 hotfix
   else if (J.bite.melee.length || J.bite.ranged.length || J.bite.healers.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
-    const TG = [['melee', 'Melee target', [20, 18], 'm7'], ['healers', 'Healer target', [-10, 20], 'h4'], ['ranged', 'Ranged target', [-30, 28], 'r7']], lab = [];
+    const TG = [['melee', 'Melee target', [20, 18], 'm7'], ['ranged', 'Ranged target', [-20, 24], 'r7']], lab = [], grp = { melee: J.bite.melee, ranged: J.bite.ranged.concat(J.bite.healers.filter((n) => !J.bite.ranged.includes(n))) };
     TG.forEach(([g, nm, c, s]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0], c[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false });
-      const ids = J.bite[g].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i + 1, ids.length + 1, 4.2); k.at(0, q, c[0] + d[0], c[1] + d[1]); }); lab.push([ids.concat(s), nm.replace(' target', ''), R, '#fff', 7, g === 'healers']); });
+      const ids = grp[g].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i + 1, ids.length + 1, ids.length > 8 ? 5.6 : 4.2); k.at(0, q, c[0] + d[0], c[1] + d[1]); }); lab.push([ids.concat(s), g === 'ranged' ? 'Ranged and healers' : 'Melee', R, '#fff', 7, false]); });
     const T = GDZ_RAID.filter((s) => s[0] === 't' && !put.has(s)); T.forEach((s, i) => { put.add(s); k.at(0, s, 26 + i * 3, 22 - i * 3); }); rest(k, put, [10, 4], 6);
     cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Soak your group\'s red circle)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
-      legend: [ppG('Melee bite', R, J.bite.melee.map((n) => ppI(P, n))), ppG('Ranged bite', R, J.bite.ranged.map((n) => ppI(P, n))), ppG('Healer bite', R, J.bite.healers.map((n) => ppI(P, n))), ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stay still so your soakers can reach you.')],
+      legend: [ppG('Melee bite', R, grp.melee.map((n) => ppI(P, n))), ppG('Ranged bite (ranged and healers)', R, grp.ranged.map((n) => ppI(P, n))), ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stay still so your soakers can reach you.')],
       foot: 'Soakers take a big hit as the circle ends: a big defensive. Then spread, each sending your wave away from the raid.' }); }
   // Slithering Clutches: the two grippers pull each clutch in before it reaches the venom (the guide's map at the grips)
   if (J.grips.length) { const fix = { t1: J.grips[0] }; if (J.grips[1]) fix.t2 = J.grips[1]; const ids = Object.keys(fix);
