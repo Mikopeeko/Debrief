@@ -14763,7 +14763,7 @@ function miniMap(mp, pmap) {
     if (ft < w.t0 || ft > w.t1) continue;
     if (w.ring) { /* (Nov 10, Ula'tek's tail waves as they come out: a ring of crescents bursting from the tail in every direction, evenly spaced, each the
       same size as it travels, so the gaps between them widen) */ const el2 = ft - w.t0, R = w.v * el2 + 2.5, o2 = Math.max(0, Math.min(1, el2 / 0.35, (w.t1 - ft) / 0.5)), c2 = w.color || '#9be13a', st = 2 * Math.PI / w.n, hz = (w.cw || 7) / 2, bul = Math.min(3.6, 0.8 + hz * 0.7), thk = Math.min(2.2, 0.8 + hz * 0.4), tp = Math.min(2.2, hz * 0.45), f0 = -tp;
-      for (let k = 0; k < w.n; k++) { const t0r = w.ph + k * st, u2 = Math.cos(t0r), v2 = Math.sin(t0r), Cx = w.x + u2 * R, Cy = w.y + v2 * R, P2 = (s1, s2) => { const q = { x: Cx + u2 * s1 - v2 * s2, y: Cy + v2 * s1 + u2 * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); };
+      for (let k = 0; k < w.n; k++) { const t0r = (w.ph != null ? w.ph : (w.deg || 0) * Math.PI / 180) + k * st, u2 = Math.cos(t0r), v2 = Math.sin(t0r), Cx = w.x + u2 * R, Cy = w.y + v2 * R, P2 = (s1, s2) => { const q = { x: Cx + u2 * s1 - v2 * s2, y: Cy + v2 * s1 + u2 * s2 }; return X(q).toFixed(1) + ' ' + Y(q).toFixed(1); };
         s += '<path d="M' + P2(f0, -hz) + 'Q' + P2(f0 + 2 * bul, 0) + ' ' + P2(f0, hz) + 'Q' + P2(f0 + 2 * (bul - thk), 0) + ' ' + P2(f0, -hz) + 'Z" fill="' + c2 + '" fill-opacity="' + (0.92 * o2).toFixed(2) + '" stroke="#06260e" stroke-opacity="' + (0.8 * o2).toFixed(2) + '" stroke-width="1.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' +
           '<path d="M' + P2(f0 + tp * 0.4, -hz * 0.75) + 'Q' + P2(f0 + 2 * bul - 0.15, 0) + ' ' + P2(f0 + tp * 0.4, hz * 0.75) + '" fill="none" stroke="#f4ffe8" stroke-opacity="' + (0.9 * o2).toFixed(2) + '" stroke-width="1.6" stroke-linecap="round" vector-effect="non-scaling-stroke"/>'; }
       continue; }
@@ -14774,7 +14774,7 @@ function miniMap(mp, pmap) {
     const Pn = (s1, s2) => [X({ x: cx + ux * s1 - uy * s2, y: cy + uy * s1 + ux * s2 }), Y({ x: cx + ux * s1 - uy * s2, y: cy + uy * s1 + ux * s2 })], ph = ft * 3.2 + w.x * 0.37;
     const rip = (s2, k) => 0.45 * Math.sin(s2 * 0.9 + ph + k) + 0.25 * Math.sin(s2 * 2.1 - ph * 1.5 + 0.7 + k), tf = (s2) => Math.sqrt(Math.max(0, 1 - Math.pow(s2 / hw, 4))), gid = 'lqw' + (window.__lqN = (window.__lqN || 0) + 1), bw = (s2) => (w.bow || 0) * Math.max(0, 1 - Math.pow(s2 / hw, 2)); /* (a bowed wave: its middle leads) */
     const g0 = Pn(-hd - 0.5, 0), g1 = Pn(hd + 1, 0), m = Math.max(8, Math.ceil(w.w / 0.8)), S2 = (i) => -hw + w.w * i / m;
-    if (mp.liveWaves && !mp.gdzLook && w.cres) { /* (Nov 10, Ula'tek's waves as raidstrats draws them: a row of crescents, each bowed forward with a foam edge and a short wake,
+    if (w.cres) { /* (Nov 10, Ula'tek's waves as raidstrats draws them: a row of crescents, each bowed forward with a foam edge and a short wake,
       a gap wherever a player stood in its path untouched) */ const f2 = (v) => (+v).toFixed(1), wk = Math.min(5, Math.max(0, el * (w.v || 12.5) * 0.4));
       for (const [a0, b0] of w.cres) { const zc = (a0 + b0) / 2, hz = (b0 - a0) / 2, bul = Math.min(3.6, 0.8 + hz * 0.7), th = Math.min(2.2, 0.8 + hz * 0.4), tp = Math.min(2.2, hz * 0.45), f0 = hd - tp;
         if (wk > 0.6) s += '<path d="M' + P(f0 + bul - th - 0.2, zc) + 'L' + P(f0 + bul - th - wk, zc) + '" stroke="' + col + '" stroke-opacity="' + (0.32 * op).toFixed(2) + '" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';

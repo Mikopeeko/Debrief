@@ -63,7 +63,7 @@ function gdzKit(boss, len) {
     // a spinning beam: one wide bar from (x, y), pointing a0 degrees at t0 (east = 0, counterclockwise) and turning v degrees a second
     // (negative: clockwise), len yards long and w wide, until t1
     beam(o) { const q0 = RO(o.x, o.y); k.beams.push({ ...o, x: q0[0], y: q0[1], a0: (o.a0 || 0) + seg.rot, t0: TT(o.t0), t1: TT(o.t1) }); return kit; },
-    arrow(o) { k.arrows.push({ ...o, g: P(o.g), t0: TT(o.t0), t1: TT(o.t1), at: TT(o.at) }); return kit; },
+    arrow(o) { k.arrows.push({ ...o, ang: o.turn && o.ang != null ? o.ang + seg.rot * Math.PI / 180 : o.ang, g: P(o.g), t0: TT(o.t0), t1: TT(o.t1), at: TT(o.at) }); return kit; }, /* (turn: the arrow turns with the scene, like a wave) */
     tag(id, text, from, to) { k.tags.push([P(id), text, TT(from), TT(to)]); return kit; },
     // (what a player presses at the hit, after their name: kept in the whole fight, where other tags are left out)
     press(id, text, from, to) { k.tags.push([P(id), text, TT(from), TT(to), 1]); return kit; },
@@ -1320,6 +1320,11 @@ const UX_HOME = (() => { const H = { t1: [0, 34], t2: [-35, 2] };
   return H; })();
 function uxHome(k, t, hold, skip) { Object.entries(UX_HOME).forEach(([id, q]) => { if (skip && skip.includes(id)) return; if (hold != null) k.hold(hold, id); k.at(t, id, q[0], q[1]); }); return k; }
 const uxBoss = (k, t, p) => k.boss('ul', UX, t || 0, (p || UX_B)[0], (p || UX_B)[1]);
+/* (Nov 10, Flex: "the boss guide animations should be updated with the ulatek ones": her waves as rows of crescents (about 7 yd each), her tail's
+   as a ring of 16 crescents bursting out of it; the ring is turned so its gaps fall where the raid is as it passes) */
+const ulCresRow = (w) => { const n = Math.max(1, Math.round(w / 7)), wd = w / n, out = []; for (let i = 0; i < n; i++) out.push([-w / 2 + wd * i + (i ? 0.6 : 0), -w / 2 + wd * (i + 1) - (i < n - 1 ? 0.6 : 0)]); return out; };
+const ulRingTurn = (k, O, t0, n, cw) => { const st = 360 / n, cr = []; GDZ_RAID.forEach((id) => { for (let t = t0; t <= t0 + 9; t += 0.1) { const p = k.posAt(id, t); if (!p) continue; const r = Math.hypot(p[0] - O[0], p[1] - O[1]); if (r <= 12.5 * (t - t0) + 2.5) { cr.push([Math.atan2(p[1] - O[1], p[0] - O[0]) * 180 / Math.PI, r]); break; } } });
+  let best = 0, bs = 1e9; for (let ph = 0; ph < st; ph += st / 32) { let s = 0; cr.forEach(([a, r]) => { let d = ((a - ph) % st + st) % st; d = Math.min(d, st - d); if (d * Math.PI / 180 * r <= cw / 2 + 0.8) s++; }); if (s < bs) { bs = s; best = ph; } } return best; };
 const uxTail = (k, t, p) => k.boss('tl', 'Gore Rattle', t || 0, (p || UX_TAIL)[0], (p || UX_TAIL)[1]);
 // the eight egg carriers' zones (Tactyks' zone defence, turned with her): Mages far left and right, two melee up by her, the rest inside
 const UX_ZONE = { r3: [-34, 4], m1: [-11, 30], r5: [-16, 12], r1: [-12, -16], r2: [12, -16], r6: [16, 12], m2: [11, 30], r4: [34, 4] };
@@ -1344,7 +1349,7 @@ const UX_M = {
       k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: 8.4, at: 8.8, dur: 0.6, color: '#7fbf3a', cn: 'Putrid Membrane', legend: 'a Viper hatching: damage over time on the whole raid' }); k.step(0.2).step(T).step(8.2);
       k.pause(8.6, 'Two carriers drifted together: their rings touched and the egg hatched at once. A Viper, and Putrid Membrane on the whole raid.', { x: mid[0], y: mid[1], r: 8 });
       return k.done({ title: 'Mistake: two carriers touch', focus: { x: 0, y: 8, r: 40 }, badLabel: 'carriers who touched' }); }
-    if (fail) { const e = [UX_ZONE.r1[0] + O.r1[0], UX_ZONE.r1[1] + O.r1[1]]; k.wave({ x: 12, y: 44, deg: 270, v: 12.5, w: 26, d: 5, t0: 7.6, t1: 15, color: '#9be13a', legend: 'Caustic Waves: an egg they touch hatches' });
+    if (fail) { const e = [UX_ZONE.r1[0] + O.r1[0], UX_ZONE.r1[1] + O.r1[1]]; k.wave({ x: 12, y: 44, deg: 270, v: 12.5, w: 26, d: 5, cres: ulCresRow(26), t0: 7.6, t1: 15, color: '#9be13a', legend: 'Caustic Waves: an egg they touch hatches' });
       const th = 7.6 + (44 - e[1]) / 12.5; ulViper(k, 'vp', th, e[0], e[1]); k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: th + 0.2, at: th + 0.6, dur: 0.6, color: '#7fbf3a', cn: 'Putrid Membrane', legend: 'a Viper hatching: damage over time on the whole raid' });
       UX_CAR.filter((id) => id !== 'r1' && UX_ZONE[id][0] > 0).forEach((id) => { k.hold(PICK + 1.6, id).at(7.4, id, UX_ZONE[id][0] - 26, UX_ZONE[id][1]); }); ['h2', 'h4', 'r7'].forEach((id) => { k.hold(4, id).at(7.4, id, UX_HOME[id][0] - 30, UX_HOME[id][1]); });
       k.step(0.2).step(T).step(th); k.pause(th + 0.4, 'Nobody took this egg. Her waves rolled over it and it hatched: a Viper, and Putrid Membrane on the whole raid.', { x: e[0], y: e[1], r: 8 });
@@ -1376,9 +1381,9 @@ const UX_M = {
   },
   // Caustic Waves: she pulls one wing back, and waves of venom roll across that half of the platform first, then the other half (and her
   // tail sends waves of its own). A wave hit is huge stacking damage over time, and an egg it touches hatches. Stand in the other half, then cross once
-  // the first set has passed. (kept simple, your call: no tail waves drawn; fail: one player stays on the first side)
+  // the first set has passed. (fail: one player stays on the first side; Nov 10, Flex: "the boss guide animations should be updated with the ulatek ones": her waves as rows of crescents and her tail's as a ring, as on the replay)
   waves(fail, d, o) {
-    const L = 16, T0 = 4.4, k = gdzKit(UX, L), W1 = { x: -12, y: 46, deg: 270, v: 12.5, w: 24, d: 5, t0: T0, t1: T0 + 7.6, color: '#9be13a', legend: 'Caustic Waves: half the platform first, then the other half' }; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
+    const L = 16, T0 = 4.4, k = gdzKit(UX, L), W1 = { x: -12, y: 46, deg: 270, v: 12.5, w: 24, d: 5, cres: ulCresRow(24), t0: T0, t1: T0 + 7.6, color: '#9be13a', legend: 'Caustic Waves: half the platform first, then the other half' }; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.cast('ul', 'Caustic Waves', 0.2, T0); k.call(0.4, 2.6, 'Left wing back: west first', { x: -10, y: 38, color: '#9be13a', ink: '#0b1503' });
     k.wave(W1); k.wave({ ...W1, x: 12, t0: T0 + 5, t1: T0 + 12.6 }); k.wave({ ...W1, x: -36 }); k.wave({ ...W1, x: 36, t0: T0 + 5, t1: T0 + 12.6 });
     // (everyone waits on the east half near the middle; once the first wave has passed their row, they cross to the west half behind it)
@@ -1386,6 +1391,7 @@ const UX_M = {
     Object.entries(UX_HOME).forEach(([id, q]) => { if (id === LATE || id === 't1') return; const wst = q[0] < 0, xa = Math.min(16, Math.max(6, Math.abs(q[0]) + 4)) + (wst ? 2 : 0), ya = q[1] + (wst ? -2.5 : 0), th = T0 + (46 - ya) / 12.5; /* (west players a step off, so mirror-image spots don't land on each other) */
       k.hold(0.4, id).at(Math.max(1.6, th - 0.6), id, xa, ya).hold(th + 0.4, id).at(th + 0.4 + 2 * xa / 7.5, id, -xa, ya); });
     k.hold(T0 - 1, 't1').at(T0 - 0.2, 't1', 6, 40).hold(T0 + 1, 't1').at(T0 + 3, 't1', -6, 40);
+    /* (her tail sends its waves with hers: a ring of 16 crescents bursting out of it, turned so the raid is in its gaps) */ k.wave({ ring: 1, x: UX_TAIL[0], y: UX_TAIL[1], deg: ulRingTurn(k, UX_TAIL, T0, 16, 7), n: 16, cw: 7, v: 12.5, d: 5, t0: T0, t1: T0 + 9, color: '#9be13a', legend: 'Caustic Waves from her tail: a ring bursts out of it in every direction, the gaps widening as it goes' });
     if (fail) { const q = UX_HOME.r3, th = T0 + (46 - q[1]) / 12.5; ulHit(k, 'r3', th, 'Wave: huge damage over time'); k.oops('r3', th + 0.2); k.step(0.2).step(T0).step(th);
       k.pause(th + 0.3, 'This ranged stayed on the west half. The first wave rolled over them: stacking damage over time that one more wave finishes.', { on: 'r3', r: 8 });
       return k.done({ title: 'Mistake: on the side that goes first', focus: { x: 0, y: 4, r: 46 } }); }
@@ -1437,7 +1443,7 @@ const UX_M = {
     k.add('wr', 'Blightscale Wretch', 1, WP[0], WP[1]); k.add('im', 'Spectral Ula\'tek', 1.4, IMG[0], IMG[1]).show('im', 1.4, 7);
     const BEAM = nzAdd(IMG, Math.atan2(WP[1] - IMG[1], WP[0] - IMG[0]) * 180 / Math.PI, 5); k.hold(0.6, 't2').at(2.6, 't2', BEAM[0], BEAM[1]);
     k.link({ from: 'im', to: 't2', t0: 2.6, t1: 6.6, color: '#3af2a8', legend: 'Toxic Incubation: the off tank stands in the venom so the Wretch doesn\'t get it' });
-    for (let i = 0; i < 4; i++) k.wave({ x: BEAM[0], y: BEAM[1], deg: 180 + (i % 2 ? 18 : -18), v: 14, w: 4, d: 3, t0: 3 + i, t1: 4.6 + i, color: '#9be13a', legend: 'waves from the tank: aimed off the platform, away from the eggs' });
+    for (let i = 0; i < 4; i++) k.wave({ x: BEAM[0], y: BEAM[1], deg: 180 + (i % 2 ? 18 : -18), v: 14, w: 4, d: 3, cres: [[-2, 2]], t0: 3 + i, t1: 4.6 + i, color: '#9be13a', legend: 'waves from the tank: aimed off the platform, away from the eggs' });
     k.ring({ on: 't2', r: 2.4, fx: 'debuff', t0: 2.6, dur: 4, color: '#3af2a8', cn: 'Toxic Burn', legend: 'Toxic Burn: stacking damage over time on the off tank' });
     k.hold(6.8, 't2').at(11, 't2', WP[0] - 3, WP[1] - 4); k.add('wr', 'Blightscale Wretch', 11, WP[0] - 2, WP[1] - 1);
     k.cast('wr', 'Fester Burst', 10.6, 14.6); k.ring({ on: 'wr', r: 10, fx: 'safe', t0: 10.6, dur: 4.4, color: '#d8f22f', cn: 'Fester Burst', legend: 'Fester Burst: inside this bubble is safe; everyone farther than 10 yards is hit' });
@@ -1646,13 +1652,17 @@ Object.assign(UX_M, {
     PS.forEach((s) => { const p = k.posAt(s, TE); let best = p, bs = -1; for (let dx = -11; dx <= 11; dx += 1.5) for (let dy = -11; dy <= 11; dy += 1.5) { const q = [p[0] + dx, p[1] + dy], w = Math.hypot(dx, dy); if (w > 11 || !onS(q[0], q[1])) continue;
       const m = Math.min(99, ...taken.map((o) => Math.hypot(o[0] - q[0], o[1] - q[1]))), sc = Math.min(m, 7) - w * 0.05; if (sc > bs) { bs = sc; best = q; } } SPOT[s] = best; taken.push(best); });
     // (each Mythic wave aimed down the clearest path: the way with nobody within its 25 yards' reach, outward from the middle when it's a tie)
+    /* (Nov 10: three waves a soaker, 120 degrees apart (raidstrats shows three arrows a soaker; the game picks them on its server), turned so the
+       worst of the three ways is as clear as it can be) */
+    const clr = (s, g, a) => { const o = GDZ_RAID.filter((id) => id !== s).map((id) => SPOT[id] || k.posAt(id, TE)).filter(Boolean), r = a * Math.PI / 180, u = [Math.cos(r), Math.sin(r)]; let m = 99; for (const q of o) { const dx = q[0] - g[0], dy = q[1] - g[1], al = dx * u[0] + dy * u[1]; if (al > -2 && al < 27) m = Math.min(m, Math.abs(dy * u[0] - dx * u[1])); } return Math.min(m, 8); };
+    const aim3 = (s, g) => { const out = Math.atan2(g[1], g[0]) * 180 / Math.PI; let best = out, bs = -1e9; for (let a = 0; a < 120; a += 5) { const sc = Math.min(clr(s, g, a), clr(s, g, a + 120), clr(s, g, a + 240)) + 0.02 * Math.cos((a - out) * Math.PI / 180); if (sc > bs) { bs = sc; best = a; } } return best; };
     const aim = (s, g) => { const o = GDZ_RAID.filter((id) => id !== s).map((id) => SPOT[id] || k.posAt(id, TE)).filter(Boolean), out = Math.atan2(g[1], g[0]); let best = out * 180 / Math.PI, bs = -1e9;
       for (let a = 0; a < 360; a += 10) { const r = a * Math.PI / 180, u = [Math.cos(r), Math.sin(r)]; let m = 99; for (const q of o) { const dx = q[0] - g[0], dy = q[1] - g[1], al = dx * u[0] + dy * u[1]; if (al > -2 && al < 27) m = Math.min(m, Math.abs(dy * u[0] - dx * u[1])); }
         const sc = Math.min(m, 8) + Math.cos(r - out) * 0.5; if (sc > bs) { bs = sc; best = a; } } return best; };
     PS.forEach((s, i) => { k.ring({ on: s, r: 2.2, fx: 'debuff', t0: TE, dur: 5, color: '#ff8a3b', cn: 'Volatile Purge', legend: 'Volatile Purge: it erupts in 5 seconds: spread out' });
       const g = SPOT[s], a = aim(s, g); k.hold(TE + 0.2, s).at(TE + 4.2, s, g[0], g[1]);
       k.ring({ on: s, r: 4, fx: 'burst', t0: TE + 4.7, at: TE + 5, dur: 0.6, color: '#ff8a3b', cn: 'Volatile Purge', legend: 'Volatile Purge erupting round the soaker' });
-      if (myth) k.wave({ x: g[0], y: g[1], deg: a, v: 14, w: 5, d: 3, t0: TE + 5, t1: TE + 6.8, color: '#9be13a', legend: 'Mythic: a wave from each soaker: aimed away from the raid' }); });
+      if (myth) { const a3 = aim3(s, g); void a; [0, 120, 240].forEach((dd) => { k.arrow({ g: s, t0: TE, t1: TE + 5, ang: (a3 + dd) * Math.PI / 180, len: 12, color: '#f2d04c', thin: 1, turn: 1 }); k.wave({ x: g[0], y: g[1], deg: a3 + dd, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], t0: TE + 5, t1: TE + 6.8, color: '#9be13a', legend: 'Mythic: three waves from each soaker, spread apart' }); }); } });
     k.call(TE + 0.2, TE + 2.6, 'Spread!', { x: UL_PC[n][0], y: UL_PC[n][1] + 12, color: '#ff8a3b', ink: '#1a0a04' });
     if (fail) { k.oops('r6', TE + 0.2); k.call(TE + 0.1, TE + 2.1, 'Turned to stone', { on: 'r6', color: '#ff3b3b', ink: '#fff' }); gdzFailBlast(k, TE + 1.2, 'Calcified Corpse: damage on everyone', 0, -2, ['h4'], 'Calcified Corpse'); k.step(0.2).step(1.4).step(TE);
       k.pause(TE + 1.4, myth ? 'This ranged didn\'t stack with the other two targets, so no soaker stood in their circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.' : 'Nobody stood in this ranged\'s circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.', { on: 'r6', r: 9 });
@@ -1903,7 +1913,7 @@ GDZ['Ula\'tek'] = {
         { id: 'bite', fail: UX_FAIL.bite, name: 'Serpent\'s Bite (Soak every red circle)', spell: 'Serpent\'s Bite', what: 'A melee, a ranged and a healer each get a 7-yard red circle for 15 seconds. Others stand in it until it drains, or the target turns to stone and hurts the raid every second. Soakers then spread out. Four sets, one per quarter.',
           do: ['Three red circles: on a melee, a ranged and a healer.', 'Each group soaks its own red circle.', 'Never leave one unsoaked.', 'Volatile Purge: spread out at once.'],
           plan: ['Keep a backup ready for an off-role player who gets a circle.', 'Pick one side per group for the circles and tell everyone.'],
-          m: { name: 'Serpent\'s Bite (Three soakers, stacked)', what: 'Three sets. The three targets stack, and three assigned soakers (one backup) stand on all three circles at once. Each soaker takes about 2 million as it ends, then 18 seconds of damage over time, and sends a wave out away from the raid.',
+          m: { name: 'Serpent\'s Bite (Three soakers, stacked)', what: 'Three sets. The three targets stack, and three assigned soakers (one backup) stand on all three circles at once. Each soaker takes about 2 million as it ends, then 18 seconds of damage over time, and sends three waves out, one straight away from the raid.',
             do: ['Three reds: a melee, a ranged and a healer. They stack on one spot toward the middle.', 'The three assigned soakers stand on it: inside all three circles at once.', 'As it ends every soaker takes about 2 million: a big defensive.', 'Spread out at once; your wave goes away from the raid. Dying is better than hitting them.'],
             plan: ['Since Oct 6 three soakers clear a set. Sets: two Mages and a Hunter; a Rogue and both tanks; a healer and both tanks; one backup each.', 'After the hit, rotate personals and externals through the damage over time.', 'Last set: you can die after it ends (just not during), so soakers walk into the water rather than hit the raid with their waves.'] },
           map: (d, o) => UX_M.bite(false, d, o) },
