@@ -6246,15 +6246,16 @@ const UL_VB = { mid: [234.8, 127.7, 220.8], L: [7.7, 50.6, 375], R: [307.7, 50.6
 const UL_EGGS = { L: [[-90.9, 57.5], [-74.9, 71.3], [-74.1, 66.8], [-69.7, 66.8], [-68.9, 71.4], [-68.3, 78.4], [-62.7, 71.8]], R: [[85.7, 59.6], [81.5, 63.7], [75, 71.5], [73.2, 66.6], [68.7, 67.5], [67.9, 73.9], [63.6, 80], [61.9, 72.1]] };
 // (the plan's Ula'tek jobs from its note: eggs by area, the coil teams, the intermission's soak groups, each side's Phase 2 jobs)
 function ulRead(txt) {
-  const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], trans: [], side: { L: {}, R: {} } }; let eggs = [], blk = '';
+  const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], trans: [], side: { L: {}, R: {} } }; let eggs = [], blk = '', hd = ''; /* (the heading above a short label, for the team plan's wowutils export (Nov 11)) */
   const names = (s) => String(s).replace(PG_MK_RE, ' ').split(/[\s,]+/).filter((w) => w && /^[^{(\d][^{}()]*$/.test(w));
   for (const raw of String(txt || '').split('\n')) { const l = raw.trim(); if (!l) continue; const w0 = l.split(/[\s:]/)[0].toLowerCase();
     if (w0 === 'transitionstart' || w0 === 'intstart') { blk = w0; continue; } if (w0 === 'transitionend' || w0 === 'intend') { blk = ''; continue; }
-    const ci = l.indexOf(':'), lab = ci < 0 ? '' : l.slice(0, ci).toLowerCase(), who = names(ci < 0 ? l : l.slice(ci + 1)); if (!who.length) continue; let m;
+    if (!blk && l.indexOf(':') < 0) { hd = l; continue; }
+    const ci = l.indexOf(':'), al0 = ci < 0 || typeof ndzNoteAliases !== 'function' ? null : ndzNoteAliases("Ula'tek", l.slice(0, ci).trim(), hd)[0] || null, lab = ci < 0 ? '' : (al0 ? al0.to : l.slice(0, ci)).toLowerCase(), who = names(ci < 0 ? l : l.slice(ci + 1)); if (!who.length) continue; let m;
     if (blk === 'transitionstart') { if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who; else D.trans.push(who); continue; } if (blk || ci < 0) continue;
     if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) D.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) eggs = who; else if (/egg shields?/.test(lab)) D.shields = who;
-    else if ((m = /^team\s*(\d)/.exec(lab))) D.teams[+m[1] - 1 ? 1 : 0] = who; else if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who;
-    else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) D.side[m[1] === 'left' ? 'L' : 'R'][m[2].trim() || 'side'] = who; }
+    else if ((m = /^team\s*(\d)/.exec(lab))) { const ti = +m[1] - 1 ? 1 : 0; D.teams[ti] = al0 && D.teams[ti].length ? [...new Set(D.teams[ti].concat(who))] : who; } else if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who;
+    else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) { const sv = D.side[m[1] === 'left' ? 'L' : 'R'], sk = m[2].trim() || 'side'; sv[sk] = al0 && sv[sk] ? [...new Set(sv[sk].concat(who))] : who; } }
   if (!Object.values(D.ez).some((x) => x.length) && eggs.length) D.ez = { melee: eggs.slice(0, 2), left: eggs.slice(2, 4), right: eggs.slice(4, 6), far: eggs.slice(6, 8), backup: eggs.slice(8) };
   return D;
 }
