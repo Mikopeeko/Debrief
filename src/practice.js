@@ -141,30 +141,38 @@ function pgOpen(root, boss, d) {
     const brk = W.rings.filter((g) => g.fx === 'soak' && g.at > land).sort((a, b) => a.at - b.at), bg = PG_G1.includes(id) ? 0 : 1, br = brk.find((g) => g._ord === bg);
     const q0 = pgFloorSpot(FLR, A, p[0], p[1]); p[0] = q0[0]; p[1] = q0[1];
     out.push({ id, set: si, land: land + (i % 3) * 0.6, shell: land + W.P.shell, x: p[0], y: p[1], who: null, pick: land + W.P.shell + 0.8 + (i % 3) * 0.3, brk: br ? br.at : 1e9, state: 'air' }); }); }); return out; };
-  const reset = () => { G = { t: 0, hp: 100, x: 0, y: 0, done: new Set(), log: [], deaths: 0, near: {}, over: false, eggs: mkEggs(), yolk: -99, soul: -99, boost: -99, adds: [], bots: new Map(), kb: null, fx: [], still: true }; target = null; keys = {}; cam = null; };
+  const reset = () => { G = { t: 0, hp: 100, x: 0, y: 0, done: new Set(), log: [], deaths: 0, near: {}, over: false, eggs: mkEggs(), yolk: -99, soul: -99, boost: -99, adds: [], bots: new Map(), npc: new Map(), kb: null, fx: [], still: true }; target = null; keys = {}; cam = null; };
   const segsAt = (t) => W.segs.filter((s) => t >= s.T + s.k0 && t <= s.T + s.k1);
   const frameOf = (s, t) => { const fr = s.frames, lt = Math.max(0, t - s.T), i = Math.min(fr.length - 1, Math.floor(lt / 0.25)), a = fr[i], b = fr[Math.min(i + 1, fr.length - 1)], w = b.t > a.t ? Math.min(1, Math.max(0, (lt - a.t) / (b.t - a.t))) : 0;
     if (!w || a === b) return a.pts; const nb = new Map(b.pts.map((p) => [p.guid, p])); return a.pts.map((p) => { const q = nb.get(p.guid); return q ? { ...p, x: p.x + (q.x - p.x) * w, y: p.y + (q.y - p.y) * w } : p; }); };
   // where everything is at t: the scenes playing (their bosses and adds), the 19 others where the plan has them (gliding, never jumping), you, the eggs
-  const world = (t, dt) => { const act = segsAt(t), pts = [], plan = {}, seen = [];
-    const newest = act.reduce((a, s) => (!a || s.T + s.k0 >= a.T + a.k0 ? s : a), null);
+  const world = (t, dt) => { const act = segsAt(t), pts = [], plan = {}, raw = {}, pick = {};
+    const newest = act.reduce((a, s) => (!a || s.T + s.k0 >= a.T + a.k0 ? s : a), null), dive = act.find((s) => s.s.beat === 'dive');
+    // (one of each boss and add: her and her tail from the dive while she dives, else from the newest scene that has them; every scene's own units are kept for the hit checks)
     act.forEach((s) => { frameOf(s, t).forEach((p) => { if (p.kind === 'player') { if (s === newest) plan[p.guid] = { x: p.x, y: p.y }; return; }
-      if (p.kind === 'egg' || /^Blightscale (Viper|Rawling)/.test(p.name || '')) return; const g = s.G2(p.guid); if (seen.some((q) => q.name === p.name && Math.hypot(q.x - p.x, q.y - p.y) < 3)) return; seen.push(p); pts.push({ ...p, guid: g }); }); });
+      if (p.kind === 'egg' || /^Blightscale (Viper|Rawling)/.test(p.name || '')) return; const g = s.G2(p.guid), nm = p.name || g; raw[g] = [p.x, p.y];
+      const pr = (dive && s === dive && /^(Ula'tek|Gore Rattle)$/.test(nm) ? 1e6 : 0) + s.T + s.k0; if (!pick[nm] || pr >= pick[nm].pr) pick[nm] = { pr, p: { ...p, guid: g } }; }); });
+    Object.values(pick).forEach((o) => pts.push(o.p)); G.raw = raw;
     // (the boss stays on the map between scenes; the Wretch stays with the off tank)
     if (!pts.some((p) => p.kind === 'boss' && /Ula/.test(p.name || ''))) { const b = WX(t < 86 ? [0, 46] : R([0, 46], W.P.rot)); pts.push({ guid: 'pg-ul', name: 'Ula\'tek', kind: 'boss', x: b[0], y: b[1] }); }
     GDZ_RAID.forEach((id) => { if (id === me) return; const tg = plan[id], cur = G.bots.get(id); if (!tg) { if (cur) pts.push({ ...cur }); return; }
       const q = cur ? { ...cur } : { guid: id, name: gdzName(id), kind: 'player', x: tg.x, y: tg.y }; const dx = tg.x - q.x, dy = tg.y - q.y, dd = Math.hypot(dx, dy), mv = 10 * (dt || 0);
-      if (!cur || dd > 25) { q.x = tg.x; q.y = tg.y; } else if (dd > mv) { q.x += dx / dd * mv; q.y += dy / dd * mv; } else { q.x = tg.x; q.y = tg.y; } G.bots.set(id, q); pts.push(q); });
+      const mv2 = dd > 15 ? mv * 1.5 : mv; if (!cur) { q.x = tg.x; q.y = tg.y; } else if (dd > mv2) { q.x += dx / dd * mv2; q.y += dy / dd * mv2; } else { q.x = tg.x; q.y = tg.y; } G.bots.set(id, q); pts.push(q); });
     // (carriers keep out of each other's 3-yard circles: the others step apart, and never walk into yours while you stand still)
     const carr = G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== me).map((e) => G.bots.get(e.who)).filter(Boolean), meC = G.eggs.some((e) => e.state === 'held' && e.who === me);
     for (let it = 0; it < 3; it++) { for (let i = 0; i < carr.length; i++) for (let j = i + 1; j < carr.length; j++) { const a = carr[i], b = carr[j], ex = b.x - a.x, ey = b.y - a.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.8) { const pu = (3.8 - ee) / 2, ux = ex / ee, uy = ey / ee; a.x -= ux * pu; a.y -= uy * pu; b.x += ux * pu; b.y += uy * pu; } }
       if (meC && G.still) for (const b of carr) { const ex = b.x - G.x, ey = b.y - G.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.8) { b.x = G.x + ex / ee * 3.8; b.y = G.y + ey / ee * 3.8; } } }
     if (!pts.some((p) => /Wretch/.test(p.name || '')) && t > 5.4 && t < END) { const tk = G.bots.get('t2'); if (tk) pts.push({ guid: 'pg-wr', name: 'Blightscale Wretch', kind: 'add', x: tk.x + 2.5, y: tk.y - 1 }); }
+    // (no jumps: each boss and add glides from where it was last shown to where this moment's map has it; the raiders run on their own above)
+    pts.forEach((p, i) => { if (p.kind === 'player') return; const k = p.name || p.guid, c = G.npc.get(k);
+      if (!c || !dt || t - c.seen > 0.5 || /^(Gore Rattle|Spectral Ula'tek|Venomous Heart)$/.test(k)) { G.npc.set(k, { x: p.x, y: p.y, seen: t }); return; } /* (her tail, the image and the heart rise in place; anything new appears where it is) */
+      c.seen = t; const ex = p.x - c.x, ey = p.y - c.y, ee = Math.hypot(ex, ey), mv = (ee > 20 ? 18 : 12) * dt;
+      if (ee > mv) { c.x += ex / ee * mv; c.y += ey / ee * mv; } else { c.x = p.x; c.y = p.y; } pts[i] = { ...p, x: c.x, y: c.y }; });
     pts.push({ guid: me, name: gdzName(me), kind: 'player', x: G.x, y: G.y });
     G.eggs.forEach((e, i) => { if (e.state === 'air' || e.state === 'gone') return; const b = e.who && e.who !== me ? G.bots.get(e.who) : null, h = e.who ? (e.who === me ? [G.x, G.y] : (b ? [b.x, b.y] : null)) : [e.x, e.y]; if (h) pts.push({ guid: 'pg-egg' + i, name: 'Egg', kind: 'egg', x: h[0] + (e.who ? 0.9 : 0), y: h[1] + (e.who ? 0.9 : 0) }); });
     G.adds = G.adds.filter((a) => t < a.t1); G.adds.forEach((a, i) => pts.push({ guid: 'pg-add' + i, name: a.name, kind: 'add', x: a.x, y: a.y }));
     G.plan = plan; return { pts, plan }; };
-  const posOf = (pts, guid) => { if (guid === me) return [G.x, G.y]; const p = pts.find((q) => q.guid === guid); return p ? [p.x, p.y] : null; };
+  const posOf = (pts, guid) => { if (guid === me) return [G.x, G.y]; if (G.raw && G.raw[guid]) return G.raw[guid]; const p = pts.find((q) => q.guid === guid); return p ? [p.x, p.y] : null; };
   const artAt = (t) => { let a = W.base.art || null; for (const [tt, aa] of W.base.artAt || []) if (tt <= t + 1e-6) a = aa; return a; };
   const walk = (x, y) => { if (!FLR) return true; const m = (artAt(G.t) && FLR.art[artAt(G.t)]) || FLR.def; if (!m) return true; const row = m[Math.round(y - A.cy)]; if (!row) return false; const lx = x - A.cx; return row.some(([a, b]) => lx >= a - 0.5 && lx <= b + 0.5); };
 
@@ -324,7 +332,7 @@ function pgOpen(root, boss, d) {
   ov.querySelector('.pg-x').onclick = close;
   window.addEventListener('blur', () => { keys = {}; });
   start0(); pick();
-  window.__pgDbg = { get G() { return G; }, get W() { return W; }, set keys(v) { keys = v; }, get me() { return me; }, set pos(p) { G.x = p[0]; G.y = p[1]; }, sim: simRun }; /* (for testing: the game's state) */
+  window.__pgDbg = { get G() { return G; }, get W() { return W; }, set keys(v) { keys = v; }, get me() { return me; }, set pos(p) { G.x = p[0]; G.y = p[1]; }, sim: simRun, trace: (id) => { stop(); paused = true; role = part.roles.find((r) => r.id === id) || role; start0(); window.__pgAuto = true; const out = []; let nx = 0; try { while (G.t < END) { const w = tick(0.05); if (G.t >= nx) { nx += 1; out.push({ t: Math.round(G.t), npc: w.pts.filter((q) => q.kind !== 'player').map((q) => q.name + '@' + Math.round(q.x - A.cx) + ',' + Math.round(q.y - A.cy)), segs: segsAt(G.t).map((q) => (q.s.m || q.s.beat) + (q.s.o && q.s.o.set ? q.s.o.set : '')), calls: W.callouts.filter((c) => c.text && G.t >= c.t0 && G.t <= c.t1).map((c) => c.text), casts: Object.entries(W.cbars).flatMap(([g, l]) => l.filter((b) => G.t >= b.t0 && G.t <= b.t1).map((b) => b.spell)) }); } } } finally { window.__pgAuto = false; } return out; } }; /* (for testing: the game's state) */
 }
 
 function pgCss() {
