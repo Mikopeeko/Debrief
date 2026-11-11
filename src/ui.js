@@ -37936,11 +37936,56 @@ function dsGuides() {
     hd = hd.querySelector('.pv-copym');
     if (src && !hd.querySelector('[data-dsnote]')) { var nb = document.createElement('button'); nb.type = 'button'; nb.className = 'btn sm primary'; nb.setAttribute('data-ndzpcopy', src.getAttribute('data-ndzpcopy')); nb.setAttribute('data-dsnote', ''); nb.setAttribute('data-tt', '<b>Copy note for the game</b><br>Copies this plan’s NSRT note so you can paste it into the addon in game.'); nb.textContent = 'Copy note for the game'; hd.appendChild(nb); }
     var tb = document.createElement('button'); tb.type = 'button'; tb.className = 'btn sm primary'; tb.setAttribute('data-dstext', ''); tb.setAttribute('data-tt', '<b>Copy all text</b><br>One picture of the job cards as they read here, names only, no maps, ready to paste in Discord (Ctrl+V).'); tb.textContent = 'Copy all text'; hd.appendChild(tb);
-    if (pics) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all images</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all images'; hd.appendChild(b); } };
+    if (pics) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheet', ''); b.setAttribute('data-tt', '<b>Copy all images</b><br>One picture of every step, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy all images'; hd.appendChild(b); }
+    else { var mb = document.createElement('button'); mb.type = 'button'; mb.className = 'btn sm primary'; mb.setAttribute('data-dsmaps', ''); mb.setAttribute('data-tt', '<b>Copy all images</b><br>Every map on this page, every step, with who’s where beside each: one picture to paste in Discord (Ctrl+V).'); mb.textContent = 'Copy all images'; hd.appendChild(mb); } }; /* (Nov 11: the new maps' Copy all images (Flex: "there needs to be a copy images button as well as the copy text button")) */
   // (and one on each job card that has pictures: "copy these assignments", the user's words)
   var addCardBtns = function () { [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var hd = c.querySelector('.plb-rch'); if (!hd || hd.querySelector('[data-dssheetcard]') || !c.querySelector('.pj-pic:not([data-pj="marks"])')) return;
     var b = document.createElement('button'); b.type = 'button'; b.className = 'btn sm primary'; b.setAttribute('data-dssheetcard', ''); b.setAttribute('data-tt', '<b>Copy these</b><br>One picture of just this job’s steps, ready to paste in Discord (Ctrl+V).'); b.textContent = 'Copy these'; var pill = hd.querySelector('.plb-rcs'); if (pill) hd.insertBefore(b, pill); else hd.appendChild(b); }); };
   var tm = 0; new MutationObserver(function () { if (!tm) tm = requestAnimationFrame(function () { tm = 0; addBtn(); addCardBtns(); }); }).observe(document.documentElement, { childList: true, subtree: true }); addBtn(); addCardBtns();
+})();
+
+// ===== Design studio, Nov 11: Copy all images on Assignments from the new maps (Flex: "urgent: there needs to be a copy images button as well
+// as the copy text button"): every page of every map card on the page, with who's where beside each in class colours, as one picture for Discord.
+// The room art comes through our /api/art route (raidplan's own server allows no copying). Owner: the Design studio chat. =====
+(function () {
+  if (typeof document === 'undefined') return;
+  var toData = function (src) { return fetch(src).then(function (r) { return r.ok ? r.blob() : null; }).then(function (b) { return b ? new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.onerror = function () { ok(null); }; fr.readAsDataURL(b); }) : null; }).catch(function () { return null; }); };
+  var loadImg = function (src) { return new Promise(function (ok) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = function () { ok(null); }; i.src = src; }); };
+  var pages = function () { var out = []; [].slice.call(document.querySelectorAll('#view .bj-jobs .plb-rc')).forEach(function (c) { var box = c.querySelector('.pom'); if (!box) return;
+    var card = ((c.querySelector('.plb-rch b') || {}).textContent || '').trim(), bs = [].slice.call(box.querySelectorAll('[data-pomp]')), n = Math.max(1, bs.length), cur = Math.max(0, bs.findIndex(function (b) { return b.classList.contains('on'); }));
+    for (var i = 0; i < n; i++) { if (bs.length) { var pb = box.querySelector('[data-pomp="' + i + '"]'); if (pb) pb.click(); } /* (each page drawn by the map's own page buttons) */
+      var tmp = box.cloneNode(true), sv = tmp.querySelector('.pom-map svg'); if (!sv) continue;
+      var groups = [].slice.call(tmp.querySelectorAll('.pom-g')).map(function (G) { var h4 = G.querySelector('h4'); return { t: h4 ? h4.textContent.trim() : '', c: (h4 && h4.style.color) || '#c9ced8', n: [].slice.call(G.querySelectorAll('.pom-p > b')).map(function (b) { var s = b.parentElement.querySelector('small'); return { t: b.textContent.trim() + (s ? ' ' + s.textContent.trim() : ''), c: b.style.color || '#e6e8ec' }; }) }; });
+      out.push({ card: card, title: ((tmp.querySelector('.pom-t') || {}).textContent || '').trim(), svg: sv, groups: groups }); }
+    if (bs.length) { var b0 = box.querySelector('[data-pomp="' + cur + '"]'); if (b0) b0.click(); } }); return out; }; /* (back to the page you were on) */
+  var draw = function () { var P = pages(); if (!P.length) return Promise.reject(new Error('no maps'));
+    var hrefs = {}; P.forEach(function (p) { [].slice.call(p.svg.querySelectorAll('image')).forEach(function (im) { var s = im.getAttribute('href') || im.getAttribute('xlink:href') || '', m = /cdn\.raidplan\.io\/raid\/wow\.venomabyss\/map\/([\w.-]+\.(?:jpg|png|webp))$/.exec(s); hrefs[s] = m ? '/api/art/' + m[1] : s; }); });
+    var keys = Object.keys(hrefs);
+    return Promise.all(keys.map(function (k) { return toData(hrefs[k]); })).then(function (datas) { var dm = {}; keys.forEach(function (k, i) { dm[k] = datas[i]; });
+      return Promise.all(P.map(function (p) { [].slice.call(p.svg.querySelectorAll('image')).forEach(function (im) { var s = im.getAttribute('href') || im.getAttribute('xlink:href') || '', dd = dm[s]; if (dd) im.setAttribute('href', dd); else im.remove(); });
+        p.svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); var vb = (p.svg.getAttribute('viewBox') || '0 0 100 100').split(/[\s,]+/).map(Number); p.ar = vb[3] / vb[2] || 1; p.svg.setAttribute('width', 920); p.svg.setAttribute('height', Math.round(920 * p.ar));
+        var url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(p.svg)], { type: 'image/svg+xml' })); return loadImg(url).then(function (img) { URL.revokeObjectURL(url); p.img = img; return p; }); })); })
+    .then(function (P2) { var MW = 460, LW = 320, PAD = 24, W = PAD + MW + PAD + LW + PAD, HF = '"Barlow Condensed", "Arial Narrow", sans-serif', cv = document.createElement('canvas'), g = cv.getContext('2d');
+      var rows = P2.map(function (p) { var mh = Math.round(MW * p.ar), lh = 0; p.groups.forEach(function (G) { lh += 22 + Math.ceil(Math.max(1, G.n.length) / 2) * 20 + 8; }); return Math.max(mh, lh) + 34; });
+      var H = 80 + rows.reduce(function (a, b) { return a + b + 18; }, 0) + 12; cv.width = W * 2; cv.height = H * 2; g.scale(2, 2);
+      g.fillStyle = '#0f1117'; g.fillRect(0, 0, W, H); var boss = ((document.querySelector('.bh-name') || {}).textContent || '').trim();
+      g.fillStyle = '#f2f4f6'; g.font = '700 28px ' + HF; g.fillText((boss ? boss + ' · ' : '') + 'Assignments', PAD, 44); g.fillStyle = '#e6b450'; g.font = '700 14px ' + HF; g.textAlign = 'right'; g.fillText('DEBRIEF', W - PAD, 42); g.textAlign = 'left';
+      var y = 66; P2.forEach(function (p, i) { g.fillStyle = '#f2f4f6'; g.font = '700 18px ' + HF; g.fillText(p.card + (p.title ? ' · ' + p.title : ''), PAD, y + 18);
+        var my = y + 30, mh = Math.round(MW * p.ar); g.fillStyle = '#0c120e'; g.fillRect(PAD, my, MW, mh); if (p.img) g.drawImage(p.img, PAD, my, MW, mh);
+        var ly = my + 2, lx = PAD + MW + PAD; p.groups.forEach(function (G) { g.fillStyle = G.c; g.font = '700 13px ' + HF; g.fillText(G.t.toUpperCase(), lx, ly + 13, LW); ly += 22;
+          G.n.forEach(function (nm, j) { if (j && j % 2 === 0) ly += 20; g.fillStyle = nm.c; g.font = '600 15px ' + HF; g.fillText(nm.t, lx + (j % 2) * (LW / 2), ly + 14, LW / 2 - 8); }); ly += (G.n.length ? 20 : 0) + 8; });
+        y += rows[i] + 18; });
+      return cv; }); };
+  var copyMaps = function (msg) { if (msg) msg.textContent = 'Making the picture…';
+    var blobP = draw().then(function (cv) { return new Promise(function (ok) { cv.toBlob(ok, 'image/png'); }); });
+    var done = function (ok) { blobP.then(function (blob) { if (!msg) return; msg.innerHTML = (ok ? '✓ Copied one picture of every map. Paste it in Discord. ' : 'Your browser didn’t allow copying it. ') + '<a href="#" data-dsmapsdl="1">Download it</a>'; var a = msg.querySelector('a'); if (a) a._blob = blob; }, function () { if (msg) msg.textContent = 'No maps to copy on this page.'; }); };
+    var write = navigator.clipboard && window.ClipboardItem ? navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })]) : Promise.reject(new Error('no clipboard'));
+    write.then(function () { done(true); }, function () { done(false); }); };
+  document.addEventListener('click', function (e) { var t = e.target, dl = t.closest && t.closest('a[data-dsmapsdl]');
+    if (dl && dl._blob) { e.preventDefault(); var a = document.createElement('a'); a.href = URL.createObjectURL(dl._blob); a.download = ((((document.querySelector('.bh-name') || {}).textContent || 'Debrief').trim()) + ' assignments.png'); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000); return; }
+    var b = t.closest && t.closest('#view .bj-jobs [data-dsmaps]'); if (!b) return; e.preventDefault();
+    var hd = b.closest('.ndz-dph') || b.parentNode, box = hd.querySelector(':scope > .ds-sheetmsg'); if (!box) { box = document.createElement('span'); box.className = 'sub ds-sheetmsg'; hd.appendChild(box); } copyMaps(box); }, true);
+  window.__dsMapsDraw = draw; /* (for a check) */
 })();
 
 // ===== Design studio round 70 (Oct 26): the Tonight page: the table folded by default when nobody sits, the Sits column
