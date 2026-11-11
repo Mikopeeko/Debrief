@@ -14,7 +14,7 @@ Players **pick eggs up** by walking over them (Malignant Shell DoT while carried
 - **Call of the Serpent#1304012**: more eggs fall (dodge the impacts) — pick them up.
 - **Mother's Wrath#1298367** (tank): knockback; run back into the red pool in front of her, take the bites (Stone Venom DoT + Hobbled 55% slow → remove with Blessing of Freedom etc.).
 - **Mephitic Thrash#1296301** (tail): get out of 35 yd (tank runs out and back), keep eggs safe.
-- **Rage of the Shackled#1286860** (after 2 cycles): her **Venomous Heart** is exposed 20 s and takes **+100%** (12.1.5 journal, checked Nov 10), shares health → hit the heart, cleave the boss, dodge **Falling Debris** (one-shot). Save 2-min cooldowns/potion for it. Tactyks: below ~67% after the first burn is on pace.
+- **Rage of the Shackled#1286860** (after 2 cycles): her **Venomous Heart** is exposed 20 s and takes **+100%** (12.1.5 journal, checked Nov 10), shares health → hit the heart, cleave the boss, dodge **Falling Debris** (hits hard; not a one-shot since Nov 6). Save 2-min cooldowns/potion for it. Tactyks: below ~67% after the first burn is on pace.
 
 ## Phase 2 — Children of the Doomscale
 Raid splits to the two side ledges (cross the venom; mobility out, Warlock gateway back). Each side:
@@ -30,7 +30,7 @@ Eggs rain down — pick them up; tails rise around the room and cast Spectral Co
 ## Phase 3 — Ula'tek's Ascension
 - Melee/tanks on the boss's platform; ranged/healers one platform counter-clockwise (left).
 - **Call of the Serpent** → **Blightscale Clutches** on platforms (circles first) → kill them; eggs that fall into the venom hatch **Blightscale Shriekers** (big add; interrupt **Vicious Echoes**, raid stun + stacking DoT) → tank them to the boss and cleave.
-- **Serpent's Bite#1295905**: two players get a 15 s venom since the Nov 6 hotfix (a melee and a ranged in the kills since; before it, one melee, one ranged, one healer) → others stand in their circle until it's fully leeched, or they become a **Calcified Corpse** (wipe). Three soak groups (melee / ranged / healers + some short-range ranged). Soakers then get **Volatile Purge#1306086** → spread 5+ yd.
+- **Serpent's Bite#1295905**: two players get a 15 s venom since the Nov 6 hotfix (a melee and a ranged in the kills since; before it, one melee, one ranged, one healer) → others stand in their circle until it's fully leeched, or they become a **Calcified Corpse** (wipe). Heroic: one soak group per red circle (melee; ranged and healers). Mythic: the two reds stack and three assigned soakers stand in both (since Oct 6 three clear a set). Soakers then get **Volatile Purge#1306086** → spread 5+ yd.
 - **Caustic Waves** with gaps — stand where there are no orbs.
 - **Circling Prey#1301510**: she destroys the platform she's at → everyone rotates one platform counter-clockwise; personal defensives for the 2nd and 3rd breaks. Final platform: last Bite set, then the final heart phase — if she's at 1-2% jump off behind her to survive the slam a few seconds longer.
 
