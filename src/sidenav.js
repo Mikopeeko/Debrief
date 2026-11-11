@@ -126,7 +126,7 @@ function snStep(d) { const bs = (S.index && S.index.bosses) || [], i = bs.indexO
   if (S.scope === 'all' && S.tab !== 'player') S.scope = 'pull'; select(b); }
 // (Summary: deaths after the wipe call, folded into one line under How it went)
 function snAfter() { if (S.page !== 'pull' || S.tab !== 'audit' || !S.rep || S.scope === 'all') return; const end = $('#view .dbt-why .dbt-chn .dbt-chr.end'); if (!end || end.nextElementSibling && end.nextElementSibling.classList.contains('snv-after')) return;
-  let ds = []; try { const t = cutT(S.rep); if (isFinite(t)) ds = S.rep.deaths.filter((x) => x.t > t + 0.05).sort((a, b) => a.t - b.t); } catch (e) { ds = []; } if (!ds.length) return;
+  let ds = []; try { const rc0 = typeof wipeRoot === 'function' ? wipeRoot(S.rep) : null, t = rc0 && rc0.early ? (S.rep.duration || cutT(S.rep)) : cutT(S.rep); /* (Nov 10: when the root cause says the raid played on past the call, How it went already runs to the end) */ if (isFinite(t)) ds = S.rep.deaths.filter((x) => x.t > t + 0.05).sort((a, b) => a.t - b.t); } catch (e) { ds = []; } if (!ds.length) return;
   const el = document.createElement('div'); el.className = 'snv-after';
   el.innerHTML = '<button type="button" class="snv-aft" aria-expanded="false"><span class="snv-ak"></span><span>' + ds.length + ' more died as the raid went down · <u>show</u></span></button><div class="snv-afl" hidden>' +
     ds.map((x) => '<div class="snv-afr"><span class="snv-at">' + esc(T(x.t)) + '</span><b' + (x.color ? ' style="color:' + esc(x.color) + '"' : '') + '>' + esc(String(x.player || '').split('-')[0]) + '</b><span>' + esc(x.ability || x.killer || '') + '</span></div>').join('') + '</div>';
