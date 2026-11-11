@@ -1263,8 +1263,12 @@ const ROBOTS_TXT = 'User-agent: *\nAllow: /$\nAllow: /?guides\nAllow: /?ingame\n
 const SITEMAP_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + SEO_PAGES.concat(Object.keys(GUIDE_PAGES).map((k) => '/guide/' + k)).map((p) => '  <url><loc>https://debriefme.io' + p + '</loc></url>\n').join('') + '</urlset>\n'; /* (and every boss guide, Oct 27) */
 // (a boss guide's page: the app's page with the guide's title and description, and its words in the page until the app opens the guide)
 const GUIDE_RX = /^\/guide\/([a-z0-9-]+)\/(heroic|mythic)\/?$/;
+// (a guide's quiz link, /guide/<boss>/<diff>?quiz (Nov 11): its own title and description for the Discord preview; the counts match GDZ_QUIZ in guides.js)
+const QUIZ_PAGES = { 'ulatek/mythic': 26, 'ulatek/heroic': 15 };
 function guidePage(env, g, url) {
   let h = appHtml(env); if (!g) return h;
+  { const gm = GUIDE_RX.exec(url.pathname), qn = gm && url.searchParams.has('quiz') && QUIZ_PAGES[gm[1] + '/' + gm[2]]; if (qn) { const dn = gm[2] === 'heroic' ? 'Heroic' : 'Mythic';
+    g = { ...g, title: g.boss + ' ' + dn + ' quiz · Debrief', desc: 'Have you done your homework? ' + qn + ' questions on ' + g.boss + ' ' + dn + ', one at a time, with the right answer and why after each, and your score at the end.' }; } }
   const a = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'), u = 'https://debriefme.io' + url.pathname.replace(/\/$/, '');
   h = h.replace(/<title>[^<]*<\/title>/, '<title>' + a(g.title) + '</title>').replace(/(<meta name="description" content=")[^"]*/, '$1' + a(g.desc))
     .replace(/(<meta property="og:title" content=")[^"]*/, '$1' + a(g.title)).replace(/(<meta property="og:description" content=")[^"]*/, '$1' + a(g.desc))
@@ -2597,7 +2601,7 @@ export default {
     }
     // (search engines, Oct 27: the public pages are listed; raid logs, nights, plans and character pages are other guilds' logs and
     // people's names, so they stay out of search (robots.txt and a noindex header); practice and old addresses are never indexed)
-    { const gm = GUIDE_RX.exec(url.pathname); if (gm) { const g = GUIDE_PAGES[gm[1] + '/' + gm[2]]; return pageRes(req, 'g-' + gm[1] + '-' + gm[2] + '-' + (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : ''), () => guidePage(env, g, url), g ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoHeaders(url) }); } } /* (a boss guide's own page, Oct 27) */
+    { const gm = GUIDE_RX.exec(url.pathname); if (gm) { const g = GUIDE_PAGES[gm[1] + '/' + gm[2]]; return pageRes(req, 'g-' + gm[1] + '-' + gm[2] + (url.searchParams.has('quiz') ? '-q' : '') + '-' + (env.GITHUB_TOKEN ? 'r' : '') + (env.DISCORD_BOT_TOKEN ? 'i' : ''), () => guidePage(env, g, url), g ? 200 : 404, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache', ...seoHeaders(url) }); } } /* (a boss guide's own page, Oct 27) */
     { const ir = url.pathname.length < 40 && typeof ICONS === 'object' ? iconRes(url.pathname) : null; if (ir) return ir; } /* (the home-screen icon, favicons and manifest, Nov 3) */
     if (url.pathname === '/robots.txt') return new Response(url.hostname === HOME_HOST ? ROBOTS_TXT : 'User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
     if (url.pathname === '/sitemap.xml') return new Response(SITEMAP_XML, { headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });

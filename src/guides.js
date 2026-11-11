@@ -5188,7 +5188,9 @@ function openGuides(boss, d) {
   $('#list').innerHTML = ''; $('#bossHead').innerHTML = ''; $('#bossPick').innerHTML = '';
   $('#main').innerHTML = pgTabBar(null) + '<div class="gdz-pagetop">' /* (the main tab row on the guides too, Guides lit, Oct 27) */ + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
   const bk = $('#main .gdz-back'); if (bk) bk.onclick = () => { const g = GDZ_BACK; GDZ_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
+  const qz = !window.__gdzQz && (/^#quiz\b/i.test(location.hash) || /[?&]quiz(=|&|$)/.test(location.search)); /* (a quiz link, read before navNote tidies the address) */
   gdzView(); navNote(); window.scrollTo(0, 0);
+  if (qz) { window.__gdzQz = 1; const r = document.querySelector('#view .gdz'); if (r && gdzQuizOf(S.gdzBoss, S.gdzDiff)) gdzQuiz(r, S.gdzBoss, S.gdzDiff); }
 }
 // (a how-to card's step (Nov 4): "Who: what to do", the who in gold and the *key words* lit; any other step is plain text)
 function gdzStepH(s, how) { const t = String(s == null ? '' : s); if (!how) return esc(t.replace(/\*/g, ''));
@@ -5571,6 +5573,7 @@ function gdzRaider(root, G, D) {
   const hero = root.querySelector('.gdz-hero'); if (!hero) return; hero.after(bar);
   // (the hero's one big button: the whole fight, opened big over the page; the end of the page keeps it too)
   const hin = hero.querySelector('.gdz-hin'); if (hin && root.querySelector('#gdz-all article.gdz-whole')) { hin.insertAdjacentHTML('beforeend', '<button type="button" class="gdz-cta">▶ Watch the whole fight<small>' + (G.sim ? clk(gdzKillLen(G)) + ' · ' : '') + 'every mechanic in order</small></button>'); hin.querySelector('.gdz-cta').onclick = () => gdzWholePop(root); }
+  if (hin && gdzQuizOf(S.gdzBoss, D)) { gdzQuizCss(); hin.insertAdjacentHTML('beforeend', '<button type="button" class="gdz-qbtn">✎ Take the quiz<small>' + gdzQuizOf(S.gdzBoss, D).length + ' questions</small></button>'); hin.querySelector('.gdz-qbtn').onclick = () => gdzQuiz(root, S.gdzBoss, D); } /* (the guide quiz, Nov 11) */
   bar.querySelectorAll('.gdz-seg button').forEach((b) => (b.onclick = () => { ls(b.parentElement.dataset.k === 'mode' ? 'gdz-mode' : 'gdz-role', b.dataset.v); const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); }));
   // the fight at a glance: a real kill's timeline (Mythic), or each phase's mechanics in order
   const byId = {}; G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = m; }));
@@ -5647,6 +5650,204 @@ function gdzWholePop(root) {
   const key = (e) => { if (e.key === 'Escape') close(); }; document.addEventListener('keydown', key);
   ov.addEventListener('click', (e) => { if (e.target === ov || (e.target.closest && e.target.closest('.gdz-wpx'))) close(); });
   setTimeout(() => { const p = art.querySelector('.zplay'); if (p && !/Pause/.test(p.textContent)) p.click(); }, 450);
+}
+// ===== The guide quiz (Nov 11, Flex: "can you make an interactive quiz for ulatek in the boss guides? Like a pop up quiz? Something i could
+// give to my raid to see if they have researched the fight?"): a pop-up, one question at a time, the right answer and why after each, a
+// score at the end with what to read again. Every fact is the guide's own (the cards above, and notes/Guides/Bosses/<boss>.md). Its own
+// address opens it for anyone, signed in or not: /guide/<boss>/<heroic|mythic>?quiz (or #quiz). A question: q, a (the right answer
+// first; shown shuffled), why, mid (the card it comes from, for Read it), sp (the spell for its icon), pt (the part of the fight).
+const GDZ_QUIZ = {
+  "Ula'tek": {
+    m: [
+      { pt: 'Phase 1', mid: 'waves', sp: 'Caustic Waves', q: 'Ula\'tek pulls one wing back. What does that tell you?', a: ['That half of the platform gets her waves first: go to the other half', 'That half is safe for the next few seconds: stand there', 'A coil soak is about to land on that side', 'She is about to dive'], why: 'The wing she pulls back marks the half her waves roll over first. It changes every pull, so someone calls it.' },
+      { pt: 'Phase 1', mid: 'waves', sp: 'Caustic Waves', q: 'Her first half of waves has rolled past and her other half is next. What now?', a: ['Cross back behind the first wave, into the half it just left', 'Stay where you are: the second half misses you', 'Run under her into the middle', 'Pop a defensive and stand still'], why: 'Her waves go half the platform at a time. Once the first has passed, that side is clear, so the lane crosses back behind it. Mages at the sides Blink over it.' },
+      { pt: 'Phase 1', mid: 'waves', sp: 'Caustic Waves', q: 'Small tails rise at the corners during her waves. What do their waves look like?', a: ['A ring bursting out in every direction, with gaps that widen as it goes', 'One straight wall rolling toward her', 'Nothing: the small tails only slam the ground', 'A pool of venom that stays on the floor'], why: 'Each tail fires a moment after it rises, a ring of waves all round it. Step out of their paths, into a gap. Ten seconds later two more fire from the edges.' },
+      { pt: 'Phase 1', mid: 'Her and the tail', lb: 'Her and the tail', sp: 'Rattler Slam', q: 'Why must one tank be on Ula\'tek and one on her tail all fight?', a: ['An empty melee range hits the whole raid', 'So the tail can\'t turn to face the raid', 'To share the Mother\'s Wrath bites', 'It doesn\'t matter: one tank can hold both'], why: 'Nobody on the tail: Rattler Slam hits the raid. Nobody in melee range of her: Unchecked Rage hits the raid.' },
+      { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', q: 'You\'re carrying an egg. What hatches a deadly Viper out of it?', a: ['Taking a wave, falling in the water, or dying while you hold it', 'A coil soak landing on you', 'Holding it for more than 20 seconds', 'Breaking its shell before you pick it up'], why: 'Venom hatches eggs: a wave, the water, or a carrier dying. An immunity keeps you alive in a wave, but the egg still hatches.' },
+      { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', q: 'On Mythic, carrying an egg puts a 3-yard ring on you. What must it never do?', a: ['Touch another carrier\'s ring', 'Touch her tank', 'Leave your zone', 'Touch a coil soak'], why: 'If two carriers\' rings touch, a Viper hatches. Keep the rings apart all the time, even inside the Wretch\'s bubble.' },
+      { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', q: 'Your egg just broke and you have Rancid Yolk. Can you pick up another egg?', a: ['Not yet: let it drop first (20 seconds), or picking one up kills you', 'Yes, straight away', 'Yes, but only an egg in your own zone', 'Only after you stand in a coil soak'], why: 'Rancid Yolk lasts 20 seconds after an egg breaks. Picking up another egg while it\'s on you kills you.' },
+      { pt: 'Phase 1', mid: 'wretch', sp: 'Fester Burst', lb: 'Blightscale Wretch', q: 'A spectral Ula\'tek at the edge pours venom at the Blightscale Wretch. Who steps into that stream?', a: ['The off tank, with a defensive, aiming its waves off the platform', 'Nobody: let it hit the Wretch', 'The egg carriers, to break their eggs', 'The healers, taking turns'], why: 'The off tank takes the stream instead of the Wretch, and aims the waves it makes off the platform, away from the eggs. Then that tank picks up the Wretch.' },
+      { pt: 'Phase 1', mid: 'wretch', sp: 'Fester Burst', q: 'The Blightscale Wretch casts Fester Burst. Where do you stand?', a: ['Inside its 10-yard bubble, egg carriers too, rings apart', 'More than 10 yards away from it', 'Behind Ula\'tek, out of its sight', 'Anywhere: it only hits the tank'], why: 'Fester Burst blasts everyone outside the bubble: a big hit and damage over time. Kill the Wretch before its third bubble.' },
+      { pt: 'Phase 1', mid: 'coils', sp: 'Spectral Coils', q: 'Two Spectral Coils rise by her tail and slam about 3 seconds apart. How does the raid take them?', a: ['Two groups, one for each slam', 'The whole raid takes both slams together', 'Only the tanks soak them', 'Nobody: dodge them both'], why: 'Everyone within 10 yards shares a slam, and Soul Constrictor stops a soaker helping with the next one. Carried eggs break into Rawlings in the slam: kill them within 25 seconds.' },
+      { pt: 'Phase 1', mid: 'wrath', sp: 'Mother\'s Wrath', q: 'Mother\'s Wrath knocks her tank back. What does that tank do?', a: ['Run straight back into the red circle in front of her and take the bites', 'Stay out of reach until the bites end', 'Taunt the tail instead', 'Wait for the other tank to taunt her'], why: 'If her tank is out of reach, the bites hit everyone. The other tank taunts at her waves cast: never two Mother\'s Wraths in a row on one tank.' },
+      { pt: 'Phase 1', mid: 'thrash', sp: 'Mephitic Thrash', q: 'Her tail winds up Mephitic Thrash. What do you do?', a: ['Get 35 yards away from it, its tank too, then come back', 'Stack on the tail to share the hit', 'Stand behind Ula\'tek', 'Soak it in two groups'], why: 'Inside 35 yards it\'s a big hit and a knockback. Farther out it\'s only a smaller hit and some damage over time. Keep the eggs away from it.' },
+      { pt: 'Phase 1', mid: 'dive', sp: 'Submerge', lb: 'She dives', q: 'After her first waves (1:17) she dives. What does her tank do?', a: ['Waits where the bubbles rise at the edge, before she comes up', 'Taunts the tail and waits there', 'Stays in the middle until she is back', 'Runs to a side ledge'], why: 'Bubbles show where she will come up. If nobody is in her melee range when she lands, the whole raid is hit.' },
+      { pt: 'Phase 1', mid: 'heart', sp: 'Rage of the Shackled', q: 'Rage of the Shackled opens her Venomous Heart. What do you need to know?', a: ['It takes double damage for 20 seconds: cooldowns and a potion on it', 'It\'s open for 10 seconds and takes no extra damage', 'It stays open until the adds are dead', 'Only the tanks may hit it'], why: 'She hits the raid every 4 seconds while it\'s open, and brown circles drop debris that hits hard, tanks too. Under about 66% after it means you\'re on pace.' },
+      { pt: 'Phase 2', mid: 'Crossing over', lb: 'Crossing over', sp: 'Caustic Waves', q: 'Phase 2: the raid splits onto the two side ledges. When do you cross?', a: ['Once her last wave line has passed, through the Warlock\'s gate', 'Straight away, before her waves', 'Only after the Warden comes to you', 'Swim across the venom at once'], why: 'Crossing early puts you in her waves. One Warlock can place a gate for each side.' },
+      { pt: 'Phase 2', mid: 'warden', sp: 'Malice', lb: 'Doomscale Warden', q: 'The tank pulls the Doomscale Warden across the line. What happens, and what does the raid do?', a: ['It teleports to the eggs and gestates them: cleave those eggs first and kick every Malice', 'It runs back to the boss: ignore it', 'It shields the cauldron: break the eggs later', 'It splits in two: one tank on each'], why: 'Gestating eggs hatch in 20 seconds. Malice hits everyone every second: kick every one, and kill the Warden before its next gestation.' },
+      { pt: 'Phase 2', mid: 'fangs', sp: 'Grasping Fangs', q: 'The Wardens tether six players with Grasping Fangs. How do the tethers break?', a: ['One mobile ranged breaks alone, then the other five break together under raid cooldowns', 'All six break at the same moment', 'One at a time, 10 seconds apart', 'Nobody breaks them: they fall off'], why: 'Every break puts Blight Vein on the whole raid, and it stacks. The five break together 4 seconds after the first, inside Anti-Magic Zone and Rallying Cry.' },
+      { pt: 'Phase 2', mid: 'doomscales', sp: 'Doomscale Cauldron', q: 'Your ledge\'s Warden is dead. In what order do the eggs go into the cauldron?', a: ['The small eggs first, the big Doomscale Eggs last, before Hatching Doom ends', 'The big eggs first, then the small ones', 'All of them at the same time', 'None: they break on their own'], why: 'If a big egg\'s Hatching Doom runs out, everyone is stunned for 20 seconds: a wipe. Small-egg carriers keep their rings apart in the lanes.' },
+      { pt: 'Phase 2', mid: 'doomscales', sp: 'Anguished Cry', lb: 'Weakened Doomscale', q: 'Two Weakened Doomscales climb out of each pit. What matters most?', a: ['Kill them evenly and kick every Anguished Cry', 'Kill one fast, then the other', 'Ignore them: they leave on their own', 'Tank them in the venom'], why: 'When one dies the rest enrage, and an unkicked Anguished Cry stuns the raid. Aim Desperate Thrash away from people.' },
+      { pt: 'Phase 2', mid: 'heart2', sp: 'Bloodlust', lb: 'The second heart burn', q: 'In the guide\'s Mythic plan, when does the raid use Bloodlust?', a: ['The second heart burn (4:48), with the second potion', 'On the pull', 'The first heart burn', 'The last heart burn in phase 3'], why: 'It goes on the second burn, with the Doomscales cleaved down beside the heart. On early pulls with deaths, use it earlier.' },
+      { pt: 'Intermission', mid: 'intcoils', sp: 'Spectral Coils', q: 'Intermission: eight coil soaks in about 20 seconds. How are they split?', a: ['Three groups take turns round the room', 'Two groups take turns', 'The whole raid soaks every one', 'The tanks take them all'], why: 'Nobody can soak two in a row. The caller presses where the first slam lands and your spots pop up. Personals around 5:50.' },
+      { pt: 'Intermission', mid: 'The Shattering', lb: 'The Shattering', sp: 'The Shattering', q: 'The platform is about to shatter into four. Where do you stand?', a: ['Inside, on the line toward the diamond', 'At the outer edge', 'Right under her', 'Anywhere: there\'s no knockback'], why: 'The knockback is big, and outside is the venom. Watch where her bubbles come up: that\'s the first quarter.' },
+      { pt: 'Phase 3', mid: 'clutches', sp: 'Call of the Serpent', lb: 'Slithering Clutches', q: 'Slithering Clutches crawl toward the venom. Who stops them?', a: ['Two Death Knights grip them in, then Gorefiend\'s Grasp pulls them into the cleave', 'The healers dispel them', 'Nobody: let them reach the venom', 'The egg carriers pick them up'], why: 'A clutch that reaches the venom hatches a Shrieker. Kick its Vicious Echoes, which stuns the raid.' },
+      { pt: 'Phase 3', mid: 'bite', sp: 'Serpent\'s Bite', q: 'Serpent\'s Bite since the Nov 6 hotfix: how many red circles, and who soaks them?', a: ['Two, stacked on one spot, and three assigned soakers stand in both', 'Three: a melee, a ranged and a healer, each soaked apart', 'One, and the whole raid stands in it', 'Two, and nobody soaks: the targets run away'], why: 'A circle left unsoaked turns its target to stone, which hurts the raid every second. Soakers take about 2 million as it ends (big defensive), then spread and send their wave away from the raid.' },
+      { pt: 'Phase 3', mid: 'prey', sp: 'Circling Prey', q: 'Circling Prey: she\'s about to destroy the quarter she\'s on. Where does the raid go?', a: ['One quarter counter-clockwise, to her left', 'One quarter clockwise, to her right', 'Into the middle, between the quarters', 'Nowhere: stay and use defensives'], why: 'It\'s a huge hit and a knockback within 13 yards, and a smaller hit on everyone else. In this phase her waves come from behind: turn your camera to see them.' },
+      { pt: 'Phase 3', mid: 'The last burn', lb: 'The last burn', sp: 'Rage of the Shackled', q: 'The last heart burn (9:37) is ending and she\'s nearly dead. What can you do?', a: ['Jump off behind her: you dodge the slam and live a few seconds longer', 'Stack on her tank', 'Run to the next quarter', 'Nothing: the slam can\'t be dodged'], why: 'The venom hurts, but it buys the few seconds to finish her.' },
+    ],
+    h: [
+      { pt: 'Phase 1', mid: 'waves', sp: 'Caustic Waves', q: 'Ula\'tek pulls one wing back. What does that tell you?', a: ['That half of the platform gets her waves first: go to the other half', 'That half is safe for the next few seconds: stand there', 'A coil soak is about to land on that side', 'She is about to dive'], why: 'The wing she pulls back marks the half her waves roll over first. It changes every pull, so someone calls it.' },
+      { pt: 'Phase 1', mid: 'waves', sp: 'Caustic Waves', q: 'Her first half of waves has rolled past and her other half is next. What now?', a: ['Cross back behind the first wave, into the half it just left', 'Stay where you are: the second half misses you', 'Run under her into the middle', 'Pop a defensive and stand still'], why: 'Her waves go half the platform at a time. Once the first has passed, that side is clear: cross behind it before the second half goes.' },
+      { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', q: 'You\'re carrying an egg. What hatches a deadly Viper out of it?', a: ['Taking a wave, falling in the water, or dying while you hold it', 'A coil soak landing on you', 'Holding it for more than 20 seconds', 'Another player walking past you'], why: 'Venom hatches eggs: a wave, the water, or a carrier dying. A coil soak breaks the egg instead, and only a weak Rawling comes out.' },
+      { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', q: 'You hold an egg and a wave is about to hit you. You use an immunity. What happens?', a: ['You live, but the egg still hatches a Viper', 'You live and the egg is safe', 'The egg breaks into a weak Rawling', 'The egg drops and rolls away'], why: 'An immunity keeps you alive, not the egg. Get out of the wave\'s path instead.' },
+      { pt: 'Phase 1', mid: 'coils', sp: 'Spectral Coils', q: 'Two Spectral Coils rise by her tail and slam about 3 seconds apart. How does the raid take them?', a: ['Two groups, one for each slam', 'The whole raid takes both slams together', 'Only the tanks soak them', 'Nobody: dodge them both'], why: 'Everyone within 10 yards shares a slam. Soul Constrictor stops a soaker helping with the next one for a few seconds, so it takes two groups.' },
+      { pt: 'Phase 1', mid: 'coils', sp: 'Spectral Coils', q: 'You carry an egg into a coil soak. What happens to it?', a: ['It breaks and a weak Rawling comes out: kill it', 'It hatches a deadly Viper', 'Nothing: keep carrying it', 'It jumps to the nearest player'], why: 'A coil slam is how eggs are meant to break. The Rawling is weak: kill it quickly.' },
+      { pt: 'Phase 1', mid: 'wrath', sp: 'Mother\'s Wrath', q: 'Mother\'s Wrath knocks her tank back. What does that tank do?', a: ['Run straight back into the red circle in front of her and take the bites', 'Stay out of reach until the bites end', 'Taunt the tail instead', 'Wait for the other tank to taunt her'], why: 'If her tank is out of reach, the bites hit everyone. Take them with a big defensive; Blessing of Freedom takes the slow off.' },
+      { pt: 'Phase 1', mid: 'thrash', sp: 'Mephitic Thrash', q: 'Her tail winds up Mephitic Thrash. What do you do?', a: ['Get 35 yards away from it, its tank too, then come back', 'Stack on the tail to share the hit', 'Stand behind Ula\'tek', 'Soak it in two groups'], why: 'Inside 35 yards it\'s a big hit and a knockback. Farther out it\'s only a smaller hit and some damage over time. Keep the eggs away from it.' },
+      { pt: 'Phase 1', mid: 'heart', sp: 'Rage of the Shackled', q: 'Rage of the Shackled opens her Venomous Heart. What do you need to know?', a: ['It takes double damage for 20 seconds: cooldowns and a potion on it', 'It\'s open for 10 seconds and takes no extra damage', 'It stays open until the adds are dead', 'Only the tanks may hit it'], why: 'She hits the raid every 4 seconds while it\'s open, and brown circles drop debris that hits hard, tanks too. On Heroic, Bloodlust here.' },
+      { pt: 'Phase 2', mid: 'warden', sp: 'Malice', q: 'Phase 2: the Doomscale Warden on your ledge casts Malice. What do you do?', a: ['Kick it: it\'s a deadly raid channel', 'Spread out', 'Get 35 yards away', 'Stand in it to soak it'], why: 'Malice hits everyone every second while it channels. Kick every one, then kill the Warden.' },
+      { pt: 'Phase 2', mid: 'fangs', sp: 'Grasping Fangs', q: 'The Warden tethers two players on each ledge with Grasping Fangs. How do they break?', a: ['One on each ledge first; the other two once Blight Vein has fallen off', 'All four at the same moment', 'Nobody breaks them: they fall off', 'The tanks break them for the raid'], why: 'Each break puts Blight Vein on everyone, and it stacks. Breaking two at a time keeps it healable.' },
+      { pt: 'Phase 2', mid: 'doomscales', sp: 'Doomscale Cauldron', q: 'Your ledge\'s Warden is dead. In what order do the eggs go into the cauldron?', a: ['The small eggs first, the big Doomscale Egg last, before Hatching Doom ends', 'The big egg first, then the small ones', 'All of them at the same time', 'None: they break on their own'], why: 'If the big egg\'s Hatching Doom runs out, everyone is stunned for 20 seconds: a wipe. Kick the Weakened Doomscale\'s Anguished Cry.' },
+      { pt: 'Intermission', mid: 'intcoils', sp: 'Spectral Coils', q: 'Intermission: six coils rise round the platform, one after another. How are they soaked?', a: ['Two groups take turns, bringing the falling eggs in', 'One group takes them all', 'The whole raid soaks every one', 'Nobody: dodge them'], why: 'Nobody can soak two in a row. Then stand toward the inside: the shattering knocks everyone back.' },
+      { pt: 'Phase 3', mid: 'bite', sp: 'Serpent\'s Bite', q: 'Serpent\'s Bite since the Nov 6 hotfix: how many red circles, and who soaks them?', a: ['Two, and each group soaks its own until it drains', 'Three: a melee, a ranged and a healer', 'One, and only the tanks soak it', 'Two, and nobody soaks: the targets run away'], why: 'A circle left unsoaked turns its target to stone, which hurts the raid every second. Then Volatile Purge: soakers spread out at once.' },
+      { pt: 'Phase 3', mid: 'prey', sp: 'Circling Prey', q: 'Circling Prey: she\'s about to destroy the quarter she\'s on. Where does the raid go?', a: ['One quarter counter-clockwise, to her left', 'One quarter clockwise, to her right', 'Into the middle, between the quarters', 'Nowhere: stay and use defensives'], why: 'It\'s a huge hit and a knockback within 13 yards, and a smaller hit on everyone else. Personals for the second and third.' },
+    ],
+  },
+};
+const gdzQuizOf = (boss, d) => ((GDZ_QUIZ[boss] || {})[d] || null);
+const gdzQuizUrl = (boss, d) => 'https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?quiz';
+// (a question's card map from the guide itself, played under the answer: the same map, steps and captions as on the page)
+function gdzQuizMech(boss, d, mid) { const own = (o) => (!o || (o.only && o.only !== d) ? null : Object.assign({}, o, o[d] || {})); let m = null;
+  ((GDZ[boss] || {}).phases || []).forEach((p) => { const q = own(p); if (q) (q.mechs || []).forEach((x) => { const y = own(x); if (!m && y && y.id === mid && y.map) m = y; }); }); return m; }
+function gdzQuizTile(boss, d, mid) { const own = (o) => (!o || (o.only && o.only !== d) ? null : Object.assign({}, o, o[d] || {})); let t = null;
+  ((GDZ[boss] || {}).phases || []).forEach((p) => { const q = own(p); if (q) (q.tiles || []).forEach((x) => { const y = own(x); if (!t && y && y.name.startsWith(mid)) t = y; }); }); return t; }
+function gdzQuizMap(box, boss, d, mid) {
+  const m = gdzQuizMech(boss, d, mid); if (!m) return false; const key = boss + '|' + d + '|' + m.name; let mp = GDZ_CACHE.get(key);
+  if (!mp) { try { mp = m.map(d); } catch (e) { console.error(e); return false; } GDZ_CACHE.set(key, mp); }
+  const pmap = gdzPmap(); box.innerHTML = miniMap(mp, pmap); bindZoom(box); hydrateMapIcons(box);
+  if ((mp.pauses || []).length) { const zb = box.querySelector('.zbox'); if (zb) box._onPause = gdzPauseUi(zb, null, { texts: mp.pauses.map((p) => p.text) }); }
+  const st = mp.steps || [], dos = m.do || []; if (st.length && dos.length) { const cap = document.createElement('div'); cap.className = 'gdz-cap'; (box.querySelector('.zbox') || box).after(cap); let cur = -1;
+    box._onFrame = (ft) => { let j = -1; st.forEach(([t], q) => { if (ft >= t - 0.01) j = q; }); if (j !== cur) { cur = j; cap.innerHTML = j < 0 ? '' : '<i>' + (j + 1) + '</i><span>' + gdzStepH(dos[j] || '', m.how) + '</span>'; } }; }
+  bindAnim(box, mp, pmap, true); setTimeout(() => { const p = box.querySelector('.zplay'); if (p && !/Pause/.test(p.textContent)) p.click(); }, 350); return true;
+}
+// (Read it: straight to the card, aimed again while the maps above it load and the page grows)
+function gdzQuizJump(root, mid) {
+  const el = root.querySelector('.gdz-m[data-mid="' + mid + '"]') || [...root.querySelectorAll('.gdz-tile')].find((t) => ((t.querySelector('h5') || {}).textContent || '').trim().startsWith(mid)); if (!el) return; const sec = el.closest('.gdz-sec'); if (sec && sec.hidden && root._showSec) root._showSec(sec);
+  const go = () => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 70 }); go();
+  [200, 600, 1200, 2000].forEach((t) => setTimeout(() => { if (Math.abs(el.getBoundingClientRect().top - 70) > 24) go(); }, t));
+  el.classList.remove('gdz-flash'); void el.offsetWidth; el.classList.add('gdz-flash');
+}
+// (the pop-up: a start card, the questions one at a time, then the score and what to read again)
+function gdzQuiz(root, boss, d) {
+  const Q = gdzQuizOf(boss, d); if (!Q) return; const old = document.querySelector('.gdz-qz'); if (old) old.remove();
+  gdzQuizCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic', url = gdzQuizUrl(boss, d), host = !!(typeof WCL !== 'undefined' && WCL.HOSTED);
+  const ov = document.createElement('div'); ov.className = 'gdz-qz'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', boss + ' quiz');
+  ov.innerHTML = '<div class="gdz-qzin"><div class="gdz-qzh"><div><span class="gdz-qzk">' + dn + ' quiz</span><b>' + esc(boss) + '</b></div><button type="button" class="gdz-qzx" aria-label="Close the quiz">✕</button></div><div class="gdz-qzb"></div></div>';
+  (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('gdz-qzopen'); /* (inside the guide, like the whole-fight pop-up: its maps get the guide's look) */
+  const body = ov.querySelector('.gdz-qzb'), base = location.pathname + (location.search && !/[?&]quiz\b/.test(location.search) ? location.search : '');
+  if (host && location.pathname.startsWith('/guide/')) { try { history.replaceState(history.state, '', location.pathname + '?quiz'); } catch (e) { /* ignore */ } } /* (the address shows the quiz while it's open, so it can be shared from there) */
+  const shuf = (a) => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  let qs = [], at = 0, picked = null; const res = [];
+  const close = () => { if (!ov.isConnected) return; ov.remove(); document.documentElement.classList.remove('gdz-qzopen'); document.removeEventListener('keydown', key);
+    if (host && location.pathname.startsWith('/guide/')) { try { history.replaceState(history.state, '', base); } catch (e) { /* ignore */ } } };
+  const copyBtn = '<button type="button" class="gdz-qzbtn gdz-qzcp">Copy the quiz link</button>';
+  const bindCopy = () => body.querySelectorAll('.gdz-qzcp').forEach((b) => (b.onclick = async () => { let ok = false; try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { /* (no clipboard) */ }
+    b.textContent = ok ? 'Link copied: post it in Discord' : url; b.classList.add('done'); }));
+  const bar = () => '<div class="gdz-qzbar" aria-hidden="true">' + qs.map((x, i) => '<i class="' + (res[i] == null ? (i === at ? 'cur' : '') : res[i] ? 'ok' : 'no') + '"></i>').join('') + '</div>';
+  const start = () => {
+    body.innerHTML = '<div class="gdz-qzst"><p class="gdz-qzlead">Have you done your homework?</p><p>' + Q.length + ' questions (about ' + Math.max(3, Math.round(Q.length / 5)) + ' minutes) on what every raider needs to know for ' + esc(boss) + ' on ' + dn + '. One at a time: pick an answer and see the right one, and why, straight away. At the end you get your score and the parts to read again.</p>' +
+      '<div class="gdz-qzrow"><button type="button" class="gdz-qzbtn gdz-qzgo">Start the quiz</button>' + copyBtn + '</div><p class="gdz-qzfine">Every answer comes from this guide (patch 12.1.5). Raid leads: copy the link and post it, and it opens straight to the quiz.</p></div>';
+    body.querySelector('.gdz-qzgo').onclick = () => { qs = Q.map((x) => ({ ...x, o: shuf(x.a.map((t, i) => ({ t, ok: !i }))) })); at = 0; res.length = 0; ask(); }; bindCopy(); body.querySelector('.gdz-qzgo').focus(); };
+  const ask = () => {
+    const x = qs[at]; picked = null;
+    body.innerHTML = bar() + '<div class="gdz-qzmeta"><span>Question ' + (at + 1) + ' of ' + qs.length + '</span><span>' + esc(x.pt) + '</span></div>' +
+      '<div class="gdz-qzmech">' + spellIcon(0, x.sp) + '<span>' + esc(x.lb || x.sp) + '</span></div><h3 class="gdz-qzq">' + esc(x.q) + '</h3>' +
+      '<ol class="gdz-qzas">' + x.o.map((o, i) => '<li><button type="button" data-i="' + i + '"><i>' + 'ABCD'[i] + '</i><span>' + esc(o.t) + '</span></button></li>').join('') + '</ol><div class="gdz-qzwhy" aria-live="polite"></div>';
+    body.querySelectorAll('.gdz-qzas button').forEach((b) => (b.onclick = () => pick(+b.dataset.i))); try { refreshIcons(); } catch (e) { /* (icons are a nicety) */ } body.scrollTop = 0;
+  };
+  const pick = (i) => {
+    if (picked != null) return; const x = qs[at], ok = !!x.o[i].ok; picked = i; res[at] = ok;
+    body.querySelectorAll('.gdz-qzas button').forEach((b, j) => { b.disabled = true; if (x.o[j].ok) b.classList.add('ok'); else if (j === i) b.classList.add('no'); });
+    const last = at === qs.length - 1;
+    body.querySelector('.gdz-qzwhy').innerHTML = '<p><b class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'Right.' : 'Not quite.') + '</b> ' + esc(x.why) + '</p><button type="button" class="gdz-qzbtn gdz-qznx">' + (last ? 'See your score' : 'Next question') + ' ›</button>' + (gdzQuizMech(boss, d, x.mid) ? '<button type="button" class="gdz-qzbtn gdz-qzmp">▶ Watch it on the guide\'s map</button>' : '');
+    const mb = body.querySelector('.gdz-qzmp'); if (mb) mb.onclick = () => { const box = document.createElement('div'); box.className = 'gdz-mm gdz-qzmap'; mb.replaceWith(box); if (!gdzQuizMap(box, boss, d, x.mid)) box.remove(); };
+    const bq = body.querySelector('.gdz-qzbar'); if (bq) bq.outerHTML = bar();
+    const nx = body.querySelector('.gdz-qznx'); nx.onclick = () => { if (last) end(); else { at++; ask(); } }; nx.focus({ preventScroll: true }); nx.scrollIntoView({ block: 'nearest' });
+  };
+  const end = () => {
+    const n = res.filter(Boolean).length, tot = qs.length, pc = n / tot;
+    const verdict = n === tot ? ['Raid ready.', 'You know this fight inside out.'] : pc >= 0.8 ? ['Nearly there.', 'Read the parts below once more before the pull.'] : pc >= 0.5 ? ['Some homework left.', 'Read the parts below before raid night.'] : ['Back to the guide.', 'Read it through once, then take the quiz again.'];
+    const miss = []; qs.forEach((x, i) => { if (!res[i] && !miss.some((m) => m.mid === x.mid)) miss.push(x); });
+    body.innerHTML = bar() + '<div class="gdz-qzend"><div class="gdz-qzsc"><b>' + n + '<small> / ' + tot + '</small></b><div><p class="gdz-qzv ' + (n === tot ? 'ok' : pc >= 0.5 ? 'mid' : 'no') + '">' + verdict[0] + '</p><p>' + verdict[1] + '</p></div></div>' +
+      (miss.length ? '<h4>Read again</h4><ul class="gdz-qzrd">' + miss.map((x) => '<li>' + spellIcon(0, x.sp) + '<span><b>' + esc((gdzQuizMech(boss, d, x.mid) || gdzQuizTile(boss, d, x.mid) || {}).name || x.lb || x.sp) + '</b><small>' + esc(x.pt) + '</small></span><button type="button" class="gdz-qzbtn gdz-qzrdb" data-mid="' + esc(x.mid) + '">Read it ›</button></li>').join('') + '</ul>' : '') +
+      '<div class="gdz-qzrow"><button type="button" class="gdz-qzbtn gdz-qzgo">Take it again</button>' + copyBtn + '<button type="button" class="gdz-qzbtn gdz-qzcl">Back to the guide</button></div></div>';
+    body.querySelector('.gdz-qzgo').onclick = () => { qs = Q.map((x) => ({ ...x, o: shuf(x.a.map((t, i) => ({ t, ok: !i }))) })); at = 0; res.length = 0; ask(); };
+    body.querySelector('.gdz-qzcl').onclick = close; bindCopy();
+    body.querySelectorAll('.gdz-qzrdb').forEach((b) => (b.onclick = () => { close(); gdzQuizJump(root, b.dataset.mid); }));
+    try { refreshIcons(); } catch (e) { /* (icons are a nicety) */ } body.scrollTop = 0;
+  };
+  const key = (e) => { if (e.key === 'Escape') { close(); return; } if (!body.querySelector('.gdz-qzas')) return;
+    const k = String(e.key).toUpperCase(), i = '1234'.indexOf(k) >= 0 ? '1234'.indexOf(k) : 'ABCD'.indexOf(k); if (i >= 0 && picked == null && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); pick(i); } };
+  document.addEventListener('keydown', key);
+  ov.addEventListener('click', (e) => { if (e.target === ov || (e.target.closest && e.target.closest('.gdz-qzx'))) close(); });
+  start();
+}
+// (its look: the site's dark and gold, square edges, the three flag colours for right and wrong)
+function gdzQuizCss() {
+  if (document.getElementById('gdz-qz-css')) return; const st = document.createElement('style'); st.id = 'gdz-qz-css';
+  st.textContent = `
+html.gdz-qzopen, html.gdz-qzopen body { overflow: hidden; }
+.gdz-qz { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(5,6,9,.8); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.gdz-qzin { width: min(680px, 100%); max-height: 100%; display: flex; flex-direction: column; background: var(--bg, #0f1117); border: 1px solid var(--line); border-top: 3px solid var(--gold); border-radius: 0; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.gdz-qzh { display: flex; align-items: center; gap: 12px; padding: 14px 18px 12px; border-bottom: 1px solid var(--line); }
+.gdz-qzh > div { display: flex; flex-direction: column; gap: 1px; }
+.gdz-qzk { font: 700 12px var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.gdz-qzh b { font: 700 22px/1.1 var(--head); color: var(--text); }
+.gdz-qzx { margin-left: auto; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 0; background: none; color: var(--muted); font-size: 15px; cursor: pointer; }
+.gdz-qzx:hover { color: var(--text); border-color: var(--gold); }
+.gdz-qzb { padding: 16px 18px 18px; overflow: auto; }
+.gdz-qzst p { margin: 0 0 12px; color: var(--muted); font-size: 15px; line-height: 1.45; }
+.gdz-qzst .gdz-qzlead { font: 700 20px/1.2 var(--head); color: var(--text); margin-bottom: 8px; }
+.gdz-qzst .gdz-qzfine { margin: 14px 0 0; font-size: 13px; color: var(--faint, var(--muted)); }
+.gdz-qzrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.gdz-qzbtn { padding: 9px 16px; border: 1px solid var(--line2, var(--line)); border-radius: 0; background: var(--panel); color: var(--text); font: 700 14px var(--body); cursor: pointer; }
+.gdz-qzbtn:hover { border-color: var(--gold); }
+.gdz-qzgo, .gdz-qznx { background: var(--gold); border-color: var(--gold); color: #1a1408; }
+.gdz-qzgo:hover, .gdz-qznx:hover { background: #f0c565; }
+.gdz-qzcp.done { color: var(--good, #45c15c); border-color: var(--good, #45c15c); }
+.gdz-qzbar { display: flex; gap: 3px; margin: 0 0 12px; }
+.gdz-qzbar i { flex: 1; height: 5px; background: var(--line); }
+.gdz-qzbar i.cur { background: var(--gold); } .gdz-qzbar i.ok { background: var(--good, #45c15c); } .gdz-qzbar i.no { background: var(--bad, #e5534b); }
+.gdz-qzmeta { display: flex; justify-content: space-between; gap: 10px; font: 600 13px var(--body); color: var(--muted); }
+.gdz-qzmech { display: flex; align-items: center; gap: 8px; margin: 12px 0 4px; font: 700 13px var(--body); letter-spacing: .04em; text-transform: uppercase; color: var(--gold); }
+.gdz-qzmech .icw { width: 26px; height: 26px; }
+.gdz-qzq { margin: 0 0 14px; font: 700 21px/1.25 var(--head); color: var(--text); }
+.gdz-qzas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.gdz-qzas button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 11px 14px; text-align: left; border: 1px solid var(--line); border-radius: 0; background: var(--panel); color: var(--text); font: 600 15px/1.3 var(--body); cursor: pointer; }
+.gdz-qzas button:hover:not(:disabled) { border-color: var(--gold); }
+.gdz-qzas button i { flex: none; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line2, var(--line)); font: 700 12px var(--body); font-style: normal; color: var(--muted); }
+.gdz-qzas button:disabled { cursor: default; opacity: .55; }
+.gdz-qzas button.ok { opacity: 1; border-color: var(--good, #45c15c); background: rgba(69,193,92,.12); }
+.gdz-qzas button.ok i { background: var(--good, #45c15c); border-color: var(--good, #45c15c); color: #0b1a0e; }
+.gdz-qzas button.no { opacity: 1; border-color: var(--bad, #e5534b); background: rgba(229,83,75,.12); }
+.gdz-qzas button.no i { background: var(--bad, #e5534b); border-color: var(--bad, #e5534b); color: #1f0b0a; }
+.gdz-qzwhy:empty { display: none; }
+.gdz-qzwhy { margin-top: 14px; padding: 12px 14px; background: var(--panel); border-left: 3px solid var(--gold); display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.gdz-qzwhy p { flex: 1 1 100%; }
+.gdz-qzmap { flex: 1 1 100%; margin: 4px 0 0; }
+.gdz-qzmap .gdz-cap { margin-top: 6px; display: flex; gap: 8px; font-size: 14px; color: var(--text); } .gdz-qzmap .gdz-cap i { font-style: normal; color: var(--gold); font-weight: 700; }
+.gdz-qzwhy p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--text); }
+.gdz-qzwhy b.ok { color: var(--good, #45c15c); } .gdz-qzwhy b.no { color: var(--bad, #e5534b); }
+.gdz-qzsc { display: flex; align-items: center; gap: 18px; margin: 6px 0 16px; }
+.gdz-qzsc > b { font: 800 54px/1 var(--head); color: var(--text); white-space: nowrap; } .gdz-qzsc > b small { font-size: 26px; color: var(--muted); }
+.gdz-qzsc p { margin: 0; color: var(--muted); font-size: 15px; } .gdz-qzsc .gdz-qzv { font: 700 22px var(--head); color: var(--text); }
+.gdz-qzv.ok { color: var(--good, #45c15c) !important; } .gdz-qzv.mid { color: #e8a23a !important; } .gdz-qzv.no { color: var(--bad, #e5534b) !important; }
+.gdz-qzend h4 { margin: 0 0 6px; font: 700 12px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.gdz-qzrd { list-style: none; margin: 0 0 16px; padding: 0; border-top: 1px solid var(--line); }
+.gdz-qzrd li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.gdz-qzrd li > span:not(.icw) { display: flex; flex-direction: column; flex: 1; min-width: 0; } .gdz-qzrd li b { font: 700 15px var(--body); } .gdz-qzrd li small { font-size: 13px; color: var(--muted); }
+.gdz-qzrd .gdz-qzbtn { padding: 6px 12px; font-size: 13px; }
+html body #view .gdz .gdz-qbtn { display: inline-flex; align-items: baseline; gap: 10px; align-self: flex-start; margin: 16px 0 0 8px; padding: 8px 15px; border: 1px solid var(--gold); border-radius: 4px; background: rgba(15,17,23,.7); color: var(--gold); font: 700 13.5px var(--body); cursor: pointer; }
+html body #view .gdz .gdz-qbtn:hover { background: rgba(230,180,80,.14); }
+html body #view .gdz .gdz-qbtn small { font: 600 12.5px var(--body); opacity: .8; color: var(--muted); }
+@media (max-width: 760px) {
+  .gdz-qz { padding: 0; align-items: stretch; } .gdz-qzin { width: 100%; max-height: none; height: 100%; border-left: 0; border-right: 0; }
+  .gdz-qzb { padding: 14px; } .gdz-qzq { font-size: 19px; } .gdz-qzas button { font-size: 14.5px; padding: 10px 12px; }
+  html body #view .gdz .gdz-qbtn { margin-left: 0; }
+}
+`;
+  document.head.appendChild(st);
 }
 // (look B: the page's parts as tabs, one shown at a time)
 function gdzTabs(root) {
