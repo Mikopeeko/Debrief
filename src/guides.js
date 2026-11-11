@@ -1607,17 +1607,19 @@ Object.assign(UX_M, {
     const SP = (a) => nzAdd([0, 0], a, 24), START = myth ? [nzAdd([0, 0], UX_MK.star[0], 16), nzAdd([0, 0], UX_MK.diamond[0], 16), nzAdd([0, 0], UX_MK.square[0], 16)] : [[0, 8], [-14, -8], [14, -8]];
     const GC = myth ? [UL_GC.Y[0], UL_GC.P[0], UL_GC.B[0]] : ['#e6b450', '#5aa0ff'], GF = myth ? ['rgba(245,211,58,.1)', 'rgba(200,107,255,.1)', 'rgba(61,139,255,.1)'] : ['rgba(230,180,80,.1)', 'rgba(90,160,255,.1)'];
     const GLEG = TN.map((nm, gi) => nm + (myth ? ' team' : '') + '\'s soaks: the ' + lst(TK(gi)));
+    /* (one team picked on the map's team switch (Flex, Nov 11): its colour stays, the other teams go grey) */
+    const team = myth && o && o.team ? o.team - 1 : -1, DIM = '#7c838f', col = (gi) => (team < 0 || gi === team ? GC[gi] : DIM), fil = (gi) => (team < 0 || gi === team ? GF[gi] : 'rgba(124,131,143,.05)'), leg = (gi) => (team < 0 || gi === team ? GLEG[gi] : 'the other teams\' soaks'), mine = (gi) => team < 0 || gi === team;
     G.forEach((g, gi) => g.forEach((id, i) => { const q = gdzSpot(i, g.length, 5); k.at(0, id, START[gi][0] + q[0], START[gi][1] + q[1]); }));
     /* (Nov 11, Flex: the pattern in the colour of the group soaking it: every player ringed in their group's colour, each slam drawn in it too) */
-    G.forEach((g, gi) => g.forEach((id) => k.ring({ on: id, r: 3, fx: 'zone', t0: 0, dur: L, color: GC[gi], fill: 'rgba(0,0,0,0)', cn: TN[gi], legend: GLEG[gi] })));
+    G.forEach((g, gi) => g.forEach((id) => k.ring({ on: id, r: 3, fx: 'zone', t0: 0, dur: L, color: col(gi), fill: 'rgba(0,0,0,0)', cn: TN[gi], legend: leg(gi) })));
     // (the eight raid markers round the room, as the plan puts them)
     Object.entries(UX_MK).forEach(([nm, mk]) => { const p = nzAdd([0, 0], mk[0], 37); k.wmark(nm, p[0], p[1]); });
     const busy = [0, 0, 0];
     ORD.forEach((nm, n) => { const ang = UX_MK[nm][0], c = nzAdd([0, 0], ang, 44), s = SP(ang), land = T1 + DT[n], t = land - 2.6, gi = fail && n === FN ? FG : GRP[n], lp = nzAdd([0, 0], ang, 11);
-      k.add('tc' + n, 'Gore Rattle', t, c[0], c[1]).show('tc' + n, t, land + 0.6); k.ring({ x: s[0], y: s[1], r: 10, fx: 'soak', t0: t, at: land, dur: land - t + 0.6, color: GC[gi], cn: 'Spectral Coils', legend: 'Spectral Coils: the slam, in the colour of the group that soaks it' });
+      k.add('tc' + n, 'Gore Rattle', t, c[0], c[1]).show('tc' + n, t, land + 0.6); k.ring({ x: s[0], y: s[1], r: 10, fx: 'soak', t0: t, at: land, dur: land - t + 0.6, color: col(gi), cn: 'Spectral Coils', legend: 'Spectral Coils: the slam, in the colour of the group that soaks it' });
       /* (the whole order on the map from the start: each soak's spot in its group's colour with its number, gone once it has slammed; a line from the group to it while they run) */
-      if (!fail) { void lp; k.ring({ x: s[0], y: s[1], r: 10, fx: 'zone', t0: 0, dur: land + 0.2, color: GC[gi], fill: GF[gi], cn: 'Group ' + (gi + 1), legend: GLEG[gi] }); k.call(0, land + 0.8, String(GRP.slice(0, n + 1).filter((g) => g === gi).length), { x: s[0], y: s[1], color: GC[gi], ink: '#101114' }); /* (the team's own order, in its colour (Flex, Nov 11): Yellow 1, 2, 3 and so on) */
-        k.link({ from: G[gi][0], toYd: { x: s[0], y: s[1] }, t0: Math.max(0.2, busy[gi]), t1: land - 0.4, color: GC[gi], legend: 'where each group runs next' }); }
+      if (!fail) { void lp; k.ring({ x: s[0], y: s[1], r: 10, fx: 'zone', t0: 0, dur: land + 0.2, color: col(gi), fill: fil(gi), cn: 'Group ' + (gi + 1), legend: leg(gi) }); if (mine(gi)) k.call(0, land + 0.8, String(GRP.slice(0, n + 1).filter((g) => g === gi).length), { x: s[0], y: s[1], color: GC[gi], ink: '#101114' }); /* (the team's own order, in its colour (Flex, Nov 11): Yellow 1, 2, 3 and so on) */
+        if (mine(gi)) k.link({ from: G[gi][0], toYd: { x: s[0], y: s[1] }, t0: Math.max(0.2, busy[gi]), t1: land - 0.4, color: GC[gi], legend: 'where each group runs next' }); }
       G[gi].forEach((id, i) => { const q = gdzSpot(i, G[gi].length, 4.6); k.hold(busy[gi], id).at(land - 0.3, id, s[0] + q[0], s[1] + q[1]); }); /* (off to the next coil as soon as the last soak is done) */
       busy[gi] = land + 0.3; G[gi].forEach((id) => k.ring({ on: id, r: 2, fx: 'debuff', t0: land + 0.1, dur: myth ? 5 : 6, color: '#b06bff', cn: 'Soul Constrictor', legend: 'Soul Constrictor: you can\'t help with the next coil for ' + (myth ? 5 : 6) + ' seconds' }));
       if (fail && n === FN) gdzFailBlast(k, land + 0.2, 'The same group again: they don\'t count', 0, 30, ['h3', 'r6'], 'Spectral Coils'); });
@@ -1627,11 +1629,12 @@ Object.assign(UX_M, {
     const gOf = (id) => G.findIndex((g) => g.includes(id)); Object.keys(UX_HOME).forEach((id, i) => { const q = gdzSpot(i, 20, 7), dm = nzAdd([0, 0], 300, 12), gi = gOf(id); k.hold(gi >= 0 ? busy[gi] : 0, id).at(END, id, dm[0] + q[0], dm[1] + q[1]); });
     k.call(END - 1.6, END + 0.4, 'Toward diamond, on the inside', { x: 8, y: -24, color: '#7fd8ff', ink: '#06131c' });
     k.ring1(G[0]).step(0.2).step(T1 - 0.4).step(T1 + DT[2] - 0.4).step(END - 1);
-    if (myth) { k.pause(0.8, 'Pattern ' + pat + ': the first slam lands on ' + cap(ORD[0]) + ', and the other seven always follow in the same order. Each spot is in the colour of the team that soaks it and numbered in that team\'s order: Yellow (starts on Star) and Purple (on Diamond) go 1, 2, 3, Blue (on Square) 1, 2. Each team keeps to its own part of the room.', { x: 0, y: 0, r: 40 });
+    if (myth && team >= 0) k.pause(0.8, 'Pattern ' + pat + ', the ' + TN[team] + ' team: your spots are ' + GRP.map((g, n) => (g === team ? cap(ORD[n]) : null)).filter(Boolean).map((nm, j) => (j + 1) + ' at ' + nm).join(', ') + ' (the ' + lst(TK(team)) + ' slams). Grey is the other teams.', { x: 0, y: 0, r: 40 });
+    if (myth) { if (team < 0) k.pause(0.8, 'Pattern ' + pat + ': the first slam lands on ' + cap(ORD[0]) + ', and the other seven always follow in the same order. Each spot is in the colour of the team that soaks it and numbered in that team\'s order: Yellow (starts on Star) and Purple (on Diamond) go 1, 2, 3, Blue (on Square) 1, 2. Each team keeps to its own part of the room.', { x: 0, y: 0, r: 40 }); /* (all teams) */
       k.pause(T1 + DT[1] + 0.6, 'They come in pairs from opposite sides, 2 seconds apart. ' + TN[GRP[0]] + ' and ' + TN[GRP[1]] + ' have soaked their 1: each runs to its 2 while Blue takes its 1.', { x: 0, y: 0, r: 40 });
       k.pause(T1 + DT[4] - 0.8, 'The last four come back to back, about 2 seconds apart: personals and potions now. ' + TN.map((nm, gi) => nm + ' soaks the ' + lst(TK(gi))).join('; ') + '.', { x: 0, y: 0, r: 40 }); }
     else k.pause(0.8, 'The coils come at random spots: two groups take turns, group one the 1st, 3rd and 5th, group two the 2nd, 4th and 6th. The numbers show one pull\'s order. Healers stay in the middle.', { x: 0, y: 0, r: 40 });
-    return k.done({ title: myth ? 'The intermission, pattern ' + pat + ': ' + cap(ORD[0]) + ' first' : 'The intermission: two groups take turns', focus: { x: 0, y: 0, r: 46 }, hlLabel: 'group one' });
+    return k.done({ title: myth ? 'The intermission, pattern ' + pat + ': ' + cap(ORD[0]) + ' first' + (team >= 0 ? ' (' + TN[team] + ' team)' : '') : 'The intermission: two groups take turns', focus: { x: 0, y: 0, r: 46 }, hlLabel: 'group one' });
   },
 });
 
@@ -2000,7 +2003,7 @@ GDZ['Ula\'tek'] = {
       mechs: [
         { id: 'intcoils', fail: UX_FAIL.intcoils, name: 'Spectral Coils (Two groups take turns)', spell: 'Spectral Coils', what: 'Six coils rise at random spots round the platform and slam one after another, each needing a soak. Nobody soaks two in a row (Soul Constrictor), so two groups take turns. Bring falling eggs into the soaks to break them. Then the platform shatters and knocks everyone back.',
           do: ['Eggs rain down and coils rise around the platform.', 'Group one soaks the first coil.', 'Group two the next, and so on, turn about; bring eggs into the soaks.', 'Then stand toward the inside: the shattering knocks everyone back.'],
-          m: { name: 'Spectral Coils (Three groups, eight soaks)', what: 'Eight soaks in about 20 seconds, three groups taking turns. There are three patterns, set by where the first slam lands: Star, Triangle or Cross. Each pattern always goes in the same order, in pairs from opposite sides of the room, so the caller presses it and every group knows its spots. Use the pattern switch on the map to see each one.', pats: [['Pattern 1', 1, 'Star first'], ['Pattern 2', 4, 'Triangle first'], ['Pattern 3', 7, 'Cross first']],
+          m: { name: 'Spectral Coils (Three groups, eight soaks)', what: 'Eight soaks in about 20 seconds, three groups taking turns. There are three patterns, set by where the first slam lands: Star, Triangle or Cross. Each pattern always goes in the same order, in pairs from opposite sides of the room, so the caller presses it and every group knows its spots. Use the pattern switch on the map to see each one.', pats: [['Pattern 1', 1, 'Star first'], ['Pattern 2', 4, 'Triangle first'], ['Pattern 3', 7, 'Cross first']], teams: [['Yellow', '#f5d33a'], ['Purple', '#c86bff'], ['Blue', '#3d8bff']],
             do: ['Eggs rain down and coils rise. Each group waits near the marker its note gives it.', 'The first slam lands on Star, Triangle or Cross: that is the pattern. The caller presses it and your spots pop up.', 'The slams come in pairs from opposite sides, 2 seconds apart. Each team keeps to its own part of the room; Blue only soaks twice, always the 3rd. Personals around 5:50 for the last four, back to back.', 'Finish on the line toward the diamond, inside: the knockback is big and outside is the venom.'],
             plan: ['Groups: a tank, a healer and 5 melee; a tank, a healer and 4 ranged; the other two healers and the rest of the DPS.', 'Pattern 1, Star first: Star, Diamond, Square, Skull, Triangle, Circle, Cross, Moon.', 'Pattern 2, Triangle first: Triangle, Circle, Cross, Moon, Star, Diamond, Square, Skull.', 'Pattern 3, Cross first: Cross, Diamond, Triangle, Circle, Skull, Square, Star, Moon.', 'Three soak teams by colour, each starting on its own marker: Yellow on Star, Purple on Diamond, Blue on Square. Each keeps to its own part of the room, and each slam on the map is the colour of the team that soaks it, numbered in that team\'s order.', 'Pattern 1 (Star first): Yellow takes the 1st, 4th and 6th; Purple the 2nd, 5th and 8th; Blue the 3rd and 7th.', 'Pattern 2 (Triangle first): Purple takes the 1st, 4th and 6th; Yellow the 2nd, 5th and 8th; Blue the 3rd and 7th.', 'Pattern 3 (Cross first): Yellow takes the 1st, 4th and 7th; Purple the 2nd, 5th and 8th; Blue the 3rd and 6th.', 'Only three patterns, set by where the first soak lands. Don\'t get baited by her real tail: wait for the spectral coil.', 'This is often harder to heal than phase 3.'] },
           map: (d, o) => UX_M.intcoils(false, d, o) },
@@ -5331,7 +5334,7 @@ function gdzView() {
   const keyRow = '<div class="gdz-key">' + Object.entries(GDZ_ROLE).map(([, [n, c, ic]]) => '<span><img src="https://wow.zamimg.com/images/wow/icons/medium/' + ic + '.jpg" alt="" style="border-color:' + c + '">' + n + '</span>').join('') + '<span class="gdz-keyn">On the maps. Positions are examples.</span></div>';
   let mi = 0; const maps = [];
   const sec = (p, i) => '<section class="gdz-sec" id="gdz-' + p.id + '"><div class="gdz-sh"><i>' + (i + 1) + '</i><div><h3>' + esc(p.name) + '</h3><p>' + esc(p.sum) + '</p></div></div>' +
-    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m" data-mid="' + esc(m.id || '') + '">' + (m.map ? '<div class="gdz-mapc">' + (m.fail ? '<div class="gdz-mode" data-i="' + n + '"><button type="button" class="on" data-v="ok">✓ The right way</button><button type="button" data-v="bad">✕ Show a mistake</button></div>' : '') + (m.pats ? '<div class="gdz-mode gdz-pat" data-i="' + n + '" aria-label="Patterns">' + m.pats.map((p, j) => { const a = Array.isArray(p) ? p : [p]; return '<button type="button" data-p="' + (j + 1) + '"' + (j ? '' : ' class="on"') + (a[2] ? ' title="' + esc(a[2]) + '"' : '') + '>' + (a[1] && typeof markIcon === 'function' ? markIcon(a[1], 14) : '') + '<span>' + esc(a[0]) + '</span></button>'; }).join('') + '</div>' : '') + '<div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
+    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m" data-mid="' + esc(m.id || '') + '">' + (m.map ? '<div class="gdz-mapc">' + (m.fail ? '<div class="gdz-mode" data-i="' + n + '"><button type="button" class="on" data-v="ok">✓ The right way</button><button type="button" data-v="bad">✕ Show a mistake</button></div>' : '') + (m.pats ? '<div class="gdz-mode gdz-pat" data-i="' + n + '" aria-label="Patterns">' + m.pats.map((p, j) => { const a = Array.isArray(p) ? p : [p]; return '<button type="button" data-p="' + (j + 1) + '"' + (j ? '' : ' class="on"') + (a[2] ? ' title="' + esc(a[2]) + '"' : '') + '>' + (a[1] && typeof markIcon === 'function' ? markIcon(a[1], 14) : '') + '<span>' + esc(a[0]) + '</span></button>'; }).join('') + '</div>' : '') + (m.teams ? '<div class="gdz-mode gdz-team" data-i="' + n + '" aria-label="Teams"><button type="button" data-t="0" class="on">All</button>' + m.teams.map((t, j) => '<button type="button" data-t="' + (j + 1) + '"><i style="background:' + t[1] + '"></i>' + esc(t[0]) + '</button>').join('') + '</div>' : '') + '<div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
       '<div class="gdz-mt"><h4>' + spellIcon(0, m.spell || m.name.replace(/ \(.*$/, '')) + '<span>' + esc(m.name) + '</span></h4>' + (m.how ? '' : '<p class="gdz-what">' + esc(m.what) + '</p>') +
       (m.do && m.do.length ? '<ol class="gdz-steps' + (m.how ? ' gdz-how' : '') + '" data-i="' + n + '">' + m.do.map((d, j) => { const sr = m.roles || (G.stepRoles || {})[m.name]; return '<li data-j="' + j + '"' + (sr && sr[j] != null ? ' data-r="' + sr[j] + '"' : '') + '><span>' + gdzStepH(d, m.how) + '</span></li>'; }).join('') + '</ol>' : '') +
       (m.how ? '<p class="gdz-what gdz-wl"><b>What it does</b> ' + esc(m.what) + '</p>' : '') +
@@ -5416,8 +5419,8 @@ function gdzView() {
     bindAnim(box, W.mp, pmap, true);
   };
   const mount = (box) => {
-    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m0 = maps[+box.dataset.i], bad = box.dataset.v === 'bad' && m0.fail, m = bad ? m0.fail : m0, pat = !bad && +box.dataset.p > 1 ? +box.dataset.p : 0, key = boss + '|' + D + '|' + (bad ? 'fail|' : '') + m0.name + (pat ? '|p' + pat : '');
-    let mp = GDZ_CACHE.get(key); if (!mp) { try { mp = pat ? m.map(D, { pat }) : m.map(D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, mp); }
+    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m0 = maps[+box.dataset.i], bad = box.dataset.v === 'bad' && m0.fail, m = bad ? m0.fail : m0, pat = !bad && +box.dataset.p > 1 ? +box.dataset.p : 0, team = !bad && +box.dataset.t > 0 ? +box.dataset.t : 0, key = boss + '|' + D + '|' + (bad ? 'fail|' : '') + m0.name + (pat ? '|p' + pat : '') + (team ? '|t' + team : '');
+    let mp = GDZ_CACHE.get(key); if (!mp) { try { mp = pat || team ? m.map(D, { pat: pat || 1, team }) : m.map(D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, mp); }
     box.innerHTML = miniMap(mp, pmap); bindZoom(box); hydrateMapIcons(box);
     if ((mp.pauses || []).length) { const zb = box.querySelector('.zbox'); if (zb) box._onPause = gdzPauseUi(zb, null, { texts: mp.pauses.map((p) => p.text) }); }
     const ol = root.querySelector('.gdz-steps[data-i="' + box.dataset.i + '"]'), lis = ol ? [...ol.querySelectorAll('li')] : [], st = mp.steps || [];
@@ -5431,7 +5434,7 @@ function gdzView() {
     }
     bindAnim(box, mp, pmap, true);
   };
-  root.querySelectorAll('.gdz-mode:not(.gdz-pat)').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
+  root.querySelectorAll('.gdz-mode:not(.gdz-pat):not(.gdz-team)').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
     const i = sw.dataset.i, m0 = maps[+i], box = sw.parentElement.querySelector('.gdz-mm'), art = sw.closest('.gdz-m'), ol = art.querySelector('.gdz-steps'), v = bt.dataset.v;
     if (box.dataset.v === v || (!box.dataset.v && v === 'ok')) return;
     sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.v = v;
@@ -5445,7 +5448,14 @@ function gdzView() {
   root.querySelectorAll('.gdz-pat').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
     const box = sw.parentElement.querySelector('.gdz-mm'); if ((box.dataset.p || '1') === bt.dataset.p && box.dataset.v !== 'bad') return;
     sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.p = bt.dataset.p;
-    const ok = sw.parentElement.querySelector('.gdz-mode:not(.gdz-pat) button[data-v="ok"]'); if (box.dataset.v === 'bad' && ok) { ok.click(); return; }
+    const ok = sw.parentElement.querySelector('.gdz-mode:not(.gdz-pat):not(.gdz-team) button[data-v="ok"]'); if (box.dataset.v === 'bad' && ok) { ok.click(); return; }
+    box._on = 0; box._onFrame = null; box.innerHTML = ''; mount(box);
+  })));
+  // (a card with teams (Ula'tek's intermission, Nov 11): one team picked keeps its colour on the map, the others go grey; always the right way)
+  root.querySelectorAll('.gdz-team').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
+    const box = sw.parentElement.querySelector('.gdz-mm'); if ((box.dataset.t || '0') === bt.dataset.t && box.dataset.v !== 'bad') return;
+    sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.t = bt.dataset.t;
+    const ok = sw.parentElement.querySelector('.gdz-mode:not(.gdz-pat):not(.gdz-team) button[data-v="ok"]'); if (box.dataset.v === 'bad' && ok) { ok.click(); return; }
     box._on = 0; box._onFrame = null; box.innerHTML = ''; mount(box);
   })));
   const boxes = [...root.querySelectorAll('.gdz-mm')];
@@ -5590,7 +5600,7 @@ function gdzCss() {
 .gdz-mode { display: flex; gap: 2px; margin-bottom: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; width: fit-content; }
 .gdz-mode button { background: none; border: 0; border-radius: 999px; padding: 4px 14px; font: 700 13.5px var(--head); color: var(--muted); cursor: pointer; }
 .gdz-mode button.on { background: rgba(230,180,80,.16); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(230,180,80,.55); } .gdz-mode button:not(.on):hover { color: var(--text); }
-#view .gdz .gdz-mapc > .gdz-mode + .gdz-mode.gdz-pat { top: 46px; } #view .gdz .gdz-mapc > .gdz-mode button { white-space: nowrap; } /* (the pattern switch sits under The right way / Show a mistake when there is one, at the top when not; the buttons never wrap, so the two never overlap) */
+#view .gdz .gdz-mapc > .gdz-mode + .gdz-mode.gdz-pat { top: 46px; } #view .gdz .gdz-mapc > .gdz-mode.gdz-team { top: 82px; } #view .gdz .gdz-mapc > .gdz-team button.on { background: rgba(255,255,255,.12); color: var(--text); box-shadow: inset 0 0 0 1px rgba(255,255,255,.32); } #view .gdz .gdz-mapc > .gdz-team button i { display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: 0; } /* (the team switch under the patterns; a square swatch of each team's colour) */ #view .gdz .gdz-mapc > .gdz-mode button { white-space: nowrap; } /* (the pattern switch sits under The right way / Show a mistake when there is one, at the top when not; the buttons never wrap, so the two never overlap) */
 #view .gdz .gdz-mapc > .gdz-pat button { display: inline-flex; align-items: center; gap: 5px; } #view .gdz .gdz-mapc > .gdz-pat button svg.mk { flex: none; } /* (the pattern's first marker in front of its name) */
 #view .gdz .gdz-mapc > .gdz-pat button.on { background: rgba(255,255,255,.12); color: var(--text); box-shadow: inset 0 0 0 1px rgba(255,255,255,.32); } /* (Design studio, Nov 11: a plain choice is neutral, like the Everyone / Tank / Healer / DPS switch; gold read as the Yellow group's colour on this map) */
 /* (design system: the picked one is gold-tinted, not green or red) */
@@ -6157,6 +6167,8 @@ const UL_RIM = { NNW: [-18, 44], NNE: [19, 45], ENE: [44, 18.5], ESE: [44, -18],
 const UL_SOAK = { NNW: [-9.7, 24.2], NNE: [10.2, 23.3], ENE: [22.4, 11], ESE: [22.1, -9.4], SSE: [10.3, -22.5], SSW: [-7.2, -23.8], WSW: [-20.9, -8.6], WNW: [-23, 7.5] };
 const UL_GC = { Y: ['#f5d33a', 'Yellow', 'star'], P: ['#c86bff', 'Purple', 'diamond'], B: ['#3d8bff', 'Blue', 'square'] };
 // (the team's three patterns: the slam order (from the kills) and which group soaks each (the team's plan))
+// (the plan's marker at each of the eight spots, for the routes in words)
+const UL_CMK = { NNW: 'Star', NNE: 'Circle', ENE: 'Skull', ESE: 'Moon', SSE: 'Diamond', SSW: 'Triangle', WSW: 'Square', WNW: 'Cross' };
 const UL_PAT = [[['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y'], ['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P']],
   [['SSW', 'P'], ['NNE', 'Y'], ['WNW', 'B'], ['ESE', 'P'], ['NNW', 'Y'], ['SSE', 'P'], ['WSW', 'B'], ['ENE', 'Y']],
   [['WNW', 'Y'], ['SSE', 'P'], ['SSW', 'B'], ['NNE', 'Y'], ['ENE', 'P'], ['WSW', 'B'], ['NNW', 'Y'], ['ESE', 'P']]];
@@ -6220,10 +6232,10 @@ const UL_PAGES = {
         const TG = []; [['Y', 'star', [-15, 35]], ['P', 'diamond', [15, -35]], ['B', 'square', [-35, -15]]].forEach(([gk, key, d0], gi) => { const m = g.mark(key) || d0, sk = Object.keys(UL_SOAK).sort((p, q) => Math.hypot(UL_SOAK[p][0] - m[0], UL_SOAK[p][1] - m[1]) - Math.hypot(UL_SOAK[q][0] - m[0], UL_SOAK[q][1] - m[1]))[0], c = UL_SOAK[sk], dd = Math.hypot(c[0], c[1]) || 1; /* (the group stands in the coil circle nearest its mark) */
           g.cluster(D.trans[gi] || [], c, 5); TG.push([c, dd, UL_GC[gk][1] + ' group', UL_GC[gk][0]]); });
         TG.forEach(([c, dd, t, cc]) => { const u = [c[0] / dd, c[1] / dd], q = g.pick([[c[0] - u[0] * 12.5, c[1] - u[1] * 12.5], [c[0], c[1] - 12], [c[0], c[1] + 12], [c[0] - u[0] * 16, c[1] - u[1] * 16], [c[0], c[1] - 15], [c[0], c[1] + 15]], (x, y) => g.tagBox(t, x, y)); g.tag(q[0], q[1], t, cc); }); }, /* (each label in the first free spot by its circle, never on a player) */
-      leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1], UL_GC[gk][0], D.trans[gi] || [])); L.p('Six in each group, pre-placed by your group\'s mark. The tails rise round the room and slam eight coils, about 2.5 seconds apart. The pattern (1, 2 or 3) is called by the macro: see its page.');
-        L.f('In the top kills the eight slams always come in one of three orders, about 5:31 to 5:50; each coil takes 6 or 7 players.'); } }].concat(UL_PAT.map((pat, pi) => ({ t: 'Pattern ' + (pi + 1), s: 'The coils in order; your group soaks its colour', vb: 'mid',
-    draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); pat.forEach(([k, gk], i) => { const p = UL_SOAK[k], c = UL_GC[gk][0]; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 8, c, true); g.big(p[0], p[1], i + 1, c); }); },
-    leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => { const ns = pat.map(([, x], i) => (x === gk ? i + 1 : 0)).filter(Boolean); L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1] + ': coils ' + ns.join(', '), UL_GC[gk][0], D.trans[gi] || []); });
+      leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1], UL_GC[gk][0], D.trans[gi] || [])); L.p('Six in each group, pre-placed by your group\'s mark. The tails rise round the room and slam eight coils, in pairs from opposite sides about 2 seconds apart. The pattern (1, 2 or 3) is set by where the first lands and called by the macro: see its page.');
+        L.f('In the top kills the eight slams always come in one of three orders, from about 5:36 to 5:54; each coil takes 6 or 7 players.'); } }].concat(UL_PAT.map((pat, pi) => ({ t: 'Pattern ' + (pi + 1), s: 'Your group soaks its colour, numbered in your own order', vb: 'mid',
+    draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); pat.forEach(([k, gk], i) => { const p = UL_SOAK[k], c = UL_GC[gk][0]; g.slam(UL_RIM[k][0], UL_RIM[k][1]); g.circle(p[0], p[1], 8, c, true); g.big(p[0], p[1], pat.slice(0, i + 1).filter(([, x]) => x === gk).length, c); }); }, /* (each soak numbered in its group's own order (Nov 11)) */
+    leg: (D, L) => { ['Y', 'P', 'B'].forEach((gk, gi) => { const ns = pat.filter(([, x]) => x === gk).map(([kk]) => UL_CMK[kk]); L.grp('Group ' + (gi + 1) + ' · ' + UL_GC[gk][1] + ': ' + ns.map((nm, j) => (j + 1) + ' ' + nm).join(', '), UL_GC[gk][0], D.trans[gi] || []); });
       L.f('Seen in ' + ['4', '3', '3'][pi] + ' of the 10 fastest kills.'); } }))) };
 const UL_SOAK0 = { WNW: [-27.8, 8.5], WSW: [-21.9, -11.3], ESE: [25, -8.5], ENE: [23.9, 12.4], SSW: [-7.9, -25.1], SSE: [10.2, -25] }; /* (Phase 1's soaks, a little further in than the intermission's) */
 // one page's map
@@ -6564,18 +6576,20 @@ function ppCardsUL(J, M, U, P) {
     cards.push({ id: side ? 'kicksR' : 'kicksL', ph: 2, when: nm + ' ledge', title: 'Malice (' + nm + ' team kicks in order)', map: ppFreeze(k.done({ title: 'Malice', focus: { x: W[0] + 10 * sx, y: 40, r: 30 } }), 1, ppSeat(P, fix), P, M, { focus: { x: W[0] + 10 * sx, y: 40, r: 30 }, hl: ids, named: ids, tags: ids.map((s, i) => [s, 'Kick ' + (i + 1)]) }),
       legend: [ppG(nm + ' team: kick Malice in order', GR, L.map((n, i) => ppI(P, n, 'Kick ' + (i + 1))), 'Then the Weakened Doomscale\'s Anguished Cry, in the same order.')],
       foot: 'The ' + nm.toLowerCase() + ' ledge, as you face her. Cleave the gestating eggs first, and keep out of their 7 yards while the Warden lives.' }); });
-  // Intermission: eight coils round the room, one after another (clockwise from the first); group 1 takes 1, 4 and 7, group 2 takes 2, 5 and 8,
-  // group 3 takes 3 and 6; each group stands at its first. Then end toward the raid lead's marker, on the inside
-  if (J.trans.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL); const C3 = [BL, GR, GO], GRP = [0, 1, 2, 0, 1, 2, 0, 1];
-    const f1 = spot('int1', null), a0 = f1 ? Math.atan2(f1[1], f1[0]) * 180 / Math.PI : 90, S = (n) => nzAdd([0, 0], a0 - n * 45, 24), E2 = spot('intend', [15, -35]), ea = Math.atan2(E2[1], E2[0]), EP = [Math.cos(ea) * 12, Math.sin(ea) * 12];
-    GRP.forEach((g, n) => { const p = S(n); k.ring({ x: p[0], y: p[1], r: 8, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: C3[g], cn: 'Spectral Coils', label: false }); });
-    const G = J.trans.slice(0, 3).map((L, g) => ppClump(k, P, fix, put, L, S(g), 4.6)); rest(k, put, [0, 0], 5);
+  // Intermission (Nov 11, the team plan's and the kills' (117 of 117)): eight coils in one of three fixed orders, set by where the first lands
+  // (Star, Triangle or Cross); three groups by colour, each starting on its own marker (Yellow on Star, Purple on Diamond, Blue on Square) and
+  // keeping to its part of the room. The map plays Pattern 1, each soak in its group's colour and numbered in its group's order; the key gives
+  // every group's soaks for each pattern by marker. Then end toward the raid lead's marker, on the inside
+  if (J.trans.length) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_FULL); const TK = ['Y', 'P', 'B'], ST = { Y: 'NNW', P: 'SSE', B: 'WSW' }, PAT = UL_PAT[0];
+    const E2 = spot('intend', [15, -35]), ea = Math.atan2(E2[1], E2[0]), EP = [Math.cos(ea) * 12, Math.sin(ea) * 12];
+    PAT.forEach(([kk, t]) => { const p = UL_SOAK[kk]; k.ring({ x: p[0], y: p[1], r: 8, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: UL_GC[t][0], cn: 'Spectral Coils', label: false }); });
+    const G = J.trans.slice(0, 3).map((L, g) => ppClump(k, P, fix, put, L, UL_SOAK[ST[TK[g]]], 4.6)); rest(k, put, [0, 0], 5);
     k.ring({ x: EP[0], y: EP[1], r: 5, fx: 'zone', t0: 0, dur: 9, color: '#7fd8ff', fill: 'rgba(127,216,255,.06)', cn: 'The end spot', label: false });
-    const lab = GRP.map((g, n) => { const p = S(n), o = nzAdd([0, 0], a0 - n * 45, 33); return [{ rx: o[0], ry: o[1] }, String(n + 1), C3[g], g === 1 ? '#06140a' : g === 2 ? '#1a1405' : '#fff', 0]; });
-    const nums = (g) => GRP.map((x, n) => (x === g ? n + 1 : 0)).filter(Boolean), list = (a) => (a.length > 2 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a.join(' and '));
-    cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), noNames: true, labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
-      legend: G.map((ids, g) => ppG('Group ' + (g + 1) + ': soaks ' + list(nums(g)), C3[g], J.trans[g].map((n) => ppI(P, n)))),
-      foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
+    const lab = PAT.map(([kk, t], n) => { const p = UL_SOAK[kk], d = Math.hypot(p[0], p[1]) || 1, o = [p[0] * 33 / d, p[1] * 33 / d]; return [{ rx: o[0], ry: o[1] }, String(PAT.slice(0, n + 1).filter(([, x]) => x === t).length), UL_GC[t][0], t === 'Y' ? '#1a1405' : '#fff', 0]; });
+    const route = (t, pi) => UL_PAT[pi].filter(([, x]) => x === t).map(([kk]) => UL_CMK[kk]).join(', ');
+    cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups, three patterns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), noNames: true, labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
+      legend: G.map((ids, g) => { const t = TK[g]; return ppG('Group ' + (g + 1) + ' · ' + UL_GC[t][1] + ' (starts on ' + UL_CMK[ST[t]] + ')', UL_GC[t][0], J.trans[g].map((n) => ppI(P, n)), 'Pattern 1: ' + route(t, 0) + ' · Pattern 2: ' + route(t, 1) + ' · Pattern 3: ' + route(t, 2)); }),
+      foot: 'The caller presses where the first coil lands (Star, Triangle or Cross): that is the pattern, and your group soaks its spots in that order. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
   // Serpent's Bite, Mythic: the two targets stack (since the Nov 6 hotfix) and the set's three soakers stand in both circles (set 1 drawn; the backups with the rest)
   if (J.bite.sets.some((s) => s.length)) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
     const c = [-10, 20], TG = [['m7', 'Melee target', [1.6, 0.6]], ['r7', 'Ranged target', [-1.6, -0.6]]], lab = []; /* (two bites since the Nov 6 hotfix) */
