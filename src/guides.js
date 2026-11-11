@@ -1834,7 +1834,7 @@ const UX_FAIL = {
   heart: { name: 'Under the falling debris', what: 'A player doesn\'t look down: Falling Debris hits hard inside its 7 yards, on top of the raid damage every 4 seconds.', do: ['The heart opens.', 'Raid damage.', 'Under the debris: a big hit.'], map: (d) => UX_M.heart(true, d) },
   warden: { name: 'A Malice not kicked', what: 'Nobody kicks the Warden\'s Malice: a big hit on everyone every second for 6 seconds.', do: ['The half gates over.', 'The Warden gestates eggs.', 'Malice goes off.'], map: (d) => UX_M.warden(true, d) },
   fangsH: { name: 'Everyone snaps at once', what: 'All four tethers snap together: four stacks of Blight Vein on everyone at the same moment.', do: ['Fangs on four players.', 'They walk out.', 'All snap at once.'], map: () => UX_M.fangs(true, 'h') },
-  fangsM: { name: 'The five snap one by one', what: 'After the solo snap, the five snap one after another instead of together: extra ticks of every Blight Vein.', do: ['Fangs on six players.', 'One solo snap.', 'The five snap late.'], map: () => UX_M.fangs(true, 'm') },
+  fangsM: { name: 'The five snap one by one', what: 'After the solo snap, the five snap one after another instead of together: extra ticks of every Blight Vein (the damage over time each snap puts on the whole raid).', do: ['Fangs on six players.', 'One solo snap.', 'The five snap late.'], map: () => UX_M.fangs(true, 'm') },
   doomscales: { name: 'The Doomscale Egg too late', what: 'The big egg stays out too long: its Hatching Doom ends and the Ravenous Doomscale\'s Dread Roar stuns everyone for 20 seconds.', do: ['Small eggs in.', 'The big egg waits.', 'Dread Roar: a wipe.'], map: (d) => UX_M.doomscales(true, d) },
   intcoils: { name: 'One group takes two in a row', what: 'The same group goes for the next coil too: Soul Constrictor means they don\'t count, so it hits almost unsoaked.', do: ['Coils round the room.', 'The same group again.', 'An unsoaked hit.'], map: (d) => UX_M.intcoils(true, d) },
   prey: { name: 'Still on her quarter', what: 'A melee keeps hitting her instead of moving: the quarter is destroyed with them on it.', do: ['She winds up.', 'One melee stays.', 'Dead.'], map: (d) => UX_M.prey(true, d) },
@@ -5678,6 +5678,52 @@ html.gdz-wopen, html.gdz-wopen body { overflow: hidden; }
   html body #view .gdz .gdz-wipe ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gdz-wpop { padding: 0; } .gdz-wpin { height: 100%; border-radius: 0; border: 0; padding: 10px 12px; }
 }
+/* Design studio, Nov 11: the fight at a glance, what wipes us, your job (Flex: "this section needs to be revised its very weird") */
+html body #view .gdz .gdz-tl2 .gdz-tlbar { position: relative; }
+html body #view .gdz .gdz-tl2 .gdz-tk { position: absolute; bottom: 0; width: 2px; height: 7px; margin-left: -1px; background: rgba(255,255,255,.75); }
+html body #view .gdz .gdz-tl2 .gdz-tlax { margin: 4px 0 0; }
+html body #view .gdz .gdz-swb { position: relative; --lw: 196px; margin: 2px 0 0; }
+html body #view .gdz .gdz-swr { display: grid; grid-template-columns: var(--lw) minmax(0, 1fr); column-gap: 12px; align-items: center; }
+html body #view .gdz .gdz-swt { position: relative; height: 26px; }
+html body #view .gdz .gdz-swr:not(.gdz-swph):not(.gdz-swax) + .gdz-swr:not(.gdz-swax) > .gdz-swt { box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+html body #view .gdz .gdz-swph > .gdz-swt { height: 24px; margin: 0 0 4px; overflow: hidden; border-radius: 2px; background: var(--raised); }
+html body #view .gdz .gdz-swn { display: flex; align-items: center; gap: 8px; min-width: 0; height: 26px; padding: 0 4px; margin: 0; border: 0; border-radius: 2px; background: none; color: var(--text); font: 600 13px/1 var(--body); text-align: left; cursor: pointer; }
+html body #view .gdz button.gdz-swn:hover { background: rgba(255,255,255,.05); }
+html body #view .gdz .gdz-swn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view .gdz .gdz-swn :is(.icw, img, svg) { flex: none; width: 18px; height: 18px; }
+html body #view .gdz .gdz-swbd .gdz-swn { cursor: default; color: #ffb066; }
+html body #view .gdz .gdz-swbd .gdz-swn > i { flex: none; width: 18px; height: 10px; border-radius: 2px; background: repeating-linear-gradient(135deg, rgba(255,150,40,.7) 0 3px, rgba(255,150,40,.35) 3px 6px); }
+html body #view .gdz .gdz-swband { position: absolute; top: 6px; height: 14px; display: flex; align-items: center; padding: 0 5px; box-sizing: border-box; border-radius: 2px; overflow: hidden; white-space: nowrap; font: 700 10.5px var(--head); color: #ffb066; background: repeating-linear-gradient(135deg, rgba(255,150,40,.32) 0 6px, rgba(255,150,40,.14) 6px 12px); }
+html body #view .gdz .gdz-swm { position: absolute; top: 8px; width: 10px; height: 10px; margin: 0 0 0 -5px; padding: 0; border: 0; border-radius: 1px !important; background: #45c15c; cursor: pointer; }
+html body #view .gdz .gdz-swm:hover { outline: 2px solid var(--gold); outline-offset: 1px; z-index: 2; }
+html body #view .gdz .gdz-swv { position: absolute; top: 0; bottom: 20px; left: calc(var(--lw) + 12px + (100% - var(--lw) - 12px) * var(--x)); width: 1px; background: rgba(255,255,255,.16); pointer-events: none; }
+html body #view .gdz .gdz-swax > .gdz-swt { height: 20px; font-size: 11.5px; color: var(--muted); }
+html body #view .gdz .gdz-swax > .gdz-swt span { position: absolute; top: 4px; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) { html body #view .gdz .gdz-swb { --lw: 118px; } html body #view .gdz .gdz-swn { font-size: 12px; } }
+html body #view .gdz .gdz-gl { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 0 22px; margin: 12px 0 2px; padding-top: 12px; border-top: 1px solid var(--line); }
+html body #view .gdz .gdz-glc { min-width: 0; }
+html body #view .gdz .gdz-glc h5 { display: flex; align-items: center; gap: 7px; margin: 0 0 6px; padding: 0 4px; font: 700 13px/1.3 var(--head); color: var(--text); }
+html body #view .gdz .gdz-glc h5 i { flex: none; width: 9px; height: 9px; }
+html body #view .gdz .gdz-glc h5 b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: inherit; }
+html body #view .gdz .gdz-glc h5 small { flex: none; margin-left: auto; font: 600 12px var(--body); color: var(--muted); font-variant-numeric: tabular-nums; }
+html body #view .gdz .gdz-gx { display: flex; align-items: baseline; gap: 8px; width: 100%; min-height: 24px; padding: 2px 4px; margin: 0; border: 0; border-radius: 2px; background: none; text-align: left; color: var(--text); font: 600 13px/1.35 var(--body); cursor: pointer; }
+html body #view .gdz .gdz-gx:hover { background: rgba(255,255,255,.05); }
+html body #view .gdz .gdz-gx time { flex: none; width: 32px; color: var(--muted); font-variant-numeric: tabular-nums; }
+html body #view .gdz .gdz-gx span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view .gdz .gdz-gx small { flex: none; color: var(--muted); font: 600 12px var(--body); }
+html body #view .gdz .gdz-gxb { display: flex; align-items: baseline; gap: 8px; min-height: 24px; padding: 2px 4px; color: #ffb066; font: 600 13px/1.35 var(--body); cursor: default; }
+html body #view .gdz .gdz-gxb time { flex: none; width: 32px; font-variant-numeric: tabular-nums; }
+html body #view .gdz .gdz-gxb span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html body #view .gdz .gdz-gxb small { flex: none; color: rgba(255,176,102,.75); font: 600 12px var(--body); }
+html body #view .gdz .gdz-wipe li > em.gdz-jph { display: inline-block; margin: 0 0 5px; padding: 0 5px; border-radius: 2px; border: 1px solid var(--line2); background: none; color: var(--muted); font: 700 11.5px/16px var(--head); }
+html body #view .gdz .gdz-job li { padding: 7px 0 !important; border-radius: 0 !important; background: none !important; border-top: 1px solid var(--line); line-height: 1.4; }
+html body #view .gdz .gdz-job li:first-child { border-top: 0; }
+html body #view .gdz .gdz-job ul { gap: 0 !important; }
+html body #view .gdz .gdz-job em.gdz-jph { flex: none; min-width: 34px; box-sizing: border-box; text-align: center; }
+html body #view .gdz .gdz-job em.gdz-jph.none { visibility: hidden; }
+html body #view .gdz .gdz-job ul:not(:has(em.gdz-jph:not(.none))) em.gdz-jph.none { display: none; }
+@media (max-width: 760px) { html body #view .gdz .gdz-gl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; } }
+
 `;
 // (look D, Raider: your role and the fight at a glance)
 function gdzRaider(root, G, D) {
@@ -5711,23 +5757,38 @@ function gdzRaider(root, G, D) {
   // the fight at a glance: a real kill's timeline (Mythic), or each phase's mechanics in order
   const byId = {}; G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = m; }));
   const ev = (G.sim || []).map((e) => { const m = e.mech ? byId[e.mech] : null, b = e.beat ? (G.beats || {})[e.beat] : null, name = e.label || (m ? m.name : b ? b.name : ''); return { t: e.at, ph: e.ph, name, short: name.replace(/ \(.*$/, '').replace(/ \d+$/, ''), key: m ? 'm:' + m.id : 'b:' + e.beat }; }).filter((x) => x.name && !['b:start', 'b:transition', 'b:p2end', 'b:kill'].includes(x.key)); /* (only mechanics, not the pull or the kill) */
-  let tl;
-  if (ev.length) { const end = ev[ev.length - 1].t + 12, P = (t) => (t / end * 100).toFixed(2) + '%', PC = ['#3b4a6b', '#5a3b6b', '#6b5a2a', '#6b2f3b'];
-    const phs = []; ev.forEach((x) => { if (!phs.length || phs[phs.length - 1].ph !== x.ph) phs.push({ ph: x.ph, t0: x.t }); }); phs.forEach((p, i) => (p.t1 = i + 1 < phs.length ? phs[i + 1].t0 : end));
+  // (Design studio, Nov 11, Flex: "this section needs to be revised its very weird": the phase bar to scale with a tick at every mechanic's real
+  // moment and the clock right under it; below it, each part's mechanics in order with their first time, every one a jump to its card)
+  let tl; const PC = ['#3b4a6b', '#5a3b6b', '#6b5a2a', '#6b2f3b'], kl0 = gdzKillLen(G) || 0;
+  const phTag = (pi) => { if (G.phases.length < 2) return ''; /* (one part: no tag says anything) */ const nm = (G.phases[pi] || {}).name || '', m = /^Phase (\d+|one|two|three|four)\b/i.exec(nm); return m ? 'P' + ({ one: 1, two: 2, three: 3, four: 4 }[m[1].toLowerCase()] || m[1]) : /^Intermission/i.test(nm) ? 'Int.' : nm.replace(/:.*$/, '').replace(/\s*\(.*$/, '').slice(0, 16); };
+  const end = ev.length ? Math.max(ev[ev.length - 1].t + 12, kl0) : 0, phs = [];
+  ev.forEach((x) => { x.ph = x.ph || 0; if (!phs.length || phs[phs.length - 1].ph !== x.ph) phs.push({ ph: x.ph, t0: phs.length ? x.t : 0 }); }); /* (a one-part fight's events carry no part number: part 0) */ phs.forEach((p, i) => (p.t1 = i + 1 < phs.length ? phs[i + 1].t0 : end));
+  const gx = (key, t, name, n, ts) => '<button type="button" class="gdz-gx" data-key="' + esc(key) + '"' + (ts ? ' title="' + esc(ts.map(clk).join(', ') + ' · ' + name) + '"' : '') + '>' + (t != null ? '<time>' + clk(t) + '</time>' : '') + '<span>' + esc(name) + '</span>' + (n > 1 ? '<small>×' + n + '</small>' : '') + '</button>';
+  const gcol = (sw, head, sub, items) => '<div class="gdz-glc"><h5>' + (sw ? '<i style="background:' + sw + '"></i>' : '') + '<b>' + esc(head) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</h5>' + items.join('') + '</div>';
+  const nmP = (ph) => { const nm = (G.phases[ph] || {}).name || ''; return /^Intermission/i.test(nm) ? 'Intermission' : nm.replace(/^Phase (\d+):\s*/, 'P$1 · '); };
+  if (ev.length) { const P = (t) => (t / end * 100).toFixed(2) + '%', F = (t) => (t / end).toFixed(4); /* (Flex, Nov 11: "what if the timeline was something more like this?": a row per mechanic like Debriefing's timeline) */
     const pn = (p) => ((G.phases[p.ph] || {}).name || '').replace(/^Phase (\d): /, 'P$1 · ').replace(/^Intermission:.*/, 'Int.');
-    const ticks = []; for (let t = 0; t <= end - 20; t += 120) ticks.push('<span style="left:' + P(t) + '">' + clk(t) + '</span>');
-    tl = '<div class="gdz-tl"><div class="gdz-tlh"><b>The fight at a glance</b><span>a real kill, ' + clk(gdzKillLen(G) || end) + ' long · tap a mechanic to jump to it</span></div><div class="gdz-tlbar">' +
-      phs.map((p) => '<div class="gdz-tlp" style="left:' + P(p.t0) + ';width:' + ((p.t1 - p.t0) / end * 100).toFixed(2) + '%;background:' + PC[p.ph % 4] + '" title="' + esc((G.phases[p.ph] || {}).name || '') + '"><span>' + esc(pn(p)) + '</span></div>').join('') + '</div>' + ((G.simBands || []).length ? '<div class="gdz-tlbd">' + G.simBands.map((b) => '<span class="gdz-tlbn' + (b.n >= 10 ? ' hi' : '') + '" style="left:' + P(b.t0) + ';width:' + ((b.t1 - b.t0) / end * 100).toFixed(2) + '%" title="' + esc((b.title || b.n + ' axes rolling') + ', ' + clk(b.t0) + ' to ' + clk(b.t1)) + '">' + esc(b.text || b.n + ' axes') + '</span>').join('') + '</div>' : '') + '<div class="gdz-tlev">' +
-      ev.map((x, i) => '<button type="button" class="gdz-tlm' + (i % 2 ? ' lo' : '') + '" style="left:' + P(x.t) + '" data-key="' + esc(x.key) + '" title="' + esc(clk(x.t) + '  ' + x.name) + '">' + spellIcon(0, x.short) + '</button>').join('') + '</div><div class="gdz-tlax">' + ticks.join('') + '</div></div>';
-  } else tl = '<div class="gdz-tl"><div class="gdz-tlh"><b>The fight at a glance</b><span>each phase and what happens in it</span></div><div class="gdz-tlrow">' + G.phases.map((p) => '<div class="gdz-tlc"><b>' + esc(p.name) + '</b><span>' + (p.mechs || []).concat(p.tiles || []).map((m) => esc(m.name.replace(/ \(.*$/, ''))).join(' · ') + '</span></div>').join('') + '</div></div>';
+    const ticks = []; for (let t = 60; t <= end - 20; t += 60) ticks.push('<span style="left:' + P(t) + '">' + clk(t) + '</span>');
+    const lanes = new Map(); ev.forEach((x) => { const o = lanes.get(x.short); if (o) o.ms.push(x); else lanes.set(x.short, { x, ms: [x] }); }); /* (one row per mechanic, even when each phase has its own card: each mark opens its own phase's card) */
+    const bandRows = new Map(); (G.simBands || []).forEach((b) => { const k = String(b.title || b.n + ' axes rolling').replace(/^\d+\s+/, ''), o = bandRows.get(k) || { k, bs: [] }; o.bs.push(b); bandRows.set(k, o); }); /* (the egg spawns, Flex: "what about egg spawns?"; the axes on The Coiled Altar) */
+    const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1), vl = phs.slice(1).map((p) => '<i class="gdz-swv" style="--x:' + F(p.t0) + '"></i>').join('');
+    tl = '<div class="gdz-tl gdz-tl2 gdz-sw"><div class="gdz-tlh"><b>The fight at a glance</b><span>a real kill, ' + clk(kl0 || end) + ' long · click a mechanic or a mark to jump to it</span></div><div class="gdz-swb">' + vl +
+      '<div class="gdz-swr gdz-swph"><span></span><div class="gdz-swt">' + phs.map((p, i) => '<div class="gdz-tlp" style="left:' + P(p.t0) + ';width:' + ((p.t1 - p.t0) / end * 100).toFixed(2) + '%;background:' + PC[p.ph % 4] + '" title="' + esc(((G.phases[p.ph] || {}).name || '') + ' · ' + clk(p.t0) + ' – ' + clk(i === phs.length - 1 && kl0 ? kl0 : p.t1)) + '"><span>' + esc(pn(p)) + '</span></div>').join('') + '</div></div>' +
+      [...bandRows.values()].map(({ k, bs }) => '<div class="gdz-swr gdz-swbd"><b class="gdz-swn"><i></i><span>' + esc(cap(k)) + '</span></b><div class="gdz-swt">' + bs.map((b) => '<span class="gdz-swband" style="left:' + P(b.t0) + ';width:' + ((b.t1 - b.t0) / end * 100).toFixed(2) + '%" title="' + esc((b.title || b.n + ' axes rolling') + ', ' + clk(b.t0) + ' to ' + clk(b.t1)) + '">' + b.n + '</span>').join('') + '</div></div>').join('') +
+      [...lanes.values()].map(({ x, ms }) => '<div class="gdz-swr"><button type="button" class="gdz-swn" data-key="' + esc(x.key) + '" title="' + esc(x.name) + '">' + spellIcon(0, x.short) + '<span>' + esc(x.short) + '</span></button><div class="gdz-swt">' + ms.map((y) => '<button type="button" class="gdz-swm" data-key="' + esc(y.key) + '" style="left:' + P(y.t) + '" title="' + esc(clk(y.t) + '  ' + x.short) + '"></button>').join('') + '</div></div>').join('') +
+      '<div class="gdz-swr gdz-swax"><span></span><div class="gdz-swt">' + ticks.join('') + '</div></div></div></div>';
+  } else tl = '<div class="gdz-tl gdz-tl2"><div class="gdz-tlh"><b>The fight at a glance</b><span>each phase and what happens in it · tap a mechanic to jump to it</span></div><div class="gdz-gl" style="--n:' + G.phases.length + '">' +
+    G.phases.map((p, pi) => gcol(PC[pi % 4], nmP(pi), '', (p.mechs || []).filter((m) => m.id).map((m) => gx('m:' + m.id, null, m.name.replace(/ \(.*$/, ''), 1)).concat((p.tiles || []).map((m) => gx('t:' + m.name.replace(/ \(.*$/, ''), null, m.name.replace(/ \(.*$/, ''), 1))))).join('') + '</div></div>';
   // your job, and what wipes us (each mechanic's mistake, in our words)
   const RN = { t: 'Tanks', h: 'Healers', d: 'DPS' }, li = (x) => '<li>' + esc(x) + '</li>', RL = G.roles || {};
   // (each role's colour and sign, like the map's tokens; a job's line tagged with the part of the fight it's about)
   const RC = { t: '#5aa0ff', h: '#45d16b', d: '#ff8a5c' }, SIGN = { t: '<path d="M0 -6.4L5.2 -4.3V0C5.2 3.6 2.7 5.6 0 6.7C-2.7 5.6 -5.2 3.6 -5.2 0V-4.3Z" fill="#10131a"/>', h: '<path d="M-1.9 -6.2H1.9V-1.9H6.2V1.9H1.9V6.2H-1.9V1.9H-6.2V-1.9H-1.9Z" fill="#10131a"/>', d: '<path d="M-5 5L5 -5M-5 -5L5 5" stroke="#10131a" stroke-width="2.4" stroke-linecap="round"/>' };
   const jic = (k) => '<svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="' + RC[k] + '"/>' + SIGN[k] + '</svg>';
   const jph = (x) => /intermission/i.test(x) ? 'Intermission' : /phase (3|three)\b/i.test(x) ? 'P3' : /phase (2|two)\b/i.test(x) ? 'P2' : /phase (1|one)\b/i.test(x) ? 'P1' : ''; /* (no label on a line for the whole fight) */
-  const jli = (x) => '<li>' + (jph(x) ? '<em class="gdz-jph">' + jph(x) + '</em>' : '') + '<span>' + esc(x) + '</span></li>';
-  const job = role === 'all' ? '<div class="gdz-job gdz-jall"><h4>Your job <span>the first three for each role; pick yours above for all of them</span></h4><div class="gdz-job3">' + ['t', 'h', 'd'].map((k) => '<div style="--rc:' + RC[k] + '"><b>' + jic(k) + RN[k] + '</b><ul>' + (RL[k] || []).slice(0, 3).map(jli).join('') + '</ul></div>').join('') + '</div></div>'
+  const jcut = (x) => x.replace(/^(?:Phase (?:\d+|one|two|three|four)|Intermission)\s*:\s*/i, '').replace(/^./, (c) => c.toUpperCase());
+  const jtag = (x) => { const w = jph(x); if (w) return w === 'Intermission' ? 'Int.' : w; const tm = /\b(\d{1,2}):(\d\d)\b/.exec(x); if (tm && phs.length) { const t = +tm[1] * 60 + +tm[2], p = phs.find((q) => t >= q.t0 && t < q.t1); if (p) return phTag(p.ph); } return ''; };
+  const jli = (x) => { const tg = jtag(x); return '<li><em class="gdz-jph' + (tg ? '' : ' none') + '">' + esc(tg) + '</em><span>' + esc(jph(x) ? jcut(x) : x) + '</span></li>'; }; /* (Design studio, Nov 11: no "Phase 1:" after a P1 tag; every row keeps a tag slot so the text lines up) */
+  const job = role === 'all' ? '<div class="gdz-job gdz-jall"><h4>Your job <span>pick your role at the top to see just yours</span></h4><div class="gdz-job3">' + ['t', 'h', 'd'].map((k) => '<div style="--rc:' + RC[k] + '"><b>' + jic(k) + RN[k] + '</b><ul>' + (RL[k] || []).map(jli).join('') + '</ul></div>').join('') + '</div></div>'
     : '<div class="gdz-job" style="--rc:' + RC[role] + '"><h4>' + jic(role) + 'Your job<em class="gdz-jrole">' + RN[role] + '</em></h4><ul>' + (RL[role] || []).map(jli).join('') + '</ul></div>';
   // (your raid's assignments (your OK, Oct 20): the lines of your saved NSRT note for this boss that name you, the character you picked on your team)
   let asg = ''; try { const me = meOf(), all = (notesOf(S.gdzBoss).list || []);
@@ -5740,8 +5801,8 @@ function gdzRaider(root, G, D) {
   const fails = []; G.phases.forEach((p, pi) => (p.mechs || []).forEach((m) => { if (m.fail && !m.fail.solo) fails.push({ f: m.fail, pi, i: fails.length, sv: (G.simSev || {})['m:' + m.id] || 2 }); }));
   // (which four: the most dangerous mistake of each part of the fight first, then the most dangerous of the rest; shown in page order)
   const wpick = [], bySv = (a, c) => c.sv - a.sv || a.i - c.i; [...new Set(fails.map((x) => x.pi))].forEach((pi) => { const b = fails.filter((x) => x.pi === pi).sort(bySv)[0]; if (b && wpick.length < 4) wpick.push(b); });
-  fails.slice().sort(bySv).forEach((x) => { if (wpick.length < 4 && !wpick.includes(x)) wpick.push(x); }); const wfails = wpick.sort((a, c) => a.i - c.i).map((x) => x.f);
-  const wipe = fails.length ? '<div class="gdz-wipe"><h4><svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="#e5534b"/><path d="M0 -5.6V1.2" stroke="#10131a" stroke-width="2.6" stroke-linecap="round"/><circle cy="4.6" r="1.6" fill="#10131a"/></svg>What wipes us</h4><ul>' + wfails.map((x) => '<li><b>' + esc(x.name) + '</b><span>' + esc(String(x.what).split(/(?<=\.)\s+/).pop()) + '</span></li>').join('') + '</ul></div>' : '';
+  fails.slice().sort(bySv).forEach((x) => { if (wpick.length < 4 && !wpick.includes(x)) wpick.push(x); }); const wfails = wpick.sort((a, c) => a.i - c.i).map((x) => Object.assign({ pi: x.pi }, x.f));
+  const wipe = fails.length ? '<div class="gdz-wipe"><h4><svg class="gdz-jgl" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="9.4" fill="#e5534b"/><path d="M0 -5.6V1.2" stroke="#10131a" stroke-width="2.6" stroke-linecap="round"/><circle cy="4.6" r="1.6" fill="#10131a"/></svg>What wipes us</h4><ul>' + wfails.map((x) => '<li>' + (phTag(x.pi) ? '<em class="gdz-jph">' + esc(phTag(x.pi)) + '</em>' : '') + '<b>' + esc(x.name) + '</b><span>' + esc(String(x.what).split(/(?<=\.)\s+/).pop()) + '</span></li>').join('') + '</ul></div>' : '';
   const gl = document.createElement('section'); gl.className = 'gdz-glance'; gl.id = 'gdz-glance'; gl.innerHTML = tl; bar.after(gl);
   gl.insertAdjacentHTML('afterend', wipe.replace('<ul>', '<ul style="--n:' + wfails.length + '">') + job.replace('</h4>', '</h4>' + asg)); /* (the overview first, what wipes us as one row of tiles, your job full width) */
   // (each part reads like a chapter: "PHASE 1 OF 3 · 0:00 – 2:57", timed by the real kill when the guide has one)
@@ -5766,9 +5827,9 @@ function gdzRaider(root, G, D) {
     const q = document.createElement('p'); q.className = 'gdz-qline'; q.innerHTML = mine ? '<b>You:</b> ' + esc(mine.textContent) : esc(first.split(/(?<=\.)\s+/)[0]); h.after(q);
     a.addEventListener('click', (e) => { if (!root.classList.contains('gdz-q')) return; if (!a.classList.contains('open')) a.classList.add('open'); else if (e.target.closest('.gdz-mt h4')) a.classList.remove('open'); }); }); /* (a closed row opens anywhere you click; the title closes it) */
   // the timeline's mechanics jump to their part of the page
-  gl.querySelectorAll('.gdz-tlm').forEach((b) => (b.onclick = () => { const k = b.dataset.key; let el = null;
+  gl.querySelectorAll('.gdz-tlm, .gdz-gx, .gdz-swm, button.gdz-swn').forEach((b) => (b.onclick = () => { const k = b.dataset.key; let el = null;
     if (k.startsWith('m:')) { const m = byId[k.slice(2)]; el = m && [...root.querySelectorAll('.gdz-m:not(.gdz-whole)')].find((a) => ((a.querySelector('h4') || {}).textContent || '').includes(m.name)); }
-    else { const bt = (G.beats || {})[k.slice(2)], nm = bt ? bt.name.replace(/ \(.*$/, '') : ''; el = nm && [...root.querySelectorAll('.gdz-tile')].find((a) => ((a.querySelector('h5') || {}).textContent || '').includes(nm)); }
+    else { const bt = k.startsWith('b:') ? (G.beats || {})[k.slice(2)] : null, nm = k.startsWith('t:') ? k.slice(2) : bt ? bt.name.replace(/ \(.*$/, '') : ''; el = nm && [...root.querySelectorAll('.gdz-tile')].find((a) => ((a.querySelector('h5') || {}).textContent || '').includes(nm)); }
     if (!el) return; const sec = el.closest('.gdz-sec'); if (sec && sec.hidden && root._showSec) root._showSec(sec); if (root.classList.contains('gdz-q') && el.classList.contains('gdz-m')) el.classList.add('open');
     el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.remove('gdz-flash'); void el.offsetWidth; el.classList.add('gdz-flash'); }));
 }
