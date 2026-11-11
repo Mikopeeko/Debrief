@@ -14194,12 +14194,14 @@ html body #view > .dbt.dbt.dbx.dtm-on > .dbt-jump{display:none !important}
 .dtm-step button{width:30px;height:26px;border:1px solid var(--line2);border-radius:4px;background:var(--raised,#1b2129);color:var(--text);cursor:pointer;font-size:11px;line-height:1}
 .dtm-step button:hover{border-color:#5b636c}
 .dtm-step span{min-width:130px;text-align:center;font-weight:600}
-.dtm-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(360px,1fr);gap:14px;padding:12px 14px 4px;align-items:start}
+.dtm-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;padding:12px 14px 4px;align-items:start}
 .dtm-left{min-width:0;display:flex;flex-direction:column;gap:10px}
 .dtm-map{position:relative;border:1px solid var(--line2);border-radius:4px;background:#0b0f13;overflow:hidden}
 .dtm-map .mm{margin:0 !important}
 .dtm-map .zwrap{max-width:none !important;width:100% !important}
 .dtm-map svg.zmap{display:block;width:100% !important;max-width:none !important;height:auto !important;max-height:440px !important}
+/* (Nov 10, Flex: "the video player its very cramped", then "yea lets do A" (mock A, Big map): on a desktop the map is as tall as the screen allows, up to 700 px, and fills the width beside a 340 px column; Full screen keeps its own size) */
+@media (min-width: 901px){html body #view .dtm:not(.dtm-fsx) .dtm-map svg.zmap{max-height:none !important;aspect-ratio:auto !important;height:min(700px, calc(100vh - 205px)) !important}}
 .dtm-map .zanim{position:static !important;opacity:1 !important;visibility:visible !important;transform:none !important;padding:6px 10px !important;border-top:1px solid #222930;background:#0d1116 !important}
 .dtm-map > .mm > .sub{display:none !important}
 .dtm-map .zbox{height:auto !important}
