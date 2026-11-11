@@ -5295,8 +5295,10 @@ function openGuides(boss, d) {
   $('#main').innerHTML = pgTabBar(null) + '<div class="gdz-pagetop">' /* (the main tab row on the guides too, Guides lit, Oct 27) */ + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
   const bk = $('#main .gdz-back'); if (bk) bk.onclick = () => { const g = GDZ_BACK; GDZ_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
   const qz = !window.__gdzQz && (/^#quiz\b/i.test(location.hash) || /[?&]quiz(=|&|$)/.test(location.search)); /* (a quiz link, read before navNote tidies the address) */
+  const pg = !window.__pgOpen && (/^#practice\b/i.test(location.hash) || /[?&]practice(=|&|$)/.test(location.search));
   gdzView(); navNote(); window.scrollTo(0, 0);
   if (qz) { window.__gdzQz = 1; const r = document.querySelector('#view .gdz'); if (r && gdzQuizOf(S.gdzBoss, S.gdzDiff)) gdzQuiz(r, S.gdzBoss, S.gdzDiff); }
+  if (pg) { window.__pgOpen = 1; const r = document.querySelector('#view .gdz'); if (r && pgPart(S.gdzBoss, S.gdzDiff)) setTimeout(() => pgOpen(r, S.gdzBoss, S.gdzDiff), 300); } /* (a practice link, Nov 11) */
 }
 // (a how-to card's step (Nov 4): "Who: what to do", the who in gold and the *key words* lit; any other step is plain text)
 function gdzStepH(s, how) { const t = String(s == null ? '' : s); if (!how) return esc(t.replace(/\*/g, ''));
@@ -5690,6 +5692,7 @@ function gdzRaider(root, G, D) {
   // (the hero's one big button: the whole fight, opened big over the page; the end of the page keeps it too)
   const hin = hero.querySelector('.gdz-hin'); if (hin && root.querySelector('#gdz-all article.gdz-whole')) { hin.insertAdjacentHTML('beforeend', '<button type="button" class="gdz-cta">▶ Watch the whole fight<small>' + (G.sim ? clk(gdzKillLen(G)) + ' · ' : '') + 'every mechanic in order</small></button>'); hin.querySelector('.gdz-cta').onclick = () => gdzWholePop(root); }
   if (hin && gdzQuizOf(S.gdzBoss, D)) { gdzQuizCss(); hin.insertAdjacentHTML('beforeend', '<button type="button" class="gdz-qbtn">✎ Take the quiz<small>' + gdzQuizOf(S.gdzBoss, D).length + ' questions</small></button>'); hin.querySelector('.gdz-qbtn').onclick = () => gdzQuiz(root, S.gdzBoss, D); } /* (the guide quiz, Nov 11) */
+  if (hin && typeof pgPart === 'function' && pgPart(S.gdzBoss, D)) { gdzQuizCss(); hin.insertAdjacentHTML('beforeend', '<button type="button" class="gdz-qbtn gdz-pgbtn">◎ Practice ' + esc(pgPart(S.gdzBoss, D).name.toLowerCase()) + '<small>a game at the real timings</small></button>'); hin.querySelector('.gdz-pgbtn').onclick = () => pgOpen(root, S.gdzBoss, D); } /* (the practice game, Nov 11) */
   bar.querySelectorAll('.gdz-seg button').forEach((b) => (b.onclick = () => { ls(b.parentElement.dataset.k === 'mode' ? 'gdz-mode' : 'gdz-role', b.dataset.v); const y = window.scrollY; gdzView(); window.scrollTo({ top: y }); }));
   // the fight at a glance: a real kill's timeline (Mythic), or each phase's mechanics in order
   const byId = {}; G.phases.forEach((p) => (p.mechs || []).forEach((m) => { if (m.id) byId[m.id] = m; }));

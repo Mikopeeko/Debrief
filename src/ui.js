@@ -36966,6 +36966,7 @@ if (WCL.HOSTED && !window.WLA_DESKTOP) {
   }
 }
 /*GUIDES*/ // (the build puts src/guides.js here, inside this file's scope)
+/*PRACTICE*/ // (and src/practice.js, the guide's practice game (Nov 11))
 
 // ===== Ask the Paladin (Nov 9): the bubble bottom right, the chat, Debrief's animated portrait (Flex's own YouTube picture with his cat Jinx, loaded
 // when the page opens, never saved on the site; embers, flickering flames, a light sweep, Jinx blinking). Only shown when /api/ask says this person
