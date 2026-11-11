@@ -8397,6 +8397,9 @@ html body #view.plan-page .pv-copy { position: relative; display: inline-flex; }
 html body #view.plan-page .pv-copym { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; display: flex; flex-direction: column; min-width: 220px; padding: 4px; border: 1px solid var(--line2); border-radius: 6px; background: var(--panel); box-shadow: 0 10px 28px rgba(0,0,0,.45); }
 html body #view.plan-page .pv-copym[hidden] { display: none; }
 html body #view.plan-page .bj-jobs:not(:has(.pom)) [data-dsmaps] { display: none !important; } /* (Copy all images only where there are maps, Nov 11) */
+html body #view.plan-page .bj-jobs > .ds-copyline { display: block; margin: 4px 0 12px; padding: 8px 12px; font-size: 13px; line-height: 1.5; color: #d9dde4; background: rgba(230, 180, 80, .08); border-left: 2px solid #e6b450; text-align: left; } /* (the copy buttons' message, under the Jobs header, Nov 11) */
+html body #view.plan-page .bj-jobs > .ds-copyline:empty { display: none; }
+html body #view.plan-page .bj-jobs > .ds-copyline a { color: #e6b450; }
 html body #view.plan-page .pv-copym > .pp-btn { display: none !important; } /* (was hidden in the header before; Copy all images does its job) */
 html body #view.plan-page .pv-copym > .btn { justify-content: flex-start; width: 100%; margin: 0; border: 0; border-radius: 4px; background: none; color: var(--text); font-weight: 600; box-shadow: none; }
 html body #view.plan-page .pv-copym > .btn:hover { background: var(--raised); color: var(--gold); }
