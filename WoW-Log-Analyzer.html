@@ -69490,7 +69490,7 @@ const UL_PAGES = {
   coils: [{ t: 'Coil soaks', s: 'Egg carriers on their numbered spot in the circle, everyone else anywhere in it', vb: 'mid',
     draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const S = ulSoaks(D);
       [[0, 19, '#24f2cb', 'Right Soak #1'], [1, -19, '#7fd8ff', 'Left Soak #2']].forEach(([i, cx, c, lab]) => { const { e, f, sp, od } = S[i], at = {}; e.forEach((n, j) => { if (j < od.length) at[od[j]] = n; });
-        g.circle(cx, 6, 15, c, true); sp.forEach(([no, dx, dy]) => (at[no] ? g.tok(at[no], cx + dx * 1.45, 6 + dy * 1.45, 1) : g.num(cx + dx * 1.45, 6 + dy * 1.45, no))); /* (wowutils' spots, scaled to a 15-yard drawing) */
+        g.circle(cx, 6, 15, c, true); sp.forEach(([no, dx, dy]) => { if (at[no]) g.tok(at[no], cx + dx * 1.45, 6 + dy * 1.45, 1); else if (!e.length) g.num(cx + dx * 1.45, 6 + dy * 1.45, no); }); /* (only the assigned holders; the numbered spots only while nobody is assigned (Flex, Nov 11: "keep it clear and consistent")) */ /* (wowutils' spots, scaled to a 15-yard drawing) */
         f.forEach((n, j) => g.tok(n, cx - 10.5 + (j % 4) * 7, -14 - Math.floor(j / 4) * 7, 1)); /* (everyone else, below the circle) */
         g.tag(cx, 25.5, lab, c); }); },
     leg: (D, L) => { const S = ulSoaks(D); [[0, 'Right Soak #1', '#24f2cb'], [1, 'Left Soak #2', '#7fd8ff']].forEach(([i, lab, c]) => { const { e, f, od } = S[i];
