@@ -1326,6 +1326,25 @@ const ulCresRow = (w) => { const n = Math.max(1, Math.round(w / 7)), wd = w / n,
 const ulRingTurn = (k, O, t0, n, cw) => { const st = 360 / n, cr = []; GDZ_RAID.forEach((id) => { for (let t = t0; t <= t0 + 9; t += 0.1) { const p = k.posAt(id, t); if (!p) continue; const r = Math.hypot(p[0] - O[0], p[1] - O[1]); if (r <= 12.5 * (t - t0) + 2.5) { cr.push([Math.atan2(p[1] - O[1], p[0] - O[0]) * 180 / Math.PI, r]); break; } } });
   let best = 0, bs = 1e9; for (let ph = 0; ph < st; ph += st / 32) { let s = 0; cr.forEach(([a, r]) => { let d = ((a - ph) % st + st) % st; d = Math.min(d, st - d); if (d * Math.PI / 180 * r <= cw / 2 + 0.8) s++; }); if (s < bs) { bs = s; best = ph; } } return best; };
 const uxTail = (k, t, p) => k.boss('tl', 'Gore Rattle', t || 0, (p || UX_TAIL)[0], (p || UX_TAIL)[1]);
+/* (Nov 11, the wave audit, from the logs (two Mythic kills, one Heroic): the small tails rise at the platform's edge two at a time and fire
+   2.4 s later, a ring of waves at 12.5 yards a second for 9.5 s. Her own tail, by her, never fires one. In her frame (her at the north edge,
+   her tail on the west side) the pairs are: the south corners about 3 s after each of her wave casts, and on Mythic the west and east
+   edges about 13 s after it; the same two pairs in each heart burn (as it opens, and 11 s in); the east edge and north-east corner just
+   before the first coil set, the north-east corner and the south edge before the second. Heroic only has the south-corner pair) */
+const UL_EDGE = { N: [0, 56], S: [0, -56], W: [-56, 0], E: [55, 0], NE: [39.6, 39.2], NW: [-39.5, 38.9], SW: [-39.7, -40.2], SE: [38.5, -39.6] };
+function ulTails(k, pts, t) { pts.forEach((p) => { const O = typeof p === 'string' ? UL_EDGE[p] : p;
+  k.ring({ x: O[0], y: O[1], r: 3, fx: 'zone', t0: Math.max(0, t - 2.4), dur: Math.min(2.4, t), color: '#ff5a3a', fill: 'rgba(255,90,58,.25)', cn: 'Small tail', legend: 'a small tail rising at the edge: it fires a ring of waves' });
+  k.wave({ ring: 1, x: O[0], y: O[1], deg: ulRingTurn(k, O, t, 16, 7), n: 16, cw: 7, v: 12.5, d: 5, t0: t, t1: t + 9.5, color: '#9be13a', legend: 'Caustic Waves from a small tail: a ring bursts out of it in every direction, the gaps widening as it goes' }); }); }
+/* (Toxic Incubation, as the replay draws it (e9d5ae57, Flex: "thats perfect") and the logs back: the spectral image beams the Wretch for 5 s; the
+   off tank stands in the beam about a third of the way from the image (where the logs have them) and takes an impact once a second, 5 in all;
+   each impact sends two Caustic Waves out to their sides, square to the beam, 12.5 yards a second, 10 wide, for 9.5 s) */
+function ulIncub(k, who, img, wr, t0, sp) { const B = sp || [img[0] + (wr[0] - img[0]) * 0.34, img[1] + (wr[1] - img[1]) * 0.34], ba = Math.atan2(wr[1] - img[1], wr[0] - img[0]) * 180 / Math.PI;
+  k.link({ from: 'im', to: who, t0, t1: t0 + 5, color: '#3af2a8', legend: 'Toxic Incubation: the off tank stands in the venom so the Wretch doesn\'t get it' });
+  k.ring({ on: who, r: 2.4, fx: 'debuff', t0, dur: 5, color: '#3af2a8', cn: 'Toxic Burn', legend: 'Toxic Burn: stacking damage over time on the off tank' });
+  for (let i = 0; i < 5; i++) [90, -90].forEach((a) => k.wave({ x: B[0], y: B[1], deg: ba + a, v: 12.5, w: 10, d: 5, cres: ulCresRow(10), t0: t0 + 0.5 + i, t1: t0 + 10 + i, color: '#9be13a', legend: 'Caustic Waves from the off tank: two at every impact, out square to the beam' }));
+  return B; }
+// (phase three: the two edge spots across the room from her quarter, where the small tails rise as her waves go out)
+const ulOpp = (q) => { const B = UL_PB[q], sx = B[0] > 0 ? -1 : 1, sy = B[1] > 0 ? -1 : 1; return [[sx * 50.7, sy * 20.4], [sx * 21.4, sy * 51.4]]; };
 // the eight egg carriers' zones (Tactyks' zone defence, turned with her): Mages far left and right, two melee up by her, the rest inside
 const UX_ZONE = { r3: [-34, 4], m1: [-11, 30], r5: [-16, 12], r1: [-12, -16], r2: [12, -16], r6: [16, 12], m2: [11, 30], r4: [34, 4] };
 const UX_CAR = Object.keys(UX_ZONE);
@@ -1363,19 +1382,30 @@ const UX_M = {
   // Rawling). Heroic and up: Soul Constrictor (a soaker can't help the next one), so two groups, one per circle. (fail: everyone piles into the
   // first, the second goes off with nobody in it)
   coils(fail, d, o) {
-    const myth = d !== 'h', L = 14, S1 = 7.8, S2 = 11.2, k = gdzKit(UX, L); if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
+    const myth = d !== 'h', set = (o && o.set) || 1, L = myth && set === 2 && !fail ? 17 : 14, S1 = 7.8, S2 = 11.2, k = gdzKit(UX, L); if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.cast('tl', 'Spectral Coils', 0.4, 1.4); uxSoak(k, UX_SA, 1.4, S1); if (!fail) uxSoak(k, UX_SB, S1, S2); else k.ring({ x: UX_SB[0], y: UX_SB[1], r: 10, fx: 'soak', t0: S1, at: S2, dur: S2 - S1 + 0.6, color: '#24f2cb', cn: 'Spectral Coils', legend: 'Spectral Coils: everyone in it shares the hit; carried eggs break' });
     const G1 = ['m3', 'm4', 'm5', 'm6', 'm7', 'h1', 'h3', 'r1', 'r3', 'r5', 'r7'], G2 = ['m1', 'm2', 'h2', 'h4', 'r2', 'r4', 'r6'], C1 = fail ? G1.concat(G2) : G1;
-    C1.forEach((id, i) => { const q = gdzSpot(i, C1.length, fail ? 6.4 : 5.8); k.hold(0.6, id).at(S1 - 0.4, id, UX_SA[0] + q[0], UX_SA[1] + q[1] + 2); }); /* (a step north, so group one isn't in the second soak's 10 yards too) */
-    if (!fail) G2.forEach((id, i) => { const q = gdzSpot(i, G2.length, 4.8); k.hold(0.6, id).at(S1 - 0.6, id, UX_SB[0] + q[0] + 8, UX_SB[1] + q[1] - 6).hold(S1 + 0.2, id).at(S2 - 0.4, id, UX_SB[0] + q[0], UX_SB[1] + q[1] - 2); });
+    // (Mythic, first set: the off tank holds the Wretch at the first circle's inner edge, and its bubble bursts about 2 s before the first slam:
+    // everyone gathers in it on the first circle, then group two steps to the second (the logs: Fester Burst 0:38.7, the slams 0:40.8 and 0:43.6))
+    const BUB1 = myth && set === 1 && !fail, WB1 = [-26, 2];
+    C1.forEach((id, i) => { const q = gdzSpot(i, C1.length, fail ? 6.4 : BUB1 ? 4 : 5.8); k.hold(0.6, id).at(BUB1 ? 5.2 : S1 - 0.4, id, UX_SA[0] + q[0] - (BUB1 ? 0.5 : 0), UX_SA[1] + q[1] + (BUB1 ? -1 : 2)); }); /* (a step north, so group one isn't in the second soak's 10 yards too) */
+    if (!fail) G2.forEach((id, i) => { const q = gdzSpot(i, G2.length, 4.8), r = gdzSpot(i, G2.length, 3); if (BUB1) k.hold(0.6, id).at(5.2, id, WB1[0] - 1 + r[0], WB1[1] - 5 + r[1]).hold(5.7, id).at(S1 - 0.4, id, UX_SB[0] + q[0], UX_SB[1] + q[1] - 2); else k.hold(0.6, id).at(S1 - 0.6, id, UX_SB[0] + q[0] + 8, UX_SB[1] + q[1] - 6).hold(S1 + 0.2, id).at(S2 - 0.4, id, UX_SB[0] + q[0], UX_SB[1] + q[1] - 2); });
+    if (BUB1) { k.add('wr', 'Blightscale Wretch', 0, WB1[0], WB1[1]); k.cast('wr', 'Fester Burst', 1.6, 5.6); k.ring({ on: 'wr', r: 10, fx: 'safe', t0: 1.6, dur: 4.2, color: '#d8f22f', cn: 'Fester Burst', legend: 'Fester Burst: inside this bubble is safe; everyone farther than 10 yards is hit' });
+      k.ring({ on: 'wr', r: 10, fx: 'burst', t0: 5.3, at: 5.6, dur: 0.6, color: '#d8f22f', cn: 'Fester Burst', legend: 'the bubble bursts: everyone outside it is hit' }); k.call(1.8, 4.4, 'Into the bubble, on the first circle', { x: WB1[0] + 4, y: WB1[1] + 14, color: '#d8f22f', ink: '#141603' }); }
+    // (Mythic, second set: right after both slams the bubble goes up between the circles (the logs: slams 2:14.3 and 2:17.5, Fester Burst 2:21.6))
+    const BUB2 = myth && set === 2 && !fail, WB2 = [-25, 0];
+    if (BUB2) { k.add('wr', 'Blightscale Wretch', 0, WB2[0] - 6, WB2[1]).add('wr', 'Blightscale Wretch', S2, WB2[0] - 6, WB2[1]).add('wr', 'Blightscale Wretch', 12.4, WB2[0], WB2[1]); k.cast('wr', 'Fester Burst', 11.6, 15.6); k.ring({ on: 'wr', r: 10, fx: 'safe', t0: 11.6, dur: 4.2, color: '#d8f22f', cn: 'Fester Burst', legend: 'Fester Burst: inside this bubble is safe; everyone farther than 10 yards is hit' });
+      k.ring({ on: 'wr', r: 10, fx: 'burst', t0: 15.3, at: 15.6, dur: 0.6, color: '#d8f22f', cn: 'Fester Burst', legend: 'the bubble bursts: everyone outside it is hit' });
+      const ALL = G1.concat(G2); ALL.forEach((id, i) => { const q = gdzSpot(i, ALL.length, 8); k.hold(S2 + 0.3, id).at(15.1, id, WB2[0] + q[0], WB2[1] + q[1]); }); k.call(12, 14.6, 'Right after both slams: into the bubble', { x: WB2[0] + 4, y: WB2[1] + 14, color: '#d8f22f', ink: '#141603' }); }
     // two carried eggs break in the first soak: weak Rawlings
     ['r3', 'r5'].forEach((id, i) => { const p0 = k.posAt(id, 0); k.obj('ce' + i, 'egg', 0, p0[0] + 2.6, p0[1] - 2.2); ulRide(k, id, 'ce' + i, 0, S1); k.add('rw' + i, 'Blightscale Rawling', S1 + 0.1, ...k.posAt(id, S1).map((v, j) => v + (j ? -3 : 3))).show('rw' + i, S1 + 0.1, L); });
     k.call(S1 + 0.2, S1 + 1.8, 'Eggs break: Rawlings', { x: UX_SA[0] + 6, y: UX_SA[1] + 11, color: '#c9d98a', ink: '#141006' });
     G1.forEach((id) => k.ring({ on: id, r: 2, fx: 'debuff', t0: S1 + 0.1, dur: 5, color: '#b06bff', cn: 'Soul Constrictor', legend: 'Soul Constrictor: you can\'t help with the next coil for ' + (myth ? 5 : 6) + ' seconds' }));
+    if (myth) ulTails(k, set === 2 ? ['NE', 'S'] : ['E', 'NE'], S1 - 2.9); /* (the two small tails just before the first slam, both sets on Mythic) */
     if (fail) { gdzFailBlast(k, S2 + 0.2, 'Nobody in the second coil: full damage', -6, 26, ['h4', 'r6'], 'Spectral Coils'); k.step(0.4).step(1.4).step(S2);
       k.pause(S2 + 0.6, 'Everyone piled into the first circle, and Soul Constrictor stopped them helping with the second. It went off with nobody in it: the whole hit on everyone.', { x: UX_SB[0], y: UX_SB[1], r: 10 });
       return k.done({ title: 'Mistake: nobody in the second coil', focus: { x: -18, y: 6, r: 32 }, badLabel: 'dies to the full hit' }); }
-    k.ring1(G2).step(0.4).step(1.4).step(S1).step(S2);
+    k.ring1(G2); if (BUB1) k.step(0.4).step(1.6).step(S1).step(S2); else if (BUB2) k.step(0.4).step(S1 - 2.9).step(S1).step(11.6); else k.step(0.4).step(1.4).step(S1).step(S2);
     k.pause(S1 - 0.6, 'Group one in the first circle (the right one, facing the tail), group two waiting by the second. Her tank stays on her.', { x: -24, y: 0, r: 18 });
     return k.done({ title: 'Spectral Coils: two groups, two soaks', focus: { x: -18, y: 6, r: 32 }, hlLabel: 'group two, the second soak' });
   },
@@ -1383,7 +1413,7 @@ const UX_M = {
   // tail sends waves of its own). A wave hit is huge stacking damage over time, and an egg it touches hatches. Stand in the other half, then cross once
   // the first set has passed. (fail: one player stays on the first side; Nov 10, Flex: "the boss guide animations should be updated with the ulatek ones": her waves as rows of crescents and her tail's as a ring, as on the replay)
   waves(fail, d, o) {
-    const L = 16, T0 = 4.4, k = gdzKit(UX, L), W1 = { x: -12, y: 46, deg: 270, v: 12.5, w: 24, d: 5, cres: ulCresRow(24), t0: T0, t1: T0 + 7.6, color: '#9be13a', legend: 'Caustic Waves: half the platform first, then the other half' }; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
+    const myth = d !== 'h', L = myth ? 21 : 16, T0 = 4.4, k = gdzKit(UX, L), W1 = { x: -12, y: 46, deg: 270, v: 12.5, w: 24, d: 5, cres: ulCresRow(24), warn: 2.2, warnAt: 'start', t0: T0, t1: T0 + 7.6, color: '#9be13a', legend: 'Caustic Waves: half the platform first, then the other half' }; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.cast('ul', 'Caustic Waves', 0.2, T0); k.call(0.4, 2.6, 'Her west wing back: the west half first', { x: -10, y: 38, color: '#9be13a', ink: '#0b1503' });
     k.wave(W1); k.wave({ ...W1, x: 12, t0: T0 + 5, t1: T0 + 12.6 }); k.wave({ ...W1, x: -36 }); k.wave({ ...W1, x: 36, t0: T0 + 5, t1: T0 + 12.6 });
     // (everyone waits on the east half near the middle; once the first wave has passed their row, they cross to the west half behind it)
@@ -1391,11 +1421,11 @@ const UX_M = {
     Object.entries(UX_HOME).forEach(([id, q]) => { if (id === LATE || id === 't1') return; const wst = q[0] < 0, xa = Math.min(16, Math.max(6, Math.abs(q[0]) + 4)) + (wst ? 2 : 0), ya = q[1] + (wst ? -2.5 : 0), th = T0 + (46 - ya) / 12.5; /* (west players a step off, so mirror-image spots don't land on each other) */
       k.hold(0.4, id).at(Math.max(1.6, th - 0.6), id, xa, ya).hold(th + 0.4, id).at(th + 0.4 + 2 * xa / 7.5, id, -xa, ya); });
     k.hold(T0 - 1, 't1').at(T0 - 0.2, 't1', 6, 40).hold(T0 + 1, 't1').at(T0 + 3, 't1', -6, 40);
-    /* (her tail sends its waves with hers: a ring of 16 crescents bursting out of it, turned so the raid is in its gaps) */ k.wave({ ring: 1, x: UX_TAIL[0], y: UX_TAIL[1], deg: ulRingTurn(k, UX_TAIL, T0, 16, 7), n: 16, cw: 7, v: 12.5, d: 5, t0: T0, t1: T0 + 9, color: '#9be13a', legend: 'Caustic Waves from her tail: a ring bursts out of it in every direction, the gaps widening as it goes' });
+    /* (Nov 11, the logs: her own tail doesn't fire; two small tails at the south corners fire about 3 s after her cast, and on Mythic two more at the west and east edges about 13 s after it) */ ulTails(k, ['SW', 'SE'], T0 + 2.8); if (myth) ulTails(k, ['W', 'E'], T0 + 13.2);
     if (fail) { const q = UX_HOME.r3, th = T0 + (46 - q[1]) / 12.5; ulHit(k, 'r3', th, 'Wave: huge damage over time'); k.oops('r3', th + 0.2); k.step(0.2).step(T0).step(th);
       k.pause(th + 0.3, 'This ranged stayed on the west half. The first wave rolled over them: a huge poison that stacks with every wave.', { on: 'r3', r: 8 });
       return k.done({ title: 'Mistake: on the side that goes first', focus: { x: 0, y: 4, r: 46 } }); }
-    k.ring1(['t1']).step(0.2).step(T0).step(T0 + 3.4).step(T0 + 5);
+    k.ring1(['t1']).step(0.2).step(T0).step(T0 + 3.4).step(myth ? T0 + 12 : T0 + 5);
     k.pause(T0 + 3.2, 'The west half goes first: everyone waits on the east half, then crosses behind the first wave before the second half goes.', { x: 0, y: 10, r: 30 });
     return k.done({ title: 'Caustic Waves: one half, then the other', focus: { x: 0, y: 4, r: 46 }, hlLabel: 'her tank, who steps with her' });
   },
@@ -1437,37 +1467,36 @@ const UX_M = {
   // platform, away from eggs). It wakes after 20 seconds and casts Fester Burst: a 10-yard bubble round it, a big hit and damage over time on everyone
   // farther away: the whole raid, egg carriers too, gets inside. Kill it before its third bubble. (fail: a carrier stays outside)
   wretch(fail, d, o) {
-    const L = 16, k = gdzKit(UX, L), WP = [-4, 26], IMG = [-46, 8]; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
+    const L = 16, k = gdzKit(UX, L), WP = [0, 0], IMG = UL_EDGE[(o && o.img) || 'NW'], BP = [-24, 4]; if (o && o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0);
     k.ring({ x: WP[0], y: WP[1], r: 7, fx: 'burst', t0: 0.2, at: 1, dur: 0.6, color: '#c8a36a', cn: 'Toxic Womb', legend: 'Toxic Womb: 7 yards of damage where the Wretch lands' });
     Object.entries(UX_HOME).forEach(([id, q]) => { const d = Math.hypot(q[0] - WP[0], q[1] - WP[1]); if (d >= 8 || /^t/.test(id)) return; k.hold(0.2, id).at(0.9, id, WP[0] + (q[0] - WP[0]) / (d || 1) * 8.5, WP[1] + (q[1] - WP[1]) / (d || 1) * 8.5); }); /* (out of the landing, before it lands) */
     k.add('wr', 'Blightscale Wretch', 1, WP[0], WP[1]); k.add('im', 'Spectral Ula\'tek', 1.4, IMG[0], IMG[1]).show('im', 1.4, 7);
-    const BEAM = nzAdd(IMG, Math.atan2(WP[1] - IMG[1], WP[0] - IMG[0]) * 180 / Math.PI, 5); k.hold(0.6, 't2').at(2.6, 't2', BEAM[0], BEAM[1]);
-    k.link({ from: 'im', to: 't2', t0: 2.6, t1: 6.6, color: '#3af2a8', legend: 'Toxic Incubation: the off tank stands in the venom so the Wretch doesn\'t get it' });
-    for (let i = 0; i < 4; i++) k.wave({ x: BEAM[0], y: BEAM[1], deg: 180 + (i % 2 ? 18 : -18), v: 14, w: 4, d: 3, cres: [[-2, 2]], t0: 3 + i, t1: 4.6 + i, color: '#9be13a', legend: 'waves from the tank: aimed off the platform, away from the eggs' });
-    k.ring({ on: 't2', r: 2.4, fx: 'debuff', t0: 2.6, dur: 4, color: '#3af2a8', cn: 'Toxic Burn', legend: 'Toxic Burn: stacking damage over time on the off tank' });
-    k.hold(6.8, 't2').at(11, 't2', WP[0] - 3, WP[1] - 4); k.add('wr', 'Blightscale Wretch', 11, WP[0] - 2, WP[1] - 1);
+    const BEAM = [IMG[0] + (WP[0] - IMG[0]) * 0.34, IMG[1] + (WP[1] - IMG[1]) * 0.34]; k.hold(0.6, 't2').at(2.6, 't2', BEAM[0], BEAM[1]);
+    ulIncub(k, 't2', IMG, WP, 2.6, BEAM); /* (5 impacts, two waves out square to the beam at each) */
+    k.hold(7.8, 't2').at(11, 't2', BP[0] - 3, BP[1] - 4); k.add('wr', 'Blightscale Wretch', 8.2, WP[0], WP[1]).add('wr', 'Blightscale Wretch', 11, BP[0] - 2, BP[1] - 1);
     k.cast('wr', 'Fester Burst', 10.6, 14.6); k.ring({ on: 'wr', r: 10, fx: 'safe', t0: 10.6, dur: 4.4, color: '#d8f22f', cn: 'Fester Burst', legend: 'Fester Burst: inside this bubble is safe; everyone farther than 10 yards is hit' });
-    const IN = Object.keys(UX_HOME).filter((id) => !['t1', 't2'].includes(id) && !(fail && id === 'r4')); IN.forEach((id, i) => { const q = gdzSpot(i, IN.length, 9); k.hold(9.4, id).at(14.2, id, WP[0] - 2 + q[0], WP[1] - 1 + q[1]); });
+    const IN = Object.keys(UX_HOME).filter((id) => !['t1', 't2'].includes(id) && !(fail && id === 'r4')); IN.forEach((id, i) => { const q = gdzSpot(i, IN.length, 9); k.hold(9.4, id).at(14.2, id, BP[0] - 2 + q[0], BP[1] - 1 + q[1]); });
     k.ring({ on: 'wr', r: 10, fx: 'burst', t0: 14.3, at: 14.6, dur: 0.6, color: '#d8f22f', cn: 'Fester Burst', legend: 'the bubble bursts: everyone outside it is hit' });
-    k.call(10.8, 13.6, 'Into the bubble', { x: WP[0], y: WP[1] + 14, color: '#d8f22f', ink: '#141603' });
+    k.call(10.8, 13.6, 'Into the bubble', { x: BP[0], y: BP[1] + 14, color: '#d8f22f', ink: '#141603' });
     if (fail) { ulHit(k, 'r4', 14.6, 'Outside: big hit and damage over time'); k.oops('r4', 14.8); k.step(0.2).step(2.6).step(14.6);
       k.pause(15, 'An egg carrier stayed out by their zone. Fester Burst hits everyone outside the 10 yards: with the egg\'s damage over time on top, dead, and the egg hatches.', { on: 'r4', r: 9 });
       return k.done({ title: 'Mistake: outside the Wretch\'s bubble', focus: { x: -8, y: 12, r: 40 } }); }
     k.ring1(['t2']).step(0.2).step(2.6).step(10.6).step(14.6);
-    k.pause(4, 'The off tank stands in the spectral venom so the Wretch never gets it, aiming its waves off the platform.', { x: BEAM[0], y: BEAM[1], r: 10 });
-    return k.done({ title: 'The Wretch: soak its venom, then into its bubble', focus: { x: -12, y: 14, r: 36 }, hlLabel: 'the off tank' });
+    k.pause(4, 'The off tank stands in the spectral venom so the Wretch never gets it. Every impact, once a second, sends two waves out to their sides, square to the beam: off the platform, away from the eggs.', { x: BEAM[0], y: BEAM[1], r: 12 });
+    return k.done({ title: 'The Wretch: soak its venom, then into its bubble', focus: { x: -14, y: 12, r: 42 }, hlLabel: 'the off tank' });
   },
   // Rage of the Shackled: a 6.5-second cast, then 20 seconds of raid damage every 4 seconds and Falling Debris (7 yards, a one-shot even for a
   // tank) at random spots, while her Venomous Heart is open and takes 100% more damage: everything on the heart (adds dragged in to cleave),
   // cooldowns and potions; dodge the brown circles. (o.e: she's on the east edge; fail: a player stays under a debris circle)
   heart(fail, d, o) {
-    o = o || {}; const L = 14, k = gdzKit(UX, L); if (o.e) k.rot(-90); else if (o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxHome(k, 0); if (o.tail !== false) uxTail(k, 0);
+    o = o || {}; const myth = d !== 'h', L = myth && !fail ? 17 : 14, k = gdzKit(UX, L); if (o.e) k.rot(-90); else if (o.rot) k.rot(o.rot); k.art(0, UL_FULL); uxBoss(k, 0); uxHome(k, 0); if (o.tail !== false) uxTail(k, 0);
     k.cast('ul', 'Rage of the Shackled', 0.2, 2.2); k.add('ht', 'Venomous Heart', 2.2, 0, 41.5).show('ht', 2.2, L);
     k.call(2.4, 5, 'Heart open: everything on it', { x: 0, y: 30, color: '#ff8a5a', ink: '#1a0a04' });
     [2.6, 6.6, 10.6].forEach((t) => k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: t - 0.2, at: t, dur: 0.5, color: '#9b6bff', cn: 'Rage of the Shackled', legend: 'raid damage every 4 seconds' }));
     const D = [[[-20, 26], [18, 8], [-6, -10]], [[10, 30], [-24, 6], [22, -12]], [[-12, 18], [26, 22], [2, -24]]], NEAR = new Set();
     D.forEach((set, w) => set.forEach((p, j) => { const at = 4.5 + w * 3.4; k.ring({ x: p[0], y: p[1], r: 7, fx: 'burst', t0: at - 1.8, at, dur: 2.4, color: '#c8a36a', cn: 'Falling Debris', legend: 'Falling Debris: 7 yards, a big hit (step out)' });
       Object.entries(UX_HOME).forEach(([id, q]) => { const cur = k.posAt(id, at - 1.8) || q; if (Math.hypot(cur[0] - p[0], cur[1] - p[1]) < 8.5 && !(fail && id === 'r5' && w === 0)) { const v = [cur[0] - p[0], cur[1] - p[1]], dd = Math.hypot(v[0], v[1]) || 1, e = [p[0] + v[0] / dd * 9.5, p[1] + v[1] / dd * 9.5]; if (!NEAR.has(id + w)) { NEAR.add(id + w); k.hold(at - 1.8, id).at(at - 0.6, id, e[0], e[1]); } } }); }));
+    if (myth && !fail) { ulTails(k, ['SW', 'SE'], 0.6); ulTails(k, ['W', 'E'], 13.3); } /* (Mythic: the small tails fire as it opens and again about 11 s in (the logs, both burns)) */
     if (fail) { const p = D[0][2]; k.hold(2, 'r5').at(3.6, 'r5', p[0] + 1, p[1] + 1); k.oops('r5', 4.6); k.call(4.6, 6.4, 'Under the debris: a big hit', { on: 'r5', color: '#ff3b3b', ink: '#fff' }); k.step(0.2).step(2.4).step(4.5);
       k.pause(4.9, 'This ranged didn\'t look down: Falling Debris hits hard inside its 7 yards, on top of the raid damage every 4 seconds.', { x: p[0], y: p[1], r: 9 });
       return k.done({ title: 'Mistake: under the falling debris', focus: { x: 0, y: 10, r: 42 } }); }
@@ -1704,6 +1733,52 @@ Object.assign(UX_M, {
     return k.done({ title: 'Slithering Clutches: grip them in', focus: { x: 0, y: 2, r: 44 }, art: UL_BROKEN, hlLabel: 'the two Death Knights' });
   },
 });
+Object.assign(UX_M, {
+  // Phase three, her waves (Nov 11, from the logs: about every 50 s, a few seconds before each Circling Prey and before the last burn). A wall
+  // the whole room wide rolls out from where she stands, the way she faces (toward the middle); step sideways into a gap. On Mythic two small
+  // tails at the far edges, across the room from her, fire their rings a second later, from behind the raid. (o.q: her quarter)
+  waves3(fail, d, o) {
+    o = o || {}; const myth = d !== 'h', q = o.q || 'NE', L = 15, T0 = 4.4, k = gdzKit(UX, L); k.art(0, UL_BROKEN); uxB3(k, 0, q); uxP3(k, 0, q);
+    const B = UL_PB[q], deg = Math.atan2(-B[1], -B[0]) * 180 / Math.PI, a = deg * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
+    // (the gaps: 3 yards every 8 along the wall; each player in its path steps sideways into the nearest one before the front reaches them)
+    const GAPS = []; for (let z = -44; z <= 44; z += 8) GAPS.push(z);
+    const cres = []; let prev = -48; GAPS.forEach((z) => { if (z - 1.5 > prev + 0.5) cres.push([prev, z - 1.5]); prev = z + 1.5; }); cres.push([prev, 48]);
+    k.cast('ul', 'Caustic Waves', 0.2, T0);
+    k.wave({ x: B[0], y: B[1], deg, v: 12.5, w: 96, d: 5, cres, warn: 2.2, warnAt: 'start', t0: T0, t1: T0 + 9, color: '#9be13a', legend: 'Caustic Waves: hers in phase 3 roll out from where she stands, the whole room wide: step into a gap' });
+    GDZ_RAID.forEach((id) => { const p = k.posAt(id, T0); if (!p) return; const sAl = (p[0] - B[0]) * ux + (p[1] - B[1]) * uy, z = -(p[0] - B[0]) * uy + (p[1] - B[1]) * ux; if (sAl < -1) return;
+      const g = GAPS.reduce((m, v) => (Math.abs(v - z) < Math.abs(m - z) ? v : m), GAPS[0]), th = T0 + Math.max(0, sAl - 3) / 12.5; if (Math.abs(g - z) < 0.5) return;
+      k.hold(Math.max(0.4, th - 2.6), id).at(Math.max(0.9, th - 0.8), id, B[0] + sAl * ux - g * uy, B[1] + sAl * uy + g * ux); });
+    if (myth) ulTails(k, ulOpp(q), T0 + 1.2);
+    if (myth) k.step(0.2).step(T0).step(T0 + 1.2).step(T0 + 9); else k.step(0.2).step(T0).step(T0 + 9);
+    k.pause(T0 + 0.6, 'Her waves cover the whole room: everyone steps sideways into a gap and lets the wall roll past.' + (myth ? ' Behind the raid, two small tails are about to fire their rings.' : ''), { x: (B[0] + UL_PL[UX_NEXT[q]][0]) / 2, y: (B[1] + UL_PL[UX_NEXT[q]][1]) / 2, r: 30 });
+    return k.done({ title: 'Phase 3: her waves, step into a gap', focus: { x: 0, y: 0, r: 50 } });
+  },
+  // Mythic, phase three, the third Blightscale Wretch (Nov 11, from the logs, in this guide's turn of the room): its Toxic Womb lands at 7:09
+  // on the south-west quarter, just before the first Circling Prey; the spectral image beams it from beyond that quarter's south edge and the
+  // off tank soaks it there (7:15 to 7:20); then drags it to the raid's new quarter, where its bubble at 7:45 comes as Serpent's Bite's two
+  // red circles go out: the reds and their soakers stack inside it, and everyone else gets in too.
+  wretch3(fail, d, o) {
+    const L = 21, k = gdzKit(UX, L), WP = [-18.3, -18.5], IMG = [-21.4, -51.4], BEAM = [-20.6, -29.3], SP = [-23.4, 23.7]; k.art(0, UL_BROKEN); uxB3(k, 0, 'NE'); uxP3(k, 0, 'NE');
+    k.ring({ x: WP[0], y: WP[1], r: 7, fx: 'burst', t0: 0.2, at: 1, dur: 0.6, color: '#c8a36a', cn: 'Toxic Womb', legend: 'Toxic Womb: 7 yards of damage where the Wretch lands' });
+    k.call(0.4, 3, 'Toxic Womb: a Wretch lands on a far quarter', { x: WP[0], y: WP[1] + 10, color: '#c8a36a', ink: '#140f06' });
+    k.add('wr', 'Blightscale Wretch', 1, WP[0], WP[1]); k.add('im', 'Spectral Ula\'tek', 1.4, IMG[0], IMG[1]).show('im', 1.4, 8.6);
+    k.hold(0.6, 't2').at(3.2, 't2', BEAM[0], BEAM[1]); ulIncub(k, 't2', IMG, WP, 3.4, BEAM);
+    // (the raid moves on to the north-west quarter for the first Circling Prey while the off tank soaks)
+    uxB3(k, 6, 'NW'); uxP3(k, 8.4, 'NW', 5, ['t2']);
+    k.hold(8.6, 't2').at(13.4, 't2', SP[0] + 2.5, SP[1] - 2.5); k.add('wr', 'Blightscale Wretch', 9, WP[0], WP[1]).add('wr', 'Blightscale Wretch', 13.8, SP[0], SP[1]);
+    // (Serpent's Bite: the two reds stack on the Wretch's spot, the three soakers with them; Fester Burst: everyone inside its 10 yards)
+    const R = ['m3', 'r2'], SO = ['m5', 'm6', 'h2'];
+    R.forEach((id, i) => { k.hold(11.6, id).at(14, id, SP[0] + (i ? 1.4 : -1.4), SP[1] + 1); k.ring({ on: id, r: 7, fx: 'zone', t0: 12, dur: L - 12, color: '#ff3b3b', fill: 'rgba(255,59,59,.14)', cn: 'Serpent\'s Bite', legend: 'Serpent\'s Bite: stand in it to leech the venom before it ends' }); });
+    SO.forEach((id, i) => { k.hold(12.2, id).at(14.6, id, SP[0] - 1.6 + i * 1.6, SP[1] - 1.4); });
+    k.cast('wr', 'Fester Burst', 14.6, 18.6); k.ring({ on: 'wr', r: 10, fx: 'safe', t0: 14.6, dur: 4.2, color: '#d8f22f', cn: 'Fester Burst', legend: 'Fester Burst: inside this bubble is safe; everyone farther than 10 yards is hit' });
+    const IN = GDZ_RAID.filter((id) => !R.includes(id) && !SO.includes(id) && id !== 't2'); IN.forEach((id, i) => { const g = gdzSpot(i, IN.length, 8); k.hold(14.8, id).at(18.2, id, SP[0] + g[0], SP[1] + g[1]); });
+    k.ring({ on: 'wr', r: 10, fx: 'burst', t0: 18.3, at: 18.6, dur: 0.6, color: '#d8f22f', cn: 'Fester Burst', legend: 'the bubble bursts: everyone outside it is hit' });
+    k.call(15, 18, 'The reds stack in the bubble; everyone in', { x: SP[0], y: SP[1] + 13, color: '#d8f22f', ink: '#141603' });
+    k.ring1(['t2']).step(0.2).step(3.4).step(8.6).step(14.6);
+    k.pause(4.6, 'The off tank soaks this Wretch\'s spectral venom on its own quarter while the raid moves on. Its waves go out square to the beam, away from the raid.', { x: BEAM[0], y: BEAM[1], r: 12 });
+    return k.done({ title: 'Phase 3: the Wretch again, its bubble on the red circles', focus: { x: -12, y: 0, r: 46 }, hlLabel: 'the off tank' });
+  },
+});
 const UX_FAIL = {
   dive: { name: 'Nobody at the bubbles', what: 'Her tank stays put while she dives: she comes up at the bubbles with nobody in reach, and her hits go out to the whole raid.',
     do: ['She dives: bubbles rise at the west edge.', 'Her tank stays put.', 'She comes up with nobody in reach: the raid is hit.'],
@@ -1747,22 +1822,22 @@ const UX_BEATS = {
     run() { const k = gdzKit(UX, 9.4); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0); k.cast('ul', 'Submerge', 0.4, 1.6); uxBoss(k, 1.6); uxBoss(k, 8.8, [-46, -1]);
       k.ring({ x: -44, y: -1, r: 5, fx: 'zone', t0: 1.6, dur: 7.4, color: '#7fd8ff', fill: 'rgba(127,216,255,.2)', cn: 'Bubbles', legend: 'bubbles where she comes up' });
       k.hold(0.6, 't1').at(8.4, 't1', -39, -1); k.call(1.8, 6, 'Tank: to the bubbles', { on: 't1', color: '#5aa0ff', ink: '#fff' }); k.step(0.2); } },
-  kill: { name: 'The kill', do: ['Rage of the Shackled one last time: burn the heart. If she\'s at 1 or 2% as it ends, jump off behind her to live a few seconds longer.'],
+  kill: { name: 'The kill', do: ['Her last waves roll out just before it (with two small tails\' rings on Mythic). Then Rage of the Shackled one last time: burn the heart. If she\'s at 1 or 2% as it ends, jump off behind her to live a few seconds longer.'],
     run() { const k = gdzKit(UX, 4); k.art(0, UL_BROKEN); uxB3(k, 0, 'SE'); k.cast('ul', 'Rage of the Shackled', 0, 1.5); k.add('ht', 'Venomous Heart', 1.5, UL_PB.SE[0] * 0.85, UL_PB.SE[1] * 0.85).show('ht', 1.5); uxP3(k, 0, 'SE'); k.step(0.2); } },
 };
 const UX_SIM = [
   { at: 0, beat: 'start', ph: 0 }, { at: 1, mech: 'eggs', ph: 0, label: 'Call of the Serpent 1' }, { at: 3, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 1' },
-  { at: 22, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 1' }, { at: 36, mech: 'coils', ph: 0, label: 'Spectral Coils 1' }, { at: 45, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 1' },
+  { at: 22, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 1' }, { at: 36, mech: 'coils', ph: 0, label: 'Spectral Coils 1 (In the Wretch\'s bubble)' }, { at: 45, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 1' },
   { at: 50, mech: 'waves', ph: 0, label: 'Caustic Waves 1 (Go to the other half)' }, { at: 71, mech: 'eggs', ph: 0, label: 'Call of the Serpent 2 (Eight more)' },
-  { at: 72, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 2' }, { at: 77, beat: 'dive', ph: 0 },
+  { at: 72, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 2 (Its beam during the dive)', o: { img: 'SW' } }, { at: 77, beat: 'dive', ph: 0 },
   { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 102, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
-  { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2', o: { rot: 90 } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
+  { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2 (Waves and the bubble)', o: { rot: 90, set: 2, do: ['The second set (2:11): the carriers split between the two circles, her waves still rolling.', 'Two small tails fire as the coils rise: keep dodging in your soak.', 'Both slams, one after the other: eggs break into Rawlings.', 'Right after both slams, Fester Burst between the circles: everyone in.'] } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
   { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 248, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
   { at: 319, mech: 'intcoils', ph: 2 },
   { at: 377, mech: 'clutches', ph: 3, label: 'Slithering Clutches 1 (Grip them in)', o: { q: 'NE' } }, { at: 382, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 3', o: { q: 'NE' } }, { at: 397, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
-  { at: 407, mech: 'clutches', ph: 3, label: 'Slithering Clutches 2', o: { q: 'NE' } }, { at: 432, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
-  { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 467, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
-  { at: 505, mech: 'clutches', ph: 3, label: 'Slithering Clutches 3 (Two grips, two Shriekers)', o: { q: 'SW' } }, { at: 535, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 5', o: { q: 'SW' } }, { at: 544, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
+  { at: 407, mech: 'clutches', ph: 3, label: 'Slithering Clutches 2', o: { q: 'NE' } }, { at: 422, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves, then Circling Prey)', o: { q: 'NE' } }, { at: 432, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } }, { at: 443, mech: 'wretch3', ph: 3, label: 'Blightscale Wretch 3 (Landed 7:09; its bubble on the reds at 7:45)' },
+  { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 467, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NW' } }, { at: 477, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves again)', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
+  { at: 505, mech: 'clutches', ph: 3, label: 'Slithering Clutches 3 (Two grips, two Shriekers)', o: { q: 'SW' } }, { at: 527, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves again)', o: { q: 'SW' } }, { at: 535, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 5', o: { q: 'SW' } }, { at: 544, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
   { at: 565, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3 (The last set)', o: { q: 'SE' } }, { at: 577, beat: 'kill', ph: 3 },
 ];
 // (Heroic, on our two Heroic kills' clock: she comes up at the edge after the dive, so the rest of phase 1 is turned like Mythic's;
@@ -1777,15 +1852,15 @@ const UX_SIM_H = [
   { at: 176, mech: 'warden', ph: 1 }, { at: 189, mech: 'fangs', ph: 1 }, { at: 214, mech: 'doomscales', ph: 1 }, { at: 278, mech: 'heart2', ph: 1 },
   { at: 309, mech: 'intcoils', ph: 2 },
   { at: 367, mech: 'clutches', ph: 3, label: 'Call of the Serpent 1', o: { q: 'NE' } }, { at: 372, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NE' } }, { at: 387, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
-  { at: 397, mech: 'clutches', ph: 3, label: 'Call of the Serpent 2', o: { q: 'NE' } }, { at: 422, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
+  { at: 397, mech: 'clutches', ph: 3, label: 'Call of the Serpent 2', o: { q: 'NE' } }, { at: 412, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves, then Circling Prey)', o: { q: 'NE' } }, { at: 422, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } },
   { at: 442, mech: 'clutches', ph: 3, label: 'Call of the Serpent 3', o: { q: 'NW' } }, { at: 447, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 5', o: { q: 'NW' } }, { at: 458, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } },
   { at: 473, mech: 'prey', ph: 3, label: 'Circling Prey 2', o: { q: 'NW' } }, { at: 495, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 3', o: { q: 'SW' } },
   { at: 502, mech: 'clutches', ph: 3, label: 'Call of the Serpent 4', o: { q: 'SW' } }, { at: 523, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 6', o: { q: 'SW' } }, { at: 534, mech: 'prey', ph: 3, label: 'Circling Prey 3 (The last quarter)', o: { q: 'SW' } },
   { at: 555, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 4 (The last set)', o: { q: 'SE' } }, { at: 588, beat: 'kill', ph: 3 },
 ];
 // (how long each part lasts on the real clock, for the written version's overlaps; how bad a miss is: 3 can wipe, 2 can kill, 1 minor)
-const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
-const UX_SEV = { 'm:wrath3': 1, 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
+const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 15, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'm:waves3': 10, 'm:wretch3': 50, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
+const UX_SEV = { 'm:wrath3': 1, 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'm:waves3': 3, 'm:wretch3': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
 GDZ['Ula\'tek'] = {
   upd: ['12.1.5', 'Oct 21, 2026'],
   stepRoles: {
@@ -1796,8 +1871,8 @@ GDZ['Ula\'tek'] = {
   },
   sum: 'A long fight on a set clock. Phase 1: carry eggs, soak the coils, dodge her waves, burn her heart. Phase 2: the raid splits onto the two side ledges. Then the platform shatters and the last phase moves from quarter to quarter.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
-  h: { sim: UX_SIM_H, simSkip: [{ from: 442, to: 495, label: 'The next quarter, the same again', text: 'The raid moves counter-clockwise to the north-west quarter and plays it the same way: Call of the Serpent (7:22), Mother\'s Wrath, Serpent\'s Bite, then Circling Prey (7:53) to move on.' }], simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simAlways: ['One tank on her and one on the tail all fight: an empty melee range hits the whole raid.', 'Her waves come out of her, half the platform at a time: go to the other half.'] },
-  m: { sim: UX_SIM, simSkip: [{ from: 461, to: 505, label: 'The next quarter, the same again', text: 'The raid moves counter-clockwise to the north-west quarter and plays it the same way: Serpent\'s Bite (7:41), Mother\'s Wrath, then Circling Prey (8:03) to move on.' }], simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simBands: [{ t0: 10, t1: 44, n: 8, text: '8 eggs', title: '8 eggs carried' }, { t0: 82, t1: 138, n: 8, text: '8 eggs', title: '8 eggs carried' }],
+  h: { sim: UX_SIM_H, simSkip: [{ from: 442, to: 495, label: 'The next quarter, the same again', text: 'The raid moves counter-clockwise to the north-west quarter and plays it the same way: Call of the Serpent (7:22), Mother\'s Wrath, Serpent\'s Bite, her waves, then Circling Prey (7:53) to move on.' }], simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simAlways: ['One tank on her and one on the tail all fight: an empty melee range hits the whole raid.', 'Her waves come out of her, half the platform at a time: go to the other half.'] },
+  m: { sim: UX_SIM, simSkip: [{ from: 461, to: 505, label: 'The next quarter, the same again', text: 'The raid moves counter-clockwise to the north-west quarter and plays it the same way: Serpent\'s Bite (7:41) with the third Wretch\'s bubble on the stacked reds (7:45), Mother\'s Wrath, her waves and two tails\' rings (7:57), then Circling Prey (8:03) to move on.' }], simDur: UX_DUR, simSev: UX_SEV, beats: UX_BEATS, simBands: [{ t0: 10, t1: 44, n: 8, text: '8 eggs', title: '8 eggs carried' }, { t0: 82, t1: 138, n: 8, text: '8 eggs', title: '8 eggs carried' }],
     simAlways: ['Egg carriers: your 3-yard ring never touches another carrier\'s, you never take a wave, and you never die holding an egg.', 'Her waves come out of her, half the platform at a time: go to the other half, then cross behind the first wave.'],
     source: 'Tactyks\' Mythic Ula\'tek guide and first-kill video', sum: 'Egg carriers\' 3-yard rings must never touch. A Wretch makes a bubble to stand in, four Doomscales need kicks, the intermission takes three soak groups, and the last phase needs grips. Easier since the Oct 6 tuning than in the video.',
     roles: {
@@ -1818,17 +1893,18 @@ GDZ['Ula\'tek'] = {
             plan: ['Pick 8 carriers and backups, no more than 2 or 3 melee. Each owns an area set by which way she faces, not by the floor markers.', 'Breaking an egg gives Rancid Yolk for 20 seconds: while it\'s on you, a carried egg hurts three times as much, deadly for anyone but a tank. Let it drop before you pick up another.', 'Dying with an egg, or taking a wave while carrying one, hatches a Viper. An immunity keeps you alive, but the egg still hatches.', 'Second egg set (1:11): the bubble comes before the waves; melee take their eggs before it, ranged after.'] },
           map: (d, o) => UX_M.eggs(false, d, o) },
         { id: 'wretch', only: 'm', fail: UX_FAIL.wretch, name: 'Blightscale Wretch (Soak its venom, then the bubble)', spell: 'Fester Burst', what: 'An add at 0:03 and 1:12 (and again in phase 3). It drops from the ceiling in a Toxic Womb, in the middle at the pull: stay out of its 7 yards, the landing hits hard. It wakes 20 seconds later. A spectral Ula\'tek at the edge pours venom at it; the off tank steps into that stream instead. About every 32 seconds it makes a 10-yard bubble and blasts everyone outside it.',
-          do: ['A Toxic Womb lands: stay out of its 7 yards. The Wretch inside wakes 20 seconds later.', 'Off tank: stand in the spectral venom with a defensive, and aim its waves off the platform.', 'Fester Burst: everyone inside its 10 yards, carriers too, rings apart.', 'Kill it before its third bubble.'],
+          do: ['A Toxic Womb lands: stay out of its 7 yards. The Wretch inside wakes 20 seconds later.', 'Off tank: stand in the spectral venom with a defensive. Each impact (5, once a second) sends two waves out to your sides: stand where they go off the platform.', 'Fester Burst: everyone inside its 10 yards, carriers too, rings apart.', 'Kill it before its third bubble.'],
           plan: ['The tail comes up on the same side as the spectral image, so you know early where the soaks will be.', 'Its enrage only adds tank damage: kill it between its second and third bubble. Kill the old Wretch as the new one lands.', 'First bubble: on the first coil circle, whole raid in it. Second bubble: after the second eggs, in the middle by her.'],
           map: (d, o) => UX_M.wretch(false, d, o) },
         { id: 'coils', fail: UX_FAIL.coils, name: 'Spectral Coils (Two groups, two circles)', spell: 'Spectral Coils', what: 'Two coils rise at the edge by her tail and slam one after the other, about 3 seconds apart. Everyone within 10 yards of a slam shares it. Soul Constrictor stops a soaker helping with the next one for 6 seconds, so two groups.',
           do: ['The tail comes up at the edge; its tank stays on it.', 'Facing the tail, the right-hand coil slams first: group one in it.', 'It slams: carried eggs break into weak Rawlings. Kill them.', 'Group two takes the second slam.'],
           plan: ['Raid cooldowns right before the first slam: Spirit Link, Darkness, Anti-Magic Zone.', 'Never take a wave to reach a soak: take the other one instead.'],
-          m: { what: 'First set: the Wretch\'s bubble goes up on the first circle and the carriers take that slam inside it; group two takes the second. Second set: the carriers split between the circles, and right after both slams the bubble goes up between them.',
+          m: { do: ['The tail comes up at the edge; the off tank holds the Wretch at the first circle.', 'Fester Burst first: everyone into its bubble on the first circle, carriers\' rings apart. Two small tails rise at the far edge.', 'Facing the tail, the right-hand coil slams first: the carriers take it inside the bubble, eggs break into Rawlings. Group two steps to the second circle.', 'Group two takes the second slam as the tails\' rings roll in: step into a gap.'],
+            what: 'First set: the Wretch\'s bubble goes up on the first circle and the carriers take that slam inside it; group two takes the second. Second set: the carriers split between the circles, and right after both slams the bubble goes up between them.',
             plan: ['Outside the Wretch\'s bubble is a big hit and damage over time; the tanks decide where it goes by where they hold the Wretch.', 'Second set (2:11): the carriers bring 8 eggs through her waves into the double slam. A wave is always coming: keep dodging in your soak.', 'Rawlings enrage 25 seconds after they hatch: kill them before that, kept to the side of the boss.'] },
           map: (d, o) => UX_M.coils(false, d, o) },
         { id: 'waves', fail: UX_FAIL.waves, name: 'Caustic Waves (Go to the other half)', spell: 'Caustic Waves', note: 'Which half she starts on changes every pull, so someone calls it. The map shows one way it can go.', what: 'She pulls one wing back and waves of venom roll across that half of the platform, then the other half a few seconds later; her tail sends waves of its own. A hit is a huge stacking poison, and it hatches a carried egg.',
-          do: ['Her wing goes back: that half goes first. Go to the other half.', 'Her waves roll over the first half.', 'Cross behind the first wave before the second half goes.', 'Stay out until it has rolled past. Carrying an egg? A hit hatches it.'],
+          do: ['Her wing goes back: that half goes first. Go to the other half.', 'Her waves roll over the first half; two small tails rise at the south corners and fire rings: step out of their paths.', 'Cross behind the first wave before the second half goes.', 'Stay out until it has rolled past. Carrying an egg? A hit hatches it.'],
           m: { name: 'Caustic Waves (The lane steps across, Mages Blink)', what: 'The second set at 1:47 is the hardest moment of the fight: eggs out, her waves and the tails\' waves at once, with carriers who must not touch. A hit is a huge poison that stacks: take one only with a big defensive up.',
             do: ['The caller says which half she starts on. The lane steps to the other half together, rings apart.', 'Her first half rolls; small tails rise at the corners and fire a moment later: step out of their paths.', 'Her other half next: the lane crosses back behind her first wave. Mages at the sides Blink back over it.', 'Ten seconds later two more tails fire from the edges.'],
             plan: ['Mages make the best outer carriers: they Blink over a wave when there\'s no room. Two Evokers\' Time Spiral helps them.', 'Stay in your own area when the small tails fire. A big defensive lets you live through one hit.'] },
@@ -1842,7 +1918,8 @@ GDZ['Ula\'tek'] = {
         { id: 'heart', fail: UX_FAIL.heart, name: 'Rage of the Shackled (Burn the heart)', spell: 'Rage of the Shackled', what: 'Her Venomous Heart opens for 20 seconds and takes double damage, while she hits the raid every 4 seconds. Falling Debris lands in brown circles that hit hard, tanks too.',
           do: ['A 6.5-second cast, then her heart opens: save cooldowns and a potion.', 'Everyone on the heart, the adds dragged in for the cleave.', 'Raid damage every 4 seconds: heal through it.', 'Brown circles: step out before the debris lands.'],
           plan: ['On Heroic, Bloodlust here.', 'She ends on the left or right edge: that side\'s phase 2 half stays, the other walks across.'],
-          m: { plan: ['Start your cooldowns when the cast is about 2.7 seconds from the end, so they\'re up as it opens.', 'Under about 66% after this burn means you\'re on pace for a kill.', 'Where she ends sets where the second burn starts: the half on her side gets the short walk back.'] },
+          m: { do: ['A 6.5-second cast, then her heart opens: save cooldowns and a potion.', 'Everyone on the heart, the adds dragged in for the cleave.', 'Raid damage every 4 seconds; two small tails fire as it opens and two more about 11 seconds in: step out of their rings.', 'Brown circles: step out before the debris lands.'],
+            plan: ['Start your cooldowns when the cast is about 2.7 seconds from the end, so they\'re up as it opens.', 'Under about 66% after this burn means you\'re on pace for a kill.', 'Where she ends sets where the second burn starts: the half on her side gets the short walk back.'] },
           map: (d, o) => UX_M.heart(false, d, o) },
         { id: 'dive', fail: UX_FAIL.dive, spell: 'Submerge', name: 'She dives (Watch the bubbles)', what: 'After her first waves (1:02 on Heroic, 1:17 on Mythic) she dives and comes up where bubbles rise at the edge. Her tank gets there before she lands: an empty melee range hits the whole raid.',
           do: ['After her first waves she dives.', 'Bubbles rise at the edge where she will come up.', 'Her tank is there before she lands: an empty melee range hits the whole raid.'],
@@ -1881,7 +1958,7 @@ GDZ['Ula\'tek'] = {
           map: (d, o) => UX_M.doomscales(false, d, o) },
         { id: 'heart2', fail: UX_FAIL.heart, name: 'Rage of the Shackled (The second burn)', spell: 'Rage of the Shackled', what: 'The second heart burn (4:38 on Heroic, 4:48 on Mythic). The same as the first, with the Doomscales dragged in for the cleave.',
           do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Everything on the heart, the Doomscales cleaved with it.', 'Raid damage every 4 seconds.', 'Brown circles hit hard: step out.'],
-          m: { do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; the tails fire at the raid again.', 'Brown circles hit hard: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
+          m: { do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; two small tails fire as it opens and two more about 11 seconds in: step out of their rings.', 'Brown circles hit hard: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
           map: (d, o) => UX_M.heart(false, d, { e: true, ...(o || {}) }) },
       ],
       tiles: [
@@ -1917,6 +1994,14 @@ GDZ['Ula\'tek'] = {
             do: ['Two reds, usually a melee and a ranged. They stack on one spot toward the middle.', 'The three assigned soakers stand on it: inside both circles at once.', 'As it ends every soaker takes about 2 million: a big defensive.', 'Spread out at once; your wave goes away from the raid. Dying is better than hitting them.'],
             plan: ['Since Oct 6 three soakers clear a set. Sets: two Mages and a Hunter; a Rogue and both tanks; a healer and both tanks; one backup each.', 'After the hit, rotate personals and externals through the damage over time.', 'Last set: you can die after it ends (just not during), so soakers walk into the water rather than hit the raid with their waves.'] },
           map: (d, o) => UX_M.bite(false, d, o) },
+        { id: 'waves3', name: 'Caustic Waves (Step into a gap)', spell: 'Caustic Waves', what: 'Her waves still come in this phase, about every 50 seconds: a few seconds before each Circling Prey, and before the last burn. They roll out from the quarter she is on, the whole room wide, with gaps to step into. A hit is a huge poison that stacks.',
+          do: ['She winds up her waves on her quarter.', 'A wall of waves the whole room wide rolls out from her: step sideways into a gap.', 'It has rolled past: back to your spots.'],
+          m: { what: 'Her waves still come in this phase, about every 50 seconds: a few seconds before each Circling Prey, and before the last burn. They roll out from the quarter she is on, the whole room wide, with gaps to step into. A second later two small tails at the far edges fire their rings, from behind the raid.',
+            do: ['She winds up her waves on her quarter.', 'A wall of waves the whole room wide rolls out from her: step sideways into a gap.', 'A second later two small tails at the far edges fire their rings, from behind you: turn your camera and step out of their paths.', 'It has rolled past: back to your spots.'] },
+          map: (d, o) => UX_M.waves3(false, d, o) },
+        { id: 'wretch3', only: 'm', name: 'Blightscale Wretch (Again, on the red circles)', spell: 'Fester Burst', what: 'A third Wretch: its Toxic Womb lands at 7:09 on a far quarter, just before the first Circling Prey. The spectral image beams it again, so the tank without Stone Venom soaks it there while the raid moves on, then drags the Wretch to the raid\'s new quarter. Its bubble at 7:45 comes as Serpent\'s Bite\'s two red circles go out.',
+          do: ['Toxic Womb: the Wretch lands on a far quarter. Step out of its 7 yards.', 'Off tank: into the spectral venom on that quarter; its waves go out square to the beam, away from the raid.', 'Drag the Wretch to the raid\'s new quarter, onto the red circles\' spot.', 'Fester Burst as the reds go out: the reds and their soakers stack inside the bubble, and everyone gets in.'],
+          map: (d, o) => UX_M.wretch3(false, d, o) },
         { id: 'prey', fail: UX_FAIL.prey, name: 'Circling Prey (One quarter counter-clockwise)', spell: 'Circling Prey', what: 'She destroys the quarter she\'s on: a huge hit and a knockback within 13 yards, a smaller hit on everyone else. Everyone moves one quarter counter-clockwise, to her left. Personals for the second and third.',
           do: ['Circling Prey: she\'s about to destroy the quarter she\'s on.', 'Everyone moves one quarter counter-clockwise.', 'It lands: personals for the second and third.', 'She comes up at the next corner.'],
           m: { plan: ['A raid cooldown waits on each new quarter (Anti-Magic Zone, Anti-Magic Zone, Spirit Link Totem).', 'The third quarter is short: a Warlock gate to the fourth makes it easy.', 'Waves in this phase come from behind: turn your camera to see them coming.'] },
@@ -1927,8 +2012,6 @@ GDZ['Ula\'tek'] = {
           map: (d, o) => UX_M.wrath3(false, d, o) },
       ],
       tiles: [
-        { name: 'Caustic Waves (Watch behind you)', do: 'Her waves still come in this phase, from behind. Watch for them, step out, then spread back out.' },
-        { only: 'm', name: 'Blightscale Wretch (Again on quarter 2)', do: 'A Wretch comes back on the second quarter. Its bubble right after the second break overlaps the red circles: the reds stack inside it.' },
         { name: 'Blightscale Shrieker (Kick and tank)', do: 'Kick its Vicious Echoes (a raid stun and stacking damage over time; never let it reach 2 stacks) and tank it to the boss.', m: { do: 'Two Shriekers come with the last clutches: half the raid kicks each. Kill them around their enrage.' } },
         { name: 'The last burn (Jump off at the end)', do: 'Rage of the Shackled one more time (9:27 on Heroic, 9:37 on Mythic). If she\'s nearly dead as it ends, jump off behind her: the venom hurts, but you dodge the slam and live a few seconds longer. Use a normal potion here.' },
       ] },
@@ -5696,7 +5779,7 @@ const GDZ_QUIZ = {
       { pt: 'Intermission', mid: 'The Shattering', lb: 'The Shattering', sp: 'The Shattering', q: 'The platform is about to shatter into four. Where do you stand?', a: ['Inside, on the line toward the diamond', 'At the outer edge', 'Right under her', 'Anywhere: there\'s no knockback'], why: 'The knockback is big, and outside is the venom. Watch where her bubbles come up: that\'s the first quarter (usually north-east).' },
       { pt: 'Phase 3', mid: 'clutches', sp: 'Call of the Serpent', lb: 'Slithering Clutches', q: 'Slithering Clutches crawl toward the venom. Who stops them?', a: ['Two Death Knights grip them in, then Gorefiend\'s Grasp pulls them into the cleave', 'The healers dispel them', 'Nobody: let them reach the venom', 'The egg carriers pick them up'], why: 'A clutch that reaches the venom hatches a Shrieker: kick its Vicious Echoes, a 6-second raid stun. On the first quarter they come back during Serpent\'s Bite: grip them again.' },
       { pt: 'Phase 3', mid: 'bite', sp: 'Serpent\'s Bite', q: 'Serpent\'s Bite since the Nov 6 hotfix: how many red circles, and who soaks them?', a: ['Two, stacked on one spot, and three assigned soakers stand in both', 'Three: a melee, a ranged and a healer, each soaked apart', 'One, and the whole raid stands in it', 'Two, and nobody soaks: the targets run away'], why: 'Each red is a 7-yard circle for 15 seconds; one left unsoaked turns its target to stone, which hurts the raid every second. Soakers take about 2 million as it ends: big defensive, then spread and send your wave away from the raid.' },
-      { pt: 'Phase 3', mid: 'Blightscale Wretch (Again', lb: 'Blightscale Wretch, phase 3', sp: 'Fester Burst', q: 'Second quarter: a Wretch\'s bubble goes up just as Serpent\'s Bite\'s red circles are out. Where do the reds go?', a: ['They stack inside the bubble, with their soakers', 'Out of the bubble, away from the raid', 'Into the venom', 'Each to a different quarter'], why: 'Outside the bubble is a big hit, so the stacked reds and their three soakers stand inside it. The tank without Stone Venom soaks this Wretch\'s spectral venom.' },
+      { pt: 'Phase 3', mid: 'wretch3', lb: 'Blightscale Wretch, phase 3', sp: 'Fester Burst', q: 'Second quarter: a Wretch\'s bubble goes up just as Serpent\'s Bite\'s red circles are out. Where do the reds go?', a: ['They stack inside the bubble, with their soakers', 'Out of the bubble, away from the raid', 'Into the venom', 'Each to a different quarter'], why: 'Outside the bubble is a big hit, so the stacked reds and their three soakers stand inside it. The tank without Stone Venom soaks this Wretch\'s spectral venom.' },
       { pt: 'Phase 3', mid: 'prey', sp: 'Circling Prey', q: 'Circling Prey: she\'s about to destroy the quarter she\'s on. Where does the raid go?', a: ['One quarter counter-clockwise, to her left', 'One quarter clockwise, to her right', 'Into the middle, between the quarters', 'Nowhere: stay and use defensives'], why: 'A huge hit and a knockback within 13 yards, a smaller hit on everyone else. Her waves in this phase come from behind: turn your camera. Personals for the second and third.' },
       { pt: 'Phase 3', mid: 'bite', sp: 'Serpent\'s Bite', lb: 'Serpent\'s Bite: the last set', q: 'The last Serpent\'s Bite set: a soaker\'s waves would hit the raid. What should they do?', a: ['Walk into the water once it has ended: dying then is better than hitting the raid', 'Stand still and use a defensive', 'Stack on the raid so the healers can reach them', 'Leave the red circle early'], why: 'Soakers must not die during the soak, but after the last set ends they can: walking into the venom keeps their waves off the raid.' },
       { pt: 'Phase 3', mid: 'The last burn', lb: 'The last burn', sp: 'Rage of the Shackled', q: 'The last heart burn (9:37) is ending and she\'s nearly dead. What can you do?', a: ['Jump off behind her: you dodge the slam and live a few seconds longer', 'Stack on her tank', 'Run to the next quarter', 'Nothing: the slam can\'t be dodged'], why: 'The venom hurts, but it buys the few seconds to finish her. Use a normal potion on this burn.' },
