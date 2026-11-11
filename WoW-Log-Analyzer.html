@@ -70889,8 +70889,8 @@ function pgOpen(root, boss, d) {
     // (the boss stays on the map between scenes; the Wretch stays with the off tank)
     if (!pts.some((p) => p.kind === 'boss' && /Ula/.test(p.name || ''))) { const b = WX(t < 86 ? [0, 46] : R([0, 46], W.P.rot)); pts.push({ guid: 'pg-ul', name: 'Ula\'tek', kind: 'boss', x: b[0], y: b[1] }); }
     GDZ_RAID.forEach((id) => { if (id === me) return; const tg = plan[id], cur = G.bots.get(id); if (!tg) { if (cur) pts.push({ ...cur }); return; }
-      const q = cur ? { ...cur } : { guid: id, name: gdzName(id), kind: 'player', x: tg.x, y: tg.y }; const dx = tg.x - q.x, dy = tg.y - q.y, dd = Math.hypot(dx, dy), mv = 10 * (dt || 0);
-      const mv2 = dd > 15 ? mv * 1.5 : mv; if (!cur) { q.x = tg.x; q.y = tg.y; } else if (dd > mv2) { q.x += dx / dd * mv2; q.y += dy / dd * mv2; } else { q.x = tg.x; q.y = tg.y; } G.bots.set(id, q); pts.push(q); });
+      const q = cur ? { ...cur } : { guid: id, name: gdzName(id), kind: 'player', x: tg.x, y: tg.y }; const dx = tg.x - q.x, dy = tg.y - q.y, dd = Math.hypot(dx, dy), mv = PG_SPEED * (dt || 0); /* (the others run at your speed) */
+      const mv2 = dd > 15 ? mv * 1.4 : mv; /* (far behind: as fast as your speed boost) */ if (!cur) { q.x = tg.x; q.y = tg.y; } else if (dd > mv2) { q.x += dx / dd * mv2; q.y += dy / dd * mv2; } else { q.x = tg.x; q.y = tg.y; } G.bots.set(id, q); pts.push(q); });
     // (carriers keep out of each other's 3-yard circles: the others step apart, and never walk into yours while you stand still)
     const carr = G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== me).map((e) => G.bots.get(e.who)).filter(Boolean), meC = G.eggs.some((e) => e.state === 'held' && e.who === me);
     for (let it = 0; it < 3; it++) { for (let i = 0; i < carr.length; i++) for (let j = i + 1; j < carr.length; j++) { const a = carr[i], b = carr[j], ex = b.x - a.x, ey = b.y - a.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.8) { const pu = (3.8 - ee) / 2, ux = ex / ee, uy = ey / ee; a.x -= ux * pu; a.y -= uy * pu; b.x += ux * pu; b.y += uy * pu; } }
@@ -70899,7 +70899,7 @@ function pgOpen(root, boss, d) {
     // (no jumps: each boss and add glides from where it was last shown to where this moment's map has it; the raiders run on their own above)
     pts.forEach((p, i) => { if (p.kind === 'player') return; const k = p.name || p.guid, c = G.npc.get(k);
       if (!c || !dt || t - c.seen > 0.5 || /^(Gore Rattle|Spectral Ula'tek|Venomous Heart)$/.test(k)) { G.npc.set(k, { x: p.x, y: p.y, seen: t }); return; } /* (her tail, the image and the heart rise in place; anything new appears where it is) */
-      c.seen = t; const ex = p.x - c.x, ey = p.y - c.y, ee = Math.hypot(ex, ey), mv = (ee > 20 ? 18 : 12) * dt;
+      c.seen = t; const ex = p.x - c.x, ey = p.y - c.y, ee = Math.hypot(ex, ey), mv = (ee > 20 ? 12 : 8) * dt;
       if (ee > mv) { c.x += ex / ee * mv; c.y += ey / ee * mv; } else { c.x = p.x; c.y = p.y; } pts[i] = { ...p, x: c.x, y: c.y }; });
     pts.push({ guid: me, name: gdzName(me), kind: 'player', x: G.x, y: G.y });
     G.eggs.forEach((e, i) => { if (e.state === 'air' || e.state === 'gone') return; const b = e.who && e.who !== me ? G.bots.get(e.who) : null, h = e.who ? (e.who === me ? [G.x, G.y] : (b ? [b.x, b.y] : null)) : [e.x, e.y]; if (h) pts.push({ guid: 'pg-egg' + i, name: 'Egg', kind: 'egg', x: h[0] + (e.who ? 0.9 : 0), y: h[1] + (e.who ? 0.9 : 0) }); });
