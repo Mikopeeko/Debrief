@@ -5563,7 +5563,7 @@ function checkAssignments(r, noteText) {
       else if (prevUse != null) { /* (pressed earlier and still recharging: early, not missed) */ ck.add(prevUse); row.used = prevUse; row.delta = prevUse - row.expected; row.status = 'early'; row.onCd = true;
         res.mistakes.push({ t: prevUse, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Low', detail: 'Used ' + (row.spell || 'their assigned cooldown') + ' at ' + fmtT(prevUse) + ', ' + Math.abs(row.delta).toFixed(0) + ' s before its reminder (' + fmtT(row.expected) + '), so it was still recharging when the reminder came.', fix: 'Hold it for the reminder, or tell the raid leader to move it in the note.' }); }
       else {
-        row.status = 'missed';
+        row.status = 'missed'; if (free.length) row.near = free.reduce((a, b) => (Math.abs(b - row.expected) < Math.abs(a - row.expected) ? b : a)); /* (Nov 10, Flex: "put a time stamp of when it was pressed": its nearest press, far from the note time, or none at all) */
         res.mistakes.push({ t: row.expected, player: p.name, mechanic: 'Assigned cooldown', id: rem.spellid, severity: 'Medium',
           detail: 'Never used ' + (row.spell || 'their assigned spell') + ' for the assignment at ' + fmtT(row.expected) + ' (P' + rem.ph + ' ' + fmtT(rem.time) + ').', fix: 'Assigned cooldowns are planned around the damage. If it was on cooldown, tell the raid leader so the plan can change.' });
       }
