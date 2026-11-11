@@ -1589,33 +1589,52 @@ Object.assign(UX_M, {
   // take turns (Soul Constrictor); Mythic: three groups (the coils come faster; the third only soaks twice). Carry eggs into the soaks to
   // break them. Then she bursts up through the middle and the platform shatters into four: stand toward your side, on the inside.
   // (fail: one group takes two coils in a row and Soul Constrictor stops them counting)
-  intcoils(fail, d) {
-    const myth = d !== 'h', L = myth ? 28 : 26.2, k = gdzKit(UX, L); k.art(0, UL_FULL);
-    const ORD = myth ? [90, 45, 0, 315, 270, 225, 180, 135] : [90, 45, 0, 315, 270, 225], GRP = myth ? [0, 1, 2, 0, 1, 2, 0, 1] : [0, 1, 0, 1, 0, 1];
-    const G = myth ? [['t1', 'm1', 'm2', 'm3', 'm4', 'm5'], ['t2', 'r1', 'r2', 'r3', 'm6', 'm7'], ['r4', 'r5', 'r6', 'r7', 'h1', 'h2']] : [['t1', 'm1', 'm2', 'm3', 'm4', 'm5', 'r1', 'r2', 'h1'], ['t2', 'm6', 'm7', 'r3', 'r4', 'r5', 'r6', 'r7', 'h2']];
-    const MID = myth ? ['h3', 'h4'] : ['h3', 'h4']; MID.forEach((id, i) => k.at(0, id, i ? 4 : -4, 0));
-    const SP = (a) => nzAdd([0, 0], a, 24), START = [[0, 8], [-14, -8], [14, -8]];
+  intcoils(fail, d, o) {
+    /* (Nov 11, from 30 Mythic kills: the eight coils always come in one of three fixed orders, set by where the first slam lands (Star, Triangle
+       or Cross on the plan's markers round the room): in pairs from opposite sides about 2 s apart, 4 to 6 s between pairs, the last four back
+       to back. Group one takes the 1st, 4th and 7th, group two the 2nd, 5th and 8th, group three the 3rd and 6th. Heroic: six coils at random
+       spots each pull (20 kills); the map plays hyGNqYZLnwrbHctK #12's. o.pat: 1 Star, 2 Triangle, 3 Cross) */
+    const myth = d !== 'h', pat = (o && o.pat) || 1, cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+    const ORD = myth ? UX_INT_PATS[pat] : ['circle', 'diamond', 'skull', 'triangle', 'cross', 'square'], DT = myth ? [0, 2, 6.1, 8.1, 12.6, 14.2, 16.6, 18.2] : [0, 3, 8, 11, 15, 19];
+    const T1 = 5, END = T1 + DT[DT.length - 1] + 5, L = END + 2, k = gdzKit(UX, L); k.art(0, UL_FULL);
+    const GRP = myth ? [0, 1, 2, 0, 1, 2, 0, 1] : [0, 1, 0, 1, 0, 1], FN = myth ? 2 : 1, FG = myth ? 1 : 0;
+    const G = myth ? [['t1', 'h1', 'm1', 'm2', 'm3', 'm4', 'm5'], ['t2', 'h2', 'r1', 'r2', 'r3', 'r4'], ['h3', 'h4', 'm6', 'm7', 'r5', 'r6', 'r7']] : [['t1', 'm1', 'm2', 'm3', 'm4', 'm5', 'r1', 'r2', 'h1'], ['t2', 'm6', 'm7', 'r3', 'r4', 'r5', 'r6', 'r7', 'h2']];
+    const MID = myth ? [] : ['h3', 'h4']; MID.forEach((id, i) => k.at(0, id, i ? 4 : -4, 0));
+    const SP = (a) => nzAdd([0, 0], a, 24), START = [[0, 8], [-14, -8], [14, -8]], GC = ['#e6b450', '#5aa0ff', '#7ee08f'], GF = ['rgba(230,180,80,.1)', 'rgba(90,160,255,.1)', 'rgba(126,224,143,.1)'];
+    const GLEG = myth ? ['group one\'s soaks: the 1st, 4th and 7th', 'group two\'s soaks: the 2nd, 5th and 8th', 'group three\'s soaks: the 3rd and 6th'] : ['group one\'s soaks: the 1st, 3rd and 5th', 'group two\'s soaks: the 2nd, 4th and 6th'];
     G.forEach((g, gi) => g.forEach((id, i) => { const q = gdzSpot(i, g.length, 5); k.at(0, id, START[gi][0] + q[0], START[gi][1] + q[1]); }));
-    let t = 2.4; const busy = [0, 0, 0];
-    ORD.forEach((a, n) => { const c = nzAdd([0, 0], a, 44), s = SP(a), land = t + 2.6, gi = fail && n === 1 ? 0 : GRP[n];
+    // (the eight raid markers round the room, as the plan puts them)
+    Object.entries(UX_MK).forEach(([nm, mk]) => { const p = nzAdd([0, 0], mk[0], 37); k.wmark(nm, p[0], p[1]); });
+    const busy = [0, 0, 0];
+    ORD.forEach((nm, n) => { const ang = UX_MK[nm][0], c = nzAdd([0, 0], ang, 44), s = SP(ang), land = T1 + DT[n], t = land - 2.6, gi = fail && n === FN ? FG : GRP[n], lp = nzAdd([0, 0], ang, 11);
       k.add('tc' + n, 'Gore Rattle', t, c[0], c[1]).show('tc' + n, t, land + 0.6); uxSoak(k, s, t, land);
+      /* (the whole order on the map from the start: each soak's spot in its group's colour with its number, gone once it has slammed; a line from the group to it while they run) */
+      if (!fail) { void lp; k.ring({ x: s[0], y: s[1], r: 10, fx: 'zone', t0: 0, dur: land + 0.2, color: GC[gi], fill: GF[gi], cn: 'Group ' + (gi + 1), legend: GLEG[gi] }); k.call(0, land + 0.8, String(n + 1), { x: s[0], y: s[1], color: GC[gi], ink: '#101114' }); /* (just the number: the colour is the group) */
+        k.link({ from: G[gi][0], toYd: { x: s[0], y: s[1] }, t0: Math.max(0.2, busy[gi]), t1: land - 0.4, color: GC[gi], legend: 'where each group runs next' }); }
       G[gi].forEach((id, i) => { const q = gdzSpot(i, G[gi].length, 4.6); k.hold(busy[gi], id).at(land - 0.3, id, s[0] + q[0], s[1] + q[1]); }); /* (off to the next coil as soon as the last soak is done) */
-      busy[gi] = land + 0.3; if (d === 'h' || myth) G[gi].forEach((id) => k.ring({ on: id, r: 2, fx: 'debuff', t0: land + 0.1, dur: 5, color: '#b06bff', cn: 'Soul Constrictor', legend: 'Soul Constrictor: you can\'t help with the next coil for ' + (myth ? 5 : 6) + ' seconds' }));
-      if (fail && n === 1) { gdzFailBlast(k, land + 0.2, 'Group one again: they don\'t count', 0, 30, ['h3', 'r6'], 'Spectral Coils'); }
-      t += myth ? 2.4 : 2.9; });
-    if (fail) { k.step(0.2).step(2.4).step(2.4 + (myth ? 2.4 : 2.9) + 2.8); k.pause(2.4 + (myth ? 2.4 : 2.9) + 3.2, 'Group one went for the second coil too. Soul Constrictor means they don\'t count, so it hit everyone almost unsoaked.', { x: SP(ORD[1])[0], y: SP(ORD[1])[1], r: 9 });
+      busy[gi] = land + 0.3; G[gi].forEach((id) => k.ring({ on: id, r: 2, fx: 'debuff', t0: land + 0.1, dur: myth ? 5 : 6, color: '#b06bff', cn: 'Soul Constrictor', legend: 'Soul Constrictor: you can\'t help with the next coil for ' + (myth ? 5 : 6) + ' seconds' }));
+      if (fail && n === FN) gdzFailBlast(k, land + 0.2, 'The same group again: they don\'t count', 0, 30, ['h3', 'r6'], 'Spectral Coils'); });
+    if (fail) { const fl = T1 + DT[FN], fs = SP(UX_MK[ORD[FN]][0]); k.step(0.2).step(T1 - 2.6).step(fl - 0.4);
+      k.pause(fl + 0.6, 'The same group went for the next coil too. Soul Constrictor means they don\'t count, so it hit everyone almost unsoaked.', { x: fs[0], y: fs[1], r: 9 });
       return k.done({ title: 'Mistake: one group takes two in a row', focus: { x: 0, y: 0, r: 46 } }); }
-    const END = t + 5, gOf = (id) => G.findIndex((g) => g.includes(id)); Object.keys(UX_HOME).forEach((id, i) => { const q = gdzSpot(i, 20, 7), dm = nzAdd([0, 0], 300, 12), gi = gOf(id); k.hold(gi >= 0 ? busy[gi] : 0, id).at(END, id, dm[0] + q[0], dm[1] + q[1]); });
+    const gOf = (id) => G.findIndex((g) => g.includes(id)); Object.keys(UX_HOME).forEach((id, i) => { const q = gdzSpot(i, 20, 7), dm = nzAdd([0, 0], 300, 12), gi = gOf(id); k.hold(gi >= 0 ? busy[gi] : 0, id).at(END, id, dm[0] + q[0], dm[1] + q[1]); });
     k.call(END - 1.6, END + 0.4, 'Toward diamond, on the inside', { x: 8, y: -24, color: '#7fd8ff', ink: '#06131c' });
-    k.ring1(G[0]).step(0.2).step(2.4).step(2.4 + (myth ? 2.4 : 2.9)).step(END - 1);
-    k.pause(4.8, myth ? 'Three groups: each knows its coils from where the first one lands (group three soaks only twice). Into it, out, and on to your next.' : 'Two groups take turns: group one the first coil, group two the next, and so on. Healers stay in the middle.', { x: 0, y: 0, r: 30 });
-    return k.done({ title: myth ? 'The intermission: three groups take turns' : 'The intermission: two groups take turns', focus: { x: 0, y: 0, r: 46 }, hlLabel: 'group one' });
+    k.ring1(G[0]).step(0.2).step(T1 - 0.4).step(T1 + DT[2] - 0.4).step(END - 1);
+    if (myth) { k.pause(0.8, 'Pattern ' + pat + ': the first slam lands on ' + cap(ORD[0]) + ', and the other seven always follow in the same order. The numbers show all eight; the colours show who takes each: gold is group one, blue group two, green group three.', { x: 0, y: 0, r: 40 });
+      k.pause(T1 + DT[1] + 0.6, 'They come in pairs from opposite sides, 2 seconds apart. Groups one and two have soaked: each runs to its next number while group three takes the 3rd.', { x: 0, y: 0, r: 40 });
+      k.pause(T1 + DT[4] - 0.8, 'The last four come back to back, about 2 seconds apart: personals and potions now. Group three is done after the 6th.', { x: 0, y: 0, r: 40 }); }
+    else k.pause(0.8, 'The coils come at random spots: two groups take turns, group one the 1st, 3rd and 5th, group two the 2nd, 4th and 6th. The numbers show one pull\'s order. Healers stay in the middle.', { x: 0, y: 0, r: 40 });
+    return k.done({ title: myth ? 'The intermission, pattern ' + pat + ': ' + cap(ORD[0]) + ' first' : 'The intermission: two groups take turns', focus: { x: 0, y: 0, r: 46 }, hlLabel: 'group one' });
   },
 });
 
 // ---- Phase three: the four quarters (counter-clockwise: north-east, north-west, south-west, south-east, as on our kill). Melee and tanks on
 // her quarter; healers at the near edge of the next quarter counter-clockwise, ranged on its far side.
 const UX_NEXT = { NE: 'NW', NW: 'SW', SW: 'SE', SE: 'NE' };
+// (the plan's raid markers round the room (angle from east, counter-clockwise; her start at the north edge), and the intermission's three coil
+// orders on Mythic from 30 kills: the first slam on Star, Triangle or Cross sets the rest)
+const UX_MK = { skull: [22.5, '#ece8df'], circle: [67.5, '#ff8a2a'], star: [112.5, '#ffd23b'], cross: [157.5, '#ff5a4a'], square: [202.5, '#5aa0ff'], triangle: [247.5, '#7ee08f'], diamond: [292.5, '#c39bff'], moon: [337.5, '#c8d0dc'] };
+const UX_INT_PATS = { 1: ['star', 'diamond', 'square', 'skull', 'triangle', 'circle', 'cross', 'moon'], 2: ['triangle', 'circle', 'cross', 'moon', 'star', 'diamond', 'square', 'skull'], 3: ['cross', 'diamond', 'triangle', 'circle', 'skull', 'square', 'star', 'moon'] };
 function uxP3(k, t, q, hold, skip) {
   const s = new Set(skip || []), b = UL_PB[q], c = UL_PL[q], n = UX_NEXT[q], cn = UL_PC[n], nn = UL_PL[n], one = (id, p) => { if (s.has(id)) return; if (hold != null) k.hold(hold, id); k.at(t, id, p[0], p[1]); };
   one('t1', [c[0] + (b[0] - c[0]) * 0.6, c[1] + (b[1] - c[1]) * 0.6]); one('t2', [c[0] + (b[0] - c[0]) * 0.35 + 4, c[1] + (b[1] - c[1]) * 0.35 - 4]);
@@ -1807,7 +1826,7 @@ const UX_FAIL = {
   fangsH: { name: 'Everyone snaps at once', what: 'All four tethers snap together: four stacks of Blight Vein on everyone at the same moment.', do: ['Fangs on four players.', 'They walk out.', 'All snap at once.'], map: () => UX_M.fangs(true, 'h') },
   fangsM: { name: 'The five snap one by one', what: 'After the solo snap, the five snap one after another instead of together: extra ticks of every Blight Vein.', do: ['Fangs on six players.', 'One solo snap.', 'The five snap late.'], map: () => UX_M.fangs(true, 'm') },
   doomscales: { name: 'The Doomscale Egg too late', what: 'The big egg stays out too long: its Hatching Doom ends and the Ravenous Doomscale\'s Dread Roar stuns everyone for 20 seconds.', do: ['Small eggs in.', 'The big egg waits.', 'Dread Roar: a wipe.'], map: (d) => UX_M.doomscales(true, d) },
-  intcoils: { name: 'One group takes two in a row', what: 'Group one goes for the second coil too: Soul Constrictor means they don\'t count, so it hits almost unsoaked.', do: ['Coils round the room.', 'Group one again.', 'An unsoaked hit.'], map: (d) => UX_M.intcoils(true, d) },
+  intcoils: { name: 'One group takes two in a row', what: 'The same group goes for the next coil too: Soul Constrictor means they don\'t count, so it hits almost unsoaked.', do: ['Coils round the room.', 'The same group again.', 'An unsoaked hit.'], map: (d) => UX_M.intcoils(true, d) },
   prey: { name: 'Still on her quarter', what: 'A melee keeps hitting her instead of moving: the quarter is destroyed with them on it.', do: ['She winds up.', 'One melee stays.', 'Dead.'], map: (d) => UX_M.prey(true, d) },
   bite: { name: 'A red circle left alone', what: 'Nobody stands in one Serpent\'s Bite circle: its target turns to stone and the corpse hurts the whole raid every second.', do: ['Two red circles.', 'One has no soakers.', 'Stone.'], map: (d) => UX_M.bite(true, d) },
   clutchesH: { name: 'A clutch left to hatch', what: 'Nobody breaks the far quarter\'s clutch: it hatches a Shrieker, and nobody kicks its Vicious Echoes.', do: ['Clutches on every quarter.', 'One is left.', 'A Shrieker, unkicked.'], map: () => UX_M.clutches(true, 'h') },
@@ -1833,7 +1852,7 @@ const UX_SIM = [
   { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 102, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2', o: { rot: 90 } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
   { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2 (Waves and the bubble)', o: { rot: 90, set: 2, do: ['The second set (2:11): the carriers split between the two circles, her waves still rolling.', 'Two small tails fire as the coils rise: keep dodging in your soak.', 'Both slams, one after the other: eggs break into Rawlings.', 'Right after both slams, Fester Burst between the circles: everyone in.'] } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
   { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 248, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
-  { at: 319, mech: 'intcoils', ph: 2 },
+  { at: 319, mech: 'intcoils', ph: 2, label: 'Spectral Coils (Pattern 1 of 3: Star first)' },
   { at: 377, mech: 'clutches', ph: 3, label: 'Slithering Clutches 1 (Grip them in)', o: { q: 'NE' } }, { at: 382, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 3', o: { q: 'NE' } }, { at: 397, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
   { at: 407, mech: 'clutches', ph: 3, label: 'Slithering Clutches 2', o: { q: 'NE' } }, { at: 422, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves, then Circling Prey)', o: { q: 'NE' } }, { at: 432, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } }, { at: 443, mech: 'wretch3', ph: 3, label: 'Blightscale Wretch 3 (Landed 7:09; its bubble on the reds at 7:45)' },
   { at: 461, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 2', o: { q: 'NW' } }, { at: 467, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 4', o: { q: 'NW' } }, { at: 477, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves again)', o: { q: 'NW' } }, { at: 483, mech: 'prey', ph: 3, label: 'Circling Prey 2 (Gate to the third quarter)', o: { q: 'NW' } },
@@ -1968,11 +1987,11 @@ GDZ['Ula\'tek'] = {
     { id: 'int', name: 'Intermission: The Shattering', sum: 'Eggs rain down and coils rise around the platform for back-to-back soaks. Then the platform shatters into four.',
       m: { sum: 'Eight coil soaks in about 20 seconds, three groups taking turns; the middle ones come back to back, so personals and potions.' },
       mechs: [
-        { id: 'intcoils', fail: UX_FAIL.intcoils, name: 'Spectral Coils (Two groups take turns)', spell: 'Spectral Coils', what: 'Six coils rise round the platform and slam one after another, each needing a soak. Nobody soaks two in a row (Soul Constrictor), so two groups take turns. Bring falling eggs into the soaks to break them. Then the platform shatters and knocks everyone back.',
+        { id: 'intcoils', fail: UX_FAIL.intcoils, name: 'Spectral Coils (Two groups take turns)', spell: 'Spectral Coils', what: 'Six coils rise at random spots round the platform and slam one after another, each needing a soak. Nobody soaks two in a row (Soul Constrictor), so two groups take turns. Bring falling eggs into the soaks to break them. Then the platform shatters and knocks everyone back.',
           do: ['Eggs rain down and coils rise around the platform.', 'Group one soaks the first coil.', 'Group two the next, and so on, turn about; bring eggs into the soaks.', 'Then stand toward the inside: the shattering knocks everyone back.'],
-          m: { name: 'Spectral Coils (Three groups, eight soaks)', what: 'Eight soaks in about 20 seconds, round the room, three groups taking turns. Where the first one lands sets the order, so the caller presses it and each group gets its spots.',
-            do: ['Eggs rain down and coils rise. Each group waits near the marker its note gives it.', 'The caller presses where the first slam lands: your spots pop up.', 'Round the room: group one, two, three, again; group three only soaks twice. Personals around 5:50.', 'Finish on the line toward the diamond, inside: the knockback is big and outside is the venom.'],
-            plan: ['Groups: a tank, a healer and 5 melee; a tank, a healer and 4 ranged; the other two healers and the rest of the DPS.', 'Only three patterns, set by where the first soak lands. Don\'t get baited by her real tail: wait for the spectral coil.', 'This is often harder to heal than phase 3.'] },
+          m: { name: 'Spectral Coils (Three groups, eight soaks)', what: 'Eight soaks in about 20 seconds, three groups taking turns. There are three patterns, set by where the first slam lands: Star, Triangle or Cross. Each pattern always goes in the same order, in pairs from opposite sides of the room, so the caller presses it and every group knows its spots. Use the pattern switch on the map to see each one.', pats: [['Pattern 1', 1, 'Star first'], ['Pattern 2', 4, 'Triangle first'], ['Pattern 3', 7, 'Cross first']],
+            do: ['Eggs rain down and coils rise. Each group waits near the marker its note gives it.', 'The first slam lands on Star, Triangle or Cross: that is the pattern. The caller presses it and your spots pop up.', 'The slams come in pairs from opposite sides, 2 seconds apart: group one, two, three, and again; group three only soaks twice (the 3rd and 6th). Personals around 5:50 for the last four, back to back.', 'Finish on the line toward the diamond, inside: the knockback is big and outside is the venom.'],
+            plan: ['Groups: a tank, a healer and 5 melee; a tank, a healer and 4 ranged; the other two healers and the rest of the DPS.', 'Pattern 1, Star first: Star, Diamond, Square, Skull, Triangle, Circle, Cross, Moon.', 'Pattern 2, Triangle first: Triangle, Circle, Cross, Moon, Star, Diamond, Square, Skull.', 'Pattern 3, Cross first: Cross, Diamond, Triangle, Circle, Skull, Square, Star, Moon.', 'Group one takes the 1st, 4th and 7th slams; group two the 2nd, 5th and 8th; group three the 3rd and 6th.', 'Only three patterns, set by where the first soak lands. Don\'t get baited by her real tail: wait for the spectral coil.', 'This is often harder to heal than phase 3.'] },
           map: (d, o) => UX_M.intcoils(false, d, o) },
       ],
       tiles: [
@@ -5301,7 +5320,7 @@ function gdzView() {
   const keyRow = '<div class="gdz-key">' + Object.entries(GDZ_ROLE).map(([, [n, c, ic]]) => '<span><img src="https://wow.zamimg.com/images/wow/icons/medium/' + ic + '.jpg" alt="" style="border-color:' + c + '">' + n + '</span>').join('') + '<span class="gdz-keyn">On the maps. Positions are examples.</span></div>';
   let mi = 0; const maps = [];
   const sec = (p, i) => '<section class="gdz-sec" id="gdz-' + p.id + '"><div class="gdz-sh"><i>' + (i + 1) + '</i><div><h3>' + esc(p.name) + '</h3><p>' + esc(p.sum) + '</p></div></div>' +
-    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m" data-mid="' + esc(m.id || '') + '">' + (m.map ? '<div class="gdz-mapc">' + (m.fail ? '<div class="gdz-mode" data-i="' + n + '"><button type="button" class="on" data-v="ok">✓ The right way</button><button type="button" data-v="bad">✕ Show a mistake</button></div>' : '') + '<div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
+    (p.mechs || []).map((m) => { const n = mi++; maps.push(m); return '<article class="gdz-m" data-mid="' + esc(m.id || '') + '">' + (m.map ? '<div class="gdz-mapc">' + (m.fail ? '<div class="gdz-mode" data-i="' + n + '"><button type="button" class="on" data-v="ok">✓ The right way</button><button type="button" data-v="bad">✕ Show a mistake</button></div>' : '') + (m.pats ? '<div class="gdz-mode gdz-pat" data-i="' + n + '" aria-label="Patterns">' + m.pats.map((p, j) => { const a = Array.isArray(p) ? p : [p]; return '<button type="button" data-p="' + (j + 1) + '"' + (j ? '' : ' class="on"') + (a[2] ? ' title="' + esc(a[2]) + '"' : '') + '>' + esc(a[0]) + (a[1] && typeof markIcon === 'function' ? ' ' + markIcon(a[1], 14) : '') + '</button>'; }).join('') + '</div>' : '') + '<div class="gdz-mm" data-i="' + n + '"></div></div>' : '') +
       '<div class="gdz-mt"><h4>' + spellIcon(0, m.spell || m.name.replace(/ \(.*$/, '')) + '<span>' + esc(m.name) + '</span></h4>' + (m.how ? '' : '<p class="gdz-what">' + esc(m.what) + '</p>') +
       (m.do && m.do.length ? '<ol class="gdz-steps' + (m.how ? ' gdz-how' : '') + '" data-i="' + n + '">' + m.do.map((d, j) => { const sr = m.roles || (G.stepRoles || {})[m.name]; return '<li data-j="' + j + '"' + (sr && sr[j] != null ? ' data-r="' + sr[j] + '"' : '') + '><span>' + gdzStepH(d, m.how) + '</span></li>'; }).join('') + '</ol>' : '') +
       (m.how ? '<p class="gdz-what gdz-wl"><b>What it does</b> ' + esc(m.what) + '</p>' : '') +
@@ -5386,8 +5405,8 @@ function gdzView() {
     bindAnim(box, W.mp, pmap, true);
   };
   const mount = (box) => {
-    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m0 = maps[+box.dataset.i], bad = box.dataset.v === 'bad' && m0.fail, m = bad ? m0.fail : m0, key = boss + '|' + D + '|' + (bad ? 'fail|' : '') + m0.name;
-    let mp = GDZ_CACHE.get(key); if (!mp) { try { mp = m.map(D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, mp); }
+    if (box._on) return; box._on = 1; if (box.dataset.w) { mountWhole(box); return; } const m0 = maps[+box.dataset.i], bad = box.dataset.v === 'bad' && m0.fail, m = bad ? m0.fail : m0, pat = !bad && +box.dataset.p > 1 ? +box.dataset.p : 0, key = boss + '|' + D + '|' + (bad ? 'fail|' : '') + m0.name + (pat ? '|p' + pat : '');
+    let mp = GDZ_CACHE.get(key); if (!mp) { try { mp = pat ? m.map(D, { pat }) : m.map(D); } catch (e) { console.error(e); box.innerHTML = '<p class="muted">This map could not be drawn.</p>'; return; } GDZ_CACHE.set(key, mp); }
     box.innerHTML = miniMap(mp, pmap); bindZoom(box); hydrateMapIcons(box);
     if ((mp.pauses || []).length) { const zb = box.querySelector('.zbox'); if (zb) box._onPause = gdzPauseUi(zb, null, { texts: mp.pauses.map((p) => p.text) }); }
     const ol = root.querySelector('.gdz-steps[data-i="' + box.dataset.i + '"]'), lis = ol ? [...ol.querySelectorAll('li')] : [], st = mp.steps || [];
@@ -5401,7 +5420,7 @@ function gdzView() {
     }
     bindAnim(box, mp, pmap, true);
   };
-  root.querySelectorAll('.gdz-mode').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
+  root.querySelectorAll('.gdz-mode:not(.gdz-pat)').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
     const i = sw.dataset.i, m0 = maps[+i], box = sw.parentElement.querySelector('.gdz-mm'), art = sw.closest('.gdz-m'), ol = art.querySelector('.gdz-steps'), v = bt.dataset.v;
     if (box.dataset.v === v || (!box.dataset.v && v === 'ok')) return;
     sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.v = v;
@@ -5409,6 +5428,13 @@ function gdzView() {
     const list = v === 'bad' ? m0.fail.do : m0.do;
     if (ol) { ol.innerHTML = list.map((d, j) => '<li data-j="' + j + '"><span>' + gdzStepH(d, v !== 'bad' && m0.how) + '</span></li>').join(''); ol.classList.toggle('gdz-bad', v === 'bad');
       if (v === 'bad') ol.insertAdjacentHTML('beforebegin', '<div class="gdz-failnote"><b>Mistake: ' + esc(m0.fail.name) + '</b>' + esc(m0.fail.what) + '</div>'); }
+    box._on = 0; box._onFrame = null; box.innerHTML = ''; mount(box);
+  })));
+  // (a card with patterns (Ula'tek's intermission coils, Nov 11): each one plays on the map; a pattern always plays the right way)
+  root.querySelectorAll('.gdz-pat').forEach((sw) => sw.querySelectorAll('button').forEach((bt) => (bt.onclick = () => {
+    const box = sw.parentElement.querySelector('.gdz-mm'); if ((box.dataset.p || '1') === bt.dataset.p && box.dataset.v !== 'bad') return;
+    sw.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === bt)); box.dataset.p = bt.dataset.p;
+    const ok = sw.parentElement.querySelector('.gdz-mode:not(.gdz-pat) button[data-v="ok"]'); if (box.dataset.v === 'bad' && ok) { ok.click(); return; }
     box._on = 0; box._onFrame = null; box.innerHTML = ''; mount(box);
   })));
   const boxes = [...root.querySelectorAll('.gdz-mm')];
@@ -5553,6 +5579,7 @@ function gdzCss() {
 .gdz-mode { display: flex; gap: 2px; margin-bottom: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 3px; width: fit-content; }
 .gdz-mode button { background: none; border: 0; border-radius: 999px; padding: 4px 14px; font: 700 13.5px var(--head); color: var(--muted); cursor: pointer; }
 .gdz-mode button.on { background: rgba(230,180,80,.16); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(230,180,80,.55); } .gdz-mode button:not(.on):hover { color: var(--text); }
+#view .gdz .gdz-mapc > .gdz-mode.gdz-pat { top: 46px; } .gdz-pat button svg.mk { vertical-align: -2px; margin-left: 2px; } /* (the pattern switch sits under The right way / Show a mistake) */
 /* (design system: the picked one is gold-tinted, not green or red) */
 .gdz-failnote { background: var(--bad-bg); border: 1px solid rgba(229,83,75,.55); border-radius: 8px; padding: 9px 12px; margin: 0 0 10px; font-size: 14px; }
 .gdz-failnote b { display: block; color: #ff8a80; font: 700 15px var(--head); margin-bottom: 2px; }
@@ -5775,6 +5802,7 @@ const GDZ_QUIZ = {
       { pt: 'Phase 2', mid: 'doomscales', sp: 'Anguished Cry', lb: 'Weakened Doomscale', q: 'Two Weakened Doomscales climb out of each pit. What matters most?', a: ['Kill them evenly and kick every Anguished Cry', 'Kill one fast, then the other', 'Ignore them: they leave on their own', 'Tank them in the venom'], why: 'When one dies the rest enrage. An unkicked Anguished Cry stuns everyone within 60 yards for 6 seconds. Aim Desperate Thrash away from people.' },
       { pt: 'Phase 2', mid: 'heart2', sp: 'Bloodlust', lb: 'The second heart burn', q: 'In the guide\'s Mythic plan, when does the raid use Bloodlust?', a: ['The second heart burn (4:48), with the second potion', 'On the pull', 'The first heart burn', 'The last heart burn in phase 3'], why: 'It goes on the second burn, with the Doomscales cleaved down beside the heart. Under about 44% after it is killable. On early pulls with deaths, use it earlier.' },
       { pt: 'Intermission', mid: 'intcoils', sp: 'Spectral Coils', q: 'Intermission: eight coil soaks in about 20 seconds. How are they split?', a: ['Three groups take turns round the room', 'Two groups take turns', 'The whole raid soaks every one', 'The tanks take them all'], why: 'Nobody can soak two in a row. The caller presses where the first slam lands and your spots pop up; group three only soaks twice. Personals around 5:50: it is often harder to heal than phase 3.' },
+      { pt: 'Intermission', mid: 'intcoils', sp: 'Spectral Coils', lb: 'Spectral Coils: the patterns', q: 'Intermission: how many coil patterns are there, and what decides which one you get?', a: ['Three: where the first slam lands (Star, Triangle or Cross) sets the whole order', 'One: the same order every pull', 'Eight: one for each marker', 'None: every slam is random'], why: 'Each pattern always goes in the same order, in pairs from opposite sides of the room. The caller presses where the first one lands, and every group knows its spots: group one the 1st, 4th and 7th, group two the 2nd, 5th and 8th, group three the 3rd and 6th.' },
       { pt: 'Intermission', mid: 'intcoils', sp: 'Spectral Coils', lb: 'Her real tail', q: 'Intermission: her real tail rises near you. Is that your soak?', a: ['No: wait for the spectral coil; where the first one lands sets the pattern', 'Yes: stand on it', 'Yes: the whole raid stacks on it', 'Taunt it'], why: 'There are only three patterns, set by where the first spectral coil lands. Bring the falling eggs into the soaks to break them.' },
       { pt: 'Intermission', mid: 'The Shattering', lb: 'The Shattering', sp: 'The Shattering', q: 'The platform is about to shatter into four. Where do you stand?', a: ['Inside, on the line toward the diamond', 'At the outer edge', 'Right under her', 'Anywhere: there\'s no knockback'], why: 'The knockback is big, and outside is the venom. Watch where her bubbles come up: that\'s the first quarter (usually north-east).' },
       { pt: 'Phase 3', mid: 'clutches', sp: 'Call of the Serpent', lb: 'Slithering Clutches', q: 'Slithering Clutches crawl toward the venom. Who stops them?', a: ['Two Death Knights grip them in, then Gorefiend\'s Grasp pulls them into the cleave', 'The healers dispel them', 'Nobody: let them reach the venom', 'The egg carriers pick them up'], why: 'A clutch that reaches the venom hatches a Shrieker: kick its Vicious Echoes, a 6-second raid stun. On the first quarter they come back during Serpent\'s Bite: grip them again.' },
