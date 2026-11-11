@@ -6252,10 +6252,12 @@ function ulRead(txt) {
     if (w0 === 'transitionstart' || w0 === 'intstart') { blk = w0; continue; } if (w0 === 'transitionend' || w0 === 'intend') { blk = ''; continue; }
     if (!blk && l.indexOf(':') < 0) { hd = l; continue; }
     const ci = l.indexOf(':'), al0 = ci < 0 || typeof ndzNoteAliases !== 'function' ? null : ndzNoteAliases("Ula'tek", l.slice(0, ci).trim(), hd)[0] || null, lab = ci < 0 ? '' : (al0 ? al0.to : l.slice(0, ci)).toLowerCase(), who = names(ci < 0 ? l : l.slice(ci + 1)); if (!who.length) continue; let m;
-    if (blk === 'transitionstart') { if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who; else D.trans.push(who); continue; } if (blk || ci < 0) continue;
+    if (blk === 'transitionstart') { if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who; else { const ix = (D.tb = (D.tb || 0) + 1) - 1; if (!(D.trans[ix] || []).length) D.trans[ix] = who; } continue; } /* (the block's rows by order; the labelled "{star} Group:" lines may have set them already, Nov 11) */ if (blk || ci < 0) continue;
     if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) D.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) eggs = who; else if (/egg shields?/.test(lab)) D.shields = who;
     else if ((m = /^team\s*(\d)/.exec(lab))) { const ti = +m[1] - 1 ? 1 : 0; D.teams[ti] = al0 && D.teams[ti].length ? [...new Set(D.teams[ti].concat(who))] : who; } else if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who;
-    else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) { const sv = D.side[m[1] === 'left' ? 'L' : 'R'], sk = m[2].trim() || 'side'; sv[sk] = al0 && sv[sk] ? [...new Set(sv[sk].concat(who))] : who; } }
+    else if ((m = /^(?:right|left)?\s*soak #?([12])\b/.exec(lab))) { const ti = +m[1] - 1; D.teams[ti] = [...new Set(D.teams[ti].concat(who))]; } /* (Egg Clear: "Right Soak #1 Eggs" and "… Filler" are coil team 1 together, Nov 11) */
+    else if ((m = /^\{?(star|diamond|square)\}?\s*group$/.exec(lab))) D.trans[['star', 'diamond', 'square'].indexOf(m[1])] = who; else if (/^fester burst/.test(lab)) { if (!eggs.length) eggs = who; }
+    else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) { const sv = D.side[m[1] === 'left' ? 'L' : 'R'], s0 = m[2].trim() || 'side', sk = /big egg/.test(s0) ? 'doomscale egg' : s0, far = /far/.test(s0); sv[sk] = sv[sk] && (al0 || sk !== s0) ? [...new Set(far ? who.concat(sv[sk]) : sv[sk].concat(who))] : who; } } /* (Mythic's far big egg and big egg are both the ledge's Doomscale Eggs on the map, the far one first, Nov 11) */
   if (!Object.values(D.ez).some((x) => x.length) && eggs.length) D.ez = { melee: eggs.slice(0, 2), left: eggs.slice(2, 4), right: eggs.slice(4, 6), far: eggs.slice(6, 8), backup: eggs.slice(8) };
   return D;
 }
@@ -6591,6 +6593,7 @@ function ppReadUL(N, P) {
     if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) J.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) J.eggs = who; else if (/egg shields?/.test(lab)) J.shields = who;
     else if ((m = /^team\s*(\d)/.exec(lab))) J.teams[+m[1] - 1 ? 1 : 0] = who;
     else if ((m = /^(backup\s*)?bite\s*([123])\b/.exec(lab))) J.bite[m[1] ? 'back' : 'sets'][+m[2] - 1] = who; /* (Mythic's sets since Oct 6, J1) */
+    else if ((m = /^group soak\s*([123])(\s*backup)?/.exec(lab))) J.bite[m[2] ? 'back' : 'sets'][+m[1] - 1] = who; /* (the team plan's names, Nov 11) */
     else if ((m = /bite\s*(melee|ranged|healers?)/.exec(lab))) J.bite[m[1].startsWith('heal') ? 'healers' : m[1]] = who;
     else if (/incubation|beam/.test(lab)) J.beam = who[0]; else if (/grip/.test(lab)) J.grips = who; else if (/freedom/.test(lab)) J.freedom = who;
   }
