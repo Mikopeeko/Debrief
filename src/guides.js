@@ -1441,7 +1441,7 @@ const UX_M = {
     if (fail) { gdzFailBlast(k, 5.4, 'Out of reach: the bites hit everyone', -16, 30, ['h1', 'r5'], 'Mother\'s Wrath'); k.step(0.2).step(0.9).step(5.2);
       k.pause(6, 'Her tank didn\'t get back into the red circle in time, so every bite went out to the whole raid instead.', { x: RC[0], y: RC[1], r: 8 });
       return k.done({ title: 'Mistake: her tank out of reach', focus: { x: -4, y: 28, r: 24 }, badLabel: 'dies to the bites' }); }
-    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower on Mythic, 45% on Heroic (Blessing of Freedom helps); Stone Venom stacks' });
+    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: ' + (d === 'h' ? 45 : 55) + '% slower (Blessing of Freedom helps); Stone Venom stacks' });
     k.call(8.6, 10.6, 'Swap at her waves cast', { on: 't2', color: '#5aa0ff', ink: '#fff' }); /* (the tanks swap during her next Caustic Waves cast, never two Wraths in a row) */
     k.ring1(['t1', 't2']).step(0.2).step(0.9).step(4.8).step(8.6);
     k.pause(4.9, 'Knocked back, her tank walks straight back into the red circle in front of her and takes the bites with a big defensive.', { x: RC[0], y: RC[1], r: 8 });
@@ -1657,7 +1657,7 @@ Object.assign(UX_M, {
     k.hold(0.9, 't1').at(1.4, 't1', KB[0] + 2, KB[1] - 2); k.call(0.9, 2.4, 'Knocked back', { on: 't1', color: '#ff8a8a', ink: '#200a0a' });
     k.hold(2, 't1').at(4.8, 't1', RC[0], RC[1]); k.call(3.6, 5.2, 'Big defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' });
     for (let i = 0; i < 5; i++) k.ring({ on: 't1', r: 2.6, fx: 'burst', t0: 5.2 + i * 0.6 - 0.2, at: 5.2 + i * 0.6, dur: 0.4, color: '#ff4a4a', cn: 'Bite', legend: 'a bite: Stone Venom and Hobbled' });
-    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower on Mythic, 45% on Heroic (Blessing of Freedom helps); Stone Venom stacks' });
+    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: ' + (d === 'h' ? 45 : 55) + '% slower (Blessing of Freedom helps); Stone Venom stacks' });
     k.hold(8.4, 't1').at(10.8, 't1', T0[0], T0[1]); k.call(8.6, 10.6, 'Swap at her waves cast', { on: 't2', color: '#5aa0ff', ink: '#fff' });
     k.ring1(['t1', 't2']).step(0.2).step(0.9).step(4.8).step(8.6);
     k.pause(4.9, 'The same Mother\'s Wrath on the broken platform: knocked back, her tank walks straight back into the red circle in front of her and takes the bites.', { x: RC[0], y: RC[1], r: 8 });
@@ -1800,7 +1800,7 @@ Object.assign(UX_M, {
 });
 const UX_FAIL = {
   dive: { name: 'Nobody at the bubbles', what: 'Her tank stays put while she dives: she comes up at the bubbles with nobody in reach, and her hits go out to the whole raid.',
-    do: ['She dives: bubbles rise at the west edge.', 'Her tank stays put.', 'She comes up with nobody in reach: the raid is hit.'],
+    do: ['She dives: bubbles rise at the edge.', 'Her tank stays put.', 'She comes up with nobody in reach: the raid is hit.'],
     map: () => { const k = gdzKit(UX, 11); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0); k.cast('ul', 'Submerge', 0.4, 1.6); uxBoss(k, 1.6); uxBoss(k, 8.8, [-46, -1]);
       k.ring({ x: -44, y: -1, r: 5, fx: 'zone', t0: 1.6, dur: 9, color: '#7fd8ff', fill: 'rgba(127,216,255,.2)', cn: 'Bubbles', legend: 'bubbles where she comes up' });
       k.call(1.8, 6, 'The tank stays put', { on: 't1', color: '#ff3b3b', ink: '#fff' });
@@ -1837,10 +1837,10 @@ const UX_FAIL = {
 const UX_BEATS = {
   start: { name: 'The pull', do: ['She rises at the north edge, her tail on the west side. The carriers stand in their zones; on Mythic the off tank heads for the spectral image.'],
     run() { const k = gdzKit(UX, 2.5); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0, null, UX_CAR); UX_CAR.forEach((id) => k.at(0, id, UX_ZONE[id][0], UX_ZONE[id][1])); k.step(0.2); } },
-  dive: { name: 'She dives (Watch the bubbles)', do: ['After her first waves she dives and comes up at the west edge, where the bubbles rise. Her tank gets there first: an empty melee range hits the whole raid.'],
-    run() { const k = gdzKit(UX, 9.4); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0); k.cast('ul', 'Submerge', 0.4, 1.6); uxBoss(k, 1.6); uxBoss(k, 8.8, [-46, -1]);
-      k.ring({ x: -44, y: -1, r: 5, fx: 'zone', t0: 1.6, dur: 7.4, color: '#7fd8ff', fill: 'rgba(127,216,255,.2)', cn: 'Bubbles', legend: 'bubbles where she comes up' });
-      k.hold(0.6, 't1').at(8.4, 't1', -39, -1); k.call(1.8, 6, 'Tank: to the bubbles', { on: 't1', color: '#5aa0ff', ink: '#fff' }); k.step(0.2); } },
+  dive: { name: 'She dives (Watch the bubbles)', do: ['After her first waves she dives and comes up at the east or west edge, either side (here, the west): watch for the bubbles. Her tank gets there first: an empty melee range hits the whole raid.'],
+    run(o) { const sx = o && o.east ? -1 : 1, k = gdzKit(UX, 9.4); k.art(0, UL_FULL); uxBoss(k, 0); uxTail(k, 0); uxHome(k, 0); k.cast('ul', 'Submerge', 0.4, 1.6); uxBoss(k, 1.6); uxBoss(k, 8.8, [-46 * sx, -1]);
+      k.ring({ x: -44 * sx, y: -1, r: 5, fx: 'zone', t0: 1.6, dur: 7.4, color: '#7fd8ff', fill: 'rgba(127,216,255,.2)', cn: 'Bubbles', legend: 'bubbles where she comes up' });
+      k.hold(0.6, 't1').at(8.4, 't1', -39 * sx, -1); k.call(1.8, 6, 'Tank: to the bubbles', { on: 't1', color: '#5aa0ff', ink: '#fff' }); k.step(0.2); } },
   kill: { name: 'The kill', do: ['Her last waves roll out just before it (with two small tails\' rings on Mythic). Then Rage of the Shackled one last time: burn the heart. If she\'s at 1 or 2% as it ends, jump off behind her to live a few seconds longer.'],
     run() { const k = gdzKit(UX, 4); k.art(0, UL_BROKEN); uxB3(k, 0, 'SE'); k.cast('ul', 'Rage of the Shackled', 0, 1.5); k.add('ht', 'Venomous Heart', 1.5, UL_PB.SE[0] * 0.85, UL_PB.SE[1] * 0.85).show('ht', 1.5); uxP3(k, 0, 'SE'); k.step(0.2); } },
 };
@@ -1928,7 +1928,8 @@ GDZ['Ula\'tek'] = {
             do: ['The caller says which half she starts on. The lane steps to the other half together, rings apart.', 'Her first half rolls; small tails rise at the corners and fire a moment later: step out of their paths.', 'Her other half next: the lane crosses back behind her first wave. Mages at the sides Blink back over it.', 'Ten seconds later two more tails fire from the edges.'],
             plan: ['Mages make the best outer carriers: they Blink over a wave when there\'s no room. Two Evokers\' Time Spiral helps them.', 'Stay in your own area when the small tails fire. A big defensive lets you live through one hit.'] },
           map: (d, o) => UX_M.waves(false, d, o) },
-        { id: 'wrath', fail: UX_FAIL.wrath, name: 'Mother\'s Wrath (Run back in)', spell: 'Mother\'s Wrath', what: 'A 5-second cast knocks her tank back, then 3 seconds of bites hit whoever is in the red circle in front of her. Each bite stacks Stone Venom and Hobbled (55% slower on Mythic, 45% on Heroic). If her tank is out of reach, the bites hit everyone.',
+        { id: 'wrath', fail: UX_FAIL.wrath, name: 'Mother\'s Wrath (Run back in)', spell: 'Mother\'s Wrath', what: 'A 5-second cast knocks her tank back, then 3 seconds of bites hit whoever is in the red circle in front of her. Each bite stacks Stone Venom and Hobbled (45% slower). If her tank is out of reach, the bites hit everyone.',
+          m: { what: 'A 5-second cast knocks her tank back, then 3 seconds of bites hit whoever is in the red circle in front of her. Each bite stacks Stone Venom and Hobbled (55% slower). If her tank is out of reach, the bites hit everyone.' },
           do: ['Mother\'s Wrath: her tank is knocked back.', 'Run straight back into the red circle in front of her.', 'Take the bites with a big defensive; Blessing of Freedom takes the slow off.', 'The other tank taunts: swap during her waves cast, never two in a row.'],
           map: (d, o) => UX_M.wrath(false, d, o) },
         { id: 'thrash', fail: UX_FAIL.thrash, name: 'Mephitic Thrash (Get 35 yards away)', spell: 'Mephitic Thrash', what: 'Her tail sweeps the ground: a big hit and a knockback within 35 yards, a smaller hit and damage over time beyond.',
@@ -1940,14 +1941,17 @@ GDZ['Ula\'tek'] = {
           m: { do: ['A 6.5-second cast, then her heart opens: save cooldowns and a potion.', 'Everyone on the heart, the adds dragged in for the cleave.', 'Raid damage every 4 seconds; two small tails fire as it opens and two more about 11 seconds in: step out of their rings.', 'Brown circles: step out before the debris lands.'],
             plan: ['Start your cooldowns when the cast is about 2.7 seconds from the end, so they\'re up as it opens.', 'Under about 66% after this burn means you\'re on pace for a kill.', 'Where she ends sets where the second burn starts: the half on her side gets the short walk back.'] },
           map: (d, o) => UX_M.heart(false, d, o) },
-        { id: 'dive', fail: UX_FAIL.dive, spell: 'Submerge', name: 'She dives (Watch the bubbles)', what: 'After her first waves (1:02 on Heroic, 1:17 on Mythic) she dives and comes up where bubbles rise at the edge. Her tank gets there before she lands: an empty melee range hits the whole raid.',
-          do: ['After her first waves she dives.', 'Bubbles rise at the edge where she will come up.', 'Her tank is there before she lands: an empty melee range hits the whole raid.'],
-          map: () => { if (GDZ_SEG) { const k0 = GDZ_SEG.kit, n0 = k0.peek().steps.length; UX_BEATS.dive.run({}); k0.peek().steps.length = n0; k0.step(0.4).step(1.8).step(8.4); return k0; } /* (inside the whole fight: the scene straight into it) */
+        { id: 'dive', fail: UX_FAIL.dive, spell: 'Submerge', name: 'She dives (Watch the bubbles)', what: 'After her first waves (1:02) she dives and comes up at the east or west edge: it can be either, so watch for the bubbles rising where she will surface. Her tank gets there before she lands: an empty melee range hits the whole raid.',
+          m: { what: 'After her first waves (1:17) she dives and comes up at the east or west edge: it can be either, so watch for the bubbles rising where she will surface. Her tank gets there before she lands: an empty melee range hits the whole raid.' },
+          pats: [['West edge', 0, 'She comes up at the west edge'], ['East edge', 0, 'She comes up at the east edge']],
+          do: ['After her first waves she dives.', 'Bubbles rise at the edge where she will come up: east or west, it can be either.', 'Her tank is there before she lands: an empty melee range hits the whole raid.'],
+          map: (d, o) => { const east = !!(o && o.pat === 2), sx = east ? -1 : 1; /* (the East / West switch: she can come up on either side) */
+            if (GDZ_SEG) { const k0 = GDZ_SEG.kit, n0 = k0.peek().steps.length; UX_BEATS.dive.run({ east }); k0.peek().steps.length = n0; k0.step(0.4).step(1.8).step(8.4); return k0; } /* (inside the whole fight: the scene straight into it) */
             const kit = gdzKit(UX, 9.4); let L = 9.4; GDZ_SEG = { kit, next(len) { kit.seg(0, 0, len); L = len; } };
-            try { UX_BEATS.dive.run({}); } finally { GDZ_SEG = null; } /* (the whole fight's dive scene, on its own) */
+            try { UX_BEATS.dive.run({ east }); } finally { GDZ_SEG = null; } /* (the whole fight's dive scene, on its own) */
             kit.seg(0, 'dv', L); kit.peek().steps.length = 0; kit.step(0.4).step(1.8).step(8.4);
-            kit.pause(5, 'Her tank runs to the bubbles and is waiting when she comes up. If nobody is in her melee range, the whole raid is hit.', { x: -42, y: -1, r: 9 });
-            return kit.done({ len: L, title: 'She dives: her tank to the bubbles', focus: { x: -22, y: 0, r: 30 }, art: UL_FULL }); } },
+            kit.pause(5, 'She can come up on either side: here the ' + (east ? 'east' : 'west') + '. Her tank runs to the bubbles and is waiting when she comes up. If nobody is in her melee range, the whole raid is hit.', { x: -42 * sx, y: -1, r: 9 });
+            return kit.done({ len: L, title: 'She dives: her tank to the bubbles (' + (east ? 'east' : 'west') + ' edge)', focus: { x: -22 * sx, y: 0, r: 30 }, art: UL_FULL }); } },
       ],
       tiles: [
         { name: 'Her and the tail (Two tanks, always)', do: 'One tank on her and one on the tail at all times. Nobody on the tail: Rattler Slam hits the raid. Nobody in melee of her: Unchecked Rage hits the raid.' },
@@ -1975,9 +1979,9 @@ GDZ['Ula\'tek'] = {
             do: ['Warden dead: wait for your Blight Vein to drop, then pick up. Leave the big eggs for now.', 'Small eggs up the lanes, carriers never touching; wait at the pit and throw them in together.', 'Big eggs: a mobile healer runs back for the far one, a melee takes the close one, both in on one countdown. Once picked up, a big egg hatches in 20 seconds.', 'Two Doomscales per side: kick every Anguished Cry, aim Desperate Thrash away, and kill them evenly.'],
             plan: ['Kill the Rawlings before Boiling Venom: everyone on them; stun any that enrage.', 'Watch Rancid Yolk: with it on, a carried egg hurts three times as much, deadly for anyone but a tank. Let it drop first.', 'Mark the Doomscales from the boss frames and set focus: the kick alert needs it. Call it when two drift apart.'] },
           map: (d, o) => UX_M.doomscales(false, d, o) },
-        { id: 'heart2', fail: UX_FAIL.heart, name: 'Rage of the Shackled (The second burn)', spell: 'Rage of the Shackled', what: 'The second heart burn (4:38 on Heroic, 4:48 on Mythic). The same as the first, with the Doomscales dragged in for the cleave.',
+        { id: 'heart2', fail: UX_FAIL.heart, name: 'Rage of the Shackled (The second burn)', spell: 'Rage of the Shackled', what: 'The second heart burn (4:38). The same as the first, with the Doomscales dragged in for the cleave.',
           do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Everything on the heart, the Doomscales cleaved with it.', 'Raid damage every 4 seconds.', 'Brown circles hit hard: step out.'],
-          m: { do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; two small tails fire as it opens and two more about 11 seconds in: step out of their rings.', 'Brown circles hit hard: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
+          m: { what: 'The second heart burn (4:48). The same as the first, with the Doomscales dragged in for the cleave.', do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; two small tails fire as it opens and two more about 11 seconds in: step out of their rings.', 'Brown circles hit hard: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
           map: (d, o) => UX_M.heart(false, d, { e: true, ...(o || {}) }) },
       ],
       tiles: [
@@ -1995,7 +1999,7 @@ GDZ['Ula\'tek'] = {
           map: (d, o) => UX_M.intcoils(false, d, o) },
       ],
       tiles: [
-        { name: 'The Shattering (Stay inside)', do: 'The platform breaks into four with a big knockback. Stand toward the middle: from the edge you land in the venom.', m: { do: 'The knockback is bigger than on Heroic. Gather on the line toward the diamond, inside. Watch where her bubbles come up: that\'s the first quarter (usually north-east).' } },
+        { name: 'The Shattering (Stay inside)', do: 'The platform breaks into four with a big knockback. Stand toward the middle: from the edge you land in the venom.', m: { do: 'The knockback is big. Gather on the line toward the diamond, inside. Watch where her bubbles come up: that\'s the first quarter (usually north-east).' } },
       ] },
     { id: 'p3', name: 'Phase 3: Ula\'tek\'s Ascension', sum: 'The platform is in four quarters. Clutches land, red circles need soaking, and she smashes the quarter she\'s on, so the raid moves one quarter counter-clockwise each time.',
       m: { sum: 'Grips for the Slithering Clutches, two stacked red circles with three soakers, a raid cooldown on every quarter, and one last heart burn. Most raids find it the easiest phase.' },
@@ -2032,7 +2036,7 @@ GDZ['Ula\'tek'] = {
       ],
       tiles: [
         { name: 'Blightscale Shrieker (Kick and tank)', do: 'Kick its Vicious Echoes (a raid stun and stacking damage over time; never let it reach 2 stacks) and tank it to the boss.', m: { do: 'Two Shriekers come with the last clutches: half the raid kicks each. Kill them around their enrage.' } },
-        { name: 'The last burn (Jump off at the end)', do: 'Rage of the Shackled one more time (9:27 on Heroic, 9:37 on Mythic). If she\'s nearly dead as it ends, jump off behind her: the venom hurts, but you dodge the slam and live a few seconds longer. Use a normal potion here.' },
+        { name: 'The last burn (Jump off at the end)', m: { do: 'Rage of the Shackled one more time (9:37). If she\'s nearly dead as it ends, jump off behind her: the venom hurts, but you dodge the slam and live a few seconds longer. Use a normal potion here.' }, do: 'Rage of the Shackled one more time (9:27). If she\'s nearly dead as it ends, jump off behind her: the venom hurts, but you dodge the slam and live a few seconds longer. Use a normal potion here.' },
       ] },
   ],
   roles: {
@@ -5788,7 +5792,7 @@ const GDZ_QUIZ = {
       { pt: 'Phase 1', mid: 'wrath', sp: 'Mother\'s Wrath', q: 'Mother\'s Wrath knocks her tank back. What does that tank do?', a: ['Run straight back into the red circle in front of her and take the bites', 'Stay out of reach until the bites end', 'Taunt the tail instead', 'Wait for the other tank to taunt her'], why: 'A 5-second cast, then 3 seconds of bites. If her tank is out of reach, the bites hit everyone. The other tank taunts at her waves cast: never two Mother\'s Wraths in a row on one tank.' },
       { pt: 'Phase 1', mid: 'wrath', sp: 'Hobbled', lb: 'Mother\'s Wrath: Hobbled', q: 'Each Mother\'s Wrath bite stacks Stone Venom and Hobbled (55% slower on Mythic). What takes the slow off?', a: ['Blessing of Freedom', 'Standing in a coil soak', 'Taunting the tail', 'Nothing: it wears off when the bites end'], why: 'Hobbled lasts a minute, so her tank needs a Blessing of Freedom to get back in place quickly. Take the bites with a big defensive.' },
       { pt: 'Phase 1', mid: 'thrash', sp: 'Mephitic Thrash', q: 'Her tail winds up Mephitic Thrash. What do you do?', a: ['Get 35 yards away from it, its tank too, then come back', 'Stack on the tail to share the hit', 'Stand behind Ula\'tek', 'Soak it in two groups'], why: 'A 4-second cast. Inside 35 yards it\'s a big hit and a knockback; farther out a smaller hit and 10 seconds of damage over time. Keep the eggs away from it.' },
-      { pt: 'Phase 1', mid: 'dive', sp: 'Submerge', lb: 'She dives', q: 'After her first waves (1:17) she dives. What does her tank do?', a: ['Waits where the bubbles rise at the edge, before she comes up', 'Taunts the tail and waits there', 'Stays in the middle until she is back', 'Runs to a side ledge'], why: 'Bubbles show where she will come up. If nobody is in her melee range when she lands, the whole raid is hit.' },
+      { pt: 'Phase 1', mid: 'dive', sp: 'Submerge', lb: 'She dives', q: 'After her first waves (1:17) she dives. What does her tank do?', a: ['Waits where the bubbles rise at the edge, before she comes up', 'Taunts the tail and waits there', 'Stays in the middle until she is back', 'Runs to a side ledge'], why: 'She can come up at the east or west edge: the bubbles show which. If nobody is in her melee range when she lands, the whole raid is hit.' },
       { pt: 'Phase 1', mid: 'eggs', sp: 'Call of the Serpent', lb: 'Eggs: the second set', q: 'Second egg set (1:11): the Wretch\'s bubble comes before her waves. When do the carriers pick up?', a: ['Melee carriers before the bubble, ranged carriers after it', 'Everyone before the bubble', 'Everyone after her waves', 'Nobody: leave them for the coils'], why: 'Eight more eggs land at 1:11 and the new Wretch at 1:12. Inside the bubble the carriers still keep their 3-yard rings apart.' },
       { pt: 'Phase 1', mid: 'coils', sp: 'Spectral Coils', lb: 'Spectral Coils: the second set', q: 'Second coil set (2:11): what else is going on while you soak?', a: ['Her waves keep coming, so keep dodging in your soak; the Wretch\'s bubble goes up between the circles right after both slams', 'Nothing: soak and stand still', 'Her heart is open: everyone on it', 'She dives: her tank leaves'], why: 'The carriers split between the circles and bring 8 eggs through her waves into the double slam. Right after, everyone into the bubble: outside it is a big hit.' },
       { pt: 'Phase 1', mid: 'heart', sp: 'Rage of the Shackled', q: 'Rage of the Shackled opens her Venomous Heart (2:25). What do you need to know?', a: ['It takes double damage for 20 seconds: cooldowns and a potion on it', 'It\'s open for 10 seconds and takes no extra damage', 'It stays open until the adds are dead', 'Only the tanks may hit it'], why: 'She hits the raid every 4 seconds while it\'s open, and brown circles drop Falling Debris (7 yards) that hits hard, tanks too: step out. Under about 66% after it means you\'re on pace.' },
