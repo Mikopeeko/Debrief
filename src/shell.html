@@ -17508,6 +17508,30 @@ html body #view#view section.dbt .dtm .znorth { top: 10px !important; right: 10p
 html body #view#view section.dbt .dtm .zctl { right: 10px !important; bottom: 54px !important; gap: 0 !important; display: flex !important; flex-direction: column !important; }
 html body #view#view section.dbt .dtm .zin, html body #view#view section.dbt .dtm .zout { width: 26px !important; height: 26px !important; font-size: 15px !important; }
 html body #view#view section.dbt .dtm .zout { border-top: 0 !important; }
+/* ===== Design studio, Nov 11: the replay's HUD (Flex: "can we improve the look of these on the replays"). Boss health as frames (the name and % on
+   the bar, red for a boss, amber for an add, like the raid frames); Coming up as timer bars that run down (grey; the next one gold in its last
+   5 s); both on the map's one HUD surface. Owner: the Design studio chat. ===== */
+html body #view#view#view section.dbt .dtm .dtm-map>.dtm-hp { width: 236px !important; max-width: 45% !important; height: auto !important; padding: 6px !important; gap: 3px !important; }
+html body #view#view#view section.dbt .dtm .dtm-hpr { position: relative; display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 7px; overflow: hidden; background: rgba(255,255,255,.06); font-size: 12.5px; line-height: 20px; }
+html body #view#view#view section.dbt .dtm .dtm-hpr > i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(232,162,58,.38); }
+html body #view#view#view section.dbt .dtm .dtm-hpr.b > i { background: rgba(229,83,75,.55); }
+html body #view#view#view section.dbt .dtm .dtm-hpr > span { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: #d4d9de; }
+html body #view#view#view section.dbt .dtm .dtm-hpr.b > span { font-weight: 700; color: #f2f4f6; }
+html body #view#view#view section.dbt .dtm .dtm-hpr > em { position: relative; flex: none; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: #f2f4f6; }
+html body #view#view#view section.dbt .dtm .dtm-map>.dtm-cu { width: 236px !important; padding: 6px !important; background: rgba(11,13,18,.84) !important; border: 1px solid rgba(255,255,255,.09) !important; border-radius: 0 !important; box-shadow: none !important; }
+html body #view#view#view section.dbt .dtm .dtm-cu > b { margin: 0 0 5px 1px !important; font: 700 12px var(--body) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: #8b939c !important; }
+html body #view#view#view section.dbt .dtm .dtm-cur { display: grid !important; grid-template-columns: 20px minmax(0, 1fr) !important; column-gap: 5px !important; align-items: center !important; padding: 0 !important; margin: 0 0 3px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cur:last-child { margin-bottom: 0 !important; }
+html body #view#view#view section.dbt .dtm .dtm-cui { width: 20px !important; height: 20px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cui > * { max-width: 20px !important; max-height: 20px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cub { position: relative; display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 7px; overflow: hidden; background: rgba(255,255,255,.06); font-size: 12.5px; line-height: 20px; }
+html body #view#view#view section.dbt .dtm .dtm-cub > i { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
+html body #view#view#view section.dbt .dtm .dtm-cub > i > u { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,.16); transition: width .25s linear; }
+html body #view#view#view section.dbt .dtm .dtm-cur.soon .dtm-cub > i > u { background: rgba(216,178,90,.55); }
+html body #view#view#view section.dbt .dtm .dtm-cub > span { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #eef1f4; }
+html body #view#view#view section.dbt .dtm .dtm-cub > em { position: relative; flex: none; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: #c9cfd6; }
+html body #view#view#view section.dbt .dtm .dtm-cur.soon .dtm-cub > em { color: #ffe1a0; }
+html body #view#view#view section.dbt .dtm .dtm-cur:hover .dtm-cub { box-shadow: inset 0 0 0 1px rgba(230,180,80,.55); }
 /* raid frames: smaller and quieter (still draggable; the script places them 10px from the corner) */
 html body #view#view section.dbt .dtm .dtm-rf { padding: 3px !important; }
 html body #view#view section.dbt .dtm .dtm-rfh { height: 5px !important; }
