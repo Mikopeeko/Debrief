@@ -69368,7 +69368,7 @@ function ppCardsUL(J, M, U, P) {
     cards.push({ id: 'trans', ph: 2.5, when: 'Intermission', title: 'Spectral Coils (Three groups take turns)', map: ppFreeze(k.done({ title: 'Intermission', focus: UL_WHOLE }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE, hl: G.flat(), noNames: true, labels: lab.concat([[{ rx: EP[0], ry: EP[1] - 7 }, 'End', '#7fd8ff', '#06131c', 0]]) }),
       legend: G.map((ids, g) => ppG('Group ' + (g + 1) + ': soaks ' + list(nums(g)), C3[g], J.trans[g].map((n) => ppI(P, n)))),
       foot: 'The caller marks the first coil; each group takes its own from there. Then end ' + (U.intend ? 'toward ' + MKN(U.intend) : 'here') + ', on the inside: the platform breaks into four.' }); }
-  // Serpent's Bite, Mythic: the three targets stack and the set's three soakers stand in all three circles (set 1 drawn; the backups with the rest)
+  // Serpent's Bite, Mythic: the two targets stack (since the Nov 6 hotfix) and the set's three soakers stand in both circles (set 1 drawn; the backups with the rest)
   if (J.bite.sets.some((s) => s.length)) { const k = gdzKit(UX, 3), fix = {}, put = new Set(); k.art(0, UL_BROKEN); uxB3(k, 0, 'NE');
     const c = [-10, 20], TG = [['m7', 'Melee target', [1.6, 0.6]], ['r7', 'Ranged target', [-1.6, -0.6]]], lab = []; /* (two bites since the Nov 6 hotfix) */
     TG.forEach(([s, nm, d]) => { put.add(s); fix[s] = ppAny(nm); k.at(0, s, c[0] + d[0], c[1] + d[1]); k.ring({ on: s, r: 7, fx: 'soak', t0: 0, at: 1.05, dur: 5, color: R, cn: 'Serpent\'s Bite', label: false }); });

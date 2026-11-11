@@ -55,7 +55,7 @@ Sources, in order: the in-game encounter journal and spell data of the live buil
 
 | Number | Heroic | Mythic | Source | Site before (fixed?) |
 |---|---|---|---|---|
-| Serpent's Bite targets | **2** | **2** | Nov 6 hotfix ("reduced the number of targets on all difficulties"); logs: 2 a cast after (Mythic: Havoc DH + Demo Warlock, Arcane Mage + Havoc DH; Heroic: Hunter + DK), 3 before | said "a melee, a ranged and a healer", three stacked circles: fixed (cards, maps, How it works). The Plan tab's Heroic "Bite Healers" group and Mythic bite picture rings are still built for three: follow-up |
+| Serpent's Bite targets | **2** | **2** | Nov 6 hotfix ("reduced the number of targets on all difficulties"); logs: 2 a cast after (Mythic: Havoc DH + Demo Warlock, Arcane Mage + Havoc DH; Heroic: Hunter + DK), 3 before | said "a melee, a ranged and a healer", three stacked circles: fixed (cards, maps, How it works). Plan tab fixed too in 8a662368: Heroic has two groups (melee; ranged and healers), the Mythic picture two rings |
 | Serpent's Bite venom / leech range | 15 s, 7 yd | 15 s, 7 yd | spell 1288879, journal | right |
 | Soakers needed to clear a bite | 3 | 3 | Oct 6 hotfix; Nov 9 log 3-4 Purges a cast | right |
 | Volatile Purge | erupts after 5 s, DoT 15 s | 5 s, DoT 18 s, Caustic Waves from each soaker | spell 1312967 / 1306086 text; logs 5.0 s | right. Its burst size has no game number (server area trigger; on Heroic it scales with raid size): the replay's "~12 yd" ring is from logs |
