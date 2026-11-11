@@ -5175,6 +5175,7 @@ function buildUlatek(ev, r, h) {
     fester: ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.fester).map((e) => [+e.t.toFixed(2), e.k === 'start' ? 1 : 0, e.src]),
     thrash: ev.filter((e) => (e.k === 'start' || e.k === 'cast') && e.id === UL.thrash).map((e) => [+e.t.toFixed(2), e.k === 'start' ? 1 : 0, e.src]),
     big: ev.filter((e) => (e.k === 'start' || e.k === 'cast') && ids(UL.waveBig).includes(e.id)).map((e) => [+e.t.toFixed(2), e.k === 'start' ? 1 : 0, e.id, e.x != null ? +(+e.x).toFixed(2) : null, e.y != null ? +(+e.y).toFixed(2) : null, e.face != null ? +(+e.face).toFixed(3) : null]),
+    ws: ev.filter((e) => e.k === 'start' && e.id === UL.waveTail).map((e) => [+e.t.toFixed(2), e.src]), /* (each tail's wave cast starting, for its cast bar on the replay (Nov 10)) */
     hits: wvHits.map((e) => [+e.t.toFixed(2), e.dst]),
     incub: dmgId(UL.incubHit).map((e) => [+e.t.toFixed(2), e.dst]) };
   // Ula'tek's own waves (and the tail's in their joint Stage 1 cast) go out from the platform's edge toward the middle for
