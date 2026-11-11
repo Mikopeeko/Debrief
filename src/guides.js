@@ -6256,7 +6256,7 @@ function ulRead(txt) {
     if ((m = /^egg\s*(melee|left|right|far|backup)/.exec(lab))) D.ez[m[1]] = who; else if (/egg carriers?/.test(lab)) eggs = who; else if (/egg shields?/.test(lab)) D.shields = who;
     else if ((m = /^team\s*(\d)/.exec(lab))) { const ti = +m[1] - 1 ? 1 : 0; D.teams[ti] = al0 && D.teams[ti].length ? [...new Set(D.teams[ti].concat(who))] : who; } else if ((m = /soak group\s*(\d)/.exec(lab))) D.trans[+m[1] - 1] = who;
     else if ((m = /^(?:right|left)?\s*soak #?([12])\b/.exec(lab))) { const ti = +m[1] - 1; D.teams[ti] = [...new Set(D.teams[ti].concat(who))]; if (/egg/.test(lab)) D.ce[ti] = who; else if (/fill/.test(lab)) D.cf[ti] = who; } /* (Egg Clear: "Right Soak #1 Eggs" and "… Filler" are coil team 1 together, Nov 11) */
-    else if ((m = /^\{?(star|diamond|square)\}?\s*group$/.exec(lab))) D.trans[['star', 'diamond', 'square'].indexOf(m[1])] = who; else if (/^fester burst/.test(lab)) { if (!eggs.length) eggs = who; }
+    else if ((m = /^\{?(star|diamond|square)\}?\s*group$/.exec(lab))) D.trans[['star', 'diamond', 'square'].indexOf(m[1])] = who; else if (/^fester burst/.test(lab)) { (D.fb = D.fb || []).push(who); if (!eggs.length) eggs = who; } /* (each Fester Burst line is one burst's spots in order: 1 to 8, then 11 to 18, Nov 11) */
     else if ((m = /^p2\s*(left|right)\s*(.*)$/.exec(lab))) { const sv = D.side[m[1] === 'left' ? 'L' : 'R'], s0 = m[2].trim() || 'side', sk = /big egg/.test(s0) ? 'doomscale egg' : s0, far = /far/.test(s0); sv[sk] = sv[sk] && (al0 || sk !== s0) ? [...new Set(far ? who.concat(sv[sk]) : sv[sk].concat(who))] : who; } } /* (Mythic's far big egg and big egg are both the ledge's Doomscale Eggs on the map, the far one first, Nov 11) */
   if (!Object.values(D.ez).some((x) => x.length) && eggs.length) D.ez = { melee: eggs.slice(0, 2), left: eggs.slice(2, 4), right: eggs.slice(4, 6), far: eggs.slice(6, 8), backup: eggs.slice(8) };
   return D;
@@ -6264,7 +6264,7 @@ function ulRead(txt) {
 // (the Fester Burst spots, clockwise from the top: Melee top and top right, Right right and bottom right, Far bottom and bottom left, Left left and top left; a backup fills a gap)
 const UL_BURST_AT = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖']; /* (arrows: short enough that every name fits the legend) */
 const ulBurst = (D) => { const bk = (D.ez.backup || []).slice(), P = []; for (const z of ['melee', 'right', 'far', 'left']) for (let i = 0; i < 2; i++) P.push((D.ez[z] || [])[i] || bk.shift() || null); return P; };
-const ulHas = (key, D) => (key === 'eggs' ? Object.values(D.ez).some((x) => x.length) : key === 'coils' ? D.teams.some((x) => x.length) : key === 'trans' ? D.trans.some((x) => x && x.length) : key === 'side' ? Object.keys(D.side.L).length + Object.keys(D.side.R).length > 0 : false);
+const ulHas = (key, D) => (key === 'eggs' || key === 'burst' ? Object.values(D.ez).some((x) => x.length) : key === 'coils' ? D.teams.some((x) => x.length) : key === 'trans' ? D.trans.some((x) => x && x.length) : key === 'side' || key === 'sideeggs' ? Object.keys(D.side.L).length + Object.keys(D.side.R).length > 0 : false);
 // the pages: each draws on the floor in room yards; tokens are [name, x, y]
 // (Phase 1's coil soaks as the team's wowutils plan draws them (Flex, Nov 11: "please re check wowutils and fix it so it looks similar"): two circles,
 // Left Soak #2 and Right Soak #1; in each, the egg carriers on numbered spots so no two egg rings touch, and everyone else waiting below to stand anywhere
@@ -6282,14 +6282,12 @@ const UL_PAGES = {
         if (D.ez.backup.length) L.grp('Backup', '#c9ced8', D.ez.backup); if (D.shields.length) L.grp('Egg shields', '#e6e0c8', D.shields);
         L.p('Quadrants as you face her. The centre person takes the inner egg, the edge person the outer one; with only one egg in your quadrant, the centre person finds one somewhere else. Never let your 3-yard ring touch another carrier\'s.');
         L.f('In the top kills the eggs land all over the platform, at about 0:20 and again at 1:35.'); } },
-    { t: 'Fester Burst spread', s: 'Stand inside the Wretch\'s bubble, spread so egg rings never touch', vb: 'mid',
-      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); [[[26, -4], 'Burst 1 · 0:37', 1], [[-26, -2], 'Burst 3 · 1:48', 11]].forEach(([w, t, n0]) => { g.circle(w[0], w[1], 10, '#ff8a3d', true); g.add(w[0], w[1], 'Wretch');
-        const who = ulBurst(D); for (let i = 0; i < 8; i++) { const a = Math.PI / 2 - (i * Math.PI) / 4, x = w[0] + Math.cos(a) * 8, y = w[1] + Math.sin(a) * 8; if (who[i]) g.tok(who[i], x, y, 1); else g.num(x, y, n0 + i); } /* (eight spots in a ring round the Wretch, none under it; each carrier on their spot (Flex, Nov 10: "bugged not showing whos in the assignments")) */
-        const s = w[0] < 0 ? 1 : -1, q = g.pick([[w[0], w[1] + 13.5], [w[0], w[1] - 13.5], [w[0] + s * 5, w[1] + 13.5], [w[0] + s * 5, w[1] - 13.5], [w[0] + s * 9, w[1] + 13.5], [w[0] + s * 9, w[1] - 13.5]], (x, y) => g.tagBox(t, x, y)); g.tag(q[0], q[1], t); }); },
-      leg: (D, L) => { const who = ulBurst(D), on = who.map((n, i) => [n, UL_BURST_AT[i]]).filter(([n]) => n); if (on.length) L.grp('Your spot in the bubble (both bursts)', '#ff8a3d', on.map(([n]) => n), on.map(([, t]) => t));
-        L.p('Fester Burst hits everyone outside the Wretch\'s 10-yard bubble: all in for bursts 1 and 3 (2 and 4 come when the raid is already on it). Egg carriers spread round the edge of the bubble on the side of their quadrant (top is the side nearest Ula\'tek), so their 3-yard rings never touch; everyone else stands inside the bubble too.');
-        L.f('In the top kills burst 1 lands on the side the first coils come from (the tank brings the Wretch there), burst 3 on either side; 2 is at the north, 4 at the south.'); } }],
-  coils: [{ t: 'Coil soaks', s: 'Egg carriers on their numbered spot in the circle, everyone else anywhere in it', vb: 'mid',
+    { t: 'Fester Burst spread', s: 'Each egg carrier on their numbered spot in the Wretch\'s bubble', vb: 'mid', /* (as the team's wowutils plan draws it (Flex, Nov 11: "this should be the layout for festerburst")) */
+      draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const F = ulFester(D);
+        [[0, 27, 'Fester Burst #1 · 0:37', UL_FB[0], 1], [1, -27, 'Fester Burst #3 · 1:48', UL_FB[1], 11]].forEach(([i, cx, lab, SP, n0]) => { g.circle(cx, 2, 14, '#ff8a3d', true);
+          SP.forEach(([dx, dy], j) => { const n = F[i][j]; if (n) g.tok(n, cx + dx * 14, 2 + dy * 14, 1); else if (!F[i].length) g.num(cx + dx * 14, 2 + dy * 14, n0 + j); }); g.tag(cx, 20.5, lab, '#ff8a3d'); }); },
+      leg: (D, L) => { const F = ulFester(D); [[0, 'Fester Burst #1 · 0:37', 1], [1, 'Fester Burst #3 · 1:48', 11]].forEach(([i, lab, n0]) => { if (F[i].length) L.grp(lab, '#ff8a3d', F[i], F[i].map((_, j) => '#' + (n0 + j))); });
+        L.p('Fester Burst hits everyone outside the Wretch\'s bubble. The egg carriers stand on their numbered spot in it so no two egg rings touch; everyone else stands inside the bubble too.'); } }],  coils: [{ t: 'Coil soaks', s: 'Egg carriers on their numbered spot in the circle, everyone else anywhere in it', vb: 'mid',
     draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const S = ulSoaks(D);
       [[0, 19, '#24f2cb', 'Right Soak #1'], [1, -19, '#7fd8ff', 'Left Soak #2']].forEach(([i, cx, c, lab]) => { const { e, f, sp, od } = S[i], at = {}; e.forEach((n, j) => { if (j < od.length) at[od[j]] = n; });
         g.circle(cx, 6, 15, c, true); sp.forEach(([no, dx, dy]) => { if (at[no]) g.tok(at[no], cx + dx * 1.45, 6 + dy * 1.45, 1); else if (!e.length) g.num(cx + dx * 1.45, 6 + dy * 1.45, no); }); /* (only the assigned holders; the numbered spots only while nobody is assigned (Flex, Nov 11: "keep it clear and consistent")) */ /* (wowutils' spots, scaled to a 15-yard drawing) */
@@ -6362,12 +6360,28 @@ function ulH(key, D, P, M, i) {
   return '<div class="pom-leg"><div class="pom-top"><b class="pom-t">' + esc(pg.t) + '</b>' + (pages.length > 1 ? '<span class="pom-pg">' + pages.map((p, j) => '<button type="button" data-pomp="' + j + '"' + (j === i ? ' class="on" aria-current="true"' : '') + ' title="' + esc(p.t) + '" aria-label="' + esc(p.t) + '">' + (j + 1) + '</button>').join('') + '</span>' : '') + '</div><p class="pom-s">' + esc(pg.s) + '</p>' + leg + '</div><div class="pom-map">' + ulSvg(pg, D, P, M) + '</div>';
 }
 // (the Orb carriers and P3 orb carriers job cards on Plan get their map, filled from the plan's note; drawn again when the card is)
+// (a name on a map whose class Debrief doesn't know yet (not in Who plays, the team or any log): its class from Warcraft Logs, by the realm the note's
+// invite list gives, kept apart from the rosters so nobody is added anywhere; the maps then draw again in class colours (Flex, Nov 11: "make sure the
+// maps have class colors for the classes that are listed"))
+UL_PAGES.burst = UL_PAGES.eggs.splice(1, 1); UL_PAGES.sideeggs = UL_PAGES.side; delete UL_PAGES.side; /* (the ledge egg maps on Side Egg Pickups, not Sides (Flex, Nov 11: "this should be in egg side pickups not in sides")) */ /* (the Fester Burst map on its own card, Fester Burst Egg Spread, not page 2 of Pick up Egg (Flex, Nov 11: "Why is the map for festerburst gone?")) */
+// (the Fester Burst spots as wowutils draws them, as parts of the bubble's radius (x right, y up): burst #1's spots 1 to 8, burst #3's 11 to 18; a note's
+// first "Fester Burst Spreads:" line fills #1 in order, the second #3; one line fills both; no line: the egg zones, melee, left, right, far)
+const UL_FB = [[[0.77, 0], [0.32, 0.68], [0.32, -0.68], [0.26, 0], [-0.35, -0.67], [-0.35, 0.68], [-0.75, 0], [-0.25, 0]], [[-0.74, 0], [-0.34, -0.68], [-0.34, 0.68], [-0.23, 0], [0.34, 0.68], [0.34, -0.69], [0.78, 0], [0.27, 0]]];
+const ulFester = (D) => { const L = (D.fb || []).filter((x) => x && x.length); if (L.length) return [L[0], L[1] || L[0]]; const z = ['melee', 'left', 'right', 'far'].flatMap((k) => D.ez[k] || []); return [z, z]; };
+const POM_CLS_KEY = 'wla-pom-cls', POM_CLS = () => { try { return JSON.parse(store.get(POM_CLS_KEY) || '{}') || {}; } catch (e) { return {}; } }, POM_ASKED = new Set();
+function pomClassFill(text, P) { if (typeof WCL === 'undefined' || !WCL.charInfo || typeof wclCreds !== 'function') return;
+  const m = /invitelist:([^\n;]*)/i.exec(String(text || '')); if (!m) return;
+  const want = m[1].split(',').map((s) => s.trim()).filter(Boolean).map((s) => { const i = s.indexOf('-'); return i > 0 ? { n: s.slice(0, i), srv: s.slice(i + 1) } : null; }).filter((x) => x && !POM_ASKED.has(x.n.toLowerCase()) && !(((P && P.get(x.n.toLowerCase())) || {}).cls));
+  if (!want.length) return; want.forEach((x) => POM_ASKED.add(x.n.toLowerCase()));
+  (async () => { let creds = null; try { creds = await wclCreds(); } catch (e) { return; } let got = 0;
+    for (const x of want) { try { const info = await WCL.charInfo(creds, { name: x.n, srv: x.srv.toLowerCase().replace(/['’]/g, '').replace(/\s+/g, '-'), reg: 'US' }); if (info && info.cls) { const C = POM_CLS(); C[String(info.name || x.n).toLowerCase()] = { cls: info.cls }; store.set(POM_CLS_KEY, JSON.stringify(C)); got++; } } catch (e) { /* (not found: stays grey) */ } }
+    if (got) { PP_SETS.clear(); document.querySelectorAll('.bj-jobs .plb-rc[data-pom]').forEach((el) => { el.removeAttribute('data-pom'); el.querySelectorAll(':scope > .pom').forEach((b) => b.remove()); }); try { pomJobs(); } catch (e) { /* (drawn on the next render) */ } } })(); }
 function pomJobs() {
   for (const el of document.querySelectorAll('.bj-jobs .plb-rc:not([data-pom])')) {
     const pics = el.querySelector(':scope > .pj-pics'), key = pics && pics.dataset.mech; el.dataset.pom = '1'; if (key !== 'orbs' && key !== 'orbs3' && !UL_PAGES[key]) continue;
     const ch = el.querySelector('[data-noteboss][data-noteid]') || (el.closest('.bj-jobs') || document).querySelector('[data-noteboss][data-noteid]'); if (!ch) continue;
-    let set = null, O = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); O = c && pomRead(noteResolve(c.u0.text))[key === 'orbs' ? 0 : 1]; } catch (e) { set = null; }
-    if (set && set.cf && set.diff === 'Mythic' && set.boss === 'Ula\'tek' && UL_PAGES[key]) { let U = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); U = c && ulRead(noteResolve(c.u0.text)); } catch (e) { U = null; }
+    let set = null, O = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); set = c && ppSet(c.r, c.u0); O = c && pomRead(noteResolve(c.u0.text))[key === 'orbs' ? 0 : 1]; if (c && set && set.P && set.boss === 'The Coiled Altar') pomClassFill(c.u0.text, set.P); } catch (e) { set = null; }
+    if (set && set.cf && set.diff === 'Mythic' && set.boss === 'Ula\'tek' && UL_PAGES[key]) { let U = null; try { const c = ndzDcNote(ch.dataset.noteboss + '|' + ch.dataset.noteid); U = c && ulRead(noteResolve(c.u0.text)); if (c) pomClassFill(c.u0.text, set.P); } catch (e) { U = null; }
       if (U && ulHas(key, U)) { const box = document.createElement('div'); box.className = 'pom pom-ul'; box._pom = { ul: 1, key, U, P: set.P, M: set.cf.marks || {} }; box.innerHTML = ulH(key, U, set.P, box._pom.M, 0); const after = el.querySelector(':scope > .plb-rrs'); if (after) after.after(box); else el.appendChild(box); }
       continue; }
     if (!set || !set.cf || set.boss !== 'The Coiled Altar' || set.diff !== 'Mythic' || !O || !(O.purple.length || O.green.length)) continue;
@@ -6392,13 +6406,13 @@ const ppAny = (label) => ({ name: label, color: '#c9ced8', specIcon: 'inv_misc_q
 // (who each name is: class colour, spec icon and role, from the pull, else from Plan's roster (the job cards' own data), else Plan's
 // saved specs; the class icon when the spec isn't known, never a question mark for a real player (Plan round 5, Nov 4: in a fresh browser
 // everyone was a "?" and "ranged", Vandagos the tank too))
-function ppWho(r, names) { const sp = ndzSpecs(), here = new Map((r ? ndzIn(r) : []).map((p) => [ndzPn(p).toLowerCase(), p])), P = new Map();
+function ppWho(r, names) { const sp = (() => { try { return typeof ndzBSp === 'function' ? ndzBSp({ team: store.get(GROUP_CUR) || null }) : ndzSpecs(); } catch (e) { return ndzSpecs(); } })(), here = /* (every class Debrief knows: the logs, your teams' members and rosters, players added by hand, so a name on a map is in its class colour even when not ticked in Who plays (Flex, Nov 11: "make sure the maps have class colors for the classes that are listed")) */ new Map((r ? ndzIn(r) : []).map((p) => [ndzPn(p).toLowerCase(), p])), P = new Map();
   let ro = new Map(), ps = {}; try { if (typeof pnPeople === 'function' && typeof pnGet === 'function') ro = new Map(pnPeople(pnGet(), { alts: true }).map((q) => [String(q.n).toLowerCase(), q])); } catch (e) { ro = new Map(); } try { if (typeof planSp === 'function') ps = planSp() || {}; } catch (e) { ps = {}; }
   const RK = { tank: 1, healer: 1, melee: 1, ranged: 1 };
   for (const n of names) { const k = n.toLowerCase(), p = here.get(k), q = ro.get(k), s1 = ps[k] || {}, s0 = sp[k] || {}, s = s1.cls ? s1 : s0.cls ? s0 : s1;
-    const cls = (p && p.cls) || (q && q.cls) || s.cls || null, sid = +((p && p.specId) || (q && q.sid) || s.sid) || 0;
+    const cls = (p && p.cls) || (q && q.cls) || s.cls || (POM_CLS()[k] || {}).cls || null, sid = +((p && p.specId) || (q && q.sid) || s.sid) || 0;
     const role = p && p.role ? (p.role === 'tank' || p.role === 'healer' ? p.role : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged') : q && RK[q.kind] ? q.kind : s.role === 'tank' || s.role === 'healer' ? s.role : sid && NDZ_MELEE.has(sid) ? 'melee' : 'ranged';
-    P.set(k, { name: n, cls, color: [p && p.color, (E.CLASSES[cls] || [])[1], s.color].find((c) => c && c !== 'inherit') || '#c9ced8', specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : ''), role }); }
+    P.set(k, { name: n, cls, color: [(E.CLASSES[cls] || [])[1], p && p.color, s.color].find((c) => c && c !== 'inherit') || '#c9ced8' /* (the class colour first: a stand-in player's grey never hides a class Debrief knows, Nov 11) */, specIcon: NDZ_SPECIC[sid] || (cls ? 'classicon_' + String(cls).toLowerCase() : ''), role }); }
   return P; }
 // (who stands in which of the guide's spots: the jobs first, then everyone else by role, so a healer takes a healer's spot)
 function ppSeat(P, fix) { const S = { ...fix }, used = new Set(Object.values(fix).filter((v) => typeof v === 'string')), left = [...P.values()].map((p) => p.name).filter((n) => !used.has(n)), free = GDZ_RAID.filter((s) => !(s in S)), R = { t: 'tank', h: 'healer', m: 'melee', r: 'ranged' };
@@ -7458,7 +7472,7 @@ function ppSet(r, u0) {
   if (!cf) return { boss, diff, cards: [] };
   if (cf.jm && Object.keys(cf.jm).length) { try { N = E.parseNote(ppJmText(noteResolve(u0.text), cf.jm)); } catch (e) { /* (as written) */ } } /* (each marker job on the marker the raid lead picked) */
   const key = [boss, diff, u0.text, JSON.stringify([cf.marks, cf.uses, cf.jm]), store.get(NDZ_SPEC_KEY)].join('|'); if (PP_SETS.has(key)) return PP_SETS.get(key);
-  const names = ndzNoteRoster(u0) || [...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))].concat(ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]);
+  const names = (ndzNoteRoster(u0) || []).concat([...new Set(noteNames(noteResolve(u0.text)).map((x) => String(x).split('-')[0]))], ndzIn(r).map(ndzPn)), P = ppWho(r, [...new Set(names)]); /* (everyone the note names, not only who's ticked in Who plays, so every name on a map gets its class colour, Nov 11) */
   const J0 = cf.C.read(N, P), set = { key, boss, diff, cf, J: J0, P, cards: cf.C.cards(J0, cf.marks, cf.uses, P).filter((cd) => !/^kicks/.test(cd.id)) /* (no pictures for interrupt jobs, the user's call (Nov 10): "remove the image generation from interupt mechanics"; the kick jobs stay in the rows and the note) */, pics: new Map() };
   set.pic = (cd) => { const pk = cd.id + '|' + JSON.stringify(ppEdOf(boss, diff, cd.id)); if (!set.pics.has(pk)) set.pics.set(pk, ppDraw(cd, boss, diff).then((cv) => ({ cv, url: cv.toDataURL('image/png'), thumb: ppThumbUrl(cv) })).catch((e) => { console.warn('Picture plan:', e); return null; })); return set.pics.get(pk); };
   PP_SETS.set(key, set); if (PP_SETS.size > 4) PP_SETS.delete(PP_SETS.keys().next().value);
