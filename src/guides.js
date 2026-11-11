@@ -252,7 +252,7 @@ function gdzCallSvg(c, x, y, ft, at, yd) {
     '<text x="' + x + '" y="' + (by + 15) + '" text-anchor="middle" style="font:800 12.5px var(--head,sans-serif);letter-spacing:.04em" fill="' + ink + '">' + esc(t) + '</text></g>';
 }
 // the labels the maps put up by themselves, by mechanic (cn): what to do, and how long it shows (land: until it goes off; a number: seconds)
-const GDZ_CALL = { 'Toxic Deluge': ['Dodge', 'land'], Guillotine: ['Soak here · 5+', 'land', '#ff8a6a'], "Widow's Kiss": ['Get 40 yards away', 'land', '#9ff26d'], Gloombomb: ['To your add', 'land', '#e07bff'],
+const GDZ_CALL = { 'Toxic Deluge': ['Dodge', 'land'], Guillotine: ['Soak here · 5+', 'land', '#ff8a6a'], "Widow's Kiss": ['Get 50 yards away', 'land', '#9ff26d'], Gloombomb: ['To your add', 'land', '#e07bff'],
   Venomfang: ['Dispel', 'dur', '#7cf07c'], Dreadmarch: ['Mind controlled', 3, '#c49bff'], 'Spirit Erasure': ['Stop it', 'land', '#c49bff'], 'Veil of Twilight': ['Burst the shield', 'dur', '#e07bff'],
   'Purple circles': ['Dodge', 'land', '#e07bff'], Defilement: ['Stay out', 3, '#8fd16a'], 'Raid cooldowns': ['Stack · raid cooldowns', 'dur', '#b9a6ff'], "Purple orb's ring": ['Purple: keep clear', 2.4, '#c49bff'], 'Noxious Ground': ['Avoid', 3, '#8fd16a'],
   'Spectral Coils': ['Soak', 'land', '#24f2cb'], 'Fester Burst': ['Get in the bubble', 'land', '#d8f22f'], 'Falling Debris': ['Dodge', 'land', '#c8a36a'], 'Call of the Serpent': ['Dodge', 'land', '#c8a36a'], 'Serpent\'s Bite': ['Stack and soak', 'dur', '#ff5a6a'], 'Circling Prey': ['Move one piece left', 'land', '#ff3b3b'] };
@@ -382,20 +382,20 @@ const GDZ_CA_AXES = {
   1: { how: 1, tg: 'r3', grp: ['m5', 'm6', 'r6', 'r5', 'r7', 'h3'], tags: [['r3', 'External'], ['m6', 'Feint'], ['r6', 'Dispersion'], ['m5', 'Wall']], hl: ['r5', 'r7'], title: 'Guillotine on Mythic: the first soak', hlLabel: 'axe target and the Hunters', tagLabel: 'What they press',
     go: 'Axe: to the moon', walk: 'Soak 1: walk in', here: 'Soak here · 6 or 7', ext: 'External',
     pause: 'Freeze. Soak 1 is big: 6 or 7. Both Hunters are in it, so neither can be picked for the next axe.',
-    do: ['Axe target: *Walk to the moon corner* as soon as the axe marks you. Healers put an *external* and a *Zephyr* on you there.', 'Soak 1: Both *Hunters*, a *Shadow Priest*, a *Rogue* and a *Warrior* walk in with them, 6 or 7 in all. *Press a defensive* as it lands. Hunters *save Turtle*.', 'Everyone in it: When it lands, *walk out 40 yards*, back toward the boss. You have 6 seconds before the spot erupts.'] },
+    do: ['Axe target: *Walk to the moon corner* as soon as the axe marks you. Healers put an *external* and a *Zephyr* on you there.', 'Soak 1: Both *Hunters*, a *Shadow Priest*, a *Rogue* and a *Warrior* walk in with them, 6 or 7 in all. *Press a defensive* as it lands. Hunters *save Turtle*.', 'Everyone in it: When it lands, *walk out 50 yards*, back toward the boss. You have 6 seconds before the spot erupts.'] },
   2: { how: 1, tg: 'm3', grp: ['t1', 't2', 'r5', 'r7'], tags: [['m3', 'BoP'], ['t1', 'Wall'], ['t2', 'Wall'], ['r5', 'Turtle'], ['r7', 'Turtle']], hl: ['t1', 't2', 'r5', 'r7'], title: 'Guillotine on Mythic: the second soak', hlLabel: 'axe target and the five soakers', tagLabel: 'What they press',
     go: 'Axe: to the moon', walk: 'Soak 2: walk in', here: 'Exactly 5 here', ext: 'Blessing of Protection',
     pause: 'Freeze. Exactly five: both tanks with a defensive, both Hunters in Turtle, and Blessing of Protection on the target. Nobody else.',
-    do: ['Soak 2: The next axe comes 85 seconds later, to the same corner. *Exactly 5* go in: the target, *both tanks* and *both Hunters*.', 'Soak 2: Tanks bring the boss and *press a defensive*. Hunters *press Turtle*. A Paladin puts *Blessing of Protection* on the target.', 'Everyone in it: *Walk out 40 yards* again. Gate into a soak, never out of one.'] },
+    do: ['Soak 2: The next axe comes 85 seconds later, to the same corner. *Exactly 5* go in: the target, *both tanks* and *both Hunters*.', 'Soak 2: Tanks bring the boss and *press a defensive*. Hunters *press Turtle*. A Paladin puts *Blessing of Protection* on the target.', 'Everyone in it: *Walk out 50 yards* again. Gate into a soak, never out of one.'] },
   g1: { how: 1, tg: 'r2', grp: ['m1', 'h1', 'r1', 'h2'], tags: [['r2', 'Externals'], ['m1', 'Wall'], ['r1', 'Defensive']], hl: [], title: 'Grim Guillotine 1: at the star', hlLabel: 'player with the axe', tagLabel: 'What they press', go: 'Axe 1: to the star', walk: 'Five new soakers', here: 'Soak here · 5', ext: 'Big externals',
     pause: 'Freeze. Phase 3\'s first axe, at the star: five who have never soaked, and big externals on the target. These axes are magic now.',
-    do: ['Axe 1 target: *Walk to the star marker*. Healers put *big externals* on you.', 'Soak 1: *4 players who never soaked* walk in with them. *Press a defensive* as it lands.', 'Everyone in it: *Walk out 40 yards*. Gate in, never out.'] },
+    do: ['Axe 1 target: *Walk to the star marker*. Healers put *big externals* on you.', 'Soak 1: *4 players who never soaked* walk in with them. *Press a defensive* as it lands.', 'Everyone in it: *Walk out 50 yards*. Gate in, never out.'] },
   g2: { how: 1, tg: 'r4', grp: ['m6', 'h3', 'm5', 'm4'], tags: [['r4', 'Externals'], ['m6', 'Cloak'], ['h3', 'Bubble'], ['m5', 'Spellwarding']], hl: ['m6', 'h3', 'm5'], title: 'Grim Guillotine 2: at the square', hlLabel: 'axe target and the immunities', tagLabel: 'What they press', go: 'Axe 2: to the square', walk: 'Soak 2: walk in', here: 'Soak here · 5', ext: 'Big externals',
     pause: 'Freeze. Five at the square. Cloak, Bubble and Blessing of Spellwarding let players who already soaked take this magic axe.',
-    do: ['Axe 2 target: *Walk to the square marker*. Big externals again.', 'Soak 2: Players who already soaked go in with *Cloak*, *Bubble* or *Spellwarding*. *At least 5* in all.', 'Everyone in it: *Walk out 40 yards*.'] },
+    do: ['Axe 2 target: *Walk to the square marker*. Big externals again.', 'Soak 2: Players who already soaked go in with *Cloak*, *Bubble* or *Spellwarding*. *At least 5* in all.', 'Everyone in it: *Walk out 50 yards*.'] },
   g3: { how: 1, tg: 'm7', grp: ['m2', 'h4', 'r5', 'r7', 'r3'], tags: [['m7', 'Externals'], ['r5', 'Turtle'], ['r7', 'Turtle'], ['r3', 'Ice Block']], hl: ['r5', 'r7', 'r3'], title: 'Grim Guillotine 3: send everyone free', hlLabel: 'axe target and the immunities', tagLabel: 'What they press', go: 'Axe 3: to the square', walk: 'Send everyone free', here: 'Soak here · 6', ext: 'Big externals',
     pause: 'Freeze. The last axe: everyone still free of the debuff, plus immunities. Five is the minimum and four wipes, so this sends six.',
-    do: ['Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity: *Turtle*, *Ice Block*. Four wipes, so *send six*.', 'Everyone in it: *Walk out 40 yards*. That was the last axe.'] },
+    do: ['Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity: *Turtle*, *Ice Block*. Four wipes, so *send six*.', 'Everyone in it: *Walk out 50 yards*. That was the last axe.'] },
 };
 // (a Gloombomb's 3 Soul Fragments: they drop 3 to 8 yards from where it went off (the logs, Nov 1), and the bombed player picks each up
 // or dies; returns when the last one is picked up)
@@ -533,7 +533,7 @@ const GDZ_CA_M = {
   // walk out to 43 yards at a running pace, everyone on their own spot of the arc (never inside the eruption)
   axe(o) {
     const V = GDZ_CA_AXES[(o && o.soak) || 1], k = gdzCaMarks(gdzKit('The Coiled Altar', 13)), C = (o && o.at) || [-35, -35], tg = V.tg, grp = V.grp, how = !!V.how;
-    // (written for the moon corner; another corner mirrors the raid's spots and the way out, so everyone ends 40 yards from it)
+    // (written for the moon corner; another corner mirrors the raid's spots and the way out, so everyone ends 50 yards from it)
     const fx = C[0] > 0 ? -1 : 1, fy = C[1] > 0 ? -1 : 1, at = (t, ids, x, y, sp) => k.at(t, ids, x * fx, y * fy, sp), S = new Set([tg].concat(grp)), free = (ids) => ids.filter((x) => !S.has(x));
     const TK = S.has('t1'), B0 = TK ? [-11 * fx, -11 * fy] : [0, 0];
     k.boss('zj', 'Zul\'jan', 0, B0[0], B0[1]); at(0, 't1', TK ? -8 : 5, TK ? -11 : 0); at(0, 't2', TK ? -12 : -2, TK ? -7 : 6); at(0, free(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']), 0, 8, 4.5); at(0, free(['h1', 'h2', 'h3', 'h4']), -6, 22, 3.5); at(0, free(['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7']), 4, 24, 4.5);
@@ -544,14 +544,14 @@ const GDZ_CA_M = {
     if (TK) k.boss('zj', 'Zul\'jan', 0.3, B0[0], B0[1]).boss('zj', 'Zul\'jan', 4.8, C[0] + 9 * fx, C[1] + 9 * fy).boss('zj', 'Zul\'jan', 6.3, C[0] + 9 * fx, C[1] + 9 * fy).boss('zj', 'Zul\'jan', 11, 0, 0);
     const a0 = Math.atan2(-C[1], -C[0]), LP = { x: C[0] + Math.cos(a0) * (TK ? 17 : 10), y: C[1] + Math.sin(a0) * (TK ? 17 : 10) }; /* (the corner's captions sit just outside the circle, toward the boss: never over the soakers) */
     if (how) { const CO = { color: '#ff8a6a', ink: '#1a0d08' };
-      k.call(1, 2.4, V.go, { on: tg, ...CO }).call(2.4, 4.4, V.walk, { ...LP, ...CO }).call(4.4, 6, V.here, { ...LP, ...CO }).call(6, 11.8, 'Walk out 40 yards', { ...LP, color: '#9ff26d', ink: '#0d1a06' }); /* (one caption at a time: never piled up) */
+      k.call(1, 2.4, V.go, { on: tg, ...CO }).call(2.4, 4.4, V.walk, { ...LP, ...CO }).call(4.4, 6, V.here, { ...LP, ...CO }).call(6, 11.8, 'Walk out 50 yards', { ...LP, color: '#9ff26d', ink: '#0d1a06' }); /* (one caption at a time: never piled up) */
       V.tags.forEach(([id, txt]) => k.press(id, txt, 4.6, 9)); /* (pressed just before it lands) */
       k.ring({ on: tg, r: 3.4, fx: 'zone', t0: 4.6, dur: 2.6, color: '#ffd23b', cn: V.ext, legend: V.ext + ' on the axe target' }); }
     else V.tags.forEach(([id, txt]) => k.tag(id, txt, 1, 13));
-    k.ring({ x: C[0], y: C[1], r: 40, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 40 yards around the spot, 6 s after', ...(how ? { label: false } : {}) });
+    k.ring({ x: C[0], y: C[1], r: 50, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 50 yards around the spot, 6 s after', ...(how ? { label: false } : {}) });
     const out = [tg].concat(grp);
-    if (how) out.forEach((id, i) => { k.ok(id, 6); const a = a0 + (i - (out.length - 1) / 2) * 0.17; k.hold(6.1, id).at(11.7, id, C[0] + Math.cos(a) * 43, C[1] + Math.sin(a) * 43); });
-    else out.forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, grp.length + 1, 6); k.hold(6.3, id); at(11.8, id, dx, dy); });
+    if (how) out.forEach((id, i) => { k.ok(id, 6); const a = a0 + (i - (out.length - 1) / 2) * 0.17; k.hold(6.1, id).at(11.7, id, C[0] + Math.cos(a) * 52, C[1] + Math.sin(a) * 52); }); /* (past the 50-yard eruption) */
+    else out.forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, grp.length + 1, 6); k.hold(6.3, id); at(11.8, id, dx + 8, dy + 8); }); /* (just past the 50-yard eruption) */
     k.ring1([tg].concat(V.hl)); if (how) k.step(1).step(1.6).step(6.2); else k.step(1).step(2).step(6).step(6.4).step(11);
     k.pause(5.6, V.pause, { x: C[0], y: C[1], r: 11 }); return k.done({ title: V.title, focus: { x: C[0] * 0.37, y: C[1] * 0.37, r: 24 }, hlLabel: V.hlLabel, goodLabel: 'in the soak', tagLabel: V.tagLabel });
   },
@@ -876,7 +876,7 @@ const GDZ_CA_BEATS = {
   kill: { name: 'The kill', do: ['DPS: *Kill Zul\'jan first*, before his pool cast, about a minute after the second shield. Leave Malacrass at *7 or 8%*, then finish him.'],
     run() { const k = gdzKit('The Coiled Altar', 7.5); gdzCaBoss(k, 3);
       k.call(0.3, 2, 'Zul\'jan first', { on: 'zj' }); k.ring({ on: 'zj', r: 7, fx: 'burst', t0: 1.6, at: 2.2, dur: 0.8, color: '#ffd23b', cn: 'Zul\'jan dies', legend: 'Zul\'jan dies first' }); k.show('zj', 0, 2.4);
-      k.ring({ on: 'hm', r: 5, fx: 'zone', t0: 2.4, dur: 2.8, color: '#ff3b3b', cn: 'Soulbound', legend: 'one boss dead: the other gets 500% stronger' }); k.call(2.5, 4.9, 'About 7%: finish him', { on: 'hm', color: '#ff3b3b', ink: '#fff' });
+      k.ring({ on: 'hm', r: 5, fx: 'zone', t0: 2.4, dur: 2.8, color: '#ff3b3b', cn: 'Soulbound', legend: 'one boss dead: the other gets 100% stronger every few seconds, up to 500%' }); k.call(2.5, 4.9, 'About 7%: finish him', { on: 'hm', color: '#ff3b3b', ink: '#fff' });
       k.ring({ on: 'hm', r: 7, fx: 'burst', t0: 4.6, at: 5.2, dur: 0.8, color: '#ffd23b', cn: 'Malacrass dies', legend: 'the kill' }); k.show('hm', 0, 5.4); k.call(5.4, 7.4, 'Kill', { x: 14, y: 2 });
       k.pause(2.7, 'Zul\'jan is dead, before his pool cast. Malacrass is at 7 or 8% and now hits 500% harder, so finish him fast.', { on: 'hm', r: 9 });
       k.step(0.3); } },
@@ -906,7 +906,7 @@ const GDZ_CA_SIM = [
 const GDZ_CA_BEATS_H = Object.assign({}, GDZ_CA_BEATS, {
   start: Object.assign({}, GDZ_CA_BEATS.start, { do: ['Boss tank: Take Zul\'jan to the *middle*. The raid stands around him.', 'Everyone: Fangs hits the raid and pours *poison pools* in from both side walls. *Stay out of them*.'] }),
   fangs: Object.assign({}, GDZ_CA_BEATS.fangs, { run() { const k = gdzKit('The Coiled Altar', 3.5); gdzCaBoss(k, 0); k.rot(0); gdzCaLaneH(k, 0); k.cast('zj', 'Fangs of the Coiled Altar', 0, 1.6); k.step(0.2); } }),
-  kill: { name: 'The kill (Together)', do: ['DPS: *Kill both bosses* close together. When one dies, the other gets *500% stronger*.'],
+  kill: { name: 'The kill (Together)', do: ['DPS: *Kill both bosses* close together. When one dies, the other gets *100% stronger every 5 seconds*, up to 500%.'],
     run() { const k = gdzKit('The Coiled Altar', 5.5); gdzCaBoss(k, 3);
       k.call(0.3, 2.2, 'Both together', { on: 'zj' });
       k.ring({ on: 'zj', r: 7, fx: 'burst', t0: 1.6, at: 2.2, dur: 0.8, color: '#ffd23b', cn: 'Zul\'jan dies', legend: 'the kill' }); k.show('zj', 0, 2.4);
@@ -939,10 +939,10 @@ function gdzCaSimOverlay(k, rt2sim, end, SIM, gone2) {
   const W = 52, life = 28;
   [[-W, 0], [W, 0]].forEach(([x, y]) => { k.ring({ x, y, r: 28, clip: true, fx: 'puddle', t0: rt2sim(0) + 2.6, dur: rt2sim(life) - rt2sim(0) - 2.6, color: '#c4f03c', fill: 'rgba(52,128,30,.5)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' });
     k.ring({ x, y, r: 48, clip: true, fx: 'puddle', t0: rt2sim(85) + 0.8, dur: rt2sim(gone2 || 85 + life) - rt2sim(85) - 0.8, color: '#c4f03c', fill: 'rgba(52,128,30,.46)', cn: 'Noxious Ground', legend: 'pools from Fangs: stay in the middle lane' }); });
-  // (the rolling axes, as on the real kills: each throw's 5 roll on from the end of its own scene for 3 minutes, then vanish; in the
+  // (the rolling axes, as on the real kills: each throw's 5 roll on from the end of its own scene for 3 minutes on Mythic (a minute on Heroic), then vanish; in the
   // layout's turn (simRot 90), like the scenes; anyone one touches takes a hit)
   k.rot(90); const ov = [];
-  SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + 180));
+  SIM.forEach((e, j) => { if (e.mech !== 'grinder') return; const S = rt2sim(e.at), nx = SIM[j + 1], a = nx ? rt2sim(nx.at - 0.001) : S + 14, b = Math.min(end, rt2sim(e.at + 3 + (SIM === GDZ_CA_SIM_H ? 60 : 180)));
     for (let n = 0; n < 5; n++) { const i = (e.o && e.o.more ? 5 : 0) + n, id = 'axo' + i, P = (t) => GDZ_CA_AXP[i](t - S - 3.4); for (let t = a; t <= b + 0.001; t += 1) { const q = P(t); k.obj(id, 'axe', t, q[0], q[1]); }
       k.show(id, a, b).ring({ on: id, r: 3, fx: 'zone', t0: a, dur: b - a, color: '#ff9628', cn: 'Axegrinder', legend: 'rolling axe: hurts if it touches you' }); ov.push({ a, b, P }); } });
   if (ov.length) { const pos = (i, t) => (t >= ov[i].a && t <= ov[i].b ? ov[i].P(t) : null), t0 = Math.min(...ov.map((x) => x.a)), t1 = Math.max(...ov.map((x) => x.b));
@@ -966,7 +966,7 @@ const GDZ_CA_FAIL = {
       ulHit(k, 'r5', 5.8, 'Noxious Ground'); ulHit(k, 'r5', 7.2, 'Noxious Ground'); k.oops('r5', 8.6);
       k.step(0.4).step(1.2).step(5.8); return k.done({ title: 'Mistake: standing in the pools', focus: { x: 0, y: 0, r: 30 }, badLabel: 'dies in the pool' }); } },
   gloomH: { name: 'A Gloombomb in the raid', what: 'A marked player doesn\'t run out: the blast hits everyone within 15 yards of them, and they all have Soul Fragments to pick up.',
-    do: ['Two players get Gloombomb.', 'One stays in the raid.', 'It explodes on everyone within 15 yards.'],
+    do: ['Three players get Gloombomb.', 'One stays in the raid.', 'It explodes on everyone within 15 yards.'],
     map: () => { const L = 8.5, k = GDZ_CA_M.home2(gdzKit('The Coiled Altar', L), ['r1']); k.at(0, 'r1', 3, 2);
       k.ring({ on: 'r1', r: 15, fx: 'burst', t0: 0.6, at: 6, dur: 6, color: '#da3df2', cn: 'Gloombomb', label: false, legend: 'explodes 15 yards around them' });
       k.call(1, 5.4, 'Stays in the raid', { on: 'r1', color: '#ff3b3b', ink: '#fff' });
@@ -1019,14 +1019,14 @@ const GDZ_CA_FAIL = {
       k.ring({ on: 'p0', r: 3.5, fx: 'debuff', t0: 0, dur: 4.4, color: '#b65cff', cn: 'Purple orb\'s ring', legend: 'must never touch another orb' });
       gdzFailBlast(k, 4.4, 'Wipe', -25, 0, GDZ_RAID, 'Venom Rupture ×20');
       k.step(0.3).step(3.6).step(4.4); k.pause(3.4, 'Stop. See that purple ring about to touch the green orb? That\'s a wipe.', { x: -25, y: -7, r: 7 }); return k.done({ title: 'Mistake: purple touches green', focus: { x: -14, y: -6, r: 18 }, badLabel: 'dead' }); } },
-  axe: { name: 'Only 3 in the soak', what: 'The axe needs at least 5 inside. With 3, it hits the whole raid instead (Execution).',
-    do: ['The axe target walks to the corner, but only 2 players join them.', 'The axe lands with 3 inside, not 5.', 'Execution: a big hit on the whole raid, and people die.'],
-    map: () => { const k = gdzKit('The Coiled Altar', 9), C = [36, -36]; k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k, ['r3', 'm5', 'm6']);
-      k.at(0, 'r3', 24, -14).at(0, ['m5', 'm6'], 14, -10, 2);
-      k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 0.5, at: 4.5, dur: 4.3, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak, 5 or more inside' });
-      k.hold(0.5, 'r3').at(3, 'r3', C[0], C[1]); ['m5', 'm6'].forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 3, 3); k.hold(0.5, id).at(3.6, id, C[0] + dx, C[1] + dy); });
-      gdzFailBlast(k, 4.6, 'Only 3: Execution', 14, -16, ['h2', 'r1', 'm2'], 'Execution');
-      k.step(0.5).step(4.5).step(4.8); k.pause(4.3, 'Stop. Only 3 in the circle. This is going to hit the whole raid.', { x: C[0], y: C[1], r: 11 }); return k.done({ title: 'Mistake: too few soakers', focus: { x: 16, y: -12, r: 24 }, badLabel: 'dies to Execution' }); } },
+  axe: { name: 'Too few in the soak', what: 'The axe needs at least 3 inside on Heroic and 5 on Mythic. With only 2, it hits the whole raid instead (Execution).',
+    do: ['The axe target walks to the corner, but only 1 player joins them.', 'The axe lands with 2 inside: too few.', 'Execution: a big hit on the whole raid, and people die.'],
+    map: () => { const k = gdzKit('The Coiled Altar', 9), C = [36, -36]; k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k, ['r3', 'm5']);
+      k.at(0, 'r3', 24, -14).at(0, 'm5', 14, -10);
+      k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 0.5, at: 4.5, dur: 4.3, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak: 3 or more inside on Heroic, 5 on Mythic' });
+      k.hold(0.5, 'r3').at(3, 'r3', C[0], C[1]); ['m5'].forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 2, 3); k.hold(0.5, id).at(3.6, id, C[0] + dx, C[1] + dy); });
+      gdzFailBlast(k, 4.6, 'Only 2: Execution', 14, -16, ['h2', 'r1', 'm2'], 'Execution');
+      k.step(0.5).step(4.5).step(4.8); k.pause(4.3, 'Stop. Only 2 in the circle. This is going to hit the whole raid.', { x: C[0], y: C[1], r: 11 }); return k.done({ title: 'Mistake: too few soakers', focus: { x: 16, y: -12, r: 24 }, badLabel: 'dies to Execution' }); } },
   dmH: { name: 'A ghost reaches its player', what: 'A ghost moves whenever its player looks away. If it reaches them, they\'re mind controlled again.',
     do: ['A freed player turns away from their ghost to run.', 'The ghost catches up and touches them.', 'Mind controlled again: back to the stack spot, with a fresh shield to break.'],
     map: () => { const k = gdzKit('The Coiled Altar', 8); k.boss('hm', 'Malacrass', 0, 0, 10);
@@ -1079,7 +1079,7 @@ GDZ['The Coiled Altar'] = {
   sum: 'Zul\'jan first, then Hex Lord Malacrass, then both at once. Orbs go to the front for the frontal, axes get soaked by five, and ghosts get led into the frontal too.',
   // (the Mythic guide credits its source by name (your call, Oct 20): a name only, never a link out)
   h: { simRot: 90, sim: GDZ_CA_SIM_H, simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, beats: GDZ_CA_BEATS_H, simOverlay: (k, r, e) => gdzCaSimOverlay(k, r, e, GDZ_CA_SIM_H, 103), simAdd: gdzCaSimAdd,
-    simAlways: ['Axegrinder: 5 axes roll around the room from 0:12 for about 3 minutes. Step out of their way: every touch hurts.', 'Orbs: never pop more than a handful at once, and pop them all before Zul\'jan dies.', 'From phase 3, Defilement ground stays down: stay out of it.'] },
+    simAlways: ['Axegrinder: 5 axes roll around the room from 0:12 for about a minute. Step out of their way: every touch hurts.', 'Orbs: never pop more than a handful at once, and pop them all before Zul\'jan dies.', 'From phase 3, Defilement ground stays down: stay out of it.'] },
   m: { simRot: 90, sim: GDZ_CA_SIM, simSkip: [{ from: 267, to: 352, label: "The cycle repeats", text: "The same cycle plays again: two sets of Dreadmarch, adds and Soul Sever, then Eternal Nightfall (5:32)." }, { from: 532, to: 611, label: "Phase 3, the same again", text: "The phase 3 cycle plays once more: Defilement and a tank swap (8:52), orbs by the circle marker, Eternal Nightfall (9:24), Dreadmarch (9:43) and the last adds, just kicked (9:49)." }], simDur: GDZ_CA_DUR, simSev: GDZ_CA_SEV, simBands: [{ t0: 15, t1: 100, n: 5 }, { t0: 100, t1: 195, n: 10 }, { t0: 195, t1: 280, n: 5 }], simAlways: ['Axegrinder: 5 axes roll around the room from 0:14, 10 from 1:39, and the last ones vanish around 4:40. Step out of their way: every touch hurts.', 'From phase 3, Defilement ground stays down: stay out of it.'], beats: GDZ_CA_BEATS, simOverlay: gdzCaSimOverlay, simAdd: gdzCaSimAdd, source: 'Tactyks\' Mythic Coiled Altar guide and first-kill video', sum: 'Zul\'jan, then Hex Lord Malacrass, then both. Purple orbs never touch another orb, axe soakers are planned, ghosts never touch, and bombs go on the adds. This follows a plan that killed it; your raid may mark the room its own way.' },
   facts: [['Phases', '3 + intermission'], ['Bloodlust', 'Intermission'], ['Healers', '4', 'h'], ['Healers', '5', 'm'], ['Hardest part', 'Orbs and ghosts', 'h'], ['Hardest part', 'Purple orbs', 'm']],
   phases: [
@@ -1109,11 +1109,11 @@ GDZ['The Coiled Altar'] = {
             k.step(1).step(3).step(3.4).step(11.8).step(13.6);
             k.pause(13.1, 'Freeze. This is the pile: every orb right in front of the boss, and the off-tank has taunted. 5 to 7 orbs is fine. More hurts.', { x: 0, y: -15, r: 9 }); return k.done({ title: 'Toxic Deluge and Sever', focus: { x: 0, y: -4, r: 17 }, tagLabel: 'Carrying an orb', hlLabel: 'orb carriers and tanks' });
           } },
-        { id: 'axe', fail: GDZ_CA_FAIL.axe, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 5 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 40 yards out.',
-          do: ['Axe target: *Walk to a corner*, away from the raid, as soon as the axe marks you.', 'Soak group: *Walk in with them*. At least *5* must be inside. On Heroic you can send the whole raid.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 40 yards*. The spot erupts 6 seconds later.', 'Everyone: *Gate into* a soak, never out of one. Orbs spawn on the path.'],
+        { id: 'axe', fail: GDZ_CA_FAIL.axe, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 3 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 50 yards out.',
+          do: ['Axe target: *Walk to a corner*, away from the raid, as soon as the axe marks you.', 'Soak group: *Walk in with them*. At least *3* must be inside. On Heroic you can send the whole raid.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 50 yards*. The spot erupts 6 seconds later.', 'Everyone: *Gate into* a soak, never out of one. Orbs spawn on the path.'],
           roles: ['', '', '', ''],
           note: 'Soaking leaves Guillotined (the next axe hits you 500% harder). Phase 1 usually has one axe, so the whole raid can share it; if a second comes, the players without the debuff take it.',
-          m: { note: null, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 5 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 40 yards out. Soaking marks you for 100 seconds, and the next axe would hit you 500% harder.',
+          m: { note: null, how: 1, name: 'Guillotine (Soak)', what: 'An axe drops on one player. At least 5 must share its 9-yard circle, or it hits the whole raid. 6 seconds after it lands, the spot erupts 50 yards out. Soaking marks you for 100 seconds, and the next axe would hit you 500% harder.',
             do: GDZ_CA_AXES[1].do.concat(GDZ_CA_AXES[2].do), roles: ['', 'd', '', 'td', 'tdh', ''],
             plan: ['Phase 1 has two axes, at about 0:43 and 2:08. Phase 3 has three more.', 'This guide uses the moon corner. Any corner works, as long as it\'s away from the raid.', 'Why the Hunters soak the first axe: a player who soaked can\'t be picked as the next target. So neither Hunter can get axe 2, and both can Turtle it.', 'Good soak 1 extras: Shadow Priest (Dispersion), a Warrior (walls work, the phase 1 axe is physical), a Rogue (Feint).', 'Phase 1 axes are physical, so Blessing of Protection on the target works. Phase 3 axes are magic: see Grim Guillotine.', 'Gate into a soak, never out of one: orbs spawn on the path right after.'] },
           map: (d, o) => {
@@ -1121,18 +1121,18 @@ GDZ['The Coiled Altar'] = {
             const k = gdzKit('The Coiled Altar', 13), C = [36, -36], grp = ['m5', 'm6', 'r6', 'h3'];
             k.boss('zj', 'Zul\'jan', 0, 0, 10); gdzCaRaid(k, ['r3'].concat(grp));
             k.at(0, 'r3', 24, -14).at(0, ['m5', 'm6'], 14, -10, 2).at(0, 'r6', 20, -8).at(0, 'h3', 12, -16);
-            k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 1, at: 6, dur: 5.8, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak, 5 or more inside', label: false });
+            k.ring({ on: 'r3', r: 9, fx: 'soak', t0: 1, at: 6, dur: 5.8, color: '#f24824', cn: 'Guillotine', legend: '9-yard soak, 3 or more inside', label: false });
             k.hold(1, 'r3').at(3.2, 'r3', C[0], C[1]); grp.forEach((id, i) => { const [dx, dy] = gdzSpot(i + 1, 5, 4); k.hold(1.2, id).at(4.6, id, C[0] + dx, C[1] + dy); });
-            k.ring({ x: C[0], y: C[1], r: 40, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 40 yards around the spot, 6 s after', label: false });
-            ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 5, 5); k.hold(6.3, id).at(11, id, -3 + dx, 3 + dy); });
+            k.ring({ x: C[0], y: C[1], r: 50, fx: 'burst', t0: 6, at: 12, dur: 6.6, color: '#9ff26d', cn: 'Widow\'s Kiss', legend: 'erupts 50 yards around the spot, 6 s after', label: false });
+            ['r3'].concat(grp).forEach((id, i) => { k.ok(id, 6); const [dx, dy] = gdzSpot(i, 5, 5); k.hold(6.3, id).at(11, id, -6 + dx, 6 + dy); }); /* (50 yards out: past the eruption's edge) */
             const a0 = Math.atan2(10 - C[1], -C[0]), LP = { x: C[0] + Math.cos(a0) * 10, y: C[1] + Math.sin(a0) * 10 }, CO = { color: '#ff8a6a', ink: '#1a0d08' }; /* (just outside the circle, toward the boss) */
-            k.call(1, 2.4, 'Axe: to a corner', { on: 'r3', ...CO }).call(2.4, 4.4, 'Soak: walk in', { ...LP, ...CO }).call(4.4, 6, 'Soak here · 5+', { ...LP, ...CO }).call(6, 11, 'Walk out 40 yards', { ...LP, color: '#9ff26d', ink: '#0d1a06' });
+            k.call(1, 2.4, 'Axe: to a corner', { on: 'r3', ...CO }).call(2.4, 4.4, 'Soak: walk in', { ...LP, ...CO }).call(4.4, 6, 'Soak here · 3+', { ...LP, ...CO }).call(6, 11, 'Walk out 50 yards', { ...LP, color: '#9ff26d', ink: '#0d1a06' });
             [['r3', 'Defensive'], ['m5', 'Wall'], ['m6', 'Feint'], ['r6', 'Dispersion']].forEach(([id, t]) => k.press(id, t, 4.6, 9));
             k.ring1(['r3']).step(1).step(2.4).step(4.6).step(11);
-            k.pause(5.6, 'Freeze. Count them: at least 5 in the circle, everyone else well away. In a moment the spot erupts 40 yards out.', { x: C[0], y: C[1], r: 11 }); return k.done({ title: 'Guillotine', focus: { x: 16, y: -14, r: 26 }, hlLabel: 'player with the axe', goodLabel: 'in the soak' });
+            k.pause(5.6, 'Freeze. Count them: at least 5 in the circle, everyone else well away. In a moment the spot erupts 50 yards out.', { x: C[0], y: C[1], r: 11 }); return k.done({ title: 'Guillotine', focus: { x: 16, y: -14, r: 26 }, hlLabel: 'player with the axe', goodLabel: 'in the soak' });
           } },
-        { id: 'grinder', fail: GDZ_CA_FAIL.grinder, how: 1, name: 'Axegrinder (Rolling Axes)', spell: 'Axegrinder', what: 'Zul\'jan throws 5 axes out from himself. Anyone they fly into is knocked back. Then they roll around the room for 3 minutes and hurt anyone they touch.',
-          do: ['Melee: Watch for his *Axegrinder* cast. The axes fly out from him and *knock you back*, so don\'t stand with a pool right behind you.', 'Everyone: The axes now *roll around the room* for 3 minutes, often through the middle. *Keep an eye on them*.', 'Everyone: The *dashed line* shows where an axe is heading. *Step aside early*, a few yards, not when it\'s on you.', 'Everyone: A touch *only hurts*. One won\'t kill you, but they add up. If you must pick, stand in a pool rather than an axe.'],
+        { id: 'grinder', fail: GDZ_CA_FAIL.grinder, how: 1, name: 'Axegrinder (Rolling Axes)', spell: 'Axegrinder', what: 'Zul\'jan throws 5 axes out from himself. Anyone they fly into is knocked back. Then they roll around the room for a minute and hurt anyone they touch.',
+          do: ['Melee: Watch for his *Axegrinder* cast. The axes fly out from him and *knock you back*, so don\'t stand with a pool right behind you.', 'Everyone: The axes now *roll around the room* for a minute, often through the middle. *Keep an eye on them*.', 'Everyone: The *dashed line* shows where an axe is heading. *Step aside early*, a few yards, not when it\'s on you.', 'Everyone: A touch *only hurts*. One won\'t kill you, but they add up. If you must pick, stand in a pool rather than an axe.'],
           roles: ['td', '', '', ''],
           m: { what: 'Zul\'jan throws 5 axes at 0:14 and 5 more at 1:39. Each set rolls for 3 minutes, so 10 are out at once until about 3:15.', do: ['Melee: He throws *5 axes* at 0:14 and *5 more* at 1:39. They fly out from him and *knock you back*.', 'Everyone: Each set *rolls for 3 minutes*. From 1:39 to about 3:15 there are *10 at once*.', 'Everyone: The *dashed line* shows where an axe is heading. *Step aside early*, also during soaks and orbs.', 'Everyone: A touch *only hurts*, but the hits add up. Ranged, *stay out of melee*.'] },
           map: (D, o) => GDZ_CA_M.grinder(false, o, D) },
@@ -1205,7 +1205,7 @@ GDZ['The Coiled Altar'] = {
           roles: ['td', 'd', '', 'td'],
           plan: ['One add is the ranged add and the other the melee add. One player marks the ranged add and calls where both are: marked means ranged kicks, unmarked means melee kicks.', 'Which is which, by where they spawn (the plan\'s rule): an add at the moon is always ranged; an add beside the stack spot is always melee.', 'Skull add: melee if the other is at the moon, ranged if the other is at the square or star. Star add: melee if the other is at the moon or skull, ranged if the other is at the square.', 'Every second set of adds is followed by Eternal Nightfall, so the adds must die before the next set but the shield comes first.', 'The last set before the intermission doesn\'t need bombs: their shields break at the transition. Just keep kicking.'],
           map: (d, o) => GDZ_CA_M.bombs(o) },
-        { id: 'gloomh', only: 'h', fail: GDZ_CA_FAIL.gloomH, how: 1, spell: 'Gloombomb', name: 'Gloombomb (Bombs)', what: 'Two players get a bomb that explodes 15 yards around them. Each of them, and anyone else it hits, must pick up 3 Soul Fragments.',
+        { id: 'gloomh', only: 'h', fail: GDZ_CA_FAIL.gloomH, how: 1, spell: 'Gloombomb', name: 'Gloombomb (Bombs)', what: 'Three players get a bomb that explodes 15 yards around them. Each of them, and anyone else it hits, must pick up 3 Soul Fragments.',
           do: ['Marked: *Run 15 yards from everyone* right away and *press a defensive*.', 'Marked: When it goes off, *pick up your 3 Soul Fragments* around you. Everyone else: *stay away* from marked players.'],
           roles: ['', ''],
           map: () => GDZ_CA_M.gloomH() },
@@ -1257,11 +1257,11 @@ GDZ['The Coiled Altar'] = {
           roles: ['dth', 'dh', 'dth', 't'],
           plan: ['Gloombomb with no adds up: just run to the edge of the room, away from the raid. Speed boosts help.', 'The next orb sets are built around the circle and diamond markers: the circle side gets its frontal first (two purples by the circle).', 'Damage: kill Zul\'jan before his pool cast, about a minute after the second shield, because every orb blows up then. Malacrass at 7 or 8% when Zul\'jan dies is fine. Don\'t over-damage Malacrass.', 'The last frontals hit 0 or 1 orbs. The last adds just need kicks.', 'Axes in phase 3: the first at the star marker, the second and third at the square.'],
           map: () => GDZ_CA_M.diamond() },
-        { id: 'grim', fail: GDZ_CA_FAIL.axe, how: 1, spell: 'Grim Guillotine', name: 'Grim Guillotine (Soak)', what: 'Phase 1\'s axe again, now shadow damage. At least 5 share its 9-yard circle. Then the spot erupts 40 yards out.',
-          do: ['Axe target: *Walk to a corner*, away from the raid and the orbs.', 'Soak group: *Walk in with them*. At least *5* must be inside.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 40 yards*.', 'Everyone: *Gate into* a soak, never out of one.'],
+        { id: 'grim', fail: GDZ_CA_FAIL.axe, how: 1, spell: 'Grim Guillotine', name: 'Grim Guillotine (Soak)', what: 'Phase 1\'s axe again, now shadow damage. At least 3 share its 9-yard circle. Then the spot erupts 50 yards out.',
+          do: ['Axe target: *Walk to a corner*, away from the raid and the orbs.', 'Soak group: *Walk in with them*. At least *3* must be inside.', 'Everyone in it: *Press a defensive* as it lands, then *walk out 50 yards*.', 'Everyone: *Gate into* a soak, never out of one.'],
           roles: ['', '', '', ''],
           m: { name: 'Grim Guillotine (Soak)', what: 'Three magic axes in phase 3. At least 5 share each 9-yard circle. Soaking marks you for 120 seconds, so axe 2 needs new players or immunities.',
-            do: ['Axe 1 target: *Walk to the star marker*. Healers put *big externals* on you.', 'Soak 1: *4 players who never soaked* walk in with them. *Press a defensive*, then *walk out 40 yards*.', 'Axe 2 target: *Walk to the square marker*. Big externals again.', 'Soak 2: Players who already soaked go in with *Cloak*, *Bubble* or *Spellwarding*. At least 5 in all, then walk out.', 'Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity. Four wipes, so *send six*.'],
+            do: ['Axe 1 target: *Walk to the star marker*. Healers put *big externals* on you.', 'Soak 1: *4 players who never soaked* walk in with them. *Press a defensive*, then *walk out 50 yards*.', 'Axe 2 target: *Walk to the square marker*. Big externals again.', 'Soak 2: Players who already soaked go in with *Cloak*, *Bubble* or *Spellwarding*. At least 5 in all, then walk out.', 'Axe 3 target: *The square* again. Axe 1\'s soakers are *free again* by now.', 'Soak 3: *Send everyone free* of the debuff, plus any immunity. Four wipes, so *send six*.'],
             roles: ['', 'd', '', 'dh', '', ''],
             plan: ['These axes are magic: a Rogue\'s Cloak, a Paladin\'s Bubble or Blessing of Spellwarding lets a player who already soaked take one. Blessing of Protection doesn\'t work here.', 'Big externals on every axe target.', 'Gate into a soak, never out of one: orbs spawn on the path.'] },
           map: (d) => { if (d === 'm') return GDZ_CA_M.grim(); /* (Heroic: phase 1's soak) */ const ax = GDZ['The Coiled Altar'].phases.flatMap((p) => p.mechs || []).find((x) => x.id === 'axe'), mp = ax.map('h'); if (mp && mp.frames) mp.title = 'Grim Guillotine'; return mp; } },
@@ -1271,14 +1271,14 @@ GDZ['The Coiled Altar'] = {
           map: () => GDZ_CA_M.defile() },
       ],
       tiles: [
-        { name: 'Soulbound (Linked Bosses)', do: 'When one boss dies, the other gets 500% stronger. Keep their health close and kill them at the same time.', m: { do: 'When one dies the other gets 500% stronger. Kill Zul\'jan first, before his pool cast, with Malacrass around 7 to 8%.' } },
+        { name: 'Soulbound (Linked Bosses)', do: 'When one boss dies, the other gets 100% stronger every 5 seconds, up to 500%. Keep their health close and kill them at the same time.', m: { do: 'When one dies the other gets 100% stronger every 2 seconds, up to 500%. Kill Zul\'jan first, before his pool cast, with Malacrass around 7 to 8%.' } },
         { only: 'h', name: 'Blighted Sever (Frontal)', do: 'The frontal now hits orbs and ghosts both, and anyone it hits gets Gravebound: pick up your Soul Fragments.' },
       ] },
   ],
   roles: {
     t: ['Swap on every frontal: the other tank taunts just before Sever or Soul Sever.', 'Aim Sever through the orb pile and Soul Sever through the ghosts.', 'Phase 3: Corrupted Toxin also forces swaps.'],
     h: ['Dispel Venomfang fast (Poison Cleansing Totem does it on its own).', 'Each popped orb hits the raid: be ready when the frontal lands.', 'Going into phase 2 the orb stacks are high: stack raid cooldowns there.', 'Intermission: every fragment stop hits the raid, so keep cooldowns ready.'],
-    d: ['Carry orbs to the pile in front of the boss (5 seconds each).', 'Soak the axe when it\'s your group\'s turn, then run 40 yards.', 'Break Dreadmarch shields and the Eternal Nightfall shield fast.', 'Bloodlust in the intermission: Zul\'jan takes double damage.', 'Phase 3: kill both bosses together.'],
+    d: ['Carry orbs to the pile in front of the boss (5 seconds each).', 'Soak the axe when it\'s your group\'s turn, then run 50 yards.', 'Break Dreadmarch shields and the Eternal Nightfall shield fast.', 'Bloodlust in the intermission: Zul\'jan takes double damage.', 'Phase 3: kill both bosses together.'],
   },
 };
 GDZ['The Coiled Altar'].m.roles = {
@@ -1411,7 +1411,7 @@ const UX_M = {
     if (fail) { gdzFailBlast(k, 5.4, 'Out of reach: the bites hit everyone', -16, 30, ['h1', 'r5'], 'Mother\'s Wrath'); k.step(0.2).step(0.9).step(5.2);
       k.pause(6, 'Her tank didn\'t get back into the red circle in time, so every bite went out to the whole raid instead.', { x: RC[0], y: RC[1], r: 8 });
       return k.done({ title: 'Mistake: her tank out of reach', focus: { x: -4, y: 28, r: 24 }, badLabel: 'dies to the bites' }); }
-    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower (Blessing of Freedom helps); Stone Venom stacks' });
+    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower on Mythic, 45% on Heroic (Blessing of Freedom helps); Stone Venom stacks' });
     k.call(8.6, 10.6, 'Swap at her waves cast', { on: 't2', color: '#5aa0ff', ink: '#fff' }); /* (the tanks swap during her next Caustic Waves cast, never two Wraths in a row) */
     k.ring1(['t1', 't2']).step(0.2).step(0.9).step(4.8).step(8.6);
     k.pause(4.9, 'Knocked back, her tank walks straight back into the red circle in front of her and takes the bites with a big defensive.', { x: RC[0], y: RC[1], r: 8 });
@@ -1466,7 +1466,7 @@ const UX_M = {
     k.call(2.4, 5, 'Heart open: everything on it', { x: 0, y: 30, color: '#ff8a5a', ink: '#1a0a04' });
     [2.6, 6.6, 10.6].forEach((t) => k.ring({ x: 0, y: 0, r: 70, fx: 'burst', t0: t - 0.2, at: t, dur: 0.5, color: '#9b6bff', cn: 'Rage of the Shackled', legend: 'raid damage every 4 seconds' }));
     const D = [[[-20, 26], [18, 8], [-6, -10]], [[10, 30], [-24, 6], [22, -12]], [[-12, 18], [26, 22], [2, -24]]], NEAR = new Set();
-    D.forEach((set, w) => set.forEach((p, j) => { const at = 4.5 + w * 3.4; k.ring({ x: p[0], y: p[1], r: 7, fx: 'burst', t0: at - 1.8, at, dur: 2.4, color: '#c8a36a', cn: 'Falling Debris', legend: 'Falling Debris: 7 yards, one-shots anyone, tanks too' });
+    D.forEach((set, w) => set.forEach((p, j) => { const at = 4.5 + w * 3.4; k.ring({ x: p[0], y: p[1], r: 7, fx: 'burst', t0: at - 1.8, at, dur: 2.4, color: '#c8a36a', cn: 'Falling Debris', legend: 'Falling Debris: 7 yards, a big hit (step out)' });
       Object.entries(UX_HOME).forEach(([id, q]) => { const cur = k.posAt(id, at - 1.8) || q; if (Math.hypot(cur[0] - p[0], cur[1] - p[1]) < 8.5 && !(fail && id === 'r5' && w === 0)) { const v = [cur[0] - p[0], cur[1] - p[1]], dd = Math.hypot(v[0], v[1]) || 1, e = [p[0] + v[0] / dd * 9.5, p[1] + v[1] / dd * 9.5]; if (!NEAR.has(id + w)) { NEAR.add(id + w); k.hold(at - 1.8, id).at(at - 0.6, id, e[0], e[1]); } } }); }));
     if (fail) { const p = D[0][2]; k.hold(2, 'r5').at(3.6, 'r5', p[0] + 1, p[1] + 1); k.oops('r5', 4.6); k.call(4.6, 6.4, 'Under the debris: dead', { on: 'r5', color: '#ff3b3b', ink: '#fff' }); k.step(0.2).step(2.4).step(4.5);
       k.pause(4.9, 'This ranged didn\'t look down: Falling Debris one-shots anyone inside its 7 yards.', { x: p[0], y: p[1], r: 9 });
@@ -1509,24 +1509,24 @@ Object.assign(UX_M, {
     k.pause(9.6, 'The Warden Shadow Molts to the eggs and starts Writhing Gestation: cleave those eggs first, and stay out of their 7 yards while it lives.', { x: W[0], y: W[1], r: 12 });
     return k.done({ title: 'Doomscale Warden: cleave the eggs, kick Malice', focus: { x: 90, y: 42, r: 26 }, full: { x: 88, y: 30, r: 40 }, hlLabel: 'its tank and the kickers' });
   },
-  // Grasping Fangs: the Warden bites a few players (three a side on Heroic, six on Mythic) with tethers that slow them; snapping one (moving
+  // Grasping Fangs: each Warden bites a few players (two a side on Heroic since the Nov 6 hotfix, three a side on Mythic: six in all) with tethers that slow them; snapping one (moving
   // away) gives Blight Vein, damage over time. Heroic and up it lands on the whole raid and stacks: snap two at a time and let it fall off. Mythic: one
   // solo snap (a mobile ranged), then the other five together at the edge of their tethers, stepping out on the count under stacked raid
   // cooldowns. (fail: everyone snaps at once (Heroic), or the five snap one by one (Mythic))
   fangs(fail, d) {
     const myth = d !== 'h', L = 15, k = gdzKit(UX, L), W = [80, 56]; k.art(0, UL_FULL); k.add('wd', 'Doomscale Warden', 0, W[0], W[1]); const S = uxHalf(k, 0, null, W);
-    k.cast('wd', 'Grasping Fangs', 0.4, 1.6); const TG = myth ? ['r1', 'r3', 'r5', 'r7', 'h1', 'h3'] : ['r1', 'r5', 'h3'];
-    const SNAP = myth ? (fail ? [4, 8.6, 9.4, 10.4, 11.2, 12] : [4, 9.6, 9.6, 9.6, 9.6, 9.6]) : (fail ? [4.4, 4.4, 4.4] : [4.4, 4.4, 9.6]);
+    k.cast('wd', 'Grasping Fangs', 0.4, 1.6); const TG = myth ? ['r1', 'r5', 'h3'] : ['r1', 'h3']; /* (this ledge's tethers: three on Mythic, two on Heroic since Nov 6) */
+    const SNAP = myth ? (fail ? [4, 8.6, 11.2] : [4, 9.6, 9.6]) : (fail ? [4.4, 4.4] : [4.4, 9.6]);
     TG.forEach((id, i) => { const q = S[id], v = [q[0] - W[0], q[1] - W[1]], dd = Math.hypot(v[0], v[1]) || 1, ed = [W[0] + v[0] / dd * 20, W[1] + v[1] / dd * 20], out = [W[0] + v[0] / dd * 25, W[1] + v[1] / dd * 25];
       k.link({ from: 'wd', to: id, t0: 1.6, t1: SNAP[i], color: '#ff5a4f', legend: 'Grasping Fangs: a tether that breaks with distance; snapping it gives Blight Vein' });
       k.hold(1.6, id).at(Math.min(SNAP[i] - 1, 3.6), id, ed[0], ed[1]).hold(SNAP[i] - 0.4, id).at(SNAP[i], id, out[0], out[1]);
       k.ring({ x: 0, y: 0, r: 200, fx: 'burst', t0: SNAP[i] - 0.2, at: SNAP[i] + i * 0.01, dur: 0.5, color: '#ff5a4f', cn: 'Blight Vein', legend: 'Blight Vein: damage over time on everyone (Heroic and up), stacking with every snap' }); });
     if (myth) k.call(8.4, 11, 'AMZ, Rally: snap together', { x: W[0] + 10, y: W[1] + 14, color: '#45d16b', ink: '#04140a' }); else k.call(8.8, 10.6, 'Next pair', { x: W[0] + 10, y: W[1] + 14, color: '#ff5a4f', ink: '#fff' });
-    if (fail) { gdzFailBlast(k, myth ? 12.2 : 4.8, myth ? 'Late snaps: extra Blight Vein ticks' : 'Three snaps at once: stacked damage over time', 92, 72, ['h1', 'r7'], 'Blight Vein'); k.step(0.4).step(1.6).step(myth ? 9.6 : 4.4);
-      k.pause(myth ? 12.6 : 5.2, myth ? 'The five snapped one after another instead of together, so the raid ate extra ticks of every Blight Vein.' : 'All three snapped at once: three stacks of Blight Vein on everyone at the same moment.', { x: W[0], y: W[1], r: 22 });
+    if (fail) { gdzFailBlast(k, myth ? 12.2 : 4.8, myth ? 'Late snaps: extra Blight Vein ticks' : 'All snap at once: stacked damage over time', 92, 72, ['h1', 'r7'], 'Blight Vein'); k.step(0.4).step(1.6).step(myth ? 9.6 : 4.4);
+      k.pause(myth ? 12.6 : 5.2, myth ? 'The five snapped one after another instead of together, so the raid ate extra ticks of every Blight Vein.' : 'All four snapped at once (two on each ledge): four stacks of Blight Vein on everyone at the same moment.', { x: W[0], y: W[1], r: 22 });
       return k.done({ title: myth ? 'Mistake: the five snap one by one' : 'Mistake: everyone snaps at once', focus: { x: 88, y: 50, r: 28 }, full: { x: 88, y: 40, r: 36 }, badLabel: 'dies to the stacked damage over time' }); }
     k.ring1(TG).step(0.4).step(1.6).step(myth ? 4 : 4.4).step(9.6);
-    k.pause(3.8, myth ? 'One mobile ranged snaps alone first. The other five walk to the edge of their tethers and step out together on the count.' : 'Two snap first and the raid heals through their Blight Vein; the last one snaps once it has fallen off.', { x: W[0], y: W[1], r: 22 });
+    k.pause(3.8, myth ? 'One mobile ranged snaps alone first. The other five, on both ledges, walk to the edge of their tethers and step out together on the count.' : 'One on each ledge snaps first and the raid heals through their Blight Vein; the other two snap once it has fallen off.', { x: W[0], y: W[1], r: 22 });
     return k.done({ title: myth ? 'Grasping Fangs: one, then the five together' : 'Grasping Fangs: two at a time', focus: { x: 88, y: 50, r: 28 }, full: { x: 88, y: 40, r: 36 }, hlLabel: 'the tethered players' });
   },
   // The Doomscale Eggs: with the Warden dead, carry every small egg to the cauldron in the pit (they hatch into weak Rawlings: kill them),
@@ -1609,7 +1609,7 @@ Object.assign(UX_M, {
     k.hold(0.9, 't1').at(1.4, 't1', KB[0] + 2, KB[1] - 2); k.call(0.9, 2.4, 'Knocked back', { on: 't1', color: '#ff8a8a', ink: '#200a0a' });
     k.hold(2, 't1').at(4.8, 't1', RC[0], RC[1]); k.call(3.6, 5.2, 'Big defensive', { on: 't1', color: '#5aa0ff', ink: '#fff' });
     for (let i = 0; i < 5; i++) k.ring({ on: 't1', r: 2.6, fx: 'burst', t0: 5.2 + i * 0.6 - 0.2, at: 5.2 + i * 0.6, dur: 0.4, color: '#ff4a4a', cn: 'Bite', legend: 'a bite: Stone Venom and Hobbled' });
-    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower (Blessing of Freedom helps); Stone Venom stacks' });
+    k.ring({ on: 't1', r: 2.2, fx: 'debuff', t0: 5.4, dur: L - 5.4, color: '#c8a36a', cn: 'Hobbled', legend: 'Hobbled: 55% slower on Mythic, 45% on Heroic (Blessing of Freedom helps); Stone Venom stacks' });
     k.hold(8.4, 't1').at(10.8, 't1', T0[0], T0[1]); k.call(8.6, 10.6, 'Swap at her waves cast', { on: 't2', color: '#5aa0ff', ink: '#fff' });
     k.ring1(['t1', 't2']).step(0.2).step(0.9).step(4.8).step(8.6);
     k.pause(4.9, 'The same Mother\'s Wrath on the broken platform: knocked back, her tank walks straight back into the red circle in front of her and takes the bites.', { x: RC[0], y: RC[1], r: 8 });
@@ -1629,22 +1629,22 @@ Object.assign(UX_M, {
     k.pause(4.6, 'Everyone shifts one quarter counter-clockwise: melee onto the next quarter, healers and ranged onto the one after.', { x: 0, y: 6, r: 34 });
     return k.done({ title: 'Circling Prey: one quarter counter-clockwise', focus: { x: 0, y: 6, r: 40 }, art: UL_BROKEN });
   },
-  // Serpent's Bite: a melee, a ranged and a healer each get a 7-yard circle and a 15-second venom; when it ends they turn to stone and die
+  // Serpent's Bite: two players (a melee and a ranged; three, with a healer, before the Nov 6 hotfix) each get a 7-yard circle and a 15-second venom; when it ends they turn to stone and die
   // (Heroic and up the corpse also hurts the whole raid every second). Players inside the circle leech the venom away, then their Volatile
   // Purge erupts 5 seconds later: spread out at once. Mythic: the fewest soakers that clear it (target plus four, assigned), a big defensive
   // for the 2-million hit as it ends, and the waves each soaker then sends must go away from the raid. (fail: a circle left alone)
   bite(fail, d, o) {
     o = o || {}; const myth = d !== 'h', q = o.q || 'NE', n = UX_NEXT[q], TE = 11.4, L = TE + 7.4, k = gdzKit(UX, L); k.art(0, UL_BROKEN); uxB3(k, 0, q); uxP3(k, 0, q); /* (TE: when the venom ends) */
     k.cast('ul', 'Serpent\'s Bite', 0.2, 1.4);
-    // (Mythic: the targets stack 12 yards in from her, toward the middle; the three soakers stand inside all three circles at once)
+    // (Mythic: the targets stack 12 yards in from her, toward the middle; the three soakers stand inside both circles at once)
     const B = UL_PB[q], bd = Math.hypot(B[0], B[1]) || 1, ST = [B[0] - B[0] / bd * 12, B[1] - B[1] / bd * 12];
-    const RED = myth ? [['m3', []], ['h2', []], ['r6', []]] : [['m3', ['t2', 'm1', 'm2', 'm5', 'm6', 'm7']], ['h2', ['h1', 'h3', 'h4', 'r1', 'r2']], ['r6', ['r3', 'r4', 'r5', 'r7']]], SO = ['r3', 'r4', 'r5'];
+    const RED = myth ? [['m3', []], ['r6', []]] : [['m3', ['t2', 'm1', 'm2', 'm5', 'm6', 'm7']], ['r6', ['h1', 'h3', 'h4', 'r3', 'r4', 'r5', 'r7']]], SO = ['r3', 'r4', 'r5'], LASTR = RED.length - 1;
     RED.forEach(([id], j) => { k.ring({ on: id, r: 7, fx: 'soak', t0: 1.4, at: TE, dur: TE - 1.2, color: '#ff4a4a', cn: 'Serpent\'s Bite', legend: 'Serpent\'s Bite: stand in it to leech the venom before it ends' });
-      if (myth && !(fail && j === 2)) { const g = gdzSpot(j, 3, 2.6); k.hold(1.6, id).at(7.6, id, ST[0] + g[0], ST[1] + g[1]); } });
+      if (myth && !(fail && j === LASTR)) { const g = gdzSpot(j, RED.length, 2.6); k.hold(1.6, id).at(7.6, id, ST[0] + g[0], ST[1] + g[1]); } });
     if (myth) { SO.forEach((s, i) => { const g = gdzSpot(i, 3, 2.6); k.hold(1.8, s).at(8, s, ST[0] + g[0] + 0.8, ST[1] + g[1] - 0.8); }); k.call(TE - 1.2, TE + 0.4, 'Big defensive', { on: 'r3', color: '#5aa0ff', ink: '#fff' }); }
-    else RED.forEach(([id, so], j) => { if (fail && j === 2) return; const c = k.posAt(id, 1.4); so.forEach((s, i) => { const g = gdzSpot(i + 1, so.length + 1, 4.4); k.hold(1.6, s).at(4, s, c[0] + g[0], c[1] + g[1]); }); });
+    else RED.forEach(([id, so], j) => { if (fail && j === LASTR) return; const c = k.posAt(id, 1.4); so.forEach((s, i) => { const g = gdzSpot(i + 1, so.length + 1, 4.4); k.hold(1.6, s).at(4, s, c[0] + g[0], c[1] + g[1]); }); });
     // (the purge: everyone who soaked spreads out; on Mythic each sends a wave out, so they walk toward the venom and aim it away from the raid)
-    const PS = myth ? SO : RED.filter((_, j) => !(fail && j === 2)).flatMap(([id, so]) => so.concat(id));
+    const PS = myth ? SO : RED.filter((_, j) => !(fail && j === LASTR)).flatMap(([id, so]) => so.concat(id));
     // (where each soaker spreads to: the nearest open spot on the broken stone (GDZ_FLOOR) that keeps 5 or more yards from everyone else,
     // the ones who didn't soak where they stand and the soakers already placed)
     const FM = GDZ_FLOOR[UX] && GDZ_FLOOR[UX].art[UL_BROKEN], onS = (x, y) => !FM || [-1.6, 0, 1.6].every((dy) => (FM[Math.round(y + dy)] || []).some(([a, b]) => x - 1.6 >= a && x + 1.6 <= b));
@@ -1665,11 +1665,11 @@ Object.assign(UX_M, {
       if (myth) { const a3 = aim3(s, g); void a; [0, 120, 240].forEach((dd) => { k.arrow({ g: s, t0: TE, t1: TE + 5, ang: (a3 + dd) * Math.PI / 180, len: 12, color: '#f2d04c', thin: 1, turn: 1 }); k.wave({ x: g[0], y: g[1], deg: a3 + dd, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], t0: TE + 5, t1: TE + 6.8, color: '#9be13a', legend: 'Mythic: three waves from each soaker, spread apart' }); }); } });
     k.call(TE + 0.2, TE + 2.6, 'Spread!', { x: UL_PC[n][0], y: UL_PC[n][1] + 12, color: '#ff8a3b', ink: '#1a0a04' });
     if (fail) { k.oops('r6', TE + 0.2); k.call(TE + 0.1, TE + 2.1, 'Turned to stone', { on: 'r6', color: '#ff3b3b', ink: '#fff' }); gdzFailBlast(k, TE + 1.2, 'Calcified Corpse: damage on everyone', 0, -2, ['h4'], 'Calcified Corpse'); k.step(0.2).step(1.4).step(TE);
-      k.pause(TE + 1.4, myth ? 'This ranged didn\'t stack with the other two targets, so no soaker stood in their circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.' : 'Nobody stood in this ranged\'s circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.', { on: 'r6', r: 9 });
+      k.pause(TE + 1.4, myth ? 'This ranged didn\'t stack with the other target, so no soaker stood in their circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.' : 'Nobody stood in this ranged\'s circle. The venom ran out: they turned to stone, and the corpse hurts the whole raid every second.', { on: 'r6', r: 9 });
       return k.done({ title: 'Mistake: a red circle left alone', focus: { x: -6, y: 18, r: 34 }, art: UL_BROKEN, badLabel: 'turned to stone' }); }
     k.ring1(myth ? RED.map(([id]) => id).concat(SO) : RED.map(([id]) => id)).step(0.2).step(1.4).step(myth ? 8 : 4).step(TE + 0.2);
-    k.pause(myth ? 8.4 : 4.4, myth ? 'The three targets stack on one spot and the three assigned soakers stand on it: inside all three circles at once.' : 'Each group soaks its own red circle: melee on her quarter, healers and ranged on the next.', { x: myth ? ST[0] : -6, y: myth ? ST[1] : 18, r: myth ? 12 : 30 });
-    return k.done({ title: myth ? 'Serpent\'s Bite: three soakers, stacked' : 'Serpent\'s Bite: soak, then spread', focus: { x: -6, y: 18, r: 34 }, art: UL_BROKEN, hlLabel: myth ? 'the targets and their soakers' : 'the three red circles' });
+    k.pause(myth ? 8.4 : 4.4, myth ? 'The two targets stack on one spot and the three assigned soakers stand on it: inside both circles at once.' : 'Each group soaks its own red circle: melee on her quarter, ranged and healers on the next.', { x: myth ? ST[0] : -6, y: myth ? ST[1] : 18, r: myth ? 12 : 30 });
+    return k.done({ title: myth ? 'Serpent\'s Bite: three soakers, stacked' : 'Serpent\'s Bite: soak, then spread', focus: { x: -6, y: 18, r: 34 }, art: UL_BROKEN, hlLabel: myth ? 'the targets and their soakers' : 'the two red circles' });
   },
   // Call of the Serpent in phase three. Heroic: a Blightscale Clutch lands on every quarter: break each (weak Rawlings) or it hatches a
   // Blightscale Shrieker (kick Vicious Echoes, a raid stun; its Acidic Expulsion stacks damage over time on the raid). Mythic: Slithering Clutches crawl toward
@@ -1729,7 +1729,7 @@ const UX_FAIL = {
   wretch: { name: 'Outside the Wretch\'s bubble', what: 'An egg carrier stays out by their zone: Fester Burst hits everyone farther than 10 yards.', do: ['The Wretch lands.', 'The off tank soaks its venom.', 'Outside the bubble: hit.'], map: (d) => UX_M.wretch(true, d) },
   heart: { name: 'Under the falling debris', what: 'A player doesn\'t look down: Falling Debris one-shots anyone inside its 7 yards.', do: ['The heart opens.', 'Raid damage.', 'Under the debris: dead.'], map: (d) => UX_M.heart(true, d) },
   warden: { name: 'A Malice not kicked', what: 'Nobody kicks the Warden\'s Malice: a big hit on everyone every second for 6 seconds.', do: ['The half gates over.', 'The Warden gestates eggs.', 'Malice goes off.'], map: (d) => UX_M.warden(true, d) },
-  fangsH: { name: 'Everyone snaps at once', what: 'All three tethers snap together: three stacks of Blight Vein on everyone at the same moment.', do: ['Fangs on three players.', 'They walk out.', 'All snap at once.'], map: () => UX_M.fangs(true, 'h') },
+  fangsH: { name: 'Everyone snaps at once', what: 'All four tethers snap together: four stacks of Blight Vein on everyone at the same moment.', do: ['Fangs on four players.', 'They walk out.', 'All snap at once.'], map: () => UX_M.fangs(true, 'h') },
   fangsM: { name: 'The five snap one by one', what: 'After the solo snap, the five snap one after another instead of together: extra ticks of every Blight Vein.', do: ['Fangs on six players.', 'One solo snap.', 'The five snap late.'], map: () => UX_M.fangs(true, 'm') },
   doomscales: { name: 'The Doomscale Egg too late', what: 'The big egg stays out too long: its Hatching Doom ends and the Ravenous Doomscale\'s Dread Roar stuns everyone for 20 seconds.', do: ['Small eggs in.', 'The big egg waits.', 'Dread Roar: a wipe.'], map: (d) => UX_M.doomscales(true, d) },
   intcoils: { name: 'One group takes two in a row', what: 'Group one goes for the second coil too: Soul Constrictor means they don\'t count, so it hits almost unsoaked.', do: ['Coils round the room.', 'Group one again.', 'An unsoaked hit.'], map: (d) => UX_M.intcoils(true, d) },
@@ -1802,7 +1802,7 @@ GDZ['Ula\'tek'] = {
     source: 'Tactyks\' Mythic Ula\'tek guide and first-kill video', sum: 'Egg carriers\' 3-yard rings must never touch. A Wretch makes a bubble to stand in, four Doomscales need kicks, the intermission takes three soak groups, and the last phase needs grips. Easier since the Oct 6 tuning than in the video.',
     roles: {
       t: ['Phase 1: the off tank soaks the spectral venom (waves off the platform), then takes the tail and the Wretch; the boss tank runs back in after Mother\'s Wrath. Never two Mother\'s Wraths in a row.', 'She dives at 1:17: her tank waits at the bubbles.', 'Phase 2: pull the Warden across the line so it teleports to the eggs; grab both Doomscales and bring them back.', 'Phase 3: the two Death Knights grip the clutches quarter by quarter and Gorefiend\'s Grasp them; tanks soak two of the three red sets.'],
-      h: ['Phase 1: raid cooldowns just before the first coil slam; the brown circles in the heart burn kill in one hit.', 'Phase 2: the five-player tether break needs Anti-Magic Zone and Rallying Cry, plus Spirit Link or Darkness.', 'Intermission: personals and potions around 5:50 for the back-to-back slams.', 'Phase 3: the three red soakers take about 2 million each as it ends, then big damage over time: externals on them.'],
+      h: ['Phase 1: raid cooldowns just before the first coil slam; step out of the brown circles in the heart burn (they hit hard).', 'Phase 2: the five-player tether break needs Anti-Magic Zone and Rallying Cry, plus Spirit Link or Darkness.', 'Intermission: personals and potions around 5:50 for the back-to-back slams.', 'Phase 3: the three red soakers take about 2 million each as it ends, then big damage over time: externals on them.'],
       d: ['Phase 1: 8 carriers in their zones, rings never touch; the egg-damage players break the shells. An immunity won\'t save your egg from a wave.', 'Phase 1: the whole raid in the bubble on the first coil circle, carriers rings apart, then into the second circle.', 'Phase 2: one mobile ranged breaks their tether alone, then five break together 4 seconds later.', 'Phase 3: the assigned soakers stand on the stacked reds, then aim their waves away from the raid.'],
     } },
   facts: [['Phases', '3 + intermission'], ['Healers', '4', 'h'], ['Healers', '4', 'm'], ['Fight length', 'About 9:45, on a set clock'], ['Bloodlust', 'First heart burn', 'h'], ['Bloodlust', 'Second heart burn', 'm'], ['Hardest part', 'Eggs and waves', 'h'], ['Hardest part', 'Phase 1', 'm']],
@@ -1821,7 +1821,7 @@ GDZ['Ula\'tek'] = {
           do: ['The Wretch lands where the Toxic Womb was.', 'Off tank: stand in the spectral venom with a defensive, and aim its waves off the platform.', 'Fester Burst: everyone inside its 10 yards, carriers too, rings apart.', 'Kill it before its third bubble.'],
           plan: ['The tail comes up on the same side as the spectral image, so you know early where the soaks will be.', 'Its enrage only adds tank damage: kill it between its second and third bubble. Kill the old Wretch as the new one lands.', 'First bubble: on the first coil circle, whole raid in it. Second bubble: after the second eggs, in the middle by her.'],
           map: (d, o) => UX_M.wretch(false, d, o) },
-        { id: 'coils', fail: UX_FAIL.coils, name: 'Spectral Coils (Two groups, two circles)', spell: 'Spectral Coils', what: 'Two coils rise at the edge by her tail and slam one after the other, about 3 seconds apart. Everyone within 10 yards of a slam shares it. Soul Constrictor stops a soaker helping with the next one for 5 seconds, so two groups.',
+        { id: 'coils', fail: UX_FAIL.coils, name: 'Spectral Coils (Two groups, two circles)', spell: 'Spectral Coils', what: 'Two coils rise at the edge by her tail and slam one after the other, about 3 seconds apart. Everyone within 10 yards of a slam shares it. Soul Constrictor stops a soaker helping with the next one for 6 seconds, so two groups.',
           do: ['The tail comes up at the edge; its tank stays on it.', 'Facing the tail, the right-hand coil slams first: group one in it.', 'It slams: carried eggs break into weak Rawlings. Kill them.', 'Group two takes the second slam.'],
           plan: ['Raid cooldowns right before the first slam: Spirit Link, Darkness, Anti-Magic Zone.', 'Never take a wave to reach a soak: take the other one instead.'],
           m: { what: 'First set: the Wretch\'s bubble goes up on the first circle and the carriers take that slam inside it; group two takes the second. Second set: the carriers split between the circles, and right after both slams the bubble goes up between them.',
@@ -1833,13 +1833,13 @@ GDZ['Ula\'tek'] = {
             do: ['The caller says which half she starts on. The lane steps to the other half together, rings apart.', 'Her first half rolls; small tails rise at the corners and fire a moment later: step out of their paths.', 'Her other half next: the lane crosses back behind her first wave. Mages at the sides Blink back over it.', 'Ten seconds later two more tails fire from the edges.'],
             plan: ['Mages make the best outer carriers: they Blink over a wave when there\'s no room. Two Evokers\' Time Spiral helps them.', 'Stay in your own area when the small tails fire. A big defensive lets you live through one hit.'] },
           map: (d, o) => UX_M.waves(false, d, o) },
-        { id: 'wrath', fail: UX_FAIL.wrath, name: 'Mother\'s Wrath (Run back in)', spell: 'Mother\'s Wrath', what: 'A 5-second cast knocks her tank back, then 3 seconds of bites hit whoever is in the red circle in front of her. Each bite stacks Stone Venom and Hobbled (55% slower). If her tank is out of reach, the bites hit everyone.',
+        { id: 'wrath', fail: UX_FAIL.wrath, name: 'Mother\'s Wrath (Run back in)', spell: 'Mother\'s Wrath', what: 'A 5-second cast knocks her tank back, then 3 seconds of bites hit whoever is in the red circle in front of her. Each bite stacks Stone Venom and Hobbled (55% slower on Mythic, 45% on Heroic). If her tank is out of reach, the bites hit everyone.',
           do: ['Mother\'s Wrath: her tank is knocked back.', 'Run straight back into the red circle in front of her.', 'Take the bites with a big defensive; Blessing of Freedom takes the slow off.', 'The other tank taunts: swap during her waves cast, never two in a row.'],
           map: (d, o) => UX_M.wrath(false, d, o) },
         { id: 'thrash', fail: UX_FAIL.thrash, name: 'Mephitic Thrash (Get 35 yards away)', spell: 'Mephitic Thrash', what: 'Her tail sweeps the ground: a big hit and a knockback within 35 yards, a smaller hit and damage over time beyond.',
           do: ['The tail winds up.', 'Everyone near it runs out of the 35 yards, its tank too.', 'It lands: back to your spots. Keep eggs away from it.'],
           map: (d, o) => UX_M.thrash(false, d, o) },
-        { id: 'heart', fail: UX_FAIL.heart, name: 'Rage of the Shackled (Burn the heart)', spell: 'Rage of the Shackled', what: 'Her Venomous Heart opens for 20 seconds and takes double damage, while she hits the raid every 4 seconds. Falling Debris lands in brown circles that kill anyone they hit, tanks too.',
+        { id: 'heart', fail: UX_FAIL.heart, name: 'Rage of the Shackled (Burn the heart)', spell: 'Rage of the Shackled', what: 'Her Venomous Heart opens for 20 seconds and takes double damage, while she hits the raid every 4 seconds. Falling Debris lands in brown circles that hit hard, tanks too.',
           do: ['A 6-second cast, then her heart opens: save cooldowns and a potion.', 'Everyone on the heart, the adds dragged in for the cleave.', 'Raid damage every 4 seconds: heal through it.', 'Brown circles: step out before the debris lands.'],
           plan: ['On Heroic, Bloodlust here.', 'She ends on the left or right edge: that side\'s phase 2 half stays, the other walks across.'],
           m: { plan: ['Start your cooldowns when the cast is about 2.7 seconds from the end, so they\'re up as it opens.', 'Under about 66% after this burn means you\'re on pace for a kill.', 'Where she ends sets where the second burn starts: the half on her side gets the short walk back.'] },
@@ -1867,10 +1867,10 @@ GDZ['Ula\'tek'] = {
             do: ['Wait for her last wave line to pass, then gate across: the Warlock places a gate for each side.', 'The tank pulls the Warden to the stairs: it teleports to the eggs and starts Writhing Gestation.', 'Break those egg shields and kill the Rawlings by 3:12, everyone off the eggs.', 'Kick every Malice (a 15-second cooldown: the melee share it), and kill the Warden before its next gestation.'],
             plan: ['Start at the north end of the ledge, where most eggs are, then work south.', 'Split evenly: the right side has one extra egg. Make sure each side can kill its Warden in time.', 'With one Warlock: they place the other side\'s gate first, then Soulburn to place their own. The side without one takes the movement classes for the way back.'] },
           map: (d, o) => UX_M.warden(false, d, o) },
-        { id: 'fangs', fail: UX_FAIL.fangsH, name: 'Grasping Fangs (Break two at a time)', spell: 'Grasping Fangs', what: 'The Warden tethers three players on each ledge. A tether breaks with distance and leaves Blight Vein, damage over time on everyone that stacks with every break.',
-          do: ['The Warden tethers three players.', 'They walk out to the edge of their tethers.', 'Two break first; the raid heals through their Blight Vein.', 'The last one breaks once it has fallen off.'],
-          m: { fail: UX_FAIL.fangsM, name: 'Grasping Fangs (One break, then five together)', what: 'The Warden tethers six players. One mobile ranged breaks theirs alone; then the other five break together, at full stretch, away from the eggs, inside stacked raid cooldowns.',
-            do: ['The Warden tethers six players.', 'One mobile ranged (a Mage, Hunter or Balance Druid) walks out and breaks theirs alone.', 'The other five walk to the edge of their tethers, away from the eggs, inside Anti-Magic Zone and Rallying Cry.', 'Four seconds later, as that Blight Vein ends, the five break on the same second: strongest defensive and a potion or Healthstone.'],
+        { id: 'fangs', fail: UX_FAIL.fangsH, name: 'Grasping Fangs (Break two at a time)', spell: 'Grasping Fangs', what: 'Each Warden tethers two players on its ledge (three before the Nov 6 hotfix). A tether breaks with distance and leaves Blight Vein, damage over time on everyone that stacks with every break.',
+          do: ['The Warden tethers two players on each ledge.', 'They walk out to the edge of their tethers.', 'One on each ledge breaks first; the raid heals through their Blight Vein.', 'The other two break once it has fallen off (4 seconds).'],
+          m: { fail: UX_FAIL.fangsM, name: 'Grasping Fangs (One break, then five together)', what: 'Each Warden tethers three players, six in all. One mobile ranged breaks theirs alone; then the other five, on both ledges, break together, at full stretch, away from the eggs, inside stacked raid cooldowns.',
+            do: ['The Wardens tether six players, three on each ledge.', 'One mobile ranged (a Mage, Hunter or Balance Druid) walks out and breaks theirs alone.', 'The other five walk to the edge of their tethers, away from the eggs, inside Anti-Magic Zone and Rallying Cry.', 'Four seconds later, as that Blight Vein ends, the five break on the same second: strongest defensive and a potion or Healthstone.'],
             plan: ['Someone counts down the break; an addon timer shows it too.', 'Cooldowns per side: an Anti-Magic Zone and a Rallying Cry each, plus Spirit Link Totem on one side and Darkness on the other.', 'Be at the end of your tether two seconds early: a late break adds 1 to 3 ticks for everyone.', 'If the Warden dies early, don\'t pick up an egg until your Blight Vein is gone.'] },
           map: (d, o) => UX_M.fangs(false, d, o) },
         { id: 'doomscales', fail: UX_FAIL.doomscales, name: 'Doomscale Eggs (Small first, the big one last)', spell: 'Doomscale Cauldron', what: 'With the Warden dead, carry the small eggs to the cauldron in the pit and kill the Rawlings. The big egg goes last, before Hatching Doom ends, or everyone is stunned 20 seconds: a wipe. Kick the Weakened Doomscale\'s Anguished Cry; bring it to her.',
@@ -1880,13 +1880,13 @@ GDZ['Ula\'tek'] = {
             plan: ['Kill the Rawlings before Boiling Venom: everyone on them; stun any that enrage.', 'Watch Rancid Yolk: picking up an egg with it on kills you (unless you\'re a tank). Let it drop first.', 'Mark the Doomscales from the boss frames and set focus: the kick alert needs it. Call it when two drift apart.'] },
           map: (d, o) => UX_M.doomscales(false, d, o) },
         { id: 'heart2', fail: UX_FAIL.heart, name: 'Rage of the Shackled (The second burn)', spell: 'Rage of the Shackled', what: 'The second heart burn (4:38 on Heroic, 4:48 on Mythic). The same as the first, with the Doomscales dragged in for the cleave.',
-          do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Everything on the heart, the Doomscales cleaved with it.', 'Raid damage every 4 seconds.', 'Brown circles kill in one hit: step out.'],
-          m: { do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; the tails fire at the raid again.', 'Brown circles kill in one hit: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
+          do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Everything on the heart, the Doomscales cleaved with it.', 'Raid damage every 4 seconds.', 'Brown circles hit hard: step out.'],
+          m: { do: ['Back on the platform by her: the heart opens for 20 seconds.', 'Bloodlust and your second potion here.', 'Raid damage every 4 seconds; the tails fire at the raid again.', 'Brown circles hit hard: step out.'], plan: ['Under about 44% after this burn is killable.', 'On early pulls with deaths, use Bloodlust earlier.'] },
           map: (d, o) => UX_M.heart(false, d, { e: true, ...(o || {}) }) },
       ],
       tiles: [
         { name: 'Crossing over (Last wave first, then gate)', do: 'The raid splits in two and crosses the venom to the side ledges. Wait for her last wave line to pass, tank first, then movement abilities or a Warlock gate. On the way back, the side without a gate needs its own way.' },
-        { name: 'Brown circles (Kill in one hit)', do: 'Debris falls on the ledges too: the brown circles kill even a tank. Run through one only right after it lands.' },
+        { name: 'Brown circles (Step out)', do: 'Debris falls on the ledges too: the brown circles hit hard, tanks too. Run through one only right after it lands.' },
       ] },
     { id: 'int', name: 'Intermission: The Shattering', sum: 'Eggs rain down and coils rise around the platform for back-to-back soaks. Then the platform shatters into four.',
       m: { sum: 'Eight coil soaks in about 20 seconds, three groups taking turns; the middle ones come back to back, so personals and potions.' },
@@ -1902,7 +1902,7 @@ GDZ['Ula\'tek'] = {
         { name: 'The Shattering (Stay inside)', do: 'The platform breaks into four with a big knockback. Stand toward the middle: from the edge you land in the venom.', m: { do: 'The knockback is bigger than on Heroic. Gather on the line toward the diamond, inside. Watch where her bubbles come up: that\'s the first quarter (usually north-east).' } },
       ] },
     { id: 'p3', name: 'Phase 3: Ula\'tek\'s Ascension', sum: 'The platform is in four quarters. Clutches land, red circles need soaking, and she smashes the quarter she\'s on, so the raid moves one quarter counter-clockwise each time.',
-      m: { sum: 'Grips for the Slithering Clutches, three stacked red circles with three soakers, a raid cooldown on every quarter, and one last heart burn. Most raids find it the easiest phase.' },
+      m: { sum: 'Grips for the Slithering Clutches, two stacked red circles with three soakers, a raid cooldown on every quarter, and one last heart burn. Most raids find it the easiest phase.' },
       mechs: [
         { id: 'clutches', fail: UX_FAIL.clutchesH, name: 'Call of the Serpent (Break every clutch)', spell: 'Call of the Serpent', what: 'A Blightscale Clutch lands on every quarter. Break each one (a weak Rawling comes out), or it hatches a Blightscale Shrieker: kick its Vicious Echoes, a raid stun.',
           do: ['Clutches land on the quarters: step out of the circles.', 'Melee break the one by her; ranged the one on their quarter and the one at the back.', 'Kill each before it hatches.'],
@@ -1910,11 +1910,11 @@ GDZ['Ula\'tek'] = {
             do: ['Clutches spawn on the quarters and crawl for the venom.', 'The Death Knights grip the near ones right away.', 'The far one first to the near quarter, then the rest of the way.', 'Gorefiend\'s Grasp them together and cleave them down before the waves reach them.'],
             plan: ['You need two Death Knights; a Blood Death Knight covers nearly every Gorefiend\'s Grasp.', 'They come back during Serpent\'s Bite, so on the first quarter you do it twice.', 'The last set (8:25) is the easy one: two grips, and two Shriekers to kick (half the raid on each).'] },
           map: (d, o) => UX_M.clutches(false, d, o) },
-        { id: 'bite', fail: UX_FAIL.bite, name: 'Serpent\'s Bite (Soak every red circle)', spell: 'Serpent\'s Bite', what: 'A melee, a ranged and a healer each get a 7-yard red circle for 15 seconds. Others stand in it until it drains, or the target turns to stone and hurts the raid every second. Soakers then spread out. Four sets, one per quarter.',
-          do: ['Three red circles: on a melee, a ranged and a healer.', 'Each group soaks its own red circle.', 'Never leave one unsoaked.', 'Volatile Purge: spread out at once.'],
+        { id: 'bite', fail: UX_FAIL.bite, name: 'Serpent\'s Bite (Soak every red circle)', spell: 'Serpent\'s Bite', what: 'Two players each get a 7-yard red circle for 15 seconds (three before the Nov 6 hotfix). Others stand in it until it drains, or the target turns to stone and hurts the raid every second. Soakers then spread out. Four sets, one per quarter.',
+          do: ['Two red circles, on two players.', 'Each group soaks its own red circle.', 'Never leave one unsoaked.', 'Volatile Purge: spread out at once.'],
           plan: ['Keep a backup ready for an off-role player who gets a circle.', 'Pick one side per group for the circles and tell everyone.'],
-          m: { name: 'Serpent\'s Bite (Three soakers, stacked)', what: 'Three sets. The three targets stack, and three assigned soakers (one backup) stand on all three circles at once. Each soaker takes about 2 million as it ends, then 18 seconds of damage over time, and sends three waves out, one straight away from the raid.',
-            do: ['Three reds: a melee, a ranged and a healer. They stack on one spot toward the middle.', 'The three assigned soakers stand on it: inside all three circles at once.', 'As it ends every soaker takes about 2 million: a big defensive.', 'Spread out at once; your wave goes away from the raid. Dying is better than hitting them.'],
+          m: { name: 'Serpent\'s Bite (Three soakers, stacked)', what: 'Three sets. The two targets stack (three before the Nov 6 hotfix), and three assigned soakers (one backup) stand on both circles at once. Each soaker takes about 2 million as it ends, then 18 seconds of damage over time, and sends three waves out, one straight away from the raid.',
+            do: ['Two reds: a melee and a ranged. They stack on one spot toward the middle.', 'The three assigned soakers stand on it: inside both circles at once.', 'As it ends every soaker takes about 2 million: a big defensive.', 'Spread out at once; your wave goes away from the raid. Dying is better than hitting them.'],
             plan: ['Since Oct 6 three soakers clear a set. Sets: two Mages and a Hunter; a Rogue and both tanks; a healer and both tanks; one backup each.', 'After the hit, rotate personals and externals through the damage over time.', 'Last set: you can die after it ends (just not during), so soakers walk into the water rather than hit the raid with their waves.'] },
           map: (d, o) => UX_M.bite(false, d, o) },
         { id: 'prey', fail: UX_FAIL.prey, name: 'Circling Prey (One quarter counter-clockwise)', spell: 'Circling Prey', what: 'She destroys the quarter she\'s on: a huge hit and a knockback within 13 yards, a smaller hit on everyone else. Everyone moves one quarter counter-clockwise, to her left. Personals for the second and third.',
@@ -6044,7 +6044,7 @@ function ppReadCA(N, P) {
 }
 // (the starting map pieces of a static scene: the raid around Zul'jan, everyone not placed in two clumps beside him)
 function ppRest(k, put, spots, spread) { const left = GDZ_RAID.filter((s) => !put.has(s)); spots.forEach(([x, y], j) => k.at(0, left.filter((_, i) => i % spots.length === j), x, y, spread || 4.5)); }
-// (an axe soak on a marker: the target and its soakers there, its 9-yard circle (the 40-yard walk-out is the footer's line, not a ring:
+// (an axe soak on a marker: the target and its soakers there, its 9-yard circle (the 50-yard walk-out is the footer's line, not a ring:
 // Plan round 5); the raid by the boss)
 function ppAxe(at, soak, ext, zeph, P, M) {
   const k = gdzKit('The Coiled Altar', 3), fix = {}, put = new Set(), tanks = soak.filter((n) => (P.get(n.toLowerCase()) || {}).role === 'tank'), others = soak.filter((n) => !tanks.includes(n));
@@ -6091,7 +6091,7 @@ function ppCardsCA(J, M, U, P) {
   J.axes.forEach((A, i) => { if (!A || !A.soak.length) return; const x = ppAxe(spot('axe', [-37, 37]), A.soak, A.ext, A.zeph, P, M);
     cards.push({ id: 'axe' + (i + 1), ph: 1, when: 'Axe ' + (i + 1), title: 'Guillotine ' + (i + 1) + ' (Soak ' + where('axe') + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak ' + where('axe'), R, '#fff', 7]] }),
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
-      foot: 'Soakers walk 40 yards out after it lands: the spot erupts.' }); });
+      foot: 'Soakers walk 50 yards out after it lands: the spot erupts.' }); });
   // Phase 2, Dreadmarch: the mind controls are stacked on the raid lead's marker; the note's crowd-control order frees them
   if (J.cc.filter(Boolean).length) { const st = spot('dread', [25, -35]), k = gdzKit('The Coiled Altar', 3), m = Math.hypot(st[0], st[1]) || 1, toM = [-st[0] / m, -st[1] / m], fix = {}, put = new Set();
     const bx = [st[0] + toM[0] * 16, st[1] + toM[1] * 16]; k.boss('hm', 'Malacrass', 0, bx[0], bx[1]);
@@ -6151,7 +6151,7 @@ function ppCardsCA(J, M, U, P) {
   J.grim.forEach((A, i) => { if (!A || !A.soak.length) return; const u = i ? 'grim2' : 'grim1', x = ppAxe(spot(u, [25, -35]), A.soak, A.ext, A.zeph, P, M);
     cards.push({ id: 'grim' + (i + 1), ph: 3, when: 'Axe ' + (i + 1), title: 'Grim Guillotine ' + (i + 1) + ' (Soak ' + where(u) + ')', map: ppFreeze(x.mp, x.T, x.S, P, M, { hl: x.G.concat(x.jobs.map((q) => q[0])), named: x.jobs.map((q) => q[0]), tags: x.jobs, labels: [[x.G, 'Axe ' + (i + 1) + ' soak ' + where(u), R, '#fff', 7]] }),
       legend: [ppG('Soak (' + A.soak.length + ' + the target)', R, A.soak.map((n) => ppI(P, n))), ppG('On the axe target', GO, [A.ext && ppI(P, A.ext, 'External'), A.zeph && ppI(P, A.zeph, 'Zephyr')]), ppG('Axe target', Q, [ppI(P, ppAny('Whoever gets the axe'))], 'Walks to the soak spot.')],
-      foot: 'These axes are magic: big externals on the target. Soakers walk 40 yards out after it lands.' }); });
+      foot: 'These axes are magic: big externals on the target. Soakers walk 50 yards out after it lands.' }); });
   return cards;
 }
 // ===== Ula'tek, Mythic (Oct 26, the user: "Exact same setup" as The Coiled Altar; Plan's Jobs cards in 2caefe9) =====
@@ -6243,7 +6243,7 @@ function ppCardsUL(J, M, U, P) {
     const ids = J.bite.sets[0].map((n) => { const q = ppSlot(P, n, put); if (q) fix[q] = n; return q; }).filter(Boolean); ids.forEach((q, i) => { const d = gdzSpot(i, ids.length, 3.4); k.at(0, q, c[0] + d[0], c[1] + d[1]); });
     lab.push([ids.concat(TG.map((x) => x[0])), 'Bite 1', R, '#fff', 7, false]);
     const T = GDZ_RAID.filter((s) => s[0] === 't' && !put.has(s)); T.forEach((s, i) => { put.add(s); k.at(0, s, 26 + i * 3, 22 - i * 3); }); rest(k, put, [10, 4], 6);
-    cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Your set stands in all three circles)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
+    cards.push({ id: 'bite', ph: 3, when: 'Every bite', title: 'Serpent\'s Bite (Your set stands in both circles)', map: ppFreeze(k.done({ title: 'Serpent\'s Bite', focus: UL_WHOLE3, art: UL_BROKEN }), 1, ppSeat(P, fix), P, M, { focus: UL_WHOLE3, hl: lab.flatMap((x) => x[0]), labels: lab }),
       legend: J.bite.sets.map((s, i) => ppG('Bite ' + (i + 1) + (J.bite.back[i].length ? ' · backup: ' + J.bite.back[i].join(', ') : ''), R, s.map((n) => ppI(P, n)))).concat([ppG('Bite targets', Q, [ppI(P, ppAny('Whoever gets a bite'))], 'Stack on one spot toward the middle.')]),
       foot: 'The three targets stack and the set\'s three soakers stand in all three circles at once. A big defensive as it ends, then personals for 18 seconds; spread at once and send your wave away from the raid.' }); }
   // Serpent's Bite, Heroic: each group on its own target's red circle (melee on her quarter, healers and ranged on the next one counter-clockwise)

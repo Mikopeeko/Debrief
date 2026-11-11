@@ -14,11 +14,11 @@ Players **pick eggs up** by walking over them (Malignant Shell DoT while carried
 - **Call of the Serpent#1304012**: more eggs fall (dodge the impacts) — pick them up.
 - **Mother's Wrath#1298367** (tank): knockback; run back into the red pool in front of her, take the bites (Stone Venom DoT + Hobbled 55% slow → remove with Blessing of Freedom etc.).
 - **Mephitic Thrash#1296301** (tail): get out of 35 yd (tank runs out and back), keep eggs safe.
-- **Rage of the Shackled#1286860** (after 2 cycles): her **Venomous Heart** is exposed 20 s and takes **+200%** (journal; guides say +100%), shares health → hit the heart, cleave the boss, dodge **Falling Debris** (one-shot). Save 2-min cooldowns/potion for it. Tactyks: below ~67% after the first burn is on pace.
+- **Rage of the Shackled#1286860** (after 2 cycles): her **Venomous Heart** is exposed 20 s and takes **+100%** (12.1.5 journal, checked Nov 10), shares health → hit the heart, cleave the boss, dodge **Falling Debris** (one-shot). Save 2-min cooldowns/potion for it. Tactyks: below ~67% after the first burn is on pace.
 
 ## Phase 2 — Children of the Doomscale
 Raid splits to the two side ledges (cross the venom; mobility out, Warlock gateway back). Each side:
-- **Doomscale Warden**: interrupt **Malice#1290779**; tank it on glowing eggs to cleave them; **Grasping Fangs#1301117** tethers (break → Blight Vein DoT; Heroic+: on the **whole raid**, both sides) → break 2 at a time, wait for the DoT to end (Icy Veins) — Tactyks/Mythic: one solo break, then a 5-break under stacked raid cooldowns.
+- **Doomscale Warden**: interrupt **Malice#1290779**; tank it on glowing eggs to cleave them; **Grasping Fangs#1301117** tethers (3 a side on Mythic; 2 a side on Heroic since Nov 6; break → Blight Vein DoT; Heroic+: on the **whole raid**, both sides) → break 2 at a time, wait for the DoT to end (Icy Veins) — Tactyks/Mythic: one solo break, then a 5-break under stacked raid cooldowns.
   **Warden's Protection**: eggs can't be touched (and hurt within 7 yd) while it lives. **Writhing Gestation** (Shadow Molt) turns nearby eggs into a clutch that hatches in 20 s → cleave them.
 - After it dies: collect all small eggs, then **one player takes the big Doomscale Egg** last (90 s to pick up, then 20 s to throw it into the **Doomscale Cauldron#1313355**) — small eggs first. Heroic: touching the Doomscale Egg starts **Mass Gestation** on remaining spawn.
 - The **Weakened Doomscale**: interrupt **Anguished Cry#1305650** (raid stun), Desperate Thrash frontal away from people; drag adds back to the center.
@@ -30,7 +30,7 @@ Eggs rain down — pick them up; tails rise around the room and cast Spectral Co
 ## Phase 3 — Ula'tek's Ascension
 - Melee/tanks on the boss's platform; ranged/healers one platform counter-clockwise (left).
 - **Call of the Serpent** → **Blightscale Clutches** on platforms (circles first) → kill them; eggs that fall into the venom hatch **Blightscale Shriekers** (big add; interrupt **Vicious Echoes**, raid stun + stacking DoT) → tank them to the boss and cleave.
-- **Serpent's Bite#1295905**: one melee, one ranged, one healer get a 15 s venom → others stand in their circle until it's fully leeched, or they become a **Calcified Corpse** (wipe). Three soak groups (melee / ranged / healers + some short-range ranged). Soakers then get **Volatile Purge#1306086** → spread 5+ yd.
+- **Serpent's Bite#1295905**: two players get a 15 s venom since the Nov 6 hotfix (a melee and a ranged in the kills since; before it, one melee, one ranged, one healer) → others stand in their circle until it's fully leeched, or they become a **Calcified Corpse** (wipe). Three soak groups (melee / ranged / healers + some short-range ranged). Soakers then get **Volatile Purge#1306086** → spread 5+ yd.
 - **Caustic Waves** with gaps — stand where there are no orbs.
 - **Circling Prey#1301510**: she destroys the platform she's at → everyone rotates one platform counter-clockwise; personal defensives for the 2nd and 3rd breaks. Final platform: last Bite set, then the final heart phase — if she's at 1-2% jump off behind her to survive the slam a few seconds longer.
 
@@ -47,3 +47,37 @@ Eggs rain down — pick them up; tails rise around the room and cast Spectral Co
 
 ## What a log can check (module exists)
 Vipers hatched (and why: waves, water, carrier death, Noxious Splash), eggs broken in soaks; Spectral Coils soaker counts; Mother's Wrath with nobody in reach; Rattler Slam / Unchecked Rage (tank out of melee); heart damage in each burn; Grasping Fangs break timing; Malice / Anguished Cry / Vicious Echoes interrupts; Doomscale Egg delivery time; Serpent's Bite completion (Calcified Corpse), Volatile Purge clips; deaths to Circling Prey and Falling Debris.
+
+## Game data (checked Nov 10, 2026)
+Sources, in order: the in-game encounter journal and spell data of the live build **12.1.5.70783** (wago.tools DB2: JournalEncounterSection, Spell, SpellEffect, SpellMisc, SpellRadius, SpellDuration, SpellAuraOptions, SpellTargetRestrictions, by the current spell IDs in engine.js), the hotfix notes (Oct 6 and **Nov 6**), then real kills only as a check: Mythic after the hotfix PV6RNngYQ28r4kvw #24 (Nov 9, downloaded once), Mythic before 1B9xF8jT3YLZvGwV (Nov 5), Heroic after hyGNqYZLnwrbHctK #12 (Nov 8), Heroic before AYRTPrbCv7fKJjXQ (Nov 4).
+
+**The Nov 10 wipe-review sentences: all six numbers are right.** Anguished Cry stuns everyone within 60 yd for 6 s (1305650); Rawlings boil after 25 s (Boiling Venom 1313757: +100% haste and damage, and Acidic Expulsion); Malice hits everyone every second for 6 s (1290779); egg carriers splash within 3 yd (Noxious Shell 1307612); Fester Burst hits everyone farther than 10 yd (1310763); Calcified Corpse hurts the whole raid every second on Heroic and Mythic (1318329; on Normal it only hurts the stoned player).
+
+| Number | Heroic | Mythic | Source | Site before (fixed?) |
+|---|---|---|---|---|
+| Serpent's Bite targets | **2** | **2** | Nov 6 hotfix ("reduced the number of targets on all difficulties"); logs: 2 a cast after (Mythic: Havoc DH + Demo Warlock, Arcane Mage + Havoc DH; Heroic: Hunter + DK), 3 before | said "a melee, a ranged and a healer", three stacked circles: fixed (cards, maps, How it works). The Plan tab's Heroic "Bite Healers" group and Mythic bite picture rings are still built for three: follow-up |
+| Serpent's Bite venom / leech range | 15 s, 7 yd | 15 s, 7 yd | spell 1288879, journal | right |
+| Soakers needed to clear a bite | 3 | 3 | Oct 6 hotfix; Nov 9 log 3-4 Purges a cast | right |
+| Volatile Purge | erupts after 5 s, DoT 15 s | 5 s, DoT 18 s, Caustic Waves from each soaker | spell 1312967 / 1306086 text; logs 5.0 s | right. Its burst size has no game number (server area trigger; on Heroic it scales with raid size): the replay's "~12 yd" ring is from logs |
+| Grasping Fangs targets | **2 a side (4)** | 3 a side (6) | Nov 6 hotfix (Normal and Heroic only); logs: Heroic 6 before, 4 after; Mythic 3 + 3 a second apart, before and after | Heroic said three a side: fixed. Mythic map drew six tethers on one ledge: fixed to three |
+| Blight Vein | all players, 4 s, stacks | same | spell 1311609, Oct 6 hotfix | right |
+| Spectral Coils share range | 10 yd | 10 yd | spell 1287260 | right |
+| Soul Constrictor | **6 s** | 5 s | spell 1300685; logs 6.0 / 5.0 s | Heroic card said 5: fixed |
+| Mephitic Thrash | 35 yd knockback, 4 s cast; outside: smaller hit + DoT every 2 s for 10 s | same | spell 1296301, journal | right |
+| Call of the Serpent impacts | 4 yd | 4 yd | spell 1304012 | right; 8 eggs a wave on Mythic: Sep 15 hotfix + logs |
+| Toxic Womb impact / Wretch wakes | — | 7 yd / after 20 s | spell 1310738 | right |
+| Wretch and Shrieker enrage | — | after 30 s | Boiling Venom 1315343 | right; the bubbles at ~36, 68, 100 s are logs only |
+| Rancid Yolk | — | +200%, 20 s | spell 1312150 | right |
+| Mother's Wrath | 5 s cast, 3 s of bites | same | spell 1298367 | right |
+| Hobbled | **45%** | 55% | spell 1300938 (35% Normal), 60 s | said 55% for both: fixed |
+| Rage of the Shackled | 6.5 s cast, raid hit every 4 s for 20 s, heart +100% | same | spells 1286860 / 1299526 | right (these notes said +200%: fixed) |
+| Falling Debris | 7 yd, **not a one-shot** | 7 yd, **not a one-shot since Nov 6** | spell 1286885; logs: Heroic hits 23-63% of a player's health before and after Nov 6; Mythic damage -77% on Nov 6, the one Mythic hit since: 61% | said "kills in one hit, tanks too": fixed. Its "Dangerous" weight in Avoidable damage is untouched |
+| Warden's Protection | 7 yd | 7 yd | spell 1306858 | right |
+| Writhing Gestation | hatches in 20 s | same | spell 1290990 | right; "every egg within 10 yards": no game number (server) |
+| Doomscale Egg | hatches 20 s after pickup; Hatching Doom 90 s; Dread Roar stuns 20 s | same | spells 1300312 / 1306862 / 1305775 | right |
+| Revenge | — | +100% haste and damage | spell 1307941 | right |
+| Vicious Echoes | stun 6 s + stacking DoT | same | spell 1310764 | right |
+| Circling Prey | 13 yd | 13 yd | spell 1301510 | right |
+| Caustic Waves | 10 s DoT, stacks | same; a tail sends 3 | spell 1292403; Oct 6 hotfix | right; 12.5 yd a second is logs only |
+| Putrid Membrane | 20 s | 20 s since Nov 6 (30 s in the files) | spell 1301268; Nov 6 hotfix; logs 20 s on both | the site doesn't state it |
+| Malice "15-second cooldown" | — | — | no game number (server); logs | logs only |

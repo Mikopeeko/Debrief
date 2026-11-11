@@ -8,9 +8,9 @@ Fight style: P1 single target (Zul'jan), P2 single target (Malacrass), intermiss
 - **Toxic Deluge → Coalesced Venom#1282403 orbs**: circles land (dodge), leaving green orbs that pulse raid damage. Step on one to carry it 5 s (Volatile Venom, 5 yd damage around you), then it drops. Carry orbs into a cluster in front of the boss.
   Destroying an orb = **Venom Rupture** raid damage (Heroic+: a stacking DoT) → destroy ~5-6 at a time (7 max, Tactyks); orbs left when Zul'jan dies all explode.
 - **Sever#1299680** (tank frontal): huge hit + Sever vulnerability → **aim it through the orb cluster** (destroys them). Taunt swap every cast (Tactyks: the off-tank taunts just before the frontal).
-- **Guillotine#1283594**: axe on a player; split damage within 9 yd, needs **≥5 players** (else Execution raid hit); then **Widow's Kiss** explodes within 40 yd → soak, then run out (Gateway / Stampeding Roar). Heroic+: **Guillotined** (+500% to the next) → **two alternating soak groups**.
-  (Tactyks says Normal/Heroic only need 3; the journal says 5 on all difficulties.) Gate **into** the soak, never out (orbs spawn on the path).
-- **Axegrinder#1283832**: axes roam the arena for 3 min (knockback) — common killer of melee; prefer a puddle over an axe. Mythic: they never despawn.
+- **Guillotine#1283594**: axe on a player; split damage within 9 yd, needs **≥3 players on Heroic, ≥5 on Mythic** (else Execution raid hit); then **Widow's Kiss** explodes within 50 yd on Heroic and Mythic (40 on Normal) → soak, then run out (Gateway / Stampeding Roar). Heroic+: **Guillotined** (+500% to the next) → **two alternating soak groups**.
+  (The 12.1.5 journal: 3 on Normal and Heroic, 5 on Mythic. Checked Nov 10, see Game data.) Gate **into** the soak, never out (orbs spawn on the path).
+- **Axegrinder#1283832**: axes roam the arena for 1 min on Normal and Heroic, 3 min on Mythic (knockback) — common killer of melee; prefer a puddle over an axe.
 - **Venomfang#1282287**: dispellable poison DoT (Poison Cleansing Totem automates it).
 
 ## Phase 2 — Hex Lord Malacrass (Usurper's Reprisal)
@@ -26,12 +26,12 @@ Fight style: P1 single target (Zul'jan), P2 single target (Malacrass), intermiss
 Zul'jan returns with **Ghastly Regeneration** (heals 2%/s for 35 s, **takes +100%**) → **Lust, potions, everything**. **Fragments of Malacrass#1287722** run to Zul'jan (each heals ~10%) → intercept them, but each step = **Spirit Erasure** raid hit → stagger soaks. One reaching him is nearly a wipe; some spawn on the inner ring.
 
 ## Phase 3 — Coiled Union
-Both bosses; all P1 and P2 mechanics at once (Defilement replaces Fangs: heal-absorb ground, Corrupted Toxin tank DoT → tank swaps; Grim Guillotine is shadow; **Blighted Sever** hits orbs and ghosts and gives Gravebound). **Soulbound**: when one dies the other gets +500% → kill together.
+Both bosses; all P1 and P2 mechanics at once (Defilement replaces Fangs: heal-absorb ground, Corrupted Toxin tank DoT → tank swaps; Grim Guillotine is shadow; **Blighted Sever** hits orbs and ghosts and gives Gravebound). **Soulbound**: when one dies the other gets +100% attack speed and damage every 5 s (2 s on Mythic), up to +500% → kill together.
 
 ## Mythic
 - **Virulent Mutation#1310544** (purple orb): if its purple ring touches any other orb (green or purple, on the ground or carried) → ~20 Venom Ruptures = wipe. You *can* run a green orb past a carried purple. Purple orbs left at the next Deluge also wipe. **Purples are hard-assigned** (Tactyks: the off-tank, Mages, Warlocks with gateways; mobile healers in a pinch); everyone else clears green orbs out of their way.
   P1 layout: purple carriers per corner, a triangle/pyramid in front of the boss up to marker lines; the entrance side frontal first. P3: one frontal takes all purples in a **diamond** formation; greens go to one side (missed greens are survivable).
-- **Tainted Blood** after carrying an orb (+200% Volatile Venom for 10 s) → rotate carriers. **Guillotined is permanent**.
+- ~~Tainted Blood~~: no longer in the live Mythic journal, and no kill since Nov 6 had it. **Guillotined lasts 100 s** (not permanent; Grim Guillotine's debuff 120 s): see Game data.
 - P2/P3 ghosts are **only visible to their target**; two ghosts touching (Malevolent Resonance) kills both targets. Interrupting Wail of Terror briefly shows all ghosts.
 - Spiteful Soulcoilers have **Spirit Shield** (99% DR) → must be hit by **2 Gloombombs**: 2 ranged and 2 melee get Gloombomb each time → ranged bombs go to the "ranged" add, melee bombs to the "melee" add (kick it as soon as Gloombomb is cast so it stands still). Second kick on the melee add must be a melee player.
 - Intermission: each Fragment soak gives the raid +20% Spirit Erasure damage for 2 s → soak 3-5 at a time, let it drop, then 7-10 under stacked cooldowns.
@@ -86,3 +86,41 @@ corners, star and square in the far corners, diamond in the middle of the far wa
 - First Fangs (0:00): reaches to about 14 yd short of the centre; hits for ~25-30 s, then fades.
 - Second Fangs (~1:25): reaches the centre; the two pools meet around the boss; hits for ~25-30 s. The raid can't fully dodge it.
 - Players' outermost positions over whole fights: about ±40-46 yd from the centre (beyond that = mind-controlled players falling).
+
+## Game data (checked Nov 10, 2026)
+Sources, in order: the in-game encounter journal and spell data of the live build **12.1.5.70783** (wago.tools DB2 tables JournalEncounterSection, Spell, SpellEffect, SpellMisc, SpellRadius, SpellDuration, SpellAuraOptions, SpellTargetRestrictions, read by the current spell IDs in engine.js), the hotfix notes, then real kills only as a check (Mythic, after the Nov 6 hotfix: K2cTXMb7PBvjLFdA #11, dW16pYmt4Ry7c3xX #3, cyjRhMT4V9wJmqLX #16; Heroic, Nov 4-5: XWKmh9yZtJbxQH84 #39, 2vbXtZAV43WQhHML #32, kaLA9YmwX3HMTh7R #36; all in DebriefLogs).
+
+| Number | Heroic | Mythic | Source | Site before (fixed?) |
+|---|---|---|---|---|
+| Guillotine / Grim Guillotine soak circle | 9 yd | 9 yd | spell 1283594 / 1299296 radius | 9 yd, right |
+| Soakers needed (else Execution on the raid) | **3** | **5** | journal text of 1283594 / 1299296 ("fails to hit at least 3 / 5") | Heroic guide said 5: fixed |
+| Axe eruption (Widow's Kiss 1283623 / Death's Embrace 1299396) | **50 yd** | **50 yd** | spell radius (40 yd on Normal); logs: Mythic hits out to 48.7 yd, the small outside hit (Widow's Touch) from 48.1 yd; Heroic hits to 37.9, outside from 49.4 | said 40 everywhere: fixed (text, maps, the replay ring) |
+| Eruption after the axe lands | 6 s | 6 s | no game number (scripted); logs 6.0 s every drop | right |
+| Guillotine debuff (1307425 "Guillotine", +500% from the next axe) | 100 s | **100 s** | spell 1283594 text; logs: all 41 Mythic soakers 100 s (185 s when the second axe refreshed it) | Plan tab said "permanent on Mythic": fixed. The never-ending "Guillotined" (1309940/1309944) is in the files but no kill used it |
+| Grim Guillotine debuff (1307652) | 180 s | **120 s** | spell 1299296 text; Mythic log 120 s | Mythic card said 120, right; Plan tab said permanent: fixed |
+| Axes between soaks | P1 85 s; P3 ~64 s then ~100 s | same | no game number; logs (48 s and 133 s; 343 s and 407 s on K2cT) | right |
+| Axegrinder axes live for | **1 min** | 3 min | spell 1283840 duration 60 s / 180 s; logs 60-61 s / 180-181 s | said 3 min on Heroic too: fixed (tip, guide, Heroic whole-fight video). The live journal no longer says "never despawn" |
+| Axe impact knockback | 4 yd | 4 yd | spell 1283840 radius | — |
+| Rolling axe touch range | ~6 yd | ~6 yd | no game number (server area trigger); logs (90% within 5.9 yd) | right |
+| Green orb carrier (Volatile Venom 1282288) | 5 yd, 5 s | 5 yd, 5 s | spell radius, aura 1282419 | right |
+| Purple orb carrier (Mutagenic Venom 1309759) | — | **8 yd** | spell radius; logs: 17 of 106 hits landed past 6 yd, 4 past 8 (position noise) | said 6: fixed (text, map ring). The purple-touches-orb collision check (6 + 1.5 yd) is a separate area with no game number: untouched |
+| Purple touching another orb | — | 20 Venom Ruptures | journal (1310544 / 1310498) | right |
+| Toxic Deluge impacts | 4 yd | 4 yd | spell 1300137 | right |
+| Venom Rupture | stacking DoT, 10 s | same | spell 1299838 | — |
+| Tainted Blood (1310013, +200% Volatile Venom, 10 s) | — | gone | in the files, but not in the live Mythic journal and 0 applications on 2 Mythic kills since Nov 6 | notes only |
+| Sever vulnerability | 200% | **600%** | spell 1299684 (33 s); Soul Sever 1286620 and Blighted Sever 1307292 the same, 45 s | mistake text said 200% on Mythic: fixed |
+| Gloombomb | 5 s, 15 yd, **3 players** | 5 s, 15 yd, **4 players** | spell 1310881 (5 s, 15 yd, 3 targets); logs 3 a cast on Heroic, 4 on Mythic (Mythic's 4 is logs only) | Heroic guide said 2: fixed |
+| Soul Fragments | 3, fade 15 s | 3, fade 10 s | journal; Gravebound 16 s / 11 s | right |
+| Spirit Shield | — | 99%, 2 stacks | spell 1309105 | right |
+| Retaliatory Malice | every 3 s | every 3 s | spell 1308311 | right |
+| Wail of Terror | fear 5 s, 12 s cast | fear 5 s, 10 s cast | spell 1286399 | — |
+| Eternal Nightfall | 17 s cast, circles 5 yd | same | spell 1286918 | right |
+| Ghastly Regeneration | 2%/s for 35 s, +100% damage taken | same | spell 1304033 | right |
+| A Fragment reaching Zul'jan heals | 3% | 10% | spell 1287718 | right |
+| Spirit Erasure step | — | +20% for 2 s, stacks | spell 1287722 | right |
+| Soulbound | +100% every 5 s, up to 5 | +100% every 2 s, up to 5 | spell 1309987 | said "500% stronger" flat: reworded |
+| Venomfang | 14 s, every 2 s | same | spell 1306906 | right; "every 35 s or so" is logs only |
+| Malevolent Resonance | — | 5 s DoT on both players | spell 1310732 | right |
+| Ghosts per freed player | 2 | 2 | spell 1297445 | right |
+| Fangs pools (Noxious Ground) | — | 37 yd first, 47 later | no game number (server); logs (Oct 31 / Nov 2) | logs only |
+| Orbs per Toxic Deluge | 8 | 8 | no game number; logs | logs only |
