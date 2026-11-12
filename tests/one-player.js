@@ -50,6 +50,8 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
     if (/Getting worse/.test(say1)) say('trend words', 'one player', 'the last 5 pulls were clean, and the trend says "' + say1 + '"');
     const up = [P('bad', 0), P('bad', 0), P('ok', 100), P('ok', 100), P('ok', 100), P('ok', 100), P('warn', 90), P('warn', 90), P('warn', 90), P('warn', 90), P('warn', 90)], say2 = X.mxTrend(up, 15);
     if (/Getting better/.test(say2)) say('trend words', 'one player', 'the last 5 pulls had more mistakes than before, and the trend says "' + say2 + '"'); }
+  { const P = (st) => ({ st }), a = X.mxFlag([P('bad'), P('bad'), P('ok')]), b = X.mxFlag([P('warn'), P('warn')], 'times'), c = X.mxFlag([P('warn'), P('bad'), P('warn')]);
+    for (const [g, want] of [[a, /^Failed · 2 of 3 pulls it came up$/], [b, /^Mistakes every time · 2 of 2 times$/], [c, /^Mistakes every time · 3 of 3 pulls it came up$/]]) if (!g || !want.test(g.t)) say('flag words', 'one player', 'a flag reads "' + (g && g.t) + '"'); }
   // 13. What wiped us most with a player picked (shell.html's script reads the coach box on the page, so its code is checked)
   { const sh = H.SH, a = sh.indexOf('var W1 = wipL.map('), b = sh.indexOf('\n', a), w1 = a < 0 ? '' : sh.slice(a, b);
     if (!/\.filter\(function \(x\) \{ return x\.w > 0; \}\)/.test(w1)) say('What wiped us most', 'one player', 'its rows can say "0 wipes" (the coach\'s own tips, with a player picked)');
@@ -71,9 +73,20 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
           const lab = labelOf(o), a1 = own.filter((q) => !want.includes(q)), a2 = want.filter((q) => !own.includes(q));
           if (a1.length) say(where, 'one player', 'Summary counts ' + lab + ' against them in pull' + (a1.length > 1 ? 's ' : ' ') + a1.join(', ') + ', where its lines don\'t name them' + tg);
           if (a2.length) say(where, 'one player', 'Summary misses ' + lab + ' in pull' + (a2.length > 1 ? 's ' : ' ') + a2.join(', ') + ', where its lines name them' + tg); }
+        // 14. a mechanic anyone can walk into (its fine rows list its targets, never this player) counts every pull it came up while they were
+        //     alive, never only the pulls it hit them (Nov 12, Flex: "why does this say i got a 0% on those mechanics?", the tank frontal "2 of 2")
+        if (NEW) { const fl = (row) => row.some((c) => c && (c.bad || c.warn)), nmd = (c) => c && (c.p || (c.ps && c.ps.length) || (c.pt && c.pt.length)), isMe = (c) => c && (c.p === p.name || (c.ps || []).includes(p.name) || (c.pt || []).some((y) => y[0] === p.name));
+          const fineAny = new Set(), fineMe = new Set(); for (const r of reps) for (const s of r.module.sections || []) for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) if (!fl(row)) { if (row.some(nmd)) fineAny.add(s.id); if (row.some(isMe)) fineMe.add(s.id); }
+          for (const o of SR) { if (!fineAny.has(o.x.id) || fineMe.has(o.x.id)) continue; const Y = o.pts.filter((q) => q.st !== 'na').length, lab = labelOf(o); let want = 0;
+            for (const r of mine) { const s = (r.module.sections || []).find((q) => q.id === o.x.id); if (!s) continue; const sl = o.split ? X.phSlices(r.module, s).get(o.ph) : s; if (!sl) continue; const dead = Math.min(Infinity, ...(r.deaths || []).filter((d) => d.player === p.name).map((d) => d.t));
+              const ts = (sl.groups || []).map((g) => g.t).concat((sl.rows || []).map((row) => { const c = row.find((q) => q && q.t != null); return c ? c.t : null; })).filter((v) => v != null), unT = (sl.groups || []).some((g) => g.t == null) || (sl.rows || []).some((row) => !row.some((c) => c && c.t != null)), named = (sl.rows || []).concat(...(sl.groups || []).map((g) => g.rows || [])).some((row) => row.some(isMe) || culprits(s, row, null, rx).includes(me));
+              if (ts.some((t) => t < dead) || unT || named) want++; }
+            if (Y !== want) say(where, 'one player', lab + ' is a mechanic anyone can walk into, so it counts the ' + want + ' pulls it came up while they were alive, but it reads "of ' + Y + '"'); } }
         for (const o of SR) { const own = o.pts.filter((q) => q.st === 'bad' || q.st === 'warn').map((q) => q.p), J = o.pts.filter((q) => q.st !== 'na'), lab = labelOf(o);
-          const m = /^(Failed|Some mistakes|Mistakes every pull|Done right) · (\d+) of (\d+)$/.exec((o.flag || {}).t || ''), nb = J.filter((q) => q.st === 'bad').length;
-          if (!m || +m[3] !== J.length || +m[2] !== { Failed: nb, 'Some mistakes': own.length, 'Mistakes every pull': own.length, 'Done right': J.length - own.length }[m[1]]) say(where, 'one player', lab + ' reads "' + ((o.flag || {}).t || '') + '", but it came up in ' + J.length + ' pulls with mistakes of theirs in ' + own.length);
+          const m = /^(Failed|Some mistakes|Mistakes every time|Done right) · (\d+) of (\d+) pulls it came up$/.exec((o.flag || {}).t || ''), nb = J.filter((q) => q.st === 'bad').length;
+          // 15. the flag says what its count counts, never "every pull" (Nov 12, Flex: "it says 2 of 2 pulls, but there were 19 pulls no?", "'mistakes in every pull' very misleading")
+          { const t = (o.flag || {}).t || ''; if (/every pull/i.test(t) || /\d+ of \d+\s*$/.test(t)) say(where, 'one player', lab + ' reads "' + t + '": a bare count, or "every pull"'); }
+          if (!m || +m[3] !== J.length || +m[2] !== { Failed: nb, 'Some mistakes': own.length, 'Mistakes every time': own.length, 'Done right': J.length - own.length }[m[1]]) say(where, 'one player', lab + ' reads "' + ((o.flag || {}).t || '') + '", but it came up in ' + J.length + ' pulls with mistakes of theirs in ' + own.length);
           // 12b. its trend words, the way the row draws them
           const Jv = o.pts.filter((q) => q.v != null), th = Math.max(2, Math.floor(Jv.length / 3)), avg = (L) => L.reduce((s0, q) => s0 + q.v, 0) / L.length, mv = Jv.length >= 4 ? Math.round(avg(Jv.slice(-th))) - Math.round(avg(Jv.slice(0, th))) : 0, tw = X.mxTrend(o.pts, mv);
           if (tw) { const l5 = Jv.slice(-5), E0 = Jv.slice(0, -5), wr = (L) => L.filter((q) => q.st === 'bad' || q.st === 'warn').length / Math.max(1, L.length);
