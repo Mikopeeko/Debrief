@@ -96,7 +96,15 @@ Notable: our raid takes **the same** Noxious Ground and Axegrinder damage per mi
   later in the fight). A pull is judged at its own length (up to the wipe filter), using the next point at or after it.
 - **Measure:** time standing in it (ticks ≈ seconds) for ground and pools (Noxious Ground, Defiled Ground, Caustic Residue,
   blood pools, Aftershock craters, Evil Eyes, Latent Cultist puddles); hits (times you walked into it) for everything else.
-- **Amber** ("a bit more than most"): more than 9 in 10 raiders in the fastest kills by this point (and at least 2).
+- **By role (Nov 12, Flex: "Healers also tend to stand in it a bit more because we self heal quite a bit").** Each source
+  also has a line for healers and one for damage dealers, from the same kills (`AVOID_BASE[boss][source][3]` = { h, d }).
+  A healer is judged against what 9 in 10 of the kills' healers took by that point, a damage dealer against their damage
+  dealers. The words say whose line it was ("more than 9 in 10 healers in the fastest kills by then"). Tanks, and anyone the
+  log gives no role, use the all-raiders line as before. The night's "top raiders slip on this in X% of kills" numbers
+  (`TOP_MECH`) were moved by exactly what the new lines change on the same kills, so the night and each pull agree.
+  Rebuilt from the 20 fastest saved Mythic kills of each boss after the latest tuning (the log library), with the site's own
+  engine: `rolebars/extract.js` + `build.js` + `gen.js` (copies in the Main chat's shared notes, `av/`).
+- **Amber** ("a bit more than most"): more than 9 in 10 raiders of your role in the fastest kills by this point (and at least 2).
 - **Red**: twice the amber line, a death to it, or any hit from a Dangerous source (tank frontals on non-tanks, ghosts
   touching, Falling Debris, Noxious Splash, Blast Wave, Soul Transfer).
 - **The pull's flag** (Debriefing, Fix cards, Homework): yellow only when a raider is red. One or two raiders a little over
