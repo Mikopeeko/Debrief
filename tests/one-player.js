@@ -15,6 +15,7 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
   const NEW = has('rcMechRows') && has('mxKind') && has('mechListOf');
   const base0 = ['esc', 'lpAnd', 'andList', 'plural', 'cellTxt', 'rowSay', 'rowText', 'cutModule', 'phSlices', 'lvlJudge', 'avLimAt', 'mechForPlayer', 'mechAcross', 'mxFlag', 'mxTrend', 'secSpec', 'secSpecd', 'NKG', 'NK346', 'NK283', 'nkWord283', 'TOP_MECH', 'topMechOf', 'mechJudge', 'mechTally'];
   const NAMES = base0.concat(NEW ? ['ROW_DIED', 'whoRx', 'rowWho', 'mechRepsFor', 'mechPhRows', 'mechListOf', 'mechGist', 'mechWhy', 'RCM', 'rcMechRows', 'mxKind'] : []);
+  if (has('mxUnitOf')) NAMES.push('MX_TGT', 'mxUnitOf', 'mxUnit1'); /* (Nov 12: targeted rows' words) */
   const X = H.site(NAMES, { cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], spellIcon: () => '' });
   /* (and again with a wipe call in every pull, at 60% of it: a set's flag must come from the rows left at the call (Nov 12: Gloombomb pull 6)) */
   const CUT = (r) => (r.duration || 0) * 0.6, X2 = H.site(NAMES, { cutT: CUT, keptMistakes: (r) => (r.mistakes || []).filter((m) => m.t <= CUT(r) + 0.5), spellIcon: () => '' });
@@ -114,7 +115,9 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
           // 17. Venomfang is a dispeller's job: no row for a player who was never one of its dispellers (Main's audit: Komo, Zaffia, Schooty)
           for (const o of SR) if (o.x.id === 'vf' && !mine.some((r) => { const s0 = (r.module.sections || []).find((q) => q.id === 'vf'); return s0 && (s0.targets || []).some(([n]) => lo(n) === me); })) say(where, 'one player', 'has a Venomfang row (' + o.flag.t + '), but they never dispelled it'); }
         for (const o of SR) { const own = o.pts.filter((q) => q.st === 'bad' || q.st === 'warn').map((q) => q.p), J = o.pts.filter((q) => q.st !== 'na'), lab = labelOf(o);
-          const m = /^(Failed|Some mistakes|Mistakes every time|Done right) · (\d+) of (\d+) pulls it came up$/.exec((o.flag || {}).t || ''), nb = J.filter((q) => q.st === 'bad').length;
+          const uW = o.x.tgt && X.mxUnitOf ? X.mxUnitOf(o.x.id, o.split && o.ph) : 'pulls it came up', m0 = /^(Failed|Some mistakes|Mistakes every time|Done right) · (\d+) of (\d+) (.+)$/.exec((o.flag || {}).t || ''), m = m0 && m0[4] === uW ? m0 : null, nb = J.filter((q) => q.st === 'bad').length;
+          // 22. a mechanic that names its targets says so (Nov 12, Flex: "Yes, reword them": "pulls your ghost targeted you in P3")
+          if (X.mxUnitOf && ['ghosts', 'dmghost', 'orbs', 'vf'].includes(o.x.id) && mine.some((r) => ((r.module.sections || []).find((q) => q.id === o.x.id) || {}).targets) && !o.x.tgt) say(where, 'one player', lab + ' names its targets, but reads "' + ((o.flag || {}).t || '') + '"');
           // 15. the flag says what its count counts, never "every pull" (Nov 12, Flex: "it says 2 of 2 pulls, but there were 19 pulls no?", "'mistakes in every pull' very misleading")
           { const t = (o.flag || {}).t || ''; if (/every pull/i.test(t) || /\d+ of \d+\s*$/.test(t)) say(where, 'one player', lab + ' reads "' + t + '": a bare count, or "every pull"'); }
           if (!m || +m[3] !== J.length || +m[2] !== { Failed: own.length, 'Some mistakes': own.length, 'Mistakes every time': own.length, 'Done right': J.length - own.length }[m[1]]) say(where, 'one player', lab + ' reads "' + ((o.flag || {}).t || '') + '", but it came up in ' + J.length + ' pulls with mistakes of theirs in ' + own.length);

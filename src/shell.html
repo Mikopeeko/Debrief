@@ -12176,6 +12176,8 @@ html body #view .rcb-tbl .rcb-tr { grid-template-columns: 30px minmax(150px, 1.3
 .rqc-sub { margin: 10px 0 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.06); font: 600 12px var(--head); letter-spacing: .08em; text-transform: uppercase; color: #868f99; } .rqc-sub span { text-transform: none; letter-spacing: 0; font-weight: 400; color: #6b737d; }
 html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 3 !important; min-width: 0; }
 html body #view .ds-rcard.r321 .rqc-row .rqc-wn > small { display: block; margin-top: 1px !important; }
+/* (Nov 12, Flex: "Yes, reword them": "Failed · 2 of 4 pulls your ghost targeted you in P3" reads in full under the reason, never cut off) */
+html body #view .ds-rcard.r321 .rqc-row .rqc-wn > small.rqc-note { white-space: normal; overflow: visible; text-overflow: clip; }
 @media (max-width: 699px) { html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 2 / -1 !important; grid-row: 2 !important; } html body #view .ds-rcard.r321 .rqc-row .rqc-why { font-size: 12.5px; } }
 
 /* round 322: the checks they passed show too (the user: "dont hide the things they did well") */
