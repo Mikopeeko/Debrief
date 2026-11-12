@@ -4476,14 +4476,19 @@ function buildCoiledAltar(ev, r, h) {
        leapt (12+ yd between two samples under a second apart) is measured at both spots, so a blink into an orb counts. One carrier is named only when
        they alone were within ring range (6 yd, plus 1.5 for the log's position error) and every other carrier was 10 yd or more from any orb, with
        every spot under 1.5 s old; when several were close, only the close ones stay (orbRefine); r.orbPick keeps it for Why we wiped and All pulls) */
-    { const RING = 7.5, CLEAR = 10, T0 = new Map(inst.map((i) => [i.guid, i.t0]));
+    { const RING = 7.5, CLEAR = RING + 1 /* (Nov 12: a yard outside the ring, was 10: Tyralien at 9.9 yd kept Shockabunga's 6.4 from being named) */, T0 = new Map(inst.map((i) => [i.guid, i.t0]));
       const sampAt = (g, t) => { const u = r.positions && r.positions.get(g); if (!u) return null; let b = null, a = null; for (const p of u.pts) { if (p[0] <= t) b = p; else { a = p; break; } } return { b: b && t - b[0] <= 1.5 ? b : null, a: a && a[0] - t <= 1 ? a : null }; };
       const whereAt = (g, t, fr) => { const s = sampAt(g, t), q = fr.find((p) => p.guid === g), pts = []; if (!s) return { pts, leap: false }; const leap = !!(s.b && s.a && s.a[0] - s.b[0] <= 1 && Math.hypot(s.a[1] - s.b[1], s.a[2] - s.b[2]) > 12);
         if (leap) pts.push([s.b[1], s.b[2]], [s.a[1], s.a[2]]); else if (q) pts.push([q.x, q.y]); else if (s.b) pts.push([s.b[1], s.b[2]]); return { pts, leap }; };
       const vrT = vr.filter((e) => e.op === 'apply' || e.op === 'dose' || e.op === 'rdose').map((e) => e.t);
       const waveAt = (t) => { const w = vrT.filter((x) => x >= t - 2.5 && x <= t + 0.5).sort((a, b) => a - b); for (let i = 0; i < w.length; i++) if (w.filter((x) => x >= w[i] && x <= w[i] + 0.3).length >= 5) return w[i]; return t; };
       const vrd = (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '')).map((x) => x.t).sort((x, y) => x - y).filter((t, i, l) => !i || t - l[i - 1] > 10);
-      r.orbPick = [...new Set(bursts.map((b) => b.t).concat(vrd).map(waveAt).map((t) => +t.toFixed(2)))].map((tc) => { try {
+      /* (Nov 12: every collision, by when it came: Venom Ruptures on 3+ players with no Sever or Blighted Sever landing in the 3.5 s before, outside
+         the P1 push's and Defilement's blow-ups. A burst late in a wipe can show one stack each, so stacks alone missed Kargaryen's on Nov 11) */
+      const colW = (() => { const out = []; let g = null; for (const t of vrT.slice().sort((a, b) => a - b)) { if (g && t - g.last < 4) { g.last = t; g.n++; } else { if (g) out.push(g); g = { a: t, last: t, n: 1 }; } } if (g) out.push(g);
+        return out.filter((w) => w.n >= 3 && !severs.some((sv) => sv.t >= w.a - 3.5 && sv.t <= w.a + 0.3) && !(zjDown != null && w.a >= zjDown - 1.5 && w.a <= zjDown + 6) && !defils.some((df) => w.a >= df - 0.5 && w.a <= df + 4)).map((w) => w.a); })();
+      r.orbWaves = [...new Set(bursts.map((b) => b.t).concat(vrd, colW).map(waveAt).map((t) => +t.toFixed(2)))].sort((a, b) => a - b);
+      r.orbPick = r.orbWaves.map((tc) => { try {
         const fr = (h.frames(tc, tc, 0.2)[0] || { pts: [] }).pts, pu = [...new Set(carriersAt(tc).map((c) => c.g))]; if (pu.length < 2) return null;
         const spots = new Map(pu.map((g) => [g, whereAt(g, tc, fr)])); if (pu.some((g) => !spots.get(g).pts.length)) return { t: tc, stale: true };
         /* (the orbs on the floor: this phase's (the P1 push and the phase changes clear the rest), minus the ones a frontal cone popped, like the replay) */
@@ -7893,7 +7898,9 @@ function orbRefine(r, t, names) { if (!names || names.length < 2) return names; 
   if (op.one && has(op.one)) return names.filter((x) => base(x) === base(op.one)); if (op.close && op.close.length < names.length && op.close.every(has)) return names.filter((x) => op.close.some((n) => base(n) === base(x))); return names; }
 const orbNoteAt = (r, t, who) => { const op = orbPickAt(r, t); if (!op || !op.one || !who || who.length !== 1) return ''; const d = op.dist || {}, me = d[op.one], rest = Object.entries(d).filter(([n]) => n !== op.one).map(([, v]) => v).filter((v) => v != null);
   return me == null || !rest.length ? '' : String(op.one).split('-')[0] + ' was the only carrier next to another orb: ' + Math.max(1, Math.round(me)) + ' yd from ' + (op.what || 'another orb') + (op.leap ? ', right after a blink or leap' : '') + '. The other carriers were ' + Math.round(Math.min(...rest)) + ' yd or more from any orb.'; };
-function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; return d ? orbRefine(r, d.t, orbCarriers(r, d.t)) : []; }
+/* (Nov 12: the burst a Venom Rupture death came from: the last collision at or just before it (6 s), so the carriers are read while the orb was still carried) */
+const orbWaveAt = (r, t) => { const w = ((r && r.orbWaves) || []).filter((x) => x <= t + 0.2 && t - x <= 6).sort((a, b) => b - a)[0]; return w != null ? w : t; };
+function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; if (!d) return []; const tc = orbWaveAt(r, d.t); return orbRefine(r, tc, orbCarriers(r, tc)); }
 const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
 function rootCause(r, opts) {
   opts = opts || {};
@@ -7989,7 +7996,7 @@ function rootCause(r, opts) {
       else { say(sk ? sk.t : t0, 'guil', sk ? 'the Guillotine soak had ' + sk.n + ' of 5 (' + T(sk.t) + ')' : 'the Guillotine soak was short'); say(t0, 'guil', ga + ' killed ' + trig.filter((d) => d.cat === 'guil').length); } }
     else if (wcat === 'kick') { const k = trig.find((d) => d.via).via, l = trig.filter((d) => d.via); cat = 'kick'; sure = 0.75; say(k.t, 'kick', kickLine(k, l)); }
     else if (wcat === 'orbs') { const cl = evIn('collide', t0 - 40, t0 + 1).pop(); cat = 'orbs'; sure = share >= 0.7 ? 0.9 : 0.7;
-      const fv = trig.find((d) => d.ab === 'Venom Rupture') || trig.find((d) => d.cat === 'orbs'); orbAt = fv ? fv.t : t0; orbBy = orbRefine(r, orbAt, carriersAt(orbAt)); /* (Nov 8: by position, when it's clear) */ { const ot = cl && orbAt - cl.t <= 6 ? cl.t : orbAt; say(ot, 'orbs', orbSay(orbBy) + ' (' + T(ot) + ')'); } /* (Nov 6: the burst, unless the touch logged is within 6 s of it) */ /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
+      const fv = trig.find((d) => d.ab === 'Venom Rupture') || trig.find((d) => d.cat === 'orbs'); orbAt = fv ? orbWaveAt(r, fv.t) : t0; orbBy = orbRefine(r, orbAt, carriersAt(orbAt)); /* (Nov 8: by position, when it's clear) */ { const ot = cl && orbAt - cl.t <= 6 ? cl.t : orbAt; say(ot, 'orbs', orbSay(orbBy) + ' (' + T(ot) + ')'); } /* (Nov 6: the burst, unless the touch logged is within 6 s of it) */ /* (whose orb: the carriers at the first Venom Rupture death, when the orbs went off) */ say(t0, 'orbs', 'Venom Rupture killed ' + trig.filter((d) => d.cat === 'orbs').length); }
     else if (wcat === 'shield') { cat = 'shield'; sure = share >= 0.6 ? 0.85 : 0.65; const chkN = deadAt(t0 - 0.5).length; say(t0, 'shield', 'Eternal Nightfall\'s shield wasn\'t broken in time' + (chkN >= 2 ? ' with ' + chkN + ' already dead' : '') + SEP + 'it killed ' + trig.filter((d) => d.cat === 'shield').length + ' (' + T(t0) + ')'); }
     else { cat = wcat; sure = share >= 0.7 ? 0.8 : 0.6; if (cat === 'adds') addsBomb(t0); if (cat === 'erasure') eraseSay(t0); say(t0, wcat, who3(trig) + ' died to ' + rcAnd([...new Set(trig.map((d) => d.ab))].slice(0, 2)) + ' (' + T(t0) + ')'); } }
   /* (Nov 6: pull 6 was called at the missed damage check with one death: a shield still up when the wipe was called (or finished just

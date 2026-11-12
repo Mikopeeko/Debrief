@@ -14,7 +14,10 @@ for (let i = 0; i < args.length; i++) if (args[i] === '--dir' && args[i + 1]) DI
 // the test nights: Wolfthorn's Oct 21 Coiled Altar (Mythic wipes), Wolfthorn's Oct 14 night (Kith'ix Heroic kill, Twin Fangs Mythic), and another
 // guild's all-bosses Mythic night (Oct 25)
 // (Nov 12: and Wolfthorn's Oct 22 Coiled Altar night, where Summary and the Report card disagreed about one player's mechanics)
-const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv', 'bcA9kw3mxHKzr4fR'];
+const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv', 'bcA9kw3mxHKzr4fR', 'agt6jMTyZBYvVzAP'];
+// (Nov 11's Coiled Altar: only its three disputed orb pulls are saved (fights 15, 16, 20 = pulls 14, 15, 19), checked with --all, whose carrier
+// the raw log shows at the burst (Flex, Nov 12: "yep it was shock that i know for sure was missing"))
+const ORB_WANT = { 'agt6jMTyZBYvVzAP:15': 'Kargaryen', 'agt6jMTyZBYvVzAP:16': 'Shockabunga', 'agt6jMTyZBYvVzAP:20': 'Volkovod' };
 const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28'];
 
 const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.js'));
@@ -136,7 +139,11 @@ function checkPull(key) {
   if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.line) { /* (Nov 5: an orb root cause names everyone who carried a purple orb when the orbs went off; a reset says who) */
       const oc = (r.module.sections || []).find((s) => s.id === 'orbs' && s.carry), at = (t) => (oc ? [...new Set(oc.carry.filter(([, s, e]) => t >= s - 0.2 && t <= e + 0.3).map(([n]) => n))] : []);
       const vr = (deaths) => deaths.find((d) => /^venom rupture$/i.test(d.ability || '') && d.t >= o.chain[0].t - 0.5);
-      if (o.cat === 'orbs' && o.chain[0] && o.chain[0].cat === 'orbs') { const fv = vr(r.deaths.slice().sort((a, b) => a.t - b.t)), want = fv ? at(fv.t) : []; if (want.length && !want.every((n) => o.short.includes(n) && o.line.includes(n))) say(pull, 'root', 'the orb root cause doesn\'t name its carrier (' + want.join(', ') + '): "' + o.short + '"'); }
+      /* (Nov 12: the carriers are read at the burst (r.orbWaves), not at the first death, and the root cause may name just the one whose ring touched:
+         it must name someone who held a purple then, and nobody who didn't) */
+      if (o.cat === 'orbs' && o.chain[0] && o.chain[0].cat === 'orbs') { const fv = vr(r.deaths.slice().sort((a, b) => a.t - b.t)), wv = fv ? ((r.orbWaves || []).filter((x) => x <= fv.t + 0.2 && fv.t - x <= 6).sort((a, b) => b - a)[0]) : null, tc = wv != null ? wv : fv ? fv.t : null, held = tc != null ? at(tc) : [];
+        if (held.length && !held.some((n) => o.short.includes(n) && o.line.includes(n))) say(pull, 'root', 'the orb root cause names none of the purple carriers at the burst (' + held.join(', ') + '): "' + o.short + '"');
+        for (const n of o.orbBy || []) if (!held.includes(n)) say(pull, 'root', 'the orb root cause names ' + n + ', who held no purple at the burst (' + E.fmtT(tc || 0) + ')'); }
       if (o.reset && !Array.isArray(o.reset.who)) say(pull, 'root', 'the reset doesn\'t say whose orb it was');
       /* (Nov 5, Flex: individual mistakes never point at one person; a single personal mistake is the cause only when it hit the raid at once) */
       if (o.cat === 'dead') { if ((o.marks || []).some((m) => m.k === 'root')) say(pull, 'root', 'Too many individual mistakes tags one death as the root cause');
@@ -144,7 +151,7 @@ function checkPull(key) {
       if (/^(axes|pools|frontal|ghosts|mc|bombs|orbs)$/.test(o.cat) && !/^(a wave|mass mind control)$/.test(o.why) && !o.early) say(pull, 'root', o.name + ' is the one cause of a pull worn down by separate deaths (' + o.why + ')');
       if (o.cat === 'adds' && (o.bombBy || []).some((n) => !o.short.includes(n))) say(pull, 'root', 'the add wipe doesn\'t name whose Gloombomb missed');
       /* (Main, Nov 5: All pulls' "Carried the orb that burst" lists the root cause's own carriers, the same rule as the sentence) */
-      if (o.cat === 'orbs') { const ob = o.orbBy || [], want = o.orbAt != null ? E.orbBurstBy(r, o.orbAt - 0.01, o.orbAt + 0.01) : [];
+      if (o.cat === 'orbs') { const ob = o.orbBy || [], want = o.orbAt != null ? E.orbBurstBy(r, o.orbAt - 0.01, o.orbAt + 6.5) : []; /* (Nov 12: orbAt is the burst; its first Venom Rupture death can come a few seconds later) */
         if (JSON.stringify(ob) !== JSON.stringify(want)) say(pull, 'root', 'the orb root cause names ' + (ob.join(', ') || 'no one') + ', but the one rule at ' + E.fmtT(o.orbAt || 0) + ' gives ' + (want.join(', ') || 'no one'));
         if (!ob.every((n) => o.line.includes(n))) say(pull, 'root', 'the orb root cause\'s carriers (' + ob.join(', ') + ') aren\'t in its line'); }
       if (!o.early && o.chain && o.chain[0] && o.chain[0].t > o.t + 0.5) say(pull, 'root', 'the root cause (' + o.name + ', ' + E.fmtT(o.chain[0].t) + ') comes after the moment the pull was lost (' + E.fmtT(o.t) + ', ' + o.why + ')');
@@ -180,6 +187,8 @@ function checkPull(key) {
   for (const q of r.insights || []) clean(pull, 'insight', q.text);
   // 3. deaths: each counted once
   const seen = new Set(); for (const d of r.deaths || []) { const k = d.player + '@' + Math.round(d.t); if (seen.has(k)) say(pull, 'count', d.player + ' died twice at ' + E.fmtT(d.t) + ' (a death counted twice)'); seen.add(k); }
+  // whose purple orb burst: the one carrier the raw log shows at the burst (ORB_WANT)
+  if (ORB_WANT[key] && E.orbBurstBy) { const by = E.orbBurstBy(r, 0, 1e9).map((n) => String(n).split('-')[0]); if (by.length !== 1 || by[0] !== ORB_WANT[key]) say(pull, 'wipes', 'whose purple orb burst: the site says ' + (by.join(' or ') || 'nobody') + ', the log shows ' + ORB_WANT[key] + ' (Flex, Nov 12)'); }
   if (oldCopy) for (let i = P.length - 1; i >= P0; i--) if (/Spell undefined/.test(P[i].msg)) P.splice(i, 1);
   return true;
 }
@@ -336,7 +345,7 @@ if (!UI.includes("'Eternal Nightfall cast started (' + shieldN + '). The raid wi
 if (!UI.includes('try { outForget(); }') || !UI.includes("const FRESH_V = '2026-11-08'") || !UI.includes('async function teamsFromServer()') || !UI.includes('const guestLock = () =>')) say('the page code', 'sign-in', 'Sign out leaves the raider on this browser, the one-time fresh start is gone, the teams list no longer comes from the account, or signed out is no longer a guest (Flex, Nov 8)');
 { const WT2 = require('fs').readFileSync(require('path').join(SRC, 'worker_template.js'), 'utf8'); if (!WT2.includes("if (!who) return json({ exists: true, locked: true, signin: true") || !WT2.includes("if (!who) return { acc: 'none', why: 'signin' };")) say('the page code', 'sign-in', 'a team plan opens without a Battle.net sign-in again (Flex, Nov 8)'); }
 if (!UI.includes("if (method === 'POST') { const mn = whoMain(); A.busy = false; close();")) say('the page code', 'sign-in', 'Save in Your characters no longer says Saved and closes (Flex, Nov 8)');
-{ const EN2 = require('fs').readFileSync(require('path').join(SRC, 'engine.js'), 'utf8'); if (!EN2.includes('orbBy = orbRefine(r, orbAt, carriersAt(orbAt));') || !EN2.includes('const RING = 7.5, CLEAR = 10') || !EN2.includes('const gnd = objs(tc, ph0)')) say('the page code', 'wipes', 'an orb wipe no longer names the carrier by position, or forgets orbs left from an earlier Deluge (Flex, Nov 8)'); }
+{ const EN2 = require('fs').readFileSync(require('path').join(SRC, 'engine.js'), 'utf8'); if (!EN2.includes('orbAt = fv ? orbWaveAt(r, fv.t) : t0; orbBy = orbRefine(r, orbAt, carriersAt(orbAt));') || !EN2.includes('const RING = 7.5, CLEAR = RING + 1') || !EN2.includes('const gnd = objs(tc, ph0)') || !EN2.includes('r.orbWaves = ') || !EN2.includes('const tc = orbWaveAt(r, d.t); return orbRefine(r, tc, orbCarriers(r, tc));')) say('the page code', 'wipes', 'an orb wipe no longer names the carrier by position at the burst, forgets orbs left from an earlier Deluge, or misses a collision late in a wipe (Flex, Nov 8 and Nov 12)'); }
 if (!UI.includes('var names = (who || []).concat(ROS)')) say('the page code', 'wipes', 'How it went colours only a row\'s own names again (Flex, Nov 8)');
 { const SH2 = require('fs').readFileSync(require('path').join(SRC, 'shell.html'), 'utf8'); if (!SH2.includes("var colours = function () { var C = {}; /* (Nov 8, Main: the pull's roster first")) say('the page code', 'wipes', 'Raid checks names lose their class colour again (Main, Nov 8)'); }
 { const SH3 = require('fs').readFileSync(require('path').join(SRC, 'shell.html'), 'utf8'); if (!SH3.includes('@layer defaultTheme { html:not([data-theme]) body.refine .op-pick select#opP')) say('the page code', 'looks', 'the Everyone chip\'s dropdown draws its own border again (Flex, Nov 8)'); }

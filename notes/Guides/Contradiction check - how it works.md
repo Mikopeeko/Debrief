@@ -61,3 +61,5 @@ always has it).
 ## When it fails
 Read the line: it names the pull, the mechanic and what doesn't match. Fix the engine or the page, never the check, unless the check
 itself is wrong (then say why in the commit).
+
+- **Whose purple orb burst (Nov 12).** The carrier is read at the burst (the first Venom Rupture of a collision), not at the first death. One carrier is named when their ring was inside another orb (7.5 yd) and every other carrier was a yard or more outside (8.5 yd). Every collision counts, even late in a wipe (ruptures with no Sever just before). With `--all`, Nov 11 pulls 14, 15 and 19 (agt6jMTyZBYvVzAP fights 15, 16, 20) must name Kargaryen, Shockabunga and Volkovod, as the raw log shows.
