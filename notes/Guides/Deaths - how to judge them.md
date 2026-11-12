@@ -273,3 +273,18 @@ Columns: the hit that killed them (size as % of their max health), health 15/10/
 | 19 | 4:59 | Vandagos (Protection Warrior) | Soul Sever 156% | 95%→94%→88%→81% · RAID Spiritcackle @4:58 High: 2 players died to Retaliatory Malice whi | own 1 — On the second stack use a defensive plus two externals, or s | own 1 | fair |
 | 19 | 5:01 | Arsyn (Affliction Warlock) | Retaliatory Malice 20% | 87%→100%→84%→77% · RAID Spiritcackle @4:58 High: 2 players died to Retaliatory Malice whi | own 1 — Only you can see your ghost on Mythic. Hold it near the mark | own 1 | fair |
 | 19 | 5:05 | Kargaryen (Devastation Evoker) | Malevolent Resonance 39% | 44%→100%→35%→27% · Malevolent Resonance @5:00 High: Their ghost touched another ghost (wi | own 1 — Only you can see your ghost on Mythic. Hold it near the mark | own 1 | fair |
+
+## Nov 12: three buckets, one rule (Main's plan, Flex: "ok fix it")
+Every death is in one bucket, the same on every page (deathVerdict: `bucket`, `label`, `say`):
+- **You**: their own mistake killed them, or a slow death with a defensive, Healthstone or potion still ready (also a healing gap or the
+  Guillotine target with one ready).
+- **The raid**: someone else's mistake (a missed kick, another player's orb), a mass death, mind control, a slow death with nothing left to
+  press, not enough healing, and every death after the wipe.
+- **Unlucky**: a one-shot (too fast to react) that wasn't their own mistake.
+Only deaths before the wipe count: before the wipe call and before a quarter of the raid is dead (`quarterDead`, 5 of 20; a kill has no wipe).
+No halves: a You death weighs 1, the rest 0. Each death costs once, in Staying alive's Deaths on you: the Mechanics rows still say "died to it",
+but a death never marks a mechanic down (no `40 x death share`, mechJudge ignores it), and "Defensive before dying" and "Healthstone or health
+potion" are information, not graded. The hover everywhere is `say`: "You: died to Sever, your mistake", "The raid: the wipe was on",
+"Unlucky: one-shot by ...". The roster's column is Own deaths (green none, amber 1-2, red 3+), hover listing each. Checks: tests/deaths-check.js
+(run by contradictions.js on every saved death).
+Not changed: fight modules that mark a row red because someone died in it (the Coiled Altar tank frontal's "died" cell) still do.
