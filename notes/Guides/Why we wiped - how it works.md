@@ -83,3 +83,11 @@ Flex: "oh lord this only applies to one boss?!". The other nine bosses share `ro
   their own", never "each player dodges it".
 - A High Pace line in the last 30 s is in what added up as "Not enough damage" (Vashnik at 8% at the 6th Imbibe).
 The Ula'tek wipes reviewed on Nov 10 read the same as before.
+
+## Nov 12: How it went reads clean
+Flex ("clean?") on "Shockabunga died to Frost Burst because 1 player died to Frost Burst while Abyssal Rain was ticking":
+- A death row never explains a death with the raid line that counts it: it keeps only that line's why ("... while Abyssal Rain was ticking"),
+  or "hit by Retaliatory Malice while set 5's adds were alive" when the line names another hit (deathBrief's fp, src/ui.js).
+- A raid line that only counts the dead goes when 80% of the deaths it counts are in death rows beside it (wipeChain).
+- A player's own row goes when the group death row beside it names them for the same hit.
+- A row's first sentence ends at . ! or ? before a capital or the end: "at Pop! 2." no longer reads "at Pop!.".
