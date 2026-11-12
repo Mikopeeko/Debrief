@@ -113,7 +113,7 @@ function pgOpen(root, boss, d) {
       teamWhy = 'state ' + (st && st.k) + ', plans ' + L.length + ', picked ' + (n ? planNm(n) : 'none') + ', on ' + on.size; if (!n) return null;
       const U = ulRead(noteResolve(n.text));
       const P = pnPeople(o).filter((q) => !q.bench && (!on.size || on.has(lc(q.n)))); teamWhy += ', people ' + P.length + ', teams ' + U.teams.map((x) => x.length).join('/'); if (P.length < 10) return null;
-      const byN = new Map(P.map((q) => [lc(q.n), q])), mains = P.map((q) => String(q.n).split('-')[0]), al = (x) => { const k = lc(x); if (byN.has(k) || typeof altOf !== 'function') return k; const m = altOf(String(x).split('-')[0], mains); return m ? lc(m) : k; }; /* (an alt in the plan counts as their main) */
+      const byN = new Map(P.map((q) => [lc(q.n), q])), mains = P.map((q) => String(q.n).split('-')[0]), AM = new Map(pnPeople(o, { alts: true }).filter((q) => q.alt).map((q) => [lc(q.n), lc(q.alt)])), al = (x) => { const k = lc(x); if (byN.has(k)) return k; if (AM.has(k) && byN.has(AM.get(k))) return AM.get(k); if (typeof altOf !== 'function') return k; const m = altOf(String(x).split('-')[0], mains); return m ? lc(m) : k; }; /* (an alt in the plan counts as their main) */
       const id2 = {}, used = new Set(), put = (x, id) => { const q = byN.get(al(x)); if (q && !used.has(q) && !id2[id]) { id2[id] = q; used.add(q); } };
       [['melee', ['m1', 'm2']], ['left', ['r5', 'r3']], ['right', ['r6', 'r4']], ['far', ['r1', 'r2']]].forEach(([z, ids]) => (U.ez[z] || []).slice(0, 2).forEach((x, i) => put(x, ids[i])));
       const free = (L) => GDZ_RAID.filter((id) => L.includes(id[0]) && !id2[id]), rk = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 1 : 2);
