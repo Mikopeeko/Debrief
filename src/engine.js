@@ -4013,7 +4013,8 @@ function buildCoiledAltar(ev, r, h) {
   /* (Nov 12, Main's audit: a slow dispel was filed under the player who had the poison (Komo, Zaffia, Schooty can't dispel it). The slip's sentence
      names the dispellers who had one free, and nobody when none was) */
   const vfSay = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
-    return x.free.length ? lst(x.free.slice(0, 3)) + (x.free.length === 1 ? ' had a dispel ready' : ' had dispels ready') + ', and Venomfang stayed on for ' + took + '.' : 'Venomfang stayed on for ' + took + ', with no dispel free.'; };
+    /* (Nov 12, Flex: "Its counting other peoples mistakes in my report card": with several dispels ready and nobody assigned, a slow one is the raid's, not each healer's) */
+    return x.free.length === 1 ? x.free[0] + ' had the only dispel ready, and Venomfang stayed on for ' + took + '.' : x.free.length > 1 ? 'Venomfang stayed on for ' + took + ' with ' + x.free.length + ' dispels ready and nobody on it.' : 'Venomfang stayed on for ' + took + ', with no dispel free.'; };
   if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', targets: vfRows.flatMap((x) => vfDis.map((d) => [nm0(d), x.t])) /* (who it's a job for: the poison dispellers) */, place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
     verdict: vfRows.some((x) => x.slow) ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red; Nov 5: one listed slip is amber, never green)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
