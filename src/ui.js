@@ -12873,24 +12873,29 @@ function cutModule(m, t) {
 // player picked, Summary counted a pull against them whenever a flagged line merely mentioned them, someone else's mistake included ("Failed ·
 // 4 of 4" on Gloombomb for Urgdragon, whose own were 2). Whose mistake a flagged row is, read the way Summary's Mistakes list names it: the
 // players its line names, else its flagged player cells, else its first player; nobody when there's none ("Not one person"). Players listed
-// only as the ones it killed ("Volkovod 4:32, Earthday 4:34 died") are who it killed, not whose mistake it was)
-const ROW_DIED = /^\s*[^,:]+? \d+:\d\d(?:\s*,\s*[^,:]+? \d+:\d\d)*,?\s+died\s*$/;
+// only as the ones it killed ("Volkovod 4:32, Earthday 4:34 died", "Urgdragon died" in a soak too few soaked) are who it killed, not whose
+// mistake it was. Names only in brackets are details ("Soul Sever missed 5 ghosts (Urgdragon's, Kargaryen's, …)": the aim's, Nov 8 M7), so
+// the row's own player (the tank who aimed it) is whose it is)
+const ROW_DIED = /^\s*[\p{L}'’-]+(?: \d+:\d\d)?(?:\s*(?:,|and)\s*[\p{L}'’-]+(?: \d+:\d\d)?)*,?\s+died\s*$/u;
 const whoRx = (r) => { if (r._whoRx) return r._whoRx; const ns = [...new Set([...r.players.values()].map((p) => String(p.name || '').split('-')[0]).filter((n) => n.length >= 3))].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return (r._whoRx = ns.length ? new RegExp('(?<![\\p{L}\\p{N}])(' + ns.join('|') + ')(?![\\p{L}\\p{N}])', 'gu') : null); };
 function rowWho(s, row, g, rx) {
   const fl = (row || []).filter((c) => c && (c.bad || c.warn)); if (!fl.length) return [];
   const base = (n) => String(n).split('-')[0];
   let line = String(rowSay(row) || (g && g.title ? g.title + ', ' : '') + rowText(s, row)).replace(/<[^>]+>/g, '');
-  for (const c of fl) if (c.txt != null && ROW_DIED.test(String(c.txt))) line = line.split(String(c.txt)).join(' '); /* (the ones it killed) */
-  const L = rx ? [...new Set(line.match(rx) || [])] : []; if (L.length) return L;
+  const vic = new Set(); for (const c of fl) { if (c.txt != null && ROW_DIED.test(String(c.txt))) { for (const n of String(c.txt).match(rx) || []) vic.add(n); line = line.split(String(c.txt)).join(' '); } /* (the ones it killed) */
+    else if (!c.txt && (c.p || c.ps) && /^died$/i.test(String((s.cols || [])[row.indexOf(c)] || ''))) for (const n of c.p ? [c.p] : c.ps) vic.add(base(n)); } /* (and its Died column: "Volkovod and Vandagos died" in a soak too few soaked) */
+  let out = line; for (let i = 0; i < 3; i++) out = out.replace(/\([^()]*\)/g, ' ');
+  const L = rx ? [...new Set(out.match(rx) || [])] : []; if (L.length) return L.filter((n) => !vic.has(n));
   const named = fl.filter((c) => c.p || c.ps).flatMap((c) => (c.p ? [c.p] : c.ps)).map(base); if (named.length) return [...new Set(named)];
+  if (rx && (line.match(rx) || []).length) { const own = row.find((c) => c && c.p); return own ? [base(own.p)] : []; } /* (names only in brackets: the row's own player) */
   const first = row.find((c) => c && c.t == null && !c.map && !c.maps && !c.more); return first && first.p ? [base(first.p)] : [];
 }
 function mechForPlayer(m, name, r) {
   const p = [...r.players.values()].find((x) => x.name === name), g = p && p.guid, base = name.split('-')[0];
   const re = new RegExp('(^|[^\\p{L}])' + base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^\\p{L}])', 'iu');
   const inMap = (mp) => !!(mp && g && (['hl', 'bad', 'good', 'warn'].some((k) => (mp[k] || []).includes(g)) || (mp.goodAt || []).some((x) => x[0] === g) || (mp.badAt || []).some((x) => x[0] === g)));
-  const about = (row) => row.some((x) => x && (x.p === name || (x.ps || []).includes(name) || (x.pt || []).some((y) => y[0] === name) || (x.txt != null && re.test(String(x.txt))) || (x.sub != null && re.test(String(x.sub))) ||
+  const about = (row) => row.some((x) => x && (x.p === name || (x.ps || []).includes(name) || (x.pt || []).some((y) => y[0] === name) || (x.txt != null && re.test(String(x.txt))) || (x.sub != null && re.test(String(x.sub))) || (x.say != null && re.test(String(x.say))) /* (Nov 12: a row whose sentence names them: "One of Boltzzx's, Arsyn's or Komo's purple orbs…") */ ||
     inMap(x.map) || (x.maps || []).some((y) => inMap(y[1])) || (x.death && x.death.player === name)));
   const worst = (rows) => (rows.some((row) => row.some((x) => x && x.bad)) ? 'bad' : rows.some((row) => row.some((x) => x && x.warn)) ? 'warn' : 'good');
   /* (Nov 12: a flagged row about them that is someone else's mistake stays in their view, unflagged (xo), so it never counts against them) */
@@ -18177,7 +18182,7 @@ function mechAcross(reps) {
       };
       x.per.set(r.item.pull, ent(s.groups || [], s.rows));
       // (a mechanic that came up in more than one phase has a result in each, so All pulls lists it under every phase it happened in, the way a single pull does (Oct 28))
-      if (phs.length > 1 && s.id !== 'avoid' && !s.info) for (const [pn, q] of phSlices(m, s)) { let mp = x.perPh.get(pn); if (!mp) x.perPh.set(pn, mp = new Map()); mp.set(r.item.pull, ent(q.groups, q.rows)); }
+      if (phs.length >= 1 && s.id !== 'avoid' && !s.info /* (Nov 12: a pull that ended in phase 1 counts in its phase too, or a mechanic listed per phase left it out) */) for (const [pn, q] of phSlices(m, s)) { let mp = x.perPh.get(pn); if (!mp) x.perPh.set(pn, mp = new Map()); mp.set(r.item.pull, ent(q.groups, q.rows)); }
     }
   }
   return order.map((id) => secs.get(id));

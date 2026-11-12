@@ -24,14 +24,18 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
   const lo = (n) => String(n || '').split('-')[0];
   const BAD = [[/\bsomeone's\b/i, '"someone\'s"'], [/\ba player's,? (?:or|and) a player's\b/i, '"a player\'s or a player\'s"'],[/(?:\band|,)\s+one\s+ghosts?\b/i, '"one ghost" with its name missing'], [/\bat\s*[,.;:]|\bat\s*$/i, 'a time missing ("at ," / "at.")'], [/\bfor (?:avoidable )?damage\b/i, '"for damage" with its number missing'], [/\b([A-Za-z]{3,})\s+\1\b/i, 'a doubled word']];
   const text = (where, who, t) => { const s = String(t || ''); for (const [re, what] of BAD) { const m = re.exec(s); if (m && !/\b(that that|had had)\b/i.test(m[0])) { say(where, 'one player', who + ': ' + what + ' in "' + s.slice(Math.max(0, m.index - 50), m.index + 50) + '"'); return; } } };
-  // (whose mistake a flagged row is, written out again here: the names its line gives, less the ones it only says it killed; else its flagged
-  //  player cells; else its first player; else nobody)
-  const DIED = /^\s*[^,:]+? \d+:\d\d(?:\s*,\s*[^,:]+? \d+:\d\d)*,?\s+died\s*$/;
+  // (whose mistake a flagged row is, written out again here: the names its line gives outside brackets, less the ones it only says it killed;
+  //  else its flagged player cells; names only in brackets are details, so the row's own player ("Soul Sever missed 5 ghosts (A's, B's…)" is
+  //  the tank's aim); else its first player; else nobody)
+  const DIED = /^\s*[\p{L}'’-]+(?: \d+:\d\d)?(?:\s*(?:,|and)\s*[\p{L}'’-]+(?: \d+:\d\d)?)*,?\s+died\s*$/u;
   const culprits = (s, row, g, rx) => { const fl = row.filter((c) => c && (c.bad || c.warn)); if (!fl.length) return [];
     let line = String(X.rowSay(row) || (g && g.title ? g.title + ', ' : '') + X.rowText(s, row)).replace(/<[^>]+>/g, '');
-    for (const c of fl) if (c.txt != null && DIED.test(String(c.txt))) line = line.split(String(c.txt)).join(' ');
-    const L = [...new Set(line.match(rx) || [])]; if (L.length) return L;
+    const vic = new Set(); for (const c of fl) { if (c.txt != null && DIED.test(String(c.txt))) { for (const n of String(c.txt).match(rx) || []) vic.add(n); line = line.split(String(c.txt)).join(' '); }
+      else if (!c.txt && (c.p || c.ps) && /^died$/i.test(String((s.cols || [])[row.indexOf(c)] || ''))) for (const n of c.p ? [c.p] : c.ps) vic.add(lo(n)); }
+    let out = line; for (let i = 0; i < 3; i++) out = out.replace(/\([^()]*\)/g, ' ');
+    const L = [...new Set(out.match(rx) || [])]; if (L.length) return L.filter((n) => !vic.has(n));
     const nm = fl.filter((c) => c.p || c.ps).flatMap((c) => (c.p ? [c.p] : c.ps)).map(lo); if (nm.length) return [...new Set(nm)];
+    if ((line.match(rx) || []).length) { const own = row.find((c) => c && c.p); return own ? [lo(own.p)] : []; }
     const first = row.find((c) => c && c.t == null && !c.map && !c.maps && !c.more); return first && first.p ? [lo(first.p)] : []; };
   // (Summary's rows for one player, from the page's own pieces; older code builds them inline the same way)
   const sumRows = (reps, name, Xv) => { Xv = Xv || X; if (NEW) return Xv.mechListOf(reps, name);
