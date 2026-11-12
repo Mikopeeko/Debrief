@@ -3842,7 +3842,7 @@ function buildCoiledAltar(ev, r, h) {
       { txt: clipped.filter((c) => c.t >= d && c.t < end).length + ' clipped', bad: clipped.some((c) => c.t >= d && c.t < end) },
       { txt: leftover.some((x) => x.t === end) ? 'orb left at next Deluge' : bursts.some((b) => b.t >= d && b.t < end) ? 'orbs collided' : 'clean', bad: leftover.some((x) => x.t === end) || bursts.some((b) => b.t >= d && b.t < end) }];
   });
-  sections.push({ id: 'orbs', title: 'Orbs (Cleanup)', place: 'Orb cleanup', spell: S('virulent mutation'), mythicOnly: true, carry: carry.map((c) => [pname(c.g), +c.s.toFixed(1), +c.e.toFixed(1)]), /* (who carried a purple orb when: the root cause names whose orb went off (Nov 5)) */
+  sections.push({ id: 'orbs', title: 'Orbs (Cleanup)', place: 'Orb cleanup', spell: S('virulent mutation'), mythicOnly: true, targets: ['mutagenic venom', 'volatile venom'].flatMap((n) => auras(n).filter((e) => e.op === 'apply' && (e.id == null || e.id === 1310498 || e.id === 1282419)).map((e) => [String(pname(e.dst)).split('-')[0], e.t])) /* (the carry itself, by ID: the hit near a carrier shares the name) */ /* (Nov 12, Main: an orb is their job when they carry one, purple or green) */, carry: carry.map((c) => [pname(c.g), +c.s.toFixed(1), +c.e.toFixed(1)]), /* (who carried a purple orb when: the root cause names whose orb went off (Nov 5)) */
     verdict: bursts.length || leftover.length ? 'bad' : 'good', /* (fix 7: purple-carrier clips are judged in Avoidable damage) */
     summary: [pl(deluges.length, 'Toxic Deluge cycle'), pl(carry.length, 'purple orb pickup'), pl(clipped.length, 'player') + ' clipped by carriers', pl(bursts.length, 'orb collision'), pl(leftover.length, 'orb') + ' left at a Deluge'].join(', ') +
       (p2 != null ? '. Venom Rupture after the P1 push: up to ' + pushMax + ' stacks' + (pushMax > 11 ? ' (the plan is 9 to 11)' : '') + '.' : '.'),
@@ -4010,12 +4010,16 @@ function buildCoiledAltar(ev, r, h) {
     if (!vfDis.length) return { why: 'Nobody dispelled Venomfang this pull, so it stayed on for ' + took + '.', next: 'Give one poison dispeller (a Druid, Monk, Holy or Protection Paladin, or Evoker) the Venomfang job.' };
     const why = (x.by ? nm0(x.by) + ' took ' + took + ' to dispel it.' : 'Nobody dispelled it, so it stayed on for ' + took + '.') + (atOnce ? ' ' + (atOnce + 1) + ' landed at once.' : '') + (free.length ? ' ' + lst(free.slice(0, 3)) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : ' Every dispeller had just used theirs') + (x.busy ? ', and it landed during ' + x.busy + ' with the healers on the raid' : '') + (x.soft ? ', so it isn\'t counted as a slip' : '') + '.'; /* (Nov 9 wording pass: one fact a sentence) */
     return { why, next: free.length ? free[0] + ' takes the next Venomfang as soon as it lands.' : atOnce ? 'Split the dispels: one dispeller per Venomfang when several land together.' : 'Keep one dispel free for Venomfang (it comes every 35 s or so).' }; };
-  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
+  /* (Nov 12, Main's audit: a slow dispel was filed under the player who had the poison (Komo, Zaffia, Schooty can't dispel it). The slip's sentence
+     names the dispellers who had one free, and nobody when none was) */
+  const vfSay = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
+    return x.free.length ? lst(x.free.slice(0, 3)) + (x.free.length === 1 ? ' had a dispel ready' : ' had dispels ready') + ', and Venomfang stayed on for ' + took + '.' : 'Venomfang stayed on for ' + took + ', with no dispel free.'; };
+  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', targets: vfRows.flatMap((x) => vfDis.map((d) => [nm0(d), x.t])) /* (who it's a job for: the poison dispellers) */, place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
     verdict: vfRows.some((x) => x.slow) ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red; Nov 5: one listed slip is amber, never green)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
-    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x) }, { p: pname(x.g) }, { txt: x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14s)' : !x.by ? 'not dispelled (gone after ' + x.took.toFixed(1) + 's)' : x.slow ? 'slow dispel (' + x.took.toFixed(1) + 's)' : 'dispelled in ' + x.took.toFixed(1) + 's', /* (plain words (the user, Oct 28)) */ warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
+    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x), ...(x.slow ? { say: vfSay(x) } : {}) }, { p: pname(x.g) }, { txt: x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14s)' : !x.by ? 'not dispelled (gone after ' + x.took.toFixed(1) + 's)' : x.slow ? 'slow dispel (' + x.took.toFixed(1) + 's)' : 'dispelled in ' + x.took.toFixed(1) + 's', /* (plain words (the user, Oct 28)) */ warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
     // how many each player dispelled
     extra: (() => { const by = new Map(); for (const x of vfRows) if (x.by) by.set(pname(x.by), (by.get(pname(x.by)) || 0) + 1); return by.size ? { title: 'Dispels by player', items: [...by].sort((a, b) => b[1] - a[1]).map(([p, n]) => ({ p, n })) } : null; })() });
 
@@ -4649,7 +4653,7 @@ function buildCoiledAltar(ev, r, h) {
         if (g.n) g.sub += (g.sub ? ' · ' : '') + pl(g.n, 'fall'); }
       sections.push({ id: 'dmghost', title: 'Dreadmarch (Break your shield)', place: 'Dreadmarch: the mind controls', spell: S('dreadmarch'), verdict: mcItems.length ? 'bad' : 'good',
         summary: 'It shows each Dreadmarch: who was mind controlled, the crowd control that landed on them, and anyone who walked off the edge. Every row has its map.',
-        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
+        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups, targets: auras('dreadmarch').filter((e) => e.op === 'apply').map((e) => [String(pname(e.dst)).split('-')[0], e.t]) /* (Nov 12, Main: a Dreadmarch is theirs when its debuff lands on them) */ });
     }
     // 2) the ghosts: two ghosts touching (Malevolent Resonance), or a ghost reaching the player it follows. The log shows that as the
     // player mind controlled again: a Dreadmarch debuff with no Dreadmarch cast just before it
@@ -4675,7 +4679,7 @@ function buildCoiledAltar(ev, r, h) {
         g.sub = (nC ? pl(nC, 'ghost collision') : 'no ghost collisions') + (nR ? ' · ' + pl(nR, 'ghost') + ' reached ' + (nR === 1 ? 'its player' : 'their players') : '') + (nM ? ' · ' + pl(nM, 'ghost') + ' missed the frontal' : ''); }
       sections.push({ id: 'ghosts', title: 'Manifestation of Dread (Stare at yours)', place: 'Dreadmarch: the ghosts', spell: S('dreadmarch'), verdict: ghItems.some((x) => x.row.some((c) => c && c.bad)) ? 'bad' : ghItems.length ? 'warn' : 'good',
         summary: 'Each freed player gets a ghost that follows them and only moves while they aren\'t looking at it. It shows ghosts touching another ghost (Malevolent Resonance) and ghosts that reached their player and mind controlled them again. Maps show the ghosts where they spawned; the log has no later positions for them.',
-        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups });
+        cols: ['What', 'When', 'Who', 'Result', ''], rows: [], groups, targets: auras('unnerving fixation').filter((e) => e.op === 'apply' && (e.id == null || e.id === 1285911)).map((e) => [String(pname(e.dst)).split('-')[0], e.t]) /* (Nov 12, Main: a ghost is theirs when its Unnerving Fixation lands on them) */ });
     }
     // 3) Soul Sever: the tank frontal destroys the ghosts it hits (a missed ghost is walked back for the next frontal (Oct 21): not a mistake)
     /* (Nov 8, Flex: Soul Sever never casts in P3 (26 saved pulls); the ghosts a P3 Blighted Sever cleared sit on that frontal's own Tank frontals row, with its map) */
@@ -6976,7 +6980,10 @@ function* analyzeSteps(item, text, opts) {
   for (const d of r.deaths) { const p = r.players.get(d.guid), dm = p && p.debuffs && p.debuffs.get('Dreadmarch'); if (!dm || /^(dreadmarch|malevolent resonance)$/i.test(String(d.ability || ''))) continue;
     if (!dm.sp.some(([a0, b0]) => a0 <= d.t + 0.1 && a0 >= d.t - 20 && (b0 == null || b0 >= d.t - 6))) continue;
     const me = String(p.name || '').split('-')[0], mx = (r.pMax && r.pMax.get(d.guid)) || 0;
-    const kh = (d.recap || []).filter((x) => !x.heal && x.amount > 0 && x.t <= d.t + 0.05 && String(x.src || '').split('-')[0] !== me && (!mx || x.amount >= 0.1 * mx)).pop();
+    /* (Nov 12, Main's audit: Zaffia, mind controlled, died to the raid's own hits ("Elemental Blast"): a raider's hit on a mind-controlled player is
+       Dreadmarch's doing, so only an enemy's hit keeps its own name) */
+    const raid = new Set([...r.players.values()].map((q) => String(q.name || '').split('-')[0]));
+    const kh = (d.recap || []).filter((x) => !x.heal && x.amount > 0 && x.t <= d.t + 0.05 && String(x.src || '').split('-')[0] !== me && !raid.has(String(x.src || '').split('-')[0]) && (!mx || x.amount >= 0.1 * mx)).pop();
     if (kh && d.t - kh.t <= 0.5 && !/^falling$/i.test(kh.spell || '')) continue;
     d.via = d.ability; d.ability = 'Dreadmarch'; d.abilityId = 1285643; d.killer = 'Hex Lord Malacrass'; }
   for (const d of r.deaths) { const p = r.players.get(d.guid); d.color = p ? p.color : '#9aa0ac'; d.icon = p && p.icon; d.specIcon = p && p.specIcon; d.spec = p ? p.specName : ''; }
@@ -7674,6 +7681,7 @@ function explainDeaths(r) {
     // (Nov 8, audit D2: the hit that killed them is the biggest of their last 4 s when it was well over the finishing tick (a 527k Venom Rupture, then a 20k venom tick), else the last hit; every verdict below reads it)
     const lastHit = hits[hits.length - 1] || null, big0 = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null), bigOk = !!(big0 && lastHit && big0 !== lastHit && big0.amount >= 1.5 * lastHit.amount && big0.amount >= 0.1 * ((r.pMax && r.pMax.get(d.guid)) || 0)); /* (and a tenth of their health: an 11k orb tick is not the hit that killed them) */
     d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0);
+    if (/^dreadmarch$/i.test(d.ability || '')) { d.kill = d.ability; d.killId = d.abilityId || 0; } /* (Nov 12, Main's audit: mind controlled, the raid's big hit (Zaffia's "Elemental Blast") is Dreadmarch's doing, on every page) */
     // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed
     // from the last moment they were at 50%+, not 90% (deaths research, Oct 22). Tanks sit at half health on purpose: from 90%+, as before)
     const hl0 = (r.php && r.php.get(d.guid)) || []; let l50 = null; for (const [ts, fr] of hl0) { if (ts > d.t) break; if (fr >= 0.5) l50 = ts; }

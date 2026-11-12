@@ -34,6 +34,7 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
       else if (!c.txt && (c.p || c.ps) && /^died$/i.test(String((s.cols || [])[row.indexOf(c)] || ''))) for (const n of c.p ? [c.p] : c.ps) vic.add(lo(n)); }
     let out = line; for (let i = 0; i < 3; i++) out = out.replace(/\([^()]*\)/g, ' ');
     const L = [...new Set(out.match(rx) || [])]; if (L.length) return L.filter((n) => !vic.has(n));
+    if (X.rowSay(row) && !(line.match(rx) || []).length) return [];
     const nm = fl.filter((c) => c.p || c.ps).flatMap((c) => (c.p ? [c.p] : c.ps)).map(lo); if (nm.length) return [...new Set(nm)];
     if ((line.match(rx) || []).length) { const own = row.find((c) => c && c.p); return own ? [lo(own.p)] : []; }
     const first = row.find((c) => c && c.t == null && !c.map && !c.maps && !c.more); return first && first.p ? [lo(first.p)] : []; };
@@ -52,6 +53,10 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
     if (/Getting better/.test(say2)) say('trend words', 'one player', 'the last 5 pulls had more mistakes than before, and the trend says "' + say2 + '"'); }
   { const P = (st) => ({ st }), a = X.mxFlag([P('bad'), P('bad'), P('ok')]), b = X.mxFlag([P('warn'), P('warn')], 'times'), c = X.mxFlag([P('warn'), P('bad'), P('warn')]);
     for (const [g, want] of [[a, /^Failed · 2 of 3 pulls it came up$/], [b, /^Mistakes every time · 2 of 2 times$/], [c, /^Mistakes every time · 3 of 3 pulls it came up$/]]) if (!g || !want.test(g.t)) say('flag words', 'one player', 'a flag reads "' + (g && g.t) + '"'); }
+  // 18. the ranked roster and the raid's tiles read the card's four parts (Main's audit: roster Mechanics 0 next to a card's 68)
+  { const subj = (H.UI.match(/const RCB_SUBJ = \[([\s\S]*?)\]\];/) || [])[1] || '', keys = [...subj.matchAll(/\['(\w+)', '/g)].map((m) => m[1]).join(',');
+    if (keys !== 'perf,mech,alive,prep') say('the Report card', 'one player', 'the roster\'s columns are ' + keys + ', not the card\'s four parts');
+    if (!/perf: sc\.perf, mech: sc\.mech, alive: sc\.alive, prep: sc\.prep/.test(H.UI)) say('the Report card', 'one player', 'the roster doesn\'t read the card\'s numbers (rcbFacts)'); }
   // 13. What wiped us most with a player picked (shell.html's script reads the coach box on the page, so its code is checked)
   { const sh = H.SH, a = sh.indexOf('var W1 = wipL.map('), b = sh.indexOf('\n', a), w1 = a < 0 ? '' : sh.slice(a, b);
     if (!/\.filter\(function \(x\) \{ return x\.w > 0; \}\)/.test(w1)) say('What wiped us most', 'one player', 'its rows can say "0 wipes" (the coach\'s own tips, with a player picked)');
@@ -73,20 +78,40 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
           const lab = labelOf(o), a1 = own.filter((q) => !want.includes(q)), a2 = want.filter((q) => !own.includes(q));
           if (a1.length) say(where, 'one player', 'Summary counts ' + lab + ' against them in pull' + (a1.length > 1 ? 's ' : ' ') + a1.join(', ') + ', where its lines don\'t name them' + tg);
           if (a2.length) say(where, 'one player', 'Summary misses ' + lab + ' in pull' + (a2.length > 1 ? 's ' : ' ') + a2.join(', ') + ', where its lines name them' + tg); }
-        // 14. a mechanic anyone can walk into (its fine rows list its targets, never this player) counts every pull it came up while they were
-        //     alive, never only the pulls it hit them (Nov 12, Flex: "why does this say i got a 0% on those mechanics?", the tank frontal "2 of 2")
-        if (NEW) { const fl = (row) => row.some((c) => c && (c.bad || c.warn)), nmd = (c) => c && (c.p || (c.ps && c.ps.length) || (c.pt && c.pt.length)), isMe = (c) => c && (c.p === p.name || (c.ps || []).includes(p.name) || (c.pt || []).some((y) => y[0] === p.name));
-          const fineAny = new Set(), fineMe = new Set(); for (const r of reps) for (const s of r.module.sections || []) for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) if (!fl(row)) { if (row.some(nmd)) fineAny.add(s.id); if (row.some(isMe)) fineMe.add(s.id); }
-          for (const o of SR) { if (!fineAny.has(o.x.id) || fineMe.has(o.x.id)) continue; const Y = o.pts.filter((q) => q.st !== 'na').length, lab = labelOf(o); let want = 0;
-            for (const r of mine) { const s = (r.module.sections || []).find((q) => q.id === o.x.id); if (!s) continue; const sl = o.split ? X.phSlices(r.module, s).get(o.ph) : s; if (!sl) continue; const dead = Math.min(Infinity, ...(r.deaths || []).filter((d) => d.player === p.name).map((d) => d.t));
-              const ts = (sl.groups || []).map((g) => g.t).concat((sl.rows || []).map((row) => { const c = row.find((q) => q && q.t != null); return c ? c.t : null; })).filter((v) => v != null), unT = (sl.groups || []).some((g) => g.t == null) || (sl.rows || []).some((row) => !row.some((c) => c && c.t != null)), named = (sl.rows || []).concat(...(sl.groups || []).map((g) => g.rows || [])).some((row) => row.some(isMe) || culprits(s, row, null, rx).includes(me));
-              if (ts.some((t) => t < dead) || unT || named) want++; }
-            if (Y !== want) say(where, 'one player', lab + ' is a mechanic anyone can walk into, so it counts the ' + want + ' pulls it came up while they were alive, but it reads "of ' + Y + '"'); } }
+        // 14. "of Y" (Nov 12, Flex: "the % should be based on all pulls not just the mistake pulls", "2 of however many pulls it came up"): a mechanic
+        //     the player meets counts every pull it came up while they were alive; one that names its targets (s.targets: a Dreadmarch's mind
+        //     controls, the Venomfang dispellers) counts the pulls it targeted them, and any pull with a mistake of their own
+        if (NEW) { const rowsOf = (q) => (q.rows || []).concat(...(q.groups || []).map((g) => g.rows || [])), met = new Set(); for (const r of mine) for (const q of X.mechForPlayer(r.module, p.name, r).m.sections) if (rowsOf(q).length) met.add(q.id);
+          for (const o of SR) { const Y = o.pts.filter((q) => q.st !== 'na').length, lab = labelOf(o); let want = 0;
+            for (const r of mine) { const s0 = (r.module.sections || []).find((q) => q.id === o.x.id); if (!s0) continue; const dead = Math.min(Infinity, ...(r.deaths || []).filter((d) => d.player === p.name).map((d) => d.t)), phs = r.module.phases || [];
+              const phOf = (t) => { let n = null; for (const ph of phs) if (t >= ph.start - 0.5) n = ph.name; return n; }, sl = o.split ? X.phSlices(r.module, s0).get(o.ph) : s0;
+              const mine0 = sl ? (sl.rows || []).map((x) => [x, null]).concat(...(sl.groups || []).map((g) => (g.rows || []).map((x) => [x, g]))).some(([row, g]) => row.some((c) => c && (c.bad || c.warn)) && culprits(s0, row, g, rx).includes(me)) : false; /* (a set row with its set, as the page reads it) */
+              if (Array.isArray(s0.targets)) { const T = s0.targets.filter(([n, t]) => lo(n) === me && t < dead && (!o.split || phOf(t) === o.ph)); if (T.length || mine0) want++; continue; }
+              if (!met.has(o.x.id) || !sl) continue;
+              const ts = (sl.groups || []).map((g) => g.t).concat((sl.rows || []).map((row) => { const c = row.find((q) => q && q.t != null); return c ? c.t : null; })).filter((v) => v != null), unT = (sl.groups || []).some((g) => g.t == null) || (sl.rows || []).some((row) => !row.some((c) => c && c.t != null));
+              const pmod = X.mechForPlayer(r.module, p.name, r).m, pm = pmod.sections.find((q) => q.id === o.x.id), psl = pm ? (o.split ? X.phSlices(pmod, pm).get(o.ph) : pm) : null, named = !!(psl && rowsOf(psl).length);
+              if (ts.some((t) => t < dead) || unT || mine0 || named) want++; }
+            if (Y !== want) say(where, 'one player', lab + ' should count the ' + want + ' pulls it came up for them, but it reads "of ' + Y + '"');
+            // (and never only the pulls with a mistake, when it came up in more)
+            const X0 = o.pts.filter((q) => q.st === 'bad' || q.st === 'warn').length; if (X0 && Y === X0 && want > X0) say(where, 'one player', lab + ' counts only the pulls with a mistake: ' + X0 + ' of ' + Y); }
+          // 19. a targeted row's "of Y" is the pulls with its targeting debuff on them, or a mistake of their own (Main, Nov 12: Flex's ghosts "3 of 3"
+          //     while the log has his ghost's fixate in 12 pulls)
+          const DEB = reps[0].item.boss === 'The Coiled Altar' ? { ghosts: ['Unnerving Fixation'], dmghost: ['Dreadmarch'], orbs: ['Mutagenic Venom', 'Volatile Venom'] } : {};
+          for (const o of SR) { const dn = DEB[o.x.id]; if (!dn) continue; let want = 0;
+            for (const r of mine) { const pl = [...r.players.values()].find((q) => q.name === p.name), dead = Math.min(Infinity, ...(r.deaths || []).filter((d) => d.player === p.name).map((d) => d.t)), phs = r.module.phases || [];
+              const phOf = (t2) => { let n = null; for (const ph of phs) if (t2 >= ph.start - 0.5) n = ph.name; return n; };
+              const starts = dn.flatMap((k) => [pl && pl.debuffs && pl.debuffs.get(k), pl && pl.buffs && pl.buffs.get(k)].filter(Boolean).flatMap((q) => q.sp || []).map((x) => x[0])) /* (an orb carry can be logged as a buff) */.filter((t2) => t2 < dead && (!o.split || phOf(t2) === o.ph));
+              const s0 = (r.module.sections || []).find((q) => q.id === o.x.id), sl = s0 ? (o.split ? X.phSlices(r.module, s0).get(o.ph) : s0) : null;
+              const mine0 = sl ? (sl.rows || []).map((x) => [x, null]).concat(...(sl.groups || []).map((g) => (g.rows || []).map((x) => [x, g]))).some(([row, g]) => row.some((c) => c && (c.bad || c.warn)) && culprits(s0, row, g, rx).includes(me)) : false; /* (a set row with its set, as the page reads it) */
+              if (starts.length || mine0) want++; }
+            const Y = o.pts.filter((q) => q.st !== 'na').length; if (Y !== want) say(where, 'one player', labelOf(o) + ' reads "of ' + Y + '", but ' + dn.join(' or ') + ' was on them in ' + want + ' pulls'); }
+          // 17. Venomfang is a dispeller's job: no row for a player who was never one of its dispellers (Main's audit: Komo, Zaffia, Schooty)
+          for (const o of SR) if (o.x.id === 'vf' && !mine.some((r) => { const s0 = (r.module.sections || []).find((q) => q.id === 'vf'); return s0 && (s0.targets || []).some(([n]) => lo(n) === me); })) say(where, 'one player', 'has a Venomfang row (' + o.flag.t + '), but they never dispelled it'); }
         for (const o of SR) { const own = o.pts.filter((q) => q.st === 'bad' || q.st === 'warn').map((q) => q.p), J = o.pts.filter((q) => q.st !== 'na'), lab = labelOf(o);
           const m = /^(Failed|Some mistakes|Mistakes every time|Done right) · (\d+) of (\d+) pulls it came up$/.exec((o.flag || {}).t || ''), nb = J.filter((q) => q.st === 'bad').length;
           // 15. the flag says what its count counts, never "every pull" (Nov 12, Flex: "it says 2 of 2 pulls, but there were 19 pulls no?", "'mistakes in every pull' very misleading")
           { const t = (o.flag || {}).t || ''; if (/every pull/i.test(t) || /\d+ of \d+\s*$/.test(t)) say(where, 'one player', lab + ' reads "' + t + '": a bare count, or "every pull"'); }
-          if (!m || +m[3] !== J.length || +m[2] !== { Failed: nb, 'Some mistakes': own.length, 'Mistakes every time': own.length, 'Done right': J.length - own.length }[m[1]]) say(where, 'one player', lab + ' reads "' + ((o.flag || {}).t || '') + '", but it came up in ' + J.length + ' pulls with mistakes of theirs in ' + own.length);
+          if (!m || +m[3] !== J.length || +m[2] !== { Failed: own.length, 'Some mistakes': own.length, 'Mistakes every time': own.length, 'Done right': J.length - own.length }[m[1]]) say(where, 'one player', lab + ' reads "' + ((o.flag || {}).t || '') + '", but it came up in ' + J.length + ' pulls with mistakes of theirs in ' + own.length);
           // 12b. its trend words, the way the row draws them
           const Jv = o.pts.filter((q) => q.v != null), th = Math.max(2, Math.floor(Jv.length / 3)), avg = (L) => L.reduce((s0, q) => s0 + q.v, 0) / L.length, mv = Jv.length >= 4 ? Math.round(avg(Jv.slice(-th))) - Math.round(avg(Jv.slice(0, th))) : 0, tw = X.mxTrend(o.pts, mv);
           if (tw) { const l5 = Jv.slice(-5), E0 = Jv.slice(0, -5), wr = (L) => L.filter((q) => q.st === 'bad' || q.st === 'warn').length / Math.max(1, L.length);
@@ -103,6 +128,8 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
         for (const [lab, y] of RL) if (!SL.has(lab) && (y.pulls || []).length) say(where, 'one player', 'the Report card lists ' + lab + ' (pulls ' + y.pulls.join(', ') + '), Summary doesn\'t');
         { const avN = new Set(mine.flatMap((r) => (r.mistakes || []).filter((m) => m.avoidRule).map((m) => m.mechanic))); /* (a fight check's own mistake is a Summary row: it never goes under Avoidable damage too) */
           for (const y of RC.filter((q) => q.grp === 'avoid')) if ((y.pulls || []).length && !avN.has(y.l)) say(where, 'one player', y.l + ' is under Avoidable damage on the Report card, but it is a fight check (Summary lists it)'); }
+        // 16. the Report card's flag and its % say the same X (Main's audit: "Failed · 1 of 2" at 0%)
+        if (NEW) for (const y of RC.filter((q) => q.grp === 'sum')) { const m2 = /^([A-Za-z ]+) · (\d+) of (\d+) pulls it came up/.exec(y.note || ''); if (!m2) continue; const X1 = m2[1] === 'Done right' ? +m2[3] - +m2[2] : +m2[2], want = Math.round(100 * (+m2[3] - X1) / +m2[3]); /* (Done right counts the clean pulls) */ if (Math.round(100 * y.f) !== want) say(where, 'one player', y.l + ' reads "' + y.note + '" next to ' + Math.round(100 * y.f) + '%'); }
         // 11. the Report card's sentences for them
         if (NEW) for (const y of RC) { text(where, 'Report card ' + y.l, y.why); text(where, 'Report card ' + y.l, y.note); } } } }
 };

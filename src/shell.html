@@ -12169,6 +12169,9 @@ html body #view .ds-rcard.r321 .rqc-row > *, html body #view .ds-rcard.r321 .rqc
    first line, and the count moves under it) */
 .rqc-why { display: block; font-size: 13px; line-height: 1.35; color: #c9cfd6; } .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 1 / -1; min-width: 0; } .rqc-wn > small { display: block; }
 .rqc-why .sp.mt { font-weight: 600; color: #e8eaed; }
+/* (Nov 12, Main's audit: the ranked roster's columns are the card's four parts, then Deaths on you) */
+html body #view .rcb-tbl .rcb-tr { grid-template-columns: 30px minmax(150px, 1.3fr) minmax(110px, 1.1fr) repeat(4, minmax(0, .75fr)) 96px; }
+@media (max-width: 760px) { html body #view .rcb-tbl .rcb-tr { grid-template-columns: 24px minmax(0, 1fr) minmax(96px, 1fr) 54px; } }
 /* (Nov 12: Mechanics reads Summary's rows; avoidable damage, which Summary keeps in its own tile, under a small label of its own) */
 .rqc-sub { margin: 10px 0 2px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.06); font: 600 12px var(--head); letter-spacing: .08em; text-transform: uppercase; color: #868f99; } .rqc-sub span { text-transform: none; letter-spacing: 0; font-weight: 400; color: #6b737d; }
 html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 3 !important; min-width: 0; }
