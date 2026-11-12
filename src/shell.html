@@ -4478,6 +4478,12 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .prw-sl .sl-ok { fill: #45c15c; } #view .prw-sl .sl-warn { fill: #e8a23a; } #view .prw-sl .sl-bad { fill: #e5534b; }
 #view .prw-tl .prw-s.up { color: #8fd99a; } #view .prw-tl .prw-s.dn { color: #ff8f87; }
 #view .prw-tl > .prw-p { margin-top: 18px; }
+/* (All pulls rows read like one pull's: score bar and percent, the pull words under the name; the squares live in the open row (Nov 12)) */
+#view .prw-tl.prw-sc > .prw-l > .mx-sq { display: none !important; }
+#view .prw-tl.prw-sc > .prw-p, #view.ds-two .prw-tl.prw-sc > .prw-p { margin-top: 0 !important; align-self: center !important; }
+#view .prw-tl.prw-sc > .prw-l > .prw-vd { grid-column: 1 !important; grid-row: 2 !important; } #view .prw-tl.prw-sc > .prw-l > .prw-s { grid-column: 1 !important; grid-row: 3 !important; } /* (the pull words right under the name, the trend after) */
+#view .prw-tl.prw-sc .prw-vd { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 600; line-height: 1.35; }
+#view .prw-tl.prw-sc .prw-vd.ok { color: #8fd99a; } #view .prw-tl.prw-sc .prw-vd.warn { color: #e6b450; } #view .prw-tl.prw-sc .prw-vd.bad { color: #ff8f87; }
 /* (Oct 24: All pulls, a line across the night for each check) */
 #view .cgl-sl { height: 24px; margin: 0; align-self: center; }
 #view .cgl-tr { margin-left: 6px; font-size: 12px; font-weight: 700; } #view .cgl-tr.up { color: #4fd1c5; } #view .cgl-tr.dn { color: #ff8f87; }
