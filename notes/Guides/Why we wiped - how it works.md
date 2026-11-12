@@ -37,3 +37,34 @@ Axegrinder, slow deaths with kit ready), 2 too much damage taken (the P1 Venom R
 `src/ui.js`: `whyWiped`, `whySay`, `whyLine`, `whyNight`, `whyDot` (before the report card grades); used in `dbfPull` and
 `dbfNight` (top and slim boxes) and the pull card. `src/shell.html`: `.dbr-why`, `.why-t`, `.why-bad/dmg/heal/na`, `.fc-why`, `.why-bar`.
 Patch kept in the shared notes folder (`why-wiped.patch`) until it goes live.
+
+## Nov 12: the mechanic the wipe was called on
+Flex, on Nov 11 pull 8: "this section is still wildly innacurate and needs serious fine tuning", "in terms of what caused the wipe at least".
+The root cause (`rootCause` in src/engine.js, The Coiled Altar) used to read only the deaths before the wipe call. When the call came from a
+wipe mechanic (`wipeMech` in ui.js: a short Guillotine soak, orbs touching, Eternal Nightfall finishing), the deaths it caused came a few
+seconds after the call, so the few earlier deaths won and it said "Too many individual mistakes". Now:
+- A wipe called on a mechanic was lost at that mechanic, with its deaths in the next 12 s. An earlier wave the raid lived through
+  (Spirit Erasure 68 s before) goes to what added up, not the root.
+- A Guillotine soak that landed while an unkicked Wail of Terror still had players feared (counted from the fear on each player) is the
+  missed kick's wipe: "An unkicked Wail of Terror feared 15 players through the Guillotine soak, so it was short and Execution hit the raid."
+- A tank killed by Blighted Sever because the other tank didn't taunt names the taunt: "Tyralien didn't taunt before Blighted Sever:
+  Vandagos took it on stack 4 and died."
+- The wipe-call row says "Ended by <the call's mechanic>", not the last serious row (pull 8 read "Ended by Gloombomb").
+
+Nov 11 (19 wipes), before → after: pull 2 Too many individual mistakes → Schooty's purple orb (Venom Rupture killed 17); pull 6 Spirit
+Erasure → Eternal Nightfall's shield (killed 15); pull 8 Too many individual mistakes → Guillotine soak 3 of 5 (Grim Execution killed 6);
+pull 13 Too many individual mistakes → the unkicked Wail (15 feared, soak 1 of 5); pull 1 "The tank frontal hit players" → Tyralien's
+missed taunt. The other 14 kept their cause. Left as it is: pull 5 (the call at 3:37 on 4 separate deaths, then Soul Sever killed 5 at
+3:38, after the call). Check: tests/contradictions.js (a wipe called on a mechanic has that mechanic, or the missed kick, in its story).
+
+## Nov 12, round 3
+Flex: "The root cause aka the reason for wipes needs further fine tuning its still very off in a lot of cases", "the summary section is arguably
+the most important part of my site". Read every saved Coiled Altar wipe (Oct 21: 35, Oct 22: 19, Nov 11: 19) with the site's own wipe call:
+tests/wipe-read.js (real cutInfo + E.rootCause next to the log's deaths and raid mistakes around the call).
+- A wipe called on the orbs keeps the orb wave a few seconds later as its own; it was read as "Reset on purpose" (Oct 21 pulls 15 and 28).
+- Oct 21 pulls 27 and 33 had no root cause at all: the sentence code used `fam` outside the block that defines it (a crash, fixed).
+- Tried and undone, waiting on Flex: naming the mechanic behind half or more of a worn-down pull's deaths as the root ("Gravebound killed 3
+  of the 4 who died") instead of "Too many individual mistakes". Flex's Nov 5 rule (272c2ac3) keeps "Too many individual mistakes" with
+  "Most were Dreadmarch (5 of 8 deaths)" for separate personal deaths, and the contradiction check guards it. With the change, 22 of 54 saved
+  October wipes would have dropped to 10.
+Still open: wipes worn down by a long phase 2 (Dreadful Presence); the other nine bosses (rootCauseGen), not re-read this round.
