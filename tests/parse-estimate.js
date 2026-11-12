@@ -25,5 +25,15 @@ for (const [nm, want] of Object.entries(WCL)) { const x = est.get(nm), got = x ?
   if (got == null || /NO REASON/.test(why)) bad++;
   console.log('  ' + nm.padEnd(13) + String(x ? x.spec : '?').padEnd(22) + ' ours ' + String(got == null ? '-' : got).padStart(3) + '   WCL ' + String(want).padStart(3) + (off == null ? '   (no estimate: ' + (x && x.none ? 'no table' : 'missing') + ')' : '   ' + (off >= 0 ? '+' : '') + off) + (why ? '   ' + why : '')); }
 for (const [nm, x] of estH) console.log('  healer ' + nm.padEnd(13) + String(x.spec).padEnd(22) + ' ours ' + (x.pct == null ? '-' : x.pct) + '   (Warcraft Logs\' healing Parse % not sent)');
+// Graphs' parse = the Report card's, every raider, damage and healing (Main's re-test, Nov 12: Graphs read 16 pulls, the card 19, so Komo read 59 on
+// Graphs and 65 on the card). In the page: Graphs' All pulls reads the whole night like the card, and both read estParses; here, Graphs' way (every pull
+// of the night at once) and the card's (each raider's own pulls) give the same number for everyone
+{ const U = H.UI, src = [[/async function graphsAll\([\s\S]{0,900}?bossReps\(it, still, [^;]*?, true\); if \(!got/, 'Graphs\' All pulls doesn\'t read the whole night (bossReps(..., true)), so it can count fewer pulls than the Report card'],
+    [/const gbPrs = \(k\) => [^\n]*estParses\(night \? NP\.map\(\(it\) => it\.r\) : \[r\], k\)/, 'Graphs\' Parse column doesn\'t read estParses over the night\'s pulls'],
+    [/estParses\(a\.per\.map\(\(g\) => g\.r\), kind377\)/, 'the Report card\'s Damage/Healing row doesn\'t read estParses over its pulls']];
+  for (const [rx, say] of src) if (!rx.test(U)) { bad++; console.log('  x ' + say); }
+  for (const [L, all] of [[D, est], [HL, estH]]) for (const [nm, x] of all) { const mine = L.filter((pl) => pl.list.some((q) => q.n === nm)).map((pl) => ({ ...pl, list: pl.list.filter((q) => q.n === nm) })), y = X.estCombine(mine).get(nm);
+    if (!y || y.pct !== x.pct) { bad++; console.log('  x ' + nm + ': Graphs ' + x.pct + ', Report card ' + (y && y.pct)); } }
+  console.log('Graphs and the Report card: the same pulls and the same number for every raider, both tables' + (bad ? ' (see the x lines)' : '')); }
 console.log(bad ? bad + ' raider(s) with no estimate or an unexplained gap' : 'every raider has an estimate; every gap over ' + GAP + ' is the short-wipe lift');
 process.exit(bad ? 1 : 0);

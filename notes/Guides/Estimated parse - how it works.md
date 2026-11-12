@@ -49,3 +49,15 @@ Huservoker 58, Optt 38, Urgdragon 6. Every gap over 10 is the short-wipe lift (t
 Warcraft Logs' percentiles drift as more guilds kill each boss. Rerun `pcttab.js` (delete `pct/` first for fresh numbers) and `phasefac.js`, then
 `pastetab.js`, build, check a practice link, push. Until `/api/specpct` and `/api/killpct` are live, `pcttab.js` reads them from the practice link
 (`BASE`); after Flex pushes, set `BASE=https://debriefme.io`.
+
+## One set of pulls (Nov 12, Main's re-test)
+Graphs read 16 of the 19 pulls (pulls 3, 5 and 16 weren't downloaded yet, and Graphs didn't say so) while the Report card reads the whole night,
+so Komo read 59 on Graphs and 65 on the card. Graphs' All pulls now reads the whole night too (`bossReps(..., true)` in `graphsAll`), and
+`tests/parse-estimate.js` checks that Graphs and the card read the same pulls and give every raider the same number in both tables.
+Main thought Graphs left out early resets on purpose; it didn't (there's no such rule on this board). Time-weighting already gives the
+1-2 minute pulls their small share (5-6% of the night here).
+
+## Why two Preservation Evokers sit at 58 and 6
+Huservoker healed 448K a second while alive, Urgdragon 348K (0.78 of it). Preservation's kill rankings on Coiled Altar Mythic are tight
+(50th percentile 437K, 10th 362K, 5th 341K), so 22% less healing is the difference between the middle and the bottom. Most of it is P2
+(313K vs 458K) and P3 (353K vs 521K); healers' phase factors are near 1, so phase matching barely moves either.
