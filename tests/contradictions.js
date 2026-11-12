@@ -13,8 +13,9 @@ const args = process.argv.slice(2), ALL = args.includes('--all'), DIRS = [];
 for (let i = 0; i < args.length; i++) if (args[i] === '--dir' && args[i + 1]) DIRS.push(args[++i]);
 // the test nights: Wolfthorn's Oct 21 Coiled Altar (Mythic wipes), Wolfthorn's Oct 14 night (Kith'ix Heroic kill, Twin Fangs Mythic), and another
 // guild's all-bosses Mythic night (Oct 25)
-const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv'];
-const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53'];
+// (Nov 12: and Wolfthorn's Oct 22 Coiled Altar night, where Summary and the Report card disagreed about one player's mechanics)
+const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv', 'bcA9kw3mxHKzr4fR'];
+const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28'];
 
 const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.js'));
 
@@ -23,7 +24,7 @@ const H = require('./site-helpers.js'), UI = H.UI;
 // (the All pulls card's line about a pull, from shell.html)
 const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n' + H.grab('nsmFocusOf', H.SH) + '\n({ story, nsmFocusOf })');
 const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_NEXT') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_NEXT, RC_FIRST, rcFirstLine })');
-const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
+const NIGHT_R = new Map(); const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
 /* (the Whole tier (Nov 5): its own numbers for a night, read with the page's code; the cut at the wipe call and the killing-blow verdict stand
    in as "none" on both sides, so the tier and All pulls are compared on the same causes) */
 const TSITE = H.site(['deathHit', 'deathHitId', 'esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
@@ -82,7 +83,7 @@ function checkPull(key) {
   const oldCopy = ev.some((e) => e.type === 'interrupt' && e.extraAbilityGameID == null);
   const txt = W.translate(it, ev); ev = null;
   const P0 = P.length;
-  const r = E.analyze(it, txt, {}); if (!r.item) r.item = it; SITE.CACHE.set(it, r);
+  const r = E.analyze(it, txt, {}); if (!r.item) r.item = it; SITE.CACHE.set(it, r); { const l = NIGHT_R.get(code) || []; l.push(r); NIGHT_R.set(code, l); } /* (Nov 12: a night's pulls, for the one-player checks (9 to 13)) */
   const hits = hitMoments(txt);
   // 1. one health number: the pull picker, the banner, the coach and the Companion read one whole-fight number, "boss at N%"
   if (!it.kill) {
@@ -203,7 +204,7 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
 for (const s of ["if (!v.counts || v.why === 'mass') continue; dAll++; if (v.why === 'own' || v.why === 'ready') deaths++;", "const late = false;", "own = !mass && !noCtrl && !forced && (", 'rcbDeathTip(x.deaths, x.dAll)']) if (!UI.includes(s)) say('the page code', 'deaths', 'the Report card counts deaths its own way again (expected "' + s + '" in src/ui.js)');
 for (const s of ['the header counts every death up to the wipe call', 'if (Wk && Wk.deadAtCall && rep) nD = Wk.deadAtCall(rep', 'deadAtCall: deadAtCall,']) if (!UI.includes(s)) say('the page code', 'deaths', 'the replay header counts deaths its own way again (expected "' + s + '" in src/ui.js)'); /* (Nov 6, Main: "☠ 0 deaths" while 4 died) */ if (!H.SH.includes('if (rpD && Kd.deadAtCall) dn = Kd.deadAtCall(rpD);')) say('the page code', 'deaths', 'Why we wiped counts the dead at the call its own way again (expected deadAtCall in src/shell.html)'); /* (Nov 6, Main: the header and Why we wiped disagreed: one count, deadAtCall) */
 /* (Nov 5, Flex: "wildly innaccurate in how its assessing the individual": someone else's mistake (m.others) never counts on the Report card's Mechanics rows; red is for a death or a habit) */
-for (const s of ['if (m.others) { mo.set(m.mechanic', "J = mechJudge(o ? topMechOf(o.it, k, role) : null, q, nB, dd, !!(o && o.big)), st = J.st;", "if (k === 'mech') return rqcMechSec(l, t, row, a.n);", 'mNight = n >= 4 ? mechNight(a.per, a.p)', "(d.fell ? ' ' + (d.fellWhy ||", "box._jumpTo(null, t, 2)", "' data-rqct=\"' + (+y.pt[n]).toFixed(1)"]) if (!UI.includes(s)) say('the page code', 'mechanics', 'the Report card\'s Mechanics rows judge players their own way again (expected "' + s + '" in src/ui.js)');
+for (const s of ['if (m.others) { mo.set(m.mechanic', "J = mechJudge(t, q, nB, dd, !!(o && o.big)), st = J.st;", "for (const y of rcMechRows(a.per, p)) rows.mech.push", "if (k === 'mech') return rqcMechSec(l, t, row, a.n);", 'mNight = n >= 4 ? mechNight(a.per, a.p)', "(d.fell ? ' ' + (d.fellWhy ||", "box._jumpTo(null, t, 2)", "' data-rqct=\"' + (+y.pt[n]).toFixed(1)"]) if (!UI.includes(s)) say('the page code', 'mechanics', 'the Report card\'s Mechanics rows judge players their own way again (expected "' + s + '" in src/ui.js)');
 /* (Nov 6, the studio + Flex: "just want it considered when assessing mechanics": a Mechanics row is never red on one or two slips, nor when the best raids
    slip on it within 5 points as often, unless the player died to it; every mechanic of every boss with top numbers, 1 to 40 pulls) */
 { const MJ = H.site(['deathHit', 'deathHitId', 'TOP_MECH', 'topMechOf', 'mechJudge']); let nBad = 0;
@@ -380,6 +381,8 @@ const t0 = Date.now(); let n = 0;
   if (bad.length) { console.log('Contradiction: ' + bad.length + ' PATCH_NOTES day(s) without a valid date, e.g. ' + JSON.stringify(bad[0]).slice(0, 100)); process.exit(1); } }
 if (!fs.existsSync(LIB) && !DIRS.length) { console.log('Contradiction check: skipped (no log library at ' + LIB + ')'); process.exit(0); }
 for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash', 'the check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } }
+// 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
+try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player', 'crash', 'the one-player check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
 for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
   const rows = [...g].sort((a, b) => b[1].length - a[1].length).map(([c, l]) => ({ nm: E.RC_CAT[c].nm, w: l.length, rc: c, fix: RCX.RC_FIX[c] || '', first: RCX.rcFirstLine(l), l })), f = SHELL.nsmFocusOf(rows), night = 'night ' + code + ' (All pulls)';
