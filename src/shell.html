@@ -4490,6 +4490,9 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 #view .prw-tl.prw-one .prw-ar { display: inline-block; margin-left: 8px; font-size: 12px; font-weight: 700; } #view .prw-tl.prw-one .prw-ar.up { color: #8fd99a; } #view .prw-tl.prw-one .prw-ar.dn { color: #ff8f87; }
 #view .prw-tl.prw-one > .prw-p { display: flex !important; align-items: baseline; justify-content: flex-end; gap: 12px; white-space: nowrap; }
 #view .prw-tl.prw-one .prw-ct { font-size: 12.5px; font-weight: 600; color: #98a0ad; }
+/* (a single pull matches (Flex, Nov 12: "Yes, match it"): no score bar, the score in its colour on the right; a problem row keeps its one why line (his Nov 8 OK)) */
+@layer defaultTheme { html body #view#view .prw > .prw-i:not(.prw-tl):not(.prw-nj) > .prw-l > .prw-t { display: none !important; }
+html body #view#view .prw > .prw-i:not(.prw-tl):not(.prw-nj) > .prw-l { grid-template-columns: minmax(0, 1fr) !important; } } /* (in the theme layer, where the old bar rule lives, so this one wins) */
 html body #view .prw .prw-t > i.ok { background: #4fbf6a !important; } html body #view .prw .prw-t > i.warn { background: #e6b450 !important; } html body #view .prw .prw-t > i.bad { background: #e5534b !important; }
 /* (Oct 24: All pulls, a line across the night for each check) */
 #view .cgl-sl { height: 24px; margin: 0; align-self: center; }
