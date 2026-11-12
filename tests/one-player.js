@@ -57,6 +57,10 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
   { const subj = (H.UI.match(/const RCB_SUBJ = \[([\s\S]*?)\]\];/) || [])[1] || '', keys = [...subj.matchAll(/\['(\w+)', '/g)].map((m) => m[1]).join(',');
     if (keys !== 'perf,mech,alive,prep') say('the Report card', 'one player', 'the roster\'s columns are ' + keys + ', not the card\'s four parts');
     if (!/perf: sc\.perf, mech: sc\.mech, alive: sc\.alive, prep: sc\.prep/.test(H.UI)) say('the Report card', 'one player', 'the roster doesn\'t read the card\'s numbers (rcbFacts)'); }
+  // 21. Rotation and potions on the card are their tabs' own numbers (Main's re-test: Rotation tab 94, card 97; potions 30 of 31, 29 of 31, 26 of 27)
+  { const U = H.UI; if (!/const x = rotOf\(l, p, false\)/.test(U) || !/rot: a\.rotN != null \? a\.rotN/.test(U)) say('the Report card', 'one player', 'the card\'s Rotation isn\'t the Rotation tab\'s night score (rotOf over the night, as the tab)');
+    if (!/const P0 = potNight\(reps, a\.p\.name\)/.test(U) || !/const P0 = potNight\(SPC_REPS/.test(U) || !/a\.pot\[0\] \+= Math\.min\(s\.used, s\.expect\)/.test(U)) say('the Report card', 'one player', 'Summary, Rotation and the card don\'t count potions with one function (potNight)');
+    if (!/sv = survivalOf\(r, p\); \} catch/.test(U)) say('the Report card', 'one player', 'Summary\'s coach counts potions its own way (cpE386 should read survivalOf)'); }
   // 13. What wiped us most with a player picked (shell.html's script reads the coach box on the page, so its code is checked)
   { const sh = H.SH, a = sh.indexOf('var W1 = wipL.map('), b = sh.indexOf('\n', a), w1 = a < 0 ? '' : sh.slice(a, b);
     if (!/\.filter\(function \(x\) \{ return x\.w > 0; \}\)/.test(w1)) say('What wiped us most', 'one player', 'its rows can say "0 wipes" (the coach\'s own tips, with a player picked)');
@@ -130,8 +134,9 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
         for (const [lab, y] of RL) if (!SL.has(lab) && (y.pulls || []).length) say(where, 'one player', 'the Report card lists ' + lab + ' (pulls ' + y.pulls.join(', ') + '), Summary doesn\'t');
         { const avN = new Set(mine.flatMap((r) => (r.mistakes || []).filter((m) => m.avoidRule).map((m) => m.mechanic))); /* (a fight check's own mistake is a Summary row: it never goes under Avoidable damage too) */
           for (const y of RC.filter((q) => q.grp === 'avoid')) if ((y.pulls || []).length && !avN.has(y.l)) say(where, 'one player', y.l + ' is under Avoidable damage on the Report card, but it is a fight check (Summary lists it)'); }
-        // 16. the Report card's flag and its % say the same X (Main's audit: "Failed · 1 of 2" at 0%)
-        if (NEW) for (const y of RC.filter((q) => q.grp === 'sum')) { const m2 = /^([A-Za-z ]+) · (\d+) of (\d+) pulls it came up/.exec(y.note || ''); if (!m2) continue; const X1 = m2[1] === 'Done right' ? +m2[3] - +m2[2] : +m2[2], want = Math.round(100 * (+m2[3] - X1) / +m2[3]); /* (Done right counts the clean pulls) */ if (Math.round(100 * y.f) !== want) say(where, 'one player', y.l + ' reads "' + y.note + '" next to ' + Math.round(100 * y.f) + '%'); }
+        // 16. the Report card's % is Summary's % for the same row (Main's re-test: Summary 63%, card 25%: a small slip counts half on both)
+        if (NEW) for (const [lab, o] of SL) { const y = RL.get(lab); if (!y || y.f == null) continue; const Jv = o.pts.filter((q) => q.st !== 'na' && q.v != null); if (!Jv.length) continue; const want = Math.round(Jv.reduce((t, q) => t + q.v, 0) / Jv.length);
+          if (Math.round(100 * y.f) !== want) say(where, 'one player', lab + ': Summary says ' + want + '%, the Report card ' + Math.round(100 * y.f) + '%'); }
         // 11. the Report card's sentences for them
         if (NEW) for (const y of RC) { text(where, 'Report card ' + y.l, y.why); text(where, 'Report card ' + y.l, y.note); } } } }
 };
