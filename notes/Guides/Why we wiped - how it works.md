@@ -68,3 +68,18 @@ tests/wipe-read.js (real cutInfo + E.rootCause next to the log's deaths and raid
   "Most were Dreadmarch (5 of 8 deaths)" for separate personal deaths, and the contradiction check guards it. With the change, 22 of 54 saved
   October wipes would have dropped to 10.
 Still open: wipes worn down by a long phase 2 (Dreadful Presence); the other nine bosses (rootCauseGen), not re-read this round.
+
+## Nov 12, round 4: every boss
+Flex: "oh lord this only applies to one boss?!". The other nine bosses share `rootCauseGen` (src/engine.js); read all 40 saved wipes of them
+(night folders and saved WCL pulls; scratchpad wr/read2.js, a copy in the shared notes folder under wipe-read/).
+- The wave just after the call (one hit killing 4 or more within 15 s after a call on separate deaths, none before) is the collapse for
+  every boss, the Coiled Altar too; it was Ula'tek only (`waveAfterCall`). A call on a mechanic keeps that mechanic. Nymrissa pull 3: the call
+  at 3:48 on 3 whirlpool deaths, then "2 murlocs from set 4 reached the bubble ... → Pulsing Tides killed 9 at once". Twin Fangs pull 16: five
+  unkicked Visceral Bursts. Coiled Altar: Oct 21 pull 5 (unkicked Wail, the tank feared into the axes), Oct 21 pull 19 and Oct 22 pull 11
+  (an orb 3 s after the call), Nov 11 pull 5 ("Soul Sever (the tank frontal) killed 5").
+- A raid line that says what went wrong is the sentence ("A Caustic Globule nobody soaked exploded on the raid"), not "Most of the deaths
+  were Caustic Globule (3 of 3)"; a raid line that only counts the dead gives way to the line just before it that says why.
+- Many players each failing the same thing: "9 players took Extinguish without a Light's Embrace mote, and died. Each of them missed it on
+  their own", never "each player dodges it".
+- A High Pace line in the last 30 s is in what added up as "Not enough damage" (Vashnik at 8% at the 6th Imbibe).
+The Ula'tek wipes reviewed on Nov 10 read the same as before.
