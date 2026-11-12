@@ -152,6 +152,15 @@ const ROUTES = {
   // one page (100) of a spec's rankings on a boss, slimmed (Compare's "Search for a player"), kept a day
   '/api/specrank': { age: 86400, run: (env, v) => specRanksOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || '', pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) && pg >= 1 && pg <= 20 ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', p: pg } : null; } },
+  // one page (100) of a spec's ranked amounts on a boss (the estimated-parse tables; tools/parses/pcttab.js), kept a day
+  '/api/specpct': { age: 86400, run: (env, v) => specPctOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), c = p.get('c') || '', s = p.get('s') || '', pg = parseInt(p.get('p'), 10) || 1; return e > 0 && [3, 4, 5].includes(d) && /^[A-Za-z]{4,15}$/.test(c) && /^[A-Za-z]{3,20}$/.test(s) && pg >= 1 && pg <= 600 ? { e, c, s, d, m: p.get('m') === 'hps' ? 'hps' : 'dps', p: pg, pt: /^-?[0-9]{1,2}$/.test(p.get('pt') || '') ? +p.get('pt') : null } : null; } },
+  // Warcraft Logs' own damage or healing table for some pulls of a report, by player (checking the estimated parse), kept an hour
+  '/api/srctab': { age: 3600, run: (env, v) => srcTabOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const c = p.get('c') || '', f = (p.get('f') || '').split(',').map((x) => parseInt(x, 10)).filter((x) => x > 0); return CODE.test(c) && f.length && f.length <= 60 ? { c, f, t: p.get('t') === 'Healing' ? 'Healing' : 'DamageDone', w: /^[1-9][0-9]?$/.test(p.get('w') || '') ? +p.get('w') : null } : null; } },
+  // kills spread through one page of a boss's speed list, each player's amount and parse (the estimated-parse tables), kept a day
+  '/api/killpct': { age: 86400, run: (env, v) => killPctOf((q, vars) => gql(env, q, vars), v),
+    v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10), pg = parseInt(p.get('p'), 10) || 1, n = parseInt(p.get('n'), 10) || 10; return e > 0 && [3, 4, 5].includes(d) && pg >= 1 && pg <= 60 && n >= 1 && n <= 25 ? { e, d, p: pg, n, cmp: p.get('cmp') === 'Parses' ? 'Parses' : null } : null; } },
   // one ranked player's spells on their kill (Compare's "Top 100 average"): a kill doesn't change, so kept a week
   '/api/plab': { age: 604800, run: (env, v) => playerAbOf((q, vars) => gql(env, q, vars), v),
     v: (p) => { const c = p.get('c') || '', f = parseInt(p.get('f'), 10), n = p.get('n') || ''; return CODE.test(c) && f > 0 && n.length >= 2 && n.length <= 24 && !/["\\]/.test(n) ? { c, f, n, m: p.get('m') === 'hps' ? 'hps' : 'dps' } : null; } },

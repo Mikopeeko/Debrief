@@ -210,6 +210,37 @@ async function guildProgOf(run, v) {
 // One page (100) of a spec's rankings on a boss, slimmed for Compare's "Search for a player": who, where, their kill, and
 // their talents (only the numbers, so the page can tell their hero tree). v: { e, c, s, d, m, p }
 const SPECRANK_Q = `query($e:Int!,$c:String!,$s:String!,$d:Int!,$m:CharacterRankingMetricType,$p:Int){worldData{encounter(id:$e){characterRankings(className:$c,specName:$s,difficulty:$d,metric:$m,page:$p,includeCombatantInfo:true)}}}`;
+// One page (100) of a spec's rankings on a boss, only the amounts (Nov 12, the Report card's estimated parse: Warcraft Logs' parse is where an
+// amount sits among every ranked player's best on that boss, so a few pages spread through the list make the table; tools/parses/pcttab.js reads them).
+// No talents asked, so a page is light. meta: the list's own numbers besides the players (a total, when Warcraft Logs sends one). v: { e, c, s, d, m, p }
+const SPECPCT_Q = `query($e:Int!,$c:String!,$s:String!,$d:Int!,$m:CharacterRankingMetricType,$p:Int,$pt:Int){worldData{encounter(id:$e){characterRankings(className:$c,specName:$s,difficulty:$d,metric:$m,page:$p,partition:$pt)}}}`;
+// (and the kill samples: Warcraft Logs' list stops at 2,000 players, so a spec ranked more than that gets its table from real parses: kills spread
+// through one page of the boss's speed list, each player's amount a second and the parse they got (rankPercent), with the spec's count (totalParses)
+// when sent. Healers' come from the healing rankings. v: { e, d, p: page, n: kills })
+// (and Warcraft Logs' own damage or healing table for some pulls of a report, by player: each one's total and active time and the pulls' time,
+// to check the estimate against the way Warcraft Logs counts. v: { c: report code, f: [fight ids], t: 'DamageDone' | 'Healing' })
+const SRCTAB_Q = `query($c:String!,$f:[Int]!,$t:TableDataType,$w:Int){reportData{report(code:$c){table(fightIDs:$f,dataType:$t,wipeCutoff:$w)}}}`;
+async function srcTabOf(run, v) { const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x), d = await run(SRCTAB_Q, { c: v.c, f: v.f, t: v.t, w: v.w || null }), T = (P(d && d.reportData && d.reportData.report && d.reportData.report.table) || {}).data || {};
+  return { totalTime: T.totalTime || 0, entries: (T.entries || []).map((e) => ({ name: e.name, type: e.type, icon: e.icon, total: e.total || 0, activeTime: e.activeTime || 0 })) }; }
+async function killPctOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x), fr = await run(TOPKILL_Q, { e: v.e, d: v.d, p: v.p || 1 }), R = P(fr && fr.worldData && fr.worldData.encounter && fr.worldData.encounter.fightRankings) || {};
+  const all = (R.rankings || []).filter((t) => t.report && /^[A-Za-z0-9]{8,32}$/.test(t.report.code) && t.report.fightID > 0), n = Math.min(all.length, v.n || 10), step = all.length / Math.max(1, n);
+  const pick = []; for (let i = 0; i < n; i++) pick.push(all[Math.floor(i * step)]);
+  const chunks = []; for (let i = 0; i < pick.length; i += 5) chunks.push(pick.slice(i, i + 5)); let keys = null;
+  const ppl = (d, h) => { const out = []; for (const [x, heal] of [[d, false], [h, true]]) { const D = ((P(x) || {}).data || [])[0]; if (!D || !D.roles) continue;
+    for (const [rk, role] of [['tanks', 'tank'], ['healers', 'healer'], ['dps', 'dps']]) { if ((role === 'healer') !== heal) continue; for (const c of (D.roles[rk] && D.roles[rk].characters) || []) { if (!keys) keys = Object.keys(c);
+      out.push({ c: c.class, s: c.spec, r: role, a: Math.round(c.amount || 0), q: c.rankPercent != null ? +c.rankPercent : null, N: c.totalParses != null ? +c.totalParses : null, k: c.rank != null ? String(c.rank) : null, b: c.best != null ? String(c.best) : null, bp: c.bracketPercent != null ? +c.bracketPercent : null, br: c.bracket != null ? c.bracket : null, bd: c.bracketData != null ? c.bracketData : null }); } } } return out; };
+  const got = await Promise.all(chunks.map(async (ch) => {
+    const q = 'query{reportData{' + ch.map((t, i) => { const f = t.report.fightID | 0; return 'k' + i + ':report(code:"' + t.report.code + '"){d:rankings(fightIDs:[' + f + '],playerMetric:dps' + (v.cmp ? ',compare:' + v.cmp : '') + ') h:rankings(fightIDs:[' + f + '],playerMetric:hps' + (v.cmp ? ',compare:' + v.cmp : '') + ')}'; }).join(' ') + '}}';
+    let d; try { d = await run(q, {}); } catch (e) { return []; }
+    return ch.map((t, i) => { const x = d && d.reportData && d.reportData['k' + i]; return x ? { code: t.report.code, fight: t.report.fightID, dur: Math.round((t.duration || 0) / 1000), ppl: ppl(x.d, x.h) } : null; }).filter(Boolean); }));
+  return { page: v.p || 1, more: !!R.hasMorePages, per: all.length, keys, kills: got.flat() };
+}
+async function specPctOf(run, v) {
+  const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x), rk = await run(SPECPCT_Q, { e: v.e, c: v.c, s: v.s, d: v.d, m: v.m, p: v.p || 1, pt: v.pt != null ? v.pt : null }), R = P(rk && rk.worldData && rk.worldData.encounter && rk.worldData.encounter.characterRankings) || {};
+  const meta = {}; for (const [k, x] of Object.entries(R)) if (k !== 'rankings' && x != null && typeof x !== 'object') meta[k] = x;
+  return { page: v.p || 1, more: !!R.hasMorePages, meta, a: (R.rankings || []).map((t) => Math.round(t.amount || 0)) };
+}
 async function specRanksOf(run, v) {
   const P = (x) => (typeof x === 'string' ? JSON.parse(x) : x);
   const rk = await run(SPECRANK_Q, { e: v.e, c: v.c, s: v.s, d: v.d, m: v.m, p: v.p || 1 }), R = P(rk && rk.worldData && rk.worldData.encounter && rk.worldData.encounter.characterRankings) || {};
