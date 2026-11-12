@@ -8396,6 +8396,16 @@ html body #view.plan-page #assignBox .pls .pv-fresh { display: flex; flex-wrap: 
 html body #view.plan-page .pv-copy { position: relative; display: inline-flex; }
 html body #view.plan-page .pv-copym { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; display: flex; flex-direction: column; min-width: 220px; padding: 4px; border: 1px solid var(--line2); border-radius: 6px; background: var(--panel); box-shadow: 0 10px 28px rgba(0,0,0,.45); }
 html body #view.plan-page .pv-copym[hidden] { display: none; }
+html body #view.plan-page .bj-jobs:not(:has(.pom)) [data-dsmaps] { display: none !important; } /* (Copy all images only where there are maps, Nov 11) */
+html body #view.plan-page .bj-jobs > .ds-copyline { display: block; margin: 4px 0 12px; padding: 8px 12px; font-size: 13px; line-height: 1.5; color: #d9dde4; background: rgba(230, 180, 80, .08); border-left: 2px solid #e6b450; text-align: left; } /* (the copy buttons' message, under the Jobs header, Nov 11) */
+html body #view.plan-page .bj-jobs > .ds-copyline:empty { display: none; }
+html body #view.plan-page .bj-jobs > .ds-copyline a { color: #e6b450; }
+/* (a Plan card's edit view: the big job rows line up with the small ones, "+ Add a player" shows whole, the remove ✕ sits inside the name (Flex, Nov 11: "these buttons are bugged")) */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .plb-edit .ndz-brow { margin-left: 0 !important; padding-left: 34px !important; grid-template-columns: 220px minmax(0, 1fr) auto !important; background: none !important; border-left: 0 !important; box-shadow: none !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .plb-edit .ndz-brow .lab, html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .plb-edit .ndz-brow .lab b { font-size: 14.5px !important; font-weight: 600 !important; color: rgb(214, 209, 198) !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .plb-edit :is(.ndz-brow, .ndz-bsi) select.ndz-bplus.ndz-bplus0 { width: auto !important; min-width: 132px !important; max-width: none !important; padding: 0 12px !important; } /* (an empty row: the whole "+ Add a player") */
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .ndz-bplus:not(.ndz-bplus0) { color: #e6b450 !important; border-color: rgba(230, 180, 80, .55) !important; font-weight: 700 !important; }
+html body #view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .bj-jobs .plb-rc.editing .ndz-p .ndz-ex { position: static !important; margin: 0 2px 0 6px !important; width: 16px !important; height: 16px !important; flex: 0 0 16px !important; background: rgba(0, 0, 0, .3) !important; color: #fff !important; line-height: 16px !important; top: auto !important; right: auto !important; }
 html body #view.plan-page .pv-copym > .pp-btn { display: none !important; } /* (was hidden in the header before; Copy all images does its job) */
 html body #view.plan-page .pv-copym > .btn { justify-content: flex-start; width: 100%; margin: 0; border: 0; border-radius: 4px; background: none; color: var(--text); font-weight: 600; box-shadow: none; }
 html body #view.plan-page .pv-copym > .btn:hover { background: var(--raised); color: var(--gold); }
@@ -17508,6 +17518,30 @@ html body #view#view section.dbt .dtm .znorth { top: 10px !important; right: 10p
 html body #view#view section.dbt .dtm .zctl { right: 10px !important; bottom: 54px !important; gap: 0 !important; display: flex !important; flex-direction: column !important; }
 html body #view#view section.dbt .dtm .zin, html body #view#view section.dbt .dtm .zout { width: 26px !important; height: 26px !important; font-size: 15px !important; }
 html body #view#view section.dbt .dtm .zout { border-top: 0 !important; }
+/* ===== Design studio, Nov 11: the replay's HUD (Flex: "can we improve the look of these on the replays"). Boss health as frames (the name and % on
+   the bar, red for a boss, amber for an add, like the raid frames); Coming up as timer bars that run down (grey; the next one gold in its last
+   5 s); both on the map's one HUD surface. Owner: the Design studio chat. ===== */
+html body #view#view#view section.dbt .dtm .dtm-map>.dtm-hp { width: 236px !important; max-width: 45% !important; height: auto !important; padding: 6px !important; gap: 3px !important; }
+html body #view#view#view section.dbt .dtm .dtm-hpr { position: relative; display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 7px; overflow: hidden; background: rgba(255,255,255,.06); font-size: 12.5px; line-height: 20px; }
+html body #view#view#view section.dbt .dtm .dtm-hpr > i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(232,162,58,.38); }
+html body #view#view#view section.dbt .dtm .dtm-hpr.b > i { background: rgba(229,83,75,.55); }
+html body #view#view#view section.dbt .dtm .dtm-hpr > span { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; color: #d4d9de; }
+html body #view#view#view section.dbt .dtm .dtm-hpr.b > span { font-weight: 700; color: #f2f4f6; }
+html body #view#view#view section.dbt .dtm .dtm-hpr > em { position: relative; flex: none; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: #f2f4f6; }
+html body #view#view#view section.dbt .dtm .dtm-map>.dtm-cu { width: 236px !important; padding: 6px !important; background: rgba(11,13,18,.84) !important; border: 1px solid rgba(255,255,255,.09) !important; border-radius: 0 !important; box-shadow: none !important; }
+html body #view#view#view section.dbt .dtm .dtm-cu > b { margin: 0 0 5px 1px !important; font: 700 12px var(--body) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: #8b939c !important; }
+html body #view#view#view section.dbt .dtm .dtm-cur { display: grid !important; grid-template-columns: 20px minmax(0, 1fr) !important; column-gap: 5px !important; align-items: center !important; padding: 0 !important; margin: 0 0 3px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cur:last-child { margin-bottom: 0 !important; }
+html body #view#view#view section.dbt .dtm .dtm-cui { width: 20px !important; height: 20px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cui > * { max-width: 20px !important; max-height: 20px !important; }
+html body #view#view#view section.dbt .dtm .dtm-cub { position: relative; display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 7px; overflow: hidden; background: rgba(255,255,255,.06); font-size: 12.5px; line-height: 20px; }
+html body #view#view#view section.dbt .dtm .dtm-cub > i { position: absolute; left: 0; top: 0; bottom: 0; right: 0; }
+html body #view#view#view section.dbt .dtm .dtm-cub > i > u { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,.16); transition: width .25s linear; }
+html body #view#view#view section.dbt .dtm .dtm-cur.soon .dtm-cub > i > u { background: rgba(216,178,90,.55); }
+html body #view#view#view section.dbt .dtm .dtm-cub > span { position: relative; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #eef1f4; }
+html body #view#view#view section.dbt .dtm .dtm-cub > em { position: relative; flex: none; font-style: normal; font-weight: 700; font-variant-numeric: tabular-nums; color: #c9cfd6; }
+html body #view#view#view section.dbt .dtm .dtm-cur.soon .dtm-cub > em { color: #ffe1a0; }
+html body #view#view#view section.dbt .dtm .dtm-cur:hover .dtm-cub { box-shadow: inset 0 0 0 1px rgba(230,180,80,.55); }
 /* raid frames: smaller and quieter (still draggable; the script places them 10px from the corner) */
 html body #view#view section.dbt .dtm .dtm-rf { padding: 3px !important; }
 html body #view#view section.dbt .dtm .dtm-rfh { height: 5px !important; }
@@ -18990,6 +19024,7 @@ html body #assignBox .pom .pom-s { font-size: 13px; }
 html body #assignBox .pom .pom-g h4 { margin: 0 0 5px; font: 700 12px/1 var(--head); letter-spacing: .12em; text-transform: uppercase; color: var(--muted, #9aa3aa); }
 html body #assignBox .pom .pom-g h4.pu { color: #d6a8ff; } html body #assignBox .pom .pom-g h4.gr { color: #7fe8a0; }
 html body #assignBox .pom .pom-g p { margin-top: 5px; }
+html body #assignBox .pom .pom-rt { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; margin: 0 0 7px; font: 600 13px/1.3 var(--body); color: var(--text); } html body #assignBox .pom .pom-rt span { display: inline-flex; align-items: center; gap: 4px; } html body #assignBox .pom .pom-rt b { font-weight: 700; } html body #assignBox .pom .pom-rt svg.mk { flex: none; } html body #assignBox .pom .pom-rt i { font-style: normal; color: var(--muted); } /* (Design studio, Nov 11: a group's soaks in order under its label) */
 html body #assignBox .pom .pom-who { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 10px; }
 html body #assignBox .pom .pom-p { display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
 html body #assignBox .pom .pom-p > b { font: 600 14px/1.3 var(--body); overflow: hidden; text-overflow: ellipsis; }
