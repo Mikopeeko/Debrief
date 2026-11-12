@@ -58992,6 +58992,7 @@ const mechGist = (t, mech, me) => { const base = String(mech || '').replace(/\s*
     .replace(/\bTheir\b/g, 'Your').replace(/\btheir\b/g, 'your').replace(/\bthemselves\b/g, 'yourself').replace(/\bthem\b/g, 'you')
     .replace(/\bthey (?=(?:also |then |still )?(?:had|have|were|did|didn't|took|got|stood|died|lost|couldn't|could|needed|went)\b)/g, 'you ') /* ("so they also had to collect souls"; never "after they landed") */
     .replace(/\s+([.,:;!?])/g, '$1').replace(/\s+at(?=[.,:;!?]|$)/g, '') /* (a time already taken out: "on everyone at.") */.replace(/^Got hit(?=[.,]|$)/, 'Got hit by ' + base).replace(/[,:;\s]+$/, '').replace(/[.!]*$/, '.');
+  if (/^[\p{L}'’]+ (?:you|your)\.?$/iu.test(x)) return ''; /* (a column and a name, all that's left of "Tank Vandagos (stack 2 · …)": no sentence) */
   return x.length > 3 ? x.charAt(0).toUpperCase() + x.slice(1) : ''; };
 // (the row's summary: the most common reason first, and a second one only when it's a different thing; a reason that keeps happening at
 // about the same time says when, so the player knows which cast it was. Key words (the boss's spells) bold, as everywhere)
