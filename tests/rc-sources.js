@@ -16,6 +16,7 @@ module.exports = function rcSources(H, say) {
     ['Damage / Healing', 'estParses(a.per.map((g) => g.r), kind377)', [U, 'const gbPrs = (k) =>']]];
   for (const [row, cardRead, [home, homeRead]] of T) { if (!card.includes(cardRead)) say('the page code', 'report card', row + ': the card no longer reads its home (expected "' + cardRead + '")'); if (!home || !home.includes(homeRead)) say('the page code', 'report card', row + ': its home tab no longer shows the same count (expected "' + homeRead + '")'); }
   if (!/async function perfNight\([\s\S]{0,2500}?bossReps\(it, still, [^;]*?, true\); if \(!got/.test(U)) say('the page code', 'report card', 'the Rotation tab no longer reads the whole night, so it can count fewer pulls than the Report card');
+  if (!card.includes("const cr = (k, x) => (x.f != null && k !== 'mech' && !x.bonus ? pc(x) : mk(x))")) say('the page code', 'report card', 'a graded row no longer counts the % it shows (Flex: "score matching the %")');
   if (!grab('cdNight').includes('cdUseRows(')) say('the page code', 'report card', 'Big cooldowns: the card\'s count isn\'t Graphs\' cdUseRows');
   if (!grab('cardOf').includes('extChances(r, p)')) say('the page code', 'report card', 'the per-pull card counts externals its own way again (extChances)');
   // (each card row names its home: src on every row the card adds; the info rows too)
