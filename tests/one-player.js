@@ -15,7 +15,7 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
   const NEW = has('rcMechRows') && has('mxKind') && has('mechListOf');
   const base0 = ['esc', 'lpAnd', 'andList', 'plural', 'cellTxt', 'rowSay', 'rowText', 'cutModule', 'phSlices', 'lvlJudge', 'avLimAt', 'mechForPlayer', 'mechAcross', 'mxFlag', 'mxTrend', 'secSpec', 'secSpecd', 'NKG', 'NK346', 'NK283', 'nkWord283', 'TOP_MECH', 'topMechOf', 'mechJudge', 'mechTally'];
   const NAMES = base0.concat(NEW ? ['ROW_DIED', 'whoRx', 'rowWho', 'mechRepsFor', 'mechPhRows', 'mechListOf', 'mechGist', 'mechWhy', 'RCM', 'rcMechRows', 'mxKind'] : []);
-  if (has('mxUnitOf')) NAMES.push('MX_TGT', 'mxUnitOf', 'mxUnit1'); /* (Nov 12: targeted rows' words) */
+  if (has('mxUnitOf')) NAMES.push('MX_TGT', 'mxUnitOf', 'mxUnit1'); if (has('RC_SRC')) NAMES.push('RC_SRC'); /* (Nov 12: each card row names its home) */ /* (Nov 12: targeted rows' words) */
   const X = H.site(NAMES, { cutT: () => Infinity, keptMistakes: (r) => r.mistakes || [], spellIcon: () => '' });
   /* (and again with a wipe call in every pull, at 60% of it: a set's flag must come from the rows left at the call (Nov 12: Gloombomb pull 6)) */
   const CUT = (r) => (r.duration || 0) * 0.6, X2 = H.site(NAMES, { cutT: CUT, keptMistakes: (r) => (r.mistakes || []).filter((m) => m.t <= CUT(r) + 0.5), spellIcon: () => '' });

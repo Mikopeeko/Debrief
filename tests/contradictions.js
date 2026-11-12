@@ -391,6 +391,7 @@ const t0 = Date.now(); let n = 0;
 if (!fs.existsSync(LIB) && !DIRS.length) { console.log('Contradiction check: skipped (no log library at ' + LIB + ')'); process.exit(0); }
 for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash', 'the check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } }
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
+try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 try { require('./deaths-check.js')(NIGHT_R, H, say); } catch (e) { say('deaths', 'crash', 'the death check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 12: Main's death plan) */
 try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player', 'crash', 'the one-player check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
