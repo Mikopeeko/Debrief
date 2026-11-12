@@ -12149,6 +12149,13 @@ html body #view .ds-rcard.r321 .rqc-sec h5 { margin: 14px 0 4px !important; }
   html body #view .rcb-2 .rqc-hd > .rqc-sc { padding-left: 0; border-left: 0; }
 }
 html body #view .ds-rcard.r321 .rqc-row > *, html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > * { grid-row: 1 !important; }
+/* (Nov 12, Flex: "this needs to briefly summarize what the player did wrong in report card": a Mechanics row says what they did on the
+   first line, and the count moves under it) */
+.rqc-why { display: block; font-size: 13px; line-height: 1.35; color: #c9cfd6; } .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 1 / -1; min-width: 0; } .rqc-wn > small { display: block; }
+.rqc-why .sp.mt { font-weight: 600; color: #e8eaed; }
+html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 3 !important; min-width: 0; }
+html body #view .ds-rcard.r321 .rqc-row .rqc-wn > small { display: block; margin-top: 1px !important; }
+@media (max-width: 699px) { html body #view .ds-rcard.r321 .rqc-row > span:nth-child(2) > .rqc-wn { grid-column: 2 / -1 !important; grid-row: 2 !important; } html body #view .ds-rcard.r321 .rqc-row .rqc-why { font-size: 12.5px; } }
 
 /* round 322: the checks they passed show too (the user: "dont hide the things they did well") */
 html body #view .ds-rcard.r321 .rqc-sec .ds-fine { display: none !important; }
