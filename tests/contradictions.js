@@ -22,7 +22,7 @@ const ONLY = { agt6jMTyZBYvVzAP: [15, 16, 18, 20], Gax3AkbyFRXmdrgQ: [7, 11, 12,
 // (Nov 11's Coiled Altar: only its three disputed orb pulls are saved (fights 15, 16, 20 = pulls 14, 15, 19), checked with --all, whose carrier
 // the raw log shows at the burst (Flex, Nov 12: "yep it was shock that i know for sure was missing"))
 const ORB_WANT = { 'agt6jMTyZBYvVzAP:15': 'Kargaryen', 'agt6jMTyZBYvVzAP:16': 'Shockabunga', 'agt6jMTyZBYvVzAP:18': '', 'agt6jMTyZBYvVzAP:20': 'Volkovod' }; /* (fight 18 = pull 17: feared onto the orbs by an unkicked Wail of Terror, nobody's orb, the missed kick's wipe (Flex, Nov 12)) */
-const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28', 'Gax3AkbyFRXmdrgQ:7', 'Gax3AkbyFRXmdrgQ:11', 'Gax3AkbyFRXmdrgQ:17', 'Gax3AkbyFRXmdrgQ:22']; /* (Nov 13: Ula'tek pulls 1, 7 and 12: the beam taken by damage dealers, the Wretch held by the tail, five Vipers from carriers touching) */ /* (Nov 13: the proof rule's deaths, in every build: Flex's fragments in an axe here; Raiyvenz low with defensives ready is read by deaths-check.js itself) */
+const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', '9DRWhKnZbHtQgf4a:37', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28', 'Gax3AkbyFRXmdrgQ:7', 'Gax3AkbyFRXmdrgQ:11', 'Gax3AkbyFRXmdrgQ:17', 'Gax3AkbyFRXmdrgQ:22']; /* (Nov 13: Ula'tek pulls 1, 7 and 12: the beam taken by damage dealers, the Wretch held by the tail, five Vipers from carriers touching) */ /* (Nov 13: the proof rule's deaths, in every build: Flex's fragments in an axe here; Raiyvenz low with defensives ready is read by deaths-check.js itself) */
 
 const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.js'));
 
@@ -187,6 +187,12 @@ function checkPull(key) {
     const lose = (r.mistakes || []).filter((m) => m.player !== 'Raid' && String(m.player).split('-')[0] !== a.by && m.t >= a.t - 0.5 && m.t <= a.end && /^(widow's kiss|death's embrace)$/i.test(m.mechanic) && !m.others); if (lose.length) say(pull, 'guillotine', lose.length + ' players are blamed for the eruption of an axe ' + a.by + ' dropped on the raid'); }
   /* (Nov 6 read-through: Spirit Erasure is its own cause, never "Too many individual mistakes") */
   /* (Nov 13, pass 3: a tank's missed Stone Breaker circles: the first miss whose hit killed the wave is named with its own count (Twin Fangs pull 27: circle 2 killed 7; a wider window read circle 1, which killed none)) */
+  /* (Nov 13, Main, after his death audit: a non-tank in the tank's Caustic Deluge beam had no row at all. Wolfthorn's Twin Fangs kill: Flex took 749k and Shockabunga 625k.
+     One hit is never coloured: even top kills' non-tanks take it about twice a kill) */
+  if (key === '9DRWhKnZbHtQgf4a:37') { const g = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => /^Caustic Deluge/.test(x.title || '')), rows = (g && g.rows) || [];
+    const who = (n) => rows.find((x) => String((x[0] || {}).p || '').split('-')[0] === n);
+    if (!g || !who('Flëxørçïst') || !who('Shockabunga')) say(pull, 'avoid', 'the tank beam (Caustic Deluge) row for non-tanks is gone: Flex and Shockabunga each stood in it once on this kill');
+    else if (rows.some((x) => /^1 hit/.test((x[1] || {}).txt || '') && (x[1].bad || x[1].warn))) say(pull, 'avoid', 'one Caustic Deluge hit is coloured: one hit is never amber or red'); }
   if (key === '9DRWhKnZbHtQgf4a:34' && E.rootCause) { const o9 = E.rootCause(r, { cut: 350, why: 'half' }); if (!o9 || !/Tyralien missed Stone Breaker circle 2, and it killed 7 players/.test(o9.short || '')) say(pull, 'root', 'Twin Fangs pull 27 no longer reads "Tyralien missed Stone Breaker circle 2, and it killed 7 players": "' + (o9 && o9.short) + '"'); }
   /* (Nov 12, Flex: "this section is still wildly innacurate ... in terms of what caused the wipe at least": a wipe called on a mechanic no kill survived (the
      page's own wipeMech) has that mechanic in Why we wiped, or the missed kick behind it; Nov 11 pull 8 read "Too many individual mistakes" for a short soak) */
@@ -296,6 +302,7 @@ if (!H.SH.includes('wrt-by')) say('the page code', 'debriefing', 'the root-cause
 if (!H.SH.includes('window.__ahGroup = function')) say('the page code', 'debriefing', 'Also hurt lost its groups');
 if (!UI.includes("filter((x) => !(x.kind === 'note' && x.label === 'Note cooldowns'))")) say('the page code', 'debriefing', 'Note cooldowns shows up among the mistakes again');
 if (!UI.includes("nd.className = 'cch-ab cch-abx cch-ab-note'") || !H.SH.includes("var ncd = pick(/^note cooldowns/i)")) say('the page code', 'debriefing', 'Raid checks lost the Note cooldowns row');
+{ const ES = require('fs').readFileSync(require('path').join(SRC, 'engine.js'), 'utf8'); if (!ES.includes("avSet('Caustic Deluge (Tank beam)'") || !ES.includes("'tainted burst', 'caustic deluge'") || !ES.includes("if (h.role(e.dst) === 'tank' || !(e.amt > 0)) continue; const a = A(e.dst); if (e.t - a.beamL > 1.5)")) say('the page code', 'avoid', 'The Twin Fangs: the tank beam (Caustic Deluge) row for non-tanks is gone from Avoidable damage (Main, Nov 13)'); }
 if (!UI.includes('if (!(w && w.auto)) return w; const p = playedOn(r, w);') || !UI.includes('if (p === w && isFinite(w.t)) { const g = (r.deaths || []).filter((d) => d.t > w.t + 0.5 && d.t <= w.t + 1.25 && (d.mass || 0) >= 3);')) say('the page code', 'wipes', 'the cut no longer follows a pull the raid played on (audit W1)');
 /* (audit P1, Nov 8: one cooldown table: Plan, the Report card and the Deaths rules read each raid cooldown's length from CD_REAL) */
 { const m = /const CD_REAL = (\{[^}]*\})/.exec(UI), CR = m ? require('vm').runInNewContext('(' + m[1] + ')') : null;

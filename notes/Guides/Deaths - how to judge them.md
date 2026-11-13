@@ -376,4 +376,6 @@ The answer key (tests/answer-key) works out every death's verdict from the raw l
 Saved nights (1,884 deaths) against the last push, with the other chats' Ula'tek work merged in: 55 deaths read differently (16 of them the reset pull), You 189 -> 184.
 Checks (tests/deaths-check.js): each death above by name (most in every build, the rest with --all), and on every death read: no proof from a by-design hit, none from
 soul fragments that all came from someone else's bomb, none in a reset pull, an edge proof only with no killing hit past the edge and not in a mass death.
-Still open: Ula'tek's Fester Burst where the Wretch was held out of reach (waits on the Ula'tek module's reach check); Twin Fangs' Caustic Deluge row.
+Twin Fangs' Caustic Deluge beam (Main's call): a non-tank who stands in it has a Harmful row under Avoidable damage ("Caustic Deluge (Tank beam)"), with the usual lines (two hits amber, five red:
+no baseline of its own yet, and top kills' non-tanks take it about twice a kill), so one hit is never coloured; as death proof it follows the normal rule.
+Still open: Ula'tek's Fester Burst where the Wretch was held out of reach (the Ula'tek module's words); what else a reset pull grades besides deaths.

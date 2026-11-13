@@ -469,7 +469,7 @@ const CA_IDS = {
   'reclaim essence': 1287718, 'eternal nightfall': 1286918, 'defilement of the coiled altar': 1298381, 'axegrinder': 1283832, 'venomfang': 1306906, // (Zul'jan's Venomfang debuff; cast 1282287. A player ability of the same name is 1306635)
   'volatile venom': 1282288, "widow's kiss": 1283623, "death's embrace": 1299396, // (the axe's eruption, 6 s after a Guillotine / Grim Guillotine lands)
 };
-const TF_SPELLS = ['eternal venom', 'venomous emergence', 'caustic globule', 'tainted blood', 'stir the depths', 'ravenous feast', 'sanguine storm', 'coiling ichor', 'corrosive spit', 'barbed bulwark', 'stone breaker', 'uncoiled wrath', 'tainted burst'];
+const TF_SPELLS = ['eternal venom', 'venomous emergence', 'caustic globule', 'tainted blood', 'stir the depths', 'ravenous feast', 'sanguine storm', 'coiling ichor', 'corrosive spit', 'barbed bulwark', 'stone breaker', 'uncoiled wrath', 'tainted burst', 'caustic deluge' /* (Nov 13: the tank beam, for non-tanks who stood in it) */];
 // Twin Fangs spell IDs, read from a Mythic kill. Several mechanics log under shared names, so the module
 // matches these by ID (MODULES entry `ids`).
 const TF = {
@@ -1395,27 +1395,31 @@ function buildTwinFangs(ev, r, h) {
   // each hit. Both are spread over the whole raid in every top kill, so amber is more than the worst top-kill raider had by the same
   // point of the fight (AVOID_BASE, avLim; mechanics audit Oct 26: the old 2 amber / 5 red had no top kill green), red twice that;
   // a death to Sanguine Storm is red when it did half or more of their last 15 s.
-  const av = new Map(), A = (g) => { let a = av.get(g); if (!a) av.set(g, a = { stir: 0, storm: 0, amt: 0, last: -9, stirT: [], stormT: [] }); return a; };
+  const av = new Map(), A = (g) => { let a = av.get(g); if (!a) av.set(g, a = { stir: 0, storm: 0, amt: 0, last: -9, stirT: [], stormT: [], beam: 0, beamT: [], beamAmt: 0, beamL: -9 }); return a; };
   for (const e of ev.filter((x) => x.k === 'aura' && L(x.spell) === 'stir the depths').sort((a, b) => a.t - b.t)) if (e.op === 'apply' && h.isPlayer(e.dst)) { const a = A(e.dst); if (e.t - a.last > 1.5) { a.stir++; a.stirT.push(e.t); } a.last = e.t; }
   for (const e of dmg('sanguine storm')) { const a = A(e.dst); a.storm++; a.stormT.push(e.t); a.amt += e.amt; }
-  const avRows = [...av].sort((a, b) => (b[1].stir + b[1].storm) - (a[1].stir + a[1].storm) || b[1].amt - a[1].amt);
+  /* (Nov 13, Main, after his death audit: Caustic Deluge is a beam on Vexhul's tank; a non-tank standing in it takes 520k to 750k (Flex 749k and Shockabunga 625k on Wolfthorn's kill).
+     It had no row at all. Even top kills' non-tanks take it about twice a kill (11 hits in 6 kills), so it's a Harmful row with the usual lines, never red for one hit) */
+  for (const e of dmg('caustic deluge').sort((p, q) => p.t - q.t)) { if (h.role(e.dst) === 'tank' || !(e.amt > 0)) continue; const a = A(e.dst); if (e.t - a.beamL > 1.5) { a.beam++; a.beamT.push(e.t); } a.beamL = e.t; a.beamAmt += e.amt; }
+  const avRows = [...av].sort((a, b) => (b[1].stir + b[1].storm + b[1].beam) - (a[1].stir + a[1].storm + a[1].beam) || b[1].amt - a[1].amt);
   const hits = (a) => a.stir + a.storm;
   // (one set per source, like every other boss's Avoidable damage, so it draws as bars: players, hits, damage, died)
   // (with how harmful it is, its hits and damage in total, and its spell, like avoidPanel's: the Summary's chart reads those)
   const avOwn = (d, n) => { const rc = (d.recap || []).filter((e) => !e.heal), all = rc.reduce((s, e) => s + (e.amount || 0), 0); return !all || rc.filter((e) => L(e.spell || '') === n).reduce((s, e) => s + (e.amount || 0), 0) >= all / 2; };
   const avSet = (title, sub, key, amtOf, sp) => { const rs = avRows.filter(([, a]) => a[key] > 0).sort((a, b) => b[1][key] - a[1][key]);
     if (!rs.length) return null; const L2 = avLim(r, { label: title, harm: 'Medium' }, false), roleG = (g) => (r.players.get(g) || {}).role || null, limG = (g) => L2.lim(r.duration || 0, roleG(g)); /* (by role, Nov 12) */
-    const died = new Map(key === 'storm' ? r.deaths.filter((d) => L(d.ability || '') === sp && avOwn(d, sp)).map((d) => [d.guid, d.t]) : []);
+    const died = new Map(key === 'storm' || key === 'beam' ? r.deaths.filter((d) => L(d.ability || '') === sp && avOwn(d, sp)).map((d) => [d.guid, d.t]) : []);
     const rows = rs.map(([g, a]) => { const [wA, bA] = limG(g), dd = died.has(g), bad = dd || a[key] >= bA; return [{ p: pname(g) }, { txt: a[key] + (a[key] === 1 ? ' hit' : ' hits'), bad, warn: !bad && a[key] >= wA }, { n: amtOf(a) }, dd ? { txt: 'died to it', bad: true } : { txt: '—', dim: true }]; });
     const nT = rs.reduce((n, [, a]) => n + a[key], 0), amt = rs.reduce((n, [, a]) => n + amtOf(a), 0), spl = S(sp);
     return { title, t: null, harm: 'Medium', nT, amt, spell: spl, sub: sub + '. ' + pl(nT, 'hit') + ' on ' + pl(rs.length, 'player') + '.', bad: rows.some((x) => x[1].bad), warn: rows.some((x) => x[1].warn), rows, hitTs: rs.map(([g, a]) => [pname(g), a[key + 'T']]),
       /* (avoidMistakes reads these: the verdict is the one answer, the pack's per-hit notes give way) */ label: title, names: [sp], secs: false, kb: false, lim: L2.lim,
       judge: rs.map(([g, a]) => ({ p: pname(g), role: roleG(g), tank: false, ts: a[key + 'T'], amt: amtOf(a), dt: died.has(g) ? died.get(g) : null })) }; };
   const avGroups = [avSet('Stir the Depths water', 'Harmful: stepping into the churned water it leaves (each step is a hit)', 'stir', () => 0, 'stir the depths'),
-    avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt, 'sanguine storm')].filter(Boolean);
+    avSet('Sanguine Storm', 'Harmful: each hit', 'storm', (a) => a.amt, 'sanguine storm'),
+    avSet('Caustic Deluge (Tank beam)', 'Harmful: a non-tank standing in the beam on Vexhul\'s tank', 'beam', (a) => a.beamAmt, 'caustic deluge')].filter(Boolean);
   sections.push({ id: 'avoid', title: 'Avoidable damage', spell: S('sanguine storm'),
     verdict: avGroups.some((g) => g.bad) ? 'bad' : avGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: avRows.length ? pl(avRows.length, 'player') + ' stepped into Stir the Depths water or got hit by Sanguine Storm.' : 'Nobody stepped into Stir the Depths water or got hit by Sanguine Storm.',
+    summary: avRows.length ? pl(avRows.length, 'player') + ' stepped into Stir the Depths water, got hit by Sanguine Storm or stood in the tank\'s Caustic Deluge beam.' : 'Nobody stepped into Stir the Depths water, got hit by Sanguine Storm or stood in the tank\'s Caustic Deluge beam.',
     cols: ['Player', 'Hits', 'Damage taken', 'Died'], rows: [], groups: avGroups });
 
   // (raid cooldown usage is shown on the Healing tab)
