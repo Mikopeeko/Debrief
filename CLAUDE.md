@@ -64,6 +64,10 @@ Edit files in src/, run `python build.py` inside src/, refresh the browser tab o
   Every bug fix adds a check in tests/ (or in the build's contradiction check) that fails on the old code and passes on the new one,
   and it runs on every build from then on. The check names the bug and the night or pull it came from. A fix pushed without its check
   isn't done; say in your "Done, pushed" note which check guards it.
+- SIDEBAR, KEPT TIDY BY EACH CHAT (the user, Nov 13: "organize my chats, they should auto organize themselves too"). A chat the user
+  starts files itself with the sidebar tool (move_sessions on "self"): "Working on things" while it works, "Done or on hold" once its
+  task is pushed or it waits on the user. The Main chat stays in "Main (builds and pushes)". Chats another chat started sit under that
+  chat and move with it. Keep the title's status icon current (🟢 working, ✅ done, ⏸️ idle).
 - `.gitignore` keeps installers, `backups/`, `*.raid-backup.*`, `.claude/` and raw combat logs off GitHub. The Warcraft Logs login is stored outside the project (LOCALAPPDATA), never in the repo.
 
 ## Conventions
