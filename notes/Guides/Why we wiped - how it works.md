@@ -164,3 +164,9 @@ each rule's own line is pinned in the page-code list.
 - **How it went keeps the deaths the root names.** The root cause returns `named` (the deaths its line names one by one: today the two tanks of a tank left alone); How it went
   gives each a row even when it is before the collapse it lists, and the 9-row cap cuts the least important other rows instead. Nov 11 pull 1: 7:33 Wail, 7:38 Tyralien, 8:54 Vandagos.
 Checks: tests/wipe-causes.js names Oct 21 pull 16, Nov 11 pull 16 and Nov 11 pull 1's How it went rows (with --all); each rule's line is pinned in the page-code list (every build).
+
+## Nov 13: a dropped purple orb (Flex: "He died as he was carrying it, and i ran into it right as he died")
+With no purple carried at a burst, the module looks for a purple whose carrier died in the 3 s before it (the carry ends at the death): it dropped where they fell (`r.orbDrop`).
+From the log's positions it names the one green carrier within ring range (7.5 yards) of that spot at the burst, when every other green carrier is clear of it (8.5 or more);
+with no such green, the carrier alone. Why we wiped: "Komo died carrying a purple orb, and it dropped where they fell. Flëxørçïst's green orb ran into it and set off Venom
+Rupture." Both are named (orbBy, and All pulls' one rule orbBurstBy); never "one of". Nov 12 pull 3, 7:58 is the pull; tests/wipe-causes.js names it.

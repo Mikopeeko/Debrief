@@ -27,6 +27,10 @@ const NAMED = [
      room: feared off the edge. Deadly Venom is Zaffia's own poison) */
   ['agt6jMTyZBYvVzAP', 17, 'kick', /^An unkicked Wail of Terror feared 16 players, and 3 ran off the edge\.$/, [],
     'Nov 11 pull 16: three players feared off the edge by the unkicked Wail of Terror at 4:59. It read "2 died while feared (Deadly Venom)"'],
+  /* (Nov 13, Flex on this pull: "He died as he was carrying it, and i ran into it right as he died". Komo's purple carry ended at his death, 7:57.5; the burst came at 7:58.7 with
+     Flëxørçïst's green 5.3 yards from where Komo fell and the other green carrier clear of it) */
+  ['Gax3AkbyFRXmdrgQ', 5, 'orbs', /^Komo died carrying a purple orb, and it dropped where they fell\. Flëxørçïst's green orb ran into it and set off Venom Rupture\.$/, [],
+    'Nov 12 pull 3, 7:58: the purple orb dropped as Komo died and Flëxørçïst\'s green ran into it. It read "No one was carrying it: it was a dropped orb on the ground"'],
   /* (Nov 13, Main, from the answer key: this pull's cause was already right; it is here for the killing hit of one of its deaths, below) */
   ['agt6jMTyZBYvVzAP', 9, 'guil', /^The Guillotine soak was short, so Execution hit the raid\.$/, [], 'Nov 11 pull 8: a Guillotine soak with 3 of 5, Grim Execution killed the raid'],
 ];
@@ -58,6 +62,7 @@ module.exports = function (o) {
     const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', rc = rootOf(r);
     if (!rc || rc.cat !== cat || !re.test(rc.short || '')) say(where, 'root', what + '. Now: ' + (rc ? rc.name + ' — "' + rc.short + '"' : 'no cause'));
     for (const b of notBy) if (rc && (rc.by || []).includes(b)) say(where, 'root', 'Why we wiped names ' + b + ' as the cause again (' + what + ')');
+    if (code === 'Gax3AkbyFRXmdrgQ' && fight === 5 && rc && JSON.stringify((rc.orbBy || []).slice().sort()) !== JSON.stringify(['Flëxørçïst', 'Komo'])) say(where, 'root', 'the dropped purple orb\'s cause names ' + ((rc.orbBy || []).join(', ') || 'nobody') + ': it is Komo (it dropped as he died) and Flëxørçïst (his green ran into it)');
     for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
       if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));
       else if ((row[1] || {}).bad || (row[1] || {}).warn) say(where, 'avoid', who + '\'s ' + grp + ' row is coloured now: the colour is judged on the ticks that did damage (14), as the top raids\' line was measured'); }
