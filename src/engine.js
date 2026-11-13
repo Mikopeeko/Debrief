@@ -3573,26 +3573,27 @@ function avoidPanel(ev, r, h, list) {
     // Blast Wave "hits" were four immunities))
     /* (Nov 13, Main, from the answer key: a source marked raw counts the hit with what shields absorbed, and a hit a shield took whole is still a hit: the tank frontal on a non-tank, whose
        mistake line already counted it that way. Zaffia, Nov 11 pull 5: 820,292 on the line, 492,988 here; Kargaryen, pulls 5 and 16: a line and no row) */
-    const amtOf = (e) => (src.raw ? Math.max(e.amt, e.raw || 0) : e.amt), hits = all.filter((e) => e.t <= cut + 0.05 && amtOf(e) !== 0); if (!hits.length) return null;
+    /* (Nov 13, from the answer key: seconds in a pool read low. A tick a shield took whole is still a second standing in it: Fourinches, Nov 11 pull 3, 18 Noxious Ground ticks in the log, "14 s in it"; Komo, pull 4: 7 ticks, "3 s". Its damage stays what got through) */ const secs0 = src.secs != null ? !!src.secs : AV_SECS.test(src.label); /* (the colour is judged on the ticks that did damage (x.tj, tkJ): the top raids' lines were measured that way, so counting the shielded ones there too would judge everyone harsher than before. Measured on 103 saved pulls: 259 rows gain seconds, none changes colour) */
+    const amtOf = (e) => (src.raw ? Math.max(e.amt, e.raw || 0) : e.amt), hits = all.filter((e) => e.t <= cut + 0.05 && (amtOf(e) !== 0 || (secs0 && (e.raw || 0) > 0))); if (!hits.length) return null;
     const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut), limOf = (g) => L2.lim(cut, h.role(g)); /* (each player against their role's line, Nov 12) */
     const per = new Map();
     // (a source whose hit leaves a damage over time under the same name (src.dot: how many seconds it lasts) counts the hits, not its
     // ticks: a shield that soaked a tick made the next one look like a new hit (Oct 24: a top kill's raider showed 5 Caustic Waves hits
     // for 3 waves). A tick starts a touch only when no hit came before it in that time (the hit itself was fully absorbed))
-    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, hit: -99, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += amtOf(e);
+    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, tj: 0, amt: 0, last: -9, hit: -99, ts: [], tk: [], tkJ: [], tl: [] }); x.ticks++; x.tk.push(e.t); if (amtOf(e) !== 0) { x.tj++; x.tkJ.push(e.t); } x.amt += amtOf(e);
       const fresh = src.dot ? e.t - x.hit > (e.tick ? src.dot + 1 : 1.5) : e.t - x.last > 1.5;
       if (fresh) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += amtOf(e); x.last = e.t; if (src.dot && (!e.tick || fresh)) x.hit = e.t; }
     // (a source that only counts a walk-in from minTicks ticks: a lone brush isn't one (Mutagenic Venom, fix 9))
     if (src.minTicks > 1) for (const [g, x] of [...per]) { const tl = x.tl.filter((c) => c.n >= src.minTicks); if (!tl.length) { per.delete(g); continue; } x.tl = tl; x.ts = tl.map((c) => c.t); x.touches = tl.length; }
     if (!per.size) return null;
-    const val = (x) => (secs ? x.ticks : x.touches);
+    const val = (x) => (secs ? x.ticks : x.touches), valJ = (x) => (secs ? x.tj : x.touches); /* (val: what the row shows; valJ: what its colour is judged on) */
     // (a death to it is red when it did half or more of the damage in their last 15 s (the Deaths page's rule), they were already past the
     // amber line, or it's Dangerous; an axe's last tick on someone the raid damage was killing is not on them (top kills, fix 9))
     const own = (d) => { const rc = (d.recap || []).filter((e) => !e.heal), all = rc.reduce((s, e) => s + (e.amount || 0), 0), mine = rc.filter((e) => src.n.includes(L(e.spell || ''))).reduce((s, e) => s + (e.amount || 0), 0); return !all || mine >= all / 2; };
-    const diedT = new Map(r.deaths.filter((d) => { const x = per.get(d.guid); return d.t <= cut + 0.05 && src.n.includes(L(d.ability || '')) && (src.harm === 'High' || own(d) || (x && val(x) >= limOf(d.guid)[0])); }).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
+    const diedT = new Map(r.deaths.filter((d) => { const x = per.get(d.guid); return d.t <= cut + 0.05 && src.n.includes(L(d.ability || '')) && (src.harm === 'High' || own(d) || (x && valJ(x) >= limOf(d.guid)[0])); }).map((d) => [d.guid, d.t])), died = new Set(diedT.keys());
     const rows = [...per.values()].sort((a, b) => val(b) - val(a) || b.amt - a.amt).map((x) => {
-      const v = val(x), tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && v >= tankKept(bA), [pw, pb] = limOf(x.g);
-      const bad = dd || kept || (!tank && v >= pb), warn = !bad && !tank && v >= pw;
+      const v = val(x), vJ = valJ(x), tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && vJ >= tankKept(bA), [pw, pb] = limOf(x.g);
+      const bad = dd || kept || (!tank && vJ >= pb), warn = !bad && !tank && vJ >= pw;
       return [{ p: h.name(x.g), sub: tank ? (kept ? 'tank, kept standing in it' : 'tank') : '' }, { txt: secs ? v + ' s in it' : v + (v === 1 ? ' hit' : ' hits'), bad, warn,
         sub: secs ? (x.touches > 1 ? x.touches + ' times' : '') : x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
     });
@@ -3608,7 +3609,7 @@ function avoidPanel(ev, r, h, list) {
       // for the Night summary report card: each player's moments (hit times, or each second in it), so it can stop at the wipe filter;
       // lim(t) gives the lines at any cut
       names: src.n, wA, bA, kb: L2.kb, lim: L2.lim, skip: src.skip || null, fix: src.fix || '',
-      judge: [...per.values()].map((x) => ({ p: h.name(x.g), role: h.role(x.g) || null, tank: !src.tankJudged && h.role(x.g) === 'tank' && val(x) < tankKept(bA), ts: secs ? x.tk : x.ts, amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
+      judge: [...per.values()].map((x) => ({ p: h.name(x.g), role: h.role(x.g) || null, tank: !src.tankJudged && h.role(x.g) === 'tank' && valJ(x) < tankKept(bA), ts: secs ? x.tk : x.ts, ...(secs && x.tkJ.length !== x.tk.length ? { tj: x.tkJ } : {}), amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
         // (for the coach's card (Oct 22): the guid, each touch, and a map of a moment: the raid then, them in red, a few seconds of movement)
         g: x.g, tl: x.tl, mk: (t) => ({ t, pts: h.snap(t), frames: h.frames ? h.frames(Math.max(0, t - 2.5), Math.min(r.duration || t + 1, t + 1), 0.25) : undefined, bad: [x.g], badLabel: 'hit by ' + src.label, title: src.label + ' at ' + h.fmtT(t) + ': ' + h.name(x.g) }) })) };
   };
@@ -3638,8 +3639,8 @@ function avoidMistakes(r) {
   // (judged where the panel is by default: the whole kill, or a wipe up to its 2nd death (the wipe filter's default), so both say the same)
   const ds = r.deaths.map((d) => d.t).sort((a, b) => a - b), T = Math.min(r.duration || Infinity, !r.item.kill && ds.length >= 2 ? ds[1] : Infinity);
   for (const g of sec.groups) for (const j of g.judge || []) {
-    if (j.tank) continue; const ts = j.ts.filter((t) => t <= T + 0.05).sort((a, b) => a - b), [wA, bA, who] = g.lim(T, j.role);
-    const tA = ts.length >= wA ? ts[wA - 1] : null, tR = j.dt != null && j.dt <= T + 0.05 ? j.dt : ts.length >= bA ? ts[bA - 1] : null;
+    if (j.tank) continue; const ts = j.ts.filter((t) => t <= T + 0.05).sort((a, b) => a - b), tj = j.tj ? j.tj.filter((t) => t <= T + 0.05).sort((a, b) => a - b) : ts /* (Nov 13: judged on the ticks that did damage) */, [wA, bA, who] = g.lim(T, j.role);
+    const tA = tj.length >= wA ? tj[wA - 1] : null, tR = j.dt != null && j.dt <= T + 0.05 ? j.dt : tj.length >= bA ? tj[bA - 1] : null;
     if (tA == null && tR == null) continue;
     // (the fight's own check already flagged this hit (the frontal on a raider, ghosts touching): one mistake, not two)
     const tt = tR != null ? tR : tA; if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - tt) <= 3)) continue;
@@ -3692,8 +3693,8 @@ function strictView(r, lv) {
       const ml = g._lim || [Infinity, Infinity], wA = Math.min(lim[0], ml[0]), bA = lim[1] ? Math.min(lim[1], ml[1]) : Infinity, short = g.label.replace(/\s*\(.*$/, '');
       out = out.filter((m) => !(m.avoidRule && L(m.mechanic) === L(g.label)));
       const byP = new Map();
-      for (const j of g.judge || []) { if (j.tank) continue; const ts = (j.ts || []).filter((t) => t <= T + 0.05).sort((a, b) => a - b), n = ts.length, died = j.dt != null && j.dt <= T + 0.05;
-        const tA = n >= wA ? ts[wA - 1] : null, tR = died ? j.dt : n >= bA ? ts[bA - 1] : null; if (tA == null && tR == null) continue; byP.set(j.p, tR != null ? 2 : 1);
+      for (const j of g.judge || []) { if (j.tank) continue; const ts = (j.ts || []).filter((t) => t <= T + 0.05).sort((a, b) => a - b), n = ts.length, died = j.dt != null && j.dt <= T + 0.05, tj = j.tj ? j.tj.filter((t) => t <= T + 0.05).sort((a, b) => a - b) : ts; /* (Nov 13: judged on the ticks that did damage) */
+        const tA = tj.length >= wA ? tj[wA - 1] : null, tR = died ? j.dt : tj.length >= bA ? tj[bA - 1] : null; if (tA == null && tR == null) continue; byP.set(j.p, tR != null ? 2 : 1);
         if (out.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - (tR != null ? tR : tA)) <= 3)) continue;
         const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
         out.push({ t: tR != null ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: tR != null ? 'High' : 'Medium', dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [], strict: true,

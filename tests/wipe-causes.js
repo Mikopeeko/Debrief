@@ -35,6 +35,10 @@ const KILLS = [
   ['agt6jMTyZBYvVzAP', 4, 'Hobbz', 221.9, 'Retaliatory Malice', 'Nov 11 pull 3, 3:41: Hobbz died to Retaliatory Malice. It read Malevolent Resonance, his last tick (the ghosts touched 10 s earlier)'],
   ['agt6jMTyZBYvVzAP', 9, 'Fourinches', 449.5, 'Grim Execution', 'Nov 11 pull 8, 7:29: Fourinches died to Grim Execution with six others. It read Malevolent Resonance (the ghosts touched 1 s before)'],
 ];
+/* A row of the Avoidable damage table: [code, fight, group, player, what the row must read, what it read before]. */
+const ROWS = [
+  ['agt6jMTyZBYvVzAP', 4, 'Noxious Ground', 'Fourinches', '18 s in it', 'Nov 11 pull 3: Fourinches stood in Noxious Ground for 18 ticks (four of them fully shielded). It read "14 s in it"'],
+];
 module.exports = function (o) {
   const { H, E, W, say, report, findFile, readJ } = o, nm = (p) => String(p || '').split('-')[0];
   const SITE = H.site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} });
@@ -49,6 +53,9 @@ module.exports = function (o) {
     const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', rc = rootOf(r);
     if (!rc || rc.cat !== cat || !re.test(rc.short || '')) say(where, 'root', what + '. Now: ' + (rc ? rc.name + ' — "' + rc.short + '"' : 'no cause'));
     for (const b of notBy) if (rc && (rc.by || []).includes(b)) say(where, 'root', 'Why we wiped names ' + b + ' as the cause again (' + what + ')');
+    for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
+      if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));
+      else if ((row[1] || {}).bad || (row[1] || {}).warn) say(where, 'avoid', who + '\'s ' + grp + ' row is coloured now: the colour is judged on the ticks that did damage (14), as the top raids\' line was measured'); }
     for (const [kc, kf, who, at, hit, was] of KILLS) { if (kc !== code || kf !== fight) continue; const d = (r.deaths || []).find((x) => nm(x.player) === who && Math.abs(x.t - at) <= 1.5);
       if (!d || String(d.kill || '') !== hit) say(where, 'deaths', was + '. Now: ' + (d ? '"' + d.kill + '"' : 'no such death')); }
     if (fight === 2 && code === 'agt6jMTyZBYvVzAP' && CH) { /* (Nov 13, Main: How it went never drops a death the root cause names: Tyralien at 7:38 and Vandagos at 8:54, even past the 9-row cap) */

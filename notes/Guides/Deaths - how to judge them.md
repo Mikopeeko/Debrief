@@ -404,3 +404,10 @@ skips an immunity like the line does. 20 answer-key lines fixed. Check: every Co
 Still open, needs a ruling: avoidable-damage lines on a wipe count hits up to the pull's SECOND DEATH (avoidMistakes and strictView, T = ds[1]), an old default of the wipe filter;
 the table and the page stop at the wipe call. Zaffia, Nov 11 pull 6: Volatile Venom at 0:55, 1:33, 1:36, 1:40, 1:42 and 6:32; second death 5:52, wipe call 7:04: the line says
 "5 times (294k)" (294k is all six hits), the table says 6. Dashtoswirly, pull 12: Axegrinder 6 on the line, 8 in the table. Counting to the wipe call would flag more lines on wipes.
+
+## Seconds in a pool (Nov 13, from the answer key)
+The answer key's guess was "about a second short per visit". The log says otherwise: a tick a shield absorbed whole was not counted (the table dropped every hit that did no
+damage). Fourinches, Nov 11 pull 3: 18 Noxious Ground ticks, four fully shielded, "14 s in it"; Komo, pull 4: 7 ticks, "3 s". Now a seconds source counts every tick (the row, the
+mistake line, the hover), while its colour is judged on the ticks that did damage (`valJ`, `tj`), the unit the top raids' lines were measured in. Counting the shielded ticks for the
+colour too turned 8 rows amber on 103 saved pulls, so it stays out until those lines are measured again. Measured: 259 rows gained seconds (248 Noxious Ground), 22 players who
+were fully shielded got a plain row, no row changed colour, no mistake line appeared or went. Damage stays what got through. 14 answer-key lines fixed.
