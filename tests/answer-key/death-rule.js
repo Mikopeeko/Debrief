@@ -12,10 +12,11 @@
 // fragments (Gravebound from their own Gloombomb or their own frontal). Raid damage is nobody's mistake (Venom Rupture, Coalesced Venom,
 // Dreadful Presence, Spirit Erasure, Fangs, Retaliatory Malice, Eternal Nightfall, an Execution, the boss's melee).
 'use strict';
-const OWN = new Set(['Axegrinder', 'Noxious Ground', "Widow's Kiss", "Death's Embrace", 'Malevolent Resonance']), FRONTAL = new Set(['Sever', 'Soul Sever', 'Blighted Sever']), NEARORB = new Set(['Volatile Venom', 'Mutagenic Venom']);
+const OWN_CA = new Set(['Axegrinder', 'Noxious Ground', "Widow's Kiss", "Death's Embrace", 'Malevolent Resonance']),
+  FRONTAL = new Set(['Sever', 'Soul Sever', 'Blighted Sever']), NEARORB = new Set(['Volatile Venom', 'Mutagenic Venom']);
 const T = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
 function deathVerdicts(pull, cause, known) {
-  const size = pull.size || 20, q = Math.ceil(size / 4), ca = pull.ca || {}, out = [];
+  const size = pull.size || 20, q = Math.ceil(size / 4), ca = pull.ca || {}, out = [], OWN = OWN_CA;
   for (const d of pull.deaths) {
     const prior = pull.deaths.filter((x) => x !== d && x.t < d.t - 0.05).length;
     const lost = cause && cause.t != null ? cause.t : null, afterQ = !pull.kill && prior >= q, afterLost = lost != null && d.t > lost + 0.75;
@@ -50,7 +51,7 @@ function deathVerdicts(pull, cause, known) {
       // 2. sat low with something ready
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
-      if (v.verdict === 'none' && !kb && !cc && d.pos) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50 && !d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; } else if (far > 50) v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
+      if (v.verdict === 'none' && !kb && !cc && d.pos && pull.ca) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50 && !d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; } else if (far > 50) v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
       if (v.verdict === 'none') v.fact = v.fact || (cc ? cc + ' when they died' : mass ? 'a mass death (' + d.mass + ' to ' + kb + ' at once)' : kb ? 'no mistake of theirs in the last 4 s (died to ' + kb + ')' : 'no killing hit');
       if (/Guillotine$/.test(kb || '')) { const g = (ca.guillotines || []).filter((x) => x.t <= d.t + 0.5 && d.t - x.t < 12).pop(); const tgt = !g || g.target === d.player; if (tgt) { v.sure = false; v.note = 'the Guillotine target\'s rule is still being written'; } else { v.verdict = 'none'; v.proof = null; v.sure = true; delete v.note; } if (g && v.verdict === 'none') v.fact = (tgt ? 'the ' + g.spell + ' target' : 'a soaker of the ' + g.spell + ': a soaker who dies in the soak is not counted') + ' (' + g.soakers.length + ' soaked)'; }
 

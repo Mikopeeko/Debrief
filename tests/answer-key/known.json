@@ -92,5 +92,6 @@
  "Gax3AkbyFRXmdrgQ:9:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:deathBy:Tyralious@117": "the death list names another killing hit than the log (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)"
+ "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
+ "Gax3AkbyFRXmdrgQ:22:splash": "the Avoidable damage table leaves Volkovod out of Noxious Splash at 0:38.5 (he touched with Kargaryen and Shockabunga) (reported Nov 13)"
 }

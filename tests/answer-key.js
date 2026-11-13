@@ -68,6 +68,9 @@ function siteFacts(code, fight) {
   out.inter = sec('inter') ? String(sec('inter').summary || '') : ''; out.orbSum = sec('orbs') ? String(sec('orbs').summary || '') : '';
   out.gloomRows = rowsOf(sec('gloom')).map((row) => ({ what: (row[0] || {}).txt || '', t: (row[1] || {}).t, players: cellP(row[2]), txt: (row[3] || {}).txt || '' }));
   out.ghostRows = rowsOf(sec('ghosts')).map((row) => ({ what: (row[0] || {}).txt || '', t: (row[1] || {}).t, players: cellP(row[2]), txt: (row[3] || {}).txt || '' }));
+  if (sec('incub') || sec('eggs') || sec('wretch')) { const eg = sec('eggs'), vm = eg && /(\d+) Blightscale Vipers? hatched/.exec(eg.summary || ''), wv = sec('waves'), wm = wv && /(\d+) wave hits? on (\d+) players?/.exec(wv.summary || '');
+    out.ula = { vipers: eg ? (vm ? +vm[1] : 0) : null, coils: rowsOf(sec('coils')).filter((row) => /^Circle \d/.test((row[0] || {}).txt || '')).map((row) => ({ t: (row[1] || {}).t, n: +((row[2] || {}).txt), who: cellP(row[3]) })),
+      beams: rowsOf(sec('incub')).map((row) => ({ t: (row[0] || {}).t, took: cellP(row[1]) })), wretch: rowsOf(sec('wretch')).map((row) => ({ outside: cellP(row[3]) })), waves: wm ? [+wm[1], +wm[2]] : null }; }
   out.dm = ((sec('dmghost') || {}).groups || []).map((g) => ({ t: g.t, tg: (g.tg || []).map(nmP) }));
 
   // ---- the same fact in two places of the site (Nov 13: "the same fact must equal itself on every tab") ----
@@ -173,6 +176,14 @@ function comparePull(code, K, S, say) {
     const st = (S.kickStats || []).find((k) => k.name === 'Wail of Terror'), km = (K.kicksMissed || []).length; if (((st && st.missed) || 0) !== km) say('wailOff', 3, 'Wail of Terror casts that got off', km + (km ? ' (' + K.kicksMissed.map((x) => T(x.t)).join(', ') + ')' : ''), (st && st.missed) || 0); else ok();
     if ((K.kicks || []).length !== (S.kicks || []).length) say('kicksAll', 2, 'kicks in the pull, all spells', K.kicks.length, S.kicks.length); else ok(); }
   // 6. The Coiled Altar's mechanics
+  const U = K.ulatek, SU = S.ula;
+  if (U && SU) { const same = (a, b) => a.slice().sort().join(', ') === b.slice().sort().join(', ');
+    if (SU.vipers != null && U.vipers.length !== SU.vipers) say('vipers', 2, 'Blightscale Vipers that hatched', U.vipers.length, SU.vipers); else ok();
+    if (U.coils.length !== SU.coils.length) say('coilN', 2, 'Spectral Coils circles', U.coils.length, SU.coils.length); else U.coils.forEach((c, i) => { if (c.soakers.length !== SU.coils[i].n) say('coilSoakers@' + Math.round(c.t), 3, 'soakers of the Spectral Coil at ' + T(c.t), c.soakers.length + ' (' + c.soakers.join(', ') + ')', SU.coils[i].n + ' (' + SU.coils[i].who.join(', ') + ')'); else ok(); });
+    if (U.beams.length !== SU.beams.length) say('beamN', 2, 'Toxic Incubation beams', U.beams.length, SU.beams.length); else U.beams.forEach((b, i) => { const kt = b.took.map((x) => x[0]); if (!same(kt, SU.beams[i].took)) say('beamTook@' + Math.round(b.t), 3, 'who took the Toxic Incubation beam at ' + T(b.t), b.took.map((x) => x[0] + ' x' + x[1]).join(', ') || 'nobody', SU.beams[i].took.join(', ') || 'nobody'); else ok(); });
+    { const kf = [...new Set(U.festerBursts.flatMap((b) => b.hitNotTanks || []))].sort(), sf = [...new Set(SU.wretch.flatMap((w) => w.outside))].sort(); if (!same(kf, sf)) say('festerOutside', 2, 'who Fester Burst caught outside the bubble (tanks left out)', kf.length + ' (' + kf.join(', ') + ')', sf.length + ' (' + sf.join(', ') + ')'); else ok(); }
+    { const kp = [...new Set(U.splashes.map((x) => x.player))], sp2 = Object.keys((S.avoid || {})['Noxious Splash'] || {}); if (!same(kp, sp2)) say('splash', 2, 'egg carriers who touched (Noxious Splash)', kp.sort().join(', ') || 'nobody', sp2.sort().join(', ') || 'nobody'); else ok(); }
+  }
   const M = K.mechanics; if (!M) return n;
   const mist = (re, dre) => (S.mistakes || []).filter((q) => re.test(q.mech) && (!dre || dre.test(q.detail)));
   const pairUp = (id, sev, lab, want, got, win) => { const used = new Set(); for (const w of want) { const i = got.findIndex((g, j) => !used.has(j) && g.player === w.player && near(g.t, w.t, win)); if (i < 0) say(id + ':' + w.player + '@' + Math.round(w.t), sev, lab + ': ' + w.player + ' at ' + T(w.t), w.say || 'yes', 'not listed'); else { used.add(i); ok(); } }

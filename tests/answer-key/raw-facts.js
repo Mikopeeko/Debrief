@@ -99,6 +99,7 @@ function rawFacts(rep, P) {
   const castN = {}, raidCds = []; for (const [id, l] of casts) { const o = (castN[nm(id)] = {}); for (const [ct, n] of l) { o[n] = (o[n] || 0) + 1; if (RAID_CDS.has(n) && !raidCds.some((q) => q[1] === nm(id) && q[2] === n && s(ct) - q[0] < 12)) raidCds.push([s(ct), nm(id), n]); } } raidCds.sort((a, b) => a[0] - b[0]); /* (a channelled cooldown logs a cast every second: one use) */
   const out = { fight: P.fight, kill: !!(ev.find((e) => e.type === 'encounterend') || {}).kill || !!F.kill, len: r1(len), wclBossPct: F.bossPercentage, wclFightPct: F.fightPercentage, wclLastPhase: F.lastPhase, wclIntermission: !!F.lastPhaseIsIntermission,
     bossHpEnd: bossHp, size: ids.length, dispels, ccSpans, castN, raidCds, players: pl, prep, consum, deaths, rez, kicks, kicksMissed: offs };
+  if (F.encounterID === 3492 || F.name === "Ula'tek") out.ula = ulatek(ev, { s, nm, an, isP, roleOf, friendly });
   if (F.encounterID === 3429 || (ev[0] && ev[0].encounterID === 3429)) out.ca = coiledAltar(ev, { t0, s, nm, an, isP, ownerOf, friendly, roleOf, ids, hp, hpAt, len, P });
   return out;
 }
@@ -192,6 +193,33 @@ function coiledAltar(ev, X) {
   // the intermission: fragments that reached Zul'jan (each heals him)
   ca.fragmentsReached = of(CA.fragHeal, 'heal').reduce((l, e) => { if (!l.some((t) => Math.abs(t - e.timestamp) < 1500)) l.push(e.timestamp); return l; }, []).length; /* (one fragment heals both bosses at once) */
   return ca;
+}
+
+// ---- Ula'tek (encounter 3492): each mechanic of phase 1, from the events alone. Spell ids are the ones in the log (names in the report). ----
+const UL = { beamCast: 1299759, beamHit: 1299919, fester: 1310763, splash: 1307635, coilHit: 1287265, coilCast: 1299010, constrictor: 1300685, waves: 1292403, thrash: 1296301, wrath: 1298367 };
+function ulatek(ev, X) {
+  const { s, nm, isP, roleOf, friendly } = X, u = {}, pd = (id) => ev.filter((e) => e.type === 'damage' && e.abilityGameID === id && isP(e.targetID));
+  // Toxic Incubation (the beam): each cast and who its impacts hit, most first; a tank should take it
+  const bh = pd(UL.beamHit); u.beams = ev.filter((e) => e.type === 'cast' && e.abilityGameID === UL.beamCast).map((e) => { const l = bh.filter((x) => x.timestamp >= e.timestamp && x.timestamp <= e.timestamp + 9000), c = new Map(); for (const x of l) c.set(x.targetID, (c.get(x.targetID) || 0) + 1);
+    const took = [...c].sort((a, b) => b[1] - a[1]); return { t: s(e.timestamp), took: took.map(([id, n]) => [nm(id), n]), nonTanks: took.filter(([id]) => roleOf(id) !== 'tank').map(([id]) => nm(id)) }; });
+  // Fester Burst: each burst and every player it put its debuff on (they were outside the Wretch's bubble)
+  u.festerBursts = ev.filter((e) => e.type === 'cast' && e.abilityGameID === UL.fester && !friendly(e.sourceID)).map((e) => ({ t: s(e.timestamp), hit: [...new Set(ev.filter((x) => x.abilityGameID === UL.fester && (x.type === 'applydebuff' || x.type === 'damage') && isP(x.targetID) && x.timestamp >= e.timestamp - 200 && x.timestamp <= e.timestamp + 1500).map((x) => nm(x.targetID)))].sort(), hitNotTanks: [...new Set(ev.filter((x) => x.abilityGameID === UL.fester && (x.type === 'applydebuff' || x.type === 'damage') && isP(x.targetID) && roleOf(x.targetID) !== 'tank' && x.timestamp >= e.timestamp - 200 && x.timestamp <= e.timestamp + 1500).map((x) => nm(x.targetID)))].sort() }));
+  // Blightscale Vipers: every Viper that appears in the log (each hatched from an egg)
+  { const seen = new Map(); for (const e of ev) { for (const [id, inst] of [[e.sourceID, e.sourceInstance], [e.targetID, e.targetInstance]]) { if (id == null || nm(id) !== 'Blightscale Viper') continue; const k = id + '.' + (inst || 0); if (!seen.has(k)) seen.set(k, s(e.timestamp)); } } u.vipers = [...seen.values()].sort((a, b) => a - b); }
+  // Spectral Coils: each circle (one Spectral Coil unit) and the players its hit split on
+  { const by = new Map(), key = (e) => e.sourceID + '.' + (e.sourceInstance || 0); /* (a circle is one Spectral Coil unit; a soaker gets Soul Constrictor from the circle they stand in; the circle's own damage hits the whole raid) */
+    for (const e of ev) { if (e.sourceID == null || nm(e.sourceID) !== 'Spectral Coil') continue; if ((e.type === 'cast' || e.type === 'begincast') && e.abilityGameID === UL.coilCast && !by.has(key(e))) by.set(key(e), { t: s(e.timestamp), who: new Set() });
+      else if (e.abilityGameID === UL.constrictor && e.type === 'applydebuff' && isP(e.targetID)) { let o = by.get(key(e)); if (!o) by.set(key(e), (o = { t: s(e.timestamp), who: new Set() })); o.who.add(nm(e.targetID)); } }
+    u.coils = [...by.values()].sort((a, b) => a.t - b.t).map((o) => ({ t: o.t, soakers: [...o.who].sort() })); }
+  // Noxious Splash: each time two egg carriers touched (the debuff lands on them)
+  u.splashes = ev.filter((e) => e.abilityGameID === UL.splash && (e.type === 'applydebuff' || e.type === 'damage') && isP(e.targetID)).reduce((l, e) => { if (!l.some((x) => x.player === nm(e.targetID) && s(e.timestamp) - x.t < 8)) l.push({ t: s(e.timestamp), player: nm(e.targetID) }); return l; }, []);
+  // Caustic Waves: each player's hits (damage at least 1.5 s after their last)
+  u.waveHits = {}; { const last = new Map(); for (const e of pd(UL.waves)) { if (e.timestamp - (last.get(e.targetID) || -1e9) > 1500) u.waveHits[nm(e.targetID)] = (u.waveHits[nm(e.targetID)] || 0) + 1; last.set(e.targetID, e.timestamp); } }
+  // the raid-wide killers, when they happened and how many they hit
+  const grp = (name) => ev.filter((e) => e.type === 'damage' && X.an(e.abilityGameID) === name && isP(e.targetID) && !friendly(e.sourceID)).reduce((l, e) => { const g = l.find((x) => Math.abs(x.ms - e.timestamp) < 1500); if (g) g.who.add(e.targetID); else l.push({ ms: e.timestamp, who: new Set([e.targetID]) }); return l; }, []).map((g) => ({ t: s(g.ms), hit: g.who.size }));
+  u.rattlerSlams = grp('Rattler Slam'); u.uncheckedRage = grp('Unchecked Rage');
+  u.wraths = ev.filter((e) => e.type === 'cast' && e.abilityGameID === UL.wrath && isP(e.targetID)).map((e) => ({ t: s(e.timestamp), on: nm(e.targetID) }));
+  return u;
 }
 function col2(o) { return o.col; }
 module.exports = { rawFacts, CA, DEFS };

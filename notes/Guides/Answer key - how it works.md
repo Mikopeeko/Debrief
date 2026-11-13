@@ -19,7 +19,7 @@ nights whose facts are written down once, from the raw log, and every build is c
 | Nov 12, The Coiled Altar Mythic | `Gax3AkbyFRXmdrgQ` | 6 wipes and the kill (fights 3 to 9) |
 | Nov 12, Ula'tek Mythic | `Gax3AkbyFRXmdrgQ-ulatek` | 13 wipes in phase 1 (fights 11 to 23) |
 
-A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'tek has the facts every boss has (length, boss health, totals, deaths and killing hits, kicks, potions, flask, food, rune) and each wipe's cause from the Ula'tek chat's proof table, with the deaths re-read here. Its mechanics and death verdicts are not in the key yet: `raw-facts.js` and `death-rule.js` need an Ula'tek block first.
+A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'tek has the facts every boss has (length, boss health, totals, deaths and killing hits, kicks, potions, flask, food, rune) and each wipe's cause from the Ula'tek chat's proof table, with the deaths re-read here. Its own mechanics are in too (`ulatek` in each pull): who took each Toxic Incubation beam and how many impacts, who each Fester Burst caught (tanks apart), every Blightscale Viper that hatched, each Spectral Coil circle and its soakers (Soul Constrictor), the egg carriers who touched (Noxious Splash), each player's Caustic Waves hits, Rattler Slams, Unchecked Rage and Mother's Wrath. The check compares the beam, the Vipers, the circles, Fester Burst and Noxious Splash; the rest is kept as data. Ula'tek deaths have before or after the wipe and the killing hit, but **no verdict yet**: the list of what is a player's own mistake on Ula'tek has not been ruled (`death-rule.js` only has The Coiled Altar's).
 
 ## The facts, and how each is read from the log
 | Fact | How it is read |
