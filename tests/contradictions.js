@@ -138,6 +138,13 @@ function checkPull(key) {
       else if (nk && (VERBS.test(nk) || nk.toLowerCase() === lc || nk.split(/\s+/).length > 2)) say(pull, 'title', '"' + base + ' (' + nk + ')" is not a 1-2 word noun nickname');
     }
   }
+  /* (Nov 13, Main, from the answer key: a non-tank in a tank frontal showed two numbers on two tabs. Zaffia, Nov 11 pull 5, Soul Sever: 820,292 on the mistake line (with what a shield
+     absorbed), 492,988 in the Avoidable damage table; Kargaryen, pulls 5 and 16: a line for a hit a shield took whole and no table row. Every pull read: each player with one such line has
+     a row in "Tank frontals on non-tanks" for the same amount) */
+  if (it.boss === 'The Coiled Altar') { const fm = (r.mistakes || []).filter((q) => /^(Sever|Soul Sever|Blighted Sever)$/.test(q.mechanic || '') && /^Stood in .* \(tank frontal\) for [\d,]+/.test(q.detail || '')), fg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => /^Tank frontals on non-tanks/.test(x.title || ''));
+    for (const q of fm) { if (fm.filter((x) => x.player === q.player).length !== 1) continue; const amt = +String((/for ([\d,]+)/.exec(q.detail) || [])[1] || '').replace(/,/g, ''), row = fg && (fg.rows || []).find((x) => (x[0] || {}).p === q.player), who = String(q.player).split('-')[0];
+      if (!row) say(pull, 'avoid', who + ' has a mistake line for standing in ' + q.mechanic + ' at ' + E.fmtT(q.t) + ' (' + amt.toLocaleString('en-US') + ') and no row in the Avoidable damage table');
+      else if (amt && Math.abs(amt - (row[2] || {}).n) > 0.01 * amt) say(pull, 'avoid', who + '\'s ' + q.mechanic + ' at ' + E.fmtT(q.t) + ' is ' + amt.toLocaleString('en-US') + ' on the mistake line and ' + Math.round((row[2] || {}).n).toLocaleString('en-US') + ' in the Avoidable damage table'); } }
   /* (Nov 13, Main, from the answer key: "never name a dead or mind-controlled player". Nov 11 pull 1: "Tyralien didn't taunt before Blighted Sever" at 8:54; he died at 7:38 and was never
      brought back. Every boss's taunt rows, every pull) */
   for (const m of r.mistakes || []) { if (!m.player || m.player === 'Raid' || !/^Didn't taunt /.test(m.detail || '')) continue; const dd = (r.deaths || []).filter((x) => x.player === m.player && x.t <= m.t + 0.2).sort((a, b) => a.t - b.t).pop();
@@ -242,6 +249,8 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
     [ENG, "line: off.length + ' feared off the edge' + into", 'players feared off the edge by an unkicked Wail of Terror are no longer said so (Nov 11 pull 16 read "2 died while feared (Deadly Venom)")'],
     [ENG, "if (d.wclKill > 0 && !bigOk", 'the hit that killed a player is guessed from their last tick again, not read from the log (Hobbz, Nov 11 pull 3; Fourinches, pull 8)'],
     [ENG, "d.noKill = fall || (d.wclKill != null ? d.wclKill === 0", '"no killing hit" is guessed again when the log says it outright'],
+    [ENG, "const amtOf = (e) => (src.raw ? Math.max(e.amt, e.raw || 0) : e.amt), hits = all.filter((e) => e.t <= cut + 0.05 && amtOf(e) !== 0);", 'the Avoidable damage table leaves out what a shield absorbed of a tank frontal again (Zaffia, Nov 11 pull 5: 820,292 on the line, 492,988 in the table)'],
+    [ENG, "raw: true, skip: (e) => role(e.dst) === 'tank' || !fKeep.has(e) || (!mythic && fTanks.has(e.dst)) || immHit(e) }", 'the tank frontal\'s table row and its mistake line count different hits again (a fully shielded hit had a line and no row: Kargaryen, Nov 11 pulls 5 and 16)'],
     [ENG, "if (tankOut(r, p, t)) continue;", 'a dead, feared or mind controlled tank can be named for a missed taunt again (Nov 11 pull 1: Tyralien, 75 s after he died)'],
     [ENG, "if (outS) mistakes[mistakes.length - 1].others = outS;", 'a tank left alone by a dead tank is blamed for the third stack again (Nov 11 pull 1: Vandagos at 8:23 and 8:54)'],
     [ENG, "if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true };", 'a wipe called inside an unkicked Wail of Terror\'s fear no longer goes to the kick (Nov 11 pull 3 read "Phase 2 push")'],

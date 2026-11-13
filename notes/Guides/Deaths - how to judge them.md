@@ -396,3 +396,11 @@ On the six saved nights (1,884 deaths) six killing hits changed: Hobbz, Nov 11 p
 Tyralious, Ula'tek pull 6 (Melee, read Stone Venom) and three on Oct 22; "no killing hit" agreed on all 249 the log marks, and three Ula'tek tank deaths to melee no longer read as
 no hit. Open: a death with no killing hit still shows its last tick in Graphs' Deaths list (How it went says "off the edge").
 Checks: tests/wipe-causes.js names both deaths (with --all); the answer key's deathBy facts hold them in every build; the translator's and the engine's lines are pinned.
+
+## One number on both tabs: a tank frontal on a non-tank (Nov 13, from the answer key)
+The mistake line counted what a shield absorbed ("for 820,292"), the Avoidable damage table did not (492,988), and a hit a shield took whole had a line and no row. Main: count the
+absorbed part on both, and the fully absorbed hit gets its row. The table's "Tank frontals on non-tanks" source is marked `raw` (avoidPanel: the hit with what shields absorbed) and
+skips an immunity like the line does. 20 answer-key lines fixed. Check: every Coiled Altar pull read fails when a player's one frontal line has no row or another amount.
+Still open, needs a ruling: avoidable-damage lines on a wipe count hits up to the pull's SECOND DEATH (avoidMistakes and strictView, T = ds[1]), an old default of the wipe filter;
+the table and the page stop at the wipe call. Zaffia, Nov 11 pull 6: Volatile Venom at 0:55, 1:33, 1:36, 1:40, 1:42 and 6:32; second death 5:52, wipe call 7:04: the line says
+"5 times (294k)" (294k is all six hits), the table says 6. Dashtoswirly, pull 12: Axegrinder 6 on the line, 8 in the table. Counting to the wipe call would flag more lines on wipes.

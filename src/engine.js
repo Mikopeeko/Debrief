@@ -3571,15 +3571,17 @@ function avoidPanel(ev, r, h, list) {
   const build = (src, all, cut) => {
     // (a hit that did no damage, met with an immunity or fully absorbed, isn't avoidable damage taken (scan, Oct 19: a top kill's
     // Blast Wave "hits" were four immunities))
-    const hits = all.filter((e) => e.t <= cut + 0.05 && e.amt !== 0); if (!hits.length) return null;
+    /* (Nov 13, Main, from the answer key: a source marked raw counts the hit with what shields absorbed, and a hit a shield took whole is still a hit: the tank frontal on a non-tank, whose
+       mistake line already counted it that way. Zaffia, Nov 11 pull 5: 820,292 on the line, 492,988 here; Kargaryen, pulls 5 and 16: a line and no row) */
+    const amtOf = (e) => (src.raw ? Math.max(e.amt, e.raw || 0) : e.amt), hits = all.filter((e) => e.t <= cut + 0.05 && amtOf(e) !== 0); if (!hits.length) return null;
     const secs = src.secs != null ? !!src.secs : AV_SECS.test(src.label), L2 = avLim(r, src, secs), [wA, bA] = L2.lim(cut), limOf = (g) => L2.lim(cut, h.role(g)); /* (each player against their role's line, Nov 12) */
     const per = new Map();
     // (a source whose hit leaves a damage over time under the same name (src.dot: how many seconds it lasts) counts the hits, not its
     // ticks: a shield that soaked a tick made the next one look like a new hit (Oct 24: a top kill's raider showed 5 Caustic Waves hits
     // for 3 waves). A tick starts a touch only when no hit came before it in that time (the hit itself was fully absorbed))
-    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, hit: -99, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += e.amt;
+    for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, amt: 0, last: -9, hit: -99, ts: [], tk: [], tl: [] }); x.ticks++; x.tk.push(e.t); x.amt += amtOf(e);
       const fresh = src.dot ? e.t - x.hit > (e.tick ? src.dot + 1 : 1.5) : e.t - x.last > 1.5;
-      if (fresh) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += e.amt; x.last = e.t; if (src.dot && (!e.tick || fresh)) x.hit = e.t; }
+      if (fresh) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += amtOf(e); x.last = e.t; if (src.dot && (!e.tick || fresh)) x.hit = e.t; }
     // (a source that only counts a walk-in from minTicks ticks: a lone brush isn't one (Mutagenic Venom, fix 9))
     if (src.minTicks > 1) for (const [g, x] of [...per]) { const tl = x.tl.filter((c) => c.n >= src.minTicks); if (!tl.length) { per.delete(g); continue; } x.tl = tl; x.ts = tl.map((c) => c.t); x.touches = tl.length; }
     if (!per.size) return null;
@@ -4071,7 +4073,7 @@ function buildCoiledAltar(ev, r, h) {
   // (from the encounter journal: what positioning can avoid; raid-wide pulses and random-target hits are left out)
   {
     const sec = avoidPanel(ev, r, h, [
-      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a damage-taken debuff (200%, or 600% on Mythic)', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', skip: (e) => role(e.dst) === 'tank' || !fKeep.has(e) || (!mythic && fTanks.has(e.dst)) }, /* (Nov 4: each frontal's first hit only, as in the mistakes: its ticks counted a healer 23 times) */
+      { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a damage-taken debuff (200%, or 600% on Mythic)', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', raw: true, skip: (e) => role(e.dst) === 'tank' || !fKeep.has(e) || (!mythic && fTanks.has(e.dst)) || immHit(e) }, /* (Nov 4: each frontal's first hit only, as in the mistakes: its ticks counted a healer 23 times) */ /* (Nov 13: the same hits and the same amount as the mistake line: with what a shield absorbed, never an immunity) */
       { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time', fix: 'When the mind control breaks, stand still, so your ghost spawns in the clump and never touches another.' },
       { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5, fix: 'Stay out of the poison pools by the statues. When the second set fills the middle, cross it quickly.' },
       { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
