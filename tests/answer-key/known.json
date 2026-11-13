@@ -1,6 +1,4 @@
 {
- "*:dmgShield:*": "damage a boss's shield absorbed (Veil of Twilight) is left out of damage done; Main: count it, as Warcraft Logs does (reported Nov 13, one line for every player and pull)",
- "*:healCheat:*": "Cheat Death and Purgatory are left out of healing done; Main: count them like any absorb (reported Nov 13, one line for every player and pull)",
  "agt6jMTyZBYvVzAP:2:venomfangFree:Urgdragon@115": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:4:venomfangFree:Dragooned@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:4:venomfangFree:Volkovod@115": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
@@ -38,5 +36,7 @@
  "Gax3AkbyFRXmdrgQ:6:venomfangFree:Optt@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:7:venomfangFree:Fourinches@31": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)"
+ "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
+ "agt6jMTyZBYvVzAP:11:dmg:Urgdragon": "the key leaves Augmentation's share of the shield-absorbed part on the hitter (raw-facts.js takes the share's amount off, not its absorbed part) and gives it to the Evoker too; the site moves it with the hit, so a healer's 4.8M reads 1.65% under the key. For the answer-key chat to fix in the key, then delete (Report card chat, Nov 13)",
+ "agt6jMTyZBYvVzAP:11:dmgShield:Urgdragon": "the key leaves Augmentation's share of the shield-absorbed part on the hitter (raw-facts.js takes the share's amount off, not its absorbed part) and gives it to the Evoker too; the site moves it with the hit, so a healer's 4.8M reads 1.65% under the key. For the answer-key chat to fix in the key, then delete (Report card chat, Nov 13)"
 }

@@ -161,7 +161,7 @@ const COOLDOWNS = {
 };
 
 // Absorbs that are not healing (cheat-death / Stagger).
-const NOT_HEALING = new Set([114556, 31850, 31230, 115069]);
+const NOT_HEALING = new Set([31850, 115069]); /* (Nov 13, Main, from the answer key: Cheat Death (31230) and Purgatory (114556) count like any absorb, as Warcraft Logs counts them: Zaffia's healing read 3% to 12% low. Ardent Defender and Stagger stay out) */
 
 // Boss mechanic rule packs (patch 12.1, Venomous Abyss), all difficulties unless a rule lists its own.
 // Spell IDs where the in-game Adventure Guide publishes them (warcraft.wiki.gg); otherwise matched by
@@ -6654,7 +6654,7 @@ async function analyzeAsync(item, text, opts, pause) {
 }
 function* analyzeSteps(item, text, opts) {
   const packs = (opts && opts.packs) || PACKS;
-  const r = { item, players: new Map(), deaths: [], rezzes: [], mistakes: [], insights: [], interrupts: [],
+  const r = { item, dmgAbsIn: true /* (Nov 13: damage done already holds what enemy shields absorbed; a reader must not add absS on top) */, players: new Map(), deaths: [], rezzes: [], mistakes: [], insights: [], interrupts: [],
     dmgS: [], healS: [], takenS: [], bossS: [], bossPct: null, duration: 0,
     takenAbS: [], // (takenAbS: per second, what hit the raid: { spell: [id, amount] }, for the Performance tab's big hits)
     dmgTS: [], enemyDied: new Map(), // (dmgTS: per second, the raid's damage by target name; enemyDied: guid -> when it died)
@@ -6809,7 +6809,7 @@ function* analyzeSteps(item, text, opts) {
         // (the Evoker is the buffer: if the line has it the other way round, swap)
         if (isPlayer(sg) && (r.players.get(sg) || {}).specId === 1473 && (r.players.get(sup) || {}).specId !== 1473) { const x = sup; sup = sg; hitter = isPlayer(x) ? x : (pets.get(x) || ''); }
         if (!isPlayer(sup)) break;
-        const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))); if (!amt) break;
+        const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))) + (!isPlayer(dg) ? Math.max(0, num(f[s0 + 6])) : 0) /* (Nov 13: with what the enemy's shield absorbed of the share, like the hit itself (dealtM)) */; if (!amt) break;
         const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
         const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit, t); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
         // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
@@ -6827,6 +6827,10 @@ function* analyzeSteps(item, text, opts) {
         if (swing && hasAdv && !owner && f[adv] === sg && isPlayer(f[adv + 1])) pets.set(sg, f[adv + 1]);
         const base = num(f[s0]), over = Math.max(0, num(f[s0 + 2]));
         const dealt = Math.max(0, base + num(f[s0 + 4]) + num(f[s0 + 5]) - over);
+        /* (Nov 13, Main, from the answer key: what an enemy's own shield absorbed is damage done, as Warcraft Logs counts it. Schooty, Nov 11 pull 1: 15.1M of 126M went into Veil of
+           Twilight and was left out, 10% to 14% under Warcraft Logs on this fight. dealtM is the meters' number (totals, spells, per second, per target); the fight checks keep
+           dealt, and get the shield's part from its own SPELL_ABSORBED line as before) */
+        const dealtM = dealt + (!isPlayer(dg) ? Math.max(0, num(f[s0 + 6])) : 0);
         const crit = f[s0 + 7] === '1';
         const id = swing ? 6603 : num(f[8]), spell = swing ? 'Melee' : f[9];
         if (!swing) { noteSchool(id, f[10]); noteId(id, spell); } else SCHOOL.set(6603, 1);
@@ -6853,9 +6857,9 @@ function* analyzeSteps(item, text, opts) {
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
           if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
-          p.damage += dealt;
-          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealt, 0, crit, t); bump(r.dmgS, t, dealt);
-          bump(p.dmgS, t, dealt); if (pet && dealt > 0) bump(p.petS || (p.petS = []), t, dealt); /* (Nov 8: pets' share per second, for Graphs' two-tone bar) */ if (dealt > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealt); { const gg = p.dmgG || (p.dmgG = {}); gg[dg] = (gg[dg] || 0) + dealt; } /* round 294: damage into each enemy */ bumpN(r.dmgTS, t, dn, dealt); bumpN(p.dmgTS, t, dn, dealt); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t);
+          p.damage += dealtM;
+          if (mod && mod.focus && mod.focus.has(dn)) modEv.push({ k: 'pdmg', t, src: owner, dst: dg, dn, amt: dealt }); addAb(p.dmgAb, pet ? sn + ': ' + spell : spell, id, dealtM, 0, crit, t); bump(r.dmgS, t, dealtM);
+          bump(p.dmgS, t, dealtM); if (pet && dealtM > 0) bump(p.petS || (p.petS = []), t, dealtM); /* (Nov 8: pets' share per second, for Graphs' two-tone bar) */ if (dealtM > 0) { p.dmgT.set(dn, (p.dmgT.get(dn) || 0) + dealtM); { const gg = p.dmgG || (p.dmgG = {}); gg[dg] = (gg[dg] || 0) + dealtM; } /* round 294: damage into each enemy */ bumpN(r.dmgTS, t, dn, dealtM); bumpN(p.dmgTS, t, dn, dealtM); if (!p.firstHit.has(dg)) p.firstHit.set(dg, t);
             /* (each enemy hit directly (no damage-over-time ticks: a DoT reaches enemies far apart), at most once every half second, for how many enemies were close (Nov 1, "if they need to be AOE or single target")) */ { const el = p.enLast || (p.enLast = new Map()); if (ev !== 'SPELL_PERIODIC_DAMAGE' && t - (el.has(dg) ? el.get(dg) : -9) >= 0.5 && (p.enHit || (p.enHit = [])).length < 60000) { el.set(dg, t); p.enHit.push([t, dg]); } } }
           if ((TIER_EVN.has(spell) || TIER_EVP.test(spell)) && (!pet || TIER_EVPET.has(spell))) { if (!p.tierEv) p.tierEv = []; if (p.tierEv.length < 12000) p.tierEv.push([t, spell, dealt, dg, ev === 'SPELL_PERIODIC_DAMAGE' ? 1 : 0, crit ? 1 : 0]); } /* (each hit of a spell a tier bonus changes hit by hit, for the tier set card (Oct 25)) */
           p.lastHit = [t, pet ? sn + ': ' + spell : spell, dg]; // (for a support line that follows it: see *_DAMAGE_SUPPORT)

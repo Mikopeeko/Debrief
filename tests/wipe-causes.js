@@ -39,6 +39,11 @@ const KILLS = [
 const ROWS = [
   ['agt6jMTyZBYvVzAP', 4, 'Noxious Ground', 'Fourinches', '18 s in it', 'Nov 11 pull 3: Fourinches stood in Noxious Ground for 18 ticks (four of them fully shielded). It read "14 s in it"'],
 ];
+/* A player's total on one pull: [code, fight, player, 'damage' or 'healing', at least, at most, what it read before]. */
+const METERS = [
+  ['agt6jMTyZBYvVzAP', 2, 'Schooty', 'damage', 124e6, 127.5e6, 'Nov 11 pull 1: Schooty did 126M with the 15.1M that went into Veil of Twilight, as Warcraft Logs counts it. It read 111M'],
+  ['agt6jMTyZBYvVzAP', 2, 'Zaffia', 'healing', 13.9e6, 14.05e6, 'Nov 11 pull 1: Zaffia healed 13.97M with Cheat Death\'s 1,684,159 absorb. It read 12.29M'],
+];
 module.exports = function (o) {
   const { H, E, W, say, report, findFile, readJ } = o, nm = (p) => String(p || '').split('-')[0];
   const SITE = H.site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} });
@@ -56,6 +61,8 @@ module.exports = function (o) {
     for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
       if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));
       else if ((row[1] || {}).bad || (row[1] || {}).warn) say(where, 'avoid', who + '\'s ' + grp + ' row is coloured now: the colour is judged on the ticks that did damage (14), as the top raids\' line was measured'); }
+    for (const [mc, mf, who, what, lo, hi, was] of METERS) { if (mc !== code || mf !== fight) continue; const p = [...r.players.values()].find((x) => nm(x.name) === who), v = p ? (what === 'damage' ? p.damage : p.healing) : null;
+      if (v == null || v < lo || v > hi) say(where, 'meters', was + '. Now: ' + (v == null ? 'no such player' : Math.round(v).toLocaleString('en-US'))); }
     for (const [kc, kf, who, at, hit, was] of KILLS) { if (kc !== code || kf !== fight) continue; const d = (r.deaths || []).find((x) => nm(x.player) === who && Math.abs(x.t - at) <= 1.5);
       if (!d || String(d.kill || '') !== hit) say(where, 'deaths', was + '. Now: ' + (d ? '"' + d.kill + '"' : 'no such death')); }
     if (fight === 2 && code === 'agt6jMTyZBYvVzAP' && CH) { /* (Nov 13, Main: How it went never drops a death the root cause names: Tyralien at 7:38 and Vandagos at 8:54, even past the 9-row cap) */

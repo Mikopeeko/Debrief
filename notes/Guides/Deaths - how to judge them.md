@@ -411,3 +411,12 @@ damage). Fourinches, Nov 11 pull 3: 18 Noxious Ground ticks, four fully shielded
 mistake line, the hover), while its colour is judged on the ticks that did damage (`valJ`, `tj`), the unit the top raids' lines were measured in. Counting the shielded ticks for the
 colour too turned 8 rows amber on 103 saved pulls, so it stays out until those lines are measured again. Measured: 259 rows gained seconds (248 Noxious Ground), 22 players who
 were fully shielded got a plain row, no row changed colour, no mistake line appeared or went. Damage stays what got through. 14 answer-key lines fixed.
+
+## The meters: damage into enemy shields, Cheat Death and Purgatory (Nov 13, from the answer key, Main: count them as Warcraft Logs does)
+Damage done counts what an enemy's own shield absorbed (engine `dealtM`: the hit plus its absorbed part, for totals, spells, per second and per target; Augmentation's share moves
+with its absorbed part). The fight checks keep the plain hit and read the shield's part from its own line, as before; the Performance damage windows no longer add it on top
+(`r.dmgAbsIn`). Cheat Death and Purgatory count as healing like any absorb (NOT_HEALING keeps Ardent Defender and Stagger out).
+Measured, old engine next to new, on 103 saved pulls (2,062 player rows): raid damage +4.4% on The Coiled Altar (up to +9.2% in a pull), +17.7% on Ula'tek (up to +35.8%; single
+players +40% to +78% on short pulls), +10.9% on the one Vashnik pull, 0 on the others; nobody's damage went down. Healing moved for the Rogues and Death Knights only (Zaffia on
+83 pulls). Open: the wipe parse estimate compares against Warcraft Logs' rankings, which count shields, so it reads truer now; its phase tables were measured before this.
+Checks: tests/wipe-causes.js names Schooty's damage and Zaffia's healing on Nov 11 pull 1 (with --all); the answer key checks every player on every pull in every build.
