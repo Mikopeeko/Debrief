@@ -7,14 +7,14 @@
  "agt6jMTyZBYvVzAP:6:venomfangFree:Schooty@116": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:6:venomfangFree:Shockabunga@116": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:6:venomfangFree:Zaffia@65": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
- "agt6jMTyZBYvVzAP:7:tabs:Zaffia-s-Volatile-Venom-near-a-green-carrier-hits": "reported (reported Nov 13)",
+ "agt6jMTyZBYvVzAP:7:tabs:Zaffia-s-Volatile-Venom-near-a-green-carrier-hits": "the mistake line counts hits only up to the pull's second death, the table counts to the end of the pull; Main is ruling on which cut to use (found by the Report card chat, Nov 13; reported Nov 13)",
  "agt6jMTyZBYvVzAP:9:venomfangFree:Hobbz@30": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:9:venomfangFree:Jangokin@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:9:venomfangFree:Larryg@65": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:10:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
  "agt6jMTyZBYvVzAP:11:venomfangFree:Komo@116": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:12:venomfangFree:Optt@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
- "agt6jMTyZBYvVzAP:13:tabs:Dashtoswirly-s-Axegrinder-hits": "reported (reported Nov 13)",
+ "agt6jMTyZBYvVzAP:13:tabs:Dashtoswirly-s-Axegrinder-hits": "the mistake line counts hits only up to the pull's second death, the table counts to the end of the pull; Main is ruling on which cut to use (found by the Report card chat, Nov 13; reported Nov 13)",
  "agt6jMTyZBYvVzAP:13:venomfangFree:Zaffia@65": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:14:venomfangFree:Volkovod@30": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:16:venomfangFree:Optt@65": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
@@ -36,7 +36,5 @@
  "Gax3AkbyFRXmdrgQ:6:venomfangFree:Optt@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:7:venomfangFree:Fourinches@31": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "agt6jMTyZBYvVzAP:11:dmg:Urgdragon": "the key leaves Augmentation's share of the shield-absorbed part on the hitter (raw-facts.js takes the share's amount off, not its absorbed part) and gives it to the Evoker too; the site moves it with the hit, so a healer's 4.8M reads 1.65% under the key. For the answer-key chat to fix in the key, then delete (Report card chat, Nov 13)",
- "agt6jMTyZBYvVzAP:11:dmgShield:Urgdragon": "the key leaves Augmentation's share of the shield-absorbed part on the hitter (raw-facts.js takes the share's amount off, not its absorbed part) and gives it to the Evoker too; the site moves it with the hit, so a healer's 4.8M reads 1.65% under the key. For the answer-key chat to fix in the key, then delete (Report card chat, Nov 13)"
+ "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)"
 }

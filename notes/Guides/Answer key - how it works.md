@@ -28,7 +28,7 @@ A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'te
 | Phase reached | phase 2 starts at Malacrass' first cast; the intermission is Zul'jan's Ghastly Regeneration; phase 3 starts when it ends |
 | Boss health at the end | each boss's last health reading in the events (Warcraft Logs' own two percentages are kept beside it) |
 | What ended the pull | by hand: the last minute of every wipe read event by event (`roots.js` has the sentence and the proof) |
-| Damage done | each hit's amount on enemies, pets counted for their owner. An Augmentation Evoker's share of a hit is its own event and comes off the buffed player, as Warcraft Logs does it. Damage a boss's shield absorbed is kept apart (`dmgShield`) |
+| Damage done | each hit's amount on enemies, pets counted for their owner. An Augmentation Evoker's share of a hit is its own event and comes off the buffed player, as Warcraft Logs does it: both the amount and the part a boss's shield absorbed (the absorbed part was left on both players until Nov 13; the Report card chat found it on Urgdragon, Nov 11 pull 10). Damage a boss's shield absorbed is kept apart (`dmgShield`) and the site's damage done is checked against the two added together |
 | Healing done | heals (with the part a heal absorb ate) plus the damage the player's shields absorbed. Shields that only stop a killing blow (Cheat Death, Purgatory) are kept apart as `absorbCheat`: the site leaves them out |
 | Time alive | the pull's length less the time between each death and the rez after it |
 | Deaths | every death event on a player (a Hunter's Feign Death is marked in the log and left out), the killing hit the log names, the last three hits, health every 2 s for 10 s, seconds at or under 35% before dying, and the defensives pressed so far |
@@ -101,4 +101,4 @@ applies the rule to the raw facts (no site code):
 
 Unsure ones (never fail a build, listed with `--list`): the Guillotine target (that rule is still being written), and "sat low with something ready".
 
-**One line for a whole kind:** `known.json` can hold an id with `*` in it. `*:dmgShield:*` is every player's damage into a boss's shield (Main: count it, as Warcraft Logs does) and `*:healCheat:*` is Cheat Death and Purgatory in healing done. The plain damage and healing numbers are still checked beside them, so a new mistake in either still shows.
+**One line for a whole kind:** `known.json` can hold an id with `*` in it. Two were used on day one: `*:dmgShield:*` (every player's damage into a boss's shield; Main: count it, as Warcraft Logs does) and `*:healCheat:*` (Cheat Death and Purgatory in healing done). The site counts both since Nov 13 (d2cdcf5b), the check called every one of them "now right", and both lines are deleted. The plain damage and healing numbers were checked beside them all along, so a new mistake in either still showed.

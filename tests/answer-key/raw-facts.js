@@ -60,7 +60,7 @@ function rawFacts(rep, P) {
     if (e.hitPoints != null && e.maxHitPoints) { const id = e.resourceActor === 2 ? e.targetID : e.sourceID, v = e.hitPoints / e.maxHitPoints;
       if (hp.has(id)) { hp.get(id).push([e.timestamp, v]); mxHp.set(id, e.maxHitPoints); } else { const n = nm(id); if (n === "Zul'jan" || n === 'Hex Lord Malacrass' || n === F.name) bossHp[n] = [s(e.timestamp), r2(100 * v)]; } }
     if (ty === 'damage') { const tot = (e.amount || 0) + (e.absorbed || 0);
-      if (e.subtractsFromSupportedActor && e.supportID != null && !friendly(e.targetID)) { const sp = isP(e.supportID) ? e.supportID : ownerOf(e.supportID); if (sp != null && get(sp)) get(sp).dmg -= e.amount || 0; }
+      if (e.subtractsFromSupportedActor && e.supportID != null && !friendly(e.targetID)) { const sp = isP(e.supportID) ? e.supportID : ownerOf(e.supportID); if (sp != null && get(sp)) { get(sp).dmg -= e.amount || 0; get(sp).dmgShield -= e.absorbed || 0; /* (the shield-absorbed part of the share is on their own event too: Urgdragon, Nov 11 pull 10) */ } }
       if (hp.has(e.targetID)) { const l = lastHits.get(e.targetID); l.push([e.timestamp, e.abilityGameID, tot, e.overkill || 0, e.sourceID, e.hitPoints != null && e.maxHitPoints ? e.hitPoints / e.maxHitPoints : null]); if (l.length > 40) l.splice(0, 20); }
       const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w) && !friendly(e.targetID)) { get(w).dmg += e.amount || 0; get(w).dmgShield += e.absorbed || 0; } }
     else if (ty === 'heal') { const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w)) { get(w).heal += (e.amount || 0) + (e.absorbed || 0); get(w).overheal += e.overheal || 0; } }
