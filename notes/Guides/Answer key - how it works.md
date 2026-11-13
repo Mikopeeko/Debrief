@@ -33,6 +33,8 @@ A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'te
 | Time alive | the pull's length less the time between each death and the rez after it |
 | Deaths | every death event on a player (a Hunter's Feign Death is marked in the log and left out), the killing hit the log names, the last three hits, health every 2 s for 10 s, seconds at or under 35% before dying, and the defensives pressed so far |
 | Kicks | every interrupt event; a Wail of Terror "got off" when the add's cast event of it lands (it then fears) |
+| Casts (Rotation) | every cast event a player made, by spell; the key keeps each player's eight most-cast spells (three casts or more) |
+| Raid cooldowns (Plan) | every cast of Aura Mastery, Divine Hymn, Rewind, Dream Flight, Spirit Link Totem, Healing Tide Totem, Tranquility, Revival, Restoral, Power Word: Barrier, Darkness, Anti-Magic Zone, Rallying Cry and Zephyr: who and when (a channelled one counts once) |
 | Potions, Healthstones | cast events by name: Healthstone, health potions, mana potions, and the combat potions seen on these nights (Potion of Recklessness, Light's Potential, Liquid Luster) |
 | Flask, food, rune | the auras in each player's record at the pull's start: "Flask of …", "Well Fed", and the augment rune (Void-Touched, Ethereal Augmentation) |
 | Tank frontals | each Sever, Soul Sever and Blighted Sever cast and every player its hit damaged; non-tanks are the mistake |

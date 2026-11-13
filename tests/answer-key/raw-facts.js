@@ -27,6 +27,8 @@ const DEFS = { 'Divine Shield': 300, 'Divine Protection': 60, 'Lay on Hands': 42
   'Fortifying Brew': 120, 'Diffuse Magic': 90, 'Touch of Karma': 90, 'Dampen Harm': 120, 'Unending Resolve': 180, 'Dark Pact': 60 };
 // Shields that only stop a killing blow (the site leaves them out of healing done; kept apart as absorbCheat).
 const CHEAT = /^(Cheat Death|Purgatory)$/;
+// Raid cooldowns by name (the ones a healing plan is built from): every cast is written down with who and when.
+const RAID_CDS = new Set(['Aura Mastery', 'Divine Hymn', 'Rewind', 'Dream Flight', 'Spirit Link Totem', 'Healing Tide Totem', 'Tranquility', 'Revival', 'Restoral', 'Power Word: Barrier', 'Darkness', 'Anti-Magic Zone', 'Rallying Cry', 'Zephyr']);
 // Combat potions by name. Each was seen used at the pull and again five minutes later (the potions' shared cooldown) on these nights.
 const COMBAT_POTS = /^(Potion of Recklessness|Light's Potential|Liquid Luster)$/;
 const r2 = (x) => Math.round(x * 100) / 100, r1 = (x) => Math.round(x * 10) / 10;
@@ -94,8 +96,9 @@ function rawFacts(rep, P) {
     if (e.type === 'cast' && e.abilityGameID === CA.wail && !friendly(e.sourceID)) offs.push({ t: s(e.timestamp), spell: 'Wail of Terror', on: nm(e.sourceID) + (e.sourceInstance ? ' ' + e.sourceInstance : ''), feared: ev.filter((x) => x.type === 'applydebuff' && x.abilityGameID === CA.wail && Math.abs(x.timestamp - e.timestamp) < 500 && isP(x.targetID)).length }); }
   const dispels = ev.filter((e) => e.type === 'dispel' && (isP(e.sourceID) || ownerOf(e.sourceID) != null)).map((e) => [s(e.timestamp), nm(isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID)), an(e.abilityGameID), an(e.extraAbilityGameID)]);
   const ccSpans = {}; for (const [id, a, b] of mcSp.concat(fearSp)) (ccSpans[nm(id)] = ccSpans[nm(id)] || []).push([s(a), s(b)]);
+  const castN = {}, raidCds = []; for (const [id, l] of casts) { const o = (castN[nm(id)] = {}); for (const [ct, n] of l) { o[n] = (o[n] || 0) + 1; if (RAID_CDS.has(n) && !raidCds.some((q) => q[1] === nm(id) && q[2] === n && s(ct) - q[0] < 12)) raidCds.push([s(ct), nm(id), n]); } } raidCds.sort((a, b) => a[0] - b[0]); /* (a channelled cooldown logs a cast every second: one use) */
   const out = { fight: P.fight, kill: !!(ev.find((e) => e.type === 'encounterend') || {}).kill || !!F.kill, len: r1(len), wclBossPct: F.bossPercentage, wclFightPct: F.fightPercentage, wclLastPhase: F.lastPhase, wclIntermission: !!F.lastPhaseIsIntermission,
-    bossHpEnd: bossHp, size: ids.length, dispels, ccSpans, players: pl, prep, consum, deaths, rez, kicks, kicksMissed: offs };
+    bossHpEnd: bossHp, size: ids.length, dispels, ccSpans, castN, raidCds, players: pl, prep, consum, deaths, rez, kicks, kicksMissed: offs };
   if (F.encounterID === 3429 || (ev[0] && ev[0].encounterID === 3429)) out.ca = coiledAltar(ev, { t0, s, nm, an, isP, ownerOf, friendly, roleOf, ids, hp, hpAt, len, P });
   return out;
 }

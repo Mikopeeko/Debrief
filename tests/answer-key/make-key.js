@@ -18,6 +18,7 @@ fights.forEach((F, i) => { const f = find(code + '_' + F.id + '.json'); if (!f) 
   const out = { fight: F.id, pull: i + 1, kill: o.kill, len: o.len, size: o.size, phase: c.phase, phaseStarts: { p2: c.p2, intermission: c.inter, p3: c.p3 }, wcl: { bossPct: o.wclBossPct, fightPct: o.wclFightPct, lastPhase: o.wclLastPhase, intermission: o.wclIntermission }, bossHpEnd: o.bossHpEnd,
     cause: root === undefined ? undefined : root, players: o.players, prep: o.prep, consumables: o.consum,
     deaths: o.deaths.map((d) => ({ t: d.t, player: d.player, killedBy: d.killedBy, mc: d.mc || undefined, feared: d.feared, mass: d.mass > 1 ? d.mass : undefined, deadBefore: d.deadBefore, hp10: d.hp10, lowFor: d.lowFor, overkill: d.overkill || undefined, maxHp: d.maxHp, pos: d.pos, last4: d.last4, hits: d.hits.slice(-3), used: d.used })), rez: o.rez,
+    casts: Object.fromEntries(Object.entries(o.castN).map(([n, c]) => [n, Object.fromEntries(Object.entries(c).filter(([, v]) => v >= 3).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8))])), raidCds: o.raidCds,
     kicks: o.kicks, kicksMissed: o.kicksMissed,
     mechanics: o.ca ? { frontals: c.frontals, dreadmarch: c.dreadmarch, ghostReached: c.ghostReached, ghostsTouched: c.ghostsTouched,
       orbBursts: c.ruptureWaves.filter((w) => !w.frontal).map((w) => ({ t: w.t, phase: w.phase, kind: w.pushP1 ? 'end of phase 1' : w.atDeluge ? 'at a Deluge' : 'burst', killed: w.killed, bigHit: w.bigHit, purpleHeld: w.purpleHeld })), frontalPops: c.ruptureWaves.filter((w) => w.frontal).map((w) => [w.t, w.stacks]),

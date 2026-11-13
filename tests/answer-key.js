@@ -48,6 +48,8 @@ function siteFacts(code, fight) {
     const X = H.site(UI_NAMES.concat(DN), { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {}, oaRowWhy: () => null, deathSecs: (x) => String(x), deathHealerOf: () => null, dbfTip1: (x) => x, whyReason: (x) => x, oaFlip: (x) => x, oaBase: (n) => String(n || '').split('-')[0], plural: (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), esc: (x) => String(x), S: {}, RC_NEXT: {} });
     out.verdicts = (r.deaths || []).map((d) => { const v = X.deathVerdict(r, d); return { t: d.t, player: nmP(d.player), bucket: v.bucket, why: v.why, counts: !!v.counts, k: v.proof ? v.proof.k : null, mech: v.proof && v.proof.mech ? v.proof.mech : null, say: String(v.say || '').slice(0, 150) }; }); }
   catch (e) { out.errs.push('the death verdicts could not be read: ' + e.message); }
+  out.casts = {}; for (const p of r.players.values()) { const o = (out.casts[p.name] = {}); for (const c of p.castAb ? p.castAb.values() : []) o[c.name] = (o[c.name] || 0) + c.n; }
+  out.cdUse = (r.cdUse || []).map((x) => ({ t: x.t, player: nmP((r.players.get(x.g) || {}).name || x.g), cd: x.cd })).concat((r.extMit || []).map((x) => ({ t: x.t, player: nmP((r.players.get(x.g) || {}).name || x.g), cd: x.name }))); /* (the raid cooldowns, and the ones the site files with externals: Zephyr) */
   out.kicks = (r.interrupts || []).map((k) => ({ t: k.t, player: nmP(k.player), spell: k.spell })); out.kickStats = (r.kicks || []).map((k) => ({ name: k.name, kicked: k.kicked, missed: k.missed }));
   // flask, food, rune: the page's own lists, on the auras each player's record has at the pull's start
   try { const Pp = H.site(UI_PREP), nameOf = (id) => { const a = it.wcl.abilities.get(+id); return a ? a.name : ''; }; out.prep = {};
@@ -157,6 +159,12 @@ function comparePull(code, K, S, say) {
       else if (ks && ss && x.k === 'mistake' && d.proof && !(d.proofOf || []).some((nm2) => x.say.toLowerCase().includes(String(nm2).toLowerCase()) || String(x.mech || '').toLowerCase().includes(String(nm2).toLowerCase()))) say('deathProof:' + id, 1, 'the proof on ' + d.player + '\'s death at ' + T(d.t), kSay, sSay, !!d.unsure);
       else ok();
       if (!ks && !ss && d.when === 'before' && !x.counts && lostT != null && d.t < lostT - 2) say('deathWhen:' + id, 2, 'whether ' + d.player + '\'s death at ' + T(d.t) + ' was before the wipe', 'before (' + (d.fact || '') + ')', 'after the wipe: ' + sSay); else ok(); } }
+  // 4c. Rotation: each player's casts of their most-used spells (one cast of slack, or 3%)
+  for (const [name, cs] of Object.entries(K.casts || {})) { const sc = (S.casts || {})[name] || {}; for (const [ab, n1] of Object.entries(cs)) { const sv = sc[ab] || 0; if (Math.abs(sv - n1) > Math.max(1, 0.03 * n1)) say('casts:' + name + ':' + ab, 2, name + '\'s casts of ' + ab, n1, sv); else ok(); } }
+  // 4d. Plan: every raid cooldown used, who and when (both ways: the log's casts are on the site, and the site lists none the log doesn't have)
+  if (K.raidCds) { const sv = (S.cdUse || []).slice(), usedC = new Set(), names = new Set(sv.map((x) => x.cd));
+    for (const [t, who2, cd] of K.raidCds) { const i = sv.findIndex((x, j) => !usedC.has(j) && x.player === who2 && x.cd === cd && near(x.t, t, 2)); if (i >= 0) { usedC.add(i); ok(); } else if (names.has(cd) || (S.cdUse || []).length) say('raidCd:' + who2 + ':' + cd.replace(/[^A-Za-z]+/g, '') + '@' + Math.round(t), 2, who2 + '\'s ' + cd + ' at ' + T(t), 'cast', 'not listed'); }
+    sv.forEach((x, j) => { if (!usedC.has(j) && K.raidCds.some((q) => q[2] === x.cd)) say('raidCd:' + x.player + ':' + x.cd.replace(/[^A-Za-z]+/g, '') + '@' + Math.round(x.t), 2, x.player + '\'s ' + x.cd + ' at ' + T(x.t), 'no such cast in the log', 'listed'); }); }
   // 5. kicks
   { const wk = (K.kicks || []).filter((k) => k.spell === 'Wail of Terror'), sk = (S.kicks || []).filter((k) => k.spell === 'Wail of Terror'), by = (l, f) => l.reduce((m, k) => { m[f(k)] = (m[f(k)] || 0) + 1; return m; }, {});
     const a = by(wk, (k) => k.by), b = by(sk, (k) => k.player); for (const p of new Set(who(a).concat(who(b)))) { if ((a[p] || 0) !== (b[p] || 0)) say('wailKicks:' + p, 2, p + '\'s Wail of Terror kicks', a[p] || 0, b[p] || 0); else ok(); }
