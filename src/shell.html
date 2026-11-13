@@ -4493,6 +4493,35 @@ details.secd.mcx-tile[open] .mcx-alt { display: none; }
 /* (a single pull matches (Flex, Nov 12: "Yes, match it"): no score bar, the score in its colour on the right; a problem row keeps its one why line (his Nov 8 OK)) */
 @layer defaultTheme { html body #view#view .prw > .prw-i:not(.prw-tl):not(.prw-nj) > .prw-l > .prw-t { display: none !important; }
 html body #view#view .prw > .prw-i:not(.prw-tl):not(.prw-nj) > .prw-l { grid-template-columns: minmax(0, 1fr) !important; } } /* (in the theme layer, where the old bar rule lives, so this one wins) */
+/* (Nov 13, Flex's Summary scores: the five scores replace the numbers block; the old tiles stay in the page, hidden, so Pace chart and Ranks still open their panels) */
+@layer defaultTheme {
+html body #view#view > .r212-sb.sc5-on { display: flex !important; flex-direction: column !important; }
+html body #view#view > .r212-sb.sc5-on > .dbr-4, html body #view#view > .r212-sb.sc5-on > section.dt-box { display: none !important; }
+html body #view#view > .r212-sb.sc5-on > .sc5 { order: -1 !important; }
+}
+#view .sc5 { padding: 12px 18px 13px; }
+#view .sc5-top { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+#view .sc5-res { margin: 0; flex: 1 1 360px; min-width: 0; font-size: 13.5px; line-height: 1.45; color: #b0b5b8; }
+#view .sc5-res > b { color: var(--text, #f0eee8); font-weight: 600; }
+#view .sc5-vd b.g { color: #5fdc7a; font-weight: 600; } #view .sc5-vd b.b { color: #e8a23a; font-weight: 600; }
+#view .sc5 .r378-sw { flex: none; padding: 0; margin: 0; }
+#view .sc5-t { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin: 10px 0 0; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.08); border-radius: 0; }
+#view .sc5-n { background: #191c1f; padding: 10px 14px 11px 16px; cursor: help; min-width: 0; outline-offset: -2px; }
+#view .sc5-n:hover, #view .sc5-n:focus-visible { background: #1f2327; }
+#view .sc5-k { display: block; font: 700 10.5px var(--head, 'Barlow Condensed', sans-serif); letter-spacing: .08em; text-transform: uppercase; color: #8e989d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#view .sc5-v { display: block; margin-top: 4px; font: 700 28px/1.1 var(--head, 'Barlow Condensed', sans-serif); color: var(--text, #f0eee8); font-variant-numeric: tabular-nums; }
+#view .sc5-v[data-g="S"] { color: #ff9a3c; } #view .sc5-v[data-g="A"] { color: #b981f5; } #view .sc5-v[data-g="B"] { color: #4f9dff; } #view .sc5-v[data-g="C"] { color: #52d65a; } #view .sc5-v[data-g="D"] { color: #c9cfd6; } #view .sc5-v[data-g="F"] { color: #e5534b; }
+#view .sc5-fx { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap; margin-top: 10px; }
+#view .sc5-fix { margin: 0; flex: 1 1 320px; min-width: 0; font-size: 13.5px; line-height: 1.45; color: var(--text, #f0eee8); }
+#view .sc5-fix[data-tt] { cursor: help; }
+#view .sc5-fk { margin-right: 8px; font: 700 10.5px var(--head, 'Barlow Condensed', sans-serif); letter-spacing: .08em; text-transform: uppercase; color: #e8a23a; }
+#view .sc5-fix.ok .sc5-fk { color: #5fdc7a; } #view .sc5-fix.wait { color: #8e989d; }
+#view .sc5-lk { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; font-size: 12.5px; }
+#view .sc5-lkl { color: #8e989d; margin-left: 4px; }
+#view .sc5-ln { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: #e6b750; cursor: pointer; }
+#view .sc5-ln:hover, #view .sc5-ln.on { color: #ffd27a; text-decoration: underline; text-underline-offset: 3px; }
+.spc-tt .sc5-tl { margin: 4px 0 0; }
+@media (max-width: 640px) { #view .sc5 { padding: 10px 12px 12px; } #view .sc5-t { grid-template-columns: repeat(2, minmax(0, 1fr)); } #view .sc5-n:first-child { grid-column: 1 / -1; } #view .sc5-v { font-size: 24px; } }
 html body #view .prw .prw-t > i.ok { background: #4fbf6a !important; } html body #view .prw .prw-t > i.warn { background: #e6b450 !important; } html body #view .prw .prw-t > i.bad { background: #e5534b !important; }
 /* (Oct 24: All pulls, a line across the night for each check) */
 #view .cgl-sl { height: 24px; margin: 0; align-self: center; }
