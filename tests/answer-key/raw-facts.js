@@ -213,8 +213,12 @@ function ulatek(ev, X) {
       else if (e.abilityGameID === UL.constrictor && e.type === 'applydebuff' && isP(e.targetID)) { let o = by.get(key(e)); if (!o) by.set(key(e), (o = { t: s(e.timestamp), who: new Set() })); o.who.add(nm(e.targetID)); } }
     u.coils = [...by.values()].sort((a, b) => a.t - b.t).map((o) => ({ t: o.t, soakers: [...o.who].sort() })); }
   // Noxious Splash: each time two egg carriers touched (the debuff lands on them)
-  /* (a Splash event with no damage is a miss: pull 12, Volkovod at 0:38.5 took nothing and got no debuff) */
-  u.splashes = ev.filter((e) => e.abilityGameID === UL.splash && (e.type === 'applydebuff' || (e.type === 'damage' && (e.amount || 0) + (e.absorbed || 0) > 0)) && isP(e.targetID)).reduce((l, e) => { if (!l.some((x) => x.player === nm(e.targetID) && s(e.timestamp) - x.t < 8)) l.push({ t: s(e.timestamp), player: nm(e.targetID) }); return l; }, []);
+  // A touch is the first hit or the debuff landing, never the once-a-second ticks after it (pull 12: Fourinches and Larryg touched at 0:30 and ticked
+  // to 0:40; those ticks are not the 0:38 touch). A first hit for no damage is still a touch: that carrier's egg broke too (pull 12: Volkovod at
+  // 0:38.5 took nothing, and his Noxious Shell came off that instant). "took" is what the first hits did; 0 keeps them out of the damage tables.
+  u.splashes = ev.filter((e) => e.abilityGameID === UL.splash && isP(e.targetID) && (e.type === 'applydebuff' || (e.type === 'damage' && !e.tick))).reduce((l, e) => { const who = nm(e.targetID), t = s(e.timestamp), took = e.type === 'damage' ? (e.amount || 0) + (e.absorbed || 0) : 0, x = l.find((y) => y.player === who && t - y.t < 3); if (x) x.took += took; else l.push({ t, player: who, took }); return l; }, []);
+  // each touch: the carriers whose first hits landed within 1.5 s of each other
+  u.touches = u.splashes.reduce((l, x) => { const g = l.find((y) => x.t - y.t < 1.5); if (g) { if (!g.players.includes(x.player)) g.players.push(x.player); } else l.push({ t: x.t, players: [x.player] }); return l; }, []);
   // Caustic Waves: each player's hits (damage at least 1.5 s after their last)
   u.waveHits = {}; { const last = new Map(); for (const e of pd(UL.waves)) { if (e.timestamp - (last.get(e.targetID) || -1e9) > 1500) u.waveHits[nm(e.targetID)] = (u.waveHits[nm(e.targetID)] || 0) + 1; last.set(e.targetID, e.timestamp); } }
   // the raid-wide killers, when they happened and how many they hit

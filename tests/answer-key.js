@@ -70,7 +70,8 @@ function siteFacts(code, fight) {
   out.ghostRows = rowsOf(sec('ghosts')).map((row) => ({ what: (row[0] || {}).txt || '', t: (row[1] || {}).t, players: cellP(row[2]), txt: (row[3] || {}).txt || '' }));
   if (sec('incub') || sec('eggs') || sec('wretch')) { const eg = sec('eggs'), vm = eg && /(\d+) Blightscale Vipers? hatched/.exec(eg.summary || ''), wv = sec('waves'), wm = wv && /(\d+) wave hits? on (\d+) players?/.exec(wv.summary || '');
     out.ula = { vipers: eg ? (vm ? +vm[1] : 0) : null, coils: rowsOf(sec('coils')).filter((row) => /^Circle \d/.test((row[0] || {}).txt || '')).map((row) => ({ t: (row[1] || {}).t, n: +((row[2] || {}).txt), who: cellP(row[3]) })),
-      beams: rowsOf(sec('incub')).map((row) => ({ t: (row[0] || {}).t, took: cellP(row[1]) })), wretch: rowsOf(sec('wretch')).map((row) => ({ outside: cellP(row[3]) })), waves: wm ? [+wm[1], +wm[2]] : null }; }
+      beams: rowsOf(sec('incub')).map((row) => ({ t: (row[0] || {}).t, took: cellP(row[1]) })), wretch: rowsOf(sec('wretch')).map((row) => ({ outside: cellP(row[3]) })), waves: wm ? [+wm[1], +wm[2]] : null,
+      touched: rowsOf(sec('eggs')).map((row) => { const m = /broke into a Viper: Noxious Splash(?:, within 3 yards of ([^;]+))?(?:;.*)?$/.exec((row[2] || {}).txt || ''); return m ? { player: cellP(row[1])[0], with: m[1] ? m[1].split(/, | and /).map((x) => x.trim()).filter(Boolean) : [] } : null; }).filter(Boolean) }; }
   out.dm = ((sec('dmghost') || {}).groups || []).map((g) => ({ t: g.t, tg: (g.tg || []).map(nmP) }));
 
   // ---- the same fact in two places of the site (Nov 13: "the same fact must equal itself on every tab") ----
@@ -182,7 +183,13 @@ function comparePull(code, K, S, say) {
     if (U.coils.length !== SU.coils.length) say('coilN', 2, 'Spectral Coils circles', U.coils.length, SU.coils.length); else U.coils.forEach((c, i) => { if (c.soakers.length !== SU.coils[i].n) say('coilSoakers@' + Math.round(c.t), 3, 'soakers of the Spectral Coil at ' + T(c.t), c.soakers.length + ' (' + c.soakers.join(', ') + ')', SU.coils[i].n + ' (' + SU.coils[i].who.join(', ') + ')'); else ok(); });
     if (U.beams.length !== SU.beams.length) say('beamN', 2, 'Toxic Incubation beams', U.beams.length, SU.beams.length); else U.beams.forEach((b, i) => { const kt = b.took.map((x) => x[0]); if (!same(kt, SU.beams[i].took)) say('beamTook@' + Math.round(b.t), 3, 'who took the Toxic Incubation beam at ' + T(b.t), b.took.map((x) => x[0] + ' x' + x[1]).join(', ') || 'nobody', SU.beams[i].took.join(', ') || 'nobody'); else ok(); });
     { const kf = [...new Set(U.festerBursts.flatMap((b) => b.hitNotTanks || []))].sort(), sf = [...new Set(SU.wretch.flatMap((w) => w.outside))].sort(); if (!same(kf, sf)) say('festerOutside', 2, 'who Fester Burst caught outside the bubble (tanks left out)', kf.length + ' (' + kf.join(', ') + ')', sf.length + ' (' + sf.join(', ') + ')'); else ok(); }
-    { const kp = [...new Set(U.splashes.map((x) => x.player))], sp2 = Object.keys((S.avoid || {})['Noxious Splash'] || {}); if (!same(kp, sp2)) say('splash', 2, 'egg carriers who touched (Noxious Splash)', kp.sort().join(', ') || 'nobody', sp2.sort().join(', ') || 'nobody'); else ok(); }
+    { const kp = [...new Set(U.splashes.filter((x) => x.took == null || x.took > 0).map((x) => x.player))], sp2 = Object.keys((S.avoid || {})['Noxious Splash'] || {}); if (!same(kp, sp2)) say('splash', 2, 'players who took Noxious Splash', kp.sort().join(', ') || 'nobody', sp2.sort().join(', ') || 'nobody'); else ok(); }
+    // who was in each egg touch: every carrier in a touch has an Eggs row saying Noxious Splash, and a touch of two or more names the others
+    if (U.touches && SU.touched) { const rows = SU.touched.map((x) => Object.assign({}, x));
+      for (const g of U.touches) for (const p of g.players) { const others = g.players.filter((x) => x !== p), id = 'touch:' + p + '@' + Math.round(g.t), lab = 'who ' + p + '\'s egg touched at ' + T(g.t), row = rows.find((x) => x.player === p && !x.used && (!others.length || same(others, x.with))) || rows.find((x) => x.player === p && !x.used);
+        if (!row) say(id, 2, lab, others.join(', ') || 'a touch (only they were hit)', 'no row under Eggs says their egg broke in a touch');
+        else { row.used = true; if (others.length && !same(others, row.with)) say(id, 2, lab, others.slice().sort().join(', '), row.with.slice().sort().join(', ') || 'nobody named'); else ok(); } }
+      for (const x of rows.filter((y) => !y.used)) say('touch:' + x.player + ':extra', 2, 'an Eggs row says ' + x.player + '\'s egg broke in a touch', 'no first hit of Noxious Splash on them in the log', 'Noxious Splash' + (x.with.length ? ', within 3 yards of ' + x.with.join(', ') : '')); }
   }
   const M = K.mechanics; if (!M) return n;
   const mist = (re, dre) => (S.mistakes || []).filter((q) => re.test(q.mech) && (!dre || dre.test(q.detail)));
