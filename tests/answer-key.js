@@ -44,6 +44,10 @@ function siteFacts(code, fight) {
   out.players = {}; for (const p of r.players.values()) out.players[p.name] = { dmg: p.damage, heal: p.healing || 0, deaths: p.deaths, role: p.role,
     stone: ((p.cons || {}).healthstone || []).length, healpot: ((p.cons || {}).healpot || []).length, pot: ((p.cons || {}).combatpot || []).length, manapot: ((p.cons || {}).manapot || []).length };
   out.deaths = (r.deaths || []).map((d) => ({ t: d.t, player: nmP(d.player), ability: d.ability || d.killer || '', kill: d.kill || '', fell: !!d.fell }));
+  try { const DN = ['deathHit', 'deathHitId', 'deathFast', 'DEATH_KIT', 'DEATH_IMM', 'deathShare', 'deathRaidSay', 'DEATH_BUCKET', 'quarterDead', 'deathOwn', 'andList', 'capS', 'DEATH_WIN', 'deathProof', 'deathVerdict', 'deathFix'];
+    const X = H.site(UI_NAMES.concat(DN), { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {}, oaRowWhy: () => null, deathSecs: (x) => String(x), deathHealerOf: () => null, dbfTip1: (x) => x, whyReason: (x) => x, oaFlip: (x) => x, oaBase: (n) => String(n || '').split('-')[0], plural: (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), esc: (x) => String(x), S: {}, RC_NEXT: {} });
+    out.verdicts = (r.deaths || []).map((d) => { const v = X.deathVerdict(r, d); return { t: d.t, player: nmP(d.player), bucket: v.bucket, why: v.why, counts: !!v.counts, k: v.proof ? v.proof.k : null, mech: v.proof && v.proof.mech ? v.proof.mech : null, say: String(v.say || '').slice(0, 150) }; }); }
+  catch (e) { out.errs.push('the death verdicts could not be read: ' + e.message); }
   out.kicks = (r.interrupts || []).map((k) => ({ t: k.t, player: nmP(k.player), spell: k.spell })); out.kickStats = (r.kicks || []).map((k) => ({ name: k.name, kicked: k.kicked, missed: k.missed }));
   // flask, food, rune: the page's own lists, on the auras each player's record has at the pull's start
   try { const Pp = H.site(UI_PREP), nameOf = (id) => { const a = it.wcl.abilities.get(+id); return a ? a.name : ''; }; out.prep = {};
@@ -107,7 +111,7 @@ function comparePull(code, K, S, say) {
   const near = (a, b, d) => a != null && b != null && Math.abs(a - b) <= d, who = (o) => Object.keys(o || {});
   if (S.crash) { say('crash', 3, 'the site crashed on this pull', 'a result', S.crash); return; }
   for (const e of S.errs || []) say('read', 3, 'the check could not read the site', 'readable', e);
-  let n = 0; const ok = () => n++;
+  let n = 0; const ok = () => n++; const lostT = K.cause && K.cause.t != null ? K.cause.t : null;
   // 0. the same fact in two places of the site
   for (const [fact, a, va, b, vb] of S.self || []) say('tabs:' + fact.replace(/[^A-Za-z0-9]+/g, '-').slice(0, 60), 2, 'two tabs disagree on ' + fact, a + ' says ' + va, b + ' says ' + vb, false, true);
   // 1. the pull itself
@@ -140,8 +144,17 @@ function comparePull(code, K, S, say) {
     for (const d of K.deaths || []) { const i = sd.findIndex((x, j) => !used.has(j) && x.player === d.player && near(x.t, d.t, 1.5)); if (i < 0) { say('death:' + d.player + '@' + Math.round(d.t), 3, d.player + '\'s death at ' + T(d.t), d.killedBy || 'no killing hit', 'not listed'); continue; } used.add(i);
       const x = sd[i], kb = String(d.killedBy || '').toLowerCase(), sb = String(x.kill || x.ability || '').toLowerCase(), sb2 = String(x.ability || '').toLowerCase();
       if (d.killedBy && kb !== sb && kb !== sb2 && !sb.includes(kb) && !kb.includes(sb)) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), d.killedBy, x.ability || 'nothing');
-      else if (!d.killedBy && d.mc && !x.fell) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), 'no killing hit, mind controlled (walked off)', x.ability || 'nothing'); else ok(); }
+      else if (!d.killedBy && d.mc && !x.fell && !/dreadmarch/i.test(x.ability || '')) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), 'no killing hit, mind controlled (walked off)', x.ability || 'nothing'); else ok(); }
     sd.forEach((x, j) => { if (!used.has(j)) say('death:' + x.player + '@' + Math.round(x.t), 3, 'a death of ' + x.player + ' at ' + T(x.t), 'no such death in the log', x.ability || 'listed'); }); }
+  // 4b. each death's verdict under the proof rule: You (with proof) or not counted
+  { const sv = (S.verdicts || []).slice(), usedV = new Set(), fam = (x) => String(x || '').toLowerCase().replace(/\s*\(.*$/, '');
+    for (const d of K.deaths || []) { if (!d.verdict) continue; const i = sv.findIndex((x, j) => !usedV.has(j) && x.player === d.player && near(x.t, d.t, 1.5)); if (i < 0) continue; usedV.add(i); const x = sv[i], id = d.player + '@' + Math.round(d.t), ks = d.verdict === 'you', ss = x.bucket === 'you';
+      const kSay = (ks ? 'You: ' + d.proof : d.verdict === 'low' ? 'maybe You: ' + d.proof : 'not counted: ' + (d.fact || '')) + (d.when === 'after' ? ' (after the wipe)' : ''), sSay = x.say + (x.counts ? '' : ' (after the wipe)');
+      if (d.verdict === 'low') { if (ss && x.k === 'mistake') say('deathVerdict:' + id, 3, d.player + '\'s death at ' + T(d.t), kSay, sSay, true); else if (!ss) say('deathVerdict:' + id, 2, d.player + '\'s death at ' + T(d.t), kSay, sSay, true); else ok(); continue; }
+      if (ks !== ss) say('deathVerdict:' + id, 3, d.player + '\'s death at ' + T(d.t), kSay, sSay, !!d.unsure);
+      else if (ks && ss && x.k === 'mistake' && d.proof && !(d.proofOf || []).some((nm2) => x.say.toLowerCase().includes(String(nm2).toLowerCase()) || String(x.mech || '').toLowerCase().includes(String(nm2).toLowerCase()))) say('deathProof:' + id, 1, 'the proof on ' + d.player + '\'s death at ' + T(d.t), kSay, sSay, !!d.unsure);
+      else ok();
+      if (!ks && !ss && d.when === 'before' && !x.counts && lostT != null && d.t < lostT - 2) say('deathWhen:' + id, 2, 'whether ' + d.player + '\'s death at ' + T(d.t) + ' was before the wipe', 'before (' + (d.fact || '') + ')', 'after the wipe: ' + sSay); else ok(); } }
   // 5. kicks
   { const wk = (K.kicks || []).filter((k) => k.spell === 'Wail of Terror'), sk = (S.kicks || []).filter((k) => k.spell === 'Wail of Terror'), by = (l, f) => l.reduce((m, k) => { m[f(k)] = (m[f(k)] || 0) + 1; return m; }, {});
     const a = by(wk, (k) => k.by), b = by(sk, (k) => k.player); for (const p of new Set(who(a).concat(who(b)))) { if ((a[p] || 0) !== (b[p] || 0)) say('wailKicks:' + p, 2, p + '\'s Wail of Terror kicks', a[p] || 0, b[p] || 0); else ok(); }

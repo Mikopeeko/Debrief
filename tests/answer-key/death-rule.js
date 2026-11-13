@@ -1,0 +1,57 @@
+// The death rule, applied to the raw facts of one pull (Nov 13; Main's proof-only rule, Flex: "yes"). No site code.
+// A death counts against a player only BEFORE the wipe and only WITH PROOF:
+//   1. a mistake of their own was part of what killed them: its hit was the killing hit, or its hits in their last 4 s were damage they'd have
+//      lived without (more than the killing blow's overkill, and a tenth of their health). In a mass death (3 or more to one hit at once) only
+//      the killing hit itself counts. Never while feared or mind controlled.
+//   2. 2 s or more at or under 35% health with their own defensive or Healthstone ready. Whether it "would have saved them" needs a model of
+//      each button, which a log alone can't settle, so the key marks these "low" and unsure.
+// Before the wipe = fewer than a quarter of the raid had died before them, and it is not after the moment the pull was lost (roots.js: cause.t).
+// What counts as a player's own mistake on The Coiled Altar (what they dodge with their own feet): Axegrinder, Noxious Ground, a tank frontal
+// on a non-tank, Widow's Kiss / Death's Embrace (not running out), Malevolent Resonance (their ghost touched another), and their own soul
+// fragments (Gravebound from their own Gloombomb or their own frontal). Raid damage is nobody's mistake (Venom Rupture, Coalesced Venom,
+// Dreadful Presence, Spirit Erasure, Fangs, Retaliatory Malice, Eternal Nightfall, an Execution, the boss's melee).
+'use strict';
+const OWN = new Set(['Axegrinder', 'Noxious Ground', "Widow's Kiss", "Death's Embrace", 'Malevolent Resonance']), FRONTAL = new Set(['Sever', 'Soul Sever', 'Blighted Sever']), NEARORB = new Set(['Volatile Venom', 'Mutagenic Venom']);
+const T = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+function deathVerdicts(pull, cause, known) {
+  const size = pull.size || 20, q = Math.ceil(size / 4), ca = pull.ca || {}, out = [];
+  for (const d of pull.deaths) {
+    const prior = pull.deaths.filter((x) => x !== d && x.t < d.t - 0.05).length;
+    const lost = cause && cause.t != null ? cause.t : null, afterQ = !pull.kill && prior >= q, afterLost = lost != null && d.t > lost + 0.75;
+    const v = { when: afterQ || afterLost ? 'after' : 'before', whenWhy: afterQ ? prior + ' had died before them (a quarter of the raid is ' + q + ')' : afterLost ? 'after the pull was lost at ' + T(lost) : prior + ' dead before them', verdict: 'none', proof: null, sure: true };
+    const cc = d.mc ? 'mind controlled' : d.feared ? 'feared' : null, mass = (d.mass || 1) >= 3, kb = d.killedBy;
+    const own = (n) => OWN.has(n) || (FRONTAL.has(n) && d.role !== 'tank');
+    if (v.when === 'before') {
+      const carried = (list) => (list || []).some((c) => c[1] === d.player && c[0] <= d.t + 0.1 && c[0] + c[2] >= d.t - 4);
+      // 1a. their own soul fragments killed them (never when a fragment came from someone else's Gloombomb)
+      if (kb === 'Gravebound' && !cc) { const g = (ca.gravebound || []).filter((x) => x.player === d.player && x.t <= d.t + 0.2 && x.t >= d.t - 20).pop(), sr = g && g.src;
+        if (g && sr) { const mine = sr.ownBomb + sr.frontal, n3 = 3 * (mine + sr.othersBomb), from = [sr.ownBomb ? 'their own Gloombomb' : '', sr.frontal ? 'a tank frontal' : '', sr.othersBomb ? sr.othersBomb + ' Gloombomb' + (sr.othersBomb > 1 ? 's' : '') + ' that were someone else\'s' : ''].filter(Boolean).join(' and ');
+          if (mine && !sr.othersBomb) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: 'Gravebound', names: ['Gravebound', 'soul fragments'], say: 'their own soul fragments (' + g.picked + ' of ' + n3 + ' picked up, from ' + from + ')' }; }
+          else { v.fact = 'Gravebound from ' + from + ' (' + g.picked + ' of ' + n3 + ' picked up)'; if (mine) { v.sure = false; v.note = 'fragments of their own and of someone else\'s bomb at once'; } } } }
+      // 1b. a tank who died to the frontal on their own turn (stack 1); on a later stack the swap was missed, which is not theirs
+      if (v.verdict === 'none' && FRONTAL.has(kb) && d.role === 'tank' && !cc) { const f = (ca.frontals || []).filter((x) => Math.abs(x.t - d.t) < 1.5 && x.tanks.includes(d.player)).pop(), st = f && f.stacks ? f.stacks[d.player] : null;
+        const prev = (ca.frontals || []).filter((x) => x.t < d.t - 1.5 && d.t - x.t < 50 && x.tanks.includes(d.player) && x.tanks.length > 1).pop();
+        if (st === 1) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: kb, names: [kb], say: 'took the ' + kb + ' on their own turn (stack 1) and it killed them' }; }
+        else if (prev) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: kb, names: [kb], say: 'took the ' + kb + ' on stack ' + st + ': they had also stood in ' + prev.tanks.filter((x) => x !== d.player).join(', ') + '\'s ' + prev.spell + ' at ' + T(prev.t) }; }
+        else v.fact = 'took the ' + kb + ' on stack ' + (st || '2 or more') + ': there was no swap'; }
+      // 1c. a mistake of their own in their last 4 s (an orb carrier's ring counts only for someone who wasn't carrying that colour)
+      if (v.verdict === 'none' && !cc && !v.fact) { const l4 = d.last4 || {}, ownN = (n) => own(n) || (n === 'Mutagenic Venom' && !carried(ca.purplePickups)) || (n === 'Volatile Venom' && !carried(ca.greenPickups));
+        const mineNames = Object.keys(l4).filter(ownN), sum = mineNames.reduce((a, n) => a + l4[n][0], 0), n = mineNames.reduce((a, x) => a + l4[x][1], 0);
+        const isKill = kb && ownN(kb), enough = !mass && sum > (d.overkill || 0) && sum >= 0.1 * (d.maxHp || 1e12);
+        if (mineNames.length && (isKill || enough)) { const top = mineNames.sort((a, b) => l4[b][0] - l4[a][0])[0]; v.verdict = 'you'; v.proof = { k: 'mistake', mech: isKill ? kb : top, names: mineNames.slice(), say: mineNames.map((x) => l4[x][1] + ' ' + x + ' hit' + (l4[x][1] === 1 ? '' : 's') + ' (' + Math.round(l4[x][0] / 1000) + 'k' + (x === kb ? ', the killing hit' : '') + ')').join(' and ') + ' in their last 4 s' };
+          if (/Widow's Kiss|Death's Embrace/.test(v.proof.mech)) { v.sure = false; v.note = 'theirs unless the axe was dropped on the raid'; } }
+        else { const ring = ['Mutagenic Venom', 'Volatile Venom'].filter((x) => l4[x] && !ownN(x)); if (ring.length) v.fact = 'carried ' + (ring[0] === 'Mutagenic Venom' ? 'a purple' : 'a green') + ' orb: its ring hits its carrier too (died to ' + (kb || 'no killing hit') + ')'; } }
+      // 2. sat low with something ready
+      if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
+        if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
+      if (v.verdict === 'none' && !kb && !cc && d.pos) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50) { v.fact = 'went off the platform on their own (' + far + ' yd from the middle, no killing hit)'; v.sure = false; v.note = 'the rule has no proof for walking off the edge'; } }
+      if (v.verdict === 'none') v.fact = v.fact || (cc ? cc + ' when they died' : mass ? 'a mass death (' + d.mass + ' to ' + kb + ' at once)' : kb ? 'no mistake of theirs in the last 4 s (died to ' + kb + ')' : 'no killing hit');
+      if (/Guillotine$/.test(kb || '')) { const g = (ca.guillotines || []).filter((x) => x.t <= d.t + 0.5 && d.t - x.t < 12).pop(); v.sure = false; v.note = 'the soak and target rules are still being written'; if (g && v.verdict === 'none') v.fact = (g.target === d.player ? 'the ' + g.spell + ' target' : 'a soaker of the ' + g.spell) + ' (' + g.soakers.length + ' soaked)'; }
+      if (v.verdict === 'you' && lost != null && Math.abs(d.t - lost) <= 0.75 && mass) { v.sure = false; v.note = 'died in the hit that lost the pull: the site reads that as after the wipe'; }
+      if (pull.kill && pull.len - d.t <= 20) { v.sure = false; v.note = 'in the kill\'s last 20 s'; }
+    } else v.fact = v.whenWhy;
+    out.push(v);
+  }
+  return out;
+}
+module.exports = { deathVerdicts };

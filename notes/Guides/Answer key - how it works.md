@@ -75,7 +75,22 @@ Ula'tek joins when the Ula'tek chat's findings are verified. Deaths have their r
 Some things a log can't fully settle (which of two carriers' purple touched first). Those entries say so, give the other
 reading (`or`, `byOr`), and never fail a build. They are listed under "to review" with `--list`.
 
-## Deaths
-Each death has its raw facts and no verdict. The proof-only death rule (a death counts only with a caught mistake of theirs, or
-2 s+ at or under 35% with a defensive ready) is being written by the Report card chat. When it's pushed, the verdicts are added
-here and checked the same way.
+## Deaths (added Nov 13, after the proof-only rule landed in 063567fd)
+Every death in the key has: before or after the wipe, the killing hit, and the proof or the plain fact. `tests/answer-key/death-rule.js`
+applies the rule to the raw facts (no site code):
+- **Before the wipe:** fewer than a quarter of the raid had died before them, and not after the second the pull was lost (`roots.js`).
+- **Proof 1, their own mistake was part of what killed them.** Its hit was the killing hit, or its hits in their last 4 s were damage
+  they'd have lived without (more than the killing blow's overkill, and a tenth of their health). In a mass death (3 or more to one hit
+  at once) only the killing hit counts. Never while feared or mind controlled.
+  What counts as their own on The Coiled Altar: Axegrinder, Noxious Ground, a tank frontal on a non-tank, Widow's Kiss / Death's Embrace,
+  Malevolent Resonance, an orb carrier's ring on someone who isn't carrying that colour, their own soul fragments (Gravebound from their
+  own Gloombomb or frontal, never from someone else's bomb), and a tank dying to the frontal on their own turn (stack 1), or on a later
+  stack they gave themselves by standing in the other tank's frontal.
+- **Proof 2, sat low with something ready:** 2 s or more at or under 35%. The key lists what wasn't on cooldown, but "would it have
+  saved them" needs the site's model of each button, so these are marked "maybe" and never fail a build.
+- The raw numbers behind each verdict are in the key for every death before the wipe: `last4` (damage by spell in the last 4 s),
+  `overkill`, `maxHp`, `lowFor`, `hp10`, `mass`, `feared`, `mc`, `pos`, `used`.
+- A hand correction goes in `roots.js` under `deaths: { <code>: { <fight>: { "<player>@<second>": { verdict, proof or fact } } } }`.
+
+Unsure ones (never fail a build, listed with `--list`): a death in the very hit that lost the pull, a Guillotine soaker or target (those
+rules are still being written), fragments from their own bomb and someone else's at once, walking off the platform with no killing hit.

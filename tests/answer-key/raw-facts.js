@@ -46,12 +46,15 @@ function rawFacts(rep, P) {
     prep[nm(id)] = { flask: au.find((n) => /^Flask of /.test(n) || /Phial/.test(n)) || null, food: au.find((n) => /Well Fed/.test(n)) || null, rune: au.find((n) => /^(Ethereal Augmentation|Void-Touched)$/.test(n)) || null, vantus: au.filter((n) => /^Vantus Rune/.test(n)).length }; }
   // ---- one pass: totals, deaths, health samples, casts ----
   const hp = new Map(ids.map((id) => [id, []])), lastHits = new Map(ids.map((id) => [id, []])), deathsRaw = [], rez = [], casts = new Map(ids.map((id) => [id, []]));
+  const mxHp = new Map(), fearSp = []; { const open = new Map(); for (const e of ev) { if (e.abilityGameID !== CA.wail) continue; if (e.type === 'applydebuff') open.set(e.targetID, e.timestamp); else if (e.type === 'removedebuff' && open.has(e.targetID)) { fearSp.push([e.targetID, open.get(e.targetID), e.timestamp]); open.delete(e.targetID); } } for (const [id, a] of open) fearSp.push([id, a, P.end]); }
+  const lastPos = new Map();
   const bossHp = {}, dead = new Map(), aliveCut = new Map(ids.map((id) => [id, 0])), diedAt = new Map();
   const consum = {}; const useC = (id, kind, t, name) => { const o = consum[nm(id)] || (consum[nm(id)] = { pot: [], stone: [], healpot: [], manapot: [] }); o[kind].push([s(t), name]); };
   for (const e of ev) {
     const ty = e.type;
+    if (e.x != null && e.resourceActor) { const idp = e.resourceActor === 2 ? e.targetID : e.sourceID; if (hp.has(idp)) lastPos.set(idp, [e.timestamp, e.x / 100, e.y / 100]); }
     if (e.hitPoints != null && e.maxHitPoints) { const id = e.resourceActor === 2 ? e.targetID : e.sourceID, v = e.hitPoints / e.maxHitPoints;
-      if (hp.has(id)) hp.get(id).push([e.timestamp, v]); else { const n = nm(id); if (n === "Zul'jan" || n === 'Hex Lord Malacrass') bossHp[n] = [s(e.timestamp), r2(100 * v)]; } }
+      if (hp.has(id)) { hp.get(id).push([e.timestamp, v]); mxHp.set(id, e.maxHitPoints); } else { const n = nm(id); if (n === "Zul'jan" || n === 'Hex Lord Malacrass') bossHp[n] = [s(e.timestamp), r2(100 * v)]; } }
     if (ty === 'damage') { const tot = (e.amount || 0) + (e.absorbed || 0);
       if (e.subtractsFromSupportedActor && e.supportID != null && !friendly(e.targetID)) { const sp = isP(e.supportID) ? e.supportID : ownerOf(e.supportID); if (sp != null && get(sp)) get(sp).dmg -= e.amount || 0; }
       if (hp.has(e.targetID)) { const l = lastHits.get(e.targetID); l.push([e.timestamp, e.abilityGameID, tot, e.overkill || 0, e.sourceID, e.hitPoints != null && e.maxHitPoints ? e.hitPoints / e.maxHitPoints : null]); if (l.length > 40) l.splice(0, 20); }
@@ -78,7 +81,11 @@ function rawFacts(rep, P) {
       const line = hp.get(id).filter((x) => x[0] <= t && x[0] >= t - 10000); let low = t; for (let i = line.length - 1; i >= 0; i--) { if (line[i][1] > 0.35) break; low = line[i][0]; }
       const samp = []; for (let k = 10; k >= 0; k -= 2) { const v = hpAt(id, t - k * 1000); samp.push(v == null ? null : Math.round(100 * v)); }
       const mine = casts.get(id).filter((c) => c[0] <= t), used = {}; for (const [ct, n2] of mine) if (DEFS[n2] != null || /Healthstone|Health(ing)? Potion/.test(n2)) used[n2] = s(ct);
-      deaths.push({ t: s(t), player: nm(id), role: roleOf(id), deadBefore: n, killedBy: kbId != null ? an(kbId) : null, killedByFrom: d.killerID != null ? nm(d.killerID) : null, mc: mcAt(id, t), hits, hp10: samp, lowFor: r1((t - low) / 1000), used }); n++; } }
+      const pe = ev.filter((e) => e.x != null && e.timestamp <= t && e.timestamp >= t - 3000 && ((e.resourceActor === 2 && e.targetID === id) || (e.resourceActor === 1 && e.sourceID === id))).pop(), posAt = pe ? [r1(pe.x / 100), r1(pe.y / 100)] : null;
+      const last4 = {}; for (const e of dmgs) { if (e.timestamp < t - 4000 || !(e.amount > 0)) continue; const k = an(e.abilityGameID), o4 = last4[k] || (last4[k] = [0, 0]); o4[0] += e.amount; o4[1]++; }
+      const okE = dmgs.slice().reverse().find((e) => e.overkill > 0), feared = fearSp.some((x) => x[0] === id && x[1] <= t && x[2] >= t - 1500), mc2 = mcSp.some((x) => x[0] === id && x[1] <= t && x[2] >= t - 2000) || (kbId == null && mcSp.some((x) => x[0] === id && x[1] <= t && x[2] >= t - 6000));
+      deaths.push({ t: s(t), player: nm(id), role: roleOf(id), deadBefore: n, last4, overkill: okE ? okE.overkill : 0, maxHp: mxHp.get(id) || null, pos: posAt, feared: feared || undefined, mc2: mc2 || undefined, killedBy: kbId != null ? an(kbId) : null, killedByFrom: d.killerID != null ? nm(d.killerID) : null, mc: mcAt(id, t), hits, hp10: samp, lowFor: r1((t - low) / 1000), used }); n++; } }
+  for (const d of deaths) { d.mass = d.killedBy ? deaths.filter((x) => x.killedBy === d.killedBy && Math.abs(x.t - d.t) <= 0.6).length : 1; if (d.mc2) d.mc = true; delete d.mc2; } /* (a mass death: 3 or more to the same hit at once; mind controlled: up to 2 s before, or 6 s with no killing hit) */
   // ---- kicks ----
   const kicks = [], offs = [];
   for (const e of ev) { if (e.type === 'interrupt' && (isP(e.sourceID) || ownerOf(e.sourceID) != null)) kicks.push({ t: s(e.timestamp), by: nm(isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID)), with: an(e.abilityGameID), spell: an(e.extraAbilityGameID), on: nm(e.targetID) + (e.targetInstance ? ' ' + e.targetInstance : '') });
@@ -102,7 +109,8 @@ function coiledAltar(ev, X) {
   ca.frontals = [];
   for (const e of ev) { if (e.type !== 'cast' || !CA.frontal[e.abilityGameID] || friendly(e.sourceID)) continue;
     const hit = ev.filter((x) => x.type === 'damage' && x.abilityGameID === e.abilityGameID && isP(x.targetID) && x.timestamp >= e.timestamp - 100 && x.timestamp <= e.timestamp + 1500).map((x) => x.targetID);
-    const u = [...new Set(hit)]; ca.frontals.push({ t: s(e.timestamp), spell: CA.frontal[e.abilityGameID], tanks: u.filter((id) => roleOf(id) === 'tank').map(nm), others: u.filter((id) => roleOf(id) !== 'tank').map(nm) }); }
+    const u = [...new Set(hit)], stacks = {}; for (const id of u.filter((x) => roleOf(x) === 'tank')) { const dz = ev.find((x) => CA.frontalDebuff[x.abilityGameID] === CA.frontal[e.abilityGameID] && x.targetID === id && Math.abs(x.timestamp - e.timestamp) < 600 && (x.type === 'applydebuff' || x.type === 'applydebuffstack')); stacks[nm(id)] = dz ? (dz.type === 'applydebuff' ? 1 : dz.stack || 2) : null; }
+    ca.frontals.push({ t: s(e.timestamp), spell: CA.frontal[e.abilityGameID], tanks: u.filter((id) => roleOf(id) === 'tank').map(nm), stacks, others: u.filter((id) => roleOf(id) !== 'tank').map(nm) }); }
   // Dreadmarch: each cast's targets (the debuff within 1.5 s of the cast). A Dreadmarch debuff at any other time is a ghost that reached its player.
   const dCast = of(CA.dreadCast, 'cast').map((e) => e.timestamp); ca.dreadmarch = dCast.map((t) => ({ t: s(t), targets: of(CA.dread, 'applydebuff').filter((x) => x.timestamp >= t && x.timestamp <= t + 1500 && isP(x.targetID)).map((x) => nm(x.targetID)) }));
   ca.ghostReached = of(CA.dread, 'applydebuff').filter((x) => isP(x.targetID) && !dCast.some((t) => x.timestamp >= t && x.timestamp <= t + 1500)).map((x) => ({ t: s(x.timestamp), player: nm(x.targetID) }));
@@ -113,7 +121,7 @@ function coiledAltar(ev, X) {
   // frontal just before it (a planned pop), the purple carriers whose orb ended at the burst, and the deaths in the next 15 s.
   const rup = ev.filter((e) => e.abilityGameID === CA.rupture && (e.type === 'applydebuff' || e.type === 'applydebuffstack') && isP(e.targetID)).sort((a, b) => a.timestamp - b.timestamp);
   const waves = []; for (const e of rup) { const w = waves[waves.length - 1]; if (w && e.timestamp - w.last < 4000) { w.last = e.timestamp; w.per.set(e.targetID, (w.per.get(e.targetID) || 0) + 1); } else waves.push({ a: e.timestamp, last: e.timestamp, per: new Map([[e.targetID, 1]]) }); }
-  const carry = (aid) => { const o = [], open = new Map(); for (const e of ev) { if (e.abilityGameID !== aid || !isP(e.targetID)) continue; if (e.type === 'applydebuff') open.set(e.targetID, e.timestamp); else if (e.type === 'removedebuff' && open.has(e.targetID)) { o.push({ who: e.targetID, a: open.get(e.targetID), b: e.timestamp }); open.delete(e.targetID); } } for (const [w, a] of open) o.push({ who: w, a, b: X.P.end }); return o; };
+  const carry = (aid) => { const o = [], open = new Map(); for (const e of ev) { if (e.abilityGameID !== aid || !isP(e.targetID)) continue; if (e.type === 'applydebuff' || e.type === 'applybuff') open.set(e.targetID, e.timestamp); else if ((e.type === 'removedebuff' || e.type === 'removebuff') && open.has(e.targetID)) { o.push({ who: e.targetID, a: open.get(e.targetID), b: e.timestamp }); open.delete(e.targetID); } } for (const [w, a] of open) o.push({ who: w, a, b: X.P.end }); return o; };
   const purple = carry(CA.purpleCarry), green = carry(CA.greenCarry), frontT = ev.filter((e) => e.type === 'cast' && CA.frontal[e.abilityGameID] && !friendly(e.sourceID)).map((e) => e.timestamp);
   const pdeaths = ev.filter((e) => e.type === 'death' && isP(e.targetID) && !e.feign);
   const rupD = ev.filter((e) => e.abilityGameID === CA.rupture && e.type === 'damage' && isP(e.targetID)), delT = of(CA.deluge, 'cast').map((e) => e.timestamp);
@@ -135,6 +143,7 @@ function coiledAltar(ev, X) {
       w.purpleJustEnded = purple.filter((c) => c.b < t - 700 && c.b >= t - 4000).map((c) => [nm(c.who), r1((t - c.b) / 1000)]);
       const pairs = []; for (let a = 0; a < things.length; a++) for (let b = a + 1; b < things.length; b++) { const A1 = things[a], B1 = things[b]; if (A1.col !== 'purple' && B1.col !== 'purple') continue; const d = Math.hypot(A1.p[0] - B1.p[0], A1.p[1] - B1.p[1]); if (d < 14) pairs.push([r1(d), A1.lab, B1.lab]); }
       pairs.sort((x, y) => x[0] - y[0]); w.near = pairs.slice(0, 5); w.orbsUp = things.length; }); }
+  ca.greenPickups = green.map((c) => [s(c.a), nm(c.who), r1((c.b - c.a) / 1000)]);
   ca.purplePickups = purple.map((c) => [s(c.a), nm(c.who), r1((c.b - c.a) / 1000)]);
   ca.deluges = of(CA.deluge, 'cast').map((e) => s(e.timestamp));
   // Gloombomb: each cast's four targets; anyone else its blast hit; and every Gravebound (from a bomb or a frontal): fragments picked up, and how it ended
@@ -146,7 +155,9 @@ function coiledAltar(ev, X) {
     const picks = ev.filter((x) => x.abilityGameID === CA.graveHit && x.type === 'damage' && x.targetID === e.targetID && x.timestamp > e.timestamp && x.timestamp <= te + 50).length;
     const died = pdeaths.find((d) => d.targetID === e.targetID && d.timestamp >= e.timestamp && d.timestamp <= te + 1500);
     const from = gHit.some((x) => x.targetID === e.targetID && Math.abs(x.timestamp - e.timestamp) < 300) ? 'Gloombomb' : (ev.find((x) => x.type === 'damage' && CA.frontal[x.abilityGameID] && x.targetID === e.targetID && Math.abs(x.timestamp - e.timestamp) < 600) ? 'frontal' : 'other');
-    return { t: s(e.timestamp), player: nm(e.targetID), from, picked: picks, for: r1((te - e.timestamp) / 1000), died: !!died, ended: !end }; });
+    const bh = gHit.filter((x) => x.targetID === e.targetID && x.timestamp >= e.timestamp - 300 && x.timestamp <= te), tgt = bh.length && of(CA.gloom, 'applydebuff', 'applybuff').some((x) => x.targetID === e.targetID && x.timestamp <= bh[0].timestamp && bh[0].timestamp - x.timestamp < 7000) ? 1 : 0;
+    const fr = ev.filter((x) => x.type === 'damage' && CA.frontal[x.abilityGameID] && x.targetID === e.targetID && x.timestamp >= e.timestamp - 600 && x.timestamp <= te).length;
+    return { t: s(e.timestamp), player: nm(e.targetID), from, src: { ownBomb: tgt, othersBomb: bh.length - tgt, frontal: fr }, picked: picks, for: r1((te - e.timestamp) / 1000), died: !!died, ended: !end }; });
   // Noxious Ground: seconds each player carried the debuff, and its damage ticks
   ca.noxious = {}; { const open = new Map(); for (const e of ev) { if (e.abilityGameID !== CA.noxious || !isP(e.targetID)) continue; const o = ca.noxious[nm(e.targetID)] || (ca.noxious[nm(e.targetID)] = { secs: 0, ticks: 0, times: 0 });
       if (e.type === 'applydebuff') { open.set(e.targetID, e.timestamp); o.times++; } else if (e.type === 'removedebuff' && open.has(e.targetID)) { o.secs += (e.timestamp - open.get(e.targetID)) / 1000; open.delete(e.targetID); } else if (e.type === 'damage') o.ticks++; }
