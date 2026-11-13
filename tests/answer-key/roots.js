@@ -86,7 +86,7 @@ module.exports = {
       proof: ['eight died between 1:46 and 1:49 (Fester Burst, Mephitic Thrash, Noxious Splash, Putrid Membrane and her melee)', 'the burst hit 15, with the Wretch 16 yd from the tail (the proof table)'] },
     21: { festerNotReachable: true /* (the second Wretch was held 24 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Caustic Waves', sure: true, t: 64.5, line: 'Her waves at 0:56 and the tails\' at 0:58 killed three by 1:03.',
       proof: ['Jangokin and Volkovod died to Caustic Waves at 1:00, Komo (Necrotic Vapors) at 1:03 and Larryg (Petrifying Sting) at 1:04'] },
-    22: { name: 'Noxious Splash', sure: true, t: 43.5, line: 'Egg carriers touched at 0:30 and 0:38 and five Vipers hatched. The raid was dead by 1:04.',
+    22: { name: 'Noxious Splash', sure: true, t: 46.5 /* (the collapse ran 0:43 to 0:46; Dragooned 0:45 and Komo 0:46 died in it, before a quarter were dead: the Ula'tek chat, Nov 13) */, line: 'Egg carriers touched at 0:30 and 0:38 and five Vipers hatched. The raid was dead by 1:04.',
       proof: ['eight died between 0:43 and 0:46', 'carriers touched at 0:30 and 0:38: 5 Vipers (the proof table)'] },
     23: { name: 'Blightscale Vipers', nameOr: ['Noxious Splash'], names: ['Dragooned'], sure: true, t: 109.5, line: 'Dragooned\'s egg went off at 1:47 (Noxious Splash), and the Viper it hatched killed Boltzzx.',
       proof: ['Dragooned died to Noxious Splash at 1:47', 'Boltzzx died to a melee hit at 1:49'] },
