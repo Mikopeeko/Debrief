@@ -63,7 +63,7 @@ the most important part of my site". Read every saved Coiled Altar wipe (Oct 21:
 tests/wipe-read.js (real cutInfo + E.rootCause next to the log's deaths and raid mistakes around the call).
 - A wipe called on the orbs keeps the orb wave a few seconds later as its own; it was read as "Reset on purpose" (Oct 21 pulls 15 and 28).
 - Oct 21 pulls 27 and 33 had no root cause at all: the sentence code used `fam` outside the block that defines it (a crash, fixed).
-- Tried and undone, waiting on Flex: naming the mechanic behind half or more of a worn-down pull's deaths as the root ("Gravebound killed 3
+- (Re-applied after Flex: "Yes, name it", see Nov 12 round 5 below.) Tried and undone, waiting on Flex: naming the mechanic behind half or more of a worn-down pull's deaths as the root ("Gravebound killed 3
   of the 4 who died") instead of "Too many individual mistakes". Flex's Nov 5 rule (272c2ac3) keeps "Too many individual mistakes" with
   "Most were Dreadmarch (5 of 8 deaths)" for separate personal deaths, and the contradiction check guards it. With the change, 22 of 54 saved
   October wipes would have dropped to 10.
@@ -91,3 +91,11 @@ Flex ("clean?") on "Shockabunga died to Frost Burst because 1 player died to Fro
 - A raid line that only counts the dead goes when 80% of the deaths it counts are in death rows beside it (wipeChain).
 - A player's own row goes when the group death row beside it names them for the same hit.
 - A row's first sentence ends at . ! or ? before a capital or the end: "at Pop! 2." no longer reads "at Pop!.".
+
+## Nov 12, round 5: the main mechanic of a worn-down pull (Flex: "Yes, name it")
+Over the Nov 5 rule: one mechanic behind half or more of a worn-down pull's deaths (a tank counts 2), and more than any other (a tie goes to
+the one that killed more people), is the root, worded by the hits that killed them: "Gravebound killed 3 of the 4 who died, and too few were
+left to reach the intermission". Dreadmarch keeps its own sentence ("Ghosts touching killed too many to reach the intermission"). No one
+player is named for it (several people). "Too many individual mistakes" is left for pulls where nothing stood out: 7 of 58 saved Coiled
+Altar wipes now (22 of 54 October wipes this morning), none on Nov 11. The contradiction check now allows a personal mechanic as the one
+cause of a worn-down pull only with that majority (rootCause returns worn: true).

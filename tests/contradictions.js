@@ -149,7 +149,9 @@ function checkPull(key) {
       /* (Nov 5, Flex: individual mistakes never point at one person; a single personal mistake is the cause only when it hit the raid at once) */
       if (o.cat === 'dead') { if ((o.marks || []).some((m) => m.k === 'root')) say(pull, 'root', 'Too many individual mistakes tags one death as the root cause');
         const nD = (r.deaths || []).filter((d) => d.t <= o.t + 0.5).length, nM = (o.most || []).reduce((s, m) => s + m.n, 0); if (nM > nD) say(pull, 'count', 'what added up counts ' + nM + ' deaths, but only ' + nD + ' died by ' + E.fmtT(o.t)); }
-      if (/^(axes|pools|frontal|ghosts|mc|bombs|orbs)$/.test(o.cat) && !/^(a wave|mass mind control)$/.test(o.why) && !o.early) say(pull, 'root', o.name + ' is the one cause of a pull worn down by separate deaths (' + o.why + ')');
+      /* (Nov 12, Flex: "Yes, name it": a worn-down pull names the mechanic behind half or more of its deaths; never one without that majority) */
+      if (/^(axes|pools|frontal|ghosts|mc|bombs|orbs)$/.test(o.cat) && !/^(a wave|mass mind control)$/.test(o.why) && !o.early) { const fm = (c) => (c === 'ghosts' ? 'mc' : c), pre = (r.deaths || []).filter((d) => d.t <= o.t + 0.5), mine = pre.filter((d) => fm(E.rcCat(d.ability || d.killer)) === fm(o.cat)).length;
+        if (!o.worn || mine * 2 < pre.length - 1) say(pull, 'root', o.name + ' is the one cause of a pull worn down by separate deaths (' + o.why + ')' + (o.worn ? ', but only ' + mine + ' of ' + pre.length + ' deaths were it' : '')); }
       if (o.cat === 'adds' && (o.bombBy || []).some((n) => !o.short.includes(n))) say(pull, 'root', 'the add wipe doesn\'t name whose Gloombomb missed');
       /* (Main, Nov 5: All pulls' "Carried the orb that burst" lists the root cause's own carriers, the same rule as the sentence) */
       if (o.cat === 'orbs') { const ob = o.orbBy || [], want = o.orbAt != null ? E.orbBurstBy(r, o.orbAt - 0.01, o.orbAt + 6.5) : []; /* (Nov 12: orbAt is the burst; its first Venom Rupture death can come a few seconds later) */
