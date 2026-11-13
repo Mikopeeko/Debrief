@@ -8126,9 +8126,10 @@ function rootCause(r, opts) {
      Only players the Wail feared, as above) */
   const fearEnd = (k) => { let z = k.t + 5; for (const p of pl) { const b = wailD(p); if (b && b.sp) for (const [a, e] of b.sp) if (a >= k.t - 1 && a <= k.t + 1.5 && e != null && e > z) z = e; } return Math.min(z, k.t + 8) + 0.6; };
   const bombish = (d) => /^(gloombomb|gravebound)$/i.test(d.ab || '') || /^(gloombomb|gravebound)$/i.test(d.kill || ''), gbOn = (d) => { const p = pBy.get(d.p), b = p && p.debuffs && p.debuffs.get('Gravebound'); return (b && b.sp ? b.sp.filter(([a, z]) => a <= d.t + 0.2 && (z == null || z >= d.t - 0.5)).pop() : null) || null; };
+  const blast = (d) => /^gloombomb$/i.test(d.ab || '') || /^gloombomb$/i.test(d.kill || ''), nFear = (k) => pl.filter((p) => { const b = wailD(p); return !!(b && b.sp && b.sp.some(([a]) => a >= k.t - 1 && a <= k.t + 1.5)); }).length;
   const touchOf = (d) => (r.mistakes || []).filter((q) => q.player === d.p && /^malevolent resonance$/i.test(q.mechanic || '') && /ghost touched/i.test(q.detail || '') && q.t <= d.t + 0.2 && q.t >= d.t - 14).pop() || null;
-  for (const d of deaths) { if (d.via || d.ab === 'Venom Rupture') continue; const k = ev.filter((e) => e.k === 'kick' && e.t <= d.t && e.t >= d.t - 20).pop(); if (!k) continue;
-    const z = fearEnd(k), g = bombish(d) ? gbOn(d) : null, q = d.cat === 'ghosts' ? touchOf(d) : null; if ((bombish(d) && d.t >= k.t - 0.5 && d.t <= z) /* (the blast: whoever it hit, feared or not) */ || (((g && g[0] >= k.t - 0.5 && g[0] <= z) || (q && q.t >= k.t - 0.5 && q.t <= z)) && fearOk(d, k))) d.via = k; }
+  /* (only in a log that has the fear on players: without it nothing says who was feared or when, and the 12 s window above stands (the Oct 21 night)) */ if (anyFear) for (const d of deaths) { if (d.via || d.ab === 'Venom Rupture') continue; const k = ev.filter((e) => e.k === 'kick' && e.t <= d.t && e.t >= d.t - 20).pop(); if (!k) continue;
+    const z = fearEnd(k), g = bombish(d) ? gbOn(d) : null, q = d.cat === 'ghosts' ? touchOf(d) : null; if ((blast(d) && d.t >= k.t - 0.5 && d.t <= z && nFear(k) >= 3) /* (the blast: whoever it hit, feared or not, when the Wail really feared the raid: a cast with nobody feared set nothing up (Oct 21 pull 17)) */ || (((g && g[0] >= k.t - 0.5 && g[0] <= z) || (q && q.t >= k.t - 0.5 && q.t <= z)) && fearOk(d, k))) d.via = k; }
   // ---- the point of no return ----
   const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || playedOnAfter(r, opts.cut, dur, opts.why) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */
     || (opts.why !== 'mech' && (() => { const t0 = waveAfterCall(r, opts.cut); if (t0 == null) return false; const m = new Map(); for (const d of (r.deaths || []).filter((x) => x.t >= t0 && x.t <= t0 + 5)) { const k = rcCat(d.ability || d.killer); m.set(k, (m.get(k) || 0) + 1); } const n = [...m.values()].reduce((a, b) => a + b, 0); return !n || (m.get('frontal') || 0) / n < 0.6; })()));
@@ -8167,6 +8168,11 @@ function rootCause(r, opts) {
      kick when the deaths it caused (4 or more) are half or more of everyone who died in the 20 s after the cast. The earlier deaths stay as what added up) */
   if (!reset && cut != null && !P.mc && !P.wave && P.why === 'the wipe call') { const k = ev.filter((e) => e.k === 'kick' && e.t <= cut + 0.5 && e.t >= cut - 10).pop();
     if (k) { const col = deaths.filter((d) => d.t >= k.t && d.t <= k.t + 20), kw = col.filter((d) => d.via === k); if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true }; } }
+  /* (Nov 13, Main, Nov 11 pull 5: Raiyvenz died to Dreadful Presence 1.1 s before the 3:38 Soul Sever that killed the tank (Tyralien didn't taunt) and four who stood in it. The wave began
+     at his death, so the missed taunt fell outside its window and the pull read "Too many individual mistakes". A wave whose missed-taunt frontal lands within 2 s of its first death begins
+     at that frontal: the deaths just before it are their own, and the moment the pull was lost is the Sever. A frontal later in a wave didn't start it (Oct 22 pull 3: 4 s in)) */
+  if (P.wave && !P.wm) { const f = P.wave.find((d) => d.cat === 'frontal'), w = f ? P.wave.filter((d) => d.t >= f.t - 0.05) : [];
+    if (f && f.t > P.wave[0].t + 0.05 && f.t - P.wave[0].t <= 2 && w.length >= 4 && (r.mistakes || []).some((q) => /sever/i.test(q.mechanic || '') && /didn't taunt/i.test(q.detail || '') && q.t >= f.t - 3 && q.t <= f.t + 1)) P = Object.assign({}, P, { t: f.t, wave: w }); }
   /* (and a kick missed after the moment the pull was lost explains no death in it: the root cause comes from before that moment) */
   for (const d of deaths) if (d.via && d.via.t > P.t + 0.5) d.via = null;
   const pre = deaths.filter((d) => d.t <= P.t + 0.5 && !(P.wave && P.wave.includes(d))), trig = P.wave ? P.wave : [];
@@ -8183,7 +8189,7 @@ function rootCause(r, opts) {
   const eraseSay = (t) => { const se = (r.mistakes || []).filter((q) => /^spirit erasure$/i.test(q.mechanic) && q.t <= t + 1 && q.t >= t - 40).pop(); if (se) say(se.t, 'erasure', String(se.detail || '').replace(/\.\s*$/, '').replace(/^The raid/, 'the raid') + ' (' + T(se.t) + ')'); };
   /* (Nov 13: what the fear set up, when most didn't run into something: bombs that went off in the feared raid (the Gloombomb rows' "Got clipped by", counted) and ghosts that touched) */
   const ranL = (l) => l.filter((d) => /^(axes|orbs|pools|frontal)$/.test(d.cat) || erupt(d));
-  const kickSetup = (k, l) => { if (!l || !l.length || ranL(l).length >= l.length / 2) return null; const z = fearEnd(k), bm = l.filter(bombish), gh = l.filter((d) => d.cat === 'ghosts' && !bombish(d)), n = bm.length + gh.length; if (n * 2 < l.length) return null;
+  const kickSetup = (k, l) => { if (!anyFear || !l || !l.length || ranL(l).length >= l.length / 2) return null; const z = fearEnd(k), bm = l.filter(bombish), gh = l.filter((d) => d.cat === 'ghosts' && !bombish(d)), n = bm.length + gh.length; if (n * 2 < l.length) return null;
     const clip = new Set((r.mistakes || []).filter((q) => /^gloombomb$/i.test(q.mechanic || '') && /^Got clipped by/.test(q.detail || '') && q.t >= k.t - 0.5 && q.t <= z).map((q) => q.player)).size;
     if (!l.some((d) => d.t > z) && clip < 2) return null; /* (everyone died inside the fear, with no bomb in the raid: "N died while feared") */
     const nF = anyFear ? pl.filter((p) => { const b = wailD(p); return !!(b && b.sp && b.sp.some(([a]) => a >= k.t - 1 && a <= k.t + 1.5)); }).length : 0;
@@ -8201,9 +8207,7 @@ function rootCause(r, opts) {
     const top = tally(trig)[0], share = top[1] / wsum(trig), t0 = trig[0].t; let wcat = trig.some((d) => d.cat === 'guil') && tally(trig.map((d) => Object.assign({}, d, { via: null })))[0][0] === 'guil' ? 'guil' : top[0];
     /* (Nov 12, Flex: "Why does it like to blame soul sever individual deaths for wipes": a Sever hit is each player's own; the wave's next cause names it, unless the other tank
        didn't taunt (Nov 11 pull 1: Vandagos took Blighted Sever on stack 4)) */
-    /* (Nov 13, Main: the frontal's moment is its own first death in the wave, not the wave's first death. Nov 11 pull 5: Raiyvenz died to Dreadful Presence 1.1 s before the 3:38 Soul Sever, so
-       the missed taunt fell outside the window and the pull read "Too many individual mistakes") */
-    frT = (trig.find((d) => d.cat === 'frontal') || trig[0]).t;
+    frT = t0; /* (Nov 13: the wave's start, which is the frontal itself when a missed-taunt Sever landed within 2 s of its first death: the wave was trimmed to it above) */
     /* (Nov 13, Main, Nov 11 pull 1: "the root is the missed kick". A tank who dies to the frontal on stack 3 or more with no other tank alive took every one alone: the wave goes back to what
        killed the other tank (an unkicked Wail of Terror feared Tyralien into Death's Embrace 75 s before Vandagos died to his fourth Blighted Sever). Never "X didn't taunt" for a dead tank) */
     const tkF = trig.find((d) => d.cat === 'frontal' && d.role === 'tank' && (wcat === 'frontal' || d === trig[0])) || null, goneT = tkF ? deadAt(tkF.t - 0.5).filter((x) => x.role === 'tank' && x.p !== tkF.p) : [];

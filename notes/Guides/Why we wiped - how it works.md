@@ -127,15 +127,18 @@ Tried and left out: naming every root death by d.kill (it moved 8 Coiled Altar r
 
 ## Nov 13, Main's three calls from the answer key (Nov 11 pulls 1, 3 and 5)
 Each was judged from the raw log by hand (tests/answer-key/roots.js) and ruled by Main. The fixes are rules, not pull patches; reading all 79 saved Coiled Altar wipes
-before and after moved five: these three, Oct 22 pull 6 (the same bomb pattern, now the missed kick) and one pull's wording.
+before and after moved four: these three and Oct 22 pull 6 (the same bomb pattern, 19 feared, now the missed kick).
 - **What follows from a missed kick, past the fear.** A death is "via the kick" within 12 s of the Wail, as before, and now also up to 20 s after the cast when the fear set
-  it up: soul fragments (Gravebound, or a Gloombomb hit) when the Gravebound on them began during the fear; a Gloombomb's blast itself while the fear was on, whoever it hit;
+  it up: soul fragments (Gravebound, or a Gloombomb hit) when the Gravebound on them began during the fear; a Gloombomb's blast itself while the fear was on, whoever it hit,
+  when that Wail really feared the raid (3 or more players: on the Oct 21 night many casts "got off" with nobody feared, and those set nothing up);
   Malevolent Resonance when their ghost touched during the fear; and the Guillotine's eruption (Widow's Kiss, Death's Embrace) on a player still feared.
+  Only players the Wail feared, and only in a log that records the fear on players; without it the 12 s window stands.
 - **A call that lands in the fear.** A wipe call within 10 s of an unkicked Wail, with no wave of its own before it, is lost at that kick when the deaths it caused (4 or
   more) are half or more of everyone who died in the 20 s after the cast. Nov 11 pull 3: the Wail at 3:26 feared 18 with Gloombombs out, the bombs went off in the raid
   1.5 s later (7 extra players hit), ghosts touched; it read "Phase 2 push" from the four deaths before the call. The line says what the fear set up: "Gloombombs went
   off in the raid (7 extra players hit) and ghosts touched".
-- **The frontal's own moment.** A missed taunt is looked for at the frontal's first death in the wave, not the wave's first death. Nov 11 pull 5: Raiyvenz died 1.1 s
+- **The frontal's own moment.** A wave whose missed-taunt frontal lands within 2 s of its first death begins at that frontal: the deaths just before it are their own, and
+  the moment the pull was lost is the Sever. A frontal later in a wave didn't start it (Oct 22 pull 3: 4 s in, unchanged). Nov 11 pull 5: Raiyvenz died 1.1 s
   before the 3:38 Soul Sever, so the taunt row fell outside the window ("Too many individual mistakes"). Now: "Tyralien didn't taunt before Soul Sever: Vandagos took it
   on stack 2 and died. Soul Sever also killed 4 who stood in it." With 3 or more others dead in it, no one player is named as the cause (a dodge that killed 3 or more is
   no one person's); the tip says both (taunt, and stay out). Without a missed taunt, Sever deaths are still each player's own, never the root (Flex, Nov 12).
