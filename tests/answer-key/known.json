@@ -1,11 +1,8 @@
 {
  "*:dmgShield:*": "damage a boss's shield absorbed (Veil of Twilight) is left out of damage done; Main: count it, as Warcraft Logs does (reported Nov 13, one line for every player and pull)",
  "*:healCheat:*": "Cheat Death and Purgatory are left out of healing done; Main: count them like any absorb (reported Nov 13, one line for every player and pull)",
- "agt6jMTyZBYvVzAP:2:cause": "Why we wiped reads the frontal; Main ruled it the missed kick at 7:34, with the frontal as what added up (Report card chat is changing it) (reported Nov 13)",
- "agt6jMTyZBYvVzAP:2:cause:who": "Why we wiped says Tyralien did not taunt; he had been dead for 75 s (reported Nov 13)",
  "agt6jMTyZBYvVzAP:2:venomfangFree:Urgdragon@115": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
  "agt6jMTyZBYvVzAP:3:tabs:Komo-s-damage-from-the-Sever-at-0-23": "reported (reported Nov 13)",
- "agt6jMTyZBYvVzAP:4:cause": "Why we wiped names another cause than the log shows (reported Nov 13)",
  "agt6jMTyZBYvVzAP:4:deathBy:Hobbz@222": "the death is put on Malevolent Resonance; the killing hit in the log is another spell (reported Nov 13)",
  "agt6jMTyZBYvVzAP:4:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:4:venomfangFree:Dragooned@66": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
@@ -13,7 +10,6 @@
  "agt6jMTyZBYvVzAP:5:noxious:Boltzzx": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:5:noxious:Komo": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:5:venomfangFree:Optt@116": "the site only knows the dispellers who removed a Venomfang in this pull; the night's log shows more who had theirs ready (reported Nov 13)",
- "agt6jMTyZBYvVzAP:6:cause": "Why we wiped names another cause than the log shows (reported Nov 13)",
  "agt6jMTyZBYvVzAP:6:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:6:tabs:Huservoker-s-damage-from-the-Soul-Sever-at-3-38": "reported (reported Nov 13)",
  "agt6jMTyZBYvVzAP:6:tabs:Jangokin-s-damage-from-the-Soul-Sever-at-3-38": "reported (reported Nov 13)",
@@ -79,6 +75,5 @@
  "Gax3AkbyFRXmdrgQ:9:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:deathBy:Tyralious@117": "the death list names another killing hit than the log (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "agt6jMTyZBYvVzAP:17:deathVerdict:Schooty@299": "the site says Not counted, the raid jumped to reset; Main ruled You, walked off the edge: only players in control make a group jump, and the other three were feared off by Wail of Terror (reported Nov 13, the Report card chat is fixing it)"
+ "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)"
 }

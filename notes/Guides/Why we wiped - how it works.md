@@ -124,3 +124,27 @@ Read every wipe's box on the all-bosses night (xH3J: Ula'tek 9, Kith'ix 4, Senti
   ("Ironvan missed Stone Breaker circle 1, and it killed 13 players", was "Caustic Globule"), or, with no wave, when it killed at least as many
   as anything else in the last 15 s; "and it killed N" counts the miss's own hit, never the wave's first death.
 Tried and left out: naming every root death by d.kill (it moved 8 Coiled Altar roots, several for the worse: needs its own review).
+
+## Nov 13, Main's three calls from the answer key (Nov 11 pulls 1, 3 and 5)
+Each was judged from the raw log by hand (tests/answer-key/roots.js) and ruled by Main. The fixes are rules, not pull patches; reading all 79 saved Coiled Altar wipes
+before and after moved five: these three, Oct 22 pull 6 (the same bomb pattern, now the missed kick) and one pull's wording.
+- **What follows from a missed kick, past the fear.** A death is "via the kick" within 12 s of the Wail, as before, and now also up to 20 s after the cast when the fear set
+  it up: soul fragments (Gravebound, or a Gloombomb hit) when the Gravebound on them began during the fear; a Gloombomb's blast itself while the fear was on, whoever it hit;
+  Malevolent Resonance when their ghost touched during the fear; and the Guillotine's eruption (Widow's Kiss, Death's Embrace) on a player still feared.
+- **A call that lands in the fear.** A wipe call within 10 s of an unkicked Wail, with no wave of its own before it, is lost at that kick when the deaths it caused (4 or
+  more) are half or more of everyone who died in the 20 s after the cast. Nov 11 pull 3: the Wail at 3:26 feared 18 with Gloombombs out, the bombs went off in the raid
+  1.5 s later (7 extra players hit), ghosts touched; it read "Phase 2 push" from the four deaths before the call. The line says what the fear set up: "Gloombombs went
+  off in the raid (7 extra players hit) and ghosts touched".
+- **The frontal's own moment.** A missed taunt is looked for at the frontal's first death in the wave, not the wave's first death. Nov 11 pull 5: Raiyvenz died 1.1 s
+  before the 3:38 Soul Sever, so the taunt row fell outside the window ("Too many individual mistakes"). Now: "Tyralien didn't taunt before Soul Sever: Vandagos took it
+  on stack 2 and died. Soul Sever also killed 4 who stood in it." With 3 or more others dead in it, no one player is named as the cause (a dodge that killed 3 or more is
+  no one person's); the tip says both (taunt, and stay out). Without a missed taunt, Sever deaths are still each player's own, never the root (Flex, Nov 12).
+- **A tank left alone.** A tank who dies to the frontal on stack 3 or more with no other tank alive took every one alone: the wave goes back to what killed the other
+  tank. Nov 11 pull 1: the unkicked Wail at 7:33 feared Tyralien into Death's Embrace; he was never brought back; Vandagos died to his fourth Blighted Sever at 8:54. The
+  root is the missed kick, with the frontal in its line. When the other tank didn't die to a missed kick, the cause stays the frontal, with nobody named.
+- **Never name a dead or mind-controlled player** (engine `tankOut`, every boss's taunt rows): a tank is out while dead (the last death has no battle res after it; it
+  used to count for 60 s only), mind controlled or feared. With the other tank out, the taker's third stack is marked someone else's (m.others): not counted against them,
+  never death proof ("Took Blighted Sever on stack 3: the other tank, Tyralien, was dead, so nobody could taunt.").
+Checks: tests/wipe-causes.js (the four pulls by name, read with the page's real wipe call; and pull 5 again with its taunt row taken out, which must not read Sever),
+with --all; the answer key holds the same three causes in every build; every pull read by the contradiction check fails if a taunt row names a tank who was dead;
+each rule's own line is pinned in the page-code list.

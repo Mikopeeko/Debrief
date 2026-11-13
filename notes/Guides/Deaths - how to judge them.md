@@ -379,3 +379,10 @@ soul fragments that all came from someone else's bomb, none in a reset pull, an 
 Twin Fangs' Caustic Deluge beam (Main's call): a non-tank who stands in it has a Harmful row under Avoidable damage ("Caustic Deluge (Tank beam)"), with the usual lines (two hits amber, five red:
 no baseline of its own yet, and top kills' non-tanks take it about twice a kill), so one hit is never coloured; as death proof it follows the normal rule.
 Still open: Ula'tek's Fester Burst where the Wretch was held out of reach (the Ula'tek module's words); what else a reset pull grades besides deaths.
+
+## Main's last call on the group jump (Nov 13, later)
+Two or more off the edge within 3 s is "the raid jumped to reset" only when the others went off in control. A feared, mind-controlled or knocked player is not jumping
+and never makes it a group jump (`ccOf`, `knockOf` in `deathVerdict`). Schooty, Nov 11 pull 16: he Disengaged off alone; the three who followed within 3 s were feared
+off by the unkicked Wail of Terror at 4:59. His death is You, walked off the edge. Kargaryen, Oct 22 pull 10 (four off in control) stays "the raid jumped to reset".
+A tank's third frontal stack with the other tank dead, mind controlled or feared is marked someone else's (see Why we wiped): never proof.
+Checks: both deaths by name in tests/deaths-check.js, and on every death read an edge proof fails when another player went off in control within 3 s.

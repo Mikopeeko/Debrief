@@ -138,6 +138,10 @@ function checkPull(key) {
       else if (nk && (VERBS.test(nk) || nk.toLowerCase() === lc || nk.split(/\s+/).length > 2)) say(pull, 'title', '"' + base + ' (' + nk + ')" is not a 1-2 word noun nickname');
     }
   }
+  /* (Nov 13, Main, from the answer key: "never name a dead or mind-controlled player". Nov 11 pull 1: "Tyralien didn't taunt before Blighted Sever" at 8:54; he died at 7:38 and was never
+     brought back. Every boss's taunt rows, every pull) */
+  for (const m of r.mistakes || []) { if (!m.player || m.player === 'Raid' || !/^Didn't taunt /.test(m.detail || '')) continue; const dd = (r.deaths || []).filter((x) => x.player === m.player && x.t <= m.t + 0.2).sort((a, b) => a.t - b.t).pop();
+    if (dd && !(r.rezzes || []).some((z) => z.guid === dd.guid && z.t > dd.t && z.t <= m.t)) say(pull, 'taunt', String(m.player).split('-')[0] + ' is named for a missed taunt at ' + E.fmtT(m.t) + ' ("' + m.detail + '"), but died at ' + E.fmtT(dd.t) + ' and was never brought back'); }
   if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { const o = E.rootCause(r); if (o && o.cat !== 'reset') { const l = NIGHT_RC.get(code) || []; l.push(o); NIGHT_RC.set(code, l); } if (!o || !o.line) say(pull, 'root', 'no root cause for this wipe'); else if (JSON.stringify(o.sp || null) !== JSON.stringify(E.RC_CAT[o.cat].sp || null)) say(pull, 'icon', 'the root cause ' + o.name + ' carries another icon'); else { clean(pull, 'root cause', o.line); clean(pull, 'root cause, short', o.short); if (!o.short) say(pull, 'root', 'no short why sentence for ' + o.cat); for (const a of o.also) for (const x of a.txt) clean(pull, 'also added up', x); if (o.also.some((a) => a.cat === o.cat)) say(pull, 'root', 'the root cause (' + o.name + ') is also listed under Also added up'); } }
   /* (Nov 5: the root cause's first moment is never after the moment the pull was lost; and How it went's row at the root cause's moment can take
      its tag (a Death row is judged by what killed them: "Too many dead" tags the first death it names)) */
@@ -232,7 +236,14 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
 /* (Nov 12 and 13, Why we wiped passes 2 and 3: each rule's own line, named for the pull it came from) */
 { const ENG = require('fs').readFileSync(require('path').join(SRC, 'engine.js'), 'utf8');
   for (const [where, s0, what] of [[ENG, "if (kF && nF >= Math.max(2, 5 - sk.n)) { cat = 'kick'", 'a Guillotine soak under an unkicked Wail of Terror\'s fear is no longer the missed kick\'s wipe (Nov 11 pull 13)'],
-    [ENG, "/didn't taunt/i.test(q.detail || '') && q.t >= t0f - 3", 'a tank killed by Blighted Sever after a missed taunt no longer names the taunt (Nov 11 pull 1)'],
+    [ENG, "/didn't taunt/i.test(q.detail || '') && q.t >= t0f - 3", 'a tank killed by the frontal after a missed taunt no longer names the taunt (Nov 11 pull 5)'],
+    [ENG, "if (tankOut(r, p, t)) continue;", 'a dead, feared or mind controlled tank can be named for a missed taunt again (Nov 11 pull 1: Tyralien, 75 s after he died)'],
+    [ENG, "if (outS) mistakes[mistakes.length - 1].others = outS;", 'a tank left alone by a dead tank is blamed for the third stack again (Nov 11 pull 1: Vandagos at 8:23 and 8:54)'],
+    [ENG, "if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true };", 'a wipe called inside an unkicked Wail of Terror\'s fear no longer goes to the kick (Nov 11 pull 3 read "Phase 2 push")'],
+    [ENG, "if ((bombish(d) && d.t >= k.t - 0.5 && d.t <= z)", 'deaths the fear set up (bombs that went off in the feared raid, ghosts that touched) no longer follow from the missed kick (Nov 11 pull 3)'],
+    [ENG, "q.t >= frT - 3 && q.t <= frT + 1", 'the missed taunt is looked for at the wave\'s first death again, not the frontal\'s own (Nov 11 pull 5 read "Too many individual mistakes")'],
+    [ENG, "if (tkF && tkStk >= 3 && goneT.length && !pl.some((p) => p.role === 'tank' && p.name !== tkF.p && !goneT.some((x) => x.p === p.name))) wcat = 'lone';", 'a tank who took every frontal alone is no longer traced back to what killed the other tank (Nov 11 pull 1: the missed kick at 7:33)'],
+    [ENG, "|| d.ab === 'Gravebound' || erupt(d)) && d.ab !== 'Venom Rupture' && fearOk(d, k)) d.via = k;", 'a feared player killed by the Guillotine\'s eruption no longer follows from the missed kick (Nov 11 pull 1: Tyralien, Death\'s Embrace)'],
     [ENG, "(m.get('frontal') || 0) / n < 0.6", 'a burst of Sever deaths after the call is the collapse again (Nov 11 pull 5)'], [ENG, "top[0] !== 'frontal' /* (Sever deaths are each player's own", 'Sever deaths can be a worn-down pull\'s root again'],
     [ENG, "wAft = opts.why === 'mech' ? null : waveAfterCall(r, opts.cut);", 'the wave just after the call is Ula\'tek-only again (Nymrissa pull 3: the murlocs that reached the bubble)'],
     [ENG, "const hrWin = !!(hr && nH >= 1 && nH >= (top[1] || 0)", 'a player\'s own miss that hit the raid no longer beats a tied "Most of the deaths were X" (Twin Fangs pull 17)'],
@@ -430,10 +441,10 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */
-/* (Nov 12, Flex: "Why does it like to blame soul sever individual deaths for wipes": Nov 11 pull 5, called at 3:37 on four separate deaths, then Soul Sever killed 5 a second later: never the root.
-   Read alone, with --all) */
-if (ALL) { try { const rep6 = report('agt6jMTyZBYvVzAP'), ef6 = findFile('agt6jMTyZBYvVzAP_6.json'), it6 = rep6 && rep6.items.get(6); if (it6 && ef6 && E.rootCause) { let ev6 = readJ(ef6); if (!Array.isArray(ev6)) ev6 = ev6.events; const r6 = E.analyze(it6, W.translate(it6, ev6), {}); ev6 = null; if (!r6.item) r6.item = it6;
-    const o8 = E.rootCause(r6, { cut: 217.4, why: 'line' }); if (!o8 || o8.cat === 'frontal' || /soul sever/i.test(o8.short || '')) say('The Coiled Altar Mythic pull 5 (agt6jMTyZBYvVzAP:6)', 'root', 'Soul Sever deaths after the call are the wipe\'s root cause again: "' + (o8 && o8.short) + '"'); } } catch (e) { say('Soul Sever guard', 'crash', e.message); } }
+/* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a
+   cut of 217.4 and wanted "never Soul Sever": the call lands on that Sever now, and with Tyralien's missed taunt it is the cause. Without a missed taunt, Sever deaths still never are: the same
+   check takes the taunt row out and reads the pull again. With --all) */
+if (ALL) { try { require('./wipe-causes.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('named wipe causes', 'crash', (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } }
 try { require('./deaths-check.js')(NIGHT_R, H, say); } catch (e) { say('deaths', 'crash', 'the death check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 12: Main's death plan) */
 try { require('./ulatek-check.js')(NIGHT_R, H, say); } catch (e) { say('ulatek', 'crash', "the Ula'tek check crashed: " + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 13: Ula'tek's wipe causes, checks A to G) */
 try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player', 'crash', 'the one-player check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
