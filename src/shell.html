@@ -4520,7 +4520,26 @@ html body #view#view > .r212-sb.sc5-on > .sc5 { order: -1 !important; }
 #view .sc5-lkl { color: #8e989d; margin-left: 4px; }
 #view .sc5-ln { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: #e6b750; cursor: pointer; }
 #view .sc5-ln:hover, #view .sc5-ln.on { color: #ffd27a; text-decoration: underline; text-underline-offset: 3px; }
-.spc-tt .sc5-tl { margin: 4px 0 0; }
+/* (Summary's hovers (Flex, Nov 13: "can we make the tooltips from these look nicer"): the score in its colour over a short square bar, a quiet line on what it
+   counts, then quiet rows: the name on the left, the number on the right, its comparison under it; small capitals over a list) */
+.spc-tt .sc5-tt { width: 272px; max-width: 80vw; font: 400 13px/1.35 var(--head, 'Barlow Condensed', sans-serif); color: #c9ced2; }
+.spc-tt .sc5-th { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.spc-tt .sc5-th > span { font: 700 14.5px/1.2 var(--head, 'Barlow Condensed', sans-serif); color: #f0eee8; }
+.spc-tt .sc5-th > b { font: 700 24px/1 var(--head, 'Barlow Condensed', sans-serif); color: #f0eee8; font-variant-numeric: tabular-nums; }
+.spc-tt .sc5-th > b.sc5-tw { font-size: 14.5px; line-height: 1.2; color: #e8a23a; text-align: right; }
+.spc-tt .sc5-tb { height: 3px; margin: 7px 0 8px; background: rgba(255,255,255,.08); }
+.spc-tt .sc5-tb > i { display: block; height: 100%; background: #c9cfd6; }
+.spc-tt .sc5-th > b[data-g="S"] { color: #ff9a3c; } .spc-tt .sc5-th > b[data-g="A"] { color: #b981f5; } .spc-tt .sc5-th > b[data-g="B"] { color: #4f9dff; } .spc-tt .sc5-th > b[data-g="C"] { color: #52d65a; } .spc-tt .sc5-th > b[data-g="D"] { color: #c9cfd6; } .spc-tt .sc5-th > b[data-g="F"] { color: #e5534b; }
+.spc-tt .sc5-tb > i[data-g="S"] { background: #ff9a3c; } .spc-tt .sc5-tb > i[data-g="A"] { background: #b981f5; } .spc-tt .sc5-tb > i[data-g="B"] { background: #4f9dff; } .spc-tt .sc5-tb > i[data-g="C"] { background: #52d65a; } .spc-tt .sc5-tb > i[data-g="D"] { background: #c9cfd6; } .spc-tt .sc5-tb > i[data-g="F"] { background: #e5534b; }
+.spc-tt .sc5-td { margin: 0 0 7px; font-size: 13.5px; line-height: 1.4; color: #98a1a7; }
+.spc-tt .sc5-ts { margin: 9px 0 1px; font: 700 12px/1.3 var(--head, 'Barlow Condensed', sans-serif); letter-spacing: .06em; text-transform: uppercase; color: #8e989d; }
+.spc-tt .sc5-tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; padding: 5px 0 5px; border-top: 1px solid rgba(255,255,255,.07); font-size: 13px; line-height: 1.35; }
+.spc-tt .sc5-ts ~ .sc5-tr { padding: 2px 0; border-top: 0; } /* (a list under small capitals: tight rows, no lines) */
+.spc-tt .sc5-tr > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c9ced2; }
+.spc-tt .sc5-tr > b { color: #f0eee8; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.spc-tt .sc5-tr > em { grid-column: 1 / -1; margin-top: 1px; font-style: normal; font-size: 12px; line-height: 1.35; color: #8e989d; }
+.spc-tt .sc5-tr > .g { color: #5fdc7a; } .spc-tt .sc5-tr > .b { color: #e8a23a; }
+.spc-tt .sc5-tm { margin-top: 5px; font-size: 12px; color: #8e989d; }
 @media (max-width: 640px) { #view .sc5 { padding: 10px 12px 12px; } #view .sc5-t { grid-template-columns: repeat(2, minmax(0, 1fr)); } #view .sc5-n:first-child { grid-column: 1 / -1; } #view .sc5-v { font-size: 24px; } }
 html body #view .prw .prw-t > i.ok { background: #4fbf6a !important; } html body #view .prw .prw-t > i.warn { background: #e6b450 !important; } html body #view .prw .prw-t > i.bad { background: #e5534b !important; }
 /* (Oct 24: All pulls, a line across the night for each check) */
