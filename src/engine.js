@@ -4510,10 +4510,17 @@ function buildCoiledAltar(ev, r, h) {
         return { t: tc, dist: Object.fromEntries(names.map((n) => [n, isFinite(dist[n]) ? +dist[n].toFixed(1) : null])), what: one ? what[one] : '', leap: one ? !!leap[one] : false, one, close: clear ? close : null };
       } catch (e) { return null; } }).filter(Boolean); }
     r._orbCarry = carry.map((c) => [pname(c.g), c.s, c.e]); /* (Nov 12: for orbFearedAt while the module is being built) */
+    /* (Nov 13, Flex: "all pulls is bugged and not showing all mistakes": a collision that killed players before their stacks could jump 8 (Oct 22 pull 32:
+       10 died to Venom Rupture at 2:16) was the wipe's root cause, but its Deluge read clean, so Summary and All pulls counted Orb Pops as done right.
+       An orb wave the root cause sees counts as a collision here too when Venom Rupture killed 5 or more in it, outside the frontals, the P1 push and
+       Defilement (one or two deaths as a Deluge lands aren't clearly a touch)) */
+    const vrKilled = (t) => (r.deaths || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= t - 1 && x.t <= t + 6).length;
+    const collAll = bursts.concat((r.orbWaves || []).filter((t) => vrKilled(t) >= 5 && !bursts.some((b) => Math.abs(b.t - t) < 4) && !severs.some((sv) => sv.t >= t - 3.5 && sv.t <= t + 0.3) && !(zjDown != null && t >= zjDown - 1.5 && t <= zjDown + 6) && !defils.some((df) => t >= df - 0.5 && t <= df + 4)).map((t) => ({ t, gain: null })));
+    const collSay = (c) => (c.gain ? '+' + c.gain + ' Venom Rupture stacks on everyone at once.' : 'Venom Rupture killed ' + vrKilled(c.t) + '.');
     orbSec0.rows = deluges.map((d, i) => {
       const end = deluges[i + 1] ?? (p2 != null && d < p2 ? p2 : dur);
       const picks = carry.filter((c) => c.s >= d && c.s < end), cl = clipped.filter((c) => c.t >= d && c.t < end).length;
-      const coll = bursts.find((b) => b.t >= d && b.t < end), left = leftover.some((x) => x.t === end), det = detonations.filter((x) => x.t >= d - 1 && x.t < end);
+      const coll = collAll.find((b) => b.t >= d && b.t < end), left = leftover.some((x) => x.t === end), det = detonations.filter((x) => x.t >= d - 1 && x.t < end);
       const fs = severs.filter((s) => s.t > d && s.t < end).map((s) => frontOf(s, d)), many = fs.length > 1;
       const fBad = fs.some((f) => f.bad), fWarn = !fBad && fs.some((f) => f.warn), raidMax = Math.max(0, ...fs.map((f) => f.raidMax));
       // (purple orbs are Mythic only: Heroic and Normal leave them out)
@@ -4527,7 +4534,7 @@ function buildCoiledAltar(ev, r, h) {
         /* (Nov 12, Flex: "someone getting feared into a mechanic because wail went off shouldnt blame the feared person": purple carriers who picked theirs up while feared ran onto it; the missed kick's, names in brackets only) */
         const fp = orbFearedAt(r, pu, tc); if (fp) return 'Wail of Terror wasn\'t kicked, and players it feared ran over orbs (' + and(pu.map((n) => n + ' onto a purple').concat(gr.map((n) => n + ' onto a green'))) + '), so a purple orb touched other orbs';
         return (pu.length === 1 ? pu[0] + '\'s purple orb touched other orbs' : pu.length ? 'One of ' + or(pu.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'A purple orb touched other orbs') + (gr.length ? ' while ' + and(gr) + ' held green orbs' : ''); })() : ''; /* (Nov 5, Flex: "name who collided with what") */
-      const res = coll ? { txt: 'orbs collided', sub: '+' + coll.gain + ' stacks at once: ' + cw.charAt(0).toLowerCase() + cw.slice(1), say: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', bad: true, why: cw + ': +' + coll.gain + ' Venom Rupture stacks on everyone at once.', next: /^Wail of Terror wasn't kicked/.test(cw) ? 'Kick every Wail of Terror: a feared raid runs over the orbs.' : 'Carry purple orbs on their own, away from the other orbs.' }
+      const res = coll ? { txt: 'orbs collided', sub: (coll.gain ? '+' + coll.gain + ' stacks at once: ' : '') + cw.charAt(0).toLowerCase() + cw.slice(1), say: cw + ': ' + collSay(coll), bad: true, why: cw + ': ' + collSay(coll), next: /^Wail of Terror wasn't kicked/.test(cw) ? 'Kick every Wail of Terror: a feared raid runs over the orbs.' : 'Carry purple orbs on their own, away from the other orbs.' }
         : left ? { txt: 'orb left at the next Deluge', sub: 'it erupted on the raid', bad: true, why: 'An orb was still out when the next Toxic Deluge came, and it erupted on the raid.', next: 'Pop every orb before the next Toxic Deluge.' }
         : det.length ? { txt: 'Defilement detonation', sub: '+' + det[0].gain + ' stacks at once: orbs still on the ground', bad: true, why: 'Orbs left on the ground detonated: +' + det[0].gain + ' Venom Rupture stacks at once.', next: 'Pop the orbs with the frontals before they detonate.' }
         : fBad ? { txt: 'too many in ' + (() => { const f = fs.find((x) => x.bad), n = f && f.tankG ? pname(f.tankG) : null; return n ? String(n).split('-')[0] + '\'s frontal' : 'one frontal'; })() /* (whose frontal: the tank it was aimed at (Oct 23)) */, bad: true } : fWarn ? { txt: 'a little off the plan', warn: true } : { txt: 'clean' }; if (res.bad && /^too many in /.test(res.txt)) { const f0 = fs.find((x) => x.bad); res.why = (f0 ? f0.popped + ' orbs' : 'Too many orbs') + ' went into one frontal, and each is a Venom Rupture stack on everyone.'; res.next = 'Tanks take turns so each frontal pops about 4 orbs, never 8.'; } /* (round 185) */
