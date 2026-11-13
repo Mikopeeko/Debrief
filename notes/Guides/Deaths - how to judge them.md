@@ -288,3 +288,29 @@ potion" are information, not graded. The hover everywhere is `say`: "You: died t
 "Unlucky: one-shot by ...". The roster's column is Own deaths (green none, amber 1-2, red 3+), hover listing each. Checks: tests/deaths-check.js
 (run by contradictions.js on every saved death).
 Not changed: fight modules that mark a row red because someone died in it (the Coiled Altar tank frontal's "died" cell) still do.
+
+## Nov 13: the proof rule (Main's plan, Flex: "yes")
+Flex, before it: "I feel like the 'your fault' part of deaths is maybe messing up the logic a bit." A death counts against a player only with
+proof, and only before the wipe (before the wipe call and before a quarter of the raid is dead):
+1. **A mistake of their own was caught and was part of what killed them** (`deathProof` in src/ui.js). Their own rows are their mistakes
+   (never one the site marked someone else's: feared, clipped by another's bomb, a short soak, an axe dropped on the raid; never the mind
+   control itself; never a stack-count note), the fight's own check rows that name them in red, and their Avoidable damage row. The row counts
+   when its hits landed on them in their last 4 s and were the hit that killed them, or damage they'd have lived without (more than the killing
+   blow's overkill, and a tenth of their health); or when it put the debuff on them that killed them (their own soul fragments, Gravebound).
+   In a mass death (3 or more of us to one hit at once) only the killing hit itself is proof. A hit logged as another player's miss (a missed
+   taunt names who took it) is never proof.
+2. **They sat low with something ready**: at or under 35% health for 2 s or more with their own defensive, immunity or Healthstone ready (one
+   that would have saved them, the saves check), not mind controlled, feared or stunned, and not in a mass death.
+Anything else is **Not counted** (grey) with a plain fact: "the wipe was on", "a mass death, 12 of us at once", "mind controlled", "feared by an
+unkicked Wail of Terror", "no mistake of yours was caught", then the hit that killed them. The fault special cases are gone (fears, soaks,
+orbs, mind control, "too fast", healing gaps, axe drops, the Guillotine target's half): they only word the fact now. Tags: **You** (red) with
+the proof in one line ("You: 4 Axegrinder hits right before you died", "You: 3 s under 35% with Divine Shield ready"). The coaching line comes
+from the proof: the mistake's own tip, "press X when you sit low", and for fragments picked up inside another hit: "Step out of the axe first,
+then pick up your fragments one at a time. Each one hits for about 180k, so heal up between them." (Flex's Nov 12 pull 5 death: "i was trying
+to collect my souls and foolishly picked them up too quickly when my health was low with an axe eating my booty").
+Unchanged: deaths come from Graphs' list, no halves, each death costs once, in Staying alive.
+
+Checks (tests/deaths-check.js, in every build): every You death carries its proof and the proof is in the log; a mass death never counts for
+a hit that isn't the killing hit; seven named deaths (Nov 12 pull 5 Flex = You with the fragments tip, pull 4 = Not counted; Nov 11 pulls 7
+and 12 Flex = You, pull 17 = Not counted, pull 5 Raiyvenz = You, pull 4 Zaffia = Not counted). Saved nights (1,215 deaths): You 83 -> 116;
+the list of every death that changed is in the shared notes folder (deaths-proof-changes.txt).

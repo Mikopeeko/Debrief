@@ -6721,7 +6721,7 @@ function* analyzeSteps(item, text, opts) {
           if (r.cdUse.length && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) cdCover(dg, t, amt, (sch & ~1) !== 0); }
           if (extOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) for (const [k, u] of extOn) { if (!k.startsWith(dg + '|')) continue; const [red, mag, aoe] = EXT_DR.get(k.slice(k.indexOf('|') + 1)); if ((mag && (sch & ~1) === 0) || (aoe && swing)) continue; u.prev += amt * red / (1 - red); u.taken += amt; bump(p.cdRS || (p.cdRS = []), t, amt * red / (1 - red)); } } /* (externals' and Zephyr's share (Oct 24)) */
           if (persOn.size && (parseInt(f[2], 16) & 0x40)) { const amt = base + Math.max(0, num(f[s0 + 6])), sch = swing ? 1 : parseInt(f[10], 16) || 1; if (amt > 0) persCover(dg, amt, (sch & ~1) !== 0); } /* (personal defensives' share (Oct 22)) */
-          recap(dg, { t, heal: false, amount: base, src: shortName(sg, sn), spell, id, hp });
+          recap(dg, { t, heal: false, amount: base, ok: over, src: shortName(sg, sn), spell, id, hp }); /* (ok: the hit's overkill, for the death proof: would they have lived without their mistake's damage) */
         } else if (owner && (parseInt(f[6], 16) & 0x40)) { // (damage on enemies only: a mind-controlled player hitting a friendly pet isn't damage done)
           const p = P(owner, pet ? null : sn);
           if (swing && !pet) (p.swT || (p.swT = [])).push(t); // (their own auto attacks, for melee uptime; a Warcraft Logs miss comes as a hit of 0)
