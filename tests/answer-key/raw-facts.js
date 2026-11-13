@@ -213,7 +213,8 @@ function ulatek(ev, X) {
       else if (e.abilityGameID === UL.constrictor && e.type === 'applydebuff' && isP(e.targetID)) { let o = by.get(key(e)); if (!o) by.set(key(e), (o = { t: s(e.timestamp), who: new Set() })); o.who.add(nm(e.targetID)); } }
     u.coils = [...by.values()].sort((a, b) => a.t - b.t).map((o) => ({ t: o.t, soakers: [...o.who].sort() })); }
   // Noxious Splash: each time two egg carriers touched (the debuff lands on them)
-  u.splashes = ev.filter((e) => e.abilityGameID === UL.splash && (e.type === 'applydebuff' || e.type === 'damage') && isP(e.targetID)).reduce((l, e) => { if (!l.some((x) => x.player === nm(e.targetID) && s(e.timestamp) - x.t < 8)) l.push({ t: s(e.timestamp), player: nm(e.targetID) }); return l; }, []);
+  /* (a Splash event with no damage is a miss: pull 12, Volkovod at 0:38.5 took nothing and got no debuff) */
+  u.splashes = ev.filter((e) => e.abilityGameID === UL.splash && (e.type === 'applydebuff' || (e.type === 'damage' && (e.amount || 0) + (e.absorbed || 0) > 0)) && isP(e.targetID)).reduce((l, e) => { if (!l.some((x) => x.player === nm(e.targetID) && s(e.timestamp) - x.t < 8)) l.push({ t: s(e.timestamp), player: nm(e.targetID) }); return l; }, []);
   // Caustic Waves: each player's hits (damage at least 1.5 s after their last)
   u.waveHits = {}; { const last = new Map(); for (const e of pd(UL.waves)) { if (e.timestamp - (last.get(e.targetID) || -1e9) > 1500) u.waveHits[nm(e.targetID)] = (u.waveHits[nm(e.targetID)] || 0) + 1; last.set(e.targetID, e.timestamp); } }
   // the raid-wide killers, when they happened and how many they hit
