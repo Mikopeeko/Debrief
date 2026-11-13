@@ -19,11 +19,22 @@ const NAMED = [
      Blighted Sever alone and died to his fourth at 8:54. And: never name a dead player) */
   ['agt6jMTyZBYvVzAP', 2, 'kick', /^An unkicked Wail of Terror feared the raid, and Tyralien, a tank, died to Death's Embrace\. With no other tank, Vandagos took every Blighted Sever alone and died on stack 4\./, ['Tyralien'],
     'Nov 11 pull 1: the missed kick at 7:33 that killed the other tank. It read "Tyralien didn\'t taunt before Blighted Sever", 75 s after Tyralien died'],
+  /* (Nov 13, Main: since the played-on rule this pull is read past its early call: 8 died, 3 to Gloombomb, 2 to Dreadmarch, 1 to Coalesced Venom, and no one cause clears the bar.
+     Flex's standing rule: biggest first, then what added up) */
+  ['HWFBkCyc6JNazQrK', 16, 'dead', /^Gloombomb killed 3 of the 8 who died, then Dreadmarch 2 and Coalesced Venom 1, and too few were left for the intermission\.$/, [],
+    'Oct 21 pull 16: 8 died to different things, Gloombomb the most (3). It read "Deaths from different mistakes added up, and too few were left for the intermission"'],
+  /* (Nov 13, Main: checked against the raw log. The Wail at 4:59 feared 16; Kargaryen, Urgdragon and Hobbz died at 5:01.0 with no killing hit, 59 to 76 yards from the middle of the
+     room: feared off the edge. Deadly Venom is Zaffia's own poison) */
+  ['agt6jMTyZBYvVzAP', 17, 'kick', /^An unkicked Wail of Terror feared 16 players, and 3 ran off the edge\.$/, [],
+    'Nov 11 pull 16: three players feared off the edge by the unkicked Wail of Terror at 4:59. It read "2 died while feared (Deadly Venom)"'],
 ];
 module.exports = function (o) {
   const { H, E, W, say, report, findFile, readJ } = o, nm = (p) => String(p || '').split('-')[0];
   const SITE = H.site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} });
   const rootOf = (r) => { const ci = SITE.cutInfo(r), c0 = ci && ci.call ? ci.call : ci, cut = c0 && c0.auto ? c0.t : null; return E.rootCause(r, c0 && c0.auto ? { cut, why: c0.why, at: c0.at, mn: c0.mn, ms: c0.ms } : { cut }); };
+  /* (How it went, as the page builds it: the real call, the real root, every kept mistake and death) */
+  let CH = null; try { CH = H.site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT', 'deathHit', 'deathHitId', 'MECH_FAM', 'mechFams', 'chainTitleFits', 'deathBrief', 'collapseFrom', 'wipeRoot', 'wipeChain'],
+    { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {}, WROOT: new WeakMap(), dbfReset: (it) => !!it && !it.kill && it.duration != null && it.duration < 15 /* (the page also asks the boss's health; none of these pulls is a reset) */, deathVerdict: () => null, keptMistakes: (r) => r.mistakes || [], keptDeaths: (r) => r.deaths || [] }); } catch (e) { say('named wipe causes', 'crash', 'How it went could not be read: ' + e.message); }
   let n = 0;
   for (const [code, fight, cat, re, notBy, what] of NAMED) {
     const rep = report(code), ef = findFile(code + '_' + fight + '.json'), it = rep && rep.items.get(fight); if (!it || !ef) continue; /* (not in this log library) */
@@ -31,6 +42,14 @@ module.exports = function (o) {
     const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', rc = rootOf(r);
     if (!rc || rc.cat !== cat || !re.test(rc.short || '')) say(where, 'root', what + '. Now: ' + (rc ? rc.name + ' — "' + rc.short + '"' : 'no cause'));
     for (const b of notBy) if (rc && (rc.by || []).includes(b)) say(where, 'root', 'Why we wiped names ' + b + ' as the cause again (' + what + ')');
+    if (fight === 2 && code === 'agt6jMTyZBYvVzAP' && CH) { /* (Nov 13, Main: How it went never drops a death the root cause names: Tyralien at 7:38 and Vandagos at 8:54, even past the 9-row cap) */
+      let ch = null; try { ch = CH.wipeChain(r); } catch (e) { say(where, 'chain', 'How it went crashed: ' + e.message); } const rows = (ch && ch.items) || [], has = (who, t) => rows.some((x) => Math.abs(x.t - t) <= 2 && String(x.txt || '').indexOf(who) >= 0);
+      if (ch && (!has('Tyralien', 458.9) || !has('Vandagos', 534.3))) say(where, 'chain', 'How it went drops a death the root cause names (Tyralien at 7:38, Vandagos at 8:54): its rows are ' + rows.map((x) => E.fmtT(x.t) + ' ' + String(x.txt || '').slice(0, 40)).join(' | '));
+      if (ch && rows.length > 9) say(where, 'chain', 'How it went has ' + rows.length + ' rows: the cap is 9'); }
+    if (fight === 17 && code === 'agt6jMTyZBYvVzAP' && CH) { /* (Nov 13, Main: the rows under the cause say what happened: Kargaryen, Urgdragon and Hobbz went off the edge at 5:01 with no killing hit; never "died to Deadly Venom") */
+      let ch = null; try { ch = CH.wipeChain(r); } catch (e) { say(where, 'chain', 'How it went crashed: ' + e.message); } const rows = (ch && ch.items) || [], at501 = rows.filter((x) => Math.abs(x.t - 301) <= 1 && /off the edge/.test(String(x.txt || '')));
+      if (ch && (at501.length !== 1 || !['Kargaryen', 'Urgdragon', 'Hobbz'].every((nmE) => at501[0].txt.indexOf(nmE) >= 0))) say(where, 'chain', 'How it went doesn\'t say Kargaryen, Urgdragon and Hobbz went off the edge at 5:01 in one row: ' + rows.filter((x) => Math.abs(x.t - 301) <= 2).map((x) => '"' + x.txt + '"').join(', '));
+      if (ch && rows.some((x) => /died to (Deadly Venom|Dreadful Presence|Retaliatory Malice)/.test(String(x.txt || '')) && /Kargaryen|Urgdragon|Hobbz|Schooty/.test(x.txt) && x.t <= 301.5)) say(where, 'chain', 'How it went names a hit for a player who went off the edge with no killing hit: ' + rows.filter((x) => x.t >= 299 && x.t <= 301.5).map((x) => '"' + x.txt + '"').join(', ')); }
     if (fight === 2) { /* (the rows behind it: no taunt row on the dead tank, and the tank left alone isn't blamed for the stacks) */
       const bad = (r.mistakes || []).filter((m) => nm(m.player) === 'Tyralien' && /didn't taunt/i.test(m.detail || '') && m.t > 460);
       if (bad.length) say(where, 'taunt', 'Tyralien is named for a missed taunt at ' + E.fmtT(bad[0].t) + ', but he died at 7:38 and was never brought back');

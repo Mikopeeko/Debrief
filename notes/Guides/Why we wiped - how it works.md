@@ -151,3 +151,16 @@ before and after moved four: these three and Oct 22 pull 6 (the same bomb patter
 Checks: tests/wipe-causes.js (the four pulls by name, read with the page's real wipe call; and pull 5 again with its taunt row taken out, which must not read Sever),
 with --all; the answer key holds the same three causes in every build; every pull read by the contradiction check fails if a taunt row names a tank who was dead;
 each rule's own line is pinned in the page-code list.
+
+## Nov 13, later: three follow-ups from Main
+- **Biggest first, then what added up** (Flex's standing rule). A worn-down pull where no one cause clears a bar ("Too many individual mistakes") leads with its biggest group of
+  deaths when that group is 2 or more: "Gloombomb killed 3 of the 8 who died, then Dreadmarch 2 and Coalesced Venom 1, and too few were left for the intermission." A tie says
+  "Axegrinder and Dreadmarch each killed 2 of the 4 who died". Next time follows the biggest group. Oct 21 pull 16 (read past its early call since the played-on rule) is the pull
+  it came from; four Oct 22 pulls read the same way now. Every group of one still reads "Deaths from different mistakes added up".
+- **Feared off the edge.** A death with no killing hit, more than 50 yards from the middle of the room (`d.noKill`, `d.far`, RC_EDGE), on a player still feared, follows from the
+  missed kick whatever ticked on them last, and the line says "3 feared off the edge". Nov 11 pull 16, checked against the raw log: the Wail at 4:59 feared 16; Kargaryen, Urgdragon
+  and Hobbz died at 5:01.0 with no killing hit, 59 to 76 yards out. It read "2 died while feared (Deadly Venom)": Deadly Venom is a raider's own poison, the last thing that ticked
+  on two of them, and the third was labelled Dreadful Presence and not counted. (The death list still names that last tick: that is the killing-hit item, next.)
+- **How it went keeps the deaths the root names.** The root cause returns `named` (the deaths its line names one by one: today the two tanks of a tank left alone); How it went
+  gives each a row even when it is before the collapse it lists, and the 9-row cap cuts the least important other rows instead. Nov 11 pull 1: 7:33 Wail, 7:38 Tyralien, 8:54 Vandagos.
+Checks: tests/wipe-causes.js names Oct 21 pull 16, Nov 11 pull 16 and Nov 11 pull 1's How it went rows (with --all); each rule's line is pinned in the page-code list (every build).
