@@ -314,3 +314,42 @@ Checks (tests/deaths-check.js, in every build): every You death carries its proo
 a hit that isn't the killing hit; seven named deaths (Nov 12 pull 5 Flex = You with the fragments tip, pull 4 = Not counted; Nov 11 pulls 7
 and 12 Flex = You, pull 17 = Not counted, pull 5 Raiyvenz = You, pull 4 Zaffia = Not counted). Saved nights (1,215 deaths): You 83 -> 116;
 the list of every death that changed is in the shared notes folder (deaths-proof-changes.txt).
+
+## Nov 13, Main's calls on the proof rule: a job is never proof
+A row that records a job isn't a caught mistake (`DEATH_JOB` in src/ui.js): "Died in the Guillotine soak." (a soaker in a full soak; Vashnik's
+"Died in the Unstable Miasma soak." too) and "Was the Guillotine target with no external or immunity and died." `deathProof` skips those rows,
+and the fight's own check row about the same mechanic at that moment (it is the same record), on any boss.
+- **A soaker who died in a full soak: Not counted.** "Not counted: soaking the Grim Guillotine was your job", tip "Not on you: you were in the
+  soak, as planned."
+- **The Guillotine target with no external: You only when their own immunity or big defensive that would have saved them was ready** (the saves
+  check; never in a mass death): "You: the Guillotine target with Icebound Fortitude ready", tip "Press Icebound Fortitude as the Guillotine lands
+  when no external is on you." Otherwise "Not counted: the Guillotine target with no external", tip "Not on you: the raid plans an external for
+  the Guillotine target (Blessing of Protection or Spellwarding)." The missing external is the raid's plan.
+- Both general proofs still apply to a soaker or a target: a caught mistake of their own in their last 4 s, or 2 s low with something ready.
+The three deaths re-read: Nov 12 pull 4 Huservoker and Nov 12 pull 7 Dragooned (soakers) = Not counted. Nov 11 pull 5 Fourinches (the target,
+nothing of his own ready) stays You on a different, real proof: 4 rolling-axe hits (Axegrinder, 238k) in his last 3 s, and the Guillotine killed
+him by a hair; with those hits left out he reads Not counted.
+Graphs' Deaths header reads "Own deaths, with proof" (and "N own, with proof" on the chart and Every death), matching the tags.
+Checks (tests/deaths-check.js): Fourinches by name in every build, plus his death with the axe hits left out both ways (nothing ready = Not
+counted, Icebound Fortitude ready = You); Huservoker and Dragooned by name with --all; no You death may carry a job row as its proof.
+
+## Nov 13, Main's death audit of the proof rule (20 deaths against the raw log, 18 right)
+1. **"Sat low" means still low** (`LOW_BACK` in src/engine.js). Nov 11 pull 15, Zaffia at 7:28: a soaker, 96% to dead in one Grim Guillotine
+   hit. She had dipped under 35% for 3.4 s earlier in her last 10 s and been healed back to 98%, and the old count (all the time under 35% in
+   the last 10 s) read "You: 3 s under 35% with Evasion ready". The low time (`d.lowFor`) now counts from the last moment they were back at
+   70% health or more (twice the low line): a dip they were healed out of isn't time to react to this death. Saved nights: 3 of 18 "sat low"
+   deaths had been healed to 91% or more first (Zaffia; Komo, Ula'tek Nov 12 pull 5; Shockabunga, Coiled Altar bcA9 pull 25); the other 15 never
+   got above 58%. She reads "Not counted: soaking the Grim Guillotine was your job".
+2. **A non-tank in the tank's circle is their own mistake** (Kith'ix, Dark Devastation: a 15-yard circle on the tank after a 4-second cast).
+   Kith'ix Heroic pull 1 (9DRWhKnZbHtQgf4a), Larryg at 1:06 stood 4 to 5 yards from the tank and took 774k + 162k; it read "Not counted: 1
+   other player caught in the Dark Devastation circle" because the hit was only filed as the raid's row. It is now a Dangerous row in Kith'ix's
+   Avoidable damage ("Dark Devastation (Tank's circle)", tanks left out), exactly like Sever's frontal on non-tanks, so his death reads
+   "You: 2 Dark Devastation hits right before you died". The raid row stays: the tank's placement can be a mistake too, but that doesn't take
+   it off the one who stood in it. (Flex's own 2:55 death on the same kill reads You for the same reason.)
+   Every boss checked the same way (33 pulls, 3 a boss, every enemy hit that lands mostly on tanks): Water Jet (Nymrissa), Ravage (Sszorak),
+   Sever / Soul Sever / Blighted Sever (The Coiled Altar), Venom Roar (Kith'ix) and Desperate Thrash (Ula'tek) already count against a non-tank.
+   One has no row yet: The Twin Fangs' Caustic Deluge beam (non-tanks take it about twice a kill even in top kills, 520k to 750k a hit); it
+   needs a line judged against top kills, not "red on any hit".
+Saved nights (1,884 deaths, 103 pulls), this whole push against main before it: 8 deaths change, You 192 -> 189 (Larryg and Flex on Kith'ix become You; Zaffia, Huservoker, Dragooned, Shockabunga and Komo become Not counted; Fourinches keeps You on the axe proof).
+Checks (tests/deaths-check.js, every build): Zaffia and Larryg by name; every "sat low" proof is worked out again from the health line (after
+they were last back at 70%, under 35% for 2 s or more).

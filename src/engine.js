@@ -2512,6 +2512,9 @@ function buildKithix(ev, r, h) {
   const av = avoidPanel(ev, r, h, [
     { n: ['twisted appendage'], label: 'Twisted Appendage', harm: 'Medium', why: 'the tentacle slam circles' },
     { n: ['venom roar'], label: 'Venom Roar', harm: 'Medium', why: 'the Venomous Hulk\'s cone (it should face away)' },
+    /* (Nov 13, Main's death audit: a non-tank in the tank's 15-yard circle is their own avoidable mistake, exactly like Sever's frontal on non-tanks. It has a 4-second cast.
+       The tank's placement can be a mistake too (the raid row above stays), but that doesn't take it off the one who stood in it. Larryg, Heroic pull 1, 66 s: 774k + 162k, and dead) */
+    { n: ['dark devastation'], label: 'Dark Devastation (Tank\'s circle)', id: KX.devCast, harm: 'High', why: 'the tank\'s 15-yard circle, a big hit after a 4-second cast', fix: 'Only the tank belongs in the Dark Devastation circle. Get 15 yards away from the tank during its 4-second cast.', skip: (e) => h.role(e.dst) === 'tank' },
     { n: ['voidscar'], label: 'Voidscar', harm: 'Medium', why: 'walking into a Voidscar puddle (knockback)' },
     { n: ['nullshards'], label: 'Nullshards', harm: 'Medium', why: 'the shards a Null Gate sprays (each one is a Nullify stack)' },
   ]);
@@ -7545,6 +7548,7 @@ function snapshot(r, t, units) {
 }
 
 // (seconds a player's health line ([t, fraction] samples) spends under th between t0 and t1)
+const LOW_BACK = 0.7;
 function lowTime(l, t0, t1, th) { let s = 0; for (let i = 0; i < l.length; i++) { const [t, fr] = l[i]; if (t > t1) break; const tn = i + 1 < l.length ? Math.min(l[i + 1][0], t1) : t1; if (tn <= t0 || fr >= th) continue; s += tn - Math.max(t, t0); } return s; }
 function survivability(r) {
   let used = 0, possible = 0;
@@ -7580,7 +7584,11 @@ function survivability(r) {
     d.healthy = !!(ref && ref.hp >= 90); // false: startHp is just their best in the window
     // (time to react (your rule, Oct 19): sitting at or under 35% health for 2 seconds or more in the 10 before dying, so a Healthstone or
     // potion was a choice. Nearly one-shot, or 80 to 0 in a burst, there was no time, so it isn't held against them)
-    const hl = (r.php && r.php.get(d.guid)) || []; d.lowFor = lowTime(hl, d.t - 10, d.t - 0.05, 0.35); d.reactable = d.lowFor >= 2;
+    /* (Nov 13, Main's death audit: Zaffia, Nov 11 pull 15, sat under 35% for 3.4 s, was healed back to 98%, and one Grim Guillotine then killed her; it read "3 s under 35% with Evasion ready".
+       A dip they were healed out of isn't time to react to this death: the low time counts from the last moment they were back at 70% or more (twice the low line).
+       Saved nights: 3 of 18 such deaths had been healed to 91% or more first; the other 15 never got above 58%) */
+    const hl = (r.php && r.php.get(d.guid)) || []; let tRec = d.t - 10; for (const [t, fr] of hl) { if (t > d.t - 0.05) break; if (t >= tRec && fr >= LOW_BACK) tRec = t; }
+    d.lowFor = lowTime(hl, tRec, d.t - 0.05, 0.35); d.reactable = d.lowFor >= 2;
   }
   for (const p of r.players.values()) {
     const died = r.deaths.filter((d) => d.guid === p.guid);
