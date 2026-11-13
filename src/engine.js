@@ -6782,7 +6782,7 @@ function* analyzeSteps(item, text, opts) {
       const p = P(dg, dn); p.deaths++;
       const recent = (recaps.get(dg) || []).filter((e) => e.t >= t - 15);
       let last = null; for (const e of recent) if (!e.heal) last = e;
-      r.deaths.push({ t, guid: dg, player: p.name, killer: last ? last.src : 'Unknown', ability: last ? last.spell : '', abilityId: last ? last.id : 0, recap: recent });
+      r.deaths.push({ t, guid: dg, player: p.name, killer: last ? last.src : 'Unknown', ability: last ? last.spell : '', abilityId: last ? last.id : 0, recap: recent, ...(f[9] && f[9][0] === 'K' ? { wclKill: +f[9].slice(1) || 0 } : {}) /* (Nov 13: the log's own killing ability, 0 = no hit killed them; absent in a log that doesn't say) */ });
       continue;
     }
 
@@ -7646,7 +7646,7 @@ function survivability(r) {
        noKill: nothing landed as they died (the last hit, if any, left them alive and had no overkill), or the fall itself. How far from the room's middle they were (d.far) comes from the
        fight's own module, where the room is known: far from the other players isn't off the platform (Schooty, Nov 11 pull 2, carried a purple orb 76 yards from the raid, on the platform)) */
     { const dm = d.recap.filter((e) => !e.heal && e.amount > 0), last = dm[dm.length - 1], fall = !!last && /^falling$/i.test(last.spell || '') && last.t >= d.t - 1;
-      d.noKill = fall || !dm.some((e) => e.t >= d.t - 0.6 && (e.ok > 0 || e.hp === 0));
+      d.noKill = fall || (d.wclKill != null ? d.wclKill === 0 /* (Nov 13: the log says so itself, when it carries the killing hit: three Ula'tek tank deaths to melee read "no killing hit") */ : !dm.some((e) => e.t >= d.t - 0.6 && (e.ok > 0 || e.hp === 0)));
     }
   }
   for (const p of r.players.values()) {
@@ -7825,7 +7825,11 @@ function explainDeaths(r) {
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
     // (Nov 8, audit D2: the hit that killed them is the biggest of their last 4 s when it was well over the finishing tick (a 527k Venom Rupture, then a 20k venom tick), else the last hit; every verdict below reads it)
     const lastHit = hits[hits.length - 1] || null, big0 = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null), bigOk = !!(big0 && lastHit && big0 !== lastHit && big0.amount >= 1.5 * lastHit.amount && big0.amount >= 0.1 * ((r.pMax && r.pMax.get(d.guid)) || 0)); /* (and a tenth of their health: an 11k orb tick is not the hit that killed them) */
-    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0); d.killSrc = bigOk ? (big0.src || '') : (d.killer || ''); /* (Nov 13: who dealt it) */
+    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0);
+    /* (Nov 13, Main, from the answer key: the log names the hit that killed them. Hobbz, Nov 11 pull 3 at 3:41: Retaliatory Malice, read as Malevolent Resonance (his last tick);
+       Fourinches, pull 8 at 7:29: Grim Execution with six others, read as Malevolent Resonance. When that spell is among their last hits it is the killing hit; the mind control
+       and Ula'tek rules below still have the last word) */
+    if (d.wclKill > 0 && !bigOk /* (a big hit well over the finishing tick stays the killing hit (audit D2): the log names the tick) */) { const kh = hits.filter((e) => (e.id === d.wclKill || (d.wclKill === 1 && (!e.spell || /^melee$/i.test(e.spell)))) && e.t >= d.t - 3).pop(); if (kh) { d.kill = kh.spell || 'Melee'; d.killId = kh.id || 0; d.killLog = true; } } d.killSrc = bigOk ? (big0.src || '') : (d.killer || ''); /* (Nov 13: who dealt it) */
     if (/^dreadmarch$/i.test(d.ability || '')) { d.kill = d.ability; d.killId = d.abilityId || 0; }
     if (r.item.boss === "Ula'tek") ulaKillFix(d, hits, (r.pMax && r.pMax.get(d.guid)) || 0); /* (Nov 13: a raid-wide hit is never the killing hit when an avoidable one landed too) */ /* (Nov 12, Main's audit: mind controlled, the raid's big hit (Zaffia's "Elemental Blast") is Dreadmarch's doing, on every page) */
     // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed

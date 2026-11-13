@@ -637,6 +637,9 @@ function* translateSteps(item, events) {
   // pets first, so their damage is credited to their owner
   for (const a of actors.values()) if (a.type === 'Pet' && a.petOwner != null)
     out.push(stamp(w.start) + 'SPELL_SUMMON,' + unit(a.petOwner) + ',' + unit(a.id) + ',0,"Summon",0x1');
+  /* (Nov 13: the killing hit rides on UNIT_DIED as one more field, "K" + the ability's id, K0 for a death no hit caused (off the edge). Only when this pull's death events carry the
+     field at all: a download without it says nothing, and the engine reads the last hits as before) */
+  const killKnown = Array.isArray(events) && events.some((x) => x && x.type === 'death' && x.killingAbilityGameID != null);
   let n = 0;
   for (const e of events) {
     if (!(++n & 4095)) yield;
@@ -719,7 +722,7 @@ function* translateSteps(item, events) {
         add(e, 'SPELL_RESURRECT,' + src(e) + ',' + dst(e) + ',' + spell(ab));
         break;
       case 'death': {
-        add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',' + (e.feign ? 1 : 0)); // (Feign Death: Warcraft Logs marks it; the engine skips it (Oct 20: a hunter's 16 "deaths"))
+        add(e, 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + dst(e) + ',' + (e.feign ? 1 : 0) + (killKnown ? ',K' + (e.killingAbilityGameID || 0) : '')); // (Feign Death: Warcraft Logs marks it; the engine skips it (Oct 20: a hunter's 16 "deaths"))
         const a = actors.get(e.targetID), k = e.targetID + ':' + (e.targetInstance || 1);
         if (a && a.type !== 'Player' && a.type !== 'Pet' && !dead.has(k)) dead.set(k, e.timestamp); // (its number's next life starts after this)
         break; }

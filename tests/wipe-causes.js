@@ -27,6 +27,13 @@ const NAMED = [
      room: feared off the edge. Deadly Venom is Zaffia's own poison) */
   ['agt6jMTyZBYvVzAP', 17, 'kick', /^An unkicked Wail of Terror feared 16 players, and 3 ran off the edge\.$/, [],
     'Nov 11 pull 16: three players feared off the edge by the unkicked Wail of Terror at 4:59. It read "2 died while feared (Deadly Venom)"'],
+  /* (Nov 13, Main, from the answer key: this pull's cause was already right; it is here for the killing hit of one of its deaths, below) */
+  ['agt6jMTyZBYvVzAP', 9, 'guil', /^The Guillotine soak was short, so Execution hit the raid\.$/, [], 'Nov 11 pull 8: a Guillotine soak with 3 of 5, Grim Execution killed the raid'],
+];
+/* The hit that killed a player, as the death list shows it (d.kill): [code, fight, player, second, the hit, what it read before]. Warcraft Logs' death event names it. */
+const KILLS = [
+  ['agt6jMTyZBYvVzAP', 4, 'Hobbz', 221.9, 'Retaliatory Malice', 'Nov 11 pull 3, 3:41: Hobbz died to Retaliatory Malice. It read Malevolent Resonance, his last tick (the ghosts touched 10 s earlier)'],
+  ['agt6jMTyZBYvVzAP', 9, 'Fourinches', 449.5, 'Grim Execution', 'Nov 11 pull 8, 7:29: Fourinches died to Grim Execution with six others. It read Malevolent Resonance (the ghosts touched 1 s before)'],
 ];
 module.exports = function (o) {
   const { H, E, W, say, report, findFile, readJ } = o, nm = (p) => String(p || '').split('-')[0];
@@ -42,6 +49,8 @@ module.exports = function (o) {
     const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', rc = rootOf(r);
     if (!rc || rc.cat !== cat || !re.test(rc.short || '')) say(where, 'root', what + '. Now: ' + (rc ? rc.name + ' — "' + rc.short + '"' : 'no cause'));
     for (const b of notBy) if (rc && (rc.by || []).includes(b)) say(where, 'root', 'Why we wiped names ' + b + ' as the cause again (' + what + ')');
+    for (const [kc, kf, who, at, hit, was] of KILLS) { if (kc !== code || kf !== fight) continue; const d = (r.deaths || []).find((x) => nm(x.player) === who && Math.abs(x.t - at) <= 1.5);
+      if (!d || String(d.kill || '') !== hit) say(where, 'deaths', was + '. Now: ' + (d ? '"' + d.kill + '"' : 'no such death')); }
     if (fight === 2 && code === 'agt6jMTyZBYvVzAP' && CH) { /* (Nov 13, Main: How it went never drops a death the root cause names: Tyralien at 7:38 and Vandagos at 8:54, even past the 9-row cap) */
       let ch = null; try { ch = CH.wipeChain(r); } catch (e) { say(where, 'chain', 'How it went crashed: ' + e.message); } const rows = (ch && ch.items) || [], has = (who, t) => rows.some((x) => Math.abs(x.t - t) <= 2 && String(x.txt || '').indexOf(who) >= 0);
       if (ch && (!has('Tyralien', 458.9) || !has('Vandagos', 534.3))) say(where, 'chain', 'How it went drops a death the root cause names (Tyralien at 7:38, Vandagos at 8:54): its rows are ' + rows.map((x) => E.fmtT(x.t) + ' ' + String(x.txt || '').slice(0, 40)).join(' | '));

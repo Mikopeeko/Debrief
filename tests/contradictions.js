@@ -235,10 +235,13 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
 /* (Nov 5, Flex: the Report card's deaths are judged as Debriefing judges them: no mass wipe deaths, nothing after the call, their own mistakes first) */
 /* (Nov 12 and 13, Why we wiped passes 2 and 3: each rule's own line, named for the pull it came from) */
 { const ENG = require('fs').readFileSync(require('path').join(SRC, 'engine.js'), 'utf8');
+  if (!require('fs').readFileSync(require('path').join(SRC, 'wcl.js'), 'utf8').includes("(killKnown ? ',K' + (e.killingAbilityGameID || 0) : '')")) say('the page code', 'deaths', 'the translator no longer passes on the hit Warcraft Logs says killed each player (Hobbz, Nov 11 pull 3, read Malevolent Resonance for Retaliatory Malice)');
   for (const [where, s0, what] of [[ENG, "if (kF && nF >= Math.max(2, 5 - sk.n)) { cat = 'kick'", 'a Guillotine soak under an unkicked Wail of Terror\'s fear is no longer the missed kick\'s wipe (Nov 11 pull 13)'],
     [ENG, "/didn't taunt/i.test(q.detail || '') && q.t >= t0f - 3", 'a tank killed by the frontal after a missed taunt no longer names the taunt (Nov 11 pull 5)'],
     [ENG, "(tie.length > 1 ? ' each' : '') + ' killed ' + ld.n + ' of the ' + pre.length + ' who died' + (rest.length ? ', then '", 'a worn-down pull with no one cause over the bar no longer leads with its biggest group (Oct 21 pull 16 read "Deaths from different mistakes added up")'],
     [ENG, "line: off.length + ' feared off the edge' + into", 'players feared off the edge by an unkicked Wail of Terror are no longer said so (Nov 11 pull 16 read "2 died while feared (Deadly Venom)")'],
+    [ENG, "if (d.wclKill > 0 && !bigOk", 'the hit that killed a player is guessed from their last tick again, not read from the log (Hobbz, Nov 11 pull 3; Fourinches, pull 8)'],
+    [ENG, "d.noKill = fall || (d.wclKill != null ? d.wclKill === 0", '"no killing hit" is guessed again when the log says it outright'],
     [ENG, "if (tankOut(r, p, t)) continue;", 'a dead, feared or mind controlled tank can be named for a missed taunt again (Nov 11 pull 1: Tyralien, 75 s after he died)'],
     [ENG, "if (outS) mistakes[mistakes.length - 1].others = outS;", 'a tank left alone by a dead tank is blamed for the third stack again (Nov 11 pull 1: Vandagos at 8:23 and 8:54)'],
     [ENG, "if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true };", 'a wipe called inside an unkicked Wail of Terror\'s fear no longer goes to the kick (Nov 11 pull 3 read "Phase 2 push")'],

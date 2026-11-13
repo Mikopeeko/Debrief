@@ -386,3 +386,13 @@ and never makes it a group jump (`ccOf`, `knockOf` in `deathVerdict`). Schooty, 
 off by the unkicked Wail of Terror at 4:59. His death is You, walked off the edge. Kargaryen, Oct 22 pull 10 (four off in control) stays "the raid jumped to reset".
 A tank's third frontal stack with the other tank dead, mind controlled or feared is marked someone else's (see Why we wiped): never proof.
 Checks: both deaths by name in tests/deaths-check.js, and on every death read an edge proof fails when another player went off in control within 3 s.
+
+## The hit that killed them, from the log (Nov 13, from the answer key)
+Warcraft Logs' death event names the killing ability (`killingAbilityGameID`; none = no hit killed them: off the edge). The translator passes it on the UNIT_DIED line (",K" + id,
+only when the pull's death events carry the field) and the engine keeps it as `d.wclKill`. The death list's one killing hit (`d.kill`) is that spell when the site only had the
+last tick to go on. A big hit well over the finishing tick stays the killing hit (audit D2: the log names the tick, the raid needs the hit), and the mind control and Ula'tek
+rules keep the last word. `d.noKill` is the log's own "none" when the log says. `d.ability` (what Why we wiped groups deaths by) is unchanged.
+On the six saved nights (1,884 deaths) six killing hits changed: Hobbz, Nov 11 pull 3 (Retaliatory Malice, read Malevolent Resonance), Fourinches, pull 8 (Grim Execution),
+Tyralious, Ula'tek pull 6 (Melee, read Stone Venom) and three on Oct 22; "no killing hit" agreed on all 249 the log marks, and three Ula'tek tank deaths to melee no longer read as
+no hit. Open: a death with no killing hit still shows its last tick in Graphs' Deaths list (How it went says "off the edge").
+Checks: tests/wipe-causes.js names both deaths (with --all); the answer key's deathBy facts hold them in every build; the translator's and the engine's lines are pinned.
