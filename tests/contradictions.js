@@ -259,6 +259,7 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
     [ENG, "const NOT_HEALING = new Set([31850, 115069]);", 'Cheat Death and Purgatory are left out of healing done again (Zaffia, Nov 11 pull 1: 1,684,159 short)'],
     [UI, "(r && r.dmgAbsIn ? 0 : b[i] || 0)", 'the Performance damage windows add the enemy shields\' part on top of damage done again: it is counted twice'],
     [ENG, "r.orbDrop = (r.orbWaves || []).map((tc) => { try { if (carriersAt(tc).length) return null;", 'a purple orb that dropped as its carrier died is "no one\'s" again (Nov 12 pull 3, 7:58: Komo died carrying it and Flex\'s green ran into it)'],
+    [UI, "Measured again on Nov 13 with damage done counting what enemy shields absorbed", 'the estimated parse\'s phase table is the one measured before damage counted shields again (wipe estimates read 20 to 40 points off)'],
     [ENG, "if (tankOut(r, p, t)) continue;", 'a dead, feared or mind controlled tank can be named for a missed taunt again (Nov 11 pull 1: Tyralien, 75 s after he died)'],
     [ENG, "if (outS) mistakes[mistakes.length - 1].others = outS;", 'a tank left alone by a dead tank is blamed for the third stack again (Nov 11 pull 1: Vandagos at 8:23 and 8:54)'],
     [ENG, "if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true };", 'a wipe called inside an unkicked Wail of Terror\'s fear no longer goes to the kick (Nov 11 pull 3 read "Phase 2 push")'],
@@ -469,6 +470,8 @@ try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores'
 /* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a
    cut of 217.4 and wanted "never Soul Sever": the call lands on that Sever now, and with Tyralien's missed taunt it is the cause. Without a missed taunt, Sever deaths still never are: the same
    check takes the taunt row out and reads the pull again. With --all) */
+/* (Nov 13, Main: a kill with real Warcraft Logs numbers: the site counts the same damage a second (within 1.5%) and its estimate lands on the real parse. With --all) */
+if (ALL) { try { require('./parse-kill.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('parse on a kill', 'crash', (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } }
 if (ALL) { try { require('./wipe-causes.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('named wipe causes', 'crash', (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } }
 try { require('./deaths-check.js')(NIGHT_R, H, say); } catch (e) { say('deaths', 'crash', 'the death check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 12: Main's death plan) */
 try { require('./ulatek-check.js')(NIGHT_R, H, say); } catch (e) { say('ulatek', 'crash', "the Ula'tek check crashed: " + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 13: Ula'tek's wipe causes, checks A to G) */

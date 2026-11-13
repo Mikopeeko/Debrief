@@ -61,3 +61,19 @@ Main thought Graphs left out early resets on purpose; it didn't (there's no such
 Huservoker healed 448K a second while alive, Urgdragon 348K (0.78 of it). Preservation's kill rankings on Coiled Altar Mythic are tight
 (50th percentile 437K, 10th 362K, 5th 341K), so 22% less healing is the difference between the middle and the bottom. Most of it is P2
 (313K vs 458K) and P3 (353K vs 521K); healers' phase factors are near 1, so phase matching barely moves either.
+
+## Nov 13: measured again after damage began counting shields
+Damage done counts what an enemy's own shield absorbed since d2cdcf5b (as Warcraft Logs counts it). PARSE_TAB is Warcraft Logs' own rankings and did not need measuring again;
+PHASE_FAC is ours (the engine on the log library's top kills) and was measured again the same day on the same 600 kills (20 boss lists of 30). The raid's factors moved a little:
+The Coiled Altar Mythic P1 0.828 to 0.785, P2 0.634 to 0.665, Intermission 3.071 to 2.927, P3 0.994 to 1.026; Ula'tek Mythic Intermission 0.349 to 0.449, P3 0.763 to 0.728.
+To measure again: copy tools/parses/phasefac.js to an empty folder (or delete its phasefac_kills cache: it keeps one result a kill and would reuse the old count), run it, paste.
+
+On a kill the count now matches Warcraft Logs: Nov 12 The Coiled Altar kill, every raider's damage a second within 1.2% of Warcraft Logs' (4% to 11% low before), and the
+estimate for the whole kill within 2 points of the real parse for the raiders who lived (Schooty 45 and 45, Komo 65 and 65, Fourinches 91 and 90; before: 23, 47, 79).
+On wipes the estimates rose a lot. Nov 11 The Coiled Altar, 19 wipes, before and after: Schooty 43 to 79, Komo 64 to 83, Fourinches 51 to 72, Volkovod 59 to 86, Dragooned 55 to 80,
+Zaffia 19 to 39, Boltzzx 18 to 43, Larryg 15 to 33. Next to Warcraft Logs' own Nov 11 Parse % (Flex's table): 11 of 16 raiders are now within 11 points (most within 4; they
+read 10 to 30 low before), and five read well above it: Schooty +42, Volkovod +33, Dragooned +24, Komo +23, Fourinches +11. Why: the extra damage is real (all of it went into
+Hex Lord Malacrass's shield), but it lands in phase 2 and 3, and those raiders gained far more there than top players of their spec did (Schooty's phase 2 rate +29%, the
+Beast Mastery factor for phase 2 +5%); and the estimate counts time alive while Warcraft Logs counts the whole pull. Open with Main: whether that is acceptable.
+Checks: tests/parse-kill.js (the kill's damage a second against Warcraft Logs', and the estimate against the real parse; with --all); tests/parse-estimate.js's saved pieces
+(tests/fixtures/agt6_ca_estpull.json) were rebuilt with the new count: run by hand it now names those five raiders as unexplained gaps.
