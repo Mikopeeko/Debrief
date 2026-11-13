@@ -1,7 +1,7 @@
 // Ula'tek accuracy checks (Nov 13; Flex: "I care about accuracy", "they keep coming back seems to be my biggest issue").
 // The night: Wolfthorn's Nov 12 Mythic progression, report Gax3AkbyFRXmdrgQ, fights 11 to 23 (pulls 1 to 13, all wipes in phase 1). Every wipe was read
 // against the raw log and against 20 top Mythic kills. Each check below names the bug it guards and the pull it came from; all of them fail on the code
-// before 2026-11-13. The build runs pulls 1, 7 and 12 (contradictions.js QUICK); `node tests/contradictions.js --all` runs all 13.
+// before 2026-11-13. The build runs pulls 1, 7, 9 and 12 (contradictions.js QUICK); `node tests/contradictions.js --all` runs all 13.
 //   A. The hit that killed a player is never one the whole raid takes (Mephitic Thrash outside the slam, a Spectral Coil's shared hit, Necrotic Vapors, an
 //      egg's own Noxious Shell) when a hit they could avoid landed in their last 5 s or dealt the blow. (Pulls 7 to 10 read "Mephitic Thrash killed 10".)
 //   B. Toxic Incubation taken by a player who isn't a tank is a raid mistake and turns its card red. (Pull 1: two damage dealers took it, the card read good.)
@@ -19,6 +19,12 @@
 //   W. An egg that broke because its carrier died is never a red row of the carrier's. (Nine deaths read "You: 4 Noxious Shell hits": pulls 4, 7, 8, 10 and 13.)
 //   X. A death in a fully soaked circle is the soak's job row, and the circle's row isn't red. (Pull 12: Dragooned and Komo read "You: 1 Spectral Coils hit", 7 soakers.)
 //   Y. The verdicts those rows gave, by the page's own death rule. (17 deaths changed; the answer key holds the full list.)
+// The played-on rule and the Plan's grips (Nov 13, Main for Flex: "I don't have those answers", so Main decided from the measurements):
+//   AA. A pull the raid played on past the wipe call is read to its end: nobody died for 15 s or more after the call and 30 s or more of pull were left. (Pulls 4, 9 and 13 were
+//       called at 1:03, 1:00 and 1:49 on three or two deaths, then went 18, 35 and 16 s without a death and fought on 45 to 57 s. Pull 9's Rattler Slam, with Vandagos 37 yards from
+//       the tail and 11 dead, and pull 13's second coil set were never read.) The engine's one rule (E.playedOnAfter) is asked by the page's wipe call and by both root-cause readers.
+//   AB. The Mythic Plan has a Clutch Grips job in phase 3 naming the Death Knights first. (The guide calls two Death Knights needed for the Slithering Clutches; the Mythic Plan
+//       had no row for them since the tank card went Heroic-only on Nov 11.)
 'use strict';
 module.exports = function ulatekCheck(NIGHT_R, H, say) {
   const E = H.E, T = E.fmtT, nm = (p) => String(p || '').split('-')[0], lc = (x) => String(x || '').toLowerCase();
@@ -38,9 +44,11 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
   /* (Nov 13, round 2, Flex: "blames the right person": pull 3 names Tyralious, 33 yards from her new spot with Vandagos in the beam; pull 5 Vandagos, 17 yards from the new tail with Tyralious on her;
      pulls 7 and 10 say who the Wretch was on) */
   const WANT = { 11: ['Toxic Incubation', /Volkovod and Shockabunga took the Toxic Incubation beam at 0:15 instead of a tank/], 12: ['Caustic Waves', /died to Caustic Waves/], 13: ['Unchecked Rage', /^Tyralious was \d+ yards from Ula'tek \(the other tank was soaking the beam\)/],
-    14: ['Caustic Waves', /2 of them were carrying eggs, so 2 Vipers hatched/], 15: ['Rattler Slam', /^Vandagos was \d+ yards from the tail \(the other tank had Ula'tek\)/], 16: ['Rattler Slam', /^Vandagos \(a tank\) died at 1:32/], 17: ['Fester Burst', /was on Vandagos, 12 yards from the tail, inside Mephitic Thrash's 35 yards/],
-    18: ['Fester Burst', /6 players were outside the Blightscale Wretch's bubble/], 19: ['Noxious Splash', /Egg carriers Boltzzx and Schooty came within 3 yards/], 20: ['Fester Burst', /was on Phartsy, who isn't a tank, 16 yards from the tail/], 21: ['Caustic Waves', /Jangokin, Volkovod and Komo died to Caustic Waves/],
-    22: ['Noxious Splash', /5 Vipers hatched/], 23: ['Blightscale Vipers', /Dragooned's egg/] };
+    14: ['Blightscale Vipers', /3 Blightscale Vipers were up \(3 from carriers who died\), and they killed 2/], 15: ['Rattler Slam', /^Vandagos was \d+ yards from the tail \(the other tank had Ula'tek\)/], 16: ['Rattler Slam', /^Vandagos \(a tank\) died at 1:32/], 17: ['Fester Burst', /was on Vandagos, 12 yards from the tail, inside Mephitic Thrash's 35 yards/],
+    18: ['Fester Burst', /6 players were outside the Blightscale Wretch's bubble/], 19: ['Rattler Slam', /^Vandagos was 37 yards from the tail \(the other tank had Ula'tek\), so Rattler Slam hit 16 players/], 20: ['Fester Burst', /was on Phartsy, who isn't a tank, 16 yards from the tail/], 21: ['Caustic Waves', /Jangokin, Volkovod and Komo died to Caustic Waves/],
+    22: ['Noxious Splash', /5 Vipers hatched/], 23: ['Noxious Splash', /Egg carriers Dragooned, Schooty and Volkovod came within 3 yards of each other at 1:47 and 2:13/] }; /* (Nov 13, check AA: pulls 4, 9 and 13 are read to their end now) */
+  /* (AA, by fight: the second the page's wipe call was made on a pull the raid played on past; null = the raid kept dying, so the call stands. Pulls 1 and 11 played on by the older rule) */
+  const PLAYED = { 11: 19.2, 12: null, 13: null /* (pull 3: the next death came 13.9 s after the call) */, 14: 63.9, 15: null, 16: null, 17: null, 18: null, 19: 60.1 /* (a third death 0.2 s after the call is the call's own) */, 20: null, 21: 63.9, 22: null, 23: 109.8 };
   let n = 0;
   for (const [code, reps] of NIGHT_R) for (const r of reps) { const it = r.item; if (!it || it.boss !== "Ula'tek") continue; n++;
     const pull = "Ula'tek " + it.diff + ' pull ' + it.pull + ' (' + code + ':' + (it.wcl && it.wcl.fight) + ')', mythic = it.diff === 'Mythic', role = (g) => ((r.players && r.players.get(g)) || {}).role || '', secs = (r.module && r.module.sections) || [], sec = (id) => secs.find((s) => s.id === id);
@@ -110,6 +118,10 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
     if (/^(mephitic thrash|necrotic vapors)$/i.test(rc.name || '')) { const slam = (sec('thrash') && (sec('thrash').rows || []).some((x) => x[1] && x[1].bad && Math.abs(x[0].t - rc.t) <= 4)); if (!slam) say(pull, 'ulatek', 'the root cause is ' + rc.name + ', a hit the whole raid takes, with nobody caught in the slam (check A)'); }
     // F. the Nov 12 night's own answers
     if (code === 'Gax3AkbyFRXmdrgQ' && it.wcl && WANT[it.wcl.fight]) { const [name, re] = WANT[it.wcl.fight]; if (rc.name !== name || !re.test(rc.short || '')) say(pull, 'ulatek', 'the root cause should be ' + name + ' (' + re.source.replace(/\\/g, '') + '), it reads "' + rc.name + ': ' + rc.short + '" (check F)'); }
+    // AA. the Nov 12 night: which pulls the raid played on past the call
+    if (code === 'Gax3AkbyFRXmdrgQ' && it.wcl && PLAYED[it.wcl.fight] !== undefined) { let ci = null; try { ci = SITE.cutInfo(r); } catch (e) { ci = null; } const want = PLAYED[it.wcl.fight], on = !!(ci && ci.why === 'played on');
+      if (want != null && !(on && Math.abs(ci.callT - want) <= 1.5 && Math.abs(ci.t - (r.duration || 0)) < 0.5)) say(pull, 'ulatek', 'the raid played on past the wipe call at ' + T(want) + ', so the whole pull should count; the page reads ' + (on ? 'played on past ' + T(ci.callT) : ci ? 'a wipe at ' + T(ci.t) + ' and nothing after it' : 'no call') + ' (check AA)');
+      if (want == null && on) say(pull, 'ulatek', 'the page reads the raid as playing on past the call at ' + T(ci.callT) + ', but it kept dying (check AA)'); }
     // G. How it went: one row, one hit
     let ch = null; try { ch = CH.wipeChain(r); } catch (e) { say(pull, 'ulatek', 'How it went crashed: ' + e.message); }
     for (const x of (ch && ch.items) || []) { const dz = x.dz || []; if (dz.length < 2) continue; const hk = new Set(dz.map((d) => lc(CH.deathHit(d)))); if (hk.size > 1) say(pull, 'ulatek', 'How it went at ' + T(x.t) + ' says "' + x.txt + '", but those deaths were to ' + [...hk].join(' and ') + ' (check G)'); }
@@ -132,6 +144,29 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
   //    soaks. The waves are cast at about 0:37 on every pull and reach the coil side as the second coil slams. Neither the guide's coil plan nor Team 2's job said when they arrive.)
   if (!/reach the coil side right as the second coil slams \(0:43\)\. On the fastest kills no soaker is hit by them/.test(GD)) say('the page code', 'ulatek', 'the Mythic guide\'s coil card no longer says the small tails\' waves reach the coil side as the second coil slams (check Z)');
   if (!/\(my \? ' On the first set, two small tails send waves at about 0:37 that reach the coil side right as this coil slams \(0:43\)/.test(H.UI)) say('the page code', 'ulatek', 'the Plan\'s Team 2 coil job no longer warns about the small tails\' waves on Mythic (check Z)');
+  // AA. The played-on rule itself, on the shapes of the Nov 12 pulls (so it runs without the log library).
+  { const f = E.playedOnAfter, D = (a) => a.map((t) => ({ t }));
+    if (typeof f !== 'function') say('the page code', 'ulatek', 'the played-on rule (E.playedOnAfter) is gone (check AA)');
+    else { const C = [[{ duration: 110, deaths: D([41.3, 60, 60.1, 60.3, 95.3, 97.5]) }, 60.1, 'line', true, 'pull 9 (called at 1:00, a third death 0.2 s later, then 35 s with no death and 50 s of pull left)'],
+        [{ duration: 108.9, deaths: D([43.5, 61.9, 63.9, 81.9, 84.2]) }, 63.9, 'line', true, 'pull 4 (18 s with no death, 45 s left)'], [{ duration: 166.9, deaths: D([64.1, 107.2, 109.8, 125.9, 127.6]) }, 109.8, 'line', true, 'pull 13 (16 s with no death, 57 s left)'],
+        [{ duration: 118.7, deaths: D([80.4, 83.6, 84.9, 85.4, 99.3]) }, 85.4, 'line', false, 'pull 3 (the next death came 13.9 s after the call)'], [{ duration: 74.7, deaths: D([40, 42, 44.3, 44.6, 45, 47]) }, 44.3, 'line', false, 'pull 2 (the raid kept dying)'],
+        [{ duration: 85, deaths: D([58, 59, 60]) }, 60, 'line', false, 'a call with 25 s of pull left'], [{ duration: 110, deaths: D([95]) }, 60, 'check', false, 'a missed damage check (not a count of deaths the raid can outlive)'],
+        [{ duration: 47, deaths: D([17.1, 19.1, 19.2, 28.2]) }, 19.2, 'line', true, 'pull 1 (the older rule: fought on 28 s past a call at 0:19)']];
+      for (const [r0, cut, why, want, what] of C) if (f(r0, cut, r0.duration, why) !== want) say('the page code', 'ulatek', 'the played-on rule says ' + (want ? 'the wipe call stands' : 'the raid played on') + ' for ' + what + ' (check AA)'); }
+    if (!/E\.playedOnAfter\(r, w\.t, dur, w\.why\)/.test(H.UI) || !/if \(g\.length\) return playedOn\(r, \{ \.\.\.w, t: Math\.max/.test(H.UI)) say('the page code', 'ulatek', 'the page\'s wipe call no longer asks the engine\'s played-on rule (check AA)');
+    if ((fs.readFileSync(path.join(SRC, 'engine.js'), 'utf8').match(/playedOnAfter\(r, opts\.cut, dur, opts\.why\)/g) || []).length !== 2) say('the page code', 'ulatek', 'a root-cause reader no longer asks the played-on rule (check AA)'); }
+  // AB. The Mythic Plan's Clutch Grips job: the Plan's own picker on a made-up roster (the helpers it needs are read out of the page by name, as it asks for them).
+  { const P = (name, cls, specId, role) => ({ name, cls, specId, role }), base = [P('TankA', 'WARRIOR', 73, 'tank'), P('TankB', 'PALADIN', 66, 'tank'), P('HealA', 'PALADIN', 65, 'healer'), P('HealB', 'PRIEST', 257, 'healer'), P('HealC', 'DRUID', 105, 'healer'), P('HealD', 'SHAMAN', 264, 'healer'),
+      P('Rog', 'ROGUE', 259, 'dps'), P('War', 'WARRIOR', 71, 'dps'), P('Ret', 'PALADIN', 70, 'dps'), P('Enh', 'SHAMAN', 263, 'dps'), P('MageA', 'MAGE', 62, 'dps'), P('MageB', 'MAGE', 63, 'dps'), P('Hunt', 'HUNTER', 253, 'dps'), P('Lock', 'WARLOCK', 265, 'dps'), P('Spriest', 'PRIEST', 258, 'dps'), P('Evo', 'EVOKER', 1467, 'dps'), P('Ele', 'SHAMAN', 262, 'dps')];
+    const pick = (my, ps) => { const names = ['NDZ_PICKS', 'ndzPut']; for (let i = 0; i < 120; i++) { const X = H.site(names, {}), B = { sel: {} }; try { X.NDZ_PICKS["Ula'tek"](B, ps, my); return B.sel; } catch (e) { const m = /^(\w+) is not defined/.exec(e.message); if (!m || names.includes(m[1])) throw e; names.push(m[1]); } } throw new Error('too many helpers'); };
+    try { const two = base.concat([P('DkOne', 'DEATHKNIGHT', 252, 'dps'), P('DkTwo', 'DEATHKNIGHT', 251, 'dps'), P('Boomy', 'DRUID', 102, 'dps')]), one = base.concat([P('DkOne', 'DEATHKNIGHT', 252, 'dps'), P('Boomy', 'DRUID', 102, 'dps'), P('Dh', 'DEMONHUNTER', 577, 'dps')]);
+      const a = pick(true, two)['clutch|Clutch Grips'], b = pick(true, one)['clutch|Clutch Grips'], h = pick(false, two);
+      if (!a || a.n.join() !== 'DkOne,DkTwo' || !/Phase 3: grip the Slithering Clutches in before they reach the venom/.test(a.why) || /this roster has/.test(a.why)) say('the page code', 'ulatek', 'the Mythic Plan\'s Clutch Grips job should name both Death Knights (DkOne, DkTwo); it reads ' + JSON.stringify(a) + ' (check AB)');
+      if (!b || b.n[0] !== 'DkOne' || !/The guide wants two Death Knights for this: this roster has one\./.test(b.why)) say('the page code', 'ulatek', 'with one Death Knight the Clutch Grips job should say the guide wants two; it reads ' + JSON.stringify(b) + ' (check AB)');
+      if (h['clutch|Clutch Grips'] || h['tanks|Clutch Grips']) say('the page code', 'ulatek', 'the Heroic Plan has a Clutch Grips job, and Heroic has no Slithering Clutches (check AB)'); }
+    catch (e) { say('the page code', 'ulatek', 'the Plan\'s Ula\'tek picker could not be run: ' + e.message + ' (check AB)'); }
+    if (!/\{ key: 'clutch', mythic: true, title: 'Clutch Grips'[^\n]*\n\s*slots: \[\{ label: 'Clutch Grips', want: 2 \}\]/.test(H.UI)) say('the page code', 'ulatek', 'the Plan lost its Mythic-only Clutch Grips card (check AB)');
+    if (!/trans: 2\.5, clutch: 3, bite: 3/.test(H.UI)) say('the page code', 'ulatek', 'the Clutch Grips card is no longer listed under phase 3 on the raid sheet (check AB)'); }
   // J. Coil order: the coil that appears first is soaked first (Flex, Nov 11), with where it has landed as the hint; the Plan names both beams' tanks.
   if (/The right-hand coil always goes first/.test(H.UI) || /the right-hand coil slams first:/.test(GD)) say('the page code', 'ulatek', 'the coil order reads as a fixed side again ("the right-hand coil always goes first"), not "the coil that appears first" (check J)');
   if (!/The second beam \(1:24\) goes to the other tank/.test(H.UI)) say('the page code', 'ulatek', 'the Plan\'s beam job no longer says who takes the second beam (check J)');

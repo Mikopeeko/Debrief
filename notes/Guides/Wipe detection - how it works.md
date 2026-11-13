@@ -57,3 +57,22 @@ Tested and left out:
 - **A healer counting as 1.5:** more wrong calls, no earlier calls.
 - **Boss health instead of time:** no boss health for the kills without ~800 heavy downloads; the damage check already catches a slow pull.
 - **Wipes as a second check:** the kills were picked for many deaths, so "9 of 10 pulls like this wiped" would be skewed.
+
+## When the raid plays on past the call (Nov 6, widened Nov 13)
+A wipe call is a line no kill ever crossed, but a raid can outlive it. When it does, the whole pull counts ("Wiped at", not "Wipe called at"), and the cause is read to the end.
+One rule decides it, in the engine (`playedOnAfter`), asked by the page's wipe call (`playedOn` in ui.js) and by both root-cause readers:
+
+1. **The pull ran on longer than the call took to come** (20 s at least, 60 s at most). Nov 6.
+2. **Nobody died for 15 s or more after the call, and 30 s or more of pull were left.** Nov 13, Main for Flex. Only for calls that count deaths (the kill line, half the raid dead):
+   a missed damage check or a wipe mechanic is not something a raid outlives. Deaths within 1.25 s of the call are the call's own, not "a death after it".
+
+Deaths in that stretch are judged like any other, by the proof-only rule, until a quarter of the raid is dead.
+
+Where it came from: Wolfthorn's Nov 12 Ula'tek night. Pulls 4, 9 and 13 were called at 1:03, 1:00 and 1:49 on two or three deaths, then went 18, 35 and 16 s without a death
+and fought on 45 to 57 s. Pull 9's Rattler Slam (the tank 37 yards from the tail, 11 dead) and pull 13's second coil set were never read.
+
+Measured on the saved nights' 94 wipes (Oct 14, 21, 22, Nov 11, Nov 12): 7 pulls changed, the three above and four older Coiled Altar pulls (Oct 21 pulls 5 and 16, Oct 22 pulls 2 and 27); 4 deaths became "You".
+Nothing changed on the Nov 11 night. One read got vaguer: Oct 21 pull 16 went from "Gloombomb killed 3 of the 4" to "Too many individual mistakes" (8 deaths read instead of 4).
+
+Checks: `tests/ulatek-check.js` AA (the rule on the pulls' shapes in every build, pull 9 from the real log in every build, all 13 with `--all`). Tool to measure a change to the
+rule: the Ula'tek chat's `cmp.js` (old code next to new: call, cause and every death's verdict).

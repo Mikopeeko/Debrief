@@ -70,8 +70,10 @@ module.exports = {
       proof: ['seven died between 0:40 and 0:44: Urgdragon, Kargaryen and Boltzzx to Caustic Waves, Schooty and Dragooned to Spectral Coils, Volkovod to Fester Burst, Komo to Necrotic Vapors', '12 were outside the bubble at 0:38.6, and 7 soakers a coil is what top kills have (the proof table)'] },
     13: { name: 'Unchecked Rage', sure: true, t: 84.5, line: 'Nobody was in her melee after the dive at 1:24, and Unchecked Rage killed nine at once.',
       proof: ['nine died to Unchecked Rage at 1:24', 'nobody was in her melee at 1:24.8 (the proof table)'] },
-    14: { name: 'Caustic Waves', sure: true, t: 63.5, line: 'Caustic Waves killed three before 1:04, two of them egg carriers, and two Vipers hatched.',
-      proof: ['Dragooned died to Caustic Waves at 0:43, Volkovod at 1:01 and Urgdragon at 1:03', 'two of the three carried eggs, and 2 Vipers hatched (the proof table)'] },
+    /* (Nov 13, Main's played-on rule: the page called pull 4 at 1:03 on three deaths, then nobody died for 18 s and the raid fought on 45 s. That stretch is read now: the lost moment is
+       Komo's death at 1:24, the fifth, a quarter of the raid. The waves that killed the carriers are the first link, so either name is right) */
+    14: { name: 'Blightscale Vipers', nameOr: ['Caustic Waves'], sure: true, t: 84.5, line: 'Caustic Waves killed three by 1:03, two of them egg carriers, and two Vipers hatched. The raid fought on, and the Vipers killed Kargaryen at 1:21 and Komo at 1:24.',
+      proof: ['Dragooned died to Caustic Waves at 0:43, Volkovod at 1:01 and Urgdragon at 1:03', 'two of the three carried eggs, and 2 Vipers hatched (the proof table)', 'no death from 1:03.9 to 1:21.9', 'a Blightscale Viper\'s melee hit Kargaryen for 670k at 1:21.6, and a Viper\'s Petrifying Sting killed Komo at 1:24.1'] },
     15: { name: 'Rattler Slam', sure: true, t: 98.5, line: 'Nobody was on the new tail at 1:35, and Rattler Slam killed seven.',
       proof: ['Komo died to Rattler Slam at 1:34 and six more at 1:38', 'nobody was on the new tail at 1:34.9 (the proof table)'] },
     16: { name: 'Rattler Slam', names: ['Vandagos'], sure: true, t: 96.5, line: 'Vandagos (tank) died at 1:32, four seconds before the Rattler Slam, and the slam killed five.',
@@ -80,16 +82,20 @@ module.exports = {
       proof: ['seven died to Fester Burst at 1:48', 'the burst hit 15, with the Wretch 12 yd from the tail; top kills hold it 46 to 53 yd away (the proof table)', 'Mephitic Thrash hit all 20 once and nobody was in the slam'] },
     18: { name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:47 hit six players outside the bubble, and Noxious Splash went off on Schooty and Shockabunga.',
       proof: ['Dragooned died to Fester Burst at 1:47, Phartsy to Mephitic Thrash at 1:47, Schooty to Noxious Splash at 1:48', 'Fester Burst hit 6 (the proof table)'] },
-    19: { name: 'Noxious Splash', names: ['Boltzzx', 'Schooty'], sure: true, t: 60.5, line: 'Boltzzx and Schooty, both carrying eggs, touched at 0:41. Two Vipers hatched, and the waves at 1:00 killed three more.',
-      proof: ['Schooty died to Noxious Splash at 0:41', 'Huservoker (Petrifying Sting), Phartsy and Kargaryen (Caustic Waves) died at 0:59 to 1:00', 'the two carriers touched at 0:41 and 2 Vipers hatched (the proof table)'] },
+    /* (Nov 13, Main's played-on rule: called at 1:00 with four dead, then nobody died for 35 s and the raid fought on 50 s, through the dive. What ended it is the Rattler Slam at 1:35) */
+    19: { name: 'Rattler Slam', names: ['Vandagos'], sure: true, t: 95.5, line: 'Nobody was on the new tail at 1:35: Vandagos was 37 yards from it. Rattler Slam hit 16 players and 11 died. Four were already dead from the egg carriers touching at 0:41 and the waves at 1:00.',
+      also: 'the eggs: Boltzzx and Schooty touched at 0:41, two Vipers hatched, and four were dead by 1:00',
+      proof: ['Schooty died to Noxious Splash at 0:41; Huservoker (Petrifying Sting), Phartsy and Kargaryen (Caustic Waves) died at 0:59 to 1:00', 'no death from 1:00.3 to 1:35.3', 'Rattler Slam at 1:34.9 hit 16 players for 12.7M; Dragooned, Boltzzx and Flëxørçïst died at 1:35.3 and eight more by 1:39', 'Vandagos was 37 yards from the new tail, with the other tank on Ula\'tek (the proof table, round 2)'] },
     20: { festerNotReachable: true /* (the second Wretch was held 16 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:47.6 hit 15 players outside the bubble. The Wretch was held 16 yd from the tail.',
       proof: ['eight died between 1:46 and 1:49 (Fester Burst, Mephitic Thrash, Noxious Splash, Putrid Membrane and her melee)', 'the burst hit 15, with the Wretch 16 yd from the tail (the proof table)'] },
     21: { festerNotReachable: true /* (the second Wretch was held 24 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Caustic Waves', sure: true, t: 64.5, line: 'Her waves at 0:56 and the tails\' at 0:58 killed three by 1:03.',
       proof: ['Jangokin and Volkovod died to Caustic Waves at 1:00, Komo (Necrotic Vapors) at 1:03 and Larryg (Petrifying Sting) at 1:04'] },
     22: { name: 'Noxious Splash', sure: true, t: 43.5 /* (three died at once at 0:43; Dragooned 0:45 and Komo 0:46 died after the pull was lost, as the page's own wipe call reads them. The coils are never their proof) */, line: 'Egg carriers touched at 0:30 and 0:38 and five Vipers hatched. The raid was dead by 1:04.',
       proof: ['eight died between 0:43 and 0:46', 'carriers touched at 0:30 and 0:38: 5 Vipers (the proof table)'] },
-    23: { name: 'Blightscale Vipers', nameOr: ['Noxious Splash'], names: ['Dragooned'], sure: true, t: 109.5, line: 'Dragooned\'s egg went off at 1:47 (Noxious Splash), and the Viper it hatched killed Boltzzx.',
-      proof: ['Dragooned died to Noxious Splash at 1:47', 'Boltzzx died to a melee hit at 1:49'] },
+    /* (Nov 13, Main's played-on rule: called at 1:49 on three deaths, then nobody died for 16 s and the raid fought on 57 s, into the second coil set. The lost moment is 2:15, when
+       three died within half a second; a quarter of the raid was dead after Komo at 2:07) */
+    23: { name: 'Blightscale Vipers', nameOr: ['Noxious Splash'], names: ['Dragooned'], sure: true, t: 135.5, line: 'Dragooned\'s egg went off at 1:47 (Noxious Splash), and the Viper it hatched killed Boltzzx. The raid fought on: waves killed Urgdragon at 2:05 and Komo at 2:07, Schooty\'s egg went off at 2:12, and the raid fell apart at 2:15.',
+      proof: ['Dragooned died to Noxious Splash at 1:47', 'Boltzzx died to a melee hit at 1:49', 'no death from 1:49.8 to 2:05.9', 'Caustic Waves hit Urgdragon for 485k at 2:04.5 (dead at 2:05.9) and killed Komo at 2:07.6', 'Schooty died to Noxious Splash at 2:12; Larryg, Zaffia and Phartsy died at 2:15'] },
   },
   // ---- deaths set by hand ("<player>@<second>"): only where a ruling can't be read from the pull's own facts ----
   deaths: { Gax3AkbyFRXmdrgQ: {

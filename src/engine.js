@@ -8059,6 +8059,18 @@ const orbFearedAt = (r, names, t) => { try { if (!names || !names.length) return
 const orbWaveAt = (r, t) => { const w = ((r && r.orbWaves) || []).filter((x) => x <= t + 0.2 && t - x <= 6).sort((a, b) => b - a)[0]; return w != null ? w : t; };
 function orbBurstBy(r, a, b) { const d = ((r && r.deaths) || []).filter((x) => /^venom rupture$/i.test(x.ability || '') && x.t >= a && x.t <= b).sort((x, y) => x.t - y.t)[0]; if (!d) return []; const tc = orbWaveAt(r, d.t), who = orbRefine(r, tc, orbCarriers(r, tc)); return orbFearedAt(r, who, tc) ? [] : who; /* (Nov 12: feared by an unkicked Wail of Terror: the missed kick's, nobody's orb) */ }
 const orbSay = (who) => (who && who.length === 1 ? who[0] + '\'s purple orb touched other orbs' : who && who.length > 1 ? 'one of ' + rcOr(who.map((n) => n + '\'s')) + ' purple orbs touched other orbs' : 'a purple orb\'s ring touched other orbs');
+/* (the raid played on past the wipe call: ONE rule, for the page's wipe call (playedOn in ui.js) and both root-cause readers below.
+   (1) Nov 6, Main: the pull ran on past the call for longer than the call took to come (20 s at least, 60 s at most).
+   (2) Nov 13, Main for Flex, from Wolfthorn's Nov 12 Ula'tek night: nobody died for 15 s or more after the call, and the pull had 30 s or more left. Pulls 4, 9 and 13 were
+       called at 1:03, 1:00 and 1:49 on three or two deaths, then went 18, 35 and 16 s without a death and fought on 45 to 57 s: a Rattler Slam that killed 11 (pull 9) and a
+       whole second coil set (pull 13) were never read. Deaths in that stretch are judged like any other, by the proof-only rule, until a quarter of the raid is dead.
+   why: the call's reason. A missed damage check and a wipe mechanic are not a count of deaths the raid can outlive, so (2) is for the kill line and half-the-raid calls only) */
+function playedOnAfter(r, cut, dur, why) {
+  if (!r || cut == null || !isFinite(cut)) return false; if (dur == null) dur = r.duration || (r.item && r.item.duration) || 0; const left = dur - cut;
+  if (left > Math.min(60, Math.max(20, cut))) return true; if (left < 30 || why === 'check' || why === 'mech') return false;
+  /* (the call's own deaths, up to 1.25 s after it as the wipe call counts a hit's deaths, are not "a death after the call": pull 9 was called at 1:00.1, a third player died at 1:00.3, the next at 1:35) */
+  const ts = (r.deaths || []).map((d) => d.t).filter((t) => t > cut + 0.05).sort((a, b) => a - b), own = ts.filter((t) => t <= cut + 1.25), t0 = own.length ? own[own.length - 1] : cut, nx = ts.find((t) => t > t0 + 0.05);
+  return dur - t0 >= 30 && (nx == null || nx - t0 >= 15); }
 function rootCause(r, opts) {
   opts = opts || {};
   if (!r || !r.item || r.item.kill) return null; if (r.item.boss !== 'The Coiled Altar') return rootCauseGen(r, opts); /* (Nov 6: every other boss) */ if (!r.module || r.module.error) return null;
@@ -8096,7 +8108,7 @@ function rootCause(r, opts) {
   const fearOk = (d, k) => { if (!anyFear) return true; const b = wailD(pBy.get(d.p)), at = /^(axes|pools|orbs|frontal)$/.test(d.cat) && d.ab !== 'Gravebound'; return !!(b && b.sp && b.sp.some(([a, z]) => a >= k.t - 1 && a <= d.t + 0.2 && (!at || z == null || z >= d.t - 1.5))); };
   for (const d of deaths) { const k = kickBefore(d.t); if (k && (/^(axes|pools|orbs|ghosts|mc|dead|frontal)$/.test(d.cat) || d.ab === 'Gravebound') && d.ab !== 'Venom Rupture' && fearOk(d, k)) d.via = k; }
   // ---- the point of no return ----
-  const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || dur - opts.cut > Math.min(60, Math.max(20, opts.cut)) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */
+  const early = opts.cut != null && (phs.some((p) => p.start >= opts.cut - 1 && p.start > 1) || playedOnAfter(r, opts.cut, dur, opts.why) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */
     || (opts.why !== 'mech' && (() => { const t0 = waveAfterCall(r, opts.cut); if (t0 == null) return false; const m = new Map(); for (const d of (r.deaths || []).filter((x) => x.t >= t0 && x.t <= t0 + 5)) { const k = rcCat(d.ability || d.killer); m.set(k, (m.get(k) || 0) + 1); } const n = [...m.values()].reduce((a, b) => a + b, 0); return !n || (m.get('frontal') || 0) / n < 0.6; })()));
   /* (Nov 12, Flex: "Why does it like to blame soul sever individual deaths for wipes": a burst of Sever / Soul Sever deaths after the call isn't the collapse (Nov 11 pull 5: 5 died to Soul Sever
      a second after the call, already low from Dreadful Presence ticking 150k a second)) */ /* (Nov 12, as every other boss: one hit killing 4 or more within 15 s after a call on separate deaths is the collapse (Nov 11 pull 5: Soul Sever killed 5 a second after the call)) */
@@ -8279,7 +8291,7 @@ function rootCauseGen(r, opts) {
   opts = opts || {}; if (!r || !r.item || r.item.kill) return null;
   const dur = r.duration || r.item.duration || 0, T = fmtT, nm = (p) => String(p || '').split('-')[0], lc = (s) => String(s || '').toLowerCase();
   const ula = r.item.boss === "Ula'tek", wAft = opts.why === 'mech' ? null : waveAfterCall(r, opts.cut); /* (a call on a mechanic no kill survived is that mechanic's wipe (Twin Fangs pull 31: the unsoaked Globule, not the Visceral Bursts after it)) */ /* (Nov 10, Flex: "Causes of deaths/wipes might need to be reviewed on ulatek mythic") */
-  const early = opts.cut != null && (dur - opts.cut > Math.min(60, Math.max(20, opts.cut)) || wAft != null) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */, end = opts.cut != null && !early ? opts.cut : dur;
+  const early = opts.cut != null && (playedOnAfter(r, opts.cut, dur, opts.why) || wAft != null) /* (Nov 6, Main: a call at 0:14 the raid fought on 29 s past, into the wave that wiped it: played on past an early call for longer than it took to come, 20 s at least) */, end = opts.cut != null && !early ? opts.cut : dur;
   /* (Ula'tek: each death by the hit that really killed them (the engine's d.kill, as the deaths list reads it): a Putrid Membrane tick after a 600k Unchecked Rage is an Unchecked Rage death) */
   /* (Ula'tek: a burst of deaths the call lands in counts whole, its deaths a second or two after the call too (xH3J pull 18: Unchecked Rage at the call, 8 more dead to it 2 s later)) */
   /* (Nov 13, Wolfthorn's Nov 12 night: a Viper kills with its melee, Acidic Burst, Petrifying Sting and Putrid Membrane (a raid-wide aura for as long as it lives), and a carrier who
@@ -8467,7 +8479,7 @@ function rootCauseGen(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
-const api = { deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, playedOnAfter, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
