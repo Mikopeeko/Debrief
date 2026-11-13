@@ -69,4 +69,14 @@ if ((Test-Path $node) -and (Test-Path $ctest) -and -not $env:DEBRIEF_SKIP_CHECK)
   if ($ccode) { $cout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  CONTRADICTION CHECK FAILED: the site contradicts itself (the lines above). Fix it before you push.' -ForegroundColor Red; $cc = 'FAILED, see above' }
   else { $cc = (($cout | Select-Object -Last 1) -replace '^Contradiction check: ', '') }
 }
-"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc
+# the answer key check (Nov 13, Flex: "they keep coming back seems to be my biggest issue"; notes/Guides/Answer key - how it works.md): real raid nights
+# read from the raw log with none of the site's code (tests/answer-key/), against what the site's own engine says about the same pulls, and the
+# same fact against itself on every tab. A NEW mismatch prints in red: fix it, or the fix you just made broke something that was right.
+# (about 1 s when the engine didn't change, about a minute when it did; skip it with $env:DEBRIEF_SKIP_CHECK = '1')
+$ak = 'skipped'; $atest = Join-Path $root 'tests\answer-key.js'
+if ((Test-Path $node) -and (Test-Path $atest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $aout = & $node $atest; $acode = $LASTEXITCODE
+  if ($acode) { $aout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  ANSWER KEY CHECK FAILED: the site no longer says what the raw log says (the lines above). Fix it before you push.' -ForegroundColor Red; $ak = 'FAILED, see above' }
+  else { $ak = (($aout | Select-Object -Last 1) -replace '^Answer key: ', '') }
+}
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak
