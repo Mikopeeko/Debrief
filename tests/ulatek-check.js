@@ -11,6 +11,14 @@
 //   E. The root cause is never a Viper's line for deaths to the waves. (Pull 11: "Viper hatched hit the raid, and Jangokin, Volkovod, Komo and 1 more died".)
 //   F. Each of the 13 wipes keeps the root cause the raw log shows.
 //   G. How it went: the deaths in one row share the hit that killed them. (Pull 12: "Shockabunga and Urgdragon died to Noxious Splash".)
+// The death rulings (Nov 13, for the answer key: which Ula'tek deaths are a player's own). Rows of this module that the death rule read as the player's own mistake when they weren't:
+//   U. A beam the off tank missed is his: he is named, and the players it hit instead, and the players its waves hit, carry rows marked someone else's. (Pull 1: the image came from the
+//      east through where the ranged stand on every pull, Tyralious stayed 32 yards away; Volkovod, Shockabunga, Komo, Urgdragon and Jangokin all read "You".)
+//   V. A Fester Burst reads "nobody could stand in the bubble" only when the Wretch is 25 yards or less from the tail (its whole bubble inside the Thrash; it said so up to 44), and every
+//      player such a burst hit carries a row marked someone else's. (Pull 7: Urgdragon and Dashtoswirly read "You: 1 Fester Burst hit".)
+//   W. An egg that broke because its carrier died is never a red row of the carrier's. (Nine deaths read "You: 4 Noxious Shell hits": pulls 4, 7, 8, 10 and 13.)
+//   X. A death in a fully soaked circle is the soak's job row, and the circle's row isn't red. (Pull 12: Dragooned and Komo read "You: 1 Spectral Coils hit", 7 soakers.)
+//   Y. The verdicts those rows gave, by the page's own death rule. (17 deaths changed; the answer key holds the full list.)
 'use strict';
 module.exports = function ulatekCheck(NIGHT_R, H, say) {
   const E = H.E, T = E.fmtT, nm = (p) => String(p || '').split('-')[0], lc = (x) => String(x || '').toLowerCase();
@@ -19,6 +27,13 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
   const CH = H.site(['deathHit', 'deathHitId', 'MECH_FAM', 'mechFams', 'chainTitleFits', 'deathBrief', 'collapseFrom', 'wipeChain'], { deathVerdict: () => null, cutInfo: (r) => SITE.cutInfo(r), cutT: (r) => SITE.cutT(r), wipeRoot: (r) => rootOf(r),
     keptMistakes: (r) => { const c = SITE.cutT(r); return (r.mistakes || []).filter((m) => m.t <= c + 0.5); }, keptDeaths: (r) => { const c = SITE.cutT(r); return (r.deaths || []).filter((d) => d.t <= c + 0.5); } });
   const SHARED = /^(mephitic thrash|spectral coils|necrotic vapors|noxious shell|stone venom)$/i;
+  /* (Y: the page's death rule, as tests/answer-key.js loads it) */
+  let DV = null; try { DV = H.site(['deathHit', 'deathHitId', 'deathFast', 'DEATH_KIT', 'DEATH_IMM', 'deathShare', 'deathRaidSay', 'DEATH_BUCKET', 'quarterDead', 'deathOwn', 'andList', 'capS', 'DEATH_JOB', 'DEATH_WIN', 'deathProof', 'deathVerdict', 'deathList', 'deathsOf', 'gbDeathOk', 'deathFix'],
+    { cutT: () => Infinity, oaRowWhy: () => null, deathSecs: (x) => String(x), deathHealerOf: () => null, dbfTip1: (x) => x, wipeMech: () => null, whyReason: (x) => x, oaFlip: (x) => x, oaBase: (n0) => String(n0 || '').split('-')[0], plural: (n0, w) => n0 + ' ' + w + (n0 === 1 ? '' : 's'), esc: (x) => String(x), S: {}, RC_NEXT: {} }); } catch (e) { DV = null; }
+  /* (fight: [player, 'you' | 'none' | null, words the verdict must carry, words it must not]) */
+  const WANT_D = { 11: [['Volkovod', 'none'], ['Shockabunga', 'none'], ['Komo', 'none'], ['Urgdragon', 'none'], ['Jangokin', 'none']], 14: [['Volkovod', 'you', /Caustic Waves/]], 15: [['Vandagos', 'you', /Rattler Slam/]],
+    17: [['Schooty', 'none'], ['Urgdragon', 'none'], ['Dashtoswirly', 'none']], 18: [['Dragooned', 'you', /Fester Burst/], ['Phartsy', 'you', /Fester Burst/]], 20: [['Dragooned', 'none'], ['Larryg', 'none'], ['Schooty', 'none']],
+    22: [['Shockabunga', 'you', /Noxious Splash/], ['Urgdragon', 'you', /Fester Burst/], ['Dragooned', null, null, /Spectral Coils/], ['Komo', null, null, /Spectral Coils/]], 23: [['Boltzzx', 'none']] };
   // F. the Nov 12 night, by fight: the root cause's name, and words its sentence must carry
   /* (Nov 13, round 2, Flex: "blames the right person": pull 3 names Tyralious, 33 yards from her new spot with Vandagos in the beam; pull 5 Vandagos, 17 yards from the new tail with Tyralious on her;
      pulls 7 and 10 say who the Wretch was on) */
@@ -67,6 +82,24 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
       for (const m of r.mistakes || []) { if (!/^spectral coils$/i.test(m.mechanic || '')) continue; const k = /\((\d+) soakers? in that circle/.exec(m.detail || ''); if (!k || +k[1] < 6) continue;
         if (/more soakers/i.test(m.fix || '')) say(pull, 'ulatek', nm(m.player) + '\'s Spectral Coils line at ' + T(m.t) + ' says "get more soakers" for a circle with ' + k[1] + ' (top kills soak with 7) (check D)');
         if (m.severity === 'High' && m.player !== 'Raid') say(pull, 'ulatek', nm(m.player) + ' has a serious Spectral Coils mistake for dying in a fully soaked circle (' + k[1] + ' soakers) at ' + T(m.t) + ' (check D)'); } }
+    // U to Y. the death rulings
+    { const fight = code === 'Gax3AkbyFRXmdrgQ' && it.wcl ? it.wcl.fight : 0, rows = (p, re) => (r.mistakes || []).filter((m) => nm(m.player) === p && re.test(m.mechanic || '')), secs = (id) => ((r.module && r.module.sections) || []).filter((x) => x.id === id), rowsIn = (x) => (x.rows || []).concat(...(x.groups || []).map((g) => g.rows || []));
+      if (fight === 11) { const bm = (r.mistakes || []).find((m) => m.beamMiss);
+        if (!bm || nm(bm.player) !== 'Tyralious' || bm.severity !== 'High') say(pull, 'ulatek', 'the first beam was the off tank\'s miss (Tyralious, about 32 yards from it); no row names him (check U)');
+        for (const p of ['Volkovod', 'Shockabunga']) if (!rows(p, /^toxic incubation$/i).some((m) => m.others)) say(pull, 'ulatek', p + ' took the beam where the ranged always stand, with no tank in it; their row isn\'t marked someone else\'s (check U)');
+        for (const p of ['Komo', 'Urgdragon', 'Jangokin']) if (!rows(p, /^caustic waves$/i).some((m) => m.others)) say(pull, 'ulatek', p + ' was hit by waves off a beam that landed in the raid; no row marks them someone else\'s (check U)'); }
+      for (const m of (r.mistakes || []).filter((x) => x.player === 'Raid' && /^fester burst$/i.test(x.mechanic || '') && /inside its 35 yards/.test(x.detail || ''))) { const yd = +(/The Wretch was (\d+) yards from the tail/.exec(m.detail) || [])[1];
+        if (!(yd <= 25)) say(pull, 'ulatek', 'the Fester Burst line at ' + T(m.t) + ' says the bubble was inside the Thrash with the Wretch ' + yd + ' yards from the tail; only 25 or less puts the whole bubble inside (check V)');
+        if ((r.mistakes || []).filter((x) => x.others && /^fester burst$/i.test(x.mechanic || '') && Math.abs(x.t - m.t) <= 1).length < 5) say(pull, 'ulatek', 'the Fester Burst at ' + T(m.t) + ' had no safe spot, but the players it hit carry no rows marked someone else\'s (check V)'); }
+      for (const x of secs('eggs')) for (const row of rowsIn(x)) if (row.some((c) => c && c.bad && /died carrying it/.test(String(c.txt || '')))) { say(pull, 'ulatek', 'an egg that broke because its carrier died is a red row of the carrier\'s again: it follows from the death (check W)'); break; }
+      if (it.diff === 'Mythic') { for (const x of secs('coils')) for (const row of rowsIn(x)) { const n0 = +((row[2] || {}).txt); if (n0 >= 6 && row.some((c) => c && c.bad && c.ps && c.ps.length)) { say(pull, 'ulatek', 'a circle ' + n0 + ' soaked has a red "died" cell: a full soak is the job (check X)'); break; } }
+        for (const m of r.mistakes || []) if (/^spectral coils$/i.test(m.mechanic || '') && /a full soak\)/.test(m.detail || '') && !/^Died in the Spectral Coils soak\b/.test(m.detail || '')) { say(pull, 'ulatek', nm(m.player) + '\'s full-soak row at ' + T(m.t) + ' doesn\'t read as a job row ("Died in the ... soak"), so the death rule takes it as their mistake (check X)'); break; } }
+      if (DV && WANT_D[fight]) { if (DV.CACHE && DV.CACHE.set) DV.CACHE.set(it, r);
+        for (const [p, bucket, must, never] of WANT_D[fight]) { const d = (r.deaths || []).find((x) => nm(x.player) === p); if (!d) { say(pull, 'ulatek', p + '\'s death isn\'t in the pull any more (check Y)'); continue; }
+          let v = null; try { v = DV.deathVerdict(r, d); } catch (e) { v = null; } if (!v) { say(pull, 'ulatek', 'the death rule crashed on ' + p + '\'s death at ' + T(d.t) + ' (check Y)'); continue; } const txt = String(v.say || v.label || '');
+          if (bucket && v.bucket !== bucket) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '"; the ruling is ' + (bucket === 'you' ? 'You' : 'Not counted') + ' (check Y)');
+          else if (must && !must.test(txt)) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '"; its proof is ' + String(must).replace(/^\/|\/$/g, '') + ' (check Y)');
+          else if (never && never.test(txt)) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '": ' + String(never).replace(/^\/|\/$/g, '') + ' is never the proof there (check Y)'); } } }
     if (it.kill) continue;
     let rc = null; try { rc = rootOf(r); } catch (e) { say(pull, 'ulatek', 'the root cause crashed: ' + e.message); continue; } if (!rc) continue;
     // D. (the root cause's own advice)
