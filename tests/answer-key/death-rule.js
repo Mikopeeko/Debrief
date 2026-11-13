@@ -16,14 +16,21 @@ const OWN_CA = new Set(['Axegrinder', 'Noxious Ground', "Widow's Kiss", "Death's
   FRONTAL = new Set(['Sever', 'Soul Sever', 'Blighted Sever']), NEARORB = new Set(['Volatile Venom', 'Mutagenic Venom']);
 const T = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
 function deathVerdicts(pull, cause, known) {
-  const size = pull.size || 20, q = Math.ceil(size / 4), ca = pull.ca || {}, out = [], OWN = OWN_CA;
+  const size = pull.size || 20, q = Math.ceil(size / 4), ca = pull.ca || {}, U = pull.ula, out = [], OWN = OWN_CA;
   for (const d of pull.deaths) {
     const prior = pull.deaths.filter((x) => x !== d && x.t < d.t - 0.05).length;
     const lost = cause && cause.t != null ? cause.t : null, afterQ = !pull.kill && prior >= q, afterLost = lost != null && d.t > lost + 0.75;
     const v = { when: afterQ || afterLost ? 'after' : 'before', whenWhy: afterQ ? prior + ' had died before them (a quarter of the raid is ' + q + ')' : afterLost ? 'after the pull was lost at ' + T(lost) : prior + ' dead before them', verdict: 'none', proof: null, sure: true };
     if (cause && cause.cat === 'reset') { v.fact = 'a reset pull: nothing in it counts'; out.push(v); continue; }
     const cc = d.mc ? 'mind controlled' : d.feared ? 'feared' : null, mass = (d.mass || 1) >= 3, kb = d.killedBy;
-    const own = (n) => OWN.has(n) || (FRONTAL.has(n) && d.role !== 'tank');
+    // Ula'tek (the Ula'tek chat's rulings, Nov 13). A player's own: Caustic Waves they could dodge (not the waves off a beam taken inside the raid),
+    // Fester Burst when the Wretch's bubble could be reached (roots.js: festerNotReachable), Noxious Splash (both carriers), the slam of Mephitic
+    // Thrash (its second hit within half a second; the raid-wide hit never counts), and Rattler Slam for a tank. Never the carried egg's own
+    // Noxious Shell, a coil soak, or the raid-wide hits.
+    const beamNear = U && (U.beams || []).find((b) => b.nonTanks.length && d.t >= b.t - 0.5 && d.t <= b.t + 7), festerOff = U && cause && cause.festerNotReachable && (U.festerBursts || []).some((b) => b.t > 100 && d.t >= b.t - 0.5 && d.t <= b.t + 6);
+    if (U && d.twice && d.twice['Mephitic Thrash'] && d.last4) d.last4['Mephitic Thrash (the slam)'] = [d.twice['Mephitic Thrash'], 1];
+    const ownU = (n) => (n === 'Caustic Waves' && !beamNear) || (n === 'Fester Burst' && !festerOff) || n === 'Noxious Splash' || n === 'Mephitic Thrash (the slam)' || (n === 'Rattler Slam' && d.role === 'tank');
+    const own = (n) => (U ? ownU(n) : OWN.has(n) || (FRONTAL.has(n) && d.role !== 'tank'));
     if (v.when === 'before') {
       const carried = (list) => (list || []).some((c) => c[1] === d.player && c[0] <= d.t + 0.1 && c[0] + c[2] >= d.t - 4);
       // 1a. their own soul fragments killed them (never when a fragment came from someone else's Gloombomb)
@@ -52,6 +59,13 @@ function deathVerdicts(pull, cause, known) {
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
       if (v.verdict === 'none' && !kb && !cc && d.pos && pull.ca) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50 && !d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; } else if (far > 50) v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
+      if (U && v.verdict === 'none') { const circle = (U.coils || []).find((c) => c.soakers.includes(d.player) && d.t >= c.t - 1 && d.t <= c.t + 8);
+        if (beamNear && beamNear.nonTanks.includes(d.player) && /^Toxic (Incubation|Burn)$/.test(kb || '')) { v.fact = 'the beam went through them: the off tank was not in its line'; v.sure = false; v.note = 'Main leaned You, the Ula\'tek chat rules not counted'; }
+        else if (kb === 'Caustic Waves' && beamNear) v.fact = 'waves off a beam taken inside the raid (' + beamNear.nonTanks.join(' and ') + ' took it, not a tank)';
+        else if (kb === 'Fester Burst' && festerOff) v.fact = 'the Wretch\'s bubble could not be reached (held inside the Thrash\'s 35 yards)';
+        else if (kb === 'Spectral Coils' && circle && circle.soakers.length >= 6) v.fact = 'a soaker in a full coil soak (' + circle.soakers.length + ' in the circle)';
+        else if (d.last4 && d.last4['Noxious Shell'] && !v.fact && !mass) v.fact = 'died carrying an egg; its own Noxious Shell is not a mistake (died to ' + (kb || 'no killing hit') + ')'; }
+      if (v.verdict === 'none' && v.sure && !cc && !mass && (d.lowFor || 0) >= 2) { v.sure = false; v.note = 'sat ' + d.lowFor + ' s at or under 35%; whether something was ready that would have saved them is for the site to judge'; }
       if (v.verdict === 'none') v.fact = v.fact || (cc ? cc + ' when they died' : mass ? 'a mass death (' + d.mass + ' to ' + kb + ' at once)' : kb ? 'no mistake of theirs in the last 4 s (died to ' + kb + ')' : 'no killing hit');
       if (/Guillotine$/.test(kb || '')) { const g = (ca.guillotines || []).filter((x) => x.t <= d.t + 0.5 && d.t - x.t < 12).pop(); const tgt = !g || g.target === d.player; if (tgt) { v.sure = false; v.note = 'the Guillotine target\'s rule is still being written'; } else { v.verdict = 'none'; v.proof = null; v.sure = true; delete v.note; } if (g && v.verdict === 'none') v.fact = (tgt ? 'the ' + g.spell + ' target' : 'a soaker of the ' + g.spell + ': a soaker who dies in the soak is not counted') + ' (' + g.soakers.length + ' soaked)'; }
 

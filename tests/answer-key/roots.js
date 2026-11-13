@@ -76,19 +76,25 @@ module.exports = {
       proof: ['Komo died to Rattler Slam at 1:34 and six more at 1:38', 'nobody was on the new tail at 1:34.9 (the proof table)'] },
     16: { name: 'Rattler Slam', names: ['Vandagos'], sure: true, t: 96.5, line: 'Vandagos (tank) died at 1:32, four seconds before the Rattler Slam, and the slam killed five.',
       proof: ['Vandagos died at 1:32 (Stone Venom, with Toxic Burn ticking)', 'five died to Rattler Slam at 1:36'] },
-    17: { name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:48 hit 15 players outside the Wretch\'s bubble and killed seven. The Wretch was held 12 yd from the tail.',
+    17: { festerNotReachable: true /* (the second Wretch was held 12 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:48 hit 15 players outside the Wretch\'s bubble and killed seven. The Wretch was held 12 yd from the tail.',
       proof: ['seven died to Fester Burst at 1:48', 'the burst hit 15, with the Wretch 12 yd from the tail; top kills hold it 46 to 53 yd away (the proof table)', 'Mephitic Thrash hit all 20 once and nobody was in the slam'] },
     18: { name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:47 hit six players outside the bubble, and Noxious Splash went off on Schooty and Shockabunga.',
       proof: ['Dragooned died to Fester Burst at 1:47, Phartsy to Mephitic Thrash at 1:47, Schooty to Noxious Splash at 1:48', 'Fester Burst hit 6 (the proof table)'] },
     19: { name: 'Noxious Splash', names: ['Boltzzx', 'Schooty'], sure: true, t: 60.5, line: 'Boltzzx and Schooty, both carrying eggs, touched at 0:41. Two Vipers hatched, and the waves at 1:00 killed three more.',
       proof: ['Schooty died to Noxious Splash at 0:41', 'Huservoker (Petrifying Sting), Phartsy and Kargaryen (Caustic Waves) died at 0:59 to 1:00', 'the two carriers touched at 0:41 and 2 Vipers hatched (the proof table)'] },
-    20: { name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:47.6 hit 15 players outside the bubble. The Wretch was held 16 yd from the tail.',
+    20: { festerNotReachable: true /* (the second Wretch was held 16 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Fester Burst', sure: true, t: 108.5, line: 'Fester Burst at 1:47.6 hit 15 players outside the bubble. The Wretch was held 16 yd from the tail.',
       proof: ['eight died between 1:46 and 1:49 (Fester Burst, Mephitic Thrash, Noxious Splash, Putrid Membrane and her melee)', 'the burst hit 15, with the Wretch 16 yd from the tail (the proof table)'] },
-    21: { name: 'Caustic Waves', sure: true, t: 64.5, line: 'Her waves at 0:56 and the tails\' at 0:58 killed three by 1:03.',
+    21: { festerNotReachable: true /* (the second Wretch was held 24 yd from the new tail, so its bubble sat inside Mephitic Thrash, 2 s before the burst) */, name: 'Caustic Waves', sure: true, t: 64.5, line: 'Her waves at 0:56 and the tails\' at 0:58 killed three by 1:03.',
       proof: ['Jangokin and Volkovod died to Caustic Waves at 1:00, Komo (Necrotic Vapors) at 1:03 and Larryg (Petrifying Sting) at 1:04'] },
     22: { name: 'Noxious Splash', sure: true, t: 43.5, line: 'Egg carriers touched at 0:30 and 0:38 and five Vipers hatched. The raid was dead by 1:04.',
       proof: ['eight died between 0:43 and 0:46', 'carriers touched at 0:30 and 0:38: 5 Vipers (the proof table)'] },
     23: { name: 'Blightscale Vipers', nameOr: ['Noxious Splash'], names: ['Dragooned'], sure: true, t: 109.5, line: 'Dragooned\'s egg went off at 1:47 (Noxious Splash), and the Viper it hatched killed Boltzzx.',
       proof: ['Dragooned died to Noxious Splash at 1:47', 'Boltzzx died to a melee hit at 1:49'] },
   },
+  // ---- deaths set by hand ("<player>@<second>"): only where a ruling can't be read from the pull's own facts ----
+  deaths: { Gax3AkbyFRXmdrgQ: {
+    // Ula'tek pull 2: a tail's wave heading west crossed the group soaking coil 2. Not ruled yet (the Ula'tek chat has not measured whether top
+    // kills take that wave in the soak), so these never fail a build.
+    12: { 'Urgdragon@43': { unsure: 'not ruled: a wave crossed the coil soak' }, 'Dragooned@44': { unsure: 'not ruled: a wave crossed the coil soak' }, 'Kargaryen@44': { unsure: 'not ruled: a wave crossed the coil soak' }, 'Boltzzx@44': { unsure: 'not ruled: a wave crossed the coil soak' } },
+  } },
 };
