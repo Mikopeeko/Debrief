@@ -3,6 +3,7 @@
 //   1. a mistake of their own was part of what killed them: its hit was the killing hit, or its hits in their last 4 s were damage they'd have
 //      lived without (more than the killing blow's overkill, and a tenth of their health). In a mass death (3 or more to one hit at once) only
 //      the killing hit itself counts. Never while feared or mind controlled.
+//   3. walked off the edge: no killing hit, in control (not feared or mind controlled), no knockback in their last 3 s (Main, Nov 13).
 //   2. 2 s or more at or under 35% health with their own defensive or Healthstone ready. Whether it "would have saved them" needs a model of
 //      each button, which a log alone can't settle, so the key marks these "low" and unsure.
 // Before the wipe = fewer than a quarter of the raid had died before them, and it is not after the moment the pull was lost (roots.js: cause.t).
@@ -19,6 +20,7 @@ function deathVerdicts(pull, cause, known) {
     const prior = pull.deaths.filter((x) => x !== d && x.t < d.t - 0.05).length;
     const lost = cause && cause.t != null ? cause.t : null, afterQ = !pull.kill && prior >= q, afterLost = lost != null && d.t > lost + 0.75;
     const v = { when: afterQ || afterLost ? 'after' : 'before', whenWhy: afterQ ? prior + ' had died before them (a quarter of the raid is ' + q + ')' : afterLost ? 'after the pull was lost at ' + T(lost) : prior + ' dead before them', verdict: 'none', proof: null, sure: true };
+    if (cause && cause.cat === 'reset') { v.fact = 'a reset pull: nothing in it counts'; out.push(v); continue; }
     const cc = d.mc ? 'mind controlled' : d.feared ? 'feared' : null, mass = (d.mass || 1) >= 3, kb = d.killedBy;
     const own = (n) => OWN.has(n) || (FRONTAL.has(n) && d.role !== 'tank');
     if (v.when === 'before') {
@@ -27,7 +29,11 @@ function deathVerdicts(pull, cause, known) {
       if (kb === 'Gravebound' && !cc) { const g = (ca.gravebound || []).filter((x) => x.player === d.player && x.t <= d.t + 0.2 && x.t >= d.t - 20).pop(), sr = g && g.src;
         if (g && sr) { const mine = sr.ownBomb + sr.frontal, n3 = 3 * (mine + sr.othersBomb), from = [sr.ownBomb ? 'their own Gloombomb' : '', sr.frontal ? 'a tank frontal' : '', sr.othersBomb ? sr.othersBomb + ' Gloombomb' + (sr.othersBomb > 1 ? 's' : '') + ' that were someone else\'s' : ''].filter(Boolean).join(' and ');
           if (mine && !sr.othersBomb) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: 'Gravebound', names: ['Gravebound', 'soul fragments'], say: 'their own soul fragments (' + g.picked + ' of ' + n3 + ' picked up, from ' + from + ')' }; }
-          else { v.fact = 'Gravebound from ' + from + ' (' + g.picked + ' of ' + n3 + ' picked up)'; if (mine) { v.sure = false; v.note = 'fragments of their own and of someone else\'s bomb at once'; } } } }
+          else if (mine) { /* (Main, Nov 13: only their own fragments are proof. They had 3 a source of their own; a death when the timer ran out is theirs if they picked up fewer than that, a death to a pickup is theirs if it was one of their own) */
+            const nOwn = 3 * mine, ranOut = g.for >= 12.5, theirs = ranOut ? g.picked < nOwn : g.picked <= nOwn;
+            if (theirs) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: 'Gravebound', names: ['Gravebound', 'soul fragments'], say: 'their own soul fragments (' + g.picked + ' of ' + n3 + ' picked up; ' + nOwn + ' were their own, from ' + from + ')' }; }
+            else v.fact = 'picked up as many fragments as were their own (' + g.picked + ' of ' + n3 + '); the rest came from someone else\'s Gloombomb (' + from + ')'; }
+          else v.fact = 'Gravebound from ' + from + ' (' + g.picked + ' of ' + n3 + ' picked up)'; } }
       // 1b. a tank who died to the frontal on their own turn (stack 1); on a later stack the swap was missed, which is not theirs
       if (v.verdict === 'none' && FRONTAL.has(kb) && d.role === 'tank' && !cc) { const f = (ca.frontals || []).filter((x) => Math.abs(x.t - d.t) < 1.5 && x.tanks.includes(d.player)).pop(), st = f && f.stacks ? f.stacks[d.player] : null;
         const prev = (ca.frontals || []).filter((x) => x.t < d.t - 1.5 && d.t - x.t < 50 && x.tanks.includes(d.player) && x.tanks.length > 1).pop();
@@ -44,10 +50,10 @@ function deathVerdicts(pull, cause, known) {
       // 2. sat low with something ready
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
-      if (v.verdict === 'none' && !kb && !cc && d.pos) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50) { v.fact = 'went off the platform on their own (' + far + ' yd from the middle, no killing hit)'; v.sure = false; v.note = 'the rule has no proof for walking off the edge'; } }
+      if (v.verdict === 'none' && !kb && !cc && d.pos) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50 && !d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; } else if (far > 50) v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
       if (v.verdict === 'none') v.fact = v.fact || (cc ? cc + ' when they died' : mass ? 'a mass death (' + d.mass + ' to ' + kb + ' at once)' : kb ? 'no mistake of theirs in the last 4 s (died to ' + kb + ')' : 'no killing hit');
       if (/Guillotine$/.test(kb || '')) { const g = (ca.guillotines || []).filter((x) => x.t <= d.t + 0.5 && d.t - x.t < 12).pop(); const tgt = !g || g.target === d.player; if (tgt) { v.sure = false; v.note = 'the Guillotine target\'s rule is still being written'; } else { v.verdict = 'none'; v.proof = null; v.sure = true; delete v.note; } if (g && v.verdict === 'none') v.fact = (tgt ? 'the ' + g.spell + ' target' : 'a soaker of the ' + g.spell + ': a soaker who dies in the soak is not counted') + ' (' + g.soakers.length + ' soaked)'; }
-      if (v.verdict === 'you' && lost != null && Math.abs(d.t - lost) <= 0.75 && mass) { v.sure = false; v.note = 'died in the hit that lost the pull: the site reads that as after the wipe'; }
+
       if (pull.kill && pull.len - d.t <= 20) { v.sure = false; v.note = 'in the kill\'s last 20 s'; }
     } else v.fact = v.whenWhy;
     out.push(v);

@@ -89,11 +89,15 @@ applies the rule to the raw facts (no site code):
   Malevolent Resonance, an orb carrier's ring on someone who isn't carrying that colour, their own soul fragments (Gravebound from their
   own Gloombomb or frontal, never from someone else's bomb), and a tank dying to the frontal on their own turn (stack 1), or on a later
   stack they gave themselves by standing in the other tank's frontal.
+- **Proof 3, walked off the edge** (Main, Nov 13): no killing hit, past the platform's edge, not feared or mind controlled (nor carried over by one that ended up to 10 s before), and no knockback in their last 3 s.
+- **Never:** a death in a reset pull. **Fragments of their own and of someone else's bomb at once:** only their own count (they had 3 a source; a death on the timer is theirs if they picked up fewer than their own, a death to a pickup is theirs if it was one of their own).
+- **A death in the very hit that lost the pull counts** when that hit is their own mistake (four players in the Soul Sever, Nov 11 pull 5).
 - **Proof 2, sat low with something ready:** 2 s or more at or under 35%. The key lists what wasn't on cooldown, but "would it have
   saved them" needs the site's model of each button, so these are marked "maybe" and never fail a build.
 - The raw numbers behind each verdict are in the key for every death before the wipe: `last4` (damage by spell in the last 4 s),
   `overkill`, `maxHp`, `lowFor`, `hp10`, `mass`, `feared`, `mc`, `pos`, `used`.
 - A hand correction goes in `roots.js` under `deaths: { <code>: { <fight>: { "<player>@<second>": { verdict, proof or fact } } } }`.
 
-Unsure ones (never fail a build, listed with `--list`): a death in the very hit that lost the pull, a Guillotine soaker or target (those
-rules are still being written), fragments from their own bomb and someone else's at once, walking off the platform with no killing hit.
+Unsure ones (never fail a build, listed with `--list`): the Guillotine target (that rule is still being written), and "sat low with something ready".
+
+**One line for a whole kind:** `known.json` can hold an id with `*` in it. `*:dmgShield:*` is every player's damage into a boss's shield (Main: count it, as Warcraft Logs does) and `*:healCheat:*` is Cheat Death and Purgatory in healing done. The plain damage and healing numbers are still checked beside them, so a new mistake in either still shows.
