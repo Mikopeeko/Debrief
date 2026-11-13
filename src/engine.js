@@ -252,7 +252,7 @@ const PACKS = [
 // (Ula'tek: spell IDs checked against real Heroic and Mythic pulls, 2026-10; the fight module covers the rest)
 { encounter: "Ula'tek", sources: ['the encounter journal', 'raid strategy guides', 'real Heroic and Mythic logs'], rules: [
   { type: 'avoidable', spellIds: [1292403], name: 'Caustic Waves', severity: 'Medium', tip: "Dodge the venom waves from Ula'tek and her tail. On Stage 1 she lifts a wing first to show the side." },
-  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', severity: 'Medium', diedSeverity: 'High', tip: 'Keep a tank on the tail (Gore Rattle) at all times, so Rattler Slam never hits the raid.' },
+  { type: 'raidFail', spellIds: [1299206], name: 'Rattler Slam', gap: 2 /* (a slam lands on everyone at once; the next one comes 3.8 s later) */, severity: 'Medium', diedSeverity: 'High', tip: 'Keep a tank on the tail (Gore Rattle) at all times, so Rattler Slam never hits the raid.' },
   { type: 'raidFail', spellIds: [1301007], name: 'Unchecked Rage', severity: 'Medium', diedSeverity: 'High', tip: "Keep a tank in Ula'tek's reach at all times, through swaps and when she resurfaces; if both tanks are away, a melee steps in." },
   { type: 'raidFail', spellIds: [1290991], name: 'Malice', severity: 'High', tip: "A Doomscale Warden's Malice went off on the raid. Interrupt it the moment it starts." },
   { type: 'interrupt', spellIds: [1290779], name: 'Malice', severity: 'High', tip: "Interrupt the Doomscale Warden's Malice." },
@@ -607,7 +607,7 @@ const UL_IDS = Object.values(UL).flat();
    when a hit they could have avoided landed in their last 5 s (Fester Burst outside the Wretch's bubble, a Caustic Wave, Noxious Splash) or dealt the blow: that one is.
    Caught in the tail's slam (a second Mephitic Thrash hit within half a second of the first) stays a Mephitic Thrash death) */
 const UL_SHARED = /^(mephitic thrash|spectral coils|necrotic vapors|noxious shell|stone venom)$/i;
-function ulaKillFix(d, hits, mx) { const pick = ulaKillPick(d.kill, d, hits, mx); if (pick) { d.killShared = d.kill; d.kill = pick.spell; d.killId = pick.id || 0; } }
+function ulaKillFix(d, hits, mx) { const pick = ulaKillPick(d.kill, d, hits, mx); if (pick) { d.killShared = d.kill; d.kill = pick.spell; d.killId = pick.id || 0; d.killSrc = pick.src || ''; } }
 function ulaKillPick(kill, d, hits, mx) {
   const L = (x) => String(x || '').toLowerCase(), k0 = L(kill); if (!UL_SHARED.test(k0)) return null;
   const last = hits.filter((e) => e.t >= d.t - 5 && e.t <= d.t + 0.2);
@@ -5121,7 +5121,9 @@ function buildUlatek(ev, r, h) {
     if (c) { used.add(c); g = c.g;
       const died = r.deaths.find((d) => d.guid === c.g && d.t >= c.s && ((d.t <= Math.min(c.e, v.t0) + 0.6 && d.t >= v.t0 - 1.3) || Math.abs(d.t - c.e) <= 0.8)), sp = splashes.find((e) => e.dst === c.g && Math.abs(e.t - c.e) <= 0.6), gr = greens.filter((e) => e.dst === c.g && e.t >= c.e - 0.7 && e.t <= c.e + 0.2).pop();
       if (!sp && !died) grE = gr || null;
-      if (sp) { splashG = [...new Set(splashes.filter((e) => Math.abs(e.t - sp.t) <= 0.4 && e.dst !== c.g).map((e) => e.dst))]; const other = splashG.map(pname);
+      /* (Nov 13, pull 12: Noxious Splash keeps ticking once a second on a carrier who touched. Larryg and Fourinches touched at 0:30, and their ticks at 0:38 to 0:39 named them again in the
+         0:38 touch of Volkovod, Kargaryen and Shockabunga. The other carriers in a touch are the ones whose own egg broke then) */
+      if (sp) { splashG = [...new Set(splashes.filter((e) => Math.abs(e.t - sp.t) <= 0.4 && e.dst !== c.g && carry.some((x) => x.g === e.dst && Math.abs(x.e - e.t) <= 0.8)).map((e) => e.dst))]; const other = splashG.map(pname);
         cause = 'Noxious Splash' + (other.length ? ', within 3 yards of ' + other.join(' and ') : '');
         /* (a splash the log shows on one carrier only: the nearest other carrier then, as a hint (pull 10: Volkovod about 4 yards from Kargaryen; pull 13: Boltzzx about 5 from Dragooned)) */
         if (!other.length) { const pp = posPts(Math.max(0, c.e - 0.15)), me = pp.find((q) => q.guid === c.g), nr = me ? carry.filter((x) => x !== c && x.g !== c.g && x.s <= c.e && x.e >= c.e - 1).map((x) => { const q = pp.find((z) => z.guid === x.g); return q ? [x.g, Math.hypot(q.x - me.x, q.y - me.y)] : null; }).filter(Boolean).sort((a, b) => a[1] - b[1])[0] : null; if (nr && nr[1] <= 6) cause += '; the nearest carrier was ' + pname(nr[0]) + ', about ' + Math.max(1, Math.round(nr[1])) + ' yards away'; }
@@ -6430,7 +6432,7 @@ class Mech {
     if (f) {
       let list = this.fails.get(f.name); if (!list) this.fails.set(f.name, list = []);
       const last = list[list.length - 1];
-      if (last && t - last.t <= 4) { last.hit.add(player); last.dmg += amount; } else list.push({ t, r: f, id, hit: new Set([player]), dmg: amount });
+      if (last && t - last.t <= (f.gap || 4)) { last.hit.add(player); last.dmg += amount; } else list.push({ t, r: f, id, hit: new Set([player]), dmg: amount }); /* (Nov 13, Ula'tek pull 9: gap = a rule's own window, for a hit that repeats inside 4 s) */
     }
     const r = this.get('avoidable', id, name); if (!r) return 0;
     const k = player + '\u0001' + r.name, a = this.avoid.get(k);
@@ -7823,7 +7825,7 @@ function explainDeaths(r) {
     const top = [...by.values()].sort((a, b) => b.amt - a.amt);
     // (Nov 8, audit D2: the hit that killed them is the biggest of their last 4 s when it was well over the finishing tick (a 527k Venom Rupture, then a 20k venom tick), else the last hit; every verdict below reads it)
     const lastHit = hits[hits.length - 1] || null, big0 = hits.filter((e) => e.t >= d.t - 4).reduce((m, e) => (!m || e.amount > m.amount ? e : m), null), bigOk = !!(big0 && lastHit && big0 !== lastHit && big0.amount >= 1.5 * lastHit.amount && big0.amount >= 0.1 * ((r.pMax && r.pMax.get(d.guid)) || 0)); /* (and a tenth of their health: an 11k orb tick is not the hit that killed them) */
-    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0);
+    d.kill = bigOk ? (big0.spell || 'Melee') : (d.ability || d.killer || ''); d.killId = bigOk ? (big0.id || 0) : (d.abilityId || 0); d.killSrc = bigOk ? (big0.src || '') : (d.killer || ''); /* (Nov 13: who dealt it) */
     if (/^dreadmarch$/i.test(d.ability || '')) { d.kill = d.ability; d.killId = d.abilityId || 0; }
     if (r.item.boss === "Ula'tek") ulaKillFix(d, hits, (r.pMax && r.pMax.get(d.guid)) || 0); /* (Nov 13: a raid-wide hit is never the killing hit when an avoidable one landed too) */ /* (Nov 12, Main's audit: mind controlled, the raid's big hit (Zaffia's "Elemental Blast") is Dreadmarch's doing, on every page) */
     // (too fast to react: from half health or more to dead in 2 s or less. A hit from 70% that kills is a one-shot too, so it's timed
@@ -8351,7 +8353,7 @@ function rootCauseGen(r, opts) {
   /* (Ula'tek: a burst of deaths the call lands in counts whole, its deaths a second or two after the call too (xH3J pull 18: Unchecked Rage at the call, 8 more dead to it 2 s later)) */
   /* (Nov 13, Wolfthorn's Nov 12 night: a Viper kills with its melee, Acidic Burst, Petrifying Sting and Putrid Membrane (a raid-wide aura for as long as it lives), and a carrier who
      touches another dies to Noxious Splash as their Vipers hatch: one cause, traced below to how the Vipers hatched (pull 12 read "Spectral Coils killed 7" with five Vipers up)) */
-  const UL_VIP = 'Blightscale Vipers', ulaEgg = (d) => { const k = lc(d.kill || d.ability); return /^(putrid membrane|petrifying sting|acidic burst|noxious splash)$/.test(k) || (/^(melee|something|unknown|damage)?$/.test(k) && /blightscale viper/i.test(d.killer || '')); }; /* (the hit that killed them first: a Fester Burst death a Viper's melee finished is a Fester Burst death (pull 10)) */
+  const UL_VIP = 'Blightscale Vipers', ulaEgg = (d) => { const k = lc(d.kill || d.ability); return /^(putrid membrane|petrifying sting|acidic burst|noxious splash)$/.test(k) || (/^(melee|something|unknown|damage)?$/.test(k) && /blightscale viper/i.test(d.killSrc || d.killer || '')); }; /* (Nov 13, pull 4: Kargaryen took a Viper's 670k melee and died to a Putrid Membrane tick 0.3 s later, logged from Ula'tek: a Viper's kill, by the unit that dealt the hit) */ /* (the hit that killed them first: a Fester Burst death a Viper's melee finished is a Fester Burst death (pull 10)) */
   let endD = end; if (ula && !early && opts.cut != null) { const ts = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), s = ts.find((t) => t >= opts.cut - 5 && t <= opts.cut + 3 && ts.filter((x) => x >= t && x <= t + 5).length >= 4); if (s != null) endD = Math.max(end, s + 5); }
   const deaths = (r.deaths || []).filter((d) => d.t <= endD + 0.5).slice().sort((a, b) => a.t - b.t).map((d) => ({ t: d.t, g: d.guid, src: d.killer || '', who: nm(d.player), ab: ula && ulaEgg(d) ? UL_VIP : (ula && d.kill) || d.ability || d.killer || 'something', kill: d.kill || d.ability || d.killer || '' }));
   const KM = (r.mistakes || []).filter((m) => m.mechanic && m.mechanic !== 'Death' && !/^(pace|phase changes)$/i.test(m.mechanic) && m.t <= endD + 0.5 && !m.others), big = (m) => /^(High|Medium)$/.test(m.severity);
@@ -8381,7 +8383,10 @@ function rootCauseGen(r, opts) {
   /* (what happened and why in one sentence: "Nobody interrupted the Doomscale Warden's Malice at 3:07, and it killed 15.", "Nobody was in melee range of Ula'tek, so Unchecked Rage hit 18 players for 11.2M, and 4 died.") */
   const ulaShort = (m, n) => { const k = lc(m.mechanic), hitM = /\bhit (\d+ players?)( for [\d.]+[KMB]?)?/i.exec(m.detail || '');
     if (m.kick) return kickSay(m) + (n ? ', and it killed ' + n : '') + '.';
-    if (ULA_WHY[k] && m.player === 'Raid') return ULA_WHY[k] + ', so ' + m.mechanic + ' hit ' + (hitM ? hitM[1] + (hitM[2] || '') : 'the raid') + (n ? ', and ' + n + ' died' : '') + '.';
+    if (ULA_WHY[k] && m.player === 'Raid') { /* (Nov 13, pull 9: the deaths counted are both slams', so the second is said too: "hit 16 players for 9.7M, and again at 1:39 (11 players for 3M), and 11 died") */
+      const more = KM.filter((x) => x !== m && x.player === 'Raid' && lc(x.mechanic) === k && x.t > m.t && x.t <= m.t + 10).sort((a, b) => a.t - b.t), h2 = more.length === 1 ? /\bhit (\d+ players?)( for [\d.]+[KMB]?)?/i.exec(more[0].detail || '') : null;
+      const again = more.length === 1 ? ', and again at ' + T(more[0].t) + (h2 ? ' (' + h2[1] + (h2[2] || '') + ')' : '') : more.length ? ', and ' + more.length + ' more times by ' + T(more[more.length - 1].t) : '';
+      return ULA_WHY[k] + ', so ' + m.mechanic + ' hit ' + (hitM ? hitM[1] + (hitM[2] || '') : 'the raid') + again + (n ? ', and ' + n + ' died' : '') + '.'; }
     return null; };
   let mixC = null; if (stunM) { /* (the stun's own branch below) */ }
   else if (wave && (tally(wave)[0][1] < 2 || vague(tally(wave)[0][0]))) { mixC = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= wave[0].t - 25 && m.t <= wave[0].t + 1 && !(ula && /^viper hatched$/i.test(m.mechanic))).pop() || null; if (!mixC) wave = null; } /* (no raid failure before a mixed wave: what most of the collapse's deaths were) */
@@ -8480,14 +8485,23 @@ function rootCauseGen(r, opts) {
       short = yd ? 'The Blightscale Wretch was ' + (on ? 'on ' + on[1] + (on[2] ? ', who isn\'t a tank, ' : ', ') : 'held ') + yd[1] + ' yards from the tail, inside Mephitic Thrash\'s 35 yards, so ' + nO + ' players were outside its bubble at ' + T(fb.t) + ': Fester Burst killed ' + nU + '.' : nO + ' players were outside the Blightscale Wretch\'s bubble at ' + T(fb.t) + (ago ? ', ' + ago[1] + ' seconds after Mephitic Thrash' : '') + ': Fester Burst killed ' + nU + '.';
       chain.length = 0; say(fb.t, nO + ' players were outside the Blightscale Wretch\'s bubble' + (yd ? ', held ' + yd[1] + ' yards from the tail' : '') + ' (' + T(fb.t) + ')'); say(tU, 'Fester Burst killed ' + nU + ' at once (' + T(tU) + ')');
       ulaNoBy = yd ? 'Her tank holds the second Wretch by her. Held by the tail, the raid had no safe spot, so no one outside the bubble caused it.' : 'Each player gets into the bubble on their own, so no one person caused it.'; }
-    else if (uk === lc(UL_VIP)) { const tL = Math.max(tU, ...all.filter((d) => lc(d.ab) === uk).map((d) => d.t)), vl = (r.mistakes || []).filter((x) => /^viper hatched$/i.test(x.mechanic || '') && x.t <= (uTop.slow ? tL - 0.3 : tL + 1.5) && x.t >= tU - 120) /* (a Viper's line is logged as it hatches, a moment after the splash that broke its egg: every one up to the last of these deaths) */.sort((a, b) => a.t - b.t), spl = vl.filter((x) => /noxious splash/i.test(x.detail || '')), who = [];
+    else if (uk === lc(UL_VIP)) { const tL = Math.max(tU, ...all.filter((d) => lc(d.ab) === uk).map((d) => d.t)), vl = (r.mistakes || []).filter((x) => /^viper hatched$/i.test(x.mechanic || '') && x.t <= (uTop.slow ? tL - 0.3 : /noxious splash/i.test(x.detail || '') ? tL + 1.5 : tL - 1) && x.t >= tU - 120) /* (a Viper's line is logged as it hatches, a moment after the splash that broke its egg: every one up to the last of these deaths) */.sort((a, b) => a.t - b.t), spl = vl.filter((x) => /noxious splash/i.test(x.detail || '')), who = [];
       for (const m of spl) { if (m.player && m.player !== 'Raid') who.push(nm(m.player)); const w = /within 3 yards of ([^)]+)\)/i.exec(m.detail || ''); if (w) for (const x of w[1].split(/,\s*|\s+and\s+/)) if (x.trim()) who.push(nm(x.trim())); }
       const u = [...new Set(who)], nV = vl.length, kS = all.filter((d) => lc(d.ab) === uk && lc(d.kill) === 'noxious splash').length, tS = []; for (const m of spl) if (!tS.some((t) => Math.abs(t - m.t) <= 3)) tS.push(m.t);
       { const d0 = all.filter((d) => lc(d.ab) === uk && lc(d.kill) === 'noxious splash').map((d) => d.t).sort((a, b) => a - b)[0]; if (d0 != null && tS.length && d0 < tS[0] && tS[0] - d0 <= 6) tS[0] = d0; } /* (the splash itself, when it killed a carrier before the Viper's line) */
       const kSay = (kS && kS < nU ? 'Noxious Splash and the Vipers killed ' : kS ? 'Noxious Splash killed ' : nV === 1 ? 'it killed ' : 'they killed ') + nU;
       if (spl.length && u.length >= 2 && (spl.length * 2 >= nV || kS >= 2)) { /* (most of the Vipers came from carriers touching, or the splash itself killed two or more) */ causeM = spl[0]; name = 'Noxious Splash'; sp = spOf(name); sure = 0.8; P = Math.min(tU, tS[0]); ulaBy = u.slice(0, 5); next = ULA_NEXT['noxious splash']; const wh = u.length <= 5 ? andL(u) : who3(u.map((x) => ({ who: x })));
-        short = 'Egg carriers ' + wh + ' came within 3 yards of each other at ' + andL(tS.map((t) => T(t))) + ', and ' + (spl.length === 1 ? 'a Viper' : spl.length + ' Vipers') + ' hatched: ' + kSay.replace(/^(it|they) killed/, spl.length === 1 ? 'it killed' : 'they killed') + '.';
-        chain.length = 0; say(tS[0], 'egg carriers ' + wh + ' came within 3 yards of each other, and ' + (spl.length === 1 ? 'a Viper' : spl.length + ' Vipers') + ' hatched (' + T(tS[0]) + ')'); say(tU, kSay.replace(/^(it|they) killed/, 'the Vipers killed') + ' (' + T(tU) + ')'); }
+        /* (Nov 13, pull 13: "Dragooned, Schooty and Volkovod came within 3 yards of each other at 1:47 and 2:13" read as if all three touched each other. Dragooned's splash at 1:47 was his alone
+           (the nearest carrier in the log was Boltzzx); Schooty and Volkovod touched at 2:13. Each touch is said with its own names) */
+        const grp = []; for (const m of spl) { let g = grp.find((x) => Math.abs(x.t0 - m.t) <= 3); if (!g) grp.push(g = { t0: m.t, t: m.t, names: [], near: '' }); const add = (x) => { x = nm(x); if (x && !g.names.includes(x)) g.names.push(x); };
+          if (m.player && m.player !== 'Raid') add(m.player); const w = /within 3 yards of ([^)]+)\)/i.exec(m.detail || ''); if (w) for (const x of w[1].split(/,\s*|\s+and\s+/)) if (x.trim()) add(x.trim());
+          const nr = /the nearest carrier was ([^,)]+), about (\d+) yards away/i.exec(m.detail || ''); if (nr && !g.near) g.near = 'nearest carrier ' + nm(nr[1].trim()) + ' about ' + nr[2] + ' yards away'; }
+        if (grp.length === tS.length) grp.forEach((g, i) => { g.t = tS[i]; });
+        const vSay = spl.length === 1 ? 'a Viper' : spl.length + ' Vipers', gSay = (g) => (g.names.length ? andL(g.names) : 'a carrier') + ' at ' + T(g.t) + (g.names.length === 1 && g.near ? ', ' + g.near : '');
+        short = grp.length > 1 ? 'Egg carriers came within 3 yards of each other ' + (grp.length === 2 ? 'twice' : grp.length + ' times') + ' (' + grp.map(gSay).join('; ') + '), and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, 'they killed') + '.'
+          : 'Egg carriers ' + wh + ' came within 3 yards of each other at ' + andL(tS.map((t) => T(t))) + ', and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, spl.length === 1 ? 'it killed' : 'they killed') + '.';
+        chain.length = 0; if (grp.length > 1) for (const g of grp) say(g.t, (g.names.length === 1 ? g.names[0] + '\'s egg went off (Noxious Splash' + (g.near ? ', ' + g.near : '') + ')' : 'egg carriers ' + (g.names.length ? andL(g.names) : '') + ' came within 3 yards of each other') + ' (' + T(g.t) + ')');
+        else say(tS[0], 'egg carriers ' + wh + ' came within 3 yards of each other, and ' + vSay + ' hatched (' + T(tS[0]) + ')'); say(tU, kSay.replace(/^(it|they) killed/, 'the Vipers killed') + ' (' + T(tU) + ')'); }
       else { const died = vl.filter((x) => /died carrying it/i.test(x.detail || '')).length, grn = vl.filter((x) => /\(hit by /i.test(x.detail || '')).length, gnd = vl.filter((x) => /egg on the ground/i.test(x.detail || '')).length, oth = nV - died - grn - gnd - spl.length;
         const parts = [died ? died + ' from ' + (died === 1 ? 'a carrier who died' : 'carriers who died') : '', spl.length ? spl.length + ' from carriers touching' : '', grn ? grn + ' from ' + (grn === 1 ? 'an egg' : 'eggs') + ' hit by a wave' : '', gnd ? gnd + ' from ' + (gnd === 1 ? 'an egg' : 'eggs') + ' left on the ground' : '', oth > 0 ? oth + ' more' : ''].filter(Boolean);
         causeM = vl[0] || null; name = UL_VIP; sp = spOf('Viper hatched', vl[0] && vl[0].id) || spOf('Putrid Membrane'); sure = 0.7; ulaBy = null; if (vl.length) P = Math.min(tU, vl[vl.length - 1].t);
