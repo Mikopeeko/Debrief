@@ -99,3 +99,14 @@ left to reach the intermission". Dreadmarch keeps its own sentence ("Ghosts touc
 player is named for it (several people). "Too many individual mistakes" is left for pulls where nothing stood out: 7 of 58 saved Coiled
 Altar wipes now (22 of 54 October wipes this morning), none on Nov 11. The contradiction check now allows a personal mechanic as the one
 cause of a worn-down pull only with that majority (rootCause returns worn: true).
+
+## Nov 12, pass 2 (Flex: "do another pass", "until its perfect, on all bosses")
+Read the box as shown (headline, tip, every How it went row) for all 19 Nov 11 wipes on a practice link (`window.wipeChain` is exposed).
+- Sever / Soul Sever / Blighted Sever deaths are each player's own ("Why does it like to blame soul sever individual deaths for wipes"): never a
+  worn-down root, an after-call burst that is 60% Sever isn't the collapse, a Sever-led wave is named by its next cause; a missed taunt still is.
+- "N deaths by the call" (it counts every death, rezzed players' earlier ones too); a missed taunt's own tip; the orb root's one carrier is
+  never "killed by orbs someone else set off"; a Phase 2 push is a raid mistake (never "Short on damage" or the damage-check tip).
+- How it went: a death right after the player's own mistake on the same hit ends that row; a count row names the single deaths beside it;
+  the root's own moment always has a row and survives the 9-row cap; a row "fits" the root only on a real match (Melee "fit" everything,
+  so the tag landed on "died to Melee").
+- A missed kick says what the fear did; Also hurt reads "A, B and C's ghosts touched each other".
