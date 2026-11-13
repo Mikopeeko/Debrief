@@ -1,4 +1,5 @@
 {
+ "agt6jMTyZBYvVzAP:2:cause": "Why we wiped reads the frontal; Main ruled it the missed kick at 7:34, with the frontal as what added up (Report card chat is changing it) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:2:cause:who": "Why we wiped says Tyralien did not taunt; he had been dead for 75 s (reported Nov 13)",
  "agt6jMTyZBYvVzAP:2:heal:Zaffia": "Cheat Death's absorb is left out of the Rogue's healing (reported Nov 13)",
  "agt6jMTyZBYvVzAP:3:heal:Zaffia": "Cheat Death's absorb is left out of the Rogue's healing (reported Nov 13)",
@@ -39,6 +40,7 @@
  "agt6jMTyZBYvVzAP:13:tabs:Fl-x-r-st-s-damage-from-the-Sever-at-0-23": "reported (reported Nov 13)",
  "agt6jMTyZBYvVzAP:14:noxious:Hobbz": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "agt6jMTyZBYvVzAP:15:tabs:Dragooned-s-damage-from-the-Blighted-Sever-at-7-11": "reported (reported Nov 13)",
+ "agt6jMTyZBYvVzAP:16:deathVerdict:Zaffia@448": "a soaker who died in the soak is counted; the fix is coming from the Report card chat (reported Nov 13)",
  "agt6jMTyZBYvVzAP:17:tabs:Boltzzx-s-damage-from-the-Soul-Sever-at-5-07": "reported (reported Nov 13)",
  "agt6jMTyZBYvVzAP:17:tabs:players-a-tank-frontal-hit-not-tanks-": "reported (reported Nov 13)",
  "agt6jMTyZBYvVzAP:17:tabs:Volkovod-s-damage-from-the-Soul-Sever-at-5-07": "reported (reported Nov 13)",
@@ -48,11 +50,14 @@
  "Gax3AkbyFRXmdrgQ:4:noxious:Boltzzx": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:4:tabs:Shockabunga-s-damage-from-the-Soul-Sever-at-3-04": "reported (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:5:axe:Vandagos": "Axegrinder hits read low (reported Nov 13)",
+ "Gax3AkbyFRXmdrgQ:5:cause:by": "the cause names nobody (\"a dropped orb\"); Flex: Komo died carrying it and he ran into it, so name both (reported Nov 13)",
+ "Gax3AkbyFRXmdrgQ:6:deathVerdict:Huservoker@450": "a soaker who died in the soak is counted; the fix is coming from the Report card chat (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:6:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:7:deathProof:Fourinches@477": "the proof reads 4 Gloombomb hits; the log shows his own soul fragments, the last pickup killed him (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:7:deathVerdict:Komo@481": "counted against Komo for Mutagenic Venom; he was carrying the purple orb, whose ring hits its carrier (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:7:tabs:Dashtoswirly-s-damage-from-the-Sever-at-1-00": "reported (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:8:heal:Zaffia": "Cheat Death's absorb is left out of the Rogue's healing (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:8:tabs:Komo-s-damage-from-the-Sever-at-0-23": "reported (reported Nov 13)",
+ "Gax3AkbyFRXmdrgQ:9:deathVerdict:Dragooned@452": "a soaker who died in the soak is counted; the fix is coming from the Report card chat (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:9:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)"
 }
