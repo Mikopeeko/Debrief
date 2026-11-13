@@ -110,3 +110,17 @@ Read the box as shown (headline, tip, every How it went row) for all 19 Nov 11 w
   the root's own moment always has a row and survives the 9-row cap; a row "fits" the root only on a real match (Melee "fit" everything,
   so the tag landed on "died to Melee").
 - A missed kick says what the fear did; Also hurt reads "A, B and C's ghosts touched each other".
+
+## Nov 13, pass 3: the other bosses' boxes as shown (Flex: "Yes, keep going")
+Read every wipe's box on the all-bosses night (xH3J: Ula'tek 9, Kith'ix 4, Sentinels, Sszorak, Twin Fangs) and the Oct 14 Twin Fangs night
+(9DRW, 29 wipes) on a practice link (`__wla.select` loop over `S.index.bosses`, then the `.dbt-why` rows; start from a single pull, not All pulls).
+- A player's line that starts with a spell reads "Bryon's Abyssal Grasp stayed on ..."; other lines keep "Name verb ...".
+- "died to Caustic Waves while stunned by an unkicked Anguished Cry", never "because stunned by".
+- The root's own moment gets a row on the other nine bosses too (not when its line is about deaths: those have death rows); a row "fits"
+  the root only on a real match (a spell with no family "fit" every root); when a row names the cause, the Root cause tag goes to it
+  (never "died to Toxic Fumes" beside the Visceral Burst row); a reset tags no row.
+- A player's own miss that hit the raid (a tank's missed Stone Breaker circle): the line explaining a wave counts up to the wave's last death,
+  the first miss wins over a later one; it is the cause when its hit (the site's one killing hit, d.kill) killed half or more of the wave
+  ("Ironvan missed Stone Breaker circle 1, and it killed 13 players", was "Caustic Globule"), or, with no wave, when it killed at least as many
+  as anything else in the last 15 s; "and it killed N" counts the miss's own hit, never the wave's first death.
+Tried and left out: naming every root death by d.kill (it moved 8 Coiled Altar roots, several for the worse: needs its own review).
