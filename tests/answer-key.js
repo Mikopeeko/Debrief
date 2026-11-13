@@ -31,7 +31,7 @@ function siteFacts(code, fight) {
   const rowsOf = (s) => (s ? (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || [])) : []);
   // the phases and the bosses' last health
   out.reached = m ? String(m.reached || '') : ''; out.phases = ((m && m.phases) || []).map((p) => [p.name, p.start]);
-  out.hp = {}; for (const u of r.hpUnits ? r.hpUnits.values() : []) if (/^(Zul'jan|Hex Lord Malacrass)$/.test(u.name) && u.samples && u.samples.length) out.hp[u.name] = Math.round(1e4 * u.samples[u.samples.length - 1][1]) / 100;
+  out.hp = {}; { const best = {}; for (const u of r.hpUnits ? r.hpUnits.values() : []) { if (!(/^(Zul'jan|Hex Lord Malacrass)$/.test(u.name) || u.name === it.boss) || !u.samples || !u.samples.length) continue; const l = u.samples[u.samples.length - 1], v = Math.round(1e4 * l[1]) / 100, b = best[u.name]; /* (a boss with several bodies of one name: the body seen last; if two were seen to the end, the one that was hit) */ if (!b || l[0] > b[0] + 2 || (Math.abs(l[0] - b[0]) <= 2 && v < b[1])) best[u.name] = [l[0], v]; } for (const [k, b] of Object.entries(best)) out.hp[k] = b[1]; }
   // why we wiped, as the page works it out: the wipe call (cutInfo) and then the root cause
   out.cause = null;
   if (!it.kill) { try { const S = H.site(UI_NAMES, { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} }); const ci = S.cutInfo(r), c0 = ci && ci.call ? ci.call : ci, cut = c0 && c0.auto ? c0.t : null;
@@ -124,7 +124,9 @@ function comparePull(code, K, S, say) {
   for (const [b, v] of Object.entries(K.bossHpEnd || {})) { const sv = (S.hp || {})[b]; if (sv == null || Math.abs(sv - v[1]) > 1.5) say('hp:' + b, 2, b + '\'s health at the end', v[1] + '%', sv == null ? 'not shown' : sv + '%'); else ok(); }
   // 2. what ended the pull
   if (K.cause && !K.kill) { const c = K.cause, sc = S.cause, cats = [c.cat].concat(c.or || []);
-    if (!sc) say('cause', 3, 'what ended the pull', c.cat + ': ' + c.line, 'no cause given', c.sure === false);
+    const byName = !c.cat && c.name, nameOk = byName && sc && [c.name].concat(c.nameOr || []).some((n) => String(sc.name || '').toLowerCase().includes(n.toLowerCase()));
+    if (!sc) say('cause', 3, 'what ended the pull', (c.cat || c.name) + ': ' + c.line, 'no cause given', c.sure === false);
+    else if (byName) { if (!nameOk) say('cause', 3, 'what ended the pull', c.name + ': ' + c.line, sc.name + ' — ' + (sc.short || ''), c.sure === false); else ok(); if (c.names) { const miss = c.names.filter((n) => !String(sc.short || '').includes(n) && !(sc.who || []).includes(n)); if (miss.length) say('cause:who', 2, 'who the cause names', c.names.join(', '), (sc.who || []).join(', ') + ' — ' + (sc.short || ''), c.sure === false); else ok(); } }
     else if (!cats.includes(sc.cat)) say('cause', 3, 'what ended the pull', c.cat + ': ' + c.line, sc.cat + ': ' + sc.name + ' — ' + (sc.short || ''), c.sure === false); else ok();
     if (sc && c.by && sc.cat === c.cat) { const got = sc.by.slice().sort().join(', '), want = c.by.slice().sort().join(', '), alt = (c.byOr || []).slice().sort().join(', ');
       const fine = c.byAny ? sc.by.length > 0 && sc.by.every((x) => c.by.includes(x)) : got === want || (c.byOr && got === alt);
@@ -199,7 +201,7 @@ function comparePull(code, K, S, say) {
 
 // ---- run ----
 (async () => {
-  const t0 = Date.now(), keyFiles = fs.existsSync(KEYS) ? fs.readdirSync(KEYS).filter((f) => /^[A-Za-z0-9]{16}\.json$/.test(f)) : [];
+  const t0 = Date.now(), keyFiles = fs.existsSync(KEYS) ? fs.readdirSync(KEYS).filter((f) => /^[A-Za-z0-9]{16}(-[a-z]+)?\.json$/.test(f)) : [];
   if (!keyFiles.length) { console.log('Answer key: no key files'); process.exit(1); }
   if (!fs.existsSync(LIB)) { console.log('Answer key: skipped (no log library at ' + LIB + ')'); process.exit(0); }
   const known = (() => { try { return JSON.parse(fs.readFileSync(path.join(KEYS, 'known.json'), 'utf8')); } catch (e) { return {}; } })();

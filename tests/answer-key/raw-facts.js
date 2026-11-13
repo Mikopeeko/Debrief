@@ -25,6 +25,8 @@ const DEFS = { 'Divine Shield': 300, 'Divine Protection': 60, 'Lay on Hands': 42
   'Cloak of Shadows': 120, 'Evasion': 120, 'Crimson Vial': 30, 'Blur': 60, 'Netherwalk': 180, 'Fiery Brand': 60, 'Metamorphosis': 180,
   'Astral Shift': 120, 'Stone Bulwark Totem': 180, 'Barkskin': 60, 'Renewal': 90, 'Survival Instincts': 180, 'Desperate Prayer': 90, 'Dispersion': 120,
   'Fortifying Brew': 120, 'Diffuse Magic': 90, 'Touch of Karma': 90, 'Dampen Harm': 120, 'Unending Resolve': 180, 'Dark Pact': 60 };
+// Shields that only stop a killing blow (the site leaves them out of healing done; kept apart as absorbCheat).
+const CHEAT = /^(Cheat Death|Purgatory)$/;
 // Combat potions by name. Each was seen used at the pull and again five minutes later (the potions' shared cooldown) on these nights.
 const COMBAT_POTS = /^(Potion of Recklessness|Light's Potential|Liquid Luster)$/;
 const r2 = (x) => Math.round(x * 100) / 100, r1 = (x) => Math.round(x * 10) / 10;
@@ -54,13 +56,13 @@ function rawFacts(rep, P) {
     const ty = e.type;
     if (e.x != null && e.resourceActor) { const idp = e.resourceActor === 2 ? e.targetID : e.sourceID; if (hp.has(idp)) lastPos.set(idp, [e.timestamp, e.x / 100, e.y / 100]); }
     if (e.hitPoints != null && e.maxHitPoints) { const id = e.resourceActor === 2 ? e.targetID : e.sourceID, v = e.hitPoints / e.maxHitPoints;
-      if (hp.has(id)) { hp.get(id).push([e.timestamp, v]); mxHp.set(id, e.maxHitPoints); } else { const n = nm(id); if (n === "Zul'jan" || n === 'Hex Lord Malacrass') bossHp[n] = [s(e.timestamp), r2(100 * v)]; } }
+      if (hp.has(id)) { hp.get(id).push([e.timestamp, v]); mxHp.set(id, e.maxHitPoints); } else { const n = nm(id); if (n === "Zul'jan" || n === 'Hex Lord Malacrass' || n === F.name) bossHp[n] = [s(e.timestamp), r2(100 * v)]; } }
     if (ty === 'damage') { const tot = (e.amount || 0) + (e.absorbed || 0);
       if (e.subtractsFromSupportedActor && e.supportID != null && !friendly(e.targetID)) { const sp = isP(e.supportID) ? e.supportID : ownerOf(e.supportID); if (sp != null && get(sp)) get(sp).dmg -= e.amount || 0; }
       if (hp.has(e.targetID)) { const l = lastHits.get(e.targetID); l.push([e.timestamp, e.abilityGameID, tot, e.overkill || 0, e.sourceID, e.hitPoints != null && e.maxHitPoints ? e.hitPoints / e.maxHitPoints : null]); if (l.length > 40) l.splice(0, 20); }
       const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w) && !friendly(e.targetID)) { get(w).dmg += e.amount || 0; get(w).dmgShield += e.absorbed || 0; } }
     else if (ty === 'heal') { const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w)) { get(w).heal += (e.amount || 0) + (e.absorbed || 0); get(w).overheal += e.overheal || 0; } }
-    else if (ty === 'absorbed') { const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w)) get(w).absorb += e.amount || 0; }
+    else if (ty === 'absorbed') { const w = isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID); if (w != null && get(w)) { if (CHEAT.test(an(e.abilityGameID))) get(w).absorbCheat = (get(w).absorbCheat || 0) + (e.amount || 0); else get(w).absorb += e.amount || 0; } }
     else if (ty === 'cast' && hp.has(e.sourceID)) { const n = an(e.abilityGameID); casts.get(e.sourceID).push([e.timestamp, n]);
       if (/^(Demonic )?Healthstone$/.test(n)) useC(e.sourceID, 'stone', e.timestamp, n); else if (/Health(ing)? Potion/.test(n)) useC(e.sourceID, 'healpot', e.timestamp, n); else if (COMBAT_POTS.test(n)) useC(e.sourceID, 'pot', e.timestamp, n); else if (/Mana Potion/.test(n)) useC(e.sourceID, 'manapot', e.timestamp, n); else if (/^(Potion of |Draught of )/.test(n) || /Potion$/.test(n)) useC(e.sourceID, 'pot', e.timestamp, n); }
     else if (ty === 'death' && hp.has(e.targetID) && !e.feign) { if (!dead.has(e.targetID)) { dead.set(e.targetID, e.timestamp); deathsRaw.push(e); if (!diedAt.has(e.targetID)) diedAt.set(e.targetID, e.timestamp); } }

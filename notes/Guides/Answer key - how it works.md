@@ -17,8 +17,9 @@ nights whose facts are written down once, from the raw log, and every build is c
 |---|---|---|
 | Nov 11, The Coiled Altar Mythic | `agt6jMTyZBYvVzAP` | 19 wipes (fights 2 to 20) |
 | Nov 12, The Coiled Altar Mythic | `Gax3AkbyFRXmdrgQ` | 6 wipes and the kill (fights 3 to 9) |
+| Nov 12, Ula'tek Mythic | `Gax3AkbyFRXmdrgQ-ulatek` | 13 wipes in phase 1 (fights 11 to 23) |
 
-Ula'tek joins when the Ula'tek chat's findings are verified. Deaths have their raw facts only (see Deaths below).
+A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'tek has the facts every boss has (length, boss health, totals, deaths and killing hits, kicks, potions, flask, food, rune) and each wipe's cause from the Ula'tek chat's proof table, with the deaths re-read here. Its mechanics and death verdicts are not in the key yet: `raw-facts.js` and `death-rule.js` need an Ula'tek block first.
 
 ## The facts, and how each is read from the log
 | Fact | How it is read |
@@ -28,7 +29,7 @@ Ula'tek joins when the Ula'tek chat's findings are verified. Deaths have their r
 | Boss health at the end | each boss's last health reading in the events (Warcraft Logs' own two percentages are kept beside it) |
 | What ended the pull | by hand: the last minute of every wipe read event by event (`roots.js` has the sentence and the proof) |
 | Damage done | each hit's amount on enemies, pets counted for their owner. An Augmentation Evoker's share of a hit is its own event and comes off the buffed player, as Warcraft Logs does it. Damage a boss's shield absorbed is kept apart (`dmgShield`) |
-| Healing done | heals (with the part a heal absorb ate) plus the damage the player's shields absorbed |
+| Healing done | heals (with the part a heal absorb ate) plus the damage the player's shields absorbed. Shields that only stop a killing blow (Cheat Death, Purgatory) are kept apart as `absorbCheat`: the site leaves them out |
 | Time alive | the pull's length less the time between each death and the rez after it |
 | Deaths | every death event on a player (a Hunter's Feign Death is marked in the log and left out), the killing hit the log names, the last three hits, health every 2 s for 10 s, seconds at or under 35% before dying, and the defensives pressed so far |
 | Kicks | every interrupt event; a Wail of Terror "got off" when the add's cast event of it lands (it then fears) |
