@@ -90,8 +90,10 @@ function rawFacts(rep, P) {
   const kicks = [], offs = [];
   for (const e of ev) { if (e.type === 'interrupt' && (isP(e.sourceID) || ownerOf(e.sourceID) != null)) kicks.push({ t: s(e.timestamp), by: nm(isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID)), with: an(e.abilityGameID), spell: an(e.extraAbilityGameID), on: nm(e.targetID) + (e.targetInstance ? ' ' + e.targetInstance : '') });
     if (e.type === 'cast' && e.abilityGameID === CA.wail && !friendly(e.sourceID)) offs.push({ t: s(e.timestamp), spell: 'Wail of Terror', on: nm(e.sourceID) + (e.sourceInstance ? ' ' + e.sourceInstance : ''), feared: ev.filter((x) => x.type === 'applydebuff' && x.abilityGameID === CA.wail && Math.abs(x.timestamp - e.timestamp) < 500 && isP(x.targetID)).length }); }
+  const dispels = ev.filter((e) => e.type === 'dispel' && (isP(e.sourceID) || ownerOf(e.sourceID) != null)).map((e) => [s(e.timestamp), nm(isP(e.sourceID) ? e.sourceID : ownerOf(e.sourceID)), an(e.abilityGameID), an(e.extraAbilityGameID)]);
+  const ccSpans = {}; for (const [id, a, b] of mcSp.concat(fearSp)) (ccSpans[nm(id)] = ccSpans[nm(id)] || []).push([s(a), s(b)]);
   const out = { fight: P.fight, kill: !!(ev.find((e) => e.type === 'encounterend') || {}).kill || !!F.kill, len: r1(len), wclBossPct: F.bossPercentage, wclFightPct: F.fightPercentage, wclLastPhase: F.lastPhase, wclIntermission: !!F.lastPhaseIsIntermission,
-    bossHpEnd: bossHp, size: ids.length, players: pl, prep, consum, deaths, rez, kicks, kicksMissed: offs };
+    bossHpEnd: bossHp, size: ids.length, dispels, ccSpans, players: pl, prep, consum, deaths, rez, kicks, kicksMissed: offs };
   if (F.encounterID === 3429 || (ev[0] && ev[0].encounterID === 3429)) out.ca = coiledAltar(ev, { t0, s, nm, an, isP, ownerOf, friendly, roleOf, ids, hp, hpAt, len, P });
   return out;
 }

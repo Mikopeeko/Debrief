@@ -40,7 +40,7 @@ Ula'tek joins when the Ula'tek chat's findings are verified. Deaths have their r
 | Gloombomb | each cast's four targets, and anyone else its blast hit |
 | Soul fragments | every Gravebound: how many fragments were picked up before it ended |
 | Noxious Ground | each player's damage ticks (one a second in a pool) and seconds with the debuff |
-| Venomfang | each debuff, who dispelled it (the dispel event) and after how long |
+| Venomfang | each debuff, who dispelled it (the dispel event) and after how long. **Who was free** when it landed: every poison dispeller (anyone who removed a Venomfang on that night) who was in the pull, alive, not feared or mind controlled, and had made no dispel in the 8 s before |
 | Guillotine | each drop's target and the players its hit split on (the soakers); Executions |
 | Axegrinder | each time an axe's debuff landed on a player |
 | Eternal Nightfall | each shield and how long it stood; whether the cast finished |
