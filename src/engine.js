@@ -3616,9 +3616,8 @@ function avoidMistakes(r) {
     const tt = tR != null ? tR : tA; if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - tt) <= 3)) continue;
     const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
     const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
-    const vs = g.harm === 'High' || !g.kb || n < wA ? '' : ', more than 9 in 10 ' + (who || 'raiders') + ' in the fastest kills by then';
     r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
-      detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + vs + (died ? ', and died to it.' : '.'), fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
+      detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
   }
   r.mistakes.sort((a, b) => a.t - b.t);
 }
