@@ -1273,7 +1273,7 @@ const SITEMAP_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http
 // (a boss guide's page: the app's page with the guide's title and description, and its words in the page until the app opens the guide)
 const GUIDE_RX = /^\/guide\/([a-z0-9-]+)\/(heroic|mythic)\/?$/;
 // (a guide's quiz link, /guide/<boss>/<diff>?quiz (Nov 11): its own title and description for the Discord preview; the counts match GDZ_QUIZ in guides.js)
-const QUIZ_PAGES = { 'ulatek/mythic': 46, 'ulatek/heroic': 18 };
+const QUIZ_PAGES = { 'ulatek/mythic': 47, 'ulatek/heroic': 18 };
 function guidePage(env, g, url) {
   let h = appHtml(env); if (!g) return h;
   { const gm = GUIDE_RX.exec(url.pathname), qn = gm && url.searchParams.has('quiz') && QUIZ_PAGES[gm[1] + '/' + gm[2]]; if (qn) { const dn = gm[2] === 'heroic' ? 'Heroic' : 'Mythic';

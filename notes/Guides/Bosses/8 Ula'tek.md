@@ -81,3 +81,22 @@ Sources, in order: the in-game encounter journal and spell data of the live buil
 | Caustic Waves | 10 s DoT, stacks | same; a tail sends 3 | spell 1292403; Oct 6 hotfix | right; 12.5 yd a second is logs only |
 | Putrid Membrane | 20 s | 20 s since Nov 6 (30 s in the files) | spell 1301268; Nov 6 hotfix; logs 20 s on both | the site doesn't state it |
 | Malice "15-second cooldown" | — | — | no game number (server); logs | logs only |
+
+## Mythic phase 1, measured (Nov 13, 2026)
+From Wolfthorn's Nov 12 night (report Gax3AkbyFRXmdrgQ, fights 11 to 23: 13 wipes, all in phase 1) and 20 top Mythic kills in the log library. The checks that guard these are in `tests/ulatek-check.js`.
+
+**The clock (same to half a second on every pull):** eggs 0:01 · Wretch lands 0:03 (wakes 0:23) · venom beam 0:15 to 0:19 (5 impacts) · Mother's Wrath 0:27 · first bubble 0:39 · coils 0:40 and 0:43 · Mephitic Thrash 0:49 · her waves 0:56 (small tails 0:58 and 1:09) · second bubble 1:10 · eggs 1:11 · second Wretch 1:12 · she dives 1:17 · second beam 1:24 to 1:28 · Mother's Wrath 1:37 · Mephitic Thrash 1:46 · second Wretch's first bubble 1:48 · her waves 1:53 · coils 2:14 and 2:17 · bubble 2:20.
+
+| Fact | Number | From |
+|---|---|---|
+| Spectral Coils, hit before mitigation | 733k with nobody, 5% less per soaker, lowest (440k) at 8 | 80 circles on 20 kills; 7 soakers (477k) in the second circle on 7 of 18 kills |
+| A coil's hit on a raider | about a third of their health with a full soak | Wolfthorn pull 7 |
+| Where the coils land | beside the tail, whichever side it is on (west or east in set 1, about even; south in set 2) | 33 of 33 pulls |
+| Which coil comes first | facing the tail, the right-hand one | 33 of 33 pulls (Flex's rule for the raid: soak whichever appears first) |
+| Venom beam (Toxic Incubation) | one tank takes all 5 impacts; the two beams go to different tanks, and the tank who took the first Mother's Wrath soaks the second | 40 beams on 20 kills, no exception |
+| Fester Burst, players hit | 0 to 2 a burst, 4 at most | 20 kills (5 or more outside is the raid's mistake) |
+| Second Wretch at 1:48 | 17 to 22 yards in front of her new spot (east or west edge), 46 to 53 yards from the new tail (south), with 17 to 20 raiders in its bubble through the Thrash | 10 of 10 kills |
+| The same moment on Wolfthorn's wipes | Wretch 12, 16 and 24 yards from the tail; 13 to 15 players outside the bubble (pulls 7, 10, 11). Pulls 8 and 13 held it 48 to 49 yards away and got 14 and 17 inside: their two best pulls | Nov 12 |
+| Mephitic Thrash | everyone takes one hit (about 45% of a raider's health); a second hit within half a second is the slam | every pull |
+
+**What wiped the 13 pulls (root causes, each read against the raw log):** the beam taken by two damage dealers (1); small tails' waves during the coil soak or her waves at 1:00 (2, 4, 11); nobody in her melee range after the dive (3); nobody on the new tail, once after a tank died to Toxic Burn (5, 6); the second Wretch held by the tail, raid outside its bubble (7, 10; 8 with 6 outside); egg carriers touching (9, 12, 13).

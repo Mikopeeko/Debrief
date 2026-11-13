@@ -14,14 +14,15 @@ for (let i = 0; i < args.length; i++) if (args[i] === '--dir' && args[i + 1]) DI
 // the test nights: Wolfthorn's Oct 21 Coiled Altar (Mythic wipes), Wolfthorn's Oct 14 night (Kith'ix Heroic kill, Twin Fangs Mythic), and another
 // guild's all-bosses Mythic night (Oct 25)
 // (Nov 12: and Wolfthorn's Oct 22 Coiled Altar night, where Summary and the Report card disagreed about one player's mechanics)
-const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv', 'bcA9kw3mxHKzr4fR', 'agt6jMTyZBYvVzAP'];
+// (Nov 13: and Wolfthorn's Nov 12 Ula'tek Mythic night, 13 wipes in phase 1 read against the raw log (tests/ulatek-check.js))
+const NIGHTS = ['HWFBkCyc6JNazQrK', '9DRWhKnZbHtQgf4a', 'xH3JNdbQ74wBDPAv', 'bcA9kw3mxHKzr4fR', 'agt6jMTyZBYvVzAP', 'Gax3AkbyFRXmdrgQ'];
 /* (Nov 13: the whole Nov 11 and Nov 12 nights are in the library now; --all kept every saved pull in memory and ran out at 8 GB. A night listed here gives --all only these fights;
    the named guards (the death proof rule's deaths, Soul Sever's root) read their own pulls alone) */
-const ONLY = { agt6jMTyZBYvVzAP: [15, 16, 18, 20] };
+const ONLY = { agt6jMTyZBYvVzAP: [15, 16, 18, 20], Gax3AkbyFRXmdrgQ: [7, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23] }; /* (Nov 12: the proof rule's Coiled Altar pull and the 13 Ula'tek wipes) */
 // (Nov 11's Coiled Altar: only its three disputed orb pulls are saved (fights 15, 16, 20 = pulls 14, 15, 19), checked with --all, whose carrier
 // the raw log shows at the burst (Flex, Nov 12: "yep it was shock that i know for sure was missing"))
 const ORB_WANT = { 'agt6jMTyZBYvVzAP:15': 'Kargaryen', 'agt6jMTyZBYvVzAP:16': 'Shockabunga', 'agt6jMTyZBYvVzAP:18': '', 'agt6jMTyZBYvVzAP:20': 'Volkovod' }; /* (fight 18 = pull 17: feared onto the orbs by an unkicked Wail of Terror, nobody's orb, the missed kick's wipe (Flex, Nov 12)) */
-const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28', 'Gax3AkbyFRXmdrgQ:7']; /* (Nov 13: the proof rule's deaths, in every build: Flex's fragments in an axe here; Raiyvenz low with defensives ready is read by deaths-check.js itself) */
+const QUICK = ['HWFBkCyc6JNazQrK:10', 'HWFBkCyc6JNazQrK:14', '9DRWhKnZbHtQgf4a:43', '9DRWhKnZbHtQgf4a:36', 'xH3JNdbQ74wBDPAv:53', 'bcA9kw3mxHKzr4fR:28', 'Gax3AkbyFRXmdrgQ:7', 'Gax3AkbyFRXmdrgQ:11', 'Gax3AkbyFRXmdrgQ:17', 'Gax3AkbyFRXmdrgQ:22']; /* (Nov 13: Ula'tek pulls 1, 7 and 12: the beam taken by damage dealers, the Wretch held by the tail, five Vipers from carriers touching) */ /* (Nov 13: the proof rule's deaths, in every build: Flex's fragments in an axe here; Raiyvenz low with defensives ready is read by deaths-check.js itself) */
 
 const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.js'));
 
@@ -318,7 +319,7 @@ if (!UI.includes('return w && w.auto ? playedOn(r, w) : w;')) say('the page code
 /* (audit J6, Nov 8: the Ula'tek soak teams follow the guide's placement and an even split never says "1 more needed" on an odd roster) */
 { if (!UI.includes("{ label: '{star} Group', want: 6, block: 'trans' }, { label: '{diamond} Group', want: 6, block: 'trans' }, { label: '{square} Group', want: 6, block: 'trans' }")) say('the page code', 'jobs', 'the intermission groups no longer ask for six each (Flex, Nov 10: "this also needs 6 people in each group"; was uneven by design, J6)');
   if (!UI.includes("wantN = (typeof sl.want === 'number' ? sl.want : 0) - (sl.approx ? 1 : 0)")) say('the page code', 'jobs', 'the Plan row flags an even split that is one short (19 raiders can\'t split 10/10, J6)');
-  if (!UI.includes('The right-hand coil always goes first')) say('the page code', 'jobs', 'the Spectral Coils teams lost the guide\'s placement sentence (J6)'); }
+  if (!UI.includes('The coil that appears first is theirs (facing the tail, the right-hand one)')) /* (Nov 13: the coil that appears first, Flex's rule, with where it has landed in every log) */ say('the page code', 'jobs', 'the Spectral Coils teams lost the guide\'s placement sentence (J6)'); }
 /* (Nov 11, Flex: "check how it labels the assignemnts so our assignments match", "especially if theres markers assigned": Ula'tek's Mythic Plan has the team plan's sections and rows, the kicks by marker) */
 { for (const l of ['Moon', 'Moon backup 2', 'Diamond backup 2', 'Right Soak #1 Eggs', 'Left Soak #2 Filler', 'Fester Burst Spreads', 'P2 Left Far Big Egg', 'Jump 4', 'Group Soak 2 backup']) if (!UI.includes("label: '" + l + "'")) say('the page code', 'jobs', 'Ula\'tek\'s Mythic Plan has no "' + l + '" row: it no longer matches the team\'s wowutils plan');
   for (const t of ['Pick up Egg', 'Egg Clear', 'Fester Burst Egg Spread', 'Sides', 'Side Egg Pickups', 'Weakened Doomscale Interrupts', 'Jump side help', 'Intermission Positions', "Serpent\\'s Bite Leech"]) if (!UI.includes("title: '" + t + "'")) say('the page code', 'jobs', 'Ula\'tek\'s Plan has no "' + t + '" card (a section of the team\'s wowutils plan)');
@@ -427,6 +428,7 @@ try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores'
 if (ALL) { try { const rep6 = report('agt6jMTyZBYvVzAP'), ef6 = findFile('agt6jMTyZBYvVzAP_6.json'), it6 = rep6 && rep6.items.get(6); if (it6 && ef6 && E.rootCause) { let ev6 = readJ(ef6); if (!Array.isArray(ev6)) ev6 = ev6.events; const r6 = E.analyze(it6, W.translate(it6, ev6), {}); ev6 = null; if (!r6.item) r6.item = it6;
     const o8 = E.rootCause(r6, { cut: 217.4, why: 'line' }); if (!o8 || o8.cat === 'frontal' || /soul sever/i.test(o8.short || '')) say('The Coiled Altar Mythic pull 5 (agt6jMTyZBYvVzAP:6)', 'root', 'Soul Sever deaths after the call are the wipe\'s root cause again: "' + (o8 && o8.short) + '"'); } } catch (e) { say('Soul Sever guard', 'crash', e.message); } }
 try { require('./deaths-check.js')(NIGHT_R, H, say); } catch (e) { say('deaths', 'crash', 'the death check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 12: Main's death plan) */
+try { require('./ulatek-check.js')(NIGHT_R, H, say); } catch (e) { say('ulatek', 'crash', "the Ula'tek check crashed: " + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 13: Ula'tek's wipe causes, checks A to G) */
 try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player', 'crash', 'the one-player check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
 for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
