@@ -107,7 +107,7 @@ function siteFacts(code, fight) {
 
 // ---- the saved results: one small file per pull, named by a hash of everything that can change the site's answer ----
 function codeHash() { const h = crypto.createHash('sha1'); for (const f of [path.join(SRC, 'engine.js'), path.join(SRC, 'wcl.js'), __filename, path.join(__dirname, 'site-helpers.js')]) h.update(fs.readFileSync(f));
-  try { const H = require('./site-helpers.js'); for (const n of UI_NAMES.concat(UI_PREP, UI_RESET)) { try { h.update(H.grab(n)); } catch (e) { h.update('missing ' + n); } } } catch (e) { h.update('no helpers'); } return h.digest('hex').slice(0, 16); }
+  try { const H = require('./site-helpers.js'); for (const n of UI_NAMES.concat(UI_PREP, UI_RESET, ['deathProof', 'deathVerdict', 'deathFix', 'quarterDead', 'DEATH_JOB', 'DEATH_FAR', 'DEATH_KNOCK', 'DEATH_WIN'] /* (Nov 13: the death rule too, so a change to it reads the deaths again) */)) { try { h.update(H.grab(n)); } catch (e) { h.update('missing ' + n); } } } catch (e) { h.update('no helpers'); } return h.digest('hex').slice(0, 16); }
 const CACHE = (() => { for (const d of [path.join(LIB, 'cache', 'answer-key'), path.join(os.tmpdir(), 'debrief-answer-key')]) { try { fs.mkdirSync(d, { recursive: true }); fs.accessSync(d, fs.constants.W_OK); return d; } catch (e) {} } return null; })();
 if (ONE) { const [code, fight, out] = ONE.split(':').concat(args[args.indexOf('--one') + 2]); let res; try { res = siteFacts(code, +fight); } catch (e) { res = { crash: (e.stack || e.message).split('\n').slice(0, 4).join(' | ') }; } fs.writeFileSync(out, JSON.stringify(res)); process.exit(0); }
 
