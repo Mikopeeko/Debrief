@@ -3962,6 +3962,23 @@ function buildCoiledAltar(ev, r, h) {
   for (const e of gbClip) { const o = gbOwn(e), nC = new Set(clipAt(e.t)).size, whose = o ? pname(o) + '\'s' : 'someone else\'s';
     M(e.t, pname(e.dst), 'gloombomb', gbGrave(e) ? 'High' : 'Low', 'Got clipped by ' + whose + ' Gloombomb' + (nC >= 3 ? ', which hit ' + nC + ' players' : '') + ', so they also had to collect souls.', 'Gloombomb targets move to the add or to the side. Everyone else stays out of the circles.');
     if (nC >= 3) mistakes[mistakes.length - 1].others = whose + ' Gloombomb went off in the raid'; }
+  /* (Nov 13, Main's rulings on the answer key's death list) two facts on each death, for the death rule:
+     byDesign: hits that were theirs by design in their last seconds. An orb's ring hits its own carrier (Komo, Nov 12 pull 5, carried the purple and read "3 Mutagenic Venom hits").
+     gb: where a Gravebound death's soul fragments came from: their own Gloombomb, a frontal they took, or someone else's Gloombomb (Raiyvenz, Nov 11 pull 4: two other players' bombs,
+     5 of 6 picked up, read "picked up your soul fragments"); how many they picked up of how many; and whether the timer killed them (fragments left) or a pickup's own hit */
+  for (const d of r.deaths || []) { const bd = ['gloombomb']; /* (a Gloombomb's hit is its target's by design, and anyone else's is the bomb owner's: Flex, Nov 5) */
+    if (carry.some((c) => c.g === d.guid && c.s <= d.t + 0.1 && c.e >= d.t - 4.3)) bd.push('mutagenic venom');
+    if ((vvWin.get(d.guid) || []).some(([a, b]) => a <= d.t + 0.1 && b >= d.t - 4.3)) bd.push('volatile venom');
+    if (bd.length) d.byDesign = bd;
+    /* (proof 3, walked off the edge: yards from the room's middle (0, 1158.6) when nothing killed them; past 50 they were off the platform, the answer key's line) */
+    if (d.noKill) { const q = h.snap(d.t).find((p) => p.guid === d.guid); if (q && q.x === q.x) d.far = Math.round(Math.hypot(q.x, q.y - 1158.6)); }
+    if (!/^gravebound$/i.test(String(d.ability || '')) && !dmg('gravebound').some((e) => e.dst === d.guid && e.t >= d.t - 4.3 && e.t <= d.t + 0.3)) continue; /* (a Gravebound death, or fragments picked up in their last seconds) */
+    const off = auras('gravebound').filter((e) => e.dst === d.guid && e.op === 'remove' && e.t < d.t - 0.5).pop(), t0 = Math.max(d.t - 30, off ? off.t : 0) - 1;
+    const bombs = dmg('gloombomb').filter((e) => e.dst === d.guid && e.t >= t0 && e.t <= d.t), others = bombs.filter((e) => gbClip.some((c) => c.dst === e.dst && c.t === e.t)).length, own = bombs.length - others;
+    let frontal = 0, lastF = -9; for (const e of [].concat(dmg('sever'), dmg('soul sever'), dmg('blighted sever')).filter((x) => x.dst === d.guid && x.t >= t0 && x.t <= d.t).sort((a, b) => a.t - b.t)) { if (e.t - lastF > 3) frontal++; lastF = e.t; }
+    const picks = dmg('gravebound').filter((e) => e.dst === d.guid && (e.id == null || +e.id === 1308330) && e.t >= t0 && e.t <= d.t + 0.3);
+    const fail = dmg('gravebound').some((e) => e.dst === d.guid && +e.id === 1297906 && Math.abs(e.t - d.t) <= 1);
+    d.gb = { own, frontal, others, picked: picks.length, of: 3 * (own + frontal + others), timer: fail || !picks.some((e) => Math.abs(e.t - d.t) <= 0.3) }; }
   sections.push({ id: 'adds', title: 'Spiritcackle and Gloombombs (Adds)', place: 'Spiritcackle adds and Gloombombs', spell: S('spiritcackle'),
     verdict: setRows.some((r2) => r2[4].bad) ? 'bad' : gbClip.length ? 'warn' : 'good',
     summary: pl(sc.length, 'add set') + ', and ' + pl(gbClip.length, 'player') + ' clipped by a Gloombomb they weren\'t targeted by. The kicks on each add are under Interrupts below.',
@@ -4409,6 +4426,9 @@ function buildCoiledAltar(ev, r, h) {
     const lastHit = d.recap.filter((x) => !x.heal && !(mcOn && x.amount === 0)).pop(); /* (Nov 5: hits the mind control's shield soaked whole aren't damage: Oct 22 pull 14's falls had only 0 hits) */
     const fell = lastHit && /^falling$/i.test(lastHit.spell); // (the log's falling damage only: "Eternal Nightfall" isn't a fall (Oct 22))
     const noHit = !lastHit || d.t - lastHit.t > 4;
+    /* (Nov 13, Main: Hobbz, Nov 11 pull 11: Dreadmarch ended 6.4 s before he died, already 52 yards out, and nothing killed him; the death list named a raider's bleed that ticked for 0
+       on him while controlled. He fell after the mind control: the death list names Dreadmarch, as it does for the other mind control falls) */
+    if (!mcOn && !fell && !noHit && d.noKill && mcS && mcS.sp && mcS.sp.some(([a, z]) => a <= d.t && z != null && z >= d.t - 12)) { d.ability = 'Dreadmarch'; d.fellLate = true; }
     if (fell || noHit) { if (mcOn) d.fell = true; /* (How it went says they fell) */
       /* (the reason, from the log: a speed buff or their own shield still on from the start of the mind control (theirs: the cancel macro takes it
          off), or the raid didn't break the shield in time, with or without a stun or grip on them first (the raid's). Without the Dreadmarch
@@ -7606,6 +7626,12 @@ function survivability(r) {
        Saved nights: 3 of 18 such deaths had been healed to 91% or more first; the other 15 never got above 58%) */
     const hl = (r.php && r.php.get(d.guid)) || []; let tRec = d.t - 10; for (const [t, fr] of hl) { if (t > d.t - 0.05) break; if (t >= tRec && fr >= LOW_BACK) tRec = t; }
     d.lowFor = lowTime(hl, tRec, d.t - 0.05, 0.35); d.reactable = d.lowFor >= 2;
+    /* (Nov 13, Main: proof 3, "walked off the edge". Fourinches, Nov 11 pull 3, ran his Gloombomb 62 yards from the middle and died at 49% health with no killing hit.
+       noKill: nothing landed as they died (the last hit, if any, left them alive and had no overkill), or the fall itself. How far from the room's middle they were (d.far) comes from the
+       fight's own module, where the room is known: far from the other players isn't off the platform (Schooty, Nov 11 pull 2, carried a purple orb 76 yards from the raid, on the platform)) */
+    { const dm = d.recap.filter((e) => !e.heal && e.amount > 0), last = dm[dm.length - 1], fall = !!last && /^falling$/i.test(last.spell || '') && last.t >= d.t - 1;
+      d.noKill = fall || !dm.some((e) => e.t >= d.t - 0.6 && (e.ok > 0 || e.hp === 0));
+    }
   }
   for (const p of r.players.values()) {
     const died = r.deaths.filter((d) => d.guid === p.guid);

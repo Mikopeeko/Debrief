@@ -353,3 +353,27 @@ counted, Icebound Fortitude ready = You); Huservoker and Dragooned by name with 
 Saved nights (1,884 deaths, 103 pulls), this whole push against main before it: 8 deaths change, You 192 -> 189 (Larryg and Flex on Kith'ix become You; Zaffia, Huservoker, Dragooned, Shockabunga and Komo become Not counted; Fourinches keeps You on the axe proof).
 Checks (tests/deaths-check.js, every build): Zaffia and Larryg by name; every "sat low" proof is worked out again from the health line (after
 they were last back at 70%, under 35% for 2 s or more).
+
+## Nov 13, Main's rulings on the answer key's death list
+The answer key (tests/answer-key) works out every death's verdict from the raw log; these are the ones the site had wrong, and Main's calls on the open ones.
+1. **By design is never proof** (`d.byDesign`, the engine). An orb's ring on its own carrier (Komo, Nov 12 pull 5, read "3 Mutagenic Venom hits"); a Gloombomb (its
+   target's by design, anyone else's is the bomb owner's: Flex, Nov 5); on Ula'tek the egg's own shell on whoever carries it (Noxious Shell, seven Nov 12 deaths).
+   Two carriers touching (Noxious Splash) is still the mistake.
+2. **Soul fragments are judged by where they came from** (`d.gb`: own Gloombomb, a frontal they took, someone else's Gloombomb; picked up of how many; timer or pickup).
+   Someone else's bomb only: Not counted (Raiyvenz, Nov 11 pull 4, two other players' bombs, 5 of 6 picked up). Their own: You, in the fragments' words ("picked up your
+   soul fragments, and the last one killed you", never "4 Gloombomb hits": Fourinches, Nov 12 pull 5), tip "Get healed or use a defensive before you pick up the last
+   soul fragment." Both at once: only their own count. On the timer they must have left some of their own (picked up fewer than their own three: Vandagos, Nov 11 pull 16,
+   picked up 5 of 6, Not counted); killed by a pickup, their own share of the pickups' damage must pass the usual test (Raiyvenz, Nov 12 kill, You).
+3. **A death in the very hit that lost the pull counts when that hit is their own mistake** (`DEATH_CALL`, 1.25 s after the wipe call, several killed at once, not past a
+   quarter of the raid dead, proof 1 on the killing hit). Nov 11 pull 5, 3:38: Jangokin, Dragooned, Larryg and Huservoker stood in the Soul Sever. A lone death a second
+   after the call is still the collapse.
+4. **Proof 3, walked off the edge** (`d.noKill`, `d.far`, `DEATH_FAR`): no killing hit, past the room's edge (The Coiled Altar: more than 50 yards from the middle; no other
+   boss has the room yet), in control, no knockback hit in their last 3 s, not in a mass death. In control means no mind control or fear in their last 12 s, and none of
+   our own raiders' damage on them in their last 8 s (that is a mind control the debuff list missed). Fourinches, Nov 11 pull 3 (ran his Gloombomb off, 62 yards) and
+   Schooty, Nov 11 pull 16 (Disengage, 77 yards) are You. Hobbz, Nov 11 pull 11, carried out by Dreadmarch that ended 6 s before he fell, is "Not counted: fell after a
+   mind control" (and the death list says he fell, not a raider's bleed that ticked for 0). Far from the other players is not off the platform.
+5. **Nothing in a reset pull counts** (`dbfReset`: the boss never moved, or under 15 s). Nov 12 pull 1, Komo at 0:09: "Not counted: a reset pull, nothing in it counts".
+Saved nights (1,884 deaths) against the last push, with the other chats' Ula'tek work merged in: 55 deaths read differently (16 of them the reset pull), You 189 -> 184.
+Checks (tests/deaths-check.js): each death above by name (most in every build, the rest with --all), and on every death read: no proof from a by-design hit, none from
+soul fragments that all came from someone else's bomb, none in a reset pull, an edge proof only with no killing hit past the edge and not in a mass death.
+Still open: Ula'tek's Fester Burst where the Wretch was held out of reach (waits on the Ula'tek module's reach check); Twin Fangs' Caustic Deluge row.
