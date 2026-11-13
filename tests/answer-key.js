@@ -125,6 +125,7 @@ function comparePull(code, K, S, say) {
     if (sc && c.by && sc.cat === c.cat) { const got = sc.by.slice().sort().join(', '), want = c.by.slice().sort().join(', '), alt = (c.byOr || []).slice().sort().join(', ');
       const fine = c.byAny ? sc.by.length > 0 && sc.by.every((x) => c.by.includes(x)) : got === want || (c.byOr && got === alt);
       if (!fine) say('cause:by', 3, c.cat === 'orbs' ? 'whose purple orb burst' : 'who the cause names', want || 'nobody (' + (c.feared ? c.feared.join(', ') + ' was feared' : c.kind || 'not one player') + ')', got || 'nobody', c.bySure === false); else ok(); } }
+  if (K.cause && !K.kill && S.cause && K.cause.notBy) { const bad = (S.cause.who || []).concat(S.cause.by || []).filter((x) => K.cause.notBy.includes(x)); if (bad.length) say('cause:who', 3, 'who the cause blames', 'not ' + K.cause.notBy.join(', ') + ' (' + K.cause.notByWhy + ')', [...new Set(bad)].join(', ') + ': ' + (S.cause.short || '')); else ok(); }
   if (K.kill && S.cause) say('cause', 2, 'a kill has no wipe cause', 'none', S.cause.cat);
   // 3. each player's totals
   for (const [name, kp] of Object.entries(K.players || {})) { const sp = (S.players || {})[name]; if (!sp) { say('player:' + name, 3, name + ' is in the pull', 'yes', 'missing'); continue; }

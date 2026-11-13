@@ -3,12 +3,13 @@
 //   t     the second the pull was lost
 //   by    for an orb burst: who carried the purple that burst ([] = nobody's mistake to name: feared, or left on the floor)
 //   line  the cause in plain words;  proof: the log events that show it (times are m:ss from the pull's start)
+//   notBy a player the cause must not blame, with why (notByWhy)
 //   sure  false = the log leaves room for another reading (or: the other cat, byOr: the other carrier); these never fail a build
 'use strict';
 module.exports = {
   agt6jMTyZBYvVzAP: {
-    2: { cat: 'frontal', or: ['kick'], sure: false, t: 534.3, line: 'Vandagos (tank) died to Blighted Sever at 8:54, his third in a row. The other tank, Tyralien, had been dead since 7:39. The raid fell apart in the next 25 s.',
-      proof: ['Blighted Sever hit Vandagos at 7:46.5, 8:23.1 and 8:54.3 (1.88M, dead)', 'Tyralien died at 7:38.9 to Death\'s Embrace, feared by a Wail of Terror that got off at 7:33.7 (15 feared), and was not brought back', '6 more died in the 10 s after 8:54.3 (two to the boss\'s melee)'] },
+    2: { cat: 'frontal', or: ['kick'], sure: false, notBy: ['Tyralien'], notByWhy: 'dead since 7:38.9 and never brought back, so there was no taunt to miss', t: 534.3, line: 'Vandagos (tank) died to Blighted Sever at 8:54, his fourth in a row. The other tank, Tyralien, had been dead since 7:39. The raid fell apart in the next 25 s.',
+      proof: ['Blighted Sever hit Vandagos at 7:13.1, 7:46.5, 8:23.1 and 8:54.3 (1.88M, dead)', 'Tyralien died at 7:38.9 to Death\'s Embrace, feared by a Wail of Terror that got off at 7:33.7 (15 feared), and was not brought back', '6 more died in the 10 s after 8:54.3 (two to the boss\'s melee)'] },
     3: { cat: 'orbs', by: ['Schooty'], kind: 'left at the Deluge', sure: true, t: 87.1, line: 'One purple orb was left after the 1:17 Sever. Schooty picked it up and died carrying it at 1:23, and it was still on the floor when Toxic Deluge came at 1:27. Venom Rupture killed 10 at once.',
       proof: ['the Severs at 1:00.0 and 1:17.0 popped 4 and 3 orbs of the 0:45 Deluge', 'Schooty\'s purple carry ran 1:19.43 to 1:23.42, ending at his death', 'Toxic Deluge cast at 1:27.04; Venom Rupture hit 19 players for up to 911k at 1:27.08, with no Sever before it', '18 dead within 15 s'] },
     4: { cat: 'kick', sure: true, t: 206.3, line: 'Wail of Terror was not kicked at 3:26 and feared 18 players with Gloombombs out. The bombs went off in the raid 1.5 s later.',
