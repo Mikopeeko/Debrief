@@ -82,6 +82,7 @@ reading (`or`, `byOr`), and never fail a build. They are listed under "to review
 Every death in the key has: before or after the wipe, the killing hit, and the proof or the plain fact. `tests/answer-key/death-rule.js`
 applies the rule to the raw facts (no site code):
 - **Before the wipe:** fewer than a quarter of the raid had died before them, and not after the second the pull was lost (`roots.js`).
+- **When the raid played on** (Main, Nov 13): if nobody died for 15 s or more after the first deaths and 30 s or more of the pull was left, the pull was not lost yet. The second it was lost in `roots.js` is then the later one, and the cause is what ended it there. Ula'tek pulls 4, 9 and 13 of Nov 12 are the three in the key (pull 9: four dead by 1:00, then 35 s with no death, then Rattler Slam at 1:35). The earlier deaths stay in the sentence as what came first.
 - **Proof 1, their own mistake was part of what killed them.** Its hit was the killing hit, or its hits in their last 4 s were damage
   they'd have lived without (more than the killing blow's overkill, and a tenth of their health). In a mass death (3 or more to one hit
   at once) only the killing hit counts. Never while feared or mind controlled.
