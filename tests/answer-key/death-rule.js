@@ -59,10 +59,10 @@ function deathVerdicts(pull, cause, known) {
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
       // 3. walked off the edge (The Coiled Altar's room: its middle is 0, 1158.6 and its edge about 46 yd out). In control, with no knockback in
-      //    the last 3 s. Two or more off the edge within 3 s of each other is the raid jumping to reset: not counted (Main, Nov 13). Carrying an
+      //    the last 3 s. Two or more off the edge IN CONTROL within 3 s of each other is the raid jumping to reset: not counted (Main, Nov 13). A feared, mind-controlled or knocked player is not jumping and never makes it a group jump (Nov 11 pull 16: Schooty Disengaged off alone, three more were feared off 2 s later by Wail of Terror). Carrying an
       //    orb doesn't make running off the platform part of the job (Schooty, Nov 11 pull 2).
       const farOf = (x) => Math.round(Math.max(0, ...[x.pos].concat(x.path4 || []).filter(Boolean).map((p) => Math.hypot(p[0], p[1] - 1158.6))));
-      if (v.verdict === 'none' && !kb && !cc && pull.ca && farOf(d) > 50) { const far = farOf(d), others = pull.deaths.filter((x) => x !== d && !x.killedBy && farOf(x) > 50 && Math.abs(x.t - d.t) <= 3);
+      if (v.verdict === 'none' && !kb && !cc && pull.ca && farOf(d) > 50) { const far = farOf(d), others = pull.deaths.filter((x) => x !== d && !x.killedBy && !x.mc && !x.feared && !x.knock3 && farOf(x) > 50 && Math.abs(x.t - d.t) <= 3);
         if (others.length) v.fact = others.length + ' more went off the edge within 3 s (' + others.map((x) => x.player).join(', ') + '): the raid jumping to reset, not counted';
         else if (!d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; }
         else v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }

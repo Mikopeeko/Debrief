@@ -79,5 +79,6 @@
  "Gax3AkbyFRXmdrgQ:9:noxious:Fourinches": "Noxious Ground seconds read low (about one second short per visit) (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:deathBy:Tyralious@117": "the death list names another killing hit than the log (reported Nov 13)",
  "Gax3AkbyFRXmdrgQ:16:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
- "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)"
+ "Gax3AkbyFRXmdrgQ:17:heal:Komo": "healing total off by more than 3% (reported Nov 13)",
+ "agt6jMTyZBYvVzAP:17:deathVerdict:Schooty@299": "the site says Not counted, the raid jumped to reset; Main ruled You, walked off the edge: only players in control make a group jump, and the other three were feared off by Wail of Terror (reported Nov 13, the Report card chat is fixing it)"
 }
