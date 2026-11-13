@@ -58,7 +58,14 @@ function deathVerdicts(pull, cause, known) {
       // 2. sat low with something ready
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }
-      if (v.verdict === 'none' && !kb && !cc && d.pos && pull.ca) { const far = Math.round(Math.hypot(d.pos[0], d.pos[1] - 1158.6)); if (far > 50 && !d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; } else if (far > 50) v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
+      // 3. walked off the edge (The Coiled Altar's room: its middle is 0, 1158.6 and its edge about 46 yd out). In control, with no knockback in
+      //    the last 3 s. Two or more off the edge within 3 s of each other is the raid jumping to reset: not counted (Main, Nov 13). Carrying an
+      //    orb doesn't make running off the platform part of the job (Schooty, Nov 11 pull 2).
+      const farOf = (x) => Math.round(Math.max(0, ...[x.pos].concat(x.path4 || []).filter(Boolean).map((p) => Math.hypot(p[0], p[1] - 1158.6))));
+      if (v.verdict === 'none' && !kb && !cc && pull.ca && farOf(d) > 50) { const far = farOf(d), others = pull.deaths.filter((x) => x !== d && !x.killedBy && farOf(x) > 50 && Math.abs(x.t - d.t) <= 3);
+        if (others.length) v.fact = others.length + ' more went off the edge within 3 s (' + others.map((x) => x.player).join(', ') + '): the raid jumping to reset, not counted';
+        else if (!d.knock3) { v.verdict = 'you'; v.proof = { k: 'edge', mech: 'walked off the edge', names: ['walked off the edge', 'off the edge', 'edge'], say: 'walked off the edge in control (' + far + ' yd from the middle, no killing hit, no knockback in their last 3 s)' }; }
+        else v.fact = 'knocked off the platform (' + far + ' yd from the middle, an axe in their last 3 s)'; }
       if (U && v.verdict === 'none') { const circle = (U.coils || []).find((c) => c.soakers.includes(d.player) && d.t >= c.t - 1 && d.t <= c.t + 8);
         if (beamNear && beamNear.nonTanks.includes(d.player) && /^Toxic (Incubation|Burn)$/.test(kb || '')) { v.fact = 'the beam went through them: the off tank was not in its line'; v.sure = true; delete v.note; } /* (Main, Nov 13: settled, not counted) */
         else if (kb === 'Caustic Waves' && beamNear) v.fact = 'waves off a beam taken inside the raid (' + beamNear.nonTanks.join(' and ') + ' took it, not a tank)';
