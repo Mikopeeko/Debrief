@@ -63,4 +63,17 @@ module.exports = function lookReview(H, say) {
   if (!/only checks the page calls off, in What to fix's order/.test(SH)) bad('Rotation: the Timeline\'s What to fix can list checks the page calls fine again (Holy Shock on cooldown 98% on pull 19, Nov 14)');
   // (Main, Nov 14: the coach page's labels were 11px; nothing a raider must read is under 12px (Design system, section 2: Label 12px / 700 UPPERCASE))
   { const small = (css.match(/[^{}]*\.rcz[^{}]*\{[^{}]*\}/g) || []).filter((r) => (r.match(/(?:font-size:\s*|font:[^;]*?\s)(\d+(?:\.\d+)?)px/g) || []).some((x) => parseFloat(x.match(/(\d+(?:\.\d+)?)px/)[1]) < 12)); if (small.length) bad('Rotation: text under 12px on the coach page again: ' + small[0].trim().slice(0, 90)); }
+  // (Plan, Nov 14, Flex: "i dont think its super clear what night you are building the roster and plan for yet": the night is the page's title on every
+  // Plan tab. Found that day on Wolfthorn's plan: the night was a "Wed 11" chip on the third row, Roster's 22px date had been shrunk to 13.5px by a
+  // text-size rule, and "Every boss tonight" was said of a night three days gone)
+  { const bar = (() => { try { return H.grab('planBarH'); } catch (e) { return ''; } })(), top = (() => { try { return H.grab('pnTopH'); } catch (e) { return ''; } })();
+    if (!/'<div class="pv-nighth" role="group"[^']*>' \+ pnTopH\(\) \+ '<\/div><div class="panel pg-bar"><nav class="pg-bosses"/.test(bar)) bad('Plan: the night is no longer the page\'s title (planBarH must draw the pv-nighth banner first, and the bar must hold the bosses only)');
+    if (!/<span class="pnb-k">Planning for<\/span>/.test(top) || !/class="pg-dpb"/.test(top) || !/weekday: 'long'/.test(top) || !/class="pnb-rel /.test(top) || !/data-ntdiff=/.test(top)) bad('Plan: the night banner lost a piece (Planning for, the date as the picker, how far away it is, or Mythic | Heroic)');
+    if (!/R\.g < 0 \? pnNextOf\(k\) : null/.test(top) || !/class="btn sm pnb-next" data-pnight=/.test(top)) bad('Plan: a night that is over no longer offers the next raid night');
+    if (!/#assignBox > \.pv-nighth \{ display: flex !important;[^}]*order: -6 !important/.test(css)) bad('Plan: the night banner is hidden or out of order again (it shows on every tab, above the tabs)');
+    const dpb = (css.match(/\.pv-nighth \.pg-dpb \{([^}]*)\}/) || [])[1] || '', px = +((dpb.match(/font: 700 (\d+(?:\.\d+)?)px/) || [])[1] || 0); if (px < 22) bad('Plan: the night\'s date is under 22px again (it was shrunk to 13.5px small print before Nov 14)');
+    if (/Every boss tonight\./.test(UI) || !/Every boss ' \+ pnWhenL\(\) \+ '\./.test(UI)) bad('Plan: Who plays says "Every boss tonight" whatever the night is again'); }
+  // (Plan, Healing cooldowns, Nov 14, Flex with a picture of Ula'tek: "Feel like theres a little too much space between the damage coming in and the
+  // cooldowns": By mechanic, the graph waited for the icon tray on the left to end, about 200px under the last cooldown)
+  if (!/dTop = top0 \+ \(BYM \? Math\.max\(cRows, 2\) : cRowsL\) \* CH \+ \(BYM \? 0 : PRX\)/.test(UI)) bad('Plan, Healing cooldowns: the damage graph waits for the icon tray again, leaving an empty band under the cooldowns (Flex, Nov 14)');
 };

@@ -156,3 +156,20 @@ no-class tags, all bosses Mythic and Heroic Ready, a new visitor, specs, phone (
   arrow not at the top"):** every name block has a ▾ (`.tn-spv`); it (or the spec icon) opens a small pop-up right under it
   (`tnSpecPop`, fixed, flips above near the bottom) with the class's specs and their role, the current one lit; a pick saves and moves
   them to their section; Escape, a tap elsewhere or a scroll closes it. The hint line starts "Tap the ▾ on a name to change their spec".
+
+## The night is the page's title (Nov 14, the user: "i dont think its super clear what night you are building the roster and plan for yet")
+- **What it is:** every Plan tab starts with a night banner (`.pv-nighth`, drawn by `pnTopH`, put on the page by `planBarH`).
+  It says "Planning for", then the date. The date is the night picker (`.pg-dpb`, 24px).
+- **How far away:** a tag beside the date says Tonight, Tomorrow, In 4 days, Yesterday or 3 days ago (`pnRelOf`).
+- **A night that is over:** a "Plan Wed, Nov 18 ›" button opens the next raid night (`pnNextOf`). It carries `data-pnight`, so
+  it does what that night's row in the picker does.
+- **Also in the banner:** Mythic | Heroic, and one line with the team, the raiders and the bosses ready (`pnSubH`).
+- **Order on the page:** the night, the tabs, the bosses, the boss header, then the page. The bar (`.pg-bar`) holds the bosses
+  and the ready ring only, and is hidden on Roster.
+- **Words:** Who plays says "Every boss on Wed, Nov 11" (`pnWhenL`), and "tonight" only when it is tonight. The side menu
+  names the night instead of "This week".
+- **What was wrong before:** the night was a small "Wed 11" chip on the third row. Roster's own night title was built at 22px,
+  but a text-size rule had shrunk it to 13.5px.
+- **Healing cooldowns, same day** (the user: "a little too much space between the damage coming in and the cooldowns"): By
+  mechanic, the damage graph starts under the tallest stack of cooldowns. It used to wait for the icon tray on the left.
+- **Checks:** `tests/look-review.js` (the lines that start "Plan:" and "Plan, Healing cooldowns:").
