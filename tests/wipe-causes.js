@@ -49,6 +49,12 @@ const KILLS = [
 ];
 /* The chain line of a named wipe: [code, fight, what it must hold (a RegExp), what it read before]. Main, Nov 13: "say what actually happened, from the log": a wave's count is the
    players the hit killed (Warcraft Logs' killing ability), and the rest are told by how they went. */
+/* An avoidable-damage mistake line, read on its own pull: [code, fight, player, mechanic, what its words must hold (a RegExp), what it read before]. Ruling A (Main, Nov 13):
+   a wipe's lines count hits up to the wipe call (the page's own call), not up to the second death; the table and the line say the same number. */
+const AVL = [
+  ['agt6jMTyZBYvVzAP', 7, 'Zaffia', 'Volatile Venom (near a green carrier)', /^Hit by Volatile Venom 6 times \(294k\)\.$/, 'Nov 11 pull 6: six Volatile Venom hits (0:55, 1:33, 1:36, 1:40, 1:42, 6:32), the wipe call at 7:04. It read "5 times (294k)", cut at the second death (5:52) with all six hits\' damage'],
+  ['agt6jMTyZBYvVzAP', 13, 'Dashtoswirly', 'Axegrinder', /^Hit by Axegrinder 9 times \(1\.8M\)\.$/, 'Nov 11 pull 12: nine axes caught him before the wipe call. It read "6 times (1.8M)", cut at the second death'],
+];
 const LINES = [
   /* (the wave is the deaths up to the call since 33ca7aa3: Jangokin, Dragooned, Huservoker and Hobbz, killed by Venom Rupture at 1:27, and Schooty, who walked off the edge at 1:23
      with no killing hit. Before that change the wave ran to 1:35: "killed 13, and 4 walked off the edge") */
@@ -113,5 +119,10 @@ module.exports = function (o) {
       const keep = r.mistakes; r.mistakes = keep.filter((m) => !/didn't taunt/i.test(m.detail || '')); let rc2 = null; try { rc2 = rootOf(r); } finally { r.mistakes = keep; }
       if (rc2 && rc2.cat === 'frontal') say(where, 'root', 'Soul Sever deaths with no missed taunt are the wipe\'s root cause again: "' + rc2.short + '"'); }
   }
+  /* (the avoidable-damage lines of ruling A, each pull read on its own: the engine's lines need the page's wipe call, which tests/site-helpers.js hands it) */
+  for (const [code, fight, who, mech, re, was] of AVL) { const rep = report(code), ef = findFile(code + '_' + fight + '.json'), it = rep && rep.items.get(fight); if (!it || !ef) continue;
+    let ev = readJ(ef); if (!Array.isArray(ev)) ev = ev.events; const r = E.analyze(it, W.translate(it, ev), {}); ev = null; if (!r.item) r.item = it; n++;
+    const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', m = (r.mistakes || []).find((x) => x.avoid && x.mechanic === mech && nm(x.player) === who);
+    if (!m || !re.test(String(m.detail || ''))) say(where, 'avoid', was + '. Now: ' + (m ? '"' + m.detail + '"' : 'no line')); }
   return n;
 };

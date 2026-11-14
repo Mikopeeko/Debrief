@@ -46,4 +46,6 @@ function pullItems(code, r, W) {
   }
   return items;
 }
+// (Nov 13, Main's ruling A: the engine counts avoidable-damage lines to the page's wipe call. The page hands it that call (ui.js, E.setCutHook); every test reads pulls the same way)
+try { if (E.setCutHook) E.setCutHook(site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} }).cutT); } catch (e) { console.error('site-helpers: the wipe call could not be handed to the engine: ' + e.message); }
 module.exports = { grab, site, pullItems, UI, SH, E };

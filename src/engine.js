@@ -3667,6 +3667,13 @@ function avoidPanel(ev, r, h, list) {
 // The avoid panel's verdict as mistakes, so the coach, Homework and a raider's fixes say what the panel says (one answer): the rule
 // pack's own avoidable mistakes for the same spells give way to it. Red (twice the kills' line, a death to it, a dangerous hit) is a
 // High mistake; amber is a Low one marked avAmber (a slip: it becomes a fix only when it keeps happening, 3+ pulls of a night).
+/* (Nov 13, Main's ruling A: "Count to the wipe call. The page tells raiders 'Each wipe counts up to its wipe call', and Flex wants every tab to agree." These lines stopped at the pull's
+   second death, the wipe filter's old default: Zaffia, Nov 11 pull 6, read "Hit by Volatile Venom 5 times" for six hits (second death 5:52, sixth hit 6:32, wipe call 7:04).
+   The wipe call is the page's own (ui.js cutT); it is handed in with setCutHook and asked here, while the pull is still being read (so the call's own cache is dropped after: the page
+   asks again when the reading is whole). With no hook (the engine on its own) the second death stands) */
+let CUT_HOOK = null;
+const avCutT = (r) => { const dur = (r && r.duration) || Infinity; if (!r || !r.item || r.item.kill) return dur; const ds = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), old = ds.length >= 2 ? ds[1] : Infinity;
+  if (!CUT_HOOK) return Math.min(dur, old); let c = null; try { c = CUT_HOOK(r); } catch (e) { c = null; } if (r._wipe) delete r._wipe; return Math.min(dur, typeof c === 'number' && !isNaN(c) ? c : old); };
 function avoidMistakes(r) {
   const sec = ((r.module && r.module.sections) || []).find((s) => s.id === 'avoid' && (s.groups || []).some((g) => g.judge)); if (!sec) return;
   const L = (x) => String(x || '').toLowerCase(), names = new Set(sec.groups.flatMap((g) => (g.names || []).concat(L(g.label)))), ids = new Set(sec.groups.map((g) => g.spell && g.spell[0]).filter(Boolean));
@@ -3674,9 +3681,12 @@ function avoidMistakes(r) {
   r.mistakes = r.mistakes.filter((m) => !(m.avoidRule && (names.has(L(m.mechanic)) || (m.ruleIds || []).some((i) => ids.has(i)))));
   const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
   // (judged where the panel is by default: the whole kill, or a wipe up to its 2nd death (the wipe filter's default), so both say the same)
-  const ds = r.deaths.map((d) => d.t).sort((a, b) => a - b), T = Math.min(r.duration || Infinity, !r.item.kill && ds.length >= 2 ? ds[1] : Infinity);
+  const T = avCutT(r); /* (Nov 13: the whole kill, or a wipe up to its wipe call) */
+  /* (Nov 13, ruling A: the line's damage is the table's at the same cut as its count, so "9 times (3.0M)" matches the row; it was the whole pull's damage: Flëxørçïst, Oct 22
+     pull 13, "9 times (3.1M)" with the cut table at 2.98M) */
+  const cutAmt = new Map(); for (const g of sec.groups) { let c = null; if (isFinite(T) && typeof g.recut === 'function') { try { c = g.recut(T); } catch (e) { c = null; } } for (const row of (c || g).rows || []) cutAmt.set(g.label + '|' + (row[0] || {}).p, (row[2] || {}).n || 0); }
   for (const g of sec.groups) for (const j of g.judge || []) {
-    if (j.tank) continue; const ts = j.ts.filter((t) => t <= T + 0.05).sort((a, b) => a - b), tj = j.tj ? j.tj.filter((t) => t <= T + 0.05).sort((a, b) => a - b) : ts /* (Nov 13: judged on the ticks that did damage) */, [wA, bA, who] = g.lim(T, j.role);
+    if (j.tank) continue; const amt = cutAmt.has(g.label + '|' + j.p) ? cutAmt.get(g.label + '|' + j.p) : j.amt; const ts = j.ts.filter((t) => t <= T + 0.05).sort((a, b) => a - b), tj = j.tj ? j.tj.filter((t) => t <= T + 0.05).sort((a, b) => a - b) : ts /* (Nov 13: judged on the ticks that did damage) */, [wA, bA, who] = g.lim(T, j.role);
     const tA = tj.length >= wA ? tj[wA - 1] : null, tR = j.dt != null && j.dt <= T + 0.05 ? j.dt : tj.length >= bA ? tj[bA - 1] : null;
     if (tA == null && tR == null) continue;
     // (the fight's own check already flagged this hit (the frontal on a raider, ghosts touching): one mistake, not two)
@@ -3686,8 +3696,8 @@ function avoidMistakes(r) {
     if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && (Math.abs(m.t - tt) <= 3 || (tk != null && Math.abs(m.t - tk) <= 3)))) continue;
     const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
     const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
-    r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
-      detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
+    r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
+      detail: what + (amt >= 1 ? ' (' + fmt(amt) + ')' : '') + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
   }
   r.mistakes.sort((a, b) => a.t - b.t);
 }
@@ -3727,7 +3737,7 @@ function strictView(r, lv) {
   // Strict: notes become amber; avoidable damage re-judged against the top-100 raider
   let out = r._m0.map((m) => (m.mechanic !== 'Death' && m.severity === 'Low' && !m.avAmber && !m.avoidRule && !hit(STRICT_NOTE[boss], m) ? step(m, 'Medium') : m));
   const T0 = STRICT_AV[boss]; if (av && T0) {
-    const ds = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), T = Math.min(r.duration || Infinity, !r.item.kill && ds.length >= 2 ? ds[1] : Infinity);
+    const T = avCutT(r); /* (Nov 13: the wipe call, as avoidMistakes) */
     const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n / 1e3) + 'k');
     for (const g of av.groups || []) { const lim = T0[g.label]; if (!lim || g.harm === 'High') continue;
       const ml = g._lim || [Infinity, Infinity], wA = Math.min(lim[0], ml[0]), bA = lim[1] ? Math.min(lim[1], ml[1]) : Infinity, short = g.label.replace(/\s*\(.*$/, '');
@@ -8867,7 +8877,7 @@ function rootCauseGen(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
-const api = { jumpReset, avoidMistakes /* (for tests/ula-later.js, check BF) */, NO_HIT, NO_HIT_EDGE, RC_KNOCK, rcKilled, killRaw, abRaw, killEarly, deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, playedOnAfter, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { setCutHook: (fn) => { CUT_HOOK = typeof fn === 'function' ? fn : null; }, jumpReset, avoidMistakes /* (for tests/ula-later.js, check BF) */, NO_HIT, NO_HIT_EDGE, RC_KNOCK, rcKilled, killRaw, abRaw, killEarly, deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, playedOnAfter, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
