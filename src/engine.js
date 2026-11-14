@@ -7947,7 +7947,10 @@ function explainDeaths(r) {
        and Ula'tek rules below still have the last word) */
     if (d.wclKill > 0 && !bigOk /* (a big hit well over the finishing tick stays the killing hit (audit D2): the log names the tick) */) { const kh = hits.filter((e) => (e.id === d.wclKill || (d.wclKill === 1 && (!e.spell || /^melee$/i.test(e.spell)))) && e.t >= d.t - 3).pop(); if (kh) { d.kill = kh.spell || 'Melee'; d.killId = kh.id || 0; d.killLog = true; } } d.killSrc = bigOk ? (big0.src || '') : (d.killer || ''); /* (Nov 13: who dealt it) */
     if (/^dreadmarch$/i.test(d.ability || '')) { d.kill = d.ability; d.killId = d.abilityId || 0; }
-    if (r.item.boss === "Ula'tek") ulaKillFix(d, hits, (r.pMax && r.pMax.get(d.guid)) || 0);
+    if (r.item.boss === "Ula'tek") { ulaKillFix(d, hits, (r.pMax && r.pMax.get(d.guid)) || 0);
+      /* (Nov 13, 4Qq6JkafyTVC7vdg fight 11, Mythic: the platform shatters as the intermission ends and everyone drops to the next one. The fall's own damage (Falling, 380k) killed
+         three players at 6:09, each at a tenth of their health under the Rawlings. That fall is a real killing hit: "No killing hit" is for an edge walked off with nothing landing) */
+      const dmL = d.recap.filter((e) => !e.heal && e.amount > 0), lf = dmL[dmL.length - 1]; if (d.noKill && lf && /^falling$/i.test(lf.spell || '') && lf.t >= d.t - 1) { d.noKill = false; d.kill = d.ability = 'Falling'; d.killId = d.abilityId = lf.id || 0; } }
     /* (Nov 13, Main: "A death with no killing hit gets its own label wherever a killing hit is shown: Graphs' Deaths list, the death cards, the Report card and hovers. It must never be
        'killed by' a last tick. Every tab has to say the same thing." Hobbz, Nov 11 pull 16, ran off the edge feared and read "Deadly Venom", a raider's own poison that had ticked on him.
        No killing hit (d.noKill: the log's own word when it has one) and past the platform's edge (d.far, where the room is known) is "Fell off the edge"; otherwise "No killing hit".
