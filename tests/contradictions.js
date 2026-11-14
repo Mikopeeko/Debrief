@@ -28,6 +28,9 @@ const E = require(path.join(SRC, 'engine.js')), W = require(path.join(SRC, 'wcl.
 
 // ---- the site's own helpers, taken out of ui.js by name (so the check reads exactly what the page shows) ----
 const H = require('./site-helpers.js'), UI = H.UI;
+/* (Nov 14, Main: "the cut is the cut": on a wipe, no raider's counted seconds go past the wipe filter time, on any tab. The page's own cutEnd and outCut, with its real wipe call) */
+const CUT1 = (() => { try { return H.site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT', 'cutEnd', 'outCut'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} }); } catch (e) { return { err: e.message }; } })();
+
 // (the All pulls card's line about a pull, from shell.html)
 const SHELL = require('vm').runInNewContext(H.grab('phN', H.SH) + '\n' + H.grab('story', H.SH) + '\n' + H.grab('nsmFocusOf', H.SH) + '\n({ story, nsmFocusOf })');
 const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_NEXT') + '\n' + H.grab('RC_FIRST') + '\n' + H.grab('rcFirstLine') + '\n({ RC_FIX, RC_NEXT, RC_FIRST, rcFirstLine })');
@@ -92,7 +95,8 @@ function checkPull(key) {
   const oldCopy = ev.some((e) => e.type === 'interrupt' && e.extraAbilityGameID == null);
   const txt = W.translate(it, ev); ev = null;
   const P0 = P.length;
-  const r = E.analyze(it, txt, {}); if (!r.item) r.item = it; SITE.CACHE.set(it, r); { const l = NIGHT_R.get(code) || []; l.push(r); NIGHT_R.set(code, l); } /* (Nov 12: a night's pulls, for the one-player checks (9 to 13)) */
+  const r = E.analyze(it, txt, {}); if (!r.item) r.item = it; SITE.CACHE.set(it, r);
+  /* (the one cut) */ try { if (CUT1.err) say(pull, 'cut', 'the page has no one cut for every tab (cutEnd and outCut): ' + CUT1.err); else if (!r.item.kill) { const c1 = CUT1.cutT(r), N1 = Math.ceil(CUT1.cutEnd(r)); if (isFinite(c1) && c1 < r.duration - 1) for (const p of r.players.values()) { if (!p.name || /^Player-/.test(p.name)) continue; for (const k1 of ['dmgS', 'healS']) { const a1 = CUT1.outCut(r, p[k1] || []); if (a1.length > N1) say(pull, 'cut', p.name + '\'s ' + (k1 === 'dmgS' ? 'damage' : 'healing') + ' is counted for ' + a1.length + ' s, past the wipe call at ' + E.fmtT(c1)); } } } } catch (e) { say(pull, 'cut', 'the one-cut check crashed: ' + e.message); } { const l = NIGHT_R.get(code) || []; l.push(r); NIGHT_R.set(code, l); } /* (Nov 12: a night's pulls, for the one-player checks (9 to 13)) */
   const hits = hitMoments(txt);
   // 1. one health number: the pull picker, the banner, the coach and the Companion read one whole-fight number, "boss at N%"
   if (!it.kill) {
