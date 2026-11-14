@@ -57,7 +57,8 @@ function deathVerdicts(pull, cause, known) {
         const mineNames = Object.keys(l4).filter(ownN), sum = mineNames.reduce((a, n) => a + l4[n][0], 0), n = mineNames.reduce((a, x) => a + l4[x][1], 0);
         const isKill = kb && ownN(kb), enough = !mass && sum > (d.overkill || 0) && sum >= 0.1 * (d.maxHp || 1e12);
         if (mineNames.length && (isKill || enough)) { const top = mineNames.sort((a, b) => l4[b][0] - l4[a][0])[0]; v.verdict = 'you'; v.proof = { k: 'mistake', mech: isKill ? kb : top, names: mineNames.slice(), say: mineNames.map((x) => l4[x][1] + ' ' + x + ' hit' + (l4[x][1] === 1 ? '' : 's') + ' (' + Math.round(l4[x][0] / 1000) + 'k' + (x === kb ? ', the killing hit' : '') + ')').join(' and ') + ' in their last 4 s' };
-          if (/Widow's Kiss|Death's Embrace/.test(v.proof.mech)) { v.sure = false; v.note = 'theirs unless the axe was dropped on the raid'; } }
+          /* (R1, Main, Nov 13: Flex's Nov 6 bad-drop rule. When the Guillotine's eruption caught 3 or more, the target dropped the axe on the raid: only the target has the mistake, nobody it caught is blamed, soakers included. Oct 22 pull 1: 12 caught, 8 dead) */
+          if (/Widow's Kiss|Death's Embrace/.test(v.proof.mech)) { const gq = (ca.guillotines || []).filter((x) => x.t <= d.t + 0.2 && d.t - x.t <= 20).pop(); if (gq && (gq.caught || []).length >= 3 && gq.target !== d.player) { v.verdict = 'none'; v.proof = null; v.fact = gq.target + ' dropped the ' + gq.spell + ' on the raid (' + gq.caught.length + ' caught): the drop is theirs, nobody it caught is blamed'; } } }
         else { const ring = ['Mutagenic Venom', 'Volatile Venom'].filter((x) => l4[x] && !ownN(x)); if (ring.length) v.fact = 'carried ' + (ring[0] === 'Mutagenic Venom' ? 'a purple' : 'a green') + ' orb: its ring hits its carrier too (died to ' + (kb || 'no killing hit') + ')'; } }
       if (v.verdict === 'none' && !v.fact && gFact) v.fact = gFact;
       // 2. sat low with something ready
