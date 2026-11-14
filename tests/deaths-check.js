@@ -78,7 +78,8 @@ module.exports = function deathsCheck(NIGHT_R, H, say) {
     /* (Main, Nov 13: a Not counted line names the row that put them there: the beam no tank was in, not a Viper that hatched next to it) */
     ['Gax3AkbyFRXmdrgQ', 1, 'Shockabunga', 19, false, /^Not counted: no tank was in the beam/, 'Ula’tek pull 1: Shockabunga died to the Toxic Incubation beam no tank was in. His line quoted a Blightscale Viper that hatched near it', /Ula'tek/],
     /* (Main, Nov 13: two or more off the edge within 3 s of each other is the raid jumping to reset; a lone walk-off stays theirs) */
-    ['bcA9kw3mxHKzr4fR', 10, 'Kargaryen', 188, false, /^Not counted: the raid jumped to reset$/, 'Oct 22 pull 10: Kargaryen was the first of four off the edge within 3 s. It read "You: walked off the edge"'],
+    /* (Nov 13, Main's ruling: a group jump with most of the raid alive makes the whole pull a reset, so his line reads the reset's own fact now) */
+    ['bcA9kw3mxHKzr4fR', 10, 'Kargaryen', 188, false, /^Not counted: (the raid jumped to reset|a reset pull, nothing in it counts)$/, 'Oct 22 pull 10: Kargaryen was the first of four off the edge within 3 s. It read "You: walked off the edge"'],
     ['agt6jMTyZBYvVzAP', 2, 'Schooty', 83, true, /^You: walked off the edge \(no killing hit, \d+ yards from the middle of the room\)$/, 'Nov 11 pull 2: Schooty picked up a purple orb and ran 77 yards off the platform, alone: carrying it doesn\'t make that part of the job']];
   /* (Raiyvenz's pull is read here in every build, without the other checks: the build's own set stays the quick one) */
   const fsx = require('fs'), pth = require('path'), LIBD = process.env.DEBRIEF_LOGS || 'C:/Users/james/DebriefLogs';
