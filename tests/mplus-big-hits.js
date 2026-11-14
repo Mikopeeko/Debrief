@@ -46,7 +46,7 @@ module.exports = function bigHitsCheck(H, say) {
   if (!MPT.includes("R.big ? ['mptCH', 'Big hits'] : null")) bad('the jump bar lost Big hits');
   if ((MPT.match(/mpBigChap\(R\) \+/g) || []).length < 3) bad('the Big hits chapter is no longer on the key page right after the summary (all three layouts)');
   if (!/row\('!', '#ff8f87', 'Close calls'/.test(MPT)) bad('Your part lost its Close calls row (right after Deaths)');
-  if (MPT.indexOf("'Close calls'") < MPT.indexOf("row('☠', '#ff8f87', 'Deaths'")) bad('Your part\'s Close calls row is no longer right after Deaths');
+  if (MPT.indexOf("row('!', '#ff8f87', 'Close calls'") < MPT.indexOf("row('☠', '#ff8f87', 'Deaths'")) bad('Your part\'s Close calls row is no longer right after Deaths');
   if (!MPT.includes('died + mpBhCard(RR, i, fold)')) bad('a pull card no longer lists its close calls right after how each player died');
   let html = '';
   try { const names = ['mpMM', 'mpCC', 'mpWho', 'mpT1', 'mpAnd', 'mpChap', 'mpBhWhere', 'mpBhT', 'mpBhIc', 'mpBhRdy', 'mpBigChap', 'mpBigHtml'];

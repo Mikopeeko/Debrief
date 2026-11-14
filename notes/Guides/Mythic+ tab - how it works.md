@@ -175,3 +175,26 @@ No new section (the Design studio's call): they go where they belong. One pass o
 - Practice links (`versions upload --preview-alias mptN`):
   - Flex's report `L7fRqbmPr2WdhaTG`: fight 1 is the Voidscar Arena +12 from the design, fight 20 is over time, fights 18 and 19 were left early.
   - `4GdvhM71B8zrCJjH` is a raid night with 2 keys (the tab beside the raid).
+
+## The key page as tabs, and Mistakes (Nov 14, 2026)
+Flex: "I think the mythic+ page needs a complete redesign/new layout", "its hard to read", "i was trying to use it to look at mistakes made throughout the key, like missed interupts and i genuinely couldnt find the information".
+On his Voidscar Arena +19 the page said "Missed kicks 6" and nothing more: which spell, which pull and whose kick was ready sat in hovers on fourteen pull cards.
+
+- **Tabs under the key's banner** (website only): Summary, Mistakes, Big hits (when the key has any), Route, Players, Rotation, Dungeon. One page each. The address keeps the tab (`&mpv=mis`, `hit`, `map`, `grp`, `rot`, `dun`; none is Summary).
+  - `MPX_VIEWS` lists them; `mpxView(v)` switches (the tab, `html[data-mpv]`, the address). The styles hide every chapter but the tab's own.
+  - Every chapter is still drawn on every draw, so nothing loads on a tab click. The map's labels are fitted when Route comes into view.
+  - Anything that lights pulls on the map opens Route first ("map" on a time row, a pull chip on Mistakes).
+- **Mistakes** (`mpxData`, `mpxHtml`): the whole key, by kind, in the key's order. Each row has the key's timer, the pull (a click shows it on the map), what happened and who.
+  - Missed kicks: `p.through` without `cc`, grouped by spell, most first, with the same Next time line as before, then each cast with every player whose kick was ready.
+  - Casts that needed a stop: `p.through` with `cc` (they can't be kicked).
+  - Deaths: `p.deaths`, with what was ready (amber) or how many defensives were used; a click opens the hits before it, as the pull card does.
+  - Debuffs left on: `mpDisp(R, F).list` rows marked `long`, with who had a dispel ready. They need the fast run, so they arrive when it does.
+  - Avoidable hits: `p.avoid`. Big cooldowns not pressed: `mpCdMiss`.
+  - A kind with nothing in it is named once on a "Clean" line. Medium-danger casts are a folded "Worth a kick, not counted".
+  - Chips narrow it to one kind or one player. A missed kick belongs to everyone whose kick was ready.
+- **Summary**: the five numbers, then a Mistakes box (`mpxDigest`: one line a kind, a click opens it) beside Where your time went, then Your part across the page. The Missed kicks number opens the list.
+- **Players**: the Kicks column shows in brackets the must-kick casts that went off with that player's kick ready (`mpxKickCell`).
+- **The Companion's card keeps its layout**: everything above is behind `MPC_ON` (`mpxKey`, `mpxChap`, `mpxDigest` return the old page for the card) and `html:not(.mpcard)` in the styles. Its class names are unchanged.
+- **The map's pull card** (`mpxCard`, Flex the same day with a picture of it: "this section has a lot in it thats really confusing and unclear"): the numbers have names (Lasted, Enemies, Count, Group DPS); the tags became sentences under **What went wrong** (the Mistakes tab's facts for that pull, deaths first, or "Nothing went wrong in this pull") and **What else happened** (Lust, the wait before it, enemy buffs, debuffs); the folds are The enemies, Kicks, CC and dispels, Damage by player. "Most mistakes" is gone from the card.
+- **Play by play** (`mpxFeed`, Flex: "maybe it should be a chat replay section"): on the pull card, the pull told in order, one line an event, by the pull's own clock: kicks with the cast they cut, CC with what it stopped, big cooldowns, defensives, dispels, what went off, deaths, close calls, big hits landing, Lust. It opens on Kicks and CC (Flex: "knowing who interupted, cast CC, stopped casts etc is very important. Moreso than someone using their big cooldowns"), with what went off in the same list; the other chips are Mistakes, Defensives, Cooldowns and Everything (14 lines until "Show all"). The enemies and Damage by player open by themselves; the kicks table is "by player". A picked player lights their own lines; nobody else is greyed out.
+- Checks: the "Mythic+:" lines at the end of `tests/look-review.js`.

@@ -19656,6 +19656,223 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #view#view#view.plan-page #assignBox .pg-tab .pg-tabn:is(.warn, .ok) { display: inline-block !important; flex: none !important; width: 15px !important; height: 15px !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; font-size: 0 !important; line-height: 0 !important; color: transparent !important; overflow: hidden !important; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.6 15 14H1z' fill='%23e8a23a'/%3E%3Cpath d='M7.2 6.2h1.6v3.9H7.2zm0 4.9h1.6v1.5H7.2z' fill='%2314171c'/%3E%3C/svg%3E") center / contain no-repeat !important; }
   html body #view#view#view.plan-page #assignBox .pg-tab .pg-tabn.ok { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.6l3.2 3.2L13 4.6' fill='none' stroke='%2345c15c' stroke-width='2.2'/%3E%3C/svg%3E") !important; opacity: .9 !important; }
 }
+/* (Mythic+, Nov 14, Flex: "I think the mythic+ page needs a complete redesign/new layout", "its hard to read", "i was trying to use it to look at
+mistakes made throughout the key, like missed interupts and i genuinely couldnt find the information". A key is now its banner with tabs under it
+(Summary, Mistakes, Route, Players, Rotation, Dungeon), one page each, and Mistakes lists every missed kick, death, debuff left on, avoidable hit and
+unpressed cooldown of the whole key. The website only; the Companion's card (html.mpcard) keeps its layout) */
+@layer defaultTheme {
+/* 1. one view at a time under the banner */
+html:not(.mpcard) body #view#view#view .mpt-jb, html:not(.mpcard) body #view#view#view #mptC1 > p.mpt-chk, html:not(.mpcard) body #view#view#view #mptCS > p.mpt-chk { display: none !important; }
+html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS),
+html:not(.mpcard)[data-mpv="mis"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCX),
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM),
+html:not(.mpcard)[data-mpv="grp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4),
+html:not(.mpcard)[data-mpv="hit"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCH),
+html:not(.mpcard)[data-mpv="dun"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC5),
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptC1 { padding-bottom: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs { width: auto !important; margin: 14px -20px 0 !important; padding: 0 12px !important; border-top: 1px solid var(--line) !important; border-bottom: 0 !important; gap: 2px !important; flex-wrap: wrap !important; }
+html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs > button { margin-bottom: 0 !important; padding: 11px 14px 10px !important; font: 700 16px 'Barlow Condensed', sans-serif !important; letter-spacing: .02em !important; }
+html:not(.mpcard) body #view#view#view #mptC1 .mpt-ban .mpt-grp { display: flex !important; }
+/* (Rotation sits in a panel like every other tab) */
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mpcRot { margin: 0 0 16px !important; padding: 6px 20px 18px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: var(--panel, #171a22) linear-gradient(rgba(255,255,255,.055), rgba(255,255,255,0) 160px) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(0,0,0,.5), 0 14px 30px -16px rgba(0,0,0,.95) !important; }
+/* 2. the Summary: the numbers, then Mistakes beside where the time went, then your part across the page */
+html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd { margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view .mpt-sbc.mpx-go { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpt-sbc.mpx-go:hover { background: rgba(255,255,255,.035) !important; }
+html:not(.mpcard) body #view#view#view .mpt-sbc.mpx-go > span::after { content: ' ›'; color: var(--gold); font-weight: 700; }
+html:not(.mpcard) body #view#view#view #mptBand { display: grid !important; grid-template-columns: minmax(0,1fr) !important; gap: 20px 0 !important; margin: 16px 0 0 !important; padding: 16px 0 0 !important; border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptBand > * { order: 0 !important; min-width: 0 !important; padding: 0 !important; border: 0 !important; max-width: none !important; }
+html:not(.mpcard) body #view#view#view #mptBand > .mpt-bl { padding-top: 16px !important; border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptBand > .mpt-br { padding-top: 16px !important; border-top: 1px solid var(--line) !important; }
+@media (min-width: 901px) {
+html:not(.mpcard) body #view#view#view #mptBand:not(.mpt-band1) { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; grid-template-rows: auto 1fr !important; }
+html:not(.mpcard) body #view#view#view #mptBand:not(.mpt-band1) > .mpx-dg { grid-column: 1 !important; grid-row: 1 !important; padding-right: 26px !important; }
+html:not(.mpcard) body #view#view#view #mptBand:not(.mpt-band1) > .mpt-br { grid-column: 2 !important; grid-row: 1 / span 2 !important; padding: 0 0 0 26px !important; border-top: 0 !important; border-left: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptBand:not(.mpt-band1) > .mpt-bl { grid-column: 1 !important; grid-row: 2 !important; padding-right: 26px !important; }
+}
+html:not(.mpcard) body #view#view#view #mptBand .mpt-fxh { margin-bottom: 4px !important; }
+html:not(.mpcard) body #view#view#view #mptBand .mpt-fxh h2 { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptBand .mpx-dg .mpt-fxh { justify-content: space-between !important; }
+html:not(.mpcard) body #view#view#view .mpx-all { font: 600 13px var(--body) !important; color: var(--gold) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr { display: grid !important; grid-template-columns: 34px 168px minmax(0,1fr) 10px !important; align-items: baseline !important; gap: 12px !important; width: 100% !important; margin: 0 !important; padding: 11px 0 !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; cursor: pointer !important; font: 500 13px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr:hover { background: rgba(255,255,255,.03) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dn { font: 800 24px/1 'Barlow Condensed', sans-serif !important; color: var(--kc) !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view .mpx-dl { font: 700 14.5px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dd { min-width: 0 !important; font: 500 13px/1.4 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr > i { font: 700 15px var(--body) !important; color: var(--faint) !important; font-style: normal !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr:hover > i { color: var(--gold) !important; }
+html:not(.mpcard) body #view#view#view #mptBand #mptPart .mpt-ptiles { grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)) !important; gap: 6px !important; }
+/* (Players: room for the missed kicks beside the kicks, and column names at 12px) */
+html:not(.mpcard) body #view#view#view .mpt .gbx.mpt-gtab { --gbx-cols: 200px minmax(0,1fr) 64px 92px 72px 52px 44px 64px 56px 84px 80px 104px !important; }
+html:not(.mpcard) body #view#view#view .mpt .mpt-gtab .gbx-hd > span { font-size: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptBand #mptPart .mpt-ptiles > .mpt-prow .mpt-ypl { font-size: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptBand #mptPart .mpt-ptiles > .mpt-prow .mpt-ypv { font-size: 14.5px !important; }
+/* 3. the Mistakes page */
+html:not(.mpcard) body #view#view#view .mpx-low { font: 800 17px/1 'Barlow Condensed', sans-serif !important; color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view .mpx-gh > span > .mpx-all { margin-left: 8px !important; padding: 0 !important; background: none !important; border: 0 !important; cursor: pointer !important; text-decoration: underline !important; text-underline-offset: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpx-g-k, html:not(.mpcard) body #view#view#view .mpx-c-k { --kc: #c39bff; }
+html:not(.mpcard) body #view#view#view .mpx-g-d, html:not(.mpcard) body #view#view#view .mpx-c-d { --kc: #ff8f87; }
+html:not(.mpcard) body #view#view#view .mpx-g-p, html:not(.mpcard) body #view#view#view .mpx-c-p { --kc: #5fd3d0; }
+html:not(.mpcard) body #view#view#view .mpx-g-a, html:not(.mpcard) body #view#view#view .mpx-c-a { --kc: #f2c46b; }
+html:not(.mpcard) body #view#view#view .mpx-g-c, html:not(.mpcard) body #view#view#view .mpx-c-c { --kc: #7d9be8; }
+html:not(.mpcard) body #view#view#view #mptCX > p.mpt-chk, html:not(.mpcard) body #view#view#view #mptCH > p.mpt-chk, html:not(.mpcard) body #view#view#view :is(#mptC4, #mptC5) > details.mpt-fold > summary .mpt-chev { display: none !important; }
+html:not(.mpcard) body #view#view#view :is(#mptC4, #mptC5) > details.mpt-fold > summary { cursor: default !important; }
+html:not(.mpcard) body #view#view#view .mpx-top { display: flex !important; align-items: center !important; justify-content: space-between !important; flex-wrap: wrap !important; gap: 10px 20px !important; margin: 0 0 12px !important; }
+html:not(.mpcard) body #view#view#view .mpx-top h2 { margin: 0 !important; font: 700 17px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-top h2 > b:first-child { font: 800 24px/1 'Barlow Condensed', sans-serif !important; color: #ff8f87 !important; margin-right: 2px !important; }
+html:not(.mpcard) body #view#view#view .mpx-ps, html:not(.mpcard) body #view#view#view .mpx-cs { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view .mpx-cs { margin: 0 !important; padding: 0 0 4px !important; }
+html:not(.mpcard) body #view#view#view .mpx-pb, html:not(.mpcard) body #view#view#view .mpx-c { display: inline-flex !important; align-items: baseline !important; gap: 7px !important; margin: 0 !important; padding: 5px 11px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: none !important; box-shadow: none !important; font: 600 13.5px var(--body) !important; color: var(--c, var(--muted)) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-pb > b { font: 600 12.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-c > b { font: 700 13.5px var(--body) !important; color: var(--kc, var(--text)) !important; }
+html:not(.mpcard) body #view#view#view .mpx-pb:hover, html:not(.mpcard) body #view#view#view .mpx-c:hover { border-color: var(--faint) !important; color: var(--c, var(--text)) !important; }
+html:not(.mpcard) body #view#view#view .mpx-pb.on, html:not(.mpcard) body #view#view#view .mpx-c.on { border-color: var(--gold) !important; background: rgba(230,180,80,.09) !important; color: var(--c, var(--text)) !important; }
+html:not(.mpcard) body #view#view#view .mpx-g { margin: 26px 0 0 !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-gh { display: flex !important; align-items: baseline !important; flex-wrap: wrap !important; gap: 4px 10px !important; padding: 0 0 9px !important; border-bottom: 2px solid var(--kc) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gn { font: 800 28px/1 'Barlow Condensed', sans-serif !important; color: var(--kc) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gh h3 { margin: 0 !important; font: 800 20px/1.1 'Barlow Condensed', sans-serif !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gh > span { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-sp { padding: 12px 0 4px !important; border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view .mpx-sph { display: flex !important; align-items: center !important; gap: 8px !important; font: 700 15.5px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-sph .mpt-rki, html:not(.mpcard) body #view#view#view .mpx-w .mpt-rki { flex: none !important; display: inline-flex !important; width: 20px !important; height: 20px !important; margin-right: 0 !important; vertical-align: -4px !important; }
+html:not(.mpcard) body #view#view#view .mpx-w .mpt-rki { margin-right: 7px !important; }
+html:not(.mpcard) body #view#view#view .mpx-sph .mpt-m { font: 500 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-n { margin-left: auto !important; font: 700 13.5px var(--body) !important; color: var(--kc) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-sp > .mpt-nt { margin: 3px 0 6px 28px !important; font: 500 13px/1.45 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-r:not(.mpx-rd), html:not(.mpcard) body #view#view#view .mpx-rd > summary { display: grid !important; grid-template-columns: 50px 156px minmax(0,1.5fr) minmax(0,1fr) minmax(46px,auto) !important; align-items: center !important; gap: 4px 12px !important; min-height: 38px !important; margin: 0 !important; padding: 5px 0 !important; font: 500 14px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-g > .mpx-r { border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view .mpx-sp .mpx-r:not(.mpx-rd) { min-height: 34px !important; padding-left: 28px !important; grid-template-columns: 50px 156px minmax(0,1fr) 0 0 !important; border-top: 1px dashed rgba(255,255,255,.05) !important; }
+html:not(.mpcard) body #view#view#view .mpx-t { font: 600 13px var(--body) !important; color: var(--muted) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mpx-p { display: inline-flex !important; align-items: center !important; gap: 7px !important; justify-self: start !important; max-width: 100% !important; margin: 0 !important; padding: 2px 9px 2px 7px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; box-shadow: none !important; font: 600 13px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-p > i { flex: none !important; width: 8px !important; height: 8px !important; border-radius: 2px !important; }
+html:not(.mpcard) body #view#view#view .mpx-p:hover { border-color: var(--gold) !important; }
+html:not(.mpcard) body #view#view#view .mpx-w { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-l { margin-right: 9px !important; font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-o { min-width: 0 !important; font: 500 13px/1.4 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-o .mpt-a { color: #f2c46b !important; font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view .mpx-e { text-align: right !important; font: 700 14px var(--body) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-rd > summary { cursor: pointer !important; list-style: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-rd > summary::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-rd > summary .mpx-e::after { content: '▸'; margin-left: 9px; color: var(--faint); font-weight: 500; }
+html:not(.mpcard) body #view#view#view .mpx-rd[open] > summary .mpx-e::after { content: '▾'; }
+html:not(.mpcard) body #view#view#view .mpx-rd > summary:hover { background: rgba(255,255,255,.03) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rm { margin: 0 0 12px 62px !important; padding: 8px 14px !important; border-left: 2px solid var(--line2, #2a2e36) !important; font: 500 13px/1.5 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rm ol { margin: 4px 0 !important; padding-left: 18px !important; font-size: 13px !important; }
+html:not(.mpcard) body #view#view#view .mpx-rm p { margin: 2px 0 !important; font-size: 13px !important; }
+html:not(.mpcard) body #view#view#view .mpx-ok { margin: 20px 0 0 !important; font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dg .mpx-ok { margin-top: 12px !important; }
+html:not(.mpcard) body #view#view#view .mpx-wait { color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ok > b { margin-right: 9px !important; font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mpx-none { margin: 10px 0 0 !important; font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-min { margin: 22px 0 0 !important; border-top: 1px solid var(--line) !important; --kc: var(--muted); }
+html:not(.mpcard) body #view#view#view .mpx-min > summary { padding: 11px 0 !important; cursor: pointer !important; font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-min > summary > b { margin-right: 9px !important; font: 700 14px var(--body) !important; color: var(--text) !important; }
+@media (max-width: 760px) {
+html:not(.mpcard) body #view#view#view .mpx-r:not(.mpx-rd), html:not(.mpcard) body #view#view#view .mpx-rd > summary, html:not(.mpcard) body #view#view#view .mpx-sp .mpx-r:not(.mpx-rd) { grid-template-columns: 46px minmax(0,1fr) auto !important; padding-left: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-r .mpx-w, html:not(.mpcard) body #view#view#view .mpx-r .mpx-o { grid-column: 2 / -1 !important; }
+html:not(.mpcard) body #view#view#view .mpx-r .mpx-e { grid-column: 3 !important; grid-row: 1 !important; }
+html:not(.mpcard) body #view#view#view .mpx-r .mpx-o:empty, html:not(.mpcard) body #view#view#view .mpx-sp .mpx-r .mpx-e { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-sp > .mpt-nt { margin-left: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rm { margin-left: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr { grid-template-columns: 30px minmax(0,1fr) 10px !important; }
+html:not(.mpcard) body #view#view#view .mpx-dr .mpx-dd { grid-column: 2 !important; }
+html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs { margin: 12px -12px 0 !important; padding: 0 4px !important; }
+html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs > button { padding: 10px 9px 9px !important; font-size: 15px !important; }
+}
+}
+/* (Mythic+, the map's pull card, Nov 14, Flex with a picture of it: "this section has a lot in it thats really confusing and unclear". Every number has
+   its name, the tags are sentences under What went wrong and What else happened, and the folds say what is in them. The website only) */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpt-mcard { padding: 14px 16px 16px !important; }
+html:not(.mpcard) body #view#view#view .mpx-ch { margin: 0 0 10px !important; gap: 10px !important; }
+html:not(.mpcard) body #view#view#view .mpx-ch > b { font: 800 21px/1.1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(78px, 1fr)) !important; margin: 0 !important; border: 1px solid var(--line) !important; border-radius: 4px !important; background: rgba(255,255,255,.015) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf > span { min-width: 0 !important; padding: 8px 10px 9px !important; box-shadow: -1px 0 0 var(--line) !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf > span[data-tt] { cursor: help !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf small { display: block !important; font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--faint) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf b { display: block !important; margin-top: 2px !important; font: 800 20px/1.1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-cf i { display: block !important; margin-top: 1px !important; font: 500 12px var(--body) !important; font-style: normal !important; color: var(--muted) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard p.mpx-ck { margin: 16px 0 6px !important; padding: 12px 0 0 !important; border-top: 1px solid var(--line) !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-g-m { --kc: #7b838d; }
+html:not(.mpcard) body #view#view#view .mpx-cr { display: grid !important; grid-template-columns: 18px minmax(0,1fr) !important; gap: 9px !important; padding: 5px 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-cr > i { font: 700 14px/1.4 var(--body) !important; font-style: normal !important; text-align: center !important; color: var(--kc) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard .mpx-cr p { margin: 0 !important; font: 500 13.5px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-cr small { display: block !important; margin-top: 1px !important; font: 500 12.5px/1.4 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard .mpx-cr.mpx-g-m p { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard p.mpx-cok { margin: 2px 0 !important; font: 600 13.5px var(--body) !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mpx-cw > details.mpt-mdr { margin: 0 !important; padding: 2px 0 !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-cw > details.mpt-mdr > summary { padding-left: 2px !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard p.mpx-cnt { margin: 8px 0 0 !important; font: 500 13px/1.45 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ce { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-ce > li { display: grid !important; grid-template-columns: 18px minmax(0,1fr) !important; gap: 9px !important; margin: 0 !important; padding: 4px 0 !important; font: 500 13.5px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ce > li > i { font: 600 13px/1.5 var(--body) !important; font-style: normal !important; text-align: center !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ce > li.mpx-ce-l > i { color: #ffd166 !important; }
+html:not(.mpcard) body #view#view#view .mpt-mcard p.mpx-ck + ul.mpt-mtips { margin-top: 0 !important; }
+/* (the play-by-play: one line an event, the time, who, what; chips narrow it; a long pull shows 14 lines until you ask for all) */
+html:not(.mpcard) body #view#view#view .mpt-mcard p.mpx-ck > span { margin-left: 9px !important; font: 500 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ff { display: flex !important; flex-wrap: wrap !important; gap: 5px !important; margin: 0 0 8px !important; }
+html:not(.mpcard) body #view#view#view .mpx-fc { display: inline-flex !important; align-items: baseline !important; gap: 6px !important; margin: 0 !important; padding: 3px 9px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: none !important; box-shadow: none !important; font: 600 12.5px var(--body) !important; color: var(--muted) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-fc > b { font: 600 12px var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fc:hover { color: var(--text) !important; border-color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fc.on { color: var(--text) !important; border-color: var(--gold) !important; background: rgba(230,180,80,.09) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li { display: grid !important; grid-template-columns: 38px 96px minmax(0,1fr) !important; align-items: baseline !important; gap: 8px !important; margin: 0 !important; padding: 3px 4px 3px 0 !important; border-bottom: 1px solid rgba(255,255,255,.04) !important; font: 500 13.5px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; opacity: 1 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .t { font: 600 12.5px var(--body) !important; color: var(--faint) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .w { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font: 700 13.5px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .w > i { font: 500 12.5px var(--body) !important; font-style: normal !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .x small { font: 500 12.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .x b { color: var(--text); }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-bad { background: rgba(255,143,135,.07) !important; box-shadow: inset 2px 0 0 #ff8f87 !important; padding-left: 6px !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 em { font-style: normal !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 em.v-k { color: #c39bff !important; } html:not(.mpcard) body #view#view#view .mpx-fl2 em.v-s { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li:is(.k-cd, .k-def):not(.k-stop) { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li:is(.k-cd, .k-def):not(.k-stop) .x b { color: var(--mpt-soft, #d6d1c6) !important; font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fb { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view .mpx-fl { color: #ffd166 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-lust { background: rgba(255,209,102,.07) !important; box-shadow: inset 2px 0 0 #ffd166 !important; padding-left: 6px !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-note, html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-edge, html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-hit { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fw[data-f="bad"] .mpx-fl2 > li:not(.k-bad), html:not(.mpcard) body #view#view#view .mpx-fw[data-f="stop"] .mpx-fl2 > li:not(.k-stop), html:not(.mpcard) body #view#view#view .mpx-fw[data-f="cd"] .mpx-fl2 > li:not(.k-cd), html:not(.mpcard) body #view#view#view .mpx-fw[data-f="def"] .mpx-fl2 > li:not(.k-def) { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-fw[data-f="all"]:not(.all) .mpx-fl2 > li:nth-child(n+16):not(:last-child) { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-fw:not([data-f="all"]) .mpx-fa { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-fa { margin: 8px 0 0 !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; font: 600 13px var(--body) !important; color: var(--gold) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-fa:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
+/* (a picked player: their own lines and rows are lit; nobody else is greyed out, which read as a broken table) */
+html:not(.mpcard) body #view#view#view .mpt-mcard .pp-off { opacity: 1 !important; }
+html:not(.mpcard) body #view#view#view .mpt-mdt.pp1 .mpt-mcard :is(.mpx-fl2 > li, .mpt-mkr, .gbx-r)[data-who]:not(.pp-off) { background: rgba(230,180,80,.08) !important; box-shadow: inset 2px 0 0 var(--gold) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mdt.pp1 .mpt-mcard .mpx-fl2 > li[data-who]:not(.pp-off) { padding-left: 6px !important; }
+/* (the map keeps its own height and stays in view while a long card scrolls; stretched to the card it left a dark band under the picture) */
+@media (min-width: 701px) {
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mgrid { align-items: start !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mleft { position: sticky !important; top: 108px !important; height: min(620px, calc(100vh - 130px)) !important; min-height: 360px !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mwrap { flex: 1 1 auto !important; height: 100% !important; }
+}
+/* (Big hits: every grid open, none folds, a box is one slim line with the defensive beside the number; Flex, Nov 14: "compact this a little bit more and have it always expanded") */
+html:not(.mpcard) body #view#view#view #mptCH .bh-hit > summary { min-height: 34px !important; padding: 4px 0 2px !important; cursor: default !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-hit > summary::after { content: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-hit > summary:hover { background: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-key > span:last-child { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-grid { margin: 0 0 8px 34px !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-gr { gap: 3px !important; margin-top: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-c { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 7px !important; height: 26px !important; padding: 0 7px 2px 9px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-c > b { flex: none !important; font-size: 14.5px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-c.bh-bad > b { font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-c > small, html:not(.mpcard) body #view#view#view #mptCH .bh-c > .bh-di { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-c.bh-no { justify-content: center !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pn { font-size: 13.5px !important; }
+/* (a defensive is its spell icon; the name is in its hover) */
+html:not(.mpcard) body #view#view#view #mptCH .bh-di { display: inline-flex !important; align-items: center !important; gap: 3px !important; min-width: 0 !important; vertical-align: -4px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-di > .mpt-rki { display: inline-flex !important; flex: none !important; width: 18px !important; height: 18px !important; margin: 0 !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-di > .mpt-rki :is(img, svg, .icw) { width: 18px !important; height: 18px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-di > small { font: 600 12px/1.15 var(--body) !important; color: #7ee08f !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pp .bh-di > small { color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pp { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pp > small { margin-right: 9px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pi { display: inline-flex !important; align-items: center !important; white-space: nowrap !important; margin-right: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-pi .bh-di { vertical-align: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCH .bh-px { margin: 0 0 0 4px !important; font: 600 13px/1 var(--body) !important; color: var(--muted) !important; }
+/* (the folds' own column names were 11px: nothing a player must read is under 12px) */
+html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mkh > span, html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mlh > span, html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mlh > small { font-size: 12px !important; }
+}
 </style>
 </body>
 </html>
