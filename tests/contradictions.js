@@ -556,6 +556,7 @@ const planNights = require('./plan-nights-copy.js')(H, say); /* (Nov 14, Main's 
 /* (Nov 13, ruling B: the estimated parse on the Nov 11 Coiled Altar night against Warcraft Logs' own Parse %, every raider within 15 and nobody more than 15 above;
    Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
 try { require('./parse-estimate.js')(H, say, true); } catch (e) { say('the estimated parse', 'crash', 'tests/parse-estimate.js crashed: ' + e.message); }
+try { require('./mplus-big-hits.js')(H, say); } catch (e) { say('Mythic+ Big hits', 'crash', 'the Big hits check crashed: ' + e.message); } /* (Nov 14, Flex: "Yes, start it": the big hits and close calls of a key) */
 try { require('./look-review.js')(H, say); } catch (e) { say('look review', 'crash', 'the look review check crashed: ' + e.message); } /* (Nov 13, Flex: "no its fine just make the changes": the look review's fixes stay in) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */
 /* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a

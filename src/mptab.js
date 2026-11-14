@@ -880,7 +880,7 @@ function mpHtml(it, R, fx) {
     /* (the five players, each with their spec icon (Flex: "use spec icons for the classes"), in class colour) */
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => { const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
       return '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"><b>' + esc(p.name) + '</b></span>'; }).join('') + '</div></div></div>';
-  if (!C) return mpChap('mptC1', 'The key', '', ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '')) + mpJumpBar(R, false) +
+  if (!C) return mpChap('mptC1', 'The key', '', ban + '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '')) + mpJumpBar(R, false) + mpBigChap(R) +
     mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, null, mpMapHtml(R, null, ''))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
@@ -981,9 +981,9 @@ function mpHtml(it, R, fx) {
     (tgt != null ? sbC('Next level', '+' + (lv + 1), '', mpMM(need) + ' faster gets it') : sbC('Next level', '+3', 'g', 'the most there is')) +
     (yG.r ? sbC('Group DPS', mpGF(yG.r), gdp != null && gdp < -5 ? 'a' : '', gdp == null ? (waiting ? mpShim('8em') : '') : (gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run') + (LD1 ? ', up to where you left' : '')) : '') +
     sbC('Missed kicks', String(thN), thN ? 'r' : 'g', thN ? (thN === 1 ? 'cast' : 'casts') + ' went off with a kick ready' : 'nothing went off with a kick ready') + '</div>' + (last1 ? '<p class="mpt-sbl">' + last1.trim() + '</p>' : '');
-  if (!MPC_ON) return mpChap('mptC1', 'The key', '', ban + scoreH + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
+  if (!MPC_ON) return mpChap('mptC1', 'The key', '', ban + scoreH + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
-  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
+  return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
@@ -1012,7 +1012,65 @@ function mpRPFold(R, F, map, wait) {
 }
 // (the band: Your part beside Fix these first (layout v3); Your part alone when the key has no timer)
 const mpBand = (R, fx, right) => '<div class="mpt-band' + (right ? '' : ' mpt-band1') + '" id="mptBand"><div class="mpt-bl">' + mpPartHtml(R, fx, MP.pp) + '</div>' + (right ? '<div class="mpt-br">' + right + '</div>' : '') + '</div>';
-const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptBand', 'Summary'], ['mptCM', 'Map'], MP_ROT_ON ? ['mptCR', 'Rotation'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
+// ---------- Big hits (Nov 14, Flex: "Yes, start it" on the research's top idea, defensive checks on the big hits; the Design studio's settled look,
+// mplus-big-hits-styled: close calls on top, every big hit under it, By player last; "close calls" its wording). The numbers are the key reader's (R.big,
+// companion/mplus.js bigHits): a big hit took two thirds of a health bar or more from the non-tanks, a close call left someone under 15% with no defensive up.
+// Only what the log proves: "X was ready" only when the reader found it ready; the count of defensives isn't a grade (the hits come faster than defensives) ----------
+const mpBhWhere = (R, k) => { const q = R.pulls[k]; if (!q) return ''; if (q.boss) return q.boss; const nx = R.pulls.slice(k + 1).find((x) => x.boss), pv = R.pulls.slice(0, k).reverse().find((x) => x.boss);
+  return nx ? 'Trash before ' + nx.boss : pv ? 'Trash after ' + pv.boss : 'Pull ' + mpNo(R, k + 1); };
+const mpBhT = (R) => { const C = mpClock(R); return (t) => mpMM(Math.max(0, C ? C.tv(t) : t)); }; /* (on the key's timer, as the rest of the page) */
+const mpBhIc = (h) => '<span class="mpt-rki bh-ic">' + (+h.id ? spellIcon(+h.id, h.spell) : '') + '</span>';
+const mpBhRdy = (c) => (c.ready && c.ready.length ? '<span class="bh-rdy"><b>' + esc(c.ready[0]) + '</b> was ready</span>' : '<span class="bh-nod">No defensive up</span>');
+const mpBigChap = (R) => (R.big ? mpChap('mptCH', 'Big hits', 'the enemy hits that take most of a health bar', mpBigHtml(R)) : '');
+function mpBigHtml(R) {
+  const B = R.big, tv = mpBhT(R), H = B.hits, CL = B.close, nD = (R.people || []).reduce((a, p) => a + (p.deaths || 0), 0), words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+  const nw = (n) => (n <= 10 ? words[n] : String(n)), nwl = (n) => nw(n).toLowerCase(), times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : nwl(n) + ' times');
+  const people = (R.people || []).filter((p) => B.per[p.name]).sort(mpByRole);
+  // (the headline: the close calls, then one sentence)
+  const top = '<div class="bh-top"><h2>' + (CL.length ? '<b class="bh-bad">' + plural(CL.length, 'close call') + '</b> in this key' : '<b class="mpt-g">No close calls</b> in this key') + '</h2></div>' +
+    '<p class="bh-say">' + (nD ? '' : 'Nobody died. ') + nw(H.length) + ' enemy ' + (H.length === 1 ? 'hit' : 'hits') + ' took two thirds of a health bar or more' +
+    (CL.length ? ', and ' + times(CL.length) + ' one of them left someone under 15% health with no defensive up.' : (H.length === 1 ? '. It never left anyone under 15% health without a defensive up.' : '. None of them left anyone under 15% health without a defensive up.')) + '</p>';
+  // (close calls: one Next time line for the spell most of them came from, then a row each)
+  let cls = '';
+  if (CL.length) { const bySp = new Map(); for (const c of CL) bySp.set(c.spell, (bySp.get(c.spell) || 0) + 1); const [sp, n] = [...bySp].sort((a, b) => b[1] - a[1])[0], h = H.find((x) => x.spell === sp);
+    const span = h && h.casts.length > 1 ? Math.round(h.casts[h.casts.length - 1].t - h.casts[0].t) : 0;
+    const nt = '<p class="mpt-nt bh-nt"><b>Next time</b> Have a defensive up for <b class="bh-sp">' + esc(sp) + '</b>.' + (h ? ' It was cast ' + plural(h.casts.length, 'time') + (span ? ' in ' + span + ' seconds' : '') + ', and each one took about ' + h.size + '% of a health bar' : '') +
+      (n === CL.length ? (CL.length > 1 ? ', and every close call came from it.' : '.') : '. ' + nw(n) + ' of the ' + CL.length + ' close calls came from it.') + '</p>';
+    cls = '<div class="bh-sec"><h3><b class="bh-n bh-bad">' + CL.length + '</b> Close calls <span>left under 15% health by a big hit, with no defensive up</span></h3>' + nt +
+      CL.map((c) => '<div class="bh-cr"><span class="bh-t">' + tv(c.t) + '</span><button type="button" class="bh-where" data-bhpick="' + c.pull + '"' + mpT1('Show this pull on the map') + '><i></i>' + esc(mpBhWhere(R, c.pull)) + '</button>' +
+        '<span class="bh-cw">' + mpBhIc(c) + mpWho(R, c.name) + ' was left at <b class="bh-bad bh-big">' + c.left + '%</b> by <b class="bh-sp">' + esc(c.spell) + '</b></span>' + mpBhRdy(c) + '</div>').join('') + '</div>'; }
+  // (every big hit: a row that opens into the players against its casts; the worst one open)
+  const cell = (w) => { if (!w) return '<span class="bh-c bh-no">–</span>'; const def = w.def.length > 0, k = w.died ? ' bh-bad' : def ? ' bh-def' : w.left < 15 ? ' bh-bad' : w.left < 30 ? ' bh-warn' : '';
+    return '<span class="bh-c' + k + '"' + mpT1('<b>' + esc(w.name) + '</b>: took ' + w.pct + '% of their health' + (w.died ? ' and died.' : ', ' + w.left + '% left.') + (def ? '<br>Up: ' + esc(w.def.join(', ')) : '<br>No defensive up.')) + '><b>' + (w.died ? 'died' : w.left + '%') + '</b>' + (def ? '<small>' + esc(w.def[0].replace(/ \(from .*$/, '')) + '</small>' : '') + '<i style="width:' + Math.min(100, w.died ? 0 : w.left) + '%"></i></span>'; };
+  const grid = (h) => '<div class="bh-grid"><div class="bh-gr bh-gh" style="--n:' + h.casts.length + '"><span></span>' + h.casts.map((c) => '<span>' + tv(c.t) + '</span>').join('') + '</div>' +
+    people.map((p) => '<div class="bh-gr" style="--n:' + h.casts.length + '"><span class="bh-pn">' + mpWho(R, p.name) + '</span>' + h.casts.map((c) => cell(c.who.find((w) => w.name === p.name))).join('') + '</div>').join('') + '</div>';
+  const where = (h) => esc(h.src) + ' · ' + esc(mpBhWhere(R, h.casts[0].pull));
+  const lowCls = (h) => (h.low < 15 ? 'bh-bad' : h.low < 30 ? 'bh-warn' : '');
+  const hitsH = '<div class="bh-sec"><h3><b class="bh-n">' + H.length + '</b> Big hits <span>every cast, and the health each player had left after it</span></h3>' +
+    '<p class="bh-key"><span><i class="bh-sw bh-def"></i>a defensive was up</span><span><i class="bh-sw bh-warn"></i>under 30%, nothing up</span><span><i class="bh-sw bh-bad"></i>under 15%</span><span>Click a hit to open or close it.</span></p>' +
+    H.map((h, k) => '<details class="bh-hit"' + (k === 0 ? ' open' : '') + '><summary>' + mpBhIc(h) + '<span class="bh-hn"><b class="bh-sp">' + esc(h.spell) + '</b><span>' + where(h) + '</span></span>' +
+      '<span class="bh-f"><b>' + h.casts.length + '</b> ' + (h.casts.length === 1 ? 'cast' : 'casts') + '</span><span class="bh-f">takes about <b>' + h.size + '%</b></span>' +
+      '<span class="bh-f">lowest <b class="' + lowCls(h) + '">' + (h.died ? plural(h.died, 'death') : h.low + '%') + '</b> ' + (h.died ? '' : mpWho(R, h.lowWho)) + '</span></summary>' + grid(h) + '</details>').join('') + '</div>';
+  // (by player: the lowest they were left, how often a defensive was up (not a grade), and the defensives they pressed in the key)
+  const pressed = (nm) => { const m = new Map(); for (const q of R.pulls) for (const d of q.defs || []) if (d.who === nm) m.set(d.name, (m.get(d.name) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]).map(([n, c]) => esc(n) + ' ×' + c).join(' · '); };
+  const byP = '<div class="bh-sec"><h3>By player <span>at this level the hits come more often than anyone has defensives, so the count is not a grade</span></h3>' + people.map((p) => { const P = B.per[p.name], pr = pressed(p.name);
+    return '<div class="bh-pr"><span class="bh-pw">' + mpWho(R, p.name) + '<small>' + esc(p.spec) + '</small></span>' +
+      '<span class="bh-pl"><small>Lowest</small> ' + (P.died ? '<b class="bh-bad">' + plural(P.died, 'death') + '</b> to a big hit' : '<b class="' + (P.low < 15 ? 'bh-bad' : P.low < 30 ? 'bh-warn' : '') + '">' + P.low + '%</b> after ' + esc(P.lowAt) + ' (' + tv(P.lowT) + ')') + '</span>' +
+      '<span class="bh-pd"><small>Defensive up</small> <span class="bh-pb"><i style="width:' + (P.n ? Math.round(100 * P.d / P.n) : 0) + '%"></i></span><b>' + P.d + '</b> of ' + plural(P.n, 'big hit') + '</span>' +
+      '<span class="bh-pp"><small>Pressed</small> ' + (pr || 'none') + '</span></div>'; }).join('') + '</div>';
+  const foot = '<p class="bh-foot">' + (B.tanks.length ? mpAnd(B.tanks.map((n) => mpWho(R, n))) + ' (tank) isn\'t judged here: a tank\'s big hits are their own check. ' : '') +
+    'A big hit is an enemy spell that took two thirds of a health bar or more from the non-tanks, shields included. A defensive counts when it was on the player as the hit landed, their own or one given to them. Shields such as Prismatic Barrier and Holy Bulwark aren\'t counted yet.</p>';
+  return top + cls + hitsH + byP + foot;
+}
+// (a pull card's close calls, right after how each player died)
+function mpBhCard(R, i, fold) { const B = R.big; if (!B) return ''; const L = B.close.filter((c) => c.pull === i); if (!L.length) return ''; const tv = mpBhT(R);
+  return fold('bh', '<span class="mpt-t2d">!</span> <b>' + plural(L.length, 'close call') + '</b> · left under 15% by a big hit',
+    L.map((c) => '<p class="mpt-mcm">' + tv(c.t) + ': ' + mpWho(R, c.name) + ' was left at <b class="mpt-bad">' + c.left + '%</b> by <b>' + esc(c.spell) + '</b>. ' + (c.ready.length ? esc(c.ready[0]) + ' was ready.' : 'No defensive up.') + '</p>').join('') +
+    '<p class="mpt-mcm"><button type="button" class="linkbtn" data-bhgo="1">See every big hit ↑</button></p>', '', true); }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-bhpick], [data-bhgo]'); if (!t) return; e.preventDefault();
+  if (t.dataset.bhpick != null) { mpMapPick('you', [t.dataset.bhpick]); const m = document.getElementById('mptCM'); if (m) m.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const c = document.getElementById('mptCH'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptBand', 'Summary'], R.big ? ['mptCH', 'Big hits'] : null, ['mptCM', 'Map'], MP_ROT_ON ? ['mptCR', 'Rotation'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return; if (b.dataset.mptj === 'mptCR') mpRkGo();
   if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */
   else { const f = s.querySelectorAll(':scope > details.mpt-fold'); if (f.length === 1 && s.children.length === 2) f[0].open = true; } /* (a chapter that's one folded part, Know this dungeon, opens it) */
@@ -1851,6 +1909,8 @@ function mpPartHtml(R, fx, pick) {
   const dd = []; P.forEach((q, i) => { for (const d of q.deaths || []) if (d.who === name) dd.push({ ...d, i }); }); dd.sort((a, b) => a.t - b.t);
   const dSk = (d) => (d.gap ? mpSkOf(R, d.t) : -1), dOn = (d) => { const k = dSk(d); return k >= 0 ? 'in the ' + mpSkTitle(R, R.skips[k]).replace(/^S/, 's') : d.gap ? 'after ' + pn(d.i) : on(d.i); }; /* (a death between pulls: its skip, else after the pull) */
   row('☠', '#ff8f87', 'Deaths', dd.length ? '<b class="mpt-bad">' + dd.length + '</b><small> · ' + dOn(dd[0]) + '</small>' : '<b class="mpt-g">0</b>', dd.length ? ' data-mppick="' + (dSk(dd[0]) >= 0 ? 's' + dSk(dd[0]) : dd[0].i) + '"' : '');
+  // (3b) close calls (Big hits, Nov 14): left under 15% by a big hit with no defensive up; a click goes to the Big hits chapter. Not for a tank
+  { const B = R.big, cl = B ? B.close.filter((c) => c.name === name) : []; if (B && B.per[name]) row('!', '#ff8f87', 'Close calls', cl.length ? '<b class="mpt-bad">' + cl.length + '</b><small> · ' + esc(cl[0].spell) + '</small>' : '<b class="mpt-g">0</b>', ' data-mpgo="mptCH"'); }
   // (4) kicks, or a healer's stops and CC (no kick; a Restoration Shaman keeps Wind Shear)
   const cc = mpCCcasts(R.ccEv || []).filter((c) => c.who === name).length, th = []; P.forEach((q, i) => { for (const x of q.through || []) if (x.who === name) th.push({ ...x, i }); });
   if (kickless) row('●', '#7ee08f', 'Stops · CC', '<b>' + (p.stops || 0) + ' · ' + cc + '</b>');
@@ -2616,7 +2676,7 @@ function mpMapHtml(R, F, tl) {
         (fod.length ? '<p class="mpt-pkf">+ ' + fod.map((x) => x.c + '× ' + esc(x.n2) + ' ' + role(x)).join(', ') + '</p>' : '') +
         (smn ? '<p class="mpt-pkf mpt-pks">+ ' + smn + ' summoned during the fight' + (smf ? ' (worth forces)' : '') + '</p>' : '') + '</div>', '', !rotOpen); })();
     return '<div class="mpt-mch">' + badge(q) + '<b>' + nm(q) + '</b>' + (run === 'you' ? '<i class="mpt-mca">Most mistakes</i>' : '') + '<span>' + mpMM(p.dur) + (q.add ? ' · +' + fmt(pc(q.add)) : '') + (() => { const r2 = RR.route && RR.route.ok ? RR.route : null; return r2 ? ' · ' + fmt(100 * r2.pulls.slice(0, q.i + 1).reduce((a, x) => a + x.add, 0) / r2.full) + ' total' : ''; })() + (gd ? ' · ' + mpGF(gd) + ' group DPS' : '') + '</span></div>' +
-      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MPC_ON ? '<button type="button" class="mpt-rgo" data-mpcgo="' + i + '">See this pull’s rotation <span aria-hidden="true">›</span></button>' : '') /* (Nov 9, Flex: the Run page and Rotation linked pull by pull) */ + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died; };
+      '<p class="mpt-mtl">' + (tags.join(' ') || '<span class="mpt-t2g">✓ Clean</span>') + '</p>' + next + pack + plan + play + kicks + dps + (run === 'you' && MP_ROT_ON && !MPC_ON ? '<button type="button" class="mpt-rgo" data-mpcgo="' + i + '">See this pull’s rotation <span aria-hidden="true">›</span></button>' : '') /* (Nov 9, Flex: the Run page and Rotation linked pull by pull) */ + (run === 'you' && MP_ROT_ON && !MP_RK_OLD ? fold('r', '<b>Rotation</b>', '<p class="mpt-mcf">Checking the rotation…</p>', ' data-rwp="' + i + '"') : '') + died + mpBhCard(RR, i, fold); };
   // (the pulls as tiles under the map (Flex, Nov 2: "any way to fill the dead space? Maybe the pull counter horizontal across the bottom somehow?"): the
   // badge over two lines, the name, then the time, the % and the icons; the full name, "chained" and "no spot" in the hover)
   // (one thin line a tile (Nov 3): the badge, the time, the icons; the name and the forces are in the hover)
@@ -3442,6 +3502,48 @@ body.mpz-wh .spc-tt{display:none !important}
 .mpt .mpt-rwp{display:block;margin-top:4px;font-size:12px;color:var(--muted)} .mpt .mpt-rwch{display:inline-block;border:1px solid #3a424b;border-radius:4px;padding:0 5px;margin:0 3px 2px 3px;background:none;color:#aeb6bf;font:400 11px var(--body);cursor:pointer} .mpt .mpt-rwch:hover{border-color:#6c757e;color:var(--text)} .mpt .mpt-rwch.b{color:#ffd166;border-color:#6b5a2a}
 .mpt .mpt-rwg{margin:10px 0 0;border-top:1px solid var(--line);padding-top:9px;color:#7ee08f;font-size:13px} .mpt .mpt-rwf{font-size:11px;color:#6c757e;margin:10px 0 0} .mpt .mpt-rw .mpt-rkr > b:last-child{margin-left:auto}
 .mpt .mpt-ypw{display:block;font:400 12.5px var(--body);color:#8f98a1;margin-top:2px} .mpt .mpt-ypk{display:block;font:400 11px var(--body);color:#6c757e;margin-top:1px} .mpt .mpt-ypf{font:400 11px var(--body);color:#6c757e;margin:6px 0 0}
+/* (Big hits, Nov 14: the Design studio's mplus-big-hits-styled, fitted to the key page on main) */
+.mpt .bh-top h2{margin:0;font:700 22px/1.2 var(--head)} .mpt .bh-top h2 b{font-weight:800}
+.mpt .bh-say{margin:4px 0 0;max-width:860px;font:500 14.5px/1.5 var(--body);color:var(--mpt-soft,#d6d1c6)}
+.mpt .bh-bad{color:#ff8f87!important} .mpt .bh-warn{color:#f2c46b!important} .mpt .bh-sp{color:#c39bff}
+.mpt .bh-sec{margin-top:22px} .mpt .bh-sec > h3{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:0 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line2);font:700 18px/1.2 var(--head)}
+.mpt .bh-sec > h3 > span{font:500 13px var(--body);color:var(--muted)} .mpt .bh-n{font:800 22px/1 var(--head)}
+.mpt .bh-nt{margin:8px 0 4px;font:500 13.5px/1.45 var(--body)}
+.mpt .bh-cr{display:grid;grid-template-columns:50px 190px minmax(0,1.6fr) minmax(0,1fr);align-items:center;gap:10px;min-height:38px;padding:4px 0;border-bottom:1px solid var(--line);font:500 13.5px var(--body);color:var(--mpt-soft,#d6d1c6)}
+.mpt .bh-t{color:var(--muted);font-variant-numeric:tabular-nums}
+.mpt .bh-where{display:inline-flex;align-items:center;gap:7px;justify-self:start;max-width:100%;padding:3px 9px;border:1px solid var(--line2);border-radius:3px;background:rgba(255,255,255,.03);color:var(--text);font:600 12.5px var(--body);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpt .bh-where:hover{border-color:#7d9be8} .mpt .bh-where > i{flex:none;width:7px;height:7px;border-radius:1px;background:#7d9be8}
+.mpt .bh-cw{display:flex;align-items:center;flex-wrap:wrap;gap:0 5px;min-width:0} .mpt .bh-big{font:800 17px/1 var(--head)}
+.mpt .bh-rdy{color:#f2c46b} .mpt .bh-rdy b{color:#f2c46b} .mpt .bh-nod{color:var(--muted)}
+.mpt .bh-ic{display:inline-flex;width:22px;height:22px;flex:none} .mpt .bh-ic img{width:22px;height:22px;border-radius:3px}
+.mpt .bh-key{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;margin:8px 0 4px;font:500 13px var(--body);color:var(--mpt-soft,#d6d1c6)}
+.mpt .bh-sw{display:inline-block;width:14px;height:14px;margin-right:6px;vertical-align:-2px;border-radius:2px;background:#1b1f27;box-shadow:inset 0 0 0 1px var(--line2,#2a2e36)}
+.mpt .bh-sw.bh-def{box-shadow:inset 3px 0 0 #45c15c,inset 0 0 0 1px var(--line2,#2a2e36)} .mpt .bh-sw.bh-warn{background:rgba(242,196,107,.2);box-shadow:inset 0 0 0 1px rgba(242,196,107,.6)} .mpt .bh-sw.bh-bad{background:rgba(255,143,135,.26);box-shadow:inset 0 0 0 1px rgba(255,143,135,.75)}
+.mpt .bh-hit{border-bottom:1px solid var(--line)}
+.mpt .bh-hit > summary{display:grid;grid-template-columns:22px minmax(0,1fr) 76px 136px 200px 14px;align-items:center;gap:12px;min-height:46px;padding:6px 0;cursor:pointer;list-style:none;font:500 13.5px var(--body);color:var(--muted)}
+.mpt .bh-hit > summary::-webkit-details-marker{display:none} .mpt .bh-hit > summary::after{content:'▸';color:var(--muted);text-align:right} .mpt .bh-hit[open] > summary::after{content:'▾'} .mpt .bh-hit > summary:hover{background:rgba(255,255,255,.03)}
+.mpt .bh-hn{min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 9px} .mpt .bh-hn > b{font:700 15.5px var(--body)} .mpt .bh-hn > span{font:500 13px var(--body)}
+.mpt .bh-f{white-space:nowrap} .mpt .bh-f > b{font:700 15px var(--body);color:var(--text)} .mpt .bh-f > .mpt-nm{font:700 13.5px var(--body)}
+.mpt .bh-grid{margin:0 0 14px 34px;padding:2px 0;overflow-x:auto;scrollbar-width:thin}
+.mpt .bh-gr{display:grid;grid-template-columns:112px repeat(var(--n),minmax(86px,1fr));gap:4px;margin-top:4px;align-items:stretch;max-width:calc(112px + var(--n) * 154px)} /* (a hit cast once or twice keeps slim cells) */
+.mpt .bh-gh > span{font:600 12px var(--body);color:var(--muted);font-variant-numeric:tabular-nums;padding-left:9px}
+.mpt .bh-pn{display:flex;align-items:center;font:700 14px var(--body);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.mpt .bh-c{position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;height:40px;padding:0 8px 3px 9px;border-radius:2px;background:#1b1f27;box-shadow:inset 0 0 0 1px var(--line,#252a32);overflow:hidden}
+.mpt .bh-c > b{font:700 15px/1.15 var(--body);color:var(--text);font-variant-numeric:tabular-nums} .mpt .bh-c > small{display:block;font:600 12px/1.15 var(--body);color:#7ee08f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpt .bh-c > i{position:absolute;left:0;bottom:0;height:3px;background:#5b636c}
+.mpt .bh-c.bh-def{box-shadow:inset 3px 0 0 #45c15c,inset 0 0 0 1px var(--line,#252a32)} .mpt .bh-c.bh-def > i{background:#45c15c}
+.mpt .bh-c.bh-warn{background:rgba(242,196,107,.13);box-shadow:inset 0 0 0 1px rgba(242,196,107,.5)} .mpt .bh-c.bh-warn > b{color:#f2c46b} .mpt .bh-c.bh-warn > i{background:#f2c46b}
+.mpt .bh-c.bh-bad{background:rgba(255,143,135,.2);box-shadow:inset 0 0 0 1px rgba(255,143,135,.8)} .mpt .bh-c.bh-bad > b{color:#ff8f87;font-size:17px} .mpt .bh-c.bh-bad > i{background:#ff8f87}
+.mpt .bh-c.bh-no{align-items:center;background:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);color:var(--muted);font:500 13px var(--body)}
+.mpt .bh-pr{display:grid;grid-template-columns:170px minmax(0,1.25fr) minmax(0,1fr) minmax(0,1.35fr);align-items:center;gap:4px 18px;min-height:44px;padding:6px 0;border-bottom:1px solid var(--line);font:500 13.5px/1.4 var(--body);color:var(--mpt-soft,#d6d1c6)}
+.mpt .bh-pr small{font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.mpt .bh-pw > .mpt-nm{display:block;font:700 14.5px var(--body)} .mpt .bh-pw > small{display:block;font:500 12.5px var(--body);letter-spacing:0;text-transform:none}
+.mpt .bh-pl > b{font:800 17px/1 var(--head);color:var(--text)} .mpt .bh-pd > b{font:700 14px var(--body);color:var(--text)}
+.mpt .bh-pb{display:inline-block;width:64px;height:6px;margin-right:8px;vertical-align:1px;background:#23272f;overflow:hidden} .mpt .bh-pb > i{display:block;height:100%;background:#45c15c}
+.mpt .bh-foot{margin:16px 0 0;max-width:900px;font:500 12.5px/1.5 var(--body);color:var(--muted)}
+@media (max-width:900px){ .mpt .bh-hit > summary{grid-template-columns:22px minmax(0,1fr) 14px;row-gap:2px} .mpt .bh-hit > summary > .bh-f{grid-column:2} .mpt .bh-hit > summary::after{grid-column:3;grid-row:1}
+  .mpt .bh-grid{margin-left:0} .mpt .bh-gr{grid-template-columns:96px repeat(var(--n),84px)} .mpt .bh-pn{position:sticky;left:0;z-index:1;background:var(--panel,#171a22)}
+  .mpt .bh-pr{grid-template-columns:minmax(0,1fr)} .mpt .bh-cr{grid-template-columns:46px minmax(0,1fr)} .mpt .bh-cr > .bh-cw,.mpt .bh-cr > .bh-rdy,.mpt .bh-cr > .bh-nod{grid-column:2} }
 `;
 
 // ---------- card mode (Nov 3, the studio's pop-up-only-brief.md, Flex: "I still want the pop up window"): the PC app's pop-up shows this tab for one
