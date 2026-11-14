@@ -1026,10 +1026,14 @@ function mpBigHtml(R) {
   const B = R.big, tv = mpBhT(R), H = B.hits, CL = B.close, nD = (R.people || []).reduce((a, p) => a + (p.deaths || 0), 0), words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
   const nw = (n) => (n <= 10 ? words[n] : String(n)), nwl = (n) => nw(n).toLowerCase(), times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : nwl(n) + ' times');
   const people = (R.people || []).filter((p) => B.per[p.name]).sort(mpByRole);
-  // (the headline: the close calls, then one sentence)
-  const top = '<div class="bh-top"><h2>' + (CL.length ? '<b class="bh-bad">' + plural(CL.length, 'close call') + '</b> in this key' : '<b class="mpt-g">No close calls</b> in this key') + '</h2></div>' +
-    '<p class="bh-say">' + (nD ? '' : 'Nobody died. ') + nw(H.length) + ' enemy ' + (H.length === 1 ? 'hit' : 'hits') + ' took two thirds of a health bar or more' +
-    (CL.length ? ', and ' + times(CL.length) + ' one of them left someone under 15% health with no defensive up.' : (H.length === 1 ? '. It never left anyone under 15% health without a defensive up.' : '. None of them left anyone under 15% health without a defensive up.')) + '</p>';
+  // (the headline: deaths to a big hit first, then the close calls, then one sentence. Nov 14, the Design studio's catch on Flex's +20 Den of Nalorakk:
+  // Raging Squall killed Awokengodess with nothing up, and the headline said "No close calls ... None of them left anyone under 15%")
+  const DH = []; for (const h of H) for (const c of h.casts) for (const w of c.who) if (w.died) DH.push({ name: w.name, spell: h.spell, def: w.def });
+  const cap1 = (x) => x.charAt(0).toUpperCase() + x.slice(1), lead = [DH.length ? '<b class="bh-bad">' + plural(DH.length, 'death') + ' to ' + (DH.length === 1 ? 'a big hit' : 'big hits') + '</b>' : '', CL.length ? '<b class="bh-bad">' + plural(CL.length, 'close call') + '</b>' : ''].filter(Boolean);
+  const top = '<div class="bh-top"><h2>' + (lead.length ? lead.join(' and ') + ' in this key' : '<b class="mpt-g">No close calls</b> in this key') + '</h2></div>' +
+    '<p class="bh-say">' + (nD ? '' : 'Nobody died. ') + nw(H.length) + ' enemy ' + (H.length === 1 ? 'hit' : 'hits') + ' took two thirds of a health bar or more.' +
+    DH.map((d) => ' ' + mpWho(R, d.name) + ' died right after <b class="bh-sp">' + esc(d.spell) + '</b>, with ' + (d.def.length ? esc(d.def[0].replace(/ \(from .*$/, '')) + ' up.' : 'no defensive up.')).join('') +
+    (CL.length ? ' ' + cap1(times(CL.length)) + ' one of them left someone under 15% health with no defensive up.' : DH.length ? '' : H.length === 1 ? ' It never left anyone under 15% health without a defensive up.' : ' None of them left anyone under 15% health without a defensive up.') + '</p>';
   // (close calls: one Next time line for the spell most of them came from, then a row each)
   let cls = '';
   if (CL.length) { const bySp = new Map(); for (const c of CL) bySp.set(c.spell, (bySp.get(c.spell) || 0) + 1); const [sp, n] = [...bySp].sort((a, b) => b[1] - a[1])[0], h = H.find((x) => x.spell === sp);

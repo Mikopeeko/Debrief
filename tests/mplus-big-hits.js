@@ -56,6 +56,8 @@ module.exports = function bigHitsCheck(H, say) {
   const txt = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
   if (!/id="mptCH"/.test(html)) bad('the chapter has no id mptCH, so the jump bar and Your part can\'t reach it');
   if (!/2 close calls in this key/.test(txt)) bad('the headline should say "2 close calls in this key": ' + txt.slice(0, 120));
+  if (!/1 death to a big hit and 2 close calls in this key/.test(txt) || !/Healy died right after Purification Strike , with no defensive up\./.test(txt) || /None of them left/.test(txt))
+    bad('a death to a big hit should lead the headline and be said in its sentence (Nov 14, Flex\'s +20 Den of Nalorakk: Raging Squall killed Awokengodess and it read "No close calls"): ' + txt.slice(0, 260));
   if (!/Astral Shift was ready/.test(txt) || !/No defensive up/.test(txt)) bad('a close call should say what was ready ("Astral Shift was ready"), or "No defensive up" when nothing was');
   if (!/Next time Have a defensive up for Purification Strike/.test(txt) || !/every close call came from it/.test(txt)) bad('the close calls lost their Next time line');
   if (!/the count is not a grade/.test(txt)) bad('By player lost its line that the count is not a grade');
