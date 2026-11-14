@@ -88,7 +88,9 @@ function rawFacts(rep, P) {
       const dmgs = ev.filter((e) => e.type === 'damage' && e.targetID === id && e.timestamp <= t + 50 && e.timestamp >= t - 10000);
       for (const e of dmgs.slice(-6)) hits.push([s(e.timestamp), an(e.abilityGameID), (e.amount || 0) + (e.absorbed || 0), e.hitPoints != null && e.maxHitPoints ? Math.round(100 * e.hitPoints / e.maxHitPoints) : null]);
       const kbId = d.killingAbilityGameID != null ? d.killingAbilityGameID : null; /* (the death event's own killing blow; none = no hit killed them: a fall, or carried off) */
-      const line = hp.get(id).filter((x) => x[0] <= t && x[0] >= t - 10000); let low = t; for (let i = line.length - 1; i >= 0; i--) { if (line[i][1] > 0.35) break; low = line[i][0]; }
+      const line = hp.get(id).filter((x) => x[0] <= t && x[0] >= t - 10000); /* (Main, Nov 14: the site's measure. All the time under 35% since they were last back at 70% or more, in the 10 s before dying; a short heal above 35% doesn't restart it.
+   Larryg, Oct 22 pull 16: healed from 15% to 37% for a moment, 4 s under 35% in all; the unbroken stretch at the end was 0.9 s) */
+      let tRec = t - 10000; for (const x of line) { if (x[0] > t - 50) break; if (x[1] >= 0.7) tRec = x[0]; } let lowMs = 0; for (let i = 0; i < line.length; i++) { const [t1, fr] = line[i]; if (t1 > t - 50) break; const tn = i + 1 < line.length ? Math.min(line[i + 1][0], t - 50) : t - 50; if (tn <= tRec || fr >= 0.35) continue; lowMs += tn - Math.max(t1, tRec); } const low = t - lowMs;
       const samp = []; for (let k = 10; k >= 0; k -= 2) { const v = hpAt(id, t - k * 1000); samp.push(v == null ? null : Math.round(100 * v)); }
       const mine = casts.get(id).filter((c) => c[0] <= t), used = {}; for (const [ct, n2] of mine) if (DEFS[n2] != null || /Healthstone|Health(ing)? Potion/.test(n2)) used[n2] = s(ct);
       const pe = ev.filter((e) => e.x != null && e.timestamp <= t && e.timestamp >= t - 3000 && ((e.resourceActor === 2 && e.targetID === id) || (e.resourceActor === 1 && e.sourceID === id))).pop(), posAt = pe ? [r1(pe.x / 100), r1(pe.y / 100)] : null;

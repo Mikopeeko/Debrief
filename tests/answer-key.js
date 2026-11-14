@@ -120,7 +120,7 @@ function comparePull(code, K, S, say) {
   const near = (a, b, d) => a != null && b != null && Math.abs(a - b) <= d, who = (o) => Object.keys(o || {});
   if (S.crash) { say('crash', 3, 'the site crashed on this pull', 'a result', S.crash); return; }
   for (const e of S.errs || []) say('read', 3, 'the check could not read the site', 'readable', e);
-  let n = 0; const ok = () => n++; const lostT = K.cause && K.cause.t != null ? K.cause.t : null;
+  let n = 0; const ok = () => n++; const lostT = K.cause && K.cause.call != null ? K.cause.call : K.cause && K.cause.t != null ? K.cause.t : null; /* (the page's call where Main had it checked (roots.js: call)) */
   // 0. the same fact in two places of the site
   for (const [fact, a, va, b, vb] of S.self || []) say('tabs:' + fact.replace(/[^A-Za-z0-9]+/g, '-').slice(0, 60), 2, 'two tabs disagree on ' + fact, a + ' says ' + va, b + ' says ' + vb, false, true);
   // 1. the pull itself
