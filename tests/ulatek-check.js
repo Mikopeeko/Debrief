@@ -228,5 +228,7 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
     const u = Q && Q["Ula'tek"], wm = /'ulatek\/mythic': (\d+), 'ulatek\/heroic': (\d+)/.exec(WK);
     if (u && wm && (u.m.length !== +wm[1] || u.h.length !== +wm[2])) say('the page code', 'ulatek', 'the Ula\'tek quiz has ' + u.m.length + ' Mythic and ' + u.h.length + ' Heroic questions, the Worker\'s QUIZ_PAGES says ' + wm[1] + ' and ' + wm[2] + ' (check K)');
     if (u && !u.m.some((q) => /second Wretch/i.test(q.q || '') && /45 yards or more from the new tail/.test((q.a || [])[0] || ''))) say('the page code', 'ulatek', 'the Mythic quiz has no question on where the second Wretch is held (check K)'); }
+  /* (Nov 13: Ula'tek after phase 1, on other guilds' pulls: checks AG on, each with its own small real-log copy) */
+  try { require('./ula-later.js')(H, say); } catch (e) { say('the page code', 'ulatek', 'the after-phase-1 checks crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); }
   return n;
 };

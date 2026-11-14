@@ -593,13 +593,15 @@ const UL = {
   malShell: 1295360, noxShell: 1307612, splash: 1307635, yolk: 1312150, // eggs: carrying (Malignant Shell; Mythic Noxious Shell), carriers touching, a popped carrier
   coil: 1299010, coilHit: 1287265, constrictor: 1300685, // Spectral Coils: a circle's cast, its hit on the raid, the soaker's debuff
   wave: 1292403, waveBig: [1311807, 1319282, 1292211], waveTail: 1298570, thrash: 1296301, // Caustic Waves (the hit/DoT on players; the big wave casts; one from the tail surfacing at the edge), Mephitic Thrash
-  wrath: 1298367, wrathHit: 1298369, stone: 1298417, slam: 1299206, unchecked: 1301007, // tanks: Mother's Wrath, Stone Venom stacks, the punishments
+  wrath: 1298367, wrathHit: 1298369, wrathRaid: 1301122 /* (a bite its tank wasn't there for: it hits the whole raid) */, stone: 1298417, slam: 1299206, unchecked: 1301007, // tanks: Mother's Wrath, Stone Venom stacks, the punishments
   rage: 1286860, debris: 1286885, // Rage of the Shackled (the 20 s damage amp), Falling Debris
   womb: 1303620, fester: 1310763, incub: 1299759, incubHit: 1299919, burn: 1302842, boon: 1299764, // Mythic Blightscale Wretch and Toxic Incubation
   hatching: 1306862, fangs: 1311611, fangsCast: 1301117, vein: 1311609, spit: 1302982, wardenAura: 1306858, desperate: 1305709, revenge: 1307941, wardenGest: 1302950, // Stage 2 (wardenGest: the Warden's Writhing Gestation; a second one is its enrage)
   cots: [1304012, 1315541, 1300751], prey: 1315341, biteCast: 1295905, bite: 1288879, purge: 1312967, purgeBoom: 1305878, corpse: [1306119, 1318329], // intermission and Stage 3
   expulsion: 1313531, boilS: 1315342, // Acidic Expulsion (raid DoT from Rawlings and Shriekers), a Shrieker's Boiling Venom
+  clutchGest: 1290990, // a Blightscale Clutch's own Writhing Gestation (stage 2 by the Warden, phase 3 on Heroic after each Call of the Serpent): it hatches into a Viper 20 s later unless it is killed
   cry: 1305650, // a Weakened Doomscale's Anguished Cry (542K to everyone within 60 yards and a 6 s stun; interruptible)
+  unleashed: 1286905, // Fury Unleashed: her enrage (Mythic: 10:08; Berserk, 1287651, two seconds later). No kill of 116 is longer than 10:07
 };
 const UL_IDS = Object.values(UL).flat();
 /* (Nov 13, Wolfthorn's Nov 12 Mythic night, 13 wipes read against the raw log: pulls 7 to 10 said "Mephitic Thrash killed 10". A hit the whole raid takes whatever it
@@ -607,6 +609,10 @@ const UL_IDS = Object.values(UL).flat();
    when a hit they could have avoided landed in their last 5 s (Fester Burst outside the Wretch's bubble, a Caustic Wave, Noxious Splash) or dealt the blow: that one is.
    Caught in the tail's slam (a second Mephitic Thrash hit within half a second of the first) stays a Mephitic Thrash death) */
 const UL_SHARED = /^(mephitic thrash|spectral coils|necrotic vapors|noxious shell|stone venom)$/i;
+/* (Nov 13, Y91DhrV7MtTFAKzQ fight 16, a Mythic wipe in phase 2: six had died one by one by 4:51, two of them healers, and the second heart burn's raid damage killed the rest. It read
+   "Rage of the Shackled killed 3 at once", with no Next time. These hit the whole raid (or the tank) whatever anyone does, and no job stops them: a burst of deaths to them means the
+   raid was already short, so the deaths before it are the cause, never the hit) */
+const UL_UNAVOID = /^(rage of the shackled|necrotic vapors|stone venom)$/i;
 function ulaKillFix(d, hits, mx) { const pick = ulaKillPick(d.kill, d, hits, mx); if (pick) { d.killShared = d.kill; d.kill = pick.spell; d.killId = pick.id || 0; d.killSrc = pick.src || ''; } }
 function ulaKillPick(kill, d, hits, mx) {
   const L = (x) => String(x || '').toLowerCase(), k0 = L(kill); if (!UL_SHARED.test(k0)) return null;
@@ -3402,7 +3408,7 @@ HOW["Ula'tek"] = {
   doomscale: 'Stage 2: break the egg shields, then kill the Doomscale Warden before its second gestation (its enrage). While it lives, standing on or next to its eggs hurts (Warden\'s Protection). Drop the small eggs into the cauldron first and the big Doomscale Eggs last (they don\'t have the 3-yard circle), before the big egg\'s timer runs out, or it hatches a Ravenous Doomscale. The cauldron hatches Weakened Doomscales (four on Mythic): mark them, give each a kick rotation for Anguished Cry, keep them off the raid with their frontal, and kill them together. When one dies the others gain Revenge (100% more haste and damage). Revenge is marked to look at. It\'s a problem when it costs something: an Anguished Cry gets through (about 1.1M to everyone within 60 yards and a 6-second stun under Revenge) or someone dies to that Doomscale while it has it. How long it lasts matters less than whether every Cry is kicked, because it casts twice as fast.',
   bite: 'Stage 3: Serpent\'s Bite marks two players (three before the Nov 6 hotfix). Assigned soakers stand with them to take the venom off before it turns them into a Calcified Corpse. A bitten player dying is a wipe. Taking it off gives the soaker Volatile Purge. On Mythic it hits them for about 2 million when it pops, then a long damage over time, so there are three soakers a cast (the two targets stack and the soakers stand in both circles); pick players with immunities or big defensives, and get externals after. Their Purges also shoot waves, so they spread where the waves miss the raid. Shown: who cleared each bite, any Calcified Corpse, Purge holders without a defensive (Mythic) and anyone caught in a Purge they weren\'t holding.',
   shriek: 'Stage 3: each Call of the Serpent drops egg clutches. On Mythic they crawl toward the water. Grip them platform to platform (not across the middle, which can hatch Vipers) and kill them so they hatch as Rawlings before the waves. Eggs that reach the venom hatch Blightscale Shriekers: tank them, interrupt Vicious Echoes (see Interrupts) and kill them before their next cast; on Mythic, Shriekers and Rawlings start Boiling Venom (stronger) if they live too long. Shown: each Shrieker\'s time alive and anything beyond its first cast, and any Rawling that cast Acidic Expulsion.',
-  avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous: Noxious Splash (Mythic: two egg carriers within 3 yards) and the brown Falling Debris circles during the damage amps (they kill anyone). Harmful: Caustic Waves, the Weakened Doomscale frontal on non-tanks, Fester Burst (Mythic: outside the Wretch\'s bubble) and Virulent Spit. Minor: standing on or next to an egg while its Doomscale Warden lives. Raid-wide damage (Necrotic Vapors, Spectral Coils, Mephitic Thrash, Blight Vein, Circling Prey) isn\'t avoidable and isn\'t listed.',
+  avoid: 'Every source of damage that positioning can avoid, most harmful first. Dangerous: Noxious Splash (Mythic: two egg carriers within 3 yards) and the brown Falling Debris circles, during the damage amps and three more times in Stage 2 (about half a raider\'s health a hit since the Nov 6 hotfix; a kill before it). Harmful: Caustic Waves, the Weakened Doomscale frontal on non-tanks, Fester Burst (Mythic: outside the Wretch\'s bubble) and Virulent Spit. Minor: standing on or next to an egg while its Doomscale Warden lives. Raid-wide damage (Necrotic Vapors, Spectral Coils, Mephitic Thrash, Blight Vein, Circling Prey) isn\'t avoidable and isn\'t listed.',
 };
 
 // "How it works" for the Interrupts mechanic, per boss
@@ -5096,13 +5102,16 @@ function buildUlatek(ev, r, h) {
   const swingsOf = ev.filter((e) => e.k === 'swing'), onWho = (src, t, win) => { const e = swingsOf.filter((x) => x.src === src && x.t <= t + 0.05 && x.t >= t - win).pop(); return e ? e.dst : null; };
   const aliveAt = (g, t) => { const d = r.deaths.filter((x) => x.guid === g && x.t <= t).pop(); return !d || (r.rezzes || []).some((z) => z.guid === g && z.t > d.t && z.t <= t); };
   const ydAt = (a, b, t) => { const pp = posPts(t, [a, b]), p = pp.find((q) => q.guid === a), q = pp.find((z) => z.guid === b); return p && q ? Math.hypot(p.x - q.x, p.y - q.y) : null; };
-  const ulForced = { beam: [], fest: [] }, ulForcedSeen = new Set(); /* (hits that were someone else's doing: waves from a beam taken by players who aren't tanks; a bubble nobody could stand in) */
+  const ulForced = { beam: [], fest: [], purge: [], wv: new Map() }, ulForcedSeen = new Set(); /* (hits that were someone else's doing: waves from a beam taken by players who aren't tanks; a bubble nobody could stand in) */
   const maxIn = (hist, g, a, b) => { let v = 0, cur = 0; for (const [t, s] of hist.get(g) || []) { if (t > b) break; cur = s; if (t >= a) v = Math.max(v, s); } return Math.max(v, (hist.get(g) || []).filter(([t]) => t < a).slice(-1).map(([, s]) => s)[0] || 0); };
 
   // ---- phases ----
   const hatch = castsOf(UL.hatching), cots = castsOf(UL.cots);
   const p2 = hatch.length ? hatch[0] : null, it = p2 != null ? cots.find((t) => t > p2 + 30) ?? null : null;
-  const p3n = it != null ? cots.find((t) => t > it + 20) : null, p3 = p3n != null ? Math.max(it + 1, p3n - 5) : null;
+  /* (Nov 13: phase 3 starts when her first Call of the Serpent after the intermission lands, as Warcraft Logs has it (its switch falls 376 to 382 s into 1,100 Mythic wipes; the cast
+     starts at 372.7 to 377.3 s and takes 4 s). It was five seconds before the cast began: 4Qq6JkafyTVC7vdg fight 11, a wipe 6:17 long, read "reached phase 3" where Warcraft Logs
+     ends it in the intermission. A pull that ends before that cast lands hasn't reached phase 3) */
+  const p3n = it != null ? cots.find((t) => t > it + 20) : null, p3l = p3n != null ? ev.find((e) => e.k === 'cast' && ids(UL.cots).includes(e.id) && e.t >= p3n && e.t <= p3n + 10) : null, p3 = p3l ? Math.max(it + 1, p3l.t) : null;
   const phases = [{ name: 'P1 Serpent Mother', start: 0, end: p2 ?? dur }];
   if (p2 != null) phases.push({ name: 'P2 Doomscale', start: p2, end: it ?? dur });
   if (it != null) phases.push({ name: 'Intermission', start: it, end: p3 ?? dur });
@@ -5127,8 +5136,12 @@ function buildUlatek(ev, r, h) {
   for (const c of carry) c.pop = c.e < dur && coilPop(c);
   const splashes = dmgId(UL.splash), greens = dmgId([UL.wave, UL.thrash, UL.incubHit, UL.fester]);
   const vipers = unitsNamed(/^Blightscale Viper$/), used = new Set(), eggRows = [];
+  /* (Nov 13, 123 top Heroic kills: a Blightscale Clutch hatches into a Viper 20 s after its Writhing Gestation unless it is killed. In phase 3 on Heroic every Call of the Serpent makes
+     four, and 85 of the kills let at least one hatch (1FvZBrQWV3n9jfGT fight 38: Clutches at 6:02 and 6:32, Vipers at 6:24 and 6:56). Each read "an egg on the ground, nobody picked it up",
+     and two turned the card red, on 74 of the 123 kills. A Viper first seen 18 to 30 s after a Clutch's cast, with no carried egg breaking then, is that Clutch's: amber, red only with a death to a Viper) */
+  const clutchG = ev.filter((e) => e.k === 'cast' && e.id === UL.clutchGest).map((e) => e.t), clutchV = new Set(vipers.filter((v) => clutchG.some((t) => v.t0 - t >= 18 && v.t0 - t <= 30) && !carry.some((c) => !c.pop && Math.abs(c.e - v.t0) <= 1.3)).map((v) => v.g));
   /* (U4, Oct 26: one Viper of ~50 eggs with nobody dying to it is some mistakes, as on a top kill; two or more, or a death, is the failure) */
-  const vDead = r.deaths.filter((d) => /putrid membrane/i.test(d.ability || '') || /blightscale viper/i.test(d.killer || '')), vSevere = vipers.length >= 2 || vDead.length > 0;
+  const vDead = r.deaths.filter((d) => /putrid membrane/i.test(d.ability || '') || /blightscale viper/i.test(d.killer || '')), vSevere = vipers.length - clutchV.size >= 2 || vDead.length > 0;
   // (who held an egg when, for the maps (your note, Oct 18): a small green ring on each carrier from the moment they picked
   // it up until it came off, so a map shows who had an egg while a mechanic hit)
   const eggC = mcol('Noxious Shell'), eggRings = (a, b) => carry.filter((c) => c.s < b && c.e > a).map((c) => ({ guid: c.g, r: 2, t0: c.s, dur: Math.max(0.3, c.e - c.s), label: '', color: eggC.color, fill: 'rgba(58,242,168,.28)', fx: 'debuff', cn: 'Small green ring', legend: 'carrying an egg' }));
@@ -5141,7 +5154,7 @@ function buildUlatek(ev, r, h) {
        (the carrier died, touched another carrier, or took a wave). The earliest such egg not yet matched is its egg) */
     if (!c) { const brk = (x) => x.e < dur && (splashes.some((e) => e.dst === x.g && Math.abs(e.t - x.e) <= 0.8) || r.deaths.some((d) => d.guid === x.g && Math.abs(d.t - x.e) <= 0.8) || greens.some((e) => e.dst === x.g && e.t >= x.e - 0.8 && e.t <= x.e + 0.2));
       c = carry.filter((x) => !used.has(x) && !x.pop && x.e < v.t0 - 1 && x.e >= v.t0 - 5 && brk(x)).sort((a, b) => a.e - b.e)[0]; }
-    let cause, fix, g = null, splashG = null, grE = null, gndM = null;
+    let cause, fix, g = null, splashG = null, grE = null, gndM = null, clutch = false;
     if (c) { used.add(c); g = c.g;
       const died = r.deaths.find((d) => d.guid === c.g && d.t >= c.s && ((d.t <= Math.min(c.e, v.t0) + 0.6 && d.t >= v.t0 - 1.3) || Math.abs(d.t - c.e) <= 0.8)), sp = splashes.find((e) => e.dst === c.g && Math.abs(e.t - c.e) <= 0.6), gr = greens.filter((e) => e.dst === c.g && e.t >= c.e - 0.7 && e.t <= c.e + 0.2).pop();
       if (!sp && !died) grE = gr || null;
@@ -5155,14 +5168,15 @@ function buildUlatek(ev, r, h) {
       else if (died) { cause = 'died carrying it'; fix = 'An egg breaks into a Viper when its carrier dies. Carriers should get defensives and healing, and pass on the egg if they\'re low.'; }
       else if (gr) { cause = 'hit by ' + gr.spell; fix = 'Keep eggs away from anything green. Dodge the waves, and only take an egg into a Spectral Coil that is meant to pop it.'; }
       else { cause = 'broke in their hands'; fix = 'Anything green touching an egg or its carrier breaks it into a Viper.'; }
-    } else { cause = 'an egg on the ground'; fix = 'Pick up every egg after Call of the Serpent. One left on the ground breaks into a Viper when a wave or a Coil hits it.';
+    } else if (clutchV.has(v.g)) { clutch = true; cause = 'a Blightscale Clutch that wasn\'t killed in time'; fix = 'A Blightscale Clutch hatches into a Viper 20 seconds after it appears. Cleave the Clutches down together before that.'; }
+    else { cause = 'an egg on the ground'; fix = 'Pick up every egg after Call of the Serpent. One left on the ground breaks into a Viper when a wave or a Coil hits it.';
       /* (Nov 13, pulls 1 and 7: a Viper 4 to 5 yards from where the beam was being soaked, within 2 s of an impact: the beam's waves broke an egg that lay there, not "nobody picked it up") */
       const vp0 = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean), im = vp0 ? dmgId(UL.incubHit).filter((e) => v.t0 - e.t >= -0.5 && v.t0 - e.t <= 3).map((e) => { const q = posPts(e.t).find((p) => p.guid === e.dst); return q ? [e, Math.hypot(q.x - vp0.x, q.y - vp0.y)] : null; }).filter((x) => x && x[1] <= 15).sort((a, b) => a[1] - b[1])[0] : null;
       if (im) { gndM = { who: im[0].dst, yd: Math.max(1, Math.round(im[1])) }; cause = 'an egg on the ground, broken by the waves from ' + pname(im[0].dst) + '\'s Toxic Incubation'; fix = 'Soak the beam where its waves cross no eggs, and break the shells and pick the eggs up fast.'; } }
     if (c) c.viper = { t: v.t0, cause };
-    M(v.t0, g ? pname(g) : 'Raid', 'Viper hatched', mythic ? UL.noxShell : UL.malShell, vSevere ? 'High' : 'Medium', 'A Blightscale Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg (' + cause + ').' : gndM ? ' from an egg on the ground, ' + gndM.yd + ' yards from where ' + pname(gndM.who) + ' soaked Toxic Incubation: its waves broke it.' : ' from an egg on the ground, or one the log doesn\'t tie to a carrier.'), fix);
+    M(v.t0, g ? pname(g) : 'Raid', 'Viper hatched', mythic ? UL.noxShell : UL.malShell, (clutch ? vDead.length > 0 : vSevere) ? 'High' : 'Medium', 'A Blightscale Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg (' + cause + ').' : clutch ? ' from a Blightscale Clutch that wasn\'t killed within 20 seconds.' : gndM ? ' from an egg on the ground, ' + gndM.yd + ' yards from where ' + pname(gndM.who) + ' soaked Toxic Incubation: its waves broke it.' : ' from an egg on the ground, or one the log doesn\'t tie to a carrier.'), fix);
     // (a Viper from a carried egg is that egg's line in its egg phase below; one from an egg on the ground stays up here)
-    (c ? (vr) => { c.vrow = vr; } : (vr) => eggRows.push(vr))([{ t: v.t0, why: 'A Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg: ' + cause : gndM ? ' from ' + cause : ' from an egg nobody picked up') + '.', next: String(fix).split(/(?<=\.)\s/)[0] }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: vSevere && cause !== 'died carrying it', warn: !vSevere || cause === 'died carrying it' } /* (Nov 13, the death rulings: nine deaths read "You: 4 Noxious Shell hits" off this row. It follows from the death, and carrying the egg is the job) */, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
+    (c ? (vr) => { c.vrow = vr; } : (vr) => eggRows.push(vr))([{ t: v.t0, why: 'A Viper hatched at ' + T(v.t0) + (g ? ' from ' + pname(g) + '\'s egg: ' + cause : gndM || clutch ? ' from ' + cause : ' from an egg nobody picked up') + '.', next: String(fix).split(/(?<=\.)\s/)[0] }, g ? { p: pname(g) } : { txt: 'nobody', dim: true }, { txt: cause, bad: (clutch ? vDead.length > 0 : vSevere) && cause !== 'died carrying it', warn: !(clutch ? vDead.length > 0 : vSevere) || cause === 'died carrying it' } /* (Nov 13, the death rulings: nine deaths read "You: 4 Noxious Shell hits" off this row. It follows from the death, and carrying the egg is the job) */, { txt: v.died != null ? 'killed ' + Math.round(v.died - v.t0) + 's later' : 'still up', dim: v.died != null },
       // (a Noxious Splash: the carriers who came within 3 yards of each other, each with their 3-yard circle, a moment before
       // it went off; any other Viper: who had the egg)
       splashG ? { map: { t: Math.max(0, c.e - 0.15), hl: [g].concat(splashG), bad: [g].concat(splashG), badLabel: 'egg carriers within 3 yards', rings: [g].concat(splashG).map((x) => ({ guid: x, r: 3, label: '3 yd', ...mcol('Noxious Shell', 0.14), fx: 'debuff', legend: 'a Noxious Shell, 3 yd (another carrier inside breaks both)' })),
@@ -5172,7 +5186,7 @@ function buildUlatek(ev, r, h) {
         // hit the carrier, or the spot an egg on the ground broke)
         : (() => { const t = Math.max(0, (c ? c.e : v.t0) - 0.2), rings = eggRings(t - 5, t + 1.5);
           // (an egg on the ground whose Viper the log never placed: no map, since there's nothing true to draw (your rule))
-          if (!c) { const vp = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean); if (!vp) return { txt: '' }; rings.push({ x: vp.x, y: vp.y, r: 2.5, t0: v.t0 - 1, dur: 3, fx: 'puddle', label: 'egg', ...mcol('Noxious Shell', 0.3), cn: 'Green circle', legend: 'an egg left on the ground broke here' }); }
+          if (!c) { const vp = [0.4, 1, 2, 3].map((d) => posPts(v.t0 + d, [v.g]).find((p) => p.guid === v.g)).find(Boolean); if (!vp) return { txt: '' }; rings.push({ x: vp.x, y: vp.y, r: 2.5, t0: v.t0 - 1, dur: 3, fx: 'puddle', label: 'egg', ...mcol('Noxious Shell', 0.3), cn: 'Green circle', legend: clutch ? 'a Blightscale Clutch hatched here' : 'an egg left on the ground broke here' }); }
           else if (grE && ids(UL.fester).includes(grE.id)) { const me = posPts(grE.t).find((p) => p.guid === g), w = unitsNamed(/^Blightscale Wretch$/).filter((u) => u.t0 <= grE.t && (u.died == null || u.died >= grE.t - 1)).map((u) => ({ u, p: posPts(grE.t, [u.g]).find((q) => q.guid === u.g) })).filter((x) => x.p).sort((a, b) => (me ? Math.hypot(a.p.x - me.x, a.p.y - me.y) - Math.hypot(b.p.x - me.x, b.p.y - me.y) : 0))[0];
             if (w) rings.push({ guid: w.u.g, r: 10, fx: 'safe', label: '10 yd bubble', ...mcol('Fester Burst', 0.12), legend: 'the Wretch\'s bubble, 10 yd: the carrier was outside it when Fester Burst hit' }); }
           else if (grE) rings.push({ guid: g, r: 3, t0: grE.t - 0.1, dur: 1.2, fx: 'burst', at: grE.t, label: '', color: '#ff3b3b', fill: 'rgba(255,59,59,.25)', cn: 'Red flash', legend: grE.spell + ' hit the carrier here' });
@@ -5239,25 +5253,33 @@ function buildUlatek(ev, r, h) {
     cols: ['When', 'Carrier', 'What happened', 'Viper', ''], rows: eggRows, groups: eggGroups });
 
   // ---- 2. Spectral Coils: soakers per circle (Soul Constrictor marks a soaker on Heroic and Mythic) ----
-  const coilHits = []; for (const e of dmgId(UL.coilHit)) { let c = coilHits.find((x) => Math.abs(x.t - e.t) < 1); if (!c) coilHits.push(c = { t: e.t, amt: 0, n: 0 }); c.amt += e.amt; c.n++; }
+  /* (Nov 13, a top Mythic kill's intermission, GzjMwgnCWQ7TVbyL fight 18: the sixth and seventh circles landed 0.95 s apart and read as one circle with "13 soakers" (a 6 and a 7).
+     Every circle is its own Spectral Coil, so its hits are told apart by which one dealt them, and a soaker belongs to the circle that landed nearest their Soul Constrictor) */
+  const coilHits = []; for (const e of dmgId(UL.coilHit)) { let c = coilHits.find((x) => Math.abs(x.t - e.t) < 1 && (!x.src || !e.src || x.src === e.src)); if (!c) coilHits.push(c = { t: e.t, amt: 0, n: 0, src: e.src || '' }); c.amt += e.amt; c.n++; }
   coilHits.sort((a, b) => a.t - b.t);
+  const coilOf = (t) => coilHits.reduce((b, c) => (!b || Math.abs(c.t - t) < Math.abs(b.t - t) ? c : b), null), scOf = (c) => sc.filter((e) => Math.abs(e.t - c.t) < 1 && coilOf(e.t) === c);
   const sc = auraId(UL.constrictor, 'apply').filter((e) => h.isPlayer(e.dst)), minSoak = mythic ? 6 : Math.max(3, Math.round(r.players.size * 0.2)); /* (Nov 13, measured on 20 Mythic kills: each soaker takes 5% off a circle's hit, down to its lowest at 8 (733k with nobody, 550k with 5, 477k with 7, 440k with 8 or more). Top kills soak a circle with 7 often, with 5 or fewer rarely: under 6 is the flag) */
+  /* (Nov 13, 116 top Mythic kills, 928 intermission circles: three groups take turns there, and a circle had 6 or 7 soakers in 73% of them, 5 in 13%, 4 or fewer in 6%.
+     "Under 6" flagged 80 of the 116 kills; in the intermission a circle is thin under 5. Phase 1's two big groups stay at under 6: 15 of the 116 kills) */
+  const minAt = (t) => (mythic && phaseAt(t) === 'Intermission' ? 5 : minSoak);
   const coilSets = []; for (const c of coilHits) { const cur = coilSets[coilSets.length - 1]; if (cur && c.t - cur[cur.length - 1].t < 10) cur.push(c); else coilSets.push([c]); }
   const coilGroups = coilSets.map((set, si) => {
     const parts = [];
     const rows = set.map((c, k) => {
-      const soak = [...new Set(sc.filter((e) => Math.abs(e.t - c.t) < 1).map((e) => e.dst))], died = r.deaths.filter((d) => d.t >= c.t - 0.2 && d.t <= c.t + 2 && /spectral coils/i.test(d.ability || ''));
-      const none = hcUp && !soak.length, thin = hcUp && soak.length > 0 && soak.length < minSoak;
-      const full = mythic && soak.length >= minSoak; /* (Nov 13, pulls 2 and 12: "get more soakers" under a 7-player soak, the same as top kills) */
+      const soak = [...new Set(scOf(c).map((e) => e.dst))], mn = minAt(c.t), died = r.deaths.filter((d) => d.t >= c.t - 0.2 && d.t <= c.t + 2 && /spectral coils/i.test(d.ability || ''));
+      const none = hcUp && !soak.length, thin = hcUp && soak.length > 0 && soak.length < mn;
+      const full = mythic && soak.length >= mn; /* (Nov 13, pulls 2 and 12: "get more soakers" under a 7-player soak, the same as top kills) */
       if (died.length) for (const d of died) { const pk = mythic ? ulaKillPick('Spectral Coils', d, (d.recap || []).filter((e) => !e.heal), (r.pMax && r.pMax.get(d.guid)) || 0) : null; if (pk && full) continue; /* (pull 12: Shockabunga took Noxious Splash, then the fully soaked coil finished it: the splash's death, not a Spectral Coils mistake) */
-        M(c.t, d.player, 'Spectral Coils', UL.coil, full ? 'Low' : 'High', (full ? 'Died in the Spectral Coils soak at ' /* (the death rule's job rows start "Died in the ... soak") */ : 'Died to Spectral Coils at ') + T(c.t) + (hcUp ? ' (' + pl(soak.length, 'soaker') + ' in that circle' + (full ? ', a full soak): too low on health going in.' : ').') : '.'), full ? 'A fully soaked coil still hits everyone for about a third of their health: be healed up before it, and never take a wave or a Fester Burst on the way in.' : mythic ? 'Get more soakers into each circle: each one takes 5% off its hit, down to its lowest at 8. Alternate the two groups so nobody with Soul Constrictor is counted on.' : 'Get more soakers into each circle, because everyone in it splits the hit. Alternate the two groups so nobody with Soul Constrictor is counted on.'); }
-      else if (none) M(c.t, 'Raid', 'Spectral Coils', UL.coil, 'High', 'Nobody soaked the Spectral Coil at ' + T(c.t) + '.', 'Every circle needs its group inside before the tail slams it.');
+        /* (Nov 13, fFj6mQvpg2cKhkBL fight 21: Chainhealinc died at 5:54 to a circle 4 soaked and read "You: 3 Spectral Coils hits". A coil hits the whole raid whatever anyone does, and how
+           hard depends on how many others stood in it: a death to a circle short of soakers is the missing soakers', marked someone else's (others), as the answer key's own rule has it) */
+        M(c.t, d.player, 'Spectral Coils', UL.coil, full || hcUp ? 'Low' : 'High', (full ? 'Died in the Spectral Coils soak at ' /* (the death rule's job rows start "Died in the ... soak") */ : 'Died to Spectral Coils at ') + T(c.t) + (hcUp ? ' (' + (soak.length ? pl(soak.length, 'soaker') : 'nobody') + ' in that circle' + (full ? ', a full soak): too low on health going in.' : '): the circle was short of soakers, and its hit lands on the whole raid. Not theirs.') : '.'), full ? 'A fully soaked coil still hits everyone for about a third of their health: be healed up before it, and never take a wave or a Fester Burst on the way in.' : mythic ? 'Get more soakers into each circle: each one takes 5% off its hit, down to its lowest at 8. Alternate the two groups so nobody with Soul Constrictor is counted on.' : 'Get more soakers into each circle, because everyone in it splits the hit. Alternate the two groups so nobody with Soul Constrictor is counted on.', full || !hcUp ? undefined : { others: 'the circle was short of soakers' }); }
+      if (none) M(c.t, 'Raid', 'Spectral Coils', UL.coil, 'High', 'Nobody soaked the Spectral Coil at ' + T(c.t) + '.', 'Every circle needs its group inside before the tail slams it.');
       // (the map: the 10-yard soak to scale, centred on its soakers (the impact point isn't in the log), with anyone just
       // outside it marked)
       const at = hcUp ? posPts(c.t) : [], sp = at.filter((p) => soak.includes(p.guid)), ctr = sp.length ? { x: sp.reduce((s, p) => s + p.x, 0) / sp.length, y: sp.reduce((s, p) => s + p.y, 0) / sp.length } : null;
       const near = ctr ? at.filter((p) => p.kind === 'player' && !soak.includes(p.guid) && Math.hypot(p.x - ctr.x, p.y - ctr.y) <= 15).map((p) => p.guid) : [], diedG = died.map((d) => d.guid);
       if (ctr) parts.push({ k, t: c.t, ctr, soak, diedG });
-      return [{ txt: 'Circle ' + (k + 1) }, { t: c.t }, hcUp ? { txt: String(soak.length), bad: none, warn: thin, sub: thin ? 'under ' + minSoak : '' } : { txt: 'not shown on Normal', dim: true }, { ps: soak.map(pname), none: hcUp ? 'nobody' : '' },
+      return [{ txt: 'Circle ' + (k + 1) }, { t: c.t }, hcUp ? { txt: String(soak.length), bad: none, warn: thin, sub: thin ? 'under ' + mn : '' } : { txt: 'not shown on Normal', dim: true }, { ps: soak.map(pname), none: hcUp ? 'nobody' : '' },
         { n: c.amt / Math.max(1, c.n), sub: 'each' }, { ps: died.map((d) => d.player), none: '—', bad: died.length > 0 && !full, warn: died.length > 0 && full } /* (Nov 13, the death rulings, pull 12: Dragooned and Komo read "You: 1 Spectral Coils hit" for a circle 7 soaked. A death in a full soak is amber: the soak was done) */, { txt: '', dim: true }];
     });
     const t0 = set[0].t;
@@ -5274,11 +5296,11 @@ function buildUlatek(ev, r, h) {
           focus: { x, y, r: Math.max(13, ...parts.map((q) => Math.hypot(q.ctr.x - x, q.ctr.y - y) + 12)) }, title: 'Spectral Coils at ' + T(t0) + ': all ' + pl(set.length, 'circle') + ', in order', pts: posPts(tL + 0.3),
           ...(h.frames ? { frames: h.frames(Math.max(0, c0), Math.min(dur, tL + 1.5), 0.25) } : {}) } }]);
     }
-    return { title: 'Spectral Coils, set ' + (si + 1) + ' (' + phaseAt(t0) + ')', t: t0, sub: pl(set.length, 'circle') + (hcUp ? ': ' + set.map((c) => sc.filter((e) => Math.abs(e.t - c.t) < 1).length).join(' / ') + ' soakers' : ''),
+    return { title: 'Spectral Coils, set ' + (si + 1) + ' (' + phaseAt(t0) + ')', t: t0, sub: pl(set.length, 'circle') + (hcUp ? ': ' + set.map((c) => new Set(scOf(c).map((e) => e.dst)).size).join(' / ') + ' soakers' : ''),
       bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
   if (coilGroups.length) sections.push({ id: 'coils', title: 'Spectral Coils (Soak circles)', spell: S('spectral coils'), verdict: coilGroups.some((g) => g.bad) ? 'bad' : coilGroups.some((g) => g.warn) ? 'warn' : 'good',
-    summary: pl(coilHits.length, 'circle') + (mythic ? '. Each soaker takes 5% off a circle\'s hit, down to its lowest at 8. A circle under ' + minSoak + ' soakers is flagged.' : hcUp ? '. A circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
+    summary: pl(coilHits.length, 'circle') + (mythic ? '. Each soaker takes 5% off a circle\'s hit, down to its lowest at 8. A circle under ' + minSoak + ' soakers is flagged' + (coilHits.some((c) => minAt(c.t) !== minSoak) ? ' (under 5 in the intermission, where three groups take turns).' : '.') : hcUp ? '. A circle under ' + minSoak + ' soakers is flagged.' : '.'), cols: ['Circle', 'When', 'Soakers', 'Who soaked', 'Damage', 'Died', ''], rows: [], groups: coilGroups });
 
   // ---- 2b. Caustic Waves: every wave hit, and where that wave came from ----
   // A hit puts the 10 s Caustic Waves poison on. The tail's waves (Gore Rattle surfacing at the platform's edge, two at a
@@ -5310,8 +5332,23 @@ function buildUlatek(ev, r, h) {
   const tickOf = new Map(); for (const e of wvTicks) { const a = wvHits.filter((x) => x.dst === e.dst && x.t <= e.t + 0.2 && e.t - x.t <= 10.5).pop(); if (a) tickOf.set(a, (tickOf.get(a) || 0) + e.amt); }
   /* (Mechanics audit, Oct 24: every top kill took 6 to 17 wave hits and lived (often the same player twice), so a hit a player survives is a note
      (with how many times); a death is red. The damage itself still counts in Avoidable damage) */
+  /* (Nov 13, 82mnXac4DT1fNBAK fight 59, Mythic phase 3: the first bite's four soakers' Purges burst at 7:00.7, and the Caustic Waves they sent out hit 7 players at 7:01 to 7:03 and
+     killed 4. Ula'tek only began her own waves at 7:02, and hers reach the raid 4 s or more after that. A hit within 4 s of a Purge burst, and before her own waves could arrive,
+     is the soakers' waves: someone else's on anyone who wasn't soaking, with the raid's own line when it caught three or more) */
+  const pgT = []; if (mythic) for (const e of dmgId(UL.purgeBoom)) if (!pgT.some((x) => Math.abs(x.t - e.t) < 1)) pgT.push({ t: e.t, hit: new Set() });
+  for (const p of pgT) { const her = bigW.filter((w) => w.c.id === UL.waveBig[2] && w.s <= p.t + 4 && w.s >= p.t - 14).pop(); p.end = her ? Math.min(p.t + 4, her.s + 4) : p.t + 4;
+    p.hold = new Set(auraId(UL.purge, 'apply').filter((x) => h.isPlayer(x.dst) && x.t >= p.t - 5.6 && x.t <= p.t - 4.4).map((x) => x.dst)); if (p.end > p.t + 0.15) ulForced.purge.push([p.t, p.end, p.hold]); }
+  const purgeOf = (t) => pgT.find((p) => t >= p.t + 0.15 && t <= p.end) || null;
+  /* (Nov 13, Bvryf2VWpGJ6PAk3 fight 28, Mythic phase 2: an Anguished Cry nobody kicked stunned 9 at 4:47 for 6 s; her waves reached Theduv and Rjæ 0.4 and 0.6 s after the stun
+     ended and killed them, and both read "You: 2 Caustic Waves hits". A wave that lands on a stunned player, or within 1.5 s of the stun ending, is the missed kick's: one row a
+     player a stun, marked someone else's (m.others)) */
+  const cryOn = new Map(); for (const a of auraId(UL.cry)) { if (!h.isPlayer(a.dst)) continue; if (a.op === 'apply') { if (!cryOn.has(a.dst)) cryOn.set(a.dst, []); cryOn.get(a.dst).push([a.t, a.t + 6]); } else if (a.op === 'remove') { const l = cryOn.get(a.dst); if (l && l.length && a.t >= l[l.length - 1][0]) l[l.length - 1][1] = a.t; } }
+  const cryAt = (g, t) => (cryOn.get(g) || []).find(([x, z]) => t >= x && t <= z + 1.5) || null;
   const wvN = new Map();
   const waveRows = wvHits.map((a) => {
+    const cs = cryAt(a.dst, a.t);
+    if (cs) { const key = a.dst + '|cry' + Math.round(cs[0]); if (!ulForcedSeen.has(key)) { ulForcedSeen.add(key);
+      M(a.t, pname(a.dst), 'Caustic Waves', S('caustic waves')[0], 'Low', 'Hit by a wave ' + (a.t <= cs[1] ? 'while stunned by the Anguished Cry that landed at ' + T(cs[0]) : (a.t - cs[1]).toFixed(1) + ' s after the stun of the Anguished Cry at ' + T(cs[0]) + ' ended') + ': there was no time to step out of it. Not theirs.', 'An Anguished Cry that isn\'t kicked stuns everyone within 60 yards for 6 seconds, so nobody can step out of what comes next. Kick every one.', { others: 'stunned by Anguished Cry' }); } }
     const nth = (wvN.get(a.dst) || 0) + 1; wvN.set(a.dst, nth);
     const me = posPts(a.t).find((p) => p.guid === a.dst);
     let src = null;
@@ -5319,7 +5356,13 @@ function buildUlatek(ev, r, h) {
       const ux = -Math.sin(c.face), uy = Math.cos(c.face), dx = me.x - c.x, dy = me.y - c.y, al = dx * ux + dy * uy, pp = Math.abs(dy * ux - dx * uy), late = Math.abs(a.t - c.t - al / WAVE_V);
       if (al > 0 && pp <= 12 && late <= 1.5 && (!src || late + pp / 8 < src.score)) src = { c, ux, uy, score: late + pp / 8 }; }
     // (Toxic Incubation: its impacts send waves out from whoever took one, or from where they landed when nobody did)
-    const bigB = !src && bigW.find((w) => a.t >= w.s - 0.5 && a.t <= w.e + 2), big = bigB && bigB.c, inc = !src && !big && incOn.filter((e) => a.t >= e.t - 0.3 && a.t <= e.t + 6).pop();
+    const pg = !src ? purgeOf(a.t) : null;
+    if (pg && !pg.hold.has(a.dst)) { pg.hit.add(a.dst); const key = a.dst + '|pg' + Math.round(pg.t); if (!ulForcedSeen.has(key)) { ulForcedSeen.add(key);
+      M(a.t, pname(a.dst), 'Caustic Waves', S('caustic waves')[0], 'Low', 'Hit by the waves the Serpent\'s Bite soakers sent out as their Volatile Purge burst at ' + T(pg.t) + '. Not theirs.', 'On Mythic every soaker sends waves out when their Volatile Purge bursts. The soakers step away from the raid first.', { others: 'the soakers\' Volatile Purge waves' }); } }
+    /* (Nov 13, DP94CYMqw8LWHk3p fight 11: the soakers' Purge waves hit Pinx at 6:59, then four of Ula'tek's own waves, cast at 7:02, killed him at 7:08. Every wave for 14 s after
+       a Purge burst was left out of the avoidable damage, so that death read "Not counted". Each hit is marked forced or not on its own: ulForced.wv, read by the panel's skip) */
+    { if (!ulForced.wv.has(a.dst)) ulForced.wv.set(a.dst, []); ulForced.wv.get(a.dst).push([a.t, !!cs || !!(pg && !pg.hold.has(a.dst))]); }
+    const bigB = !src && !pg && bigW.find((w) => a.t >= w.s - 0.5 && a.t <= w.e + 2), big = bigB && bigB.c, inc = !src && !big && incOn.filter((e) => a.t >= e.t - 0.3 && a.t <= e.t + 6).pop();
     const incT = !src && !big && !inc && incCasts.some((t) => a.t >= t && a.t <= t + 18);
     const amt = tickOf.get(a) || 0;
     const died0 = r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= a.t + 10.5 && /caustic waves/i.test(d.ability || ''));
@@ -5329,7 +5372,7 @@ function buildUlatek(ev, r, h) {
     if (died && r.item.kill && died.t >= dur - 20) return [{ t: a.t }, { ps: [pname(a.dst)] }, { txt: 'a wave in the last 20 s of the kill', dim: true }, { n: tickOf.get(a) || 0, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: 'died', dim: true, sub: 'the end of the kill' }];
     /* (Nov 13, pull 1: every wave read "from Shockabunga", the last one hit; the beam's first three impacts were on Volkovod. All who took that beam are named, and a beam taken by players who aren't tanks says so) */
     const incWho = inc ? [...new Set(incOn.filter((e) => Math.abs(e.t - inc.t) <= 6.5).map((e) => e.dst))] : [], incBad = incWho.some((g) => role(g) !== 'tank');
-    const from = src ? 'the tail\'s wave, heading ' + compass(src.ux, src.uy) : big ? (big.id === UL.waveBig[2] ? 'Ula\'tek\'s waves' : 'Ula\'tek and the tail\'s waves') : inc ? (incWho.length > 1 ? 'waves from the Toxic Incubation beam ' + andList(incWho.map(pname)) + ' took' : 'waves from ' + pname(inc.dst) + ' (Toxic Incubation)') : incT ? 'Toxic Incubation\'s waves' : 'not clear from the log';
+    const from = src ? 'the tail\'s wave, heading ' + compass(src.ux, src.uy) : pg ? 'the bite soakers\' waves (Volatile Purge)' : big ? (big.id === UL.waveBig[2] ? 'Ula\'tek\'s waves' : 'Ula\'tek and the tail\'s waves') : inc ? (incWho.length > 1 ? 'waves from the Toxic Incubation beam ' + andList(incWho.map(pname)) + ' took' : 'waves from ' + pname(inc.dst) + ' (Toxic Incubation)') : incT ? 'Toxic Incubation\'s waves' : 'not clear from the log';
     const wvWhy = { why: pname(a.dst) + ' was hit by ' + (from === 'not clear from the log' ? 'a Caustic Wave' : from) + (nth > 1 ? ' (their ' + nth + (nth === 2 ? 'nd' : nth === 3 ? 'rd' : 'th') + ' hit)' : '') + (a.op === 'dose' ? ', a second wave on top of the first' : '') + (died ? ', and died to it.' : '.'),
       next: src ? 'Watch the tail: its wave heads ' + compass(src.ux, src.uy) + ', so step out of that line.' : inc && incBad ? 'The beam is the off tank\'s. Taken by anyone else in the raid, its waves hit whoever is near: that is the beam\'s mistake, not theirs.' : inc ? 'Stay away from ' + pname(inc.dst) + ' when Toxic Incubation lands: the waves go out from them.' : incT ? 'Spread from the Toxic Incubation targets: the waves go out from where they land.' : big ? 'Move out of the path of Ula\'tek\'s waves as they go out.' : 'Watch for the waves and step out of their line.' };
     /* (Nov 13, the death rulings, pull 1: Komo, Urgdragon and Jangokin read "You" for waves off the beam's 4th impact, which landed on Shockabunga in the middle of the ranged group 0.05 s before:
@@ -5338,6 +5381,9 @@ function buildUlatek(ev, r, h) {
       M(a.t, pname(a.dst), 'Caustic Waves', S('caustic waves')[0], 'Low', 'Hit by the waves from the Toxic Incubation beam ' + andList(incWho.map(pname)) + ' took at ' + T(bt != null ? bt : inc.t) + ': it landed in the raid, so there was nothing to dodge. Not theirs.', 'The beam is the off tank\'s. Taken by anyone else in the raid, its waves hit whoever is near.', { others: 'the beam was taken in the raid' }); } }
     return [{ t: a.t, ...wvWhy }, { ps: [pname(a.dst)], sub: nth > 1 ? 'hit ' + nth + ' times' : '' }, { txt: from }, { n: amt, sub: a.op === 'dose' ? 'a second wave on top' : '' }, { txt: died ? 'died' : '—', bad: !!died, dim: !died }];
   });
+  for (const p of pgT) if (p.hit.size >= 3) { const dead = r.deaths.filter((d) => p.hit.has(d.guid) && d.t >= p.t && d.t <= p.t + 12 && /caustic waves/i.test(d.ability || '')).length;
+    M(p.t, 'Raid', 'Volatile Purge', UL.purge, dead ? 'High' : 'Medium', 'The Serpent\'s Bite soakers (' + andList([...p.hold].map(pname)) + ') sent their Volatile Purge\'s Caustic Waves through the raid at ' + T(p.t) + ': ' + pl(p.hit.size, 'player') + ' hit' + (dead ? ', and ' + dead + ' died' : '') + '.',
+      'On Mythic every soaker sends Caustic Waves out when their Volatile Purge bursts, 5 seconds after the bite clears. The soakers step away from the raid before it does, and the bite is soaked with as few players as it needs.'); }
   const wvPl = new Set(wvHits.map((e) => e.dst)).size;
   if (wvHits.length || tailW.length) sections.push({ id: 'waves', title: 'Caustic Waves (Dodge waves)', spell: S('caustic waves'), verdict: waveRows.some((x) => x[4].bad) ? 'bad' : 'good',
     summary: wvHits.length ? pl(wvHits.length, 'wave hit') + ' on ' + pl(wvPl, 'player') + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ')' : '') + '. Each row says which wave it was.' : 'Nobody was hit by Caustic Waves' + (tailW.length ? ' (the tail surfaced ' + pl(tailW.length, 'time') + ').' : '.'),
@@ -5351,7 +5397,17 @@ function buildUlatek(ev, r, h) {
     const tank = tg.find((g) => role(g) === 'tank') || tg[0], raidHit = tg.length >= 3, st = tank ? maxIn(stone, tank, land, land + 6) : 0, had = tank ? stackAt(stone, tank, land - 0.6) : 0;
     if (raidHit) M(land, tank ? pname(tank) : 'Raid', "Mother's Wrath", UL.wrath, 'High', "Mother's Wrath at " + T(land) + ' hit ' + pl(tg.length, 'player') + ': its target was out of reach.', "The tank on Ula'tek stays in melee range through swaps and when she resurfaces.");
     if (had && !raidHit) M(land, pname(tank), "Mother's Wrath", UL.wrath, 'Low', pname(tank) + " took Mother's Wrath at " + T(land) + ' with ' + had + ' Stone Venom still on.', 'Swap so each Mother\'s Wrath lands on a tank with no Stone Venom left.');
-    tankRows.push([{ t: land }, { s: S("mother's wrath") }, tank ? { p: pname(tank) } : { txt: '—', dim: true }, { txt: had ? 'had ' + had + ' going in' : 'none going in', warn: had > 0, dim: !had, sub: st ? st + ' after' : '' }, { txt: raidHit ? 'hit ' + pl(tg.length, 'player') : 'on the tank', bad: raidHit }]);
+    /* (Nov 13, ytmBHw1F9T2JvNK7 fight 19, a Mythic wipe 13 s into phase 3: Mother's Wrath bites its tank 9 times over 3 s. Grümpydk took 7, and the last two landed on all 20
+       as the raid's own Mother's Wrath (695k, then 445k): 17 died. It read "17 died to Mother's Wrath" with the Tanks card good. One of 240 kills has a single such hit) */
+    const rw = dmgId(UL.wrathRaid).filter((e) => e.t >= land - 0.5 && e.t <= land + 6), rwN = new Set(rw.map((e) => e.dst)).size, bites = tank ? dmgId(UL.wrathHit).filter((e) => e.dst === tank && e.t >= land - 0.5 && e.t <= land + 5).length : 0;
+    /* (the bites that went to the raid, counted by their moments; worded as the tank's own miss that hit the raid, so the wipe cause names the tank and never reads "each player dodges it") */
+    const rwT = []; for (const e of rw) if (!rwT.some((t) => Math.abs(t - e.t) < 0.25)) rwT.push(e.t);
+    /* (Wolfthorn's Nov 12 pull 5: Tyralious took Rattler Slam at 1:38 and died at 1:39 after 7 bites; the last 2 hit 10 players for 4.27M. A tank who died during the bites didn't miss
+       them: that is the raid's line, with what it needs next time) */
+    const wDied = tank && rwT.length ? r.deaths.find((d) => d.guid === tank && d.t >= land - 0.5 && d.t <= Math.min(...rwT) + 0.4) : null, rwAmt = h.compact(rw.reduce((s, e) => s + e.amt, 0));
+    if (rwN >= 3 && !raidHit) { if (wDied) M(Math.min(...rwT), 'Raid', "Mother's Wrath", UL.wrath, 'High', pname(tank) + ' died at ' + T(wDied.t) + ' after ' + bites + ' of Mother\'s Wrath\'s ' + (bites + rwT.length) + ' bites, and the rest landed on the whole raid: ' + pl(rwN, 'player') + ' hit for ' + rwAmt + '.', "Mother's Wrath bites its tank 9 times over 3 seconds, and every bite after its tank dies hits the whole raid. The tank goes in topped up with a defensive, and gets an external.");
+      else M(Math.min(...rwT), tank ? pname(tank) : 'Raid', "Mother's Wrath", UL.wrath, 'High', (tank ? 'Missed ' + rwT.length + ' of Mother\'s Wrath\'s ' + (bites + rwT.length) + ' bites at ' + T(Math.min(...rwT)) + ': they landed on the whole raid and hit ' + pl(rwN, 'player') + ' for ' + rwAmt + '.' : "Mother's Wrath at " + T(land) + ' hit ' + pl(rwN, 'player') + ' for ' + rwAmt + ': no tank was there for its bites.'), "Mother's Wrath bites its tank 9 times over 3 seconds. Stay in the red pool in front of her until the last bite: every bite the tank isn't there for hits the whole raid."); }
+    tankRows.push([{ t: land }, { s: S("mother's wrath") }, tank ? { p: pname(tank) } : { txt: '—', dim: true }, { txt: had ? 'had ' + had + ' going in' : 'none going in', warn: had > 0, dim: !had, sub: st ? st + ' after' : '' }, { txt: raidHit ? 'hit ' + pl(tg.length, 'player') : rwN >= 3 ? 'hit ' + pl(rwN, 'player') : 'on the tank', bad: raidHit || rwN >= 3, sub: rwN >= 3 && !raidHit && tank ? bites + ' of ' + (bites + rwT.length) + ' bites on the tank' + (wDied ? ', who died' : '') : '' }]);
   }
   for (const [id, nm, what] of [[UL.slam, 'rattler slam', 'nobody was on the tail'], [UL.unchecked, 'unchecked rage', "nobody was in melee of Ula'tek"]]) {
     const hs = dmgId(id), seen = []; for (const e of hs) { if (seen.some((t) => Math.abs(t - e.t) < 3)) continue; seen.push(e.t);
@@ -5446,6 +5502,12 @@ function buildUlatek(ev, r, h) {
   const ulU = [...(r.hpUnits || new Map()).values()].find((u) => u.name === "Ula'tek");
   const poolS = ulU ? [...r.hpUnits.values()].filter((u) => u.max >= 0.9 * ulU.max).flatMap((u) => u.samples).sort((a, b) => a[0] - b[0]) : [];
   const hpAt = (t) => { let v = null; for (const [tt, f] of poolS) { if (tt > t) break; v = f; } return v; };
+  /* (Nov 13, VMjPrYtNaRwHhWJ7 fight 42, Mythic, a 3% wipe: she gained Fury Unleashed at 10:08 and it killed the 7 left in 4 s. The wipe read "… died to Fury Unleashed at once".
+     Her enrage gets its own line, with her health and how many were already dead) */
+  { const fu = auraId(UL.unleashed, 'apply').find((a) => !h.isPlayer(a.dst));
+    if (fu) { const hp = hpAt(fu.t), dead = new Set(r.deaths.filter((d) => d.t < fu.t - 0.3 && !aliveAt(d.guid, fu.t - 0.3)).map((d) => d.guid)).size, late = new Set(r.deaths.filter((d) => d.t >= fu.t - 30 && d.t < fu.t - 0.3 && !aliveAt(d.guid, fu.t - 0.3)).map((d) => d.guid)).size;
+      M(fu.t, 'Raid', 'Fury Unleashed', UL.unleashed, 'High', 'Ula\'tek reached her enrage at ' + T(fu.t) + (hp != null && !r.item.kill ? ' with ' + Math.max(1, Math.round(100 * hp)) + '% health left' : '') + ' (Fury Unleashed)' + (dead ? ': ' + pl(dead, 'player') + (dead === 1 ? ' was' : ' were') + ' dead by then' + (late >= 2 && late < dead ? ', ' + late + ' of them in the last 30 seconds' : late >= 2 ? ', all in the last 30 seconds' : '') : '') + '.',
+        'Her enrage comes at ' + T(fu.t) + ' and kills the raid in seconds, so she has to die before it. Every player who dies in phase 3 is damage the raid doesn\'t have at the end.'); } }
   // (Mythic: Ula'tek at 67% or lower after the first window, and 45% or lower after the second, is on pace for a kill; Heroic: 60% and
   // 37%, from two Heroic kills that finished in the last window (Nov 3, the pace card's note))
   const PACE = mythic ? [0.67, 0.45] : diff === 'Heroic' ? [0.60, 0.37] : [];
@@ -5483,6 +5545,12 @@ function buildUlatek(ev, r, h) {
     if (hcUp) for (const b of batches) if (b.length >= 2) { const spread = b[b.length - 1].e - b[0].e, cds = cdsAt(b[0].e - 10, b[0].e + 1), loose = spread > 2, noCd = b.length >= 4 && !cds.length;
       if (loose) M(b[0].e, 'Raid', 'Grasping Fangs', UL.fangsCast, 'Low', 'A break of ' + b.length + ' tethers at ' + T(b[0].e) + ' was spread over ' + spread.toFixed(1) + ' s (more Blight Vein ticks on the raid).', 'Everyone in the batch stands at the edge of their tether a couple of seconds early and steps out together on the call.');
       rows.push([{ t: b[0].e }, { txt: 'Break of ' + b.length }, { txt: 'over ' + spread.toFixed(1) + ' s', sub: cds.length ? cds.join(', ') : 'no raid cooldown' }, { txt: loose ? 'spread out' : noCd ? 'no raid cooldown' : 'together', warn: loose || noCd, dim: !loose && !noCd }]); }
+    /* (Nov 13, WTf2MYZGzR4PvNkb fight 8, a Heroic wipe: three tethers broke at 3:14 and three more at 3:21 to 3:23; 3 died to Blight Vein at 3:25 to 3:27. The wipe read
+       "Pilspal, Mossy and Frog died to Blight Vein", with nothing on which break did it. Every tether that breaks puts Blight Vein on the whole raid: its deaths are that break's) */
+    { const bv = r.deaths.filter((d) => /^blight vein$/i.test(d.ability || '') && d.t >= t0 && d.t <= t1 + 12);
+      if (bv.length) { const bvC = bv.filter((d) => carry.some((c) => c.g === d.guid && c.s <= d.t && c.e >= d.t - 0.6)).length, lb = batches.filter((b) => b[0].e <= bv[0].t + 0.5).pop() || null, sp = lb ? lb[lb.length - 1].e - lb[0].e : 0, cds = lb ? cdsAt(lb[0].e - 10, lb[0].e + 1) : [], prev = lb ? batches[batches.indexOf(lb) - 1] : null, gap = prev ? lb[0].e - prev[prev.length - 1].e : null;
+        M(bv[0].t, 'Raid', 'Blight Vein', UL.vein, 'High', 'Blight Vein killed ' + bv.length + ' at ' + T(bv[0].t) + (bvC ? ' (' + bvC + ' carrying ' + (bvC === 1 ? 'an egg, which' : 'eggs, which') + ' hatched)' : '') + (lb ? ': ' + pl(lb.length, 'tether') + ' broke at ' + T(lb[0].e) + (lb.length > 1 && sp >= 1 ? ', ' + sp.toFixed(1) + ' s apart' : '') + (gap != null && gap < 12 ? ', ' + Math.round(gap) + ' s after the break before' : '') : '') + ' (up to ' + pl(pk, 'stack') + ' on the whole raid' + (cds.length ? ', under ' + cds.join(' and ') : ', with no raid cooldown') + ').',
+          'Every tether that breaks puts Blight Vein on the whole raid for 4 seconds, and it stacks. Break them on a call with the raid healed up, wait for it to drop between breaks, and put a raid cooldown under the big one.'); } }
     rows.sort((a, b) => a[0].t - b[0].t);
     return { title: 'Grasping Fangs ' + (i + 1), t: t0, sub: pl(set.length, 'tether') + ', broken in ' + batches.map((b) => b.length).join(' + ') + ' · Blight Vein up to ' + pl(pk, 'stack') + ' on the raid', bad: rows.some((x) => x.some((c) => c.bad)), warn: rows.some((x) => x.some((c) => c.warn)), rows };
   });
@@ -5512,7 +5580,9 @@ function buildUlatek(ev, r, h) {
     dsRows.push([{ t: set[0].t0 }, { txt: pl(set.length, 'Weakened Doomscale') }, { txt: ds.length ? 'killed ' + ds.map((t) => T(t)).join(', ') : 'not killed', dim: !ds.length },
       { txt: rv.length ? 'Revenge' + (gap != null ? ' (' + Math.round(gap) + 's apart)' : '') : gap != null ? Math.round(gap) + 's apart' : '—', bad: rvBad, dim: !rvBad, /* (Mechanics audit, Oct 24: every top kill had Revenge with nothing getting through, so harmless Revenge is a note) */
         sub: rv.length ? (rvBad ? hurt : 'no Anguished Cry got through') : '' }]); });
-  for (const x of rav) { M(x.t0, 'Raid', 'Ravenous Doomscale', UL.hatching, 'High', 'A Doomscale Egg hatched into a Ravenous Doomscale at ' + T(x.t0) + '.', 'Drop the small eggs into the cauldron first and the big Doomscale Egg last, before its timer runs out.');
+  /* (Nov 13, 4GCQd1tvqBPn2JAp fight 13, Mythic phase 2: a big egg was still out when Hatching Doom's 90 s ran out at 4:24; the Ravenous Doomscale's Dread Roar killed 15 at 4:35, and the
+     wipe read "15 died to Dread Roar at once". The line says which timer ran out and what the Doomscale does, so the wipe cause can name the egg) */
+  for (const x of rav) { M(x.t0, 'Raid', 'Ravenous Doomscale', UL.hatching, 'High', 'A Doomscale Egg hatched into a Ravenous Doomscale at ' + T(x.t0) + (p2 != null && x.t0 >= p2 + 88 ? ': it was still out when Hatching Doom\'s 90 seconds ran out' : ': it wasn\'t in the cauldron 20 seconds after it was picked up') + '. Its Dread Roar hits the whole raid.', 'Drop the small eggs into the cauldron first and the big Doomscale Egg last, before its timer runs out.');
     dsRows.push([{ t: x.t0 }, { txt: 'Ravenous Doomscale' }, { txt: 'a big egg hatched' }, { txt: 'a problem', bad: true }]); }
   dsRows.sort((a, b) => a[0].t - b[0].t);
   if (dsRows.length) sections.push({ id: 'doomscale', title: 'Wardens and Doomscales (Big adds)', place: 'Wardens and Doomscales (Kill in time)', spell: S('hatching doom'), verdict: dsRows.some((x) => x.some((c) => c.bad)) ? 'bad' : dsRows.some((x) => x.some((c) => c.warn)) ? 'warn' : 'good',
@@ -5530,14 +5600,26 @@ function buildUlatek(ev, r, h) {
   const biteGroups = bSets.map((set, i) => {
     const t0 = set[0].t, ends = set.map((e) => { const rm = bt.find((x) => x.op === 'remove' && x.dst === e.dst && x.t >= e.t); return rm ? rm.t : dur; });
     const helpers = [...new Set(pa.filter((x) => ends.some((t) => x.t >= t - 0.3 && x.t <= t + 0.6) && !set.some((e) => e.dst === x.dst)).map((x) => x.dst))];
+    /* (Nov 13, 2mWMajqCxPYbZLt9 fight 47, Mythic phase 3: Raidlogger, a target of the second bite, died to Fester Burst at 7:45 as the bite landed and turned to stone; his stone killed
+       Saadxp and Alexdr half a second into their own bites, and 11 more. It read "Serpent's Bite on Alexdr and Saadxp wasn't cleared: they turned to stone". The first stone of a cast
+       is its cause: a bite that ran its 15 s, or a bitten player who died. Anyone bitten who then died to that stone, their own bite not yet 14 s old, is its victim) */
+    const fc = corpse.filter((x) => x.k === 'aura' && x.op === 'apply' && h.isPlayer(x.dst) && x.t >= t0 - 6 && x.t <= Math.max(...ends) + 4).sort((a, b) => a.t - b.t)[0] || null;
+    const stoneFix = 'Their soakers stand with them right away, and nobody with a bite takes extra damage before it clears.';
     const rows = set.map((e, k) => { const end = ends[k], died = r.deaths.find((d) => d.guid === e.dst && d.t >= e.t && d.t <= end + 1), cc = corpse.find((x) => x.t >= e.t && x.t <= end + 4 && (x.dst === e.dst || x.src === e.dst));
-      const bad = !!died || !!cc, res = cc ? 'became a Calcified Corpse' : died ? 'died with it (a wipe)' : end < dur ? 'cleared' : 'not cleared';
-      if (bad) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'High', "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': ' + res + '.', 'Their soakers stand with them right away, and nobody with a bite takes extra damage before it clears.');
+      const victim = !!fc && fc.dst !== e.dst && end - e.t < 14 && !!died && died.t >= fc.t - 0.05, first = !!fc && fc.dst === e.dst, diedIn = first && end - e.t < 14 && !!died;
+      const bad = !!died || !!cc, res = victim ? 'died to ' + pname(fc.dst) + '\'s Calcified Corpse' : diedIn ? 'died with it and turned to stone' : cc ? 'became a Calcified Corpse' : died ? 'died with it (a wipe)' : end < dur ? 'cleared' : 'not cleared';
+      if (victim) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'Low', "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': killed by ' + pname(fc.dst) + '\'s stone ' + (died.t - e.t < 0.3 ? 'as it landed' : (died.t - e.t).toFixed(1) + ' s into it') + '. Not theirs.', stoneFix, { others: 'the first Calcified Corpse' });
+      else if (diedIn) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'High', pname(e.dst) + ' died at ' + T(died.t) + ' with Serpent\'s Bite on them' + (died.ability && !/^(serpent's bite|calcified corpse)$/i.test(died.ability) ? ' (to ' + died.ability + ')' : '') + ' and turned to stone (Calcified Corpse).', 'A bitten player who dies turns to stone at once. Nobody with a bite takes any other hit: the bitten stand in the Wretch\'s bubble and out of the waves, with a defensive on.');
+      else if (bad) M(e.t, pname(e.dst), "Serpent's Bite", UL.biteCast, 'High', "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': ' + res + '.', stoneFix);
       // (the map: just before it cleared, every bite of this cast with its 7-yard leech circle, and who took the venom)
       const mt = Math.max(0, (end < dur ? end : e.t + 2) - 0.3);
       const bmap = { map: { t: mt, hl: [e.dst], hlLabel: 'bitten', good: helpers, goodLabel: 'took the venom (now a Purge holder)', rings: set.map((x) => ({ guid: x.dst, r: 7, fx: 'debuff', label: '7 yd', ...mcol("Serpent's Bite", 0.12), legend: 'leech range, 7 yd' })), title: "Serpent's Bite on " + pname(e.dst) + ' at ' + T(e.t) + ': the 7-yard leech circles', pts: posPts(mt), focus: ctrOf(posPts(mt), set.map((x) => x.dst), 12) } };
       // (the whole cast's map is on its own row above; a bite that went wrong keeps its own map)
-      return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bad ? bmap : { txt: '' }]; });
+      return [{ t: e.t }, { p: pname(e.dst) }, { txt: res, bad: bad && !victim, warn: victim, sub: end < dur && !bad ? 'after ' + Math.round(end - e.t) + 's' : '' }, bad ? bmap : { txt: '' }]; });
+    /* (a target of the cast who died before the bite landed has no bite in the log, only the stone) */
+    if (fc && !set.some((e) => e.dst === fc.dst)) { const fd = r.deaths.find((d) => d.guid === fc.dst && Math.abs(d.t - fc.t) <= 1);
+      M(fc.t, pname(fc.dst), "Serpent's Bite", UL.biteCast, 'High', pname(fc.dst) + ' died at ' + T(fc.t) + ' as Serpent\'s Bite landed on them' + (fd && fd.ability && !/^(serpent's bite|calcified corpse)$/i.test(fd.ability) ? ' (to ' + fd.ability + ')' : '') + ' and turned to stone (Calcified Corpse).', 'A bitten player who dies turns to stone at once. Nobody with a bite takes any other hit: the bitten stand in the Wretch\'s bubble and out of the waves, with a defensive on.');
+      rows.push([{ t: fc.t }, { p: pname(fc.dst) }, { txt: 'died as the bite landed and turned to stone', bad: true }, { txt: '' }]); }
     const lastEnd = Math.max(...ends), bm = booms.filter((x) => x.t >= lastEnd + 3 && x.t <= lastEnd + 7.5), seenB = [], bursts = [];
     for (const e of bm) { if (seenB.some((t) => Math.abs(t - e.t) < 0.5)) continue; seenB.push(e.t);
       const hold = holdersAt(e.t), caught = [...new Set(bm.filter((x) => Math.abs(x.t - e.t) < 0.5 && !hold.has(x.dst)).map((x) => x.dst))];
@@ -5549,7 +5631,9 @@ function buildUlatek(ev, r, h) {
       for (const g of caught) { M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', "Caught in someone else's Volatile Purge at " + T(e.t) + '.', 'Spread before the Purges explode, 5 seconds after a bite is cleared.');
         rows.push([{ t: e.t }, { p: pname(g) }, { txt: "caught in someone else's Volatile Purge", dim: true }, pmap]); } /* (Mechanics audit, Oct 24: 1 or 2 a top kill, all lived: a note) */
       // (Mythic: the Purge hits its holder for about 2 million, so every holder needs a big defensive or an external)
-      if (mythic) for (const g of hold) { if (r.deaths.some((d) => d.guid === g && d.t < e.t - 0.2)) continue; const c = covered(g, e.t);
+      /* (Nov 13, 713cYPKDXfApbkqT fight 24: Fisko had died at 2:27 and been rezzed; at 8:04 his Purge burst for 1.44M and killed him, and he had no row: "died before the burst" read any
+         death earlier in the pull. 47 soakers on 116 top kills had no row this way) */
+      if (mythic) for (const g of hold) { if (!aliveAt(g, e.t - 0.2)) continue; const c = covered(g, e.t);
         if (!c) M(e.t, pname(g), 'Volatile Purge', UL.purge, 'Low', 'Took the Volatile Purge at ' + T(e.t) + ' with no defensive or external.', 'The Purge hits its holder for about 2 million. Use a big defensive or immunity for it, then personals and externals through the damage over time after it.');
         rows.push([{ t: e.t }, { p: pname(g) }, { txt: c ? 'Volatile Purge with ' + String(c).replace(/\b\w/g, (x) => x.toUpperCase()).replace(/ (Of|The) /g, (m) => m.toLowerCase()) : 'Volatile Purge, no defensive', dim: true }, { txt: '' }]); }
       bursts.push({ t: e.t, hold, caught }); }
@@ -5599,11 +5683,11 @@ function buildUlatek(ev, r, h) {
     { n: ['desperate thrash'], label: 'Desperate Thrash (Doomscale frontal)', harm: 'Medium', warnAt: 1, badAt: 2, tankOk: true, dot: 6, why: 'standing in front of a Weakened Doomscale' },
     /* (Nov 13: not counted against the players it hit: waves from a beam taken by players who aren't tanks (pull 1: Komo and Urgdragon read "hit by Caustic Waves and died to it", their own mistake);
        a bubble held inside Mephitic Thrash's reach (pulls 7, 10, 11: 13 players each flagged for a Fester Burst nobody could avoid). The raid's own line says each, by name) */
-    { n: ['caustic waves'], label: 'Caustic Waves', harm: 'Medium', dot: 10, why: 'the venom waves from Ula\'tek and her tail', skip: (e) => ulForced.beam.some(([a, b]) => e.t >= a && e.t <= b + 10) },
+    { n: ['caustic waves'], label: 'Caustic Waves', harm: 'Medium', dot: 10, why: 'the venom waves from Ula\'tek and her tail', skip: (e) => { if (ulForced.beam.some(([a, b]) => e.t >= a && e.t <= b + 10)) return true; let last = null; for (const x of ulForced.wv.get(e.dst) || []) { if (x[0] > e.t + 0.3) break; last = x; } return !!(last && last[1] && e.t <= last[0] + 10.5); } },
     { n: ['fester burst'], label: 'Fester Burst', harm: 'Medium', dot: 12, why: 'more than 10 yards from the Blightscale Wretch when it bursts', skip: (e) => ulForced.fest.some(([a, b]) => e.t >= a && e.t <= b) },
     { n: ['virulent spit'], label: 'Virulent Spit', harm: 'Medium', why: 'the swirlies in Stage 2' },
     /* (Mechanics audit, Oct 24: 2 of 5 top Mythic kills had someone clipped by a circle's edge who lived, so a hit you live through isn't red; a death is) */
-    { n: ['falling debris'], label: 'Falling Debris', harm: 'Medium', why: 'the brown circles during Rage of the Shackled' + (mythic ? ' (a full hit kills anyone, tanks too)' : '') },
+    { n: ['falling debris'], label: 'Falling Debris', harm: 'Medium', why: 'the brown circles on the ground, during Rage of the Shackled and three more times in Stage 2' }, /* (Nov 13: "a full hit kills anyone, tanks too" was true until the Nov 6 hotfix; since it, 264k to 458k a hit) */
     { n: ["warden's protection"], label: "Warden's Protection", harm: 'Low', warnAt: 2, badAt: 5, why: 'standing on or next to an egg while its Doomscale Warden is alive' },
     // (Oct 21: the tail's Mephitic Thrash hits everyone within 35 yards as its 4 s cast ends (spell 1296301: a hit, a 10 s damage
     // over time and a knockback). Only that hit counts, not the ticks after it; tanks are judged loosely as usual)
@@ -7467,7 +7551,11 @@ function kickReport(r, casts, mech, starts) {
     if (!kickable) continue;
     // A cast with a cast bar that finishes was not kicked (a later kick on the same add is its next cast). Only channels,
     // which log their success when the channel starts, can still be interrupted after the success.
-    const kicked = !c.hadStart && r.interrupts.some((k) => k.target === c.guid && k.t >= c.t && k.t - c.t <= 12 && (k.id === c.id || k.spell === c.spell));
+    /* (Nov 13, Ula'tek, djBRFJQa1Xr6tWYD fight 19: the Doomscale Warden's Malice is a 1.5 s cast bar, then a 6 s channel. Its bar ended at 3:05.0 and it was kicked at 3:05.9, before
+       its first tick, and read "got off" and "kicked" for the one cast. A kick of the same spell on the same caster within 8 s of its bar ending, with no new cast bar of it in
+       between, stopped that cast's channel: there is nothing else for it to have stopped. What the channel did before the kick is the mechanic's own line) */
+    const chanKick = c.hadStart && r.interrupts.some((k) => k.target === c.guid && (k.id === c.id || k.spell === c.spell) && k.t >= c.t - 0.05 && k.t - c.t <= 8 && !(starts || []).some((s) => s.guid === c.guid && s.id === c.id && s.t > c.t + 0.05 && s.t <= k.t));
+    const kicked = chanKick || (!c.hadStart && r.interrupts.some((k) => k.target === c.guid && k.t >= c.t && k.t - c.t <= 12 && (k.id === c.id || k.spell === c.spell)));
     if (!kicked) { const x = row(c.id, c.spell); x.missed++; x.missedAt.push({ t: c.t, caster: c.caster, guid: c.guid }); }
   }
   r.kicks = [...byKey.values()].sort((a, b) => (b.kicked + b.missed) - (a.kicked + a.missed));
@@ -7486,7 +7574,7 @@ function kickReport(r, casts, mech, starts) {
       const nxt = i + 1 < ss.length ? ss[i + 1].t : Infinity, died = r.enemyDied.get(x.guid) ?? Infinity;
       const kick = kk.find((q) => !usedK.has(q) && q.t >= x.t - 0.05 && q.t < nxt + 0.05), done = dn.find((c) => c.t >= x.t - 0.05 && c.t < nxt + 0.05);
       const b = { g: x.guid, id: x.id, spell: x.spell, t0: x.t };
-      if (kick && (!done || kick.t <= done.t)) { usedK.add(kick); bars.push({ ...b, t1: kick.t, end: 'kick', by: kick.player }); }
+      if (kick && (!done || kick.t <= done.t || kick.t - done.t <= 8 /* (kicked in the channel that follows its cast bar) */)) { usedK.add(kick); bars.push({ ...b, t1: kick.t, end: 'kick', by: kick.player }); }
       else if (done) bars.push({ ...b, t1: done.t, end: 'done' });
       else bars.push({ ...b, t1: Math.min(nxt, died), end: died < nxt ? 'died' : 'stop' }); // (its end is set from the spell's length below)
     });
@@ -8400,9 +8488,16 @@ function waveAfterCall(r, cut) {
   if (pre.some((t) => burst(pre, t))) return null;
   const hit = (d) => String(killRaw(d) || abRaw(d) || killerRaw(d) || '').toLowerCase();
   /* (a new event: one hit killed 4 or more in the burst (not a melee mix), and none before the call (xH3J pull 18: Unchecked Rage killed one at the call and 8 more 2 s later: the call's own event, no playing on)) */
-  for (const t0 of ts) { if (t0 <= cut + 0.5 || t0 > cut + 15 || !burst(ts, t0)) continue; const w = ds.filter((d) => d.t >= t0 && d.t <= t0 + 5), m = new Map(); for (const d of w) m.set(hit(d), (m.get(hit(d)) || 0) + 1);
+  /* (Nov 13, Ula'tek, 27yzC6Kv8wXFB3t1 fight 24, Mythic phase 2: the call came at 3:29 on a tethered death; 18 were alive and nobody died from 3:34 to 3:54, then the egg carriers died
+     under the Rawlings' Acidic Expulsion and the raid was gone by 4:09. It read "Coffeecleave died to Blight Vein at 3:29". On Ula'tek a burst that starts up to 30 s after the call,
+     with less than a third of the raid dead then, is the new event too) */
+  const ulaLate = (t0) => r.item.boss === "Ula'tek" && t0 <= cut + 30 && new Set(ds.filter((d) => d.t < t0 - 0.01 && !(r.rezzes || []).some((z) => z.guid === d.guid && z.t > d.t && z.t < t0)).map((d) => d.guid)).size * 3 < ((r.players && r.players.size) || 20);
+  for (const t0 of ts) { if (t0 <= cut + 0.5 || (t0 > cut + 15 && !ulaLate(t0)) || !burst(ts, t0)) continue; const w = ds.filter((d) => d.t >= t0 && d.t <= t0 + 5), m = new Map(); for (const d of w) m.set(hit(d), (m.get(hit(d)) || 0) + 1);
     const top = [...m].sort((a, b) => b[1] - a[1])[0]; if (!top || top[1] < 4 || !top[0] || /^(melee|something|unknown|damage)$/.test(top[0])) continue;
-    if (r.item.boss === "Ula'tek" && UL_SHARED.test(top[0])) continue; /* (Nov 13, pull 12: Mephitic Thrash's raid-wide hit at 0:48 finished a raid with five Vipers up; a hit the whole raid takes is never the new event) */
+    if (r.item.boss === "Ula'tek" && UL_SHARED.test(top[0])) continue;
+    /* (Nov 13, 2BXZYz3DyPdq6Lf8 fight 4, Mythic phase 2: Blight Vein killed 3 at 3:37 to 3:39, the call; two were carrying eggs, and their Vipers' Putrid Membrane killed the next six.
+       A Viper's hit after the call, with a carrier dead in the 10 s before it, is what followed from those deaths, never a new event) */
+    if (r.item.boss === "Ula'tek" && /^(putrid membrane|petrifying sting|acidic burst)$/.test(top[0]) && (r.mistakes || []).some((m) => /^viper hatched$/i.test(m.mechanic || '') && /died carrying it/i.test(m.detail || '') && m.t >= cut - 10 && m.t <= cut + 3)) continue; /* (Nov 13, pull 12: Mephitic Thrash's raid-wide hit at 0:48 finished a raid with five Vipers up; a hit the whole raid takes is never the new event) */
     if (ds.some((d) => d.t <= cut + 0.5 && hit(d) === top[0]) || (r.mistakes || []).some((m) => m.player === 'Raid' && String(m.mechanic || '').toLowerCase() === top[0] && m.t >= cut - 10 && m.t <= cut + 0.5)) return null; return t0; }
   return null;
 }
@@ -8415,7 +8510,11 @@ function rootCauseGen(r, opts) {
   /* (Ula'tek: a burst of deaths the call lands in counts whole, its deaths a second or two after the call too (xH3J pull 18: Unchecked Rage at the call, 8 more dead to it 2 s later)) */
   /* (Nov 13, Wolfthorn's Nov 12 night: a Viper kills with its melee, Acidic Burst, Petrifying Sting and Putrid Membrane (a raid-wide aura for as long as it lives), and a carrier who
      touches another dies to Noxious Splash as their Vipers hatch: one cause, traced below to how the Vipers hatched (pull 12 read "Spectral Coils killed 7" with five Vipers up)) */
-  const UL_VIP = 'Blightscale Vipers', ulaEgg = (d) => { const k = lc(killRaw(d) || abRaw(d)); return /^(putrid membrane|petrifying sting|acidic burst|noxious splash)$/.test(k) || (/^(melee|something|unknown|damage)?$/.test(k) && /blightscale viper/i.test(d.killSrc || d.killer || '')); }; /* (Nov 13, pull 4: Kargaryen took a Viper's 670k melee and died to a Putrid Membrane tick 0.3 s later, logged from Ula'tek: a Viper's kill, by the unit that dealt the hit) */ /* (the hit that killed them first: a Fester Burst death a Viper's melee finished is a Fester Burst death (pull 10)) */
+  /* (Nov 13, LPDTjqfyrBQWx1Nc fight 21, Mythic phase 3: two Vipers were up from 5:52 and 6:32 and never killed. During the first Serpent's Bite 7 died one after another, most to a
+     Necrotic Vapors tick with the Vipers' Putrid Membrane and Petrifying Sting on them; it read "With 10 already dead, Serpent's Bite wasn't cleared". A death to damage nobody can dodge
+     is the Vipers' when their hits took a tenth of that player's health or more in their last 6 s: the Vipers are the part of it that could have been stopped) */
+  const vipDrain = (d) => { const mx = (r.pMax && r.pMax.get(d.guid)) || 0; if (!mx) return false; let s = 0; for (const e of d.recap || []) if (!e.heal && e.amount > 0 && e.t >= d.t - 6 && e.t <= d.t + 0.2 && (/^(putrid membrane|petrifying sting|acidic burst)$/i.test(e.spell || '') || /blightscale viper/i.test(e.src || ''))) s += e.amount; return s >= 0.1 * mx; };
+  const UL_VIP = 'Blightscale Vipers', ulaEgg = (d) => { const k = lc(killRaw(d) || abRaw(d)); return /^(putrid membrane|petrifying sting|acidic burst|noxious splash)$/.test(k) || (/^(melee|something|unknown|damage)?$/.test(k) && /blightscale viper/i.test(d.killSrc || d.killer || '')) || (UL_UNAVOID.test(k) && vipDrain(d)); }; /* (Nov 13, pull 4: Kargaryen took a Viper's 670k melee and died to a Putrid Membrane tick 0.3 s later, logged from Ula'tek: a Viper's kill, by the unit that dealt the hit) */ /* (the hit that killed them first: a Fester Burst death a Viper's melee finished is a Fester Burst death (pull 10)) */
   let endD = end; if (ula && !early && opts.cut != null) { const ts = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), s = ts.find((t) => t >= opts.cut - 5 && t <= opts.cut + 3 && ts.filter((x) => x >= t && x <= t + 5).length >= 4); if (s != null) endD = Math.max(end, s + 5); }
   const deaths = (r.deaths || []).filter((d) => d.t <= endD + 0.5).slice().sort((a, b) => a.t - b.t).map((d) => ({ t: d.t, g: d.guid, src: d.killer || '', who: nm(d.player), ab: ula && ulaEgg(d) ? UL_VIP : (ula && killRaw(d)) || abRaw(d) || killerRaw(d) || 'something', kill: killRaw(d) || abRaw(d) || killerRaw(d) || '', lab: d.noHit ? d.kill : '' }));
   const KM = (r.mistakes || []).filter((m) => m.mechanic && m.mechanic !== 'Death' && !/^(pace|phase changes)$/i.test(m.mechanic) && m.t <= endD + 0.5 && !m.others), big = (m) => /^(High|Medium)$/.test(m.severity);
@@ -8425,7 +8524,24 @@ function rootCauseGen(r, opts) {
   const tally = (l) => { const m = new Map(); for (const d of l) m.set(d.ab, (m.get(d.ab) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
   const who3 = (l) => { const u = [...new Set(l.map((d) => d.who))]; return u.length > 3 ? u.slice(0, 3).join(', ') + ' and ' + (u.length - 3) + ' more' : u.length > 1 ? u.slice(0, -1).join(', ') + ' and ' + u[u.length - 1] : u[0] || ''; };
   const raidFirst = (a, b) => (a.player === 'Raid' ? 0 : 1) - (b.player === 'Raid' ? 0 : 1);
-  let wave = null; for (const d of deaths) { if (wAft != null && d.t < wAft - 0.01) continue; const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (w.length >= 4) { wave = w; break; } }
+  /* (Nov 13, Ula'tek past phase 1, two wipes read against the raw log:
+     - kwxdG81zgD2yapTN fight 20 (Heroic): 8 died in phase 1 by 0:59, the raid played on for 4.5 minutes, and two Spectral Coils nobody soaked killed it in the intermission. It read
+       "4 died to Caustic Waves at once (0:52)". The wipe is the last unbroken run of deaths, after a lull of more than a minute (87 s here): a burst before it is what added up.
+       A shorter lull is the same collapse (pqyvNR3JfMXtVZDL fight 64: 6 died at 8:05 to 8:11 and ten players held on for 55 s before the rest fell: lost at 8:09, as the call says);
+     - GMjPHq6CckLrAf4W fight 24 (Heroic): 5 died at 7:57 to 8:02, then a Serpent's Bite nobody cleared turned to stone at 8:36 and killed 16. It read "Caustic Waves killed 3 at once".
+       Within the run the first burst is the cause, unless a later one, after 15 s or more with no death, killed at least twice as many while less than a third of the raid
+       was dead (FQHBqjP4TnmC37VN fight 10, Heroic: Volatile Purge killed 6 of 20 at 7:55 and 9 were dead by 8:04; the stone at 8:25 finished a raid already lost)) */
+  /* (Nov 13, BPdmX6tfjwrC3DAT fight 43, Heroic with 15 players: Blight Vein killed 3 at 3:30 to 3:32, a fifth of the raid, and it melted from there; the root read two Deadly Venom
+     deaths at 4:06. In a raid of 16 or fewer three deaths within 5 s are a burst) */
+  const waveN = ula && ((r.players && r.players.size) || 20) <= 16 ? 3 : 4, vagueAb = (ab) => /^(melee|something|unknown|damage)$/i.test(String(ab || ''));
+  let runT = -1; if (ula) for (let i = deaths.length - 1; i > 0; i--) if (deaths[i].t - deaths[i - 1].t > 60) { runT = deaths[i].t; break; }
+  let wave = null; for (const d of deaths) { if ((wAft != null && d.t < wAft - 0.01) || d.t < runT - 0.01) continue; const w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5); if (ula && w.length >= waveN && w.filter((x) => !UL_UNAVOID.test(x.ab)).length < 2) continue; /* (Ula'tek: all but one of them died to damage nobody can dodge) */ if (w.length >= waveN) { wave = w; break; }
+    /* (Nov 13, 2BXZYz3DyPdq6Lf8 fight 4, Mythic phase 2: five tethers broke together at 3:35 and Blight Vein killed 3 at 3:37 to 3:39, two of them carrying eggs; their Vipers finished the
+       raid 6 s later and it read "7 Blightscale Vipers were up". One short of a burst, all to the same hit, with the raid's own line for that hit: that is where it started) */
+    if (ula && w.length === waveN - 1 && w.length >= 3) { const tp = tally(w)[0]; if (tp && tp[1] === w.length && !vagueAb(tp[0]) && !UL_UNAVOID.test(tp[0]) && KM.some((m) => m.player === 'Raid' && m.severity === 'High' && fits(m, tp[0]) && m.t >= d.t - 10 && m.t <= w[w.length - 1].t + 1)) { wave = w; break; } } }
+  if (ula && wave) for (const d of deaths) { if (d.t <= wave[wave.length - 1].t + 0.01) continue; const before = deaths.filter((x) => x.t < d.t - 0.01).pop(), w = deaths.filter((x) => x.t >= d.t && x.t <= d.t + 5);
+    const deadThen = new Set(deaths.filter((x) => x.t < d.t - 0.01 && !(r.rezzes || []).some((z) => z.guid === x.g && z.t > x.t && z.t < d.t)).map((x) => x.g)).size; /* (who was dead then: a player rezzed since doesn't count) */
+    if (before && d.t - before.t >= 15 && w.length >= 2 * wave.length && deadThen * 3 < ((r.players && r.players.size) || 20) && w.filter((x) => !UL_UNAVOID.test(x.ab)).length >= 2) { wave = w; break; } }
   let c0 = wave ? wave[0].t : end; for (const d of deaths.slice().reverse()) { if (d.t > c0) continue; if (c0 - d.t > 45) break; c0 = d.t; } c0 = Math.max(0, Math.min(c0, end - 30) - 5);
   const chain = [], say = (t, txt) => chain.push({ t, cat: 'gen', txt });
   let cat = 'gen', name = null, sp = null, next = '', short = '', sure = 0.5, causeM = null, manyN = 0; let P = wave ? wave[0].t : end;
@@ -8437,7 +8553,10 @@ function rootCauseGen(r, opts) {
      call (or the end, when the raid played on), not only the wave's first 5 s) */
   if (ula && wave) { const stunAt = (d, m, back) => { const p = r.players && r.players.get(d.g), b = p && p.debuffs && p.debuffs.get(m.mechanic); return !!(b && b.sp && b.sp.some(([a, z]) => a >= m.t - 0.6 && a <= m.t + 0.6 && a <= d.t + 0.2 && (z == null || z >= d.t - back))); }; /* (this cast's own stun, not the next one's) */
     for (const m of KM.filter((x) => x.player === 'Raid' && x.kick && /^(anguished cry|vicious echoes)$/i.test(x.mechanic) && x.t >= wave[0].t - 8 && x.t <= wave[wave.length - 1].t + 0.2)) { const l = deaths.filter((d) => d.t >= m.t - 0.2 && d.t <= m.t + 12 && stunAt(d, m, 2.5)); if (l.length >= 2 && l.length > stunL.length) { stunM = m; stunL = l; stunIn = l.filter((d) => stunAt(d, m, 0.5)).length; } } }
-  const kickSay = (m) => { const det = String(m.detail || ''), src = det.indexOf(' got ') > 0 ? det.split(' got ')[0].trim() : ''; return 'Nobody interrupted ' + (src ? 'the ' + src + '\'s ' : '') + m.mechanic + ' at ' + T(m.t); };
+  /* (Nov 13, Frwn49zWfdxHQAJG fight 40, Mythic: three Doomscales died at 5:12 to 5:15 and the fourth gained Revenge; its Anguished Cry came out in 1.4 s at double damage, hit all 20
+     and killed 5. A Cry from a Doomscale with Revenge says so: killing them together is the fix, more than the kick) */
+  const revOf = (m) => (ula && /^anguished cry$/i.test(m.mechanic || '') ? (r.mistakes || []).find((x) => x.player === 'Raid' && /^revenge$/i.test(x.mechanic || '') && x.t >= m.t - 8 && x.t <= m.t + 0.5) || null : null);
+  const kickSay = (m) => { const det = String(m.detail || ''), src = det.indexOf(' got ') > 0 ? det.split(' got ')[0].trim() : ''; return revOf(m) ? 'Nobody interrupted the Anguished Cry of a Weakened Doomscale with Revenge at ' + T(m.t) + ' (the other Doomscales died first, so it cast twice as fast and hit twice as hard)' : 'Nobody interrupted ' + (src ? 'the ' + src + '\'s ' : '') + m.mechanic + ' at ' + T(m.t); };
   const ULA_NEXT = { 'anguished cry': 'Kick every Anguished Cry: it stuns everyone within 60 yards, so nobody can dodge what comes next.', 'vicious echoes': 'Kick every Vicious Echoes: it stuns the whole raid.', malice: 'Kick every Malice the moment it starts: it hits the whole raid every second for 6 seconds.',
     'noxious splash': 'Egg carriers stay more than 3 yards apart: a carrier touching another carrier hatches a Viper (Noxious Splash).', 'unchecked rage': 'Keep a tank in Ula\'tek\'s reach at all times, through swaps, Mother\'s Wrath and her dive: when she resurfaces, a tank is already at her new spot. If both tanks are away, a melee steps in.', 'rattler slam': 'Keep a tank on the tail at all times. After her dive a new tail rises on another side: the tank who soaked the beam goes straight to it.',
     'caustic waves': 'Dodge every wave: watch the small tails at the edge and step into a gap. Egg carriers above all, because a carrier who dies hatches a Viper.' };
@@ -8463,7 +8582,7 @@ function rootCauseGen(r, opts) {
     if (causeM) { name = causeM.mechanic; sp = spOf(name, causeM.id); say(causeM.t, s1(causeM.detail) + ' (' + T(causeM.t) + ')'); next = s1(causeM.fix); sure = 0.6; short = s1(causeM.detail) + '.'; }
     say(wave[0].t, wave.length + ' died within 5 s' + (hits.length ? ' to ' + (hits.length > 1 ? hits.slice(0, -1).join(', ') + ' and ' + hits[hits.length - 1] : hits[0]) : '') + ' (' + T(wave[0].t) + ')'); }
   else if (wave) {
-    const [ab, n] = tally(wave)[0], tA = ula ? (wave.find((d) => d.ab === ab) || wave[0]).t : wave[0].t; if (ula) { P = tA; uTop = { ab, n, t: tA, all: wave }; } /* (the moment the pull was lost is that hit, not a lone death before it) */ /* (Ula'tek: the raid line for the hit that killed most can come with those deaths, after the wave's first death (xH3J pull 16: Unchecked Rage at 2:12, the first death a Caustic Waves at 2:08)) */
+    const [ab, n] = tally(ula ? wave.filter((d) => !UL_UNAVOID.test(d.ab)) : wave)[0], tA = ula ? (wave.find((d) => d.ab === ab) || wave[0]).t : wave[0].t; if (ula) { P = tA; uTop = { ab, n, t: tA, all: wave }; } /* (the moment the pull was lost is that hit, not a lone death before it) */ /* (Ula'tek: the raid line for the hit that killed most can come with those deaths, after the wave's first death (xH3J pull 16: Unchecked Rage at 2:12, the first death a Caustic Waves at 2:08)) */
     causeM = KM.filter((m) => big(m) && m.t >= wave[0].t - 25 && m.t <= Math.max(tA, wave[wave.length - 1].t) + 1 /* (Nov 12, Twin Fangs pull 15: the miss was logged as the wave ended) */ && fits(m, ab)).sort((a, b) => (ula ? (b.kick ? 1 : 0) - (a.kick ? 1 : 0) : 0) /* (Ula'tek: the missed kick before the Malice it let through) */ || raidFirst(a, b) || ((a.t > tA + 1) - (b.t > tA + 1)) || (a.t > tA + 1 ? a.t - b.t : b.t - a.t))[0] /* (Nov 12: a line logged after the wave began only when none came before, and then the first: the first of two missed circles) */ || KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= wave[0].t - 25 && m.t <= tA + 1 && /\b(died|killed|dead)\b/i.test(m.detail || '')).pop() || null; /* (Nov 6: or the raid failure just before whose line says players died) */
     /* (Nov 12: a raid line that only counts the dead ("11 players died to Pulsing Tides") gives way to the raid line just before that says why ("2 murlocs from set 4 reached the bubble")) */
     if (causeM && causeM.player === 'Raid' && /^\d+ players? died (to|in|with) /i.test(causeM.detail || '')) { const cnt = causeM, why = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m !== cnt && m.t >= wave[0].t - 10 && m.t <= tA + 0.5 && !/^\d+ players? died (to|in|with) /i.test(m.detail || '')).pop(); if (why) causeM = why; }
@@ -8475,15 +8594,18 @@ function rootCauseGen(r, opts) {
     if (causeM && causeM.player && causeM.player !== 'Raid') { const same = KM.filter((m) => m.player && m.player !== 'Raid' && lc(m.mechanic) === lc(causeM.mechanic) && Math.abs(m.t - causeM.t) <= 3 && lc(String(m.detail || '').replace(/\s*\([^)]*\)/g, '')) === lc(String(causeM.detail || '').replace(/\s*\([^)]*\)/g, '')));
       if (new Set(same.map((m) => m.player)).size >= 3) { manyN = new Set(same.map((m) => m.player)).size; short = manyN + ' players ' + s1(String(causeM.detail || '').replace(/\s*\([^)]*\)/g, '')).replace(/^./, (x) => x.toLowerCase()) + '.'; const c1 = chain.find((c) => c.t === causeM.t); if (c1) c1.txt = short.replace(/\.$/, '') + ' (' + T(causeM.t) + ')'; } }
     if (ula && causeM) { const k = lc(causeM.mechanic), u = ulaShort(causeM, n >= 2 && fits(causeM, ab) ? n : 0); if (ULA_NEXT[k]) next = ULA_NEXT[k]; if (u) short = u; }
+    if (ula && causeM && /^ravenous doomscale$/i.test(causeM.mechanic || '') && lc(ab) === 'dread roar') { short = s1(causeM.detail) + ', and its Dread Roar killed ' + n + '.'; next = 'Every big Doomscale Egg goes into the cauldron before Hatching Doom\'s 90 seconds run out, and within 20 seconds of being picked up: one that hatches roars, and Dread Roar hits and stuns the whole raid.'; }
     if (ula && lc(ab) === 'noxious splash' && n >= 2) { /* (Mythic eggs: two carriers within 3 yards hatch Vipers (Noxious Splash): the carriers named in the Viper lines, never "each player dodges it") */
       const who = [], vl = (r.mistakes || []).filter((x) => x.t >= tA - 6 && x.t <= tA + 3 && /noxious splash, within 3 yards of/i.test(x.detail || '')); for (const m of vl) { if (m.player && m.player !== 'Raid') who.push(nm(m.player)); const w = /within 3 yards of ([^)]+)\)/i.exec(m.detail || ''); if (w) for (const x of w[1].split(/,\s*|\s+and\s+/)) if (x.trim()) who.push(nm(x.trim())); }
       const u = [...new Set(who)]; if (u.length >= 2) { ulaBy = u.slice(0, 4); name = 'Noxious Splash'; sp = spOf(name); next = ULA_NEXT['noxious splash']; sure = 0.8; const t0n = Math.min(tA, ...vl.map((m) => m.t)), wh = who3(u.map((x) => ({ who: x })));
         short = 'Egg carriers ' + wh + ' came within 3 yards of each other, and Noxious Splash killed ' + n + '.'; chain.length = 0; say(t0n, 'egg carriers ' + wh + ' came within 3 yards of each other (' + T(t0n) + ')'); say(tA, 'Noxious Splash killed ' + n + ' at once (' + T(tA) + ')'); } }
     if (ula && n >= 2 && (lc(ab) === 'calcified corpse' || (causeM && /^serpent's bite$/i.test(causeM.mechanic || '')))) { /* (a bitten player whose circle wasn't cleared turns to stone, and the Calcified Corpse hurts the whole raid: the targets, never "Serpent's Bite hit the raid") */
-      const tg = [...new Set((r.mistakes || []).filter((x) => /^serpent's bite$/i.test(x.mechanic || '') && /calcified corpse/i.test(x.detail || '') && x.t >= tA - 20 && x.t <= tA + 3).map((x) => nm(x.player)).filter((x) => x && x !== 'Raid'))];
+      const stones = (r.mistakes || []).filter((x) => /^serpent's bite$/i.test(x.mechanic || '') && /calcified corpse/i.test(x.detail || '') && !x.others && x.t >= tA - 20 && x.t <= tA + 3).sort((a, b) => a.t - b.t), stoneD = stones.find((x) => / died at [\d:]+ (with|as) Serpent's Bite /.test(x.detail || '')) || null;
+      const tg = [...new Set(stones.map((x) => nm(x.player)).filter((x) => x && x !== 'Raid'))];
       const nCC = (r.deaths || []).filter((d) => /^calcified corpse$/i.test(killRaw(d) || abRaw(d)) && d.t >= tA - 1 && d.t <= tA + 8).length, before = (r.deaths || []).filter((d) => d.t < (tA - 0.5)).length - (r.rezzes || []).filter((x) => x.t > 1 && x.t < tA).length;
       name = 'Serpent\'s Bite'; sp = spOf(name); next = 'Get the assigned soakers into every Serpent\'s Bite circle in time: a bitten player who turns to stone (Calcified Corpse) hurts the whole raid every second.'; sure = 0.8;
       short = (before >= 4 ? 'With ' + before + ' already dead, Serpent\'s Bite on ' : 'Serpent\'s Bite on ') + (tg.length ? who3(tg.map((x) => ({ who: x }))) : 'a player') + ' wasn\'t cleared: they turned to stone (Calcified Corpse), and ' + Math.max(n, nCC) + ' died.';
+      if (stoneD && stones[0] === stoneD) { short = (before >= 4 ? 'With ' + before + ' already dead, ' : '') + s1(stoneD.detail) + ', and ' + Math.max(n, nCC) + ' died.'; next = 'A bitten player who dies turns to stone at once. Nobody with a bite takes any other hit: stand in the Wretch\'s bubble and out of the waves, with a defensive on.'; }
       chain.length = 0; say(tA, short.replace(/\.$/, '')); }
     if (ula && n >= 2 && lc(ab) === 'acidic expulsion') { const srcs = wave.filter((d) => d.ab === ab).map((d) => d.src), shr = srcs.filter((s) => /shrieker/i.test(s)).length, raw = srcs.filter((s) => /rawling/i.test(s)).length;
       if (raw >= shr) { short = 'Blightscale Rawlings weren\'t killed within 25 seconds: their Acidic Expulsion killed ' + n + '.'; next = 'Kill Rawlings within 25 seconds: once they enrage they cast Acidic Expulsion, damage over time on the whole raid.'; }
@@ -8506,7 +8628,7 @@ function rootCauseGen(r, opts) {
     if (!stunM && !ulaBy) { const hw = KM.filter((m) => m.player && m.player !== 'Raid' && big(m) && m.t >= wave[0].t - 5 && m.t <= wave[wave.length - 1].t + 1 && /^(missed|dropped|failed|didn't|did not)\b/i.test(m.detail || '') && /\b(hit|killed|caught)\s+(\d+\s+(players?|people|others)|the raid|everyone)\b/i.test(m.detail || '')).find((m) => wave.filter((d) => lc(d.kill) === lc(m.mechanic)).length * 2 >= wave.length);
       if (hw && hw !== causeM && !(causeM && causeM.player && causeM.player !== 'Raid' && causeM.mechanic === hw.mechanic)) { /* (not when the cause is already that player's miss of the same hit: circle 2 killed 7, circle 1 none) */ causeM = hw; name = hw.mechanic; sp = spOf(name, hw.id); next = s1(hw.fix); sure = 0.8; short = s1(hw.detail) + '.'; chain.length = 0; say(hw.t, s1(hw.detail) + ' (' + T(hw.t) + ')'); say(hw.t, hw.mechanic + ' killed ' + wave.filter((d) => lc(d.kill) === lc(hw.mechanic)).length + ' at once (' + T(hw.t) + ')'); } }
   } else {
-    const pre = deaths.filter((d) => d.t >= c0), top = tally(pre)[0] || [null, 0], late = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= end - 25 && !(ula && /^viper hatched$/i.test(m.mechanic))).pop(); /* (Ula'tek: a Viper that hatched killed nobody by itself: never the root on its own) */
+    const pre = deaths.filter((d) => d.t >= c0), top = tally(ula ? pre.filter((d) => !UL_UNAVOID.test(d.ab)) : pre)[0] || [null, 0], late = KM.filter((m) => m.player === 'Raid' && m.severity === 'High' && m.t >= end - 25 && !(ula && /^viper hatched$/i.test(m.mechanic))).pop(); /* (Ula'tek: a Viper that hatched killed nobody by itself: never the root on its own) */
     /* (Nov 12, Twin Fangs pull 17: Ironvan's missed Stone Breaker circle hit 19 and killed 2, tied with 2 globule deaths: a player's own miss that hit the raid, in the last 15 s, killing at least as many, is the root) */
     const hr = KM.filter((m) => m.player && m.player !== 'Raid' && big(m) && m.t >= end - 15 && m.t <= end + 0.5 && /^(missed|dropped|failed|didn't|did not)\b/i.test(m.detail || '') && /\b(hit|killed|caught)\s+(\d+\s+(players?|people|others)|the raid|everyone)\b/i.test(m.detail || '')).pop(), nH = hr ? pre.filter((d) => (fits(hr, d.ab) || lc(d.kill) === lc(hr.mechanic)) /* (the hit that killed them, as the rows say) */ && d.t >= hr.t - 1 && d.t <= hr.t + 6).length : 0;
     const hrWin = !!(hr && nH >= 1 && nH >= (top[1] || 0) && !(top[0] && fits(hr, top[0])));
@@ -8528,7 +8650,18 @@ function rootCauseGen(r, opts) {
         say(pre[0].t, pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + rcTo1(d) + ' (' + T(d.t) + ')').join(', then ')); say(end, deaths.length > 1 ? deaths.length + ' dead by ' + T(end) + ', more than any kill of this boss had this early' : 'no kill of this boss had anyone dead this early'); /* (Nov 8, audit W8: every death at the call, as the header counts) */
         short = pre.map((d) => d.who + (tkOf(d) ? ' (a tank)' : '') + rcTo1(d)).join(', then ') + ' at ' + T(pre[pre.length - 1].t) + (deaths.length > 1 ? ': ' + deaths.length + ' dead by ' + T(end) + ', more than any kill of this boss had this early.' : ', and no kill of this boss had anyone dead this early.'); sure = 0.6; }
       else { cat = 'reset'; name = 'Reset on purpose'; say(end, 'the raid lead called the wipe (' + T(end) + ') with ' + nd); short = 'The raid lead called the wipe with ' + nd + '.'; sure = 0.5; } }
-    else if (pre.length) { cat = 'dead'; name = 'Too many individual mistakes'; say(pre[0].t, pre.length + ' died to separate mistakes from ' + T(pre[0].t) + ' (' + tally(pre).slice(0, 3).map(([a, k]) => k + ' to ' + a).join(', ') + ')'); short = 'Deaths from different mistakes added up, and too few were left to finish the boss.'; sure = 0.45; }
+    else if (pre.length) { cat = 'dead'; name = 'Too many individual mistakes'; say(pre[0].t, pre.length + ' died to separate mistakes from ' + T(pre[0].t) + ' (' + tally(pre).slice(0, 3).map(([a, k]) => k + ' to ' + a).join(', ') + ')'); short = 'Deaths from different mistakes added up, and too few were left to finish the boss.'; sure = 0.45;
+      /* (Ula'tek: the deaths to a mistake by name, then how many more the raid-wide damage took, and how many healers were down) */
+      const unv = ula ? pre.filter((d) => UL_UNAVOID.test(d.ab)) : [];
+      if (unv.length >= 2) { const real = pre.filter((d) => !UL_UNAVOID.test(d.ab)), abS = (d) => (vague(d.ab) && d.src ? (/^[aeiou]/i.test(d.src) ? 'an ' : 'a ') + d.src + '\'s melee' : d.ab), andL = (l) => (l.length < 2 ? l.join('') : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]);
+        const uN = [...new Set(unv.map((d) => d.ab))], roleOf = (g) => ((r.players && r.players.get(g)) || {}).role || '', deadAt = (g) => { const x = (r.deaths || []).filter((q) => q.guid === g && q.t <= endD + 0.5).pop(); return !!x && !(r.rezzes || []).some((z) => z.guid === g && z.t > x.t && z.t <= endD + 0.5); };
+        const hD = [...((r.players && r.players.values()) || [])].filter((p) => p.role === 'healer' && deadAt(p.guid)).length, hS = hD ? ', with ' + hD + (hD === 1 ? ' healer' : ' healers') + ' dead' : '';
+        const first = real.slice(0, 4).map((d) => d.who + (roleOf(d.g) === 'tank' ? ' (a tank)' : roleOf(d.g) === 'healer' ? ' (a healer)' : '') + ' to ' + abS(d)), more = real.length > 4 ? ' and ' + (real.length - 4) + ' more' : '';
+        chain.length = 0; if (real.length) say(real[0].t, real.length + ' died one by one from ' + T(real[0].t) + ': ' + andL(first) + more + ' (' + T(real[0].t) + ')');
+        say(unv[0].t, unv.length + ' more died to ' + andL(uN) + ', raid-wide damage nobody can dodge' + hS + ' (from ' + T(unv[0].t) + ')');
+        short = (real.length ? real.length + ' died one by one from ' + T(real[0].t) + ' (' + andL(first) + more + '), and ' : '') + (real.length ? '' : 'Nobody died to a mistake: ') + unv.length + (real.length ? ' more' : '') + ' died to raid-wide damage nobody can dodge (' + andL(uN) + ')' + hS + '.';
+        next = 'Damage the whole raid takes only kills a raid that is already low or short of healers. Fix the deaths before it, and keep a raid cooldown for each Rage of the Shackled.'; }
+    }
     else return null;
   }
   /* (Nov 13, Wolfthorn's Nov 12 Mythic night, each line checked against the raw log)
@@ -8564,8 +8697,8 @@ function rootCauseGen(r, opts) {
           : 'Egg carriers ' + wh + ' came within 3 yards of each other at ' + andL(tS.map((t) => T(t))) + ', and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, spl.length === 1 ? 'it killed' : 'they killed') + '.';
         chain.length = 0; if (grp.length > 1) for (const g of grp) say(g.t, (g.names.length === 1 ? g.names[0] + '\'s egg went off (Noxious Splash' + (g.near ? ', ' + g.near : '') + ')' : 'egg carriers ' + (g.names.length ? andL(g.names) : '') + ' came within 3 yards of each other') + ' (' + T(g.t) + ')');
         else say(tS[0], 'egg carriers ' + wh + ' came within 3 yards of each other, and ' + vSay + ' hatched (' + T(tS[0]) + ')'); say(tU, kSay.replace(/^(it|they) killed/, 'the Vipers killed') + ' (' + T(tU) + ')'); }
-      else { const died = vl.filter((x) => /died carrying it/i.test(x.detail || '')).length, grn = vl.filter((x) => /\(hit by /i.test(x.detail || '')).length, gnd = vl.filter((x) => /egg on the ground/i.test(x.detail || '')).length, oth = nV - died - grn - gnd - spl.length;
-        const parts = [died ? died + ' from ' + (died === 1 ? 'a carrier who died' : 'carriers who died') : '', spl.length ? spl.length + ' from carriers touching' : '', grn ? grn + ' from ' + (grn === 1 ? 'an egg' : 'eggs') + ' hit by a wave' : '', gnd ? gnd + ' from ' + (gnd === 1 ? 'an egg' : 'eggs') + ' left on the ground' : '', oth > 0 ? oth + ' more' : ''].filter(Boolean);
+      else { const died = vl.filter((x) => /died carrying it/i.test(x.detail || '')).length, grn = vl.filter((x) => /\(hit by /i.test(x.detail || '')).length, gnd = vl.filter((x) => /egg on the ground/i.test(x.detail || '')).length, clu = vl.filter((x) => /from a Blightscale Clutch/i.test(x.detail || '')).length, oth = nV - died - grn - gnd - clu - spl.length;
+        const parts = [died ? died + ' from ' + (died === 1 ? 'a carrier who died' : 'carriers who died') : '', spl.length ? spl.length + ' from carriers touching' : '', grn ? grn + ' from ' + (grn === 1 ? 'an egg' : 'eggs') + ' hit by a wave' : '', gnd ? gnd + ' from ' + (gnd === 1 ? 'an egg' : 'eggs') + ' left on the ground' : '', clu ? clu + ' from ' + (clu === 1 ? 'a Clutch' : 'Clutches') + ' that weren\'t killed' : '', oth > 0 ? oth + ' more' : ''].filter(Boolean);
         causeM = vl[0] || null; name = UL_VIP; sp = spOf('Viper hatched', vl[0] && vl[0].id) || spOf('Putrid Membrane'); sure = 0.7; ulaBy = null; if (vl.length) P = Math.min(tU, vl[vl.length - 1].t);
         short = nV === 1 ? s1(vl[0].detail).replace(/\s*\(the other carrier isn't in the log\)/i, '') + ', and ' + kSay.replace(/^it killed/, 'it killed').replace(/the Vipers killed/, 'the Viper killed') + '.' : nV ? nV + ' Blightscale Vipers were up (' + parts.join(', ') + '), and ' + kSay + '.' : 'Blightscale Vipers killed ' + nU + '.';
         next = 'No Vipers: carriers stay 3 yards apart, out of the waves and alive, and every egg gets picked up. If one hatches, kill it first: its Putrid Membrane hurts the whole raid for as long as it lives.';
@@ -8584,11 +8717,14 @@ function rootCauseGen(r, opts) {
   if (ula && causeM && causeM.player === 'Raid' && ULA_WHY[lc(causeM.mechanic)] && short.indexOf(ULA_WHY[lc(causeM.mechanic)]) === 0) { const why = ULA_WHY[lc(causeM.mechanic)], td = (r.deaths || []).filter((d) => d.t >= causeM.t - 12 && d.t <= causeM.t + 0.3 && ((r.players && r.players.get(d.guid)) || {}).role === 'tank').pop();
     if (td) { const hit = td.kill || td.ability || ''; short = nm(td.player) + ' (a tank) died at ' + T(td.t) + (hit && !vague(hit) ? ' to ' + hit : '') + ', and ' + why.charAt(0).toLowerCase() + why.slice(1) + short.slice(why.length); chain.unshift({ t: td.t, cat: 'gen', txt: nm(td.player) + ' (a tank) died' + (hit && !vague(hit) ? ' to ' + hit : '') + ' (' + T(td.t) + ')' }); if (td.t < P) P = td.t; } }
   if (ula && !early && chain.length && chain[0].t > P) P = chain[0].t; /* (never a root cause after the moment it lost the pull) */
+  /* (Nov 13, VMjPrYtNaRwHhWJ7 fight 42: a wipe to her enrage says so, in the fight module's words) */
+  if (ula && lc(name) === 'fury unleashed') { const fu = KM.find((m) => m.player === 'Raid' && /^fury unleashed$/i.test(m.mechanic || '')); if (fu) { short = String(fu.detail || short); next = fu.fix || next; chain.length = 0; chain.push({ t: fu.t, cat: 'gen', txt: 'Ula\'tek reached her enrage (Fury Unleashed) (' + T(fu.t) + ')' }); } }
+  if (ula && causeM && revOf(causeM)) next = 'Kill the Doomscales together: the last one alive gains Revenge, and its Anguished Cry comes out twice as fast and hits twice as hard. Hold damage on the lowest one until all of them are low.';
   const also = [], seen = new Set([lc(name)]);
   for (const m of KM.filter((x) => x.player === 'Raid' && x.severity === 'High' && x.t >= c0)) { if (seen.has(lc(m.mechanic)) || (causeM && m === causeM)) continue; seen.add(lc(m.mechanic)); also.push({ cat: 'gen', name: m.mechanic, short: m.mechanic, t: m.t }); }
   /* (Nov 12: a fight that ran long is in what added up: Vashnik at 8% at the 6th Imbibe, when top guilds finish by the 4th) */
   { const pc = (r.mistakes || []).filter((m) => m.player === 'Raid' && m.severity === 'High' && /^pace$/i.test(m.mechanic || '') && m.t >= end - 30 && m.t <= end + 0.5).pop(); if (pc && !seen.has('not enough damage')) { seen.add('not enough damage'); also.push({ cat: 'gen', name: 'Not enough damage', short: 'Not enough damage', t: pc.t }); } }
-  for (const [ab, k] of tally(deaths.filter((d) => d.t >= c0))) { if (k < 2 || vague(ab) || seen.has(lc(ab)) || (causeM && fits(causeM, ab)) || lc(ab) === lc(name) || (wave && causeM && wave.some((d) => d.ab === ab))) continue; seen.add(lc(ab)); also.push({ cat: 'gen', name: ab, short: ab, t: (deaths.find((d) => d.ab === ab && d.t >= c0) || {}).t }); }
+  for (const [ab, k] of tally(deaths.filter((d) => d.t >= c0))) { if (k < 2 || vague(ab) || (ula && UL_UNAVOID.test(ab)) || seen.has(lc(ab)) || (causeM && fits(causeM, ab)) || lc(ab) === lc(name) || (wave && causeM && wave.some((d) => d.ab === ab))) continue; seen.add(lc(ab)); also.push({ cat: 'gen', name: ab, short: ab, t: (deaths.find((d) => d.ab === ab && d.t >= c0) || {}).t }); }
   /* (Nov 8, audit W13: a person is the cause only when the mechanic was their job (from the note, a kick) or the deaths to it were theirs; a mechanic
      each player dodges that killed 3 or more names no one. W2: a missed kick names the kicker from the note) */
   const nmP = (p) => String(p || '').split('-')[0], abL = lc(name), dTo = deaths.filter((d) => d.t >= c0 && d.t <= P + 5 && lc(d.ab) === abL);

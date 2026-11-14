@@ -29,7 +29,10 @@ function deathVerdicts(pull, cause, known) {
     // Noxious Shell, a coil soak, or the raid-wide hits.
     const beamNear = U && (U.beams || []).find((b) => b.nonTanks.length && d.t >= b.t - 0.5 && d.t <= b.t + 7), festerOff = U && cause && cause.festerNotReachable && (U.festerBursts || []).some((b) => b.t > 100 && d.t >= b.t - 0.5 && d.t <= b.t + 6);
     if (U && d.twice && d.twice['Mephitic Thrash'] && d.last4) d.last4['Mephitic Thrash (the slam)'] = [d.twice['Mephitic Thrash'], 1];
-    const ownU = (n) => (n === 'Caustic Waves' && !beamNear) || (n === 'Fester Burst' && !festerOff) || n === 'Noxious Splash' || n === 'Mephitic Thrash (the slam)' || (n === 'Rattler Slam' && d.role === 'tank');
+    /* (Nov 13, the Ula'tek chat, after phase 1: Virulent Spit, the Stage 2 swirls, is a player's own, as the site has it (4Qq6JkafyTVC7vdg fight 11: Rexohtive at 4:12 and
+       Kalamazi at 4:28). The waves the Serpent's Bite soakers send out as their Volatile Purge burst are not a player's own, but telling them from the tail's takes the wave's
+       line (Frwn49zWfdxHQAJG fight 47: nine hit 2.4 to 3.0 s after a burst by the tail's wave), so those deaths are ruled by hand in roots.js) */
+    const ownU = (n) => (n === 'Caustic Waves' && !beamNear) || n === 'Virulent Spit' || (n === 'Fester Burst' && !festerOff) || n === 'Noxious Splash' || n === 'Mephitic Thrash (the slam)' || (n === 'Rattler Slam' && d.role === 'tank');
     const own = (n) => (U ? ownU(n) : OWN.has(n) || (FRONTAL.has(n) && d.role !== 'tank'));
     if (v.when === 'before') {
       const carried = (list) => (list || []).some((c) => c[1] === d.player && c[0] <= d.t + 0.1 && c[0] + c[2] >= d.t - 4);

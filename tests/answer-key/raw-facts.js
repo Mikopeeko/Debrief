@@ -226,7 +226,10 @@ function ulatek(ev, X) {
   { const by = new Map(), key = (e) => e.sourceID + '.' + (e.sourceInstance || 0); /* (a circle is one Spectral Coil unit; a soaker gets Soul Constrictor from the circle they stand in; the circle's own damage hits the whole raid) */
     for (const e of ev) { if (e.sourceID == null || nm(e.sourceID) !== 'Spectral Coil') continue; if ((e.type === 'cast' || e.type === 'begincast') && e.abilityGameID === UL.coilCast && !by.has(key(e))) by.set(key(e), { t: s(e.timestamp), who: new Set() });
       else if (e.abilityGameID === UL.constrictor && e.type === 'applydebuff' && isP(e.targetID)) { let o = by.get(key(e)); if (!o) by.set(key(e), (o = { t: s(e.timestamp), who: new Set() })); o.who.add(nm(e.targetID)); } }
-    u.coils = [...by.values()].sort((a, b) => a.t - b.t).map((o) => ({ t: o.t, soakers: [...o.who].sort() })); }
+    /* (Nov 13, the Ula'tek chat: a circle lands 3.9 s after it begins. One begun in the pull's last seconds that nobody was in never landed: naMdPc13Qfj9vmHY fight 42 ended at 5:51
+       with circles begun at 5:48.4 and 5:50.8, Frwn49zWfdxHQAJG fight 40 at 5:37 with one begun at 5:34.6) */
+    const endS = ev.length ? s(ev[ev.length - 1].timestamp) : 0;
+    u.coils = [...by.values()].filter((o) => o.who.size || o.t <= endS - 3.7).sort((a, b) => a.t - b.t).map((o) => ({ t: o.t, soakers: [...o.who].sort() })); }
   // Noxious Splash: each time two egg carriers touched (the debuff lands on them)
   // A touch is the first hit or the debuff landing, never the once-a-second ticks after it (pull 12: Fourinches and Larryg touched at 0:30 and ticked
   // to 0:40; those ticks are not the 0:38 touch). A first hit for no damage is still a touch: that carrier's egg broke too (pull 12: Volkovod at
