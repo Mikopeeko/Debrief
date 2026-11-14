@@ -19632,6 +19632,13 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
     html body #view#view#view .pv-nighth .pg-dpb { font-size: 22px !important; white-space: normal !important; text-align: left !important; }
   }
 }
+/* (Plan's tabs, Nov 14, Flex: "I really dont like the extra text at the top, its clutter. Can we change it to an icon with a tooltip explaining whats
+   wrong?": no text chips on the tabs at any width. Something left: a small amber warning icon. Ready: a small green tick. The tab's tooltip says what) */
+@layer defaultTheme {
+  html body #view#view#view.plan-page #assignBox .pg-tab .pg-tabn { display: none !important; }
+  html body #view#view#view.plan-page #assignBox .pg-tab .pg-tabn:is(.warn, .ok) { display: inline-block !important; flex: none !important; width: 15px !important; height: 15px !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; font-size: 0 !important; line-height: 0 !important; color: transparent !important; overflow: hidden !important; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M8 1.6 15 14H1z' fill='%23e8a23a'/%3E%3Cpath d='M7.2 6.2h1.6v3.9H7.2zm0 4.9h1.6v1.5H7.2z' fill='%2314171c'/%3E%3C/svg%3E") center / contain no-repeat !important; }
+  html body #view#view#view.plan-page #assignBox .pg-tab .pg-tabn.ok { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.6l3.2 3.2L13 4.6' fill='none' stroke='%2345c15c' stroke-width='2.2'/%3E%3C/svg%3E") !important; opacity: .9 !important; }
+}
 </style>
 </body>
 </html>

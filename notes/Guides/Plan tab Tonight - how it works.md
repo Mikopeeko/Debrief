@@ -173,3 +173,7 @@ no-class tags, all bosses Mythic and Heroic Ready, a new visitor, specs, phone (
 - **Healing cooldowns, same day** (the user: "a little too much space between the damage coming in and the cooldowns"): By
   mechanic, the damage graph starts under the tallest stack of cooldowns. It used to wait for the icon tray on the left.
 - **Checks:** `tests/look-review.js` (the lines that start "Plan:" and "Plan, Healing cooldowns:").
+- **The tabs are just their names (Nov 14, the user: "I really dont like the extra text at the top, its clutter. Can we change it
+  to an icon with a tooltip explaining whats wrong?"):** the chips ("25 playing", "1 big hit uncovered") are drawn as a small
+  icon: amber warning for something left, green tick for ready, nothing when there is nothing to say. Pointing at the tab says
+  what is left (`pgTabTip`). The chip's span and text stay in the page (`.pg-tabn`), hidden, for the code that updates it.

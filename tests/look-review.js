@@ -76,4 +76,8 @@ module.exports = function lookReview(H, say) {
   // (Plan, Healing cooldowns, Nov 14, Flex with a picture of Ula'tek: "Feel like theres a little too much space between the damage coming in and the
   // cooldowns": By mechanic, the graph waited for the icon tray on the left to end, about 200px under the last cooldown)
   if (!/dTop = top0 \+ \(BYM \? Math\.max\(cRows, 2\) : cRowsL\) \* CH \+ \(BYM \? 0 : PRX\)/.test(UI)) bad('Plan, Healing cooldowns: the damage graph waits for the icon tray again, leaving an empty band under the cooldowns (Flex, Nov 14)');
+  // (Plan's tabs, Nov 14, Flex with a picture of "Roster 25 playing · Healing cooldowns 1 big hit uncovered · Assignments 0 of 2 filled · My note none
+  // yet · Plans 11 saved": "I really dont like the extra text at the top, its clutter. Can we change it to an icon with a tooltip explaining whats wrong?")
+  if (!/#assignBox \.pg-tab \.pg-tabn \{ display: none !important; \}/.test(css) || !/\.pg-tab \.pg-tabn:is\(\.warn, \.ok\) \{[^}]*font-size: 0 !important/.test(css)) bad('Plan: the tabs show their text chips again ("25 playing", "1 big hit uncovered"); Flex, Nov 14: "its clutter", an icon with a tooltip instead');
+  if (!/const pgTabTip = \(l, b\) =>/.test(UI) || !/\(b && b\[1\] \? ' data-tt="' \+ esc\(pgTabTip\(l, b\)\)/.test(UI) || !/\[C\[2\], C\[1\] \? 'ok' : 'warn', 'Cooldowns'\]/.test(UI)) bad('Plan: a tab\'s icon no longer says what is left when you point at it (Flex, Nov 14: "an icon with a tooltip explaining whats wrong")');
 };
