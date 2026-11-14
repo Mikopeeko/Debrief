@@ -4038,7 +4038,12 @@ function buildCoiledAltar(ev, r, h) {
     if (d.noKill) { const q = h.snap(d.t).find((p) => p.guid === d.guid); if (q && q.x === q.x) d.far = Math.round(Math.hypot(q.x, q.y - 1158.6)); }
     if (!/^gravebound$/i.test(String(d.ability || '')) && !dmg('gravebound').some((e) => e.dst === d.guid && e.t >= d.t - 4.3 && e.t <= d.t + 0.3)) continue; /* (a Gravebound death, or fragments picked up in their last seconds) */
     const off = auras('gravebound').filter((e) => e.dst === d.guid && e.op === 'remove' && e.t < d.t - 0.5).pop(), t0 = Math.max(d.t - 30, off ? off.t : 0) - 1;
-    const bombs = dmg('gloombomb').filter((e) => e.dst === d.guid && e.t >= t0 && e.t <= d.t), others = bombs.filter((e) => gbClip.some((c) => c.dst === e.dst && c.t === e.t)).length, own = bombs.length - others;
+    /* (Nov 13, Main's Oct 21/22 death lines: every Gloombomb goes off at once, so a target can take their own blast and another's in the same instant. Each bomb they carried is
+       one blast of their own; any more blasts on them were someone else's. Oct 22 pull 16, Larryg carried one and took two blasts (3 own fragments and 3 from another's bomb),
+       and read "picked up your soul fragments" with 4 of 6 picked up) */
+    const bombs = dmg('gloombomb').filter((e) => e.dst === d.guid && e.t >= t0 && e.t <= d.t), used = new Set();
+    for (const c of gbWin.filter((x) => x.g === d.guid && x.e >= t0 - 0.5 && x.e <= d.t + 0.3)) { const b = bombs.find((e) => !used.has(e) && Math.abs(e.t - c.e) <= 1.5); if (b) used.add(b); }
+    const own = used.size, others = bombs.length - own;
     let frontal = 0, lastF = -9; for (const e of [].concat(dmg('sever'), dmg('soul sever'), dmg('blighted sever')).filter((x) => x.dst === d.guid && x.t >= t0 && x.t <= d.t).sort((a, b) => a.t - b.t)) { if (e.t - lastF > 3) frontal++; lastF = e.t; }
     const picks = dmg('gravebound').filter((e) => e.dst === d.guid && (e.id == null || +e.id === 1308330) && e.t >= t0 && e.t <= d.t + 0.3);
     const fail = dmg('gravebound').some((e) => e.dst === d.guid && +e.id === 1297906 && Math.abs(e.t - d.t) <= 1);
@@ -8135,12 +8140,21 @@ function explainDeaths(r) {
   // (a mass death: 3+ of us dead within 1.5 s to the same hit is one raid event, like an orb exploding into the pile, not 14 mistakes.
   // Not a mechanic that kills each player outright for their own miss (Gravebound), and not their own death when their own mistake
   // was that hit (they stood in that Sever). Deaths research, Oct 22: 51 of 105 counted deaths on the Oct 21 night)
-  const lc = (s) => String(s || '').toLowerCase(), abOf = (d) => lc(killRaw(d) || abRaw(d) || killerRaw(d)); /* (Nov 13: the last tick for a death with no killing hit, as this count always read it) */ /* (Nov 8, audit D2: the killing hit) */
-  for (const d of r.deaths) { const ab = abOf(d); d.mass = 0; if (!ab || (d.hitPct || 0) >= 500) continue;
+  /* (Nov 13, Main's Oct 21/22 death lines: when the log carries its own killing hit (d.wclKill), a mass death is 3 or more to that very hit, and a death the log gives no killing
+     hit is in none. Oct 22 pull 7: Dashtoswirly died to his axe hits and a Venom Rupture tick, the other two 0.3 s later to Dreadful Presence (all three read "Venom Rupture");
+     pull 12: Boltzzx went off the edge alone 0.8 s before the burst and was read as one of 7 to Venom Rupture, its last tick on him) */
+  const lc = (s) => String(s || '').toLowerCase(), logK = (d) => { if (d.wclKill === 1) return 'melee'; const e = (d.recap || []).filter((x) => !x.heal && x.id === d.wclKill).pop(); return e && e.spell ? lc(e.spell) : '#' + d.wclKill; } /* (the log's hit by name: one spell can carry several ids) */,
+    abOf = (d) => (d.wclKill != null ? (d.wclKill > 0 ? logK(d) : '') : lc(killRaw(d) || abRaw(d) || killerRaw(d))); /* (Nov 13: the last tick for a death with no killing hit, as this count always read it) */ /* (Nov 8, audit D2: the killing hit) */
+  const shownOf = (d) => lc(killRaw(d) || abRaw(d) || killerRaw(d));
+  for (const d of r.deaths) { const ab = abOf(d); d.mass = 0;
+    /* (how many died at once to the hit the death shows (the last tick when no hit killed them), as this count read it before: the wipe call's move onto a hit that killed
+       several (cutInfo) and deathVerdict's late rule are judged on what the raid saw, so no call moves (Nov 11 pull 2 stays on the orb burst at 1:23)) */
+    { const sh = shownOf(d); d.massShown = sh && (d.hitPct || 0) < 500 ? r.deaths.filter((x) => Math.abs(x.t - d.t) <= 1.5 && shownOf(x) === sh && (x.hitPct || 0) < 500).length : 0; if (d.massShown < 3) d.massShown = 0; }
+    if (!ab || (d.hitPct || 0) >= 500) continue;
     const near = r.deaths.filter((x) => Math.abs(x.t - d.t) <= 1.5 && abOf(x) === ab && (x.hitPct || 0) < 500); if (near.length < 3) continue;
-    d.mass = near.length;
-    const raidK = (d.links || []).some((l) => l.raid && (lc(l.mechanic) === ab || (ab.length > 3 && lc(l.detail).includes(ab)))); /* (Nov 8, audit D4: the raid's miss on that very hit beats their own dodging) */
-    if (!raidK && ((d.links || []).some((l) => !l.raid && !l.others && lc(l.mechanic) === ab) || (d.ownAvoid && lc(d.avoidName) === ab))) continue;
+    d.mass = near.length; const abN = lc(killRaw(d) || abRaw(d) || killerRaw(d)); /* (the hit's name, for the rows) */
+    const raidK = (d.links || []).some((l) => l.raid && (lc(l.mechanic) === abN || (abN.length > 3 && lc(l.detail).includes(abN)))); /* (Nov 8, audit D4: the raid's miss on that very hit beats their own dodging) */
+    if (!raidK && ((d.links || []).some((l) => !l.raid && !l.others && lc(l.mechanic) === abN) || (d.ownAvoid && lc(d.avoidName) === abN))) continue;
     d.story = d.noHit ? 'one of ' + near.length + ' of us killed at once, ' + (d.kill === NO_HIT_EDGE ? 'off the edge' : 'with no killing hit') : 'one of ' + near.length + ' of us killed by ' + (d.kill || d.ability || d.killer) + ' at once';
     d.prevent = ['Not on you: ' + (killRaw(d) || abRaw(d) || killerRaw(d)) + ' killed ' + near.length + ' of us at once. Fix what set it off as a raid.']; }
 }
