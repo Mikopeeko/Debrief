@@ -18,6 +18,9 @@ nights whose facts are written down once, from the raw log, and every build is c
 | Nov 11, The Coiled Altar Mythic | `agt6jMTyZBYvVzAP` | 19 wipes (fights 2 to 20) |
 | Nov 12, The Coiled Altar Mythic | `Gax3AkbyFRXmdrgQ` | 6 wipes and the kill (fights 3 to 9) |
 | Nov 12, Ula'tek Mythic | `Gax3AkbyFRXmdrgQ-ulatek` | 13 wipes in phase 1 (fights 11 to 23) |
+| Oct 22, The Coiled Altar Mythic | `bcA9kw3mxHKzr4fR` | 35 wipes (fights 5 to 39): 20 ended in phase 1, 15 in phase 2 |
+
+Oct 22 was added on Nov 13 (Flex: "grow the answer key to two more nights") because every fix of that day was tuned on Nov 11 and Nov 12. It is a night none of them was built on. Oct 21 (`HWFBkCyc6JNazQrK`) is asked for too and waits on a full copy of its log (see "Adding a night").
 
 A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'tek has the facts every boss has (length, boss health, totals, deaths and killing hits, kicks, potions, flask, food, rune) and each wipe's cause from the Ula'tek chat's proof table, with the deaths re-read here. Its own mechanics are in too (`ulatek` in each pull): who took each Toxic Incubation beam and how many impacts, who each Fester Burst caught (tanks apart), every Blightscale Viper that hatched, each Spectral Coil circle and its soakers (Soul Constrictor), each egg touch and who was in it (Noxious Splash: a touch is the first hit or the debuff landing, never the once-a-second ticks after it, and a first hit for no damage still counts; checked against each carrier's row under Eggs since Nov 13, after the site read ticks as a second touch on pull 12 and this reader had made the same slip), each player's Caustic Waves hits, Rattler Slams, Unchecked Rage and Mother's Wrath. The check compares the beam, the Vipers, the circles, Fester Burst and Noxious Splash; the rest is kept as data. Ula'tek deaths have verdicts too, from the Ula'tek chat's rulings (Nov 13). A player's own there: Caustic Waves they could dodge (not the waves off a beam taken inside the raid), Fester Burst when the Wretch's bubble could be reached (`festerNotReachable` in `roots.js` marks the pulls where it couldn't: the Wretch 25 yd or less from the tail at a Thrash in the 4 s before), Noxious Splash (both carriers), the slam of Mephitic Thrash (a second Thrash hit within half a second; the raid-wide hit never counts) and Rattler Slam for a tank. Never the carried egg's own Noxious Shell, and never a soaker in a full coil soak. A non-tank the beam went through is not counted either (the off tank missed the beam; Main, Nov 13). Still unsure there: pull 2's wave across the coil soak (not ruled).
 
@@ -36,10 +39,10 @@ A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'te
 | Casts (Rotation) | every cast event a player made, by spell; the key keeps each player's eight most-cast spells (three casts or more) |
 | Raid cooldowns (Plan) | every cast of Aura Mastery, Divine Hymn, Rewind, Dream Flight, Spirit Link Totem, Healing Tide Totem, Tranquility, Revival, Restoral, Power Word: Barrier, Darkness, Anti-Magic Zone, Rallying Cry and Zephyr: who and when (a channelled one counts once) |
 | Potions, Healthstones | cast events by name: Healthstone, health potions, mana potions, and the combat potions seen on these nights (Potion of Recklessness, Light's Potential, Liquid Luster) |
-| Flask, food, rune | the auras in each player's record at the pull's start: "Flask of …", "Well Fed", and the augment rune (Void-Touched, Ethereal Augmentation) |
+| Flask, food, rune | the auras in each player's record at the pull's start: "Flask of …", "Well Fed", and the augment rune (Void-Touched, Ethereal Augmentation). "Void-Touched" is two auras: 1264426 is the rune's buff, 97821 is the mark Raise Ally leaves on the player it brought back. The mark is left out (the reader took it for a rune until Oct 22 pull 14 showed it) |
 | Tank frontals | each Sever, Soul Sever and Blighted Sever cast and every player its hit damaged; non-tanks are the mistake |
 | Ghosts | a Dreadmarch debuff that isn't from a Dreadmarch cast is a ghost that reached its player; Malevolent Resonance on two players at once is two ghosts touching |
-| Orb bursts | Venom Rupture stacks landing with no frontal in the 3.5 s before. Who carried: the purple carries around it (start, end, length; a full carry is 5.0 s) and where each carrier stood |
+| Orb bursts | Venom Rupture stacks landing with no frontal in the 3.5 s before. Who carried: the purple carries around it (start, end, length; a full carry is 5.0 s) and where each carrier stood. Four things Oct 22 taught the reader: (1) a burst can hide behind a Sever: a pop adds one stack per orb, a purple bursting adds about 20, so 3 or more players jumping 8 or more stacks, 0.6 s or more into a Sever's wave, is its own burst (pull 4: stacks 3 to 23, 1.9 s after the Sever). (2) A Sever takes its orbs off the floor: it added N stacks, so the N orbs nearest the line from the boss through the tank are gone. Before, an orb popped minutes ago still read as "on the floor". (3) A carry that ends at the burst drops its orb there, and the dropped orb is a new unit with its own position: that is where the carrier really was. A player's own reading lags a Shimmer or a Demonic Circle (pull 9: 18.5 yd off). (4) A carrier who blinked or teleported in the 1.5 s before the burst and kept the orb is placed at their first reading after it. The bursting purple is not used up: "its carry ended at the burst" only means its carrier died |
 | Gloombomb | each cast's four targets, and anyone else its blast hit |
 | Soul fragments | every Gravebound: how many fragments were picked up before it ended |
 | Noxious Ground | each player's damage ticks (one a second in a pool) and seconds with the debuff |
@@ -67,12 +70,17 @@ A second boss of the same night gets its own file (`<code>-<boss>.json`). Ula'te
    `node tests/answer-key/make-key.js <code>`, and read the diff: only the fact you meant to change may move.
 
 ## Adding a night or a boss
-1. The night's events must be in the log library (`C:\Users\james\DebriefLogs\events`, `reports`). Ask Main; one downloader only.
+1. The night's events must be in the log library (`C:\Users\james\DebriefLogs\events`, `reports`) as a FULL copy. Ask Main; one downloader only. A slimmed copy won't do (the index's `full-no-resources` or `slim`): Oct 21's has no gear and aura records, no "whose health and position" field, no tick or overkill, no "which spell was kicked or dispelled", and Augmentation's share can't be told apart. The site never sees a log like that, so a key on it would test the copy, not the site. A quick test: the file has `combatantinfo` events and its damage events have `resourceActor`.
 2. `node tests/answer-key/make-key.js <code> --boss "<boss name>"` writes the raw facts.
 3. Read every wipe's last minute and add its cause to `roots.js` (the sentence, the events that prove it, `sure: false` when the
-   log leaves room for two readings). Run make-key again.
+   log leaves room for two readings). Run make-key again. The cause's kind uses the site's short names so the two can be compared: guil, orbs,
+   kick, shield, frontal, reset, and from Oct 22 push (died to the phase push), mc (Dreadmarch), bombs (Gloombomb), ghosts, dead (worn down by
+   several things). `or` lists another kind that says the same thing. For a purple left for the Deluge the key names the last carrier.
 4. For a new boss, add its spells and mechanics to `raw-facts.js` (as `coiledAltar` does) and its comparisons to `answer-key.js`.
-5. Run the check. Report every mismatch to Main, worst first; put them in `known.json` only once reported.
+5. Run the check. Read every new mismatch against the raw events before it goes anywhere: on Oct 22 seven kinds were the key's own gaps, not the
+   site's (a burst behind a Sever, popped orbs, blink positions, the rune's namesake, Toxic Deluge's circles as a player's own mistake, axe hits hidden
+   behind a soul-fragment death, a low-health verdict on a button never pressed that night). Fix the reader or the rule, rebuild every key, and read
+   the diff of the older ones. Then report what is left to Main, worst first; put it in `known.json` only once reported.
 
 ## What "sure: false" means
 Some things a log can't fully settle (which of two carriers' purple touched first). Those entries say so, give the other

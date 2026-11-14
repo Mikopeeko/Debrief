@@ -8,11 +8,11 @@
 //      each button, which a log alone can't settle, so the key marks these "low" and unsure.
 // Before the wipe = fewer than a quarter of the raid had died before them, and it is not after the moment the pull was lost (roots.js: cause.t).
 // What counts as a player's own mistake on The Coiled Altar (what they dodge with their own feet): Axegrinder, Noxious Ground, a tank frontal
-// on a non-tank, Widow's Kiss / Death's Embrace (not running out), Malevolent Resonance (their ghost touched another), and their own soul
+// on a non-tank, Toxic Deluge's circles, Widow's Kiss / Death's Embrace (not running out), Malevolent Resonance (their ghost touched another), and their own soul
 // fragments (Gravebound from their own Gloombomb or their own frontal). Raid damage is nobody's mistake (Venom Rupture, Coalesced Venom,
 // Dreadful Presence, Spirit Erasure, Fangs, Retaliatory Malice, Eternal Nightfall, an Execution, the boss's melee).
 'use strict';
-const OWN_CA = new Set(['Axegrinder', 'Noxious Ground', "Widow's Kiss", "Death's Embrace", 'Malevolent Resonance']),
+const OWN_CA = new Set(['Axegrinder', 'Noxious Ground', 'Toxic Deluge', "Widow's Kiss", "Death's Embrace", 'Malevolent Resonance']),
   FRONTAL = new Set(['Sever', 'Soul Sever', 'Blighted Sever']), NEARORB = new Set(['Volatile Venom', 'Mutagenic Venom']);
 const T = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
 function deathVerdicts(pull, cause, known) {
@@ -34,14 +34,15 @@ function deathVerdicts(pull, cause, known) {
     if (v.when === 'before') {
       const carried = (list) => (list || []).some((c) => c[1] === d.player && c[0] <= d.t + 0.1 && c[0] + c[2] >= d.t - 4);
       // 1a. their own soul fragments killed them (never when a fragment came from someone else's Gloombomb)
+      let gFact = null; /* (soul fragments that were not their own: said only if nothing of their own shows in the last 4 s) */
       if (kb === 'Gravebound' && !cc) { const g = (ca.gravebound || []).filter((x) => x.player === d.player && x.t <= d.t + 0.2 && x.t >= d.t - 20).pop(), sr = g && g.src;
         if (g && sr) { const mine = sr.ownBomb + sr.frontal, n3 = 3 * (mine + sr.othersBomb), from = [sr.ownBomb ? 'their own Gloombomb' : '', sr.frontal ? 'a tank frontal' : '', sr.othersBomb ? sr.othersBomb + ' Gloombomb' + (sr.othersBomb > 1 ? 's' : '') + ' that were someone else\'s' : ''].filter(Boolean).join(' and ');
           if (mine && !sr.othersBomb) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: 'Gravebound', names: ['Gravebound', 'soul fragments'], say: 'their own soul fragments (' + g.picked + ' of ' + n3 + ' picked up, from ' + from + ')' }; }
           else if (mine) { /* (Main, Nov 13: only their own fragments are proof. They had 3 a source of their own; a death when the timer ran out is theirs if they picked up fewer than that, a death to a pickup is theirs if it was one of their own) */
             const nOwn = 3 * mine, ranOut = g.for >= 12.5, theirs = ranOut ? g.picked < nOwn : g.picked <= nOwn;
             if (theirs) { v.verdict = 'you'; v.proof = { k: 'mistake', mech: 'Gravebound', names: ['Gravebound', 'soul fragments'], say: 'their own soul fragments (' + g.picked + ' of ' + n3 + ' picked up; ' + nOwn + ' were their own, from ' + from + ')' }; }
-            else v.fact = 'picked up as many fragments as were their own (' + g.picked + ' of ' + n3 + '); the rest came from someone else\'s Gloombomb (' + from + ')'; }
-          else v.fact = 'Gravebound from ' + from + ' (' + g.picked + ' of ' + n3 + ' picked up)'; } }
+            else gFact = 'picked up as many fragments as were their own (' + g.picked + ' of ' + n3 + '); the rest came from someone else\'s Gloombomb (' + from + ')'; }
+          else gFact = 'Gravebound from ' + from + ' (' + g.picked + ' of ' + n3 + ' picked up)'; } }
       // 1b. a tank who died to the frontal on their own turn (stack 1); on a later stack the swap was missed, which is not theirs
       if (v.verdict === 'none' && FRONTAL.has(kb) && d.role === 'tank' && !cc) { const f = (ca.frontals || []).filter((x) => Math.abs(x.t - d.t) < 1.5 && x.tanks.includes(d.player)).pop(), st = f && f.stacks ? f.stacks[d.player] : null;
         const prev = (ca.frontals || []).filter((x) => x.t < d.t - 1.5 && d.t - x.t < 50 && x.tanks.includes(d.player) && x.tanks.length > 1).pop();
@@ -55,6 +56,7 @@ function deathVerdicts(pull, cause, known) {
         if (mineNames.length && (isKill || enough)) { const top = mineNames.sort((a, b) => l4[b][0] - l4[a][0])[0]; v.verdict = 'you'; v.proof = { k: 'mistake', mech: isKill ? kb : top, names: mineNames.slice(), say: mineNames.map((x) => l4[x][1] + ' ' + x + ' hit' + (l4[x][1] === 1 ? '' : 's') + ' (' + Math.round(l4[x][0] / 1000) + 'k' + (x === kb ? ', the killing hit' : '') + ')').join(' and ') + ' in their last 4 s' };
           if (/Widow's Kiss|Death's Embrace/.test(v.proof.mech)) { v.sure = false; v.note = 'theirs unless the axe was dropped on the raid'; } }
         else { const ring = ['Mutagenic Venom', 'Volatile Venom'].filter((x) => l4[x] && !ownN(x)); if (ring.length) v.fact = 'carried ' + (ring[0] === 'Mutagenic Venom' ? 'a purple' : 'a green') + ' orb: its ring hits its carrier too (died to ' + (kb || 'no killing hit') + ')'; } }
+      if (v.verdict === 'none' && !v.fact && gFact) v.fact = gFact;
       // 2. sat low with something ready
       if (v.verdict === 'none' && !cc && !mass && (d.lowFor || 0) >= 2) { const ready = (known[d.player] || []).filter((n) => { const u = (d.used || {})[n]; return u == null || d.t - u >= (known.__cd[n] || 1e9); });
         if (ready.length) { v.verdict = 'low'; v.sure = false; v.proof = { k: 'low', secs: d.lowFor, ready, say: d.lowFor + ' s at or under 35% with ' + ready.slice(0, 3).join(', ') + ' not on cooldown (whether it would have saved them is the site\'s call)' }; } }

@@ -21,7 +21,7 @@ fights.forEach((F, i) => { const f = find(code + '_' + F.id + '.json'); if (!f) 
     casts: Object.fromEntries(Object.entries(o.castN).map(([n, c]) => [n, Object.fromEntries(Object.entries(c).filter(([, v]) => v >= 3).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 8))])), raidCds: o.raidCds,
     kicks: o.kicks, kicksMissed: o.kicksMissed,
     mechanics: o.ca ? { frontals: c.frontals, dreadmarch: c.dreadmarch, ghostReached: c.ghostReached, ghostsTouched: c.ghostsTouched,
-      orbBursts: c.ruptureWaves.filter((w) => !w.frontal).map((w) => ({ t: w.t, phase: w.phase, kind: w.pushP1 ? 'end of phase 1' : w.atDeluge ? 'at a Deluge' : 'burst', killed: w.killed, bigHit: w.bigHit, purpleHeld: w.purpleHeld })), frontalPops: c.ruptureWaves.filter((w) => w.frontal).map((w) => [w.t, w.stacks]),
+      orbBursts: c.ruptureWaves.filter((w) => !w.frontal).map((w) => ({ t: w.t, phase: w.phase, kind: w.pushP1 ? 'end of phase 1' : w.atDeluge ? 'at a Deluge' : 'burst', killed: w.killed, bigHit: w.bigHit, purpleHeld: w.purpleHeld, afterFrontal: w.afterFrontal })), frontalPops: c.ruptureWaves.filter((w) => w.frontal).map((w) => [w.t, w.stacks]),
       purpleCarries: c.purplePickups.reduce((m, x) => { m[x[1]] = (m[x[1]] || 0) + 1; return m; }, {}), deluges: c.deluges,
       gloombombs: c.gloombombs, graveboundMissed: c.gravebound.filter((g) => g.picked < 3 && !g.ended && g.for > 0.5), graveboundN: c.gravebound.length,
       noxious: c.noxious, venomfang: c.venomfang, guillotines: c.guillotines, executions: c.executions, axeCaught: c.axeCaught, axeHits: c.axeHits, shields: c.shields, nightfallFinished: c.nightfallFinished, adds: c.adds, fragmentsReached: c.fragmentsReached } : undefined, ulatek: o.ula };
