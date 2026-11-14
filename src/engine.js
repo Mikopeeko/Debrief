@@ -4071,14 +4071,16 @@ function buildCoiledAltar(ev, r, h) {
   // ---- 7. Venomfang dispels ----
   // only the boss's Venomfang (a 14s dispellable poison); a player ability shares the name and lasts 6s
   const vf = auras('venomfang').filter((e) => h.isPlayer(e.dst) && !h.isPlayer(e.src));
-  const vfRows = [];
+  const vfRows = [], vfEnd = ev.reduce((m, e) => (e.t > m ? e.t : m), 0); /* (the pull's last moment: a Venomfang still on then ran until the pull ended) */
   for (const a of vf.filter((e) => e.op === 'apply')) {
     const rem = vf.find((e) => e.op === 'remove' && e.dst === a.dst && e.t >= a.t);
     const disp = ev.find((e) => e.k === 'dispel' && L(e.spell) === 'venomfang' && e.dst === a.dst && e.t >= a.t && (!rem || e.t <= rem.t + 0.2));
     const took = rem ? rem.t - a.t : null;
-    vfRows.push({ t: a.t, g: a.dst, took, by: disp ? disp.src : null, died: !!r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= (rem ? rem.t : a.t + 14) + 0.5) });
+    /* (Nov 13, Main, from the answer key: one that landed less than 14 s before the pull ended and was never removed ran until the end, not the full 14 s. Vandagos, Oct 22 pull 26: 0.5 s) */
+    const cut = !rem && vfEnd - a.t < 13.5 ? Math.max(0, vfEnd - a.t) : null;
+    vfRows.push({ t: a.t, g: a.dst, took, cut, by: disp ? disp.src : null, died: !!r.deaths.find((d) => d.guid === a.dst && d.t >= a.t && d.t <= (rem ? rem.t : a.t + 14) + 0.5) });
   }
-  const vfSlow0 = (x) => x.took == null || x.took > 4;
+  const vfSlow0 = (x) => (x.took == null ? !(x.cut != null && x.cut <= 4) : x.took > 4);
   /* (why and next time for one Venomfang (Oct 27): the poison dispellers are the players who dispelled it this pull; one is free when their last dispel
      was 8 s or more before it landed) */
   /* (Nov 13, Main, from the answer key: "X had the only dispel ready" knew only the players who had removed a Venomfang in that same pull, so a dispeller who had not got to one
@@ -4097,14 +4099,14 @@ function buildCoiledAltar(ev, r, h) {
   for (const x of vfRows) { x.free = vfDis.filter((g) => g !== x.by && !vfOut(g, x.t) && !allDisp.some((d) => d.src === g && d.t <= x.t + 0.5 && d.t > x.t - 8)).map(nm0); x.busy = vfBusyAt(x.t); x.soft = vfSlow0(x) && vfDis.length > 0 && (!x.free.length || !!x.busy); x.slow = vfSlow0(x) && !x.soft; }
   const slow = vfRows.filter((x) => x.slow && !x.by);
   const vfWhy = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), atOnce = vfRows.filter((y) => y !== x && Math.abs(y.t - x.t) < 1.5).length;
-    const free = x.free, took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
-    if (x.took != null && x.took <= 4) return {};
+    const free = x.free, took = x.cut != null ? x.cut.toFixed(1) + ' s, until the pull ended' : x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
+    if ((x.took != null && x.took <= 4) || (x.cut != null && x.cut <= 4)) return {};
     if (!vfDid.length) return { why: 'Nobody dispelled Venomfang this pull, so it stayed on for ' + took + '.', next: 'Give one poison dispeller (a Druid, Monk, Holy or Protection Paladin, or Evoker) the Venomfang job.' };
     const why = (x.by ? nm0(x.by) + ' took ' + took + ' to dispel it.' : 'Nobody dispelled it, so it stayed on for ' + took + '.') + (atOnce ? ' ' + (atOnce + 1) + ' landed at once.' : '') + (free.length ? ' ' + lst(free.length > 3 ? free.slice(0, 3).concat([(free.length - 3) + ' more']) /* (Nov 13: six ready reads "A, B, C and 3 more", not as if it were three) */ : free) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : ' Every dispeller had just used theirs') + (x.busy ? ', and it landed during ' + x.busy + ' with the healers on the raid' : '') + (x.soft ? ', so it isn\'t counted as a slip' : '') + '.'; /* (Nov 9 wording pass: one fact a sentence) */
     return { why, next: free.length ? free[0] + ' takes the next Venomfang as soon as it lands.' : atOnce ? 'Split the dispels: one dispeller per Venomfang when several land together.' : 'Keep one dispel free for Venomfang (it comes every 35 s or so).' }; };
   /* (Nov 12, Main's audit: a slow dispel was filed under the player who had the poison (Komo, Zaffia, Schooty can't dispel it). The slip's sentence
      names the dispellers who had one free, and nobody when none was) */
-  const vfSay = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
+  const vfSay = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), took = x.cut != null ? x.cut.toFixed(1) + ' s, until the pull ended' : x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
     /* (Nov 12, Flex: "Its counting other peoples mistakes in my report card": with several dispels ready and nobody assigned, a slow one is the raid's, not each healer's) */
     return x.free.length === 1 ? x.free[0] + ' had the only dispel ready, and Venomfang stayed on for ' + took + '.' : x.free.length > 1 ? 'Venomfang stayed on for ' + took + ' with ' + x.free.length + ' dispels ready and nobody on it.' : 'Venomfang stayed on for ' + took + ', with no dispel free.'; };
   if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', targets: vfRows.flatMap((x) => vfDid.map((d) => [nm0(d), x.t])) /* (who it's a job for: the players who dispelled one this pull, as before the kit list) */, place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
@@ -4112,7 +4114,7 @@ function buildCoiledAltar(ev, r, h) {
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',
     // amber: a slow or missed dispel (no guide sets a hard rule); red only when the player died with it on them
-    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x), ...(x.slow ? { say: vfSay(x) } : {}) }, { p: pname(x.g) }, { txt: x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14s)' : !x.by ? 'not dispelled (gone after ' + x.took.toFixed(1) + 's)' : x.slow ? 'slow dispel (' + x.took.toFixed(1) + 's)' : 'dispelled in ' + x.took.toFixed(1) + 's', /* (plain words (the user, Oct 28)) */ warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
+    cols: ['When', 'Player', 'Removed after', 'Dispelled by'], rows: vfRows.map((x) => [{ t: x.t, ...vfWhy(x), ...(x.slow ? { say: vfSay(x) } : {}) }, { p: pname(x.g) }, { txt: x.cut != null ? 'still on when the pull ended (' + x.cut.toFixed(1) + 's)' : x.took == null ? 'not removed' : x.took >= 13.5 && !x.by ? 'never dispelled (ran the full 14s)' : !x.by ? 'not dispelled (gone after ' + x.took.toFixed(1) + 's)' : x.slow ? 'slow dispel (' + x.took.toFixed(1) + 's)' : 'dispelled in ' + x.took.toFixed(1) + 's', /* (plain words (the user, Oct 28)) */ warn: x.slow, dim: x.soft, sub: x.soft ? (x.busy ? 'during ' + x.busy : 'no dispel was free') : '' }, x.by ? { p: pname(x.by) } : { txt: 'expired / not dispelled', dim: true }]),
     // how many each player dispelled
     extra: (() => { const by = new Map(); for (const x of vfRows) if (x.by) by.set(pname(x.by), (by.get(pname(x.by)) || 0) + 1); return by.size ? { title: 'Dispels by player', items: [...by].sort((a, b) => b[1] - a[1]).map(([p, n]) => ({ p, n })) } : null; })() });
 
@@ -6960,6 +6962,8 @@ function* analyzeSteps(item, text, opts) {
         if (!isPlayer(sup)) break;
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2]))) + (!isPlayer(dg) ? Math.max(0, num(f[s0 + 6])) : 0) /* (Nov 13: with what the enemy's shield absorbed of the share, like the hit itself (dealtM)) */; if (!amt) break;
         const spell = swing ? 'Support' : f[9], id = swing ? 0 : num(f[8]), crit = f[s0 + 7] === '1';
+        /* (Nov 13, Main, from the answer key: the Evoker's share of his own hit, or of his own pet's, is already counted in that hit. Kargaryen, Oct 22 pull 4: 287,217 counted twice) */
+        if (hitter && hitter === sup) { const a0 = P(sup, null); (a0.supAb || (a0.supAb = new Map())).set(spell, (a0.supAb.get(spell) || 0) + amt); break; }
         const a = P(sup, null); a.damage += amt; addAb(a.dmgAb, spell, id, amt, 0, crit, t); if (spell === 'Fate Mirror') { if (!a.tierEv) a.tierEv = []; if (a.tierEv.length < 12000) a.tierEv.push([t, spell, amt, null, 0, crit ? 1 : 0]); } bump(a.dmgS, t, amt); a.dmgT.set(dn, (a.dmgT.get(dn) || 0) + amt); bumpN(a.dmgTS, t, dn, amt);
         // (by buff, and by whose hit it came through, for "damage through your buffs"; Breath of Eons' explosions one by one)
         (a.supAb || (a.supAb = new Map())).set(spell, (a.supAb.get(spell) || 0) + amt); if (hitter && hitter !== sup) { const hn = P(hitter, null).name || ''; if (hn) (a.supTo || (a.supTo = new Map())).set(hn, (a.supTo.get(hn) || 0) + amt); }
@@ -7066,6 +7070,9 @@ function* analyzeSteps(item, text, opts) {
         if (f.length < sp + 4) break;
         const absorber = f[a], id = num(f[sp]), amt = num(f[sp + 3]);
         noteSchool(id, f[sp + 2]);
+        /* (Nov 13, Main, from the answer key: a negative amount is a shield giving back what it took (Fel Armor's delayed damage). It comes off the owner's healing,
+           so healing done is net, as Warcraft Logs counts it. Arsyn, Oct 22 pull 7: Fel Armor read 382,575 where the log nets 183,576) */
+        if (amt < 0 && !NOT_HEALING.has(id)) { const ow0 = isPlayer(absorber) ? absorber : pets.get(absorber); if (ow0) { const p0 = P(ow0, isPlayer(absorber) ? f[a + 1] : null), ha0 = p0.healAb.get(f[sp + 1]); p0.healing += amt; p0.absorbs += amt; bump(r.healS, t, amt); bump(p0.healS, t, amt); if (ha0) { ha0.total += amt; ha0.abs = (ha0.abs || 0) + amt; } } break; }
         if (amt <= 0 || NOT_HEALING.has(id)) break;
         /* (Oct 26, your ask "isolate damage done to the shields on coiled altar": each hit into Veil of Twilight (Eternal Nightfall's shield) and the
            Dreadmarch shields on mind-controlled players: [shield id, time, who hit it, amount, whose shield]) */

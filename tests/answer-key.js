@@ -18,7 +18,7 @@ const T = (t) => (t == null ? '?' : Math.floor(t / 60) + ':' + String(Math.floor
 const nmP = (s) => String(s || '').split('-')[0];
 // the page's own pieces this check reads (by name, out of src/ui.js): the wipe call, and the lists that say what a flask and a rune are
 const UI_RESET = ['PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'dbfReset'];
-const UI_NAMES = ['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], UI_PREP = ['FLASKS', 'AUG_RUNE'];
+const UI_NAMES = ['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], UI_PREP = ['FLASKS', 'FLASK_IDS', 'AUG_RUNE'];
 const findFile = (n) => [path.join(LIB, 'events', n), path.join(LIB, 'reports', n)].find((f) => fs.existsSync(f));
 
 // ---- what the site says about one pull (runs the engine; this is the slow part, so its result is saved by a hash of the code that made it) ----
@@ -53,8 +53,8 @@ function siteFacts(code, fight) {
   out.kicks = (r.interrupts || []).map((k) => ({ t: k.t, player: nmP(k.player), spell: k.spell })); out.kickStats = (r.kicks || []).map((k) => ({ name: k.name, kicked: k.kicked, missed: k.missed }));
   // flask, food, rune: the page's own lists, on the auras each player's record has at the pull's start
   try { const Pp = H.site(UI_PREP), nameOf = (id) => { const a = it.wcl.abilities.get(+id); return a ? a.name : ''; }; out.prep = {};
-    for (const c of r.combatantsRaw || []) { const p = r.players.get(c.guid); if (!p) continue; const names = (c.auras || []).map((a) => a.name || nameOf(a.ability));
-      out.prep[p.name] = { flask: names.find((n) => Pp.FLASKS.includes(String(n).toLowerCase())) || null, food: names.find((n) => /well fed/i.test(n)) || null, rune: names.find((n) => Pp.AUG_RUNE.test(n)) || null }; } }
+    for (const c of r.combatantsRaw || []) { const p = r.players.get(c.guid); if (!p) continue; const names = (c.auras || []).map((a) => a.name || nameOf(a.ability)), flaskById = (c.auras || []).map((a) => Pp.FLASK_IDS.get(+a.ability)).find(Boolean);
+      out.prep[p.name] = { flask: names.find((n) => Pp.FLASKS.includes(String(n).toLowerCase())) || flaskById || null, food: names.find((n) => /well fed/i.test(n)) || null, rune: names.find((n) => Pp.AUG_RUNE.test(n)) || null }; } }
   catch (e) { out.errs.push('flask, food and rune could not be read: ' + e.message); }
   // mechanics: the mistakes list, and the rows of each mechanic's own section
   out.mistakes = (r.mistakes || []).filter((q) => q.mechanic !== 'Death').map((q) => ({ t: q.t, player: nmP(q.player), mech: q.mechanic, detail: String(q.detail || '').slice(0, 160), others: !!q.others }));

@@ -31539,6 +31539,8 @@ function abilities(kind) {
 // ---------- raid audit: enchants, flasks and combat potions ----------
 // Midnight consumable and enchant lists (patch 12.1).
 const FLASKS = ['flask of thalassian resistance', 'flask of the blood knights', 'flask of the magisters', 'flask of the shattered sun'];
+/* (Nov 13, Main, from the answer key: the same flasks by spell id, so a pull-start aura whose name didn't come through still reads as the flask. 4Qq6JkafyTVC7vdg pull 11: six players read "no flask") */
+const FLASK_IDS = new Map([[1235057, 'Flask of Thalassian Resistance'], [1235110, 'Flask of the Blood Knights'], [1235108, 'Flask of the Magisters'], [1235111, 'Flask of the Shattered Sun']]);
 const COMBAT_POTS = (E.COMBAT_POT_NAMES || []).slice(), MANA_POTS = (E.MANA_POT_NAMES || []).slice(); // (the engine's one potion list, E.POTIONS (Oct 26): cauldron potions and every rank cast the same spell)
 // Enchantable slots in Midnight (cloak and bracer enchants were removed); gear array index = equipment slot
 const ENCHANT_SLOTS = [[0, 'Head'], [2, 'Shoulders'], [4, 'Chest'], [6, 'Legs'], [7, 'Feet'], [10, 'Ring 1'], [11, 'Ring 2'], [15, 'Weapon']];
@@ -31604,7 +31606,7 @@ function markLowIlvl(rows) {
 function auditChar(c, p) {
   const sa = c.auras.filter((a) => a.source == null || a.source === c.self);
   const lname = (a) => String(a.name || '').toLowerCase();
-  const flask = sa.find((a) => FLASKS.includes(lname(a))) || c.auras.find((a) => FLASKS.includes(lname(a)));
+  const isFlask = (a) => FLASKS.includes(lname(a)) || FLASK_IDS.has(+a.ability), flask0 = sa.find(isFlask) || c.auras.find(isFlask), flask = flask0 && !flask0.name ? Object.assign(flask0, { name: FLASK_IDS.get(+flask0.ability) }) : flask0;
   const food = c.auras.find((a) => /well fed/.test(lname(a)));
   const rune = c.auras.find((a) => AUG_RUNE.test(a.name || ''));
   const vantus = c.auras.filter((a) => /^vantus rune/i.test(a.name || ''));
