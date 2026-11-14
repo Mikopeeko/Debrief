@@ -29,4 +29,14 @@ module.exports = function lookReview(H, say) {
   // fix 9 + 10: Home and Mythic+ on the type scale; Home's panels fit what they hold
   if (!/\.hd-ph > h3, \.hd-kr \.hd-kl\) \{ font-size: 18px/.test(css)) bad('fix 9: Home\'s panel titles are off the type scale again');
   if (!/\.hd-r2, [^{]*\.hd-r3 \{ align-items: start/.test(css) || !/\.hd-season \.hd-srs \{ flex: none/.test(css)) bad('fix 10: Home\'s Your season tiles or the ladder panel stretch to twice their content again');
+  // (Nov 13, Flex: "yea fine do them" on the review's option A pictures, then "Yes, push all"): Plan › Plans is the raid nights on top and one list
+  const UI = H.UI, plc = (() => { try { return H.grab('plcH'); } catch (e) { return ''; } })();
+  if (!/plc-w plc-a/.test(plc) || /plc-cal/.test(plc)) bad('Plans: the raid nights on top and one list (option A) is gone, or the month calendar is back');
+  if (!/'<button type="button" class="plc-use" ' \+ useA\(r\.x\) \+ '>Use for '/.test(plc) || (plc.match(/class="plc-use"/g) || []).length !== 1) bad('Plans: the one gold "Use for <night>" button on the closest plan is gone or doubled');
+  // Compare opens on where you stand
+  if (!/const CMP_MODES = \[\['top', /.test(UI)) bad('Compare: it no longer opens on Top raiders of your spec (option A)');
+  if (!/if \(S\.cmpTopW == null\) \{ const U = k === 'heal'/.test(UI)) bad('Compare: the start screen (who you are and where you stand, straight away) is gone');
+  // the default look one step darker behind the panels ("A step darker"); the themes keep their own
+  if (!/html:not\(\[data-theme\]\) body\.refine \{\s*--bg: #0a0b0d !important/.test(SH)) bad('the default look\'s page is no longer the darker #0a0b0d Flex picked');
+  if (!/html\[data-theme="aurora"\] body\.refine\{--bg:#060912/.test(SH)) bad('a theme (Aurora) lost its own page colour');
 };

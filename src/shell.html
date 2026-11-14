@@ -14864,12 +14864,12 @@ html body #view .rck .rcx-sec > .rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-sh.rcx-s
    Layered important declarations outrank the older unlayered skins without selector duplication. */
 @layer defaultTheme {
   html:not([data-theme]) {
-    background: #101214 !important;
-    scrollbar-color: #42484c #101214 !important;
+    background: #0a0b0d !important; /* (Nov 13, Flex: "A step darker": only the page behind the panels; it was #101214) */
+    scrollbar-color: #42484c #0a0b0d !important;
     scrollbar-width: thin;
   }
   html:not([data-theme]) body.refine {
-    --bg: #101214 !important;
+    --bg: #0a0b0d !important; /* (Nov 13, Flex: "A step darker"; panels, lines, text and gold stay) */
     --panel: #191c1f !important;
     --raised: #22272b !important;
     --line: #2c3236 !important;
@@ -19197,6 +19197,56 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #main#main#main#main .home .hd-season .hd-srs { flex: none !important; }
   html body #main#main#main#main .home .hd-wnl > .hd-wn:nth-child(4):last-child { grid-column: span 2 !important; }
 }
+/* (Plan › Plans, option A (Flex, Nov 13: "yea fine do them"): the raid nights on top as small boxes, then this boss's plans as quiet rows, closest to
+   the night's roster first, one gold button) */
+@layer defaultTheme {
+  html body #view#view#view#view#view#view .plc-w.plc-a { display: block !important; grid-template-columns: none !important; padding: 4px 20px 20px !important; height: auto !important; min-height: 0 !important; }
+  html body #view .plc-a .plc-lab { margin: 16px 0 6px !important; font: 700 11px var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+  html body #view .plc-a .plc-lab i { font-style: normal !important; font-weight: 400 !important; letter-spacing: 0 !important; text-transform: none !important; }
+  html body #view .plc-a .plc-ns { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; align-items: stretch !important; }
+  html body #view .plc-a .plc-n { display: flex !important; flex-direction: column !important; gap: 2px !important; min-width: 168px !important; max-width: 260px !important; padding: 8px 12px !important; border: 1px solid var(--line2) !important; border-radius: 3px !important; background: none !important; color: var(--text) !important; text-align: left !important; cursor: pointer !important; font: inherit !important; }
+  html body #view .plc-a .plc-n:hover { border-color: rgba(212,183,125,.6) !important; }
+  html body #view .plc-a .plc-n.sel { border-color: var(--gold, #d4b77d) !important; background: rgba(212,183,125,.07) !important; }
+  html body #view .plc-a .plc-n b { font-size: 13.5px !important; font-weight: 600 !important; white-space: nowrap !important; }
+  html body #view .plc-a .plc-n > span { font-size: 12.5px !important; color: var(--muted) !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+  html body #view .plc-a .plc-tag { display: inline-block !important; margin-left: 8px !important; padding: 1px 6px !important; border: 1px solid var(--line2) !important; font-size: 11px !important; font-weight: 700 !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--muted) !important; vertical-align: 1px !important; }
+  html body #view .plc-a .plc-tag.g { border-color: var(--gold, #d4b77d) !important; color: var(--gold, #d4b77d) !important; }
+  html body #view .plc-a .plc-early { align-self: center !important; background: none !important; border: 0 !important; padding: 4px 6px !important; color: var(--gold, #d4b77d) !important; font: 600 13px var(--head, 'Barlow Condensed', sans-serif) !important; cursor: pointer !important; }
+  html body #view .plc-a .plc-ar { display: grid !important; grid-template-columns: minmax(0, 260px) 96px minmax(0, 1fr) auto !important; align-items: center !important; gap: 16px !important; padding: 9px 6px !important; border-bottom: 1px solid var(--line) !important; font-size: 13.5px !important; }
+  html body #view .plc-a .plc-lab + .plc-ar { border-top: 1px solid var(--line) !important; }
+  html body #view .plc-a .plc-anm, html body #view .plc-a .plc-adf { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+  html body #view .plc-a .plc-anm b, html body #view .plc-a .plc-adf b { font-weight: 600 !important; }
+  html body #view .plc-a .plc-m { color: var(--muted) !important; font-size: 12.5px !important; }
+  html body #view .plc-a .plc-ok { color: #5fdc7a !important; }
+  html body #view .plc-a .plc-aac { display: flex !important; align-items: center !important; justify-content: flex-end !important; gap: 6px !important; min-width: 190px !important; }
+  html body #view .plc-a .plc-use { background: var(--gold, #d4b77d) !important; color: #16130c !important; border: 0 !important; border-radius: 3px !important; padding: 6px 12px !important; font: 700 13px var(--head, 'Barlow Condensed', sans-serif) !important; white-space: nowrap !important; cursor: pointer !important; }
+  html body #view .plc-a .plc-ul { background: none !important; border: 0 !important; padding: 6px 8px !important; color: var(--gold, #d4b77d) !important; font: 600 13px var(--head, 'Barlow Condensed', sans-serif) !important; cursor: pointer !important; }
+  html body #view .plc-a .plc-ul:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
+  @media (max-width: 760px) { html body #view .plc-a .plc-ar { grid-template-columns: minmax(0, 1fr) auto !important; } html body #view .plc-a .plc-ar > .plc-m, html body #view .plc-a .plc-ar > .plc-adf { grid-column: 1 / -1 !important; } html body #view .plc-a .plc-n { min-width: 140px !important; } }
+}
+/* (Compare's start, option A (Flex, Nov 13: "yea fine do them"): who you are and where you stand straight away, the tabs under it, a Compare › on each
+   row and the top three players a click away) */
+@layer defaultTheme {
+  html body #view#view#view#view#view#view .cmp-hps.cmp-ov { display: block !important; padding: 0 22px 18px !important; height: auto !important; min-height: 0 !important; }
+  html body #view#view#view#view#view#view .cmp-hps.cmp-ov::before, html body #view#view#view#view#view#view .cmp-hps.cmp-ov::after { display: none !important; }
+  html body #view .cmp-ovh { display: flex !important; align-items: center !important; gap: 14px !important; padding: 14px 0 !important; border-bottom: 1px solid var(--line) !important; }
+  html body #view .cmp-ovn { display: flex !important; flex-direction: column !important; gap: 2px !important; min-width: 0 !important; }
+  html body #view .cmp-ovn > span > b { font: 700 18px var(--head, 'Barlow Condensed', sans-serif) !important; }
+  html body #view .cmp-ovtag { display: inline-block !important; margin-left: 8px !important; padding: 1px 6px !important; border: 1px solid var(--line2) !important; font: 700 11px var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--muted) !important; vertical-align: 3px !important; }
+  html body #view .cmp-ovn small, html body #view .cmp-ovb1 small { font-size: 12.5px !important; color: var(--muted) !important; }
+  html body #view .cmp-ovb1 { display: flex !important; flex-direction: column !important; margin-left: auto !important; text-align: right !important; }
+  html body #view .cmp-ovb1 + .cmp-ovb1 { margin-left: 28px !important; padding-left: 28px !important; border-left: 1px solid var(--line) !important; }
+  html body #view .cmp-ovb1 b { font: 700 22px/1.1 var(--head, 'Barlow Condensed', sans-serif) !important; }
+  html body #view .cmp-ovt { margin: 6px 0 4px !important; border-bottom: 1px solid var(--line) !important; }
+  html body #view .cmp-ovs { margin-top: 8px !important; }
+  html body #view .cmp-ovl { background: none !important; border: 0 !important; padding: 2px 4px !important; color: var(--gold, #d4b77d) !important; font: 600 12.5px var(--head, 'Barlow Condensed', sans-serif) !important; cursor: pointer !important; white-space: nowrap !important; }
+  html body #view .cmp-ovl:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
+  html body #view .cmp-or { margin: 12px 0 0 !important; font-size: 13.5px !important; color: var(--muted) !important; }
+  html body #view .cmp-or .cmp-ovl { margin-left: 8px !important; font-size: 13.5px !important; }
+  html body #view#view#view#view#view#view .cmp-ovs .pf-row.cb { grid-template-columns: 22px minmax(0, 1fr) 72px 60px 84px !important; } /* (the Compare › column) */
+  html body #view#view#view#view#view#view .cmp-ovs .pf-row.cb > .cb-r { display: flex !important; justify-content: flex-end !important; }
+}/* (Nov 13, "A step darker": the guide's sticky bar (Everyone · Tank · Healer · DPS and the phases) steps darker with the page, so it never looks lighter than it) */
+@layer defaultTheme { html:not([data-theme]) body #view#view#view#view .gdz-rbar.gdz-bar { background: rgba(10, 11, 13, .96) !important; } }
 </style>
 </body>
 </html>
