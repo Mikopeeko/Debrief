@@ -26,12 +26,14 @@ module.exports = function bigHitsCheck(H, say) {
   big(150, T, 600000); big(150.2, HL, 300000); big(150.3, D, 120000); /* (cast 2: the healer behind Divine Protection; the shaman at 12% with Astral Shift ready (never pressed, 150 s in)) */
   aura(158, HL, false, 498, 'Divine Protection');
   big(160, T, 600000); big(160.2, HL, 0); big(160.3, D, 500000); L.push(at(161) + 'UNIT_DIED,0000000000000000,nil,0x80000000,0x80000000,' + who(HL) + ',0'); /* (cast 3: the healer dies: a death, not a close call) */
+  hit(100, D, 266951, 'Suppression Slam', 950000, 0, 50000, max); hit(100.1, HL, 266951, 'Suppression Slam', 950000, 0, 50000, max); /* (Kings' Rest's dodge list: a 95% hit to dodge is Avoidable, never a big hit or a close call (Main's review of d8d4a07d)) */
   hit(30, D, 999, 'Tickle', 200000, 0, 800000, max); hit(31, D, 998, 'Rot', 900000, 0, 100000, max, true); /* (a small hit, and a big damage-over-time tick: neither is a big hit) */
   L.push(at(170) + 'CHALLENGE_MODE_END,1762,1,20,1783326,488.724884,3787.405762');
   const R = build(L.join('\n'), E), B = R && R.big;
   if (!B) { bad('the key reader finds no big hits (R.big) in a key where Purification Strike takes 80% of a health bar three times'); return; }
   const h = B.hits[0];
   if (B.hits.length !== 1 || !h || h.spell !== 'Purification Strike') bad('big hits should be only Purification Strike (not a small hit, not a damage-over-time tick): ' + B.hits.map((x) => x.spell).join(', '));
+  if (B.hits.some((x) => x.spell === 'Suppression Slam') || B.close.some((c) => c.spell === 'Suppression Slam')) bad('a dodge-list spell (Suppression Slam) is a big hit or a close call; the fix there is to dodge, and Avoidable hits counts it (the review of d8d4a07d)');
   if (h && (h.casts.length !== 3 || h.size !== 80)) bad('Purification Strike should be 3 casts at 80% of a health bar: ' + (h && h.casts.length) + ' casts, ' + (h && h.size) + '%');
   if (h && h.casts.some((c) => c.who.some((w) => w.name === 'Tanky'))) bad('the tank is judged on big hits; a tank\'s big hits are their own check');
   const cl = B.close.map((c) => c.name + ' ' + c.left + '% ' + (c.ready[0] || 'none')).join(' | ');

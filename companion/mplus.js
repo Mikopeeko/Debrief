@@ -82,14 +82,15 @@ const roleOf = (spec) => (/Restoration|Holy|Discipline|Mistweaver|Preservation/.
 // and nothing is unconfirmed. For each cast and each non-tank it hit: the health left after it, the defensives up as it landed (a buff on them, their own or
 // given) and a death within 3 s. A close call is a big hit that left someone under 15% with no defensive up, and no death (a death is its own row).
 // "Ready": a defensive of their class and spec, baseline or pressed in this key (a talent only counts once seen), with the engine's cooldown over since their
-// last press (never a shorter guess, so "ready" is always true). Tanks aren't judged here: their big hits are their own check ----
+// last press (never a shorter guess, so "ready" is always true). Tanks aren't judged here: their big hits are their own check. A spell on the dungeon's dodge
+// list is left out (Main's review, Nov 14): a defensive isn't its answer, and Avoidable hits counts it. With no list for the dungeon, every hit is weighed ----
 const BH_EXT = ['Blessing of Sacrifice', 'Blessing of Protection', 'Blessing of Spellwarding', 'Ironbark', 'Pain Suppression', 'Life Cocoon', 'Guardian Spirit', 'Time Dilation', 'Anti-Magic Zone', 'Power Word: Barrier', 'Feint'];
 const BH_BIG = 2 / 3, BH_LOW = 0.15;
 function bhDefs(E) { const m = new Map();
   for (const l of Object.values(E.DEFENSIVES || {})) for (const d of l) if (d[5] !== 'heal' && !m.has(lc(d[0]))) m.set(lc(d[0]), { name: d[0], specs: d[3] || null });
   for (const n of BH_EXT) if (!m.has(lc(n))) m.set(lc(n), { name: n, specs: null });
   return m; }
-function bigHits(ev, players, pullOf, DEF, defIds, E) {
+function bigHits(ev, players, pullOf, DEF, defIds, E, LIST) {
   const tank = (g) => (players.get(g) || {}).role === 'tank', nm = (g) => (players.get(g) || {}).name || short(g);
   // (the defensives up on each player, as stretches; one still on at the end runs to the end)
   const up = new Map(), open = new Map();
@@ -108,7 +109,8 @@ function bigHits(ev, players, pullOf, DEF, defIds, E) {
     return out.sort((a, b) => a[1] - b[1]).map((r) => r[0]); };
   // (the hits on non-tanks, by spell; a cast is that spell's hits within 1.5 s of the last)
   const by = new Map(), deaths = ev.filter((x) => x[1] === 'died');
-  for (const x of ev) { if (x[1] !== 'hit' || x[7] || !x[10] || x[4] === 'Melee' || !x[10][1] || tank(x[2])) continue; if (!by.has(x[4])) by.set(x[4], []); by.get(x[4]).push(x); }
+  for (const x of ev) { if (x[1] !== 'hit' || x[7] || !x[10] || x[4] === 'Melee' || !x[10][1] || tank(x[2])) continue;
+    if (LIST && LIST.dodge.has(lc(x[4]))) continue; /* (Main's review, Nov 14: a hit on the dungeon's dodge list is never a big hit. The fix there is to dodge, not a defensive, and Avoidable hits already counts it) */ if (!by.has(x[4])) by.set(x[4], []); by.get(x[4]).push(x); }
   const hits = [], close = [], per = {};
   for (const [spell, L] of by) { const pc = L.map((x) => x[10][0] / x[10][1]).sort((a, b) => a - b), med = pc[pc.length >> 1]; if (med < BH_BIG - 0.005) continue;
     const casts = []; let last = -1e9;
@@ -356,7 +358,7 @@ function build(text, E) {
   const KS = new Map(); for (const o of out) for (const x of o.spam) { const b = KS.get(x.spell) || { spell: x.spell, id: x.id, casts: 0, kicked: 0, stopped: 0, enemies: 0, mob: x.mob }; b.casts += x.casts; b.kicked += x.kicked; b.stopped += x.stopped; KS.set(x.spell, b); }
   for (const b of KS.values()) b.enemies = (bySpell.get(lc(b.spell)) || { guids: new Set() }).guids.size;
   const tiers = {}; for (const c of casts) if (danger(c)) tiers[c.spell] = tierOf(c); /* (high, medium or low (Nov 1)) */
-  const big = bigHits(ev, players, pullOf, BH_DEF, defIds, E);
+  const big = bigHits(ev, players, pullOf, BH_DEF, defIds, E, LIST);
   return { run, people, pulls: out, list: !!LIST, big, spam: [...KS.values()].sort((a, b) => b.casts - a.casts), tiers, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
     through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length, minor: out.reduce((a, o) => a + o.minor.length, 0) }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
 }
