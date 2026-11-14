@@ -170,3 +170,11 @@ With no purple carried at a burst, the module looks for a purple whose carrier d
 From the log's positions it names the one green carrier within ring range (7.5 yards) of that spot at the burst, when every other green carrier is clear of it (8.5 or more);
 with no such green, the carrier alone. Why we wiped: "Komo died carrying a purple orb, and it dropped where they fell. Flëxørçïst's green orb ran into it and set off Venom
 Rupture." Both are named (orbBy, and All pulls' one rule orbBurstBy); never "one of". Nov 12 pull 3, 7:58 is the pull; tests/wipe-causes.js names it.
+
+## The Root cause header needs no mechanic row (Nov 13)
+Summary's header rewrite (shell.html) only ran when How it went had a row tagged with a mechanic or a death row that says "died to X". Nov 11 pull 2 has neither: its rows are
+"Schooty walked off the edge" and the wipe call. So on main the header stayed "It started at 1:23: Schooty walked off the edge" and the cause the page had already worked out
+("Schooty's purple orb touched other orbs and set off Venom Rupture") sat under It added up with. The live site, before the edge rows of Nov 13, read "Root cause: Coalesced Venom
+(Orb Pops)". Now a pull with no such row takes the root cause's own name for the header, and the rest of the rewrite runs as for any other pull. The same would have hit a pull that
+opens with "fell off the edge" or "died with no killing hit". Seen on the practice link next to a build of main without it. Check: the shell's line is pinned
+(tests/contradictions.js); the shell's page code has no Node test, so look at Nov 11 pull 2 on a practice link after touching that rewrite.

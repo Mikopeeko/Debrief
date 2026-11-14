@@ -16369,6 +16369,10 @@ function scan() { r423soon(); try { if (window.__ahDedupe) [].forEach.call(docum
       var isWipe = function (x) { return /^wipe called$/i.test(x.mech); }, isDeath = function (x) { return /^death$/i.test(x.mech); };
       var pick = function (minLv) { var o = []; R0.forEach(function (x) { if (!isWipe(x) && !isDeath(x) && x.lv >= minLv && x.mech && o.indexOf(x.mech) < 0) o.push(x.mech); }); return o; };
       var mechs = pick(4); if (!mechs.length) mechs = pick(3); if (!mechs.length) { var by = {}; R0.forEach(function (x) { if (!isDeath(x)) return; var m = x.s.match(/died to (.+?)\.?$/); if (m) by[m[1]] = (by[m[1]] || 0) + 1; }); mechs = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; }).slice(0, 2); }
+      /* (Nov 13: a pull whose rows name no mechanic and no "died to X" still has its root cause. Nov 11 pull 2: How it went is "Schooty walked off the edge" and the wipe call, and
+         the header stayed "It started at 1:23: Schooty walked off the edge" with "Schooty's purple orb touched other orbs" pushed down under It added up with. The live site read
+         "Root cause: Coalesced Venom (Orb Pops)". The same goes for a row that reads "fell off the edge" or "died with no killing hit") */
+      if (!mechs.length) { var rt0 = null; try { rt0 = window.wipeRoot ? window.wipeRoot() : null; } catch (e0) { rt0 = null; } if (rt0 && rt0.line && rt0.name) mechs = [String(rt0.name)]; }
       if (!mechs.length) return;
       var wr = R0.filter(isWipe)[0], last = wr || R0[R0.length - 1], ph = last.ph || '', nD = R0.filter(isDeath).length;
       var and = function (l) { return l.length < 2 ? l[0] : l.slice(0, -1).join(', ') + ' and ' + l[l.length - 1]; }, ms = mechs.slice(0, 3);
