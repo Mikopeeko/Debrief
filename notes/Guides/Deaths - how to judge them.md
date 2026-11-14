@@ -486,5 +486,8 @@ only `free` and `poisonDispellers` changed (Hobbz added on Nov 11, Jangokin and 
 Measured, old code next to new, on the 499 Venomfang rows of the saved Coiled Altar pulls: 42 slip sentences changed. 14 went from one named player to the raid ("with 6 dispels
 ready and nobody on it"), 27 say a bigger number, and one slip went away (Oct 22 pull 26, 1:55: the two "ready" dispellers were dead or feared). No result cell changed colour
 except that one, no job list and no mistake line changed.
+Oct 22 joined the answer key the same evening (35 pulls, 11 more of these lines). It showed one more case: Volkovod, a Hunter, took a Venomfang off himself once with Emergency
+Salve, and "anyone who removed one" made him a dispeller for the raid. So on both sides a removal counts only when it was from another player (`vfOth`; make-key.js: `v.by !== v.player`).
+All three Coiled Altar key files were built again with the rule; only `free` and `poisonDispellers` changed. All 42 lines are right and deleted.
 Checks: the answer key compares the free dispellers of every Venomfang on every build; tests/wipe-causes.js names Hobbz's Venomfang, Nov 11 pull 8, 0:30 (with --all); the spec
 list, the kit union, the alive-and-in-control test and the job list are pinned.

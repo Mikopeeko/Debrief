@@ -4074,7 +4074,9 @@ function buildCoiledAltar(ev, r, h) {
      who removed a Venomfang this pull whatever their spec. One is free when alive, not mind controlled or feared, and 8 s past their last dispel. The job itself (targets) stays
      with the players who dispelled one this pull) */
   const vfDid = [...new Set(ev.filter((x) => x.k === 'dispel' && L(x.spell) === 'venomfang' && x.src).map((x) => x.src))], allDisp = ev.filter((x) => x.k === 'dispel' && x.src); /* (src is the player's name) */
-  const vfKit = [...r.players.values()].filter((p) => VF_SPECS.has(+p.specId) && p.name), vfDis = [...new Set(vfDid.concat(vfKit.map((p) => p.name)))], vfP = new Map([...r.players.values()].map((p) => [p.name, p]));
+  const vfKit = [...r.players.values()].filter((p) => VF_SPECS.has(+p.specId) && p.name), vfP = new Map([...r.players.values()].map((p) => [p.name, p]));
+  /* (and of those who removed one, only who removed it from another player: a Hunter's Emergency Salve takes it off the Hunter alone. Volkovod, Oct 22, salved his own once) */
+  const vfOth = [...new Set(ev.filter((x) => x.k === 'dispel' && L(x.spell) === 'venomfang' && x.src && h.name(x.dst) !== x.src).map((x) => x.src))], vfDis = [...new Set(vfOth.concat(vfKit.map((p) => p.name)))];
   const vfOut = (g, t) => { const p = vfP.get(g); return !!(p && tankOut(r, p, t)); }; /* (dead and not brought back, mind controlled or feared when it landed) */
   const nm0 = (n) => String(n || '').split('-')[0];
   /* (the moment: dispellers free (their dispel back), how many landed together, and a raid-wide hit the healers were on (Oct 28)) */

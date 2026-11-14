@@ -33,7 +33,7 @@ fights.forEach((F, i) => { const f = find(code + '_' + F.id + '.json'); if (!f) 
 /* (Nov 13, Main: the poison dispellers are everyone whose class and spec can remove a poison (Paladin, Druid, Monk, Evoker: their spec ids), plus anyone who removed a Venomfang
    on that night. It was only the second: Hobbz (Retribution) and Phartsy (Windwalker) never dispelled one and were left out, and so was Jangokin (Balance) on Nov 12) */
 const POISON_SPECS = new Set([65, 66, 70, 102, 103, 104, 105, 268, 269, 270, 1467, 1468, 1473]);
-{ const dis = {}; for (const o of raws) for (const v of (o.ca || {}).venomfang || []) if (v.by) (dis[v.by] = dis[v.by] || new Set()).add(v.with);
+{ const dis = {}; for (const o of raws) for (const v of (o.ca || {}).venomfang || []) if (v.by && v.by !== v.player /* (Nov 13: from another player; a Hunter's Emergency Salve takes it off the Hunter alone) */) (dis[v.by] = dis[v.by] || new Set()).add(v.with);
   raws.forEach((o, i) => { const vf = pulls[i].mechanics && pulls[i].mechanics.venomfang; if (!vf) return; const deadAt = (n, t) => { let dead = false; const evs = o.deaths.filter((d) => d.player === n).map((d) => [d.t, 1]).concat(o.rez.filter((x) => x[1] === n).map((x) => [x[0], 0])).sort((a, b) => a[0] - b[0]); for (const [tt, k] of evs) { if (tt > t) break; dead = !!k; } return dead; };
     const can = [...new Set(Object.keys(dis).concat(Object.keys(o.players).filter((n) => POISON_SPECS.has(+o.players[n].spec))))];
     for (const v of vf) v.free = can.filter((n) => o.players[n] && !deadAt(n, v.t) && !(o.ccSpans[n] || []).some(([a, b]) => v.t >= a - 0.2 && v.t <= b) && !o.dispels.some((d) => d[1] === n && d[0] > v.t - 8 && d[0] <= v.t + 0.5)).sort();
