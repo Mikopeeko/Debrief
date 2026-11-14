@@ -1025,7 +1025,7 @@ function mpxCard(o) { const { q, run, RR, p, i, gd } = o, D = mpxData(RR, o.F), 
   // (a death's line reads as a sentence: "Hansso died to Insidious Aura (Chitigoth) · 1 defensive used"; a click still opens the hits before it)
   const died = (o.died || '').replace(/<b>How (.*?) died<\/b> · /g, '<b>$1 died</b> <span class="mpt-m">to</span> ').replace(/ · (\d+ defensives?)<\/summary>/g, ' · $1 used</summary>').replace(/ · no defensive<\/summary>/g, ' · no defensive used</summary>');
   return '<div class="mpt-mch mpx-ch">' + o.head + '</div>' + facts +
-    '<p class="mpx-ck">What went wrong</p><div class="mpx-cw">' + (died || wrong.length ? died + wrong.join('') : '<p class="mpx-cok">✓ Nothing went wrong in this pull.</p>') + minor + '</div>' +
+    '<p class="mpx-ck">Mistakes</p><div class="mpx-cw">' + (died || wrong.length ? died + wrong.join('') : '<p class="mpx-cok">✓ No mistakes in this pull.</p>') + minor + '</div>' +
     (o.next ? o.next.replace('<p class="mpt-mcn">▼ ', '<p class="mpt-nt mpx-cnt"><b>Next time</b> ') : '') +
     (more.length ? '<p class="mpx-ck">What else happened</p><ul class="mpx-ce">' + more.map(([c, ic, t]) => '<li class="mpx-ce-' + c + '"><i aria-hidden="true">' + ic + '</i><span>' + t + '</span></li>').join('') + '</ul>' : '') +
     mpxFeed(o) +
