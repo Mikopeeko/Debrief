@@ -35483,14 +35483,18 @@ const tpSum = (k, a, b) => k === 'wla-plan-chosen' ? tpPick(a, b) : k.startsWith
 function tpDirty() { const snap = tpSnap(), d = {}; for (const k of new Set(Object.keys(snap).concat(Object.keys(TP.base || {})))) { const a = snap[k] === undefined ? null : snap[k], b = TP.base[k] === undefined ? null : TP.base[k]; if (a !== b) d[k] = a; } return d; }
 async function tpTick() {
   if (!TP.base || TP.busy || !TP.doc || !TP.doc.exists || !(TP.doc.you && TP.doc.you.can)) return;
+  if (TP.waitTill && Date.now() < TP.waitTill) return; /* (Nov 13, the look review: a save that failed was sent again every 1.5 s forever, 142 tries in one visit to Plan; now it waits 5 s, then 10, 20, 40, and a minute at most) */
   const d = tpDirty(), sig = Object.entries(d).map(([k, v]) => k + ':' + (v == null ? -1 : v.length)).join('|'); if (!sig) { TP.sig = ''; return; }
   if (sig !== TP.sig) { TP.sig = sig; TP.since = Date.now(); return; } if (Date.now() - TP.since < 3500) return;
   TP.busy = true; const sums = {}; for (const k of Object.keys(d)) sums[k] = tpSum(k, TP.base[k], d[k]);
   try { const r = await tpApi('id=' + encodeURIComponent(TP.id), { op: 'set', keys: d, sums, me: tpWho() });
-    if (r.ok) { for (const [k, v] of Object.entries(d)) TP.base[k] = v; Object.assign(TP.doc, { ver: r.ver, log: r.log, officers: r.officers }); TP.ver = r.ver; TP.sig = ''; tpChip(); }
+    if (r.ok) { for (const [k, v] of Object.entries(d)) TP.base[k] = v; Object.assign(TP.doc, { ver: r.ver, log: r.log, officers: r.officers }); TP.ver = r.ver; TP.sig = ''; TP.fails = 0; TP.waitTill = 0; tpChip(); }
     else if (r._st === 401 || r._st === 403) { TP.doc.you = Object.assign({}, TP.doc.you, { can: false }); tpChip(); }
-  } catch (e) { /* (sent again on the next tick) */ } finally { TP.busy = false; }
+    else tpWait();
+  } catch (e) { tpWait(); /* (sent again once the wait is over) */ } finally { TP.busy = false; }
 }
+// (a failed save waits longer each time before it's sent again: 5 s, 10, 20, 40, then a minute; a save that goes through starts over)
+function tpWait() { TP.fails = (TP.fails || 0) + 1; TP.waitTill = Date.now() + Math.min(60e3, 5e3 * Math.pow(2, TP.fails - 1)); }
 setInterval(() => { try { tpTick(); if (S.page === 'plan' && TP.doc && !document.querySelector('#view header.plan-bh .tp-wrap')) tpChip(); /* (Plan redrew part of itself: the chip comes back) */ } catch (e) { /* (next tick) */ } }, 1500);
 setInterval(() => { if (document.visibilityState === 'visible' && (S.page === 'plan' || TP.doc)) tpPull(); }, 20000);
 window.addEventListener('focus', () => { if (S.page === 'plan' || TP.doc) tpPull(); });

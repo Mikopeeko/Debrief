@@ -507,6 +507,7 @@ if (!fs.existsSync(LIB) && !DIRS.length) { console.log('Contradiction check: ski
 for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash', 'the check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } }
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
+const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */
 /* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a
    cut of 217.4 and wanted "never Soul Sever": the call lands on that Sever now, and with Tyralien's missed taunt it is the cause. Without a missed taunt, Sever deaths still never are: the same
@@ -565,7 +566,7 @@ const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0]
   if (got !== want) say('raid days', 'days', 'Wed + Thu every week with a few odd nights should be raid days ' + want + ', the rule says ' + got);
   if (home !== String(RD.raidDaysOf(ats))) say('raid days', 'days', 'Home\'s raid days (' + home + ') and Plan\'s (' + RD.raidDaysOf(ats) + ') disagree');
   if (String(RD.raidDaysOf(ats, [4, 3])) !== '3,4' || String(RD.raidDaysOf(ats, [5])) !== '5') say('raid days', 'days', 'the lead\'s Raid days don\'t win over the rule'); }
-tierCount().then(() => {
+Promise.all([tierCount(), planSave]).then(() => {
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }
