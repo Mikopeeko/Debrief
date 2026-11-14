@@ -50,7 +50,9 @@ const KILLS = [
 /* The chain line of a named wipe: [code, fight, what it must hold (a RegExp), what it read before]. Main, Nov 13: "say what actually happened, from the log": a wave's count is the
    players the hit killed (Warcraft Logs' killing ability), and the rest are told by how they went. */
 const LINES = [
-  ['agt6jMTyZBYvVzAP', 3, /Venom Rupture killed 13, and 4 walked off the edge/, 'Nov 11 pull 2: Venom Rupture killed 13 (the log names it for each), and Schooty, Boltzzx, Tyralien and Vandagos went off the edge in control with no killing hit. It read "Venom Rupture killed 17"'],
+  /* (the wave is the deaths up to the call since 33ca7aa3: Jangokin, Dragooned, Huservoker and Hobbz, killed by Venom Rupture at 1:27, and Schooty, who walked off the edge at 1:23
+     with no killing hit. Before that change the wave ran to 1:35: "killed 13, and 4 walked off the edge") */
+  ['agt6jMTyZBYvVzAP', 3, /Venom Rupture killed 4, and 1 walked off the edge/, 'Nov 11 pull 2: Venom Rupture killed 4 at the call (the log names it for each), and Schooty walked off the edge with no killing hit. It read "Venom Rupture killed 17", counting players no hit killed'],
   ['agt6jMTyZBYvVzAP', 17, /3 feared off the edge/, 'Nov 11 pull 16: three players feared off the edge by the unkicked Wail of Terror'],
 ];
 /* A slow Venomfang's own sentence: [code, fight, player, second, what it must read (a RegExp), what it read before]. */
