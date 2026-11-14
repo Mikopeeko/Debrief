@@ -34,6 +34,7 @@ const RCX = require('vm').runInNewContext(H.grab('RC_FIX') + '\n' + H.grab('RC_N
 const NIGHT_R = new Map(); const NIGHT_RC = new Map(); /* (each test night's Coiled Altar root causes, for the All pulls focus band check) */
 /* (the Whole tier (Nov 5): its own numbers for a night, read with the page's code; the cut at the wipe call and the killing-blow verdict stand
    in as "none" on both sides, so the tier and All pulls are compared on the same causes) */
+const KRC = H.site(['deathHit', 'deathHitId', 'deathKillRc'], {}); /* (Graphs' Deaths list's own pick of the killing hit's recap line) */
 const TSITE = H.site(['deathHit', 'deathHitId', 'esc', 'plural', 'NKG', 'NK346', 'NK283', 'nkWord283', 'PROGRESS', 'phSize', 'phShare', 'encLeft', 'shortBoss', 'bossAtV', 'progressOf', 'wclProg', 'pullProg', 'pullPct', 'cHtml', 'aphOf', 'nightOf', 'tierDay', 'TIER_CC', 'tierModel', 'lc0', 'whyKey', 'dbfCap', 'dbfReset', 'wipeRoot', 'pullCauseOf', 'tierVer', 'tierSumOf'], { cutInfo: () => null, WROOT: new WeakMap(), whyWiped: () => null, mech: (m) => m, RD: null });
 const TIER_T = new Map(); /* (each test night's pulls of a boss: the tier's line, All pulls' cause and health) */
 /* (How it went's titles (Nov 5): the page's own rule and wipe chain; the cut at the wipe call stands in as "none") */
@@ -235,6 +236,27 @@ function checkPull(key) {
   if (key === 'agt6jMTyZBYvVzAP:17') { const h = (r.deaths || []).find((d) => /^Hobbz/.test(d.player) && Math.abs(d.t - 301) <= 3); let row = null; try { row = ((CHT.wipeChain(r) || {}).items || []).find((x) => /Hobbz/.test(x.txt || '')); } catch (e) { row = null; }
     if (!h || h.kill !== 'Fell off the edge' || h.ability !== 'Fell off the edge' || TSITE.deathHit(h) !== 'Fell off the edge') say(pull, 'nohit', 'Hobbz, Nov 11 pull 16, 5:01: feared off the edge, and no hit killed him. The page reads "' + (h ? [...new Set([h.kill, h.ability])].join(' / ') : 'no such death') + '", not "Fell off the edge" (it read "Deadly Venom", a raider\'s own poison)');
     if (!row || !/ off the edge/.test(row.txt) || /Deadly Venom|died to/.test(row.txt)) say(pull, 'nohit', 'Hobbz, Nov 11 pull 16: How it went reads "' + (row ? row.txt : 'no row') + '", not that he went off the edge'); }
+  /* (Nov 13, Main: "one killing hit everywhere: Graphs' Deaths list and the avoidable 'and died to it' use the same killing hit as How it went (the engine's, after the big-hit
+     rule, or the label). Never the recap's last line." Shockabunga, Nov 11 pull 16, 1:53: Graphs and the death card read "Axegrinder", a 6.9K tick; a Venom Rupture killed him.
+     On every pull: the line Graphs shows is the hit How it went names; an Avoidable damage row says "died to it" only for a death that hit killed; and the killing hit the rows
+     were built on (found early, d.kill0) is the one the death list ends up with) */
+  { const lcK = (x) => String(x || '').replace(/ \(absorb\)$/, '').toLowerCase(), b0 = (p) => String(p || '').split('-')[0];
+    for (const d of r.deaths || []) { const rc = KRC.deathKillRc(d), hit = TSITE.deathHit(d);
+      if (d.noHit ? rc : (!rc || lcK(rc.spell || 'Melee') !== lcK(hit || 'Melee'))) say(pull, 'killhit', b0(d.player) + ' at ' + E.fmtT(d.t) + ': Graphs\' Deaths list would read "' + (rc ? rc.spell || 'Melee' : 'nothing') + '", How it went reads "' + hit + '"');
+      if (d.kill0 != null && !d.noHit && !d.noKill && d.kill !== 'Falling' && lcK(d.kill0) !== lcK(d.kill)) say(pull, 'killhit', b0(d.player) + ' at ' + E.fmtT(d.t) + ': the Avoidable damage rows were built on "' + d.kill0 + '" as the killing hit, the death list says "' + d.kill + '"'); }
+    for (const sec of (m && m.sections) || []) for (const g of sec.groups || []) for (const row of g.rows || []) { if (!row[3] || row[3].txt !== 'died to it' || !g.names) continue; const who = (row[0] || {}).p;
+      if (!(r.deaths || []).some((d) => d.player === who && !d.noHit && g.names.includes(lcK(d.kill)))) say(pull, 'killhit', g.title + ': ' + b0(who) + '\'s row says "died to it", but no death of theirs has it as the killing hit (' + (r.deaths || []).filter((d) => d.player === who).map((d) => d.kill).join(', ') + ')'); } }
+  /* (Nov 13, Main, the wave count: "say what actually happened, from the log ... count only the 4 and name what sent the rest off." On every Coiled Altar wipe: when a step of the
+     chain says "<hit> killed N", N is no more than the players whose killing hit it was in the whole pull. Nov 11 pull 2 said "Venom Rupture killed 17" with 13 killed by it) */
+  if (E.rootCause && it.boss === 'The Coiled Altar' && !it.kill) { let o = null; try { o = E.rootCause(r); } catch (e) { o = null; }
+    for (const c of (o && o.chain) || []) { const mm = /(?:^|→ |, )((?:[A-Z][\w']*(?: of| the)? ?)+?) killed (\d+)\b/.exec(String(c.txt || '')); if (!mm) continue; const nmK = mm[1].trim().toLowerCase(), n = +mm[2];
+      const real = (r.deaths || []).filter((d) => !d.noHit && [d.kill, d.abLast, d.ability].some((z) => String(z || '').toLowerCase() === nmK)).length, withTick = (r.deaths || []).filter((d) => d.noHit && String(d.abLast || '').toLowerCase() === nmK).length;
+      if (real > 0 && withTick > 0 && n > real) say(pull, 'root', 'the chain says "' + mm[0].replace(/^(→ |, )/, '') + '", but it killed ' + real + ': ' + withTick + ' more had it ticking on them and no killing hit'); } }
+  /* (the named death: Shockabunga, Nov 11 pull 16, 1:53. Warcraft Logs names the last tick, Axegrinder for 6.9K; the engine's big-hit rule names the Venom Rupture before it) */
+  if (key === 'agt6jMTyZBYvVzAP:17') { const sh = (r.deaths || []).find((d) => /^Shockabunga/.test(d.player) && Math.abs(d.t - 113) <= 3), rc = sh && KRC.deathKillRc(sh);
+    if (!sh || !rc || rc.spell !== 'Venom Rupture' || TSITE.deathHit(sh) !== 'Venom Rupture') say(pull, 'killhit', 'Shockabunga, Nov 11 pull 16, 1:53: Graphs\' Deaths list reads "' + (rc ? rc.spell : sh ? 'nothing' : 'no such death') + '", not Venom Rupture (it read "Axegrinder", the recap\'s last line, a 6.9K tick)');
+    const ax = (((m && m.sections) || []).find((x) => x.id === 'avoid') || { groups: [] }).groups.find((g) => g.title === 'Axegrinder'), row = ax && (ax.rows || []).find((x) => /^Shockabunga/.test((x[0] || {}).p || ''));
+    if (row && row[3] && row[3].txt === 'died to it') say(pull, 'killhit', 'Shockabunga, Nov 11 pull 16: his Axegrinder row says "died to it"; the Venom Rupture killed him'); }
   // 3. deaths: each counted once
   const seen = new Set(); for (const d of r.deaths || []) { const k = d.player + '@' + Math.round(d.t); if (seen.has(k)) say(pull, 'count', d.player + ' died twice at ' + E.fmtT(d.t) + ' (a death counted twice)'); seen.add(k); }
   // whose purple orb burst: the one carrier the raw log shows at the burst (ORB_WANT)
@@ -306,11 +328,17 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
     [ENG, "vfDis = [...new Set(vfOth.concat(vfKit.map((p) => p.name)))]", 'Venomfang\'s dispellers are only the players who removed one in that same pull again (Tyralien, Nov 11 pull 8, 0:30: "had the only dispel ready" with five more ready)'],
     [ENG, "x.free = vfDis.filter((g) => g !== x.by && !vfOut(g, x.t) &&", 'a dead, feared or mind-controlled dispeller counts as having a dispel ready (Oct 22 pull 26, 1:55: "2 dispels ready" with nobody able to press one)'],
     [ENG, "targets: vfRows.flatMap((x) => vfDid.map((d) => [nm0(d), x.t]))", 'the Venomfang job is handed to every class that could dispel it (a Retribution Paladin\'s Mechanics would count it), not to the players who dispel'],
+    [UI, "kill = deathKillRc(d) /* (Nov 13, Main: the engine's killing hit, as How it went names it", 'Graphs\' Deaths list reads the recap\'s last line as the killer again (Shockabunga, Nov 11 pull 16, 1:53: "Axegrinder" for a Venom Rupture death)'],
+    [UI, "const kbOf = (d) => { const k0 = deathKillRc(d); return k0 ? abN(k0)", 'Graphs\' Deaths list groups deaths by the recap\'s last line again, not by the killing hit'],
+    [UI, "const kill = deathKillRc(d) /* (Nov 13, Main: the engine's killing hit, never just the recap's last line", 'the death card\'s "Killed by" reads the recap\'s last line again'],
+    [ENG, "src.n.includes(dieHit(d))", 'an Avoidable damage row\'s "died to it" goes by the death\'s last tick again, not the killing hit (Shockabunga, Nov 11 pull 16: Axegrinder)'],
+    [ENG, "const rcKilled = (name, l) => { const k = l.filter((d) => !d.lab).length,", 'a wave\'s count includes players no hit killed again (Nov 11 pull 2: "Venom Rupture killed 17" for 13)'],
+    [ENG, "say(t0, 'orbs', rcKilled('Venom Rupture', trig.filter((d) => d.cat === 'orbs')));", 'the orb wave\'s count is every death with an orb tick again, not the players Venom Rupture killed'],
     [UI, "e.ids.includes(x.noHit ? x.abIdLast : x.abilityId)", 'the wipe call\'s "a mechanic killed several" test reads the no-killing-hit label, which has no spell, so calls move (Nov 11 pull 2: the call moved from the orb burst at 1:23 to 1:27)'],
     [ENG, "abOf = (d) => lc(killRaw(d) || abRaw(d) || killerRaw(d));", 'the mass death count reads the no-killing-hit label instead of the last tick, so wipe calls move (Nov 11 pull 2: the call moved from the orb burst at 1:23 to 1:27)'],
     [ENG, "ab: abRaw(d) || killerRaw(d) || 'something', cat: rcCat(abRaw(d) || killerRaw(d)), kill: String(killRaw(d))", 'Why we wiped reads the no-killing-hit label instead of the last tick, so causes move (Nov 11 pull 2 read "a dropped orb" for Schooty\'s orb; Oct 22 pulls 7, 10, 11 and 13 read "Too many individual mistakes")'],
     [ENG, "filter((x) => /^venom rupture$/i.test(abRaw(x))", 'whose purple orb burst is found from the label instead of the first Venom Rupture tick (Nov 11 pull 2: Schooty)'],
-    [UI, "kill = d.noHit ? null /* (Nov 13, Main: no hit killed them: the list shows the engine's label, never the last tick) */", 'Graphs\' Deaths list reads the last tick for a death with no killing hit again (Hobbz, Nov 11 pull 16)'],
+    [UI, "const deathKillRc = (d) => { if (!d || d.noHit) return null;", 'Graphs\' Deaths list reads the last tick for a death with no killing hit again (Hobbz, Nov 11 pull 16)'],
     [UI, "d.noHit ? '<div><b>' + esc(d.kill) + ':</b> no hit killed them.</div>'", 'the death card says "Killed by" a last tick for a death with no killing hit again'],
     [UI, "(noHitL(deathHit(x.d)) ? '' : 'Killed by ') + '<b>'", 'the Report card says "Killed by Fell off the edge" again'],
     [UI, "' ran off the edge while feared by ' + fe[1].trim()", 'a player who ran off the edge reads "died to" the last thing that ticked on them again (Nov 11 pull 16: "Hobbz died to Deadly Venom")'],

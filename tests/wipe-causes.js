@@ -47,6 +47,12 @@ const KILLS = [
   ['agt6jMTyZBYvVzAP', 6, 'Komo', 234.0, 'Dreadmarch', 'Nov 11 pull 5, 3:54: Komo was mind controlled off the edge. It read Fel Armor, his own spell ticking for 0'],
   ['agt6jMTyZBYvVzAP', 3, 'Schooty', 83.0, 'Fell off the edge', 'Nov 11 pull 2, 1:23: Schooty went off the edge, 77 yards from the middle, with health left and no killing hit. It read Venom Rupture, his last tick'],
 ];
+/* The chain line of a named wipe: [code, fight, what it must hold (a RegExp), what it read before]. Main, Nov 13: "say what actually happened, from the log": a wave's count is the
+   players the hit killed (Warcraft Logs' killing ability), and the rest are told by how they went. */
+const LINES = [
+  ['agt6jMTyZBYvVzAP', 3, /Venom Rupture killed 13, and 4 walked off the edge/, 'Nov 11 pull 2: Venom Rupture killed 13 (the log names it for each), and Schooty, Boltzzx, Tyralien and Vandagos went off the edge in control with no killing hit. It read "Venom Rupture killed 17"'],
+  ['agt6jMTyZBYvVzAP', 17, /3 feared off the edge/, 'Nov 11 pull 16: three players feared off the edge by the unkicked Wail of Terror'],
+];
 /* A slow Venomfang's own sentence: [code, fight, player, second, what it must read (a RegExp), what it read before]. */
 const VFS = [
   /* (Nov 13, Main, from the answer key: the poison dispellers are everyone whose class and spec can remove a poison, not only who removed one in that pull) */
@@ -77,6 +83,7 @@ module.exports = function (o) {
     const where = it.boss + ' ' + (it.diff || '') + ' pull ' + it.pull + ' (' + code + ':' + fight + ')', rc = rootOf(r);
     if (!rc || rc.cat !== cat || !re.test(rc.short || '')) say(where, 'root', what + '. Now: ' + (rc ? rc.name + ' — "' + rc.short + '"' : 'no cause'));
     for (const b of notBy) if (rc && (rc.by || []).includes(b)) say(where, 'root', 'Why we wiped names ' + b + ' as the cause again (' + what + ')');
+    for (const [lc0, lf, lre, lwas] of LINES) if (lc0 === code && lf === fight && !(rc && lre.test(rc.line || ''))) say(where, 'root', lwas + '. Now: "' + (rc ? rc.line : 'no cause') + '"');
     if (code === 'Gax3AkbyFRXmdrgQ' && fight === 5 && rc && JSON.stringify((rc.orbBy || []).slice().sort()) !== JSON.stringify(['Flëxørçïst', 'Komo'])) say(where, 'root', 'the dropped purple orb\'s cause names ' + ((rc.orbBy || []).join(', ') || 'nobody') + ': it is Komo (it dropped as he died) and Flëxørçïst (his green ran into it)');
     for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
       if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));

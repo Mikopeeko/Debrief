@@ -178,3 +178,32 @@ Summary's header rewrite (shell.html) only ran when How it went had a row tagged
 (Orb Pops)". Now a pull with no such row takes the root cause's own name for the header, and the rest of the rewrite runs as for any other pull. The same would have hit a pull that
 opens with "fell off the edge" or "died with no killing hit". Seen on the practice link next to a build of main without it. Check: the shell's line is pinned
 (tests/contradictions.js); the shell's page code has no Node test, so look at Nov 11 pull 2 on a practice link after touching that rewrite.
+
+## The page check: Summary's header in a real browser (Nov 13, Main: "a pin isn't enough here")
+The Root cause header regression (af80e9fc, fixed in 84f501d8) got past every check, because Summary's header is decided by the page shell's own DOM code, which no Node test
+runs. `tests/header-page.mjs` opens the BUILT app (WoW-Log-Analyzer.html) in a headless Edge, gives it a saved pull as a combat log through the page's own open-file handler
+(the translator's lines, kept in `DebriefLogs/cache/page-check`; no network, no sign-in), and reads what the page shows: the Why we wiped header must start with "Root cause: "
+and the name of the root cause the page itself computed (`window.wipeRoot()`). The other Summary layout, the coach card, has no header box; its "What wiped us" line must name
+the same mechanic. It also fails on any "died to Fell off the edge" on the page. src/build.ps1 runs it after the answer key on the quick check's pulls plus Nov 11 pull 2 (11
+pulls, about 40 s); `--all` sweeps every saved wipe of the test nights (94 pulls, about 6 minutes).
+Proof: on af80e9fc's build it fails on Nov 11 pull 2 ("It started at 1:23: Schooty walked off the edge", root cause Coalesced Venom (Orb Pops)); on the fixed build it passes.
+Sweep of all 94 saved wipes on the old build: Nov 11 pull 2 was the only pull whose header disagreed with its root cause. On the new build: none.
+How the page is fed: a page on file:// has no `window.__wla`; the test reads `window.wipeRoot` (defined everywhere) and calls `#fileIn`'s onchange with a File built from the
+log (DOM.setFileInputFiles does not fire it in headless Edge).
+
+## One killing hit everywhere (Nov 13, Main)
+Graphs' Deaths list, the death card and an Avoidable damage row's "died to it" each took the recap's last line as the killer. Shockabunga, Nov 11 pull 16, 1:53: they read
+"Axegrinder", a 6.9K tick; How it went, the death list and the log's own Venom Rupture (the big-hit rule: 87K, over half his health) said Venom Rupture.
+- The page: `deathKillRc(d)` (ui.js) is the recap line of the engine's killing hit (`d.kill`): its last damaging line of that name; none when no hit killed them (the label shows).
+- The engine: Avoidable damage rows are built before explainDeaths names the killing hit, so `killEarly(r, d)` runs the same rule early (big hit, the log's own spell, Dreadmarch,
+  Ula'tek's pick) and keeps it in `d.kill0`. The contradiction check holds `d.kill0` against the final `d.kill` on every pull (0 differ on 1,881 deaths).
+Measured on every saved pull: 364 of 1,881 deaths show another hit on Graphs (Kargaryen, Oct 21 pull 1, 4:18: Gloombomb 50K, now Retaliatory Malice 195K). In the Avoidable
+damage tables 18 rows changed colour, all through "died to it" (red because they died to it, or now red because they did), 2 mistake lines changed, no count changed.
+Checks: every pull: Graphs' line is How it went's hit; a "died to it" row only when that hit killed them; `d.kill0` equals `d.kill`. Named: Shockabunga, Nov 11 pull 16.
+
+## The wave count says what happened (Nov 13, Main)
+"Venom Rupture killed 17" on Nov 11 pull 2: by the log, Venom Rupture killed 13 (its killing ability), and Schooty, Boltzzx, Tyralien and Vandagos went off the edge in control with
+no killing hit. A wave is still found by what was ticking on the raid; the sentence (`rcKilled`) now counts as killed only the deaths a hit killed and says how the rest went off:
+knocked by that hit ("killed 4 and knocked 13 off the edge", Main's wording, when a knockback hit from it landed in their last 3 s), feared ("ran off the edge feared"), mind
+controlled, knocked by another hit, or in control ("walked off the edge": the log shows nothing sending them). Now: "Venom Rupture killed 13, and 4 walked off the edge."
+Checks: every Coiled Altar wipe: a chain step's "X killed N" is never more than the players X killed when some had it ticking and no killing hit; named: Nov 11 pull 2.

@@ -79,4 +79,14 @@ if ((Test-Path $node) -and (Test-Path $atest) -and -not $env:DEBRIEF_SKIP_CHECK)
   if ($acode) { $aout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  ANSWER KEY CHECK FAILED: the site no longer says what the raw log says (the lines above). Fix it before you push.' -ForegroundColor Red; $ak = 'FAILED, see above' }
   else { $ak = (($aout | Select-Object -Last 1) -replace '^Answer key: ', '') }
 }
-"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak
+# the page check (Nov 13, Main: "a pin isn't enough here. This regression got past every check we have"; tests/header-page.mjs): the app just built, opened in a
+# headless Edge with saved pulls as combat logs (no network). Summary's header must name the root cause the page itself computed. It runs the page's own
+# DOM code, which no Node test reaches: Nov 11 The Coiled Altar pull 2 read "It started at 1:23: Schooty walked off the edge" on af80e9fc.
+# (about 40 s; skip it with $env:DEBRIEF_SKIP_CHECK = '1'; without the log library or a browser it says so and passes)
+$pc = 'skipped'; $ptest = Join-Path $root 'tests\header-page.mjs'
+if ((Test-Path $node) -and (Test-Path $ptest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $pout = & $node --max-old-space-size=4096 $ptest; $pcode = $LASTEXITCODE
+  if ($pcode) { $pout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  PAGE CHECK FAILED: the page shows something other than what it computed (the lines above). Fix it before you push.' -ForegroundColor Red; $pc = 'FAILED, see above' }
+  else { $pc = (($pout | Select-Object -Last 1) -replace '^Page check: ', '') }
+}
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}; page check: {6}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak, $pc
