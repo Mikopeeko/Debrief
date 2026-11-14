@@ -454,3 +454,18 @@ Checks: every pull read by tests/contradictions.js (13 on every build, all with 
 d.ability and the page's deathHit, the label never sits on a death a hit killed, and no line says "died to" or "killed by" a label. Hobbz, Nov 11 pull 16, is named and read on every
 build. The answer key (every build, every pull of its nights) fails when a death the raw log gives no killing hit shows a spell. tests/wipe-causes.js names Hobbz and Schooty
 (pull 16), Schooty (pull 2) and Komo (pull 5) with --all. The engine's and the page's lines are pinned.
+
+## Axegrinder hits are the debuff's landings (Nov 13, from the answer key)
+Vandagos, Nov 12 pull 3: the Axegrinder debuff landed on him 13 times and the table said "9 hits". The raw log: the debuff goes on when a player is inside an axe and comes off
+when they leave, and ticks every 0.25 s in between. The table counted a hit as a gap of more than 1.5 s between damaging ticks. So an axe that caught a player again while the last
+one's ticks still ran was no new hit (1:47 to 2:00: five landings read as two), a landing a shield soaked whole was no hit at all (1:02, 1:56, 1:57), and one landing with a
+shielded tick in the middle could read as two.
+Now a source with its own debuff (`aura` on the source; Axegrinder is the only one) counts the debuff's landings: each application more than 1.5 s after the one before, the answer
+key's own rule, when the log shows damage or a shield's absorb for it (never an immunity). The row, the mistake line and the card's visits follow the landings (`x.lt`,
+`judge.ts`, `x.tl`). The colour is still judged on the old count (`x.touches`, `judge.tj`), the unit the top raids' lines were measured in; the card's "twice what top guilds take"
+reads that count too (`vJ`). A player with ticks and no debuff in the log keeps the old count. Damage stays what got through.
+Measured, old code next to new, on the 3,962 Avoidable damage rows and lines of the saved Coiled Altar pulls: 197 Axegrinder rows show another number (149 one more, 22 two more,
+8 three more, 1 four more, 1 six more, 16 one fewer), no row changed colour, 19 mistake lines say another number and none came or went.
+Open until the top raids' lines are measured again the new way (the last item of the Nov 13 queue): judging the colour on landings.
+Checks: tests/wipe-causes.js names Vandagos's row ("13 hits", not coloured) with --all; the answer key compares every player's landings with the row on every build (its
+Vandagos line is deleted); the source's flag, the landing count, the shielded landing and the two judged counts are pinned.

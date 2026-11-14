@@ -3586,7 +3586,19 @@ function avoidPanel(ev, r, h, list) {
     // (a source that only counts a walk-in from minTicks ticks: a lone brush isn't one (Mutagenic Venom, fix 9))
     if (src.minTicks > 1) for (const [g, x] of [...per]) { const tl = x.tl.filter((c) => c.n >= src.minTicks); if (!tl.length) { per.delete(g); continue; } x.tl = tl; x.ts = tl.map((c) => c.t); x.touches = tl.length; }
     if (!per.size) return null;
-    const val = (x) => (secs ? x.ticks : x.touches), valJ = (x) => (secs ? x.tj : x.touches); /* (val: what the row shows; valJ: what its colour is judged on) */
+    /* (Nov 13, Main, from the answer key: Vandagos, Nov 12 pull 3: the Axegrinder debuff landed on him 13 times and the table said "9 hits". A hit was a gap of more than 1.5 s between
+       damage ticks, so an axe that caught a player again while the last one's ticks still ran was no new hit, and one landing with a shielded tick in the middle was two. A source
+       with its own debuff (src.aura) counts the debuff's landings: each time it is applied more than 1.5 s after the application before (the answer key's count).
+       x.lt holds them and the visits (x.tl) follow them. The colour stays judged on the old count (x.touches, x.ts): the top raids' lines were measured that way. A player with
+       ticks and no debuff in the log keeps the old count) */
+    if (src.aura && !secs) for (const x of per.values()) { const pp = r.players && r.players.get(x.g), b = pp && pp.debuffs && pp.debuffs.get(src.aura), sp = ((b && b.sp) || []).slice().sort((u, v) => u[0] - v[0]), lt = []; let last = -9;
+      /* (a landing a shield took whole is still the axe catching them, as a shielded second in a pool is still a second in it; an immunity, which leaves no damage and nothing absorbed, is not) */
+      const evs = all.filter((e) => e.dst === x.g && e.t <= cut + 0.05 && (e.amt !== 0 || (e.raw || 0) > 0));
+      for (const [a, z] of sp) { if (a > cut + 0.05) break; if (a - last > 1.5 && evs.some((e) => e.t >= a - 0.25 && e.t <= (z == null ? cut : z) + 0.75)) lt.push(a); last = a; }
+      if (!lt.length) continue; const tl = lt.map((t) => ({ t, e: t, n: 0, a: 0 }));
+      for (const e of evs) { let i = tl.length - 1; while (i > 0 && tl[i].t > e.t + 0.25) i--; const c = tl[i]; c.e = Math.max(c.e, e.t); c.n++; c.a += amtOf(e); }
+      x.tl = tl; x.lt = lt; }
+    const val = (x) => (secs ? x.ticks : x.lt ? x.lt.length : x.touches), valJ = (x) => (secs ? x.tj : x.touches); /* (val: what the row shows; valJ: what its colour is judged on) */
     // (a death to it is red when it did half or more of the damage in their last 15 s (the Deaths page's rule), they were already past the
     // amber line, or it's Dangerous; an axe's last tick on someone the raid damage was killing is not on them (top kills, fix 9))
     const own = (d) => { const rc = (d.recap || []).filter((e) => !e.heal), all = rc.reduce((s, e) => s + (e.amount || 0), 0), mine = rc.filter((e) => src.n.includes(L(e.spell || ''))).reduce((s, e) => s + (e.amount || 0), 0); return !all || mine >= all / 2; };
@@ -3595,7 +3607,7 @@ function avoidPanel(ev, r, h, list) {
       const v = val(x), vJ = valJ(x), tank = !src.tankJudged && h.role(x.g) === 'tank', dd = died.has(x.g), kept = tank && vJ >= tankKept(bA), [pw, pb] = limOf(x.g);
       const bad = dd || kept || (!tank && vJ >= pb), warn = !bad && !tank && vJ >= pw;
       return [{ p: h.name(x.g), sub: tank ? (kept ? 'tank, kept standing in it' : 'tank') : '' }, { txt: secs ? v + ' s in it' : v + (v === 1 ? ' hit' : ' hits'), bad, warn,
-        sub: secs ? (x.touches > 1 ? x.touches + ' times' : '') : x.ticks > x.touches ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
+        sub: secs ? (x.touches > 1 ? x.touches + ' times' : '') : x.ticks > v ? x.ticks + ' damage ticks' : '' }, { n: x.amt }, { txt: dd ? 'died to it' : '—', bad: dd, dim: !dd }];
     });
     const nT = [...per.values()].reduce((s, x) => s + val(x), 0), amt = [...per.values()].reduce((s, x) => s + x.amt, 0);
     // (the spell, for its icon and tooltip: the source's own, else what hit players most often under it, with its name)
@@ -3609,7 +3621,7 @@ function avoidPanel(ev, r, h, list) {
       // for the Night summary report card: each player's moments (hit times, or each second in it), so it can stop at the wipe filter;
       // lim(t) gives the lines at any cut
       names: src.n, wA, bA, kb: L2.kb, lim: L2.lim, skip: src.skip || null, fix: src.fix || '',
-      judge: [...per.values()].map((x) => ({ p: h.name(x.g), role: h.role(x.g) || null, tank: !src.tankJudged && h.role(x.g) === 'tank' && valJ(x) < tankKept(bA), ts: secs ? x.tk : x.ts, ...(secs && x.tkJ.length !== x.tk.length ? { tj: x.tkJ } : {}), amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
+      judge: [...per.values()].map((x) => ({ p: h.name(x.g), role: h.role(x.g) || null, tank: !src.tankJudged && h.role(x.g) === 'tank' && valJ(x) < tankKept(bA), ts: secs ? x.tk : x.lt || x.ts, ...(secs && x.tkJ.length !== x.tk.length ? { tj: x.tkJ } : x.lt ? { tj: x.ts } /* (Nov 13: shown by the debuff's landings, judged on the old count) */ : {}), amt: x.amt, dt: diedT.has(x.g) ? diedT.get(x.g) : null,
         // (for the coach's card (Oct 22): the guid, each touch, and a map of a moment: the raid then, them in red, a few seconds of movement)
         g: x.g, tl: x.tl, mk: (t) => ({ t, pts: h.snap(t), frames: h.frames ? h.frames(Math.max(0, t - 2.5), Math.min(r.duration || t + 1, t + 1), 0.25) : undefined, bad: [x.g], badLabel: 'hit by ' + src.label, title: src.label + ' at ' + h.fmtT(t) + ': ' + h.name(x.g) }) })) };
   };
@@ -4077,7 +4089,7 @@ function buildCoiledAltar(ev, r, h) {
       { n: ['sever', 'soul sever', 'blighted sever'], label: 'Tank frontals on non-tanks', id: S('sever')[0], harm: 'High', why: 'a big hit plus a damage-taken debuff (200%, or 600% on Mythic)', fix: 'Only the tank belongs in front of the boss. Stay out of the frontal cone.', raw: true, skip: (e) => role(e.dst) === 'tank' || !fKeep.has(e) || (!mythic && fTanks.has(e.dst)) || immHit(e) }, /* (Nov 4: each frontal's first hit only, as in the mistakes: its ticks counted a healer 23 times) */ /* (Nov 13: the same hits and the same amount as the mistake line: with what a shield absorbed, never an immunity) */
       { n: ['malevolent resonance'], label: 'Malevolent Resonance', id: S('malevolent resonance')[0], harm: 'High', why: 'two ghosts touching, which is a lethal damage over time', fix: 'When the mind control breaks, stand still, so your ghost spawns in the clump and never touches another.' },
       { n: ['noxious ground'], label: 'Noxious Ground', harm: 'Medium', why: 'the poison pools under the snake statues, every second you stand in them', warnAt: 2, badAt: 5, fix: 'Stay out of the poison pools by the statues. When the second set fills the middle, cross it quickly.' },
-      { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true },
+      { n: ['axegrinder'], label: 'Axegrinder', id: S('axegrinder')[0], harm: 'Medium', why: 'damage and a knockback every half second in an axe', warnAt: 5, badAt: 8, tankOk: true, aura: 'Axegrinder' /* (Nov 13: a hit is the debuff landing) */ },
       { n: ['gloombomb'], label: 'Gloombomb (not your own)', id: S('gloombomb')[0], harm: 'Medium', why: 'Gravebound: collect your soul fragments or die', warnAt: 1, badAt: 2, fix: 'Stay out of the Gloombomb circles on other players.', skip: (e) => gbT.some((a) => a.dst === e.dst && e.t - a.t >= 0 && e.t - a.t <= 10) },
       { n: ['mutagenic venom'], label: 'Mutagenic Venom (near a purple carrier)', id: S('mutagenic venom')[0], harm: 'Medium', why: 'heavy damage from standing near a purple orb carrier', warnAt: 2, badAt: 5, minTicks: 2, fix: 'Give purple orb carriers room: they have right of way.', skip: (e) => carriersAt(e.t).some((c) => c.g === e.dst) },
       { n: ['defiled ground'], label: 'Defiled Ground', harm: 'Medium', why: 'P3 ground that absorbs healing every second', warnAt: 2, badAt: 5 },
