@@ -3661,7 +3661,10 @@ function avoidMistakes(r) {
     const tA = tj.length >= wA ? tj[wA - 1] : null, tR = j.dt != null && j.dt <= T + 0.05 ? j.dt : tj.length >= bA ? tj[bA - 1] : null;
     if (tA == null && tR == null) continue;
     // (the fight's own check already flagged this hit (the frontal on a raider, ghosts touching): one mistake, not two)
-    const tt = tR != null ? tR : tA; if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - tt) <= 3)) continue;
+    /* (Nov 13, Wolfthorn Nov 12 pull 13: a line that is red because the player died to the hit is timed at the death. Volkovod touched Schooty's egg at 2:12.5, the fight's own
+       row is at 2:14 and he died to the splash at 2:17: 3.2 s from the row, so one touch was two mistakes. The hit that killed them, the last one before the death, is checked too) */
+    const tt = tR != null ? tR : tA, tk = j.dt != null && j.dt <= T + 0.05 ? ts.filter((t) => t <= j.dt + 0.05).pop() : null;
+    if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && (Math.abs(m.t - tt) <= 3 || (tk != null && Math.abs(m.t - tk) <= 3)))) continue;
     const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
     const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
     r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
@@ -5676,10 +5679,16 @@ function buildUlatek(ev, r, h) {
     .map(([a0, b0], wi, all) => { const hs = ev.filter((e) => e.k === 'dmg' && h.isPlayer(e.dst) && String(e.spell).toLowerCase() === 'mephitic thrash' && e.t >= a0 && e.t <= b0 && e.amt !== 0), hit = new Set(hs.map((e) => e.dst));
       /* round 427 thrash slam: a second hit within half a second of a player's first is the slam (the raid-wide part is one hit, then ticks every 2 s) */ const by = new Map(); for (const e of hs.slice().sort((p, q) => p.t - q.t)) { let l = by.get(e.dst); if (!l) by.set(e.dst, l = []); l.push(e); }
       const slam = new Set(), slamP = new Set(); for (const [g, l] of by) for (let i = 1; i < l.length; i++) if (l[i].t - l[0].t <= 0.5) { slam.add(l[i]); slamP.add(g); }
-      return { a0, b0, raid: hit.size * 2 >= Math.max(10, r.players.size), slam, slamP }; });
+      /* (Nov 13, Main, Wolfthorn Nov 12 pull 4: at 1:45 three players were alive and the Thrash hit all three once, nobody in the slam. Half of a raid of 20 it was not, so each
+         hit was judged as that player's own: "Huservoker: hit by Mephitic Thrash once and died to it". Raid-wide is half of the players ALIVE as it lands (pull 9, 1:45: the same)) */
+      const aliveN = [...r.players.keys()].filter((g) => aliveAt(g, a0)).length;
+      return { a0, b0, raid: hit.size * 2 >= Math.min(Math.max(10, r.players.size), Math.max(1, aliveN)), slam, slamP }; });
   const thrashWin = (t) => thrashW.find((w) => t >= w.a0 && t <= w.b0) || null;
   const av = avoidPanel(ev, r, h, [
-    { n: ['noxious splash'], label: 'Noxious Splash', harm: 'High', why: 'two egg carriers within 3 yards of each other' },
+    /* (Nov 13, Main: two carriers touching was two High mistakes for each of them, this line and the module's own "Viper hatched … (Noxious Splash, within 3 yards of X)".
+       Pull 9, 0:41: Schooty and Boltzzx; pull 12: four carriers. The second name lets this line give way to that row (avoidMistakes: the fight's own check already flagged
+       this hit); no damage is logged under it, so the table counts as before) */
+    { n: ['noxious splash', 'viper hatched'], label: 'Noxious Splash', harm: 'High', why: 'two egg carriers within 3 yards of each other' },
     { n: ['desperate thrash'], label: 'Desperate Thrash (Doomscale frontal)', harm: 'Medium', warnAt: 1, badAt: 2, tankOk: true, dot: 6, why: 'standing in front of a Weakened Doomscale' },
     /* (Nov 13: not counted against the players it hit: waves from a beam taken by players who aren't tanks (pull 1: Komo and Urgdragon read "hit by Caustic Waves and died to it", their own mistake);
        a bubble held inside Mephitic Thrash's reach (pulls 7, 10, 11: 13 players each flagged for a Fester Burst nobody could avoid). The raid's own line says each, by name) */
@@ -8749,7 +8758,7 @@ function rootCauseGen(r, opts) {
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
-const api = { NO_HIT, NO_HIT_EDGE, killRaw, abRaw, deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, playedOnAfter, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
+const api = { avoidMistakes /* (for tests/ula-later.js, check BF) */, NO_HIT, NO_HIT_EDGE, killRaw, abRaw, deathLinkOk, fzPack, fzRevive, fzKinds, rootCause, rootCauseGen, waveAfterCall, playedOnAfter, RC_CAT, rcCat, rcJobBy, orbBurstBy, SAVE_EXT, strictView, STRICT_LV, MECH_COL, liveIndexer, parseNote, checkAssignments, cdName, CD_NAMES, CONSUMABLES, POTIONS, COMBAT_POT_NAMES, MANA_POT_NAMES, COMBAT_POT_IDS, MANA_POT_IDS, INTERRUPTS, SCHOOL, SPELLID, coach, analyze, analyzeAsync, analyzeSteps, indexChunks, createIndexer, parseTs, split, fmtT, compact, checklist, CLASSES, SPECS, PACKS, DEFENSIVES, DEF_REPLACED, SURV_MINOR, potionKind, BOSS_IDS, BOSS_NAMES, BOSS_SPELL, ENEMY_SPELL, MODULE_SPELLS: Object.fromEntries(MODULES.map((m) => [m.encounter, m.spells || []])) };
 root.ENGINE = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

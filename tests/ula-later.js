@@ -32,6 +32,13 @@
 //       And the drop as the platform shatters is a killing hit: three died to Falling (380k) at 6:09 on that pull, and read "No killing hit".
 //   BB. A wave that lands on a player stunned by Anguished Cry, or within 1.5 s of the stun ending, isn't theirs. (Bvryf2VWpGJ6PAk3 fight 28, Mythic phase 2, Nov 4: the Cry at
 //       4:47 stunned 9 for 6 s; her waves hit Theduv and Rjæ 0.4 and 0.6 s after it ended and killed them. Both read "You: 2 Caustic Waves hits right before you died".)
+//   Avoidable damage on Wolfthorn's own night (Nov 13, Main: the Report card chat's "count hits up to the wipe call" brought 14 new lines on Nov 12; 6 of them weren't right):
+//   BD. Mephitic Thrash's first hit lands on every living player; only the slam's second hit is avoidable, also when few are alive. (Gax3AkbyFRXmdrgQ fight 14, pull 4: at 1:45
+//       three players were alive, nobody in the slam; Huservoker read "hit by Mephitic Thrash once and died to it". Raid-wide was half of 20, not half of those alive.)
+//   BE. Two egg carriers touching is one mistake for each, not two. (Fight 19, pull 9, 0:41: Schooty and Boltzzx each had "Viper hatched … (Noxious Splash, within 3 yards
+//       of …)" and "Hit by Noxious Splash", both High. The same at 1:45 on that pull for the Thrash with 3 alive: Raiyvenz.)
+//   BF. …also when the carrier died to the splash a few seconds later. (Fight 23, pull 13: Volkovod touched Schooty at 2:12.5, his row is at 2:14, he died to it at 2:17.
+//       With the lines counted up to that death, the line timed at the death sat 3.2 s from the row and counted again.)
 //   BC. A wipe to her enrage says so. (VMjPrYtNaRwHhWJ7 fight 42, Mythic, a 3% wipe, Nov 1: Fury Unleashed at 10:08 with 13 dead; it read "… died to Fury Unleashed at once".)
 'use strict';
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
@@ -71,6 +78,19 @@ const PULLS = [
   { key: 'Bvryf2VWpGJ6PAk3:28', name: 'BB: a wave right after the stun', tail: 170, test: (R) => rootIs(R, 'Anguished Cry', /^Nobody interrupted the Weakened Doomscale's Anguished Cry at 4:55: it stunned the raid, and 4 died while stunned/)
     .concat(['Theduv', 'Rjæ'].filter((p) => !R.deaths.some((d) => d.p === p && Math.abs(d.t - 294.8) < 1.5 && /^Not counted: stunned by Anguished Cry/.test(d.say))).map((p) => p + '\'s death at 4:54, to a wave that hit half a second after a 6-second stun ended, isn\'t "Not counted: stunned by Anguished Cry" (check BB)')) },
   { key: 'VMjPrYtNaRwHhWJ7:42', name: 'BC: her enrage', tail: 170, test: (R) => rootIs(R, 'Fury Unleashed', /^Ula'tek reached her enrage at 10:08 with 3% health left \(Fury Unleashed\): 13 players were dead by then, 9 of them in the last 30 seconds\.$/) },
+  { key: 'Gax3AkbyFRXmdrgQ:14', name: 'BD: Wolfthorn pull 4, Mephitic Thrash with 3 alive', test: (R) => { const g = ((R.sec('avoid') || {}).groups || []).find((x) => x.label === 'Mephitic Thrash'), jd = (g && g.judge) || [];
+    const late = jd.filter((j) => j.ts.some((t) => t > 100)).map((j) => nm(j.p)), slam = jd.some((j) => nm(j.p) === 'Dashtoswirly' && j.ts.some((t) => t > 45 && t < 52));
+    return (late.length ? ['Mephitic Thrash at 1:45, with 3 players alive and nobody in the slam, is still an avoidable hit for ' + late.join(', ') + ' (check BD)'] : []).concat(slam ? [] : ['Dashtoswirly\'s slam hit at 0:48 is gone from Avoidable damage (check BD)']); } },
+  { key: 'Gax3AkbyFRXmdrgQ:19', name: 'BE: Wolfthorn pull 9, an egg touch is one mistake', test: (R) => { const gs = (R.sec('avoid') || {}).groups || [], sp = gs.find((x) => x.label === 'Noxious Splash'), th = gs.find((x) => x.label === 'Mephitic Thrash');
+    return ['Schooty', 'Boltzzx'].flatMap((p) => { const m = R.mistakes.filter((x) => x.p === p && x.sev === 'High' && x.t >= 39 && x.t <= 44); return m.length === 1 && m[0].mech === 'Viper hatched' ? [] : [p + '\'s egg touch at 0:41 is ' + m.length + ' High mistakes (' + m.map((x) => x.mech).join(', ') + '): one event, one mistake (check BE)']; })
+      .concat(sp && ['Schooty', 'Boltzzx'].every((p) => (sp.judge || []).some((j) => nm(j.p) === p)) ? [] : ['the Avoidable damage table no longer lists Schooty and Boltzzx under Noxious Splash (check BE)'])
+      .concat(th && (th.judge || []).some((j) => j.ts.some((t) => t > 100)) ? ['Mephitic Thrash at 1:45, with 3 players alive, is still an avoidable hit on pull 9 (check BE)'] : []); } },
+  { key: 'Gax3AkbyFRXmdrgQ:23', name: 'BF: Wolfthorn pull 13, a touch the carrier died to later', test: (R) => { const r = R.r, vd = r.deaths.find((d) => nm(d.player) === 'Volkovod' && Math.abs(d.t - 137.2) < 2.5); if (!vd) return ['no death of Volkovod at 2:17 on pull 13 (check BF)'];
+    if (typeof R.E.avoidMistakes !== 'function') return ['the engine no longer shares avoidMistakes with the checks (check BF)'];
+    /* (the same pull with the lines counted up to his death, as "up to the wipe call" does on a pull that was played on) */
+    const r2 = Object.assign({}, r, { deaths: r.deaths.filter((d) => d.t >= vd.t - 0.05), mistakes: r.mistakes.filter((m) => !m.avoidRule) }); R.E.avoidMistakes(r2);
+    const mine = r2.mistakes.filter((m) => nm(m.player) === 'Volkovod' && m.severity === 'High' && m.mechanic !== 'Death' && m.t >= 131 && m.t <= vd.t + 1.5);
+    return mine.length === 1 && mine[0].mechanic === 'Viper hatched' ? [] : ['Volkovod\'s egg touch at 2:12 is ' + mine.length + ' High mistakes with the lines counted up to his death at 2:17 (' + mine.map((m) => m.mechanic).join(', ') + '): one event, one mistake (check BF)']; } },
   { key: 'FQHBqjP4TnmC37VN:10', name: 'AR: ...not when a third of the raid is already dead', tail: 170, test: (R) => rootIs(R, 'Volatile Purge', /died to Volatile Purge at once\.$/) },
 ];
 function load(file) { return JSON.parse(zlib.gunzipSync(fs.readFileSync(file)).toString('utf8')); }
@@ -84,7 +104,7 @@ function read(H, W, fx) {
   const r = E.analyze(it, W.translate(it, fx.events), {}); if (!r.item) r.item = it;
   const ci = it.kill ? null : S.cutInfo(r), c0 = ci && ci.call ? ci.call : ci, cut = c0 && c0.auto ? c0.t : null, rc = it.kill ? null : E.rootCause(r, c0 && c0.auto ? { cut, why: c0.why, at: c0.at, mn: c0.mn, ms: c0.ms } : { cut });
   const mod = r.module || {}, secs = mod.sections || [];
-  return { key: fx.key, r, kill: it.kill, phases: (mod.phases || []).map((p) => p.name.split(' ')[0] + ' ' + Math.round(p.start)), call: c0 && c0.auto ? [Math.round(c0.t), c0.why] : null,
+  return { key: fx.key, r, E, kill: it.kill, phases: (mod.phases || []).map((p) => p.name.split(' ')[0] + ' ' + Math.round(p.start)), call: c0 && c0.auto ? [Math.round(c0.t), c0.why] : null,
     root: rc ? { name: rc.name, short: rc.short, line: rc.line, by: rc.by, next: rc.next } : null, sec: (id) => secs.find((s) => s.id === id) || null,
     deaths: r.deaths.map((d) => { let v = {}; try { v = S.deathVerdict(r, d); } catch (e) { v = { bucket: 'ERR', say: e.message }; } return { t: d.t, p: nm(d.player), bucket: v.bucket, say: v.say }; }),
     mistakes: (r.mistakes || []).filter((m) => m.mechanic !== 'Death').map((m) => ({ t: m.t, p: m.player === 'Raid' ? 'Raid' : nm(m.player), sev: m.severity, mech: m.mechanic, detail: String(m.detail || '') })) };
