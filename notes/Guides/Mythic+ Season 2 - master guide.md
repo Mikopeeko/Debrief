@@ -2,6 +2,8 @@
 
 This guide covers Midnight Season 2 Mythic+ and is meant for anyone working on Debrief. It was researched Nov 1–2, 2026 for Flex, who asked: "Go learn as much about the current m+ as you can… Only find reliable sources… make a list or guide or checklist".
 
+**Corrected Nov 14, 2026** from the deeper research in [Mythic+ - how it works (the whole picture).md](Mythic+%20-%20how%20it%20works%20(the%20whole%20picture).md): where Lindormi's Guidance ends, the death penalty at +6 to +11 (5 seconds), where gear stops improving (+10, not +12), the exact rating formula, and today's cutoffs and top groups.
+
 **Sources** (only these):
 - Blizzard's own posts
 - Wowhead's season and dungeon guides
@@ -49,14 +51,14 @@ Some pages still show older timers:
 |---|---|
 | +2 | **Lindormi's Guidance:** marked enemies have 5% less health and damage, and **deaths cost no time**. |
 | +5 | **Xal'atath's Bargain:** one of four, rotating weekly. |
-| +5 or +6 | Lindormi's Guidance ends. Raider.IO says after +4; Wowhead says it's removed at +6. A tank can still ask Lindormi for **Lindormi's Glow**, which only highlights enemies. |
+| +6 | Lindormi's Guidance ends: it covers +2 to +5, so a +5 has both it and a Bargain (Wowhead's overview and keystone guide, and the wiki; Icy Veins and Raider.IO's pre-season article say it ends after +4). **A death now costs 5 seconds.** A tank can still ask Lindormi for **Lindormi's Glow**, which only highlights enemies. |
 | +7 | **Fortified** or **Tyrannical**, alternating weekly. |
 | +10 | **Both** Fortified and Tyrannical. |
 | +12 | **Xal'atath's Guile** replaces the Bargain: **each death costs 15 seconds** (until the last minute). |
 
 - **Fortified:** non-boss enemies have 20% more health and do 20% more damage.
 - **Tyrannical:** bosses have 25% more health and do 15% more damage (their minions too).
-- **Gear stops getting better at +12.** Above it, players push for rating, Resilient Keystones and achievements (Wowhead).
+- **Gear stops getting better at +10** (corrected Nov 14): the end-of-run item is 311 and the Great Vault's is 318 from +10 up (Wowhead's overview and Icy Veins agree). Myth crests are reported to keep rising to +12 (Method only, unverified). Above that, players push for rating, Resilient Keystones and titles.
 
 ### The four Bargains (+5 to +11 only)
 Each one buffs your group if you handle it, or the enemies (more damage, less damage taken, stacking) if you don't.
@@ -66,7 +68,7 @@ Each one buffs your group if you handle it, or the enemies (more damage, less da
 | **Voidbound** | A Void Emissary empowers nearby enemies with Dark Prayer. Swap to it, stop its casts, and kill it. | 20% versatility and 30% cooldown rate, 30 s |
 | **Pulsar** | Orbs circle each player for 15 s. Walk into someone else's orb; stand close to your group to make it easy. | Mastery and leech, 30 s, stacking |
 | **Devour** | A healing absorb on every player for 15 s. Heal through it, or dispel it: any dispel works, including Cloak of Shadows and Stoneform. | Crit and max health, 30 s, stacking |
-Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Flex's logs, the affix IDs on the key start line were 158 (Voidbound) on Oct 25 and 160 (Devour) on Oct 31.
+Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Flex's logs, the affix IDs on the key start line were 158 (Voidbound) on Oct 25 and 160 (Devour) on Oct 31. Older keys also show 162 (Pulsar) and 148 (Ascendant).
 
 ---
 
@@ -75,8 +77,8 @@ Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Fle
   - Checked on Raider.IO run data: a +12 at 80.3% got +1, one at 69% got +2, and ones at 59.5% to 59.7% got +3.
 - **Deaths:**
   - **+12 and up: 15 seconds each.** Measured on Flex's Altar of Fangs +12 (Oct 25): 2 deaths added 31.6 s.
-  - **+2 to +4 or +5:** no penalty (Lindormi's Guidance).
-  - **+6 to +11:** there's still a penalty, but no source states the number for Midnight, and the +10 keys in Flex's logs had no deaths to measure. Don't state a number.
+  - **+2 to +5:** no penalty (Lindormi's Guidance).
+  - **+6 to +11: 5 seconds each** (corrected Nov 14). Wowhead's keystone guide says so, and 10 of Flex's +8, +10 and +11 keys from Aug 20 to Oct 11 measured 4.2 to 5.2 seconds a death. Two Voidscar Arena keys didn't fit (3.3 seconds, and 9 deaths with no time lost) and aren't explained.
 - **Over time:** the key still counts as a run, but your keystone drops a level.
   - **Resilient Keystone N:** time all 8 dungeons at level N (12 or higher) and your keystone never drops below N for the rest of the season. Flex has timed all 8 at +19, so his key shouldn't drop below 19.
   - You can lower a key on purpose by talking to Lindormi in Silvermoon.
@@ -91,7 +93,8 @@ Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Fle
 
 ## 4. Rating (score), worked out from Raider.IO's own numbers
 - **Your rating is the sum of your best run in each of the 8 dungeons.** A failed or lower run never lowers it (Raider.IO support).
-- **From +12 up, each key level is worth 15 points.** A just-timed key is about 365 + 15 × (level − 12):
+- **The exact points for a timed key** (corrected Nov 14; it fits Raider.IO's top 100 runs to within 0.07 points and the end lines in Flex's logs): **125 + 15 for each key level + 15 for each affix step reached (+5, +7, +10, +12) + up to 15 for speed.** So a just-timed +2 is 155, +5 is 215, +7 is 260, +10 is 320 and +12 is 365.
+- **From +12 up, each key level is worth 15 points.** A just-timed key is 365 + 15 × (level − 12):
   | Level | Just timed | At 60% or faster (max) |
   |---|---|---|
   | +12 | ~365 | 380 |
@@ -102,8 +105,8 @@ Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Fle
   | +24 | ~545 | 560 |
 - **Speed bonus:** finishing faster adds up to 15 points, rising evenly from 100% of the timer to 60%. That's about 0.375 points per 1% faster.
   - Flex's +19s: 99% of the timer gave 470.5, and 94% gave 472.1.
-- **Below +12, the steps are uneven** (affix breakpoints). From Trëèflêx's runs, a +10 at 60% or faster was worth 335.
-- **US cutoffs** (Raider.IO, Nov 2, 2026):
+- **Below +12, the steps are uneven:** reaching +5, +7, +10 and +12 is worth a double step (30 points), because each adds an affix. From Trëèflêx's runs, a +10 at 60% or faster was worth 335, which is 320 + 15.
+- **US cutoffs** (Raider.IO, Nov 2, 2026; on Nov 14 the top 10% was 3,296, the top 1% 3,794 and the top 0.1% 4,062):
   | Mark | Rating |
   |---|---|
   | Keystone Conqueror | 1,500 |
@@ -116,6 +119,7 @@ Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Fle
   | Top 0.1% | 4,030 |
 - **Flex (Flëxørçïst, Holy Paladin):** 3,770.5, all 8 dungeons timed at +19.
   - He's 4 points from the top 1%: one +20 timed (about +15) gets there.
+  - Update, Nov 14: his log's end line on Nov 5 (Kings' Rest +20, 488.7 points) reads 3,787.4, and Debrief's Mythic+ page showed 3,804 from Raider.IO on Nov 9. The top 1% now starts at 3,794.
   - All 8 at +20 would be about 3,880–3,900.
   - Trëèflêx (Resto Druid): 2,950.5.
 
@@ -128,6 +132,7 @@ Sources: Raider.IO "Mythic+ Affixes (Season 2)" and the Wowhead overview. In Fle
 - **Group setups:**
   - **Blood DK / Holy Paladin / Arms Warrior / Elemental Shaman / Subtlety Rogue:** 70 of 100.
   - The same with a Guardian Druid tank: 12.
+- **Checked again Nov 14** (top 100 runs, 99 at +24 and one +25): Arms Warrior 93, Holy Paladin 88, Subtlety Rogue 88, Elemental Shaman 87, Blood Death Knight 73, Guardian Druid 24, Restoration Shaman 10, Assassination Rogue 8. The top setup is 55 of 100, and the same with a Guardian Druid tank is 18. All 100 were timed for +1 only, using 85% to 98% of the timer.
 - **Flex's group:** Blood DK / Holy Paladin / Subtlety Rogue / Arms Warrior / Arcane Mage. That's the top setup with Arcane in place of Elemental.
 - **Tier lists:** Icy Veins and Murlok agree on Blood DK and Holy Paladin. Their DPS lists move around from week to week; the top-run counts above are the firmer evidence.
 
@@ -321,7 +326,7 @@ Boss plans come from each dungeon's Wowhead overview: "Boss Quick Strategy" and 
 - [ ] **Path choices:** Voidscar left (Versatility) or right (Mastery). Blinding Vale left or right.
 
 ### During the key
-- [ ] **Don't die.** From +12, every death is 15 seconds.
+- [ ] **Don't die.** From +12, every death is 15 seconds. At +6 to +11 it's 5.
 - [ ] **Kick the list**, then CC and stuns.
 - [ ] **Stand less between pulls.** On the Voidscar +19, Flex's group stood 1:48 between pulls and the typical fast run 1:05.
 - [ ] **Pull bigger where it's safe.** Fewer, bigger pulls are where fast runs save the most time.

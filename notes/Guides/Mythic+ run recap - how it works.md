@@ -108,7 +108,7 @@ Research and plan: [Mythic+ run recap - gameplan.md](Mythic+%20run%20recap%20-%2
   - A UNIT_DIED ending in 1 is Feign Death, not a death.
   - Each death shows the biggest hit in its last 5 s and whether a defensive was used in the 30 s before.
 - **The timer:**
-  - Timers come from Wowhead. Altar of Fangs is 29:00 from its own page; the season table says 30.
+  - Timers are the live ones (Raider.IO's data, the same as `TIMER` in `companion/mplus.js`). Altar of Fangs is 30:00: Wowhead's own Altar page says 29, but a +12 there scoring 378.3 points for 19:21 only fits a 30:00 timer (corrected Nov 14).
   - Two levels at 80% of the timer, three at 60%.
   - Death cost is measured, not guessed: WoW's final time minus the time that passed (less the 10 s countdown), rounded to 5 s. It's 15 s per death at +12.
   - Checked against Raider.IO's upgrade stars on every key it could see.
