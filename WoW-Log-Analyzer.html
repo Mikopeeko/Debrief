@@ -15748,6 +15748,9 @@ const COOLDOWNS = {
 };
 
 // Absorbs that are not healing (cheat-death / Stagger).
+/* (Nov 13, Main, from the answer key: shields Warcraft Logs leaves out of healing done, measured on 9 kills against its own numbers (57 -> 83 exact matches of 180 players): Time Dilation,
+   Stretch Time, Refractive Images; Temporal Anomaly and Pet Protector Immunity only when the shield was on a pet. Their soaks still feed the defensive reads) */
+const NOT_HEALING_SHIELD = new Set([357170, 410355, 1309497]), NOT_HEALING_ON_PET = new Set([373862, 1297827]);
 const NOT_HEALING = new Set([31850, 115069]); /* (Nov 13, Main, from the answer key: Cheat Death (31230) and Purgatory (114556) count like any absorb, as Warcraft Logs counts them: Zaffia's healing read 3% to 12% low. Ardent Defender and Stagger stay out) */
 
 // Boss mechanic rule packs (patch 12.1, Venomous Abyss), all difficulties unless a rule lists its own.
@@ -22567,6 +22570,9 @@ function* analyzeSteps(item, text, opts) {
         if (swing && hasAdv && !owner && f[adv] === sg && isPlayer(f[adv + 1])) pets.set(sg, f[adv + 1]);
         const base = num(f[s0]), over = Math.max(0, num(f[s0 + 2]));
         const dealt = Math.max(0, base + num(f[s0 + 4]) + num(f[s0 + 5]) - over);
+        /* (Nov 13, Main, from Warcraft Logs' own table (Tyralien, Nov 12 kill: "Tempered in Battle (Damage) -2.13m"): health a player's spell moves off a teammate comes off that player's healing done.
+           Protection Paladins read about 3 to 6% high, Restoration Shamans 3 to 7%) */
+        if (owner && (dealt > 0 || num(f[s0 + 6]) > 0) && (isPlayer(dg) || pets.has(dg)) && /^(Tempered in Battle|Spirit Link( Totem)?)$/.test(f[9] || '')) { const pq = P(owner, pet ? null : sn), mv = dealt + Math.max(0, num(f[s0 + 6])) /* (with what a shield soaked of it, as Warcraft Logs counts it: Tyralien, Oct 22 pull 17, 322,887) */; pq.healing -= mv; addAb(pq.healAb, f[9] + ' (Damage)', num(f[8]), -mv, 0, false, t); bump(pq.healS, t, -mv); bump(r.healS, t, -mv); }
         /* (Nov 13, Main, from the answer key: what an enemy's own shield absorbed is damage done, as Warcraft Logs counts it. Schooty, Nov 11 pull 1: 15.1M of 126M went into Veil of
            Twilight and was left out, 10% to 14% under Warcraft Logs on this fight. dealtM is the meters' number (totals, spells, per second, per target); the fight checks keep
            dealt, and get the shield's part from its own SPELL_ABSORBED line as before) */
@@ -22626,7 +22632,10 @@ function* analyzeSteps(item, text, opts) {
         noteSchool(id, f[10]);
         if (owner) {
           const p = P(owner, pet ? null : sn);
-          const effH = eff + Math.max(0, num(f[s0 + 3])); /* (Nov 7, Flex: "Yes, count them": healing a heal absorb ate is the healer's healing, as Warcraft Logs counts it) */
+          /* (Nov 13, Main, from the answer key: a heal on another player's pet is not healing done, as Warcraft Logs counts it; one on your own pet is (Mend Pet). Optt, Nov 12 kill: 0.35% high -> exact) */
+          const offPet = !isPlayer(dg) && pets.has(dg) && pets.get(dg) !== owner;
+          const effH = eff + Math.max(0, num(f[s0 + 3]));
+          if (offPet && effH > 0) { p.petHealOut = (p.petHealOut || 0) + effH; const pm = p.petHealAb || (p.petHealAb = new Map()), pk = pet ? sn + ': ' + spell : spell; pm.set(pk, (pm.get(pk) || 0) + effH); } /* (taken off healing done for healers once roles are known) */ /* (Nov 7, Flex: "Yes, count them": healing a heal absorb ate is the healer's healing, as Warcraft Logs counts it) */
           p.healing += effH; p.overheal += over; addAb(p.healAb, pet ? sn + ': ' + spell : spell, id, effH, over, crit, t); bump(r.healS, t, effH); bump(p.healS, t, effH); if (over > 0) { bump(r.ohS || (r.ohS = []), t, over); bump(p.ohS || (p.ohS = []), t, over); } /* round 308 overheal per second */ if (isPlayer(dg)) { const tn = shortName(dg, dn); if (effH > 0) bumpN(p.healToS || (p.healToS = []), t, tn, effH); if (over > 0) bumpN(p.ohToS || (p.ohToS = []), t, tn, over); } /* (Nov 9: who each heal landed on, per second, for Graphs' Healing By target) */
           // (triage: the heal's advanced block is the target's, health after it; under half before it)
           if (s0 > 11 && f[11] === dg && eff > 0 && isPlayer(dg)) { const mx = num(f[14]); if (mx > 0 && (num(f[13]) - eff) / mx < 0.5) { p.lowHeal += eff; if (lowHL.length < 60000) lowHL.push([t, dg, owner, eff, 0, spell]); } }
@@ -22647,6 +22656,9 @@ function* analyzeSteps(item, text, opts) {
       // a heal eaten by a heal absorb the module watches (e.g. Twin Fangs' Tainted Blood): the absorb's owner, the player
       // with it, the absorb, then the healer and their heal, then the amount eaten (the healer's pet or totem counts for them)
       case 'SPELL_HEAL_ABSORBED': {
+        /* (Nov 13, Main, from Warcraft Logs' own table (Flex, Nov 12 kill: "Light of the Martyr -7.11m"): what Light of the Martyr's heal-absorb soaked comes off the Holy Paladin who has it.
+           The healers keep their heals into it. Holy Paladins read 2.7 to 4.8% high without this) */
+        if (f.length >= 19 && num(f[8]) === 448005) { const lo = isPlayer(sg) ? sg : pets.get(sg); if (lo) { const pl = P(lo, isPlayer(sg) ? sn : null), am = num(f[18]); if (am > 0) { pl.healing -= am; addAb(pl.healAb, 'Light of the Martyr', 448005, -am, 0, false, t); bump(r.healS, t, -am); bump(pl.healS, t, -am); } } }
         if (f.length >= 19) { const hg9 = f[11], ho9 = isPlayer(hg9) ? hg9 : pets.get(hg9) || ''; if (ho9 && f[9] && !/^(Light of the Martyr|Death Pact|Shroud of Purgatory|Purgatory)$/i.test(f[9])) { /* (a player's own heal-absorbs are not the fight's) */ const q9 = P(ho9), hb = q9.habs || (q9.habs = {}); hb[f[9]] = (hb[f[9]] || 0) + num(f[18]); } } /* round 294: healing into heal-absorbs */
         if (mod && f.length >= 19 && W(f[9], f[8])) { const hg = f[11], ho = isPlayer(hg) ? hg : pets.get(hg) || '';
           modEv.push({ k: 'habs', t, dst: dg, spell: f[9], id: num(f[8]), healer: ho || hg, heal: f[16], healId: num(f[15]), amt: num(f[18]) }); }
@@ -22673,6 +22685,7 @@ function* analyzeSteps(item, text, opts) {
         // (Darkness: an attack it made someone avoid, exact)
         if (isPlayer(dg) && String(f[sp + 1]).toLowerCase() === 'darkness') { const u = cdPress(ow, 'Darkness', t, true); u.prev += amt; u.taken += amt; u.cov.add(dg); }
         { const u = PERS_DR.has(String(f[sp + 1]).toLowerCase()) && ow === dg ? r.defMit.slice().reverse().find((x) => x.g === dg && x.abs && x.name.toLowerCase() === String(f[sp + 1]).toLowerCase() && t - x.t <= 30) : null; if (u) u.prev += amt; } /* (a personal shield's soak, exact (Oct 22)) */
+        if (NOT_HEALING_SHIELD.has(id) || (NOT_HEALING_ON_PET.has(id) && !isPlayer(dg))) break;
         const p = P(ow, isPlayer(absorber) ? f[a + 1] : null);
         if (isPlayer(dg)) { const tp = r.players.get(dg); if (tp) { const m = tp.shBy || (tp.shBy = new Map()); m.set(p.name || '', (m.get(p.name || '') || 0) + amt); } } /* (who shielded whom (Oct 23)) */
         p.healing += amt; p.absorbs += amt; addAb(p.healAb, f[sp + 1], id, amt, 0, false, t); bump(p.shDS || (p.shDS = []), t, amt); if (isPlayer(dg)) { const tn = shortName(dg, dn); bumpN(p.healToS || (p.healToS = []), t, tn, amt); bumpN(p.shToS || (p.shToS = []), t, tn, amt); } { const ha = p.healAb.get(f[sp + 1]); if (ha) ha.abs = (ha.abs || 0) + amt; } /* (Nov 8: shields given, per second and per spell, for Graphs' two-tone bar) */
@@ -22848,6 +22861,8 @@ function* analyzeSteps(item, text, opts) {
     p.cls = sp ? sp[1] : null;
     p.specName = sp ? sp[0] + ' ' + CLASSES[sp[1]][0] : 'Unknown spec';
     p.role = TANKS.has(p.specId) ? 'tank' : HEALERS.has(p.specId) ? 'healer' : (p.specId ? 'dps' : (p.healing > p.damage ? 'healer' : 'dps'));
+    /* (Nov 13, Main, measured on 9 kills against Warcraft Logs: a healer's heals on another player's pet are not healing done; a tank's or damage dealer's are. Optt, Nov 12 kill: 0.35% high -> exact) */
+    if (p.role === 'healer' && p.petHealOut) { p.healing -= p.petHealOut; for (const [k, v] of p.petHealAb || []) { const ab = p.healAb.get(k); if (ab) ab.total = Math.max(0, ab.total - v); } }
     p.color = p.cls ? CLASSES[p.cls][1] : '#9aa0ac';
     p.icon = p.cls ? CLASSES[p.cls][2] : null;
     p.specIcon = SPEC_ICON[p.specId] || null;
