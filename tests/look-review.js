@@ -54,6 +54,11 @@ module.exports = function lookReview(H, say) {
   // (the polish pass, Nov 14, Flex to the design chat: "much better, but i think visually a bit difficult to read/navigate"): the parts are tiles in rows,
   // one line a check, and an "On this page" row follows you down the page
   if (!/function jumpBar\(pg, sec\)/.test(UI) || !/\.rcz-jump\.show \{ display: flex !important/.test(css) || !/\.rcz-book \{ display: grid !important; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important/.test(css)) bad('Rotation: the polish pass is gone (the parts as tiles in three columns, or the "On this page" row)');
+  // (Nov 14, Flex: "use the timeline find bugs", and "I dont think two player toggles are needed probably just keep the one at the top")
+  if (/rcz-selw/.test(UI)) bad('Rotation: a second Change player is back in the coach band; the site\'s Player picker at the top switches the page (Flex, Nov 14)');
+  if (!/function tourKill\(\)/.test(UI) || UI.indexOf("if (!box.offsetParent || document.querySelector('.ptip')") < 0) bad('Rotation: the Timeline\'s first-visit tour can float over the Coach view or another page again (found Nov 14 with the Timeline)');
+  if (!/the page's own number, over the whole pull/.test(UI)) bad('Rotation: the Timeline\'s average HPS/DPS is a second number again, not the page\'s own (it read 390K against 381.3K on pull 19, Nov 14)');
+  if (!/only checks the page calls off, in What to fix's order/.test(SH)) bad('Rotation: the Timeline\'s What to fix can list checks the page calls fine again (Holy Shock on cooldown 98% on pull 19, Nov 14)');
   // (Main, Nov 14: the coach page's labels were 11px; nothing a raider must read is under 12px (Design system, section 2: Label 12px / 700 UPPERCASE))
   { const small = (css.match(/[^{}]*\.rcz[^{}]*\{[^{}]*\}/g) || []).filter((r) => (r.match(/(?:font-size:\s*|font:[^;]*?\s)(\d+(?:\.\d+)?)px/g) || []).some((x) => parseFloat(x.match(/(\d+(?:\.\d+)?)px/)[1]) < 12)); if (small.length) bad('Rotation: text under 12px on the coach page again: ' + small[0].trim().slice(0, 90)); }
 };
