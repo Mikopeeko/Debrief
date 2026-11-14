@@ -32,6 +32,13 @@ function run(H, say, quiet) {
   for (const [who, was] of Object.entries(NAMED)) { const x = est.get(who); if (x && x.pct != null && x.pct - WCL[who] > OVER) bad(who + ' reads ' + x.pct + ' again (Warcraft Logs ' + WCL[who] + '; ' + was + ' before ruling B)'); }
   /* (Nov 12 Ula'tek: printed only, the reason is at the top) */
   if (F.ud) { const u = byN(X.estCombine(pulls(F.ud))); log('Nov 12 Ula\'tek, 13 wipes, printed only (Warcraft Logs\' wipe numbers there don\'t follow its own rankings):'); log('  ' + Object.entries(ULA).map(([w, v]) => w + ' ' + ((u.get(w) || {}).pct) + '/' + v).join(', ')); }
+  /* (Nov 13, Main: "a made-up raider whose phase 1 damage per second sits at a spec's median ... must read about 50 (±5), and one at the 90th percentile about 90", for
+     three specs on Ula'tek. Our method by our own rule, where Warcraft Logs' wipe numbers disagree: a raider who played 5 minutes of phase 1 at the spec's kill-ranking amount
+     at that percentile, times the spec's own phase 1 share (PHASE_FAC), must read that percentile) */
+  { const bk = "Ula'tek|16", ph = 'P1 Serpent Mother', F = X.PHASE_FAC[bk];
+    for (const sp of ['Frost Death Knight', 'Balance Druid', 'Beast Mastery Hunter']) { const T = X.PARSE_TAB[sp] && X.PARSE_TAB[sp][bk]; if (!T || !F) { bad('Ula\'tek self-check: no table for ' + sp); continue; } const f = X.phFacOf(F, sp, 'dps', ph);
+      for (const want of [50, 90]) { const amt = T[1 + X.PARSE_PCT.indexOf(want)] * f, got = (X.estCombine([{ bk, kill: false, list: [{ n: 'Test', sp, role: 'dps', ph: [[ph, amt * 300, 300]] }] }]).get('Test') || {}).pct;
+        log('  Ula\'tek self-check: ' + sp + ' at the ' + want + 'th percentile of phase 1 reads ' + got); if (got == null || Math.abs(got - want) > 5) bad('Ula\'tek self-check: ' + sp + ' at the ' + want + 'th percentile of phase 1 reads ' + got + ', not about ' + want); } } }
   /* (Graphs and the Report card read the same pulls and give the same number: Graphs' All pulls reads the whole night like the card) */
   const U = H.UI; for (const [rx, m] of [[/async function graphsAll\([\s\S]{0,900}?bossReps\(it, still, [^;]*?, true\); if \(!got/, 'Graphs\' All pulls doesn\'t read the whole night (bossReps(..., true)), so it can count fewer pulls than the Report card'],
     [/const gbPrs = \(k\) => [^\n]*estParses\(night \? NP\.map\(\(it\) => it\.r\) : \[r\], k\)/, 'Graphs\' Parse column doesn\'t read estParses over the night\'s pulls'], [/estParses\(a\.per\.map\(\(g\) => g\.r\), kind377\)/, 'the Report card\'s Damage/Healing row doesn\'t read estParses over its pulls']]) if (!rx.test(U)) bad(m);
