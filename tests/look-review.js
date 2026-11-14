@@ -43,4 +43,12 @@ module.exports = function lookReview(H, say) {
   // "Not pulled yet" on killed bosses and a guessed raid day for its first seconds; the boss row and the next raid shimmer until the import is in)
   const hd = (() => { try { return H.grab('hdDash'); } catch (e) { return ''; } })();
   if (!/const ld0 = S\.progBusy === g\.gid && !g\.last;/.test(hd) || !/\(ld0 \? shim\('4\.5em'\) : k \? 'Killed'/.test(hd) || !/const hnx = ld0 \?/.test(hd)) bad('fix 3: Home\'s first visit shows "Not pulled yet" on killed bosses or a guessed raid day again while the nights come in');
+  // (Nov 14, Flex: "I feel like rotation is kinda weak", "re-design this page top to bottom make it good", "not just showing them what they did wrong, but
+  // what they need to do to fix it and maybe show them the correct version", then "Yes, build this" on the two pictures): Rotation is a coach. Work on these
+  // shows You next to Better with a Next time line, and Your rotation, part by part opens a part to how it's played and the priority list
+  if (!/function picOf\(c, D, T, force\)/.test(UI) || !/<b>Work on these<\/b>/.test(UI) || !/data-rczsec="/.test(UI) || !/function aplList\(c, D\)/.test(UI)) bad('Rotation: the coach page (Work on these with You next to Better, and Your rotation, part by part) is gone');
+  if (!/'<span class="rcz-who ' \+ \(k === 'you' \? 'you' : 'bet'\)/.test(UI) || !/<span>Next time<\/span>/.test(UI)) bad('Rotation: a fix no longer shows You next to Better, or lost its Next time line');
+  if (!/\.pf-inl\.spc-v\.rcz-on > \.ds-rtop, [^{]*\.rtl-vt \{ display: none !important/.test(css) || !/\.rcz-who\.you \{ color: var\(--warn/.test(css)) bad('Rotation: the coach page\'s styles are gone, so the old top box and checklist show again');
+  if (!/function fillJ\(pg, P, box\)/.test(UI) || !/data-rczf', 'gx'/.test(UI)) bad('Rotation: a part\'s How it\'s judged (today\'s full detail of each check) or the Gear and extras fold is gone, so a fact was dropped');
+  if (/class="rda-strip"/.test(UI)) bad('Rotation: option A (the strip of cooldown lanes) is back. Flex, Nov 14: "not gonna lie i kinda hate this layout"');
 };
