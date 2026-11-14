@@ -548,6 +548,7 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
+const planNights = require('./plan-nights-copy.js')(H, say); /* (Nov 14, Main's test: Heroic then Mythic saved the page's old copy of the raid nights over the team's, erasing Nov 4 and Nov 11) */
 /* (Nov 13, ruling B: the estimated parse on the Nov 11 Coiled Altar night against Warcraft Logs' own Parse %, every raider within 15 and nobody more than 15 above;
    Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
 try { require('./parse-estimate.js')(H, say, true); } catch (e) { say('the estimated parse', 'crash', 'tests/parse-estimate.js crashed: ' + e.message); }
@@ -610,7 +611,7 @@ const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0]
   if (got !== want) say('raid days', 'days', 'Wed + Thu every week with a few odd nights should be raid days ' + want + ', the rule says ' + got);
   if (home !== String(RD.raidDaysOf(ats))) say('raid days', 'days', 'Home\'s raid days (' + home + ') and Plan\'s (' + RD.raidDaysOf(ats) + ') disagree');
   if (String(RD.raidDaysOf(ats, [4, 3])) !== '3,4' || String(RD.raidDaysOf(ats, [5])) !== '5') say('raid days', 'days', 'the lead\'s Raid days don\'t win over the rule'); }
-Promise.all([tierCount(), planSave]).then(() => {
+Promise.all([tierCount(), planSave, planNights]).then(() => {
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }
