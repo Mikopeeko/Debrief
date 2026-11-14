@@ -420,3 +420,37 @@ Measured, old engine next to new, on 103 saved pulls (2,062 player rows): raid d
 players +40% to +78% on short pulls), +10.9% on the one Vashnik pull, 0 on the others; nobody's damage went down. Healing moved for the Rogues and Death Knights only (Zaffia on
 83 pulls). Open: the wipe parse estimate compares against Warcraft Logs' rankings, which count shields, so it reads truer now; its phase tables were measured before this.
 Checks: tests/wipe-causes.js names Schooty's damage and Zaffia's healing on Nov 11 pull 1 (with --all); the answer key checks every player on every pull in every build.
+
+## A death with no killing hit has its own label (Nov 13, Main)
+Hobbz, Nov 11 pull 16, was feared off the edge by an unkicked Wail of Terror and the log names no killing hit. Graphs' Deaths list, the death card and the hovers read "Deadly Venom",
+a raider's own poison that ticked on him 0.1 s before: each of them took the last line of the recap. Main: "A death with no killing hit gets its own label wherever a killing hit is
+shown. It must never be 'killed by' a last tick. Every tab has to say the same thing as How it went and Why we wiped."
+
+The rule, set once in the engine at the end of its reading (explainDeaths):
+- The log says no killing hit (`d.noKill`: Warcraft Logs' killing ability 0, or the older guess where a log has none) and the player is past the platform's edge (`d.far` over 50
+  yards, where the room is known): **Fell off the edge**. Otherwise: **No killing hit**.
+- A mind control fall is **Dreadmarch**, as before, now also when only the boss module caught it (Komo, Nov 11 pull 5, read his own "Fel Armor" ticking for 0).
+- `d.kill` and `d.ability` both carry the label (pages read either), `d.noHit` marks it, `d.killer` is empty, and `d.hitLast`, `d.abLast`, `d.killerLast` keep the last tick.
+
+The label is for showing. The engine's own reasoning still reads the last tick (`killRaw`, `abRaw`, `killerRaw`): the mass death count, Why we wiped's categories, whose purple orb
+burst, an Avoidable damage row's "died to it". A first try that fed the label to that reasoning moved 9 of 79 saved wipe causes: Nov 11 pull 2 lost "Schooty's purple orb touched
+other orbs" (13 of the 17 "Venom Rupture" deaths there went off the edge before it killed them, and the first of them is how the burst is found), and four Oct 22 pulls turned into
+"Too many individual mistakes". The page's wipe-call test ("a mechanic killed several", by spell id) reads the last tick too (`d.abIdLast`). So: do not switch that reasoning to the
+label without a ruling.
+
+Measured, the code before next to the code after, on the six saved nights: 181 of 1,884 deaths read differently (155 "Fell off the edge", 24 "No killing hit", 2 mind control falls now
+Dreadmarch: Komo, Nov 11 pull 5, and Optt, Oct 21 pull 1). No death changed sides (178 count against a player before and after). One changed its reason and stayed Not counted:
+Volkovod, Oct 21 pull 3, 1:07, 12 yards from the middle with no killing hit in the log, read "killed by orbs someone else set off (Venom Rupture)" and now reads "no mistake of yours
+was caught (no killing hit)". Of 92 saved wipes (79 on The Coiled Altar, 13 on Ula'tek) no wipe call, cause or one-line cause moved; four lines name only the hits that killed
+(Oct 22 pull 10: "Kargaryen, Tyralien, Komo and 3 more fell off the edge", it read "died to Stretch Time and Dreadful Presence").
+
+On the page a list cell shows the label; a sentence says it in words (ui.js `noHitL`, `dthDied`, `dthTo`): "Hobbz fell off the edge", "First: Hobbz off the edge at 5:01", never
+"died to Fell off the edge" or "Killed by Fell off the edge". The death card's result line reads "Fell off the edge: no hit killed them." and no row of its recap is marked as the kill.
+
+Left as it was, on purpose: Why we wiped's counts of a wave ("Venom Rupture killed 17" on Nov 11 pull 2, where 4 died to it and 13 went off the edge after it burst), and an
+Avoidable damage line's "and died to it". Both are the raid's event told by what was hitting it. Reported to Main for a ruling.
+
+Checks: every pull read by tests/contradictions.js (13 on every build, all with --all): a death with Warcraft Logs' killing ability 0 shows only a label or Dreadmarch in d.kill,
+d.ability and the page's deathHit, the label never sits on a death a hit killed, and no line says "died to" or "killed by" a label. Hobbz, Nov 11 pull 16, is named and read on every
+build. The answer key (every build, every pull of its nights) fails when a death the raw log gives no killing hit shows a spell. tests/wipe-causes.js names Hobbz and Schooty
+(pull 16), Schooty (pull 2) and Komo (pull 5) with --all. The engine's and the page's lines are pinned.

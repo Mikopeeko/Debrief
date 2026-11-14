@@ -28,7 +28,9 @@ function grab(name, src) {
   throw new Error('could not read ' + name + ' out of ui.js');
 }
 function site(names, extra) {
-  const code = names.map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
+  /* (Nov 13: the page's words for a death with no killing hit ride along with every load: the death lines, the wipe chain and the verdicts all say them) */
+  const base = ['NO_HIT_SAY', 'noHitL', 'dthDied', 'dthTo'].filter((n) => !names.includes(n));
+  const code = base.concat(names).map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
   const ctx = vm.createContext({ E, C: E.compact, T: E.fmtT, CACHE: new Map(), S: { index: { bosses: [] } }, window: {}, ...(extra || {}) });
   const o = vm.runInContext(code, ctx); o.CACHE = ctx.CACHE; return o;
 }

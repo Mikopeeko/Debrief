@@ -38,6 +38,11 @@ const NAMED = [
 const KILLS = [
   ['agt6jMTyZBYvVzAP', 4, 'Hobbz', 221.9, 'Retaliatory Malice', 'Nov 11 pull 3, 3:41: Hobbz died to Retaliatory Malice. It read Malevolent Resonance, his last tick (the ghosts touched 10 s earlier)'],
   ['agt6jMTyZBYvVzAP', 9, 'Fourinches', 449.5, 'Grim Execution', 'Nov 11 pull 8, 7:29: Fourinches died to Grim Execution with six others. It read Malevolent Resonance (the ghosts touched 1 s before)'],
+  /* (Nov 13, Main: a death with no killing hit gets its own label, never the last tick) */
+  ['agt6jMTyZBYvVzAP', 17, 'Hobbz', 301.0, 'Fell off the edge', 'Nov 11 pull 16, 5:01: Hobbz was feared off the edge and no hit killed him. It read Deadly Venom, a raider\'s own poison that ticked on him 0.1 s before'],
+  ['agt6jMTyZBYvVzAP', 17, 'Schooty', 299.0, 'Fell off the edge', 'Nov 11 pull 16, 4:59: Schooty walked off the edge in control and no hit killed him. It read Dreadful Presence, the last thing that ticked on him'],
+  ['agt6jMTyZBYvVzAP', 6, 'Komo', 234.0, 'Dreadmarch', 'Nov 11 pull 5, 3:54: Komo was mind controlled off the edge. It read Fel Armor, his own spell ticking for 0'],
+  ['agt6jMTyZBYvVzAP', 3, 'Schooty', 83.0, 'Fell off the edge', 'Nov 11 pull 2, 1:23: Schooty went off the edge, 77 yards from the middle, with health left and no killing hit. It read Venom Rupture, his last tick'],
 ];
 /* A row of the Avoidable damage table: [code, fight, group, player, what the row must read, what it read before]. */
 const ROWS = [

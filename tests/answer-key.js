@@ -154,7 +154,9 @@ function comparePull(code, K, S, say) {
     for (const d of K.deaths || []) { const i = sd.findIndex((x, j) => !used.has(j) && x.player === d.player && near(x.t, d.t, 1.5)); if (i < 0) { say('death:' + d.player + '@' + Math.round(d.t), 3, d.player + '\'s death at ' + T(d.t), d.killedBy || 'no killing hit', 'not listed'); continue; } used.add(i);
       const x = sd[i], kb = String(d.killedBy || '').toLowerCase(), sb = String(x.kill || x.ability || '').toLowerCase(), sb2 = String(x.ability || '').toLowerCase();
       if (d.killedBy && kb !== sb && kb !== sb2 && !sb.includes(kb) && !kb.includes(sb)) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), d.killedBy, x.ability || 'nothing');
-      else if (!d.killedBy && d.mc && !x.fell && !/dreadmarch/i.test(x.ability || '')) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), 'no killing hit, mind controlled (walked off)', x.ability || 'nothing'); else ok(); }
+      else if (!d.killedBy && d.mc && !x.fell && !/dreadmarch/i.test(x.ability || '')) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), 'no killing hit, mind controlled (walked off)', x.ability || 'nothing');
+      /* (Nov 13, Main: "a death the log marks as having no killing hit never shows a 'killed by' spell". Hobbz, Nov 11 pull 16, read "Deadly Venom", a raider's own poison) */
+      else if (!d.killedBy && !d.mc && !x.fell && !/^(fell off the edge|no killing hit|dreadmarch)$/i.test(String(x.kill || x.ability || ''))) say('deathBy:' + d.player + '@' + Math.round(d.t), 2, 'what killed ' + d.player + ' at ' + T(d.t), 'no killing hit', x.kill || x.ability || 'nothing'); else ok(); }
     sd.forEach((x, j) => { if (!used.has(j)) say('death:' + x.player + '@' + Math.round(x.t), 3, 'a death of ' + x.player + ' at ' + T(x.t), 'no such death in the log', x.ability || 'listed'); }); }
   // 4b. each death's verdict under the proof rule: You (with proof) or not counted
   { const sv = (S.verdicts || []).slice(), usedV = new Set(), fam = (x) => String(x || '').toLowerCase().replace(/\s*\(.*$/, '');
