@@ -512,6 +512,7 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
+try { require('./look-review.js')(H, say); } catch (e) { say('look review', 'crash', 'the look review check crashed: ' + e.message); } /* (Nov 13, Flex: "no its fine just make the changes": the look review's fixes stay in) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */
 /* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a
    cut of 217.4 and wanted "never Soul Sever": the call lands on that Sever now, and with Tyralien's missed taunt it is the cause. Without a missed taunt, Sever deaths still never are: the same

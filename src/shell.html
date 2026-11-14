@@ -15556,7 +15556,7 @@ html body #view .dbt-why .dbt-chn .dbt-chr.hiw-kid.wrt-rootrow > b::after { cont
     <div class="live" id="liveBar" hidden><button class="btn" id="liveBtn" title="Check the report for new pulls every 15 seconds">Live: off</button><span class="sub" id="liveMsg"></span></div>
     <div class="cutside" id="cutSide"></div>
     <a class="btn tb-disc" id="tbDisc" href="#" target="_blank" rel="noopener" aria-label="Join our Discord" title="Join our Discord" hidden></a>
-    <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open a log or a report" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="tbmenu"><button class="btn tbm-b" id="tbMenu" type="button" aria-label="Open the menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="tbm-w">Menu</span></button>
       <div class="tbm-pop" id="tbMenuPop" hidden><button class="tbm-i" id="openBtn" type="button">Open combat log<span>a WoWCombatLog file on this PC</span></button><button class="tbm-i" id="wclBtn" type="button">Warcraft Logs<span>import a report by its link</span></button><button class="tbm-i" id="tbSaved" type="button">Saved progress<span>which logs are your raid, saved pulls</span></button><button class="tbm-i" id="tbTips" type="button">Help<span>tips for this page, and the tour</span></button><button class="tbm-i" id="tbPlan" type="button">Plan<span>rosters and notes for every boss</span></button><button class="tbm-i" id="tbGuides" type="button">Boss guides<span>how each fight works, with animated maps</span></button><button class="tbm-i" id="tbInGame" type="button">Debrief Companion<span>your pull recap over WoW, and the download</span></button><button class="tbm-i" id="tbBnet" type="button" hidden>Link Battle.net<span>optional: Debrief knows every character is yours</span></button><button class="tbm-i" id="tbTheme" type="button">Theme<span>change how Debrief looks</span></button><button class="tbm-i" id="tbPatch" type="button">Patch notes<span>what's new, and what we fixed</span></button><button class="tbm-i" id="tbReport" type="button" hidden>Report a problem<span>sends it to us, with this page attached</span></button><button class="tbm-i" id="tbIdea" type="button" hidden>Suggest an idea<span>posts it in #suggestions on our Discord</span></button><a class="tbm-i" id="tbDiscord" href="#" target="_blank" rel="noopener" hidden>Join the Discord<span>questions, feedback and news</span></a><button class="tbm-i tbm-out" id="tbOut" type="button" hidden>Sign out<span>you</span></button></div></div>
     <div class="progress" id="prog"><div></div></div>
     <input type="file" id="fileIn" accept=".txt,.log" hidden>
@@ -19123,6 +19123,79 @@ html body #assignBox .pom .pom-f { margin-top: auto; padding-top: 9px; border-to
 html body #assignBox .pom .pom-map { min-width: 0; }
 html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: auto; }
 @media (max-width: 760px) { html body #view#view#view#view.plan-page #assignBox#assignBox .bj-jobs .plb-rc > .pom { grid-template-columns: minmax(0, 1fr); margin-left: 0; } html body #assignBox .pom .pom-leg { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.12); } }
+}
+</style>
+<style id="look-nov13">/* (look review, Nov 13 (Flex: "no its fine just make the changes"), fix 1: the Menu button shows its three lines and the word Menu. It was a blank
+   square: the button's side padding left its icon 6px wide.) */
+@layer defaultTheme {
+  :root body #tbMenu.tbm-b.tbm-b, :root body.snv-on #sideNav .snv-tools #tbMenu.tbm-b { width: auto !important; min-width: 0 !important; padding: 0 10px 0 8px !important; gap: 6px !important; }
+  :root body #tbMenu.tbm-b > svg { flex: none !important; width: 16px !important; height: 16px !important; }
+  :root body #tbMenu.tbm-b > .tbm-w { font: 600 13px/1 var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: 0 !important; white-space: nowrap; }
+  :root body.snv-on.snv-fold #sideNav .snv-tools #tbMenu.tbm-b { width: 32px !important; padding: 0 !important; justify-content: center !important; }
+  :root body.snv-on.snv-fold #sideNav .snv-tools #tbMenu.tbm-b > .tbm-w { display: none !important; }
+}
+/* (fix 7 (the long selectors outrank the older roster rules in this layer): on the Plan's roster grids, sitting out is a quiet grey dash in an empty cell, not a red X in over half the grid; red stays for real problems) */
+@layer defaultTheme {
+  html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit, html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-one .nt-tk.sit { background: rgba(255,255,255,.025) !important; border: 1px solid rgba(255,255,255,.06) !important; box-shadow: none !important; color: transparent !important; }
+  html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit::after, html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-one .nt-tk.sit::after, html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.out::after { content: '\2013' !important; color: rgba(255,255,255,.3) !important; font-size: 12px !important; font-weight: 600 !important; }
+  html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page #assignBox .pv-grid .nt-g .nt-tk.out { background: transparent !important; box-shadow: none !important; }
+  html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit:hover, html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-one .nt-tk.sit:hover { background: rgba(255,255,255,.08) !important; border-color: rgba(255,255,255,.2) !important; }
+  html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-g .nt-tk.sit:hover::after, html body #view#view#view#view#view#view#view.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page.plan-page .nt-one .nt-tk.sit:hover::after { color: rgba(255,255,255,.75) !important; }
+}
+/* (fix 2: an answer is never smaller than its own detail line: Summary's "Next time" sentence and Also hurt's Next time lines read at body size; What's new
+   titles stay over their sub line from the first second) */
+@layer defaultTheme {
+  html body #view .dbt-why .dbt-ln > span:not(:first-child) { font-size: 13.5px !important; font-weight: 400 !important; line-height: 1.45 !important; color: var(--text, #f0eee8) !important; }
+  html body #view .dbt-add em.ahg-nx, html body #view .dbt-add em.ahg-nx * { font-size: 13.5px !important; }
+  html body #main .hd-news .hd-evt > b { font-size: 13.5px !important; font-weight: 600 !important; }
+  html body #main .hd-news .hd-evt > em { font-size: 12.5px !important; }
+}
+/* (fix 6: themes only recolour: the bold bits that could shrink to 11px with a theme on keep their own size) */
+@layer defaultTheme {
+  html body #view .rqc-under.r437 .r437-t > b { font-size: 18px !important; font-weight: 700 !important; }
+  html body #view .rqc-under.r437 .r437-t > b small { font-size: 12.5px !important; font-weight: 400 !important; }
+  html body :is(#main, #view) .mpf-s2pl > b { font-size: 26px !important; }
+  html body :is(#main, #view) .mpf-s2dh > b { font-size: 13.5px !important; font-weight: 700 !important; }
+  html body #view p.rpc-lead > b { font-size: 13.5px !important; font-weight: 700 !important; }
+  html body #view :is(b, strong, h3, h4, h5) > .sp.mt { font-size: inherit !important; }
+}
+/* (fix 8: one face, Barlow Condensed, everywhere: Summary All pulls' night chart, its key and the opened "What wiped us most" row were plain Barlow) */
+@layer defaultTheme {
+  html body #view .nsm, html body #view .nsm * { font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; }
+}
+/* (fix 4: one "pick one" switch look everywhere, the quiet-list choice (Flex, Oct 28): slim tabs, the picked one in white with a gold underline, no boxes.
+   Summary's All/P1/P2, Report card's Everyone/Tanks, Compare, Graphs, "Compared with", Plan's Mythic/Heroic and Mythic+'s Newest switch) */
+@layer defaultTheme {
+  html body :is(#main, #view) :is(.seg, .r378-seg, .ndz-seg, .mpf-s3sw).seg-x, html body :is(#main, #view) :is(.seg, .r378-seg, .ndz-seg, .mpf-s3sw) { background: transparent !important; background-image: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; gap: 2px !important; border-radius: 0 !important; }
+  html body :is(#main, #view) :is(.seg, .r378-seg, .ndz-seg, .mpf-s3sw) > button { background: transparent !important; background-image: none !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; box-shadow: none !important; color: #b0b5b8 !important; padding: 4px 10px !important; font-size: 13.5px !important; font-weight: 600 !important; min-height: 0 !important; height: auto !important; }
+  html body :is(#main, #view) :is(.seg, .r378-seg, .ndz-seg, .mpf-s3sw) > button:hover { color: var(--text, #f0eee8) !important; }
+  html body :is(#main, #view) :is(.seg, .r378-seg, .ndz-seg, .mpf-s3sw) > button:is(.on, [aria-pressed="true"], [aria-selected="true"]) { color: var(--text, #f0eee8) !important; border-bottom-color: #d4b77d !important; background: transparent !important; }
+}
+/* (fix 5: one gold button a screen: Plans' Import / Use again on every card, Summary's Import NSRT note and Mythic+'s Open are quiet buttons now;
+   Mythic+ keeps "Prep for ..." in gold) */
+@layer defaultTheme {
+  html body #view#view#view#view#view#view#view :is(.plc-acts, .dbn-add, .th-box) .btn.primary.primary.primary, html body #main#main#main#main#main#main#main :is(.plc-acts, .dbn-add, .th-box) .btn.primary.primary.primary { background: transparent !important; background-image: none !important; border: 1px solid var(--line2, #3b4348) !important; color: var(--text, #f0eee8) !important; box-shadow: none !important; text-shadow: none !important; }
+  html body #view#view#view#view#view#view#view :is(.plc-acts, .dbn-add, .th-box) .btn.primary.primary.primary:hover, html body #main#main#main#main#main#main#main :is(.plc-acts, .dbn-add, .th-box) .btn.primary.primary.primary:hover { border-color: #d4b77d !important; color: #e6c98a !important; }
+}
+/* (fix 9: Home and Mythic+ on the site's type scale (11 labels · 12.5 secondary · 13.5 body and names · 18 headings · 22 big numbers; display text
+   keeps its size). Sizes only: no widths or places change.) */
+@layer defaultTheme {
+  html body #main#main#main#main .home :is(.hd-srs .l > b, .hd-lab, .hd-mych > span.l, .hj-cs small, .hd-gbl span.r, .hd-gk, .hd-evi, .hd-myc em, .hd-meb i) { font-size: 11px !important; }
+  html body #main#main#main#main .home :is(.hd-srs .l > em, .hd-sch, .hj-nm, .hj-more) { font-size: 12.5px !important; }
+  html body #main#main#main#main .home :is(.hd-pill > b, .hd-row .hd-sc, .hd-gbt > button) { font-size: 13.5px !important; }
+  html body #main#main#main#main .home :is(.hd-ph > h3, .hd-kr .hd-kl) { font-size: 18px !important; }
+  html body #main#main#main#main .home :is(.hj-jb .hj-tg, .hd-sct > b, .hd-nm > h2) { font-size: 22px !important; }
+  html body #main#main#main#main :is(.mpf-msg, .mpf-s3c, .mpf-s3ch, .th-links > button) { font-size: 13.5px !important; }
+  html body #main#main#main#main :is(.mpf-s2c > span, .mpf-s2df, .mpf-s2pr small) { font-size: 12.5px !important; }
+  html body #main#main#main#main .mpf-s3kh > h2 { font-size: 18px !important; }
+  html body #main#main#main#main :is(.mpt, .mpf) svg text { font-family: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; } /* (fix 8 too: the rating chart's labels were a third face) */
+}
+/* (fix 10: Home's panels fit what they hold: Your season's four tiles were twice their content's height, the Mythic+ ladder panel stretched to the
+   calendar's height half empty, and the news grid left a hole when it has four stories. No panel moves.) */
+@layer defaultTheme {
+  html body #main#main#main#main .home .hd-r2, html body #main#main#main#main .home .hd-r3 { align-items: start !important; }
+  html body #main#main#main#main .home .hd-season .hd-srs { flex: none !important; }
+  html body #main#main#main#main .home .hd-wnl > .hd-wn:nth-child(4):last-child { grid-column: span 2 !important; }
 }
 </style>
 </body>
