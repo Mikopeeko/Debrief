@@ -67,6 +67,9 @@ const VFS = [
   ['agt6jMTyZBYvVzAP', 9, 'Hobbz', 30, /^Venomfang stayed on for 4\.6 s with 6 dispels ready and nobody on it\.$/, 'Nov 11 pull 8, 0:30: Venomfang sat on Hobbz for 4.6 s with six dispels ready (Tyralien, Kargaryen, Flëxørçïst, Jangokin, Urgdragon and Hobbz himself). It read "Tyralien had the only dispel ready"'],
 ];
 /* A row of the Avoidable damage table: [code, fight, group, player, what the row must read, what it read before]. */
+/* (each named row's colour. Nov 13, item (c): the top raids' lines were measured again the new way and the colour is judged on the count the row shows. Fourinches' 18 seconds
+   (Noxious Ground's line is 16 by then, 9 in 10 top raiders) is amber; it was not coloured while the colour counted only the 14 ticks that did damage. Vandagos is a tank: listed, not judged) */
+const ROW_COL = { 'agt6jMTyZBYvVzAP:4:Fourinches': 'amber', 'Gax3AkbyFRXmdrgQ:5:Vandagos': '' };
 const ROWS = [
   ['agt6jMTyZBYvVzAP', 4, 'Noxious Ground', 'Fourinches', '18 s in it', 'Nov 11 pull 3: Fourinches stood in Noxious Ground for 18 ticks (four of them fully shielded). It read "14 s in it"'],
   /* (Nov 13, Main, from the answer key: an Axegrinder hit is the debuff landing, also when a shield soaks it whole; it was a gap of more than 1.5 s between damage ticks) */
@@ -95,7 +98,7 @@ module.exports = function (o) {
     if (code === 'Gax3AkbyFRXmdrgQ' && fight === 5 && rc && JSON.stringify((rc.orbBy || []).slice().sort()) !== JSON.stringify(['Flëxørçïst', 'Komo'])) say(where, 'root', 'the dropped purple orb\'s cause names ' + ((rc.orbBy || []).join(', ') || 'nobody') + ': it is Komo (it dropped as he died) and Flëxørçïst (his green ran into it)');
     for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
       if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));
-      else if ((row[1] || {}).bad || (row[1] || {}).warn) say(where, 'avoid', who + '\'s ' + grp + ' row is coloured now: the colour is judged on the older count (the ticks that did damage; for an axe, the gaps between ticks), as the top raids\' line was measured'); }
+      else { const col = (row[1] || {}).bad ? 'red' : (row[1] || {}).warn ? 'amber' : '', want = (ROW_COL[rc0 + ':' + rf + ':' + who] || ''); if (col !== want) say(where, 'avoid', who + '\'s ' + grp + ' row is ' + (col || 'not coloured') + ', it should be ' + (want || 'not coloured') + ' (the colour is judged on the count the row shows, against the top raids\' line measured the same way, item (c) of Nov 13)'); } }
     for (const [vc, vfF, who, at, re, was] of VFS) { if (vc !== code || vfF !== fight) continue; const sec = ((r.module && r.module.sections) || []).find((x) => x.id === 'vf'), row = sec && (sec.rows || []).find((x) => nm((x[1] || {}).p) === who && Math.abs(((x[0] || {}).t || 0) - at) <= 2);
       if (!row || !re.test(String((row[0] || {}).say || ''))) say(where, 'venomfang', was + '. Now: ' + (row ? '"' + ((row[0] || {}).say || 'no slip sentence') + '"' : 'no such Venomfang')); }
     for (const [mc, mf, who, what, lo, hi, was] of METERS) { if (mc !== code || mf !== fight) continue; const p = [...r.players.values()].find((x) => nm(x.name) === who), v = p ? (what === 'damage' ? p.damage : p.healing) : null;
