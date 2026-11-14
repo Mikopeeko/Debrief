@@ -39,4 +39,8 @@ module.exports = function lookReview(H, say) {
   // the default look one step darker behind the panels ("A step darker"); the themes keep their own
   if (!/html:not\(\[data-theme\]\) body\.refine \{\s*--bg: #0a0b0d !important/.test(SH)) bad('the default look\'s page is no longer the darker #0a0b0d Flex picked');
   if (!/html\[data-theme="aurora"\] body\.refine\{--bg:#060912/.test(SH)) bad('a theme (Aurora) lost its own page colour');
+  // (fix 3, Flex Nov 13: "Yes, fix 3": on a first visit, while the team's nights are still coming in (its first import, no g.last yet), Home showed
+  // "Not pulled yet" on killed bosses and a guessed raid day for its first seconds; the boss row and the next raid shimmer until the import is in)
+  const hd = (() => { try { return H.grab('hdDash'); } catch (e) { return ''; } })();
+  if (!/const ld0 = S\.progBusy === g\.gid && !g\.last;/.test(hd) || !/\(ld0 \? shim\('4\.5em'\) : k \? 'Killed'/.test(hd) || !/const hnx = ld0 \?/.test(hd)) bad('fix 3: Home\'s first visit shows "Not pulled yet" on killed bosses or a guessed raid day again while the nights come in');
 };
