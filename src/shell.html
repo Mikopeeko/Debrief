@@ -16146,7 +16146,7 @@ function scan() { r423soon(); try { if (window.__ahDedupe) [].forEach.call(docum
     heads.map(function (x) { var cs = getComputedStyle(x[0]); return [x[1], parseFloat(cs.fontSize), cs.fontWeight]; }).forEach(function (x) { var k = x[0], px = x[1], np = snap(px), w0 = x[2], nw = wt(w0), d = ''; if (Math.abs(np - px) > 0.05) d += 'font-size:' + np + 'px !important;'; if (String(nw) !== String(w0)) d += 'font-weight:' + nw + ' !important;'; if (!d) return;
       try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k + ' {' + d + '}', W.sheet.cssRules.length); } catch (er) { /* (a selector the browser won't take: left as it is) */ } });
     rest.map(function (x) { var cs2 = getComputedStyle(x[0]); return [x[0], x[1], parseFloat(cs2.fontSize), cs2.fontWeight]; }).forEach(function (x) { var e = x[0], k = x[1], cp2 = x[2], cw = x[3], nw2 = wt(cw), np2 = snap(cp2); if (String(nw2) === String(cw) && Math.abs(np2 - cp2) <= 0.05) return; /* (same kind, another weight here: a rule for this one's own row) */
-      var pe2 = e.parentElement, pk = pe2 ? [].slice.call(pe2.classList).map(function (y) { return '.' + CSS.escape(y); }).join('') : ''; var k2 = (pk ? pk + ' > ' : '') + k.split(' > ').pop() + '|w' + cw + '|s' + cp2; if (W.keys[k2]) return; W.keys[k2] = 1;
+      var pe2 = e.parentElement, pk = pe2 ? [].slice.call(pe2.classList).map(function (y) { return '.' + CSS.escape(y); }).join('') : ''; if (!pk) return; /* (Nov 14: a parent with no class gave a rule with no container, "b:not([class]) { font-size: 22px }", for every plain <b> on the page; round 404's rule, kept here too) */ var k2 = pk + ' > ' + k.split(' > ').pop() + '|w' + cw + '|s' + cp2; if (W.keys[k2]) return; W.keys[k2] = 1;
       try { W.sheet.insertRule('html body :is(#view, #main, #bossHead):is(#view, #main, #bossHead):is(#view, #main, #bossHead) ' + k2.split('|')[0] + ' {' + (String(nw2) !== String(cw) ? 'font-weight:' + nw2 + ' !important;' : '') + (Math.abs(np2 - cp2) > 0.05 ? 'font-size:' + np2 + 'px !important;' : '') + '}', W.sheet.cssRules.length); } catch (er) { /* (left) */ } }); })(); /* round 358 type fixes */ [].forEach.call(document.querySelectorAll('#view .dbt-why .r357-facts'), function (p) { if (p.style.getPropertyValue('font-size') !== '12.5px') p.style.setProperty('font-size', '12.5px', 'important'); }); [].forEach.call(document.querySelectorAll('#view .dbt-why .dbt-addr'), function (x) { var lv = x.querySelector('.dbt-lv'), sp = x.querySelector(':scope > span:not(.dbt-ic)'); if (lv && !lv.classList.contains('r357-cc') && sp && /to spare/i.test(sp.textContent)) { lv.className = 'dbt-lv r357-cc'; lv.textContent = 'Close call'; } }); /* round 357 why we wiped */ [].forEach.call(document.querySelectorAll('#view .dbt-why:not([data-r357])'), function (w) { var h2 = w.querySelector('h2'); if (!h2 || !h2.querySelector('.r208-m')) return; w.setAttribute('data-r357', '1');
     var T = function (e) { return (e ? e.textContent : '').replace(/\s+/g, ' ').trim(); }, lvOf = function (r) { var m = ((r.querySelector('.dbt-lv') || {}).className || '').match(/\bl(\d)\b/); return m ? +m[1] : 0; }, sOf = function (r) { return r.querySelector(':scope > span:not(.dbt-cht):not(.dbt-ic)'); };
     var N = []; [].forEach.call(document.querySelectorAll('#view [data-phjump][title]'), function (b) { var n = String(b.getAttribute('title') || '').split(':')[0].replace(/\s*\(.*$/, ''); if (n && n.length > 2 && N.indexOf(n) < 0) N.push(n); }); N.sort(function (x, y) { return y.length - x.length; });
@@ -19669,7 +19669,7 @@ html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):
 html:not(.mpcard)[data-mpv="grp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4),
 html:not(.mpcard)[data-mpv="hit"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCH),
 html:not(.mpcard)[data-mpv="dun"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC5),
-html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4):not(#mpcRot) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptC1 { padding-bottom: 0 !important; }
 html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs { width: auto !important; margin: 14px -20px 0 !important; padding: 0 12px !important; border-top: 1px solid var(--line) !important; border-bottom: 0 !important; gap: 2px !important; flex-wrap: wrap !important; }
 html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs > button { margin-bottom: 0 !important; padding: 11px 14px 10px !important; font: 700 16px 'Barlow Condensed', sans-serif !important; letter-spacing: .02em !important; }
@@ -19872,6 +19872,24 @@ html:not(.mpcard) body #view#view#view #mptCH .bh-pi .bh-di { vertical-align: 0 
 html:not(.mpcard) body #view#view#view #mptCH .bh-px { margin: 0 0 0 4px !important; font: 600 13px/1 var(--body) !important; color: var(--muted) !important; }
 /* (the folds' own column names were 11px: nothing a player must read is under 12px) */
 html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mkh > span, html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mlh > span, html:not(.mpcard) body #view#view#view .mpt-mcard .mpt-mlh > small { font-size: 12px !important; }
+}
+/* (Mythic+, Nov 14, round 2, Flex with pictures of Play by play: "if a defensive was used during an aoe, or while they had a debuff, or were in danger
+   etc etc it should be noted", and of the Players and Rotation tabs: "I think these two sections could be merged together probably". What a defensive
+   was pressed into sits on its own quiet line under it; Players shows the group table and, under it, the picked player's rotation) */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpx-why { display: block !important; margin-top: 1px !important; font: 500 12.5px/1.4 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .mpx-why b { color: var(--mpt-soft, #d6d1c6) !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .mpx-why b.mpt-ab { color: #c39bff !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 .mpx-why b.mpx-fb { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 small.mpx-rdy { color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-def .x > b { color: var(--text) !important; }
+/* Players and Rotation, one tab */
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > #mptC4 { display: block !important; }
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mpcRot::before { content: 'Rotation'; display: block; margin: 10px 0 0; font: 800 19px 'Barlow Condensed', sans-serif; color: var(--text); }
+html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot) { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot):hover { background: rgba(255,255,255,.045) !important; }
+html:not(.mpcard) body #view#view#view #mptC4 .gbx-r.mpx-ron { background: rgba(230,180,80,.09) !important; box-shadow: inset 2px 0 0 var(--gold) !important; }
+html:not(.mpcard) body #view#view#view #mptC4 .mpt-gft::after { content: 'Click a player for their rotation, just below.'; display: block; margin-top: 6px; font: 500 12.5px var(--body); color: var(--faint); }
 }
 </style>
 </body>
