@@ -51,4 +51,6 @@ module.exports = function lookReview(H, say) {
   if (!/\.pf-inl\.spc-v\.rcz-on > \.ds-rtop, [^{]*\.rtl-vt \{ display: none !important/.test(css) || !/\.rcz-who\.you \{ color: var\(--warn/.test(css)) bad('Rotation: the coach page\'s styles are gone, so the old top box and checklist show again');
   if (!/function fillJ\(pg, P, box\)/.test(UI) || !/data-rczf', 'gx'/.test(UI)) bad('Rotation: a part\'s How it\'s judged (today\'s full detail of each check) or the Gear and extras fold is gone, so a fact was dropped');
   if (/class="rda-strip"/.test(UI)) bad('Rotation: option A (the strip of cooldown lanes) is back. Flex, Nov 14: "not gonna lie i kinda hate this layout"');
+  // (Main, Nov 14: the coach page's labels were 11px; nothing a raider must read is under 12px (Design system, section 2: Label 12px / 700 UPPERCASE))
+  { const small = (css.match(/[^{}]*\.rcz[^{}]*\{[^{}]*\}/g) || []).filter((r) => (r.match(/(?:font-size:\s*|font:[^;]*?\s)(\d+(?:\.\d+)?)px/g) || []).some((x) => parseFloat(x.match(/(\d+(?:\.\d+)?)px/)[1]) < 12)); if (small.length) bad('Rotation: text under 12px on the coach page again: ' + small[0].trim().slice(0, 90)); }
 };
