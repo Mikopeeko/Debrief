@@ -236,6 +236,8 @@ module.exports = {
     proof: ['Volatile Purge burst on Jeopardized, Lubelia, Kungmilkies and Unbanvkapls at 7:00.7', 'Caustic Waves hit 7 times from 7:01.6 to 7:03; Ula\'tek began her own Caustic Waves cast at 7:02.1', 'Notascalie, Killzehunter, Kyonis, Meowkick and Sinvoker died to Caustic Waves between 7:03.4 and 7:09.9'] } },
   // ---- deaths set by hand ("<player>@<second>"): only where a ruling can't be read from the pull's own facts ----
   deaths: {
+    // Main's ruling (Nov 13): the kill line stands. Oct 22 pull 35 is called at 2:52 with three dead, more than any kill survived at that point, so Larryg's second death at 2:53.6 is after the wipe.
+    bcA9kw3mxHKzr4fR: { 39: { 'Larryg@174': { when: 'after', fact: 'after the wipe call at 2:52 (three dead; no kill survived more than two at that point: Main\'s ruling, Nov 13)' } } },
     // Ula'tek after phase 1 (Nov 13, the Ula'tek chat). DP94CYMqw8LWHk3p fight 11: the first bite's Purges burst at 6:57.7 with Pinx, who held none, 1.9 s of wave travel away. One wave
     // hit him at 6:59.6 and its venom ticked him down to dead at 7:08.6; no other wave touched him (Ula'tek began her own at 7:02.1 and none reached him). The key's rule counts
     // the ticks in his last 4 s as hits of his own.
