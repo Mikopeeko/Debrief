@@ -33,6 +33,9 @@ const NAMED = [
     'Nov 12 pull 3, 7:58: the purple orb dropped as Komo died and Flëxørçïst\'s green ran into it. It read "No one was carrying it: it was a dropped orb on the ground"'],
   /* (Nov 13, Main, from the answer key: this pull's cause was already right; it is here for the killing hit of one of its deaths, below) */
   ['agt6jMTyZBYvVzAP', 9, 'guil', /^The Guillotine soak was short, so Execution hit the raid\.$/, [], 'Nov 11 pull 8: a Guillotine soak with 3 of 5, Grim Execution killed the raid'],
+  /* (Nov 13: Schooty's purple orb touched other orbs at 1:23, Venom Rupture ticked on 17, and Schooty and 12 more went off the edge before it killed them. Whose orb burst is found from
+     the first Venom Rupture death, read by its last tick: when the no-killing-hit label was fed to that reasoning, the pull read "a dropped orb on the ground" and its call moved to 1:27) */
+  ['agt6jMTyZBYvVzAP', 3, 'orbs', /^Schooty's purple orb touched other orbs and set off Venom Rupture\.$/, [], 'Nov 11 pull 2: Schooty\'s purple orb touched other orbs at 1:23. With the no-killing-hit label in the reasoning it read "A purple orb\'s ring touched other orbs ... No one was carrying it"'],
 ];
 /* The hit that killed a player, as the death list shows it (d.kill): [code, fight, player, second, the hit, what it read before]. Warcraft Logs' death event names it. */
 const KILLS = [
@@ -43,6 +46,11 @@ const KILLS = [
   ['agt6jMTyZBYvVzAP', 17, 'Schooty', 299.0, 'Fell off the edge', 'Nov 11 pull 16, 4:59: Schooty walked off the edge in control and no hit killed him. It read Dreadful Presence, the last thing that ticked on him'],
   ['agt6jMTyZBYvVzAP', 6, 'Komo', 234.0, 'Dreadmarch', 'Nov 11 pull 5, 3:54: Komo was mind controlled off the edge. It read Fel Armor, his own spell ticking for 0'],
   ['agt6jMTyZBYvVzAP', 3, 'Schooty', 83.0, 'Fell off the edge', 'Nov 11 pull 2, 1:23: Schooty went off the edge, 77 yards from the middle, with health left and no killing hit. It read Venom Rupture, his last tick'],
+];
+/* A slow Venomfang's own sentence: [code, fight, player, second, what it must read (a RegExp), what it read before]. */
+const VFS = [
+  /* (Nov 13, Main, from the answer key: the poison dispellers are everyone whose class and spec can remove a poison, not only who removed one in that pull) */
+  ['agt6jMTyZBYvVzAP', 9, 'Hobbz', 30, /^Venomfang stayed on for 4\.6 s with 6 dispels ready and nobody on it\.$/, 'Nov 11 pull 8, 0:30: Venomfang sat on Hobbz for 4.6 s with six dispels ready (Tyralien, Kargaryen, Flëxørçïst, Jangokin, Urgdragon and Hobbz himself). It read "Tyralien had the only dispel ready"'],
 ];
 /* A row of the Avoidable damage table: [code, fight, group, player, what the row must read, what it read before]. */
 const ROWS = [
@@ -73,6 +81,8 @@ module.exports = function (o) {
     for (const [rc0, rf, grp, who, txt, was] of ROWS) { if (rc0 !== code || rf !== fight) continue; const gg = ((((r.module && r.module.sections) || []).find((x) => x.id === 'avoid') || {}).groups || []).find((x) => x.title === grp), row = gg && (gg.rows || []).find((x) => nm((x[0] || {}).p) === who);
       if (!row || (row[1] || {}).txt !== txt) say(where, 'avoid', was + '. Now: ' + (row ? '"' + (row[1] || {}).txt + '"' : 'no row'));
       else if ((row[1] || {}).bad || (row[1] || {}).warn) say(where, 'avoid', who + '\'s ' + grp + ' row is coloured now: the colour is judged on the older count (the ticks that did damage; for an axe, the gaps between ticks), as the top raids\' line was measured'); }
+    for (const [vc, vfF, who, at, re, was] of VFS) { if (vc !== code || vfF !== fight) continue; const sec = ((r.module && r.module.sections) || []).find((x) => x.id === 'vf'), row = sec && (sec.rows || []).find((x) => nm((x[1] || {}).p) === who && Math.abs(((x[0] || {}).t || 0) - at) <= 2);
+      if (!row || !re.test(String((row[0] || {}).say || ''))) say(where, 'venomfang', was + '. Now: ' + (row ? '"' + ((row[0] || {}).say || 'no slip sentence') + '"' : 'no such Venomfang')); }
     for (const [mc, mf, who, what, lo, hi, was] of METERS) { if (mc !== code || mf !== fight) continue; const p = [...r.players.values()].find((x) => nm(x.name) === who), v = p ? (what === 'damage' ? p.damage : p.healing) : null;
       if (v == null || v < lo || v > hi) say(where, 'meters', was + '. Now: ' + (v == null ? 'no such player' : Math.round(v).toLocaleString('en-US'))); }
     for (const [kc, kf, who, at, hit, was] of KILLS) { if (kc !== code || kf !== fight) continue; const d = (r.deaths || []).find((x) => nm(x.player) === who && Math.abs(x.t - at) <= 1.5);

@@ -904,6 +904,9 @@ function setsOf(list, gap) {
 /* (Nov 13, Main, from the answer key: "never name a dead or mind-controlled player". Nov 11 pull 1 read "Tyralien didn't taunt before Blighted Sever" 75 s after he died: a death only counted
    for 60 s. A tank is out while dead (their last death has no battle res after it), mind controlled or feared; tankOut says which, for the taker's row) */
 const TANK_CC = [['Dreadmarch', 'mind controlled'], ['Wail of Terror', 'feared']];
+/* (Nov 13: the specs that can remove a poison from another player: Paladin (Cleanse with its talent, Cleanse Toxins), Druid (Remove Corruption, Nature's Cure), Monk (Detox),
+   Evoker (Expunge, Naturalize). On Nov 11 and 12 every Venomfang was removed by one of these: Holy and Protection Paladin, Balance Druid, Preservation and Augmentation Evoker) */
+const VF_SPECS = new Set([65, 66, 70, 102, 103, 104, 105, 268, 269, 270, 1467, 1468, 1473]);
 const tankOut = (r, p, t) => { const d = (r.deaths || []).filter((x) => x.guid === p.guid && x.t <= t + 0.2).sort((a, b) => a.t - b.t).pop(); if (d && !(r.rezzes || []).some((z) => z.guid === p.guid && z.t > d.t && z.t <= t)) return 'dead';
   for (const [n, w] of TANK_CC) { const b = p.debuffs && p.debuffs.get && p.debuffs.get(n); if (b && b.sp && b.sp.some(([a, z]) => a <= t && (z == null || z >= t - 1))) return w; } return ''; };
 const otherTank = (r, g, t, debOn) => { for (const p of r.players.values()) { if (p.role !== 'tank' || p.guid === g) continue; if (tankOut(r, p, t)) continue; if (debOn && debOn(p.guid)) continue; return p.guid; } return null; };
@@ -4065,24 +4068,31 @@ function buildCoiledAltar(ev, r, h) {
   const vfSlow0 = (x) => x.took == null || x.took > 4;
   /* (why and next time for one Venomfang (Oct 27): the poison dispellers are the players who dispelled it this pull; one is free when their last dispel
      was 8 s or more before it landed) */
-  const vfDis = [...new Set(ev.filter((x) => x.k === 'dispel' && L(x.spell) === 'venomfang' && x.src).map((x) => x.src))], allDisp = ev.filter((x) => x.k === 'dispel' && x.src); /* (src is the player's name) */
+  /* (Nov 13, Main, from the answer key: "X had the only dispel ready" knew only the players who had removed a Venomfang in that same pull, so a dispeller who had not got to one
+     yet was not counted, and the one who had was blamed alone (31 answer-key lines on Nov 11 and 12). The poison dispellers are everyone whose class and spec can remove a poison
+     (VF_SPECS: the spec ids of Paladin, Druid, Monk and Evoker; a healer's poison dispel is a talent every raid healer takes, and the log's talents don't reach here), plus anyone
+     who removed a Venomfang this pull whatever their spec. One is free when alive, not mind controlled or feared, and 8 s past their last dispel. The job itself (targets) stays
+     with the players who dispelled one this pull) */
+  const vfDid = [...new Set(ev.filter((x) => x.k === 'dispel' && L(x.spell) === 'venomfang' && x.src).map((x) => x.src))], allDisp = ev.filter((x) => x.k === 'dispel' && x.src); /* (src is the player's name) */
+  const vfKit = [...r.players.values()].filter((p) => VF_SPECS.has(+p.specId) && p.name), vfDis = [...new Set(vfDid.concat(vfKit.map((p) => p.name)))], vfP = new Map([...r.players.values()].map((p) => [p.name, p]));
+  const vfOut = (g, t) => { const p = vfP.get(g); return !!(p && tankOut(r, p, t)); }; /* (dead and not brought back, mind controlled or feared when it landed) */
   const nm0 = (n) => String(n || '').split('-')[0];
   /* (the moment: dispellers free (their dispel back), how many landed together, and a raid-wide hit the healers were on (Oct 28)) */
   const VF_BUSY = ['toxic deluge', 'grim guillotine', 'guillotine', 'defilement of the coiled altar', 'dreadmarch', 'soulbinding'], vfBusyAt = (t) => { for (const n of VF_BUSY) { const c = casts(n).find((x) => x >= t - 2 && x <= t + 4); if (c != null) return S(n)[1]; } return null; };
-  for (const x of vfRows) { x.free = vfDis.filter((g) => g !== x.by && !allDisp.some((d) => d.src === g && d.t <= x.t + 0.5 && d.t > x.t - 8)).map(nm0); x.busy = vfBusyAt(x.t); x.soft = vfSlow0(x) && vfDis.length > 0 && (!x.free.length || !!x.busy); x.slow = vfSlow0(x) && !x.soft; }
+  for (const x of vfRows) { x.free = vfDis.filter((g) => g !== x.by && !vfOut(g, x.t) && !allDisp.some((d) => d.src === g && d.t <= x.t + 0.5 && d.t > x.t - 8)).map(nm0); x.busy = vfBusyAt(x.t); x.soft = vfSlow0(x) && vfDis.length > 0 && (!x.free.length || !!x.busy); x.slow = vfSlow0(x) && !x.soft; }
   const slow = vfRows.filter((x) => x.slow && !x.by);
   const vfWhy = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), atOnce = vfRows.filter((y) => y !== x && Math.abs(y.t - x.t) < 1.5).length;
     const free = x.free, took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
     if (x.took != null && x.took <= 4) return {};
-    if (!vfDis.length) return { why: 'Nobody dispelled Venomfang this pull, so it stayed on for ' + took + '.', next: 'Give one poison dispeller (a Druid, Monk, Holy or Protection Paladin, or Evoker) the Venomfang job.' };
-    const why = (x.by ? nm0(x.by) + ' took ' + took + ' to dispel it.' : 'Nobody dispelled it, so it stayed on for ' + took + '.') + (atOnce ? ' ' + (atOnce + 1) + ' landed at once.' : '') + (free.length ? ' ' + lst(free.slice(0, 3)) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : ' Every dispeller had just used theirs') + (x.busy ? ', and it landed during ' + x.busy + ' with the healers on the raid' : '') + (x.soft ? ', so it isn\'t counted as a slip' : '') + '.'; /* (Nov 9 wording pass: one fact a sentence) */
+    if (!vfDid.length) return { why: 'Nobody dispelled Venomfang this pull, so it stayed on for ' + took + '.', next: 'Give one poison dispeller (a Druid, Monk, Holy or Protection Paladin, or Evoker) the Venomfang job.' };
+    const why = (x.by ? nm0(x.by) + ' took ' + took + ' to dispel it.' : 'Nobody dispelled it, so it stayed on for ' + took + '.') + (atOnce ? ' ' + (atOnce + 1) + ' landed at once.' : '') + (free.length ? ' ' + lst(free.length > 3 ? free.slice(0, 3).concat([(free.length - 3) + ' more']) /* (Nov 13: six ready reads "A, B, C and 3 more", not as if it were three) */ : free) + (free.length === 1 ? ' had a dispel ready' : ' had dispels ready') : ' Every dispeller had just used theirs') + (x.busy ? ', and it landed during ' + x.busy + ' with the healers on the raid' : '') + (x.soft ? ', so it isn\'t counted as a slip' : '') + '.'; /* (Nov 9 wording pass: one fact a sentence) */
     return { why, next: free.length ? free[0] + ' takes the next Venomfang as soon as it lands.' : atOnce ? 'Split the dispels: one dispeller per Venomfang when several land together.' : 'Keep one dispel free for Venomfang (it comes every 35 s or so).' }; };
   /* (Nov 12, Main's audit: a slow dispel was filed under the player who had the poison (Komo, Zaffia, Schooty can't dispel it). The slip's sentence
      names the dispellers who had one free, and nobody when none was) */
   const vfSay = (x) => { const lst = (n) => (n.length <= 1 ? n.join('') : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]), took = x.took != null && x.took < 13.5 ? x.took.toFixed(1) + ' s' : 'the full 14 s';
     /* (Nov 12, Flex: "Its counting other peoples mistakes in my report card": with several dispels ready and nobody assigned, a slow one is the raid's, not each healer's) */
     return x.free.length === 1 ? x.free[0] + ' had the only dispel ready, and Venomfang stayed on for ' + took + '.' : x.free.length > 1 ? 'Venomfang stayed on for ' + took + ' with ' + x.free.length + ' dispels ready and nobody on it.' : 'Venomfang stayed on for ' + took + ', with no dispel free.'; };
-  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', targets: vfRows.flatMap((x) => vfDis.map((d) => [nm0(d), x.t])) /* (who it's a job for: the poison dispellers) */, place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
+  if (vfRows.length) sections.push({ id: 'vf', title: 'Venomfang (Dispel fast)', targets: vfRows.flatMap((x) => vfDid.map((d) => [nm0(d), x.t])) /* (who it's a job for: the players who dispelled one this pull, as before the kit list) */, place: 'Venomfang (poison) dispels', spell: S('venomfang'), // (no panel on a pull without Venomfang)
     verdict: vfRows.some((x) => x.slow) ? 'warn' : 'good', // (Oct 21, your call: dispel it quickly, but it isn't deadly: a slow one is a slip, never a fail, never red; Nov 5: one listed slip is amber, never green)
     summary: pl(vfRows.length, 'Venomfang debuff') + ', and ' + vfRows.filter((x) => x.by).length + ' were dispelled. The average time on a player was ' +
       (vfRows.filter((x) => x.took != null).length ? (vfRows.filter((x) => x.took != null).reduce((s, x) => s + x.took, 0) / vfRows.filter((x) => x.took != null).length).toFixed(1) + ' s' : 'n/a') + '.',

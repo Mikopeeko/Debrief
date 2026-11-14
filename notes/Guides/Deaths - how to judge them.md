@@ -469,3 +469,22 @@ Measured, old code next to new, on the 3,962 Avoidable damage rows and lines of 
 Open until the top raids' lines are measured again the new way (the last item of the Nov 13 queue): judging the colour on landings.
 Checks: tests/wipe-causes.js names Vandagos's row ("13 hits", not coloured) with --all; the answer key compares every player's landings with the row on every build (its
 Vandagos line is deleted); the source's flag, the landing count, the shielded landing and the two judged counts are pinned.
+
+## Venomfang: who had a dispel ready (Nov 13, from the answer key)
+A slow Venomfang's sentence ("X had the only dispel ready") knew only the players who had removed a Venomfang in that same pull. A dispeller who had not got to one yet was not
+counted, so the one who had was blamed alone: Tyralien, Nov 11 pull 8, 0:30, "had the only dispel ready" with five more ready. 31 answer-key lines on Nov 11 and 12.
+Main: the list comes from each player's kit, with anyone who removed one as the fallback; several free is the raid's slip.
+- The poison dispellers of a pull: every player whose class and spec can remove a poison from someone else (`VF_SPECS`, by spec id: Paladin, Druid, Monk, Evoker), plus anyone who
+  removed a Venomfang this pull whatever their spec. On Nov 11 and 12 every Venomfang was removed by one of these: Holy Paladin (Cleanse), Protection Paladin (Cleanse Toxins),
+  Balance Druid (Remove Corruption), Preservation Evoker (Naturalize), Augmentation Evoker (Expunge).
+- One is free when alive (not dead without a rez), not mind controlled or feared (`tankOut`), and 8 s past their last dispel of anything.
+- The Venomfang job (the section's `targets`) stays with the players who removed one this pull: a Retribution Paladin who never dispels gets no job from this.
+- Not known here: talents (Warcraft Logs' pull-start talents don't reach the engine), so a healer's poison dispel is taken as picked; and the night (the engine reads one pull).
+  A Shaman's Poison Cleansing Totem and an Evoker's Cauterizing Flame (60 s) are left out.
+The answer key's own rule moved with it (tests/answer-key/make-key.js: the same spec list plus anyone who removed one that night); its two Coiled Altar files were built again and
+only `free` and `poisonDispellers` changed (Hobbz added on Nov 11, Jangokin and Phartsy on Nov 12). All 31 lines are right now and deleted; 5 known lines are left.
+Measured, old code next to new, on the 499 Venomfang rows of the saved Coiled Altar pulls: 42 slip sentences changed. 14 went from one named player to the raid ("with 6 dispels
+ready and nobody on it"), 27 say a bigger number, and one slip went away (Oct 22 pull 26, 1:55: the two "ready" dispellers were dead or feared). No result cell changed colour
+except that one, no job list and no mistake line changed.
+Checks: the answer key compares the free dispellers of every Venomfang on every build; tests/wipe-causes.js names Hobbz's Venomfang, Nov 11 pull 8, 0:30 (with --all); the spec
+list, the kit union, the alive-and-in-control test and the job list are pinned.
