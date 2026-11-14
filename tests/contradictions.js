@@ -300,7 +300,8 @@ if (UI.includes("w[1].split(', ').forEach((v) => add('Carried the orb that burst
     [ENG, "const NOT_HEALING = new Set([31850, 115069]);", 'Cheat Death and Purgatory are left out of healing done again (Zaffia, Nov 11 pull 1: 1,684,159 short)'],
     [UI, "(r && r.dmgAbsIn ? 0 : b[i] || 0)", 'the Performance damage windows add the enemy shields\' part on top of damage done again: it is counted twice'],
     [ENG, "r.orbDrop = (r.orbWaves || []).map((tc) => { try { if (carriersAt(tc).length) return null;", 'a purple orb that dropped as its carrier died is "no one\'s" again (Nov 12 pull 3, 7:58: Komo died carrying it and Flex\'s green ran into it)'],
-    [UI, "Measured again on Nov 13 with damage done counting what enemy shields absorbed", 'the estimated parse\'s phase table is the one measured before damage counted shields again (wipe estimates read 20 to 40 points off)'],
+    [UI, "ruling B (Main, Nov 13): per boss and difficulty, each spec's own share of its whole-kill output in each phase", 'the estimated parse\'s phase table is the old one again (one factor per phase for a whole role: Schooty, Nov 11, read 79 against Warcraft Logs\' 36)'],
+    [UI, "const v = b.none || !b.pn ? null : b.pr / b.pn /* (Nov 13, ruling B: the phases' own ranks, by time alive) */", 'the estimated parse combines the phases\' amounts again instead of ranking each phase on its own table (ruling B)'],
     [ENG, "if (tankOut(r, p, t)) continue;", 'a dead, feared or mind controlled tank can be named for a missed taunt again (Nov 11 pull 1: Tyralien, 75 s after he died)'],
     [ENG, "if (outS) mistakes[mistakes.length - 1].others = outS;", 'a tank left alone by a dead tank is blamed for the third stack again (Nov 11 pull 1: Vandagos at 8:23 and 8:54)'],
     [ENG, "if (kw.length >= 4 && wsum(kw) * 2 >= wsum(col)) P = { t: cut, why: 'the wipe call', wave: kw, wm: true };", 'a wipe called inside an unkicked Wail of Terror\'s fear no longer goes to the kick (Nov 11 pull 3 read "Phase 2 push")'],
@@ -540,6 +541,9 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
+/* (Nov 13, ruling B: the estimated parse on the Nov 11 Coiled Altar night against Warcraft Logs' own Parse %, every raider within 15 and nobody more than 15 above;
+   Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
+try { require('./parse-estimate.js')(H, say, true); } catch (e) { say('the estimated parse', 'crash', 'tests/parse-estimate.js crashed: ' + e.message); }
 try { require('./look-review.js')(H, say); } catch (e) { say('look review', 'crash', 'the look review check crashed: ' + e.message); } /* (Nov 13, Flex: "no its fine just make the changes": the look review's fixes stay in) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */
 /* (Nov 13, Main: three Coiled Altar wipes named by hand from the raw log (Nov 11 pulls 1, 3 and 5), read with the page's real wipe call. It replaces the Nov 12 guard that called pull 5 with a

@@ -77,3 +77,27 @@ Hex Lord Malacrass's shield), but it lands in phase 2 and 3, and those raiders g
 Beast Mastery factor for phase 2 +5%); and the estimate counts time alive while Warcraft Logs counts the whole pull. Open with Main: whether that is acceptable.
 Checks: tests/parse-kill.js (the kill's damage a second against Warcraft Logs', and the estimate against the real parse; with --all); tests/parse-estimate.js's saved pieces
 (tests/fixtures/agt6_ca_estpull.json) were rebuilt with the new count: run by hand it now names those five raiders as unexplained gaps.
+
+## Nov 13: ruling B, one table per spec and phase
+Main: "a wipe estimate 20 to 40 points too high (Schooty 79 against Warcraft Logs' 37, Volkovod 86 against 53) is the kind of number raiders notice and stop trusting ... rank
+each phase against top players' own numbers for that phase, one table per spec and phase, instead of one factor per phase. Keep time-alive weighting."
+Why the five read high: their specs had fewer than 8 samples in the 30 top kills read, so they used the average damage dealer's phase shape. Beast Mastery Hunters do far more
+of their damage in phase 2 than the average (0.74 of their whole-kill rate, against 0.64) and less in the intermission (2.6 against 3.2); Frost Mages likewise.
+- More kills: phasefac.js read every kill the library has for The Coiled Altar Mythic (129) and Ula'tek Mythic (116), not the top 30 (`KB_MAX=200`). Beast Mastery Hunter went
+  from 3 samples to 31, Frost Mage from 1 to 17.
+- The tables: tools/parses/phasetab.js builds PHASE_FAC from every kill read, each spec's own median pulled toward its role by 2 samples (K), for every spec seen (no 8-sample
+  floor). Times the kill rankings (PARSE_TAB), each factor is one table per spec and phase.
+- The page (estCombine): each phase is ranked on its own table (`parseAt(T, amount / seconds / factor)`) and the ranks are combined by time alive. Before, the amounts were
+  combined first and ranked once.
+Measured against Warcraft Logs' own Parse %, read from its report pages on Nov 13 (saved in tools/parses/wcl_wipe_pct/):
+- Nov 11 The Coiled Altar, 19 wipes: 6.4 points off on average (12.4 before), 13 of 16 within 10, the most above +15 (Schooty; it was +43). Before and after: Schooty 79 to 51
+  (Warcraft Logs 36), Volkovod 86 to 60 (53), Dragooned 80 to 64 (54), Komo 83 to 73 (59), Fourinches 72 to 64 (59). Healers within 5 (Flëxørçïst 84, Warcraft Logs 85).
+  What's left is mostly time alive: Warcraft Logs counts the whole pull, dead time in.
+- The Nov 12 kill: unchanged, every raider within 1 of the real parse (a kill counts whole).
+- Nov 12 Ula'tek, 13 wipes, all ended in phase 1: about 19 off whatever the method (20.5 before). Warcraft Logs' wipe Parse % there doesn't follow its own kill rankings
+  (Fourinches' 196K a second reads 54, the Frost Death Knight kill median is 355K; Vandagos' 105K reads 59, under the 10th percentile of Protection Warrior kills), and its
+  Ula'tek damage table doesn't match the raw log per player (melee 15 to 27% under the log's plain damage, casters up to 14% over everything they hit; on Nov 11 we match it
+  within 1% for everyone). Reported to Main; printed by the test, not checked.
+Checks: tests/parse-estimate.js (contradictions.js runs it on every build): Nov 11, every raider within 15, nobody more than 15 above, the average under 8, Schooty, Volkovod,
+Dragooned, Komo and Fourinches named; on the old code it fails with all five. tests/parse-kill.js (with --all): the kill within 5. The new table's line and the per-phase rank
+are pinned. To measure again: `KB_MAX=200 node phasefac.js "<boss>|Mythic"`, then `node phasetab.js 2`, paste phasetab.txt over the PHASE_FAC line.
