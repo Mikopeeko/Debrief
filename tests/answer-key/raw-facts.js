@@ -49,7 +49,7 @@ function rawFacts(rep, P) {
   const get = (id) => pl[nm(id)];
   // ---- flask, food, runes at the pull's start: the auras in each player's combatant record, by name ----
   const prep = {}; for (const id of ids) { const au = (info.get(id).auras || []).filter((a) => a.ability !== 97821 /* (Void-Touched, the mark Raise Ally leaves: not the rune's buff of the same name, 1264426) */).map((a) => a.name || an(a.ability));
-    prep[nm(id)] = { flask: au.find((n) => /^Flask of /.test(n) || /Phial/.test(n)) || null, food: au.find((n) => /Well Fed/.test(n)) || null, rune: au.find((n) => /^(Ethereal Augmentation|Void-Touched)$/.test(n)) || null, vantus: au.filter((n) => /^Vantus Rune/.test(n)).length }; }
+    prep[nm(id)] = { flask: au.find((n) => /^Flask of /.test(n) || /Phial/.test(n)) || null, food: au.find((n) => /Well Fed/.test(n)) || null, rune: au.find((n) => /( Augmentation|^Void-Touched)$/.test(n)) /* (any augment rune's buff: Ethereal, Draconic, Soulgorged ... Augmentation, and the Void-Touched rune's) */ || null, vantus: au.filter((n) => /^Vantus Rune/.test(n)).length }; }
   // ---- one pass: totals, deaths, health samples, casts ----
   const hp = new Map(ids.map((id) => [id, []])), lastHits = new Map(ids.map((id) => [id, []])), deathsRaw = [], rez = [], casts = new Map(ids.map((id) => [id, []]));
   const mxHp = new Map(), fearSp = []; { const open = new Map(); for (const e of ev) { if (e.abilityGameID !== CA.wail) continue; if (e.type === 'applydebuff') open.set(e.targetID, e.timestamp); else if (e.type === 'removedebuff' && open.has(e.targetID)) { fearSp.push([e.targetID, open.get(e.targetID), e.timestamp]); open.delete(e.targetID); } } for (const [id, a] of open) fearSp.push([id, a, P.end]); }
