@@ -8,7 +8,10 @@ const KILLS = [
   { code: 'Gax3AkbyFRXmdrgQ', fight: 9, what: 'Nov 12 The Coiled Altar kill',
     /* name: [Warcraft Logs' damage a second, the real parse, lived the whole kill] */
     dps: { Schooty: [222764, 45, true], Komo: [285126, 65, true], Fourinches: [317588, 90, true], Zaffia: [270052, 63, true], Volkovod: [243231, 73, true], Larryg: [239629, 31, true], Dashtoswirly: [238603, 41, true],
-      Jangokin: [219434, 39, true], Kargaryen: [245385, 27, true], Shockabunga: [232148, 47, true], Boltzzx: [203519, 9, true], Raiyvenz: [221268, 11, false], Dragooned: [241419, 42, false] } },
+      Jangokin: [219434, 39, true], Kargaryen: [245385, 27, true], Shockabunga: [232148, 47, true], Boltzzx: [203519, 9, true], Raiyvenz: [221268, 11, false], Dragooned: [241419, 42, false] },
+    /* (Nov 13, Main, from the answer key: Warcraft Logs' healing a second on the same kill, read from its rankings. Huservoker read 3.3% high (Time Dilation, Temporal Anomaly on pets,
+       heals on others' pets), Optt 0.35%, Urgdragon 2.8%. Flëxørçïst read 3.6% high: Light of the Martyr's soak comes off him, as Warcraft Logs' own table shows ("-7.11m")) */
+    hps: { Huservoker: 488523.72, Optt: 433502.14, Urgdragon: 334569.34, Flëxørçïst: 411717.82 } },
 ];
 module.exports = function (o) {
   const { H, E, W, say, report, findFile, readJ } = o, nm = (p) => String(p || '').split('-')[0]; let X = null;
@@ -21,6 +24,8 @@ module.exports = function (o) {
     for (const [who, [wcl, real, lived]] of Object.entries(k.dps)) { const p = [...r.players.values()].find((x) => nm(x.name) === who); if (!p) { say(where, 'parse', who + ' is not in the kill'); continue; }
       const ours = p.damage / r.duration, off = ours / wcl - 1;
       if (Math.abs(off) > 0.015) say(where, 'parse', who + '\'s damage a second is ' + Math.round(ours).toLocaleString('en-US') + ', Warcraft Logs has ' + wcl.toLocaleString('en-US') + ' (' + (off * 100).toFixed(1) + '%): damage done is counted another way than Warcraft Logs again (shields?)');
-      const e = byN.get(who); if (lived && (!e || e.pct == null || Math.abs(e.pct - real) > 5)) say(where, 'parse', who + '\'s estimated parse on the kill is ' + (e && e.pct != null ? e.pct : 'missing') + ', the real one is ' + real); } }
+      const e = byN.get(who); if (lived && (!e || e.pct == null || Math.abs(e.pct - real) > 5)) say(where, 'parse', who + '\'s estimated parse on the kill is ' + (e && e.pct != null ? e.pct : 'missing') + ', the real one is ' + real); }
+    for (const [who, wcl] of Object.entries(k.hps || {})) { const p = [...r.players.values()].find((x) => nm(x.name) === who); if (!p) { say(where, 'parse', who + ' is not in the kill'); continue; }
+      const ours = p.healing / r.duration, off = ours / wcl - 1; if (Math.abs(off) > 0.005) say(where, 'parse', who + '\'s healing a second is ' + Math.round(ours).toLocaleString('en-US') + ', Warcraft Logs has ' + Math.round(wcl).toLocaleString('en-US') + ' (' + (off * 100).toFixed(1) + '%): healing done is counted another way than Warcraft Logs again (Time Dilation, shields on pets, heals on others\' pets?)'); } }
   return n;
 };

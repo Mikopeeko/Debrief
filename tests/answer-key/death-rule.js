@@ -22,7 +22,7 @@ function deathVerdicts(pull, cause, known) {
     const lost = cause && cause.t != null ? cause.t : null, afterQ = !pull.kill && prior >= q, afterLost = lost != null && d.t > lost + 0.75;
     const v = { when: afterQ || afterLost ? 'after' : 'before', whenWhy: afterQ ? prior + ' had died before them (a quarter of the raid is ' + q + ')' : afterLost ? 'after the pull was lost at ' + T(lost) : prior + ' dead before them', verdict: 'none', proof: null, sure: true };
     if (cause && cause.cat === 'reset') { v.fact = 'a reset pull: nothing in it counts'; out.push(v); continue; }
-    const cc = d.mc ? 'mind controlled' : d.feared ? 'feared' : null, mass = (d.mass || 1) >= 3, kb = d.killedBy;
+    const cc = d.mc ? 'mind controlled' : d.feared ? 'feared' : null, mass = (d.mass || 1) >= 3, kb = d.killedByLog || d.killedBy; /* (the verdict reads the log's own killing hit; the name shown follows the big-hit rule (Nov 13)) */
     // Ula'tek (the Ula'tek chat's rulings, Nov 13). A player's own: Caustic Waves they could dodge (not the waves off a beam taken inside the raid),
     // Fester Burst when the Wretch's bubble could be reached (roots.js: festerNotReachable), Noxious Splash (both carriers), the slam of Mephitic
     // Thrash (its second hit within half a second; the raid-wide hit never counts), and Rattler Slam for a tank. Never the carried egg's own
