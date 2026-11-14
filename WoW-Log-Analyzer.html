@@ -78289,9 +78289,8 @@ function dsGuides() {
     var spec = D.spec || 'your spec';
     h += '<div class="rcz-lab"><b>Your rotation, part by part</b><i>how ' + E(spec) + ' is played, and how you did on each part</i><span class="rcz-sp"></span><span class="rcz-cats">' + cats.map(function (x) { return '<span class="rcz-cat"><small>' + E(x.n) + '</small><b class="' + x.st + '">' + E(x.v) + '</b></span>'; }).join('') + '</span></div>';
     h += '<div class="rcz-book">' + parts.map(function (P) { var gr = P.l.filter(function (c) { return c.st !== 'na'; }), off = P.l.filter(isOff).length, st = P.l.some(function (c) { return c.st === 'bad'; }) ? 'bad' : off ? 'warn' : gr.length ? 'ok' : 'na', main = P.main || P.l[0];
-        var rule = off ? one1(noGuide(tx(P.lead))) || tipOf(P.l.filter(isOff)[0]) : '';
         return '<button type="button" class="rcz-cell s-' + st + '" data-rczsec="' + E(P.name) + '" aria-expanded="false"><span class="rcz-c1">' + icoH(D, P.ic, 22) + '<b>' + E(P.name) + '</b><span class="rcz-sp"></span>' + (off ? '<span class="rcz-tag ' + st + '">' + off + ' to fix</span>' : st === 'ok' ? '<span class="rcz-ok">✓</span>' : '<span class="rcz-m">not graded</span>') + '</span>' +
-          (rule ? '<span class="rcz-rule">' + E(rule) + '</span>' : '') + '<span class="rcz-cks">' + P.l.map(function (c) { var v = tx(c.v); return '<span>' + E(c.label) + ' <b class="' + c.st + '">' + (v === 'Yes' ? '✓' : v === 'No' ? '✕' : E(v)) + '</b></span>'; }).join('') + '</span></button>'; }).join('') + '</div>';
+          '<span class="rcz-cks">' + P.l.map(function (c) { var v = tx(c.v); return '<span>' + E(c.label) + ' <b class="' + c.st + '">' + (v === 'Yes' ? '✓' : v === 'No' ? '✕' : E(v)) + '</b></span>'; }).join('') + '</span></button>'; }).join('') + '</div>';
     return { html: h, parts: parts, fx: fx, n: fx.length, heal: heal }; }
 
   /* (a part, opened: how it's played, a block a check (the ones that are off first), its plain uses as rows, and today's detail under How it's judged) */
@@ -78352,11 +78351,40 @@ function dsGuides() {
     if (sel) hd.querySelector('.rcz-selw').appendChild(sel);
     if (tq) { tq.open = true; hd.querySelector('.rcz-talw').appendChild(tq); }
     if (old) old.remove(); pg.insertBefore(hd, pg.firstChild); return hd; }
-  function sync(pg) { var on = pg.classList.contains('rtl-on'), k9 = (on ? 1 : 0) + '|' + ST.gx + '|' + ST.tal + '|' + (pg.querySelector(':scope > .rcz-hd') ? 1 : 0) + (pg.querySelector(':scope > .rcz-fold') ? 1 : 0); if (pg._rczs === k9) return; pg._rczs = k9; [].forEach.call(pg.querySelectorAll(':scope > .rcz-hd [data-rczv]'), function (b) { var s = (b.getAttribute('data-rczv') === 'tl') === on; b.classList.toggle('on', s); b.setAttribute('aria-selected', s ? 'true' : 'false'); });
+  /* (the polish pass, Nov 14 (Flex: "much better, but i think visually a bit difficult to read/navigate"): "On this page", a slim row under the site's
+     own sticky bar once you scroll past Coach | Timeline. A link a section with its count, the one on screen in gold, and ↑ Top. It sits on the body: the
+     page box scrolls sideways (overflow-x), so sticky inside it doesn't hold. It is measured under the site's sticky bar, and goes when the page is left
+     or the Timeline is on) */
+  var JB = { bar: null, pg: null, items: [], sb: 0, sbT: 0 };
+  function jumpKill() { if (JB.bar) JB.bar.remove(); JB.bar = null; JB.pg = null; JB.items = []; }
+  function stickyBottom(pg) { var now = Date.now(); if (now - JB.sbT < 400) return JB.sb; JB.sbT = now; var y = 0, found = [], r0 = pg.getBoundingClientRect(), px = Math.round(r0.left + r0.width / 2), wide = Math.min(600, window.innerWidth * 0.8);
+    [8, 40, 72, 104].forEach(function (py) { (document.elementsFromPoint ? document.elementsFromPoint(px, py) : []).forEach(function (e0) { if (e0.closest('.rcz-jump')) return; for (var e = e0; e && e !== document.body; e = e.parentElement) { var cs = getComputedStyle(e); if (cs.position === 'sticky' || cs.position === 'fixed') { found.push(e.getBoundingClientRect()); break; } } }); });
+    found.sort(function (a, b) { return a.top - b.top; }).forEach(function (r) { if (r.top <= y + 4 && r.bottom < 220 && r.width > wide && r.bottom > y) y = r.bottom; }); JB.sb = Math.round(y); return JB.sb; }
+  function jumpPlace() { var pg = JB.pg, bar = JB.bar; if (!bar) return; if (!pg || !pg.isConnected || !pg.classList.contains('rcz-on') || pg.classList.contains('rtl-on')) { jumpKill(); return; }
+    var r = pg.getBoundingClientRect(), top = stickyBottom(pg), tabs = pg.querySelector(':scope > .rcz-hd .rcz-tabs'), past = tabs ? tabs.getBoundingClientRect().bottom < top : window.scrollY > 300;
+    bar.style.left = Math.round(r.left) + 'px'; bar.style.width = Math.round(r.width) + 'px'; bar.style.top = top + 'px'; bar.classList.toggle('show', past && r.bottom > top + 80);
+    var cur = 0; JB.items.forEach(function (it, i) { if (it.el.isConnected && it.el.getBoundingClientRect().top < top + 120) cur = i; });
+    [].forEach.call(bar.querySelectorAll('button[data-rczj9]'), function (b) { var on9 = b.getAttribute('data-rczj9') === String(cur); if (b.classList.contains('on') !== on9) b.classList.toggle('on', on9); }); }
+  function jumpBar(pg, sec) { jumpKill(); var items = [];
+    [].forEach.call(sec.querySelectorAll(':scope > .rcz-lab'), function (l) { var b = l.querySelector(':scope > b'), t = b ? tx(b.innerHTML) : '', c = '';
+      if (/^Work on these/.test(t)) c = String(sec.querySelectorAll('.rcz-fix').length || ''); else if (/^Also worth/.test(t)) c = String(sec.querySelectorAll('.rcz-al').length); else if (/part by part/.test(t)) { var k = sec.querySelectorAll('.rcz-cell.s-warn, .rcz-cell.s-bad').length; c = k ? k + ' to fix' : ''; t = 'Part by part'; }
+      if (t) items.push({ el: l, t: t, c: c }); });
+    var src = pg.querySelector(':scope > .rgx-src'); if (src) items.push({ el: src, t: /damage/i.test((src.textContent || '').slice(0, 40)) ? 'Damage' : 'Healing', c: '' });
+    var gx = pg.querySelector(':scope > .rcz-fold'); if (gx) items.push({ el: gx, t: 'Gear', c: '' });
+    if (items.length < 2) return;
+    var bar = document.createElement('nav'); bar.className = 'rcz-jump'; bar.setAttribute('aria-label', 'On this page');
+    bar.innerHTML = '<span class="rcz-jl">On this page</span>' + items.map(function (it, i) { return '<button type="button" data-rczj9="' + i + '">' + E(it.t) + (it.c ? '<i>' + E(it.c) + '</i>' : '') + '</button>'; }).join('') + '<span class="rcz-jsp"></span><button type="button" data-rczj9="top">↑ Top</button>';
+    document.body.appendChild(bar); JB.bar = bar; JB.pg = pg; JB.items = items; JB.sbT = 0; jumpPlace(); }
+  window.addEventListener('scroll', function () { if (JB.bar) jumpPlace(); }, { passive: true });
+  window.addEventListener('resize', function () { if (JB.bar) { JB.sbT = 0; jumpPlace(); } });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rcz-jump button[data-rczj9]'); if (!b || !JB.pg) return; var k = b.getAttribute('data-rczj9');
+    if (k === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; } var it = JB.items[+k]; if (it && it.el.isConnected) window.scrollTo({ top: it.el.getBoundingClientRect().top + window.scrollY - stickyBottom(JB.pg) - 46, behavior: 'smooth' }); });
+  function sync(pg) { if (pg.classList.contains('rtl-on')) { if (JB.bar) jumpKill(); } else if (!JB.bar || JB.pg !== pg) { var s9 = pg.querySelector(':scope > section.rcz'); if (s9) jumpBar(pg, s9); }
+    var on = pg.classList.contains('rtl-on'), k9 = (on ? 1 : 0) + '|' + ST.gx + '|' + ST.tal + '|' + (pg.querySelector(':scope > .rcz-hd') ? 1 : 0) + (pg.querySelector(':scope > .rcz-fold') ? 1 : 0); if (pg._rczs === k9) return; pg._rczs = k9; [].forEach.call(pg.querySelectorAll(':scope > .rcz-hd [data-rczv]'), function (b) { var s = (b.getAttribute('data-rczv') === 'tl') === on; b.classList.toggle('on', s); b.setAttribute('aria-selected', s ? 'true' : 'false'); });
     pg.classList.toggle('rcz-gx', !!ST.gx); var f = pg.querySelector(':scope > .rcz-fold'); if (f) { f.setAttribute('aria-expanded', ST.gx ? 'true' : 'false'); var cv = f.querySelector('.rcz-chv'), cw = ST.gx ? '▾' : '▸'; if (cv.textContent !== cw) cv.textContent = cw; }
     var tw = pg.querySelector(':scope > .rcz-hd .rcz-talw'), tb = pg.querySelector(':scope > .rcz-hd [data-rcztal]'); if (tw && tb) { tw.hidden = !ST.tal; tb.setAttribute('aria-expanded', ST.tal ? 'true' : 'false'); var ts = tb.querySelector('span'), tw2 = ST.tal ? '▾' : '▸'; if (ts.textContent !== tw2) ts.textContent = tw2; } }
   var run = function () {
-    var pg = document.querySelector('#view .pf-inl.spc-v'), D = window.rotData; if (!pg || !D || !D.checks || !D.checks.length) return;
+    var pg = document.querySelector('#view .pf-inl.spc-v'), D = window.rotData; if (JB.bar && (!JB.pg || !JB.pg.isConnected || JB.pg !== pg)) jumpKill(); /* (the page was left or redrawn) */ if (!pg || !D || !D.checks || !D.checks.length) return;
     if (!pg.querySelector(':scope > .ds-rtop.rpc-on')) return; /* (the top box is built first: its What to fix rows give the order) */
     var sec = pg.querySelector(':scope > section.rcz'), k = D.key + '|' + D.checks.length + '|' + pg.querySelectorAll(':scope > .ds-rtop [data-ck]').length + '|' + pg.querySelectorAll('section.rck .rck-cat').length + '|' + (pg.querySelector('section.rck-gx') ? 1 : 0);
     if (sec && sec._d === D && sec._k === k) { sync(pg); return; }
@@ -78364,7 +78392,7 @@ function dsGuides() {
     restore(); if (ST.key !== D.key) { ST.key = D.key; ST.sec = ''; ST.j = 0; }
     try { head(pg, D, B); } catch (e) { console.error(e); }
     if (!sec) { sec = document.createElement('section'); sec.className = 'rcz'; pg.appendChild(sec); }
-    sec.innerHTML = B.html; sec._d = D; sec._k = k; sec._parts = B.parts; pg._rczs = ''; pg.classList.add('rcz-on'); pg.classList.toggle('rcz-heal', !!B.heal);
+    sec.innerHTML = B.html; sec._d = D; sec._k = k; sec._parts = B.parts; pg._rczs = ''; jumpKill(); /* (its links point at the old labels: sync makes it again) */ pg.classList.add('rcz-on'); pg.classList.toggle('rcz-heal', !!B.heal);
     var gx = pg.querySelector('section.rck-gx'), f = pg.querySelector(':scope > .rcz-fold'); if (f) f.remove();
     if (gx) { var gm = tx((gx.querySelector('.rgx-pn') || gx).innerHTML).match(/Your gear added\s+(about [^ ]+ [A-Z]+)/); f = document.createElement('button'); f.type = 'button'; f.className = 'rcz-fold'; f.setAttribute('data-rczf', 'gx');
       f.innerHTML = '<span class="rcz-chv">▸</span><b>Gear and extras</b><small>' + (gm ? 'your gear added ' + E(gm[1]) + ' · ' : '') + 'trinkets, tier set, enchants and what isn\'t graded</small>'; pg.appendChild(f); }
@@ -78386,7 +78414,6 @@ function dsGuides() {
     new MutationObserver(function (ms) { if (ms.every(function (x) { var el = x.target.nodeType === 1 ? x.target : x.target.parentElement; return el && el.closest && el.closest('section.rcz, .rcz-hd, .rcz-fold, section.rtl'); })) return; try { run(); } catch (e) { console.error(e); } }).observe(m, { childList: true, subtree: true }); run(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
-
 // ===== Design studio round 152 (Oct 28): the phase rows' one-line summary in the moment's own words. Owner: the Design studio chat. =====
 // (the line under each mechanic's bar in an Overview phase read like shorthand ("slow P2, Cooldowns / Zul'jan's health Zul'jan back at
 // 48%"); it now reads the worst moment's own sentence, the same one its dropdown leads with: "At 4:59: Died to Soul Sever on stack 2.")
@@ -84211,14 +84238,15 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
 }/* (Nov 13, "A step darker": the guide's sticky bar (Everyone · Tank · Healer · DPS and the phases) steps darker with the page, so it never looks lighter than it) */
 @layer defaultTheme { html:not([data-theme]) body #view#view#view#view .gdz-rbar.gdz-bar { background: rgba(10, 11, 13, .96) !important; } }
 /* (Nov 14, Flex: "re-design this page top to bottom make it good", then "Yes, build this" on the two pictures: Rotation as a coach. The page's old
-   top box and checklist are hidden, not removed: the Timeline reads them, and a part's How it's judged moves their details in. Labels are
-   12px and up (Main, Nov 14: nothing a raider must read is under 12px)) */
+   top box and checklist are hidden, not removed: the Timeline reads them, and a part's How it's judged moves their details in. The polish pass
+   (Flex, Nov 14: "visually a bit difficult to read/navigate"): a clear break before each section, roomier cards, You above Better in Also worth a look,
+   the parts as tiles in rows with one line a check, and the "On this page" row) */
 @layer defaultTheme {
   html body #view#view#view .pf-inl.spc-v.rcz-on > .ds-rtop, html body #view#view#view .pf-inl.spc-v.rcz-on > .rtl-vt { display: none !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on > .rcz-hd { order: -3 !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on > section.rtl { order: 2 !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on > section.rcz { order: 3 !important; }
-  html body #view#view#view .pf-inl.spc-v.rcz-on > .rgx-src { order: 4 !important; margin: 26px 0 0 !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+  html body #view#view#view .pf-inl.spc-v.rcz-on > .rgx-src { order: 4 !important; margin: 40px 0 0 !important; padding: 20px 0 0 !important; background: none !important; border: 0 !important; border-top: 1px solid var(--line2, rgba(255,255,255,.14)) !important; box-shadow: none !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on > .rcz-fold { order: 5 !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on > .ds-rcols { order: 6 !important; display: none !important; margin: 0 !important; }
   html body #view#view#view .pf-inl.spc-v.rcz-on.rcz-gx > .ds-rcols { display: block !important; }
@@ -84288,12 +84316,14 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #view#view#view .rcz-talw > details.spc-tqd { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; position: static !important; width: auto !important; max-width: none !important; }
   html body #view#view#view .rcz-lab { display: flex !important; align-items: baseline !important; flex-wrap: wrap !important; gap: 4px 10px !important; margin: 24px 0 10px !important; }
   html body #view#view#view .rcz-lab > b { font: 700 18px/1.2 var(--head, 'Barlow Condensed', sans-serif) !important; color: var(--text, #e8e6e1) !important; }
-  html body #view#view#view .rcz-lab > i { font-style: normal !important; font-size: 13px !important; color: var(--muted, #9aa0a6) !important; }
+  html body #view#view#view .rcz-lab > i { font-style: normal !important; font-size: 13.5px !important; color: var(--muted, #9aa0a6) !important; }
+  html body #view#view#view section.rcz > .rcz-lab { margin: 40px 0 14px !important; padding-top: 20px !important; border-top: 1px solid var(--line2, rgba(255,255,255,.14)) !important; }
+  html body #view#view#view section.rcz > .rcz-lab:first-child { margin-top: 20px !important; padding-top: 0 !important; border-top: 0 !important; }
   html body #view#view#view .rcz-clean { margin: 0 !important; padding: 12px 14px !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; color: var(--muted, #9aa0a6) !important; font-size: 13.5px !important; }
   html body #view#view#view .rcz-clean > b { color: var(--good, #5fdc7a) !important; font-weight: 600 !important; }
-  html body #view#view#view .rcz-fix { display: block !important; margin: 0 !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; border-radius: 0 !important; background: var(--panel, rgba(255,255,255,.02)) !important; box-shadow: none !important; padding: 14px 16px 16px !important; }
+  html body #view#view#view .rcz-fix { display: block !important; margin: 0 !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; border-radius: 0 !important; background: var(--panel, rgba(255,255,255,.02)) !important; box-shadow: none !important; padding: 18px 22px 20px !important; }
   html body #view#view#view .rcz-fix.first { border-color: rgba(212,183,125,.75) !important; }
-  html body #view#view#view .rcz-fix > header { display: flex !important; align-items: center !important; gap: 10px !important; margin: 0 0 12px !important; padding: 0 !important; border: 0 !important; background: none !important; }
+  html body #view#view#view .rcz-fix > header { display: flex !important; align-items: center !important; gap: 10px !important; margin: 0 0 16px !important; padding: 0 0 14px !important; border: 0 !important; border-bottom: 1px solid var(--line, rgba(255,255,255,.08)) !important; background: none !important; }
   html body #view#view#view .rcz-fix h3 { margin: 0 !important; padding: 0 !important; border: 0 !important; font: 700 18px/1.2 var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text, #e8e6e1) !important; cursor: pointer !important; }
   html body #view#view#view .rcz-fix h3:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
   html body #view#view#view .rcz-n { display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 24px !important; height: 24px !important; border-radius: 50% !important; background: #3a3f48 !important; color: #e8e6e1 !important; font: 700 13.5px/1 var(--head, 'Barlow Condensed', sans-serif) !important; flex: none !important; }
@@ -84301,16 +84331,18 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #view#view#view .rcz-val { display: flex !important; align-items: baseline !important; gap: 6px !important; white-space: nowrap !important; }
   html body #view#view#view .rcz-val > b { font: 700 22px/1.1 var(--head, 'Barlow Condensed', sans-serif) !important; }
   html body #view#view#view .rcz-val > small { font-size: 12.5px !important; color: var(--muted, #9aa0a6) !important; }
-  html body #view#view#view .rcz-body { display: grid !important; grid-template-columns: minmax(0, 36fr) minmax(0, 64fr) !important; gap: 22px !important; align-items: start !important; }
+  html body #view#view#view .rcz-body { display: grid !important; grid-template-columns: minmax(0, 36fr) minmax(0, 64fr) !important; gap: 0 !important; align-items: start !important; }
+  html body #view#view#view .rcz-body > :first-child { padding-right: 26px !important; }
+  html body #view#view#view .rcz-body:not(.solo) > :last-child { padding-left: 26px !important; border-left: 1px solid var(--line, rgba(255,255,255,.08)) !important; }
   html body #view#view#view .rcz-body.solo { grid-template-columns: minmax(0, 1fr) !important; }
-  html body #view#view#view .rcz-kv { margin: 0 0 10px !important; }
-  html body #view#view#view .rcz-kv > span { display: block !important; font: 700 12.5px/1.3 var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--muted, #9aa0a6) !important; }
-  html body #view#view#view .rcz-kv > p { margin: 2px 0 0 !important; padding: 0 !important; font-size: 13.5px !important; line-height: 1.4 !important; color: var(--text, #e8e6e1) !important; }
-  html body #view#view#view .rcz-kv.gold { margin-bottom: 0 !important; padding: 8px 10px !important; border-left: 2px solid var(--gold, #d4b77d) !important; background: rgba(212,183,125,.07) !important; }
+  html body #view#view#view .rcz-kv { margin: 0 0 14px !important; }
+  html body #view#view#view .rcz-kv > span { display: block !important; margin-bottom: 3px !important; font: 700 12.5px/1.3 var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--muted, #9aa0a6) !important; }
+  html body #view#view#view .rcz-kv > p { margin: 2px 0 0 !important; padding: 0 !important; font-size: 13.5px !important; line-height: 1.5 !important; color: var(--text, #e8e6e1) !important; }
+  html body #view#view#view .rcz-kv.gold { margin-bottom: 0 !important; padding: 10px 12px !important; border-left: 2px solid var(--gold, #d4b77d) !important; background: rgba(212,183,125,.07) !important; }
   html body #view#view#view .rcz-kv.gold > span { color: var(--gold, #d4b77d) !important; }
   html body #view#view#view .rcz-kv.gold > p { font-weight: 600 !important; }
   html body #view#view#view .rcz-kv.gold > p b { color: var(--good, #5fdc7a) !important; font-weight: 600 !important; }
-  html body #view#view#view .rcz-two { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 12px !important; margin-top: 12px !important; }
+  html body #view#view#view .rcz-two { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; gap: 14px !important; margin-top: 14px !important; }
   html body #view#view#view .rcz-two.one { grid-template-columns: minmax(0, 1fr) !important; }
   html body #view#view#view .rcz-two > .rcz-fix { display: flex !important; flex-direction: column !important; }
   html body #view#view#view .rcz-two > .rcz-fix > .rcz-kv.gold { margin-top: auto !important; }
@@ -84385,34 +84417,41 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #view#view#view .rcz-st.v .rcz-ic { outline: 2px solid var(--good, #5fdc7a) !important; outline-offset: 1px !important; }
   html body #view#view#view .rcz-st.v > small { color: var(--good, #5fdc7a) !important; }
   html body #view#view#view .rcz-als { border-top: 1px solid var(--line, rgba(255,255,255,.08)) !important; }
-  html body #view#view#view .rcz-al { display: grid !important; grid-template-columns: 250px minmax(0, 1fr) minmax(0, 1.25fr) !important; gap: 4px 18px !important; align-items: center !important; padding: 12px 4px !important; border-bottom: 1px solid var(--line, rgba(255,255,255,.08)) !important; cursor: pointer !important; }
-  html body #view#view#view .rcz-al:hover { background: rgba(255,255,255,.02) !important; }
-  html body #view#view#view .rcz-al > .rcz-ovs { display: contents !important; }
+  html body #view#view#view .rcz-al { display: grid !important; grid-template-columns: 240px minmax(0, 1.2fr) minmax(0, 1fr) !important; gap: 6px 26px !important; align-items: center !important; padding: 16px 8px !important; border-bottom: 1px solid var(--line, rgba(255,255,255,.08)) !important; cursor: pointer !important; }
+  html body #view#view#view .rcz-al:hover { background: rgba(255,255,255,.025) !important; }
+  html body #view#view#view .rcz-al > .rcz-ovs { display: flex !important; flex-direction: column !important; gap: 10px !important; margin: 0 !important; grid-column: 2 !important; grid-row: 1 !important; }
+  html body #view#view#view .rcz-al > .rcz-upn { grid-column: 2 !important; }
   html body #view#view#view .rcz-alh { display: flex !important; gap: 10px !important; align-items: center !important; min-width: 0 !important; }
   html body #view#view#view .rcz-alh b { font-weight: 600 !important; font-size: 13.5px !important; color: var(--text, #e8e6e1) !important; }
   html body #view#view#view .rcz-alh small { display: block !important; font-size: 12.5px !important; color: var(--muted, #9aa0a6) !important; }
   html body #view#view#view .rcz-alh small > b { font-size: 12.5px !important; }
-  html body #view#view#view .rcz-alw { grid-column: 2 / -1 !important; margin: 0 !important; font-size: 13px !important; color: var(--text, #e8e6e1) !important; }
-  html body #view#view#view .rcz-alt { grid-column: 2 / -1 !important; margin: 2px 0 0 64px !important; padding: 0 !important; font-size: 12.5px !important; color: var(--muted, #9aa0a6) !important; }
-  html body #view#view#view .rcz-al.nopic > .rcz-alt { margin-left: 0 !important; }
+  html body #view#view#view .rcz-alw { grid-column: 2 !important; grid-row: 1 !important; margin: 0 !important; font-size: 13.5px !important; line-height: 1.5 !important; color: var(--text, #e8e6e1) !important; }
+  html body #view#view#view .rcz-alt { grid-column: 3 !important; grid-row: 1 !important; align-self: center !important; margin: 0 !important; padding: 0 0 0 20px !important; border-left: 1px solid var(--line, rgba(255,255,255,.08)) !important; font-size: 13px !important; line-height: 1.5 !important; color: var(--text, #e8e6e1) !important; }
   html body #view#view#view .rcz-alt b { color: var(--text, #e8e6e1) !important; font-weight: 600 !important; }
   html body #view#view#view .rcz-cats { display: inline-flex !important; flex-wrap: wrap !important; gap: 2px 14px !important; }
   html body #view#view#view .rcz-cat { display: inline-flex !important; align-items: baseline !important; gap: 6px !important; }
   html body #view#view#view .rcz-cat > small { font-size: 12.5px !important; color: var(--muted, #9aa0a6) !important; }
   html body #view#view#view .rcz-cat > b { font: 700 18px/1 var(--head, 'Barlow Condensed', sans-serif) !important; }
-  html body #view#view#view .rcz-book { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; grid-auto-flow: row dense !important; column-gap: 28px !important; border-top: 1px solid var(--line, rgba(255,255,255,.08)) !important; }
-  html body #view#view#view .rcz-cell { display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 10px 4px 11px !important; border: 0 !important; border-bottom: 1px solid var(--line, rgba(255,255,255,.08)) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; font: inherit !important; color: inherit !important; letter-spacing: 0 !important; text-transform: none !important; cursor: pointer !important; align-self: stretch !important; }
-  html body #view#view#view .rcz-cell:hover { background: rgba(255,255,255,.025) !important; }
-  html body #view#view#view .rcz-cell.on { background: rgba(212,183,125,.06) !important; }
+  html body #view#view#view .rcz-book { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; grid-auto-flow: row dense !important; gap: 10px !important; align-items: stretch !important; }
+  html body #view#view#view .rcz-cell { display: flex !important; flex-direction: column !important; align-items: stretch !important; justify-content: flex-start !important; width: auto !important; height: auto !important; min-height: 0 !important; margin: 0 !important; padding: 12px 14px 10px !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; border-radius: 0 !important; background: rgba(255,255,255,.015) !important; box-shadow: none !important; text-align: left !important; font: inherit !important; color: inherit !important; letter-spacing: 0 !important; text-transform: none !important; cursor: pointer !important; align-self: stretch !important; }
+  html body #view#view#view .rcz-cell:hover { border-color: rgba(212,183,125,.6) !important; background: rgba(255,255,255,.035) !important; }
+  html body #view#view#view .rcz-cell.s-warn { border-color: rgba(230,180,80,.5) !important; }
+  html body #view#view#view .rcz-cell.s-bad { border-color: rgba(255,107,107,.55) !important; }
+  html body #view#view#view .rcz-cell.on { border-color: var(--gold, #d4b77d) !important; background: rgba(212,183,125,.05) !important; }
   html body #view#view#view .rcz-c1 { display: flex !important; align-items: center !important; gap: 9px !important; }
-  html body #view#view#view .rcz-c1 > b { font: 600 13.5px/1.25 var(--body, 'Barlow Condensed', sans-serif) !important; color: var(--text, #e8e6e1) !important; }
+  html body #view#view#view .rcz-c1 > b { font: 700 13.5px/1.25 var(--body, 'Barlow Condensed', sans-serif) !important; color: var(--text, #e8e6e1) !important; }
+  html body #view#view#view .rcz-c1::after { content: '›' !important; margin-left: 8px !important; color: var(--muted, #9aa0a6) !important; font: 600 18px/1 var(--head, 'Barlow Condensed', sans-serif) !important; }
+  html body #view#view#view .rcz-cell:hover .rcz-c1::after, html body #view#view#view .rcz-cell.on .rcz-c1::after { color: var(--gold, #d4b77d) !important; }
   html body #view#view#view .rcz-cell.on .rcz-c1 > b { color: var(--gold, #d4b77d) !important; }
   html body #view#view#view .rcz-ok { color: var(--good, #5fdc7a) !important; font-weight: 700 !important; font-size: 13.5px !important; }
   html body #view#view#view .rcz-c1 > .rcz-m { font-size: 12.5px !important; }
   html body #view#view#view .rcz-rule { display: block !important; margin: 5px 0 0 31px !important; font-size: 12.5px !important; color: var(--muted, #9aa0a6) !important; line-height: 1.35 !important; }
-  html body #view#view#view .rcz-cks { margin: 5px 0 0 31px !important; display: flex !important; flex-wrap: wrap !important; gap: 2px 16px !important; font-size: 13px !important; color: var(--muted, #9aa0a6) !important; }
+  html body #view#view#view .rcz-cks { margin: 9px 0 0 !important; display: flex !important; flex-direction: column !important; flex-wrap: nowrap !important; gap: 0 !important; font-size: 13.5px !important; color: var(--muted, #9aa0a6) !important; }
+  html body #view#view#view .rcz-cks > span { display: flex !important; justify-content: space-between !important; align-items: baseline !important; gap: 14px !important; padding: 4px 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; font-size: 13.5px !important; font-weight: 400 !important; color: #c3c7cc !important; }
+  html body #view#view#view .rcz-cks > span > b { white-space: nowrap !important; text-align: right !important; }
+  html body #view#view#view .rcz-cks > span > b.ok { color: var(--text, #e8e6e1) !important; }
   html body #view#view#view .rcz-cks b { font: 700 13.5px/1.2 var(--head, 'Barlow Condensed', sans-serif) !important; }
-  html body #view#view#view .rcz-open { grid-column: 1 / -1 !important; margin: 10px 0 14px !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; background: rgba(0,0,0,.16) !important; box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
+  html body #view#view#view .rcz-open { grid-column: 1 / -1 !important; margin: 2px 0 8px !important; border: 1px solid var(--line2, rgba(255,255,255,.14)) !important; background: rgba(0,0,0,.16) !important; box-shadow: none !important; border-radius: 0 !important; padding: 0 !important; }
   html body #view#view#view .rcz-open > header { display: flex !important; align-items: center !important; gap: 9px !important; margin: 0 !important; padding: 10px 14px !important; border: 0 !important; border-bottom: 1px solid var(--line, rgba(255,255,255,.08)) !important; background: none !important; cursor: pointer !important; }
   html body #view#view#view .rcz-open > header > b { font: 700 18px/1.2 var(--head, 'Barlow Condensed', sans-serif) !important; color: var(--gold, #d4b77d) !important; }
   html body #view#view#view .rcz-chv { color: var(--gold, #d4b77d) !important; width: 12px !important; flex: none !important; font-size: 13.5px !important; }
@@ -84501,14 +84540,32 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
   html body #view#view#view .rcz-pbar > i { display: block !important; height: 10px !important; margin: -1.5px 0 0 -1.5px !important; background: var(--gold, #d4b77d) !important; }
   html body #view#view#view .rcz-pbar.g { border-color: var(--good, #5fdc7a) !important; }
   html body #view#view#view .rcz-pbar.g > i { background: var(--good, #5fdc7a) !important; }
+  html body .rcz-jump { position: fixed !important; z-index: 40 !important; display: none !important; align-items: center !important; gap: 4px !important; height: 34px !important; margin: 0 !important; padding: 0 14px !important; background: var(--bg, #0a0b0d) !important; border: 0 !important; border-bottom: 1px solid var(--line2, rgba(255,255,255,.14)) !important; box-shadow: none !important; font: 600 13px/1 var(--head, 'Barlow Condensed', sans-serif) !important; overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none !important; white-space: nowrap !important; box-sizing: border-box !important; }
+  html body .rcz-jump.show { display: flex !important; }
+  html body .rcz-jump .rcz-jl { flex: none !important; margin-right: 10px !important; font: 700 12.5px/1 var(--head, 'Barlow Condensed', sans-serif) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--muted, #9aa0a6) !important; }
+  html body .rcz-jump .rcz-jsp { flex: 1 1 auto !important; }
+  html body .rcz-jump button { flex: none !important; height: 34px !important; min-height: 0 !important; margin: 0 !important; padding: 0 10px !important; background: none !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; color: var(--muted, #9aa0a6) !important; font: inherit !important; letter-spacing: 0 !important; text-transform: none !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+  html body .rcz-jump button:hover { color: var(--text, #e8e6e1) !important; }
+  html body .rcz-jump button.on { color: var(--gold, #d4b77d) !important; box-shadow: inset 0 -2px var(--gold, #d4b77d) !important; }
+  html body .rcz-jump button > i { font-style: normal !important; font-size: 12.5px !important; color: var(--warn, #e6b450) !important; }
+  @media (max-width: 1100px) {
+    html body #view#view#view .rcz-book { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  }
   @media (max-width: 900px) {
     html body #view#view#view .rcz-wins { grid-template-columns: minmax(0, 1fr) !important; }
     html body #view#view#view .rcz-body, html body #view#view#view .rcz-two, html body #view#view#view .rcz-blk { grid-template-columns: minmax(0, 1fr) !important; }
     html body #view#view#view .rcz-al { grid-template-columns: minmax(0, 1fr) !important; }
-    html body #view#view#view .rcz-alw, html body #view#view#view .rcz-alt { grid-column: 1 !important; margin-left: 0 !important; }
-    html body #view#view#view .rcz-book { grid-template-columns: minmax(0, 1fr) !important; }
+    html body #view#view#view .rcz-al > .rcz-ovs, html body #view#view#view .rcz-alw, html body #view#view#view .rcz-alt, html body #view#view#view .rcz-al > .rcz-upn { grid-column: 1 !important; grid-row: auto !important; }
+    html body #view#view#view .rcz-alt { border-left: 0 !important; padding: 0 !important; }
+    html body #view#view#view .rcz-body:not(.solo) > :last-child { border-left: 0 !important; padding-left: 0 !important; padding-top: 14px !important; }
+    html body #view#view#view .rcz-body > :first-child { padding-right: 0 !important; }
   }
   @media (max-width: 640px) {
+    html body #view#view#view .rcz-book { grid-template-columns: minmax(0, 1fr) !important; }
+    html body #view#view#view .rcz-fix { padding: 14px 14px 16px !important; }
+    html body .rcz-jump { padding: 0 4px !important; }
+    html body .rcz-jump .rcz-jl, html body .rcz-jump .rcz-jsp { display: none !important; }
+    html body .rcz-jump button { padding: 0 8px !important; }
     html body #view#view#view .rcz-idb { flex-wrap: wrap !important; gap: 10px 12px !important; }
     html body #view#view#view .rcz-idb > .rcz-sp { flex-basis: 100% !important; height: 0 !important; }
     html body #view#view#view .rcz-port, html body #view#view#view .rcz-port > * { width: 44px !important; height: 44px !important; }
@@ -84518,7 +84575,6 @@ html body #assignBox .pom .pom-map > svg { display: block; width: 100%; height: 
     html body #view#view#view .rcz-score { margin-left: auto !important; padding-left: 12px !important; }
     html body #view#view#view .rcz-score > b { font-size: 40px !important; }
     html body #view#view#view .rcz-tabs { gap: 14px !important; flex-wrap: wrap !important; }
-    html body #view#view#view .rcz-fix { padding: 12px 12px 14px !important; }
     html body #view#view#view .rcz-fix > header { flex-wrap: wrap !important; }
     html body #view#view#view .rcz-val > b { font-size: 22px !important; }
     html body #view#view#view .rcz-pic .rcz-who { width: 58px !important; font-size: 12.5px !important; }

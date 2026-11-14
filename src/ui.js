@@ -39672,9 +39672,8 @@ function dsGuides() {
     var spec = D.spec || 'your spec';
     h += '<div class="rcz-lab"><b>Your rotation, part by part</b><i>how ' + E(spec) + ' is played, and how you did on each part</i><span class="rcz-sp"></span><span class="rcz-cats">' + cats.map(function (x) { return '<span class="rcz-cat"><small>' + E(x.n) + '</small><b class="' + x.st + '">' + E(x.v) + '</b></span>'; }).join('') + '</span></div>';
     h += '<div class="rcz-book">' + parts.map(function (P) { var gr = P.l.filter(function (c) { return c.st !== 'na'; }), off = P.l.filter(isOff).length, st = P.l.some(function (c) { return c.st === 'bad'; }) ? 'bad' : off ? 'warn' : gr.length ? 'ok' : 'na', main = P.main || P.l[0];
-        var rule = off ? one1(noGuide(tx(P.lead))) || tipOf(P.l.filter(isOff)[0]) : '';
         return '<button type="button" class="rcz-cell s-' + st + '" data-rczsec="' + E(P.name) + '" aria-expanded="false"><span class="rcz-c1">' + icoH(D, P.ic, 22) + '<b>' + E(P.name) + '</b><span class="rcz-sp"></span>' + (off ? '<span class="rcz-tag ' + st + '">' + off + ' to fix</span>' : st === 'ok' ? '<span class="rcz-ok">✓</span>' : '<span class="rcz-m">not graded</span>') + '</span>' +
-          (rule ? '<span class="rcz-rule">' + E(rule) + '</span>' : '') + '<span class="rcz-cks">' + P.l.map(function (c) { var v = tx(c.v); return '<span>' + E(c.label) + ' <b class="' + c.st + '">' + (v === 'Yes' ? '✓' : v === 'No' ? '✕' : E(v)) + '</b></span>'; }).join('') + '</span></button>'; }).join('') + '</div>';
+          '<span class="rcz-cks">' + P.l.map(function (c) { var v = tx(c.v); return '<span>' + E(c.label) + ' <b class="' + c.st + '">' + (v === 'Yes' ? '✓' : v === 'No' ? '✕' : E(v)) + '</b></span>'; }).join('') + '</span></button>'; }).join('') + '</div>';
     return { html: h, parts: parts, fx: fx, n: fx.length, heal: heal }; }
 
   /* (a part, opened: how it's played, a block a check (the ones that are off first), its plain uses as rows, and today's detail under How it's judged) */
@@ -39735,11 +39734,40 @@ function dsGuides() {
     if (sel) hd.querySelector('.rcz-selw').appendChild(sel);
     if (tq) { tq.open = true; hd.querySelector('.rcz-talw').appendChild(tq); }
     if (old) old.remove(); pg.insertBefore(hd, pg.firstChild); return hd; }
-  function sync(pg) { var on = pg.classList.contains('rtl-on'), k9 = (on ? 1 : 0) + '|' + ST.gx + '|' + ST.tal + '|' + (pg.querySelector(':scope > .rcz-hd') ? 1 : 0) + (pg.querySelector(':scope > .rcz-fold') ? 1 : 0); if (pg._rczs === k9) return; pg._rczs = k9; [].forEach.call(pg.querySelectorAll(':scope > .rcz-hd [data-rczv]'), function (b) { var s = (b.getAttribute('data-rczv') === 'tl') === on; b.classList.toggle('on', s); b.setAttribute('aria-selected', s ? 'true' : 'false'); });
+  /* (the polish pass, Nov 14 (Flex: "much better, but i think visually a bit difficult to read/navigate"): "On this page", a slim row under the site's
+     own sticky bar once you scroll past Coach | Timeline. A link a section with its count, the one on screen in gold, and ↑ Top. It sits on the body: the
+     page box scrolls sideways (overflow-x), so sticky inside it doesn't hold. It is measured under the site's sticky bar, and goes when the page is left
+     or the Timeline is on) */
+  var JB = { bar: null, pg: null, items: [], sb: 0, sbT: 0 };
+  function jumpKill() { if (JB.bar) JB.bar.remove(); JB.bar = null; JB.pg = null; JB.items = []; }
+  function stickyBottom(pg) { var now = Date.now(); if (now - JB.sbT < 400) return JB.sb; JB.sbT = now; var y = 0, found = [], r0 = pg.getBoundingClientRect(), px = Math.round(r0.left + r0.width / 2), wide = Math.min(600, window.innerWidth * 0.8);
+    [8, 40, 72, 104].forEach(function (py) { (document.elementsFromPoint ? document.elementsFromPoint(px, py) : []).forEach(function (e0) { if (e0.closest('.rcz-jump')) return; for (var e = e0; e && e !== document.body; e = e.parentElement) { var cs = getComputedStyle(e); if (cs.position === 'sticky' || cs.position === 'fixed') { found.push(e.getBoundingClientRect()); break; } } }); });
+    found.sort(function (a, b) { return a.top - b.top; }).forEach(function (r) { if (r.top <= y + 4 && r.bottom < 220 && r.width > wide && r.bottom > y) y = r.bottom; }); JB.sb = Math.round(y); return JB.sb; }
+  function jumpPlace() { var pg = JB.pg, bar = JB.bar; if (!bar) return; if (!pg || !pg.isConnected || !pg.classList.contains('rcz-on') || pg.classList.contains('rtl-on')) { jumpKill(); return; }
+    var r = pg.getBoundingClientRect(), top = stickyBottom(pg), tabs = pg.querySelector(':scope > .rcz-hd .rcz-tabs'), past = tabs ? tabs.getBoundingClientRect().bottom < top : window.scrollY > 300;
+    bar.style.left = Math.round(r.left) + 'px'; bar.style.width = Math.round(r.width) + 'px'; bar.style.top = top + 'px'; bar.classList.toggle('show', past && r.bottom > top + 80);
+    var cur = 0; JB.items.forEach(function (it, i) { if (it.el.isConnected && it.el.getBoundingClientRect().top < top + 120) cur = i; });
+    [].forEach.call(bar.querySelectorAll('button[data-rczj9]'), function (b) { var on9 = b.getAttribute('data-rczj9') === String(cur); if (b.classList.contains('on') !== on9) b.classList.toggle('on', on9); }); }
+  function jumpBar(pg, sec) { jumpKill(); var items = [];
+    [].forEach.call(sec.querySelectorAll(':scope > .rcz-lab'), function (l) { var b = l.querySelector(':scope > b'), t = b ? tx(b.innerHTML) : '', c = '';
+      if (/^Work on these/.test(t)) c = String(sec.querySelectorAll('.rcz-fix').length || ''); else if (/^Also worth/.test(t)) c = String(sec.querySelectorAll('.rcz-al').length); else if (/part by part/.test(t)) { var k = sec.querySelectorAll('.rcz-cell.s-warn, .rcz-cell.s-bad').length; c = k ? k + ' to fix' : ''; t = 'Part by part'; }
+      if (t) items.push({ el: l, t: t, c: c }); });
+    var src = pg.querySelector(':scope > .rgx-src'); if (src) items.push({ el: src, t: /damage/i.test((src.textContent || '').slice(0, 40)) ? 'Damage' : 'Healing', c: '' });
+    var gx = pg.querySelector(':scope > .rcz-fold'); if (gx) items.push({ el: gx, t: 'Gear', c: '' });
+    if (items.length < 2) return;
+    var bar = document.createElement('nav'); bar.className = 'rcz-jump'; bar.setAttribute('aria-label', 'On this page');
+    bar.innerHTML = '<span class="rcz-jl">On this page</span>' + items.map(function (it, i) { return '<button type="button" data-rczj9="' + i + '">' + E(it.t) + (it.c ? '<i>' + E(it.c) + '</i>' : '') + '</button>'; }).join('') + '<span class="rcz-jsp"></span><button type="button" data-rczj9="top">↑ Top</button>';
+    document.body.appendChild(bar); JB.bar = bar; JB.pg = pg; JB.items = items; JB.sbT = 0; jumpPlace(); }
+  window.addEventListener('scroll', function () { if (JB.bar) jumpPlace(); }, { passive: true });
+  window.addEventListener('resize', function () { if (JB.bar) { JB.sbT = 0; jumpPlace(); } });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.rcz-jump button[data-rczj9]'); if (!b || !JB.pg) return; var k = b.getAttribute('data-rczj9');
+    if (k === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; } var it = JB.items[+k]; if (it && it.el.isConnected) window.scrollTo({ top: it.el.getBoundingClientRect().top + window.scrollY - stickyBottom(JB.pg) - 46, behavior: 'smooth' }); });
+  function sync(pg) { if (pg.classList.contains('rtl-on')) { if (JB.bar) jumpKill(); } else if (!JB.bar || JB.pg !== pg) { var s9 = pg.querySelector(':scope > section.rcz'); if (s9) jumpBar(pg, s9); }
+    var on = pg.classList.contains('rtl-on'), k9 = (on ? 1 : 0) + '|' + ST.gx + '|' + ST.tal + '|' + (pg.querySelector(':scope > .rcz-hd') ? 1 : 0) + (pg.querySelector(':scope > .rcz-fold') ? 1 : 0); if (pg._rczs === k9) return; pg._rczs = k9; [].forEach.call(pg.querySelectorAll(':scope > .rcz-hd [data-rczv]'), function (b) { var s = (b.getAttribute('data-rczv') === 'tl') === on; b.classList.toggle('on', s); b.setAttribute('aria-selected', s ? 'true' : 'false'); });
     pg.classList.toggle('rcz-gx', !!ST.gx); var f = pg.querySelector(':scope > .rcz-fold'); if (f) { f.setAttribute('aria-expanded', ST.gx ? 'true' : 'false'); var cv = f.querySelector('.rcz-chv'), cw = ST.gx ? '▾' : '▸'; if (cv.textContent !== cw) cv.textContent = cw; }
     var tw = pg.querySelector(':scope > .rcz-hd .rcz-talw'), tb = pg.querySelector(':scope > .rcz-hd [data-rcztal]'); if (tw && tb) { tw.hidden = !ST.tal; tb.setAttribute('aria-expanded', ST.tal ? 'true' : 'false'); var ts = tb.querySelector('span'), tw2 = ST.tal ? '▾' : '▸'; if (ts.textContent !== tw2) ts.textContent = tw2; } }
   var run = function () {
-    var pg = document.querySelector('#view .pf-inl.spc-v'), D = window.rotData; if (!pg || !D || !D.checks || !D.checks.length) return;
+    var pg = document.querySelector('#view .pf-inl.spc-v'), D = window.rotData; if (JB.bar && (!JB.pg || !JB.pg.isConnected || JB.pg !== pg)) jumpKill(); /* (the page was left or redrawn) */ if (!pg || !D || !D.checks || !D.checks.length) return;
     if (!pg.querySelector(':scope > .ds-rtop.rpc-on')) return; /* (the top box is built first: its What to fix rows give the order) */
     var sec = pg.querySelector(':scope > section.rcz'), k = D.key + '|' + D.checks.length + '|' + pg.querySelectorAll(':scope > .ds-rtop [data-ck]').length + '|' + pg.querySelectorAll('section.rck .rck-cat').length + '|' + (pg.querySelector('section.rck-gx') ? 1 : 0);
     if (sec && sec._d === D && sec._k === k) { sync(pg); return; }
@@ -39747,7 +39775,7 @@ function dsGuides() {
     restore(); if (ST.key !== D.key) { ST.key = D.key; ST.sec = ''; ST.j = 0; }
     try { head(pg, D, B); } catch (e) { console.error(e); }
     if (!sec) { sec = document.createElement('section'); sec.className = 'rcz'; pg.appendChild(sec); }
-    sec.innerHTML = B.html; sec._d = D; sec._k = k; sec._parts = B.parts; pg._rczs = ''; pg.classList.add('rcz-on'); pg.classList.toggle('rcz-heal', !!B.heal);
+    sec.innerHTML = B.html; sec._d = D; sec._k = k; sec._parts = B.parts; pg._rczs = ''; jumpKill(); /* (its links point at the old labels: sync makes it again) */ pg.classList.add('rcz-on'); pg.classList.toggle('rcz-heal', !!B.heal);
     var gx = pg.querySelector('section.rck-gx'), f = pg.querySelector(':scope > .rcz-fold'); if (f) f.remove();
     if (gx) { var gm = tx((gx.querySelector('.rgx-pn') || gx).innerHTML).match(/Your gear added\s+(about [^ ]+ [A-Z]+)/); f = document.createElement('button'); f.type = 'button'; f.className = 'rcz-fold'; f.setAttribute('data-rczf', 'gx');
       f.innerHTML = '<span class="rcz-chv">▸</span><b>Gear and extras</b><small>' + (gm ? 'your gear added ' + E(gm[1]) + ' · ' : '') + 'trinkets, tier set, enchants and what isn\'t graded</small>'; pg.appendChild(f); }
@@ -39769,7 +39797,6 @@ function dsGuides() {
     new MutationObserver(function (ms) { if (ms.every(function (x) { var el = x.target.nodeType === 1 ? x.target : x.target.parentElement; return el && el.closest && el.closest('section.rcz, .rcz-hd, .rcz-fold, section.rtl'); })) return; try { run(); } catch (e) { console.error(e); } }).observe(m, { childList: true, subtree: true }); run(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();
-
 // ===== Design studio round 152 (Oct 28): the phase rows' one-line summary in the moment's own words. Owner: the Design studio chat. =====
 // (the line under each mechanic's bar in an Overview phase read like shorthand ("slow P2, Cooldowns / Zul'jan's health Zul'jan back at
 // 48%"); it now reads the worst moment's own sentence, the same one its dropdown leads with: "At 4:59: Died to Soul Sever on stack 2.")
