@@ -430,3 +430,9 @@ Flex: "maybe start another chat to work on the summary tab. Clean it up make it 
 Not built, noted for later: the closest call as one sentence at the top; a key left early still shows "DPS vs top" and "Your rotation" tiles in Your part after one pull; the tiles' colours on a timed key (Timed +1 is amber in the tile and green in the banner).
 
 Checks: tests/mplus-summary-strip.js runs Summary's own code on made-up keys; tests/look-review.js has a block of lines for this pass.
+
+Raid frames, one line each (Nov 14; Flex: "could we make these not as tall somehow?"): the name, then the target in lighter type on the same line, the health on the right. On a phone the target is left off.
+
+The panel beside the replay (Nov 14; Flex: "instead of having two dps meters, what if this was replaced with mob health bars/cast bars", and of As it happens: "this should also have mob casts especially if they get stopped/interupted/missed"):
+- Enemies: the enemies in the fight, a health bar and a cast bar each (the ones casting first, then the bosses, then the lowest; 8 at most, then "+ N more"), with the count by name under them. The damage list that was there is the meter on the map; a running big cooldown now shows on the meter's row.
+- As it happens also lists a kickable cast that went off ("went off", with the enemy) and a cast a stun, knock or grip stopped ("stopped by" the player, with the spell). Kicks and the must-kick casts that went off were there already.
