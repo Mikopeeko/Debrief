@@ -72807,7 +72807,7 @@ function pgOpen(root, boss, d, pk) {
   pgCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic';
   // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
-    get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ' and stay in range' + (rl(me) === 'm' ? ' (melee: close to it)' : '') + '.' : null; },
+    get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.' : null; },
     mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
