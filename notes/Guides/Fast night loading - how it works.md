@@ -35,6 +35,21 @@
    - A night already read opens on All pulls as before.
 5. **Loading tips** now match the page: the wipe call, the pull line at the top, mechanic rows, All pulls.
 
+## One draw when a pull opens (Nov 15)
+
+*The raid-night rehearsal (Nov 14) found that opening a pull built its page 3 times behind the loading card before it showed (11.9 s on a PC, 11.8 s on a phone, Wolfthorn Thu Nov 12 Ula'tek pull 13).*
+
+- **Why:** the comparison lists on Debriefing (top guilds' rates, this pull's own numbers for the per-raid scale, the guild's history, the pace list, the top kills' curves, parses on a kill, the night's shared raid notes) were asked for by the draw itself. The pace and curve lists were only asked for by the second draw, once the guild's history was in, and every answer built the whole page again.
+- **Now (all in src/ui.js):**
+  - `livePrefetch(item)` asks for all of them the moment a pull is picked, side by side, while the pull is read, with the same fetchers the draw uses.
+  - `liveSettled()` makes `select0` wait for them after the pull is read: at most 3 s (6 s on a phone). The page is then built once, with everything in. A redraw asked for while the pull was read is cancelled: the draw has that list already.
+  - `LIVE_INF` / `liveTrack` track each request until it lands or fails. `livePending` reads that, so a list that came back short no longer counts as "still coming" for good.
+  - Behind the loading card, `liveRedraw` waits for every list still coming, then draws once.
+  - The per-raid scale (`cal381`) uses an answer asked for early (`RATEK_RAW`), only for that same pull.
+  - The top kill's guild name is written into the chart key in place (Nov 14), never a redraw.
+- **The check:** tests/night-open-draws.js runs the page's own select0, liveRedraw and fetchers with a stand-in clock and Warcraft Logs, and fails if a pull opens with more than one draw.
+- **Rule for other chats:** a new list Debriefing waits on gets asked for in `livePrefetch` too, and its request goes through `liveTrack`. Otherwise it brings back a second draw.
+
 ## Measuring it
 
 - `scratchpad/audit/loadtime.js <url> [profile]` opens a night in a clean headless Edge. It times three cases: first visit, downloads saved but readings cleared, and a reload. With `profile` set to 1 it shows what the page was busy with.

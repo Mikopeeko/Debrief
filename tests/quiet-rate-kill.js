@@ -29,7 +29,7 @@ module.exports = function quietRateKill(say, H) {
   /* (2) WCL.rateKill asks the site for one pull's numbers */
   if (typeof W.rateKill !== 'function') bad('src/wcl.js has no rateKill in window.WCL, so the rate tiles never get each raid\'s own scale (lost in the Nov 1 rebuild db4d3c1b)');
   /* (3) ui.js's own cal381, with that WCL, asks for the pull's numbers the first time a pull is drawn (fetch is called at once, before any await) */
-  let code; try { code = H.grab('RATE_CAL') + '\n' + H.grab('cal381') + '\n({ cal381 })'; } catch (e) { bad('could not read RATE_CAL or cal381 out of src/ui.js: ' + e.message); return; }
+  let code; try { code = ['RATE_CAL', 'LIVE_INF', 'liveTrack', 'RATEK_RAW', 'cal381Of', 'cal381'].map((nm) => H.grab(nm)).join('\n') + '\n({ cal381 })'; } /* (Nov 15, night open speed: cal381 tracks its answer (liveTrack) and can use one asked for before the pull was read (RATEK_RAW, cal381Of)) */ catch (e) { bad('could not read RATE_CAL or cal381 out of src/ui.js: ' + e.message); return; }
   const CAL381 = new Map(); let redraws = 0;
   let P; try { P = vm.runInContext(code, vm.createContext({ CAL381, S: { tab: 'audit' }, liveRedraw: () => { redraws++; }, WCL: W })); } catch (e) { bad('cal381 would not load: ' + e.message); return; }
   const n = 120, r = { item: { boss: "Ula'tek", diffId: 16, wcl: { code: 'Gax3AkbyFRXmdrgQ', fight: 23 } }, dmgS: new Array(n).fill(2e6), healS: new Array(n).fill(5e5), takenS: new Array(n).fill(3e5) };

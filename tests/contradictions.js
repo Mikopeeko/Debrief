@@ -553,6 +553,7 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
 const planNights = require('./plan-nights-copy.js')(H, say);
+const nightOpen = (async () => require('./night-open-draws.js')(H, say))().catch((e) => say("Wolfthorn Thu Nov 12 Ula'tek pull 13", 'crash', 'the night open draws check crashed: ' + e.message)); /* (Nov 14 rehearsal, fixed Nov 15: opening a pull built the whole page 3 times before it showed) */
 const kguildRebuild = require('./kguild-no-rebuild.js')(H, say).catch((e) => say("Wolfthorn Thu Nov 12 Ula'tek pull 13", 'crash', 'the guild-name rebuild check crashed: ' + e.message)); /* (Nov 14 rehearsal: the top kill's guild name rebuilt the whole page) */ /* (Nov 14, Main's test: Heroic then Mythic saved the page's old copy of the raid nights over the team's, erasing Nov 4 and Nov 11) */
 /* (Nov 13, ruling B: the estimated parse on the Nov 11 Coiled Altar night against Warcraft Logs' own Parse %, every raider within 15 and nobody more than 15 above;
    Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
@@ -639,7 +640,7 @@ const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0]
   if (got !== want) say('raid days', 'days', 'Wed + Thu every week with a few odd nights should be raid days ' + want + ', the rule says ' + got);
   if (home !== String(RD.raidDaysOf(ats))) say('raid days', 'days', 'Home\'s raid days (' + home + ') and Plan\'s (' + RD.raidDaysOf(ats) + ') disagree');
   if (String(RD.raidDaysOf(ats, [4, 3])) !== '3,4' || String(RD.raidDaysOf(ats, [5])) !== '5') say('raid days', 'days', 'the lead\'s Raid days don\'t win over the rule'); }
-Promise.all([tierCount(), planSave, planNights, kguildRebuild, quietBugsP]).then(() => { /* (quietBugsP: the quiet-bug checks that run async code finish before this prints (Nov 15)) */
+Promise.all([tierCount(), planSave, planNights, kguildRebuild, quietBugsP, nightOpen]).then(() => { /* (quietBugsP: the quiet-bug checks that run async code finish before this prints (Nov 15)) */
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }
