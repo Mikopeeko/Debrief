@@ -13,6 +13,7 @@
 //   E. Hints of what's coming next for you, and an arrow to where your job wants you (Flex, Nov 15); see check E below.
 //   F. The start card, tidy: your job, your job in short, Start; the rundown and the options folded away (Flex, Nov 15); see check F below.
 //   G. Hitting the right thing: the Rawlings, the heart, a Viper; Tab picks a target (Flex, Nov 15); see check G below.
+//   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -151,6 +152,26 @@ function checks(H, say, pj) {
     // (Flex, Nov 15: "Wheres the damage button i dont see it": a Target button on the action bar, clickable, gold when something needs hitting)
     if (!/class="pg-act pg-tab" data-a="tgt"/.test(PJ) || !/tb\.onclick = \(\) => \{ if \(G && !paused\) cycleTgt\(\); \}/.test(PJ) || !/tb\.classList\.toggle\('hot', hot\)/.test(PJ)) bad('there is no Target button on the action bar that picks a target and glows when something needs hitting (check G)');
   } catch (e) { bad('the damage moments crashed the game: ' + e.message + ' (check G)'); }
+  // H. Attacking you can see (Nov 15, Flex: "ok but how do you do damage...?", "there needs to be a clear instruction thats how you attack", "pressing 1
+  //    closes the game"): 1 attacks (picking the right target first if you have none), Rawlings die when you finish them, your hits on the heart count,
+  //    the game tells you once how to attack, and the site's own keys never see the game's (1 switched the guide to Heroic and closed it). Also the
+  //    wrong-way calls the review found: she surfaces where the run says, and after the dive her waves name the half they really come down first.
+  if (typeof dbg.atk !== 'function') { bad('there is no way to attack: no 1 · Attack (check H)'); return; }
+  try {
+    if (!/document\.addEventListener\('keydown', kd, true\)/.test(PJ) || !/e\.stopPropagation\(\); if \(\/\^\[0-9\]\$\/\.test\(e\.key\)/.test(PJ)) bad('the game doesn\'t keep the keyboard while it is open: the site\'s number keys can still switch pages and close it (check H)');
+    if (!/e\.code === 'Digit1' \|\| e\.code === 'Numpad1'\)\) \{ e\.preventDefault\(\); atkKey\(\)/.test(PJ) || !/class="pg-act pg-atk" data-a="atk"/.test(PJ) || !/Tab: target · 1: attack/.test(PJ)) bad('1 isn\'t the attack key, or there is no 1 · Attack button, or the keys line doesn\'t say so (check H)');
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(40.6, 'r3', { east: false, seed: 3 }); dbg.tgt = null; dbg.G.atk = false; dbg.G.taught = false;
+    const raw0 = dbg.G.adds.filter((a) => a.kind === 'rawling').length, on = dbg.atk(), picked = dbg.tgt, k0 = dbg.G.kills || 0;
+    if (!raw0) bad('no Rawlings are up at 0:40.6 after the first coil slam, so there is nothing to attack (check H)');
+    else if (!on || !picked || !/^a\d+$/.test(picked)) bad('pressing 1 with nothing picked doesn\'t pick a Rawling and attack it (check H)');
+    else { dbg.stepOwn(80); if (!((dbg.G.kills || 0) > k0) || dbg.G.adds.some((a) => a.id === picked)) bad('attacking a Rawling for 4 s doesn\'t kill it (check H)'); else if (raw0 > 1 && (dbg.G.kills || 0) - k0 < 2) bad('after killing a Rawling the attack stops instead of moving on to the next one (check H)'); if (!dbg.G.taught) bad('the game never says how to attack when the first Rawlings come (check H)'); }
+    dbg.at(147, 'r3', { east: false, seed: 3 }); dbg.tgt = 'heart'; dbg.G.atk = true; dbg.G.heartHits = 0; dbg.stepOwn(100);
+    if (!(dbg.G.heartHits >= 6)) bad('5 s on the heart with your attack on gave ' + dbg.G.heartHits + ' hits; there should be one every 0.6 s (check H)');
+    const runs = Array.from({ length: 12 }, (_, i) => script({ seed: i + 21 }));
+    for (const r of runs) { const sw = r.warns.find((w) => /She surfaces on the/.test(w.text)); if (!sw || !sw.text.includes(r.east ? 'EAST' : 'WEST')) { bad('the dive warning reads "' + (sw && sw.text) + '" but she comes up ' + (r.east ? 'east' : 'west') + ' (seed ' + r.seed + ', check H)'); break; }
+      const wg = r.wings[1], hw = r.waves.filter((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1), ax = hw.reduce((a, w) => a + w.x, 0) / hw.length - r.dive.to[0], ay = hw.reduce((a, w) => a + w.y, 0) / hw.length - r.dive.to[1], real = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'WEST' : 'EAST') : (ay < 0 ? 'SOUTH' : 'NORTH');
+      if (wg.first !== real) { bad('after the dive her first waves come down the ' + real + ' half but the call says ' + wg.first + ' (seed ' + r.seed + ', check H)'); break; } }
+  } catch (e) { bad('attacking crashed the game: ' + e.message + ' (check H)'); }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;

@@ -76,6 +76,8 @@ function pg3dShapes(A, t) {
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
+  // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
+  const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { if (h.age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + h.age * 5, h.melee ? '#fff0c8' : '#f3c969', 1 - h.age / 0.4); }); (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
   if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */

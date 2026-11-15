@@ -72777,8 +72777,9 @@ function pgUlScript(o) {
   [45, 102].forEach((t) => { const p = FT(PG_UL.tail, t); cast('tail', 'Mephitic Thrash', t, t + 4); warn(t, 'Mephitic Thrash: out of her tail\'s 35 yards!', '#ff9b4a'); timer(t + 4, 'Mephitic Thrash'); S.thrash.push({ t0: t, at: t + 4, x: p[0], y: p[1], r: 35 }); });
   // Caustic Waves: 6 s cast, she pulls one wing back; that half gets two waves first, the other half 6.5 s later, rolling away from her
   S.wings = [];
-  [50, 107].forEach((t) => { const west = rnd() < 0.5, T0 = t + 6, rot = rotAt(T0); S.wings.push({ t, west });
-    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Ula\'tek pulls her ' + (west ? 'WEST' : 'EAST') + ' wing back!', '#9be13a'); timer(T0, 'Caustic Waves'); timer(T0 + 6.5, 'Caustic Waves (second half)');
+  [50, 107].forEach((t) => { const west = rnd() < 0.5, T0 = t + 6, rot = rotAt(T0), d1 = pgRot([west ? -1 : 1, 0], rot), side = (v) => (Math.abs(v[0]) > Math.abs(v[1]) ? (v[0] < 0 ? 'WEST' : 'EAST') : (v[1] < 0 ? 'SOUTH' : 'NORTH')), wFirst = side(d1), wSafe = side([-d1[0], -d1[1]]);
+    S.wings.push({ t, west, first: wFirst, safe: wSafe }); /* (the half of the room her first waves come down, turned with her after the dive) */
+    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Ula\'tek pulls her wing back: the ' + wFirst + ' half goes first!', '#9be13a'); timer(T0, 'Caustic Waves'); timer(T0 + 6.5, 'Caustic Waves (second half)');
     const first = west ? [-12, -36] : [12, 36], second = west ? [12, 36] : [-12, -36];
     [[first, T0], [second, T0 + 6.5]].forEach(([xs, t0]) => xs.forEach((x) => { const p = pgRot([x, 46], rot); S.waves.push({ kind: 'her', x: p[0], y: p[1], deg: 270 + rot, v: 12.5, w: 24, d: 5, cres: cres(24), warn: 2.2, t0, t1: t0 + 7.6, name: 'Caustic Waves', tip: 'Wait on the half that goes second, then cross behind the first wave.' }); })); });
   // the small tails (Gore Rattle), from the 12 measured top Mythic kills (notes/Guides/Bosses/8 Ula'tek.md, "Tail waves"): each rises at the
@@ -72792,7 +72793,7 @@ function pgUlScript(o) {
     ts.forEach(([q, hd]) => { const p = F(q, t), h = hd + rotAt(t); S.tails.push({ x: p[0], y: p[1], t0: t - 2.4, at: t });
       [0, -(20 + rnd() * 45), 20 + rnd() * 45].forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: h + off, v: 12.5, w: 9, d: 4, cres: cres(9), warn: 2.4, t0: t, t1: t + 8.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge sends three waves 2.4 s later: step out of their red lanes.' })); }); });
   // the dive: Submerge, bubbles where she'll come up, she surfaces on the other side; her tank has to be there first
-  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch for the bubbles!', '#7fd8ff'); warn(SURF, 'She surfaces on the ' + (o.east ? 'EAST' : 'WEST') + ' edge!', '#7fd8ff'); timer(SURF, 'She surfaces');
+  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch for the bubbles!', '#7fd8ff'); warn(SURF, 'She surfaces on the ' + (east ? 'EAST' : 'WEST') + ' edge, where the bubbles were!', '#7fd8ff'); timer(SURF, 'She surfaces');
   // Rage of the Shackled: 6.5 s cast, then her heart is open for 20 s; raid damage every 4 s; Falling Debris (7 yards) all over
   cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: burn the heart, watch the floor!', '#ff8a5a'); timer(145.5, 'Heart open');
   for (let t = 145.5; t < 165; t += 4) S.pulses.push(t);
@@ -72815,7 +72816,7 @@ function pgOpen(root, boss, d, pk) {
     '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div>' +
     '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
-    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab). You hit it while in range."><b>Tab</b><span>Target</span></div><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
+    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab)."><b>Tab</b><span>Target</span></div><div class="pg-act pg-atk" data-a="atk" role="button" tabindex="0" title="Attack your target (1). Press again to stop."><b>1</b><span>Attack</span></div><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
     '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div><div class="pg-card"></div></div>';
   (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('pg-open');
   const mini = ov.querySelector('.pg-mini'), mx2 = mini.getContext('2d'), cv = ov.querySelector('.pg-cv'), cx = cv.getContext('2d'), card = ov.querySelector('.pg-card'), $ = (s) => ov.querySelector(s);
@@ -72905,29 +72906,39 @@ function pgOpen(root, boss, d, pk) {
   // need to do and when"): Tab picks a target (a click on one picks it too) and you hit it while you're in range (melee 5 yards from it, everyone else
   // 40). The moments that matter: a Viper the moment it hatches, the heart while it's open, the Rawlings after each coil soak. A moment spent mostly
   // on the right thing counts; a miss is one line in the report. No damage numbers: training wheels. ----
+  const ADD_HP = { rawling: 3, viper: 5 };
   const tgtList = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
-    G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1 }); });
+    G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); const mx = ADD_HP[a.kind] || 3; if (a.hp == null) a.hp = mx; L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1, hp: a.hp, max: mx }); });
     if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
   const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
-  const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it and kill it first.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart and stay in range.'],
-    rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick them and kill them before they grow strong.'] };
+  const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it, then 1 to attack, and kill it first.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart, then 1 to attack, and stay in range.'],
+    rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick one, then 1 to attack, and kill them before they grow strong.'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
   const inRange = (o) => pgDist([G.x, G.y], o.p) - o.r <= (rl(me) === 'm' ? 5 : 40);
   const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
-  const onRight = (cat, o) => isRight(cat, o) && inRange(o);
+  const onRight = (cat, o) => isRight(cat, o) && inRange(o) && !!G.atk;
+  const nearestRight = (t) => { const cat = dpsCat(t), L = tgtList(t), d = (o) => pgDist([G.x, G.y], o.p); return (cat ? L.filter((o) => isRight(cat, o)) : L.filter((o) => o.kind !== 'boss' && o.kind !== 'tail')).sort((a, b) => d(a) - d(b))[0] || L.sort((a, b) => d(a) - d(b))[0] || null; };
+  const atkKey = () => { if (!G) return; if (G.atk && tgtNow(G.t)) { G.atk = false; say('Attack off.'); hud(true); return; } if (!tgtNow(G.t)) { const o = nearestRight(G.t); if (o) G.tgt = o.key; } G.atk = !!tgtNow(G.t); if (G.atk) G.swing = 0; hud(true); };
+  const hitTgt = (o, t) => { (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
+    const a = G.adds.find((q) => q.id === o.key); if (a) { a.hp = (a.hp == null ? ADD_HP[a.kind] || 3 : a.hp) - 1; if (a.hp <= 0) { G.adds = G.adds.filter((q) => q !== a); G.kills = (G.kills || 0) + 1; say((a.kind === 'viper' ? 'Viper' : 'Rawling') + ' killed.'); } }
+    else if (o.key === 'heart') G.heartHits = (G.heartHits || 0) + 1; else if (P2 && P2.hit) P2.hit(o.key); };
+  const atkStep = (t, dt) => { if (!G.atk) return; let o = tgtNow(t); if (!o && dpsCat(t)) { const nx = nearestRight(t); if (nx && isRight(dpsCat(t), nx)) { G.tgt = nx.key; o = nx; } } /* (training wheels: after a kill, on to the next one that matters) */ if (!o) { G.atk = false; return; } if (!inRange(o)) return; G.swing = (G.swing || 0) - dt; if (G.swing <= 0) { G.swing = 0.6; hitTgt(o, t); } };
   const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
     if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (DPS_SAY[c.kind][3] || (c.kind === 'heart' || c.kind === 'viper' ? 'it' : 'them')) + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
   const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
-    if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
+    if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) { G.tgt = o.key; G.atk = true; } } /* (the autopilot, a careful player, picks the right thing and attacks) */
+    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then 1 to attack.' : (cat === 'viper' ? 'A Viper! ' : 'Rawlings! ') + 'Press Tab to pick one, then 1 to attack.', '#f3c969'); } /* (once a run: how to attack) */
+    atkStep(t, dt); if (G.hitFx && G.hitFx.length && t - G.hitFx[0].t0 > 0.5) G.hitFx = G.hitFx.filter((x) => t - x.t0 <= 0.5);
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
   const cycleTgt = () => { const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
-  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
+  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, atk: !!G.atk, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), adds: tgtList(t).filter((o) => o.max) }; };
+  const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; el.textContent = text; el.style.color = c || '#fff'; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
   const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
@@ -73013,7 +73024,7 @@ function pgOpen(root, boss, d, pk) {
       if (!byKeys && target) sp = Math.min(sp, Math.hypot(target[0] - G.x, target[1] - G.y));
       const nx = G.x + mx * sp, ny = G.y + my * sp; if (onPlat(nx, ny) || inVenom(G.x, G.y)) { G.x = nx; G.y = ny; } else if (onPlat(nx, G.y)) G.x = nx; else if (onPlat(G.x, ny)) G.y = ny; }
     G.still = !G.kb && Math.hypot(G.x - px, G.y - py) < 1e-4; G.t = t; moveBots(t, dt); check(t0, t);
-    G.bossHp = P2 ? P2.bossHp(t) : Math.max(56, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0)); };
+    G.bossHp = P2 ? P2.bossHp(t) : Math.max(52, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0) - Math.min(4, (G.heartHits || 0) * 0.12)); /* (your hits on the heart take her down a little faster) */ };
   const check = (t0, t) => { const x = G.x, y = G.y, crossed = (at) => at > t0 && at <= t;
     // waves: a hit is huge stacking poison; an egg it touches hatches (in your hands or on the floor)
     S.waves.forEach((w, i) => { if (G.done.has('w' + i) || !inWave(w, t, x, y)) return; G.done.add('w' + i); deb('venom', 10, true); mistake(w.ring ? 'ring' : 'wave', w.name + ' hit you.', w.tip, 28); const e = myEggHeld(); if (e) hatch(e, 'A wave touched your egg', 'Carrying an egg, a wave hatches it: dodge every one.'); });
@@ -73095,6 +73106,9 @@ function pgOpen(root, boss, d, pk) {
       cx.beginPath(); cx.arc(sx, sy, rad, 0, Math.PI * 2); cx.lineWidth = (you ? 3 : 2) * dpr; cx.strokeStyle = you ? '#fff' : clsC(id) || r[1]; cx.stroke(); if (TEAM && !you) label(x, y, nm(id).slice(0, 7), clsC(id) || '#cfd6df', 10, -13); };
     GDZ_RAID.forEach((id) => { if (id !== me) unit(id, G.bots[id].x, G.bots[id].y, false); });
     if (has('def')) circ(G.x, G.y, 1.9, 'rgba(127,184,255,.18)', '#7fb8ff', 2); unit(me, G.x, G.y, true); label(G.x, G.y, 'YOU', '#fff', 12, -22);
+    const dv3 = dpsView(); if (dv3) { dv3.fx.forEach((h) => { if (h.melee) { if (h.age < 0.25) { const [sx, sy] = P(h.x1, h.y1), rr = (h.r + 0.6) * k; cx.strokeStyle = 'rgba(255,240,200,' + (1 - h.age / 0.25).toFixed(2) + ')'; cx.lineWidth = 3 * dpr; cx.beginPath(); cx.moveTo(sx - rr, sy - rr); cx.lineTo(sx + rr, sy + rr); cx.stroke(); } return; }
+        const f2 = Math.min(1, h.age / 0.22), bx = h.x0 + (h.x1 - h.x0) * f2, by = h.y0 + (h.y1 - h.y0) * f2; if (f2 < 1) circ(bx, by, 0.5, '#ffe9a8', '#f3c969', 1.5); else if (h.age < 0.45) circ(h.x1, h.y1, h.r + 0.4 + (h.age - 0.22) * 6, null, 'rgba(243,201,105,' + (1 - (h.age - 0.22) / 0.23).toFixed(2) + ')', 2); });
+      dv3.adds.forEach((o) => { if (o.hp >= o.max) return; const [sx, sy] = P(o.p[0], o.p[1] + o.r + 1.2), w = 30 * dpr, h2 = 4 * dpr; cx.fillStyle = 'rgba(0,0,0,.8)'; cx.fillRect(sx - w / 2 - dpr, sy - h2 - dpr, w + 2 * dpr, h2 + 2 * dpr); cx.fillStyle = '#ff6b5c'; cx.fillRect(sx - w / 2, sy - h2, w * Math.max(0, o.hp / o.max), h2); }); }
     const dv2 = dpsView(); if (dv2) { const pu = (0.55 + 0.4 * Math.sin(performance.now() / 150)).toFixed(2); dv2.right.forEach((o) => circ(o.p[0], o.p[1], o.r + 1.2, null, 'rgba(243,201,105,' + pu + ')', 2.5)); if (dv2.cur) circ(dv2.cur.p[0], dv2.cur.p[1], dv2.cur.r + 0.7, null, dv2.inRange ? '#ffffff' : '#ff8f87', 2, [4, 3]); }
     const hn = hintNow(); if (hn) { const ux = (hn.T[0] - G.x) / hn.d, uy = (hn.T[1] - G.y) / hn.d, A = (r, s2) => P(G.x + ux * r - uy * s2, G.y + uy * r + ux * s2), a0 = A(2.2, 0), a1 = A(4.6, 0), w1 = A(3.6, -0.9), w2 = A(3.6, 0.9), pulse = 0.65 + 0.35 * Math.sin(performance.now() / 160);
       cx.globalAlpha = pulse; cx.lineWidth = 3 * dpr; cx.strokeStyle = '#f3c969'; cx.beginPath(); cx.moveTo(a0[0], a0[1]); cx.lineTo(a1[0], a1[1]); cx.moveTo(w1[0], w1[1]); cx.lineTo(a1[0], a1[1]); cx.lineTo(w2[0], w2[1]); cx.stroke(); cx.globalAlpha = 1;
@@ -73128,8 +73142,8 @@ function pgOpen(root, boss, d, pk) {
     if (bb) return 'Fester Burst in ' + Math.ceil(bb.at - t) + ' s: get within 10 yards of the Wretch (the yellow bubble).';
     if (sk && t < sk.t0) return 'Soak #' + (sk.k + 1) + ': ' + (sk.k ? 'the second coil to appear is yours. Wait for it beside her tail.' : 'the first coil to appear beside her tail is yours.') + (held ? ' Your egg breaks there.' : '');
     if (sk) return 'Your coil (the ' + (sk.k ? 'second' : 'first') + ' to appear) slams in ' + Math.ceil(sk.at - t) + ' s: stand in the gold circle.' + (held ? ' Your egg breaks there.' : '');
-    const dc = !P2 && dpsCat(t); if (dc && !onRight(dc, tgtNow(t)) && !(e && e.state !== 'gone')) return DPS_SAY[dc][0] + ': press Tab to pick ' + (dc === 'rawling' ? 'one' : 'it') + ' and stay in range' + (rl(me) === 'm' ? ' (melee: close to it)' : '') + '.';
-    if (wg) return 'Her ' + (wg.west ? 'west' : 'east') + ' half goes first: wait on the ' + (wg.west ? 'east' : 'west') + ' half, then cross behind the first wave.';
+    const dc = !P2 && dpsCat(t); if (dc && !onRight(dc, tgtNow(t)) && !(e && e.state !== 'gone')) return DPS_SAY[dc][0] + ': press Tab to pick ' + (dc === 'rawling' ? 'one' : 'it') + ', then 1 to attack' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.';
+    if (wg) return 'The ' + wg.first.toLowerCase() + ' half goes first: wait on the ' + wg.safe.toLowerCase() + ' half, then cross behind the first wave.';
     if (e && e.state === 'air') return 'Your egg lands in ' + Math.max(0, Math.ceil(e.land - t)) + ' s (the gold circle): stay out of the 4-yard impact, then wait by it.';
     if (e && t < e.shell) return 'Your egg\'s shell breaks in ' + Math.ceil(e.shell - t) + ' s: wait by it.';
     if (e) return 'Pick up your egg now: walk over it.';
@@ -73152,7 +73166,7 @@ function pgOpen(root, boss, d, pk) {
   let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
     const t = G.t, j = jobOf(me, t), egg = G.eggs.some((e) => e.id === me && e.state === 'floor'), act = !!(j.ob || j.fast || egg), b = { id: me, x: G.x, y: G.y, esc: G.hintEsc }, dz = act ? dodge(b, j.T, t, j.fast, j.ob) : null; G.hintEsc = b.esc;
     const T = dz ? dz.T : null, d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, dodge: !!b.esc } : null; hintC = { t, h }; return h; };
-  const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o');
+  const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + (G.atk ? 'a' : '');
     if (!force && key === hudKey) return; hudKey = key;
     $('.pg-mn').textContent = role.name + ' (you)'; $('.pg-mj').textContent = role.job;
     const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = hp + '%'; hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
@@ -73163,7 +73177,8 @@ function pgOpen(root, boss, d, pk) {
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
     const tg = $('.pg-tgt'); if (tg) tg.innerHTML = !dv ? '' : (dv.cur ? '<span class="pg-tgn' + (dv.ok ? ' ok' : '') + '">Target: <b>' + esc(dv.cur.name) + '</b>' + (dv.inRange ? '' : ' <em>out of range</em>') + '</span>' : '') + (dv.cat && !dv.ok ? '<span class="pg-tgr">' + esc(DPS_SAY[dv.cat][0]) + ': press Tab</span>' : '');
     $('.pg-up').innerHTML = hints ? upNext(t).map((u) => '<span style="border-color:' + u.c + ';color:' + u.c + '">' + esc(u.text) + ' <b>' + Math.ceil(u.at - t) + ' s</b></span>').join('') : '';
-    { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; } }
+    { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; }
+      const ab = $('.pg-atk'); if (ab) { ab.classList.toggle('hot', !!(dv && dv.cur && dv.cat && isRight(dv.cat, dv.cur) && !dv.atk)); ab.classList.toggle('good', !!(dv && dv.atk && dv.ok)); ab.classList.toggle('on', !!(dv && dv.atk)); ab.querySelector('span').textContent = dv && dv.atk ? (dv.inRange ? 'Attacking' : 'Too far') : 'Attack'; } }
     [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); if (P2) P2.hud(t); };
   const warns = () => { while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w = S.warns[G.warnI++], el = $('.pg-warn'); el.textContent = w.text; el.style.color = w.c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } };
 
@@ -73231,7 +73246,7 @@ function pgOpen(root, boss, d, pk) {
       '<details class="pg-opts"><summary>Options: <b>' + esc(optSum()) + '</b></summary><div class="pg-optrow"><span>Speed</span><div class="pg-seg pg-spd"><button type="button" data-v="1"' + (speed === 1 ? ' class="on"' : '') + '>Normal</button><button type="button" data-v="0.5"' + (speed < 1 ? ' class="on"' : '') + '>Half speed</button></div>' +
       '<span>Hints</span><div class="pg-seg pg-hint"><button type="button" data-v="1"' + (hints ? ' class="on"' : '') + '>On</button><button type="button" data-v="0"' + (hints ? '' : ' class="on"') + '>Off</button></div>' +
       '<span>Start at</span><select class="pg-at">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div></details>' +
-      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button><p class="pg-keys">Move: W A S D or click · Tab: target · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div></div>';
+      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button><p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div></div>';
     const asgSet = () => { const a = card.querySelector('.pg-asg0'), s0 = card.querySelector('.pg-short0'); if (a) a.innerHTML = P2 ? P2.asg() : asg(role.id); if (s0) s0.innerHTML = '<span class="pg-k">Your job in short</span>' + (P2 ? P2.short() : short(role.id)); };
     const optSet = () => { const o = card.querySelector('.pg-opts summary b'); if (o) o.textContent = optSum(); };
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Start) */ } }; /* (the picture behind the card is you) */
@@ -73280,14 +73295,17 @@ function pgOpen(root, boss, d, pk) {
   const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
   const pauseT = () => { if (!G || card.classList.contains('on')) return; paused = !paused; if (paused) { stop(); const w = $('.pg-warn'); w.textContent = 'Paused (Space to go on)'; w.style.color = '#fff'; w.classList.remove('in'); void w.offsetWidth; w.classList.add('in'); } else go(); };
   const K = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
-  const kd = (e) => { if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
+  const kd = (e) => { if (!ov.isConnected) return; const tg = e.target && e.target.tagName, typing = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
+    if (!(e.ctrlKey || e.metaKey || e.altKey)) { e.stopPropagation(); if (/^[0-9]$/.test(e.key) && !typing) e.preventDefault(); } /* (the site's own keys never see the game's: 1 switched the guide to Heroic and closed it) */
+    if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
     if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
     if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
+    if (G && !paused && (e.code === 'Digit1' || e.code === 'Numpad1')) { e.preventDefault(); atkKey(); return; }
     if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
-  document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
+  document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
   cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
@@ -73303,8 +73321,9 @@ function pgOpen(root, boss, d, pk) {
   vw.onclick = (e) => { const b = e.target.closest('button'); if (b) { b.blur(); view(b.dataset.v === '3'); } };
   { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d' || P2) view(true); } /* (a later part is 3D only (Flex): it opens in 3D, and doesn't change the view phase 1 remembers) */
   window.__pg3dDbg = { get v3() { return v3; }, view };
-  const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); window.removeEventListener('blur', onBlur); };
+  const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd, true); document.removeEventListener('keyup', ku, true); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
+  { const ab = $('.pg-atk'); if (ab) { ab.onclick = () => { if (G && !paused) atkKey(); }; ab.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) atkKey(); } }; } }
   { const tb = $('.pg-tab'); if (tb) { tb.onclick = () => { if (G && !paused) cycleTgt(); }; tb.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) cycleTgt(); } }; } }
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
 
@@ -73327,7 +73346,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => { atkKey(); return !!G.atk; }, sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -73357,7 +73376,8 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-job { max-width: 560px; padding: 9px 12px; background: rgba(10,12,16,.88); border: 1px solid rgba(243,201,105,.5); } .pg-job span { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg-job p { margin: 2px 0 0; font: 600 15px/1.35 var(--body, system-ui); }
 .pg-acts { display: flex; gap: 6px; } .pg-act { position: relative; width: 64px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(10,12,16,.88); border: 1px solid rgba(255,255,255,.22); overflow: hidden; }
 .pg-act b { font: 800 14px var(--head, system-ui); }
-.pg-tab { pointer-events: auto; cursor: pointer; } .pg-tab:hover { border-color: #f3c969; } .pg-tab span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-tab, .pg-atk { pointer-events: auto; cursor: pointer; } .pg-atk:hover { border-color: #f3c969; } .pg-atk.on { background: rgba(126,224,143,.12); }
+.pg-atk.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.55); animation: pgTabHot 1s ease-in-out infinite; } .pg-atk.hot b, .pg-atk.hot span { color: #f3c969; } .pg-atk.good { border-color: #7ee08f; } .pg-atk.good b { color: #7ee08f; } .pg-tab:hover { border-color: #f3c969; } .pg-tab span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pg-tab.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.55); animation: pgTabHot 1s ease-in-out infinite; } .pg-tab.hot b, .pg-tab.hot span { color: #f3c969; }
 .pg-tab.good { border-color: #7ee08f; } .pg-tab.good b { color: #7ee08f; } @keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } } .pg-act span { font-size: 11.5px; color: #aab4c0; } .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0,0,0,.6); }
 .pg-mis b { color: #ff8f87; font-size: 18px; }
@@ -73497,6 +73517,8 @@ function pg3dShapes(A, t) {
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
+  // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
+  const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { if (h.age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + h.age * 5, h.melee ? '#fff0c8' : '#f3c969', 1 - h.age / 0.4); }); (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
   if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
