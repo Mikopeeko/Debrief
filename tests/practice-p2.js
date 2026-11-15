@@ -182,9 +182,12 @@ function checks(H, say) {
       dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, east, 4), DL = (dbg.G.dpsM && dbg.G.dpsM.list) || [], tag = pk.side + ' ' + pk.role + (east ? ', she is east' : ', she is west');
       ['warden', 'ds', 'heart'].forEach((k) => { const m = DL.find((q) => q.kind === k); if (!m || m.fr < 0.5) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m ? Math.round(m.fr * 100) + '%' : 'no moment') + ', check I)'); });
       if (r.log.some((x) => /was up|were up|was open/.test(x))) bad('the autopilot (' + tag + ') misses a damage moment: ' + r.log.join(' | ') + ' (check I)');
+      if (!(dbg.G.hits >= 20)) bad('the autopilot (' + tag + ') pressed 1 only ' + (dbg.G.hits || 0) + ' times in phase 2; a moment counts only while you keep pressing (check I)');
       if (dbg.P2.dpsNames(DL) !== 'the Warden, the Doomscales, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
     dbg.P2.pick = pkI; const st = dbg.sim(meI, false, false, 4).log.join(' | ');
     ['The Warden was up', 'The Doomscales were up', 'The heart was open'].forEach((x) => { if (!st.includes(x)) bad('standing still all phase, "' + x + '" isn\'t in the mistakes (check I)'); });
+    // (Nov 15, the press-to-cast attack: a moment counts only while you keep pressing 1; the job line says so, as phase 1's does)
+    dbg.P2.pick = pkI; dbg.at(200, meI, { east: false, seed: 3 }); dbg.G.tgt = null; const hint = dbg.P2.jobText(); if (!/Tab to pick it, then keep pressing 1 to hit it/.test(hint)) bad('at 3:20 with no target, phase 2\'s job line reads "' + hint + '"; it should say Tab to pick the Warden, then keep pressing 1 (check I)');
     const PJ0 = rd('practice.js'); if (/e\.code === 'Tab' && !P2/.test(PJ0) || /const dpsStep = \(t, dt\) => \{ if \(P2\) return/.test(PJ0) || /const pickTgtAt = \(p\) => \{ if \(P2/.test(PJ0)) bad('Tab, a click or the damage tally is still off in phase 2 (check I)');
   } catch (e) { bad('the damage moments crashed phase 2: ' + e.message + ' (check I)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
