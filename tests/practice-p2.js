@@ -53,6 +53,14 @@ function checks(H, say) {
   { const m = /Falling Debris \| also falls three times in stage 2 \(about (\d):(\d\d), (\d):(\d\d) and (\d):(\d\d)\)/.exec(notes); if (!m) bad('the notes no longer give stage 2\'s Falling Debris times (check A)');
     else { const exp = [sec(m), sec([0, m[3], m[4]]), sec([0, m[5], m[6]])], firsts = exp.map((e) => S.impacts.filter((q) => q.name === 'Falling Debris' && Math.abs(q.at - e) < 1.5).length); if (firsts.some((n) => !n)) bad('stage 2\'s Falling Debris doesn\'t fall at ' + exp.map(clkS).join(', ') + ' (circles near each: ' + firsts.join(', ') + ', check A)'); } }
   { const m = /Wardens dead about (\d):(\d\d) to (\d):(\d\d)/.exec(clockLine); if (m && (T.wdie < sec(m) - 0.5 || T.wdie > sec([0, m[3], m[4]]) + 0.5)) bad('the Wardens die at ' + clkS(T.wdie) + '; top kills kill them ' + m[1] + ':' + m[2] + ' to ' + m[3] + ':' + m[4] + ' (check A)'); }
+  // (Flex, Nov 15: "the big egg locations are wrong, well the close one is": 10 top Mythic kills in the log library pick the big eggs up at each
+  // ledge's two far ends, about (±56.5, -84.5) and (±56.5, 86.5) in the guide's yards (ARENAS cx 0, cy 1553.1); the close one had sat 16 yards
+  // from the far one, near the cauldron. The cauldron: the big eggs go in about (±105, 0), the guide's pit)
+  [['far', -84.5], ['close', 86.5]].forEach(([w, y]) => ['E', 'W'].forEach((s) => { const b = S.big.find((q) => q.side === s && q.which === w), want = [s === 'E' ? 56.5 : -56.5, y];
+    if (!b || hyp([b.x, b.y], want) > 3) bad('the ' + w + ' big egg on the ' + s + ' ledge is at ' + (b ? b.x.toFixed(0) + ', ' + b.y.toFixed(0) : 'nowhere') + '; top kills pick it up at ' + want.join(', ') + ' (check A)'); }));
+  ['E', 'W'].forEach((s) => { if (hyp(S.pits[s], [s === 'E' ? 106 : -106, 0]) > 4) bad('the ' + s + ' cauldron is at ' + S.pits[s].join(', ') + '; top kills throw the eggs in about ' + (s === 'E' ? 106 : -106) + ', 0 (check A)'); });
+  if (T.throwAt < 226 || T.throwAt > 236) bad('the small eggs go in at ' + clkS(T.throwAt) + '; top kills put them in 3:46 to 3:56 (check A)');
+  if (T.bigUp < 244 || T.bigUp > 263) bad('the big eggs are picked up at ' + clkS(T.bigUp) + '; top kills pick them up 4:04 to 4:23 (check A)');
   if (T.doomEnd - T.doom !== 90) bad('the big eggs get ' + (T.doomEnd - T.doom) + ' s to be picked up; Hatching Doom is 90 s (spell 1306862, check A)');
   // B. the tethers, over 40 runs
   let tanks = 0; for (let seed = 1; seed <= 40; seed++) { const J = ctx.pgP2Jobs(seed, null, null), ids = Object.keys(J).filter((id) => J[id].teth), solo = ids.filter((id) => J[id].teth === 'solo');
