@@ -188,11 +188,14 @@ function pg3dNormals(H, w, h, k, wrap, out) {
 // same heights, so colour and relief line up. free() empties the canvases (closing the game calls it through keep()).
 function pg3dStoneDraw(mk, px) {
   const PL = pg3dStonePlan(), S = PL.span, K = px / S, TAU = Math.PI * 2, hs = (a, b) => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };
-  const STONE = [62, 72, 66], GROOVE = [37, 44, 40], RAISED = [72, 83, 76], SLATE = [40, 52, 64], RUST = [72, 44, 34], GLOW = [92, 222, 46];
+  // (the stone leans teal like the room's: the warm key light takes blue away, so a grey-green came out olive. Its green never tops its red
+  // and blue by much, so the shader's venom glow (vglow) leaves it alone; only GLOW-coloured marks clear it, and none of them by much)
+  const STONE = [54, 72, 70], GROOVE = [32, 44, 43], RAISED = [64, 84, 80], SLATE = [40, 52, 64], RUST = [72, 44, 34], GLOW = [92, 222, 46], MOSS = [64, 92, 54];
   const rgb = (c, a) => 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (a == null ? 1 : a) + ')', sh = (c, d) => [c[0] + d, c[1] + d, c[2] + d];
-  // (one pen for both maps: a shape goes on the colour map and, given a height, on the height map too)
+  // (one pen for both maps: a shape goes on the colour map and, given a height, on the height map too; a list of lines is one path, so a
+  // see-through stroke over it never doubles up where they cross)
   const pen = (w, h, toPx, k) => { const col = mk(w, h), hgt = mk(w, h), C = col.getContext('2d'), H = hgt.getContext('2d'), both = [C, H];
-    const go = (L, close) => { for (const g of both) { g.beginPath(); L.forEach((p, i) => { const q = toPx(p[0], p[1]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); if (close) g.closePath(); } };
+    const go = (L, close) => { for (const g of both) { g.beginPath(); (Array.isArray(L[0][0]) ? L : [L]).forEach((M) => { M.forEach((p, i) => { const q = toPx(p[0], p[1]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); if (close) g.closePath(); }); } };
     return { col, hgt, C, H, w, h, poly: (L) => go(L, true), line: (L) => go(L, false),
       arc: (x, y, r, a0, a1) => { const q = toPx(x, y); for (const g of both) { g.beginPath(); g.arc(q[0], q[1], r * k, a0 || 0, a1 == null ? TAU : a1); } },
       fill: (c, hv, a) => { C.fillStyle = rgb(c, a); C.fill(); if (hv != null) { H.fillStyle = rgb([hv, hv, hv], a); H.fill(); } },
@@ -221,7 +224,7 @@ function pg3dStoneDraw(mk, px) {
   const rim = (p) => !PL.inside(p[0], p[1], 0.02), rough = (a, b) => { if (b[0] < a[0] || (b[0] === a[0] && b[1] < a[1])) { const c = a; a = b; b = c; } const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / 0.7)), out = [a];
     for (let k = 1; k < n; k++) { const t = k / n, o = (hs(a[0] * 7.3 + b[0] * 3.1 + k, a[1] * 5.7 + b[1] * 2.3) - 0.5) * 0.16; out.push([a[0] + (b[0] - a[0]) * t - (b[1] - a[1]) / L * o, a[1] + (b[1] - a[1]) * t + (b[0] - a[0]) / L * o]); } out.push(b); return out; };
   PL.slabs.forEach((L, i) => { T.poly(L); T.fill(sh(STONE, (hs(i, 5) - 0.5) * 12), 146 + hs(i, 6) * 10); const c = L.reduce((s, p) => [s[0] + p[0] / L.length, s[1] + p[1] / L.length], [0, 0]);
-    for (let k = 0; k < 3; k++) T.blot(c[0] + (hs(i, k + 7) - 0.5) * 3, c[1] + (hs(k + 7, i) - 0.5) * 3, 0.8 + hs(i + k, 8) * 1.6, hs(i, k + 9) < 0.5 ? [30, 36, 33] : [92, 102, 95], 0.12); });
+    for (let k = 0; k < 3; k++) T.blot(c[0] + (hs(i, k + 7) - 0.5) * 3, c[1] + (hs(k + 7, i) - 0.5) * 3, 0.8 + hs(i + k, 8) * 1.6, hs(i, k + 9) < 0.5 ? [28, 36, 35] : [86, 103, 100], 0.12); });
   PL.slabs.forEach((L) => L.forEach((a, k) => { const b = L[(k + 1) % L.length]; if (rim(a) && rim(b)) return; T.line(rough(a, b)); T.stroke(GROOVE, 112, 0.45, 0.3); T.stroke(GROOVE, 74, 0.17); }));
   PL.rays.forEach((L) => { T.line(L); T.stroke(GROOVE, 112, 0.45, 0.3); T.stroke(GROOVE, 78, 0.18); });
   T.poly(PL.octAt(PL.BAND + 0.5)); T.stroke(RAISED, 184, PL.FRAME - PL.BAND); [PL.BAND, PL.FRAME].forEach((d) => { T.poly(PL.octAt(d)); T.stroke(GROOVE, 80, 0.16); }); T.poly(PL.octAt(PL.BAND + 0.5)); T.stroke(sh(RAISED, -8), 168, 0.06);
@@ -241,11 +244,12 @@ function pg3dStoneDraw(mk, px) {
   // (the carved square in the middle: two raised frames)
   const [s0, s1, s2, s3] = PL.sq; T.poly(sqr(0, 0, s0)); T.fill(sh(STONE, -2), 150); T.poly(sqr(0, 0, (s0 + s1) / 2)); T.stroke(RAISED, 182, s0 - s1); T.poly(sqr(0, 0, (s2 + s3) / 2)); T.stroke(RAISED, 180, s2 - s3);
   PL.sq.forEach((h) => { T.poly(sqr(0, 0, h)); T.stroke(GROOVE, 82, 0.15); });
-  // (a fan of carved scales in each corner of the square, with a green venom inlay at its corner)
+  // (a fan of carved scales in each corner of the square, with a dull moss inlay at its corner: green enough to glow, it read as an arrow on
+  // the floor next to the gold hint arrow (0:39, 0:41), so it stays under vglow's threshold)
   quad.forEach(([sx, sy]) => { const F = PL.fans, cx = sx * F.at, cy = sy * F.at, a0 = sy > 0 ? 0 : Math.PI; T.poly(sqr(0, 0, s0)); T.clip(); T.arc(cx, cy, F.r); T.fill(sh(RAISED, -4), 168); T.clip();
     for (let j = 0; j < 11; j++) for (let i = 0; i < 8; i++) { T.arc(cx - sx * (i * 1.3 + (j % 2) * 0.65), cy - sy * j * 0.85, 0.68, a0, a0 + Math.PI); T.stroke(GROOVE, 104, 0.08, 0.8); }
     T.unclip(); T.arc(cx, cy, F.r - 0.3); T.stroke(RAISED, 184, 0.6); T.arc(cx, cy, F.r); T.stroke(GROOVE, 82, 0.14); T.unclip();
-    const L = [[cx - sx * 3.8, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 3.8]]; T.line(L); T.stroke(GROOVE, 90, 0.5); T.stroke(GLOW, 104, 0.18, 0.4); }); /* (dim: bright, it read as an arrow on the floor in the 0:41 picture) */
+    const L = [[cx - sx * 3.8, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 3.8]]; T.line(L); T.stroke(GROOVE, 90, 0.5); T.stroke(MOSS, 104, 0.18, 0.5); });
   // (the round medallion: a raised ring with rune marks, and the serpent's head inside: a crest of spikes, whiskers, scales, brows, glowing
   // eyes, fangs; it looks south as in the room's picture)
   const M = PL.med; T.arc(M.x, M.y, M.r[0]); T.fill(sh(STONE, -3), 148); T.arc(M.x, M.y, (M.r[0] + M.r[1]) / 2); T.stroke(RAISED, 184, M.r[0] - M.r[1]); M.r.forEach((r) => { T.arc(M.x, M.y, r); T.stroke(GROOVE, 82, 0.15); });
@@ -263,15 +267,19 @@ function pg3dStoneDraw(mk, px) {
   carve(PLATE, sh(RAISED, 5), 206); carve(mir(PLATE), sh(RAISED, 5), 206);
   [[[0, 2.8], [0, -4.6]], [[-3.3, -0.8], [-2.2, -3.4], [-1.0, -5.6]], [[3.3, -0.8], [2.2, -3.4], [1.0, -5.6]]].forEach((L) => cut(L, 128, 0.06)); [[[-0.75, -5.15], [-0.45, -5.6]], [[0.75, -5.15], [0.45, -5.6]]].forEach((L) => cut(L, 100, 0.13));
   carve(FANG, sh(RAISED, 10), 204); carve(mir(FANG), sh(RAISED, 10), 204);
-  [EYE, mir(EYE)].forEach((L) => { T.poly(L.map((p) => [M.x + p[0], M.y + p[1]])); T.fill(GROOVE, 110); T.fill(GLOW, null, 0.55); T.stroke(GLOW, null, 0.24, 0.12); });
+  /* (the eyes glow faintly: at full glow they read as two arrowheads either side of you, 0:30) */
+  [EYE, mir(EYE)].forEach((L) => { T.poly(L.map((p) => [M.x + p[0], M.y + p[1]])); T.fill(GROOVE, 110); T.fill(GLOW, null, 0.25); });
   // (the rim: worn on top, chipped, stained by the venom; then the cracks)
   T.poly(PL.oct); T.stroke(sh(STONE, 18), 136, 0.32, 0.55); PL.chips.forEach((L) => { T.poly(L); T.fill(sh(GROOVE, 12), 104); });
   T.poly(PL.octAt(0.9)); T.stroke([56, 98, 42], null, 1.6, 0.2);
-  PL.cracks.forEach((c) => { T.line(c.L); T.stroke(GROOVE, 88, c.w); if (c.glow) { T.stroke(GLOW, null, 0.4, 0.09); T.stroke(GLOW, null, c.w * 0.5, 0.7); } });
+  /* (a glowing crack's core is 0.11 yards wide, 3 texels on the 2048 map, and faint: thinner, it broke into a dotted green line that flickers as
+     the camera moves, like a beam out from under you, 0:48. The glowing ones are one path, so a branch doesn't glow twice where it starts) */
+  PL.cracks.forEach((c) => { T.line(c.L); T.stroke(GROOVE, 88, c.w); });
+  const lit = PL.cracks.filter((c) => c.glow).map((c) => c.L); if (lit.length) { T.line(lit); T.stroke(GLOW, null, 0.4, 0.09); T.stroke(GLOW, null, 0.11, 0.2); }
   // (weathering over everything: dark and light patches, a little moss, pits)
   T.poly(PL.oct); T.C.save(); T.C.clip();
-  for (let k = 0; k < 900; k++) T.blot((hs(k, 97) - 0.5) * 74, (hs(k, 98) - 0.5) * 70, 0.3 + hs(k, 99) * 0.9, hs(k, 100) < 0.55 ? [26, 32, 29] : [100, 110, 102], 0.07);
-  for (let k = 0; k < 150; k++) { const z = hs(k, 93); T.blot((hs(k, 90) - 0.5) * 74, (hs(k, 91) - 0.5) * 70, 1.2 + hs(k, 92) * 5, z < 0.5 ? [22, 28, 25] : z < 0.75 ? [50, 80, 36] : [98, 108, 100], z < 0.5 ? 0.16 : z < 0.75 ? 0.12 : 0.07); }
+  for (let k = 0; k < 900; k++) T.blot((hs(k, 97) - 0.5) * 74, (hs(k, 98) - 0.5) * 70, 0.3 + hs(k, 99) * 0.9, hs(k, 100) < 0.55 ? [24, 32, 31] : [94, 110, 108], 0.07);
+  for (let k = 0; k < 150; k++) { const z = hs(k, 93); T.blot((hs(k, 90) - 0.5) * 74, (hs(k, 91) - 0.5) * 70, 1.2 + hs(k, 92) * 5, z < 0.5 ? [20, 28, 27] : z < 0.75 ? [50, 80, 36] : [92, 108, 106], z < 0.5 ? 0.16 : z < 0.75 ? 0.12 : 0.07); }
   for (let k = 0; k < 1600; k++) { T.arc((hs(k, 94) - 0.5) * 74, (hs(k, 95) - 0.5) * 70, 0.03 + hs(k, 96) * 0.06); T.fill(GROOVE, 112, 0.5); }
   T.C.restore(); finish(T, 6, false);
 
@@ -288,7 +296,7 @@ function pg3dStoneDraw(mk, px) {
   const tg = W.H.createLinearGradient(0, 0, 0, 0.14 * wk); tg.addColorStop(0, rgb([104, 104, 104])); tg.addColorStop(1, rgb([150, 150, 150], 0)); W.H.fillStyle = tg; W.H.fillRect(0, 0, W.w, 0.14 * wk);
   W.line([[-1, 0.04], [WW + 1, 0.04]]); W.stroke(sh(STONE, 12), null, 0.08, 0.7);
   for (let k = 0; k < 16; k++) { const x = hs(k, 105) * WW, w = 0.15 + hs(k, 106) * 0.35, d = 0.03 + hs(k, 107) * 0.06; [0, -WW, WW].forEach((o) => { W.poly([[x + o - w, 0], [x + o + w * 0.2, d], [x + o + w, 0]]); W.fill(sh(GROOVE, 8), 112); }); }
-  for (let k = 0; k < 40; k++) { const x = hs(k, 108) * WW, y = hs(k, 109) * WH, z = hs(k, 110); [0, -WW, WW].forEach((o) => W.blot(x + o, y, 0.3 + hs(k, 111) * 1.1, z < 0.6 ? [22, 28, 25] : [96, 106, 98], z < 0.6 ? 0.18 : 0.08)); }
+  for (let k = 0; k < 40; k++) { const x = hs(k, 108) * WW, y = hs(k, 109) * WH, z = hs(k, 110); [0, -WW, WW].forEach((o) => W.blot(x + o, y, 0.3 + hs(k, 111) * 1.1, z < 0.6 ? [20, 28, 27] : [90, 106, 104], z < 0.6 ? 0.18 : 0.08)); }
   for (let k = 0; k < 260; k++) { W.arc(hs(k, 112) * WW, hs(k, 113) * WH, 0.02 + hs(k, 114) * 0.04); W.fill(GROOVE, 112, 0.5); }
   for (let k = 0; k < 4; k++) { let x = 1 + hs(k, 115) * (WW - 2), y = 0; const L = [[x, y]]; while (y < 0.9) { x += (hs(k, 116 + y * 10) - 0.5) * 0.25; y += 0.12 + hs(k, 117 + y) * 0.1; L.push([x, y]); } W.line(L); W.stroke(GROOVE, 88, 0.05); }
   // (the venom's stain and a faint glowing line where it meets the stone, half a yard down)
@@ -363,8 +371,8 @@ function pg3d(host, A) {
   // the stone: practice.js's PG_UL.onPlat octagon (|x| <= 36.5, |y| <= 34, |x| + |y| <= 49), a pale rim at the very edge. Its top and side
   // walls wear the carved stone pg3dStoneDraw draws once here (a colour map and a normal map each; 1024 px on a PC with little memory): the
   // top's texture spans the plan's 74 yards with the stone's middle at its middle (the top's UVs are yards), the wall's runs along the wall
-  // with its top edge at the wall's top (the wall's UVs are yards along it and 1 - height). The faint venom glow in the cracks, inlays and
-  // eyes comes from their green in the colour map, worked out in the shader (no third texture to read). Kept as quick to draw as the old
+  // with its top edge at the wall's top (the wall's UVs are yards along it and 1 - height). The faint venom glow in the cracks and the
+  // serpent's eyes comes from their green in the colour map, worked out in the shader (no third texture to read). Kept as quick to draw as the old
   // tiles (measured in headless Chrome): Lambert light (rough stone shows no shine anyway), the normal maps read from one mip level.
   const OCT = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]], DEPTH = 4;
   const shp = (L) => { const s = new T.Shape(); L.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1]))); s.closePath(); return s; };

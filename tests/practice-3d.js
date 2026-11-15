@@ -30,10 +30,15 @@
 //     address (or pg3dStoneDraw needs more than a canvas to draw), the stone is drawn more than once or while drawing frames, its textures or
 //     canvases aren't freed on close (keep()), the normal map is inside out, or the carving doesn't line up with the octagon (pg3dStonePlan:
 //     its outline isn't PG_UL.onPlat's, a slab, chip, crack, knot or fan is off the stone, a panel sits in the rim's band, the medallion isn't
-//     in the middle, or the texture doesn't span the plan with the stone's middle at its middle).
+//     in the middle, or the texture doesn't span the plan with the stone's middle at its middle);
+// 10. (the review of the stone's pictures, Nov 15: 0:30, 0:39, 0:41, 0:48, 0:57, 2:30) a carved mark looks like a floor marker again: a mark on
+//     the stone glows at more than 30% of the shader's venom glow (the green corner inlays read as a ">" by the gold hint arrow and the "Go here"
+//     ring, the serpent's eyes as arrowheads either side of you), a glowing line is under 0.1 yards wide (a dotted green dash that flickers, like
+//     a beam out from under you), the stone's own colours glow, the stone isn't teal (olive under the warm light, not the room's sea-green), or
+//     the slate panels aren't a separate blue.
 // contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). 1 to 3 fail on 9e8d89f9, the game before the 3D view;
 // 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass; 8 fails on 47da0826, the graphics pass before its review; 9 fails on
-// 18efba7b, the plain grey tiles.
+// 18efba7b, the plain grey tiles; 10 fails on 9051ebd6, the stone before its review.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function practice3d(say, H) {
@@ -199,6 +204,7 @@ module.exports = function practice3d(say, H) {
     if (!sp || +sp[1] > 6 || +sp[2] > 0.5 || !/cm\.uniforms\.uK\.value = 3/.test(P3) || !/vy = \(7\.0 \+ 10\.0 \* aR\.z\) \* sqrt\(uS\)/.test(P3)) bad('the splash\'s light column is tall and bright again (it washed out the HUD\'s words at 1:18 and 1:27): 6 x size at most, 0.5 bright at most, fading fast at the top, its droplets rising by the square root of its size');
     if (!/const edge = pool\([\s\S]*?m\.renderOrder = 605/.test(P3) || !/const e = edge\(\); e\.position\.set\(x, 0\.04, -y\); e\.rotation\.set\(0, s\.a, 0\); e\.scale\.set\(Dd, 1, Wd\)/.test(P3)) bad('a wave\'s strip has no red border drawn after the wave (the red under it never showed, 0:57)'); }
   // 9. the carved stone (Nov 15): drawn by code once, on the top and the side walls, freed on close, lined up with the octagon
+  let marks = null; /* (what the top's colour map got: every fill and stroke, its colour and width; k, pixels a yard) */
   { const nope = (m) => bad('the stone: ' + m);
     const pm = /const plat = new T\.Mesh\(pg, \[([\s\S]*?)\]\);/.exec(P3), mats = pm ? pm[1] : '';
     if (!/\{ map: stx\(STN\.col, [^}]*?(normalMap|bumpMap): stx\(STN\.nrm, /.test(mats)) nope('the platform\'s top has no canvas-drawn colour map and normal (or bump) map from pg3dStoneDraw (plain grey tiles)');
@@ -226,13 +232,31 @@ module.exports = function practice3d(say, H) {
         if (N[16] !== 128 || N[17] !== 128 || N[18] !== 255) nope('a flat stone\'s normal map isn\'t flat (128, 128, 255)');
         if (!(E[16] < 128) || !(S[17] < 128)) nope('the normal map is inside out: a slope rising east must face west (red under 128), one rising north must face south (green under 128)'); } catch (e) { nope('pg3dNormals crashed: ' + e.message); }
       // (drawn with nothing but a canvas maker: a stand-in canvas that keeps what's put on it)
-      const made = [], fake = (w, h) => { const cv = { width: w, height: h, puts: [] }, o = {}, g = new Proxy(o, { get: (t, k) => k === 'getImageData' ? (x, y, ww, hh) => ({ data: new Uint8ClampedArray(ww * hh * 4) }) : k === 'createImageData' ? (ww, hh) => ({ data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh })
-        : k === 'putImageData' ? (im) => { cv.puts.push(im); } : (k === 'createRadialGradient' || k === 'createLinearGradient') ? () => ({ addColorStop() {} }) : k in t ? t[k] : () => {} });
+      // (it also notes every fill and stroke with its colour and width, for 10)
+      const made = [], fake = (w, h) => { const cv = { width: w, height: h, puts: [], draws: [] }, o = { lineWidth: 1 }, g = new Proxy(o, { get: (t, k) => k === 'getImageData' ? (x, y, ww, hh) => ({ data: new Uint8ClampedArray(ww * hh * 4) }) : k === 'createImageData' ? (ww, hh) => ({ data: new Uint8ClampedArray(ww * hh * 4), width: ww, height: hh })
+        : k === 'putImageData' ? (im) => { cv.puts.push(im); } : (k === 'createRadialGradient' || k === 'createLinearGradient') ? () => ({ addColorStop() {} }) : (k === 'fill' || k === 'stroke') ? () => { cv.draws.push({ k, s: k === 'fill' ? t.fillStyle : t.strokeStyle, w: t.lineWidth }); } : k in t ? t[k] : () => {} });
         cv.getContext = () => g; made.push(cv); return cv; };
-      try { const r = sc.draw(fake, 256), nm = r.nrm.puts[r.nrm.puts.length - 1];
+      try { const r = sc.draw(fake, 256), nm = r.nrm.puts[r.nrm.puts.length - 1]; marks = { draws: r.col.draws, k: 256 / r.span };
         if (r.col.width !== 256 || r.nrm.width !== 256 || r.span !== (PL && PL.span) || !r.wall || !r.wallN || !(r.wallW > 0) || !(r.wallH > 0)) nope('pg3dStoneDraw doesn\'t give the top\'s colour and normal maps (px square, the plan\'s span) and the wall\'s');
         if (!nm || nm.data[0] !== 128 || nm.data[1] !== 128 || nm.data[2] !== 255 || !r.wallN.puts.length) nope('the normal maps aren\'t made from the heights (pg3dNormals)');
         r.free(); if ([r.col, r.nrm, r.wall, r.wallN].some((q) => q.width !== 0)) nope('free() doesn\'t empty the stone\'s canvases'); } catch (e) { nope('pg3dStoneDraw needs more than a canvas to draw (' + String(e.message).slice(0, 140) + ')'); } } }
+  // 10. the stone's marks against the floor's markers (Nov 15, the review of the stone's 0:30, 0:39, 0:41, 0:48, 0:57 and 2:30 pictures): the
+  // shader's venom glow (vglow) lights any green in the colour map, so each mark is measured as it lands on a groove
+  { const nope = (m) => bad('the stone\'s marks: ' + m);
+    const vg = /smoothstep\(([\d.]+), ([\d.]+), diffuseColor\.g - max\(diffuseColor\.r, diffuseColor\.b\)\)/.exec(P3), pal = (n) => { const q = new RegExp('\\b' + n + ' = \\[(\\d+), (\\d+), (\\d+)\\]').exec(P3); return q && q.slice(1).map(Number); };
+    const ST = pal('STONE'), GR = pal('GROOVE'), RA = pal('RAISED'), SL = pal('SLATE');
+    if (!vg || !ST || !GR || !RA || !SL) nope('can\'t read the venom glow\'s threshold (vglow: smoothstep(lo, hi, diffuseColor.g - max(diffuseColor.r, diffuseColor.b))) or the stone\'s colours (STONE, GROOVE, RAISED, SLATE in pg3dStoneDraw)');
+    else {
+      const lo = +vg[1], hi = +vg[2], glow = (c, a) => { const m = GR.map((g, i) => g + (c[i] - g) * a), x = Math.min(1, Math.max(0, ((m[1] - Math.max(m[0], m[2])) / 255 - lo) / (hi - lo))); return x * x * (3 - 2 * x); };
+      if ([ST, GR, RA].some((c) => glow(c, 1) > 0)) nope('the stone\'s own colours (STONE, GROOVE, RAISED) clear the venom glow\'s threshold: the whole floor would glow');
+      if (ST[2] - ST[0] < 10) nope('the stone isn\'t teal (STONE ' + ST.join(', ') + ': blue at least 10 over red): the warm key light takes blue away, so a grey-green came out olive, not the room\'s sea-green (0:41 against the room\'s picture)');
+      if (SL[2] - SL[1] < ST[2] - ST[1] + 8) nope('the slate panels aren\'t a separate blue from the stone (SLATE ' + SL.join(', ') + ' against STONE ' + ST.join(', ') + ')');
+      if (marks) { const hot = new Set(), thin = new Set();
+        marks.draws.forEach((d) => { const q = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(typeof d.s === 'string' ? d.s : ''); if (!q) return; const g = glow([+q[1], +q[2], +q[3]], +q[4]), yd = d.w / marks.k;
+          if (g > 0.3) hot.add(d.s + ' ' + d.k + ' at ' + Math.round(g * 100) + '%');
+          if (g > 0 && d.k === 'stroke' && yd < 0.1) thin.add(d.s + ' ' + yd.toFixed(2) + ' yd'); });
+        if (hot.size) nope('a carved mark glows at more than 30% of the venom glow (' + [...hot].join('; ') + '): the corner inlays read as green arrows by the gold hint arrow and the "Go here" ring (0:39, 0:41) and the serpent\'s eyes as arrowheads either side of you (0:30); keep the stone\'s marks dull so only the markers stand out');
+        if (thin.size) nope('a glowing line is under 0.1 yards wide, under 3 texels on the 2048 map (' + [...thin].join('; ') + '): it breaks into a dotted green dash that flickers as the camera moves, like a beam out from under you (0:48)'); } } }
   return loadP;
 };
 if (require.main === module) {
