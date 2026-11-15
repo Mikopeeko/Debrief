@@ -8,8 +8,18 @@
 //  3. a 3D shape isn't where the hit code hits: a coil soak's radius isn't s.r, the bubble isn't the hit code's 10 yards round the Wretch's live
 //     spot (G.wr), the tail's sweep isn't th.r, her reach isn't the hit code's 5 at wr.p, a landing egg isn't its 4, an impact isn't m.r, the
 //     beam doesn't go to b.tank (else the off tank), or a wave's floor strip isn't exactly practice.js's inWave area (her waves, the beam's
-//     waves, the small tails', a wave without crescents, and a ring: every point a ring hits is inside the drawn ring).
-// contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). It fails on 9e8d89f9, the game before the 3D view.
+//     waves, the small tails', a wave without crescents, and a ring: every point a ring hits is inside the drawn ring);
+//  4. (the graphics pass, Nov 15, Flex: "improve the graphics a bit across the whole thing") the nameplates go back to a pile of names: a raider
+//     far from you who isn't in your soak group or carrying near you still shows a name, a raider next to you, a soak mate across the stone while
+//     your coil is up or a carrier near you shows none, you have no nameplate, far plates aren't fainter, or raider names are plain labels again;
+//  5. the hint (practice.js hintNow) isn't drawn: no arrow at your feet pointing to hint().T, no "Go here · N yd" ring at it, or an arrow when
+//     hint() gives nothing;
+//  6. the spell effects lose their shapes: no spectral coil over a coil soak (and its flash after the slam), no rock dropping for Falling Debris,
+//     no blob shadow under a falling egg, she doesn't rear and bite for Mother's Wrath, no splash when she surfaces, her tail doesn't slam;
+//  7. drawing makes new three.js objects (a `new T.` in put or draw1), or a geometry, material or texture is made without keep() (so closing
+//     the game wouldn't free it).
+// contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). 1 to 3 fail on 9e8d89f9, the game before the 3D view;
+// 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function practice3d(say, H) {
@@ -95,6 +105,42 @@ module.exports = function practice3d(say, H) {
     if (!hits) bad(name + ': the test grid found no point the wave hits (the test is broken)');
     if (miss) bad(name + ': ' + miss + ' spot(s) the wave hits are outside its 3D strip (' + ex + ')');
     if (extra) bad(name + ': ' + extra + ' spot(s) inside its 3D strip aren\'t hit by it (' + ex + ')'); }
+  S.waves = [];
+
+  // 4. nameplates: a bar over everyone, a name only near you, on your soak group while your coil is up, and on carriers near you (you: r3 at -30, 4)
+  { const h0 = { x: bots.h1.x, y: bots.h1.y }; bots.h1.x = -27; bots.h1.y = 6; const L = at(40); bots.h1.x = h0.x; bots.h1.y = h0.y; const pl = (id) => L.find((s) => s.k === 'plate' && s.id === id);
+    if (!pl('r3') || !pl('r3').show) bad('you have no nameplate (with your name always shown)');
+    if (!pl('t1') || pl('t1').show) bad('a raider 42 yards from you, not in your soak group and not carrying, still shows a name (the pile of names in a bubble)');
+    if (!pl('h1') || !pl('h1').show) bad('a raider 4 yards from you shows no name on their nameplate');
+    if (!pl('m1') || !pl('m1').show) bad('your soak group mate across the stone shows no name while your coil is up');
+    if (pl('t1') && pl('h1') && !(pl('t1').o < pl('h1').o)) bad('a far nameplate isn\'t fainter than a near one');
+    if (L.some((s) => s.k === 'label' && /^(t1|t2|h1|m1)$/.test(s.text))) bad('raider names are plain labels again, not nameplates'); }
+  { const t2 = { x: bots.t2.x, y: bots.t2.y }; bots.t2.x = -36; bots.t2.y = 10; G.eggs.push({ id: 't2', x: 0, y: 0, land: 0, shell: 0, state: 'held', who: 't2' }, { id: 't1', x: 0, y: 0, land: 0, shell: 0, state: 'held', who: 't1' });
+    const L = at(20), pl = (id) => L.find((s) => s.k === 'plate' && s.id === id); G.eggs.splice(1, 2); bots.t2.x = t2.x; bots.t2.y = t2.y;
+    if (!pl('t2') || !pl('t2').show) bad('an egg carrier 8.5 yards from you shows no name');
+    if (!pl('t1') || pl('t1').show) bad('an egg carrier 42 yards from you shows a name'); }
+  // 5. the hint: an arrow at your feet to hint().T and a "Go here" ring with the yards; nothing when hint() gives nothing
+  { A.hint = () => ({ T: [-20, 10], d: Math.hypot(10, 6), dodge: false }); const L = at(20); A.hint = () => null; const L0 = at(20); delete A.hint;
+    const ar = L.find((s) => s.k === 'arrow'); if (!ar || ar.x !== G.x || ar.y !== G.y || Math.abs(ar.a - Math.atan2(6, 10)) > 1e-9) bad('no hint arrow at your feet pointing to where your job wants you (hint().T)');
+    if (!L.some((s) => s.k === 'label' && s.text === 'Go here · 12 yd') || !has(L, 'ring', -20, 10, 1.4)) bad('no "Go here · 12 yd" ring at the hint\'s spot');
+    if (L0.some((s) => s.k === 'arrow' || (s.k === 'label' && /^Go here/.test(s.text)))) bad('a hint arrow shows when hint() gives nothing'); }
+  // 6. the spell effects' shapes
+  { const c = at(40).find((s) => s.k === 'coil'), c2 = at(41).find((s) => s.k === 'coil' && s.x === -25 && s.y === 8);
+    if (!c || c.x !== -25 || c.y !== 8 || c.r !== 10 || !(c.f > 0) || c.slam) bad('no spectral coil rising over a coil soak before its slam');
+    if (!c2 || !(c2.slam > 0)) bad('no flash on a coil soak right after its slam'); }
+  { S.impacts.push({ x: 10, y: 10, r: 7, t0: 150, at: 151.8, name: 'Falling Debris', color: '#c8a36a' }); const r1 = at(151).find((s) => s.k === 'rock'), r2 = at(151.9).find((s) => s.k === 'rock'); S.impacts.pop();
+    if (!r1 || r1.x !== 10 || r1.y !== 10 || r1.land || !r2 || !(r2.land > 0)) bad('no rock dropping onto a Falling Debris circle (and landing on it)'); }
+  if (!at(8.5).some((s) => s.k === 'egg' && s.fall && s.h > 5)) bad('a falling egg isn\'t marked as falling (its shadow on the floor)');
+  { const b1 = at(24).find((s) => s.k === 'boss'), b2 = at(28).find((s) => s.k === 'boss'); if (!b1 || !(b1.rear > 0) || !b2 || !(b2.bite >= 0)) bad('she doesn\'t rear back for Mother\'s Wrath and bite after it'); }
+  if (!at(86.5).some((s) => s.k === 'splash' && s.x === S.dive.to[0] && s.y === S.dive.to[1])) bad('no splash where she bursts up after the dive');
+  { const tl = at(49.3).find((s) => s.k === 'tail'); if (!tl || !(tl.slam > 0) || !(at(47).find((s) => s.k === 'tail').wig > 0)) bad('her tail doesn\'t lift for Mephitic Thrash and slam as it lands'); }
+  // 7. nothing new while drawing; everything made through keep() so closing the game frees it
+  { const a = P3.indexOf('const put = '), b = P3.indexOf('\n  // ---- the camera'), c = P3.indexOf('const draw1 = '), d = P3.indexOf('\n  const draw = ');
+    if (a < 0 || b < a || c < 0 || d < c) bad('practice3d.js no longer has put and draw1 where the test reads them');
+    else if (/new T\./.test(P3.slice(a, b) + P3.slice(c, d))) bad('the 3D view makes new three.js objects while drawing (a `new T.` in put or draw1): everything must come from a pool made once');
+    const loose = []; for (const m of P3.matchAll(/new T\.(\w*(?:Geometry|Material|Texture)|InstancedMesh)\(/g)) if (P3.slice(m.index - 5, m.index) !== 'keep(') loose.push(m[1]);
+    if (loose.length) bad('a three.js ' + [...new Set(loose)].join(', ') + ' is made without keep(), so closing the game wouldn\'t free it');
+    if (!/own\.forEach\(\(o\) => \{ try \{ o\.dispose\(\); \}/.test(P3)) bad('dispose() no longer frees everything keep() holds'); }
   return loadP;
 };
 if (require.main === module) {
