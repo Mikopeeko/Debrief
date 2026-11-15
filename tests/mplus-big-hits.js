@@ -49,8 +49,8 @@ module.exports = function bigHitsCheck(H, say) {
   if (MPT.indexOf("row('!', '#ff8f87', 'Close calls'") < MPT.indexOf("row('☠', '#ff8f87', 'Deaths'")) bad('Your part\'s Close calls row is no longer right after Deaths');
   if (!MPT.includes('died + mpBhCard(RR, i, fold)')) bad('a pull card no longer lists its close calls right after how each player died');
   let html = '';
-  try { const names = ['mpMM', 'mpCC', 'mpWho', 'mpT1', 'mpAnd', 'mpChap', 'mpBhWhere', 'mpBhT', 'mpBhIc', 'mpBhRdy', 'mpBigChap', 'mpBigHtml'];
-    const ctx = { E, esc: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'), plural: (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), spellIcon: () => '', mpClock: () => null, mpNo: (r, n) => n, mpByRole: () => 0, MPC_ON: false }; /* (MPC_ON: the website; the Companion's card keeps one list, Nov 15) */
+  try { const names = ['mpMM', 'mpCC', 'mpWho', 'mpT1', 'mpAnd', 'mpChap', 'mpBhWhere', 'mpBhT', 'mpBhIc', 'mpBhRdy', 'mpBhNext', 'mpBigChap', 'mpBigHtml'];
+    const ctx = { E, esc: (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'), plural: (n, w) => n + ' ' + w + (n === 1 ? '' : 's'), spellIcon: () => '', mpClock: () => null, mpNo: (r, n) => n, mpByRole: () => 0, MPC_ON: true }; /* (MPC_ON: the Companion's card; on the website Big hits is the Survival tab's since Nov 15) */
     const X = require('vm').runInNewContext(names.map((n) => H.grab(n, MPT)).join('\n') + '\n({ ' + names.join(', ') + ' })', ctx); html = X.mpBigChap(R); }
   catch (e) { bad('the Big hits chapter crashed: ' + (e.stack || e.message).split('\n').slice(0, 2).join(' | ')); return; }
   const txt = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');

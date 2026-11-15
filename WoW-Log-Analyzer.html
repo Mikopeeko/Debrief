@@ -73676,7 +73676,7 @@ function mpFixes(R, C, all) {
 // layout", "its hard to read", "i was trying to use it to look at mistakes made throughout the key, like missed interupts and i genuinely couldnt find
 // the information"). Found that day on his Voidscar Arena +19: the page said "Missed kicks 6" and nothing more; which spell, which pull and whose kick
 // was ready sat in hovers on fourteen pull cards, one click each. The website only: the Companion's card keeps its layout (MPC_ON) ----------
-const MPX_VIEWS = [['rep', 'Report card'], ['map', 'Route'], ['rot', 'Rotation'], ['gra', 'Graphs'], ['cmp', 'Compare']]; /* (Nov 15, Flex: "What if we just merge some of summary with report card, and make report card the opening tab": Summary's tab is gone, its story, where the time went and Fix first are at the top of Report card, and every mistake, kind by kind, is a panel under it) */ /* (Players is the group table and the picked player's rotation (Flex, Nov 14: "these two sections could be merged"); its key stays 'rot') */
+const MPX_VIEWS = [['rep', 'Report card'], ['map', 'Route'], ['rot', 'Rotation'], ['sur', 'Survival'], ['gra', 'Graphs'], ['cmp', 'Compare']]; /* (Nov 15, Flex: "what if we made a new tab, for survivability": Survival, after Rotation) */ /* (Nov 15, Flex: "What if we just merge some of summary with report card, and make report card the opening tab": Summary's tab is gone, its story, where the time went and Fix first are at the top of Report card, and every mistake, kind by kind, is a panel under it) */ /* (Players is the group table and the picked player's rotation (Flex, Nov 14: "these two sections could be merged"); its key stays 'rot') */
 // (each kind of mistake: its title, its colour letter, and what the page says when the key had none. In the order that decides a key (the Mythic+ research,
 // Nov 14: not dying first, then stopping the dangerous casts, then dispels and cooldowns; avoidable hits that killed nobody come last))
 const MPX_KIND = { death: ['Deaths', 'd', 'no deaths'], close: ['Close calls', 'd', 'no close calls'], kick: ['Missed kicks', 'k', 'nothing went off with a kick ready'], cc: ['Casts that needed a stop', 'k', ''], disp: ['Debuffs left on', 'p', 'no debuff left on too long'], cd: ['Big cooldowns not pressed', 'c', 'a big cooldown in every long pull'], avoid: ['Avoidable hits', 'a', 'no avoidable hits'] };
@@ -73725,7 +73725,7 @@ function mpxParts(R, F, pick) { const D = mpxData(R, F), C = mpClock(R), KS = Ob
   const minor = D.minor.filter((x) => !pick || x.ready.includes(pick)), sec = (k, sub, body) => { if (L[k].length) K[k] = { n: L[k].length, sub, body }; return ''; }, dmg = L.avoid.reduce((a, x) => a + x.dmg, 0);
   sec('kick', (L.kick.length === 1 ? 'cast' : 'casts') + ' went off with ' + (pick ? esc(pick) + '\'s' : 'a') + ' kick ready', mpxKicks(R, L.kick)) +
     sec('cc', 'they can\'t be kicked, and nothing stopped them, so the enemy got its buff', mpxKicks(R, L.cc, true)) +
-    sec('close', 'left under 15% health by a big hit, with no defensive up <button type="button" class="linkbtn mpx-all" data-mpxv="run" data-mpxat="mptCH">See every big hit ›</button>', L.close.map((x) => mpxRow(R, x, mpxIc(x.id, x.spell) + mpWho(R, x.who) + ' <span class="mpt-m">was left at</span> <b class="mpx-low">' + x.left + '%</b> <span class="mpt-m">by</span> <b class="mpt-ab">' + esc(x.spell) + '</b>',
+    sec('close', 'left under 15% health by a big hit, with no defensive up <button type="button" class="linkbtn mpx-all" data-mpxv="sur" data-mpxat="mpxSvH">See every big hit ›</button>', L.close.map((x) => mpxRow(R, x, mpxIc(x.id, x.spell) + mpWho(R, x.who) + ' <span class="mpt-m">was left at</span> <b class="mpx-low">' + x.left + '%</b> <span class="mpt-m">by</span> <b class="mpt-ab">' + esc(x.spell) + '</b>',
       x.ready.length ? '<span class="mpt-a">' + esc(x.ready[0]) + ' was ready</span>' : 'No defensive up', '')).join('')) +
     sec('death', pen ? '+' + mpMM(pen * L.death.length) + ' on the timer · click one for the hits before it' : 'click one for the hits before it', L.death.map((x) => mpxDeath(R, x, pen)).join('')) +
     sec('disp', 'they stayed on longer than in the fast run while a dispel was ready', L.disp.map((x) => mpxRow(R, x, '<b class="mpt-ab">' + esc(x.n) + '</b> <span class="mpt-m">on</span> ' + mpWho(R, x.who) + ' <span class="mpt-m">for ' + Math.round(x.dur) + ' s</span>',
@@ -73766,7 +73766,7 @@ function mpxDigest(R, F) { if (MPC_ON) return ''; const D = mpxData(R, F), C = m
   const KS = Object.keys(MPX_KIND); rows.sort((a, b) => KS.indexOf(a[0]) - KS.indexOf(b[0]));
   const clean = KS.filter((k) => !D[k].length && MPX_KIND[k][2] && (k !== 'close' || R.big) && (k !== 'disp' || F) && (k !== 'cd' || (R.cdWho || []).length)).map((k) => MPX_KIND[k][2]);
   const PP = mpxParts(R, F, ''), open = (k) => (PP.K[k] ? '<div class="mpx-dkb"><p class="mpx-dks">' + PP.K[k].sub + '</p>' + PP.K[k].body + (k === 'kick' ? PP.minorH : '') + '</div>' : '');
-  return (fold ? '<details class="mpx-allm" id="mpxAllM"><summary class="mpx-alls"><b class="mpx-allt">Every mistake, kind by kind</b><span class="mpx-alln">' + nAll + '</span><span class="mpx-alld">every missed kick, death, close call and big hit, each with every time it happened</span><i aria-hidden="true">›</i></summary>' : '') + '<section class="mpx-dg" aria-label="Mistakes"><div class="mpt-fxh"><h2>Mistakes</h2>' + (rows.length ? '<span class="mpx-dgs">Click a line to see every one.</span>' : '') + '</div>' +
+  return (fold ? '<details class="mpx-allm" id="mpxAllM"><summary class="mpx-alls"><b class="mpx-allt">Every mistake, kind by kind</b><span class="mpx-alln">' + nAll + '</span><span class="mpx-alld">missed kicks, deaths, close calls and the rest, each with every time it happened</span><i aria-hidden="true">›</i></summary>' : '') + '<section class="mpx-dg" aria-label="Mistakes"><div class="mpt-fxh"><h2>Mistakes</h2>' + (rows.length ? '<span class="mpx-dgs">Click a line to see every one.</span>' : '') + '</div>' +
     rows.map(([k, n, d]) => '<details class="mpx-dk" id="mpxK' + k + '"><summary class="mpx-dr mpx-g-' + MPX_KIND[k][1] + '"><b class="mpx-dn">' + n + '</b><span class="mpx-dl">' + MPX_KIND[k][0] + '</span><span class="mpx-dd">' + d + '</span><i aria-hidden="true">›</i></summary>' + open(k) + '</details>').join('') +
     (PP.minorH && !D.kick.length ? PP.minorH : '') + /* (no missed kick: the medium-danger casts still have their fold) */
     (rows.length ? '' : '<p class="mpx-none">No must-kick cast went off with a kick ready, nobody died, and nothing avoidable hit anyone.</p>') + (clean.length && rows.length ? '<p class="mpx-ok"><b>Clean</b>' + mpCap(clean.join(' · ')) + '.</p>' : '') +
@@ -73811,7 +73811,7 @@ document.addEventListener('click', (e) => { if (MPC_ON) return; const s = e.targ
 const mpxMissed = (R, n) => { const m = R._mxk || (R._mxk = (() => { const c = {}; for (const p of R.pulls) for (const x of p.through || []) if (!x.cc) for (const w of x.ready || []) c[w] = (c[w] || 0) + 1; return c; })()); return m[n] || 0; };
 const mpxKickCell = (R, p) => { const l = MPC_ON ? 0 : mpxMissed(R, p.name); return '<span class="gbx-s mpt-gxn' + (p.kicks || l ? '' : ' mpt-g0') + '"' + (l ? ' tabindex="0"' + mpT1('<b>' + esc(p.name) + '</b><br>' + plural(p.kicks, 'kick') + '. ' + plural(l, 'must-kick cast') + ' went off with their kick ready.') : '') + '>' + p.kicks + (l ? ' <small class="mpt-t2k">(' + l + ')</small>' : '') + '</span>'; };
 // (a jump that used to scroll to a chapter opens that chapter's tab first: Your part's tiles, Big hits' own links)
-const MPX_BYID = { mptBand: 'rep', mptCX: 'rep', mptCH: 'rep', mptCG: 'gra', mptCM: 'map', mptC4: 'rep', mptPlayers: 'rep', mptCP: 'rep', mptC5: 'map', mptKnow: 'map', mptCR: 'rot', mptCC: 'cmp' };
+const MPX_BYID = { mptBand: 'rep', mptCX: 'rep', mptCH: 'sur', mptCV: 'sur', mpxSvH: 'sur', mptCG: 'gra', mptCM: 'map', mptC4: 'rep', mptPlayers: 'rep', mptCP: 'rep', mptC5: 'map', mptKnow: 'map', mptCR: 'rot', mptCC: 'cmp' };
 const mpxGoId = (id) => { if (!MPC_ON && MPX_BYID[id]) { mpxView(MPX_BYID[id]); if (id === 'mptCH') mpxBhShow(); if (id === 'mptC4' || id === 'mptPlayers') setTimeout(() => { const t = document.querySelector('#mptCP .rcb-tbl'); if (t) t.scrollIntoView({ block: 'start' }); }, 0); /* (the players table is off the website's tab: its place is the ranked group) */ } };
 // (a tab picked from further down the page starts at its top)
 // ---------- the key page in the raid review's flow, with its own look (Nov 14; Flex, on the page that copied the raid review's look: "I dont want it to
@@ -73820,8 +73820,8 @@ const mpxGoId = (id) => { if (!MPC_ON && MPX_BYID[id]) { mpxView(MPX_BYID[id]); 
 // exact tabs either"). The raid review's five tabs in its order, with the two only a key has slotted in: Summary, Route, Mistakes, Rotation, Graphs,
 // Report card, Compare. The tab row sticks to the top and one bar under it holds the key and the player: the player picked there is the one Summary,
 // Rotation and Report card show. The Companion's card keeps its own layout (everything here is behind MPC_ON).
-const MPX_OLD = { grp: 'rep', hit: 'rep', dun: 'map', mis: 'rep', run: 'rep' }; /* (Nov 15: a link to Summary, Big hits or the mistakes opens Report card, where they are now) */ /* (old links: Players is on Report card, Big hits on Graphs, Dungeon under the Route map, and the mistakes open in Summary's box) */
-const MPX_NEED = { gra: 'mptCG', rep: 'mptC4', cmp: 'mptCC' }; /* (a tab is offered only when its chapter was drawn) */
+const MPX_OLD = { grp: 'rep', hit: 'sur', dun: 'map', mis: 'rep', run: 'rep' }; /* (Nov 15: a link to Summary, Big hits or the mistakes opens Report card, where they are now) */ /* (old links: Players is on Report card, Big hits on Graphs, Dungeon under the Route map, and the mistakes open in Summary's box) */
+const MPX_NEED = { gra: 'mptCG', rep: 'mptC4', cmp: 'mptCC', sur: 'mptCV' }; /* (a tab is offered only when its chapter was drawn) */
 const mpxWhoIc = (p) => { if (!p) return ''; const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : ''; return ic ? '<img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()">' : ''; };
 // (the bar: the key with a step either way, the player, and the key finder)
 function mpxBar(R) { if (MPC_ON || !R) return ''; const it = MP.item, keys = mpKeys(), i = keys.indexOf(it), pl = (R.people || []).slice().sort(mpByRole), pc = pl.find((x) => x.name === (MP.pp || ''));
@@ -73902,7 +73902,7 @@ function mpxMoments(R, F) { const D = mpxData(R, F), C = mpClock(R), P = R.pulls
 // then the rest as one line, each kind a click away in the fold below, and what was clean)
 function mpxMomList(R, mo) { if (MPC_ON || !mo) return '';
   const rows = mo.top.map((m) => '<div class="mpx-mor mpx-g-' + MPX_KIND[m.k][1] + '"><span class="mpx-mon' + (MPX_HOLLOW[m.k] ? ' mpx-moh' : '') + '">' + m.n + '</span><span class="mpx-mot">' + m.at + '</span>' + mpxPull(R, m.i) +
-    '<span class="mpx-mow">' + mpCap(m.w) + (m.g ? ' <span class="mpx-mog">' + m.g + '</span>' : '') + (m.k === 'close' ? ' <button type="button" class="linkbtn mpx-mobh" data-mpxv="run" data-mpxat="mptCH">See the hit ›</button>' : '') + '</span><span class="mpx-moe">' + (m.e || '') + '</span></div>').join('');
+    '<span class="mpx-mow">' + mpCap(m.w) + (m.g ? ' <span class="mpx-mog">' + m.g + '</span>' : '') + (m.k === 'close' ? ' <button type="button" class="linkbtn mpx-mobh" data-mpxv="sur" data-mpxat="mpxSvH">See the hit ›</button>' : '') + '</span><span class="mpx-moe">' + (m.e || '') + '</span></div>').join('');
   const also = mo.rest.map((r) => '<button type="button" class="mpx-moal mpx-g-' + MPX_KIND[r.k][1] + '" data-mpxv="mis" data-mpxk="' + r.k + '">' + r.n + ' ' + (r.more ? 'more ' : '') + MPX_IN[r.k][r.n === 1 ? 0 : 1] + '</button>' + (r.ps.length && r.ps.length <= 4 ? ' <span class="mpx-mog">(' + esc(mpPNs(R, r.ps.map((i) => i + 1))) + ')</span>' : '')).join('<span class="mpx-mod"> · </span>');
   const line = [also ? '<span class="mpx-moak">Also:</span> ' + also : '', mo.clean.length ? '<span class="mpx-mock">Clean:</span> ' + mo.clean.join(', ') + '.' : ''].filter(Boolean).join('<span class="mpx-mod"> · </span>');
   return '<div class="mpx-mos">' + (rows || '<p class="mpx-mo0">No mistakes decided this key.</p>') + '</div>' + (line || mo.all ? '<p class="mpx-moa">' + line + (mo.all ? ' <button type="button" class="linkbtn mpx-moall" data-mpxv="mis" data-mpxk="">Every mistake, kind by kind ›</button>' : '') + '</p>' : ''); }
@@ -74025,18 +74025,18 @@ function mprOf(R, fx, p, PREP) { const name = p.name, F = fx && fx.R ? fx.R : nu
      mattered and could be done: a defensive is missed when a big hit left them under 15% or dead while one sat ready; a Healthstone or health potion is
      missed when one of those moments passed with neither pressed and one off cooldown; a combat potion's chances are the bosses and long pulls) */
   { const B = R.big, them = own ? 'you' : 'them'; if (B && B.per && B.per[name]) { const cl = D.close.filter((q) => q.who === name); let faced = 0, cov = 0; for (const hh of B.hits || []) for (const c of hh.casts || []) for (const x of c.who || []) if (x.name === name) { faced++; if ((x.def || []).length) cov++; }
-    const mC = cl.filter((q) => q.ready.length), mD = dd.filter((q) => q.r && q.r.ready.length && !q.d.defs), miss = mC.length + mD.length, free = cl.length - mC.length, ML = mC.map((q) => ({ i: q.i, t: q.t, s: q.at + ' · ' + q.spell + ' left ' + them + ' at ' + Math.round(100 * q.left) + '% with ' + mpAnd(q.ready) + ' ready', n: q.spell })).concat(mD.map((q) => ({ i: q.i, t: q.t, s: q.at + ' · died to ' + dTo(q) + ' with ' + mpAnd(q.r.ready) + ' ready', n: 'died' }))).sort((a, b) => a.t - b.t);
-    if (cov + miss) add('alive', !miss ? 'ok' : miss <= 2 ? 'w' : 'bad', 'Defensives on big hits', 'no big hit leaves ' + them + ' under 15% or dead while a defensive sits ready', (p.defs || 0) + ' pressed' + (miss ? ' · ' + miss + ' missed' : ''), { f: cov / (cov + miss), pulls: pl(ML), pn: lab1(ML, (q) => q.n), pd: lab(ML, (q) => q.s), tt: plural(cov, 'big hit') + ' met with a defensive up' + (miss ? '; ' + miss + ' left ' + them + ' under 15% or dead with one ready.' : '.') });
+    const mC = cl.filter((q) => q.ready.length), mD = dd.filter((q) => q.r && q.r.ready.length && !q.d.defs), miss = mC.length + mD.length, free = cl.length - mC.length, ML = mC.map((q) => ({ i: q.i, t: q.t, s: q.at + ' · ' + q.spell + ' left ' + them + ' at ' + Math.round(q.left) + '% with ' + mpAnd(q.ready) + ' ready', n: q.spell })).concat(mD.map((q) => ({ i: q.i, t: q.t, s: q.at + ' · died to ' + dTo(q) + ' with ' + mpAnd(q.r.ready) + ' ready', n: 'died' }))).sort((a, b) => a.t - b.t);
+    if (cov + miss) add('alive', !miss ? 'ok' : miss <= 2 ? 'w' : 'bad', 'Defensives on big hits', 'no big hit leaves ' + them + ' under 15% or dead while a defensive sits ready', (p.defs || 0) + ' pressed' + (miss ? ' · ' + miss + ' missed' : ''), { f: cov / (cov + miss), nMiss: miss, pulls: pl(ML), pn: lab1(ML, (q) => q.n), pd: lab(ML, (q) => q.s), tt: plural(cov, 'big hit') + ' met with a defensive up' + (miss ? '; ' + miss + ' left ' + them + ' under 15% or dead with one ready.' : '.') });
     else add('alive', 'na', 'Defensives on big hits', 'information: no big hit needed one', (p.defs || 0) + ' pressed');
-    add('alive', 'na', 'Close calls', 'information: big hits that left ' + them + ' under 15% with no defensive up', (cl.length ? plural(cl.length, 'close call') + (free ? ', ' + free + ' with nothing ready' : '') : 'none') + (faced ? ' in ' + plural(faced, 'big hit') : ''), cl.length ? { tt: cl.map((q) => esc(mpCap(mpPullName(R, q.i)) + ', ' + q.at + ' · ' + q.spell + ' left ' + them + ' at ' + Math.round(100 * q.left) + '%' + (q.ready.length ? ', ' + mpAnd(q.ready) + ' ready' : ', nothing ready'))).join('<br>') } : null); }
+    add('alive', 'na', 'Close calls', 'information: big hits that left ' + them + ' under 15% with no defensive up', (cl.length ? plural(cl.length, 'close call') + (free ? ', ' + free + ' with nothing ready' : '') : 'none') + (faced ? ' in ' + plural(faced, 'big hit') : ''), cl.length ? { tt: cl.map((q) => esc(mpCap(mpPullName(R, q.i)) + ', ' + q.at + ' · ' + q.spell + ' left ' + them + ' at ' + Math.round(q.left) + '%' + (q.ready.length ? ', ' + mpAnd(q.ready) + ' ready' : ', nothing ready'))).join('<br>') } : null); }
     else add('alive', 'na', 'Defensives pressed', 'information: big hits are not judged for this role', plural(p.defs || 0, 'defensive')); }
   { const cs = (R.cnm || {})[name] || {}, ids = (R.cid || {})[name] || {}, hsT = [], potT = [], them = own ? 'you' : 'them'; for (const [nm, id] of Object.entries(cs)) { if (mpgHS.test(nm)) hsT.push(...(ids[id] || [])); else if (mpgPOT.test(nm)) potT.push(...(ids[id] || [])); }
     const lock = hsT.length > 0 || (R.people || []).some((y) => y.cls === 'Warlock'), uses = hsT.length + potT.length, near = (T, t, a, b) => T.some((x) => x >= t - a && x <= t + b), spent = (T, t) => T.some((x) => x < t - 8 && x > t - 300);
     /* (the moments one was needed: a big hit that left them under 15%, or a death that took a moment (not one hit from nowhere)) */
-    const mom = D.close.filter((q) => q.who === name).map((q) => ({ t: q.t, i: q.i, at: q.at, what: q.spell + ' left ' + them + ' at ' + Math.round(100 * q.left) + '%', n: q.spell })).concat(dd.filter((q) => q.r && q.r.hits.length && Math.max(...q.r.hits.map((h) => h.ago)) >= 1.5).map((q) => ({ t: q.t, i: q.i, at: q.at, death: true, hs: q.r.hs, what: 'died to ' + dTo(q), n: 'died' }))).sort((a, b) => a.t - b.t);
+    const mom = D.close.filter((q) => q.who === name).map((q) => ({ t: q.t, i: q.i, at: q.at, what: q.spell + ' left ' + them + ' at ' + Math.round(q.left) + '%', n: q.spell, sp: q.spell, left: q.left })).concat(dd.filter((q) => q.r && q.r.hits.length && Math.max(...q.r.hits.map((h) => h.ago)) >= 1.5).map((q) => ({ t: q.t, i: q.i, at: q.at, death: true, hs: q.r.hs, what: 'died to ' + dTo(q), n: 'died', to: dTo(q) }))).sort((a, b) => a.t - b.t);
     let ch = 0, ans = 0; const ML = []; for (const m of mom) { const pressed = near(hsT, m.t, 8, m.death ? 0 : 8) || near(potT, m.t, 8, m.death ? 0 : 8) || (m.death && m.hs != null && m.hs <= 8), avail = (lock && !spent(hsT, m.t)) || !spent(potT, m.t); if (!pressed && !avail) continue; ch++; if (pressed) ans++; else ML.push(m); }
-    if (ch) add('alive', ans === ch ? 'ok' : ans / ch >= 0.5 ? 'w' : 'bad', 'Healthstone or health potion', 'press one when a big hit leaves ' + them + ' under 15%, if one is off cooldown', ans + ' of ' + plural(ch, 'moment'), { f: ans / ch, pulls: pl(ML), pn: lab1(ML, (q) => q.n), pd: lab(ML, (q) => q.at + ' · ' + q.what + ', neither pressed'), tt: (uses ? 'Used ' + tw(uses) + ' in the key.' : 'Not used in the key.') + ' A moment counts when a big hit left ' + them + ' under 15% or killed ' + them + ' and a Healthstone or health potion was off cooldown.' });
-    else add('alive', 'na', 'Healthstone or health potion', 'information: no moment needed one', uses ? 'used ' + tw(uses) : 'not used'); }
+    if (ch) add('alive', ans === ch ? 'ok' : ans / ch >= 0.5 ? 'w' : 'bad', 'Healthstone or health potion', 'press one when a big hit leaves ' + them + ' under 15%, if one is off cooldown', ans + ' of ' + plural(ch, 'moment'), { f: ans / ch, ch, ans, uses, hsN: hsT.length, potN: potT.length, mis: ML, pulls: pl(ML), pn: lab1(ML, (q) => q.n), pd: lab(ML, (q) => q.at + ' · ' + q.what + ', neither pressed'), tt: (uses ? 'Used ' + tw(uses) + ' in the key.' : 'Not used in the key.') + ' A moment counts when a big hit left ' + them + ' under 15% or killed ' + them + ' and a Healthstone or health potion was off cooldown.' });
+    else add('alive', 'na', 'Healthstone or health potion', 'information: no moment needed one', uses ? 'used ' + tw(uses) : 'not used', { uses, hsN: hsT.length, potN: potT.length }); }
   // performance: damage as a parse (or against the spec in the fastest runs), Rotation, big cooldowns, combat potions
   const wt = !fx || fx.wait, v = mpSpecVs(p, (fx && fx.list && fx.list.runs) || []), px = mpParseOf(name, 'dps'), pw = !!(MP.parse && MP.item && MP.parse.k === mpK(MP.item) && MP.parse.wait), mid = 'the middle ' + p.spec + ' ' + cn + ' in the fastest runs at this level';
   if (px) { const pc = Math.round(px.pct); add('perf', pc >= 50 ? 'ok' : pc >= 25 ? 'w' : 'bad', 'Damage', 'a parse of 50 or more', mpGF(p.dps) + ' DPS · ' + pc + ' parse', { f: pc / 100 });
@@ -74368,7 +74368,7 @@ function mpxGraphs(R) { if (MPC_ON || !R || !(R.people || []).length || !(R.pull
     const L = pl.map((p) => ({ p, s: st[p.name] })).sort((a, b) => b.s.n - a.s.n), top = Math.max(1, ...L.map((x) => x.s.n)), S = (f) => L.reduce((a, x) => a + f(x.s), 0), bad = (v) => (v ? '<b class="mpt-bad">' + v + '</b>' : '0');
     table = head(String(S((s) => s.n)), 'pressed', (S((s) => s.faced) ? 'a defensive was up for ' + S((s) => s.cov) + ' of the ' + S((s) => s.faced) + ' big hits they took · ' : '') + esc(wname)) +
       heads('Player', ['Pressed', 'Kinds', 'Covered', 'Close', 'Deaths', '']) + '<div class="gb-rows">' + L.map((x, k) => { const open = MP.gopen === x.p.name; return prow(k + 1, { p: x.p, bar: 100 * x.s.n / top, c: [String(x.s.n), String(x.s.kinds.size), x.s.faced ? x.s.cov + '/' + x.s.faced : '-', bad(x.s.close), bad(x.s.dead), ''] }, open) + (open ? opened(x.p) : ''); }).join('') + total([String(S((s) => s.n)), '', S((s) => s.faced) ? S((s) => s.cov) + '/' + S((s) => s.faced) : '-', String(S((s) => s.close)), String(S((s) => s.dead)), '']) + '</div>' +
-      '<p class="mpx-gmz mpg-note"><b class="mpg-nb">Covered</b> is the big hits they took with a defensive up, of all the big hits they took. <b class="mpg-nb">Close</b> is a big hit that left them under 15% health with no defensive up. Every big hit, cast by cast, is on Summary, under Mistakes.</p>'; }
+      '<p class="mpx-gmz mpg-note"><b class="mpg-nb">Covered</b> is the big hits they took with a defensive up, of all the big hits they took. <b class="mpg-nb">Close</b> is a big hit that left them under 15% health with no defensive up. Every big hit, cast by cast, is on the Survival tab.</p>'; }
   return mpChap('mptCG', 'Graphs', '', '<div class="gb gb-tb ds-gb mpg">' + rail + '<div class="gb-tl"><div class="gb-tmain">' + chart + '<section class="panel pf-bars gb-card' + (rate ? ' r316-tot' : '') + '">' + table + '</section></div></div></div>'); } /* (the raid tab's count panels, Survival among them, show their big number in the head; its total panels do not) */
 // (the chapter again after a choice or a new pick; the page's html element says which number is open, so Big hits shows only under Defensives)
 function mpxGraphPaint() { if (MPC_ON) return; const el = document.getElementById('mptCG'), it = MP.item, R = it && MP.R[mpK(it)]; document.documentElement.dataset.mpg = MP.gm || 'dmg'; if (!el || !R) return; el.outerHTML = mpxGraphs(R); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
@@ -74544,7 +74544,7 @@ function mpHtml(it, R, fx) {
     /* (the five players, each with their spec icon (Flex: "use spec icons for the classes"), in class colour) */
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => { const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
       return '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"><b>' + esc(p.name) + '</b></span>'; }).join('') + '</div></div></div>';
-  if (!C) return mpxKey(ban, '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '', mpxDigest(R, F))) + mpxGraphs(R) + mpJumpBar(R, false) + mpBigChap(R) +
+  if (!C) return mpxKey(ban, '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '', mpxDigest(R, F))) + mpxGraphs(R) + mpxSurv(R, fx) + mpJumpBar(R, false) + mpBigChap(R) +
     mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, null, mpMapHtml(R, null, ''))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
@@ -74681,7 +74681,7 @@ function mpHtml(it, R, fx) {
   const fixW = waiting && tgt != null && need > ck.deathCost;
   const fixH = MPC_ON ? '' : mpxFix(fixW ? null : fix1, fixW || (waiting && tgt != null), true, fixW ? null : fixX); if (!MPC_ON && R._sx) { R._sx.fix = fixH; R._sx.fixC = fixW || !fix1 ? '' : fix1[0].c || ''; } /* (Fix first opens the Report card too, under its strip; fixC is its kind) */
   const scoreH = MPC_ON ? scoreT : heroH + fixH + mpxGlance(bh.tl, R, F, fixW ? null : fix1);
-  if (!MPC_ON) return mpxKey(ban, scoreH + band) + mpxCmp(R, fx, fixes + behindH) + mpxGraphs(R) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
+  if (!MPC_ON) return mpxKey(ban, scoreH + band) + mpxCmp(R, fx, fixes + behindH) + mpxGraphs(R) + mpxSurv(R, fx) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
@@ -74722,7 +74722,14 @@ const mpBhWhere = (R, k) => { const q = R.pulls[k]; if (!q) return ''; if (q.bos
 const mpBhT = (R) => { const C = mpClock(R); return (t) => mpMM(Math.max(0, C ? C.tv(t) : t)); }; /* (on the key's timer, as the rest of the page) */
 const mpBhIc = (h) => '<span class="mpt-rki bh-ic">' + (+h.id ? spellIcon(+h.id, h.spell) : '') + '</span>';
 const mpBhRdy = (c) => (c.ready && c.ready.length ? '<span class="bh-rdy"><b>' + esc(c.ready[0]) + '</b> was ready</span>' : '<span class="bh-nod">No defensive up</span>');
-const mpBigChap = (R) => (R.big ? mpChap('mptCH', 'Big hits', 'the enemy hits that take most of a health bar', mpBigHtml(R)) : '');
+// (the close calls' Next time line: the spell most of them came from, how often it was cast and how much it took. The Companion's Big hits chapter and the
+// website's Survival tab both show it (found by the patch review, Nov 15: it had gone from the website with the chapter))
+const mpBhNext = (R) => { const B = R.big, CL = (B && B.close) || [], H = (B && B.hits) || []; if (!CL.length) return ''; const words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'], nw = (n) => (n <= 10 ? words[n] : String(n));
+  const bySp = new Map(); for (const c of CL) bySp.set(c.spell, (bySp.get(c.spell) || 0) + 1); const [sp, n] = [...bySp].sort((a, b) => b[1] - a[1])[0], h = H.find((x) => x.spell === sp), span = h && h.casts.length > 1 ? Math.round(h.casts[h.casts.length - 1].t - h.casts[0].t) : 0;
+  return '<p class="mpt-nt bh-nt"><b>Next time</b> Have a defensive up for <b class="bh-sp">' + esc(sp) + '</b>.' + (h ? ' It was cast ' + plural(h.casts.length, 'time') + (span ? ' in ' + span + ' seconds' : '') + ', and each one took about ' + h.size + '% of a health bar' : '') +
+    (n === CL.length ? (CL.length > 1 ? ', and every close call came from it.' : '.') : '. ' + nw(n) + ' of the ' + CL.length + ' close calls came from it.') + '</p>'; };
+/* (on the website Big hits is the Survival tab's, Nov 15: the chapter is the Companion's card's only) */
+const mpBigChap = (R) => (R.big && MPC_ON ? mpChap('mptCH', 'Big hits', 'the enemy hits that take most of a health bar', mpBigHtml(R)) : '');
 function mpBigHtml(R) {
   const B = R.big, tv = mpBhT(R), H = B.hits, CL = B.close, nD = (R.people || []).reduce((a, p) => a + (p.deaths || 0), 0), words = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
   const nw = (n) => (n <= 10 ? words[n] : String(n)), nwl = (n) => nw(n).toLowerCase(), times = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : nwl(n) + ' times');
@@ -74737,10 +74744,7 @@ function mpBigHtml(R) {
     (CL.length ? ' ' + cap1(times(CL.length)) + ' one of them left someone under 15% health with no defensive up.' : DH.length ? '' : H.length === 1 ? ' It never left anyone under 15% health without a defensive up.' : ' None of them left anyone under 15% health without a defensive up.') + '</p>';
   // (close calls: one Next time line for the spell most of them came from, then a row each)
   let cls = '';
-  if (CL.length) { const bySp = new Map(); for (const c of CL) bySp.set(c.spell, (bySp.get(c.spell) || 0) + 1); const [sp, n] = [...bySp].sort((a, b) => b[1] - a[1])[0], h = H.find((x) => x.spell === sp);
-    const span = h && h.casts.length > 1 ? Math.round(h.casts[h.casts.length - 1].t - h.casts[0].t) : 0;
-    const nt = '<p class="mpt-nt bh-nt"><b>Next time</b> Have a defensive up for <b class="bh-sp">' + esc(sp) + '</b>.' + (h ? ' It was cast ' + plural(h.casts.length, 'time') + (span ? ' in ' + span + ' seconds' : '') + ', and each one took about ' + h.size + '% of a health bar' : '') +
-      (n === CL.length ? (CL.length > 1 ? ', and every close call came from it.' : '.') : '. ' + nw(n) + ' of the ' + CL.length + ' close calls came from it.') + '</p>';
+  if (CL.length) { const nt = mpBhNext(R);
     cls = '<div class="bh-sec"><h3><b class="bh-n bh-bad">' + CL.length + '</b> Close calls <span>left under 15% health by a big hit, with no defensive up</span></h3>' + nt +
       CL.map((c) => '<div class="bh-cr"><span class="bh-t">' + tv(c.t) + '</span><button type="button" class="bh-where" data-bhpick="' + c.pull + '"' + mpT1('Show this pull on the map') + '><i></i>' + esc(mpBhWhere(R, c.pull)) + '</button>' +
         '<span class="bh-cw">' + mpBhIc(c) + mpWho(R, c.name) + ' was left at <b class="bh-bad bh-big">' + c.left + '%</b> by <b class="bh-sp">' + esc(c.spell) + '</b></span>' + mpBhRdy(c) + '</div>').join('') + '</div>'; }
@@ -74755,22 +74759,10 @@ function mpBigHtml(R) {
   const hitRow = (h, open, sub) => '<details class="bh-hit"' + (open ? ' open' : '') + '><summary>' + mpBhIc(h) + '<span class="bh-hn"><b class="bh-sp">' + esc(h.spell) + '</b><span>' + sub + '</span></span>' +
       '<span class="bh-f"><b>' + h.casts.length + '</b> ' + (h.casts.length === 1 ? 'cast' : 'casts') + '</span><span class="bh-f">takes about <b>' + h.size + '%</b></span>' +
       '<span class="bh-f">lowest <b class="' + lowCls(h) + '">' + (h.died ? plural(h.died, 'death') : h.low + '%') + '</b> ' + (h.died ? '' : mpWho(R, h.lowWho)) + '</span></summary>' + grid(h) + '</details>';
-  /* (on the website the big hits are grouped by part of the key, in the key's order (Nov 15, Flex: "the abilities need to be organized better, by bosses/trash
-     packs/pull numbers or something", then "the big hits section needs to be sorted better"): the trash before each boss with its pull numbers, then the boss,
-     its name in gold; under each part the spells cast there, in the order each first went off. A spell cast in two parts is in both, with that part's casts,
-     its own lowest and its own deaths. The Companion's card keeps one list, the worst first) */
-  const groups = () => { const G = new Map(), eff = (x) => (x.died ? 0 : x.left);
-    for (const h of H) for (const c of h.casts) { const w = mpBhWhere(R, c.pull) || 'The key'; let g = G.get(w); if (!g) G.set(w, (g = { w, k: c.pull, boss: !!(R.pulls[c.pull] || {}).boss, hits: new Map() })); g.k = Math.min(g.k, c.pull); if (!g.hits.has(h)) g.hits.set(h, []); g.hits.get(h).push(c); }
-    const pn = (a) => (a.length === 1 ? 'pull ' : 'pulls ') + mpAnd(a.map((k) => String(mpNo(R, k + 1))));
-    return [...G.values()].sort((a, b) => a.k - b.k).map((g) => {
-      const L = [...g.hits].map(([h, cs]) => { const ws = cs.flatMap((c) => c.who), lo = ws.reduce((m, x) => (!m || eff(x) < eff(m) ? x : m), null);
-        return Object.assign({}, h, { casts: cs, died: ws.filter((x) => x.died).length, low: lo ? eff(lo) : h.low, lowWho: lo ? lo.name : h.lowWho }); }).sort((a, b) => a.casts[0].t - b.casts[0].t);
-      const ps = [...new Set(L.flatMap((h) => h.casts.map((c) => c.pull)))].sort((a, b) => a - b);
-      return '<div class="bh-grp"><p class="bh-gh2"><b class="bh-gt' + (g.boss ? ' bh-gtb' : '') + '">' + esc(g.w) + '</b><span class="bh-gs">' + (g.boss ? '' : pn(ps) + ' · ') + plural(L.length, 'big hit') + '</span></p>' +
-        L.map((h) => hitRow(h, false, esc(h.src) + (!g.boss && ps.length > 1 ? ' · ' + pn([...new Set(h.casts.map((c) => c.pull))].sort((a, b) => a - b)) : ''))).join('') + '</div>'; }).join(''); };
+  /* (the Companion's card lists the big hits worst first; on the website they are the Survival tab's, grouped by part of the key (mpxSvGroups)) */
   const hitsH = '<div class="bh-sec"><h3><b class="bh-n">' + H.length + '</b> Big hits <span>every cast, and the health each player had left after it</span></h3>' +
     '<p class="bh-key"><span><i class="bh-sw bh-def"></i>a defensive was up</span><span><i class="bh-sw bh-warn"></i>under 30%, nothing up</span><span><i class="bh-sw bh-bad"></i>under 15%</span><span>Click a hit to open or close it.</span></p>' +
-    (MPC_ON ? H.map((h, k) => hitRow(h, k === 0, where(h))).join('') : groups()) + '</div>';
+    H.map((h, k) => hitRow(h, k === 0, where(h))).join('') + '</div>';
   // (by player: the lowest they were left, how often a defensive was up (not a grade), and the defensives they pressed in the key)
   const pressed = (nm) => { const m = new Map(); for (const q of R.pulls) for (const d of q.defs || []) if (d.who === nm) m.set(d.name, (m.get(d.name) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]).map(([n, c]) => esc(n) + ' ×' + c).join(' · '); };
   const byP = '<div class="bh-sec"><h3>By player <span>at this level the hits come more often than anyone has defensives, so the count is not a grade</span></h3>' + people.map((p) => { const P = B.per[p.name], pr = pressed(p.name);
@@ -74782,6 +74774,92 @@ function mpBigHtml(R) {
     'A big hit is an enemy spell that took two thirds of a health bar or more from the non-tanks, shields included. A defensive counts when it was on the player as the hit landed, their own or one given to them. Shields such as Prismatic Barrier and Holy Bulwark aren\'t counted yet.</p>';
   return top + cls + hitsH + byP + foot;
 }
+// ---------- Survival (Nov 15, Flex: "what if we made a new tab, for survivability that highlighted players ability to use their kit to stay alive, and
+// mitigate damage done? It could include the avoidable damage, could include this defensive usage chart you made...", then "Yes, build it" on the mock).
+// One tab for staying alive, on the website (the Companion's card keeps its Big hits chapter): the numbers on top, the deaths with their recaps, the
+// defensives on big hits (a line a spell, grouped by part of the key, a click opens its casts), each player's kit, and the avoidable damage. It reads what
+// the page already works out (mpxData, the Report card's model, R.big, R.hsf, each pull's defensives), so its numbers are the Report card's and the mistakes' ----------
+// (the big hits by part of the key, in its order: the trash before each boss with its pulls, then the boss; each spell with that part's casts, its lowest,
+// its deaths, and how many of its hits landed on someone with a defensive up. A spell cast in two parts is in both)
+function mpxSvGroups(R) { const B = R && R.big; if (!B) return []; const G = new Map(), eff = (x) => (x.died ? 0 : x.left);
+  for (const h of B.hits || []) for (const c of h.casts || []) { const w = mpBhWhere(R, c.pull) || 'The key'; let g = G.get(w); if (!g) G.set(w, (g = { w, k: c.pull, boss: !!(R.pulls[c.pull] || {}).boss, hits: new Map() })); g.k = Math.min(g.k, c.pull); if (!g.hits.has(h)) g.hits.set(h, []); g.hits.get(h).push(c); }
+  return [...G.values()].sort((a, b) => a.k - b.k).map((g) => { const L = [...g.hits].map(([h, cs]) => { const ws = cs.flatMap((c) => c.who || []), lo = ws.reduce((m, x) => (!m || eff(x) < eff(m) ? x : m), null);
+      return Object.assign({}, h, { casts: cs, died: ws.filter((x) => x.died).length, low: lo ? eff(lo) : h.low, lowWho: lo ? lo.name : h.lowWho, up: ws.filter((x) => (x.def || []).length).length, of: ws.length, ps: [...new Set(cs.map((c) => c.pull))].sort((a, b) => a - b) }); }).sort((a, b) => a.casts[0].t - b.casts[0].t);
+    return { w: g.w, boss: g.boss, ps: [...new Set(L.flatMap((h) => h.ps))].sort((a, b) => a - b), hits: L }; }); }
+// (the numbers on top: deaths, close calls (and the one cast that left the most players under 15% at once), defensives left unpressed while ready, the
+// Healthstone or health potion moments, avoidable hits. The unpressed defensives and the Healthstone moments are the Report card's own counts)
+function mpxSvNums(R, D, L) { const row = (x, l) => ((x.rows || {}).alive || []).find((y) => y.l === l) || null, o = { dN: D.death.length, cN: D.close.length, aN: D.avoid.reduce((a, x) => a + (x.n || 1), 0), miss: 0, hsCh: 0, hsAns: 0, worst: null, g0: null };
+  for (const x of L || []) { const y = row(x, 'Defensives on big hits'), z = row(x, 'Healthstone or health potion'); if (y && y.nMiss) { o.miss += y.nMiss; if (!o.worst || y.nMiss > o.worst.n) o.worst = { name: x.name, n: y.nMiss }; } if (z && z.ch) { o.hsCh += z.ch; o.hsAns += z.ans; } }
+  const grp = new Map(), cur = {}; let gn = 0; for (const c of D.close.slice().sort((a, b) => a.t - b.t)) { const b = c.i + '|' + c.spell, q = cur[b]; if (!q || c.t - q.t > 1.5) cur[b] = { t: c.t, k: b + '|' + (++gn) }; else cur[b].t = c.t; const k = cur[b].k; if (!grp.has(k)) grp.set(k, []); grp.get(k).push(c); }
+  o.g0 = [...grp.values()].sort((a, b) => b.length - a.length || a[0].t - b[0].t)[0] || null; return o; }
+// (a cell of a big hit's grid: the health a player had left after a cast, red under 15%, amber under 30% with nothing up, a green edge and its icon when a
+// defensive was up)
+const mpxSvCell = (w) => { if (!w) return '<span class="bh-c bh-no">–</span>'; const def = (w.def || []).length > 0, k = w.died ? ' bh-bad' : def ? ' bh-def' : w.left < 15 ? ' bh-bad' : w.left < 30 ? ' bh-warn' : '';
+  return '<span class="bh-c' + k + '"' + mpT1('<b>' + esc(w.name) + '</b>: took ' + w.pct + '% of their health' + (w.died ? ' and died.' : ', ' + w.left + '% left.') + (def ? '<br>Up: ' + esc(w.def.join(', ')) : '<br>No defensive up.')) + '><b>' + (w.died ? 'died' : w.left + '%') + '</b>' + (def ? mpxDefIc(w.def) : '') + '<i style="width:' + Math.min(100, w.died ? 0 : w.left) + '%"></i></span>'; };
+function mpxSurv(R, fx) { if (MPC_ON || !R || !(R.people || []).length || !(R.pulls || []).length) return '';
+  const F = fx && fx.R ? fx.R : null, D = mpxData(R, F), C = mpClock(R), pen = C && C.pen ? Math.round(C.pen) : 0, B = R.big, BR = !!(B || Object.keys(R.phm || {}).length), M = mprModel(R, fx), N = mpxSvNums(R, D, M.L), tv = mpBhT(R); /* (BR: the big hits were read. R.big is null both when no enemy hit took two thirds of a health bar and when health was not in the log; the health per second (R.phm) tells them apart. Found by the patch review, Nov 15) */
+  const W = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'], nw = (n) => (n <= 10 ? W[n] : String(n)), onP = (i) => (R.pulls[i] && R.pulls[i].boss ? 'on ' : 'in ') + esc(mpPullName(R, i));
+  const people = (R.people || []).filter((p) => B && B.per && B.per[p.name]).sort(mpByRole), lowC = (v) => (v < 15 ? 'mpsv-bad' : v < 30 ? 'mpsv-warn' : '');
+  const pn = (a) => (a.length === 1 ? 'pull ' : 'pulls ') + mpAnd(a.map((k) => String(mpNo(R, k + 1))));
+  const sec = (id, h, sub, body) => '<section class="mpsv-sec" id="' + id + '"><div class="mpsv-sh"><h3 class="mpsv-h3">' + h + '</h3>' + (sub ? '<span class="mpsv-shs">' + sub + '</span>' : '') + '</div>' + body + '</section>';
+  const clean = (t) => '<p class="mpsv-clean"><b class="mpsv-ck">Clean</b>' + t + '</p>';
+  // 1. staying alive: one line, one sentence, five numbers
+  const h1 = N.dN || N.cN ? [N.dN ? '<span class="mpsv-bad">' + plural(N.dN, 'death') + '</span>' : '', N.cN ? '<span class="mpsv-bad">' + plural(N.cN, 'close call') + '</span>' : ''].filter(Boolean).join(' and ') + '.' : '<span class="mpsv-ok">Nobody died</span>' + (BR ? ', and no big hit left anyone under 15% without a defensive up.' : '.');
+  const say = [N.g0 && N.g0.length > 1 ? 'One <b class="mpsv-sp">' + esc(N.g0[0].spell) + '</b> ' + onP(N.g0[0].i) + ' left ' + (N.g0.length >= (R.people || []).length ? 'all of you' : nw(N.g0.length) + ' of you') + ' under 15% at once.' : '',
+    N.worst ? mpWho(R, N.worst.name) + ' had a defensive ready ' + (N.worst.n === 1 ? 'once' : N.worst.n === 2 ? 'twice' : nw(N.worst.n) + ' times') + ' when a big hit left them under 15% or dead, and didn\'t press it.' : ''].filter(Boolean).join(' ');
+  const tile = (l, v, cls, s) => '<div class="mpsv-tl"><small class="mpsv-tll">' + l + '</small><b class="mpsv-tlv' + (cls ? ' ' + cls : '') + '">' + v + '</b><span class="mpsv-tls">' + s + '</span></div>';
+  const tiles = '<div class="mpsv-tiles">' + tile('Deaths', N.dN, N.dN ? 'mpsv-bad' : 'mpsv-ok', N.dN ? (pen ? '+' + mpMM(pen * N.dN) + ' on the timer' : C ? 'no time added to the timer' : 'no timer to judge') : 'nobody died') +
+    tile('Close calls', BR ? N.cN : '–', !BR ? '' : N.cN ? 'mpsv-bad' : 'mpsv-ok', !BR ? 'health was not in the log' : N.g0 && N.g0.length > 1 ? N.g0.length + ' at once ' + onP(N.g0[0].i) : N.cN ? 'as low as ' + Math.min(...D.close.map((c) => c.left)) + '% health' : 'no big hit left anyone under 15% without a defensive up') +
+    tile('Defensive ready, not pressed', BR ? N.miss : '–', !BR ? '' : N.miss ? 'mpsv-warn' : 'mpsv-ok', !BR ? 'health was not in the log' : N.miss ? 'times a big hit left someone under 15% or dead' : 'nobody left a ready one unpressed') +
+    tile('Healthstone or potion', N.hsCh ? N.hsAns + ' of ' + N.hsCh : '–', !N.hsCh ? '' : N.hsAns === N.hsCh ? 'mpsv-ok' : 'mpsv-warn', N.hsCh ? 'times one was needed and off cooldown' : 'never needed') +
+    tile('Avoidable hits', N.aN, N.aN ? 'mpsv-warn' : 'mpsv-ok', N.aN ? 'hits the fastest groups dodge' : 'nothing avoidable hit anyone') + '</div>';
+  const top = '<section class="mpsv-sec mpsv-top" id="mpxSvT"><p class="mpsv-k">Staying alive</p><p class="mpsv-h1">' + h1 + '</p>' + (say ? '<p class="mpsv-say">' + say + '</p>' : '') + tiles + '</section>';
+  // 2. the deaths, each with the hits before it and what was ready (the rows the mistakes and Graphs' Deaths use)
+  const deaths = sec('mpxSvD', 'Deaths', N.dN ? 'click one for the hits before it and what was ready' : '', N.dN ? '<div class="mpsv-list">' + D.death.map((x) => mpxDeath(R, x, pen)).join('') + '</div>' : clean('Nobody died.'));
+  // 3. the defensives on big hits: a line a spell, by part of the key; a click opens its grid of players against its casts
+  const grid = (h) => '<div class="bh-grid mpsv-grid"><div class="bh-gr bh-gh" style="--n:' + h.casts.length + '"><span></span>' + h.casts.map((c) => '<span>' + tv(c.t) + '</span>').join('') + '</div>' +
+    people.map((p) => '<div class="bh-gr" style="--n:' + h.casts.length + '"><span class="bh-pn">' + mpWho(R, p.name) + '</span>' + h.casts.map((c) => mpxSvCell((c.who || []).find((w) => w.name === p.name))).join('') + '</div>').join('') + '</div>';
+  const hitRow = (h, g) => '<details class="mpsv-hit"><summary class="mpsv-hs">' + mpBhIc(h) + '<span class="mpsv-hn"><b class="mpsv-sp">' + esc(h.spell) + '</b><span class="mpsv-src">' + esc(h.src) + (!g.boss && g.ps.length > 1 ? ' · ' + pn(h.ps) : '') + '</span></span>' +
+    '<span class="mpsv-f mpsv-f2"><b class="mpsv-fb">' + h.casts.length + '</b> ' + (h.casts.length === 1 ? 'cast' : 'casts') + '</span><span class="mpsv-f mpsv-f2">takes about <b class="mpsv-fb">' + h.size + '%</b></span>' +
+    '<span class="mpsv-f">lowest <b class="mpsv-fb ' + lowC(h.died ? 0 : h.low) + '">' + (h.died ? plural(h.died, 'death') : h.low + '%') + '</b> ' + (h.died ? '' : mpWho(R, h.lowWho)) + '</span>' +
+    '<span class="mpsv-up"' + mpT1(h.up + ' of its ' + h.of + ' hits landed on someone with a defensive up') + '><u class="mpsv-ub"><i class="mpsv-ui" style="width:' + (h.of ? Math.round(100 * h.up / h.of) : 0) + '%"></i></u><span class="mpsv-ut"><b class="mpsv-fb">' + h.up + '</b> of ' + h.of + ' up</span></span><i class="mpsv-cv" aria-hidden="true">›</i></summary>' + grid(h) + '</details>';
+  const G = mpxSvGroups(R);
+  const hitsB = !BR ? '<p class="mpsv-clean">Health was not in the log, so the big hits could not be read.</p>' : !G.length ? clean('No enemy hit took two thirds of a health bar.') :
+    mpBhNext(R) + '<p class="mpsv-key"><span class="mpsv-kk"><i class="bh-sw bh-def"></i>a defensive was up</span><span class="mpsv-kk"><i class="bh-sw bh-warn"></i>under 30%, nothing up</span><span class="mpsv-kk"><i class="bh-sw bh-bad"></i>under 15%</span><span class="mpsv-kk">"up" counts the hits that landed on someone with a defensive on</span></p>' +
+    G.map((g) => '<div class="mpsv-part"><p class="mpsv-ph"><b class="mpsv-pt' + (g.boss ? ' mpsv-pb' : '') + '">' + esc(g.w) + '</b><span class="mpsv-ps">' + (g.boss ? '' : pn(g.ps) + ' · ') + plural(g.hits.length, 'big hit') + '</span></p>' + g.hits.map((h) => hitRow(h, g)).join('') + '</div>').join('') +
+    '<p class="mpsv-note">' + ((B.tanks || []).length ? mpAnd(B.tanks.map((n) => mpWho(R, n))) + ' (tank) isn\'t judged here: a tank\'s big hits are their own check. ' : '') + 'A big hit is an enemy spell that took two thirds of a health bar or more from the non-tanks, shields included. A defensive counts when it was on the player as the hit landed, their own or one given to them. Shields such as Prismatic Barrier and Holy Bulwark aren\'t counted yet.</p>';
+  const hits = sec('mpxSvH', 'Defensives on big hits', 'every enemy hit that took two thirds of a health bar or more, by part of the key · click one to see each cast', hitsB);
+  // 5. each player's kit: what they pressed, how often one was up on a big hit, close calls, self-healing, the lowest they got (Healthstones and potions have their own part)
+  const pressed = (nm) => { const m = new Map(); for (const q of R.pulls) for (const d of q.defs || []) if (d.who === nm) m.set(d.name, (m.get(d.name) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]); };
+  const healOf = (nm) => { let self = 0, hs = 0, pot = 0; for (const f of (R.hsf || {})[nm] || []) for (const [k, v] of Object.entries(f || {})) { if (mpgHS.test(k)) hs += v; else if (mpgPOT.test(k)) pot += v; else self += v; } return { self, hs, pot }; };
+  const byN = new Map(M.L.map((x) => [x.name, x]));
+  const kr = (p) => { const x = byN.get(p.name), P = B && B.per ? B.per[p.name] : null, L = pressed(p.name), n = L.reduce((a, y) => a + y[1], 0), top4 = L.slice(0, 4), hl = healOf(p.name), cl = D.close.filter((c) => c.who === p.name).length, dd = D.death.filter((d) => d.who === p.name);
+    const dfs = L.length ? top4.map(([nm, c]) => '<span class="mpsv-df">' + mpxDefIc([nm]) + '<span class="mpsv-dx">×' + c + '</span></span>').join('') + (L.length > 4 ? '<span class="mpsv-dm">+' + (n - top4.reduce((a, y) => a + y[1], 0)) + ' more</span>' : '') : '<span class="mpsv-m">none</span>';
+    const up = P ? '<span class="mpsv-up"><u class="mpsv-ub"><i class="mpsv-ui" style="width:' + (P.n ? Math.round(100 * P.d / P.n) : 0) + '%"></i></u><span class="mpsv-ut"><b class="mpsv-fb">' + P.d + '</b> of ' + P.n + '</span></span>' : '<span class="mpsv-m">' + (p.role === 'tank' ? 'not judged (tank)' : 'no big hits') + '</span>';
+    const lo = dd.length ? '<b class="mpsv-fb mpsv-bad">died</b><small class="mpsv-lw">' + esc(mpCap(mpPullName(R, dd[0].i))) + (mpxTo(dd[0].d.to) ? ', ' + esc(dd[0].d.to) : '') + '</small>' : P && P.lowAt ? '<b class="mpsv-fb ' + lowC(P.low) + '">' + P.low + '%</b><small class="mpsv-lw">' + esc(P.lowAt) + ', ' + tv(P.lowT) + '</small>' : '<span class="mpsv-m">–</span>';
+    return '<div class="mpsv-kr"><span class="mpsv-who" data-l="Player"><b class="mpsv-wn" style="color:' + mpCC(p.cls) + '">' + esc(p.name) + '</b><small class="mpsv-ws">' + esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + '</small></span>' +
+      '<span class="mpsv-dfs" data-l="Defensives pressed">' + dfs + '</span><span class="mpsv-kc" data-l="Up on big hits">' + up + '</span><span class="mpsv-kc" data-l="Close calls">' + (P ? (cl ? '<b class="mpsv-fb mpsv-bad">' + cl + '</b>' : '<span class="mpsv-m">0</span>') : '<span class="mpsv-m">–</span>') + '</span>' +
+      '<span class="mpsv-kc" data-l="Self-healing">' + (hl.self ? mpgN(hl.self) : '<span class="mpsv-m">–</span>') + '</span><span class="mpsv-kc" data-l="Lowest health">' + lo + '</span></div>'; };
+  // 4. Healthstones and health potions: each player's, what they healed, the times one was needed, and each time it was not pressed (the Report card's own count)
+  const hz = (nm) => { const x = byN.get(nm); return x ? ((x.rows.alive || []).find((y) => y.l === 'Healthstone or health potion') || null) : null; };
+  const used = (n, h) => (n ? '<b class="mpsv-fb">' + n + '</b> used' + (h ? '<small class="mpsv-lw">healed ' + mpgN(h) + '</small>' : '') : '<span class="mpsv-m">none</span>');
+  const PL = (R.people || []).slice().sort(mpByRole), mis = [];
+  const prow = (p) => { const z = hz(p.name), hl = healOf(p.name); for (const m of (z && z.mis) || []) mis.push({ m, who: p.name });
+    return '<div class="mpsv-pr"><span class="mpsv-who" data-l="Player"><b class="mpsv-wn" style="color:' + mpCC(p.cls) + '">' + esc(p.name) + '</b><small class="mpsv-ws">' + esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || '')) + '</small></span>' +
+      '<span class="mpsv-kc" data-l="Healthstones">' + used(z ? z.hsN || 0 : 0, hl.hs) + '</span><span class="mpsv-kc" data-l="Health potions">' + used(z ? z.potN || 0 : 0, hl.pot) + '</span>' +
+      '<span class="mpsv-kc" data-l="When one was needed">' + (z && z.ch ? '<b class="mpsv-fb ' + (z.ans === z.ch ? 'mpsv-ok' : 'mpsv-warn') + '">' + z.ans + ' of ' + z.ch + '</b><small class="mpsv-lw">' + (z.ch === 1 ? 'time one was needed' : 'times one was needed') + '</small>' : '<span class="mpsv-m">never needed</span>') + '</span></div>'; };
+  const prH = '<div class="mpsv-pr mpsv-kh"><span class="mpsv-khl">Player</span><span class="mpsv-khl">Healthstones</span><span class="mpsv-khl">Health potions</span><span class="mpsv-khl">When one was needed</span></div>' + PL.map(prow).join('');
+  mis.sort((x, y) => x.m.t - y.m.t);
+  const misH = mis.length ? '<p class="mpsv-sub2">Times one was needed and neither was pressed</p><div class="mpsv-list">' + mis.map(({ m, who }) => mpxRow(R, { at: m.at, i: m.i }, mpWho(R, who) + (m.death ? ' <span class="mpt-m">died to</span> <b class="mpt-ab">' + esc(m.to || 'a hit the log doesn\'t name') + '</b>' : ' <span class="mpt-m">was left at</span> <b class="mpx-low">' + Math.round(m.left) + '%</b> <span class="mpt-m">by</span> <b class="mpt-ab">' + esc(m.sp || '') + '</b>'), '<span class="mpt-a">a Healthstone or potion was off cooldown</span>', '')).join('') + '</div>' : '';
+  const anyCh = PL.some((p) => { const z = hz(p.name); return z && z.ch; });
+  const pots = sec('mpxSvP', 'Healthstones and health potions', 'one is needed when a big hit leaves someone under 15% or kills them, and one is off cooldown', prH + (misH || (anyCh ? clean('Everyone pressed one each time it was needed.') : '')));
+  const kit = sec('mpxSvK', 'Each player\'s kit', 'what they pressed to stay alive, and how often one was up when a big hit landed',
+    '<div class="mpsv-kr mpsv-kh"><span class="mpsv-khl">Player</span><span class="mpsv-khl">Defensives pressed</span><span class="mpsv-khl">Up on big hits</span><span class="mpsv-khl">Close calls</span><span class="mpsv-khl">Self-healing</span><span class="mpsv-khl">Lowest health</span></div>' +
+    (R.people || []).slice().sort(mpByRole).map(kr).join('') + '<p class="mpsv-note">At this level the hits come more often than anyone has defensives, so "up on big hits" is not a grade. The grade is a defensive left unpressed while one was ready: the Report card\'s Staying alive.</p>');
+  // 6. avoidable damage (the rows the mistakes use)
+  const av = (mpxParts(R, F, '').K || {}).avoid;
+  const avoid = sec('mpxSvA', 'Avoidable damage', av ? av.sub : 'hits the fastest groups dodge', av ? '<div class="mpsv-list">' + av.body + '</div>' : clean('Nothing avoidable hit anyone in this key.'));
+  return '<div class="mpsv" role="region" aria-label="Survival" id="mptCV">' + top + deaths + hits + pots + kit + avoid + '</div>'; }
 // (a pull card's close calls, right after how each player died)
 function mpBhCard(R, i, fold) { const B = R.big; if (!B) return ''; const L = B.close.filter((c) => c.pull === i); if (!L.length) return ''; const tv = mpBhT(R);
   return fold('bh', '<span class="mpt-t2d">!</span> <b>' + plural(L.length, 'close call') + '</b> · left under 15% by a big hit',
@@ -74789,7 +74867,7 @@ function mpBhCard(R, i, fold) { const B = R.big; if (!B) return ''; const L = B.
     '<p class="mpt-mcm"><button type="button" class="linkbtn" data-bhgo="1">See every big hit ↑</button></p>', '', true); }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-bhpick], [data-bhgo]'); if (!t) return; e.preventDefault();
   if (t.dataset.bhpick != null) { mpxView('map'); mpMapPick('you', [t.dataset.bhpick]); const m = document.getElementById('mptCM'); if (m) m.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-  mpxGoId('mptCH'); /* (Big hits is in the fold under the Report card (Nov 15); it was on Graphs once) */ const c = document.getElementById('mptCH'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  mpxGoId('mptCH'); /* (Big hits is on the Survival tab (Nov 15); it was on Graphs once) */ const c = document.getElementById('mptCH') || document.getElementById('mpxSvH'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
 const mpJumpBar = (R, tl) => '<nav class="mpt-jb" aria-label="Jump to">' + [['mptBand', 'Summary'], R.big ? ['mptCH', 'Big hits'] : null, ['mptCM', 'Map'], MP_ROT_ON ? ['mptCR', 'Rotation'] : null, ['mptC4', 'Your group'], MP_KNOW[mpLc(R.run.dungeon)] ? ['mptC5', 'Dungeon'] : null].filter(Boolean).map(([id, l]) => '<button type="button" data-mptj="' + id + '">' + l + '</button>').join('') + '</nav>';
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-mptj]'); if (!b) return; e.preventDefault(); const s = document.getElementById(b.dataset.mptj); if (!s) return; if (b.dataset.mptj === 'mptCR') mpRkGo();
   if (s.tagName === 'DETAILS') s.open = true; /* (a folded section opens first) */
@@ -77589,7 +77667,7 @@ async function mpvDetLoad(R) { const el = document.getElementById('mpvDet'); if 
   if (h) h = mpvWords(h, !!(R.pulls[i] || {}).boss);
   el2.innerHTML = h ? '<h3 class="mpv-dh">This pull in full</h3>' + h : '<p class="mpc-pn">This pull’s checklist couldn’t be drawn.</p>'; try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 // (the website's tabs, put back after each draw of the page: Run or Rotation, kept in the address (&mpv=rot) so a link opens on it)
-if (MP.cv == null) { const m = /[?&]mpv=(run|rot|mis|map|gra|rep|cmp|hit|grp|dun)\b/.exec(location.search); if (m) MP.cv = m[1]; }
+if (MP.cv == null) { const m = /[?&]mpv=(run|rot|sur|mis|map|gra|rep|cmp|hit|grp|dun)\b/.exec(location.search); if (m) MP.cv = m[1]; }
 { const m = location.search.match(/[?&]mpp=([^&]+)/); if (m) { try { MP.cvp = decodeURIComponent(m[1]); } catch (e) { /* (a bad name is ignored) */ } } }
 function mpvUrl() { if (MPC_ON) return; try { const u = new URL(location.href); if (MP.cv && MP.cv !== 'rep') u.searchParams.set('mpv', MP.cv); else u.searchParams.delete('mpv'); if (MP.cvp) u.searchParams.set('mpp', MP.cvp); history.replaceState(history.state, '', u); } catch (x) { /* (the address stays) */ } }
 // ===== Mythic+ Route score (Nov 14, Flex: "I also think there should be a score for the route somehow", "Like route efficiency, timing the key, how
@@ -87230,6 +87308,108 @@ html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 { display: flex 
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt { font: 700 16px var(--body) !important; color: var(--text) !important; }
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt.bh-gtb { color: #e6b450 !important; }
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gs { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+}
+/* Mythic+ Survival, a tab of its own (Nov 15, Flex: "what if we made a new tab, for survivability that highlighted players ability to use their kit to stay
+alive", then "Yes, build it" on the mock): panels like the other tabs', the numbers on top, a line a big hit (its casts behind a click), a row a player.
+The website only */
+@layer defaultTheme {
+html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCV):not(.mpc-tabs):not(.mpx-tb) { display: none !important; }
+html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > #mptCV { display: block !important; margin-top: 14px !important; }
+html:not(.mpcard):not([data-mpv="sur"]) body #view#view#view #mptBody > #mptCV { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sec { margin: 0 0 16px !important; padding: 16px 20px 18px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: var(--panel, #171a22) linear-gradient(rgba(255,255,255,.055), rgba(255,255,255,0) 160px) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(0,0,0,.5), 0 14px 30px -16px rgba(0,0,0,.95) !important; scroll-margin-top: 64px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-h3 { margin: 0 !important; font: 800 19px/1.15 'Barlow Condensed', sans-serif !important; color: var(--text) !important; letter-spacing: .01em !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-shs { font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-m { color: var(--muted) !important; font-weight: 500 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sp { color: var(--text) !important; font-weight: 700 !important; }
+/* the top */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-k { margin: 0 !important; font: 700 12px var(--body) !important; letter-spacing: .07em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-h1 { margin: 6px 0 2px !important; font: 800 30px/1.1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-say { margin: 0 0 14px !important; font: 500 17px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { display: grid !important; grid-template-columns: repeat(5, minmax(0,1fr)) !important; margin: 10px 0 0 !important; border: 1px solid var(--line) !important; border-radius: 4px !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tl { padding: 11px 14px 12px !important; box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line) !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tll { display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv { display: block !important; margin: 4px 0 2px !important; font: 800 28px/1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tls { display: block !important; font: 500 13.5px/1.3 var(--body) !important; color: var(--muted) !important; }
+/* clean lines, notes, lists */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-clean { margin: 2px 0 0 !important; font: 500 16px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ck { margin-right: 8px !important; font: 700 13px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-note { margin: 12px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list { border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r { border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r:last-child { border-bottom: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-nt { margin: 0 0 8px !important; }
+/* the defensives on big hits: a part of the key, then a line a spell */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-key { display: flex !important; flex-wrap: wrap !important; gap: 4px 18px !important; margin: -2px 0 4px !important; font: 500 13.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kk { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-part { margin: 14px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ph { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 2px !important; padding: 0 0 6px !important; border-bottom: 1px solid var(--line2, #2a2e36) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt { font: 700 16px var(--body) !important; color: var(--text) !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt.mpsv-pb { color: #e6b450 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ps { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit { border-bottom: 1px solid rgba(255,255,255,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: grid !important; grid-template-columns: 26px minmax(0,1.6fr) minmax(56px,70px) minmax(96px,118px) minmax(0,1.15fr) minmax(104px,150px) 14px !important; gap: 12px !important; align-items: center !important; padding: 7px 0 !important; list-style: none !important; cursor: pointer !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs:hover { background: rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .bh-ic { width: 24px !important; height: 24px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-sp { font: 700 15px var(--body) !important; color: #c39bff !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-src { margin-left: 8px !important; font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-f { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb { font-weight: 800 !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-up { display: flex !important; align-items: center !important; gap: 8px !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ub { position: relative !important; flex: 1 1 auto !important; min-width: 40px !important; height: 6px !important; border-radius: 0 !important; background: rgba(255,255,255,.08) !important; overflow: hidden !important; text-decoration: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ui { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; background: #7ee08f !important; opacity: .8 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ut { white-space: nowrap !important; font: 600 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-cv { font: 700 15px var(--body) !important; font-style: normal !important; color: var(--faint) !important; text-align: right !important; transition: transform .15s !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit[open] > .mpsv-hs > .mpsv-cv { transform: rotate(90deg) !important; color: var(--text) !important; }
+/* a spell's grid (the Big hits chapter's own look) */
+html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin: 0 0 10px 38px !important; padding: 2px 0 4px !important; overflow-x: auto !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-gr { gap: 3px !important; margin-top: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 7px !important; height: 26px !important; padding: 0 7px 2px 9px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c > b { flex: none !important; font-size: 14.5px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-bad > b { font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c > .bh-di { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-no { justify-content: center !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-pn { font-size: 13.5px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di { display: inline-flex !important; align-items: center !important; gap: 3px !important; min-width: 0 !important; vertical-align: -4px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki { display: inline-flex !important; flex: none !important; width: 18px !important; height: 18px !important; margin: 0 !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki :is(img, svg, .icw) { width: 18px !important; height: 18px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > small { font: 600 12px/1.15 var(--body) !important; color: #7ee08f !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+/* each player's kit */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1.6fr) minmax(110px,1fr) minmax(64px,.5fr) minmax(80px,.6fr) minmax(120px,1.2fr) !important; gap: 14px !important; align-items: center !important; padding: 10px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) !important; gap: 14px !important; align-items: center !important; padding: 9px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sub2 { margin: 16px 0 4px !important; font: 700 15px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-khl { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-wn { display: block !important; font: 700 16px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ws, html:not(.mpcard) body #view#view#view #mptCV .mpsv-lw { display: block !important; font: 500 13px/1.3 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-dfs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df { display: inline-flex !important; align-items: center !important; gap: 4px !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di { display: inline-flex !important; align-items: center !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki { display: inline-flex !important; width: 22px !important; height: 22px !important; margin: 0 !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki :is(img, svg, .icw) { width: 22px !important; height: 22px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di > small { font: 600 13px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-dx, html:not(.mpcard) body #view#view#view #mptCV .mpsv-dm { font: 600 14px var(--body) !important; color: var(--muted) !important; }
+@media (max-width: 900px) {
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 10px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-hn { flex: 1 1 0 !important; white-space: normal !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-src, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-src { display: block !important; margin: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f2 { display: none !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-up { flex: 1 1 100% !important; margin-left: 36px !important; white-space: normal !important; order: 1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin-left: 0 !important; overflow-x: auto !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh, html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { display: none !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-who { grid-column: 1 / -1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-kc::before { content: attr(data-l) !important; display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-who, html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-dfs { grid-column: 1 / -1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > :is(.mpsv-kc, .mpsv-dfs)::before { content: attr(data-l) !important; display: block !important; flex: 0 0 100% !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+}
 }
 </style>
 </body>

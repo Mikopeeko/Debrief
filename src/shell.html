@@ -20639,6 +20639,108 @@ html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt { font:
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt.bh-gtb { color: #e6b450 !important; }
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gs { font: 500 13px var(--body) !important; color: var(--muted) !important; }
 }
+/* Mythic+ Survival, a tab of its own (Nov 15, Flex: "what if we made a new tab, for survivability that highlighted players ability to use their kit to stay
+alive", then "Yes, build it" on the mock): panels like the other tabs', the numbers on top, a line a big hit (its casts behind a click), a row a player.
+The website only */
+@layer defaultTheme {
+html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCV):not(.mpc-tabs):not(.mpx-tb) { display: none !important; }
+html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > #mptCV { display: block !important; margin-top: 14px !important; }
+html:not(.mpcard):not([data-mpv="sur"]) body #view#view#view #mptBody > #mptCV { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sec { margin: 0 0 16px !important; padding: 16px 20px 18px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: var(--panel, #171a22) linear-gradient(rgba(255,255,255,.055), rgba(255,255,255,0) 160px) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(0,0,0,.5), 0 14px 30px -16px rgba(0,0,0,.95) !important; scroll-margin-top: 64px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-h3 { margin: 0 !important; font: 800 19px/1.15 'Barlow Condensed', sans-serif !important; color: var(--text) !important; letter-spacing: .01em !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-shs { font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-m { color: var(--muted) !important; font-weight: 500 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sp { color: var(--text) !important; font-weight: 700 !important; }
+/* the top */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-k { margin: 0 !important; font: 700 12px var(--body) !important; letter-spacing: .07em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-h1 { margin: 6px 0 2px !important; font: 800 30px/1.1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-say { margin: 0 0 14px !important; font: 500 17px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { display: grid !important; grid-template-columns: repeat(5, minmax(0,1fr)) !important; margin: 10px 0 0 !important; border: 1px solid var(--line) !important; border-radius: 4px !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tl { padding: 11px 14px 12px !important; box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line) !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tll { display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv { display: block !important; margin: 4px 0 2px !important; font: 800 28px/1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-tls { display: block !important; font: 500 13.5px/1.3 var(--body) !important; color: var(--muted) !important; }
+/* clean lines, notes, lists */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-clean { margin: 2px 0 0 !important; font: 500 16px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ck { margin-right: 8px !important; font: 700 13px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-note { margin: 12px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list { border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r { border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r:last-child { border-bottom: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-nt { margin: 0 0 8px !important; }
+/* the defensives on big hits: a part of the key, then a line a spell */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-key { display: flex !important; flex-wrap: wrap !important; gap: 4px 18px !important; margin: -2px 0 4px !important; font: 500 13.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kk { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-part { margin: 14px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ph { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 2px !important; padding: 0 0 6px !important; border-bottom: 1px solid var(--line2, #2a2e36) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt { font: 700 16px var(--body) !important; color: var(--text) !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt.mpsv-pb { color: #e6b450 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ps { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit { border-bottom: 1px solid rgba(255,255,255,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: grid !important; grid-template-columns: 26px minmax(0,1.6fr) minmax(56px,70px) minmax(96px,118px) minmax(0,1.15fr) minmax(104px,150px) 14px !important; gap: 12px !important; align-items: center !important; padding: 7px 0 !important; list-style: none !important; cursor: pointer !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs:hover { background: rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .bh-ic { width: 24px !important; height: 24px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-sp { font: 700 15px var(--body) !important; color: #c39bff !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-src { margin-left: 8px !important; font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-f { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb { font-weight: 800 !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-up { display: flex !important; align-items: center !important; gap: 8px !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ub { position: relative !important; flex: 1 1 auto !important; min-width: 40px !important; height: 6px !important; border-radius: 0 !important; background: rgba(255,255,255,.08) !important; overflow: hidden !important; text-decoration: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ui { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; background: #7ee08f !important; opacity: .8 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ut { white-space: nowrap !important; font: 600 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-cv { font: 700 15px var(--body) !important; font-style: normal !important; color: var(--faint) !important; text-align: right !important; transition: transform .15s !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit[open] > .mpsv-hs > .mpsv-cv { transform: rotate(90deg) !important; color: var(--text) !important; }
+/* a spell's grid (the Big hits chapter's own look) */
+html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin: 0 0 10px 38px !important; padding: 2px 0 4px !important; overflow-x: auto !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-gr { gap: 3px !important; margin-top: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 7px !important; height: 26px !important; padding: 0 7px 2px 9px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c > b { flex: none !important; font-size: 14.5px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-bad > b { font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c > .bh-di { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-no { justify-content: center !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-pn { font-size: 13.5px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di { display: inline-flex !important; align-items: center !important; gap: 3px !important; min-width: 0 !important; vertical-align: -4px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki { display: inline-flex !important; flex: none !important; width: 18px !important; height: 18px !important; margin: 0 !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki :is(img, svg, .icw) { width: 18px !important; height: 18px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .bh-di > small { font: 600 12px/1.15 var(--body) !important; color: #7ee08f !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+/* each player's kit */
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1.6fr) minmax(110px,1fr) minmax(64px,.5fr) minmax(80px,.6fr) minmax(120px,1.2fr) !important; gap: 14px !important; align-items: center !important; padding: 10px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) !important; gap: 14px !important; align-items: center !important; padding: 9px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-sub2 { margin: 16px 0 4px !important; font: 700 15px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-khl { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-wn { display: block !important; font: 700 16px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ws, html:not(.mpcard) body #view#view#view #mptCV .mpsv-lw { display: block !important; font: 500 13px/1.3 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-dfs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df { display: inline-flex !important; align-items: center !important; gap: 4px !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di { display: inline-flex !important; align-items: center !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki { display: inline-flex !important; width: 22px !important; height: 22px !important; margin: 0 !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki :is(img, svg, .icw) { width: 22px !important; height: 22px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di > small { font: 600 13px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-dx, html:not(.mpcard) body #view#view#view #mptCV .mpsv-dm { font: 600 14px var(--body) !important; color: var(--muted) !important; }
+@media (max-width: 900px) {
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 10px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-hn { flex: 1 1 0 !important; white-space: normal !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-src, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-src { display: block !important; margin: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f2 { display: none !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-up { flex: 1 1 100% !important; margin-left: 36px !important; white-space: normal !important; order: 1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin-left: 0 !important; overflow-x: auto !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh, html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { display: none !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-who { grid-column: 1 / -1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-kc::before { content: attr(data-l) !important; display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-who, html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-dfs { grid-column: 1 / -1 !important; }
+  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > :is(.mpsv-kc, .mpsv-dfs)::before { content: attr(data-l) !important; display: block !important; flex: 0 0 100% !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+}
+}
 </style>
 </body>
 </html>

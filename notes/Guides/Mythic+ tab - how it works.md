@@ -495,3 +495,23 @@ Checks: tests/mplus-report-opens.js runs the tab list, the address and the strip
 ### Big hits grouped by part of the key (Nov 15, 2026)
 
 Flex: "the big hits section needs to be sorted better" (after "the abilities need to be organized better, by bosses/trash packs/pull numbers or something"). On the website the big hits are grouped by part of the key, in its order: the trash before each boss (with its pull numbers), then the boss, its name in gold. Under each part are the spells cast there, in the order each first went off. A spell cast in two parts is in both, with that part's casts, its own lowest and its own deaths; in a part of several trash pulls a row says which pull. The close calls and By player are as before. The Companion app's card keeps one list, the worst first. Check: tests/mplus-big-hits-order.js (fails on 78fa4907).
+
+## Survival, a tab of its own (Nov 15, 2026)
+
+Flex, on Big hits ("man the big hits still feels so out of place", "thats too much in a single persons report card", "im almost debating on putting it in the graphs section, but its very big"), then his idea: "what if we made a new tab, for survivability that highlighted players ability to use their kit to stay alive, and mitigate damage done? It could include the avoidable damage, could include this defensive usage chart you made", and "Yes, build it" on the mock. The website's key page has six tabs: Report card, Route, Rotation, **Survival**, Graphs, Compare (`&mpv=sur`).
+
+What is on it, top to bottom:
+- **Staying alive**: one line ("2 deaths and 5 close calls."), one sentence (the one cast that left the most of you under 15% at once; the player who left a ready defensive unpressed most often), five numbers: deaths (+ time on the timer), close calls, defensive ready but not pressed, Healthstone or potion (used of the times one was needed), avoidable hits.
+- **Deaths**: the same rows as the mistakes and Graphs' Deaths; a click shows the hits before it and what was ready.
+- **Defensives on big hits**: grouped by part of the key (the trash before each boss with its pulls, then the boss in gold), a line a spell: its casts, how much it takes, the lowest it left anyone, and how many of its hits landed on someone with a defensive up ("8 of 24 up"). A click opens the spell's grid of players against its casts, with each defensive as its icon. Shut until clicked, so the tab stays short.
+- **Healthstones and health potions** (Flex: "Healthpots and healthstones should also be included in this"): a row a player with Healthstones and health potions used and what they healed, and how many of the times one was needed they pressed one (the Report card's own count: a big hit left them under 15% or killed them and one was off cooldown); then each time one was needed and neither was pressed, with its time, pull and what hit them.
+- **Each player's kit**: the defensives they pressed (icons ×count), how often one was up on a big hit, close calls, self-healing, and the lowest they got (or where they died). The tank's big hits aren't judged. On a phone each row stacks, each value with its label.
+- **Avoidable damage**: the mistakes' rows, or "Clean".
+
+Fixed on the way: the Report card's hovers said a close call "left you at 900%" (the health left is already a whole percent); they read "left you at 9%" now.
+
+Where the numbers come from (nothing is counted twice): deaths, close calls and avoidable hits are `mpxData`'s; the defensives left unpressed and the Healthstone moments are the Report card's own (its Staying alive rows carry `nMiss` and `ch`, `ans`, `uses`, `hsN`, `potN` and each missed moment, `mis`); the big hits are `R.big`; self-healing and potion healing are `R.hsf`; the pressed defensives are each pull's `defs`.
+
+Big hits on the website is now only this tab: the old Big hits chapter (`mpBigChap`) draws on the Companion app's card only, which keeps its layout. Links to Big hits (the close calls' "See every big hit", Route's pull cards, old `&mpv=hit` links) open Survival. Graphs keeps its raw Survival and Deaths views. Code: `mpxSvGroups`, `mpxSvNums`, `mpxSvCell`, `mpxSurv` in src/mptab.js; the look is the "Mythic+ Survival" block at the end of style#look-nov13.
+
+Checks: tests/mplus-big-hits-order.js runs the tab's own code (the parts of the key, the numbers on top, the Report card's counts, the Companion's list); tests/look-review.js has a block for the tab. Each fails on 6f03d342.

@@ -17,10 +17,10 @@ module.exports = function reportOpens(say) {
   let T; try { T = vm.runInNewContext(line(s, 'MPX_VIEWS') + line(s, 'MPX_OLD') + line(s, 'MPX_NEED') + '\n({ MPX_VIEWS, MPX_OLD, MPX_NEED })'); } catch (e) { bad('the tab list no longer runs by itself: ' + String(e.message).slice(0, 120)); return; }
   if (!T.MPX_VIEWS.length || T.MPX_VIEWS[0][0] !== 'rep' || T.MPX_VIEWS[0][1] !== 'Report card') bad('the key\'s first tab is "' + (T.MPX_VIEWS[0] || [])[1] + '", not Report card (Flex, Nov 15: "make report card the opening tab")');
   if (T.MPX_VIEWS.some(([v, l]) => v === 'run' || l === 'Summary')) bad('the Summary tab is back (Nov 15: its story, where the time went and Fix first are at the top of the Report card)');
-  for (const v of ['run', 'hit', 'mis']) if (T.MPX_OLD[v] !== 'rep') bad('an old link with &mpv=' + v + ' opens "' + T.MPX_OLD[v] + '" instead of the Report card, where it lives now');
+  for (const v of ['run', 'mis']) if (T.MPX_OLD[v] !== 'rep') bad('an old link with &mpv=' + v + ' opens "' + T.MPX_OLD[v] + '" instead of the Report card, where it lives now');
   { const m = /if \(MP\.cv == null\) \{ const m = (\/[^\n]*?\/)\.exec\(location\.search\)/.exec(s); let re = null; try { re = m && vm.runInNewContext(m[1]); } catch (e) { re = null; }
     if (!re) bad('the address no longer reads the tab (&mpv=)');
-    else for (const [q, want] of [['?report=a&fight=2&tab=mplus&mpv=run', 'rep'], ['?mpv=hit', 'rep'], ['?mpv=map&x=1', 'map'], ['?tab=mplus', null]]) { const g = re.exec(q), v = g ? (T.MPX_OLD[g[1]] || g[1]) : null; if (v !== want) bad('the address ' + q + ' opens the tab "' + v + '" (it must be ' + (want || 'the first tab, Report card') + ')'); } }
+    else for (const [q, want] of [['?report=a&fight=2&tab=mplus&mpv=run', 'rep'], ['?mpv=hit', 'sur'], ['?mpv=sur', 'sur'], ['?mpv=map&x=1', 'map'], ['?tab=mplus', null]]) { const g = re.exec(q), v = g ? (T.MPX_OLD[g[1]] || g[1]) : null; if (v !== want) bad('the address ' + q + ' opens the tab "' + v + '" (it must be ' + (want || 'the first tab, Report card') + ')'); } }
   // 2. The key, in short and Fix first, run on made-up keys
   const run = (card) => vm.runInNewContext('const MPC_ON = ' + (card ? 'true' : 'false') + ';' +
     'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +
