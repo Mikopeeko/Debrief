@@ -397,6 +397,16 @@ function pgP2(A) {
     L0.push(['The Doomscales (4:27)', 'Behind or beside them, never in front: their frontal goes at the tank.' + (pk.cry ? ' Kick Doomscale ' + pk.cry + '\'s Anguished Cry at 4:35, 4:53 and 5:09.' : '')]);
     L0.push(['Back to her (4:38)', 'Take your gate back. The heart opens at 4:55: step out of the brown circles.']); L0.push(['Falling Debris', 'Also at 3:50, 4:30 and 5:17: step out of the brown circles.']);
     return '<ul class="pg-asg">' + L0.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
+  // (the start card's "Your job in short" (practice.js pick(), Nov 15, Flex: "improve the setup screens. Still a little convoluted"): four plain
+  // lines, your ledge and gate, your egg and kicks, your tether, the heart; the full rundown (asg) folds away under it)
+  const short = () => { fix(); const s = SD[pk.side], ord = ['', '1st', '2nd', '3rd'], L0 = [];
+    L0.push(s[0].toUpperCase() + s.slice(1) + ' ledge: cross through your gate (the gold ring) at 2:47.');
+    const egg = pk.egg === 'far' || pk.egg === 'close' ? 'The ' + pk.egg + ' big egg (' + (pk.egg === 'far' ? 'south' : 'north') + ' end): pick it up at 4:14, in by 4:27' : pk.egg ? 'Small egg ' + pk.egg.slice(1) + ': pick it up when the Warden dies, into the cauldron at 3:56' : 'No egg: keep out of the carriers\' rings';
+    const kk = [pk.mal ? 'the ' + ord[pk.mal] + ' Malice (' + clk(T.malice[pk.mal - 1]) + ')' : '', pk.cry ? 'Doomscale ' + pk.cry + '\'s Anguished Cry' : ''].filter(Boolean);
+    L0.push(egg + (kk.length ? '. Kick (E) ' + kk.join(' and ') : '') + '.');
+    L0.push(({ random: 'Tether: if you get one, break alone at 3:18 or with the five at 3:34.', solo: 'Tether: you break alone at 3:18, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
+    L0.push('Back to her at 4:38: burn the heart, step out of the brown circles.');
+    return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
   const starts = [[0, '2:46 · The split'], [190, '3:10 · The tethers'], [216, '3:36 · The small eggs'], [248, '4:08 · The big eggs'], [266, '4:26 · The Doomscales'], [284, '4:44 · The heart burn']];
 
   // ---- the minimap: the whole room, both ledges ----
@@ -449,7 +459,7 @@ function pgP2(A) {
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); };
 
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, upNext, acts, hud, card, bind, role, asg, starts, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
+    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
     clean: 'Every kick landed, your tether broke on the count, your eggs went in clean, and you kept out of the frontals and the debris. Try another job.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, clash, get T() { return T; } };
 }
