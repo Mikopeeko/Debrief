@@ -20573,6 +20573,11 @@ html:not(.mpcard) body #view#view#view .mrp-side .mrp-feed { height: 252px !impo
 html:not(.mpcard) body #view#view#view .mrp-ef > .mrp-efr { transition: transform .18s ease !important; }
 @media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-left > .mrp-map { flex: none !important; } }
 }
+/* Mythic+ replay: a player's mark fades while its spot is a guess (Nov 15: the log has no positions while they only walk) */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-p.held { opacity: .42 !important; }
+html:not(.mpcard) body #view#view#view .mrp-p.held > circle { stroke-dasharray: 3 2 !important; }
+}
 </style>
 </body>
 </html>
