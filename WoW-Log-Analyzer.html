@@ -72866,8 +72866,8 @@ function pgOpen(root, boss, d, pk) {
     if (have === want) return g; if (have < 0) { g[want].push(slot); return g; }
     const car = (x) => !!PG_UL.eggO[x], pool = g[want], mate = pool.find((x) => car(x) === car(slot) && x[0] === slot[0]) || pool.find((x) => car(x) === car(slot)) || pool[pool.length - 1];
     g[have] = g[have].filter((x) => x !== slot).concat([mate]); g[want] = g[want].filter((x) => x !== mate).concat([slot]); return g; });
-  const jobRole = (j) => { const slot = jobSlot(j), sk = jobSoak(slot, j), RN = { m: 'Melee', r: 'Ranged', h: 'Healer' };
-    return { id: slot, name: RN[j.role], job: (j.egg ? 'Egg carrier, ' + ZN[slot][0] + ', ' + ZN[slot][1] + ' spot' : 'No egg') + ' · coil team ' + (sk[0][0].includes(slot) ? 1 : 2) + ', then ' + (sk[1][0].includes(slot) ? 1 : 2) }; };
+  const jobRole = (j) => { const slot = jobSlot(j), sk = jobSoak(slot, j), RN = { m: 'Melee', r: 'Ranged', h: 'Healer' }, t1 = sk[0][0].includes(slot) ? 1 : 2, t2 = sk[1][0].includes(slot) ? 1 : 2; /* (Main, Nov 15: "then 1" read oddly) */
+    return { id: slot, name: RN[j.role], job: (j.egg ? 'Egg carrier, ' + ZN[slot][0] + ', ' + ZN[slot][1] + ' spot' : 'No egg') + ' · coil team ' + t1 + (t2 !== t1 ? ', then team ' + t2 : '') }; };
   const newG = () => { G = { t: 0, hp: 100, x: 0, y: 0, debs: {}, log: [], deaths: 0, done: new Set(), eggs: [], adds: [], bots: {}, wr: {}, kb: null, sprint: -99, def: -99, fx: [], warnI: 0, bossHp: 100, still: true, vipers: 0 };
     S.eggSets.forEach((e) => e.eggs.forEach((q) => G.eggs.push({ ...q, set: e.si, state: 'air', who: null })));
     GDZ_RAID.forEach((id) => { const p = homeOf(id, 0); G.bots[id] = { id, x: p[0], y: p[1], esc: null }; });
@@ -73145,10 +73145,13 @@ function pgOpen(root, boss, d, pk) {
     const egg = car ? (() => { const z = UX_ZONE[slot], q = PG_UL.eggO[slot], p = PG_UL.inward([z[0] + q[0], z[1] + q[1]]); return '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="5.5" fill="rgba(243,201,105,.3)" stroke="#f3c969" stroke-width="1.2"/><circle cx="' + X(p) + '" cy="' + Y(p) + '" r="1.8" fill="#e9e2c6"/>' + tx([p[0], p[1] + (p[1] > 25 ? -10.5 : 8)], 'Your egg', '#f3c969', 6); })() : tx([0, -3], 'No egg', '#c2cbd5', 7);
     const map = '<svg viewBox="-46 -56 92 96" role="img" aria-label="' + (car ? 'Where your egg lands' : 'No egg') + '"><image href="' + PG_UL.art + '" x="' + (-PG_UL.artW / 2).toFixed(1) + '" y="' + (-(PG_UL.artY + PG_UL.artH / 2)).toFixed(1) + '" width="' + PG_UL.artW.toFixed(1) + '" height="' + PG_UL.artH.toFixed(1) + '" preserveAspectRatio="none" opacity=".5"/>' +
       '<polygon points="' + oct + '" fill="rgba(120,140,110,.12)" stroke="rgba(220,230,210,.55)" stroke-width=".6"/><ellipse cx="0" cy="-46" rx="7" ry="5.4" fill="#1f4a1b" stroke="#b6f23a" stroke-width=".8"/>' + tx([0, 36], 'Ula\'tek', '#e9ffd0', 6) + egg + '</svg>';
-    const row = (k, lab, opts, cur) => '<div class="pg-optrow pg-jrow"><span>' + lab + '</span><div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</div></div>';
+    const ric = (v) => (GDZ_ROLE[v] ? '<img class="pg-ric" src="https://wow.zamimg.com/images/wow/icons/medium/' + GDZ_ROLE[v][2] + '.jpg" alt="" onerror="this.remove()">' : '');
+    const row = (k, lab, opts, cur, gl) => '<div class="pg-optrow pg-jrow"><span>' + (gl ? pgGlyph(gl) : '') + lab + '</span><div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + '>' + (k === 'jr' ? ric(v) : '') + esc(t) + '</button>').join('') + '</div></div>';
+    const coilPic = '<div class="pg-jcoil"><svg viewBox="0 0 60 22" aria-hidden="true">' + [0, 1].map((k) => { const on = k === team - 1, cx = 15 + k * 30; return '<circle cx="' + cx + '" cy="11" r="9.5" fill="' + (on ? 'rgba(243,201,105,.25)' : 'rgba(36,242,203,.08)') + '" stroke="' + (on ? '#f3c969' : 'rgba(36,242,203,.55)') + '" stroke-width="' + (on ? 1.8 : 1.1) + '"' + (on ? '' : ' stroke-dasharray="2.2 1.6"') + '/><text x="' + cx + '" y="14.2" text-anchor="middle" font-size="9" font-weight="800" fill="' + (on ? '#f3c969' : '#8fd9cb') + '">' + (k ? '2nd' : '1st') + '</text>'; }).join('') +
+      '</svg><span><b>Your coil: the ' + (team === 2 ? 'second' : 'first') + ' to appear.</b>' + (car && team === 2 ? ' In set 1 the first, with the other egg carriers.' : '') + '</span></div>';
     const area = car ? (JOB_AREAS.find(([id]) => ZN[id][0] === ZN[slot][0]) || [slot])[0] : 'none';
-    return '<div class="pg-jobp"><div class="pg-jside">' + row('jr', 'Role', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], j.role) + row('je', 'Egg', [['none', 'No egg']].concat(JOB_AREAS), area) + row('jc', 'Coil team', [[1, 'Team 1'], [2, 'Team 2']], team) +
-      '<p class="pg-jnote">Team 1 soaks the first coil to appear, team 2 the second.' + (car ? ' Egg carriers soak the first coil in set 1, inside the Wretch\'s bubble.' : '') + ' Your bubble spot is picked for you.</p></div><div class="pg-jmap">' + map + '</div></div>'; };
+    return '<div class="pg-jobp"><div class="pg-jside">' + row('jr', 'Role', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], j.role) + row('je', 'Egg', [['none', 'No egg']].concat(JOB_AREAS), area, 'egg') + row('jc', 'Coil team', [[1, 'Team 1'], [2, 'Team 2']], team, 'coil') +
+      '<p class="pg-jnote">Team 1 soaks the first coil to appear, team 2 the second.' + (car ? ' Egg carriers soak the first coil in set 1, inside the Wretch\'s bubble.' : '') + ' Your bubble spot is picked for you.</p></div><div class="pg-jmapw"><div class="pg-jmap">' + map + '</div>' + coilPic + '</div></div>'; };
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
     const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
     if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her (the gold circle shows it). Wait for its shell, walk over it, carry it clean, break it in your coil soak.']);
@@ -73162,21 +73165,30 @@ function pgOpen(root, boss, d, pk) {
     L.push(['Her waves', 'At 0:56 and 1:53: wait on the half she isn\'t pulling her wing back from, then cross behind the first wave.']); L.push(['Small tails', 'A tail rising at the edge sends three waves 2.4 s later: step out of their red lanes.']);
     L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive (1:17) and the heart (2:25)', 'She comes up on either side. In the heart burn, step out of the brown circles.']);
     return '<ul class="pg-asg">' + L.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
+  // (the start card's glyphs, in the colours the fight uses: an egg, a coil, the Wretch's bubble, a wave; drawn here, no pictures)
+  const pgGlyph = (k) => '<svg class="pg-gl" viewBox="0 0 16 16" aria-hidden="true">' + ({
+    egg: '<ellipse cx="8" cy="8.6" rx="4.8" ry="6.1" fill="#e9e2c6" stroke="#5a5136" stroke-width="1"/>',
+    noegg: '<ellipse cx="8" cy="8.6" rx="4.8" ry="6.1" fill="none" stroke="#8d97a3" stroke-width="1.3" stroke-dasharray="2 1.6"/>',
+    coil: '<circle cx="8" cy="8" r="5.6" fill="rgba(36,242,203,.18)" stroke="#24f2cb" stroke-width="1.8"/>',
+    bubble: '<circle cx="8" cy="8" r="6.2" fill="rgba(216,242,47,.2)" stroke="#d8f22f" stroke-width="1.4"/><circle cx="8" cy="8" r="1.9" fill="#9b5cff"/>',
+    wave: '<path d="M1.5 11.5Q8 1.5 14.5 11.5Q8 7 1.5 11.5Z" fill="#9be13a" stroke="#06260e" stroke-width=".8"/>' }[k] || '') + '</svg>';
   // (your job in short: three or four plain lines for the start card; the full rundown is one click away)
   const short = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
     const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
+    const G4 = [carrierOf(id) ? 'egg' : 'noegg', 'coil', 'bubble', 'wave'];
     L.push(carrierOf(id) ? 'You carry an egg (' + ZN[id][0] + '). It lands at 0:10 and 1:20: pick it up once its shell breaks.' : 'No egg: keep out of the egg carriers\' way.');
     L.push(sets[0] || sets[1] ? 'Coil team ' + sets[0] + (sets[1] !== sets[0] ? ' at 0:40, team ' + sets[1] + ' at 2:14' : ' at 0:40 and 2:14') + '. Team 1 takes the first coil to appear.' : 'No coil soak: stay out of both circles.');
     const fbn = TEAM ? TEAM.fb.map((q, i) => { const j = q.indexOf(id); return j >= 0 ? (i ? 11 + j : 1 + j) : 0; }).filter(Boolean) : [];
     L.push('Get in the Wretch\'s bubble at 0:39, 1:10, 1:48 and 2:20.' + (fbn.length ? ' Your spot: ' + fbn.join(' and ') + '.' : ''));
     L.push('Dodge every wave. Get out of her tail\'s 35 yards at 0:49 and 1:46.');
-    return '<ul class="pg-short">' + L.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
+    return '<ul class="pg-short">' + L.map((x, i) => '<li>' + pgGlyph(G4[i]) + esc(x) + '</li>').join('') + '</ul>'; };
   const START = [[0, 'The pull'], [30, '0:30 · First coils and the bubble'], [44, '0:44 · Tail sweep, then her waves'], [66, '1:06 · Second eggs and the dive'], [98, '1:38 · The hardest waves'], [124, '2:04 · Second coils'], [138, '2:18 · The last bubble and the heart burn']];
   const pick = () => { stop(); paused = true; card.className = 'pg-card on'; if (TEAM && (!pickedMe || !role || !TEAM.id2[role.id] || rl(role.id) === 't')) pickedMe = true, role = teamRole(TEAM.you && rl(TEAM.you) !== 't' ? TEAM.you : CAR8.find((c) => TEAM.id2[c]) || GDZ_RAID.find((c) => TEAM.id2[c] && rl(c) !== 't'));
     if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob);
     const parts = Object.keys(PG_PARTS[boss] || {}).filter((k) => k === d || PG_PARTS[boss][k].d === d), pkNow = pk || d; /* (the parts of the fight you can practise: Phase 1, Phase 2) */
-    card.innerHTML = '<div class="pg-cin"><span class="pg-k">Practice · ' + dn + '</span><h2>' + esc(boss) + ': ' + esc(part.name) + '</h2>' +
-      (parts.length > 1 ? '<div class="pg-optrow pg-partrow"><span>Part</span><div class="pg-seg pg-part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div></div>' : '') +
+    const art = typeof BOSS_ART !== 'undefined' && typeof artUrl === 'function' && BOSS_ART[boss] ? artUrl(BOSS_ART[boss][0]) : '';
+    card.innerHTML = '<div class="pg-cin"><div class="pg-head">' + (art ? '<img class="pg-head-art" src="' + art + '" alt="" onerror="this.remove()">' : '') + '<span class="pg-k">Practice · ' + dn + '</span><h2>' + esc(boss) + ': ' + esc(part.name) + '</h2>' +
+      (parts.length > 1 ? '<div class="pg-optrow pg-partrow"><span>Part</span><div class="pg-seg pg-part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div></div>' : '') + '</div>' +
       (P2 ? '<p class="pg-lead">The real fight clock from 2:46, from the top Mythic kills. Pick your job: the other 19 play the rest of the plan. Phase 2 plays in 3D.</p><div class="pg-job0">' + P2.card() + '</div>' :
       TEAM ? '<p class="pg-lead">The real fight clock, from the top Mythic kills, with your team\'s plan: <b>' + esc(TEAM.name) + '</b>. Everyone does their job from it.</p>' +
         '<div class="pg-optrow pg-who"><span>Play as</span><select class="pg-me">' + GDZ_RAID.filter((id) => TEAM.id2[id] && rl(id) !== 't').map((id) => '<option value="' + id + '"' + (id === role.id ? ' selected' : '') + '>' + esc(nm(id)) + ' · ' + esc(teamRole(id).job) + '</option>').join('') + '</select></div>'
@@ -73281,7 +73293,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -73326,7 +73338,16 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-jside { flex: 1 1 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-jside p { margin: 0 !important; font-size: 13.5px !important; } .pg-jside b { color: #fff; }
 .pg-jno.on { border-color: #f3c969; color: #f3c969; }
 .pg-short0 { margin-top: 12px; } .pg-short { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.pg-short li { position: relative; padding-left: 14px; font-size: 14px; line-height: 1.4; color: #e8edf2; } .pg-short li::before { content: ''; position: absolute; left: 2px; top: .55em; width: 6px; height: 6px; background: #f3c969; }
+.pg-short li { position: relative; padding-left: 24px; font-size: 14px; line-height: 1.45; color: #e8edf2; } .pg-short li .pg-gl { position: absolute; left: 0; top: 2px; }
+.pg-gl { width: 16px; height: 16px; flex: none; vertical-align: -3px; } .pg-jrow > span .pg-gl { margin-right: 6px; }
+.pg-ric { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; border: 1px solid rgba(0,0,0,.5); }
+.pg-head { position: relative; margin: -20px -22px 10px; padding: 18px 22px 14px; min-height: 92px; background: #0b0e12; border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; }
+.pg-head > * { position: relative; } .pg-head-art { position: absolute !important; right: -6px; bottom: -14px; height: 150px; width: auto; opacity: .9; pointer-events: none; }
+.pg-head .pg-partrow { margin-top: 8px; }
+.pg-jmapw { flex: 0 1 220px; max-width: 230px; display: flex; flex-direction: column; gap: 8px; } .pg-jmapw .pg-jmap { max-width: none; flex: none; }
+.pg-jcoil { display: flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1.35; color: #c2cbd5; } .pg-jcoil svg { width: 84px; height: auto; flex: none; } .pg-jcoil b { color: #fff; font-weight: 600; }
+.pg-seg button.on { background: rgba(230,180,80,.16); color: #f3c969; box-shadow: inset 0 0 0 1px rgba(230,180,80,.45); }
+.pg-go { height: 40px; padding: 0 26px; font-size: 15.5px; }
 .pg-more, .pg-opts { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.08); } .pg-more > summary, .pg-opts > summary { cursor: pointer; list-style: none; font: 700 13.5px var(--head, system-ui); color: #aab4c0; }
 .pg-more > summary::-webkit-details-marker, .pg-opts > summary::-webkit-details-marker { display: none; } .pg-more > summary::before, .pg-opts > summary::before { content: '▸  '; } .pg-more[open] > summary::before, .pg-opts[open] > summary::before { content: '▾  '; }
 .pg-more > summary:hover, .pg-opts > summary:hover { color: #fff; } .pg-opts summary b { color: #e8edf2; font-weight: 600; } .pg-opts .pg-optrow { margin-top: 8px; }
@@ -73499,6 +73520,174 @@ function pg3dPick(Q, cap) {
     q.on = true; }
   return Q; }
 
+// ---- the stone (Nov 15, Flex: "Maybe the platform could have an actual texture similar to the platform in the game?") ----
+// The in-game platform as a texture drawn by code on a canvas once, when 3D opens (no picture is loaded or shipped): weathered grey-green
+// slabs in a border band round the rim with worn, chipped edges and a raised frame inside it, four sunken blue-slate panels (north, south,
+// east, west), carved knots at the four corners, a carved square in the middle with scale-carved fans in its corners (each with a green venom
+// inlay) round a round medallion with the serpent's head (glowing eyes), and cracks, a few with a faint venom glow. Laid out after the room's
+// top-down picture and fitted to practice.js's PG_UL.onPlat octagon. Mid-dark and low in contrast, so the floor markers stay bright on it.
+// pg3dStonePlan: the layout in yards (x east, y north, as practice.js), plain numbers, so tests/practice-3d.js checks it against onPlat.
+function pg3dStonePlan() {
+  const hs = (a, b) => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };
+  const octAt = (d) => { const a = 36.5 - d, b = 34 - d, c = 49 - d * Math.SQRT2; return [[a, c - a], [c - b, b], [b - c, b], [-a, c - a], [-a, a - c], [b - c, -b], [c - b, -b], [a, a - c]]; };
+  const inside = (x, y, d) => Math.abs(x) <= 36.5 - d && Math.abs(y) <= 34 - d && Math.abs(x) + Math.abs(y) <= 49 - d * Math.SQRT2;
+  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const BAND = 6.4, FRAME = 7.4, O = octAt(0), I = octAt(BAND), slabs = [], chips = [], cracks = [], rays = [];
+  // (the border band: each side cut into slabs with slanted joints, some split across the band)
+  for (let i = 0; i < 8; i++) { const j = (i + 1) % 8, n = Math.max(2, Math.round(Math.hypot(O[j][0] - O[i][0], O[j][1] - O[i][1]) / 4.4)), cut = [[0, 0]];
+    for (let k = 1; k < n; k++) cut.push([(k + (hs(i, k) - 0.5) * 0.5) / n, (k + (hs(k, i + 9) - 0.5) * 0.6) / n]); cut.push([1, 1]);
+    for (let k = 0; k < n; k++) { const a = cut[k], b = cut[k + 1], o0 = lerp(O[i], O[j], a[0]), o1 = lerp(O[i], O[j], b[0]), i1 = lerp(I[i], I[j], b[1]), i0 = lerp(I[i], I[j], a[1]);
+      if (hs(i * 7 + k, 3) < 0.4) { const m0 = lerp(o0, i0, 0.35 + hs(i, k + 20) * 0.3), m1 = lerp(o1, i1, 0.35 + hs(i + 20, k) * 0.3); slabs.push([o0, o1, m1, m0], [m0, m1, i1, i0]); } else slabs.push([o0, o1, i1, i0]); } }
+  // (chips out of the rim: a small notch on the edge; the octagon runs anticlockwise, so inward is the edge's left)
+  for (let c = 0; c < 44; c++) { const i = c % 8, j = (i + 1) % 8, L = Math.hypot(O[j][0] - O[i][0], O[j][1] - O[i][1]), t = 0.06 + hs(c, 31) * 0.88, w = (0.4 + hs(c, 32) * 0.8) / L / 2, dp = 0.18 + hs(c, 33) * 0.4;
+    const ux = (O[j][0] - O[i][0]) / L, uy = (O[j][1] - O[i][1]) / L, m = lerp(O[i], O[j], t), sk = (hs(c, 34) - 0.5) * 0.3;
+    chips.push([lerp(O[i], O[j], t - w), [m[0] - uy * dp + ux * sk, m[1] + ux * dp + uy * sk], [m[0] - uy * dp * 0.4 + ux * w * L * 0.8, m[1] + ux * dp * 0.4 + uy * w * L * 0.8], lerp(O[i], O[j], t + w)]); }
+  // (cracks: short wandering lines, some with a branch; every third one glows faintly with venom)
+  for (let c = 0; c < 18; c++) { let x = 0, y = 0, k = 0; do { x = (hs(c, 40 + k) - 0.5) * 70; y = (hs(c, 60 + k) - 0.5) * 64; k++; } while (!inside(x, y, 1.5) && k < 20); if (!inside(x, y, 1.5)) continue;
+    let a = hs(c, 41) * Math.PI * 2; const L = [[x, y]], n = 4 + Math.floor(hs(c, 42) * 4);
+    for (let s = 0; s < n; s++) { a += (hs(c, 50 + s) - 0.5) * 1.1; const d = 0.7 + hs(c, 70 + s) * 0.9; x += Math.cos(a) * d; y += Math.sin(a) * d; if (!inside(x, y, 0.3)) break; L.push([x, y]); }
+    if (L.length > 1) cracks.push({ L, glow: c % 3 === 0, w: 0.08 + hs(c, 43) * 0.06 });
+    if (L.length > 2 && hs(c, 44) < 0.45) { let bx = L[1][0], by = L[1][1], b = a + 1.2; const B = [[bx, by]]; for (let s = 0; s < 3; s++) { b += (hs(c, 80 + s) - 0.5) * 0.9; bx += Math.cos(b) * 0.8; by += Math.sin(b) * 0.8; if (!inside(bx, by, 0.3)) break; B.push([bx, by]); } if (B.length > 1) cracks.push({ L: B, glow: c % 3 === 0, w: 0.06 }); } }
+  // (the field's joints, out from the middle to the frame; the panels and the middle cover most of them)
+  for (let k = 0; k < 16; k++) { const a = (k * 22.5 + 11.25) * Math.PI / 180, u = Math.cos(a), v = Math.sin(a); let r = 15; while (inside(u * (r + 0.2), v * (r + 0.2), FRAME)) r += 0.2; rays.push([[u * 15, v * 15], [u * r, v * r]]); }
+  // (a panel: a long box with its corners cut, [x0, y0, x1, y1, cut])
+  const box = (x0, y0, x1, y1, c) => [[x1 - c, y0], [x1, y0 + c], [x1, y1 - c], [x1 - c, y1], [x0 + c, y1], [x0, y1 - c], [x0, y0 + c], [x0 + c, y0]];
+  const panels = [[-13.5, 17.2, 13.5, 25.8, 4], [-13.5, -25.8, 13.5, -17.2, 4], [17.2, -13.5, 27.6, 13.5, 4.3], [-27.6, -13.5, -17.2, 13.5, 4.3]];
+  return { span: 74, oct: O, band: I, BAND, FRAME, octAt, inside, slabs, chips, cracks, rays, box, panels, sq: [16.6, 15.6, 14.4, 13.6], fans: { at: 16.6, r: 8 }, knots: { at: 19.4, h: 2.6 }, med: { x: 0, y: 0, r: [9.6, 8.6] } };
+}
+// pg3dNormals: a normal map (RGBA bytes into out, or a new array) from a height map (one byte a pixel, w x h), k the relief's strength; wrap:
+// the left and right edges meet (the side wall's texture repeats). Canvas rows run south, so a slope up to the north tilts the normal south.
+function pg3dNormals(H, w, h, k, wrap, out) {
+  out = out || new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) { const yu = y > 0 ? y - 1 : 0, yd = y < h - 1 ? y + 1 : h - 1;
+    for (let x = 0; x < w; x++) { const xl = x > 0 ? x - 1 : (wrap ? w - 1 : 0), xr = x < w - 1 ? x + 1 : (wrap ? 0 : w - 1), j = (y * w + x) * 4;
+      const dx = (H[y * w + xr] - H[y * w + xl]) * k / 510, dy = (H[yd * w + x] - H[yu * w + x]) * k / 510, l = 1 / Math.sqrt(dx * dx + dy * dy + 1);
+      out[j] = (0.5 - dx * l * 0.5) * 255; out[j + 1] = (0.5 + dy * l * 0.5) * 255; out[j + 2] = (0.5 + l * 0.5) * 255; out[j + 3] = 255; } }
+  return out; }
+// pg3dStoneDraw: draws the plan on canvases made by mk(w, h): the top's colour map and normal map (px square, the plan's span across, the
+// stone's middle in the middle), and the side wall's rock face and its normal map (wallW yards along the wall, the top wallH yards of it).
+// Each shape goes on the colour map and a height map at once, the normal maps come from the heights and the grooves are darkened from the
+// same heights, so colour and relief line up. free() empties the canvases (closing the game calls it through keep()).
+function pg3dStoneDraw(mk, px) {
+  const PL = pg3dStonePlan(), S = PL.span, K = px / S, TAU = Math.PI * 2, hs = (a, b) => { const h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); };
+  // (the stone leans teal like the room's: the warm key light takes blue away, so a grey-green came out olive. Its green never tops its red
+  // and blue by much, so the shader's venom glow (vglow) leaves it alone; only GLOW-coloured marks clear it, and none of them by much)
+  const STONE = [54, 72, 70], GROOVE = [32, 44, 43], RAISED = [64, 84, 80], SLATE = [40, 52, 64], RUST = [72, 44, 34], GLOW = [92, 222, 46], MOSS = [64, 92, 54];
+  const rgb = (c, a) => 'rgba(' + Math.round(c[0]) + ',' + Math.round(c[1]) + ',' + Math.round(c[2]) + ',' + (a == null ? 1 : a) + ')', sh = (c, d) => [c[0] + d, c[1] + d, c[2] + d];
+  // (one pen for both maps: a shape goes on the colour map and, given a height, on the height map too; a list of lines is one path, so a
+  // see-through stroke over it never doubles up where they cross)
+  const pen = (w, h, toPx, k) => { const col = mk(w, h), hgt = mk(w, h), C = col.getContext('2d'), H = hgt.getContext('2d'), both = [C, H];
+    const go = (L, close) => { for (const g of both) { g.beginPath(); (Array.isArray(L[0][0]) ? L : [L]).forEach((M) => { M.forEach((p, i) => { const q = toPx(p[0], p[1]); if (i) g.lineTo(q[0], q[1]); else g.moveTo(q[0], q[1]); }); if (close) g.closePath(); }); } };
+    return { col, hgt, C, H, w, h, poly: (L) => go(L, true), line: (L) => go(L, false),
+      arc: (x, y, r, a0, a1) => { const q = toPx(x, y); for (const g of both) { g.beginPath(); g.arc(q[0], q[1], r * k, a0 || 0, a1 == null ? TAU : a1); } },
+      fill: (c, hv, a) => { C.fillStyle = rgb(c, a); C.fill(); if (hv != null) { H.fillStyle = rgb([hv, hv, hv], a); H.fill(); } },
+      stroke: (c, hv, wd, a, cap) => { C.lineWidth = H.lineWidth = wd * k; C.lineJoin = H.lineJoin = 'round'; C.lineCap = H.lineCap = cap || 'round'; C.strokeStyle = rgb(c, a); C.stroke(); if (hv != null) { H.strokeStyle = rgb([hv, hv, hv], a); H.stroke(); } },
+      clip: () => { for (const g of both) { g.save(); g.clip(); } }, unclip: () => { for (const g of both) g.restore(); },
+      blot: (x, y, r, c, a) => { const q = toPx(x, y), rr = r * k, g = C.createRadialGradient(q[0], q[1], 0, q[0], q[1], rr); g.addColorStop(0, rgb(c, a)); g.addColorStop(1, rgb(c, 0)); C.fillStyle = g; C.fillRect(q[0] - rr, q[1] - rr, rr * 2, rr * 2); } }; };
+  // (the heights blurred a little make the normal map; the heights against a wider blur darken the grooves and lighten the ridges; a fine grain)
+  const finish = (Q, k, wrap) => { const w = Q.w, h = Q.h, half = mk(w >> 1, h >> 1), tiny = mk(w >> 3, h >> 3), hc = half.getContext('2d'), tc = tiny.getContext('2d'), tw = w >> 3, th = h >> 3;
+    hc.imageSmoothingQuality = tc.imageSmoothingQuality = 'high'; hc.drawImage(Q.hgt, 0, 0, w >> 1, h >> 1); tc.drawImage(Q.hgt, 0, 0, tw, th); const td = tc.getImageData(0, 0, tw, th).data;
+    Q.H.setTransform(1, 0, 0, 1, 0, 0); Q.H.globalAlpha = 1; Q.H.globalCompositeOperation = 'copy'; Q.H.drawImage(half, 0, 0, w, h); Q.H.globalCompositeOperation = 'source-over';
+    const A = Q.H.getImageData(0, 0, w, h).data, n = w * h, Hh = new Uint8Array(n), ci = Q.C.getImageData(0, 0, w, h), D = ci.data;
+    for (let y = 0, i = 0; y < h; y++) { const fy = Math.min(th - 1, Math.max(0, (y + 0.5) / 8 - 0.5)), y0 = fy | 0, y1 = Math.min(th - 1, y0 + 1), wy = fy - y0;
+      for (let x = 0; x < w; x++, i++) { const fx = Math.min(tw - 1, Math.max(0, (x + 0.5) / 8 - 0.5)), x0 = fx | 0, x1 = Math.min(tw - 1, x0 + 1), wx = fx - x0, j = i * 4;
+        const b = (td[(y0 * tw + x0) * 4] * (1 - wx) + td[(y0 * tw + x1) * 4] * wx) * (1 - wy) + (td[(y1 * tw + x0) * 4] * (1 - wx) + td[(y1 * tw + x1) * 4] * wx) * wy;
+        let z = Math.imul(i, 0x9E3779B1); z ^= z >>> 15; z = Math.imul(z, 0x85EBCA77); const f = 1 + (A[j] - b) * 0.0036 + ((z >>> 24) - 128) * 0.0003;
+        Hh[i] = A[j]; D[j] *= f; D[j + 1] *= f; D[j + 2] *= f; } }
+    Q.C.putImageData(ci, 0, 0); const nd = Q.H.createImageData(w, h); pg3dNormals(Hh, w, h, k, wrap, nd.data); Q.H.putImageData(nd, 0, 0); half.width = half.height = tiny.width = tiny.height = 0; };
+
+  // ---- the top ----
+  const P = (x, y) => [(x + S / 2) * K, (S / 2 - y) * K], T = pen(px, px, P, K), quad = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+  // (outside the octagon: the rim's colour, a little lower, so the edge stays dark and worn where the texture is blended down far away)
+  T.C.fillStyle = rgb(sh(STONE, -14)); T.C.fillRect(0, 0, px, px); T.H.fillStyle = rgb([118, 118, 118]); T.H.fillRect(0, 0, px, px);
+  T.poly(PL.oct); T.fill(STONE, 150);
+  // (the border band: slabs, each its own shade and patches, with worn joints that wander a little, the same way from either slab (the rim's
+  // own edge gets none); the field's joints; the raised frame inside the band)
+  const rim = (p) => !PL.inside(p[0], p[1], 0.02), rough = (a, b) => { if (b[0] < a[0] || (b[0] === a[0] && b[1] < a[1])) { const c = a; a = b; b = c; } const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / 0.7)), out = [a];
+    for (let k = 1; k < n; k++) { const t = k / n, o = (hs(a[0] * 7.3 + b[0] * 3.1 + k, a[1] * 5.7 + b[1] * 2.3) - 0.5) * 0.16; out.push([a[0] + (b[0] - a[0]) * t - (b[1] - a[1]) / L * o, a[1] + (b[1] - a[1]) * t + (b[0] - a[0]) / L * o]); } out.push(b); return out; };
+  PL.slabs.forEach((L, i) => { T.poly(L); T.fill(sh(STONE, (hs(i, 5) - 0.5) * 12), 146 + hs(i, 6) * 10); const c = L.reduce((s, p) => [s[0] + p[0] / L.length, s[1] + p[1] / L.length], [0, 0]);
+    for (let k = 0; k < 3; k++) T.blot(c[0] + (hs(i, k + 7) - 0.5) * 3, c[1] + (hs(k + 7, i) - 0.5) * 3, 0.8 + hs(i + k, 8) * 1.6, hs(i, k + 9) < 0.5 ? [28, 36, 35] : [86, 103, 100], 0.12); });
+  PL.slabs.forEach((L) => L.forEach((a, k) => { const b = L[(k + 1) % L.length]; if (rim(a) && rim(b)) return; T.line(rough(a, b)); T.stroke(GROOVE, 112, 0.45, 0.3); T.stroke(GROOVE, 74, 0.17); }));
+  PL.rays.forEach((L) => { T.line(L); T.stroke(GROOVE, 112, 0.45, 0.3); T.stroke(GROOVE, 78, 0.18); });
+  T.poly(PL.octAt(PL.BAND + 0.5)); T.stroke(RAISED, 184, PL.FRAME - PL.BAND); [PL.BAND, PL.FRAME].forEach((d) => { T.poly(PL.octAt(d)); T.stroke(GROOVE, 80, 0.16); }); T.poly(PL.octAt(PL.BAND + 0.5)); T.stroke(sh(RAISED, -8), 168, 0.06);
+  // (the corner knots, over the frame and into the band: a square and a diamond woven over and under each other round a small square, carved strips)
+  const sqr = (x, y, r) => [[x - r, y - r], [x + r, y - r], [x + r, y + r], [x - r, y + r]];
+  quad.forEach(([sx, sy]) => { const cx = sx * PL.knots.at, cy = sy * PL.knots.at, h = PL.knots.h, d = h * 1.3, strip = (L, open) => { T[open ? 'line' : 'poly'](L); T.stroke(GROOVE, 84, 0.95, 1, open && 'butt'); T.stroke(RAISED, 186, 0.55, 1, open && 'butt'); };
+    T.arc(cx, cy, h * 1.45); T.fill(sh(STONE, -4), 146); T.stroke(GROOVE, 84, 0.14); strip(sqr(cx, cy, h)); strip([[cx + d, cy], [cx, cy + d], [cx - d, cy], [cx, cy - d]]);
+    /* (the square goes back over the diamond at every other crossing: (h, d - h) and its quarter turns) */
+    let p = [h, d - h], t = [0, 0.7]; for (let q = 0; q < 4; q++) { strip([[cx + p[0] - t[0], cy + p[1] - t[1]], [cx + p[0] + t[0], cy + p[1] + t[1]]], true); p = [-p[1], p[0]]; t = [-t[1], t[0]]; }
+    strip(sqr(cx, cy, h * 0.42)); });
+  // (the four sunken blue-slate panels: a raised lip, the slate with a faint diamond grid and a thin rust line inside the lip)
+  PL.panels.forEach((p, n) => { const [x0, y0, x1, y1, c] = p, ins = (d) => PL.box(x0 + d, y0 + d, x1 - d, y1 - d, c - d * 0.414);
+    T.poly(PL.box(x0, y0, x1, y1, c)); T.fill(RAISED, 176); T.stroke(GROOVE, 80, 0.18); T.poly(ins(0.6)); T.fill(SLATE, 118); T.clip();
+    for (let k = 0; k < 9; k++) T.blot(x0 + hs(n, k) * (x1 - x0), y0 + hs(k, n) * (y1 - y0), 2 + hs(n + k, 7) * 4, hs(k, n + 3) < 0.5 ? [26, 36, 48] : [60, 74, 86], 0.28);
+    for (let v = -40; v < 40; v += 2.4) { T.line([[x0 + v, y0], [x0 + v + 40, y0 + 40]]); T.stroke(sh(SLATE, -7), 112, 0.06); T.line([[x0 + v, y1], [x0 + v + 40, y1 - 40]]); T.stroke(sh(SLATE, -7), 112, 0.06); }
+    T.unclip(); T.poly(ins(0.6)); T.stroke([22, 28, 34], 96, 0.14); T.poly(ins(0.8)); T.stroke(RUST, null, 0.1, 0.45); });
+  // (the carved square in the middle: two raised frames)
+  const [s0, s1, s2, s3] = PL.sq; T.poly(sqr(0, 0, s0)); T.fill(sh(STONE, -2), 150); T.poly(sqr(0, 0, (s0 + s1) / 2)); T.stroke(RAISED, 182, s0 - s1); T.poly(sqr(0, 0, (s2 + s3) / 2)); T.stroke(RAISED, 180, s2 - s3);
+  PL.sq.forEach((h) => { T.poly(sqr(0, 0, h)); T.stroke(GROOVE, 82, 0.15); });
+  // (a fan of carved scales in each corner of the square, with a dull moss inlay at its corner: green enough to glow, it read as an arrow on
+  // the floor next to the gold hint arrow (0:39, 0:41), so it stays under vglow's threshold)
+  quad.forEach(([sx, sy]) => { const F = PL.fans, cx = sx * F.at, cy = sy * F.at, a0 = sy > 0 ? 0 : Math.PI; T.poly(sqr(0, 0, s0)); T.clip(); T.arc(cx, cy, F.r); T.fill(sh(RAISED, -4), 168); T.clip();
+    for (let j = 0; j < 11; j++) for (let i = 0; i < 8; i++) { T.arc(cx - sx * (i * 1.3 + (j % 2) * 0.65), cy - sy * j * 0.85, 0.68, a0, a0 + Math.PI); T.stroke(GROOVE, 104, 0.08, 0.8); }
+    T.unclip(); T.arc(cx, cy, F.r - 0.3); T.stroke(RAISED, 184, 0.6); T.arc(cx, cy, F.r); T.stroke(GROOVE, 82, 0.14); T.unclip();
+    const L = [[cx - sx * 3.8, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 0.9], [cx - sx * 0.9, cy - sy * 3.8]]; T.line(L); T.stroke(GROOVE, 90, 0.5); T.stroke(MOSS, 104, 0.18, 0.5); });
+  // (the round medallion: a raised ring with rune marks, and the serpent's head inside: a crest of spikes, whiskers, scales, brows, glowing
+  // eyes, fangs; it looks south as in the room's picture)
+  const M = PL.med; T.arc(M.x, M.y, M.r[0]); T.fill(sh(STONE, -3), 148); T.arc(M.x, M.y, (M.r[0] + M.r[1]) / 2); T.stroke(RAISED, 184, M.r[0] - M.r[1]); M.r.forEach((r) => { T.arc(M.x, M.y, r); T.stroke(GROOVE, 82, 0.15); });
+  for (let k = 0; k < 32; k++) { const a = k / 32 * TAU, c = Math.cos(a), s = Math.sin(a), r0 = M.r[1] + 0.15, r1 = k % 4 ? r0 + 0.35 : M.r[0] - 0.15; T.line([[M.x + c * r0, M.y + s * r0], [M.x + c * r1, M.y + s * r1]]); T.stroke(GROOVE, 120, k % 4 ? 0.07 : 0.1); }
+  T.arc(M.x, M.y, M.r[1]); T.fill(sh(STONE, -4), 138);
+  const mir = (L) => L.map((p) => [-p[0], p[1]]), carve = (L, c, hv) => { T.poly(L.map((p) => [M.x + p[0], M.y + p[1]])); T.fill(c, hv); T.stroke(GROOVE, 92, 0.11); }, cut = (L, hv, w) => { T.line(L.map((p) => [M.x + p[0], M.y + p[1]])); T.stroke(GROOVE, hv, w); };
+  for (let k = 0; k < 9; k++) { const a = (25 + k * 16.25) * Math.PI / 180, R = 5.6 + 1.6 * (1 - Math.abs(k - 4) / 4), at = (r, da) => [Math.cos(a + da) * r, 0.8 + Math.sin(a + da) * r];
+    carve([at(2.4, -0.13), at(R * 0.6, -0.1), at(R, 0), at(R * 0.6, 0.1), at(2.4, 0.13)], sh(RAISED, -2), 184); cut([at(2.6, 0), at(R * 0.85, 0)], 120, 0.06); }
+  [[[3.4, -1.0], [7.2, -2.4], [3.1, -2.0]], [[2.6, -3.0], [5.9, -5.4], [2.2, -3.9]]].forEach((L) => { carve(L, sh(RAISED, -2), 182); carve(mir(L), sh(RAISED, -2), 182); });
+  const half = [[0, 3.0], [1.8, 2.7], [3.2, 1.6], [3.7, 0.0], [3.3, -1.8], [2.4, -3.6], [1.5, -5.2], [0.8, -6.1]], HEAD = half.concat([[0, -6.4]], mir(half.slice(1)).reverse());
+  carve(HEAD, RAISED, 192); T.poly(HEAD.map((p) => [M.x + p[0], M.y + p[1]])); T.clip();
+  for (let j = 0; j < 17; j++) for (let i = -5; i <= 5; i++) { T.arc(M.x + i * 0.75 + (j % 2) * 0.375, M.y + 2.7 - j * 0.55, 0.38, 0, Math.PI); T.stroke(GROOVE, 150, 0.045, 0.7); }
+  T.unclip();
+  const PLATE = [[-3.1, 0.5], [-1.6, 0.9], [-1.1, 0.3], [-2.0, -0.2], [-3.0, -0.1]], EYE = [[-3.15, -0.45], [-2.3, -0.32], [-1.55, -0.78], [-2.45, -1.05]], FANG = [[0.35, -6.2], [0.85, -6.0], [0.55, -7.9]];
+  carve(PLATE, sh(RAISED, 5), 206); carve(mir(PLATE), sh(RAISED, 5), 206);
+  [[[0, 2.8], [0, -4.6]], [[-3.3, -0.8], [-2.2, -3.4], [-1.0, -5.6]], [[3.3, -0.8], [2.2, -3.4], [1.0, -5.6]]].forEach((L) => cut(L, 128, 0.06)); [[[-0.75, -5.15], [-0.45, -5.6]], [[0.75, -5.15], [0.45, -5.6]]].forEach((L) => cut(L, 100, 0.13));
+  carve(FANG, sh(RAISED, 10), 204); carve(mir(FANG), sh(RAISED, 10), 204);
+  /* (the eyes glow faintly: at full glow they read as two arrowheads either side of you, 0:30) */
+  [EYE, mir(EYE)].forEach((L) => { T.poly(L.map((p) => [M.x + p[0], M.y + p[1]])); T.fill(GROOVE, 110); T.fill(GLOW, null, 0.25); });
+  // (the rim: worn on top, chipped, stained by the venom; then the cracks)
+  T.poly(PL.oct); T.stroke(sh(STONE, 18), 136, 0.32, 0.55); PL.chips.forEach((L) => { T.poly(L); T.fill(sh(GROOVE, 12), 104); });
+  T.poly(PL.octAt(0.9)); T.stroke([56, 98, 42], null, 1.6, 0.2);
+  /* (a glowing crack's core is 0.11 yards wide, 3 texels on the 2048 map, and faint: thinner, it broke into a dotted green line that flickers as
+     the camera moves, like a beam out from under you, 0:48. The glowing ones are one path, so a branch doesn't glow twice where it starts) */
+  PL.cracks.forEach((c) => { T.line(c.L); T.stroke(GROOVE, 88, c.w); });
+  const lit = PL.cracks.filter((c) => c.glow).map((c) => c.L); if (lit.length) { T.line(lit); T.stroke(GLOW, null, 0.4, 0.09); T.stroke(GLOW, null, 0.11, 0.2); }
+  // (weathering over everything: dark and light patches, a little moss, pits)
+  T.poly(PL.oct); T.C.save(); T.C.clip();
+  for (let k = 0; k < 900; k++) T.blot((hs(k, 97) - 0.5) * 74, (hs(k, 98) - 0.5) * 70, 0.3 + hs(k, 99) * 0.9, hs(k, 100) < 0.55 ? [24, 32, 31] : [94, 110, 108], 0.07);
+  for (let k = 0; k < 150; k++) { const z = hs(k, 93); T.blot((hs(k, 90) - 0.5) * 74, (hs(k, 91) - 0.5) * 70, 1.2 + hs(k, 92) * 5, z < 0.5 ? [20, 28, 27] : z < 0.75 ? [50, 80, 36] : [92, 108, 106], z < 0.5 ? 0.16 : z < 0.75 ? 0.12 : 0.07); }
+  for (let k = 0; k < 1600; k++) { T.arc((hs(k, 94) - 0.5) * 74, (hs(k, 95) - 0.5) * 70, 0.03 + hs(k, 96) * 0.06); T.fill(GROOVE, 112, 0.5); }
+  T.C.restore(); finish(T, 6, false);
+
+  // ---- the side wall: x along the wall, y down from its top, in yards (the venom covers all but its top half yard) ----
+  const WW = 16, WH = 2, wk = 64, W = pen(WW * wk, WH * wk, (x, y) => [x * wk, y * wk], wk), J = [];
+  W.C.fillStyle = rgb(sh(STONE, 4)); W.C.fillRect(0, 0, W.w, W.h); W.H.fillStyle = rgb([150, 150, 150]); W.H.fillRect(0, 0, W.w, W.h);
+  for (let k = 0; k < 8; k++) J.push(k * 2 + 0.6 + (hs(k, 101) - 0.5) * 0.9);
+  // (blocks, each its own shade, the joints slanting a little; a course line under the venom; the block shades wrap round the seam)
+  for (let row = 0; row < 2; row++) for (let k = 0; k < 8; k++) { const o = row ? 1 : 0, x0 = J[k] + o, x1 = J[(k + 1) % 8] + o + (k === 7 ? WW : 0), y0 = row ? 0.9 : 0, y1 = row ? WH : 0.9, c = sh(STONE, 2 + (hs(k + row * 8, 102) - 0.5) * 12);
+    [0, -WW, WW].forEach((d) => { W.poly([[x0 + d, y0], [x1 + d, y0], [x1 + d, y1], [x0 + d, y1]]); W.fill(c, 146 + hs(k, 103 + row) * 10); }); }
+  for (let row = 0; row < 2; row++) J.forEach((x, k) => { const o = row ? 1 : 0; [0, -WW, WW].forEach((d) => { W.line([[x + o + d, row ? 0.9 : 0], [x + o + d + (hs(k, 104) - 0.5) * 0.2, row ? WH : 0.9]]); W.stroke(GROOVE, 112, 0.18, 0.35); W.stroke(GROOVE, 70, 0.07); }); });
+  W.line([[-1, 0.9], [WW + 1, 0.9]]); W.stroke(GROOVE, 112, 0.18, 0.35); W.stroke(GROOVE, 70, 0.07);
+  // (the worn top edge, rounded off in the heights; chips out of it; patches and pits; a crack or two)
+  const tg = W.H.createLinearGradient(0, 0, 0, 0.14 * wk); tg.addColorStop(0, rgb([104, 104, 104])); tg.addColorStop(1, rgb([150, 150, 150], 0)); W.H.fillStyle = tg; W.H.fillRect(0, 0, W.w, 0.14 * wk);
+  W.line([[-1, 0.04], [WW + 1, 0.04]]); W.stroke(sh(STONE, 12), null, 0.08, 0.7);
+  for (let k = 0; k < 16; k++) { const x = hs(k, 105) * WW, w = 0.15 + hs(k, 106) * 0.35, d = 0.03 + hs(k, 107) * 0.06; [0, -WW, WW].forEach((o) => { W.poly([[x + o - w, 0], [x + o + w * 0.2, d], [x + o + w, 0]]); W.fill(sh(GROOVE, 8), 112); }); }
+  for (let k = 0; k < 40; k++) { const x = hs(k, 108) * WW, y = hs(k, 109) * WH, z = hs(k, 110); [0, -WW, WW].forEach((o) => W.blot(x + o, y, 0.3 + hs(k, 111) * 1.1, z < 0.6 ? [20, 28, 27] : [90, 106, 104], z < 0.6 ? 0.18 : 0.08)); }
+  for (let k = 0; k < 260; k++) { W.arc(hs(k, 112) * WW, hs(k, 113) * WH, 0.02 + hs(k, 114) * 0.04); W.fill(GROOVE, 112, 0.5); }
+  for (let k = 0; k < 4; k++) { let x = 1 + hs(k, 115) * (WW - 2), y = 0; const L = [[x, y]]; while (y < 0.9) { x += (hs(k, 116 + y * 10) - 0.5) * 0.25; y += 0.12 + hs(k, 117 + y) * 0.1; L.push([x, y]); } W.line(L); W.stroke(GROOVE, 88, 0.05); }
+  // (the venom's stain and a faint glowing line where it meets the stone, half a yard down)
+  const vg = W.C.createLinearGradient(0, 0.22 * wk, 0, 0.62 * wk); vg.addColorStop(0, rgb([50, 95, 35], 0)); vg.addColorStop(1, rgb([50, 95, 35], 0.45)); W.C.fillStyle = vg; W.C.fillRect(0, 0.22 * wk, W.w, W.h);
+  W.line([[-1, 0.55], [WW + 1, 0.55]]); W.stroke(GLOW, null, 0.03, 0.4);
+  finish(W, 4, true);
+  return { span: S, px, col: T.col, nrm: T.hgt, wall: W.col, wallN: W.hgt, wallW: WW, wallH: WH, free: () => { [T.col, T.hgt, W.col, W.hgt].forEach((c) => { c.width = c.height = 0; }); } };
+}
+
 // ---- the 3D view: pg3d(host, A) draws into host (a box over the 2D canvas). A as above, plus walk([x, y]) for a click on the floor, flashT
 // (the red hurt flash) and fail(e) (a crash while drawing: practice.js goes back to 2D). Returns { draw(t), resize(), pick(clientX, clientY)
 // -> [x, y] or null, fwd() -> the way the camera looks [x, y], yaw, info() (the renderer's counts, for tests), dispose() } ----
@@ -73561,16 +73750,24 @@ function pg3d(host, A) {
       vertexShader: 'attribute float aS; uniform float uT, uPx; varying float vA; void main(){ vec3 p = position; p.y = mod(p.y + uT * (0.35 + aS * 0.8), 26.0); p.x += sin(uT * 0.35 + aS * 40.0) * 2.0; p.z += cos(uT * 0.3 + aS * 30.0) * 2.0; vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(1.0, (0.16 + 0.2 * aS) * uPx / -mv.z); vA = (0.45 + 0.55 * sin(uT * 2.0 + aS * 50.0)) * smoothstep(0.0, 3.0, p.y) * smoothstep(26.0, 17.0, p.y); }',
       fragmentShader: 'varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); gl_FragColor = vec4(0.62, 1.0, 0.3, max(vA, 0.0) * 0.8 * smoothstep(0.5, 0.0, d)); }' }));
     const pts = new T.Points(g, m); pts.frustumCulled = false; scene.add(pts); }
-  // the stone: practice.js's PG_UL.onPlat octagon (|x| <= 36.5, |y| <= 34, |x| + |y| <= 49), slabs every 5 yards, a pale rim at the very edge
-  const OCT = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]];
+  // the stone: practice.js's PG_UL.onPlat octagon (|x| <= 36.5, |y| <= 34, |x| + |y| <= 49), a pale rim at the very edge. Its top and side
+  // walls wear the carved stone pg3dStoneDraw draws once here (a colour map and a normal map each; 1024 px on a PC with little memory): the
+  // top's texture spans the plan's 74 yards with the stone's middle at its middle (the top's UVs are yards), the wall's runs along the wall
+  // with its top edge at the wall's top (the wall's UVs are yards along it and 1 - height). The faint venom glow in the cracks and the
+  // serpent's eyes comes from their green in the colour map, worked out in the shader (no third texture to read). Kept as quick to draw as the old
+  // tiles (measured in headless Chrome): Lambert light (rough stone shows no shine anyway), the normal maps read from one mip level.
+  const OCT = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]], DEPTH = 4;
   const shp = (L) => { const s = new T.Shape(); L.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1]))); s.closePath(); return s; };
-  const slab = ctex(canvas(256, 256, (g) => { g.fillStyle = '#4f585f'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const l = 116 + ((i * 3 + j * 5) % 4) * 6; g.fillStyle = 'rgb(' + l + ',' + (l + 9) + ',' + (l + 17) + ')'; g.fillRect(i * 128 + 3, j * 128 + 3, 122, 122); }
-    for (let k = 0; k < 1400; k++) { g.fillStyle = 'rgba(0,0,0,' + (hash(k, 1) * 0.07).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 256, hash(k, 3) * 256, 2, 2); } }), true); slab.repeat.set(0.1, 0.1);
-  const pg = keep(new T.ExtrudeGeometry(shp(OCT), { depth: 4, bevelEnabled: false })); pg.rotateX(-Math.PI / 2);
-  const plat = new T.Mesh(pg, [keep(new T.MeshStandardMaterial({ map: slab, roughness: 0.88 })), keep(new T.MeshStandardMaterial({ color: 0x4f5a55, roughness: 0.95 }))]); plat.position.y = -4; plat.receiveShadow = true; scene.add(plat);
+  const STN = pg3dStoneDraw((w, h) => canvas(w, h, () => {}), (navigator.deviceMemory || 8) < 4 ? 1024 : 2048), AN = Math.min(4, R.capabilities.getMaxAnisotropy()); keep({ dispose: STN.free });
+  const stx = (c, rx, ry, ox, oy, nrm) => { const tx = ctex(c, true); tx.anisotropy = nrm ? 1 : AN; if (nrm) tx.minFilter = T.LinearMipmapNearestFilter; tx.repeat.set(rx, ry); tx.offset.set(ox, oy); return tx; };
+  const vglow = (m) => { m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' +
+    'totalEmissiveRadiance += vec3(0.15, 0.46, 0.06) * smoothstep(0.1, 0.3, diffuseColor.g - max(diffuseColor.r, diffuseColor.b));'); }; return m; };
+  const pg = keep(new T.ExtrudeGeometry(shp(OCT), { depth: DEPTH, bevelEnabled: false })); pg.rotateX(-Math.PI / 2);
+  const plat = new T.Mesh(pg, [vglow(keep(new T.MeshLambertMaterial({ map: stx(STN.col, 1 / STN.span, 1 / STN.span, 0.5, 0.5), normalMap: stx(STN.nrm, 1 / STN.span, 1 / STN.span, 0.5, 0.5, true) }))),
+    vglow(keep(new T.MeshLambertMaterial({ map: stx(STN.wall, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH), normalMap: stx(STN.wallN, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH, true) })))]);
+  plat.position.y = -DEPTH; plat.receiveShadow = true; scene.add(plat);
   { const rim = shp(OCT); rim.holes.push(shp(OCT.map((p) => [p[0] * 0.985, p[1] * 0.982]).reverse())); const rg = keep(new T.ShapeGeometry(rim)); rg.rotateX(-Math.PI / 2);
-    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xc9d2d8, transparent: true, opacity: 0.55, depthWrite: false }))); m.position.y = 0.02; m.renderOrder = 5; scene.add(m); }
+    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xb4c2b6, transparent: true, opacity: 0.38, depthWrite: false }))); /* (a worn pale stone over the carved texture, not a white band) */ m.position.y = 0.02; m.renderOrder = 5; scene.add(m); }
 
   // ---- reused pieces: floor shapes from a few flat geometries, everything else from pools (nothing new per frame once warm) ----
   const flatG = (g) => { g.rotateX(-Math.PI / 2); return g; };
