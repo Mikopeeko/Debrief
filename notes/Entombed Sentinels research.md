@@ -64,3 +64,6 @@ These notes may name sources; the app's text stays neutral.
 - Pull: red soaks and drops the first blood line on the back wall; green kills the add in lust.
 - Then green soaks on both sides (dodge the daggers), then Shifting Protovenom (pre-spread, bump circles), then spread for the math game.
 - End of each later cycle: Protovenom, then high-damage soaks, then straight into the math game. Immunities on those soaks.
+
+## Fix queue
+- **Blood pool: not checked yet (quiet-bug hunt, Nov 15).** The rule and the Avoidable damage line were keyed to 1284208. In all 262 saved Sentinels pulls, that ID shows up only as one aura the Blood of Ula'tek takes off itself, never as damage, so neither could ever flag anyone. Main's ruling: keep the rule, mark it `notChecked` (the boss card now says "Blood pool not checked yet"), and change no grades. To do: measure it from a real pull. Blood Venom 1284210 is the likely hit, but every Unstable Miasma soaker gets it by design, so leave out each soaker's own pool. Set the amber and red lines from top kills before turning it on. A rough first try marked about 1 in 5 players amber on top Mythic kills.
