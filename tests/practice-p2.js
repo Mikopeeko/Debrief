@@ -88,10 +88,19 @@ function checks(H, say) {
   // E. the mistakes
   try {
     const pk = { side: 'E', role: 'm', egg: 'n2', mal: 1, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk);
-    const still = dbg.sim(me, false, false, 3).log.join(' | ');
+    const stillR = dbg.sim(me, false, false, 3), still = stillR.log.join(' | ');
+    // (the review, Nov 15: an unkicked Malice did 13 a tick; the notes measure about 650k a player a tick, close to half a raider's health, so
+    // six ticks kill: the run that never kicks the 3:03 Malice dies in its channel)
+    if (!stillR.deaths.some((c) => c >= '3:05' && c <= '3:11')) bad('missing the 3:03 Malice kick doesn\'t kill you in its channel (deaths: ' + (stillR.deaths.join(', ') || 'none') + '); its ticks are about 650k each (check E)');
     if (!/never crossed to your ledge/.test(still)) bad('standing still on the platform isn\'t a mistake ("never crossed"): ' + still + ' (check E)');
     if (!/didn't kick Malice \(3:03\)/.test(still)) bad('the 3:03 Malice kicker who never kicks gets no mistake: ' + still + ' (check E)');
     if (!(dbg.grade().sc < 80)) bad('standing still all of phase 2 scores ' + dbg.grade().sc + ' (check E)');
+    // (the review, Nov 15: an east-half raider who walked into the west gate landed beside the west ledge's own gate, which sent them straight back,
+    // and on and on, with a "wrong gate" mistake every tick)
+    dbg.at(167.5, me, { east: false, seed: 3 }); const gw = dbg.S.gates.find((g) => g.side === 'W' && !g.back); dbg.pos = gw.p.slice(); dbg.step(20);
+    const wrongN = dbg.log.filter((x) => /You took the west gate/.test(x)).length; if (wrongN !== 1 || dbg.G.p2.where[me] !== 'L' || dbg.G.p2.wside[me] !== 'W') bad('the wrong gate gives ' + wrongN + ' mistakes in a second and leaves you ' + dbg.G.p2.where[me] + ' ' + dbg.G.p2.wside[me] + '; it should be one mistake, on the west ledge (check E)');
+    // (the review, Nov 15: the words said "the purple ring", but in 3D your own gate is the gold one, the purple one the other half's)
+    if (/purple ring/.test(rd('practice-p2.js'))) bad('a text still calls your gate "the purple ring"; in 3D yours is gold (check E)');
     dbg.at(183.5, me, { east: false, seed: 3 }); const W = dbg.G.p2.wd.E; dbg.pos = [W[0] - 3, W[1] - 3]; dbg.kick(); if (dbg.G.p2.kick.mE1 !== me) bad('pressing E by the Warden in its 3:03 Malice cast doesn\'t kick it (check E)');
     dbg.at(200, me, { east: false, seed: 3 }); const e0 = dbg.G.eggs.find((e) => e.side === 'E'); dbg.pos = [e0.x - 3, e0.y]; dbg.step(2); if (!dbg.log.some((x) => /Warden's Protection/.test(x))) bad('standing 3 yards from an egg while its Warden lives isn\'t a mistake (check E)');
     const pkT = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'five' }; dbg.P2.pick = pkT; const meT = dbg.P2.slotOf(pkT); dbg.at(205, meT, { east: false, seed: 3 }); const WT = dbg.G.p2.wd.E;

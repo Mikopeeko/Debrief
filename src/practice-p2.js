@@ -245,7 +245,7 @@ function pgP2(A) {
 
   // ---- a new run ----
   const init = (G0) => { setup(); G = G0; S = A.S; G.t = T.start; G.wipes = 0; G.bossHp = bossHp(T.start);
-    G.p2 = { where: {}, wside: {}, teth: {}, kick: {}, gone: [], stun: {}, kickCd: -99, wardT: -99, big: S.big.map(() => ({ state: 'floor', who: null, at: null })), ds: {}, wd: {}, fan: [], tlog: [], missed: [], veins: [], once: new Set(), crossT: null, backT: null };
+    G.p2 = { where: {}, wside: {}, lock: {}, teth: {}, kick: {}, gone: [], stun: {}, kickCd: -99, wardT: -99, big: S.big.map(() => ({ state: 'floor', who: null, at: null })), ds: {}, wd: {}, fan: [], tlog: [], missed: [], veins: [], once: new Set(), crossT: null, backT: null };
     GDZ_RAID.forEach((id) => { G.p2.where[id] = 'p0'; G.p2.wside[id] = null; });
     G.eggs = S.eggs.map((e) => ({ id: holder('egg', e.side, e.n), side: e.side, n: e.n, x: e.x, y: e.y, land: T.wardens, shell: T.shells + S.eggs.filter((q) => q.side === e.side && pgDist([q.x, q.y], S.pits[e.side]) > pgDist([e.x, e.y], S.pits[e.side])).length * 1.4, set: 0, state: 'floor', who: null, lock: 'Its shield holds until the Warden is dead: wait.' })); };
   const bossHp = (t) => 56 - (t > T.heart ? 12 * Math.min(1, (t - T.heart) / (T.heartEnd - T.heart)) : 0);
@@ -261,22 +261,26 @@ function pgP2(A) {
     const foes = S.wardens.map((w) => G.p2.wd[w.side]).filter(Boolean).concat(Object.values(G.p2.ds).map((d) => [d.x, d.y])); if (!foes.some((p) => pgDist(p, [G.x, G.y]) <= rg)) { A.say('Nothing to kick within ' + rg + ' yards.', true); return; }
     G.p2.kickCd = t; const K = kickables(t).filter((k) => pgDist(k.p, [G.x, G.y]) <= rg).sort((a, b) => (b.who === me) - (a.who === me))[0]; if (K) kicked(K, me, t); else A.say('Kick wasted: nothing was casting. 15 s until the next.', true); A.hud(true); };
   const gates = (t) => { const me = A.me;
-    S.gates.forEach((g) => { const ids = GDZ_RAID.filter((id) => (g.back ? G.p2.where[id] === 'L' && G.p2.wside[id] === g.side : G.p2.where[id] === 'p0'));
+    // (a gate takes you once you've stepped off the one you came out of: you land beside the other end, which would send you straight back (the review, Nov 15))
+    GDZ_RAID.forEach((id) => { const lk = G.p2.lock[id]; if (lk && pgDist(pos(id), lk) > 3.6) delete G.p2.lock[id]; });
+    S.gates.forEach((g) => { const ids = GDZ_RAID.filter((id) => !G.p2.lock[id] && (g.back ? G.p2.where[id] === 'L' && G.p2.wside[id] === g.side : G.p2.where[id] === 'p0'));
       ids.forEach((id) => { const j = S.job[id], p = pos(id), wrong = id === me && g.back && j.side !== g.side, open = (t >= g.t0 && t <= g.t1) || (wrong && t < T.heart); if (!open || pgDist(p, g.p) > 2.4) return;
         if (id !== me && (j.side !== g.side || t < (g.back ? S.home[id] : S.cross[id]))) return; if (id !== me && !(t >= g.t0 && t <= g.t1)) return;
         const q = spiral(g.to, idx(id), 2.6), dst = nearFloor(q); if (id === me) { G.x = dst[0]; G.y = dst[1]; G.kb = null; A.clearTarget(); } else { G.bots[id].x = dst[0]; G.bots[id].y = dst[1]; G.bots[id].esc = null; }
+        G.p2.lock[id] = g.to.slice();
         if (!g.back) { G.p2.where[id] = 'L'; G.p2.wside[id] = g.side; } else { G.p2.where[id] = t < T.home ? 'p0' : 'p1'; G.p2.wside[id] = null; }
         if (id !== me) return;
-        if (!g.back) { G.p2.crossT = t; if (g.side !== j.side) A.mistake('side', 'You took the ' + SD[g.side] + ' gate: your half is on the ' + SD[j.side] + ' ledge.', 'Your gate is on your ledge\'s side of the platform. Its gate sends you back.', 0); else if (t > T.wardens + 1 && once('late0')) A.mistake('late', 'You crossed late (' + clk(t) + '): your half was already on the Warden.', 'Walk into your gate as it opens at 2:47.', 0); else A.say('On the ' + SD[g.side] + ' ledge.'); }
+        if (!g.back) { G.p2.crossT = t; if (g.side !== j.side) { if (once('side' + g.side + Math.floor(t / 20))) A.mistake('side', 'You took the ' + SD[g.side] + ' gate: your half is on the ' + SD[j.side] + ' ledge.', 'Your gate is the gold ring on your ledge\'s side of the platform. Step off and back into this ledge\'s gate to go back.', 0); } else if (t > T.wardens + 1 && once('late0')) A.mistake('late', 'You crossed late (' + clk(t) + '): your half was already on the Warden.', 'Walk into your gate as it opens at 2:47.', 0); else A.say('On the ' + SD[g.side] + ' ledge.'); }
         else if (G.p2.where[id] === 'p1') { G.p2.backT = t; if (t > T.rage && once('late1')) A.mistake('late', 'You came back late (' + clk(t) + ') for the heart burn.', 'Take your gate back at 4:38, as the tank brings the Doomscales.', 0); else A.say('Back by her: burn the heart.'); } }); });
-    if (t > T.wardens + 10 && G.p2.where[me] === 'p0' && once('nocross')) A.mistake('side', 'You never crossed to your ledge.', 'Walk into your gate (the purple ring on your side of the platform) as it opens at 2:47.', 0);
+    if (t > T.wardens + 10 && G.p2.where[me] === 'p0' && once('nocross')) A.mistake('side', 'You never crossed to your ledge.', 'Walk into your gate (the gold ring on your side of the platform) as it opens at 2:47.', 0);
     if (t > T.heart && G.p2.where[me] === 'L' && once('noback')) A.mistake('late', 'You stayed on the ledge through the heart burn.', 'Take your gate back to her at 4:38.', 0); };
   const kicks = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     kickables(t).forEach((k) => { if (!k.who || stunned(k.who, t) || (k.who === me && !window.__pgAuto) || t < k.t0 + 0.2) return; if (pgDist(pos(k.who), k.p) <= range(k.who) + (k.who === me ? 0 : 3)) kicked(k, k.who, t); }); /* (the bots' kicks reach 3 yards further: the plan's kickers, never a miss of yours) */
     S.malice.forEach((m) => { const key = 'm' + m.side + m.k, who = holder('mal', m.side, m.k);
       if (cr(m.by) && !G.p2.kick[key] && G.p2.wd[m.side]) { G.p2.kick[key] = 'none'; G.p2.gone.push(m); S.casts.push({ who: 'warden', name: 'Warden: Malice (not kicked)', t0: m.by, t1: Math.min(m.t1, T.wdie) }); G.p2.missed.push([who, 'a Malice not kicked ' + clk(m.t0)]);
-        if (who === me) A.mistake('kick', 'You didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone on your ledge every second for 6 s.', 'Press E while the Warden\'s cast bar runs (until a second into the channel), within ' + range(me) + ' yards of it.', 0); }
-      if (G.p2.kick[key] === 'none') for (let k = 1; k <= 6; k++) if (cr(m.ch + k) && m.ch + k < T.wdie && G.p2.where[me] === 'L' && G.p2.wside[me] === m.side) { A.hurt(13); A.deb('malice', 1.2); } });
+        if (who === me) A.mistake('kick', 'You didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.', 'Press E while the Warden\'s cast bar runs (you have until just under a second into its channel), within ' + range(me) + ' yards of it.', 0); }
+      // (its ticks: about 650k a player each, close to half a raider's health (the notes, "After phase 1, measured"); everyone is hit (the notes: "Malice hits everyone"))
+      if (G.p2.kick[key] === 'none') for (let k = 1; k <= 6; k++) if (cr(m.ch + k) && m.ch + k < T.wdie) { A.hurt(45); A.deb('malice', 1.2); } });
     S.cries.forEach((c) => { const key = 'c' + c.ds + c.i, d = G.p2.ds[c.ds], who = holder('cry', c.side, c.dk); if (!cr(c.t1) || G.p2.kick[key] || !d) return; G.p2.kick[key] = 'none'; G.p2.missed.push([who, 'an Anguished Cry not kicked ' + clk(c.t0)]);
       GDZ_RAID.forEach((id) => { if (pgDist(pos(id), [d.x, d.y]) <= P.CRY) G.p2.stun[id] = t + 6; });
       if (pgDist([G.x, G.y], [d.x, d.y]) <= P.CRY) { A.deb('stun', 6); A.hurt(25); if (who !== me) A.say('Anguished Cry: stunned for 6 s.', true); }
@@ -289,7 +293,7 @@ function pgP2(A) {
       const late = id === me && !window.__pgAuto && t > hi + 1;
       if (d <= P.TETHER && !late) return; th.br = t; vein(t); G.p2.tlog.push([id, t, t >= lo && t <= hi]); if (id !== me) return; if (G.debs.fangs) G.debs.fangs.until = t;
       if (t < lo) A.mistake('tether', 'You broke your tether early (' + clk(t) + '): ' + (th.solo ? 'the solo break is at 3:18.' : 'the five break together at 3:34.'), th.solo ? 'Walk out alone at 3:18, once the raid is ready for it.' : 'Wait at the edge of your tether (about 20 yards from the Warden) and step out on the count.', 0);
-      else if (t > hi) A.mistake('tether', 'You broke your tether late (' + clk(t) + '): another stack of Blight Vein on everyone.', th.solo ? 'Walk out past 25 yards from the Warden at 3:18.' : 'Be at the edge of your tether two seconds early, then step out on the count at 3:34.', 0);
+      else if (t > hi) A.mistake('tether', 'You broke your tether late (' + clk(t) + '): its Blight Vein landed apart from the others, so everyone took extra ticks.', th.solo ? 'Walk out past 25 yards from the Warden at 3:18.' : 'Be at the edge of your tether two seconds early, then step out on the count at 3:34.', 0);
       else A.say('Tether broken on time.'); }); };
   const eggs = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     // Warden's Protection: an egg can't be touched while its Warden lives, and it hurts anyone within 7 yards
@@ -304,9 +308,9 @@ function pgP2(A) {
     S.big.forEach((B, i) => { const st = G.p2.big[i], hd = holder('big', B.side, B.which);
       if (st.state === 'floor') { const mineB = hd === me, who = mineB ? (Math.hypot(G.x - B.x, G.y - B.y) <= 2.2 ? me : null) : hd && t >= T.bigUp + (B.which === 'close' ? 0.5 : 0) && pgDist(pos(hd), [B.x, B.y]) <= 2.2 ? hd : null;
         if (who) { st.state = 'held'; st.who = who; st.at = t; if (who === me) { A.deb('doom', 20); if (G.eggs.some((e) => e.side === B.side && e.state !== 'gone')) A.mistake('big', 'You picked up the big egg with small eggs still out: they start gestating.', 'Big eggs last: wait until every small egg on your ledge is in the cauldron.', 0); else A.say('Big egg: into the cauldron within 20 s.'); } }
-        else if (t >= T.doomEnd) { st.state = 'hatched'; if (hd === me) { G.wipes++; A.mistake('wipe', 'Hatching Doom ran out on your big egg: the Ravenous Doomscale\'s Dread Roar stuns everyone for 20 s. A wipe.', 'Pick the big egg up by 4:24 (4:19 is the plan) and carry it straight in.', 0); A.deb('stun', 6); G.p2.stun[me] = t + 6; } } }
+        else if (t >= T.doomEnd) { st.state = 'hatched'; if (hd === me) { G.wipes++; A.mistake('wipe', 'Hatching Doom ran out on your big egg: the Ravenous Doomscale\'s Dread Roar stuns everyone for 20 s, a wipe on a real pull (6 s here, so you can play on).', 'Pick the big egg up by 4:24 (4:19 is the plan) and carry it straight in.', 0); A.deb('stun', 6); G.p2.stun[me] = t + 6; } } }
       else if (st.state === 'held') { const p = pos(st.who);
-        if (t - st.at >= 20) { st.state = 'hatched'; if (st.who === me) { G.wipes++; A.mistake('wipe', 'Your big egg hatched in your hands (20 s after you picked it up): Dread Roar stuns everyone for 20 s. A wipe.', 'Once picked up, a big egg hatches in 20 s: carry it straight to the cauldron.', 0); A.deb('stun', 6); G.p2.stun[me] = t + 6; } }
+        if (t - st.at >= 20) { st.state = 'hatched'; if (st.who === me) { G.wipes++; A.mistake('wipe', 'Your big egg hatched in your hands (20 s after you picked it up): Dread Roar stuns everyone for 20 s, a wipe on a real pull (6 s here, so you can play on).', 'Once picked up, a big egg hatches in 20 s: carry it straight to the cauldron.', 0); A.deb('stun', 6); G.p2.stun[me] = t + 6; } }
         else if (pgDist(p, S.pits[B.side]) <= P.THROW && (st.who === me || t >= T.bigIn)) { st.state = 'in'; if (st.who === me) { if (G.debs.doom) G.debs.doom.until = t; A.say('Big egg in the cauldron.'); } } } }); };
   const fans = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     S.dthrash.forEach((f, i) => { const d = G.p2.ds[f.ds]; if (cr(f.t0) && d) { const tk = pos(tankOf(f.side)); G.p2.fan.push({ i, t0: f.t0, at: f.at, p: [d.x, d.y], dir: Math.atan2(tk[1] - d.y, tk[0] - d.x), tank: tankOf(f.side) }); }
@@ -324,12 +328,12 @@ function pgP2(A) {
     .concat(S.cries.filter((c) => c.side === j.side && c.dk === j.cry).map((c) => ({ at: c.t0, by: c.t1, kind: 'Anguished Cry', key: 'c' + c.ds + c.i }))).filter((k) => !G.p2.kick[k.key] && k.by >= t); };
   const jobText = () => { sync(); const t = G.t, me = A.me, j = S.job[me], w = G.p2.where[me], th = G.p2.teth[me], e = G.eggs.find((q) => q.id === me && q.state !== 'gone'), bi = j.big ? bigIx(j.side, j.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null, k = myKicks(t)[0];
     if (stunned(me, t)) return 'Stunned by Anguished Cry: ' + Math.ceil(G.p2.stun[me] - t) + ' s.';
-    if (w === 'p0') return t < T.gate ? 'Phase 2: your half crosses to the ' + SD[j.side] + ' ledge. Your gate opens in ' + Math.ceil(T.gate - t) + ' s.' : 'Walk into your gate (the purple ring, ' + SD[j.side] + ' side) to cross to your ledge.';
+    if (w === 'p0') return t < T.gate ? 'Phase 2: your half crosses to the ' + SD[j.side] + ' ledge. Your gate opens in ' + Math.ceil(T.gate - t) + ' s.' : 'Walk into your gate (the gold ring, ' + SD[j.side] + ' side) to cross to your ledge.';
     if (w === 'L' && G.p2.wside[me] !== j.side) return 'Wrong ledge: take this ledge\'s gate back, then your own.';
     if (k && t >= k.at - 5) return t < k.at ? 'Your kick: ' + k.kind + ' in ' + Math.ceil(k.at - t) + ' s. Press E as its cast bar starts.' : 'Kick ' + k.kind + ' now! (E)';
     if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. At 3:18, walk past 25 yards from the Warden (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 3 ? 'Grasping Fangs: you\'re one of the five. At 3:31 go to the edge of your tether (20 yards), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
     const fl = S.impacts.find((m) => t >= m.t0 && t <= m.at && Math.hypot(G.x - m.x, G.y - m.y) < m.r + 3); if (fl) return 'Falling Debris: step out of the brown circle!';
-    if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the purple ring).';
+    if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
     if (w === 'L' && t < T.wdie) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 2) ? 'Keep 7 yards from the eggs while the Warden lives (Warden\'s Protection).' : 'The Warden: stay with your half, out of 7 yards of the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
     if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait by it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
     if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
@@ -384,7 +388,7 @@ function pgP2(A) {
   const role = () => { fix(); const id = slotOf(pk), egg = pk.egg === 'far' || pk.egg === 'close' ? 'the ' + pk.egg + ' big egg' : pk.egg ? 'small egg ' + pk.egg.slice(1) : 'no egg';
     return { id, name: RN[pk.role], job: SD[pk.side][0].toUpperCase() + SD[pk.side].slice(1) + ' ledge · ' + egg + (pk.mal ? ' · Malice ' + ['', '1st', '2nd', '3rd'][pk.mal] : '') + (pk.cry ? ' · Anguished Cry' : '') }; };
   const asg = () => { fix(); const L0 = [], s = SD[pk.side];
-    L0.push(['Cross over (2:47)', 'Walk into your gate (the purple ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
+    L0.push(['Cross over (2:47)', 'Walk into your gate (the gold ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
     L0.push(['The Warden (2:55)', 'Stay with your half. While it lives, keep 7 yards from the eggs (Warden\'s Protection).' + (pk.mal ? ' Kick its ' + ['', '1st', '2nd', '3rd'][pk.mal] + ' Malice (' + clk(T.malice[pk.mal - 1]) + ') with E.' : ' The melee kick its Malice.')]);
     L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:18. One of the five: to the edge of your tether at 3:31, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:18.', five: 'One of the five: to the edge of your tether (20 yards) at 3:31, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:18, five at 3:34).' })[pk.teth]]);
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + pk.egg + ' big egg', 'It waits at your ledge\'s south end. Go to it at 4:10, pick it up at 4:19 (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
