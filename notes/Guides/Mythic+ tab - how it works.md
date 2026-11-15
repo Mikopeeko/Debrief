@@ -515,3 +515,14 @@ Where the numbers come from (nothing is counted twice): deaths, close calls and 
 Big hits on the website is now only this tab: the old Big hits chapter (`mpBigChap`) draws on the Companion app's card only, which keeps its layout. Links to Big hits (the close calls' "See every big hit", Route's pull cards, old `&mpv=hit` links) open Survival. Graphs keeps its raw Survival and Deaths views. Code: `mpxSvGroups`, `mpxSvNums`, `mpxSvCell`, `mpxSurv` in src/mptab.js; the look is the "Mythic+ Survival" block at the end of style#look-nov13.
 
 Checks: tests/mplus-big-hits-order.js runs the tab's own code (the parts of the key, the numbers on top, the Report card's counts, the Companion's list); tests/look-review.js has a block for the tab. Each fails on 6f03d342.
+
+## The fresh reviewers' top three (Nov 15, 2026)
+
+Flex asked "rate the mythic+ tab overall". Seven reviewers who had never seen the work scored each tab from real pictures of his +19 Kings' Rest: 7.0 overall (Survival 7.3, Rotation 7.2, Graphs 7.0, Report card, Route and Compare 6.8; the full report is in the shared notes, mplus-rating-nov15.md). Flex: "Yes, fix them" on the top three:
+- **One wording per number.** Compare's sentence says what the deaths put on the timer and how much of it was beyond the fast run's ("0:30 on the timer, 0:15 more than the fast run's"), so it matches its bar's "Deaths 0:15". The Report card's group row adds up the players' damage above it (the whole key, walking included, as every player's number and Graphs count it); the in-pull number (1.02m) is called "while in a pull", with the whole-key one beside it. The banner counts pulls as Route does (11, the bosses apart).
+- **One Next key list** on the Report card, under The key, in short: the timer (what Summary called Fix first, with its Next time line, what it cost and its links), the grade (the Report card's tip, which left the strip) and the picked player (their card's own Fix first, with a link to their checklist). A key with no timer keeps its strip as it was.
+- **No banner said twice**: the Report card's banner keeps its numbers and the group grade, not the key's name, result and time (they are in the banner on top of every tab); the time to spare replaces "players graded".
+- **Compare, one job**: the key against a typical fast run. Each player's bar fills to the best of their own spec with a white mark at its middle player (one scale for every role made the healer look worst), furthest behind first, and a player with no fast runs of their spec gets a line saying so.
+- **A phone shows every tab**: the tab row wraps onto two lines.
+
+Left as it was: the floating "Ask the Paladin" bubble shows only for the admin. Code: `mprNext` in src/mptab.js; the look is the last block of style#look-nov13. Checks: tests/mplus-report-opens.js runs the Next key list; tests/look-review.js has a block of six lines. Each fails on b203075a.

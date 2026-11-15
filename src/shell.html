@@ -20741,6 +20741,41 @@ html:not(.mpcard) body #view#view#view #mptCV .mpsv-dx, html:not(.mpcard) body #
   html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > :is(.mpsv-kc, .mpsv-dfs)::before { content: attr(data-l) !important; display: block !important; flex: 0 0 100% !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
 }
 }
+/* Mythic+, the fresh reviewers' top three (Nov 15, Flex: "Yes, fix them"): the Report card's Next key list (one list instead of three "do this first"
+lines), its banner without the key's name and result a second time, Compare's bars against each player's own spec, and every tab in view on a phone */
+@layer defaultTheme {
+/* Next key */
+html:not(.mpcard) body #view#view#view #mptCP .mprn { margin: 0 0 16px !important; padding: 14px 18px 8px !important; border: 1px solid rgba(230,180,80,.5) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-k { margin: 0 0 4px !important; font: 700 12px var(--body) !important; letter-spacing: .07em !important; text-transform: uppercase !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-r { display: grid !important; grid-template-columns: 26px minmax(0,1fr) auto !important; gap: 4px 14px !important; align-items: start !important; padding: 10px 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-r:first-of-type { border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-n { display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 24px !important; height: 24px !important; border: 1px solid rgba(230,180,80,.55) !important; border-radius: 3px !important; font: 800 14px/1 'Barlow Condensed', sans-serif !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-m { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-h { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 1px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-tag { flex: none !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-t { font: 700 17px/1.3 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-tv { font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-m > .mpt-nt, html:not(.mpcard) body #view#view#view #mptCP .mprn-m > .mpx-fxd, html:not(.mpcard) body #view#view#view #mptCP .mprn-g { margin: 4px 0 0 !important; font: 500 15px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-l { display: flex !important; flex-wrap: wrap !important; gap: 4px 18px !important; margin: 6px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-l > .linkbtn { margin: 0 !important; font: 600 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-v { display: grid !important; justify-items: end !important; gap: 2px !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-vb { font: 800 24px/1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-vb.mprn-vr { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCP .mprn-vb.mprn-va { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCP .mprn-vb.mprn-vg { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mprn-vs { font: 500 12px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; }
+/* the banner's small label (the key's name and result are in the banner on top of every tab) */
+html:not(.mpcard) body #view#view#view #mptCP .rcb-ban .rcb-banl > .rcb-k { margin: 0 0 8px !important; }
+/* Compare: each player's bar fills to the best of their spec; the white mark is its middle player */
+html:not(.mpcard) body #view#view#view #mptCC .mpx-cvx .gbx-b { position: relative !important; overflow: visible !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-cvx .mpx-cvm { position: absolute !important; top: -3px !important; bottom: -3px !important; width: 2px !important; margin-left: -1px !important; background: var(--text) !important; opacity: .75 !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-cvx .mpx-cvn { grid-column: 2 / -1 !important; font: 500 13.5px var(--body) !important; color: var(--muted) !important; }
+/* a phone: the tabs wrap onto two lines, so every tab is in view */
+@media (max-width: 760px) {
+  html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) { flex-wrap: wrap !important; overflow-x: visible !important; row-gap: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) > button { padding-left: 9px !important; padding-right: 9px !important; }
+  html:not(.mpcard) body #view#view#view #mptCP .mprn-r { grid-template-columns: 26px minmax(0,1fr) !important; }
+  html:not(.mpcard) body #view#view#view #mptCP .mprn-v { grid-column: 2 !important; justify-items: start !important; text-align: left !important; display: flex !important; align-items: baseline !important; gap: 8px !important; }
+}
+}
 </style>
 </body>
 </html>
