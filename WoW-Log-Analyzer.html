@@ -74169,12 +74169,12 @@ function pg3d(host, A) {
 // 4:27, Anguished Cry about 4:35, 4:53 and 5:09, Rage of the Shackled 4:48, heart open 4:55) and the guide's plan (src/guides.js: the halves (UX_HALF),
 // the side ledges, the gate's landing, the Warden, the small eggs' spots (UL_EGGS), the cauldron pit (UX_E)); the big eggs from 10 top Mythic kills' logs.
 // Not measured, so picked from the guide and flagged where they're set: the gates and their times, Malice every 15 s (logs only), the solo break at
-// 3:18.5 and the five at 3:34 (measured: 14 to 18 s apart), the tether's 25 yards, the small eggs in together at 3:56 and the big eggs picked up at 4:14 (inside what 10 top kills did: small eggs in 3:46 to 3:56, big eggs up 4:04 to 4:23),
+// 3:26 and the five at 3:34 (measured since, Main on all 131 library Mythic kills and checked on the 30 fastest: the tethers land about 3:17, one breaks alone a median 8.3 s later, the five a median 16.7 s after the landing, 8 s apart; 40 of 131 break all six at once), the tether's 25 yards, the small eggs in together at 3:56 and the big eggs picked up at 4:14 (inside what 10 top kills did: small eggs in 3:46 to 3:56, big eggs up 4:04 to 4:23),
 // Anguished Cry's 2 s cast (1.4 s with Revenge), Desperate Thrash's times and its 14-yard, 50-degree cone, the way back at 4:38.5.
 // practice.js keeps the loop, the screen, the cards and the score; this file gives the part its script, room, bots, hits, start card, minimap and
 // 3D pieces through pgP2(api) (practice.js calls it when a part has `mod`). Read into ui.js's scope right after practice.js (build.ps1,
 // /*PRACTICE*/). 3D only (Flex): the 2D canvas says so; the minimap stays. tests/practice-p2.js plays it in Node on every build.
-const PG_P2_T = { start: 166, gate: 167, doom: 174, doomEnd: 264, wardens: 175, molt: 178, malice: [183, 198, 213], fangs: 196, solo: 198.5, five: 214, wdie: 218, shells: 219,
+const PG_P2_T = { start: 166, gate: 167, doom: 174, doomEnd: 264, wardens: 175, molt: 178, malice: [183, 198, 213], fangs: 196, solo: 206, five: 214, wdie: 218, shells: 219,
   throwAt: 236, back: 243, bigUp: 254, bigIn: 267, dsUp: 267.5, cries: [275, 293, 309], thrash: [272, 290, 303], home: 278.5, rage: 288, heart: 294.5, heartEnd: 314.5, debris: [230, 270, 317], end: 318 };
 const PG_P2 = {
   // the two halves (the guide's UX_HALF on the east ledge, the rest on the west)
@@ -74227,9 +74227,9 @@ function pgP2Jobs(seed, me, pk) {
   SIDES.forEach((s) => { const pool = P.half[s].slice(); for (let i = 0; i < 3; i++) J[pool.splice(Math.floor(rnd() * pool.length), 1)[0]].teth = 'five'; });
   const all = SIDES.flatMap((s) => P.half[s]); J[all.find((id) => J[id].teth && id[0] === 'r') || all.find((id) => J[id].teth)].teth = 'solo';
   if (me && J[me] && pk) pgP2Give(J, me, pk);
-  // (a melee kicker can't kick from the end of a tether: the solo walks out over the 2nd Malice, the five over the 3rd; the raid leader hands that
+  // (a melee kicker can't kick from the end of a tether: the five walk out over the 3rd Malice (the solo, at 3:26, between the 2nd and 3rd); the raid leader hands that
   // kick to someone free. Your own picks stay yours.)
-  SIDES.forEach((s) => P.half[s].forEach((id) => { const k = J[id].teth === 'solo' ? 2 : J[id].teth === 'five' ? 3 : 0; if (!k || J[id].mal !== k || id[0] === 'r' || (id === me && pk && pk.teth !== 'random')) return; /* (a tether dealt to you at random hands your kick on too; one you picked, the card warns about) */
+  SIDES.forEach((s) => P.half[s].forEach((id) => { const k = J[id].teth === 'five' ? 3 : 0; /* (the solo walks out at 3:26, between the 2nd and 3rd Malice: no clash) */ if (!k || J[id].mal !== k || id[0] === 'r' || (id === me && pk && pk.teth !== 'random')) return; /* (a tether dealt to you at random hands your kick on too; one you picked, the card warns about) */
     const free = (q) => q !== me && q !== id && !J[q].teth && (q[0] === 'm' || q[0] === 'r'), o = P.half[s].find((q) => free(q) && !J[q].mal) || P.half[s].find((q) => free(q) && J[q].mal === 1); if (o) { const v = J[o].mal; J[o].mal = k; J[id].mal = v; if (id === me) J[id].handed = k; } }));
   return J;
 }
@@ -74276,7 +74276,7 @@ function pgP2Script(o) {
   cast('warden', 'Warden: Shadow Molt', T.molt, T.molt + 1.2); warn(T.wardens, 'Doomscale Wardens: kick Malice!', '#b06bff'); timer(T.wardens, 'Wardens');
   // Malice (3:03, then every 15 s: logs only): a 1.5 s cast, then a 6 s channel; a kick up to 0.9 s into the channel and nobody is hit
   S.malice = []; T.malice.forEach((t0, k) => { ['E', 'W'].forEach((s) => S.malice.push({ side: s, k: k + 1, t0, ch: t0 + 1.5, by: t0 + 2.4, t1: t0 + 7.5, c: cast('warden', 'Warden: Malice', t0, t0 + 1.5) })); timer(t0, 'Malice ' + (k + 1)); });
-  // Grasping Fangs (3:16): the solo breaks first, the five together (14 to 18 s later on top kills)
+  // Grasping Fangs (3:16): the solo breaks first, about 8 s after the tethers land, then the five together 8 s later (131 library Mythic kills)
   cast('warden', 'Warden: Grasping Fangs', T.fangs - 1.2, T.fangs); warn(T.fangs, 'Grasping Fangs: six tethers!', '#ff5a4f'); timer(T.fangs, 'Grasping Fangs'); timer(T.solo, 'Solo break'); timer(T.five, 'The five break');
   warn(T.solo, 'Solo break!', '#ff8a6a'); warn(T.five - 3, 'The five: to the edge of your tether…', '#ff8a6a'); warn(T.five, 'The five: break now!', '#ff5a4f');
   timer(T.wdie, 'Wardens die'); warn(T.wdie, 'Wardens down: pick up your egg once Blight Vein drops', '#f5d33a');
@@ -74457,13 +74457,13 @@ function pgP2(A) {
       if (who === me) A.mistake('kick', 'You didn\'t kick Anguished Cry (' + clk(c.t0) + '): everyone within 60 yards was stunned for 6 s.', 'Press E during the Doomscale\'s cast bar, within ' + range(me) + ' yards.', 0); }); };
   const tethers = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     if (cr(T.fangs)) { const n = { E: 0, W: 0 }; Object.keys(S.job).forEach((id) => { const j = S.job[id]; if (!j.teth) return; G.p2.teth[id] = { solo: j.teth === 'solo', br: null, side: j.side, n: n[j.side]++ };
-      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break alone at 3:18.' : 'break with the five at 3:34.') + (j.handed ? ' Your ' + ['', '1st', '2nd', '3rd'][j.handed] + ' Malice kick goes to someone free.' : ''), true); } }); }
+      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break alone at 3:26.' : 'break with the five at 3:34.') + (j.handed ? ' Your ' + ['', '1st', '2nd', '3rd'][j.handed] + ' Malice kick goes to someone free.' : ''), true); } }); }
     if (t < T.fangs || t > T.wdie + 0.1) return;
     Object.entries(G.p2.teth).forEach(([id, th]) => { if (th.br != null) return; if (t >= T.wdie) { th.br = 'gone'; return; } const W = G.p2.wd[th.side]; if (!W) return; const d = pgDist(pos(id), W), bt = th.solo ? T.solo : T.five, lo = th.solo ? bt - 1.5 : bt - 1, hi = th.solo ? bt + 3 : bt + 1.5;
       const late = id === me && !window.__pgAuto && t > hi + 1;
       if (d <= P.TETHER && !late) return; th.br = t; vein(t); G.p2.tlog.push([id, t, t >= lo && t <= hi]); if (id !== me) return; if (G.debs.fangs) G.debs.fangs.until = t;
-      if (t < lo) A.mistake('tether', 'You broke your tether early (' + clk(t) + '): ' + (th.solo ? 'the solo break is at 3:18.' : 'the five break together at 3:34.'), th.solo ? 'Walk out alone at 3:18, once the raid is ready for it.' : 'Wait at the edge of your tether (about 20 yards from the Warden) and step out on the count.', 0);
-      else if (t > hi) A.mistake('tether', 'You broke your tether late (' + clk(t) + '): its Blight Vein landed apart from the others, so everyone took extra ticks.', th.solo ? 'Walk out past 25 yards from the Warden at 3:18.' : 'Be at the edge of your tether two seconds early, then step out on the count at 3:34.', 0);
+      if (t < lo) A.mistake('tether', 'You broke your tether early (' + clk(t) + '): ' + (th.solo ? 'the solo break is at 3:26.' : 'the five break together at 3:34.'), th.solo ? 'Walk out alone at 3:26, once the raid is ready for it.' : 'Wait at the edge of your tether (about 20 yards from the Warden) and step out on the count.', 0);
+      else if (t > hi) A.mistake('tether', 'You broke your tether late (' + clk(t) + '): its Blight Vein landed apart from the others, so everyone took extra ticks.', th.solo ? 'Walk out past 25 yards from the Warden at 3:26.' : 'Be at the edge of your tether two seconds early, then step out on the count at 3:34.', 0);
       else A.say('Tether broken on time.'); }); };
   const eggs = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     // Warden's Protection: an egg can't be touched while its Warden lives, and it hurts anyone within 7 yards
@@ -74501,7 +74501,7 @@ function pgP2(A) {
     if (w === 'p0') return t < T.gate ? 'Phase 2: your half crosses to the ' + SD[j.side] + ' ledge. Your gate opens in ' + Math.ceil(T.gate - t) + ' s.' : 'Walk into your gate (the gold ring, ' + SD[j.side] + ' side) to cross to your ledge.';
     if (w === 'L' && G.p2.wside[me] !== j.side) return 'Wrong ledge: take this ledge\'s gate back, then your own.';
     if (k && t >= k.at - 5) return t < k.at ? 'Your kick: ' + k.kind + ' in ' + Math.ceil(k.at - t) + ' s. Press E as its cast bar starts.' : 'Kick ' + k.kind + ' now! (E)';
-    if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. To the edge of your tether now (about 20 yards; you\'re slowed), then past 25 yards at 3:18 (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 5.5 ? 'Grasping Fangs: you\'re one of the five. At 3:28 go to the edge of your tether (20 yards; you\'re slowed), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
+    if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. To the edge of your tether now (about 20 yards; you\'re slowed), then past 25 yards at 3:26 (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 5.5 ? 'Grasping Fangs: you\'re one of the five. At 3:28 go to the edge of your tether (20 yards; you\'re slowed), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
     const fl = S.impacts.find((m) => t >= m.t0 && t <= m.at && Math.hypot(G.x - m.x, G.y - m.y) < m.r + 3); if (fl) return 'Falling Debris: step out of the brown circle!';
     if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
     if (w === 'L' && t < T.wdie) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 2) ? 'Keep 7 yards from the eggs while the Warden lives (Warden\'s Protection).' : 'The Warden: stay with your half, out of 7 yards of the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
@@ -74537,7 +74537,7 @@ function pgP2(A) {
       ['far', 'close'].map((w) => { const p = pgP2L(s, P[w]), on = pk.egg === w; return hit(w, 'The ' + NS[w] + ' big egg', on, '<ellipse cx="' + X(p) + '" cy="' + Y(p) + '" rx="3.6" ry="4.6" fill="' + (on ? '#f3c969' : '#6a5320') + '" stroke="' + (on ? '#fff' : '#e6b450') + '" stroke-width=".6"/>') + tx([p[0] + (s === 'E' ? 15 : -15), p[1] - 1.3], w === 'far' ? 'South big egg' : 'North big egg', on ? '#f3c969' : '#e6b450', 3.8); }).join('') + '</svg>'; };
   const seg = (k, opts, cur, dis) => '<div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + (dis ? ' disabled' : '') + '>' + esc(t) + '</button>').join('') + '</div>';
   // (a melee can't kick from the end of a tether: the 2nd Malice comes as the solo walks out, the 3rd as the five do; raids hand that kick on)
-  const clash = () => pk.role === 'm' && ((pk.mal === 2 && pk.teth === 'solo') || (pk.mal === 3 && pk.teth === 'five')) ? '<p class="pg-tip">' + esc(pk.mal === 2 ? 'Heads up: the 2nd Malice (3:18) comes as the solo walks out. From the end of a tether a melee can\'t kick it; raids give that kick to someone else.' : 'Heads up: the 3rd Malice (3:33) comes as the five walk out. From the end of a tether a melee can\'t kick it; raids give that kick to someone else.') + '</p>' : '';
+  const clash = () => pk.role === 'm' && pk.mal === 3 && pk.teth === 'five' ? '<p class="pg-tip">' + esc('Heads up: the 3rd Malice (3:33) comes as the five walk out. From the end of a tether a melee can\'t kick it; raids give that kick to someone else.') + '</p>' : ''; /* (the solo walks out at 3:26, between the 2nd and 3rd Malice) */
   const card = () => { fix(); const heal = pk.role === 'h', tab = ui.tab; let body;
     if (tab === 'egg') body = '<div class="pg-jobp"><div class="pg-jmap">' + ledgeSvg() + '</div><div class="pg-jside"><p><b>Your egg.</b> Click your small egg (its number on your raid\'s plan) or a big egg.</p><p>' +
       (pk.egg === 'far' || pk.egg === 'close' ? esc('Picked: the ' + NS[pk.egg] + ' big egg. Pick it up at 4:14, once the small eggs are in, and have it in by 4:27.') : pk.egg ? esc('Picked: small egg ' + pk.egg.slice(1) + '. Pick it up once the Warden is dead, then into the cauldron at 3:56.') : 'Picked: no egg.') + '</p>' +
@@ -74547,7 +74547,7 @@ function pgP2(A) {
       '<p>' + (heal ? 'Healers have no kick in Midnight (only a Restoration Shaman).' : 'Press E during the cast bar: melee within 8 yards, ranged within 30.') + '</p>' + clash() + '</div>';
     else body = '<div class="pg-p2kick"><p><b>Grasping Fangs (3:16).</b> Six tethers, three on each ledge, on anyone. One player breaks alone, then the other five break together.</p>' +
       seg('p2t', [['random', 'Random'], ['solo', 'Solo break'], ['five', 'One of the five'], ['none', 'No tether']], pk.teth) +
-      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:18, alone.', five: 'At 3:28 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
+      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:26, alone.', five: 'At 3:28 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
     return '<div class="pg-optrow pg-jrole"><span>Ledge</span>' + seg('p2s', [['W', 'West'], ['E', 'East']], pk.side) + '<span>Role</span>' + seg('p2r', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], pk.role) + '</div>' +
       '<div class="pg-jtabs">' + seg('p2tab', [['egg', 'Egg'], ['kick', 'Kicks'], ['teth', 'Tether']], tab) + '</div>' + body; };
   const bind = (box, refresh) => { box.onclick = (e) => { const b = e.target.closest('[data-p2s],[data-p2r],[data-p2tab],[data-p2e],[data-p2m],[data-p2c],[data-p2t]'); if (!b || b.disabled) return; const d0 = b.dataset;
@@ -74560,7 +74560,7 @@ function pgP2(A) {
   const asg = () => { fix(); const L0 = [], s = SD[pk.side];
     L0.push(['Cross over (2:47)', 'Walk into your gate (the gold ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
     L0.push(['The Warden (2:55)', 'Stay with your half. While it lives, keep 7 yards from the eggs (Warden\'s Protection).' + (pk.mal ? ' Kick its ' + ['', '1st', '2nd', '3rd'][pk.mal] + ' Malice (' + clk(T.malice[pk.mal - 1]) + ') with E.' : ' The melee kick its Malice.')]);
-    L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:18. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:18.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:18, five at 3:34).' })[pk.teth]]);
+    L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:26. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:26.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:26, five at 3:34).' })[pk.teth]]);
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. Go to it at 3:57, pick it up at 4:14 (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
     else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others at 3:56.']);
     else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
@@ -74574,7 +74574,7 @@ function pgP2(A) {
     const egg = pk.egg === 'far' || pk.egg === 'close' ? 'The ' + NS[pk.egg] + ' big egg: pick it up at 4:14, in by 4:27' : pk.egg ? 'Small egg ' + pk.egg.slice(1) + ': pick it up when the Warden dies, into the cauldron at 3:56' : 'No egg: keep out of the carriers\' rings';
     const kk = [pk.mal ? 'the ' + ord[pk.mal] + ' Malice (' + clk(T.malice[pk.mal - 1]) + ')' : '', pk.cry ? 'Doomscale ' + pk.cry + '\'s Anguished Cry' : ''].filter(Boolean);
     L0.push(egg + (kk.length ? '. Kick (E) ' + kk.join(' and ') : '') + '.');
-    L0.push(({ random: 'Tether: if you get one, break alone at 3:18 or with the five at 3:34.', solo: 'Tether: you break alone at 3:18, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
+    L0.push(({ random: 'Tether: if you get one, break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
     L0.push('Back to her at 4:38: burn the heart, step out of the brown circles.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
   const starts = [[0, '2:46 · The split'], [190, '3:10 · The tethers'], [216, '3:36 · The small eggs'], [248, '4:08 · The big eggs'], [266, '4:26 · The Doomscales'], [284, '4:44 · The heart burn']];
