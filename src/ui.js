@@ -1427,9 +1427,11 @@ window.addEventListener('resize', () => { if (BUF.on && window.innerWidth !== BU
 function prevArrived() { if (!holding() && phoneish()) return; /* (Nov 6: on a phone a pull that's showing isn't rebuilt (a ~10 s still picture there): Since last pull shows at the next draw) */
   try { if (S.tab === 'audit' && S.rep && !S.rep.allPulls) { if (!holding()) bufStart(null, 4000); oaFill([S.rep]); } } catch (e) { liveRedraw(); } }
 function liveRedraw() { clearTimeout(LIVE_T); if (!LIVE_0) LIVE_0 = Date.now(); LIVE_T = setTimeout(() => { LIVE_T = 0; if (S.tab !== 'audit' || !S.item || !S.rep || ldOn()) { LIVE_0 = 0; LIVE_HD = false; return; }
-  if (!holding() && phoneish() && !LIVE_HD) { LIVE_0 = 0; try { liveSave(); } catch (e) { /* (not remembered) */ } return; } /* (Nov 6: a phone doesn't rebuild a pull it's showing for late live numbers: kept for the next draw) */
-  if (!holding() && !LIVE_HD && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
-  if (holding() && livePending(true) && Date.now() - HOLD_0 + LIVE_SPENT < (phoneish() ? 9000 : 4000) - 300) { LIVE_HD = true; liveRedraw(); return; } /* (0.3 s before the card's own limit for the lists (holdWait), so it draws while the card is still up) */ /* (Nov 15: behind the hold card too, one draw for all the lists still coming, not one each: every list is asked for when the pull is picked (livePrefetch), so nothing waits on a draw to be asked for) */
+  const inB = holding() && Date.now() - HOLD_0 + LIVE_SPENT < (phoneish() ? 9000 : 4000) - 300; /* (the card's time for the lists, what's left of it) */
+  if (holding() && !inB && !LIVE_HD) { liveRedraw(); return; } /* (Nov 15, Main's second review: a list later than that, behind the card: gathered for after it goes, one redraw for all of them (a phone keeps them for its next draw), not a whole build each) */
+  if (!holding() && phoneish()) { LIVE_0 = 0; LIVE_HD = false; try { liveSave(); } catch (e) { /* (not remembered) */ } return; } /* (Nov 6: a phone doesn't rebuild a pull it's showing for late live numbers: kept for the next draw) */
+  if (!holding() && (document.querySelector('.pcx-tile.on') || livePending()) && Date.now() - LIVE_0 < 10000) { liveRedraw(); return; } /* (wait for the rest, at most 10 s; behind the hold card it draws at once, which starts the next read) */
+  if (inB && livePending(true)) { LIVE_HD = true; liveRedraw(); return; } /* (within its time: wait for the rest; when the time is up, the ones in are drawn behind the card in one go) */ /* (0.3 s before the card's own limit for the lists (holdWait), so it draws while the card is still up) */ /* (Nov 15: behind the hold card too, one draw for all the lists still coming, not one each: every list is asked for when the pull is picked (livePrefetch), so nothing waits on a draw to be asked for) */
   if (!holding()) bufStart(null, 4000); try { liveSave(); } catch (e) { /* (not remembered) */ } /* (each arrival is remembered, not only the ones in before the page showed) */
   LIVE_0 = 0; LIVE_HD = false; const y = window.scrollY, v0 = document.getElementById('view'), g0 = v0 && v0.querySelector(':scope > .dbt'), gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
   renderMain(); { const v1 = document.getElementById('view'); if (gc && v1 && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); } } /* (Oct 29: no flicker: the timeline stays on screen until the fresh one replaces it) */
@@ -1466,7 +1468,7 @@ function livePrefetch(it) { try { liveRestore(); } catch (e) { /* (fetched again
     .forEach((f) => { try { f(); } catch (e) { /* (the draw asks for it) */ } }); return true; }
 /* (and the pull's page waits for them before its one draw: at most 3 s after the pull is read (6 s on a phone, where a draw takes several
    seconds); a list later than that still shows as before) */
-const liveSettled = () => new Promise((res) => { const t0 = Date.now(), cap = phoneish() ? 6000 : 3000; (function tick() { if (S.tab !== 'audit' || !LIVE_INF.size || Date.now() - t0 >= cap) res(); else setTimeout(tick, 50); })(); });
+const liveSettled = () => new Promise((res) => { const t0 = Date.now(), cap = Math.max(0, (phoneish() ? 6000 : 3000) - LIVE_SPENT); /* (what's left of it, when a stale saved reading is read again (Main's second review)) */ (function tick() { if (S.tab !== 'audit' || !LIVE_INF.size || Date.now() - t0 >= cap) res(); else setTimeout(tick, 50); })(); });
 /* (the open pull list's lines, brought up to date: a pull read since the list was drawn gets its boss health (Nov 6)) */
 window.refreshPullSel = () => { try { const G = window.allPulls333(), cur = G.find((g) => g.cur), all = new Map(); G.forEach((g) => g.pulls.forEach((q) => all.set('p' + q.i, q)));
   document.querySelectorAll('select.r300-pull option').forEach((o) => { const q = /^\d+$/.test(o.value) ? cur && cur.pulls[+o.value] : all.get(o.value); if (q && q.txt && /boss at|Kill/.test(q.txt) && !/boss at|Kill/.test(o.textContent)) { o.textContent = q.txt; if (q.col) o.style.color = q.col; } }); } catch (e) { /* (the list stays as drawn) */ } };
@@ -1479,16 +1481,16 @@ window.openPull333 = (i) => { const L = ((S.index && S.index.bosses) || []).filt
 /* (Nov 1: a pull asked for again while it's still opening (a reload asks twice: the report, then the remembered view) is opened once) */
 let SEL = null;
 function select(item) { if (SEL && SEL.item === item) return SEL.p; const p = select0(item), s = { item, p }; SEL = s; const off = () => { if (SEL === s) SEL = null; }; p.then(off, off); return p; }
-async function select0(item) {
+async function select0(item, again) {
   bufEnd(); /* (the loading card, not the last page, while this one is read) */
   if (S.tab === 'overview') S.tab = 'audit'; /* (opening a pull leaves the Plan page) */
   S.miss = 0; syncUrl(item);
   S.item = item; S.mPlayer = null; S.pPlayer = null; S.death = 0;
   document.querySelectorAll('.pull').forEach((b) => b.classList.toggle('sel', ITEMS[+b.dataset.i] === item));
   $('#main').innerHTML = '<div class="empty">' + loadCard('Opening ' + item.boss + (item.pull ? ', pull ' + item.pull : ''), 'Reading the pull…', null, 'loadmsg') + '</div>';
-  const lp = livePrefetch(item); LIVE_SPENT = 0; /* (Nov 15: the comparison lists, asked for now, while the pull is read) */
+  const lp = livePrefetch(item); if (!again) LIVE_SPENT = 0; /* (a stale saved reading read again keeps the time already waited (Main's second review)) */ /* (Nov 15: the comparison lists, asked for now, while the pull is read) */
   let rep; const pe = prevEarly(item);
-  try { rep = await getRep(item); await Promise.all([Promise.race([pe, new Promise((r) => setTimeout(r, 1500))]), lp && S.item === item ? (() => { const t0 = Date.now(); return liveSettled().then(() => { if (S.item === item) LIVE_SPENT = Date.now() - t0; }); })() : null]); } /* (a moment for the pull before, so the page is built once with it; Nov 15: and for the comparison lists) */
+  try { rep = await getRep(item); await Promise.all([Promise.race([pe, new Promise((r) => setTimeout(r, 1500))]), lp && S.item === item ? (() => { const t0 = Date.now(); return liveSettled().then(() => { if (S.item === item) LIVE_SPENT += Date.now() - t0; }); })() : null]); } /* (a moment for the pull before, so the page is built once with it; Nov 15: and for the comparison lists) */
   catch (err) {
     if (S.item !== item) return;
     $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p><button class="btn primary" id="pullRetry" type="button">Try again</button></div>'; console.error(err);
@@ -1498,7 +1500,7 @@ async function select0(item) {
   try { S.rep = rep; }
   catch (err) { $('#main').innerHTML = '<div class="empty"><p class="muted">Couldn\'t analyze this pull: ' + esc(err.message) + '</p></div>'; console.error(err); return; }
   clearTimeout(LIVE_T); LIVE_T = 0; LIVE_0 = 0; LIVE_HD = false; /* (Nov 15: this draw has every list that came in while the pull was read; a redraw asked for then would only build the page again) */
-  holdStart(); try { renderMain(); } catch (e) { if (!rep._stale || item._rdSkip) throw e; console.warn('A saved reading from before the update didn\'t fit, reading the pull again:', e); item._rdSkip = 1; CACHE.delete(item); return select0(item); }
+  holdStart(); try { renderMain(); } catch (e) { if (!rep._stale || item._rdSkip) throw e; console.warn('A saved reading from before the update didn\'t fit, reading the pull again:', e); item._rdSkip = 1; CACHE.delete(item); return select0(item, true); }
   bgFetch(item); // (the next pull, then the rest of this boss's pulls, download in the background)
 }
 // Warcraft Logs reports: once a pull is up, this boss's other pulls in the report download quietly, the next pull first,
@@ -15797,7 +15799,7 @@ function oaRowWhy(r, d) { const secs = (r.module && !r.module.error && r.module.
     for (const row of (s.rows || []).concat(...(s.groups || []).map((g) => g.rows || []))) { if (!row.some((c) => c && c.bad)) continue; const tc = row.find((c) => c && c.t != null); if (!tc || tc.t < d.t - 3 || tc.t > d.t + 1) continue;
       if (row.some((c) => c && c.p && oaBase(c.p) === nm)) { const tx = row.filter((c) => c && c.bad && c.txt && !c.p).map((c) => String(c.txt)); return { l: (s.spell && s.spell[1]) || shortT(s.title || '').replace(/\s*\(.*$/, ''), why: tx.length ? tx[tx.length - 1] : '' }; } } }
   return null; }
-function oaCache(reps, name, f) { for (const r of reps) strictOn(r); const k = reps.map((r) => (r.item.id || r.item.boss) + ':' + r.item.diffId + ':' + r.item.pull + (r._stale ? 's' : '')).join(',') + '|' + deathCutN() + '|' + strictLv() + '|' + oaBase(name)
+function oaCache(reps, name, f) { for (const r of reps) strictOn(r); const k = reps.map((r) => repKey(r) + (r._stale ? 's' : '')).join(',') + '|' + repsLoaded(reps) /* (Nov 15, Main's second review: the report too, and the set of loaded pulls the lines read) */ + '|' + deathCutN() + '|' + strictLv() + '|' + oaBase(name)
     /* (Oct 24, your note "you removed the getting better / worse tags again": a pull's comparison with the last pull was worked out once, sometimes before
        the earlier pulls had loaded, and stayed empty. How many earlier pulls are loaded is part of the key now, so it's worked out again when they arrive) */
     + '|p' + (reps.length === 1 && reps[0].item ? ((S.index && S.index.bosses) || []).filter((b) => b.id === reps[0].item.id && b.diffId === reps[0].item.diffId && b.pull < reps[0].item.pull && CACHE.has(b)).length : 0);
@@ -24357,7 +24359,7 @@ function hpalChecks(reps, name, one) {
     ['Resources', [['Holy Power', ['hp', 'b5']], ['Mana', ['mana', 'hlo', 'mnx']]]],
     ['Cooldowns', [['Beacon of Virtue', ['bv', 'act', 'dt', 'amb', 'cd-divine-toll', 'dth', 'am']], [wingN, ['cd-' + wingN.toLowerCase().replace(/ /g, '-'), 'aw', 'win-cast', 'win-proc', 'awh', 'awdt', 'p-hand-of-divinity']], ['Aura Mastery', ['devam', 'cd-aura-mastery', 'dev']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
-  const pg = specPage({ per, rows, groups, one, P0, heroN, TAL, keyN, talents, talIc: TAL_IC, TIPS: HPAL_TIPS, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP, top: 'Holy Paladins', tl, VIZ, pullT,
+  const pg = specPage({ reps, per, rows, groups, one, P0, heroN, TAL, keyN, talents, talIc: TAL_IC, TIPS: HPAL_TIPS, LAYOUT, LG, LANE, WT, MERGE, TOPB, TOPP, top: 'Holy Paladins', tl, VIZ, pullT,
     tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, Holy Shock at full charges, or Holy Power sitting at 5.',
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Holy Paladin, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Holy Shock and Infusion of Light count three times as much as most, and heals on yourself count half. A clean check counts in full, and a minor one counts half.',
     secIc: { 'Your pull at a glance': 'Avenging Wrath', 'Pull by pull': 'Holy Shock' } });
@@ -25743,7 +25745,7 @@ let SPC_DRAW = false;
 /* (Nov 15, Main's review: Potions and Big cooldowns in a Rotation page counted over SPC_REPS, whatever the Rotation tab last drew, even when a pull was being
    graded for Summary or the Report card, so a grade changed with what Rotation showed last (and an old night's pulls could leak in). The tab's own set
    only while it draws; otherwise the pulls being graded) */
-const spcNightReps = (o) => (SPC_DRAW && SPC_REPS && SPC_REPS.length ? SPC_REPS : o.per.map((x) => x.r));
+const spcNightReps = (o) => (o.reps && o.reps.length ? o.reps : o.per.map((x) => x.r)); /* (Nov 15, Main's second review: every pull the check was given (o.reps), not o.per, which leaves out pulls the raider lived under 20 s; the same on the Rotation tab (SPC_REPS is what it passes) and in the Report card's grade) */
 function spcCoach(d) {
   const { checks, focus, good, UN, one } = d, top = d.TOPB || {}, txt = (v) => String(v == null ? '' : v).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   const tipOf = (c) => (c.tip ? tipNow(c.tip) : ''), first = (c) => spcFirst(c.sub), nm = d.top || 'top players', of = one ? (d.kill ? 'kill' : 'pull') : 'night';
@@ -26767,7 +26769,7 @@ function rdruChecks(reps, name, one) {
     ['Cooldowns', [['Tranquility', ['tq', 'cd-tranquility']], ['Convoke the Spirits', ['cv', 'cd-convoke-the-spirits']], ['Tree of Life', ['tol', 'cd-incarnation-tree-of-life']], ['Other cooldowns', ['cd-nature-s-swiftness', 'ns4', 'cd-ironbark']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
   Object.assign(MERGE, SH.MERGE); Object.assign(WT, SH.WT, { lbe: 1.5, rr: 1, rjb: 1, rje: 1, rjo: 0, wgd: 1.5 });
-  const pg = specPage({ per, rows, groups, one, P0, heroN, VIZ, TAL, keyN, talents, LAYOUT, LG, LANE, WT, MERGE, TOPB, TIPS: RDRU_TIPS, TOPP: new Set(['apl', 'mast', 'abc', 'lb', 'hots', 'sm', 'sms', 'ab', 'wg', 'tq', 'cv', 'mana', 'rr', 'rjb', 'rjo', 'wgd', 'lbe']), top: 'Restoration Druids', tl, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, or a time Lifebloom was down.', pullT,
+  const pg = specPage({ reps, per, rows, groups, one, P0, heroN, VIZ, TAL, keyN, talents, LAYOUT, LG, LANE, WT, MERGE, TOPB, TIPS: RDRU_TIPS, TOPP: new Set(['apl', 'mast', 'abc', 'lb', 'hots', 'sm', 'sms', 'ab', 'wg', 'tq', 'cv', 'mana', 'rr', 'rjb', 'rjo', 'wgd', 'lbe']), top: 'Restoration Druids', tl, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use, or a time Lifebloom was down.', pullT,
     src: 'Built with help from the Wowhead, Icy Veins, Questionably Epic and WoWAnalyzer guides for Restoration Druid, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Lifebloom and Swiftmend count three times as much as most, and Ironbark counts half. A clean check counts in full, and a minor one counts half.',
     secIc: { 'Your cooldowns over the pull': 'Tranquility', 'Pull by pull': 'Lifebloom' } });
   return { score: pg.score, checks: pg.checks, top: pg.top, wins: pg.wins, talents, html: pg.html, wait: sum((s) => s.wait) };
@@ -27150,7 +27152,7 @@ function pevkChecks(reps, name, one) {
     ['Resources', [['Mana', ['mana', 'mnx']]]],
     ['Cooldowns', [[stasisT ? 'Stasis and Inner Flame' : 'Dream Flight and Inner Flame', ['stc', 'stl', 'cd-stasis', 'cd-dream-flight', 'inf', 'fbs', 'win-cast', 'win-proc']], ['Other cooldowns', ['cd-tip-the-scales', 'cd-rewind', 'fbr', 'cd-util']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre.concat(['som'])]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PEVK_TIPS, TOPP: new Set(['abc', 'apl', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
+  const pg = specPage({ reps, per, rows, groups, one, P0, heroN, tl, VIZ, LAYOUT, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PEVK_TIPS, TOPP: new Set(['abc', 'apl', 'ta', 'db', 'dbr', 'ess', 'ecu', 'mana']), top: 'Preservation Evokers', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Preservation Evoker, and from what your talents do.', ringTip: 'Each check counts as much as it matters. Temporal Anomaly, Dream Breath and Essence Burst count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Stasis', 'Pull by pull': 'Echo' } });
   return { score: pg.score, checks: pg.checks, top: pg.top, wins: pg.wins, talents, html: pg.html, wait: sum((s) => s.wait) };
 }
@@ -27405,7 +27407,7 @@ function pdemChecks(reps, name, one) {
     ['Cooldowns', [['Demonic Tyrant', ['tyh', 'cd-summon-demonic-tyrant', 'tyd', 'tyc', 'tyx', 'pi']], ['Other demons', ['cd-grimoire-imp-lord', 'cd-grimoire-fel-ravager', 'cd-summon-doomguard', 'cd-power-siphon', 'imp']]]]];
   if (SH.keys.pre.length) LAYOUT.unshift(['Start of the pull', [['Before the pull', SH.keys.pre]]]); if (SH.keys.stats.length) LAYOUT.push(['Stats', [['Your stats', SH.keys.stats]]]);
   const tyX = rows.flatMap((s) => s.ty || []).map((q) => q.x).filter((v) => v != null), tyI = rows.reduce((v, s) => v + (s.tyIn || 0), 0), tyL = rows.reduce((v, s) => v + (s.tyInL || 0), 0), tyA = rows.reduce((v, s) => v + (s.allD || 0), 0), tyAL = rows.reduce((v, s) => v + (s.allL || 0), 0), burst = tyX.length ? { x: tyX.reduce((v, y) => v + y, 0) / tyX.length, n: tyX.length, name: 'Summon Demonic Tyrant', dps: tyL ? tyI / tyL : null, out: tyAL - tyL > 0 ? (tyA - tyI) / (tyAL - tyL) : null } : null;
-  const pg = specPage({ per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
+  const pg = specPage({ reps, per, rows, groups, one, P0, heroN, tl, VIZ, unitN: 'damage', LAYOUT, burst, tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents, LG, LANE, WT, MERGE, TOPB, TIPS: PDEM_TIPS, TOPP: new Set(['abc', 'apl', 'tyh', 'tyd', 'ssw', 'cd:summon demonic tyrant', 'cd:call dreadstalkers']), top: 'Demonology Warlocks', pullT,
     src: 'Built with help from the Wowhead, Icy Veins and WoWAnalyzer guides for Demonology Warlock, SimulationCraft\'s priority list (the one Raidbots sims with), and from what your talents do.', ringTip: 'Each check counts as much as it matters. Demonic Tyrant and Hand of Gul\'dan in it count three times as much as most. A clean check counts in full, and a minor one counts half.', secIc: { 'Your pull at a glance': 'Summon Demonic Tyrant', 'Pull by pull': 'Hand of Gul\'dan' } });
   return { score: pg.score, checks: pg.checks, top: pg.top, wins: pg.wins, talents, html: pg.html, wait: 0 };
 }
@@ -28369,7 +28371,7 @@ function genRun0(spec, D, reps, name, one) {
   const burst = winL.length && WIN ? (() => { const xs = winL.map((w) => w.x).filter((v) => v != null); const LB = Math.max(1, winL.reduce((v, w) => v + w.len, 0)); return xs.length ? { x: xs.reduce((v, y) => v + y, 0) / xs.length, n: xs.length, name: WSAY, dps: winL.reduce((v, w) => v + w.d, 0) / LB, out: winL.reduce((v, w) => v + (w.outR || 0) * w.len, 0) / LB } : null; })() : null;
   if (one && rows.length === 1) for (const g of groups) for (const c of g.l) { if (c.k === 'win' && winL.length) { c.cards = winL.map(winCard); c.cardsL = 'Each ' + WSAY + ', side by side'; } if (c.k === 'apl' && rows[0].apl && rows[0].apl.log) c.slips = aplGroups(rows[0].apl.log);
     const mq = MORE.find((q) => c.k === 'mw:' + q.k); if (mq && ((rows[0].more || {})[mq.k] || []).length) { c.cards = rows[0].more[mq.k].map((w) => moreCard(mq, w)); c.cardsL = 'Each ' + mq.n + ', side by side'; } }
-  const pg = specPage({ keyNa: D.keyNa, per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, WSAY: WIN ? WSAY : '', WIC: WIN ? WIN.n : '', WNAMES: WIN ? (WIN.names || [WIN.n]) : [], tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
+  const pg = specPage({ reps, keyNa: D.keyNa, per, rows, groups, one, P0, heroN, tl, unitN: D.unitN || 'damage', LAYOUT, VIZ, burst, WSAY: WIN ? WSAY : '', WIC: WIN ? WIN.n : '', WNAMES: WIN ? (WIN.names || [WIN.n]) : [], tlSub: 'Hover to see what you pressed and which buffs were up. Red marks a cooldown that sat ready long enough for one more use.', TAL, keyN, talents: [heroN].filter(Boolean), LG, WT, MERGE, TOPB,
     TOPP: new Set(['abc', 'res', 'mana', 'apl', 'win', 'wr'].concat(SPREAD.map((q) => 'sp:' + q.k), rot.map((q) => 'cd:' + lc(q.n)), cds.map((q) => 'cd:' + lc(q.n)), dots.map((q) => 'dot:' + q.n), ups.map((q) => 'up:' + q.n), TU.map((q) => 'tu:' + q.k))), top: D.top || spec + 's', topL: 'Top players', topH: 'The ' + (D.top || spec + 's') + ' who parsed 75 or higher in the fastest kills of this boss', pullT,
     src: 'Built with help from the Wowhead and Icy Veins guides and WoWAnalyzer\'s checks for ' + spec + ', and from what your talents do.', secIc: { 'Your pull at a glance': D.ic, 'Pull by pull': D.ic } });
   // (a priest's Power Infusion: the same cards and advice as Graphs' Power Infusion view, for this priest only, at the end
@@ -33135,11 +33137,14 @@ function raidFixFirst(c, N) {
 // (Summary's five tiles: a number each, in its grade's colour as on the Report card, no letter; the detail is in each tile's hover (a tap on a phone))
 const SUM5 = [['night', 'Night score'], ['perf', 'Performance'], ['mech', 'Mechanics'], ['alive', 'Staying alive'], ['prep', 'Ready to raid']];
 const sum5Tiles = (N, tt, one) => '<div class="sc5-t">' + SUM5.map(([k, l]) => { if (one && k === 'night') l = 'Pull score'; /* (one pull: its own grade, not the night's (Wolfthorn Thu Nov 12 Ula'tek pull 13)) */ const v = N ? N[k] : undefined; return '<div class="sc5-n" tabindex="0" data-k="' + k + '"' + (tt && tt[k] ? ' data-tt="' + esc(tt[k]) + '"' : '') + '><span class="sc5-k">' + l + '</span><b class="sc5-v"' + (v != null ? ' data-g="' + letterOf(v) + '"' : '') + '>' + (v === undefined ? '…' : v == null ? '–' : Math.round(v)) + '</b></div>'; }).join('') + '</div>';
-const SUM5_D = new Map(), SUM5_R = new Map(), SUM5_LAST = new Map(), SUM5_NS = new Map(), SUM5_BUSY = new Set();
+const SUM5_D = new Map(), SUM5_R = new Map(), SUM5_LAST = new Map(), SUM5_NS = new Map(), SUM5_BUSY = new Set(), SUM5_TRIES = new Map(); /* (SUM5_TRIES: when grades started, per pull and set: at most two in 20 s on their own) */
+const sum5Tries = (dk) => (SUM5_TRIES.get(dk) || []).filter((t) => Date.now() - t < 20000);
 /* (Nov 15, Main's review: a kept grade holds its pulls (about 25-30 MB each), so it goes as soon as one of them has left CACHE: the memory limit dropped it,
    or another report or log opened. Without this a phone kept up to 36 grades' pulls past its 14-pull limit, and another night's scores could stand in) */
-function sum5Prune() { const gone = (D) => !!(D && D.c && (D.c.reps || []).some((r) => !r || !r.item || CACHE.get(r.item) !== r));
+function sum5Prune() { const out = (r) => !r || !r.item || (CACHE.get(r.item) !== r && r !== S.rep), gone = (D) => !!(D && D.c && (D.c.reps || []).some(out)); /* (the pull on screen is never let go: it's held by the page anyway, and pruning its grade graded it again forever (Main's second review)) */
   for (const [k, D] of [...SUM5_D]) if (gone(D)) SUM5_D.delete(k); for (const [k, L] of [...SUM5_LAST]) if (!L || gone(L.D)) SUM5_LAST.delete(k);
+  for (const [k, c] of [...OA_C]) if (!c || (c.reps || []).some(out)) OA_C.delete(k); /* (Summary's coach lines too) */
+  if (S.plData && (S.plData.reps || []).some(out)) S.plData = null; /* (and the Report card's grade: a new report or log lets it go) */
   if (typeof SPC_REPS !== 'undefined' && SPC_REPS.length && !SPC_REPS.some((q) => q && q.item && CACHE.get(q.item) === q)) SPC_REPS = []; }
 /* (each pull's or night's key: the report too, so another night's scores never stand in (Main's review, Nov 15)) */
 const sum5Key0 = (it, one) => (one ? 'p|' + ((it.wcl && it.wcl.code) || '') + ':' + it.id + ':' + it.diffId + ':' + it.pull + ':' + (it.startMs || '') : 'n|' + ((it.wcl && it.wcl.code) || Math.floor((it.startMs || 0) / 864e5)) + ':' + it.id + ':' + it.diffId + ':' + pickKey325(it)) + '|' + deathCutN(); /* (Nov 15: SUM5_LAST, each pull's last finished scores; SUM5_NS, when its set of loaded pulls last changed) */
@@ -33188,13 +33193,13 @@ function sum5Draw(box, sb, D, one, it) {
   sum5Sync(sb); }
 // (the Report card's numbers for these pulls: the card's own grades when it has them, else the same plData (remembered for the card))
 async function sum5Load(dk, it, one, rep) {
-  const d0 = dk.slice(0, dk.lastIndexOf('|')); SUM5_BUSY.add(d0); /* (Nov 15: one grade at a time per pull) */
+  const d0 = dk.slice(0, dk.lastIndexOf('|')); SUM5_BUSY.add(d0); SUM5_TRIES.set(dk, sum5Tries(dk).concat(Date.now())); if (SUM5_TRIES.size > 300) SUM5_TRIES.delete(SUM5_TRIES.keys().next().value); /* (Nov 15: one grade at a time per pull) */
   SUM5_D.set(dk, { busy: true }); const still = () => S.tab === 'audit' && !!S.rep;
   try { await new Promise((ok) => setTimeout(ok, 120)); /* (after the page's first paint) */
     let reps = [rep], PD = null;
     if (!one) { const pulls = S.index.bosses.filter((b) => b.id === it.id && b.diffId === it.diffId && pickOk325(it, b)); reps = pulls.map((b) => CACHE.get(b)).filter(Boolean);
       if (reps.length < pulls.length) { const got = await bossReps(it, still, null, true); if (!got) { SUM5_D.delete(dk); return; } reps = got.reps; }
-      if (S.plData && S.plData.key === it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:' + pickKey325(it) + ':' + bossLoaded(it.boss)) PD = S.plData; }
+      if (S.plData && S.plData.key === it.id + ':' + it.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:' + pickKey325(it) + ':' + bossLoaded(it.boss) && (S.plData.reps || []).every((r) => r && r.item && CACHE.get(r.item) === r)) PD = S.plData; } /* (Nov 15, Main's second review: and only with the same readings: an older reading of a pull was pruned, graded with again, pruned again, forever) */
     const nsA = bossLoaded(it.boss), data = PD ? PD.data : await plData(reps, still); if (!data) { SUM5_D.delete(dk); SUM5_BUSY.delete(d0); return; }
     const c = PD || { reps, data }, N = raidCardNums(c); let fx = null; try { fx = raidFixFirst(c, N); } catch (e) { console.warn('summary fix first', e); }
     const nsB = bossLoaded(it.boss), dkN = nsA === nsB ? d0 + '|' + nsB : dk; if (dkN !== dk) SUM5_D.delete(dk); /* (Nov 15: kept under the set of pulls it was worked out with: All pulls loads the night itself, so that's the set at the end) */
@@ -33210,7 +33215,7 @@ function sum5Scan(force) {
      While the rest of the night is still arriving (the background reader, a pull being read) the last scores stay up; once it has all landed they're worked out again and only the
      numbers change, in place, never the page) */
   const L0 = SUM5_LAST.get(dk0), hold = !D && L0 && L0.D && L0.D.N && L0.D !== D ? L0.D : null;
-  let wait = SUM5_BUSY.has(dk0) && !D; /* (a grade of this pull is still being worked out: it finishes first) */
+  let wait = (SUM5_BUSY.has(dk0) && !D) || (!D && sum5Tries(dk).length >= 2); /* (a grade of this pull is still being worked out: it finishes first; and never more than two for the same pull and set in 20 s (Main's second review): a loop stops, a real change later is still graded) */
   if (hold && !wait) { const w = SUM5_NS.get(dk0); if (!w || w.ns !== ns) { SUM5_NS.set(dk0, { ns, at: Date.now() }); wait = true; } else if (Date.now() - w.at < 4000 || BG_ON || INFLIGHT.size || ((S.index && S.index.bosses) || []).some((b) => b._pl && b.boss === it.boss)) wait = true; }
   let box = sb.querySelector(':scope > .sc5');
   if (D && D.err) { sb.classList.remove('sc5-on'); if (box) box.remove(); return; } /* (no scores: the old tiles stay) */
@@ -34679,7 +34684,7 @@ function rcBind(box) { if (!box) return; box.querySelectorAll('.dbf-go[data-dsec
   setTimeout(() => window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 80 }), 140); })); }
 async function recapInto(r) {
   if (!$('#rcTop') || r.allPulls) return;
-  const key = cutT(r) + '|' + (S.mechP || ''), fill = (c) => { const t = $('#rcTop'), m = $('#rcMore'); if (!t || !m || S.rep !== r || S.tab !== 'audit') return false; t.innerHTML = c.top; m.innerHTML = c.more; refreshIcons(); dbfNoGo(m); rcBind(t); return true; };
+  const key = cutT(r) + '|' + (S.mechP || '') + '|' + bossLoaded(r.item.boss) /* (Nov 15, Main's second review: its Power Infusion line reads the boss's other loaded pulls) */, fill = (c) => { const t = $('#rcTop'), m = $('#rcMore'); if (!t || !m || S.rep !== r || S.tab !== 'audit') return false; t.innerHTML = c.top; m.innerHTML = c.more; refreshIcons(); dbfNoGo(m); rcBind(t); return true; };
   if (r._rc && r._rc.key === key) { fill(r._rc); return; }
   let x = null; try { x = await recapData('audit', true); } catch (e) { x = null; }
   if (S.rep !== r || S.tab !== 'audit') return;

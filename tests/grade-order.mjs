@@ -124,7 +124,34 @@ try {
       if (!/^\d+$/.test(P.back || '')) problems.push('coming back to pull 11 while a pull of the night was still missing, Summary showed "' + (P.back || 'nothing') + '" instead of the last scores');
       if (P.back2 == null || Math.abs(P.back2 - ref.night) > 1e-9 || P.backShown !== String(REF)) problems.push('coming back to pull 11, Summary ended on Pull score ' + (P.back2 == null ? 'none' : P.back2.toFixed(3)) + ' (shows ' + P.backShown + ') once the night was in; the whole night graded once is ' + ref.night.toFixed(3));
       if (P.draws || !P.same) problems.push('the rest of the night arriving redrew the whole page (' + P.draws + ' time(s)); only the scores should change'); } }
+  /* (3) Summary settles (Main's second review, Nov 15): on one pull and on All pulls, (a) the pull on screen let go from CACHE and (b) a fresh reading of
+     it put into CACHE (as the background re-read does before the page swaps to it) must stop after at most 2 grades and show numbers, not "…". On 1063cfba
+     the one-pull grade was pruned and graded again forever, and on All pulls a Report card grade kept from the older readings was reused forever) */
+  const SETTLE = `(async () => { try { window.__go = null; const W = (ms) => new Promise((r) => setTimeout(r, ms));
+    const items = ((S.index && S.index.bosses) || []).filter((b) => b.boss === "Ula'tek" && b.diffId === 16).sort((a, b) => a.pull - b.pull), it11 = items[10];
+    for (const it of items) if (!CACHE.get(it)) CACHE.set(it, await getRep(it));
+    const r11 = CACHE.get(it11), r2 = Object.assign(Object.create(Object.getPrototypeOf(r11)), r11), orig = sum5Load; let calls = 0;
+    sum5Load = function () { calls++; return orig.apply(this, arguments); };
+    const score = () => { const b = document.querySelector('#main:not(.dbr-snap) #view .sc5 .sc5-n[data-k="night"] .sc5-v') || document.querySelector('#main:not(.dbr-snap) #view .sc5 .sc5-v'); return b ? b.textContent.trim() : ''; };
+    const out = {}, run = async (nm, setup, undo) => { await W(9000); calls = 0; setup(); await W(14000); out[nm] = { calls, score: score() }; undo(); };
+    try {
+      S.tab = 'audit'; S.scope = 'pull'; await select(it11); await W(2000);
+      await run('one pull, the pull on screen let go from CACHE', () => CACHE.delete(it11), () => CACHE.set(it11, r11));
+      await run('one pull, a fresh reading of it put into CACHE', () => CACHE.set(it11, r2), () => CACHE.set(it11, r11));
+      S.scope = 'all'; renderMain(); await W(2000);
+      const pulls = S.index.bosses.filter((b) => b.id === it11.id && b.diffId === it11.diffId && pickOk325(it11, b)), oldReps = pulls.map((b) => CACHE.get(b)).filter(Boolean);
+      S.plData = { key: it11.id + ':' + it11.diffId + ':' + pulls.length + ':' + deathCutN() + ':night:' + pickKey325(it11) + ':' + bossLoaded(it11.boss), reps: oldReps, data: await plData(oldReps, () => true) }; /* (the Report card graded the night, with these readings) */
+      await run('All pulls, the pull let go from CACHE', () => CACHE.delete(it11), () => CACHE.set(it11, r11));
+      await run('All pulls, a fresh reading of it put into CACHE', () => CACHE.set(it11, r2), () => CACHE.set(it11, r11));
+    } finally { sum5Load = orig; S.scope = 'pull'; }
+    window.__go = JSON.stringify(out); } catch (e) { window.__go = JSON.stringify({ err: String(e && e.stack || e).slice(0, 300) }); } })()`;
+  const s3 = await inPage(SETTLE); let Q = null;
+  if (s3 !== 'ok') problems.push('could not run the settles part inside the page (' + s3 + ')');
+  else { Q = await result(200);
+    if (!Q || Q.err) problems.push('the settles part: ' + (Q ? Q.err : 'did not finish'));
+    else for (const [nm, o] of Object.entries(Q)) { if (o.calls > 2) problems.push(nm + ': Summary graded ' + o.calls + ' times in 14 s; it should stop after at most 2');
+      if (!/^\d+$/.test(o.score)) problems.push(nm + ': Summary shows "' + (o.score || 'nothing') + '" instead of numbers'); } }
   if (errs.length) problems.push('page errors: ' + errs.slice(0, 3).join(' | '));
   if (problems.length) { problems.forEach((p) => console.log('  ' + WHERE + ': ' + p)); await bye(problems.length + ' problem(s)', 1); }
-  await bye('pull 11 graded in 3 load orders in ' + Math.round((Date.now() - T0) / 1000) + ' s: ' + fmt(ref) + ' every time, and the same right after the Rotation tab showed All pulls; Summary worked it out again in place as the night arrived (' + P.before + ' -> ' + P.after + ', ' + P.full.toFixed(3) + '), no full redraw, and coming back to the pull showed the last scores at once', 0);
+  await bye('pull 11 graded in 3 load orders in ' + Math.round((Date.now() - T0) / 1000) + ' s: ' + fmt(ref) + ' every time, and the same right after the Rotation tab showed All pulls; Summary worked it out again in place as the night arrived (' + P.before + ' -> ' + P.after + ', ' + P.full.toFixed(3) + '), no full redraw, and coming back to the pull showed the last scores at once; Summary settles (' + Object.values(Q).map((o) => o.calls).join(', ') + ' grades) with the pull let go or read again, on one pull and on All pulls', 0);
 } catch (e) { await bye('FAILED: the check crashed: ' + (e.stack || e.message).split('\n')[0], 1); }
