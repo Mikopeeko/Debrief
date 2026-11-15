@@ -19972,60 +19972,28 @@ html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-
 html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv { display: block !important; font: 600 14px/1.35 var(--body) !important; color: var(--text) !important; white-space: normal !important; text-align: left !important; }
 html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv b { font: 600 14px/1.35 var(--body) !important; }
 html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv small { font: 500 12.5px/1.35 var(--body) !important; }
-/* 6. Graphs, the rebuild: one number at a time. A row of choices, the key pull by pull as blocks, which pulls, then the site's meter rows */
+/* 6. Graphs, as the raid review's Graphs tab (Flex, Nov 14: "almost exactly like the other graphs tab in appearance and functionality"): its markup is
+   the raid tab's own, so the raid tab's styles dress it; these are only what a key adds. The chapter is no panel of its own: the rail and the two
+   panels sit on the page, as they do on a raid pull */
 html:not(.mpcard)[data-mpv="gra"]:not([data-mpg="def"]) body #view#view#view #mptBody#mptBody > #mptCH:not(#mptC1):not(#mptCS) { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gk, html:not(.mpcard) body #view#view#view #mptCG .mpx-gw { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px !important; margin: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gk > button { margin: 0 !important; padding: 6px 13px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; box-shadow: none !important; font: 700 15px/20px 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; letter-spacing: .2px !important; color: var(--muted) !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gk > button:hover { color: var(--text) !important; border-color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gk > button.on { color: var(--text) !important; border-color: var(--mpt-you, #7d9be8) !important; background: rgba(125,155,232,.16) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gc { margin: 16px 0 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gch { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 8px !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gct { font: 800 18px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gcs { font: 500 12.5px/1.45 var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gcs > .mpx-gcw { font: 700 12.5px/1.45 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gsv { display: block !important; width: 100% !important; height: 150px !important; border-bottom: 1px solid var(--line2) !important; overflow: visible !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gb { cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gbh { fill: rgba(255,255,255,0) !important; } html:not(.mpcard) body #view#view#view #mptCG .mpx-gb:hover > .mpx-gbh { fill: rgba(255,255,255,.07) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gbv { fill: var(--mpt-you, #7d9be8) !important; opacity: .62 !important; } html:not(.mpcard) body #view#view#view #mptCG .mpx-gbb > .mpx-gbv { fill: #d8b46a !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gb:hover > .mpx-gbv { opacity: .85 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gbm { opacity: 1 !important; pointer-events: none !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gb.off > .mpx-gbv { opacity: .2 !important; } html:not(.mpcard) body #view#view#view #mptCG .mpx-gb.off > .mpx-gbm { opacity: .3 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gbd { fill: #ff8f87 !important; pointer-events: none !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gcl { position: relative !important; height: 20px !important; margin: 3px 0 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gcb { position: absolute !important; top: 0 !important; transform: translateX(-50%) !important; font: 600 12px var(--body) !important; color: #d8b46a !important; white-space: nowrap !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gw { margin: 12px 0 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gw > button { min-width: 28px !important; margin: 0 !important; padding: 3px 9px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: none !important; box-shadow: none !important; font: 600 13px/18px var(--body) !important; color: var(--muted) !important; text-align: center !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gw > button.mpx-gwb { color: #d8b46a !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gw > button:hover { border-color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gw > button.on { color: var(--text) !important; border-color: var(--mpt-you, #7d9be8) !important; background: rgba(125,155,232,.16) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gwl { margin: 0 4px 0 8px !important; font: 500 12.5px var(--body) !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gsel { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 18px 0 8px !important; padding: 14px 0 0 !important; border-top: 1px solid var(--line) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gselb { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gsels { font: 500 13px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt { max-width: none !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt > .gbx-r { min-height: 28px !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt > .gbx-hd > span:nth-child(n+3) { text-align: right !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gr { cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gr.on { background: rgba(125,155,232,.10) !important; box-shadow: inset 2px 0 0 var(--mpt-you, #7d9be8) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt .gbx-n > img { flex: none !important; width: 18px !important; height: 18px !important; border-radius: 3px !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-grn { font: 600 13.5px var(--body) !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-grs { font: 500 12.5px var(--body) !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt .gbx-b { height: 15px !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gt .gbx-v, html:not(.mpcard) body #view#view#view #mptCG .mpx-gt .gbx-s { font-size: 13px !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gtt { margin-top: 4px !important; border-top: 1px solid var(--line2) !important; border-radius: 0 !important; background: none !important; }
-html:not(.mpcard) body #view#view#view #mptCG .mpx-gtt .mpx-grn { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCG { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; }
+html:not(.mpcard) body #view#view#view #mptCG > p.mpt-chk { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg > .gb-tl { display: block !important; } /* (one column of panels, as on a raid pull) */
+html:not(.mpcard) body #view#view#view #mptCG .r267-key { display: none !important; } /* (the raid tab's line about parse colours is added to any such panel; a key's table has no parse) */
+html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap { position: relative !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-who { font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-mk { cursor: default !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-kb { background: rgba(255,255,255,.4) !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-pull { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-pull:hover { background: rgba(255,255,255,.035) !important; }
 html:not(.mpcard) body #view#view#view #mptCG .mpx-gdl { margin: 6px 0 0 !important; border-top: 1px solid var(--line) !important; }
 html:not(.mpcard) body #view#view#view .mpx-cv > .gbx { max-width: none !important; --gbx-cols: 130px minmax(0, 1fr) 60px; }
 html:not(.mpcard) body #view#view#view .mpx-gmh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 8px !important; margin: 0 0 6px !important; }
 html:not(.mpcard) body #view#view#view .mpx-gmt { font: 800 18px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
 html:not(.mpcard) body #view#view#view .mpx-gms { font: 500 12.5px var(--body) !important; color: var(--muted) !important; }
 html:not(.mpcard) body #view#view#view .mpx-gmz { margin: 0 !important; padding: 4px 0 !important; font: 500 13px var(--body) !important; color: var(--faint) !important; }
-@media (max-width: 720px) {
-  html:not(.mpcard) body #view#view#view #mptCG .mpx-gsv { height: 110px !important; }
-  html:not(.mpcard) body #view#view#view #mptCG .mpx-gt { --gbx-cols: 112px minmax(0, 1fr) 54px 54px 40px !important; }
-  html:not(.mpcard) body #view#view#view #mptCG .mpx-grs { display: none !important; }
-  html:not(.mpcard) body #view#view#view #mptCG .mpx-gcb { font-size: 12px !important; max-width: 70px !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-}
+/* (a phone: the rail lies across the top and the panels take the width; the raid tab's own rule for this hangs on its place in the page) */
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view #mptCG .mpg { grid-template-columns: minmax(0, 1fr) !important; } html:not(.mpcard) body #view#view#view #mptCG .mpg > .ds-grail, html:not(.mpcard) body #view#view#view #mptCG .mpg > .gb-tl { grid-column: 1 / -1 !important; min-width: 0 !important; max-width: 100% !important; } }
 /* 7. Compare: where the time went, then each player against the top players of their spec */
 html:not(.mpcard) body #view#view#view #mptCC > .mpx-ct > p.mpt-chk { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv { margin: 22px 0 0 !important; padding: 16px 0 0 !important; border-top: 1px solid var(--line) !important; }

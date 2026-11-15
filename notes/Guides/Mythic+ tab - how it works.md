@@ -271,3 +271,17 @@ An old link to the Mistakes tab opens Summary.
 Summary is one column: the five numbers, "Fix first", the key pull by pull, the mistakes at full width, then the picked player's part.
 
 A death the log has no hit for reads "died to a hit the log doesn't name" (it read "died to unknown", and its Next time line "Watch for unknown").
+
+## Graphs, as Raid review's Graphs (Nov 14, 2026, night)
+
+This replaces "Graphs, rebuilt" above (the chart of pull blocks). Flex: "I think i want the graphs tab to be almost exactly like the other graphs tab in appearance and functionality".
+
+It is Raid review's Graphs tab, fed a key:
+- The rail on the left: Damage done, Damage taken, Healing, Deaths, Interrupts, Dispels, Defensives.
+- The chart: damage, damage taken or healing per second across the key, a layer a player (one player alone when one is picked). Bosses are faint bands with their names; Bloodlust and deaths are marked. Pulls: Whole key, Bosses, Trash; one pull zooms the chart to it.
+- The table: By player (total, per second, share, and "vs spec" against top players of the spec for the whole key's damage), By ability, By pull. A player's row opens to their damage by spell and shows their layer alone on the chart; an ability opens to who did it; a pull's row picks that pull.
+- Interrupts and Dispels open to what was kicked or taken off. Deaths lists each death with the hits before it. Defensives shows Big hits.
+
+What a key does not have, and is left out instead of faked: buffs, debuffs, resources, casts, item level, active time, and a hover on the chart. Healing is not kept per second, so its chart is flat across each pull; a spell's casts and crits are not kept, so those columns show a dash.
+
+Where the numbers come from: damage and healing are the reader's own numbers for each pull, the ones the players table is built from. Damage taken, the chart's damage and a spell's damage are the page's own pass over the log.
