@@ -393,7 +393,7 @@ function pg3d(host, A) {
     vglow(keep(new T.MeshLambertMaterial({ map: stx(STN.wall, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH), normalMap: stx(STN.wallN, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH, true) })))]);
   plat.position.y = -DEPTH; plat.receiveShadow = true; scene.add(plat);
   { const rim = shp(OCT); rim.holes.push(shp(OCT.map((p) => [p[0] * 0.985, p[1] * 0.982]).reverse())); const rg = keep(new T.ShapeGeometry(rim)); rg.rotateX(-Math.PI / 2);
-    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xb4c2b6, transparent: true, opacity: 0.38, depthWrite: false }))); /* (a worn pale stone over the carved texture, not a white band) */ m.position.y = 0.02; m.renderOrder = 5; scene.add(m); }
+    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xb4c2b6, transparent: true, opacity: 0.38, depthWrite: false }))); /* (a worn pale stone over the carved texture, not a white band) */ m.position.y = 0.02; m.renderOrder = 5; m.name = 'pg-rim'; scene.add(m); } /* (named: phase 3 hides it with the platform, src/practice-p3.js) */
 
   // ---- reused pieces: floor shapes from a few flat geometries, everything else from pools (nothing new per frame once warm) ----
   const flatG = (g) => { g.rotateX(-Math.PI / 2); return g; };
@@ -657,7 +657,8 @@ function pg3d(host, A) {
   // ---- one shape on the screen ----
   const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), V4 = new T.Vector3(), faceIn = (x, y) => Math.atan2(-x, y); /* (turned to face the middle of the stone) */
   // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
-  const P2K = A.P2 && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
+  const P2K = A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
+    : A.P2 && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
   const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'ring') { flat(ringG(s.r, s.w, s.dash), s.x, s.y, 1, 1, s.dash ? t * 0.3 : 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
