@@ -440,3 +440,17 @@ The panel beside the replay (Nov 14; Flex: "instead of having two dps meters, wh
 ## The Rotation tab is judged as a key (Nov 14)
 
 Flex: "Yes, build it". A key pull has its own rules for the Rotation rows, a healer gets a damage-or-heal check, big cooldowns are judged over the whole key (a hold for Lust is never marked), and the score is 70% the pulls and 30% the key's own check. The rules, the numbers they were set from and what is still open: `notes/Guides/Mythic+ Rotation - how a key is judged.md`. The check: `tests/mplus-rotation-keys.js`.
+
+## Summary: option A2, the story (Nov 14, 2026)
+
+Flex, on the clean-up pass: "I feel like nothing changed?", then "Do you think this is the best version of the summary tab?", "can you do a mock first", "you dont think A is hard to read?" and, on the redrawn mock "The story, easier to read": "Yes, build A2". This replaces the clean-up pass's layout (the section above) on the website; the Companion's card is as it was.
+
+Top to bottom:
+- **The headline.** "Timed +1 with 1:35 to spare." Then one sentence of what put the key at risk, biggest first: a wipe or a near-wipe (one cast that left three or more under 15%), the deaths, casts that went off with a kick ready. "...nearly cost it" when the key was close (a wipe or near-wipe, deaths that cost half the time to spare, or under 30 s to spare); over time, "...cost it: without the deaths it was in time" when the deaths alone would have timed it. A clean key says so. Then, in grey, against a typical fast run and the biggest part of the gap; then, faint, the next level, group DPS and Lust (they were tiles). Beside it the three numbers that decide a key: Deaths, Close calls, Missed kicks, each opening its list.
+- **The key, pull by pull.** The strip with the moments that decided the key numbered on it (a hover says the moment, a click opens the pull on Route) and a gold bracket over the pulls Fix first is about. Under it the moments, one fact a row: the number, the key's timer, the pull, what happened and what was ready, and what a death cost. Four at most (`MPX_MOM_N`), chosen by weight (a wipe, a death, a near-wipe, a missed kick, a close call, a cast that needed a stop, a debuff left on, a cooldown not pressed, an avoidable hit) and told in the order they happened. Then one line: "Also:" and the rest counted by kind (each a link), what was clean, and "Every mistake, kind by kind".
+- **Every mistake, kind by kind.** The old Mistakes box, folded and out of sight until a link opens it (the "Also" links, the three numbers, "Every mistake, kind by kind"). Nothing in it changed.
+- **Fix first and Your part, side by side.** Fix first is a card: what it cost on the right, the title, its Next time line, "Show on the map" and "Where your 5:35 went". Your part is a card: the player, their Next time line, their mistakes as one line, and their report card.
+
+`MPX_STRIP_ON = false` in src/mptab.js takes the numbers off the strip. A key with no timer (left early) keeps its page: no headline, the Mistakes box open, Your part as a card.
+
+Checks: tests/mplus-summary-strip.js runs the story code on made-up keys (the sentence, which moments are told, a wipe told once, the numbers on the strip, Fix first's card); tests/look-review.js has a block for A2.

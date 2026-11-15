@@ -1,85 +1,85 @@
-// Mythic+ Summary, the clean-up pass (Nov 14, Flex: "work on the summary tab. Clean it up make it better"; judged on his +19 Kings' Rest of Sep 25,
-// report dtMfgnRvDwBLPCKZ fight 2). Before it, "Fix first" was one thin line of text, and "The key, pull by pull" showed two deaths and nothing of the
-// key's five close calls or its three pulls with no big cooldown. This runs Summary's own code (mpxFix, mpxAlso, mpxMarks, mpxGlance) on made-up keys and
-// fails if: the rows of mistakes are gone, are named another way than the Mistakes box, or sit on each other on a crowded key; a mark no longer opens its
-// kind's list; the bracket and column for Fix first's pulls are gone; the rows show on the Companion's card or on a key with no timer; or Fix first loses
-// its box, its Next time line or the mistakes inside its pulls. contradictions.js runs it on every build.
+// Mythic+ Summary, option A2 (Nov 14, Flex: "Yes, build A2", on the mock "The story, easier to read"; judged on his +19 Kings' Rest of Sep 25, report
+// dtMfgnRvDwBLPCKZ fight 2). The tab tells the key as a story: a headline sentence, the moments that decided it numbered on the strip and told one fact a
+// row, the rest one line, Fix first as a card. This runs Summary's own code (mpxStory, mpxMoments, mpxMomList, mpxMarks, mpxGlance, mpxFix) on made-up keys
+// and fails if: the sentence says the wrong thing for a key, the moments are not the ones that decided it (deaths and near-wipes before cooldowns), a wipe
+// is told five times, the numbers sit on each other or off the strip, a moment's number is not where it happened, the rest of the mistakes are not counted,
+// Fix first loses its card, or any of it shows on the Companion's card or on a key with no timer. contradictions.js runs it on every build.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function summaryStrip(say) {
-  const bad = (m) => say('Mythic+ Summary', 'the strip and Fix first', m);
+  const bad = (m) => say('Mythic+ Summary', 'the story and its moments', m);
   let s; try { s = fs.readFileSync(path.join(__dirname, '..', 'src', 'mptab.js'), 'utf8'); } catch (e) { bad('could not read src/mptab.js'); return; }
-  const a = s.indexOf('// (Summary, the clean-up pass'), z = s.indexOf('// (a player\'s part, two ways.');
-  if (a < 0 || z < a) { bad('Summary\'s Fix first box and the strip\'s rows of mistakes are gone from src/mptab.js (mpxFix, mpxMarks, mpxGlance)'); return; }
+  const a = s.indexOf('// (Summary, option A2'), z = s.indexOf('// (a player\'s part, two ways.');
+  if (a < 0 || z < a) { bad('Summary\'s story code is gone from src/mptab.js (mpxStory, mpxMoments, mpxMomList, mpxMarks, mpxGlance, mpxFix)'); return; }
   const line = (n) => { const m = s.match(new RegExp('\\nconst ' + n + ' = [^\\n]*')); if (!m) throw new Error('src/mptab.js has no ' + n); return m[0]; };
   const run = (card) => vm.runInNewContext(
     'const MPC_ON = ' + (card ? 'true' : 'false') + ', document = { addEventListener: () => {} };' +
     'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +
-    'const mpT1 = (h) => " data-tt=\\"" + esc(h) + "\\"", mpShim = () => "<span class=\\"mpt-shim\\"></span>";' +
-    'const mpPullName = (R, k) => "pull " + (k + 1), mpPNs = (R, ns) => "pulls " + ns.join(", "), mpClock = (R) => R._C || null, mpxData = (R) => R._D;' +
-    line('mpMM') + line('mpAnd') + line('mpCap') + line('mpDTo') + line('MPX_KIND') + '\n' + s.slice(a, z) + '\n({ mpxFix, mpxAlso, mpxMarks, mpxGlance, MPX_KIND })');
+    'const mpT1 = (h) => " data-tt=\\"" + esc(h) + "\\"", mpShim = () => "<span class=\\"mpt-shim\\"></span>", mpGF = (v) => String(v), mpWho = (R, n) => "<b class=\\"mpt-nm\\">" + n + "</b>";' +
+    'const mpPullName = (R, k) => (R.pulls[k] && R.pulls[k].boss ? R.pulls[k].boss : "pull " + (k + 1)), mpPNs = (R, ns) => "pulls " + ns.join(", "), mpClock = (R) => R._C || null, mpxData = (R) => R._D;' +
+    'const mpxPull = (R, i) => "<button type=\\"button\\" class=\\"mpx-p\\" data-mpxpull=\\"" + i + "\\">P" + (i + 1) + "</button>";' +
+    line('mpMM') + line('mpAnd') + line('mpCap') + line('mpxTo') + line('mpDTo') + line('MPX_KIND') + '\n' + s.slice(a, z) + '\n({ mpxStory, mpxMoments, mpxMomList, mpxMarks, mpxGlance, mpxFix, MPX_KIND })');
   let X; try { X = run(false); } catch (e) { bad('Summary\'s own code no longer runs by itself: ' + String(e.message).slice(0, 140)); return; }
-  // a made-up key: 12 pulls of 20 s back to back from 10 s, a 600 s timer; tv is the plain clock
-  const P = Array.from({ length: 12 }, (_, i) => ({ s: 10 + i * 20, e: 30 + i * 20, n: i + 1 }));
-  const C = { ck: { par: 600, time: 250 }, pen: 15, T0: 0, tv: (t) => t };
+  // a made-up key: 15 pulls of 20 s from 10 s, a 600 s timer, 15 s a death; tv is the plain clock
+  const P = Array.from({ length: 15 }, (_, i) => ({ s: 10 + i * 20, e: 30 + i * 20, n: i + 1 }));
+  const C = { ck: { par: 600, time: 300 }, pen: 15, T0: 0, tv: (t) => t }, W0 = 600 * 1.03;
   const D0 = () => ({ kick: [], cc: [], minor: [], death: [], close: [], disp: [], avoid: [], cd: [] });
-  const lefts = (h, cls) => { const r = (h.split('<div class="mpt-ln mpx-ml ' + cls + '">')[1] || '').split('</div></div>')[0]; return [...r.matchAll(/class="mpx-md[^"]*" style="left:([\d.]+)%"[^>]*>(\d*)</g)].map((m) => [+m[1], m[2]]); };
-  // 1. a crowded key: three missed kicks in each of six pulls in a row; then pulls so short their marks would touch
-  { const D = D0(); for (let i = 0; i < 6; i++) for (let k = 0; k < 3; k++) D.kick.push({ t: 12 + i * 20 + k, at: '0:' + (12 + i * 20), i, spell: 'Bolt', mob: 'Mage', id: 1, ready: ['Ann'] });
-    const short = P.map((p, i) => ({ s: 10 + i * 4, e: 14 + i * 4, n: i + 1 })), D2 = D0(); for (let i = 0; i < 6; i++) D2.kick.push({ t: 11 + i * 4, at: '0:11', i, spell: 'Bolt', mob: 'Mage', id: 1, ready: [] });
-    const h = X.mpxMarks({ pulls: P, _C: C, _D: D }, null, null), L = lefts(h, 'mpx-g-' + X.MPX_KIND.kick[1]);
-    if (L.length !== 6) bad('the Missed kicks row over the strip has ' + L.length + ' marks for six pulls with missed kicks (one mark a pull, with its count)');
-    else if (L.some((m) => m[1] !== '3')) bad('the marks of one kind in one pull no longer merge into one mark with their count (three missed kicks in a pull must read 3)');
-    if (!/class="mpx-md[^"]*" style="left:[\d.]+%" data-mpxv="mis" data-mpxk="kick"/.test(h)) bad('a mark over the strip no longer opens its kind\'s list in the Mistakes box');
-    if (h.indexOf('Bolt ×3, kick ready: Ann') < 0 || h.indexOf('Bolt, kick ready: Ann') >= 0) bad('a mark\'s hover repeats the same line for each cast of one spell (three Bolts with Ann\'s kick ready must read "Bolt ×3, kick ready: Ann" once; the patch review, Nov 14)');
-    const h2 = X.mpxMarks({ pulls: short, _C: C, _D: D2 }, null, null), L2 = lefts(h2, 'mpx-g-' + X.MPX_KIND.kick[1]);
-    { const C2 = { ck: { par: 200, time: 260 }, pen: 15, T0: 0, tv: (x) => x }, D3 = D0(); for (let k = 0; k < 5; k++) D3.close.push({ t: 255 + k, at: '4:15', i: 7 + k, who: 'Ann', left: 9, spell: 'Slam' + k, ready: [] });
-      const L3 = lefts(X.mpxMarks({ pulls: P, _C: C2, _D: D3 }, null, null), 'mpx-g-' + X.MPX_KIND.close[1]); if (L3.length !== 5 || L3.some((m, j) => j && m[0] - L3[j - 1][0] < 2.59) || L3.some((m) => m[0] > 99.01)) bad('at the end of a key that went over time the marks over the strip sit on each other or run past its end (' + L3.map((m) => m[0]).join(', ') + '; the patch review, Nov 14)'); }
-    if (L2.length !== 6 || L2.some((m, j) => j && m[0] - L2[j - 1][0] < 2.59) || L2.some((m) => m[0] > 100)) bad('on a crowded key the marks over the strip sit on each other or run off its end (six short pulls in a row: ' + L2.map((m) => m[0]).join(', ') + ')'); }
-  // 2. every kind gets its row, in the Mistakes box's order and under its names, and a death sits at its own moment
-  { const D = D0(); D.death.push({ t: 130, at: '2:10', i: 6, who: 'Ann', d: { to: 'unknown' } }); D.close.push({ t: 50, at: '0:50', i: 2, who: 'Bob', left: 7, spell: 'Slam', ready: [] }); D.cd.push({ t: 70, at: '1:10', i: 3, names: ['Ann', 'Bob'], dur: 80 });
-    D.avoid.push({ t: 95, at: '1:35', i: 4, who: 'Bob', spell: 'Pool', n: 4, dmg: 9 }); D.disp.push({ t: 150, at: '2:30', i: 7, n: 'Rot', who: 'Ann', dur: 14, rdy: [] }); D.cc.push({ t: 170, at: '2:50', i: 8, spell: 'Roar', mob: 'Brute', ready: [] });
-    const h = X.mpxMarks({ pulls: P, _C: C, _D: D }, null, [{ t: 'Trash before the boss', ps: [1, 2, 5] }, 1]);
-    const order = ['mpx-mlf', 'mpx-g-d', 'mpx-g-d', 'mpx-g-k', 'mpx-g-p', 'mpx-g-c', 'mpx-g-a'], got = [...h.matchAll(/<div class="mpt-ln mpx-ml ([\w-]+)">/g)].map((m) => m[1]);
-    if (got.join(' ') !== order.join(' ')) bad('the rows over the strip are not Fix first, then a row a kind in the Mistakes box\'s order (got: ' + got.join(' ') + ')');
-    for (const k of ['death', 'close', 'cc', 'disp', 'cd', 'avoid']) if (h.indexOf('>' + X.MPX_KIND[k][0] + '</button>') < 0) bad('a row over the strip is not named as the Mistakes box names it (' + X.MPX_KIND[k][0] + ')');
-    if ((h.match(/class="mpx-md mpx-mdh"/g) || []).length !== 3) bad('a close call, a cast that needed a stop and a cooldown not pressed are no longer drawn hollow (two kinds share red, two share purple, and a solid blue mark reads as a small pull)');
-    { const hb = X.mpxMarks({ pulls: P, _C: C, _D: D }, null, [{ t: 'Pulls 6', ps: [5] }, 1]); if ((hb.match(/Pulls 6/g) || []).length !== 1) bad('the Fix first bracket\'s hover says the title twice (a boss fix read "The Golden Serpent / The Golden Serpent"; the patch review, Nov 14)'); }
-    if ((h.match(/class="mpx-mfs"/g) || []).length !== 2) bad('the Fix first bracket no longer draws one piece a run of pulls (pulls 2, 3 and 6 are two pieces)');
-    if ((h.match(/class="mpx-mfc"/g) || []).length !== 2 || h.indexOf('class="mpx-mfc"') > h.indexOf('<div class="mpt-ln mpx-ml ')) bad('the faint column for the pulls Fix first is about is gone, or is drawn after the rows (it must sit behind them)');
-    const dl = lefts(h, 'mpx-g-d')[0]; if (!dl || Math.abs(dl[0] - 100 * (130 + 7.5) / (600 * 1.03)) > 0.02) bad('a death\'s mark is no longer over the middle of its red block on the lane (its moment plus half its 15 s penalty, on the strip\'s scale: the timer\'s length times 1.03)');
-    if (h.indexOf('died to unknown') >= 0) bad('a death\'s mark says "died to unknown"');
-    if (!/>4<\/button>/.test(h)) bad('an avoidable hit that landed four times no longer shows 4 on its mark'); }
-  // 3. nothing to show: no rows, and the strip is left as it was
-  { const R0 = { pulls: P, _C: C, _D: D0() }, tl = '<div class="mpt-tl"><div class="mpt-ln"><span>You</span></div></div>';
-    if (X.mpxMarks(R0, null, null) !== '') bad('a key with no mistakes and no located fix gets rows over its strip');
-    const g0 = X.mpxGlance(tl, R0, null, null); if (g0.indexOf(tl) < 0 || /mpx-glm/.test(g0) || g0.indexOf('Click a pull to open it on Route') < 0) bad('a key with no mistakes no longer shows its strip as it was');
-    const D = D0(); D.death.push({ t: 130, at: '2:10', i: 6, who: 'Ann', d: { to: 'Slam' } }); const R1 = { pulls: P, _C: C, _D: D }, g1 = X.mpxGlance(tl, R1, null, null);
-    if (!/class="mpx-gl mpx-glm"/.test(g1) || g1.indexOf('<div class="mpt-tl"><div class="mpt-ln mpx-ml ') < 0 || g1.indexOf('</div></div><div class="mpt-ln"><span>You</span>') < 0) bad('the rows of mistakes no longer go in front of the strip\'s first lane');
-    if (g1.indexOf('Click a mark for its list') < 0) bad('the strip no longer says a mark can be clicked');
-    { const g2 = X.mpxGlance(tl, R0, null, [{ t: 'Trash', ps: [2, 3] }, 1]); if (!/mpx-glm/.test(g2) || g2.indexOf('Click a mark') >= 0) bad('the strip says "Click a mark for its list" when it has only the Fix first bracket and no mark (the patch review, Nov 14)'); }
-    if (X.mpxGlance('<div class="mpt-tl">no lanes here</div>', R1, null, null).indexOf('no lanes here') < 0) bad('a strip with no lanes loses its markup');
-    if (X.mpxMarks({ pulls: P, _C: null, _D: D }, null, null) !== '') bad('a key with no timer gets rows over a strip it does not have'); }
-  // 4. the Companion's card keeps its layout
-  { const Y = run(true), D = D0(); D.death.push({ t: 130, at: '2:10', i: 6, who: 'Ann', d: { to: 'Slam' } }); const R = { pulls: P, _C: C, _D: D };
-    if (Y.mpxMarks(R, null, null) !== '' || Y.mpxGlance('<div class="mpt-ln">', R, null, null) !== '' || Y.mpxAlso(R, null, { ps: [6], c: 'trash' }) !== '') bad('the Companion\'s card gets the website\'s strip rows'); }
-  // 5. Fix first: a box with its Next time line and what it cost; a placeholder while the fast run loads; nothing when there is nothing to fix
-  { const f = X.mpxFix([{ t: 'Trash before the boss', s: 90, c: 'trash' }, 1], false, true, { nt: '<p class="mpt-nt"><b>Next time</b> Pull bigger.</p>', go: '<button>map</button>', gap: 335, also: '<p class="mpx-fxa">also</p>' });
-    if (!/^<div class="mpx-fix mpx-fx2 mpx-fx-trash">/.test(f) || f.indexOf('<span class="mpx-fk">Fix first</span><span class="mpx-fxt">Trash before the boss</span>') < 0 || f.indexOf('<div class="mpx-fxn"><p class="mpt-nt"><b>Next time</b> Pull bigger.</p></div><p class="mpx-fxa">also</p>') < 0 || f.indexOf('data-mpxv="cmp"') < 0) bad('Fix first is no longer a box with its title, its Next time line, the mistakes inside its pulls and the link to Compare');
-    if (f.indexOf('<b class="mpx-vr">1:30</b><span class="mpx-fxsl">of your 5:35 behind</span>') < 0 || f.indexOf('Where your 5:35 went ›') < 0) bad('Fix first no longer ties its number to the key\'s gap ("1:30 of your 5:35 behind", "Where your 5:35 went")');
-    if (X.mpxFix([{ t: 'Trash', s: 90, c: 'trash' }, 1], false, true, { gap: 60 }).indexOf('<span class="mpx-fxsl">behind the fast run</span>') < 0) bad('Fix first says "1:30 of your 1:00 behind" when one stretch lost more than the whole gap');
-    const g = X.mpxFix([{ t: 'One death', s: 15, c: 'death' }, 0], false, true, null); if (g.indexOf('<b class="mpx-vg">0:15</b><span class="mpx-fxsl">back on the timer</span>') < 0 || g.indexOf('Where the time went ›') < 0) bad('a fix that gives time back on the timer no longer says how much');
-    if (X.mpxFix([{ t: 'Kick Bolt', s: 0, n: 7, c: 'kick' }, 0], false, true, null).indexOf('<b class="mpx-vk">7</b><span class="mpx-fxsl">casts went off</span>') < 0) bad('a fix counted in casts no longer says "7 casts went off" (a bare number needs its name)');
-    if (X.mpxFix(null, true, true, null).indexOf('mpt-shim') < 0 || !/^<div class="mpx-fix mpx-fx2">/.test(X.mpxFix(null, true, true, null))) bad('Fix first has no placeholder box while the fast run loads (the page jumps when it arrives)');
-    if (X.mpxFix(null, false, true, null) !== '') bad('Fix first shows an empty box on a key with nothing to fix');
-    if (X.mpxFix([{ t: 'Trash', s: 90, c: 'trash', d: 'You took 6 pulls there.' }, 1], false, true, { nt: '' }).indexOf('<div class="mpx-fxn"><p class="mpx-fxd">You took 6 pulls there.</p></div>') < 0) bad('a fix with no Next time line leaves the Fix first box a title alone (it says its plain facts instead)'); }
-  // 6. Also in these pulls: the mistakes inside the fix's pulls, each opening its list; none of the fix's own kind
-  { const D = D0(); D.death.push({ t: 50, at: '0:50', i: 2, who: 'Ann', d: { to: 'Slam' } }, { t: 190, at: '3:10', i: 9, who: 'Bob', d: { to: 'Slam' } }); D.close.push({ t: 52, at: '0:52', i: 2, who: 'Bob', left: 7, spell: 'Slam', ready: [] }, { t: 33, at: '0:33', i: 1, who: 'Ann', left: 9, spell: 'Slam', ready: [] });
-    const R = { pulls: P, _C: C, _D: D }, al = X.mpxAlso(R, null, { t: 'Trash', ps: [1, 2], c: 'trash' });
-    if (al.indexOf('Also in these pulls') < 0 || al.indexOf('data-mpxk="death">1 death</button>') < 0 || al.indexOf('data-mpxk="close">2 close calls</button>') < 0) bad('Fix first no longer says which mistakes happened inside its pulls ("Also in these pulls: 1 death · 2 close calls")');
-    if (X.mpxAlso(R, null, { t: 'The boss', ps: [2], c: 'boss' }).indexOf('Also in this pull<') < 0) bad('Fix first says "Also in these pulls" under a fix that is one pull or one boss (the patch review, Nov 14)');
-    { const D2 = D0(); D2.cd.push({ t: 50, at: '0:50', i: 2, names: ['Ann'], dur: 60 }); if (X.mpxAlso({ pulls: P, _C: C, _D: D2 }, null, { ps: [2], c: 'trash' }).indexOf('1 pull with a big cooldown not pressed') < 0) bad('"Also in these pulls" says a pull had no big cooldown when one player held theirs (it must say "a big cooldown not pressed", as its list does; the patch review, Nov 14)'); }
-    if (X.mpxAlso(R, null, { t: 'Kick Slam', ps: [2], c: 'kick', sp: 'Slam', s: 15 }).indexOf('data-mpxk="death"') >= 0) bad('a kick fix lists its own deaths again under "Also in these pulls" (the deaths to the spell it is about; the patch review, Nov 14)');
-    if (X.mpxAlso(R, null, { t: 'Deaths', ps: [2], c: 'death' }).indexOf('data-mpxk="death"') >= 0) bad('a fix that is about deaths lists its own deaths again under "Also in these pulls"');
-    if (X.mpxAlso(R, null, { t: 'Standing between pulls', c: 'stand' }) !== '' || X.mpxAlso(R, null, { t: 'Trash', ps: [5, 6], c: 'trash' }) !== '') bad('"Also in these pulls" shows for a fix with no pulls or with nothing in them'); }
+  const dth = (t, i, who, to, gap, ready) => ({ t, at: '0:' + t, i, who, d: { to: to || 'unknown', gap: !!gap }, r: ready ? { ready, hits: [], used: [] } : null });
+  const cl = (t, i, who, spell, left, ready) => ({ t, at: '0:' + t, i, who, left, spell, id: 0, ready: ready || [] });
+  // 1. the headline's sentence
+  { const S = X.mpxStory;
+    const t1 = S({ lv: 1, risky: true, deaths: 2, near: 'in pull 1' }); if (t1 !== 'A near-wipe in pull 1 and two deaths nearly cost it.') bad('the headline\'s sentence for his Kings\' Rest reads "' + t1 + '" (it must read "A near-wipe in pull 1 and two deaths nearly cost it.")');
+    if (!/^A clean key/.test(S({ lv: 2, deaths: 0 }))) bad('a clean timed key is not told as a clean key');
+    const t3 = S({ lv: 1, risky: false, deaths: 1 }); if (t3 !== 'One death was the mistake, and there was still time to spare.') bad('one death in a key with time to spare reads "' + t3 + '"');
+    const t4 = S({ lv: 0, cost: true, deaths: 6 }); if (t4 !== 'Six deaths cost it: without the deaths it was in time.') bad('an over-time key the deaths cost reads "' + t4 + '"');
+    const t5 = S({ lv: 0, deaths: 6, wipe: 'in pull 3', wipeN: 5 }); if (t5 !== 'A wipe in pull 3 and one more death were the mistakes, and the rest of the time was in the pace.') bad('a wipe and one more death read "' + t5 + '"');
+    const t6 = S({ lv: 1, risky: false, kicks: 3 }); if (t6 !== 'Three casts that went off with a kick ready were the mistakes, and there was still time to spare.') bad('three missed kicks read "' + t6 + '"'); }
+  // 2. his Kings' Rest in small: two deaths (one after a pull), a cast that left four under 15%, one close call, three pulls with a cooldown not pressed
+  const DK = D0(); DK.death.push(dth(118, 5, 'Sornarjr', 'unknown', true, ['Survival Instincts']), dth(172, 7, 'Flex', 'Putrid Seekers', false, ['Divine Shield', 'Divine Protection']));
+  DK.close.push(cl(15, 0, 'Rage', 'Shadow Whirlwind', 3), cl(15, 0, 'Leaf', 'Shadow Whirlwind', 11), cl(15.4, 0, 'Sham', 'Shadow Whirlwind', 8), cl(15.6, 0, 'Flex', 'Shadow Whirlwind', 9, ['Divine Protection']), cl(152, 6, 'Flex', 'Purification Strike', 6, ['Divine Protection']));
+  DK.cd.push({ t: 90, at: '1:30', i: 4, names: ['Leaf', 'Sham', 'Flex', 'Sornarjr'], dur: 55 }, { t: 110, at: '1:50', i: 5, names: ['Leaf', 'Sham', 'Rage', 'Sornarjr'], dur: 68 }, { t: 270, at: '4:30', i: 13, names: ['Leaf', 'Sornarjr'], dur: 90 });
+  const RK = { pulls: P, people: [1, 2, 3, 4, 5], big: { close: [] }, cdWho: ['x'], _C: C, _D: DK };
+  const MK = X.mpxMoments(RK, {});
+  { const k = MK.top.map((m) => m.k + m.n).join(' ');
+    if (k !== 'close1 death2 close3 death4') bad('the four moments of his Kings\' Rest are not the near-wipe, the two deaths and the close call, in the order they happened (got: ' + k + '); a pull with a big cooldown not pressed must never push out a death');
+    if (MK.near !== 'in pull 1') bad('the near-wipe (one cast leaving four under 15%) is not found');
+    const w1 = MK.top[0] && MK.top[0].w; if (!w1 || w1.indexOf('Shadow Whirlwind</b> left four of you under 15%.') < 0) bad('the near-wipe\'s row reads "' + w1 + '"');
+    if (!MK.top[1] || MK.top[1].w.indexOf(' died after the pull.') < 0 || MK.top[1].w.indexOf('unknown') >= 0 || MK.top[1].g !== 'Survival Instincts was ready.') bad('a death after a pull with no named hit is not told plainly ("Sornarjr died after the pull. Survival Instincts was ready.")');
+    if (!MK.top[3] || MK.top[3].g !== 'Divine Shield and Divine Protection were ready.' || MK.top[3].e !== '+15 s') bad('a death no longer says what was ready and what it cost on the timer');
+    const r = MK.rest.find((x) => x.k === 'cd'); if (!r || r.n !== 3 || r.more || r.ps.join() !== '4,5,13') bad('the pulls with a big cooldown not pressed are not counted in the line under the moments');
+    if (MK.clean.indexOf('no avoidable hits') < 0 || MK.clean.indexOf('nothing went off with a kick ready') < 0) bad('what was clean is not said');
+    const L = X.mpxMomList(RK, MK);
+    if ((L.match(/class="mpx-mor mpx-g-/g) || []).length !== 4 || L.indexOf('data-mpxk="cd">3 pulls with a big cooldown not pressed</button> <span class="mpx-mog">(pulls 5, 6, 14)</span>') < 0 || L.indexOf('data-mpxv="mis" data-mpxk="">Every mistake, kind by kind ›</button>') < 0) bad('the moments\' list lost a row, the "Also" line or the link to every mistake');
+    if (L.indexOf('<span class="mpx-mon mpx-moh">1</span>') < 0 || L.indexOf('<span class="mpx-mon">2</span>') < 0) bad('a close call\'s number is no longer hollow, or a death\'s solid (two kinds share red)'); }
+  // 3. a wipe is one moment, and more deaths than the list holds are counted
+  { const D = D0(); D.death.push(dth(52, 2, 'A', 'Slam'), dth(55, 2, 'B'), dth(58, 2, 'C'), dth(61, 2, 'D'), dth(200, 9, 'E'));
+    const M = X.mpxMoments({ pulls: P, people: [1, 2, 3, 4, 5], _C: C, _D: D }, {});
+    if (M.top.length !== 2 || M.top[0].w !== 'Wipe: four died in 9 s.' || M.top[0].g !== 'First <b class="mpt-nm">A</b>, to Slam.' || M.wipe !== 'in pull 3' || M.wipeN !== 4) bad('a wipe is not one moment ("Wipe: four died in 9 s. First A, to Slam.")');
+    const D2 = D0(); for (let k = 0; k < 7; k++) D2.death.push(dth(20 + k * 40, k * 2, 'P' + k));
+    const M2 = X.mpxMoments({ pulls: P, people: [1, 2, 3, 4, 5], _C: C, _D: D2 }, {});
+    if (M2.top.length !== 4 || !M2.rest[0] || M2.rest[0].k !== 'death' || M2.rest[0].n !== 3 || !M2.rest[0].more || X.mpxMomList({ pulls: P }, M2).indexOf('>3 more deaths</button>') < 0) bad('more deaths than the list holds are not counted as "3 more deaths"'); }
+  // 4. the numbers on the strip: where it happened, apart, inside the strip, opening the pull; the bracket for Fix first
+  { const h = X.mpxMarks(RK, null, [{ t: 'Trash before the boss', s: 90, ps: [2, 3, 4], c: 'trash' }, 1], MK), xs = [...h.matchAll(/class="mpx-mo[^"]*" style="left:([\d.]+)%" data-mpxpull="(\d+)"/g)].map((m) => [+m[1], +m[2]]);
+    if (xs.length !== 4 || xs.map((x) => x[1]).join() !== '0,5,6,7') bad('the strip\'s numbers do not open their pulls (data-mpxpull)');
+    else if (Math.abs(xs[1][0] - 100 * (118 + 7.5) / W0) > 0.02) bad('a death\'s number is no longer over the middle of its red block on the lane (its moment plus half its penalty, on the strip\'s scale)');
+    if (h.indexOf('<em class="mpx-mfl">Fix first: 1:30 lost here</em>') < 0 || (h.match(/class="mpx-mfs"/g) || []).length !== 1) bad('the Fix first bracket over its pulls is gone');
+    const D = D0(); for (let k = 0; k < 4; k++) D.death.push(dth(612 + k, 14, 'Z' + k, 'Slam', true)); /* (after the last pull, so not one wipe: four numbers at the very end) */
+    const M = X.mpxMoments({ pulls: P, people: [], _C: { ck: { par: 600, time: 640 }, pen: 15, T0: 0, tv: (t) => t }, _D: D }, null);
+    const L3 = [...X.mpxMarks({ pulls: P, _C: { ck: { par: 600, time: 640 }, pen: 15, T0: 0, tv: (t) => t } }, null, null, M).matchAll(/style="left:([\d.]+)%"/g)].map((m) => +m[1]);
+    if (L3.length !== 4 || L3.some((x, j) => j && x - L3[j - 1] < 2.59) || L3.some((x) => x > 99.01)) bad('at the end of a key that went over time the numbers on the strip sit on each other or run off its end (' + L3.join(', ') + ')');
+    if (X.mpxMarks({ pulls: P, _C: null, _D: DK }, null, null, MK) !== '') bad('a key with no timer gets numbers over a strip it does not have'); }
+  // 5. the strip with its moments
+  { const tl = '<div class="mpt-tl"><div class="mpt-lanes"><div class="mpt-ln"><span>You</span></div></div></div>', g = X.mpxGlance(tl, RK, {}, null);
+    if (g.indexOf('<div class="mpt-lanes"><div class="mpt-ln mpx-ml">') < 0 || g.indexOf('</div></div><div class="mpt-ln"><span>You</span>') < 0) bad('the numbered moments no longer go in front of the strip\'s first lane');
+    if (g.indexOf('The numbers match the list below.') < 0 || g.indexOf('class="mpx-mor') < 0) bad('the strip lost its list of moments, or no longer says the numbers match it');
+    const g0 = X.mpxGlance(tl, { pulls: P, people: [], big: {}, cdWho: [], _C: C, _D: D0() }, {}, null);
+    if (g0.indexOf('No mistakes decided this key.') < 0 || /mpx-glm/.test(g0) || g0.indexOf('Every mistake') >= 0) bad('a key with no mistakes is not said plainly, or shows numbers or a link to an empty list'); }
+  // 6. Fix first, a card
+  { const f = X.mpxFix([{ t: 'Trash before the boss', s: 90, c: 'trash' }, 1], false, true, { nt: '<p class="mpt-nt"><b>Next time</b> Pull bigger.</p>', go: '<button>map</button>', gap: 335 });
+    if (!/^<div class="mpx-fix mpx-fx3 mpx-fx-trash"><p class="mpx-fxh"><span class="mpx-fk">Fix first<\/span><span class="mpx-fxs"><b class="mpx-vr">1:30<\/b><span class="mpx-fxsl">of your 5:35 behind<\/span><\/span><\/p><p class="mpx-fxt">Trash before the boss<\/p><div class="mpx-fxn"><p class="mpt-nt">/.test(f) || f.indexOf('Where your 5:35 went ›') < 0) bad('Fix first is no longer a card with its label, what it cost, its title, its Next time line and the link to Compare');
+    if (X.mpxFix([{ t: 'One death', s: 15, c: 'death' }, 0], false, true, null).indexOf('<b class="mpx-vg">0:15</b><span class="mpx-fxsl">back on the timer</span>') < 0) bad('a fix that gives time back no longer says how much');
+    if (X.mpxFix([{ t: 'Kick Bolt', s: 0, n: 7, c: 'kick' }, 0], false, true, null).indexOf('<b class="mpx-vk">7</b><span class="mpx-fxsl">casts went off</span>') < 0) bad('a fix counted in casts no longer says "7 casts went off"');
+    if (X.mpxFix(null, true, true, null).indexOf('mpt-shim') < 0 || X.mpxFix(null, false, true, null) !== '') bad('Fix first has no placeholder while the fast run loads, or shows an empty card'); }
+  // 7. the Companion's card keeps its layout
+  { const Y = run(true); if (Y.mpxMarks(RK, null, null, MK) !== '' || Y.mpxGlance('<div class="mpt-ln">', RK, null, null) !== '' || Y.mpxMomList(RK, MK) !== '') bad('the Companion\'s card gets the website\'s story pieces'); }
 };
