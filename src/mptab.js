@@ -1938,11 +1938,26 @@ function mpBigHtml(R) {
     people.map((p) => '<div class="bh-gr" style="--n:' + h.casts.length + '"><span class="bh-pn">' + mpWho(R, p.name) + '</span>' + h.casts.map((c) => cell(c.who.find((w) => w.name === p.name))).join('') + '</div>').join('') + '</div>';
   const where = (h) => esc(h.src) + ' · ' + esc(mpBhWhere(R, h.casts[0].pull));
   const lowCls = (h) => (h.low < 15 ? 'bh-bad' : h.low < 30 ? 'bh-warn' : '');
+  /* (a big hit's row: the spell, where, its casts, how much it takes, the lowest it left anyone, and the grid of players against its casts) */
+  const hitRow = (h, open, sub) => '<details class="bh-hit"' + (open ? ' open' : '') + '><summary>' + mpBhIc(h) + '<span class="bh-hn"><b class="bh-sp">' + esc(h.spell) + '</b><span>' + sub + '</span></span>' +
+      '<span class="bh-f"><b>' + h.casts.length + '</b> ' + (h.casts.length === 1 ? 'cast' : 'casts') + '</span><span class="bh-f">takes about <b>' + h.size + '%</b></span>' +
+      '<span class="bh-f">lowest <b class="' + lowCls(h) + '">' + (h.died ? plural(h.died, 'death') : h.low + '%') + '</b> ' + (h.died ? '' : mpWho(R, h.lowWho)) + '</span></summary>' + grid(h) + '</details>';
+  /* (on the website the big hits are grouped by part of the key, in the key's order (Nov 15, Flex: "the abilities need to be organized better, by bosses/trash
+     packs/pull numbers or something", then "the big hits section needs to be sorted better"): the trash before each boss with its pull numbers, then the boss,
+     its name in gold; under each part the spells cast there, in the order each first went off. A spell cast in two parts is in both, with that part's casts,
+     its own lowest and its own deaths. The Companion's card keeps one list, the worst first) */
+  const groups = () => { const G = new Map(), eff = (x) => (x.died ? 0 : x.left);
+    for (const h of H) for (const c of h.casts) { const w = mpBhWhere(R, c.pull) || 'The key'; let g = G.get(w); if (!g) G.set(w, (g = { w, k: c.pull, boss: !!(R.pulls[c.pull] || {}).boss, hits: new Map() })); g.k = Math.min(g.k, c.pull); if (!g.hits.has(h)) g.hits.set(h, []); g.hits.get(h).push(c); }
+    const pn = (a) => (a.length === 1 ? 'pull ' : 'pulls ') + mpAnd(a.map((k) => String(mpNo(R, k + 1))));
+    return [...G.values()].sort((a, b) => a.k - b.k).map((g) => {
+      const L = [...g.hits].map(([h, cs]) => { const ws = cs.flatMap((c) => c.who), lo = ws.reduce((m, x) => (!m || eff(x) < eff(m) ? x : m), null);
+        return Object.assign({}, h, { casts: cs, died: ws.filter((x) => x.died).length, low: lo ? eff(lo) : h.low, lowWho: lo ? lo.name : h.lowWho }); }).sort((a, b) => a.casts[0].t - b.casts[0].t);
+      const ps = [...new Set(L.flatMap((h) => h.casts.map((c) => c.pull)))].sort((a, b) => a - b);
+      return '<div class="bh-grp"><p class="bh-gh2"><b class="bh-gt' + (g.boss ? ' bh-gtb' : '') + '">' + esc(g.w) + '</b><span class="bh-gs">' + (g.boss ? '' : pn(ps) + ' · ') + plural(L.length, 'big hit') + '</span></p>' +
+        L.map((h) => hitRow(h, false, esc(h.src) + (!g.boss && ps.length > 1 ? ' · ' + pn([...new Set(h.casts.map((c) => c.pull))].sort((a, b) => a - b)) : ''))).join('') + '</div>'; }).join(''); };
   const hitsH = '<div class="bh-sec"><h3><b class="bh-n">' + H.length + '</b> Big hits <span>every cast, and the health each player had left after it</span></h3>' +
     '<p class="bh-key"><span><i class="bh-sw bh-def"></i>a defensive was up</span><span><i class="bh-sw bh-warn"></i>under 30%, nothing up</span><span><i class="bh-sw bh-bad"></i>under 15%</span><span>Click a hit to open or close it.</span></p>' +
-    H.map((h, k) => '<details class="bh-hit"' + (k === 0 ? ' open' : '') + '><summary>' + mpBhIc(h) + '<span class="bh-hn"><b class="bh-sp">' + esc(h.spell) + '</b><span>' + where(h) + '</span></span>' +
-      '<span class="bh-f"><b>' + h.casts.length + '</b> ' + (h.casts.length === 1 ? 'cast' : 'casts') + '</span><span class="bh-f">takes about <b>' + h.size + '%</b></span>' +
-      '<span class="bh-f">lowest <b class="' + lowCls(h) + '">' + (h.died ? plural(h.died, 'death') : h.low + '%') + '</b> ' + (h.died ? '' : mpWho(R, h.lowWho)) + '</span></summary>' + grid(h) + '</details>').join('') + '</div>';
+    (MPC_ON ? H.map((h, k) => hitRow(h, k === 0, where(h))).join('') : groups()) + '</div>';
   // (by player: the lowest they were left, how often a defensive was up (not a grade), and the defensives they pressed in the key)
   const pressed = (nm) => { const m = new Map(); for (const q of R.pulls) for (const d of q.defs || []) if (d.who === nm) m.set(d.name, (m.get(d.name) || 0) + 1); return [...m].sort((a, b) => b[1] - a[1]).map(([n, c]) => esc(n) + ' ×' + c).join(' · '); };
   const byP = '<div class="bh-sec"><h3>By player <span>at this level the hits come more often than anyone has defensives, so the count is not a grade</span></h3>' + people.map((p) => { const P = B.per[p.name], pr = pressed(p.name);

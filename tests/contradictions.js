@@ -558,6 +558,7 @@ const kguildRebuild = require('./kguild-no-rebuild.js')(H, say).catch((e) => say
    Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
 try { require('./parse-estimate.js')(H, say, true); } catch (e) { say('the estimated parse', 'crash', 'tests/parse-estimate.js crashed: ' + e.message); }
 try { require('./mplus-rotation-keys.js')(H, say); } catch (e) { say('Mythic+ Rotation', 'crash', 'the key Rotation check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 14, Flex: "Yes, build it": a key's Rotation judged as a key) */
+try { require('./mplus-big-hits-order.js')(H, say); } catch (e) { say('Mythic+ Big hits', 'crash', 'the Big hits order check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-big-hits.js')(H, say); } catch (e) { say('Mythic+ Big hits', 'crash', 'the Big hits check crashed: ' + e.message); } /* (Nov 14, Flex: "Yes, start it": the big hits and close calls of a key) */
 try { require('./look-review.js')(H, say); } catch (e) { say('look review', 'crash', 'the look review check crashed: ' + e.message); } /* (Nov 13, Flex: "no its fine just make the changes": the look review's fixes stay in) */
 try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores', 'crash', 'the Summary scores check crashed: ' + e.message); } /* (Nov 13: Summary's five scores are the Report card's) */

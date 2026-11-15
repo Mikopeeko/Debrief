@@ -491,3 +491,7 @@ Old links still work: `&mpv=run` (Summary), `&mpv=mis` (Mistakes) and `&mpv=hit`
 How it is built: Summary's code still draws (the Companion uses it, and its pieces are what the Report card shows). The heroH part of `mpHtml` keeps its sentences on `R._sx` (story, fast, fastA, next, lust, fix); `mprShort` and `mprFixH` read them. `mpxAllMove` (run by `mpxOpen` after each draw) moves `#mpxAllM`, or a timerless key's `.mpx-dg` and `#mptCH`, into `div#mptCA` right after `#mptCP`; a Report card repaint replaces only `#mptCP`, so the panel stays.
 
 Checks: tests/mplus-report-opens.js runs the tab list, the address and the strip on made-up keys (contradictions.js runs it on every build); tests/look-review.js has a block of lines for this change. Each fails on e0f8fb6d.
+
+### Big hits grouped by part of the key (Nov 15, 2026)
+
+Flex: "the big hits section needs to be sorted better" (after "the abilities need to be organized better, by bosses/trash packs/pull numbers or something"). On the website the big hits are grouped by part of the key, in its order: the trash before each boss (with its pull numbers), then the boss, its name in gold. Under each part are the spells cast there, in the order each first went off. A spell cast in two parts is in both, with that part's casts, its own lowest and its own deaths; in a part of several trash pulls a row says which pull. The close calls and By player are as before. The Companion app's card keeps one list, the worst first. Check: tests/mplus-big-hits-order.js (fails on 78fa4907).
