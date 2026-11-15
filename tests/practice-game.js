@@ -9,6 +9,8 @@
 //   C. One tank takes all 5 beam impacts; the tank who took the first Mother's Wrath soaks the second beam and takes the new tail; at 1:48 the second Wretch
 //      is held 17 to 22 yards in front of her new spot, 46 to 53 from the new tail, with the raid in its bubble through the Thrash. (The off tank took both
 //      beams and held the second Wretch 26 yards from her; her first tank stayed on her after the dive.)
+//   D. Your own job without a team plan (Flex, Nov 15): egg spot, coil team per set, numbered bubble spots, clicked on the game's map; see check D below.
+//   E. Hints of what's coming next for you, and an arrow to where your job wants you (Flex, Nov 15); see check E below.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -79,6 +81,40 @@ function checks(H, say, pj) {
     if (dHer < 17 || dHer > 22 || dTail < 46 || dTail > 53) bad('at 1:48 the second Wretch is ' + dHer.toFixed(0) + ' yards from her and ' + dTail.toFixed(0) + ' from the new tail; top kills hold it 17 to 22 from her, 46 to 53 from the tail' + tag + ' (check C)');
     if (!(thrashIn >= 17)) bad('only ' + thrashIn + ' raiders are in the second Wretch\'s bubble as the Thrash lands at 1:46; top kills have 17 to 20' + tag + ' (check C)');
   }
+  // D. Your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment" / "click on the spot they are assigned to"): the egg
+  //    spot picks your place, your coil team holds in each set with both teams kept even, your numbered bubble spots are where the game sends you, and
+  //    the run plays that job clean. (Before: only three fixed jobs, Ranged west carrier, Melee carrier by her, Healer with no egg.)
+  if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
+  const UL_FB = vm.runInContext('UL_FB', G0.ctx), sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and ');
+  const J = { role: 'h', egg: 'm2', soak: [2, 1], fb: [5, 13] }, base = sizes(script({ seed: 3, east: false }));
+  try {
+    dbg.myJob = JSON.parse(JSON.stringify(J)); if (dbg.jobSlot() !== 'm2') bad('picking the egg spot by her (edge) puts you in ' + dbg.jobSlot() + ', not that carrier\'s place (check D)');
+    const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
+    if (team(0) !== '2' || team(1) !== '1') bad('the picked coil teams (team 2 in set 1, team 1 in set 2) play as ' + (team(0) || 'none') + ' and ' + (team(1) || 'none') + ' (check D)');
+    if (sizes(S2) !== base) bad('picking a coil team leaves the teams at ' + sizes(S2) + ' instead of ' + base + ' (check D)');
+    r.log.filter((x) => /missed your coil soak|Soul Constrictor|Fester Burst/.test(x)).forEach((x) => bad('the picked job, played by the autopilot: ' + x + ' (check D)'));
+    if (!/Your spot in the bubble: 5\b/.test(dbg.asg('m2')) || !/Your spot in the bubble: 13\b/.test(dbg.asg('m2'))) bad('the start card doesn\'t name the picked bubble spots 5 and 13 (check D)');
+    for (const [east, more] of [[false, { tailEast: false, first: [false, false] }], [true, { tailEast: true, first: [true, false] }]]) {
+      dbg.at(37.5, 'm2', { east, seed: 3, ...more }); const S3 = dbg.S, b1 = S3.bubbles[0], v1 = b1.m ? b1.m(UL_FB[0][4]) : UL_FB[0][4], want1 = [b1.p[0] + v1[0] * 10, b1.p[1] + v1[1] * 10];
+      if (hyp(dbg.job('m2').T, want1) > 0.6) bad('at the 0:39 bubble the game sends you ' + hyp(dbg.job('m2').T, want1).toFixed(1) + ' yards from your picked spot 5 (tail ' + (more.tailEast ? 'east' : 'west') + ', check D)');
+      dbg.step(Math.round((106 - dbg.G.t) / 0.05)); const b3 = S3.bubbles[2], a = (S3.rotAt(b3.at) - 90) * Math.PI / 180, u = UL_FB[1][2], want3 = [b3.p[0] + (u[0] * Math.cos(a) - u[1] * Math.sin(a)) * 10, b3.p[1] + (u[0] * Math.sin(a) + u[1] * Math.cos(a)) * 10];
+      if (hyp(dbg.job('m2').T, want3) > 0.6) bad('at the 1:48 bubble the game sends you ' + hyp(dbg.job('m2').T, want3).toFixed(1) + ' yards from your picked spot 13 (she surfaces ' + (east ? 'east' : 'west') + ', check D)'); }
+    dbg.myJob = { role: 'r', egg: null, soak: [1, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
+    if (slot !== 'r7' || !S4.soaks.some((q) => q.set === 0 && q.k === 0 && q.group.includes(slot)) || !S4.soaks.some((q) => q.set === 1 && q.k === 1 && q.group.includes(slot))) bad('a ranged job with no egg on team 1 then team 2 plays as ' + slot + ' on other teams (check D)');
+  } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
+  finally { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; }
+  // E. Hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next things for you with their
+  //    time, and an arrow to where your job wants you (into the bubble when it's due), gone when hints are off. (Before: only the general timers.)
+  if (typeof dbg.hint !== 'function' || typeof dbg.upNext !== 'function') { bad('the game shows no hints of what\'s coming next for you (check E)'); return; }
+  try {
+    dbg.at(35.5, 'r3', { east: false, seed: 3 }); const up = dbg.upNext() || [], b1 = dbg.S.bubbles[0];
+    if (!up.some((u) => /Bubble/.test(u.text) && Math.abs(u.at - b1.at) < 0.1) || !up.some((u) => /Your coil/.test(u.text))) bad('at 0:35 the "coming up" line reads ' + JSON.stringify(up.map((u) => u.text)) + '; it should name the bubble at 0:39 and your coil (check E)');
+    if (up.length > 3) bad('the "coming up" line lists ' + up.length + ' things; three at most, or it clutters (check E)');
+    dbg.pos = [25, -20]; const h = dbg.hint();
+    if (!h || !(h.d > 2.5) || hyp(h.T, b1.p) > 10.5) bad('far from the bubble at 0:35, the hint arrow ' + (h ? 'points ' + hyp(h.T, b1.p).toFixed(0) + ' yards from the bubble' : 'isn\'t there') + ' (check E)');
+    dbg.hints = false; if (dbg.hint()) bad('with hints off, the arrow still shows (check E)');
+  } catch (e) { bad('the hints crashed the game: ' + e.message + ' (check E)'); }
+  finally { try { dbg.hints = true; } catch (e) { /* (no hints) */ } }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;
