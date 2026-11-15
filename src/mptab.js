@@ -950,8 +950,8 @@ function mpxDigest(R, F) { if (MPC_ON) return ''; const D = mpxData(R, F), C = m
     rows.map(([k, n, d]) => '<button type="button" class="mpx-dr mpx-g-' + MPX_KIND[k][1] + '" data-mpxv="mis" data-mpxk="' + k + '"><b class="mpx-dn">' + n + '</b><span class="mpx-dl">' + MPX_KIND[k][0] + '</span><span class="mpx-dd">' + d + '</span><i aria-hidden="true">›</i></button>').join('') +
     (rows.length ? '' : '<p class="mpx-none">No must-kick cast went off with a kick ready, nobody died, and nothing avoidable hit anyone.</p>') + (clean.length && rows.length ? '<p class="mpx-ok"><b>Clean</b>' + mpCap(clean.join(' · ')) + '.</p>' : '') + '</section>'; }
 // (one view at a time under the key's banner: the tab, the address (&mpv=) and what shows; the map's labels are fitted when it comes into view)
-function mpxView(v) { if (MPC_ON) return; if (MPX_OLD[v]) v = MPX_OLD[v]; /* (an old link) */ if (!MPX_VIEWS.some((x) => x[0] === v) || (MPX_NEED[v] && !document.getElementById(MPX_NEED[v]))) v = 'run';
-  MP.cv = v; const de = document.documentElement; de.classList.toggle('mpc-rot', v === 'rot'); de.dataset.mpv = v;
+function mpxView(v) { if (MPC_ON) return; if (v === 'hit') MP.gm = 'def'; /* (an old link to Big hits: Graphs, on Defensives) */ if (MPX_OLD[v]) v = MPX_OLD[v]; /* (an old link) */ if (!MPX_VIEWS.some((x) => x[0] === v) || (MPX_NEED[v] && !document.getElementById(MPX_NEED[v]))) v = 'run';
+  MP.cv = v; const de = document.documentElement; de.classList.toggle('mpc-rot', v === 'rot'); de.dataset.mpv = v; de.dataset.mpg = MP.gm || 'dmg';
   document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => { x.classList.toggle('on', x.dataset.mpcv === v); x.setAttribute('aria-selected', String(x.dataset.mpcv === v)); });
   mpvUrl(); mpcRotPaint();
   if (v === 'map') requestAnimationFrame(() => { try { mpLabelFit(); } catch (e) { /* (labels stay as drawn) */ } });
@@ -980,7 +980,7 @@ const mpxMissed = (R, n) => { const m = R._mxk || (R._mxk = (() => { const c = {
 const mpxKickCell = (R, p) => { const l = MPC_ON ? 0 : mpxMissed(R, p.name); return '<span class="gbx-s mpt-gxn' + (p.kicks || l ? '' : ' mpt-g0') + '"' + (l ? ' tabindex="0"' + mpT1('<b>' + esc(p.name) + '</b><br>' + plural(p.kicks, 'kick') + '. ' + plural(l, 'must-kick cast') + ' went off with their kick ready.') : '') + '>' + p.kicks + (l ? ' <small class="mpt-t2k">(' + l + ')</small>' : '') + '</span>'; };
 // (a jump that used to scroll to a chapter opens that chapter's tab first: Your part's tiles, Big hits' own links)
 const MPX_BYID = { mptBand: 'run', mptCX: 'mis', mptCH: 'gra', mptCG: 'gra', mptCM: 'map', mptC4: 'rep', mptPlayers: 'rep', mptCP: 'rep', mptC5: 'map', mptKnow: 'map', mptCR: 'rot', mptCC: 'cmp' };
-const mpxGoId = (id) => { if (!MPC_ON && MPX_BYID[id]) mpxView(MPX_BYID[id]); };
+const mpxGoId = (id) => { if (!MPC_ON && MPX_BYID[id]) { mpxView(MPX_BYID[id]); if (id === 'mptCH') mpxGm('def'); } };
 function mpxPaint(R) { const el = document.getElementById('mptCX'); if (!el || !R) return; el.outerHTML = mpxChap(R, mpxFast(R)); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 // (a tab picked from further down the page starts at its top)
 // ---------- the key page in the raid review's flow, with its own look (Nov 14; Flex, on the page that copied the raid review's look: "I dont want it to
@@ -1005,7 +1005,7 @@ function mpxPPSync(name) { if (MPC_ON) return; const it = MP.item, R = it && MP.
   document.querySelectorAll('.mpx-tb .mpx-tbi').forEach((x) => { x.innerHTML = mpxWhoIc(p); });
   document.querySelectorAll('#mptCP .mpx-rcard').forEach((c) => c.classList.toggle('on', !!name && c.dataset.for === name));
   if (p && MP.cvp !== name) { MP.cvp = name; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); mpcRotPaint(); }
-  try { mpxRowOn(); } catch (e) { /* (no table yet) */ } }
+  try { mpxRowOn(); mpxGraphPaint(); } catch (e) { /* (no table yet) */ } }
 // (a key with no map: the pick still moves Your part)
 function mpxPPOnly(name) { MP.pp = name; if (MPC_ON) return; const pe = document.getElementById('mptPart'), it = MP.item, R = it && MP.R[mpK(it)]; if (pe && R && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null, name); mpxPPSync(name); }
 // (pick a player the way the bar does, so it is kept for this key)
@@ -1046,17 +1046,76 @@ function mpxPart(o) { const { pick, name, own, p, rows, nt, full } = o, col = mp
 function mpxRep(R, fx) { if (MPC_ON || !R || !(R.people || []).length) return ''; const me = mpMine(R), pl = R.people.slice().sort((a, b) => (b.name === me) - (a.name === me) || mpByRole(a, b));
   return mpChap('mptCP', 'Each player', 'their mistakes and what they did well on this key', '<div class="mpx-rcs">' + pl.map((p) => mpPartHtml(R, fx, p.name, true)).join('') + '</div>'); }
 function mpxRepPaint(R) { if (MPC_ON) return; const el = document.getElementById('mptCP'), it = MP.item; if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpxRep(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
-// (Graphs: the raw numbers of the whole key as the site's meter rows, a player a row, the biggest first. Big hits and defensives sit under them)
-function mpxGraphs(R) { if (MPC_ON || !R || !(R.people || []).length) return ''; const pl = R.people.slice(), P = R.pulls || [], tk = R.ptk || {};
-  const cnt = (k, f) => { const m = {}; for (const q of P) for (const x of q[k] || []) { const w = x.who; if (w) m[w] = (m[w] || 0) + (f ? f(x) : 1); } return m; }, dth = cnt('deaths'), avd = cnt('avoid', (x) => x.n || 0), thr = cnt('through');
-  const took = (p) => { const a = tk[p.name]; let s = 0; if (a) for (const k in a) s += +a[k] || 0; return s; };
-  const meter = (title, sub, val, fmt, zero) => { const L = pl.map((p) => ({ p, v: +val(p) || 0 })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v); if (!L.length && !zero) return ''; const mx = L.length ? L[0].v : 1;
-    return '<div class="mpx-gm"><p class="mpx-gmh"><b class="mpx-gmt">' + title + '</b><span class="mpx-gms">' + sub + '</span></p>' + (L.length ? '<div class="gbx">' + L.map((x) => { const cc = mpCC(x.p.cls);
-      return '<div class="gbx-r" style="--c:' + cc + '"><span class="gbx-n" style="color:' + cc + '">' + esc(x.p.name) + '</span><span class="gbx-b"><i style="width:' + (100 * x.v / mx).toFixed(1) + '%"></i></span><b class="gbx-v">' + fmt(x.v, x.p) + '</b></div>'; }).join('') + '</div>' : '<p class="mpx-gmz">' + zero + '</p>') + '</div>'; };
-  const body = meter('Damage', 'per second, the whole key', (p) => p.dps, (v) => mpGF(v)) + meter('Healing', 'per second, the whole key', (p) => p.hps, (v) => mpGF(v)) + meter('Damage taken', 'in all', took, (v) => mpGF(v)) +
-    meter('Kicks', 'casts interrupted', (p) => p.kicks, (v) => String(v)) + meter('Other stops', 'casts stopped with a stun or other CC', (p) => p.stops, (v) => String(v)) + meter('Dispels', 'debuffs taken off', (p) => p.dispels, (v) => String(v)) +
-    meter('Casts that went off', 'with their kick ready', (p) => thr[p.name], (v) => String(v), 'None. Nothing went off with a kick ready.') + meter('Avoidable hits', 'hits they could have dodged', (p) => avd[p.name], (v) => String(v), 'None in this key.') + meter('Deaths', 'in the whole key', (p) => dth[p.name], (v) => String(v), 'Nobody died.');
-  return body ? mpChap('mptCG', 'Graphs', 'the raw numbers of the whole key, a player a row', '<div class="mpx-gms0">' + body + '</div>') : ''; }
+// (Graphs, the rebuild (Nov 14; Flex on the first one, nine small bar lists: "the graphs tab 100% needs to be worked on", then "Yes, build it" to one
+// big meter at a time, a filter for where, a chart across the key, a recap for every death, and Defensives as its own choice). One number at a time,
+// as on Warcraft Logs. The chart is the key pull by pull: a block a pull, as wide as it lasted and as tall as the number in it; a click shows only
+// that pull. Under it the meter for the pulls picked. Damage and healing are the reader's own numbers a pull and damage taken is the page's pass, so
+// the whole key adds up to the players table. Deaths lists each death with its recap; Defensives shows Big hits, which sits under this chapter)
+const MPX_GM = [['dmg', 'Damage'], ['heal', 'Healing'], ['taken', 'Damage taken'], ['kick', 'Kicks and stops'], ['disp', 'Dispels'], ['death', 'Deaths'], ['def', 'Defensives']];
+// (each pull's numbers a player, built once a key. Kicks, stops, dispels and deaths are the reader's own lists a pull, the ones the players table
+// counts; a CC cast belongs to the pull it fell in, or the last one started before it)
+function mpxGdata(R) { if (R._gd) return R._gd; const P = R.pulls || [], pl = R.people || [], tk = R.ptk || {}, at = (t) => { let j = 0; for (let i = 0; i < P.length; i++) if (t >= P[i].s - 2) j = i; return j; };
+  const D = P.map((q) => { const a = Math.floor(q.s), b = Math.floor(q.e), d = q.dur || Math.max(1, q.e - q.s), o = { dmg: {}, heal: {}, taken: {}, kick: {}, stop: {}, cc: {}, disp: {}, purge: {}, death: {} };
+    /* (the reader keeps a pull's damage and healing per second of the pull: times its length is the amount, as the reader's own whole-key DPS does) */
+    for (const p of pl) { const n = p.name, arr = tk[n]; o.dmg[n] = ((q.dmg || {})[n] || 0) * d; o.heal[n] = ((q.heal || {})[n] || 0) * d; let s = 0; if (arr) for (let k = a; k <= b; k++) s += arr[k] || 0; o.taken[n] = s; }
+    for (const x of q.kicks || []) if (x.who) o.kick[x.who] = (o.kick[x.who] || 0) + 1;
+    for (const x of q.stops || []) if (x.who) o.stop[x.who] = (o.stop[x.who] || 0) + 1;
+    for (const x of q.dispels || []) if (x.who) o.disp[x.who] = (o.disp[x.who] || 0) + 1;
+    for (const x of q.purges || []) if (x.who) o.purge[x.who] = (o.purge[x.who] || 0) + 1;
+    for (const x of q.deaths || []) if (x.who) o.death[x.who] = (o.death[x.who] || 0) + 1;
+    return o; });
+  if (P.length) for (const e of mpCCcasts(R.ccEv || [])) if (e.who) { const o = D[at(e.t)].cc; o[e.who] = (o[e.who] || 0) + 1; }
+  return (R._gd = D); }
+function mpxGraphs(R) { if (MPC_ON || !R || !(R.people || []).length || !(R.pulls || []).length) return '';
+  const P = R.pulls, pl = R.people.slice().sort(mpByRole), D = mpxGdata(R), m = MPX_GM.some((x) => x[0] === MP.gm) ? MP.gm : 'dmg', key = mpK(MP.item || {}); if (MP.gk !== key) { MP.gk = key; MP.gw = 'all'; } /* (a new key starts on the whole key) */
+  const w = MP.gw, all = P.map((q, i) => i), idx = typeof w === 'number' && P[w] ? [w] : w === 'boss' ? all.filter((i) => P[i].boss) : w === 'trash' ? all.filter((i) => !P[i].boss) : all, allSel = idx.length === P.length;
+  const KEYS = { dmg: ['dmg'], heal: ['heal'], taken: ['taken'], def: ['taken'], kick: ['kick', 'stop'], disp: ['disp', 'purge'], death: ['death'] }[m], rate = m === 'dmg' || m === 'heal' || m === 'taken' || m === 'def';
+  /* (the chart under Deaths is the damage taken, with the deaths as its red marks: a block as tall as "1 death" says nothing) */
+  const CK = m === 'death' ? ['taken'] : KEYS, crate = rate || m === 'death', big = (v) => (v >= 1e9 ? (v / 1e9).toFixed(2).replace(/\.?0+$/, '') + 'b' : mpGF(v));
+  const dur = (q) => Math.max(1, q.e - q.s), val = (i, n) => CK.reduce((a, k) => a + (D[i][k][n] || 0), 0), grp = (i) => pl.reduce((a, p) => a + val(i, p.name), 0), pv = (i) => (crate ? grp(i) / dur(P[i]) : grp(i)), fmt = (v) => (crate ? mpGF(v) : String(Math.round(v)));
+  const sum = (k, n, L) => (L || idx).reduce((a, i) => a + (D[i][k][n] || 0), 0);
+  // (the key's seconds as the reader counts them, so the whole key's damage per second is the players table's DPS)
+  const tot = (() => { for (const p of pl) { const s = sum('dmg', p.name, all); if (p.dps > 0 && s > 0) return s / p.dps; } return Math.max(1, P[P.length - 1].e - P[0].s); })(), secs = allSel ? tot : idx.reduce((a, i) => a + dur(P[i]), 0);
+  const pname = (q) => (q.boss ? q.boss : 'Pull ' + mpNo(R, q.n)), who = MP.pp || '', wp = pl.find((p) => p.name === who);
+  const unit = { dmg: 'damage per second', heal: 'healing per second', taken: 'damage taken per second', def: 'damage taken per second', kick: 'casts stopped', disp: 'debuffs taken off', death: 'damage taken per second' }[m];
+  // the chart: the key pull by pull
+  const t0 = P[0].s, t1 = Math.max(P[P.length - 1].e, t0 + 1), X = (t) => 1000 * (t - t0) / (t1 - t0), H = 120, mx = Math.max(1, ...P.map((q, i) => pv(i)));
+  const blocks = P.map((q, i) => { const x = X(q.s), wd = Math.max(3, X(q.e) - x - 1), v = pv(i), h = v > 0 ? Math.max(2, H * v / mx) : 0, mv = wp ? (crate ? val(i, who) / dur(q) : val(i, who)) : 0, hm = mv > 0 ? Math.max(1.5, H * mv / mx) : 0, xs = ' x="' + x.toFixed(1) + '" width="' + wd.toFixed(1) + '"';
+    return '<g class="mpx-gb' + (q.boss ? ' mpx-gbb' : '') + (idx.includes(i) ? '' : ' off') + '" data-mpgw="' + i + '"><title>' + esc(pname(q) + ' · ' + mpMM(dur(q)) + ' · ' + fmt(v) + ' ' + unit + (wp && mv > 0 ? ' · ' + who + ' ' + fmt(mv) : '')) + '</title><rect class="mpx-gbh"' + xs + ' y="0" height="' + (H + 6) + '"/><rect class="mpx-gbv"' + xs + ' y="' + (H - h).toFixed(1) + '" height="' + h.toFixed(1) + '"/>' +
+      (hm ? '<rect class="mpx-gbm"' + xs + ' y="' + (H - hm).toFixed(1) + '" height="' + hm.toFixed(1) + '" fill="' + mpCC(wp.cls) + '"/>' : '') + '</g>'; }).join('');
+  const dead = P.flatMap((q) => (q.deaths || []).map((d) => '<rect class="mpx-gbd" x="' + (X(d.t) - 1.2).toFixed(1) + '" y="0" width="2.4" height="10"><title>' + esc(d.who + ' died') + '</title></rect>')).join('');
+  const labels = P.map((q) => (q.boss ? '<span class="mpx-gcb" style="left:' + (X((q.s + q.e) / 2) / 10).toFixed(1) + '%">' + esc(q.boss) + '</span>' : '')).join('');
+  const chart = '<div class="mpx-gc"><p class="mpx-gch"><b class="mpx-gct">The key, pull by pull</b><span class="mpx-gcs">A block is a pull: as wide as it lasted, as tall as its ' + unit + '. The tallest is ' + fmt(mx) + '. Bosses are gold. ' + (wp ? 'The <b class="mpx-gcw" style="color:' + mpCC(wp.cls) + '">coloured part</b> is ' + esc(who) + '. ' : '') + (P.some((q) => (q.deaths || []).length) ? 'A red mark on top is a death. ' : '') + 'Click a pull to see only that pull.</span></p>' +
+    '<svg class="mpx-gsv" viewBox="0 0 1000 ' + (H + 6) + '" preserveAspectRatio="none" role="img" aria-label="' + esc('The key pull by pull, ' + unit) + '">' + blocks + dead + '</svg><div class="mpx-gcl" aria-hidden="true">' + labels + '</div></div>';
+  // the choices: which number, and which pulls
+  const kinds = '<div class="mpx-gk" role="tablist" aria-label="Which number">' + MPX_GM.map(([k, l]) => '<button type="button" role="tab" data-mpgm="' + k + '"' + (k === m ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + l + '</button>').join('') + '</div>';
+  const wb = (v, l, cls) => '<button type="button" data-mpgw="' + v + '" class="' + (cls || '') + ((v === 'all' ? allSel : w === v) ? ' on' : '') + '">' + l + '</button>';
+  const where = m === 'def' ? '' : '<div class="mpx-gw" role="group" aria-label="Which pulls">' + wb('all', 'Whole key') + (P.some((q) => q.boss) && P.some((q) => !q.boss) ? wb('boss', 'Bosses') + wb('trash', 'Trash') : '') + '<span class="mpx-gwl">or one pull</span>' + P.map((q, i) => wb(i, q.boss ? esc(q.boss) : String(mpNo(R, q.n)), 'mpx-gwp' + (q.boss ? ' mpx-gwb' : ''))).join('') + '</div>';
+  const said = '<p class="mpx-gsel"><b class="mpx-gselb">' + MPX_GM.find((x) => x[0] === m)[1] + '</b><span class="mpx-gsels">' + (allSel ? 'the whole key' : w === 'boss' ? 'the bosses' : w === 'trash' ? 'the trash pulls' : esc(pname(P[idx[0]]))) + ' · ' + mpMM(idx.reduce((a, i) => a + dur(P[i]), 0)) + ' of fighting</span></p>';
+  // the meter
+  const nameCell = (p) => '<span class="gbx-n" style="color:' + mpCC(p.cls) + '">' + mpxWhoIc(p) + '<span class="mpx-grn">' + esc(p.name) + '</span><small class="mpx-grs">' + esc(p.spec) + '</small></span>';
+  const table = (cols, head, L, total) => '<div class="gbx mpx-gt" style="--gbx-cols:' + cols + '"><div class="gbx-r gbx-hd"><span>Player</span><span></span>' + head.map((h2) => '<span>' + h2 + '</span>').join('') + '</div>' +
+    L.map((x) => '<div class="gbx-r mpx-gr' + (x.p.name === who ? ' on' : '') + '" data-mpgwho="' + esc(x.p.name) + '" style="--c:' + mpCC(x.p.cls) + '">' + nameCell(x.p) + '<span class="gbx-b"><i style="width:' + x.bar.toFixed(1) + '%"></i></span>' + x.cells.map((c, k) => (k ? '<span class="gbx-s">' + c + '</span>' : '<b class="gbx-v">' + c + '</b>')).join('') + '</div>').join('') +
+    (total ? '<div class="gbx-r mpx-gtt"><span class="gbx-n"><span class="mpx-grn">Your group</span></span><span></span>' + total.map((c, k) => (k ? '<span class="gbx-s">' + c + '</span>' : '<b class="gbx-v">' + c + '</b>')).join('') + '</div>' : '') + '</div>';
+  let body = '';
+  if (rate && m !== 'def') { const k = KEYS[0], L = pl.map((p) => ({ p, a: sum(k, p.name) })).filter((x) => x.a > 0).sort((a, b) => b.a - a.a), T = L.reduce((a, x) => a + x.a, 0), top = L.length ? L[0].a : 1;
+    body = L.length ? table('220px minmax(0, 1fr) 84px 84px 64px', ['Amount', 'Per second', 'Share'], L.map((x) => ({ p: x.p, bar: 100 * x.a / top, cells: [big(x.a), mpGF(x.a / secs), Math.round(100 * x.a / (T || 1)) + '%'] })), [big(T), mpGF(T / secs), ''])
+      : '<p class="mpx-gmz">' + (m === 'taken' ? 'No damage taken was read for these pulls.' : 'Nothing here for these pulls.') + '</p>'; }
+  else if (m === 'kick') { const L = pl.map((p) => ({ p, k: sum('kick', p.name), s: sum('stop', p.name), c: sum('cc', p.name) })).sort((a, b) => (b.k + b.s) - (a.k + a.s) || b.c - a.c), top = Math.max(1, ...L.map((x) => x.k + x.s)), S = (f) => L.reduce((a, x) => a + f(x), 0);
+    body = table('220px minmax(0, 1fr) 70px 90px 80px', ['Kicks', 'Other stops', 'CC casts'], L.map((x) => ({ p: x.p, bar: 100 * (x.k + x.s) / top, cells: [String(x.k), String(x.s), String(x.c)] })), [String(S((x) => x.k)), String(S((x) => x.s)), String(S((x) => x.c))]); }
+  else if (m === 'disp') { const L = pl.map((p) => ({ p, d: sum('disp', p.name), u: sum('purge', p.name) })).filter((x) => x.d + x.u > 0).sort((a, b) => (b.d + b.u) - (a.d + a.u)), top = Math.max(1, ...L.map((x) => x.d + x.u));
+    body = L.length ? table('220px minmax(0, 1fr) 80px 80px', ['Dispels', 'Purges'], L.map((x) => ({ p: x.p, bar: 100 * (x.d + x.u) / top, cells: [String(x.d), String(x.u)] })), [String(L.reduce((a, x) => a + x.d, 0)), String(L.reduce((a, x) => a + x.u, 0))]) : '<p class="mpx-gmz">Nothing was dispelled ' + (allSel ? 'in this key.' : 'here.') + '</p>'; }
+  else if (m === 'death') { const DD = mpxData(R, mpxFast(R)).death.filter((x) => idx.includes(x.i)), C = mpClock(R), pen = C && C.pen ? Math.round(C.pen) : 0;
+    body = DD.length ? '<p class="mpx-gmz">Click a death for the hits before it and what was ready.</p><div class="mpx-g mpx-gdl">' + DD.map((x) => mpxDeath(R, x, pen)).join('') + '</div>' : '<p class="mpx-gmz">Nobody died ' + (allSel ? 'in this key.' : 'here.') + '</p>'; }
+  else body = '<p class="mpx-gmz">Every big hit of the key, who it left low and what was pressed for it, is just below.</p>';
+  return mpChap('mptCG', 'Graphs', 'the raw numbers, one at a time', kinds + chart + where + said + body); }
+// (the chapter again after a choice or a new pick; the page's html element says which number is open, so Big hits shows only under Defensives)
+function mpxGraphPaint() { if (MPC_ON) return; const el = document.getElementById('mptCG'), it = MP.item, R = it && MP.R[mpK(it)]; document.documentElement.dataset.mpg = MP.gm || 'dmg'; if (!el || !R) return; el.outerHTML = mpxGraphs(R); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
+const mpxGm = (m) => { MP.gm = m; mpxGraphPaint(); };
+document.addEventListener('click', (e) => { if (MPC_ON || !e.target.closest) return; const t = e.target.closest('#mptCG [data-mpgm], #mptCG [data-mpgw], #mptCG [data-mpgwho]'); if (!t) return; e.preventDefault();
+  if (t.dataset.mpgm) mpxGm(t.dataset.mpgm);
+  else if (t.dataset.mpgw != null) { const v = t.dataset.mpgw; MP.gw = /^\d+$/.test(v) ? (MP.gw === +v ? 'all' : +v) : v; mpxGraphPaint(); } /* (a second click on the open pull goes back to the whole key) */
+  else if (t.dataset.mpgwho) mpxPick(t.dataset.mpgwho); });
 // (Compare: the key against a typical fast run (where the time went, stretch by stretch), then each player against the top players of their spec)
 function mpxCmp(R, fx, time) { if (MPC_ON || !R) return ''; const runs = (fx && fx.list && fx.list.runs) || [], wt = !fx || fx.wait, pl = (R.people || []).slice().sort(mpByRole);
   const L = pl.map((p) => ({ p, v: mpSpecVs(p, runs) })).filter((x) => x.v), mx = Math.max(1, ...L.map((x) => Math.max(x.v.mine || 0, x.v.best || 0)));
@@ -1072,7 +1131,7 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   if (t.dataset.mpxpull != null) { mpxView('map'); try { mpMapPick('you', +t.dataset.mpxpull); } catch (x) { /* (no map for this key) */ } mpxTop(); return; }
   if (t.dataset.mpxk != null) MP.xk = t.dataset.mpxk;
   if (t.dataset.mpxp != null) MP.xp = t.dataset.mpxp;
-  if (t.dataset.mpxv) { mpxView(t.dataset.mpxv); mpxTop(); } if (t.dataset.mpxat) { const c = document.getElementById(t.dataset.mpxat); if (c) c.scrollIntoView({ block: 'start' }); } /* (a link to a section further down its tab) */
+  if (t.dataset.mpxv) { mpxView(t.dataset.mpxv); mpxTop(); } if (t.dataset.mpxat === 'mptCH') mpxGm('def'); if (t.dataset.mpxat) { const c = document.getElementById(t.dataset.mpxat); if (c) c.scrollIntoView({ block: 'start' }); } /* (a link to a section further down its tab) */
   mpxPaint(R); });
 // ---------- the map's pull card, in plain words (Flex, Nov 14, with a picture of the card: "Pull 1 1:09 · +7.7% · 7.7% total · 1.91m group DPS", "Most
 // mistakes", "! Demoralizing Shout ⚡ Lust 0:20 in Bolster ×6": "this section has a lot in it thats really confusing and unclear"). Every number gets its

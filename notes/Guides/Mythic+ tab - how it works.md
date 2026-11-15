@@ -244,3 +244,16 @@ What moved: Players is on Report card, Big hits is on Graphs, Dungeon is under t
 The look is the key page's own again: its banner, its panels, its blue under the open tab. From the earlier page only the flow pieces stayed: the tab row that stays at the top, and the bar with the key and the player.
 
 The Companion's card keeps its own layout.
+
+## Graphs, rebuilt (Nov 14, 2026, late)
+
+Flex on the first Graphs tab (nine small bar lists): "the graphs tab 100% needs to be worked on...", then "Yes, build it".
+
+One number at a time, as on Warcraft Logs:
+- The choices on top: Damage, Healing, Damage taken, Kicks and stops, Dispels, Deaths, Defensives.
+- The chart, "The key, pull by pull": a block is a pull, as wide as it lasted and as tall as the number in it (damage per second, healing per second, casts stopped and so on). Bosses are gold, trash is blue. The coloured part of each block is the player picked in the bar. A red mark on top is a death. Click a block to see only that pull; click it again for the whole key.
+- Which pulls: Whole key, Bosses, Trash, or one pull.
+- The meter: a player a row with their spec icon, the bar, then the amount, the amount per second and their share. Click a row to pick that player everywhere.
+- Deaths lists each death with the hits before it and what was ready. Defensives shows Big hits (every big hit and what was pressed for it), unchanged.
+
+Where the numbers come from: damage and healing are the reader's own numbers for each pull, the same ones the players table is built from, so the whole key's damage per second matches the table. Kicks, stops, dispels and deaths are the same lists the table counts. Damage taken is the page's own pass over the log. A CC cast counts for the pull it fell in.
