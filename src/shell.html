@@ -20112,6 +20112,87 @@ html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-why > .mpt-rki >
   html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row > b { min-width: 0 !important; max-width: 46vw !important; white-space: normal !important; text-align: right !important; overflow-wrap: anywhere !important; }
 }
 }
+/* Mythic+ replay on the Route map (Nov 14, Flex: "Lets start by making a replay version of the map", "I still want the route to be shown, but i want the
+   replay to follow the group", "Get creative with it"). The map plays the key back with the route under it; the panel beside it follows the fight. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpt-mdt.mrp-on > .mpt-mdtv, html:not(.mpcard) body #view#view#view .mpt-mdt.mrp-on > .mpt-mstrip, html:not(.mpcard) body #view#view#view .mpt-mdt.mrp-on .mrp-go, html:not(.mpcard) body #view#view#view .mpt-mdt.mrp-on .mpt-mtg, html:not(.mpcard) body #view#view#view .mpt-mdt.mrp-on .mpt-mstep { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpt-mbar .mrp-go { margin-left: 10px !important; border-color: rgba(212,183,125,.55) !important; color: #d4b77d !important; font: 700 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mrp { display: block !important; margin: 10px 0 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-top { display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 8px !important; margin: 0 0 10px !important; }
+html:not(.mpcard) body #view#view#view .mrp-b { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-width: 34px; height: 32px; padding: 0 9px; border: 1px solid var(--line2); border-radius: 4px; background: rgba(255,255,255,.03); color: var(--text); font: 700 14px var(--body); cursor: pointer; }
+html:not(.mpcard) body #view#view#view .mrp-b:hover { background: var(--raised); }
+html:not(.mpcard) body #view#view#view .mrp-b.mrp-pp { min-width: 46px; border-color: #d4b77d; color: #d4b77d; font-size: 15px; }
+html:not(.mpcard) body #view#view#view .mrp-sk { all: unset; box-sizing: border-box; height: 32px; padding: 0 10px; border: 1px solid var(--line2); border-radius: 4px; color: var(--muted); font: 600 13px var(--body); cursor: pointer; }
+html:not(.mpcard) body #view#view#view .mrp-sk.on { border-color: rgba(126,224,143,.5); color: #7ee08f; }
+html:not(.mpcard) body #view#view#view .mrp-clk { margin-left: 6px !important; font: 400 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-clk > .mrp-t { font: 700 20px var(--head) !important; color: var(--text) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-clk > .mrp-of, html:not(.mpcard) body #view#view#view .mrp-clk > .mrp-ct { font: 400 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-top > .mrp-x { margin-left: auto !important; }
+html:not(.mpcard) body #view#view#view .mrp-grid { display: grid !important; grid-template-columns: minmax(0, 1fr) 372px !important; gap: 12px !important; align-items: start !important; }
+html:not(.mpcard) body #view#view#view .mrp-left { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-p:not(.me) > .mrp-pt { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-map { position: relative !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; overflow: hidden !important; background: #0b0c0e !important; }
+html:not(.mpcard) body #view#view#view .mrp-svg { display: block !important; width: 100% !important; height: auto !important; aspect-ratio: 1.6 !important; }
+html:not(.mpcard) body #view#view#view .mrp-base .mpt-ep, html:not(.mpcard) body #view#view#view .mrp-base .mpt-mk, html:not(.mpcard) body #view#view#view .mrp-base .mk-lust, html:not(.mpcard) body #view#view#view .mrp-base .mk-wait, html:not(.mpcard) body #view#view#view .mrp-base .mk-bad, html:not(.mpcard) body #view#view#view .mrp-base .mpt-bport { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-base .mpt-mtag { transform-box: fill-box !important; transform-origin: center !important; scale: .62 !important; }
+html:not(.mpcard) body #view#view#view .mrp-base * { pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-base .mpt-mpl.now .mpt-hpg { opacity: .3 !important; }
+html:not(.mpcard) body #view#view#view .mrp-base .mpt-mpl.done { opacity: .5 !important; }
+html:not(.mpcard) body #view#view#view .mrp-walk { stroke: #d4b77d !important; opacity: .6 !important; stroke-linejoin: round !important; stroke-linecap: round !important; }
+html:not(.mpcard) body #view#view#view .mrp-e { fill: #e5534b !important; stroke: #1a0e0e !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.bo { fill: #d4b77d !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.soon { opacity: .32 !important; }
+html:not(.mpcard) body #view#view#view .mrp-p.dead { opacity: .35 !important; }
+html:not(.mpcard) body #view#view#view .mrp-p > .mrp-pt { font-family: var(--body) !important; font-weight: 700 !important; paint-order: stroke !important; stroke: #0b0c0e !important; stroke-width: calc(var(--y, 1) * .9px) !important; }
+html:not(.mpcard) body #view#view#view .mrp-pop { color: #aeb6bf; }
+html:not(.mpcard) body #view#view#view .mrp-pop-kick { color: #7ee08f; } html:not(.mpcard) body #view#view#view .mrp-pop-off, html:not(.mpcard) body #view#view#view .mrp-pop-death { color: #ff8f87; } html:not(.mpcard) body #view#view#view .mrp-pop-hit { color: #f2c46b; }
+html:not(.mpcard) body #view#view#view .mrp-pop > .mrp-ring { fill: none !important; stroke: currentColor !important; transform-box: fill-box !important; transform-origin: center !important; animation: mrpRing 1.5s ease-out forwards !important; }
+html:not(.mpcard) body #view#view#view .mrp-pop > text { fill: currentColor !important; font-family: var(--body) !important; font-weight: 700 !important; paint-order: stroke !important; stroke: #0b0c0e !important; stroke-width: calc(var(--y, 1) * 1px) !important; animation: mrpFade 2.2s ease-out forwards !important; }
+@keyframes mrpRing { from { transform: scale(.35); opacity: 1; } to { transform: scale(2.4); opacity: 0; } }
+@keyframes mrpFade { 0% { opacity: 0; } 12% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mrpNew { from { background: rgba(212,183,125,.22); } to { background: transparent; } }
+html:not(.mpcard) body #view#view#view .mrp-cap { position: absolute !important; left: 12px !important; top: 10px !important; display: grid !important; gap: 1px !important; padding: 6px 10px !important; border-radius: 4px !important; background: rgba(11,12,14,.78) !important; pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-cap > .mrp-capk { font: 700 16px var(--head) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrp-cap > .mrp-caps { font: 400 12.5px var(--body) !important; color: var(--muted) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-ban { position: absolute !important; left: 50% !important; bottom: 14px !important; transform: translateX(-50%) !important; padding: 7px 14px !important; border-radius: 4px !important; background: rgba(11,12,14,.86) !important; border: 1px solid var(--line2) !important; font: 600 14px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-ban[hidden] { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-ban.mrp-ban-lust { border-color: #d4b77d !important; } html:not(.mpcard) body #view#view#view .mrp-ban.mrp-ban-death { border-color: rgba(255,143,135,.6) !important; }
+html:not(.mpcard) body #view#view#view .mrp-ban > b, html:not(.mpcard) body #view#view#view .mrp-feed b { font: inherit !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view .mrp-lu { color: #d4b77d !important; }
+html:not(.mpcard) body #view#view#view .mrp-side { min-width: 0 !important; padding: 12px 14px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; }
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-k { margin: 12px 0 6px !important; font: 700 12px var(--head) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-k:first-child { margin-top: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-k > span { margin-left: 6px !important; font: 400 12px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--faint, #6b7480) !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr { display: grid !important; grid-template-columns: 20px minmax(0, 92px) 46px minmax(0, 1fr) 46px !important; column-gap: 8px !important; align-items: center !important; padding: 4px 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr.dead { opacity: .45 !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-pi { width: 20px !important; height: 20px !important; } html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-pi > img { display: block !important; width: 20px !important; height: 20px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-pn { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font: 700 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-hp, html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-dm { display: block !important; height: 8px !important; background: rgba(255,255,255,.07) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-hp > i { display: block !important; height: 100% !important; width: 100%; background: #45c15c; transition: width .25s linear; } html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-hp > i.mid { background: #e8a23a; } html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-hp > i.lo { background: #e5534b; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-dm > i { display: block !important; height: 100% !important; width: 0; opacity: .85; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-dv { text-align: right !important; font: 700 12.5px var(--body) !important; font-variant-numeric: tabular-nums !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-ch { grid-column: 2 / -1 !important; min-height: 0 !important; font: 600 12px var(--body) !important; color: #d4b77d !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-pr > .mrp-ch:empty { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-er { display: grid !important; grid-template-columns: 92px minmax(0, 1fr) auto !important; column-gap: 8px !important; align-items: center !important; padding: 3px 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-er.gone { opacity: .4 !important; }
+html:not(.mpcard) body #view#view#view .mrp-er > .mrp-ed { display: flex !important; flex-wrap: wrap !important; gap: 2px !important; } html:not(.mpcard) body #view#view#view .mrp-er > .mrp-ed > i { width: 6px !important; height: 6px !important; border-radius: 50% !important; background: #e5534b !important; } html:not(.mpcard) body #view#view#view .mrp-er > .mrp-ed > i.x { background: rgba(255,255,255,.14) !important; }
+html:not(.mpcard) body #view#view#view .mrp-er > .mrp-el { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font: 500 13px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrp-er > .mrp-ev { font: 700 12.5px var(--body) !important; font-variant-numeric: tabular-nums !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-en > .mrp-none { margin: 0 !important; font: 400 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed { list-style: none !important; margin: 0 !important; padding: 0 !important; min-height: 150px !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed > .mrp-f { display: grid !important; grid-template-columns: 38px minmax(0, 1fr) !important; column-gap: 8px !important; padding: 4px 4px !important; border-top: 1px solid rgba(255,255,255,.05) !important; font: 400 13px/1.35 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed > .mrp-f.new { animation: mrpNew 1.2s ease-out !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed > .mrp-f.q { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed .mrp-ft { font: 400 12.5px var(--body) !important; color: var(--muted) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-feed .mrp-fh { font: inherit !important; color: inherit !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-bar { margin: 10px 0 0 !important; padding: 8px 10px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; }
+html:not(.mpcard) body #view#view#view .mrp-lane { position: relative !important; height: 26px !important; cursor: pointer !important; touch-action: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-blk { position: absolute !important; top: 6px !important; height: 14px !important; opacity: .8 !important; }
+html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-tk { position: absolute !important; top: 1px !important; width: 2px !important; height: 24px !important; margin-left: -1px !important; pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-tk.d { background: #ff8f87 !important; } html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-tk.l { background: #d4b77d !important; height: 8px !important; top: 18px !important; }
+html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-ph { position: absolute !important; top: -2px !important; width: 2px !important; height: 30px !important; margin-left: -1px !important; background: #fff !important; box-shadow: 0 0 0 1px rgba(0,0,0,.6) !important; pointer-events: none !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-grid { grid-template-columns: minmax(0, 1fr) !important; } html:not(.mpcard) body #view#view#view .mrp-top > .mrp-x { margin-left: 0 !important; } }
+}
 </style>
 </body>
 </html>

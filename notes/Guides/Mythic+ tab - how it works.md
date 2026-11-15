@@ -357,3 +357,19 @@ Inside Staying alive the rows weigh by the same research: Deaths half, Defensive
 - The group's report card has, under its four tiles, the table's three callouts (what went off with a kick ready, who never pressed a big cooldown, who was furthest behind their spec), the group's damage (all, trash and bosses against a fast run), the group's totals (kicks, stops, CC, dispels, defensives, avoidable hits, big cooldowns) and the low-danger casts.
 - Each player's own numbers were already rows of their checklist.
 The Companion app's card keeps the table as it was.
+
+## Route: the replay (Nov 14, 2026, first version)
+
+Flex: "Lets start by making a replay version of the map", "I still want the route to be shown, but i want the replay to follow the group", "Get creative with it", and of the pull's panel beside the map: "that includes getting creative with this part too".
+
+"Replay the key" on the Route map's bar plays the key back on the map:
+- The route stays drawn (each pull's outline and number, the route line). The pull being fought lights up, and the ones done fade.
+- The five players move where the log put them, second by second, each a ring in their class colour round their spec's icon. A gold line shows the way walked so far. The camera follows the middle of the group, and changes floor with it.
+- A pull's enemies are red dots (a boss is gold) where the log saw them, until they die. Between pulls the next pack shows faintly ahead.
+- What happened pops up at its spot and its moment: a kick (✓), a cast that went off (!), a death (☠), an avoidable hit. Lust and deaths also show a line across the bottom of the map.
+- The panel beside the map follows the same clock: each player's health (read at each hit) and their damage in the pull as it grows, with a big cooldown named while it runs; the pull's enemies by name and how many are left; and the pull's events as they happen, newest first.
+- The clock is the key's own timer. Play or pause (Space too), jump a pull back or forward, 1×, 4×, 10× or 30×, and "Skip the walking" (on from the start: between pulls it runs fast). The strip under the map is the whole key, a block a pull, with a red tick a death and a gold one a Lust; click or drag it to move the clock.
+
+What it reads: the page's own pass over the log now keeps where each player and each enemy was, a spot a second (from the position each log line carries). Everything else was already kept for the map and the pull cards.
+
+Not in this first version: the fast run moving beside the group, a player to follow, dispels and defensives on the map itself (they are in the list), and enemy health.
