@@ -19666,7 +19666,7 @@ html:not(.mpcard) body #view#view#view .mpt-jb, html:not(.mpcard) body #view#vie
 html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS):not(#mptCH),
 html:not(.mpcard)[data-mpv="mis"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCX),
 html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM):not(#mptC5),
-html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4):not(#mptCP),
+html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCP),
 html:not(.mpcard)[data-mpv="gra"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCG),
 html:not(.mpcard)[data-mpv="cmp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCC),
 html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
@@ -20084,6 +20084,33 @@ html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-under details.mpx-rcm { m
 html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-nm > .mpt-rki { vertical-align: middle !important; margin: -3px 7px 0 0 !important; }
 html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-nm > .mpt-rki > .icw { margin: 0 !important; }
 html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row > b > .mpt-shim { vertical-align: middle !important; }
+}
+/* Mythic+ Report card: the players table's facts live in it now (Nov 14, Flex, with pictures of that table: "Maybe you can integrate some of the remaining
+   information into the report card tab somehow?", and of its DPS and vs spec columns: "i think this is valuable information"). Two more columns in the
+   ranked group, the group's own row under it, and the group's callouts and lines under its four tiles. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tbl .rcb-tr { grid-template-columns: 30px minmax(150px, 1.3fr) minmax(104px, 1fr) repeat(4, minmax(0, .7fr)) minmax(56px, .55fr) minmax(92px, .8fr) 64px !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr .mpr-c2 { min-width: 0 !important; text-align: center !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr .mpr-dps { font: 700 13.5px var(--body) !important; font-variant-numeric: tabular-nums !important; color: var(--text); }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr .mpr-c2 > .mpt-vs { font: 600 12.5px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr.mpr-tot { margin-top: 6px !important; padding-top: 10px !important; border-top: 1px solid var(--line) !important; border-radius: 0 !important; cursor: default !important; background: none !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr.mpr-tot .mpr-tk { visibility: hidden !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr.mpr-tot .rcb-who small { display: block !important; font: 400 12px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-grp { display: grid !important; gap: 8px !important; margin: 14px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-cos { display: flex !important; flex-wrap: wrap !important; gap: 8px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-co { padding: 5px 10px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; font: 500 13px/1.4 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-co > b { font: inherit !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-gf { margin: 0 !important; font: 400 13px/1.5 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-gf > .mpr-gfk { margin-right: 6px !important; font: 700 12px var(--head) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-gf > .mpt-vs { font: inherit !important; font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-why > .mpt-rki { vertical-align: middle !important; margin: -3px 6px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-why > .mpt-rki > .icw { margin: 0 !important; }
+@media (max-width: 760px) {
+  html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tbl .rcb-tr { grid-template-columns: 24px minmax(0, 1fr) minmax(96px, 1fr) 54px !important; }
+  html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tr .mpr-c2 { display: none !important; }
+  html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-th > button[data-mprs="score"] { display: block !important; }
+  html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row > b { min-width: 0 !important; max-width: 46vw !important; white-space: normal !important; text-align: right !important; overflow-wrap: anywhere !important; }
+}
 }
 </style>
 </body>

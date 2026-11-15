@@ -337,3 +337,23 @@ What each part reads (all of it is on the key's other tabs too):
 Every column of the players table is a row in each checklist, with the table's own number (Flex, with a picture of that table: "can each of these be put in the individuals report card?"): damage and damage against the spec, kicks, stops, CC, dispels, deaths, defensives pressed, avoidable hits and big cooldowns. The ones a key cannot judge fairly (stops, CC, defensives pressed, against the spec when there is a parse) are shown, not graded.
 
 Not the same as Raid review's: no externals (not read in a key), no "Gear and stats" pop-up, and every death counts (a key has no wipe call). The players table (damage, kicks, dispels and so on) is still on the tab, under the ranked group.
+
+## Report card: a key's own grade, and the players table folded in (Nov 14, 2026, late night)
+
+This replaces what the section above says about the weights, the ungraded rows and the players table.
+
+**The weights are a key's own** (Main's ruling, from "Mythic+ - how it works (the whole picture)", section 4): Mechanics 40%, Staying alive 30%, Performance 20%, Ready 10%. Raid review keeps its own (Performance 40, Mechanics 30, Staying alive 20, Ready 10). Why: in a key, not dying is 10 of 10, stopping the dangerous casts 9, defensives on the big hits 9; your place on the meter is 4 and parse colours 2. Flex can overrule the numbers.
+
+**Three things are graded a key's own way** (Flex: "I think some of the ungraded parts of report card could be graded, things like defensives, healthstone healthpot usage combat potion usage. You might need to make new formulas specific for mythic+ regarding those though"). Each counts only the moments it mattered and could be done:
+- Defensives on big hits (Staying alive): missed when a big hit left the player under 15% or dead while a defensive sat ready. Its % is the big hits met with a defensive up, out of those and the missed ones. A hit with nothing ready is not counted. Close calls are still listed, as information.
+- Healthstone or health potion (Staying alive): the moments are the big hits that left the player under 15% and the deaths that took a moment. A moment counts when a Healthstone or a health potion was off cooldown (5 minutes since the last one; a Healthstone only with a Warlock in the group or one pressed in the key). Its % is the moments where one was pressed within 8 seconds.
+- Combat potion (Performance): a chance is a boss or a long pull (45 seconds or more) starting with the 5-minute cooldown back. The walking between pulls is not a chance. The row lists what was drunk, by name with how often (Flex: "this should also list which combat potions they used"). Potions are sorted by the site's one potion list, never by the word "potion" in their name (Light's Potential has none).
+Inside Staying alive the rows weigh by the same research: Deaths half, Defensives on big hits 35%, a Healthstone or health potion 15% (not dying is 10 of 10, defensives 9, Healthstones 5: one Healthstone not pressed must not cost what a death costs).
+
+**Healer damage** (Flex: "i definetely think healer dps should be rewarded and evaluated/graded"): a healer's Damage row is graded like anyone's (half of Performance). When their damage is what timed the key, "Damage and the timer" is a bonus check: it lifts the grade, and never counts against them.
+
+**The players table is off the tab; its facts are in the Report card** (Flex, with pictures of it: "Maybe you can integrate some of the remaining information into the report card tab somehow?", and of its DPS and vs spec columns: "i think this is valuable information"):
+- Ranked group has two more columns, DPS (in its parse colour) and vs spec. Click either to rank by it. Under the five players is the group's own row: its grade, its parts, its damage while fighting and how far that is from a fast run.
+- The group's report card has, under its four tiles, the table's three callouts (what went off with a kick ready, who never pressed a big cooldown, who was furthest behind their spec), the group's damage (all, trash and bosses against a fast run), the group's totals (kicks, stops, CC, dispels, defensives, avoidable hits, big cooldowns) and the low-danger casts.
+- Each player's own numbers were already rows of their checklist.
+The Companion app's card keeps the table as it was.
