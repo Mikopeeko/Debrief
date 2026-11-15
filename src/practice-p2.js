@@ -151,7 +151,9 @@ function pgP2(A) {
   const T = PG_P2_T, P = PG_P2, L = pgP2L, away = pgP2Away, clk = pgClock, RN = { m: 'Melee', r: 'Ranged', h: 'Healer' }, SD = { E: 'east', W: 'west' }, NS = { far: 'south', close: 'north' };
   let S = null, G = null; const sync = () => { S = A.S; G = A.G; };
   // (its debuffs on your frame, and which mistakes count as big ones: added on the first run, once practice.js has made its lists)
-  let setUp = false; const setup = () => { if (setUp) return; setUp = true; Object.assign(A.DEB, { vein: ['Blight Vein', '#ff5a4f'], fangs: ['Grasping Fangs', '#ff8a6a'], stun: ['Stunned', '#ffd23b'], doom: ['Doomscale Egg', '#e6b450'], malice: ['Malice', '#b06bff'] });
+  let setUp = false; const setup = () => { if (setUp) return; setUp = true;
+    if (A.DPS_SAY) Object.assign(A.DPS_SAY, { warden: ['Hit the Warden', 'The Warden was up', 'Tab picks the Doomscale Warden: it has to die before its next Writhing Gestation (about 3:38). Stay in range.', 'it'], ds: ['Hit the Doomscales', 'The Doomscales were up', 'Tab picks a Weakened Doomscale: hit them from behind or beside (their frontal goes at the tank), and kill them evenly.', 'them'] });
+    Object.assign(A.DEB, { vein: ['Blight Vein', '#ff5a4f'], fangs: ['Grasping Fangs', '#ff8a6a'], stun: ['Stunned', '#ffd23b'], doom: ['Doomscale Egg', '#e6b450'], malice: ['Malice', '#b06bff'] });
     ['kick', 'tether', 'ward', 'big', 'wipe', 'frontal', 'side', 'egg'].forEach((k) => A.MAJ.add(k)); };
   // ---- your job (the start card), remembered on this browser ----
   const KEY = 'wla-pg-job2', job0 = () => ({ side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' });
@@ -185,7 +187,7 @@ function pgP2(A) {
   // (a kicker's spot: 5 yards behind their Doomscale, on the side away from its tank, so its frontal never points at them)
   const behind = (s, k) => { const d = G.p2.ds['ds' + s + k]; if (!d) return null; const tp = pos(tankOf(s)), ex = d.x - tp[0], ey = d.y - tp[1], ee = Math.hypot(ex, ey) || 1; return [d.x + ex / ee * 5, d.y + ey / ee * 5]; };
   const dsWant = (d, t) => { if (t < d.up) return null; if (t < d.up + 1.5) return S.pits[d.side].slice(); const tk = tankOf(d.side), tp = pos(tk), sg = S.east ? 1 : -1;
-    return G.p2.where[tk] === 'p1' ? [tp[0] + sg * (d.k === 1 ? -2.5 : 2.5), tp[1] + 7] : (() => { const o = pgP2L(d.side, [-7, d.k === 1 ? 2.5 : -2.5]); return [tp[0] + o[0], tp[1] + o[1]]; })(); };
+    return G.p2.where[tk] === 'p1' ? [tp[0] + sg * (d.k === 1 ? -2.5 : 2.5), tp[1] + (tp[1] < 0 ? 7 : -7)] : (() => { const o = pgP2L(d.side, [-7, d.k === 1 ? 2.5 : -2.5]); return [tp[0] + o[0], tp[1] + o[1]]; })(); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
   const ledgeJob = (id, t, j, s, b0) => { const tk = id[0] === 't', i = idx(id), F = L(s, P.fight); let T0, fast = false, ob = null;
@@ -208,11 +210,15 @@ function pgP2(A) {
       else T0 = spiral(L(s, P.wait), i, 5);
       if (tk && t >= T.dsUp - 4) { T0 = L(s, P.ds); fast = true; } }
     else { // the Doomscales: their tank east of them (their frontal goes at the tank), the kickers behind them, the rest further back
-      T0 = tk ? L(s, P.ds) : j.cry ? behind(s, j.cry) || L(s, P.dsKick) : spiral(L(s, P.dsWait), i, 5); }
+      // (once their tank has taken them through the gate, everyone left on the ledge heads for it too: never at them across the venom)
+      const gone = G.p2.where[tankOf(s)] === 'p1';
+      T0 = tk ? L(s, P.ds) : gone ? L(s, P.land) : j.cry ? behind(s, j.cry) || L(s, P.dsKick) : id[0] === 'm' ? (() => { const q = behind(s, 1 + (i % 2)); return q ? spiral(q, i, 2.2) : L(s, P.dsKick); })() : spiral(L(s, P.dsWait), i, 5); fast = gone; } /* (the melee: behind them, in reach (the damage moments, Nov 15)) */
     return { T: T0, fast, ob }; };
   const platJob = (id, t, j) => { const sg = S.east ? 1 : -1, PL = (x, y) => [x * sg, y], east = j.side === 'E';
-    // (back by her: each tank holds its two Doomscales south of the raid, their frontals pointing away; the kickers behind them; the rest by the heart)
-    const T0 = id[0] === 't' ? PL(east ? 30 : 18, -17) : j.cry ? behind(j.side, j.cry) || PL(east ? 30 : 18, -4) : spiral(PL(26, 7), GDZ_RAID.indexOf(id), 6);
+    // (back by her, the Doomscales dragged in by the heart for the cleave (the guide): the east half's tank holds its two just south of the heart and
+    // the west half's just north, their frontals pointing away at the tanks; every melee by the heart, in reach of it and of their Doomscale (kicks
+    // too); the ranged and healers a little back. The damage moments, Nov 15)
+    const i = GDZ_RAID.indexOf(id), T0 = id[0] === 't' ? PL(34, east ? -12 : 12) : id[0] === 'm' ? spiral(PL(35.5, 0), i, 1.5) : spiral(PL(25, 0), i, 5);
     return { T: T0, fast: false, ob: null }; };
   const job = (id, t) => { sync(); const j = S.job[id], s = j.side, w = G.p2.where[id], ws = G.p2.wside[id], b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id]; let r;
     if (w === 'p0') r = t < S.cross[id] ? { T: spiral(L(s, [14, -2]), idx(id), 5), fast: false, ob: null } : { T: L(s, P.gateP), fast: true, ob: { at: T.wardens, p: L(s, P.gateP), r: 1.2 } };
@@ -341,6 +347,7 @@ function pgP2(A) {
     if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. To the edge of your tether now (about 20 yards; you\'re slowed), then past 25 yards at 3:26 (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 5.5 ? 'Grasping Fangs: you\'re one of the five. At 3:28 go to the edge of your tether (20 yards; you\'re slowed), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
     const fl = S.impacts.find((m) => t >= m.t0 && t <= m.at && Math.hypot(G.x - m.x, G.y - m.y) < m.r + 3); if (fl) return 'Falling Debris: step out of the brown circle!';
     if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
+    const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (w === 'L' && t < T.wdie) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 2) ? 'Keep 7 yards from the eggs while the Warden lives (Warden\'s Protection).' : 'The Warden: stay with your half, out of 7 yards of the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
     if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait by it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
     if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
@@ -414,6 +421,19 @@ function pgP2(A) {
     L0.push(({ random: 'Tether: if you get one, break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
     L0.push('Back to her at 4:38: burn the heart, step out of the brown circles.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
+  // ---- hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"; practice.js does the rest: Tab or a click picks a target,
+  // you hit it in range (melee 5 yards, others 40), a moment spent mostly on it counts, a miss is one line). The targets: your ledge's Warden while it
+  // lives, the Weakened Doomscales, any Viper, the heart while it's open. The moments, most urgent first: a Viper (deadly), the heart (the second burn,
+  // 4:55 to 5:15), the Doomscales (from 4:29, killed evenly; the guide), the Warden (before its next Writhing Gestation, dead by 3:38) ----
+  const tgts = (t) => { sync(); const L0 = []; if (!G || !G.p2) return L0;
+    G.adds.forEach((a) => { if (a.kind !== 'viper') return; a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6 }); });
+    if (t >= T.heart && t < T.heartEnd) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 3 });
+    S.ds.forEach((d) => { const c = G.p2.ds[d.id]; if (c && t >= d.up + 1.5) L0.push({ key: d.id, kind: 'ds', name: 'Weakened Doomscale', p: [c.x, c.y], r: 2.6 }); });
+    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (p && t >= w.molt) L0.push({ key: w.id, kind: 'warden', name: 'Doomscale Warden', p: p.slice(), r: 2.5 }); });
+    return L0; };
+  const dpsCat = (t) => { sync(); if (!G || !G.p2) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (t >= T.heart && t < T.heartEnd) return 'heart';
+    if (t >= T.dsUp + 1.5 && Object.keys(G.p2.ds).length) return 'ds'; const j = S.job[A.me]; return j && G.p2.wd[j.side] && t >= T.molt + 1.2 ? 'warden' : null; };
+  const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['warden', 'ds', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ warden: 'the Warden', ds: 'the Doomscales', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   const starts = [[0, '2:46 · The split'], [190, '3:10 · The tethers'], [216, '3:36 · The small eggs'], [248, '4:08 · The big eggs'], [266, '4:26 · The Doomscales'], [284, '4:44 · The heart burn']];
 
   // ---- the minimap: the whole room, both ledges ----
@@ -466,7 +486,7 @@ function pgP2(A) {
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); };
 
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
+    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
     clean: 'Every kick landed, your tether broke on the count, your eggs went in clean, and you kept out of the frontals and the debris. Try another job.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, clash, get T() { return T; } };
 }

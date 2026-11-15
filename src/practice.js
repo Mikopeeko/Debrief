@@ -106,6 +106,7 @@ function pgOpen(root, boss, d, pk) {
   pgCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic';
   // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
+    get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ' and stay in range' + (rl(me) === 'm' ? ' (melee: close to it)' : '') + '.' : null; },
     mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
@@ -204,13 +205,13 @@ function pgOpen(root, boss, d, pk) {
   // need to do and when"): Tab picks a target (a click on one picks it too) and you hit it while you're in range (melee 5 yards from it, everyone else
   // 40). The moments that matter: a Viper the moment it hatches, the heart while it's open, the Rawlings after each coil soak. A moment spent mostly
   // on the right thing counts; a miss is one line in the report. No damage numbers: training wheels. ----
-  const tgtList = (t) => { const L = [], B = bossAt(t), TL = tailAt(t);
+  const tgtList = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
     G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1 }); });
     if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
-  const dpsCat = (t) => (G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
+  const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
   const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it and kill it first.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart and stay in range.'],
     rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick them and kill them before they grow strong.'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
@@ -218,15 +219,15 @@ function pgOpen(root, boss, d, pk) {
   const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
   const onRight = (cat, o) => isRight(cat, o) && inRange(o);
   const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
-    if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (c.kind === 'heart' ? 'it' : c.kind === 'viper' ? 'it' : 'them') + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
-  const dpsStep = (t, dt) => { if (P2) return; const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
+    if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (DPS_SAY[c.kind][3] || (c.kind === 'heart' || c.kind === 'viper' ? 'it' : 'them')) + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
+  const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
     if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
   const cycleTgt = () => { const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
-  const pickTgtAt = (p) => { if (P2 || !G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
-  const dpsView = () => { if (!G || P2) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
+  const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
+  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
   const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
@@ -563,7 +564,7 @@ function pgOpen(root, boss, d, pk) {
   const grade = () => { const maj = G.log.filter((m) => MAJ.has(m.kind)).length, mn = G.log.length - maj, sc = Math.max(0, 100 - maj * 9 - mn * 4 - G.deaths * 20 - (G.wipes || 0) * 20); return { sc, g: sc >= 95 ? 'S' : sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D' }; };
   const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [];
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + '</span>' +
-      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (the Rawlings, the heart' + (DL.some((m) => m.kind === 'viper') ? ', the Vipers' : '') + ').</p>' : '') +
+      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (' + (P2 ? P2.dpsNames(DL) : 'the Rawlings, the heart' + (DL.some((m) => m.kind === 'viper') ? ', the Vipers' : '')) + ').</p>' : '') +
       (n ? '<ol class="pg-sum">' + G.log.slice().sort((a, b) => a.t - b.t).map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.text) + '</b>' + (m.tip ? '<span>' + esc(m.tip) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
@@ -581,7 +582,7 @@ function pgOpen(root, boss, d, pk) {
   const kd = (e) => { if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
     if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
-    if (G && !paused && e.code === 'Tab' && !P2) { e.preventDefault(); cycleTgt(); return; }
+    if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
     if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };

@@ -19,7 +19,9 @@
 //      clean run doesn't score 100;
 //   F. the part isn't on the start card's Part switch, `?practice=2` doesn't open it, or build.ps1 doesn't check and read src/practice-p2.js;
 //   G. the 3D view doesn't draw phase 2's own shapes where its hits are (the tether's 25 yards, the eggs' 7, the cauldron's 9, the frontal's 14);
-//   H. phase 1 changes with this file loaded (the part hook stays off for it).
+//   H. phase 1 changes with this file loaded (the part hook stays off for it);
+//   I. the damage moments (Flex, Nov 15): the Warden, the Doomscales and the heart at their times (any Viper first), Tab and a click work, the
+//      autopilot hits each in four jobs, standing still misses all three, and the end card names them.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -157,6 +159,23 @@ function checks(H, say) {
     if (!/^<ul class="pg-short">/.test(sh) || li < 3 || li > 4) bad('phase 2\'s "your job in short" isn\'t a pg-short list of three or four lines (' + li + ', check F)');
     else if (!/West ledge/.test(sh) || !/north big egg/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
   catch (e) { bad('phase 2\'s "your job in short" crashed: ' + e.message + ' (check F)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // I. hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"): your ledge's Warden while it lives, the Weakened
+  //    Doomscales from 4:29, the heart from 4:55, any Viper first; Tab or a click picks, melee 5 yards, others 40; a moment mostly on it counts, a
+  //    miss is one line, the end card says "Right target: N of M". (Before: phase 2 had no targets; Tab did nothing in it)
+  try {
+    const pkI = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkI; const meI = dbg.P2.slotOf(pkI);
+    [[200, 'warden'], [275, 'ds'], [300, 'heart']].forEach(([t0, cat]) => { dbg.at(t0, meI, { east: false, seed: 3 }); const c = dbg.P2.dpsCat(dbg.G.t), L0 = dbg.P2.tgts(dbg.G.t);
+      if (c !== cat) bad('at ' + clkS(t0) + ' the damage moment is ' + c + ', not ' + cat + ' (check I)'); if (!L0.some((o) => o.kind === cat)) bad('at ' + clkS(t0) + ' there is no ' + cat + ' to pick (check I)'); });
+    for (const [pk, east] of [[{ side: 'E', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'none' }, true], [{ side: 'W', role: 'm', egg: null, mal: 0, cry: 2, teth: 'none' }, false], [{ side: 'W', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }, true], [{ side: 'E', role: 'h', egg: 'close', mal: 0, cry: 0, teth: 'random' }, false]]) {
+      dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, east, 4), DL = (dbg.G.dpsM && dbg.G.dpsM.list) || [], tag = pk.side + ' ' + pk.role + (east ? ', she is east' : ', she is west');
+      ['warden', 'ds', 'heart'].forEach((k) => { const m = DL.find((q) => q.kind === k); if (!m || m.fr < 0.5) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m ? Math.round(m.fr * 100) + '%' : 'no moment') + ', check I)'); });
+      if (r.log.some((x) => /was up|were up|was open/.test(x))) bad('the autopilot (' + tag + ') misses a damage moment: ' + r.log.join(' | ') + ' (check I)');
+      if (dbg.P2.dpsNames(DL) !== 'the Warden, the Doomscales, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
+    dbg.P2.pick = pkI; const st = dbg.sim(meI, false, false, 4).log.join(' | ');
+    ['The Warden was up', 'The Doomscales were up', 'The heart was open'].forEach((x) => { if (!st.includes(x)) bad('standing still all phase, "' + x + '" isn\'t in the mistakes (check I)'); });
+    const PJ0 = rd('practice.js'); if (/e\.code === 'Tab' && !P2/.test(PJ0) || /const dpsStep = \(t, dt\) => \{ if \(P2\) return/.test(PJ0) || /const pickTgtAt = \(p\) => \{ if \(P2/.test(PJ0)) bad('Tab, a click or the damage tally is still off in phase 2 (check I)');
+  } catch (e) { bad('the damage moments crashed phase 2: ' + e.message + ' (check I)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
   const PJ = rd('practice.js'), GJ = rd('guides.js'), BP = rd('build.ps1');
