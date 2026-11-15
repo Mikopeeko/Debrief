@@ -526,7 +526,7 @@ function pg3d(host, A) {
   const resize = () => { const w = host.clientWidth, h = host.clientHeight; if (!w || !h || (w === W0 && h === H0)) return; W0 = w; H0 = h; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); pxK = (h / 2) / Math.tan(cam.fov * Math.PI / 360); UPX.value = pxK * R.getPixelRatio(); };
   const RAY = new T.Raycaster(), NDC = new T.Vector2(), GROUND = new T.Plane(new T.Vector3(0, 1, 0), 0), HIT = new T.Vector3();
   const pick = (X, Y) => { const r = cv.getBoundingClientRect(); if (!r.width || !r.height || !camAt) return null; NDC.set((X - r.left) / r.width * 2 - 1, 1 - (Y - r.top) / r.height * 2); cam.updateMatrixWorld(); RAY.setFromCamera(NDC, cam);
-    const p = RAY.ray.intersectPlane(GROUND, HIT); if (!p || Math.hypot(p.x, p.z) > 140) return null; return [p.x, -p.z]; };
+    const p = RAY.ray.intersectPlane(GROUND, HIT); if (!p || Math.hypot(p.x, p.z) > (A.P2 ? 200 : 140)) return null; /* (phase 2's ledges reach about 180 yards out) */ return [p.x, -p.z]; };
   // (the damage numbers float up by you, and the red flash when you're hurt, over the picture as in 2D)
   const FX = new Map(), V5 = new T.Vector3();
   const fx = (t) => { const G = A.G; G.fx = G.fx.filter((f) => t - f.t0 < 1.2); const live = new Set();

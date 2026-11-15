@@ -127,7 +127,10 @@ function checks(H, say) {
     at(176).forEach((s) => kinds.add(s.k)); at(262).forEach((s) => kinds.add(s.k)); const LF = at(271.5); LF.forEach((s) => kinds.add(s.k)); at(300).forEach((s) => kinds.add(s.k));
     const fan = LF.find((s) => s.k === 'fan'); if (!fan || Math.abs(fan.r - P.FAN.r) > 0.01) bad('in 3D the Doomscale\'s frontal isn\'t drawn at its ' + P.FAN.r + ' yards (check G)');
     ['gate', 'warden', 'tether', 'cauldron', 'begg', 'dscale', 'fan', 'heart'].forEach((k) => { if (!kinds.has(k)) bad('the 3D view draws no "' + k + '" in phase 2 (check G)'); });
-    const P3 = rd('practice3d.js'); if (!/A\.P2\.shapes\(t, P,/.test(P3) || !/P2K && P2K\.put\(s, t\)/.test(P3) || !/typeof pg3dP2 === 'function'/.test(P3)) bad('practice3d.js no longer hands phase 2 its shapes and pieces (check G)');
+    // (the review, Nov 15: a click on a ledge's outer stone did nothing, since the 3D view dropped any floor click past 140 yards, phase 1's platform's size)
+    const far = []; for (let x = 120; x <= 165; x += 5) for (let y = -60; y <= 60; y += 10) if (ctx.pgP2Floor(x, y) && Math.hypot(x, y) > 140) far.push([x, y]);
+    const P3 = rd('practice3d.js'), lim = /Math\.hypot\(p\.x, p\.z\) > \(A\.P2 \? (\d+) : 140\)/.exec(P3); if (far.length && (!lim || far.some((q) => Math.hypot(q[0], q[1]) > +lim[1]))) bad('in 3D a click on a ledge\'s outer stone (' + far.length + ' spots past 140 yards, e.g. ' + far[0].join(', ') + ') doesn\'t walk you there (check G)');
+    if (!/A\.P2\.shapes\(t, P,/.test(P3) || !/P2K && P2K\.put\(s, t\)/.test(P3) || !/typeof pg3dP2 === 'function'/.test(P3)) bad('practice3d.js no longer hands phase 2 its shapes and pieces (check G)');
   } catch (e) { bad('the 3D shapes crashed on phase 2: ' + e.message + ' (check G)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // H. phase 1, with this file loaded
