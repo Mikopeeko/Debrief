@@ -387,3 +387,13 @@ At the top of the Route tab: a ring with the score out of 100, and its five part
 A part that can't be judged is left out and the rest is scaled to 100: a key left early has no timer, pace or count; with no fast run there is no pull plan.
 
 Why these weights: the Mythic+ research ranks route and pull plan 9.5 of 10, pace between pulls 8.5, Lust on the right moments 7.5, and finishing at 100% count 7.
+
+## Route: the tab, redesigned (Nov 14, 2026)
+
+Flex: "we need to look at the route tab next, and find a better design for it", then "Redesign the tab".
+
+The map is the star of the tab and was a screen down the page. Now, top to bottom:
+- The Route score as a slim band: the ring, and a tile a part (Timer, Pace between pulls, Pull plan, Count, Lust) with its points and what happened. A part's sentence is on its tile's hover, and all five are under "Why these points".
+- One bar: your route or the fast run's, the pull stepper, and "Replay the key". The bar's own Player picker is hidden: the page's bar has it, and the two were always one pick.
+- The map with the timeline strip (You and Fast run, pull by pull) under it, in one column that stays in view while the pull's card beside it scrolls.
+The sentence "You took N more pulls than the fast run" is hidden when the score's Pull plan says the same; the line of route facts under the score stays.
