@@ -20531,6 +20531,20 @@ html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efc > i { height: 3px !impor
 html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efc > .mrp-eft { position: absolute !important; right: 42px !important; bottom: 4px !important; max-width: 40% !important; padding: 0 !important; font: 700 12px/18px var(--body) !important; color: #ffd27a !important; text-align: right !important; }
 html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.kick .mrp-eft { color: #9df0ad !important; } html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.off .mrp-eft { color: #ffb0a8 !important; } html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.nk .mrp-eft { color: #d5d9de !important; }
 }
+/* Mythic+ replay: the enemies' health bars coloured by kind (Nov 14, Flex: "Can you also color the mob health bars by their mob type? Elite > Some type of
+   purple, Caster > Some type of blue, Melee > Warrior class color"), on the map's nameplates and in the rows beside the map, with a small key. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-e.t-elite > .mrp-ebf { fill: #a335ee !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.t-cast > .mrp-ebf { fill: #1f80ea !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.t-melee > .mrp-ebf { fill: #c69b6d !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.t-elite .mrp-efh > i { background: #9b30e3 !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.t-cast .mrp-efh > i { background: #1a72d6 !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.t-melee .mrp-efh > i { background: #b58a5d !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mr > .mrp-mrn > .mrp-mrc { color: #fff1bf !important; text-shadow: 1px 1px 1px #000, 0 0 3px #000 !important; } /* (a cooldown's name reads on any class colour) */
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-k > .mrp-elg { float: right !important; margin: 0 !important; font: 600 12px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-elg > i { display: inline-block !important; width: 9px !important; height: 9px !important; margin: 0 4px 0 10px !important; vertical-align: -1px !important; }
+html:not(.mpcard) body #view#view#view .mrp-elg > i.t-elite { background: #a335ee !important; } html:not(.mpcard) body #view#view#view .mrp-elg > i.t-cast { background: #1f80ea !important; } html:not(.mpcard) body #view#view#view .mrp-elg > i.t-melee { background: #c69b6d !important; }
+}
 </style>
 </body>
 </html>
