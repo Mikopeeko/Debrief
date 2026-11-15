@@ -152,12 +152,12 @@ function pgOpen(root, boss, d, pk) {
   const ZN = { m1: ['by her', 'centre'], m2: ['by her', 'edge'], r5: ['left (west)', 'centre'], r3: ['left (west)', 'edge'], r6: ['right (east)', 'centre'], r4: ['right (east)', 'edge'], r1: ['far (south)', 'centre'], r2: ['far (south)', 'edge'] };
   const teamRole = (id) => { const sk = TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
   // ---- your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment, for those who arent using my website for
-  // assignments" / "using the raid plan images with the ability to click on the spot they are assigned to"): your role, your egg spot (or none),
-  // your coil team in each set and your numbered bubble spots (wowutils' 1 to 8 and 11 to 18), clicked on the game's own map. The other 19 take
-  // the jobs left and the teams stay even. Remembered on this browser. ----
+  // assignments", then "its a bit overkill"): three rows of buttons, your role, your egg area (or none) and your coil team. The rest is picked for
+  // you: the egg spot in your area, a free bubble spot (shown in gold), and team 1 in set 1 for egg carriers. The other 19 take the jobs left and
+  // the teams stay even. Remembered on this browser. ----
   const JOB_KEY = 'wla-pg-job', job0 = () => ({ role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] });
   const jobOk = (j) => !!j && /^[mrh]$/.test(j.role) && (j.egg === null || !!PG_UL.eggO[j.egg]) && Array.isArray(j.soak) && j.soak.length === 2 && Array.isArray(j.fb) && j.fb.length === 2;
-  let myJob = (() => { try { const j = JSON.parse(localStorage.getItem(JOB_KEY) || 'null'); if (jobOk(j)) return j; } catch (e) { /* (no storage) */ } return job0(); })();
+  let myJob = (() => { try { const j = JSON.parse(localStorage.getItem(JOB_KEY) || 'null'); if (jobOk(j)) return { ...j, soak: [j.soak[1], j.soak[1]], fb: [0, 0] }; } catch (e) { /* (no storage) */ } return job0(); })();
   const jobSave = () => { try { localStorage.setItem(JOB_KEY, JSON.stringify(myJob)); } catch (e) { /* (no storage) */ } };
   const jobSlot = (j) => (j.egg && PG_UL.eggO[j.egg] ? j.egg : { m: 'm3', r: 'r7', h: 'h2' }[j.role]);
   const jobMine = () => !P2 && !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
@@ -215,16 +215,8 @@ function pgOpen(root, boss, d, pk) {
     if (!M) { const n = Math.max(5, ob.car.length), D = 2 * Math.PI / n, th = ob.car.map((c) => { const z = S.F(UX_ZONE[c] || UX_HOME[c] || [0, 0], ob.at); return [c, Math.atan2(z[1] - ob.p[1], z[0] - ob.p[0])]; }).sort((a, b) => a[1] - b[1]);
       let sx = 0, sy = 0; th.forEach(([, a], i) => { sx += Math.cos(a - i * D); sy += Math.sin(a - i * D); }); const c0 = Math.atan2(sy, sx); M = new Map(th.map(([c], i) => [c, c0 + i * D])); RC.set(key, M); }
     const a = M.get(id); return [ob.p[0] + Math.cos(a) * 6.5, ob.p[1] + Math.sin(a) * 6.5]; };
-  // (the carriers' numbered bubble spots: the team plan's; with a picked job, your spot and the other carriers each on the nearest one left)
-  const fbList = (ek) => { if (TEAM) { const f = TEAM.fb[ek]; return f && f.length ? f : null; }
-    const n = jobMine() && myJob.fb[ek], j = n ? n - (ek ? 11 : 1) : -1; if (!(j >= 0 && j < 8) || !carrierOf(me) || typeof UL_FB === 'undefined') return null;
-    const C = S._fbl = S._fbl || {}, key = ek + ':' + me + ':' + j; if (C[key]) return C[key];
-    const q = S.bubbles.filter((z) => eggsHeldAt(z.at))[ek]; if (!q) return null;
-    const at = (u) => { const v = ek ? pgRot(u, S.rotAt(q.at) - 90) : q.m ? q.m(u) : u; return [q.p[0] + v[0] * 10, q.p[1] + v[1] * 10]; };
-    const L = new Array(8).fill(null), P = [], done = new Set(); L[j] = me;
-    CAR8.filter((c) => c !== me).forEach((c) => { const z = S.F(UX_ZONE[c], q.at); UL_FB[ek].forEach((u, i) => { if (i !== j) P.push([pgDist(z, at(u)), c, i]); }); });
-    P.sort((a, b) => a[0] - b[0]).forEach(([, c, i]) => { if (!done.has(c) && !L[i]) { L[i] = c; done.add(c); } });
-    return (C[key] = L); };
+  // (the carriers' numbered bubble spots: the team plan's; without one, each carrier takes a free spot round the bubble)
+  const fbList = (ek) => { if (!TEAM) return null; const f = TEAM.fb[ek]; return f && f.length ? f : null; };
   const jobOf = (id, t) => { if (P2) return P2.job(id, t); let T = homeOf(id, t), fast = false; const b0 = id === me ? { x: G.x, y: G.y } : G.bots[id], myEgg = G.eggs.find((e) => e.id === id && (e.state === 'floor' || e.state === 'air') && e.land - t < 14);
     // carriers: next to their egg once it's down, onto it when the shell breaks
     if (myEgg && t >= myEgg.land - 1.5) { T = t >= myEgg.shell - 0.4 ? [myEgg.x, myEgg.y] : [myEgg.x - 4.6, myEgg.y + 1]; }
@@ -445,44 +437,18 @@ function pgOpen(root, boss, d, pk) {
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   // (the job picker: your role, then three maps of the game's own stone: your egg spot, your coil team in each set, your numbered bubble spots)
-  const jobUi = { step: 'egg', set: 0 };
-  const jobPanel = () => { const j = myJob, slot = jobSlot(j), car = !!j.egg, st = jobUi.step === 'fb' && !car ? 'egg' : jobUi.step, set = jobUi.set, Y = (p) => (-p[1]).toFixed(2), X = (p) => p[0].toFixed(2);
-    const tx = (p, t, c, sz, an) => '<text pointer-events="none" x="' + X(p) + '" y="' + Y(p) + '" fill="' + (c || '#e8edf2') + '" font-size="' + (sz || 4.2) + '" text-anchor="' + (an || 'middle') + '" font-weight="700" paint-order="stroke" stroke="#05070a" stroke-width="' + ((sz || 4.2) * 0.28).toFixed(2) + '">' + esc(t) + '</text>';
+  // (the job picker: three rows of buttons, and a small map of where your egg lands)
+  const JOB_AREAS = [['m1', 'By her'], ['r5', 'Left'], ['r6', 'Right'], ['r1', 'Far']];
+  const jobPanel = () => { const j = myJob, slot = jobSlot(j), car = !!j.egg, team = j.soak[1] === 2 ? 2 : 1, Y = (p) => (-p[1]).toFixed(2), X = (p) => p[0].toFixed(2);
+    const tx = (p, t, c, sz) => '<text pointer-events="none" x="' + X(p) + '" y="' + Y(p) + '" fill="' + c + '" font-size="' + sz + '" text-anchor="middle" font-weight="700" paint-order="stroke" stroke="#05070a" stroke-width="' + (sz * 0.28).toFixed(2) + '">' + esc(t) + '</text>';
     const oct = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]].map((q) => X(q) + ',' + Y(q)).join(' ');
-    const room = '<image href="' + PG_UL.art + '" x="' + (-PG_UL.artW / 2).toFixed(1) + '" y="' + (-(PG_UL.artY + PG_UL.artH / 2)).toFixed(1) + '" width="' + PG_UL.artW.toFixed(1) + '" height="' + PG_UL.artH.toFixed(1) + '" preserveAspectRatio="none" opacity=".5"/><polygon points="' + oct + '" fill="rgba(120,140,110,.12)" stroke="rgba(220,230,210,.55)" stroke-width=".5"/>';
-    const her = (p, lab, at) => '<ellipse cx="' + X(p) + '" cy="' + Y(p) + '" rx="6.5" ry="5" fill="#1f4a1b" stroke="#b6f23a" stroke-width=".7"/>' + tx(at || [p[0], p[1] + (p[1] > 40 ? -9.5 : 7.5)], lab || 'Ula\'tek', '#e9ffd0', 4.2, at ? 'start' : 'middle');
-    const tail = (p) => '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="3.4" fill="#4a3b19" stroke="#c8a36a" stroke-width=".6"/>';
-    const hit = (attr, label, on, inner) => '<g class="pg-jhit" tabindex="0" role="button" aria-label="' + esc(label) + '" aria-pressed="' + (on ? 'true' : 'false') + '" ' + attr + '><title>' + esc(label) + '</title>' + inner + '</g>';
-    const seg = (k, opts, cur) => '<div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</div>';
-    let svg = '', side = '';
-    if (st === 'egg') {
-      svg = '<svg viewBox="-52 -55 104 100" role="group" aria-label="Your egg spot">' + room + her([0, 46]) + CAR8.map((c) => { const z = UX_ZONE[c], q = PG_UL.eggO[c], p = PG_UL.inward([z[0] + q[0], z[1] + q[1]]), on = c === j.egg;
-        return hit('data-je="' + c + '"', ZN[c][0] + ', ' + ZN[c][1] + ' spot', on, '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="4.6" fill="' + (on ? 'rgba(243,201,105,.3)' : 'rgba(230,224,200,.16)') + '" stroke="' + (on ? '#f3c969' : '#e6e0c8') + '" stroke-width="' + (on ? 1.1 : 0.55) + '"/><circle cx="' + X(p) + '" cy="' + Y(p) + '" r="1.5" fill="#e9e2c6"/>') +
-          (on ? tx([p[0], p[1] + (p[1] > 25 ? -8.5 : 6.4)], 'Your egg', '#f3c969', 4.4) : ''); }).join('') + '</svg>';
-      side = '<p><b>Your egg.</b> Click where your egg lands, as your raid leader told you.</p><p>' + (car ? esc('Picked: ' + ZN[slot][0] + ', the ' + ZN[slot][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her.') : 'Picked: no egg. You stay out of the carriers\' way.') + '</p>' +
-        '<button type="button" class="pg-btn pg-jno' + (car ? '' : ' on') + '" data-je="none" aria-pressed="' + !car + '">No egg</button>';
-    } else if (st === 'coil') {
-      const P = set ? [[-8, -25], [8, -25]] : [PG_UL.soakA, PG_UL.soakB], lock = car && !set, mine = lock ? 0 : j.soak[set] === 2 ? 1 : 0;
-      svg = '<svg viewBox="-52 -55 104 100" role="img" aria-label="Where the coils rise: beside her tail">' + room + (set ? her([-46, 0], 'Ula\'tek (east or west)', [-51, -9]) : her([0, 46])) +
-        (set ? tail([0, -41]) + tx([0, -35.5], 'Her tail (south)', '#e8d6a8', 4.2) : tail(PG_UL.tail) + tx([-51, -6.5], 'Her tail', '#e8d6a8', 4.2, 'start') + tx([-51, -11.5], '(west or east)', '#e8d6a8', 4.2, 'start')) +
-        P.map((p) => '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="10" fill="rgba(36,242,203,.1)" stroke="#24f2cb" stroke-width=".6"/>' + tx([p[0], p[1] - 1.4], '1st or 2nd', '#9fe9da', 4.2)).join('') + '</svg>';
-      side = seg('jset', [[0, 'Set 1 · 0:40'], [1, 'Set 2 · 2:14']], set) + '<p><b>Your coil team.</b> Team 1 soaks the first coil to appear. Team 2 soaks the second.</p>' +
-        '<div class="pg-jteams">' + [1, 2].map((k) => '<button type="button" class="pg-btn pg-jno' + (mine === k - 1 ? ' on' : '') + '" data-jc="' + k + '" aria-pressed="' + (mine === k - 1) + '"' + (lock && k === 2 ? ' disabled' : '') + '>Team ' + k + (k === 1 ? ': the first coil' : ': the second') + '</button>').join('') + '</div>' +
-        (lock ? '<p>Egg carriers soak the first coil in set 1, inside the Wretch\'s bubble.</p>' : '') + '<p>The coils rise beside her tail. Either one can appear first. Watch which one appears.</p>';
-    } else {
-      const C = set ? [-26, 0] : [-26, 2], SP = UL_FB[set], n0 = set ? 11 : 1, cur = j.fb[set] || 0;
-      svg = '<svg viewBox="' + (C[0] - 15).toFixed(1) + ' ' + (-C[1] - 15).toFixed(1) + ' 30 30" role="group" aria-label="Your bubble spot">' +
-        (set ? '' : '<circle cx="' + X(PG_UL.soakA) + '" cy="' + Y(PG_UL.soakA) + '" r="10" fill="rgba(36,242,203,.06)" stroke="#24f2cb" stroke-width=".25" stroke-dasharray="1 .7"/>' + tx([PG_UL.soakA[0], PG_UL.soakA[1] + 7.4], 'the first coil', '#9fe9da', 1.35)) +
-        '<circle cx="' + X(C) + '" cy="' + Y(C) + '" r="10" fill="rgba(216,242,47,.1)" stroke="#d8f22f" stroke-width=".35"/><circle cx="' + X(C) + '" cy="' + Y(C) + '" r="1.3" fill="#9b5cff"/>' +
-        SP.map((u, i) => { const p = [C[0] + u[0] * 10, C[1] + u[1] * 10], on = cur === n0 + i; return hit('data-jf="' + (n0 + i) + '"', 'Bubble spot ' + (n0 + i), on, '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="1.75" fill="' + (on ? '#f3c969' : 'rgba(10,12,16,.85)') + '" stroke="' + (on ? '#fff' : '#e6e0c8') + '" stroke-width=".22"/>') + tx([p[0], p[1] - 0.55], String(n0 + i), on ? '#1a1405' : '#fff', 1.5); }).join('') +
-        (set ? tx([C[0] - 13.6, C[1] - 0.4], '← Ula\'tek', '#e9ffd0', 1.35, 'start') : tx([C[0] - 13.6, C[1] - 0.4], '← her tail', '#e8d6a8', 1.35, 'start')) + '</svg>';
-      side = seg('jset', [[0, 'Fester Burst 0:39'], [1, 'Fester Burst 1:48']], set) + '<p><b>Your bubble spot.</b> Egg carriers stand on their numbered spot in the Wretch\'s bubble. No two egg circles touch. Click yours.</p>' +
-        '<p>' + (set ? 'The spots turn with her when she comes up on the other side.' : 'The spots turn with her tail and flip with the first coil.') + '</p>' +
-        '<button type="button" class="pg-btn pg-jno' + (cur ? '' : ' on') + '" data-jf="0" aria-pressed="' + !cur + '">Any spot</button>';
-    }
-    return '<div class="pg-optrow pg-jrole"><span>Role</span>' + seg('jr', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], j.role) + '</div>' +
-      '<div class="pg-jtabs">' + seg('js', [['egg', 'Egg'], ['coil', 'Coils']].concat(car ? [['fb', 'Bubble spot']] : []), st) + '</div>' +
-      '<div class="pg-jobp"><div class="pg-jmap">' + svg + '</div><div class="pg-jside">' + side + '</div></div>'; };
+    const egg = car ? (() => { const z = UX_ZONE[slot], q = PG_UL.eggO[slot], p = PG_UL.inward([z[0] + q[0], z[1] + q[1]]); return '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="5.5" fill="rgba(243,201,105,.3)" stroke="#f3c969" stroke-width="1.2"/><circle cx="' + X(p) + '" cy="' + Y(p) + '" r="1.8" fill="#e9e2c6"/>' + tx([p[0], p[1] + (p[1] > 25 ? -10.5 : 8)], 'Your egg', '#f3c969', 6); })() : tx([0, -3], 'No egg', '#c2cbd5', 7);
+    const map = '<svg viewBox="-46 -56 92 96" role="img" aria-label="' + (car ? 'Where your egg lands' : 'No egg') + '"><image href="' + PG_UL.art + '" x="' + (-PG_UL.artW / 2).toFixed(1) + '" y="' + (-(PG_UL.artY + PG_UL.artH / 2)).toFixed(1) + '" width="' + PG_UL.artW.toFixed(1) + '" height="' + PG_UL.artH.toFixed(1) + '" preserveAspectRatio="none" opacity=".5"/>' +
+      '<polygon points="' + oct + '" fill="rgba(120,140,110,.12)" stroke="rgba(220,230,210,.55)" stroke-width=".6"/><ellipse cx="0" cy="-46" rx="7" ry="5.4" fill="#1f4a1b" stroke="#b6f23a" stroke-width=".8"/>' + tx([0, 36], 'Ula\'tek', '#e9ffd0', 6) + egg + '</svg>';
+    const row = (k, lab, opts, cur) => '<div class="pg-optrow pg-jrow"><span>' + lab + '</span><div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</div></div>';
+    const area = car ? (JOB_AREAS.find(([id]) => ZN[id][0] === ZN[slot][0]) || [slot])[0] : 'none';
+    return '<div class="pg-jobp"><div class="pg-jside">' + row('jr', 'Role', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], j.role) + row('je', 'Egg', [['none', 'No egg']].concat(JOB_AREAS), area) + row('jc', 'Coil team', [[1, 'Team 1'], [2, 'Team 2']], team) +
+      '<p class="pg-jnote">Team 1 soaks the first coil to appear, team 2 the second.' + (car ? ' Egg carriers soak the first coil in set 1, inside the Wretch\'s bubble.' : '') + ' Your bubble spot is picked for you.</p></div><div class="pg-jmap">' + map + '</div></div>'; };
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
     const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
     if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her (the gold circle shows it). Wait for its shell, walk over it, carry it clean, break it in your coil soak.']);
@@ -491,7 +457,7 @@ function pgOpen(root, boss, d, pk) {
     else if (TEAM) L.push(['Coil soaks', 'Not yours: stay out of both circles.']);
     else L.push(['Coil soaks', 'First set (0:40): team ' + sets[0] + '. Second set (2:14): team ' + sets[1] + '. Team 1 takes the first coil to appear, team 2 the next. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
     if (TEAM) TEAM.fb.forEach((f, i) => { const j = f.indexOf(id); if (j >= 0) L.push(['Fester Burst ' + (i ? '1:48' : '0:39'), 'Your spot in the bubble: ' + (i ? 11 + j : 1 + j) + ' (a gold circle while you carry your egg).']); });
-    else if (J && carrierOf(id)) [0, 1].forEach((i) => L.push(['Fester Burst ' + (i ? '1:48' : '0:39'), J.fb[i] ? 'Your spot in the bubble: ' + J.fb[i] + ' (a gold circle while you carry your egg).' : 'Any spot in the bubble, 3 yards from the other carriers (a gold circle shows it).']));
+    else if (J && carrierOf(id)) L.push(['Fester Burst (0:39 and 1:48)', 'Your spot in the bubble is picked for you: the gold circle. Keep 3 yards from the other carriers.']);
     L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch at 0:39, 1:10, 1:48 and 2:20. At 1:48 stand on it from her tail\'s sweep at 1:46.']); L.push(['Her tail\'s sweep', 'Out of 35 yards from her tail at 0:49 and 1:46.']);
     L.push(['Her waves', 'At 0:56 and 1:53: wait on the half she isn\'t pulling her wing back from, then cross behind the first wave.']); L.push(['Small tails', 'A tail rising at the edge sends three waves 2.4 s later: step out of their red lanes.']);
     L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive (1:17) and the heart (2:25)', 'She comes up on either side. In the heart burn, step out of the brown circles.']);
@@ -518,15 +484,13 @@ function pgOpen(root, boss, d, pk) {
     const pm = card.querySelector('.pg-me'); if (pm) pm.onchange = () => { role = teamRole(pm.value); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + asg(role.id); seeMe(); };
     card.querySelectorAll('.pg-part button').forEach((b) => (b.onclick = () => { if (b.dataset.v === pkNow) return; close(); pgOpen(root, boss, d, b.dataset.v === d ? null : b.dataset.v); }));
     const jp = card.querySelector('.pg-job0'); if (jp && P2) P2.bind(jp, () => { role = P2.role(); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + P2.asg(); seeMe(); });
-    else if (jp) jp.onclick = (e) => { const b = e.target.closest('[data-jr],[data-js],[data-jset],[data-je],[data-jc],[data-jf]'); if (!b) return; const d0 = b.dataset;
-      if (d0.jr) { myJob.role = d0.jr; if (myJob.egg === null) myJob.fb = [0, 0]; }
-      if (d0.js) jobUi.step = d0.js; if (d0.jset) jobUi.set = +d0.jset;
-      if (d0.je) { myJob.egg = d0.je === 'none' ? null : d0.je; if (!myJob.egg) myJob.fb = [0, 0]; }
-      if (d0.jc) myJob.soak[jobUi.set] = +d0.jc; if (d0.jf != null && d0.jf !== '') myJob.fb[jobUi.set] = +d0.jf;
-      const fk = ['jr', 'js', 'jset', 'je', 'jc', 'jf'].find((k) => d0[k] != null), sel = fk ? '[data-' + fk + '="' + d0[fk] + '"]' : null, refocus = !!(document.activeElement && b.contains(document.activeElement)) || e.detail === 0;
+    else if (jp) jp.onclick = (e) => { const b = e.target.closest('[data-jr],[data-je],[data-jc]'); if (!b) return; const d0 = b.dataset;
+      if (d0.jr) myJob.role = d0.jr;
+      if (d0.je) { const e2 = d0.je === 'none' ? null : d0.je; if (!e2 || !myJob.egg || ZN[e2][0] !== ZN[myJob.egg][0]) myJob.egg = e2; } /* (an area you already have keeps its spot) */
+      if (d0.jc) myJob.soak = [+d0.jc, +d0.jc]; myJob.fb = [0, 0];
+      const fk = ['jr', 'je', 'jc'].find((k) => d0[k] != null), sel = '[data-' + fk + '="' + d0[fk] + '"]', refocus = !!(document.activeElement && b.contains(document.activeElement)) || e.detail === 0;
       jobSave(); role = jobRole(myJob); jp.innerHTML = jobPanel(); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + asg(role.id); seeMe();
-      if (refocus && sel) { const nb = jp.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
-    if (jp && !P2) jp.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.pg-jhit')) { e.preventDefault(); e.stopPropagation(); e.target.closest('.pg-jhit').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); } };
+      if (refocus) { const nb = jp.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
     card.querySelectorAll('.pg-spd button').forEach((b) => (b.onclick = () => { speed = +b.dataset.v; card.querySelectorAll('.pg-spd button').forEach((q) => q.classList.toggle('on', q === b)); }));
     card.querySelector('.pg-at').onchange = (e) => { startAt = +e.target.value || 0; };
     card.querySelectorAll('.pg-hint button').forEach((b) => (b.onclick = () => { hints = b.dataset.v === '1'; try { localStorage.setItem('wla-pg-hints', hints ? '1' : '0'); } catch (e) { /* (no storage) */ } card.querySelectorAll('.pg-hint button').forEach((q) => q.classList.toggle('on', q === b)); }));
@@ -643,11 +607,11 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-cin h2 { margin: 2px 0 8px; font: 800 24px/1.15 var(--head, system-ui); color: #fff; } .pg-k { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #aab4c0; }
 .pg-cin p { margin: 0 0 10px; color: #c2cbd5; font-size: 15px; line-height: 1.45; } .pg-tip { color: #f3c969 !important; }
 .pg-who select { min-width: 0; flex: 1; max-width: 420px; }
-.pg-jrole { margin-top: 8px; } .pg-jtabs { margin-top: 10px; } .pg-jseg button { height: 30px; }
+.pg-jrow { margin-top: 0 !important; } .pg-jrow > span { min-width: 70px; } .pg-jnote { margin: 2px 0 0 !important; font-size: 13px !important; color: #aab4c0 !important; } .pg-jseg button { height: 30px; }
 .pg-jobp { display: flex; flex-wrap: wrap; gap: 12px; margin: 10px 0 2px; align-items: flex-start; }
-.pg-jmap { flex: 1 1 270px; max-width: 330px; background: #0b0f12; border: 1px solid rgba(255,255,255,.15); } .pg-jmap svg { display: block; width: 100%; height: auto; }
+.pg-jmap { flex: 0 1 200px; max-width: 220px; background: #0b0f12; border: 1px solid rgba(255,255,255,.15); } .pg-jmap svg { display: block; width: 100%; height: auto; }
 .pg-jhit { cursor: pointer; } .pg-jhit:hover circle:first-of-type { stroke: #fff; }
-.pg-jside { flex: 1 1 190px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-jside p { margin: 0 !important; font-size: 13.5px !important; } .pg-jside b { color: #fff; }
+.pg-jside { flex: 1 1 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-jside p { margin: 0 !important; font-size: 13.5px !important; } .pg-jside b { color: #fff; }
 .pg-jno.on { border-color: #f3c969; color: #f3c969; } .pg-jno:disabled { opacity: .45; cursor: not-allowed; } .pg-jteams { display: flex; flex-wrap: wrap; gap: 6px; }
 .pg-jhit:focus { outline: none; } .pg-jhit:focus-visible circle:first-of-type { stroke: #fff; stroke-width: 1.2; }
 .pg-cin > .pg-row:last-child { position: sticky; bottom: -20px; margin: 14px -22px -20px; padding: 10px 22px 14px; background: var(--bg, #0f1117); border-top: 1px solid rgba(255,255,255,.08); }

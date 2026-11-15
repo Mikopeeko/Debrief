@@ -9,7 +9,7 @@
 //   C. One tank takes all 5 beam impacts; the tank who took the first Mother's Wrath soaks the second beam and takes the new tail; at 1:48 the second Wretch
 //      is held 17 to 22 yards in front of her new spot, 46 to 53 from the new tail, with the raid in its bubble through the Thrash. (The off tank took both
 //      beams and held the second Wretch 26 yards from her; her first tank stayed on her after the dive.)
-//   D. Your own job without a team plan (Flex, Nov 15): egg spot, coil team per set, numbered bubble spots, clicked on the game's map; see check D below.
+//   D. Your own job without a team plan (Flex, Nov 15): three rows, role, egg area and one coil team; see check D below.
 //   E. Hints of what's coming next for you, and an arrow to where your job wants you (Flex, Nov 15); see check E below.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -81,32 +81,26 @@ function checks(H, say, pj) {
     if (dHer < 17 || dHer > 22 || dTail < 46 || dTail > 53) bad('at 1:48 the second Wretch is ' + dHer.toFixed(0) + ' yards from her and ' + dTail.toFixed(0) + ' from the new tail; top kills hold it 17 to 22 from her, 46 to 53 from the tail' + tag + ' (check C)');
     if (!(thrashIn >= 17)) bad('only ' + thrashIn + ' raiders are in the second Wretch\'s bubble as the Thrash lands at 1:46; top kills have 17 to 20' + tag + ' (check C)');
   }
-  // D. Your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment" / "click on the spot they are assigned to"): the egg
-  //    spot picks your place, your coil team holds in each set with both teams kept even, your numbered bubble spots are where the game sends you, and
-  //    the run plays that job clean. (Before: only three fixed jobs, Ranged west carrier, Melee carrier by her, Healer with no egg.)
-  if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
-  const UL_FB = vm.runInContext('UL_FB', G0.ctx), sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and ');
-  const J = { role: 'h', egg: 'm2', soak: [1, 2], fb: [5, 13] }, base = sizes(script({ seed: 3, east: false }));
+  // D. Your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment", then "its a bit overkill"): three rows, your role,
+  //    your egg area and one coil team. Your egg area picks your place, your team holds (egg carriers take the first coil in set 1, where the bubble
+  //    sits on it), both teams stay even, your bubble spot is picked for you, and the run plays that job clean. (Before: three tabs, two maps and
+  //    numbered bubble spots; before that, only three fixed jobs.)
+  if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function' || typeof dbg.panel !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
+  const sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and '), base = sizes(script({ seed: 3, east: false }));
   try {
-    dbg.myJob = JSON.parse(JSON.stringify(J)); if (dbg.jobSlot() !== 'm2') bad('picking the egg spot by her (edge) puts you in ' + dbg.jobSlot() + ', not that carrier\'s place (check D)');
+    const P = dbg.panel(); if (!/data-jr=/.test(P) || !/data-je=/.test(P) || !/data-jc=/.test(P) || /data-jf=|data-js=|data-jset=/.test(P)) bad('the job picker isn\'t the simple three rows (role, egg, coil team): it has ' + ['jr', 'je', 'jc', 'js', 'jset', 'jf'].filter((x) => P.includes('data-' + x + '=')).join(', ') + ' (check D)');
+    dbg.myJob = { role: 'h', egg: 'm2', soak: [2, 2], fb: [0, 0] }; if (dbg.jobSlot() !== 'm2') bad('picking the egg area by her puts you in ' + dbg.jobSlot() + ', not a carrier\'s place there (check D)');
     const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
-    if (team(0) !== '1' || team(1) !== '2') bad('the picked coil teams (team 1 in set 1, team 2 in set 2) play as ' + (team(0) || 'none') + ' and ' + (team(1) || 'none') + ' (check D)');
+    if (team(0) !== '1' || team(1) !== '2') bad('an egg carrier on coil team 2 plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; carriers take the first coil in set 1 (in the Wretch\'s bubble), then team 2 (check D)');
     if (sizes(S2) !== base) bad('picking a coil team leaves the teams at ' + sizes(S2) + ' instead of ' + base + ' (check D)');
     r.log.filter((x) => /missed your coil soak|Soul Constrictor|Fester Burst/.test(x)).forEach((x) => bad('the picked job, played by the autopilot: ' + x + ' (check D)'));
-    if (!/Your spot in the bubble: 5\b/.test(dbg.asg('m2')) || !/Your spot in the bubble: 13\b/.test(dbg.asg('m2'))) bad('the start card doesn\'t name the picked bubble spots 5 and 13 (check D)');
-    for (const [east, more] of [[false, { tailEast: false, first: [false, false] }], [true, { tailEast: true, first: [true, false] }]]) {
-      dbg.at(37.5, 'm2', { east, seed: 3, ...more }); const S3 = dbg.S, b1 = S3.bubbles[0], v1 = b1.m ? b1.m(UL_FB[0][4]) : UL_FB[0][4], want1 = [b1.p[0] + v1[0] * 10, b1.p[1] + v1[1] * 10];
-      if (hyp(dbg.job('m2').T, want1) > 0.6) bad('at the 0:39 bubble the game sends you ' + hyp(dbg.job('m2').T, want1).toFixed(1) + ' yards from your picked spot 5 (tail ' + (more.tailEast ? 'east' : 'west') + ', check D)');
-      dbg.step(Math.round((106 - dbg.G.t) / 0.05)); const b3 = S3.bubbles[2], a = (S3.rotAt(b3.at) - 90) * Math.PI / 180, u = UL_FB[1][2], want3 = [b3.p[0] + (u[0] * Math.cos(a) - u[1] * Math.sin(a)) * 10, b3.p[1] + (u[0] * Math.sin(a) + u[1] * Math.cos(a)) * 10];
-      if (hyp(dbg.job('m2').T, want3) > 0.6) bad('at the 1:48 bubble the game sends you ' + hyp(dbg.job('m2').T, want3).toFixed(1) + ' yards from your picked spot 13 (she surfaces ' + (east ? 'east' : 'west') + ', check D)'); }
-    // (the review, Nov 15: a carrier can't be on team 2 in set 1, where the bubble sits on the first coil; it played as a Soul Constrictor or a missed bubble)
-    dbg.myJob = { role: 'r', egg: 'r1', soak: [2, 1], fb: [0, 0] }; dbg.sim('r1', false, false, 3); if (!dbg.S.soaks.some((q) => q.set === 0 && q.k === 0 && q.group.includes('r1'))) bad('an egg carrier who picks team 2 for set 1 is put on it, but the 0:39 bubble sits on the first coil, so that job can\'t be played (check D)');
-    // (the review, Nov 15: with a picked 0:39 spot, a bot carrier on a far spot missed the 0:40 coil and then carried two eggs; both sides of the tail and both coil orders)
-    for (const [east, seed, more] of [[false, 3, { tailEast: false, first: [false, false] }], [true, 7, { tailEast: true, first: [true, true] }]]) {
-      dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [1, 11] }; dbg.at(0.05, 'r3', { east, seed, ...more });
-      dbg.audit(east, seed, more).filter((x) => SERIOUS.test(x) && !x.includes('[r3]')).forEach((x) => bad('with a picked bubble spot, a bot slips: ' + x + ' (tail ' + (more.tailEast ? 'east' : 'west') + ', check D)')); }
-    dbg.myJob = { role: 'r', egg: null, soak: [1, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
-    if (slot !== 'r7' || !S4.soaks.some((q) => q.set === 0 && q.k === 0 && q.group.includes(slot)) || !S4.soaks.some((q) => q.set === 1 && q.k === 1 && q.group.includes(slot))) bad('a ranged job with no egg on team 1 then team 2 plays as ' + slot + ' on other teams (check D)');
+    if (!/picked for you/.test(dbg.asg('m2'))) bad('the start card doesn\'t say your bubble spot is picked for you (check D)');
+    // (the review, Nov 15: a carrier going from the bubble to the coil that slams a second later hurries; it walked, missed the 0:40 coil and carried two eggs)
+    dbg.at(39.15, 'm2', { east: false, seed: 3, tailEast: false, first: [false, false] }); const k1 = dbg.S.soaks.find((q) => q.set === 0 && q.k === 0);
+    const slow = k1.group.filter((id) => id !== 'm2').map((id) => ({ id, j: dbg.job(id), b: dbg.G.bots[id] })).filter((o) => hyp(o.j.T, [o.b.x, o.b.y]) > 1.5 && !o.j.fast);
+    if (slow.length) bad(slow.map((o) => o.id).join(', ') + ' walk from the 0:39 bubble to the coil that slams at 0:40; they should hurry (check D)');
+    dbg.myJob = { role: 'r', egg: null, soak: [2, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
+    if (slot !== 'r7' || !S4.soaks.every((q) => (q.k === 1) === q.group.includes(slot))) bad('a ranged job with no egg on coil team 2 plays as ' + slot + ' on other teams (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   finally { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; }
   // E. Hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next things for you with their
