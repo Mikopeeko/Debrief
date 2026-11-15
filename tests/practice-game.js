@@ -148,6 +148,8 @@ function checks(H, say, pj) {
     dbg.tgt = 'boss'; const n0 = dbg.G.log.length; dbg.stepOwn(Math.ceil((dbg.S.end - dbg.G.t) / 0.05) + 1);
     if (!dbg.G.log.slice(n0).some((m) => m.kind === 'dps' && /^The heart was open: you were on it \d+% of the time\.$/.test(m.text))) bad('a raider who stays on Ula\'tek through the heart burn gets no line for the heart (check G)');
     if (!/Tab: target/.test(PJ)) bad('the keys line does not say Tab picks a target (check G)');
+    // (Flex, Nov 15: "Wheres the damage button i dont see it": a Target button on the action bar, clickable, gold when something needs hitting)
+    if (!/class="pg-act pg-tab" data-a="tgt"/.test(PJ) || !/tb\.onclick = \(\) => \{ if \(G && !paused\) cycleTgt\(\); \}/.test(PJ) || !/tb\.classList\.toggle\('hot', hot\)/.test(PJ)) bad('there is no Target button on the action bar that picks a target and glows when something needs hitting (check G)');
   } catch (e) { bad('the damage moments crashed the game: ' + e.message + ' (check G)'); }
 }
 

@@ -72815,7 +72815,7 @@ function pgOpen(root, boss, d, pk) {
     '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div>' +
     '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
-    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
+    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab). You hit it while in range."><b>Tab</b><span>Target</span></div><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
     '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div><div class="pg-card"></div></div>';
   (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('pg-open');
   const mini = ov.querySelector('.pg-mini'), mx2 = mini.getContext('2d'), cv = ov.querySelector('.pg-cv'), cx = cv.getContext('2d'), card = ov.querySelector('.pg-card'), $ = (s) => ov.querySelector(s);
@@ -73163,6 +73163,7 @@ function pgOpen(root, boss, d, pk) {
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
     const tg = $('.pg-tgt'); if (tg) tg.innerHTML = !dv ? '' : (dv.cur ? '<span class="pg-tgn' + (dv.ok ? ' ok' : '') + '">Target: <b>' + esc(dv.cur.name) + '</b>' + (dv.inRange ? '' : ' <em>out of range</em>') + '</span>' : '') + (dv.cat && !dv.ok ? '<span class="pg-tgr">' + esc(DPS_SAY[dv.cat][0]) + ': press Tab</span>' : '');
     $('.pg-up').innerHTML = hints ? upNext(t).map((u) => '<span style="border-color:' + u.c + ';color:' + u.c + '">' + esc(u.text) + ' <b>' + Math.ceil(u.at - t) + ' s</b></span>').join('') : '';
+    { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; } }
     [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); if (P2) P2.hud(t); };
   const warns = () => { while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w = S.warns[G.warnI++], el = $('.pg-warn'); el.textContent = w.text; el.style.color = w.c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } };
 
@@ -73304,6 +73305,7 @@ function pgOpen(root, boss, d, pk) {
   window.__pg3dDbg = { get v3() { return v3; }, view };
   const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
+  { const tb = $('.pg-tab'); if (tb) { tb.onclick = () => { if (G && !paused) cycleTgt(); }; tb.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) cycleTgt(); } }; } }
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
 
   // (for testing: play the whole part at once, as a raider who follows the plan or stands still; and an audit of all 20)
@@ -73354,7 +73356,10 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: flex-end; gap: 16px; padding: 12px 14px; pointer-events: none; }
 .pg-job { max-width: 560px; padding: 9px 12px; background: rgba(10,12,16,.88); border: 1px solid rgba(243,201,105,.5); } .pg-job span { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg-job p { margin: 2px 0 0; font: 600 15px/1.35 var(--body, system-ui); }
 .pg-acts { display: flex; gap: 6px; } .pg-act { position: relative; width: 64px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(10,12,16,.88); border: 1px solid rgba(255,255,255,.22); overflow: hidden; }
-.pg-act b { font: 800 14px var(--head, system-ui); } .pg-act span { font-size: 11.5px; color: #aab4c0; } .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0,0,0,.6); }
+.pg-act b { font: 800 14px var(--head, system-ui); }
+.pg-tab { pointer-events: auto; cursor: pointer; } .pg-tab:hover { border-color: #f3c969; } .pg-tab span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-tab.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.55); animation: pgTabHot 1s ease-in-out infinite; } .pg-tab.hot b, .pg-tab.hot span { color: #f3c969; }
+.pg-tab.good { border-color: #7ee08f; } .pg-tab.good b { color: #7ee08f; } @keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } } .pg-act span { font-size: 11.5px; color: #aab4c0; } .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0,0,0,.6); }
 .pg-mis b { color: #ff8f87; font-size: 18px; }
 .pg-mini { position: absolute; left: 14px; top: 104px; width: 180px; height: 180px; border: 1px solid rgba(255,255,255,.2); pointer-events: none; }
 @media (max-width: 900px) { .pg-mini { width: 120px; height: 120px; bottom: auto; top: 120px; } }
