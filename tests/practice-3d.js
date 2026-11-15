@@ -49,6 +49,10 @@ module.exports = function practice3d(say, H) {
   if (!PJ) { bad('src/practice.js is missing'); return Promise.resolve(); }
   H = H || require('./site-helpers.js');
   const grab = (n, src) => { try { return H.grab(n, src); } catch (e) { bad('could not read ' + n + ' (' + e.message + ')'); return null; } };
+  // (Nov 15: the carved stone platform took away the old floor tiles, "slab", that phase 2's 3D kit is still handed; phase 2's 3D stopped loading with
+  //  "slab is not defined". Every name handed to pg3dP2 must be declared in the 3D view)
+  { const k = /pg3dP2\(\{([^}]*)\}\)/.exec(P3); if (k) k[1].split(',').map((x) => x.trim()).filter((x) => /^[A-Za-z_]\w*$/.test(x)).forEach((n) => {
+    if (!new RegExp('(?:\\b(?:const|let|var)\\s+|,\\s*)' + n + '\\s*=').test(P3)) bad('phase 2\'s 3D kit is handed "' + n + '", which the 3D view no longer declares, so phase 2\'s 3D stops loading (' + n + ' is not defined)'); }); }
 
   // 1. one exact version, an allowed host, loaded on demand
   const m = /const PG3D_THREE = '([^']+)'/.exec(P3);

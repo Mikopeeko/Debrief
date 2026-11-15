@@ -75,6 +75,8 @@ function pg3dShapes(A, t) {
     P({ k: 'egg', x, y, h, held: !!e.who });
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
+  // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
+  const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
   if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
@@ -378,6 +380,11 @@ function pg3d(host, A) {
   const OCT = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]], DEPTH = 4;
   const shp = (L) => { const s = new T.Shape(); L.forEach((p, i) => (i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1]))); s.closePath(); return s; };
   const STN = pg3dStoneDraw((w, h) => canvas(w, h, () => {}), (navigator.deviceMemory || 8) < 4 ? 1024 : 2048), AN = Math.min(4, R.capabilities.getMaxAnisotropy()); keep({ dispose: STN.free });
+  // (phase 2's ledges still wear the old floor tiles: its 3D kit asks for them as slab; the carved stone took their place on phase 1's platform
+  // and phase 2's 3D stopped loading with "slab is not defined", Nov 15)
+  const slab = A.P2 ? ctex(canvas(256, 256, (g) => { g.fillStyle = '#4f585f'; g.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const l = 116 + ((i * 3 + j * 5) % 4) * 6; g.fillStyle = 'rgb(' + l + ',' + (l + 9) + ',' + (l + 17) + ')'; g.fillRect(i * 128 + 3, j * 128 + 3, 122, 122); }
+    for (let k = 0; k < 1400; k++) { g.fillStyle = 'rgba(0,0,0,' + (hash(k, 1) * 0.07).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 256, hash(k, 3) * 256, 2, 2); } }), true) : null; if (slab) slab.repeat.set(0.1, 0.1);
   const stx = (c, rx, ry, ox, oy, nrm) => { const tx = ctex(c, true); tx.anisotropy = nrm ? 1 : AN; if (nrm) tx.minFilter = T.LinearMipmapNearestFilter; tx.repeat.set(rx, ry); tx.offset.set(ox, oy); return tx; };
   const vglow = (m) => { m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' +
     'totalEmissiveRadiance += vec3(0.15, 0.46, 0.06) * smoothstep(0.1, 0.3, diffuseColor.g - max(diffuseColor.r, diffuseColor.b));'); }; return m; };

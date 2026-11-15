@@ -111,7 +111,7 @@ function pgOpen(root, boss, d, pk) {
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
   ov.innerHTML = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
     '<div class="pg-top"><div class="pg-me"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div><div class="pg-debs"></div></div>' +
-    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div></div>' +
+    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div>' +
     '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
     '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
@@ -200,6 +200,33 @@ function pgOpen(root, boss, d, pk) {
   let flashT = 0; const flash = () => { flashT = performance.now(); };
   const hurt = (n) => { if (!n) return; const m = has('def') ? 0.5 : 1; G.hp -= n * m; G.fx.push({ x: G.x, y: G.y, text: '−' + Math.round(n * m), t0: G.t, c: '#ff8f87' }); flash(); };
   const MAJ = new Set(['wave', 'ring', 'impact', 'fester', 'thrash', 'bite', 'viper', 'soak', 'soul', 'yolk']);
+  // ---- hitting the right thing (Nov 15, Flex: "include dps mechanics ... very simplified version", "just let the player get the idea of what they
+  // need to do and when"): Tab picks a target (a click on one picks it too) and you hit it while you're in range (melee 5 yards from it, everyone else
+  // 40). The moments that matter: a Viper the moment it hatches, the heart while it's open, the Rawlings after each coil soak. A moment spent mostly
+  // on the right thing counts; a miss is one line in the report. No damage numbers: training wheels. ----
+  const tgtList = (t) => { const L = [], B = bossAt(t), TL = tailAt(t);
+    G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1 }); });
+    if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
+    S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
+    if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
+    return L; };
+  const dpsCat = (t) => (G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
+  const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it and kill it first.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart and stay in range.'],
+    rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick them and kill them before they grow strong.'] };
+  const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
+  const inRange = (o) => pgDist([G.x, G.y], o.p) - o.r <= (rl(me) === 'm' ? 5 : 40);
+  const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
+  const onRight = (cat, o) => isRight(cat, o) && inRange(o);
+  const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
+    if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (c.kind === 'heart' ? 'it' : c.kind === 'viper' ? 'it' : 'them') + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
+  const dpsStep = (t, dt) => { if (P2) return; const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
+    if (G.tgt && !tgtNow(t)) G.tgt = null;
+    if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
+    if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
+    if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
+  const cycleTgt = () => { const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
+  const pickTgtAt = (p) => { if (P2 || !G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
+  const dpsView = () => { if (!G || P2) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
   const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
@@ -318,7 +345,7 @@ function pgOpen(root, boss, d, pk) {
     const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0);
     G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + 5.5 * (t - t0));
     if (P2) P2.check(t0, t);
-    G.adds = G.adds.filter((a) => t < a.t1); };
+    G.adds = G.adds.filter((a) => t < a.t1); dpsStep(t, t - t0); };
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
@@ -367,6 +394,7 @@ function pgOpen(root, boss, d, pk) {
       cx.beginPath(); cx.arc(sx, sy, rad, 0, Math.PI * 2); cx.lineWidth = (you ? 3 : 2) * dpr; cx.strokeStyle = you ? '#fff' : clsC(id) || r[1]; cx.stroke(); if (TEAM && !you) label(x, y, nm(id).slice(0, 7), clsC(id) || '#cfd6df', 10, -13); };
     GDZ_RAID.forEach((id) => { if (id !== me) unit(id, G.bots[id].x, G.bots[id].y, false); });
     if (has('def')) circ(G.x, G.y, 1.9, 'rgba(127,184,255,.18)', '#7fb8ff', 2); unit(me, G.x, G.y, true); label(G.x, G.y, 'YOU', '#fff', 12, -22);
+    const dv2 = dpsView(); if (dv2) { const pu = (0.55 + 0.4 * Math.sin(performance.now() / 150)).toFixed(2); dv2.right.forEach((o) => circ(o.p[0], o.p[1], o.r + 1.2, null, 'rgba(243,201,105,' + pu + ')', 2.5)); if (dv2.cur) circ(dv2.cur.p[0], dv2.cur.p[1], dv2.cur.r + 0.7, null, dv2.inRange ? '#ffffff' : '#ff8f87', 2, [4, 3]); }
     const hn = hintNow(); if (hn) { const ux = (hn.T[0] - G.x) / hn.d, uy = (hn.T[1] - G.y) / hn.d, A = (r, s2) => P(G.x + ux * r - uy * s2, G.y + uy * r + ux * s2), a0 = A(2.2, 0), a1 = A(4.6, 0), w1 = A(3.6, -0.9), w2 = A(3.6, 0.9), pulse = 0.65 + 0.35 * Math.sin(performance.now() / 160);
       cx.globalAlpha = pulse; cx.lineWidth = 3 * dpr; cx.strokeStyle = '#f3c969'; cx.beginPath(); cx.moveTo(a0[0], a0[1]); cx.lineTo(a1[0], a1[1]); cx.moveTo(w1[0], w1[1]); cx.lineTo(a1[0], a1[1]); cx.lineTo(w2[0], w2[1]); cx.stroke(); cx.globalAlpha = 1;
       circ(hn.T[0], hn.T[1], 1.4, 'rgba(243,201,105,.14)', '#f3c969', 2, [4, 3]); label(hn.T[0], hn.T[1], 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 12, -16); }
@@ -399,6 +427,7 @@ function pgOpen(root, boss, d, pk) {
     if (bb) return 'Fester Burst in ' + Math.ceil(bb.at - t) + ' s: get within 10 yards of the Wretch (the yellow bubble).';
     if (sk && t < sk.t0) return 'Soak #' + (sk.k + 1) + ': ' + (sk.k ? 'the second coil to appear is yours. Wait for it beside her tail.' : 'the first coil to appear beside her tail is yours.') + (held ? ' Your egg breaks there.' : '');
     if (sk) return 'Your coil (the ' + (sk.k ? 'second' : 'first') + ' to appear) slams in ' + Math.ceil(sk.at - t) + ' s: stand in the gold circle.' + (held ? ' Your egg breaks there.' : '');
+    const dc = !P2 && dpsCat(t); if (dc && !onRight(dc, tgtNow(t)) && !(e && e.state !== 'gone')) return DPS_SAY[dc][0] + ': press Tab to pick ' + (dc === 'rawling' ? 'one' : 'it') + ' and stay in range' + (rl(me) === 'm' ? ' (melee: close to it)' : '') + '.';
     if (wg) return 'Her ' + (wg.west ? 'west' : 'east') + ' half goes first: wait on the ' + (wg.west ? 'east' : 'west') + ' half, then cross behind the first wave.';
     if (e && e.state === 'air') return 'Your egg lands in ' + Math.max(0, Math.ceil(e.land - t)) + ' s (the gold circle): stay out of the 4-yard impact, then wait by it.';
     if (e && t < e.shell) return 'Your egg\'s shell breaks in ' + Math.ceil(e.shell - t) + ' s: wait by it.';
@@ -417,12 +446,12 @@ function pgOpen(root, boss, d, pk) {
     S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + (q.k ? '2nd' : '1st') + ' to appear)', '#24f2cb'));
     S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Bubble: get in', '#d8f22f'); });
     S.thrash.forEach((q) => add(q.at, 'Tail sweep: out of 35 yards', '#ff9b4a')); S.wings.forEach((w) => add(w.t + 6, 'Her waves', '#9be13a'));
-    S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open', '#ff8a5a');
+    S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open: hit it', '#ff8a5a');
     return L.sort((a, b) => a.at - b.at).slice(0, 3); };
   let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
     const t = G.t, j = jobOf(me, t), egg = G.eggs.some((e) => e.id === me && e.state === 'floor'), act = !!(j.ob || j.fast || egg), b = { id: me, x: G.x, y: G.y, esc: G.hintEsc }, dz = act ? dodge(b, j.T, t, j.fast, j.ob) : null; G.hintEsc = b.esc;
     const T = dz ? dz.T : null, d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, dodge: !!b.esc } : null; hintC = { t, h }; return h; };
-  const hud = (force) => { const t = G.t, c = castNow(t), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '');
+  const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o');
     if (!force && key === hudKey) return; hudKey = key;
     $('.pg-mn').textContent = role.name + ' (you)'; $('.pg-mj').textContent = role.job;
     const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = hp + '%'; hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
@@ -431,6 +460,7 @@ function pgOpen(root, boss, d, pk) {
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100) + '%'; cb.querySelector('span').textContent = (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + '  ' + Math.max(0, c.t1 - t).toFixed(1); } else cb.style.display = 'none';
     $('.pg-timers').innerHTML = S.timers.filter((q) => q.t > t).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5).map((q) => '<div class="pg-tm"><i style="width:' + Math.max(0, Math.min(100, (1 - (q.t - t) / 20) * 100)).toFixed(1) + '%"></i><span>' + esc(q.name) + '</span><b>' + Math.ceil(q.t - t) + '</b></div>').join('');
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
+    const tg = $('.pg-tgt'); if (tg) tg.innerHTML = !dv ? '' : (dv.cur ? '<span class="pg-tgn' + (dv.ok ? ' ok' : '') + '">Target: <b>' + esc(dv.cur.name) + '</b>' + (dv.inRange ? '' : ' <em>out of range</em>') + '</span>' : '') + (dv.cat && !dv.ok ? '<span class="pg-tgr">' + esc(DPS_SAY[dv.cat][0]) + ': press Tab</span>' : '');
     $('.pg-up').innerHTML = hints ? upNext(t).map((u) => '<span style="border-color:' + u.c + ';color:' + u.c + '">' + esc(u.text) + ' <b>' + Math.ceil(u.at - t) + ' s</b></span>').join('') : '';
     [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); if (P2) P2.hud(t); };
   const warns = () => { while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w = S.warns[G.warnI++], el = $('.pg-warn'); el.textContent = w.text; el.style.color = w.c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } };
@@ -499,7 +529,7 @@ function pgOpen(root, boss, d, pk) {
       '<details class="pg-opts"><summary>Options: <b>' + esc(optSum()) + '</b></summary><div class="pg-optrow"><span>Speed</span><div class="pg-seg pg-spd"><button type="button" data-v="1"' + (speed === 1 ? ' class="on"' : '') + '>Normal</button><button type="button" data-v="0.5"' + (speed < 1 ? ' class="on"' : '') + '>Half speed</button></div>' +
       '<span>Hints</span><div class="pg-seg pg-hint"><button type="button" data-v="1"' + (hints ? ' class="on"' : '') + '>On</button><button type="button" data-v="0"' + (hints ? '' : ' class="on"') + '>Off</button></div>' +
       '<span>Start at</span><select class="pg-at">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div></details>' +
-      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button><p class="pg-keys">Move: W A S D or click · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div></div>';
+      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button><p class="pg-keys">Move: W A S D or click · Tab: target · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div></div>';
     const asgSet = () => { const a = card.querySelector('.pg-asg0'), s0 = card.querySelector('.pg-short0'); if (a) a.innerHTML = P2 ? P2.asg() : asg(role.id); if (s0) s0.innerHTML = '<span class="pg-k">Your job in short</span>' + (P2 ? P2.short() : short(role.id)); };
     const optSet = () => { const o = card.querySelector('.pg-opts summary b'); if (o) o.textContent = optSum(); };
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Start) */ } }; /* (the picture behind the card is you) */
@@ -521,7 +551,7 @@ function pgOpen(root, boss, d, pk) {
   const optSum = () => (speed < 1 ? 'Half speed' : 'Normal speed') + ' · Hints ' + (hints ? 'on' : 'off') + ' · ' + (startAt > 0 ? 'From ' + pgClock(startAt) : 'From the pull');
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
-    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.kb = null; G.fx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
+    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); }
@@ -531,9 +561,9 @@ function pgOpen(root, boss, d, pk) {
     card.querySelector('.pg-go').onclick = () => { G.hp = 100; G.debs = {}; card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); };
     card.querySelector('.pg-again').onclick = pick; };
   const grade = () => { const maj = G.log.filter((m) => MAJ.has(m.kind)).length, mn = G.log.length - maj, sc = Math.max(0, 100 - maj * 9 - mn * 4 - G.deaths * 20 - (G.wipes || 0) * 20); return { sc, g: sc >= 95 ? 'S' : sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D' }; };
-  const end = () => { stop(); paused = true; const { sc, g } = grade(), n = G.log.length;
+  const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [];
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + '</span>' +
-      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' +
+      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (the Rawlings, the heart' + (DL.some((m) => m.kind === 'viper') ? ', the Vipers' : '') + ').</p>' : '') +
       (n ? '<ol class="pg-sum">' + G.log.slice().sort((a, b) => a.t - b.t).map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.text) + '</b>' + (m.tip ? '<span>' + esc(m.tip) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
@@ -551,18 +581,19 @@ function pgOpen(root, boss, d, pk) {
   const kd = (e) => { if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
     if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
+    if (G && !paused && e.code === 'Tab' && !P2) { e.preventDefault(); cycleTgt(); return; }
     if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
   document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
-  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; target = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); });
+  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
   const v3api = { hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt,
-    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G) target = p; }, fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
+    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G && !pickTgtAt(p)) target = p; }, dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
@@ -593,7 +624,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -637,12 +668,15 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-jhit { cursor: pointer; } .pg-jhit:hover circle:first-of-type { stroke: #fff; }
 .pg-jside { flex: 1 1 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-jside p { margin: 0 !important; font-size: 13.5px !important; } .pg-jside b { color: #fff; }
 .pg-jno.on { border-color: #f3c969; color: #f3c969; }
+.pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; min-height: 0; } .pg-tgt:empty { display: none; } .pg-tgt span { padding: 2px 8px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); font: 600 12.5px var(--body, system-ui); }
+.pg-tgn b { color: #fff; } .pg-tgn.ok { border-color: #7ee08f !important; } .pg-tgn em { font-style: normal; color: #ff8f87; } .pg-tgr { border-color: #f3c969 !important; color: #f3c969; font-weight: 700 !important; }
+.pg-dpsl { margin: -4px 0 10px !important; } .pg-dpsl b { color: #fff; }
 .pg-short0 { margin-top: 12px; } .pg-short { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .pg-short li { position: relative; padding-left: 24px; font-size: 14px; line-height: 1.45; color: #e8edf2; } .pg-short li .pg-gl { position: absolute; left: 0; top: 2px; }
 .pg-gl { width: 16px; height: 16px; flex: none; vertical-align: -3px; } .pg-jrow > span .pg-gl { margin-right: 6px; }
 .pg-ric { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; border: 1px solid rgba(0,0,0,.5); }
 .pg-head { position: relative; margin: -20px -22px 10px; padding: 18px 22px 14px; min-height: 92px; background: #0b0e12; border-bottom: 1px solid rgba(255,255,255,.08); overflow: hidden; }
-.pg-head > * { position: relative; } .pg-head-art { position: absolute !important; right: -6px; bottom: -14px; height: 150px; width: auto; opacity: .9; pointer-events: none; }
+.pg-head > * { position: relative; } .pg-head-art { position: absolute !important; right: -34px; bottom: -78px; height: 250px; width: auto; opacity: .9; pointer-events: none; }
 .pg-head .pg-partrow { margin-top: 8px; }
 .pg-jmapw { flex: 0 1 220px; max-width: 230px; display: flex; flex-direction: column; gap: 8px; } .pg-jmapw .pg-jmap { max-width: none; flex: none; }
 .pg-jcoil { display: flex; align-items: center; gap: 8px; font-size: 12.5px; line-height: 1.35; color: #c2cbd5; } .pg-jcoil svg { width: 84px; height: auto; flex: none; } .pg-jcoil b { color: #fff; font-weight: 600; }

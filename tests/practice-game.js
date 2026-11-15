@@ -12,6 +12,7 @@
 //   D. Your own job without a team plan (Flex, Nov 15): three rows, role, egg area and one coil team; see check D below.
 //   E. Hints of what's coming next for you, and an arrow to where your job wants you (Flex, Nov 15); see check E below.
 //   F. The start card, tidy: your job, your job in short, Start; the rundown and the options folded away (Flex, Nov 15); see check F below.
+//   G. Hitting the right thing: the Rawlings, the heart, a Viper; Tab picks a target (Flex, Nov 15); see check G below.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -131,6 +132,23 @@ function checks(H, say, pj) {
   if (!/No egg/.test(shNo)) bad('"your job in short" for a raider with no egg doesn\'t say so (check F)');
   if (!/<details class="pg-more"[^>]*><summary>What happens in the fight<\/summary><div class="pg-asg0">/.test(PJ)) bad('the fight\'s rundown isn\'t folded under "What happens in the fight" on the start card (check F)');
   if (!/<details class="pg-opts"><summary>Options: /.test(PJ) || !/class="pg-btn pg-go">Start<\/button><p class="pg-keys">/.test(PJ)) bad('the options aren\'t folded under one Options line, or the keys aren\'t beside Start (check F)');
+  // G. Hitting the right thing (Nov 15, Flex: "include dps mechanics ... very simplified version", "just let the player get the idea of what they need to do
+  //    and when"): the Rawlings after each coil soak, the heart while it's open, a Viper the moment it hatches; Tab or a click picks a target; a moment spent
+  //    mostly on the right thing counts, a miss is one line in the report. (Before: nothing to hit.)
+  if (typeof dbg.dpsList !== 'function' || typeof dbg.tgts !== 'function') { bad('the game has nothing to hit: no damage moments (check G)'); return; }
+  try {
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] };
+    const r1 = dbg.sim('r3', true, false, 3), kinds = dbg.dpsList().map((m) => m.kind);
+    if (!kinds.includes('rawling') || !kinds.includes('heart')) bad('a full run had the damage moments ' + JSON.stringify(kinds) + '; it should have the Rawlings after the coils and the heart (check G)');
+    r1.log.filter((x) => /were up:|was open:|was up:/.test(x)).forEach((x) => bad('the autopilot, on the right target, still got: ' + x + ' (check G)'));
+    dbg.at(146, 'r3', { east: false, seed: 3 }); const h = dbg.tgts().find((o) => o.key === 'heart');
+    if (!h) bad('the heart is not a target while it is open at 2:26 (check G)');
+    else { dbg.tgt = 'heart'; const v = dbg.dps(); if (!v || v.cat !== 'heart' || !v.right.some((o) => o.key === 'heart') || !v.cur || v.cur.key !== 'heart') bad('at 2:26 the game does not show the heart as the right thing to hit, or picking it does not stick (check G)'); }
+    // (a raider who stays on Ula'tek through the heart burn gets one line for it)
+    dbg.tgt = 'boss'; const n0 = dbg.G.log.length; dbg.stepOwn(Math.ceil((dbg.S.end - dbg.G.t) / 0.05) + 1);
+    if (!dbg.G.log.slice(n0).some((m) => m.kind === 'dps' && /^The heart was open: you were on it \d+% of the time\.$/.test(m.text))) bad('a raider who stays on Ula\'tek through the heart burn gets no line for the heart (check G)');
+    if (!/Tab: target/.test(PJ)) bad('the keys line does not say Tab picks a target (check G)');
+  } catch (e) { bad('the damage moments crashed the game: ' + e.message + ' (check G)'); }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;
