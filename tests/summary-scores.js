@@ -50,4 +50,12 @@ module.exports = function summaryScores(H, say) {
   for (const [k, v] of Object.entries(TN)) if (!(TT[k] || '').includes('<b data-g="' + Y.letterOf(v) + '">' + v + '</b>')) bad('the ' + k + ' hover does not show its tile\'s ' + v + ' in its colour');
   if (!/<span>Flask<\/span><b class="g">1 of 1<\/b>/.test(TT.prep) || !/<span>Food<\/span><b class="b">0 of 1<\/b>/.test(TT.prep) || /Gems/.test(TT.prep)) bad('the Ready to raid hover no longer counts who met each one (green when all did, amber when not, skipped when it does not apply)');
   if (!/<span>Defensives<\/span><b class="b">4 raiders press too few<\/b>/.test(TT.alive)) bad('a line with only words (Defensives) lost its words or its colour in the hover');
+  // (Wolfthorn Thu Nov 12 Ula'tek pull 13 (Gax3AkbyFRXmdrgQ, fight 23): Summary on that one pull called the pull's own raid grade (62) "Night score", while the
+  // Report card's raid grade for the night was 75. On one pull the first tile and its hover say "Pull score"; on All pulls they say "Night score".)
+  const lab0 = (h) => (/data-k="night"[^>]*><span class="sc5-k">([^<]+)</.exec(h) || [])[1];
+  if (lab0(X.sum5Tiles(N, null, true)) !== 'Pull score') bad('Summary on one pull calls that pull\'s grade "' + lab0(X.sum5Tiles(N, null, true)) + '"; it should say "Pull score" (Wolfthorn Thu Nov 12 Ula\'tek pull 13: "Night score 62" next to the Report card\'s 75)');
+  if (lab0(X.sum5Tiles(N, null, false)) !== 'Night score') bad('Summary on All pulls no longer says "Night score" on its first tile');
+  if (!/sum5Tiles\(N, [^;]*, one\)/.test(grab('sum5Draw'))) bad('Summary no longer tells its tiles whether it shows one pull, so one pull reads "Night score" again (Wolfthorn Thu Nov 12 Ula\'tek pull 13)');
+  if (!TT.night.includes('<span>Pull score</span>')) bad('the first tile\'s hover on one pull is not titled "Pull score" (Wolfthorn Thu Nov 12 Ula\'tek pull 13)');
+  if (!Y.sum5Tips({ N: { ...TN, n: 20, F: {} }, c: { data: [{}], reps: [1, 2] } }, O, false, false).night.includes('<span>Night score</span>')) bad('the first tile\'s hover on All pulls is not titled "Night score"');
 };

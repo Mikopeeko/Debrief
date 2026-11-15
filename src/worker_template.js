@@ -1741,6 +1741,9 @@ async function tierList(env, v, ctx) {
   return o;
 }
 async function tierGet(env, v, url) { const o = await env.debrief_nights.get(tierK(v, url)); if (!o) return null; return { doc: JSON.parse(await new Response(o.body.pipeThrough(new DecompressionStream('gzip'))).text()), etag: o.etag }; }
+// (Nov 14, raid-night rehearsal: the pulls in a POST whose line differs from the one kept (its time aside); none differ, nothing is written.
+// Every visit to a night used to rewrite the guild's file with the same lines. tests/tier-send-once.js)
+function tierChanged(c, add) { const F = ['k', 'n', 'rc', 'u', 'dd', 'v']; return Object.keys(add).filter((k) => { const o = c && c[k]; return !o || F.some((f) => String(o[f] == null ? '' : o[f]) !== String(add[k][f] == null ? '' : add[k][f])); }); }
 async function tier(req, env, url, ctx) {
   if (!env.debrief_nights) return json({ error: 'The whole tier isn\'t set up on this copy of Debrief.' }, 503);
   const v = tierV(url.searchParams); if (!v) return json({ error: 'That boss is missing something.' }, 400);
@@ -1764,7 +1767,8 @@ async function tier(req, env, url, ctx) {
   if (!Object.keys(add).length) return json({ ok: true, kept: 0 });
   for (let tries = 0; tries < 4; tries++) {
     const g = await tierGet(env, v, url).catch(() => null), doc = g ? g.doc : { g: v.g, e: v.e, d: v.d, c: {} };
-    Object.assign(doc.c, add);
+    const ch = tierChanged(doc.c, add); if (!ch.length) return json({ ok: true, kept: 0, same: Object.keys(add).length }); /* (nothing new: no write, Nov 14) */
+    for (const k of ch) doc.c[k] = add[k];
     const gz = await new Response(new Blob([JSON.stringify(doc)]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
     const put = await env.debrief_nights.put(tierK(v, url), gz, { httpMetadata: { contentType: 'application/octet-stream' }, ...(g ? { onlyIf: { etagMatches: g.etag } } : {}) });
     if (put) return json({ ok: true, kept: Object.keys(add).length }); /* (null: someone saved in between, so it reads again and merges) */
