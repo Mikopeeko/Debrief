@@ -1,0 +1,54 @@
+// Mythic+, the replay's meter, switchable (Nov 15, Flex: "What if we just merged as much of graphs as we can into this", with a picture of the replay's damage
+// meter, then "Yes, build it"): Damage done, Healing, Damage taken, Interrupts, Dispels and Deaths, over the pull being played or the key so far, a player
+// lit up on a click. This runs the page's own meter (mrpMeter) on a made-up key and fails if: a kind is missing or out of order, a number is not the
+// page's own (damage, healing and taken a second; kicks, dispels and deaths as each pull lists them), the key-so-far rate counts the walking, the small line
+// loses the cooldown, defensive, kicked spell, debuff or killer, the meter goes blank before the first pull or after the last, or the replay loses the
+// switches or the click. contradictions.js runs it on every build. Each part fails on the page as it was at 9a758623.
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm');
+module.exports = function replayMeter(say) {
+  const bad = (m) => say('Mythic+ replay', 'the switchable meter', m);
+  let s, css; try { s = fs.readFileSync(path.join(__dirname, '..', 'src', 'mptab.js'), 'utf8'); css = fs.readFileSync(path.join(__dirname, '..', 'src', 'shell.html'), 'utf8'); } catch (e) { bad('could not read src/mptab.js or src/shell.html'); return; }
+  const line = (n) => { const m = s.match(new RegExp('\\n(?:const|function) ' + n + '\\b')); if (!m) throw new Error('src/mptab.js has no ' + n); const L = s.slice(m.index + 1).split('\n'), out = [];
+    for (const l of L) { out.push(l); if (/;\s*(?:\/\*.*\*\/)?\s*$/.test(l)) break; } return '\n' + out.join('\n'); };
+  const fn = (n) => { const a = s.indexOf('\nfunction ' + n + '('); if (a < 0) throw new Error('src/mptab.js has no function ' + n); let i = s.indexOf('{', a), d = 0; for (; i < s.length; i++) { const c = s[i]; if (c === '{') d++; else if (c === '}' && --d === 0) break; } return s.slice(a, i + 1); };
+  let X; try { X = vm.runInNewContext('const MP = {};' + 'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +
+    line('mpGF') + line('mpCap') + line('mpNo') + line('mpPullName') + line('mpxTo') + line('mpT1') + line('MRP_MM') + line('mrpMm') + line('mrpMtHead') + '\n' + fn('mrpCum') + '\n' + fn('mrpMeter') + '\n({ MP, MRP_MM, MRP_MT, mrpMm, mrpMw, mrpMtHead, mrpMeter, mpGF })');
+  } catch (e) { bad('the replay\'s switchable meter is gone or no longer runs by itself (MRP_MM, mrpMeter): ' + String(e.message).slice(0, 140)); return; }
+  if (X.MRP_MM.map((x) => x[1]).join(' | ') !== 'Damage | Healing | Taken | Kicks | Dispels | Deaths') bad('the meter\'s kinds are "' + X.MRP_MM.map((x) => x[1]).join(' | ') + '", not Damage | Healing | Taken | Kicks | Dispels | Deaths');
+  // a made-up key: two players; pull 1 from 10 to 40 (trash), a walk, then the boss from 60 to 100
+  const per = (from, to, v) => { const a = []; for (let t = from; t < to; t++) a[t] = v; return a; };
+  const P = [{ n: 1, s: 10, e: 40, kicks: [{ t: 15, who: 'A', spell: 'Frostbolt' }, { t: 35, who: 'A', spell: 'Shadow Bolt' }], dispels: [{ t: 20, who: 'B', removed: 'Curse of Tongues' }], purges: [{ t: 25, who: 'A', removed: 'Bone Shield' }], deaths: [] },
+    { n: 2, s: 60, e: 100, boss: 'The Boss', kill: true, kicks: [{ t: 70, who: 'B', spell: 'Dark Mending' }], dispels: [], purges: [], deaths: [{ t: 90, who: 'B', to: 'Crush' }, { t: 95, who: 'A', to: 'Unknown' }] }];
+  const R = { pulls: P, pd: { A: per(10, 40, 100000), B: per(10, 40, 50000) }, phl: { B: per(10, 40, 200000) }, ptk: { A: per(10, 40, 30000), B: per(60, 100, 40000) } };
+  const D = { P, end: 110, ppl: [{ n: 'A' }, { n: 'B' }], ev: [{ t: 20, k: 'cd', who: 'A', sp: 'Avenging Wrath' }, { t: 25, k: 'def', who: 'A', sp: 'Divine Shield' }] };
+  for (let t = 45; t < 55; t++) R.phl.B[t] = 999999; /* (healing while walking between the pulls) */
+  const G = (T, k, mm, mw) => X.mrpMeter(R, D, T, k, mm, mw);
+  try {
+    { const m = G(30, 0, 'dmg', 'pull'); if (m.title !== 'Damage done · Pull 1' || m.v.join() !== '2000000,1000000' || m.tx[0] !== X.mpGF(100000) + ' (67%)' || m.sm[0] !== 'Avenging Wrath' || m.sm[1] !== '') bad('Damage done for the pull being played is not each player\'s damage so far, its rate and share, with a big cooldown pressed in the last 12 seconds: ' + JSON.stringify([m.title, m.v, m.tx, m.sm])); }
+    { const m = G(30.5, 0, 'dmg', 'pull'); if (m.v[0] !== 2050000) bad('the second being played is not counted in its share (the meter jumps a second at a time): ' + m.v[0]); }
+    { const m = G(30, 0, 'heal', 'pull'); if (m.title !== 'Healing · Pull 1' || m.v.join() !== '0,4000000' || m.tx[1] !== X.mpGF(200000) + ' (100%)') bad('Healing is not each player\'s healing a second (R.phl): ' + JSON.stringify([m.title, m.v, m.tx])); }
+    { const m = G(30, 0, 'taken', 'pull'); if (m.title !== 'Damage taken · Pull 1' || m.v.join() !== '600000,0' || m.sm[0] !== 'Divine Shield') bad('Damage taken is not each player\'s damage taken a second (R.ptk), or lost the defensive pressed in the last 8 seconds: ' + JSON.stringify([m.v, m.sm])); }
+    { const m = G(80, 1, 'dmg', 'key'); if (m.title !== 'Damage done · Key so far' || m.v[0] !== 3000000 || m.tx[0] !== X.mpGF(3000000 / 50) + ' (67%)') bad('Key so far is not the whole key up to now, or its rate counts the walk between pulls (3,000,000 over 50 seconds of fighting): ' + JSON.stringify([m.title, m.v, m.tx])); }
+    { const m1 = G(41, 0, 'heal', 'key'), m2 = G(52, 0, 'heal', 'key'); if (m1.tx[1] !== X.mpGF(200000) + ' (100%)' || m2.tx[1] !== m1.tx[1] || m2.v[1] !== 6000000) bad('Key so far counts healing done while walking between pulls but not the time, so its rate climbs while nobody fights (the review, Nov 15: 127k to 160k on a key of two 100k pulls): ' + JSON.stringify([m1.tx[1], m2.tx[1], m2.v[1]])); }
+    { const m = G(38, 0, 'kick', 'pull'); if (m.title !== 'Interrupts · Pull 1' || m.v.join() !== '2,0' || m.sm[0] !== 'Shadow Bolt' || m.tx[0] !== '2') bad('Interrupts is not each player\'s kicks in the pull so far, with the last spell kicked: ' + JSON.stringify([m.v, m.sm])); }
+    { const m = G(20, 0, 'kick', 'pull'); if (m.v.join() !== '1,0' || m.sm[0] !== 'Frostbolt') bad('Interrupts counts a kick before it happened'); }
+    { const m = G(80, 1, 'kick', 'key'); if (m.v.join() !== '2,1' || m.sm[1] !== 'Dark Mending') bad('Interrupts over the key so far does not add up every pull\'s kicks: ' + m.v.join()); }
+    { const m = G(30, 0, 'disp', 'pull'); if (m.title !== 'Dispels · Pull 1' || m.v.join() !== '1,1' || m.sm[1] !== 'Curse of Tongues' || m.sm[0] !== 'Bone Shield') bad('Dispels lost a dispel or a purge, or what it took off: ' + JSON.stringify([m.v, m.sm])); }
+    { const m = G(99, 1, 'death', 'pull'); if (m.title !== 'Deaths · The Boss' || m.v.join() !== '1,1' || m.sm[1] !== 'to Crush' || m.sm[0] !== '') bad('Deaths lost a death or what killed them (an unknown killer stays unnamed): ' + JSON.stringify([m.title, m.v, m.sm])); }
+    { const m = G(5, -1, 'dmg', 'pull'); if (m.title !== 'Damage done · before the first pull' || m.v.join() !== '0,0') bad('before the first pull the meter is not an empty Damage done: ' + m.title); }
+    { const m = G(105, -2, 'dmg', 'pull'); if (m.title !== 'Damage done · The Boss') bad('after the last pull the meter does not keep the last pull (it went blank): ' + m.title); }
+    { X.MP.rpm = 'heal'; X.MP.rpw = 'key'; const h = X.mrpMtHead(); X.MP.rpm = 'nonsense'; const dflt = X.mrpMm(); X.MP.rpm = undefined; X.MP.rpw = undefined;
+      if ((h.match(/data-mrpm="/g) || []).length !== 6 || (h.match(/data-mrpw="/g) || []).length !== 2 || h.indexOf('data-mrpm="heal" aria-selected="true" class="on"') < 0 || h.indexOf('data-mrpw="key" aria-selected="true" class="on"') < 0 || h.indexOf('<p class="mrp-mth">Healing</p>') < 0 || dflt !== 'dmg') bad('the meter\'s head lost its six kinds, Pull or Key, or does not keep the kind picked for the next replay'); }
+  } catch (e) { bad('the switchable meter crashed on a made-up key: ' + String(e.message).slice(0, 140)); }
+  // the replay draws it, its clicks work, and a picked player lights up
+  if (s.indexOf("'<div class=\"mrp-side\"><div class=\"mrp-mt\">' + mrpMtHead() + '<div class=\"mrp-mtl\"></div></div>") < 0 || s.indexOf('const M = mrpMeter(st.R, D, T, k, mrpMm(), mrpMw())') < 0) bad('the replay no longer draws the switchable meter');
+  if (s.indexOf("'.mrp [data-mrpa], .mrp [data-mrps], .mrp [data-mrpm], .mrp [data-mrpw], .mrp [data-mrpj]'") < 0 || s.indexOf("if (t.dataset.mrpm || t.dataset.mrpw || t.dataset.mrpj != null) { mrpMtClick(st, t); return; }") < 0 || s.indexOf("r.className = 'mrp-mr'; r.dataset.mrpj = j;") < 0) bad('a click on the meter (a kind, Pull or Key, a player) does nothing');
+  if (s.indexOf("g.classList.toggle('pk', st.pick === j); g.classList.toggle('dm', st.pick != null && st.pick !== j);") < 0 || s.indexOf("r.f.classList.toggle('pk', st.pick === r.j);") < 0 || !/\.mrp-p\.pk > \.mrp-pt \{ display: inline !important; \}/.test(css) || !/\.mrp-p\.dm \{ opacity: \.4 !important; \}/.test(css)) bad('a player picked in the meter is not lit up on the map and in the raid frames');
+  if (s.indexOf("if (e.key !== 'Enter' || !e.target.matches || !e.target.matches('.mrp [data-mrpj]')) return;") < 0 || /e\.key !== ' '\) \|\| !e\.target\.matches \|\| !e\.target\.matches\('\.mrp \[data-mrpj\]'\)/.test(s)) bad('Space on a meter row lights up the player and also plays or pauses the replay (the review, Nov 15): a row answers Enter only');
+  if (!/\.mrp-mr\.pk::after \{ content: '' !important; position: absolute !important; inset: 0 !important; z-index: 2 !important;/.test(css)) bad('the picked player\'s row shows no ring when their bar is long, so the top player never looks picked (the review, Nov 15)');
+  if (!/\.mrp-p\.dm\.dead \{ opacity: \.15 !important; \}/.test(css) || !/\.mrp-rff\.pk\.lo \{ box-shadow: inset 0 0 0 1px #e5534b, 0 0 0 1px #fff !important; \}/.test(css)) bad('while a player is lit up, the dead look like the living on the map, or a lit-up frame loses its low-health red (the review, Nov 15)');
+  if (!/@media \(max-width: 900px\) \{ html:not\(\.mpcard\) body #view#view#view \.mrp-side > \.mrp-mt > \.mrp-mtt > button \{ padding: 4px 3px !important; \}/.test(css)) bad('on a phone the meter\'s Deaths wraps onto a line of its own and a boss pull\'s title is cut off (the review, Nov 15)');
+  if (s.indexOf("add(x.t, 'def', { i, who: x.who, sp: x.name || '', quiet: true,") < 0) bad('the replay\'s defensives lost their names, so Damage taken cannot say what was pressed');
+  if (!/\.mrp-side > \.mrp-mt > \.mrp-mtt > button \{[^}]*font: 700 12px/.test(css) || !/\.mrp-side > \.mrp-mt \{ display: grid !important;/.test(css)) bad('the meter\'s kinds lost their look (or went under 12px)');
+};
