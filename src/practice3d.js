@@ -78,7 +78,7 @@ function pg3dShapes(A, t) {
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
   // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
   // (her waves, Nov 15: the half hit first glows red, the safe half green; they swap once the first wave has gone by)
-  const hv = A.halves ? A.halves() : null; if (hv) { const a = Math.atan2(hv.d[1], hv.d[0]); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a : a + Math.PI, f0: 0, f1: 60, w0: -60, w1: 60, c: '#ff4632', o: 0.14 }); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a + Math.PI : a, f0: 0, f1: 60, w0: -60, w1: 60, c: '#5ae678', o: 0.11 }); }
+  const hv = A.halves ? A.halves() : null; if (hv) { const a = Math.atan2(hv.d[1], hv.d[0]); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a : a + Math.PI, f0: 0, f1: 60, w0: -60, w1: 60, c: '#ff4632', o: 0.26 }); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a + Math.PI : a, f0: 0, f1: 60, w0: -60, w1: 60, c: '#5ae678', o: 0.22 }); }
   const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { if (h.age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + h.age * 5, h.melee ? '#fff0c8' : '#f3c969', 1 - h.age / 0.4); }); (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
