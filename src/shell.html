@@ -19666,7 +19666,7 @@ html:not(.mpcard) body #view#view#view .mpt-jb, html:not(.mpcard) body #view#vie
 html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS):not(#mptCH),
 html:not(.mpcard)[data-mpv="mis"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCX),
 html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM):not(#mptC5),
-html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCP),
+html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCP):not(#mptCA),
 html:not(.mpcard)[data-mpv="gra"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCG),
 html:not(.mpcard)[data-mpv="cmp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCC),
 html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
@@ -20577,6 +20577,54 @@ html:not(.mpcard) body #view#view#view .mrp-ef > .mrp-efr { transition: transfor
 @layer defaultTheme {
 html:not(.mpcard) body #view#view#view .mrp-p.held { opacity: .42 !important; }
 html:not(.mpcard) body #view#view#view .mrp-p.held > circle { stroke-dasharray: 3 2 !important; }
+}
+/* Mythic+: Summary merged into the Report card, the key's opening tab (Nov 15, Flex: "What if we just merge some of summary with report card, and make report
+card the opening tab"). The key, in short reads a line a fact (the result and the story, where the time went, the group's line, the next level and Lust);
+Fix first is the card under it; every mistake, kind by kind (Big hits inside it) is a panel of its own under the Report card. The website only */
+@layer defaultTheme {
+/* the key, in short: a line a fact */
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > :is(.mpr-s1, .mpr-s2, .mpr-s3, .mpr-s4) { display: block !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s1 { font: 600 18px/1.4 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > :is(.mpr-s2, .mpr-s3) { margin: 6px 0 0 !important; font: 500 15px/1.5 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s4 { margin: 6px 0 0 !important; font: 500 13px/1.4 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx .mpx-hb { color: var(--text) !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s2.mpr-bh .mpx-hb { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s6 { display: block !important; margin: 4px 0 0 !important; font: 500 13px/1.4 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s6 > .mpt-vd2 { font: inherit !important; color: inherit !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > span b { font-size: inherit !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s5 { display: block !important; margin: 6px 0 0 !important; font: 500 15px/1.5 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .rcw-strip.mpr-sxs > p.mpr-sx > .mpr-s5 > .mpr-nxk { margin-right: 6px !important; font: 700 15px var(--body) !important; color: #f2c46b !important; }
+/* Fix first, the card Summary drew, under the strip */
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix { margin: 0 0 16px !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix > .mpx-fix.mpx-fx3 { display: block !important; margin: 0 !important; padding: 14px 16px !important; border: 1px solid rgba(230,180,80,.5) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 > .mpx-fxh { display: flex !important; align-items: flex-start !important; justify-content: space-between !important; gap: 12px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 > .mpx-fxh > .mpx-fk { padding-top: 4px !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 .mpx-fxs { display: grid !important; justify-items: end !important; gap: 2px !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 .mpx-fxs > b { font: 800 26px/1 'Barlow Condensed', sans-serif !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 .mpx-fxs > .mpx-fxsl { font: 500 12px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 > .mpx-fxt { margin: 2px 0 0 !important; font: 700 18px/1.3 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 .mpx-fxn > .mpt-nt, html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 .mpx-fxn > .mpx-fxd { margin: 6px 0 0 !important; font: 500 15px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 > .mpx-fxl { display: flex !important; flex-wrap: wrap !important; gap: 4px 18px !important; margin: 10px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpr-fix .mpx-fx3 > .mpx-fxl > .linkbtn { margin: 0 !important; font: 600 13px var(--body) !important; }
+/* every mistake, kind by kind: a panel under the Report card, its title the one line while it is shut */
+html:not(.mpcard) body #view#view#view #mptCA { scroll-margin-top: 62px !important; }
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-allm { margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-allm > .mpx-alls { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 !important; padding: 4px 0 !important; border: 0 !important; list-style: none !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-allm[open] > .mpx-alls { margin: 0 0 8px !important; padding: 4px 0 12px !important; border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-allm > .mpx-alls::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-alls > .mpx-allt { font: 700 18px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-alls > .mpx-alln { min-width: 22px !important; padding: 0 6px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; font: 700 13px/20px var(--body) !important; text-align: center !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-alls > .mpx-alld { flex: 1 1 260px !important; min-width: 0 !important; font: 500 14px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-alls > i { margin-left: auto !important; font: 700 15px var(--body) !important; font-style: normal !important; color: var(--faint) !important; transition: transform .15s !important; }
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-allm[open] > .mpx-alls > i { transform: rotate(90deg) !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-allm > .mpx-dg > .mpt-fxh > h2 { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-dg .mpt-fxh { justify-content: flex-start !important; align-items: baseline !important; gap: 2px 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-dg, html:not(.mpcard) body #view#view#view #mptCA details.mpx-dk { scroll-margin-top: 62px !important; }
+html:not(.mpcard) body #view#view#view #mptCA .mpx-dr > .mpx-dd { box-shadow: none !important; }
+/* a key with no timer: its Mistakes box and Big hits in the panel, its heading the panel's title, Big hits a part of it, not a panel inside a panel */
+html:not(.mpcard) body #view#view#view #mptCA > .mpx-dg > .mpt-fxh > h2 { margin: 0 !important; font: 700 18px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCA > #mptCH { display: block !important; scroll-margin-top: 64px !important; margin: 18px 0 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCA > #mptCH > details.mpx-bhf > summary.mpx-bhs { padding: 10px 0 !important; border-top: 1px solid var(--line) !important; }
 }
 </style>
 </body>

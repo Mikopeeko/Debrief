@@ -470,3 +470,24 @@ Raid frames that move like health (Nov 14; Flex: "the healthbars here dont reall
 Walking and the map's size (Nov 14; Flex: "disabling this doesnt work, it still skips the walking", "how can we fill the empty space"): a player writes nothing in the log while only walking, so the replay now walks each player in a straight line from one spot the log has to the next; with "Skip the walking" off the walk plays at its own speed. The map grows to the height of the panel beside it, and the panel keeps a fixed height (8 enemy rows, 9 lines of As it happens) so the map never changes size mid-pull.
 
 Targets and guessed spots (Nov 15; Flex: "I think what people are targeting needs to be checked, its switching too often", "theres no way they stood still for 12 seconds"): a raid frame's target is only what the player aims at (a cast with a target, a melee swing, an auto shot), the one they aimed at most in the last 5 seconds. A player writes nothing while only walking, so between the spots the log has, the replay guesses (a straight line on the same floor, or the last spot until the next floor); while a spot is a guess the mark fades, and the caption says the log has no positions while they walk.
+
+## Summary merged into the Report card, which opens the key (Nov 15, 2026)
+
+Flex, after four Summary designs: "Maybe we dont even need it? Thoughts?", then "What if we just merge some of summary with report card, and make report card the opening tab". So the website's key page has five tabs: **Report card, Route, Rotation, Graphs, Compare**. The page opens on Report card. The Companion app's card is unchanged.
+
+What came from Summary, and where it is now:
+- **The key, in short** (the Report card's strip) reads a line a fact on a key with a timer: the result with the story of the key ("Timed +1 with 1:35 to spare. A near-wipe in pull 1 and two deaths nearly cost it."), how far behind a typical fast run, the group's line as before, its tip as its own line called **To raise the grade**, then the next level and Lust, faint. Where most of the time went is said by Fix first under it; with no Fix first card the strip says it itself.
+- **Fix first**: Summary's card, under the strip, with its Next time line, "Show on the map" and "Where your time went" (Compare).
+- **Every mistake, kind by kind**: a panel of its own under the Report card, shut until you click its title. Big hits is its last part. A key with no timer has its Mistakes box and Big hits in that panel instead.
+- The pull strip with its numbered moments: Route has the same strip, and each pull's card there says what happened in it.
+- Your part: the Report card's own card for the picked player.
+
+Details the patch review found (Nov 15), each with its check: the first line counts the spare time against the limit of the level the key got, as Summary did and the rest of the site does (the Report card's own line counted it against the whole timer: "Timed +2 with 6:20 to spare"); "behind a fast run" is red, "ahead of" is not; a clean key says "nobody died" once; where most of the time went stays in the strip unless Fix first is that same stretch; "Last time here (+18, Nov 2): …" is the strip's last faint line (it had no other place on the website); the panel's count is the banner's "mistakes" count; a key whose log names no players still shows its mistakes on the first tab.
+
+Why "To raise the grade": the Report card's tip ("Next key: …") is the grade's biggest gain, and Fix first is the timer's. Side by side, two "Next key" lines read as two "do this first".
+
+Old links still work: `&mpv=run` (Summary), `&mpv=mis` (Mistakes) and `&mpv=hit` (Big hits, opened in its fold) open the Report card. A pull card's "See every big hit" on Route opens it there too (it still pointed at Graphs).
+
+How it is built: Summary's code still draws (the Companion uses it, and its pieces are what the Report card shows). The heroH part of `mpHtml` keeps its sentences on `R._sx` (story, fast, fastA, next, lust, fix); `mprShort` and `mprFixH` read them. `mpxAllMove` (run by `mpxOpen` after each draw) moves `#mpxAllM`, or a timerless key's `.mpx-dg` and `#mptCH`, into `div#mptCA` right after `#mptCP`; a Report card repaint replaces only `#mptCP`, so the panel stays.
+
+Checks: tests/mplus-report-opens.js runs the tab list, the address and the strip on made-up keys (contradictions.js runs it on every build); tests/look-review.js has a block of lines for this change. Each fails on e0f8fb6d.
