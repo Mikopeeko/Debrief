@@ -4,6 +4,90 @@
   lined up with certain mechanic windows, for example an add set, a shield to break, or a boss damage-taken window,
   or when it was spent during a phase where damage doesn't matter. Likely home: the burst window cards on Rotation.
 
+- **Discord link with mechanic alerts (Oct 20):** let users link Debrief to their own Discord server and set up
+  channels that get alerts about boss mechanics (for example, a post when a pull fails a mechanic, or a summary
+  after each pull). Debrief already posts patch notes to its own Discord through a webhook, so a raid could add
+  its own webhook in the same way.
+
+- **In-game companion addon: "Your homework" (Oct 21, user liked it):** a "Copy for game" string from Debrief, pasted into
+  the addon once. When you zone in or target a boss (out of combat), a small card shows your top 3 fixes for that boss,
+  your NSRT job and a one-line tip. Out of combat only, because Midnight blocks live combat data for addons.
+  Check the 12.1.5 addon rules before building.
+
+- **Addon option: glow the cooldown to press (Oct 21):** for healing cooldown assignments from the NSRT note, instead of
+  pop-up icons, glow that spell's icon on the Cooldown Manager when it's time to press it. Check first: (1) can an addon
+  still glow the Cooldown Manager in combat in Midnight 12.1.5, (2) can it listen to NSRT's own reminders so timing and
+  phases match the note, (3) does NSRT already have a "glow the spell" option. Rated solid, maybe amazing.
+
+  - **Plan (Oct 21):** a small program on the PC watches WoWCombatLog.txt and analyzes each pull as it ends (Debrief's own
+    engine). It puts a short code on the clipboard with a sound; a keybind in game pastes it, and the card shows (no /reload;
+    a SavedVariables + /reload route is the fallback). Nothing types into the game or touches its memory.
+  - **Who sees what:** a recap for the INDIVIDUAL by default: their result on that boss, their performance (damage or
+    healing against their last and best pull) and their rotation slips, much simpler than the website. A raid lead can
+    switch to the raid's view too: the pull result, the top 3 raid mistakes with names, deaths and the Next pull line.
+
+- **Why we wiped: one root cause, at a glance (Oct 22):** narrow each single wipe down to its ONE root cause (the first
+  domino that lost the pull), not a list of everything that went wrong, and say it in an even briefer line you can read
+  at a glance. Details can open underneath. Sent to the "Why we wiped" chat (raiding research) to build on its test link.
+
+## Pick your own pulls (Oct 23)
+New feature idea from the user: "Select multiple pulls, asside from all pulls. You select the pulls from the chart you want to view as a whole. This is great for filtering out fluke pulls."
+- Click points on the pull chart (the boss-health line) to pick a set of pulls, then everything (coach box, bars, Breakdown) summarises just those, like All pulls.
+- Use: drop fluke pulls (early resets, disconnects, one-shot wipes) so the summary shows real progress.
+- Owners: the header chart is Front page and look; the summary is Debriefing (All pulls / Whole progression). Fits next to the "Whole progression" idea.
+
+## TOMORROW (Oct 25): mechanics audit (Oct 24)
+The user: "need to do a mechanics audit to ensure things are being evaluated properly, strictly, fairly, etc. fine tuning the logic more."
+- Go mechanic by mechanic, boss by boss (all 10, Heroic and Mythic): is each moment judged right, is red only for real mistakes, is yellow fair, and does nothing slip through as green? Check against the guides (notes/Guides) and the 20 fastest kills, then against our own pulls.
+- Things noticed on Oct 24 to start with:
+  - A check's per-pull dot can disagree with its night number (Defensives 100% for the night while its line dips on some pulls): the night adds up first, each dot judges one pull alone. Make both use the same rule.
+  - Spiteful Soulcoiler showed 100% while the note said a cast got through our kicks: should a cast that got through cost the mechanic?
+  - The Sever orb-count check was filed under the tanks' Sever until today (now Coalesced Venom): look for other checks filed under the wrong mechanic.
+  - Mistake kinds drop the player's name ("Too many in someone's frontal"): check each kind still reads right.
+  - What wiped us now says "Too many deaths" when 3+ died from different things: check it picks the right story on a range of wipes.
+
+## Debrief Lite: a recap without the PC app (Oct 25)
+**Parked until after the Debrief 1.0 release** (the user, Oct 25: "Keep Debrief Lite parked until after the 1.0 release. Fixes only until then.").
+The user asked whether the addon could work in game without Debrief Companion ("unconventional methods are fine, just no bans"). It can, as a smaller recap, using only what Blizzard lets addons read in Midnight. Nothing risks a ban. Parked for later (the user: "add it to a list of things to consider at a later time").
+- Could show, fairly sure:
+  - Your rotation, from your own button presses (Midnight hides other players' casts, not yours): your gaps between casts, big cooldowns used and how often, held cooldowns, your opener. Another addon, Midnight Sensei, already grades rotations this way in raids.
+  - Defensives, Healthstone and potion: pressed or not, and when.
+  - The pull itself (boss, difficulty, kill or wipe, length) from Blizzard's encounter events.
+  - Your own death (Blizzard's death recap: the last 5 hits).
+  - Your numbers pull by pull tonight, saved by the addon.
+- Also possible if one test passes: Blizzard's built-in damage meter (C_DamageMeter). It is hidden during the fight, and reports disagree on whether it opens up after the pull. If it does: your damage or healing and your place, avoidable damage by spell, interrupts, dispels, and who died, when and to what.
+  - The test, right after a boss pull, in WoW chat: /dump C_DamageMeter.GetCombatSessionFromType(1, 0). Numbers mean yes; "secret" or nothing means no.
+- Only the PC app can do:
+  - the raid lead box, What wiped us and the wipe call
+  - mechanic checks against top guilds
+  - rotation checks that need buffs or other players' health (addons can't read buffs any more)
+  - the grade and the full coach
+- My take: 6/10 as a feature on its own, 8/10 as a free first taste ("Get the full recap with Debrief Companion") that lets new raiders try Debrief without installing anything.
+- TESTED Oct 25 by the user, right after a pull (/dump C_DamageMeter.GetCombatSessionFromType(1, 0)):
+  - It returned real numbers. The fight lasted 147 s, and each player had their class, name, total damage, damage per second, death recap ID and death time. The user's own Druid "Trëèflêx" did 26.3M damage at 179k per second.
+  - The "Expired" session (2, 0) was empty at that moment.
+  - So the meter half works: read the Current session when the boss fight ends (ENCOUNTER_END / out of combat), before the next pull resets it.
+  - Still to check: that it was a boss fight; Mythic+ keys (stricter "challenge mode" rules); Mythic raid. With this, the take goes to 8/10.
+- Checked Oct 25 (the user asked: "most restrictions happen in combat"): reading the combat log is shut for addons all the time, not only in combat.
+  - Live events (COMBAT_LOG_EVENT_UNFILTERED) error when an addon registers for them.
+  - The game's stored log, the one the Combat Log chat tab reads, can only be read through C_CombatLogSecure, which is marked SecureOnly (Blizzard's own code only).
+  - Its chat lines come wrapped in protected |K text that addons can show but not read.
+  - What does open after combat is the secret values (meters, health): that's what the /dump test checks.
+- Not possible or not safe: reading the combat log file from inside WoW; pulling recaps from the website into the game (addons can't go online); anything that presses keys for you, such as auto-typing /reload (that's how accounts get banned).
+
+## Report card: repeated mistakes count more (Oct 26)
+The user: "regarding the report card. Mistakes are one thing, repeated mistakes that dont get corrected or happen too frequently are another".
+- One-off mistakes and mistakes that keep happening should not weigh the same. A mistake made once and then fixed is learning. The same mistake pull after pull (never corrected), or very often in one night, is the real problem.
+- Ideas: a "repeat" tag on Report card checks ("4 pulls in a row", "never fixed tonight"); weigh repeats more in the grade and one-offs less; show "fixed after pull 6" as a positive; compare with last raid ("still happening since last week").
+- Owner: Report card (archived; unarchive it), sharing the week-to-week and trend logic Debriefing already has (Improving / Worsening tags, Since last pull).
+
+## ✅ DONE (aa23b9f, waiting for the next launch): Resource tracking seems very inaccurate (Oct 26)
+The user: "Resource tracking seems very innacurate".
+- Rotation's Resources section (mana, Holy Power, Runic Power, Combo Points, Insanity, Astral Power, Fury, Maelstrom, Essence and so on): capping, wasted resource, spending and pooling checks.
+- Check against the raw log: the advanced-log power fields (current/max and type per event) vs what the engine reads. Watch for the wrong power type for specs with two resources, the max changing with talents, regen not in the log, overcap counted on events that don't generate, and pets or secondary units mixed in.
+- Verify each spec against a top player's kill (they should come out clean), and against the user's own Holy Paladin pull (Holy Power, mana).
+- Owner: Rotation (local_bbb0619c).
+
 ## Strictness setting: Flexible / Moderate / Strict (Oct 26)
 The user: "The user of the website can toggle how strict the raid lead is/the rules are. Flexible/Moderate/Strict or something like that. This would basically allow them to simulate their own raid scene, maybe a raid lead uses my website and wants 0 mistakes, no room for error at all. Maybe some want some leniency."
 - One setting that scales every judgement: mistake tolerances, the avoidable-damage limits, soak tolerance, death blame, yellow-vs-red cut-offs, and how the coach talks.
@@ -69,35 +153,15 @@ The user: "The user of the website can toggle how strict the raid lead is/the ru
       - Clicking it scrolls to the header switch and flashes it.
     - **Full spec:** the Design studio's look/strict/mock.js (window.__strictMock('A')).
 
-## Debrief Lite: a recap without the PC app (Oct 25)
-**Parked until after the Debrief 1.0 release** (the user, Oct 25: "Keep Debrief Lite parked until after the 1.0 release. Fixes only until then.").
-The user asked whether the addon could work in game without Debrief Companion ("unconventional methods are fine, just no bans"). It can, as a smaller recap, using only what Blizzard lets addons read in Midnight. Nothing risks a ban. Parked for later (the user: "add it to a list of things to consider at a later time").
-- Could show, fairly sure:
-  - Your rotation, from your own button presses (Midnight hides other players' casts, not yours): your gaps between casts, big cooldowns used and how often, held cooldowns, your opener. Another addon, Midnight Sensei, already grades rotations this way in raids.
-  - Defensives, Healthstone and potion: pressed or not, and when.
-  - The pull itself (boss, difficulty, kill or wipe, length) from Blizzard's encounter events.
-  - Your own death (Blizzard's death recap: the last 5 hits).
-  - Your numbers pull by pull tonight, saved by the addon.
-- Also possible if one test passes: Blizzard's built-in damage meter (C_DamageMeter). It is hidden during the fight, and reports disagree on whether it opens up after the pull. If it does: your damage or healing and your place, avoidable damage by spell, interrupts, dispels, and who died, when and to what.
-  - The test, right after a boss pull, in WoW chat: /dump C_DamageMeter.GetCombatSessionFromType(1, 0). Numbers mean yes; "secret" or nothing means no.
-- Only the PC app can do:
-  - the raid lead box, What wiped us and the wipe call
-  - mechanic checks against top guilds
-  - rotation checks that need buffs or other players' health (addons can't read buffs any more)
-  - the grade and the full coach
-- My take: 6/10 as a feature on its own, 8/10 as a free first taste ("Get the full recap with Debrief Companion") that lets new raiders try Debrief without installing anything.
-- TESTED Oct 25 by the user, right after a pull (/dump C_DamageMeter.GetCombatSessionFromType(1, 0)):
-  - It returned real numbers. The fight lasted 147 s, and each player had their class, name, total damage, damage per second, death recap ID and death time. The user's own Druid "Trëèflêx" did 26.3M damage at 179k per second.
-  - The "Expired" session (2, 0) was empty at that moment.
-  - So the meter half works: read the Current session when the boss fight ends (ENCOUNTER_END / out of combat), before the next pull resets it.
-  - Still to check: that it was a boss fight; Mythic+ keys (stricter "challenge mode" rules); Mythic raid. With this, the take goes to 8/10.
-- Checked Oct 25 (the user asked: "most restrictions happen in combat"): reading the combat log is shut for addons all the time, not only in combat.
-  - Live events (COMBAT_LOG_EVENT_UNFILTERED) error when an addon registers for them.
-  - The game's stored log, the one the Combat Log chat tab reads, can only be read through C_CombatLogSecure, which is marked SecureOnly (Blizzard's own code only).
-  - Its chat lines come wrapped in protected |K text that addons can show but not read.
-  - What does open after combat is the secret values (meters, health): that's what the /dump test checks.
-- Not possible or not safe: reading the combat log file from inside WoW; pulling recaps from the website into the game (addons can't go online); anything that presses keys for you, such as auto-typing /reload (that's how accounts get banned).
-
+## "Summarize this for me" button (Oct 26)
+The user: "a one button press, 'Summarize this for me' with a pop up that breaks down all the information simply for them to understand".
+- One button on a page (Debriefing, Rotation, Report card, Graphs…). It opens a pop-up that explains that page's information in a
+  few plain lines, for someone who doesn't want to read the whole thing.
+- Main chat's take (8/10): it fits the "tired raider after work" goal ([[effortless-setup]]) and the simple-first rules. Build it from
+  the page's own facts (coachSummary already has one shared brain), not an AI call per press, so it's instant, free and always matches
+  the page. Keep it 3–5 lines: what happened, the one thing to fix, what went well. Watch that it doesn't repeat the coach box word
+  for word; the pop-up covers the WHOLE page (every section), and the coach box covers one pull.
+- Owners when built: Debriefing (the shared summary brain), Design studio (the button and pop-up look), then each tab's owner.
 
 ## Plan: picture raid plans with the assignments on the map (Oct 26)
 The user: "for plan, finding a way to make picture raid plans, showing the assignments when applicable. similar to how they would manually build it on raidstrats.gg"
@@ -176,6 +240,86 @@ execution."
   week's same weekday in Copy from.
 - Owners: Plan (the nights and the copy), Design studio (the look).
 
+## Compare: your boss pulls against top guilds' pulls (Oct 31)
+- The user: "in compare tab.. compare boss pulls against top guild boss pulls".
+- What it would be: pick one of your pulls (or your best) and set it beside a top guild's kill of the same boss: the pace at each
+  phase (boss health at the same times), deaths and when, how long each phase took, the raid's damage and healing over time, and
+  the big mechanics side by side (soaks, kicks, add kills).
+- My take, 8.5/10: the question every prog raid asks is "where are we losing time compared to a kill", and Compare already does
+  this for two players; doing it for whole pulls answers it at a glance. The top kills are already read for the pace checks and
+  baselines. Keep it to the few numbers that tell the story (pace, deaths, phase times) so it doesn't become another big table.
+- Owners: Compare (the data), Design studio (the look).
+
+## Addon: your casts and damage by ability against top logs (Nov 1)
+- A raider's idea in the Discord (shave8297), passed on by Flex for the addon: "an option for like total cast comparison to top logs
+  and damage percent by ability comparison". No rush ("no like rush order or anything required").
+- What it would be, on the one recap card (in game and the PC pop-up): for your spec on that pull, how many times you pressed each
+  button against the top players of your spec on the same boss (per minute, so pull length doesn't matter), and what share of your
+  damage each ability did against theirs. One quiet list: the ability, your number, the top players' typical number, and a dot
+  when you're well off (for example "Blade of Justice: 9 a minute, top 12").
+- My take, 8/10: it's the question players already take to Warcraft Logs ("am I pressing the right buttons as often as the best
+  players"), and Debrief already reads top kills per spec for the Rotation checks (SPEC_TOP), so the numbers exist. Keep it to
+  the abilities that matter for the spec, folded under Rotation and open on tap, so the card stays calm. Damage share fits
+  damage specs; for healers use healing share.
+- Owners: the in-game addon chat (data into the card), Rotation (the top-player numbers), Design studio (the look).
+
+## Debriefing: rotation mistakes and wins on each pull, against top players (Nov 2)
+- Flex: "Incorporating rotational errors/improvments into debriefing tab somehow. It would need to be based on how top players
+  utilize their cooldowns and rotations on that fight as a comparison, along with other rotational mistakes."
+- What it would be, when one player is picked on Debriefing:
+  - Each pull gets a short "Your play" list, at most 3 lines, worst first. The comparison is the top players of the same spec on
+    the same boss (SPEC_TOP and the kill baselines):
+    - were your big cooldowns lined up with the moments top players use theirs (the damage amps, the burn phase, the add sets)?
+    - did you press the key buttons as often as they do?
+    - idle time
+    - the spec's own Rotation checks that matter on this fight
+  - Each line is priced: damage lost, or seconds of fight time / boss health it cost, so it's clear what mattered.
+  - One "✓" line when earned, then one "Next time".
+- It's the raid twin of the Mythic+ "Your play" being built now (mplus-tab-design/your-play.md, Nov 2). Use the same shared rows
+  function, so the Rotation tab and the addon card say the same thing.
+- **Update, Flex: "or just putting that into the rotations tab for that specific fight". That's the plan.** It lives on the
+  Rotation tab, for the fight that's open. Debriefing gets at most one link line on a pull ("Your play this pull · 2 to fix ▸",
+  which opens Rotation on that pull), so Debriefing stays calm.
+- My take: 9/10 in the Rotation tab (8.5 on Debriefing). Rotation is already where spec advice lives, fight by fight, and it has
+  the top-player numbers (SPEC_TOP). One place to build and keep right, and no change to the paused Debriefing page.
+- Owners: Rotation (the checks, the top-player numbers and the place), Design studio (the look). The Debriefing chat only adds the one link line.
+
+- **Rotation timeline as a replay of your casts (Nov 3):** let the Rotation tab's timeline play the player's casting sequence
+  the way Debriefing's Timeline replays a pull: a Play button (1x / 2x / 4x) moves a playhead across the cast strip, each
+  press lights up with its icon as it happens, and gaps, late cooldowns and wrong presses show as they come, so you can watch
+  your own rotation unfold instead of reading it.
+  - My take: 7/10. Watching it play makes a slow opener or a capped resource easy to feel, and the replay's player, speed
+    buttons and dragging line already exist to reuse. The static timeline already shows everything, so it's a nicer way to
+    look rather than new information.
+  - Owners when it starts: Rotation (the data and the checks), the Timeline replay chat (the player), Design studio (the look).
+
+## Plan tab: big ideas after looking at Viserio / WowUtils (Nov 4)
+- Flex: "My whole issue with wowutils/visero is what you said. It's hard to navigate. I want mine to be very easy". Their
+  friction: raiders join a group and claim characters, "Update roster" by hand, re-run auto-fill after every change, many
+  separate tools, the best automation behind a paywall. Ours must need no sign-up for raiders and keep itself up to date.
+- Flex's answers on the five ideas:
+  1. **Plan learns from your pulls** (job cards show how each person did that job last raid, the whole-plan button prefers
+     people who did it cleanly): "lets discuss". My take 10/10; Viserio can't judge soaks, kicks or spots.
+  2. **"My jobs tonight" for raiders**: yes. Flex: "I think the my assignments/jobs would fit well in the homepage". Mocked Nov 4 as a
+     "Your jobs" panel under What's new (one tile a boss: your first job + "+N", Sitting, "Heal · no job"; tap = your pictures with
+     only you on them). Other raiders' Home needs the team plan online (idea 3) first.
+  3. **One team plan saved online** (officers edit the same plan, not a copy): yes.
+  4. **Post the plan to Discord** (lineup + pictures, edits the post when the plan changes; always a button press): eventually.
+  5. **Your own fight timings** (cooldown chart built from your pulls' phase times): "raid plans are usually used for the first
+     kills, but they can be revised later throughout prog. We should probably plan this out". Needs a plan before building.
+- Lower: sign-ups/absences in Discord that sit people (6/10), loot-aware bench (5/10).
+- Owners when they start: Plan (data, sharing, raider view), Design studio (the look), the Discord bot chat (idea 4).
+
+- Nov 7 (Flex): a Plan tab for personal NSRT notes, where each raider assigns anything they want for themselves, not for the raid (NSRT's personal note). Rated 8/10: every raider uses it, carries over to the next tier. BUILT Nov 7 (main 1be910a2 + cooldown rules); Flex: "will definitely need some work but its a decent start". Open: sync across devices (it's per browser), confirm NSRT reads the lines as a personal note, raid jobs as suggestions.
+
+## PRIORITY, long-term project: Compare guild vs guild (Nov 8)
+- Flex: "Compare guild vs guild long term project".
+- Your guild side by side with another guild (a rival, or guilds around your world rank) across the tier: progress and pulls per
+  boss, how fast each boss died, mechanics, deaths, raid damage and healing, pull by pull or night by night.
+- Builds on Compare (your pulls vs top guilds), "Guilds like us" and the Warcraft Logs guild reports. Plan it before building.
+
+- **Talent check for the fight** (Flex, Nov 15: "Talent tree audit, something that would check if members of the group/raid are running the appropriate talents for the fight. Would likely need to be more based off of logs than anything"). Read each pull's talents from the log (COMBATANT_INFO, which the site already turns into talent names for Rotation) and compare with what the top kills of the same spec take on the same boss. Flag only fight talents a raider is missing (movement, defensives, add or cleave picks top players take here), not every small difference. Main's take: 8/10.
+
 ## Defensives tile: what to compare with (Nov 1, parked)
 Flex, looking at "32% behind · vs top players" while Guilds like us was picked: "what about this one?". Then he said "lets leave it
 for now and re explore another time". Today the tile compares how often each raider presses each defensive per minute alive with the
@@ -202,3 +346,11 @@ top players of their spec (DEF_TOP, built in). The Guilds like us switch doesn't
 - Flex: "skip it for now". Warcraft Logs gives no parses for wipe pulls, so it would be an estimate from the spec's kill rankings
   (about 4 ranking pages per spec, cached a day; needs /api/specrank to return the ranking count). Kills already show real parses.
 - Build it only if raiders ask for wipe parses.
+
+## Rotation tab: practice your rotation (Nov 15)
+- Flex: "add to ideas in rotation tab: practice rotation module".
+- A practice mode inside the Rotation tab. Your spec's main buttons sit on a hotbar like the practice game's (press to cast, cooldown sweeps, procs lighting up), against a target dummy. It scores you the way the Rotation checks already do: the opener, casts on cooldown, no capping, procs used, holding cooldowns for burst windows. No damage meter.
+- Training wheels first, the same idea as the Ula'tek practice game: hints on, slow speed. Then a fight version that plays the boss's real timeline (movement, add sets, burst windows from the guide) so you practice the rotation for that fight.
+- It reuses what exists: the practice game's hotbar and press-to-cast, the Rotation checks and their top-player numbers, the 12.1.5 talent data.
+- Main's take: 7/10. Raiders would come back to it, and nothing else does this. But each spec needs its own buttons and priority, and they must match 12.1.5 exactly. Start with one spec (Holy Paladin) and only its 5 or 6 core buttons, then add specs one at a time.
+- Owners when it starts: Rotation (the checks and spec data), the practice game chat (the hotbar), Design studio (the look).
