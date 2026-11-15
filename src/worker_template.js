@@ -193,7 +193,7 @@ async function fileBug(req, env, url) {
   if (!b || typeof b !== 'object') return json({ error: 'That report was empty.' }, 400);
   if (b.website) return json({ ok: true }); // (a bot filled in the hidden field: say thanks and drop it)
   const text = String(b.text || '').trim().slice(0, 4000), name = String(b.name || '').trim().slice(0, 60);
-  if (text.length < 10) return json({ error: 'Please say a little more about what went wrong.' }, 400);
+  if (text.length < 10) return json({ error: 'Please say a little more about what happened.' }, 400);
   const ip = req.headers.get('CF-Connecting-IP') || 'x', now = Date.now();
   let w = bugSeen.get(ip); if (!w || now - w.t > 600000) { w = { t: now, n: 0 }; bugSeen.set(ip, w); if (bugSeen.size > 2000) bugSeen.clear(); }
   if (w.n >= 3) return json({ error: 'You\'ve sent a few reports just now. Please wait a few minutes before sending another.' }, 429);
@@ -913,7 +913,7 @@ async function discordClick(req, env, ctx) {
   if (i.type === 1) return json({ type: 1 }); // (Discord's check that this address answers)
   if (i.type === 2 && i.data && i.data.name === 'killfeed') { // (a slash command: answered "thinking…" at once, then filled in)
     ctx.waitUntil((async () => {
-      let msg; try { msg = await killfeedCommand(env, i); } catch (err) { msg = 'Something went wrong. Please try again in a minute.'; console.warn('Killfeed:', err && err.message); }
+      let msg; try { msg = await killfeedCommand(env, i); } catch (err) { msg = 'That didn\'t work. Please try again in a minute.'; console.warn('Killfeed:', err && err.message); }
       await fetch('https://discord.com/api/v10/webhooks/' + APP_ID + '/' + i.token + '/messages/@original', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: msg, allowed_mentions: { parse: [] } }) });
     })());
     return json({ type: 5 });
@@ -1315,7 +1315,7 @@ async function previewPage(env, url) {
     '<meta property="og:url" content="' + a(url.toString()) + '"><meta property="og:image" content="' + SITE + '/og.png"><meta name="twitter:card" content="summary_large_image">' +
     '<meta name="theme-color" content="#e6b450"></head><body><a href="' + a(url.toString()) + '">' + a(title) + '</a></body></html>';
 }
-const WELCOME_DM = "Hey, welcome to **Debrief**! 👋 It reads your raid logs and tells you what went right, what went wrong, and what to fix next pull.\n\n• **Start here:** <#1561476332917882941>\n• **Questions:** <#1561477989919891588> (the FAQ is pinned first)\n• **Something broken?** <#1561538061366599782>\n• **Want to test new stuff?** Ask in #general-chat and you will be added to the beta.\n\nNo pressure, just have a look around. 💛\n— Claudia, Debrief's welcome committee 🧡";
+const WELCOME_DM = "Hey, welcome to **Debrief**! 👋 It reads your raid logs and tells you what went right, the mistakes, and what to fix next pull.\n\n• **Start here:** <#1561476332917882941>\n• **Questions:** <#1561477989919891588> (the FAQ is pinned first)\n• **Something broken?** <#1561538061366599782>\n• **Want to test new stuff?** Ask in #general-chat and you will be added to the beta.\n\nNo pressure, just have a look around. 💛\n— Claudia, Debrief's welcome committee 🧡";
 async function welcomeDm(env, uid) {
   const ch = await dc(env, '/users/@me/channels', { method: 'POST', body: { recipient_id: uid } });
   await dc(env, '/channels/' + ch.id + '/messages', { method: 'POST', body: { content: WELCOME_DM, allowed_mentions: { parse: [] } } });
