@@ -102,6 +102,12 @@ function checks(H, say, pj) {
     if (slow.length) bad(slow.map((o) => o.id).join(', ') + ' walk from the 0:39 bubble to the coil that slams at 0:40; they should hurry (check D)');
     dbg.myJob = { role: 'r', egg: null, soak: [2, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
     if (slot !== 'r7' || !S4.soaks.every((q) => (q.k === 1) === q.group.includes(slot))) bad('a ranged job with no egg on coil team 2 plays as ' + slot + ' on other teams (check D)');
+    // (Flex, Nov 15: "pressing these doesnt change the image": the picker's picture shows your coil, the first or second to appear, and changes with the team)
+    if (!/Your coil: the second to appear/.test(dbg.panel())) bad('picking coil team 2 does not change the picture in the picker to the second coil (check D)');
+    dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; if (!/Your coil: the first to appear/.test(dbg.panel())) bad('picking coil team 1 does not show the first coil in the picture in the picker (check D)');
+    // (Main, Nov 15: the job line read "coil team 1, then 1": one team says it once, two say "then team 2")
+    if (/then 1$|, then 1\b/.test(dbg.jobRole().job) || !/coil team 1$/.test(dbg.jobRole().job)) bad('the job line reads "' + dbg.jobRole().job + '"; with one team it should end "coil team 1" (check D)');
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; if (!/coil team 1, then team 2$/.test(dbg.jobRole().job)) bad('a carrier on team 2 reads "' + dbg.jobRole().job + '"; it should end "coil team 1, then team 2" (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   finally { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; }
   // E. Hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next things for you with their
