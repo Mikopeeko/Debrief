@@ -73470,7 +73470,7 @@ function mpFixes(R, C, all) {
     out.push({ c: 'death', ps: [P.indexOf(p)], s: dd.length * pen, t: 'Don\'t wipe on ' + esc(mpPN(R, p.n)), plus: 'plus the run back',
       d: (tank ? 'Your tank ' : '') + mpWho(R, f.who) + ' died first, to <b class="mpt-ab">' + esc(f.to) + '</b>' + (f.defs ? '.' : ', with <b class="mpt-bad">no defensive</b>.') + ' Everyone else was dead ' + Math.max(1, Math.round(dd[dd.length - 1].t - f.t)) + ' s later.' }); }
   // (a must-kick cast and the deaths it caused: the same spell from the same kind of enemy, in a pull where it went off with a kick ready)
-  const thr = new Map(); for (const p of P) for (const t of p.through) { const k = t.spell + '|' + t.mob, o = thr.get(k) || { spell: t.spell, mob: t.mob, n: 0, pulls: new Set() }; o.n++; o.pulls.add(p.n); thr.set(k, o); }
+  const thr = new Map(); for (const p of P) for (const t of p.through) { if (t.cc) continue; /* (Nov 14, the Summary pass: a cast that can't be kicked is never "Kick <spell>" in Fix first or on Compare; the Mistakes box lists it as a cast that needed a stop) */ const k = t.spell + '|' + t.mob, o = thr.get(k) || { spell: t.spell, mob: t.mob, n: 0, pulls: new Set() }; o.n++; o.pulls.add(p.n); thr.set(k, o); }
   const by = new Map(), rest = []; for (const p of P) for (const d0 of p.deaths) { const d = d0.big ? { ...d0, to: d0.big, from: d0.bigFrom || '' } : d0; /* (coaching follows the biggest hit (Nov 3)) */ if (used.has(d0) || !d.to || d.to === 'unknown') { if (!used.has(d0)) rest.push({ ...d, pull: p.n }); continue; } const k = thr.get(d.to + '|' + d.from), key = k && k.pulls.has(p.n) ? 'k|' + d.to + '|' + d.from : 'd|' + d.to, o = by.get(key) || { to: d.to, k: key[0] === 'k' ? k : null, list: [] }; o.list.push({ ...d, pull: p.n }); by.set(key, o); }
   for (const o of by.values()) { const names = [...new Set(o.list.map((d) => d.who))], killed = names.map((w) => mpWho(R, w)).join(' and '), times = o.list.length;
     if (o.k) { o.k.done = true; const pl = [...o.k.pulls]; out.push({ c: 'kick', ps: [...o.k.pulls].map((n) => n - 1), sp: o.to, mob: o.k.mob, s: times * pen, t: 'Kick ' + esc(o.to) + (pl.length === 1 ? ' in ' + esc(mpPN(R, pl[0])) : ''), d: 'It went off ' + plural(o.k.n, 'time') + ' with a kick ready, and killed ' + killed + (times > names.length ? ' ' + (times === 2 ? 'twice' : times + ' times') : '') + '.' }); }
@@ -73567,7 +73567,7 @@ const mpDTo = (s) => (s && !/^unknown$/i.test(s) ? s : 'a hit the log doesn\'t n
 const mpxPartsHtml = (PP) => PP.KS.map((k) => (PP.K[k] ? '<section class="mpx-g mpx-g-' + MPX_KIND[k][1] + '"><div class="mpx-gh"><b class="mpx-gn">' + PP.K[k].n + '</b><h3>' + MPX_KIND[k][0] + '</h3><span>' + PP.K[k].sub + '</span></div>' + PP.K[k].body + '</section>' : '')).join('') + PP.minorH;
 // (a link to the mistakes: a kind opens in Summary's box, a player's in their Report card card)
 function mpxMis(kind, who) { if (MPC_ON) return; if (who) { mpxView('rep'); MP.rco = who; if ((MP.pp || '') !== who) mpxPick(who); { const it8 = MP.item, R8 = it8 && MP.R[mpK(it8)]; if (R8) mpxRepPaint(R8); } const c = document.querySelector('#mptCP .mpr-under'), d = c && c.querySelector('details.mpx-rcm'); if (d) d.open = true; if (d || c) (d || c).scrollIntoView({ block: 'start' }); else mpxTop(); return; }
-  mpxView('run'); const d = kind ? document.getElementById('mpxK' + kind) : null, to = d || document.querySelector('#mptCS .mpx-dg'); if (d) d.open = true; if (to) to.scrollIntoView({ block: 'start' }); else mpxTop(); }
+  mpxView('run'); const d = kind ? document.getElementById('mpxK' + kind) : null, to = d || document.querySelector('#mptCS .mpx-dg'); if (d) d.open = true; if (to) to.scrollIntoView({ block: 'nearest' }); /* (Nov 14: only as far as it must, so the strip or the tile that was clicked stays on screen) */ else mpxTop(); }
 // (the key's banner is its own panel with the tabs under it, the Summary the next one; the Companion's card keeps one panel)
 const mpxKey = (ban, sum) => (MPC_ON ? mpChap('mptC1', 'The key', '', ban + sum) : mpChap('mptC1', 'The key', '', ban) + mpChap('mptCS', 'Summary', '', sum));
 // (the Summary's own Mistakes box: one line a kind, the count first, then the worst of it; a click opens every one of that kind right there)
@@ -73577,8 +73577,13 @@ function mpxDigest(R, F) { if (MPC_ON) return ''; const D = mpxData(R, F), C = m
   const names = (a) => mpAnd(uniq(a).map((n) => mpWho(R, n)));
   if (D.kick.length) rows.push(['kick', D.kick.length, top(D.kick, (x) => x.spell) + ' <span class="mpt-m">· ' + where(D.kick) + '</span>']);
   if (D.cc.length) rows.push(['cc', D.cc.length, top(D.cc, (x) => x.spell) + ' <span class="mpt-m">· ' + where(D.cc) + '</span>']);
-  if (D.close.length) rows.push(['close', D.close.length, names(D.close.map((x) => x.who)) + ' <span class="mpt-m">· as low as ' + Math.min(...D.close.map((x) => x.left)) + '% after</span> ' + top(D.close, (x) => x.spell)]);
-  if (D.death.length) rows.push(['death', D.death.length, names(D.death.map((x) => x.who)) + (pen ? ' <span class="mpt-m">· +' + mpMM(pen * D.death.length) + ' on the timer</span>' : '')]);
+  /* (Nov 14, the Summary pass: a close call is told as the cast that caused it, with its pull. "Ragemaxxing, Leafeon, Shamanfoxx and Flëxørçïst · as low as 3% after Shadow Whirlwind ×4" was one cast in pull 1 that left four of five under 15%) */
+  const onP = (i) => '<span class="mpt-m">' + (R.pulls[i] && R.pulls[i].boss ? 'on ' : 'in ') + esc(mpPullName(R, i)) + '</span>';
+  if (D.close.length) { const g = new Map(), cur = {}; let gn = 0; for (const x of D.close) { const b = x.i + '|' + x.spell, q = cur[b]; if (!q || x.t - q.t > 1.5) cur[b] = { t: x.t, k: b + '|' + (++gn) }; else cur[b].t = x.t; const k = cur[b].k; if (!g.has(k)) g.set(k, []); g.get(k).push(x); } const G = [...g.values()].sort((a, b) => b.length - a.length || a[0].t - b[0].t);
+    rows.push(['close', D.close.length, G.slice(0, 2).map((L) => { const lo = Math.min(...L.map((x) => x.left)), hi = Math.max(...L.map((x) => x.left)); return '<b class="mpt-ab">' + esc(L[0].spell) + '</b> <span class="mpt-m">left</span> ' + (L.length > 1 ? '<span class="mpt-m">' + L.length + ' players at ' + (lo === hi ? lo + '%' : lo + '% to ' + hi + '%') + '</span> ' : mpWho(R, L[0].who) + ' <span class="mpt-m">at ' + lo + '%</span> ') + onP(L[0].i); }).join(' <span class="mpt-m">·</span> ') + (G.length > 2 ? ' <span class="mpt-m">· and ' + (G.length - 2) + ' more</span>' : '')]); }
+  /* (up to three deaths: each place once after its names, a name that died twice there as ×2: "Ann, Bob and Cy in pull 7", "Ann ×2 on The Golden Serpent") */
+  const dPl = (L) => { const G = []; for (const x of L) { const k = (x.d && x.d.gap ? 'a' : 'i') + x.i; let q = G.find((y) => y.k === k); if (!q) G.push((q = { k, at: x.d && x.d.gap ? '<span class="mpt-m">after ' + esc(mpPullName(R, x.i)) + '</span>' : onP(x.i), n: new Map() })); q.n.set(x.who, (q.n.get(x.who) || 0) + 1); } return mpAnd(G.map((q) => mpAnd([...q.n].map(([w, c]) => mpWho(R, w) + (c > 1 ? ' ×' + c : ''))) + ' ' + q.at)); };
+  if (D.death.length) rows.push(['death', D.death.length, (D.death.length <= 3 ? dPl(D.death) : names(D.death.map((x) => x.who)) + ' <span class="mpt-m">· ' + where(D.death) + '</span>') + (pen ? ' <span class="mpt-m">· +' + mpMM(pen * D.death.length) + ' on the timer</span>' : '')]);
   if (D.disp.length) rows.push(['disp', D.disp.length, top(D.disp, (x) => x.n) + ' <span class="mpt-m">· up to ' + Math.round(Math.max(...D.disp.map((x) => x.dur))) + ' s with a dispel ready</span>']);
   if (D.avoid.length) rows.push(['avoid', D.avoid.reduce((a, x) => a + x.n, 0), top(D.avoid, (x) => x.spell) + ' <span class="mpt-m">· ' + names(D.avoid.map((x) => x.who)) + '</span>']);
   if (D.cd.length) rows.push(['cd', D.cd.length, names(D.cd.flatMap((x) => x.names)) + ' <span class="mpt-m">· ' + where(D.cd) + '</span>']);
@@ -73655,12 +73660,61 @@ const mpxFollow = () => setTimeout(() => { if (!MPC_ON && MP.cvp && MP.cvp !== (
 document.addEventListener('change', (e) => { if (e.target && e.target.matches && e.target.matches('#mpcRot [data-mpcsel]')) mpxFollow(); });
 document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('#mpcRot [data-mpcn], #mpcRot [data-mpcw]')) mpxFollow(); });
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpxstep]'); if (!t || MPC_ON) return; e.preventDefault(); const keys = mpKeys(), k = keys[keys.indexOf(MP.item) + +t.dataset.mpxstep]; if (k) mpOpen(k); });
-// (Summary: under the five numbers, the one thing to fix first; the whole list is on Compare)
-function mpxFix(fix, wait, cmp) { const f = fix && fix[0], more = cmp ? '<button type="button" class="linkbtn mpx-fxm" data-mpxv="cmp">Where the time went ›</button>' : '';
-  return f ? '<p class="mpx-fix"><span class="mpx-fk">Fix first</span><span class="mpx-fxt">' + f.t + '</span>' + (f.s ? '<span class="mpx-fxs">' + (fix[1] ? '<b class="mpx-vr">' + mpMM(f.s) + '</b> behind the fast run' : 'saves <b class="mpx-vg">' + mpMM(f.s) + '</b>') + '</span>' : '') + more + '</p>'
-    : wait ? '<p class="mpx-fix"><span class="mpx-fk">Fix first</span>' + mpShim('min(26em, 70%)') + '</p>' : ''; }
-// (Summary: the key as one line of pulls, yours over the fast run's; a click opens the pull on Route. The lanes stay under the map too)
-const mpxGlance = (tl) => (MPC_ON || !tl ? '' : '<div class="mpx-gl"><p class="mpx-glh"><b class="mpx-glt">The key, pull by pull</b><span class="mpx-gls">Click a pull to open it on Route</span></p><div class="mpt-mstrip">' + tl + '</div></div>');
+// (Summary, the clean-up pass (Nov 14, Flex: "work on the summary tab. Clean it up make it better"). Under the numbers, the one thing to fix first is a box
+// of its own: what it is, its Next time line (the one Compare's first row has), what else happened in its pulls, where to see it, and what it cost. It was
+// one thin line of text, the smallest thing on the page. The whole list stays on Compare.
+// x: { nt: the Next time line, go: the "Show on the map" link, gap: how far behind the fast run the key was, also: the mistakes inside its pulls })
+function mpxFix(fix, wait, cmp, x) { const f = fix && fix[0], gap = x && x.gap && fix && fix[1] ? x.gap : 0, more = cmp ? '<button type="button" class="linkbtn mpx-fxm" data-mpxv="cmp">' + (gap ? 'Where your ' + mpMM(gap) + ' went' : 'Where the time went') + ' ›</button>' : '';
+  const box = (c, head, nt, also, links, val) => '<div class="mpx-fix mpx-fx2' + (c ? ' mpx-fx-' + c : '') + '"><div class="mpx-fxb"><p class="mpx-fxh"><span class="mpx-fk">Fix first</span>' + head + '</p>' + (nt ? '<div class="mpx-fxn">' + nt + '</div>' : '') + (also || '') + (links ? '<p class="mpx-fxl">' + links + '</p>' : '') + '</div>' + (val || '') + '</div>';
+  if (!f) return wait ? box('', mpShim('min(26em, 70%)'), mpShim('min(30em, 84%)'), '', '', '') : '';
+  const sz = f.s >= 60 ? 'mpx-vr' : f.s >= 20 ? 'mpx-va' : 'mpx-vm';
+  const val = f.s ? '<p class="mpx-fxs">' + (fix[1] ? '<b class="' + sz + '">' + mpMM(f.s) + '</b><span class="mpx-fxsl">' + (gap && f.s <= gap ? 'of your ' + mpMM(gap) + ' behind' : 'behind the fast run') + '</span>' : '<b class="mpx-vg">' + mpMM(f.s) + '</b><span class="mpx-fxsl">back on the timer' + (f.plus ? ', ' + f.plus : '') + '</span>') + '</p>'
+    : f.n ? '<p class="mpx-fxs"><b class="mpx-vk">' + f.n + '</b><span class="mpx-fxsl">' + (f.n === 1 ? 'cast' : 'casts') + ' went off</span></p>' : '';
+  /* (a fix with no Next time line of its own says its plain facts instead, so the box is never a title alone) */
+  return box(f.c, '<span class="mpx-fxt">' + f.t + '</span>', (x && x.nt) || (f.d ? '<p class="mpx-fxd">' + f.d + '</p>' : ''), x && x.also, ((x && x.go) || '') + more, val); }
+// (Fix first's "Also in these pulls" line: the mistakes of each kind that happened in the pulls the fix is about, each opening its list. A slow stretch of
+// trash is often where the deaths were too, and the box said only "Pull bigger". A kick fix's own deaths (the spell it is about) are not said twice)
+const MPX_IN = { death: ['death', 'deaths'], close: ['close call', 'close calls'], kick: ['missed kick', 'missed kicks'], cc: ['cast that needed a stop', 'casts that needed a stop'], disp: ['debuff left on', 'debuffs left on'], cd: ['pull with a big cooldown not pressed', 'pulls with a big cooldown not pressed'], avoid: ['avoidable hit', 'avoidable hits'] };
+function mpxAlso(R, F, f) { if (MPC_ON || !f || !f.ps || !f.ps.length) return ''; const D = mpxData(R, F), ps = new Set(f.ps.map(Number)), own = f.c === 'death' ? 'death' : f.c === 'kick' ? 'kick' : '';
+  const bits = Object.keys(MPX_KIND).filter((k) => k !== own).map((k) => { const L = D[k].filter((y) => ps.has(y.i) && !(k === 'death' && f.c === 'kick' && f.s && y.d && (y.d.big || y.d.to) === f.sp)), n = k === 'avoid' ? L.reduce((a, y) => a + (y.n || 1), 0) : L.length;
+    return n ? '<button type="button" class="mpx-fxc mpx-g-' + MPX_KIND[k][1] + '" data-mpxv="mis" data-mpxk="' + k + '">' + n + ' ' + MPX_IN[k][n === 1 ? 0 : 1] + '</button>' : ''; }).filter(Boolean);
+  return bits.length ? '<p class="mpx-fxa"><span class="mpx-fxak">' + (ps.size === 1 ? 'Also in this pull' : 'Also in these pulls') + '</span>' + bits.join('<span class="mpx-fxad"> · </span>') + '</p>' : ''; }
+// (Summary's strip: every mistake of the key where it happened. A row a kind over the "You" lane, named at the left with the Mistakes box's own words, its
+// marks in the colour its number has in that box; the marks of one kind in one pull are one mark with their count. A close call, a cast that needed a stop
+// and a cooldown not pressed are drawn hollow: two kinds share red, two share purple, and a solid blue mark would read as a small pull. A hover says who and
+// what, a click opens that kind's list in the Mistakes box. The pulls Fix first is about get a bracket on top and a faint column down through the rows and
+// both lanes, so the mistakes inside the fix are seen to be inside it. The lanes themselves are mpBehind's, shared with Route and not changed: the rows go
+// into Summary's copy of the markup, in front of the first lane. The scale is mpBehind's own (a build check keeps the two the same).
+// MPX_STRIP_ON false takes the rows off again and leaves the strip as it was)
+const MPX_STRIP_ON = true;
+const MPX_ROWS = { kick: 'Kicks', cc: 'Stops', disp: 'Debuffs', cd: 'Cooldowns', avoid: 'Avoidable' }; /* (a phone's narrow label column: the short name) */
+const MPX_HOLLOW = { close: 1, cc: 1, cd: 1 };
+function mpxMarks(R, F, fix) { const C = mpClock(R); if (MPC_ON || !MPX_STRIP_ON || !C) return ''; const FC = F ? mpClock(F) : null, ck = C.ck, P = R.pulls, D = mpxData(R, F);
+  const W0 = Math.max(ck.par, ck.time, FC ? FC.ck.time : 0) * 1.03, pc = (s) => Math.min(100, 100 * Math.max(0, s) / W0), X = (v) => v.toFixed(2) + '%';
+  const tn = (n) => (n > 1 ? ' ×' + n : ''), said = { death: (x, n) => esc(x.who) + ' died to ' + esc(mpDTo(x.d.to)) + tn(n), close: (x, n) => esc(x.who) + ' was left at ' + x.left + '% by ' + esc(x.spell) + tn(n), kick: (x, n) => esc(x.spell) + tn(n) + (x.ready.length ? ', kick ready: ' + x.ready.map(esc).join(', ') : ''),
+    cc: (x, n) => esc(x.spell) + tn(n) + ', nothing stopped it', disp: (x, n) => esc(x.n) + ' on ' + esc(x.who) + ' for ' + Math.round(x.dur) + ' s' + tn(n), cd: (x) => mpAnd(x.names.map(esc)) + ' pressed no big cooldown', avoid: (x) => esc(x.who) + ' was hit by ' + esc(x.spell) + tn(x.n) };
+  /* (a mark's hover: the same line once, with its count: three Bolts with Ann's kick ready read "Bolt ×3, kick ready: Ann", as the purple ! on the lane says it) */
+  const lines = (k, L) => { const M2 = new Map(); for (const x of L) { const s = said[k](x, 1), o = M2.get(s); if (o) o.n++; else M2.set(s, { x, n: 1 }); } return [...M2.values()].map((o) => said[k](o.x, o.n)); };
+  const row = (cls, lab, k, body) => '<div class="mpt-ln mpx-ml ' + cls + '">' + (k ? '<button type="button" class="mpt-ll mpx-mll" data-s="' + (MPX_ROWS[k] || lab) + '" data-mpxv="mis" data-mpxk="' + k + '"' + mpT1('Open ' + lab.toLowerCase() + ' in the Mistakes list') + '>' + lab + '</button>' : '<span class="mpt-ll mpx-mll" data-s="' + lab + '">' + lab + '</span>') + '<div class="mpt-lt mpx-mlt">' + body + '</div></div>';
+  let top = '', rows = '';
+  // (Fix first: a bracket a run of its pulls, and the column under it; a fix with no pulls of its own (standing between pulls) has neither)
+  { const f = fix && fix[0], ps = f && f.ps ? [...new Set(f.ps.map(Number))].filter((i) => P[i]).sort((a, b) => a - b) : [], segs = []; for (const i of ps) { const l = segs[segs.length - 1]; if (l && i === l[1] + 1) l[1] = i; else segs.push([i, i]); }
+    const span = segs.map(([a, b]) => { const x0 = pc(C.tv(P[a].s)), x1 = pc(C.tv(P[b].e)); return { a, b, l: X(x0), w: X(Math.max(0.4, x1 - x0)) }; });
+    if (span.length) top = span.map((s) => '<i class="mpx-mfc" style="left:' + s.l + ';width:' + s.w + '" aria-hidden="true"></i>').join('') +
+      row('mpx-mlf', 'Fix first', '', span.map((s) => '<i class="mpx-mfs" tabindex="0" style="left:' + s.l + ';width:' + s.w + '"' + mpT1(((sub) => '<b>Fix first</b><br>' + f.t + (sub !== f.t.replace(/<[^>]+>/g, '') ? '<br><span class="sub">' + esc(sub) + '</span>' : ''))(mpCap(mpPNs(R, P.map((p, i) => i).filter((i) => i >= s.a && i <= s.b).map((i) => i + 1))))) + '></i>').join('')); }
+  for (const k of Object.keys(MPX_KIND)) { if (!D[k].length) continue; const by = new Map(); for (const x of D[k]) { if (!P[x.i]) continue; if (!by.has(x.i)) by.set(x.i, []); by.get(x.i).push(x); }
+    /* (a mark sits at its moment; a cooldown not pressed at the middle of its pull; a death over the middle of its red block on the lane, which runs from the death for as long as its penalty) */
+    const M = [...by].map(([i, L]) => ({ i, L, n: k === 'avoid' ? L.reduce((a, x) => a + (x.n || 1), 0) : L.length, x: pc(C.tv(k === 'cd' ? (P[i].s + P[i].e) / 2 : L.reduce((a, x) => a + x.t, 0) / L.length) + (k === 'death' ? (C.pen || 0) / 2 : 0)) })).sort((a, b) => a.x - b.x);
+    for (let j = 1; j < M.length; j++) if (M[j].x - M[j - 1].x < 2.6) M[j].x = Math.min(100, M[j - 1].x + 2.6); /* (two marks never sit on each other) */
+    for (let j = M.length - 1, cap = 99; j >= 0; j--) { if (M[j].x > cap) M[j].x = Math.max(0, cap); cap = M[j].x - 2.6; } /* (and at the end of a key that went over time, a pass back from the right keeps them apart and inside the strip) */
+    rows += row('mpx-g-' + MPX_KIND[k][1], MPX_KIND[k][0], k, M.map((m) => '<button type="button" class="mpx-md' + (MPX_HOLLOW[k] ? ' mpx-mdh' : '') + '" style="left:' + X(m.x) + '" data-mpxv="mis" data-mpxk="' + k + '" aria-label="' + esc(MPX_KIND[k][0] + (m.n > 1 ? ' ×' + m.n : '') + ', ' + mpPullName(R, m.i)) + '"' +
+      mpT1('<b>' + MPX_KIND[k][0] + (m.n > 1 ? ' ×' + m.n : '') + '</b><br><span class="sub">' + esc(mpCap(mpPullName(R, m.i))) + ' · ' + m.L[0].at + '</span><br>' + ((LL) => LL.slice(0, 5).join('<br>') + (LL.length > 5 ? '<br>and ' + (LL.length - 5) + ' more' : ''))(lines(k, m.L)) + '<br><span class="sub">Click for the list</span>') + '>' + (m.n > 1 ? m.n : '') + '</button>').join('')); }
+  return top + rows; }
+// (Summary: the key as one line of pulls, yours over the fast run's, with the mistakes over them; a click on a pull opens it on Route. The lanes stay under the map too)
+const mpxGlance = (tl, R, F, fix) => { if (MPC_ON || !tl) return ''; const rows = R ? mpxMarks(R, F, fix) : '', k = tl.indexOf('<div class="mpt-ln">'), tl2 = rows && k >= 0 ? tl.slice(0, k) + rows + tl.slice(k) : tl, on = tl2 !== tl;
+  return '<div class="mpx-gl' + (on ? ' mpx-glm' : '') + '"><p class="mpx-glh"><b class="mpx-glt">The key, pull by pull</b><span class="mpx-gls">' + (/class="mpx-md/.test(rows) ? 'Click a pull to open it on Route. Click a mark for its list.' : 'Click a pull to open it on Route') + '</span></p><div class="mpt-mstrip">' + tl2 + '</div></div>'; };
+// (Summary's tiles that open a list are role="button" with a tabindex: Enter or Space opens them as a click does)
+document.addEventListener('keydown', (e) => { if (MPC_ON || (e.key !== 'Enter' && e.key !== ' ') || !e.target.matches || !e.target.matches('#mptCS .mpx-go[data-mpxv]')) return; e.preventDefault(); e.target.click(); });
 // (a player's part, two ways. On Summary: one sentence with the one fix, the mistakes as tiles, and a link to their card. On Report card: the whole
 // card, the mistakes beside what went well, then the plain numbers. The rows are Your part's own, sorted by their colour: red and amber are mistakes,
 // green is done well, a plain number is a number; each still opens its pull)
@@ -74353,13 +74407,25 @@ function mpHtml(it, R, fx) {
   /* (Nov 9, the Run tab redesign (Flex: "Redesign first"): on the website five numbers read at a glance instead of two sentences; the Companion keeps its lines) */
   const sbC = (lab, big, cls, sub) => '<div class="mpt-sbc"><small>' + lab + '</small><b' + (cls ? ' class="' + cls + '"' : '') + '>' + big + '</b><span>' + sub + '</span></div>';
   const lim1 = lv === 3 ? P * 0.6 : lv === 2 ? P * 0.8 : P, gap1 = FC ? T - FC.ck.time : null, last1 = mpLastTime(it, R);
-  const scoreT = '<div class="mpt-sbd">' + sbC('Result', lv > 0 ? 'Timed +' + lv : 'Over time', lv >= 2 ? 'g' : lv === 1 ? 'a' : 'r', lv > 0 ? mpMM(lim1 - T) + ' to spare' : 'by ' + mpMM(T - P)) +
+  const scoreT = '<div class="mpt-sbd">' + sbC('Result', lv > 0 ? 'Timed +' + lv : 'Over time', lv >= 2 ? 'g' : lv === 1 ? 'a' : 'r', (lv > 0 ? mpMM(lim1 - T) + ' to spare' : 'by ' + mpMM(T - P)) +
+      /* (Nov 14, the Summary pass: the next level is the Result's second line on the website (it was a tile of its own; its place went to Close calls, which decide more keys). Over time, it would repeat "by 1:20") */
+      (MPC_ON ? '' : lv === 3 ? '<i class="mpx-sbn">+3 is the most there is</i>' : lv > 0 && tgt != null ? '<i class="mpx-sbn">' + mpMM(need) + ' faster gets +' + (lv + 1) + '</i>' : '')) +
     (FC ? sbC('Against a fast run', gap1 > 5 ? mpMM(gap1) + ' behind' : gap1 < -5 ? mpMM(-gap1) + ' ahead' : 'Even', gap1 > 5 ? 'r' : 'g', 'A typical fast run took ' + mpMM(FC.ck.time)) : waiting ? sbC('Against a fast run', mpShim('5em'), '', mpShim('9em')) : '') +
-    (tgt != null ? sbC('Next level', '+' + (lv + 1), '', mpMM(need) + ' faster gets it') : sbC('Next level', '+3', 'g', 'the most there is')) +
+    (!MPC_ON ? '' : tgt != null ? sbC('Next level', '+' + (lv + 1), '', mpMM(need) + ' faster gets it') : sbC('Next level', '+3', 'g', 'the most there is')) +
     (yG.r ? sbC('Group DPS', mpGF(yG.r), gdp != null && gdp < -5 ? 'a' : '', gdp == null ? (waiting ? mpShim('8em') : '') : (gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run') + (LD1 ? ', up to where you left' : '')) : '') +
-    sbC('Missed kicks', String(thN), thN ? 'r' : 'g', thN ? (thN === 1 ? 'cast' : 'casts') + ' went off with a kick ready' : 'nothing went off with a kick ready').replace('<div class="mpt-sbc">', '<div class="mpt-sbc mpx-go" role="button" tabindex="0" data-mpxv="mis" data-mpxk="kick">') + '</div>' + (last1 ? '<p class="mpt-sbl">' + last1.trim() + '</p>' : '');
+    /* (Nov 14, the Summary pass: the mistakes that decide a key, in the Mistakes box's order, each tile opening its list. Deaths come first: the only mistake among the tiles was "Missed kicks 0" in green over a key with two deaths.
+       Each count is the Mistakes box's own, so a tile and the list it opens agree: Missed kicks no longer counts the casts that can't be kicked, which the box lists apart as Casts that needed a stop) */
+    (MPC_ON ? '' : ((dN) => sbC('Deaths', String(dN), dN ? 'r' : 'g', dN ? (C.pen ? '+' + mpMM(Math.round(C.pen) * dN) + ' on the timer' : 'no time added to the timer') : 'nobody died').replace('<div class="mpt-sbc">', '<div class="mpt-sbc mpx-go mpx-sbm" role="button" tabindex="0" data-mpxv="mis" data-mpxk="death">'))(R.pulls.reduce((a, p) => a + (p.deaths || []).length, 0))) +
+    (MPC_ON || !R.big ? '' : ((CL) => { const g = new Map(), cur = {}; let gn = 0; for (const c of CL.slice().sort((x, y) => x.t - y.t)) { const b = c.pull + '|' + c.spell, q = cur[b]; if (!q || c.t - q.t > 1.5) cur[b] = { t: c.t, k: b + '|' + (++gn) }; else cur[b].t = c.t; g.set(cur[b].k, (g.get(cur[b].k) || 0) + 1); } /* (one cast: one pull, one spell, its hits within 1.5 s, as the reader splits casts; the same boss hit 28 s later is another cast) */ const top = [...g].sort((a, b) => b[1] - a[1])[0], ti = top ? +top[0].split('|')[0] : -1;
+      return sbC('Close calls', String(CL.length), CL.length ? 'r' : 'g', !CL.length ? 'no big hit left anyone under 15%' : top[1] > 1 && R.pulls[ti] ? top[1] + ' at once ' + (R.pulls[ti].boss ? 'on ' : 'in ') + esc(mpPullName(R, ti)) : 'as low as ' + Math.min(...CL.map((c) => c.left)) + '% health').replace('<div class="mpt-sbc">', '<div class="mpt-sbc mpx-go" role="button" tabindex="0" data-mpxv="mis" data-mpxk="close">'); })(R.big.close || [])) +
+    ((kN) => sbC('Missed kicks', String(kN), kN ? 'r' : 'g', kN ? (kN === 1 ? 'cast' : 'casts') + ' went off with a kick ready' : 'nothing went off with a kick ready').replace('<div class="mpt-sbc">', '<div class="mpt-sbc mpx-go" role="button" tabindex="0" data-mpxv="mis" data-mpxk="kick">'))(MPC_ON ? thN : R.pulls.reduce((a, p) => a + (p.through || []).filter((x) => !x.cc).length, 0)) + '</div>' + (last1 ? '<p class="mpt-sbl">' + last1.trim() + '</p>' : '');
   /* (Nov 14, the raid review's flow: the Summary's top on the website is the five numbers, the one thing to fix first, then the key pull by pull; the band under them is the mistakes beside the picked player's part. Where the time went is on Compare) */
-  const scoreH = MPC_ON ? scoreT : scoreT + mpxFix(went && went[0] ? [went[0], 1] : FIX[0] ? [FIX[0], 0] : null, waiting && tgt != null, true) + mpxGlance(bh.tl);
+  /* (Nov 14, the Summary pass: Fix first carries its Next time line (Compare's first row has the same one), the mistakes inside its pulls and a link to them on the map; the strip gets the same fix, for its bracket) */
+  const fix1 = went && went[0] ? [went[0], 1] : FIX[0] ? [FIX[0], 0] : null, fixX = !fix1 || MPC_ON ? null : ((f) => ({ nt: f.nt || (f.c === 'kick' && f.sp ? mpNextKick(R, f.sp) : '') || (f.c === 'death' ? '<p class="mpt-nt mpt-ntd">' + f.d + '</p>' : ''), gap: went && fT0 != null ? T - fT0 : 0, also: mpxAlso(R, F, f),
+    go: f.ps && f.ps.length && R.units && R.units.length ? '<button type="button" class="linkbtn mpx-fxgo" data-mpps="' + f.ps.join(',') + '" data-mpt="' + esc(f.t.replace(/<[^>]+>/g, '')) + '" data-mpl="' + esc(esc(mpPNs(R, f.ps.map((k) => k + 1)))) + '">Show on the map ›</button>' : '' }))(fix1[0]);
+  /* (while the fast run is still loading and could still change the pick (the next level is further off than every death cost), the box holds its place instead of showing a fix it would swap a moment later) */
+  const fixW = waiting && tgt != null && need > ck.deathCost;
+  const scoreH = MPC_ON ? scoreT : scoreT + mpxFix(fixW ? null : fix1, fixW || (waiting && tgt != null), true, fixW ? null : fixX) + mpxGlance(bh.tl, R, F, fixW ? null : fix1);
   if (!MPC_ON) return mpxKey(ban, scoreH + band) + mpxCmp(R, fx, fixes + behindH) + mpxGraphs(R) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
@@ -86439,6 +86505,109 @@ html:not(.mpcard) body #view#view#view .mrp-e.cast.nk > .mrp-ecf { fill: #9aa3ad
 html:not(.mpcard) body #view#view#view .mrp-e.cast.kick > .mrp-ecf { fill: #7ee08f !important; } html:not(.mpcard) body #view#view#view .mrp-e.cast.kick > .mrp-ect { fill: #7ee08f !important; }
 html:not(.mpcard) body #view#view#view .mrp-e.cast.off > .mrp-ecf { fill: #ff4d4d !important; } html:not(.mpcard) body #view#view#view .mrp-e.cast.off > .mrp-ect { fill: #ff8f87 !important; }
 @media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-rf { width: 150px !important; } html:not(.mpcard) body #view#view#view .mrp-mt { width: 150px !important; } }
+}
+/* Mythic+ Summary, the clean-up pass (Nov 14, Flex: "work on the summary tab. Clean it up make it better"). The tiles are two groups (the clock, the
+   mistakes); Fix first is a box of its own; the pull strip has a row a kind of mistake over the "You" lane and a faint column for the pulls Fix first is
+   about; one heading grammar (title, then a grey line); Your part is its sentence beside its tiles. The website only: the Companion's card keeps its layout. */
+@layer defaultTheme {
+/* the tiles: the clock, a gap, the mistakes (three and three; a phone keeps the plain grid) */
+html:not(.mpcard) body #view#view#view #mptCS .mpt-sbc small { font-size: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpt-sbc > span > .mpx-sbn { display: block !important; font: 500 12px/1.3 var(--body) !important; font-style: normal !important; color: var(--faint) !important; }
+@media (min-width: 1200px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd { display: flex !important; align-items: stretch !important; gap: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; overflow: visible !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc { flex: 1 1 0 !important; border: solid var(--line) !important; border-width: 1px 0 1px 1px !important; box-shadow: none !important; background: rgba(255,255,255,.015) !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc:first-child, html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc.mpx-sbm { border-radius: 4px 0 0 4px !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc:last-child, html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc:has(+ .mpx-sbm) { border-right-width: 1px !important; border-radius: 0 4px 4px 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc:first-child:has(+ .mpx-sbm), html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc.mpx-sbm:last-child { border-radius: 4px !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc.mpx-sbm { margin-left: 12px !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc.mpx-go:hover { background: rgba(255,255,255,.035) !important; }
+}
+/* (narrower than that, the two groups are two rows of three, never five tiles and one left alone; a phone gets three rows of two) */
+@media (max-width: 1199px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd > .mpt-sbc { box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line) !important; }
+}
+@media (max-width: 560px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpt-sbd { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+/* Fix first: a flat box with a gold outline (no bar down its left edge) */
+html:not(.mpcard) body #view#view#view #mptCS > .mpx-fix.mpx-fx2 { display: grid !important; grid-template-columns: minmax(0,1fr) auto !important; align-items: center !important; gap: 6px 28px !important; margin: 12px 0 0 !important; padding: 13px 18px 13px 16px !important; border: 1px solid rgba(230,180,80,.5) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 > .mpx-fxb { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 12px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxh > .mpx-fk { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxh > .mpx-fxt { font: 700 18px/1.3 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxn > .mpt-nt { margin: 5px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxn > .mpx-fxd { margin: 5px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxn > .mpt-shim { margin-top: 8px !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxa { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 0 !important; margin: 4px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxa > .mpx-fxak { margin-right: 8px !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxa > .mpx-fxad { white-space: pre !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxa > .mpx-fxc { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; font: 600 13.5px/1.45 var(--body) !important; color: var(--kc, var(--text)) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxa > .mpx-fxc:hover { text-decoration: underline !important; text-underline-offset: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxl { display: flex !important; flex-wrap: wrap !important; gap: 4px 20px !important; margin: 7px 0 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 .mpx-fxl > .linkbtn { margin: 0 !important; font: 600 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 > .mpx-fxs { display: grid !important; justify-items: end !important; gap: 3px !important; margin: 0 !important; padding: 0 0 0 28px !important; border-left: 1px solid var(--line) !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 > .mpx-fxs > b { font: 800 24px/1.05 'Barlow Condensed', sans-serif !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mpx-fx2 > .mpx-fxs > .mpx-fxsl { font: 500 12px/1.3 var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-vk { color: #c39bff !important; } html:not(.mpcard) body #view#view#view .mpx-va { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view .mpx-vm { color: var(--text) !important; }
+/* the strip: the rows over the lanes */
+/* (a wide screen: a label column wide enough for a row's whole name, as the Mistakes box has it. Narrower, the strip keeps its own column (84px, 64px on a
+   phone) so the lanes stay as wide as they were, and a row shows its short name) */
+@media (min-width: 1200px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-tl { margin-left: 168px !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-ln { margin-left: -168px !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-ll { width: 168px !important; }
+}
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-ln.mpx-ml { height: 20px !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-ln.mpx-ml + .mpt-ln:not(.mpx-ml) { margin-top: 6px !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > .mpx-mll { flex: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; font: 600 12.5px/20px var(--body) !important; letter-spacing: 0 !important; text-align: left !important; text-transform: none !important; color: var(--muted) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > button.mpx-mll { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > button.mpx-mll:hover { color: var(--text) !important; text-decoration: underline !important; text-underline-offset: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-mlf > .mpx-mll { font-weight: 700 !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > .mpx-mlt { height: 16px !important; border-radius: 0 !important; background: linear-gradient(rgba(236,232,223,.06), rgba(236,232,223,.06)) left center / 100% 1px no-repeat !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-mlf > .mpx-mlt { background: none !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-md { position: absolute !important; top: 0 !important; z-index: 1 !important; box-sizing: border-box !important; min-width: 18px !important; height: 16px !important; margin: 0 !important; padding: 0 3px !important; transform: translateX(-50%) !important; border: 1.5px solid var(--kc, #aeb6bf) !important; border-radius: 2px !important; background: var(--kc, #aeb6bf) !important; box-shadow: 0 0 0 1.5px var(--bg) !important; font: 800 12px/13px var(--body) !important; color: #111418 !important; text-align: center !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-md:empty { top: 2px !important; min-width: 10px !important; width: 10px !important; height: 12px !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-md.mpx-mdh { background: var(--panel, #1c1e22) !important; color: var(--kc, #aeb6bf) !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-md:hover, html:not(.mpcard) body #view#view#view #mptCS .mpx-md:focus-visible { z-index: 3 !important; outline: 2px solid var(--text) !important; outline-offset: 1px !important; }
+/* (the pulls Fix first is about: a bracket on top, and a faint column down through the rows and both lanes) */
+html:not(.mpcard) body #view#view#view #mptCS .mpx-mfs { position: absolute !important; top: 4px !important; height: 9px !important; min-width: 6px !important; box-sizing: border-box !important; border: solid #f2c46b !important; border-width: 2px 2px 0 !important; background: none !important; cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-mfc { position: absolute !important; top: 13px !important; bottom: 0 !important; z-index: 0 !important; box-sizing: border-box !important; border: solid rgba(242,196,107,.3) !important; border-width: 0 1px !important; background: rgba(242,196,107,.05) !important; pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpt-ln { z-index: 1 !important; }
+/* (the purple ! over a lane stays, on both lanes alike; it was 11px) */
+html:not(.mpcard) body #view#view#view #mptCS .mpx-gl .mpt-ktk { font-size: 12px !important; }
+/* a boss under the strip: its name, then its time and the gap on one line (they were three lines with a dot left hanging) */
+@media (min-width: 1300px) { html:not(.mpcard) body #view#view#view #mptCS .mpx-gl .mpt-gp b[class] { display: inline !important; } } /* (on a narrower strip the labels keep their three short lines: side by side, two bosses close together would touch) */
+/* one heading grammar: the title, then a grey line; one gap between the titled sections */
+html:not(.mpcard) body #view#view#view #mptCS > .mpx-gl { margin-top: 18px !important; padding-top: 16px !important; }
+html:not(.mpcard) body #view#view#view #mptCS > #mptBand { margin-top: 18px !important; padding-top: 16px !important; gap: 18px 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBand .mpx-dg .mpt-fxh { justify-content: flex-start !important; align-items: baseline !important; gap: 2px 10px !important; }
+html:not(.mpcard) body #view#view#view .mpx-dg .mpx-dgs { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+/* (a Mistakes line's words carried a drop shadow, a dark band behind them that stopped short of the arrow) */
+html:not(.mpcard) body #view#view#view #mptCS .mpx-dr > .mpx-dd { box-shadow: none !important; }
+/* Your part: the heading, its Next time line and the report card link at the left, the tiles at the right on an even grid (one size for every player) */
+html:not(.mpcard) body #view#view#view #mptBand #mptPart .mpt-ptiles > .mpt-prow .mpt-ypv small { font-size: 12px !important; }
+@media (min-width: 1200px) {
+  html:not(.mpcard) body #view#view#view #mptBand #mptPart.mpx-my { display: grid !important; grid-template-columns: minmax(0, 38fr) minmax(0, 62fr) !important; grid-template-rows: auto auto 1fr !important; column-gap: 28px !important; align-items: start !important; }
+  html:not(.mpcard) body #view#view#view #mptBand #mptPart.mpx-my > * { grid-column: 1 !important; }
+  html:not(.mpcard) body #view#view#view #mptBand #mptPart.mpx-my > .mpx-my1 { margin: 8px 0 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptBand #mptPart.mpx-my > .mpx-ccm { margin-top: 8px !important; justify-self: start !important; }
+  html:not(.mpcard) body #view#view#view #mptBand #mptPart.mpx-my > .mpx-myt { grid-column: 2 !important; grid-row: 1 / span 3 !important; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; align-self: start !important; margin: 0 !important; }
+}
+/* (the short name of a row, under 1200px; after the label's own rule, so its font-size wins) */
+@media (max-width: 1199px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > .mpx-mll { font-size: 0 !important; overflow: hidden !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-glm .mpx-ml > .mpx-mll::before { content: attr(data-s); font: 600 12px/20px var(--body); }
+}
+@media (max-width: 760px) {
+  html:not(.mpcard) body #view#view#view #mptCS > .mpx-fix.mpx-fx2 { grid-template-columns: minmax(0,1fr) !important; padding: 12px 13px !important; }
+  html:not(.mpcard) body #view#view#view .mpx-fx2 > .mpx-fxs { display: flex !important; align-items: baseline !important; gap: 8px !important; padding: 0 !important; border-left: 0 !important; text-align: left !important; }
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-md, html:not(.mpcard) body #view#view#view #mptCS .mpx-md:empty, html:not(.mpcard) body #view#view#view #mptCS .mpx-md.mpx-mdh { top: 2px !important; min-width: 10px !important; width: 10px !important; height: 12px !important; padding: 0 !important; color: transparent !important; }
+}
+/* (the strip's own narrow-screen rules start at 860px and make its +3, +2, +1 labels 11px) */
+@media (max-width: 860px) {
+  html:not(.mpcard) body #view#view#view #mptCS .mpx-gl .mpt-mk span { font-size: 12px !important; }
+}
 }
 </style>
 </body>

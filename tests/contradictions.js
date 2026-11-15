@@ -572,6 +572,7 @@ try { require('./replay-icons.js')(H, say); } catch (e) { say("Ula'tek replay", 
 try { require('./no-went-wrong.js')(say); } catch (e) { say('the page code', 'crash', 'the "went wrong" check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-left-early.js')(say); } catch (e) { say('Mythic+ banner', 'crash', 'the Left early check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-unknown-death.js')(say); } catch (e) { say('Mythic+ deaths', 'crash', 'the unknown-hit check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
+try { require('./mplus-summary-strip.js')(say); } catch (e) { say('Mythic+ Summary', 'crash', 'the Summary strip check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, the Summary pass: Fix first as a box, the rows of mistakes over the pull strip) */
 try { require('./graphs-buff-row.js')(say); } catch (e) { say('Graphs', 'crash', 'the Buffs row check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
 for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
