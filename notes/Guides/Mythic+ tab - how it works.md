@@ -209,3 +209,19 @@ Flex, with pictures of pull 8 of his +19 Kings' Rest of Sep 25: "If a cc cast st
 - **Dispels**: "dispelled X off Y, after N s". A debuff nobody took off has its own line: a mistake (red, under Mistakes) when they died with it on or a dispel sat ready, else a quiet note. The chip is "Kicks, CC and dispels".
 - **A death** says which defensives were ready.
 - **Players and Rotation are one tab**: the group table, then the picked player's rotation. A click on a player's row picks them (`mpxRowOn`). The tab's key is still `rot`; an old `&mpv=grp` link opens it.
+
+## The key page as Raid review's sibling (Nov 14, 2026, night)
+
+Flex: "i dont want it to be a mirror copy of the raid review tab but i want it to be a brother or sister of it in similarity", then "Im giving you creative freedom with this, with the plan for the future to turn the map in mythic+ into a replay map as well".
+
+What a key shares with a raid pull now:
+- The banner: the dungeon's art across the right, a small tag and the date, the name at the same size with the key level beside it, and the result as a pill.
+- The tab row right under the banner. It stays at the top of the screen while you scroll.
+- One bar under the tabs: the key (with arrows to step to the key before or after), the player whose part shows, and Find other keys. The key picker that sat above the banner lives here.
+- Summary in the same order: the score panel (one sentence, the five numbers, "Fix first"), then "Your part…" (Raid review's "Your raid lead says…"): one sentence with the one fix, Your mistakes beside What you did well, the plain numbers under them, and a link to every mistake of yours on the Mistakes tab. Then "The key at a glance": your pulls over the fast run's; click a pull to open it on Route. Then Mistakes beside Where your time went.
+
+What stays Mythic+'s own: the timer and the fast-run comparison, the Mistakes list, Big hits, Route (the map; the plan is to make it a replay that follows the group), Players and Dungeon.
+
+How Your part sorts its rows: a row whose value is red or amber is a mistake, a green one is done well, and a plain number (damage, healing, kicks, dispels) goes in the row of numbers. Nothing was dropped. Each row still opens its pull.
+
+The Companion's card keeps its own layout.

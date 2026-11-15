@@ -983,7 +983,53 @@ const MPX_BYID = { mptBand: 'run', mptCX: 'mis', mptCH: 'hit', mptCM: 'map', mpt
 const mpxGoId = (id) => { if (!MPC_ON && MPX_BYID[id]) mpxView(MPX_BYID[id]); };
 function mpxPaint(R) { const el = document.getElementById('mptCX'); if (!el || !R) return; el.outerHTML = mpxChap(R, mpxFast(R)); try { refreshIcons(); } catch (e) { /* (icons load later) */ } }
 // (a tab picked from further down the page starts at its top)
-const mpxTop = () => { const tb = document.querySelector('.mpc-tabs'); if (!tb) return; const y = tb.getBoundingClientRect().top; if (y < 60 || y > innerHeight * 0.6) window.scrollTo({ top: Math.max(0, y + window.scrollY - 70) }); };
+// ---------- the key page as the raid review's sibling (Nov 14; Flex: "i dont want it to be a mirror copy of the raid review tab but i want it to be a
+// brother or sister of it in similarity", then "Im giving you creative freedom with this, with the plan for the future to turn the map in mythic+ into a
+// replay map as well"). The same frame: the banner as the raid's hero, the tab row under it (it sticks to the top), one toolbar with the key and the
+// player, then Summary in the raid's order: the score panel, Your part (its "Your raid lead says"), The key at a glance, then Mistakes beside Where your
+// time went. Its own: the timer, the Mistakes list, Big hits, Route (the map, later a replay), Players and Dungeon. The Companion's card keeps its layout.
+const mpxWhoIc = (p) => { if (!p) return ''; const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : ''; return ic ? '<img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()">' : ''; };
+// (the toolbar: the key with a step either way, the player whose part shows, and the key finder. The key picker that sat above the banner lives here)
+function mpxBar(R) { if (MPC_ON || !R) return ''; const it = MP.item, keys = mpKeys(), i = keys.indexOf(it), pl = (R.people || []).slice().sort(mpByRole), pc = pl.find((x) => x.name === (MP.pp || ''));
+  return '<div class="mpx-tb">' +
+    (keys.length > 1 ? '<label class="mpx-tbp mpx-tbk"><span class="mpx-tbl">Key</span><select id="mptPick" aria-label="Pick a key">' + keys.map((x, k) => '<option value="' + k + '"' + (x === it ? ' selected' : '') + '>' + esc(mpKeyName(x)) + '</option>').join('') + '</select></label>' +
+      '<span class="mpx-tba"><button type="button" data-mpxstep="-1" aria-label="The key before" title="The key before"' + (i <= 0 ? ' disabled' : '') + '>‹</button><button type="button" data-mpxstep="1" aria-label="The key after" title="The key after"' + (i < 0 || i >= keys.length - 1 ? ' disabled' : '') + '>›</button></span>' : '') +
+    (pl.length ? '<label class="mpx-tbp mpx-tbw"><span class="mpx-tbl">Player</span><span class="mpx-tbi">' + mpxWhoIc(pc) + '</span><select data-mppsel aria-label="Show a player"' + (pc ? ' style="color:' + mpCC(pc.cls) + '"' : '') + '><option value="">Everyone</option>' + pl.map((x) => '<option value="' + esc(x.name) + '" style="color:' + mpCC(x.cls) + '"' + (x === pc ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select></label>' : '') +
+    '<span class="mpx-tbs"></span><button class="linkbtn mpt-findl" type="button" data-mpf-open="1">Find other keys</button></div>'; }
+// (the toolbar's player follows a pick made anywhere on the page)
+function mpxPPSync(name) { if (MPC_ON) return; const it = MP.item, R = it && MP.R[mpK(it)], p = R && (R.people || []).find((x) => x.name === name);
+  document.querySelectorAll('.mpx-tb [data-mppsel]').forEach((x) => { x.value = name || ''; x.style.color = p ? mpCC(p.cls) : ''; });
+  document.querySelectorAll('.mpx-tb .mpx-tbi').forEach((x) => { x.innerHTML = mpxWhoIc(p); }); }
+// (a key with no map: the pick still moves Your part)
+function mpxPPOnly(name) { MP.pp = name; if (MPC_ON) return; const pe = document.getElementById('mptPart'), it = MP.item, R = it && MP.R[mpK(it)]; if (pe && R && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null, name); mpxPPSync(name); }
+document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpxstep]'); if (!t || MPC_ON) return; e.preventDefault(); const keys = mpKeys(), k = keys[keys.indexOf(MP.item) + +t.dataset.mpxstep]; if (k) mpOpen(k); });
+// (the score panel: one sentence, the five numbers, then the one thing to fix first, as on the raid review)
+function mpxScore(keyLine, gLine, tiles, fix, wait) { const f = fix && fix[0];
+  return '<div class="mpx-pn mpx-sc">' + keyLine.replace('<p class="mpt-vd">', '<p class="mpt-vd mpx-vd">').replace(/<\/p>$/, (gLine ? ' <span class="mpx-vs">' + gLine + '</span>' : '') + '</p>') + tiles +
+    (f ? '<p class="mpx-fix"><span class="mpx-fk">Fix first</span><span class="mpx-fxt">' + f.t + '</span>' + (f.s ? '<span class="mpx-fxs">' + (fix[1] ? '<b class="mpx-vr">' + mpMM(f.s) + '</b> behind the fast run' : 'saves <b class="mpx-vg">' + mpMM(f.s) + '</b>') + '</span>' : '') + '</p>'
+      : wait ? '<p class="mpx-fix"><span class="mpx-fk">Fix first</span>' + mpShim('min(26em, 70%)') + '</p>' : '') + '</div>'; }
+// (Your part's panel, ahead of the band)
+const mpxPP = (R, fx) => (MPC_ON ? '' : '<div class="mpx-pn mpx-ppn">' + mpPartHtml(R, fx, MP.pp) + '</div>');
+// (The key at a glance: the timeline lanes, yours over the fast run's; a click on a pull opens it on the Route tab. The lanes stay under the map too)
+const mpxGlance = (tl) => (MPC_ON || !tl ? '' : '<div class="mpx-pn mpx-gl"><p class="mpx-glh"><b class="mpx-glt">The key at a glance</b><span class="mpx-gls">Click a pull to open it on the map</span></p><div class="mpt-mstrip">' + tl + '</div></div>');
+// (Your part, the raid review's "Your raid lead says" for a key: one sentence with the one fix, then the mistakes beside what went well, then the plain
+// numbers. The rows are Your part's own, sorted by their colour: red and amber are mistakes, green is done well; each still opens its pull)
+function mpxPart(o) { const { pick, name, own, p, rows, nt } = o, col = mpCC(p.cls), shim = rows.some((h) => /mpt-shim/.test(h));
+  const K = rows.map((h, k) => ({ h, k, r: /mpt-shim/.test(h) ? 5 : /mpt-prow2/.test(h) ? (/mpt-pwin/.test(h) ? 3 : 9) : /class="(mpt-bad|mpt-rwc-b)[\s"]/.test(h) ? 0 : /class="(mpt-a|mpt-rwc-w|mpt-t2k)[\s"]/.test(h) ? 1 : /class="(mpt-g|mpt-rwc-g)[\s"]/.test(h) ? 3 : 5 }));
+  const bad = K.filter((x) => x.r < 2).sort((a, b) => a.r - b.r || a.k - b.k), good = K.filter((x) => x.r === 3), num = K.filter((x) => x.r === 5), wide = K.filter((x) => x.r === 9);
+  const tag = (x) => (x.r < 2 ? x.h.replace('class="mpt-prow"', 'class="mpt-prow ' + (x.r ? 'mpt-pta' : 'mpt-ptb') + '"') : x.h), list = (L, none) => '<div class="mpt-prows mpx-ccl">' + (L.map(tag).join('') || '<p class="mpx-ccz">' + none + '</p>') + '</div>';
+  const n = bad.length, lead = shim ? mpShimT('two things to sharpen in this key.') : n ? (n === 1 ? 'one thing' : n + ' things') + ' to sharpen in this key.' : own ? 'a clean key from you.' : 'a clean key.';
+  const k1 = mpK(MP.item || {}) + '|' + name, fade = !shim && MP._ptS !== k1 ? ' mpt-fadein' : ''; if (!shim) MP._ptS = k1; /* (the sorted lists arrive once, with a fade) */
+  return '<div id="mptPart" class="mpx-cch" data-for="' + esc(pick || '') + '"><p class="mpx-cchd"><span class="mpx-cck">' + (own ? 'Your part…' : 'Their part…') + '</span><span class="mpx-ccw" style="color:' + col + '">' + esc(name) + '</span><span class="mpx-ccs">' + esc(p.spec + (o.cn ? ' ' + o.cn : '')) + '</span></p>' +
+    '<p class="mpx-cch1"><span class="mpx-ccw" style="color:' + col + '">' + esc(name) + '</span>, ' + lead + (nt ? ' <span class="mpx-ccf">' + (own ? 'Your' : 'Their') + ' one fix: ' + nt + '</span>' : '') + '</p>' +
+    '<div class="mpx-ccg' + fade + '"><div class="mpx-ccc mpx-ccb"><p class="mpx-cct">' + (own ? 'Your' : 'Their') + ' mistakes</p>' + list(bad, 'None counted in this key.') + '</div><div class="mpx-ccc mpx-cco"><p class="mpx-cct">What ' + (own ? 'you' : 'they') + ' did well</p>' + list(good, shim ? mpShim('9em') : 'Nothing stood out.') + '</div></div>' +
+    (wide.length ? '<div class="mpt-prows mpx-ccwd">' + wide.map((x) => x.h).join('') + '</div>' : '') +
+    (num.length ? '<div class="mpt-prows mpx-ccn">' + num.map((x) => x.h).join('') + '</div>' : '') +
+    (n ? '<button type="button" class="mpx-ccm" data-mpxv="mis" data-mpxk="" data-mpxp="' + esc(name) + '">Every mistake of ' + (own ? 'yours' : 'theirs') + ', in detail <i aria-hidden="true">›</i></button>' : '') + '</div>'; }
+// (a new tab starts under the tab row: the row sticks to the top, so the page scrolls to where the banner has just left the screen)
+const mpxTop = () => { const c1 = document.getElementById('mptC1'), tb = document.querySelector('.mpc-tabs'); if (!tb) return;
+  if (c1 && tb.parentNode === c1.parentNode) { const y = c1.getBoundingClientRect().bottom; if (y < 0) window.scrollTo({ top: Math.max(0, y + window.scrollY) }); return; }
+  const y = tb.getBoundingClientRect().top; if (y < 60 || y > innerHeight * 0.6) window.scrollTo({ top: Math.max(0, y + window.scrollY - 70) }); };
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpxv],[data-mpxk],[data-mpxp],[data-mpxpull]'); if (!t || MPC_ON) return; const it = MP.item, R = it && MP.R[mpK(it)]; if (!R) return; e.preventDefault();
   if (t.dataset.mpxpull != null) { mpxView('map'); try { mpMapPick('you', +t.dataset.mpxpull); } catch (x) { /* (no map for this key) */ } mpxTop(); return; }
   if (t.dataset.mpxk != null) MP.xk = t.dataset.mpxk;
@@ -1125,14 +1171,14 @@ function mpHtml(it, R, fx) {
   const ptsH = (() => { const rp = mpRating(R, ck, it); if (!rp) return ''; const col = mpScoreCol(rp.pts), g = rp.gain != null ? { x: Math.round(rp.gain), tip: rp.tip } : mpGain(it, R, rp.pts);
     return '<span class="mpt-bpts" style="color:' + col + '" tabindex="0"' + mpT1(rp.tip) + '>' + (rp.est ? '~' : '') + Math.round(rp.pts) + ' points</span>' + (g ? ' <span class="mpt-bgain" style="color:' + (g.x ? col : 'var(--muted)') + '" tabindex="0"' + mpT1(g.tip) + '>(+' + g.x + ')</span>' : ''); })();
   const art = MP_ART[mpLc(run.dungeon || mpDung(it.boss))], tmH = ck ? mpMM(ck.time) + ' of ' + mpMM(ck.par) : run.timeMs ? mpMM(run.timeMs / 1000) : '';
-  const ban = '<div class="mpt-ban' + (art ? ' mpt-ban-art' : '') + '">' + (art ? '<div class="mpt-bart" style="background-image:url(https://wow.zamimg.com/uploads/guide/' + art + '.jpg)" aria-hidden="true"></div>' : '') + '<div class="mpt-kb">+' + run.level + '</div><div class="mpt-bt"><p class="mpt-k">Mythic+' + (date ? ' · ' + esc(date) : '') + '</p><h1>' + esc(run.dungeon || it.boss) + '</h1>' +
+  const ban = '<div class="mpt-ban' + (art ? ' mpt-ban-art' : '') + '">' + (art ? '<div class="mpt-bart" style="background-image:url(https://wow.zamimg.com/uploads/guide/' + art + '.jpg)" aria-hidden="true"></div>' : '') + '<div class="mpt-kb">+' + run.level + '</div><div class="mpt-bt"><p class="mpt-k">' + (MPC_ON ? 'Mythic+' + (date ? ' · ' + esc(date) : '') : '<b class="mpx-tag">Mythic+</b>' + (date ? '<span class="mpx-kd">' + esc(date) + '</span>' : '')) + '</p><h1>' + esc(run.dungeon || it.boss) + '</h1>' +
     '<div class="mpt-pills"><span class="mpt-res ' + res[1] + '">' + res[0] + '</span>' + (mpNewBest(it, R, !!(ck && ck.up > 0)) ? '<span class="mpt-pill mpt-best">★ New best on ' + esc(mpDung(it.boss)) + '</span>' : '') + '<span class="mpt-bmeta">' + [tmH ? esc(tmH) : '', ptsH].filter(Boolean).join(' · ') + '</span></div>' +
     /* (its affixes, each with a plain hover) */
     ((run.affixes || []).some((a) => MP_AFFIX[a]) ? '<div class="mpt-afx">' + run.affixes.filter((a) => MP_AFFIX[a]).map((a) => '<span class="mpt-af" tabindex="0"' + mpT1('<b>' + esc(MP_AFFIX[a][0]) + '</b><br>' + esc(MP_AFFIX[a][1])) + '>' + esc(MP_AFFIX[a][0]) + '</span>').join('') + '</div>' : '') +
     /* (the five players, each with their spec icon (Flex: "use spec icons for the classes"), in class colour) */
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => { const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
       return '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"><b>' + esc(p.name) + '</b></span>'; }).join('') + '</div></div></div>';
-  if (!C) return mpxKey(ban, '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '', mpxDigest(R, F))) + mpxChap(R, F) + mpJumpBar(R, false) + mpBigChap(R) +
+  if (!C) return mpxKey(ban, '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpxPP(R, fx) + mpBand(R, fx, '', mpxDigest(R, F))) + mpxChap(R, F) + mpJumpBar(R, false) + mpBigChap(R) +
     mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, null, mpMapHtml(R, null, ''))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
@@ -1228,11 +1274,13 @@ function mpHtml(it, R, fx) {
   /* (Nov 9, the Run tab redesign (Flex: "Redesign first"): on the website five numbers read at a glance instead of two sentences; the Companion keeps its lines) */
   const sbC = (lab, big, cls, sub) => '<div class="mpt-sbc"><small>' + lab + '</small><b' + (cls ? ' class="' + cls + '"' : '') + '>' + big + '</b><span>' + sub + '</span></div>';
   const lim1 = lv === 3 ? P * 0.6 : lv === 2 ? P * 0.8 : P, gap1 = FC ? T - FC.ck.time : null, last1 = mpLastTime(it, R);
-  const scoreH = '<div class="mpt-sbd">' + sbC('Result', lv > 0 ? 'Timed +' + lv : 'Over time', lv >= 2 ? 'g' : lv === 1 ? 'a' : 'r', lv > 0 ? mpMM(lim1 - T) + ' to spare' : 'by ' + mpMM(T - P)) +
+  const scoreT = '<div class="mpt-sbd">' + sbC('Result', lv > 0 ? 'Timed +' + lv : 'Over time', lv >= 2 ? 'g' : lv === 1 ? 'a' : 'r', lv > 0 ? mpMM(lim1 - T) + ' to spare' : 'by ' + mpMM(T - P)) +
     (FC ? sbC('Against a fast run', gap1 > 5 ? mpMM(gap1) + ' behind' : gap1 < -5 ? mpMM(-gap1) + ' ahead' : 'Even', gap1 > 5 ? 'r' : 'g', 'A typical fast run took ' + mpMM(FC.ck.time)) : waiting ? sbC('Against a fast run', mpShim('5em'), '', mpShim('9em')) : '') +
     (tgt != null ? sbC('Next level', '+' + (lv + 1), '', mpMM(need) + ' faster gets it') : sbC('Next level', '+3', 'g', 'the most there is')) +
     (yG.r ? sbC('Group DPS', mpGF(yG.r), gdp != null && gdp < -5 ? 'a' : '', gdp == null ? (waiting ? mpShim('8em') : '') : (gdp ? Math.abs(gdp) + '% ' + (gdp < 0 ? 'less' : 'more') + ' than the fast run' : 'the same as the fast run') + (LD1 ? ', up to where you left' : '')) : '') +
     sbC('Missed kicks', String(thN), thN ? 'r' : 'g', thN ? (thN === 1 ? 'cast' : 'casts') + ' went off with a kick ready' : 'nothing went off with a kick ready').replace('<div class="mpt-sbc">', '<div class="mpt-sbc mpx-go" role="button" tabindex="0" data-mpxv="mis" data-mpxk="kick">') + '</div>' + (last1 ? '<p class="mpt-sbl">' + last1.trim() + '</p>' : '');
+  /* (Nov 14, the raid review's sibling: the Summary's top on the website is the score panel, Your part, then The key at a glance; the band under them is Mistakes beside the time) */
+  const scoreH = MPC_ON ? scoreT : mpxScore(keyLine, gLine, scoreT, went && went[0] ? [went[0], 1] : FIX[0] ? [FIX[0], 0] : null, waiting && tgt != null) + mpxPP(R, fx) + mpxGlance(bh.tl);
   if (!MPC_ON) return mpxKey(ban, scoreH + band) + mpxChap(R, F) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
     mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
   return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'Your key on the map', 'every pull, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
@@ -1263,7 +1311,8 @@ function mpRPFold(R, F, map, wait) {
   return (hd ? '<div class="mpt-fxh mpt-mph"><h2' + (F ? ' class="' + mpFi().trim() + '"' : '') + '>' + hd + '</h2></div>' : '') + '<p class="mpt-rpl mpt-meta">' + bits.join(' · ') + '</p>' + (map || '');
 }
 // (the band: Your part beside Fix these first (layout v3); Your part alone when the key has no timer)
-const mpBand = (R, fx, right, pre) => '<div class="mpt-band' + (right ? '' : ' mpt-band1') + '" id="mptBand">' + (pre || '') + '<div class="mpt-bl">' + mpPartHtml(R, fx, MP.pp) + '</div>' + (right ? '<div class="mpt-br">' + right + '</div>' : '') + '</div>';
+/* (Nov 14, the raid review's sibling: on the website Your part is its own panel ahead of the band (mpxPP); the card keeps it in the band) */
+const mpBand = (R, fx, right, pre) => '<div class="mpt-band' + (right ? '' : ' mpt-band1') + '" id="mptBand">' + (pre || '') + (MPC_ON ? '<div class="mpt-bl">' + mpPartHtml(R, fx, MP.pp) + '</div>' : '') + (right ? '<div class="mpt-br">' + right + '</div>' : '') + '</div>';
 // ---------- Big hits (Nov 14, Flex: "Yes, start it" on the research's top idea, defensive checks on the big hits; the Design studio's settled look,
 // mplus-big-hits-styled: close calls on top, every big hit under it, By player last; "close calls" its wording). The numbers are the key reader's (R.big,
 // companion/mplus.js bigHits): a big hit took two thirds of a health bar or more from the non-tanks, a close call left someone under 15% with no defensive up.
@@ -2212,6 +2261,7 @@ function mpPartHtml(R, fx, pick) {
   else if (avN) { const m = new Map(); for (const a of av) m.set(a.spell, (m.get(a.spell) || 0) + a.n); const [s1, n] = [...m].sort((a, b) => b[1] - a[1])[0]; nt = 'Dodge ' + esc(s1) + '. It hit ' + you + ' ' + tw(n) + '.'; }
   else if (v && v.pct < -5) nt = 'Push ' + (own ? 'your' : 'their') + ' damage. ' + (own ? 'You were ' : esc(name) + ' was ') + (-v.pct) + '% behind top ' + esc(p.spec) + ' ' + esc(cn) + 's.';
   const ntH = nt ? '<p class="mpt-nt' + (v && !dd.length && !th.length && !miss.length && !avN ? mpFi() : '') + '"><b>Next time</b> ' + nt + '</p>' : wt ? '<p class="mpt-nt">' + mpShimT('Next time push your damage. You were 10% behind top players.') + '</p>' : '';
+  if (!MPC_ON) return mpxPart({ pick, name, own, p, cn, rows, nt }); /* (the website: the raid review's coach panel for a key) */
   return '<div id="mptPart" data-for="' + esc(pick || '') + '"><p class="mpt-k mpt-pth">' + (own ? 'Your part · ' : '') + '<span style="color:' + mpCC(p.cls) + '">' + esc(name) + '</span>' + (own ? '' : '\'s part') + ' <span class="mpt-m">(' + esc(p.spec) + ')</span></p>' +
     '<div class="mpt-prows' + (MPC_ON ? '' : ' mpt-ptiles') + (() => { if (MPC_ON || rows.some((h) => /mpt-shim/.test(h))) return ''; const k = mpK(MP.item || {}) + '|' + name; if (MP._ptS === k) return ''; MP._ptS = k; return ' mpt-fadein'; })() /* (Nov 9: the worst-first order arrives once, with a fade) */ + '">' + (MPC_ON || rows.some((h) => /mpt-shim/.test(h)) ? rows : rows.map((h, k) => ({ h, k, r: /mpt-prow2/.test(h) ? 9 : /class="(mpt-bad|mpt-rwc-b)[\s"]/.test(h) ? 0 : /class="(mpt-a|mpt-rwc-w|mpt-t2k)[\s"]/.test(h) ? 1 : 2 })).sort((a, b) => a.r - b.r || a.k - b.k).map((x) => (x.r < 2 ? x.h.replace('class="mpt-prow"', 'class="mpt-prow ' + (x.r ? 'mpt-pta' : 'mpt-ptb') + '"') : x.h))).join('') + '</div>' + ntH + '</div>'; } /* (Nov 9: tiles, the worst first) */
 // (a player against the same spec in the fastest runs with a public log at this level: healers by their DPS when the runs have it, else HPS)
@@ -2994,11 +3044,11 @@ function mpMapAutoGo(now, quiet) { const it = MP.item, R = it && MP.R[mpK(it)], 
 const mpMapAutoOn = () => { const p = MP.pick; return !p || p.auto || p.k !== (MP.item ? mpK(MP.item) : ''); }; /* (the viewer hasn't picked a pull on this key) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
-function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) return; name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
+function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) { mpxPPOnly(name || ''); return; } name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
   if (name && MP_PLAY_ON) mpRotAll(name);
   { const it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (R2 && MP_ROT_ON) { if (MP_RK_OLD) { mpRkPaint(R2); if (name) mpRkGo(); } else mpRwPaint(R2); } } /* (the Rotation chapter follows the pick) */
   { const pe = document.getElementById('mptPart'), it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (pe && R2 && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R2, MP.fastOf && MP.fastOf.k === mpK(it2) ? MP.fastOf : null, name); } /* (Your part follows the pick) */
-  box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; });
+  box.querySelectorAll('[data-mppsel]').forEach((x) => { x.value = name; const o = x.selectedOptions[0]; x.style.color = name && o ? o.style.color : ''; }); mpxPPSync(name);
   box.querySelectorAll('.mpt-mdtv[data-v="you"] [data-who]').forEach((el) => el.classList.toggle('pp-off', !!name && !el.dataset.who.split('|').includes(name)));
   if (MP.pick && MP.pick.auto && MP.pick.pp !== name) mpMapAutoGo(); } /* (the card follows the new player's most mistakes) */
 document.addEventListener('change', (e) => { const x = e.target; if (!x || !x.matches || !x.matches('[data-mppsel]')) return; mpMapPP(x.value); if (MP.ppK) { const m = mpPPGet(); m[MP.ppK] = x.value; try { localStorage.setItem(MP_PPK, JSON.stringify(m)); } catch (e2) { /* (not kept) */ } } });
@@ -3118,7 +3168,7 @@ document.addEventListener('click', (e) => { const t = e.target; if (!t.closest) 
   const st = t.closest('[data-mstep]'); if (st && box) { const view = box.querySelector('.mpt-mdtv:not([hidden])'), n = +view.dataset.n, p = MP.pick && MP.pick.v === view.dataset.v && MP.pick.ids.length === 1 ? +MP.pick.ids[0] : -1;
     const sli = MP.pick && MP.pick.v === view.dataset.v && /^s/.test(MP.pick.ids[0]) ? view.querySelector('.mpt-mfl li[data-pi="' + MP.pick.ids[0] + '"]') : null; /* (from a skip: the pulls either side) */
     let k = sli ? (+st.dataset.mstep > 0 ? +sli.dataset.after : +sli.dataset.after - 1) : p + +st.dataset.mstep; if (k < 0) k = n - 1; if (k >= n) k = 0; mpMapPick(view.dataset.v, k); return; }
-  const blk = t.closest('.mpt-mstrip .mpt-blk[data-pi]'); if (blk) { mpMapPick(blk.dataset.run, blk.dataset.pi); return; }
+  const blk = t.closest('.mpt-mstrip .mpt-blk[data-pi]'); if (blk) { const gl = !MPC_ON && blk.closest('.mpx-gl'); if (gl) mpxView('map'); /* (from The key at a glance on Summary: the pull opens on the Route tab) */ mpMapPick(blk.dataset.run, blk.dataset.pi); if (gl) mpxTop(); return; }
   const go = t.closest('[data-mpps]'); if (go) { e.preventDefault(); e.stopPropagation(); const ids = go.dataset.mpps.split(','), ch2 = document.getElementById('mptCM');
     mpxView('map'); mpMapPick('you', ids, '<div class="mpt-mch"><b>' + go.dataset.mpt + '</b><span>' + go.dataset.mpl + '</span></div><p class="mpt-mcm">Lit up on the map. Click one for what happened in it.</p>');
     if (ch2) ch2.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
@@ -4017,12 +4067,12 @@ async function mpvDetLoad(R) { const el = document.getElementById('mpvDet'); if 
 if (MP.cv == null) { const m = /[?&]mpv=(rot|mis|hit|map|grp|dun)\b/.exec(location.search); if (m) MP.cv = m[1]; }
 { const m = location.search.match(/[?&]mpp=([^&]+)/); if (m) { try { MP.cvp = decodeURIComponent(m[1]); } catch (e) { /* (a bad name is ignored) */ } } }
 function mpvUrl() { if (MPC_ON) return; try { const u = new URL(location.href); if (MP.cv && MP.cv !== 'run') u.searchParams.set('mpv', MP.cv); else u.searchParams.delete('mpv'); if (MP.cvp) u.searchParams.set('mpp', MP.cvp); history.replaceState(history.state, '', u); } catch (x) { /* (the address stays) */ } }
-function mpvLay(b) { if (MPC_ON || !b || b.querySelector('.mpc-tabs')) return; const ban = b.querySelector(':scope > #mptC1 > .mpt-ban');
-  (ban || b).insertAdjacentHTML(ban ? 'afterend' : 'afterbegin', '<div class="mpc-tabs" role="tablist">' + MPX_VIEWS.filter(([v]) => (v !== 'dun' || b.querySelector(':scope > #mptC5')) && (v !== 'mis' || b.querySelector(':scope > #mptCX')) && (v !== 'hit' || b.querySelector(':scope > #mptCH'))).map(([v, l]) => '<button type="button" role="tab" data-mpcv="' + v + '">' + l + '</button>').join('') + '</div>');
+function mpvLay(b) { if (MPC_ON || !b || b.querySelector('.mpc-tabs')) return; const ban = b.querySelector(':scope > #mptC1'), it0 = MP.item, R0 = it0 && MP.R[mpK(it0)]; /* (Nov 14: the tab row and the toolbar sit under the banner's box, as on the raid review, so the row can stick to the top) */
+  (ban || b).insertAdjacentHTML(ban ? 'afterend' : 'afterbegin', '<div class="mpc-tabs" role="tablist">' + MPX_VIEWS.filter(([v]) => (v !== 'dun' || b.querySelector(':scope > #mptC5')) && (v !== 'mis' || b.querySelector(':scope > #mptCX')) && (v !== 'hit' || b.querySelector(':scope > #mptCH'))).map(([v, l]) => '<button type="button" role="tab" data-mpcv="' + v + '">' + l + '</button>').join('') + '</div>' + mpxBar(R0)); { const op = b.parentNode && b.parentNode.querySelector(':scope > .mpt-pick'); if (op && b.querySelector('.mpx-tb')) op.remove(); } /* (the key picker lives in the toolbar now) */
   b.insertAdjacentHTML('beforeend', '<div id="mpcRot"></div>'); mpxView(MP.cv || 'run'); }
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcv],[data-mpcp],[data-mpcs],[data-mpcw],[data-mpco],[data-mpcm],[data-mpcn],[data-mpcf]'); if (!t) return; e.preventDefault();
   const it = MP.item, R = it && MP.R[mpK(it)];
-  if (t.dataset.mpcv && !MPC_ON) { mpxView(t.dataset.mpcv); return; }
+  if (t.dataset.mpcv && !MPC_ON) { mpxView(t.dataset.mpcv); mpxTop(); /* (Nov 14: the tab row sticks to the top, so a tab picked while scrolled starts at its top) */ return; }
   if (t.dataset.mpcv) { MP.cv = t.dataset.mpcv; document.documentElement.classList.toggle('mpc-rot', MP.cv === 'rot'); document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => x.classList.toggle('on', x.dataset.mpcv === MP.cv));
     mpvUrl();
     mpcRotPaint(); return; }
@@ -4036,7 +4086,7 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   mpcRotPaint(); });
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-mpcgo]'); if (!t) return; e.preventDefault(); /* (Nov 9: a pull on the map opens its Rotation) */
   MP.cv = 'rot'; MP.cvi = +t.dataset.mpcgo; MP.cvf = null; MP.cvo = new Set(['0']); MP.cvm = false; document.documentElement.classList.add('mpc-rot'); document.documentElement.dataset.mpv = 'rot'; document.querySelectorAll('.mpc-tabs [data-mpcv]').forEach((x) => x.classList.toggle('on', x.dataset.mpcv === 'rot'));
-  mpvUrl(); mpcRotPaint(); const tb = document.querySelector('.mpc-tabs'); if (tb) window.scrollTo({ top: Math.max(0, tb.getBoundingClientRect().top + window.scrollY - 70) }); });
+  mpvUrl(); mpcRotPaint(); if (!MPC_ON) { mpxTop(); return; } const tb = document.querySelector('.mpc-tabs'); if (tb) window.scrollTo({ top: Math.max(0, tb.getBoundingClientRect().top + window.scrollY - 70) }); });
 document.addEventListener('change', (e) => { const t = e.target; if (!t || !t.matches || !t.matches('[data-mpcsel]')) return; MP.cvp = t.value; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); mpcRotPaint(); }); /* (Nov 9: the player picker) */
 document.addEventListener('toggle', (e) => { if (e.target && e.target.classList && e.target.classList.contains('mpv-all')) MP.cvAll = e.target.open; }, true); /* (kept open across redraws) */
 function mpcLay() {
