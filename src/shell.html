@@ -19930,9 +19930,6 @@ html:not(.mpcard) body #view#view#view .mpx-gl > .mpx-glh { display: flex !impor
 html:not(.mpcard) body #view#view#view .mpx-gl .mpx-glt { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
 html:not(.mpcard) body #view#view#view .mpx-gl .mpx-gls { font: 500 13px var(--body) !important; color: var(--muted) !important; }
 html:not(.mpcard) body #view#view#view .mpx-gl > .mpt-mstrip { margin: 6px 0 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
-html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; }
-html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpx-dg { padding-right: 26px !important; }
-html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpt-bl { padding: 0 0 0 26px !important; border-top: 0 !important; border-left: 1px solid var(--line) !important; }
 html:not(.mpcard) body #view#view#view #mptBand.mpt-band1 > .mpt-bl:has(> #mptPart:empty) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptPart.mpx-my > .mpx-myh, html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-rch { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; margin: 0 !important; }
 html:not(.mpcard) body #view#view#view #mptPart.mpx-my .mpx-myk { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
@@ -20038,9 +20035,6 @@ html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv > .mpx-cvx { --gbx-cols:
 @media (max-width: 720px) {
   html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) { overflow-x: auto !important; scrollbar-width: none !important; }
   html:not(.mpcard) body #view#view#view .mpx-tb select { max-width: 58vw !important; }
-  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) { grid-template-columns: minmax(0,1fr) !important; }
-  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpx-dg { padding-right: 0 !important; }
-  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpt-bl { padding: 16px 0 0 !important; border-left: 0 !important; border-top: 1px solid var(--line) !important; }
   html:not(.mpcard) body #view#view#view #mptCP .mpx-rcs, html:not(.mpcard) body #view#view#view #mptCG .mpx-gms0, html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccg { grid-template-columns: minmax(0,1fr) !important; }
   html:not(.mpcard) body #view#view#view .mpx-gm > .gbx { --gbx-cols: 104px minmax(0, 1fr) 52px; }
   html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv > .mpx-cvx { --gbx-cols: 96px minmax(0, 1fr) 44px 0 0 84px; }
@@ -20059,6 +20053,37 @@ html:not(.mpcard) body #view#view#view #mptCC .mpt-fxh { margin-bottom: 4px !imp
 html:not(.mpcard) body #view#view#view #mptCC .mpt-fxh h2 { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
 html:not(.mpcard) body #view#view#view #mptCC .mpx-dg .mpt-fxh { justify-content: space-between !important; }
 html:not(.mpcard) body #view#view#view #mptCC > .mpx-ct { padding: 0 !important; border: 0 !important; }
+}
+@layer defaultTheme {
+/* (Nov 14, the Mistakes tab folded into Summary and Report card (Flex, with a picture of the tab's label: "im not seeing the value in this tab, how can
+   we migrate the information into another tab?"). A kind opens its rows in place in Summary's Mistakes box; a player's rows open in their card) */
+/* Summary's Mistakes box: a line a kind, at the full width; a click opens every one of that kind under it */
+html:not(.mpcard) body #view#view#view .mpx-dg .mpx-dgs { font: 500 12.5px var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk { margin: 0 !important; border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk > summary.mpx-dr { list-style: none !important; border-bottom: 0 !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk > summary.mpx-dr::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk[open] > summary.mpx-dr { background: rgba(255,255,255,.03) !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk[open] > summary.mpx-dr > i { transform: rotate(90deg) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view details.mpx-dk > .mpx-dkb { margin: 0 !important; padding: 6px 0 14px 46px !important; }
+html:not(.mpcard) body #view#view#view .mpx-dkb > .mpx-dks { margin: 0 0 4px !important; font: 500 12.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dkb > .mpx-r { border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view .mpx-dkb > .mpx-r:last-child { border-bottom: 0 !important; }
+/* (a row's spell icon sat a line low: its box has no line height, so it hung from the text's baseline. In the opened lists it is centred on the words) */
+html:not(.mpcard) body #view#view#view .mpx-dkb .mpx-w > .mpt-rki, html:not(.mpcard) body #view#view#view .mpx-rcmb .mpx-w > .mpt-rki { vertical-align: middle !important; margin: -3px 7px 0 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-dkb .mpx-w > .mpt-rki > .icw, html:not(.mpcard) body #view#view#view .mpx-rcmb .mpx-w > .mpt-rki > .icw { margin: 0 !important; }
+/* (a jump to the mistakes stops under the tab row, which sticks to the top) */
+html:not(.mpcard) body #view#view#view #mptCS .mpx-dg, html:not(.mpcard) body #view#view#view details.mpx-dk { scroll-margin-top: 62px !important; }
+/* Report card: a card opens to every mistake with that player's name on it, and takes the full width while it is open */
+html:not(.mpcard) body #view#view#view #mptCP .mpx-rcard:has(> details.mpx-rcm[open]) { grid-column: 1 / -1 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > details.mpx-rcm { margin: 10px 0 0 !important; padding: 8px 0 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcm > summary.mpx-rcms { display: flex !important; align-items: center !important; gap: 8px !important; list-style: none !important; padding: 2px 0 !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcm > summary.mpx-rcms::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcms > .mpx-rcmt { font: 600 13px var(--body) !important; color: var(--muted) !important; text-decoration: underline !important; text-underline-offset: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcms:hover > .mpx-rcmt { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcms > .mpx-rcmn { padding: 0 7px !important; border-radius: 4px !important; background: rgba(255,143,135,.12) !important; font: 700 12px/18px var(--body) !important; color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcms > i { font: 700 14px var(--body) !important; font-style: normal !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcm[open] > .mpx-rcms > i { transform: rotate(90deg) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcm > .mpx-rcmb { margin: 8px 0 0 !important; }
 }
 </style>
 </body>

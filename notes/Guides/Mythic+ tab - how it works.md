@@ -257,3 +257,17 @@ One number at a time, as on Warcraft Logs:
 - Deaths lists each death with the hits before it and what was ready. Defensives shows Big hits (every big hit and what was pressed for it), unchanged.
 
 Where the numbers come from: damage and healing are the reader's own numbers for each pull, the same ones the players table is built from, so the whole key's damage per second matches the table. Kicks, stops, dispels and deaths are the same lists the table counts. Damage taken is the page's own pass over the log. A CC cast counts for the pull it fell in.
+
+## The Mistakes tab folds into Summary and Report card (Nov 14, 2026, night)
+
+Flex, with a picture of the Mistakes tab's label: "im not seeing the value in this tab, how can we migrate the information into another tab?" For the passes that follow: "go through each tab one at a time and fix it up real nice", "full creative executive freedom in each tab. Just make sure it doesnt completely look like a different website, follow a similar flow and style as the rest of the site but let mythic + have its own flavor".
+
+Six tabs now: Summary, Route, Rotation, Graphs, Report card, Compare. Nothing from the Mistakes tab was dropped:
+- By kind: Summary's Mistakes box. Each line (Deaths, Close calls, Missed kicks and so on) opens to every one of them, with its pull and who could have stopped it. The Missed kicks number on top opens that line.
+- By player: Report card. Each card has "Every mistake with their name on it, one by one", which opens the same rows for that player; the card goes full width while it is open.
+- By place: Route, in each pull's card, as before.
+An old link to the Mistakes tab opens Summary.
+
+Summary is one column: the five numbers, "Fix first", the key pull by pull, the mistakes at full width, then the picked player's part.
+
+A death the log has no hit for reads "died to a hit the log doesn't name" (it read "died to unknown", and its Next time line "Watch for unknown").
