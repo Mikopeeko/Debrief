@@ -20545,6 +20545,13 @@ html:not(.mpcard) body #view#view#view .mrp-side > .mrp-k > .mrp-elg { float: ri
 html:not(.mpcard) body #view#view#view .mrp-elg > i { display: inline-block !important; width: 9px !important; height: 9px !important; margin: 0 4px 0 10px !important; vertical-align: -1px !important; }
 html:not(.mpcard) body #view#view#view .mrp-elg > i.t-elite { background: #a335ee !important; } html:not(.mpcard) body #view#view#view .mrp-elg > i.t-cast { background: #1f80ea !important; } html:not(.mpcard) body #view#view#view .mrp-elg > i.t-melee { background: #c69b6d !important; }
 }
+/* Mythic+ Summary: Big hits inside the fold "Every mistake, kind by kind" (Nov 14, Flex: "Yes, move it"): a part of the fold, not a panel of its own */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mpxAllM > #mptCH { display: block !important; scroll-margin-top: 64px !important; margin: 18px 0 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mpxAllM > #mptCH > details.mpx-bhf > summary.mpx-bhs { padding: 10px 0 !important; border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mpxAllM > #mptCH .mpx-bht { font: 700 16px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCS .mpx-mow > .mpx-mobh { margin: 0 0 0 6px !important; font: 600 13px var(--body) !important; white-space: nowrap !important; }
+}
 </style>
 </body>
 </html>
