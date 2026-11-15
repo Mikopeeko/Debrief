@@ -72806,6 +72806,7 @@ function pgOpen(root, boss, d, pk) {
   pgCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic';
   // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
+    get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ' and stay in range' + (rl(me) === 'm' ? ' (melee: close to it)' : '') + '.' : null; },
     mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
@@ -72904,13 +72905,13 @@ function pgOpen(root, boss, d, pk) {
   // need to do and when"): Tab picks a target (a click on one picks it too) and you hit it while you're in range (melee 5 yards from it, everyone else
   // 40). The moments that matter: a Viper the moment it hatches, the heart while it's open, the Rawlings after each coil soak. A moment spent mostly
   // on the right thing counts; a miss is one line in the report. No damage numbers: training wheels. ----
-  const tgtList = (t) => { const L = [], B = bossAt(t), TL = tailAt(t);
+  const tgtList = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
     G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1 }); });
     if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
-  const dpsCat = (t) => (G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
+  const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
   const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it and kill it first.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart and stay in range.'],
     rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick them and kill them before they grow strong.'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
@@ -72918,15 +72919,15 @@ function pgOpen(root, boss, d, pk) {
   const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
   const onRight = (cat, o) => isRight(cat, o) && inRange(o);
   const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
-    if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (c.kind === 'heart' ? 'it' : c.kind === 'viper' ? 'it' : 'them') + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
-  const dpsStep = (t, dt) => { if (P2) return; const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
+    if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (DPS_SAY[c.kind][3] || (c.kind === 'heart' || c.kind === 'viper' ? 'it' : 'them')) + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
+  const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
     if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
   const cycleTgt = () => { const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
-  const pickTgtAt = (p) => { if (P2 || !G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
-  const dpsView = () => { if (!G || P2) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
+  const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
+  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false }; };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
   const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
@@ -73263,7 +73264,7 @@ function pgOpen(root, boss, d, pk) {
   const grade = () => { const maj = G.log.filter((m) => MAJ.has(m.kind)).length, mn = G.log.length - maj, sc = Math.max(0, 100 - maj * 9 - mn * 4 - G.deaths * 20 - (G.wipes || 0) * 20); return { sc, g: sc >= 95 ? 'S' : sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D' }; };
   const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [];
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + '</span>' +
-      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (the Rawlings, the heart' + (DL.some((m) => m.kind === 'viper') ? ', the Vipers' : '') + ').</p>' : '') +
+      '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (' + (P2 ? P2.dpsNames(DL) : 'the Rawlings, the heart' + (DL.some((m) => m.kind === 'viper') ? ', the Vipers' : '')) + ').</p>' : '') +
       (n ? '<ol class="pg-sum">' + G.log.slice().sort((a, b) => a.t - b.t).map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.text) + '</b>' + (m.tip ? '<span>' + esc(m.tip) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
@@ -73281,7 +73282,7 @@ function pgOpen(root, boss, d, pk) {
   const kd = (e) => { if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
     if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
-    if (G && !paused && e.code === 'Tab' && !P2) { e.preventDefault(); cycleTgt(); return; }
+    if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
     if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
@@ -74319,7 +74320,9 @@ function pgP2(A) {
   const T = PG_P2_T, P = PG_P2, L = pgP2L, away = pgP2Away, clk = pgClock, RN = { m: 'Melee', r: 'Ranged', h: 'Healer' }, SD = { E: 'east', W: 'west' }, NS = { far: 'south', close: 'north' };
   let S = null, G = null; const sync = () => { S = A.S; G = A.G; };
   // (its debuffs on your frame, and which mistakes count as big ones: added on the first run, once practice.js has made its lists)
-  let setUp = false; const setup = () => { if (setUp) return; setUp = true; Object.assign(A.DEB, { vein: ['Blight Vein', '#ff5a4f'], fangs: ['Grasping Fangs', '#ff8a6a'], stun: ['Stunned', '#ffd23b'], doom: ['Doomscale Egg', '#e6b450'], malice: ['Malice', '#b06bff'] });
+  let setUp = false; const setup = () => { if (setUp) return; setUp = true;
+    if (A.DPS_SAY) Object.assign(A.DPS_SAY, { warden: ['Hit the Warden', 'The Warden was up', 'Tab picks the Doomscale Warden: it has to die before its next Writhing Gestation (about 3:38). Stay in range.', 'it'], ds: ['Hit the Doomscales', 'The Doomscales were up', 'Tab picks a Weakened Doomscale: hit them from behind or beside (their frontal goes at the tank), and kill them evenly.', 'them'] });
+    Object.assign(A.DEB, { vein: ['Blight Vein', '#ff5a4f'], fangs: ['Grasping Fangs', '#ff8a6a'], stun: ['Stunned', '#ffd23b'], doom: ['Doomscale Egg', '#e6b450'], malice: ['Malice', '#b06bff'] });
     ['kick', 'tether', 'ward', 'big', 'wipe', 'frontal', 'side', 'egg'].forEach((k) => A.MAJ.add(k)); };
   // ---- your job (the start card), remembered on this browser ----
   const KEY = 'wla-pg-job2', job0 = () => ({ side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' });
@@ -74353,7 +74356,7 @@ function pgP2(A) {
   // (a kicker's spot: 5 yards behind their Doomscale, on the side away from its tank, so its frontal never points at them)
   const behind = (s, k) => { const d = G.p2.ds['ds' + s + k]; if (!d) return null; const tp = pos(tankOf(s)), ex = d.x - tp[0], ey = d.y - tp[1], ee = Math.hypot(ex, ey) || 1; return [d.x + ex / ee * 5, d.y + ey / ee * 5]; };
   const dsWant = (d, t) => { if (t < d.up) return null; if (t < d.up + 1.5) return S.pits[d.side].slice(); const tk = tankOf(d.side), tp = pos(tk), sg = S.east ? 1 : -1;
-    return G.p2.where[tk] === 'p1' ? [tp[0] + sg * (d.k === 1 ? -2.5 : 2.5), tp[1] + 7] : (() => { const o = pgP2L(d.side, [-7, d.k === 1 ? 2.5 : -2.5]); return [tp[0] + o[0], tp[1] + o[1]]; })(); };
+    return G.p2.where[tk] === 'p1' ? [tp[0] + sg * (d.k === 1 ? -2.5 : 2.5), tp[1] + (tp[1] < 0 ? 7 : -7)] : (() => { const o = pgP2L(d.side, [-7, d.k === 1 ? 2.5 : -2.5]); return [tp[0] + o[0], tp[1] + o[1]]; })(); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
   const ledgeJob = (id, t, j, s, b0) => { const tk = id[0] === 't', i = idx(id), F = L(s, P.fight); let T0, fast = false, ob = null;
@@ -74376,11 +74379,15 @@ function pgP2(A) {
       else T0 = spiral(L(s, P.wait), i, 5);
       if (tk && t >= T.dsUp - 4) { T0 = L(s, P.ds); fast = true; } }
     else { // the Doomscales: their tank east of them (their frontal goes at the tank), the kickers behind them, the rest further back
-      T0 = tk ? L(s, P.ds) : j.cry ? behind(s, j.cry) || L(s, P.dsKick) : spiral(L(s, P.dsWait), i, 5); }
+      // (once their tank has taken them through the gate, everyone left on the ledge heads for it too: never at them across the venom)
+      const gone = G.p2.where[tankOf(s)] === 'p1';
+      T0 = tk ? L(s, P.ds) : gone ? L(s, P.land) : j.cry ? behind(s, j.cry) || L(s, P.dsKick) : id[0] === 'm' ? (() => { const q = behind(s, 1 + (i % 2)); return q ? spiral(q, i, 2.2) : L(s, P.dsKick); })() : spiral(L(s, P.dsWait), i, 5); fast = gone; } /* (the melee: behind them, in reach (the damage moments, Nov 15)) */
     return { T: T0, fast, ob }; };
   const platJob = (id, t, j) => { const sg = S.east ? 1 : -1, PL = (x, y) => [x * sg, y], east = j.side === 'E';
-    // (back by her: each tank holds its two Doomscales south of the raid, their frontals pointing away; the kickers behind them; the rest by the heart)
-    const T0 = id[0] === 't' ? PL(east ? 30 : 18, -17) : j.cry ? behind(j.side, j.cry) || PL(east ? 30 : 18, -4) : spiral(PL(26, 7), GDZ_RAID.indexOf(id), 6);
+    // (back by her, the Doomscales dragged in by the heart for the cleave (the guide): the east half's tank holds its two just south of the heart and
+    // the west half's just north, their frontals pointing away at the tanks; every melee by the heart, in reach of it and of their Doomscale (kicks
+    // too); the ranged and healers a little back. The damage moments, Nov 15)
+    const i = GDZ_RAID.indexOf(id), T0 = id[0] === 't' ? PL(34, east ? -12 : 12) : id[0] === 'm' ? spiral(PL(35.5, 0), i, 1.5) : spiral(PL(25, 0), i, 5);
     return { T: T0, fast: false, ob: null }; };
   const job = (id, t) => { sync(); const j = S.job[id], s = j.side, w = G.p2.where[id], ws = G.p2.wside[id], b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id]; let r;
     if (w === 'p0') r = t < S.cross[id] ? { T: spiral(L(s, [14, -2]), idx(id), 5), fast: false, ob: null } : { T: L(s, P.gateP), fast: true, ob: { at: T.wardens, p: L(s, P.gateP), r: 1.2 } };
@@ -74509,6 +74516,7 @@ function pgP2(A) {
     if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. To the edge of your tether now (about 20 yards; you\'re slowed), then past 25 yards at 3:26 (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 5.5 ? 'Grasping Fangs: you\'re one of the five. At 3:28 go to the edge of your tether (20 yards; you\'re slowed), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
     const fl = S.impacts.find((m) => t >= m.t0 && t <= m.at && Math.hypot(G.x - m.x, G.y - m.y) < m.r + 3); if (fl) return 'Falling Debris: step out of the brown circle!';
     if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
+    const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (w === 'L' && t < T.wdie) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 2) ? 'Keep 7 yards from the eggs while the Warden lives (Warden\'s Protection).' : 'The Warden: stay with your half, out of 7 yards of the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
     if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait by it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
     if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
@@ -74582,6 +74590,19 @@ function pgP2(A) {
     L0.push(({ random: 'Tether: if you get one, break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
     L0.push('Back to her at 4:38: burn the heart, step out of the brown circles.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
+  // ---- hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"; practice.js does the rest: Tab or a click picks a target,
+  // you hit it in range (melee 5 yards, others 40), a moment spent mostly on it counts, a miss is one line). The targets: your ledge's Warden while it
+  // lives, the Weakened Doomscales, any Viper, the heart while it's open. The moments, most urgent first: a Viper (deadly), the heart (the second burn,
+  // 4:55 to 5:15), the Doomscales (from 4:29, killed evenly; the guide), the Warden (before its next Writhing Gestation, dead by 3:38) ----
+  const tgts = (t) => { sync(); const L0 = []; if (!G || !G.p2) return L0;
+    G.adds.forEach((a) => { if (a.kind !== 'viper') return; a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6 }); });
+    if (t >= T.heart && t < T.heartEnd) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 3 });
+    S.ds.forEach((d) => { const c = G.p2.ds[d.id]; if (c && t >= d.up + 1.5) L0.push({ key: d.id, kind: 'ds', name: 'Weakened Doomscale', p: [c.x, c.y], r: 2.6 }); });
+    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (p && t >= w.molt) L0.push({ key: w.id, kind: 'warden', name: 'Doomscale Warden', p: p.slice(), r: 2.5 }); });
+    return L0; };
+  const dpsCat = (t) => { sync(); if (!G || !G.p2) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (t >= T.heart && t < T.heartEnd) return 'heart';
+    if (t >= T.dsUp + 1.5 && Object.keys(G.p2.ds).length) return 'ds'; const j = S.job[A.me]; return j && G.p2.wd[j.side] && t >= T.molt + 1.2 ? 'warden' : null; };
+  const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['warden', 'ds', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ warden: 'the Warden', ds: 'the Doomscales', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   const starts = [[0, '2:46 · The split'], [190, '3:10 · The tethers'], [216, '3:36 · The small eggs'], [248, '4:08 · The big eggs'], [266, '4:26 · The Doomscales'], [284, '4:44 · The heart burn']];
 
   // ---- the minimap: the whole room, both ledges ----
@@ -74634,7 +74655,7 @@ function pgP2(A) {
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); };
 
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
+    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
     clean: 'Every kick landed, your tether broke on the count, your eggs went in clean, and you kept out of the frontals and the debris. Try another job.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, clash, get T() { return T; } };
 }
