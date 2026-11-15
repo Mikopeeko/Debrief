@@ -76,6 +76,58 @@ const isPlayer = (g) => typeof g === 'string' && g.startsWith('Player-');
 const isNpc = (g) => typeof g === 'string' && (g.startsWith('Creature-') || g.startsWith('Vehicle-'));
 const short = (n) => String(n || '').replace(/-.*$/, '');
 const roleOf = (spec) => (/Restoration|Holy|Discipline|Mistweaver|Preservation/.test(spec) ? 'healer' : /Protection|Guardian|Blood|Brewmaster|Vengeance/.test(spec) ? 'tank' : 'dps');
+// ---- Big hits (Nov 14, Flex: "Yes, start it" on the research's top idea, "defensive checks on the big hits"; the Design studio's look; notes/Guides/
+// Mythic+ - how it works (the whole picture).md, section 7). A big hit is an enemy spell's direct hit (not a damage-over-time, not a melee swing) that took
+// two thirds of a health bar or more from the non-tanks: the middle of its hits on them, shields included. The log picks them, so no dungeon list is needed
+// and nothing is unconfirmed. For each cast and each non-tank it hit: the health left after it, the defensives up as it landed (a buff on them, their own or
+// given) and a death within 3 s. A close call is a big hit that left someone under 15% with no defensive up, and no death (a death is its own row).
+// "Ready": a defensive of their class and spec, baseline or pressed in this key (a talent only counts once seen), with the engine's cooldown over since their
+// last press (never a shorter guess, so "ready" is always true). Tanks aren't judged here: their big hits are their own check. A spell on the dungeon's dodge
+// list is left out (Main's review, Nov 14): a defensive isn't its answer, and Avoidable hits counts it. With no list for the dungeon, every hit is weighed ----
+const BH_EXT = ['Blessing of Sacrifice', 'Blessing of Protection', 'Blessing of Spellwarding', 'Ironbark', 'Pain Suppression', 'Life Cocoon', 'Guardian Spirit', 'Time Dilation', 'Anti-Magic Zone', 'Power Word: Barrier', 'Feint'];
+const BH_BIG = 2 / 3, BH_LOW = 0.15;
+function bhDefs(E) { const m = new Map();
+  for (const l of Object.values(E.DEFENSIVES || {})) for (const d of l) if (d[5] !== 'heal' && !m.has(lc(d[0]))) m.set(lc(d[0]), { name: d[0], specs: d[3] || null });
+  for (const n of BH_EXT) if (!m.has(lc(n))) m.set(lc(n), { name: n, specs: null });
+  return m; }
+function bigHits(ev, players, pullOf, DEF, defIds, E, LIST) {
+  const tank = (g) => (players.get(g) || {}).role === 'tank', nm = (g) => (players.get(g) || {}).name || short(g);
+  // (the defensives up on each player, as stretches; one still on at the end runs to the end)
+  const up = new Map(), open = new Map();
+  for (const x of ev) { if (x[1] === 'dbon') { const k = x[2] + '|' + x[3]; if (open.has(k)) continue; const o = { n: x[3], s: x[0], e: 1e9, by: x[4] !== x[2] && isPlayer(x[4]) ? nm(x[4]) : null }; open.set(k, o); if (!up.has(x[2])) up.set(x[2], []); up.get(x[2]).push(o); }
+    else if (x[1] === 'dboff') { const k = x[2] + '|' + x[3], o = open.get(k); if (o) { o.e = x[0]; open.delete(k); } } }
+  const specOk = (g, d) => !d.specs || d.specs.includes((players.get(g) || {}).specId); /* (Havoc's Metamorphosis is a damage cooldown: only Vengeance's counts) */
+  const upAt = (g, t) => (up.get(g) || []).filter((o) => o.s <= t + 0.3 && o.e >= t - 0.3 && specOk(g, DEF.get(o.n))).map((o) => DEF.get(o.n).name + (o.by ? ' (from ' + o.by + ')' : ''));
+  // (each player's presses of their own defensives, for what was ready)
+  const press = new Map(); for (const x of ev) if (x[1] === 'cast' && defIds.has(x[3])) { if (!press.has(x[2])) press.set(x[2], []); press.get(x[2]).push([x[0], defIds.get(x[3])]); }
+  const readyAt = (g, t) => { const pl = players.get(g) || {}, mine = press.get(g) || [], out = [];
+    for (const d of (E.DEFENSIVES || {})[pl.cls] || []) { if (d[5] === 'heal' || (d[3] && !d[3].includes(pl.specId))) continue;
+      const rep = (E.DEF_REPLACED || {})[lc(d[0])]; if (rep && mine.some((q) => lc(q[1]) === rep)) continue; /* (a mage with Ice Cold has no Ice Block) */
+      const ps = mine.filter((q) => q[1] === d[0]); if (!d[4] && !ps.length) continue;
+      const before = ps.filter((q) => q[0] <= t - 0.3), lu = before.length ? before[before.length - 1][0] : null;
+      if (lu == null ? t >= d[2] : t - lu >= d[2]) out.push([d[0], d[2]]); }
+    return out.sort((a, b) => a[1] - b[1]).map((r) => r[0]); };
+  // (the hits on non-tanks, by spell; a cast is that spell's hits within 1.5 s of the last)
+  const by = new Map(), deaths = ev.filter((x) => x[1] === 'died');
+  for (const x of ev) { if (x[1] !== 'hit' || x[7] || !x[10] || x[4] === 'Melee' || !x[10][1] || tank(x[2])) continue;
+    if (LIST && LIST.dodge.has(lc(x[4]))) continue; /* (Main's review, Nov 14: a hit on the dungeon's dodge list is never a big hit. The fix there is to dodge, not a defensive, and Avoidable hits already counts it) */ if (!by.has(x[4])) by.set(x[4], []); by.get(x[4]).push(x); }
+  const hits = [], close = [], per = {};
+  for (const [spell, L] of by) { const pc = L.map((x) => x[10][0] / x[10][1]).sort((a, b) => a - b), med = pc[pc.length >> 1]; if (med < BH_BIG - 0.005) continue;
+    const casts = []; let last = -1e9;
+    for (const x of L) { if (x[0] - last > 1.5) casts.push({ t: x[0], pull: pullOf(x[0]), m: new Map() }); last = x[0]; const c = casts[casts.length - 1], o = c.m.get(x[2]) || { g: x[2], t: x[0], dmg: 0, mx: x[10][1], left: x[10][2] }; o.dmg += x[10][0]; o.left = x[10][2]; c.m.set(x[2], o); }
+    const H = { spell, id: L[0][8] || '', src: String(L[0][5] || ''), size: Math.round(100 * med), casts: [] };
+    for (const c of casts) {
+      const who = [...c.m.values()].map((o) => { const died = deaths.some((d) => d[2] === o.g && d[0] >= o.t - 0.5 && d[0] <= o.t + 3), def = upAt(o.g, o.t), left = died ? 0 : Math.max(0, Math.round(100 * o.left / o.mx));
+        const w = { name: nm(o.g), pct: Math.round(100 * o.dmg / o.mx), left, def, died }, P = per[w.name] || (per[w.name] = { n: 0, d: 0, low: 101, lowAt: '', lowT: 0, lowDef: false, died: 0 });
+        P.n++; if (def.length) P.d++; if (died) P.died++; if (left < P.low) { P.low = left; P.lowAt = spell; P.lowT = +o.t.toFixed(1); P.lowDef = def.length > 0; }
+        if (!died && !def.length && left < 100 * BH_LOW) close.push({ t: +o.t.toFixed(1), pull: c.pull, name: w.name, left, spell, id: H.id, src: H.src, ready: readyAt(o.g, o.t) });
+        return w; });
+      H.casts.push({ t: +c.t.toFixed(1), pull: c.pull, who }); }
+    const all = H.casts.flatMap((c) => c.who); H.n = all.length; H.d = all.filter((w) => w.def.length).length; H.died = all.filter((w) => w.died).length;
+    const lo = all.slice().sort((a, b) => a.left - b.left)[0]; H.low = lo ? lo.left : 100; H.lowWho = lo ? lo.name : ''; hits.push(H); }
+  hits.sort((a, b) => a.low - b.low || b.size - a.size); close.sort((a, b) => a.t - b.t);
+  for (const P of Object.values(per)) if (P.low > 100) P.low = 100;
+  return hits.length ? { hits, close, per, tanks: [...players.values()].filter((p) => p.role === 'tank' && p.cls).map((p) => p.name) } : null; }
 function build(text, E) {
   const ADV = 19, lines = text.split('\n');
   const run = { dungeon: '', level: 0, affixes: [], timed: false, timeMs: 0, score: null, started: null };
@@ -84,6 +136,7 @@ function build(text, E) {
   const mobHp = new Map(), spawned = new Set(); // enemy guid -> its most health seen; enemies an enemy summoned (a mechanic's wave, never a pack of their own)
   const P = (g, n) => { let p = players.get(g); if (!p) { p = { guid: g, name: short(n), cls: '', spec: '' }; players.set(g, p); } if (n && !p.name) p.name = short(n); return p; };
   const ev = []; // [t, kind, ...]
+  const BH_DEF = bhDefs(E); /* (Big hits: every defensive a buff can prove, by its lower-case name) */
   const encs = []; let enc = null, LIST = null, lastT = 0;
   let t0 = null;
   for (const line of lines) {
@@ -112,7 +165,7 @@ function build(text, E) {
         const amt = Math.max(0, num(f[s0]) + num(f[s0 + 4]) + num(f[s0 + 5]) - Math.max(0, num(f[s0 + 2])));
         const ow = ownerOf(adv);
         if (ow && isNpc(dg)) { if (isPlayer(sg)) P(sg, sn); ev.push([t, 'dmg', ow, amt, dg, dn]); if (hasAdv && f[adv] === dg) { const m = num(f[adv + 3]); if (m > (mobHp.get(dg) || 0)) mobHp.set(dg, m); } } /* (the advanced block is the enemy hit: its max health) */
-        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8], Math.max(0, num(f[s0 + 2]))]); /* (x[8]: the spell id, for its icon (Nov 1); x[9]: its overkill (Nov 3)) */
+        else if (isNpc(sg) && isPlayer(dg)) ev.push([t, 'hit', dg, amt, swing ? 'Melee' : f[9], sn, sg, e === 'SPELL_PERIODIC_DAMAGE', swing ? '' : f[8], Math.max(0, num(f[s0 + 2])), hasAdv && f[adv] === dg ? [num(f[s0]) + num(f[s0 + 6]), num(f[adv + 3]), num(f[adv + 2])] : null]); /* (x[8]: the spell id, for its icon (Nov 1); x[9]: its overkill (Nov 3); x[10]: [the hit with what shields took, max health, health left] when the advanced block is the player's (Big hits, Nov 14)) */
         if (!swing && ow && isNpc(dg) && KNOCK.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
         break;
       }
@@ -128,8 +181,10 @@ function build(text, E) {
         else if (isNpc(sg)) ev.push([t, 'done', sg, sn, num(f[8]), f[9]]);
         break; }
       case 'SPELL_INTERRUPT': { const ow = isPlayer(sg) ? sg : owners.get(sg); if (ow && isNpc(dg)) ev.push([t, 'kick', ow, f[9], dg, dn, num(f[11]), f[12]]); break; }
+      case 'SPELL_AURA_REMOVED': if (isPlayer(dg) && f[11] === 'BUFF' && BH_DEF.has(lc(f[9]))) ev.push([t, 'dboff', dg, lc(f[9])]); break;
       case 'SPELL_AURA_APPLIED': {
         const ow = isPlayer(sg) ? sg : owners.get(sg);
+        if (isPlayer(dg) && f[11] === 'BUFF' && BH_DEF.has(lc(f[9]))) ev.push([t, 'dbon', dg, lc(f[9]), sg]); /* (a defensive on a player, their own or given: Big hits) */
         if (ow && isNpc(dg) && CC.has(String(f[9]).toLowerCase())) ev.push([t, 'cc', ow, f[9], dg]);
         else if (isPlayer(sg) && sg === dg) ev.push([t, 'aura', sg, num(f[8]), f[9]]);
         else if (LIST && isNpc(sg) && isPlayer(dg) && f[11] === 'DEBUFF' && LIST.dispel.has(lc(f[9]))) ev.push([t, 'deb', dg, f[9]]); /* (a debuff to dispel landed) */
@@ -303,7 +358,8 @@ function build(text, E) {
   const KS = new Map(); for (const o of out) for (const x of o.spam) { const b = KS.get(x.spell) || { spell: x.spell, id: x.id, casts: 0, kicked: 0, stopped: 0, enemies: 0, mob: x.mob }; b.casts += x.casts; b.kicked += x.kicked; b.stopped += x.stopped; KS.set(x.spell, b); }
   for (const b of KS.values()) b.enemies = (bySpell.get(lc(b.spell)) || { guids: new Set() }).guids.size;
   const tiers = {}; for (const c of casts) if (danger(c)) tiers[c.spell] = tierOf(c); /* (high, medium or low (Nov 1)) */
-  return { run, people, pulls: out, list: !!LIST, spam: [...KS.values()].sort((a, b) => b.casts - a.casts), tiers, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
+  const big = bigHits(ev, players, pullOf, BH_DEF, defIds, E, LIST);
+  return { run, people, pulls: out, list: !!LIST, big, spam: [...KS.values()].sort((a, b) => b.casts - a.casts), tiers, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
     through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length, minor: out.reduce((a, o) => a + o.minor.length, 0) }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
 }
 // ---- Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's own Rotation checks on each

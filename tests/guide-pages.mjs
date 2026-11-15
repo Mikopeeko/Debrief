@@ -30,9 +30,13 @@ const READ = `(() => { const m = document.querySelector('#main'); if (!m) return
     /* (a short title glued to its text, "A purple touches a green The purple ring...", reads "Title: text"; a doubled first word goes) */
     const ln = (e.innerText || e.textContent).split(/\\n+/).map((x) => x.replace(/\\s+/g, ' ').trim()).filter(Boolean), f = e.firstElementChild;
     const ft = f && /^(B|STRONG|EM|SPAN|DIV)$/.test(f.tagName) ? f.textContent.replace(/\\s+/g, ' ').trim() : '';
-    let t = ln.length > 1 && ln[0].length < 80 && !/[:.!?]$/.test(ln[0]) ? ln[0] + ': ' + ln.slice(1).join(' ') : ln.join(' ');
+    /* (Nov 13: a tile that leads with its part of the fight, "P1" / "Int." / "The loop", then its title, then its text: "P1: Title: text". It read "P1: Title text" and "Int. Title text", the title run into its sentence) */
+    if (ln.length > 1 && /^Int\\.?$/i.test(ln[0])) ln[0] = 'Intermission'; /* (the page's short tag, spelled out: "Intermission: Tank the Echo in its doorway", not "Int. Tank the Echo") */
+    const part = ln.length > 2 && ln[0].length <= 24 && ln[1].length < 80 && !/[:.!?]$/.test(ln[1]) && (/^(P\\d+|Int\\.?|Intermission|Phase \\d+)$/i.test(ln[0]) || !/[:.!?]$/.test(ln[0]));
+    let t = part ? ln[0].replace(/^Int\\.?$/i, 'Intermission') + ': ' + ln[1] + ': ' + ln.slice(2).join(' ') : ln.length > 1 && ln[0].length < 80 && !/[:.!?]$/.test(ln[0]) ? ln[0] + ': ' + ln.slice(1).join(' ') : ln.join(' ');
     if (ft && ft.length < 80 && !/[:.!?]$/.test(ft) && t.startsWith(ft) && /^[A-Z]/.test(t.slice(ft.length).trim())) t = ft + ': ' + t.slice(ft.length).trim();
     t = t.replace(/^(\\S+(?: \\S+)?) \\1\\b/, '$1').replace(/^([^:]{1,30}): \\1:/, '$1:');
+    t = t.replace(/^(What it does) (?=[A-Z])/, '$1: '); /* (a card's label run into its sentence: "What it does An axe drops on one player") */
     if (e.tagName === 'H4' && /^Your job/.test(t)) t = 'Your job';
     if (!t || t.length < 3 || seen.has(t) || /^How each fight works/.test(t)) return; /* (the page's own subtitle is the same on every guide) */ seen.add(t); out.push([e.tagName.toLowerCase(), t]); });
   return out; })()`;

@@ -47,6 +47,7 @@ function snWho() { const me = meOf(); let g = null; try { g = homeTarget(); } ca
   const W = WCL.HOSTED ? WHO.now : null, st = !WCL.HOSTED ? '' : !W ? '' : W.me ? (W.me.legacy ? 'old' : 'in') : 'out';
   return { name: me ? String(me.name).split('-')[0] : '', col: k ? k[1] : '', team, st }; }
 // ---- drawing the menu ----
+function snPlanNight() { try { return pnShortOf(pnSelK()); } catch (e) { return 'This week'; } } /* (Nov 14: the night Plan is on, like the page's title) */
 function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nights = snNights(), jobs = snJobs();
   const last = op ? null : nights[0];
   const tip = { raid: op ? 'Raid review · ' + (op.day ? snDate(op.day) + ', ' : '') + 'pull ' + op.n : last ? 'Raid review · last night ' + snDate(last.day) : 'Raid review', plan: 'Plan' + (jobs.n ? ' · ' + plural(jobs.n, 'job') + ' left' : '') };
@@ -57,7 +58,7 @@ function snNavHtml() { const sec = snSec(), fold = snFold(), op = snOpen(), nigh
     if (fold) continue;
     if (k === 'raid' && sec === 'raid' && op) { /* (Nov 10, Flex: "these can be removed, theres already a drop down to select nights in the summary section": no Last nights list, just the pull that's open) */
       h += '<div class="snv-sub">' + '<div class="snv-k">' + (op.k === nightOf(Date.now()) ? 'Tonight' : 'Open now') + '</div><div class="snv-n cur"><b>' + esc(op.boss) + '</b><small>' + esc([op.day ? snDate(op.day, 1) : '', op.of ? 'pull ' + op.n + ' of ' + op.of : ''].filter(Boolean).join(' · ')) + '</small></div>' + '</div>'; }
-    if (k === 'plan' && sec === 'plan' && jobs.boss) h += '<div class="snv-sub"><div class="snv-k">This week</div><div class="snv-n cur"><b>' + esc(jobs.boss) + '</b><small>' + (jobs.none ? 'No plan yet' : jobs.n ? plural(jobs.n, 'job') + ' not filled' : 'Every job filled') + '</small></div></div>'; }
+    if (k === 'plan' && sec === 'plan' && jobs.boss) h += '<div class="snv-sub"><div class="snv-k">' + esc(snPlanNight()) + '</div><div class="snv-n cur"><b>' + esc(jobs.boss) + '</b><small>' + (jobs.none ? 'No plan yet' : jobs.n ? plural(jobs.n, 'job') + ' not filled' : 'Every job filled') + '</small></div></div>'; }
   return h; }
 const pnShortB = (b) => String(b).replace(/^The /, '');
 function snWhoHtml() { const w = snWho(), fold = snFold(), out = w.st === 'out', ini = out && !w.name ? '?' : (w.name || '?').charAt(0).toUpperCase();
@@ -80,7 +81,7 @@ function snPlace() { const on = snOn(), tools = $('#snTools'), tb = $('#topbar')
   if (on) { if (disc && disc.parentElement !== tools) tools.appendChild(disc); if (menu && menu.parentElement !== tools) tools.appendChild(menu); }
   else { const pr = $('#prog'); if (menu && menu.parentElement !== tb) tb.insertBefore(menu, pr); if (disc && disc.parentElement !== tb) tb.insertBefore(disc, menu || pr); } }
 function snDraw(force) { if (!$('#sideNav')) snMount(); const fold = snFold(), sec = snSec(), jobs = snJobs(), op = snOpen();
-  const k = [sec, S.page, S.tab, op ? op.boss + op.n + op.of : '', SN_LAST ? SN_LAST.boss : '', HIST && HIST.mem ? HIST.mem.size : 0, fold, jobs.n, jobs.boss, (meOf() || {}).name || '', snWho().st].join('|'); /* (the sign-in state too, Nov 8) */
+  const k = [sec, S.page, S.tab, op ? op.boss + op.n + op.of : '', SN_LAST ? SN_LAST.boss : '', HIST && HIST.mem ? HIST.mem.size : 0, fold, jobs.n, jobs.boss, sec === 'plan' ? snPlanNight() : '', (meOf() || {}).name || '', snWho().st].join('|'); /* (the sign-in state too, Nov 8) */
   document.body.classList.toggle('snv-fold', fold); document.body.dataset.snSec = sec;
   if (!force && k === SN_KEY) return; SN_KEY = k;
   $('#snNav').innerHTML = snNavHtml(); $('#snWho').innerHTML = snWhoHtml();

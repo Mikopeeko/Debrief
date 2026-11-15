@@ -1,0 +1,58 @@
+// Mythic+, Summary merged into the Report card, and the Report card the key's opening tab (Nov 15, Flex: "What if we just merge some of summary with report
+// card, and make report card the opening tab", after "Maybe we dont even need it?"; judged on his +19 Kings' Rest of Sep 25, report dtMfgnRvDwBLPCKZ fight 2).
+// This runs the page's own code on made-up keys and fails if: the Summary tab is back or Report card is not the first tab, an old link to Summary, Big hits or
+// the mistakes (&mpv=run, hit, mis) no longer opens the Report card, The key, in short loses the story of the key, where the time went, the next level or
+// Lust, or runs them into one line, Fix first no longer sits under it, or any of it shows on a key with no timer or on the Companion's card.
+// contradictions.js runs it on every build. Each part fails on the page as it was at e0f8fb6d.
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm');
+module.exports = function reportOpens(say) {
+  const bad = (m) => say('Mythic+ Report card', 'the key opens on it', m);
+  let s, ui; try { s = fs.readFileSync(path.join(__dirname, '..', 'src', 'mptab.js'), 'utf8'); ui = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui.js'), 'utf8'); } catch (e) { bad('could not read src/mptab.js or src/ui.js'); return; }
+  /* (a statement from its first line to the line that ends it with a semicolon: MPR_SUBJ runs over two lines) */
+  const line = (src, n) => { const m = src.match(new RegExp('\\n(?:const|function) ' + n + '\\b')); if (!m) throw new Error('no ' + n); const L = src.slice(m.index + 1).split('\n'), out = [];
+    for (const l of L) { out.push(l); if (/;\s*(?:\/\*.*\*\/)?\s*$/.test(l)) break; } return '\n' + out.join('\n'); };
+  const fn = (n) => { const a = s.indexOf('\nfunction ' + n + '('); if (a < 0) throw new Error('src/mptab.js has no function ' + n); let i = s.indexOf('{', a), d = 0; for (; i < s.length; i++) { const c = s[i]; if (c === '{') d++; else if (c === '}' && --d === 0) break; } return s.slice(a, i + 1); };
+  // 1. the tabs: Report card first, no Summary; old links land on the Report card
+  let T; try { T = vm.runInNewContext(line(s, 'MPX_VIEWS') + line(s, 'MPX_OLD') + line(s, 'MPX_NEED') + '\n({ MPX_VIEWS, MPX_OLD, MPX_NEED })'); } catch (e) { bad('the tab list no longer runs by itself: ' + String(e.message).slice(0, 120)); return; }
+  if (!T.MPX_VIEWS.length || T.MPX_VIEWS[0][0] !== 'rep' || T.MPX_VIEWS[0][1] !== 'Report card') bad('the key\'s first tab is "' + (T.MPX_VIEWS[0] || [])[1] + '", not Report card (Flex, Nov 15: "make report card the opening tab")');
+  if (T.MPX_VIEWS.some(([v, l]) => v === 'run' || l === 'Summary')) bad('the Summary tab is back (Nov 15: its story, where the time went and Fix first are at the top of the Report card)');
+  for (const v of ['run', 'hit', 'mis']) if (T.MPX_OLD[v] !== 'rep') bad('an old link with &mpv=' + v + ' opens "' + T.MPX_OLD[v] + '" instead of the Report card, where it lives now');
+  { const m = /if \(MP\.cv == null\) \{ const m = (\/[^\n]*?\/)\.exec\(location\.search\)/.exec(s); let re = null; try { re = m && vm.runInNewContext(m[1]); } catch (e) { re = null; }
+    if (!re) bad('the address no longer reads the tab (&mpv=)');
+    else for (const [q, want] of [['?report=a&fight=2&tab=mplus&mpv=run', 'rep'], ['?mpv=hit', 'rep'], ['?mpv=map&x=1', 'map'], ['?tab=mplus', null]]) { const g = re.exec(q), v = g ? (T.MPX_OLD[g[1]] || g[1]) : null; if (v !== want) bad('the address ' + q + ' opens the tab "' + v + '" (it must be ' + (want || 'the first tab, Report card') + ')'); } }
+  // 2. The key, in short and Fix first, run on made-up keys
+  const run = (card) => vm.runInNewContext('const MPC_ON = ' + (card ? 'true' : 'false') + ';' +
+    'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +
+    line(ui, 'plural') + line(s, 'mpMM') + line(s, 'MPR_SEC') + line(s, 'MPR_SUBJ') + '\n' + fn('mprShort') + '\n' + line(s, 'mprFixH') + '\n({ mprShort, mprFixH, MPR_SEC })');
+  let X; try { X = run(false); } catch (e) { bad('The key, in short no longer runs by itself (mprShort, mprFixH): ' + String(e.message).slice(0, 140)); return; }
+  const rows = () => Object.fromEntries(X.MPR_SEC.map(([k]) => [k, []]));
+  const M = { L: [{ deaths: 1, rows: rows() }, { deaths: 1, rows: rows() }, { deaths: 0, rows: rows() }], avg: () => null };
+  const sx = () => ({ story: 'A near-wipe in pull 1 and two deaths nearly cost it.', fast: 'You were <b class="mpx-hb">5:35</b> behind a typical fast run. The biggest part, 2:29, was on the trash between The Golden Serpent and Mchimba.', fastA: 'You were <b class="mpx-hb">5:35</b> behind a typical fast run.', res: '<b>Timed +1</b> with <b>1:35</b> to spare.', behind: true, fixC: 'trash', last: '<span class="mpt-vd2">Last time here (+18, Nov 2): timed with 0:40 to spare.</span>',
+    next: '+2 needed 6:36 faster', lust: 'Lust 3 times', fix: '<div class="mpx-fix mpx-fx3 mpx-fx-trash"><p class="mpx-fxh"><span class="mpx-fk">Fix first</span></p><p class="mpx-fxt">Pull bigger before Mchimba</p></div>' });
+  const key = (o) => Object.assign({ run: { clock: { up: 1, par: 1980, time: 1885, deathCost: 30 }, timeMs: 1885000, left: false }, pulls: Array.from({ length: 15 }, (_, i) => ({ n: i + 1 })) }, o || {});
+  { const h = X.mprShort(key({ _sx: sx() }), M);
+    if (h.indexOf('<section class="rcw-strip mpr-sxs"><span class="rcw-q">The key, in short</span><p class="mpr-sx">') !== 0) bad('The key, in short is not a line a fact on a key with a timer (it ran the story, where the time went and the group\'s line into one paragraph)');
+    const s1 = (/<span class="mpr-s1">([\s\S]*?)<\/span><span class="mpr-s2[ "]/.exec(h) || [])[1] || '';
+    if (s1 !== '<b>Timed +1</b> with <b>1:35</b> to spare. A near-wipe in pull 1 and two deaths nearly cost it.') bad('the strip\'s first line reads "' + s1 + '" (it must be the result, then the story of the key)');
+    if (h.indexOf('<span class="mpr-s2 mpr-bh">You were <b class="mpx-hb">5:35</b> behind a typical fast run.</span>') < 0) bad('the strip lost how far behind a typical fast run the key was, as its own line, or it says where the time went when Fix first right under it says the same (seen on his Kings\' Rest, Nov 15: "1:30, was on the trash between The Golden Serpent and Mchimba" twice)');
+    if (X.mprShort(key({ _sx: Object.assign(sx(), { fix: '' }) }), M).indexOf('<span class="mpr-s2 mpr-bh">You were <b class="mpx-hb">5:35</b> behind a typical fast run. The biggest part, 2:29, was on the trash between The Golden Serpent and Mchimba.</span>') < 0) bad('with no Fix first card the strip no longer says where most of the time went');
+    if (X.mprShort(key({ _sx: Object.assign(sx(), { fixC: 'death' }) }), M).indexOf('The biggest part, 2:29, was on the trash between') < 0) bad('when Fix first is about deaths or kicks, the strip no longer says where most of the time went (only a Fix first about that stretch says it; found by the patch review, Nov 15)');
+    { const t2 = X.mprShort(key({ run: { clock: { up: 2, par: 1800, time: 1420, deathCost: 15 }, timeMs: 1420000, left: false }, _sx: Object.assign(sx(), { res: '<b>Timed +2</b> with <b>0:20</b> to spare.', story: 'One death nearly cost it.' }) }), M);
+      if (t2.indexOf('<span class="mpr-s1"><b>Timed +2</b> with <b>0:20</b> to spare. One death nearly cost it.</span>') < 0 || /6:20/.test(t2)) bad('a +2 key\'s first line counts the spare time against the whole timer ("Timed +2 with 6:20 to spare" beside "One death nearly cost it"); it must be against the +2 limit, as the rest of the site says it (found by the patch review, Nov 15)'); }
+    if (X.mprShort(key({ _sx: Object.assign(sx(), { behind: false, fast: 'You were <b class="mpx-hb">1:12</b> ahead of a typical fast run.', fastA: 'You were <b class="mpx-hb">1:12</b> ahead of a typical fast run.' }) }), M).indexOf('<span class="mpr-s2">You were <b class="mpx-hb">1:12</b> ahead') < 0) bad('a key ahead of the fast run gets the red "behind" look on its line (found by the patch review, Nov 15)');
+    { const M0 = { L: [{ deaths: 0, rows: rows() }], avg: () => null }, c1 = X.mprShort(key({ _sx: Object.assign(sx(), { story: 'A clean key: nobody died, nobody was left under 15%, and nothing went off with a kick ready.' }) }), M0), c2 = X.mprShort(key({ _sx: Object.assign(sx(), { story: 'Three casts that went off with a kick ready were the mistakes, and there was still time to spare.' }) }), M0);
+      if (/Nobody died./.test(c1) || c2.indexOf('<span class="mpr-s3">Nobody died.</span>') < 0) bad('a clean key says "nobody died" twice, or a key whose story does not say it lost "Nobody died." (found by the patch review, Nov 15)'); }
+    { const R2 = rows(); R2.perf.push({ lost: 3, l: 'Big cooldowns', f: 50 }); const M2 = { L: [{ deaths: 2, rows: R2 }], avg: () => null }, t = X.mprShort(key({ _sx: sx() }), M2), t0 = X.mprShort(key(), M2);
+      if (t.indexOf('<span class="mpr-s5 rcw-nx"><b class="mpr-nxk">To raise the grade</b> Press a big cooldown in every long pull.</span>') < 0 || /Next key:/.test(t)) bad('the grade\'s tip is not its own line called "To raise the grade" (beside Fix first, "Next key:" read as a second "do this first", Nov 15)');
+      if (t0.indexOf('<span class="rcw-nx">Next key: Press a big cooldown in every long pull.</span>') < 0) bad('a key with no timer lost its "Next key:" tip'); }
+    if (!/<span class="mpr-s3">2 deaths cost <b>0:30<\/b>\.[^<]*<\/span>/.test(h)) bad('the strip lost the group\'s line (what the deaths cost), or it is not its own line');
+    if (h.indexOf('<span class="mpr-s4">+2 needed 6:36 faster · Lust 3 times</span><span class="mpr-s6"><span class="mpt-vd2">Last time here (+18, Nov 2): timed with 0:40 to spare.</span></span></p></section>') < 0) bad('the strip lost the next level and Lust (Summary\'s faint line), or "Last time here" (it had no other place on the website once Summary went; found by the patch review, Nov 15)');
+    const f = X.mprFixH(key({ _sx: sx() })); if (f.indexOf('<div class="mpr-fix"><div class="mpx-fix mpx-fx3') !== 0) bad('Fix first no longer sits under The key, in short');
+    const o = X.mprShort(key(), M); if (/mpr-s[1-4]|mpr-sxs/.test(o) || o.indexOf('<section class="rcw-strip"><span class="rcw-q">The key, in short</span><p><b>Timed +1</b> with <b>1:35</b> to spare. 2 deaths cost <b>0:30</b>.') !== 0) bad('a Report card drawn before Summary\'s sentences are known is not the strip as it was');
+    if (X.mprFixH(key()) !== '' || X.mprFixH(key({ _sx: Object.assign(sx(), { fix: '' }) })) !== '') bad('an empty Fix first card shows under the strip');
+    const L = key({ _sx: sx(), run: { clock: null, timeMs: 0, left: true } }); if (/mpr-sx/.test(X.mprShort(L, M)) || X.mprFixH(L) !== '') bad('a key left early (no timer) gets the timer\'s story, where the time went or Fix first'); }
+  // 3. the Companion's card keeps its layout
+  { let Y; try { Y = run(true); } catch (e) { bad('the strip does not run for the Companion\'s card: ' + String(e.message).slice(0, 100)); return; }
+    if (/mpr-sx/.test(Y.mprShort(key({ _sx: sx() }), M)) || Y.mprFixH(key({ _sx: sx() })) !== '') bad('the Companion\'s card gets the website\'s Report card pieces'); }
+};

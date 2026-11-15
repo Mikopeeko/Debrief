@@ -273,3 +273,221 @@ Columns: the hit that killed them (size as % of their max health), health 15/10/
 | 19 | 4:59 | Vandagos (Protection Warrior) | Soul Sever 156% | 95%→94%→88%→81% · RAID Spiritcackle @4:58 High: 2 players died to Retaliatory Malice whi | own 1 — On the second stack use a defensive plus two externals, or s | own 1 | fair |
 | 19 | 5:01 | Arsyn (Affliction Warlock) | Retaliatory Malice 20% | 87%→100%→84%→77% · RAID Spiritcackle @4:58 High: 2 players died to Retaliatory Malice whi | own 1 — Only you can see your ghost on Mythic. Hold it near the mark | own 1 | fair |
 | 19 | 5:05 | Kargaryen (Devastation Evoker) | Malevolent Resonance 39% | 44%→100%→35%→27% · Malevolent Resonance @5:00 High: Their ghost touched another ghost (wi | own 1 — Only you can see your ghost on Mythic. Hold it near the mark | own 1 | fair |
+
+## Nov 12: three buckets, one rule (Main's plan, Flex: "ok fix it")
+Every death is in one bucket, the same on every page (deathVerdict: `bucket`, `label`, `say`):
+- **You**: their own mistake killed them, or a slow death with a defensive, Healthstone or potion still ready (also a healing gap or the
+  Guillotine target with one ready).
+- **The raid**: someone else's mistake (a missed kick, another player's orb), a mass death, mind control, a slow death with nothing left to
+  press, not enough healing, and every death after the wipe.
+- **Unlucky**: a one-shot (too fast to react) that wasn't their own mistake.
+Only deaths before the wipe count: before the wipe call and before a quarter of the raid is dead (`quarterDead`, 5 of 20; a kill has no wipe).
+No halves: a You death weighs 1, the rest 0. Each death costs once, in Staying alive's Deaths on you: the Mechanics rows still say "died to it",
+but a death never marks a mechanic down (no `40 x death share`, mechJudge ignores it), and "Defensive before dying" and "Healthstone or health
+potion" are information, not graded. The hover everywhere is `say`: "You: died to Sever, your mistake", "The raid: the wipe was on",
+"Unlucky: one-shot by ...". The roster's column is Own deaths (green none, amber 1-2, red 3+), hover listing each. Checks: tests/deaths-check.js
+(run by contradictions.js on every saved death).
+Not changed: fight modules that mark a row red because someone died in it (the Coiled Altar tank frontal's "died" cell) still do.
+
+## Nov 13: the proof rule (Main's plan, Flex: "yes")
+Flex, before it: "I feel like the 'your fault' part of deaths is maybe messing up the logic a bit." A death counts against a player only with
+proof, and only before the wipe (before the wipe call and before a quarter of the raid is dead):
+1. **A mistake of their own was caught and was part of what killed them** (`deathProof` in src/ui.js). Their own rows are their mistakes
+   (never one the site marked someone else's: feared, clipped by another's bomb, a short soak, an axe dropped on the raid; never the mind
+   control itself; never a stack-count note), the fight's own check rows that name them in red, and their Avoidable damage row. The row counts
+   when its hits landed on them in their last 4 s and were the hit that killed them, or damage they'd have lived without (more than the killing
+   blow's overkill, and a tenth of their health); or when it put the debuff on them that killed them (their own soul fragments, Gravebound).
+   In a mass death (3 or more of us to one hit at once) only the killing hit itself is proof. A hit logged as another player's miss (a missed
+   taunt names who took it) is never proof.
+2. **They sat low with something ready**: at or under 35% health for 2 s or more with their own defensive, immunity or Healthstone ready (one
+   that would have saved them, the saves check), not mind controlled, feared or stunned, and not in a mass death.
+Anything else is **Not counted** (grey) with a plain fact: "the wipe was on", "a mass death, 12 of us at once", "mind controlled", "feared by an
+unkicked Wail of Terror", "no mistake of yours was caught", then the hit that killed them. The fault special cases are gone (fears, soaks,
+orbs, mind control, "too fast", healing gaps, axe drops, the Guillotine target's half): they only word the fact now. Tags: **You** (red) with
+the proof in one line ("You: 4 Axegrinder hits right before you died", "You: 3 s under 35% with Divine Shield ready"). The coaching line comes
+from the proof: the mistake's own tip, "press X when you sit low", and for fragments picked up inside another hit: "Step out of the axe first,
+then pick up your fragments one at a time. Each one hits for about 180k, so heal up between them." (Flex's Nov 12 pull 5 death: "i was trying
+to collect my souls and foolishly picked them up too quickly when my health was low with an axe eating my booty").
+Unchanged: deaths come from Graphs' list, no halves, each death costs once, in Staying alive.
+
+Checks (tests/deaths-check.js, in every build): every You death carries its proof and the proof is in the log; a mass death never counts for
+a hit that isn't the killing hit; seven named deaths (Nov 12 pull 5 Flex = You with the fragments tip, pull 4 = Not counted; Nov 11 pulls 7
+and 12 Flex = You, pull 17 = Not counted, pull 5 Raiyvenz = You, pull 4 Zaffia = Not counted). Saved nights (1,215 deaths): You 83 -> 116;
+the list of every death that changed is in the shared notes folder (deaths-proof-changes.txt).
+
+## Nov 13, Main's calls on the proof rule: a job is never proof
+A row that records a job isn't a caught mistake (`DEATH_JOB` in src/ui.js): "Died in the Guillotine soak." (a soaker in a full soak; Vashnik's
+"Died in the Unstable Miasma soak." too) and "Was the Guillotine target with no external or immunity and died." `deathProof` skips those rows,
+and the fight's own check row about the same mechanic at that moment (it is the same record), on any boss.
+- **A soaker who died in a full soak: Not counted.** "Not counted: soaking the Grim Guillotine was your job", tip "Not on you: you were in the
+  soak, as planned."
+- **The Guillotine target with no external: You only when their own immunity or big defensive that would have saved them was ready** (the saves
+  check; never in a mass death): "You: the Guillotine target with Icebound Fortitude ready", tip "Press Icebound Fortitude as the Guillotine lands
+  when no external is on you." Otherwise "Not counted: the Guillotine target with no external", tip "Not on you: the raid plans an external for
+  the Guillotine target (Blessing of Protection or Spellwarding)." The missing external is the raid's plan.
+- Both general proofs still apply to a soaker or a target: a caught mistake of their own in their last 4 s, or 2 s low with something ready.
+The three deaths re-read: Nov 12 pull 4 Huservoker and Nov 12 pull 7 Dragooned (soakers) = Not counted. Nov 11 pull 5 Fourinches (the target,
+nothing of his own ready) stays You on a different, real proof: 4 rolling-axe hits (Axegrinder, 238k) in his last 3 s, and the Guillotine killed
+him by a hair; with those hits left out he reads Not counted.
+Graphs' Deaths header reads "Own deaths, with proof" (and "N own, with proof" on the chart and Every death), matching the tags.
+Checks (tests/deaths-check.js): Fourinches by name in every build, plus his death with the axe hits left out both ways (nothing ready = Not
+counted, Icebound Fortitude ready = You); Huservoker and Dragooned by name with --all; no You death may carry a job row as its proof.
+
+## Nov 13, Main's death audit of the proof rule (20 deaths against the raw log, 18 right)
+1. **"Sat low" means still low** (`LOW_BACK` in src/engine.js). Nov 11 pull 15, Zaffia at 7:28: a soaker, 96% to dead in one Grim Guillotine
+   hit. She had dipped under 35% for 3.4 s earlier in her last 10 s and been healed back to 98%, and the old count (all the time under 35% in
+   the last 10 s) read "You: 3 s under 35% with Evasion ready". The low time (`d.lowFor`) now counts from the last moment they were back at
+   70% health or more (twice the low line): a dip they were healed out of isn't time to react to this death. Saved nights: 3 of 18 "sat low"
+   deaths had been healed to 91% or more first (Zaffia; Komo, Ula'tek Nov 12 pull 5; Shockabunga, Coiled Altar bcA9 pull 25); the other 15 never
+   got above 58%. She reads "Not counted: soaking the Grim Guillotine was your job".
+2. **A non-tank in the tank's circle is their own mistake** (Kith'ix, Dark Devastation: a 15-yard circle on the tank after a 4-second cast).
+   Kith'ix Heroic pull 1 (9DRWhKnZbHtQgf4a), Larryg at 1:06 stood 4 to 5 yards from the tank and took 774k + 162k; it read "Not counted: 1
+   other player caught in the Dark Devastation circle" because the hit was only filed as the raid's row. It is now a Dangerous row in Kith'ix's
+   Avoidable damage ("Dark Devastation (Tank's circle)", tanks left out), exactly like Sever's frontal on non-tanks, so his death reads
+   "You: 2 Dark Devastation hits right before you died". The raid row stays: the tank's placement can be a mistake too, but that doesn't take
+   it off the one who stood in it. (Flex's own 2:55 death on the same kill reads You for the same reason.)
+   Every boss checked the same way (33 pulls, 3 a boss, every enemy hit that lands mostly on tanks): Water Jet (Nymrissa), Ravage (Sszorak),
+   Sever / Soul Sever / Blighted Sever (The Coiled Altar), Venom Roar (Kith'ix) and Desperate Thrash (Ula'tek) already count against a non-tank.
+   One has no row yet: The Twin Fangs' Caustic Deluge beam (non-tanks take it about twice a kill even in top kills, 520k to 750k a hit); it
+   needs a line judged against top kills, not "red on any hit".
+Saved nights (1,884 deaths, 103 pulls), this whole push against main before it: 8 deaths change, You 192 -> 189 (Larryg and Flex on Kith'ix become You; Zaffia, Huservoker, Dragooned, Shockabunga and Komo become Not counted; Fourinches keeps You on the axe proof).
+Checks (tests/deaths-check.js, every build): Zaffia and Larryg by name; every "sat low" proof is worked out again from the health line (after
+they were last back at 70%, under 35% for 2 s or more).
+
+## Nov 13, Main's rulings on the answer key's death list
+The answer key (tests/answer-key) works out every death's verdict from the raw log; these are the ones the site had wrong, and Main's calls on the open ones.
+1. **By design is never proof** (`d.byDesign`, the engine). An orb's ring on its own carrier (Komo, Nov 12 pull 5, read "3 Mutagenic Venom hits"); a Gloombomb (its
+   target's by design, anyone else's is the bomb owner's: Flex, Nov 5); on Ula'tek the egg's own shell on whoever carries it (Noxious Shell, seven Nov 12 deaths).
+   Two carriers touching (Noxious Splash) is still the mistake.
+2. **Soul fragments are judged by where they came from** (`d.gb`: own Gloombomb, a frontal they took, someone else's Gloombomb; picked up of how many; timer or pickup).
+   Someone else's bomb only: Not counted (Raiyvenz, Nov 11 pull 4, two other players' bombs, 5 of 6 picked up). Their own: You, in the fragments' words ("picked up your
+   soul fragments, and the last one killed you", never "4 Gloombomb hits": Fourinches, Nov 12 pull 5), tip "Get healed or use a defensive before you pick up the last
+   soul fragment." Both at once: only their own count. On the timer they must have left some of their own (picked up fewer than their own three: Vandagos, Nov 11 pull 16,
+   picked up 5 of 6, Not counted); killed by a pickup, their own share of the pickups' damage must pass the usual test (Raiyvenz, Nov 12 kill, You).
+3. **A death in the very hit that lost the pull counts when that hit is their own mistake** (`DEATH_CALL`, 1.25 s after the wipe call, several killed at once, not past a
+   quarter of the raid dead, proof 1 on the killing hit). Nov 11 pull 5, 3:38: Jangokin, Dragooned, Larryg and Huservoker stood in the Soul Sever. A lone death a second
+   after the call is still the collapse.
+4. **Proof 3, walked off the edge** (`d.noKill`, `d.far`, `DEATH_FAR`): no killing hit, past the room's edge (The Coiled Altar: more than 50 yards from the middle; no other
+   boss has the room yet), in control, no knockback hit in their last 3 s, not in a mass death. In control means no mind control or fear in their last 12 s, and none of
+   our own raiders' damage on them in their last 8 s (that is a mind control the debuff list missed). Fourinches, Nov 11 pull 3 (ran his Gloombomb off, 62 yards) and
+   Schooty, Nov 11 pull 16 (Disengage, 77 yards) are You. Hobbz, Nov 11 pull 11, carried out by Dreadmarch that ended 6 s before he fell, is "Not counted: fell after a
+   mind control" (and the death list says he fell, not a raider's bleed that ticked for 0). Far from the other players is not off the platform.
+5. **Nothing in a reset pull counts** (`dbfReset`: the boss never moved, or under 15 s). Nov 12 pull 1, Komo at 0:09: "Not counted: a reset pull, nothing in it counts".
+Saved nights (1,884 deaths) against the last push, with the other chats' Ula'tek work merged in: 55 deaths read differently (16 of them the reset pull), You 189 -> 184.
+Checks (tests/deaths-check.js): each death above by name (most in every build, the rest with --all), and on every death read: no proof from a by-design hit, none from
+soul fragments that all came from someone else's bomb, none in a reset pull, an edge proof only with no killing hit past the edge and not in a mass death.
+Twin Fangs' Caustic Deluge beam (Main's call): a non-tank who stands in it has a Harmful row under Avoidable damage ("Caustic Deluge (Tank beam)"), with the usual lines (two hits amber, five red:
+no baseline of its own yet, and top kills' non-tanks take it about twice a kill), so one hit is never coloured; as death proof it follows the normal rule.
+Still open: Ula'tek's Fester Burst where the Wretch was held out of reach (the Ula'tek module's words); what else a reset pull grades besides deaths.
+
+## Main's last call on the group jump (Nov 13, later)
+Two or more off the edge within 3 s is "the raid jumped to reset" only when the others went off in control. A feared, mind-controlled or knocked player is not jumping
+and never makes it a group jump (`ccOf`, `knockOf` in `deathVerdict`). Schooty, Nov 11 pull 16: he Disengaged off alone; the three who followed within 3 s were feared
+off by the unkicked Wail of Terror at 4:59. His death is You, walked off the edge. Kargaryen, Oct 22 pull 10 (four off in control) stays "the raid jumped to reset".
+A tank's third frontal stack with the other tank dead, mind controlled or feared is marked someone else's (see Why we wiped): never proof.
+Checks: both deaths by name in tests/deaths-check.js, and on every death read an edge proof fails when another player went off in control within 3 s.
+
+## The hit that killed them, from the log (Nov 13, from the answer key)
+Warcraft Logs' death event names the killing ability (`killingAbilityGameID`; none = no hit killed them: off the edge). The translator passes it on the UNIT_DIED line (",K" + id,
+only when the pull's death events carry the field) and the engine keeps it as `d.wclKill`. The death list's one killing hit (`d.kill`) is that spell when the site only had the
+last tick to go on. A big hit well over the finishing tick stays the killing hit (audit D2: the log names the tick, the raid needs the hit), and the mind control and Ula'tek
+rules keep the last word. `d.noKill` is the log's own "none" when the log says. `d.ability` (what Why we wiped groups deaths by) is unchanged.
+On the six saved nights (1,884 deaths) six killing hits changed: Hobbz, Nov 11 pull 3 (Retaliatory Malice, read Malevolent Resonance), Fourinches, pull 8 (Grim Execution),
+Tyralious, Ula'tek pull 6 (Melee, read Stone Venom) and three on Oct 22; "no killing hit" agreed on all 249 the log marks, and three Ula'tek tank deaths to melee no longer read as
+no hit. Open: a death with no killing hit still shows its last tick in Graphs' Deaths list (How it went says "off the edge").
+Checks: tests/wipe-causes.js names both deaths (with --all); the answer key's deathBy facts hold them in every build; the translator's and the engine's lines are pinned.
+
+## One number on both tabs: a tank frontal on a non-tank (Nov 13, from the answer key)
+The mistake line counted what a shield absorbed ("for 820,292"), the Avoidable damage table did not (492,988), and a hit a shield took whole had a line and no row. Main: count the
+absorbed part on both, and the fully absorbed hit gets its row. The table's "Tank frontals on non-tanks" source is marked `raw` (avoidPanel: the hit with what shields absorbed) and
+skips an immunity like the line does. 20 answer-key lines fixed. Check: every Coiled Altar pull read fails when a player's one frontal line has no row or another amount.
+Still open, needs a ruling: avoidable-damage lines on a wipe count hits up to the pull's SECOND DEATH (avoidMistakes and strictView, T = ds[1]), an old default of the wipe filter;
+the table and the page stop at the wipe call. Zaffia, Nov 11 pull 6: Volatile Venom at 0:55, 1:33, 1:36, 1:40, 1:42 and 6:32; second death 5:52, wipe call 7:04: the line says
+"5 times (294k)" (294k is all six hits), the table says 6. Dashtoswirly, pull 12: Axegrinder 6 on the line, 8 in the table. Counting to the wipe call would flag more lines on wipes.
+
+## Seconds in a pool (Nov 13, from the answer key)
+The answer key's guess was "about a second short per visit". The log says otherwise: a tick a shield absorbed whole was not counted (the table dropped every hit that did no
+damage). Fourinches, Nov 11 pull 3: 18 Noxious Ground ticks, four fully shielded, "14 s in it"; Komo, pull 4: 7 ticks, "3 s". Now a seconds source counts every tick (the row, the
+mistake line, the hover), while its colour is judged on the ticks that did damage (`valJ`, `tj`), the unit the top raids' lines were measured in. Counting the shielded ticks for the
+colour too turned 8 rows amber on 103 saved pulls, so it stays out until those lines are measured again. Measured: 259 rows gained seconds (248 Noxious Ground), 22 players who
+were fully shielded got a plain row, no row changed colour, no mistake line appeared or went. Damage stays what got through. 14 answer-key lines fixed.
+
+## The meters: damage into enemy shields, Cheat Death and Purgatory (Nov 13, from the answer key, Main: count them as Warcraft Logs does)
+Damage done counts what an enemy's own shield absorbed (engine `dealtM`: the hit plus its absorbed part, for totals, spells, per second and per target; Augmentation's share moves
+with its absorbed part). The fight checks keep the plain hit and read the shield's part from its own line, as before; the Performance damage windows no longer add it on top
+(`r.dmgAbsIn`). Cheat Death and Purgatory count as healing like any absorb (NOT_HEALING keeps Ardent Defender and Stagger out).
+Measured, old engine next to new, on 103 saved pulls (2,062 player rows): raid damage +4.4% on The Coiled Altar (up to +9.2% in a pull), +17.7% on Ula'tek (up to +35.8%; single
+players +40% to +78% on short pulls), +10.9% on the one Vashnik pull, 0 on the others; nobody's damage went down. Healing moved for the Rogues and Death Knights only (Zaffia on
+83 pulls). Open: the wipe parse estimate compares against Warcraft Logs' rankings, which count shields, so it reads truer now; its phase tables were measured before this.
+Checks: tests/wipe-causes.js names Schooty's damage and Zaffia's healing on Nov 11 pull 1 (with --all); the answer key checks every player on every pull in every build.
+
+## A death with no killing hit has its own label (Nov 13, Main)
+Hobbz, Nov 11 pull 16, was feared off the edge by an unkicked Wail of Terror and the log names no killing hit. Graphs' Deaths list, the death card and the hovers read "Deadly Venom",
+a raider's own poison that ticked on him 0.1 s before: each of them took the last line of the recap. Main: "A death with no killing hit gets its own label wherever a killing hit is
+shown. It must never be 'killed by' a last tick. Every tab has to say the same thing as How it went and Why we wiped."
+
+The rule, set once in the engine at the end of its reading (explainDeaths):
+- The log says no killing hit (`d.noKill`: Warcraft Logs' killing ability 0, or the older guess where a log has none) and the player is past the platform's edge (`d.far` over 50
+  yards, where the room is known): **Fell off the edge**. Otherwise: **No killing hit**.
+- A mind control fall is **Dreadmarch**, as before, now also when only the boss module caught it (Komo, Nov 11 pull 5, read his own "Fel Armor" ticking for 0).
+- `d.kill` and `d.ability` both carry the label (pages read either), `d.noHit` marks it, `d.killer` is empty, and `d.hitLast`, `d.abLast`, `d.killerLast` keep the last tick.
+
+The label is for showing. The engine's own reasoning still reads the last tick (`killRaw`, `abRaw`, `killerRaw`): the mass death count, Why we wiped's categories, whose purple orb
+burst, an Avoidable damage row's "died to it". A first try that fed the label to that reasoning moved 9 of 79 saved wipe causes: Nov 11 pull 2 lost "Schooty's purple orb touched
+other orbs" (13 of the 17 "Venom Rupture" deaths there went off the edge before it killed them, and the first of them is how the burst is found), and four Oct 22 pulls turned into
+"Too many individual mistakes". The page's wipe-call test ("a mechanic killed several", by spell id) reads the last tick too (`d.abIdLast`). So: do not switch that reasoning to the
+label without a ruling.
+
+Measured, the code before next to the code after, on the six saved nights: 181 of 1,884 deaths read differently (155 "Fell off the edge", 24 "No killing hit", 2 mind control falls now
+Dreadmarch: Komo, Nov 11 pull 5, and Optt, Oct 21 pull 1). No death changed sides (178 count against a player before and after). One changed its reason and stayed Not counted:
+Volkovod, Oct 21 pull 3, 1:07, 12 yards from the middle with no killing hit in the log, read "killed by orbs someone else set off (Venom Rupture)" and now reads "no mistake of yours
+was caught (no killing hit)". Of 92 saved wipes (79 on The Coiled Altar, 13 on Ula'tek) no wipe call, cause or one-line cause moved; four lines name only the hits that killed
+(Oct 22 pull 10: "Kargaryen, Tyralien, Komo and 3 more fell off the edge", it read "died to Stretch Time and Dreadful Presence").
+
+On the page a list cell shows the label; a sentence says it in words (ui.js `noHitL`, `dthDied`, `dthTo`): "Hobbz fell off the edge", "First: Hobbz off the edge at 5:01", never
+"died to Fell off the edge" or "Killed by Fell off the edge". The death card's result line reads "Fell off the edge: no hit killed them." and no row of its recap is marked as the kill.
+
+Left as it was, on purpose: Why we wiped's counts of a wave ("Venom Rupture killed 17" on Nov 11 pull 2, where 4 died to it and 13 went off the edge after it burst), and an
+Avoidable damage line's "and died to it". Both are the raid's event told by what was hitting it. Reported to Main for a ruling.
+
+Checks: every pull read by tests/contradictions.js (13 on every build, all with --all): a death with Warcraft Logs' killing ability 0 shows only a label or Dreadmarch in d.kill,
+d.ability and the page's deathHit, the label never sits on a death a hit killed, and no line says "died to" or "killed by" a label. Hobbz, Nov 11 pull 16, is named and read on every
+build. The answer key (every build, every pull of its nights) fails when a death the raw log gives no killing hit shows a spell. tests/wipe-causes.js names Hobbz and Schooty
+(pull 16), Schooty (pull 2) and Komo (pull 5) with --all. The engine's and the page's lines are pinned.
+
+## Axegrinder hits are the debuff's landings (Nov 13, from the answer key)
+Vandagos, Nov 12 pull 3: the Axegrinder debuff landed on him 13 times and the table said "9 hits". The raw log: the debuff goes on when a player is inside an axe and comes off
+when they leave, and ticks every 0.25 s in between. The table counted a hit as a gap of more than 1.5 s between damaging ticks. So an axe that caught a player again while the last
+one's ticks still ran was no new hit (1:47 to 2:00: five landings read as two), a landing a shield soaked whole was no hit at all (1:02, 1:56, 1:57), and one landing with a
+shielded tick in the middle could read as two.
+Now a source with its own debuff (`aura` on the source; Axegrinder is the only one) counts the debuff's landings: each application more than 1.5 s after the one before, the answer
+key's own rule, when the log shows damage or a shield's absorb for it (never an immunity). The row, the mistake line and the card's visits follow the landings (`x.lt`,
+`judge.ts`, `x.tl`). The colour is still judged on the old count (`x.touches`, `judge.tj`), the unit the top raids' lines were measured in; the card's "twice what top guilds take"
+reads that count too (`vJ`). A player with ticks and no debuff in the log keeps the old count. Damage stays what got through.
+Measured, old code next to new, on the 3,962 Avoidable damage rows and lines of the saved Coiled Altar pulls: 197 Axegrinder rows show another number (149 one more, 22 two more,
+8 three more, 1 four more, 1 six more, 16 one fewer), no row changed colour, 19 mistake lines say another number and none came or went.
+Open until the top raids' lines are measured again the new way (the last item of the Nov 13 queue): judging the colour on landings.
+Checks: tests/wipe-causes.js names Vandagos's row ("13 hits", not coloured) with --all; the answer key compares every player's landings with the row on every build (its
+Vandagos line is deleted); the source's flag, the landing count, the shielded landing and the two judged counts are pinned.
+
+## Venomfang: who had a dispel ready (Nov 13, from the answer key)
+A slow Venomfang's sentence ("X had the only dispel ready") knew only the players who had removed a Venomfang in that same pull. A dispeller who had not got to one yet was not
+counted, so the one who had was blamed alone: Tyralien, Nov 11 pull 8, 0:30, "had the only dispel ready" with five more ready. 31 answer-key lines on Nov 11 and 12.
+Main: the list comes from each player's kit, with anyone who removed one as the fallback; several free is the raid's slip.
+- The poison dispellers of a pull: every player whose class and spec can remove a poison from someone else (`VF_SPECS`, by spec id: Paladin, Druid, Monk, Evoker), plus anyone who
+  removed a Venomfang this pull whatever their spec. On Nov 11 and 12 every Venomfang was removed by one of these: Holy Paladin (Cleanse), Protection Paladin (Cleanse Toxins),
+  Balance Druid (Remove Corruption), Preservation Evoker (Naturalize), Augmentation Evoker (Expunge).
+- One is free when alive (not dead without a rez), not mind controlled or feared (`tankOut`), and 8 s past their last dispel of anything.
+- The Venomfang job (the section's `targets`) stays with the players who removed one this pull: a Retribution Paladin who never dispels gets no job from this.
+- Not known here: talents (Warcraft Logs' pull-start talents don't reach the engine), so a healer's poison dispel is taken as picked; and the night (the engine reads one pull).
+  A Shaman's Poison Cleansing Totem and an Evoker's Cauterizing Flame (60 s) are left out.
+The answer key's own rule moved with it (tests/answer-key/make-key.js: the same spec list plus anyone who removed one that night); its two Coiled Altar files were built again and
+only `free` and `poisonDispellers` changed (Hobbz added on Nov 11, Jangokin and Phartsy on Nov 12). All 31 lines are right now and deleted; 5 known lines are left.
+Measured, old code next to new, on the 499 Venomfang rows of the saved Coiled Altar pulls: 42 slip sentences changed. 14 went from one named player to the raid ("with 6 dispels
+ready and nobody on it"), 27 say a bigger number, and one slip went away (Oct 22 pull 26, 1:55: the two "ready" dispellers were dead or feared). No result cell changed colour
+except that one, no job list and no mistake line changed.
+Oct 22 joined the answer key the same evening (35 pulls, 11 more of these lines). It showed one more case: Volkovod, a Hunter, took a Venomfang off himself once with Emergency
+Salve, and "anyone who removed one" made him a dispeller for the raid. So on both sides a removal counts only when it was from another player (`vfOth`; make-key.js: `v.by !== v.player`).
+All three Coiled Altar key files were built again with the rule; only `free` and `poisonDispellers` changed. All 42 lines are right and deleted.
+Checks: the answer key compares the free dispellers of every Venomfang on every build; tests/wipe-causes.js names Hobbz's Venomfang, Nov 11 pull 8, 0:30 (with --all); the spec
+list, the kit union, the alive-and-in-control test and the job list are pinned.

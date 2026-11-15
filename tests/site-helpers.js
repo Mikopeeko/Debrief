@@ -28,7 +28,9 @@ function grab(name, src) {
   throw new Error('could not read ' + name + ' out of ui.js');
 }
 function site(names, extra) {
-  const code = names.map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
+  /* (Nov 13: the page's words for a death with no killing hit ride along with every load: the death lines, the wipe chain and the verdicts all say them) */
+  const base = ['NO_HIT_SAY', 'noHitL', 'dthDied', 'dthTo'].filter((n) => !names.includes(n));
+  const code = base.concat(names).map((n) => grab(n)).join('\n') + '\n({ ' + names.join(', ') + ' })';
   const ctx = vm.createContext({ E, C: E.compact, T: E.fmtT, CACHE: new Map(), S: { index: { bosses: [] } }, window: {}, ...(extra || {}) });
   const o = vm.runInContext(code, ctx); o.CACHE = ctx.CACHE; return o;
 }
@@ -44,4 +46,6 @@ function pullItems(code, r, W) {
   }
   return items;
 }
+// (Nov 13, Main's ruling A: the engine counts avoidable-damage lines to the page's wipe call. The page hands it that call (ui.js, E.setCutHook); every test reads pulls the same way)
+try { if (E.setCutHook) E.setCutHook(site(['raidSizeOf', 'playedOn', 'deathCutN', 'WIPE_LINE', 'wipeLine', 'WIPE_OPEN', 'wipeCharges', 'wipeWeights', 'wipeLim', 'WIPE_MECH', 'wipeMech', 'WIPE_LAST', 'wipeAt', 'cutInfo', 'cutT'], { store: { get: () => null, set: () => {} }, noteForRep: () => null, strictOn: () => {} }).cutT); } catch (e) { console.error('site-helpers: the wipe call could not be handed to the engine: ' + e.message); }
 module.exports = { grab, site, pullItems, UI, SH, E };

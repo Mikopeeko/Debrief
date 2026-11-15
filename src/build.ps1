@@ -10,7 +10,7 @@ $wcl = & $read 'wcl.js'
 # stop without writing anything)
 $node = 'C:\Program Files\nodejs\node.exe'
 if (Test-Path $node) { foreach ($f in 'engine.js', 'wcl.js', 'ui.js', 'guides.js', 'practice.js', 'mptab.js', 'sidenav.js', 'worker_template.js') {
-  $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP 'debrief-worker-check.mjs'; [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
+  $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP ('debrief-worker-check-' + $PID + '.mjs'); [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
   & $node --check $p; if ($LASTEXITCODE) { throw "$f has a syntax error: nothing was built" } } }
 # (the Mythic+ tab (Nov 1): the PC app's own key reader, companion/mplus.js, in its own script, and the tab, src/mptab.js, inside ui.js)
 $mplus = [IO.File]::ReadAllText((Join-Path $root 'companion\mplus.js'))
@@ -36,7 +36,7 @@ $w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
 # (Nov 5, faster loading: the website's copy without the notes in the code, ~0.4 MB less to download (src/strip-comments.js says what stays);
 # only when Node is on this PC, else the page goes as it is)
-if (Test-Path $node) { $tin = Join-Path $env:TEMP 'debrief-site-in.html'; $tout = Join-Path $env:TEMP 'debrief-site-out.html'; [IO.File]::WriteAllText($tin, $hosted, $utf8)
+if (Test-Path $node) { $tin = Join-Path $env:TEMP ('debrief-site-in-' + $PID + '.html'); $tout = Join-Path $env:TEMP ('debrief-site-out-' + $PID + '.html'); [IO.File]::WriteAllText($tin, $hosted, $utf8)
   & $node (Join-Path $src 'strip-comments.js') $tin $tout; if ($LASTEXITCODE) { throw 'strip-comments.js failed: nothing was built' }
   $hosted = [IO.File]::ReadAllText($tout); Remove-Item $tin, $tout -ErrorAction SilentlyContinue }
 $base = $w.Replace("`r`n", "`n")
@@ -69,4 +69,24 @@ if ((Test-Path $node) -and (Test-Path $ctest) -and -not $env:DEBRIEF_SKIP_CHECK)
   if ($ccode) { $cout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  CONTRADICTION CHECK FAILED: the site contradicts itself (the lines above). Fix it before you push.' -ForegroundColor Red; $cc = 'FAILED, see above' }
   else { $cc = (($cout | Select-Object -Last 1) -replace '^Contradiction check: ', '') }
 }
-"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc
+# the answer key check (Nov 13, Flex: "they keep coming back seems to be my biggest issue"; notes/Guides/Answer key - how it works.md): real raid nights
+# read from the raw log with none of the site's code (tests/answer-key/), against what the site's own engine says about the same pulls, and the
+# same fact against itself on every tab. A NEW mismatch prints in red: fix it, or the fix you just made broke something that was right.
+# (about 1 s when the engine didn't change, about a minute when it did; skip it with $env:DEBRIEF_SKIP_CHECK = '1')
+$ak = 'skipped'; $atest = Join-Path $root 'tests\answer-key.js'
+if ((Test-Path $node) -and (Test-Path $atest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $aout = & $node $atest; $acode = $LASTEXITCODE
+  if ($acode) { $aout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  ANSWER KEY CHECK FAILED: the site no longer says what the raw log says (the lines above). Fix it before you push.' -ForegroundColor Red; $ak = 'FAILED, see above' }
+  else { $ak = (($aout | Select-Object -Last 1) -replace '^Answer key: ', '') }
+}
+# the page check (Nov 13, Main: "a pin isn't enough here. This regression got past every check we have"; tests/header-page.mjs): the app just built, opened in a
+# headless Edge with saved pulls as combat logs (no network). Summary's header must name the root cause the page itself computed. It runs the page's own
+# DOM code, which no Node test reaches: Nov 11 The Coiled Altar pull 2 read "It started at 1:23: Schooty walked off the edge" on af80e9fc.
+# (about 40 s; skip it with $env:DEBRIEF_SKIP_CHECK = '1'; without the log library or a browser it says so and passes)
+$pc = 'skipped'; $ptest = Join-Path $root 'tests\header-page.mjs'
+if ((Test-Path $node) -and (Test-Path $ptest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $pout = & $node --max-old-space-size=4096 $ptest; $pcode = $LASTEXITCODE
+  if ($pcode) { $pout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  PAGE CHECK FAILED: the page shows something other than what it computed (the lines above). Fix it before you push.' -ForegroundColor Red; $pc = 'FAILED, see above' }
+  else { $pc = (($pout | Select-Object -Last 1) -replace '^Page check: ', '') }
+}
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}; page check: {6}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak, $pc
