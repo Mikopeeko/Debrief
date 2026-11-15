@@ -397,3 +397,11 @@ The map is the star of the tab and was a screen down the page. Now, top to botto
 - One bar: your route or the fast run's, the pull stepper, and "Replay the key". The bar's own Player picker is hidden: the page's bar has it, and the two were always one pick.
 - The map with the timeline strip (You and Fast run, pull by pull) under it, in one column that stays in view while the pull's card beside it scrolls.
 The sentence "You took N more pulls than the fast run" is hidden when the score's Pull plan says the same; the line of route facts under the score stays.
+
+## Route: the replay, round 2 (Nov 14, 2026)
+
+Flex: "I think putting the health bars like raid frames on the map would be better", then "Same for enemy health bars".
+- The group's health is on the map as raid frames, bottom left: a bar a player in their class colour, their name and their health, red-edged under 35%, grey with "Dead" while dead. The panel beside the map keeps the damage in the pull and the cooldown running.
+- Each enemy has a small health bar over it, like a nameplate. A boss also gets a frame at the top right of the map with its name and health.
+- Health is the log's own reading: each line names the health of the unit it describes, and the replay keeps the last reading of each second.
+- Enemies are drawn above the players. In melee the pack stands where the group stands, and it was hidden under the player icons (found on Flex's Den of Nalorakk +20, Pull 8).
