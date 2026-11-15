@@ -436,3 +436,7 @@ Raid frames, one line each (Nov 14; Flex: "could we make these not as tall someh
 The panel beside the replay (Nov 14; Flex: "instead of having two dps meters, what if this was replaced with mob health bars/cast bars", and of As it happens: "this should also have mob casts especially if they get stopped/interupted/missed"):
 - Enemies: the enemies in the fight, a health bar and a cast bar each (the ones casting first, then the bosses, then the lowest; 8 at most, then "+ N more"), with the count by name under them. The damage list that was there is the meter on the map; a running big cooldown now shows on the meter's row.
 - As it happens also lists a kickable cast that went off ("went off", with the enemy) and a cast a stun, knock or grip stopped ("stopped by" the player, with the spell). Kicks and the must-kick casts that went off were there already.
+
+## The Rotation tab is judged as a key (Nov 14)
+
+Flex: "Yes, build it". A key pull has its own rules for the Rotation rows, a healer gets a damage-or-heal check, big cooldowns are judged over the whole key (a hold for Lust is never marked), and the score is 70% the pulls and 30% the key's own check. The rules, the numbers they were set from and what is still open: `notes/Guides/Mythic+ Rotation - how a key is judged.md`. The check: `tests/mplus-rotation-keys.js`.

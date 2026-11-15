@@ -2615,7 +2615,7 @@ async function mpRwStart(R, text) { if (R._rw || !window.DBF_MPLUS_ROT || !windo
   for (let k = 0; k < 2; k++) { rw.stale = false; try { await window.DBF_MPLUS_ROT(R, text, W, { line: CB.slipLine, bits: CB.rotBits, icon: (n) => CB.spellId(W, n) }); } catch (e) { console.error(e); }
     if (k || !rw.stale) break; for (let j = 0; j < 50 && pend(); j++) await new Promise((r) => setTimeout(r, 300));
     for (const o of R.pulls) delete o.rot; for (const q of R.people || []) delete q.rot; for (const k2 of Object.keys(all)) delete all[k2]; rw.raw = {}; }
-  rw.done = true; R._rwS = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); } mpxRepPaint(R);
+  rw.done = true; R._rwS = null; R._kh = null; mpRwPaint(R); { const pe = document.getElementById('mptPart'); if (pe) mpRotPart(R, pe.dataset.for || ''); } mpxRepPaint(R);
   if (MP.item && MP.R[mpK(MP.item)] === R && MP.pick && MP.pick.auto) mpMapAutoGo(false, true); } /* (the auto pick counts the rotation's mistakes too, moving only a card that's off screen) */
 // (words: no guide names (a sentence naming one goes), "1 was"; a value as the card says it, "3 of 6")
 const MP_RW_GUIDE = /\b(Wowhead|Icy Veins|SimulationCraft|Raidbots|Bloodmallet|WoWAnalyzer|log tool)\b|\b(a|both|the|one|another) guides?\b|\bthe simulations?\b/i;
@@ -2674,11 +2674,13 @@ function mpRwSum(R, n) { R._rwS = R._rwS || {}; if (R._rwS[n]) return R._rwS[n];
   // (92 and up played right, 72 to 91 mostly right, under 72 needs work), so the two never disagree. No pull with a score: no %, the word from the pulls' own)
   const pv = seen.map((x) => mpRwPv(R, x.i, n)), nb = pv.filter((v) => v === 'bad').length, nw = pv.filter((v) => v === 'warn').length, ng = pv.length - nb - nw, J = pv.length;
   let sw = 0, sv = 0; for (const x of seen) { const sc = mpRwScore(R, x.i, n); if (sc == null) continue; const d = Math.max(1, x.o.dur || 0); sw += d; sv += d * sc; }
-  const pct = sw ? Math.round(sv / sw) : null, st = pct != null ? (pct >= 92 ? 'ok' : pct >= 72 ? 'warn' : 'bad') : !nb && nw <= J / 4 ? 'ok' : nb >= J / 2 ? 'bad' : 'warn';
-  return (R._rwS[n] = { seen, fix, good, st, pct, ng, nw, nb }); }
+  /* (Nov 14, the key plan: 70% the pulls, 30% the key's own check when there is one: a damage dealer's or tank's cooldowns on the big pulls, a healer's damage while the group is healthy (mpkPart).
+     pct0 is the pulls alone. The Report card's Performance row reads pct) */
+  const pct0 = sw ? Math.round(sv / sw) : null, kp = mpkPart(R, n), pct = pct0 != null && kp != null ? Math.round(0.7 * pct0 + 0.3 * kp) : pct0, st = pct != null ? (pct >= 92 ? 'ok' : pct >= 72 ? 'warn' : 'bad') : !nb && nw <= J / 4 ? 'ok' : nb >= J / 2 ? 'bad' : 'warn';
+  return (R._rwS[n] = { seen, fix, good, st, pct, pct0, kp, ng, nw, nb }); }
 const mpRwSplit = (s) => [s.ng ? s.ng + ' played right' : '', s.nw ? s.nw + ' mostly right' : '', s.nb ? s.nb + (s.nb === 1 ? ' needs work' : ' need work') : ''].filter(Boolean).join(', ');
-const MP_RW_PCT = 'Rotation score for the whole key: each pull’s score from the Rotation tab’s checks, longer pulls counting more.';
-const mpRwPc = (s, big) => (s.pct == null ? '' : big ? '<b class="mpt-rwc-' + MP_RWV[s.st][1] + '"' + mpT1(MP_RW_PCT) + '>' + s.pct + '%</b>' : ' <span class="mpt-m"' + mpT1(MP_RW_PCT) + '>(' + s.pct + '%)</span>');
+const MP_RW_PCT0 = 'Rotation score for the whole key: each pull’s score from the Rotation tab’s checks, longer pulls counting more.', MP_RW_PCT = 'Rotation score for the whole key: 70% the pulls (each pull’s score from the Rotation checks, longer pulls counting more) and 30% the key’s own check: cooldowns on the big pulls, or, for a healer, damage while the group is healthy.'; /* (Nov 14: the second when the key has its own check, the first when the score is the pulls alone) */
+const mpRwPc = (s, big) => (s.pct == null ? '' : big ? '<b class="mpt-rwc-' + MP_RWV[s.st][1] + '"' + mpT1(s.kp == null ? MP_RW_PCT0 : MP_RW_PCT) + '>' + s.pct + '%</b>' : ' <span class="mpt-m"' + mpT1(s.kp == null ? MP_RW_PCT0 : MP_RW_PCT) + '>(' + s.pct + '%)</span>');
 function mpRwHtml(R) { const rw = R._rw, pick = MP.pp || '', ppl = (R.people || []).slice().sort(mpByRole), N = R.pulls.length;
   if (!rw || !rw.done) return '<div id="mptRot" class="mpt-rw"><p class="mpt-mcf">' + (R._rwOff && !rw ? 'Reload the page to check the rotation for this key.' : 'Checking everyone’s rotation…') + '</p></div>';
   const foot = '<p class="mpt-rwf">The Rotation tab’s own checks, the same as the Debrief app. Click a pull to open it in the card.</p>';
@@ -4433,8 +4435,8 @@ async function mpTopRun(c, who) {
       if (v.k === 'pct') { a.a += (o.dur || 1) * v.a; a.w += o.dur || 1; } else { a.a += v.a; a.b += v.b || 0; } } }
   if (!out.dur || cut) return null; out.id = c.code + ':' + c.fight + ':' + who; try { localStorage.setItem(key, JSON.stringify(out)); } catch (e) { /* (kept for this visit only) */ } return out; }
 // (the runs for a key and player: { st: 'wait' | 'ok' | 'none', runs, lv }), started once; the tab draws again when it's in)
-function mpTopFor(R, name) { const it = MP.item; if (!it || !it.id || !it.level || !WCL.mpFast) return { st: 'none', runs: [] };
-  const me = (R.people || []).find((p) => p.name === name); if (!me) return { st: 'none', runs: [] };
+function mpTopFor(R, name) { const it = MP.item; if (!it || !it.id || !it.level || !WCL.mpFast) return { st: 'none', runs: [], lv: [] }; /* (Nov 14: lv always there. Without it the website's Rotation tab threw on TOP.lv.slice() and stayed blank for a key with no dungeon id or level) */
+  const me = (R.people || []).find((p) => p.name === name); if (!me) return { st: 'none', runs: [], lv: [] };
   const C = MP.top || (MP.top = new Map()), key = mpK(it) + '|' + name; if (C.has(key)) return C.get(key);
   const T = { st: 'wait', runs: [], lv: [] }; C.set(key, T);
   const sp = mpTopNorm(me.spec), cl = mpTopNorm((E.CLASSES[me.cls] || [])[0] || me.cls), has = (r) => (r.ppl || []).find((m) => mpTopNorm(m.s) === sp && mpTopNorm(m.c) === cl);
@@ -4489,6 +4491,105 @@ const mpvAllHtml = (R, name, TOP, myDur) => { const L = mpvAll(R, name); if (!L.
   return '<details class="mpv-all"' + (MP.cvAll ? ' open' : '') + '><summary><span class="mpv-h">Every check across the key</span><span class="mpv-alln">' + L.length + ' checks · ' + clean + ' clean on every pull</span></summary>' + L.map((a) => { const top = a.tot ? mpTopOf(TOP, a.lb, a.tot, myDur) : '';
     return '<div class="mpv-ar"><i class="kd" style="background:' + MPC_COL[a.st] + '"></i>' + mpcIc((CB && a.ic ? CB.spellId(W, a.ic) : '') || MP_RW_IC.find(([re]) => re.test(a.lb))[1], a.lb) + '<span class="mpv-al">' + esc(a.lb) + '<small>fine on ' + a.ok + ' of ' + a.n + ' pulls</small></span><span class="mpv-av" style="color:' + MPC_TXT[a.st] + '">' + esc(a.tot || '') + (top ? '<small>top ' + esc(top) + '</small>' : '') + '</span></div>'; }).join('') + '</details>'; };
 // (one line per big cooldown over the key: ticks, pull dividers, bosses, and where a throughput or group one sat ready)
+// ---- A key judged as a key (Nov 14, Flex: "Yes, build it"; notes/Guides/Mythic+ Rotation - how a key is judged.md). Two things a pull-by-pull read
+// can't see are judged once over the whole key and make up 30% of the Rotation score (the pulls are the other 70%):
+// a damage dealer's or tank's big cooldowns on the big pulls, and a healer's damage while the group is healthy. ----
+// (bars, from 13 fast timed +20 runs read on Nov 14: 56 big cooldowns' longest wait inside a big pull was 24 s in the middle, 31 s at the 75th
+// percentile, 43 s at the 90th and 72 s at the most; a wait of 45 s is amber, 90 s red. An amber wait costs little (mpkWaitPts): inside a boss fight
+// a hold for its next phase can be right, and the log can't tell. A cooldown counts from 60 s. The last 15 s of a pull never count (the pack is
+// dying). A press within 3 s before or 6 s after a Lust was a hold for Lust)
+const MPK_CD_MIN = 60, MPK_WAIT = [45, 90], MPK_EOP = 15, MPK_LUST = [3, 6], MPK_FAST_WAIT = 25;
+// (a cooldown's points from its longest wait: 100 under 45 s, falling to 70 at 90 s, 40 from there)
+const mpkWaitPts = (s) => (s < MPK_WAIT[0] ? 100 : s < MPK_WAIT[1] ? 100 - 30 * (s - MPK_WAIT[0]) / (MPK_WAIT[1] - MPK_WAIT[0]) : 40);
+// (a healer's share of presses on damage while the group is healthy: [green from, amber from, what fast players read], measured with the page's own
+// count on the 13 fast runs. Holy Paladin from 4 players (66, 73, 73, 74%), Restoration Shaman from 5 (39, 39, 41, 42, 45%): green starts about 5
+// points under the lowest of them. One player is too few to set a bar: those specs are shown, not graded)
+const MPK_HDMG = { 'Holy Paladin': [0.62, 0.5, '66 to 74%'], 'Restoration Shaman': [0.34, 0.25, '39 to 45%'], 'Holy Priest': [null, null, '73% (one player)'], 'Mistweaver Monk': [null, null, '90% (one player)'], 'Preservation Evoker': [null, null, '53% (one player)'], 'Restoration Druid': [null, null, '31% (one player)'] };
+const MPK_THRU = ['Mistweaver Monk', 'Discipline Priest']; /* (they heal by dealing damage) */
+const MPK_MIN_PRESSES = 40;
+// (the key's big pulls: every boss, and the 3 trash pulls of 30 s or more with the most group damage)
+function mpkBig(R) { if (R._kbig) return R._kbig; const gd = (o) => Object.values(o.dmg || {}).reduce((a, v) => a + v, 0) * (o.dur || 0);
+  const tr = R.pulls.map((o, i) => ({ o, i })).filter((x) => !x.o.boss && (x.o.dur || 0) >= 30).sort((a, b) => gd(b.o) - gd(a.o)).slice(0, 3).map((x) => x.i);
+  return (R._kbig = R.pulls.map((o, i) => i).filter((i) => R.pulls[i].boss || tr.includes(i))); }
+// (one player's big cooldowns over the key. A cooldown's length is the spec's listed one, the longest it can be, so "it was ready" is certain. Per
+// big pull: each stretch it sat ready and unpressed while the player was alive. { rows: [{ nm, cd, n, ts, waits: [{ i, s, from, to, lust }], worst, st }],
+// st, part (0 to 100), worst, lust }. A healer has none: their cooldowns go out when the group needs them)
+function mpkCd(R, name) { const C = R._kcd || (R._kcd = {}); if (C[name]) return C[name]; const out = C[name] = { rows: [], st: null, part: null, worst: null, lust: 0 };
+  const per = (R.people || []).find((p) => p.name === name); if (!per || per.role === 'healer') return out;
+  const gs = typeof GEN_SPECS !== 'undefined' ? GEN_SPECS[mpSpN(per)] : null, L = (R.cds || {})[name] || [], big = mpkBig(R), P = R.pulls, lens = new Map();
+  for (const c of (gs && gs.cds) || []) if (c.cd >= MPK_CD_MIN) for (const n2 of [c.n].concat(c.names || [])) lens.set(mpLc(n2), c.cd);
+  out.listed = lens.size > 0; /* (the spec lists a big cooldown: when no row shows below, none was pressed, which isn't "none to judge") */
+  const pc = (R.pc || {})[name] || [], dead = (R.deathPos || []).filter((d) => d.who === name).map((d) => { const b = mpAfter(pc, d.t + 1); return [d.t, b == null ? Infinity : b]; });
+  const alive = (a, b) => { let s = Math.max(0, b - a); for (const [x, y] of dead) s -= Math.max(0, Math.min(b, y) - Math.max(a, x)); return Math.max(0, s); };
+  const lustAt = (t) => (R.lust || []).some((l) => t >= l.t - MPK_LUST[0] && t <= l.t + MPK_LUST[1]);
+  for (const nm of [...new Set(L.map((x) => x.spell))]) { const cd = lens.get(mpLc(nm)); if (!cd) continue; const ts = L.filter((x) => x.spell === nm).map((x) => x.t).sort((a, b) => a - b), waits = [];
+    for (const i of big) { const q = P[i], end = q.e - MPK_EOP, before = ts.filter((t) => t < q.s - 3).pop(); let t = Math.max(q.s, before == null ? 0 : before + cd);
+      for (const x of ts.filter((y) => y >= q.s - 3 && y <= q.e + 1)) { const s = x > t ? alive(t, Math.min(x, end)) : 0; if (s > 0) waits.push({ i, s, from: t, to: x, lust: lustAt(x) }); t = x + cd; }
+      if (end > t) { const nx = ts.find((y) => y > q.e + 1), s = alive(t, end); if (s > 0) waits.push({ i, s, from: t, to: null, lust: nx != null && nx - q.e < 30 && lustAt(nx) }); } }
+    const worst = waits.filter((w) => !w.lust).sort((a, b) => b.s - a.s)[0] || null, st = worst && worst.s >= MPK_WAIT[1] ? 'bad' : worst && worst.s >= MPK_WAIT[0] ? 'warn' : 'ok';
+    out.rows.push({ nm, cd, n: ts.length, ts, waits, worst, st, lust: waits.filter((w) => w.lust && w.s >= 20).length }); }
+  if (out.rows.length) { out.part = Math.round(out.rows.reduce((a, r) => a + mpkWaitPts(r.worst ? r.worst.s : 0), 0) / out.rows.length);
+    out.st = out.rows.some((r) => r.st === 'bad') ? 'bad' : out.rows.some((r) => r.st === 'warn') ? 'warn' : 'ok';
+    out.worst = out.rows.map((r) => r.worst && { ...r.worst, nm: r.nm }).filter(Boolean).sort((a, b) => b.s - a.s)[0] || null; out.lust = out.rows.reduce((a, r) => a + r.lust, 0); }
+  return out; }
+// (a healer's whole key: the two key rows of every pull added up. { qD, qT, nH, nT, sh, st, part, top, thru }; no grade under 40 presses or without a bar)
+function mpkHeal(R, name) { const per = (R.people || []).find((p) => p.name === name), rw = R._rw, o = { qD: 0, qT: 0, nH: 0, nT: 0, sh: null, st: null, part: null, top: '', thru: false };
+  if (!per || per.role !== 'healer' || !rw || !rw.done) return o; const C = R._kh || (R._kh = {}); if (C[name]) return C[name]; C[name] = o;
+  for (const q of R.pulls) for (const c of ((rw.all[q.n] || {})[name] || [])) { if (c.k !== 'kdmg' && c.k !== 'kheal') continue; const m = /^(\d+)\s*\/\s*(\d+)$/.exec(mpPlain(c.v).trim()); if (!m) continue; if (c.k === 'kdmg') { o.qD += +m[1]; o.qT += +m[2]; } else { o.nH += +m[1]; o.nT += +m[2]; } }
+  const B = MPK_HDMG[mpSpN(per)]; o.top = B ? B[2] : ''; o.thru = MPK_THRU.includes(mpSpN(per));
+  if (o.qT >= MPK_MIN_PRESSES) { o.sh = o.qD / o.qT; if (B && B[0] != null) { o.st = o.sh >= B[0] ? 'ok' : o.sh >= B[1] ? 'warn' : 'bad'; o.part = o.st === 'ok' ? 100 : o.st === 'warn' ? 70 : 40; } }
+  return o; }
+// (the key's own part of the score, 0 to 100, or null when there is nothing to judge)
+const mpkPart = (R, name) => { const per = (R.people || []).find((p) => p.name === name); if (!per) return null; return per.role === 'healer' ? mpkHeal(R, name).part : mpkCd(R, name).part; };
+const mpkPn = (R, i) => (R.pulls[i].boss ? R.pulls[i].boss : 'pull ' + mpNo(R, i + 1)), mpkSec = (s) => plural(Math.round(s), 'second');
+// (what a cooldown's worst wait was, in one plain sentence)
+const mpkWaitSay = (R, w) => (w.to == null ? esc(w.nm) + ' sat ready for ' + mpkSec(w.s) + ' near the end of ' + esc(mpkPn(R, w.i)) + ' and wasn’t pressed.' : esc(w.nm) + ' sat ready for ' + mpkSec(w.s) + ' on ' + esc(mpkPn(R, w.i)) + ' before it was pressed.');
+// (the key row for the fixes list and Done right: null when there is nothing to judge)
+function mpkRow(R, name) { const per = (R.people || []).find((p) => p.name === name); if (!per) return null;
+  if (per.role === 'healer') { const h = mpkHeal(R, name); if (!h.st) return null; const pc = Math.round(100 * h.sh) + '%';
+    return { st: h.st, label: 'Damage while the group is healthy', v: pc, top: h.top, why: 'While the group was healthy, ' + h.qD + ' of your ' + h.qT + ' presses went to damage (' + pc + '). Healers of your spec in fast timed +20 keys read ' + h.top + '. Damage in the quiet seconds is real time off the clock.', tip: 'When nobody needs healing, press your damage buttons.' }; }
+  const c = mpkCd(R, name); if (!c.st) return null; const w = c.worst;
+  return { st: c.st, label: 'Cooldowns on the big pulls', v: w ? 'waited ' + Math.round(w.s) + ' s' : 'On time', top: '', why: (w && c.st !== 'ok' ? mpPlain(mpkWaitSay(R, w)) + ' ' : '') + 'A big pull is a boss or one of the key’s three biggest trash pulls. In fast timed +20 keys the longest wait is about ' + MPK_FAST_WAIT + ' seconds for most players. A hold for Lust is never marked.', tip: w && c.st !== 'ok' ? 'Press ' + w.nm + ' as the big pull starts, unless you are holding it for Lust.' : '' }; }
+// (the website's key tile, first of the three: the key's own check at a glance)
+function mpkTile(R, name) { const per = (R.people || []).find((p) => p.name === name); if (!per) return '';
+  const tile = (lb, cls, big, sub) => '<div class="mpv-tile mpk-tile"><small>' + lb + '</small><b class="' + cls + '">' + big + '</b><i>' + sub + '</i></div>';
+  if (per.role === 'healer') { const h = mpkHeal(R, name); if (h.sh == null) return tile('Damage while the group is healthy', 'mpk-plain', '–', 'too few presses to count');
+    return tile('Damage while the group is healthy', h.st || 'mpk-plain', Math.round(100 * h.sh) + '%', h.qD + ' of ' + h.qT + ' presses' + (h.top ? ' · fast +20 healers ' + esc(h.top) : '')); }
+  const c = mpkCd(R, name); if (!c.rows.length) return tile('Cooldowns on the big pulls', 'mpk-plain', '–', c.listed ? 'none of your big cooldowns was pressed in this key' : 'no big cooldown to judge for this spec');
+  const n = c.rows.filter((r) => r.st !== 'ok').length, w = c.rows.map((r) => r.worst).filter(Boolean).sort((a, b) => b.s - a.s)[0];
+  return tile('Cooldowns on the big pulls', c.st, n ? plural(n, 'long wait') : 'On time', (w ? 'longest wait ' + Math.round(w.s) + ' s' : c.lust ? 'only holds for Lust' : 'no wait at all') + ' · fast +20 players about ' + MPK_FAST_WAIT + ' s'); }
+// (the website's cooldown card: one line per big cooldown over the key. Big pulls are shaded, a Lust is a blue line, a press is a tick, and a stretch
+// of 20 s or more where a judged cooldown sat ready inside a big pull is drawn: amber or red when it counts, blue when it went out with Lust)
+function mpkStrip(R, name) { const per = (R.people || []).find((p) => p.name === name), l = (R.cds || {})[name] || [], P = R.pulls, end = Math.max(1, ...P.map((o) => o.e || 0)); if (!per || !l.length) return '';
+  const heal = per.role === 'healer', c = heal ? { rows: [], st: null, lust: 0 } : mpkCd(R, name), judged = new Map(c.rows.map((r) => [r.nm, r])), big = new Set(mpkBig(R));
+  const x = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', mm = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const names = [...new Set(l.map((y) => y.spell))].sort((a, b) => (judged.has(b) ? 1 : 0) - (judged.has(a) ? 1 : 0)).slice(0, 6);
+  const grid = P.map((o, i) => (big.has(i) ? '<i class="mpk-big" style="left:' + x(o.s) + ';width:calc(' + x(o.e) + ' - ' + x(o.s) + ')" title="' + esc(mpkPn(R, i)) + '"></i>' : '') + '<i class="mpv-pd' + (o.boss ? ' b' : '') + '" style="left:' + x(o.s) + '"' + (o.boss ? ' title="' + esc(o.boss) + '"' : '') + '>' + (o.boss ? '★' : '') + '</i>').join('') +
+    (R.lust || []).map((u) => '<i class="mpk-lust" style="left:' + x(u.t) + '" title="' + esc((u.spell || 'Lust') + ' at ' + mm(u.t)) + '"></i>').join('');
+  const lines = names.map((nm) => { const r = judged.get(nm), ts = l.filter((y) => y.spell === nm).map((y) => y.t).sort((a, b) => a - b);
+    const ws = r ? r.waits.filter((w) => w.s >= 20).map((w) => { const b = w.to == null ? P[w.i].e - MPK_EOP : Math.min(w.to, P[w.i].e - MPK_EOP), cls = w.lust ? 'l' : w.s >= MPK_WAIT[1] ? 'b' : w.s >= MPK_WAIT[0] ? 'w' : 'o';
+      return '<i class="mpk-wait ' + cls + '" style="left:' + x(w.from) + ';width:calc(' + x(b) + ' - ' + x(w.from) + ')" title="' + esc('Ready, not pressed: ' + mm(w.from) + ' to ' + mm(b) + (w.lust ? ' (went out with Lust)' : '')) + '"></i>'; }).join('') : '';
+    return '<div class="mpv-cdr"><span class="mpv-cdn' + (r ? '' : ' mpk-nj') + '">' + esc(nm) + '</span><span class="mpv-cdl">' + ws + ts.map((t) => '<i class="mpv-tick" style="left:' + x(t) + '" title="' + esc(nm + ' at ' + mm(t)) + '"></i>').join('') + '</span></div>'; }).join('');
+  let say = '';
+  if (heal) say = '<p class="mpk-say">A healer’s cooldowns go out when the group needs them, so no wait is marked here.</p>';
+  else if (!c.rows.length) say = '<p class="mpk-say">' + (c.listed ? 'None of your big cooldowns was pressed in this key.' : 'No big cooldown of this spec to judge here.') + '</p>';
+  else { const w = c.worst, holds = c.lust ? ' ' + (c.lust === 1 ? 'One wait' : c.lust + ' waits') + ' went out with Lust: a hold for Lust is good play, so ' + (c.lust === 1 ? 'it isn’t' : 'they aren’t') + ' marked.' : '';
+    say = c.st === 'ok' ? '<p class="mpk-say"><b class="mpk-ok">✓</b> No big cooldown sat ready for ' + MPK_WAIT[0] + ' seconds or more inside a big pull.' + holds + '</p>'
+      : '<p class="mpk-say"><b class="mpk-' + c.st + '">' + mpkWaitSay(R, w) + '</b> In fast timed +20 keys the longest wait is about ' + MPK_FAST_WAIT + ' seconds for most players.' + (P[w.i].boss ? ' A hold for a boss’s next phase can be right: the log can’t tell, so this only shows the wait.' : '') + holds + '</p>'; }
+  return '<section class="mpv-cds mpk-cds"><div class="mpv-h">Cooldowns on the big pulls</div><div class="mpv-cdw"><div class="mpv-cdg">' + grid + '</div>' + lines + '</div>' + say +
+    '<p class="mpv-cdk mpk-key"><span><i class="mpk-kb"></i>a big pull (a boss, or one of the 3 biggest trash pulls)</span><span><i class="mpk-kl"></i>Lust</span>' + (heal ? '' : '<span><i class="mpk-kw"></i>ready, not pressed: amber from ' + MPK_WAIT[0] + ' seconds, red from ' + MPK_WAIT[1] + ', blue when it went out with Lust</span>') + '</p></section>'; }
+// (the website's healer card: the presses of the whole key by the group's health at that moment, as two bars)
+function mpkHealCard(R, name) { const per = (R.people || []).find((p) => p.name === name); if (!per || per.role !== 'healer') return ''; const h = mpkHeal(R, name); if (h.sh == null) return '';
+  const pc = (a, b) => Math.round(100 * a / Math.max(1, b)), dq = pc(h.qD, h.qT), hn = pc(h.nH, h.nT), sum = (R.people || []).reduce((a, p) => a + (p.dps || 0), 0);
+  const bar = (lb, sub, d, hl) => '<div class="mpk-hr"><span class="mpk-hl">' + lb + '<small>' + sub + '</small></span><span class="mpk-bar"><i class="d" style="width:' + d + '%"></i><i class="h" style="width:' + hl + '%"></i></span></div>';
+  const verdict = h.st === 'ok' ? '<b class="mpk-ok">✓</b> While the group was healthy, ' + dq + '% of your presses went to damage. Fast +20 healers of your spec read ' + esc(h.top) + '.'
+    : h.st ? '<b class="mpk-' + h.st + '">While the group was healthy, ' + dq + '% of your presses went to damage.</b> Fast +20 healers of your spec read ' + esc(h.top) + '.'
+    : 'While the group was healthy, ' + dq + '% of your presses went to damage.' + (h.top ? ' The one fast +20 healer of your spec read so far: ' + esc(h.top.replace(/ \(one player\)$/, '')) + '. One player is too few to grade against, so this is shown, not graded.' : ' No fast +20 healer of your spec has been read yet, so this is shown, not graded.');
+  return '<section class="mpk-heal"><div class="mpv-h">A healer’s key: damage or heal</div>' + bar('Group healthy', h.qD + ' damage · ' + (h.qT - h.qD) + ' heals', dq, 100 - dq) +
+    (h.thru || !h.nT ? '' : bar('Someone needs healing', (h.nT - h.nH) + ' damage · ' + h.nH + ' heals', 100 - hn, hn)) +
+    '<p class="mpk-lg"><span><i class="d"></i>damage presses</span><span><i class="h"></i>heal presses</span></p><p class="mpk-say">' + verdict + '</p>' +
+    (h.thru ? '<p class="mpk-note">Your spec heals by dealing damage, so damage while someone is hurt isn’t set against healing.</p>' : h.nT ? '<p class="mpk-note">While someone needed healing, ' + hn + '% of your presses were heals. That is shown, not graded: a tank sits low for much of a key.</p>' : '') +
+    (sum && per.dps ? '<p class="mpk-note">Your damage: ' + mpGF(per.dps) + ' DPS, ' + (Math.round(1000 * per.dps / sum) / 10) + '% of the group’s.</p>' : '') + '</section>'; }
 const mpvCdStrip = (R, name) => {
   const l = (R.cds || {})[name] || [], P = R.pulls, end = Math.max(1, ...P.map((o) => o.e || 0)); if (!l.length) return '';
   const sp = [...new Set(l.map((x) => x.spell))].slice(0, 6), W = 1000, x = (t) => (100 * Math.max(0, Math.min(end, t)) / end).toFixed(2) + '%', mm = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
@@ -4540,15 +4641,17 @@ function mpcRotHtml(R) {
   if (TOP && !(MPC_ON && TOP.st !== 'ok')) { const me = (R.people || []).find((p) => p.name === name), sp = me ? esc(me.spec + ' ' + ((E.CLASSES[me.cls] || [])[0] || '')) : 'player', lv = TOP.lv.slice().sort((a, b) => a - b).map((l) => '+' + l), lvs = lv.length > 1 ? lv[0] + ' to ' + lv[lv.length - 1] : lv[0] || '';
     topLn = '<p class="mpv-top">' + (TOP.st === 'wait' ? 'Reading fast runs with a ' + sp + ' for the top players’ numbers…' : TOP.st === 'ok' ? '<b>top</b> is the middle of ' + TOP.runs.length + ' fast ' + lvs + ' runs of this dungeon with a ' + sp + ', counts scaled to your pulls’ length.' : 'No top players’ numbers: fewer than ' + MP_TOPN + ' fast runs of this dungeon had a ' + sp + '.') + '</p>'; }
   if (side) { rows = side.rows; note = (MP.cvf === 'boss' ? 'Bosses' : 'Trash pulls') + ' only: ' + side.n + ' of ' + R.pulls.length + ' pulls. Tap the tile again for the whole key.'; }
+  { const kr = pi == null && !side ? mpkRow(R, name) : null; /* (Nov 14: the key's own check leads the fixes when it isn't fine, else it is done right) */
+    if (kr && kr.st !== 'ok') rows.unshift(Object.assign([kr.st, '', kr.label, kr.v, kr.top, kr.tip, '', kr.why, '', ''], { pts: 30, cost: 0, hit: 1, gap: null })); else if (kr) good.unshift(kr.label); }
   { const fx = new Set(rows.map((r) => String(r[2]).toLowerCase())); good = good.filter((g) => !fx.has(String(g).replace(/^No /, '').toLowerCase()) && !fx.has(String(g).toLowerCase())); } /* (never in Done right and in the fixes at once (Nov 5)) */
   const open = MP.cvo || (MP.cvo = new Set(['0'])), all = !!MP.cvm, shown = all ? rows : rows.slice(0, 3);
   const rr = (r, i) => { const k = String(i), o2 = open.has(k);
     return '<div class="mpc-rr" data-mpco="' + k + '"><i class="kd" style="background:' + (MPC_COL[r[0]] || '#6c7381') + '"></i>' + mpcIc(r[1] || (/casting|pace|pressing|priority/i.test(r[2]) ? 'spell_holy_borrowedtime' : ''), r[2]) + '<div class="krb"><div class="krt"><b>' + esc(r[2]) + '</b><span class="krv" style="color:' + (MPC_TXT[r[0]] || '#ece8df') + '">' + esc(r[3]) + (r[4] ? '<small>top ' + esc(r[4]) + '</small>' : '') + '</span><i class="kpl">' + (o2 ? '–' : '+') + '</i></div>' +
       (o2 ? (r[7] ? '<p class="kwhy">' + esc(r[7]) + '</p>' : '') + (r[6] ? '<div class="ksq">' + r[6].split('').map((q) => '<i style="background:' + (MPC_SQ[q] || '#6c7381') + '"></i>').join('') + '</div>' : '') + (r[5] ? '<p class="knx"><b>Next time:</b> ' + esc(r[5]) + '</p>' : '') +
         (r[9] ? '<p class="kmo">' + String(r[9]).split(';').map((m) => '• ' + esc(m)).join('<br>') + '</p>' : '') + (r[8] ? '<p class="khow">How it’s judged: ' + esc(r[8]) + '</p>' : '') : '') + '</div></div>'; };
-  const tiles = wide && pi == null ? '<div class="mpv-tiles">' + [['trash', 'Trash pulls'], ['boss', 'Bosses']].map(([k, lb]) => { const x = mpvSide(R, name, k === 'boss'), t0 = x.fx[0];
+  const tiles = wide && pi == null ? '<div class="mpv-tiles mpk-t3">' + mpkTile(R, name) + [['trash', 'Trash pulls'], ['boss', 'Bosses']].map(([k, lb]) => { const x = mpvSide(R, name, k === 'boss'), t0 = x.fx[0];
     return '<button type="button" class="mpv-tile' + (MP.cvf === k ? ' on' : '') + '" data-mpcf="' + k + '"><small>' + lb + '</small><b class="' + (x.fx.some((a) => a.st === 'bad') ? 'bad' : x.fx.length ? 'warn' : 'ok') + '">' + (x.n ? (x.fx.length ? x.fx.length + ' to fix' : 'Clean') : 'None') + '</b><i>' + (t0 ? esc(t0.f[2]) + ', on ' + t0.ps.length + ' of ' + x.n : x.n ? 'nothing came up' : '') + '</i></button>'; }).join('') + '</div>' : '';
-  const card = who + tiles + (wide && pi == null ? mpvCdStrip(R, name) : '') /* (Nov 9: up under the score) */ + '<div class="mpc-h"><span>ROTATION' + (sc != null ? ' · <b>' + sc + '</b>/100' : '') + '</span></div>' +
+  const card = who + tiles + (wide && pi == null ? mpkHealCard(R, name) + mpkStrip(R, name) : '') /* (Nov 9: up under the score; Nov 14: the key's own cards) */ + '<div class="mpc-h"><span>ROTATION' + (sc != null ? ' · <b>' + sc + '</b>/100' : '') + '</span></div>' +
     (rows.length ? shown.map(rr).join('') + (rows.length > 3 ? '<button type="button" class="mpc-more" data-mpcm="1">' + (all ? 'Show less' : 'Show ' + (rows.length - 3) + ' more') + '</button>' : '') : '<p class="mpc-good">Nothing to fix here.</p>') +
     (good.length ? '<p class="mpc-good">Done right: ' + good.map(esc).join(', ') + '.</p>' : '');
   if (!wide) return pk + '<p class="mpc-pn">' + note + '</p>' + card;

@@ -20447,6 +20447,51 @@ html:not(.mpcard) body #view#view#view .mrp-mr { height: 17px !important; }
 html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrn { padding-right: 44px !important; line-height: 17px !important; }
 html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrv { line-height: 17px !important; }
 }
+@layer defaultTheme {
+/* (Nov 14, the Mythic+ Rotation tab judged as a key, website only; Flex: "Yes, build it". Three tiles, the cooldown card with the big pulls shaded,
+   and a healer's damage-or-heal card. The Companion's card (html.mpcard) draws none of these) */
+html:not(.mpcard) body #view#view#view #mpcRot .mpv-tiles.mpk-t3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-tile { cursor: default !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-tile:hover { border-color: #262a33 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-tile > b.mpk-plain { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-tile > i { white-space: normal !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpv-cdw { margin-top: 2px !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-big { position: absolute !important; top: 0 !important; bottom: 0 !important; background: rgba(230, 180, 80, .07) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-lust { position: absolute !important; top: 0 !important; bottom: 0 !important; width: 2px !important; margin-left: -1px !important; background: #6aa8ff !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-wait { position: absolute !important; top: 6px !important; height: 0 !important; border-top: 2px dashed rgba(143, 152, 161, .55) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-wait.w { border-top-color: #e8a23a !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-wait.b { border-top-color: #e5534b !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpk-wait.l { border-top-color: #6aa8ff !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-cds .mpv-cdn.mpk-nj { color: var(--mute, #8f98a1) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-say { margin: 8px 0 4px !important; font-size: 13.5px !important; line-height: 1.45 !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-say > b { font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-ok { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-warn { color: #e8a23a !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-bad { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-note { margin: 2px 0 0 !important; font-size: 13px !important; color: #8f98a1 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key { display: flex !important; flex-wrap: wrap !important; gap: 4px 16px !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key > span { display: inline-flex !important; align-items: center !important; gap: 6px !important; font-size: 12.5px !important; color: #8f98a1 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key i { display: inline-block !important; width: 14px !important; height: 10px !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key .mpk-kb { background: rgba(230, 180, 80, .22) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key .mpk-kl { width: 2px !important; background: #6aa8ff !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-key .mpk-kw { height: 0 !important; border-top: 2px dashed rgba(143, 152, 161, .8) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-heal { margin: 14px 0 16px !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-hr { display: grid !important; grid-template-columns: 250px minmax(0, 1fr) !important; gap: 12px !important; align-items: center !important; margin: 6px 0 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-hl { font-size: 13.5px !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-hl > small { display: block !important; font-size: 12.5px !important; color: #8f98a1 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-bar { display: flex !important; height: 20px !important; background: #1b1e25 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-bar > i { display: block !important; height: 100% !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-bar > i.d, html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg i.d { background: #c9a227 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-bar > i.h, html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg i.h { background: #3f8f52 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg { display: flex !important; gap: 16px !important; margin: 4px 0 0 262px !important; font-size: 12.5px !important; color: #8f98a1 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg > span { display: inline-flex !important; align-items: center !important; gap: 6px !important; font-size: 12.5px !important; color: #8f98a1 !important; }
+html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg i { display: inline-block !important; width: 10px !important; height: 10px !important; }
+@media (max-width: 700px) {
+  html:not(.mpcard) body #view#view#view #mpcRot .mpv-tiles.mpk-t3 { grid-template-columns: minmax(0, 1fr) !important; }
+  html:not(.mpcard) body #view#view#view #mpcRot .mpk-hr { grid-template-columns: minmax(0, 1fr) !important; gap: 3px !important; }
+  html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg { margin-left: 0 !important; }
+}
+}
 </style>
 </body>
 </html>
