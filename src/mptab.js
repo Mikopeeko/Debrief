@@ -855,7 +855,7 @@ function mpFixes(R, C, all) {
     out.push({ c: 'kick', ps: [...k.pulls.keys()].map((n) => n - 1), sp: k.spell, n: k.n, s: 0, ns: 'fewer casts', t: 'Kick ' + esc(k.spell), d: 'It went off ' + plural(k.n, 'time') + ' with a kick ready' + (pl.length === 1 && wiped.has(bp) ? ', all in the ' + esc(mpPN(R, bp)) + ' wipe' : pl.length > 1 && bn * 2 >= k.n && wiped.has(bp) ? ', ' + bn + ' of them in the ' + esc(mpPN(R, bp)) + ' wipe' : pl.length <= 3 ? ', in ' + esc(mpPNs(R, pl)) : ', across ' + pl.length + ' pulls') + '.' }); }
   // (last, the deaths left, one to each cause, as one line)
   const more = out.some((x) => x.s > 0); /* ("more" only after other deaths above it) */
-  if (rest.length) out.push({ c: 'death', ps: [...new Set(rest.map((d) => d.pull - 1))], s: rest.length * pen, t: more ? (rest.length === 1 ? 'One more death' : plural(rest.length, 'more death')) : (rest.length === 1 ? 'One death' : plural(rest.length, 'death')), d: rest.sort((a, b) => a.t - b.t).map((d) => mpWho(R, d.who) + ' to <b class="mpt-ab">' + esc(d.to || 'unknown') + '</b> <span class="mpt-m">(' + mpDWhere(R, d) + ')</span>').join(', ') + '.' });
+  if (rest.length) out.push({ c: 'death', ps: [...new Set(rest.map((d) => d.pull - 1))], s: rest.length * pen, t: more ? (rest.length === 1 ? 'One more death' : plural(rest.length, 'more death')) : (rest.length === 1 ? 'One death' : plural(rest.length, 'death')), d: rest.sort((a, b) => a.t - b.t).map((d) => mpWho(R, d.who) + ' to <b class="mpt-ab">' + esc(mpDTo(d.to)) + '</b> <span class="mpt-m">(' + mpDWhere(R, d) + ')</span>').join(', ') + '.' });
   return all ? out : out.slice(0, 3); }
 
 // ---------- the parts, top to bottom ----------
@@ -924,6 +924,7 @@ function mpxParts(R, F, pick) { const D = mpxData(R, F), C = mpClock(R), KS = Ob
 // (a player's rows as a list: a heading a kind, then its rows)
 // (the reader writes "unknown" when the log names no hit for a death)
 const mpxTo = (s) => (s && !/^unknown$/i.test(s) ? s : '');
+const mpDTo = (s) => (s && !/^unknown$/i.test(s) ? s : 'a hit the log doesn\'t name'); /* (a death the log gives no hit for: never "died to unknown" (Nov 14)) */
 const mpxPartsHtml = (PP) => PP.KS.map((k) => (PP.K[k] ? '<section class="mpx-g mpx-g-' + MPX_KIND[k][1] + '"><div class="mpx-gh"><b class="mpx-gn">' + PP.K[k].n + '</b><h3>' + MPX_KIND[k][0] + '</h3><span>' + PP.K[k].sub + '</span></div>' + PP.K[k].body + '</section>' : '')).join('') + PP.minorH;
 // (a link to the mistakes: a kind opens in Summary's box, a player's in their Report card card)
 function mpxMis(kind, who) { if (MPC_ON) return; if (who) { mpxView('rep'); const c = [...document.querySelectorAll('#mptCP .mpx-rcard')].find((x) => x.dataset.for === who), d = c && c.querySelector('details.mpx-rcm'); if (d) d.open = true; if (c) c.scrollIntoView({ block: 'start' }); else mpxTop(); return; }
@@ -1578,7 +1579,7 @@ function mpPullTags(RR, i) {
   const en = (n) => plural(n, 'enemy').replace(/enemys$/, 'enemies'), who = (L, sp) => [...new Set((L || []).filter((x) => x.removed === sp).map((x) => x.who))].map(esc).join(', ');
   const grp = (L) => { const m = new Map(); for (const x of L || []) { const o = m.get(x.spell) || { n: 0, who: new Set() }; o.n++; if (x.who) o.who.add(x.who); m.set(x.spell, o); } return m; }, tw = (n) => (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
   if (wipe) t('☠ Wipe', 'mpt-t2d', plural(p.deaths.length, 'death') + ': ' + p.deaths.map((d) => esc(d.who)).join(', ') + '.');
-  else for (const d of p.deaths.filter((x) => !x.gap).sort((a, b) => a.t - b.t)) t('☠ ' + esc(d.who), 'mpt-t2d', '<b>' + esc(d.who) + '</b> died to ' + esc(d.to || 'unknown') + ', ' + mpMM(d.t - p.s) + ' in.');
+  else for (const d of p.deaths.filter((x) => !x.gap).sort((a, b) => a.t - b.t)) t('☠ ' + esc(d.who), 'mpt-t2d', '<b>' + esc(d.who) + '</b> died to ' + esc(mpDTo(d.to)) + ', ' + mpMM(d.t - p.s) + ' in.');
   if (p.boss && p.kill === false && !wipe) t('Not killed', 'mpt-t2d');
   for (const [sp, o] of grp(p.through)) t('! ' + esc(sp) + (o.n > 1 ? ' ×' + o.n : ''), 'mpt-t2k', '<b>' + esc(sp) + '</b> went off ' + tw(o.n) + ' with a kick ready.' + (o.who.size ? '<br>Kick ready: ' + [...o.who].map(esc).join(', ') + '.' : ''));
   for (const [sp, o] of grp(p.minor)) t('! ' + esc(sp) + (o.n > 1 ? ' ×' + o.n : ''), 'mpt-t2m', '<b>' + esc(sp) + '</b> went off ' + tw(o.n) + ' with a kick ready. Worth a kick, not a mistake.');
@@ -3057,10 +3058,10 @@ function mpMapHtml(R, F, tl) {
     // (how each player died: the killing blow and its source, and whether a defensive was used, on the line; the last hits, what was ready and the
     // Healthstone inside)
     const died = p.deaths.filter((d) => !d.gap).sort((a, b) => a.t - b.t).map((d) => { const r = q.dd.find((x) => x.who === d.who && Math.abs(x.t - d.t) < 3);
-      const body = '<p class="mpt-mcm">Died to <b>' + esc(d.to || 'unknown') + '</b>' + (d.from ? ' (from ' + esc(d.from) + ')' : '') + ', ' + mpMM(d.t - p.s) + ' in. ' + (d.defs ? 'Used ' + plural(d.defs, 'defensive') + '.' : 'No defensive used.') + '</p>' + (!r ? '' :
+      const body = '<p class="mpt-mcm">Died to <b>' + esc(mpDTo(d.to)) + '</b>' + (d.from ? ' (from ' + esc(d.from) + ')' : '') + ', ' + mpMM(d.t - p.s) + ' in. ' + (d.defs ? 'Used ' + plural(d.defs, 'defensive') + '.' : 'No defensive used.') + '</p>' + (!r ? '' :
         (r.hits.length ? '<ol>' + r.hits.map((h) => '<li><span class="mpt-m">' + h.ago.toFixed(1) + ' s before:</span> <b>' + esc(h.sp) + '</b>' + (h.from ? ' <span class="mpt-m">(' + esc(h.from) + ')</span>' : '') + ' ' + mpGF(h.amt) + (h.pct ? ' <span class="mpt-m">· ' + Math.round(100 * h.pct) + '% of their health</span>' : '') + '</li>').join('') + '</ol>' : '') +
         '<p class="mpt-mcm">' + (r.ready.length ? mpAnd(r.ready.map(esc)) + (r.ready.length === 1 ? ' was' : ' were') + ' ready.' : 'No defensive was ready.') + (r.used.length ? ' Used: ' + r.used.map(([n, sec]) => esc(n) + ' (' + sec + ' s before)').join(', ') + '.' : '') + ' Healthstone: ' + (r.hs != null ? 'used ' + r.hs + ' s before.' : 'not used.') + '</p>');
-      return fold('x', '<span class="mpt-t2d">☠</span> <b>How ' + mpWho(RR, d.who) + ' died</b> · ' + esc(d.to || 'unknown') + (d.from ? ' (' + esc(d.from) + ')' : '') + ' · ' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive'), body, ' data-dr="' + esc(d.who) + '"'); }).join('');
+      return fold('x', '<span class="mpt-t2d">☠</span> <b>How ' + mpWho(RR, d.who) + ' died</b> · ' + esc(mpDTo(d.to)) + (d.from ? ' (' + esc(d.from) + ')' : '') + ' · ' + (d.defs ? plural(d.defs, 'defensive') : 'no defensive'), body, ' data-dr="' + esc(d.who) + '"'); }).join('');
     // (the pack (map-extras.md item 17; Flex: "those are considered the mini bosses in dungeons or the harder mobs to deal with"): each kind of enemy with
     // one role, Caster (it healed another enemy, or it keeps casting: 14 or more casts a minute, or 10 or more with mostly magic damage) or Melee; Elite for the mini-boss tier, at least twice the health of
     // the key's middle trash enemy (the same on every pull), or a rare; fodder, half that or less, on one last line. 5 rows, then the rest in a hover)

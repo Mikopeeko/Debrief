@@ -571,6 +571,7 @@ try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player
 try { require('./replay-icons.js')(H, say); } catch (e) { say("Ula'tek replay", 'crash', 'the replay icons check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } /* (Nov 13, Flex: every Ula'tek add on the replay has its own icon, not a plain shape) */
 try { require('./no-went-wrong.js')(say); } catch (e) { say('the page code', 'crash', 'the "went wrong" check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-left-early.js')(say); } catch (e) { say('Mythic+ banner', 'crash', 'the Left early check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
+try { require('./mplus-unknown-death.js')(say); } catch (e) { say('Mythic+ deaths', 'crash', 'the unknown-hit check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
 for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
   const rows = [...g].sort((a, b) => b[1].length - a[1].length).map(([c, l]) => ({ nm: E.RC_CAT[c].nm, w: l.length, rc: c, fix: RCX.RC_FIX[c] || '', first: RCX.rcFirstLine(l), l })), f = SHELL.nsmFocusOf(rows), night = 'night ' + code + ' (All pulls)';
