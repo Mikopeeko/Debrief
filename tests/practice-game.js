@@ -86,11 +86,11 @@ function checks(H, say, pj) {
   //    the run plays that job clean. (Before: only three fixed jobs, Ranged west carrier, Melee carrier by her, Healer with no egg.)
   if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
   const UL_FB = vm.runInContext('UL_FB', G0.ctx), sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and ');
-  const J = { role: 'h', egg: 'm2', soak: [2, 1], fb: [5, 13] }, base = sizes(script({ seed: 3, east: false }));
+  const J = { role: 'h', egg: 'm2', soak: [1, 2], fb: [5, 13] }, base = sizes(script({ seed: 3, east: false }));
   try {
     dbg.myJob = JSON.parse(JSON.stringify(J)); if (dbg.jobSlot() !== 'm2') bad('picking the egg spot by her (edge) puts you in ' + dbg.jobSlot() + ', not that carrier\'s place (check D)');
     const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
-    if (team(0) !== '2' || team(1) !== '1') bad('the picked coil teams (team 2 in set 1, team 1 in set 2) play as ' + (team(0) || 'none') + ' and ' + (team(1) || 'none') + ' (check D)');
+    if (team(0) !== '1' || team(1) !== '2') bad('the picked coil teams (team 1 in set 1, team 2 in set 2) play as ' + (team(0) || 'none') + ' and ' + (team(1) || 'none') + ' (check D)');
     if (sizes(S2) !== base) bad('picking a coil team leaves the teams at ' + sizes(S2) + ' instead of ' + base + ' (check D)');
     r.log.filter((x) => /missed your coil soak|Soul Constrictor|Fester Burst/.test(x)).forEach((x) => bad('the picked job, played by the autopilot: ' + x + ' (check D)'));
     if (!/Your spot in the bubble: 5\b/.test(dbg.asg('m2')) || !/Your spot in the bubble: 13\b/.test(dbg.asg('m2'))) bad('the start card doesn\'t name the picked bubble spots 5 and 13 (check D)');
@@ -99,6 +99,12 @@ function checks(H, say, pj) {
       if (hyp(dbg.job('m2').T, want1) > 0.6) bad('at the 0:39 bubble the game sends you ' + hyp(dbg.job('m2').T, want1).toFixed(1) + ' yards from your picked spot 5 (tail ' + (more.tailEast ? 'east' : 'west') + ', check D)');
       dbg.step(Math.round((106 - dbg.G.t) / 0.05)); const b3 = S3.bubbles[2], a = (S3.rotAt(b3.at) - 90) * Math.PI / 180, u = UL_FB[1][2], want3 = [b3.p[0] + (u[0] * Math.cos(a) - u[1] * Math.sin(a)) * 10, b3.p[1] + (u[0] * Math.sin(a) + u[1] * Math.cos(a)) * 10];
       if (hyp(dbg.job('m2').T, want3) > 0.6) bad('at the 1:48 bubble the game sends you ' + hyp(dbg.job('m2').T, want3).toFixed(1) + ' yards from your picked spot 13 (she surfaces ' + (east ? 'east' : 'west') + ', check D)'); }
+    // (the review, Nov 15: a carrier can't be on team 2 in set 1, where the bubble sits on the first coil; it played as a Soul Constrictor or a missed bubble)
+    dbg.myJob = { role: 'r', egg: 'r1', soak: [2, 1], fb: [0, 0] }; dbg.sim('r1', false, false, 3); if (!dbg.S.soaks.some((q) => q.set === 0 && q.k === 0 && q.group.includes('r1'))) bad('an egg carrier who picks team 2 for set 1 is put on it, but the 0:39 bubble sits on the first coil, so that job can\'t be played (check D)');
+    // (the review, Nov 15: with a picked 0:39 spot, a bot carrier on a far spot missed the 0:40 coil and then carried two eggs; both sides of the tail and both coil orders)
+    for (const [east, seed, more] of [[false, 3, { tailEast: false, first: [false, false] }], [true, 7, { tailEast: true, first: [true, true] }]]) {
+      dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [1, 11] }; dbg.at(0.05, 'r3', { east, seed, ...more });
+      dbg.audit(east, seed, more).filter((x) => SERIOUS.test(x) && !x.includes('[r3]')).forEach((x) => bad('with a picked bubble spot, a bot slips: ' + x + ' (tail ' + (more.tailEast ? 'east' : 'west') + ', check D)')); }
     dbg.myJob = { role: 'r', egg: null, soak: [1, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
     if (slot !== 'r7' || !S4.soaks.some((q) => q.set === 0 && q.k === 0 && q.group.includes(slot)) || !S4.soaks.some((q) => q.set === 1 && q.k === 1 && q.group.includes(slot))) bad('a ranged job with no egg on team 1 then team 2 plays as ' + slot + ' on other teams (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
