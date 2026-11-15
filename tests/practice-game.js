@@ -14,6 +14,7 @@
 //   F. The start card, tidy: your job, your job in short, Start; the rundown and the options folded away (Flex, Nov 15); see check F below.
 //   G. Hitting the right thing: the Rawlings, the heart, a Viper; Tab picks a target (Flex, Nov 15); see check G below.
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
+//   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -174,6 +175,28 @@ function checks(H, say, pj) {
       const wg = r.wings[1], hw = r.waves.filter((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1), ax = hw.reduce((a, w) => a + w.x, 0) / hw.length - r.dive.to[0], ay = hw.reduce((a, w) => a + w.y, 0) / hw.length - r.dive.to[1], real = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'WEST' : 'EAST') : (ay < 0 ? 'SOUTH' : 'NORTH');
       if (wg.first !== real) { bad('after the dive her first waves come down the ' + real + ' half but the call says ' + wg.first + ' (seed ' + r.seed + ', check H)'); break; } }
   } catch (e) { bad('attacking crashed the game: ' + e.message + ' (check H)'); }
+  // I. The mechanics play like the raid (Nov 15, the improvement pass Flex said yes to): her waves light the half hit first red and the safe half green, then
+  //    swap; the venom beam gets a call, a timer and red lanes before its side waves, and standing in it is your mistake (Wolfthorn's pull 1); your egg ring
+  //    warns before another carrier touches it (pulls 9, 12, 13); calls that land together share one line; at 1:41 the call says run to the second Wretch
+  //    (pulls 7, 8, 10); the timers show only your coil.
+  if (typeof dbg.halves !== 'function' || typeof dbg.eggWarn !== 'function') { bad('the improvement pass is missing: no floor halves for her waves, no egg ring warning (check I)'); return; }
+  try {
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(52, 'r3', { east: false, seed: 3 }); const h1 = dbg.halves();
+    if (!h1 || h1.red !== 1 || h1.first !== dbg.S.wings[0].first) bad('while she pulls her wing back at 0:52 the floor doesn\'t light the half hit first (check I)');
+    dbg.stepOwn(200); const h2 = dbg.halves(); if (!h2 || !h2.swap || h2.red !== -1) bad('after her first wave has gone by, the floor doesn\'t swap to "cross behind it" (check I)');
+    if (!/const hv = A\.halves \? A\.halves\(\) : null; if \(hv\)/.test(fs.readFileSync(path.join(SRC, 'practice3d.js'), 'utf8'))) bad('the 3D view doesn\'t light the halves of the floor for her waves (check I)');
+    const S0 = script({ seed: 3, east: false }), inc = S0.waves.filter((w) => w.kind === 'incub');
+    if (!inc.length || inc.some((w) => !(w.warn > 0))) bad('the venom beam\'s side waves come with no red lane before them (check I)');
+    if (!S0.warns.some((w) => /Venom beam/.test(w.text) && Math.abs(w.t - 13) < 0.1) || !S0.timers.some((q) => q.name === 'Venom beam' && Math.abs(q.t - 15) < 0.1)) bad('the venom beam at 0:15 has no call and no timer (check I)');
+    dbg.at(15.2, 'r3', { east: false, seed: 3 }); { const bm = dbg.S.beams[0], tk = dbg.G.bots[bm.tank]; dbg.pos = [(bm.from[0] + tk.x) / 2, (bm.from[1] + tk.y) / 2]; } const n0 = dbg.G.log.length; dbg.stepOwn(6);
+    if (!dbg.G.log.slice(n0).some((m) => /You stood in the venom beam/.test(m.text))) bad('standing in the venom beam, between the image and the off tank, is not a mistake (check I)');
+    dbg.at(30, 'r3', { east: false, seed: 3 }); const other = dbg.G.eggs.find((e) => e.state === 'held' && e.who && e.who !== 'r3');
+    if (!dbg.G.eggs.some((e) => e.who === 'r3' && e.state === 'held') || !other) bad('at 0:30 you or the other carriers hold no egg, so the ring warning can\'t be checked (check I)');
+    else { const b = dbg.G.bots[other.who], lv = (d) => { b.x = dbg.G.x + d; b.y = dbg.G.y; return dbg.eggWarn(); }; if (lv(3.2) !== 2 || lv(4.5) !== 1 || lv(9) !== 0) bad('your egg ring doesn\'t turn red within 3.5 yards of another carrier, orange within 5 and clear beyond (check I)'); }
+    if (!S0.warns.some((w) => /Run to the second Wretch/.test(w.text) && Math.abs(w.t - 101) < 0.1)) bad('at 1:41 there is no call to run to the second Wretch in front of her (check I)');
+    if (!/calls that come within 1\.5 s of each other share one line/.test(PJ)) bad('calls that land together still cover each other (check I)');
+    dbg.at(125, 'r3', { east: false, seed: 3 }); const th = (dbg.timers ? dbg.timers() : []).join(' | '); if (!/Your coil/.test(th) || /Coil slam/.test(th)) bad('the timers at 2:05 read "' + th + '": they should show only your coil, as "Your coil" (check I)');
+  } catch (e) { bad('the improvement pass crashed the game: ' + e.message + ' (check I)'); }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;

@@ -71,12 +71,14 @@ function pg3dShapes(A, t) {
     segs.forEach(([a0, b0]) => { const w0 = Math.max(a0, -hw), w1 = Math.min(b0, hw); if (w1 > w0) P({ k: 'wave', x: cx0, y: cy0, a, f0: -hd, f1: hd + 3, w0, w1, o: op }); }); });
   // eggs: on the floor (its shell, and yours in gold), or riding over their carrier with the 3-yard circle
   G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let x = e.x, y = e.y, h = 1.2;
-    if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; disc(b.x, b.y, 3, '#3af2a8', 0.08); ring(b.x, b.y, 3, '#3af2a8', 0.85, 0.2); }
+    if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; disc(b.x, b.y, 3, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, 3, ec, 0.9, ew ? 0.32 : 0.2); }
     P({ k: 'egg', x, y, h, held: !!e.who });
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
   // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
+  // (her waves, Nov 15: the half hit first glows red, the safe half green; they swap once the first wave has gone by)
+  const hv = A.halves ? A.halves() : null; if (hv) { const a = Math.atan2(hv.d[1], hv.d[0]); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a : a + Math.PI, f0: 0, f1: 60, w0: -60, w1: 60, c: '#ff4632', o: 0.14 }); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a + Math.PI : a, f0: 0, f1: 60, w0: -60, w1: 60, c: '#5ae678', o: 0.11 }); }
   const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { if (h.age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + h.age * 5, h.melee ? '#fff0c8' : '#f3c969', 1 - h.age / 0.4); }); (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
