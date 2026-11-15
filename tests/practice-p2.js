@@ -84,6 +84,15 @@ function checks(H, say) {
     if (j2.big !== 'far' || j2.egg || j2.teth !== 'five') bad('the far big egg with a tether (one of the five) plays as ' + JSON.stringify(j2) + ' (check D)');
     if (r2.log.length) bad('the autopilot playing the far big egg (a healer, one of the five) makes mistakes: ' + r2.log.join(' | ') + ' (check D)');
     if (dbg.grade().sc !== 100) bad('a clean run scores ' + dbg.grade().sc + ', not 100 (check E)');
+    // (the review, Nov 15: your walk to the end of the tether started 2.8 s before the break, the bots' pace; you walk slower while tethered, so an
+    // east melee in the five, following the arrow, broke late at 3:36, and starting at 3:36 left the tether unbreakable in time)
+    const pk3 = { side: 'E', role: 'm', egg: 'far', mal: 1, cry: 1, teth: 'five' }; dbg.P2.pick = pk3; const me3 = dbg.P2.slotOf(pk3), r3 = dbg.sim(me3, true, false, 2);
+    if (r3.log.some((x) => /tether late/.test(x))) bad('an east melee in the five, played by the autopilot (the same way the arrow points), breaks late: ' + r3.log.join(' | ') + ' (check D)');
+    dbg.at(216.2, me3, { east: false, seed: 2 }); const th3 = dbg.G.p2.teth[me3]; if (th3 && th3.br == null) bad('starting at "3:36 · The small eggs" as one of the five leaves your tether unbroken past the count (check D)');
+    // (the review, Nov 15: a melee who picked the 3rd Malice with a random tether was sometimes dealt one of the five, and kept both, which can't be done)
+    const pk4 = { side: 'E', role: 'm', egg: 'n4', mal: 3, cry: 1, teth: 'random' }, me4 = dbg.P2.slotOf(pk4); let both = 0;
+    for (let seed = 1; seed <= 60; seed++) { const J4 = ctx.pgP2Jobs(seed, me4, pk4); if (J4[me4].teth === 'five' && J4[me4].mal === 3) both++; }
+    if (both) bad('a melee with the 3rd Malice and a random tether keeps both when dealt one of the five (' + both + ' of 60 seeds); that kick should go to someone free (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   // E. the mistakes
   try {

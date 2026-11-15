@@ -63,8 +63,8 @@ function pgP2Jobs(seed, me, pk) {
   if (me && J[me] && pk) pgP2Give(J, me, pk);
   // (a melee kicker can't kick from the end of a tether: the solo walks out over the 2nd Malice, the five over the 3rd; the raid leader hands that
   // kick to someone free. Your own picks stay yours.)
-  SIDES.forEach((s) => P.half[s].forEach((id) => { const k = J[id].teth === 'solo' ? 2 : J[id].teth === 'five' ? 3 : 0; if (!k || J[id].mal !== k || id[0] === 'r' || id === me) return;
-    const free = (q) => q !== me && q !== id && !J[q].teth && (q[0] === 'm' || q[0] === 'r'), o = P.half[s].find((q) => free(q) && !J[q].mal) || P.half[s].find((q) => free(q) && J[q].mal === 1); if (o) { const v = J[o].mal; J[o].mal = k; J[id].mal = v; } }));
+  SIDES.forEach((s) => P.half[s].forEach((id) => { const k = J[id].teth === 'solo' ? 2 : J[id].teth === 'five' ? 3 : 0; if (!k || J[id].mal !== k || id[0] === 'r' || (id === me && pk && pk.teth !== 'random')) return; /* (a tether dealt to you at random hands your kick on too; one you picked, the card warns about) */
+    const free = (q) => q !== me && q !== id && !J[q].teth && (q[0] === 'm' || q[0] === 'r'), o = P.half[s].find((q) => free(q) && !J[q].mal) || P.half[s].find((q) => free(q) && J[q].mal === 1); if (o) { const v = J[o].mal; J[o].mal = k; J[id].mal = v; if (id === me) J[id].handed = k; } }));
   return J;
 }
 // (your slot takes the picked jobs; whoever had them takes your slot's old ones, so every job is still done once and each ledge keeps three tethers)
@@ -191,7 +191,7 @@ function pgP2(A) {
       const mk = S.malice.find((m) => m.side === s && j.mal === m.k && t >= m.t0 - 4 && t <= m.by); if (mk) { const rg = range(id) - 1.5, d = pgDist(T0, F); if (d > rg && rg > 0) T0 = [F[0] + (T0[0] - F[0]) * rg / d, F[1] + (T0[1] - F[1]) * rg / d]; }
       // (a tether: within 19 yards of the Warden until your break, to 21 yards 2.8 s before it, out past 25 on the count)
       const th = G.p2.teth[id]; if (th && th.br == null && t >= T.fangs - 0.2) { const bt = th.solo ? T.solo : T.five, dir = th.solo ? TDIR[0] : TDIR[1 + (th.n % 4)];
-        if (t >= bt) { T0 = away(F, 28, dir, s); fast = true; ob = { at: bt + 0.6, p: T0, r: 1 }; } else if (t >= bt - 2.8) { T0 = away(F, 21, dir, s); fast = true; ob = { at: bt, p: T0, r: 1 }; }
+        if (t >= bt) { T0 = away(F, 28, dir, s); fast = true; ob = { at: bt + 0.6, p: T0, r: 1 }; } else if (t >= bt - (id === A.me ? 5.5 : 2.8)) { T0 = away(F, 21, dir, s); fast = true; ob = { at: bt, p: T0, r: 1 }; } /* (you walk slower than the bots run: off 5.5 s early, then wait at the edge) */
         else { const d = pgDist(T0, F); if (d > 19) T0 = [F[0] + (T0[0] - F[0]) * 19 / d, F[1] + (T0[1] - F[1]) * 19 / d]; } } }
     else if (t < T.dsUp) { // the eggs: yours once its shield breaks, to your lane spot at the cauldron, in together; the big eggs last
       const e = G.eggs.find((q) => q.id === id && q.state !== 'gone'), bi = j.big ? bigIx(s, j.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null;
@@ -266,7 +266,7 @@ function pgP2(A) {
     S.gates.forEach((g) => { const ids = GDZ_RAID.filter((id) => !G.p2.lock[id] && (g.back ? G.p2.where[id] === 'L' && G.p2.wside[id] === g.side : G.p2.where[id] === 'p0'));
       ids.forEach((id) => { const j = S.job[id], p = pos(id), wrong = id === me && g.back && j.side !== g.side, open = (t >= g.t0 && t <= g.t1) || (wrong && t < T.heart); if (!open || pgDist(p, g.p) > 2.4) return;
         if (id !== me && (j.side !== g.side || t < (g.back ? S.home[id] : S.cross[id]))) return; if (id !== me && !(t >= g.t0 && t <= g.t1)) return;
-        const q = spiral(g.to, idx(id), 2.6), dst = nearFloor(q); if (id === me) { G.x = dst[0]; G.y = dst[1]; G.kb = null; A.clearTarget(); } else { G.bots[id].x = dst[0]; G.bots[id].y = dst[1]; G.bots[id].esc = null; }
+        const q = g.back && t < T.home ? home(id) : spiral(g.to, idx(id), 2.6), dst = nearFloor(q); if (id === me) { G.x = dst[0]; G.y = dst[1]; G.kb = null; A.clearTarget(); } else { G.bots[id].x = dst[0]; G.bots[id].y = dst[1]; G.bots[id].esc = null; }
         G.p2.lock[id] = g.to.slice();
         if (!g.back) { G.p2.where[id] = 'L'; G.p2.wside[id] = g.side; } else { G.p2.where[id] = t < T.home ? 'p0' : 'p1'; G.p2.wside[id] = null; }
         if (id !== me) return;
@@ -287,7 +287,7 @@ function pgP2(A) {
       if (who === me) A.mistake('kick', 'You didn\'t kick Anguished Cry (' + clk(c.t0) + '): everyone within 60 yards was stunned for 6 s.', 'Press E during the Doomscale\'s cast bar, within ' + range(me) + ' yards.', 0); }); };
   const tethers = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     if (cr(T.fangs)) { const n = { E: 0, W: 0 }; Object.keys(S.job).forEach((id) => { const j = S.job[id]; if (!j.teth) return; G.p2.teth[id] = { solo: j.teth === 'solo', br: null, side: j.side, n: n[j.side]++ };
-      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break alone at 3:18.' : 'break with the five at 3:34.'), true); } }); }
+      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break alone at 3:18.' : 'break with the five at 3:34.') + (j.handed ? ' Your ' + ['', '1st', '2nd', '3rd'][j.handed] + ' Malice kick goes to someone free.' : ''), true); } }); }
     if (t < T.fangs || t > T.wdie + 0.1) return;
     Object.entries(G.p2.teth).forEach(([id, th]) => { if (th.br != null) return; if (t >= T.wdie) { th.br = 'gone'; return; } const W = G.p2.wd[th.side]; if (!W) return; const d = pgDist(pos(id), W), bt = th.solo ? T.solo : T.five, lo = th.solo ? bt - 1.5 : bt - 1, hi = th.solo ? bt + 3 : bt + 1.5;
       const late = id === me && !window.__pgAuto && t > hi + 1;
@@ -331,7 +331,7 @@ function pgP2(A) {
     if (w === 'p0') return t < T.gate ? 'Phase 2: your half crosses to the ' + SD[j.side] + ' ledge. Your gate opens in ' + Math.ceil(T.gate - t) + ' s.' : 'Walk into your gate (the gold ring, ' + SD[j.side] + ' side) to cross to your ledge.';
     if (w === 'L' && G.p2.wside[me] !== j.side) return 'Wrong ledge: take this ledge\'s gate back, then your own.';
     if (k && t >= k.at - 5) return t < k.at ? 'Your kick: ' + k.kind + ' in ' + Math.ceil(k.at - t) + ' s. Press E as its cast bar starts.' : 'Kick ' + k.kind + ' now! (E)';
-    if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. At 3:18, walk past 25 yards from the Warden (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 3 ? 'Grasping Fangs: you\'re one of the five. At 3:31 go to the edge of your tether (20 yards), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
+    if (th && th.br == null && t >= T.fangs && t < T.wdie) { const bt = th.solo ? T.solo : T.five; return th.solo ? (t < bt ? 'Grasping Fangs: you break alone. To the edge of your tether now (about 20 yards; you\'re slowed), then past 25 yards at 3:18 (' + Math.ceil(bt - t) + ' s).' : 'Break now: walk past 25 yards from the Warden.') : t < bt - 5.5 ? 'Grasping Fangs: you\'re one of the five. At 3:28 go to the edge of your tether (20 yards; you\'re slowed), out together at 3:34.' : t < bt ? 'To the edge of your tether: out together in ' + Math.ceil(bt - t) + ' s.' : 'Break now: step out past 25 yards!'; }
     const fl = S.impacts.find((m) => t >= m.t0 && t <= m.at && Math.hypot(G.x - m.x, G.y - m.y) < m.r + 3); if (fl) return 'Falling Debris: step out of the brown circle!';
     if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
     if (w === 'L' && t < T.wdie) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 2) ? 'Keep 7 yards from the eggs while the Warden lives (Warden\'s Protection).' : 'The Warden: stay with your half, out of 7 yards of the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
@@ -377,7 +377,7 @@ function pgP2(A) {
       '<p>' + (heal ? 'Healers have no kick in Midnight (only a Restoration Shaman).' : 'Press E during the cast bar: melee within 8 yards, ranged within 30.') + '</p>' + clash() + '</div>';
     else body = '<div class="pg-p2kick"><p><b>Grasping Fangs (3:16).</b> Six tethers, three on each ledge, on anyone. One player breaks alone, then the other five break together.</p>' +
       seg('p2t', [['random', 'Random'], ['solo', 'Solo break'], ['five', 'One of the five'], ['none', 'No tether']], pk.teth) +
-      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:18, alone.', five: 'At 3:31 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
+      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:18, alone.', five: 'At 3:28 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
     return '<div class="pg-optrow pg-jrole"><span>Ledge</span>' + seg('p2s', [['W', 'West'], ['E', 'East']], pk.side) + '<span>Role</span>' + seg('p2r', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], pk.role) + '</div>' +
       '<div class="pg-jtabs">' + seg('p2tab', [['egg', 'Egg'], ['kick', 'Kicks'], ['teth', 'Tether']], tab) + '</div>' + body; };
   const bind = (box, refresh) => { box.onclick = (e) => { const b = e.target.closest('[data-p2s],[data-p2r],[data-p2tab],[data-p2e],[data-p2m],[data-p2c],[data-p2t]'); if (!b || b.disabled) return; const d0 = b.dataset;
@@ -390,7 +390,7 @@ function pgP2(A) {
   const asg = () => { fix(); const L0 = [], s = SD[pk.side];
     L0.push(['Cross over (2:47)', 'Walk into your gate (the gold ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
     L0.push(['The Warden (2:55)', 'Stay with your half. While it lives, keep 7 yards from the eggs (Warden\'s Protection).' + (pk.mal ? ' Kick its ' + ['', '1st', '2nd', '3rd'][pk.mal] + ' Malice (' + clk(T.malice[pk.mal - 1]) + ') with E.' : ' The melee kick its Malice.')]);
-    L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:18. One of the five: to the edge of your tether at 3:31, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:18.', five: 'One of the five: to the edge of your tether (20 yards) at 3:31, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:18, five at 3:34).' })[pk.teth]]);
+    L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:18. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:18.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:18, five at 3:34).' })[pk.teth]]);
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + pk.egg + ' big egg', 'It waits at your ledge\'s south end. Go to it at 4:10, pick it up at 4:19 (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
     else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others at 3:58.']);
     else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
