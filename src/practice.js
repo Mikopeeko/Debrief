@@ -704,7 +704,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } .pg-sum li { display: flex; gap: 10px; font-size: 14px; } .pg-sum time { min-width: 38px; color: #8d97a3; font-variant-numeric: tabular-nums; } .pg-sum b { display: block; color: #fff; font-weight: 600; } .pg-sum span { display: block; color: #f3c969; font-size: 13px; }
 @media (max-width: 900px) { .pg-top { grid-template-columns: 1fr 34px; } .pg-bossf, .pg-timers { display: none; } .pg-bot { flex-direction: column; align-items: stretch; } }
 .pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
-.pg-vw { position: absolute; left: 14px; top: 292px; z-index: 4; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: rgba(10,12,16,.85); }
+.pg-vw { position: absolute; left: 14px; top: 292px; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
 .pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-p2 .pg-vw button[data-v="2"] { display: none; }
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }

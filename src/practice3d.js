@@ -627,10 +627,15 @@ function pg3d(host, A) {
   // (the HUD's call-outs in the middle of the screen, practice.js's .pg-warn and .pg-float: where their words are while they show. Their box is
   // read again only when their words or the window's size change)
   const HUD = ['.pg-warn', '.pg-float'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, cs: getComputedStyle(el), key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
+  // (the minimap and the "2D | 3D" switch under it: the labels and names keep out of that corner too. Main, Nov 15: at 0:42 a name sat over the switch)
+  const CRN = ['.pg-mini', '.pg-vw'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
   const RNG = document.createRange(), BX = [], LQ = [], PQ = [];
   const bands = () => { BX.length = 0; let hr = null;
     for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
       if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); RNG.selectNodeContents(B.el); const r = RNG.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 3; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 3; }
+      BX.push(B); }
+    for (let i = 0; i < CRN.length; i++) { const B = CRN[i]; if (!B.el.offsetWidth) continue; const key = W0 + '|' + H0;
+      if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); const r = B.el.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 4; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 4; }
       BX.push(B); } };
   const names = () => { bands();
     // (the labels: each one's box on the screen; a HUD call-out or an earlier label pushes it down below, or hides it if it only names a creature)

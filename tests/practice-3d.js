@@ -53,6 +53,10 @@ module.exports = function practice3d(say, H) {
   //  "slab is not defined". Every name handed to pg3dP2 must be declared in the 3D view)
   { const k = /pg3dP2\(\{([^}]*)\}\)/.exec(P3); if (k) k[1].split(',').map((x) => x.trim()).filter((x) => /^[A-Za-z_]\w*$/.test(x)).forEach((n) => {
     if (!new RegExp('(?:\\b(?:const|let|var)\\s+|,\\s*)' + n + '\\s*=').test(P3)) bad('phase 2\'s 3D kit is handed "' + n + '", which the 3D view no longer declares, so phase 2\'s 3D stops loading (' + n + ' is not defined)'); }); }
+  // (Main, Nov 15, at 0:42 in 3D: the "2D | 3D" switch under the minimap was half hidden: her tail showed through it and a name sat on its words. The switch is
+  //  solid and on top, and the 3D labels and names keep out of the minimap's corner)
+  { const vw = /\.pg-vw \{([^}]*)\}/.exec(PJ); if (!vw || !/z-index: ?([6-9]|\d\d)/.test(vw[1]) || !/background: ?#[0-9a-f]{3,6}\b/i.test(vw[1])) bad('the "2D | 3D" switch isn\'t solid and on top (z-index 6 or more and a solid background): the 3D picture shows through it');
+    if (!/\['\.pg-mini', '\.pg-vw'\]\.map\(/.test(P3) || !/for \(let i = 0; i < CRN\.length; i\+\+\)[^\n]*BX\.push|BX\.push\(B\); \} \};/.test(P3)) bad('the 3D labels no longer keep out of the minimap and the "2D | 3D" switch'); }
 
   // 1. one exact version, an allowed host, loaded on demand
   const m = /const PG3D_THREE = '([^']+)'/.exec(P3);
