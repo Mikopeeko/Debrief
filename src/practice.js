@@ -101,16 +101,20 @@ function pgUlScript(o) {
   return S;
 }
 
-function pgOpen(root, boss, d) {
-  const part = pgPart(boss, d); if (!part) return; const old = document.querySelector('.pg'); if (old) old.remove();
+function pgOpen(root, boss, d, pk) {
+  const part = pgPart(boss, pk || d); if (!part) return; const old = document.querySelector('.pg'); if (old) old.remove();
   pgCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic';
-  const ov = document.createElement('div'); ov.className = 'pg'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
+  // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
+  const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
+    mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
+  const P2 = part.mod ? part.mod(P2API) : null;
+  const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
   ov.innerHTML = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
     '<div class="pg-top"><div class="pg-me"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div><div class="pg-debs"></div></div>' +
     '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div></div>' +
     '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
-    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div><div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
+    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
     '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div><div class="pg-card"></div></div>';
   (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('pg-open');
   const mini = ov.querySelector('.pg-mini'), mx2 = mini.getContext('2d'), cv = ov.querySelector('.pg-cv'), cx = cv.getContext('2d'), card = ov.querySelector('.pg-card'), $ = (s) => ov.querySelector(s);
@@ -126,7 +130,7 @@ function pgOpen(root, boss, d) {
   // your raiders on the plan's jobs: each egg area's two (the first is the centre, the second the edge), the coil soaks, the Fester Burst
   // spots; the rest by role. Without one, the guide's plan. ----
   let teamWhy = '', pickedMe = false; /* (why there's no team plan in the game: for the audit) */
-  const TEAM = (() => { try { if (d !== 'm' || typeof pnGet !== 'function' || typeof pnState !== 'function' || typeof ulRead !== 'function') { teamWhy = 'no plan code (d=' + d + ')'; return null; }
+  const TEAM = (() => { try { if (P2) { teamWhy = 'a later part: picked jobs'; return null; } if (d !== 'm' || typeof pnGet !== 'function' || typeof pnState !== 'function' || typeof ulRead !== 'function') { teamWhy = 'no plan code (d=' + d + ')'; return null; }
       const o = pnGet(), st = pnState(o, boss), lc = (x) => String(x).split('-')[0].toLowerCase(), on = new Set(((o.on || {})[boss] || []).map(lc));
       const L = notesOf(boss).list.filter((q) => !q.example && !q.pgEmpty && pnNoteDiff(q) === 'Mythic'), chId = typeof planChosenGet === 'function' ? planChosenGet(o.rid, boss) : null, sc = (q) => { const t = noteResolve(q.text); return [...on].filter((x) => noteHas(t, x)).length; };
       const n = (st && st.n && pnNoteDiff(st.n) === 'Mythic' ? st.n : null) || L.find((q) => q.id === chId) || L.slice().sort((a, b) => sc(b) - sc(a) || (b.saved || 0) - (a.saved || 0))[0] || null;
@@ -156,7 +160,7 @@ function pgOpen(root, boss, d) {
   let myJob = (() => { try { const j = JSON.parse(localStorage.getItem(JOB_KEY) || 'null'); if (jobOk(j)) return j; } catch (e) { /* (no storage) */ } return job0(); })();
   const jobSave = () => { try { localStorage.setItem(JOB_KEY, JSON.stringify(myJob)); } catch (e) { /* (no storage) */ } };
   const jobSlot = (j) => (j.egg && PG_UL.eggO[j.egg] ? j.egg : { m: 'm3', r: 'r7', h: 'h2' }[j.role]);
-  const jobMine = () => !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
+  const jobMine = () => !P2 && !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
   // (the coil teams with you on the one you picked: you change places with someone on it, a carrier for a carrier, the same role if there is one)
   const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], want = si === 0 && PG_UL.eggO[slot] ? 0 : j.soak[si] === 2 ? 1 : 0, /* (set 1: carriers take the first coil, in the Wretch's bubble) */ have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1;
     if (have === want) return g; if (have < 0) { g[want].push(slot); return g; }
@@ -167,13 +171,13 @@ function pgOpen(root, boss, d) {
   const newG = () => { G = { t: 0, hp: 100, x: 0, y: 0, debs: {}, log: [], deaths: 0, done: new Set(), eggs: [], adds: [], bots: {}, wr: {}, kb: null, sprint: -99, def: -99, fx: [], warnI: 0, bossHp: 100, still: true, vipers: 0 };
     S.eggSets.forEach((e) => e.eggs.forEach((q) => G.eggs.push({ ...q, set: e.si, state: 'air', who: null })));
     GDZ_RAID.forEach((id) => { const p = homeOf(id, 0); G.bots[id] = { id, x: p[0], y: p[1], esc: null }; });
-    const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; };
-  const reset = (o) => { o = o || {}; S = pgUlScript({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
+    const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; if (P2) P2.init(G); };
+  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
   // where each raider stands when nothing is happening: her tank in front of her, melee round her, carriers in their zones, the rest inside; turned with her
-  const homeOf = (id, t) => { const rot = S.rotAt(t), egg = G && G.eggs.some((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
+  const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.some((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
     return PG_UL.inward(pgRot(carrierOf(id) && egg ? UX_ZONE[id] : UX_HOME[id], rot)); };
-  const bossAt = (t) => { const D = S.dive; if (t < D.gone) return { p: PG_UL.boss.slice(), up: true }; return { p: D.to, up: t >= D.surf }; };
-  const tailAt = (t) => { const D = S.dive; if (t >= D.gone && t < D.surf) return { p: S.FT(PG_UL.tail, D.surf), up: false }; return { p: S.FT(PG_UL.tail, t), up: true }; };
+  const bossAt = (t) => { if (P2) return P2.bossAt(t); const D = S.dive; if (t < D.gone) return { p: PG_UL.boss.slice(), up: true }; return { p: D.to, up: t >= D.surf }; };
+  const tailAt = (t) => { if (P2) return P2.tailAt(t); const D = S.dive; if (t >= D.gone && t < D.surf) return { p: S.FT(PG_UL.tail, D.surf), up: false }; return { p: S.FT(PG_UL.tail, t), up: true }; };
 
   // ---- the Wretches: asleep where they land until they wake, then held by a tank (the one of its last bubble, or of its next), brought to each bubble's spot in time ----
   const wretchAt = (w, t) => { if (t < w.land || t >= w.dies) return null; if (t < w.awake) return [0, 0]; const nb = S.bubbles.find((q) => q.w === w.id && q.at >= t - 0.5);
@@ -186,7 +190,7 @@ function pgOpen(root, boss, d) {
       return false; }
     const a = w.deg * Math.PI / 180, u = Math.cos(a), v = Math.sin(a), cx0 = w.x + u * w.v * el, cy0 = w.y + v * w.v * el, rx = x - cx0, ry = y - cy0, s1 = rx * u + ry * v, s2 = -rx * v + ry * u, hw = w.w / 2, hd = w.d / 2;
     if (Math.abs(s2) > hw + R0) return false; if (w.cres && !w.cres.some(([a0, b0]) => s2 >= a0 - R0 && s2 <= b0 + R0)) return false; return s1 >= -hd - R0 && s1 <= hd + 3 + R0; };
-  const onPlat = (x, y) => PG_UL.onPlat(x, y), inVenom = (x, y) => !onPlat(x, y);
+  const onPlat = (x, y) => (P2 ? P2.onPlat(x, y) : PG_UL.onPlat(x, y)), inVenom = (x, y) => !onPlat(x, y);
   const nearEdge = (x, y) => { if (onPlat(x, y)) return [x, y]; for (let r = 0.5; r < 20; r += 0.5) for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, qx = x + Math.cos(a) * r, qy = y + Math.sin(a) * r; if (onPlat(qx, qy)) return [qx, qy]; } return [0, 0]; };
 
   // ---- you: damage, debuffs, mistakes ----
@@ -221,7 +225,7 @@ function pgOpen(root, boss, d) {
     CAR8.filter((c) => c !== me).forEach((c) => { const z = S.F(UX_ZONE[c], q.at); UL_FB[ek].forEach((u, i) => { if (i !== j) P.push([pgDist(z, at(u)), c, i]); }); });
     P.sort((a, b) => a[0] - b[0]).forEach(([, c, i]) => { if (!done.has(c) && !L[i]) { L[i] = c; done.add(c); } });
     return (C[key] = L); };
-  const jobOf = (id, t) => { let T = homeOf(id, t), fast = false; const b0 = id === me ? { x: G.x, y: G.y } : G.bots[id], myEgg = G.eggs.find((e) => e.id === id && (e.state === 'floor' || e.state === 'air') && e.land - t < 14);
+  const jobOf = (id, t) => { if (P2) return P2.job(id, t); let T = homeOf(id, t), fast = false; const b0 = id === me ? { x: G.x, y: G.y } : G.bots[id], myEgg = G.eggs.find((e) => e.id === id && (e.state === 'floor' || e.state === 'air') && e.land - t < 14);
     // carriers: next to their egg once it's down, onto it when the shell breaks
     if (myEgg && t >= myEgg.land - 1.5) { T = t >= myEgg.shell - 0.4 ? [myEgg.x, myEgg.y] : [myEgg.x - 4.6, myEgg.y + 1]; }
     // the tanks (measured on 20 top kills): her tank in front of her, in her reach for Mother's Wrath, first to the bubbles in the dive; the other soaks the
@@ -250,7 +254,7 @@ function pgOpen(root, boss, d) {
     for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(id) && !(ob && ob.at < s.at - 0.3) && pgDist(T, [s.x, s.y]) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; }
     if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]);
     return { T, fast, ob }; };
-  const dodge = (b, T, t, fast, ob) => { const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank));
+  const dodge = (b, T, t, fast, ob) => { if (P2) return { T, fast }; /* (a later part dodges in its own job: src/practice-p2.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank));
     const imps = S.impacts.filter((m) => m.at >= t && m.at - t <= 2.4).concat(G.eggs.filter((e) => e.state === 'air' && e.land >= t && e.land - t <= 2.4).map((e) => ({ x: e.x, y: e.y, r: 4, at: e.land })),
       b.id === 't1' || b.id === 't2' ? [] : S.soaks.filter((q) => !q.group.includes(b.id) && t >= q.t0 && q.at >= t && q.at - t <= 2.4).map((q) => ({ x: q.x, y: q.y, r: q.r, at: q.at, mg: 0.5 })));
     if (!act.length && !imps.length) { b.esc = null; return { T, fast }; }
@@ -269,7 +273,7 @@ function pgOpen(root, boss, d) {
     if (best) { b.esc = { x: best[0], y: best[1], t }; return { T: best, fast: true }; } if (late) return { T: late, fast: true }; return { T, fast }; };
   const moveBots = (t, dt) => { const pre = {}; if (myEggHeld()) GDZ_RAID.forEach((id) => { if (id !== me) pre[id] = Math.hypot(G.bots[id].x - G.x, G.bots[id].y - G.y); });
     GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob));
-      const dx = T[0] - b.x, dy = T[1] - b.y, dd = Math.hypot(dx, dy), sp = SPEED * (fast || dd > 15 ? 1.4 : 1) * dt; if (dd > sp) { b.x += dx / dd * sp; b.y += dy / dd * sp; } else { b.x = T[0]; b.y = T[1]; } });
+      const dx = T[0] - b.x, dy = T[1] - b.y, dd = Math.hypot(dx, dy), sp = SPEED * (fast || dd > 15 ? 1.4 : 1) * dt * (P2 ? P2.slow(id, t) : 1); if (dd > sp) { b.x += dx / dd * sp; b.y += dy / dd * sp; } else { b.x = T[0]; b.y = T[1]; } });
     // carriers keep out of each other's 3-yard circles; nobody walks into yours (if you walk into theirs, that's yours)
     const car = G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== me).map((e) => G.bots[e.who]); for (let it = 0; it < 2; it++) { for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i], c = car[j], ex = c.x - a.x, ey = c.y - a.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6) { const pu = (3.6 - ee) / 2; a.x -= ex / ee * pu; a.y -= ey / ee * pu; c.x += ex / ee * pu; c.y += ey / ee * pu; } }
       if (myEggHeld() && window.__pgAuto) for (const c of car) { const ex = G.x - c.x, ey = G.y - c.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6) { const nx = ex / ee, ny = ey / ee; G.x = c.x + nx * 3.6; G.y = c.y + ny * 3.6; if (target) { const tx = target[0] - G.x, ty = target[1] - G.y; if (tx * nx + ty * ny < 0) { const sd = tx * -ny + ty * nx >= 0 ? 1 : -1, d = SPEED * dt * 0.8; G.x -= ny * sd * d; G.y += nx * sd * d; } } } } /* (the autopilot, a careful player, steps round other carriers: out of their circle, and along its edge when they stand in the way) */
@@ -285,11 +289,11 @@ function pgOpen(root, boss, d) {
       if (v3 && (mx || my)) { const f = v3.fwd(); [mx, my] = [mx * f[1] + my * f[0], my * f[1] - mx * f[0]]; } /* (3D: W walks where the camera looks, A and D to its sides) */
       const byKeys = !!(mx || my);
       if (!byKeys && target) { const ex = target[0] - G.x, ey = target[1] - G.y, ee = Math.hypot(ex, ey); if (ee < 0.2) target = null; else { mx = ex / ee; my = ey / ee; } }
-      const mm = Math.hypot(mx, my); if (mm > 1) { mx /= mm; my /= mm; } let sp = SPEED * (has('sprint') ? 1.4 : 1) * (inVenom(G.x, G.y) ? 0.6 : 1) * dt;
+      const mm = Math.hypot(mx, my); if (mm > 1) { mx /= mm; my /= mm; } let sp = SPEED * (has('sprint') ? 1.4 : 1) * (inVenom(G.x, G.y) ? 0.6 : 1) * dt * (P2 ? P2.slow(me, t) : 1);
       if (!byKeys && target) sp = Math.min(sp, Math.hypot(target[0] - G.x, target[1] - G.y));
       const nx = G.x + mx * sp, ny = G.y + my * sp; if (onPlat(nx, ny) || inVenom(G.x, G.y)) { G.x = nx; G.y = ny; } else if (onPlat(nx, G.y)) G.x = nx; else if (onPlat(G.x, ny)) G.y = ny; }
     G.still = !G.kb && Math.hypot(G.x - px, G.y - py) < 1e-4; G.t = t; moveBots(t, dt); check(t0, t);
-    G.bossHp = Math.max(56, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0)); };
+    G.bossHp = P2 ? P2.bossHp(t) : Math.max(56, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0)); };
   const check = (t0, t) => { const x = G.x, y = G.y, crossed = (at) => at > t0 && at <= t;
     // waves: a hit is huge stacking poison; an egg it touches hatches (in your hands or on the floor)
     S.waves.forEach((w, i) => { if (G.done.has('w' + i) || !inWave(w, t, x, y)) return; G.done.add('w' + i); deb('venom', 10, true); mistake(w.ring ? 'ring' : 'wave', w.name + ' hit you.', w.tip, 28); const e = myEggHeld(); if (e) hatch(e, 'A wave touched your egg', 'Carrying an egg, a wave hatches it: dodge every one.'); });
@@ -299,7 +303,7 @@ function pgOpen(root, boss, d) {
     // the eggs land (4 yards), their shells break, carriers pick theirs up
     G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id]; if ((b && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
-      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say('Its shell isn\'t broken yet: wait a moment.'); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); } }
+      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || 'Its shell isn\'t broken yet: wait a moment.'); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); } }
       if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
     // another carrier inside your 3-yard circle: Noxious Splash, it hatches at once
     const mine = myEggHeld(); if (mine && !G.still) G.eggs.forEach((e) => { if (e.state !== 'held' || !e.who || e.who === me || !mine || mine.state !== 'held') return; const b = G.bots[e.who]; if (b && Math.hypot(x - b.x, y - b.y) < 3) { deb('splash', 10); hurt(30); hatch(mine, nm(e.who) + ' (carrying too) came inside your 3-yard circle', 'Two carriers within 3 yards: Noxious Splash. Keep your circle clear.'); } });
@@ -321,11 +325,12 @@ function pgOpen(root, boss, d) {
     S.pulses.forEach((p) => { if (crossed(p)) hurt(6); });
     const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0);
     G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + 5.5 * (t - t0));
+    if (P2) P2.check(t0, t);
     G.adds = G.adds.filter((a) => t < a.t1); };
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
-  const draw = () => { if (v3) { v3.draw(G.t); if (v3) { miniMap2(G.t); return; } } /* (the 3D view draws instead: src/practice3d.js) */ const rect = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); const Wd = Math.max(1, Math.round(rect.width * dpr)), Hd = Math.max(1, Math.round(rect.height * dpr)); if (cv.width !== Wd || cv.height !== Hd) { cv.width = Wd; cv.height = Hd; }
+  const draw = () => { if (v3) { v3.draw(G.t); if (v3) { miniMap2(G.t); return; } } /* (the 3D view draws instead: src/practice3d.js) */ if (P2) { P2.draw2d(cx, cv); miniMap2(G.t); return; } /* (a later part is 3D only, Flex) */ const rect = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); const Wd = Math.max(1, Math.round(rect.width * dpr)), Hd = Math.max(1, Math.round(rect.height * dpr)); if (cv.width !== Wd || cv.height !== Hd) { cv.width = Wd; cv.height = Hd; }
     const t = G.t, k = Z * dpr; if (!cam) cam = [G.x, G.y]; cam = [cam[0] + (G.x - cam[0]) * 0.18, cam[1] + (G.y - cam[1]) * 0.18];
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.fillStyle = '#07090c'; cx.fillRect(0, 0, cv.width, cv.height);
     const room = IMG.room; if (ok(room)) { const [sx, sy] = W2S(-PG_UL.artW / 2, PG_UL.artY + PG_UL.artH / 2); cx.drawImage(room, sx, sy, PG_UL.artW * k, PG_UL.artH * k); }
@@ -379,7 +384,7 @@ function pgOpen(root, boss, d) {
     const fl = (performance.now() - flashT) / 400; if (fl < 1) { const g = cx.createRadialGradient(cv.width / 2, cv.height / 2, Math.min(cv.width, cv.height) * 0.35, cv.width / 2, cv.height / 2, Math.max(cv.width, cv.height) * 0.75); g.addColorStop(0, 'rgba(255,40,30,0)'); g.addColorStop(1, 'rgba(255,40,30,' + (0.45 * (1 - fl)).toFixed(3) + ')'); cx.fillStyle = g; cx.fillRect(0, 0, cv.width, cv.height); } };
 
   // ---- the minimap: the whole stone at a glance ----
-  const miniMap2 = (t) => { const Wm = mini.width, Hm = mini.height, sc = Wm / 120, M = (x, y) => [Wm / 2 + x * sc, Hm / 2 - y * sc], dot = (x, y, r, c, st) => { const [a, b] = M(x, y); mx2.beginPath(); mx2.arc(a, b, r, 0, Math.PI * 2); if (c) { mx2.fillStyle = c; mx2.fill(); } if (st) { mx2.strokeStyle = st; mx2.lineWidth = 1.5; mx2.stroke(); } };
+  const miniMap2 = (t) => { if (P2) { P2.mini(mx2, mini.width, mini.height, t); return; } const Wm = mini.width, Hm = mini.height, sc = Wm / 120, M = (x, y) => [Wm / 2 + x * sc, Hm / 2 - y * sc], dot = (x, y, r, c, st) => { const [a, b] = M(x, y); mx2.beginPath(); mx2.arc(a, b, r, 0, Math.PI * 2); if (c) { mx2.fillStyle = c; mx2.fill(); } if (st) { mx2.strokeStyle = st; mx2.lineWidth = 1.5; mx2.stroke(); } };
     mx2.clearRect(0, 0, Wm, Hm); mx2.fillStyle = 'rgba(8,10,14,.82)'; mx2.fillRect(0, 0, Wm, Hm);
     const oct = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]].map((q) => M(q[0], q[1])); mx2.beginPath(); oct.forEach((q, i) => (i ? mx2.lineTo(q[0], q[1]) : mx2.moveTo(q[0], q[1]))); mx2.closePath(); mx2.fillStyle = 'rgba(120,140,110,.28)'; mx2.fill(); mx2.strokeStyle = 'rgba(200,220,190,.5)'; mx2.lineWidth = 1; mx2.stroke();
     S.thrash.forEach((th) => { if (t >= th.t0 && t <= th.at) dot(th.x, th.y, th.r * sc, 'rgba(255,140,60,.18)', '#ff9b4a'); });
@@ -396,7 +401,7 @@ function pgOpen(root, boss, d) {
   // ---- the screen: your frame, her frame and cast, timers, warnings, your job, the action bar ----
   let hudKey = '';
   const castNow = (t) => S.casts.filter((c) => t >= c.t0 && t <= c.t1).sort((a) => (a.who === 'boss' ? -1 : 1))[0];
-  const jobText = () => { const t = G.t, e = G.eggs.find((q) => q.id === me && (q.state === 'floor' || q.state === 'air') && q.land - t < 14), held = myEggHeld();
+  const jobText = () => { if (P2) return P2.jobText(); const t = G.t, e = G.eggs.find((q) => q.id === me && (q.state === 'floor' || q.state === 'air') && q.land - t < 14), held = myEggHeld();
     const sk = S.soaks.find((s) => s.group.includes(me) && s.at > t && s.at - t <= 9), bb = S.bubbles.find((q) => q.at > t && q.at - t <= 8 && G.wr[q.w]), th = S.thrash.find((q) => t >= q.t0 - 1 && t <= q.at), wg = S.wings.find((w) => t >= w.t && t <= w.t + 14);
     if (th && Math.hypot(G.x - th.x, G.y - th.y) < 38) return 'Mephitic Thrash in ' + Math.max(0, Math.ceil(th.at - t)) + ' s: run out of 35 yards from her tail!';
     if (bb) return 'Fester Burst in ' + Math.ceil(bb.at - t) + ' s: get within 10 yards of the Wretch (the yellow bubble).';
@@ -414,7 +419,7 @@ function pgOpen(root, boss, d) {
   // matter to you, and an arrow at your feet to where your job wants you now (the same target the bots and the autopilot follow, round the waves
   // the way they dodge), with a "Go here" ring. On by default; a switch on the start card, remembered. ----
   let hints = (() => { try { return localStorage.getItem('wla-pg-hints') !== '0'; } catch (e) { return true; } })();
-  const upNext = (t) => { const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
+  const upNext = (t) => { if (P2) return P2.upNext(t); const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));
     if (!car) S.eggSets.forEach((e) => add(e.land, 'Eggs land: dodge the circles', '#e6e0c8'));
     S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + (q.k ? '2nd' : '1st') + ' to appear)', '#24f2cb'));
@@ -435,7 +440,7 @@ function pgOpen(root, boss, d) {
     $('.pg-timers').innerHTML = S.timers.filter((q) => q.t > t).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5).map((q) => '<div class="pg-tm"><i style="width:' + Math.max(0, Math.min(100, (1 - (q.t - t) / 20) * 100)).toFixed(1) + '%"></i><span>' + esc(q.name) + '</span><b>' + Math.ceil(q.t - t) + '</b></div>').join('');
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
     $('.pg-up').innerHTML = hints ? upNext(t).map((u) => '<span style="border-color:' + u.c + ';color:' + u.c + '">' + esc(u.text) + ' <b>' + Math.ceil(u.at - t) + ' s</b></span>').join('') : '';
-    [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); };
+    [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); if (P2) P2.hud(t); };
   const warns = () => { while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w = S.warns[G.warnI++], el = $('.pg-warn'); el.textContent = w.text; el.style.color = w.c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } };
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
@@ -493,22 +498,27 @@ function pgOpen(root, boss, d) {
     return '<ul class="pg-asg">' + L.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
   const START = [[0, 'The pull'], [30, '0:30 · First coils and the bubble'], [44, '0:44 · Tail sweep, then her waves'], [66, '1:06 · Second eggs and the dive'], [98, '1:38 · The hardest waves'], [124, '2:04 · Second coils'], [138, '2:18 · The last bubble and the heart burn']];
   const pick = () => { stop(); paused = true; card.className = 'pg-card on'; if (TEAM && (!pickedMe || !role || !TEAM.id2[role.id] || rl(role.id) === 't')) pickedMe = true, role = teamRole(TEAM.you && rl(TEAM.you) !== 't' ? TEAM.you : CAR8.find((c) => TEAM.id2[c]) || GDZ_RAID.find((c) => TEAM.id2[c] && rl(c) !== 't'));
-    if (!TEAM) role = jobRole(myJob);
+    if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob);
+    const parts = Object.keys(PG_PARTS[boss] || {}).filter((k) => k === d || PG_PARTS[boss][k].d === d), pkNow = pk || d; /* (the parts of the fight you can practise: Phase 1, Phase 2) */
     card.innerHTML = '<div class="pg-cin"><span class="pg-k">Practice · ' + dn + '</span><h2>' + esc(boss) + ': ' + esc(part.name) + '</h2>' +
-      (TEAM ? '<p class="pg-lead">The real fight clock, from the top Mythic kills, with your team\'s plan: <b>' + esc(TEAM.name) + '</b>. Everyone does their job from it.</p>' +
+      (parts.length > 1 ? '<div class="pg-optrow pg-partrow"><span>Part</span><div class="pg-seg pg-part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div></div>' : '') +
+      (P2 ? '<p class="pg-lead">The real fight clock from 2:46, from the top Mythic kills. Pick your job: the other 19 play the rest of the plan. Phase 2 plays in 3D.</p><div class="pg-job0">' + P2.card() + '</div>' :
+      TEAM ? '<p class="pg-lead">The real fight clock, from the top Mythic kills, with your team\'s plan: <b>' + esc(TEAM.name) + '</b>. Everyone does their job from it.</p>' +
         '<div class="pg-optrow pg-who"><span>Play as</span><select class="pg-me">' + GDZ_RAID.filter((id) => TEAM.id2[id] && rl(id) !== 't').map((id) => '<option value="' + id + '"' + (id === role.id ? ' selected' : '') + '>' + esc(nm(id)) + ' · ' + esc(teamRole(id).job) + '</option>').join('') + '</select></div>'
       : '<p class="pg-lead">The real fight clock, from the top Mythic kills. Pick your job on the map: the other 19 play the rest of the plan.</p>' +
       '<div class="pg-job0">' + jobPanel() + '</div>') +
-      '<div class="pg-asg0"><span class="pg-k">Your assignments</span>' + asg(role.id) + '</div>' +
+      '<div class="pg-asg0"><span class="pg-k">Your assignments</span>' + (P2 ? P2.asg() : asg(role.id)) + '</div>' +
       '<div class="pg-optrow"><span>Speed</span><div class="pg-seg pg-spd"><button type="button" data-v="1"' + (speed === 1 ? ' class="on"' : '') + '>Normal</button><button type="button" data-v="0.5"' + (speed < 1 ? ' class="on"' : '') + '>Half speed</button></div>' +
       '<span>Hints</span><div class="pg-seg pg-hint"><button type="button" data-v="1"' + (hints ? ' class="on"' : '') + '>On</button><button type="button" data-v="0"' + (hints ? '' : ' class="on"') + '>Off</button></div>' +
-      '<span>Start at</span><select class="pg-at">' + START.map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div>' +
-      '<p class="pg-keys">Move: W A S D, the arrows, or click · Shift: sprint · Q: defensive · Wheel: zoom · Space: pause · 3D: drag to turn</p>' +
+      '<span>Start at</span><select class="pg-at">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div>' +
+      '<p class="pg-keys">Move: W A S D, the arrows, or click · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Wheel: zoom · Space: pause · 3D: drag to turn</p>' +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button></div></div>';
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Start) */ } }; /* (the picture behind the card is you) */
     seeMe();
     const pm = card.querySelector('.pg-me'); if (pm) pm.onchange = () => { role = teamRole(pm.value); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + asg(role.id); seeMe(); };
-    const jp = card.querySelector('.pg-job0'); if (jp) jp.onclick = (e) => { const b = e.target.closest('[data-jr],[data-js],[data-jset],[data-je],[data-jc],[data-jf]'); if (!b) return; const d0 = b.dataset;
+    card.querySelectorAll('.pg-part button').forEach((b) => (b.onclick = () => { if (b.dataset.v === pkNow) return; close(); pgOpen(root, boss, d, b.dataset.v === d ? null : b.dataset.v); }));
+    const jp = card.querySelector('.pg-job0'); if (jp && P2) P2.bind(jp, () => { role = P2.role(); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + P2.asg(); seeMe(); });
+    else if (jp) jp.onclick = (e) => { const b = e.target.closest('[data-jr],[data-js],[data-jset],[data-je],[data-jc],[data-jf]'); if (!b) return; const d0 = b.dataset;
       if (d0.jr) { myJob.role = d0.jr; if (myJob.egg === null) myJob.fb = [0, 0]; }
       if (d0.js) jobUi.step = d0.js; if (d0.jset) jobUi.set = +d0.jset;
       if (d0.je) { myJob.egg = d0.je === 'none' ? null : d0.je; if (!myJob.egg) myJob.fb = [0, 0]; }
@@ -516,14 +526,14 @@ function pgOpen(root, boss, d) {
       const fk = ['jr', 'js', 'jset', 'je', 'jc', 'jf'].find((k) => d0[k] != null), sel = fk ? '[data-' + fk + '="' + d0[fk] + '"]' : null, refocus = !!(document.activeElement && b.contains(document.activeElement)) || e.detail === 0;
       jobSave(); role = jobRole(myJob); jp.innerHTML = jobPanel(); card.querySelector('.pg-asg0').innerHTML = '<span class="pg-k">Your assignments</span>' + asg(role.id); seeMe();
       if (refocus && sel) { const nb = jp.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
-    if (jp) jp.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.pg-jhit')) { e.preventDefault(); e.stopPropagation(); e.target.closest('.pg-jhit').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); } };
+    if (jp && !P2) jp.onkeydown = (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest && e.target.closest('.pg-jhit')) { e.preventDefault(); e.stopPropagation(); e.target.closest('.pg-jhit').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 })); } };
     card.querySelectorAll('.pg-spd button').forEach((b) => (b.onclick = () => { speed = +b.dataset.v; card.querySelectorAll('.pg-spd button').forEach((q) => q.classList.toggle('on', q === b)); }));
     card.querySelector('.pg-at').onchange = (e) => { startAt = +e.target.value || 0; };
     card.querySelectorAll('.pg-hint button').forEach((b) => (b.onclick = () => { hints = b.dataset.v === '1'; try { localStorage.setItem('wla-pg-hints', hints ? '1' : '0'); } catch (e) { /* (no storage) */ } card.querySelectorAll('.pg-hint button').forEach((q) => q.classList.toggle('on', q === b)); }));
     card.querySelector('.pg-go').onclick = begin; };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
-    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.kb = null; G.fx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; };
+    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.kb = null; G.fx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); }
@@ -532,14 +542,14 @@ function pgOpen(root, boss, d) {
       '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">Start over</button></div></div>';
     card.querySelector('.pg-go').onclick = () => { G.hp = 100; G.debs = {}; card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); };
     card.querySelector('.pg-again').onclick = pick; };
-  const grade = () => { const maj = G.log.filter((m) => MAJ.has(m.kind)).length, mn = G.log.length - maj, sc = Math.max(0, 100 - maj * 9 - mn * 4 - G.deaths * 20); return { sc, g: sc >= 95 ? 'S' : sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D' }; };
+  const grade = () => { const maj = G.log.filter((m) => MAJ.has(m.kind)).length, mn = G.log.length - maj, sc = Math.max(0, 100 - maj * 9 - mn * 4 - G.deaths * 20 - (G.wipes || 0) * 20); return { sc, g: sc >= 95 ? 'S' : sc >= 85 ? 'A' : sc >= 70 ? 'B' : sc >= 50 ? 'C' : 'D' }; };
   const end = () => { stop(); paused = true; const { sc, g } = grade(), n = G.log.length;
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + '</span>' +
       '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' +
-      (n ? '<ol class="pg-sum">' + G.log.slice().sort((a, b) => a.t - b.t).map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.text) + '</b>' + (m.tip ? '<span>' + esc(m.tip) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.</p>') +
+      (n ? '<ol class="pg-sum">' + G.log.slice().sort((a, b) => a.t - b.t).map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.text) + '</b>' + (m.tip ? '<span>' + esc(m.tip) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
-    const txt = 'Debrief practice · ' + boss + ' ' + dn + ', ' + part.name + ' · ' + role.name + ': ' + g + ' (' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'no mistakes') + ', ' + G.deaths + ' death' + (G.deaths === 1 ? '' : 's') + ')' + (speed < 1 ? ' at half speed' : '') + ' · https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?practice';
+    const txt = 'Debrief practice · ' + boss + ' ' + dn + ', ' + part.name + ' · ' + role.name + ': ' + g + ' (' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'no mistakes') + ', ' + G.deaths + ' death' + (G.deaths === 1 ? '' : 's') + ')' + (speed < 1 ? ' at half speed' : '') + ' · https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?practice' + (P2 ? '=2' : '');
     card.querySelector('.pg-copy').onclick = async (e) => { const b = e.currentTarget; let done = false; try { await navigator.clipboard.writeText(txt); done = true; } catch (er) { /* (no clipboard) */ } b.textContent = done ? 'Copied: post it in Discord' : txt; }; };
 
   // ---- the loop ----
@@ -552,6 +562,7 @@ function pgOpen(root, boss, d) {
   const K = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
   const kd = (e) => { if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
+    if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
     if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
@@ -562,14 +573,14 @@ function pgOpen(root, boss, d) {
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
-  const v3api = { hint: () => hintNow(), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt,
+  const v3api = { hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt,
     spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G) target = p; }, fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
-  const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
+  const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
-    pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
-      .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load, so you\'re in 2D.'); }).finally(() => vw.classList.remove('busy')); };
+    pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
+      .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load' + (P2 ? ': phase 2 needs it. Press 3D to try again, or play phase 1 in 2D.' : ', so you\'re in 2D.')); }).finally(() => vw.classList.remove('busy')); };
   vw.onclick = (e) => { const b = e.target.closest('button'); if (b) { b.blur(); view(b.dataset.v === '3'); } };
-  { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d') view(true); }
+  { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d' || P2) view(true); } /* (a later part is 3D only (Flex): it opens in 3D, and doesn't change the view phase 1 remembers) */
   window.__pg3dDbg = { get v3() { return v3; }, view };
   const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
@@ -592,9 +603,9 @@ function pgOpen(root, boss, d) {
         S.beams.forEach((bm) => bm.hits.forEach((ht) => { if (crossed(ht) && id === bm.tank && Math.hypot(b.x - bm.at[0], b.y - bm.at[1]) > 3) add('beam tank not in the beam ' + pgClock(ht), id, t); }));
         if (!onPlat(b.x, b.y)) add('off the platform', id, t); });
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
-      const ht = S.herTank(S.dive.surf); if (t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
+      if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -658,7 +669,8 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
 .pg-vw { position: absolute; left: 14px; top: 292px; z-index: 4; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: rgba(10,12,16,.85); }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
-.pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; }
+.pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-p2 .pg-vw button[data-v="2"] { display: none; }
+.pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 900px) { .pg-vw { top: 248px; } }
 `;
   document.head.appendChild(st);
