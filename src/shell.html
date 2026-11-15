@@ -19665,11 +19665,11 @@ unpressed cooldown of the whole key. The website only; the Companion's card (htm
 html:not(.mpcard) body #view#view#view .mpt-jb, html:not(.mpcard) body #view#view#view #mptC1 > p.mpt-chk, html:not(.mpcard) body #view#view#view #mptCS > p.mpt-chk { display: none !important; }
 html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS),
 html:not(.mpcard)[data-mpv="mis"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCX),
-html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM),
-html:not(.mpcard)[data-mpv="grp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4),
-html:not(.mpcard)[data-mpv="hit"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCH),
-html:not(.mpcard)[data-mpv="dun"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC5),
-html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4):not(#mpcRot) { display: none !important; }
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM):not(#mptC5),
+html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4):not(#mptCP),
+html:not(.mpcard)[data-mpv="gra"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCG):not(#mptCH),
+html:not(.mpcard)[data-mpv="cmp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCC),
+html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptC1 { padding-bottom: 0 !important; }
 html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs { width: auto !important; margin: 14px -20px 0 !important; padding: 0 12px !important; border-top: 1px solid var(--line) !important; border-bottom: 0 !important; gap: 2px !important; flex-wrap: wrap !important; }
 html:not(.mpcard) body #view#view#view #mptC1 > .mpc-tabs > button { margin-bottom: 0 !important; padding: 11px 14px 10px !important; font: 700 16px 'Barlow Condensed', sans-serif !important; letter-spacing: .02em !important; }
@@ -19884,126 +19884,134 @@ html:not(.mpcard) body #view#view#view .mpx-fl2 .mpx-why b.mpx-fb { color: #ff8f
 html:not(.mpcard) body #view#view#view .mpx-fl2 small.mpx-rdy { color: #f2c46b !important; }
 html:not(.mpcard) body #view#view#view .mpx-fl2 > li.k-def .x > b { color: var(--text) !important; }
 /* Players and Rotation, one tab */
-html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > #mptC4 { display: block !important; }
 html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mpcRot::before { content: 'Rotation'; display: block; margin: 10px 0 0; font: 800 19px 'Barlow Condensed', sans-serif; color: var(--text); }
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot) { cursor: pointer !important; }
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot):hover { background: rgba(255,255,255,.045) !important; }
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r.mpx-ron { background: rgba(230,180,80,.09) !important; box-shadow: inset 2px 0 0 var(--gold) !important; }
-html:not(.mpcard) body #view#view#view #mptC4 .mpt-gft::after { content: 'Click a player for their rotation, just below.'; display: block; margin-top: 6px; font: 500 12.5px var(--body); color: var(--faint); }
+html:not(.mpcard) body #view#view#view #mptC4 .mpt-gft::after { content: 'Click a player for their card, just below.'; display: block; margin-top: 6px; font: 500 12.5px var(--body); color: var(--faint); }
 }
 @layer defaultTheme {
-/* (Nov 14, the key page as the raid review's sibling (Flex: "i dont want it to be a mirror copy of the raid review tab but i want it to be a brother or
-   sister of it in similarity", "Im giving you creative freedom with this"). The raid review's own frame, measured off its page: the hero banner, the tab
-   row that sticks, one toolbar, then panels with the gold corner. The Companion's card is untouched (html:not(.mpcard))) */
-/* 1. the banner is the raid's hero: the art across the right, a small kicker, the name at 40px with the level beside it and the result pill */
-html:not(.mpcard) body #view#view#view #mptC1 { margin: -6px 0 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban { display: grid !important; grid-template-columns: auto auto minmax(0,1fr) !important; align-content: center !important; align-items: center !important; gap: 9px 12px !important; min-height: 210px !important; margin: 0 !important; padding: 24px !important; border: 1px solid rgb(59,67,72) !important; border-radius: 4px !important; background: rgb(25,28,31) !important; overflow: hidden !important; position: relative !important; isolation: isolate !important; text-shadow: 0 1px 3px rgba(0,0,0,.8) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban > .mpt-bt { display: contents !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban > .mpt-bart { top: 0 !important; right: 0 !important; bottom: 0 !important; left: 38% !important; width: auto !important; opacity: 1 !important; filter: saturate(1.08) brightness(.92) !important; border-radius: 0 !important; background-position: 60% 30% !important; -webkit-mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.6) 16%, #000 34%) !important; mask-image: linear-gradient(90deg, transparent 0, rgba(0,0,0,.6) 16%, #000 34%) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-k { grid-column: 1 / -1 !important; grid-row: 1 !important; display: flex !important; align-items: center !important; gap: 10px !important; margin: 0 0 4px !important; font: 600 12.5px var(--body) !important; letter-spacing: .5px !important; text-transform: uppercase !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-k > .mpx-tag { padding: 3px 8px !important; border: 1px solid rgba(255,128,0,.35) !important; border-radius: 4px !important; background: rgba(255,128,0,.12) !important; font: 700 12px/12px var(--body) !important; letter-spacing: .44px !important; color: rgb(255,154,60) !important; text-shadow: none !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-k > .mpx-kd { font: 600 12.5px var(--body) !important; letter-spacing: .5px !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban h1 { grid-column: 1 !important; grid-row: 2 !important; margin: 0 !important; font: 700 40px/44px 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; letter-spacing: -.4px !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban > .mpt-kb { grid-column: 2 !important; grid-row: 2 !important; width: auto !important; height: auto !important; min-width: 0 !important; justify-self: start !important; text-align: left !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; font: 700 40px/44px 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; letter-spacing: -.4px !important; color: #e6b450 !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-pills { grid-column: 3 !important; grid-row: 2 !important; display: flex !important; align-items: center !important; flex-wrap: wrap !important; gap: 6px 12px !important; margin: 0 0 0 8px !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-res { position: static !important; inset: auto !important; width: auto !important; pointer-events: auto !important; /* ("Left early" shares its class name, mpt-rl, with the map's route line, which is absolute and full width: the pill was a strip across the banner) */ height: 26px !important; padding: 0 12px !important; border: 1px solid currentColor !important; border-radius: 4px !important; font: 700 13.5px var(--body) !important; letter-spacing: .135px !important; text-shadow: none !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-bmeta { font: 600 13.5px var(--body) !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-grp { grid-column: 1 / -1 !important; grid-row: 3 !important; margin: 8px 0 0 !important; }
-html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-afx { grid-column: 1 / -1 !important; grid-row: 4 !important; margin: 0 !important; }
-/* 2. the tab row: the raid review's, under the banner; it sticks to the top while the page scrolls */
-html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1) { display: flex !important; align-items: stretch !important; gap: 2px !important; position: sticky !important; top: 0 !important; z-index: 6 !important; width: auto !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-bottom: 1px solid rgb(44,50,54) !important; border-radius: 0 !important; background: var(--bg, #0a0b0d) !important; }
-html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1) > button { flex: none !important; margin: 0 0 -1px !important; padding: 13px 14px 12px !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; font: 600 15px/22.5px var(--body) !important; letter-spacing: .15px !important; text-transform: none !important; color: rgb(176,181,184) !important; white-space: nowrap !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1) > button:hover { color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1) > button.on { color: rgb(212,183,125) !important; border-bottom-color: rgb(212,183,125) !important; background: rgb(33,31,26) !important; }
-/* 3. the toolbar: the key with a step either way, the player, the key finder */
-html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpx-tb:not(#mptC1) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 10px !important; margin: 20px 0 2px !important; padding: 0 !important; }
-html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbp { display: inline-flex !important; align-items: center !important; gap: 8px !important; height: 32px !important; margin: 0 !important; padding: 0 2px 0 12px !important; border: 1px solid rgb(59,67,72) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbl { font: 400 13.5px var(--body) !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view .mpx-tb select { height: 30px !important; max-width: min(46vw, 420px) !important; margin: 0 !important; padding: 0 26px 0 2px !important; border: 0 !important; border-radius: 0 !important; background-color: transparent !important; box-shadow: none !important; font: 600 13.5px var(--body) !important; letter-spacing: .135px !important; color: var(--text); cursor: pointer !important; }
+/* (Nov 14, the key page in the raid review's flow with its own look (Flex, on the page that copied the raid review's look: "I dont want it to look or
+   resemble the raid review, but have a similar flow to it. Similar tabs and stuff like that", "i want mythic+ to have its own identity"). Seven tabs
+   in the raid review's order (Summary, Route, Mistakes, Rotation, Graphs, Report card, Compare); the tab row sticks and one bar holds the key and the
+   player. The look is the key page's own: its banner, its panels, its blue. The Companion's card is untouched (html:not(.mpcard))) */
+/* 1. the tab row, under the banner's panel; it sticks to the top while the page scrolls. The key page's own blue marks the open tab */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) { display: flex !important; align-items: stretch !important; gap: 2px !important; position: sticky !important; top: 0 !important; z-index: 6 !important; width: auto !important; margin: 10px 0 0 !important; padding: 0 !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; border-radius: 0 !important; background: var(--bg, #0a0b0d) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) > button { flex: none !important; margin: 0 0 -1px !important; padding: 12px 14px 11px !important; border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; font: 700 16px/22px 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; letter-spacing: .2px !important; text-transform: none !important; color: var(--muted) !important; white-space: nowrap !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) > button:hover { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) > button.on { color: var(--text) !important; border-bottom-color: var(--mpt-you, #7d9be8) !important; }
+/* 2. the bar: the key with a step either way, the player, the key finder */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpx-tb:not(#mptC1):not(#mptCS) { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 10px !important; margin: 14px 0 0 !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbp { display: inline-flex !important; align-items: center !important; gap: 8px !important; height: 32px !important; margin: 0 !important; padding: 0 2px 0 12px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbl { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-tb select { height: 30px !important; max-width: min(46vw, 420px) !important; margin: 0 !important; padding: 0 26px 0 2px !important; border: 0 !important; border-radius: 0 !important; background-color: transparent !important; box-shadow: none !important; font: 600 13.5px var(--body) !important; color: var(--text); cursor: pointer !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb select option { background: #171a22; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbi { display: inline-flex !important; } html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbi:empty { display: none !important; }
-html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbi > img { display: block !important; width: 18px !important; height: 18px !important; border-radius: 50% !important; }
+html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbi > img { display: block !important; width: 18px !important; height: 18px !important; border-radius: 3px !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tba { display: inline-flex !important; gap: 4px !important; }
-html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tba > button { width: 30px !important; height: 32px !important; margin: 0 !important; padding: 0 !important; border: 1px solid rgb(59,67,72) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; font: 600 15px var(--body) !important; color: var(--text) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tba > button { width: 30px !important; height: 32px !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.03) !important; font: 600 15px var(--body) !important; color: var(--text) !important; cursor: pointer !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tba > button:hover:not(:disabled) { border-color: var(--faint) !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tba > button:disabled { opacity: .35 !important; cursor: default !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpx-tbs { flex: 1 1 auto !important; }
 html:not(.mpcard) body #view#view#view .mpx-tb .mpt-findl { font: 600 13px var(--body) !important; }
-/* 4. Summary is panels in the raid review's order, each with its gold corner: the score, Your part, The key at a glance, then Mistakes beside the time */
-html:not(.mpcard) body #view#view#view #mptBody > .mpt-chap:not(#mptC1) { margin-top: 18px !important; }
-html:not(.mpcard) body #view#view#view #mptCS { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; }
-html:not(.mpcard) body #view#view#view #mptCS > .mpx-pn, html:not(.mpcard) body #view#view#view #mptCS > #mptBand { margin: 0 0 14px !important; border: 1px solid rgba(255,255,255,.09) !important; border-radius: 4px !important; box-shadow: 0 20px 48px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.24) !important;
-  background: linear-gradient(rgb(240,195,90), rgb(240,195,90)) no-repeat 0 0 / 56px 3px, linear-gradient(90deg, rgba(240,195,90,.8), rgba(240,195,90,.12) 60%, rgba(240,195,90,0) 85%) no-repeat 0 0 / 100% 1px, radial-gradient(70% 170px at 0% 0%, rgba(230,180,80,.09), rgba(230,180,80,0) 70%) no-repeat 0 0 / 100% 100%, linear-gradient(rgba(255,255,255,.067), rgba(255,255,255,0) 170px) no-repeat 0 0 / 100% 100%, rgb(25,28,31) !important; }
-html:not(.mpcard) body #view#view#view #mptCS > #mptBand { padding: 18px 20px !important; } html:not(.mpcard) body #view#view#view #mptCS > #mptBand:empty { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptCS > .mpt-note { margin: 0 0 14px !important; }
-/* the score panel */
-html:not(.mpcard) body #view#view#view #mptCS > .mpx-sc { padding: 16px 18px 14px !important; }
-html:not(.mpcard) body #view#view#view .mpx-sc > .mpx-vd { display: block !important; margin: 0 0 12px !important; font: 400 13.5px/1.4 var(--body) !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view .mpx-sc > .mpx-vd b { font: 600 13.5px/1.4 var(--body) !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view .mpx-sc > .mpx-vd span { font: 400 13.5px/1.4 var(--body) !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view .mpx-sc > .mpt-sbd { margin: 0 !important; }
-html:not(.mpcard) body #view#view#view .mpx-sc > .mpx-fix { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 10px 0 0 !important; font: 400 13.5px/1.45 var(--body) !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fk { font: 700 12px var(--body) !important; letter-spacing: .04em !important; text-transform: uppercase !important; color: rgb(232,162,58) !important; }
-html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxt { font: 400 13.5px/1.45 var(--body) !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxs { font: 400 13.5px/1.45 var(--body) !important; color: rgb(176,181,184) !important; }
+/* 3. the banner's panel no longer holds the tabs; a chapter opened from a link stops under the tab row */
+html:not(.mpcard) body #view#view#view #mptC1 { padding-bottom: 6px !important; }
+html:not(.mpcard) body #view#view#view #mptBody > .mpt-chap:not(#mptC1), html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > #mpcRot { margin-top: 14px !important; scroll-margin-top: 64px !important; }
+/* 4. Summary: the five numbers, the one thing to fix, the key pull by pull, then the group's mistakes beside the picked player's part */
+html:not(.mpcard) body #view#view#view #mptCS > .mpx-fix { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 10px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fk { font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: #f2c46b !important; }
+html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxt { font: 600 13.5px/1.45 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxs { font: 500 13.5px/1.45 var(--body) !important; color: var(--muted) !important; }
 html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxs > b { font: 700 13.5px/1.45 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-fix > .mpx-fxm { margin-left: auto !important; font: 600 13px var(--body) !important; }
 html:not(.mpcard) body #view#view#view .mpx-vr { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view .mpx-vg { color: #7ee08f !important; }
-/* Your part: the raid review's coach panel for a key */
-html:not(.mpcard) body #view#view#view #mptCS > .mpx-ppn { padding: 20px 24px !important; background-color: rgb(30,30,26) !important; }
-html:not(.mpcard) body #view#view#view #mptCS > .mpx-ppn:has(> #mptPart:empty) { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-cchd { display: flex !important; align-items: baseline !important; gap: 10px !important; margin: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-cck { font: 600 12.5px var(--body) !important; letter-spacing: .5px !important; text-transform: uppercase !important; color: rgb(212,183,125) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-cchd > .mpx-ccw { font: 600 13.5px var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccs { font: 400 13px var(--body) !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-cch1 { margin: 12px 0 !important; font: 600 18px/1.55 var(--body) !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-cch1 > .mpx-ccw, html:not(.mpcard) body #view#view#view #mptPart > .mpx-cch1 > .mpx-ccf { font: 600 18px/1.55 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-cch1 > .mpx-ccf { color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccg { display: grid !important; grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 12px 28px !important; margin: 10px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-cct { margin: 0 0 4px !important; font: 700 12.5px var(--body) !important; letter-spacing: .25px !important; color: rgb(212,183,125) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-cco > .mpx-cct { color: rgb(63,185,80) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccz { margin: 0 !important; padding: 6px 0 !important; font: 400 13px var(--body) !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd { display: block !important; margin: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd > .mpt-prow { display: grid !important; grid-template-columns: minmax(0,1fr) !important; grid-template-rows: none !important; gap: 2px !important; width: 100% !important; margin: 0 !important; padding: 6px 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow + .mpt-prow, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd > .mpt-prow + .mpt-prow { border-top: 1px solid rgba(255,255,255,.06) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd { margin: 10px 0 0 !important; padding: 4px 0 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpt-prow > .mpt-pic { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow > .mpt-ypl, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd > .mpt-prow > .mpt-ypl { grid-column: 1 !important; grid-row: auto !important; font: 700 13.5px var(--body) !important; color: rgb(232,234,240) !important; white-space: normal !important; overflow: visible !important; text-align: left !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow > .mpt-ypv, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow > .mpt-ypv2, html:not(.mpcard) body #view#view#view #mptPart .mpx-ccwd > .mpt-prow > .mpt-ypv2 { grid-column: 1 !important; grid-row: auto !important; font: 400 13px/1.35 var(--body) !important; color: rgb(176,181,184) !important; white-space: normal !important; text-align: left !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow > .mpt-ypv b { font: 600 13px/1.35 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > .mpt-prow > .mpt-ypv small { font: 400 13px/1.35 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > button.mpt-prow { cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptPart .mpx-ccl > button.mpt-prow:hover > .mpt-ypl { color: rgb(212,183,125) !important; }
-/* the plain numbers: slim cells in a row under the two lists */
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; gap: 0 18px !important; margin: 10px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > .mpt-prow { display: grid !important; grid-template-columns: minmax(0,1fr) !important; gap: 2px !important; margin: 0 !important; padding: 2px 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > .mpt-prow > .mpt-ypl { grid-column: 1 !important; font: 700 12px var(--body) !important; letter-spacing: .6px !important; text-transform: uppercase !important; color: rgb(142,152,157) !important; white-space: normal !important; overflow: visible !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > .mpt-prow > .mpt-ypv { grid-column: 1 !important; font: 600 15px/1.3 var(--body) !important; color: rgb(240,238,232) !important; white-space: normal !important; text-align: left !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > .mpt-prow > .mpt-ypv b { font: 600 15px/1.3 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > .mpt-prow > .mpt-ypv small { font: 400 12.5px/1.3 var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccn > button.mpt-prow { cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccm { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 12px 0 0 -8px !important; padding: 6px 8px !important; border: 0 !important; border-radius: 4px !important; background: none !important; font: 700 13.5px var(--body) !important; color: rgb(195,200,212) !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccm:hover { color: var(--text) !important; background: rgba(255,255,255,.04) !important; }
-html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccm > i { font: 700 13.5px var(--body) !important; font-style: normal !important; color: var(--muted) !important; }
-/* The key at a glance */
-html:not(.mpcard) body #view#view#view #mptCS > .mpx-gl { padding: 14px 20px 14px !important; }
-html:not(.mpcard) body #view#view#view .mpx-gl > .mpx-glh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 12px !important; margin: 0 !important; }
-html:not(.mpcard) body #view#view#view .mpx-gl .mpx-glt { font: 800 18px/24.3px 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif !important; letter-spacing: .18px !important; color: rgb(240,238,232) !important; }
-html:not(.mpcard) body #view#view#view .mpx-gl .mpx-gls { font: 400 13.5px var(--body) !important; color: rgb(176,181,184) !important; }
-html:not(.mpcard) body #view#view#view .mpx-gl > .mpt-mstrip { margin: 8px 0 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
-/* a phone: the banner stacks, the lists are one column, the tab row scrolls sideways */
+html:not(.mpcard) body #view#view#view #mptCS > .mpx-gl { margin: 16px 0 0 !important; padding: 14px 0 0 !important; border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gl > .mpx-glh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-gl .mpx-glt { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gl .mpx-gls { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gl > .mpt-mstrip { margin: 6px 0 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; }
+html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpx-dg { padding-right: 26px !important; }
+html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpt-bl { padding: 0 0 0 26px !important; border-top: 0 !important; border-left: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptBand.mpt-band1 > .mpt-bl:has(> #mptPart:empty) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptPart.mpx-my > .mpx-myh, html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-rch { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 8px !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptPart.mpx-my .mpx-myk { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccw { font: 700 14px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccs { font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcn { margin-left: auto !important; padding: 1px 8px !important; border: 1px solid currentColor !important; border-radius: 4px !important; font: 700 12px/18px var(--body) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcn-b { color: #ff8f87 !important; background: rgba(255,143,135,.08) !important; } html:not(.mpcard) body #view#view#view .mpx-rcn-g { color: #7ee08f !important; background: rgba(126,224,143,.08) !important; }
+html:not(.mpcard) body #view#view#view .mpx-my1, html:not(.mpcard) body #view#view#view .mpx-rc1 { margin: 8px 0 10px !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mpx-my1k { margin-right: 4px !important; font: 700 13.5px/1.45 var(--body) !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccz { margin: 0 !important; padding: 6px 0 !important; font: 500 13px var(--body) !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccm { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 10px 0 0 -8px !important; padding: 5px 8px !important; border: 0 !important; border-radius: 4px !important; background: none !important; font: 600 13px var(--body) !important; color: var(--muted) !important; text-decoration: underline !important; text-underline-offset: 3px !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccm:hover { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-ccm > i { font: 600 13px var(--body) !important; font-style: normal !important; }
+/* 5. Report card: the players table, then a card a player (yours first, across the top): mistakes beside what went well, then the plain numbers */
+html:not(.mpcard) body #view#view#view #mptCP .mpx-rcs { display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpx-rcard { min-width: 0 !important; padding: 14px 16px 12px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; scroll-margin-top: 70px !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpx-rcard:first-child { grid-column: 1 / -1 !important; }
+html:not(.mpcard) body #view#view#view #mptCP .mpx-rcard.on { border-color: var(--mpt-you, #7d9be8) !important; box-shadow: inset 3px 0 0 var(--mpt-you, #7d9be8) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-rci { display: inline-flex !important; } html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-rci:empty { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-rci > img { display: block !important; width: 20px !important; height: 20px !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-rch > .mpx-ccw { font: 700 16px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccg { display: grid !important; grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 10px 24px !important; margin: 10px 0 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-cct { margin: 0 0 2px !important; font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-cco > .mpx-cct { color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl, html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccwd { display: block !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow { display: flex !important; align-items: baseline !important; justify-content: space-between !important; gap: 12px !important; width: 100% !important; margin: 0 !important; padding: 5px 0 !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccwd > .mpt-prow { display: block !important; width: 100% !important; margin: 10px 0 0 !important; padding: 8px 0 0 !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; border-radius: 0 !important; background: none !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpt-prow > .mpt-pic { display: none !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow > .mpt-ypl, html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccwd > .mpt-prow > .mpt-ypl { display: block !important; flex: none !important; font: 600 13px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow > .mpt-ypv, html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow > .mpt-ypv2, html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccwd > .mpt-prow > .mpt-ypv2 { display: block !important; min-width: 0 !important; font: 500 13px/1.35 var(--body) !important; color: var(--muted) !important; white-space: normal !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow.mpt-prow2 { display: block !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccwd > .mpt-prow > .mpt-ypv2, html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow.mpt-prow2 > .mpt-ypv2 { margin-top: 2px !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow > .mpt-ypv b { font: 700 13px/1.35 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > .mpt-prow > .mpt-ypv small { font: 500 12.5px/1.35 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > button.mpt-prow { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard .mpx-ccl > button.mpt-prow:hover > .mpt-ypl { text-decoration: underline !important; text-underline-offset: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important; gap: 6px 16px !important; margin: 10px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow { display: block !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypl { display: block !important; font: 700 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--faint) !important; white-space: normal !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv { display: block !important; font: 600 14px/1.35 var(--body) !important; color: var(--text) !important; white-space: normal !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv b { font: 600 14px/1.35 var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-ypv small { font: 500 12.5px/1.35 var(--body) !important; }
+/* 6. Graphs: the raw numbers as the site's meter rows, two meters across */
+html:not(.mpcard) body #view#view#view #mptCG .mpx-gms0 { display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 20px 32px !important; }
+html:not(.mpcard) body #view#view#view .mpx-gm > .gbx, html:not(.mpcard) body #view#view#view .mpx-cv > .gbx { max-width: none !important; --gbx-cols: 130px minmax(0, 1fr) 60px; }
+html:not(.mpcard) body #view#view#view .mpx-gmh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 8px !important; margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view .mpx-gmt { font: 800 18px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gms { font: 500 12.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpx-gmz { margin: 0 !important; font: 500 13px var(--body) !important; color: var(--faint) !important; }
+/* 7. Compare: where the time went, then each player against the top players of their spec */
+html:not(.mpcard) body #view#view#view #mptCC > .mpx-ct > p.mpt-chk { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv { margin: 22px 0 0 !important; padding: 16px 0 0 !important; border-top: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv:first-child { margin-top: 0 !important; padding-top: 0 !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv > .mpx-cvx { --gbx-cols: 140px minmax(0, 1fr) 56px 56px 56px 110px; }
+/* a phone: one column, and the tab row scrolls sideways */
 @media (max-width: 720px) {
-  html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban { grid-template-columns: auto minmax(0,1fr) !important; min-height: 0 !important; padding: 18px 16px !important; }
-  html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban > .mpt-bart { left: 10% !important; opacity: .4 !important; }
-  html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban h1, html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban > .mpt-kb { font-size: 28px !important; line-height: 32px !important; }
-  html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-pills { grid-column: 1 / -1 !important; grid-row: 3 !important; margin-left: 0 !important; }
-  html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-grp { grid-row: 4 !important; } html:not(.mpcard) body #view#view#view #mptC1 > .mpt-ban .mpt-afx { grid-row: 5 !important; }
-  html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1) { overflow-x: auto !important; scrollbar-width: none !important; }
-  html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpx-tb:not(#mptC1) { margin-top: 14px !important; }
+  html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody > .mpc-tabs:not(#mptC1):not(#mptCS) { overflow-x: auto !important; scrollbar-width: none !important; }
   html:not(.mpcard) body #view#view#view .mpx-tb select { max-width: 58vw !important; }
-  html:not(.mpcard) body #view#view#view #mptCS > .mpx-ppn { padding: 16px !important; }
-  html:not(.mpcard) body #view#view#view #mptPart > .mpx-cch1 { font-size: 16px !important; }
-  html:not(.mpcard) body #view#view#view #mptPart > .mpx-ccg { grid-template-columns: minmax(0,1fr) !important; }
+  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) { grid-template-columns: minmax(0,1fr) !important; }
+  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpx-dg { padding-right: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptBand.mpt-band1:has(> .mpx-dg):has(#mptPart:not(:empty)) > .mpt-bl { padding: 16px 0 0 !important; border-left: 0 !important; border-top: 1px solid var(--line) !important; }
+  html:not(.mpcard) body #view#view#view #mptCP .mpx-rcs, html:not(.mpcard) body #view#view#view #mptCG .mpx-gms0, html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccg { grid-template-columns: minmax(0,1fr) !important; }
+  html:not(.mpcard) body #view#view#view .mpx-gm > .gbx { --gbx-cols: 104px minmax(0, 1fr) 52px; }
+  html:not(.mpcard) body #view#view#view #mptCC > .mpx-cv > .mpx-cvx { --gbx-cols: 96px minmax(0, 1fr) 44px 0 0 84px; }
 }
+/* Compare wears the band's own rules for Where your time went (copied from #mptBand when this was written) */
+html:not(.mpcard) body #view#view #mptCC .mpt-fxh h2 { font-size: 20px !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-sbar { height: 10px !important; border-radius: 2px !important; margin-top: 8px !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-sk { display: flex !important; flex-wrap: wrap !important; gap: 4px 14px !important; font-size: 12px !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxr { display: grid !important; grid-template-columns: 24px minmax(0,1fr) auto !important; column-gap: 12px !important; align-items: start !important; padding: 11px 0 !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxr > div { grid-column: 2 !important; grid-row: 1 !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxr > .mpt-fxs { grid-column: 3 !important; grid-row: 1 !important; width: auto !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxs b { font-size: 20px !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxgo { font-size: 0 !important; margin-left: 6px !important; }
+html:not(.mpcard) body #view#view #mptCC .mpt-fxgo::after { content: 'map'; font: 600 11.5px var(--body); color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+html:not(.mpcard) body #view#view#view #mptCC .mpt-fxh { margin-bottom: 4px !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpt-fxh h2 { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-dg .mpt-fxh { justify-content: space-between !important; }
+html:not(.mpcard) body #view#view#view #mptCC > .mpx-ct { padding: 0 !important; border: 0 !important; }
 }
 </style>
 </body>

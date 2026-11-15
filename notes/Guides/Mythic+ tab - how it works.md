@@ -225,3 +225,22 @@ What stays Mythic+'s own: the timer and the fast-run comparison, the Mistakes li
 How Your part sorts its rows: a row whose value is red or amber is a mistake, a green one is done well, and a plain number (damage, healing, kicks, dispels) goes in the row of numbers. Nothing was dropped. Each row still opens its pull.
 
 The Companion's card keeps its own layout.
+
+## The key page in Raid review's flow, with its own look (Nov 14, 2026, late)
+
+This replaces the section above ("as Raid review's sibling"). That page copied Raid review's look. Flex: "I dont want it to look or resemble the raid review, but have a similar flow to it. Similar tabs and stuff like that. Summary tab, rotation tab, graphs tab, report card, compare", "i want mythic+ to have its own identity but follow a familiar flow to raid review", "full creative freedom ... it doesnt have to be those exact tabs either".
+
+The tabs, in Raid review's order with the two only a key has slotted in:
+- Summary: the five numbers, "Fix first", the key pull by pull (click a pull to open it on Route), then the group's mistakes beside the picked player's part.
+- Route: the map and the pull cards, with Know this dungeon under it. The plan is to make the map a replay that follows the group.
+- Mistakes: every missed kick, death, close call and debuff left on, in one list.
+- Rotation: the picked player's rotation.
+- Graphs: the raw numbers of the whole key as bars (damage, healing, damage taken, kicks, other stops, dispels, casts that went off, avoidable hits, deaths), then Big hits and defensives.
+- Report card: the players table, then a card a player (yours first): their mistakes beside what they did well, then their plain numbers.
+- Compare: where your time went against a typical fast run, stretch by stretch, then each player against top players of their spec.
+
+What moved: Players is on Report card, Big hits is on Graphs, Dungeon is under the Route map. Old links to those still open. Players and Rotation are two tabs again (this replaces the earlier merge): the Player picker in the bar under the tabs is the one player Summary, Rotation and Report card show.
+
+The look is the key page's own again: its banner, its panels, its blue under the open tab. From the earlier page only the flow pieces stayed: the tab row that stays at the top, and the bar with the key and the player.
+
+The Companion's card keeps its own layout.
