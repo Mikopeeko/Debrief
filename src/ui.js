@@ -25307,7 +25307,10 @@ const KEY_ROWS = {
   'Blood Death Knight': { na: ['cd:blood boil'] },
   'Protection Paladin': { soft: ['up:Shield of the Righteous', 'up:Consecration'] },
   'Guardian Druid': { soft: ['up:Ironfur'] },
-  'Brewmaster Monk': { soft: ['up:Shuffle'] } };
+  'Brewmaster Monk': { soft: ['up:Shuffle'] },
+  // (Nov 14, Flex: "Yes, read them": five fast timed Holy Priests (+19 and +20) read their priority row not fine on 17 of 51 pulls against the raid bar of 90%;
+  // 48 of the 51 pulls read 83% or more. keyBar: a key's own bar for a row that gives a percentage, [green from, amber from], and what fast players read)
+  'Holy Priest': { keyBar: { apl: [0.8, 0.7] }, keyBarSay: { apl: 'fast timed Holy Priests read 83% or more on most of their pulls' } } };
 // (cooldowns of 45 s or more that a key's trash pull still wants: Outlaw's finishers cut them, so they are rotation buttons, not held ones)
 const KEY_NOHOLD = { 'Outlaw Rogue': ['Between the Eyes', 'Roll the Bones'] };
 // (healers who heal by dealing damage: for them a damage press while someone is hurt is the heal)
@@ -25323,8 +25326,8 @@ function keyHealSplit(per) { const o = { qD: 0, qH: 0, nD: 0, nH: 0 };
     const quiet = (t) => { const s0 = Math.floor(t); for (let s = s0 - 2; s <= s0; s++) if (low.has(s) || (c7.get(s) || 0) >= 2) return false; return true; };
     const fk = p.fakeT || new Map(), fake = (n, t) => (fk.get(String(n).toLowerCase()) || []).some((u) => Math.abs(u - t) < 0.01); /* (lines Warcraft Logs marks as not pressed, and Tranquility's ticks: the same test the Casts view uses) */
     let last = -9; for (const [t, nm, tg] of p.castTg) { if (nm === 'Melee' || t > end || fake(nm, t)) continue; const isD = p.dmgAb.has(nm), isH = p.healAb.has(nm), ally = !!tg && /^(Player|Pet)-/.test(String(tg));
-      const kind = tg && !ally ? (isD ? 'D' : '') : ally ? (isH ? 'H' : isD ? 'D' : '') : isD && !isH ? 'D' : isH && !isD ? 'H' : ''; if (!kind || t - last < 0.7) continue; last = t;
-      o[(quiet(t) ? 'q' : 'n') + kind]++; } }
+      const qt = quiet(t), kind = tg && !ally ? (isD ? 'D' : '') : ally ? (isH ? 'H' : isD ? 'D' : '') : isD && !isH ? 'D' : isH && !isD ? 'H' : isD && isH ? (qt ? 'D' : 'H') : ''; if (!kind || t - last < 0.7) continue; last = t; /* (Nov 14, the review: a press with no target that both hits and heals, like Holy Nova on a pack, is damage while the group is healthy and a heal while someone needs one. It was counted as nothing: 159 of one fast Holy Priest's Holy Novas) */
+      o[(qt ? 'q' : 'n') + kind]++; } }
   return o; }
 // (the healer's two key rows. Shown on each pull, never graded there: one pull is too few presses. The Mythic+ tab adds them up and grades the whole key)
 function keyHealRows(o, per) { const s = keyHealSplit(per), tq = s.qD + s.qH, tn = s.nD + s.nH; if (tq + tn < 1) return [];
@@ -25339,13 +25342,16 @@ function keyRows(o) { const per = (o.per || []).filter((x) => x && x.r && x.r.it
   const trash = per.every((x) => keyTrash(x.r)), heal = !!(o.P0 && o.P0.role === 'healer'), KR = KEY_ROWS[o.P0 && o.P0.specName] || {}, has = (l, c) => (l || []).includes(String(c.k)), graded = (c) => c.st === 'ok' || c.st === 'warn' || c.st === 'bad';
   const off = (c, why) => { c.st = 'na'; c.keyNa = true; c.tip = ''; c.sub = String(c.sub || '') + ' ' + why; }, soft = (c, why) => { if (c.st !== 'bad') return; c.st = 'warn'; c.keySoft = true; c.sub = String(c.sub || '') + ' ' + why; };
   for (const c of o.groups.flatMap((g) => g.l)) { if (!graded(c)) continue; const k = String(c.k);
+    if (KR.keyBar && KR.keyBar[k]) { const m = /(\d+(?:\.\d+)?)%/.exec(String(c.v).replace(/<[^>]+>/g, '')), [ok, warn] = KR.keyBar[k];
+      if (m) { const v = +m[1] / 100; c.st = v >= ok ? 'ok' : v >= warn ? 'warn' : 'bad'; if (c.st === 'ok') c.tip = ''; c.keyBar = true;
+        c.how = String(c.how || '').replace(/\d+% or more is good/, Math.round(100 * ok) + '% or more is good') + ' In a key the bar is ' + Math.round(100 * ok) + '%' + ((KR.keyBarSay || {})[k] ? ': ' + KR.keyBarSay[k] : '') + '.'; } }
     if (KEY_ALL_NA[k]) off(c, KEY_ALL_NA[k]);
     else if (heal && k === 'cc') off(c, 'In a key this isn’t graded: stopping a cast to heal, move or dispel is right.');
     else if (has(KR.na, c)) off(c, 'In a key this isn’t graded: players in the fastest timed keys read the same way.');
     else if (trash && has(KR.trashNa, c)) off(c, 'On a key’s trash pack this isn’t graded: the pack decides it. It counts on bosses.');
     else if (k === 'cc') soft(c, 'In a key this is amber at most: stopping a cast to kick or to move out of something is right.');
     else if (has(KR.soft, c) || (trash && (has(KR.trashSoft, c) || k.startsWith('p:')))) soft(c, 'In a key this is amber at most: one pull is too little to call it a mistake.');
-    if (trash && k === 'abc' && graded(c)) c.how = String(c.how || '') + ' On a key’s trash pull the bar is 8 points lower: moving to the pack costs casting time.'; } }
+    if (trash && per.length === 1 && k === 'abc' && graded(c)) c.how = String(c.how || '').replace(/(\d+)% or more is good/, (m0, n) => Math.round(+n - 100 * KEY_ABC_TRASH) + '% or more is good').replace(/under (\d+)% is a lot of time/, (m0, n) => 'under ' + Math.round(+n - 100 * KEY_ABC_TRASH) + '% is a lot of time') + ' On a key’s trash pull these are 8 points under a boss’s: moving to the pack costs casting time.'; } /* (Nov 14, the review: one trash pull only, as abcSt; the numbers follow, so the Companion's "Aim for" line says the key's bar) */ }
 // (a healer's two key rows join the page before its layout pass, as Saves does, so they sit in the Rotation chapter's Casting block. Run by specPage)
 function keyHealAdd(o) { const per = (o.per || []).filter((x) => x && x.r && x.r.item); if (!per.length || !per.every((x) => x.r.item.dungeon === true) || !(o.P0 && o.P0.role === 'healer')) return;
   const rows = keyHealRows(o, per); if (!rows.length) return; o.groups.push({ t: 'Casting', l: rows });

@@ -36,8 +36,9 @@ They act only when every pull on the page is a key's pull (`item.dungeon`).
 - **A healer:** Cancelled casts isn't graded (stopping a cast to heal, move or dispel is right). The healing rows were already off since Nov 9.
 - **By spec** (`KEY_ROWS`): `na` = not graded on any key pull, `trashNa` = not graded on a trash pack but graded on bosses, `soft` = amber at most, `trashSoft` = amber at most on trash.
 - **Everyone:** Cancelled casts is amber at most (a kick or a dodge cancels a cast). On trash, a wasted-proc row is amber at most (procs come faster on a pack than they can be spent).
-- **Casting time on trash:** the bar is 8 points lower (`abcSt`, `KEY_ABC_TRASH`), for the casting row and for casting inside a burst window.
+- **Casting time on trash:** the bar is 8 points lower (`abcSt`, `KEY_ABC_TRASH`), for the casting row and for casting inside a burst window, on a page of one trash pull. The row's own "X% or more is good" numbers follow, so the Companion's "Aim for" line says the key's bar.
 - **The priority row on a key's boss:** a step with a cooldown of 45 seconds or more is wanted only from its first press in that pull.
+- **Holy Priest's priority row** has a key bar (`keyBar`): green from 80%, amber from 70%. Five fast timed Holy Priests (+19 and +20) read it not fine on 17 of 51 pulls against the raid bar of 90%; 48 of the 51 pulls read 83% or more, and with the key bar 50 of 51 are green. A raid pull keeps 90%.
 - **Outlaw:** Between the Eyes and Roll the Bones stay wanted on trash (`KEY_NOHOLD`); their cooldowns are cut by finishers, so they aren't held.
 - **Restoration Shaman:** with 2 or more enemies close, every damage button is right (Chain Lightning, Lava Burst, Flame Shock, Lightning Bolt, Frost Shock, Voltaic Blaze). The class guide gives no order for a shaman's damage on a pack.
 - **Mistweaver with Chi-Ji:** the damage list is read all the time (`dmgAlways`). The guide: "Melee heals via Gust of Mists". Its two steps no longer say "nobody needed healing" (the one wording change a raid page sees).
@@ -45,21 +46,21 @@ They act only when every pull on the page is a key's pull (`item.dungeon`).
 ## A healer's damage or heal (src/ui.js `keyHealSplit`, src/mptab.js `mpkHeal`)
 
 - Every press that deals damage or heals counts once. Cast lines within 0.7 seconds of each other are one press (a spread Flame Shock, a Rejuvenation with its Germination, a Twin Flame copy).
-- A press on an enemy with a spell that deals damage is damage. A press on a player with a spell that heals is a heal. A press with no target goes by what the spell did on that pull. Swings and utility never count.
+- A press on an enemy with a spell that deals damage is damage. A press on a player with a spell that heals is a heal. A press with no target goes by what the spell did on that pull; one that both hits and heals (Holy Nova on a pack) is damage while the group is healthy and a heal while someone needs one. Swings and utility never count.
 - **Healthy** is the priority row's own test: nobody under 50% health and at most one player under 70%, over the last 2 seconds.
 - Each pull shows two rows, never graded there: "Damage while the group is healthy" and "Heals when someone needs one". One pull is too few presses. They are added before the page's layout pass (`keyHealAdd`), so they sit in the Rotation chapter's Casting block.
 - A cast line Warcraft Logs marks as not pressed, and a Tranquility tick, is never a press.
-- The whole key's share of healthy presses on damage is graded against healers of the same spec in the fast runs:
+- The whole key's share of healthy presses on damage is graded against healers of the same spec in fast timed keys. Holy Paladin and Restoration Shaman were set from the fast +20 runs, about 5 points under the lowest player. The other five were set on Nov 14 after Flex's "Yes, read them", from 21 more fast timed keys at +16 to +20 (Restoration Druids and Discipline Priests are rare at +20): 5 different players each, green from 5 points under the lowest, amber 10 points under that. A spec needs 3 or more different fast players to be graded.
 
-| Spec | Fast +20 players read | Green from | Amber from |
+| Spec | Fast players read | Green from | Amber from |
 |---|---|---|---|
 | Holy Paladin (4 players) | 66, 73, 73, 74% (Flex: 78%) | 62% | 50% |
 | Restoration Shaman (5) | 39, 39, 41, 42, 45% | 34% | 25% |
-| Holy Priest (1) | 73% | shown, not graded | |
-| Mistweaver (1) | 90% | shown, not graded | |
-| Preservation (1) | 53% | shown, not graded | |
-| Restoration Druid (1) | 31% | shown, not graded | |
-| Discipline (0) | none read | shown, not graded | |
+| Holy Priest (5) | 41, 50, 64, 72, 80% | 36% | 26% |
+| Mistweaver (5) | 85, 86, 90, 90, 91% | 80% | 70% |
+| Preservation (5) | 53, 53, 56, 62, 65% | 48% | 38% |
+| Restoration Druid (5) | 31, 40, 41, 53, 55% | 26% | 16% |
+| Discipline (5) | 84, 88, 88, 92, 94% | 79% | 69% |
 
 - "Heals when someone needs one" is shown, never graded: a tank sits low for much of a key. It isn't shown for Mistweaver and Discipline, who heal by dealing damage.
 - Overhealing is never a measure (the Mythic+ guide ranks it 1 of 10).
@@ -82,7 +83,6 @@ On the 14 keys the 70 players went from 67 to 100 (middle 94) to 80 to 100 (midd
 
 ## What is still open
 
-- Holy Priest, Mistweaver, Preservation, Restoration Druid and Discipline need three or more fast keys each before their damage share can be graded.
 - Fire, Frost Mage, Affliction, Devastation, Augmentation, Outlaw, Assassination and Survival are in none of the fast +20 runs: their key rules come from the rules and guides only.
 - Pack priority lists the helpers found thin or wrong and that still need a key to prove: Marksmanship (Trick Shots is never read), Arcane (Barrage before Orb), Feral (Apex bite ahead of Primal Wrath), Destruction (Conflagrate at 2 charges), Demonology (Implosion), Fury (Whirlwind buff on small enemies). Their priority rows are amber at most on trash until then.
 - Cooldowns carry over from the pull before only for the 45 second rule; a full carry-over (the key is one log) would be more exact.
