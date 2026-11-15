@@ -105,13 +105,13 @@ function pgOpen(root, boss, d) {
   const part = pgPart(boss, d); if (!part) return; const old = document.querySelector('.pg'); if (old) old.remove();
   pgCss(); const dn = d === 'h' ? 'Heroic' : 'Mythic';
   const ov = document.createElement('div'); ov.className = 'pg'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
-  ov.innerHTML = '<div class="pg-in"><canvas class="pg-cv"></canvas>' +
+  ov.innerHTML = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
     '<div class="pg-top"><div class="pg-me"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div><div class="pg-debs"></div></div>' +
     '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div></div>' +
     '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
     '<div class="pg-bot"><div class="pg-job"><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div><div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
-    '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-card"></div></div>';
+    '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div><div class="pg-card"></div></div>';
   (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('pg-open');
   const mini = ov.querySelector('.pg-mini'), mx2 = mini.getContext('2d'), cv = ov.querySelector('.pg-cv'), cx = cv.getContext('2d'), card = ov.querySelector('.pg-card'), $ = (s) => ov.querySelector(s);
   // ---- pictures: the room, and each role's icon (loaded from Wowhead at runtime, a plain circle until they arrive) ----
@@ -254,7 +254,9 @@ function pgOpen(root, boss, d) {
   const step1 = (dt) => { const t0 = G.t, t = Math.min(S.end, G.t + dt), px = G.x, py = G.y;
     if (G.kb) { const k = Math.min(1, (t - G.kb.t0) / 0.55); G.x = G.kb.x0 + (G.kb.x1 - G.kb.x0) * k; G.y = G.kb.y0 + (G.kb.y1 - G.kb.y0) * k; if (k >= 1) G.kb = null; }
     else { if (window.__pgAuto) { const j = jobOf(me, t), ab = { id: me, x: G.x, y: G.y, esc: G.autoEsc }, dz = dodge(ab, j.T, t, j.fast, j.ob); G.autoEsc = ab.esc; target = dz.T; }
-      let mx = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), my = (keys.u ? 1 : 0) - (keys.d ? 1 : 0); const byKeys = !!(mx || my);
+      let mx = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), my = (keys.u ? 1 : 0) - (keys.d ? 1 : 0);
+      if (v3 && (mx || my)) { const f = v3.fwd(); [mx, my] = [mx * f[1] + my * f[0], my * f[1] - mx * f[0]]; } /* (3D: W walks where the camera looks, A and D to its sides) */
+      const byKeys = !!(mx || my);
       if (!byKeys && target) { const ex = target[0] - G.x, ey = target[1] - G.y, ee = Math.hypot(ex, ey); if (ee < 0.2) target = null; else { mx = ex / ee; my = ey / ee; } }
       const mm = Math.hypot(mx, my); if (mm > 1) { mx /= mm; my /= mm; } let sp = SPEED * (has('sprint') ? 1.4 : 1) * (inVenom(G.x, G.y) ? 0.6 : 1) * dt;
       if (!byKeys && target) sp = Math.min(sp, Math.hypot(target[0] - G.x, target[1] - G.y));
@@ -296,7 +298,7 @@ function pgOpen(root, boss, d) {
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
-  const draw = () => { const rect = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); const Wd = Math.max(1, Math.round(rect.width * dpr)), Hd = Math.max(1, Math.round(rect.height * dpr)); if (cv.width !== Wd || cv.height !== Hd) { cv.width = Wd; cv.height = Hd; }
+  const draw = () => { if (v3) { v3.draw(G.t); if (v3) { miniMap2(G.t); return; } } /* (the 3D view draws instead: src/practice3d.js) */ const rect = cv.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); const Wd = Math.max(1, Math.round(rect.width * dpr)), Hd = Math.max(1, Math.round(rect.height * dpr)); if (cv.width !== Wd || cv.height !== Hd) { cv.width = Wd; cv.height = Hd; }
     const t = G.t, k = Z * dpr; if (!cam) cam = [G.x, G.y]; cam = [cam[0] + (G.x - cam[0]) * 0.18, cam[1] + (G.y - cam[1]) * 0.18];
     cx.setTransform(1, 0, 0, 1, 0, 0); cx.fillStyle = '#07090c'; cx.fillRect(0, 0, cv.width, cv.height);
     const room = IMG.room; if (ok(room)) { const [sx, sy] = W2S(-PG_UL.artW / 2, PG_UL.artY + PG_UL.artH / 2); cx.drawImage(room, sx, sy, PG_UL.artW * k, PG_UL.artH * k); }
@@ -358,7 +360,8 @@ function pgOpen(root, boss, d) {
       const ang = w.deg * Math.PI / 180, u = Math.cos(ang), v = Math.sin(ang), c0 = [w.x + u * w.v * el, w.y + v * w.v * el], p1 = M(c0[0] + v * w.w / 2, c0[1] - u * w.w / 2), p2 = M(c0[0] - v * w.w / 2, c0[1] + u * w.w / 2); mx2.beginPath(); mx2.moveTo(p1[0], p1[1]); mx2.lineTo(p2[0], p2[1]); mx2.strokeStyle = 'rgba(155,225,58,.9)'; mx2.lineWidth = 3; mx2.stroke(); });
     const B = bossAt(t), TL = tailAt(t); if (B.up) dot(B.p[0], B.p[1], 5, '#2f6a22', '#b6f23a'); if (TL.up) dot(TL.p[0], TL.p[1], 3.5, '#4a3b19', '#c8a36a');
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c) dot(c.x, c.y, 3, '#9b5cff'); });
-    GDZ_RAID.forEach((id) => { if (id !== me) dot(G.bots[id].x, G.bots[id].y, 1.8, GDZ_ROLE[id[0]][1]); }); dot(G.x, G.y, 3, '#fff', '#000'); };
+    GDZ_RAID.forEach((id) => { if (id !== me) dot(G.bots[id].x, G.bots[id].y, 1.8, GDZ_ROLE[id[0]][1]); }); dot(G.x, G.y, 3, '#fff', '#000');
+    if (v3) { const f = v3.fwd(), [a, b] = M(G.x, G.y); mx2.beginPath(); mx2.moveTo(a, b); mx2.lineTo(a + f[0] * 14, b - f[1] * 14); mx2.strokeStyle = '#f3c969'; mx2.lineWidth = 2; mx2.stroke(); } }; /* (3D: the way the camera looks) */
 
   // ---- the screen: your frame, her frame and cast, timers, warnings, your job, the action bar ----
   let hudKey = '';
@@ -411,7 +414,7 @@ function pgOpen(root, boss, d) {
       '<div class="pg-asg0"><span class="pg-k">Your assignments</span>' + asg(role.id) + '</div>' +
       '<div class="pg-optrow"><span>Speed</span><div class="pg-seg pg-spd"><button type="button" data-v="1"' + (speed === 1 ? ' class="on"' : '') + '>Normal</button><button type="button" data-v="0.5"' + (speed < 1 ? ' class="on"' : '') + '>Half speed</button></div>' +
       '<span>Start at</span><select class="pg-at">' + START.map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></div>' +
-      '<p class="pg-keys">Move: W A S D, the arrows, or click · Shift: sprint · Q: defensive · Wheel: zoom · Space: pause</p>' +
+      '<p class="pg-keys">Move: W A S D, the arrows, or click · Shift: sprint · Q: defensive · Wheel: zoom · Space: pause · 3D: drag to turn</p>' +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go">Start</button></div></div>';
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Start) */ } }; /* (the picture behind the card is you) */
     if (TEAM) seeMe();
@@ -458,7 +461,19 @@ function pgOpen(root, boss, d) {
   cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; target = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); });
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
-  const close = () => { if (!ov.isConnected) return; stop(); ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); window.removeEventListener('blur', onBlur); };
+  // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
+  // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
+  let v3 = null, want3 = false; const vw = $('.pg-vw');
+  const v3api = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt,
+    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G) target = p; }, fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
+  const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
+  const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
+    pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
+      .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load, so you\'re in 2D.'); }).finally(() => vw.classList.remove('busy')); };
+  vw.onclick = (e) => { const b = e.target.closest('button'); if (b) { b.blur(); view(b.dataset.v === '3'); } };
+  { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d') view(true); }
+  window.__pg3dDbg = { get v3() { return v3; }, view };
+  const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd); document.removeEventListener('keyup', ku); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
 
@@ -533,6 +548,11 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-grade .gS { color: #f3c969; } .pg-grade .gA { color: #7ee08f; } .pg-grade .gB { color: #7fb8ff; } .pg-grade .gC { color: #e0a53a; } .pg-grade .gD { color: #ff8f87; } .pg-grade h2 { margin: 0; } .pg-grade p { margin: 2px 0 0; }
 .pg-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } .pg-sum li { display: flex; gap: 10px; font-size: 14px; } .pg-sum time { min-width: 38px; color: #8d97a3; font-variant-numeric: tabular-nums; } .pg-sum b { display: block; color: #fff; font-weight: 600; } .pg-sum span { display: block; color: #f3c969; font-size: 13px; }
 @media (max-width: 900px) { .pg-top { grid-template-columns: 1fr 34px; } .pg-bossf, .pg-timers { display: none; } .pg-bot { flex-direction: column; align-items: stretch; } }
+.pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
+.pg-vw { position: absolute; left: 14px; top: 292px; z-index: 4; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: rgba(10,12,16,.85); }
+.pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
+.pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; }
+@media (max-width: 900px) { .pg-vw { top: 248px; } }
 `;
   document.head.appendChild(st);
 }
