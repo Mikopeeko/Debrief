@@ -37872,6 +37872,7 @@ async function askCheck() { if (typeof WCL === 'undefined' || !WCL.HOSTED) retur
 setTimeout(askCheck, 2500); document.addEventListener('whoami', () => setTimeout(askCheck, 300));
 /*MPTAB*/ // (and src/mptab.js, the Mythic+ tab (Nov 1))
 /*SIDENAV*/ // (and src/sidenav.js, the side menu, sub tabs and context bar (Nov 8))
+if (typeof document !== 'undefined' && !window.__g8bo) { window.__g8bo = 1; document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains('g8-bfd')) return; if (d.open) S.gbBfOpen = d.dataset.g8bo; else if (S.gbBfOpen === d.dataset.g8bo && d.isConnected && !window.__g8bKeep) S.gbBfOpen = null; }, true); } /* (Nov 9: the Buffs row you opened stays open when the chart redraws) */ /* (Nov 14: moved inside the closure; outside it, S was undefined and every toggle threw) */
 })();
 
 // ===== Design studio round 3 (Oct 25): bars. Reads the scores other chats already draw and sets --p (and a fold) so the CSS can draw one bar language.
@@ -42004,7 +42005,6 @@ window.dsMo = dsMo; /* (Debriefing's hold calls dsMo.reveal when it lifts by its
 document.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-prwok]'); if (!t) return; e.preventDefault(); e.stopPropagation(); const p = t.closest('.prw'); if (!p) return; const on = p.classList.toggle('prw-open'); const s = t.querySelector('u'); if (s) s.textContent = on ? 'Hide' : 'Show'; }, true);
 document.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const t = e.target.closest && e.target.closest('[data-prwok]'); if (t) { e.preventDefault(); e.stopPropagation(); t.click(); } }, true);
 
-if (typeof document !== 'undefined' && !window.__g8bo) { window.__g8bo = 1; document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains('g8-bfd')) return; if (d.open) S.gbBfOpen = d.dataset.g8bo; else if (S.gbBfOpen === d.dataset.g8bo && d.isConnected && !window.__g8bKeep) S.gbBfOpen = null; }, true); } /* (Nov 9: the Buffs row you opened stays open when the chart redraws) */
 if (typeof document !== 'undefined' && !window.__g8so) { window.__g8so = 1; document.addEventListener('toggle', (e) => { const d = e.target; if (!d || !d.classList || !d.classList.contains('g8-svd')) return; if (d.open) S.gbSvOpen = d.dataset.g8so; else if (S.gbSvOpen === d.dataset.g8so && d.isConnected) S.gbSvOpen = null; }, true); } /* (Nov 9: the Defensives row you opened stays open when the chart redraws) */
 
 /* (Nov 9, Summary > Timeline tidy: the play-by-play scrolls to its newest line and then lines its first visible row up with the fixed
