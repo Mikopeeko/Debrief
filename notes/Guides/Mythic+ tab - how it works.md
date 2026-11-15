@@ -297,3 +297,20 @@ Flex on the first raid-style Graphs: "graphs is missing a lot of breakdowns. The
 Where the numbers come from: the page's own pass over the log now also keeps, for each pull, what hit each player, each player's healing by spell with its overheal, and who received it. Healing is counted the way the reader counts it (the heal less its overheal, a pet's healing to its owner, onto players), so a player's spells add up to about their healing in the table; healing between pulls is in the chart but not in a pull's breakdown.
 
 Still not read from a key's log, and so not shown: casts and crits for a spell, buffs, debuffs, resources.
+
+## Graphs: the whole rail, and Big hits on Summary (Nov 14, 2026, night)
+
+Flex, with a picture of Raid review's rail: "missing a lot of categories", "also why no buffs/debuff section?". And with a picture of the Big hits list under Graphs: "I think this is good but probably better in summary or somewhere else".
+
+The rail now has Raid review's numbers in its order: Damage done, Damage taken, Healing, Buffs, Debuffs, Deaths, Interrupts, Dispels, Resources, Casts, Survival.
+- Buffs: By player (how many buffs, their average uptime; a row opens to each buff with its uptime and how often it went on) and By buff (who had it).
+- Debuffs: what the dungeon put on the group: how many times, on how many players, for how long in all; a row opens to who.
+- Resources: "Mana left" for mana users (average, lowest, time under 20%, with a chart, a line a player), and for each other resource what a player gained and how much spilled over the cap.
+- Casts: casts per minute By player (a row opens to each spell) and By spell (who cast it), with a chart of casts per minute.
+- Survival: Defensives (as before), Healthstones, potions & self-heals, Combat potions (who used one, and when), and Health over the key (the lowest each player got, with a chart).
+
+Big hits (every big hit, cast by cast) left Graphs. It is on Summary, under Mistakes, as a part you open; "See every big hit", the Close calls tile and old links open it there.
+
+Where the new numbers come from: the page's own pass over the log now keeps every buff on a player and every debuff no player put on them (as times on and off), the mana a caster's own casts say they had, and the healing a player did to themself. Uptime is the share of the fighting in the pulls picked.
+
+Not the same as Raid review's: no "click to chart" for one buff or spell, no stacks, no "how much a defensive took off", and mana is only known at the moments its owner cast something.

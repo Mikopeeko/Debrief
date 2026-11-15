@@ -19663,11 +19663,11 @@ unpressed cooldown of the whole key. The website only; the Companion's card (htm
 @layer defaultTheme {
 /* 1. one view at a time under the banner */
 html:not(.mpcard) body #view#view#view .mpt-jb, html:not(.mpcard) body #view#view#view #mptC1 > p.mpt-chk, html:not(.mpcard) body #view#view#view #mptCS > p.mpt-chk { display: none !important; }
-html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS),
+html:not(.mpcard)[data-mpv="run"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCS):not(#mptCH),
 html:not(.mpcard)[data-mpv="mis"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCX),
 html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM):not(#mptC5),
 html:not(.mpcard)[data-mpv="rep"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptC4):not(#mptCP),
-html:not(.mpcard)[data-mpv="gra"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCG):not(#mptCH),
+html:not(.mpcard)[data-mpv="gra"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCG),
 html:not(.mpcard)[data-mpv="cmp"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCC),
 html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mptBody > *:not(#mptC1):not(#mpcRot) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptC1 { padding-bottom: 0 !important; }
@@ -19975,7 +19975,6 @@ html:not(.mpcard) body #view#view#view .mpx-rcard > .mpx-ccn > .mpt-prow > .mpt-
 /* 6. Graphs, as the raid review's Graphs tab (Flex, Nov 14: "almost exactly like the other graphs tab in appearance and functionality"): its markup is
    the raid tab's own, so the raid tab's styles dress it; these are only what a key adds. The chapter is no panel of its own: the rail and the two
    panels sit on the page, as they do on a raid pull */
-html:not(.mpcard)[data-mpv="gra"]:not([data-mpg="def"]) body #view#view#view #mptBody#mptBody > #mptCH:not(#mptC1):not(#mptCS) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptCG { padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; overflow: visible !important; }
 html:not(.mpcard) body #view#view#view #mptCG > p.mpt-chk { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptCG .mpg > .gb-tl { display: block !important; } /* (one column of panels, as on a raid pull) */
@@ -20059,6 +20058,20 @@ html:not(.mpcard) body #view#view#view .mpx-rcm > .mpx-rcmb { margin: 8px 0 0 !i
 html:not(.mpcard) body #view#view#view #mptCG .mpg-note { margin: 10px 0 0 !important; }
 html:not(.mpcard) body #view#view#view #mptCG .mpg-nb { font-weight: 700 !important; color: var(--muted) !important; }
 html:not(.mpcard) body #view#view#view #mptCG .gb-bfb > .gb-bh { margin: 2px 0 4px !important; }
+}
+@layer defaultTheme {
+/* (Nov 14: Big hits on Summary, as a part you open (Flex: "probably better in summary or somewhere else"), and the few lines the Graphs rail's other
+   numbers need over the raid tab's own styles) */
+html:not(.mpcard) body #view#view#view #mptCH > p.mpt-chk { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf > summary.mpx-bhs { display: flex !important; align-items: baseline !important; gap: 4px 12px !important; flex-wrap: wrap !important; list-style: none !important; margin: 0 !important; padding: 2px 0 !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf > summary.mpx-bhs::-webkit-details-marker { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCH .mpx-bht { font: 800 20px 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCH .mpx-bhd { flex: 1 1 auto !important; font: 500 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCH .mpx-bhi { font: 700 15px var(--body) !important; font-style: normal !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf[open] > summary.mpx-bhs { margin: 0 0 12px !important; padding-bottom: 12px !important; border-bottom: 1px solid var(--line) !important; }
+html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf[open] > summary.mpx-bhs > .mpx-bhi { transform: rotate(90deg) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-when { white-space: normal !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view #mptCG .gb-bd > .g8-rich { margin: 0 !important; }
 }
 </style>
 </body>
