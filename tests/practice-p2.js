@@ -62,6 +62,16 @@ function checks(H, say) {
   if (T.throwAt < 226 || T.throwAt > 236) bad('the small eggs go in at ' + clkS(T.throwAt) + '; top kills put them in 3:46 to 3:56 (check A)');
   if (T.bigUp < 244 || T.bigUp > 263) bad('the big eggs are picked up at ' + clkS(T.bigUp) + '; top kills pick them up 4:04 to 4:23 (check A)');
   if (T.doomEnd - T.doom !== 90) bad('the big eggs get ' + (T.doomEnd - T.doom) + ' s to be picked up; Hatching Doom is 90 s (spell 1306862, check A)');
+  // (Flex, Nov 15: "im fairly confident they [healers] are usually the ones assigned to pick up the big eggs". The 30 fastest Mythic kills in the log
+  // library: the north big egg is a healer's on 45 of 46, the south one a melee's on 45 of 74; healers carry 6% of the small eggs, tanks about one
+  // each. Before: a healer took each ledge's south egg, all four healers carried small eggs, and the tanks none)
+  { const J0 = ctx.pgP2Jobs(3, null, null);
+    ['E', 'W'].forEach((s) => { const ids = Object.keys(J0).filter((id) => J0[id].side === s), north = ids.find((id) => J0[id].big === 'close'), south = ids.find((id) => J0[id].big === 'far');
+      if (!north || north[0] !== 'h') bad('the ' + s + ' ledge\'s north big egg goes to ' + north + '; top kills give it to a healer (45 of 46, check B)');
+      if (!south || south[0] !== 'm') bad('the ' + s + ' ledge\'s south big egg goes to ' + south + '; top kills give it to a mobile melee most (check B)');
+      const hs = ids.filter((id) => id[0] === 'h' && J0[id].egg), tk = ids.filter((id) => id[0] === 't' && J0[id].egg);
+      if (hs.length) bad('healers carry small eggs on the ' + s + ' ledge (' + hs.join(' ') + '); top kills give healers 6% of them (check B)');
+      if (tk.length !== 1) bad('the ' + s + ' ledge\'s tank carries ' + tk.length + ' small eggs; top kills give each tank about one (check B)'); }); }
   // B. the tethers, over 40 runs
   let tanks = 0; for (let seed = 1; seed <= 40; seed++) { const J = ctx.pgP2Jobs(seed, null, null), ids = Object.keys(J).filter((id) => J[id].teth), solo = ids.filter((id) => J[id].teth === 'solo');
     if (ids.length !== 6 || ids.filter((id) => J[id].side === 'E').length !== 3 || solo.length !== 1) { bad('Grasping Fangs gives ' + ids.length + ' tethers (' + ids.filter((id) => J[id].side === 'E').length + ' east) and ' + solo.length + ' solo on seed ' + seed + '; Mythic has six, three a ledge, one breaking alone (check B)'); break; }
@@ -96,6 +106,11 @@ function checks(H, say) {
     // east melee in the five, following the arrow, broke late at 3:36, and starting at 3:36 left the tether unbreakable in time)
     const pk3 = { side: 'E', role: 'm', egg: 'far', mal: 1, cry: 1, teth: 'five' }; dbg.P2.pick = pk3; const me3 = dbg.P2.slotOf(pk3), r3 = dbg.sim(me3, true, false, 2);
     if (r3.log.some((x) => /tether late/.test(x))) bad('an east melee in the five, played by the autopilot (the same way the arrow points), breaks late: ' + r3.log.join(' | ') + ' (check D)');
+    // (Nov 15, the wider audit: the solo break played by the autopilot (and so the arrow) walked out round the Warden from a ranged spot and broke at
+    // 3:22, after the count's 3:21.5)
+    const pkS = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'solo' }; dbg.P2.pick = pkS; const meS = dbg.P2.slotOf(pkS), rS = dbg.sim(meS, true, false, 9);
+    if (rS.log.some((x) => /tether (late|early)/.test(x))) bad('the solo break, played by the autopilot from a ranged spot (the way the arrow points), misses the count: ' + rS.log.join(' | ') + ' (check D)');
+    dbg.P2.pick = pk3;
     dbg.at(216.2, me3, { east: false, seed: 2 }); const th3 = dbg.G.p2.teth[me3]; if (th3 && th3.br == null) bad('starting at "3:36 · The small eggs" as one of the five leaves your tether unbroken past the count (check D)');
     // (the review, Nov 15: a melee who picked the 3rd Malice with a random tether was sometimes dealt one of the five, and kept both, which can't be done)
     const pk4 = { side: 'E', role: 'm', egg: 'n4', mal: 3, cry: 1, teth: 'random' }, me4 = dbg.P2.slotOf(pk4); let both = 0;
@@ -130,7 +145,7 @@ function checks(H, say) {
   // picked job, naming your ledge, your egg and kicks, your tether and the heart)
   try { dbg.P2.pick = { side: 'W', role: 'm', egg: 'close', mal: 2, cry: 1, teth: 'five' }; const sh = typeof dbg.P2.short === 'function' ? dbg.P2.short() : '', li = (sh.match(/<li>/g) || []).length;
     if (!/^<ul class="pg-short">/.test(sh) || li < 3 || li > 4) bad('phase 2\'s "your job in short" isn\'t a pg-short list of three or four lines (' + li + ', check F)');
-    else if (!/West ledge/.test(sh) || !/close big egg \(north end\)/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
+    else if (!/West ledge/.test(sh) || !/north big egg/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
   catch (e) { bad('phase 2\'s "your job in short" crashed: ' + e.message + ' (check F)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
