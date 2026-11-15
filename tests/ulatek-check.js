@@ -114,7 +114,7 @@ module.exports = function ulatekCheck(NIGHT_R, H, say) {
       if (DV && WANT_D[fight]) { if (DV.CACHE && DV.CACHE.set) DV.CACHE.set(it, r);
         for (const [p, bucket, must, never] of WANT_D[fight]) { const d = (r.deaths || []).find((x) => nm(x.player) === p); if (!d) { say(pull, 'ulatek', p + '\'s death isn\'t in the pull any more (check Y)'); continue; }
           let v = null; try { v = DV.deathVerdict(r, d); } catch (e) { v = null; } if (!v) { say(pull, 'ulatek', 'the death rule crashed on ' + p + '\'s death at ' + T(d.t) + ' (check Y)'); continue; } const txt = String(v.say || v.label || '');
-          if (bucket && v.bucket !== bucket) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '"; the ruling is ' + (bucket === 'you' ? 'You' : 'Not counted') + ' (check Y)');
+          if (bucket && v.bucket !== bucket) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '"; the ruling is ' + (bucket === 'you' ? 'Own death' : 'Not counted') + ' (check Y)');
           else if (must && !must.test(txt)) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '"; its proof is ' + String(must).replace(/^\/|\/$/g, '') + ' (check Y)');
           else if (never && never.test(txt)) say(pull, 'ulatek', p + '\'s death at ' + T(d.t) + ' reads "' + txt.slice(0, 70) + '": ' + String(never).replace(/^\/|\/$/g, '') + ' is never the proof there (check Y)'); } } }
     if (it.kill) continue;

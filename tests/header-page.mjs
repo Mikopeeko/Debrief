@@ -43,7 +43,8 @@ const pulls = []; for (const k of keys) { const [code, f] = k.split(':'), fight 
 if (!pulls.length) done('skipped (none of the pulls are in this log library)');
 /* (the browser) */
 const prof = path.join(os.tmpdir(), 'debrief-page-check-prof-' + process.pid), port = 9300 + Math.floor(Math.random() * 500);
-const ed = spawn(EDGE, ['--headless=new', '--disable-gpu', '--no-first-run', '--allow-file-access-from-files', '--user-data-dir=' + prof, '--remote-debugging-port=' + port, 'about:blank'], { stdio: 'ignore' });
+/* (Nov 15: the three tabs run at full speed, none slowed down as a background tab) */
+const ed = spawn(EDGE, ['--headless=new', '--disable-gpu', '--no-first-run', '--allow-file-access-from-files', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows', '--user-data-dir=' + prof, '--remote-debugging-port=' + port, 'about:blank'], { stdio: 'ignore' });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const bye = async (line, code) => { try { ed.kill(); } catch (e) { /* (gone) */ } await sleep(800); for (const d of [prof, TMP]) { try { fs.rmSync(d, { recursive: true, force: true }); } catch (e) { /* (the browser may still hold it) */ } } done(line, code); };
 let ver = null; for (let i = 0; i < 60 && !ver; i++) { try { ver = await (await fetch('http://127.0.0.1:' + port + '/json/version')).json(); } catch (e) { await sleep(300); } }
@@ -58,15 +59,21 @@ const READ = '(function () { var h2 = document.querySelector("#view .dbt-why h2"
   ' return JSON.stringify({ h2: h2 ? h2.innerText.replace(/\\s+/g, " ").trim() : null, wip: wp ? wp.innerText.replace(/\\s+/g, " ").trim() : null, root: rt && rt.line ? { name: String(rt.name || ""), short: String(rt.short || ""), unsure: !!rt.unsure } : null, err: err, tab: ((document.querySelector(".tab.on") || {}).innerText || "").trim(), view: (document.querySelector("#view") || { innerText: "" }).innerText.length, reset: !!document.querySelector("#view .dbt-why.wrt-reset"), bad: bad ? t.slice(Math.max(0, bad.index - 60), bad.index + 60).replace(/\\s+/g, " ") : "" }); })()';
 const one = async (p) => { const file = logOf(p.code, p.fight, p.it), t = await send('Target.createTarget', { url: 'about:blank' }), tid = t.result.targetId, a = await send('Target.attachToTarget', { targetId: tid, flatten: true }), sid = a.result.sessionId;
   const ev = async (expression) => { const r = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, sid); return r.result && r.result.result ? r.result.result.value : null; };
-  try { await send('Emulation.setDeviceMetricsOverride', { width: 1366, height: 900, deviceScaleFactor: 1, mobile: false }, sid); await send('Page.enable', {}, sid); await send('Runtime.enable', {}, sid);
+  try { await send('Emulation.setDeviceMetricsOverride', { width: 1366, height: 900, deviceScaleFactor: 1, mobile: false }, sid); await send('Emulation.setFocusEmulationEnabled', { enabled: true }, sid); await send('Page.enable', {}, sid); await send('Runtime.enable', {}, sid);
     await send('Page.addScriptToEvaluateOnNewDocument', { source: "try{localStorage.setItem('wla-tour-done','1')}catch(e){}" }, sid); await send('Page.navigate', { url: APP }, sid);
-    let ready = false; for (let i = 0; i < 80 && !ready; i++) { await sleep(250); ready = !!(await ev('!!(document.getElementById("fileIn") && document.getElementById("fileIn").onchange)')); }
+    let ready = false; for (let i = 0; i < 240 && !ready; i++) { await sleep(250); ready = !!(await ev('!!(document.getElementById("fileIn") && document.getElementById("fileIn").onchange)')); }
     if (!ready) return { p, fail: 'the app did not start in the browser' };
     const given = await ev('new Promise(function (res) { var x = new XMLHttpRequest(); x.open("GET", ' + JSON.stringify(pathToFileURL(file).href) + '); x.onload = function () { try { document.getElementById("fileIn").onchange({ target: { files: [new File([x.responseText], "WoWCombatLog.txt", { type: "text/plain" })] } }); res("ok"); } catch (e) { res("ERR " + e); } }; x.onerror = function () { res("the log file could not be read by the page"); }; x.send(); })');
     if (given !== 'ok') return { p, fail: String(given) };
-    /* (wait for Summary, then for the page's own tidy passes: they run on timers for about 3 s after a render) */
-    let o = null, seen = 0; for (let i = 0; i < 90; i++) { await sleep(500); o = JSON.parse((await ev(READ)) || 'null'); if (!o) continue; const want = o.root ? 'Root cause: ' + o.root.name : null;
-      if (o.h2 != null || o.wip != null || (o.tab && o.view > 400)) seen++; if (o.h2 != null && want && o.h2.indexOf(want) === 0 && seen >= 3) break; if (seen >= 14) break; }
+    /* (wait for the pull's Summary, then until the page's answer holds still: its tidy passes run on timers for about 3 s after a render.
+       Nov 15, from the Nov 14 rehearsal: the build's line read 9, 10 or 11 "with a root cause" on the same build. The first pulls of a run, three tabs starting at once,
+       sometimes took over 45 s to show anything; the old wait gave up at 45 s and counted the blank page as "no root cause", with no problem raised. Now it waits up to
+       3 minutes for the pull to show, a pull that never shows is a problem, and the answer is read only once it is the same three reads running (ten when there's no root cause)) */
+    let o = null, shown = 0, same = 0, last = null, open = false; for (let i = 0; i < 360; i++) { await sleep(500); o = JSON.parse((await ev(READ)) || 'null'); if (!o) continue;
+      const pull = o.h2 != null || o.wip != null; if (!pull && !(o.tab && o.view > 400)) continue; open = true; shown++;
+      const k = o.root ? o.root.name : '', want = o.root ? 'Root cause: ' + o.root.name : null; same = k === last ? same + 1 : 0; last = k;
+      if (pull && same >= (o.root ? 2 : 9) && (!want || o.h2 == null || o.h2.indexOf(want) === 0 || o.reset)) break; if (shown >= 40) break; }
+    if (!open) return { p, fail: 'the pull never showed in the browser (3 minutes)' };
     return { p, o };
   } finally { await send('Target.closeTarget', { targetId: tid }); } };
 /* (three pulls at a time) */

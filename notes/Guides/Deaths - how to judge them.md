@@ -303,8 +303,8 @@ proof, and only before the wipe (before the wipe call and before a quarter of th
    that would have saved them, the saves check), not mind controlled, feared or stunned, and not in a mass death.
 Anything else is **Not counted** (grey) with a plain fact: "the wipe was on", "a mass death, 12 of us at once", "mind controlled", "feared by an
 unkicked Wail of Terror", "no mistake of yours was caught", then the hit that killed them. The fault special cases are gone (fears, soaks,
-orbs, mind control, "too fast", healing gaps, axe drops, the Guillotine target's half): they only word the fact now. Tags: **You** (red) with
-the proof in one line ("You: 4 Axegrinder hits right before you died", "You: 3 s under 35% with Divine Shield ready"). The coaching line comes
+orbs, mind control, "too fast", healing gaps, axe drops, the Guillotine target's half): they only word the fact now. Tags: **Own death** (red; "You" until Nov 15, Flex's pick, because "Raiyvenz · You" read as the viewer) with
+the proof in one line ("Own death: 4 Axegrinder hits right before they died", "Own death: 3 s under 35% with Divine Shield ready"). The coaching line comes
 from the proof: the mistake's own tip, "press X when you sit low", and for fragments picked up inside another hit: "Step out of the axe first,
 then pick up your fragments one at a time. Each one hits for about 180k, so heal up between them." (Flex's Nov 12 pull 5 death: "i was trying
 to collect my souls and foolishly picked them up too quickly when my health was low with an axe eating my booty").

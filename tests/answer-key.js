@@ -164,7 +164,7 @@ function comparePull(code, K, S, say) {
   // 4b. each death's verdict under the proof rule: You (with proof) or not counted
   { const sv = (S.verdicts || []).slice(), usedV = new Set(), fam = (x) => String(x || '').toLowerCase().replace(/\s*\(.*$/, '');
     for (const d of K.deaths || []) { if (!d.verdict) continue; const i = sv.findIndex((x, j) => !usedV.has(j) && x.player === d.player && near(x.t, d.t, 1.5)); if (i < 0) continue; usedV.add(i); const x = sv[i], id = d.player + '@' + Math.round(d.t), ks = d.verdict === 'you', ss = x.bucket === 'you';
-      const kSay = (ks ? 'You: ' + d.proof : d.verdict === 'low' ? 'maybe You: ' + d.proof : 'not counted: ' + (d.fact || '')) + (d.when === 'after' ? ' (after the wipe)' : ''), sSay = x.say + (x.counts ? '' : ' (after the wipe)');
+      const kSay = (ks ? 'Own death: ' + d.proof : d.verdict === 'low' ? 'maybe Own death: ' + d.proof : 'not counted: ' + (d.fact || '')) + (d.when === 'after' ? ' (after the wipe)' : ''), sSay = x.say + (x.counts ? '' : ' (after the wipe)');
       /* (R5, Main, Nov 13: on "sat low with a defensive ready" the site's verdict stands (it knows each class's kit), and a bigger reason it gives (orbs someone else set off, a mass death, an unkicked stun) outranks it) */
       if (d.verdict === 'low') { if (ss && x.k === 'mistake') say('deathVerdict:' + id, 3, d.player + '\'s death at ' + T(d.t), kSay, sSay, true); else ok(); continue; }
       /* (the key knows only the buttons a player pressed on that night: 'sat low with a defensive ready' on a button never pressed is the site's to say, so it is unsure, never a red line) */

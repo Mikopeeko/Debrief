@@ -3683,7 +3683,13 @@ const avCutT = (r) => { const dur = (r && r.duration) || Infinity; if (!r || !r.
   if (!CUT_HOOK) return Math.min(dur, old); let c = null; try { c = CUT_HOOK(r); } catch (e) { c = null; } if (r._wipe) delete r._wipe; return Math.min(dur, typeof c === 'number' && !isNaN(c) ? c : old); };
 /* (Nov 14, Wolfthorn Thu Nov 12 Ula'tek pull 13: Raiyvenz read "Hit by Caustic Waves twice (1.7M) and died to it" while his death said "3 Caustic Waves hits right before you died". The log has 4 wave hits:
    0:43.5, then three waves from one tail at 1:03.8, 1:04.0 and 1:04.1. Hits under 1.5 s apart count as one time (the top raids' lines were measured that way), so the line keeps "twice" and says the last time was 3 hits at once) */
-const avBurst = (j, died, n) => { const v = died && j.tl ? j.tl.filter((c) => c.t <= j.dt + 0.05).pop() : null; return v && v.w > 1 ? v.w + ' hits at once' + (n > 1 ? ' the last time' : '') : ''; };
+/* (Nov 15, from the Nov 14 rehearsal: a player hit one time only, by a burst, read "Hit by Caustic Waves once (1.2M, 3 hits at once)": once and 3 hits in one line. One time that was
+   a burst now reads "Hit by Caustic Waves (1.2M, 3 hits at once)", the shape the big-hit lines already had, so every summary that strips the brackets reads it as before
+   (a first try, "Hit by 3 Caustic Waves hits at once", made the Report card say "Got hit by 3 Caustic Waves hits"). One plain hit stays "once"; more times keep
+   "3 hits at once the last time". tests/avoid-once.js) */
+const avBurstN = (j, died) => { const v = died && j.tl ? j.tl.filter((c) => c.t <= j.dt + 0.05).pop() : null; return v && v.w > 1 ? v.w : 0; };
+const avBurst = (j, died, n) => { const w = avBurstN(j, died); return w ? w + ' hits at once' + (n > 1 ? ' the last time' : '') : ''; };
+const avHitBy = (nm, n, w, high) => (high || (n === 1 && w > 1) ? 'Hit by ' + nm + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + nm + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times'));
 function avoidMistakes(r) {
   const sec = ((r.module && r.module.sections) || []).find((s) => s.id === 'avoid' && (s.groups || []).some((g) => g.judge)); if (!sec) return;
   const L = (x) => String(x || '').toLowerCase(), names = new Set(sec.groups.flatMap((g) => (g.names || []).concat(L(g.label)))), ids = new Set(sec.groups.map((g) => g.spell && g.spell[0]).filter(Boolean));
@@ -3705,7 +3711,7 @@ function avoidMistakes(r) {
     const tt = tR != null ? tR : tA, tk = j.dt != null && j.dt <= T + 0.05 ? ts.filter((t) => t <= j.dt + 0.05).pop() : null;
     if (r.mistakes.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && (Math.abs(m.t - tt) <= 3 || (tk != null && Math.abs(m.t - tk) <= 3)))) continue;
     const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
-    const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
+    const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? avHitBy((g.spell && g.spell[1]) || short, n, avBurstN(j, died), true) : avHitBy(short, n, avBurstN(j, died), false);
     r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
       detail: what + ((b) => (b.length ? ' (' + b.join(', ') + ')' : ''))([amt >= 1 ? fmt(amt) : '', avBurst(j, died, n)].filter(Boolean)) + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
   }
@@ -3756,7 +3762,7 @@ function strictView(r, lv) {
       for (const j of g.judge || []) { if (j.tank) continue; const ts = (j.ts || []).filter((t) => t <= T + 0.05).sort((a, b) => a - b), n = ts.length, died = j.dt != null && j.dt <= T + 0.05, tj = j.tj ? j.tj.filter((t) => t <= T + 0.05).sort((a, b) => a - b) : ts; /* (Nov 13: judged on the ticks that did damage) */
         const tA = tj.length >= wA ? tj[wA - 1] : null, tR = died ? j.dt : tj.length >= bA ? tj[bA - 1] : null; if (tA == null && tR == null) continue; byP.set(j.p, tR != null ? 2 : 1);
         if (out.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - (tR != null ? tR : tA)) <= 3)) continue;
-        const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
+        const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : avHitBy(short, n, avBurstN(j, died), false);
         out.push({ t: tR != null ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: tR != null ? 'High' : 'Medium', dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [], strict: true,
           detail: what + ((b) => (b.length ? ' (' + b.join(', ') + ')' : ''))([j.amt >= 1 ? fmt(j.amt) : '', avBurst(j, died, n)].filter(Boolean)) + ', more than the typical raider in the world\'s top 100 guilds' + (died ? ', and died to it.' : '.'), fix: g.fix || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') }); }
       const jp = new Set((g.judge || []).filter((j) => !j.tank).map((j) => j.p));
@@ -8746,7 +8752,7 @@ function rootCauseGen(r, opts) {
     say(tA, (n >= 2 ? ab + ' killed ' + n + ' at once' : wave.length + ' died at once') + ' (' + T(tA) + ')');
     next = causeM ? s1(causeM.fix) : ''; sure = causeM ? 0.8 : 0.6; short = causeM ? s1(causeM.detail) + '.' : n + ' died to ' + ab + ' at once.';
     /* (Nov 12, Kith'ix pull 27: 9 players each took Extinguish without a mote: "9 players took Extinguish without a Light's Embrace mote, and died.", not one player's line and "each player dodges it") */
-    if (causeM && causeM.player && causeM.player !== 'Raid') { const same = KM.filter((m) => m.player && m.player !== 'Raid' && lc(m.mechanic) === lc(causeM.mechanic) && Math.abs(m.t - causeM.t) <= 3 && lc(String(m.detail || '').replace(/\s*\([^)]*\)/g, '')) === lc(String(causeM.detail || '').replace(/\s*\([^)]*\)/g, '')));
+    if (causeM && causeM.player && causeM.player !== 'Raid') { const same = KM.filter((m) => m.player && m.player !== 'Raid' && lc(m.mechanic) === lc(causeM.mechanic) && Math.abs(m.t - causeM.t) <= 3 && lc(String(m.detail || '').replace(/\s*\([^)]*\)/g, '').replace(/ once\b/, '')) === lc(String(causeM.detail || '').replace(/\s*\([^)]*\)/g, '').replace(/ once\b/, ''))); /* (Nov 15: a one-time burst, "Hit by Caustic Waves (1.2M, 3 hits at once)", is the same mistake as "Hit by Caustic Waves once (900k)", as before tests/avoid-once.js's wording fix) */
       if (new Set(same.map((m) => m.player)).size >= 3) { manyN = new Set(same.map((m) => m.player)).size; short = manyN + ' players ' + s1(String(causeM.detail || '').replace(/\s*\([^)]*\)/g, '')).replace(/^./, (x) => x.toLowerCase()) + '.'; const c1 = chain.find((c) => c.t === causeM.t); if (c1) c1.txt = short.replace(/\.$/, '') + ' (' + T(causeM.t) + ')'; } }
     if (ula && causeM) { const k = lc(causeM.mechanic), u = ulaShort(causeM, n >= 2 && fits(causeM, ab) ? n : 0); if (ULA_NEXT[k]) next = ULA_NEXT[k]; if (u) short = u; }
     if (ula && causeM && /^ravenous doomscale$/i.test(causeM.mechanic || '') && lc(ab) === 'dread roar') { short = s1(causeM.detail) + ', and its Dread Roar killed ' + n + '.'; next = 'Every big Doomscale Egg goes into the cauldron before Hatching Doom\'s 90 seconds run out, and within 20 seconds of being picked up: one that hatches roars, and Dread Roar hits and stuns the whole raid.'; }
