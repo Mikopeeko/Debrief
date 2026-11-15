@@ -126,6 +126,13 @@ function checks(H, say) {
     dbg.pos = [B.x, B.y]; dbg.step(2); if (!dbg.log.some((x) => /big egg with small eggs still out/.test(x))) bad('picking up the big egg at 3:52, with the small eggs still out, isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
   } catch (e) { bad('the mistakes crashed the game: ' + e.message + ' (check E)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // (the start card's "Your job in short" (Nov 15, Flex: "improve the setup screens. Still a little convoluted"): three or four plain lines for the
+  // picked job, naming your ledge, your egg and kicks, your tether and the heart)
+  try { dbg.P2.pick = { side: 'W', role: 'm', egg: 'close', mal: 2, cry: 1, teth: 'five' }; const sh = typeof dbg.P2.short === 'function' ? dbg.P2.short() : '', li = (sh.match(/<li>/g) || []).length;
+    if (!/^<ul class="pg-short">/.test(sh) || li < 3 || li > 4) bad('phase 2\'s "your job in short" isn\'t a pg-short list of three or four lines (' + li + ', check F)');
+    else if (!/West ledge/.test(sh) || !/close big egg \(north end\)/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
+  catch (e) { bad('phase 2\'s "your job in short" crashed: ' + e.message + ' (check F)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
   const PJ = rd('practice.js'), GJ = rd('guides.js'), BP = rd('build.ps1');
   if (!ctx.PG_PARTS["Ula'tek"].m2 || ctx.PG_PARTS["Ula'tek"].m2.d !== 'm' || typeof ctx.PG_PARTS["Ula'tek"].m2.mod !== 'function') bad('phase 2 isn\'t a Mythic part of Ula\'tek with its own mod in PG_PARTS (check F)');
