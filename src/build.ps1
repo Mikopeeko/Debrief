@@ -10,7 +10,7 @@ $wcl = & $read 'wcl.js'
 # stop without writing anything)
 $node = 'C:\Program Files\nodejs\node.exe'
 if (Test-Path $node) { foreach ($f in 'engine.js', 'wcl.js', 'ui.js', 'guides.js', 'mptab.js', 'sidenav.js', 'worker_template.js') {
-  $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP 'debrief-worker-check.mjs'; [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
+  $p = Join-Path $src $f; if ($f -eq 'worker_template.js') { $tmp = Join-Path $env:TEMP ('debrief-worker-check-' + $PID + '.mjs'); [IO.File]::WriteAllText($tmp, ([IO.File]::ReadAllText($p) -replace '__[A-Z_]+__', '""'), $utf8); $p = $tmp }
   & $node --check $p; if ($LASTEXITCODE) { throw "$f has a syntax error: nothing was built" } } }
 # (the Mythic+ tab (Nov 1): the PC app's own key reader, companion/mplus.js, in its own script, and the tab, src/mptab.js, inside ui.js)
 $mplus = [IO.File]::ReadAllText((Join-Path $root 'companion\mplus.js'))
@@ -36,7 +36,7 @@ $w = $w.Replace('/*TOPSPEC*/', $ts.Value)
 $hosted = ([regex]'<head>').Replace($html, "<head>`n<script>window.WLA_HOSTED = true;</script>", 1)
 # (Nov 5, faster loading: the website's copy without the notes in the code, ~0.4 MB less to download (src/strip-comments.js says what stays);
 # only when Node is on this PC, else the page goes as it is)
-if (Test-Path $node) { $tin = Join-Path $env:TEMP 'debrief-site-in.html'; $tout = Join-Path $env:TEMP 'debrief-site-out.html'; [IO.File]::WriteAllText($tin, $hosted, $utf8)
+if (Test-Path $node) { $tin = Join-Path $env:TEMP ('debrief-site-in-' + $PID + '.html'); $tout = Join-Path $env:TEMP ('debrief-site-out-' + $PID + '.html'); [IO.File]::WriteAllText($tin, $hosted, $utf8)
   & $node (Join-Path $src 'strip-comments.js') $tin $tout; if ($LASTEXITCODE) { throw 'strip-comments.js failed: nothing was built' }
   $hosted = [IO.File]::ReadAllText($tout); Remove-Item $tin, $tout -ErrorAction SilentlyContinue }
 $base = $w.Replace("`r`n", "`n")
