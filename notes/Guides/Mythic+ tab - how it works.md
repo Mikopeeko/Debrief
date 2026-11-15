@@ -285,3 +285,15 @@ It is Raid review's Graphs tab, fed a key:
 What a key does not have, and is left out instead of faked: buffs, debuffs, resources, casts, item level, active time, and a hover on the chart. Healing is not kept per second, so its chart is flat across each pull; a spell's casts and crits are not kept, so those columns show a dash.
 
 Where the numbers come from: damage and healing are the reader's own numbers for each pull, the ones the players table is built from. Damage taken, the chart's damage and a spell's damage are the page's own pass over the log.
+
+## Graphs: the breakdowns and Defensives (Nov 14, 2026, night)
+
+Flex on the first raid-style Graphs: "graphs is missing a lot of breakdowns. Theres no healing breakdowns, damage taken breakdowns. Looks unfinished. Whats going on with the defensives section of graphs?"
+
+- Damage taken: a player's row opens to "Damage taken by source" (each ability that hit them: its share, hits, average hit and biggest hit). By ability lists every ability that hit the group and opens to who took it.
+- Healing: a player's row opens to "Healing by spell" (share, hits, average hit, overheal). By ability lists every healing spell and opens to who cast it. By target is who received the healing. The last column of By player is that player's overheal. The chart is by the second now.
+- Defensives: a table of its own. Pressed (how many defensives), Kinds (how many different ones), Covered (the big hits they took with a defensive up, of all the big hits they took), Close (a big hit that left them under 15% with none up) and Deaths. A row opens to the defensives they pressed. Every big hit, cast by cast, is the Big hits list under it, unchanged.
+
+Where the numbers come from: the page's own pass over the log now also keeps, for each pull, what hit each player, each player's healing by spell with its overheal, and who received it. Healing is counted the way the reader counts it (the heal less its overheal, a pet's healing to its owner, onto players), so a player's spells add up to about their healing in the table; healing between pulls is in the chart but not in a pull's breakdown.
+
+Still not read from a key's log, and so not shown: casts and crits for a spell, buffs, debuffs, resources.
