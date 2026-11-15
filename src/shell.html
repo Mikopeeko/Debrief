@@ -20776,6 +20776,40 @@ html:not(.mpcard) body #view#view#view #mptCC .mpx-cvx .mpx-cvn { grid-column: 2
   html:not(.mpcard) body #view#view#view #mptCP .mprn-v { grid-column: 2 !important; justify-items: start !important; text-align: left !important; display: flex !important; align-items: baseline !important; gap: 8px !important; }
 }
 }
+/* Mythic+ Route, the fresh reviewers (Nov 15): a takeaway line under the Route score ("The score has no takeaway"), and a one-line key under the strip ("The strip
+   has no legend"). The key's swatches are the strip's own pieces, set in a row. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrs-r > .mrs-tk { margin: 10px 0 0 !important; font: 500 15px/1.45 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view .mrs-tk > .mrs-tkp, html:not(.mpcard) body #view#view#view .mrs-tk > .mrs-tkf { font-weight: 700 !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrs-tk.mrs-tk-y > .mrs-tkp { color: #f3c969 !important; } html:not(.mpcard) body #view#view#view .mrs-tk.mrs-tk-r > .mrs-tkp { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view .mpt-mstrip > .mrt-key { display: flex !important; flex-wrap: wrap !important; align-items: center !important; column-gap: 14px !important; row-gap: 4px !important; margin: 4px 0 6px !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view .mrt-key .mrt-kt { font: 500 12.5px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > :is(.mpt-blk, .mpt-dth, .mpt-lst, .mpt-cp, .mpt-ktk) { position: static !important; flex: none !important; margin: 0 !important; transform: none !important; opacity: 1 !important; filter: none !important; outline: 0 !important; cursor: default !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > .mpt-blk { display: block !important; width: 16px !important; height: 10px !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > .mpt-dth { display: block !important; width: 4px !important; height: 14px !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > .mpt-lst { display: block !important; width: 3px !important; height: 14px !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > .mpt-cp { display: grid !important; place-items: center !important; width: 14px !important; height: 14px !important; }
+html:not(.mpcard) body #view#view#view .mrt-key > .mrt-ki > .mpt-ktk { display: block !important; width: 10px !important; font-size: 12px !important; line-height: 14px !important; }
+}
+/* Mythic+ Rotation (Nov 15, the fresh reviewers): the Trash pulls and Bosses tiles name their pull or boss, and the line wraps */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mpcRot .mpv-tile > i { white-space: normal !important; }
+}
+/* Mythic+ Graphs (Nov 15, the fresh reviewers): the boss band, its start line, its name and the Bosses chip in the site's boss gold; the name over the layers with a dark edge */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCG .mpg-kb { background: #e6b450 !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bb { fill: rgba(230,180,80,.08) !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bl { stroke: #e6b450 !important; stroke-opacity: .7 !important; }
+html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bn { fill: #e6b450 !important; font-size: 12px !important; font-weight: 700 !important; paint-order: stroke !important; stroke: rgba(10,11,13,.85) !important; stroke-width: 3px !important; stroke-linejoin: round !important; }
+}
+/* Mythic+ Survival (Nov 15, the fresh reviewers): with no Warlock the potions table has three columns; the "up" bars in the site's blue, so a short one doesn't
+read as a failed check (how often a defensive was up is not graded) */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-p3 { grid-template-columns: minmax(120px,1fr) minmax(0,1fr) minmax(0,1.3fr) !important; }
+html:not(.mpcard) body #view#view#view #mptCV .mpsv-ui { background: #7d9be8 !important; opacity: .7 !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-p3 { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; } }
+}
 </style>
 </body>
 </html>

@@ -526,3 +526,13 @@ Flex asked "rate the mythic+ tab overall". Seven reviewers who had never seen th
 - **A phone shows every tab**: the tab row wraps onto two lines.
 
 Left as it was: the floating "Ask the Paladin" bubble shows only for the admin. Code: `mprNext` in src/mptab.js; the look is the last block of style#look-nov13. Checks: tests/mplus-report-opens.js runs the Next key list; tests/look-review.js has a block of six lines. Each fails on b203075a.
+
+## The next batch from the rating (Nov 15, 2026)
+
+Flex: "Yes, next batch" on the fresh reviewers' list (mplus-rating-nov15.md in the shared notes). Three readers drafted the Route, Rotation and Graphs changes from the code; the Survival part is this session's.
+- **Route**: one line under the Route score names the weakest part (the lowest share of its points, as the tiles colour them), says that part's own sentence and what to do next time ("Pull plan is the weak part. You took 3 more pulls than the fast run (11 against 8)... Next time, pull bigger where the fast run did."); when the Timer is the weak part the action is Fix first's own (R._sx.fx). Under the strip a one-line key names each shape the lanes show, drawn with the strip's own pieces, only the ones this key has (`mrsTake`, `mrtKey`). The map and the replay are untouched.
+- **Rotation** (the website's tab is `mpcRotHtml`): every check to fix opens by default, so the worst one is never shut, until you open or shut one yourself; the Trash pulls and Bosses tiles name the pull or boss when it came up on one or two ("Rotation priority, on pull 1"). The order of the checks is the studio's (gap to top players first).
+- **Graphs**: Damage done, Damage taken and Healing open on every player, a layer each in class colours; opening a row shows that player alone (the chart follows the opened row on those three; Casts, Resources, Deaths and Survival still follow the Player pick). The boss band, its start line, its name and the Bosses chip are in the site's boss gold, the name drawn over the layers.
+- **Survival**: with no Warlock in the group and no Healthstone used, the tab says health potion only (the tile, the section's title and its rows; the Healthstones column goes). The kit's column is the graded number, "Ready, not pressed" (a defensive that sat ready when a big hit left them under 15% or dead), with "up on N of M big hits" under it. The "up" bars on the big hits are the site's blue.
+
+Left for later: Route's map readability (another chat works on the map and the replay); Survival telling the same moments in several parts; the tabs' different summary styles.
