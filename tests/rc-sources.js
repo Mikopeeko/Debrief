@@ -10,7 +10,7 @@ module.exports = function rcSources(H, say) {
     ['Ready to raid (flask, food, oil, rune, enchants, gems, item level)', 'rdyRows(prepNight(NR, nm))', [grab('coachKitHtml'), 'rdyRows(prepNight(K.reps, K.name))']],
     ['Healthstone or health potion; Close calls answered', 'kitNight(NR, nm)', [grab('coachKitHtml'), 'kitFromK(K, K.name)']],
     ['Big defensives (tanks)', 'tankDefNight(NR, nm)', [grab('coachKitHtml'), 'tankDefNight(K.reps, K.name)']],
-    ['Big cooldowns', 'cdNight(NR, nm)', [U, "{ const CN = o.P0 ? cdNight(SPC_REPS && SPC_REPS.length ? SPC_REPS : o.per.map((x) => x.r), o.P0.name) : null;"]],
+    ['Big cooldowns', 'cdNight(NR, nm)', [U, "{ const CN = o.P0 ? cdNight(spcNightReps(o), o.P0.name) : null;" /* (Nov 15, Main's review: the pulls being graded; the Rotation tab's set only while it draws) */]],
     ['Externals', 'extNight(NR, nm)', [grab('coachKitHtml'), 'extNight(K.reps, K.name)']],
     ['Deaths on you, Defensive before dying', 'deathsOf(a.per.map((g) => g.r), nm)', [grab('gbDeathOk'), 'v.on']],
     ['Damage / Healing', 'estParses(a.per.map((g) => g.r), kind377)', [U, 'const gbPrs = (k) =>']]];

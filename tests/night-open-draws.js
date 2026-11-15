@@ -73,9 +73,14 @@ module.exports = async function nightOpenDraws(H, say, src) {
     /* (a pull already saved on this browser reads in 0.5 s: the page waits for the lists, still one draw) */
     const saved = await open(phone, 0, { read: 500 }); if (!saved) return;
     if (saved.draws.length > MAX_DRAWS) bad('opening a pull already saved on this browser ' + where + ' builds the whole page ' + saved.draws.length + ' times; it should wait for the comparison lists and be built ' + MAX_DRAWS + ' time');
-    /* (two lists past the wait, a second apart, behind the loading card: one redraw for both, not one each) */
-    const two = await open(phone, 0, { read: 500, guild: 3800, pace: phone ? 7300 : 5600 }); if (!two) return;
-    if (two.draws.length > MAX_DRAWS + 1) bad('with two lists coming in late behind the loading card ' + where + ', the page is built ' + two.draws.length + ' times; one redraw should cover both');
+    /* (two lists past the wait, a moment apart, behind the loading card while its time for the lists lasts: one redraw for both, not one each. Only a
+       phone has time left after its draw: on a PC the 3 s wait before the draw and the draw itself use up the 4 s the card waits for the lists) */
+    if (phone) { const two = await open(phone, 0, { read: 500, guild: 8100, pace: 8700 }); if (!two) return;
+      if (two.draws.length > MAX_DRAWS + 1) bad('with two lists coming in late behind the loading card ' + where + ', the page is built ' + two.draws.length + ' times; one redraw should cover both'); }
+    /* (Nov 15, Main's review: a list later than every wait holds the loading card once, not twice: the time the page waited for it before its draw counts
+       against the card's own wait for the lists (4 s on a PC, 9 s on a phone, in all). It held the card up to 3 + 4 s (6 + 9 s on a phone)) */
+    { const cap = phone ? 9000 : 4000, slow = await open(phone, 15000); if (!slow) return;
+      if (slow.shownAt == null || slow.shownAt - READ_MS > cap + DRAW_MS + 1000) bad('with the guild\'s history 15 s late ' + where + ', the loading card stayed ' + (slow.shownAt == null ? 'up' : ((slow.shownAt - READ_MS) / 1000).toFixed(1) + ' s') + ' after the pull was read; the lists get ' + cap / 1000 + ' s in all, plus the draw'); }
     /* (one list lands after the draw while another is still coming past the card's limit: the first is drawn while the card is still up, never
        dropped when the card goes (Nov 15 review: held back to wait for the rest, it could miss the card's end and stay off a phone's page)) */
     const gAt = phone ? 7000 : 3800, held = await open(phone, 0, { read: 500, guild: gAt, pace: 40000 }); if (!held) return;

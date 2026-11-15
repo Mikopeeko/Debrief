@@ -78,14 +78,17 @@ try {
     const ORD = { 'pull 11 first': [[11], others], 'the rest first': [others, [11]], 'half and half': [[11].concat(others.slice(0, 6)), others.slice(6)] }, out = {};
     for (const [nm, steps] of Object.entries(ORD)) { fresh(); const L = []; for (const st of steps) { L.push(...st); setLoaded(L); if (L.includes(11)) await grade(); } out[nm] = await grade(); }
     setLoaded(items.map((b) => b.pull)); fresh(); const ref = await grade(); fresh(); /* (the whole-night answer: the whole night loaded on a fresh page, graded once) */
-    window.__go = JSON.stringify({ ref, out }); } catch (e) { window.__go = JSON.stringify({ err: String(e && e.stack || e).slice(0, 300) }); } })()`;
+    /* (Main's review, Nov 15: right after the Rotation tab showed All pulls (SPC_REPS = the whole night), pull 11 graded for Summary is the same grade) */
+    let spc = null; try { SPC_REPS = items.map((b) => reps.get(b.pull)); spc = await grade(); } finally { SPC_REPS = []; fresh(); }
+    window.__go = JSON.stringify({ ref, out, spc }); } catch (e) { window.__go = JSON.stringify({ err: String(e && e.stack || e).slice(0, 300) }); } })()`;
   const s1 = await inPage(SCEN); if (s1 !== 'ok') await bye('FAILED: could not run the grades inside the page (' + s1 + ')', 1);
   const G = await result(240); if (!G || G.err) await bye('FAILED: ' + (G ? G.err : 'the grades did not finish'), 1);
   const problems = [], fmt = (o) => 'Pull score ' + o.night.toFixed(3) + ' (shows ' + Math.round(o.night) + '), Huservoker\'s Big cooldowns "' + o.hus + '", Dragooned\'s Rotation ' + o.dra;
   /* (every order must end on the whole-night answer, field for field. Offline the page has no Warcraft Logs or Wowhead (top players' casts, gear
      names), so its Pull score and Dragooned's Rotation read lower than the site's 65 and 77 (64 and 69); Huservoker's Big cooldowns, the row of the bug,
      is the site's "1 of 2" here too. The site's own numbers were checked on the practice link the day it was fixed) */
-  const { ref, out } = G, REF = Math.round(ref.night), names = Object.keys(out);
+  const { ref, out, spc } = G, REF = Math.round(ref.night), names = Object.keys(out);
+  if (!spc || ['night', 'perf', 'mech', 'alive', 'prep', 'hus', 'dra'].some((k) => spc[k] !== ref[k])) problems.push('graded right after the Rotation tab showed All pulls, pull 11 is ' + (spc ? fmt(spc) : 'nothing') + ', but on its own it is ' + fmt(ref) + ' (Potions and Big cooldowns counted over the pulls Rotation drew)');
   if (ref.hus !== '1 of 2 possible uses') problems.push('the whole night loaded, Huservoker\'s Big cooldowns reads "' + ref.hus + '"; he pressed Rewind in pulls 8, 10 and 13, so it is "1 of 2 possible uses"');
   for (const nm of names) { const o = out[nm];
     if (o.wait) problems.push(nm + ': a spell cooldown was still being looked up (tests/grade-order-cooldowns.json is missing one)');
@@ -103,7 +106,7 @@ try {
     const mo = new MutationObserver((ms) => { for (const m of ms) for (const x of m.addedNodes) if (x.id === 'view') draws++; }); mo.observe(document.getElementById('main'), { childList: true });
     for (const it of items) if (it.pull !== 11) CACHE.set(it, reps.get(it.pull));
     /* (the exact score Summary holds for pull 11 with the whole night loaded: worked out again in place, it equals the whole night graded once) */
-    const held = () => { const it0 = S.rep.item, dk0 = 'p|' + it0.id + ':' + it0.diffId + ':' + it0.pull + ':' + (it0.startMs || '') + '|' + deathCutN(); let D = null; try { D = SUM5_D.get(dk0 + '|' + bossLoaded(it0.boss)); } catch (e) { D = SUM5_D.get(dk0); } return D && D.N ? D.N.night : null; };
+    const held = () => { const it0 = S.rep.item; let dk0 = 'p|' + it0.id + ':' + it0.diffId + ':' + it0.pull + ':' + (it0.startMs || '') + '|' + deathCutN(); try { dk0 = sum5Key0(it0, true); } catch (e) { /* (an older page: no report in the key) */ } let D = null; try { D = SUM5_D.get(dk0 + '|' + bossLoaded(it0.boss)); } catch (e) { D = SUM5_D.get(dk0); } return D && D.N ? D.N.night : null; };
     let after = before, full = null; for (let i = 0; i < 200; i++) { await new Promise((r) => setTimeout(r, 250)); after = score(); full = held(); if (full != null && Math.abs(full - REFN) < 1e-9 && after === REF) break; }
     mo.disconnect();
     /* (and coming back: leave pull 11 while a pull of the night is missing, come back: the last scores show at once, then the whole-night grade once it's in) */
@@ -123,5 +126,5 @@ try {
       if (P.draws || !P.same) problems.push('the rest of the night arriving redrew the whole page (' + P.draws + ' time(s)); only the scores should change'); } }
   if (errs.length) problems.push('page errors: ' + errs.slice(0, 3).join(' | '));
   if (problems.length) { problems.forEach((p) => console.log('  ' + WHERE + ': ' + p)); await bye(problems.length + ' problem(s)', 1); }
-  await bye('pull 11 graded in 3 load orders in ' + Math.round((Date.now() - T0) / 1000) + ' s: ' + fmt(ref) + ' every time; Summary worked it out again in place as the night arrived (' + P.before + ' -> ' + P.after + ', ' + P.full.toFixed(3) + '), no full redraw, and coming back to the pull showed the last scores at once', 0);
+  await bye('pull 11 graded in 3 load orders in ' + Math.round((Date.now() - T0) / 1000) + ' s: ' + fmt(ref) + ' every time, and the same right after the Rotation tab showed All pulls; Summary worked it out again in place as the night arrived (' + P.before + ' -> ' + P.after + ', ' + P.full.toFixed(3) + '), no full redraw, and coming back to the pull showed the last scores at once', 0);
 } catch (e) { await bye('FAILED: the check crashed: ' + (e.stack || e.message).split('\n')[0], 1); }

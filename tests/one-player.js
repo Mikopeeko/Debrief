@@ -60,7 +60,7 @@ module.exports = function onePlayer(NIGHT_R, H, say) {
     if (!/perf: sc\.perf, mech: sc\.mech, alive: sc\.alive, prep: sc\.prep/.test(H.UI)) say('the Report card', 'one player', 'the roster doesn\'t read the card\'s numbers (rcbFacts)'); }
   // 21. Rotation and potions on the card are their tabs' own numbers (Main's re-test: Rotation tab 94, card 97; potions 30 of 31, 29 of 31, 26 of 27)
   { const U = H.UI; if (!/const x = rotOf\(l, p, false\)/.test(U) || !/rot: a\.rotN != null \? a\.rotN/.test(U)) say('the Report card', 'one player', 'the card\'s Rotation isn\'t the Rotation tab\'s night score (rotOf over the night, as the tab)');
-    if (!/const P0 = potNight\(reps, a\.p\.name\)/.test(U) || !/const P0 = potNight\(SPC_REPS/.test(U) || !/a\.pot\[0\] \+= Math\.min\(s\.used, s\.expect\)/.test(U)) say('the Report card', 'one player', 'Summary, Rotation and the card don\'t count potions with one function (potNight)');
+    if (!/const P0 = potNight\(reps, a\.p\.name\)/.test(U) || !/const P0 = potNight\(spcNightReps\(o\)/.test(U) /* (Nov 15, Main's review: the pulls being graded; the Rotation tab's set only while it draws) */ || !/a\.pot\[0\] \+= Math\.min\(s\.used, s\.expect\)/.test(U)) say('the Report card', 'one player', 'Summary, Rotation and the card don\'t count potions with one function (potNight)');
     if (!/sv = survivalOf\(r, p\); \} catch/.test(U)) say('the Report card', 'one player', 'Summary\'s coach counts potions its own way (cpE386 should read survivalOf)'); }
   // 13. What wiped us most with a player picked (shell.html's script reads the coach box on the page, so its code is checked)
   { const sh = H.SH, a = sh.indexOf('var W1 = wipL.map('), b = sh.indexOf('\n', a), w1 = a < 0 ? '' : sh.slice(a, b);
