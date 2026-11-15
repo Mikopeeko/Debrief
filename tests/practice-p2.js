@@ -5,7 +5,9 @@
 //   A. the clock isn't the measured Mythic one (notes/Guides/Bosses/8 Ula'tek.md, "After phase 1, measured": Hatching Doom 2:54, Wardens 2:55,
 //      Malice 3:03, Grasping Fangs 3:16, Wardens dead 3:37 to 3:40, Falling Debris 3:50, 4:30 and 5:17, Doomscales 4:27, Anguished Cry 4:35, 4:53
 //      and 5:09, Rage of the Shackled 4:48, heart open 4:55): the check reads those times out of the notes themselves;
-//   B. Grasping Fangs isn't six tethers, three a ledge, on anyone (tanks too), one solo break 14 to 18 s before the five (measured);
+//   B. Grasping Fangs isn't six tethers, three a ledge, on anyone (tanks too), one solo break about 8 s after the tethers land and 8 s before the
+//      five (Main, Nov 15, all 131 library Mythic kills: the solo a median 8.3 s after the landing, the five 16.7 s; the game had the solo at 3:18.5,
+//      2.5 s after the landing, from the notes' "14 to 18 s", which was counted from the landing, not the solo);
 //   C. a bot slips: off the stone, in Falling Debris or a frontal, off their ledge or not back for the heart, by a protected egg, a tether broken
 //      off the count, a kick missed, two egg carriers within 3 yards, an egg not in the cauldron. (Found while building it, Nov 15: the Doomscales'
 //      kickers stood just out of reach, so a missed Anguished Cry stunned the raid into the 5:14 and 5:17 debris; the egg carriers walked straight
@@ -77,7 +79,11 @@ function checks(H, say) {
     if (ids.length !== 6 || ids.filter((id) => J[id].side === 'E').length !== 3 || solo.length !== 1) { bad('Grasping Fangs gives ' + ids.length + ' tethers (' + ids.filter((id) => J[id].side === 'E').length + ' east) and ' + solo.length + ' solo on seed ' + seed + '; Mythic has six, three a ledge, one breaking alone (check B)'); break; }
     if (ids.some((id) => id[0] === 't')) tanks++; }
   if (!tanks) bad('no tank got a tether in 40 runs; on top kills they land on any role, tanks too (check B)');
-  if (T.five - T.solo < 14 || T.five - T.solo > 18) bad('the five break ' + (T.five - T.solo) + ' s after the solo; top kills break them 14 to 18 s apart (check B)');
+  // (the tethers land at 3:16 on the game's clock, about 1.4 s before the logs' cast event at 3:17.4, so the solo sits about 8.3 + 1.4 s after it)
+  if (T.five - T.solo < 6 || T.five - T.solo > 10) bad('the five break ' + (T.five - T.solo) + ' s after the solo; top kills break them about 8 s apart (middle half 7.5 to 9.2, check B)');
+  if (T.solo - T.fangs < 7.5 || T.solo - T.fangs > 12) bad('the solo breaks ' + (T.solo - T.fangs) + ' s after the tethers land; top kills break it about 8 s after (middle half 6.9 to 9.3 from the cast event, check B)');
+  if (T.five - T.fangs < 15.5 || T.five - T.fangs > 19.5) bad('the five break ' + (T.five - T.fangs) + ' s after the tethers land; top kills break them about 17 s after (check B)');
+  if (/break alone at 3:18|solo break is at 3:18|at 3:18, alone/.test(rd('practice-p2.js'))) bad('a text still puts the solo break at 3:18 (check B)');
   // C. the bots, played: a raider with no egg, no kick and no tether as you, so every job is a bot's
   const free = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' };
   try { dbg.P2.pick = free; for (const [east, seed] of [[false, 3], [true, 5], [false, 11], [true, 14]]) { dbg.at(166.05, dbg.P2.slotOf(free), { east, seed }); dbg.audit(east, seed).filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + ' (she is ' + (east ? 'east' : 'west') + ', seed ' + seed + ', check C)')); } }
@@ -88,9 +94,13 @@ function checks(H, say) {
     if (!/^m[4-7]$/.test(me)) bad('a west melee pick plays as ' + me + ', not one of the west half\'s melee (check D)');
     const r = dbg.sim(me, true, false, 3), J = dbg.S.job, j = J[me];
     if (j.egg !== 4 || j.mal !== 1 || j.cry !== 1 || j.teth !== 'solo') bad('the picked job (west, small egg 4, the 1st Malice, Doomscale 1\'s cries, the solo break) plays as ' + JSON.stringify(j) + ' (check D)');
-    // (a melee who picks the 2nd Malice and the solo break, or the 3rd and the five, is told on the card: they can't kick from the end of a tether)
-    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; if (!/Heads up: the 2nd Malice/.test(dbg.P2.clash())) bad('a melee picking the 2nd Malice and the solo break isn\'t told they clash (check D)');
-    dbg.P2.pick = { side: 'W', role: 'r', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; if (dbg.P2.clash()) bad('a ranged kicker (30 yards) is told the 2nd Malice clashes with the solo break (check D)');
+    // (a melee who picks the 3rd Malice and one of the five is told on the card: they can't kick from the end of a tether. The solo walks out at 3:26,
+    // between the 2nd and 3rd Malice, so the 2nd Malice and the solo break go together, for melee too (Main, Nov 15))
+    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 3, cry: 1, teth: 'five' }; if (!/Heads up: the 3rd Malice/.test(dbg.P2.clash())) bad('a melee picking the 3rd Malice and one of the five isn\'t told they clash (check D)');
+    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; if (dbg.P2.clash()) bad('a melee picking the 2nd Malice (3:18) and the solo break (3:26) is told they clash; they don\'t (check D)');
+    dbg.P2.pick = { side: 'W', role: 'r', egg: 'n4', mal: 3, cry: 1, teth: 'five' }; if (dbg.P2.clash()) bad('a ranged kicker (30 yards) is told the 3rd Malice clashes with the five (check D)');
+    // (and played: a west melee with the 2nd Malice and the solo break kicks at 3:18, then breaks alone on the count, clean)
+    { const pkM = { side: 'W', role: 'm', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; dbg.P2.pick = pkM; const rM = dbg.sim(dbg.P2.slotOf(pkM), true, false, 3); if (rM.log.length) bad('a west melee with the 2nd Malice and the solo break, played by the autopilot, makes mistakes: ' + rM.log.join(' | ') + ' (check D)'); }
     ['E', 'W'].forEach((s) => { const ids = Object.keys(J).filter((id) => J[id].side === s), n = (k, v) => ids.filter((id) => J[id][k] === v).length;
       for (let e = 1; e <= P.eggs[s].length; e++) if (n('egg', e) !== 1) bad('small egg ' + e + ' on the ' + s + ' ledge has ' + n('egg', e) + ' carriers after the pick (check D)');
       ['far', 'close'].forEach((w) => { if (n('big', w) !== 1) bad('the ' + w + ' big egg on the ' + s + ' ledge has ' + n('big', w) + ' carriers after the pick (check D)'); });
