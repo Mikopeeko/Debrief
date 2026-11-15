@@ -483,8 +483,11 @@ function pgOpen(root, boss, d, pk) {
     S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open: hit it', '#ff8a5a');
     return L.sort((a, b) => a.at - b.at).slice(0, 3); };
   let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
-    const t = G.t, j = jobOf(me, t), egg = G.eggs.some((e) => e.id === me && e.state === 'floor'), act = !!(j.ob || j.fast || egg), b = { id: me, x: G.x, y: G.y, esc: G.hintEsc }, dz = act ? dodge(b, j.T, t, j.fast, j.ob) : null; G.hintEsc = b.esc;
-    const T = dz ? dz.T : null, d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, dodge: !!b.esc } : null; hintC = { t, h }; return h; };
+    // (Flex, Nov 15: "the move here thing should only be for specific mechanics ... where to stand for things like soaks, not how to dodge waves": your coil
+    // soak, the Wretch's bubble and your egg; never the waves, the tail's sweep or her reach)
+    const t = G.t, j = jobOf(me, t), eg = G.eggs.find((e) => e.id === me && e.state === 'floor'); let T = null, what = '';
+    if (j.ob) { T = spotIn(j.ob, me) || j.ob.p.slice(); what = 'spot'; } else if (eg) { T = [eg.x, eg.y]; what = 'egg'; }
+    const d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, what } : null; hintC = { t, h }; return h; };
   const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
     if (!force && key === hudKey) return; hudKey = key;
     $('.pg-mn').textContent = role.name + ' (you)'; $('.pg-mj').textContent = role.job;

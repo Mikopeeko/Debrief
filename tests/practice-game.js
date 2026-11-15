@@ -122,7 +122,10 @@ function checks(H, say, pj) {
     if (up.length > 3) bad('the "coming up" line lists ' + up.length + ' things; three at most, or it clutters (check E)');
     dbg.pos = [25, -20]; const h = dbg.hint();
     if (!h || !(h.d > 2.5) || hyp(h.T, b1.p) > 10.5) bad('far from the bubble at 0:35, the hint arrow ' + (h ? 'points ' + hyp(h.T, b1.p).toFixed(0) + ' yards from the bubble' : 'isn\'t there') + ' (check E)');
-    dbg.hints = false; if (dbg.hint()) bad('with hints off, the arrow still shows (check E)');
+    dbg.hints = false; if (dbg.hint()) bad('with hints off, the arrow still shows (check E)'); dbg.hints = true;
+    // (Flex, Nov 15: "the move here thing should only be for specific mechanics ... where to stand for things like soaks, not how to dodge waves")
+    dbg.at(58, 'r3', { east: false, seed: 3 }); dbg.pos = [20, -20]; const hw = dbg.hint(); if (hw) bad('during her waves at 0:58 the "Go here" arrow shows (' + hw.what + '); it is only for where to stand: soaks, bubbles, your egg (check E)');
+    if (!/if \(j\.ob\) \{ T = spotIn\(j\.ob, me\) \|\| j\.ob\.p\.slice\(\); what = 'spot'; \} else if \(eg\)/.test(PJ) || /dodge\(b, j\.T, t, j\.fast, j\.ob\)/.test(PJ)) bad('the "Go here" arrow still follows dodges, not only where to stand (check E)');
   } catch (e) { bad('the hints crashed the game: ' + e.message + ' (check E)'); }
   finally { try { dbg.hints = true; } catch (e) { /* (no hints) */ } }
   // F. The start card, tidy (Nov 15, Flex: "can you improve the setup screens. Still a little convoluted"): your job, your job in short (four lines at
