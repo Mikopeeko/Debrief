@@ -20193,6 +20193,34 @@ html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-tk.d { background: #ff8f
 html:not(.mpcard) body #view#view#view .mrp-lane > .mrp-ph { position: absolute !important; top: -2px !important; width: 2px !important; height: 30px !important; margin-left: -1px !important; background: #fff !important; box-shadow: 0 0 0 1px rgba(0,0,0,.6) !important; pointer-events: none !important; }
 @media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-grid { grid-template-columns: minmax(0, 1fr) !important; } html:not(.mpcard) body #view#view#view .mrp-top > .mrp-x { margin-left: 0 !important; } }
 }
+/* Mythic+ Route score (Nov 14, Flex: "I also think there should be a score for the route somehow"): a ring and five parts at the top of the Route tab. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrs { display: grid !important; grid-template-columns: 150px minmax(0, 1fr) !important; gap: 18px !important; align-items: center !important; margin: 8px 0 16px !important; padding: 14px 18px !important; border: 1px solid var(--line2) !important; border-radius: 4px !important; background: rgba(255,255,255,.02) !important; }
+html:not(.mpcard) body #view#view#view .mrs.mrs-none { grid-template-columns: minmax(0, 1fr) !important; padding: 10px 18px !important; }
+html:not(.mpcard) body #view#view#view .mrs.mrs-none > .mrs-h { margin: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrs-l { display: grid !important; justify-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view .mrs-l > .mrs-lk { font: 700 12px var(--head) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrs-r { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrs-h { margin: 0 0 8px !important; }
+html:not(.mpcard) body #view#view#view .mrs-h > .mrs-hk { font: 700 16px var(--head) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrs-h > .mrs-hs { margin-left: 8px !important; font: 400 13px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrs-row { display: grid !important; grid-template-columns: 150px 150px 62px 84px minmax(0, 1fr) !important; column-gap: 12px !important; align-items: center !important; padding: 5px 0 !important; border-top: 1px solid rgba(255,255,255,.05) !important; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-n { font: 600 13.5px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-bar { display: block !important; height: 8px !important; background: rgba(255,255,255,.07) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-bar > i { display: block !important; height: 100% !important; background: #45c15c; }
+html:not(.mpcard) body #view#view#view .mrs-row.mrs-y > .mrs-bar > i { background: #e8a23a; } html:not(.mpcard) body #view#view#view .mrs-row.mrs-r > .mrs-bar > i { background: #e5534b; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-p { font: 700 15px var(--body) !important; font-variant-numeric: tabular-nums !important; color: #7ee08f; }
+html:not(.mpcard) body #view#view#view .mrs-row.mrs-y > .mrs-p { color: #f3c969; } html:not(.mpcard) body #view#view#view .mrs-row.mrs-r > .mrs-p { color: #ff8f87; } html:not(.mpcard) body #view#view#view .mrs-row.mrs-n > .mrs-p { color: var(--muted); }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-p > small { font: 400 12.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-v { font: 600 13px var(--body) !important; color: var(--text) !important; font-variant-numeric: tabular-nums !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mrs-row > .mrs-w { font: 400 13px/1.4 var(--body) !important; color: var(--muted) !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrs-row.mrs-n > .mrs-n, html:not(.mpcard) body #view#view#view .mrs-row.mrs-n > .mrs-v { color: var(--muted) !important; }
+@media (max-width: 900px) {
+  html:not(.mpcard) body #view#view#view .mrs { grid-template-columns: minmax(0, 1fr) !important; }
+  html:not(.mpcard) body #view#view#view .mrs-row { grid-template-columns: minmax(0, 1fr) 90px 62px !important; row-gap: 2px !important; }
+  html:not(.mpcard) body #view#view#view .mrs-row > .mrs-v, html:not(.mpcard) body #view#view#view .mrs-row > .mrs-w { grid-column: 1 / -1 !important; white-space: normal !important; }
+}
+}
 </style>
 </body>
 </html>

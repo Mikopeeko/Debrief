@@ -373,3 +373,17 @@ Flex: "Lets start by making a replay version of the map", "I still want the rout
 What it reads: the page's own pass over the log now keeps where each player and each enemy was, a spot a second (from the position each log line carries). Everything else was already kept for the map and the pull cards.
 
 Not in this first version: the fast run moving beside the group, a player to follow, dispels and defensives on the map itself (they are in the list), and enemy health.
+
+## Route: the Route score (Nov 14, 2026)
+
+Flex: "I also think there should be a score for the route somehow", "Like route efficiency, timing the key, how much time remained... etc things like that. Tricky to make". He agreed to five parts ("Yes, build it"). The numbers are his to tune.
+
+At the top of the Route tab: a ring with the score out of 100, and its five parts, each with its points, what happened and one sentence.
+- Timer, 35: a timed key is 24, and the time left earns the rest (40% of the timer left, which is a +3, earns all 35). Over time loses the 24 a little at a time, and all of it at 25% over.
+- Pace between pulls, 25: the time not fighting, against the fast run's. The same or less is 25; twice as long is 0. With no fast run it is judged by its share of the key (12% or less is 25, 32% is 0).
+- Pull plan, 20: the trash pulls taken, against the fast run's. Each pull more costs 3.
+- Count, 10: finishing at 100% and not far over. Up to 2% over is free; each 1% more costs 1.
+- Lust, 10: each Lust on a boss or one of the three biggest pulls, out of the Lusts the key's length allows (one every 10 minutes, 3 at most).
+A part that can't be judged is left out and the rest is scaled to 100: a key left early has no timer, pace or count; with no fast run there is no pull plan.
+
+Why these weights: the Mythic+ research ranks route and pull plan 9.5 of 10, pace between pulls 8.5, Lust on the right moments 7.5, and finishing at 100% count 7.
