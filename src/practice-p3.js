@@ -176,8 +176,8 @@ function pgP3(A) {
   const T = PG_P3_T, P = PG_P3, clk = pgClock, RN = { m: 'Melee', r: 'Ranged', h: 'Healer' }, ORD = ['', '1st', '2nd', '3rd'];
   let S = null, G = null; const sync = () => { S = A.S; G = A.G; };
   let setUp = false; const setup = () => { if (setUp) return; setUp = true;
-    if (A.DPS_SAY) Object.assign(A.DPS_SAY, { clutch: ['Hit the clutches', 'The clutches were up', 'Tab picks a Slithering Clutch once the Death Knights have gripped it onto the raid: hit them down before they hatch.', 'them'],
-      wretch: ['Hit the Wretch', 'The Wretch was up', 'Tab picks the Blightscale Wretch: kill it before its third bubble.', 'it'], shrieker: ['Hit the Shriekers', 'The Shriekers were up', 'Tab picks a Blightscale Shrieker: they stack damage on the whole raid, so kill them fast.', 'them'] });
+    if (A.DPS_SAY) Object.assign(A.DPS_SAY, { clutch: ['Hit the clutches', 'The clutches were up', 'Once the Death Knights grip the clutches onto the raid, press Tab to pick one, then keep pressing 1 until they die.', 'them'],
+      wretch: ['Hit the Wretch', 'The Wretch was up', 'Press Tab to pick the Blightscale Wretch, then keep pressing 1: kill it before its third bubble.', 'it'], shrieker: ['Hit the Shriekers', 'The Shriekers were up', 'Press Tab to pick a Blightscale Shrieker, then keep pressing 1: they stack damage on the whole raid, so kill them fast.', 'them'] });
     Object.assign(A.DEB, { bite: ['Serpent\'s Bite', '#ff4a4a'], purge: ['Volatile Purge', '#ff8a3b'], stun: ['Stunned', '#ffd23b'], echo: ['Vicious Echoes', '#ff9fb2'], corpse: ['Calcified Corpse', '#b8a88a'] });
     ['prey', 'stone', 'soakmiss', 'stack', 'purge', 'kick', 'fester', 'wipe'].forEach((k) => A.MAJ.add(k)); };
   // ---- your job (the start card), remembered on this browser ----
@@ -417,7 +417,7 @@ function pgP3(A) {
   const short = () => { fix(); const L0 = [];
     L0.push('Get onto her quarter (gateway or walk) and stack with the raid. At each Circling Prey (7:12, 8:03, 9:04) move one quarter left first.');
     L0.push(pk.soak ? 'Soak the ' + ORD[pk.soak] + ' Serpent\'s Bite (' + ['', '6:42', '7:46', '9:30'][pk.soak] + '): stand on the red circles, press Q as they drain, then spread to the edge.' : 'No soak: keep out of the red circles.' + (pk.bite === 'yes' ? ' One will land on you: walk it to the gold ring.' : pk.bite === 'random' && pk.role !== 'h' ? ' One may land on you: walk it to the gold ring.' : ''));
-    L0.push((pk.kick ? 'Kick Shrieker ' + pk.kick + '\'s Vicious Echoes at 8:47 (E). ' : '') + 'Hit the clutches, the Wretch and the Shriekers when they\'re up (Tab).');
+    L0.push((pk.kick ? 'Kick Shrieker ' + pk.kick + '\'s Vicious Echoes at 8:47 (E). ' : '') + 'Hit the clutches, the Wretch and the Shriekers when they\'re up (Tab, then keep pressing 1).');
     L0.push('Step into a gap in her waves. Into the Wretch\'s bubble at 7:45 and 8:17. Burn the heart at 9:43.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
   // ---- hitting the right thing: the clutches once they're on the raid (and their Rawlings), the Wretch while it's awake, the Shriekers once they're
