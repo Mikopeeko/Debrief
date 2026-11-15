@@ -462,3 +462,9 @@ The enemies' health bars in their kind's colour (Nov 14; Flex: "Can you also col
 ### Big hits moves into the fold (Nov 14, 2026)
 
 Flex: "I think the big hits section is throwing me off im not sure what to do with it", then "Yes, move it". Big hits was its own folded panel under the Summary, a second, longer list of what the moments already tell. It is now the last part of "Every mistake, kind by kind", with its own fold inside. The Close calls number, a close call's row ("See the hit") and "See every big hit" open it there. Nothing in Big hits changed. A key with no timer has no fold, so its Big hits stays where it was.
+
+The enemies beside the replay keep a fixed order (Nov 14; Flex: "Dont organize these mid pull just leave them with elites at the top, then casters, then melee. Dont sort by health remaining"): bosses, elites, casters, melee, the same kind together by name. A row only moves up when one above it dies, or down when a new enemy joins.
+
+Raid frames that move like health (Nov 14; Flex: "the healthbars here dont really move in a realistic way can you fine tune it"): the page keeps every change of a player's health with its moment, and a frame shows the health at that very moment, easing there quickly (a hit drops it fast, heals fill it a little slower). A boss's health bar is red, on the map and beside it ("Bosses should have red health bars").
+
+Walking and the map's size (Nov 14; Flex: "disabling this doesnt work, it still skips the walking", "how can we fill the empty space"): a player writes nothing in the log while only walking, so the replay now walks each player in a straight line from one spot the log has to the next; with "Skip the walking" off the walk plays at its own speed. The map grows to the height of the panel beside it, and the panel keeps a fixed height (8 enemy rows, 9 lines of As it happens) so the map never changes size mid-pull.

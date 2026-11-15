@@ -20552,6 +20552,27 @@ html:not(.mpcard) body #view#view#view #mpxAllM > #mptCH > details.mpx-bhf > sum
 html:not(.mpcard) body #view#view#view #mpxAllM > #mptCH .mpx-bht { font: 700 16px var(--body) !important; }
 html:not(.mpcard) body #view#view#view #mptCS .mpx-mow > .mpx-mobh { margin: 0 0 0 6px !important; font: 600 13px var(--body) !important; white-space: nowrap !important; }
 }
+/* Mythic+ replay: a boss's health bar is red (Nov 14, Flex: "Bosses should have red health bars"), on the map and beside it, like its frame on the map. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-e.t-boss > .mrp-ebf { fill: #e5534b !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.t-boss .mrp-efh > i { background: #c8312b !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.t-boss .mrp-efn { color: #fff !important; }
+}
+/* Mythic+ replay: the map fills its column (Nov 14, Flex, with a picture of the empty space under the map: "how can we fill the empty space"). The panel beside
+   it keeps a fixed height (8 enemy rows, 9 lines of As it happens), and the map grows to it, so it never resizes as enemies die; the enemies' rows slide quicker. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-grid { align-items: stretch !important; }
+html:not(.mpcard) body #view#view#view .mrp-left { display: flex !important; flex-direction: column !important; }
+html:not(.mpcard) body #view#view#view .mrp-left > .mrp-map { flex: 1 0 auto !important; aspect-ratio: 1.6 !important; min-height: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-left > .mrp-map > .mrp-svg { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; aspect-ratio: auto !important; }
+html:not(.mpcard) body #view#view#view .mrp-left > .mrp-bar { flex: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-ef { height: 192px !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-efm2 { min-height: 18px !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-efm2:empty { display: block !important; visibility: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-feed { height: 252px !important; min-height: 0 !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef > .mrp-efr { transition: transform .18s ease !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-left > .mrp-map { flex: none !important; } }
+}
 </style>
 </body>
 </html>
