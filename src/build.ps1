@@ -89,4 +89,12 @@ if ((Test-Path $node) -and (Test-Path $ptest) -and -not $env:DEBRIEF_SKIP_CHECK)
   if ($pcode) { $pout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  PAGE CHECK FAILED: the page shows something other than what it computed (the lines above). Fix it before you push.' -ForegroundColor Red; $pc = 'FAILED, see above' }
   else { $pc = (($pout | Select-Object -Last 1) -replace '^Page check: ', '') }
 }
-"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}; page check: {6}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak, $pc
+# the grade order check (Nov 15, Main's ruling on Wolfthorn Thu Nov 12 Ula'tek pull 11, fight 21, found by the night open speed work): the same pull graded
+# with the night loaded in three orders must end on the same grade, and Summary must work it out again in place as the night arrives (about a minute)
+$gc = 'skipped'; $gtest = Join-Path $root 'tests\grade-order.mjs'
+if ((Test-Path $node) -and (Test-Path $gtest) -and -not $env:DEBRIEF_SKIP_CHECK) {
+  $gout = & $node --max-old-space-size=4096 $gtest; $gcode = $LASTEXITCODE
+  if ($gcode) { $gout | ForEach-Object { Write-Host ("  " + $_) -ForegroundColor Red }; Write-Host '  GRADE ORDER CHECK FAILED: a grade depends on which pulls loaded first (the lines above). Fix it before you push.' -ForegroundColor Red; $gc = 'FAILED, see above' }
+  else { $gc = (($gout | Select-Object -Last 1) -replace '^Grade order: ', '') }
+}
+"app: {0:N0} chars; worker: {1:N0} chars; discord worker: {3:N0} chars; design check: {2}; contradiction check: {4}; answer key: {5}; page check: {6}; grade order: {7}" -f $html.Length, $w.Length, $(if ($dc) { "$dc warning(s), see above" } else { 'OK' }), $bot.Length, $cc, $ak, $pc, $gc
