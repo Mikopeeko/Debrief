@@ -43,7 +43,7 @@ const pgP2Mask = () => { if (PG_P2_MASK) return PG_P2_MASK; const F = typeof GDZ
   for (let y = 0; y < H; y++) { const out = []; let a = null; for (let x = 0; x <= W; x++) { const on = x < W && c[y * W + x] && Math.abs(x + X0) > 45; if (on && a == null) a = x; if (!on && a != null) { if (x - 1 - a >= 3) out.push([a + X0, x - 1 + X0]); a = null; } } M[y + Y0] = out; }
   return (PG_P2_MASK = M); };
 const pgP2Ledge = (x, y, m) => { const M = pgP2Mask(), g = m == null ? 1.2 : m; return [-g, 0, g].every((dy) => (M[Math.round(y + dy)] || []).some(([a, b]) => x - g >= a && x + g <= b)); };
-const pgP2Floor = (x, y) => PG_UL.onPlat(x, y) || pgP2Ledge(x, y);
+const pgP2Floor = (x, y) => PG_UL.onPlat(x, y) || pgP2Ledge(x, y, 0.8);
 const pgP2L = (s, p) => (s === 'E' ? [p[0], p[1]] : [-p[0], p[1]]);
 // (a point d yards from c at a heading in the east ledge's frame (0 east, 90 north), mirrored for the west ledge)
 const pgP2Away = (c, d, deg, s) => { const a = (s === 'W' ? 180 - deg : deg) * Math.PI / 180; return [c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d]; };
@@ -134,7 +134,8 @@ function pgP2Script(o) {
   // Falling Debris: three times in stage 2 (about 3:50, 4:30 and 5:17; 264k to 458k a hit since Nov 6), by each half, and all over the stone in the heart burn
   const near = (c, r, onF) => { let q = c; for (let k = 0; k < 40; k++) { const a = rnd() * Math.PI * 2, d = 2 + rnd() * r; q = [c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d]; if (onF(q[0], q[1])) break; } return q; };
   const fall = (q, at) => S.impacts.push({ x: q[0], y: q[1], r: 7, t0: at - 2, at, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Brown circles: step out before they land.' });
-  [[T.debris[0], [95, 30]], [T.debris[1], [104, 6]]].forEach(([at, c]) => ['E', 'W'].forEach((s) => { for (let j = 0; j < 4; j++) fall(near(L(s, c), 14, (x, y) => pgP2Ledge(x, y, 2)), at + j * 0.3); }));
+  // (on the ledges: never right at an edge, so there's stone to step out on either side)
+  [[T.debris[0], [104, 24]], [T.debris[1], [104, 6]]].forEach(([at, c]) => ['E', 'W'].forEach((s) => { for (let j = 0; j < 4; j++) fall(near(L(s, c), 13, (x, y) => pgP2Ledge(x, y, 7)), at + j * 0.3); }));
   for (let j = 0; j < 3; j++) fall(near([24 * sg, 2], 16, PG_UL.onPlat), T.debris[2] + j * 0.3);
   T.debris.forEach((t) => { timer(t, 'Falling Debris'); warn(t - 2, 'Falling Debris: brown circles!', '#c8a36a'); });
   for (let t = T.heart + 2.5; t < T.heartEnd; t += 3.4) for (let j = 0; j < 3; j++) { let q; for (let k = 0; k < 30; k++) { q = [-30 + rnd() * 60, -30 + rnd() * 62]; if (PG_UL.onPlat(q[0], q[1])) break; } fall(q, t + j * 0.25); }
@@ -220,16 +221,25 @@ function pgP2(A) {
     // stone all the way there, and past each circle on the way before it lands)
     r.T = nearFloor(r.T); const imps = S.impacts.filter((m) => m.at >= t - 0.05 && m.at - t <= 2.4); if (!imps.length) return r;
     const sp = (id === A.me ? 7 * (A.has('sprint') ? 1.4 : 1) : 9.8) * Math.max(0.3, slow(id, t)), near = (x, y, pad) => imps.some((q) => Math.hypot(x - q.x, y - q.y) <= q.r + pad);
-    const clear = (x, y) => { if (near(x, y, 1.6)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
+    // (a carrier's spot keeps out of the other carriers' 3-yard rings too)
+    const held = G.eggs.some((e) => e.who === id && e.state === 'held'), rings = held ? G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== id).map((e) => pos(e.who)) : [];
+    const clear = (x, y) => { if (near(x, y, 1.6) || rings.some((o) => Math.hypot(x - o[0], y - o[1]) < 3.9)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
     if ((near(r.T[0], r.T[1], 2.2) || near(b0.x, b0.y, 1.6)) && !clear(r.T[0], r.T[1])) {
-      // (a kick of yours due: stay within reach of its caster if you can)
-      const kk = kickables(t + 1).concat(kickables(t)).find((k) => k.who === id), foe = kk ? kk.p : null, rg = range(id) + (id === A.me ? -0.6 : 3); let best = null, bd = 1e9;
-      for (const rr of [2, 3.5, 5, 7, 9, 11, 14, 17]) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, x = b0.x + Math.cos(a) * rr, y = b0.y + Math.sin(a) * rr; if (!clear(x, y)) continue;
-        const dd = rr + 0.4 * Math.hypot(x - r.T[0], y - r.T[1]) + (foe && Math.hypot(x - foe[0], y - foe[1]) > rg ? 40 : 0); if (dd < bd) { bd = dd; best = [x, y]; } }
-      // (nowhere clean in time: straight away from the circle that lands first, as far as the stone goes)
-      if (!best) { const m = imps.filter((q) => Math.hypot(b0.x - q.x, b0.y - q.y) <= q.r + 3).sort((a, b) => a.at - b.at)[0]; if (m) { const a = Math.atan2(b0.y - m.y, b0.x - m.x) || 0; best = nearFloor([b0.x + Math.cos(a) * 12, b0.y + Math.sin(a) * 12]); } }
+      // (a kick of yours due: stay within reach of its caster if you can. The spots are tried cheapest first, so few paths are walked through)
+      const kk = kickables(t + 1).concat(kickables(t)).find((k) => k.who === id), foe = kk ? kk.p : null, rg = range(id) + (id === A.me ? -0.6 : 3), C = [];
+      for (const rr of [2, 3.5, 5, 7, 9, 11, 14, 17]) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, x = b0.x + Math.cos(a) * rr, y = b0.y + Math.sin(a) * rr; C.push([rr + 0.4 * Math.hypot(x - r.T[0], y - r.T[1]) + (foe && Math.hypot(x - foe[0], y - foe[1]) > rg ? 40 : 0), x, y]); }
+      C.sort((a, b) => a[0] - b[0]); let best = null; for (const c of C) if (clear(c[1], c[2])) { best = [c[1], c[2]]; break; }
+      // (nowhere clean in time: the nearest spot out of every circle that's on the stone all the way there)
+      if (!best) { const onWay = (x, y) => { for (let k = 1; k <= 8; k++) { const f = k / 8; if (!pgP2Floor(b0.x + (x - b0.x) * f, b0.y + (y - b0.y) * f)) return false; } return true; };
+        const D = C.map((c) => [Math.hypot(c[1] - b0.x, c[2] - b0.y), c[1], c[2]]).sort((a, b) => a[0] - b[0]); for (const c of D) if (!near(c[1], c[2], 0.5) && onWay(c[1], c[2])) { best = [c[1], c[2]]; break; } }
       if (best) { r.T = best; r.fast = true; } }
-    return r; };
+    r.T = route(b0, r.T); return r; };
+  // (a straight walk that would leave the stone (the ledges have inlets of venom): via the nearest point down the ledge's middle that it can reach
+  // on the stone and that reaches the spot on the stone)
+  const MID = [[100, 60], [100, 45], [100, 30], [100, 15], [100, 0], [100, -15], [100, -30], [100, -45], [80, 66], [78, -62]];
+  const onWay = (a, b) => { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(d / 1.5)); for (let k = 1; k <= n; k++) { const f = k / n; if (!pgP2Floor(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return false; } return true; };
+  const route = (b0, T0) => { const a = [b0.x, b0.y]; if (!pgP2Ledge(a[0], a[1], 0.4) || onWay(a, T0)) return T0; const s = a[0] > 0 ? 'E' : 'W'; let best = null, bd = 1e9;
+    MID.forEach((p) => { const q = pgP2L(s, p); if (!onWay(a, q) || !onWay(q, T0)) return; const d = pgDist(a, q) + pgDist(q, T0); if (d < bd) { bd = d; best = q; } }); return best || T0; };
   const home = (id) => { sync(); const s = PG_P2.half.E.includes(id) ? 'E' : 'W'; return spiral(L(s, [14, -2]), PG_P2.half[s].indexOf(id), 5); };
   const slow = (id, t) => { sync(); if (!G || !G.p2) return 1; if (stunned(id, t)) return 0; const th = G.p2.teth[id]; return th && th.br == null && t >= T.fangs && t < T.wdie ? 0.75 : 1; };
 
@@ -342,7 +352,7 @@ function pgP2(A) {
 
   // ---- the start card: your ledge, role, egg, kicks and tether ----
   const ui = { tab: 'egg' };
-  const ledgeSvg = () => { const s = pk.side, U = pgP2Eggs()[s === 'E' ? 'R' : 'L'], X = (p) => p[0].toFixed(1), Y = (p) => (-p[1]).toFixed(1), vb = (s === 'E' ? '54' : '-162') + ' -90 108 150';
+  const ledgeSvg = () => { const s = pk.side, U = pgP2Eggs()[s === 'E' ? 'R' : 'L'], X = (p) => p[0].toFixed(1), Y = (p) => (-p[1]).toFixed(1), vb = (s === 'E' ? '56' : '-152') + ' -84 96 138';
     const tx = (p, t, c, sz) => '<text pointer-events="none" x="' + X(p) + '" y="' + Y(p) + '" fill="' + (c || '#e8edf2') + '" font-size="' + (sz || 4.4) + '" text-anchor="middle" font-weight="700" paint-order="stroke" stroke="#05070a" stroke-width="' + ((sz || 4.4) * 0.28).toFixed(2) + '">' + esc(t) + '</text>';
     const hit = (v, label, on, inner) => '<g class="pg-jhit" tabindex="0" role="button" data-p2e="' + v + '" aria-label="' + esc(label) + '" aria-pressed="' + on + '"><title>' + esc(label) + '</title>' + inner + '</g>';
     const pit = pgP2L(s, P.pit), gate = pgP2L(s, P.land), wd = pgP2L(s, P.fight);
@@ -350,18 +360,20 @@ function pgP2(A) {
       '<circle cx="' + X(pit) + '" cy="' + Y(pit) + '" r="' + P.THROW + '" fill="rgba(176,107,255,.12)" stroke="#b06bff" stroke-width=".7"/>' + tx([pit[0], pit[1] - 2], 'Cauldron', '#d6b8ff', 4) +
       '<circle cx="' + X(gate) + '" cy="' + Y(gate) + '" r="2.6" fill="none" stroke="#c084ff" stroke-width=".7"/>' + tx([gate[0], gate[1] + 4], 'Gate', '#d6b8ff', 3.8) + '<circle cx="' + X(wd) + '" cy="' + Y(wd) + '" r="2.4" fill="#5b2a8c" stroke="#c89bff" stroke-width=".6"/>' + tx([wd[0], wd[1] - 6], 'Warden', '#c89bff', 3.8) +
       U.map((p, i) => { const v = 'n' + (i + 1), on = pk.egg === v; return hit(v, 'Small egg ' + (i + 1), on, '<circle cx="' + X(p) + '" cy="' + Y(p) + '" r="3.1" fill="' + (on ? '#f3c969' : 'rgba(10,12,16,.85)') + '" stroke="' + (on ? '#fff' : '#e6e0c8') + '" stroke-width=".55"/>') + tx([p[0], p[1] - 1.5], String(i + 1), on ? '#1a1405' : '#fff', 4); }).join('') +
-      ['far', 'close'].map((w) => { const p = pgP2L(s, P[w]), on = pk.egg === w; return hit(w, (w === 'far' ? 'The far' : 'The close') + ' big egg', on, '<ellipse cx="' + X(p) + '" cy="' + Y(p) + '" rx="3.6" ry="4.6" fill="' + (on ? '#f3c969' : '#6a5320') + '" stroke="' + (on ? '#fff' : '#e6b450') + '" stroke-width=".6"/>') + tx([p[0], p[1] - 9], w === 'far' ? 'Far big egg' : 'Close big egg', on ? '#f3c969' : '#e6b450', 3.8); }).join('') + '</svg>'; };
+      ['far', 'close'].map((w) => { const p = pgP2L(s, P[w]), on = pk.egg === w; return hit(w, (w === 'far' ? 'The far' : 'The close') + ' big egg', on, '<ellipse cx="' + X(p) + '" cy="' + Y(p) + '" rx="3.6" ry="4.6" fill="' + (on ? '#f3c969' : '#6a5320') + '" stroke="' + (on ? '#fff' : '#e6b450') + '" stroke-width=".6"/>') + tx([p[0] + (s === 'E' ? 15 : -15), p[1] - 1.3], w === 'far' ? 'Far big egg' : 'Close big egg', on ? '#f3c969' : '#e6b450', 3.8); }).join('') + '</svg>'; };
   const seg = (k, opts, cur, dis) => '<div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + (dis ? ' disabled' : '') + '>' + esc(t) + '</button>').join('') + '</div>';
+  // (a melee can't kick from the end of a tether: the 2nd Malice comes as the solo walks out, the 3rd as the five do; raids hand that kick on)
+  const clash = () => pk.role === 'm' && ((pk.mal === 2 && pk.teth === 'solo') || (pk.mal === 3 && pk.teth === 'five')) ? '<p class="pg-tip">' + esc(pk.mal === 2 ? 'Heads up: the 2nd Malice (3:18) comes as the solo walks out. From the end of a tether a melee can\'t kick it; raids give that kick to someone else.' : 'Heads up: the 3rd Malice (3:33) comes as the five walk out. From the end of a tether a melee can\'t kick it; raids give that kick to someone else.') + '</p>' : '';
   const card = () => { fix(); const heal = pk.role === 'h', tab = ui.tab; let body;
     if (tab === 'egg') body = '<div class="pg-jobp"><div class="pg-jmap">' + ledgeSvg() + '</div><div class="pg-jside"><p><b>Your egg.</b> Click your small egg (its number on your raid\'s plan) or a big egg.</p><p>' +
       (pk.egg === 'far' || pk.egg === 'close' ? esc('Picked: the ' + pk.egg + ' big egg. Pick it up at 4:19, once the small eggs are in, and have it in by 4:27.') : pk.egg ? esc('Picked: small egg ' + pk.egg.slice(1) + '. Pick it up once the Warden is dead, then into the cauldron at 3:58.') : 'Picked: no egg.') + '</p>' +
       '<button type="button" class="pg-btn pg-jno' + (pk.egg ? '' : ' on') + '" data-p2e="none" aria-pressed="' + !pk.egg + '">No egg</button></div></div>';
     else if (tab === 'kick') body = '<div class="pg-p2kick"><p><b>Malice.</b> The Warden casts it at 3:03, 3:18 and 3:33. Which one do you kick?</p>' + seg('p2m', [[0, 'None'], [1, '1st · 3:03'], [2, '2nd · 3:18'], [3, '3rd · 3:33']], pk.mal, heal) +
       '<p><b>Anguished Cry.</b> Each Doomscale on your ledge casts it at 4:35, 4:53 and 5:09. Kick one Doomscale\'s three?</p>' + seg('p2c', [[0, 'None'], [1, 'Doomscale 1'], [2, 'Doomscale 2']], pk.cry, heal) +
-      '<p>' + (heal ? 'Healers have no kick in Midnight (only a Restoration Shaman).' : 'Press E during the cast bar: melee within 8 yards, ranged within 30.') + '</p></div>';
+      '<p>' + (heal ? 'Healers have no kick in Midnight (only a Restoration Shaman).' : 'Press E during the cast bar: melee within 8 yards, ranged within 30.') + '</p>' + clash() + '</div>';
     else body = '<div class="pg-p2kick"><p><b>Grasping Fangs (3:16).</b> Six tethers, three on each ledge, on anyone. One player breaks alone, then the other five break together.</p>' +
       seg('p2t', [['random', 'Random'], ['solo', 'Solo break'], ['five', 'One of the five'], ['none', 'No tether']], pk.teth) +
-      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:18, alone.', five: 'At 3:31 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p></div>';
+      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:18, alone.', five: 'At 3:31 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
     return '<div class="pg-optrow pg-jrole"><span>Ledge</span>' + seg('p2s', [['W', 'West'], ['E', 'East']], pk.side) + '<span>Role</span>' + seg('p2r', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], pk.role) + '</div>' +
       '<div class="pg-jtabs">' + seg('p2tab', [['egg', 'Egg'], ['kick', 'Kicks'], ['teth', 'Tether']], tab) + '</div>' + body; };
   const bind = (box, refresh) => { box.onclick = (e) => { const b = e.target.closest('[data-p2s],[data-p2r],[data-p2tab],[data-p2e],[data-p2m],[data-p2c],[data-p2t]'); if (!b || b.disabled) return; const d0 = b.dataset;
@@ -435,7 +447,70 @@ function pgP2(A) {
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, starts, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p2) { G.wipes = 0; G.p2.kickCd = -99; G.p2.wardT = -99; G.p2.stun = {}; G.p2.missed = []; G.p2.tlog = []; } },
     clean: 'Every kick landed, your tether broke on the count, your eggs went in clean, and you kept out of the frontals and the debris. Try another job.',
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; } };
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, clash, get T() { return T; } };
 }
 // (the part on the start card's Part switch, after phase 1; `?practice=2` on the guide opens it)
 PG_PARTS["Ula'tek"].m2 = { name: 'Phase 2', d: 'm', end: PG_P2_T.end, roles: [{ id: 'r5', name: 'Ranged', job: 'East ledge' }], mod: pgP2 };
+
+// ---- 3D (practice3d.js calls pg3dP2(K) once when the 3D view opens for a phase 2 game; K is its kit: three.js, the scene, keep, pool, flat,
+// fxMat, glw, the shared shapes and textures). Builds the side ledges as stone, and returns put(shape, t) for this part's own shapes (pgP2's
+// shapes()): the gates, the cauldrons, the Wardens, the tethers, the big eggs, the Doomscales, the frontal cones and Anguished Cry's shockwave;
+// frame(G) keeps the sun's shadows round you out on a ledge. ----
+function pg3dP2(K) {
+  const T = K.T, scene = K.scene, keep = K.keep, M = pgP2Mask();
+  // the ledges: each row of the floor joined to the next as one smooth strip (the platform's stone slabs on top, 4 yards deep, a pale rim on the
+  // inner edge over the venom); where a row splits, a plain block
+  const P = [], N = [], U = [], I = [], RP = [], RI = [];
+  const quad = (a, b, c, d, n) => { const v = P.length / 3; [a, b, c, d].forEach((q) => { P.push(q[0], q[1], -q[2]); N.push(n[0], n[1], -n[2]); U.push(q[0], q[2]); }); I.push(v, v + 1, v + 2, v, v + 2, v + 3); };
+  const wall = (x0, y0, x1, y1) => { const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, n = [dy / l, 0, -dx / l]; quad([x0, 0, y0], [x0, -4, y0], [x1, -4, y1], [x1, 0, y1], n); };
+  const rim = (x0, y0, x1, y1, w) => { const v = RP.length / 3; [[x0, y0], [x0 + w, y0], [x1 + w, y1], [x1, y1]].forEach((q) => RP.push(q[0], 0.025, -q[1])); RI.push(v, v + 1, v + 2, v, v + 2, v + 3); };
+  const side = (y, sgn) => (M[y] || []).filter(([a, b]) => (sgn > 0 ? a > 0 : b < 0));
+  [1, -1].forEach((sgn) => { for (let y = -96; y < 96; y++) { const A0 = side(y, sgn), A1 = side(y + 1, sgn);
+    if (A0.length === 1 && A1.length === 1) { const [a0, b0] = A0[0], [a1, b1] = A1[0]; quad([a0, 0, y], [b0, 0, y], [b1, 0, y + 1], [a1, 0, y + 1], [0, 1, 0]);
+      wall(a1, y + 1, a0, y); wall(b0, y, b1, y + 1); if (sgn > 0) rim(a0, y, a1, y + 1, 0.6); else rim(b0, y, b1, y + 1, -0.6);
+      if (!side(y - 1, sgn).length) wall(a0, y, b0, y); if (!side(y + 2, sgn).length) wall(b1, y + 1, a1, y + 1); }
+    else A0.forEach(([a, b]) => { quad([a, 0, y - 0.5], [b, 0, y - 0.5], [b, 0, y + 0.5], [a, 0, y + 0.5], [0, 1, 0]); wall(a, y + 0.5, a, y - 0.5); wall(b, y - 0.5, b, y + 0.5); wall(a, y - 0.5, b, y - 0.5); wall(b, y + 0.5, a, y + 0.5); }); } });
+  const lg = keep(new T.BufferGeometry()); lg.setAttribute('position', new T.Float32BufferAttribute(P, 3)); lg.setAttribute('normal', new T.Float32BufferAttribute(N, 3)); lg.setAttribute('uv', new T.Float32BufferAttribute(U, 2)); lg.setIndex(I);
+  const ledge = new T.Mesh(lg, keep(new T.MeshStandardMaterial({ map: K.slab, roughness: 0.9, side: T.DoubleSide }))); ledge.receiveShadow = true; scene.add(ledge);
+  const rg = keep(new T.BufferGeometry()); rg.setAttribute('position', new T.Float32BufferAttribute(RP, 3)); rg.setIndex(RI);
+  const rimM = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xc9d2d8, transparent: true, opacity: 0.5, depthWrite: false, side: T.DoubleSide }))); rimM.renderOrder = 5; scene.add(rimM);
+  // (the rock spires out in the venom stood on the ledges: moved out past the room's walls)
+  scene.children.forEach((o) => { if (!o.isInstancedMesh) return; const m4 = new T.Matrix4(), p = new T.Vector3(), q = new T.Quaternion(), s = new T.Vector3();
+    for (let i = 0; i < o.count; i++) { o.getMatrixAt(i, m4); m4.decompose(p, q, s); const r = Math.hypot(p.x, p.z) || 1, k = (185 + (i % 5) * 14) / r; p.x *= k; p.z *= k; m4.compose(p, q, s); o.setMatrixAt(i, m4); } o.instanceMatrix.needsUpdate = true; });
+  const BALL = K.BALL, CONE = K.CONEG, glw = K.glw;
+  const stdM = (c, e, x) => keep(new T.MeshStandardMaterial(Object.assign({ color: c, emissive: e || 0, roughness: 0.5 }, x || {})));
+  // (a Warlock's gateway: a ring of fel-purple on the floor, a column of light, a slow swirl)
+  const gate = K.pool(() => { const g = new T.Group(), rm = stdM(0x5a1d8c, 0x7a2ad8), r = new T.Mesh(keep(new T.TorusGeometry(2.3, 0.22, 10, 48)), rm), cm = K.fxMat(3, '#c084ff', true), c = new T.Mesh(K.WALLG, cm), sw = new T.Mesh(K.UDISC, keep(new T.MeshBasicMaterial({ color: 0x9a4dff, transparent: true, opacity: 0.35, depthWrite: false, blending: T.AdditiveBlending })));
+    r.rotation.x = Math.PI / 2; r.position.y = 0.25; c.scale.set(2.1, 7, 2.1); c.renderOrder = 650; sw.scale.set(2.1, 1, 2.1); sw.position.y = 0.06; sw.renderOrder = 12; g.add(r, c, sw); g.userData = { rm, cm, sw }; return g; });
+  // (the cauldron in each ledge's pit: a stone bowl with a bubbling purple brew and its glow)
+  const caul = K.pool(() => { const g = new T.Group(), bowl = new T.Mesh(keep(new T.TorusGeometry(4.2, 1.2, 12, 40)), stdM(0x3a3632, 0x0a0806, { roughness: 0.95 })), brew = new T.Mesh(K.UDISC, stdM(0x4a1a6a, 0x8a3ac8, { roughness: 0.2 })), bub = new T.Group(), bm = stdM(0xb98aff, 0x6a2ab0);
+    bowl.rotation.x = Math.PI / 2; bowl.position.y = 0.9; bowl.castShadow = true; brew.scale.set(3.8, 1, 3.8); brew.position.y = 1.1; for (let i = 0; i < 9; i++) bub.add(new T.Mesh(BALL, bm)); g.add(bowl, brew, bub); g.userData = { bub }; return g; });
+  // (the Doomscale Warden: a hulking serpent-kin in dark scales with a fel crest)
+  const WARDM = stdM(0x2a1838, 0x12061e, { roughness: 0.45 }), CRESTM = stdM(0x9b5cff, 0x5a2aa8);
+  const warden = K.pool(() => { const g = new T.Group(), b = new T.Mesh(BALL, WARDM), h = new T.Mesh(BALL, WARDM); b.scale.set(1.8, 2.6, 1.6); b.position.y = 2.6; h.scale.set(1.1, 1, 1.4); h.position.set(0, 5.4, 0.6); b.castShadow = h.castShadow = true; g.add(b, h);
+    for (let i = 0; i < 5; i++) { const c = new T.Mesh(CONE, CRESTM); c.scale.setScalar(0.45 - i * 0.04); c.position.set(0, 6.3 - i * 0.9, -0.6 - i * 0.25); c.rotation.x = -0.5; g.add(c); } [-0.45, 0.45].forEach((x) => { const e = new T.Mesh(BALL, CRESTM); e.scale.setScalar(0.18); e.position.set(x, 5.6, 1.85); g.add(e); }); return g; });
+  // (a Weakened Doomscale: a heavy, scarred drake-serpent, olive and grey, rising out of the cauldron's pit)
+  const DSM = stdM(0x56603a, 0x141a06, { roughness: 0.6 });
+  const dscale = K.pool(() => { const g = new T.Group(), b = new T.Mesh(BALL, DSM), n = new T.Mesh(BALL, DSM), h = new T.Mesh(BALL, DSM); b.scale.set(2.2, 1.7, 3.2); b.position.y = 1.8; n.scale.set(0.9, 0.9, 1.6); n.position.set(0, 3, 2.6); h.scale.set(0.9, 0.75, 1.3); h.position.set(0, 3.6, 4); b.castShadow = n.castShadow = h.castShadow = true; g.add(b, n, h);
+    for (let i = 0; i < 5; i++) { const c = new T.Mesh(CONE, CRESTM); c.scale.setScalar(0.38); c.position.set(0, 3.4, 1.5 - i * 1.1); g.add(c); } return g; });
+  // (the big Doomscale Egg: twice a small egg, gold-brown and glowing)
+  const BEGGM = stdM(0xb08a3a, 0x3a2a08, { roughness: 0.35 });
+  const begg = K.pool(() => { const m = new T.Mesh(BALL, BEGGM); m.scale.set(1.5, 1.95, 1.5); m.castShadow = true; return m; });
+  // (a tether: a thin glowing line from the Warden to the bitten player)
+  const teth = K.pool(() => { const m = new T.Mesh(K.BEAMG, K.fxMat(1, '#ff5a4f', true)); m.renderOrder = 640; return m; });
+  const FANS = new Map(), fanG = (half) => { const key = half.toFixed(3); let g = FANS.get(key); if (!g) { g = K.flatG(keep(new T.CircleGeometry(1, 32, -half, 2 * half))); FANS.set(key, g); } return g; };
+  const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), UP = new T.Vector3(0, 1, 0), faceIn = (x, y) => Math.atan2(-x, y);
+  const put = (s, t) => { const k = s.k, by = K.baseY(s.x, s.y);
+    if (k === 'gate') { const g = gate(), u = g.userData; g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.8; K.col(u.rm, s.c); u.cm.uniforms.uO.value = 0.5 + 0.15 * Math.sin(t * 4); u.sw.rotation.y = -t * 2; glw(s.x, by + 1.5, -s.y, 5, s.c, 0.5); return true; }
+    if (k === 'cauldron') { const g = caul(); g.position.set(s.x, by, -s.y); g.userData.bub.children.forEach((b, i) => { const ph = (t * 0.7 + i * 0.37) % 1, a = i * 2.4, rr = 0.6 + (i % 4) * 0.7; b.position.set(Math.cos(a) * rr, 1.1 + ph * 0.8, Math.sin(a) * rr); b.scale.setScalar(0.25 + 0.2 * Math.sin(ph * Math.PI)); }); glw(s.x, by + 2.2, -s.y, 9, '#9a4dff', 0.45); return true; }
+    if (k === 'warden') { const g = warden(); g.position.set(s.x, by, -s.y); g.rotation.y = faceIn(s.x, s.y) + Math.PI + Math.sin(t * 0.9) * 0.08; return true; }
+    if (k === 'dscale') { const g = dscale(), c = s.climb == null ? 1 : s.climb; g.position.set(s.x, by - 5 * (1 - c), -s.y); g.rotation.y = faceIn(s.x, s.y) + Math.PI + Math.sin(t * 1.1) * 0.1; return true; }
+    if (k === 'begg') { const m = begg(), z = s.h > 0 ? 0.62 : 1, h0 = by + (s.h || 0) + 1.9 * z; m.scale.set(1.5 * z, 1.95 * z, 1.5 * z); m.position.set(s.x, h0 + (s.h > 0 ? Math.sin(t * 4) * 0.15 : 0), -s.y); m.rotation.y = t * 0.4; glw(s.x, h0, -s.y, 4.5 * z, '#ffcf5a', 0.35 + 0.15 * Math.sin(t * 3)); return true; }
+    if (k === 'tether') { V1.set(s.x0, K.baseY(s.x0, s.y0) + 4.2, -s.y0); V2.set(s.x1, K.baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), m = teth(), u = m.material.uniforms; m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.normalize()); m.scale.set(0.14, len, 0.14); K.ucol(u.uC, s.c); u.uLen.value = len * 1.2; u.uO.value = 0.9; return true; }
+    if (k === 'fan') { K.flat(fanG(s.half), s.x, s.y, s.r, s.r, s.a, s.c, s.o, false); return true; }
+    if (k === 'shock') { if (s.r > 0.5) K.flat(K.URING, s.x, s.y, s.r, s.r, 0, s.c, 0.85 * (1 - s.r / 60), false); return true; }
+    return false; };
+  // (the sun's shadow box follows you, so the ledges get shadows too)
+  const frame = (G) => { if (!G || !K.sun) return; K.sun.position.set(G.x - 34, 72, -G.y + 26); K.sun.target.position.set(G.x, 0, -G.y); K.sun.target.updateMatrixWorld(); };
+  return { put, frame, ledge };
+}

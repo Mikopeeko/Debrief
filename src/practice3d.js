@@ -94,6 +94,7 @@ function pg3dShapes(A, t) {
   // (her tail: it lifts through Mephitic Thrash's cast and slams down on the stone's edge as it lands)
   if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
+  if (A.P2) A.P2.shapes(t, P, { disc, ring, grow, label }); /* (a later part's own shapes: src/practice-p2.js) */
   if (t >= 145.5 && t < 165.5) { const hp = S.F(PG_UL.heart, t); disc(hp[0], hp[1], 3, '#5a0f22', 0.6); ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P({ k: 'heart', x: hp[0], y: hp[1] }); label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14, 'name'); }
   // the raid, then you (a gold ring), your defensive, where you clicked. Nameplates as in WoW: a thin bar over everyone, fainter far away; a name
   // only near you (7 yards), on your soak group's late ones (still outside its circle) while your coil is up, and on egg carriers near you (14
@@ -158,7 +159,7 @@ function pg3d(host, A) {
   const sun = new T.DirectionalLight(0xffd3a1, 1.05); sun.position.set(-34, 72, 26); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
   Object.assign(sun.shadow.camera, { left: -78, right: 78, top: 78, bottom: -78, near: 1, far: 240 }); sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.03; scene.add(sun);
   const rim = new T.DirectionalLight(0x6aa6ff, 0.62); rim.position.set(44, 30, -60); scene.add(rim);
-  const V = (p) => new T.Vector3(p[0], p[1], p[2]), onP = (x, y) => PG_UL.onPlat(x, y), baseY = (x, y) => (onP(x, y) ? 0 : WATER - 0.45);
+  const V = (p) => new T.Vector3(p[0], p[1], p[2]), onP = (x, y) => (A.P2 ? A.onPlat(x, y) : PG_UL.onPlat(x, y)), baseY = (x, y) => (onP(x, y) ? 0 : WATER - 0.45);
   const low = (x, y, r) => r < 8 && !onP(x, y); /* (a small shape off the stone sits on the venom, not in the air) */
   const col = (m, c) => { if (m.userData.c !== c) { m.userData.c = c; m.color.set(c); if (m.emissive && m.userData.glow) m.emissive.set(c).multiplyScalar(m.userData.glow); } };
   const ucol = (u, c) => { if (u.c !== c) { u.c = c; u.value.set(c); } };
@@ -467,7 +468,9 @@ function pg3d(host, A) {
 
   // ---- one shape on the screen ----
   const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), V4 = new T.Vector3(), faceIn = (x, y) => Math.atan2(-x, y); /* (turned to face the middle of the stone) */
-  const put = (s, t) => { const k = s.k;
+  // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
+  const P2K = A.P2 && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
+  const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'ring') { flat(ringG(s.r, s.w, s.dash), s.x, s.y, 1, 1, s.dash ? t * 0.3 : 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'arc') { flat(arcG(s.r, s.f), s.x, s.y, 1, 1, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
@@ -533,7 +536,7 @@ function pg3d(host, A) {
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; });
-    const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t);
+    const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
     place(); cam.updateMatrixWorld(); names(); const bo = fade(boss, BOSSM, 12, BTW, 690); for (let i = 0; i < eyeGl.length; i++) eyeGl[i].material.opacity = eyeO * bo;

@@ -5326,10 +5326,10 @@ function openGuides(boss, d) {
   $('#main').innerHTML = pgTabBar(null) + '<div class="gdz-pagetop">' /* (the main tab row on the guides too, Guides lit, Oct 27) */ + (GDZ_BACK && S.index ? '<button type="button" class="btn gdz-back">‹ Back to your pull</button>' : '') + '<div><div class="gdz-kick">Debrief</div><h1>Boss guides</h1><p>How each fight works: the plan in plain words, animated maps, what goes wrong, and the whole fight played out.</p></div></div><section id="view"></section>';
   const bk = $('#main .gdz-back'); if (bk) bk.onclick = () => { const g = GDZ_BACK; GDZ_BACK = null; S.tab = g.tab || 'audit'; S.scope = g.scope || 'pull'; select(g.item); };
   const qz = !window.__gdzQz && (/^#quiz\b/i.test(location.hash) || /[?&]quiz(=|&|$)/.test(location.search)); /* (a quiz link, read before navNote tidies the address) */
-  const pg = !window.__pgOpen && (/^#practice\b/i.test(location.hash) || /[?&]practice(=|&|$)/.test(location.search));
+  const pg = !window.__pgOpen && (/^#practice\b/i.test(location.hash) || /[?&]practice(=|&|$)/.test(location.search)), pgN = (/[?&#]practice=(\d)/.exec(location.search + location.hash) || [])[1]; /* (read before gdzView tidies the address) */
   gdzView(); navNote(); window.scrollTo(0, 0);
   if (qz) { window.__gdzQz = 1; const r = document.querySelector('#view .gdz'); if (r && gdzQuizOf(S.gdzBoss, S.gdzDiff)) gdzQuiz(r, S.gdzBoss, S.gdzDiff); }
-  if (pg) { window.__pgOpen = 1; const r = document.querySelector('#view .gdz'); if (r && pgPart(S.gdzBoss, S.gdzDiff)) setTimeout(() => pgOpen(r, S.gdzBoss, S.gdzDiff), 300); } /* (a practice link, Nov 11) */
+  if (pg) { window.__pgOpen = 1; const r = document.querySelector('#view .gdz'); if (r && pgPart(S.gdzBoss, S.gdzDiff)) { const n = pgN, pk = n && n !== '1' && pgPart(S.gdzBoss, S.gdzDiff + n) ? S.gdzDiff + n : null; setTimeout(() => pgOpen(r, S.gdzBoss, S.gdzDiff, pk), 300); } } /* (?practice=2: phase 2, Nov 15) */ /* (a practice link, Nov 11) */
 }
 // (a how-to card's step (Nov 4): "Who: what to do", the who in gold and the *key words* lit; any other step is plain text)
 function gdzStepH(s, how) { const t = String(s == null ? '' : s); if (!how) return esc(t.replace(/\*/g, ''));
