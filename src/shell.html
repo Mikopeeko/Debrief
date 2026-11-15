@@ -20500,6 +20500,37 @@ html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg i { display: inline-block
   html:not(.mpcard) body #view#view#view #mpcRot .mpk-lg { margin-left: 0 !important; }
 }
 }
+/* Mythic+ replay: smooth bars (Nov 14, Flex: "is there a way to get the bars to update in real time and not be so choppy?"). The bars are drawn every frame
+   from values between the log's readings, so they need no easing of their own; the meter's rows and the enemies' rows slide to their places. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rfh, html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrb, html:not(.mpcard) body #view#view#view .mrp-efh > i, html:not(.mpcard) body #view#view#view .mrp-efc > i, html:not(.mpcard) body #view#view#view .mrp-bff > .mrp-bfb > i { transition: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtl { position: relative !important; display: block !important; }
+html:not(.mpcard) body #view#view#view .mrp-mt.off { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtl > .mrp-mr { position: absolute !important; left: 0 !important; right: 0 !important; top: 0 !important; transition: transform .3s ease !important; }
+html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrn > .mrp-mrnn { font: inherit !important; color: inherit !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef { position: relative !important; display: block !important; height: 0; margin: 0 0 4px !important; transition: height .3s ease !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef > .mrp-efr { position: absolute !important; left: 0 !important; right: 0 !important; top: 0 !important; transition: transform .3s ease !important; }
+html:not(.mpcard) body #view#view#view .mrp-efm2 { margin: 0 0 10px !important; font: 400 12px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mrp-efm2:empty { display: none !important; }
+/* the damage meter at the top of the panel, like a real damage meter (Flex: "can you make this look like an actual dps meter lol looks cheap", and "the dps
+   meter put where these are now"): a title bar, a spec icon a row, a glossy bar in the class colour, damage per second and the share of the group's */
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-mt { position: static !important; width: auto !important; margin: 0 0 14px !important; padding: 0 !important; background: none !important; border: 0 !important; pointer-events: auto !important; }
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-mt > .mrp-mth { margin: 0 !important; padding: 4px 8px !important; background: linear-gradient(#2c2f35, #1b1d21) !important; border: 1px solid #050506 !important; font: 700 12px var(--head) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: #dfe3e8 !important; }
+html:not(.mpcard) body #view#view#view .mrp-side > .mrp-mt > .mrp-mtl { box-sizing: content-box !important; padding: 1px !important; background: #0c0d0f !important; border: 1px solid #050506 !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mtl > .mrp-mr { left: 1px !important; right: 1px !important; top: 1px !important; height: 22px !important; background: #17191c !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mr > .mrp-mri { position: absolute !important; left: 0 !important; top: 0 !important; width: 22px !important; height: 22px !important; display: block !important; background: #101114 !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mr > .mrp-mrb { left: 23px !important; max-width: calc(100% - 23px) !important; opacity: 1 !important; background-image: linear-gradient(to bottom, rgba(255,255,255,.28), rgba(255,255,255,.04) 48%, rgba(0,0,0,.18) 52%, rgba(0,0,0,.34)) !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mr > .mrp-mrn { padding: 0 104px 0 29px !important; font: 700 12.5px/22px var(--body) !important; color: #fff !important; text-shadow: 1px 1px 1px #000, 0 0 2px #000 !important; }
+html:not(.mpcard) body #view#view#view .mrp-side .mrp-mr > .mrp-mrv { right: 7px !important; font: 700 12.5px/22px var(--body) !important; color: #fff !important; text-shadow: 1px 1px 1px #000, 0 0 2px #000 !important; }
+/* the enemies beside the map: one slim line each, the cast written over the bar and a thin cast line under it */
+html:not(.mpcard) body #view#view#view .mrp-ef > .mrp-efr { gap: 1px !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efh > .mrp-efn { max-width: 56% !important; padding: 0 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efc { position: relative !important; height: 3px !important; overflow: visible !important; background: rgba(255,255,255,.04) !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.cast .mrp-efc { background: rgba(0,0,0,.55) !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efc > i { height: 3px !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efc > .mrp-eft { position: absolute !important; right: 42px !important; bottom: 4px !important; max-width: 40% !important; padding: 0 !important; font: 700 12px/18px var(--body) !important; color: #ffd27a !important; text-align: right !important; }
+html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.kick .mrp-eft { color: #9df0ad !important; } html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.off .mrp-eft { color: #ffb0a8 !important; } html:not(.mpcard) body #view#view#view .mrp-ef .mrp-efr.nk .mrp-eft { color: #d5d9de !important; }
+}
 </style>
 </body>
 </html>

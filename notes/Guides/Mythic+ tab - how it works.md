@@ -454,3 +454,5 @@ Top to bottom:
 `MPX_STRIP_ON = false` in src/mptab.js takes the numbers off the strip. A key with no timer (left early) keeps its page: no headline, the Mistakes box open, Your part as a card.
 
 Checks: tests/mplus-summary-strip.js runs the story code on made-up keys (the sentence, which moments are told, a wipe told once, the numbers on the strip, Fix first's card); tests/look-review.js has a block for A2.
+
+Smooth bars (Nov 14; Flex: "is there a way to get the bars to update in real time and not be so choppy?"): the log reads health and damage once a second, so every bar on the replay (the raid frames, the meter, the enemies beside the map, the bosses' frames and the bars over the enemies) slides from one reading to the next and is drawn every frame. The meter's rows and the enemies' rows slide into their new places when the order changes, and the enemies glide between their spots.
