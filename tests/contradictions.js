@@ -552,7 +552,8 @@ for (const k of keys) { try { if (checkPull(k)) n++; } catch (e) { say(k, 'crash
 // 9 to 13. one player's mechanics: Summary and the Report card read the same facts, every line is whole, trend words agree, What wiped us most (Nov 12)
 try { require('./rc-sources.js')(H, say); } catch (e) { say('report card', 'crash', 'the sources check crashed: ' + e.message); } /* (Nov 12: every card row reads its home tab) */
 const planSave = require('./plan-save-retry.js')(H, say); /* (Nov 13, the look review: a failed Plan save waits longer each time, never every 1.5 s) */
-const planNights = require('./plan-nights-copy.js')(H, say); /* (Nov 14, Main's test: Heroic then Mythic saved the page's old copy of the raid nights over the team's, erasing Nov 4 and Nov 11) */
+const planNights = require('./plan-nights-copy.js')(H, say);
+const kguildRebuild = require('./kguild-no-rebuild.js')(H, say).catch((e) => say("Wolfthorn Thu Nov 12 Ula'tek pull 13", 'crash', 'the guild-name rebuild check crashed: ' + e.message)); /* (Nov 14 rehearsal: the top kill's guild name rebuilt the whole page) */ /* (Nov 14, Main's test: Heroic then Mythic saved the page's old copy of the raid nights over the team's, erasing Nov 4 and Nov 11) */
 /* (Nov 13, ruling B: the estimated parse on the Nov 11 Coiled Altar night against Warcraft Logs' own Parse %, every raider within 15 and nobody more than 15 above;
    Schooty, Volkovod, Dragooned, Komo and Fourinches named: they read 79, 86, 80, 83, 72 before) */
 try { require('./parse-estimate.js')(H, say, true); } catch (e) { say('the estimated parse', 'crash', 'tests/parse-estimate.js crashed: ' + e.message); }
@@ -566,14 +567,21 @@ try { require('./summary-scores.js')(H, say); } catch (e) { say('summary scores'
 if (ALL) { try { require('./parse-kill.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('parse on a kill', 'crash', (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } }
 if (ALL) { try { require('./wipe-causes.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('named wipe causes', 'crash', (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } }
 try { require('./deaths-check.js')(NIGHT_R, H, say); } catch (e) { say('deaths', 'crash', 'the death check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 12: Main's death plan) */
+try { require('./ula-egg-touch.js')(H, say); } catch (e) { say('ulatek', 'crash', 'the egg touch check crashed: ' + e.message); } /* (Nov 14: Wolfthorn Thu Nov 12 Ula'tek pulls 12 and 13, read on every build) */
 try { require('./ulatek-check.js')(NIGHT_R, H, say); } catch (e) { say('ulatek', 'crash', "the Ula'tek check crashed: " + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 13: Ula'tek's wipe causes, checks A to G) */
+try { require('./wipe-played-on.js')(H, say, LIB); } catch (e) { say('played on', 'crash', 'the played-on wording check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10)).slice(0, 3).join(' | ')); } /* (Nov 14 rehearsal: Wolfthorn Thu Nov 12 Ula'tek pull 13, "Wipe called" at 2:46 vs the call at 1:49; the end is "Pull ended") */
 try { require('./one-player.js')(NIGHT_R, H, say); } catch (e) { say('one player', 'crash', 'the one-player check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); }
 try { require('./replay-icons.js')(H, say); } catch (e) { say("Ula'tek replay", 'crash', 'the replay icons check crashed: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')); } /* (Nov 13, Flex: every Ula'tek add on the replay has its own icon, not a plain shape) */
 try { require('./no-went-wrong.js')(say); } catch (e) { say('the page code', 'crash', 'the "went wrong" check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-left-early.js')(say); } catch (e) { say('Mythic+ banner', 'crash', 'the Left early check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-unknown-death.js')(say); } catch (e) { say('Mythic+ deaths', 'crash', 'the unknown-hit check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
 try { require('./mplus-summary-strip.js')(say); } catch (e) { say('Mythic+ Summary', 'crash', 'the Summary strip check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, the Summary pass: Fix first as a box, the rows of mistakes over the pull strip) */
+try { require('./tier-send-once.js')(H, say); } catch (e) { say('Whole tier', 'crash', 'the tier sync check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, raid-night rehearsal: each pull goes to the tier store once) */
+try { require('./plan-cd-lengths.js')(H, say); } catch (e) { say('Plan', 'crash', 'the cooldown lengths check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, raid-night rehearsal: Lay on Hands, Divine Shield, Divine Protection and Blessing of Freedom have lengths) */
+try { require('./import-resume.js')(H, say); } catch (e) { say('Home', 'crash', 'the team import check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, raid-night rehearsal: a paused team import carries on right after) */
 try { require('./graphs-buff-row.js')(say); } catch (e) { say('Graphs', 'crash', 'the Buffs row check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); }
+try { require('./avoid-burst.js')({ H, E, W, say, report, findFile, readJ }); } catch (e) { say('avoidable damage', 'crash', 'the hits-at-once check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Nov 14, Wolfthorn Thu Nov 12 Ula'tek pull 13: Raiyvenz "twice" vs "3 Caustic Waves hits right before you died") */
+try { require('./how-it-went-death-link.js')(H, say); } catch (e) { say('How it went', 'crash', 'the death row link check crashed: ' + (e.stack || e.message).split(String.fromCharCode(10))[0]); } /* (Wolfthorn Thu Nov 12 Ula'tek pull 13: Komo's death row took Jangokin's Caustic Waves moment and its Serious) */
 // 5. the All pulls focus band names row #1 of What wiped us most (by root cause), or its one sentence says what came first, true to the chains
 for (const [code, rcs] of NIGHT_RC) { const g = new Map(); for (const o of rcs) { const l = g.get(o.cat) || []; l.push(o); g.set(o.cat, l); }
   const rows = [...g].sort((a, b) => b[1].length - a[1].length).map(([c, l]) => ({ nm: E.RC_CAT[c].nm, w: l.length, rc: c, fix: RCX.RC_FIX[c] || '', first: RCX.rcFirstLine(l), l })), f = SHELL.nsmFocusOf(rows), night = 'night ' + code + ' (All pulls)';
@@ -621,7 +629,7 @@ const tierCount = async () => { for (const [gk, l] of TIER_T) { const it0 = l[0]
   if (got !== want) say('raid days', 'days', 'Wed + Thu every week with a few odd nights should be raid days ' + want + ', the rule says ' + got);
   if (home !== String(RD.raidDaysOf(ats))) say('raid days', 'days', 'Home\'s raid days (' + home + ') and Plan\'s (' + RD.raidDaysOf(ats) + ') disagree');
   if (String(RD.raidDaysOf(ats, [4, 3])) !== '3,4' || String(RD.raidDaysOf(ats, [5])) !== '5') say('raid days', 'days', 'the lead\'s Raid days don\'t win over the rule'); }
-Promise.all([tierCount(), planSave, planNights]).then(() => {
+Promise.all([tierCount(), planSave, planNights, kguildRebuild]).then(() => {
 const by = new Map(); for (const x of P) { const a = by.get(x.pull) || []; a.push(x); by.set(x.pull, a); }
 // (the same problem on many pulls prints once per pull, at most 12 lines a pull)
 for (const [pull, l] of by) { console.log('\n' + pull + ':'); const u = [...new Set(l.map((x) => '  [' + x.kind + '] ' + x.msg))]; u.slice(0, 12).forEach((x) => console.log(x)); if (u.length > 12) console.log('  ... and ' + (u.length - 12) + ' more'); }

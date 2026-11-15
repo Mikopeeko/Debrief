@@ -3607,7 +3607,7 @@ function avoidPanel(ev, r, h, list) {
     // for 3 waves). A tick starts a touch only when no hit came before it in that time (the hit itself was fully absorbed))
     for (const e of hits) { let x = per.get(e.dst); if (!x) per.set(e.dst, x = { g: e.dst, touches: 0, ticks: 0, tj: 0, amt: 0, last: -9, hit: -99, ts: [], tk: [], tkJ: [], tl: [] }); x.ticks++; x.tk.push(e.t); if (amtOf(e) !== 0) { x.tj++; x.tkJ.push(e.t); } x.amt += amtOf(e);
       const fresh = src.dot ? e.t - x.hit > (e.tick ? src.dot + 1 : 1.5) : e.t - x.last > 1.5;
-      if (fresh) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; tc.a += amtOf(e); x.last = e.t; if (src.dot && (!e.tick || fresh)) x.hit = e.t; }
+      if (fresh) { x.touches++; x.ts.push(e.t); x.tl.push({ t: e.t, e: e.t, n: 0, a: 0 }); } const tc = x.tl[x.tl.length - 1]; tc.e = e.t; tc.n++; if (src.dot && !e.tick) tc.w = (tc.w || 0) + 1; tc.a += amtOf(e); x.last = e.t; if (src.dot && (!e.tick || fresh)) x.hit = e.t; }
     // (a source that only counts a walk-in from minTicks ticks: a lone brush isn't one (Mutagenic Venom, fix 9))
     if (src.minTicks > 1) for (const [g, x] of [...per]) { const tl = x.tl.filter((c) => c.n >= src.minTicks); if (!tl.length) { per.delete(g); continue; } x.tl = tl; x.ts = tl.map((c) => c.t); x.touches = tl.length; }
     if (!per.size) return null;
@@ -3676,6 +3676,9 @@ function avoidPanel(ev, r, h, list) {
 let CUT_HOOK = null;
 const avCutT = (r) => { const dur = (r && r.duration) || Infinity; if (!r || !r.item || r.item.kill) return dur; const ds = (r.deaths || []).map((d) => d.t).sort((a, b) => a - b), old = ds.length >= 2 ? ds[1] : Infinity;
   if (!CUT_HOOK) return Math.min(dur, old); let c = null; try { c = CUT_HOOK(r); } catch (e) { c = null; } if (r._wipe) delete r._wipe; return Math.min(dur, typeof c === 'number' && !isNaN(c) ? c : old); };
+/* (Nov 14, Wolfthorn Thu Nov 12 Ula'tek pull 13: Raiyvenz read "Hit by Caustic Waves twice (1.7M) and died to it" while his death said "3 Caustic Waves hits right before you died". The log has 4 wave hits:
+   0:43.5, then three waves from one tail at 1:03.8, 1:04.0 and 1:04.1. Hits under 1.5 s apart count as one time (the top raids' lines were measured that way), so the line keeps "twice" and says the last time was 3 hits at once) */
+const avBurst = (j, died, n) => { const v = died && j.tl ? j.tl.filter((c) => c.t <= j.dt + 0.05).pop() : null; return v && v.w > 1 ? v.w + ' hits at once' + (n > 1 ? ' the last time' : '') : ''; };
 function avoidMistakes(r) {
   const sec = ((r.module && r.module.sections) || []).find((s) => s.id === 'avoid' && (s.groups || []).some((g) => g.judge)); if (!sec) return;
   const L = (x) => String(x || '').toLowerCase(), names = new Set(sec.groups.flatMap((g) => (g.names || []).concat(L(g.label)))), ids = new Set(sec.groups.map((g) => g.spell && g.spell[0]).filter(Boolean));
@@ -3699,7 +3702,7 @@ function avoidMistakes(r) {
     const red = tR != null, n = ts.length, died = j.dt != null && j.dt <= T + 0.05, short = g.label.replace(/\s*\(.*$/, '');
     const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : g.harm === 'High' ? 'Hit by ' + ((g.spell && g.spell[1]) || short) + (n > 1 ? ' ' + n + ' times' : '') : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
     r.mistakes.push({ t: red ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: red ? 'High' : 'Low', avAmber: !red, dmg: amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [],
-      detail: what + (amt >= 1 ? ' (' + fmt(amt) + ')' : '') + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
+      detail: what + ((b) => (b.length ? ' (' + b.join(', ') + ')' : ''))([amt >= 1 ? fmt(amt) : '', avBurst(j, died, n)].filter(Boolean)) + (died ? ' and died to it.' : '.'), /* (Nov 12, Flex: 'weird wording' on '…twice (1.7M), more than 9 in 10 damage dealers in the fastest kills by then, and died to it.': the top raids decide the colour (red or amber above), never the sentence (Nov 6 rule)) */ fix: g.fix || tipOf(g) || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') });
   }
   r.mistakes.sort((a, b) => a.t - b.t);
 }
@@ -3750,7 +3753,7 @@ function strictView(r, lv) {
         if (out.some((m) => !m.avoidRule && m.player === j.p && (g.names || []).includes(L(m.mechanic)) && Math.abs(m.t - (tR != null ? tR : tA)) <= 3)) continue;
         const what = g.secs ? 'Stood in ' + short + ' for ' + n + ' s' : 'Hit by ' + short + ' ' + (n === 1 ? 'once' : n === 2 ? 'twice' : n + ' times');
         out.push({ t: tR != null ? tR : tA, player: j.p, mechanic: g.label, id: (g.spell && g.spell[0]) || 0, severity: tR != null ? 'High' : 'Medium', dmg: j.amt, pos: true, avoidRule: true, avoid: true, touches: n, ruleIds: [], strict: true,
-          detail: what + (j.amt >= 1 ? ' (' + fmt(j.amt) + ')' : '') + ', more than the typical raider in the world\'s top 100 guilds' + (died ? ', and died to it.' : '.'), fix: g.fix || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') }); }
+          detail: what + ((b) => (b.length ? ' (' + b.join(', ') + ')' : ''))([j.amt >= 1 ? fmt(j.amt) : '', avBurst(j, died, n)].filter(Boolean)) + ', more than the typical raider in the world\'s top 100 guilds' + (died ? ', and died to it.' : '.'), fix: g.fix || (g.secs ? 'Stay out of ' + short + '.' : 'Dodge ' + short + '.') }); }
       const jp = new Set((g.judge || []).filter((j) => !j.tank).map((j) => j.p));
       for (const x of g.rows || []) { const c = x[1], p = x[0] && x[0].p; if (!c || !p || !jp.has(p)) continue; const s = byP.get(p) || 0; c.bad = !!c.bad || s === 2; c.warn = !c.bad && (!!c.warn || s === 1); }
       g.bad = (g.rows || []).some((x) => x[1] && x[1].bad); g.warn = (g.rows || []).some((x) => x[1] && x[1].warn); }
@@ -8695,7 +8698,7 @@ function rootCauseGen(r, opts) {
   const vague = (ab) => /^(melee|something|unknown|damage|no killing hit|fell off the edge)$/i.test(String(ab || '')); /* (Nov 13: a label names no hit) */
   /* (Nov 10, Ula'tek: an unkicked Anguished Cry (a 60-yard stun) or Vicious Echoes (a raid stun) before the wave: the deaths of stunned players (Caustic Waves
      nobody could dodge, Falling Debris) come from the missed kick (xH3J pull 20: Anguished Cry at 4:53 stunned all 20 and 13 died in it, read as "5 died to Caustic Waves")) */
-  let stunM = null, stunL = [], stunIn = 0, ulaBy = null, ulaNoBy = '', uTop = null;
+  let stunM = null, stunL = [], stunIn = 0, ulaBy = null, ulaNoBy = '', ulaOwnBy = false, uTop = null;
   /* (stunned at death, or dead within 2.5 s of the stun ending: Falling Debris circles take about 2 s to step out of. The deaths counted are every death up to the
      call (or the end, when the raid played on), not only the wave's first 5 s) */
   if (ula && wave) { const stunAt = (d, m, back) => { const p = r.players && r.players.get(d.g), b = p && p.debuffs && p.debuffs.get(m.mechanic); return !!(b && b.sp && b.sp.some(([a, z]) => a >= m.t - 0.6 && a <= m.t + 0.6 && a <= d.t + 0.2 && (z == null || z >= d.t - back))); }; /* (this cast's own stun, not the next one's) */
@@ -8830,19 +8833,24 @@ function rootCauseGen(r, opts) {
     else if (uk === lc(UL_VIP)) { const tL = Math.max(tU, ...all.filter((d) => lc(d.ab) === uk).map((d) => d.t)), vl = (r.mistakes || []).filter((x) => /^viper hatched$/i.test(x.mechanic || '') && x.t <= (uTop.slow ? tL - 0.3 : /noxious splash/i.test(x.detail || '') ? tL + 1.5 : tL - 1) && x.t >= tU - 120) /* (a Viper's line is logged as it hatches, a moment after the splash that broke its egg: every one up to the last of these deaths) */.sort((a, b) => a.t - b.t), spl = vl.filter((x) => /noxious splash/i.test(x.detail || '')), who = [];
       for (const m of spl) { if (m.player && m.player !== 'Raid') who.push(nm(m.player)); const w = /within 3 yards of ([^)]+)\)/i.exec(m.detail || ''); if (w) for (const x of w[1].split(/,\s*|\s+and\s+/)) if (x.trim()) who.push(nm(x.trim())); }
       const u = [...new Set(who)], nV = vl.length, kS = all.filter((d) => lc(d.ab) === uk && lc(d.kill) === 'noxious splash').length, tS = []; for (const m of spl) if (!tS.some((t) => Math.abs(t - m.t) <= 3)) tS.push(m.t);
-      { const d0 = all.filter((d) => lc(d.ab) === uk && lc(d.kill) === 'noxious splash').map((d) => d.t).sort((a, b) => a - b)[0]; if (d0 != null && tS.length && d0 < tS[0] && tS[0] - d0 <= 6) tS[0] = d0; } /* (the splash itself, when it killed a carrier before the Viper's line) */
+      { const dS = all.filter((d) => lc(d.ab) === uk && lc(d.kill) === 'noxious splash').map((d) => d.t).sort((a, b) => a - b); tS.forEach((t, i) => { const d0 = dS.find((x) => x < t && t - x <= 6 && (!i || x > tS[i - 1])); if (d0 != null) tS[i] = d0; }); } /* (the splash itself, when it killed a carrier before the Viper's line; every touch's own (Nov 14, Wolfthorn Thu Nov 12 Ula'tek pull 13: Schooty and Volkovod's touch read 2:13, the time of the Viper's line; the splash that killed Schooty was at 2:12)) */
       const kSay = (kS && kS < nU ? 'Noxious Splash and the Vipers killed ' : kS ? 'Noxious Splash killed ' : nV === 1 ? 'it killed ' : 'they killed ') + nU;
       if (spl.length && u.length >= 2 && (spl.length * 2 >= nV || kS >= 2)) { /* (most of the Vipers came from carriers touching, or the splash itself killed two or more) */ causeM = spl[0]; name = 'Noxious Splash'; sp = spOf(name); sure = 0.8; P = Math.min(tU, tS[0]); ulaBy = u.slice(0, 5); next = ULA_NEXT['noxious splash']; const wh = u.length <= 5 ? andL(u) : who3(u.map((x) => ({ who: x })));
         /* (Nov 13, pull 13: "Dragooned, Schooty and Volkovod came within 3 yards of each other at 1:47 and 2:13" read as if all three touched each other. Dragooned's splash at 1:47 was his alone
            (the nearest carrier in the log was Boltzzx); Schooty and Volkovod touched at 2:13. Each touch is said with its own names) */
         const grp = []; for (const m of spl) { let g = grp.find((x) => Math.abs(x.t0 - m.t) <= 3); if (!g) grp.push(g = { t0: m.t, t: m.t, names: [], near: '' }); const add = (x) => { x = nm(x); if (x && !g.names.includes(x)) g.names.push(x); };
           if (m.player && m.player !== 'Raid') add(m.player); const w = /within 3 yards of ([^)]+)\)/i.exec(m.detail || ''); if (w) for (const x of w[1].split(/,\s*|\s+and\s+/)) if (x.trim()) add(x.trim());
-          const nr = /the nearest carrier was ([^,)]+), about (\d+) yards away/i.exec(m.detail || ''); if (nr && !g.near) g.near = 'nearest carrier ' + nm(nr[1].trim()) + ' about ' + nr[2] + ' yards away'; }
+          const nr = /the nearest carrier was ([^,)]+), about (\d+) yards away/i.exec(m.detail || ''); if (nr && !g.near) g.near = 'the nearest other carrier, ' + nm(nr[1].trim()) + ', was about ' + nr[2] + ' yards away'; }
         if (grp.length === tS.length) grp.forEach((g, i) => { g.t = tS[i]; });
-        const vSay = spl.length === 1 ? 'a Viper' : spl.length + ' Vipers', gSay = (g) => (g.names.length ? andL(g.names) : 'a carrier') + ' at ' + T(g.t) + (g.names.length === 1 && g.near ? ', ' + g.near : '');
-        short = grp.length > 1 ? 'Egg carriers came within 3 yards of each other ' + (grp.length === 2 ? 'twice' : grp.length + ' times') + ' (' + grp.map(gSay).join('; ') + '), and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, 'they killed') + '.'
+        const vSay = spl.length === 1 ? 'a Viper' : spl.length + ' Vipers', gSay = (g) => (g.names.length ? andL(g.names) : 'a carrier') + ' at ' + T(g.t);
+        /* (Nov 14, Wolfthorn Thu Nov 12 Ula'tek pull 13: "Egg carriers came within 3 yards of each other twice (Dragooned at 1:47, nearest carrier Boltzzx about 4 yards away; ...)" said a touch and
+           4 yards in one sentence. The log shows the 1:47 splash on Dragooned alone, so a carrier alone is said apart: their egg went off, with the nearest other carrier) */
+        const gPart = (g) => g.names.length > 1 ? andL(g.names) + ' came within 3 yards of each other at ' + T(g.t) : (g.names.length ? g.names[0] + '\'s egg' : 'an egg') + ' went off at ' + T(g.t) + (g.near ? ' (' + g.near + ')' : ''), parts = grp.map(gPart), soloS = grp.length > 1 && grp.some((g) => g.names.length < 2) ? parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1] : '';
+        ulaOwnBy = grp.length > 1; /* (each moment's row names its own carriers: "Caused by" every carrier, on the first moment's row, put the 2:12 pair on Dragooned's 1:47 row) */
+        short = soloS ? soloS.charAt(0).toUpperCase() + soloS.slice(1) + '. ' + vSay.charAt(0).toUpperCase() + vSay.slice(1) + ' hatched: ' + kSay.replace(/^(it|they) killed/, 'they killed') + '.'
+          : grp.length > 1 ? 'Egg carriers came within 3 yards of each other ' + (grp.length === 2 ? 'twice' : grp.length + ' times') + ' (' + grp.map(gSay).join('; ') + '), and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, 'they killed') + '.'
           : 'Egg carriers ' + wh + ' came within 3 yards of each other at ' + andL(tS.map((t) => T(t))) + ', and ' + vSay + ' hatched: ' + kSay.replace(/^(it|they) killed/, spl.length === 1 ? 'it killed' : 'they killed') + '.';
-        chain.length = 0; if (grp.length > 1) for (const g of grp) say(g.t, (g.names.length === 1 ? g.names[0] + '\'s egg went off (Noxious Splash' + (g.near ? ', ' + g.near : '') + ')' : 'egg carriers ' + (g.names.length ? andL(g.names) : '') + ' came within 3 yards of each other') + ' (' + T(g.t) + ')');
+        chain.length = 0; if (grp.length > 1) for (const g of grp) say(g.t, (g.names.length === 1 ? g.names[0] + '\'s egg went off (Noxious Splash' + (g.near ? '; ' + g.near : '') + ')' : 'egg carriers ' + (g.names.length ? andL(g.names) : '') + ' came within 3 yards of each other') + ' (' + T(g.t) + ')');
         else say(tS[0], 'egg carriers ' + wh + ' came within 3 yards of each other, and ' + vSay + ' hatched (' + T(tS[0]) + ')'); say(tU, kSay.replace(/^(it|they) killed/, 'the Vipers killed') + ' (' + T(tU) + ')'); }
       else { const died = vl.filter((x) => /died carrying it/i.test(x.detail || '')).length, grn = vl.filter((x) => /\(hit by /i.test(x.detail || '')).length, gnd = vl.filter((x) => /egg on the ground/i.test(x.detail || '')).length, clu = vl.filter((x) => /from a Blightscale Clutch/i.test(x.detail || '')).length, oth = nV - died - grn - gnd - clu - spl.length;
         const parts = [died ? died + ' from ' + (died === 1 ? 'a carrier who died' : 'carriers who died') : '', spl.length ? spl.length + ' from carriers touching' : '', grn ? grn + ' from ' + (grn === 1 ? 'an egg' : 'eggs') + ' hit by a wave' : '', gnd ? gnd + ' from ' + (gnd === 1 ? 'an egg' : 'eggs') + ' left on the ground' : '', clu ? clu + ' from ' + (clu === 1 ? 'a Clutch' : 'Clutches') + ' that weren\'t killed' : '', oth > 0 ? oth + ' more' : ''].filter(Boolean);
@@ -8889,7 +8897,7 @@ function rootCauseGen(r, opts) {
     if (K >= 1) short = byL[0] + ' ' + did + ', and ' + (lc(did).indexOf(ab0) >= 0 ? 'it' : mOwn ? causeM.mechanic : wave[0].ab) + ' killed ' + K + (K === 1 ? ' player.' : ' players.'); }
   const alsoL = also.slice(0, 3), marks = (cat === 'dead' ? deaths.filter((d) => d.t >= c0).map((d) => ({ t: d.t, k: 'also' })) : (chain.length ? [{ t: chain[0].t, k: 'root' }] : [])).concat(cat === 'dead' ? [] : alsoL.filter((a) => a.t != null).map((a) => ({ t: a.t, k: 'also' })));
   const line = chain.map((c, i) => (i ? c.txt : c.txt.charAt(0).toUpperCase() + c.txt.slice(1))).join(' → ') + '.';
-  return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short: rcNoBy(rcWithBy(short, byL, byOneG), byL, noByG), by: byL, byOne: byOneG, bySay: rcBySay(byL, byOneG), noBy: !byL.length ? noByG : '', did, didK, didT, didAb, marks, sp, orbBy: [], orbAt: null, chain,
+  return { cat, gen: true, name, flex: name, t: P, why: wave ? 'a wave' : 'the wipe call', phase: '', early, earlyNote: '', pnr: { t: P, why: wave ? 'a wave' : 'the wipe call' }, reset: null, line, short: rcNoBy(rcWithBy(short, byL, byOneG), byL, noByG), by: byL, byOne: byOneG, bySay: ulaOwnBy ? '' : rcBySay(byL, byOneG), noBy: !byL.length ? noByG : '', did, didK, didT, didAb, marks, sp, orbBy: [], orbAt: null, chain,
     also: alsoL.map((a) => ({ cat: a.cat, name: a.name, short: a.short, who: '', flex: a.name, txt: [] })), sure, unsure: sure < 0.5, next, nextCat: null, most: [], bombBy: [], kinds: null, brezLeft: null, dead: deaths.length };
 }
 
