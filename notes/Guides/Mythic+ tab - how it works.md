@@ -314,3 +314,26 @@ Big hits (every big hit, cast by cast) left Graphs. It is on Summary, under Mist
 Where the new numbers come from: the page's own pass over the log now keeps every buff on a player and every debuff no player put on them (as times on and off), the mana a caster's own casts say they had, and the healing a player did to themself. Uptime is the share of the fighting in the pulls picked.
 
 Not the same as Raid review's: no "click to chart" for one buff or spell, no stacks, no "how much a defensive took off", and mana is only known at the moments its owner cast something.
+
+## Report card: like Raid review's (Nov 14, 2026, night)
+
+Flex: "I think the report card tab should also function and look the same as its counterpart in raid".
+
+A key's Report card is Raid review's Report card page, fed a key:
+- The banner: the dungeon and level, how it ended, five numbers (pulls, deaths, combat potions drunk, mistakes, players graded) and the group's grade as a ring.
+- "The key, in short": how it ended, what the deaths cost, the group's best and weakest part, and "Next key:" the one thing that cost the group the most points.
+- The group's report card: Performance, Mechanics, Staying alive and Ready for the key, each averaged over the five players, with the best of the key.
+- Ranked group: the five players by grade. Click a column to rank by it, a role to narrow it, a player for their checklist under their row (click again to close it). The player picked in the bar is the row picked.
+- The checklist: Fix first (the row that cost the most points), a box a part, then every row with its goal and what happened. A row with mistakes opens to its pulls; a pull shows on the Route map.
+
+The grade is Raid review's own formula: Performance 40%, Mechanics 30%, Staying alive 20%, Ready 10%. A row with a % counts that %; Mechanics rows count as passed, half or missed. Inside Performance, Damage is half, Rotation 30%, the rest 20%. A part with nothing graded gives its share to the others.
+
+What each part reads (all of it is on the key's other tabs too):
+- Ready for the key: flask, food, weapon oil, enchants, gems and item level as the key started (the gear and buffs the log wrote at the start). A log with no such line has no Ready part.
+- Mechanics: must-kick casts that went off with the player's kick ready, debuffs left on with their dispel ready, and avoidable hits by spell. Stops and CC are shown, not graded.
+- Staying alive: deaths (each takes time off the timer) and close calls (a big hit that left them under 15% with no defensive up). A defensive ready at a death and Healthstones or health potions pressed are shown, not graded.
+- Performance: the damage parse (with no parse, damage against the middle player of the spec in the fastest runs), Rotation (the Rotation tab's score), big cooldowns (one in every pull of 45 seconds or more) and combat potions (one each time it is ready). A healer's healing is shown, not graded.
+
+Every column of the players table is a row in each checklist, with the table's own number (Flex, with a picture of that table: "can each of these be put in the individuals report card?"): damage and damage against the spec, kicks, stops, CC, dispels, deaths, defensives pressed, avoidable hits and big cooldowns. The ones a key cannot judge fairly (stops, CC, defensives pressed, against the spec when there is a parse) are shown, not graded.
+
+Not the same as Raid review's: no externals (not read in a key), no "Gear and stats" pop-up, and every death counts (a key has no wipe call). The players table (damage, kicks, dispels and so on) is still on the tab, under the ranked group.

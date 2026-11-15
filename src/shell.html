@@ -19888,7 +19888,7 @@ html:not(.mpcard)[data-mpv="rot"] body #view#view#view #mpcRot::before { content
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot) { cursor: pointer !important; }
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r:not(.gbx-hd):not(.mpt-gtot):hover { background: rgba(255,255,255,.045) !important; }
 html:not(.mpcard) body #view#view#view #mptC4 .gbx-r.mpx-ron { background: rgba(230,180,80,.09) !important; box-shadow: inset 2px 0 0 var(--gold) !important; }
-html:not(.mpcard) body #view#view#view #mptC4 .mpt-gft::after { content: 'Click a player for their card, just below.'; display: block; margin-top: 6px; font: 500 12.5px var(--body); color: var(--faint); }
+html:not(.mpcard) body #view#view#view #mptC4 .mpt-gft::after { content: 'Click a player for their checklist, in the ranked group above.'; display: block; margin-top: 6px; font: 500 12.5px var(--body); color: var(--faint); }
 }
 @layer defaultTheme {
 /* (Nov 14, the key page in the raid review's flow with its own look (Flex, on the page that copied the raid review's look: "I dont want it to look or
@@ -20072,6 +20072,18 @@ html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf[open] > summary.
 html:not(.mpcard) body #view#view#view #mptCH > details.mpx-bhf[open] > summary.mpx-bhs > .mpx-bhi { transform: rotate(90deg) !important; color: var(--text) !important; }
 html:not(.mpcard) body #view#view#view #mptCG .mpg-when { white-space: normal !important; text-align: right !important; }
 html:not(.mpcard) body #view#view#view #mptCG .gb-bd > .g8-rich { margin: 0 !important; }
+}
+/* Mythic+ Report card, as the raid review's Report card (Nov 14, Flex: "I think the report card tab should also function and look the same as its
+   counterpart in raid"). The page is the raid tab's own markup, so the raid tab's rules dress it; these are only the few that hang on where it sits. */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptBody > #mptCP.mpr { display: block; margin: 12px 0 14px !important; padding: 0 !important; border: 0 !important; background: none !important; box-shadow: none !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr > .rcn { margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rcb-tbl .rcb-tr { scroll-margin-top: 70px !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-sec, html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-under { scroll-margin-top: 70px !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .mpr-under details.mpx-rcm { margin: 14px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.06) !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-nm > .mpt-rki { vertical-align: middle !important; margin: -3px 7px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row .rqc-nm > .mpt-rki > .icw { margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCP.mpr .rqc-row > b > .mpt-shim { vertical-align: middle !important; }
 }
 </style>
 </body>
