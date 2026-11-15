@@ -73389,7 +73389,8 @@ function pg3dShapes(A, t) {
   const cl = (v) => Math.max(0, Math.min(1, v));
   const disc = (x, y, r, c, o) => P({ k: 'disc', x, y, r, c, o }), grow = (x, y, r, c, o) => P({ k: 'grow', x, y, r, c, o });
   const ring = (x, y, r, c, o, w, dash) => P({ k: 'ring', x, y, r, c, o, w: w || 0.3, dash: !!dash });
-  const label = (x, y, h, text, c, px) => P({ k: 'label', x, y, h, text, c, px: px || 13 });
+  // (a label; how 'name' for one that only names a creature, so pg3d hides it rather than move it off a HUD call-out; 'add' for an add pack's)
+  const label = (x, y, h, text, c, px, how) => P({ k: 'label', x, y, h, text, c, px: px || 13, how: how || '' });
   // the floor: her tail's sweep (th.r, 35), her reach (5), the coil soaks (s.r, 10; yours gold), the bubble (10 round the Wretch), impacts (m.r), landing eggs (4)
   S.thrash.forEach((th) => { if (t >= th.t0 && t <= th.at + 0.4) { const f = Math.min(1, (t - th.t0) / (th.at - th.t0)); disc(th.x, th.y, th.r, '#ff8c3c', 0.1 + 0.16 * f); ring(th.x, th.y, th.r, '#ff9b4a', 0.9, 0.5, true); if (t > th.at) disc(th.x, th.y, th.r, '#ff7828', 0.35); } });
   S.wrath.forEach((wr) => { if (t >= wr.t0 && t <= wr.at + 3.2) { disc(wr.p[0], wr.p[1], 5, '#ff3c3c', 0.22); ring(wr.p[0], wr.p[1], 5, '#ff4a4a', 1, 0.3); } });
@@ -73397,10 +73398,10 @@ function pg3dShapes(A, t) {
   S.soaks.forEach((s) => { if (t >= s.t0 && t <= s.at + 0.5) { const mine = s.group.includes(me), f = Math.min(1, (t - s.t0) / (s.at - s.t0)), c = mine ? '#f3c969' : '#24f2cb';
     disc(s.x, s.y, s.r, '#24f2cb', t > s.at ? 0.4 : 0.08); ring(s.x, s.y, s.r, c, 1, mine ? 0.45 : 0.3, mine); grow(s.x, s.y, s.r * f, '#24f2cb', 0.7);
     P({ k: 'wall', x: s.x, y: s.y, r: s.r, h: 2 + 3 * f, c, o: 0.08 + 0.14 * f }); P({ k: 'coil', x: s.x, y: s.y, r: s.r, f, slam: t > s.at ? cl((t - s.at) / 0.5) : 0 });
-    label(s.x, s.y, 10.5, mine ? 'YOUR SOAK' : 'Soak ' + (s.k + 1), c, 15); } });
+    label(s.x, s.y, 5, mine ? 'YOUR SOAK' : 'Soak ' + (s.k + 1), c, 15); } }); /* (low over its circle: higher up it sat on the HUD's call-outs, review of Nov 15) */
   S.bubbles.forEach((q) => { const c = G.wr[q.w]; if (c && t >= q.t0 && t <= q.at + 0.4) { const f = Math.min(1, (t - q.t0) / (q.at - q.t0));
     P({ k: 'dome', x: c.x, y: c.y, r: 10, c: '#d8f22f', o: 0.14 + 0.16 * f, f }); ring(c.x, c.y, 10, '#d8f22f', 1, 0.4); grow(c.x, c.y, 10 * (1 - f), '#d8f22f', 0.55); if (t > q.at) disc(c.x, c.y, 10, '#d8f22f', 0.45);
-    label(c.x, c.y, 12, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 15); } });
+    label(c.x, c.y, 5, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 15); } });
   // (impacts; the Womb and the Falling Debris drop out of the sky onto their circles)
   S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); disc(m.x, m.y, m.r, '#c8a36a', 0.16); ring(m.x, m.y, m.r, m.color || '#c8a36a', 1, 0.3); disc(m.x, m.y, m.r * f, '#ff5a3c', 0.25);
     if (m.name === 'Falling Debris' || m.name === 'Toxic Womb') P({ k: 'rock', x: m.x, y: m.y, f, land: t > m.at ? cl((t - m.at) / 0.3) : 0, womb: m.name === 'Toxic Womb', sd: m.x * 0.37 + m.y * 0.71 }); } });
@@ -73408,8 +73409,8 @@ function pg3dShapes(A, t) {
     P({ k: 'egg', x: e.x, y: e.y, h: 1.2 + 32 * (1 - f * f), fall: true }); } }); /* (falling from the sky until it lands, its shadow shrinking under it) */
   // the beam: from the spectral image to the tank in it (b.tank, else the off tank)
   S.beams.forEach((b) => { const tk = G.bots[b.tank || 't2']; if (t >= b.t0 && t <= b.t1 && tk) P({ k: 'beam', x0: b.from[0], y0: b.from[1], x1: tk.x, y1: tk.y });
-    if (t >= b.t0 - 1 && t <= b.t1) { disc(b.from[0], b.from[1], 3, '#3af2a8', 0.25); ring(b.from[0], b.from[1], 3, '#3af2a8', 1, 0.25); P({ k: 'ghost', x: b.from[0], y: b.from[1] }); label(b.from[0], b.from[1], 15, 'Spectral Ula\'tek', '#3af2a8', 14); } });
-  S.tails.forEach((q) => { if (t >= q.t0 && t <= q.at + 0.6) { disc(q.x, q.y, 3, '#ff5a3a', 0.35); ring(q.x, q.y, 3, '#ff5a3a', 1, 0.25); P({ k: 'stail', x: q.x, y: q.y, f: cl((t - q.t0) / 1.2), sink: t > q.at ? cl((t - q.at) / 0.6) : 0 }); label(q.x, q.y, 8, 'Tail', '#ff8a6a', 13);
+    if (t >= b.t0 - 1 && t <= b.t1) { disc(b.from[0], b.from[1], 3, '#3af2a8', 0.25); ring(b.from[0], b.from[1], 3, '#3af2a8', 1, 0.25); P({ k: 'ghost', x: b.from[0], y: b.from[1] }); label(b.from[0], b.from[1], 12, 'Spectral Ula\'tek', '#3af2a8', 14, 'name'); } });
+  S.tails.forEach((q) => { if (t >= q.t0 && t <= q.at + 0.6) { disc(q.x, q.y, 3, '#ff5a3a', 0.35); ring(q.x, q.y, 3, '#ff5a3a', 1, 0.25); P({ k: 'stail', x: q.x, y: q.y, f: cl((t - q.t0) / 1.2), sink: t > q.at ? cl((t - q.at) / 0.6) : 0 }); label(q.x, q.y, 8, 'Tail', '#ff8a6a', 13, 'name');
     if (t < q.t0 + 1.1) P({ k: 'splash', x: q.x, y: q.y, p: (t - q.t0) / 1.1, s: 0.5 }); } });
   if (t >= S.dive.gone && t < S.dive.surf) { const p = S.dive.to; disc(p[0], p[1], 5, '#7fd8ff', 0.25); ring(p[0], p[1], 5, '#7fd8ff', 1, 0.3, true); P({ k: 'fizz', x: p[0], y: p[1] }); label(p[0], p[1], 5, 'Bubbles', '#7fd8ff', 14); }
   // waves: the red lanes before they go (the 2D's start strip, and the lane it will run down), then the walls, placed as inWave places them
@@ -73429,28 +73430,32 @@ function pg3dShapes(A, t) {
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
   if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
-  // the adds, the Wretches, her, her tail, the heart
-  G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); label(a.x, a.y, 2.6, a.kind === 'viper' ? 'Viper' : 'Rawling', a.kind === 'viper' ? '#ff8f87' : '#c9df9a', 12); });
-  S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up }); label(c.x, c.y, up ? 6 : 4.5, up ? 'Blightscale Wretch' : 'Wretch (asleep)', '#c89bff', 13); });
+  // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
+  // (nine names piled up in one heap, review of Nov 15)
+  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
+    if (!q) packs.push(q = { kind: a.kind, x0: a.x, y0: a.y, sx: 0, sy: 0, n: 0 }); q.sx += a.x; q.sy += a.y; q.n++; });
+  packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
+  S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up });
+    if (!S.bubbles.some((q) => q.w === w.id && t >= q.t0 && t <= q.at + 0.4)) label(c.x, c.y, up ? 6 : 4.5, up ? 'Blightscale Wretch' : 'Wretch (asleep)', '#c89bff', 13, 'name'); }); /* (its bubble's label says it while that's up) */
   const B = A.bossAt(t), TL = A.tailAt(t), D = S.dive;
   let sink = 0; if (B.up && t >= D.t0 && t < D.gone) sink = (t - D.t0) / (D.gone - D.t0); if (B.up && t >= D.surf && t < D.surf + 1.5) sink = 1 - (t - D.surf) / 1.5; /* (only the picture: bossAt says where she is) */
   // (her: she rears back through Mother's Wrath's cast, then bites five times; a splash as she dives and as she bursts up on the other side)
-  if (B.up) { const wr = S.wrath.find((q) => t >= q.t0 && t < q.at + 3); P({ k: 'boss', x: B.p[0], y: B.p[1], sink, rear: wr && t < wr.at ? (t - wr.t0) / (wr.at - wr.t0) : 0, bite: wr && t >= wr.at ? ((t - wr.at) % 0.6) / 0.6 : -1 }); if (sink < 0.6) label(B.p[0], B.p[1], 33, 'Ula\'tek', '#e9ffd0', 16); }
+  if (B.up) { const wr = S.wrath.find((q) => t >= q.t0 && t < q.at + 3); P({ k: 'boss', x: B.p[0], y: B.p[1], sink, rear: wr && t < wr.at ? (t - wr.t0) / (wr.at - wr.t0) : 0, bite: wr && t >= wr.at ? ((t - wr.at) % 0.6) / 0.6 : -1 }); } /* (no name over her: the boss bar says it, and the name sat under the bar) */
   if (t >= D.t0 + 0.4 && t < D.gone + 1) { const p0 = A.bossAt(D.t0).p; P({ k: 'splash', x: p0[0], y: p0[1], p: (t - D.t0 - 0.4) / (D.gone + 0.6 - D.t0), s: 1.5 }); }
   if (t >= D.surf && t < D.surf + 2.4) P({ k: 'splash', x: B.p[0], y: B.p[1], p: (t - D.surf) / 2.4, s: 2 });
   // (her tail: it lifts through Mephitic Thrash's cast and slams down on the stone's edge as it lands)
-  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13);
+  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
-  if (t >= 145.5 && t < 165.5) { const hp = S.F(PG_UL.heart, t); disc(hp[0], hp[1], 3, '#5a0f22', 0.6); ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P({ k: 'heart', x: hp[0], y: hp[1] }); label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
+  if (t >= 145.5 && t < 165.5) { const hp = S.F(PG_UL.heart, t); disc(hp[0], hp[1], 3, '#5a0f22', 0.6); ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P({ k: 'heart', x: hp[0], y: hp[1] }); label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14, 'name'); }
   // the raid, then you (a gold ring), your defensive, where you clicked. Nameplates as in WoW: a thin bar over everyone, fainter far away; a name
-  // only near you (7 yards), on your soak group while your coil is up, and on egg carriers near you (14 yards); yours always (no more pile of 20
-  // names in a bubble: pg3d also drops a name that would sit on top of a nearer one)
-  const RAID = typeof GDZ_RAID !== 'undefined' ? GDZ_RAID : Object.keys(G.bots), NEAR = 7, CARRY = 14, mates = new Set(), carry = new Set();
-  S.soaks.forEach((s) => { if (s.group.includes(me) && t >= s.cast - 0.5 && t <= s.at + 0.5) s.group.forEach((id) => mates.add(id)); });
+  // only near you (7 yards), on your soak group's late ones (still outside its circle) while your coil is up, and on egg carriers near you (14
+  // yards); yours always (no more pile of 20 names in a bubble: pg3d also drops a name that would sit on top of a nearer one, four at most)
+  const RAID = typeof GDZ_RAID !== 'undefined' ? GDZ_RAID : Object.keys(G.bots), NEAR = 7, CARRY = 14, mates = new Map(), carry = new Set();
+  S.soaks.forEach((s) => { if (s.group.includes(me) && t >= s.cast - 0.5 && t <= s.at + 0.5) s.group.forEach((id) => { if (!mates.has(id)) mates.set(id, s); }); });
   G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) carry.add(e.who); });
   RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id), d = Math.hypot(b.x - G.x, b.y - G.y);
     ring(b.x, b.y, 0.95, rc, 0.9, 0.16); P({ k: 'unit', id, x: b.x, y: b.y, c: cc || rc });
-    const why = d <= NEAR ? 'near' : mates.has(id) ? 'soak' : carry.has(id) && d <= CARRY ? 'egg' : '';
+    const ms = mates.get(id), why = d <= NEAR ? 'near' : ms && Math.hypot(b.x - ms.x, b.y - ms.y) > ms.r ? 'soak' : carry.has(id) && d <= CARRY ? 'egg' : '';
     P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d }); });
   if (G.debs.def && G.debs.def.until > t) P({ k: 'dome', x: G.x, y: G.y, r: 1.9, c: '#7fb8ff', o: 0.18 });
   const hp = cl((G.hp == null ? 100 : G.hp) / 100);
@@ -73462,6 +73467,28 @@ function pg3dShapes(A, t) {
     P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
   return out;
 }
+
+// ---- the words over the picture, worked out on the screen each frame (plain functions, so tests/practice-3d.js runs them) ----
+// pg3dHud: the HUD's call-outs in the middle of the screen (practice.js .pg-warn and .pg-float) win over the labels in the picture, and an
+// earlier label wins over a later one. A label on top of one moves down below it, or hides if it only names a creature (the picture shows it).
+// L: the labels in order, [{ x, y, w, h, hide }] (centre and size in pixels); B: the call-outs showing now, [{ l, t, r, b }], top to bottom.
+// Sets y (moved down) or off on each label. (Review of Nov 15: at 0:39 "Into the bubble" sat under "Egg picked up" and neither could be read.)
+function pg3dHud(L, B) {
+  const on = (l, a, b, c, d) => l.x - l.w / 2 < c && l.x + l.w / 2 > a && l.y - l.h / 2 < d && l.y + l.h / 2 > b;
+  for (let i = 0; i < L.length; i++) { const l = L[i]; l.off = false;
+    for (let g = 0; g < 12; g++) { let low = null;
+      for (let j = 0; j < B.length && low == null; j++) { const o = B[j]; if (on(l, o.l, o.t, o.r, o.b)) low = o.b; }
+      for (let j = 0; j < i && low == null; j++) { const o = L[j]; if (!o.off && on(l, o.x - o.w / 2, o.y - o.h / 2, o.x + o.w / 2, o.y + o.h / 2)) low = o.y + o.h / 2; }
+      if (low == null) break; if (l.hide) { l.off = true; break; } l.y = low + l.h / 2 + 3; } }
+  return L; }
+// pg3dPick: which names to show. Q: [{ l, t, r, b, pri, fix, free }]. Fixed boxes always stay (you, the labels, the call-outs); the rest go by
+// pri (lower first) and stay only where they sit on nothing kept, `cap` at most (free ones, the add packs' labels, don't count). Sets on.
+function pg3dPick(Q, cap) {
+  Q.sort((a, b) => (a.fix ? -1 : a.pri) - (b.fix ? -1 : b.pri)); let n = 0;
+  for (let k = 0; k < Q.length; k++) { const q = Q[k]; q.on = false;
+    if (!q.fix) { if (!q.free && n >= cap) continue; let hit = false; for (let i = 0; i < k && !hit; i++) { const o = Q[i]; hit = o.on && q.l < o.r && q.r > o.l && q.t < o.b && q.b > o.t; } if (hit) continue; if (!q.free) n++; }
+    q.on = true; }
+  return Q; }
 
 // ---- the 3D view: pg3d(host, A) draws into host (a box over the 2D canvas). A as above, plus walk([x, y]) for a click on the floor, flashT
 // (the red hurt flash) and fail(e) (a crash while drawing: practice.js goes back to 2D). Returns { draw(t), resize(), pick(clientX, clientY)
@@ -73573,16 +73600,16 @@ function pg3d(host, A) {
   // (the effect shaders: 0 a soft glowing tube, 1 bands flowing along it, 2 a dome with a bright rim and shimmering bands that pulse quicker as it
   // nears, 3 a column of light fading upward)
   const FXV = 'varying vec2 vUv; varying float vF; varying vec3 vP; void main(){ vUv = uv; vP = position; vec4 wp = modelMatrix * vec4(position, 1.0); vec3 n = normalize(mat3(modelMatrix) * normal); vF = abs(dot(n, normalize(cameraPosition - wp.xyz))); gl_Position = projectionMatrix * viewMatrix * wp; }';
-  const FXF = 'uniform vec3 uC; uniform float uO, uT, uLen, uF; varying vec2 vUv; varying float vF; varying vec3 vP;\nvoid main(){ float a; vec3 c = uC;\n' +
+  const FXF = 'uniform vec3 uC; uniform float uO, uT, uLen, uF, uK; varying vec2 vUv; varying float vF; varying vec3 vP;\nvoid main(){ float a; vec3 c = uC;\n' +
     '#if MODE == 0\n a = uO * pow(vF, 1.4);\n' +
     '#elif MODE == 1\n float b = 0.5 + 0.5 * sin(vUv.y * uLen - uT * 12.0); a = uO * (0.45 + 0.55 * b) * (0.5 + 0.5 * vF); c = mix(uC, vec3(1.0), 0.22 * b);\n' +
     '#elif MODE == 2\n float fr = pow(1.0 - vF, 2.4), an = atan(vP.z, vP.x), sh = 0.5 + 0.5 * sin(vP.y * 16.0 - uT * (2.5 + 7.0 * uF) + sin(an * 7.0 + uT * 1.3) * 1.6), pu = 0.5 + 0.5 * sin(uT * (4.0 + 10.0 * uF));\n a = uO * (0.12 + fr * 2.4 + sh * (0.3 + fr)) * (0.8 + 0.5 * pu * uF); c = uC * (0.75 + fr * 0.9 + sh * 0.35);\n' +
-    '#else\n a = uO * pow(1.0 - vUv.y, 1.6) * (0.6 + 0.4 * vF);\n#endif\n gl_FragColor = vec4(c, clamp(a, 0.0, 1.0)); }';
-  const fxMat = (mode, c, add) => keep(new T.ShaderMaterial({ defines: { MODE: mode }, uniforms: { uC: { value: new T.Color(c) }, uO: { value: 1 }, uT: UT, uLen: { value: 10 }, uF: { value: 0 } }, vertexShader: FXV, fragmentShader: FXF, transparent: true, depthWrite: false, side: T.DoubleSide, blending: add ? T.AdditiveBlending : T.NormalBlending }));
+    '#else\n a = uO * pow(1.0 - vUv.y, uK) * (0.6 + 0.4 * vF);\n#endif\n gl_FragColor = vec4(c, clamp(a, 0.0, 1.0)); }';
+  const fxMat = (mode, c, add) => keep(new T.ShaderMaterial({ defines: { MODE: mode }, uniforms: { uC: { value: new T.Color(c) }, uO: { value: 1 }, uT: UT, uLen: { value: 10 }, uF: { value: 0 }, uK: { value: 1.6 } }, vertexShader: FXV, fragmentShader: FXF, transparent: true, depthWrite: false, side: T.DoubleSide, blending: add ? T.AdditiveBlending : T.NormalBlending }));
   // (points worked out in their shader from fixed random numbers: 0 sparks flowing along a beam, 1 a splash's droplets, 2 spray over a wave's crest)
   const PTV = 'attribute vec3 aR; uniform float uT, uPx, uP, uS, uD, uW, uO; varying float vA;\nvoid main(){ vec3 p; float sz;\n' +
     '#if MODE == 0\n float u = fract(aR.x + uT * (0.7 + 0.5 * aR.y)), an = aR.z * 6.2832 + uT * (5.0 + 3.0 * aR.y), rr = 0.2 + 0.7 * aR.y * (1.0 - u * 0.4); p = vec3(cos(an) * rr, u, sin(an) * rr); sz = 0.2 + 0.25 * aR.z; vA = uO * sin(u * 3.1416);\n' +
-    '#elif MODE == 1\n float tt = uP * 1.5, an = aR.x * 6.2832, sp = (2.0 + 5.0 * aR.y) * uS, vy = (7.0 + 10.0 * aR.z) * uS, y = vy * tt - 11.0 * tt * tt; p = vec3(cos(an) * sp * tt, y, sin(an) * sp * tt); sz = (0.28 + 0.35 * aR.z) * uS; vA = (y > -0.3 ? 1.0 : 0.0) * (1.0 - uP);\n' +
+    '#elif MODE == 1\n float tt = uP * 1.5, an = aR.x * 6.2832, sp = (2.0 + 5.0 * aR.y) * uS, vy = (7.0 + 10.0 * aR.z) * sqrt(uS), y = vy * tt - 11.0 * tt * tt; p = vec3(cos(an) * sp * tt, y, sin(an) * sp * tt); sz = (0.28 + 0.35 * aR.z) * uS; vA = (y > -0.3 ? 1.0 : 0.0) * (1.0 - uP);\n' +
     '#else\n float ph = fract(aR.y + uT * (0.8 + 0.7 * aR.z)), z = (aR.x - 0.5) * uW * 0.95, q = 1.0 - pow(2.0 * z / max(uW, 0.1), 2.0); p = vec3(uD * (0.02 + 0.2 * aR.z) + ph * 1.1, (1.5 + 1.3 * q) * (1.0 + 0.1 * ph) + ph * (0.6 + 1.2 * aR.z), z); sz = 0.14 + 0.2 * aR.z; vA = uO * (1.0 - ph) * 0.9;\n#endif\n' +
     ' vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(1.0, sz * uPx / -mv.z); }';
   const PTF = 'uniform vec3 uC; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(uC, vA * smoothstep(0.5, 0.1, d)); }';
@@ -73630,12 +73657,18 @@ function pg3d(host, A) {
     ' c = mix(c, vec3(0.93, 1.0, 0.86), fm) + vec3(0.35, 0.8, 0.15) * fr * 0.4; gl_FragColor = vec4(c, uO * (0.84 + 0.16 * fm)); }';
   const wave = pool(() => { const m = new T.Mesh(URECT, keep(new T.ShaderMaterial({ uniforms: { uO: { value: 1 }, uT: UT }, vertexShader: WAVEV, fragmentShader: WAVEF, transparent: true, depthWrite: false, side: T.DoubleSide }))), sm = ptsMat(2, '#e8ffd0'), sp = pts(SPRAYG, sm);
     m.add(sp); m.userData = { sm }; return m; });
+  // (exactly the strip a wave hits: a thin red border drawn after the wave, so it reads on the stone and on the venom; a red fill under the wave
+  // was covered by it and never showed, review of Nov 15)
+  const EDGEV = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }';
+  const EDGEF = 'uniform vec2 uS; uniform float uO; varying vec2 vUv; void main(){ vec2 d = min(vUv, 1.0 - vUv) * uS; if (min(d.x, d.y) > 0.3) discard; gl_FragColor = vec4(1.0, 0.27, 0.18, uO); }';
+  const edge = pool(() => { const m = new T.Mesh(URECT, keep(new T.ShaderMaterial({ uniforms: { uS: { value: new T.Vector2(1, 1) }, uO: { value: 1 } }, vertexShader: EDGEV, fragmentShader: EDGEF, transparent: true, depthWrite: false, side: T.DoubleSide }))); m.renderOrder = 605; return m; });
   // (the beam: a soft glow, a bright core with bands flowing to the tank, sparks round it)
   const beam = pool(() => { const g = new T.Group(), om = fxMat(0, '#3af2a8', true), im = fxMat(1, '#b8ffe6', true), a = new T.Mesh(BEAMG, om), b = new T.Mesh(BEAMG, im), sm = ptsMat(0, '#d8fff0'), sp = pts(SPARKG, sm);
     om.uniforms.uO.value = 0.55; im.uniforms.uO.value = 0.95; a.scale.set(0.95, 1, 0.95); b.scale.set(0.24, 1, 0.24); a.renderOrder = b.renderOrder = 640; g.add(a, b, sp); g.userData = { im, sm }; return g; });
-  // (a splash: droplets thrown up and out, a ring of foam spreading, a column of venom that rises and falls)
+  // (a splash: droplets thrown up and out, a ring of foam spreading, a short column of venom that rises and falls, fading fast at its top: a
+  // tall bright one sat right behind the HUD's call-outs and washed their words out, review of Nov 15)
   const splash = pool(() => { const g = new T.Group(), pm = ptsMat(1, '#c8ff8a'), d = pts(DROPG, pm), fm = keep(new T.MeshBasicMaterial({ map: FOAMT, color: 0xd9ffb8, transparent: true, depthWrite: false })), f = new T.Mesh(URECT, fm), cm = fxMat(3, '#9cff5a', true), c = new T.Mesh(WALLG, cm);
-    f.position.y = 0.08; f.renderOrder = 9; c.renderOrder = 645; g.add(d, f, c); g.userData = { pm, f, fm, c, cm }; return g; });
+    cm.uniforms.uK.value = 3; f.position.y = 0.08; f.renderOrder = 9; c.renderOrder = 645; g.add(d, f, c); g.userData = { pm, f, fm, c, cm }; return g; });
   // (falling eggs, Falling Debris rocks with a burning trail, the Toxic Womb)
   const EGGM = keep(new T.MeshStandardMaterial({ color: 0xe9e2c6, roughness: 0.35, emissive: 0x15140c })), VIPM = keep(new T.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x3a0606, roughness: 0.5 })), RAWM = keep(new T.MeshStandardMaterial({ color: 0xa7c46b, roughness: 0.6 }));
   const egg = pool(() => { const m = new T.Mesh(BALL, EGGM); m.scale.set(0.9, 1.17, 0.9); m.castShadow = true; return m; });
@@ -73646,16 +73679,22 @@ function pg3d(host, A) {
   const viper = pool(() => { const g = new T.Group(), b = new T.Mesh(VIPG, VIPM), h = new T.Mesh(BALL, VIPM); b.rotation.x = Math.PI / 2; b.position.y = 0.45; h.scale.setScalar(0.62); h.position.set(0, 0.75, 1.5); b.castShadow = true; g.add(b, h); return g; });
   const rawl = pool(() => { const m = new T.Mesh(BALL, RAWM); m.scale.set(1.15, 0.85, 1.15); m.castShadow = true; return m; });
   const spikeM = () => keep(new T.MeshStandardMaterial({ color: 0xb7e34a, roughness: 0.45, emissive: 0x253f06, transparent: true }));
+  // (see-through, cleanly: each part of her, her tail and a Wretch has a twin that only writes depth, drawn just before them while they're
+  // faded, so only their front surface blends: one clean ghost, not a stack of overlapping parts showing through each other (her tail looked
+  // like a pile of see-through coins near the camera, review of Nov 15))
+  const DEPTHM = keep(new T.MeshBasicMaterial({ colorWrite: false, transparent: true }));
+  const twins = (g) => { const L = []; g.traverse((m) => { if (m.isMesh) L.push(m); }); return L.map((m) => { const d = new T.Mesh(m.geometry, DEPTHM); d.visible = false; m.add(d); return [m, d]; }); };
   // (the Wretch: about the 2D's 2.2 yards across its back; see-through when it stands between the camera and you)
   const wretch = pool(() => { const g = new T.Group(), m = keep(new T.MeshStandardMaterial({ color: 0x5b3e7a, roughness: 0.6, transparent: true })), sm = spikeM(), b = new T.Mesh(BALL, m), h = new T.Mesh(BALL, m); b.scale.set(1.8, 1.45, 2.1); b.position.y = 1.45; h.scale.setScalar(0.9); h.position.set(0, 2.2, 1.9);
-    b.castShadow = h.castShadow = true; g.add(b, h); for (let i = 0; i < 4; i++) { const c = new T.Mesh(CONEG, sm); c.scale.setScalar(0.42); c.position.set(0, 2.85, 0.8 - i * 0.8); g.add(c); } g.userData.m = m; g.userData.mats = [m, sm]; return g; });
+    b.castShadow = h.castShadow = true; g.add(b, h); for (let i = 0; i < 4; i++) { const c = new T.Mesh(CONEG, sm); c.scale.setScalar(0.42); c.position.set(0, 2.85, 0.8 - i * 0.8); g.add(c); } g.userData.m = m; g.userData.mats = [m, sm]; g.userData.tw = twins(g); return g; });
 
   // ---- her: a serpent's neck and head out of the venom, a hood, three coils of her body breaking the surface behind her, glowing eyes ----
   const SCALEM = keep(new T.MeshStandardMaterial({ map: SCALET, bumpMap: SCALET, bumpScale: 0.3, vertexColors: true, roughness: 0.42, metalness: 0.18, emissive: 0x12061e, transparent: true }));
   const SPIKEM = spikeM(), FINM = keep(new T.MeshStandardMaterial({ map: FINT, side: T.DoubleSide, roughness: 0.55, emissive: 0x1a0830, transparent: true })), HORNM = keep(new T.MeshStandardMaterial({ color: 0x3a2b48, roughness: 0.5, transparent: true }));
-  const FANGM = keep(new T.MeshStandardMaterial({ color: 0xece4c8, roughness: 0.3 })), EYEM = keep(new T.MeshBasicMaterial({ color: 0xeaff4a })), PUPM = keep(new T.MeshBasicMaterial({ color: 0x0a0a04 })), MOUTHM = keep(new T.MeshStandardMaterial({ color: 0x4a0812, emissive: 0x2a0308, roughness: 0.6 }));
-  const BOSSM = [SCALEM, SPIKEM, FINM, HORNM];
-  const NECK = [[0, -12, -17], [0, -2, -13.5], [0, 8, -10.5], [0, 16.5, -7], [0, 22.5, -2.5], [0, 24.6, 2.2]], nr = (u) => 3.9 - 1.45 * u;
+  const FANGM = keep(new T.MeshStandardMaterial({ color: 0xece4c8, roughness: 0.3, transparent: true })), EYEM = keep(new T.MeshBasicMaterial({ color: 0xeaff4a, transparent: true })), PUPM = keep(new T.MeshBasicMaterial({ color: 0x0a0a04, transparent: true })), MOUTHM = keep(new T.MeshStandardMaterial({ color: 0x4a0812, emissive: 0x2a0308, roughness: 0.6, transparent: true }));
+  const BOSSM = [SCALEM, SPIKEM, FINM, HORNM, FANGM, MOUTHM, EYEM, PUPM]; /* (all of her fades together: her eyes, fangs and mouth stayed solid inside a faint head, review of Nov 15) */
+  // (her head about 19 yards up, so it clears the HUD's boss bar from the default camera; the neck ends inside her skull, no open ring under her jaw)
+  const NECK = [[0, -12, -17], [0, -2, -13.5], [0, 6.5, -10.5], [0, 13, -7.2], [0, 17.4, -2.6], [0, 19.4, 4.8]], nr = (u) => 3.9 - 1.45 * u - 0.65 * u * u * u * u;
   const NECKG = tube(56, 18, (u, o) => { frame(NECK, u, o); return nr(u); }, 2, 3.2, (c, o) => shade(c, o));
   const SKULLG = (() => { const g = keep(new T.SphereGeometry(1, 30, 22)), p = g.attributes.position; for (let i = 0; i < p.count; i++) { let x = p.getX(i), y = p.getY(i), z = p.getZ(i); const fz = (z + 1) / 2; x *= 1.15 * (1 - 0.42 * fz * fz); y *= (y > 0 ? 0.62 : 0.5) * (1 - 0.3 * fz); z *= 1.9; p.setXYZ(i, x, y, z); }
     g.computeVertexNormals(); uvx(g, 2, 1.4); return paint(g, (x, y, z, nx, ny) => Math.max(-1, Math.min(1, ny * 1.6 + 0.25))); })();
@@ -73669,9 +73708,9 @@ function pg3d(host, A) {
     for (let i = 0; i < 11; i++) { const u = 0.17 + i * 0.075; frame(NECK, u, fo); const r = nr(u), c = new T.Mesh(CONEG, SPIKEM), k = 0.65 + 0.45 * Math.sin(i / 10 * Math.PI);
       c.position.copy(fo.p).addScaledVector(fo.d, r * 0.8); c.quaternion.setFromUnitVectors(UP, fo.d.clone().multiplyScalar(0.85).addScaledVector(fo.t, -0.5).normalize()); c.scale.set(0.8 * k, k, 0.8 * k); boss.add(c); }
     // (the hood: a membrane each side of her upper neck, swept back)
-    frame(NECK, 0.64, fo); [1, -1].forEach((sd) => { const f = new T.Mesh(FING, FINM), X1 = fo.s.clone().multiplyScalar(sd), X2 = X1.clone().multiplyScalar(Math.cos(0.55)).addScaledVector(fo.d, Math.sin(0.55)).normalize(), Z1 = new T.Vector3().crossVectors(X2, fo.t);
-      f.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(X2, fo.t, Z1)); f.position.copy(fo.p).addScaledVector(X1, nr(0.64) * 0.55).addScaledVector(fo.d, 0.4); boss.add(f); });
-    headG.position.set(0, 25.4, 6.4); headG.scale.setScalar(3.4); boss.add(headG);
+    frame(NECK, 0.62, fo); [1, -1].forEach((sd) => { const f = new T.Mesh(FING, FINM), X1 = fo.s.clone().multiplyScalar(sd), X2 = X1.clone().multiplyScalar(Math.cos(0.55)).addScaledVector(fo.d, Math.sin(0.55)).normalize(), Z1 = new T.Vector3().crossVectors(X2, fo.t);
+      f.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(X2, fo.t, Z1)); f.position.copy(fo.p).addScaledVector(X1, nr(0.62) * 0.55).addScaledVector(fo.d, 0.4); f.scale.setScalar(0.8); boss.add(f); }); /* (0.8: her neck is shorter since her head came down) */
+    headG.position.set(0, 19.4, 6.4); headG.scale.setScalar(3.4); boss.add(headG);
     const sk = new T.Mesh(SKULLG, SCALEM); sk.castShadow = true; headG.add(sk);
     jawP.position.set(0, -0.26, -1.05); headG.add(jawP); const jw = new T.Mesh(JAWG, SCALEM); jw.position.set(0, -0.08, 1.05); jw.castShadow = true; jawP.add(jw);
     const mo = new T.Mesh(BALL, MOUTHM); mo.scale.set(0.78, 0.15, 1.4); mo.position.set(0, -0.3, 0.38); headG.add(mo);
@@ -73683,7 +73722,7 @@ function pg3d(host, A) {
     // (her body: three coils breaking the surface behind her, smaller further out)
     [[-5.5, -27, 0.5, 1], [4.5, -38, -0.45, 0.85], [-2.5, -48.5, 0.3, 0.7]].forEach(([x, z, yaw, s], i) => { const h = new T.Mesh(HUMPG, SCALEM); h.castShadow = true; h.position.set(x, -2.6 * s, z); h.rotation.y = Math.PI / 2 + yaw; h.scale.setScalar(s);
       [-0.5, 0, 0.5].forEach((da) => { const a = Math.PI / 2 + da, c = new T.Mesh(CONEG, SPIKEM); c.position.set(Math.cos(a) * 6.1, Math.sin(a) * 6.1, 0); c.rotation.z = a - Math.PI / 2; c.scale.set(0.7, 0.8, 0.7); h.add(c); }); boss.add(h); humps.push({ m: h, x, z, s, y0: -2.6 * s, i }); }); }
-  scene.add(boss);
+  const BTW = twins(boss); let eyeO = 1; scene.add(boss);
   // ---- her tail (Gore Rattle): ridged segments rising from the venom just off the stone, its rattle at the tip; it lifts and slams for the Thrash ----
   const SEGG = keep(new T.LatheGeometry([[0, -0.5], [0.8, -0.5], [0.97, -0.36], [1, -0.12], [0.9, 0.22], [0.72, 0.5], [0, 0.5]].map(([x, y]) => new T.Vector2(x, y)), 14));
   const TAILSM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.48, metalness: 0.15, emissive: 0x140826, transparent: true })), BONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45, emissive: 0xff7a2a, emissiveIntensity: 0.06, transparent: true })), TSPIKEM = spikeM();
@@ -73699,13 +73738,16 @@ function pg3d(host, A) {
       m.position.set(P[i][0] + CD.x * r * 0.75, P[i][1] + CD.y * r * 0.75, P[i][2] + CD.z * r * 0.75); CD.addScaledVector(CT, -0.45).normalize(); m.quaternion.setFromUnitVectors(UP, CD); m.scale.set(0.42 * r, 0.42 * r, 0.42 * r); }); };
   const mixP = (P0, P1, k, O) => { for (let i = 0; i < O.length; i++) for (let j = 0; j < 3; j++) O[i][j] = P0[i][j] + (P1[i][j] - P0[i][j]) * k; };
   const TREST = [[-8, -6, -11.5], [-6, 1.5, -9], [-2.6, 7, -6], [0.6, 10, -2.6], [1.6, 9.4, 0.8]], TLIFT = [[-8, -6, -11.5], [-7.5, 4, -10.5], [-6, 12, -9.5], [-2.5, 17.5, -8], [1.2, 19, -4.8]], TSLAM = [[-8, -6, -11.5], [-5.5, 2, -8], [-2.6, 3.2, -3], [0, 1.6, 2.5], [0.8, 0.9, 7]];
-  const TP = TREST.map(() => [0, 0, 0]), tail = new T.Group(), TAIL = chain(tail, 18, 6, 1, TAILSM, BONEM, TSPIKEM); tail.scale.setScalar(1.35); scene.add(tail);
+  const TP = TREST.map(() => [0, 0, 0]), tail = new T.Group(), TAIL = chain(tail, 18, 6, 1, TAILSM, BONEM, TSPIKEM), TTW = twins(tail); tail.scale.setScalar(1.35); scene.add(tail);
   const tailPose = (wig, slam, t) => { if (slam > 0) { const a = Math.min(1, slam / 0.16), b = slam < 0.55 ? 0 : (slam - 0.55) / 0.45; mixP(TLIFT, TSLAM, a * a, TP); if (b > 0) mixP(TP, TREST, b * b * (3 - 2 * b), TP); }
     else { mixP(TREST, TLIFT, wig * wig * (3 - 2 * wig), TP); for (let i = 1; i < 5; i++) { TP[i][0] += Math.sin(t * 1.3 + i * 0.8) * 0.5 * i / 4; TP[i][1] += Math.sin(t * 1.7 + i) * 0.25 * i / 4; } }
     BONEM.emissiveIntensity = 0.06 + 0.7 * wig * (1 - slam) * (0.75 + 0.25 * Math.sin(t * 20)); pose(TAIL, TP, t, 0.25 + 1.2 * wig * (1 - slam), 1.9, 0.85, 1.1); };
-  // (her or her tail between the camera and you: see-through until you're clear)
-  const fade = (g, mats, rad) => { if (!g.visible || !camAt) return; const ax = cam.position.x, az = cam.position.z, dx = camAt[0] - ax, dz = -camAt[1] - az, L2 = dx * dx + dz * dz || 1, px = g.position.x, pz = g.position.z;
-    const u = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)), o = Math.hypot(ax + dx * u - px, az + dz * u - pz) < rad || Math.hypot(ax - px, az - pz) < rad * 2 ? 0.25 : 1; /* (or right by the camera) */ mats.forEach((m) => { m.opacity = o; m.depthWrite = o === 1; }); };
+  // (her or her tail between the camera and you: see-through until you're clear; returns how see-through. While faded, her parts draw late (ro + 1)
+  // right after their depth twins (ro), so whatever is behind her, effects too, shows through one clean ghost)
+  const fade = (g, mats, rad, tw, ro) => { if (!g.visible || !camAt) return 1; const ax = cam.position.x, az = cam.position.z, dx = camAt[0] - ax, dz = -camAt[1] - az, L2 = dx * dx + dz * dz || 1, px = g.position.x, pz = g.position.z;
+    const u = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)), o = Math.hypot(ax + dx * u - px, az + dz * u - pz) < rad || Math.hypot(ax - px, az - pz) < rad * 2 ? 0.25 : 1; /* (or right by the camera) */
+    const see = o < 1; mats.forEach((m) => { m.opacity = o; m.depthWrite = !see; });
+    if (tw && g.userData.see !== see) { g.userData.see = see; tw.forEach(([m, d]) => { d.visible = see; d.renderOrder = ro; m.renderOrder = see ? ro + 1 : 0; }); } return o; };
   // (the small tails: the same ridged tail, smaller, rising out of the venom and sinking back once they've fired)
   const STAILM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.5, emissive: 0x140826 })), SBONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45 }));
   const STREST = [[0, -5, -3.5], [0, -0.5, -2.4], [0, 3.6, -1.2], [0, 6.2, 0.6], [0, 6.8, 2.8]], ST = STREST.map(() => [0, 0, 0]);
@@ -73731,15 +73773,17 @@ function pg3d(host, A) {
   // labels: a sprite each, the same size on screen at any distance
   const LBL = []; let nL = 0, W0 = 0, H0 = 0, pxK = 800;
   const lblMake = () => { const c = document.createElement('canvas'); c.width = 512; c.height = 96; const tx = keep(new T.CanvasTexture(c)); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false;
-    const sp = new T.Sprite(keep(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }))); sp.renderOrder = 1000; scene.add(sp); return { sp, c, tx, key: '' }; };
+    const sp = new T.Sprite(keep(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }))); sp.renderOrder = 1000; scene.add(sp); return { sp, c, tx, key: '', tw: 0, px: 13, hide: false, free: false, q: null }; };
   const label = (s) => { let L = LBL[nL]; if (!L) L = LBL[nL] = lblMake();
     nL++; const key = s.text + '|' + s.c;
     if (L.key !== key) { L.key = key; const g = L.c.getContext('2d'); g.clearRect(0, 0, 512, 96); let f = 56; g.font = '700 ' + f + 'px system-ui, sans-serif'; const w = g.measureText(s.text).width; if (w > 492) { f = Math.floor(f * 492 / w); g.font = '700 ' + f + 'px system-ui, sans-serif'; }
-      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(s.text, 256, 50); g.fillStyle = s.c; g.fillText(s.text, 256, 50); L.tx.needsUpdate = true; }
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 10; g.strokeStyle = 'rgba(0,0,0,.85)'; g.strokeText(s.text, 256, 50); g.fillStyle = s.c; g.fillText(s.text, 256, 50); L.tx.needsUpdate = true; L.tw = Math.min(w, 492) + 10; }
+    L.px = s.px; L.hide = s.how === 'name' || s.how === 'add'; L.free = s.how === 'add'; /* (pg3dHud and pg3dPick read these in names()) */
     L.sp.visible = true; L.sp.position.set(s.x, s.h + (low(s.x, s.y, 0) ? WATER : 0), -s.y); const k = s.px / 56 / pxK; L.sp.scale.set(512 * k, 96 * k, 1); };
   // nameplates (WoW style): a name and a thin bar over each raider, each its own pair of sprites drawn only when they change; a name is kept only
-  // if it doesn't sit on one nearer to you (you first, then your soak group and carriers, then the nearest), seven names at most
-  const PLATES = new Map(), PL = [], NR = [], PLN = 12.5 / 26;
+  // if it doesn't sit on a label, a HUD call-out or one nearer to you (you first, then your soak group's late ones and carriers, then the
+  // nearest), four besides yours at most (pg3dPick)
+  const PLATES = new Map(), PL = [], PLN = 12.5 / 26;
   const plSprite = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const tx = keep(new T.CanvasTexture(c)); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false;
     const sp = new T.Sprite(keep(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }))); sp.renderOrder = 990; sp.visible = false; scene.add(sp); return { c, tx, sp }; };
   const plateOf = (id) => { let p = PLATES.get(id); if (!p) { p = { n: plSprite(256, 40), b: plSprite(64, 8), nk: '', bk: '', w: 0, on: false, s: null }; p.n.sp.center.set(0.5, -0.3); PLATES.set(id, p); } return p; };
@@ -73748,11 +73792,30 @@ function pg3d(host, A) {
     const bk = s.bar + '|' + Math.round(s.hp * 40); if (p.bk !== bk) { p.bk = bk; const g = p.b.c.getContext('2d'), w = Math.round(62 * s.hp); g.clearRect(0, 0, 64, 8); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 64, 8); g.fillStyle = s.bar; g.fillRect(1, 1, w, 6); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(1, 1, w, 2); p.b.tx.needsUpdate = true; }
     const y = baseY(s.x, s.y) + 2.75; p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
     p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = true; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); };
-  const plPri = (s) => (s.you ? 0 : s.why === 'near' ? 2 : 1) + s.d / 1000;
-  const names = () => { PL.sort((a, b) => plPri(a.s) - plPri(b.s)); let n = 0;
-    for (let k = 0; k < PL.length && n < 28; k++) { const p = PL[k]; if (!p.s.show) continue; /* (yours and six more at most) */ V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
-      const x = (V4.x + 1) / 2 * W0, y = (1 - V4.y) / 2 * H0, hw = p.w / 2 + 2; let hit = false; for (let i = 0; i < n; i += 4) if (x - hw < NR[i + 2] && x + hw > NR[i] && y - 25 < NR[i + 3] && y - 5 > NR[i + 1]) { hit = true; break; }
-      if (hit) continue; NR[n++] = x - hw; NR[n++] = y - 25; NR[n++] = x + hw; NR[n++] = y - 5; p.n.sp.visible = true; } };
+  // (the HUD's call-outs in the middle of the screen, practice.js's .pg-warn and .pg-float: where their words are while they show. Their box is
+  // read again only when their words or the window's size change)
+  const HUD = ['.pg-warn', '.pg-float'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, cs: getComputedStyle(el), key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
+  const RNG = document.createRange(), BX = [], LQ = [], PQ = [];
+  const bands = () => { BX.length = 0; let hr = null;
+    for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
+      if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); RNG.selectNodeContents(B.el); const r = RNG.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 3; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 3; }
+      BX.push(B); } };
+  const names = () => { bands();
+    // (the labels: each one's box on the screen; a HUD call-out or an earlier label pushes it down below, or hides it if it only names a creature)
+    LQ.length = 0; for (let i = 0; i < nL; i++) { const L = LBL[i]; V4.copy(L.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.3 || Math.abs(V4.y) > 1.3) continue;
+      const q = L.q || (L.q = { L, i: 0, x: 0, y: 0, y0: 0, z: 0, w: 0, h: 0, hide: false, off: false, l: 0, t: 0, r: 0, b: 0, fix: true, free: false, pri: 0, on: true });
+      q.i = i; q.x = (V4.x + 1) / 2 * W0; q.y = q.y0 = (1 - V4.y) / 2 * H0; q.z = V4.z; q.w = L.tw * L.px / 56; q.h = L.px * 1.2; q.hide = L.hide; q.free = L.free;
+      if (q.hide && (q.x - q.w / 2 < 0 || q.x + q.w / 2 > W0)) { L.sp.visible = false; continue; } /* (a creature's name cut by the screen's edge) */ LQ.push(q); }
+    LQ.sort((a, b) => (a.hide - b.hide) || (a.i - b.i)); pg3dHud(LQ, BX);
+    PQ.length = 0; for (let i = 0; i < BX.length; i++) PQ.push(BX[i]);
+    for (let i = 0; i < LQ.length; i++) { const q = LQ[i]; if (q.off) { q.L.sp.visible = false; continue; }
+      if (q.y !== q.y0) { V4.set(q.x / W0 * 2 - 1, 1 - q.y / H0 * 2, q.z).unproject(cam); q.L.sp.position.copy(V4); }
+      q.l = q.x - q.w / 2; q.r = q.x + q.w / 2; q.t = q.y - q.h / 2; q.b = q.y + q.h / 2; q.fix = !q.free; q.pri = 50 + q.i; PQ.push(q); }
+    // (the names: you, the labels and the call-outs stay; then the late soak mates and carriers, then the nearest, where they sit on nothing)
+    for (let k = 0; k < PL.length; k++) { const p = PL[k], s = p.s; if (!s.show) continue; V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
+      const q = p.q || (p.q = { p, l: 0, t: 0, r: 0, b: 0, fix: false, free: false, pri: 0, on: false }), x = (V4.x + 1) / 2 * W0, y = (1 - V4.y) / 2 * H0, hw = p.w / 2 + 2;
+      q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); }
+    pg3dPick(PQ, 4); for (let i = 0; i < PQ.length; i++) { const q = PQ[i]; if (q.p) q.p.n.sp.visible = q.on; else if (q.L && !q.on) q.L.sp.visible = false; } };
 
   // ---- one shape on the screen ----
   const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), V4 = new T.Vector3(), faceIn = (x, y) => Math.atan2(-x, y); /* (turned to face the middle of the stone) */
@@ -73763,13 +73826,14 @@ function pg3d(host, A) {
     if (k === 'rect' || k === 'wave') { const u = Math.cos(s.a), v = Math.sin(s.a), m1 = (s.f0 + s.f1) / 2, m2 = (s.w0 + s.w1) / 2, x = s.x + u * m1 - v * m2, y = s.y + v * m1 + u * m2, Dd = s.f1 - s.f0, Wd = s.w1 - s.w0;
       if (k === 'rect') { flat(URECT, x, y, Dd, Wd, s.a, s.c, s.o, false); return; }
       const q = Math.min(1, s.o / 0.92), m = wave(), sm = m.userData.sm.uniforms; m.geometry = waveG(Dd, Wd); m.position.set(x, 0.03, -y); m.rotation.set(0, s.a, 0); m.scale.set(1, 0.25 + 0.75 * q, 1); m.material.uniforms.uO.value = 0.9 * q; m.renderOrder = 600;
-      sm.uD.value = Dd; sm.uW.value = Wd; sm.uO.value = q; flat(URECT, x, y, Dd, Wd, s.a, '#ff4a32', 0.3 * q, false); return; } /* (the red strip under it: exactly where it hits) */
+      sm.uD.value = Dd; sm.uW.value = Wd; sm.uO.value = q;
+      const e = edge(); e.position.set(x, 0.04, -y); e.rotation.set(0, s.a, 0); e.scale.set(Dd, 1, Wd); e.material.uniforms.uS.value.set(Dd, Wd); e.material.uniforms.uO.value = 0.95 * q; return; } /* (its red border: exactly where it hits) */
     if (k === 'dome' || k === 'wall') { const m = k === 'dome' ? dome() : wall(), U = m.material.uniforms; m.position.set(s.x, low(s.x, s.y, s.r) ? WATER + 0.25 : 0.03, -s.y); if (k === 'dome') m.scale.setScalar(s.r); else m.scale.set(s.r, s.h, s.r);
       ucol(U.uC, s.c); U.uO.value = s.o * (k === 'dome' ? 0.65 : 1.6); U.uF.value = s.f || 0; m.renderOrder = k === 'dome' ? 620 : 610; return; }
     if (k === 'coil') { const g = coil(), u = g.userData, sl = s.slam, rise = 0.12 + 0.88 * (1 - Math.pow(1 - s.f, 3)), dn = sl > 0 ? Math.max(0, 1 - sl / 0.3) : 1, R0 = s.r * 0.78;
       g.position.set(s.x, 0.04, -s.y); u.hx.visible = dn > 0.02; u.hx.scale.set(R0, R0 * 1.05 * rise * dn + 0.01, R0); u.hx.rotation.y = t * 1.4 + s.x; u.hm.uniforms.uO.value = (0.22 + 0.33 * s.f) * Math.min(1, dn * 1.5);
       u.fl.visible = u.fc.visible = sl > 0; if (sl > 0) { const q = 1 - sl; u.fl.scale.set(s.r, 1, s.r); u.flm.opacity = 0.8 * q * q; u.fc.scale.set(s.r * 0.95, 16 * (0.4 + 0.6 * q), s.r * 0.95); u.fcm.uniforms.uO.value = 0.75 * q; } return; }
-    if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 10.2, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
+    if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y); u.m.visible = true; u.on = true; return; }
     if (k === 'plate') { plate(s); return; }
@@ -73783,9 +73847,9 @@ function pg3d(host, A) {
     if (k === 'wretch') { const g = wretch(), ud = g.userData; if (ud.x != null && Math.hypot(s.x - ud.x, s.y - ud.y) > 0.02) g.rotation.y = Math.atan2(s.x - ud.x, -(s.y - ud.y)); ud.x = s.x; ud.y = s.y;
       g.position.set(s.x, baseY(s.x, s.y), -s.y); g.scale.set(1, s.awake ? 1 : 0.6, 1); col(ud.m, s.awake ? '#9b5cff' : '#5b3e7a'); return; }
     if (k === 'boss') { const rear = s.rear || 0, bite = s.bite >= 0 ? Math.sin(s.bite * Math.PI) : 0, fy = faceIn(s.x, s.y), sy = Math.sin(fy), cy = Math.cos(fy), bx = s.x, bz = -s.y;
-      boss.visible = true; boss.position.set(bx, -36 * s.sink, bz); boss.rotation.set(-0.16 * rear * rear + 0.32 * bite + 0.025 * Math.sin(t * 1.3) + 0.25 * s.sink, fy + Math.sin(t * 0.9) * 0.05, 0);
+      boss.visible = true; boss.position.set(bx, -36 * s.sink, bz); boss.rotation.set(-0.16 * rear * rear + 0.42 * bite + 0.025 * Math.sin(t * 1.3) + 0.25 * s.sink, fy + Math.sin(t * 0.9) * 0.05, 0); /* (0.42: the same reach as before her head came down) */
       headG.rotation.set(0.2 - 0.18 * rear + 0.12 * bite, Math.sin(t * 1.7) * 0.1, Math.sin(t * 1.1) * 0.05); jawP.rotation.x = 0.05 + 0.5 * bite + 0.28 * rear;
-      const eo = 0.75 + 0.25 * Math.sin(t * 4); eyeGl.forEach((g) => { g.material.opacity = eo; });
+      eyeO = 0.75 + 0.25 * Math.sin(t * 4); /* (the eyes' glow: set after fade() in draw1, times how see-through she is) */
       humps.forEach((h) => { h.m.position.y = h.y0 + Math.sin(t * 1.1 + h.i * 1.7) * 0.45 * h.s; });
       if (s.sink < 0.85) { const fo1 = 0.6 * (1 - s.sink), ws = (lx, lz, sz, i) => foamAt(bx + lx * cy + lz * sy, bz - lx * sy + lz * cy, sz * (1 + 0.06 * Math.sin(t * 2.3 + i)), fo1, t * 0.2 + i);
         ws(0, -13.2, 13, 0); humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
@@ -73794,7 +73858,7 @@ function pg3d(host, A) {
     if (k === 'stail') { const g = stail(), C = g.userData.C, rise = 1 - Math.pow(1 - s.f, 3), dn = -9 * (1 - rise) - 10 * (s.sink || 0); g.position.set(s.x, WATER, -s.y); g.rotation.y = faceIn(s.x, s.y);
       for (let i = 0; i < 5; i++) { ST[i][0] = STREST[i][0] + Math.sin(t * 3.1 + i) * 0.35 * i / 4; ST[i][1] = STREST[i][1] + dn; ST[i][2] = STREST[i][2]; } pose(C, ST, t, 1, 1.5, 0.8, 1.0); if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
     if (k === 'splash') { if (s.p < 0 || s.p > 1) return; const g = splash(), u = g.userData, oy = onP(s.x, s.y) ? 0.04 : WATER + 0.02; g.position.set(s.x, oy, -s.y); u.pm.uniforms.uP.value = s.p; u.pm.uniforms.uS.value = s.s;
-      u.f.scale.set((2 + 9 * Math.sqrt(s.p)) * s.s * 2, 1, (2 + 9 * Math.sqrt(s.p)) * s.s * 2); u.fm.opacity = 0.8 * (1 - s.p); const hh = Math.sin(Math.min(1, s.p * 1.5) * Math.PI) * 15 * s.s; u.c.visible = hh > 0.1; u.c.scale.set(2.4 * s.s * (1 + s.p), hh + 0.01, 2.4 * s.s * (1 + s.p)); u.cm.uniforms.uO.value = 0.8 * (1 - s.p); return; }
+      u.f.scale.set((2 + 9 * Math.sqrt(s.p)) * s.s * 2, 1, (2 + 9 * Math.sqrt(s.p)) * s.s * 2); u.fm.opacity = 0.8 * (1 - s.p); const hh = Math.sin(Math.min(1, s.p * 1.5) * Math.PI) * 5 * s.s; u.c.visible = hh > 0.1; u.c.scale.set(2.4 * s.s * (1 + s.p), hh + 0.01, 2.4 * s.s * (1 + s.p)); u.cm.uniforms.uO.value = 0.4 * (1 - s.p); return; }
     if (k === 'ghost') { const g = ghost(); g.position.set(s.x, 0, -s.y); g.rotation.y = faceIn(s.x, s.y); return; }
     if (k === 'heart') { const ph = (t * 1.2) % 1, b = Math.exp(-Math.pow(ph / 0.07, 2)) + 0.6 * Math.exp(-Math.pow((ph - 0.24) / 0.07, 2)); heart.visible = hfl.visible = true; heart.position.set(s.x, 3.2, -s.y); hcore.scale.setScalar(2.1 * (1 + 0.1 * b)); HEARTM.emissiveIntensity = 0.3 + 1.05 * b;
       hhalo.scale.setScalar(10 + 3 * b); hhalo.material.opacity = 0.35 + 0.5 * b; hfl.position.set(s.x, WATER + 0.12, -s.y); hfl.scale.set(6 + 2 * b, 1, 6 + 2 * b); hfl.material.opacity = 0.18 + 0.25 * b; return; }
@@ -73824,7 +73888,8 @@ function pg3d(host, A) {
     const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t);
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
-    place(); cam.updateMatrixWorld(); names(); fade(boss, BOSSM, 12); fade(tail, TAILM, 6); wretch.L.forEach((g) => fade(g, g.userData.mats, 2.4)); fx(t);
+    place(); cam.updateMatrixWorld(); names(); const bo = fade(boss, BOSSM, 12, BTW, 690); for (let i = 0; i < eyeGl.length; i++) eyeGl[i].material.opacity = eyeO * bo;
+    fade(tail, TAILM, 6, TTW, 692); wretch.L.forEach((g) => fade(g, g.userData.mats, 2.4, g.userData.tw, 694)); fx(t);
     if (A.flashT && A.flashT !== flashSeen) { flashSeen = A.flashT; const left = 400 - (performance.now() - flashSeen); if (left > 0 && flL.animate) flL.animate([{ opacity: left / 400 }, { opacity: 0 }], { duration: left, easing: 'linear' }); } /* (the red hurt flash fades on its own, paused or not) */
     R.render(scene, cam); };
   const draw = (t) => { if (dead) return; try { draw1(t); } catch (e) { if (A.fail) A.fail(e); else throw e; } };

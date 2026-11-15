@@ -17,9 +17,16 @@
 //  6. the spell effects lose their shapes: no spectral coil over a coil soak (and its flash after the slam), no rock dropping for Falling Debris,
 //     no blob shadow under a falling egg, she doesn't rear and bite for Mother's Wrath, no splash when she surfaces, her tail doesn't slam;
 //  7. drawing makes new three.js objects (a `new T.` in put or draw1), or a geometry, material or texture is made without keep() (so closing
-//     the game wouldn't free it).
+//     the game wouldn't free it);
+//  8. (the review of the graphics pass, Nov 15, the 0:39, 0:41, 0:48, 0:57 and 1:27 pictures) the words pile up again: the soak and bubble
+//     labels float high over their circles into the HUD's call-outs, a label on a call-out isn't moved below it (or hidden if it only names a
+//     creature: pg3dHud), names aren't capped at four besides yours or a name sits on a label (pg3dPick), every add gets its own label (nine
+//     "Rawling" in a heap) instead of one per pack near you, a soak mate already in the circle still shows a name, or the "Ula'tek" label is
+//     back under the boss bar; her eyes, fangs and mouth stay solid while she's faded, the faded tail shows every overlapping part (no depth
+//     twins), her head is back up behind the boss bar or the neck's open end hangs under her jaw, the splash's light column is tall and bright
+//     again, or a wave's strip has no red border drawn over the wave.
 // contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). 1 to 3 fail on 9e8d89f9, the game before the 3D view;
-// 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass.
+// 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass; 8 fails on 47da0826, the graphics pass before its review.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function practice3d(say, H) {
@@ -141,6 +148,49 @@ module.exports = function practice3d(say, H) {
     const loose = []; for (const m of P3.matchAll(/new T\.(\w*(?:Geometry|Material|Texture)|InstancedMesh)\(/g)) if (P3.slice(m.index - 5, m.index) !== 'keep(') loose.push(m[1]);
     if (loose.length) bad('a three.js ' + [...new Set(loose)].join(', ') + ' is made without keep(), so closing the game wouldn\'t free it');
     if (!/own\.forEach\(\(o\) => \{ try \{ o\.dispose\(\); \}/.test(P3)) bad('dispose() no longer frees everything keep() holds'); }
+  // 8. the review of the graphics pass (Nov 15)
+  { const lb = (L, re) => L.find((s) => s.k === 'label' && re.test(s.text)), ys = lb(at(40), /^YOUR SOAK$/), bb = lb(at(37), /^Into the bubble/);
+    if (!ys || ys.h > 6) bad('the "YOUR SOAK" label floats ' + (ys ? ys.h : '?') + ' yards up, over the HUD\'s call-outs and far from its circle (0:39): keep it low (6 at most)');
+    if (!bb || bb.h > 6) bad('the "Into the bubble" label floats ' + (bb ? bb.h : '?') + ' yards up, on the HUD\'s call-outs (0:39, under "Egg picked up"): keep it low (6 at most)');
+    if (at(20).some((s) => s.k === 'label' && /^Ula'tek$/.test(s.text))) bad('the "Ula\'tek" label is back: it sat half under the boss bar, which already names her');
+    const gl = at(48).find((s) => s.k === 'label' && s.text === 'Gore Rattle'); if (!gl || gl.how !== 'name') bad('"Gore Rattle" isn\'t marked as a creature\'s name (how: \'name\'), so it would move off a HUD call-out instead of hiding'); }
+  { G.adds.length = 0; for (let i = 0; i < 9; i++) G.adds.push({ kind: 'rawling', x: -27 + (i % 3) * 1.2, y: 6 + Math.floor(i / 3) * 1.2 }); G.adds.push({ kind: 'viper', x: 20, y: -20 });
+    const L = at(20), ad = L.filter((s) => s.k === 'label' && /^(Rawling|Viper)/.test(s.text)); G.adds.length = 0;
+    if (L.filter((s) => s.k === 'add').length !== 10) bad('the adds themselves aren\'t all drawn');
+    if (ad.length !== 1 || ad[0].text !== 'Rawlings ×9' || ad[0].how !== 'add') bad('nine Rawlings in one pack near you get ' + ad.length + ' label(s) (' + ad.map((s) => s.text).join(', ') + '), not one "Rawlings ×9" (0:48: nine "Rawling" in a heap), or a far pack gets one'); }
+  { const g0 = S.soaks[0].group; S.soaks[0].group = ['r3', 'm1', 'h1']; const h0 = { x: bots.h1.x, y: bots.h1.y }; bots.h1.x = -18; bots.h1.y = 8; const L = at(40); bots.h1.x = h0.x; bots.h1.y = h0.y; S.soaks[0].group = g0;
+    const pl = (id) => L.find((s) => s.k === 'plate' && s.id === id);
+    if (!pl('h1') || pl('h1').show) bad('a soak mate already inside your soak circle (12 yards from you) still shows a name (0:39: six names plus yours in the bubble)');
+    if (!pl('m1') || !pl('m1').show) bad('a late soak mate, still outside your soak circle, shows no name'); }
+  { const fn = (n) => { try { const c = vm.createContext({ Math }); vm.runInContext(H.grab(n, P3) + '\nthis.f = ' + n + ';', c); return c.f; } catch (e) { bad('practice3d.js has no ' + n + ' (' + e.message + ')'); return null; } };
+    const hud = fn('pg3dHud'), pick = fn('pg3dPick');
+    if (hud) { const B = [{ l: 460, t: 198, r: 980, b: 232 }, { l: 500, t: 279, r: 940, b: 300 }], L = [{ x: 712, y: 290, w: 150, h: 18 }, { x: 760, y: 214, w: 110, h: 18 }, { x: 860, y: 216, w: 100, h: 16, hide: true }, { x: 200, y: 600, w: 90, h: 16 }, { x: 205, y: 604, w: 80, h: 16, hide: true }];
+      hud(L, B); const clear = (l) => B.every((b) => !(l.x - l.w / 2 < b.r && l.x + l.w / 2 > b.l && l.y - l.h / 2 < b.b && l.y + l.h / 2 > b.t));
+      if (L[0].off || !clear(L[0]) || !(L[0].y > 300)) bad('pg3dHud: a label on the HUD\'s lower call-out isn\'t moved below it (0:39 "Into the bubble" under "Egg picked up")');
+      if (L[1].off || !clear(L[1]) || !(L[1].y > 232)) bad('pg3dHud: a label on the top call-out isn\'t moved clear of both call-outs');
+      if (!L[2].off) bad('pg3dHud: a creature\'s name on a call-out isn\'t hidden (0:39 "Gore Rattle" on "Spectral Coils: team 1 takes the first coil")');
+      if (L[3].off || L[3].y !== 600) bad('pg3dHud: a label away from the call-outs is moved or hidden');
+      if (!L[4].off) bad('pg3dHud: a creature\'s name on top of an earlier label isn\'t hidden'); }
+    if (pick) { const Q = [{ l: 700, t: 500, r: 740, b: 520, fix: true, pri: 0 }], at0 = (x, y, pri, o) => Object.assign({ l: x - 30, t: y - 10, r: x + 30, b: y + 10, pri }, o || {});
+      for (let i = 0; i < 8; i++) Q.push(at0(100 + i * 150, 300, 1 + i / 100)); Q.push(at0(110, 305, 0.5), at0(400, 700, 60, { free: true }), at0(1000, 700, 61, { free: true }), at0(720, 515, 0.2), at0(900, 100, 2, { fix: true }));
+      pick(Q, 4); const on = Q.filter((q) => q.on && !q.fix && !q.free);
+      if (on.length !== 4) bad('pg3dPick: ' + on.length + ' names show besides yours and the labels, not four at most (0:39: six names plus yours in a bubble)');
+      if (Q.some((q) => q.l === 80 && q.on) === Q.some((q) => q.l === 70 && q.on)) bad('pg3dPick: a name on top of a nearer one isn\'t dropped');
+      if (Q.some((q) => q.l === 690 && q.on)) bad('pg3dPick: a name on top of your nameplate isn\'t dropped');
+      if (!Q.filter((q) => q.free).every((q) => q.on)) bad('pg3dPick: an add pack\'s label on nothing is dropped, or counts against the four names'); }
+    if (!/const names = \(\) => \{ bands\(\);[\s\S]*?pg3dHud\(LQ, BX\)[\s\S]*?pg3dPick\(PQ, 4\)/.test(P3) || !/'\.pg-warn', '\.pg-float'/.test(P3)) bad('pg3d no longer reads the HUD\'s call-outs (.pg-warn, .pg-float) and runs pg3dHud and pg3dPick in names()'); }
+  { const bm = (/const BOSSM = \[([^\]]*)\]/.exec(P3) || ['', ''])[1];
+    if (!['FANGM', 'MOUTHM', 'EYEM', 'PUPM'].every((m) => new RegExp('\\b' + m + '\\b').test(bm) && new RegExp('\\b' + m + ' = keep\\(new T\\.\\w+\\(\\{[^}]*transparent: true').test(P3))) bad('her eyes, pupils, fangs and mouth don\'t fade with her (see-through materials in BOSSM): they float solid inside her faint head');
+    if (!/eyeGl\[i\]\.material\.opacity = eyeO \* bo/.test(P3) || !/const bo = fade\(boss,/.test(P3)) bad('her eyes\' glow stays at full brightness while she\'s faded');
+    if (!/const twins = /.test(P3) || !/BTW = twins\(boss\)/.test(P3) || !/TTW = twins\(tail\)/.test(P3) || !/userData\.tw = twins\(g\)/.test(P3) || !/fade\(tail, TAILM, 6, TTW,/.test(P3)) bad('her, her tail or a Wretch has no depth twins while faded: the faded tail shows every overlapping segment, a stack of see-through coins (1:27)');
+    const nk = /const NECK = (\[\[[^;]*?\]\]), nr = \(u\) => ([^;]+);/.exec(P3), hd = /headG\.position\.set\(([-\d.]+), ([-\d.]+), ([-\d.]+)\)/.exec(P3);
+    if (!nk || !hd) bad('practice3d.js no longer has her NECK path, nr() and headG where the test reads them');
+    else { const N = JSON.parse(nk[1]), r1 = vm.runInNewContext('(' + nk[2] + ')', { u: 1 }), e = N[N.length - 1], hy = +hd[2], hz = +hd[3];
+      if (hy > 20.5) bad('her head is ' + hy + ' yards up, behind the HUD\'s boss bar from the default camera (0:16): keep it about 19');
+      if (e[2] < hz - 0.6 * 1.9 * 3.4 || Math.abs(e[1] - hy) > 1.5 || r1 > 2) bad('her neck\'s open end isn\'t inside her skull (ends at ' + e.join(',') + ', radius ' + r1.toFixed(2) + '): a hollow ring shows under her jaw (0:16)'); } }
+  { const sp = /const hh = Math\.sin\([^;]*?\* ([\d.]+) \* s\.s; [^;]*;[^;]*; u\.cm\.uniforms\.uO\.value = ([\d.]+) \*/.exec(P3);
+    if (!sp || +sp[1] > 6 || +sp[2] > 0.5 || !/cm\.uniforms\.uK\.value = 3/.test(P3) || !/vy = \(7\.0 \+ 10\.0 \* aR\.z\) \* sqrt\(uS\)/.test(P3)) bad('the splash\'s light column is tall and bright again (it washed out the HUD\'s words at 1:18 and 1:27): 6 x size at most, 0.5 bright at most, fading fast at the top, its droplets rising by the square root of its size');
+    if (!/const edge = pool\([\s\S]*?m\.renderOrder = 605/.test(P3) || !/const e = edge\(\); e\.position\.set\(x, 0\.04, -y\); e\.rotation\.set\(0, s\.a, 0\); e\.scale\.set\(Dd, 1, Wd\)/.test(P3)) bad('a wave\'s strip has no red border drawn after the wave (the red under it never showed, 0:57)'); }
   return loadP;
 };
 if (require.main === module) {
