@@ -65,6 +65,17 @@ function checks(H, say) {
   ['E', 'W'].forEach((s) => { if (hyp(S.pits[s], [s === 'E' ? 106 : -106, 0]) > 4) bad('the ' + s + ' cauldron is at ' + S.pits[s].join(', ') + '; top kills throw the eggs in about ' + (s === 'E' ? 106 : -106) + ', 0 (check A)'); });
   if (T.throwAt < 226 || T.throwAt > 236) bad('the small eggs go in at ' + clkS(T.throwAt) + '; top kills put them in 3:46 to 3:56 (check A)');
   if (T.bigUp < 244 || T.bigUp > 263) bad('the big eggs are picked up at ' + clkS(T.bigUp) + '; top kills pick them up 4:04 to 4:23 (check A)');
+  // (Flex, Nov 15: "i think the first healer picks it up right away, and the second one is delayed". The 30 fastest Mythic kills: the melee take the
+  // south eggs first, about 4:06 to 4:10; the healers the north ones after, the first a median 4:13, the second a median 2.5 s later (middle half 1.3
+  // to 4.7). Before: all four at 4:14)
+  if (!script({ seed: 1 }).bigAt) bad('the big eggs have no pickup times of their own: all four at once, not the south ones first and the two healers 2.5 s apart (check A)');
+  else { const firsts = new Set(); for (let seed = 1; seed <= 20; seed++) { const B = script({ seed }).bigAt, n =[B.E.close, B.W.close].sort((a, b) => a - b), sth = Math.max(B.E.far, B.W.far);
+      firsts.add(B.E.close < B.W.close ? 'E' : 'W'); if (sth > n[0] - 2) { bad('the south big eggs (' + clkS(sth) + ') aren\'t picked up before the north ones (' + clkS(n[0]) + ') on seed ' + seed + '; top kills take the south ones first (check A)'); break; }
+      if (n[1] - n[0] < 1.3 || n[1] - n[0] > 4.7) { bad('the two healers pick up their north eggs ' + (n[1] - n[0]).toFixed(1) + ' s apart on seed ' + seed + '; top kills: a median 2.5 s, middle half 1.3 to 4.7 (check A)'); break; }
+      if ([B.E.far, B.W.far, B.E.close, B.W.close].some((x) => x < 246 || x > 263)) { bad('a big egg is picked up outside 4:06 to 4:23 on seed ' + seed + ' (check A)'); break; } }
+    if (firsts.size < 2) bad('the same ledge\'s healer always picks up first over 20 runs; it should vary (check A)');
+    dbg.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.sim(dbg.P2.slotOf(dbg.P2.pick), false, false, 6);
+    dbg.S.big.forEach((B, i) => { const at = dbg.G.p2.big[i].at, want = dbg.S.bigAt[B.side][B.which]; if (at == null || at < want - 0.1 || at > want + 3) bad('the ' + (B.which === 'far' ? 'south' : 'north') + ' big egg on the ' + B.side + ' ledge is picked up at ' + (at == null ? 'never' : clkS(at)) + '; its time is ' + clkS(want) + ' (check A)'); }); }
   if (T.doomEnd - T.doom !== 90) bad('the big eggs get ' + (T.doomEnd - T.doom) + ' s to be picked up; Hatching Doom is 90 s (spell 1306862, check A)');
   // (Flex, Nov 15: "im fairly confident they [healers] are usually the ones assigned to pick up the big eggs". The 30 fastest Mythic kills in the log
   // library: the north big egg is a healer's on 45 of 46, the south one a melee's on 45 of 74; healers carry 6% of the small eggs, tanks about one
@@ -171,9 +182,12 @@ function checks(H, say) {
       dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, east, 4), DL = (dbg.G.dpsM && dbg.G.dpsM.list) || [], tag = pk.side + ' ' + pk.role + (east ? ', she is east' : ', she is west');
       ['warden', 'ds', 'heart'].forEach((k) => { const m = DL.find((q) => q.kind === k); if (!m || m.fr < 0.5) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m ? Math.round(m.fr * 100) + '%' : 'no moment') + ', check I)'); });
       if (r.log.some((x) => /was up|were up|was open/.test(x))) bad('the autopilot (' + tag + ') misses a damage moment: ' + r.log.join(' | ') + ' (check I)');
+      if (!(dbg.G.hits >= 20)) bad('the autopilot (' + tag + ') pressed 1 only ' + (dbg.G.hits || 0) + ' times in phase 2; a moment counts only while you keep pressing (check I)');
       if (dbg.P2.dpsNames(DL) !== 'the Warden, the Doomscales, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
     dbg.P2.pick = pkI; const st = dbg.sim(meI, false, false, 4).log.join(' | ');
     ['The Warden was up', 'The Doomscales were up', 'The heart was open'].forEach((x) => { if (!st.includes(x)) bad('standing still all phase, "' + x + '" isn\'t in the mistakes (check I)'); });
+    // (Nov 15, the press-to-cast attack: a moment counts only while you keep pressing 1; the job line says so, as phase 1's does)
+    dbg.P2.pick = pkI; dbg.at(200, meI, { east: false, seed: 3 }); dbg.G.tgt = null; const hint = dbg.P2.jobText(); if (!/Tab to pick it, then keep pressing 1 to hit it/.test(hint)) bad('at 3:20 with no target, phase 2\'s job line reads "' + hint + '"; it should say Tab to pick the Warden, then keep pressing 1 (check I)');
     const PJ0 = rd('practice.js'); if (/e\.code === 'Tab' && !P2/.test(PJ0) || /const dpsStep = \(t, dt\) => \{ if \(P2\) return/.test(PJ0) || /const pickTgtAt = \(p\) => \{ if \(P2/.test(PJ0)) bad('Tab, a click or the damage tally is still off in phase 2 (check I)');
   } catch (e) { bad('the damage moments crashed phase 2: ' + e.message + ' (check I)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
