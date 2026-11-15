@@ -405,3 +405,13 @@ Flex: "I think putting the health bars like raid frames on the map would be bett
 - Each enemy has a small health bar over it, like a nameplate. A boss also gets a frame at the top right of the map with its name and health.
 - Health is the log's own reading: each line names the health of the unit it describes, and the replay keeps the last reading of each second.
 - Enemies are drawn above the players. In melee the pack stands where the group stands, and it was hidden under the player icons (found on Flex's Den of Nalorakk +20, Pull 8).
+
+## Route: the replay, round 3 (Nov 14, 2026)
+
+Flex: "the default speed on the replay should be x1 not x10", "it would be cool if you could put what they are targeting", "This should be organized by DPS done at that time, would be even better if you could put dps meters on the map so people can watch the dps in real time", "Would be nice if mob health bars also had cast bars, and it showed who/when someone interupted".
+- Speeds are 1x, 2x and 4x, and the replay starts at 1x. "Skip the walking" still runs fast between pulls.
+- Each raid frame's second line is who the player last hit or cast on (in the last 3 seconds); a friendly target (a healer's heal) is in green.
+- A damage meter sits at the bottom right of the map: the pull's damage per second so far, the most first, moving as the pull goes. The panel's list beside the map is in the same order.
+- Each enemy has a cast bar under its health bar, with the spell's name over it, filling as it casts. Grey: it can't be kicked (never kicked in the key and not on the must-kick list). Green "Kicked · name" for a moment when someone kicked it. Red when a must-kick cast went off.
+- The camera is a little closer (130 yards across), and the health bars, cast bars and names over the enemies keep the same size on screen.
+What it reads: the page's pass now keeps each enemy's casts (when each started, and whether it went off, was kicked and by whom, or was stopped) and who each player hit or cast on, a second at a time. A cast's length comes from its own end, or from how long that spell usually takes in the key.

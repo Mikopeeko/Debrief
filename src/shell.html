@@ -20281,6 +20281,32 @@ html:not(.mpcard) body #view#view#view .mrp-e.soon > rect { display: none !impor
 html:not(.mpcard) body #view#view#view .mrp-pr { grid-template-columns: 20px minmax(0, 92px) minmax(0, 1fr) 46px !important; }
 @media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-rf { width: 128px !important; } html:not(.mpcard) body #view#view#view .mrp-bf { width: 160px !important; } }
 }
+/* Mythic+ replay, round 3 (Nov 14, Flex): each raid frame says who the player is hitting ("it would be cool if you could put what they are targeting"),
+   a live damage meter on the map ("would be even better if you could put dps meters on the map so people can watch the dps in real time"), and a cast bar
+   under each enemy's health bar that says who kicked it ("Would be nice if mob health bars also had cast bars, and it showed who/when someone interupted"). */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-rf { width: 200px !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff { height: 38px !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rfn, html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rfp { line-height: 21px !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rft { position: relative !important; z-index: 1 !important; display: block !important; padding: 0 7px !important; font: 600 12px/14px var(--body) !important; color: rgba(255,255,255,.9) !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rft.fr { color: #b6f0c0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-mt { position: absolute !important; right: 10px !important; bottom: 10px !important; width: 214px !important; padding: 5px 6px 6px !important; background: rgba(11,12,14,.86) !important; border: 1px solid var(--line2) !important; pointer-events: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-mt:has(> .mrp-mtl:empty) { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-mt > .mrp-mth { margin: 0 0 4px !important; font: 700 12px var(--head) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: var(--muted) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtl { display: grid !important; gap: 2px !important; }
+html:not(.mpcard) body #view#view#view .mrp-mr { position: relative !important; height: 20px !important; background: rgba(255,255,255,.05) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrb { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; opacity: .78 !important; transition: width .25s linear !important; }
+html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrn { position: relative !important; z-index: 1 !important; display: block !important; padding: 0 52px 0 6px !important; font: 700 12px/20px var(--body) !important; color: #fff !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-mr > .mrp-mrv { position: absolute !important; right: 6px !important; top: 0 !important; z-index: 1 !important; font: 700 12px/20px var(--body) !important; color: #fff !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-e > .mrp-ecb, html:not(.mpcard) body #view#view#view .mrp-e > .mrp-ecf, html:not(.mpcard) body #view#view#view .mrp-e > .mrp-ect { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast > .mrp-ecb { display: inline !important; fill: rgba(0,0,0,.75) !important; stroke: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast > .mrp-ecf { display: inline !important; fill: #f2c46b !important; stroke: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast > .mrp-ect { display: inline !important; fill: #f2c46b !important; stroke: #0b0c0e !important; paint-order: stroke !important; font-family: var(--body) !important; font-weight: 700 !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast.nk > .mrp-ecf { fill: #9aa3ad !important; } html:not(.mpcard) body #view#view#view .mrp-e.cast.nk > .mrp-ect { fill: #c7ccd2 !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast.kick > .mrp-ecf { fill: #7ee08f !important; } html:not(.mpcard) body #view#view#view .mrp-e.cast.kick > .mrp-ect { fill: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.cast.off > .mrp-ecf { fill: #ff4d4d !important; } html:not(.mpcard) body #view#view#view .mrp-e.cast.off > .mrp-ect { fill: #ff8f87 !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-rf { width: 150px !important; } html:not(.mpcard) body #view#view#view .mrp-mt { width: 150px !important; } }
+}
 </style>
 </body>
 </html>
