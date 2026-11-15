@@ -320,6 +320,10 @@ async function paceRecs(v) { if (!HOSTED) return null; return api('/api/pace?e='
 async function killGuild(code) { if (!HOSTED) return null; return api('/api/kguild?c=' + code); }
 async function curveRecs(v) { if (!HOSTED) return null; return api('/api/curves?e=' + v.e + '&d=' + v.d); } /* (the top kills' curves for the two-line charts (Oct 23)) */
 async function rateRecs(v) { if (!HOSTED) return null; return api('/api/rates?e=' + v.e + '&d=' + v.d); }
+/* (round 381, Oct 31: one pull's own Warcraft Logs numbers, phase by phase, for each raid's own rate-tile scale. It was only ever in the built
+   files, and the Nov 1 rebuild from source dropped it, so the tiles quietly kept the built-in scale; back in the source Nov 15 (quiet-bug hunt;
+   tests/quiet-rate-kill.js). Warcraft Logs pulls only; on any failure the page keeps the built-in scale) */
+async function rateKill(v) { if (!HOSTED) return null; return api('/api/ratek?c=' + encodeURIComponent(v.c) + '&f=' + (v.f | 0)); }
 
 async function loadReport(creds, code, live) {
   let rep;
@@ -733,6 +737,6 @@ function* translateSteps(item, events) {
   return out;
 }
 
-root.WCL = { HOSTED, tierPullsOf, guildProgOf, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
+root.WCL = { HOSTED, tierPullsOf, guildProgOf, loadParses, rioTeam, wowNews, mpFast, MPFAST_Q, paceRecs, rateRecs, rateKill, curveRecs, killGuild, TOPRANK_Q, TOPAB_Q, TOPKILL_Q, topSpec, topKills, guildProg, specRanks, playerAb, WCL_DIFF, REPORT_Q, EVENTS_Q, RANK_Q, TEAM_INFO_Q, TEAM_REPORTS_Q, NIGHT_Q, DEATHS_Q, CHAR_INFO_Q, CHAR_REPORTS_Q, CHAR_RANK_Q, charRankings, CHAR_LOOK_Q, charLook, RENDER, TEAM_RANK_Q, teamRankings, parseLink, loadReport, loadEvents, loadRankings, isSaved, translate, translateAsync, BASE, parseTeamLink, teamInfo, teamReports, nightPulls, parseCharLink, charInfo, charReports, charReportsPage, TEAM_LATEST_Q, CHAR_LATEST_Q, latestReports };
 if (typeof module !== 'undefined') module.exports = root.WCL;
 })(typeof window !== 'undefined' ? window : globalThis);

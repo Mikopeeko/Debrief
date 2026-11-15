@@ -410,6 +410,13 @@ ROUTES['/api/kguild'] = { age: 86400, v: (p) => { const c = p.get('c') || ''; re
   run: async (env, v) => { const d = await gql(env, 'query($c:String!){reportData{report(code:$c){guild{name server{name}} owner{name}}}}', { c: v.c }), R = (d && d.reportData && d.reportData.report) || {}; return { c: v.c, name: (R.guild && R.guild.name) || (R.owner && R.owner.name) || '' }; } };
 ROUTES['/api/curves'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('curve-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
+/* (round 381, Oct 31: one pull's own numbers for its raid's rate-tile scale; only ever in the built files until the Nov 1 rebuild dropped it, back
+   in the source Nov 15 (quiet-bug hunt; tests/quiet-rate-kill.js). Kept once for everyone, per report and fight, in R2 (KV when R2 isn't there), so
+   each pull costs the site's Warcraft Logs key once (the one-gatherer rule): never a request on every page view) */
+async function rateKGet(env, k) { try { if (env.debrief_nights) { const t = await r2Get(env, k); return t ? JSON.parse(t) : null; } return env.DEBRIEF_KV ? await env.DEBRIEF_KV.get(k, 'json') : null; } catch (e) { return null; } }
+async function rateKPut(env, k, o) { try { const txt = JSON.stringify(o); if (env.debrief_nights) { const gz = await new Response(new Blob([txt]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer(); await env.debrief_nights.put(k, gz, { httpMetadata: { contentType: 'application/json' } }); } else if (env.DEBRIEF_KV) await env.DEBRIEF_KV.put(k, txt, { expirationTtl: 30 * 86400 }); } catch (e) { /* (not kept: asked again next time) */ } }
+ROUTES['/api/ratek'] = { age: 86400, v: (p) => { const c = p.get('c') || '', f = parseInt(p.get('f'), 10); return /^[A-Za-z0-9]{8,24}$/.test(c) && f > 0 && f < 10000 ? { c, f } : null; },
+  run: async (env, v) => { const k = 'ratek1/' + v.c + '/' + v.f, kept = await rateKGet(env, k); if (kept && Array.isArray(kept.ph)) return kept; const o = await rateOfKill(env, v.c, v.f); if (o && Array.isArray(o.ph) && o.ph.length) await rateKPut(env, k, o); return o; } };
 ROUTES['/api/rates'] = { age: 1800, v: (p) => { const e = parseInt(p.get('e'), 10), d = parseInt(p.get('d'), 10); return e > 0 && e < 1e6 && [3, 4, 5].includes(d) ? { e, d } : null; },
   run: async (env, v) => ({ key: v.e + ':' + v.d, recs: (await env.DEBRIEF_KV.get('rate-raw:' + v.e + ':' + v.d, 'json')) || [] }) };
 // (Raider.IO for Home's Mythic+ (Nov 3, the studio's home-redesign-brief.md): each raider's season score and its colour, item level, spec, recent keys,
@@ -524,7 +531,7 @@ async function runBugs(env, quick) {
       (tagNames.length ? '\n**Tags:** ' + tagNames.join(', ') : '') + (files.length ? '\n**Pictures:**\n' + files.map((u) => '- ' + u).join('\n') : '') +
       '\n\nhttps://discord.com/channels/' + GUILD + '/' + t.id + '\n\n_Copied from ' + (idea ? '#suggestions' : '#bug-reports') + ' by Claudette (the Debrief bot). Closing this issue tells the post it\'s ' + (idea ? 'built, or not planned' : 'fixed') + '._';
     const issue = await gh(env, '/issues', { method: 'POST', body: { title: (idea ? '[discord idea] ' : '[discord] ') + t.name.slice(0, 90), body, labels: [idea ? 'idea' : 'bug', 'discord', ...areas.map((a) => a.toLowerCase())] } });
-    st.t[t.id] = issue.number; st.open.push([t.id, issue.number]);
+    st.t[t.id] = issue.number; st.open.push([t.id, issue.number]); await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); // (saved now: a failed reply below once meant the same post was copied to GitHub again every run (quiet-bug hunt, Nov 15))
     // (and a post in the owner's #bug-review with the answer buttons, tagging them: nothing is looked into until they press
     // one (the user's call, Oct 20: "just wait for me to react with the button presses"))
     try {
@@ -542,7 +549,7 @@ async function runBugs(env, quick) {
     await dc(env, '/channels/' + t.id, { method: 'PATCH', body: { applied_tags: [...keep].slice(0, 5) } }).catch(() => {});
     const noPull = !/https?:\/\/|pull\s*#?\d+|\bp\d+\b/i.test(text) && !files.length;
     await say(env, t.id, idea ? 'Thanks for the idea! It\'s on our list now. Tap 👍 on it if you want it too, and we\'ll post here if we build it.' : 'Thanks, got it! This is on our list now, and we\'ll post here when it\'s fixed.' +
-      (noPull ? '\nTo help us find it fast: which pull was it? Paste the Debrief or Warcraft Logs link, or say the boss and pull number. A screenshot helps too.' : ''));
+      (noPull ? '\nTo help us find it fast: which pull was it? Paste the Debrief or Warcraft Logs link, or say the boss and pull number. A screenshot helps too.' : '')).catch((err) => console.warn('Thanks reply:', err && err.message));
   }
   if (quick) { if (dirty) await env.DEBRIEF_KV.put('dc-bugs', JSON.stringify(st)); return all; } // (the one-minute run stops here: new posts only)
   // (closed on GitHub: Fixed, or Can't reproduce when it was closed as not planned)
@@ -586,7 +593,6 @@ const alike = (a, b) => { const x = words(a), y = words(b); if (!x.size || !y.si
 async function runDigest(env, now, all) {
   const d = new Date(now), day = d.toISOString().slice(0, 10);
   if (d.getUTCHours() !== 14 || (await env.DEBRIEF_KV.get('dc-digest')) === day) return;
-  await env.DEBRIEF_KV.put('dc-digest', day);
   const chans = await dc(env, '/guilds/' + GUILD + '/channels'), mod = chans.find((c) => c.name === 'moderator-only'); if (!mod) return;
   const since = now - 864e5, link = (t) => '<#' + t.id + '>';
   const bugs = all.filter((t) => t.parent_id === FORUM_BUGS && !(t.flags & 2)), ideas = all.filter((t) => t.parent_id === FORUM_IDEAS && !(t.flags & 2));
@@ -602,6 +608,7 @@ async function runDigest(env, now, all) {
     '\nBugs still open: **' + (st.open || []).length + '**';
   if (!newBugs.length && !newIdeas.length && !quiet.length && !fixed.length) msg = '**Good morning!** A quiet day: no new bugs, ideas or unanswered questions. Bugs still open: **' + (st.open || []).length + '**';
   await say(env, mod.id, msg.slice(0, 1990));
+  await env.DEBRIEF_KV.put('dc-digest', day); // (marked sent only once it's sent: a failed post is tried again on the next run that hour (quiet-bug hunt, Nov 15))
 }
 // The twice-a-day bug check (a Claude task on the user's PC) talks to the bot through KV only, so it needs no keys:
 // - gh-inbox: the open issues (number, title, body, labels, Discord thread), refreshed every run when they change;
@@ -618,7 +625,7 @@ async function runInbox(env) {
   for (const [tid, n] of Object.entries(st.t || {})) if (n) thread[n] = tid;
   const ops = await env.DEBRIEF_KV.get('dc-ops', 'json');
   if (Array.isArray(ops) && ops.length) {
-    await env.DEBRIEF_KV.delete('dc-ops'); let mod = null, rev = null, revDirty = false;
+    { const rest = ops.slice(20); if (rest.length) await env.DEBRIEF_KV.put('dc-ops', JSON.stringify(rest)); else await env.DEBRIEF_KV.delete('dc-ops'); } let mod = null, rev = null, revDirty = false; // (20 jobs a run; the rest wait for the next run: they were deleted unread (quiet-bug hunt, Nov 15))
     const reviews = (await env.DEBRIEF_KV.get('dc-reviews', 'json')) || {};
     for (const o of ops.slice(0, 20)) {
       try {
@@ -1229,14 +1236,14 @@ async function runKillFeed(env, now) {
     try {
       const r = ((((await gql(env, TEAM_LATEST_Q, { id: g.id })) || {}).reportData || {}).reports || {}).data || []; if (!r[0]) continue;
       const key = r[0].code + ':' + r[0].endTime; if (key === g.seen) continue;
-      g.seen = key; dirty = true;
-      const rep = ((await gql(env, KILLS_Q, { code: r[0].code })) || {}).reportData.report, fights = (rep && rep.fights) || [];
+      const rep = ((((await gql(env, KILLS_Q, { code: r[0].code })) || {}).reportData) || {}).report, fights = (rep && rep.fights) || [];
       for (const f of fights.filter((x) => x.kill && x.difficulty === 5 && x.encounterID && !g.done.includes(x.encounterID))) {
-        g.done.push(f.encounterID);
         const pull = fights.filter((x) => x.encounterID === f.encounterID && x.difficulty === 5 && x.startTime <= f.startTime).length;
         if (!ch) ch = await kfChannel(env); if (!ch) return;
         await say(env, ch, '🎉 **' + g.name + '** killed **Mythic ' + f.name + '**!' + (pull > 1 ? ' Pull ' + pull + ' tonight' : ' First pull of the night') + ', a ' + mss(f.endTime - f.startTime) + ' fight.\n' + SITE + '/?report=' + rep.code + '&fight=' + f.id);
+        g.done.push(f.encounterID); dirty = true;
       }
+      g.seen = key; dirty = true; // (Nov 15, quiet-bug hunt: marked read only after its kills posted; marked first, a failed read or post lost that kill for good)
     } catch (err) { console.warn('Kill feed:', g.name, err && err.message); }
   }
   if (dirty) await env.DEBRIEF_KV.put('killfeed', JSON.stringify(list));
@@ -1351,7 +1358,7 @@ async function runReminders(env, now) {
 }
 async function discordJobs(env, now) {
   if (!env.DISCORD_BOT_TOKEN || !env.DEBRIEF_KV || !env.GITHUB_TOKEN) return;
-  const all = await runBugs(env);
+  const all = (await runBugs(env).catch((err) => { console.warn('Bugs:', err && err.message); return null; })) || (await dc(env, '/guilds/' + GUILD + '/threads/active').then((a) => (a && a.threads) || []).catch(() => [])); // (Nov 15, quiet-bug hunt: a failing GitHub call here used to stop the kill feed, #questions, reminders, welcomes and the digest too)
   await runReplies(env, all).catch((err) => console.warn('Replies:', err && err.message));
   await runMentions(env, all).catch((err) => console.warn('Mentions:', err && err.message));
   await sweepDone(env, all).catch((err) => console.warn('Sweep:', err && err.message));
@@ -1362,7 +1369,7 @@ async function discordJobs(env, now) {
   await runReminders(env, now).catch((err) => console.warn('Reminders:', err && err.message));
   await relink(env).catch((err) => console.warn('Relink:', err && err.message));
   await runWelcome(env).catch((err) => console.warn('Welcome:', err && err.message));
-  await runDigest(env, now, all);
+  await runDigest(env, now, all).catch((err) => console.warn('Digest:', err && err.message));
 }
 // "Suggest an idea" (the site's form): a new post in #suggestions, under the area picked. Same limits as Report a problem.
 async function fileIdea(req, env, url) {
@@ -1447,14 +1454,25 @@ async function moveIn(req, env) {
 }
 // (the newest Patch notes day before `before` (YYYY-MM-DD), or the newest of all: its New features titles and how many
 // Improvements and Bug fixes lines it has)
+// (how many lines a day's n: [...] or f: [...] list has, by counting its strings: single or double quoted, escapes and ']' inside a
+// string skipped. It counted lines that start with 4 spaces and a quote, and days are written on one line since Nov 5, so the post
+// always said 0 improvements and 0 fixes (quiet-bug hunt, Nov 15; tests/quiet-patch-post-counts.js))
+function notesCount(day, k) {
+  const a = day.indexOf(' ' + k + ': ['); if (a < 0) return 0; let n = 0;
+  for (let i = a + k.length + 4; i < day.length; i++) { const c = day[i];
+    if (c === ']') break;
+    if (c === '/' && day[i + 1] === '*') { const e = day.indexOf('*/', i + 2); if (e < 0) break; i = e + 1; continue; }
+    if (c === '/' && day[i + 1] === '/') { const e = day.indexOf('\n', i); if (e < 0) break; i = e; continue; }
+    if (c === "'" || c === '"' || c === '`') { n++; for (i++; i < day.length && day[i] !== c; i++) if (day[i] === '\\') i++; } }
+  return n;
+}
 function newestNotes(before) {
   const i = APP_HTML.indexOf('const PATCH_NOTES = ['); if (i < 0) return null;
   const s = APP_HTML.slice(i, i + 200000), re = /\n  \{ d: '(\d{4}-\d\d-\d\d)'(?:, t: '((?:[^'\\]|\\.)*)')?/g;
   let m; while ((m = re.exec(s)) && before && m[1] >= before) { /* a day not over yet */ }
   if (!m) return null;
   const end = s.indexOf('\n  { d: \'', m.index + 5), day = s.slice(m.index, end > 0 ? end : s.length);
-  const part = (k) => { const a = day.indexOf(' ' + k + ': ['); if (a < 0) return ''; const b = day.indexOf('\n  ]', a); return day.slice(a, b > 0 ? b : day.length); };
-  const hs = day.split(' n: [')[0].split(' f: [')[0], count = (k) => (part(k).match(/\n {4}'/g) || []).length;
+  const hs = day.split(' n: [')[0].split(' f: [')[0], count = (k) => notesCount(day, k);
   const feats = [...hs.matchAll(/\{ t: '((?:[^'\\]|\\.)*)', d: /g)].map((x) => x[1].replace(/\\'/g, "'"));
   return { d: m[1], t: m[2] ? m[2].replace(/\\'/g, "'") : '', feats, n: count('n'), f: count('f') };
 }

@@ -208,7 +208,10 @@ const PACKS = [
   // Miasma soaker at the soak, so it isn't avoidable)
   { type: 'avoidable', spellIds: [1284207, 1284209], name: 'Living Venom', severity: 'Medium', difficulties: ['Heroic', 'Mythic'], tip: 'After a droplet is destroyed, its venom flies back to the Breath of Ula\'tek. Stay out of its path.' },
   // (named apart from the Blood Venom debuff: rules also match by name, and every Miasma soaker takes that one)
-  { type: 'avoidable', spellIds: [1284208], name: 'Blood pool', severity: 'Medium', difficulties: ['Heroic', 'Mythic'], tip: 'Get out of blood pools, and drop your own pool at the room edge or on an existing pool.' },
+  // (Nov 15, quiet-bug hunt: NOT CHECKED YET. 1284208 shows up in all 262 saved Sentinels pulls only as one aura the Blood of Ula'tek takes off
+  // itself, never as damage, so this rule can't flag anyone. Kept, marked notChecked so the page says so; to measure from a real pull (Blood
+  // Venom 1284210 is the likely hit, but every Miasma soaker gets it too). Main's ruling, Nov 15: no grade change)
+  { type: 'avoidable', spellIds: [1284208], name: 'Blood pool', notChecked: true, severity: 'Medium', difficulties: ['Heroic', 'Mythic'], tip: 'Get out of blood pools, and drop your own pool at the room edge or on an existing pool.' },
   // (Cultivated Burst, a Helical Toxins not solved, is flagged by the fight module with who and when)
   { type: 'avoidable', spellIds: [1296962], name: 'Protovenom Eruption', severity: 'Low', /* (fix 16, Oct 26: one Medium per player hit; top kills erupt and win) */ difficulties: ['Mythic'], tip: 'Only touch another player who also has Shifting Protovenom. Touching an unmarked player erupts and knocks you both back.' },
 ]},
@@ -1635,8 +1638,10 @@ function buildEntombedSentinels(ev, r, h) {
   // ---- 3. Toxic Droplets (green): step on every droplet, one each, and dodge the venom flying back ----
   // Read from Mythic pulls: a droplet stepped on hits for 375k; one left alone erupts on the whole raid after 12 s
   // (Noxious Blast); each destroyed droplet's venom flies back to the boss 4 s later (Living Venom, 375k a hit).
-  const dropT = castT(ES.dropCast), picks = dmgId(ES.drop), blasts = dmgId(ES.blast), lvHits = dmgId(ES.lv);
-  const immune = ev.filter((e) => e.k === 'miss' && e.id === ES.drop);
+  const dropT = castT(ES.dropCast), dropHits = dmgId(ES.drop), blasts = dmgId(ES.blast), lvHits = dmgId(ES.lv);
+  // (a droplet taken with an immunity: a miss in a game log; Warcraft Logs writes it as a hit of 0 that no shield absorbed, as Nymrissa's check reads it (Nov 15, quiet-bug hunt: on reports 'with an immunity' never showed))
+  const zeroHit = (e) => !e.amt && !e.raw, picks = dropHits.filter((e) => !zeroHit(e));
+  const immune = ev.filter((e) => e.k === 'miss' && e.id === ES.drop).concat(dropHits.filter(zeroHit)).sort((a, b) => a.t - b.t);
   const dGroups = dropT.map((t, i) => {
     const end = Math.min(dropT[i + 1] != null ? dropT[i + 1] - 1 : dur + 1, t + 24);
     const pk = picks.filter((e) => e.t >= t && e.t < end), im = immune.filter((e) => e.t >= t && e.t < end), lv = lvHits.filter((e) => e.t >= t && e.t < end + 6);
@@ -3343,7 +3348,7 @@ const HOW = {
     marks: 'Each boss stacks its own damage over time on everyone within 40 yards: Mark of Acid from the Breath, Mark of Blood from the Blood. Be in range of only one boss. Spread-damage specs cleave both from the edge of range. Stacks are counted from 8 seconds after each intermission (the swap). Amber: 3 or more stacks of the other boss\'s Mark in a cycle. Red: 6 or more. Tanks aren\'t judged.',
     balance: 'Keep the bosses 40+ yards apart (closer, they take 99% less damage) and at even health: Vitriolic Stasis heals the lower one up to the other, so any lead is wasted. Balance by moving players between sides, not by stopping damage. Amber: 5+ points apart going into an intermission. Red: within 40 yards for 3+ seconds outside the intermissions.',
     tanks: 'There\'s one tank on each boss. Empowering Slam on the Breath ramps on the same tank, and Bloodvenom Injection on the Blood stacks a damage over time. They trade bosses at every intermission so the stacks drop, and the tank leaving the Blood drops a big pool when Injection ends: into old blood. Red: no swap after an intermission.',
-    avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit) and standing in a blood pool. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk. It lands on every Unstable Miasma soaker.',
+    avoid: 'Every source of damage positioning can avoid, most harmful first. Dangerous: Protovenom Eruption (a circle touching a player without one). Harmful: Living Venom (a droplet\'s venom flying back to the boss, 375k a hit). Standing in a blood pool isn\'t checked yet. Raid-wide damage (the Marks, Contaminate, Noxious Blast, the Helical Toxins ticks) isn\'t listed, and neither is Clinging Murk. It lands on every Unstable Miasma soaker.',
   },
   'The Lost Explorers': {
     boxes: 'Trader Gebbo throws boxes around the room. A box left alone glows green and ruptures on the whole raid (Relic Rupture), so one player pops every box. On Mythic every pop also hits the whole raid with a stacking bleed (Splinters), so the popper keeps a rhythm: two stacks, let them drop, two more (three if needed, never during Blink Nova or other big damage). Each row is one box: popped or ruptured, and the raid\'s stacks right after. Red: a box ruptured, or deaths to the bleed. Amber: a pop that took the raid to four stacks.',
