@@ -160,13 +160,15 @@ function checks(H, say, pj) {
   try {
     if (!/document\.addEventListener\('keydown', kd, true\)/.test(PJ) || !/e\.stopPropagation\(\); if \(\/\^\[0-9\]\$\/\.test\(e\.key\)/.test(PJ)) bad('the game doesn\'t keep the keyboard while it is open: the site\'s number keys can still switch pages and close it (check H)');
     if (!/e\.code === 'Digit1' \|\| e\.code === 'Numpad1'\)\) \{ e\.preventDefault\(\); atkKey\(\)/.test(PJ) || !/class="pg-act pg-atk" data-a="atk"/.test(PJ) || !/Tab: target · 1: attack/.test(PJ)) bad('1 isn\'t the attack key, or there is no 1 · Attack button, or the keys line doesn\'t say so (check H)');
-    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(40.6, 'r3', { east: false, seed: 3 }); dbg.tgt = null; dbg.G.atk = false; dbg.G.taught = false;
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(40.6, 'r3', { east: false, seed: 3 }); dbg.tgt = null; dbg.G.gcd0 = null; dbg.G.taught = false; /* (the autopilot's last press cools down first) */
     const raw0 = dbg.G.adds.filter((a) => a.kind === 'rawling').length, on = dbg.atk(), picked = dbg.tgt, k0 = dbg.G.kills || 0;
     if (!raw0) bad('no Rawlings are up at 0:40.6 after the first coil slam, so there is nothing to attack (check H)');
     else if (!on || !picked || !/^a\d+$/.test(picked)) bad('pressing 1 with nothing picked doesn\'t pick a Rawling and attack it (check H)');
-    else { dbg.stepOwn(80); if (!((dbg.G.kills || 0) > k0) || dbg.G.adds.some((a) => a.id === picked)) bad('attacking a Rawling for 4 s doesn\'t kill it (check H)'); else if (raw0 > 1 && (dbg.G.kills || 0) - k0 < 2) bad('after killing a Rawling the attack stops instead of moving on to the next one (check H)'); if (!dbg.G.taught) bad('the game never says how to attack when the first Rawlings come (check H)'); }
-    dbg.at(147, 'r3', { east: false, seed: 3 }); dbg.tgt = 'heart'; dbg.G.atk = true; dbg.G.heartHits = 0; dbg.stepOwn(100);
-    if (!(dbg.G.heartHits >= 6)) bad('5 s on the heart with your attack on gave ' + dbg.G.heartHits + ' hits; there should be one every 0.6 s (check H)');
+    else { const h1 = dbg.G.hits || 0; dbg.atk(); if ((dbg.G.hits || 0) !== h1) bad('pressing 1 twice at once hits twice: each press is one hit with a 1 s cooldown, like a spell (check H)');
+      for (let i = 0; i < 8; i++) { dbg.stepOwn(21); dbg.atk(); } /* (Flex: "like you keep pressing it") */
+      if (!((dbg.G.kills || 0) > k0) || dbg.G.adds.some((a) => a.id === picked)) bad('pressing 1 eight times on a Rawling doesn\'t kill it (check H)'); else if (raw0 > 1 && (dbg.G.kills || 0) - k0 < 2) bad('after killing a Rawling the next press doesn\'t move on to the next one (check H)'); if (!dbg.G.taught) bad('the game never says how to attack when the first Rawlings come (check H)'); }
+    dbg.at(147, 'r3', { east: false, seed: 3 }); dbg.tgt = 'heart'; dbg.G.gcd0 = null; dbg.G.heartHits = 0; for (let i = 0; i < 6; i++) { dbg.atk(); dbg.stepOwn(21); }
+    if (!(dbg.G.heartHits >= 6)) bad('pressing 1 six times a second apart on the heart gave ' + dbg.G.heartHits + ' hits; each ready press should hit (check H)');
     const runs = Array.from({ length: 12 }, (_, i) => script({ seed: i + 21 }));
     for (const r of runs) { const sw = r.warns.find((w) => /She surfaces on the/.test(w.text)); if (!sw || !sw.text.includes(r.east ? 'EAST' : 'WEST')) { bad('the dive warning reads "' + (sw && sw.text) + '" but she comes up ' + (r.east ? 'east' : 'west') + ' (seed ' + r.seed + ', check H)'); break; }
       const wg = r.wings[1], hw = r.waves.filter((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1), ax = hw.reduce((a, w) => a + w.x, 0) / hw.length - r.dive.to[0], ay = hw.reduce((a, w) => a + w.y, 0) / hw.length - r.dive.to[1], real = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'WEST' : 'EAST') : (ay < 0 ? 'SOUTH' : 'NORTH');
