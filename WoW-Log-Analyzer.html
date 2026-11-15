@@ -87670,6 +87670,19 @@ html:not(.mpcard) body #view#view#view #mptCCv#mptCCv > .mpx-cv { margin-top: 0 
   html:not(.mpcard) body #view#view#view #mptCD .mpdb-ev { grid-column: 1 / -1 !important; }
 }
 }
+/* Mythic+ replay: raid frames (Nov 15, Flex, with a picture of the frames: "these are too long, can you have the health bar being more like a healer raid
+   frame and the target be to the right of the healthbar?"): each player a short box, the name and health inside it, as on a healer's raid frames; what they
+   are hitting or healing is outside the box, to its right, over the map. Still one line tall (Flex, Nov 14: "could we make these not as tall somehow?") */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-rf { width: 132px !important; gap: 3px !important; }
+html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff { display: block !important; width: 132px !important; height: 24px !important; padding: 0 !important; overflow: visible !important; }
+html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff > .mrp-rfh { overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff > .mrp-rfn { display: block !important; max-width: none !important; padding: 0 38px 0 7px !important; font: 700 12.5px/24px var(--body) !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff > .mrp-rfp { position: absolute !important; right: 6px !important; top: 0 !important; font: 700 12px/24px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rft { position: absolute !important; left: calc(100% + 8px) !important; top: 0 !important; max-width: 180px !important; padding: 0 !important; font: 600 12.5px/24px var(--body) !important; color: rgba(255,255,255,.9) !important; text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 6px rgba(0,0,0,.9) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rft.fr { color: #b6f0c0 !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-rf, html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff { width: 120px !important; } html:not(.mpcard) body #view#view#view .mrp-rff > .mrp-rft { display: none !important; } }
+}
 </style>
 </body>
 </html>
