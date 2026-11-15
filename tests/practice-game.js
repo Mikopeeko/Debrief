@@ -1,0 +1,91 @@
+// The Ula'tek practice game (src/practice.js), run in Node: the fight script and the 19 bots, with the page's screen stood in for by a do-nothing stub,
+// so a check reads exactly what the game plays. Runs on every build (tests/contradictions.js); `node tests/practice-game.js` runs the checks alone and
+// prints the bot audit for a few runs.
+// The checks (Nov 15, Main held the game against the measured Mythic clock in notes/Guides/Bosses/8 Ula'tek.md, "Mythic phase 1, measured"):
+//   A. The fight clock is the measured one. (The off tank's venom beam ran at 0:07 instead of 0:15 to 0:19, the second at 1:16 while she was still diving
+//      instead of 1:24 to 1:28, the second bubble at 1:14 instead of 1:10, and the start card named bubbles at 1:14 and 2:22.)
+//   B. Her tail, and the coils that rise beside it, are on either side in set 1 (west or east, about even) and south in set 2, and either coil can come first:
+//      team 1 takes the first to appear (Flex: "whichever appears first is the one gets soaked"). (The tail and its coils were always west, the same coil first.)
+//   C. One tank takes all 5 beam impacts; the tank who took the first Mother's Wrath soaks the second beam and takes the new tail; at 1:48 the second Wretch
+//      is held 17 to 22 yards in front of her new spot, 46 to 53 from the new tail, with the raid in its bubble through the Thrash. (The off tank took both
+//      beams and held the second Wretch 26 yards from her; her first tank stayed on her after the dive.)
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm');
+const SRC = path.join(__dirname, '..', 'src');
+
+// (a stand-in for the page: every element, canvas and call answers with another stand-in, and reads as 0 in a sum)
+function stub() {
+  const f = function () { return stub(); };
+  return new Proxy(f, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : stub()), set: () => true, apply: () => stub() });
+}
+function load(H, pj) {
+  H = H || require('./site-helpers.js');
+  const PJ = pj || fs.readFileSync(path.join(SRC, 'practice.js'), 'utf8'), GJ = fs.readFileSync(path.join(SRC, 'guides.js'), 'utf8');
+  const fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB'].map((n) => H.grab(n, GJ)).join('\n');
+  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+  class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
+  const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console });
+  vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + PJ + '\nthis.pgUlScript = pgUlScript; this.PG_UL = PG_UL; this.UX_ZONE = UX_ZONE; this.UL_EDGE = UL_EDGE;', ctx);
+  vm.runInContext('pgOpen(null, "Ula\'tek", "m")', ctx);
+  return { dbg: win.__pgDbg, script: ctx.pgUlScript, PG_UL: ctx.PG_UL, PJ, ctx };
+}
+
+function checks(H, say, pj) {
+  const bad = (t) => say("Ula'tek practice game", 'game', t), clk = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0') + (Math.abs(s - Math.round(s)) > 0.05 ? '.' + Math.round((s % 1) * 10) : ''), near = (a, b) => Math.abs(a - b) <= 0.5;
+  let G0; try { G0 = load(H, pj); } catch (e) { bad('the game would not run in the test (' + e.message + ')'); return; }
+  const { dbg, script, PG_UL, PJ } = G0, hyp = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  // A. the clock
+  const S = script({ seed: 3, east: false }), want = (what, got, exp) => { if (got.length !== exp.length || got.some((v, i) => !near(v, exp[i]))) bad(what + ' at ' + got.map(clk).join(', ') + '; the measured clock has ' + exp.map(clk).join(', ') + ' (check A)'); };
+  want('the eggs are called', S.eggSets.map((e) => e.cast), [1, 71]);
+  want('the Wretches land', S.wretches.map((w) => w.land), [3, 72]); want('the Wretches wake', S.wretches.map((w) => w.awake), [23, 92]);
+  want('the venom beams\' impacts are', S.beams.flatMap((b) => b.hits || [b.t0]), [15, 16, 17, 18, 19, 84, 85, 86, 87, 88]);
+  want('the beams\' waves leave', [...new Set(S.waves.filter((w) => w.kind === 'incub').map((w) => w.t0))], [15, 16, 17, 18, 19, 84, 85, 86, 87, 88]);
+  want('Mother\'s Wrath bites', S.wrath.map((w) => w.at), [27, 97]); want('the bubbles go off', S.bubbles.map((b) => b.at), [39, 70, 108, 140]);
+  want('the coils slam', S.soaks.map((q) => q.at), [40, 43, 134, 137]); want('Mephitic Thrash lands', S.thrash.map((q) => q.at), [49, 106]);
+  want('her waves start', [...new Set(S.waves.filter((w) => w.kind === 'her').map((w) => w.t0))].filter((t, i, a) => !a.some((u) => u < t && t - u < 7)), [56, 113]);
+  want('she dives', [S.dive.t0], [77]);
+  if (!/0:39, 1:10, 1:48 and 2:20/.test(PJ) || /1:14|2:22/.test(PJ)) bad('the start card\'s bubble times don\'t read 0:39, 1:10, 1:48 and 2:20 (check A)');
+  // B. the sides
+  const runs = Array.from({ length: 40 }, (_, i) => script({ seed: i + 1 })), tE = runs.filter((r) => r.tailEast).length, f0 = runs.filter((r) => r.first && r.first[0]).length, f1 = runs.filter((r) => r.first && r.first[1]).length;
+  if (tE < 10 || tE > 30) bad('her tail rose east in ' + tE + ' of 40 runs; it should be west or east about evenly (check B)');
+  if (f0 < 10 || f0 > 30 || f1 < 10 || f1 > 30) bad('the same coil comes first nearly every run (set 1: the other one in ' + f0 + ' of 40, set 2: ' + f1 + '); either can appear first (check B)');
+  if (JSON.stringify(script({ seed: 9 }).soaks.map((q) => [q.x, q.y])) !== JSON.stringify(script({ seed: 9 }).soaks.map((q) => [q.x, q.y]))) bad('the same seed gives a different run, so a run can\'t be replayed (check B)');
+  for (const r of runs) { const tl1 = r.thrash[0], tl2 = r.thrash[1], c = r.soaks;
+    if (Math.abs(tl1.y) > 5 || Math.abs(Math.abs(tl1.x) - 41) > 2 || (tl1.x > 0) !== !!r.tailEast) { bad('in set 1 her tail is at ' + tl1.x.toFixed(0) + ', ' + tl1.y.toFixed(0) + ', not on the west or east edge (seed ' + r.seed + ', check B)'); break; }
+    if (tl2.y > -35 || Math.abs(tl2.x) > 5) { bad('in set 2 her tail is at ' + tl2.x.toFixed(0) + ', ' + tl2.y.toFixed(0) + ', not south after her turn (seed ' + r.seed + ', check B)'); break; }
+    if (c.some((q) => hyp([q.x, q.y], q.set ? [tl2.x, tl2.y] : [tl1.x, tl1.y]) > 22)) { bad('a coil rises away from her tail (seed ' + r.seed + ', check B)'); break; }
+    if (hyp(r.bubbles[0].p, [c[0].x, c[0].y]) > 7) { bad('the first bubble isn\'t on the first coil\'s circle (seed ' + r.seed + ', check B)'); break; }
+    if (c[0].t0 >= c[1].t0) { bad('the first coil doesn\'t appear before the second (check B)'); break; } }
+  if (/the first slam, 0:41|the second slam, 0:44/.test(PJ) || !/first coil to appear/.test(PJ)) bad('the start card names a coil by its slam order and time, not "the first coil to appear" (check B)');
+  // C. the tanks and the second Wretch (script)
+  const [b1, b2] = S.beams;
+  if (!b1 || !b2 || b1.tank !== 't2' || b2.tank !== 't1') bad('the beams go to ' + (b1 && b1.tank) + ' and ' + (b2 && b2.tank) + '; the off tank takes the first, the tank who took the first Mother\'s Wrath the second (check C)');
+  else if (!S.wrath[0] || S.wrath[0].tank !== b2.tank || S.herTank(S.dive.surf) !== b1.tank) bad('the tank who took the first Mother\'s Wrath doesn\'t soak the second beam, or the other tank doesn\'t have her after the dive (check C)');
+  // (played: two runs with different sides; the bots' audit, the beam's tank at each impact, the new tail, and the second Wretch at 1:48 with the raid on it)
+  const SERIOUS = /off their soak|soaked both|outside the bubble|in the tail's sweep|in her reach|beam tank|her tank|two carriers|under a landing egg|off the platform/;
+  for (const [east, seed, more] of [[false, 3, { tailEast: true, first: [true, false] }], [true, 5, { tailEast: false, first: [false, true] }]]) {
+    const tag = ' (she surfaces ' + (east ? 'east' : 'west') + ', tail ' + (more.tailEast ? 'east' : 'west') + ' in set 1)';
+    let a; try { a = dbg.audit(east, seed, more); } catch (e) { bad('the bots\' audit crashed' + tag + ': ' + e.message); continue; }
+    a.filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + tag + ' (check C)'));
+    try { dbg.at(83.9, 'r4', { east, seed, ...more }); } catch (e) { bad('the game crashed playing to 1:24' + tag + ': ' + e.message); continue; }
+    const Sx = dbg.S, G = dbg.G, B2 = Sx.beams[1]; let thrashIn = null, w108 = null;
+    while (G.t < 108.2) { const t0 = G.t; dbg.step(1); const t = G.t, cr = (x) => x > t0 && x <= t;
+      (B2.hits || []).forEach((h) => { if (cr(h)) { const tk = G.bots[B2.tank]; if (!tk || hyp([tk.x, tk.y], B2.at) > 3) bad('the second beam\'s impact at ' + clk(h) + ' missed its tank' + tag + ' (check C)'); Object.keys(G.bots).filter((id) => id !== B2.tank && id !== 'r4').forEach((id) => { if (hyp([G.bots[id].x, G.bots[id].y], B2.at) < 2) bad(id + ' stood in the second beam at ' + clk(h) + tag + ' (check C)'); }); } });
+      if (cr(106)) { const w = G.wr.w2; if (w) thrashIn = Object.values(G.bots).filter((b) => b.id !== 'r4' && hyp([b.x, b.y], [w.x, w.y]) <= 10).length + (hyp([G.x, G.y], [w.x, w.y]) <= 10 ? 1 : 0); }
+      if (cr(108)) w108 = G.wr.w2 ? [G.wr.w2.x, G.wr.w2.y] : null;
+      if (cr(100)) { const tl = (Sx.FT || Sx.F)(PG_UL.tail, t), t1 = G.bots[B2.tank] || G.bots.t1; if (hyp([t1.x, t1.y], tl) > 12) bad('the tank who soaked the second beam is ' + hyp([t1.x, t1.y], tl).toFixed(0) + ' yards from the new tail at 1:40' + tag + ' (check C)'); } }
+    if (!w108) { bad('the second Wretch isn\'t up at 1:48' + tag + ' (check C)'); continue; }
+    const dHer = hyp(w108, Sx.dive.to), dTail = hyp(w108, (Sx.FT || Sx.F)(PG_UL.tail, 108));
+    if (dHer < 17 || dHer > 22 || dTail < 46 || dTail > 53) bad('at 1:48 the second Wretch is ' + dHer.toFixed(0) + ' yards from her and ' + dTail.toFixed(0) + ' from the new tail; top kills hold it 17 to 22 from her, 46 to 53 from the tail' + tag + ' (check C)');
+    if (!(thrashIn >= 17)) bad('only ' + thrashIn + ' raiders are in the second Wretch\'s bubble as the Thrash lands at 1:46; top kills have 17 to 20' + tag + ' (check C)');
+  }
+}
+
+module.exports = checks; module.exports.load = load; module.exports.stub = stub;
+
+if (require.main === module) {
+  let n = 0; const t0 = Date.now(); checks(null, (a, b, t) => { n++; console.log('✗ ' + t); });
+  console.log(n ? n + ' problem(s)' : 'practice game: all checks pass', '(' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)');
+  if (process.argv.includes('--audit')) { const { dbg } = load(); for (const [east, seed] of [[false, 3], [true, 3], [false, 11], [true, 29]]) { const a = dbg.audit(east, seed), S = dbg.S; console.log('east ' + east + ' seed ' + seed + ' tail ' + (S.tailEast ? 'east' : 'west') + ' first ' + JSON.stringify(S.first) + ': ' + (a.length ? '\n  ' + a.join('\n  ') : 'clean')); } }
+  process.exitCode = n ? 1 : 0;
+}
