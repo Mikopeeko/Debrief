@@ -58,8 +58,23 @@ Tested and left out:
 - **Boss health instead of time:** no boss health for the kills without ~800 heavy downloads; the damage check already catches a slow pull.
 - **Wipes as a second check:** the kills were picked for many deaths, so "9 of 10 pulls like this wiped" would be skewed.
 
-## When the raid plays on past the call (Nov 6, widened Nov 13)
-A wipe call is a line no kill ever crossed, but a raid can outlive it. When it does, the whole pull counts ("Wiped at", not "Wipe called at"), and the cause is read to the end.
+## When the raid plays on past the call (Nov 6, widened Nov 13, re-called Nov 16)
+A wipe call is a line no kill ever crossed, but a raid can outlive it. Until Nov 16 the whole pull then counted ("Pull ended at"), and the cause is read to the end.
+
+**Since Nov 16 (Flex, Wolfthorn's Nov 12 Ula'tek pull 13: "Pull ended at 2:46: the raid played on past the wipe call at 1:49 ... the raid lived on for another minute"):**
+counting the whole pull went too far the other way (on that pull 12 died from 2:05 to 2:20, all counted). Now the site looks again from the call's own deaths on, by the same
+rules (kill line, half the raid, damage check, wipe mechanic), and calls the wipe where the raid fell apart: 2:05 on that pull. It repeats if the raid fights on past that one too.
+Only when nothing later calls it does the whole pull count, as before ("Pull ended at"). The page says "(the raid kept fighting after 1:49)" and the picture explains the earlier
+crossing. The rule that decides whether the raid played on is unchanged, and the root cause still reads from the first call, so the reason for the wipe is unchanged (Flex:
+"this shouldnt touch the 'reason for the wipe' or anything, just the timing"). This matches the answer key's own Nov 13 rule ("the second it was lost is then the later one").
+
+Measured (scratchpad wc/, shared notes `wipe-call-audit-nov16.md`): on the 101 wipes the answer key judged by hand, calls on time (3 s before to 5 s after the judged moment)
+went from 63 to 70, late from 34 to 26, the average miss from 6.5 s to 4.1 s; whole-pull wipes from 24 of 156 to 3. On 55 more wipes judged blind by independent readers (who
+agreed with the hand key on 33 of 34), on time went from 31 to 36 and the average miss from 12.2 s to 8.8 s. Reasons changed on 0 wipes. Check: `tests/wipe-call-again.js`.
+
+What was tested and left alone: removing the kill line (Flex's question; on time 63 to 58, late 34 to 42, because "half the raid dead" is late), a dead tank counting as 1
+(no labelled call moved), no battle rez credit (slightly worse), a "death spiral" rule with no kill line (19 to 22 calls early). The kill line itself holds on kills: 1 of 123
+saved Ula'tek Mythic kills and 0 of 128 Coiled Altar Mythic kills ever had more dead than it allows.
 One rule decides it, in the engine (`playedOnAfter`), asked by the page's wipe call (`playedOn` in ui.js) and by both root-cause readers:
 
 1. **The pull ran on longer than the call took to come** (20 s at least, 60 s at most). Nov 6.
