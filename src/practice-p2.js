@@ -220,7 +220,7 @@ function pgP2(A) {
   const range = (id) => P.KICK[id[0]] || 0;
   const holder = (k, s, v) => Object.keys(S.job).find((id) => S.job[id].side === s && S.job[id][k] === v) || null;
   const bigIx = (s, w) => S.big.findIndex((b) => b.side === s && b.which === w);
-  const slot = (s, n) => { const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8.5, 25 + Math.max(0, o) * 36, s); } /* (8.5 yards out, 36 degrees apart: 5.25 yards between carriers, past the 4.3 a splash needs) */, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
+  const slot = (s, n) => { const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8.8, 10 + Math.max(0, o) * 33, s); } /* (8.8 yards out, 33 degrees apart: 5.0 yards between carriers, past the 4.3 a splash needs) */, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
   const TDIR = [10, -15, -32, -50, -68, -84];
   // (your way out of a tether: the safe heading (east round to south, away from the eggs and the venom) nearest your own side of the Warden)
   const outDir = (F, b0, s) => { const q = pgP2L(s, [b0.x - F[0], b0.y - F[1]]), b = Math.atan2(q[1], q[0]) * 180 / Math.PI, off = (a) => Math.abs((((a - b) % 360) + 540) % 360 - 180); return TDIR.reduce((m, a) => (off(a) < off(m) ? a : m), TDIR[0]); };
@@ -257,7 +257,10 @@ function pgP2(A) {
     if (id === A.me && G.tgt) { const c = G.p2.cl[G.tgt], a = G.adds.find((q) => q.id === G.tgt && q.own); if (c && c.dead == null && c.side === s && ok(c.x, c.y)) o = [c.x, c.y]; else if (a && a.side === s && ok(a.x, a.y)) o = [a.x, a.y]; }
     if (!o) { const c = Object.values(G.p2.cl).filter((q) => q.side === s && q.dead == null && ok(q.x, q.y)).sort((a, b) => a.born - b.born)[0]; if (c) o = [c.x, c.y]; }
     if (!o && (id !== A.me || an)) { const a = G.adds.filter((q) => q.own && q.side === s && q.kind === 'rawling' && ok(q.x, q.y)).sort((x, y) => x.born - y.born)[0]; if (a && pgP2Ledge(a.x, a.y, 0.6)) o = [a.x, a.y]; }
-    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3]; return pgP2Floor(q[0], q[1]) ? q : nearFloor(q); };
+    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3], inside = (p) => pgP2Ledge(p[0], p[1], 2) || PG_UL.onPlat(p[0], p[1]);
+    if (inside(q)) return q; /* (2 yards in from the edge: an add walking along it would lead you off the stone) */
+    let best = null, bd = 1e9; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, p = [o[0] + Math.cos(a) * 3, o[1] + Math.sin(a) * 3]; if (!inside(p)) continue; const dd = Math.hypot(p[0] - b0.x, p[1] - b0.y); if (dd < bd) { bd = dd; best = p; } }
+    return best || nearFloor(q); };
   // (a kick due for this raider soon (their own, or the one they're backing up): where its caster is)
   const kickDue = (id, t) => { const k = kickables(t + 4).concat(kickables(t)).find((q) => q.who === id && t >= q.t0 - 4); return k ? k.p : null; };
   const bkCry = (id) => { const b = G.p2.bk; if (!b || id !== A.me || G.p2.kick[b.key] || !/^c/.test(b.key)) return 0; const c = S.cries.find((q) => 'c' + q.ds + q.i === b.key); return c ? c.dk : 0; };
@@ -310,9 +313,9 @@ function pgP2(A) {
     // stone all the way there, and past each circle on the way before it lands)
     r.T = nearFloor(r.T); const imps = S.impacts.filter((m) => m.at >= t - 0.05 && m.at - t <= 2.4); if (!imps.length) { r.T = route(b0, r.T, id); return r; }
     const sp = (id === A.me ? 7 * (A.has('sprint') ? 1.4 : 1) : 9.8) * Math.max(0.3, slow(id, t)), near = (x, y, pad) => imps.some((q) => Math.hypot(x - q.x, y - q.y) <= q.r + pad);
-    // (a carrier's spot keeps out of the other carriers' rings too: 4.9 yards from them, a splash's 4.3 and a little)
+    // (a carrier's escape keeps out of the other carriers' rings too: 4.4 yards from them, just past a splash's 4.3)
     const held = G.eggs.some((e) => e.who === id && e.state === 'held'), rings = held ? G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== id).map((e) => pos(e.who)) : [];
-    const clear = (x, y) => { if (near(x, y, 1.6) || rings.some((o) => Math.hypot(x - o[0], y - o[1]) < 4.9)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
+    const clear = (x, y) => { if (near(x, y, 1.6) || rings.some((o) => Math.hypot(x - o[0], y - o[1]) < 4.4)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
     // (an escape, once picked, is kept while it stays clean until the circles land: a circle right on you has two equally good ways out, and
     // re-picking each step would swap between them and leave you in it (a Virulent Spit swirl lands on the raider it marked))
     const need = (near(r.T[0], r.T[1], 2.2) || near(b0.x, b0.y, 1.6)) && !clear(r.T[0], r.T[1]), es = G.p2.esc[id]; if (need && es && t < es.until && clear(es.T[0], es.T[1]) && !G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, es.T[0], es.T[1], 1.5))) { r.T = es.T; r.fast = true; r.T = route(b0, r.T, id); return r; }
