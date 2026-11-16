@@ -20956,6 +20956,25 @@ html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li[data-who]
 html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-ff { gap: 4px !important; }
 html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fc { gap: 4px !important; padding: 2px 7px !important; font-size: 12px !important; }
 }
+/* Mythic+ Route, the panel beside the map for a picked pull (Nov 16, Flex: "I think this whole section could use a makeover in the pull by pull"): four
+tabs across its top (Play by play, Players, Enemies, Tips) that stay in view while the panel scrolls, one view at a time, each fold inside open with its
+title as a small label. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pt { position: sticky !important; top: 0 !important; z-index: 2 !important; display: grid !important; grid-auto-flow: column !important; grid-auto-columns: minmax(0, 1fr) !important; gap: 0 !important; margin: 0 0 10px !important; padding: 0 !important; background: rgb(25,28,31) !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pt > button { margin: 0 !important; padding: 7px 4px !important; border: 0 !important; border-left: 1px solid var(--line2, #2a2e36) !important; border-radius: 0 !important; background: none !important; font: 700 12.5px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pt > button:first-child { border-left: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pt > button:hover { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pt > button.on { color: var(--text) !important; background: rgba(125,155,232,.14) !important; box-shadow: inset 0 -2px 0 var(--mpt-you, #7d9be8) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mc > .mpx-pane[hidden] { display: none !important; }
+/* inside a tab: the play by play's own label goes (the tab says it), each fold's title is a small label and can't shut */
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane[data-p="play"] > p.mpx-ck:first-child { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane details.mpt-cfd { margin: 0 0 14px !important; border: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane details.mpt-cfd > summary.mpt-cfs { margin: 0 0 6px !important; padding: 0 0 6px !important; border-bottom: 1px solid var(--line) !important; pointer-events: none !important; list-style: none !important; font: 500 12.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane details.mpt-cfd > summary.mpt-cfs::-webkit-details-marker, html:not(.mpcard) body #view#view#view #mptCM .mpx-pane details.mpt-cfd > summary.mpt-cfs::after { display: none !important; content: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane details.mpt-cfd > summary.mpt-cfs > b:first-child { margin-right: 6px !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane[data-p="ppl"] [data-who] { cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpx-pane[data-p="tip"] ul.mpt-mtips { margin: 0 !important; }
+}
 </style>
 </body>
 </html>
