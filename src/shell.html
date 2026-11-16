@@ -20981,6 +20981,14 @@ flowing line with a rule weaker than the filters' hide rules (:where), and a blo
 html:not(.mpcard) body #view#view#view :where(#mptCM .mpt-mside) .mpx-fl2 > li { display: block !important; }
 html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li * { text-indent: 0 !important; }
 }
+/* Mythic+ enemy portraits on the Route map and in the replay (Nov 16, Flex: "Can we use those portraits on the maps and the replay"): every enemy's
+portrait on the map at every zoom; in the replay the portrait inside the enemy's circle with a red ring, gold for a boss. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpt-mdt svg .mpt-ep { display: inline !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.pic > circle { fill: none !important; stroke: #e5534b !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.pic.bo > circle { stroke: #d4b77d !important; }
+html:not(.mpcard) body #view#view#view .mrp-e.pic > image { filter: brightness(1.25) !important; }
+}
 </style>
 </body>
 </html>
