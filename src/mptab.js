@@ -1041,7 +1041,7 @@ function mpxPPSync(name) { if (MPC_ON) return; const it = MP.item, R = it && MP.
   if (p && MP.cvp !== name) { MP.cvp = name; MP.cvo = new Set(['0']); MP.cvm = false; mpvUrl(); mpcRotPaint(); }
   try { mpxRowOn(); mpxGraphPaint(); } catch (e) { /* (no table yet) */ } }
 // (a key with no map: the pick still moves Your part)
-function mpxPPOnly(name) { MP.pp = name; if (MPC_ON) return; const pe = document.getElementById('mptPart'), it = MP.item, R = it && MP.R[mpK(it)]; if (pe && R && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null, name); mpxPPSync(name); }
+function mpxPPOnly(name) { MP.pp = name; mpxMeMark(name); if (MPC_ON) return; const pe = document.getElementById('mptPart'), it = MP.item, R = it && MP.R[mpK(it)]; if (pe && R && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null, name); mpxPPSync(name); }
 // (pick a player the way the bar does, so it is kept for this key)
 function mpxPick(name) { const sel = document.querySelector('[data-mppsel]'); if (sel && [...sel.options].some((o) => o.value === name)) { sel.value = name; sel.dispatchEvent(new Event('change', { bubbles: true })); } else mpMapPP(name); }
 // (a player picked inside Rotation is the bar's player too)
@@ -2091,22 +2091,44 @@ function mpxResult(R, F) { if (MPC_ON || !R || !(R.pulls || []).length) return '
     st('inv_misc_pocketwatch_01', 'Time', mpMM(ck.time) + '<em> / ' + mpMM(ck.par) + '</em>') + (up ? st('spell_nature_timestop', 'Spare', mpMM(ck.par - ck.time), 'ok') : st('spell_nature_timestop', 'Over', mpMM(ck.time - ck.par), 'bad')) +
     st('inv_misc_bone_humanskull_01', 'Deaths', D ? D + (C.pen ? '<em> +' + mpMM(Math.round(C.pen * D)) + '</em>' : '') : '0', D ? 'bad' : '', D && C.pen ? 'What the deaths added to the timer.' : '') +
     (beh != null ? st('ability_rogue_sprint', 'Vs a fast run', mpMM(Math.abs(beh)) + '<em> ' + (beh > 0 ? 'behind' : 'ahead') + '</em>', '', 'A typical fast run of this dungeon at this level finished at ' + mpMM(FC.ck.time) + '.') : '') + (cnt != null ? st('achievement_bg_killxenemies_generalsroom', 'Count', Math.round(cnt) + '%') : '') + (lu ? st('spell_nature_bloodlust', 'Lust', String(lu)) : '') + '</div>'; }
+// (each player's Mythic+ rating for the group's Rating column (Nov 16, Flex with the game's end-of-key board: "id like each of these columns in the visual as
+// well"): their realm from their name in the log, Raider.IO asked once for the group through the site's own lookup, kept for the visit; the cells fill in
+// when it answers, a dash when Raider.IO doesn't know them)
+const MPX_RIO = new Map();
+const mpRealmSlug = (s) => String(s || '').replace(/'/g, '').replace(/([a-z])([A-Z])/g, '$1-$2').replace(/([A-Za-z])(\d)/g, '$1-$2').replace(/\s+/g, '-').toLowerCase();
+function mpxRioPaint(by) { if (typeof document === 'undefined') return; for (const el of document.querySelectorAll('#view .mpbn-rt[data-mprt]')) { const c = by[el.getAttribute('data-mprt')]; if (!c) continue;
+  el.classList.remove('mpbn-z'); el.textContent = Number(c.score).toLocaleString('en-US'); if (/^#[0-9a-f]{6}$/i.test(c.col || '')) el.style.setProperty('--rc', c.col); el.setAttribute('data-tt', 'Their Mythic+ rating today, from Raider.IO.'); } }
+function mpxRio(R) { if (MPC_ON || !R || !R.srv || typeof WCL === 'undefined' || !WCL.rioTeam) return null; const L = (R.people || []).map((p) => [p.name, R.srv[p.name]]).filter((x) => x[1] && x[1].s); if (!L.length) return null;
+  const it = MP.item || {}, reg0 = String((L.find((x) => x[1].r) || [0, {}])[1].r || it.reg || it.region || 'us').toLowerCase(), reg = /^(us|eu|kr|tw)$/.test(reg0) ? reg0 : 'us', key = reg + '|' + L.map((x) => x[0] + '-' + x[1].s).join(','), o = MPX_RIO.get(key); if (o) return o.d;
+  const x = { d: null }; MPX_RIO.set(key, x);
+  WCL.rioTeam(reg, L.map(([n, v]) => [n, mpRealmSlug(v.s)])).then((d) => { const by = {}; ((d && d.chars) || []).forEach((c, i) => { if (!c || c.none || c.score == null) return; const n = (L.find((y) => mpLc(y[0]) === mpLc(c.n || '')) || L[i] || [])[0]; if (n) by[n] = c; }); x.d = by; mpxRioPaint(by); })
+    .catch(() => { x.d = {}; }); return null; }
+// (the player picked at the top of the page, framed in gold in the group like your own row on the game's board: the same pick the page makes for the key
+// (a saved pick, or you), and the frame follows a new pick at once)
+function mpxPick(R) { const it = MP.item; if (!it) return ''; const k = mpK(it); if (MP.ppK === k) return MP.pp || ''; const v = mpPPGet()[k]; return v != null ? v : mpMine(R); }
+function mpxMeMark(n) { if (MPC_ON || typeof document === 'undefined') return; for (const el of document.querySelectorAll('#view .mpbn-b[data-mpxp]')) el.classList.toggle('mpbn-me', !!n && el.getAttribute('data-mpxp') === n); }
 function mpxBoard(R, M, F) { if (MPC_ON || !R || !(R.people || []).length) return ''; const P = R.pulls || [], ppl = (R.people || []).slice().sort(mpByRole);
   const tot = (o, n) => P.reduce((a, q) => a + ((q[o] || {})[n] || 0) * (q.dur || 0), 0), taken = (n) => ((R.ptk || {})[n] || []).reduce((a, v) => a + (v || 0), 0);
   const il = (n) => { const o = ((M && M.L) || []).find((x) => x.name === n), r = o && Object.values(o.rows || {}).flat().map((y) => (Array.isArray(y) ? y[1] : y)).find((y) => y && y.l === 'Item level'), m = r && /^(\d+)/.exec(String(r.v || '')); return m ? m[1] : ''; };
   const rows = ppl.map((p) => ({ p, d: p.deaths || 0, tk: taken(p.name), av: p.avoidDmg || 0, avn: p.avoid || 0, dm: tot('dmg', p.name), dps: p.dps || 0, he: tot('heal', p.name), hps: p.hps || 0, ki: p.kicks || 0, di: (p.dispels || 0) + (p.purges || 0), il: il(p.name) }));
-  // (banners, one a player (Nov 16, Flex picked the third of three looks: "go with C, but make the banner more interesting... visually its lacking flavor",
-  // meaning the result above it): each player a banner in their class colour, their portrait, name, spec and item level; then DPS and HPS with each
-  // one's total under it, deaths, damage taken, avoidable damage, kicks and dispels; the group's best in a column marked in gold; a click opens that
-  // player's Report card)
-  const tp = (k, v) => (rows.length > 1 && v > 0 && v === Math.max(...rows.map((x) => x[k])) ? ' mpbn-top' : ''), z = '<span class="mpbn-n mpbn-z">0</span>', cn = (p) => (typeof E !== 'undefined' && E.CLASSES && (E.CLASSES[p.cls] || [])[0]) || '';
-  const head = '<div class="mpbn-r mpbn-h"><span>Player</span><span>DPS</span><span>HPS</span><span>Deaths</span><span>Damage taken</span><span>Avoidable</span><span>Kicks</span><span>Dispels</span></div>';
-  const body = rows.map((r) => { const c = mpCC(r.p.cls);
-    return '<div class="mpbn-r mpbn-b" style="--c:' + c + '" role="button" tabindex="0" data-mpxv="mis" data-mpxp="' + esc(r.p.name) + '"><span class="mpbn-p">' + mpxWhoIc(r.p) + '<span><b>' + esc(r.p.name) + '</b><small>' + esc([r.p.spec, cn(r.p)].filter(Boolean).join(' ')) + (r.il ? ' <em' + mpT1(r.il + ' item level') + '>· ' + r.il + '</em>' : '') + '</small></span></span>' +
-      '<span class="mpbn-n' + tp('dps', r.dps) + '">' + mpGF(r.dps) + '<small>' + mpGF(r.dm) + '</small></span><span class="mpbn-n' + tp('hps', r.hps) + '">' + mpGF(r.hps) + '<small>' + mpGF(r.he) + '</small></span>' +
-      (r.d ? '<span class="mpbn-n mpbn-bad">' + r.d + '</span>' : z) + '<span class="mpbn-n">' + mpGF(r.tk) + '</span>' +
-      (r.av ? '<span class="mpbn-n mpbn-bad" tabindex="0"' + mpT1(plural(r.avn, 'avoidable hit') + ' took ' + mpGF(r.av) + '.') + '>' + mpGF(r.av) + '</span>' : z) +
-      (r.ki ? '<span class="mpbn-n' + tp('ki', r.ki) + '">' + r.ki + '</span>' : z) + (r.di ? '<span class="mpbn-n' + tp('di', r.di) + '">' + r.di + '</span>' : z) + '</div>'; }).join('');
+  // (a row a player, like the game's own end-of-key board (Nov 16, Flex: "I like the design but its unpolished and unrefined", with a picture of the game's
+  // board: "hoping to get a similar quality", then "id like each of these columns in the visual as well"): the player in their class colour with their spec
+  // and item level and a small role mark, then Rating, Deaths, Damage taken, Avoidable, Damage, DPS, Healing, HPS, Interrupts and Dispels; one decimal with
+  // the unit small and dim; a thin bar under DPS and HPS against the group's best, the best in gold; colour only where it means something (red deaths,
+  // orange avoidable, blue interrupts, green dispels, the most of each in gold); the player picked at the top framed in gold; a click opens their Report card)
+  const mx = (k) => Math.max(0, ...rows.map((x) => x[k] || 0)), top = (k, v) => rows.length > 1 && v > 0 && v === mx(k), z = '<span class="mpbn-n mpbn-z">0</span>', cn = (p) => (typeof E !== 'undefined' && E.CLASSES && (E.CLASSES[p.cls] || [])[0]) || '';
+  const fm = (v) => { v = +v || 0; const u = v >= 1e9 ? ['b', 1e9] : v >= 1e6 ? ['m', 1e6] : v >= 1e3 ? ['k', 1e3] : null; return u ? (v / u[1]).toFixed(1) + '<i class="mpbn-u">' + u[0] + '</i>' : String(Math.round(v)); };
+  const num = (v) => (v > 0 ? '<span class="mpbn-n">' + fm(v) + '</span>' : z), bar = (k, v) => (v > 0 ? '<span class="mpbn-n mpbn-bar' + (top(k, v) ? ' mpbn-best' : '') + '" style="--w:' + Math.max(0.04, v / (mx(k) || v)).toFixed(3) + '">' + fm(v) + '</span>' : z);
+  const rio = typeof mpxRio === 'function' ? mpxRio(R) : null, me = typeof mpxPick === 'function' ? mpxPick(R) : typeof MP !== 'undefined' ? MP.pp || '' : '';
+  const rt = (n) => { const c = rio && rio[n]; return c ? '<span class="mpbn-n mpbn-rt"' + (/^#[0-9a-f]{6}$/i.test(c.col || '') ? ' style="--rc:' + c.col + '"' : '') + ' data-mprt="' + esc(n) + '"' + mpT1('Their Mythic+ rating today, from Raider.IO.') + '>' + Number(c.score).toLocaleString('en-US') + '</span>' : '<span class="mpbn-n mpbn-rt mpbn-z" data-mprt="' + esc(n) + '">–</span>'; };
+  const H = [['Player'], ['Rating', 'Each player\'s Mythic+ rating today, from Raider.IO.'], ['Deaths'], ['Damage taken'], ['Avoidable', 'Damage taken from things that can be dodged.'], ['Damage'], ['DPS'], ['Healing'], ['HPS'], ['Interrupts'], ['Dispels', 'Dispels and purges.']];
+  const head = '<div class="mpbn-r mpbn-h">' + H.map(([t, tip]) => '<span' + (tip ? ' tabindex="0"' + mpT1(tip) : '') + '>' + t + '</span>').join('') + '</div>';
+  const body = rows.map((r) => { const c = mpCC(r.p.cls), role = r.p.role === 'tank' || r.p.role === 'healer' ? r.p.role : 'dps', sc = [r.p.spec, cn(r.p)].filter(Boolean).join(' '); /* (the game's board: the item level under the name; the spec's icon, the class colour and the role mark say the rest, the full spec on hover) */
+    return '<div class="mpbn-r mpbn-b' + (r.p.name === me ? ' mpbn-me' : '') + '" style="--c:' + c + '" role="button" tabindex="0" data-mpxv="mis" data-mpxp="' + esc(r.p.name) + '"><span class="mpbn-p"><span class="mpbn-pic"' + mpT1(sc + ', ' + (role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : 'damage')) + '>' + mpxWhoIc(r.p) + '<i class="mpbn-role mpbn-role-' + role + '"></i></span><span><b>' + esc(r.p.name) + '</b><small>' + (r.il ? r.il + ' item level' : esc(sc)) + '</small></span></span>' +
+      rt(r.p.name) + (r.d ? '<span class="mpbn-n mpbn-bad">' + r.d + '</span>' : z) + num(r.tk) +
+      (r.av ? '<span class="mpbn-n mpbn-warn" tabindex="0"' + mpT1(plural(r.avn, 'avoidable hit') + ' took ' + mpGF(r.av) + '.') + '>' + fm(r.av) + '</span>' : z) +
+      num(r.dm) + bar('dps', r.dps) + num(r.he) + bar('hps', r.hps) +
+      (r.ki ? '<span class="mpbn-n mpbn-ki' + (top('ki', r.ki) ? ' mpbn-top' : '') + '">' + r.ki + '</span>' : z) + (r.di ? '<span class="mpbn-n mpbn-di' + (top('di', r.di) ? ' mpbn-top' : '') + '">' + r.di + '</span>' : z) + '</div>'; }).join('');
   return '<section class="mpsb" aria-label="The group at a glance"><p class="mpsb-hd"><b>The group</b><small>click a player for their Report card</small></p>' + mpxResult(R, F) + '<div class="mpsb-t">' + head + body + '</div></section>'; }
 function mpxRunGlance(R, F) { if (MPC_ON || !R || !(R.pulls || []).length) return ''; const C = mpClock(R); if (!C) return ''; const ck = C.ck, P = R.pulls, FC = F && (F.pulls || []).length ? mpClock(F) : null;
   const W0 = Math.max(ck.par, ck.time, FC ? FC.ck.time : 0) * 1.02, pc = (t) => 100 * Math.max(0, Math.min(W0, t)) / W0, X = (t) => pc(t).toFixed(2) + '%';
@@ -3322,6 +3344,8 @@ const MP_PKI = (() => { const sv = (b) => '<svg viewBox="0 0 12 12" width="12" h
     elite: sv('<path d="M6 1 7.5 4.4 11 4.6 8.3 7 9.1 10.6 6 8.7 2.9 10.6 3.7 7 1 4.6 4.5 4.4z" fill="currentColor"/>') + 'Elite' }; })();
 const MP_LUST = /^(bloodlust|heroism|time warp|primal rage|fury of the aspects|harrier's cry)$|drums/i;
 function mpScan(it, R, text) {
+  if (typeof text === 'string') { const want = new Map((R.people || []).map((p) => [mpLc(p.name), p.name])), srv = R.srv = {}, re = /Player-[0-9A-Fa-f]+-[0-9A-Fa-f]+,"([^"]+)"/g; let m, n = 0; /* (each player's realm and region from their name in the log ("Name-Realm-US"), for their Raider.IO rating in the Summary's group) */
+    while (want.size && n++ < 20000 && (m = re.exec(text))) { const parts = m[1].split('-'), k = mpLc(parts[0]); if (parts.length < 2 || !want.has(k)) continue; const rg = parts.length > 2 && /^(us|eu|kr|tw)$/i.test(parts[parts.length - 1]) ? parts.pop().toLowerCase() : ''; srv[want.get(k)] = { s: parts.slice(1).join('-'), r: rg }; want.delete(k); } }
   const T = MP_ROUTE[mpLc(R.run.dungeon || it.boss)], P = R.pulls, N = P.length, ADV = 19, NPC = /^(Creature|Vehicle)-/;
   const ui = T ? new Set(T.floors.map((f) => f[0])) : new Set(), pts = P.map(() => ({ x: [], y: [], u: [] })), add = P.map(() => 0), taken = P.map(() => 0), seen = new Set(), lustT = [], cast = {}, summoned = new Set();
   R.summoned = summoned;
@@ -3858,7 +3882,7 @@ function mpMapAutoGo(now, quiet) { if (!MPC_ON) return false; /* (Nov 16: the we
 const mpMapAutoOn = () => { const p = MP.pick; return !p || p.auto || p.k !== (MP.item ? mpK(MP.item) : ''); }; /* (the viewer hasn't picked a pull on this key) */
 function mpMapPeek(view, i) { if (!view) return; view.classList.toggle('peek', i != null); view.querySelectorAll('[data-pi]').forEach((x) => x.classList.toggle('pk', i != null && x.dataset.pi === String(i))); }
 // (pick a player: only their kick, CC and death marks on the map, the others' rows in the card faded; the Home character is the default later)
-function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) { mpxPPOnly(name || ''); return; } name = name || ''; MP.pp = name; box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
+function mpMapPP(name) { const box = document.querySelector('.mpt-mdt'); if (!box) { mpxPPOnly(name || ''); return; } name = name || ''; MP.pp = name; mpxMeMark(name); box.classList.toggle('pp1', !!name); /* (Your play shows for one picked player) */
   if (name && MP_PLAY_ON) mpRotAll(name);
   { const it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (R2 && MP_ROT_ON) { if (MP_RK_OLD) { mpRkPaint(R2); if (name) mpRkGo(); } else mpRwPaint(R2); } } /* (the Rotation chapter follows the pick) */
   { const pe = document.getElementById('mptPart'), it2 = MP.item, R2 = it2 && MP.R[mpK(it2)]; if (pe && R2 && pe.dataset.for !== name) pe.outerHTML = mpPartHtml(R2, MP.fastOf && MP.fastOf.k === mpK(it2) ? MP.fastOf : null, name); } /* (Your part follows the pick) */
