@@ -30,18 +30,34 @@
 //   I. the damage moments: the clutches once gripped in, the Wretch, the Shriekers and the heart at their times; the autopilot hits each, standing
 //      still misses them, a soaker busy with their soak isn't told they missed one, and the end card names them;
 //   J. the floor isn't the broken platform's: four quarters, the cracks between two standing quarters wadeable, a quarter gone once she breaks it.
+//   Q. the spot maps (Flex, Nov 16: "visual maps that lets them select the spot is best, you should use the plans maps", "make sure the maps are placed
+//      properly it looks off", "clicking on your coil hides no egg", "maybe randomize their assignments"): phase 3 gives the setup screen no maps, or
+//      Your bite group's three circles (Group Soak 1, 2, 3) or Your Shrieker's two spots aren't where the game itself stacks each bite and hatches
+//      each Shrieker (read from pgP3Script as she rises north-east, and turned with her on the other three), or they aren't drawn there on the Plan's
+//      map of the broken platform; the buttons under the tabs change from tab to tab; a role doesn't start with every mechanic it can take (melee
+//      and ranged: a group, a kick and one red circle; healers: a group) or a pick saved before the maps isn't brought up to that; a click on a group,
+//      a Shrieker, No soak, No kick or Random doesn't give exactly that job with every set still three soakers and each Shrieker one kicker, or gives a
+//      healer a kick; the role defaults don't play clean; or a melee on Group Soak 1 (6:42 to about 7:02) still gets a Viper from the far clutch of
+//      6:52, which they can't reach in time (the raid covers the clutches while you're on your own soak; before: "hatched a Viper", seed 1).
+//      The review of the maps (Nov 16) adds: Your Shrieker's spots and the gold You aren't where the game has you kick, each Shrieker where her tank
+//      holds it as its Vicious Echoes starts, played on all four first quarters (they sat on the hatch spots, 41 to 48 yards off, and the held spots
+//      didn't turn with her, up to 4 yards off on the other quarters); the autopilot on a picked group doesn't stand in that group's circle, or on a
+//      picked Shrieker doesn't kick it from where the map shows it; the Plan page behind doesn't draw each spot's own circle at the same MX/MY; a
+//      healer has a Your Shrieker tab with nothing to pick, or a click on a group does nothing for a healer whose tab was left on Your Shrieker;
+//      "No kick" saved with a group comes back with a kick (it did on every load); an old "Never" red circle isn't brought up to one.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
 function stub() { const f = function () { return stub(); }; return new Proxy(f, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : stub()), set: () => true, apply: () => stub() }); }
-function load(H, part) {
-  H = H || require('./site-helpers.js');
-  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS'].map((n) => H.grab(n, GJ)).join('\n');
-  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+// (opt.maps: the Plan's map maker too (ulSvg and its pieces), so the setup screen draws its spot maps; opt.store: a browser storage with these saves)
+function load(H, part, opt) {
+  H = H || require('./site-helpers.js'); opt = opt || {};
+  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS'].concat(opt.maps ? ['POM_DEF', 'POM_MK', 'UL_VB', 'ulSvg', 'UL_BROKEN'] : []).map((n) => H.grab(n, GJ)).join('\n') + (opt.maps ? '\nconst UL_PAGES = {};' : '');
+  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} }, st = opt.store;
   class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
-  const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
+  const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: st ? { getItem: (k) => (k in st ? st[k] : null), setItem: (k, v) => { st[k] = String(v); }, removeItem: (k) => { delete st[k]; } } : stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
   vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + rd('practice.js') + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + rd('practice-p3.js') +
-    '\nthis.PG_P3 = PG_P3; this.PG_P3_T = PG_P3_T; this.pgP3Script = pgP3Script; this.pgP3Jobs = pgP3Jobs; this.pgP3Mask = pgP3Mask; this.pgP3Floor = pgP3Floor; this.pgP3Q = pgP3Q; this.pgP3R = pgP3R; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.pgPart = pgPart;', ctx);
+    '\nthis.PG_P3 = PG_P3; this.PG_P3_T = PG_P3_T; this.pgP3Script = pgP3Script; this.pgP3Jobs = pgP3Jobs; this.pgP3Mask = pgP3Mask; this.pgP3Floor = pgP3Floor; this.pgP3Q = pgP3Q; this.pgP3R = pgP3R; this.pgP3Held = pgP3Held; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.pgPart = pgPart;', ctx);
   vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (part ? ', "' + part + '"' : '') + ')', ctx);
   return { dbg: win.__pgDbg, ctx };
 }
@@ -284,6 +300,90 @@ function checks(H, say) {
     if (!/wait outside them/.test(dbg.P2.jobText())) bad('as the heart opens with the last red circles still draining, the job says "' + dbg.P2.jobText() + '", not to wait outside them (check P)');
     dbg.G.p3.bite[2] = b2;
   } catch (e) { bad('the playtest fixes check crashed: ' + e.message + ' (check P)'); } finally { reset(); }
+  // Q. the spot maps (the header has the list)
+  try {
+    const M = dbg.P2.setup && dbg.P2.setup.maps, FN = ['tabs', 'page', 'hot', 'pick', 'extras', 'extra', 'random', 'role', 'say', 'sub'];
+    if (!M || FN.some((f) => typeof M[f] !== 'function')) bad('phase 3 gives the setup screen no spot maps (setup.maps with ' + FN.join(', ') + '; Flex, Nov 16: "visual maps that lets them select the spot", check Q)');
+    else {
+      // (where the game puts each one: the script itself, as she rises on the north-east quarter; and the same spots turned with her on the other three)
+      const S0 = script({ seed: 7, q1: 0 }), qOf = (p) => ctx.pgP3Q(p[0], p[1]), set = (r) => { dbg.P2.pick = { role: 'r', soak: 1, bite: 'yes', kick: 2, v: 2 }; M.role(r); };
+      const tabsOf = (r) => { set(r); return (M.tabs() || []).map((x) => x.join(':')).join(' | '); };
+      for (const r of ['m', 'r']) { const tq = tabsOf(r); if (tq !== 'bite:Your soak group | shriek:Your Shrieker') bad('the setup\'s tabs for a ' + r + ' are "' + tq + '", not Your soak group and Your Shrieker (check Q)'); }
+      { const tq = tabsOf('h'); if (tq !== 'bite:Your soak group') bad('a healer\'s setup tabs are "' + tq + '": a Your Shrieker tab with nothing to pick (healers have no kick), not just Your soak group (the review, Nov 16, check Q)'); }
+      // (no made-up map: the Plan has no phase 3 map, so every tab is buttons (page null). Flex, Nov 16, on a map drawn on the broken platform: "where did this
+      //  come from? Theres no map like this in the plan section of my website", "the soak assignments are just who stands in the soaks", "the soaks are not
+      //  spread out on mythic")
+      set('r'); if (['bite', 'shriek'].some((k) => M.page(k) != null)) bad('phase 3 still draws a map for its picks; the Plan has none, so they\'re buttons (check Q)');
+      const hb = M.hot('bite'), hs = M.hot('shriek'), S1 = script({ seed: 1, q1: 0 });
+      if (hb.map((h) => h.id + ':' + h.lab).join() !== 'g1:Group Soak 1,g2:Group Soak 2,g3:Group Soak 3') bad('Your soak group offers ' + hb.map((h) => h.lab).join(', ') + ', not Group Soak 1, 2 and 3 (check Q)');
+      S0.bites.forEach((b, i) => { const h = hb[i]; if (h && h.note !== clkS(b.land)) bad('Group Soak ' + (i + 1) + ' says ' + h.note + '; its bite lands at ' + clkS(b.land) + ' in the game (check Q)');
+        if (qOf(b.stack) !== S0.Qs[b.n] || !ctx.pgP3Floor(b.stack[0], b.stack[1], [1, 1, 1, 1], 1)) bad('the game stacks bite ' + (i + 1) + ' off her quarter or off the stone (check Q)'); });
+      // (Mythic: each bite's three soakers stand together in its two stacked red circles, never spread)
+      for (let seed = 1; seed <= 6; seed++) script({ seed }).bites.forEach((b, i) => { if (!b.stack || b.so.length !== 3) bad('bite ' + (i + 1) + ' (seed ' + seed + ') has ' + b.so.length + ' soakers on one stack, not three (check Q)'); });
+      if (hs.map((h) => h.id + ':' + h.lab + ':' + h.note).join() !== 's1:Shrieker 1:kick at 8:47,s2:Shrieker 2:kick at 8:47') bad('Your Shrieker offers ' + hs.map((h) => h.lab + ' (' + h.note + ')').join(', ') + ', not Shrieker 1 and 2, kicked at 8:47 (check Q)');
+      if (S0.shriekers.some((s) => qOf(s.p0) === S0.Qs[S0.stepAt(T.shriek)])) bad('a Shrieker hatches on her quarter; the kills have them on the two broken ones (check Q)');
+      // (each Shrieker's spot is where you kick it: where the game has it as its Vicious Echoes starts (8:46.8), played on every first quarter and turned back
+      //  to her north-east frame. Before the review (Nov 16) the spots sat on the hatch spots, 41 and 48 yards off, and the held spots didn't turn with her)
+      for (const q of [0, 1, 2, 3]) { const pk = { role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; dbg.at(T.echoes + 0.1, dbg.P2.slotOf(pk), { seed: seedFor(ctx, q) });
+        [1, 2].forEach((k) => { const s = dbg.G.p3.sh['sh' + k], h = ctx.pgP3Held(S1, k, T.echoes); if (!s || !h) { bad('no Shrieker ' + k + ' to measure as Vicious Echoes starts (her first quarter ' + P.QN[q] + ', check Q)'); return; }
+          const at = ctx.pgP3R([s.x, s.y], 4 - dbg.S.q1), d = hyp(at, h); if (d > 1) bad('Shrieker ' + k + ' is ' + d.toFixed(1) + ' yards from its held spot (pgP3Held, turned with her) as you kick it (her first quarter ' + P.QN[q] + ', check Q)'); }); }
+      for (let q = 1; q < 4; q++) { const S2 = script({ seed: 5, q1: q }); S2.bites.forEach((b, i) => { if (hyp(ctx.pgP3R(S0.bites[i].stack, q), b.stack) > 1.5) bad('as she rises on the ' + P.QN[q] + ' quarter, bite ' + (i + 1) + ' stacks ' + hyp(ctx.pgP3R(S0.bites[i].stack, q), b.stack).toFixed(1) + ' yards from the map\'s spot turned with her (check Q)'); });
+        S2.shriekers.forEach((s, i) => { if (hyp(ctx.pgP3R(S0.shriekers[i].p0, q), s.p0) > 1.5) bad('as she rises on the ' + P.QN[q] + ' quarter, Shrieker ' + s.k + ' hatches away from the map\'s spot turned with her (check Q)'); }); }
+      set('h'); if (M.hot('shriek').length) bad('a healer can pick a Shrieker to kick; healers have no kick in Midnight (check Q)');
+      // (a melee who left the setup on Your Shrieker, then picked Healer: that tab is gone, and a click on a group must still take it)
+      set('m'); M.tab = 'shriek'; M.role('h'); M.pick(M.tab, 'g3'); if (dbg.P2.pick.soak !== 3) bad('a healer whose map was left on Your Shrieker clicks Group Soak 3 and gets ' + JSON.stringify(dbg.P2.pick) + ' (the review, Nov 16, check Q)'); M.tab = 'bite';
+      // (defaults: every mechanic the role can take, from a fresh start and from a pick saved before the maps)
+      const L0 = load(H, 'm3'), P0 = L0.dbg.P2.pick; if (!(P0.soak && P0.kick && P0.bite === 'yes')) bad('a fresh start isn\'t every mechanic: ' + JSON.stringify(P0) + ' (a group, a kick and one red circle, check Q)');
+      ['m', 'h', 'r'].forEach((r) => { L0.dbg.P2.setup.maps.role(r); const p = L0.dbg.P2.pick, me = L0.dbg.P2.slotOf(r === 'h' ? { ...p, kick: 0, bite: 'no' } : p), J = ctx.pgP3Jobs(3, me, r === 'h' ? { ...p, kick: 0, bite: 'no' } : p).J[me];
+        if (!J.sk.length || (r !== 'h' && (!J.kick || p.bite !== 'yes'))) bad('a ' + r + ' from a fresh start plays ' + JSON.stringify(J) + ' (' + JSON.stringify(p) + '): not every mechanic it can take (check Q)'); });
+      { const st = { 'wla-pg-job3': JSON.stringify({ role: 'm', soak: 0, bite: 'random', kick: 1 }) }, p = load(H, 'm3', { store: st }).dbg.P2.pick; if (p.soak !== 2 || p.kick !== 1 || p.bite !== 'yes') bad('a melee "Kick a Shrieker" saved before the maps comes back as ' + JSON.stringify(p) + ', not Group Soak 2, Shrieker 1 and one red circle (check Q)');
+        const st2 = { 'wla-pg-job3': JSON.stringify({ role: 'r', soak: 0, bite: 'yes', kick: 0, v: 2 }) }, p2 = load(H, 'm3', { store: st2 }).dbg.P2.pick; if (p2.soak || p2.kick) bad('"No soak" and "No kick", saved with the maps, aren\'t remembered: ' + JSON.stringify(p2) + ' (check Q)');
+        // (the review, Nov 16: "No kick" with a group came back with a kick on every load; an old "Never" kept the red circle off, with no button to bring it back)
+        for (const sv of [{ role: 'r', soak: 1, bite: 'yes', kick: 0, v: 2 }, { role: 'm', soak: 3, bite: 'yes', kick: 0, v: 2 }]) { const p3 = load(H, 'm3', { store: { 'wla-pg-job3': JSON.stringify(sv) } }).dbg.P2.pick; if (p3.kick || p3.soak !== sv.soak) bad('"No kick" saved with Group Soak ' + sv.soak + ' comes back as ' + JSON.stringify(p3) + ' (check Q)'); }
+        { const p4 = load(H, 'm3', { store: { 'wla-pg-job3': JSON.stringify({ role: 'r', soak: 0, bite: 'no', kick: 1 }) } }).dbg.P2.pick; if (p4.bite !== 'yes' || p4.soak !== 1 || p4.kick !== 1) bad('a ranged "Never" saved before the maps comes back as ' + JSON.stringify(p4) + ', not a group, the kick and one red circle (the maps have no red circle button, check Q)'); } }
+      // (every click: exactly that job, every set three soakers, each Shrieker one kicker, a healer never kicks, one red circle in a set you don't soak)
+      for (const r of ['m', 'r', 'h']) for (const g of [0, 1, 2, 3]) for (const k of r === 'h' ? [0] : [0, 1, 2]) {
+        set(r); if (g) M.pick('bite', 'g' + g); else M.extra('nosoak'); if (r !== 'h') { if (k) M.pick('shriek', 's' + k); else M.extra('nokick'); }
+        const p = dbg.P2.pick, e = r === 'h' ? { ...p, kick: 0, bite: 'no' } : p, me = dbg.P2.slotOf(e), tag = ' (' + r + ', group ' + g + ', kick ' + k + ', check Q)';
+        if (p.role !== r || p.soak !== g || (r !== 'h' && p.kick !== k)) { bad('clicking group ' + g + ' and Shrieker ' + k + ' as ' + r + ' picks ' + JSON.stringify(p) + tag); continue; }
+        if (me[0] !== r || me === 'm4') bad('the pick plays as ' + me + ', not a ' + r + ' off the grips' + tag);
+        for (let seed = 1; seed <= 4; seed++) { const d = ctx.pgP3Jobs(seed, me, e), J = d.J;
+          if (J[me].sk.join() !== (g ? String(g) : '')) { bad('you soak sets ' + JSON.stringify(J[me].sk) + ', not ' + (g || 'none') + tag); break; }
+          if (J[me].kick !== (r === 'h' ? 0 : k)) { bad('you kick Shrieker ' + J[me].kick + ', not ' + (r === 'h' ? 'none' : k) + tag); break; }
+          if ([1, 2, 3].some((n) => Object.keys(J).filter((id) => J[id].sk.includes(n)).length !== 3) || [1, 2].some((s) => Object.keys(J).filter((id) => J[id].kick === s).length !== 1)) { bad('a set loses a soaker or a Shrieker its kicker' + tag); break; }
+          const red = d.tg.map((L, i) => (L.includes(me) ? i + 1 : 0)).filter(Boolean); if (r === 'h' ? red.length : red.length !== 1 || red[0] === g) { bad('you get red circles in sets ' + JSON.stringify(red) + ' (seed ' + seed + ')' + tag); break; } }
+        const sy = M.say(); if (!/^You [^.]*\.$/.test(sy) || /went wrong/.test(sy)) bad('the maps\' sentence isn\'t one plain sentence: "' + sy + '"' + tag); if (M.sub().length > 40) bad('the Play button\'s line runs long: "' + M.sub() + '"' + tag); }
+      // (🎲 Random: any group, and any Shrieker for melee and ranged; never a kick played by a healer)
+      for (const r of ['m', 'r', 'h']) { set(r); const gs = new Set(), ks = new Set(); for (let i = 0; i < 60; i++) { M.random(); const p = dbg.P2.pick; gs.add(p.soak); ks.add(r === 'h' ? 0 : p.kick); }
+        if (gs.size !== 3 || [...gs].some((x) => ![1, 2, 3].includes(x))) bad('Random gives a ' + r + ' groups ' + [...gs].join(', ') + ', not any of the three (check Q)'); if (r !== 'h' && (ks.size !== 2 || ks.has(0))) bad('Random gives a ' + r + ' Shriekers ' + [...ks].join(', ') + ' (check Q)');
+        if (r === 'h' && /Kick/.test(dbg.P2.role().job)) bad('Random gives a healer a kick (check Q)'); }
+      // (drawn: buttons, no map and no picture; your pick lit; the same buttons under both tabs)
+      try { const L1 = load(H, 'm3', { maps: true }), su = L1.dbg.setupApi(), M1 = su && su.maps;
+        if (!M1) bad('the setup screen has no picks with the Plan\'s map maker loaded (check Q)');
+        else for (const r of ['m', 'r', 'h']) { M1.role(r); const rows = {}, tabs = M1.tabs().map((x) => x[0]);
+          for (const tab of tabs) { M1.tab = tab; const html = L1.dbg.panel(), row = (/<div class="pg-seg pg-sptab"[^>]*>([\s\S]*?)<\/div>/.exec(html) || [])[1] || '';
+            rows[tab] = [...row.matchAll(/<button[^>]*data-(mt|mr|mx)="([^"]*)"[^>]*>([^<]*)<\/button>/g)].map((m) => m[1] + ':' + m[2] + ':' + m[3]).join(' | ');
+            if (/pg-spmap|<image |fullbreak/.test(html)) bad('Your ' + (tab === 'bite' ? 'soak group' : 'Shrieker') + ' still shows a map for a ' + r + ' (check Q)');
+            const want = M1.hot(tab), btn = [...html.matchAll(/<button type="button" data-mh="([^"]*)"([^>]*)><span class="pg-spn">([^<]*)<\/span>(?:<span class="pg-spt">([^<]*)<\/span>)?<\/button>/g)];
+            if (!want.length || btn.map((m) => m[1] + ':' + m[3] + ':' + (m[4] || '')).join() !== want.map((h) => h.id + ':' + h.lab + ':' + h.note).join()) bad('the ' + tab + ' buttons for a ' + r + ' are "' + btn.map((m) => m[3]).join(', ') + '", not ' + want.map((h) => h.lab).join(', ') + ' (check Q)');
+            if (btn.filter((m) => / class="on"/.test(m[2])).map((m) => m[1]).join() !== want.filter((h) => h.on).map((h) => h.id).join()) bad('the lit ' + tab + ' button for a ' + r + ' isn\'t your pick (check Q)'); }
+          if (r !== 'h' && (!rows.bite || rows.bite.replace(/mt:(bite|shriek)/g, 'mt') !== String(rows.shriek).replace(/mt:(bite|shriek)/g, 'mt'))) bad('the buttons under the tabs change from Your soak group to Your Shrieker for a ' + r + ': "' + rows.bite + '" then "' + rows.shriek + '" (Flex, Nov 16: "clicking on your coil hides no egg", check Q)');
+          if (!/mr:1:/.test(rows.bite) || !/mx:nosoak:No soak/.test(rows.bite) || (r !== 'h') !== /mx:nokick:No kick/.test(rows.bite)) bad('the buttons for a ' + r + ' are "' + rows.bite + '", not Random, No soak' + (r !== 'h' ? ' and No kick' : '') + ' (check Q)'); } }
+      catch (e) { bad('drawing the setup\'s picks crashed: ' + e.message + ' (check Q)'); }
+      // (the role defaults play clean; a melee on Group Soak 1 gets no Viper from the far clutch it can't reach (seed 1 hatched one before Nov 16))
+      for (const [pk, seed, why] of [[{ role: 'm', soak: 2, bite: 'yes', kick: 1, v: 2 }, 3, 'the melee default'], [{ role: 'r', soak: 1, bite: 'yes', kick: 2, v: 2 }, 3, 'the ranged default'], [{ role: 'm', soak: 1, bite: 'yes', kick: 2, v: 2 }, 1, 'a melee on Group Soak 1']]) {
+        dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, false, seed); if (r.log.length) bad(why + ' (' + JSON.stringify(pk) + ', seed ' + seed + ') doesn\'t play clean: ' + r.log.join(' | ') + ' (check Q)'); }
+      // (what a pick does in the game, played by the autopilot on another first quarter each time and turned back to the map's frame: on Group Soak g it stands
+      //  in that group's circle and is counted a soaker; on Shrieker k it kicks that one, within its reach of the map's spot)
+      const back = (p) => ctx.pgP3R(p, 4 - dbg.S.q1), XY = (p) => ({ x: p[0], y: p[1] });
+      for (const [r, g, q] of [['r', 1, 1], ['m', 2, 2], ['h', 3, 3]]) { const pk = { role: r, soak: g, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), h = XY(S1.bites[g - 1].stack); dbg.at(T.start + 0.1, me, { seed: seedFor(ctx, q) });
+        const b = dbg.S.bites[g - 1]; let n = 0, inn = 0; while (dbg.G.t < b.end + 0.5 && !(dbg.G.p3.bite[g - 1] && dbg.G.p3.bite[g - 1].done)) { dbg.step(1); if (dbg.G.t >= b.land + 1) { n++; if (hyp(back([dbg.G.x, dbg.G.y]), [h.x, h.y]) <= P.BITE) inn++; } }
+        const st = dbg.G.p3.bite[g - 1]; if (!n || inn / n < 0.9 || !st || !st.by.has(me)) bad('the autopilot on Group Soak ' + g + ' (' + r + ', her first quarter ' + P.QN[q] + ') stands in that group\'s circle on the map ' + (n ? Math.round(inn / n * 100) : 0) + '% of the soak' + (st && st.by.has(me) ? '' : ' and isn\'t counted a soaker') + ' (check Q)'); }
+      for (const [r, k, q] of [['m', 1, 3], ['r', 2, 1], ['m', 2, 0], ['r', 1, 2]]) { const pk = { role: r, soak: 0, bite: 'no', kick: k, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), h = XY(ctx.pgP3Held(S1, k, T.echoes)); dbg.at(T.echoes - 0.2, me, { seed: seedFor(ctx, q) });
+        while (dbg.G.t < T.echoes + T.echoCast + 0.2 && dbg.G.p3.kick['sh' + k] == null) dbg.step(1); const by = dbg.G.p3.kick['sh' + k], d = hyp(back([dbg.G.x, dbg.G.y]), [h.x, h.y]);
+        if (by !== me || d > P.KICK[r]) bad('the autopilot on Shrieker ' + k + ' (' + r + ', her first quarter ' + P.QN[q] + ') ' + (by === me ? 'kicks it ' + d.toFixed(1) + ' yards from the map\'s spot, past its ' + P.KICK[r] + '-yard reach' : 'doesn\'t kick it (kicked by ' + by + ')') + ' (check Q)'); }
+      M.tab = 'bite'; }
+  } catch (e) { bad('the spot maps check crashed: ' + e.message + ' (check Q)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }

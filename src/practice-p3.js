@@ -42,6 +42,9 @@ const PG_P3 = {
   mel: [16.5, 16.5], rng: [11, 13.5], heal: [13, 13.5], tank: [22.4, 21.6], off: [24.5, 16.5], grasp: [15, 17],
   stack: [[10.2, 30.3], [26.8, 16.1], [23.5, 24.9]], spread: [[35, 8], [35, 17], [28, 4.5], [7.5, 32.5], [5, 25], [30, 22.5], [19, 4.5], [37, 12.5]],
   clutch: [[8, 24], [24, 9], [15, 29]], shriek: [[-9, -24], [8.5, -22.5]],
+  // (where her tank holds Shrieker 1 and 2 for their Vicious Echoes, either side of Gorefiend's Grasp's spot (picked). In her frame, so they turn with her like
+  // everything else: they were fixed in room yards, up to 4 yards off the spot map's when she rose on another quarter (the review, Nov 16))
+  held: [[17.5, 15.5], [12.5, 18.5]],
   womb: [-18.3, -19.5], beam: [-20.6, -29.3], img: [-21.4, -51.4], fb: [[20.4, 17.6], [20.8, 13.3]], heart: [29, 28],
   gate1To: [12, 13], gate2: [[13, 16], [-15, 18]], tails: [[-51, -21], [-21, -51]], tails2: [[-51, 21], [21, -51]],
   // where the cracks are narrowest: one way across between each two quarters (0-1, 1-2, 2-3, 3-0)
@@ -56,7 +59,9 @@ const PG_P3 = {
   // last (4.2 s), outlives its 10.2 s gestation without you
   // (a Shrieker keeps 15% until its Vicious Echoes is kicked or done: on every kill both cast it, and your hits with the raid's killed yours at 8:44 to 8:46,
   //  before its cast at 8:46.8, so you never got a kick (Flex, Nov 15: "there should be at least one spot where the player is asked to interupt"))
-  CLUTCH: { hp: 7, drain: 1.1, gest: 10.2 }, SHRIEK: { hp: 12, drain: 0.57, hit: 0.5, late: 40, floor: 0.15 }, WRETCH: { hp: 30, drain: 0.4, hit: 0.25 } };
+  // (cover: while your own job has you on your red circle, your soak or your Purge, the raid breaks the clutches a quarter faster without you (Nov 16: the spot
+  //  maps let any role take any bite group, and a melee on Group Soak 1 (6:42 to about 7:02) can't reach the far clutch of 6:52 before it hatches at 7:02))
+  CLUTCH: { hp: 7, drain: 1.1, gest: 10.2, cover: 1.25 }, SHRIEK: { hp: 12, drain: 0.57, hit: 0.5, late: 40, floor: 0.15 }, WRETCH: { hp: 30, drain: 0.4, hit: 0.25 } };
 // (a point in her frame turned to quarter k: 0 as is, then 90 degrees counter-clockwise each step)
 const pgP3R = (p, k) => { k = ((k % 4) + 4) % 4; return k === 0 ? [p[0], p[1]] : k === 1 ? [-p[1], p[0]] : k === 2 ? [-p[0], -p[1]] : [p[1], -p[0]]; };
 // (which quarter a point is on: the cracks cross at about x 0.5, y -1)
@@ -182,6 +187,8 @@ function pgP3Script(o) {
 // (a spot pulled onto the standing stone, the nearest one)
 // (a spot pulled onto the standing stone, the nearest one a little way in from its edge)
 function pgP3Near(q, alive) { if (pgP3Floor(q[0], q[1], alive, 1.4)) return [q[0], q[1]]; for (let r = 0.5; r < 30; r += 0.5) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, x = q[0] + Math.cos(a) * r, y = q[1] + Math.sin(a) * r; if (pgP3Floor(x, y, alive, 1.4)) return [x, y]; } return [q[0], q[1]]; }
+// (where her tank holds Shrieker k at time t: the game walks them there (shWant) and the spot map's Your Shrieker draws it, one function for both)
+const pgP3Held = (S, k, t) => S.F2(PG_P3.held[k - 1], S.stepAt(t));
 
 // ---- the part: practice.js calls pgP3(api) once per game ----
 function pgP3(A) {
@@ -193,9 +200,17 @@ function pgP3(A) {
     Object.assign(A.DEB, { bite: ['Serpent\'s Bite', '#ff4a4a'], purge: ['Volatile Purge', '#ff8a3b'], stun: ['Stunned', '#ffd23b'], echo: ['Vicious Echoes', '#ff9fb2'], acid: ['Acidic Expulsion', '#a8e04a'], corpse: ['Calcified Corpse', '#b8a88a'] });
     ['prey', 'stone', 'soakmiss', 'stack', 'purge', 'kick', 'fester', 'wipe'].forEach((k) => A.MAJ.add(k)); };
   // ---- your job (the start card), remembered on this browser ----
-  const KEY = 'wla-pg-job3', job0 = () => ({ role: 'r', soak: 0, bite: 'random', kick: 2 });
+  // (every mechanic your role can take, by default (Flex, Nov 16: "each role should ideally be tested on as many mechanics as they are elgible to get"):
+  // a bite group, a Shrieker kick and one red circle for melee and ranged; a bite group for healers (no kick in Midnight, no red circle since Nov 6). The
+  // groups are the Plan's sets (Group Soak 1 two Mages and a Hunter, 2 a Rogue and both tanks, 3 a healer and both tanks), the kicks the game's (m2, r4))
+  const DEF = { m: { soak: 2, kick: 1 }, r: { soak: 1, kick: 2 }, h: { soak: 3, kick: 2 } }; /* (a healer's kick is kept, unplayed, for a switch to melee or ranged) */
+  const KEY = 'wla-pg-job3', job0 = () => ({ role: 'r', soak: 1, bite: 'yes', kick: 2, v: 2 });
   const jobOk = (j) => !!j && /^[mrh]$/.test(j.role) && [0, 1, 2, 3].includes(j.soak) && ['random', 'yes', 'no'].includes(j.bite) && [0, 1, 2].includes(j.kick);
-  let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) { if (j.role !== 'h' && j.soak && !j.kick) j.kick = j.role === 'm' ? 1 : 2; /* (a soak saved before the soaks carried a kick) */ return j; } } catch (e) { /* (no storage) */ } return job0(); })();
+  // (a pick saved before the spot maps (no v) gets every mechanic its role can take, once, the red circle too: an old "Never" would have stayed, and the maps
+  // have no red circle button to bring it back. After that "No soak" and "No kick" are remembered, "No kick" with a soak too: the old line that gave a soak
+  // its kick ran on every load and undid it (the review, Nov 16))
+  const upgrade = (j) => { if (!j.soak) j.soak = DEF[j.role].soak; if (!j.kick) j.kick = DEF[j.role].kick; j.bite = 'yes'; j.v = 2; return j; };
+  let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) return j.v ? j : upgrade(j); } catch (e) { /* (no storage) */ } return job0(); })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(pk)); } catch (e) { /* (no storage) */ } };
   // (a healer has no kick and, since Nov 6, no red circle: what's played drops them, but the saved pick keeps them for when you switch back (the review, Nov 15:
   // one tap on Healer wiped a saved kick and red circle))
@@ -218,7 +233,7 @@ function pgP3(A) {
 
   // ---- the Wretch and the Shriekers and the clutches: where they are ----
   const wrWant = (t) => { const W = S.wretch; if (t < W.land || t >= W.dies || G.p3.wrDead) return null; if (t < W.land + 25) return W.p0.slice(); /* (awake at 20 s, but it stays put until 25 s on all 17 kills, then reaches its bubble spot about 7:40) */ const f = W.fb; return t < f[0].at + 1 ? f[0].p.slice() : t >= T.prey[1] + 2.5 ? f[1].p.slice() : f[0].p.slice(); };
-  const shWant = (s, t) => { if (t < s.up || t >= s.dies || G.p3.shDead[s.id]) return null; if (t < s.up + 1.2) return s.p0.slice(); const c = FR(P.grasp, step(t)); return [c[0] + (s.k === 1 ? -2.5 : 2.5), c[1] + (s.k === 1 ? 1.5 : -1.5)]; };
+  const shWant = (s, t) => { if (t < s.up || t >= s.dies || G.p3.shDead[s.id]) return null; if (t < s.up + 1.2) return s.p0.slice(); return pgP3Held(S, s.k, t); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this; practice.js's shared dodge then keeps them out
   // of the waves) ----
@@ -318,7 +333,7 @@ function pgP3(A) {
       if (!st) st = G.p3.cl[c.id] = { x: c.p[0], y: c.p[1], on: c.rel === 0, hp: P.CLUTCH.hp };
       c.grips.forEach((g) => { if (!cr(g.at)) return; const d = pos(g.by), to = g.mid ? near(pgP3R(P.clutch[1], (S.Qs[c.n] + 1) % 4), t) : [d[0] + 1.5, d[1] - 1]; G.p3.grips.push({ by: g.by, from: [st.x, st.y], to, t0: t }); st.x = to[0]; st.y = to[1]; if (!g.mid) st.on = true; });
       if (cr(c.grasp)) { const q = near(FR(P.grasp, c.n), t); if (st.on) { const i = S.clutches.indexOf(c); st.x = q[0] + Math.cos(i * 2.1) * 1.4; st.y = q[1] + Math.sin(i * 2.1) * 1.4; } if (!G.p3.once.has('grasp' + c.ci)) { G.p3.once.add('grasp' + c.ci); G.p3.grips.push({ by: P.dk[0], grasp: q, t0: t }); } }
-      if (st.on && t >= c.land + 0.5) st.hp -= P.CLUTCH.drain * dt; /* (the raid's cleave once it's with the raid) */
+      if (st.on && t >= c.land + 0.5) st.hp -= P.CLUTCH.drain * dt * (onMine(t) ? P.CLUTCH.cover : 1); /* (the raid's cleave once it's with the raid) */
       if (st.hp <= 0) { G.p3.clDone[c.id] = 'broken'; delete G.p3.cl[c.id]; G.adds.push({ kind: 'rawling', x: st.x, y: st.y, born: t }); return; }
       if (t >= c.land + P.CLUTCH.gest) { G.p3.clDone[c.id] = 'viper'; delete G.p3.cl[c.id]; G.adds.push({ kind: 'viper', x: st.x, y: st.y, born: t }); G.vipers = (G.vipers || 0) + 1; A.deb('putrid', 20, true);
         A.mistake('viper', 'A Slithering Clutch wasn\'t broken in time (' + clk(t) + '): it hatched a Viper, with Putrid Membrane on the raid.', 'Once the Death Knights grip a clutch in, press Tab to pick it and keep pressing 1: break each one within 10 s of landing.', 8); return; }
@@ -444,7 +459,7 @@ function pgP3(A) {
       if (d0.p3r) pk.role = d0.p3r; if (d0.p3tab) ui.tab = d0.p3tab; if (d0.p3s != null) pk.soak = +d0.p3s; if (d0.p3b) pk.bite = d0.p3b; if (d0.p3k != null) pk.kick = +d0.p3k;
       const fk = ['p3r', 'p3tab', 'p3s', 'p3b', 'p3k'].find((k) => d0[k] != null), sel = fk ? '[data-' + fk + '="' + d0[fk] + '"]' : null, refocus = e.detail === 0;
       save(); box.innerHTML = card(); refresh(); if (refocus && sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } }; };
-  const role = () => { const e = eff(), id = slotOf(e); return { id, name: RN[e.role], job: (e.soak ? 'Soak bite ' + e.soak : 'No soak') + (e.kick ? ' · Kick Shrieker ' + e.kick : '') }; };
+  const role = () => { const e = eff(), id = slotOf(e); return { id, name: RN[e.role], job: (e.soak ? 'Group Soak ' + e.soak : 'No soak') + (e.kick ? ' · Kick Shrieker ' + e.kick : '') }; };
   const asg = () => { const e = eff(), L0 = [];
     L0.push(['Onto her quarter (6:12)', 'The platform has shattered. She rises on one of the four quarters: take the gateway (the gold ring) or walk there, and stack with the raid.']);
     L0.push(['Slithering Clutches (6:22, 6:52, 8:30)', 'One lands on each quarter. The two Death Knights grip them onto the raid: hit them down before they hatch.']);
@@ -464,11 +479,37 @@ function pgP3(A) {
   const setupCard = { roles: ['m', 'r', 'h'],
     now: () => { const e = eff(), r = e.role, v = jobNow(e); return { role: r, job: SJ[r].some((x) => x[0] === v) ? v : SJ[r][0][0] }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
-    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, soak: v[0] === 's' ? +v[1] : 0, kick: v[0] === 'k' ? +v[1] : v[0] === 's' && r !== 'h' ? (r === 'm' ? 1 : 2) : 0, bite: 'random' }; save(); },
+    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, soak: v[0] === 's' ? +v[1] : 0, kick: v[0] === 'k' ? +v[1] : v[0] === 's' && r !== 'h' ? (r === 'm' ? 1 : 2) : 0, bite: 'random', v: 2 }; save(); },
     say: () => { const v = setupCard.now().job, e = eff(), n = +v.slice(1), circle = e.role === 'h' ? '' : ' A red circle may land on you: walk it to the gold ring.';
       return (v[0] === 's' ? 'You soak the ' + ORD[n] + ' Serpent\'s Bite (' + ['', '6:42', '7:46', '9:30'][n] + '): stand on the stacked red circles, press Q as they drain, then spread to the edge.' + (e.kick ? ' Then kick Shrieker ' + e.kick + '\'s Vicious Echoes at 8:47 with E.' : '')
         : v[0] === 'k' ? 'You stack with the raid on her quarter and kick Shrieker ' + n + '\'s Vicious Echoes at 8:47 with E.'
         : e.role === 'h' ? 'You stack with the raid on her quarter, keep out of the red circles and move a quarter left at each Circling Prey.' : 'You stack with the raid on her quarter, hit what\'s up, and move a quarter left at each Circling Prey.') + circle; } };
+  // ---- the setup's picks (practice.js's SETUP.maps contract). Phase 3 has no Plan map, so it has no map: plain buttons (Flex, Nov 16, on a map a helper
+  // drew on the broken platform: "where did this come from? Theres no map like this in the plan section of my website", "the soak assignments are just
+  // who stands in the soaks", "the soaks are not spread out on mythic"). The Plan's phase 3 jobs are lists of names: Group Soak 1, 2 and 3 (who stands in
+  // each Serpent's Bite: its three soakers stack in its two red circles, by her) and who kicks each Shrieker.
+  //   Your soak group: Group Soak 1, 2 or 3, with the time its bite lands (the game's own, bites[i].land). Your Shrieker (melee and ranged; healers have no
+  //   kick): Shrieker 1 or 2, kicked at 8:47 (E). The buttons under the tabs are the same on both tabs (Flex: "clicking on your coil hides no egg") ----
+  const MAP = { S: null }, mapS = () => MAP.S || (MAP.S = pgP3Script({ seed: 1, q1: 0 }));
+  const kicker = () => pk.role !== 'h';
+  const maps = { tab: 'bite', tabs: () => [['bite', 'Your soak group']].concat(kicker() ? [['shriek', 'Your Shrieker']] : []), page: () => null, /* (no Plan map: buttons) */
+    hot: (key) => { if (key === 'shriek') return kicker() ? [1, 2].map((k) => ({ id: 's' + k, lab: 'Shrieker ' + k, note: 'kick at ' + clk(Math.round(T.echoes)), on: pk.kick === k, title: 'Shrieker ' + k + ': kick its Vicious Echoes at ' + clk(Math.round(T.echoes)) + ' (E)' })) : [];
+      return mapS().bites.map((b) => ({ id: 'g' + (b.i + 1), lab: 'Group Soak ' + (b.i + 1), note: clk(b.land), on: pk.soak === b.i + 1, title: 'Group Soak ' + (b.i + 1) + ': you and two others stand in the ' + ORD[b.i + 1] + ' Serpent\'s Bite at ' + clk(b.land) + ', stacked by her' })); },
+    // (by the spot's own id, not the tab: a tab left on Your Shrieker by a melee is gone for a healer, and a click on a group then did nothing)
+    pick: (key, id) => { const m = /^([gs])([1-3])$/.exec(String(id)); if (!m) return; const n = +m[2]; if (m[1] === 's' && n <= 2 && kicker()) pk = { ...pk, kick: n, v: 2 }; else if (m[1] === 'g') pk = { ...pk, soak: n, v: 2 }; save(); },
+    extras: () => [['nosoak', 'No soak', !pk.soak]].concat(kicker() ? [['nokick', 'No kick', !pk.kick]] : []),
+    extra: (id) => { if (id === 'nosoak') pk = { ...pk, soak: 0, v: 2 }; else if (id === 'nokick' && kicker()) pk = { ...pk, kick: 0, v: 2 }; save(); },
+    // (no assignments yet: a random bite group and, for melee and ranged, a random Shrieker; any role can be on any group)
+    random: () => { pk = { ...pk, soak: 1 + Math.floor(Math.random() * 3), kick: kicker() ? 1 + Math.floor(Math.random() * 2) : pk.kick, v: 2 }; save(); },
+    // (a new role keeps its group (any role can soak any one) and its kick (a healer's is kept, unplayed); from healer to melee or ranged, a kick and a red circle)
+    role: (r) => { if (!DEF[r]) return; const fromH = pk.role === 'h' && r !== 'h'; pk = { ...pk, role: r, kick: fromH && !pk.kick ? DEF[r].kick : pk.kick, bite: fromH && pk.bite !== 'no' ? 'yes' : pk.bite, v: 2 }; save();
+      if (!maps.tabs().some((q) => q[0] === maps.tab)) maps.tab = 'bite'; },
+    say: () => { const e = eff(), b = mapS().bites[e.soak - 1], circ = e.bite === 'yes' ? 'walk one red circle to the gold ring' : e.bite === 'random' ? 'walk a red circle to the gold ring if one lands on you' : '';
+      const L = (b ? ['soak Group Soak ' + e.soak + ' at ' + clk(b.land) + ', by her'] : []).concat(e.kick ? ['kick Shrieker ' + e.kick + ' at 8:47 (E)'] : [], circ ? [circ] : []);
+      if (!L.length) return e.role === 'h' ? 'You stack with the raid and heal: no soak, and healers have no kick.' : 'You stack with the raid, hit what\'s up and keep out of the red circles.';
+      return 'You ' + (L.length > 1 ? L.slice(0, -1).join(', ') + ' and ' + L[L.length - 1] : L[0]) + (e.role === 'h' ? ' (healers have no kick).' : '.'); },
+    sub: () => { const e = eff(); return (e.soak ? 'Group Soak ' + e.soak : 'No soak') + (e.role === 'h' ? '' : ' · ' + (e.kick ? 'Kick Shrieker ' + e.kick : 'No kick')); } };
+  setupCard.maps = maps;
   // (the start card's "Your job in short": four plain lines)
   const short = () => { const e = eff(), L0 = [];
     L0.push('Get onto her quarter (gateway or walk) and stack with the raid. At each Circling Prey (7:12, 8:03, 9:04) move one quarter left first.');
@@ -490,6 +531,8 @@ function pgP3(A) {
   // moment for you: training wheels, so a soaker isn't told they missed the Wretch)
   const busy = (t) => { const me = A.me; if (myBite(t) || G.p3.purge.some((q) => q.who.includes(me) && t < q.burst + 2)) return true; const qm = kq(G.x, G.y);
     if (T.prey.some((p0, i) => t >= p0 - 2 && t < S.hit[i] + 1.5)) return true; const g1 = S.gates.find((g) => g.k === 1); return !!(g1 && t < T.gateEnd + 4 && qm !== S.Qs[0]); }; /* (and everyone, while the raid changes quarters) */
+  // (on your own red circle, your soak or the Purge after it: the raid covers the clutches for you, P.CLUTCH.cover)
+  const onMine = (t) => !!(G && G.p3 && (myBite(t) || G.p3.purge.some((q) => q.who.includes(A.me) && S.bites[q.i] && S.bites[q.i].so.includes(A.me) && t < q.burst + 2)));
   const dpsCat = (t) => { sync(); if (!G || !G.p3) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (busy(t)) return null; const c = FR(P.mel, raidStep(t));
     if (Object.values(G.p3.sh).some((s) => pgDist([s.x, s.y], c) < 25)) return 'shrieker'; if (S.clutches.some((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp)) return 'clutch'; if (G.adds.some((a) => a.kind === 'rawling')) return 'rawling';
     if (t >= T.heart && t < T.end && (!S.bites[2] || (G.p3.bite[2] && G.p3.bite[2].done) || t >= S.bites[2].end)) return 'heart'; /* (not while the last bite's red circles still sit by it: following "burn the heart" walked you into them, Main's playtest, Nov 15) */ return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };

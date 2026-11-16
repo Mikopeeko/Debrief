@@ -22,13 +22,22 @@
 //   H. phase 1 changes with this file loaded (the part hook stays off for it);
 //   I. the damage moments (Flex, Nov 15): the Warden, the Doomscales and the heart at their times (any Viper first), Tab and a click work, the
 //      autopilot hits each in four jobs, standing still misses all three, and the end card names them.
+//   M. the setup's spot maps (Flex, Nov 16) aren't phase 2's: Your side, Small egg (the Plan's Side Egg Pickups page), Big egg and Kicks, every spot where the
+//      game puts it, the same buttons on every tab, every role on every mechanic it can take by default, Random only what the role can take, and each pick the
+//      job the run plays (with the Plan's map pieces out of src/guides.js: load(H, 'm2', { maps: true })).
+//   M2. the review of those maps (Nov 16): a Doomscale off its Kicks spot when your big egg goes in late, or its spot's words putting all three of its Cries
+//      there (the next two come by her); a ranged who doesn't start on Malice or can't take the south big egg (in M).
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
 function stub() { const f = function () { return stub(); }; return new Proxy(f, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : stub()), set: () => true, apply: () => stub() }); }
-function load(H, part) {
+// (the Plan's maps out of src/guides.js, in the file's order: what ulSvg draws the Plan's pages with, and the line that files them as Plan shows them. In the site
+//  they share the game's scope; in Node the game runs without them (no ulSvg, so the setup keeps its job row) unless a check asks: load(H, 'm2', { maps: true }))
+const MAP_BITS = ['POM_DEF', 'POM_MK', 'UL_RIM', 'UL_SOAK', 'UL_GC', 'UL_MKI', 'UL_CMK', 'UL_PAT', 'UL_VB', 'UL_CSP', 'ulSoaks', 'UL_PAGES', 'ulSvg', 'ulFester'];
+function load(H, part, o) {
   H = H || require('./site-helpers.js');
-  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS'].map((n) => H.grab(n, GJ)).join('\n');
+  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS'].map((n) => H.grab(n, GJ)).join('\n') +
+    (o && o.maps ? '\n' + MAP_BITS.map((n) => H.grab(n, GJ)).join('\n') + '\n' + ((/^UL_PAGES\.burst = [^\n]*/m.exec(GJ) || [''])[0]) : '');
   const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
   class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
   const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
@@ -193,6 +202,94 @@ function checks(H, say) {
       su.set('r', 'egg'); if (su.now().job !== 'egg') bad('phase 2\'s setup doesn\'t keep the default ranged small egg (check S)');
       su.set('h', 'mal'); if (su.now().job !== 'big') bad('phase 2\'s setup takes a kick job for a healer instead of the default (check S)'); } }
   catch (e) { bad('phase 2\'s setup crashed: ' + e.message + ' (check S)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // M. the spot maps (Flex, Nov 16: "visual maps that lets them select the spot is best, you should use the plans maps so its something familiar ... Customizable,
+  //    but not crazy confusing", "maybe randomize their assignments", then on phase 1's first maps "make sure the maps are placed properly it looks off" and
+  //    "clicking on your coil hides no egg"): phase 2 hands the card setup.maps (practice.js's contract). Your side (both ledges, the spot your gate lands you on),
+  //    Small egg (the Plan's own Side Egg Pickups page for your ledge, eggs 1 to 8 where the game lays them), Big egg (the south one a melee's or a ranged's,
+  //    the north one a healer's, where the game lays them), Kicks (the Warden where it casts Malice and the two Weakened Doomscales by the Plan's markers, Moon
+  //    and Cross west, Skull and Diamond east, where their tank holds them on the ledge; no Kicks for healers, no kick in Midnight). The same buttons on every
+  //    tab; every role starts on every mechanic it can take (a melee kicks Malice and a Cry and carries, a ranged too, a healer carries the north big egg); Random
+  //    picks only what the role can take; every pick, Random, No egg and a new role is the job the run plays. (Before: no maps, one job from a row of tiles)
+  try { const Mb = (m) => bad(m + ' (check M)'), MM = dbg.P2.setup && dbg.P2.setup.maps, FN = ['tabs', 'page', 'hot', 'pick', 'extras', 'extra', 'random', 'role', 'say', 'sub'];
+    if (!MM || FN.some((f) => typeof MM[f] !== 'function')) Mb('phase 2\'s setup has no spot maps (setup.maps with ' + FN.join(', ') + '): no Your side, Small egg, Big egg or Kicks maps to pick your spots on (Flex, Nov 16)');
+    else {
+      if (/pg-sprow/.test(dbg.panel())) Mb('without the Plan\'s maps (no ulSvg, as in Node) phase 2\'s setup draws the Spots row instead of keeping its job row');
+      const GM = load(H, 'm2', { maps: true }), D = GM.dbg, M = D.P2.setup.maps, MK = { E: ['Skull', 'Diamond'], W: ['Moon', 'Cross'] };
+      // (a fresh browser: a ranged with a small egg who kicks Malice and a Cry, the tether at random)
+      { const p0 = D.P2.pick; if (p0.role !== 'r' || !/^n\d$/.test(p0.egg || '') || p0.mal !== 1 || !p0.cry || p0.teth !== 'random') Mb('a first visit starts as ' + JSON.stringify(p0) + '; a ranged starts on a small egg, Malice and a Doomscale\'s Cries, the tether at random (every mechanic it can take)'); }
+      const PX = (x) => +(340 + x * 2.083).toFixed(1), PY = (y) => +(240 - (y + 0.9) * 2.083).toFixed(1), attr = (tag, a) => { const m = new RegExp('\\s' + a + '="([^"]*)"').exec(tag); return m ? m[1] : null; };
+      const svgs = (P) => { const s = String(P), i = s.indexOf('class="pg-spmap"'); return i < 0 ? [] : [...s.slice(i).matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/g)].map((m) => m[0]); };
+      const hotIn = (P) => [...String(svgs(P)[1] || '').matchAll(/<circle\b[^>]*\bclass="pg-hs[^"]*"[^>]*>/g)].map(([t]) => ({ id: attr(t, 'data-mh'), cx: +attr(t, 'cx'), cy: +attr(t, 'cy'), r: +attr(t, 'r'), on: /class="pg-hs[^"]*\bon\b/.test(t) }));
+      const btnIn = (P) => [...String(P).matchAll(/<button\b[^>]*\bdata-m([trx])="([^"]*)"[^>]*>([^<]*)<\/button>/g)].map((m) => m[1] + ':' + m[2] + ':' + m[3]);
+      const youIn = (svg) => (String(svg).match(/>You<\/text>/g) || []).length;
+      const DEF = { m: { egg: 'far', mal: 1, cry: 1 }, r: { egg: 'n6', mal: 1, cry: 1 }, h: { egg: 'close', mal: 0, cry: 0 } }, TABS = { m: 'side,egg,big,kick', r: 'side,egg,big,kick', h: 'side,big' };
+      const S3 = GM.ctx.pgP2Script({ seed: 3, east: false }), slotJob = (pk) => { D.P2.pick = pk; const me = D.P2.slotOf(pk); D.at(166.05, me, { east: false, seed: 3 }); return { me, j: D.S.job[me] }; };
+      // (where the game puts each kick's caster: the Warden as its Malice starts; each Doomscale where its tank holds it on the ledge, just before the tank takes it
+      // back to her at 4:38.5 (and its first Anguished Cry there, on this run whose big eggs go in on the count); its name on the target frame)
+      const at = {}, cry1 = {}; for (const s of ['E', 'W']) { const pk = { side: s, role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; D.P2.pick = pk; const me = D.P2.slotOf(pk); D.at(166.05, me, { east: false, seed: 3 }); const G = D.G, S = D.S;
+        while (G.t < 300 && !(at[s + 'mal'] && at[s + 'cry1'] && at[s + 'cry2'])) { D.step(1); const t = G.t, m = S.malice.find((q) => q.side === s && q.k === 1); if (!at[s + 'mal'] && m && t >= m.t0 && G.p2.wd[s]) at[s + 'mal'] = G.p2.wd[s].slice();
+          [1, 2].forEach((k) => { const c = S.cries.find((q) => q.ds === 'ds' + s + k && q.i === 1), d = G.p2.ds['ds' + s + k]; if (!cry1[s + k] && c && d && t >= c.t0) { cry1[s + k] = [d.x, d.y]; const nm = (D.P2.tgts(t).find((q) => q.key === 'ds' + s + k) || {}).name || '';
+            if (nm.indexOf('(' + MK[s][k - 1] + ')') < 0) Mb('in the game the ' + s + ' ledge\'s Doomscale ' + k + ' is "' + nm + '" on your target frame; the Kicks map calls it the ' + MK[s][k - 1] + ' Doomscale (the Plan\'s marker)'); }
+            if (!at[s + 'cry' + k] && d && t >= 278.55) at[s + 'cry' + k] = [d.x, d.y]; }); } }
+      ['E', 'W'].forEach((s) => [1, 2].forEach((k) => { const a = at[s + 'cry' + k], c = cry1[s + k]; if (!a || !c || Math.hypot(a[0] - c[0], a[1] - c[1]) > 1) Mb('on a run whose big eggs go in on the count the ' + MK[s][k - 1] + ' Doomscale casts its first Anguished Cry at ' + (c ? c.map((v) => v.toFixed(1)).join(', ') : 'nowhere') + ', not where its tank holds it (' + (a ? a.map((v) => v.toFixed(1)).join(', ') : 'nowhere') + ')'); }));
+      for (const role of ['m', 'r', 'h']) for (const side of ['E', 'W']) { const tag = ' (' + role + ', ' + side + ' ledge)';
+        D.P2.pick = { side, role, ...DEF[role], teth: 'random' }; const tabs = M.tabs().map((q) => q[0]).join(','); if (tabs !== TABS[role]) Mb('the tabs are ' + tabs + tag + '; they should be ' + TABS[role] + ' (a healer has no small egg and no kick; a ranged takes the south big egg on 15 of 74 kills)');
+        let B0 = null;
+        for (const [key] of M.tabs()) { M.tab = key; const P = D.panel(), B = btnIn(P), sv = svgs(P), V = sv.map((s) => attr(s.slice(0, s.indexOf('>')), 'viewBox')), vb = (V[0] || '').split(' ').map(Number), HS = M.hot(key), drawn = hotIn(P), tg = ' on ' + key + tag;
+          if (!/class="pg-srow pg-sprow"><span class="pg-sl">Spots<\/span>/.test(P) || !new RegExp('data-mt="' + key + '" class="on"').test(P)) { Mb('the setup shows no Spots row with ' + key + ' lit' + tag); continue; }
+          if (B0 && B.join('|') !== B0) Mb('the Spots row\'s buttons change between the tabs (' + B0 + ', then ' + B.join('|') + ')' + tag + ' (Flex: "clicking on your coil hides no egg")'); B0 = B.join('|');
+          if (!B.includes('r:1:🎲 Random') || !B.includes('x:noegg:No egg')) Mb('the Spots row has ' + B.join(', ') + tg + '; 🎲 Random and No egg belong on every tab');
+          if (V.length !== 2 || V[0] !== V[1]) Mb('the spots aren\'t laid over the map in its own frame (' + V.join(' and ') + ')' + tg);
+          if (drawn.map((d) => d.id).join(',') !== HS.map((h) => h.id).join(',')) Mb('the spots drawn (' + drawn.map((d) => d.id).join(', ') + ') aren\'t the ones you can pick (' + HS.map((h) => h.id).join(', ') + ')' + tg);
+          HS.forEach((h) => { const d = drawn.find((q) => q.id === h.id); if (!d || Math.abs(d.cx - PX(h.x)) > 0.1 || Math.abs(d.cy - PY(h.y)) > 0.1) Mb('the ' + h.id + ' spot is drawn off its place' + tg);
+            if (vb.length === 4 && (PX(h.x) - h.r * 2.083 < vb[0] - 0.5 || PX(h.x) + h.r * 2.083 > vb[0] + vb[2] + 0.5 || PY(h.y) - h.r * 2.083 < vb[1] - 0.5 || PY(h.y) + h.r * 2.083 > vb[1] + vb[2] + 0.5)) Mb('the ' + h.id + ' spot runs off the edge of its map' + tg); });
+          const want = (id) => { if (key === 'side') { const g = S3.gates.find((q) => !q.back && q.side === id); return g && g.to; } if (key === 'egg') { const e = S3.eggs.find((q) => q.side === side && 'n' + q.n === id); return e && [e.x, e.y]; }
+            if (key === 'big') { const b = S3.big.find((q) => q.side === side && q.which === id); return b && [b.x, b.y]; } return at[side + id]; };
+          HS.forEach((h) => { const w = want(h.id); if (!w || Math.hypot(h.x - w[0], h.y - w[1]) > (key === 'kick' ? 1 : 0.5)) Mb('the ' + h.id + ' spot is at ' + h.x.toFixed(1) + ', ' + h.y.toFixed(1) + tg + '; the game puts it at ' + (w ? w.map((v) => v.toFixed(1)).join(', ') : 'nowhere') + ' (Flex: "make sure the maps are placed properly")'); });
+          const ids = HS.map((h) => h.id).sort().join(','), wantIds = { side: 'E,W', egg: S3.eggs.filter((q) => q.side === side).map((q) => 'n' + q.n).sort().join(','), big: role === 'h' ? 'close' : 'far', kick: 'cry1,cry2,mal' }[key];
+          if (ids !== wantIds) Mb('the ' + key + ' map offers ' + ids + tg + '; it should offer ' + wantIds + ' (the kills: a melee or a ranged takes a small egg or the south big egg, a healer the north big egg)');
+          const lit = HS.filter((h) => h.on).map((h) => h.id).sort().join(','), litWant = { side, egg: /^n/.test(DEF[role].egg) ? DEF[role].egg : '', big: /^n/.test(DEF[role].egg) ? '' : DEF[role].egg, kick: (DEF[role].cry ? ['cry' + DEF[role].cry] : []).concat(DEF[role].mal ? ['mal'] : []).sort().join(',') }[key];
+          if (lit !== litWant) Mb('the ' + key + ' map lights ' + (lit || 'nothing') + tg + '; your picks are ' + (litWant || 'none there'));
+          const yn = youIn(sv[1]), yw = key === 'side' || (key === 'egg' && /^n/.test(DEF[role].egg)) || (key === 'big' && !/^n/.test(DEF[role].egg)) ? 1 : 0; if (yn !== yw) Mb('the ' + key + ' map draws the gold You ' + yn + ' times' + tg + '; once on your spot, or not at all where you have none');
+          if (key === 'egg' && !new RegExp('aria-label="' + (side === 'W' ? 'Left' : 'Right') + ' ledge"').test(sv[0] || '')) Mb('Small egg isn\'t the Plan\'s own Side Egg Pickups page for the ' + side + ' ledge');
+          if (key === 'kick' && MK[side].some((m) => (sv[0] || '').indexOf('<title>The ' + m + ' Doomscale</title>') < 0)) Mb('the Kicks map doesn\'t mark the ' + MK[side].join(' and ') + ' Doomscales' + tag); }
+        const say = M.say(), sub = M.sub(); if (!/^[A-Z].*\.$/.test(say) || /\. [A-Z]/.test(say) || /went wrong/i.test(say)) Mb('the setup sentence isn\'t one plain sentence' + tag + ': ' + say);
+        if (DEF[role].cry && say.indexOf(MK[side][DEF[role].cry - 1]) < 0) Mb('the setup sentence doesn\'t name your Doomscale\'s marker' + tag + ': ' + say);
+        if (sub.length > 60 || sub.indexOf(side === 'E' ? 'East' : 'West') < 0) Mb('the Play button\'s line "' + sub + '" isn\'t short or doesn\'t name your ledge' + tag);
+        // (each role's default, played by the autopilot: kicks land, the eggs go in, the tether on the count; only a damage moment may slip)
+        if (side === 'E') for (const [east, seed] of [[false, 5], [true, 3]]) { D.P2.pick = { side, role, ...DEF[role], teth: 'random' }; const r = D.sim(D.P2.slotOf(D.P2.pick), true, east, seed), L0 = r.log.filter((x) => !/were up: you were on/.test(x));
+          if (L0.length || r.deaths.length) Mb('the autopilot playing the ' + role + ' default (' + JSON.stringify(DEF[role]) + ', seed ' + seed + ') makes mistakes: ' + L0.concat(r.deaths.map((x) => 'died ' + x)).join(' | ')); } }
+      // (every pick is the job the run plays; a pick a role can't take does nothing)
+      D.P2.pick = { side: 'E', role: 'm', ...DEF.m, teth: 'random' }; M.pick('side', 'W'); M.pick('egg', 'n3'); M.pick('kick', 'cry2');
+      { const { me, j } = slotJob(D.P2.pick); if (j.side !== 'W' || j.egg !== 3 || j.big || j.mal !== 1 || j.cry !== 2 || !j.teth || me[0] !== 'm') Mb('a melee who picks the west ledge, small egg 3 and the Cross Doomscale (Malice on) plays ' + me + ' ' + JSON.stringify(j)); }
+      M.pick('big', 'far'); M.pick('kick', 'mal'); { const { j } = slotJob(D.P2.pick); if (j.big !== 'far' || j.egg || j.mal) Mb('a melee who picks the south big egg and turns Malice off plays ' + JSON.stringify(j)); }
+      M.extra('noegg'); { const { j } = slotJob(D.P2.pick); if (j.egg || j.big) Mb('No egg still plays an egg: ' + JSON.stringify(j)); } M.extra('noegg'); if (D.P2.pick.egg !== 'far') Mb('No egg pressed again gives a melee ' + D.P2.pick.egg + ', not the south big egg back');
+      D.P2.pick = { side: 'E', role: 'h', ...DEF.h, teth: 'random' }; M.pick('kick', 'mal'); M.pick('kick', 'cry1'); M.pick('egg', 'n2'); M.pick('big', 'far'); { const { j } = slotJob(D.P2.pick); if (j.mal || j.cry || j.egg || j.big !== 'close') Mb('a healer can pick a kick, a small egg or the south big egg: plays ' + JSON.stringify(j)); }
+      D.P2.pick = { side: 'E', role: 'r', ...DEF.r, teth: 'random' }; M.pick('big', 'far'); M.pick('kick', 'mal'); M.pick('kick', 'cry1'); { const { j } = slotJob(D.P2.pick); if (j.big !== 'far' || j.egg || j.mal || j.cry) Mb('a ranged who picks the south big egg and drops Malice and the Cry plays ' + JSON.stringify(j)); }
+      M.pick('big', 'close'); if (D.P2.pick.egg === 'close') Mb('a ranged can pick the north big egg (a healer\'s on 45 of 46 kills)');
+      // (a new role keeps your ledge and an egg it can carry, and starts on that role's kicks)
+      D.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 1, cry: 2, teth: 'random' }; M.role('r'); const pR = D.P2.pick; M.role('h'); const pH = D.P2.pick; M.role('m'); const pM = D.P2.pick;
+      if (pR.side !== 'W' || pR.egg !== 'n4' || pR.mal !== 1 || pR.cry !== 2) Mb('melee to ranged gives ' + JSON.stringify(pR) + '; the ledge, small egg 4, Malice and the Cross Doomscale stay (a ranged kicks Malice too)');
+      if (pH.egg !== 'close' || pH.mal || pH.cry) Mb('ranged to healer gives ' + JSON.stringify(pH) + '; a healer carries the north big egg and has no kick');
+      if (pM.egg !== 'far' || pM.mal !== 1 || pM.cry !== 1) Mb('healer to melee gives ' + JSON.stringify(pM) + '; a melee starts on the south big egg, Malice and a Cry');
+      // (🎲 Random, for people with no plan yet: only what the role can take, both ledges, both Doomscales, never no egg)
+      for (const role of ['m', 'r', 'h']) { D.P2.pick = { side: 'E', role, ...DEF[role], teth: 'random' }; const seen = new Set();
+        for (let i = 0; i < 60; i++) { M.random(); const p = D.P2.pick; seen.add(p.side); seen.add(p.egg === 'far' || p.egg === 'close' ? p.egg : p.egg ? 'small' : 'none'); seen.add('c' + p.cry);
+          const ok = p.teth === 'random' && (role === 'h' ? p.egg === 'close' && !p.mal && !p.cry : (/^n[1-8]$/.test(p.egg) || p.egg === 'far') && (p.cry === 1 || p.cry === 2) && p.mal === 1) && !(p.side === 'W' && p.egg === 'n8');
+          if (!ok) { Mb('🎲 Random gives a ' + role + ' ' + JSON.stringify(p) + ', which isn\'t a spot set it can take (with every mechanic: Malice too for a melee or a ranged)'); break; } }
+        const need = ['E', 'W'].concat(role === 'h' ? [] : ['c1', 'c2', 'small', 'far']); if (need.some((x) => !seen.has(x))) Mb('🎲 Random for a ' + role + ' never gives ' + need.filter((x) => !seen.has(x)).join(', ') + ' in 60 tries'); }
+      // M2. the review (Nov 16) of these maps. (1) The Kicks map's Doomscales stand where their tank holds them on the ledge on EVERY run, also when your own
+      //     big egg goes in late (the defaults now: a melee's south egg, a healer's north one) and their first Cry comes as the tank walks off, 12 yards away
+      //     (the build's note said "where each casts its first Anguished Cry ... every run", true only when the eggs go in on the count); the spot's words say
+      //     the next two Cries come by her. (2) A ranged starts on Malice too and can take the south big egg (above). Before: a ranged's default had no Malice
+      //     and no Big egg tab, and the Doomscale's words gave its three Cries at that spot
+      { const M2b = (m) => bad(m + ' (check M2)'), hs = {}; ['E', 'W'].forEach((s) => { D.P2.pick = { side: s, role: 'm', ...DEF.m, teth: 'random' }; M.hot('kick').forEach((h) => { hs[s + h.id] = h; }); });
+        ['E', 'W'].forEach((s) => [1, 2].forEach((k) => { const h = hs[s + 'cry' + k]; if (!h || !/ by her\b/.test(h.title) || h.title.indexOf(MK[s][k - 1]) < 0) M2b('the ' + MK[s][k - 1] + ' Doomscale\'s spot says "' + (h && h.title) + '"; it should say its first Cry comes there and the next two by her, where its tank takes it'); }));
+        for (const [pk, east, seed] of [[{ side: 'E', role: 'm', ...DEF.m }, false, 5], [{ side: 'W', role: 'h', ...DEF.h }, false, 1], [{ side: 'W', role: 'm', ...DEF.m, cry: 2 }, true, 4]]) { D.P2.pick = { ...pk, teth: 'random' }; D.at(278.6, D.P2.slotOf(D.P2.pick), { east, seed });
+          D.S.ds.forEach((d) => { const c = D.G.p2.ds[d.id], h = hs[d.side + 'cry' + d.k]; if (!c || !h || Math.hypot(c.x - h.x, c.y - h.y) > 0.5) M2b('at 4:38.6, just before its tank takes it back to her, the ' + MK[d.side][d.k - 1] + ' Doomscale stands at ' + (c ? c.x.toFixed(1) + ', ' + c.y.toFixed(1) : 'nowhere') + '; the Kicks map puts it at ' + (h ? h.x.toFixed(1) + ', ' + h.y.toFixed(1) : 'nowhere') + ' (you as ' + pk.role + ' with ' + pk.egg + ', seed ' + seed + ')'); }); } }
+    } }
+  catch (e) { bad('phase 2\'s spot maps crashed: ' + e.message + ' (check M)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // I. hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"): your ledge's Warden while it lives, the Weakened
   //    Doomscales from 4:29, the heart from 4:55, any Viper first; Tab or a click picks, melee 5 yards, others 40; a moment mostly on it counts, a

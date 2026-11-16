@@ -43,6 +43,15 @@
 //   M. the unit frames don't look like Flex's own UI (Nov 15: "the player/target/boss frames should look more like this", his screenshot): your frame
 //      left of the hotbar and your target's right of it on one row (narrow screens: the frames side by side, the bar under them), one flat bar each with
 //      the name inside on the left and "735K | 100%" on the right, your class (or role) colour, the target's target after a ">", the boss's name in its bar.
+//   N. the spot maps (Flex, Nov 16: "visual maps that lets them select the spot ... use the plans maps so its something familiar", "make sure the maps are
+//      placed properly it looks off", "clicking on your coil hides no egg", "maybe randomize their assignments"): with the Plan's maps loaded the setup
+//      shows them, on the Plan's own Groups page (Intermission Positions); Your group offers exactly the teams your role is on in the guide's plan, each
+//      ring where the game has that team wait (16 yards out by its marker), and You where the game stands you; Your egg offers exactly the teams whose plan
+//      has your role carry an egg, each circle round where the game drops that team's eggs (200 runs); the Plan's labels stay off the spots; every role
+//      carries an egg where its team has one, by default and after a role change, No egg turns it off and on; 🎲 Random gives a team your role is on
+//      with its egg; the same buttons on both tabs; what you pick is what you play. (Before Nov 16 the intermission had no maps: a row of job buttons.)
+//      The review (Nov 16): the eggs drawn on Your egg sit on real landings (they were on a made-up ring, one 3.6 yards from anywhere a Purple egg lands),
+//      You sits on one of yours, your own egg lands in your circle, and the autopilot plays every pick the map offers clean.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -147,14 +156,15 @@ function checks(H, say) {
     if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
     const sh = dbg.P2.short(), li = (sh.match(/<li>/g) || []).length; if (li !== 4) bad('"your job in short" isn\'t four lines (' + li + ', check F)');
     dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/diamond line/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and the diamond line: ' + s2 + ' (check F)');
-    // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 4 jobs a role, one sentence)
+    // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 6 jobs a role, one sentence. Nov 16,
+    // Flex: "maybe leave it as an option for ranged just in case groups do it that way": a ranged may also take Yellow, with or without an egg)
     const su = dbg.P2.setup; if (!su || typeof su.now !== 'function' || typeof su.jobs !== 'function' || typeof su.set !== 'function' || typeof su.say !== 'function') bad('the intermission gives the setup screen no setup (roles, now, jobs, set, say; check F)');
     else { if (JSON.stringify(su.roles) !== '["m","r","h"]') bad('the setup\'s roles are ' + JSON.stringify(su.roles) + ' (check F)');
-      su.roles.forEach((r) => { const J0 = su.jobs(r); if (J0.length < 2 || J0.length > 4) bad('the setup offers ' + J0.length + ' jobs to ' + r + ' (2 to 4, check F)');
+      su.roles.forEach((r) => { const J0 = su.jobs(r); if (J0.length < 2 || J0.length > 6) bad('the setup offers ' + J0.length + ' jobs to ' + r + ' (2 to 6, check F)');
         J0.forEach(([v, lab]) => { su.set(r, v); const nw = su.now(), pk = dbg.P2.pick, me = dbg.P2.slotOf(), J = ctx.pgIntJobs(me, pk);
           if (nw.role !== r || nw.job !== v) bad('picking ' + r + ' / ' + lab + ' shows ' + nw.role + ' / ' + nw.job + ' (check F)');
           if (me[0] !== r || J.team[me] !== v[0] || J.carry.has(me) !== /e$/.test(v)) bad('picking ' + r + ' / ' + lab + ' plays ' + me + ' on ' + J.team[me] + (J.carry.has(me) ? ' with an egg' : '') + ' (check F)');
-          if (!P.team[v[0]].some((id) => id[0] === r)) bad('the setup offers ' + r + ' the ' + P.TN[v[0]] + ' team, which has no ' + r + ' in the guide\'s plan (check F)');
+          if (!P.team[v[0]].some((id) => id[0] === r) && !(r === 'r' && v[0] === 'Y')) bad('the setup offers ' + r + ' the ' + P.TN[v[0]] + ' team, which has no ' + r + ' in the guide\'s plan (check F)');
           const say = su.say(); if (!new RegExp(P.TM[v[0]]).test(say) || !/diamond line/.test(say) || !/Press Q/.test(say) || !/No kicks/.test(say) || /egg/.test(say) !== /e$/.test(v)) bad('the setup\'s sentence for ' + r + ' / ' + lab + ' doesn\'t name the mark, the egg, the defensive and the diamond line: ' + say + ' (check F)'); }); });
       su.set('r', 'B'); } }
   catch (e) { bad('the wiring check crashed:' + e.message + ' (check F)'); }
@@ -239,6 +249,81 @@ function checks(H, say) {
     if (!/class="pg-tot"/.test(PJ) || !/tot: tot \?/.test(PJ)) bad('the target frame doesn\'t show its target after a ">" (check M)');
     dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.slams[7] + 1, me, { seed: 4 }); const ra = dbg.G.adds.find((a) => a.kind === 'rawling'); if (ra) { dbg.tgt = ra.id; const f = dbg.tf(); if (!f || f.none || f.tot !== null) bad('a Rawling target shows a target of its own: ' + JSON.stringify(f) + ' (check M)'); } }
   catch (e) { bad('the frames check crashed: ' + e.message + ' (check M)'); }
+  // N. the spot maps (Flex, Nov 16)
+  try { const HH = H || require('./site-helpers.js'), ex = ['POM_DEF', 'POM_MK', 'UL_GC', 'UL_VB', 'UL_PAGES', 'ulSvg'].map((n) => HH.grab(n, GJ)).join('\n');
+    const LM = load(HH, 'mint', ex), dm = LM.dbg, M = dm.P2 && dm.P2.setup && dm.P2.setup.maps, PK = () => dm.P2.pick, FN = ['tabs', 'page', 'hot', 'pick', 'extras', 'extra', 'random', 'role', 'say', 'sub'];
+    if (!M || FN.some((k) => typeof M[k] !== 'function')) bad('the intermission gives the setup no spot maps (setup.maps with ' + FN.join(', ') + '; Flex, Nov 16: "visual maps that lets them select the spot", check N)');
+    else {
+      const pHas = (r) => ['Y', 'P', 'B'].filter((g) => P.team[g].some((id) => id[0] === r)), pEggs = (r) => ['Y', 'P', 'B'].filter((g) => P.team[g].some((id) => id[0] === r && P.carry.includes(id)));
+      // (Flex, Nov 16, on the map: "theres no yellow group assignments", then "maybe leave it as an option for ranged just in case groups do it that way": a ranged
+      // may also take Yellow, with an egg; melee and healers keep the plan's teams)
+      const has = (r) => (r === 'r' ? ['Y', 'P', 'B'] : pHas(r)), eggs = (r) => (r === 'r' ? ['Y', 'P', 'B'].filter((g) => g === 'Y' || pEggs(r).includes(g)) : pEggs(r));
+      const X = (x) => +(340 + x * 2.083).toFixed(1), Y = (y) => +(240 - (y + 0.9) * 2.083).toFixed(1), S0 = script({ seed: 4 }), pkS = (j) => { dm.P2.pick = { pat: 0, ...j }; };
+      // (the setup screen shows them, on the Plan's own Groups page: its eight coil circles)
+      pkS({ role: 'r', team: 'P', egg: true }); M.tab = 'grp'; const html = dm.panel();
+      if (!/pg-sprow/.test(html) || !/data-mh="P"/.test(html) || /data-sj=/.test(html)) bad('with the Plan\'s maps loaded the setup screen doesn\'t show the spot maps: ' + html.replace(/<[^>]+>/g, ' ').slice(0, 160) + ' (check N)');
+      Object.entries(ctx.UL_SOAK).forEach(([k, s]) => { if (!html.includes('cx="' + X(s[0]) + '" cy="' + Y(s[1]) + '" r="16.7"')) bad('Your group isn\'t the Plan\'s Groups map: its ' + k + ' coil circle is missing (UL_PAGES.trans[0], check N)'); });
+      // (each role: the teams it's on in the guide's plan, where the game has them wait; Your egg only where its plan has it carry one; every pick plays as shown)
+      for (const r of ['m', 'r', 'h']) { pkS({ role: r === 'm' ? 'r' : 'm', team: 'B', egg: false }); M.role(r); const H0 = M.hot('grp'), rings = H0.filter((h) => !h.you);
+        if (rings.map((h) => h.id).join() !== has(r).join()) bad('Your group offers ' + r + ' the teams ' + rings.map((h) => h.id).join(', ') + '; the guide\'s plan has ' + r + ' on ' + has(r).join(', ') + ' (check N)');
+        rings.forEach((h) => { const d = hyp([h.x, h.y], S0.pre[h.id]); if (d > 0.01) bad('the ' + P.TN[h.id] + ' ring on Your group is ' + d.toFixed(1) + ' yards from where the game has that team wait (check N)'); });
+        if (H0.filter((h) => h.you).length !== 1) bad('Your group doesn\'t show You once (' + r + ', check N)');
+        const tabs = M.tabs().map((q) => q[0]).join(); if (tabs !== (eggs(r).length ? 'grp,egg' : 'grp')) bad('the map tabs for ' + r + ' are ' + tabs + (eggs(r).length ? '; Your group and Your egg' : '; Your group only (healers carry no egg)') + ' (check N)');
+        if (eggs(r).length && M.hot('egg').filter((h) => h.big).map((h) => h.id).join() !== eggs(r).join()) bad('Your egg offers ' + r + ' the teams ' + M.hot('egg').filter((h) => h.big).map((h) => h.id).join(', ') + '; the plan has ' + r + ' carry in ' + eggs(r).join(', ') + ' (check N)');
+        if (!eggs(r).length && M.extras().length) bad('a healer gets a No egg button (check N)');
+        for (const g of has(r)) for (const egg of eggs(r).includes(g) ? [true, false] : [false]) { M.tab = 'grp'; M.pick('grp', g); if (!!PK().egg !== egg) M.extra('noegg'); const pk = PK();
+          if (pk.team !== g || pk.egg !== egg || pk.role !== r) { bad('picking ' + P.TN[g] + (egg ? ' with an egg' : '') + ' on the map as ' + r + ' gives ' + JSON.stringify(pk) + ' (check N)'); continue; }
+          // (the card redraws after every click and asks the job list (setup.now); it must keep the map's pick. Nov 16 on the test copy: a ranged's Yellow click
+          // went back to Purple, the old fixed list had no Yellow for ranged)
+          dm.P2.setup.now(); if (PK().team !== g || PK().egg !== egg || !dm.P2.setup.jobs(r).some((o) => o[0] === g + (egg ? 'e' : ''))) { bad('the card\'s redraw turns the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ') into ' + JSON.stringify(PK()) + ' (check N)'); continue; }
+          const me = dm.P2.slotOf(); dm.at(320, me, { seed: 4 }); const want = dm.job(me).T, you = M.hot('grp').find((h) => h.you);
+          if (!you || hyp([you.x, you.y], want) > 0.01) bad('You on the map isn\'t where the game stands you while your team waits (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ': ' + (you ? you.x.toFixed(1) + ', ' + you.y.toFixed(1) : 'none') + ' on the map, ' + want.map((v) => v.toFixed(1)).join(', ') + ' in the game, check N)');
+          if (dm.S.job.team[me] !== g || dm.S.job.carry.has(me) !== egg) bad('the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ') plays ' + me + ' on ' + P.TN[dm.S.job.team[me]] + (dm.S.job.carry.has(me) ? ' with an egg' : ' without one') + ' (check N)');
+          const say = M.say(), sub = M.sub(); if (!say.includes(P.TM[g]) || /egg/.test(say) !== egg || !/diamond line/.test(say) || (say.match(/\. /g) || []).length || !sub.includes(P.TN[g] + ' team')) bad('the map\'s sentence or Play line for ' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ' doesn\'t say the mark, the egg and the diamond line in one sentence: ' + say + ' / ' + sub + ' (check N)');
+          // (the review, Nov 16: what the map picks is what you play: your own egg lands in your team's circle on Your egg (150 runs), and the autopilot plays the
+          // pick clean (every soak of your team, your egg broken in one), on each pattern in turn)
+          if (egg) { const h = M.hot('egg').find((q) => q.big && q.id === g); let n = 0, inn = 0, worst = 0; for (let seed = 2001; seed <= 2150; seed++) { const e = script({ seed, me, pick: pk }).eggSets[0].eggs.find((q) => q.id === me); if (!e) continue; n++; const d = hyp([e.x, e.y], [h.x, h.y]) - h.r; if (d <= 0) inn++; worst = Math.max(worst, d); }
+            if (!n || inn / n < 0.8 || worst > 3) bad('as ' + r + ' on ' + P.TN[g] + ' with an egg, your own egg lands in the circle on Your egg ' + (n ? Math.round(inn / n * 100) : 0) + '% of the time (the farthest ' + worst.toFixed(1) + ' yards out, check N)'); }
+          { const pt = 1 + (r.charCodeAt(0) + g.charCodeAt(0) + (egg ? 1 : 0)) % 3; dm.P2.pick = { ...pk, pat: pt }; const sr = dm.sim(me, true, pt === 2, 5 + pt); dm.P2.pick = pk;
+            if (sr.log.length || sr.deaths.length) bad('the autopilot playing the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ', pattern ' + pt + ') makes mistakes: ' + sr.log.concat(sr.deaths.map((d) => 'died ' + d)).join(' | ') + ' (check N)'); } } }
+      // (Your egg: each circle round where the game drops that team's eggs, 200 runs it never worked from; its eggs drawn in it, as many as the team carries)
+      const by = { Y: [], P: [], B: [] }; for (let seed = 1001; seed <= 1200; seed++) { const Sx = script({ seed }); Sx.eggSets[0].eggs.forEach((e) => by[Sx.job.team[e.id]].push([e.x, e.y])); }
+      const AR = {}; pkS({ role: 'r', team: 'P', egg: true }); M.hot('egg').filter((h) => h.big).forEach((h) => { AR[h.id] = h; }); pkS({ role: 'm', team: 'Y', egg: true }); M.hot('egg').filter((h) => h.big).forEach((h) => { AR[h.id] = h; });
+      ['Y', 'P', 'B'].forEach((g) => { const h = AR[g]; if (!h) { bad('Your egg has no circle for the ' + P.TN[g] + ' team (check N)'); return; } const L0 = by[g], inn = L0.filter((p) => hyp(p, [h.x, h.y]) <= h.r).length / L0.length, out = Math.max(...L0.map((p) => hyp(p, [h.x, h.y]) - h.r));
+        if (!h.big || inn < 0.9 || out > 3.5) bad('the ' + P.TN[g] + ' circle on Your egg holds ' + Math.round(inn * 100) + '% of where the game drops that team\'s eggs (200 runs; the farthest ' + out.toFixed(1) + ' yards outside it, check N)'); });
+      pkS({ role: 'r', team: 'P', egg: true }); { const n = (M.page('egg').svg.match(/<title>An egg<\/title>/g) || []).length, want = eggs('r').reduce((a, g) => a + P.team[g].filter((id) => P.carry.includes(id)).length, 0); if (n !== want) bad('Your egg draws ' + n + ' eggs for a ranged; ' + want + ', every egg of ' + eggs('r').join(', ') + ' (check N)'); }
+      // (the eggs drawn on Your egg sit where the game really drops that team's eggs, and You on one of yours, in your team's circle; no You without an egg.
+      // The review, Nov 16: they were drawn on a made-up ring round the circle's middle, one 3.6 yards from anywhere a Purple egg lands, and You on that middle)
+      for (const [r, g] of [['m', 'Y'], ['r', 'Y'], ['r', 'P'], ['r', 'B']]) { pkS({ role: r, team: g, egg: true }); const sv = M.page('egg').svg, HS = M.hot('egg'), C = HS.filter((h) => h.big), you = HS.filter((h) => h.you), mine = C.find((h) => h.id === g), E0 = [], re = /<ellipse cx="([\d.-]+)" cy="([\d.-]+)" rx="[\d.]+" ry="[\d.]+" fill="#e8dc96"/g; let m;
+        while ((m = re.exec(sv))) E0.push([(+m[1] - 340) / 2.083, (240 - +m[2]) / 2.083 - 0.9]);
+        E0.forEach((p) => { const h = C.slice().sort((a, b) => hyp(p, [a.x, a.y]) - hyp(p, [b.x, b.y]))[0], d = Math.min(...by[h.id].map((q) => hyp(p, q))); if (d > 1) bad('an egg drawn on Your egg (' + r + ') sits ' + d.toFixed(1) + ' yards from anywhere the game drops a ' + P.TN[h.id] + ' egg, at ' + p.map((v) => v.toFixed(1)).join(', ') + ' (check N)'); });
+        if (!mine || you.length !== 1 || !E0.some((p) => hyp(p, [you[0].x, you[0].y]) < 0.5) || hyp([you[0].x, you[0].y], [mine.x, mine.y]) > mine.r) bad('You on Your egg (' + r + ', ' + P.TN[g] + ') isn\'t on one of the ' + P.TN[g] + ' eggs drawn in its circle (check N)');
+        pkS({ role: r, team: g, egg: false }); if (M.hot('egg').some((h) => h.you)) bad('You shows on Your egg without an egg (' + r + ', ' + P.TN[g] + ', check N)'); }
+      // (the Plan's labels never on a spot you click)
+      for (const [r, key] of [['m', 'grp'], ['m', 'egg'], ['r', 'grp'], ['r', 'egg'], ['h', 'grp']]) { pkS({ role: r, team: has(r)[0], egg: true }); const sv = M.page(key).svg, HS = M.hot(key), re = /<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="[\d.]+" fill="#0b0d11" fill-opacity="\.88"/g; let m;
+        while ((m = re.exec(sv))) { const b = [+m[1], +m[2], +m[1] + +m[3], +m[2] + +m[4]]; const hit = HS.find((h) => { const cx = X(h.x), cy = Y(h.y), nx = Math.max(b[0], Math.min(cx, b[2])), ny = Math.max(b[1], Math.min(cy, b[3])); return Math.hypot(nx - cx, ny - cy) < h.r * 2.083; });
+          if (hit) bad('a label of the Plan\'s map sits on the ' + P.TN[hit.id] + ' spot you click (' + r + ', ' + key + ', check N)'); } }
+      // (every mechanic by default: a new role carries an egg where its team has one; it keeps the team it can be on, else goes where it carries)
+      for (const [from, r, team, egg] of [[{ role: 'h', team: 'Y' }, 'm', 'Y', true], [{ role: 'h', team: 'P' }, 'r', 'P', true], [{ role: 'h', team: 'P' }, 'm', 'Y', true], [{ role: 'h', team: 'B' }, 'r', 'B', true], [{ role: 'h', team: 'B' }, 'm', 'B', false], [{ role: 'm', team: 'Y', egg: true }, 'h', 'Y', false], [{ role: 'm', team: 'Y', egg: true }, 'r', 'Y', true], [{ role: 'r', team: 'P', egg: false }, 'm', 'Y', false]]) {
+        pkS({ egg: false, ...from }); M.role(r); const pk = PK(); if (pk.role !== r || pk.team !== team || pk.egg !== egg) bad('switching ' + JSON.stringify(from) + ' to ' + r + ' gives ' + JSON.stringify(pk) + '; ' + P.TN[team] + (egg ? ' with its egg' : ' without an egg') + ' (check N)'); }
+      { const L1 = load(HH, 'mint', ex); const p0 = L1.dbg.P2.pick; if (p0.role !== 'r' || p0.team !== 'P' || !p0.egg) bad('a first visit plays ' + JSON.stringify(p0) + '; every mechanic a ranged can do (Purple, with an egg) (check N)'); }
+      // (No egg off and on; a team you click keeps it off; a melee on Blue, whose plan has no melee egg, gets Yellow's)
+      pkS({ role: 'r', team: 'B', egg: true }); M.extra('noegg'); if (PK().egg || PK().team !== 'B') bad('No egg doesn\'t turn your egg off (check N)'); M.pick('grp', 'P'); if (PK().egg) bad('after No egg, picking another team brings the egg back (check N)');
+      M.extra('noegg'); if (!PK().egg || PK().team !== 'P') bad('No egg pressed again doesn\'t give your egg back (check N)');
+      pkS({ role: 'm', team: 'B', egg: false }); M.extra('noegg'); if (PK().team !== 'Y' || !PK().egg) bad('a melee on Blue pressing No egg off isn\'t moved to Yellow with its egg: ' + JSON.stringify(PK()) + ' (check N)');
+      pkS({ role: 'r', team: 'P', egg: false }); M.pick('egg', 'B'); if (PK().team !== 'B' || !PK().egg) bad('clicking Blue on Your egg doesn\'t make you Blue\'s carrier: ' + JSON.stringify(PK()) + ' (check N)');
+      // (a healer's click with Your egg left open still picks the team)
+      pkS({ role: 'r', team: 'P', egg: true }); M.tab = 'egg'; M.role('h'); M.pick(M.tab, 'B'); if (PK().team !== 'B') bad('a healer\'s click on Your group after Your egg was open picks nothing (check N)');
+      pkS({ role: 'h', team: 'Y', egg: false }); M.tab = 'egg'; M.pick(M.tab, 'P'); if (PK().team !== 'P') bad('a healer\'s click picks nothing while Your egg is the tab remembered (check N)');
+      // (🎲 Random: a team your role is on, with its egg where it has one; every such team comes up)
+      for (const r of ['m', 'r', 'h']) { const seen = new Set(); pkS({ role: r, team: has(r)[0], egg: false }); for (let i = 0; i < 80; i++) { M.random(); const pk = PK(); seen.add(pk.team);
+          if (pk.role !== r || !has(r).includes(pk.team) || pk.egg !== eggs(r).includes(pk.team)) { bad('🎲 Random as ' + r + ' gives ' + JSON.stringify(pk) + ' (check N)'); break; } }
+        if (seen.size !== has(r).length) bad('🎲 Random as ' + r + ' only ever gives ' + [...seen].join(', ') + ' (check N)'); }
+      // (the same buttons on both tabs, before and after a click: Flex, "clicking on your coil hides no egg")
+      for (const r of ['m', 'r']) { pkS({ role: r, team: eggs(r)[0], egg: true }); const btns = (t) => { M.tab = t; const L2 = []; const re = /<button[^>]*data-m([trx])="([^"]*)"[^>]*>([^<]*)<\/button>/g; let m; const h2 = dm.panel(); while ((m = re.exec(h2))) L2.push(m[1] + ':' + m[2] + ':' + m[3]); return L2.join(' | '); };
+        const a = btns('grp'), b = btns('egg'); M.pick('egg', eggs(r)[0]); const c = btns('egg'), d = btns('grp');
+        if (!/x:noegg:No egg/.test(a) || a !== b || b !== c || c !== d) bad('the map\'s buttons change between tabs (' + r + '): ' + [a, b, c, d].join(' / ') + ' (check N)'); } } }
+  catch (e) { bad('the spot maps crashed: ' + e.message + ' (check N)'); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
     const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }

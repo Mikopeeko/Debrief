@@ -20,6 +20,8 @@
 //   M. Sounds you can feel (Flex, Nov 16): waves, slams, the bubble, the sweep, landings, Vipers, her roar, and your attacks by role; see check M.
 //   L. Main's playtest (Nov 15): bot carriers keep clear of you, melee reach the heart, calls clear on the game's clock, the small tails' measured fan; see L.
 //   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
+//   O. Spot maps (Flex, Nov 16): Your egg and Your coil on the Plan's own maps, the spots where the Plan puts you and the game drops your egg, your role's spots
+//      only, 🎲 Random and No egg in the same place on both tabs, every pick the job the game plays; see check O.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -29,10 +31,14 @@ function stub() {
   const f = function () { return stub(); };
   return new Proxy(f, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : stub()), set: () => true, apply: () => stub() });
 }
-function load(H, pj) {
+// (the Plan's maps out of src/guides.js, in the file's order: what ulSvg draws the Plan's pages with, and the line that files the pages as Plan shows them.
+//  In the site they share the game's scope; in Node the game runs without them (no ulSvg, so the setup keeps its job row) unless a check asks: load(H, pj, { maps: true }))
+const MAP_BITS = ['POM_DEF', 'POM_MK', 'UL_RIM', 'UL_SOAK', 'UL_GC', 'UL_MKI', 'UL_CMK', 'UL_PAT', 'UL_VB', 'UL_EGGS', 'UL_CSP', 'ulSoaks', 'UL_PAGES', 'ulSvg', 'ulFester'];
+function load(H, pj, o) {
   H = H || require('./site-helpers.js');
   const PJ = pj || fs.readFileSync(path.join(SRC, 'practice.js'), 'utf8'), GJ = fs.readFileSync(path.join(SRC, 'guides.js'), 'utf8');
-  const fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB'].map((n) => H.grab(n, GJ)).join('\n');
+  const fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB'].map((n) => H.grab(n, GJ)).join('\n') +
+    (o && o.maps ? '\n' + MAP_BITS.map((n) => H.grab(n, GJ)).join('\n') + '\n' + ((/^UL_PAGES\.burst = [^\n]*/m.exec(GJ) || [''])[0]) : '');
   const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
   class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
   const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console });
@@ -404,6 +410,129 @@ function checks(H, say, pj) {
       [/inWave\(w, t, x, y, 5\)\) \{ G\.done\.add\('ws' \+ i\); feel\('wave'\);/, 'a wave passing you'], [/if \(!crossed\(s\.at\)\) return; feel\('slam'\);/, 'a coil\'s slam'], [/if \(c\) feel\('pop'\);/, 'the Wretch\'s bubble'],
       [/if \(!crossed\(th\.at\)\) return; feel\('sweep'\);/, 'the tail\'s sweep'], [/feel\('thud'\)/, 'something landing near you'], [/const hatch = \(e, why, tip\) => \{ feel\('hiss'\);/, 'a Viper hatching'], [/feel\('zip'\); hurt\(8\);/, 'a Viper\'s sting'], [/feel\('roar'\)/, 'her dive and the heart']]
       .forEach(([re, what]) => { if (!re.test(PJ)) M('no sound for ' + what); }); }
+  // O. The spot maps (Flex, Nov 16: "visual maps that lets them select the spot is best, you should use the plans maps so its something familiar ... Customizable,
+  //    but not crazy confusing", "Maybe include an option for people who dont have assignments yet maybe randomize their assignments", then on phase 1's first
+  //    maps "make sure the maps are placed properly it looks off", "clicking on your coil hides no egg" and "The plans layout is just general locations not exact
+  //    egg spots remember"): under your role a Spots row, Your egg and Your coil, drawn with the Plan's own maps (ulSvg of UL_PAGES, here out of src/guides.js),
+  //    with 🎲 Random and No egg in the same place on both tabs. Each egg spot is where the Plan's "Pick up eggs" map puts that carrier (pulled onto the stone),
+  //    and the game drops that slot's egg in the same quadrant, the inner spot's nearer the middle; a ranged or healer sees the left, right and far spots, a melee
+  //    the two by her; the coil spots are the Plan's own soak circles, with you drawn in yours; every pick, Random, No egg and a new role is the job the game plays.
+  //    In Node without the Plan's map pieces the setup keeps its job row (check D holds that path). (Before: no maps, only the job row: Egg carrier, First coil,
+  //    Second coil.)
+  try { const O = (m) => bad(m + ' (check O)'), SU0 = dbg.setupApi && dbg.setupApi();
+    if (!SU0 || !SU0.maps || typeof SU0.maps.hot !== 'function' || typeof SU0.maps.page !== 'function') O('the setup has no spot maps (its maps): no Your egg and Your coil maps to pick your spots on (Flex, Nov 16)');
+    else {
+      if (/pg-sprow/.test(dbg.panel())) O('without the Plan\'s maps (no ulSvg, as in Node) the setup still draws the Spots row instead of keeping the job row');
+      let GM = null; try { GM = load(H, pj, { maps: true }); } catch (e) { O('the game would not run with the Plan\'s map pieces from src/guides.js (' + e.message + ')'); }
+      const D = GM && GM.dbg, M = D && D.setupApi() && D.setupApi().maps;
+      if (GM && !M) O('with the Plan\'s maps loaded the setup has no spot maps');
+      else if (GM) try {
+        const PX = (x) => 340 + x * 2.083, PY = (y) => 240 - (y + 0.9) * 2.083, YX = (X) => (X - 340) / 2.083, YY = (Y) => (240 - Y) / 2.083 - 0.9; /* (room yards on the Plan's maps, as ulSvg draws them) */
+        const EGG = { m: ['m1', 'm2'], r: ['r5', 'r3', 'r6', 'r4', 'r1', 'r2'], h: ['r5', 'r3', 'r6', 'r4', 'r1', 'r2'] }, WHO = { m: 'a melee', r: 'a ranged', h: 'a healer' };
+        const QS = [['melee', ['m1', 'm2']], ['left', ['r5', 'r3']], ['right', ['r6', 'r4']], ['far', ['r1', 'r2']]]; /* (the Plan's egg areas and the game's slots, the centre (inner) carrier first, as the game reads a team plan) */
+        const quad = (p) => Math.round(Math.atan2(p[1], p[0]) / (Math.PI / 2)) & 3; /* (the Plan's quadrants, cut by its two diagonal lines: 0 right, 1 by her, 2 left, 3 far) */
+        const attr = (tag, a) => { const m = new RegExp('\\s' + a + '="([^"]*)"').exec(tag); return m ? m[1] : null; };
+        const svgs = (P) => { const s = String(P), i = s.indexOf('class="pg-spmap"'); return i < 0 ? [] : [...s.slice(i).matchAll(/<svg\b[^>]*>[\s\S]*?<\/svg>/g)].map((m) => m[0]); }; /* (the Plan's map, then the spots laid over it) */
+        const hotIn = (P) => [...String(svgs(P)[1] || '').matchAll(/<circle\b[^>]*\bclass="pg-hs[^"]*"[^>]*>/g)].map(([t]) => ({ id: attr(t, 'data-mh'), cx: +attr(t, 'cx'), cy: +attr(t, 'cy'), on: /class="pg-hs[^"]*\bon\b/.test(t) }));
+        const btnIn = (P) => [...String(P).matchAll(/<button\b[^>]*\bdata-m([trx])="([^"]*)"[^>]*>([^<]*)<\/button>/g)].map((m) => m[1] + ':' + m[2] + ':' + m[3]);
+        const youIn = (svg) => { const out = []; let i = -1; while ((i = svg.indexOf('>You</text>', i + 1)) >= 0) { const cs = [...svg.slice(svg.lastIndexOf('<g', i), i).matchAll(/<circle cx="([-\d.]+)" cy="([-\d.]+)"[^>]*\sfill="([^"]+)"/g)].filter((m) => m[3] !== '#000'); if (cs.length) { const c = cs[cs.length - 1]; out.push({ cx: +c[1], cy: +c[2], fill: c[3] }); } } return out; };
+        // (the setup: your role, the Spots row and one sentence; the same buttons in the same place on both tabs, the map and its spots in one frame)
+        D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; M.tab = 'egg'; const Pe = D.panel(); M.tab = 'coil'; const Pc = D.panel(); M.tab = 'egg';
+        for (const [P, k, lab] of [[Pe, 'egg', 'Your egg'], [Pc, 'coil', 'Your coil']]) { const B = btnIn(P), V = svgs(P).map((s) => attr(s.slice(0, s.indexOf('>')), 'viewBox'));
+          if (!/class="pg-srow pg-sprow"><span class="pg-sl">Spots<\/span>/.test(P) || !B.includes('t:egg:Your egg') || !B.includes('t:coil:Your coil') || !new RegExp('data-mt="' + k + '" class="on"').test(P)) O('showing ' + lab + ', the setup has no Spots row with Your egg and Your coil tabs, ' + lab + ' lit');
+          if (!B.includes('r:1:🎲 Random') || !B.includes('x:noegg:No egg')) O('showing ' + lab + ', the Spots row has ' + (B.join(', ') || 'no buttons') + '; 🎲 Random and No egg belong on both tabs');
+          if ((P.match(/data-sr="/g) || []).length !== 3 || /data-sj="|<details/.test(P) || (P.match(/class="pg-say"/g) || []).length !== 1) O('showing ' + lab + ', the setup isn\'t your role (three buttons), the Spots row and one sentence');
+          if (V.length !== 2 || !V[0] || V[0] !== V[1]) O('showing ' + lab + ', the spots aren\'t laid over the Plan\'s map in its own frame (view boxes ' + V.join(' and ') + '), so they sit off what they mark'); }
+        if (btnIn(Pe).join('|') !== btnIn(Pc).join('|')) O('the Spots row\'s buttons change between the tabs (' + btnIn(Pe).join(', ') + ', then ' + btnIn(Pc).join(', ') + '); they stay in the same place (Flex: "clicking on your coil hides no egg")');
+        // (Your egg: where the Plan's own "Pick up eggs" map puts each carrier, drawn with a name in each place and read back; a ranged or healer gets the left,
+        //  right and far spots, a melee the two by her; yours lit, with the gold You on it)
+        const ez = { melee: [], left: [], right: [], far: [], backup: [] }; QS.forEach(([z, ids]) => { ez[z] = ids.map((id) => 'P' + id); });
+        const plan = String(vm.runInContext('ulSvg', GM.ctx)(vm.runInContext('UL_PAGES', GM.ctx).eggs[0], { ez, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, new Map(), {})), planAt = {};
+        QS.forEach(([, ids]) => ids.forEach((id) => { const i = plan.indexOf('<title>P' + id + '</title>'), cs = i < 0 ? [] : [...plan.slice(plan.lastIndexOf('<g', i), i).matchAll(/<circle cx="([-\d.]+)" cy="([-\d.]+)"/g)]; if (cs.length) { const c = cs[cs.length - 1]; planAt[id] = [YX(+c[1]), YY(+c[2])]; } }));
+        if (Object.keys(planAt).length !== 8) O('the Plan\'s "Pick up eggs" map drew ' + Object.keys(planAt).length + ' of the eight carriers, so the egg spots can\'t be held to it');
+        const spotAt = {};
+        for (const [role, egg] of [['r', 'r3'], ['h', 'r1'], ['m', 'm1']]) { D.myJob = { role, egg, soak: [1, 1], fb: [0, 0] }; M.tab = 'egg';
+          const HS = M.hot('egg'), ids = HS.map((h) => h.id).sort().join(','), want = EGG[role].slice().sort().join(','), P = D.panel(), drawn = hotIn(P), you = youIn(svgs(P)[1] || '');
+          if (ids !== want) O(WHO[role] + ' sees the egg spots ' + ids + '; ' + (role === 'm' ? 'a melee takes only the two by her (m1, m2)' : 'a ranged or healer takes the left, right and far ones (' + want + ')'));
+          if (drawn.map((d) => d.id).sort().join(',') !== ids) O('the egg spots drawn for ' + WHO[role] + ' (' + drawn.map((d) => d.id).join(', ') + ') aren\'t the ones it can pick (' + ids + ')');
+          HS.forEach((h) => { spotAt[h.id] = [h.x, h.y]; const pa = planAt[h.id], pw = pa && GM.PG_UL.inward(pa), d = drawn.find((q) => q.id === h.id);
+            if (pw && Math.hypot(h.x - pw[0], h.y - pw[1]) > 0.15) O('the ' + h.id + ' egg spot is at ' + h.x.toFixed(1) + ', ' + h.y.toFixed(1) + '; the Plan\'s "Pick up eggs" map puts that carrier at ' + pa.map((v) => v.toFixed(1)).join(', ') + (Math.hypot(pa[0] - pw[0], pa[1] - pw[1]) > 0.05 ? ' (' + pw.map((v) => v.toFixed(1)).join(', ') + ' on the stone)' : '') + ' (Flex: "make sure the maps are placed properly")');
+            if (!GM.PG_UL.onPlat(h.x, h.y)) O('the ' + h.id + ' egg spot is off the stone');
+            if (!d || Math.abs(d.cx - PX(h.x)) > 0.1 || Math.abs(d.cy - PY(h.y)) > 0.1) O('the ' + h.id + ' egg spot is drawn at ' + (d ? d.cx + ', ' + d.cy : 'nowhere') + ' on the map, not at its place ' + PX(h.x).toFixed(1) + ', ' + PY(h.y).toFixed(1));
+            if (!!h.on !== (h.id === egg) || !!h.you !== (h.id === egg) || (d && d.on !== (h.id === egg))) O('the ' + h.id + ' egg spot is ' + (h.on ? 'lit' : 'not lit') + ' for ' + WHO[role] + ' who carries the ' + egg + ' egg'); });
+          const mine = HS.find((h) => h.id === egg); if (!mine || you.length !== 1 || you[0].fill !== '#f3c969' || Math.abs(you[0].cx - PX(mine.x)) > 0.1 || Math.abs(you[0].cy - PY(mine.y)) > 0.1) O('on Your egg the gold You isn\'t drawn once, on your spot (' + WHO[role] + ' carrying ' + egg + ')'); }
+        // (the game drops each slot's egg in its spot's quadrant, the inner spot's egg nearer the middle than the outer one's: the run played, and four more seeds)
+        D.at(12, 'r3', { east: false, seed: 3 }); const floor = D.G.eggs.filter((e) => e.set === 0 && e.state !== 'floor'); if (floor.length) O('at 0:12 the first eggs ' + floor.map((e) => e.id).join(', ') + ' aren\'t lying on the floor');
+        for (const [tag, S1] of [['the run played', D.S]].concat([5, 8, 13, 21].map((sd) => ['seed ' + sd, GM.script({ seed: sd, east: sd % 2 === 0 })]))) { const at = (id) => { const e = S1.eggSets[0].eggs.find((q) => q.id === id); return e ? [e.x, e.y] : [0, 0]; };
+          const out = Object.keys(spotAt).filter((id) => quad(at(id)) !== quad(spotAt[id])); if (out.length) { O('in the first set (' + tag + ') the game drops the ' + out.join(', ') + ' egg(s) outside the quadrant their map spot is in'); break; }
+          const flip = QS.filter(([, [a, b]]) => Math.hypot(...at(a)) >= Math.hypot(...at(b))).map(([z]) => z); if (flip.length) { O('in the first set (' + tag + ') the inner spot\'s egg lands no nearer the middle than the outer one\'s (' + flip.join(', ') + ')'); break; } }
+        // (both sets, 300 runs each way: every egg in its own quadrant (set 2 turned back by her dive), the inner one nearer the middle, none on a beam spot or
+        //  the beam tank's walk. The map review, Nov 16: an egg kept off them turned up to 60 degrees, and set 2's inner eggs landed in the next quadrant on 667
+        //  of 2000 runs)
+        { const segD = (p, a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1], u = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(p[0] - a[0] - vx * u, p[1] - a[1] - vy * u); };
+          const QI = { right: 0, melee: 1, left: 2, far: 3 }, PU = GM.PG_UL, bk = (p, d) => { const a = -d * Math.PI / 180; return [p[0] * Math.cos(a) - p[1] * Math.sin(a), p[0] * Math.sin(a) + p[1] * Math.cos(a)]; }; let bad2 = null;
+          for (let sd = 1; sd <= 300 && !bad2; sd++) for (const east of [false, true]) { const S2 = GM.script({ seed: sd, east });
+            S2.eggSets.forEach((st, si) => { if (bad2) return; for (const e of st.eggs) { const p = bk([e.x, e.y], st.rot), z = PU.eggQ[e.id][0];
+                if (quad(p) !== QI[z]) { bad2 = 'set ' + (si + 1) + ' (seed ' + sd + (east ? ', east' : '') + ') drops the ' + e.id + ' egg outside its ' + z + ' quadrant'; return; }
+                if (S2.beams.some((bm) => Math.hypot(e.x - bm.at[0], e.y - bm.at[1]) < 8) || (si === 1 && S2.beams[1] && segD([e.x, e.y], [0, 34], S2.beams[1].at) < 6)) { bad2 = 'set ' + (si + 1) + ' (seed ' + sd + ') drops the ' + e.id + ' egg on a beam spot or the beam tank\'s walk'; return; } }
+              for (const [, [a, b]] of QS) { const A = st.eggs.find((q) => q.id === a), B = st.eggs.find((q) => q.id === b); if (A && B && Math.hypot(A.x, A.y) >= Math.hypot(B.x, B.y)) { bad2 = 'set ' + (si + 1) + ' (seed ' + sd + ') drops the inner ' + a + ' egg no nearer the middle than ' + b; return; } } }); }
+          if (bad2) O(bad2); }
+        // (each egg carrier starts, waits (0:08) and holds its egg (0:20) on its ring, the Plan's place for that egg. The map review, Nov 16: the game held them on
+        //  another guide's zone-defence spots, 4 to 20 yards from the ring)
+        for (const [role, ids] of [['m', EGG.m], ['r', EGG.r]]) for (const id of ids) { D.myJob = { role, egg: id, soak: [1, 1], fb: [0, 0] }; M.tab = 'egg'; const h = M.hot('egg').find((q) => q.id === id), slot = D.jobSlot(); if (!h) continue;
+          for (const [t, what] of [[0.05, 'starts'], [8, 'waits at 0:08'], [20, 'holds its egg at 0:20']]) { D.at(t, slot, { seed: 3, east: false }); const d = Math.hypot(D.G.x - h.x, D.G.y - h.y);
+            if (d > 2) { O('the ' + id + ' carrier ' + what + ' ' + d.toFixed(1) + ' yards from its ring on Your egg (the Plan\'s place for that egg)'); break; } } }
+        // (Your coil: the Plan's own two soak circles, Right Soak #1 the first coil to appear; yours lit, and you drawn once, in gold, INSIDE your circle, as the
+        //  game stands you in your coil: an egg carrier on the Plan's numbered spot, anyone else in its middle. The review, Nov 16: without an egg You sat in the
+        //  Plan's list under the circle, 22 yards from its middle, while the game stands you within 3 yards of the coil's middle. And the coil you pick is the one
+        //  the game plays, read off its run: an egg carrier takes the first coil in set 1 whatever it picks, so on Left Soak #2 the sentence says so (it said
+        //  "pick it up, then soak Left Soak #2" while the game stood you in the first coil))
+        M.tab = 'coil';
+        for (const [egg, tm] of [['r3', 1], ['r3', 2], [null, 1], [null, 2]]) { D.myJob = { role: 'r', egg, soak: [tm, tm], fb: [0, 0] };
+          const HS = M.hot('coil'), P = D.panel(), [pg, hs] = svgs(P), drawn = hotIn(P), circ = [...String(pg || '').matchAll(/<circle cx="([-\d.]+)" cy="([-\d.]+)" r="([-\d.]+)"/g)].map((m) => [+m[1], +m[2], +m[3]]), tag = ' (' + (egg ? 'an egg carrier' : 'no egg') + ' on Soak #' + tm + ')';
+          if (HS.map((h) => h.id).join(',') !== 't1,t2' || HS.some((h) => !h.big) || drawn.length !== 2) { O('Your coil\'s spots are ' + HS.map((h) => h.id).join(', ') + '; they should be the two soak circles, Right Soak #1 and Left Soak #2' + tag); continue; }
+          if (!/first coil to appear/.test(HS[0].title) || !/Left Soak #2/.test(HS[1].title)) O('Your coil\'s spots read "' + HS.map((h) => h.title).join('" and "') + '"; Right Soak #1 takes the first coil to appear, Left Soak #2 the next');
+          HS.forEach((h) => { if (!circ.some(([x, y, r]) => Math.abs(x - PX(h.x)) < 0.15 && Math.abs(y - PY(h.y)) < 0.15 && Math.abs(r - h.r * 2.083) < 0.15)) O('the ' + h.id + ' coil spot isn\'t on the Plan map\'s own soak circle' + tag);
+            const d = drawn.find((q) => q.id === h.id); if (!d || Math.abs(d.cx - PX(h.x)) > 0.1 || Math.abs(d.cy - PY(h.y)) > 0.1) O('the ' + h.id + ' coil spot is drawn off its circle' + tag); });
+          const mine = HS.find((h) => h.id === 't' + tm), other = HS.find((h) => h.id !== 't' + tm), you = youIn(String(pg || '')).concat(youIn(String(hs || '')));
+          if (!mine.on || other.on) O('Your coil lights ' + (HS.filter((h) => h.on).map((h) => h.id).join(', ') || 'nothing') + tag);
+          if (you.length !== 1 || you[0].fill !== '#f3c969') O('Your coil draws ' + (you.length === 1 ? 'you, but not in gold' : you.length + ' You tokens') + '; it draws you once, in gold' + tag);
+          else { const yx = YX(you[0].cx), yy = YY(you[0].cy), yd = Math.hypot(yx - mine.x, yy - mine.y);
+            if (yd >= mine.r) O('Your coil draws you at ' + yx.toFixed(1) + ', ' + yy.toFixed(1) + ', ' + yd.toFixed(1) + ' yards from the middle of your circle (radius ' + mine.r + '): outside it, while the game stands you in your coil' + tag); }
+          // (the game's own run: which coil this job soaks in each set, and the sentence saying the same)
+          const slot = D.jobSlot(); D.at(0.05, slot, { seed: 3 }); const kk = [0, 1].map((si) => { const q = D.S.soaks.find((s) => s.set === si && s.group.includes(slot)); return q ? q.k + 1 : 0; }), say = M.say();
+          if (kk[1] !== tm || kk[0] !== (egg ? 1 : tm)) O('the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second; your pick (Soak #' + tm + ') is the second set\'s, and the first set\'s too without an egg (egg carriers take the first coil there)' + tag);
+          if (kk[0] !== kk[1] ? !/first coil/.test(say) || !/Left Soak #2 in the second set/.test(say) : /second set/.test(say) || !(kk[1] === 2 ? /Left Soak #2/ : /Right Soak #1/).test(say)) O('the sentence reads "' + say + '" while the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second' + tag); }
+        M.tab = 'egg';
+        // (each pick is the job the game plays)
+        D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] };
+        M.pick('egg', 'r6'); if (D.myJob.egg !== 'r6' || D.jobSlot() !== 'r6' || D.myJob.role !== 'r' || D.myJob.soak.join() !== '1,1') O('picking the right inner egg spot gives ' + JSON.stringify(D.myJob) + ', not the r6 egg with your role and coil kept');
+        M.pick('coil', 't2'); if (D.myJob.soak.join() !== '2,2' || D.myJob.egg !== 'r6') O('picking Left Soak #2 gives ' + JSON.stringify(D.myJob) + ', not coil team 2 with your egg kept');
+        if (!/coil team 1, then team 2$/.test(D.jobRole().job)) O('an egg carrier on Left Soak #2 plays "' + D.jobRole().job + '"; carriers take the first coil in set 1 (in the bubble), then team 2');
+        if (!/Left Soak #2/.test(M.say()) || !/Left Soak #2/.test(M.sub()) || !/right/i.test(M.sub())) O('after picking the right egg and Left Soak #2, the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"');
+        { D.at(20, D.jobSlot(), { seed: 3 }); const e = D.G.eggs.find((q) => q.set === 0 && q.who === 'r6' && q.state === 'held'); /* (the game's own run, on its autopilot: the egg you pick is the one you carry) */
+          if (!e || e.id !== 'r6' || quad([e.x, e.y]) !== 0) O('after picking the right inner egg spot the game\'s run has you holding ' + (e ? 'the ' + e.id + ' egg from ' + e.x.toFixed(0) + ', ' + e.y.toFixed(0) : 'no egg') + ' at 0:20; you carry the r6 egg, from the right quadrant'); }
+        M.extra('noegg'); { const lit = (M.extras().find((q) => q[0] === 'noegg') || [])[2];
+          D.at(20, D.jobSlot(), { seed: 3 }); if (D.G.eggs.some((q) => q.who === D.jobSlot())) O('with No egg the game\'s run still hands you an egg');
+          if (D.myJob.egg !== null || D.jobSlot() !== 'r7' || D.myJob.soak.join() !== '2,2' || !lit) O('No egg gives ' + JSON.stringify(D.myJob) + (lit ? '' : ' and isn\'t lit') + '; it should drop your egg and keep your coil');
+          if (M.hot('egg').some((h) => h.on || h.you)) O('with No egg an egg spot is still lit');
+          if (!/coil team 2$/.test(D.jobRole().job) || /then/.test(D.jobRole().job)) O('no egg on Left Soak #2 plays "' + D.jobRole().job + '"; it should be coil team 2');
+          if (!/^No egg/.test(M.say()) || !/^No egg/.test(M.sub())) O('with No egg the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"'); }
+        M.pick('coil', 't1'); if (D.myJob.soak.join() !== '1,1' || D.myJob.egg !== null) O('picking Right Soak #1 with no egg gives ' + JSON.stringify(D.myJob));
+        M.pick('egg', 'r2'); if (D.myJob.egg !== 'r2' || D.jobSlot() !== 'r2' || D.myJob.soak.join() !== '1,1' || (M.extras().find((q) => q[0] === 'noegg') || [])[2]) O('picking an egg spot after No egg gives ' + JSON.stringify(D.myJob) + ' (No egg should go dark)');
+        // (a new role keeps the spots it can take and moves the rest)
+        D.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; M.role('h'); if (D.myJob.role !== 'h' || D.myJob.egg !== 'r3' || D.myJob.soak.join() !== '2,2') O('switching Ranged to Healer gives ' + JSON.stringify(D.myJob) + '; a healer can keep the same egg and coil');
+        M.role('m'); if (D.myJob.role !== 'm' || !EGG.m.includes(D.myJob.egg) || D.myJob.soak.join() !== '2,2') O('switching to Melee gives ' + JSON.stringify(D.myJob) + '; a melee takes an egg by her and keeps the coil');
+        M.role('r'); if (D.myJob.role !== 'r' || !EGG.r.includes(D.myJob.egg) || D.myJob.soak.join() !== '2,2') O('switching Melee to Ranged gives ' + JSON.stringify(D.myJob) + '; a ranged takes a left, right or far egg and keeps the coil');
+        // (🎲 Random, for people with no plan yet: an egg spot your role can take and a coil, never the same every time)
+        for (const role of ['m', 'r', 'h']) { const eggs = new Set(), teams = new Set(); D.myJob = { role, egg: null, soak: [1, 1], fb: [0, 0] };
+          for (let i = 0; i < 60; i++) { M.random(); const j = D.myJob; eggs.add(j.egg); teams.add(j.soak.join());
+            if (j.role !== role || !EGG[role].includes(j.egg) || !/^(1,1|2,2)$/.test(j.soak.join())) { O('🎲 Random gave ' + WHO[role] + ' ' + JSON.stringify(j) + ': ' + (j.role !== role ? 'a different role' : !j.egg ? 'no egg (every role takes every mechanic it can)' : !EGG[role].includes(j.egg) ? 'an egg spot ' + WHO[role] + ' can\'t take' : 'no coil team')); break; } }
+          if (eggs.size < 2 || teams.size < 2) O('🎲 Random for ' + WHO[role] + ' gives the same every time (eggs ' + [...eggs].join(', ') + '; coils ' + [...teams].join(' and ') + ')'); }
+      } catch (e) { O('the spot maps crashed: ' + e.message); }
+      finally { try { if (D) D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; if (M) M.tab = 'egg'; } catch (e) { /* (no job) */ } }
+    }
+  } catch (e) { bad('the spot maps crashed the game: ' + e.message + ' (check O)'); }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;

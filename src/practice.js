@@ -24,6 +24,10 @@ const PG_UL = {
   // (a spot pulled onto the stone, 1.5 yards in from its edge)
   inward: (p) => { let q = [p[0], p[1]]; for (let i = 0; i < 60 && !(Math.abs(q[0]) <= 35 && Math.abs(q[1]) <= 32.5 && Math.abs(q[0]) + Math.abs(q[1]) <= 47); i++) q = [q[0] * 0.98, q[1] * 0.98]; return q; },
   eggO: { r3: [-3, 4], m1: [0, 0], r5: [-3, 2], r1: [2, 3], r2: [-2, 3], r6: [3, -2], m2: [0, 0], r4: [3, 2] },
+  // (the team plan's egg places, as the Plan's "Pick up eggs" map draws them (guides.js UL_PAGES.eggs): melee by her, left, right and far as she faces north, the
+  // centre carrier about 14 yards in on the quadrant's line and the edge carrier at the rim. GENERAL PLACES, not where eggs land (Flex, Nov 16: "The plans layout is
+  // just general locations not exact egg spots remember"): the eggs land at random, one inner and one outer in each quadrant (eggLand), and you take yours)
+  planEgg: { m1: [0, 14], m2: [0, 35], r5: [-14, 0], r3: [-41, 0], r6: [14, 0], r4: [41, 0], r1: [0, -14], r2: [0, -40] }, eggQ: { m1: ['melee', 0], m2: ['melee', 1], r5: ['left', 0], r3: ['left', 1], r6: ['right', 0], r4: ['right', 1], r1: ['far', 0], r2: ['far', 1] }, qAx: { melee: 90, left: 180, right: 0, far: 270 },
   // (the coil soak groups: set 1, every carrier takes the first slam inside the Wretch's bubble and group two the second; set 2, the carriers split)
   soak: [[['m1', 'm2', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'h1', 'h3', 'm3'], ['m4', 'm5', 'm6', 'm7', 'h2', 'h4', 'r7']],
     [['r1', 'r3', 'r5', 'm1', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r2', 'r4', 'r6', 'm2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
@@ -37,7 +41,7 @@ const PG_UL = {
 function pgUlScript(o) {
   // (the sides, from the run's seed so a run can be replayed: where she surfaces, her tail's side in set 1 (west or east, about even), and which coil of
   // each set appears first; Flex: "whichever appears first is the one gets soaked", team 1 takes it)
-  const rnd = pgRng(o.seed || 1), side = pgRng(((o.seed || 1) * 7919 + 13) >>> 0), sr = [side(), side(), side(), side()];
+  const rnd = pgRng(o.seed || 1), side = pgRng(((o.seed || 1) * 7919 + 13) >>> 0), sr = [side(), side(), side(), side()], eggRnd = pgRng(((o.seed || 1) * 104729 + 71) >>> 0);
   const east = o.east != null ? !!o.east : sr[0] < 0.5, tailEast = o.tailEast != null ? !!o.tailEast : sr[1] < 0.5, first = Array.isArray(o.first) ? o.first.map((x) => !!x) : [sr[2] < 0.5, sr[3] < 0.5];
   const ROT = east ? -90 : 90, SURF = 85.8, DIVE = 77, rotAt = (t) => (t < SURF ? 0 : ROT), F = (p, t) => pgRot(p, rotAt(t));
   // (her tail's frame: the plan's spots are for a tail on the west; set 1 mirrors them when it rises east, set 2 turns them to the south after her turn)
@@ -48,7 +52,8 @@ function pgUlScript(o) {
   const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c) => S.warns.push({ t, text, c: c || '#ff8f87' }), timer = (t, name) => S.timers.push({ t, name });
   const cres = (w) => { const n = Math.max(1, Math.round(w / 7)), wd = w / n, out = []; for (let i = 0; i < n; i++) out.push([-w / 2 + wd * i + (i ? 0.6 : 0), -w / 2 + wd * (i + 1) - (i < n - 1 ? 0.6 : 0)]); return out; };
   // eggs: Call of the Serpent, 8 eggs into the carriers' zones (they turn with her), 4-yard landings, a shell for 3.6 s
-  S.eggSets = [{ cast: 1, land: 10, rot: 0 }, { cast: 71, land: 80, rot: ROT }].map((e, si) => ({ ...e, si, eggs: Object.keys(PG_UL.eggO).map((id, i) => { const z = UX_ZONE[id], q = PG_UL.eggO[id]; const p = PG_UL.inward(pgRot([z[0] + q[0], z[1] + q[1]], e.rot)); return { id, x: p[0], y: p[1], land: e.land + (i % 3) * 0.7, shell: e.land + (i % 3) * 0.7 + 3.6 }; }) }));
+  S.eggSets = [{ cast: 1, land: 10, rot: 0 }, { cast: 71, land: 80, rot: ROT }].map((e, si) => ({ ...e, si, eggs: Object.keys(PG_UL.eggO).map((id, i) => { const [z, out] = PG_UL.eggQ[id], a = (PG_UL.qAx[z] + (eggRnd() * 2 - 1) * 28) * Math.PI / 180, dd = out ? 24 + eggRnd() * 10 : 9 + eggRnd() * 9;
+    const p = PG_UL.inward(pgRot([Math.cos(a) * dd, Math.sin(a) * dd], e.rot)); /* (at random in your quadrant, the inner or the outer one (Flex, Nov 16: the Plan's places are general)) */ return { id, x: p[0], y: p[1], land: e.land + (i % 3) * 0.7, shell: e.land + (i % 3) * 0.7 + 3.6 }; }) }));
   S.eggSets.forEach((e) => { cast('boss', 'Call of the Serpent', e.cast, e.cast + 1.4); warn(e.cast, e.si ? 'Call of the Serpent: eight more eggs!' : 'Call of the Serpent: eggs incoming!', '#e6e0c8'); timer(e.land, 'Eggs land'); });
   // the Wretches: Toxic Womb lands in the middle (7 yards) at 0:03 and 1:12, it wakes 20 s later; a spectral image beams it, five impacts a second apart
   // (0:15 to 0:19, 1:24 to 1:28), all on one tank: the off tank first, then the tank who took the first Mother's Wrath. The old Wretch dies as the new one lands.
@@ -61,6 +66,18 @@ function pgUlScript(o) {
     S.beams.push({ from: w.img, to: [0, 0], at: B, t0: w.beam - 0.4, t1: w.beam + 4.3, hits: [0, 1, 2, 3, 4].map((i) => w.beam + i), wretch: w.id, tank: w.tank });
     warn(w.beam - 2, 'Venom beam on the off tank: only the tank stands in it. Stay out of its side waves!', '#3af2a8'); timer(w.beam, 'Venom beam');
     for (let i = 0; i < 5; i++) [90, -90].forEach((a) => S.waves.push({ kind: 'incub', tank: w.tank, warn: 1.5, x: B[0], y: B[1], deg: ba + a, v: 12.5, w: 10, d: 5, cres: cres(10), t0: w.beam + i, t1: w.beam + 9.5 + i, name: 'Caustic Waves from the off tank', tip: 'The off tank\'s beam sends waves out sideways: stay clear of their lanes.' })); });
+  // (the random eggs land clear of the venom beam's spot, where the beam tank has to stand: one landed on the 1:24 beam spot (Nov 16). Turned round the middle
+  //  in 12-degree steps until 8 yards clear, staying in the same quadrant band)
+  //  (and clear of the beam tank's walk to the second beam: at the dive her tank runs from in front of her straight to that spot, a tight 7 s; an egg landing on
+  //  the way at 1:20 held it up and the first impact missed it)
+  const segD = (p, a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1], u = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(p[0] - a[0] - vx * u, p[1] - a[1] - vy * u); };
+  const eggBad = (e, si) => S.beams.some((bm) => Math.hypot(e.x - bm.at[0], e.y - bm.at[1]) < 8) || (si === 1 && S.beams[1] && segD([e.x, e.y], [0, 34], S.beams[1].at) < 6);
+  // (an egg kept off them moves within its own quadrant: at most 40 degrees off its axis, in its inner or outer band. Before, it turned up to 60 degrees,
+  //  and a third of set 2's inner eggs landed in the next quadrant (the map review, Nov 16))
+  S.eggSets.forEach((st, si) => st.eggs.forEach((e) => { if (!eggBad(e, si)) return; const [z, out] = PG_UL.eggQ[e.id], l0 = pgRot([e.x, e.y], -st.rot), a0 = Math.atan2(l0[1], l0[0]) * 180 / Math.PI, d0 = Math.hypot(l0[0], l0[1]);
+    const off = (a) => ((a - PG_UL.qAx[z]) % 360 + 540) % 360 - 180, R = out ? [22, 36] : [7, 20], C = [];
+    [0, 12, -12, 24, -24, 36, -36, 48, -48].forEach((da) => [1, 0.8, 1.25, 0.65, 1.45].forEach((f) => { const a = a0 + da; if (Math.abs(off(a)) <= 40) C.push([Math.abs(da) / 12 + Math.abs(f - 1) * 3, a, Math.max(R[0], Math.min(R[1], d0 * f))]); }));
+    C.sort((p, q) => p[0] - q[0]); for (const [, a, d] of C) { const q = PG_UL.inward(pgRot([Math.cos(a * Math.PI / 180) * d, Math.sin(a * Math.PI / 180) * d], st.rot)); if (!eggBad({ x: q[0], y: q[1] }, si)) { e.x = q[0]; e.y = q[1]; return; } } }));
   // the bubbles (Fester Burst, 4 s cast, 10 yards round the Wretch) at 0:39, 1:10, 1:48 and 2:20: on the first coil's circle (by her tail, whichever coil comes
   // first); in the middle by her; the second Wretch held by her tank 20 yards in front of her new spot (measured 17 to 22, and 46 to 53 from the new tail), the
   // raid on it from the Thrash's cast so the Thrash only hits them small; between the second coil circles. `tank`: who holds the Wretch there
@@ -193,8 +210,11 @@ function pgOpen(root, boss, d, pk) {
     const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; if (P2) P2.init(G); };
   const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
   // where each raider stands when nothing is happening: her tank in front of her, melee round her, carriers in their zones, the rest inside; turned with her
-  const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.some((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
-    return PG_UL.inward(pgRot(carrierOf(id) && egg ? UX_ZONE[id] : UX_HOME[id], rot)); };
+  const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.find((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
+    // (an egg carrier waits and holds the first set's egg at the Plan's place for it, where the setup's ring is: the map review, Nov 16, found the game holding
+    //  carriers on another guide's zone-defence spots, 4 to 20 yards from their ring (Flex: "make sure the maps are placed properly it looks off"). The
+    //  second set keeps the zone spots: on the Plan's places, turned with her dive, m2 stood in her reach at 1:37 and r1 and r6 met at 1:25)
+    return PG_UL.inward(pgRot(carrierOf(id) && egg ? (egg.set === 0 && PG_UL.planEgg[id]) || UX_ZONE[id] : UX_HOME[id], rot)); };
   const bossAt = (t) => { if (P2) return P2.bossAt(t); const D = S.dive; if (t < D.gone) return { p: PG_UL.boss.slice(), up: true }; return { p: D.to, up: t >= D.surf }; };
   // (her waves' halves, Nov 15: [first, safe] as the floor shows them now: until the first wave has gone by the first half is red and the other green,
   // then the colours swap: cross behind it. d: the direction into the half that's hit first)
@@ -754,10 +774,58 @@ function pgOpen(root, boss, d, pk) {
       '<p class="pg-say">Your job comes from <b>' + esc(TEAM.name) + '</b>: ' + esc(role.job) + '.</p>';
     if (!SETUP) return '<div class="pg-job0">' + P2.card() + '</div>'; /* (a part that has no setup yet keeps its own picker) */
     const nw = SETUP.now();
+    if (mapsOn()) { try { return '<div class="pg-srow"><span class="pg-sl">Role</span>' + tiles('sr', SETUP.roles.map((r) => [r, SROLE[r]]), nw.role) + '</div>' + mapsHtml(SETUP.maps) + '<p class="pg-say">' + esc(SETUP.maps.say()) + '</p>'; } catch (e) { console.error('Practice setup maps:', e); /* (no maps here: the job row) */ } }
     return '<div class="pg-srow"><span class="pg-sl">Role</span>' + tiles('sr', SETUP.roles.map((r) => [r, SROLE[r]]), nw.role) + '</div>' +
       '<div class="pg-srow"><span class="pg-sl">Job</span>' + tiles('sj', SETUP.jobs(nw.role), nw.job) + '</div><p class="pg-say">' + esc(SETUP.say()) + '</p>'; };
+  // (Flex, Nov 16: "each role should ideally be tested on as many mechanics as they are elgible to get", and "assigned positions in soaks, or where they pick
+  // up eggs ... let them select those spots without it being crazy complex. I think visual maps that lets them select the spot is best, you should use the
+  // plans maps so its something familiar". Phase 1: under your role, the Plan's own maps (ulSvg, UL_PAGES, as Plan draws them for the team's wowutils plan):
+  // Your egg, the eight quadrant spots (melee by her, left, right, far; the centre and the edge one), and Your coil, Right Soak #1 or Left Soak #2. You are
+  // the gold token; every spot your role can take has a dashed ring to click. You carry an egg and soak a coil by default, as the plan has everyone)
+  // ---- the spot maps (Flex, Nov 16). The contract every part gives its setup as SETUP.maps (phase 1's below; a later part's module gives its own):
+  //   tabs() -> [[key, label]], tab: the key shown now (read and written by the card), page(key) -> { svg, vb } (svg: the Plan's own map, ulSvg of a UL_PAGES
+  //   page, with you on it; vb: its view box [x, y, w]), hot(key) -> [{ id, x, y, r, title, on, big, you }] (the spots you can click, in room yards, the same
+  //   frame as the Plan's maps; r in yards; on: yours now; you: draw the gold You token there; big: a whole area like a soak circle), pick(key, id) (take
+  //   that spot), extras() -> [[id, label, on]] (small buttons like No egg) and extra(id), random() (Flex: "for people who dont have assignments yet maybe
+  //   randomize their assignments"), role(r) (a new role: keep the spots it can take, move the rest), say() -> one sentence, sub() -> the Play button's line.
+  //   Spots go where the game really puts you (Flex, Nov 16: "make sure the maps are placed properly it looks off"). Every role takes every mechanic it can
+  //   by default (Flex: "each role should ideally be tested on as many mechanics as they are elgible to get") ----
+  const mapsOn = () => !TEAM && !!(SETUP && SETUP.maps) && typeof ulSvg === 'function' && typeof UL_PAGES !== 'undefined' && typeof UL_VB !== 'undefined';
+  const MX = (x) => +(340 + x * 2.083).toFixed(1), MY = (y) => +(240 - (y + 0.9) * 2.083).toFixed(1); /* (room yards on the Plan's maps, as ulSvg draws them) */
+  // (a tab with no Plan map (page(key) -> null) shows its spots as plain buttons instead: { id, lab, note, on }. Flex, Nov 16, on a made-up phase 3 map:
+  // "where did this come from? Theres no map like this in the plan section", "the soak assignments are just who stands in the soaks", "the soaks are not
+  // spread out on mythic". Only the Plan's own maps are drawn; a job that isn't a place is a button)
+  const spotBtns = (M, tab) => '<div class="pg-seg pg-spl" role="group" aria-label="Pick one">' + M.hot(tab).map((h) => '<button type="button" data-mh="' + esc(h.id) + '"' + (h.on ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (h.title ? ' title="' + esc(h.title) + '"' : '') + '><span class="pg-spn">' + esc(h.lab || h.title) + '</span>' + (h.note ? '<span class="pg-spt">' + esc(h.note) + '</span>' : '') + '</button>').join('') + '</div>';
+  const mapsHtml = (M) => { const T = M.tabs(), tab = T.some((q) => q[0] === M.tab) ? M.tab : T[0][0], pg = M.page(tab), vb = pg ? pg.vb : [0, 0, 380], k = vb[2] / 380;
+    const hot = pg && M.hot(tab).map((h) => '<circle class="pg-hs' + (h.on ? ' on' : '') + (h.big ? ' big' : '') + '" data-mh="' + esc(h.id) + '" cx="' + MX(h.x) + '" cy="' + MY(h.y) + '" r="' + (h.r * 2.083).toFixed(1) + '"><title>' + esc(h.title) + '</title></circle>' +
+      (h.you ? '<g pointer-events="none"><circle cx="' + MX(h.x) + '" cy="' + MY(h.y) + '" r="' + (9 * k).toFixed(1) + '" fill="#f3c969" stroke="#0b0d11" stroke-width="' + (1.2 * k).toFixed(2) + '"/><text x="' + MX(h.x) + '" y="' + (MY(h.y) + 3.1 * k).toFixed(1) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="' + (8.5 * k).toFixed(1) + '" fill="#0d1014">You</text></g>' : '')).join('');
+    return '<div class="pg-srow pg-sprow"><span class="pg-sl">Spots</span><div class="pg-spw"><div class="pg-seg pg-sptab" role="group" aria-label="Map">' + T.map(([v, t]) => '<button type="button" data-mt="' + esc(v) + '"' + (v === tab ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(t) + '</button>').join('') +
+      '<button type="button" class="pg-rnd" data-mr="1" title="No assignments yet? Pick random spots your role can take">🎲 Random</button>' + (M.extras ? M.extras() : []).map(([id, t, on]) => '<button type="button" class="pg-mx' + (on ? ' on' : '') + '" data-mx="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(t) + '</button>').join('') + '</div>' +
+      (pg ? '<div class="pg-spmap">' + pg.svg + '<svg class="pg-hot" viewBox="' + [vb[0], vb[1], vb[2], vb[2]].join(' ') + '" xmlns="http://www.w3.org/2000/svg">' + hot + '</svg></div>' : spotBtns(M, tab)) + '</div></div>'; };
+  // phase 1's maps: Your egg (the Plan's Pick up eggs page: the eight spots, melee by her, left, right, far, the centre and the edge one, drawn where the game drops
+  // each egg in the first set) and Your coil (its Coil soaks page: Right Soak #1, the first coil to appear, or Left Soak #2). You carry an egg and soak a coil by default
+  const EGG_SP = [['m1', 'melee', 0], ['m2', 'melee', 1], ['r5', 'left', 0], ['r3', 'left', 1], ['r6', 'right', 0], ['r4', 'right', 1], ['r1', 'far', 0], ['r2', 'far', 1]], ZNAME = { melee: 'by her', left: 'left', right: 'right', far: 'far' };
+  const eggFor = (r, z) => (r === 'm' ? z === 'melee' : z !== 'melee'); /* (the plan's egg melee take the quadrant by her, everyone else the other three) */
+  const eggAt = (slot) => PG_UL.inward(PG_UL.planEgg[slot]); /* (the Plan's general place for that egg, on the stone: the egg itself lands at random in that quadrant.
+    DO NOT move these rings onto the eggs' landing spots: Flex, Nov 16, "The plans layout is just general locations not exact egg spots remember". Check O holds it) */
+  const P1MAPS = { tab: 'egg', tabs: () => [['egg', 'Your egg'], ['coil', 'Your coil']],
+    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myJob.soak[1] === 2 ? 1 : 0;
+      if (key === 'coil' && myJob.egg) { D.teams[ti] = ['You']; D.ce[ti] = ['You']; } const pg = key === 'egg' ? UL_PAGES.eggs[0] : UL_PAGES.coils[0]; /* (an egg carrier on the Plan's numbered spot in the circle; without an egg, You is drawn in the middle of your circle (hot: you), where the game stands you, not in the Plan's list under it (review, Nov 16)) */
+      return { svg: ulSvg(pg, D, new Map([['you', { color: '#f3c969' }]]), {}), vb: UL_VB[pg.vb] || UL_VB.mid }; },
+    hot: (key) => (key === 'egg' ? EGG_SP.filter(([slot, z]) => eggFor(myJob.role, z) || slot === myJob.egg).map(([slot, z, i]) => { const p = eggAt(slot), on = slot === myJob.egg; return { id: slot, x: p[0], y: p[1], r: 7.2, title: (z === 'melee' ? 'By her' : ZNAME[z][0].toUpperCase() + ZNAME[z].slice(1) + ' quadrant') + ': the ' + (i ? 'outer' : 'inner') + ' egg (it lands somewhere there)', on, you: on }; })
+      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = (myJob.soak[1] === 2 ? 2 : 1) === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' + (myJob.egg ? ' (egg carriers: in the second set)' : '') }; })),
+    pick: (key, id) => { if (key === 'egg') myJob = { ...myJob, egg: id, fb: [0, 0] }; else { const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
+    extras: () => [['noegg', 'No egg', !myJob.egg]], extra: (id) => { if (id === 'noegg') { myJob = { ...myJob, egg: null, fb: [0, 0] }; jobSave(); } },
+    random: () => { const ok = EGG_SP.filter((q) => eggFor(myJob.role, q[1])), q = ok[Math.floor(Math.random() * ok.length)], tm = Math.random() < 0.5 ? 1 : 2; myJob = { ...myJob, egg: q ? q[0] : null, soak: [tm, tm], fb: [0, 0] }; jobSave(); },
+    role: (r) => { const es = EGG_SP.find((q) => q[0] === myJob.egg), keep = es && eggFor(r, es[1]); myJob = { ...myJob, role: r, egg: myJob.egg ? (keep ? myJob.egg : EGG_BY[r]) : null, fb: [0, 0] }; jobSave(); },
+    // (an egg carrier takes the first coil in set 1, in the bubble, whatever their pick (jobSoak); Left Soak #2 is theirs in the second set only. The sentence said
+    //  "pick it up, then soak Left Soak #2" while the game stood them in the first coil (review, Nov 16))
+    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myJob.soak[1] === 2; return es ? 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'take the first coil in the Wretch\'s bubble with the other egg carriers, and Left Soak #2 in the second set.' : 'soak Right Soak #1, the first coil to appear, and get in the Wretch\'s bubble.')
+      : 'No egg: you soak ' + (t2 ? 'Left Soak #2, the second coil to appear' : 'Right Soak #1, the first coil to appear') + ', and get in the Wretch\'s bubble.'; },
+    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myJob.soak[1] === 2 ? (myJob.egg ? 'Soak #1, then Left Soak #2' : 'Left Soak #2') : 'Right Soak #1') };
+  if (SETUP && !P2) SETUP.maps = P1MAPS;
   const panel = () => setupHtml(); /* (for the test) */
-  const playSub = () => role.name + ' · ' + (TEAM ? role.job : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job);
+  const playSub = () => role.name + ' · ' + (TEAM ? role.job : mapsOn() ? SETUP.maps.sub() : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job);
   const pick = () => { stop(); paused = true; card.className = 'pg-card on'; if (TEAM && (!pickedMe || !role || !TEAM.id2[role.id] || rl(role.id) === 't')) pickedMe = true, role = teamRole(TEAM.you && rl(TEAM.you) !== 't' ? TEAM.you : CAR8.find((c) => TEAM.id2[c]) || GDZ_RAID.find((c) => TEAM.id2[c] && rl(c) !== 't'));
     if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob);
     const parts = Object.keys(PG_PARTS[boss] || {}).filter((k) => k === d || PG_PARTS[boss][k].d === d), pkNow = pk || d; /* (the parts of the fight you can practise) */
@@ -775,7 +843,10 @@ function pgOpen(root, boss, d, pk) {
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
     const bindBox = () => { const pm = box.querySelector('.pg-me'); if (pm) pm.onchange = () => { role = teamRole(pm.value); redo(); };
       const jp = box.querySelector('.pg-job0'); if (jp && P2 && P2.bind) P2.bind(jp, () => { role = P2.role(); card.querySelector('.pg-psub').textContent = playSub(); seeMe(); }); };
-    box.onclick = (e) => { const b = e.target.closest('[data-sr],[data-sj]'); if (!b || !SETUP) return; const nw = SETUP.now(), r = b.dataset.sr || nw.role, js = SETUP.jobs(r).map((o) => o[0]);
+    box.onclick = (e) => { const M = mapsOn() ? SETUP.maps : null, m = M && e.target.closest('[data-mt],[data-mh],[data-mx],[data-mr]');
+      if (m) { const d0 = m.dataset; if (d0.mt) M.tab = d0.mt; else if (d0.mh) M.pick(M.tab, d0.mh); else if (d0.mx) M.extra(d0.mx); else if (d0.mr) M.random(); redo(); return; } /* (a map tab, a spot, an extra like No egg, or 🎲 Random) */
+      const b = e.target.closest('[data-sr],[data-sj]'); if (!b || !SETUP) return;
+      if (b.dataset.sr && M && M.role) { M.role(b.dataset.sr); redo(e.detail === 0 ? '[data-sr="' + b.dataset.sr + '"]' : null); return; } const nw = SETUP.now(), r = b.dataset.sr || nw.role, js = SETUP.jobs(r).map((o) => o[0]);
       SETUP.set(r, b.dataset.sj || (js.includes(nw.job) ? nw.job : js[0])); redo(e.detail === 0 ? (b.dataset.sr ? '[data-sr="' + r + '"]' : '[data-sj="' + b.dataset.sj + '"]') : null); };
     bindBox(); seeMe();
     card.querySelectorAll('.pg-part button').forEach((b) => (b.onclick = () => { if (b.dataset.v === pkNow) return; close(); pgOpen(root, boss, d, b.dataset.v === d ? null : b.dataset.v); }));
@@ -992,6 +1063,13 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-grade .gS { color: #f3c969; } .pg-grade .gA { color: #7ee08f; } .pg-grade .gB { color: #7fb8ff; } .pg-grade .gC { color: #e0a53a; } .pg-grade .gD { color: #ff8f87; } .pg-grade h2 { margin: 0; } .pg-grade p { margin: 2px 0 0; }
 .pg-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } .pg-sum li { display: flex; gap: 10px; font-size: 14px; } .pg-sum time { min-width: 38px; color: #8d97a3; font-variant-numeric: tabular-nums; } .pg-sum b { display: block; color: #fff; font-weight: 600; } .pg-sum span { display: block; color: #f3c969; font-size: 13px; }
 .pg-setup { width: min(560px, 94%); }
+.pg-sprow { align-items: flex-start !important; } .pg-sprow .pg-sl { padding-top: 8px; } .pg-spw { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.pg-sptab { display: flex; } .pg-sptab button { flex: 1; } .pg-sptab .pg-rnd, .pg-sptab .pg-mx { flex: none; padding: 0 10px; } .pg-sptab .pg-mx.on { color: #f3c969; } .pg-noegg.on { color: #f3c969; }
+.pg-spmap { position: relative; width: min(100%, 330px); aspect-ratio: 1; margin: 0 auto; border: 1px solid rgba(255,255,255,.15); background: #0b0f12; overflow: hidden; } .pg-spmap > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: hidden; }
+.pg-hot .pg-hs { fill: rgba(243,201,105,.06); stroke: #f3c969; stroke-width: 1.4; stroke-dasharray: 4 3; cursor: pointer; } .pg-hot .pg-hs:hover { fill: rgba(243,201,105,.22); } .pg-hot .pg-hs.on { fill: none; stroke-dasharray: none; stroke-width: 2.2; }
+.pg-hot .pg-hs.big { fill: rgba(243,201,105,.04); } .pg-hot .pg-hs.big.on { fill: rgba(243,201,105,.10); }
+.pg-spl { display: flex; width: 100%; } .pg-spl button { flex: 1; height: auto; min-height: 46px; padding: 6px 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; } .pg-spl button + button { border-left: 1px solid rgba(255,255,255,.12); }
+.pg-spl .pg-spn { font: 600 14px var(--body, system-ui); } .pg-spl .pg-spt { font: 500 12px var(--body, system-ui); color: #8a96a4; } .pg-spl button.on { background: rgba(230,180,80,.16); color: #f3c969; box-shadow: inset 0 0 0 1px rgba(230,180,80,.45); } .pg-spl button.on .pg-spt { color: #d9b765; }
 .pg-sub { margin: 2px 0 10px !important; font-size: 13.5px !important; color: #aab4c0 !important; }
 .pg-sbox { display: flex; flex-direction: column; gap: 10px; margin: 16px 0 2px; }
 .pg-srow { display: flex; align-items: center; gap: 12px; } .pg-sl { flex: none; width: 46px; font: 700 12px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #aab4c0; }
@@ -1014,6 +1092,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
 .pg-snd { height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 0; background: rgba(10,12,16,.72); color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; pointer-events: auto; } .pg-snd.on { color: #fff; } .pg-snd:hover { color: #fff; }
 .pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-vw button[data-v="2"] { display: none; } .pg.pg3 .pg-vw { display: none; } /* (3D only, Flex: no 2D | 3D switch; the 3D button shows only to retry when 3D didn't load) */
+.pg:has(.pg-card.on) .pg-vw { display: none; } /* (the setup card covers the picture: no view switch over it; after the real .pg-vw rule, which tests/practice-3d.js reads first) */
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
 `;
   document.head.appendChild(st);

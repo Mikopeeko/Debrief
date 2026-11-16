@@ -75,6 +75,12 @@ const pgIntGather = () => pgIntAt(PG_INT.GA, PG_INT.GATHER);
 const pgIntOrd = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
 // (where the knockback puts you: 6 yards further out from the middle; from inside her burst, out past it)
 const pgIntKb = (p) => { const d = Math.hypot(p[0], p[1]) || 0.01, nd = d <= PG_INT.MID ? PG_INT.MID + PG_INT.KB : d + PG_INT.KB; return [p[0] / d * nd, p[1] / d * nd]; };
+// (where each team waits until the pattern is called: 16 yards out by its marker (the guide's map). One rule for the game and the setup's spot maps)
+const pgIntPre = (g) => pgIntAt(PG_INT.mark[g], 16);
+const pgIntSpiral = (c, i, r) => { const a = i * 2.39996, rr = r * Math.sqrt(((i % 9) + 0.5) / 9); return [c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]; };
+// (your own spot while your team waits (J: pgIntJobs's teams): the carriers on a ring 5 yards out, apart; the rest round the middle)
+const pgIntPreAt = (J, id, c0) => { const g = J.team[id], L = J.list[g], car = L.filter((q) => J.carry.has(q)), i = car.indexOf(id), c = c0 || pgIntPre(g);
+  if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 1.1; return [c[0] + Math.cos(a) * 5, c[1] + Math.sin(a) * 5]; } return pgIntSpiral(c, Math.max(0, L.filter((q) => !J.carry.has(q)).indexOf(id)), 3.2); };
 
 // ---- the jobs: who is on which team and who carries an egg; your picked job swapped in (the card) ----
 function pgIntBase() { const team = {}; Object.entries(PG_INT.team).forEach(([g, L]) => L.forEach((id) => { team[id] = g; })); return { team, carry: new Set(PG_INT.carry) }; }
@@ -107,7 +113,7 @@ function pgIntScript(o) {
   warn(T.start, 'Intermission: go to your team\'s mark. Eggs and coils are coming!', '#c084ff');
   cast('boss', 'Call of the Serpent', T.call, T.callL); warn(T.call, 'Call of the Serpent: eight eggs incoming!', '#e6e0c8'); timer(T.land, 'Call of the Serpent');
   // each team waits by its marker, 16 yards out (the guide's map)
-  S.pre = { Y: pgIntAt(P.mark.Y, 16), P: pgIntAt(P.mark.P, 16), B: pgIntAt(P.mark.B, 16) };
+  S.pre = { Y: pgIntPre('Y'), P: pgIntPre('P'), B: pgIntPre('B') };
   // the eggs: one for each carrier, at random in its team's part of the room, apart from each other and from the teams' waiting spots
   // (between the soak circles, so a carrier never has to step into another team's coil for it: 8 to 17 yards out, 10.5 from every soak's middle; the
   // real eggs land anywhere, a median 21 yards out (picked, flagged above))
@@ -136,6 +142,17 @@ function pgIntScript(o) {
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
+// (where each team's eggs land in the game, for the setup's Your egg map: the run's own rule above over 96 runs, the middle of them and the circle
+// round 95% of them (it holds 93 to 95% of 200 other runs' eggs: tests/practice-int.js N); worked out once, about 50 ms. `pts`: as many real landings
+// as the team carries eggs, to draw: its eggs in order round the room cut into that many equal slices, the landing nearest each slice's middle; `you`: the
+// one of them nearest the middle (the review, Nov 16: the map drew them on a made-up ring, one 3.6 yards from where any Purple egg ever lands)
+let PG_INT_EA = null;
+const pgIntEggArea = (g) => { if (!PG_INT_EA) { const by = { Y: [], P: [], B: [] }; for (let seed = 1; seed <= 96; seed++) { const S = pgIntScript({ seed }); S.eggSets[0].eggs.forEach((e) => by[S.job.team[e.id]].push([e.x, e.y])); }
+    PG_INT_EA = {}; Object.entries(by).forEach(([k, L]) => { const c = [L.reduce((s, p) => s + p[0], 0) / L.length, L.reduce((s, p) => s + p[1], 0) / L.length], d = L.map((p) => pgDist(p, c)).sort((a, b) => a - b);
+      const n = PG_INT.carry.filter((id) => PG_INT.team[k].includes(id)).length, ac = Math.atan2(c[1], c[0]), rel = (p) => ((Math.atan2(p[1], p[0]) - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI, A = L.slice().sort((p, q) => rel(p) - rel(q));
+      const pts = Array.from({ length: n }, (_, i) => { const ch = A.slice(Math.floor(i * A.length / n), Math.floor((i + 1) * A.length / n)), m = [ch.reduce((s, p) => s + p[0], 0) / ch.length, ch.reduce((s, p) => s + p[1], 0) / ch.length]; return ch.reduce((b, p) => (pgDist(p, m) < pgDist(b, m) ? p : b)).slice(); });
+      PG_INT_EA[k] = { c, r: d[Math.floor(d.length * 0.95)], n, pts, you: pts.reduce((b, p) => (pgDist(p, c) < pgDist(b, c) ? p : b)) }; }); }
+  return PG_INT_EA[g]; };
 
 // ---- the part: practice.js calls pgInt(api) once per game; api is practice.js's window on the game (G, S, me, the hit helpers) ----
 function pgInt(A) {
@@ -144,14 +161,14 @@ function pgInt(A) {
   let setUp = false; const setup = () => { if (setUp) return; setUp = true; Object.assign(A.DEB, { fall: ['Falling', '#c8a36a'], dvenom: ['Deadly Venom', '#9be13a'] }); ['shatter', 'egg'].forEach((k) => A.MAJ.add(k));
     if (A.DPS_SAY && A.DPS_SAY.rawling) A.DPS_SAY.rawling[3] = 'them'; }; /* ("press Tab to pick one", not "it": this game's own copy of the lines, the review, Nov 15) */
   // ---- your job (the start card), remembered on this browser ----
-  const KEY = 'wla-pg-jobint', job0 = () => ({ role: 'r', team: 'B', egg: false, pat: 0 });
+  const KEY = 'wla-pg-jobint', job0 = () => ({ role: 'r', team: 'P', egg: true, pat: 0 }); /* (a first visit plays every mechanic a ranged can: Purple, with an egg (Flex, Nov 16)) */
   const jobOk = (j) => !!j && /^[mrh]$/.test(j.role) && /^[YPB]$/.test(j.team) && typeof j.egg === 'boolean' && [0, 1, 2, 3].includes(j.pat);
   let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) return j; } catch (e) { /* (no storage) */ } return job0(); })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(pk)); } catch (e) { /* (no storage) */ } };
   const slotOf = (j) => pgIntSlot(j || pk), mine = () => A.me === slotOf(pk);
   const pos = (id) => (id === A.me ? [G.x, G.y] : [G.bots[id].x, G.bots[id].y]);
   const teamOf = (id) => S.job.team[id];
-  const spiral = (c, i, r) => { const a = i * 2.39996, rr = r * Math.sqrt(((i % 9) + 0.5) / 9); return [c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]; };
+  const spiral = pgIntSpiral;
   const once = (k) => (G.int.once.has(k) ? false : (G.int.once.add(k), true));
   const called = (t) => t >= S.soaks[0].cast; /* (the first coil rises on Star, Triangle or Cross: the caller calls the pattern, and every team knows its spots) */
   const nextSoak = (id, t) => S.soaks.find((s) => s.group.includes(id) && s.at >= t - 0.15) || null;
@@ -159,8 +176,7 @@ function pgInt(A) {
   // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, 8.7 yards apart, so their 3-yard rings never touch; the rest near the middle)
   const slotIn = (s, id) => { const car = s.group.filter((q) => S.job.carry.has(q)), i = car.indexOf(id); if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 0.6; return [s.x + Math.cos(a) * 5, s.y + Math.sin(a) * 5]; }
     return spiral([s.x, s.y], Math.max(0, s.group.filter((q) => !S.job.carry.has(q)).indexOf(id)), 3); };
-  const preSpot = (id) => { const g = teamOf(id), L = S.job.list[g], car = L.filter((q) => S.job.carry.has(q)), i = car.indexOf(id), c = S.pre[g];
-    if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 1.1; return [c[0] + Math.cos(a) * 5, c[1] + Math.sin(a) * 5]; } return spiral(c, Math.max(0, L.filter((q) => !S.job.carry.has(q)).indexOf(id)), 3.2); };
+  const preSpot = (id) => pgIntPreAt(S.job, id, S.pre[teamOf(id)]);
   // (one rule for your egg, used by the bots, the autopilot, your arrow and your hint (the review, Nov 15: the hint sent carriers to their soak, then
   // the score said they never picked their egg up): go for it from 4 s before its shell breaks whenever you can be at it as it breaks and still reach
   // your next soak's edge before it slams; else soak first and get it after)
@@ -318,9 +334,59 @@ function pgInt(A) {
   // (the one-screen setup (practice.js SETUP, Nov 15, Flex via Main: "still too complex and confusing"): your role, then your job, the team you soak
   // with and, for some, an egg: the guide's teams, so melee are Yellow or Blue, ranged Purple or Blue, healers any. The pattern is random each run,
   // as in the raid; one plain sentence)
-  const SJ = { m: [['Ye', 'Yellow team, egg'], ['Y', 'Yellow team'], ['B', 'Blue team']], r: [['Pe', 'Purple team, egg'], ['P', 'Purple team'], ['Be', 'Blue team, egg'], ['B', 'Blue team']], h: [['Y', 'Yellow team'], ['P', 'Purple team'], ['B', 'Blue team']] };
+  const SJ = {}; /* (filled below the maps' grpsOf and eggsOf, so the job list and the maps offer the same teams: Flex, Nov 16, a ranged on Yellow) */
   const jobNow = (j) => j.team + (j.egg ? 'e' : '');
-  const setupCard = { roles: ['m', 'r', 'h'],
+  // ---- the spot maps (Flex, Nov 16: "visual maps that lets them select the spot ... use the plans maps so its something familiar", "Customizable, but
+  // not crazy confusing"; practice.js's contract, SETUP.maps). The Plan's Intermission Positions map (its Groups page, UL_PAGES.trans[0]) twice:
+  //   Your group: a ring for each team your role is on in the guide's plan, where the game has that team wait until the pattern is called (16 yards out
+  //   by its marker: Yellow by Star, Purple by Diamond, Blue by Square; pgIntPre, the same rule the run uses), and you where the game stands you in it
+  //   (pgIntPreAt: carriers on a ring 5 yards out, the rest round the middle). From there each team soaks its coils as the pattern lights them up.
+  //   Your egg (melee and ranged): where each team's eggs land in the game (pgIntEggArea, the run's own rule), for the teams whose plan has your role carry
+  //   one: Yellow for melee, Purple or Blue for ranged. Healers carry none.
+  // Every role carries an egg where its team's plan has one (Flex: "each role should ideally be tested on as many mechanics as they are elgible to get");
+  // No egg turns it off; the same buttons on both tabs (Flex: "clicking on your coil hides no egg"). The pattern stays random each run, as in the raid ----
+  // (Flex, Nov 16, on the map: "theres no yellow group assignments", then "i forgot melee are in that group, but maybe leave it as an option for ranged just in
+  // case groups do it that way": melee and healers keep the teams the plan has them on; a ranged may also take Yellow, with one of its eggs. The run swaps you
+  // with someone in it (pgIntJobs), so the teams keep their size and their egg count)
+  const planGrps = (r) => ['Y', 'P', 'B'].filter((g) => PG_INT.team[g].some((id) => id[0] === r));
+  const planEggs = (r) => ['Y', 'P', 'B'].filter((g) => PG_INT.team[g].some((id) => id[0] === r && PG_INT.carry.includes(id)));
+  const grpsOf = (r) => (r === 'r' ? ['Y', 'P', 'B'] : planGrps(r));
+  const eggsOf = (r) => (r === 'r' ? ['Y', 'P', 'B'].filter((g) => g === 'Y' || planEggs(r).includes(g)) : planEggs(r));
+  // (the job list behind the card (now/jobs/set): every team the maps offer, the plan's own first, each with its egg where you can carry one. It was a
+  // fixed list, so a ranged's Yellow pick was put back to Purple on every redraw)
+  ['m', 'r', 'h'].forEach((r) => { SJ[r] = []; const G = planGrps(r).concat(grpsOf(r).filter((g) => !planGrps(r).includes(g)));
+    G.forEach((g) => { if (eggsOf(r).includes(g)) SJ[r].push([g + 'e', P.TN[g] + ' team, egg']); SJ[r].push([g, P.TN[g] + ' team']); }); });
+  const put = (j) => { pk = { role: j.role, team: j.team, egg: !!j.egg && eggsOf(j.role).includes(j.team), pat: 0 }; save(); };
+  const want = () => (eggsOf(pk.role).includes(pk.team) ? pk.egg : true); /* (an egg wherever you can carry one, unless you turned it off) */
+  const ROOM = (x, y) => [340 + x * 2.083, 240 - (y + 0.9) * 2.083]; /* (room yards on the Plan's maps, as ulSvg draws them) */
+  // (the Plan's own Groups page, with its group labels kept off the spots you click (its pick, told those spots are taken); on Your egg, each team's eggs
+  // drawn on real landings from the game (pgIntEggArea's pts), as many as it carries)
+  const mapPage = (key) => { const base = UL_PAGES.trans[0], H = MAPS.hot(key), OFF = [-1e5, -1e5, -1e5 + 1, -1e5 + 1];
+    const near = (b) => H.some((h) => { const [cx, cy] = ROOM(h.x, h.y), rr = (h.r + (h.you ? 2.6 : 1)) * 2.083, nx = Math.max(b[0], Math.min(cx, b[2])), ny = Math.max(b[1], Math.min(cy, b[3])); return Math.hypot(nx - cx, ny - cy) < rr; });
+    const pg = { t: key === 'egg' ? 'Where the eggs land' : base.t, s: base.s, vb: base.vb, draw: (D, g) => {
+      if (key === 'egg') eggsOf(pk.role).forEach((gg) => pgIntEggArea(gg).pts.forEach((p) => g.egg(p[0], p[1])));
+      base.draw(D, Object.assign({}, g, { pick: (C, box) => g.pick(C, (x, y) => { const b = box(x, y); return near(b) ? OFF : b; }) })); } };
+    const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [[], [], []], side: { L: {}, R: {} } };
+    return { svg: ulSvg(pg, D, new Map(), {}), vb: UL_VB[pg.vb] || UL_VB.mid }; };
+  const nSoak = (g) => pgIntPat()[0].filter(([, x]) => x === g).length;
+  const MAPS = { tab: 'grp',
+    tabs: () => (eggsOf(pk.role).length ? [['grp', 'Your group'], ['egg', 'Your egg']] : [['grp', 'Your group']]),
+    page: (key) => mapPage(key === 'egg' && eggsOf(pk.role).length ? 'egg' : 'grp'),
+    hot: (key) => { if (key === 'egg') { const L = eggsOf(pk.role).map((g) => { const A = pgIntEggArea(g); return { id: g, x: A.c[0], y: A.c[1], r: A.r, big: true, on: pk.egg && pk.team === g, title: P.TN[g] + ' team: its eggs land in here at 5:24. Carry one into your soak' }; });
+        /* (You on one of your team's drawn eggs, a real landing, not on the circle's middle) */ const Y0 = pk.egg && eggsOf(pk.role).includes(pk.team) ? pgIntEggArea(pk.team).you : null;
+        return Y0 ? L.concat([{ id: pk.team, x: Y0[0], y: Y0[1], r: 0.8, on: true, you: true, title: 'You: your egg lands in the ' + P.TN[pk.team] + ' circle, somewhere new each pull' }]) : L; }
+      const me = slotOf(pk), yp = pgIntPreAt(pgIntJobs(me, pk), me);
+      return grpsOf(pk.role).map((g) => { const c = pgIntPre(g); return { id: g, x: c[0], y: c[1], r: 6, on: pk.team === g, title: P.TN[g] + ' team: wait here by ' + P.TM[g] + ', then soak ' + nSoak(g) + ' of the 8 coils' }; })
+        .concat([{ id: pk.team, x: yp[0], y: yp[1], r: 0.8, on: true, you: true, title: 'You: where the game stands you until the pattern is called' }]); },
+    pick: (key, id) => { if (!/^[YPB]$/.test(id)) return; const egg = key === 'egg' && eggsOf(pk.role).length > 0; /* (the tab shown: a healer has no Your egg) */
+      if (egg && eggsOf(pk.role).includes(id)) put({ ...pk, team: id, egg: true }); else if (!egg && grpsOf(pk.role).includes(id)) put({ ...pk, team: id, egg: want() }); },
+    extras: () => (eggsOf(pk.role).length ? [['noegg', 'No egg', !pk.egg]] : []),
+    extra: (id) => { if (id !== 'noegg' || !eggsOf(pk.role).length) return; if (pk.egg) put({ ...pk, egg: false }); else put({ ...pk, team: eggsOf(pk.role).includes(pk.team) ? pk.team : eggsOf(pk.role)[0], egg: true }); },
+    random: () => { const L = grpsOf(pk.role); put({ ...pk, team: L[Math.floor(Math.random() * L.length)], egg: true }); }, /* (no plan yet: a team your role is on, with its egg if it has one) */
+    role: (r) => { const L = grpsOf(r); if (!L.length) return; const w = want(); put({ role: r, team: L.includes(pk.team) ? pk.team : eggsOf(r)[0] || L[0], egg: w }); if (!eggsOf(r).length) MAPS.tab = 'grp'; },
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team' + (pk.egg ? ', carry an egg into your next soak' : '') + ' and soak ' + nSoak(g) + ' of the 8 coils as the pattern lights them up, then end on the diamond line before 6:09.'; },
+    sub: () => P.TN[pk.team] + ' team' + (eggsOf(pk.role).length ? (pk.egg ? ' · egg' : ' · no egg') : '') };
+  const setupCard = { roles: ['m', 'r', 'h'], maps: MAPS,
     now: () => { const r = pk.role; if (!SJ[r].some((x) => x[0] === jobNow(pk))) setupCard.set(r, SJ[r][0][0]); return { role: pk.role, job: jobNow(pk) }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
     set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, team: v[0], egg: v.length > 1, pat: 0 }; save(); },

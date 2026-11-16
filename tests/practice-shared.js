@@ -68,7 +68,9 @@ function checks(H, say) {
     let n = 0, quick = 0; const last = {}, fastAt = {}; const held = () => g.eggs.filter((e) => e.state === 'held' && e.who && e.who !== 'r3').map((e) => e.who);
     held().forEach((id) => { last[id] = [g.bots[id].x, g.bots[id].y]; });
     while (g.t < 39) { steps(1); held().forEach((id) => { const b = g.bots[id], p = last[id]; if (p) { const v = Math.hypot(b.x - p[0], b.y - p[1]) / 0.05; if (v > 0.5) { n++; if (b.rush != null && Math.abs(b.rush - g.t) <= 0.051) (fastAt[id] = fastAt[id] || []).push(g.t); if (v > 8.6 && !(b.rush != null && Math.abs(b.rush - g.t) <= 0.051)) quick++; } } last[id] = [b.x, b.y]; }); }
-    Object.entries(fastAt).forEach(([id, L]) => { const bursts = []; L.forEach((x) => { const q = bursts[bursts.length - 1]; if (q && x - q[1] <= 0.3) q[1] = x; else bursts.push([x, x]); });
+    // (one Sprint is one burst, even with a stop inside its 3 s: since Nov 16 a carrier holds on its ring, the Plan's place, and can reach it mid-Sprint, stand
+    //  a moment, then move on in the same Sprint. A second burst starting within 3 s of the first is that same Sprint, not a new one)
+    Object.entries(fastAt).forEach(([id, L]) => { const bursts = []; L.forEach((x) => { const q = bursts[bursts.length - 1]; if (q && (x - q[1] <= 0.3 || x - q[0] <= 3.05)) q[1] = x; else bursts.push([x, x]); });
       bursts.forEach((q, i) => { if (q[1] - q[0] > 3.2) bad(id + ' ran fast for ' + (q[1] - q[0]).toFixed(1) + ' s holding an egg; Sprint lasts 3 s (check E)'); if (i && q[0] - bursts[i - 1][0] < 29.5) bad(id + ' sprinted again ' + (q[0] - bursts[i - 1][0]).toFixed(1) + ' s after the last; Sprint comes back every 30 s (check E)'); }); });
     if (!n) bad('no egg holder walked between 0:20 and 0:39, so their speed can\'t be checked (check E)'); else if (quick / n > 0.02) bad('egg holders ran faster than you (over 8.6 yd/s, not dodging) on ' + Math.round(100 * quick / n) + '% of their steps; they walk at your 7 yd/s, faster only for a wave or a soak due (check E)');
     // the sidestep: find an egg holder on the move, stand 4.5 yd ahead of it on its path with your egg, and watch it step aside
