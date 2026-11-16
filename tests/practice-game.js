@@ -281,6 +281,21 @@ function checks(H, say, pj) {
       if (!/\.pg-tmi \.icw svg rect \{ ?rx: ?0/.test(PJ)) bad('the boss mods\' built-in icons keep their rounded corners until the real icon loads (check J)');
       if (!/flex-wrap: ?wrap/.test(rule('.pg .pg-trow'))) bad('the 2D | 3D switch and Mistakes don\'t wrap in the narrow minimap column: Mistakes sticks out past the minimap at 740 px wide (check J)');
       if (!/min-height: ?104px/.test(uc) || /(^|[^-])height: ?104px/.test(uc)) bad('your frame\'s column has a fixed height, so a long row of debuffs runs into the action bar instead of lifting the frames (check J)'); }
+    // (Flex, Nov 15: "the health bars in p2 arent moving": a later part's targets carry no health, so the target frame sat full. It reads a part's hpFr and,
+    //  for any add in G.adds, that add's own health)
+    if (!/else if \(o\.hpFr != null\) pct = o\.hpFr \* 100; else if \(ad\) \{ const mx = ADD_HP\[ad\.kind\] \|\| 3; pct = Math\.max\(0, ad\.hp == null \? mx : ad\.hp\) \/ mx \* 100; \}/.test(PJ) || !/const ad = !o\.max && o\.hpFr == null \? G\.adds\.find\(\(q\) => q\.id === o\.key\) : null;/.test(PJ)) bad('the target frame can\'t show a later part\'s health (hpFr) or an add\'s own health when the part lists it without max: phase 2\'s bars never move (check J)');
+    // (Main, Nov 15, phase 3 at 7:10 and 8:25 in 3D: four to six calls shared one line, ran to two lines and under the minimap and the boss frame. At most
+    //  two show at once, the one about you first; the rest wait their turn, and one that waited 4 s is dropped (the boss-mod bars have it). The line stays
+    //  between the bars on the left and the minimap column on the right)
+    if (typeof dbg.warnsNow !== 'function') bad('the call line can\'t be checked (dbg.warnsNow) (check J)');
+    else { dbg.at(30, 'r3'); const S0 = dbg.S, G0 = dbg.G, t = G0.t, six = ['Circling Prey: move one quarter left!', 'Fester Burst: into the Wretch\'s bubble!', 'Serpent\'s Bite: soakers in!', 'A gateway to the next quarter is up', 'Her waves: find the gap!', 'Your coil: soak it!'].map((text, i) => ({ t: t - 0.01, text, c: '#fff', i }));
+      S0.warns.splice(G0.warnI, 0, ...six); G0.warnQ = []; G0.lastWarn = null; const L1 = dbg.warnsNow();
+      if (!L1 || L1.n > 2) bad('six calls landing together show ' + (L1 ? L1.n : 0) + ' at once on the call line; two at most (check J)');
+      else { if (!/^Your coil/.test(L1.all[0])) bad('with six calls at once, the one about you isn\'t first: "' + L1.all[0] + '" (check J)');
+        const L2 = dbg.warnsNow(); if (L2.n > 2 || L2.all.join() !== L1.all.join()) bad('a full call line takes more calls straight away; the rest should wait their turn (check J)');
+        dbg.stepOwn(48); const L3 = dbg.warnsNow(); if (!L3 || L3.all.join() === L1.all.join() || L3.n > 2) bad('2.4 s later the waiting calls don\'t get their turn (check J)');
+        dbg.stepOwn(100); dbg.warnsNow(); if ((dbg.G.warnQ || []).some((w) => six.some((x) => x.text === w.text))) bad('a call that waited more than 4 s is still queued; it should drop (the boss-mod bars have it) (check J)'); } }
+    { const wr = (/\.pg-warn \{([^}]*)\}/.exec(PJ) || [])[1] || ''; if (/left: ?0[;\s]/.test(wr) || !/left: ?\d{3}px/.test(wr) || !/right: ?\d{3}px/.test(wr)) bad('the call line spans the whole width, under the boss-mod bars and the minimap; it stays between them (check J)'); }
     // (review of the 3D attacks, Nov 15: "Start at 2:18" fast-forwards with the autopilot pressing 1, and its last hit was still in the air when the game
     //  began: a glowing bolt sat frozen at your hand through the 3-2-1, or a melee slash hung mid-swing. The jump clears the hits like everything else)
     if (typeof dbg.ff !== 'function') bad('no way to check the "Start at" jump (dbg.ff) (check J)');
