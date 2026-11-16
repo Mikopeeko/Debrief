@@ -47,6 +47,28 @@ const pgIntMk = (k) => (typeof UL_CMK !== 'undefined' && UL_CMK[k]) || ({ NNW: '
 const PG_INT_MKC = { Skull: '#ece8df', Circle: '#ff8a2a', Star: '#ffd23b', Cross: '#ff5a4a', Square: '#5aa0ff', Triangle: '#7ee08f', Diamond: '#c39bff', Moon: '#c8d0dc' };
 const PG_INT_MKA = { ENE: 22.5, NNE: 67.5, NNW: 112.5, WNW: 157.5, WSW: 202.5, SSW: 247.5, SSE: 292.5, ESE: 337.5 };
 const pgIntAt = (deg, r) => [Math.cos(deg * Math.PI / 180) * r, Math.sin(deg * Math.PI / 180) * r];
+// (the eight raid markers in the shapes and colours raiders know from the game (Flex, Nov 15: "make the markers have the floating marker shape like in
+// game"), drawn here, never Blizzard's art: a yellow star, an orange circle, a purple diamond, a green triangle, a silver moon, a blue square, a red
+// cross and a white skull, lit from the top with a dark rim. On a canvas context g, centred on cx, cy, r across; `bg` cuts the moon's crescent in that
+// colour (on a shared canvas, the minimap), else it's cut out of its own canvas)
+const PG_INT_MKG = { Star: ['#ffe873', '#d9a40b'], Circle: ['#ffb873', '#d9620c'], Diamond: ['#e4b8ff', '#9a3fe0'], Triangle: ['#aef5a2', '#2f9f3c'], Moon: ['#f4f7fb', '#98a4b4'], Square: ['#93c8ff', '#2562c9'], Cross: ['#ff9182', '#c8281c'], Skull: ['#ffffff', '#bdb6a8'] };
+function pgIntMarkDraw(g, nm, cx, cy, r, bg) {
+  const C = PG_INT_MKG[nm] || ['#ffffff', '#999999'], gr = g.createLinearGradient(cx, cy - r, cx, cy + r); gr.addColorStop(0, C[0]); gr.addColorStop(1, C[1]);
+  g.save(); g.lineJoin = 'round'; g.lineWidth = Math.max(1, r * 0.13); g.strokeStyle = 'rgba(12,9,6,.92)'; g.fillStyle = gr; g.beginPath();
+  const poly = (L) => L.forEach(([x, y], i) => (i ? g.lineTo(cx + x * r, cy + y * r) : g.moveTo(cx + x * r, cy + y * r)));
+  if (nm === 'Star') { const L = []; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? 0.44 : 0.98; L.push([Math.cos(a) * q, Math.sin(a) * q + 0.06]); } poly(L); g.closePath(); }
+  else if (nm === 'Circle') g.arc(cx, cy, r * 0.84, 0, Math.PI * 2);
+  else if (nm === 'Diamond') { poly([[0, -0.98], [0.7, 0], [0, 0.98], [-0.7, 0]]); g.closePath(); }
+  else if (nm === 'Triangle') { poly([[0, -0.9], [0.96, 0.78], [-0.96, 0.78]]); g.closePath(); }
+  else if (nm === 'Square') g.rect(cx - r * 0.74, cy - r * 0.74, r * 1.48, r * 1.48);
+  else if (nm === 'Cross') { const w = 0.27, l = 0.98, c = Math.SQRT1_2; poly([[w, -l], [w, -w], [l, -w], [l, w], [w, w], [w, l], [-w, l], [-w, w], [-l, w], [-l, -w], [-w, -w], [-w, -l]].map(([x, y]) => [(x - y) * c, (x + y) * c])); g.closePath(); }
+  else if (nm === 'Skull') { g.arc(cx, cy - r * 0.14, r * 0.72, Math.PI * 0.82, Math.PI * 2.18); g.lineTo(cx + r * 0.4, cy + r * 0.78); g.lineTo(cx - r * 0.4, cy + r * 0.78); g.closePath(); }
+  else if (nm === 'Moon') g.arc(cx, cy, r * 0.86, 0, Math.PI * 2);
+  g.fill(); g.stroke();
+  if (nm === 'Moon') { g.beginPath(); g.arc(cx + r * 0.42, cy - r * 0.22, r * 0.68, 0, Math.PI * 2); if (bg) { g.fillStyle = bg; g.fill(); } else { g.globalCompositeOperation = 'destination-out'; g.fill(); g.globalCompositeOperation = 'source-over'; } }
+  if (nm === 'Skull') { g.fillStyle = 'rgba(20,16,12,.92)'; [-1, 1].forEach((sd) => { g.beginPath(); g.arc(cx + sd * r * 0.27, cy - r * 0.12, r * 0.18, 0, Math.PI * 2); g.fill(); }); g.beginPath(); poly([[0, 0.12], [0.09, 0.3], [-0.09, 0.3]]); g.closePath(); g.fill();
+    g.lineWidth = Math.max(1, r * 0.06); g.strokeStyle = 'rgba(20,16,12,.8)'; [-0.18, 0, 0.18].forEach((x) => { g.beginPath(); g.moveTo(cx + x * r, cy + r * 0.5); g.lineTo(cx + x * r, cy + r * 0.74); g.stroke(); }); }
+  g.restore(); }
 // (on a crack line once the platform shatters: within 3.5 yards of the line through the middle north to south, or east to west)
 const pgIntCrack = (x, y, m) => Math.abs(x) <= PG_INT.CRACK + (m || 0) || Math.abs(y) <= PG_INT.CRACK + (m || 0);
 const pgIntGather = () => pgIntAt(PG_INT.GA, PG_INT.GATHER);
@@ -313,7 +335,7 @@ function pgInt(A) {
     mx.clearRect(0, 0, Wm, Hm); mx.fillStyle = 'rgba(8,10,14,.82)'; mx.fillRect(0, 0, Wm, Hm); mx.fillStyle = 'rgba(120,140,110,.28)';
     const oct = [[36.5, 12.5], [15, 34], [-15, 34], [-36.5, 12.5], [-36.5, -12.5], [-15, -34], [15, -34], [36.5, -12.5]].map((q) => M(q[0], q[1])); mx.beginPath(); oct.forEach((q, i) => (i ? mx.lineTo(q[0], q[1]) : mx.moveTo(q[0], q[1]))); mx.closePath(); mx.fill();
     if (G.int && G.int.shat) { mx.fillStyle = 'rgba(40,90,30,.95)'; const a = M(-P.CRACK, 36), b = M(-37, P.CRACK); mx.fillRect(a[0], a[1], 2 * P.CRACK * sc, 72 * sc); mx.fillRect(b[0], b[1], 74 * sc, 2 * P.CRACK * sc); }
-    Object.keys(PG_INT_MKA).forEach((k) => { const p = pgIntAt(PG_INT_MKA[k], 40); dot(p[0], p[1], 2.2, PG_INT_MKC[pgIntMk(k)]); });
+    Object.keys(PG_INT_MKA).forEach((k) => { const p = pgIntAt(PG_INT_MKA[k], 40), q = M(p[0], p[1]); pgIntMarkDraw(mx, pgIntMk(k), q[0], q[1], Math.max(4, Wm / 32), 'rgb(14,17,20)'); }); /* (the markers in their own shapes, as in the game) */
     const me = A.me, g = S.job.team[me];
     S.soaks.forEach((s) => { if (t > s.at + 0.4) return; const yours = s.group.includes(me); if (t >= s.t0) dot(s.x, s.y, s.r * sc, yours ? 'rgba(243,201,105,.25)' : 'rgba(36,242,203,.18)', yours ? '#f3c969' : '#24f2cb'); else if (yours && called(t)) dot(s.x, s.y, s.r * sc, null, 'rgba(243,201,105,.55)'); });
     if (!called(t)) { const p = S.pre[g]; dot(p[0], p[1], 3, null, P.TC[g]); }
@@ -342,7 +364,9 @@ function pgInt(A) {
   const cl = (v) => Math.max(0, Math.min(1, v));
   const shapes = (t, P3, h) => { sync(); if (!G || !G.int) return; const me = A.me, g = teamOf(me);
     // (the raid markers round the room, as the plan puts them)
-    Object.keys(PG_INT_MKA).forEach((k) => { const p = pgIntAt(PG_INT_MKA[k], 33), nm = pgIntMk(k), c = PG_INT_MKC[nm]; h.disc(p[0], p[1], 1.5, c, 0.6); h.ring(p[0], p[1], 1.5, c, 0.95, 0.2); h.label(p[0], p[1], 2.4, nm, c, 12); });
+    // (as in the game: the marker floating over its spot with a soft glow of its colour on the stone (pg3dInt draws the floating shape), its name small
+    // under it, training wheels)
+    Object.keys(PG_INT_MKA).forEach((k) => { const p = pgIntAt(PG_INT_MKA[k], 33), nm = pgIntMk(k), c = PG_INT_MKC[nm]; h.disc(p[0], p[1], 2, c, 0.2); h.ring(p[0], p[1], 2, c, 0.75, 0.16); P3({ k: 'wmark', x: p[0], y: p[1], nm, c }); h.label(p[0], p[1], 1.1, nm, c, 12); });
     // (her Call at her edge, then down into the venom with a splash)
     if (t >= T.callL + 0.6 && t < T.callL + 2.8) P3({ k: 'splash', x: S.her[0], y: S.her[1], p: (t - T.callL - 0.6) / 2.2, s: 1.5 });
     // (where your team waits until the pattern is called)
@@ -363,8 +387,19 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; } };
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K) };
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
+// ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the
+// scene, keep, pool, glw, canvas, ctex, baseY). The floating raid markers: each of the eight shapes drawn once on its own canvas, a sprite that bobs
+// 3.4 yards over its spot with a glow round it, like the game's world markers. put(shape) draws this part's 'wmark' shapes; frame() has nothing to do ----
+function pg3dInt(K) {
+  const T = K.T, SP = {}, H = 3.4;
+  ['Skull', 'Circle', 'Star', 'Cross', 'Square', 'Triangle', 'Diamond', 'Moon'].forEach((nm) => { const tx = K.ctex(K.canvas(128, 128, (g) => pgIntMarkDraw(g, nm, 64, 64, 54)));
+    SP[nm] = K.pool(() => { const sp = new T.Sprite(K.keep(new T.SpriteMaterial({ map: tx, transparent: true, depthWrite: false, fog: false }))); sp.renderOrder = 680; return sp; }); });
+  const put = (s, t) => { if (s.k !== 'wmark' || !SP[s.nm]) return false; const sp = SP[s.nm](), y = K.baseY(s.x, s.y) + H + Math.sin(t * 1.7 + s.x * 0.21 + s.y * 0.13) * 0.3;
+    sp.position.set(s.x, y, -s.y); sp.scale.set(2.5, 2.5, 1); if (K.glw) K.glw(s.x, y, -s.y, 4.2, s.c, 0.3); return true; };
+  return { put, frame: () => {} };
+}
 { const U = PG_PARTS["Ula'tek"], mi = { name: 'Intermission', d: 'm', end: PG_INT_T.end, roles: [{ id: 'r7', name: 'Ranged', job: 'Blue team' }], mod: pgInt }, out = {}, keys = Object.keys(U);
   keys.forEach((k) => { if (k === 'm3' && !out.mint) out.mint = mi; if (k !== 'mint') out[k] = U[k]; }); if (!out.mint) out.mint = mi; keys.forEach((k) => { delete U[k]; }); Object.assign(U, out); }

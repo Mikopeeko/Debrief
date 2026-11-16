@@ -30,7 +30,10 @@
 //   J. the independent review (Nov 15): the egg hint and the egg mistake follow one rule (carriers sent to their soak, then told they never picked
 //      their egg up); carriers never stuck on another egg's berth; melee never told to hold while the Rawlings still count; the defensive's cue
 //      covers all four slams; she comes up at one quarter's outer corner (17 kills: never the middle); a carried egg in the venom hatches; the
-//      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true.
+//      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true;
+//   K. the raid markers aren't the game's floating shapes (Flex, Nov 15: "make the markers have the floating marker shape like in game"): all eight
+//      at the rim in 3D, each its own shape and colour (a 10-point star, a 12-point cross, a 4-point diamond, a 3-point triangle, a skull with eye
+//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d).
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -42,7 +45,7 @@ function load(H, part, extra) {
   class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
   const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
   vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + rd('practice.js') + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + (extra || '') + '\n' + rd('practice-int.js') +
-    '\nthis.pgIntScript = pgIntScript; this.pgIntJobs = pgIntJobs; this.pgIntSlot = pgIntSlot; this.PG_INT = PG_INT; this.PG_INT_T = PG_INT_T; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.UL_PAT = UL_PAT; this.UL_SOAK = UL_SOAK; this.UL_RIM = UL_RIM; this.pgIntKb = pgIntKb;', ctx);
+    '\nthis.pgIntScript = pgIntScript; this.pgIntJobs = pgIntJobs; this.pgIntSlot = pgIntSlot; this.PG_INT = PG_INT; this.PG_INT_T = PG_INT_T; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.UL_PAT = UL_PAT; this.UL_SOAK = UL_SOAK; this.UL_RIM = UL_RIM; this.pgIntKb = pgIntKb; this.pg3dInt = pg3dInt; this.pgIntMarkDraw = pgIntMarkDraw;', ctx);
   if (part !== null) vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (part ? ', "' + part + '"' : '') + ')', ctx);
   return { dbg: win.__pgDbg, ctx };
 }
@@ -184,6 +187,28 @@ function checks(H, say) {
     dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const ml = dbg.P2.slotOf(); dbg.at(T.slams[3] + 0.5, ml, { seed: 3 }); { const e = dbg.G.eggs.find((q) => q.id === ml); e.state = 'floor'; e.who = null; e.shell = Math.min(e.shell, dbg.G.t - 1); }
     dbg.G.log = []; while (dbg.G.t < T.end - 0.1) dbg.step(1); if (dbg.log.some((l) => /never went into a soak|still in your hands/.test(l))) bad('a late pickup broken in a later soak is still a mistake: ' + dbg.log.join(' | ') + ' (check J)'); }
   catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check J)'); }
+  // K. the floating raid markers
+  try { dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(), A = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
+    dbg.at(330, me, { seed: 4 }); const L = ctx.pg3dShapes(A, dbg.G.t).filter((s) => s.k === 'wmark'), NM = ['Skull', 'Circle', 'Star', 'Cross', 'Square', 'Triangle', 'Diamond', 'Moon'];
+    if (L.length !== 8 || NM.some((n) => !L.some((s) => s.nm === n))) bad('in 3D the floating raid markers aren\'t all eight: ' + L.map((s) => s.nm).join(', ') + ' (check K)');
+    if (L.some((s) => Math.abs(Math.hypot(s.x, s.y) - 33) > 0.01)) bad('a floating raid marker isn\'t at the rim, 33 yards out (check K)');
+    // (each shape's outline, on a recording canvas)
+    const rec = () => { const c = { n: {} }; return new Proxy(c, { get: (o, k) => (k === 'n' ? o.n : k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : (...a) => { o.n[k] = (o.n[k] || 0) + 1; }), set: () => true }); };
+    const pts = (nm, bg) => { const g = rec(); ctx.pgIntMarkDraw(g, nm, 64, 64, 50, bg); return g.n; };
+    [['Star', 10], ['Cross', 12], ['Diamond', 4], ['Triangle', 3]].forEach(([nm, n]) => { const c = pts(nm); if ((c.moveTo || 0) + (c.lineTo || 0) !== n || !c.fill || !c.stroke) bad('the ' + nm + ' marker isn\'t its ' + n + '-point shape with a fill and a rim (' + JSON.stringify(c) + ', check K)'); });
+    { const c = pts('Skull'); if ((c.fill || 0) < 4) bad('the Skull marker has no eye sockets and nose (' + JSON.stringify(c) + ', check K)'); }
+    { const c = pts('Moon', '#000'), c2 = pts('Moon'); if ((c.fill || 0) < 2 || (c.arc || 0) < 2 || (c2.fill || 0) < 2) bad('the Moon marker isn\'t a crescent (' + JSON.stringify(c) + ', check K)'); }
+    { const c = pts('Square'), c2 = pts('Circle'); if (!c.rect || !c2.arc) bad('the Square or Circle marker isn\'t its shape (check K)'); }
+    // (the part's own 3D kit floats them: a sprite for each marker over its spot, bobbing, with a glow)
+    if (typeof dbg.P2.kit3d !== 'function') bad('the intermission brings no 3D kit for its floating markers (kit3d, check K)');
+    else { const made = []; class Spr { constructor(m) { this.material = m; this.position = { x: 0, y: 0, z: 0, set(x, y, z) { this.x = x; this.y = y; this.z = z; } }; this.scale = { set() {} }; made.push(this); } }
+      const K = { T: { Sprite: Spr, SpriteMaterial: function (o) { Object.assign(this, o); } }, keep: (x) => x, ctex: (c) => ({ c }), canvas: (w, h, fn) => { fn(rec(), w, h); return {}; }, pool: (mk) => { const P0 = []; return () => P0[0] || (P0[0] = mk()); }, baseY: () => 0, glw: () => {} };
+      const kit = dbg.P2.kit3d(K); if (!kit || typeof kit.put !== 'function' || typeof kit.frame !== 'function') bad('the intermission\'s 3D kit has no put and frame (check K)');
+      else { const ok = kit.put({ k: 'wmark', x: 12, y: -30, nm: 'Star', c: '#ffd23b' }, 1), sp = made[made.length - 1];
+        if (!ok || !sp || Math.abs(sp.position.x - 12) > 1e-9 || Math.abs(sp.position.z - 30) > 1e-9 || sp.position.y < 2.5 || sp.position.y > 4.5) bad('the 3D kit doesn\'t float the Star over its spot, about 3.4 yards up (check K)');
+        if (kit.put({ k: 'disc', x: 0, y: 0, r: 1 }, 1)) bad('the 3D kit takes shapes that aren\'t its markers (check K)'); } }
+    if (!/A\.P2 && A\.P2\.kit3d \? A\.P2\.kit3d\(\{[^}]*canvas, ctex/.test(rd('practice3d.js'))) bad('practice3d.js no longer hands a part\'s kit3d its pieces (canvas and ctex for the markers, check K)'); }
+  catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
     const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }

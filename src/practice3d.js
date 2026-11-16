@@ -708,8 +708,10 @@ function pg3d(host, A) {
   // ---- one shape on the screen ----
   const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), V4 = new T.Vector3(), faceIn = (x, y) => Math.atan2(-x, y); /* (turned to face the middle of the stone) */
   // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
-  // (flat3d: a part on phase 1's platform alone, no side ledges: the intermission, src/practice-int.js)
-  const P2K = A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
+  // (flat3d: a part on phase 1's platform alone, no side ledges: the intermission, src/practice-int.js; kit3d: a part that brings its own 3D pieces from
+  // its module (the intermission's floating raid markers, Nov 15))
+  const P2K = A.P2 && A.P2.kit3d ? A.P2.kit3d({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, canvas, ctex, BALL, CONEG, BEAMG, WALLG, UDISC, URING })
+    : A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
     : A.P2 && !A.P2.flat3d && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
   const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
