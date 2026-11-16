@@ -87,7 +87,9 @@ function pgP2Jobs(seed, me, pk) {
   // then the other five together
   SIDES.forEach((s) => { const pool = P.half[s].slice(); for (let i = 0; i < 3; i++) J[pool.splice(Math.floor(rnd() * pool.length), 1)[0]].teth = 'five'; });
   const all = SIDES.flatMap((s) => P.half[s]); J[all.find((id) => J[id].teth && id[0] === 'r') || all.find((id) => J[id].teth)].teth = 'solo';
-  if (me && J[me] && pk) pgP2Give(J, me, pk);
+  // (Flex, Nov 15: "Make the player always get one of the grasping fangs, randomize if its the early break or 5 break": with a random tether you
+  // always get one, the solo or one of the five on a coin flip, so both get practised)
+  if (me && J[me] && pk) pgP2Give(J, me, pk.teth === 'random' ? { ...pk, teth: rnd() < 0.5 ? 'solo' : 'five' } : pk);
   // (the one Malice comes at 3:04, the tethers at 3:16: a kicker never has both at once, so nothing is handed on)
   return J;
 }
@@ -563,7 +565,7 @@ function pgP2(A) {
       '<p>' + (heal ? 'Healers have no kick in Midnight (only a Restoration Shaman).' : 'Press E during the cast bar: melee within 8 yards, ranged within 30.') + '</p>' + clash() + '</div>';
     else body = '<div class="pg-p2kick"><p><b>Grasping Fangs (3:16).</b> Six tethers, three on each ledge, on anyone. One player breaks alone, then the other five break together.</p>' +
       seg('p2t', [['random', 'Random'], ['solo', 'Solo break'], ['five', 'One of the five'], ['none', 'No tether']], pk.teth) +
-      '<p>' + ({ random: 'Like the real fight: you may get one.', solo: 'You walk out past 25 yards from the Warden at 3:26, alone.', five: 'At 3:28 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
+      '<p>' + ({ random: 'You always get one: alone or one of the five, at random each run.', solo: 'You walk out past 25 yards from the Warden at 3:26, alone.', five: 'At 3:28 go to the edge of your tether (20 yards); step out on the count at 3:34.', none: 'You stay with your half; the bots take the tethers.' })[pk.teth] + '</p>' + clash() + '</div>';
     return '<div class="pg-optrow pg-jrole"><span>Ledge</span>' + seg('p2s', [['W', 'West'], ['E', 'East']], pk.side) + '<span>Role</span>' + seg('p2r', [['m', 'Melee'], ['r', 'Ranged'], ['h', 'Healer']], pk.role) + '</div>' +
       '<div class="pg-jtabs">' + seg('p2tab', [['egg', 'Egg'], ['kick', 'Kicks'], ['teth', 'Tether']], tab) + '</div>' + body; };
   const bind = (box, refresh) => { box.onclick = (e) => { const b = e.target.closest('[data-p2s],[data-p2r],[data-p2tab],[data-p2e],[data-p2m],[data-p2c],[data-p2t]'); if (!b || b.disabled) return; const d0 = b.dataset;
@@ -583,15 +585,15 @@ function pgP2(A) {
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
     set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; const D = pgP2Base(), side = pk.side === 'W' ? 'W' : 'E', mine0 = P.half[side].find((id) => id[0] === r && D[id].egg);
       pk = { side, role: r, egg: v === 'big' ? (r === 'h' ? 'close' : 'far') : v === 'egg' ? 'n' + (mine0 ? D[mine0].egg : 6) : null, mal: v === 'mal' ? 1 : 0, cry: v === 'cry' ? 1 : 0, teth: 'random' }; fix(); save(); },
-    say: () => { const v = setupCard.now().job; return ({ mal: 'You cross to your ledge and kick the Warden\'s Malice at ' + clk(T.malice) + ' with E, then follow the plan to the heart burn.',
-      cry: 'You cross to your ledge, then kick your Doomscale\'s Anguished Cry with E each time it casts (about ' + crN.map(clk).join(', ') + ').',
-      egg: 'You cross to your ledge and carry a small egg into the cauldron once the Warden dies.',
-      big: 'You cross to your ledge and carry the ' + (pk.role === 'h' ? 'north' : 'south') + ' big egg into the cauldron before Hatching Doom runs out.',
-      none: 'You cross to your ledge, help kill the Warden and the Doomscales, and keep out of the frontals and the falling rocks.' })[v]; } };
+    say: () => { const v = setupCard.now().job; return ({ mal: 'You cross to your ledge and kick the Warden\'s Malice at ' + clk(T.malice) + ' with E, then break your tether (alone at 3:26 or with the five at 3:34) and follow the plan to the heart burn.',
+      cry: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), then kick your Doomscale\'s Anguished Cry with E each time it casts (about ' + crN.map(clk).join(', ') + ').',
+      egg: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34) and carry a small egg into the cauldron once the Warden dies.',
+      big: 'You cross to your ledge and carry the ' + (pk.role === 'h' ? 'north' : 'south') + ' big egg into the cauldron before Hatching Doom runs out, after breaking your tether (alone at 3:26 or with the five at 3:34).',
+      none: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), help kill the Warden and the Doomscales, and keep out of the frontals and the falling rocks.' })[v]; } };
   const asg = () => { fix(); const L0 = [], s = SD[pk.side];
     L0.push(['Cross over (2:47)', 'Walk into your gate (the gold ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
     L0.push(['The Warden (2:55)', 'Kill it with your half (it dies about 3:38). Kill the glowing Clutches it makes first (3:04), then the Rawlings that come out of them.' + (pk.mal ? ' Kick its Malice (' + clk(T.malice) + ') with E.' : ' Its tank kicks its Malice.')]);
-    L0.push(['Grasping Fangs (3:16)', ({ random: 'You may get a tether. Solo: walk out past 25 yards at 3:26. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:26.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:26, five at 3:34).' })[pk.teth]]);
+    L0.push(['Grasping Fangs (3:16)', ({ random: 'You always get a tether, the solo or one of the five at random. Solo: walk out past 25 yards at 3:26. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:26.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:26, five at 3:34).' })[pk.teth]]);
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. ' + (pk.egg === 'far' ? 'Go to it at 3:53, pick it up at 4:09' : 'Go to it at about 3:58, pick it up at 4:13 or 4:16 (one ledge\'s healer goes first, the other about 2.5 s later)') + ' (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
     else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others at 3:56.']);
     else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
@@ -605,7 +607,7 @@ function pgP2(A) {
     const egg = pk.egg === 'far' || pk.egg === 'close' ? 'The ' + NS[pk.egg] + ' big egg: pick it up at ' + (pk.egg === 'far' ? '4:09' : '4:13 or 4:16') + ', in by 4:27' : pk.egg ? 'Small egg ' + pk.egg.slice(1) + ': pick it up when the Warden dies, into the cauldron at 3:56' : 'No egg: keep out of the carriers\' rings';
     const kk = [pk.mal ? 'the Warden\'s Malice (' + clk(T.malice) + ')' : '', pk.cry ? 'Doomscale ' + pk.cry + '\'s Anguished Cry' : ''].filter(Boolean);
     L0.push(egg + (kk.length ? '. Kick (E) ' + kk.join(' and ') : '') + '.');
-    L0.push(({ random: 'Tether: if you get one, break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
+    L0.push(({ random: 'Tether: you get one every run, at random: break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
     L0.push('Back to her at 4:38: burn the heart, step out of the brown circles.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
   // ---- hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"; practice.js does the rest: Tab or a click picks a target,
@@ -615,14 +617,14 @@ function pgP2(A) {
   // (each target with its health for the target frame and the ring round it: the adds' own, the Warden's and the Doomscales' from the raid's damage)
   const tgts = (t) => { sync(); const L0 = []; if (!G || !G.p2) return L0;
     G.adds.forEach((a) => { if (a.kind !== 'viper' && !a.own) return; a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1);
-      if (a.kind === 'viper') L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6, hp: a.hp == null ? 5 : a.hp, max: 5 });
-      else L0.push({ key: a.id, kind: 'rawling', side: a.side, name: 'Blightscale Rawling' + (a.boil ? ' (boiling)' : ''), p: [a.x, a.y], r: 1.1, hp: Math.max(0, a.hp), max: P.RHITS }); });
-    Object.values(G.p2.cl).forEach((c) => { if (c.dead == null) L0.push({ key: c.id, kind: 'clutch', side: c.side, name: 'Blightscale Clutch · ' + Math.max(0, Math.ceil(c.born + T.CHATCH - t)) + ' s', p: [c.x, c.y], r: 1.4, hp: Math.max(0, c.hp) * 10, max: 10 }); });
+      if (a.kind === 'viper') L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6, hp: a.hp == null ? 5 : a.hp, max: 5, hpFr: Math.max(0, a.hp == null ? 1 : a.hp / 5) });
+      else L0.push({ key: a.id, kind: 'rawling', side: a.side, name: 'Blightscale Rawling' + (a.boil ? ' (boiling)' : ''), p: [a.x, a.y], r: 1.1, hp: Math.max(0, a.hp), max: P.RHITS, hpFr: Math.max(0, a.hp / P.RHITS) }); });
+    Object.values(G.p2.cl).forEach((c) => { if (c.dead == null) L0.push({ key: c.id, kind: 'clutch', side: c.side, name: 'Blightscale Clutch · ' + Math.max(0, Math.ceil(c.born + T.CHATCH - t)) + ' s', p: [c.x, c.y], r: 1.4, hp: Math.max(0, c.hp) * 10, max: 10, hpFr: Math.max(0, c.hp) }); });
     if (t >= T.heart && t < T.heartEnd) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 3 });
     // (kill them evenly (the guide): on your ledge the right one is the one with the most health, or any within 5% of it)
     const js = (S.job[A.me] || {}).side, top = Math.max(0, ...S.ds.filter((d) => d.side === js && G.p2.ds[d.id] && G.p2.dsS[d.id]).map((d) => G.p2.dsS[d.id].hp));
-    S.ds.forEach((d) => { const c = G.p2.ds[d.id], st = G.p2.dsS[d.id]; if (c && st && t >= st.up + 1.5) L0.push({ key: d.id, kind: d.side === js && st.hp < top - 0.05 ? 'dsx' : 'ds', side: d.side, name: 'Weakened Doomscale ' + d.k + (st.rev != null ? ' (Revenge)' : ''), p: [c.x, c.y], r: 2.6, hp: Math.max(0, st.hp) * 100, max: 100 }); });
-    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (p && t >= w.molt) L0.push({ key: w.id, kind: 'warden', side: w.side, name: 'Doomscale Warden', p: p.slice(), r: 2.5, hp: Math.max(0, G.p2.whp[w.side]) * 100, max: 100 }); });
+    S.ds.forEach((d) => { const c = G.p2.ds[d.id], st = G.p2.dsS[d.id]; if (c && st && t >= st.up + 1.5) L0.push({ key: d.id, kind: d.side === js && st.hp < top - 0.05 ? 'dsx' : 'ds', side: d.side, name: 'Weakened Doomscale ' + d.k + (st.rev != null ? ' (Revenge)' : ''), p: [c.x, c.y], r: 2.6, hp: Math.max(0, st.hp) * 100, max: 100, hpFr: Math.max(0, st.hp) }); });
+    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (p && t >= w.molt) L0.push({ key: w.id, kind: 'warden', side: w.side, name: 'Doomscale Warden', p: p.slice(), r: 2.5, hp: Math.max(0, G.p2.whp[w.side]) * 100, max: 100, hpFr: Math.max(0, G.p2.whp[w.side]) }); });
     return L0; };
   // (the moment that matters most now, on your ledge: a Viper, a Clutch (it hatches at 20 s), the heart, a Rawling, the Doomscales, the Warden)
   // (while you carry an egg, carrying it is your job: no damage moment then)
@@ -701,7 +703,7 @@ function pgP2(A) {
     // Acidic Expulsion; a Ravenous Doomscale and its Dread Roar)
     Object.values(G.p2.cl).forEach((c) => { if (c.dead != null) return; const left = c.born + T.CHATCH - t; P3({ k: 'clutch', x: c.x, y: c.y, p: left }); if (c.side === j.side || pgDist([c.x, c.y], [G.x, G.y]) < 30) h.label(c.x, c.y, 3.6, 'Clutch · ' + Math.max(0, Math.ceil(left)) + ' s', left < 6 ? '#ff8f87' : '#d9b8ff', 13); });
     S.south.forEach((q) => { const se = G.p2.se[q.id]; if (t >= q.up && se.state !== 'clutch') P3({ k: 'egg', x: q.x, y: q.y, h: 0 }); });
-    G.adds.forEach((a) => { if (!a.own) return; if (a.boil != null) h.ring(a.x, a.y, 1.7, '#ff4a2f', 0.95, 0.25, true); const c = S.casts.find((q) => q.rid === a.id && t >= q.t0 && t <= q.t1); if (c) castRing(a.x, a.y, 2, c, 'rawling'); });
+    G.adds.forEach((a) => { if (!a.own) return; const c = S.casts.find((q) => q.rid === a.id && t >= q.t0 && t <= q.t1); if (c) castRing(a.x, a.y, 2, c, 'rawling'); }); /* (a boiling one's red ring: practice3d.js draws it for every add with a.boil) */
     G.p2.rav.forEach((r) => { P3({ k: 'rav', x: r.x, y: r.y }); const c = r.c; if (t >= c.t0 && t <= c.t1) castRing(r.x, r.y, 5, c, 'rav'); else h.label(r.x, r.y, 10, 'Ravenous Doomscale', '#ff8f87', 15);
       if (t >= r.roar && t <= r.roar + 0.9) P3({ k: 'shock', x: r.x, y: r.y, r: 60 * Math.min(1, (t - r.roar) / 0.9), c: '#ff5a4f' }); });
     if (t >= T.heart && t < T.heartEnd + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 3, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
