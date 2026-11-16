@@ -60,6 +60,26 @@ function checks(H, say) {
     played.length = 0; dbg.sim('r3', true, false, 1); if (played.length) bad('the autopilot\'s run plays ' + played.length + ' sounds; it should play none (check D)');
     { const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8'); if (!/class=\\"pg-snd on\\"|class="pg-snd on"/.test(src) || !/e\.code === 'KeyM'\) \{ sndSet\(!sndOn\)/.test(src) || !/M: sound/.test(src)) bad('no Sound button by the 2D | 3D switch, no M key, or no "M: sound" on the keys line (check D)'); }
   } catch (x) { bad('the sound check crashed: ' + x.message + ' (check D)'); } finally { try { delete win.AudioContext; } catch (e) { /* (none) */ } }
+  // E. egg holders (Flex, Nov 15: "maybe the egg holders should try to avoid the player just a little, without making it super super easy but they tend to
+  //    pause and then move a lot faster than the player and will run right into me if im in their path"): a raider holding an egg walks at your speed
+  //    (7 yd/s), faster only to get out of a wave; with your egg held and you right in its path it sidesteps a little
+  try {
+    dbg.at(20, 'r3', { seed: 3 }); const g = G(), mine = g.eggs.find((e) => e.who === 'r3' && e.state === 'held'); if (!mine) bad('at 0:20 you hold no egg, so the egg holders can\'t be checked (check E)');
+    let n = 0, quick = 0; const last = {}, fastAt = {}; const held = () => g.eggs.filter((e) => e.state === 'held' && e.who && e.who !== 'r3').map((e) => e.who);
+    held().forEach((id) => { last[id] = [g.bots[id].x, g.bots[id].y]; });
+    while (g.t < 39) { steps(1); held().forEach((id) => { const b = g.bots[id], p = last[id]; if (p) { const v = Math.hypot(b.x - p[0], b.y - p[1]) / 0.05; if (v > 0.5) { n++; if (b.rush != null && Math.abs(b.rush - g.t) <= 0.051) (fastAt[id] = fastAt[id] || []).push(g.t); if (v > 8.6 && !(b.rush != null && Math.abs(b.rush - g.t) <= 0.051)) quick++; } } last[id] = [b.x, b.y]; }); }
+    Object.entries(fastAt).forEach(([id, L]) => { const bursts = []; L.forEach((x) => { const q = bursts[bursts.length - 1]; if (q && x - q[1] <= 0.3) q[1] = x; else bursts.push([x, x]); });
+      bursts.forEach((q, i) => { if (q[1] - q[0] > 3.2) bad(id + ' ran fast for ' + (q[1] - q[0]).toFixed(1) + ' s holding an egg; Sprint lasts 3 s (check E)'); if (i && q[0] - bursts[i - 1][0] < 29.5) bad(id + ' sprinted again ' + (q[0] - bursts[i - 1][0]).toFixed(1) + ' s after the last; Sprint comes back every 30 s (check E)'); }); });
+    if (!n) bad('no egg holder walked between 0:20 and 0:39, so their speed can\'t be checked (check E)'); else if (quick / n > 0.02) bad('egg holders ran faster than you (over 8.6 yd/s, not dodging) on ' + Math.round(100 * quick / n) + '% of their steps; they walk at your 7 yd/s, faster only for a wave or a soak due (check E)');
+    // the sidestep: find an egg holder on the move, stand 4.5 yd ahead of it on its path with your egg, and watch it step aside
+    dbg.at(20, 'r3', { seed: 3 }); let side = null; for (let k = 0; k < 400 && !side; k++) { const g2 = G(), before = {}; held().forEach((id) => { before[id] = [g2.bots[id].x, g2.bots[id].y]; }); steps(1);
+      for (const id of held()) { const b = g2.bots[id], p = before[id]; if (!p) continue; const vx = b.x - p[0], vy = b.y - p[1], v = Math.hypot(vx, vy) / 0.05; if (v > 5 && v < 7.2) { side = { id, ux: vx / Math.hypot(vx, vy), uy: vy / Math.hypot(vx, vy), x0: b.x, y0: b.y }; break; } } }
+    if (!side) bad('no egg holder walked steadily between 0:20 and 0:40 to check the sidestep (check E)');
+    else { const g3 = G(), b = g3.bots[side.id]; g3.x = side.x0 + side.ux * 4.5; g3.y = side.y0 + side.uy * 4.5; steps(6);
+      const off = Math.abs(side.ux * (b.y - side.y0) - side.uy * (b.x - side.x0)), dMe = Math.hypot(b.x - g3.x, b.y - g3.y);
+      if (off < 0.3) bad('an egg holder walking at you (you hold your egg, 4.5 yd ahead) didn\'t step aside: ' + off.toFixed(2) + ' yd off its line after 0.3 s (check E)');
+      if (dMe < 3) bad('an egg holder walked into your 3-yard ring (' + dMe.toFixed(1) + ' yd) while you stood in its path (check E)'); }
+  } catch (x) { bad('the egg holder check crashed: ' + x.message + ' (check E)'); }
 }
 module.exports = checks;
 if (require.main === module) {
