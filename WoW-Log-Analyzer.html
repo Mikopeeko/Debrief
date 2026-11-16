@@ -75301,7 +75301,9 @@ const PG_P3 = {
   // the adds' health (picked so the raid alone kills them on the kills' clock: the near clutches in 6 to 8 s, the Shriekers about 8:53, the Wretch about 8:50, so
   // your hits bring the Wretch down by 8:27 to 8:32 as on the kills; a hit of yours: a clutch 1, a Shrieker 0.5, the Wretch 0.25). The far clutch, gripped in
   // last (4.2 s), outlives its 10.2 s gestation without you
-  CLUTCH: { hp: 7, drain: 1.1, gest: 10.2 }, SHRIEK: { hp: 12, drain: 0.57, hit: 0.5, late: 40 }, WRETCH: { hp: 30, drain: 0.4, hit: 0.25 } };
+  // (a Shrieker keeps 15% until its Vicious Echoes is kicked or done: on every kill both cast it, and your hits with the raid's killed yours at 8:44 to 8:46,
+  //  before its cast at 8:46.8, so you never got a kick (Flex, Nov 15: "there should be at least one spot where the player is asked to interupt"))
+  CLUTCH: { hp: 7, drain: 1.1, gest: 10.2 }, SHRIEK: { hp: 12, drain: 0.57, hit: 0.5, late: 40, floor: 0.15 }, WRETCH: { hp: 30, drain: 0.4, hit: 0.25 } };
 // (a point in her frame turned to quarter k: 0 as is, then 90 degrees counter-clockwise each step)
 const pgP3R = (p, k) => { k = ((k % 4) + 4) % 4; return k === 0 ? [p[0], p[1]] : k === 1 ? [-p[1], p[0]] : k === 2 ? [-p[0], -p[1]] : [p[1], -p[0]]; };
 // (which quarter a point is on: the cracks cross at about x 0.5, y -1)
@@ -75411,7 +75413,7 @@ function pgP3Script(o) {
   T.prey.forEach((p0, i) => { cast('boss', 'Circling Prey', p0, p0 + T.preyCast); timer(hit[i], 'Circling Prey'); warn(p0, i === 1 && S.gates.some((g) => g.k === 2) ? 'Circling Prey: take your gateway once her waves pass!' : 'Circling Prey: move one quarter left, you have ' + Math.floor(hit[i] - p0) + ' s!', '#ff4a4a'); });
   // the Shriekers: hatched in the venom where the broken quarters were, tanked to the raid; Vicious Echoes (kick it!), dead about 8:53
   S.shriekers = P.shriek.map((q, i) => ({ id: 'sh' + (i + 1), k: i + 1, p0: F(q, 2), up: T.shriek, dies: T.sdie }));
-  { const mk = o.me && S.job[o.me] ? S.job[o.me].kick : 0, ck = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  { const mk = o.me && S.job[o.me] ? S.job[o.me].kick : 0, ck = (t) => { const r = Math.round(t); return Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0'); };
     warn(T.shriek, mk ? 'Two Shriekers: your kick is Shrieker ' + mk + ' at ' + ck(T.echoes) + ' (E)!' : 'Two Blightscale Shriekers: kill them fast!', '#ff9fb2'); if (mk) warn(T.echoes, 'Kick now: your Shrieker\'s Vicious Echoes (E)!', '#ff9fb2'); }
   S.echoes = S.shriekers.map((s) => ({ sh: s.id, k: s.k, t0: T.echoes, t1: T.echoes + T.echoCast, c: cast('shrieker', 'Shrieker: Vicious Echoes', T.echoes, T.echoes + T.echoCast) })); timer(T.echoes, 'Vicious Echoes');
   // the last burn
@@ -75439,7 +75441,7 @@ function pgP3(A) {
   // ---- your job (the start card), remembered on this browser ----
   const KEY = 'wla-pg-job3', job0 = () => ({ role: 'r', soak: 0, bite: 'random', kick: 2 });
   const jobOk = (j) => !!j && /^[mrh]$/.test(j.role) && [0, 1, 2, 3].includes(j.soak) && ['random', 'yes', 'no'].includes(j.bite) && [0, 1, 2].includes(j.kick);
-  let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) return j; } catch (e) { /* (no storage) */ } return job0(); })();
+  let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) { if (j.role !== 'h' && j.soak && !j.kick) j.kick = j.role === 'm' ? 1 : 2; /* (a soak saved before the soaks carried a kick) */ return j; } } catch (e) { /* (no storage) */ } return job0(); })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(pk)); } catch (e) { /* (no storage) */ } };
   // (a healer has no kick and, since Nov 6, no red circle: what's played drops them, but the saved pick keeps them for when you switch back (the review, Nov 15:
   // one tap on Healer wiped a saved kick and red circle))
@@ -75618,7 +75620,7 @@ function pgP3(A) {
     S.shriekers.forEach((s) => { const w = shWant(s, t); if (!w) { delete G.p3.sh[s.id]; return; } const c = G.p3.sh[s.id]; if (!c) { G.p3.sh[s.id] = { x: w[0], y: w[1], hp: P.SHRIEK.hp }; return; } const ex = w[0] - c.x, ey = w[1] - c.y, ee = Math.hypot(ex, ey), sp = 9 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = w[0]; c.y = w[1]; } });
     gates(t); kicks(t0, t); clutches(t0, t, dt); bites(t0, t, dt);
     // (the Shriekers and the Wretch have health (the audit, Nov 15): the raid wears them down once they're with it, your hits add)
-    { const c = FR(P.mel, raidStep(t)); Object.entries(G.p3.sh).forEach(([k, s]) => { if (pgDist([s.x, s.y], c) < 25) s.hp -= P.SHRIEK.drain * dt; if (s.hp <= 0) { G.p3.shDead[k] = t; delete G.p3.sh[k]; } });
+    { const c = FR(P.mel, raidStep(t)); Object.entries(G.p3.sh).forEach(([k, s]) => { if (pgDist([s.x, s.y], c) < 25) s.hp -= P.SHRIEK.drain * dt; const ec = S.echoes.find((q) => q.sh === k); if (ec && !G.p3.kick[k] && t < ec.t1) s.hp = Math.max(s.hp, P.SHRIEK.hp * P.SHRIEK.floor); /* (it lives to cast: your kick) */ if (s.hp <= 0) { G.p3.shDead[k] = t; delete G.p3.sh[k]; } });
       const w = G.p3.wr; if (w && !G.p3.wrDead && t >= S.wretch.wake + 6 && pgDist([w.x, w.y], c) < 20) G.p3.wrHp -= P.WRETCH.drain * dt; if (w && G.p3.wrHp <= 0 && !G.p3.wrDead) { G.p3.wrDead = t; G.p3.wr = null; } }
     // (Acidic Expulsion: each Shrieker alive 6.6 s after it hatches puts a stack on the whole raid for about 36 s (8:36.8 to 9:14.5 on the kills); alive at 40 s, again)
     if (cr(T.acid)) Object.keys(G.p3.sh).forEach(() => A.deb('acid', 36, true));
@@ -75701,14 +75703,15 @@ function pgP3(A) {
   // ---- the shared setup screen (practice.js, Nov 15, Flex via Main: "still too complex and confusing"): a role, then one job in plain words, as
   // phase 2's. The soak sets are the guide's plan's (the 1st a ranged's, the 2nd a melee's, the 3rd a healer's); a kick is a melee's or a ranged's;
   // the red circle comes at random, like the real fight (one melee and one ranged DPS each set since Nov 6) ----
-  const SJ = { m: [['k1', 'Kick a Shrieker'], ['s2', 'Soak the 2nd bite'], ['none', 'Stack and hit']], r: [['k2', 'Kick a Shrieker'], ['s1', 'Soak the 1st bite'], ['none', 'Stack and hit']], h: [['s3', 'Soak the 3rd bite'], ['none', 'Heal, no soak']] };
+  // (every melee and ranged pick but "no kick" has a Shrieker kick, Flex, Nov 15: "there should be at least one spot where the player is asked to interupt")
+  const SJ = { m: [['k1', 'Kick a Shrieker'], ['s2', 'Soak the 2nd bite, and kick'], ['none', 'Stack and hit, no kick']], r: [['k2', 'Kick a Shrieker'], ['s1', 'Soak the 1st bite, and kick'], ['none', 'Stack and hit, no kick']], h: [['s3', 'Soak the 3rd bite'], ['none', 'Heal, no soak']] };
   const jobNow = (j) => (j.soak ? 's' + j.soak : j.kick ? 'k' + j.kick : 'none');
   const setupCard = { roles: ['m', 'r', 'h'],
     now: () => { const e = eff(), r = e.role, v = jobNow(e); return { role: r, job: SJ[r].some((x) => x[0] === v) ? v : SJ[r][0][0] }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
-    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, soak: v[0] === 's' ? +v[1] : 0, kick: v[0] === 'k' ? +v[1] : 0, bite: 'random' }; save(); },
+    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, soak: v[0] === 's' ? +v[1] : 0, kick: v[0] === 'k' ? +v[1] : v[0] === 's' && r !== 'h' ? (r === 'm' ? 1 : 2) : 0, bite: 'random' }; save(); },
     say: () => { const v = setupCard.now().job, e = eff(), n = +v.slice(1), circle = e.role === 'h' ? '' : ' A red circle may land on you: walk it to the gold ring.';
-      return (v[0] === 's' ? 'You soak the ' + ORD[n] + ' Serpent\'s Bite (' + ['', '6:42', '7:46', '9:30'][n] + '): stand on the stacked red circles, press Q as they drain, then spread to the edge.'
+      return (v[0] === 's' ? 'You soak the ' + ORD[n] + ' Serpent\'s Bite (' + ['', '6:42', '7:46', '9:30'][n] + '): stand on the stacked red circles, press Q as they drain, then spread to the edge.' + (e.kick ? ' Then kick Shrieker ' + e.kick + '\'s Vicious Echoes at 8:47 with E.' : '')
         : v[0] === 'k' ? 'You stack with the raid on her quarter and kick Shrieker ' + n + '\'s Vicious Echoes at 8:47 with E.'
         : e.role === 'h' ? 'You stack with the raid on her quarter, keep out of the red circles and move a quarter left at each Circling Prey.' : 'You stack with the raid on her quarter, hit what\'s up, and move a quarter left at each Circling Prey.') + circle; } };
   // (the start card's "Your job in short": four plain lines)
