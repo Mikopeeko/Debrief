@@ -247,6 +247,20 @@ function checks(H, say) {
     { const pk = { role: 'r', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.prey[1] + 6, me, { seed: 3 }); dbg.pos = dbg.S.F2([14, 14], 2); dbg.stepOwn(1); if (!/Press Q/.test(dbg.P2.jobText())) bad('at the 2nd Circling Prey, off her quarter, the screen doesn\'t say to press Q: ' + dbg.P2.jobText() + ' (check L)'); }
     if (!script({ seed: 3 }).impacts.some((m) => m.name === 'Falling Debris' && m.at > T.heart)) bad('no Falling Debris in the last heart burn (check L)');
   } catch (e) { bad('the mechanics audit\'s checks crashed: ' + e.message + ' (check L)'); } finally { reset(); }
+  // M. the call line (Main, Nov 15, 0441260f: at most two calls show at once, one that says "you" or "your" first, and one that waited 4 s drops). Phase
+  //    3's calls about your job (your red circle, your soak, your kick, Circling Prey) say you/your so they're never the ones dropped; timer-only facts
+  //    (Toxic Womb, Rage of the Shackled, the second gateway on its own) have no call; every call fits on one line. Played on the real call line
+  try { const ME = /\b(you|your)\b/i;
+    for (const [pk, seed] of [[{ role: 'm', soak: 0, bite: 'no', kick: 1 }, 3], [{ role: 'r', soak: 1, bite: 'no', kick: 0 }, seedFor(ctx, 1)], [{ role: 'r', soak: 0, bite: 'yes', kick: 2 }, 5], [{ role: 'h', soak: 3, bite: 'no', kick: 0 }, seedFor(ctx, 2)]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), tag = ' (' + JSON.stringify(pk) + ', seed ' + seed + ', check M)'; dbg.at(T.start - 1, me, { seed }); const S = dbg.S, G = dbg.G, W = S.warns.filter((w) => w.t >= T.start - 1);
+      W.filter((w) => w.text.length > 56).forEach((w) => bad('a phase 3 call runs past one line (' + w.text.length + ' letters): "' + w.text + '"' + tag));
+      W.filter((w) => /^(Toxic Womb|Rage of the Shackled|A gateway to the next quarter)/.test(w.text)).forEach((w) => bad('a timer-only fact still has a call (the boss-mod bar has it): "' + w.text + '"' + tag));
+      const mine = []; S.bites.forEach((b) => { if (b.tg.includes(me)) mine.push([b.land, /on you/, 'your red circle']); else if (S.job[me].sk.includes(b.i + 1)) mine.push([b.land, /^Your soak/, 'your soak']); });
+      if (S.job[me].kick) mine.push([T.shriek, /your kick is Shrieker \d at \d:\d\d/, 'your kick'], [T.echoes, /^Kick now/, 'kick now']); T.prey.forEach((p) => mine.push([p, /^Circling Prey/, 'Circling Prey']));
+      mine.forEach(([at, re, what]) => { const w = W.find((q) => Math.abs(q.t - at) < 0.01 && re.test(q.text)); if (!w) bad('no call for ' + what + ' at ' + clkS(at) + tag); else if (!ME.test(w.text)) bad('the call for ' + what + ' doesn\'t say you/your, so it can be dropped: "' + w.text + '"' + tag); });
+      const shown = new Set((G.lastWarn && G.lastWarn.all) || []); /* (the opening call shows as the jump lands) */ G.warnQ = []; G.lastWarn = null; for (let k = 0; T.start - 1 + k * 0.05 < S.end; k++) { G.t = T.start - 1 + k * 0.05; const L = dbg.warnsNow(); if (L) L.all.forEach((x) => shown.add(x)); }
+      W.filter((w) => ME.test(w.text) && !shown.has(w.text)).forEach((w) => bad('"' + w.text + '" (' + clkS(w.t) + ') never shows on the call line' + tag)); }
+  } catch (e) { bad('the call line check crashed: ' + e.message + ' (check M)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
