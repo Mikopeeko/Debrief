@@ -630,8 +630,8 @@ function pgP2(A) {
   // (while you carry an egg, carrying it is your job: no damage moment then)
   const dpsCat = (t) => { sync(); if (!G || !G.p2) return null; const j = S.job[A.me], s = j && j.side, here = G.p2.where[A.me] === 'L' && G.p2.wside[A.me] === s, near = (p) => pgDist(p, [G.x, G.y]) < 45;
     if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (G.eggs.some((e) => e.who === A.me && e.state === 'held') || G.p2.big.some((b) => b.who === A.me && b.state === 'held')) return null;
-    if (here && Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && near([c.x, c.y]))) return 'clutch';
-    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 30 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
+    if (here && Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && pgDist([c.x, c.y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 40))) return 'clutch'; /* (one within your reach soon: a melee 25 yards, others their 40) */
+    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
     if (Object.keys(G.p2.ds).some((id) => G.p2.dsS[id] && t >= G.p2.dsS[id].up + 1.5)) return 'ds'; return j && G.p2.wd[s] && t >= T.clutch ? 'warden' : null; };
   const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['warden', 'clutch', 'rawling', 'ds', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ warden: 'the Warden', clutch: 'the Clutches', rawling: 'the Rawlings', ds: 'the Doomscales', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   // (the bar under your target's frame: your target's cast, gold when you can kick it; "Interrupted" a moment after a kick lands on it; with no target,
