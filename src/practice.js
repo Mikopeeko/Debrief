@@ -113,13 +113,22 @@ function pgOpen(root, boss, d, pk) {
     mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
-  ov.innerHTML = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
-    '<div class="pg-top"><div class="pg-me"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div><div class="pg-debs"></div></div>' +
-    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div><div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div>' +
-    '<div class="pg-timers"></div><button type="button" class="pg-x" aria-label="Close">✕</button></div>' +
+  // (the screen, laid out like a raider's UI (Nov 15, Flex: "Player healthbar and target bar in the middle, hotbars with spells on them for the attack/sprint/
+  // defensive. Boss mods. Etc. Nothing fancy, just a better more familiar layout"): top right the minimap, the 2D | 3D switch and your mistakes, then her boss
+  // frame; on the left the boss-mod timer bars; bottom centre your job, then your frame and your target's side by side (her cast bar under the target), then
+  // the action bar, filled in once your role is known (actsHtml))
+  const HUD = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
+    '<div class="pg-tr"><canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-trow"><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div>' +
+    '<div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span>Mistakes</span></div></div>' +
+    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div></div></div>' +
+    '<button type="button" class="pg-x" aria-label="Close">✕</button><div class="pg-timers"></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
-    '<div class="pg-bot"><div class="pg-job"><div class="pg-up" aria-live="off"></div><span>Your job now</span><p></p></div><div class="pg-acts"><div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab)."><b>Tab</b><span>Target</span></div><div class="pg-act pg-atk" data-a="atk" role="button" tabindex="0" title="Hit your target (1). Press it again as soon as it is ready."><b>1</b><span>Attack</span><i></i></div><div class="pg-act" data-a="sprint"><b>Shift</b><span>Sprint</span><i></i></div><div class="pg-act" data-a="def"><b>Q</b><span>Defensive</span><i></i></div>' + (P2 ? P2.acts() : '') + '<div class="pg-act pg-mis"><b class="pg-mc">0</b><span>Mistakes</span></div></div></div>' +
-    '<canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div><div class="pg-card"></div></div>';
+    '<div class="pg-bot"><div class="pg-job"><span>Your job now</span><p></p></div>' +
+    '<div class="pg-ufs"><div class="pg-ucol pg-me"><div class="pg-uf"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div></div><div class="pg-debs"></div></div>' +
+    '<div class="pg-ucol pg-tfc"><div class="pg-uf pg-tf none"><div class="pg-nm"><b class="pg-tfn">No target</b><span class="pg-tfr">Tab to pick</span></div><div class="pg-bar pg-tfh"><i></i><span></span></div></div>' +
+    '<div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div></div>' +
+    '<div class="pg-acts"></div></div><div class="pg-card"></div></div>';
+  ov.innerHTML = HUD;
   (root && root.isConnected ? root : document.body).appendChild(ov); document.documentElement.classList.add('pg-open');
   const mini = ov.querySelector('.pg-mini'), mx2 = mini.getContext('2d'), cv = ov.querySelector('.pg-cv'), cx = cv.getContext('2d'), card = ov.querySelector('.pg-card'), $ = (s) => ov.querySelector(s);
   // ---- pictures: the room, and each role's icon (loaded from Wowhead at runtime, a plain circle until they arrive) ----
@@ -246,7 +255,7 @@ function pgOpen(root, boss, d, pk) {
     atkStep(t); if (G.hitFx && G.hitFx.length && t - G.hitFx[0].t0 > 0.5) G.hitFx = G.hitFx.filter((x) => t - x.t0 <= 0.5);
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
-  const cycleTgt = () => { const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
+  const cycleTgt = () => { press('tgt'); const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
   const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), adds: tgtList(t).filter((o) => o.max) }; };
   const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; el.textContent = text; el.style.color = c || '#fff'; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
@@ -483,22 +492,71 @@ function pgOpen(root, boss, d, pk) {
     S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open: hit it', '#ff8a5a');
     return L.sort((a, b) => a.at - b.at).slice(0, 3); };
   let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
-    const t = G.t, j = jobOf(me, t), egg = G.eggs.some((e) => e.id === me && e.state === 'floor'), act = !!(j.ob || j.fast || egg), b = { id: me, x: G.x, y: G.y, esc: G.hintEsc }, dz = act ? dodge(b, j.T, t, j.fast, j.ob) : null; G.hintEsc = b.esc;
-    const T = dz ? dz.T : null, d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, dodge: !!b.esc } : null; hintC = { t, h }; return h; };
+    // (Flex, Nov 15: "the move here thing should only be for specific mechanics ... where to stand for things like soaks, not how to dodge waves": your coil
+    // soak, the Wretch's bubble and your egg; never the waves, the tail's sweep or her reach)
+    const t = G.t, j = jobOf(me, t), eg = G.eggs.find((e) => e.id === me && e.state === 'floor'); let T = null, what = '';
+    if (j.ob) { T = spotIn(j.ob, me) || j.ob.p.slice(); what = 'spot'; } else if (eg) { T = [eg.x, eg.y]; what = 'egg'; }
+    const d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, what } : null; hintC = { t, h }; return h; };
   const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
     if (!force && key === hudKey) return; hudKey = key;
-    $('.pg-mn').textContent = role.name + ' (you)'; $('.pg-mj').textContent = role.job;
+    $('.pg-mn').textContent = role.name + ' (you)'; { const mj = $('.pg-mj'); mj.textContent = role.job; mj.title = role.job; } /* (cut short in the frame: the whole job on hover) */
     const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = hp + '%'; hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
     $('.pg-debs').innerHTML = Object.entries(G.debs).filter(([, v]) => v.until > t).concat(myEggHeld() ? [['shell', { until: t + 99, n: 1 }]] : []).map(([kk, v]) => { const dd = DEB[kk]; return '<span style="border-color:' + dd[1] + ';color:' + dd[1] + '">' + esc(dd[0]) + (v.n > 1 ? ' ×' + v.n : '') + (v.until - t < 60 ? ' <em>' + Math.ceil(v.until - t) + '</em>' : '') + '</span>'; }).join('');
     $('.pg-clk').textContent = pgClock(t); const bh = $('.pg-bhp'); bh.querySelector('i').style.width = G.bossHp.toFixed(1) + '%'; bh.querySelector('span').textContent = Math.round(G.bossHp) + '%';
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100) + '%'; cb.querySelector('span').textContent = (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + '  ' + Math.max(0, c.t1 - t).toFixed(1); } else cb.style.display = 'none';
-    $('.pg-timers').innerHTML = myTimers(t).map((q) => '<div class="pg-tm"><i style="width:' + Math.max(0, Math.min(100, (1 - (q.t - t) / 20) * 100)).toFixed(1) + '%"></i><span>' + esc(q.name) + '</span><b>' + Math.ceil(q.t - t) + '</b></div>').join('');
+    modsDraw(t);
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
-    const tg = $('.pg-tgt'); if (tg) tg.innerHTML = !dv ? '' : (dv.cur ? '<span class="pg-tgn' + (dv.ok ? ' ok' : '') + '">Target: <b>' + esc(dv.cur.name) + '</b>' + (dv.inRange ? '' : ' <em>out of range</em>') + '</span>' : '') + (dv.cat && !dv.ok ? '<span class="pg-tgr">' + esc(DPS_SAY[dv.cat][0]) + ': press Tab</span>' : '');
-    $('.pg-up').innerHTML = hints ? upNext(t).map((u) => '<span style="border-color:' + u.c + ';color:' + u.c + '">' + esc(u.text) + ' <b>' + Math.ceil(u.at - t) + ' s</b></span>').join('') : '';
+    tfDraw(tgtFrame(t)); const tg = $('.pg-tgt'); if (tg) tg.innerHTML = tgtHint(dv);
     { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; }
-      const ab = $('.pg-atk'); if (ab) { const rdy = !!dv && dv.cd <= 0; ab.classList.toggle('hot', !!(dv && dv.cat && rdy && !dv.ok)); ab.classList.toggle('good', !!(dv && dv.ok)); ab.classList.remove('on'); ab.querySelector('span').textContent = dv && dv.cur && !dv.inRange ? 'Too far' : 'Attack'; ab.querySelector('i').style.height = dv && dv.cd > 0 ? (dv.cd / GCD * 100).toFixed(1) + '%' : '0'; } }
-    [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; }); if (P2) P2.hud(t); };
+      const ab = $('.pg-atk'); if (ab) { const rdy = !!dv && dv.cd <= 0, ai = atkIc(); ab.classList.toggle('hot', !!(dv && dv.cat && rdy && !dv.ok)); ab.classList.toggle('good', !!(dv && dv.ok)); ab.classList.toggle('far', !!(dv && dv.cur && !dv.inRange)); ab.classList.remove('on'); ab.querySelector('span').textContent = dv && dv.cur && !dv.inRange ? 'Too far' : 'Attack'; ab.querySelector('i').style.height = dv && dv.cd > 0 ? (dv.cd / GCD * 100).toFixed(1) + '%' : '0';
+        const an = ab.querySelector('.pg-cdn'); if (an) an.textContent = dv && dv.cd > 1 ? Math.ceil(dv.cd) : ''; if (ai !== atkShown) { atkShown = ai; icSet(ab, ai); } } } /* (the attack's icon is your role's: a melee strike, a firebolt, a healer's smite) */
+    [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; const n = $('.pg-act[data-a="' + kk + '"] .pg-cdn'); if (n) n.textContent = left > 1 ? Math.ceil(left) : ''; }); if (P2) P2.hud(t); };
+  // ---- the target frame (Nov 15, Flex: "theres also no healthbar for the target. This should look/feel like youre playing the game(kind of)"): your target's
+  // name and a hostile red health bar. An add's own health; Ula'tek, her tail and her heart share hers (they are all her); a Wretch's by the clock, from waking
+  // to dying; anything else (phase 2's targets have no health) a full bar with no number. No target: a dim frame, "Tab to pick". A hit flashes the bar ----
+  const tgtFrame = (t) => { if (!G) return null; const o = tgtNow(t); if (!o) return { none: true, name: 'No target' }; let pct = null;
+    if (o.max) pct = Math.max(0, o.hp == null ? o.max : o.hp) / o.max * 100; else if ((o.kind === 'boss' || o.kind === 'tail' || o.kind === 'heart') && typeof G.bossHp === 'number') pct = G.bossHp;
+    else if (o.kind === 'wretch') { const w = (S.wretches || []).find((q) => q.id === o.key); if (w && w.dies > w.awake) pct = Math.max(0, Math.min(1, (w.dies - t) / (w.dies - w.awake))) * 100; }
+    return { none: false, key: o.key, name: o.name, pct: pct == null ? null : Math.max(0, Math.min(100, pct)), range: inRange(o) }; };
+  let hitSeen = null, tfFlash = 0;
+  const tfDraw = (tf) => { const el = $('.pg-tf'); if (!el || !tf) return; el.classList.toggle('none', !!tf.none); el.classList.toggle('far', !tf.none && !tf.range);
+    $('.pg-tfn').textContent = tf.name; $('.pg-tfr').textContent = tf.none ? 'Tab to pick' : tf.range ? '' : 'Out of range';
+    const bar = $('.pg-tfh'); bar.querySelector('i').style.width = (tf.none ? 0 : tf.pct == null ? 100 : tf.pct).toFixed(1) + '%'; bar.querySelector('span').textContent = tf.none || tf.pct == null ? '' : Math.round(tf.pct) + '%';
+    const h = G.hits || 0; if (h !== hitSeen) { const nw = hitSeen != null && h > hitSeen; hitSeen = h; if (nw && !window.__pgAuto) { tfFlash++; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } } }; /* (by the hit count: two hits in one step still flash) */
+  // (the line under it: what to do about your target, only while a moment needs one: the wrong one picked, too far, or not hitting it)
+  const tgtHint = (dv) => { if (!dv || !dv.cat || dv.ok) return ''; const s0 = (DPS_SAY[dv.cat] || ['Hit the right target'])[0], right = !!dv.cur && isRight(dv.cat, dv.cur);
+    return '<span class="pg-tgr">' + esc(!right ? s0 + ': press Tab' : !dv.inRange ? (rl(me) === 'm' ? 'Too far: get close to it' : 'Too far: get closer') : s0 + ': keep pressing 1') + '</span>'; };
+  // ---- the boss mods (Nov 15, Flex: "Boss mods"): timer bars like DBM or BigWigs on the left, the coming-up hints (when hints are on) and the boss-mod timers
+  // in one list, the same thing once (by name, or the same spell within 1.5 s), soonest first, five at most. Each bar has its spell's icon (the site's, by the
+  // fight's spell names in the engine), its name, the seconds left and a fill that empties as the time runs out; under 5 s it lights up ----
+  const MOD_SP = [[/coil/i, 'Spectral Coils'], [/womb/i, 'Toxic Womb'], [/beam/i, 'Toxic Incubation'], [/bubble|fester/i, 'Fester Burst'], [/wrath|bites/i, 'Mother\'s Wrath'], [/thrash|tail sweep/i, 'Mephitic Thrash'],
+    [/heart|rage/i, 'Rage of the Shackled'], [/debris/i, 'Falling Debris'], [/wave|small tails/i, 'Caustic Waves'], [/malice/i, 'Malice'], [/cry|doomscale/i, 'Anguished Cry'], [/fangs|break/i, 'Grasping Fangs'], [/egg/i, null]];
+  const modSp = (n) => { const m = MOD_SP.find(([re]) => re.test(n)); return !m ? null : m[1] || (P2 ? 'Hatching Doom' : 'Call of the Serpent'); };
+  const modBars = (t) => { const L = [], put = (at, name, c) => { if (!(at > t) || !name) return; const sp = modSp(name); if (L.some((q) => q.name === name || (sp && q.sp === sp && Math.abs(q.at - at) <= 1.5))) return;
+      L.push({ at, name, c: /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : '#5a8cdc', sp, left: at - t, soon: at - t < 5 }); };
+    if (hints) upNext(t).forEach((u) => put(u.at, u.text, u.c)); myTimers(t).forEach((q) => put(q.t, q.name, null));
+    return L.sort((a, b) => a.at - b.at).slice(0, 5); };
+  const modIcon = (b) => { if (b.sp && typeof spellIcon === 'function') { try { return '<span class="pg-tmi">' + spellIcon(0, b.sp) + '</span>'; } catch (e) { /* (no icon: the colour square) */ } } return '<span class="pg-tmi pg-tmq"></span>'; };
+  let modKey = null; /* (the bars are made again only when the list changes, so their icons don't flicker; the fills and seconds are set every time) */
+  const modsDraw = (t) => { const el = $('.pg-timers'); if (!el) return; const B = modBars(t), k = B.map((b) => b.name + '@' + b.at).join('|');
+    if (k !== modKey) { modKey = k; el.innerHTML = B.map((b) => '<div class="pg-tm" style="--c:' + b.c + '">' + modIcon(b) + '<div class="pg-tmb"><i></i><span>' + esc(b.name) + '</span><b></b></div></div>').join(''); if (typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (the colour squares stay) */ } } }
+    const rows = el.children; B.forEach((b, i) => { const r = rows && rows[i]; if (!r) return; r.classList.toggle('soon', b.soon); r.querySelector('.pg-tmb i').style.width = Math.max(0, Math.min(100, b.left / 30 * 100)).toFixed(1) + '%'; r.querySelector('.pg-tmb b').textContent = b.soon ? b.left.toFixed(1) : String(Math.ceil(b.left)); }); };
+  // ---- the action bar (Nov 15, Flex: "hotbars with spells on them for the attack/sprint/defensive"): square spell icons with the key in the corner and a
+  // short name under each, the cooldown's dark sweep and its seconds; the gold glow when it's the thing to press. Icons by name (loaded at runtime, the site's
+  // loader when it's there); a button whose icon can't load stays a plain dark square with its key. Phase 2's Kick gets its icon here too ----
+  const ACT_IC = { tgt: 'ability_hunter_markedfordeath', sprint: 'ability_rogue_sprint', def: 'spell_holy_divineprotection', kick: 'ability_kick' }, ATK_IC = { m: 'ability_warrior_savageblow', r: 'spell_fire_firebolt02', h: 'spell_holy_searinglight' };
+  const atkIc = () => ATK_IC[rl(me)] || ATK_IC.m; let atkShown = null;
+  const actDeco = (h) => String(h).replace(/<div class="pg-act(?: [^"]*)?" data-a="(\w+)"[^>]*>(?!<img class="pg-ai")/g, (m0, a) => { const n = a === 'atk' ? atkIc() : ACT_IC[a]; return n ? m0 + '<img class="pg-ai" data-ic="' + n + '" alt="">' : m0; });
+  const actsHtml = () => actDeco('<div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab)."><b>Tab</b><span>Target</span></div>' +
+    '<div class="pg-act pg-atk" data-a="atk" role="button" tabindex="0" title="Hit your target (1). Press it again as soon as it is ready."><b>1</b><span>Attack</span><i></i><em class="pg-cdn"></em></div>' +
+    '<div class="pg-act" data-a="sprint" title="Sprint (Shift): faster for 3 s, every 30 s."><b>Shift</b><span>Sprint</span><i></i><em class="pg-cdn"></em></div>' +
+    '<div class="pg-act" data-a="def" title="Defensive (Q): half damage for 8 s, every 90 s."><b>Q</b><span>Defensive</span><i></i><em class="pg-cdn"></em></div>' + (P2 ? P2.acts() : ''));
+  const hudHtml = () => HUD.replace('<div class="pg-acts"></div>', '<div class="pg-acts">' + actsHtml() + '</div>'); /* (the screen as it stands once the action bar is in: for the test) */
+  const icLoad = (im, n) => { if (!im || !n) return; im.dataset.ic = n; if (typeof loadOfficial === 'function') { try { loadOfficial(im, n); return; } catch (e) { /* (loaded here instead) */ } }
+    const u = ['https://wow.zamimg.com/images/wow/icons/large/' + n + '.jpg', 'https://render.worldofwarcraft.com/us/icons/56/' + n + '.jpg']; let k = 0;
+    im.onload = () => { if (im.naturalWidth && im.parentNode) im.parentNode.classList.add('has'); }; im.onerror = () => { if (++k < u.length) im.src = u[k]; else im.remove(); }; im.src = u[0]; };
+  const icSet = (btn, n) => { if (!btn) return; let im = btn.querySelector('img.pg-ai'); if (!im) { im = document.createElement('img'); im.className = 'pg-ai'; im.alt = ''; btn.insertBefore(im, btn.firstChild); } btn.classList.remove('has'); icLoad(im, n); };
+  const press = (a) => { const el = $('.pg-act[data-a="' + a + '"]'); if (!el) return; el.classList.remove('pr'); void el.offsetWidth; el.classList.add('pr'); }; /* (a key or a click shows the button pressed) */
   // (calls that come within 1.5 s of each other share one line, so one never covers the other: "a second Wretch!" showed for 0.2 s, Nov 15 review)
   // (the boss-mod timers: only your coil slam, named "Your coil", Nov 15 review)
   const myTimers = (t) => S.timers.filter((q) => q.t > t).filter((q) => { const m = /^Coil slam (\d)$/.exec(q.name); return !m || S.soaks.some((z) => Math.abs(z.at - q.t) < 0.01 && z.k === +m[1] - 1 && z.group.includes(me)); }).map((q) => (/^Coil slam \d$/.test(q.name) ? { ...q, name: 'Your coil' } : q)).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5);
@@ -592,7 +650,7 @@ function pgOpen(root, boss, d, pk) {
   const optSum = () => (speed < 1 ? 'Half speed' : 'Normal speed') + ' · Hints ' + (hints ? 'on' : 'off') + ' · ' + (startAt > 0 ? 'From ' + pgClock(startAt) : 'From the pull');
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
-    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
+    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); }
@@ -622,12 +680,14 @@ function pgOpen(root, boss, d, pk) {
   const kd = (e) => { if (!ov.isConnected) return; const tg = e.target && e.target.tagName, typing = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
     if (!(e.ctrlKey || e.metaKey || e.altKey)) { e.stopPropagation(); if (/^[0-9]$/.test(e.key) && !typing) e.preventDefault(); } /* (the site's own keys never see the game's: 1 switched the guide to Heroic and closed it) */
     if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
-    if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } return; }
-    if (G && !paused && P2 && e.code === 'KeyE') { P2.kick(); return; }
+    if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { sprintKey(e); return; }
+    if (G && !paused && P2 && e.code === 'KeyE') { if (!e.repeat) press('kick'); P2.kick(); return; }
     if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
-    if (G && !paused && (e.code === 'Digit1' || e.code === 'Numpad1')) { e.preventDefault(); atkKey(); return; }
-    if (G && !paused && e.code === 'KeyQ') { if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } return; }
+    if (G && !paused && (e.code === 'Digit1' || e.code === 'Numpad1')) { e.preventDefault(); atkKey(); if (!e.repeat) press('atk'); return; }
+    if (G && !paused && e.code === 'KeyQ') { defKey(e); return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
+  const sprintKey = (e) => { if (!(e && e.repeat)) press('sprint'); if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } };
+  const defKey = (e) => { if (!(e && e.repeat)) press('def'); if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
   document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
   cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
@@ -647,7 +707,10 @@ function pgOpen(root, boss, d, pk) {
   window.__pg3dDbg = { get v3() { return v3; }, view };
   const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd, true); document.removeEventListener('keyup', ku, true); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
-  { const ab = $('.pg-atk'); if (ab) { ab.onclick = () => { if (G && !paused) atkKey(); }; ab.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) atkKey(); } }; } }
+  // (the action bar goes in now that your role is known (the attack's icon is your role's), its icons load, and every button is clickable like a WoW bar)
+  { const ba = $('.pg-acts'); if (ba) { ba.innerHTML = actsHtml(); atkShown = atkIc(); ba.querySelectorAll('img.pg-ai').forEach((im) => icLoad(im, im.dataset.ic));
+    ba.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('.pg-act') : null; if (!b || !G || paused) return; const a = b.dataset.a; if (a === 'sprint') sprintKey(); else if (a === 'def') defKey(); else if (a === 'kick' && P2) { press('kick'); P2.kick(); } }); } }
+  { const ab = $('.pg-atk'); if (ab) { ab.onclick = () => { if (G && !paused) { atkKey(); press('atk'); } }; ab.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) { atkKey(); press('atk'); } } }; } }
   { const tb = $('.pg-tab'); if (tb) { tb.onclick = () => { if (G && !paused) cycleTgt(); }; tb.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) cycleTgt(); } }; } }
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
 
@@ -670,7 +733,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -680,33 +743,65 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg { position: fixed; inset: 0; z-index: 72; background: #05070a; }
 .pg-in { position: absolute; inset: 0; overflow: hidden; font-family: var(--body, system-ui, sans-serif); color: #e8edf2; user-select: none; }
 .pg-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
-.pg-top { position: absolute; top: 0; left: 0; right: 0; display: grid; grid-template-columns: 300px 1fr 280px 34px; gap: 16px; align-items: start; padding: 12px 14px; pointer-events: none; }
-.pg-top > * { pointer-events: auto; }
-.pg-nm { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; } .pg-nm b { font: 700 15px var(--head, system-ui); text-shadow: 0 1px 3px #000; } .pg-nm span { font-size: 12.5px; color: #c2cbd5; text-shadow: 0 1px 3px #000; }
-.pg-bar { position: relative; height: 20px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.18); overflow: hidden; }
-.pg-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #3fbf5a; transition: width .1s linear; } .pg-bar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 12.5px var(--head, system-ui); text-shadow: 0 1px 2px #000; }
-.pg-hp.mid i { background: #d9a93a; } .pg-hp.low i { background: #d8483e; }
-.pg-debs { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 22px; } .pg-debs span { padding: 2px 6px; border: 1px solid; background: rgba(10,12,16,.85); font: 600 12px var(--body, system-ui); } .pg-debs em { font-style: normal; color: #fff; margin-left: 3px; }
-.pg-bossf { justify-self: center; width: min(460px, 100%); } .pg-bossf .pg-nm { justify-content: space-between; } .pg-clk { font: 800 16px var(--head, system-ui) !important; color: #fff !important; font-variant-numeric: tabular-nums; }
-.pg-bhp i { background: #b0303a; } .pg-cast { margin-top: 4px; height: 18px; } .pg-cast i { background: #e0a53a; }
-.pg-timers { display: flex; flex-direction: column; gap: 3px; } .pg-tm { position: relative; height: 20px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.15); font: 600 12.5px var(--body, system-ui); }
-.pg-tm i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(90,140,220,.45); } .pg-tm span { position: absolute; left: 7px; top: 2px; } .pg-tm b { position: absolute; right: 7px; top: 2px; font-variant-numeric: tabular-nums; }
-.pg-x { width: 32px; height: 32px; border: 1px solid rgba(255,255,255,.25); border-radius: 4px; background: rgba(10,12,16,.85); color: #cfd6de; font-size: 15px; cursor: pointer; } .pg-x:hover { border-color: #f3c969; color: #fff; }
+/* (the screen, Nov 15: laid out like a raider's UI; every rule under .pg so none of it reaches the site's own pg- classes) */
+.pg .pg-nm { display: flex; align-items: baseline; gap: 8px; min-width: 0; margin-bottom: 4px; } .pg .pg-nm b { flex: none; font: 700 14px var(--head, system-ui); color: #fff; text-shadow: 0 1px 3px #000; }
+.pg .pg-nm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #c2cbd5; text-shadow: 0 1px 3px #000; }
+.pg .pg-bar { position: relative; height: 20px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.18); overflow: hidden; }
+.pg .pg-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #3fbf5a; transition: width .1s linear; } .pg .pg-bar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000; }
+.pg .pg-hp.mid i { background: #d9a93a; } .pg .pg-hp.low i { background: #d8483e; }
+/* (top right, where WoW's minimap is: the minimap, the 2D | 3D switch and your mistakes under it, then her boss frame; the close button in the corner) */
+.pg .pg-tr { position: absolute; top: 12px; right: 54px; width: 200px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+.pg .pg-mini { display: block; width: 200px; height: 200px; border: 1px solid rgba(255,255,255,.2); pointer-events: none; }
+.pg .pg-trow { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 6px; } /* (wraps in the 150 px column on a narrow window: Mistakes stuck out past the minimap) */
+.pg .pg-mis { display: flex; align-items: center; gap: 6px; padding: 0 9px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.18); font: 600 12px var(--body, system-ui); color: #aab4c0; } .pg .pg-mis b { font: 800 16px var(--head, system-ui); color: #ff8f87; font-variant-numeric: tabular-nums; }
+.pg .pg-bossf { padding: 5px 6px 6px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); } .pg .pg-bossf .pg-nm { justify-content: space-between; } .pg .pg-clk { font: 800 15px var(--head, system-ui) !important; color: #fff !important; font-variant-numeric: tabular-nums; }
+.pg .pg-bhp i { background: #b0303a; }
+.pg .pg-x { position: absolute; top: 12px; right: 14px; z-index: 6; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,.25); background: rgba(10,12,16,.85); color: #cfd6de; font-size: 15px; cursor: pointer; } .pg .pg-x:hover { border-color: #f3c969; color: #fff; }
+/* (left side: the boss mods, timer bars like DBM's: an icon, the name, the seconds; the fill empties as the time runs out, brighter under 5 s) */
+.pg .pg-timers { position: absolute; left: 14px; top: 36%; width: 270px; display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
+.pg .pg-tm { display: flex; height: 24px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.16); }
+.pg .pg-tmi { position: relative; flex: none; width: 22px; height: 22px; overflow: hidden; background: #0b0d11; border-right: 1px solid #000; } .pg .pg-tmq { background: var(--c); opacity: .7; }
+.pg .pg-tmi .icw { display: block; width: 22px; height: 22px; margin: 0; vertical-align: top; } .pg .pg-tmi .icw img.oi { border-radius: 0; box-shadow: none; } .pg .pg-tmi .icw svg rect { rx: 0; }
+.pg .pg-tmb { position: relative; flex: 1; min-width: 0; } .pg .pg-tmb i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); opacity: .38; transition: width .25s linear; }
+.pg .pg-tmb span { position: absolute; left: 7px; right: 42px; top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px/22px var(--body, system-ui); color: #e8edf2; text-shadow: 0 1px 2px #000; }
+.pg .pg-tmb b { position: absolute; right: 7px; top: 0; font: 700 12.5px/22px var(--head, system-ui); color: #e8edf2; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.pg .pg-tm.soon { border-color: var(--c); } .pg .pg-tm.soon .pg-tmb i { opacity: .85; } .pg .pg-tm.soon .pg-tmb span, .pg .pg-tm.soon .pg-tmb b { color: #fff; font-weight: 800; }
 .pg-warn { position: absolute; top: 22%; left: 0; right: 0; text-align: center; font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn.in { animation: pgWarn 3s ease-out forwards; } @keyframes pgWarn { 0% { opacity: 0; transform: scale(1.15); } 8% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
 .pg-float { position: absolute; top: 31%; left: 0; right: 0; text-align: center; font: 700 16px var(--head, system-ui); text-shadow: 0 1px 4px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-float.bad { color: #ff8f87; } .pg-float.ok { color: #7ee08f; } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
-.pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; align-items: flex-end; gap: 16px; padding: 12px 14px; pointer-events: none; }
-.pg-job { max-width: 560px; padding: 9px 12px; background: rgba(10,12,16,.88); border: 1px solid rgba(243,201,105,.5); } .pg-job span { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg-job p { margin: 2px 0 0; font: 600 15px/1.35 var(--body, system-ui); }
-.pg-acts { display: flex; gap: 6px; } .pg-act { position: relative; width: 64px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(10,12,16,.88); border: 1px solid rgba(255,255,255,.22); overflow: hidden; }
-.pg-act b { font: 800 14px var(--head, system-ui); }
-.pg-tab, .pg-atk { pointer-events: auto; cursor: pointer; } .pg-atk:hover { border-color: #f3c969; } .pg-atk.on { background: rgba(126,224,143,.12); }
-.pg-atk.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.55); animation: pgTabHot 1s ease-in-out infinite; } .pg-atk.hot b, .pg-atk.hot span { color: #f3c969; } .pg-atk.good { border-color: #7ee08f; } .pg-atk.good b { color: #7ee08f; } .pg-tab:hover { border-color: #f3c969; } .pg-tab span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pg-tab.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.55); animation: pgTabHot 1s ease-in-out infinite; } .pg-tab.hot b, .pg-tab.hot span { color: #f3c969; }
-.pg-tab.good { border-color: #7ee08f; } .pg-tab.good b { color: #7ee08f; } @keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } } .pg-act span { font-size: 11.5px; color: #aab4c0; } .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(0,0,0,.6); }
-.pg-mis b { color: #ff8f87; font-size: 18px; }
-.pg-mini { position: absolute; left: 14px; top: 104px; width: 180px; height: 180px; border: 1px solid rgba(255,255,255,.2); pointer-events: none; }
-@media (max-width: 900px) { .pg-mini { width: 120px; height: 120px; bottom: auto; top: 120px; } }
+/* (bottom centre, ElvUI style: your job, then your frame left of centre and your target's right of it (you stand between them), then the action bar) */
+.pg .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 14px 8px; pointer-events: none; }
+.pg .pg-job { max-width: min(520px, 100%); padding: 6px 12px 7px; text-align: center; background: rgba(10,12,16,.85); border: 1px solid rgba(243,201,105,.45); } .pg .pg-job span { display: block; font: 700 12px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg .pg-job p { margin: 1px 0 0; font: 600 14px/1.35 var(--body, system-ui); color: #e8edf2; }
+.pg .pg-ufs { display: flex; justify-content: center; gap: 140px; }
+.pg .pg-ucol { position: relative; width: 250px; min-height: 104px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+/* (the site's own rules reach in here: ".pg-me { align-items: flex-start }" (Home's "Which one is you?") shrank your frame to its words, and body.refine
+   rounds every button and "#main .pg-bar" (the Plan page's bar, inside the site's defaultTheme layer, so this one has to be in that layer too) by 4 px;
+   the screen keeps square edges) */
+.pg.pg .pg-in :is(.pg-x, .pg-vw button, .pg-bar) { border-radius: 0 !important; } @layer defaultTheme { html body #main .pg.pg .pg-in .pg-bar { border-radius: 0 !important; } }
+.pg .pg-uf { padding: 5px 6px 6px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); } .pg .pg-uf .pg-bar { height: 22px; background: #15181d; border-color: #000; } .pg .pg-uf .pg-bar span { justify-content: flex-end; padding-right: 7px; }
+.pg .pg-debs { display: flex; flex-wrap: wrap; gap: 3px; } .pg .pg-debs span { padding: 1px 5px; border: 1px solid; background: rgba(10,12,16,.85); font: 600 12px var(--body, system-ui); } .pg .pg-debs em { font-style: normal; color: #fff; margin-left: 3px; }
+.pg .pg-tfh i { background: #c0352c; } .pg .pg-tf .pg-tfr { color: #ff8f87; font-weight: 700; } .pg .pg-tf.far .pg-tfh i { background: #7c2a25; }
+.pg .pg-tf.none { opacity: .6; } .pg .pg-tf.none .pg-tfn { color: #aab4c0; } .pg .pg-tf.none .pg-tfr { color: #8d97a3; font-weight: 600; }
+.pg .pg-tfh::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; } .pg .pg-tf.hit .pg-tfh::after { animation: pgHit .15s ease-out; } @keyframes pgHit { 0% { opacity: .5; } 100% { opacity: 0; } }
+.pg .pg-cast { height: 18px; } .pg .pg-cast i { background: #e0a53a; } .pg .pg-cast span { font-size: 12px; }
+.pg .pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; } .pg .pg-tgt:empty { display: none; } .pg .pg-tgt span { padding: 1px 8px; background: rgba(10,12,16,.85); border: 1px solid #f3c969; color: #f3c969; font: 700 12.5px var(--body, system-ui); }
+/* (the action bar: square spell icons, the key in the corner, the name under it; the cooldown's dark sweep and its seconds; the gold proc glow, green when right) */
+.pg .pg-acts { display: flex; gap: 14px; padding-bottom: 18px; }
+.pg .pg-acts .pg-act { position: relative; isolation: isolate; flex: none; width: 46px; height: 46px; background: #11141a; border: 1px solid rgba(255,255,255,.3); box-shadow: 0 0 0 1px #000; pointer-events: auto; cursor: pointer; }
+.pg .pg-acts .pg-act img.pg-ai { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.has img.pg-ai { opacity: 1; }
+.pg .pg-acts .pg-act b { position: absolute; left: 3px; top: 1px; z-index: 3; font: 800 12.5px var(--head, system-ui); color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
+.pg .pg-acts .pg-act span { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px var(--body, system-ui); color: #c2cbd5; text-shadow: 0 1px 2px #000; pointer-events: none; }
+.pg .pg-acts .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: 1; background: rgba(0,0,0,.62); pointer-events: none; }
+.pg .pg-acts .pg-act em { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding-top: 12px; font: 800 16px var(--head, system-ui); font-style: normal; color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
+.pg .pg-acts .pg-act::before { content: ''; position: absolute; inset: 0; z-index: 1; background: rgba(200,30,30,.45); opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.far::before { opacity: 1; }
+.pg .pg-acts .pg-act::after { content: ''; position: absolute; inset: 0; z-index: 4; background: rgba(255,240,200,.5); opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.pr::after { animation: pgPr .16s ease-out; } @keyframes pgPr { 0% { opacity: 1; } 100% { opacity: 0; } }
+.pg .pg-acts .pg-act:hover { border-color: #f3c969; }
+.pg .pg-acts .pg-act.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.6); animation: pgTabHot 1s ease-in-out infinite; } .pg .pg-acts .pg-act.hot span { color: #f3c969; }
+@keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } }
+.pg .pg-acts .pg-act.good { border-color: #7ee08f; box-shadow: 0 0 0 1px #7ee08f; } .pg .pg-acts .pg-act.good span { color: #7ee08f; }
+@media (max-width: 900px) { .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
+@media (max-width: 640px) { .pg .pg-ufs { gap: 12px; } .pg .pg-ucol { width: calc(50vw - 20px); } .pg .pg-acts { gap: 10px; } .pg .pg-timers { width: 200px; } .pg .pg-job p { font-size: 13px; } }
 .pg-card { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,6,9,.62); z-index: 3; } .pg-card.on { display: flex; }
 .pg-cin { width: min(620px, 94%); max-height: 92%; overflow: auto; padding: 20px 22px; background: var(--bg, #0f1117); border: 1px solid var(--line2, rgba(255,255,255,.18)); border-radius: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.55); }
 .pg-cin h2 { margin: 2px 0 8px; font: 800 24px/1.15 var(--head, system-ui); color: #fff; } .pg-k { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #aab4c0; }
@@ -718,8 +813,6 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-jhit { cursor: pointer; } .pg-jhit:hover circle:first-of-type { stroke: #fff; }
 .pg-jside { flex: 1 1 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-jside p { margin: 0 !important; font-size: 13.5px !important; } .pg-jside b { color: #fff; }
 .pg-jno.on { border-color: #f3c969; color: #f3c969; }
-.pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; min-height: 0; } .pg-tgt:empty { display: none; } .pg-tgt span { padding: 2px 8px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); font: 600 12.5px var(--body, system-ui); }
-.pg-tgn b { color: #fff; } .pg-tgn.ok { border-color: #7ee08f !important; } .pg-tgn em { font-style: normal; color: #ff8f87; } .pg-tgr { border-color: #f3c969 !important; color: #f3c969; font-weight: 700 !important; }
 .pg-dpsl { margin: -4px 0 10px !important; } .pg-dpsl b { color: #fff; }
 .pg-short0 { margin-top: 12px; } .pg-short { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .pg-short li { position: relative; padding-left: 24px; font-size: 14px; line-height: 1.45; color: #e8edf2; } .pg-short li .pg-gl { position: absolute; left: 0; top: 2px; }
@@ -738,7 +831,6 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-row .pg-keys { margin: 0 !important; align-self: center; flex: 1; min-width: 200px; font-size: 12.5px !important; } .pg-jno:disabled { opacity: .45; cursor: not-allowed; } .pg-jteams { display: flex; flex-wrap: wrap; gap: 6px; }
 .pg-jhit:focus { outline: none; } .pg-jhit:focus-visible circle:first-of-type { stroke: #fff; stroke-width: 1.2; }
 .pg-cin > .pg-row:last-child { position: sticky; bottom: -20px; margin: 14px -22px -20px; padding: 10px 22px 14px; background: var(--bg, #0f1117); border-top: 1px solid rgba(255,255,255,.08); }
-.pg-up { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 6px; } .pg-up:empty { display: none; } .pg-up span { display: inline-block; padding: 1px 7px; border: 1px solid; background: rgba(10,12,16,.6); font: 700 12.5px var(--body, system-ui); letter-spacing: 0; text-transform: none; white-space: nowrap; } .pg-up b { color: #fff; margin-left: 2px; font-variant-numeric: tabular-nums; }
 .pg-roles { display: flex; gap: 8px; margin: 12px 0; } .pg-role { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 4px; background: none; color: #fff; cursor: pointer; text-align: left; }
 .pg-role b { font: 700 15px var(--head, system-ui); } .pg-role small { font-size: 12.5px; color: #aab4c0; } .pg-role.on { border-color: #f3c969; background: rgba(243,201,105,.08); }
 .pg-asg { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; max-height: 230px; overflow: auto; } .pg-asg li { padding: 5px 9px; border-left: 2px solid rgba(243,201,105,.6); font-size: 13.5px; line-height: 1.35; color: #c2cbd5; } .pg-asg li b { display: block; color: #fff; font: 700 13.5px var(--head, system-ui); }
@@ -752,13 +844,11 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-grade { display: flex; align-items: center; gap: 16px; margin: 8px 0 12px; } .pg-grade > b { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; font: 900 46px var(--head, system-ui); border: 2px solid; }
 .pg-grade .gS { color: #f3c969; } .pg-grade .gA { color: #7ee08f; } .pg-grade .gB { color: #7fb8ff; } .pg-grade .gC { color: #e0a53a; } .pg-grade .gD { color: #ff8f87; } .pg-grade h2 { margin: 0; } .pg-grade p { margin: 2px 0 0; }
 .pg-sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; } .pg-sum li { display: flex; gap: 10px; font-size: 14px; } .pg-sum time { min-width: 38px; color: #8d97a3; font-variant-numeric: tabular-nums; } .pg-sum b { display: block; color: #fff; font-weight: 600; } .pg-sum span { display: block; color: #f3c969; font-size: 13px; }
-@media (max-width: 900px) { .pg-top { grid-template-columns: 1fr 34px; } .pg-bossf, .pg-timers { display: none; } .pg-bot { flex-direction: column; align-items: stretch; } }
 .pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
-.pg-vw { position: absolute; left: 14px; top: 292px; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; }
+.pg-vw { position: relative; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; pointer-events: auto; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
 .pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-p2 .pg-vw button[data-v="2"] { display: none; }
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
-@media (max-width: 900px) { .pg-vw { top: 248px; } }
 `;
   document.head.appendChild(st);
 }

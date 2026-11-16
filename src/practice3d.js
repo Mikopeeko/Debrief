@@ -79,8 +79,25 @@ function pg3dShapes(A, t) {
   // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
   // (her waves, Nov 15: the half hit first glows red, the safe half green; they swap once the first wave has gone by)
   const hv = A.halves ? A.halves() : null; if (hv) { const a = Math.atan2(hv.d[1], hv.d[0]); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a : a + Math.PI, f0: 0, f1: 60, w0: -60, w1: 60, c: '#ff4632', o: 0.26 }); P({ k: 'rect', x: 0, y: 0, a: hv.red > 0 ? a + Math.PI : a, f0: 0, f1: 60, w0: -60, w1: 60, c: '#5ae678', o: 0.22 }); }
-  const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { if (h.age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + h.age * 5, h.melee ? '#fff0c8' : '#f3c969', 1 - h.age / 0.4); }); (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
-  const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35)); if (dv.cur) ring(dv.cur.p[0], dv.cur.p[1], dv.cur.r + 0.7, dv.inRange ? '#ffffff' : '#ff8f87', 0.9, 0.25, true); }
+  // (attacks you can see, Nov 15, Flex: "the attack doesnt look like its attacking ... just familiar"): ranged and healers throw a glowing bolt
+  // from hand height (2.4) to the target in 0.22 s (fire for ranged, holy gold for healers), then it bursts on the target (a flash and a ring);
+  // melee swing a quick slash in front of them at the target, and it sparks. You lean into each hit. The gold floor ring comes as the hit lands.
+  // (a tank hits from 40 yards in this game: a slash when close, else a pale bolt.) bolt: x, y, h where it is, tx, ty, th the end of its streak.
+  const HT = { fly: 0.22, swing: 0.16, end: 0.5 }, myR = A.rl ? A.rl(me) : 'r'; let lean = null;
+  const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { const age = h.age; if (!(age >= 0 && age < HT.end)) return;
+      const dx = h.x1 - h.x0, dy = h.y1 - h.y0, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, a = Math.atan2(dy, dx), mel = !!h.melee || (myR === 't' && d - h.r <= 5);
+      const c = mel ? '#fff0c8' : myR === 'h' ? '#ffd34d' : myR === 't' ? '#9fd0ff' : '#ff6a2a', hz = Math.min(3.2, 0.5 + h.r * 0.6), sk = Math.min(Math.max(0, h.r - 1.2), d * 0.5);
+      const ex = h.x1 - ux * sk, ey = h.y1 - uy * sk, at = mel ? 0.07 : HT.fly; /* (where it lands: the middle of a small target, the near side of a big one) */
+      if (mel) { if (age < HT.swing) P({ k: 'slash', x: h.x0, y: h.y0, a, f: age / HT.swing, c }); if (age < 0.4) grow(h.x1, h.y1, h.r + 0.4 + age * 5, '#fff0c8', 1 - age / 0.4); }
+      else if (age < HT.fly) { const s0 = Math.min(0.7, d * 0.25), Lx = Math.max(0.01, d - sk - s0), fl = (q) => [h.x0 + ux * (s0 + Lx * q), h.y0 + uy * (s0 + Lx * q), 2.4 + (hz - 2.4) * q + 0.5 * Math.sin(Math.PI * q)];
+        const p = age / HT.fly, b = fl(p), e = fl(Math.max(0, p - Math.min(3, Lx * p) / Lx)); P({ k: 'bolt', x: b[0], y: b[1], h: b[2], tx: e[0], ty: e[1], th: e[2], p, c }); }
+      else { const e = age - HT.fly; if (e < 0.28) grow(h.x1, h.y1, h.r + 0.4 + e * 5, '#f3c969', 1 - e / 0.28); }
+      if (age >= at) P({ k: 'impact', x: ex, y: ey, h: hz, r: h.r, p: (age - at) / (HT.end - at), c, melee: mel });
+      if (age < 0.25 && (!lean || age < lean.age)) lean = { age, a, f: Math.sin(Math.PI * age / 0.25) * (mel ? 1 : 0.6) }; });
+    (dvh.adds || []).forEach((o) => { if (o.hp < o.max) P({ k: 'arc', x: o.p[0], y: o.p[1], r: o.r + 0.7, f: Math.max(0.02, o.hp / o.max), c: '#ff6b5c', o: 1 }); }); }
+  // (your target, Nov 15: a red circle on the floor under it, as in WoW; dashed and dimmer while it's out of range. Inside the add's health arc)
+  const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35));
+    if (dv.cur) { const q = dv.cur, R = q.r + 0.3; disc(q.p[0], q.p[1], R, '#ff2a1a', dv.inRange ? 0.16 : 0.07); ring(q.p[0], q.p[1], R, '#ff3b2f', dv.inRange ? 0.95 : 0.6, 0.24, !dv.inRange); } }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
   if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
@@ -114,7 +131,7 @@ function pg3dShapes(A, t) {
     P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d }); });
   if (G.debs.def && G.debs.def.until > t) P({ k: 'dome', x: G.x, y: G.y, r: 1.9, c: '#7fb8ff', o: 0.18 });
   const hp = cl((G.hp == null ? 100 : G.hp) / 100);
-  ring(G.x, G.y, 1.25, '#f3c969', 1, 0.32); P({ k: 'unit', id: me, x: G.x, y: G.y, c: A.clsC(me) || GDZ_ROLE[A.rl(me)][1], you: true });
+  ring(G.x, G.y, 1.25, '#f3c969', 1, 0.32); P({ k: 'unit', id: me, x: G.x, y: G.y, c: A.clsC(me) || GDZ_ROLE[A.rl(me)][1], you: true, la: lean ? lean.a : 0, lf: lean ? lean.f : 0 });
   P({ k: 'plate', id: me, x: G.x, y: G.y, name: 'YOU', c: '#ffd34d', bar: hp < 0.35 ? '#d8483e' : hp < 0.65 ? '#d9a93a' : '#3fbf5a', hp, o: 1, show: true, why: 'you', d: 0, you: true });
   const tg = A.target; if (tg) ring(tg[0], tg[1], 0.6, '#ffffff', 0.6, 0.15);
   // the hint (practice.js hintNow: where your job wants you now): an arrow at your feet and a "Go here" ring with the yards, gold as in 2D
@@ -505,6 +522,21 @@ function pg3d(host, A) {
   // tall bright one sat right behind the HUD's call-outs and washed their words out, review of Nov 15)
   const splash = pool(() => { const g = new T.Group(), pm = ptsMat(1, '#c8ff8a'), d = pts(DROPG, pm), fm = keep(new T.MeshBasicMaterial({ map: FOAMT, color: 0xd9ffb8, transparent: true, depthWrite: false })), f = new T.Mesh(URECT, fm), cm = fxMat(3, '#9cff5a', true), c = new T.Mesh(WALLG, cm);
     cm.uniforms.uK.value = 3; f.position.y = 0.08; f.renderOrder = 9; c.renderOrder = 645; g.add(d, f, c); g.userData = { pm, f, fm, c, cm }; return g; });
+  // (your attacks, Nov 15: a bolt's fading streak, an impact's ring and a melee hit's spark (sprites over two small textures drawn once), and the
+  // slash, a crescent brightest at its leading edge that sweeps round in front of you. pg3dShapes says where and when)
+  const STREAKG = keep(new T.ConeGeometry(1, 1, 10, 1, true)); STREAKG.translate(0, 0.5, 0); /* (its wide end at the bolt, its point trailing behind) */
+  const SLASHG = (() => { const N = 24, PHI = 1.05, R = 2.8, W = 0.8, pos = [], cols = [], idx = [];
+    for (let i = 0; i <= N; i++) { const u = i / N, a = -PHI + 2 * PHI * u, w = W * Math.pow(Math.sin(Math.PI * u), 0.8) + 0.02, b = Math.pow(u, 1.6), c = Math.cos(a), s = Math.sin(a);
+      pos.push(c * R, 0, -s * R, c * (R - w), 0, -s * (R - w)); cols.push(b, b, b, b * 0.45, b * 0.45, b * 0.45); }
+    for (let i = 0; i < N; i++) { const j = i * 2; idx.push(j, j + 1, j + 2, j + 1, j + 3, j + 2); }
+    const g = keep(new T.BufferGeometry()); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new T.Float32BufferAttribute(cols, 3)); g.setIndex(idx); return g; })();
+  const RINGT = ctex(canvas(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.55, 'rgba(255,255,255,0)'); gr.addColorStop(0.8, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+  const SPARKT = ctex(canvas(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.3, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr;
+    [[[1, 32], [32, 29], [63, 32], [32, 35]], [[32, 1], [35, 32], [32, 63], [29, 32]], [[12, 12], [33, 31], [52, 52], [31, 33]], [[52, 12], [33, 33], [12, 52], [31, 31]]].forEach((L, i) => { g.globalAlpha = i < 2 ? 1 : 0.5; g.beginPath(); L.forEach((p, j) => (j ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.closePath(); g.fill(); }); }));
+  const streak = pool(() => { const m = new T.Mesh(STREAKG, fxMat(3, '#ff6a2a', true)); m.material.uniforms.uK.value = 0.9; m.renderOrder = 710; return m; });
+  const fxSp = (map) => pool(() => { const sp = new T.Sprite(keep(new T.SpriteMaterial({ map, color: 0xffffff, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false }))); sp.renderOrder = 712; return sp; });
+  const hitRing = fxSp(RINGT), hitSpark = fxSp(SPARKT), VI = new T.Vector3(), VJ = new T.Vector3();
+  const slash = pool(() => { const g = new T.Group(), m = new T.Mesh(SLASHG, keep(new T.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }))); m.renderOrder = 714; g.add(m); g.rotation.order = 'YXZ'; g.userData.m = m; return g; });
   // (falling eggs, Falling Debris rocks with a burning trail, the Toxic Womb)
   const EGGM = keep(new T.MeshStandardMaterial({ color: 0xe9e2c6, roughness: 0.35, emissive: 0x15140c })), VIPM = keep(new T.MeshStandardMaterial({ color: 0xff3b3b, emissive: 0x3a0606, roughness: 0.5 })), RAWM = keep(new T.MeshStandardMaterial({ color: 0xa7c46b, roughness: 0.6 }));
   const egg = pool(() => { const m = new T.Mesh(BALL, EGGM); m.scale.set(0.9, 1.17, 0.9); m.castShadow = true; return m; });
@@ -631,15 +663,17 @@ function pg3d(host, A) {
   // (the HUD's call-outs in the middle of the screen, practice.js's .pg-warn and .pg-float: where their words are while they show. Their box is
   // read again only when their words or the window's size change)
   const HUD = ['.pg-warn', '.pg-float'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, cs: getComputedStyle(el), key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
-  // (the minimap and the "2D | 3D" switch under it: the labels and names keep out of that corner too. Main, Nov 15: at 0:42 a name sat over the switch)
-  const CRN = ['.pg-mini', '.pg-vw'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
+  // (the minimap and the "2D | 3D" switch under it: the labels and names keep out of that corner too. Main, Nov 15: at 0:42 a name sat over the switch.
+  // Since the raider-style screen (Nov 15) her boss frame and your Mistakes sit under them, and the boss-mod bars on the left: the labels keep out of those
+  // too. The bars come and go, so every box is read each frame (the HUD is already laid out by then))
+  const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
   const RNG = document.createRange(), BX = [], LQ = [], PQ = [];
   const bands = () => { BX.length = 0; let hr = null;
     for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
       if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); RNG.selectNodeContents(B.el); const r = RNG.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 3; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 3; }
       BX.push(B); }
-    for (let i = 0; i < CRN.length; i++) { const B = CRN[i]; if (!B.el.offsetWidth) continue; const key = W0 + '|' + H0;
-      if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); const r = B.el.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 4; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 4; }
+    for (let i = 0; i < CRN.length; i++) { const B = CRN[i]; if (!B.el.offsetWidth || !B.el.offsetHeight) continue;
+      hr = hr || host.getBoundingClientRect(); const r = B.el.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 4; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 4;
       BX.push(B); } };
   const names = () => { bands();
     // (the labels: each one's box on the screen; a HUD call-out or an earlier label pushes it down below, or hides it if it only names a creature)
@@ -679,7 +713,9 @@ function pg3d(host, A) {
       u.fl.visible = u.fc.visible = sl > 0; if (sl > 0) { const q = 1 - sl; u.fl.scale.set(s.r, 1, s.r); u.flm.opacity = 0.8 * q * q; u.fc.scale.set(s.r * 0.95, 16 * (0.4 + 0.6 * q), s.r * 0.95); u.fcm.uniforms.uO.value = 0.75 * q; } return; }
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
-    if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y); u.m.visible = true; u.on = true; return; }
+    if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
+      const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
+      u.m.visible = true; u.on = true; return; }
     if (k === 'plate') { plate(s); return; }
     if (k === 'egg') { const m = egg(), z = s.held ? 0.72 : 1; m.scale.set(0.9 * z, 1.17 * z, 0.9 * z); m.position.set(s.x, baseY(s.x, s.y) + s.h + (s.held ? Math.sin(t * 4) * 0.15 : 0), -s.y); m.rotation.set(s.fall ? t * 3 : 0, 0, 0); if (s.fall) blobAt(s.x, s.y, s.h - 1.2, 2.2); return; }
     if (k === 'rock') { const m = s.womb ? womb() : rock(), h = s.land > 0 ? 0 : 44 * (1 - s.f * s.f), by = baseY(s.x, s.y), sp = 1 - s.land;
@@ -709,6 +745,18 @@ function pg3d(host, A) {
     if (k === 'fizz') { fizz.visible = true; fizz.position.set(s.x, 0, -s.y); fizz.children.forEach((b, i) => { const a = i * 2.4, rr = 0.8 + (i * 1.7) % 3.8, ph = (t * 1.1 + i * 0.37) % 1; b.position.set(Math.cos(a) * rr, WATER + ph * 1.6, Math.sin(a) * rr); b.scale.setScalar((0.2 + (i % 3) * 0.12) * (1 - ph * 0.5)); }); foamAt(s.x, -s.y, 9 + Math.sin(t * 3) * 0.6, 0.5, t * 0.6); return; }
     if (k === 'arrow') { const y0 = baseY(s.x, s.y) + (onP(s.x, s.y) ? 0.06 : 0.75), pu = 0.72 + 0.28 * Math.sin(t * 6.5); arrow.visible = arrowB.visible = true; arrow.position.set(s.x, y0 + 0.01, -s.y); arrowB.position.set(s.x, y0, -s.y); arrow.rotation.y = arrowB.rotation.y = s.a; arrow.material.opacity = pu; arrowB.material.opacity = 0.5 * pu; return; }
     if (k === 'beacon') { beacon.visible = true; beacon.position.set(s.x, baseY(s.x, s.y) + 0.05, -s.y); beacon.scale.set(0.5, 9, 0.5); beacon.material.uniforms.uO.value = 0.55 + 0.2 * Math.sin(t * 5); return; }
+    // (your attacks: the bolt, a bright head and its streak back along its path; the impact, a white flash, a coloured glow and a ring opening out,
+    // and a spark for melee; the slash at chest height, tilted, swept round toward the target)
+    if (k === 'bolt') { V1.set(s.x, s.h, -s.y); V2.set(s.tx, s.th, -s.ty); V3.subVectors(V2, V1); const len = V3.length(), m = streak(), U = m.material.uniforms;
+      m.visible = len > 0.05; if (m.visible) { m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.divideScalar(len)); m.scale.set(0.36, len, 0.36); ucol(U.uC, s.c); U.uO.value = 0.95; }
+      glw(V1.x, V1.y, V1.z, 2.6, s.c, 0.95); glw(V1.x, V1.y, V1.z, 1, '#fffbe8', 1); return; }
+    if (k === 'impact') { VI.set(s.x, s.h, -s.y); VJ.subVectors(cam.position, VI).setLength(Math.min(2.2, 0.4 + s.r * 0.6)); VI.add(VJ); /* (on the side facing you, so the target's body doesn't hide it) */
+      const q = Math.max(0, Math.min(1, s.p)), e = 1 - q, X = VI.x, Y = VI.y, Z = VI.z, sz = Math.min(2.2, 0.9 + s.r * 0.3) * (s.melee ? 0.85 : 1);
+      glw(X, Y, Z, (2.2 - 0.8 * q) * sz, '#ffffff', Math.max(0, 1 - q * 2.4)); glw(X, Y, Z, (1.6 + 2.2 * q) * sz, s.c, 0.9 * e * e);
+      const rg = hitRing(), rs = (0.8 + 3.6 * (1 - e * e)) * sz; rg.position.set(X, Y, Z); rg.scale.set(rs, rs, 1); col(rg.material, s.c); rg.material.opacity = Math.pow(e, 1.5);
+      if (s.melee) { const sp = hitSpark(), ss = (1.4 + 1.6 * q) * sz; sp.position.set(X, Y, Z); sp.scale.set(ss, ss, 1); sp.material.rotation = (s.x * 7.3 + s.y * 3.1) % TAU; col(sp.material, '#ffffff'); sp.material.opacity = Math.max(0, 1 - q * 1.7); } return; }
+    if (k === 'slash') { const g = slash(), m = g.userData.m, f = Math.max(0, Math.min(1, s.f)), ez = 1 - Math.pow(1 - f, 2.2);
+      g.position.set(s.x, baseY(s.x, s.y) + 1.4, -s.y); g.rotation.set(0.5, s.a, 0); m.rotation.y = -0.9 + 1.8 * ez; m.scale.setScalar(0.9 + 0.2 * ez); col(m.material, s.c); m.material.opacity = f < 0.55 ? 1 : Math.max(0, 1 - (f - 0.55) / 0.45); return; }
     if (k === 'label') label(s); };
 
   // ---- the camera: behind you and gliding after you; yaw is the way it looks (the game's angle: 0 east, a quarter turn north) ----

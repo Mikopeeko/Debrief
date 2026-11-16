@@ -36,9 +36,15 @@
 //     ring, the serpent's eyes as arrowheads either side of you), a glowing line is under 0.1 yards wide (a dotted green dash that flickers, like
 //     a beam out from under you), the stone's own colours glow, the stone isn't teal (olive under the warm light, not the room's sea-green), or
 //     the slate panels aren't a separate blue.
+// 11. (Nov 15, Flex: "the attack doesnt look like its attacking ... This should look/feel like youre playing the game(kind of) ... I dont want
+//     it anything fancy, just familiar") attacks can't be seen in 3D: a ranged hit 0.1 s old has no bolt between you and your target at about
+//     hand height (2.4), or it bursts before the bolt gets there; 0.4 s after it there is no impact on the target; a healer's bolt isn't its
+//     own colour; a melee hit has no slash by you facing the target, or throws a bolt, or makes no spark; you don't lean into a hit; your target
+//     has no red circle under it as in WoW (or two, or the old white one too, or it covers the add's red health arc, or it no longer shows
+//     out of range by turning dashed); or put() doesn't draw the bolt, the impact or the slash.
 // contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). 1 to 3 fail on 9e8d89f9, the game before the 3D view;
 // 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass; 8 fails on 47da0826, the graphics pass before its review; 9 fails on
-// 18efba7b, the plain grey tiles; 10 fails on 9051ebd6, the stone before its review.
+// 18efba7b, the plain grey tiles; 10 fails on 9051ebd6, the stone before its review; 11 fails on 44673a75, the attacks before they showed in 3D.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function practice3d(say, H) {
@@ -56,7 +62,9 @@ module.exports = function practice3d(say, H) {
   // (Main, Nov 15, at 0:42 in 3D: the "2D | 3D" switch under the minimap was half hidden: her tail showed through it and a name sat on its words. The switch is
   //  solid and on top, and the 3D labels and names keep out of the minimap's corner)
   { const vw = /\.pg-vw \{([^}]*)\}/.exec(PJ); if (!vw || !/z-index: ?([6-9]|\d\d)/.test(vw[1]) || !/background: ?#[0-9a-f]{3,6}\b/i.test(vw[1])) bad('the "2D | 3D" switch isn\'t solid and on top (z-index 6 or more and a solid background): the 3D picture shows through it');
-    if (!/\['\.pg-mini', '\.pg-vw'\]\.map\(/.test(P3) || !/for \(let i = 0; i < CRN\.length; i\+\+\)[^\n]*BX\.push|BX\.push\(B\); \} \};/.test(P3)) bad('the 3D labels no longer keep out of the minimap and the "2D | 3D" switch'); }
+    // (Nov 15, the raider-style screen: her boss frame, your Mistakes and the boss-mod bars joined that corner and the left side, so the labels keep out of them too)
+    { const m = /const CRN = \[([^\]]*)\]\.map\(/.exec(P3); if (!m || ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers'].some((c) => !m[1].includes("'" + c + "'"))) bad('the 3D labels don\'t keep out of the boss frame, Mistakes and the boss-mod bars (the raider-style screen, Nov 15)'); }
+    if (!/for \(let i = 0; i < CRN\.length; i\+\+\)[^\n]*BX\.push|BX\.push\(B\); \} \};/.test(P3)) bad('the 3D labels no longer keep out of the minimap and the "2D | 3D" switch'); }
 
   // 1. one exact version, an allowed host, loaded on demand
   const m = /const PG3D_THREE = '([^']+)'/.exec(P3);
@@ -265,6 +273,42 @@ module.exports = function practice3d(say, H) {
           if (g > 0 && d.k === 'stroke' && yd < 0.1) thin.add(d.s + ' ' + yd.toFixed(2) + ' yd'); });
         if (hot.size) nope('a carved mark glows at more than 30% of the venom glow (' + [...hot].join('; ') + '): the corner inlays read as green arrows by the gold hint arrow and the "Go here" ring (0:39, 0:41) and the serpent\'s eyes as arrowheads either side of you (0:30); keep the stone\'s marks dull so only the markers stand out');
         if (thin.size) nope('a glowing line is under 0.1 yards wide, under 3 texels on the 2048 map (' + [...thin].join('; ') + '): it breaks into a dotted green dash that flickers as the camera moves, like a beam out from under you (0:48)'); } } }
+  // 11. attacks you can see (Nov 15, Flex: "the attack doesnt look like its attacking"): practice.js's hitTgt pushes { x0, y0, x1, y1, r, t0, melee }
+  // and dpsView hands them over with their age; you (r3) stand at -30, 4 and hit a Viper 16 yards east
+  { const nope = (m) => bad('attacks: ' + m), tg = { key: 'a1', kind: 'viper', name: 'Blightscale Viper', p: [-14, 4], r: 1.6, hp: 4, max: 5 }, dT = Math.hypot(tg.p[0] - G.x, tg.p[1] - G.y);
+    const hit = (age, melee) => ({ x0: G.x, y0: G.y, x1: tg.p[0], y1: tg.p[1], r: tg.r, t0: 20 - age, melee, age });
+    const run = (fx, o) => { const r0 = A.rl; o = o || {}; A.dps = () => ({ cat: 'viper', cur: tg, cd: 0, right: [tg], inRange: o.far ? false : true, ok: true, fx, adds: [tg] }); if (o.rl) A.rl = o.rl; const L = at(20); A.rl = r0; delete A.dps; return L; };
+    const rgb = (c) => { const q = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(c || ''); return q ? q.slice(1).map((x) => parseInt(x, 16)) : [0, 0, 0]; };
+    const L1 = run([hit(0.1, false)]), bo = L1.filter((s) => s.k === 'bolt'), b = bo[0];
+    if (bo.length !== 1) nope('a ranged hit 0.1 s old draws ' + bo.length + ' bolt(s), not one flying from you to your target');
+    else { const dp = Math.hypot(b.x - G.x, b.y - G.y), dq = Math.hypot(b.x - tg.p[0], b.y - tg.p[1]), off = Math.abs((b.x - G.x) * (tg.p[1] - G.y) - (b.y - G.y) * (tg.p[0] - G.x)) / dT, c = rgb(b.c);
+      if (!(dp > 0.5 && dq > 0.5 && dp < dT && dq < dT && off < 0.05)) nope('the ranged bolt at 0.1 s isn\'t on its way between you and your target (at ' + b.x.toFixed(2) + ', ' + b.y.toFixed(2) + ')');
+      if (!(Math.abs(b.h - 2.4) < 0.6)) nope('the ranged bolt flies ' + b.h + ' yards up, not about hand height (2.4)');
+      if (!(c[0] > 200 && c[1] >= 50 && c[1] <= 170 && c[2] < 100)) nope('the ranged bolt isn\'t orange-red like fire (' + b.c + ')');
+      if (!(b.tx != null && Math.hypot(b.tx - G.x, b.ty - G.y) < dp)) nope('the ranged bolt has no streak behind it, back toward you'); }
+    if (L1.some((s) => s.k === 'impact')) nope('a ranged hit bursts on the target 0.1 s in, before its bolt gets there');
+    const L2 = run([hit(0.4, false)]), im = L2.find((s) => s.k === 'impact');
+    if (!im || Math.hypot(im.x - tg.p[0], im.y - tg.p[1]) > tg.r || !(im.p > 0 && im.p < 1)) nope('0.4 s after a ranged hit there is no impact (a flash and a ring) on the target');
+    if (L2.some((s) => s.k === 'bolt')) nope('the ranged bolt is still flying 0.4 s after the hit');
+    if (run([hit(0.55, false)]).some((s) => s.k === 'impact' || s.k === 'bolt')) nope('a hit\'s bolt or impact is still showing after half a second');
+    const bh = run([hit(0.1, false)], { rl: (id) => (id === 'r3' ? 'h' : id[0]) }).find((s) => s.k === 'bolt'), ch = bh ? rgb(bh.c) : [0, 0, 0];
+    if (!bh || (b && bh.c === b.c) || !(ch[0] > 220 && ch[1] > 170 && ch[2] < 150)) nope('a healer\'s bolt isn\'t its own holy gold (' + (bh ? bh.c : 'no bolt') + ')');
+    const L3 = run([hit(0.1, true)]), sl = L3.find((s) => s.k === 'slash'), mine = L3.find((s) => s.k === 'unit' && s.you);
+    if (!sl || Math.hypot(sl.x - G.x, sl.y - G.y) > 2) nope('a melee hit draws ' + (sl ? 'its slash away from you' : 'no slash') + ': a melee swing is a quick slash in front of you');
+    else if (Math.abs(Math.atan2(Math.sin(sl.a - Math.atan2(tg.p[1] - G.y, tg.p[0] - G.x)), Math.cos(sl.a - Math.atan2(tg.p[1] - G.y, tg.p[0] - G.x)))) > 0.05) nope('the melee slash doesn\'t face the target');
+    if (L3.some((s) => s.k === 'bolt')) nope('a melee hit throws a bolt: a melee swing is a slash, never a bolt');
+    if (!L3.some((s) => s.k === 'impact' && Math.hypot(s.x - tg.p[0], s.y - tg.p[1]) <= tg.r && s.melee)) nope('a melee hit makes no spark on its target');
+    if (!mine || !(mine.lf > 0)) nope('you don\'t lean into a hit');
+    // (your target's circle: one, red, solid while in range, dashed while out of range, inside the add's health arc at r + 0.7)
+    const at0 = (L) => L.filter((s) => s.k === 'ring' && Math.abs(s.x - tg.p[0]) < 1e-9 && Math.abs(s.y - tg.p[1]) < 1e-9 && s.r > tg.r - 0.01 && s.r < tg.r + 1), red = (s) => { const c = rgb(s.c); return c[0] > 200 && c[1] < 90 && c[2] < 90; };
+    const R1 = at0(L1), rr = R1.filter(red), Rf = at0(run([], { far: true })).filter(red);
+    if (rr.length !== 1 || rr[0].dash) nope('your target has ' + rr.length + ' red circle(s) under it, not one solid red circle as in WoW');
+    if (R1.some((s) => /^#fff/i.test(s.c))) nope('your target still has the old white ring as well as its red circle (one circle, not two)');
+    if (rr.length === 1 && rr[0].r > tg.r + 0.7 - 0.32) nope('your target\'s red circle (radius r + ' + (rr[0].r - tg.r).toFixed(2) + ') sits on the add\'s red health arc (r + 0.38 to r + 0.7): the health can\'t be read');
+    if (Rf.length !== 1 || !Rf[0].dash) nope('your target\'s circle no longer turns dashed while it\'s out of range');
+    if (!L1.some((s) => s.k === 'disc' && s.x === tg.p[0] && s.y === tg.p[1] && red(s))) nope('your target\'s red circle has no faint red fill under it');
+    const pa = P3.indexOf('const put = '), pb = P3.indexOf('\n  // ---- the camera'), body = pa < 0 || pb < pa ? '' : P3.slice(pa, pb);
+    ['bolt', 'impact', 'slash'].forEach((k) => { if (!body.includes("if (k === '" + k + "')")) nope('put() doesn\'t draw the ' + k + ' (pg3dShapes lists it, but nothing shows)'); }); }
   return loadP;
 };
 if (require.main === module) {
