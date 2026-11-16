@@ -240,7 +240,7 @@ function pgOpen(root, boss, d, pk) {
   const GCD = 1; /* (one hit a press, then the button cools down for a second, like a spell on a WoW action bar) */
   const onRight = (cat, o) => !!cat && isRight(cat, o) && inRange(o) && G.lastHitCat === cat && G.t - (G.lastHitT == null ? -99 : G.lastHitT) <= GCD + 0.6;
   const nearestRight = (t) => { const cat = dpsCat(t), L = tgtList(t), d = (o) => pgDist([G.x, G.y], o.p); return (cat ? L.filter((o) => isRight(cat, o)) : L.filter((o) => o.kind !== 'boss' && o.kind !== 'tail')).sort((a, b) => d(a) - d(b))[0] || L.sort((a, b) => d(a) - d(b))[0] || null; };
-  const atkKey = () => { if (!G) return false; const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
+  const atkKey = () => { if (!G) return false; if (has('stun')) { if (!window.__pgAuto) say('You\'re stunned: you can\'t attack.', true); return false; } /* (stunned, as by an Anguished Cry nobody kicked: no attacks, Nov 15 audit) */ const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
     if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false; /* (still cooling down) */
     if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 1.' : 'Too far away: get closer.', true); return false; }
     G.gcd0 = t; hitTgt(o, t); hud(true); return true; };
@@ -312,7 +312,7 @@ function pgOpen(root, boss, d, pk) {
     for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(id) && !(ob && ob.at < s.at - 0.3) && pgDist(T, [s.x, s.y]) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; }
     if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]);
     return { T, fast, ob }; };
-  const dodge = (b, T, t, fast, ob) => { if (P2 && !P2.dodges) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
+  const dodge = (b, T, t, fast, ob) => { if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
     const imps = S.impacts.filter((m) => m.at >= t && m.at - t <= 2.4).concat(G.eggs.filter((e) => e.state === 'air' && e.land >= t && e.land - t <= 2.4).map((e) => ({ x: e.x, y: e.y, r: 4, at: e.land })),
       b.id === 't1' || b.id === 't2' ? [] : S.soaks.filter((q) => !q.group.includes(b.id) && t >= q.t0 && q.at >= t && q.at - t <= 2.4).map((q) => ({ x: q.x, y: q.y, r: q.r, at: q.at, mg: 0.5 })));
     if (!act.length && !imps.length) { b.esc = null; return { T, fast }; }
@@ -323,7 +323,7 @@ function pgOpen(root, boss, d, pk) {
     if (!path(T[0], T[1], vT)) { b.esc = null; return { T, fast }; }
     // (an escape spot: not in a soak that isn't theirs, and with an egg not next to another carrier)
     const held = G.eggs.some((e) => e.who === b.id && e.state === 'held'), others = held ? G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== b.id).map((e) => (e.who === me ? { x: G.x, y: G.y } : G.bots[e.who])) : [];
-    const unsafe = (x, y) => S.soaks.some((q) => !q.group.includes(b.id) && q.at >= t && q.at - t <= 3.5 && Math.hypot(x - q.x, y - q.y) <= q.r + 1.2) || others.some((o) => Math.hypot(x - o.x, y - o.y) < 4);
+    const unsafe = (x, y) => S.soaks.some((q) => !q.group.includes(b.id) && q.at >= t && q.at - t <= 3.5 && Math.hypot(x - q.x, y - q.y) <= q.r + 1.2) || others.some((o) => Math.hypot(x - o.x, y - o.y) < 4) || !!(P2 && P2.unsafe && P2.unsafe(b.id, x, y, t)); /* (a part's own danger the escape must keep out of: phase 2's Doomscale frontals) */
     if (b.esc && t - b.esc.t < 2 && !path(b.esc.x, b.esc.y, vEsc) && !unsafe(b.esc.x, b.esc.y) && !(P2 && P2.walk && !P2.walk(b.x, b.y, b.esc.x, b.esc.y))) return { T: [b.esc.x, b.esc.y], fast: true };
     // (no clean spot: the one that meets the danger latest, rather than walking on into it)
     let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && ob.at - t <= 3.5; /* (a bubble or their soak due: dodge inside it first) */

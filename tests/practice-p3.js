@@ -166,7 +166,7 @@ function checks(H, say) {
   const part3 = ctx.PG_PARTS["Ula'tek"].m3; if (!part3 || part3.d !== 'm' || typeof part3.mod !== 'function' || part3.name !== 'Phase 3') bad('phase 3 isn\'t a Mythic part of Ula\'tek called "Phase 3" with its own mod in PG_PARTS (check F)');
   if (!/pgN = \(\/\[\?&#\]practice=\(\\d\)\//.test(GJ) || !/pgPart\(S\.gdzBoss, S\.gdzDiff \+ n\)/.test(GJ) || ctx.pgPart("Ula'tek", 'm3') !== part3) bad('`?practice=3` on the guide no longer opens phase 3 (check F)');
   if (!BP.includes("'practice-p2.js', 'practice-p3.js'") || !BP.includes("(& $read 'practice-p2.js') + \"`n\" + (& $read 'practice-p3.js')")) bad('build.ps1 no longer checks src/practice-p3.js or puts it into the page right after practice-p2.js (check F)');
-  if (!/if \(P2 && !P2\.dodges\) return \{ T, fast \}/.test(PJ)) bad('practice.js\'s shared dodge no longer serves phase 3 (P2.dodges, check F)');
+  if (!/if \(P2 && !(P2\.dodges|\(typeof P2\.dodges === 'function' \? P2\.dodges\(b\.id, t\) : P2\.dodges\))\) return \{ T, fast \}/.test(PJ)) /* (phase 2 asks for it on the platform only, Nov 15: a function of the raider and the time) */ bad('practice.js\'s shared dodge no longer serves phase 3 (P2.dodges, check F)');
   if (!/'\?practice' \+ \(P2 \? '=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('practice.js lost the score link\'s ?practice=3 (check F)');
   // (the shared one-screen setup (Nov 15, Flex via Main: "still too complex and confusing"): phase 3 gives it a role, then one job in plain words)
   { const su = dbg.P2.setup; if (!/const SETUP = P2 \? P2\.setup/.test(PJ) || !su || !Array.isArray(su.roles)) bad('phase 3 gives the shared setup screen no setup (P2.setup, check F)');
@@ -264,7 +264,7 @@ function checks(H, say) {
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
-  try { const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.P2.dodges) bad('phase 2 opens as part ' + (L2.dbg.P2 && L2.dbg.P2.part) + ' or with the shared dodge on (check H)'); else { const r2 = L2.dbg.sim(L2.dbg.P2.slotOf(L2.dbg.P2.pick), true, false, 3); if (!r2 || L2.dbg.S.end !== 318) bad('phase 2 no longer plays to 5:18 with phase 3 loaded (check H)'); } }
+  try { const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || (typeof L2.dbg.P2.dodges === 'function' ? L2.dbg.P2.dodges('r1', 200) : L2.dbg.P2.dodges)) bad('phase 2 opens as part ' + (L2.dbg.P2 && L2.dbg.P2.part) + ' or with the shared dodge on (check H)'); else { const r2 = L2.dbg.sim(L2.dbg.P2.slotOf(L2.dbg.P2.pick), true, false, 3); if (!r2 || L2.dbg.S.end !== 318) bad('phase 2 no longer plays to 5:18 with phase 3 loaded (check H)'); } }
   catch (e) { bad('phase 2 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
 }
 
