@@ -239,8 +239,8 @@ module.exports = function practice3d(say, H) {
     if (!/keep\(\{ dispose: STN\.free \}\)/.test(P3)) nope('its canvases aren\'t emptied on close (keep({ dispose: STN.free }))');
     const calls = [...P3.matchAll(/pg3dStoneDraw\((?!mk, px\))/g)].map((q) => q.index), a = P3.indexOf('const put = '), b = P3.indexOf('\n  // ---- the camera'), c = P3.indexOf('const draw1 = '), d = P3.indexOf('\n  const draw = ');
     if (calls.length !== 1 || calls.some((i) => (i > a && i < b) || (i > c && i < d)) || !/const STN = pg3dStoneDraw\(/.test(P3)) nope('it must be drawn once, when the 3D view opens (one pg3dStoneDraw call, in pg3d and not in put or draw1): ' + calls.length + ' call(s)');
-    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;)/]) if (re.test(P3)) url.push(String(re));
-    if ((P3.match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s');
+    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;| PG3D_GLTF;)/]) if (re.test(P3)) url.push(String(re)); /* (PG3D_GLTF: the loader for your figure, check 13; the stone still draws by code) */
+    if ((P3.replace(/const PG3D_(GLTF|ME_URL) = '[^']+'/g, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s and your figure\'s (check 13)');
     if (url.length) nope('a texture or picture loads from an address (' + url.join(', ') + '): the stone must be drawn by code, never a picture');
     if (!/const P = \(x, y\) => \[\(x \+ S \/ 2\) \* K, \(S \/ 2 - y\) \* K\]/.test(P3) || !/S = PL\.span, K = px \/ S/.test(P3) || !/map: stx\(STN\.col, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5\)/.test(P3) || !/normalMap: stx\(STN\.nrm, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5/.test(P3)) nope('the texture doesn\'t span the plan (1 / span, the stone\'s middle at 0.5) the way pg3dStoneDraw draws it ((x + S / 2) * K, (S / 2 - y) * K): the carving would slide off the octagon');
     const sc = (() => { try { const x = vm.createContext({ Math, Uint8Array, Uint8ClampedArray }); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('pg3dStonePlan', P3) + '\n' + H.grab('pg3dNormals', P3) + '\n' + H.grab('pg3dStoneDraw', P3) + '\nthis.plan = pg3dStonePlan; this.nrm = pg3dNormals; this.draw = pg3dStoneDraw; this.on = PG_UL.onPlat;', x); return x; } catch (e) { nope('pg3dStonePlan, pg3dNormals or pg3dStoneDraw don\'t run by themselves (' + String(e.message).slice(0, 140) + ')'); return null; } })();
@@ -351,6 +351,24 @@ module.exports = function practice3d(say, H) {
       if (!/CBS\.clear\(\)/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the bars');
       const nm = P3.slice(P3.indexOf('const names = '), P3.indexOf('\n  // ---- one shape on the screen'));
       if (!/pg3dHud\(CQ, HB\)/.test(nm) || !/BX\.push\(q\)/.test(nm)) nope('the labels and names don\'t keep off the bars (their boxes don\'t join the call-outs\' in names())'); } }
+  // 13. your animated figure (Nov 16, Flex: "download and use one of those models ... for just the player"): a free (CC0) model, KayKit's Knight,
+  //     loaded at runtime from one pinned commit (never @main, never bundled), read by three.js's plain-script GLTFLoader, only inside the 3D view;
+  //     if it can't load you stay the capsule; it stands, runs and attacks; its parts are freed when the game closes; drawing makes nothing new.
+  { const nope = (m) => bad('your figure: ' + m + ' (check 13)');
+    const u = /const PG3D_ME_URL = '([^']+)'/.exec(P3), gl = /const PG3D_GLTF = '([^']+)'/.exec(P3);
+    if (!u || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/KayKit-Game-Assets\/KayKit-Character-Pack-Adventures-1\.0@[0-9a-f]{40}\/[\w./-]+\.glb$/.test(u[1])) nope('your figure must be KayKit\'s CC0 model from one pinned commit on jsdelivr (PG3D_ME_URL), not a branch or another address');
+    if (!gl || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/loaders\/GLTFLoader\.js$/.test(gl[1])) nope('the model loader must be three.js\'s plain-script GLTFLoader at one exact version (PG3D_GLTF)');
+    const calls = P3.split('pg3dMeLoad(T)').length - 1, pgA = P3.indexOf('function pg3d(host, A)');
+    if (calls !== 1 || P3.indexOf('pg3dMeLoad(T)') < pgA) nope('the figure must load once per 3D view, inside pg3d (it has ' + calls + ' call(s))');
+    if (!/pg3dMeLoad\(T\)\.then\([\s\S]{0,4000}?\}\)\.catch\(\(\) => \{/.test(P3)) nope('a model that can\'t load must leave you the capsule (no .catch after the load)');
+    if (!/if \(k === 'unit' && s\.you && ME\) \{ meFig\(s, t\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for the figure once it has loaded');
+    const mf = (/const meFig = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];
+    if (!mf) nope('there is no meFig (the figure\'s moves)');
+    else { if (/new T\./.test(mf)) nope('the figure makes new three.js objects while drawing');
+      if (!/'atk'/.test(mf) || !/'run'/.test(mf) || !/'idle'/.test(mf)) nope('the figure doesn\'t switch between standing, running and attacking'); }
+    if (!/idle:[^\n]*run:[^\n]*\n[^\n]*atk:/.test(P3)) nope('the figure\'s idle, run and attack clips aren\'t picked from the model');
+    if (!/if \(ME\) \{ ME\.root\.visible = ME\.on; if \(ME\.on\) ME\.mixer\.update\(dt\); \}/.test(P3)) nope('draw1 doesn\'t move the figure\'s animation on, or doesn\'t hide it when you aren\'t drawn');
+    if (!/own\.push\(m\.geometry\)/.test(P3)) nope('the figure\'s geometry, materials and textures aren\'t freed when the game closes (own)'); }
   return loadP;
 };
 if (require.main === module) {

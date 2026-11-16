@@ -73869,6 +73869,19 @@ const pg3dLoad = () => { if (PG3D_LIB) return PG3D_LIB;
     sc.src = PG3D_THREE; document.head.appendChild(sc); });
   p.catch(() => { if (PG3D_LIB === p) PG3D_LIB = null; }); /* (a failed try is forgotten: the next click tries again) */
   return p; };
+// ---- your character: one free (CC0) animated figure instead of your capsule (Flex, Nov 16: "download and use one of those models ... for just
+// the player", "I just wanna see what it looks like in action"). Loaded at runtime like the icons, nothing bundled; if it can't load, you stay
+// the capsule. three.js's own GLTFLoader reads it (the last plain-script one, r147, on the page's r149). A fresh copy each time the 3D view opens (the browser keeps the file),
+// so closing the game frees all of it. ----
+const PG3D_GLTF = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js'; /* (the last version with a plain-script loader: r148 dropped examples/js; it uses the page's three.js) */
+const PG3D_ME_URL = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb';
+let PG3D_GLTF_LIB = null;
+const pg3dMeLoad = (T) => {
+  if (!PG3D_GLTF_LIB) { const p = PG3D_GLTF_LIB = new Promise((ok, no) => { if (T.GLTFLoader) { ok(T.GLTFLoader); return; } const sc = document.createElement('script');
+    const tm = setTimeout(() => no(new Error('the model loader took too long')), 20000);
+    sc.onload = () => { clearTimeout(tm); if (T.GLTFLoader) ok(T.GLTFLoader); else no(new Error('the model loader loaded empty')); }; sc.onerror = () => { clearTimeout(tm); no(new Error('the model loader could not load')); };
+    sc.src = PG3D_GLTF; document.head.appendChild(sc); }); p.catch(() => { if (PG3D_GLTF_LIB === p) PG3D_GLTF_LIB = null; }); }
+  return PG3D_GLTF_LIB.then((L) => new Promise((ok, no) => { new L().load(PG3D_ME_URL, ok, undefined, no); })); };
 
 // ---- what to draw at time t: a list of shapes, each from the numbers the hit code uses (practice.js draw(), line for line) ----
 // A: practice.js's window on the game (G, S, me, nm, rl, clsC, bossAt, tailAt, spot, target, hint). Floor shapes: disc, ring (fixed size), grow
@@ -74506,6 +74519,25 @@ function pg3d(host, A) {
   const beacon = new T.Mesh(WALLG, fxMat(3, '#f3c969', true)); arrow.renderOrder = 902; arrowB.renderOrder = 901; beacon.renderOrder = 650; scene.add(arrow, arrowB, beacon);
   // the raid: a capsule each in its class colour (role colour without a team plan)
   const CAPG = keep(new T.CapsuleGeometry(0.55, 1.2, 4, 12)), UNITS = new Map();
+  // (your figure, once it loads: as tall as the capsule (2.3 yd), feet on the stone; it stands, runs when you move, swings when you hit,
+  //  and turns to the way you walk. ME stays null until then, and you are the capsule.)
+  let ME = null;
+  pg3dMeLoad(T).then((g) => { if (dead) return; const root = g.scene, anim = g.animations || [];
+    ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'].forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the Knight holds his whole kit at once: one sword and the badge shield stay) */
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
+    const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = 2.3 / h; root.scale.setScalar(k);
+    const mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
+    const act = (c, once) => { if (!c) return null; const a = mixer.clipAction(c); if (once) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } return a; };
+    const melee = A.rl && A.rl(A.me) === 'm'; /* (melee swing a sword; ranged and healers cast) */
+    const acts = { idle: act(find(/^idle$/i) || find(/idle/i) || anim[0]), run: act(find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
+      atk: act((melee ? find(/^1h_melee_attack_slice_diagonal$/i) || find(/(1h|melee).*(slash|slice|chop)/i) : find(/^spellcast_shoot$/i) || find(/spellcast/i)) || find(/attack|slash|chop/i), true) };
+    root.visible = false; scene.add(root); ME = { root, mixer, acts, cur: '', y0: -box.min.y * k, face: 0, mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null }; }).catch(() => { /* (no model: the capsule stays) */ });
+  const meFig = (s, t) => { const M = ME, G = A.G, now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
+    const dx = s.x - M.x, dy = s.y - M.y; if (Math.hypot(dx, dy) > 0.004) { M.mvAt = now; const a = Math.atan2(dx, -dy); let d = a - M.face; d = Math.atan2(Math.sin(d), Math.cos(d)); M.face += d * Math.min(1, 0.35); } M.x = s.x; M.y = s.y;
+    if (G.lastHitT != null && G.lastHitT !== M.hitSeen) { M.hitSeen = G.lastHitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
+    const want = now < M.atkTo ? 'atk' : now - M.mvAt < 140 ? 'run' : 'idle', nx = M.acts[want] || M.acts.idle;
+    if (want !== M.cur && nx) { const pv = M.acts[M.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.fadeIn(0.12).play(); if (pv && pv !== nx) pv.fadeOut(0.12); M.cur = want; }
+    M.root.position.set(s.x, baseY(s.x, s.y) + M.y0, -s.y); M.root.rotation.set(0, M.face, 0); M.on = true; };
   const unitOf = (id) => { let u = UNITS.get(id); if (!u) { u = { m: new T.Mesh(CAPG, keep(new T.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05 }))), x: 0, y: 0, on: false }; u.m.castShadow = true; scene.add(u.m); UNITS.set(id, u); } return u; };
   // labels: a sprite each, the same size on screen at any distance
   const LBL = []; let nL = 0, W0 = 0, H0 = 0, pxK = 800;
@@ -74608,6 +74640,7 @@ function pg3d(host, A) {
       u.fl.visible = u.fc.visible = sl > 0; if (sl > 0) { const q = 1 - sl; u.fl.scale.set(s.r, 1, s.r); u.flm.opacity = 0.8 * q * q; u.fc.scale.set(s.r * 0.95, 16 * (0.4 + 0.6 * q), s.r * 0.95); u.fcm.uniforms.uO.value = 0.75 * q; } return; }
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
+    if (k === 'unit' && s.you && ME) { meFig(s, t); return; } /* (your animated figure in place of your capsule) */
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
@@ -74673,7 +74706,8 @@ function pg3d(host, A) {
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
-    const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
+    if (ME) ME.on = false; const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
+    if (ME) { ME.root.visible = ME.on; if (ME.on) ME.mixer.update(dt); } /* (your figure: shown only while you're drawn, its animation moved on by the real time) */
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
