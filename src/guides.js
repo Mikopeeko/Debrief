@@ -1529,12 +1529,18 @@ const UX_M = {
 
 // ---- Phase two: half the raid on each side ledge (drawn on the east one; the west is the same, mirrored). From our Heroic kill: each half
 // went to its ledge's north end first (most eggs), then south; the Weakened Doomscales came out by each ledge's pit (the cauldron).
-const UX_E = { gate: [100, 22], north: [82, 58], south: [90, -46], pit: [108, 0], warden: [94, 36] };
+// (Nov 15, Flex: "Yes, fix them", measured on all 131 Mythic kills in the log library: Mythic has two big Doomscale Eggs a ledge, one at each
+// end (eggN, eggS); after the small eggs go in the half walks on south past the cauldron and waits at about (82, -62) (wait). Heroic has one
+// big egg a ledge, at the north end by the small eggs (eggH).)
+const UX_E = { gate: [100, 22], north: [82, 58], south: [90, -46], pit: [108, 0], warden: [94, 36], eggN: [57.6, 86.7], eggS: [56.7, -85.2], eggH: [58, 87], wait: [82, -62] };
 const UX_HALF = ['t1', 'h1', 'h3', 'm1', 'm2', 'm3', 'r1', 'r3', 'r5', 'r7'];
 const UX_NEGG = [[76, 60], [86, 64], [82, 52]];
 // the half at the north end, the tank on the Warden, ranged and healers out of the eggs' 7 yards
 function uxHalf(k, t, hold, W) { const S = { t1: [W[0] + 3.5, W[1] - 3], m1: [W[0] - 4, W[1] - 5], m2: [W[0] + 6, W[1] - 7.5], m3: [W[0] + 1, W[1] - 9], h1: [90, 42], h3: [97, 46], r1: [100, 52], r3: [92, 36], r5: [100, 38], r7: [96, 58] };
   Object.entries(S).forEach(([id, q]) => { if (hold != null) k.hold(hold, id); k.at(t, id, q[0], q[1]); }); return S; }
+// a player sets off at t0 (holding still until then) and walks through the spots in turn at v yards a second; returns when they arrive
+function uxWalk(k, id, t0, pts, v) { let t = t0, p = k.posAt(id, t0); k.hold(t0, id); for (const q of pts) { t += Math.hypot(q[0] - p[0], q[1] - p[1]) / v; k.at(t, id, q[0], q[1]); p = q; } return t; }
+const uxPathLen = (P) => P.slice(1).reduce((s, q, i) => s + Math.hypot(q[0] - P[i][0], q[1] - P[i][1]), 0);
 Object.assign(UX_M, {
   // Doomscale Warden: the half gates over. Its tank pulls the Warden across, it Shadow Molts to the eggs and starts Writhing Gestation on
   // them (they become a clutch that hatches in 20 seconds): cleave the gestating eggs first. While it lives no egg can be touched (Warden's
@@ -1580,31 +1586,74 @@ Object.assign(UX_M, {
     return k.done({ title: myth ? 'Grasping Fangs: one, then the five together' : 'Grasping Fangs: two at a time', focus: { x: 88, y: 50, r: 28 }, full: { x: 88, y: 40, r: 36 }, hlLabel: 'the tethered players' });
   },
   // The Doomscale Eggs: with the Warden dead, carry every small egg to the cauldron in the pit (they hatch into weak Rawlings: kill them),
-  // and the big Doomscale Egg last: picking it up with small eggs still out starts them all gestating, and it must be in the cauldron before
+  // and the big Doomscale Eggs last: picking one up with small eggs still out starts them all gestating, and each must be in the cauldron before
   // its Hatching Doom finishes, or the Ravenous Doomscale's Dread Roar stuns everyone for 20 seconds: a wipe. The cauldron gives a Weakened
   // Doomscale: kick Anguished Cry (a 60-yard stun), its Desperate Thrash frontal away from the raid, bring it back to her. Mythic: carriers in
-  // lanes (3-yard rings), and kill the Doomscales evenly (Revenge). (fail: the big egg too late)
+  // lanes (3-yard rings), two big eggs a ledge (one at each end), two Doomscales, killed evenly (Revenge). (fail: the big egg too late)
+  /* (Nov 15, Flex: "Yes, fix them", measured on all 131 Mythic kills in the log library: after the small eggs the half walks on south past the
+     cauldron and waits near the south end. A melee (90 of 131 each side; else a mobile ranged, mostly an Arcane Mage) takes the close big egg
+     there, about 35 yards from the raid (median 4:14); a mobile healer (128 and 130 of 131) walks south with the raid, then runs about 125
+     yards back north for the far one (4:17). Both go in on one countdown (4:29, 0.6 s apart), carried 12 to 16 s. The map had one big egg at
+     the south end and a healer running south to it on both difficulties. Heroic: one big egg, at the north end by the small eggs) */
   doomscales(fail, d) {
-    const myth = d !== 'h', L = fail ? 17 : 22, k = gdzKit(UX, L), E = UX_E, W = [80, 56]; k.art(0, UL_FULL); uxHalf(k, 0, null, W);
-    k.obj('dg', 'begg', 0, E.south[0], E.south[1]); k.cast('dg', 'Hatching Doom', 0, fail ? 15.6 : 24);
-    const CAR = ['r1', 'r3', 'm2'], SM = [[78, 60], [86, 62], [82, 52]], LANE = [[92, 36], [112, 40], [94, 26]];
-    CAR.forEach((id, i) => { const p = SM[i], [ta, tb] = ulCarry(k, id, 'se' + i, 0, p[0], p[1], 1 + i, LANE[i][0], LANE[i][1], 5 + i * 0.4, 99, true); if (myth) uxShell(k, id, ta, 11.8 - ta);
-      k.hold(tb, id).at(tb + 4.4, id, E.pit[0] - 7 + i * 7, E.pit[1] + 6); k.add('rw' + i, 'Blightscale Rawling', 12, E.pit[0] - 4 + i * 4, E.pit[1] - 1).show('rw' + i, 12, 15.4 + i * 0.4); k.show('se' + i, 0, 11.8); }); /* (7 yards apart at the cauldron: the 3-yard rings never touch; in together at 12) */
+    const myth = d !== 'h', E = UX_E, W = [80, 56], BIG = 'h3', MEL = 'm3', CAR = ['r1', 'r3', 'm2'], SM = [[78, 60], [86, 62], [82, 52]], LANE = [[92, 36], [112, 40], [94, 26]];
+    // (every walk along the ledge on the inside of the cauldron, at a running pace: 7 to 8 yards a second, a carried big egg 6.5 to 7.5. The
+    // clock is worked out first: the whole-fight video needs the map's length before it starts)
+    const PN = [60, 84.5], PS = [59, -83], DN = [105, 7], DS = [105, -7], TURN = [99, -26], TANK = myth ? [118, 0] : [117, -9], REST = myth ? ['t1', 'm1', 'm3', 'h1', BIG, 'r5', 'r7'] : ['t1', 'm1', 'm3', 'h1', 'r5', 'r7'];
+    const NE = (i) => { const q = gdzSpot(i, REST.length, 6); return [E.pit[0] + 6 + q[0], E.pit[1] + 16 + q[1]]; }; /* (north-east of the cauldron, off the big egg's way in) */
+    const SOUTH = [[100, 6], [100, -12], [98, -36], [84, -52]], BACK = [TURN, [100, -12], [100, 6], [100, 18], [96, 32], [90, 46], [76, 64], PN];
+    const CARRY_N = [PN, [76, 64], [90, 46], [96, 32], [100, 18], DN], CARRY_S = [PS, [70, -68], [84, -52], [96, -36], [100, -18], DS];
+    const T_GO = 12.6, T_TURN = !myth ? 0 : T_GO + uxPathLen([NE(REST.indexOf(BIG)), SOUTH[0], SOUTH[1], TURN]) / 7.5; /* (Mythic: the healer turns back as the raid passes the cauldron) */
+    const T_PICK = myth ? T_TURN + 0.4 + uxPathLen(BACK) / 8 : T_GO, T_IN = T_PICK + 0.4 + uxPathLen(CARRY_N) / 7.5, T_PICKS = T_IN - 0.4 - uxPathLen(CARRY_S) / 6.5;
+    /* (the mistake: Heroic's one egg hatches at 15.6 s; on Mythic the close egg goes in on the countdown and the far one's Hatching Doom runs out 2 s later) */
+    const T_R = myth ? T_IN + 2 : 15.6, L = fail ? Math.ceil(T_R + 4.4) : Math.ceil(T_IN + (myth ? 9.6 : 7.5)), k = gdzKit(UX, L); k.art(0, UL_FULL); uxHalf(k, 0, null, W);
+    const EGG = myth ? [['bgN', E.eggN], ['bgS', E.eggS]] : [['bgN', E.eggH]]; /* (both there from the start) */
+    EGG.forEach(([id, p]) => k.obj(id, 'begg', 0, p[0], p[1])); if (fail) k.cast('bgN', 'Hatching Doom', 0, T_R).show('bgN', 0, T_R + 0.8); /* (the mistake: the far egg (Heroic: the one egg) is left out) */
+    CAR.forEach((id, i) => { const p = SM[i], [ta, tb] = ulCarry(k, id, 'se' + i, 0, p[0], p[1], 1 + i, LANE[i][0], LANE[i][1], 5 + i * 0.4, 11.8, true); if (myth) uxShell(k, id, ta, 11.8 - ta);
+      k.hold(tb, id).at(tb + 4.4, id, E.pit[0] - 7 + i * 7, E.pit[1] + 6); k.add('rw' + i, 'Blightscale Rawling', 12, E.pit[0] - 4 + i * 4, E.pit[1] - 1).show('rw' + i, 12, 15.4 + i * 0.4); ulRide(k, id, 'se' + i, tb, tb + 4.5); k.show('se' + i, 0, 11.8); }); /* (7 yards apart at the cauldron: the 3-yard rings never touch; in together at 12. Each egg rides with its carrier from the lane to the cauldron: it stayed behind in the lane. To tb + 4.5, not 4.4: the ride is keyed every half second from tb, so its last key then falls after the carrier has arrived) */
     k.call(11.8, 13.4, 'Small eggs in: Rawlings', { x: E.pit[0], y: E.pit[1] - 8, color: '#c9d98a', ink: '#141006' });
-    ['t1', 'm1', 'm3', 'h1', 'r5', 'r7'].forEach((id, i) => { const q = gdzSpot(i, 6, 6); k.hold(5, id).at(9.4, id, E.pit[0] - 2 + q[0], E.pit[1] + 17 + q[1]); }); /* (north of the carriers' spots at the cauldron) */
-    const BIG = 'h3', tp = fail ? 9.4 : 8.6; k.hold(0.2, BIG).at(tp, BIG, E.south[0] + 1, E.south[1] + 1); k.call(8.4, 10.4, 'Big egg last', { on: BIG, color: '#7fbf3a', ink: '#0b1503' });
-    if (fail) { k.call(10, 15.4, 'Waiting too long…', { on: BIG, color: '#ffd23b', ink: '#1a1405' }); k.add('rd', 'Ravenous Doomscale', 15.6, E.south[0], E.south[1] + 3); k.cast('rd', 'Dread Roar', 15.6, 16.4);
-      gdzFailBlast(k, 16.4, 'Dread Roar: everyone stunned 20 s', 96, 66, ['h1', 'r7', 'm1'], 'Dread Roar'); k.step(0.2).step(tp).step(15.6);
-      k.pause(16.6, 'The big egg stayed out too long: its Hatching Doom finished, and the Ravenous Doomscale\'s Dread Roar stunned everyone for 20 seconds. A wipe.', { x: E.south[0], y: E.south[1], r: 10 });
-      return k.done({ title: 'Mistake: the Doomscale Egg too late', focus: { x: 98, y: 8, r: 46 }, full: { x: 92, y: 8, r: 58 }, badLabel: 'stunned' }); }
-    for (let t = tp; t <= 15.4; t += 0.5) { const f = Math.min(1, (t - tp) / 6.6); k.obj('dg', 'begg', t, E.south[0] + (E.pit[0] - E.south[0]) * f + 2.6, E.south[1] + (E.pit[1] - E.south[1]) * f - 2.2); }
-    k.show('dg', 0, 15.6); k.at(15.2, BIG, E.pit[0], E.pit[1] - 3);
-    k.add('dm', 'Weakened Doomscale', 15.8, E.pit[0], E.pit[1] - 6).add('dm', 'Weakened Doomscale', L, E.pit[0] - 8, E.pit[1] - 4); k.call(15.8, 17.6, 'Weakened: kick, tank it', { x: E.pit[0], y: E.pit[1] - 14, color: '#c9d98a', ink: '#141006' });
-    k.cast('dm', 'Anguished Cry', 17, 19.5, 'kick', 'm1'); k.hold(15.8, 't1').at(18.2, 't1', E.pit[0] - 6, E.pit[1] - 10); k.cast('dm', 'Desperate Thrash', 19.6, 21.6); k.cone({ from: 'dm', to: 't1', at: 21.6, r: 14, width: 50 });
-    if (myth) k.call(19.8, 21.8, 'Kill both sides evenly', { x: E.pit[0] + 2, y: E.pit[1] + 18, color: '#ffd23b', ink: '#1a1405' });
-    k.ring1(CAR.concat(BIG)).step(0.2).step(5).step(8.6).step(15.8);
-    k.pause(12.2, 'Small eggs into the cauldron first' + (myth ? ', each carrier in their own lane' : '') + '. Then one player brings the big Doomscale Egg, well before its Hatching Doom ends.', { x: 100, y: 6, r: 22 });
-    return k.done({ title: 'The Doomscale Eggs: small first, the big one last', focus: { x: 98, y: 8, r: 46 }, full: { x: 92, y: 8, r: 58 }, hlLabel: 'the egg carriers' });
+    REST.forEach((id, i) => uxWalk(k, id, 2.4, [NE(i)], 7)); /* (the rest of the half walks over with the small eggs) */
+    if (!myth) { uxWalk(k, BIG, 0.6, [[94, 66], [72, 76], PN], 7); /* (Heroic: the big egg's healer waits by it, round the far side of the small eggs) */
+      CAR.forEach((id, i) => uxWalk(k, id, 12.4, [[[121, 14], [118, 22], [124, 6]][i]], 7)); } /* (the small eggs' carriers step back to the others, off the big egg's way in) */
+    else { const GRP = ['t1', 'm1', 'm3', 'h1', 'r5', 'r7', 'r1', 'r3', 'm2'].concat(fail ? [BIG] : []); /* (Mythic: everyone on south, past the cauldron, to wait near the south end) */
+      GRP.forEach((id, i) => { const o = gdzSpot(i, GRP.length, 6); uxWalk(k, id, T_GO, SOUTH.map((p) => [p[0] + o[0] * 0.4, p[1] + o[1] * 0.4]).concat([[E.wait[0] + o[0], E.wait[1] + o[1]]]), 7.5); });
+      k.call(12.6, 15.6, 'Then south, past the cauldron', { x: 114, y: -20, color: '#c9d98a', ink: '#141006' }); }
+    // the close egg (Mythic, the mistake too): a melee walks out from the wait for it, timed to reach the cauldron on the countdown
+    if (myth) { const ms = k.posAt(MEL, T_PICKS), tl = T_PICKS - uxPathLen([ms, [70, -68], PS]) / 8; uxWalk(k, MEL, tl, [[70, -68], PS], 8); k.call(tl, tl + 2.6, 'Melee: the close egg', { on: MEL, color: '#ff7a5c', ink: '#1a0804' });
+      uxWalk(k, MEL, T_PICKS + 0.4, CARRY_S.slice(1), 6.5); k.obj('bgS', 'begg', T_PICKS, E.eggS[0], E.eggS[1]); ulRide(k, MEL, 'bgS', T_PICKS + 0.4, T_IN); k.show('bgS', 0, T_IN).cast('bgS', 'Hatching Doom', 0, T_IN, 'stop');
+      k.hold(T_IN + 0.3, MEL).at(T_IN + 2.2, MEL, 92, -5); }
+    /* (the mistake, as real wipes have it: one big egg left out. Mythic: the melee takes the close egg in, the healer stays with the raid instead of turning back for the far one) */
+    if (fail) { if (myth) k.call(T_TURN, T_TURN + 3, 'Nobody goes back for the far egg', { on: BIG, color: '#ffd23b', ink: '#1a1405' });
+      k.call(myth ? T_IN - 3 : 10, T_R - 0.2, 'Waiting too long…', { on: BIG, color: '#ffd23b', ink: '#1a1405' });
+      const RD = [EGG[0][1][0], EGG[0][1][1] - 3]; k.add('rd', 'Ravenous Doomscale', T_R, RD[0], RD[1]).show('rd', T_R, L); k.cast('rd', 'Dread Roar', T_R, T_R + 0.8);
+      k.ring({ x: 84, y: 0, r: 100, fx: 'burst', t0: T_R + 0.4, at: T_R + 0.8, dur: 1, color: '#ff3b3b', cn: 'Dread Roar', legend: 'Dread Roar: everyone stunned for 20 seconds' });
+      const WS = myth ? [E.wait[0] + 4, E.wait[1] + 14] : [E.pit[0] + 6, E.pit[1] + 30]; k.call(T_R + 1, L, 'Dread Roar: everyone stunned 20 s', { x: WS[0], y: WS[1], color: '#ff3b3b', ink: '#fff' }); ['h1', 'r7', 'm1'].forEach((id, i) => k.oops(id, T_R + 1.2 + i * 0.25));
+      k.step(0.2).step(myth ? T_TURN : 9.4).step(T_R);
+      k.pause(T_R + 1, myth ? 'Nobody went back for the far big egg. Its Hatching Doom finished, and the Ravenous Doomscale\'s Dread Roar stunned everyone for 20 seconds. A wipe.' : 'The big egg stayed out too long: its Hatching Doom finished, and the Ravenous Doomscale\'s Dread Roar stunned everyone for 20 seconds. A wipe.', { x: EGG[0][1][0], y: EGG[0][1][1], r: 12 });
+      return k.done({ title: 'Mistake: the Doomscale Egg too late', focus: { x: 86, y: 0, r: 48 }, full: { x: 86, y: 0, r: 94 }, badLabel: 'stunned' }); }
+    // the far egg: Mythic, the healer turns back for it as the raid passes the cauldron, timed so both eggs reach the cauldron together
+    if (myth) { uxWalk(k, BIG, T_GO, [SOUTH[0], SOUTH[1], TURN], 7.5); k.call(T_TURN, T_TURN + 3, 'Mobile healer: back for the far egg', { on: BIG, color: '#45d16b', ink: '#04140a' }); uxWalk(k, BIG, T_TURN + 0.4, BACK.slice(1), 8); }
+    else k.call(11.8, 13.8, 'Big egg last', { on: BIG, color: '#7fbf3a', ink: '#0b1503' });
+    uxWalk(k, BIG, T_PICK + 0.4, CARRY_N.slice(1), 7.5); k.obj('bgN', 'begg', T_PICK, EGG[0][1][0], EGG[0][1][1]); ulRide(k, BIG, 'bgN', T_PICK + 0.4, T_IN); k.show('bgN', 0, T_IN).cast('bgN', 'Hatching Doom', 0, T_IN, 'stop');
+    if (myth) k.call(T_IN - 2, T_IN, 'Both in on one countdown', { x: E.pit[0], y: E.pit[1] + 24, color: '#7fbf3a', ink: '#0b1503' }); /* (north of the cauldron, where it covers neither carrier as they come in) */
+    k.hold(T_IN + 0.3, BIG).at(T_IN + 1.3, BIG, 94, 10); /* (back from the cauldron, clear of the Doomscale's Kick and Frontal tags) */
+    // the Weakened Doomscales climb out (two on Mythic): the tank takes them east of the cauldron, frontal away from everyone; kick Anguished Cry
+    /* (Mythic: the two end about 31 yards apart east-west and 10 north-south, the tank between them, so their names, cast bars and Kick tags never pile up
+       (a name is about 45 yards wide on this map). The far egg's one climbs out on the north side and goes east before it comes down beside the tank; each
+       kicker stands behind their own, the ranged and healers back south-west, out of the frontal and clear of the names. The second Anguished Cry comes once
+       the first is kicked) */
+    if (myth) { ['t1', 'm1', 'm2', 'h1', 'r1', 'r3', 'r5', 'r7'].forEach((id, i) => { const o = gdzSpot(i, 8, 6), end = id === 't1' ? TANK : id === 'm1' ? [93.5, -10] : id === 'm2' ? [139, 4] : ((q) => [95 + q[0], -30 + q[1]])(gdzSpot(i - 3, 5, 5));
+      uxWalk(k, id, T_IN - 8.2, [[92, -54], [104, -36], [106, -22]].map((p) => [p[0] + o[0] * 0.4, p[1] + o[1] * 0.4]).concat([end]), 7.5); }); } /* (back up behind the close egg, a little to its side) */
+    else { uxWalk(k, 't1', T_IN - 3.2, [TANK], 7.5); uxWalk(k, 'm1', T_IN - 2, [[103, -2]], 7.5); }
+    const DM = myth ? [['dm', [[0.2, 104, -8], [1, 101, -8]]], ['dm2', [[0.2, 112, 9], [3, 130, 9], [3.9, 132, 2.5]]]] : [['dm', [[0.2, 108, -3], [3, 111, -5]]]], K0 = T_IN + (myth ? 3.8 : 1.4);
+    DM.forEach(([id, P]) => { P.forEach(([t, x, y]) => k.add(id, 'Weakened Doomscale', T_IN + t, x, y)); const z = P[P.length - 1]; k.add(id, 'Weakened Doomscale', L, z[1], z[2]).show(id, T_IN + 0.2, L); });
+    k.call(T_IN + 0.2, T_IN + 2, myth ? 'Weakened: kick, tank them' : 'Weakened: kick, tank it', { x: E.pit[0], y: E.pit[1] + (myth ? 24 : -36), color: '#c9d98a', ink: '#141006' }); /* (where it covers nobody: it sat on the Doomscale, its tank and its kicker) */
+    k.cast('dm', 'Anguished Cry', K0, K0 + 2.5, 'kick', 'm1'); if (myth) k.cast('dm2', 'Anguished Cry', K0 + 2.8, K0 + 5.3, 'kick', 'm2');
+    k.cast('dm', 'Desperate Thrash', K0 + 2.6, K0 + 4.6); k.cone({ from: 'dm', to: 't1', at: K0 + 4.6, r: 14, width: 50 });
+    if (myth) k.call(K0 + 2.8, K0 + 5.2, 'Kill both sides evenly', { x: E.pit[0] + 2, y: E.pit[1] + 18, color: '#ffd23b', ink: '#1a1405' });
+    k.ring1(CAR.concat(myth ? [BIG, MEL] : [BIG])).step(0.2).step(5).step(myth ? T_TURN : T_PICK).step(T_IN + 0.2);
+    k.pause(12.2, myth ? 'Small eggs into the cauldron first, each carrier in their own lane. Then the two big Doomscale Eggs, one at each end of the ledge: a melee takes the close one at the south end, a mobile healer runs back for the far one at the north end, and both go in on one countdown.' : 'Small eggs into the cauldron first. Then one player brings the big Doomscale Egg from the north end, well before its Hatching Doom ends.', { x: 104, y: 4, r: 22 });
+    return k.done({ title: myth ? 'The Doomscale Eggs: small first, both big ones last' : 'The Doomscale Eggs: small first, the big one last', focus: { x: 86, y: 0, r: 48 }, full: { x: 86, y: 0, r: 94 }, hlLabel: 'the egg carriers' });
   },
   // The intermission: eggs keep falling and tails rise round the room, each casting Spectral Coils, one after another. Heroic: two groups
   // take turns (Soul Constrictor); Mythic: three groups (the coils come faster; the third only soaks twice). Carry eggs into the soaks to
@@ -1881,7 +1930,7 @@ const UX_SIM = [
   { at: 72, mech: 'wretch', ph: 0, label: 'Blightscale Wretch 2 (Its beam during the dive)', o: { img: 'SW', w2: true, do: ['A second Toxic Womb lands in the middle: stay out of its 7 yards.', 'The tank who took the first Mother\'s Wrath stands in the spectral venom: 5 impacts, waves off the platform.', 'She dives: the other tank waits at the bubbles and takes this Wretch with them.', 'Its first bubble is at 1:48, right after Mephitic Thrash, in front of her.'] } }, { at: 77, beat: 'dive', ph: 0 },
   { at: 92, mech: 'wrath', ph: 0, label: 'Mother\'s Wrath 2', o: { rot: 90 } }, { at: 102, mech: 'thrash', ph: 0, label: 'Mephitic Thrash 2 (On the Wretch, by her)', o: { rot: 90, w2: true, do: ['The tail winds up on its new side; her tank holds the second Wretch in front of her.', 'Everyone stacks on the Wretch: 45 yards or more from the tail. The tail\'s tank runs out and back.', 'The Thrash lands: only its small hit.', 'Fester Burst 2 seconds later: everyone is already inside the bubble.'] } }, { at: 107, mech: 'waves', ph: 0, label: 'Caustic Waves 2 (The hardest set)', o: { rot: 90 } },
   { at: 130, mech: 'coils', ph: 0, label: 'Spectral Coils 2 (Waves and the bubble)', o: { rot: 90, set: 2, do: ['The second set (2:11): the carriers split between the two circles, her waves still rolling.', 'Two small tails fire as the coils rise: keep dodging in your soak.', 'Both slams, one after the other: eggs break into Rawlings.', 'Right after both slams, Fester Burst between the circles: everyone in.'] } }, { at: 139, mech: 'heart', ph: 0, label: 'Rage of the Shackled 1 (Burn the heart)', o: { rot: 90 } },
-  { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 248, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
+  { at: 173, mech: 'warden', ph: 1 }, { at: 195, mech: 'fangs', ph: 1 }, { at: 218, mech: 'doomscales', ph: 1 }, { at: 288, mech: 'heart2', ph: 1 },
   { at: 319, mech: 'intcoils', ph: 2, label: 'Spectral Coils (Pattern 1 of 3: Star first)' },
   { at: 377, mech: 'clutches', ph: 3, label: 'Slithering Clutches 1 (Grip them in)', o: { q: 'NE' } }, { at: 382, mech: 'wrath3', ph: 3, label: 'Mother\'s Wrath 3', o: { q: 'NE' } }, { at: 397, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 1', o: { q: 'NE' } },
   { at: 407, mech: 'clutches', ph: 3, label: 'Slithering Clutches 2', o: { q: 'NE' } }, { at: 422, mech: 'waves3', ph: 3, label: 'Caustic Waves (Her waves, then Circling Prey)', o: { q: 'NE' } }, { at: 432, mech: 'prey', ph: 3, label: 'Circling Prey 1', o: { q: 'NE' } }, { at: 443, mech: 'wretch3', ph: 3, label: 'Blightscale Wretch 3 (Landed 7:09; its bubble on the reds at 7:45)' },
@@ -1908,7 +1957,7 @@ const UX_SIM_H = [
   { at: 555, mech: 'bite', ph: 3, label: 'Serpent\'s Bite 4 (The last set)', o: { q: 'SE' } }, { at: 588, beat: 'kill', ph: 3 },
 ];
 // (how long each part lasts on the real clock, for the written version's overlaps; how bad a miss is: 3 can wipe, 2 can kill, 1 minor)
-const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 22, 'm:doomscales': 49, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'm:waves3': 10, 'm:wretch3': 50, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 };
+const UX_DUR = { 'm:wrath3': 8, 'm:eggs': 43, 'm:wretch': 66, 'm:wrath': 8, 'm:coils': 8, 'm:waves': 21, 'm:thrash': 6, 'm:heart': 26, 'm:warden': 22, 'm:fangs': 22, 'm:doomscales': 60, 'm:heart2': 26, 'm:intcoils': 56, 'm:clutches': 14, 'm:bite': 20, 'm:prey': 11, 'm:waves3': 10, 'm:wretch3': 50, 'b:start': 2, 'b:dive': 9, 'b:kill': 0 }; /* (Nov 15: the Doomscale Eggs run 60 s, a background row like the other long ones: Mythic 3:38, right after Grasping Fangs (3:15 to 3:37), to 4:38, before the second burn at 4:48; Heroic 3:34 to 4:34, before 4:38. The Mythic row started at 4:08, 31 s after Grasping Fangs) */
 const UX_SEV = { 'm:wrath3': 1, 'm:eggs': 3, 'm:wretch': 2, 'm:wrath': 1, 'm:coils': 2, 'm:waves': 3, 'm:thrash': 1, 'm:heart': 2, 'm:warden': 2, 'm:fangs': 3, 'm:doomscales': 3, 'm:heart2': 2, 'm:intcoils': 3, 'm:clutches': 3, 'm:bite': 3, 'm:prey': 2, 'm:waves3': 3, 'm:wretch3': 2, 'b:start': 1, 'b:dive': 2, 'b:kill': 1 };
 GDZ['Ula\'tek'] = {
   upd: ['12.1.5', 'Oct 21, 2026'],
@@ -6325,8 +6374,8 @@ const UL_PAGES = {
         const q = g.pick([[p[0], p[1] - 2.55], [p[0] + 1.45 + hw, p[1] - 0.1], [p[0] - 2.35 - hw, p[1] - 0.1], [p[0], p[1] + 2.8], [p[0], p[1] - 4], [p[0] + 1.45 + hw, p[1] - 2.2], [p[0] - 2.35 - hw, p[1] - 2.2]], (x, y) => g.nameBox(n, x, y, j)); g.name(n, q[0], q[1], j); }); },
     leg: (D, L) => { const S = D.side[k] || {}, big = S['doomscale egg'] || S['doomscale eggs'] || []; L.grp('Small eggs: your number is your egg', '#f5d33a', S.eggs || [], (S.eggs || []).map((_, i) => '#' + (i + 1))); L.grp('Big (Doomscale) egg', '#e6b450', big, big.map((n) => ((S['far big egg'] || []).includes(n) ? 'far' : (S['big egg'] || []).includes(n) ? 'close' : ''))); /* (who takes the far one and who the close one (Flex, Nov 11: "this is missing whos far and whos close")) */
       if ((S.breakers || []).length) L.grp('Breakers', '#e6e0c8', S.breakers); if ((S['solo break'] || []).length) L.grp('Solo break', '#e6e0c8', S['solo break']); if ((S.helper || []).length) L.grp('Helper', '#c9ced8', S.helper); if ((S.side || []).length) L.grp('On this side', '#c9ced8', S.side);
-      L.p('Small eggs: each carrier takes the egg by their spot at about 3:45 and drops it as the raid crosses to the other side. The big egg lies at this ledge\'s south end: run back to it at about 4:10, pick it up at 4:20 and drop it at 4:32.');
-      L.f('In the top kills the small eggs sit on these spots every pull (picked up 3:33 to 3:46); the big eggs are at the ledges\' south ends.'); } })),
+      L.p('Small eggs: each carrier takes the egg by their spot at about 3:45 and drops it as the raid crosses to the other side. Big eggs: there are two on this ledge, one at each end. The close one is at the south end, by where the raid waits: a melee (or a mobile ranged) picks it up at about 4:14. The far one is at the north end, where the small eggs were: a mobile healer runs back for it and picks it up at about 4:17. Both go into the cauldron together at about 4:29.');
+      L.f('In the top kills the small eggs sit on these spots every pull (picked up 3:33 to 3:46). The big eggs sit at each ledge\'s two ends: a healer takes the north one, a melee or a mobile ranged the south one.'); } })),
   trans: [{ t: 'Groups', s: 'Pre-place by your group\'s mark; soak the coils in your area', vb: 'mid',
       draw: (D, g) => { g.boss([0, 47], 'Ula\'tek'); const AREA = { NNW: 'Y', NNE: 'Y', ENE: 'Y', WNW: 'B', WSW: 'B', ESE: 'P', SSW: 'P', SSE: 'P' }; /* (the team's Generic page: each coil coloured by the group whose area it's in) */
         for (const k of Object.keys(UL_SOAK)) g.circle(UL_SOAK[k][0], UL_SOAK[k][1], 8, UL_GC[AREA[k]][0], true, true);
