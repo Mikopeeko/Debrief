@@ -575,7 +575,7 @@ function pgOpen(root, boss, d, pk) {
   const actsHtml = () => actDeco('<div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab)."><b>Tab</b><span>Target</span></div>' +
     '<div class="pg-act pg-atk" data-a="atk" role="button" tabindex="0" title="Hit your target (1). Press it again as soon as it is ready."><b>1</b><span>Attack</span><i></i><em class="pg-cdn"></em></div>' +
     '<div class="pg-act" data-a="sprint" title="Sprint (Shift): faster for 3 s, every 30 s."><b>Shift</b><span>Sprint</span><i></i><em class="pg-cdn"></em></div>' +
-    '<div class="pg-act" data-a="def" title="Defensive (Q): half damage for 8 s, every 90 s."><b>Q</b><span>Defensive</span><i></i><em class="pg-cdn"></em></div>' + (P2 ? P2.acts() : ''));
+    '<div class="pg-act" data-a="def" title="Defensive (Q): half damage for 8 s, every 90 s."><b>Q</b><span>Defensive</span><i></i><em class="pg-cdn"></em></div>' + (P2 && P2.acts ? P2.acts() : ''));
   const hudHtml = () => HUD.replace('<div class="pg-acts"></div>', '<div class="pg-acts">' + actsHtml() + '</div>'); /* (the screen as it stands once the action bar is in: for the test) */
   const icLoad = (im, n) => { if (!im || !n) return; im.dataset.ic = n; if (typeof loadOfficial === 'function') { try { loadOfficial(im, n); return; } catch (e) { /* (loaded here instead) */ } }
     const u = ['https://wow.zamimg.com/images/wow/icons/large/' + n + '.jpg', 'https://render.worldofwarcraft.com/us/icons/56/' + n + '.jpg']; let k = 0;
@@ -656,7 +656,7 @@ function pgOpen(root, boss, d, pk) {
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
       '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
-      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · Shift: sprint · Q: defensive' + (P2 ? ' · E: kick' : '') + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
+      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Play) */ } }; /* (the picture behind the card is you) */
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
