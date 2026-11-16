@@ -16,6 +16,7 @@
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 //   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
 //   J. A raider's screen (Flex, Nov 15): your frame and your target's in the bottom stack, spell-icon buttons with keys, the target's health, boss-mod bars; see check J.
+//   N. Boss-mod alerts (Flex, Nov 16): icon, a short order in big letters, the spell under it, a countdown, gold for you; see check N.
 //   M. Sounds you can feel (Flex, Nov 16): waves, slams, the bubble, the sweep, landings, Vipers, her roar, and your attacks by role; see check M.
 //   L. Main's playtest (Nov 15): bot carriers keep clear of you, melee reach the heart, calls clear on the game's clock, the small tails' measured fan; see L.
 //   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
@@ -382,6 +383,17 @@ function checks(H, say, pj) {
       if (/three waves 2\.4 s later: step out|small tails' rings/i.test(PJ)) L('the small tails are still described as random waves or rings'); }
   } catch (e) { bad('the playtest fixes crashed the game: ' + e.message + ' (check L)'); }
   finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
+  // N. Boss-mod alerts (Flex, Nov 16: "I think the alerts need some work", then "Yes" to the mock): each call an alert with the spell's icon, a short order in
+  //    big letters, the spell and the rest under it, a live countdown; gold when it's about you, the call's colour otherwise; two at most, the second smaller
+  try { const N = (m) => bad(m + ' (check N)'); if (typeof dbg.alerts !== 'function') N('the calls aren\'t drawn as alerts (dbg.alerts)');
+    else { dbg.at(30, 'r3'); const t = dbg.G.t, h = dbg.alerts([{ text: 'Fester Burst: into the Wretch\'s bubble, you have 4 s!', c: '#d8f22f', by: t + 4 }, { text: 'Caustic Waves: wait on the east half, then cross behind the first wave.', c: '#9be13a', by: null }]);
+      const al = h.split('<div class="pg-al').slice(1); if (al.length !== 2) N('two calls didn\'t make two alerts');
+      else { if (!/^ you"/.test(al[0]) || !/--c:#f3c969/.test(al[0])) N('a call about you isn\'t gold');
+        if (!/<b class="pg-alo">into the Wretch&#39;s bubble<\/b>/.test(al[0]) && !/<b class="pg-alo">into the Wretch's bubble<\/b>/.test(al[0])) N('the order isn\'t the short part after the spell: ' + (/pg-alo">([^<]*)/.exec(al[0]) || [])[1]);
+        if (!/<span class="pg-ald">Fester Burst<\/span>/.test(al[0])) N('the spell isn\'t named under the order');
+        if (!/<em class="pg-aln">4<\/em>/.test(al[0])) N('a call that gives you 4 s shows no countdown');
+        if (!/^ small"/.test(al[1]) || !/--c:#9be13a/.test(al[1]) || !/pg-alo">wait on the east half<\/b>/.test(al[1]) || !/Caustic Waves · then cross behind the first wave/.test(al[1])) N('the second alert isn\'t smaller, in its own colour, with a short order and the rest under it'); }
+      if (!/class="pg-ali"/.test(h)) N('the alerts have no icon box'); } } catch (e) { bad('the alerts crashed: ' + e.message + ' (check N)'); }
   // M. Sounds you can feel (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can"):
   //    made in the browser from noise and tones (no sound files, never a voice), quiet, never for the autopilot, each wired to its moment
   { const M = (m) => bad(m + ' (check M)'), kinds = ['wave', 'slam', 'pop', 'sweep', 'thud', 'hiss', 'zip', 'roar', 'fire', 'holy', 'slash', 'whirl'];
