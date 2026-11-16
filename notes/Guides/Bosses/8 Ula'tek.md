@@ -28,7 +28,7 @@ Raid splits to the two side ledges (cross the venom; mobility out, Warlock gatew
 Eggs rain down — pick them up; tails rise around the room and cast Spectral Coils repeatedly: **Team 1 soaks 1/3/5, Team 2 soaks 2/4/6** (Heroic). Then the platform shatters into four — stand toward the side, not the middle.
 
 ## Phase 3 — Ula'tek's Ascension
-- Melee/tanks on the boss's platform; ranged/healers one platform counter-clockwise (left).
+- The whole raid stands on her quarter in every part of phase 3 (17 of 17 kills since Nov 6, measured Nov 15): ranged and healers on its inner half, melee a step closer to her, tanks closest; at Circling Prey everyone moves one quarter counter-clockwise.
 - **Call of the Serpent** → **Blightscale Clutches** on platforms (circles first) → kill them; eggs that fall into the venom hatch **Blightscale Shriekers** (big add; interrupt **Vicious Echoes**, raid stun + stacking DoT) → tank them to the boss and cleave.
 - **Serpent's Bite#1295905**: two players get a 15 s venom since the Nov 6 hotfix (a melee and a ranged in the kills since; before it, one melee, one ranged, one healer) → others stand in their circle until it's fully leeched, or they become a **Calcified Corpse** (wipe). Heroic: one soak group per red circle (melee; ranged and healers). Mythic: the two reds stack and three assigned soakers stand in both (since Oct 6 three clear a set). Soakers then get **Volatile Purge#1306086** → spread 5+ yd.
 - **Caustic Waves** with gaps — stand where there are no orbs.
@@ -122,7 +122,7 @@ On Heroic, phase 2 starts between 2:37 and 2:45 on top kills (2:56 on Wolfthorn'
 | Serpent's Bite soakers | three a set (four in a fifth of sets); both tanks soak in most sets; one player soaked all three sets in 71 of 116 kills | the Plan's "nobody soaks more than two" is a choice, not a limit |
 | Volatile Purge waves (Mythic) | each soaker sends Caustic Waves out as their Purge bursts, 5 s after the bite clears. Ula'tek's own waves reach the raid 4 s or more after her cast starts (her three casts' hits cluster 10 to 11 s after the start) | 82mnXac4DT1fNBAK fight 59 (6 hit, 5 died); 116 kills |
 | Calcified Corpse | a bitten player whose bite runs its 15 s, or who dies bitten, or who dies as the bite lands, turns to stone; its first pulse kills the other bitten players within half a second | 2mWMajqCxPYbZLt9 fight 47, DP94CYMqw8LWHk3p fight 11, nQLD6P4RztjVxZ9g fight 16 |
-| Slithering Clutches | 20 a kill on Mythic; two Death Knights grip them (2 grippers on 92 kills, 3 on 23), Gorefiend's Grasp on 113 of 116. Two Shriekers at 8:30 on every kill, both kicked | 116 kills |
+| Slithering Clutches | 20 a kill on Mythic; two Death Knights grip them (2 grippers on 92 kills, 3 on 23), Gorefiend's Grasp on 113 of 116. Two Shriekers at 8:30 on every kill, both kicked | 116 kills | (Corrected Nov 15: 10 a kill, 4 at 6:22 and 4 at 6:52 one on every quarter, 2 at 8:30 with 2 Shriekers; each clutch is logged under two actor ids, which is where 20 came from. A clutch not killed in time hatches a Viper, never a Shrieker.)
 | Blightscale Clutch (Heroic phase 3, and stage 2) | hatches into a Viper 20 s after its Writhing Gestation unless it is killed; about two thirds of top Heroic kills let one hatch (85 of the 124 Heroic pulls read) | 1FvZBrQWV3n9jfGT fight 38 |
 | Where top kills lose players in phase 3 | 8:08 to 8:11, her second waves during Circling Prey (45 deaths to the waves, 11 to Circling Prey's impact on 116 kills); the first Purge burst at 7:00 (14) | 116 Mythic kills |
 | Anguished Cry's stun and her waves | the stun lasts 6 s; a wave that reaches a player in it, or within 1.5 s of it ending, can't be stepped out of | Bvryf2VWpGJ6PAk3 fight 28 (two hit 0.4 and 0.6 s after the stun ended) |
@@ -130,3 +130,21 @@ On Heroic, phase 2 starts between 2:37 and 2:45 on top kills (2:56 on Wolfthorn'
 | The bite soakers' waves or the tail's | both can land 2 to 3 s after a Purge burst. The soakers' reach the nearest player first; the tail's cross the room in a line at 12.5 yards a second | Frwn49zWfdxHQAJG fight 47 (the tail's, from 74 yards: the farthest from the soaker was hit first) |
 
 **What wiped the 35 pulls (each read against the raw log):** phase 1's own mechanics on three that only ended in phase 2; in phase 2 a tether break (5: Blight Vein killed 2 or 3 on four, the carriers died on one), an Anguished Cry nobody kicked in the second heart burn (5, one from a Doomscale with Revenge), a big egg still out when Hatching Doom ran out (2), a raid that bled out (2, one after an egg touch), Rawlings left alive (1); in the intermission circles nobody soaked or too few (3), a tank dead as the platform shattered (1); in phase 3 a bite that turned to stone (5), Volatile Purges not spread or their waves (3), her second waves during Circling Prey (2), Mother's Wrath on the raid (1), the third Wretch's bubble out of reach (1), her enrage at 3% (1).
+
+## Measured Nov 15 (Main, for the new Mythic video; 130 kills, 17 since Nov 6)
+- Two carriers touching: BOTH eggs hatch (two Vipers) and both take Noxious Splash (476k); 7 touches, 6 in Wolfthorn's Nov 13 wipes.
+- Wretch enrage 30 s after it wakes: Fester Burst cast 4 s to 2 s, outside hit and poison double (516k to 1.03M; 95k to 190k a tick). The 1:10 bubble is enraged.
+- Small tails (Gore Rattle 267418): 8 fixed edge spots ~55 yd out (N, NE, E, SE, S, SW, W, NW with her phase 1 spot north), the same facing every pull, a short fan of about 3 waves 12-20 deg apart, never a ring. Her own tail fires waves during her casts too (moderate evidence).
+- Second wave set: four patterns (dive left/right x waves start left/right: 38/29/35/27); the dive side decides the small tails, the start side only flips which half of her waves comes first.
+- Phase 1 tank swap: the tail tank taunts during her wave cast (median +4.1 s from the bar); she turns to them as her waves end (+18.9 s).
+- Rawlings: enrage at +25 s; Acidic Expulsion bar 10.7 s after that (lands ~12 s after), a 35 s raid poison (~1.8M unmitigated). One heals through; two or more wiped 5 of 5.
+- Coils: 733k with no soakers, -5% a soaker, 440k at 8 and the same past 8.
+- Phase 2 Gestation: 3 clutches west, 2 east, always the same egg spots; a big-egg pickup gestates any small eggs left on that ledge (306 of 309 within 2 s).
+- Grasping Fangs: only the three tethers on the side she ended phase 1 on take damage (130/130). The solo breaker: any role (ranged 39, healer 33, melee 16), her side 50 / other 38.
+- The phase 2 swirls during the tethers are Virulent Spit (buff 3:20, 3:40, 4:00, 4:20; hits 2.5-8.5 s later), not Falling Debris. Debris fall time can't be read from the log.
+- Anguished Cry: about 4:39, 4:55 (0.6 s after the heart opens) and 5:10; 1,457 of 1,502 kicked, none ever landed; a second kicker needed 2 times.
+- Intermission: 8 eggs at ~5:24, each with a 4.62M shield; top raids break 1-2 in the first two soaks (median 2 since Nov 6).
+- Serpent's Bite: red-circle players take no soak damage; anyone else who steps in gets Volatile Purge (0.52-0.63M per circle; a full soaker ~1.19M since Nov 6, not 2M).
+- Third Wretch: the beam tank takes her, her old tank the Wretch (84 of 127; reverse 23). Bubbles 7:45 (4 s cast) and 8:17.6 enraged (2 s cast) on the third quarter.
+- Shriekers: exactly 2 at 8:30, 20.8M each, one Vicious Echoes each at ~8:47 (as her waves start), 252/255 kicked, dead ~8:55.
+- Her phase 3 wall: ONE gap ~3 yd wide that moves each cast among four spots (in front of her 24%, 9 yd to her right 27%, 15 yd to her right 25%, 15 yd to her left 21%).
