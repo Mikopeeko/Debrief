@@ -403,9 +403,22 @@ function pg3d(host, A) {
   const STN = pg3dStoneDraw((w, h) => canvas(w, h, () => {}), (navigator.deviceMemory || 8) < 4 ? 1024 : 2048), AN = Math.min(4, R.capabilities.getMaxAnisotropy()); keep({ dispose: STN.free });
   // (phase 2's ledges still wear the old floor tiles: its 3D kit asks for them as slab; the carved stone took their place on phase 1's platform
   // and phase 2's 3D stopped loading with "slab is not defined", Nov 15)
-  const slab = A.P2 ? ctex(canvas(256, 256, (g) => { g.fillStyle = '#4f585f'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const l = 116 + ((i * 3 + j * 5) % 4) * 6; g.fillStyle = 'rgb(' + l + ',' + (l + 9) + ',' + (l + 17) + ')'; g.fillRect(i * 128 + 3, j * 128 + 3, 122, 122); }
-    for (let k = 0; k < 1400; k++) { g.fillStyle = 'rgba(0,0,0,' + (hash(k, 1) * 0.07).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 256, hash(k, 3) * 256, 2, 2); } }), true) : null; if (slab) slab.repeat.set(0.1, 0.1);
+  // (Flex, Nov 15: "the texture of the floor in p2 on the sides should be some kind of rocky tile, nothing fancy": rows of worn stone tiles of
+  // different lengths with dark grout, chipped corners, mottled stone (some warmer), a soft bevel, grit and a few cracks; darker and quieter than the
+  // carved platform so the circles stay clear. Each row's tiles add up to the full width and wrap, so the floor repeats without a seam. 512 px = 10 yards)
+  const slab = A.P2 ? ctex(canvas(512, 512, (g) => { g.fillStyle = '#1d2022'; g.fillRect(0, 0, 512, 512);
+    for (let r = 0; r < 4; r++) { const W = []; let left = 512; while (left > 0) { const w = left < 176 ? left : Math.min(88 + Math.floor(hash(r, W.length) * 70), left - 88); W.push(w); left -= w; }
+      let x = Math.floor(hash(r, 9) * 512); W.forEach((w, k) => { const x0 = x + 3, y0 = r * 128 + 3, ww = w - 6, hh = 122, l = 74 + Math.floor(hash(k + 5, r) * 30), warm = hash(k, r + 40) < 0.4 ? 5 : 0, s = r * 31 + k, ch = (q) => 4 + hash(s, q) * 9;
+        for (const o of [-512, 0, 512]) { const X = x0 + o; if (X >= 512 || X + ww <= 0) continue; g.save(); g.beginPath();
+          g.moveTo(X + ch(1), y0); g.lineTo(X + ww - ch(2), y0); g.lineTo(X + ww, y0 + ch(3)); g.lineTo(X + ww, y0 + hh - ch(4)); g.lineTo(X + ww - ch(5), y0 + hh); g.lineTo(X + ch(6), y0 + hh); g.lineTo(X, y0 + hh - ch(7)); g.lineTo(X, y0 + ch(8)); g.closePath(); g.clip();
+          g.fillStyle = 'rgb(' + (l + warm) + ',' + (l + 2) + ',' + (l - warm + 1) + ')'; g.fillRect(X, y0, ww, hh);
+          for (let b = 0; b < 7; b++) { const bx = X + hash(s, 50 + b) * ww, by = y0 + hash(s, 60 + b) * hh, br = 14 + hash(s, 70 + b) * 30, gr = g.createRadialGradient(bx, by, 0, bx, by, br), dk = hash(s, 80 + b) < 0.55;
+            gr.addColorStop(0, dk ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.07)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(bx - br, by - br, br * 2, br * 2); }
+          g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(X, y0, ww, 3); g.fillRect(X, y0, 3, hh); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(X, y0 + hh - 4, ww, 4); g.fillRect(X + ww - 4, y0, 4, hh); g.restore(); }
+        x = (x + w) % 512; }); }
+    for (let k = 0; k < 9000; k++) { const v = hash(k, 1); g.fillStyle = v < 0.5 ? 'rgba(0,0,0,' + (0.06 + v * 0.14).toFixed(3) + ')' : 'rgba(255,255,255,' + ((v - 0.5) * 0.08).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 512, hash(k, 3) * 512, 1.6, 1.6); }
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.2; for (let c = 0; c < 11; c++) { let cx = hash(c, 11) * 512, cy = hash(c, 12) * 512; g.beginPath(); g.moveTo(cx, cy); for (let s = 0; s < 4; s++) { cx += (hash(c, 20 + s) - 0.5) * 34; cy += (hash(c, 30 + s) - 0.5) * 34; g.lineTo(cx, cy); } g.stroke(); } }), true) : null;
+  if (slab) { slab.repeat.set(0.1, 0.1); slab.anisotropy = AN; }
   const stx = (c, rx, ry, ox, oy, nrm) => { const tx = ctex(c, true); tx.anisotropy = nrm ? 1 : AN; if (nrm) tx.minFilter = T.LinearMipmapNearestFilter; tx.repeat.set(rx, ry); tx.offset.set(ox, oy); return tx; };
   const vglow = (m) => { m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' +
     'totalEmissiveRadiance += vec3(0.15, 0.46, 0.06) * smoothstep(0.1, 0.3, diffuseColor.g - max(diffuseColor.r, diffuseColor.b));'); }; return m; };

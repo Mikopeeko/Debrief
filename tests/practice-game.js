@@ -271,6 +271,17 @@ function checks(H, say, pj) {
     //  began: a glowing bolt sat frozen at your hand through the 3-2-1, or a melee slash hung mid-swing. The jump clears the hits like everything else)
     if (typeof dbg.ff !== 'function') bad('no way to check the "Start at" jump (dbg.ff) (check J)');
     else for (const id of ['r1', 'm1', 'h1']) { dbg.at(130, id); dbg.ff(138.2); const fx = (dbg.dps() || {}).fx || []; if (fx.length) bad('after "Start at 2:18" as ' + id + ' ' + fx.length + ' hit(s) from the fast-forward are still in the air (check J)'); }
+    // (Flex, Nov 15, playing the test copy: "If a viper spawns though it needs to be killed", "it shouldnt just vanish": a Viper left on its own 8 s after it
+    //  hatched. It stays until you kill it, crawls to you, and its Petrifying Sting lands every 3 s and stacks (no healing on you while it lasts))
+    if (typeof dbg.hatchMine !== 'function') bad('a Viper still leaves on its own 8 s after it hatches; it should stay until you kill it (Flex, Nov 15) (check J)');
+    else { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(20, 'r3'); dbg.tgt = null; const vs = () => dbg.G.adds.filter((a) => a.kind === 'viper'), n0 = vs().length;
+      if (!dbg.hatchMine()) bad('no egg of yours to hatch at 0:20, so the Viper can\'t be checked (check J)');
+      else { dbg.stepOwn(300); const V = vs(), v = V[V.length - 1];
+        if (V.length !== n0 + 1) bad('15 s after it hatched, the Viper is gone though nobody killed it (Flex: "it shouldnt just vanish") (check J)');
+        else { const d = Math.hypot(v.x - dbg.G.x, v.y - dbg.G.y); if (d > 3.2) bad('the Viper doesn\'t come to you: ' + d.toFixed(1) + ' yards away after 15 s (check J)');
+          if (!(dbg.G.debs.sting && dbg.G.debs.sting.n >= 2 && dbg.G.debs.sting.until > dbg.G.t)) bad('the Viper\'s Petrifying Sting doesn\'t land and stack while you leave it alive (check J)');
+          const k = (dbg.tgts().find((o) => o.kind === 'viper') || {}).key; dbg.tgt = k; for (let i = 0; i < 8 && vs().length > n0; i++) { dbg.atk(); dbg.stepOwn(21); }
+          if (vs().length > n0) bad('pressing 1 on the Viper doesn\'t kill it (check J)'); } } }
   } catch (e) { bad('the raider\'s screen crashed the game: ' + e.message + ' (check J)'); }
   finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
 }
