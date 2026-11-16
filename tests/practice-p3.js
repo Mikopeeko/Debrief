@@ -261,6 +261,17 @@ function checks(H, say) {
       const shown = new Set((G.lastWarn && G.lastWarn.all) || []); /* (the opening call shows as the jump lands) */ G.warnQ = []; G.lastWarn = null; for (let k = 0; T.start - 1 + k * 0.05 < S.end; k++) { G.t = T.start - 1 + k * 0.05; const L = dbg.warnsNow(); if (L) L.all.forEach((x) => shown.add(x)); }
       W.filter((w) => ME.test(w.text) && !shown.has(w.text)).forEach((w) => bad('"' + w.text + '" (' + clkS(w.t) + ') never shows on the call line' + tag)); }
   } catch (e) { bad('the call line check crashed: ' + e.message + ' (check M)'); } finally { reset(); }
+  // N. your kick (Flex, Nov 15: "The bots arent giving the player any opportunity to interupt, there should be at least one spot where the player is asked
+  //    to interupt"). Your hits and the raid's killed your Shrieker at 8:44 to 8:46, before its Vicious Echoes (8:46.8), so only the bots' Shrieker was ever
+  //    kicked. Both live through the cast now (as on every kill), and every melee and ranged pick but "no kick" carries a kick
+  try {
+    for (const [pk, seed] of [[{ role: 'r', soak: 0, bite: 'no', kick: 2 }, 1], [{ role: 'm', soak: 0, bite: 'no', kick: 1 }, 5], [{ role: 'r', soak: 1, bite: 'no', kick: 2 }, 3]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.sim(me, true, false, seed); const G = dbg.G;
+      if (!Object.values(G.p3.kick).includes(me)) bad('playing ' + JSON.stringify(pk) + ' (seed ' + seed + '), you never kick: kicks ' + JSON.stringify(G.p3.kick) + ', Shriekers died ' + JSON.stringify(G.p3.shDead) + ' (check N)');
+      Object.entries(G.p3.shDead).forEach(([k, at]) => { if (at < T.echoes + 0.3 && G.p3.kick[k] == null) bad('Shrieker ' + k + ' died at ' + clkS(at) + ', before its Vicious Echoes (' + clkS(T.echoes) + '), unkicked (check N)'); }); }
+    const su = dbg.P2.setup; if (!su) bad('no start card to check the kick picks (check N)'); else for (const r of ['m', 'r']) su.jobs(r).forEach(([v, label]) => { su.set(r, v); const p = dbg.P2.pick, me = dbg.P2.slotOf(p), J = ctx.pgP3Jobs(3, me, p).J;
+      if (v !== 'none' && !(p.kick && J[me].kick)) bad('the ' + r + ' pick "' + label + '" has no Shrieker kick (check N)'); if (v === 'none' && (p.kick || !/no kick/.test(label))) bad('the ' + r + ' pick without a kick doesn\'t say "no kick": "' + label + '" (check N)'); });
+  } catch (e) { bad('the kick check crashed: ' + e.message + ' (check N)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }

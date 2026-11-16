@@ -110,7 +110,7 @@ function pgOpen(root, boss, d, pk) {
   // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
     get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.' : null; },
-    mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; },
+    mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), sfx: (k) => sfx(k), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; },
     big: (text, c) => bigCall(text, c), nm: (id) => nm(id) }; /* (phase 2's big calls (your kick, the backup, the five's defensive) and the bots' names on its Interrupted labels) */
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
@@ -120,7 +120,7 @@ function pgOpen(root, boss, d, pk) {
   // the action bar, filled in once your role is known (actsHtml))
   const HUD = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
     '<div class="pg-tr"><canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-trow"><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div>' +
-    '<div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span>Mistakes</span></div></div>' +
+    '<button type="button" class="pg-snd on" aria-pressed="true" title="Sound cues, like a boss mod (M)">Sound</button><div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span>Mistakes</span></div></div>' +
     '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div></div></div>' +
     '<button type="button" class="pg-x" aria-label="Close">✕</button><div class="pg-timers"></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
@@ -222,16 +222,24 @@ function pgOpen(root, boss, d, pk) {
   // 40). The moments that matter: a Viper the moment it hatches, the heart while it's open, the Rawlings after each coil soak. A moment spent mostly
   // on the right thing counts; a miss is one line in the report. No damage numbers: training wheels. ----
   const ADD_HP = { rawling: 3, viper: 5 };
-  const tgtList = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
+  // (Flex, Nov 15: "The eggs have to be damaged to break the shield in order to get picked up": your egg's Hardened shell has 5 health; the raid chips 0.4 a
+  //  second, so with your hits (one a second) it opens in about 3.6 s, as on the kills, and in about 12 s without them. "the player should get an AOE
+  //  ability" with "a short cooldown": 2 hits everything within 8 yards of your target, every 8 s. "if a viper hatches the tank should taunt it and then the
+  //  group kills it": the off tank taunts it 2 s after it hatches, and the raid kills it faster once it's on the tank)
+  const SHELL = { hp: 5, raid: 0.4 }, AOE = { cd: 8, r: 8 }, TAUNT = { at: 2, drain: 0.6 };
+  const shellsOn = () => !P2 || !!P2.eggShells; /* (phase 1 always; a later part opts in with eggShells) */
+  const myShell = () => (G && shellsOn() ? G.eggs.find((e) => e.id === me && e.state === 'floor' && e.shp > 0) || null : null);
+  const tgtList0 = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
     G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); const mx = ADD_HP[a.kind] || 3; if (a.hp == null) a.hp = mx; L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1, hp: a.hp, max: mx }); });
     if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
   // (the Nov 15 audit: the Wretches died on their own and your hits on them did nothing; their last 10 s are now a moment to help kill them)
+  const tgtList = (t) => { const L = tgtList0(t).slice(), e = myShell(); if (e) L.push({ key: 'egg', kind: 'egg', name: 'Your egg (Hardened shell)', p: [e.x, e.y], r: 1, hp: e.shp, max: e.shpMax }); return L; };
   const wretchDying = (t) => S.wretches.some((w) => t >= w.dies - 10 && t < w.dies && t >= w.awake && G.wr[w.id]);
-  const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : wretchDying(t) ? 'wretch' : null);
-  const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it, then keep pressing 1 until it dies.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart, then keep pressing 1 while you stay in range.'],
+  const dpsCat = (t) => (myShell() && !G.adds.some((a) => a.kind === 'viper') ? 'egg' : P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : wretchDying(t) ? 'wretch' : null);
+  const DPS_SAY = { egg: ['Break your egg', 'Your egg\'s shell was up', 'Your egg lands with a Hardened shell: press Tab to pick it, then keep pressing 1 (and 2, your area attack) until it breaks, then walk over it.', 'it'], viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it, then keep pressing 1 until it dies.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart, then keep pressing 1 while you stay in range.'],
     rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.'],
     wretch: ['Kill the Wretch', 'The Wretch was going down', 'Help kill each Wretch before its third bubble: press Tab to pick it, then keep pressing 1.', 'it'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
@@ -244,30 +252,55 @@ function pgOpen(root, boss, d, pk) {
     if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false; /* (still cooling down) */
     if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 1.' : 'Too far away: get closer.', true); return false; }
     G.gcd0 = t; hitTgt(o, t); hud(true); return true; };
-  const hitTgt = (o, t) => { (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
-    const cat = dpsCat(t); G.hits = (G.hits || 0) + 1; G.lastHitT = t; G.lastHitCat = cat && isRight(cat, o) ? cat : null;
+  const hitTgt = (o, t, quiet) => { if (!quiet) (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
+    const cat = dpsCat(t); G.hits = (G.hits || 0) + 1; if (!quiet) { G.lastHitT = t; G.lastHitCat = cat && isRight(cat, o) ? cat : null; } /* (the area attack's extra hits don't change what you're on) */
     const a = G.adds.find((q) => q.id === o.key); if (a) { a.hp = (a.hp == null ? ADD_HP[a.kind] || 3 : a.hp) - 1; if (a.hp <= 0) { G.adds = G.adds.filter((q) => q !== a); G.kills = (G.kills || 0) + 1; say((a.kind === 'viper' ? 'Viper' : 'Rawling') + ' killed.');
       const c2 = dpsCat(t), nx = c2 ? nearestRight(t) : null; G.tgt = nx && isRight(c2, nx) ? nx.key : null; } } /* (training wheels: after a kill your target moves on to the next one that matters) */
-    else if (o.key === 'heart') G.heartHits = (G.heartHits || 0) + 1; else if (P2 && P2.hit) P2.hit(o.key); };
-  const atkStep = (t) => { if (window.__pgAuto && dpsCat(t)) atkKey(); }; /* (the autopilot, a careful player, presses 1 as soon as it's ready) */
+    else if (o.key === 'heart') G.heartHits = (G.heartHits || 0) + 1; else if (o.kind === 'egg') shellHit(1, t); else if (P2 && P2.hit) P2.hit(o.key); };
+  const aoeLeft = (t) => Math.max(0, AOE.cd - (t - (G.aoe0 == null ? -99 : G.aoe0)));
+  const aoeKey = () => { if (!G) return false; if (has('stun')) { if (!window.__pgAuto) say('You\'re stunned: you can\'t attack.', true); return false; } const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
+    if (aoeLeft(t) > 0) { if (!window.__pgAuto) say('Area attack is cooling down: ' + Math.ceil(aoeLeft(t)) + ' s.', true); return false; } if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false;
+    if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 2.' : 'Too far away: get closer.', true); return false; }
+    G.aoe0 = t; G.gcd0 = t; const c = o.p.slice(), L = tgtList(t).filter((q) => q.key !== o.key && q.kind !== 'boss' && q.kind !== 'tail' && q.kind !== 'heart' && pgDist(q.p, c) - (q.r || 0) <= AOE.r);
+    hitTgt(o, t); L.forEach((q) => hitTgt(q, t, true)); (G.aoeFx = G.aoeFx || []).push({ x: c[0], y: c[1], r: AOE.r, t0: t, n: L.length + 1 }); hud(true); return true; };
+  const aoeWorth = (t) => { const o = tgtNow(t); return !!o && aoeLeft(t) <= 0 && tgtList(t).filter((q) => q.max && pgDist(q.p, o.p) - (q.r || 0) <= AOE.r).length >= 2; };
+  const atkStep = (t) => { if (window.__pgAuto && dpsCat(t)) { if ((!P2 || P2.autoAoe) && aoeWorth(t)) aoeKey(); atkKey(); } }; /* (the autopilot presses 2 when two or more things are close together, in phase 1 and in a part that says autoAoe: its damage moments are tuned for the faster kills) */ /* (the autopilot, a careful player, presses 1 as soon as it's ready) */
   const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
     if (fr < 0.5) G.log.push({ t: c.t0, kind: 'dps', text: DPS_SAY[c.kind][1] + ': you were on ' + (DPS_SAY[c.kind][3] || (c.kind === 'heart' || c.kind === 'viper' ? 'it' : 'them')) + ' ' + Math.round(fr * 100) + '% of the time.', tip: DPS_SAY[c.kind][2] }); };
   const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
     if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
-    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then keep pressing 1 to hit it.' : (cat === 'viper' ? 'A Viper! ' : cat === 'wretch' ? 'The Wretch is going down! ' : 'Rawlings! ') + 'Press Tab to pick ' + (cat === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it.', '#f3c969'); } /* (once a run: how to attack) */
+    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then keep pressing 1 to hit it.' : (cat === 'viper' ? 'A Viper! ' : cat === 'egg' ? 'Your egg has a shell! ' : cat === 'wretch' ? 'The Wretch is going down! ' : 'Rawlings! ') + 'Press Tab to pick ' + (cat === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it.', '#f3c969'); } /* (once a run: how to attack) */
     atkStep(t); if (G.hitFx && G.hitFx.length && t - G.hitFx[0].t0 > 0.5) G.hitFx = G.hitFx.filter((x) => t - x.t0 <= 0.5);
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
-    if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
+    // (her tail's Mephitic Thrash sends everyone 35 yards out, past a ranged player's reach of the Rawlings: that run doesn't count you off target)
+    const away = (S.thrash || []).some((q) => t >= q.t0 && t <= q.at + 3);
+    if (D.cur && !away) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
   const cycleTgt = () => { press('tgt'); const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
-  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), adds: tgtList(t).filter((o) => o.max) }; };
+  const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), aoe: (G.aoeFx || []).filter((x) => t - x.t0 < 0.7).map((x) => ({ ...x, age: t - x.t0 })), aoeCd: aoeLeft(t), adds: tgtList(t).filter((o) => o.max) }; };
   const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; el.textContent = text; el.style.color = c || '#fff'; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
-  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); };
+  // ---- sounds (Flex, Nov 15: "I think sound alerts or sound ques are going to be a good addition", "Players are used to sound ques with boss mods so thats
+  // a great way to simulate it"): short tones made here, no sound files and never a voice. A two-note ping for a call about you, three quick beeps for a
+  // "now" call, a soft blip for the others; 3-2-1 beeps and a high one as your own boss-mod bar ("Your ...") runs out; a chime when you kick, break your
+  // egg's shell or pick it up; a low buzz for a mistake. The Sound button or M turns them off (remembered). Nothing plays for the autopilot or a jump
+  let sndOn = (() => { try { return localStorage.getItem('wla-pg-sound') !== 'off'; } catch (e) { return true; } })(), actx = null;
+  const sndCtx = () => { if (actx) return actx; const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext); if (!AC) return null; try { actx = new AC(); } catch (e) { actx = null; } return actx; };
+  const SND = { you: [[880, 0, 0.11], [1320, 0.12, 0.16]], now: [[1046, 0, 0.07], [1046, 0.1, 0.07], [1568, 0.2, 0.12]], call: [[660, 0, 0.08]], tick: [[740, 0, 0.06]], go: [[1175, 0, 0.16]], ok: [[988, 0, 0.08], [1319, 0.09, 0.14]], bad: [[155, 0, 0.22]] };
+  const sfx = (k) => { if (!sndOn || window.__pgAuto || !SND[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); const t0 = c.currentTime + 0.01;
+    SND[k].forEach(([f, at, d]) => { const o = c.createOscillator(), g = c.createGain(), v = k === 'call' || k === 'tick' ? 0.05 : k === 'bad' ? 0.06 : 0.09; o.type = k === 'bad' ? 'sawtooth' : k === 'now' ? 'square' : 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(v, t0 + at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + d); o.connect(g); g.connect(c.destination); o.start(t0 + at); o.stop(t0 + at + d + 0.03); }); } catch (e) { /* (no sound here) */ } };
+  const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.textContent = sndOn ? 'Sound' : 'Muted'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); };
+  const sndSet = (on) => { sndOn = !!on; try { localStorage.setItem('wla-pg-sound', sndOn ? 'on' : 'off'); } catch (e) { /* (no storage) */ } sndUi(); if (sndOn) sfx('ok'); };
+  const countdown = () => { if (!sndOn || !G) return; const t = G.t, D = G.cdn || (G.cdn = new Set()); modBars(t).forEach((q) => { if (!/^Your\b/.test(q.name)) return; const left = q.at - t, id = q.name + '|' + q.at.toFixed(1) + '|';
+    [3, 2, 1].forEach((n) => { if (left <= n && left > n - 0.5 && !D.has(id + n)) { D.add(id + n); sfx('tick'); } }); if (left <= 0.15 && !D.has(id + 0)) { D.add(id + 0); sfx('go'); } }); };
+  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); sfx('bad'); };
   // (how close the nearest other carrier is to your egg: 0 clear, 1 within 5 yards, 2 within 3.5)
   const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 5 ? 1 : 0; };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
+  const shellBreak = (e, t) => { e.shp = 0; e.shell = Math.min(e.shell, t); if (!window.__pgAuto) { say('Shell broken: walk over your egg to pick it up.'); sfx('ok'); } };
+  const shellHit = (n, t) => { const e = myShell(); if (!e) return; e.shp -= n; if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; };
   const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
     if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
 
@@ -362,9 +395,10 @@ function pgOpen(root, boss, d, pk) {
     (S.beams || []).forEach((bm, bi) => { if (P2 || t < bm.t0 || t > bm.t1 || G.done.has('beam' + bi)) return; const ax = bm.from[0], ay = bm.from[1], tk = G.bots[bm.tank] || { x: bm.at[0], y: bm.at[1] }, vx = tk.x - ax, vy = tk.y - ay, L2 = vx * vx + vy * vy || 1, u = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / L2));
       if (Math.hypot(x - (ax + vx * u), y - (ay + vy * u)) <= 1.6) { G.done.add('beam' + bi); mistake('beam', 'You stood in the venom beam: only the off tank stands in it.', 'The spectral image beams the off tank: keep out of the line between them.', 35); } });
     // the eggs land (4 yards), their shells break, carriers pick theirs up
-    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
+    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
+      if (e.state === 'floor' && e.id === me && e.shp > 0) { e.shp -= SHELL.raid * (t - t0); if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; }
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id]; if ((b && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
-      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || 'Its shell isn\'t broken yet: wait a moment.'); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Another carrier inside it hatches a Viper.', '#3af2a8'); } } }
+      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Another carrier inside it hatches a Viper.', '#3af2a8'); } } }
       if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
     // another carrier inside your 3-yard circle: Noxious Splash, it hatches at once
     const mine = myEggHeld(); if (mine && !G.still) G.eggs.forEach((e) => { if (e.state !== 'held' || !e.who || e.who === me || !mine || mine.state !== 'held') return; const b = G.bots[e.who]; if (b && Math.hypot(x - b.x, y - b.y) < 3) { const wn = nm(e.who); deb('splash', 10); hurt(30); e.state = 'gone'; e.who = null; G.vipers++; G.adds.push({ kind: 'viper', x: b.x + 1, y: b.y + 1, born: t }); /* (both eggs burst: two Vipers, Nov 15 audit) */ hatch(mine, wn + ' (carrying too) came inside your 3-yard circle: both eggs hatched', 'Two carriers within 3 yards: Noxious Splash bursts both eggs. Keep your circle clear.'); } });
@@ -397,15 +431,17 @@ function pgOpen(root, boss, d, pk) {
   const slamHit = (n) => Math.max(6, Math.round(80 / n));
   const addsStep = (t0, t) => { const dt = t - t0; if (!(dt > 0) || !G.adds.length) return; const hp = (a) => (a.hp == null ? (a.hp = ADD_HP[a.kind] || 3) : a.hp);
     const raws = G.adds.filter((a) => a.kind === 'rawling' && a.born != null && !a.own).sort((p, q) => p.born - q.born); if (raws.length) { const a = raws[0]; a.hp = hp(a) - 1.1 * dt; }
-    G.adds.forEach((a) => { if (a.own) return; /* (a part that runs its own adds marks them own: phase 2's Rawlings, Nov 15) */ if (a.kind === 'viper' && t - (a.born == null ? t : a.born) >= 4) a.hp = hp(a) - 0.35 * dt;
+    G.adds.forEach((a) => { if (a.own) return; /* (a part that runs its own adds marks them own: phase 2's Rawlings, Nov 15) */ if (a.kind === 'viper' && t - (a.born == null ? t : a.born) >= 4) a.hp = hp(a) - (a.tank ? TAUNT.drain : 0.35) * dt;
       if (a.kind === 'rawling' && a.born != null && !a.boil && t - a.born >= 25) { a.boil = true; if (!G.done.has('boil')) { G.done.add('boil'); G.log.push({ t, kind: 'boil', text: 'A Rawling lived 25 s and boiled (Boiling Venom: twice as fast and strong).', tip: 'Kill Rawlings within 25 s: press Tab to pick one, then keep pressing 1.' }); } if (!window.__pgAuto) say('A Rawling boiled: kill it!', true); } });
     if (G.adds.some((a) => a.hp != null && a.hp <= 0)) G.adds = G.adds.filter((a) => !(a.hp != null && a.hp <= 0)); };
   // (Flex, Nov 15: "If a viper spawns though it needs to be killed", "it shouldnt just vanish": a Viper no longer leaves after 8 s; it stays until you kill it.
   // The guide: a Viper is deadly, kill it at once; its Petrifying Sting is a big heal absorb. So it crawls to you and stings you every 3 s while it's close:
   // a little damage, and no healing on you while the sting lasts, stacking. Ignore it and it wears you down)
-  const vipers = (t0, t, x, y) => { G.adds.forEach((a) => { if (a.kind !== 'viper') return; const dx = x - a.x, dy = y - a.y, d = Math.hypot(dx, dy);
+  const offTank = (t) => { const ht = S.herTank ? S.herTank(t) : 't1'; return GDZ_RAID.find((id) => id[0] === 't' && id !== ht) || 't2'; };
+  const tauntStep = (a, t) => { if (a.tank || t - (a.born == null ? t : a.born) < TAUNT.at) return; a.tank = offTank(t); a.taunt = t; if (a.tank !== me && !window.__pgAuto) say('The tank taunted the Viper: kill it with the raid!'); };
+  const vipers = (t0, t, x, y) => { G.adds.forEach((a) => { if (a.kind !== 'viper') return; tauntStep(a, t); const tk = a.tank && a.tank !== me ? G.bots[a.tank] : null, gx = tk ? tk.x : x, gy = tk ? tk.y : y, dx = gx - a.x, dy = gy - a.y, d = Math.hypot(dx, dy);
     if (d > 1.8) { const m = Math.min(d - 1.8, 6 * (t - t0)); a.x += dx / d * m; a.y += dy / d * m; }
-    const last = a.sting == null ? (a.born == null ? t0 : a.born) : a.sting; if (d <= 3.2 && t - last >= 3) { a.sting = t; G.lastSting = t; hurt(8); deb('sting', 6, true); if (!window.__pgAuto) say('Petrifying Sting: kill the Viper!', true); } }); };
+    const last = a.sting == null ? (a.born == null ? t0 : a.born - 2) : a.sting; /* (its first sting lands 1 s after it hatches, before the tank has it) */ if (!tk && d <= 3.2 && t - last >= 3) { a.sting = t; G.lastSting = t; hurt(8); deb('sting', 6, true); if (!window.__pgAuto) say('Petrifying Sting: kill the Viper!', true); } }); };
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
@@ -496,7 +532,7 @@ function pgOpen(root, boss, d, pk) {
     const dc = !P2 && dpsCat(t); if (dc && !onRight(dc, tgtNow(t)) && !(e && e.state !== 'gone')) return DPS_SAY[dc][0] + ': press Tab to pick ' + (dc === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.';
     if (wg) return 'The ' + wg.first.toLowerCase() + ' half goes first: wait on the ' + wg.safe.toLowerCase() + ' half, then cross behind the first wave.';
     if (e && e.state === 'air') return 'Your egg lands in ' + Math.max(0, Math.ceil(e.land - t)) + ' s (the gold circle): stay out of the 4-yard impact, then wait by it.';
-    if (e && t < e.shell) return 'Your egg\'s shell breaks in ' + Math.ceil(e.shell - t) + ' s: wait by it.';
+    if (e && t < e.shell) return e.shp > 0 ? 'Your egg\'s shell is up: hit it to break it (Tab, then 1; 2 is your area attack), then walk over it.' : 'Your egg\'s shell breaks in ' + Math.ceil(e.shell - t) + ' s: wait by it.';
     if (e) return 'Pick up your egg now: walk over it.';
     if (has('yolk')) return 'Rancid Yolk: no new egg for ' + Math.ceil(G.debs.yolk.until - t) + ' s.';
     if (held) return 'Carrying your egg: no waves, no venom, keep other carriers out of your 3-yard circle. Break it in your coil soak.';
@@ -535,7 +571,7 @@ function pgOpen(root, boss, d, pk) {
     { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; }
       const ab = $('.pg-atk'); if (ab) { const rdy = !!dv && dv.cd <= 0, ai = atkIc(); ab.classList.toggle('hot', !!(dv && dv.cat && rdy && !dv.ok)); ab.classList.toggle('good', !!(dv && dv.ok)); ab.classList.toggle('far', !!(dv && dv.cur && !dv.inRange)); ab.classList.remove('on'); ab.querySelector('span').textContent = dv && dv.cur && !dv.inRange ? 'Too far' : 'Attack'; ab.querySelector('i').style.height = dv && dv.cd > 0 ? (dv.cd / GCD * 100).toFixed(1) + '%' : '0';
         const an = ab.querySelector('.pg-cdn'); if (an) an.textContent = dv && dv.cd > 1 ? Math.ceil(dv.cd) : ''; if (ai !== atkShown) { atkShown = ai; icSet(ab, ai); } } } /* (the attack's icon is your role's: a melee strike, a firebolt, a healer's smite) */
-    [['sprint', G.sprint, 30], ['def', G.def, 90]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; const n = $('.pg-act[data-a="' + kk + '"] .pg-cdn'); if (n) n.textContent = left > 1 ? Math.ceil(left) : ''; }); if (P2) P2.hud(t); };
+    [['sprint', G.sprint, 30], ['def', G.def, 90], ['aoe', G.aoe0 == null ? -99 : G.aoe0, AOE.cd]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; const n = $('.pg-act[data-a="' + kk + '"] .pg-cdn'); if (n) n.textContent = left > 1 ? Math.ceil(left) : ''; }); if (P2) P2.hud(t); };
   // ---- the target frame (Nov 15, Flex: "theres also no healthbar for the target. This should look/feel like youre playing the game(kind of)"): your target's
   // name and a hostile red health bar. An add's own health; Ula'tek, her tail and her heart share hers (they are all her); a Wretch's by the clock, from waking
   // to dying; anything else (phase 2's targets have no health) a full bar with no number. No target: a dim frame, "Tab to pick". A hit flashes the bar ----
@@ -574,10 +610,12 @@ function pgOpen(root, boss, d, pk) {
   // short name under each, the cooldown's dark sweep and its seconds; the gold glow when it's the thing to press. Icons by name (loaded at runtime, the site's
   // loader when it's there); a button whose icon can't load stays a plain dark square with its key. Phase 2's Kick gets its icon here too ----
   const ACT_IC = { tgt: 'ability_hunter_markedfordeath', sprint: 'ability_rogue_sprint', def: 'spell_holy_divineprotection', kick: 'ability_kick' }, ATK_IC = { m: 'ability_warrior_savageblow', r: 'spell_fire_firebolt02', h: 'spell_holy_searinglight' };
+  const AOE_IC = { m: 'ability_whirlwind', t: 'ability_whirlwind', r: 'spell_fire_selfdestruct', h: 'spell_holy_innerfire' }; /* (Whirlwind, Flamestrike, Consecration) */
   const atkIc = () => ATK_IC[rl(me)] || ATK_IC.m; let atkShown = null;
-  const actDeco = (h) => String(h).replace(/<div class="pg-act(?: [^"]*)?" data-a="(\w+)"[^>]*>(?!<img class="pg-ai")/g, (m0, a) => { const n = a === 'atk' ? atkIc() : ACT_IC[a]; return n ? m0 + '<img class="pg-ai" data-ic="' + n + '" alt="">' : m0; });
+  const actDeco = (h) => String(h).replace(/<div class="pg-act(?: [^"]*)?" data-a="(\w+)"[^>]*>(?!<img class="pg-ai")/g, (m0, a) => { const n = a === 'atk' ? atkIc() : a === 'aoe' ? AOE_IC[rl(me)] || AOE_IC.m : ACT_IC[a]; return n ? m0 + '<img class="pg-ai" data-ic="' + n + '" alt="">' : m0; });
   const actsHtml = () => actDeco('<div class="pg-act pg-tab" data-a="tgt" role="button" tabindex="0" title="Pick a target (Tab)."><b>Tab</b><span>Target</span></div>' +
     '<div class="pg-act pg-atk" data-a="atk" role="button" tabindex="0" title="Hit your target (1). Press it again as soon as it is ready."><b>1</b><span>Attack</span><i></i><em class="pg-cdn"></em></div>' +
+    '<div class="pg-act pg-aoe" data-a="aoe" role="button" tabindex="0" title="Area attack (2): hits everything within 8 yards of your target, every 8 s."><b>2</b><span>Area</span><i></i><em class="pg-cdn"></em></div>' +
     '<div class="pg-act" data-a="sprint" title="Sprint (Shift): faster for 3 s, every 30 s."><b>Shift</b><span>Sprint</span><i></i><em class="pg-cdn"></em></div>' +
     '<div class="pg-act" data-a="def" title="Defensive (Q): half damage for 8 s, every 90 s."><b>Q</b><span>Defensive</span><i></i><em class="pg-cdn"></em></div>' + (P2 && P2.acts ? P2.acts() : ''));
   const hudHtml = () => HUD.replace('<div class="pg-acts"></div>', '<div class="pg-acts">' + actsHtml() + '</div>'); /* (the screen as it stands once the action bar is in: for the test) */
@@ -596,7 +634,7 @@ function pgOpen(root, boss, d, pk) {
     for (let i = Q.length - 1; i >= 0; i--) if (G.t - Q[i].q > 4) Q.splice(i, 1);
     if (!Q.length) return; const L = G.lastWarn, age = L ? G.t - L.t : 99; if (L && L.n >= 2 && age < 2.2) return; /* (the line is full: the rest wait) */
     Q.sort((a, b) => myCall(b) - myCall(a) || a.t - b.t); const join = !!L && L.n === 1 && age < 1.5, take = Q.splice(0, join ? 1 : 2).filter((w) => !(join && w.text === L.all[0]));
-    if (!take.length) return; const all = (join ? [L.all[0]] : []).concat(take.map((w) => w.text)), el = $('.pg-warn');
+    if (!take.length) return; sfx(take.some((w) => /\bnow\b/i.test(w.text)) ? 'now' : take.some(myCall) ? 'you' : 'call'); const all = (join ? [L.all[0]] : []).concat(take.map((w) => w.text)), el = $('.pg-warn');
     G.lastWarn = { t: G.t, n: all.length, all }; el.textContent = all.join('  ·  '); el.style.color = take[take.length - 1].c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
@@ -666,7 +704,7 @@ function pgOpen(root, boss, d, pk) {
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
       '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
-      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
+      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Play) */ } }; /* (the picture behind the card is you) */
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
@@ -682,9 +720,9 @@ function pgOpen(root, boss, d, pk) {
     card.querySelector('.pg-go').onclick = begin; };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
-    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; G.warnQ = []; G.lastWarn = null; if (P2) P2.ff(); };
-  const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
-    const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
+    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.aoe0 = -99; G.aoeFx = []; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; G.warnQ = []; G.lastWarn = null; if (P2) P2.ff(); };
+  const begin = () => { { const c = sndOn ? sndCtx() : null; if (c && c.state === 'suspended' && c.resume) c.resume().catch(() => {}); } me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick');
+    const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick'); setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; sfx('go'); go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); } /* (it's really there when you keep going, Nov 15 audit) */
     const why = G.adds.some((a) => a.kind === 'viper') && G.t - (G.lastSting == null ? -99 : G.lastSting) < 4 ? { text: 'The Viper\'s stings wore you down.', tip: 'Kill a Viper at once: press Tab to pick it, then keep pressing 1 until it dies.' } : G.log.slice(-4).reverse().find((m) => m.kind !== 'venom' && m.kind !== 'viper') || G.log[G.log.length - 1] || {};
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin"><span class="pg-k">' + pgClock(G.t) + '</span><h2>You died</h2><p>' + esc(why.text || '') + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(why.tip) + '</p>' : '') +
@@ -704,18 +742,19 @@ function pgOpen(root, boss, d, pk) {
   // ---- the loop ----
   const frame = (now) => { raf = null; if (!ov.isConnected || paused) return; const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
     let left = dt * speed; while (left > 1e-6) { const h = Math.min(0.02, left); step1(h); left -= h; if (G.hp <= 0 || G.t >= S.end) break; }
-    warns(); draw(); hud(); if (G.hp <= 0) { died(); return; } if (G.t >= S.end) { end(); return; } raf = requestAnimationFrame(frame); };
+    countdown(); warns(); draw(); hud(); if (G.hp <= 0) { died(); return; } if (G.t >= S.end) { end(); return; } raf = requestAnimationFrame(frame); };
   const go = () => { last = 0; if (!raf) raf = requestAnimationFrame(frame); };
   const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
   const pauseT = () => { if (!G || card.classList.contains('on')) return; paused = !paused; if (paused) { stop(); const w = $('.pg-warn'); w.textContent = 'Paused (Space to go on)'; w.style.color = '#fff'; w.classList.remove('in'); void w.offsetWidth; w.classList.add('in'); } else go(); };
   const K = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
   const kd = (e) => { if (!ov.isConnected) return; const tg = e.target && e.target.tagName, typing = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
     if (!(e.ctrlKey || e.metaKey || e.altKey)) { e.stopPropagation(); if (/^[0-9]$/.test(e.key) && !typing) e.preventDefault(); } /* (the site's own keys never see the game's: 1 switched the guide to Heroic and closed it) */
-    if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; }
+    if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; } if (e.code === 'KeyM') { sndSet(!sndOn); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { sprintKey(e); return; }
     if (G && !paused && P2 && e.code === 'KeyE') { if (!e.repeat) press('kick'); P2.kick(); return; }
     if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
     if (G && !paused && (e.code === 'Digit1' || e.code === 'Numpad1')) { e.preventDefault(); atkKey(); if (!e.repeat) press('atk'); return; }
+    if (G && !paused && (e.code === 'Digit2' || e.code === 'Numpad2')) { e.preventDefault(); if (!e.repeat) { aoeKey(); press('aoe'); } return; }
     if (G && !paused && e.code === 'KeyQ') { defKey(e); return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const sprintKey = (e) => { if (!(e && e.repeat)) press('sprint'); if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } };
@@ -741,7 +780,8 @@ function pgOpen(root, boss, d, pk) {
   $('.pg-x').onclick = close;
   // (the action bar goes in now that your role is known (the attack's icon is your role's), its icons load, and every button is clickable like a WoW bar)
   { const ba = $('.pg-acts'); if (ba) { ba.innerHTML = actsHtml(); atkShown = atkIc(); ba.querySelectorAll('img.pg-ai').forEach((im) => icLoad(im, im.dataset.ic));
-    ba.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('.pg-act') : null; if (!b || !G || paused) return; const a = b.dataset.a; if (a === 'sprint') sprintKey(); else if (a === 'def') defKey(); else if (a === 'kick' && P2) { press('kick'); P2.kick(); } }); } }
+    ba.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('.pg-act') : null; if (!b || !G || paused) return; const a = b.dataset.a; if (a === 'sprint') sprintKey(); else if (a === 'def') defKey(); else if (a === 'aoe') { aoeKey(); press('aoe'); } else if (a === 'kick' && P2) { press('kick'); P2.kick(); } }); } }
+  { const sb = $('.pg-snd'); if (sb) { sndUi(); sb.onclick = (e) => { e.stopPropagation(); sndSet(!sndOn); sb.blur(); }; } }
   { const ab = $('.pg-atk'); if (ab) { ab.onclick = () => { if (G && !paused) { atkKey(); press('atk'); } }; ab.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) { atkKey(); press('atk'); } } }; } }
   { const tb = $('.pg-tab'); if (tb) { tb.onclick = () => { if (G && !paused) cycleTgt(); }; tb.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) cycleTgt(); } }; } }
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
@@ -765,7 +805,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), aoe: () => aoeKey(), snd: (on) => { if (on != null) sndSet(on); return sndOn; }, cdn: () => countdown(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -897,6 +937,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
 .pg-vw { position: relative; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; pointer-events: auto; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
+.pg-snd { height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 0; background: rgba(10,12,16,.72); color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; pointer-events: auto; } .pg-snd.on { color: #fff; } .pg-snd:hover { color: #fff; }
 .pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-p2 .pg-vw button[data-v="2"] { display: none; }
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
 `;
