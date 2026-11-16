@@ -19,7 +19,8 @@
 //   E. the mistakes don't land: a missed soak, an egg never picked up or never broken, no defensive for the back-to-back slams, Soul Constrictor,
 //      the middle, a crack or the edge at the Shattering; or a clean run doesn't score 100;
 //   F. the part isn't between Phase 2 and Phase 3 on the start card's Part switch, `?practice=int` doesn't open it, build.ps1 doesn't check and read
-//      src/practice-int.js, or the shared hooks are gone (the lead line, the score link, no "E: kick" without a kick, no side ledges in 3D);
+//      src/practice-int.js, the shared hooks are gone (the score link, no "E: kick" without a kick, no side ledges in 3D), or the one-screen setup
+//      (your role, then your team) doesn't pick the job you play;
 //   G. the 3D view doesn't draw the part where its hits are (the soak's 10 yards, the coil at the rim, the cracks' 3.5, her burst's 8, the
 //      diamond line), or "Go here" still points after the Shattering (found while building it);
 //   H. phase 1 or phase 2 change with this file loaded;
@@ -120,7 +121,6 @@ function checks(H, say) {
     if (!/\/\[\?&#\]practice=\(int\)\\b\//.test(GJ) || !/pgOpen\(r, S\.gdzBoss, S\.gdzDiff, pk\)/.test(GJ)) bad('`?practice=int` on the guide no longer opens the intermission (check F)');
     if (!BP.includes("'practice-int.js'") || !BP.includes("(& $read 'practice-int.js')")) bad('build.ps1 no longer checks src/practice-int.js or puts it into the page (check F)');
     if (BP.indexOf("(& $read 'practice-int.js')") < BP.indexOf("(& $read 'practice-p2.js')")) bad('build.ps1 reads src/practice-int.js before src/practice-p2.js (check F)');
-    if (!/P2\.lead \|\|/.test(PJ)) bad('the start card no longer takes a part\'s own lead line (P2.lead, check F)');
     if (!/'=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('the score link no longer says which part (\'?practice=\' + P2.part, check F)');
     if (!/P2 && P2\.acts\(\) \? ' · E: kick'/.test(PJ)) bad('the keys line says "E: kick" for a part with no kick (check F)');
     if (!/A\.P2 && !A\.P2\.flat3d && typeof pg3dP2 === 'function'/.test(P3)) bad('practice3d.js builds phase 2\'s side ledges for the intermission (flat3d, check F)');
@@ -128,8 +128,17 @@ function checks(H, say) {
     if (!/if \(v === '3d' \|\| P2\) view\(true\)/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
     const sh = dbg.P2.short(), li = (sh.match(/<li>/g) || []).length; if (li !== 4) bad('"your job in short" isn\'t four lines (' + li + ', check F)');
     dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/diamond line/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and the diamond line: ' + s2 + ' (check F)');
-    if (!dbg.P2.lead || !/5:18/.test(dbg.P2.lead)) bad('the start card\'s lead line doesn\'t say the clock starts at 5:18 (check F)'); }
-  catch (e) { bad('the wiring check crashed: ' + e.message + ' (check F)'); }
+    // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 4 jobs a role, one sentence)
+    const su = dbg.P2.setup; if (!su || typeof su.now !== 'function' || typeof su.jobs !== 'function' || typeof su.set !== 'function' || typeof su.say !== 'function') bad('the intermission gives the setup screen no setup (roles, now, jobs, set, say; check F)');
+    else { if (JSON.stringify(su.roles) !== '["m","r","h"]') bad('the setup\'s roles are ' + JSON.stringify(su.roles) + ' (check F)');
+      su.roles.forEach((r) => { const J0 = su.jobs(r); if (J0.length < 2 || J0.length > 4) bad('the setup offers ' + J0.length + ' jobs to ' + r + ' (2 to 4, check F)');
+        J0.forEach(([v, lab]) => { su.set(r, v); const nw = su.now(), pk = dbg.P2.pick, me = dbg.P2.slotOf(), J = ctx.pgIntJobs(me, pk);
+          if (nw.role !== r || nw.job !== v) bad('picking ' + r + ' / ' + lab + ' shows ' + nw.role + ' / ' + nw.job + ' (check F)');
+          if (me[0] !== r || J.team[me] !== v[0] || J.carry.has(me) !== /e$/.test(v)) bad('picking ' + r + ' / ' + lab + ' plays ' + me + ' on ' + J.team[me] + (J.carry.has(me) ? ' with an egg' : '') + ' (check F)');
+          if (!P.team[v[0]].some((id) => id[0] === r)) bad('the setup offers ' + r + ' the ' + P.TN[v[0]] + ' team, which has no ' + r + ' in the guide\'s plan (check F)');
+          const say = su.say(); if (!new RegExp(P.TM[v[0]]).test(say) || !/diamond line/.test(say) || !/Press Q/.test(say) || /egg/.test(say) !== /e$/.test(v)) bad('the setup\'s sentence for ' + r + ' / ' + lab + ' doesn\'t name the mark, the egg, the defensive and the diamond line: ' + say + ' (check F)'); }); });
+      su.set('r', 'B'); } }
+  catch (e) { bad('the wiring check crashed:' + e.message + ' (check F)'); }
   // G. the 3D shapes
   try { dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(), A = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
     const at = (t0) => { dbg.at(t0, me, { seed: 4 }); return ctx.pg3dShapes(A, dbg.G.t); };

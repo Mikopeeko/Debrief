@@ -269,6 +269,16 @@ function pgInt(A) {
     L0.push('Press Q at 5:47: the last four slams come back to back.');
     L0.push('By 6:09 stand on the diamond line, inside: off the cracks, away from the middle and the edge.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
+  // (the one-screen setup (practice.js SETUP, Nov 15, Flex via Main: "still too complex and confusing"): your role, then your job, the team you soak
+  // with and, for some, an egg: the guide's teams, so melee are Yellow or Blue, ranged Purple or Blue, healers any. The pattern is random each run,
+  // as in the raid; one plain sentence)
+  const SJ = { m: [['Ye', 'Yellow team, egg'], ['Y', 'Yellow team'], ['B', 'Blue team']], r: [['Pe', 'Purple team, egg'], ['P', 'Purple team'], ['Be', 'Blue team, egg'], ['B', 'Blue team']], h: [['Y', 'Yellow team'], ['P', 'Purple team'], ['B', 'Blue team']] };
+  const jobNow = (j) => j.team + (j.egg ? 'e' : '');
+  const setupCard = { roles: ['m', 'r', 'h'],
+    now: () => { const r = pk.role; if (!SJ[r].some((x) => x[0] === jobNow(pk))) setupCard.set(r, SJ[r][0][0]); return { role: pk.role, job: jobNow(pk) }; },
+    jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
+    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, team: v[0], egg: v.length > 1, pat: 0 }; save(); },
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before she bursts up at 6:09.'; } };
   const starts = [[0, '5:18 · The eggs'], [330, '5:30 · The first coils'], [345, '5:45 · The back-to-back slams'], [356, '5:56 · The Shattering']];
   // ---- hitting the right thing: the Rawlings once the coils are done (the raid kills them then), any Viper at once ----
   const ADD_HP = { rawling: 3, viper: 5 };
@@ -326,10 +336,10 @@ function pgInt(A) {
       h.disc(0, 0, P.MID, '#ff4a3a', 0.18); h.ring(0, 0, P.MID, '#ff4a3a', 1, 0.3, true); h.label(0, 0, 6, 'She bursts up here', '#ff8a6a', 14); }
     if (t >= T.shatter) [0, Math.PI / 2].forEach((a) => { P3({ k: 'rect', x: 0, y: 0, a, f0: -38, f1: 38, w0: -P.CRACK, w1: P.CRACK, c: '#24481c', o: 0.94 }); P3({ k: 'rect', x: 0, y: 0, a, f0: -38, f1: 38, w0: -P.CRACK * 0.6, w1: P.CRACK * 0.6, c: '#5fae2e', o: 0.35 + 0.1 * Math.sin(t * 4) }); }); };
 
-  return { part: 'int', label: 'the intermission', flat3d: true, lead: 'The real fight clock from 5:18, measured on the top Mythic kills. Pick your team: the other 19 play the guide\'s plan. The intermission plays in 3D.',
+  return { part: 'int', label: 'the intermission', flat3d: true,
     script: (o) => pgIntScript({ ...(o || {}), me: A.me, pick: mine() ? pk : null, pat: o && o.pat != null ? o.pat : pk.pat }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => PG_UL.onPlat(x, y),
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: [0, 0], up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
+    jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     clean: 'Every soak taken, your egg broken in a soak, your defensive for the back-to-back slams, and you rode out the Shattering on the diamond line. Try another team or pattern.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; } };
 }
