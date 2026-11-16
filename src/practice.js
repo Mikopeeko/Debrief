@@ -625,7 +625,7 @@ function pgOpen(root, boss, d, pk) {
   let hints = (() => { try { return localStorage.getItem('wla-pg-hints') !== '0'; } catch (e) { return true; } })();
   // (your look in 3D, Flex, Nov 16: a wizard for ranged, a cleric for healers, "another one for ranged classes like a hunter": Auto picks by your
   //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
-  const LOOKS = ['auto', 'knight', 'wizard', 'hunter', 'cleric'], LOOKN = { auto: 'Look: auto', knight: 'Look: knight', wizard: 'Look: wizard', hunter: 'Look: hunter', cleric: 'Look: cleric' };
+  const LOOKS = ['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'], LOOKN = { auto: 'Look: auto', knight: 'Look: knight', paladin: 'Look: paladin', wizard: 'Look: wizard', hunter: 'Look: hunter', cleric: 'Look: cleric' };
   let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   const upNext = (t) => { if (P2) return P2.upNext(t); const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));

@@ -73326,7 +73326,7 @@ function pgOpen(root, boss, d, pk) {
   let hints = (() => { try { return localStorage.getItem('wla-pg-hints') !== '0'; } catch (e) { return true; } })();
   // (your look in 3D, Flex, Nov 16: a wizard for ranged, a cleric for healers, "another one for ranged classes like a hunter": Auto picks by your
   //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
-  const LOOKS = ['auto', 'knight', 'wizard', 'hunter', 'cleric'], LOOKN = { auto: 'Look: auto', knight: 'Look: knight', wizard: 'Look: wizard', hunter: 'Look: hunter', cleric: 'Look: cleric' };
+  const LOOKS = ['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'], LOOKN = { auto: 'Look: auto', knight: 'Look: knight', paladin: 'Look: paladin', wizard: 'Look: wizard', hunter: 'Look: hunter', cleric: 'Look: cleric' };
   let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   const upNext = (t) => { if (P2) return P2.upNext(t); const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));
@@ -73883,11 +73883,16 @@ const PG3D_GLTF = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loader
 //  wizard with a staff and a pointed hat), healers the healer figure; each lists the props it holds by default that it shouldn't, and its swing)
 const PG3D_KK = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/';
 //  Then "another one for ranged classes like a hunter": the hooded Rogue with a crossbow. The card's Look chip can pick any of them.)
+const PG3D_KK2 = 'https://cdn.jsdelivr.net/gh/GeorgeQLe/assets-kaykit-3d-characters@af08a62d3669370ec4636ae6314b38cdcd5dd759/assets/kaykit/';
 const PG3D_FIG = {
   knight: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i] },
   wizard: { url: PG3D_KK + 'Mage.glb', hide: ['1H_Wand', 'Spellbook', 'Spellbook_open'], atk: [/^spellcast_shoot$/i, /spellcast/i] },
   hunter: { url: PG3D_KK + 'Rogue_Hooded.glb', hide: ['Knife_Offhand', '1H_Crossbow', 'Knife', 'Throwable'], atk: [/^2h_ranged_shoot$/i, /ranged_shoot/i] },
-  cleric: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^spellcast_shoot$/i, /spellcast/i] } };
+  // (the Cleric and the Paladin: Kay Lousberg's, same style, CC0, from his paid monthly packs; here from a re-hosted copy at one pinned commit,
+  //  to move to our own storage before a release. They carry no clips and no props: anim names the model whose clips they borrow (their
+  //  skeleton is a subset of the Knight's), hold the props taken from it into their hands, metal tames the Paladin's mirror-black gold plate.)
+  cleric: { url: PG3D_KK2 + 'mystery-monthly-series-6/3%20-%20September%202025%20-%20Cleric/characters/Cleric.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  paladin: { url: PG3D_KK2 + 'mystery-monthly-series-4/10%20-%20April%202024%20-%20Paladin/characters/gltf/Paladin.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['Badge_Shield', 'handslotl']], metal: 0.3, hide: [], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i], cast: [/^spellcast_shoot$/i] } };
 let PG3D_GLTF_LIB = null;
 const pg3dMeLoad = (T, url) => {
   if (!PG3D_GLTF_LIB) { const p = PG3D_GLTF_LIB = new Promise((ok, no) => { if (T.GLTFLoader) { ok(T.GLTFLoader); return; } const sc = document.createElement('script');
@@ -74537,16 +74542,20 @@ function pg3d(host, A) {
   //  Each role's figure loads the first time you play that role in this 3D view, and stays for the next runs.)
   let ME = null; const FIGS = {};
   const figRole = () => { const L = A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (picked on the card) */
-    const r = A.rl ? A.rl(A.me) : 'm'; return r === 'r' ? (/hunter/i.test(A.cls ? A.cls(A.me) : '') ? 'hunter' : 'wizard') : r === 'h' ? 'cleric' : 'knight'; };
+    const r = A.rl ? A.rl(A.me) : 'm', c = A.cls ? A.cls(A.me) : ''; if (/paladin/i.test(c)) return 'paladin'; /* (a Paladin on the team plan, Flex's own class) */
+    return r === 'r' ? (/hunter/i.test(c) ? 'hunter' : 'wizard') : r === 'h' ? 'cleric' : 'knight'; };
   const figLoad = (rk) => { if (rk in FIGS) return; FIGS[rk] = null; const F = PG3D_FIG[rk];
-    pg3dMeLoad(T, F.url).then((g) => { if (dead) return; const root = g.scene, anim = g.animations || [];
+    Promise.all([pg3dMeLoad(T, F.url), F.anim ? pg3dMeLoad(T, F.anim) : null]).then(([g, g2]) => { if (dead) return; const root = g.scene;
     F.hide.forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
-    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
     const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = 2.3 / h; root.scale.setScalar(k);
+    (F.hold || []).forEach(([n, b]) => { const o = g2 && g2.scene.getObjectByName(n), bone = root.getObjectByName(b); if (o && bone) bone.add(o); }); /* (a borrowed staff, sword or shield in its hand) */
+    const anim = g2 ? (g2.animations || []).map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !!root.getObjectByName(T.PropertyBinding.parseTrackName(tr.name).nodeName)); return c1; }) : (g.animations || []); /* (borrowed clips, only the tracks for bones it has) */
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { if (F.metal != null && x.metalness > F.metal) x.metalness = F.metal; own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
     const mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
     const act = (c, once) => { if (!c) return null; const a = mixer.clipAction(c); if (once) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } return a; };
+    const swing = F.cast && A.rl && A.rl(A.me) !== 'm' ? F.cast : F.atk; /* (a Paladin healing casts; a Paladin in melee swings) */
     const acts = { idle: act(find(/^idle$/i) || find(/idle/i) || anim[0]), run: act(find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
-      atk: act(F.atk.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (melee swing a sword; ranged and healers cast) */
+      atk: act(swing.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (melee swing a sword; ranged and healers cast) */
     root.visible = false; scene.add(root); FIGS[rk] = { root, mixer, acts, cur: '', y0: -box.min.y * k, face: 0, mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null }; }).catch(() => { FIGS[rk] = false; /* (no model: the capsule stays) */ }); };
   const meNow = () => { const rk = figRole(); figLoad(rk); const F = FIGS[rk] || null; if (F !== ME) { if (ME) { ME.root.visible = false; ME.on = false; } ME = F; } return ME; };
   const meFig = (s, t) => { const M = ME, G = A.G, now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
