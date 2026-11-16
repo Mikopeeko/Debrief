@@ -110,7 +110,8 @@ function pgOpen(root, boss, d, pk) {
   // (a later part of the fight, e.g. phase 2 (src/practice-p2.js): its own script, room, bots, hits and start card through these hooks; this file keeps the loop, the screen and the score)
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
     get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.' : null; },
-    mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; } };
+    mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; },
+    big: (text, c) => bigCall(text, c), nm: (id) => nm(id) }; /* (phase 2's big calls (your kick, the backup, the five's defensive) and the bots' names on its Interrupted labels) */
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
   // (the screen, laid out like a raider's UI (Nov 15, Flex: "Player healthbar and target bar in the middle, hotbars with spells on them for the attack/sprint/
@@ -484,7 +485,7 @@ function pgOpen(root, boss, d, pk) {
 
   // ---- the screen: your frame, her frame and cast, timers, warnings, your job, the action bar ----
   let hudKey = '';
-  const castNow = (t) => S.casts.filter((c) => t >= c.t0 && t <= c.t1).sort((a) => (a.who === 'boss' ? -1 : 1))[0];
+  const castNow = (t) => (P2 && P2.castOf ? P2.castOf(t) : S.casts.filter((c) => t >= c.t0 && t <= c.t1).sort((a) => (a.who === 'boss' ? -1 : 1))[0]); /* (phase 2: your target's cast, as in WoW, gold when you can kick it) */
   const jobText = () => { if (P2) return P2.jobText(); const t = G.t, e = G.eggs.find((q) => q.id === me && (q.state === 'floor' || q.state === 'air') && q.land - t < 14), held = myEggHeld();
     const sk = S.soaks.find((s) => s.group.includes(me) && s.at > t && s.at - t <= 9), bb = S.bubbles.find((q) => q.at > t && q.at - t <= 8 && G.wr[q.w]), th = S.thrash.find((q) => t >= q.t0 - 1 && t <= q.at), wg = S.wings.find((w) => t >= w.t && t <= w.t + 14);
     if (th && Math.hypot(G.x - th.x, G.y - th.y) < 38) return 'Mephitic Thrash in ' + Math.max(0, Math.ceil(th.at - t)) + ' s: ' + (S.bubbles.some((q) => q.stack && t >= q.stack - 1 && t < q.at) ? 'run to the second Wretch in front of her, outside the 35 yards!' : 'run out of 35 yards from her tail!');
@@ -526,7 +527,8 @@ function pgOpen(root, boss, d, pk) {
     const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = hp + '%'; hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
     $('.pg-debs').innerHTML = Object.entries(G.debs).filter(([, v]) => v.until > t).concat(myEggHeld() ? [['shell', { until: t + 99, n: 1 }]] : []).map(([kk, v]) => { const dd = DEB[kk]; return '<span style="border-color:' + dd[1] + ';color:' + dd[1] + '">' + esc(dd[0]) + (v.n > 1 ? ' ×' + v.n : '') + (v.until - t < 60 ? ' <em>' + Math.ceil(v.until - t) + '</em>' : '') + '</span>'; }).join('');
     $('.pg-clk').textContent = pgClock(t); const bh = $('.pg-bhp'); bh.querySelector('i').style.width = G.bossHp.toFixed(1) + '%'; bh.querySelector('span').textContent = Math.round(G.bossHp) + '%';
-    const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100) + '%'; cb.querySelector('span').textContent = (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + '  ' + Math.max(0, c.t1 - t).toFixed(1); } else cb.style.display = 'none';
+    const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : '') + '  ' + Math.max(0, c.t1 - t).toFixed(1);
+      cb.classList.toggle('intr', !!c.intr); cb.classList.toggle('nok', !!P2 && !c.kick && !c.intr); } else cb.style.display = 'none'; /* (phase 2, as in WoW: gold you can kick, grey you can't, red "Interrupted") */
     modsDraw(t);
     $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
     tfDraw(tgtFrame(t)); const tg = $('.pg-tgt'); if (tg) tg.innerHTML = tgtHint(dv);
@@ -558,7 +560,7 @@ function pgOpen(root, boss, d, pk) {
   // fight's spell names in the engine), its name, the seconds left and a fill that empties as the time runs out; under 5 s it lights up ----
   const MOD_SP = [[/coil/i, 'Spectral Coils'], [/womb/i, 'Toxic Womb'], [/beam/i, 'Toxic Incubation'], [/bubble|fester/i, 'Fester Burst'], [/wrath|bites/i, 'Mother\'s Wrath'], [/thrash|tail sweep/i, 'Mephitic Thrash'],
     [/heart|rage/i, 'Rage of the Shackled'], [/debris/i, 'Falling Debris'], [/wave|small tails/i, 'Caustic Waves'], [/malice/i, 'Malice'], [/cry|doomscale/i, 'Anguished Cry'], [/fangs|break/i, 'Grasping Fangs'], [/egg/i, null]];
-  const modSp = (n) => { const m = MOD_SP.find(([re]) => re.test(n)); return !m ? null : m[1] || (P2 ? 'Hatching Doom' : 'Call of the Serpent'); };
+  const modSp = (n) => { const m = MOD_SP.find(([re]) => re.test(n)); return !m ? null : m[1] || (P2 && P2.part === 2 ? 'Hatching Doom' : 'Call of the Serpent'); }; /* (the intermission's eggs are Call of the Serpent's, Nov 15) */
   const modBars = (t) => { const L = [], put = (at, name, c) => { if (!(at > t) || !name) return; const sp = modSp(name); if (L.some((q) => q.name === name || (sp && q.sp === sp && Math.abs(q.at - at) <= 1.5))) return;
       L.push({ at, name, c: /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : '#5a8cdc', sp, left: at - t, soon: at - t < 5 }); };
     if (hints) upNext(t).forEach((u) => put(u.at, u.text, u.c)); myTimers(t).forEach((q) => put(q.t, q.name, null));
@@ -731,7 +733,7 @@ function pgOpen(root, boss, d, pk) {
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
-      .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load' + (P2 ? ': phase ' + (P2.part || 2) + ' needs it. Press 3D to try again, or play phase 1 in 2D.' : ', so you\'re in 2D.')); }).finally(() => vw.classList.remove('busy')); };
+      .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load' + (P2 ? ': ' + (P2.label || 'phase ' + (P2.part || 2)) + ' needs it. Press 3D to try again, or play phase 1 in 2D.' : ', so you\'re in 2D.')); }).finally(() => vw.classList.remove('busy')); };
   vw.onclick = (e) => { const b = e.target.closest('button'); if (b) { b.blur(); view(b.dataset.v === '3'); } };
   { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d' || P2) view(true); } /* (a later part is 3D only (Flex): it opens in 3D, and doesn't change the view phase 1 remembers) */
   window.__pg3dDbg = { get v3() { return v3; }, view };
@@ -814,7 +816,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-tfh i { background: #c0352c; } .pg .pg-tf .pg-tfr { color: #ff8f87; font-weight: 700; } .pg .pg-tf.far .pg-tfh i { background: #7c2a25; }
 .pg .pg-tf.none { opacity: .6; } .pg .pg-tf.none .pg-tfn { color: #aab4c0; } .pg .pg-tf.none .pg-tfr { color: #8d97a3; font-weight: 600; }
 .pg .pg-tfh::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; } .pg .pg-tf.hit .pg-tfh::after { animation: pgHit .15s ease-out; } @keyframes pgHit { 0% { opacity: .5; } 100% { opacity: 0; } }
-.pg .pg-cast { height: 18px; } .pg .pg-cast i { background: #e0a53a; } .pg .pg-cast span { font-size: 12px; }
+.pg .pg-cast { height: 18px; } .pg .pg-cast i { background: #e0a53a; } .pg .pg-cast span { font-size: 12px; } .pg .pg-cast.nok i { background: #7d8590; } .pg .pg-cast.intr i { background: #b8322a; }
 .pg .pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; } .pg .pg-tgt:empty { display: none; } .pg .pg-tgt span { padding: 1px 8px; background: rgba(10,12,16,.85); border: 1px solid #f3c969; color: #f3c969; font: 700 12.5px var(--body, system-ui); }
 /* (the action bar: square spell icons, the key in the corner, the name under it; the cooldown's dark sweep and its seconds; the gold proc glow, green when right) */
 .pg .pg-acts { display: flex; gap: 14px; padding-bottom: 18px; }
