@@ -59,6 +59,10 @@ module.exports = function practice3d(say, H) {
   //  "slab is not defined". Every name handed to pg3dP2 must be declared in the 3D view)
   { const k = /pg3dP2\(\{([^}]*)\}\)/.exec(P3); if (k) k[1].split(',').map((x) => x.trim()).filter((x) => /^[A-Za-z_]\w*$/.test(x)).forEach((n) => {
     if (!new RegExp('(?:\\b(?:const|let|var)\\s+|,\\s*)' + n + '\\s*=').test(P3)) bad('phase 2\'s 3D kit is handed "' + n + '", which the 3D view no longer declares, so phase 2\'s 3D stops loading (' + n + ' is not defined)'); }); }
+  // (Flex, Nov 15: phase 2's side ledges should be "some kind of rocky tile, nothing fancy": rows of stone tiles that add up to the full width and wrap, so
+  //  the floor repeats without a seam; not the old four flat grey squares)
+  { const m = /const slab = A\.P2 \? ctex\(canvas\(512, 512,[\s\S]*?\), true\) : null;/.exec(P3);
+    if (!m || !/for \(const o of \[-512, 0, 512\]\)/.test(m[0]) || !/g\.clip\(\)/.test(m[0]) ||!/x = \(x \+ w\) % 512/.test(m[0]) || /g\.fillRect\(i \* 128 \+ 3, j \* 128 \+ 3, 122, 122\)/.test(P3)) bad('phase 2\'s side ledges aren\'t rocky tiles that wrap without a seam (Flex, Nov 15)'); }
   // (Main, Nov 15, at 0:42 in 3D: the "2D | 3D" switch under the minimap was half hidden: her tail showed through it and a name sat on its words. The switch is
   //  solid and on top, and the 3D labels and names keep out of the minimap's corner)
   { const vw = /\.pg-vw \{([^}]*)\}/.exec(PJ); if (!vw || !/z-index: ?([6-9]|\d\d)/.test(vw[1]) || !/background: ?#[0-9a-f]{3,6}\b/i.test(vw[1])) bad('the "2D | 3D" switch isn\'t solid and on top (z-index 6 or more and a solid background): the 3D picture shows through it');

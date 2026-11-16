@@ -72910,7 +72910,7 @@ function pgOpen(root, boss, d, pk) {
   const nearEdge = (x, y) => { if (onPlat(x, y)) return [x, y]; for (let r = 0.5; r < 20; r += 0.5) for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, qx = x + Math.cos(a) * r, qy = y + Math.sin(a) * r; if (onPlat(qx, qy)) return [qx, qy]; } return [0, 0]; };
 
   // ---- you: damage, debuffs, mistakes ----
-  const DEB = { venom: ['Caustic Venom', '#9be13a'], shell: ['Noxious Shell', '#3af2a8'], yolk: ['Rancid Yolk', '#e0c48c'], soul: ['Soul Constrictor', '#c89bff'], fester: ['Fester Burst', '#d8f22f'], putrid: ['Putrid Membrane', '#7fbf3a'], splash: ['Noxious Splash', '#ff6b5c'], def: ['Defensive', '#7fb8ff'], sprint: ['Sprint', '#7ee08f'] };
+  const DEB = { venom: ['Caustic Venom', '#9be13a'], shell: ['Noxious Shell', '#3af2a8'], yolk: ['Rancid Yolk', '#e0c48c'], soul: ['Soul Constrictor', '#c89bff'], fester: ['Fester Burst', '#d8f22f'], putrid: ['Putrid Membrane', '#7fbf3a'], splash: ['Noxious Splash', '#ff6b5c'], sting: ['Petrifying Sting', '#cfc6b0'], def: ['Defensive', '#7fb8ff'], sprint: ['Sprint', '#7ee08f'] };
   const deb = (k, dur, stack) => { const o = G.debs[k] && G.debs[k].until > G.t ? G.debs[k] : { n: 0 }; G.debs[k] = { until: G.t + dur, n: stack ? Math.min(9, o.n + 1) : 1 }; };
   const has = (k) => G.debs[k] && G.debs[k].until > G.t;
   let flashT = 0; const flash = () => { flashT = performance.now(); };
@@ -72964,7 +72964,8 @@ function pgOpen(root, boss, d, pk) {
   // (how close the nearest other carrier is to your egg: 0 clear, 1 within 5 yards, 2 within 3.5)
   const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 5 ? 1 : 0; };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
-  const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 30, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, t1: G.t + 8 }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8); };
+  const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 30, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
+    if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
   // (egg carriers stand on their own spots in a bubble or a soak: a ring 6.5 yards out, about 5 yards apart, in the same order every time, so
@@ -73080,9 +73081,16 @@ function pgOpen(root, boss, d, pk) {
     // raid damage in the heart burn, and what's on you
     S.pulses.forEach((p) => { if (crossed(p)) hurt(6); });
     const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0);
-    G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + 5.5 * (t - t0));
+    vipers(t0, t, x, y);
+    G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + (has('sting') ? 0 : 5.5) * (t - t0)); /* (Petrifying Sting: no healing on you while it lasts) */
     if (P2) P2.check(t0, t);
-    G.adds = G.adds.filter((a) => t < a.t1); dpsStep(t, t - t0); };
+    G.adds = G.adds.filter((a) => a.t1 == null || t < a.t1); dpsStep(t, t - t0); };
+  // (Flex, Nov 15: "If a viper spawns though it needs to be killed", "it shouldnt just vanish": a Viper no longer leaves after 8 s; it stays until you kill it.
+  // The guide: a Viper is deadly, kill it at once; its Petrifying Sting is a big heal absorb. So it crawls to you and stings you every 3 s while it's close:
+  // a little damage, and no healing on you while the sting lasts, stacking. Ignore it and it wears you down)
+  const vipers = (t0, t, x, y) => { G.adds.forEach((a) => { if (a.kind !== 'viper') return; const dx = x - a.x, dy = y - a.y, d = Math.hypot(dx, dy);
+    if (d > 1.8) { const m = Math.min(d - 1.8, 6 * (t - t0)); a.x += dx / d * m; a.y += dy / d * m; }
+    const last = a.sting == null ? (a.born == null ? t0 : a.born) : a.sting; if (d <= 3.2 && t - last >= 3) { a.sting = t; G.lastSting = t; hurt(8); deb('sting', 6, true); if (!window.__pgAuto) say('Petrifying Sting: kill the Viper!', true); } }); };
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
@@ -73354,7 +73362,7 @@ function pgOpen(root, boss, d, pk) {
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); }
-    const why = G.log.slice(-4).reverse().find((m) => m.kind !== 'venom' && m.kind !== 'viper') || G.log[G.log.length - 1] || {};
+    const why = G.adds.some((a) => a.kind === 'viper') && G.t - (G.lastSting == null ? -99 : G.lastSting) < 4 ? { text: 'The Viper\'s stings wore you down.', tip: 'Kill a Viper at once: press Tab to pick it, then keep pressing 1 until it dies.' } : G.log.slice(-4).reverse().find((m) => m.kind !== 'venom' && m.kind !== 'viper') || G.log[G.log.length - 1] || {};
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin"><span class="pg-k">' + pgClock(G.t) + '</span><h2>You died</h2><p>' + esc(why.text || '') + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(why.tip) + '</p>' : '') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">Start over</button></div></div>';
     card.querySelector('.pg-go').onclick = () => { G.hp = 100; G.debs = {}; card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); };
@@ -73433,7 +73441,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => jobPanel(), asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -73958,9 +73966,22 @@ function pg3d(host, A) {
   const STN = pg3dStoneDraw((w, h) => canvas(w, h, () => {}), (navigator.deviceMemory || 8) < 4 ? 1024 : 2048), AN = Math.min(4, R.capabilities.getMaxAnisotropy()); keep({ dispose: STN.free });
   // (phase 2's ledges still wear the old floor tiles: its 3D kit asks for them as slab; the carved stone took their place on phase 1's platform
   // and phase 2's 3D stopped loading with "slab is not defined", Nov 15)
-  const slab = A.P2 ? ctex(canvas(256, 256, (g) => { g.fillStyle = '#4f585f'; g.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) { const l = 116 + ((i * 3 + j * 5) % 4) * 6; g.fillStyle = 'rgb(' + l + ',' + (l + 9) + ',' + (l + 17) + ')'; g.fillRect(i * 128 + 3, j * 128 + 3, 122, 122); }
-    for (let k = 0; k < 1400; k++) { g.fillStyle = 'rgba(0,0,0,' + (hash(k, 1) * 0.07).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 256, hash(k, 3) * 256, 2, 2); } }), true) : null; if (slab) slab.repeat.set(0.1, 0.1);
+  // (Flex, Nov 15: "the texture of the floor in p2 on the sides should be some kind of rocky tile, nothing fancy": rows of worn stone tiles of
+  // different lengths with dark grout, chipped corners, mottled stone (some warmer), a soft bevel, grit and a few cracks; darker and quieter than the
+  // carved platform so the circles stay clear. Each row's tiles add up to the full width and wrap, so the floor repeats without a seam. 512 px = 10 yards)
+  const slab = A.P2 ? ctex(canvas(512, 512, (g) => { g.fillStyle = '#1d2022'; g.fillRect(0, 0, 512, 512);
+    for (let r = 0; r < 4; r++) { const W = []; let left = 512; while (left > 0) { const w = left < 176 ? left : Math.min(88 + Math.floor(hash(r, W.length) * 70), left - 88); W.push(w); left -= w; }
+      let x = Math.floor(hash(r, 9) * 512); W.forEach((w, k) => { const x0 = x + 3, y0 = r * 128 + 3, ww = w - 6, hh = 122, l = 74 + Math.floor(hash(k + 5, r) * 30), warm = hash(k, r + 40) < 0.4 ? 5 : 0, s = r * 31 + k, ch = (q) => 4 + hash(s, q) * 9;
+        for (const o of [-512, 0, 512]) { const X = x0 + o; if (X >= 512 || X + ww <= 0) continue; g.save(); g.beginPath();
+          g.moveTo(X + ch(1), y0); g.lineTo(X + ww - ch(2), y0); g.lineTo(X + ww, y0 + ch(3)); g.lineTo(X + ww, y0 + hh - ch(4)); g.lineTo(X + ww - ch(5), y0 + hh); g.lineTo(X + ch(6), y0 + hh); g.lineTo(X, y0 + hh - ch(7)); g.lineTo(X, y0 + ch(8)); g.closePath(); g.clip();
+          g.fillStyle = 'rgb(' + (l + warm) + ',' + (l + 2) + ',' + (l - warm + 1) + ')'; g.fillRect(X, y0, ww, hh);
+          for (let b = 0; b < 7; b++) { const bx = X + hash(s, 50 + b) * ww, by = y0 + hash(s, 60 + b) * hh, br = 14 + hash(s, 70 + b) * 30, gr = g.createRadialGradient(bx, by, 0, bx, by, br), dk = hash(s, 80 + b) < 0.55;
+            gr.addColorStop(0, dk ? 'rgba(0,0,0,.16)' : 'rgba(255,255,255,.07)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(bx - br, by - br, br * 2, br * 2); }
+          g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(X, y0, ww, 3); g.fillRect(X, y0, 3, hh); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(X, y0 + hh - 4, ww, 4); g.fillRect(X + ww - 4, y0, 4, hh); g.restore(); }
+        x = (x + w) % 512; }); }
+    for (let k = 0; k < 9000; k++) { const v = hash(k, 1); g.fillStyle = v < 0.5 ? 'rgba(0,0,0,' + (0.06 + v * 0.14).toFixed(3) + ')' : 'rgba(255,255,255,' + ((v - 0.5) * 0.08).toFixed(3) + ')'; g.fillRect(hash(k, 2) * 512, hash(k, 3) * 512, 1.6, 1.6); }
+    g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = 1.2; for (let c = 0; c < 11; c++) { let cx = hash(c, 11) * 512, cy = hash(c, 12) * 512; g.beginPath(); g.moveTo(cx, cy); for (let s = 0; s < 4; s++) { cx += (hash(c, 20 + s) - 0.5) * 34; cy += (hash(c, 30 + s) - 0.5) * 34; g.lineTo(cx, cy); } g.stroke(); } }), true) : null;
+  if (slab) { slab.repeat.set(0.1, 0.1); slab.anisotropy = AN; }
   const stx = (c, rx, ry, ox, oy, nrm) => { const tx = ctex(c, true); tx.anisotropy = nrm ? 1 : AN; if (nrm) tx.minFilter = T.LinearMipmapNearestFilter; tx.repeat.set(rx, ry); tx.offset.set(ox, oy); return tx; };
   const vglow = (m) => { m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n' +
     'totalEmissiveRadiance += vec3(0.15, 0.46, 0.06) * smoothstep(0.1, 0.3, diffuseColor.g - max(diffuseColor.r, diffuseColor.b));'); }; return m; };
