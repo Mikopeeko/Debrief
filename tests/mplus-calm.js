@@ -22,7 +22,7 @@ module.exports = function mplusCalm(say) {
   // 2. old links: Survival and Big hits open Graphs on its Survival; a link to the big hits opens Debrief's close calls
   if (T.MPX_OLD.sur !== 'gra' || T.MPX_OLD.hit !== 'gra') bad('an old link to Survival or Big hits (&mpv=sur, &mpv=hit) no longer opens Graphs');
   if (s.indexOf("if (v === 'hit' || v === 'sur') { MP.gm = 'def'; MP.gsv = 'd';") < 0) bad('an old link to Survival or Big hits opens Graphs on Damage done, not on its Survival (Flex: "keep survival in graphs though")');
-  if (s.indexOf("const mpxGoId = (id) => { if (!MPC_ON && id === 'mptCH') { mpxMis('close'); return; }") < 0) bad('a link to the big hits no longer opens Debrief\'s close calls on the website');
+  if (s.indexOf("if (!MPC_ON && id === 'mptCH') { mpxMis('close'); return; }") < 0) bad('a link to the big hits no longer opens Debrief\'s close calls on the website');
   { const i = s.indexOf('function mpxView(v) {'), j = s.indexOf('mpxOpen(); }', i), body = s.slice(i, j + 12).replace(/'[^']*'/g, "''").replace(/\/\*[\s\S]*?\*\//g, '');
     if (i < 0 || j < 0 || /\bhit\b/.test(body)) bad('the tab switcher uses a name it no longer has ("hit"): every tab click would stop with an error (found while building it, Nov 15)'); }
   // 3. Graphs keeps its Survival, with its four sections

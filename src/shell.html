@@ -21225,6 +21225,49 @@ html:not(.mpcard) body #view#view#view .mpbn-n.mpbn-bar::after { content: '' !im
 html:not(.mpcard) body #view#view#view .mpbn-n.mpbn-best { color: #fff !important; }
 html:not(.mpcard) body #view#view#view .mpbn-n.mpbn-best::after { background: #e6c27a !important; box-shadow: 0 0 6px rgba(230,194,122,.45) !important; }
 }
+/* the Summary in three parts and Route its own tab (Nov 16, Flex: "Yes, build it", of the mock) */
+@layer defaultTheme {
+/* Summary: the whole key's panel, never a picked pull's; no map */
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody#mptBody > #mptCM { display: none !important; }
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mpxSel#mpxSel > #mptCD { display: block !important; }
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mpxSel#mpxSel > .mpx-selp { display: none !important; }
+/* Route: the map, its score and the picked pull; not the whole key's panel */
+html:not(.mpcard)[data-mpv="rt"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCM):not(#mpxSel) { display: none !important; }
+html:not(.mpcard)[data-mpv="rt"] body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody > :is(#mpxSel, #mptCM) { display: block !important; }
+html:not(.mpcard)[data-mpv="rt"] body #view#view#view #mpxSel#mpxSel > #mptCD { display: none !important; }
+html:not(.mpcard)[data-mpv="rt"] body #view#view#view #mpxSel:not(.one) { margin: 0 !important; }
+/* The key: the run at the foot of the board's panel */
+html:not(.mpcard) body #view#view#view .mpsb > .mpgl { margin: 16px -22px -14px !important; border: 0 !important; border-top: 1px solid rgba(255,255,255,.07) !important; border-radius: 0 !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bo > span > em.mpgl-bh { display: block !important; margin-top: 1px !important; font: 600 12.5px var(--body) !important; font-style: normal !important; color: #f0938d !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bo > span > em.mpgl-bh.mpgl-ah { color: #7ee08f !important; }
+/* Where your time went: the grade's line and the picked player's one thing */
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twg { display: flex !important; align-items: baseline !important; gap: 10px !important; margin: 10px 0 4px !important; font: 500 14px/1.45 var(--body) !important; color: #d6d9de !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twk { flex: none !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twme { display: flex !important; align-items: baseline !important; gap: 14px !important; margin: 14px 0 6px !important; padding: 12px 14px !important; border: 1px solid rgba(214,178,104,.45) !important; background: rgba(214,178,104,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twme > .mpx-twk { color: #e6c27a !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twb { flex: 1 1 auto !important; min-width: 0 !important; font: 500 14px/1.45 var(--body) !important; color: #d6d9de !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > b { color: #fff !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > .mpx-twv { color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > small { display: block !important; font: 500 13.5px var(--body) !important; color: #b3b9c4 !important; }
+html:not(.mpcard) body #view#view#view #mptCC .mpx-twme > .linkbtn { flex: none !important; }
+/* Know this dungeon: folded shut, the title row opens it */
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5:not(.mpx-open) > :not(.mpt-chk) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk { display: flex !important; align-items: baseline !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5:not(.mpx-open) > .mpt-chk { margin-bottom: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk::after { content: 'Open \25B8' !important; margin-left: auto !important; font: 600 13px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: #e6c27a !important; }
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5.mpx-open > .mpt-chk::after { content: 'Close \25B4' !important; }
+html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk:hover::after { color: #f3d79b !important; }
+/* Route: its score as one slim strip */
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b { grid-template-columns: 104px minmax(0, 1fr) !important; gap: 14px !important; padding: 12px 16px !important; margin: 4px 0 12px !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-h { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring { width: auto !important; height: auto !important; display: block !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > svg { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > span { position: static !important; inset: auto !important; display: grid !important; justify-items: start !important; gap: 2px !important; transform: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > span > b { font: 800 44px/1 var(--head, 'Barlow Condensed'), sans-serif !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > span > small { font: 600 13px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l::after { content: 'Route score' !important; display: block !important; margin-top: 2px !important; font: 500 12.5px var(--body) !important; color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-r > .mrs-tk { margin: 8px 0 0 !important; font-size: 14px !important; }
+}
 </style>
 </body>
 </html>

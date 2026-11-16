@@ -21,6 +21,7 @@ module.exports = function mplusScoreboard(say) {
   let h = ''; try { h = B(R, M); } catch (e) { bad('the scoreboard crashed on a made-up group: ' + String(e.message).slice(0, 120)); return; }
   // (the game's board: the column titles once, then a row a player with every number)
   const heads = ((h.split('<div class="mpbn-r mpbn-h">')[1] || '').split('</div>')[0].match(/<span[^>]*>[^<]+<\/span>/g) || []).map((x) => x.replace(/<[^>]+>/g, '')).join(', ');
+  if (h.indexOf('<p class="mpsb-hd"><b>The key</b>') < 0) bad('the board is no longer The key, the result, the group and the run in one panel (Flex, Nov 16: "Yes, build it")');
   if (heads !== 'Player, Rating, Deaths, Damage taken, Avoidable, Damage, DPS, Healing, HPS, Interrupts, Dispels') bad('the group\'s column titles read "' + heads + '", not the game board\'s Rating to Dispels (Flex, Nov 16: "id like each of these columns in the visual as well")');
   const rows = h.split('<div class="mpbn-r mpbn-b').slice(1);
   if (rows.length !== 2 || rows[0].indexOf('>Tank</b>') < 0) bad('the group is not one row a player in role order (tank first): ' + rows.length + ' rows');
@@ -36,7 +37,7 @@ module.exports = function mplusScoreboard(say) {
   if (s.indexOf('function mpxPPOnly(name) { MP.pp = name; mpxMeMark(name);') < 0 || s.indexOf("MP.pp = name; mpxMeMark(name); box.classList.toggle('pp1', !!name);") < 0 || s.indexOf('if (MP.ppK === k) return MP.pp || \'\'; const v = mpPPGet()[k]; return v != null ? v : mpMine(R); }') < 0) bad('the gold frame no longer follows the player picked at the top (it marked no one on Flex\'s page, Nov 16, before the page had made its pick)');
   const ri = h.indexOf('<i class="RES">'); if (ri < 0 || ri > h.indexOf('mpbn-h')) bad('the key\'s result is no longer on top of the group (Flex, Nov 16: "should be in the group section")');
   if (s.indexOf("srv[want.get(k)] = { s: parts.slice(1).join('-'), r: rg };") < 0 || s.indexOf('WCL.rioTeam(reg, L.map(([n, v]) => [n, mpRealmSlug(v.s)]))') < 0) bad('the players\' realms are no longer read from the log for their Raider.IO rating');
-  if (s.indexOf("id=\"mptCD\">' + gl + bd + top + '</div>' : '';") < 0 || s.indexOf("bd = mpxBoard(R, M, F); }") < 0) bad('the scoreboard is no longer on the Summary, under the run');
-  if (s.indexOf("const MPX_TABS = [['map', 'Summary'], ['rep', 'Players'], ['gra', 'Graphs']]") < 0 || s.indexOf("const MPX_VIEWS = [['map', 'Summary'],") < 0) bad('the main tab is no longer called Summary ("rename the tab summary again i think that makes the most sense")');
+  if (s.indexOf("id=\"mptCD\">' + all + '</div>' : '';") < 0 || s.indexOf("bd = mpxBoard(R, M, F); if (typeof requestAnimationFrame") < 0) bad('the scoreboard is no longer on the Summary, under the run');
+  if (s.indexOf("const MPX_TABS = [['map', 'Summary'], ['rt', 'Route'], ['rep', 'Players'], ['gra', 'Graphs']]") < 0 || s.indexOf("const MPX_VIEWS = [['map', 'Summary'],") < 0) bad('the main tab is no longer called Summary ("rename the tab summary again i think that makes the most sense")');
 };
 if (require.main === module) { let n = 0; module.exports((a, b, m) => { n++; console.log('[' + b + '] ' + m); }); console.log('Mythic+ scoreboard: ' + (n ? n + ' problem(s)' : 'OK')); process.exit(n ? 1 : 0); }
