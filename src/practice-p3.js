@@ -554,7 +554,7 @@ function pgP3(A) {
   // (your hits on this part's own targets: practice.js hitTgt calls P2.hit for anything that isn't one of its shared adds)
   const hit = (key) => { sync(); if (!G || !G.p3) return; const c = G.p3.cl[key]; if (c) { c.hp -= 1; return; } const s = G.p3.sh[key]; if (s) { s.hp -= P.SHRIEK.hit; return; } if (key === 'w3' && G.p3.wr) G.p3.wrHp -= P.WRETCH.hit; };
 
-  return { part: 3, dodges: true, walk, hit,
+  return { part: 3, dodges: true, autoAoe: true, walk, hit,
     script: (o) => pgP3Script({ ...(o || {}), me: A.me, pick: mine() ? eff() : null }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => { sync(); return pgP3Floor(x, y, S && G && G.p3 ? alive(G.t) : [1, 1, 1, 1], 0.35); }, bossAt, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
     clean: 'Onto her quarter in time, every bite cleared and spread, out of every wave and off every quarter before it broke. Try another job.',
