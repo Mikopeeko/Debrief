@@ -103,9 +103,9 @@ function pg3dShapes(A, t) {
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
   // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
   // (nine names piled up in one heap, review of Nov 15)
-  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
+  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
     if (!q) packs.push(q = { kind: a.kind, x0: a.x, y0: a.y, sx: 0, sy: 0, n: 0 }); q.sx += a.x; q.sy += a.y; q.n++; });
-  packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
+  packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : '') + (!vp && G.adds.some((a) => a.boil && a.kind === 'rawling' && Math.hypot(a.x - x, a.y - y) < 6) ? ' (boiling)' : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
   S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up });
     if (!S.bubbles.some((q) => q.w === w.id && t >= q.t0 && t <= q.at + 0.4)) label(c.x, c.y, up ? 6 : 4.5, up ? 'Blightscale Wretch' : 'Wretch (asleep)', '#c89bff', 13, 'name'); }); /* (its bubble's label says it while that's up) */
   const B = A.bossAt(t), TL = A.tailAt(t), D = S.dive;
@@ -427,7 +427,7 @@ function pg3d(host, A) {
     vglow(keep(new T.MeshLambertMaterial({ map: stx(STN.wall, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH), normalMap: stx(STN.wallN, 1 / STN.wallW, -1 / STN.wallH, 0, 1 + (1 - DEPTH) / STN.wallH, true) })))]);
   plat.position.y = -DEPTH; plat.receiveShadow = true; scene.add(plat);
   { const rim = shp(OCT); rim.holes.push(shp(OCT.map((p) => [p[0] * 0.985, p[1] * 0.982]).reverse())); const rg = keep(new T.ShapeGeometry(rim)); rg.rotateX(-Math.PI / 2);
-    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xb4c2b6, transparent: true, opacity: 0.38, depthWrite: false }))); /* (a worn pale stone over the carved texture, not a white band) */ m.position.y = 0.02; m.renderOrder = 5; scene.add(m); }
+    const m = new T.Mesh(rg, keep(new T.MeshBasicMaterial({ color: 0xb4c2b6, transparent: true, opacity: 0.38, depthWrite: false }))); /* (a worn pale stone over the carved texture, not a white band) */ m.position.y = 0.02; m.renderOrder = 5; m.name = 'pg-rim'; scene.add(m); } /* (named: phase 3 hides it with the platform, src/practice-p3.js) */
 
   // ---- reused pieces: floor shapes from a few flat geometries, everything else from pools (nothing new per frame once warm) ----
   const flatG = (g) => { g.rotateX(-Math.PI / 2); return g; };
@@ -708,7 +708,8 @@ function pg3d(host, A) {
   // ---- one shape on the screen ----
   const V1 = new T.Vector3(), V2 = new T.Vector3(), V3 = new T.Vector3(), V4 = new T.Vector3(), faceIn = (x, y) => Math.atan2(-x, y); /* (turned to face the middle of the stone) */
   // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
-  const P2K = A.P2 && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
+  const P2K = A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
+    : A.P2 && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
   const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'ring') { flat(ringG(s.r, s.w, s.dash), s.x, s.y, 1, 1, s.dash ? t * 0.3 : 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
