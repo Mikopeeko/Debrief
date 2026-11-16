@@ -33,7 +33,14 @@
 //      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true;
 //   K. the raid markers aren't the game's floating shapes (Flex, Nov 15: "make the markers have the floating marker shape like in game"): all eight
 //      at the rim in 3D, each its own shape and colour (a 10-point star, a 12-point cross, a 4-point diamond, a 3-point triangle, a skull with eye
-//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d).
+//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d);
+//   L. Noxious Splash at 3 yards and the egg shells: carriers splash inside each other's 3-yard ring, the game's rule everywhere (the phase 3 chat's
+//      re-scan of 170 Mythic pulls, Nov 15: carriers stood 4 to 6 yards apart for about 80 minutes without a splash; the 21 logged splashes were
+//      measured after the burst landed, so a 4.3-yard edge was pushed at 7055f8ec and undone). The part sets no splash of its own and the words say
+//      3 yards; and (Flex, Nov 15: "The eggs have to be damaged to break the shield") your egg's shell is up until you hit it, with a hint that says so;
+//   M. the unit frames don't look like Flex's own UI (Nov 15: "the player/target/boss frames should look more like this", his screenshot): your frame
+//      left of the hotbar and your target's right of it on one row (narrow screens: the frames side by side, the bar under them), one flat bar each with
+//      the name inside on the left and "735K | 100%" on the right, your class (or role) colour, the target's target after a ">", the boss's name in its bar.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -209,6 +216,25 @@ function checks(H, say) {
         if (kit.put({ k: 'disc', x: 0, y: 0, r: 1 }, 1)) bad('the 3D kit takes shapes that aren\'t its markers (check K)'); } }
     if (!/A\.P2 && A\.P2\.kit3d \? A\.P2\.kit3d\(\{[^}]*canvas, ctex/.test(rd('practice3d.js'))) bad('practice3d.js no longer hands a part\'s kit3d its pieces (canvas and ctex for the markers, check K)'); }
   catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
+  // L. the measured splash and the egg shells
+  try { if (dbg.P2.splash != null) bad('the intermission sets its own Noxious Splash distance (' + dbg.P2.splash + '); the real edge is the game\'s 3 yards (170 pulls: 4 to 6 yards apart never splashed, check L)');
+    if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
+    { const src = rd('practice-int.js'); if (/about 4 yards|SPLASH/.test(src) || !/Keep 3 yards from other carriers/.test(src) || !/3 yards from other carriers\. The slam breaks it/.test(src)) bad('the carriers\' words don\'t give the 3 yards (or still say about 4, check L)'); }
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);
+    if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/hit it to break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
+    dbg.G.log = []; while (dbg.G.t < T.slams[0]) dbg.step(1); { const e2 = dbg.G.eggs.find((q) => q.id === me); if (!e2 || e2.state === 'floor') bad('the autopilot didn\'t break its egg\'s shell and pick it up by the first slam (check L)'); } }
+  catch (e) { bad('the splash and shells check crashed: ' + e.message + ' (check L)'); }
+  // M. the unit frames like Flex's UI
+  try { const PJ = rd('practice.js'), rule = (sel) => ((new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(PJ) || [])[1] || '');
+    if (!/grid-template-areas: "job job job" "me acts tf"/.test(rule('.pg .pg-bot'))) bad('the bottom row isn\'t your frame, the hotbar, then your target\'s (Flex\'s UI, check M)');
+    if (!/display: contents/.test(rule('.pg .pg-bot > .pg-ufs'))) bad('the two frames can\'t join the hotbar\'s row (.pg-ufs must be display: contents, more specific than its flex rule, check M)');
+    if (!/"job job" "me tf" "acts acts"/.test(PJ)) bad('on a narrow screen the frames don\'t stack above the hotbar (check M)');
+    if (!/'K \| ' \+ hp \+ '%'/.test(PJ) || !/const PG_HP_K = 735;/.test(PJ)) bad('your frame doesn\'t read "735K | 100%" as Flex\'s does (check M)');
+    if (!/height: 28px/.test(rule('.pg .pg-uf .pg-bar')) || !/position: absolute/.test(rule('.pg .pg-uf .pg-nm'))) bad('the frames aren\'t one flat bar with the name inside (check M)');
+    if (!/content: attr\(data-n\)/.test(PJ) || !/class="pg-bar pg-bhp" data-n=/.test(PJ)) bad('the boss\'s name isn\'t in its bar (check M)');
+    if (!/class="pg-tot"/.test(PJ) || !/tot: tot \?/.test(PJ)) bad('the target frame doesn\'t show its target after a ">" (check M)');
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.slams[7] + 1, me, { seed: 4 }); const ra = dbg.G.adds.find((a) => a.kind === 'rawling'); if (ra) { dbg.tgt = ra.id; const f = dbg.tf(); if (!f || f.none || f.tot !== null) bad('a Rawling target shows a target of its own: ' + JSON.stringify(f) + ' (check M)'); } }
+  catch (e) { bad('the frames check crashed: ' + e.message + ' (check M)'); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
     const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }

@@ -72711,6 +72711,7 @@ const pgPart = (boss, d) => (PG_PARTS[boss] || {})[d] || null;
 const pgClock = (s) => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const pgRot = (p, deg) => { if (!deg) return [p[0], p[1]]; const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c]; };
 const pgDist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const PG_HP_K = 735; /* (your frame's health in thousands at full: Flex's own, from his screenshot of his UI, Nov 15) */
 // (a little seeded randomness, so a run can be replayed and tested)
 const pgRng = (seed) => { let s = seed >>> 0 || 1; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
 
@@ -72821,7 +72822,7 @@ function pgOpen(root, boss, d, pk) {
   const HUD = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
     '<div class="pg-tr"><canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-trow"><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div>' +
     '<button type="button" class="pg-snd on" aria-pressed="true" title="Sound cues, like a boss mod (M)">Sound</button><div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span>Mistakes</span></div></div>' +
-    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp"><i></i><span></span></div></div></div>' +
+    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp" data-n="' + esc(boss) + '"><i></i><span></span></div></div></div>' +
     '<button type="button" class="pg-x" aria-label="Close">✕</button><div class="pg-timers"></div>' +
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
     '<div class="pg-bot"><div class="pg-job"><span>Your job now</span><p></p></div>' +
@@ -73260,7 +73261,8 @@ function pgOpen(root, boss, d, pk) {
   const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
     if (!force && key === hudKey) return; hudKey = key;
     $('.pg-mn').textContent = role.name + ' (you)'; { const mj = $('.pg-mj'); mj.textContent = role.job; mj.title = role.job; } /* (cut short in the frame: the whole job on hover) */
-    const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = hp + '%'; hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
+    const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = Math.round(PG_HP_K * hp / 100) + 'K | ' + hp + '%'; /* (as Flex's own frame reads, Nov 15: "735K | 100%") */
+    hb.querySelector('i').style.background = clsC(me) || (GDZ_ROLE[rl(me)] || GDZ_ROLE.r)[1]; /* (your class colour, else your role's: one colour, as in the game) */ hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
     $('.pg-debs').innerHTML = Object.entries(G.debs).filter(([, v]) => v.until > t).concat(myEggHeld() ? [['shell', { until: t + 99, n: 1 }]] : []).map(([kk, v]) => { const dd = DEB[kk]; return '<span style="border-color:' + dd[1] + ';color:' + dd[1] + '">' + esc(dd[0]) + (v.n > 1 ? ' ×' + v.n : '') + (v.until - t < 60 ? ' <em>' + Math.ceil(v.until - t) + '</em>' : '') + '</span>'; }).join('');
     $('.pg-clk').textContent = pgClock(t); const bh = $('.pg-bhp'); bh.querySelector('i').style.width = G.bossHp.toFixed(1) + '%'; bh.querySelector('span').textContent = Math.round(G.bossHp) + '%';
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : '') + '  ' + Math.max(0, c.t1 - t).toFixed(1);
@@ -73282,10 +73284,11 @@ function pgOpen(root, boss, d, pk) {
     if (o.max) pct = Math.max(0, o.hp == null ? o.max : o.hp) / o.max * 100; else if (o.hpFr != null) pct = o.hpFr * 100; else if (ad) { const mx = ADD_HP[ad.kind] || 3; pct = Math.max(0, ad.hp == null ? mx : ad.hp) / mx * 100; }
     else if ((o.kind === 'boss' || o.kind === 'tail' || o.kind === 'heart') && typeof G.bossHp === 'number') pct = G.bossHp;
     else if (o.kind === 'wretch') { const w = (S.wretches || []).find((q) => q.id === o.key); if (w && w.dies > w.awake) pct = Math.max(0, Math.min(1, (w.dies - t) / (w.dies - w.awake))) * 100; }
-    return { none: false, key: o.key, name: o.name, pct: pct == null ? null : Math.max(0, Math.min(100, pct)), range: inRange(o) }; };
+    let tot = null; if (o.kind === 'boss' || o.kind === 'tail') tot = S.herTank ? S.herTank(t) : null; else if (o.kind === 'viper') { const a = G.adds.find((q) => q.id === o.key); tot = a && a.tank ? a.tank : me; } /* (its target, as the target frame shows it after a ">" (Flex's UI)) */
+    return { none: false, key: o.key, name: o.name, tot: tot ? (tot === me ? role.name + ' (you)' : nm(tot)) : null, totC: tot ? clsC(tot) || (GDZ_ROLE[rl(tot)] || GDZ_ROLE.r)[1] : null, pct: pct == null ? null : Math.max(0, Math.min(100, pct)), range: inRange(o) }; };
   let hitSeen = null, tfFlash = 0;
   const tfDraw = (tf) => { const el = $('.pg-tf'); if (!el || !tf) return; el.classList.toggle('none', !!tf.none); el.classList.toggle('far', !tf.none && !tf.range);
-    $('.pg-tfn').textContent = tf.name; $('.pg-tfr').textContent = tf.none ? 'Tab to pick' : tf.range ? '' : 'Out of range';
+    $('.pg-tfn').innerHTML = esc(tf.name) + (tf.tot ? ' <em class="pg-tot" style="color:' + tf.totC + '">&gt; ' + esc(tf.tot) + '</em>' : ''); $('.pg-tfr').textContent = tf.none ? 'Tab to pick' : tf.range ? '' : 'Out of range';
     const bar = $('.pg-tfh'); bar.querySelector('i').style.width = (tf.none ? 0 : tf.pct == null ? 100 : tf.pct).toFixed(1) + '%'; bar.querySelector('span').textContent = tf.none || tf.pct == null ? '' : Math.round(tf.pct) + '%';
     const h = G.hits || 0; if (h !== hitSeen) { const nw = hitSeen != null && h > hitSeen; hitSeen = h; if (nw && !window.__pgAuto) { tfFlash++; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } } }; /* (by the hit count: two hits in one step still flash) */
   // (the line under it: what to do about your target, only while a moment needs one: the wrong one picked, too far, or not hitting it)
@@ -73543,7 +73546,8 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-float { position: absolute; top: 31%; left: 0; right: 0; text-align: center; font: 700 16px var(--head, system-ui); text-shadow: 0 1px 4px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-float.bad { color: #ff8f87; } .pg-float.ok { color: #7ee08f; } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 /* (bottom centre, ElvUI style: your job, then your frame left of centre and your target's right of it (you stand between them), then the action bar) */
-.pg .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0 14px 8px; pointer-events: none; }
+.pg .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 250px auto 250px; grid-template-areas: "job job job" "me acts tf"; justify-content: center; justify-items: center; align-items: start; gap: 8px 12px; padding: 0 14px 8px; pointer-events: none; }
+.pg .pg-bot > .pg-job { grid-area: job; } .pg .pg-bot > .pg-ufs { display: contents; } .pg .pg-ufs > .pg-me { grid-area: me; width: 250px; } .pg .pg-ufs > .pg-tfc { grid-area: tf; width: 250px; } .pg .pg-bot > .pg-acts { grid-area: acts; } /* (Flex's UI, Nov 15: your frame left of the hotbar, your target's right of it) */
 .pg .pg-job { max-width: min(520px, 100%); padding: 6px 12px 7px; text-align: center; background: rgba(10,12,16,.85); border: 1px solid rgba(243,201,105,.45); } .pg .pg-job span { display: block; font: 700 12px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg .pg-job p { margin: 1px 0 0; font: 600 14px/1.35 var(--body, system-ui); color: #e8edf2; }
 .pg .pg-ufs { display: flex; justify-content: center; gap: 140px; }
 .pg .pg-ucol { position: relative; width: 250px; min-height: 104px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
@@ -73551,7 +73555,9 @@ html.pg-open, html.pg-open body { overflow: hidden; }
    rounds every button and "#main .pg-bar" (the Plan page's bar, inside the site's defaultTheme layer, so this one has to be in that layer too) by 4 px;
    the screen keeps square edges) */
 .pg.pg .pg-in :is(.pg-x, .pg-vw button, .pg-bar) { border-radius: 0 !important; } @layer defaultTheme { html body #main .pg.pg .pg-in .pg-bar { border-radius: 0 !important; } }
-.pg .pg-uf { padding: 5px 6px 6px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); } .pg .pg-uf .pg-bar { height: 22px; background: #15181d; border-color: #000; } .pg .pg-uf .pg-bar span { justify-content: flex-end; padding-right: 7px; }
+.pg .pg-uf { position: relative; padding: 0; background: none; border: 0; } .pg .pg-uf .pg-bar { height: 28px; background: #2b2f36; border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,.14); } .pg .pg-uf .pg-bar span { justify-content: flex-end; padding-right: 9px; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.pg .pg-uf .pg-nm { position: absolute; left: 0; right: 0; top: 0; height: 28px; z-index: 2; margin: 0; padding: 0 9px; align-items: center; gap: 6px; pointer-events: none; } .pg .pg-uf .pg-nm b { font: 700 13px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64%; flex: 0 1 auto; } .pg .pg-uf .pg-mj { display: none; } .pg .pg-tot { font-style: normal; } .pg .pg-uf .pg-nm .pg-tfr { font-size: 12px; text-shadow: 0 1px 2px #000; } /* (Flex's UI, Nov 15) */
+.pg .pg-bossf .pg-nm b { display: none; } .pg .pg-bossf .pg-nm { justify-content: flex-end; } .pg .pg-bossf .pg-bar { height: 24px; background: #2b2f36; border: 1px solid #000; } .pg .pg-bhp::before { content: attr(data-n); position: absolute; left: 8px; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; } .pg .pg-bossf .pg-bar span { justify-content: flex-end; padding-right: 8px; z-index: 2; }
 .pg .pg-debs { display: flex; flex-wrap: wrap; gap: 3px; } .pg .pg-debs span { padding: 1px 5px; border: 1px solid; background: rgba(10,12,16,.85); font: 600 12px var(--body, system-ui); } .pg .pg-debs em { font-style: normal; color: #fff; margin-left: 3px; }
 .pg .pg-tfh i { background: #c0352c; } .pg .pg-tf .pg-tfr { color: #ff8f87; font-weight: 700; } .pg .pg-tf.far .pg-tfh i { background: #7c2a25; }
 .pg .pg-tf.none { opacity: .6; } .pg .pg-tf.none .pg-tfn { color: #aab4c0; } .pg .pg-tf.none .pg-tfr { color: #8d97a3; font-weight: 600; }
@@ -73572,7 +73578,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-acts .pg-act.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.6); animation: pgTabHot 1s ease-in-out infinite; } .pg .pg-acts .pg-act.hot span { color: #f3c969; }
 @keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } }
 .pg .pg-acts .pg-act.good { border-color: #7ee08f; box-shadow: 0 0 0 1px #7ee08f; } .pg .pg-acts .pg-act.good span { color: #7ee08f; }
-@media (max-width: 900px) { .pg .pg-warn { left: 250px; right: 170px; } .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
+@media (max-width: 900px) { .pg .pg-bot { grid-template-columns: 1fr 1fr; grid-template-areas: "job job" "me tf" "acts acts"; } .pg .pg-ufs > .pg-me, .pg .pg-ufs > .pg-tfc { width: 230px; } .pg .pg-warn { left: 250px; right: 170px; } .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
 @media (max-width: 640px) { .pg .pg-ufs { gap: 12px; } .pg .pg-ucol { width: calc(50vw - 20px); } .pg .pg-acts { gap: 10px; } .pg .pg-timers { width: 200px; } .pg .pg-job p { font-size: 13px; } }
 .pg-card { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,6,9,.62); z-index: 3; } .pg-card.on { display: flex; }
 .pg-cin { width: min(620px, 94%); max-height: 92%; overflow: auto; padding: 20px 22px; background: var(--bg, #0f1117); border: 1px solid var(--line2, rgba(255,255,255,.18)); border-radius: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.55); }
@@ -74726,7 +74732,10 @@ function pgP2(A) {
     if (id === A.me && G.tgt) { const c = G.p2.cl[G.tgt], a = G.adds.find((q) => q.id === G.tgt && q.own); if (c && c.dead == null && c.side === s && ok(c.x, c.y)) o = [c.x, c.y]; else if (a && a.side === s && ok(a.x, a.y)) o = [a.x, a.y]; }
     if (!o) { const c = Object.values(G.p2.cl).filter((q) => q.side === s && q.dead == null && ok(q.x, q.y)).sort((a, b) => a.born - b.born)[0]; if (c) o = [c.x, c.y]; }
     if (!o && (id !== A.me || an)) { const a = G.adds.filter((q) => q.own && q.side === s && q.kind === 'rawling' && ok(q.x, q.y)).sort((x, y) => x.born - y.born)[0]; if (a && pgP2Ledge(a.x, a.y, 0.6)) o = [a.x, a.y]; }
-    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3]; return pgP2Floor(q[0], q[1]) ? q : nearFloor(q); };
+    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3], inside = (p) => pgP2Ledge(p[0], p[1], 2) || PG_UL.onPlat(p[0], p[1]);
+    if (inside(q)) return q; /* (2 yards in from the edge: an add walking along it would lead you off the stone) */
+    let best = null, bd = 1e9; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, p = [o[0] + Math.cos(a) * 3, o[1] + Math.sin(a) * 3]; if (!inside(p)) continue; const dd = Math.hypot(p[0] - b0.x, p[1] - b0.y); if (dd < bd) { bd = dd; best = p; } }
+    return best || nearFloor(q); };
   // (a kick due for this raider soon (their own, or the one they're backing up): where its caster is)
   const kickDue = (id, t) => { const k = kickables(t + 4).concat(kickables(t)).find((q) => q.who === id && t >= q.t0 - 4); return k ? k.p : null; };
   const bkCry = (id) => { const b = G.p2.bk; if (!b || id !== A.me || G.p2.kick[b.key] || !/^c/.test(b.key)) return 0; const c = S.cries.find((q) => 'c' + q.ds + q.i === b.key); return c ? c.dk : 0; };
@@ -75206,6 +75215,9 @@ function pgP2(A) {
     // (back on the platform for the heart burn, the bots use practice.js's dodge too, for the small tails' waves: the platform is flat there, as in phase 1)
     // (a kicker with a kick due holds its place instead: a missed Cry stuns everyone, worse than a wave)
     dodges: (id, t) => !!(G && G.p2 && t >= T.rage),
+    // (Noxious Splash: the game's 3 yards. The 21 logged splashes looked like 4.3, but the phase 3 chat's re-scan of 170 Mythic pulls found carriers 4 to
+    // 6 yards apart for about 80 minutes with no splash: those were measured after the burst)
+    splash: 3,
     // (and its escapes keep out of a Doomscale's frontal that's casting: a wave's way out mustn't lead into one)
     unsafe: (id, x, y, t) => !!(G && G.p2 && G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, x, y, 1.5))),
     // (after a start-at fast-forward: practice.js empties the adds, so the Rawlings alive then come back; the backup kick is the player's to have)
@@ -76064,7 +76076,7 @@ function pgInt(A) {
   const called = (t) => t >= S.soaks[0].cast; /* (the first coil rises on Star, Triangle or Cross: the caller calls the pattern, and every team knows its spots) */
   const nextSoak = (id, t) => S.soaks.find((s) => s.group.includes(id) && s.at >= t - 0.15) || null;
   const ordOf = (s) => S.soaks.filter((q) => q.team === s.team && q.at <= s.at).length;
-  // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, so their 3-yard rings never touch; the rest near the middle)
+  // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, 8.7 yards apart, so their 3-yard rings never touch; the rest near the middle)
   const slotIn = (s, id) => { const car = s.group.filter((q) => S.job.carry.has(q)), i = car.indexOf(id); if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 0.6; return [s.x + Math.cos(a) * 5, s.y + Math.sin(a) * 5]; }
     return spiral([s.x, s.y], Math.max(0, s.group.filter((q) => !S.job.carry.has(q)).indexOf(id)), 3); };
   const preSpot = (id) => { const g = teamOf(id), L = S.job.list[g], car = L.filter((q) => S.job.carry.has(q)), i = car.indexOf(id), c = S.pre[g];
@@ -76072,8 +76084,10 @@ function pgInt(A) {
   // (one rule for your egg, used by the bots, the autopilot, your arrow and your hint (the review, Nov 15: the hint sent carriers to their soak, then
   // the score said they never picked their egg up): go for it from 4 s before its shell breaks whenever you can be at it as it breaks and still reach
   // your next soak's edge before it slams; else soak first and get it after)
-  const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor' || t < e.shell - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
-    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, e.shell - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
+  // (your own egg's Hardened shell has health since Nov 15 (practice.js, Flex: "The eggs have to be damaged to break the shield"): you go and break it
+  // as soon as it lands, when your next soak allows: with your hits and the raid's it opens in about 3.6 s)
+  const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor') return false; const opens = e.shp > 0 ? t + e.shp / 1.4 : e.shell; if (!(e.shp > 0) && t < opens - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
+    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
   const homeAt = (id) => { const sg = S.east ? 1 : -1, i = GDZ_RAID.indexOf(id); return id[0] === 't' ? [34 * sg, id === 't1' ? -12 : 12] : id[0] === 'm' ? spiral([35.5 * sg, 0], i, 1.5) : spiral([25 * sg, 0], i, 5); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
@@ -76163,10 +76177,10 @@ function pgInt(A) {
         : d > P.SPREAD + 1 ? 'To the diamond line now (the gold ring): the platform shatters at 6:09!' : 'Good: on the diamond line, inside, off the cracks. Her bubbles at the ' + P.QN[S.q1] + ' corner show where she comes up. It shatters in ' + Math.max(0, Math.ceil(T.shatter - t)) + ' s.'; }
     if (t < T.land + 0.5) return e ? 'Go to the ' + tn + '\'s mark (' + P.TM[g] + '). Your egg lands at the gold circle at 5:24: stand beside it, not under it.' : 'Intermission: go to the ' + tn + '\'s mark (' + P.TM[g] + ') and wait. Eggs land at 5:24: step out of their circles.';
     const q = t >= T.defCue - 0.4 && t <= T.defBy && !(G.def >= T.defFrom - 1) ? ' Press Q now: personals for the back-to-back slams.' : '', ef = eggFirst(me, t, { x: G.x, y: G.y }, e, ns);
-    if (ef) return (t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
+    if (ef) return (e.shp > 0 ? 'Your egg\'s shell is up: hit it to break it (Tab, then 1; 2 is your area attack), then walk over it.' : t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
     if (ns && called(t)) { const n = ordOf(ns), car = e && e.state === 'held' ? ' Bring your egg: the slam breaks it.' : e && e.state === 'floor' ? ' Get your egg after it.' : '', d = pgDist([G.x, G.y], [ns.x, ns.y]);
       return (d <= ns.r - 1 ? 'In your ' + pgIntOrd(n) + ' soak at ' + mkAt(ns) + ': stay inside until it slams (' + Math.max(0, ns.at - t).toFixed(1) + ' s).' : 'Your ' + pgIntOrd(n) + ' soak: the gold circle at ' + mkAt(ns) + '. Get in before it slams (' + Math.max(0, Math.ceil(ns.at - t)) + ' s).') + car + q; }
-    if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep your egg 3 yards from other carriers.' : '');
+    if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep 3 yards from other carriers.' : '');
     if (e && e.state === 'floor') return 'Pick up your egg now: walk over it.' + q;
     if (q) return q.trim();
     if (!ns) return 'Your soaks are done: head for the diamond line (the gold ring), round the other teams\' circles. The last slam is at ' + clk(T.slams[7]) + '.';
@@ -76208,7 +76222,7 @@ function pgInt(A) {
     save(); box.innerHTML = card(); refresh(); if (refocus && sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } }; };
   const role = () => ({ id: slotOf(pk), name: RN[pk.role], job: P.TN[pk.team] + ' team' + (pk.egg ? ' · egg' : '') + (pk.pat ? ' · pattern ' + pk.pat : '') });
   const asg = () => { const g = pk.team, L0 = [];
-    L0.push(['The eggs (5:24)', 'Eight eggs drop all over the stone at 5:24: step out of their circles.' + (pk.egg ? ' Yours is the gold one. Its shell breaks between 5:31 and 5:40: pick it up and carry it into your next soak, 3 yards from other carriers. The slam breaks it.' : ' Keep 3 yards from the egg carriers.')]);
+    L0.push(['The eggs (5:24)', 'Eight eggs drop all over the stone at 5:24: step out of their circles.' + (pk.egg ? ' Yours is the gold one. Its shell breaks between 5:31 and 5:40: pick it up and carry it into your next soak, 3 yards from other carriers. The slam breaks it.' : ' Keep out of the egg carriers\' way.')]);
     L0.push(['Your team: ' + P.TN[g], 'Wait by ' + P.TM[g] + '. Your soaks: ' + [1, 2, 3].map((p) => P.PN[p] + ' first: ' + lst(soaksOf(g, p))).join('; ') + '.']);
     L0.push(['The coils (5:36 to 5:54)', 'Eight slams, in pairs from opposite sides 2 s apart. Be inside your team\'s 10-yard circle when it slams. Never step into another team\'s: Soul Constrictor keeps you out of the next slam for 5 s.']);
     L0.push(['Personals (5:47)', 'The last four slams come 2 s apart and each one hits the whole raid: press Q (defensive).']);
@@ -76217,7 +76231,7 @@ function pgInt(A) {
   // (the start card's "Your job in short": four plain lines, your team and soaks, your egg, the defensive, the Shattering)
   const short = () => { const g = pk.team, L0 = [];
     L0.push(pk.pat ? P.TN[g] + ' team, pattern ' + pk.pat + ' (' + P.PN[pk.pat] + ' first): wait by ' + P.TM[g] + ', then soak ' + lst(soaksOf(g, pk.pat)) + '.' : P.TN[g] + ' team: wait by ' + P.TM[g] + '. The first coil sets the pattern; then your ' + (g === 'B' ? 2 : 3) + ' soaks light up in gold.');
-    L0.push(pk.egg ? 'Carry an egg: pick it up when its shell breaks (5:31 to 5:40) and bring it into your next soak.' : 'No egg: step out of the falling eggs at 5:24 and keep 3 yards from the carriers.');
+    L0.push(pk.egg ? 'Carry an egg: pick it up when its shell breaks (5:31 to 5:40) and bring it into your next soak.' : 'No egg: step out of the falling eggs at 5:24 and keep out of the carriers\' way.');
     L0.push('Press Q at 5:47: the last four slams come back to back.');
     L0.push('By 6:09 stand on the diamond line, inside: off the cracks, away from the middle and the edge.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
@@ -76295,7 +76309,7 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K) };
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), eggShells: true }; /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
 // ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the

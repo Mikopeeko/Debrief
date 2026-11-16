@@ -257,7 +257,10 @@ function pgP2(A) {
     if (id === A.me && G.tgt) { const c = G.p2.cl[G.tgt], a = G.adds.find((q) => q.id === G.tgt && q.own); if (c && c.dead == null && c.side === s && ok(c.x, c.y)) o = [c.x, c.y]; else if (a && a.side === s && ok(a.x, a.y)) o = [a.x, a.y]; }
     if (!o) { const c = Object.values(G.p2.cl).filter((q) => q.side === s && q.dead == null && ok(q.x, q.y)).sort((a, b) => a.born - b.born)[0]; if (c) o = [c.x, c.y]; }
     if (!o && (id !== A.me || an)) { const a = G.adds.filter((q) => q.own && q.side === s && q.kind === 'rawling' && ok(q.x, q.y)).sort((x, y) => x.born - y.born)[0]; if (a && pgP2Ledge(a.x, a.y, 0.6)) o = [a.x, a.y]; }
-    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3]; return pgP2Floor(q[0], q[1]) ? q : nearFloor(q); };
+    if (!o) return null; const dx = b0.x - o[0], dy = b0.y - o[1], d = Math.hypot(dx, dy) || 1, q = [o[0] + dx / d * 3, o[1] + dy / d * 3], inside = (p) => pgP2Ledge(p[0], p[1], 2) || PG_UL.onPlat(p[0], p[1]);
+    if (inside(q)) return q; /* (2 yards in from the edge: an add walking along it would lead you off the stone) */
+    let best = null, bd = 1e9; for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, p = [o[0] + Math.cos(a) * 3, o[1] + Math.sin(a) * 3]; if (!inside(p)) continue; const dd = Math.hypot(p[0] - b0.x, p[1] - b0.y); if (dd < bd) { bd = dd; best = p; } }
+    return best || nearFloor(q); };
   // (a kick due for this raider soon (their own, or the one they're backing up): where its caster is)
   const kickDue = (id, t) => { const k = kickables(t + 4).concat(kickables(t)).find((q) => q.who === id && t >= q.t0 - 4); return k ? k.p : null; };
   const bkCry = (id) => { const b = G.p2.bk; if (!b || id !== A.me || G.p2.kick[b.key] || !/^c/.test(b.key)) return 0; const c = S.cries.find((q) => 'c' + q.ds + q.i === b.key); return c ? c.dk : 0; };
@@ -737,6 +740,9 @@ function pgP2(A) {
     // (back on the platform for the heart burn, the bots use practice.js's dodge too, for the small tails' waves: the platform is flat there, as in phase 1)
     // (a kicker with a kick due holds its place instead: a missed Cry stuns everyone, worse than a wave)
     dodges: (id, t) => !!(G && G.p2 && t >= T.rage),
+    // (Noxious Splash: the game's 3 yards. The 21 logged splashes looked like 4.3, but the phase 3 chat's re-scan of 170 Mythic pulls found carriers 4 to
+    // 6 yards apart for about 80 minutes with no splash: those were measured after the burst)
+    splash: 3,
     // (and its escapes keep out of a Doomscale's frontal that's casting: a wave's way out mustn't lead into one)
     unsafe: (id, x, y, t) => !!(G && G.p2 && G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, x, y, 1.5))),
     // (after a start-at fast-forward: practice.js empties the adds, so the Rawlings alive then come back; the backup kick is the player's to have)
