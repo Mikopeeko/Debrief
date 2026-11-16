@@ -69,9 +69,9 @@ function pg3dShapes(A, t) {
     if (w.ring) { const Rr = w.v * el + 2.5, st = 2 * Math.PI / w.n, hz = w.cw / 2; for (let q = 0; q < w.n; q++) { const b = w.ph + q * st; P({ k: 'wave', x: w.x + Math.cos(b) * Rr, y: w.y + Math.sin(b) * Rr, a: b, f0: -2.4, f1: 3.6, w0: -hz, w1: hz, o: op }); } return; }
     const u = Math.cos(a), v = Math.sin(a), cx0 = w.x + u * w.v * el, cy0 = w.y + v * w.v * el, hd = w.d / 2;
     segs.forEach(([a0, b0]) => { const w0 = Math.max(a0, -hw), w1 = Math.min(b0, hw); if (w1 > w0) P({ k: 'wave', x: cx0, y: cy0, a, f0: -hd, f1: hd + 3, w0, w1, o: op }); }); });
-  // eggs: on the floor (its shell, and yours in gold), or riding over their carrier with the 3-yard circle
+  // eggs: on the floor (its shell, and yours in gold), or riding over their carrier with its ring (A.ring: half the splash distance, Nov 15)
   G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let x = e.x, y = e.y, h = 1.2;
-    if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; disc(b.x, b.y, 3, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, 3, ec, 0.9, ew ? 0.32 : 0.2); }
+    if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; const rr = A.ring || 2.15; disc(b.x, b.y, rr, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, rr, ec, 0.9, ew ? 0.32 : 0.2); }
     P({ k: 'egg', x, y, h, held: !!e.who });
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
