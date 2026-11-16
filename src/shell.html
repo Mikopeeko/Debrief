@@ -21334,6 +21334,58 @@ html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twb > small { displa
 html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme > .linkbtn { flex: none !important; }
 @media (max-width: 700px) { html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l > span { font-size: 12px !important; } html:not(.mpcard) body #view#view#view #mptCD .mpx-whyh > .mpt-sk { margin: 0 !important; } html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme { flex-wrap: wrap !important; } }
 }
+/* Route's makeover (Nov 16, Flex: "Can we give the route tab the same kind of makeover treatment and polishing?", then of the mock: "Yes, build it", "im not sure
+about the timeline at the bottom though, seems redundant"). The score is a banner: a solid grade badge, the banner edged in the grade's colour, and five tiles with
+coloured top edges. The extra Whole key button only shows while a pull is picked. The map fills its frame with no dark bands, and the side panel is as tall as the
+map and scrolls. The mistakes are cards with coloured edges. A picked pull's summary is the head of the side panel instead of a panel on top. The old You vs Fast
+run lane is gone (the Summary's run tells the key in time). The website only */
+@layer defaultTheme {
+/* the score banner */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b { --gc: var(--gD); background: linear-gradient(90deg, color-mix(in srgb, var(--gc) 10%, transparent), rgba(255,255,255,.015) 45%) !important; border: 1px solid rgba(255,255,255,.08) !important; border-left: 4px solid var(--gc) !important; border-radius: 0 !important; padding: 16px 18px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-S) { --gc: var(--gS); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-A) { --gc: var(--gA); }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-B) { --gc: var(--gB); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-C) { --gc: var(--gC); }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-D) { --gc: var(--gD); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-F) { --gc: var(--gF); }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span { justify-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span > b { display: flex !important; align-items: center !important; justify-content: center !important; width: 58px !important; height: 58px !important; background: var(--gc) !important; color: #15171b !important; font: 800 36px/1 var(--head, 'Barlow Condensed'), sans-serif !important; border-radius: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l { text-align: center !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-ts { gap: 8px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t { background: rgba(255,255,255,.03) !important; border: 1px solid rgba(255,255,255,.07) !important; border-top: 3px solid rgba(255,255,255,.18) !important; border-radius: 0 !important; padding: 8px 12px 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-g { border-top-color: var(--good) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-y { border-top-color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-r { border-top-color: var(--bad) !important; }
+/* one control row: Whole key only while a pull is picked (the stepper says Whole key otherwise) */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM:not(.mpx-one) .mpt-mbar > .mpx-wk { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM.mpx-one .mpt-mbar > .mpx-wk::before { content: '\2039\00a0' !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM:not(.mpx-one) .mpt-mbar > .mpt-mstep { margin-left: auto !important; } /* (the stepper and Replay stay at the right, picked or not) */
+/* a phone: the badge on its own row over the tiles (the tiles had a narrow column beside it) */
+@media (max-width: 700px) {
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b { grid-template-columns: minmax(0, 1fr) !important; padding: 12px !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l { display: flex !important; align-items: center !important; gap: 12px !important; text-align: left !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span { justify-items: start !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t { padding: 6px 8px 8px !important; }
+}
+/* the map fills its frame (the map's own 16:10, so no dark bands); the side panel as tall as the map, scrolling inside */
+@media (min-width: 901px) {
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mgrid { align-items: stretch !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mleft { position: static !important; top: auto !important; height: auto !important; min-height: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mleft > .mpt-mwrap { flex: none !important; height: auto !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mwrap > .mpt-mdtm { aspect-ratio: 16 / 10 !important; height: auto !important; min-height: 0 !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside { contain: size !important; align-self: stretch !important; display: flex !important; flex-direction: column !important; min-height: 380px !important; }
+  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside > .mpt-mcard { flex: 1 1 auto !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow-y: auto !important; }
+}
+/* the old You vs Fast run lane under the map: gone (Flex: "seems redundant") */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mleft > .mpt-mstrip { display: none !important; }
+/* the mistakes, kind by kind: cards with a coloured edge (red for deaths, close calls and kicks; amber for the rest; green for Clean) */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM #mpxAllM details.mpx-dk { margin: 0 0 8px !important; padding-left: 10px !important; border-top: 0 !important; border-left: 3px solid var(--warn) !important; background: rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM #mpxAllM details.mpx-dk:is(#mpxKdeath, #mpxKclose, #mpxKkick, #mpxKcc) { border-left-color: var(--bad) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM #mpxAllM p.mpx-ok { margin: 0 0 8px !important; padding: 8px 10px !important; border-top: 0 !important; border-left: 3px solid var(--good) !important; background: rgba(69,193,92,.06) !important; }
+/* a picked pull: its summary is the side panel's head (its mistakes are in the play by play under it); the panel on top steps aside */
+html:not(.mpcard)[data-mpv="rt"] body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody#mptBody#mptBody > #mpxSel { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum { display: block !important; margin: 0 0 12px !important; padding: 0 0 12px !important; border-bottom: 1px solid rgba(255,255,255,.08) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > :is(p.mpx-ck:first-of-type, .mpx-cw) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important; margin: 10px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > p.mpx-ck { margin: 12px 0 4px !important; padding: 0 !important; border: 0 !important; }
+}
 </style>
 </body>
 </html>

@@ -1658,7 +1658,7 @@ document.addEventListener('mouseover', (e) => { if (MPC_ON) return; const li = e
 function mpxCard(o) { const { q, run, RR, p, i, gd } = o, D = mpxData(RR, o.F), at = (k) => D[k].filter((x) => x.i === i), they = run === 'you' ? 'You' : 'They';
   const fact = (lab, big, sub, tip) => '<span class="mpx-f1"' + (tip ? ' tabindex="0"' + mpT1(tip) : '') + '><small>' + lab + '</small><b>' + big + '</b>' + (sub ? '<i>' + sub + '</i>' : '') + '</span>';
   const nE = (/<b>Pack<\/b> · (\d+) enem/.exec(o.pack) || [])[1];
-  const facts = '<div class="mpx-cf">' + fact('Lasted', mpMM(p.dur), '', 'From the first hit to the last enemy down.') + (nE ? fact(+nE === 1 ? 'Enemy' : 'Enemies', nE, '', '') : '') +
+  const CK0 = MPC_ON ? null : mpClock(RR), facts = '<div class="mpx-cf">' + fact('Lasted', mpMM(p.dur), CK0 ? 'from ' + mpMM(CK0.tv(p.s)) : '', 'From the first hit to the last enemy down' + (CK0 ? ', starting ' + mpMM(CK0.tv(p.s)) + ' into the key.' : '.')) /* (when the pull started (Nov 16): the lane under the map that showed it is gone from Route) */ + (nE ? fact(+nE === 1 ? 'Enemy' : 'Enemies', nE, '', '') : '') +
     (o.add ? fact('Count', '+' + o.add, o.total ? o.total + ' so far' : '', 'How much of the dungeon\'s enemy count this pull added, and where the count stood after it.') : '') +
     (gd ? fact('Group DPS', mpGF(gd), '', 'The group\'s damage per second while this pull lasted.') : '') + '</div>';
   const row = (c, ic, main, sub, who) => '<div class="mpx-cr mpx-g-' + c + '"' + (who ? ' data-who="' + esc(who) + '"' : '') + '><i aria-hidden="true">' + ic + '</i><div class="mpx-cb"><p>' + main + '</p>' + (sub ? '<small>' + sub + '</small>' : '') + '</div></div>';
