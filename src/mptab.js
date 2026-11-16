@@ -1711,6 +1711,9 @@ const MPX_FEED = [['stop', 'Kicks, CC and dispels'], ['bad', 'Mistakes'], ['def'
 // included here, and maybe even externals somewhere"). Only what the log holds. A defensive's line says the health they pressed it at (under 70%), the
 // big hit it was up for, the debuff on them, how much of their health they took in the next 6 seconds, and a death right after. The health and the
 // damage taken are new: the page's own pass over the log keeps, for each player and second, the lowest health and the damage taken (R.phm, R.ptk, R.pmx) ----------
+// (a tank's own defensive, not an external: left out of the play by play and the replay's As it happens (Nov 16, Flex: "Tank defensives should be
+// ignored i think, they use them non stop"))
+const mpxTankDef = (RR, who, name) => ((RR && RR.people) || []).some((p) => p.name === who && p.role === 'tank') && !MPX_EXT.has(mpLc(name || ''));
 const MPX_EXT = new Set(['blessing of protection', 'blessing of spellwarding', 'blessing of sacrifice', 'pain suppression', 'guardian spirit', 'ironbark', 'life cocoon', 'time dilation', 'zephyr', 'rallying cry', 'anti-magic zone', 'darkness', 'power word: barrier', 'spirit link totem']);
 function mpxDefWhy(RR, p, who, t, name) { const out = [], lc = mpLc(name), k = Math.floor(t), hm = (RR.phm || {})[who], tk = (RR.ptk || {})[who], mx = (RR.pmx || {})[who];
   if (hm) { let lo = null; for (let s = k - 3; s <= k; s++) if (hm[s] != null && (lo == null || hm[s] < lo)) lo = hm[s]; if (lo != null && lo < 70) out.push('at <b' + (lo < 35 ? ' class="mpx-fb"' : '') + '>' + lo + '%</b> health'); }
@@ -1743,7 +1746,7 @@ function mpxFeed(o) { const { q, RR, p, i } = o, E = [], en = (n) => plural(n, '
   // big cooldowns, defensives, dispels and purges
   for (const n of Object.keys(RR.cds || {})) for (const x of RR.cds[n]) if (inP(x.t)) add(x.t, 'cd', n, 'pressed <b>' + esc(x.spell) + '</b> <small>big cooldown</small>', '', mpLc(x.spell));
   // (a defensive's line says what it was pressed into; an external is named as one (whom it went on isn't in what the page keeps))
-  for (const x of p.defs || []) { const ext = MPX_EXT.has(mpLc(x.name || '')), why = ext ? [] : mpxDefWhy(RR, p, x.who, x.t, x.name || '');
+  for (const x of p.defs || []) { if (!MPC_ON && mpxTankDef(RR, x.who, x.name)) continue; /* (a tank's own: Nov 16) */ const ext = MPX_EXT.has(mpLc(x.name || '')), why = ext ? [] : mpxDefWhy(RR, p, x.who, x.t, x.name || '');
     add(x.t, 'def', x.who, 'pressed <b>' + esc(x.name || 'a defensive') + '</b> <small>' + (ext ? 'external' : 'defensive') + '</small>' + (why.length ? '<span class="mpx-why">' + why.join(' · ') + '</span>' : ''), '', mpLc(x.name || '')); }
   // (dispels: who took what off whom and how long it had been on; a debuff nobody took off gets its own line, a mistake when they died with it on or a
   // dispel sat ready (Flex: "dispels should also be included here"))
@@ -5066,7 +5069,7 @@ function mrpData(R) { if (R._rp) return R._rp; const rt = R.route, P = R.pulls, 
   P.forEach((q, i) => { add(q.s, 'start', { i, h: '<b>' + esc(mpCap(mpPullName(R, i))) + '</b> starts' });
     for (const d of q.deaths || []) { const r = (R.deathPos || []).find((y) => y.who === d.who && Math.abs(y.t - d.t) < 3); add(d.t, 'death', Object.assign({ i, who: d.who, h: mpWho(R, d.who) + ' <b class="mpt-bad">died</b> to ' + esc(mpxTo(d.to) || 'a hit the log doesn\'t name') }, r ? { x: r.x, y: r.y, ui: r.ui } : pos(d.who, d.t))); }
     for (const x of q.through || []) { const c = (R.castPos || []).find((y) => y.sp === mpLc(x.spell) && y.t >= x.t - 0.5 && y.t <= x.t + 10); add(x.t, 'off', Object.assign({ i, h: '<b class="mpt-ab">' + esc(x.spell) + '</b> <b class="mpt-bad">went off</b>' + ((x.ready || []).length ? ' <span class="mpt-m">kick ready: ' + esc(mpAnd(x.ready)) + '</span>' : '') }, c ? { x: c.x, y: c.y, ui: c.ui } : {})); }
-    for (const x of q.defs || []) add(x.t, 'def', { i, who: x.who, sp: x.name || '', quiet: true, h: mpWho(R, x.who) + ' pressed ' + esc(x.name || 'a defensive') });
+    for (const x of q.defs || []) add(x.t, 'def', { i, who: x.who, sp: x.name || '', quiet: true, tk: mpxTankDef(R, x.who, x.name), h: mpWho(R, x.who) + ' pressed ' + esc(x.name || 'a defensive') });
     add(q.e, 'end', { i, h: '<b>' + esc(mpCap(mpPullName(R, i))) + '</b> done in ' + mpMM(q.e - q.s) }); });
   for (const x of R.kickEv || []) add(x.t, 'kick', { who: x.who, x: x.x, y: x.y, ui: x.ui, h: mpWho(R, x.who) + ' <b class="mpt-g">kicked</b> ' + esc(x.cut || 'a cast') });
   for (const x of R.ccEv || []) add(x.t, 'cc', { who: x.who, x: x.x, y: x.y, ui: x.ui, quiet: true, h: mpWho(R, x.who) + ' pressed ' + esc(mpTitle(x.sp)) });
@@ -5120,7 +5123,7 @@ function mrpPop(st, e) { if (e.x == null || e.ui !== st.ui || e.quiet) return; c
   g.setAttribute('class', 'mrp-pop mrp-pop-' + e.k); g.setAttribute('transform', 'translate(' + x.toFixed(1) + ' ' + y.toFixed(1) + ')'); g.innerHTML = '<circle class="mrp-ring" r="' + (5 * yy).toFixed(2) + '" stroke-width="' + (0.8 * yy).toFixed(2) + '"></circle><text text-anchor="middle" dominant-baseline="central" font-size="' + (6.5 * yy).toFixed(2) + '">' + ch + '</text>';
   st.svg.querySelector('.mrp-pops').appendChild(g); setTimeout(() => g.remove(), 2300); }
 function mrpFeed(st, fresh) { const ol = st.el.querySelector('.mrp-feed'), D = st.D, [pi, nx] = mrpPull(D, st.T), k = pi >= 0 ? pi : nx - 1, from = k >= 0 && D.P[k] ? D.P[k].s - 0.5 : 0; /* (this pull's events so far; between pulls, the pull just done) */
-  const L = D.ev.slice(0, st.ei).filter((e) => e.t >= from).slice(-9).reverse(), base = D.P[k] ? D.P[k].s : 0;
+  const L = D.ev.slice(0, st.ei).filter((e) => e.t >= from && !e.tk).slice(-9).reverse() /* (not a tank's own defensives: Nov 16) */, base = D.P[k] ? D.P[k].s : 0;
   ol.innerHTML = L.map((e, j) => '<li class="mrp-f mrp-f-' + e.k + (e.quiet ? ' q' : '') + (j === 0 && !fresh ? ' new' : '') + '"><span class="mrp-ft">' + mpMM(Math.max(0, e.t - base)) + '</span><span class="mrp-fh">' + e.h + '</span></li>').join('') || '<li class="mrp-f q"><span class="mrp-fh">Nothing yet.</span></li>'; }
 function mrpDraw(st, dt) { const D = st.D, T = st.T, s0 = Math.max(0, Math.min(D.end, Math.floor(T))), fr = T - s0, c0 = D.cen[s0], c1 = D.cen[Math.min(D.end, s0 + 1)] || c0; if (!c0) return;
   if (c0[2] !== st.ui && !mrpFloor(st, c0[2])) return; const f = st.f, y = st.ppy, lerp = (a, b) => (a && b && a[2] === b[2] ? [a[0] + (b[0] - a[0]) * fr, a[1] + (b[1] - a[1]) * fr] : a ? [a[0], a[1]] : null);
