@@ -51,7 +51,7 @@ function pg3dShapes(A, t) {
     P({ k: 'dome', x: c.x, y: c.y, r: 10, c: '#d8f22f', o: 0.14 + 0.16 * f, f }); ring(c.x, c.y, 10, '#d8f22f', 1, 0.4); grow(c.x, c.y, 10 * (1 - f), '#d8f22f', 0.55); if (t > q.at) disc(c.x, c.y, 10, '#d8f22f', 0.45);
     label(c.x, c.y, 5, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 15); } });
   // (impacts; the Womb and the Falling Debris drop out of the sky onto their circles)
-  S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); disc(m.x, m.y, m.r, '#c8a36a', 0.16); ring(m.x, m.y, m.r, m.color || '#c8a36a', 1, 0.3); disc(m.x, m.y, m.r * f, '#ff5a3c', 0.25);
+  S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); disc(m.x, m.y, m.r, m.fill || '#c8a36a', 0.16); ring(m.x, m.y, m.r, m.color || '#c8a36a', 1, 0.3); disc(m.x, m.y, m.r * f, '#ff5a3c', 0.25);
     if (m.name === 'Falling Debris' || m.name === 'Toxic Womb') P({ k: 'rock', x: m.x, y: m.y, f, land: t > m.at ? cl((t - m.at) / 0.3) : 0, womb: m.name === 'Toxic Womb', sd: m.x * 0.37 + m.y * 0.71 }); } });
   G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 2.5) { const f = Math.min(1, (t - e.land + 2.5) / 2.5); disc(e.x, e.y, 4, '#e6e0c8', 0.12); ring(e.x, e.y, 4, '#e6e0c8', 1, 0.25); disc(e.x, e.y, 4 * f, '#ff5a3c', 0.22);
     P({ k: 'egg', x: e.x, y: e.y, h: 1.2 + 32 * (1 - f * f), fall: true }); } }); /* (falling from the sky until it lands, its shadow shrinking under it) */
