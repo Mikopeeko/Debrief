@@ -10,7 +10,7 @@ const path = require('path');
 function checks(H, say) {
   const bad = (t) => say("Ula'tek practice game (shared rules)", 'bad', t);
   const { load } = require('./practice-p3.js');
-  let dbg, dbg3; try { dbg = load(H).dbg; dbg3 = load(H, 'm3').dbg; } catch (e) { bad('the game didn\'t load: ' + e.message + ' (check A)'); return; }
+  let dbg, dbg3, win; try { const L1 = load(H); dbg = L1.dbg; win = L1.ctx.window; dbg3 = load(H, 'm3').dbg; } catch (e) { bad('the game didn\'t load: ' + e.message + ' (check A)'); return; }
   const G = () => dbg.G, steps = (n) => dbg.stepOwn(n);
   // A. your egg's shell
   try {
@@ -44,6 +44,22 @@ function checks(H, say) {
     if (v.sting !== st) bad('the taunted Viper still stings you (check C)'); if (g.adds.includes(v) && Math.hypot(v.x - g.bots[tk].x, v.y - g.bots[tk].y) > Math.max(2.5, d0 - 3)) bad('the taunted Viper doesn\'t go to the tank (check C)');
     while (g.t < t + 14 && g.adds.includes(v)) steps(5); if (g.adds.includes(v)) bad('the raid hasn\'t killed the taunted Viper 14 s after it hatched (check C)');
   } catch (x) { bad('the taunt check crashed: ' + x.message + ' (check C)'); }
+  // D. sounds like a boss mod (Flex, Nov 15: "I think sound alerts or sound ques are going to be a good addition", "Players are used to sound ques with boss
+  //    mods so thats a great way to simulate it"): tones only, played through a pretend speaker here. A call about you pings (880 then 1320 Hz), a "now"
+  //    call beeps (square), other calls blip; 3-2-1 before your own bar; a buzz for a mistake; nothing when muted or for the autopilot
+  try { const played = []; class FakeAC { constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; } createOscillator() { const o = { type: '', frequency: { value: 0 }, connect() {}, start() { played.push({ f: o.frequency.value, type: o.type }); }, stop() {} }; return o; }
+      createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; } resume() { return Promise.resolve(); } }
+    win.AudioContext = FakeAC; const fs0 = () => played.map((p) => p.f), call = (text) => { const g = G(); played.length = 0; dbg.S.warns.splice(g.warnI, 0, { t: g.t - 0.01, text, c: '#fff' }); g.warnQ = []; g.lastWarn = null; dbg.warnsNow(); return fs0(); };
+    dbg.snd(true); dbg.at(30, 'r3', { seed: 3 });
+    const you = call('Your coil: soak it!'); if (!(you.includes(880) && you.includes(1320))) bad('a call about you plays no ping (' + you.join(',') + ') (check D)');
+    call('Kick now: your Shrieker\'s Vicious Echoes (E)!'); if (!played.some((p) => p.type === 'square')) bad('a "now" call plays no quick beeps (check D)');
+    const other = call('Mephitic Thrash: out of her tail\'s 35 yards!'); if (!other.includes(660)) bad('another call plays no blip (' + other.join(',') + ') (check D)');
+    const bar = (dbg.mods() || []).find((q) => /^Your\b/.test(q.name) && q.at > G().t); if (!bar) bad('no "Your ..." boss-mod bar to count down (check D)'); else { played.length = 0; G().t = bar.at - 2.9; dbg.cdn(); if (!fs0().includes(740)) bad('no countdown beep 3 s before "' + bar.name + '" ends (check D)'); }
+    dbg.at(20, 'r3', { seed: 3 }); played.length = 0; if (dbg.hatchMine() && !fs0().includes(155)) bad('a mistake plays no buzz (check D)');
+    dbg.snd(false); const muted = call('Your coil: soak it!'); if (muted.length) bad('muted, a call still plays a sound (check D)'); played.length = 0; dbg.snd(true); if (!fs0().includes(988)) bad('turning sound back on plays no chime (check D)');
+    played.length = 0; dbg.sim('r3', true, false, 1); if (played.length) bad('the autopilot\'s run plays ' + played.length + ' sounds; it should play none (check D)');
+    { const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8'); if (!/class=\\"pg-snd on\\"|class="pg-snd on"/.test(src) || !/e\.code === 'KeyM'\) \{ sndSet\(!sndOn\)/.test(src) || !/M: sound/.test(src)) bad('no Sound button by the 2D | 3D switch, no M key, or no "M: sound" on the keys line (check D)'); }
+  } catch (x) { bad('the sound check crashed: ' + x.message + ' (check D)'); } finally { try { delete win.AudioContext; } catch (e) { /* (none) */ } }
 }
 module.exports = checks;
 if (require.main === module) {

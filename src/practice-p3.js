@@ -297,7 +297,7 @@ function pgP3(A) {
     if (t > T.clu[0] + 2 && t <= T.clu[0] + 2.5 && kq(G.x, G.y) !== S.Qs[0] && once('late1')) A.mistake('late', 'You weren\'t on her quarter when phase 3 began (' + clk(T.clu[0]) + ').', S.gates.some((g) => g.k === 1) ? 'Take the gateway (the gold ring) to her quarter as she rises, then stack with the raid.' : 'Stack with the raid on her quarter as she rises.', 0); };
   // (the kicks: Vicious Echoes from each Shrieker)
   const kickables = (t) => S.echoes.filter((e) => t >= e.t0 && t <= e.t1 && !G.p3.kick[e.sh] && G.p3.sh[e.sh]).map((e) => ({ key: e.sh, kind: 'Vicious Echoes', p: [G.p3.sh[e.sh].x, G.p3.sh[e.sh].y], who: GDZ_RAID.find((id) => S.job[id].kick === e.k) || null, t0: e.t0, c: e.c }));
-  const kicked = (k, who, t) => { G.p3.kick[k.key] = who; k.c.t1 = Math.min(k.c.t1, t); if (who === A.me) A.say('Kicked: Vicious Echoes interrupted.'); };
+  const kicked = (k, who, t) => { G.p3.kick[k.key] = who; k.c.t1 = Math.min(k.c.t1, t); if (who === A.me) { A.say('Kicked: Vicious Echoes interrupted.'); if (A.sfx) A.sfx('ok'); } };
   const kick = () => { sync(); if (!G || !G.p3) return; const t = G.t, me = A.me, rg = range(me);
     if (!rg) { A.say('Healers have no kick in Midnight (only a Restoration Shaman).', true); return; } if (stunned(me, t)) { A.say('You\'re stunned.', true); return; }
     if (t - G.p3.kickCd < 15) { A.say('Kick is on cooldown: ' + Math.ceil(15 - (t - G.p3.kickCd)) + ' s.', true); return; }
