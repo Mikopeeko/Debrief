@@ -426,6 +426,19 @@ function pgP3(A) {
     L0.push(['The Shriekers (8:30)', 'Two hatch in the venom. ' + (e.kick ? 'Kick Shrieker ' + e.kick + '\'s Vicious Echoes (8:47) with E.' : 'Their kickers stop Vicious Echoes at 8:47.') + ' Kill them fast.']);
     L0.push(['The last burn (9:37)', 'Rage of the Shackled: the heart opens at 9:43, by her corner. Burn it: she dies at about 9:51.']);
     return '<ul class="pg-asg">' + L0.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
+  // ---- the shared setup screen (practice.js, Nov 15, Flex via Main: "still too complex and confusing"): a role, then one job in plain words, as
+  // phase 2's. The soak sets are the guide's plan's (the 1st a ranged's, the 2nd a melee's, the 3rd a healer's); a kick is a melee's or a ranged's;
+  // the red circle comes at random, like the real fight (one melee and one ranged DPS each set since Nov 6) ----
+  const SJ = { m: [['s2', 'Soak the 2nd bite'], ['k1', 'Kick a Shrieker'], ['none', 'Stack and hit']], r: [['s1', 'Soak the 1st bite'], ['k2', 'Kick a Shrieker'], ['none', 'Stack and hit']], h: [['s3', 'Soak the 3rd bite'], ['none', 'Heal, no soak']] };
+  const jobNow = (j) => (j.soak ? 's' + j.soak : j.kick ? 'k' + j.kick : 'none');
+  const setupCard = { roles: ['m', 'r', 'h'],
+    now: () => { const e = eff(), r = e.role, v = jobNow(e); return { role: r, job: SJ[r].some((x) => x[0] === v) ? v : SJ[r][0][0] }; },
+    jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
+    set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, soak: v[0] === 's' ? +v[1] : 0, kick: v[0] === 'k' ? +v[1] : 0, bite: 'random' }; save(); },
+    say: () => { const v = setupCard.now().job, e = eff(), n = +v.slice(1), circle = e.role === 'h' ? '' : ' A red circle may land on you: walk it to the gold ring.';
+      return (v[0] === 's' ? 'You soak the ' + ORD[n] + ' Serpent\'s Bite (' + ['', '6:42', '7:46', '9:30'][n] + '): stand on the stacked red circles, press Q as they drain, then spread to the edge.'
+        : v[0] === 'k' ? 'You stack with the raid on her quarter and kick Shrieker ' + n + '\'s Vicious Echoes at 8:47 with E.'
+        : e.role === 'h' ? 'You stack with the raid on her quarter, keep out of the red circles and move a quarter left at each Circling Prey.' : 'You stack with the raid on her quarter, hit what\'s up, and move a quarter left at each Circling Prey.') + circle; } };
   // (the start card's "Your job in short": four plain lines)
   const short = () => { const e = eff(), L0 = [];
     L0.push('Get onto her quarter (gateway or walk) and stack with the raid. At each Circling Prey (7:12, 8:03, 9:04) move one quarter left first.');
@@ -508,9 +521,9 @@ function pgP3(A) {
     if (t >= T.heart && t < T.end + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 4.5, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 4.5, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); void al; };
 
-  return { part: 3, dodges: true, walk, lead: 'The real fight clock from 6:12, from the 17 top Mythic kills since the Nov 6 hotfix. Pick your job: the other 19 play the rest of the plan. Phase 3 plays in 3D.',
+  return { part: 3, dodges: true, walk,
     script: (o) => pgP3Script({ ...(o || {}), me: A.me, pick: mine() ? eff() : null }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => { sync(); return pgP3Floor(x, y, S && G && G.p3 ? alive(G.t) : [1, 1, 1, 1], 0.35); }, bossAt, tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, upNext, acts, hud, card, bind, role, asg, short, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
+    jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
     clean: 'Onto her quarter in time, every bite cleared and spread, out of every wave and off every quarter before it broke. Try another job.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, alive: (t) => { sync(); return alive(t); }, raidStep: (t) => { sync(); return raidStep(t); } };
 }

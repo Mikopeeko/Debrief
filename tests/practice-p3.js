@@ -167,7 +167,14 @@ function checks(H, say) {
   if (!/pgN = \(\/\[\?&#\]practice=\(\\d\)\//.test(GJ) || !/pgPart\(S\.gdzBoss, S\.gdzDiff \+ n\)/.test(GJ) || ctx.pgPart("Ula'tek", 'm3') !== part3) bad('`?practice=3` on the guide no longer opens phase 3 (check F)');
   if (!BP.includes("'practice-p2.js', 'practice-p3.js'") || !BP.includes("(& $read 'practice-p2.js') + \"`n\" + (& $read 'practice-p3.js')")) bad('build.ps1 no longer checks src/practice-p3.js or puts it into the page right after practice-p2.js (check F)');
   if (!/if \(P2 && !P2\.dodges\) return \{ T, fast \}/.test(PJ)) bad('practice.js\'s shared dodge no longer serves phase 3 (P2.dodges, check F)');
-  if (!/esc\(P2\.lead \|\|/.test(PJ) || !/'\?practice' \+ \(P2 \? '=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('practice.js lost phase 3\'s start card line or the score link\'s ?practice=3 (check F)');
+  if (!/'\?practice' \+ \(P2 \? '=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('practice.js lost the score link\'s ?practice=3 (check F)');
+  // (the shared one-screen setup (Nov 15, Flex via Main: "still too complex and confusing"): phase 3 gives it a role, then one job in plain words)
+  { const su = dbg.P2.setup; if (!/const SETUP = P2 \? P2\.setup/.test(PJ) || !su || !Array.isArray(su.roles)) bad('phase 3 gives the shared setup screen no setup (P2.setup, check F)');
+    else { const saved = dbg.P2.pick; try { su.roles.forEach((r) => su.jobs(r).forEach(([v, label]) => { su.set(r, v); const nw = su.now(), pk = dbg.P2.pick, me = dbg.P2.slotOf(pk), d = ctx.pgP3Jobs(3, me, pk);
+      if (nw.role !== r || nw.job !== v) bad('the setup\'s "' + label + '" for ' + r + ' comes back as ' + nw.role + ' ' + nw.job + ' (check F)');
+      if ([1, 2, 3].some((n) => Object.keys(d.J).filter((id) => d.J[id].sk.includes(n)).length !== 3) || [1, 2].some((k) => Object.keys(d.J).filter((id) => d.J[id].kick === k).length !== 1)) bad('the setup\'s "' + label + '" for ' + r + ' loses a soaker or a kicker (check F)');
+      if (v[0] === 's' && !d.J[me].sk.includes(+v[1])) bad('the setup\'s "' + label + '" doesn\'t make you that set\'s soaker (check F)'); if (v[0] === 'k' && d.J[me].kick !== +v[1]) bad('the setup\'s "' + label + '" doesn\'t make you that Shrieker\'s kicker (check F)');
+      if (!/^You /.test(su.say() || '')) bad('the setup\'s sentence for "' + label + '" is "' + su.say() + '" (check F)'); })); } finally { dbg.P2.pick = saved; } } }
   { const k = /pg3dP3\(\{([^}]*)\}\)/.exec(P3J); if (!k) bad('practice3d.js no longer builds phase 3\'s 3D pieces (pg3dP3, check F)');
     else k[1].split(',').map((x) => x.trim()).filter((x) => /^[A-Za-z_]\w*$/.test(x)).forEach((n) => { if (!new RegExp('(?:\\b(?:const|let|var)\\s+|,\\s*)' + n + '\\s*=').test(P3J)) bad('phase 3\'s 3D kit is handed "' + n + '", which the 3D view doesn\'t declare (check F)'); });
     if (!/A\.P2\.part === 3/.test(P3J) || !/m\.name = 'pg-rim'/.test(P3J) || !/\bplat \}\)/.test(P3J)) bad('practice3d.js no longer hands phase 3 the platform to hide (plat, the named rim, check F)'); }
