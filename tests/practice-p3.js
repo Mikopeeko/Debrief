@@ -155,7 +155,7 @@ function checks(H, say) {
       dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, false, seed), DL = (dbg.G.dpsM && dbg.G.dpsM.list) || [], tag = JSON.stringify(pk) + ' seed ' + seed;
       ['clutch', 'wretch', 'shrieker', 'heart'].forEach((k) => { const m = DL.filter((q) => q.kind === k); if (!m.length || m.some((q) => q.fr < 0.5)) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m.length ? m.map((q) => Math.round(q.fr * 100) + '%').join(' ') : 'no moment') + ', check I)'); });
       if (r.log.some((x) => /was up|were up|was open/.test(x))) bad('the autopilot (' + tag + ') misses a damage moment: ' + r.log.join(' | ') + ' (check I)');
-      if (dbg.P2.dpsNames(DL) !== 'the clutches, the Wretch, the Shriekers, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
+      if (dbg.P2.dpsNames(DL) !== 'the clutches, the Rawlings, the Wretch, the Shriekers, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
     dbg.P2.pick = pkI; const st = dbg.sim(meI, false, false, 3).log.join(' | ');
     ['The clutches were up', 'The Wretch was up', 'The Shriekers were up'].forEach((x) => { if (!st.includes(x)) bad('standing still all phase, "' + x + '" isn\'t in the mistakes (check I)'); });
     // (a soaker on the 2nd bite (7:46 to 8:05) isn't told they missed the Wretch then)
@@ -215,7 +215,7 @@ function checks(H, say) {
     { dbg.P2.pick = PK0; dbg.sim(dbg.P2.slotOf(PK0), true, false, 3); const b = dbg.S.bites[0], st = dbg.G.p3.bite[0], cl = st && st.done ? st.done - b.land : null; if (cl == null || cl < 12.3 || cl > 14.2) bad('three soakers clear the 1st bite ' + (cl == null ? 'never' : cl.toFixed(1) + ' s') + ' after it lands; the kills take 13 (check K)'); }
     // (the Wretch was dragged from 7:29; the kills leave it until 7:34 and have it at its bubble about 7:40; it died 2.6 s early)
     { dbg.at(T.womb + 24, dbg.P2.slotOf(PK0), { seed: 3 }); const w = dbg.G.p3.wr; if (!w || hyp([w.x, w.y], dbg.S.wretch.p0) > 0.5) bad('the Wretch moves before 25 s after it lands; on all 17 kills it stays put until then (check K)');
-      if (T.wdie < 507.5 || T.wdie > 512) bad('the Wretch dies at ' + clkS(T.wdie) + '; on the kills about 8:27 to 8:32 (check K)'); }
+      /* (its death time is health-driven now: check L) */ }
     // (the second gateway: the screen offered it to everyone, the arrow only to ranged and healers)
     { const pk = { role: 'm', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.gate2w - 0.3, me, { seed: 3 }); const g2 = dbg.S.gates.find((g) => g.k === 2); for (let i = 0; i < 12; i++) { dbg.pos = dbg.S.F2([18, 18], 1); dbg.stepOwn(1); } /* (from before the autopilot would take it, then held on her second quarter) */
       if (g2 && hyp(dbg.job(me).T, g2.p) > 3) bad('a melee on her second quarter at 8:07 isn\'t sent to the gateway the screen offers (check K)'); }
@@ -226,6 +226,27 @@ function checks(H, say) {
     if (/cast bar/.test(P3S.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''))) bad('a phase 3 text still points at a cast bar that her waves\' cast can hide (check K)');
     if (!/onto her first quarter \(5 of 17 kills/.test(P3S) || !/second Circling Prey \(7 of 17/.test(P3S)) bad('the header\'s gateway counts aren\'t the logs\' (5 and 7 of 17, check K)');
   } catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check K)'); } finally { reset(); }
+  // L. the mechanics audit (Nov 15, the phase 1 chat's read of every part; Flex: "if this skips any part of the fight that requires mechanical execution
+  //    its not good enough", "add spawns being missed"): before it, every phase 3 add left on a timer whatever you did, the default job had no kick, a missed
+  //    Vicious Echoes didn't tick, Circling Prey 2 and 3 had no defensive prompt, and the last burn had no debris
+  try {
+    const P3S = rd('practice-p3.js'), pkR = { role: 'r', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pkR; const meR = dbg.P2.slotOf(pkR);
+    // (the clutches: health, broken into Rawlings that stay until killed; a whole one at the end of its gestation hatches a Viper)
+    dbg.at(388, meR, { seed: 3 }); const cl = dbg.P2.tgts(dbg.G.t).find((o) => o.kind === 'clutch'); if (!cl || !(cl.max > 0) || !(cl.hp > 0)) bad('a gripped clutch has no health bar (check L)');
+    else { const h0 = dbg.G.p3.cl[cl.key].hp; dbg.P2.hit(cl.key); if (!(dbg.G.p3.cl[cl.key] && dbg.G.p3.cl[cl.key].hp < h0)) bad('hitting a clutch doesn\'t hurt it (check L)'); }
+    { const r = dbg.sim(meR, true, false, 3), raw = (dbg.G.dpsM && dbg.G.dpsM.list || []).filter((m) => m.kind === 'rawling'); if (r.log.some((x) => /hatched a Viper/.test(x))) bad('the autopilot, hitting the clutches, still lets one hatch a Viper: ' + r.log.join(' | ') + ' (check L)'); if (!raw.length) bad('broken clutches leave no Rawlings to kill (check L)'); }
+    { const st = dbg.sim(meR, false, false, 3).log.join(' | '); if (!/Slithering Clutch wasn't broken in time/.test(st)) bad('with you hitting nothing, every clutch still breaks in time; the far one, gripped in last, should hatch a Viper (check L)'); }
+    if (/t >= c\.gone|c\.hatch/.test(P3S)) bad('a clutch still leaves on a timer (check L)');
+    // (the Shriekers and the Wretch: health; the Wretch's third bubble when it lives; Acidic Expulsion on the raid)
+    dbg.at(519, meR, { seed: 3 }); const sh = dbg.P2.tgts(dbg.G.t).filter((o) => o.kind === 'shrieker'); if (sh.length !== 2 || sh.some((o) => !(o.max > 0))) bad('the Shriekers have no health bars (check L)'); if (!dbg.G.debs.acid || dbg.G.debs.acid.until <= dbg.G.t) bad('no Acidic Expulsion on the raid once the Shriekers are up (check L)');
+    { dbg.sim(meR, true, false, 3); const wd = dbg.G.p3.wrDead, sd = Object.values(dbg.G.p3.shDead); if (!wd || wd < 495 || wd > 516) bad('the Wretch dies at ' + (wd ? clkS(wd) : 'never') + ' with you on it; the kills kill it 8:27 to 8:32 (check L)'); if (sd.length !== 2 || sd.some((x) => x < 515 || x > 540)) bad('the Shriekers die at ' + sd.map(clkS).join(', ') + ' with you on them; the kills kill them about 8:49 to 8:53 (check L)'); }
+    { const st = dbg.sim(meR, false, false, 3).log.join(' | '); if (!/Wretch lived to its third bubble/.test(st)) bad('with nobody but the bots on the Wretch, it never reaches its third bubble (check L)'); if (dbg.G.p3.wrDead && dbg.G.p3.wrDead < 525) bad('the bots alone kill the Wretch by ' + clkS(dbg.G.p3.wrDead) + ': your hits don\'t matter (check L)'); }
+    // (kicks: the default job for melee and ranged; a missed Vicious Echoes ticks)
+    { const su = dbg.P2.setup; if (su && (su.jobs('m')[0][0][0] !== 'k' || su.jobs('r')[0][0][0] !== 'k')) bad('a Shrieker kick isn\'t the default job for melee and ranged (check L)'); if (!/A\.has\('echo'\)\) G\.hp -=/.test(P3S)) bad('a missed Vicious Echoes doesn\'t tick (check L)'); if (!/const due = range\(A\.me\) && kickables\(t\)/.test(P3S)) bad('the E button no longer lights up while your kick is due (check L)'); }
+    // (Circling Prey 2 and 3: press Q; the last burn's debris)
+    { const pk = { role: 'r', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.prey[1] + 6, me, { seed: 3 }); dbg.pos = dbg.S.F2([14, 14], 2); dbg.stepOwn(1); if (!/Press Q/.test(dbg.P2.jobText())) bad('at the 2nd Circling Prey, off her quarter, the screen doesn\'t say to press Q: ' + dbg.P2.jobText() + ' (check L)'); }
+    if (!script({ seed: 3 }).impacts.some((m) => m.name === 'Falling Debris' && m.at > T.heart)) bad('no Falling Debris in the last heart burn (check L)');
+  } catch (e) { bad('the mechanics audit\'s checks crashed: ' + e.message + ' (check L)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
