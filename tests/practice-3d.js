@@ -353,30 +353,33 @@ module.exports = function practice3d(say, H) {
       if (!/pg3dHud\(CQ, HB\)/.test(nm) || !/BX\.push\(q\)/.test(nm)) nope('the labels and names don\'t keep off the bars (their boxes don\'t join the call-outs\' in names())'); } }
   // 13. the figures (Nov 16, Flex: "download and use one of those models ... for just the player", then "No wizard option for ranged classes? Or
   //     clerics for healers?", "another one for ranged classes like a hunter", "can you apply these to all of the characters in the game?
-  //     including the raid members", "you can use that guys versions"): free (CC0) KayKit figures loaded at runtime from pinned commits (never a
-  //     branch, never bundled), read by three.js's plain-script GLTFLoader and cloned with its SkeletonUtils (r147), only inside the 3D view;
-  //     each look loads once and every wearer gets a clone; if a model can't load, that body stays a capsule; you stand, run and swing, the
-  //     raid stands and runs; the knight, paladin, wizard, hunter, barbarian and cleric picked by the card's Look chip (yours) or by class and
-  //     role; the rings under the raid in class colours; everything freed when the game closes; drawing makes nothing new.
+  //     including the raid members", "you can use that guys versions", "Are there models that can match each class in wow?", "yes! do as many
+  //     as you can"): free (CC0) KayKit figures loaded at runtime from pinned commits (never a branch, never bundled), read by three.js's
+  //     plain-script GLTFLoader and cloned with its SkeletonUtils (r147), only inside the 3D view; each look loads once and every wearer gets a
+  //     clone; if a model can't load, that body stays a capsule; you stand, run and swing, the raid stands and runs; one figure per WoW class
+  //     (plus the Knight), picked by the card's Look list (yours) or each raider's class on the team plan, else the role; the rings under the
+  //     raid in class colours; everything freed when the game closes; drawing makes nothing new.
   { const nope = (m) => bad('the figures: ' + m + ' (check 13)');
     const kk = /const PG3D_KK = '([^']+)'/.exec(P3), kk2 = /const PG3D_KK2 = '([^']+)'/.exec(P3), gl = /const PG3D_GLTF = '([^']+)'/.exec(P3), sku = /const PG3D_SKU = '([^']+)'/.exec(P3), fig = (/const PG3D_FIG = \{[\s\S]*?\} \};/.exec(P3) || [''])[0];
     if (!kk || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/KayKit-Game-Assets\/KayKit-Character-Pack-Adventures-1\.0@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk[1])) nope('the free figures must be KayKit\'s CC0 models from one pinned commit on jsdelivr (PG3D_KK)');
-    if (!kk2 || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk2[1])) nope('the Cleric and Paladin must come from one pinned commit on jsdelivr (PG3D_KK2)');
+    if (!kk2 || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk2[1])) nope('the re-hosted packs must come from one pinned commit on jsdelivr (PG3D_KK2)');
     if (!gl || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/loaders\/GLTFLoader\.js$/.test(gl[1])) nope('the model loader must be three.js\'s plain-script GLTFLoader r147 (PG3D_GLTF)');
     if (!sku || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/utils\/SkeletonUtils\.js$/.test(sku[1])) nope('the cloner must be three.js\'s plain-script SkeletonUtils r147 (PG3D_SKU)');
     if (!/one\(PG3D_GLTF, /.test(P3) || !/one\(PG3D_SKU, /.test(P3)) nope('pg3dMeLoad must load just the loader and the cloner (one(PG3D_GLTF ...), one(PG3D_SKU ...))');
-    const LK = ['knight', 'paladin', 'wizard', 'hunter', 'barbarian', 'cleric'], urls = [...fig.matchAll(/url: ([^,]+),/g)].map((q) => q[1]);
-    if (LK.some((k) => !new RegExp('\\b' + k + ': \\{ url: ').test(fig)) || urls.length !== LK.length) nope('PG3D_FIG must have the six looks: ' + LK.join(', '));
+    const LK = ['knight', 'warrior', 'paladin', 'hunter', 'rogue', 'priest', 'deathknight', 'shaman', 'mage', 'warlock', 'monk', 'druid', 'demonhunter', 'evoker'], urls = [...fig.matchAll(/url: ([^,]+),/g)].map((q) => q[1]);
+    if (LK.some((k) => !new RegExp('\\b' + k + ': \\{ url: ').test(fig)) || urls.length !== LK.length) nope('PG3D_FIG must have the knight and a look for every class: ' + LK.join(', '));
     if (urls.some((x) => !/^PG3D_KK2? \+ '[\w%./-]+\.glb'$/.test(x))) nope('a figure loads from an address that isn\'t one of the two pinned commits');
-    if (!/wizard: \{ url: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/hunter: \{ url: PG3D_KK \+ 'Rogue_Hooded\.glb'/.test(fig) || !/barbarian: \{ url: PG3D_KK \+ 'Barbarian\.glb'/.test(fig) || !/cleric: \{ url: PG3D_KK2 \+ '[^']*Cleric\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/paladin: \{ url: PG3D_KK2 \+ '[^']*Paladin\.glb', anim: PG3D_KK \+ 'Knight\.glb'/.test(fig)) nope('a look is on the wrong model');
-    if (!/const LOOKS = \['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'\]/.test(PJ) || !/class="pg-chip pg-look"/.test(PJ) || !/look: \(\) => look/.test(PJ) || !/cls: \(id\) =>/.test(PJ)) nope('the card has no Look chip going round auto and the looks, or the 3D view can\'t read it or a raider\'s class');
+    if (!/mage: \{ url: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/rogue: \{ url: PG3D_KK \+ 'Rogue\.glb'/.test(fig) || !/priest: \{ url: PG3D_KK2 \+ '[^']*Cleric\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/paladin: \{ url: PG3D_KK2 \+ '[^']*Paladin(_with_Helmet)?\.glb', anim: PG3D_KK \+ 'Knight\.glb'/.test(fig) || !/warlock: \{ url: PG3D_KK2 \+ '[^']*Necromancer\.glb'/.test(fig) || !/druid: \{ url: PG3D_KK2 \+ '[^']*Druid\.glb'/.test(fig)) nope('a class is on the wrong model');
+    if ([...fig.matchAll(/url: PG3D_KK2 \+ [^}]*\}/g)].some((q) => !/anim: PG3D_KK \+ '(Knight|Mage|Rogue|Barbarian)\.glb'/.test(q[0]))) nope('a figure from the re-hosted packs has no clips to borrow (anim)');
+    const ln = (/const LOOKN = \{[^}]*\}, LOOKS = Object\.keys\(LOOKN\);/.exec(PJ) || [''])[0];
+    if (!['auto'].concat(LK).every((k) => new RegExp('\\b' + k + ': ').test(ln)) || !/<select class="pg-look">/.test(PJ) || !/look: \(\) => look/.test(PJ) || !/cls: \(id\) =>/.test(PJ)) nope('the card has no Look list with Auto and every look, or the 3D view can\'t read it or a raider\'s class');
     if (!/c1\.tracks = c1\.tracks\.filter\(\(tr\) => !!root\.getObjectByName\(T\.PropertyBinding\.parseTrackName\(tr\.name\)\.nodeName\)\)/.test(P3)) nope('borrowed clips keep tracks for bones the figure doesn\'t have');
     const calls = P3.split('pg3dMeLoad(T, F.url)').length - 1, pgA = P3.indexOf('function pg3d(host, A)');
     if (calls !== 1 || P3.indexOf('pg3dMeLoad(T, F.url)') < pgA) nope('a model must load only inside pg3d (figLoad: ' + calls + ' call(s))');
     if (!/if \(rk in TPL\) return; TPL\[rk\] = null;/.test(P3)) nope('a look\'s model can load more than once in a 3D view (TPL)');
     if (!/\}\)\.catch\(\(\) => \{ TPL\[rk\] = false;/.test(P3)) nope('a model that can\'t load must leave that body a capsule (no .catch)');
     if (!/const root = T\.SkeletonUtils\.clone\(P0\.root\); root\.traverse\(\(m\) => \{ if \(m\.isSkinnedMesh && m\.skeleton\) own\.push\(m\.skeleton\); \}\);/.test(P3)) nope('each wearer must get a SkeletonUtils clone, its bones freed on close');
-    if (!/if \(\/paladin\/i\.test\(c\)\) return 'paladin';/.test(P3) || !/return r === 'r' \? \(\/hunter\/i\.test\(c\) \? 'hunter' : 'wizard'\) : r === 'h' \? 'cleric' : r === 't' \|\| mine \? 'knight' : 'barbarian';/.test(P3) || !/const L = mine && A\.look \? A\.look\(\) : 'auto'; if \(PG3D_FIG\[L\]\) return L;/.test(P3)) nope('a look isn\'t picked by the Look chip (yours), else by class and role (a Paladin the paladin, a Hunter the hunter, ranged the wizard, healers the cleric, tanks and your melee the knight, the raid\'s melee the barbarian)');
+    if (!/const L = mine && A\.look \? A\.look\(\) : 'auto'; if \(PG3D_FIG\[L\]\) return L;/.test(P3) || !/if \(c !== 'knight' && PG3D_FIG\[c\]\) return c;/.test(P3) || !/return r === 'r' \? 'mage' : r === 'h' \? 'priest' : r === 't' \|\| mine \? 'knight' : 'warrior';/.test(P3)) nope('a look isn\'t picked by the Look list (yours), else by the raider\'s class, else by role (ranged the mage, healers the priest, tanks and your melee the knight, the raid\'s melee the warrior)');
     if (!/if \(k === 'unit' && s\.you && meNow\(\)\) \{ figPose\(ME, s, A\.G\.lastHitT\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for your figure');
     if (!/if \(k === 'unit' && !s\.you\) \{ const f = botNow\(s\); if \(f\) \{ figPose\(f, s, null\); return; \} \}/.test(P3)) nope('put() doesn\'t swap a raider\'s capsule for its figure');
     const fp = (/const figPose = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];

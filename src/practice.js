@@ -625,7 +625,9 @@ function pgOpen(root, boss, d, pk) {
   let hints = (() => { try { return localStorage.getItem('wla-pg-hints') !== '0'; } catch (e) { return true; } })();
   // (your look in 3D, Flex, Nov 16: a wizard for ranged, a cleric for healers, "another one for ranged classes like a hunter": Auto picks by your
   //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
-  const LOOKS = ['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'], LOOKN = { auto: 'Look: auto', knight: 'Look: knight', paladin: 'Look: paladin', wizard: 'Look: wizard', hunter: 'Look: hunter', cleric: 'Look: cleric' };
+  //  Then a figure for every WoW class (Flex: "Are there models that can match each class in wow?", "yes! do as many as you can"): auto picks
+  //  each raider's class from the team plan (else the role), and the card's Look list picks yours.)
+  const LOOKN = { auto: 'Auto (your class or role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
   let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   const upNext = (t) => { if (P2) return P2.upNext(t); const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));
@@ -865,7 +867,7 @@ function pgOpen(root, boss, d, pk) {
       (parts.length > 1 ? '<div class="pg-seg pg-part" role="group" aria-label="Part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div>' : '') + '</div>' +
       '<div class="pg-sbox">' + setupHtml() + '</div>' +
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
-      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><button type="button" class="pg-chip pg-look" title="Your figure in 3D: auto picks by your role">' + LOOKN[look] + '</button>' +
+      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="Your figure in 3D">Look <select class="pg-look">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
       '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
@@ -882,7 +884,7 @@ function pgOpen(root, boss, d, pk) {
     card.querySelectorAll('.pg-part button').forEach((b) => (b.onclick = () => { if (b.dataset.v === pkNow) return; close(); pgOpen(root, boss, d, b.dataset.v === d ? null : b.dataset.v); }));
     const hb = card.querySelector('.pg-hint'); hb.onclick = () => { hints = !hints; try { localStorage.setItem('wla-pg-hints', hints ? '1' : '0'); } catch (e) { /* (no storage) */ } hb.textContent = hints ? 'Hints on' : 'Hints off'; hb.setAttribute('aria-pressed', String(hints)); };
     const sb = card.querySelector('.pg-spd'); sb.onclick = () => { speed = speed < 1 ? 1 : 0.5; sb.textContent = speed < 1 ? 'Half speed' : 'Normal speed'; sb.setAttribute('aria-pressed', String(speed < 1)); };
-    const lb = card.querySelector('.pg-look'); if (lb) lb.onclick = () => { look = LOOKS[(LOOKS.indexOf(look) + 1) % LOOKS.length]; try { localStorage.setItem('wla-pg-look', look); } catch (e) { /* (no storage) */ } lb.textContent = LOOKN[look]; };
+    const lb = card.querySelector('.pg-look'); if (lb) lb.onchange = (e) => { look = LOOKS.includes(e.target.value) ? e.target.value : 'auto'; try { localStorage.setItem('wla-pg-look', look); } catch (er) { /* (no storage) */ } };
     card.querySelector('.pg-at').onchange = (e) => { startAt = +e.target.value || 0; };
     card.querySelector('.pg-go').onclick = begin; };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }

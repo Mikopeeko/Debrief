@@ -30,22 +30,31 @@ const pg3dLoad = () => { if (PG3D_LIB) return PG3D_LIB;
 // the capsule. three.js's own GLTFLoader reads it (the last plain-script one, r147, on the page's r149). A fresh copy each time the 3D view opens (the browser keeps the file),
 // so closing the game frees all of it. ----
 const PG3D_GLTF = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js'; /* (the last version with a plain-script loader: r148 dropped examples/js; it uses the page's three.js) */
-// (one figure per role, Flex: "No wizard option for ranged classes? Or clerics for healers?": melee and tanks the Knight, ranged the Mage (a
-//  wizard with a staff and a pointed hat), healers the healer figure; each lists the props it holds by default that it shouldn't, and its swing)
+// (the figures, Flex, Nov 16: "download and use one of those models ... for just the player", then a wizard for ranged and a cleric for
+//  healers, "another one for ranged classes like a hunter", the whole raid, and "Are there models that can match each class in wow? like
+//  rogues, warlocks, etc?" / "yes! do as many as you can": a figure for each WoW class (keys as the team plan's class names, lower case), plus
+//  the Knight for tanks and melee without a class. Each lists the props its model holds by default that it shouldn't, and its swing.)
 const PG3D_KK = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/';
-//  Then "another one for ranged classes like a hunter": the hooded Rogue with a crossbow. The card's Look chip can pick any of them.)
+// (PG3D_KK2: Kay Lousberg's other packs (same style, CC0, some from his paid monthly series), from a re-hosted copy at one pinned commit (Flex:
+//  "you can use that guys versions", "if they vanish they vanish we will find new ones"; if it goes, those bodies fall back to capsules). They
+//  carry no clips and no props: anim names the free model whose clips they borrow (their skeleton is a subset of its), hold the props taken
+//  from it into their hands, metal tames mirror-black plate. Stand-ins for classes with no figure of their own say so.)
 const PG3D_KK2 = 'https://cdn.jsdelivr.net/gh/GeorgeQLe/assets-kaykit-3d-characters@af08a62d3669370ec4636ae6314b38cdcd5dd759/assets/kaykit/';
 const PG3D_FIG = {
   knight: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i] },
-  wizard: { url: PG3D_KK + 'Mage.glb', hide: ['1H_Wand', 'Spellbook', 'Spellbook_open'], atk: [/^spellcast_shoot$/i, /spellcast/i] },
-  hunter: { url: PG3D_KK + 'Rogue_Hooded.glb', hide: ['Knife_Offhand', '1H_Crossbow', 'Knife', 'Throwable'], atk: [/^2h_ranged_shoot$/i, /ranged_shoot/i] },
-  barbarian: { url: PG3D_KK + 'Barbarian.glb', hide: ['1H_Axe_Offhand', 'Barbarian_Round_Shield', '2H_Axe', 'Mug'], atk: [/^1h_melee_attack_chop$/i, /(1h|melee).*(chop|slash|slice)/i] },
-  // (the Cleric and the Paladin: Kay Lousberg's, same style, CC0, from his paid monthly packs; here from a re-hosted copy at one pinned commit
-  //  (Flex, Nov 16: "you can use that guys versions", "if they vanish they vanish we will find new ones"; if it goes, they fall back to the
-  //  capsule). They carry no clips and no props: anim names the model whose clips they borrow (their
-  //  skeleton is a subset of the Knight's), hold the props taken from it into their hands, metal tames the Paladin's mirror-black gold plate.)
-  cleric: { url: PG3D_KK2 + 'mystery-monthly-series-6/3%20-%20September%202025%20-%20Cleric/characters/Cleric.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
-  paladin: { url: PG3D_KK2 + 'mystery-monthly-series-4/10%20-%20April%202024%20-%20Paladin/characters/gltf/Paladin.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['Badge_Shield', 'handslotl']], metal: 0.3, hide: [], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i], cast: [/^spellcast_shoot$/i] } };
+  warrior: { url: PG3D_KK + 'Barbarian.glb', hide: ['1H_Axe', '1H_Axe_Offhand', 'Barbarian_Round_Shield', 'Mug'], atk: [/^2h_melee_attack_chop$/i, /(2h|melee).*(chop|slice)/i] }, /* (the Barbarian with the big two-handed axe: the plate Warrior looked just like the Knight) */
+  paladin: { url: PG3D_KK2 + 'mystery-monthly-series-4/10%20-%20April%202024%20-%20Paladin/characters/gltf/Paladin_with_Helmet.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['Badge_Shield', 'handslotl']], metal: 0.3, hide: [], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i], cast: [/^spellcast_shoot$/i] },
+  hunter: { url: PG3D_KK2 + 'adventurers-2.0/Characters/gltf/Ranger.glb', anim: PG3D_KK + 'Rogue.glb', hold: [['2H_Crossbow', 'handslotr']], hide: [], atk: [/^2h_ranged_shoot$/i] },
+  rogue: { url: PG3D_KK + 'Rogue.glb', hide: ['1H_Crossbow', '2H_Crossbow', 'Throwable'], atk: [/^dualwield_melee_attack_slice$/i, /dualwield.*(slice|stab|chop)/i] },
+  priest: { url: PG3D_KK2 + 'mystery-monthly-series-6/3%20-%20September%202025%20-%20Cleric/characters/Cleric.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  deathknight: { url: PG3D_KK2 + 'skeletons-1.1/characters/gltf/Skeleton_Warrior.glb', anim: PG3D_KK + 'Knight.glb', hold: [['2H_Sword', 'handslotr']], hide: [], atk: [/^2h_melee_attack_slice$/i, /2h_melee_attack/i] }, /* (the undead Skeleton Warrior with a greatsword) */
+  shaman: { url: PG3D_KK2 + 'mystery-monthly-series-5/8%20-%20February%202025%20-%20Caveman/characters/Caveman.glb', anim: PG3D_KK + 'Barbarian.glb', hold: [['1H_Axe', 'handslotr'], ['Barbarian_Round_Shield', 'handslotl']], hide: [], atk: [/^1h_melee_attack_chop$/i, /(1h|melee).*(chop|slash|slice)/i], cast: [/^spellcast_shoot$/i] }, /* (a stand-in: the tribal Caveman with an axe and shield, no shaman figure exists in the set) */
+  mage: { url: PG3D_KK + 'Mage.glb', hide: ['1H_Wand', 'Spellbook', 'Spellbook_open'], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  warlock: { url: PG3D_KK2 + 'skeletons-1.1/characters/gltf/Necromancer.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  monk: { url: PG3D_KK2 + 'mystery-monthly-series-4/8%20-%20February%202024%20-%20Ninja/character/Ninja.glb', anim: PG3D_KK + 'Knight.glb', hide: ['Ninja_Mask', 'Ninja_Headband'], atk: [/^unarmed_melee_attack_punch_a$/i, /unarmed_melee_attack_punch/i] }, /* (the Ninja, unmasked: an unarmed fighter in a gi) */
+  druid: { url: PG3D_KK2 + 'adventurers-2.0/Characters/gltf/Druid.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  demonhunter: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['1H_Sword_Offhand', 'handslotl']], hide: [], atk: [/^dualwield_melee_attack_slice$/i, /dualwield.*(slice|chop|stab)/i] },
+  evoker: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Mage.glb', hold: [['1H_Wand', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] } }; /* (evoker: a stand-in, no dragon-kin figure exists in the set) */
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
 //  model is loaded, and each raider gets a clone of it from three.js's SkeletonUtils, the same r147 plain-script set as the loader)
 const PG3D_SKU = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/SkeletonUtils.js';
@@ -700,8 +709,8 @@ function pg3d(host, A) {
   //  look is loaded once (TPL) the first time someone wears it, and you and each raider get a clone of it.)
   let ME = null; const TPL = {}, MEF = {}, BOTF = new Map(), FIGL = [];
   const lookOf = (id, mine) => { const L = mine && A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (yours can be picked on the card) */
-    const r = A.rl ? A.rl(id) : 'm', c = A.cls ? A.cls(id) : ''; if (/paladin/i.test(c)) return 'paladin'; /* (a Paladin on the team plan, Flex's own class) */
-    return r === 'r' ? (/hunter/i.test(c) ? 'hunter' : 'wizard') : r === 'h' ? 'cleric' : r === 't' || mine ? 'knight' : 'barbarian'; }; /* (tanks the knight, the raid's melee the barbarian, your own melee the knight) */
+    const r = A.rl ? A.rl(id) : 'm', c = String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, ''); if (c !== 'knight' && PG3D_FIG[c]) return c; /* (the raider's class on the team plan) */
+    return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
   const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F = PG3D_FIG[rk];
     Promise.all([pg3dMeLoad(T, F.url), F.anim ? pg3dMeLoad(T, F.anim) : null]).then(([g, g2]) => { if (dead) return; const root = g.scene;
     F.hide.forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
