@@ -31,6 +31,9 @@ const PG_INT = {
   // room its eggs land in)
   mark: { Y: 112.5, P: 292.5, B: 202.5 }, area: { Y: [28, 118], P: [248, 332], B: [152, 210] },
   R: 10, CRACK: 3.5, MID: 8, KB: 6, GATHER: 23.5, GA: 292.5, SPREAD: 4,
+  // (two carriers splash when their rings touch: 4.3 yards apart, measured on 21 real Noxious Splashes (3.5 to 5.6, median 4.3); Flex, Nov 15:
+  // "Yes, use measured". practice.js reads it from the part (splash))
+  SPLASH: 4.3,
   TN: { Y: 'Yellow', P: 'Purple', B: 'Blue' }, TC: { Y: '#f5d33a', P: '#c86bff', B: '#3d8bff' }, TM: { Y: 'Star', P: 'Diamond', B: 'Square' },
   PN: ['', 'Star', 'Triangle', 'Cross'],
   // (where she comes up as the platform shatters: the outer corner of one quarter, a different one each pull (the 17 kills: north-east 3, north-west
@@ -156,7 +159,7 @@ function pgInt(A) {
   const called = (t) => t >= S.soaks[0].cast; /* (the first coil rises on Star, Triangle or Cross: the caller calls the pattern, and every team knows its spots) */
   const nextSoak = (id, t) => S.soaks.find((s) => s.group.includes(id) && s.at >= t - 0.15) || null;
   const ordOf = (s) => S.soaks.filter((q) => q.team === s.team && q.at <= s.at).length;
-  // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, so their 3-yard rings never touch; the rest near the middle)
+  // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, 8.7 yards apart, so their rings never touch (they splash at 4.3); the rest near the middle)
   const slotIn = (s, id) => { const car = s.group.filter((q) => S.job.carry.has(q)), i = car.indexOf(id); if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 0.6; return [s.x + Math.cos(a) * 5, s.y + Math.sin(a) * 5]; }
     return spiral([s.x, s.y], Math.max(0, s.group.filter((q) => !S.job.carry.has(q)).indexOf(id)), 3); };
   const preSpot = (id) => { const g = teamOf(id), L = S.job.list[g], car = L.filter((q) => S.job.carry.has(q)), i = car.indexOf(id), c = S.pre[g];
@@ -174,7 +177,7 @@ function pgInt(A) {
       // (the melee and tanks to the nearest Rawling first, until her bubbles show; the ranged and healers reach them from the line)
       if ((id[0] === 'm' || id[0] === 't') && t < T.bubbles) { const ra = G.adds.filter((a) => a.kind === 'rawling').sort((a, b) => pgDist([b0.x, b0.y], [a.x, a.y]) - pgDist([b0.x, b0.y], [b.x, b.y]))[0]; if (ra) { const d = pgDist([b0.x, b0.y], [ra.x, ra.y]) || 1; T0 = d > 3 ? [ra.x + (b0.x - ra.x) / d * 2.5, ra.y + (b0.y - ra.y) / d * 2.5] : [b0.x, b0.y]; ob = null; fast = d > 6; } } }
     else { const soakNow = !!ns && called(t), eggGo = eggFirst(id, t, b0, e, ns), dE = e ? pgDist([b0.x, b0.y], [e.x, e.y]) : 0; void sp;
-      if (eggGo) { const busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < 4.6); /* (another carrier by it: wait a step off, so the two rings never touch) */
+      if (eggGo) { const busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < P.SPLASH + 1.2); /* (another carrier by it: wait a step off, so the two rings never touch) */
         T0 = t >= e.shell - 0.3 && !busy ? [e.x, e.y] : [e.x + (e.x > 0 ? 1 : -1) * 3.2, e.y + 1.5]; fast = dE > 6; ob = { at: e.shell, p: [e.x, e.y], r: 1 }; }
       else if (soakNow) { T0 = slotIn(ns, id); fast = pgDist([b0.x, b0.y], T0) > 4; ob = { at: ns.at, p: [ns.x, ns.y], r: P.R - 3 }; }
       else if (!ns && called(t)) { T0 = spiral(pgIntGather(), GDZ_RAID.indexOf(id), P.SPREAD); ob = { at: T.shatter, p: pgIntGather(), r: P.SPREAD }; } /* (your soaks done: on toward the diamond line, round the other teams' circles) */
@@ -220,8 +223,8 @@ function pgInt(A) {
     if (cr(T.defBy) && !(G.def >= T.defFrom - 1 && G.def <= T.defBy) && once('def')) A.mistake('def', 'No defensive for the last four slams (' + clk(T.slams[4]) + ' to ' + clk(T.slams[7]) + ').', 'Press Q at about 5:47: the last four slams come 2 s apart and each hits the whole raid. Personals and potions there.', 0);
     // (a bot whose soak kept it from its egg walks to it after: practice.js would hand it over from afar 6 s after its shell breaks, next to another carrier)
     G.eggs.forEach((q) => { if (q.state === 'floor' && q.id !== me && t > q.shell + 5.5 && G.bots[q.id] && pgDist(pos(q.id), [q.x, q.y]) > 2.5) q.shell = t - 5.5; });
-    // (nor does a bot pick its egg up with another carrier beside it: it waits a moment, so their 3-yard rings never touch)
-    { const hold = G.eggs.filter((q) => q.state === 'held' && q.who).map((q) => pos(q.who)); G.eggs.forEach((q) => { if (q.state !== 'floor' || q.id === me || !G.bots[q.id] || t < q.shell) return; const p = pos(q.id); if (pgDist(p, [q.x, q.y]) < 3 && hold.some((h) => pgDist(h, p) < 3.8)) q.shell = t + 0.2; }); }
+    // (nor does a bot pick its egg up with another carrier beside it: it waits a moment, so their rings never touch: 0.6 yards clear of the splash's 4.3)
+    { const hold = G.eggs.filter((q) => q.state === 'held' && q.who).map((q) => pos(q.who)); G.eggs.forEach((q) => { if (q.state !== 'floor' || q.id === me || !G.bots[q.id] || t < q.shell) return; const p = pos(q.id); if (pgDist(p, [q.x, q.y]) < 3 && hold.some((h) => pgDist(h, p) < P.SPLASH + 0.6)) q.shell = t + 0.2; }); }
     // your egg: into one of your soaks by your last one (one mistake or the other, never both: the review, Nov 15). The rule the hint follows
     // (eggFirst) may skip a soak to fetch it first or after; your last soak is the deadline either way
     const e = G.eggs.find((q) => q.id === me), last = S.soaks.filter((s) => s.group.includes(me)).pop();
@@ -258,7 +261,7 @@ function pgInt(A) {
     if (ef) return (t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
     if (ns && called(t)) { const n = ordOf(ns), car = e && e.state === 'held' ? ' Bring your egg: the slam breaks it.' : e && e.state === 'floor' ? ' Get your egg after it.' : '', d = pgDist([G.x, G.y], [ns.x, ns.y]);
       return (d <= ns.r - 1 ? 'In your ' + pgIntOrd(n) + ' soak at ' + mkAt(ns) + ': stay inside until it slams (' + Math.max(0, ns.at - t).toFixed(1) + ' s).' : 'Your ' + pgIntOrd(n) + ' soak: the gold circle at ' + mkAt(ns) + '. Get in before it slams (' + Math.max(0, Math.ceil(ns.at - t)) + ' s).') + car + q; }
-    if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep your egg 3 yards from other carriers.' : '');
+    if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep your ring off other carriers\' rings (about 4 yards apart).' : '');
     if (e && e.state === 'floor') return 'Pick up your egg now: walk over it.' + q;
     if (q) return q.trim();
     if (!ns) return 'Your soaks are done: head for the diamond line (the gold ring), round the other teams\' circles. The last slam is at ' + clk(T.slams[7]) + '.';
@@ -300,7 +303,7 @@ function pgInt(A) {
     save(); box.innerHTML = card(); refresh(); if (refocus && sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } }; };
   const role = () => ({ id: slotOf(pk), name: RN[pk.role], job: P.TN[pk.team] + ' team' + (pk.egg ? ' · egg' : '') + (pk.pat ? ' · pattern ' + pk.pat : '') });
   const asg = () => { const g = pk.team, L0 = [];
-    L0.push(['The eggs (5:24)', 'Eight eggs drop all over the stone at 5:24: step out of their circles.' + (pk.egg ? ' Yours is the gold one. Its shell breaks between 5:31 and 5:40: pick it up and carry it into your next soak, 3 yards from other carriers. The slam breaks it.' : ' Keep 3 yards from the egg carriers.')]);
+    L0.push(['The eggs (5:24)', 'Eight eggs drop all over the stone at 5:24: step out of their circles.' + (pk.egg ? ' Yours is the gold one. Its shell breaks between 5:31 and 5:40: pick it up and carry it into your next soak, keeping your ring off other carriers\' (about 4 yards apart). The slam breaks it.' : ' Keep out of the egg carriers\' way.')]);
     L0.push(['Your team: ' + P.TN[g], 'Wait by ' + P.TM[g] + '. Your soaks: ' + [1, 2, 3].map((p) => P.PN[p] + ' first: ' + lst(soaksOf(g, p))).join('; ') + '.']);
     L0.push(['The coils (5:36 to 5:54)', 'Eight slams, in pairs from opposite sides 2 s apart. Be inside your team\'s 10-yard circle when it slams. Never step into another team\'s: Soul Constrictor keeps you out of the next slam for 5 s.']);
     L0.push(['Personals (5:47)', 'The last four slams come 2 s apart and each one hits the whole raid: press Q (defensive).']);
@@ -309,7 +312,7 @@ function pgInt(A) {
   // (the start card's "Your job in short": four plain lines, your team and soaks, your egg, the defensive, the Shattering)
   const short = () => { const g = pk.team, L0 = [];
     L0.push(pk.pat ? P.TN[g] + ' team, pattern ' + pk.pat + ' (' + P.PN[pk.pat] + ' first): wait by ' + P.TM[g] + ', then soak ' + lst(soaksOf(g, pk.pat)) + '.' : P.TN[g] + ' team: wait by ' + P.TM[g] + '. The first coil sets the pattern; then your ' + (g === 'B' ? 2 : 3) + ' soaks light up in gold.');
-    L0.push(pk.egg ? 'Carry an egg: pick it up when its shell breaks (5:31 to 5:40) and bring it into your next soak.' : 'No egg: step out of the falling eggs at 5:24 and keep 3 yards from the carriers.');
+    L0.push(pk.egg ? 'Carry an egg: pick it up when its shell breaks (5:31 to 5:40) and bring it into your next soak.' : 'No egg: step out of the falling eggs at 5:24 and keep out of the carriers\' way.');
     L0.push('Press Q at 5:47: the last four slams come back to back.');
     L0.push('By 6:09 stand on the diamond line, inside: off the cracks, away from the middle and the edge.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
@@ -358,7 +361,9 @@ function pgInt(A) {
       if (cr(T.shatter)) { const q = pgIntKb(p); if (pgIntCrack(p[0], p[1])) add('on a crack at the Shattering', id, t); else if (!PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1])) add('thrown into the venom at the Shattering', id, t); }
       if (t > T.shatter + 0.6 && pgIntCrack(p[0], p[1]) && !G.int.kb[id]) add('in a crack after the Shattering', id, t); });
     if (cr(T.gather)) G.eggs.forEach((e) => { if (e.state !== 'gone') add('egg not broken by the last slam', e.id || '?', t); });
-    G.int.soakN.splice(0).forEach(([k, n]) => { if (n < 5) add('slam ' + (k + 1) + ' had only ' + n + ' soakers', 'raid', t); }); };
+    G.int.soakN.splice(0).forEach(([k, n]) => { if (n < 5) add('slam ' + (k + 1) + ' had only ' + n + ' soakers', 'raid', t); });
+    // (two carriers' rings touching at the measured splash, 4.3 yards: practice.js's own audit still counts 3 until it reads the part's splash)
+    { const H = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => [e.who, pos(e.who)]); for (let i = 0; i < H.length; i++) for (let j = i + 1; j < H.length; j++) if (pgDist(H[i][1], H[j][1]) < P.SPLASH) add('two carriers\' rings touch (' + P.SPLASH + ' yards)', H[i][0] + '+' + H[j][0], t); } };
 
   // ---- 3D: the shapes for this part (practice3d.js's pg3dShapes adds them to the list it draws) ----
   const cl = (v) => Math.max(0, Math.min(1, v));
@@ -387,7 +392,7 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K) };
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), splash: P.SPLASH };
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
 // ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the
