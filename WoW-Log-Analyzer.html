@@ -75342,7 +75342,8 @@ function pgP3Script(o) {
   S.gates = []; const nf = (p) => pgP3Near(p, [1, 1, 1, 1]);
   if (Qs[0] !== P.land) S.gates.push({ k: 1, p: nf(pgP3R([15, 15], P.land)), to: nf(F(P.gate1To, 0)), t0: T.gate, t1: T.gateEnd });
   S.gates.push({ k: 2, p: nf(F(P.gate2[0], 1)), to: nf(F(P.gate2[1], 1)), t0: T.gate2w, shown: T.gate2[0], t1: T.gate2[1] }); /* (placed by 7:58, takes you from 8:07: it sits in the raid's stack, and through it sooner you'd come out in her waves) */
-  warn(T.start, Qs[0] === P.land ? 'Phase 3: she rises on your quarter. Stack with the raid!' : 'Phase 3: she rises on the ' + P.QN[Qs[0]] + ' quarter. Take the gateway to her!', '#c084ff');
+  // (the calls: short, at most two show at once and the ones about you go first (Main, Nov 15); a fact the boss-mod bars already have gets no call)
+  warn(T.start, Qs[0] === P.land ? 'Phase 3: she rises on your quarter. Stack up!' : 'Phase 3: you need the gateway to reach her!', '#c084ff');
   if (Qs[0] !== P.land) timer(T.gateEnd, 'Gateway closes');
   // Call of the Serpent: the clutches, one on each standing quarter (two in the last set, and two Shriekers where the broken quarters were)
   S.clutches = []; T.call.forEach((c0, ci) => { cast('boss', 'Call of the Serpent', c0, c0 + 4); timer(T.clu[ci], ci === 2 ? 'Clutches and Shriekers' : 'Slithering Clutches'); const n = stepAt(T.clu[ci]), R = Qs[n];
@@ -75352,17 +75353,17 @@ function pgP3Script(o) {
       // in two grips; then Gorefiend's Grasp onto the raid)
       const grips = rel === 0 ? [] : rel === 1 ? [{ at: T.clu[ci] + 0.8, by: P.dk[0] }] : rel === 3 ? [{ at: T.clu[ci] + 1.4, by: P.dk[1] }] : [{ at: T.clu[ci] + 2.6, by: P.dk[1], mid: true }, { at: T.clu[ci] + 4.2, by: P.dk[0] }];
       S.clutches.push({ id, ci, k, rel, p, land: T.clu[ci], grips, grasp: T.clu[ci] + 5, hatch: T.clu[ci] + T.gest, gone: T.clu[ci] + T.gest + 4, n }); }); });
-  warn(T.clu[0], 'Slithering Clutches: the Death Knights grip them in. Hit them!', '#c9d98a');
+  warn(T.clu[0], 'Slithering Clutches: break them before they hatch!', '#c9d98a');
   // Mother's Wrath (5 s): on her tank, in her reach in front of her
   T.wrath.forEach((w0, i) => { const n = stepAt(w0 + 5), tk = herTank(w0 + 5); S.wrath.push({ t0: w0, at: w0 + 5, p: F(P.tank, n), tank: tk }); cast('boss', 'Mother\'s Wrath', w0, w0 + 5); timer(w0 + 5, 'Mother\'s Wrath'); });
   // Serpent's Bite: two red circles 0.5 s after the cast, 15 s of venom; the two stack, three soakers stand in both
-  S.bites = T.bite.map((b0, i) => { const land = b0 + T.biteLand, n = stepAt(land); cast('boss', 'Serpent\'s Bite', b0, b0 + T.biteCast); timer(land, 'Serpent\'s Bite'); warn(land, 'Serpent\'s Bite: the two red circles stack. Soakers in!', '#ff5a6a');
+  S.bites = T.bite.map((b0, i) => { const land = b0 + T.biteLand, n = stepAt(land); cast('boss', 'Serpent\'s Bite', b0, b0 + T.biteCast); timer(land, 'Serpent\'s Bite'); { const on = !!o.me && S.tg[i].includes(o.me), so = !!o.me && !!S.job[o.me] && S.job[o.me].sk.includes(i + 1); warn(land, on ? 'Serpent\'s Bite on you: go to the gold ring!' : so ? 'Your soak: into the stacked red circles!' : 'Serpent\'s Bite: soakers only, keep out!', '#ff5a6a'); }
     return { i, b0, land, end: land + T.venom, n, stack: nf(F(P.stack[i], n)), tg: S.tg[i].filter(Boolean), so: GDZ_RAID.filter((id) => S.job[id].sk.includes(i + 1)) }; });
   // her waves: a wall the whole room wide rolling out from her quarter toward the middle, 12.5 yards a second (the guide's, Nov 11), with gaps; the
   // small tails' rings at the far edges 3.3 s after each cast. (Picked: a 5.5-yard gap every 11 yards, wide enough to stand in with room to spare;
   // the guide draws 3 every 8, which no one can stand in once you allow for a body's width)
   T.waves.forEach((w0, i) => { const t0 = w0 + T.wavesCast, n = stepAt(t0), B = S.her(n), deg = Math.atan2(-B[1], -B[0]) * 180 / Math.PI, cres = []; let prev = -50; for (let z = -44; z <= 44; z += P.GAP[1]) { if (z - P.GAP[0] / 2 > prev + 0.5) cres.push([prev, z - P.GAP[0] / 2]); prev = z + P.GAP[0] / 2; } cres.push([prev, 50]);
-    cast('boss', 'Caustic Waves', w0, t0); timer(t0, 'Her waves'); warn(t0 - 2, 'Her waves: step sideways into a gap!', '#9be13a');
+    cast('boss', 'Caustic Waves', w0, t0); timer(t0, 'Her waves'); warn(t0 - 2, 'Her waves: step into a gap beside you!', '#9be13a');
     S.waves.push({ kind: 'her3', x: B[0], y: B[1], deg, v: 12.5, w: 96, d: 5, cres, warn: 2.2, t0, t1: t0 + 9, name: 'Her Caustic Waves', tip: 'Her waves roll out from her quarter, the whole room wide: step sideways into a gap (the dark lanes).' }); });
   T.tails.forEach((b0, i) => { const n = stepAt(b0), L = i === 4 ? P.tails2 : P.tails, mid = F(P.mel, n); L.forEach((q) => { const O = F(q, n), st = 2 * Math.PI / 16, toR = Math.atan2(mid[1] - O[1], mid[0] - O[0]);
     S.tails.push({ x: O[0], y: O[1], t0: b0, at: b0 + 2.4 }); S.waves.push({ kind: 'tail', ring: 1, x: O[0], y: O[1], n: 16, cw: 7, v: 12.5, d: 5, ph: toR + st / 2, t0: b0 + 2.4, t1: b0 + 2.4 + 9.5, name: 'A small tail\'s Caustic Waves', tip: 'In phase 3 two small tails rise at the far edges behind the raid: watch for their rings and stand in a gap.' }); });
@@ -75372,23 +75373,23 @@ function pgP3Script(o) {
   { const p0 = nf(F(P.womb, 0)), img = F(P.img, 0), bm = F(P.beam, 0), ba = Math.atan2(p0[1] - img[1], p0[0] - img[0]) * 180 / Math.PI;
     S.impacts.push({ x: p0[0], y: p0[1], r: 7, t0: T.womb - 2, at: T.womb, name: 'Toxic Womb', dmg: 25, color: '#c8a36a', tip: 'The Wretch lands in a 7-yard circle: keep out of it.' });
     S.wretch = { p0, land: T.womb, wake: T.wake, dies: T.wdie, fb: T.fester.map(([t0, at], i) => ({ i, t0, at, p: nf(F(P.fb[i], i + 1)) })) };
-    warn(T.womb, 'Toxic Womb: a Wretch landed on the far quarter.', '#c8a36a'); timer(T.womb, 'Toxic Womb');
+    timer(T.womb, 'Toxic Womb'); /* (no call: the bar has it) */
     const b0 = T.incub + 8; cast('boss', 'Toxic Incubation', T.incub, b0); S.beams.push({ tank: 't2', from: img, at: bm, t0: b0, t1: b0 + 4, hits: [0, 1, 2, 3, 4].map((i) => b0 + i) });
     for (let i = 0; i < 5; i++) [90, -90].forEach((a) => S.waves.push({ kind: 'incub', tank: 't2', x: bm[0], y: bm[1], deg: ba + a, v: 12.5, w: 10, d: 5, cres: [[-5, 5]], t0: b0 + 0.5 + i, t1: b0 + 10 + i, name: 'Caustic Waves from the beam', tip: 'The off tank in the spectral beam sends waves out to both sides: keep out of their lanes.' }));
-    S.wretch.fb.forEach((q) => { cast('wretch', 'Fester Burst', q.t0, q.at); warn(q.t0, 'Fester Burst: into the Wretch\'s bubble!', '#d8f22f'); timer(q.at, 'Fester Burst'); }); }
+    S.wretch.fb.forEach((q) => { cast('wretch', 'Fester Burst', q.t0, q.at); warn(q.t0, 'Fester Burst: you have ' + Math.round(q.at - q.t0) + ' s to get in the bubble!', '#d8f22f'); timer(q.at, 'Fester Burst'); }); }
   // Circling Prey (8 s): she destroys her quarter; everyone moves one quarter counter-clockwise first
-  T.prey.forEach((p0, i) => { cast('boss', 'Circling Prey', p0, p0 + T.preyCast); timer(hit[i], 'Circling Prey'); warn(p0, 'Circling Prey: move one quarter left (counter-clockwise)!', '#ff4a4a'); });
-  if (S.gates.some((g) => g.k === 2)) warn(T.gate2[0] + 0.5, 'A gateway to the next quarter is up: take it once her waves pass.', '#c084ff');
+  T.prey.forEach((p0, i) => { cast('boss', 'Circling Prey', p0, p0 + T.preyCast); timer(hit[i], 'Circling Prey'); warn(p0, i === 1 && S.gates.some((g) => g.k === 2) ? 'Circling Prey: take your gateway once her waves pass!' : 'Circling Prey: move one quarter left, you have ' + Math.floor(hit[i] - p0) + ' s!', '#ff4a4a'); });
   // the Shriekers: hatched in the venom where the broken quarters were, tanked to the raid; Vicious Echoes (kick it!), dead about 8:53
   S.shriekers = P.shriek.map((q, i) => ({ id: 'sh' + (i + 1), k: i + 1, p0: F(q, 2), up: T.shriek, dies: T.sdie }));
-  warn(T.shriek, 'Two Blightscale Shriekers: kick their Vicious Echoes!', '#ff9fb2');
+  { const mk = o.me && S.job[o.me] ? S.job[o.me].kick : 0, ck = (t) => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+    warn(T.shriek, mk ? 'Two Shriekers: your kick is Shrieker ' + mk + ' at ' + ck(T.echoes) + ' (E)!' : 'Two Blightscale Shriekers: kill them fast!', '#ff9fb2'); if (mk) warn(T.echoes, 'Kick now: your Shrieker\'s Vicious Echoes (E)!', '#ff9fb2'); }
   S.echoes = S.shriekers.map((s) => ({ sh: s.id, k: s.k, t0: T.echoes, t1: T.echoes + T.echoCast, c: cast('shrieker', 'Shrieker: Vicious Echoes', T.echoes, T.echoes + T.echoCast) })); timer(T.echoes, 'Vicious Echoes');
   // the last burn
-  cast('boss', 'Rage of the Shackled', T.rage, T.heart); warn(T.rage, 'Rage of the Shackled: burn the heart!', '#ff8a5a'); timer(T.heart, 'Heart open'); for (let t = T.heart; t < T.end; t += 4) S.pulses.push(t);
+  cast('boss', 'Rage of the Shackled', T.rage, T.heart); timer(T.heart, 'Heart open'); for (let t = T.heart; t < T.end; t += 4) S.pulses.push(t);
   S.heart = F(P.heart, 3);
   { const al = [0, 0, 0, 0]; al[Qs[3]] = 1; for (let t = T.heart + 2.5; t < T.end - 1; t += 4) for (let j = 0; j < 2; j++) { let q = null; for (let k = 0; k < 40; k++) { const c = F([6 + rnd() * 14, 6 + rnd() * 14], 3); /* (picked: two every 4 s on the inner part of her quarter, away from the heart, the melee by it and the soakers spread at the rim) */ if (pgP3Floor(c[0], c[1], al, 3)) { q = c; break; } }
     if (q) S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t + j * 0.25 - 2, at: t + j * 0.25, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Brown circles: step out before they land.' }); }
-    warn(T.heart + 0.3, 'The heart is open: burn it, step out of the brown circles!', '#c8a36a'); }
+    warn(T.heart + 0.3, 'The heart is open: burn it, dodge brown circles!', '#c8a36a'); }
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
