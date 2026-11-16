@@ -73084,7 +73084,7 @@ function pgOpen(root, boss, d, pk) {
     if (inVenom(x, y)) { hurt(10 * (t - t0)); const e = myEggHeld(); if (e) hatch(e, 'You went into the venom with your egg', 'The water off the platform hatches eggs: stay on the stone.'); if (!G.done.has('venom' + Math.floor(t / 10))) { G.done.add('venom' + Math.floor(t / 10)); G.log.push({ t, kind: 'venom', text: 'You were in the venom off the platform.', tip: 'Stay on the stone.' }); } }
     // raid damage in the heart burn, and what's on you
     S.pulses.forEach((p) => { if (crossed(p)) hurt(6); });
-    const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0) + (has('thrash') ? 1.5 : 0) + 2 * G.adds.filter((a) => a.boil).length; /* (each boiling Rawling's Acidic Expulsion on the raid) */
+    const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0) + (has('thrash') ? 1.5 : 0) + 2 * G.adds.filter((a) => a.boil && !a.own && a.born != null && G.t - a.born >= 35).length; /* (a Rawling's Acidic Expulsion on the raid, from 35 s after it spawns: measured 35.3 to 35.6 s on the 30 fastest kills, phase 2 chat Nov 15; a part's own adds run their own) */
     vipers(t0, t, x, y); addsStep(t0, t);
     G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + (has('sting') ? 0 : 5.5) * (t - t0)); /* (Petrifying Sting: no healing on you while it lasts) */
     if (P2) P2.check(t0, t);
@@ -73095,9 +73095,9 @@ function pgOpen(root, boss, d, pk) {
   // Every part uses this: a part's own adds only need born instead of t1)
   const slamHit = (n) => Math.max(6, Math.round(80 / n));
   const addsStep = (t0, t) => { const dt = t - t0; if (!(dt > 0) || !G.adds.length) return; const hp = (a) => (a.hp == null ? (a.hp = ADD_HP[a.kind] || 3) : a.hp);
-    const raws = G.adds.filter((a) => a.kind === 'rawling' && a.born != null).sort((p, q) => p.born - q.born); if (raws.length) { const a = raws[0]; a.hp = hp(a) - 1.1 * dt; }
-    G.adds.forEach((a) => { if (a.kind === 'viper' && t - (a.born == null ? t : a.born) >= 4) a.hp = hp(a) - 0.35 * dt;
-      if (a.kind === 'rawling' && a.born != null && !a.boil && t - a.born >= 25) { a.boil = true; if (!G.done.has('boil')) { G.done.add('boil'); G.log.push({ t, kind: 'boil', text: 'A Rawling lived 25 s and boiled: its Acidic Expulsion hit the raid.', tip: 'Kill Rawlings within 25 s: press Tab to pick one, then keep pressing 1.' }); } if (!window.__pgAuto) say('A Rawling boiled: kill it!', true); } });
+    const raws = G.adds.filter((a) => a.kind === 'rawling' && a.born != null && !a.own).sort((p, q) => p.born - q.born); if (raws.length) { const a = raws[0]; a.hp = hp(a) - 1.1 * dt; }
+    G.adds.forEach((a) => { if (a.own) return; /* (a part that runs its own adds marks them own: phase 2's Rawlings, Nov 15) */ if (a.kind === 'viper' && t - (a.born == null ? t : a.born) >= 4) a.hp = hp(a) - 0.35 * dt;
+      if (a.kind === 'rawling' && a.born != null && !a.boil && t - a.born >= 25) { a.boil = true; if (!G.done.has('boil')) { G.done.add('boil'); G.log.push({ t, kind: 'boil', text: 'A Rawling lived 25 s and boiled (Boiling Venom: twice as fast and strong).', tip: 'Kill Rawlings within 25 s: press Tab to pick one, then keep pressing 1.' }); } if (!window.__pgAuto) say('A Rawling boiled: kill it!', true); } });
     if (G.adds.some((a) => a.hp != null && a.hp <= 0)) G.adds = G.adds.filter((a) => !(a.hp != null && a.hp <= 0)); };
   // (Flex, Nov 15: "If a viper spawns though it needs to be killed", "it shouldnt just vanish": a Viper no longer leaves after 8 s; it stays until you kill it.
   // The guide: a Viper is deadly, kill it at once; its Petrifying Sting is a big heal absorb. So it crawls to you and stings you every 3 s while it's close:
