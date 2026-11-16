@@ -16,6 +16,7 @@
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 //   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
 //   J. A raider's screen (Flex, Nov 15): your frame and your target's in the bottom stack, spell-icon buttons with keys, the target's health, boss-mod bars; see check J.
+//   M. Sounds you can feel (Flex, Nov 16): waves, slams, the bubble, the sweep, landings, Vipers, her roar, and your attacks by role; see check M.
 //   L. Main's playtest (Nov 15): bot carriers keep clear of you, melee reach the heart, calls clear on the game's clock, the small tails' measured fan; see L.
 //   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
 'use strict';
@@ -381,6 +382,16 @@ function checks(H, say, pj) {
       if (/three waves 2\.4 s later: step out|small tails' rings/i.test(PJ)) L('the small tails are still described as random waves or rings'); }
   } catch (e) { bad('the playtest fixes crashed the game: ' + e.message + ' (check L)'); }
   finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
+  // M. Sounds you can feel (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can"):
+  //    made in the browser from noise and tones (no sound files, never a voice), quiet, never for the autopilot, each wired to its moment
+  { const M = (m) => bad(m + ' (check M)'), kinds = ['wave', 'slam', 'pop', 'sweep', 'thud', 'hiss', 'zip', 'roar', 'fire', 'holy', 'slash', 'whirl'];
+    const fx = (/const FX = \{([\s\S]*?)\};\n/.exec(PJ) || [])[1] || ''; kinds.forEach((k) => { if (!new RegExp('\\b' + k + ': \\(c, t\\) =>').test(fx)) M('there is no "' + k + '" sound'); });
+    if (!/const feel = \(k\) => \{ if \(!sndOn \|\| window\.__pgAuto \|\| !FX\[k\]\) return;/.test(PJ)) M('the sounds play for the autopilot, or ignore the Sound / M switch');
+    if (/\.(mp3|ogg|wav)\b|speechSynthesis|new Audio\(/.test(PJ)) M('the game uses a sound file or a voice; sounds are made in the browser, never a voice');
+    [[/const hitTgt = \(o, t, quiet\) => \{ if \(!quiet\) feel\(rl\(me\) === 'm' \? 'slash' : rl\(me\) === 'h' \? 'holy' : 'fire'\);/, 'your attack (by role)'], [/feel\('whirl'\); \(G\.aoeFx/, 'the area attack'],
+      [/inWave\(w, t, x, y, 5\)\) \{ G\.done\.add\('ws' \+ i\); feel\('wave'\);/, 'a wave passing you'], [/if \(!crossed\(s\.at\)\) return; feel\('slam'\);/, 'a coil\'s slam'], [/if \(c\) feel\('pop'\);/, 'the Wretch\'s bubble'],
+      [/if \(!crossed\(th\.at\)\) return; feel\('sweep'\);/, 'the tail\'s sweep'], [/feel\('thud'\)/, 'something landing near you'], [/const hatch = \(e, why, tip\) => \{ feel\('hiss'\);/, 'a Viper hatching'], [/feel\('zip'\); hurt\(8\);/, 'a Viper\'s sting'], [/feel\('roar'\)/, 'her dive and the heart']]
+      .forEach(([re, what]) => { if (!re.test(PJ)) M('no sound for ' + what); }); }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;

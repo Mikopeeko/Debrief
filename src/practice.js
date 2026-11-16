@@ -257,7 +257,7 @@ function pgOpen(root, boss, d, pk) {
     if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false; /* (still cooling down) */
     if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 1.' : 'Too far away: get closer.', true); return false; }
     G.gcd0 = t; hitTgt(o, t); hud(true); return true; };
-  const hitTgt = (o, t, quiet) => { if (!quiet) (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
+  const hitTgt = (o, t, quiet) => { if (!quiet) feel(rl(me) === 'm' ? 'slash' : rl(me) === 'h' ? 'holy' : 'fire'); if (!quiet) (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
     const cat = dpsCat(t); G.hits = (G.hits || 0) + 1; if (!quiet) { G.lastHitT = t; G.lastHitCat = cat && isRight(cat, o) ? cat : null; } /* (the area attack's extra hits don't change what you're on) */
     const a = G.adds.find((q) => q.id === o.key); if (a) { a.hp = (a.hp == null ? ADD_HP[a.kind] || 3 : a.hp) - 1; if (a.hp <= 0) { G.adds = G.adds.filter((q) => q !== a); G.kills = (G.kills || 0) + 1; say((a.kind === 'viper' ? 'Viper' : 'Rawling') + ' killed.');
       const c2 = dpsCat(t), nx = c2 ? nearestRight(t) : null; G.tgt = nx && isRight(c2, nx) ? nx.key : null; } } /* (training wheels: after a kill your target moves on to the next one that matters) */
@@ -267,7 +267,7 @@ function pgOpen(root, boss, d, pk) {
     if (aoeLeft(t) > 0) { if (!window.__pgAuto) say('Area attack is cooling down: ' + Math.ceil(aoeLeft(t)) + ' s.', true); return false; } if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false;
     if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 2.' : 'Too far away: get closer.', true); return false; }
     G.aoe0 = t; G.gcd0 = t; const c = o.p.slice(), L = tgtList(t).filter((q) => q.key !== o.key && q.kind !== 'boss' && q.kind !== 'tail' && q.kind !== 'heart' && pgDist(q.p, c) - (q.r || 0) <= AOE.r);
-    hitTgt(o, t); L.forEach((q) => hitTgt(q, t, true)); (G.aoeFx = G.aoeFx || []).push({ x: c[0], y: c[1], r: AOE.r, t0: t, n: L.length + 1 }); hud(true); return true; };
+    hitTgt(o, t); L.forEach((q) => hitTgt(q, t, true)); feel('whirl'); (G.aoeFx = G.aoeFx || []).push({ x: c[0], y: c[1], r: AOE.r, t0: t, n: L.length + 1 }); hud(true); return true; };
   const aoeWorth = (t) => { const o = tgtNow(t); return !!o && aoeLeft(t) <= 0 && tgtList(t).filter((q) => q.max && pgDist(q.p, o.p) - (q.r || 0) <= AOE.r).length >= 2; };
   const atkStep = (t) => { if (window.__pgAuto && dpsCat(t)) { if ((!P2 || P2.autoAoe) && aoeWorth(t)) aoeKey(); atkKey(); } }; /* (the autopilot presses 2 when two or more things are close together, in phase 1 and in a part that says autoAoe: its damage moments are tuned for the faster kills) */ /* (the autopilot, a careful player, presses 1 as soon as it's ready) */
   const dpsClose = () => { const D = G.dpsM; if (!D || !D.cur) return; const c = D.cur; D.cur = null; if (c.tot < 1.5) return; const fr = c.ok / c.tot; D.list.push({ kind: c.kind, t0: c.t0, fr });
@@ -296,6 +296,23 @@ function pgOpen(root, boss, d, pk) {
   const sfx = (k) => { if (!sndOn || window.__pgAuto || !SND[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); const t0 = c.currentTime + 0.01;
     SND[k].forEach(([f, at, d]) => { const o = c.createOscillator(), g = c.createGain(), v = k === 'call' || k === 'tick' ? 0.05 : k === 'bad' ? 0.06 : 0.09; o.type = k === 'bad' ? 'sawtooth' : k === 'now' ? 'square' : 'sine'; o.frequency.value = f;
       g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(v, t0 + at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + d); o.connect(g); g.connect(c.destination); o.start(t0 + at); o.stop(t0 + at + d + 0.03); }); } catch (e) { /* (no sound here) */ } };
+  // (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can": what a mechanic feels
+  // like, made the same way, from noise and sliding tones: a whoosh as a wave passes you, a deep boom for a coil's slam, a wet pop for the Wretch's bubble, a
+  // heavy sweep for the tail's Thrash, a thud when something lands near you, a hiss when a Viper hatches and a zip when it stings, a low roar as she dives and
+  // as her heart opens; and your attacks: a fire whoosh that crackles on landing (ranged), a soft holy bell (healers), a blade's swish and thump (melee), a
+  // whirl for the area attack. Quiet, under the calls; nothing for the autopilot)
+  let NZ = null; const noise = (c) => { if (NZ && NZ.sampleRate === c.sampleRate) return NZ; NZ = c.createBuffer(1, Math.floor(c.sampleRate * 1.6), c.sampleRate); const d = NZ.getChannelData(0); let v = 0; for (let i = 0; i < d.length; i++) { v = v * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = v * 1.6; } return NZ; };
+  const nz = (c, t0, d, v, type, f0, f1, q) => { const n = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); n.buffer = noise(c); fl.type = type; fl.frequency.setValueAtTime(f0, t0); fl.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + d); fl.Q.value = q || 0.8;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + Math.min(0.04, d * 0.3)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); n.connect(fl); fl.connect(g); g.connect(c.destination); n.start(t0); n.stop(t0 + d + 0.05); };
+  const tn = (c, t0, d, v, type, f0, f1) => { const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + d + 0.05); };
+  const FX = { wave: (c, t) => nz(c, t, 0.7, 0.07, 'bandpass', 380, 1500, 1.2), slam: (c, t) => { tn(c, t, 0.5, 0.16, 'sine', 95, 38); nz(c, t, 0.35, 0.08, 'lowpass', 900, 120); },
+    pop: (c, t) => { tn(c, t, 0.18, 0.09, 'sine', 420, 90); nz(c, t + 0.02, 0.25, 0.05, 'lowpass', 1800, 300); }, sweep: (c, t) => { nz(c, t, 1.1, 0.09, 'lowpass', 2200, 160); tn(c, t + 0.6, 0.45, 0.1, 'sine', 70, 40); },
+    thud: (c, t) => { tn(c, t, 0.28, 0.11, 'sine', 120, 45); nz(c, t, 0.18, 0.05, 'lowpass', 600, 120); }, hiss: (c, t) => nz(c, t, 0.7, 0.06, 'highpass', 2600, 5200, 0.7), zip: (c, t) => tn(c, t, 0.12, 0.05, 'sawtooth', 1800, 600),
+    roar: (c, t) => { tn(c, t, 1.4, 0.07, 'sawtooth', 62, 48); nz(c, t, 1.4, 0.06, 'lowpass', 420, 140); },
+    fire: (c, t) => { nz(c, t, 0.24, 0.06, 'bandpass', 600, 2400, 1.1); nz(c, t + 0.22, 0.22, 0.05, 'highpass', 1800, 900); }, holy: (c, t) => { tn(c, t, 0.6, 0.045, 'sine', 1318, 1310); tn(c, t, 0.45, 0.02, 'sine', 2637, 2620); },
+    slash: (c, t) => { nz(c, t, 0.14, 0.07, 'highpass', 1500, 5200, 0.7); tn(c, t + 0.06, 0.12, 0.07, 'sine', 160, 70); }, whirl: (c, t) => { nz(c, t, 0.45, 0.06, 'bandpass', 500, 2600, 1.4); nz(c, t + 0.15, 0.35, 0.05, 'bandpass', 2600, 700, 1.4); } };
+  const feel = (k) => { if (!sndOn || window.__pgAuto || !FX[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); FX[k](c, c.currentTime + 0.01); } catch (e) { /* (no sound here) */ } };
   const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.textContent = sndOn ? 'Sound' : 'Muted'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); };
   const sndSet = (on) => { sndOn = !!on; try { localStorage.setItem('wla-pg-sound', sndOn ? 'on' : 'off'); } catch (e) { /* (no storage) */ } sndUi(); if (sndOn) sfx('ok'); };
   const countdown = () => { if (!sndOn || !G) return; const t = G.t, D = G.cdn || (G.cdn = new Set()); modBars(t).forEach((q) => { if (!/^Your\b/.test(q.name)) return; const left = q.at - t, id = q.name + '|' + q.at.toFixed(1) + '|';
@@ -306,7 +323,7 @@ function pgOpen(root, boss, d, pk) {
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
   const shellBreak = (e, t) => { e.shp = 0; e.shell = Math.min(e.shell, t); if (!window.__pgAuto) { say('Shell broken: walk over your egg to pick it up.'); sfx('ok'); } };
   const shellHit = (n, t) => { const e = myShell(); if (!e) return; e.shp -= n; if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; };
-  const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
+  const hatch = (e, why, tip) => { feel('hiss'); e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
     if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
@@ -411,6 +428,9 @@ function pgOpen(root, boss, d, pk) {
     G.bossHp = P2 ? P2.bossHp(t) : Math.max(52, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0) - Math.min(4, (G.heartHits || 0) * 0.12)); /* (your hits on the heart take her down a little faster) */ };
   const check = (t0, t) => { const x = G.x, y = G.y, crossed = (at) => at > t0 && at <= t;
     // waves: a hit is huge stacking poison; an egg it touches hatches (in your hands or on the floor)
+    // (what the fight feels like, Nov 16: a whoosh as a wave passes within 5 yards, a thud when something lands near you, a low roar as she dives and as her heart opens)
+    S.waves.forEach((w, i) => { if (!G.done.has('ws' + i) && w.from !== me && inWave(w, t, x, y, 5)) { G.done.add('ws' + i); feel('wave'); } });
+    S.impacts.forEach((m) => { if (crossed(m.at) && Math.hypot(x - m.x, y - m.y) <= m.r + 10) feel('thud'); }); if (!P2 && S.dive && (crossed(S.dive.t0) || crossed(145.5))) feel('roar');
     S.waves.forEach((w, i) => { if (G.done.has('w' + i) || w.from === me || !inWave(w, t, x, y)) return; /* (w.from: a wave sent by a raider, phase 3's Volatile Purge, never hits them) */ G.done.add('w' + i); deb('venom', 10, true); mistake(w.ring ? 'ring' : 'wave', w.name + ' hit you.', w.tip, 28); const e = myEggHeld(); if (e) hatch(e, 'A wave touched your egg', 'Carrying an egg, a wave hatches it: dodge every one.'); });
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'floor' && S.waves.some((w) => inWave(w, t, e.x, e.y))) hatch(e, 'Your egg was still on the floor when a wave reached it', 'Pick your egg up as soon as its shell breaks.'); });
     // impacts: the Womb, the debris
@@ -419,7 +439,7 @@ function pgOpen(root, boss, d, pk) {
     (S.beams || []).forEach((bm, bi) => { if (P2 || t < bm.t0 || t > bm.t1 || G.done.has('beam' + bi)) return; const ax = bm.from[0], ay = bm.from[1], tk = G.bots[bm.tank] || { x: bm.at[0], y: bm.at[1] }, vx = tk.x - ax, vy = tk.y - ay, L2 = vx * vx + vy * vy || 1, u = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / L2));
       if (Math.hypot(x - (ax + vx * u), y - (ay + vy * u)) <= 1.6) { G.done.add('beam' + bi); mistake('beam', 'You stood in the venom beam: only the off tank stands in it.', 'The spectral image beams the off tank: keep out of the line between them.', 35); } });
     // the eggs land (4 yards), their shells break, carriers pick theirs up
-    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
+    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 14) feel('thud'); if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
       if (e.state === 'floor' && e.id === me && e.shp > 0) { e.shp -= SHELL.raid * (t - t0); if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; }
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id]; if ((b && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
       if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Another carrier inside it hatches a Viper.', '#3af2a8'); } } }
@@ -427,15 +447,15 @@ function pgOpen(root, boss, d, pk) {
     // another carrier inside your 3-yard circle: Noxious Splash, it hatches at once
     const mine = myEggHeld(); if (mine && !G.still) G.eggs.forEach((e) => { if (e.state !== 'held' || !e.who || e.who === me || !mine || mine.state !== 'held') return; const b = G.bots[e.who]; if (b && Math.hypot(x - b.x, y - b.y) < 3) { const wn = nm(e.who); deb('splash', 10); hurt(30); e.state = 'gone'; e.who = null; G.vipers++; G.adds.push({ kind: 'viper', x: b.x + 1, y: b.y + 1, born: t }); /* (both eggs burst: two Vipers, Nov 15 audit) */ hatch(mine, wn + ' (carrying too) came inside your 3-yard circle: both eggs hatched', 'Two carriers within 3 yards: Noxious Splash bursts both eggs. Keep your circle clear.'); } });
     // the coil slams: shared by everyone within 10 yards; carried eggs break; Soul Constrictor 5 s
-    S.soaks.forEach((s) => { if (!crossed(s.at)) return; const n = 1 + GDZ_RAID.filter((id) => id !== me && Math.hypot(G.bots[id].x - s.x, G.bots[id].y - s.y) <= s.r).length, inn = Math.hypot(x - s.x, y - s.y) <= s.r;
+    S.soaks.forEach((s) => { if (!crossed(s.at)) return; feel('slam'); const n = 1 + GDZ_RAID.filter((id) => id !== me && Math.hypot(G.bots[id].x - s.x, G.bots[id].y - s.y) <= s.r).length, inn = Math.hypot(x - s.x, y - s.y) <= s.r;
       if (inn) { if (has('soul')) mistake('soul', 'Soul Constrictor: you took the slam before, so you couldn\'t help with this one.', 'Take only your own slam; the next one is the other group\'s.', 25);
         else { hurt(slamHit(n)); const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; deb('yolk', 20); G.adds.push({ kind: 'rawling', x: x + 1.2, y: y + 1.2, born: t }); say('Soaked: your egg broke (a Rawling). Rancid Yolk for 20 s.'); } else say('Soaked.'); } deb('soul', 5); }
       else { hurt(slamHit(n)); if (s.group.includes(me)) mistake('soak', 'You missed your coil soak (slam ' + (s.k + 1) + '): the others took more.', 'Be inside your group\'s 10-yard circle when it slams.', 0); } /* (every slam hits the whole raid: the soakers only make it smaller, Nov 15 audit) */
       G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me && Math.hypot(G.bots[e.who].x - s.x, G.bots[e.who].y - s.y) <= s.r) { e.state = 'gone'; G.adds.push({ kind: 'rawling', x: G.bots[e.who].x + 1, y: G.bots[e.who].y + 1, born: t }); e.who = null; } }); });
     // the bubbles: everyone farther than 10 yards from the Wretch is hit
-    S.bubbles.forEach((q) => { if (!crossed(q.at)) return; const c = G.wr[q.w]; if (c && Math.hypot(x - c.x, y - c.y) > 10) { deb('fester', 12); mistake('fester', 'Fester Burst: you were outside the Wretch\'s bubble.', 'Be within 10 yards of the Wretch when Fester Burst goes off.', 40); } });
+    S.bubbles.forEach((q) => { if (!crossed(q.at)) return; const c = G.wr[q.w]; if (c) feel('pop'); if (c && Math.hypot(x - c.x, y - c.y) > 10) { deb('fester', 12); mistake('fester', 'Fester Burst: you were outside the Wretch\'s bubble.', 'Be within 10 yards of the Wretch when Fester Burst goes off.', 40); } });
     // the tail's sweep: 35 yards, a big hit and a knockback
-    S.thrash.forEach((th) => { if (!crossed(th.at)) return; const dd = Math.hypot(x - th.x, y - th.y); hurt(15); deb('thrash', 10); /* (everyone takes the sweep's hit and its DoT, Nov 15 audit) */
+    S.thrash.forEach((th) => { if (!crossed(th.at)) return; feel('sweep'); const dd = Math.hypot(x - th.x, y - th.y); hurt(15); deb('thrash', 10); /* (everyone takes the sweep's hit and its DoT, Nov 15 audit) */
       if (dd <= th.r) { mistake('thrash', 'Mephitic Thrash: you were inside her tail\'s 35 yards.', 'Run out of 35 yards from her tail during the cast.', 30); { const e = myEggHeld(); if (e) hatch(e, 'Mephitic Thrash hit your egg inside her tail\'s 35 yards', 'Carrying an egg, get out of 35 yards from her tail before the sweep.'); } const a = Math.atan2(y - th.y, x - th.x); G.kb = { t0: t, x0: x, y0: y, x1: th.x + Math.cos(a) * (dd + 14), y1: th.y + Math.sin(a) * (dd + 14) }; } });
     // Mother's Wrath: five bites in her reach
     S.wrath.forEach((wr) => { for (let k = 0; k < 5; k++) { if (crossed(wr.at + k * 0.6) && Math.hypot(x - wr.p[0], y - wr.p[1]) <= 5 + PR) mistake('bite', 'Mother\'s Wrath bit you: you were in her reach.', 'Only her tank stands in the red circle in front of her.', 30); } });
@@ -465,7 +485,7 @@ function pgOpen(root, boss, d, pk) {
   const tauntStep = (a, t) => { if (a.tank || t - (a.born == null ? t : a.born) < TAUNT.at) return; a.tank = offTank(t); a.taunt = t; if (a.tank !== me && !window.__pgAuto) say('The tank taunted the Viper: kill it with the raid!'); };
   const vipers = (t0, t, x, y) => { G.adds.forEach((a) => { if (a.kind !== 'viper') return; tauntStep(a, t); const tk = a.tank && a.tank !== me ? G.bots[a.tank] : null, gx = tk ? tk.x : x, gy = tk ? tk.y : y, dx = gx - a.x, dy = gy - a.y, d = Math.hypot(dx, dy);
     if (d > 1.8) { const m = Math.min(d - 1.8, 6 * (t - t0)); a.x += dx / d * m; a.y += dy / d * m; }
-    const last = a.sting == null ? (a.born == null ? t0 : a.born - 2) : a.sting; /* (its first sting lands 1 s after it hatches, before the tank has it) */ if (!tk && d <= 3.2 && t - last >= 3) { a.sting = t; G.lastSting = t; hurt(8); deb('sting', 6, true); if (!window.__pgAuto) say('Petrifying Sting: kill the Viper!', true); } }); };
+    const last = a.sting == null ? (a.born == null ? t0 : a.born - 2) : a.sting; /* (its first sting lands 1 s after it hatches, before the tank has it) */ if (!tk && d <= 3.2 && t - last >= 3) { a.sting = t; G.lastSting = t; feel('zip'); hurt(8); deb('sting', 6, true); if (!window.__pgAuto) say('Petrifying Sting: kill the Viper!', true); } }); };
 
   // ---- drawing ----
   const W2S = (x, y) => [cv.width / 2 + (x - cam[0]) * Z * dpr, cv.height / 2 - (y - cam[1]) * Z * dpr];
