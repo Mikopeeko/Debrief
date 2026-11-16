@@ -50,9 +50,9 @@ function checks(H, say) {
   const want = (what, re, got, tol) => { const m = re.exec(clockLine); if (!m) { bad('the notes no longer say ' + what + ' in "After phase 1, measured" (check A)'); return; } const exp = m.slice(1).reduce((a, v, i, arr) => (i % 2 ? a : a.concat([+arr[i] * 60 + +arr[i + 1]])), []);
     if (got.length !== exp.length || got.some((v, i) => Math.abs(v - exp[i]) > (tol || 0.6))) bad(what + ' at ' + got.map(clkS).join(', ') + ' in the game; the measured clock has ' + exp.map(clkS).join(', ') + ' (check A)'); };
   const S = script({ seed: 3, east: false });
-  want('Hatching Doom', /Hatching Doom (\d):(\d\d)/, [T.doom]); want('the Wardens', /Wardens up (\d):(\d\d)/, [T.wardens]); want('their first Malice', /their Malice (\d):(\d\d)/, [S.malice[0].t0]);
+  want('Hatching Doom', /Hatching Doom (\d):(\d\d)/, [T.doom]); want('the Wardens', /Wardens up (\d):(\d\d)/, [T.wardens]); want('their first Malice', /their Malice (\d):(\d\d)/, [Math.min(...S.malice.map((m) => m.t0))], 1);
   want('Grasping Fangs', /Grasping Fangs (\d):(\d\d)/, [T.fangs]); want('Rage of the Shackled', /Rage of the Shackled (\d):(\d\d), heart open/, [S.casts.find((c) => c.name === 'Rage of the Shackled').t0]);
-  want('the heart', /heart open (\d):(\d\d)/, [T.heart], 0.6); want('Anguished Cry', /Anguished Cry three times, about (\d):(\d\d), (\d):(\d\d) and (\d):(\d\d)/, [...new Set(S.cries.map((c) => c.t0))]);
+  want('the heart', /heart open (\d):(\d\d)/, [T.heart], 0.6);
   want('the Weakened Doomscales', /Weakened Doomscales up about (\d):(\d\d)/, [T.dsUp], 1);
   { const m = /Falling Debris \| also falls three times in stage 2 \(about (\d):(\d\d), (\d):(\d\d) and (\d):(\d\d)\)/.exec(notes); if (!m) bad('the notes no longer give stage 2\'s Falling Debris times (check A)');
     else { const exp = [sec(m), sec([0, m[3], m[4]]), sec([0, m[5], m[6]])], firsts = exp.map((e) => S.impacts.filter((q) => q.name === 'Falling Debris' && Math.abs(q.at - e) < 1.5).length); if (firsts.some((n) => !n)) bad('stage 2\'s Falling Debris doesn\'t fall at ' + exp.map(clkS).join(', ') + ' (circles near each: ' + firsts.join(', ') + ', check A)'); } }
@@ -74,7 +74,10 @@ function checks(H, say) {
       if (n[1] - n[0] < 1.3 || n[1] - n[0] > 4.7) { bad('the two healers pick up their north eggs ' + (n[1] - n[0]).toFixed(1) + ' s apart on seed ' + seed + '; top kills: a median 2.5 s, middle half 1.3 to 4.7 (check A)'); break; }
       if ([B.E.far, B.W.far, B.E.close, B.W.close].some((x) => x < 246 || x > 263)) { bad('a big egg is picked up outside 4:06 to 4:23 on seed ' + seed + ' (check A)'); break; } }
     if (firsts.size < 2) bad('the same ledge\'s healer always picks up first over 20 runs; it should vary (check A)');
-    dbg.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.sim(dbg.P2.slotOf(dbg.P2.pick), false, false, 6);
+    dbg.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.sim(dbg.P2.slotOf(dbg.P2.pick), true, false, 6);
+    // (the Cries, from that run: each Doomscale's, 7.8 s after it climbs out and every 15.8 s; on the kills, about 4:35, 4:53 and 5:09 over the four)
+    { const C = [1, 2, 3].map((i) => dbg.S.cries.filter((c) => c.i === i).map((c) => c.t0).sort((a, b) => a - b)), md = C.map((L) => L[Math.floor(L.length / 2)]); want('Anguished Cry', /Anguished Cry three times, about (\d):(\d\d), (\d):(\d\d) and (\d):(\d\d)/, md, 5);
+      if (C.some((L) => L.length !== 4)) bad('a played run has ' + C.map((L) => L.length).join('/') + ' first, second and third Cries; four Doomscales cast three each (check A)'); }
     dbg.S.big.forEach((B, i) => { const at = dbg.G.p2.big[i].at, want = dbg.S.bigAt[B.side][B.which]; if (at == null || at < want - 0.1 || at > want + 3) bad('the ' + (B.which === 'far' ? 'south' : 'north') + ' big egg on the ' + B.side + ' ledge is picked up at ' + (at == null ? 'never' : clkS(at)) + '; its time is ' + clkS(want) + ' (check A)'); }); }
   if (T.doomEnd - T.doom !== 90) bad('the big eggs get ' + (T.doomEnd - T.doom) + ' s to be picked up; Hatching Doom is 90 s (spell 1306862, check A)');
   // (Flex, Nov 15: "im fairly confident they [healers] are usually the ones assigned to pick up the big eggs". The 30 fastest Mythic kills in the log
@@ -109,15 +112,14 @@ function checks(H, say) {
     if (j.egg !== 4 || j.mal !== 1 || j.cry !== 1 || j.teth !== 'solo') bad('the picked job (west, small egg 4, the 1st Malice, Doomscale 1\'s cries, the solo break) plays as ' + JSON.stringify(j) + ' (check D)');
     // (a melee who picks the 3rd Malice and one of the five is told on the card: they can't kick from the end of a tether. The solo walks out at 3:26,
     // between the 2nd and 3rd Malice, so the 2nd Malice and the solo break go together, for melee too (Main, Nov 15))
-    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 3, cry: 1, teth: 'five' }; if (!/Heads up: the 3rd Malice/.test(dbg.P2.clash())) bad('a melee picking the 3rd Malice and one of the five isn\'t told they clash (check D)');
-    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; if (dbg.P2.clash()) bad('a melee picking the 2nd Malice (3:18) and the solo break (3:26) is told they clash; they don\'t (check D)');
-    dbg.P2.pick = { side: 'W', role: 'r', egg: 'n4', mal: 3, cry: 1, teth: 'five' }; if (dbg.P2.clash()) bad('a ranged kicker (30 yards) is told the 3rd Malice clashes with the five (check D)');
+    // (Nov 15, the kills: ONE Malice a Warden, 3:03.9, before the tethers at 3:16: no pick clashes any more)
+    dbg.P2.pick = { side: 'W', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'five' }; if (dbg.P2.clash()) bad('a melee with the Malice and one of the five is told they clash; the one Malice comes before the tethers (check D)');
     // (and played: a west melee with the 2nd Malice and the solo break kicks at 3:18, then breaks alone on the count, clean)
     { const pkM = { side: 'W', role: 'm', egg: 'n4', mal: 2, cry: 1, teth: 'solo' }; dbg.P2.pick = pkM; const rM = dbg.sim(dbg.P2.slotOf(pkM), true, false, 3); if (rM.log.length) bad('a west melee with the 2nd Malice and the solo break, played by the autopilot, makes mistakes: ' + rM.log.join(' | ') + ' (check D)'); }
     ['E', 'W'].forEach((s) => { const ids = Object.keys(J).filter((id) => J[id].side === s), n = (k, v) => ids.filter((id) => J[id][k] === v).length;
       for (let e = 1; e <= P.eggs[s].length; e++) if (n('egg', e) !== 1) bad('small egg ' + e + ' on the ' + s + ' ledge has ' + n('egg', e) + ' carriers after the pick (check D)');
       ['far', 'close'].forEach((w) => { if (n('big', w) !== 1) bad('the ' + w + ' big egg on the ' + s + ' ledge has ' + n('big', w) + ' carriers after the pick (check D)'); });
-      [1, 2, 3].forEach((k) => { if (n('mal', k) !== 1) bad('Malice ' + k + ' on the ' + s + ' ledge has ' + n('mal', k) + ' kickers after the pick (check D)'); });
+      if (n('mal', 1) !== 1 || ids.some((id) => J[id].mal > 1)) bad('the ' + s + ' ledge has ' + n('mal', 1) + ' Malice kickers after the pick; one Warden casts one Malice (check D)');
       if (ids.filter((id) => J[id].teth).length !== 3) bad('the ' + s + ' ledge has ' + ids.filter((id) => J[id].teth).length + ' tethers after the pick, not 3 (check D)'); });
     if (Object.keys(J).filter((id) => J[id].teth === 'solo').length !== 1) bad('the pick leaves ' + Object.keys(J).filter((id) => J[id].teth === 'solo').length + ' solo breakers (check D)');
     if (r.log.length) bad('the autopilot playing a west melee carrier with two kicks and the solo break makes mistakes: ' + r.log.join(' | ') + ' (check D)');
@@ -135,10 +137,11 @@ function checks(H, say) {
     if (rS.log.some((x) => /tether (late|early)/.test(x))) bad('the solo break, played by the autopilot from a ranged spot (the way the arrow points), misses the count: ' + rS.log.join(' | ') + ' (check D)');
     dbg.P2.pick = pk3;
     dbg.at(216.2, me3, { east: false, seed: 2 }); const th3 = dbg.G.p2.teth[me3]; if (th3 && th3.br == null) bad('starting at "3:36 · The small eggs" as one of the five leaves your tether unbroken past the count (check D)');
-    // (the review, Nov 15: a melee who picked the 3rd Malice with a random tether was sometimes dealt one of the five, and kept both, which can't be done)
-    const pk4 = { side: 'E', role: 'm', egg: 'n4', mal: 3, cry: 1, teth: 'random' }, me4 = dbg.P2.slotOf(pk4); let both = 0;
-    for (let seed = 1; seed <= 60; seed++) { const J4 = ctx.pgP2Jobs(seed, me4, pk4); if (J4[me4].teth === 'five' && J4[me4].mal === 3) both++; }
-    if (both) bad('a melee with the 3rd Malice and a random tether keeps both when dealt one of the five (' + both + ' of 60 seeds); that kick should go to someone free (check D)');
+    // (Nov 15, the kills: the tanks kicked 33 of the 60 Malices on the 30 fastest kills, and the plan's kick line starts with the tank: with no pick of
+    // yours each ledge's Malice is its tank's; picked, it's yours and the tank's no more)
+    { const J0 = ctx.pgP2Jobs(3, null, null); ['E', 'W'].forEach((s) => { const k = Object.keys(J0).filter((id) => J0[id].side === s && J0[id].mal); if (k.length !== 1 || k[0][0] !== 't') bad('the ' + s + ' ledge\'s Malice goes to ' + k.join(' ') + '; its tank kicks it unless you take it (check D)'); });
+      const pk4 = { side: 'E', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'random' }, me4 = dbg.P2.slotOf(pk4); let off = 0; for (let seed = 1; seed <= 30; seed++) { const J4 = ctx.pgP2Jobs(seed, me4, pk4); if (J4[me4].mal !== 1 || Object.keys(J4).filter((id) => J4[id].side === 'E' && J4[id].mal).length !== 1) off++; }
+      if (off) bad('taking the Malice with a random tether leaves it with someone else, or two kickers, on ' + off + ' of 30 seeds (check D)'); }
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   // E. the mistakes
   try {
@@ -146,9 +149,9 @@ function checks(H, say) {
     const stillR = dbg.sim(me, false, false, 3), still = stillR.log.join(' | ');
     // (the review, Nov 15: an unkicked Malice did 13 a tick; the notes measure about 650k a player a tick, close to half a raider's health, so
     // six ticks kill: the run that never kicks the 3:03 Malice dies in its channel)
-    if (!stillR.deaths.some((c) => c >= '3:05' && c <= '3:11')) bad('missing the 3:03 Malice kick doesn\'t kill you in its channel (deaths: ' + (stillR.deaths.join(', ') || 'none') + '); its ticks are about 650k each (check E)');
+    if (!stillR.deaths.some((c) => c >= '3:05' && c <= '3:13')) bad('missing the 3:03 Malice kick doesn\'t kill you in its channel (deaths: ' + (stillR.deaths.join(', ') || 'none') + '); its ticks are about 650k each (check E)');
     if (!/never crossed to your ledge/.test(still)) bad('standing still on the platform isn\'t a mistake ("never crossed"): ' + still + ' (check E)');
-    if (!/didn't kick Malice \(3:03\)/.test(still)) bad('the 3:03 Malice kicker who never kicks gets no mistake: ' + still + ' (check E)');
+    if (!/didn't kick Malice \(3:0[34]\)/.test(still)) bad('the 3:03 Malice kicker who never kicks gets no mistake: ' + still + ' (check E)');
     if (!(dbg.grade().sc < 80)) bad('standing still all of phase 2 scores ' + dbg.grade().sc + ' (check E)');
     // (the review, Nov 15: an east-half raider who walked into the west gate landed beside the west ledge's own gate, which sent them straight back,
     // and on and on, with a "wrong gate" mistake every tick)
@@ -156,8 +159,8 @@ function checks(H, say) {
     const wrongN = dbg.log.filter((x) => /You took the west gate/.test(x)).length; if (wrongN !== 1 || dbg.G.p2.where[me] !== 'L' || dbg.G.p2.wside[me] !== 'W') bad('the wrong gate gives ' + wrongN + ' mistakes in a second and leaves you ' + dbg.G.p2.where[me] + ' ' + dbg.G.p2.wside[me] + '; it should be one mistake, on the west ledge (check E)');
     // (the review, Nov 15: the words said "the purple ring", but in 3D your own gate is the gold one, the purple one the other half's)
     if (/purple ring/.test(rd('practice-p2.js'))) bad('a text still calls your gate "the purple ring"; in 3D yours is gold (check E)');
-    dbg.at(183.5, me, { east: false, seed: 3 }); const W = dbg.G.p2.wd.E; dbg.pos = [W[0] - 3, W[1] - 3]; dbg.kick(); if (dbg.G.p2.kick.mE1 !== me) bad('pressing E by the Warden in its 3:03 Malice cast doesn\'t kick it (check E)');
-    dbg.at(200, me, { east: false, seed: 3 }); const e0 = dbg.G.eggs.find((e) => e.side === 'E'); dbg.pos = [e0.x - 3, e0.y]; dbg.step(2); if (!dbg.log.some((x) => /Warden's Protection/.test(x))) bad('standing 3 yards from an egg while its Warden lives isn\'t a mistake (check E)');
+    dbg.at(T.malice + 1.2, me, { east: false, seed: 3 }); const W = dbg.G.p2.wd.E; dbg.pos = [W[0] - 3, W[1] - 3]; dbg.kick(); if (dbg.G.p2.kick.mE1 !== me) bad('pressing E by the Warden in its 3:03 Malice cast doesn\'t kick it (check E)');
+    dbg.at(200, me, { east: false, seed: 3 }); const e0 = dbg.G.eggs.find((e) => e.side === 'E'); dbg.pos = [e0.x - 1.5, e0.y]; dbg.step(2); if (!dbg.log.some((x) => /Warden's Protection/.test(x))) bad('standing on an egg while its Warden lives isn\'t a mistake (check E)');
     const pkT = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'five' }; dbg.P2.pick = pkT; const meT = dbg.P2.slotOf(pkT); dbg.at(205, meT, { east: false, seed: 3 }); const WT = dbg.G.p2.wd.E;
     dbg.pos = [WT[0] + 20, WT[1] - 20]; dbg.step(3); if (!dbg.log.some((x) => /broke your tether early/.test(x))) bad('one of the five walking out of their tether at 3:25 isn\'t "broke your tether early": ' + dbg.log.join(' | ') + ' (check E)');
     const pkB = { side: 'E', role: 'h', egg: 'far', mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkB; const meB = dbg.P2.slotOf(pkB); dbg.at(232, meB, { east: false, seed: 3 }); const B = dbg.S.big.find((b) => b.side === 'E' && b.which === 'far');
@@ -166,9 +169,9 @@ function checks(H, say) {
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // (the start card's "Your job in short" (Nov 15, Flex: "improve the setup screens. Still a little convoluted"): three or four plain lines for the
   // picked job, naming your ledge, your egg and kicks, your tether and the heart)
-  try { dbg.P2.pick = { side: 'W', role: 'm', egg: 'close', mal: 2, cry: 1, teth: 'five' }; const sh = typeof dbg.P2.short === 'function' ? dbg.P2.short() : '', li = (sh.match(/<li>/g) || []).length;
+  try { dbg.P2.pick = { side: 'W', role: 'm', egg: 'close', mal: 1, cry: 1, teth: 'five' }; const sh = typeof dbg.P2.short === 'function' ? dbg.P2.short() : '', li = (sh.match(/<li>/g) || []).length;
     if (!/^<ul class="pg-short">/.test(sh) || li < 3 || li > 4) bad('phase 2\'s "your job in short" isn\'t a pg-short list of three or four lines (' + li + ', check F)');
-    else if (!/West ledge/.test(sh) || !/north big egg/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
+    else if (!/West ledge/.test(sh) || !/north big egg/.test(sh) || !/Malice \(3:0[34]\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
   catch (e) { bad('phase 2\'s "your job in short" crashed: ' + e.message + ' (check F)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // S. the shared setup screen (Nov 15, Flex via Main: "fix the setup menus ... still too complex and confusing"): phase 2 hands the card `setup` (roles,
@@ -196,20 +199,95 @@ function checks(H, say) {
   //    miss is one line, the end card says "Right target: N of M". (Before: phase 2 had no targets; Tab did nothing in it)
   try {
     const pkI = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkI; const meI = dbg.P2.slotOf(pkI);
-    [[200, 'warden'], [275, 'ds'], [300, 'heart']].forEach(([t0, cat]) => { dbg.at(t0, meI, { east: false, seed: 3 }); const c = dbg.P2.dpsCat(dbg.G.t), L0 = dbg.P2.tgts(dbg.G.t);
+    [[186, 'clutch'], [191, 'rawling'], [212, 'warden'], [275, 'ds'], [300, 'heart']].forEach(([t0, cat]) => { dbg.at(t0, meI, { east: false, seed: 3 }); const c = dbg.P2.dpsCat(dbg.G.t), L0 = dbg.P2.tgts(dbg.G.t);
       if (c !== cat) bad('at ' + clkS(t0) + ' the damage moment is ' + c + ', not ' + cat + ' (check I)'); if (!L0.some((o) => o.kind === cat)) bad('at ' + clkS(t0) + ' there is no ' + cat + ' to pick (check I)'); });
     for (const [pk, east] of [[{ side: 'E', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'none' }, true], [{ side: 'W', role: 'm', egg: null, mal: 0, cry: 2, teth: 'none' }, false], [{ side: 'W', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }, true], [{ side: 'E', role: 'h', egg: 'close', mal: 0, cry: 0, teth: 'random' }, false]]) {
       dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, east, 4), DL = (dbg.G.dpsM && dbg.G.dpsM.list) || [], tag = pk.side + ' ' + pk.role + (east ? ', she is east' : ', she is west');
-      ['warden', 'ds', 'heart'].forEach((k) => { const m = DL.find((q) => q.kind === k); if (!m || m.fr < 0.5) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m ? Math.round(m.fr * 100) + '%' : 'no moment') + ', check I)'); });
+      ['clutch', 'rawling', 'warden', 'ds', 'heart'].forEach((k) => { const m = DL.find((q) => q.kind === k); if (!m || m.fr < 0.5) bad('the autopilot (' + tag + ') isn\'t on the ' + k + ' for its moment (' + (m ? Math.round(m.fr * 100) + '%' : 'no moment') + ', check I)'); });
       if (r.log.some((x) => /was up|were up|was open/.test(x))) bad('the autopilot (' + tag + ') misses a damage moment: ' + r.log.join(' | ') + ' (check I)');
       if (!(dbg.G.hits >= 20)) bad('the autopilot (' + tag + ') pressed 1 only ' + (dbg.G.hits || 0) + ' times in phase 2; a moment counts only while you keep pressing (check I)');
-      if (dbg.P2.dpsNames(DL) !== 'the Warden, the Doomscales, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
+      if (dbg.P2.dpsNames(DL) !== 'the Warden, the Clutches, the Rawlings, the Doomscales, the heart') bad('the end card names the moments "' + dbg.P2.dpsNames(DL) + '" (check I)'); }
     dbg.P2.pick = pkI; const st = dbg.sim(meI, false, false, 4).log.join(' | ');
     ['The Warden was up', 'The Doomscales were up', 'The heart was open'].forEach((x) => { if (!st.includes(x)) bad('standing still all phase, "' + x + '" isn\'t in the mistakes (check I)'); });
     // (Nov 15, the press-to-cast attack: a moment counts only while you keep pressing 1; the job line says so, as phase 1's does)
-    dbg.P2.pick = pkI; dbg.at(200, meI, { east: false, seed: 3 }); dbg.G.tgt = null; const hint = dbg.P2.jobText(); if (!/Tab to pick it, then keep pressing 1 to hit it/.test(hint)) bad('at 3:20 with no target, phase 2\'s job line reads "' + hint + '"; it should say Tab to pick the Warden, then keep pressing 1 (check I)');
+    dbg.P2.pick = pkI; dbg.at(212, meI, { east: false, seed: 3 }); dbg.G.tgt = null; const hint = dbg.P2.jobText(); if (!/Tab to pick it, then keep pressing 1 to hit it/.test(hint)) bad('at 3:20 with no target, phase 2\'s job line reads "' + hint + '"; it should say Tab to pick the Warden, then keep pressing 1 (check I)');
     const PJ0 = rd('practice.js'); if (/e\.code === 'Tab' && !P2/.test(PJ0) || /const dpsStep = \(t, dt\) => \{ if \(P2\) return/.test(PJ0) || /const pickTgtAt = \(p\) => \{ if \(P2/.test(PJ0)) bad('Tab, a click or the damage tally is still off in phase 2 (check I)');
   } catch (e) { bad('the damage moments crashed phase 2: ' + e.message + ' (check I)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // K. the adds and the kicks, as on the kills (Nov 15; Flex: "if this skips any part of the fight that requires mechanical execution its not good
+  //    enough", "i still dont see good interupt mechanics", "theres also add spawns being missed"; the 30 fastest Mythic kills in the log library,
+  //    checked on 130 and the 26 phase 2 wipes). Before: three Malices a Warden at 3:03, 3:18 and 3:33, kicked 0.2 s into every bar; no Writhing
+  //    Gestation or Clutches; Rawlings that left after 8 s and couldn't be hit; Wardens and Doomscales on a clock with no health; all four Doomscales
+  //    up at 4:27.5 casting at once with a 2 s bar; no Revenge; no Ravenous Doomscale; a kick only visible to the kicker
+  try {
+    const free = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = free; const meF = dbg.P2.slotOf(free);
+    // (one Malice a Warden: 3:03.9 and the other Warden's 1.0 s later, a 1.5 s bar and a 6 s channel; a bot kicks it 0.45 to 0.8 s in)
+    const S0 = script({ seed: 3 }), mt = S0.malice.map((m) => m.t0).sort((a, b) => a - b);
+    if (S0.malice.length !== 2 || Math.abs(mt[0] - 183.9) > 0.3 || Math.abs(mt[1] - mt[0] - 1) > 0.2 || S0.malice.some((m) => Math.abs(m.ch - m.t0 - 1.5) > 0.01 || Math.abs(m.t1 - m.t0 - 7.5) > 0.01)) bad('the Wardens cast ' + S0.malice.length + ' Malices at ' + mt.map(clkS).join(', ') + '; on the kills each casts one, 3:03.9 and 1.0 s apart, a 1.5 s bar and a 6 s channel (check K)');
+    const shG = S0.casts.filter((c) => /Writhing Gestation/.test(c.name)), shM = S0.casts.filter((c) => /Shadow Molt/.test(c.name));
+    if (shG.length !== 2 || shG.some((c) => Math.abs(c.t0 - 180.1) > 0.3 || Math.abs(c.t1 - c.t0 - 3) > 0.01) || shM.some((c) => Math.abs(c.t0 - 176.6) > 0.3 || Math.abs(c.t1 - c.t0 - 3) > 0.01)) bad('the Wardens\' Shadow Molt (3:56.6) and Writhing Gestation (3:00.1), 3 s casts each, aren\'t on the kills\' clock (check K)');
+    // (a played run: the Clutches, 2 east and 3 west, turn 0.3 s after the Gestation and die to the raid in under 12 s; each leaves a Rawling on its
+    // spot; every small egg in a cauldron leaves one there; the Wardens die about 3:38; the Doomscales climb out 1 s after their eggs go in)
+    dbg.at(166.05, meF, { east: false, seed: 3 }); const seenR = new Set(), clDead = {}; let rawN = 0, rawAt = 0, t1Seen = 0;
+    while (dbg.G.t < 318) { dbg.step(1); const G = dbg.G; G.adds.forEach((a) => { if (a.own && !seenR.has(a)) { seenR.add(a); rawN++; if (a.t1 != null) t1Seen++; const cl = Object.values(G.p2.cl).find((c) => c.dead != null && Math.abs(c.dead - G.t) < 0.06 && hyp([c.x, c.y], [a.x, a.y]) < 0.5); if (cl) clDead[cl.id] = 1; else if (hyp([a.x, a.y], G.p2 && dbg.S.pits[a.side]) < 6) rawAt++; } }); }
+    const G = dbg.G, cls = Object.values(G.p2.cl), set1 = cls.filter((c) => c.set === 1);
+    if (set1.filter((c) => c.side === 'E').length !== 2 || set1.filter((c) => c.side === 'W').length !== 3 || set1.some((c) => c.born < 183.2 || c.born > 184))
+      bad('the Clutches: ' + set1.map((c) => c.side + '@' + clkS(c.born)).join(' ') + '; on the kills the Warden\'s Writhing Gestation turns 2 east and 3 west at about 3:03.4 (check K)');
+    if (cls.some((c) => c.dead == null || c.dead - c.born > 12 || c.hatched)) bad('a Clutch lived past 12 s or hatched: ' + cls.map((c) => c.id + ' ' + (c.dead == null ? 'alive' : (c.dead - c.born).toFixed(1) + ' s')).join(', ') + '; the kills kill them in about 6.9 s (check K)');
+    if (Object.keys(clDead).length !== cls.length) bad('only ' + Object.keys(clDead).length + ' of ' + cls.length + ' dead Clutches left a Rawling on their spot (200 of 202 on the kills, check K)');
+    if (rawAt !== 15) bad(rawAt + ' Rawlings came out of the cauldrons; one comes out for each of the 15 small eggs (check K)');
+    if (rawN < 20 || t1Seen) bad(rawN + ' Rawlings in a run (' + t1Seen + ' leaving on their own); the kills have 24 a pull and kill every one (check K)');
+    if (G.adds.some((a) => a.own)) bad('Rawlings were still up at 5:18 (the raid kills them in about 21 s, check K)');
+    ['E', 'W'].forEach((s) => { const d = G.p2.wdead[s]; if (d == null || d < 214 || d > 223) bad('the ' + s + ' Warden died at ' + (d == null ? 'never' : clkS(d)) + '; the raid kills it about 3:38 (3:36 to 3:41 on the kills, check K)'); });
+    const D = Object.entries(G.p2.dsS); if (D.length !== 4) bad(D.length + ' Weakened Doomscales climbed out; one comes from each of the four big eggs (check K)');
+    D.forEach(([id, st]) => { const B = dbg.S.big.findIndex((b) => b.side === id[2] && b.which === (id[3] === '1' ? 'far' : 'close')), inAt = G.p2.dsAt[id] - 1;
+      if (G.p2.big[B].state !== 'in' || Math.abs(st.up - inAt - 1) > 0.06) bad(id + ' climbed out at ' + clkS(st.up) + ', not 1.0 s after its egg went in (check K)');
+      const cr = dbg.S.cries.filter((c) => c.ds === id).map((c) => +(c.t0 - st.up).toFixed(1)); if (cr.join() !== '7.8,23.6,39.4') bad(id + '\'s Cries come ' + cr.join(', ') + ' s after it climbs out; on the kills 7.8 s, then every 15.8 s (check K)');
+      if (dbg.S.cries.some((c) => c.ds === id && !c.rev && Math.abs(c.t1 - c.t0 - 2.5) > 0.01)) bad(id + '\'s Cry bar isn\'t 2.5 s (2.50 to 2.52 on the kills, check K)');
+      if (st.dead == null || st.dead < 300 || st.dead > 318) bad(id + ' died at ' + (st.dead == null ? 'never' : clkS(st.dead)) + '; the kills kill them about 5:12, all four within a few seconds (check K)'); });
+    // (Revenge: the first to die gives the rest +100%: a Cry that starts after it takes 1.25 s)
+    if (G.p2.rev == null || !D.some(([, st]) => st.rev === G.p2.rev)) bad('no Doomscale got Revenge when the first one died (30 of 30 kills, check K)');
+    if (dbg.S.cries.some((c) => c.t0 > G.p2.rev && G.p2.dsS[c.ds].dead > c.t0 && Math.abs(c.t1 - c.t0 - 1.25) > 0.01)) bad('a Cry after Revenge doesn\'t take 1.25 s (check K)');
+    // (the bots kick a moment into the bar, not 0.2 s: Malice 0.45 to 0.8 s, a Cry 0.65 to 1.15 s)
+    if (G.p2.intr.length < 0) bad('no kicks were seen (check K)');
+    { const kt = []; dbg.at(166.05, meF, { east: false, seed: 5 }); while (dbg.G.t < 318) { dbg.step(1); dbg.G.p2.intr.forEach((q) => { if (!kt.some((x) => x.key === q.key)) { const c = dbg.S.malice.find((m) => 'm' + m.side + m.k === q.key) || dbg.S.cries.find((x) => 'c' + x.ds + x.i === q.key); if (c) kt.push({ key: q.key, d: q.t - c.t0, who: q.who }); } }); }
+      const bots = kt.filter((x) => x.who !== meF), lo = bots.filter((x) => x.d < 0.4), hi = bots.filter((x) => x.d > 1.25); if (!bots.length || lo.length || hi.length) bad('the bots kick ' + bots.map((x) => x.key + ' +' + x.d.toFixed(2)).join(', ') + '; on the kills Malice is kicked about 0.6 s in, a Cry about 0.9 s (check K)'); }
+    // (you see every kick: an "Interrupted" label stands over the caster with who kicked it; your target's bar shows its cast, gold when you can kick it)
+    dbg.at(T.malice + 0.2, meF, { east: false, seed: 3 }); const mF = dbg.S.malice.slice().sort((a, b) => a.t0 - b.t0)[0].side; dbg.G.tgt = 'wd' + mF; const cb = dbg.P2.castOf(dbg.G.t); if (!cb || !/Malice/.test(cb.name) || !cb.kick) bad('your target\'s bar during its Malice reads ' + (cb ? cb.name + (cb.kick ? ' (kick)' : '') : 'nothing') + '; it should show Malice, gold to kick (check K)');
+    for (let i = 0; i < 40 && !dbg.G.p2.intr.some((q) => q.caster === 'wd' + mF); i++) dbg.step(1); const iq = dbg.G.p2.intr.find((q) => q.caster === 'wd' + mF); dbg.G.tgt = 'wd' + mF; const cb2 = dbg.P2.castOf(dbg.G.t);
+    if (!iq) bad('the west Warden\'s Malice was kicked with no Interrupted label over it (check K)'); else if (!cb2 || !cb2.intr || !/Interrupted/.test(cb2.name)) bad('your target\'s bar doesn\'t say "Interrupted" after its Malice is kicked (' + (cb2 ? cb2.name : 'nothing') + ', check K)');
+    { const A3 = { get G() { return dbg.G; }, get S() { return dbg.S; }, me: meF, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 }; const L3 = ctx.pg3dShapes(A3, dbg.G.t);
+      if (!L3.some((s) => s.k === 'label' && /Interrupted/.test(s.text || ''))) bad('in 3D no "Interrupted" label stands over the kicked Warden (check K)'); }
+    // (the backup: once a run a damage dealer with no kick of their own is the backup for a cast on their ledge and is told; a healer never)
+    dbg.P2.pick = free; const rB = dbg.sim(meF, true, false, 4); if (!dbg.G.p2.bk || dbg.G.p2.kick[dbg.G.p2.bk.key] !== meF) bad('a ranged with no kick, played by the autopilot, is never the backup kicker, or doesn\'t kick it (' + JSON.stringify(dbg.G.p2.bk) + ', check K)');
+    if (rB.log.length) bad('the backup run makes mistakes: ' + rB.log.join(' | ') + ' (check K)');
+    const stB = dbg.sim(meF, false, false, 4); if (dbg.G.p2.bk && !stB.log.some((x) => /You were the backup and didn't kick/.test(x))) bad('a backup kick you don\'t press isn\'t a mistake (check K)');
+    const pkH = { side: 'E', role: 'h', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkH; dbg.sim(dbg.P2.slotOf(pkH), true, false, 4); if (dbg.G.p2.bk) bad('a healer was made the backup kicker; healers have no kick in Midnight (check K)');
+    // (a Warden nobody helps lives on: a damage dealer standing still on its ledge lets it reach its second Writhing Gestation, more eggs turn)
+    dbg.P2.pick = free; dbg.at(176, meF, { east: false, seed: 3 }); dbg.pos = [92, 30]; for (let i = 0; i < 1100; i++) { dbg.stepOwn(1); dbg.pos = [92, 30]; } const w2 = Object.values(dbg.G.p2.cl).filter((c) => c.set === 3 && c.side === 'E');
+    if (!w2.length || !dbg.log.some((x) => /second Writhing Gestation/.test(x))) bad('a damage dealer who never hits the Warden doesn\'t let it reach its second Writhing Gestation (dead at ' + (dbg.G.p2.wdead.E ? clkS(dbg.G.p2.wdead.E) : 'never') + ', ' + w2.length + ' more Clutches, check K)');
+    // (a Clutch left 20 s hatches a Viper; a Rawling left 35.5 s casts Acidic Expulsion: a hit and a stacking damage over time, and a mistake)
+    dbg.at(183.5, meF, { east: false, seed: 3 }); const P0 = { c: P.CPACE, r: P.RPACE }; P.CPACE = 0;
+    try { dbg.pos = [92, 30]; for (let i = 0; i < 440; i++) { dbg.stepOwn(1); dbg.pos = [92, 30]; } } finally { P.CPACE = P0.c; }
+    if (!dbg.G.adds.some((a) => a.kind === 'viper') || !Object.values(dbg.G.p2.cl).some((c) => c.hatched)) bad('a Clutch nobody kills for 20 s doesn\'t hatch a Viper (check K)');
+    dbg.at(183.5, meF, { east: false, seed: 3 }); P.RPACE = { warden: 0, eggs: 0, ds: 0 };
+    try { dbg.pos = [92, 30]; for (let i = 0; i < 900; i++) { dbg.stepOwn(1); dbg.pos = [92, 30]; } } finally { P.RPACE = P0.r; }
+    if (!dbg.log.some((x) => /cast Acidic Expulsion/.test(x)) || !(dbg.G.debs.acid && dbg.G.debs.acid.n >= 1)) bad('a Rawling nobody kills for 35.5 s doesn\'t cast Acidic Expulsion on you (check K)');
+    // (Rawlings can be hit: in your targets with their health; your hits take it down; they stay until killed)
+    dbg.at(192, meF, { east: false, seed: 3 }); const rt = dbg.P2.tgts(dbg.G.t).find((o) => o.kind === 'rawling'); if (!rt || !(rt.max > 0) || !(rt.hp > 0)) bad('a Rawling at 3:12 isn\'t a target with its health (check K)');
+    else { const a = dbg.G.adds.find((q) => q.id === rt.key), h0 = a.hp; dbg.P2.hit(rt.key); ctx.__h = 0; if (a.hp !== h0) {} }
+    // (a big egg left until Hatching Doom ends: a Ravenous Doomscale stands up there and its Dread Roar, 9 s later, stuns you)
+    const pkR = { side: 'E', role: 'h', egg: 'far', mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkR; const meR = dbg.P2.slotOf(pkR); dbg.at(240, meR, { east: false, seed: 3 }); dbg.pos = [96, 9];
+    for (let i = 0; i < 700; i++) { dbg.stepOwn(1); dbg.pos = [96, 9]; } const rv = dbg.G.p2.rav[0];
+    if (!rv || Math.abs(rv.t - 264) > 0.2 || !dbg.S.casts.some((c) => /Dread Roar/.test(c.name) && Math.abs(c.t0 - 270.5) < 0.3)) bad('a big egg left until 4:24 doesn\'t raise a Ravenous Doomscale with its Dread Roar 6.5 s later (check K)');
+    if (!dbg.log.some((x) => /Ravenous Doomscale stood up/.test(x))) bad('the big egg left until 4:24 isn\'t a wipe mistake naming the Ravenous Doomscale (check K)');
+    // (the south eggs: picking up the south big egg beside them turns them into Clutches 0.7 s later)
+    dbg.P2.pick = free; dbg.at(166.05, meF, { east: false, seed: 3 }); while (dbg.G.t < 262) dbg.step(1); const sc = Object.values(dbg.G.p2.cl).filter((c) => c.set === 2), pu = dbg.G.p2.big[dbg.S.big.findIndex((b) => b.side === 'E' && b.which === 'far')].at;
+    if (sc.filter((c) => c.side === 'E').length !== 2 || sc.some((c) => c.side === 'E' && Math.abs(c.born - pu - 0.7) > 0.1)) bad('the south big egg\'s pickup (' + clkS(pu) + ') doesn\'t turn the two south eggs beside it into Clutches 0.7 s later (check K)');
+    // (no damage moment while you carry an egg; after a start-at, the Rawlings up then are still up)
+    const pkC = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkC; const meC = dbg.P2.slotOf(pkC); dbg.at(232, meC, { east: false, seed: 3 }); if (dbg.G.eggs.some((e) => e.who === meC && e.state === 'held') && dbg.P2.dpsCat(dbg.G.t)) bad('carrying your egg you\'re asked to hit ' + dbg.P2.dpsCat(dbg.G.t) + '; carrying it is your job then (check K)');
+    dbg.P2.pick = free; const tg = dbg.ff ? null : null; dbg.at(166.05, meF, { east: false, seed: 3 }); while (dbg.G.t < 240) dbg.step(1); const nUp = dbg.G.adds.filter((a) => a.own).length; dbg.G.adds = []; dbg.P2.ff(); if (nUp && dbg.G.adds.filter((a) => a.own).length !== nUp) bad('after a start-at the ' + nUp + ' Rawlings up then are gone (check K)');
+  } catch (e) { bad('the adds and kicks crashed phase 2: ' + e.message + ' (check K)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
   const PJ = rd('practice.js'), GJ = rd('guides.js'), BP = rd('build.ps1');
@@ -226,9 +304,9 @@ function checks(H, say) {
     const W = dbg.G.p2.wd.E; if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.TETHER) < 0.01 && hyp([s.x, s.y], W) < 0.01)) bad('in 3D your tether doesn\'t show its ' + P.TETHER + '-yard break ring round the Warden (check G)');
     if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.WARD) < 0.01)) bad('in 3D the eggs\' ' + P.WARD + '-yard Warden\'s Protection rings are gone (check G)');
     if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.THROW) < 0.01 && hyp([s.x, s.y], dbg.S.pits.E) < 0.01)) bad('in 3D the cauldron\'s ' + P.THROW + '-yard ring isn\'t where it takes the eggs (check G)');
-    at(176).forEach((s) => kinds.add(s.k)); at(262).forEach((s) => kinds.add(s.k)); const LF = at(271.5); LF.forEach((s) => kinds.add(s.k)); at(300).forEach((s) => kinds.add(s.k));
+    at(176).forEach((s) => kinds.add(s.k)); at(262).forEach((s) => kinds.add(s.k)); at(186).forEach((s) => kinds.add(s.k)); const LF = at(281); LF.forEach((s) => kinds.add(s.k)); at(300).forEach((s) => kinds.add(s.k));
     const fan = LF.find((s) => s.k === 'fan'); if (!fan || Math.abs(fan.r - P.FAN.r) > 0.01) bad('in 3D the Doomscale\'s frontal isn\'t drawn at its ' + P.FAN.r + ' yards (check G)');
-    ['gate', 'warden', 'tether', 'cauldron', 'begg', 'dscale', 'fan', 'heart'].forEach((k) => { if (!kinds.has(k)) bad('the 3D view draws no "' + k + '" in phase 2 (check G)'); });
+    ['gate', 'warden', 'tether', 'cauldron', 'begg', 'dscale', 'fan', 'heart', 'clutch', 'arc'].forEach((k) => { if (!kinds.has(k)) bad('the 3D view draws no "' + k + '" in phase 2 (check G)'); });
     // (the review, Nov 15: a click on a ledge's outer stone did nothing, since the 3D view dropped any floor click past 140 yards, phase 1's platform's size)
     const far = []; for (let x = 120; x <= 165; x += 5) for (let y = -60; y <= 60; y += 10) if (ctx.pgP2Floor(x, y) && Math.hypot(x, y) > 140) far.push([x, y]);
     const P3 = rd('practice3d.js'), lim = /Math\.hypot\(p\.x, p\.z\) > \(A\.P2 \? (\d+) : 140\)/.exec(P3); if (far.length && (!lim || far.some((q) => Math.hypot(q[0], q[1]) > +lim[1]))) bad('in 3D a click on a ledge\'s outer stone (' + far.length + ' spots past 140 yards, e.g. ' + far[0].join(', ') + ') doesn\'t walk you there (check G)');
