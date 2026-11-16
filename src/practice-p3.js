@@ -297,7 +297,7 @@ function pgP3(A) {
     if (t > T.clu[0] + 2 && t <= T.clu[0] + 2.5 && kq(G.x, G.y) !== S.Qs[0] && once('late1')) A.mistake('late', 'You weren\'t on her quarter when phase 3 began (' + clk(T.clu[0]) + ').', S.gates.some((g) => g.k === 1) ? 'Take the gateway (the gold ring) to her quarter as she rises, then stack with the raid.' : 'Stack with the raid on her quarter as she rises.', 0); };
   // (the kicks: Vicious Echoes from each Shrieker)
   const kickables = (t) => S.echoes.filter((e) => t >= e.t0 && t <= e.t1 && !G.p3.kick[e.sh] && G.p3.sh[e.sh]).map((e) => ({ key: e.sh, kind: 'Vicious Echoes', p: [G.p3.sh[e.sh].x, G.p3.sh[e.sh].y], who: GDZ_RAID.find((id) => S.job[id].kick === e.k) || null, t0: e.t0, c: e.c }));
-  const kicked = (k, who, t) => { G.p3.kick[k.key] = who; k.c.t1 = Math.min(k.c.t1, t); if (who === A.me) A.say('Kicked: Vicious Echoes interrupted.'); };
+  const kicked = (k, who, t) => { G.p3.kick[k.key] = who; k.c.t1 = Math.min(k.c.t1, t); if (who === A.me) { A.say('Kicked: Vicious Echoes interrupted.'); if (A.sfx) A.sfx('ok'); } };
   const kick = () => { sync(); if (!G || !G.p3) return; const t = G.t, me = A.me, rg = range(me);
     if (!rg) { A.say('Healers have no kick in Midnight (only a Restoration Shaman).', true); return; } if (stunned(me, t)) { A.say('You\'re stunned.', true); return; }
     if (t - G.p3.kickCd < 15) { A.say('Kick is on cooldown: ' + Math.ceil(15 - (t - G.p3.kickCd)) + ' s.', true); return; }
@@ -554,7 +554,7 @@ function pgP3(A) {
   // (your hits on this part's own targets: practice.js hitTgt calls P2.hit for anything that isn't one of its shared adds)
   const hit = (key) => { sync(); if (!G || !G.p3) return; const c = G.p3.cl[key]; if (c) { c.hp -= 1; return; } const s = G.p3.sh[key]; if (s) { s.hp -= P.SHRIEK.hit; return; } if (key === 'w3' && G.p3.wr) G.p3.wrHp -= P.WRETCH.hit; };
 
-  return { part: 3, dodges: true, walk, hit,
+  return { part: 3, dodges: true, autoAoe: true, walk, hit,
     script: (o) => pgP3Script({ ...(o || {}), me: A.me, pick: mine() ? eff() : null }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => { sync(); return pgP3Floor(x, y, S && G && G.p3 ? alive(G.t) : [1, 1, 1, 1], 0.35); }, bossAt, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
     clean: 'Onto her quarter in time, every bite cleared and spread, out of every wave and off every quarter before it broke. Try another job.',

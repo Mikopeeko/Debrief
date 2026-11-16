@@ -73,8 +73,8 @@ function pg3dShapes(A, t) {
   G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let x = e.x, y = e.y, h = 1.2;
     if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; disc(b.x, b.y, 3, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, 3, ec, 0.9, ew ? 0.32 : 0.2); }
     P({ k: 'egg', x, y, h, held: !!e.who });
-    if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
-    if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 14); } });
+    if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: e.shpMax ? 1 - Math.max(0, e.shp) / e.shpMax : (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); /* (your egg: its shell's health, Flex, Nov 15) */ P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
+    if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? (e.shp > 0 ? 'Your egg: hit it to break the shell' : 'Your egg (shell up)') : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
   // (your attacks, Nov 15: a gold flash on what you hit; Rawlings and Vipers show their health as a red arc that shrinks)
   // (her waves, Nov 15: the half hit first glows red, the safe half green; they swap once the first wave has gone by)
@@ -84,7 +84,8 @@ function pg3dShapes(A, t) {
   // melee swing a quick slash in front of them at the target, and it sparks. You lean into each hit. The gold floor ring comes as the hit lands.
   // (a tank hits from 40 yards in this game: a slash when close, else a pale bolt.) bolt: x, y, h where it is, tx, ty, th the end of its streak.
   const HT = { fly: 0.22, swing: 0.16, end: 0.5 }, myR = A.rl ? A.rl(me) : 'r'; let lean = null;
-  const dvh = A.dps ? A.dps() : null; if (dvh) { (dvh.fx || []).forEach((h) => { const age = h.age; if (!(age >= 0 && age < HT.end)) return;
+  const dvh = A.dps ? A.dps() : null; (dvh && dvh.aoe || []).forEach((h) => { const f = Math.min(1, h.age / 0.6), rr = h.r * (0.35 + 0.65 * f); disc(h.x, h.y, rr, '#ffd36b', 0.2 * (1 - f)); ring(h.x, h.y, rr, '#ffd36b', 1, 0.75 * (1 - f)); }); /* (the area attack's burst, Nov 15) */
+  if (dvh) { (dvh.fx || []).forEach((h) => { const age = h.age; if (!(age >= 0 && age < HT.end)) return;
       const dx = h.x1 - h.x0, dy = h.y1 - h.y0, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, a = Math.atan2(dy, dx), mel = !!h.melee || (myR === 't' && d - h.r <= 5);
       const c = mel ? '#fff0c8' : myR === 'h' ? '#ffd34d' : myR === 't' ? '#9fd0ff' : '#ff6a2a', hz = Math.min(3.2, 0.5 + h.r * 0.6), sk = Math.min(Math.max(0, h.r - 1.2), d * 0.5);
       const ex = h.x1 - ux * sk, ey = h.y1 - uy * sk, at = mel ? 0.07 : HT.fly; /* (where it lands: the middle of a small target, the near side of a big one) */
@@ -103,7 +104,7 @@ function pg3dShapes(A, t) {
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
   // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
   // (nine names piled up in one heap, review of Nov 15)
-  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
+  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); if (a.taunt != null && t - a.taunt < 0.9) ring(a.x, a.y, 1.6 + (t - a.taunt) * 2.5, '#ff6b5c', 1, 0.6 * (1 - (t - a.taunt) / 0.9)); /* (the tank's taunt, Nov 15) */ if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
     if (!q) packs.push(q = { kind: a.kind, x0: a.x, y0: a.y, sx: 0, sy: 0, n: 0 }); q.sx += a.x; q.sy += a.y; q.n++; });
   packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : '') + (!vp && G.adds.some((a) => a.boil && a.kind === 'rawling' && Math.hypot(a.x - x, a.y - y) < 6) ? ' (boiling)' : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
   S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up });
