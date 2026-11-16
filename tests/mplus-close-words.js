@@ -13,7 +13,7 @@ module.exports = function mplusCloseWords(say) {
     ["' was ready but not pressed.</span>' : 'A close call: no defensive was ready.'", 'a pull\'s close calls'],
     ["esc(c.ready[0]) + ' was ready but not pressed' : 'no defensive was ready')", 'the play by play\'s close calls'],
     ["'information: big hits that left ' + them + ' under 15% with no defensive active'", 'the Report card\'s Close calls row'],
-    ["with no defensive active. Each close call is on Route, in its pull.</p>'", 'the Graphs note']];
+    ["with no defensive active. Each close call is on Summary, in its pull.</p>'", 'the Graphs note']];
   for (const [w, where] of want) if (s.indexOf(w) < 0) bad(where + ' no longer says plainly whether a defensive was ready ("Im confused on the wording here")');
   for (const old of ["' was ready</span>' : 'No defensive up'", "'A close call: no defensive was up.'", "' was ready' : 'no defensive up')", "Each close call is on Debrief", "'Next key on Debrief,"]) if (s.indexOf(old) >= 0) bad('an old line is back: ' + old.slice(0, 60));
 };

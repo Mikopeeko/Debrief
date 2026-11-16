@@ -15,14 +15,14 @@ module.exports = function mplusRouteMain(say) {
   const one = (n) => { const m = s.match(new RegExp('\\nconst ' + n + ' = [^\\n]*?;')); if (!m) throw new Error('src/mptab.js has no ' + n); return m[0].trim(); };
   let T; try { T = vm.runInNewContext([one('MPX_VIEWS'), one('MPX_OLD'), s.match(/\nconst MPX_TABS = [^\n]*?;/)[0]].join('\n') + '\n({ MPX_VIEWS, MPX_OLD, MPX_TABS })'); } catch (e) { bad('the key\'s tab lists no longer read by themselves: ' + String(e.message).slice(0, 140)); return; }
   // 1. the tabs
-  if (T.MPX_TABS.map((x) => x[1]).join(' | ') !== 'Route | Players | Graphs') bad('the tab row is "' + T.MPX_TABS.map((x) => x[1]).join(' | ') + '", not Route | Players | Graphs');
+  if (T.MPX_TABS.map((x) => x[1]).join(' | ') !== 'Summary | Players | Graphs') bad('the tab row is "' + T.MPX_TABS.map((x) => x[1]).join(' | ') + '", not Route | Players | Graphs');
   if ((T.MPX_VIEWS[0] || [])[0] !== 'map' || T.MPX_VIEWS.some(([v]) => v === 'deb')) bad('Route is not the first view, or Debrief is a view again');
   for (const v of ['deb', 'mis', 'run']) if (T.MPX_OLD[v] !== 'map') bad('an old link with &mpv=' + v + ' no longer opens Route');
   if (s.indexOf("mpxView(MP.cv || 'map'); }") < 0) bad('the key no longer opens on Route');
   // 2. the whole key's summary, no pull-by-pull table on the website
   { const i = s.indexOf('\nfunction mpxDeb(R, fx) {'), j = s.indexOf('\nconst mpxDebPaint', i); const body = i < 0 ? '' : s.slice(i, j);
     if (!body || /mpxPbp\(/.test(body.replace(/\/\*[\s\S]*?\*\//g, ''))) bad('the key pull by pull is back on the website (picking a pull on Route tells each pull)');
-    if (body.indexOf("id=\"mptCD\">' + gl + top + '</div>' : ''") < 0) bad('the whole key\'s summary (The key, in short and Next key) is no longer one box for the top of Route'); }
+    if (body.indexOf("id=\"mptCD\">' + gl + bd + top + '</div>' : ''") < 0) bad('the whole key\'s summary (The key, in short and Next key) is no longer one box for the top of Route'); }
   // 3. Route opens on the whole key; the top follows the pick
   if (s.indexOf('function mpMapAutoGo(now, quiet) { if (!MPC_ON) return false;') < 0) bad('the website picks a pull by itself again, so Route opens on a pull, not the whole key');
   for (const f of ['function mpMapWhole() {', 'function mpxSelPaint() { if (MPC_ON) return;', "mpZoomTo(box, 1, null); if (!MPC_ON) mpxSelPaint(); }", "try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove();"]) if (s.indexOf(f) < 0) bad('the top of Route no longer follows the pick (missing: ' + f.slice(0, 60) + ')');

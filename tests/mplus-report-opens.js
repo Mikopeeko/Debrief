@@ -17,8 +17,8 @@ module.exports = function reportOpens(say) {
   const fn = (n) => { const a = s.indexOf('\nfunction ' + n + '('); if (a < 0) throw new Error('src/mptab.js has no function ' + n); let i = s.indexOf('{', a), d = 0; for (; i < s.length; i++) { const c = s[i]; if (c === '{') d++; else if (c === '}' && --d === 0) break; } return s.slice(a, i + 1); };
   // 1. the tabs: Debrief first, no Summary; old links land on Debrief (Nov 15)
   let T; try { T = vm.runInNewContext(line(s, 'MPX_VIEWS') + line(s, 'MPX_OLD') + line(s, 'MPX_NEED') + '\n({ MPX_VIEWS, MPX_OLD, MPX_NEED })'); } catch (e) { bad('the tab list no longer runs by itself: ' + String(e.message).slice(0, 120)); return; }
-  if (!T.MPX_VIEWS.length || T.MPX_VIEWS[0][0] !== 'map' || T.MPX_VIEWS[0][1] !== 'Route') bad('the key\'s first view is "' + (T.MPX_VIEWS[0] || [])[1] + '", not Route (Flex, Nov 16: "i feel like the route tab should just be the main page, and the debrief tab gets deleted")');
-  if (T.MPX_VIEWS.some(([v, l]) => v === 'run' || l === 'Summary')) bad('the Summary tab is back (Nov 15: its story, where the time went and Fix first are at the top of the Report card)');
+  if (!T.MPX_VIEWS.length || T.MPX_VIEWS[0][0] !== 'map' || T.MPX_VIEWS[0][1] !== 'Summary') bad('the key\'s first view is "' + (T.MPX_VIEWS[0] || [])[1] + '", not Route (Flex, Nov 16: "i feel like the route tab should just be the main page, and the debrief tab gets deleted")');
+  if (T.MPX_VIEWS.some(([v]) => v === 'run')) bad('the old Summary view (run) is back (Nov 15; since Nov 16 "Summary" is the main tab\'s name again, the map view)');
   for (const v of ['run', 'mis', 'deb']) if (T.MPX_OLD[v] !== 'map') bad('an old link with &mpv=' + v + ' opens "' + T.MPX_OLD[v] + '" instead of Route, where its summary and mistakes live now (Nov 16)');
   { const m = /if \(MP\.cv == null\) \{ const m = (\/[^\n]*?\/)\.exec\(location\.search\)/.exec(s); let re = null; try { re = m && vm.runInNewContext(m[1]); } catch (e) { re = null; }
     if (!re) bad('the address no longer reads the tab (&mpv=)');

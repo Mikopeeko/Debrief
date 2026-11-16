@@ -24,6 +24,6 @@ module.exports = function mplusRunGlance(say) {
   const deaths = (h.match(/class="mpgl-d" data-mpxpull="(\d+)"[^>]*>(\d+)<\/i>/g) || []).map((x) => x.replace(/.*data-mpxpull="(\d+)".*>(\d+)<\/i>/, '$1:$2')).join(','); if (deaths !== '0:1,2:2') bad('the deaths read "' + deaths + '", not numbered 1 and 2 on their pulls');
   if (h.indexOf(' spare</span>') < 0 || !/class="mpgl-fin" style="left:[\d.]+%"><b>24:/.test(h)) bad('the finish or the time to spare is gone');
   for (const l of ['+3', '+2', '+1']) if (h.indexOf('<b>' + l + '</b> ') < 0) bad('the ' + l + ' mark is gone from the axis');
-  if (s.indexOf("const gl = mpxRunGlance(R, F); return top || gl ? '<div class=\"mpdb mpx-whole\" role=\"region\" aria-label=\"The whole key\" id=\"mptCD\">' + gl + top + '</div>' : '';") < 0) bad('Route\'s summary no longer shows the run at a glance on top ("What if the summary section had that or something like that at the top?")');
+  if (s.indexOf("const gl = mpxRunGlance(R, F); return top || gl ? '<div class=\"mpdb mpx-whole\" role=\"region\" aria-label=\"The whole key\" id=\"mptCD\">' + gl + bd + top + '</div>' : '';") < 0) bad('Route\'s summary no longer shows the run at a glance on top ("What if the summary section had that or something like that at the top?")');
 };
 if (require.main === module) { let n = 0; module.exports((a, b, m) => { n++; console.log('[' + b + '] ' + m); }); console.log('Mythic+ run at a glance: ' + (n ? n + ' problem(s)' : 'OK')); process.exit(n ? 1 : 0); }

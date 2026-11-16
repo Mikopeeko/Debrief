@@ -21045,6 +21045,32 @@ html:not(.mpcard) body #view#view#view .mpgl-ax > i:first-child { transform: non
 html:not(.mpcard) body #view#view#view .mpgl-ax > i > b { font-weight: 700 !important; color: var(--muted) !important; }
 @media (max-width: 760px) { html:not(.mpcard) body #view#view#view .mpgl-bo > span, html:not(.mpcard) body #view#view#view .mpgl-key { display: none !important; } }
 }
+/* Mythic+ Summary, the group at a glance under the run (Nov 16, Flex with a picture of an end-of-key scoreboard: "lets build the idea i sent and then
+evaluate"): a panel like the run's, a slim row a player, numbers right-aligned in one face, DPS and HPS with a thin bar in class colour, zeros faint,
+deaths and avoidable damage in red; the whole row opens the player's Report card. On a phone it scrolls sideways inside its panel. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpsb { margin: 0 0 16px !important; padding: 12px 18px 8px !important; background: rgb(25,28,31) !important; border: 1px solid rgba(255,255,255,.09) !important; border-radius: 4px !important; }
+html:not(.mpcard) body #view#view#view .mpsb-hd { display: flex !important; align-items: baseline !important; gap: 10px !important; margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view .mpsb-hd > b { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-hd > small { font: 500 12px var(--body) !important; color: var(--faint, #8a919c) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-t { overflow-x: auto !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r { display: grid !important; grid-template-columns: minmax(180px, 1.9fr) repeat(9, minmax(68px, 1fr)) !important; align-items: center !important; column-gap: 10px !important; min-width: 860px !important; padding: 5px 4px !important; border-bottom: 1px solid rgba(255,255,255,.05) !important; font: 600 14px var(--body) !important; color: var(--text) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r > span:not(.mpsb-p) { text-align: right !important; }
+html:not(.mpcard) body #view#view#view .mpsb-h > span:first-child { text-align: left !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r:not(.mpsb-h) { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r:not(.mpsb-h):hover { background: rgba(255,255,255,.035) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-h { padding: 0 4px 6px !important; border-bottom: 1px solid var(--line) !important; font: 600 12px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p { display: flex !important; align-items: center !important; gap: 9px !important; min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > img { width: 28px !important; height: 28px !important; border-radius: 3px !important; flex: none !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > span { display: grid !important; min-width: 0 !important; line-height: 1.2 !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > span > b { font: 700 14px var(--body) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > span > small { font: 500 12px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-z { color: var(--faint, #6f7680) !important; font-weight: 500 !important; }
+html:not(.mpcard) body #view#view#view .mpsb-bad { color: #f0938d !important; }
+html:not(.mpcard) body #view#view#view .mpsb-b { display: grid !important; justify-items: end !important; gap: 3px !important; }
+html:not(.mpcard) body #view#view#view .mpsb-bar { display: block !important; width: 64px !important; height: 3px !important; background: rgba(255,255,255,.07) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-bar > i { display: block !important; height: 100% !important; opacity: .85 !important; }
+}
 </style>
 </body>
 </html>
