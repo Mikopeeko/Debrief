@@ -22,7 +22,7 @@ module.exports = function mplusRouteMain(say) {
   // 2. the whole key's summary, no pull-by-pull table on the website
   { const i = s.indexOf('\nfunction mpxDeb(R, fx) {'), j = s.indexOf('\nconst mpxDebPaint', i); const body = i < 0 ? '' : s.slice(i, j);
     if (!body || /mpxPbp\(/.test(body.replace(/\/\*[\s\S]*?\*\//g, ''))) bad('the key pull by pull is back on the website (picking a pull on Route tells each pull)');
-    if (body.indexOf("id=\"mptCD\">' + top + '</div>' : ''") < 0) bad('the whole key\'s summary (The key, in short and Next key) is no longer one box for the top of Route'); }
+    if (body.indexOf("id=\"mptCD\">' + gl + top + '</div>' : ''") < 0) bad('the whole key\'s summary (The key, in short and Next key) is no longer one box for the top of Route'); }
   // 3. Route opens on the whole key; the top follows the pick
   if (s.indexOf('function mpMapAutoGo(now, quiet) { if (!MPC_ON) return false;') < 0) bad('the website picks a pull by itself again, so Route opens on a pull, not the whole key');
   for (const f of ['function mpMapWhole() {', 'function mpxSelPaint() { if (MPC_ON) return;', "mpZoomTo(box, 1, null); if (!MPC_ON) mpxSelPaint(); }", "try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove();"]) if (s.indexOf(f) < 0) bad('the top of Route no longer follows the pick (missing: ' + f.slice(0, 60) + ')');
