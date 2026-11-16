@@ -33,7 +33,10 @@
 //      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true;
 //   K. the raid markers aren't the game's floating shapes (Flex, Nov 15: "make the markers have the floating marker shape like in game"): all eight
 //      at the rim in 3D, each its own shape and colour (a 10-point star, a 12-point cross, a 4-point diamond, a 3-point triangle, a skull with eye
-//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d).
+//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d);
+//   L. the measured Noxious Splash and the egg shells (Flex, Nov 15: "Yes, use measured": carriers splash 4.3 yards apart, 21 real splashes; "The
+//      eggs have to be damaged to break the shield"): the part says splash 4.3, no bot carriers' rings touch at it (the audit's "rings touch"), the
+//      words say about 4 yards (not 3), and your egg's shell is up until you hit it, with a hint that says so.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -209,6 +212,14 @@ function checks(H, say) {
         if (kit.put({ k: 'disc', x: 0, y: 0, r: 1 }, 1)) bad('the 3D kit takes shapes that aren\'t its markers (check K)'); } }
     if (!/A\.P2 && A\.P2\.kit3d \? A\.P2\.kit3d\(\{[^}]*canvas, ctex/.test(rd('practice3d.js'))) bad('practice3d.js no longer hands a part\'s kit3d its pieces (canvas and ctex for the markers, check K)'); }
   catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
+  // L. the measured splash and the egg shells
+  try { if (dbg.P2.splash !== 4.3) bad('the intermission doesn\'t use the measured Noxious Splash (4.3 yards; Flex: "Yes, use measured"; it has ' + dbg.P2.splash + ', check L)');
+    if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
+    const words = rd('practice-int.js').match(/'[^'\n]*(?:\\'[^'\n]*)*'/g).filter((s) => /yards? from (other )?(the )?(egg )?carriers|3-yard/.test(s)); if (words.length) bad('the words still give the old 3 yards between carriers: ' + words.join(' | ') + ' (check L)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);
+    if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/hit it to break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
+    dbg.G.log = []; while (dbg.G.t < T.slams[0]) dbg.step(1); { const e2 = dbg.G.eggs.find((q) => q.id === me); if (!e2 || e2.state === 'floor') bad('the autopilot didn\'t break its egg\'s shell and pick it up by the first slam (check L)'); } }
+  catch (e) { bad('the splash and shells check crashed: ' + e.message + ' (check L)'); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
     const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }

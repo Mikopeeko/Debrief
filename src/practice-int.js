@@ -167,8 +167,10 @@ function pgInt(A) {
   // (one rule for your egg, used by the bots, the autopilot, your arrow and your hint (the review, Nov 15: the hint sent carriers to their soak, then
   // the score said they never picked their egg up): go for it from 4 s before its shell breaks whenever you can be at it as it breaks and still reach
   // your next soak's edge before it slams; else soak first and get it after)
-  const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor' || t < e.shell - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
-    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, e.shell - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
+  // (your own egg's Hardened shell has health since Nov 15 (practice.js, Flex: "The eggs have to be damaged to break the shield"): you go and break it
+  // as soon as it lands, when your next soak allows: with your hits and the raid's it opens in about 3.6 s)
+  const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor') return false; const opens = e.shp > 0 ? t + e.shp / 1.4 : e.shell; if (!(e.shp > 0) && t < opens - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
+    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
   const homeAt = (id) => { const sg = S.east ? 1 : -1, i = GDZ_RAID.indexOf(id); return id[0] === 't' ? [34 * sg, id === 't1' ? -12 : 12] : id[0] === 'm' ? spiral([35.5 * sg, 0], i, 1.5) : spiral([25 * sg, 0], i, 5); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
@@ -242,6 +244,10 @@ function pgInt(A) {
       else if (off) { A.mistake('shatter', 'The knockback threw you into the venom: you stood too close to the edge.', 'Stand on the inside, not at the edge: the burst knocks everyone about 6 yards out from the middle.', 25); A.deb('dvenom', 12); }
       else A.say('You rode out the Shattering on the stone.');
       if (held && (onC || off)) { held.state = 'gone'; held.who = null; vip(q[0], q[1], true, 'Your egg went into the venom with you', 'Carried eggs hatch in the venom: break yours in a soak before the Shattering.'); } }
+    // (the bots' carriers keep their rings apart at the measured splash: 4.9 yards, 0.6 clear of its 4.3 (practice.js pushes them 3.6 apart until it
+    // reads the part's splash). Walking your own ring into theirs stays yours, as in phase 1)
+    { const want = P.SPLASH + 0.6, car = G.eggs.filter((q) => q.state === 'held' && q.who && q.who !== me && G.bots[q.who]).map((q) => G.bots[q.who]);
+      for (let it = 0; it < 2; it++) for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i], c = car[j], ex = c.x - a.x, ey = c.y - a.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < want) { const pu = (want - ee) / 2; a.x -= ex / ee * pu; a.y -= ey / ee * pu; c.x += ex / ee * pu; c.y += ey / ee * pu; } } }
     Object.entries(G.int.kb).forEach(([id, k]) => { const f = Math.min(1, (t - k.t0) / 0.55), b = G.bots[id]; if (b) { b.x = k.x0 + (k.x1 - k.x0) * f; b.y = k.y0 + (k.y1 - k.y0) * f; } if (f >= 1) delete G.int.kb[id]; });
     // (a crack after the Shattering is venom: it hurts until you're back on the stone (off the stone, practice.js's own venom does it: not twice))
     if (G.int.shat && !G.kb && pgIntCrack(x, y) && PG_UL.onPlat(x, y)) { G.hp -= 10 * dt * (A.has('def') ? 0.5 : 1); if (!A.has('dvenom')) A.deb('dvenom', 6); const h2 = G.eggs.find((z) => z.who === me && z.state === 'held'); if (h2) { h2.state = 'gone'; h2.who = null; vip(x, y, true, 'You carried your egg into a crack', 'The cracks are venom after the Shattering: it hatches eggs.'); } }
@@ -258,7 +264,7 @@ function pgInt(A) {
         : d > P.SPREAD + 1 ? 'To the diamond line now (the gold ring): the platform shatters at 6:09!' : 'Good: on the diamond line, inside, off the cracks. Her bubbles at the ' + P.QN[S.q1] + ' corner show where she comes up. It shatters in ' + Math.max(0, Math.ceil(T.shatter - t)) + ' s.'; }
     if (t < T.land + 0.5) return e ? 'Go to the ' + tn + '\'s mark (' + P.TM[g] + '). Your egg lands at the gold circle at 5:24: stand beside it, not under it.' : 'Intermission: go to the ' + tn + '\'s mark (' + P.TM[g] + ') and wait. Eggs land at 5:24: step out of their circles.';
     const q = t >= T.defCue - 0.4 && t <= T.defBy && !(G.def >= T.defFrom - 1) ? ' Press Q now: personals for the back-to-back slams.' : '', ef = eggFirst(me, t, { x: G.x, y: G.y }, e, ns);
-    if (ef) return (t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
+    if (ef) return (e.shp > 0 ? 'Your egg\'s shell is up: hit it to break it (Tab, then 1; 2 is your area attack), then walk over it.' : t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
     if (ns && called(t)) { const n = ordOf(ns), car = e && e.state === 'held' ? ' Bring your egg: the slam breaks it.' : e && e.state === 'floor' ? ' Get your egg after it.' : '', d = pgDist([G.x, G.y], [ns.x, ns.y]);
       return (d <= ns.r - 1 ? 'In your ' + pgIntOrd(n) + ' soak at ' + mkAt(ns) + ': stay inside until it slams (' + Math.max(0, ns.at - t).toFixed(1) + ' s).' : 'Your ' + pgIntOrd(n) + ' soak: the gold circle at ' + mkAt(ns) + '. Get in before it slams (' + Math.max(0, Math.ceil(ns.at - t)) + ' s).') + car + q; }
     if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep your ring off other carriers\' rings (about 4 yards apart).' : '');
@@ -392,7 +398,7 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), splash: P.SPLASH };
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), splash: P.SPLASH, eggShells: true }; /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
 // ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the
