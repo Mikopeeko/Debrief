@@ -363,6 +363,12 @@ function checks(H, say, pj) {
     const L = (m) => bad(m + ' (check L)');
     for (const [role, egg, east, seed] of [['m', 'm1', false, 3], ['m', 'm1', true, 7], ['m', 'm1', false, 11], ['r', 'r3', false, 3]]) { dbg.myJob = { role, egg, soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(), r = dbg.sim(slot, true, east, seed), sp = r.log.filter((x) => /carrying too/.test(x));
       if (sp.length || r.deaths.length) L('following the plan as the ' + (role === 'm' ? 'melee' : 'ranged') + ' egg carrier (' + slot + ', seed ' + seed + '): ' + (sp[0] || 'died at ' + r.deaths.join(', '))); }
+    // (Flex, Nov 16: "its impossible to walk into another egg carrier now. Thats part of the fight people need to practice": the fix above made carriers step
+    //  back from you and moved their spots away from wherever you stood. They keep clear of your PLANNED spot; walk into one and both eggs hatch)
+    if (typeof dbg.walkTo !== 'function') L('there is no way to walk the player in the check (dbg.walkTo)');
+    else { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(30, 'r3'); const G0 = dbg.G, other = G0.eggs.find((e) => e.state === 'held' && e.who && e.who !== 'r3'), b = other && G0.bots[other.who];
+      if (!b || !G0.eggs.some((e) => e.who === 'r3' && e.state === 'held')) L('at 0:30 you or another carrier hold no egg, so walking into a carrier can\'t be checked');
+      else { const v0 = G0.vipers; for (let i = 0; i < 80 && dbg.G.vipers === v0; i++) { dbg.walkTo([b.x, b.y]); dbg.stepOwn(1); } if (!(dbg.G.vipers > v0)) L('walking straight into another egg carrier never splashes: the carrier keeps stepping away'); } }
     for (const [east, seed] of [[false, 3], [true, 7]]) { dbg.myJob = { role: 'm', egg: null, soak: [2, 2], fb: [0, 0] }; dbg.sim(dbg.jobSlot(), true, east, seed); const H = dbg.dpsList().filter((m) => m.kind === 'heart');
       if (!H.length || H.some((m) => m.fr < 0.5)) L('a melee following the plan is on the heart ' + H.map((m) => Math.round(m.fr * 100) + '%').join(', ') + ' of the burn; their spot must be in reach'); }
     dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(30, 'r3'); { const G0 = dbg.G, S0 = dbg.S, t = G0.t; S0.warns.splice(G0.warnI, 0, { t: t - 0.01, text: 'Circling Prey: move one quarter left, you have 8 s!', c: '#fff' }); G0.warnQ = []; G0.lastWarn = null;
