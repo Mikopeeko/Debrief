@@ -239,8 +239,8 @@ module.exports = function practice3d(say, H) {
     if (!/keep\(\{ dispose: STN\.free \}\)/.test(P3)) nope('its canvases aren\'t emptied on close (keep({ dispose: STN.free }))');
     const calls = [...P3.matchAll(/pg3dStoneDraw\((?!mk, px\))/g)].map((q) => q.index), a = P3.indexOf('const put = '), b = P3.indexOf('\n  // ---- the camera'), c = P3.indexOf('const draw1 = '), d = P3.indexOf('\n  const draw = ');
     if (calls.length !== 1 || calls.some((i) => (i > a && i < b) || (i > c && i < d)) || !/const STN = pg3dStoneDraw\(/.test(P3)) nope('it must be drawn once, when the 3D view opens (one pg3dStoneDraw call, in pg3d and not in put or draw1): ' + calls.length + ' call(s)');
-    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;| PG3D_GLTF;)/]) if (re.test(P3)) url.push(String(re)); /* (PG3D_GLTF: the loader for your figure, check 13; the stone still draws by code) */
-    if ((P3.replace(/const PG3D_(GLTF|KK2?) = '[^']+'/g, '').replace(/const PG3D_FIG = \{[\s\S]*?\} \};/, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s and your figure\'s (check 13)');
+    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;| src;)/]) if (re.test(P3)) url.push(String(re)); /* (PG3D_GLTF: the loader for your figure, check 13; the stone still draws by code) */
+    if ((P3.replace(/const PG3D_(GLTF|SKU|KK2?) = '[^']+'/g, '').replace(/const PG3D_FIG = \{[\s\S]*?\} \};/, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s and your figure\'s (check 13)');
     if (url.length) nope('a texture or picture loads from an address (' + url.join(', ') + '): the stone must be drawn by code, never a picture');
     if (!/const P = \(x, y\) => \[\(x \+ S \/ 2\) \* K, \(S \/ 2 - y\) \* K\]/.test(P3) || !/S = PL\.span, K = px \/ S/.test(P3) || !/map: stx\(STN\.col, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5\)/.test(P3) || !/normalMap: stx\(STN\.nrm, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5/.test(P3)) nope('the texture doesn\'t span the plan (1 / span, the stone\'s middle at 0.5) the way pg3dStoneDraw draws it ((x + S / 2) * K, (S / 2 - y) * K): the carving would slide off the octagon');
     const sc = (() => { try { const x = vm.createContext({ Math, Uint8Array, Uint8ClampedArray }); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('pg3dStonePlan', P3) + '\n' + H.grab('pg3dNormals', P3) + '\n' + H.grab('pg3dStoneDraw', P3) + '\nthis.plan = pg3dStonePlan; this.nrm = pg3dNormals; this.draw = pg3dStoneDraw; this.on = PG_UL.onPlat;', x); return x; } catch (e) { nope('pg3dStonePlan, pg3dNormals or pg3dStoneDraw don\'t run by themselves (' + String(e.message).slice(0, 140) + ')'); return null; } })();
@@ -351,38 +351,43 @@ module.exports = function practice3d(say, H) {
       if (!/CBS\.clear\(\)/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the bars');
       const nm = P3.slice(P3.indexOf('const names = '), P3.indexOf('\n  // ---- one shape on the screen'));
       if (!/pg3dHud\(CQ, HB\)/.test(nm) || !/BX\.push\(q\)/.test(nm)) nope('the labels and names don\'t keep off the bars (their boxes don\'t join the call-outs\' in names())'); } }
-  // 13. your animated figure (Nov 16, Flex: "download and use one of those models ... for just the player"): a free (CC0) model, KayKit's Knight,
-  //     loaded at runtime from one pinned commit (never @main, never bundled), read by three.js's plain-script GLTFLoader, only inside the 3D view;
-  //     if it can't load you stay the capsule; it stands, runs and attacks; its parts are freed when the game closes; drawing makes nothing new.
-  //     Then (Flex: "No wizard option for ranged classes? Or clerics for healers?") one figure per role: the Knight for melee and tanks, the
-  //     Mage (a wizard) for ranged, a healer figure for healers, each loaded the first time you play that role.
-  { const nope = (m) => bad('your figure: ' + m + ' (check 13)');
-    const kk = /const PG3D_KK = '([^']+)'/.exec(P3), gl = /const PG3D_GLTF = '([^']+)'/.exec(P3), fig = (/const PG3D_FIG = \{[\s\S]*?\} \};/.exec(P3) || [''])[0];
-    if (!kk || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/KayKit-Game-Assets\/KayKit-Character-Pack-Adventures-1\.0@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk[1])) nope('the figures must be KayKit\'s CC0 models from one pinned commit on jsdelivr (PG3D_KK), not a branch or another address');
-    //     Then the Cleric and a Paladin (Kay's, same style, CC0), from a re-hosted copy pinned to one commit (PG3D_KK2), borrowing the Mage's or
-    //     the Knight's clips and props.
-    const kk2 = /const PG3D_KK2 = '([^']+)'/.exec(P3), LK = ['knight', 'paladin', 'wizard', 'hunter', 'cleric'];
+  // 13. the figures (Nov 16, Flex: "download and use one of those models ... for just the player", then "No wizard option for ranged classes? Or
+  //     clerics for healers?", "another one for ranged classes like a hunter", "can you apply these to all of the characters in the game?
+  //     including the raid members", "you can use that guys versions"): free (CC0) KayKit figures loaded at runtime from pinned commits (never a
+  //     branch, never bundled), read by three.js's plain-script GLTFLoader and cloned with its SkeletonUtils (r147), only inside the 3D view;
+  //     each look loads once and every wearer gets a clone; if a model can't load, that body stays a capsule; you stand, run and swing, the
+  //     raid stands and runs; the knight, paladin, wizard, hunter, barbarian and cleric picked by the card's Look chip (yours) or by class and
+  //     role; the rings under the raid in class colours; everything freed when the game closes; drawing makes nothing new.
+  { const nope = (m) => bad('the figures: ' + m + ' (check 13)');
+    const kk = /const PG3D_KK = '([^']+)'/.exec(P3), kk2 = /const PG3D_KK2 = '([^']+)'/.exec(P3), gl = /const PG3D_GLTF = '([^']+)'/.exec(P3), sku = /const PG3D_SKU = '([^']+)'/.exec(P3), fig = (/const PG3D_FIG = \{[\s\S]*?\} \};/.exec(P3) || [''])[0];
+    if (!kk || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/KayKit-Game-Assets\/KayKit-Character-Pack-Adventures-1\.0@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk[1])) nope('the free figures must be KayKit\'s CC0 models from one pinned commit on jsdelivr (PG3D_KK)');
     if (!kk2 || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk2[1])) nope('the Cleric and Paladin must come from one pinned commit on jsdelivr (PG3D_KK2)');
-    const urls = [...fig.matchAll(/url: ([^,]+),/g)].map((q) => q[1]);
-    if (LK.some((k) => !new RegExp('\\b' + k + ': \\{ url: ').test(fig)) || urls.length !== LK.length) nope('PG3D_FIG must have the five looks: ' + LK.join(', '));
-    if (!/wizard: \{ url: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/hunter: \{ url: PG3D_KK \+ 'Rogue_Hooded\.glb'/.test(fig) || !/cleric: \{ url: PG3D_KK2 \+ '[^']*Cleric\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/paladin: \{ url: PG3D_KK2 \+ '[^']*Paladin\.glb', anim: PG3D_KK \+ 'Knight\.glb'/.test(fig)) nope('the wizard must be KayKit\'s Mage, the hunter the hooded Rogue, the cleric and the paladin Kay\'s with the Mage\'s and the Knight\'s clips');
-    if (!/const LOOKS = \['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'\]/.test(PJ) || !/class="pg-chip pg-look"/.test(PJ) || !/look: \(\) => look/.test(PJ)) nope('the card has no Look chip going round auto and the five looks, or the 3D view can\'t read it');
+    if (!gl || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/loaders\/GLTFLoader\.js$/.test(gl[1])) nope('the model loader must be three.js\'s plain-script GLTFLoader r147 (PG3D_GLTF)');
+    if (!sku || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/utils\/SkeletonUtils\.js$/.test(sku[1])) nope('the cloner must be three.js\'s plain-script SkeletonUtils r147 (PG3D_SKU)');
+    if (!/one\(PG3D_GLTF, /.test(P3) || !/one\(PG3D_SKU, /.test(P3)) nope('pg3dMeLoad must load just the loader and the cloner (one(PG3D_GLTF ...), one(PG3D_SKU ...))');
+    const LK = ['knight', 'paladin', 'wizard', 'hunter', 'barbarian', 'cleric'], urls = [...fig.matchAll(/url: ([^,]+),/g)].map((q) => q[1]);
+    if (LK.some((k) => !new RegExp('\\b' + k + ': \\{ url: ').test(fig)) || urls.length !== LK.length) nope('PG3D_FIG must have the six looks: ' + LK.join(', '));
     if (urls.some((x) => !/^PG3D_KK2? \+ '[\w%./-]+\.glb'$/.test(x))) nope('a figure loads from an address that isn\'t one of the two pinned commits');
-    if (!/c1\.tracks = c1\.tracks\.filter\(\(tr\) => !!root\.getObjectByName\(T\.PropertyBinding\.parseTrackName\(tr\.name\)\.nodeName\)\)/.test(P3)) nope('borrowed clips keep tracks for bones the figure doesn\'t have (three.js warns and the pose breaks)');
-    if (!gl || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/loaders\/GLTFLoader\.js$/.test(gl[1])) nope('the model loader must be three.js\'s plain-script GLTFLoader at one exact version (PG3D_GLTF)');
+    if (!/wizard: \{ url: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/hunter: \{ url: PG3D_KK \+ 'Rogue_Hooded\.glb'/.test(fig) || !/barbarian: \{ url: PG3D_KK \+ 'Barbarian\.glb'/.test(fig) || !/cleric: \{ url: PG3D_KK2 \+ '[^']*Cleric\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/paladin: \{ url: PG3D_KK2 \+ '[^']*Paladin\.glb', anim: PG3D_KK \+ 'Knight\.glb'/.test(fig)) nope('a look is on the wrong model');
+    if (!/const LOOKS = \['auto', 'knight', 'paladin', 'wizard', 'hunter', 'cleric'\]/.test(PJ) || !/class="pg-chip pg-look"/.test(PJ) || !/look: \(\) => look/.test(PJ) || !/cls: \(id\) =>/.test(PJ)) nope('the card has no Look chip going round auto and the looks, or the 3D view can\'t read it or a raider\'s class');
+    if (!/c1\.tracks = c1\.tracks\.filter\(\(tr\) => !!root\.getObjectByName\(T\.PropertyBinding\.parseTrackName\(tr\.name\)\.nodeName\)\)/.test(P3)) nope('borrowed clips keep tracks for bones the figure doesn\'t have');
     const calls = P3.split('pg3dMeLoad(T, F.url)').length - 1, pgA = P3.indexOf('function pg3d(host, A)');
-    if (calls !== 1 || P3.indexOf('pg3dMeLoad(T, F.url)') < pgA) nope('a figure must load only inside pg3d, once per role (figLoad: it has ' + calls + ' call(s))');
-    if (!/if \(rk in FIGS\) return; FIGS\[rk\] = null;/.test(P3)) nope('a role\'s figure can load more than once in a 3D view');
-    if (!/pg3dMeLoad\(T, F\.url\)[^\n]*\.then\([\s\S]{0,5000}?\}\)\.catch\(\(\) => \{ FIGS\[rk\] = false;/.test(P3)) nope('a model that can\'t load must leave you the capsule (no .catch after the load)');
-    if (!/if \(PG3D_FIG\[L\]\) return L;/.test(P3) || !/if \(\/paladin\/i\.test\(c\)\) return 'paladin';/.test(P3) || !/return r === 'r' \? \(\/hunter\/i\.test\(c\) \? 'hunter' : 'wizard'\) : r === 'h' \? 'cleric' : 'knight';/.test(P3)) nope('the figure isn\'t picked by the Look chip, else by your class and role (a Paladin the paladin, ranged the wizard or a Hunter the hunter, healers the cleric, everyone else the knight)');
-    if (!/if \(k === 'unit' && s\.you && meNow\(\)\) \{ meFig\(s, t\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for your role\'s figure once it has loaded');
-    const mf = (/const meFig = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];
-    if (!mf) nope('there is no meFig (the figure\'s moves)');
-    else { if (/new T\./.test(mf)) nope('the figure makes new three.js objects while drawing');
-      if (!/'atk'/.test(mf) || !/'run'/.test(mf) || !/'idle'/.test(mf)) nope('the figure doesn\'t switch between standing, running and attacking'); }
-    if (!/idle:[^\n]*run:[^\n]*\n[^\n]*atk:/.test(P3)) nope('the figure\'s idle, run and attack clips aren\'t picked from the model');
-    if (!/if \(ME\) \{ ME\.root\.visible = ME\.on; if \(ME\.on\) ME\.mixer\.update\(dt\); \}/.test(P3)) nope('draw1 doesn\'t move the figure\'s animation on, or doesn\'t hide it when you aren\'t drawn');
-    if (!/own\.push\(m\.geometry\)/.test(P3)) nope('the figure\'s geometry, materials and textures aren\'t freed when the game closes (own)'); }
+    if (calls !== 1 || P3.indexOf('pg3dMeLoad(T, F.url)') < pgA) nope('a model must load only inside pg3d (figLoad: ' + calls + ' call(s))');
+    if (!/if \(rk in TPL\) return; TPL\[rk\] = null;/.test(P3)) nope('a look\'s model can load more than once in a 3D view (TPL)');
+    if (!/\}\)\.catch\(\(\) => \{ TPL\[rk\] = false;/.test(P3)) nope('a model that can\'t load must leave that body a capsule (no .catch)');
+    if (!/const root = T\.SkeletonUtils\.clone\(P0\.root\); root\.traverse\(\(m\) => \{ if \(m\.isSkinnedMesh && m\.skeleton\) own\.push\(m\.skeleton\); \}\);/.test(P3)) nope('each wearer must get a SkeletonUtils clone, its bones freed on close');
+    if (!/if \(\/paladin\/i\.test\(c\)\) return 'paladin';/.test(P3) || !/return r === 'r' \? \(\/hunter\/i\.test\(c\) \? 'hunter' : 'wizard'\) : r === 'h' \? 'cleric' : r === 't' \|\| mine \? 'knight' : 'barbarian';/.test(P3) || !/const L = mine && A\.look \? A\.look\(\) : 'auto'; if \(PG3D_FIG\[L\]\) return L;/.test(P3)) nope('a look isn\'t picked by the Look chip (yours), else by class and role (a Paladin the paladin, a Hunter the hunter, ranged the wizard, healers the cleric, tanks and your melee the knight, the raid\'s melee the barbarian)');
+    if (!/if \(k === 'unit' && s\.you && meNow\(\)\) \{ figPose\(ME, s, A\.G\.lastHitT\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for your figure');
+    if (!/if \(k === 'unit' && !s\.you\) \{ const f = botNow\(s\); if \(f\) \{ figPose\(f, s, null\); return; \} \}/.test(P3)) nope('put() doesn\'t swap a raider\'s capsule for its figure');
+    const fp = (/const figPose = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];
+    if (!fp) nope('there is no figPose (the figures\' moves)');
+    else { if (/new T\./.test(fp)) nope('the figures make new three.js objects while drawing');
+      if (!/'atk'/.test(fp) || !/'run'/.test(fp) || !/'idle'/.test(fp)) nope('the figures don\'t switch between standing, running and attacking'); }
+    if (!/atk: mine \? act\(/.test(P3)) nope('only your figure swings (the raid stands and runs)');
+    if (!/for \(let i = 0; i < FIGL\.length; i\+\+\) FIGL\[i\]\.on = false;/.test(P3) || !/for \(let i = 0; i < FIGL\.length; i\+\+\) \{ const f = FIGL\[i\]; f\.root\.visible = f\.on; if \(f\.on\) f\.mixer\.update\(dt\); \}/.test(P3)) nope('draw1 doesn\'t move the figures\' animations on, or doesn\'t hide one that isn\'t drawn');
+    if (!/FIGL\.length = 0; BOTF\.clear\(\);/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the figures');
+    if (!/own\.push\(m\.geometry\)/.test(P3)) nope('the models\' geometry, materials and textures aren\'t freed when the game closes (own)');
+    if (!/ring\(b\.x, b\.y, 0\.95, cc \|\| rc, 0\.9, 0\.16\)/.test(P3)) nope('the rings under the raid aren\'t in class colours (the figures show the role, the ring the class)'); }
   return loadP;
 };
 if (require.main === module) {
