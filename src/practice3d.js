@@ -30,14 +30,22 @@ const pg3dLoad = () => { if (PG3D_LIB) return PG3D_LIB;
 // the capsule. three.js's own GLTFLoader reads it (the last plain-script one, r147, on the page's r149). A fresh copy each time the 3D view opens (the browser keeps the file),
 // so closing the game frees all of it. ----
 const PG3D_GLTF = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js'; /* (the last version with a plain-script loader: r148 dropped examples/js; it uses the page's three.js) */
-const PG3D_ME_URL = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/Knight.glb';
+// (one figure per role, Flex: "No wizard option for ranged classes? Or clerics for healers?": melee and tanks the Knight, ranged the Mage (a
+//  wizard with a staff and a pointed hat), healers the healer figure; each lists the props it holds by default that it shouldn't, and its swing)
+const PG3D_KK = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/';
+//  Then "another one for ranged classes like a hunter": the hooded Rogue with a crossbow. The card's Look chip can pick any of them.)
+const PG3D_FIG = {
+  knight: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i] },
+  wizard: { url: PG3D_KK + 'Mage.glb', hide: ['1H_Wand', 'Spellbook', 'Spellbook_open'], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  hunter: { url: PG3D_KK + 'Rogue_Hooded.glb', hide: ['Knife_Offhand', '1H_Crossbow', 'Knife', 'Throwable'], atk: [/^2h_ranged_shoot$/i, /ranged_shoot/i] },
+  cleric: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^spellcast_shoot$/i, /spellcast/i] } };
 let PG3D_GLTF_LIB = null;
-const pg3dMeLoad = (T) => {
+const pg3dMeLoad = (T, url) => {
   if (!PG3D_GLTF_LIB) { const p = PG3D_GLTF_LIB = new Promise((ok, no) => { if (T.GLTFLoader) { ok(T.GLTFLoader); return; } const sc = document.createElement('script');
     const tm = setTimeout(() => no(new Error('the model loader took too long')), 20000);
     sc.onload = () => { clearTimeout(tm); if (T.GLTFLoader) ok(T.GLTFLoader); else no(new Error('the model loader loaded empty')); }; sc.onerror = () => { clearTimeout(tm); no(new Error('the model loader could not load')); };
     sc.src = PG3D_GLTF; document.head.appendChild(sc); }); p.catch(() => { if (PG3D_GLTF_LIB === p) PG3D_GLTF_LIB = null; }); }
-  return PG3D_GLTF_LIB.then((L) => new Promise((ok, no) => { new L().load(PG3D_ME_URL, ok, undefined, no); })); };
+  return PG3D_GLTF_LIB.then((L) => new Promise((ok, no) => { new L().load(url, ok, undefined, no); })); };
 
 // ---- what to draw at time t: a list of shapes, each from the numbers the hit code uses (practice.js draw(), line for line) ----
 // A: practice.js's window on the game (G, S, me, nm, rl, clsC, bossAt, tailAt, spot, target, hint). Floor shapes: disc, ring (fixed size), grow
@@ -677,17 +685,21 @@ function pg3d(host, A) {
   const CAPG = keep(new T.CapsuleGeometry(0.55, 1.2, 4, 12)), UNITS = new Map();
   // (your figure, once it loads: as tall as the capsule (2.3 yd), feet on the stone; it stands, runs when you move, swings when you hit,
   //  and turns to the way you walk. ME stays null until then, and you are the capsule.)
-  let ME = null;
-  pg3dMeLoad(T).then((g) => { if (dead) return; const root = g.scene, anim = g.animations || [];
-    ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'].forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the Knight holds his whole kit at once: one sword and the badge shield stay) */
+  //  Each role's figure loads the first time you play that role in this 3D view, and stays for the next runs.)
+  let ME = null; const FIGS = {};
+  const figRole = () => { const L = A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (picked on the card) */
+    const r = A.rl ? A.rl(A.me) : 'm'; return r === 'r' ? (/hunter/i.test(A.cls ? A.cls(A.me) : '') ? 'hunter' : 'wizard') : r === 'h' ? 'cleric' : 'knight'; };
+  const figLoad = (rk) => { if (rk in FIGS) return; FIGS[rk] = null; const F = PG3D_FIG[rk];
+    pg3dMeLoad(T, F.url).then((g) => { if (dead) return; const root = g.scene, anim = g.animations || [];
+    F.hide.forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
     root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
     const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = 2.3 / h; root.scale.setScalar(k);
     const mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
     const act = (c, once) => { if (!c) return null; const a = mixer.clipAction(c); if (once) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } return a; };
-    const melee = A.rl && A.rl(A.me) === 'm'; /* (melee swing a sword; ranged and healers cast) */
     const acts = { idle: act(find(/^idle$/i) || find(/idle/i) || anim[0]), run: act(find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
-      atk: act((melee ? find(/^1h_melee_attack_slice_diagonal$/i) || find(/(1h|melee).*(slash|slice|chop)/i) : find(/^spellcast_shoot$/i) || find(/spellcast/i)) || find(/attack|slash|chop/i), true) };
-    root.visible = false; scene.add(root); ME = { root, mixer, acts, cur: '', y0: -box.min.y * k, face: 0, mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null }; }).catch(() => { /* (no model: the capsule stays) */ });
+      atk: act(F.atk.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (melee swing a sword; ranged and healers cast) */
+    root.visible = false; scene.add(root); FIGS[rk] = { root, mixer, acts, cur: '', y0: -box.min.y * k, face: 0, mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null }; }).catch(() => { FIGS[rk] = false; /* (no model: the capsule stays) */ }); };
+  const meNow = () => { const rk = figRole(); figLoad(rk); const F = FIGS[rk] || null; if (F !== ME) { if (ME) { ME.root.visible = false; ME.on = false; } ME = F; } return ME; };
   const meFig = (s, t) => { const M = ME, G = A.G, now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
     const dx = s.x - M.x, dy = s.y - M.y; if (Math.hypot(dx, dy) > 0.004) { M.mvAt = now; const a = Math.atan2(dx, -dy); let d = a - M.face; d = Math.atan2(Math.sin(d), Math.cos(d)); M.face += d * Math.min(1, 0.35); } M.x = s.x; M.y = s.y;
     if (G.lastHitT != null && G.lastHitT !== M.hitSeen) { M.hitSeen = G.lastHitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
@@ -796,7 +808,7 @@ function pg3d(host, A) {
       u.fl.visible = u.fc.visible = sl > 0; if (sl > 0) { const q = 1 - sl; u.fl.scale.set(s.r, 1, s.r); u.flm.opacity = 0.8 * q * q; u.fc.scale.set(s.r * 0.95, 16 * (0.4 + 0.6 * q), s.r * 0.95); u.fcm.uniforms.uO.value = 0.75 * q; } return; }
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
-    if (k === 'unit' && s.you && ME) { meFig(s, t); return; } /* (your animated figure in place of your capsule) */
+    if (k === 'unit' && s.you && meNow()) { meFig(s, t); return; } /* (your animated figure for your role in place of your capsule) */
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
