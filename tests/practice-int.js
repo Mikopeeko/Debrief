@@ -1,0 +1,396 @@
+// The Ula'tek practice game's intermission (src/practice-int.js, Nov 15; Flex: "i think we forgot to do the intermission with the coil soaks"),
+// run in Node the same way tests/practice-p2.js runs phase 2: the real game code with a do-nothing page.
+// Runs on every build (tests/contradictions.js); `node tests/practice-int.js` runs it alone (`--audit` prints the bots' audit for more runs).
+// This fails if:
+//   A. the clock isn't the measured Mythic one: her Call 5:19 (4 s), the eggs 5:24.1, the eight slams (17 top Mythic kills since the Nov 6 hotfix:
+//      5:36.5, 5:38.5, 5:42.5, 5:44.5, 5:48.5, 5:50.4, 5:52.5, 5:54.5, each coil rising 4 s before), the Shattering 6:09.4; the notes' own clock line
+//      (notes/Guides/Bosses/8 Ula'tek.md, "After phase 1, measured": intermission Call 5:19, eight Spectral Coils 5:37 ... 5:55) within 0.7 s;
+//   B. the coils don't follow the guide's plan: the three slam orders and who soaks each (UL_PAT, the table the Plan reads), the soak spots (UL_SOAK,
+//      within 3 yards of where the 17 kills' soakers stood), the coils at the rim (UL_RIM), the guide card's three teams (a tank, a healer and 5
+//      melee; a tank, a healer and 4 ranged; the rest), each team's slams as the kills' Soul Constrictor split them (1-4-6 / 2-5-8 / 3-7 on Star and
+//      Triangle, 1-4-7 / 2-5-8 / 3-6 on Cross), or an egg lands inside a soak circle (found while building it, Nov 15: a carrier's egg inside
+//      another team's circle kept them from it until too late);
+//   C. a bot slips: off the stone, under a landing egg, off its soak, in another team's slam, two carriers within 3 yards (found while building it:
+//      a late carrier got its egg handed over from afar right beside another carrier; she east, seed 3: two eggs 8 yards apart trapped a tank,
+//      who stepped out of one into the other), an egg not broken by the last slam, a slam with under 5
+//      soakers, in the middle or on a crack or thrown into the venom at the Shattering;
+//   D. your picked job isn't the one you play (your team, your egg), or a team loses or gains a raider or an egg in the swap. The autopilot plays
+//      picked jobs clean on all three patterns;
+//   E. the mistakes don't land: a missed soak, an egg never picked up or never broken, no defensive for the back-to-back slams, Soul Constrictor,
+//      the middle, a crack or the edge at the Shattering; or a clean run doesn't score 100;
+//   F. the part isn't between Phase 2 and Phase 3 on the start card's Part switch, `?practice=int` doesn't open it, build.ps1 doesn't check and read
+//      src/practice-int.js, the shared hooks are gone (the score link, the boss-mod egg icon, no side ledges in 3D), or the one-screen setup
+//      (your role, then your team) doesn't pick the job you play;
+//   G. the 3D view doesn't draw the part where its hits are (the soak's 10 yards, the coil at the rim, the cracks' 3.5, her burst's 8, the
+//      diamond line), or "Go here" still points after the Shattering (found while building it);
+//   H. phase 1 or phase 2 change with this file loaded;
+//   I. the damage moments: the Rawlings only once the coils are done (the raid kills them then: measured 5:55 to 6:12) and until her bubbles show,
+//      any Viper at once; the autopilot hits them as ranged and as melee (found while building it: a melee never walked over to them), standing
+//      still misses them;
+//   J. the independent review (Nov 15): the egg hint and the egg mistake follow one rule (carriers sent to their soak, then told they never picked
+//      their egg up); carriers never stuck on another egg's berth; melee never told to hold while the Rawlings still count; the defensive's cue
+//      covers all four slams; she comes up at one quarter's outer corner (17 kills: never the middle); a carried egg in the venom hatches; the
+//      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true;
+//   K. the raid markers aren't the game's floating shapes (Flex, Nov 15: "make the markers have the floating marker shape like in game"): all eight
+//      at the rim in 3D, each its own shape and colour (a 10-point star, a 12-point cross, a 4-point diamond, a 3-point triangle, a skull with eye
+//      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d);
+//   L. Noxious Splash at 3 yards and the egg shells: carriers splash inside each other's 3-yard ring, the game's rule everywhere (the phase 3 chat's
+//      re-scan of 170 Mythic pulls, Nov 15: carriers stood 4 to 6 yards apart for about 80 minutes without a splash; the 21 logged splashes were
+//      measured after the burst landed, so a 4.3-yard edge was pushed at 7055f8ec and undone). The part sets no splash of its own and the words say
+//      3 yards; and (Flex, Nov 15: "The eggs have to be damaged to break the shield") your egg's shell is up until you hit it, with a hint that says so;
+//      and the calmer egg carriers are on (Flex, Nov 15: "Yes, turn them on": a bot holding an egg walks at your speed and steps round you), with the
+//      egg plan timing the walk to the soak at 7 yards a second, so no carrier misses its soak (the bots' audit, check C);
+//   M. the unit frames don't look like Flex's own UI (Nov 15: "the player/target/boss frames should look more like this", his screenshot): your frame
+//      left of the hotbar and your target's right of it on one row (narrow screens: the frames side by side, the bar under them), one flat bar each with
+//      the name inside on the left and "735K | 100%" on the right, your class (or role) colour, the target's target after a ">", the boss's name in its bar.
+//   N. the spot maps (Flex, Nov 16: "visual maps that lets them select the spot ... use the plans maps so its something familiar", "make sure the maps are
+//      placed properly it looks off", "clicking on your coil hides no egg", "maybe randomize their assignments"): with the Plan's maps loaded the setup
+//      shows them, on the Plan's own Groups page (Intermission Positions); Your group offers exactly the teams your role is on in the guide's plan, each
+//      ring where the game has that team wait (16 yards out by its marker), and You where the game stands you; Your egg offers exactly the teams whose plan
+//      has your role carry an egg, each circle round where the game drops that team's eggs (200 runs); the Plan's labels stay off the spots; every role
+//      carries an egg where its team has one, by default and after a role change, No egg turns it off and on; 🎲 Random gives a team your role is on
+//      with its egg; the same buttons on both tabs; what you pick is what you play. (Before Nov 16 the intermission had no maps: a row of job buttons.)
+//      The review (Nov 16): the eggs drawn on Your egg sit on real landings (they were on a made-up ring, one 3.6 yards from anywhere a Purple egg lands),
+//      You sits on one of yours, your own egg lands in your circle, and the autopilot plays every pick the map offers clean.
+//   O. the release sweep (Nov 16): your egg still on the floor after your last soak and the game sends you to pick it up, or charges it twice ("never went
+//      into a soak" and "still in your hands", or its Viper on a crack); the 5:45 start loses the Rawlings from slams 1 to 4, or a melee is scored on
+//      Rawlings it couldn't reach yet (from 5:45, and from a last soak across the room); a Rawling boiling is charged to you; with Q pressed early in the
+//      part the line says "Press Q now", What's next shows "Defensive (Q)", or the mistake doesn't say Q was still cooling down.
+'use strict';
+const fs = require('fs'), path = require('path'), vm = require('vm');
+const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
+function stub() { const f = function () { return stub(); }; return new Proxy(f, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : stub()), set: () => true, apply: () => stub() }); }
+function load(H, part, extra) {
+  H = H || require('./site-helpers.js');
+  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS', 'UL_RIM', 'UL_SOAK', 'UL_CMK', 'UL_PAT'].map((n) => H.grab(n, GJ)).join('\n');
+  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+  class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
+  const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
+  vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + rd('practice.js') + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + (extra || '') + '\n' + rd('practice-int.js') +
+    '\nthis.pgIntScript = pgIntScript; this.pgIntJobs = pgIntJobs; this.pgIntSlot = pgIntSlot; this.PG_INT = PG_INT; this.PG_INT_T = PG_INT_T; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.UL_PAT = UL_PAT; this.UL_SOAK = UL_SOAK; this.UL_RIM = UL_RIM; this.pgIntKb = pgIntKb; this.pg3dInt = pg3dInt; this.pgIntMarkDraw = pgIntMarkDraw;', ctx);
+  if (part !== null) vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (part ? ', "' + part + '"' : '') + ')', ctx);
+  return { dbg: win.__pgDbg, ctx };
+}
+const clkS = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0') + (s % 1 ? '.' + Math.round((s % 1) * 10) : '');
+const SERIOUS = /off the platform|under a landing egg|off their soak|soaked both|two carriers|another team's slam|on a crack|thrown into the venom|in a crack|egg not broken|only \d soakers/;
+// (measured on the 17 top Mythic kills since the Nov 6 hotfix: the medians of the 16 on the clock; where each spot's soakers stood (their middle))
+const MEAS = { call: 319.0, callL: 323.0, land: 324.1, slams: [336.49, 338.5, 342.46, 344.47, 348.48, 350.44, 352.49, 354.49], lead: 4.0, shatter: 369.45,
+  soak: { SSW: [-8.6, -23.2], NNE: [8.9, 25.7], WNW: [-24.7, 10], ESE: [23.1, -10], NNW: [-9.4, 25.4], SSE: [11.7, -22.2], WSW: [-21, -9], ENE: [23.2, 11.9] },
+  split: { 1: ['1-4-6', '2-5-8', '3-7'], 2: ['1-4-6', '2-5-8', '3-7'], 3: ['1-4-7', '2-5-8', '3-6'] } };
+
+function checks(H, say) {
+  const bad = (t) => say("Ula'tek practice game, intermission", 'intermission', t);
+  let L; try { L = load(H, 'mint'); } catch (e) { bad('the game would not run the intermission in the test (' + e.message + ')'); return; }
+  const { dbg, ctx } = L, T = ctx.PG_INT_T, P = ctx.PG_INT, script = ctx.pgIntScript, hyp = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  if (!dbg || !dbg.P2 || dbg.P2.part !== 'int') { bad('opening the intermission part gives no intermission game (PG_PARTS["Ula\'tek"].mint with its mod, check F)'); return; }
+  // A. the clock
+  const S = script({ seed: 3, east: false, pat: 1 });
+  const near = (what, got, want, tol) => { if (Math.abs(got - want) > tol) bad(what + ' at ' + clkS(got) + ' in the game; top kills: ' + clkS(want) + ' (check A)'); };
+  const call = S.casts.find((c) => c.name === 'Call of the Serpent'); if (!call) bad('her Call of the Serpent isn\'t cast (check A)'); else { near('her Call of the Serpent', call.t0, MEAS.call, 0.3); near('her Call landing', call.t1, MEAS.callL, 0.3); }
+  near('the eggs landing', Math.min(...S.eggSets[0].eggs.map((e) => e.land)), MEAS.land, 0.3); if (Math.max(...S.eggSets[0].eggs.map((e) => e.land)) > 325) bad('the eggs land until ' + clkS(Math.max(...S.eggSets[0].eggs.map((e) => e.land))) + '; top kills: all by 5:24.8 (check A)');
+  if (S.eggSets[0].eggs.length !== 8) bad(S.eggSets[0].eggs.length + ' eggs fall; top kills: 8 (check A)');
+  if (S.soaks.length !== 8) bad(S.soaks.length + ' coils; top kills: 8 (check A)'); else S.soaks.forEach((s, n) => { near('slam ' + (n + 1), s.at, MEAS.slams[n], 0.15); near('coil ' + (n + 1) + ' rising', s.t0, MEAS.slams[n] - MEAS.lead, 0.2); });
+  near('the Shattering', T.shatter, MEAS.shatter, 0.3); if (T.end < T.shatter + 1.5 || T.end > 373) bad('the part ends at ' + clkS(T.end) + '; phase 3 takes over at 6:12, just after the Shattering (check A)');
+  { const notes = fs.readFileSync(path.join(__dirname, '..', 'notes', 'Guides', 'Bosses', "8 Ula'tek.md"), 'utf8'), line = notes.split('\n').find((l) => l.startsWith('**The Mythic clock after phase 1')) || '';
+    const m = /intermission Call (\d):(\d\d)/.exec(line), c = /eight Spectral Coils ((?:\d:\d\d(?:, | and |\s·)?)+)/.exec(line);
+    if (!m) bad('the notes no longer give the intermission Call in "After phase 1, measured" (check A)'); else if (call) near('her Call (the notes)', call.t0, +m[1] * 60 + +m[2], 0.7);
+    if (!c) bad('the notes no longer give the eight intermission coils in "After phase 1, measured" (check A)'); else { const exp = (c[1].match(/\d:\d\d/g) || []).map((x) => +x.split(':')[0] * 60 + +x.split(':')[1]); if (exp.length !== 8) bad('the notes give ' + exp.length + ' intermission coils (check A)'); else S.soaks.forEach((s, n) => near('slam ' + (n + 1) + ' (the notes)', s.at, exp[n], 0.7)); } }
+  // B. the guide's plan
+  const GJ = rd('guides.js'), gm = /const G = myth \? \[(\[[^\]]+\]), (\[[^\]]+\]), (\[[^\]]+\])\]/.exec(GJ);
+  if (!gm) bad('the guide\'s intermission card no longer lists its three Mythic teams (const G = myth ? [...], check B)');
+  else ['Y', 'P', 'B'].forEach((g, i) => { const ids = gm[i + 1].match(/'(\w\d)'/g).map((x) => x.slice(1, -1)); if (ids.join() !== P.team[g].join()) bad('the ' + P.TN[g] + ' team is ' + P.team[g].join(' ') + ' in the game; the guide\'s card has ' + ids.join(' ') + ' (check B)'); });
+  { const n = (g, r) => P.team[g].filter((id) => id[0] === r).length; if (n('Y', 't') !== 1 || n('Y', 'h') !== 1 || n('Y', 'm') !== 5 || n('P', 't') !== 1 || n('P', 'h') !== 1 || n('P', 'r') !== 4 || n('B', 'h') !== 2 || n('B', 't') !== 0) bad('the teams aren\'t a tank, a healer and 5 melee; a tank, a healer and 4 ranged; two healers and the rest (the guide\'s plan, check B)'); }
+  [1, 2, 3].forEach((pat) => { const Sp = script({ seed: 5, pat }), PAT = ctx.UL_PAT[pat - 1];
+    Sp.soaks.forEach((s, n) => { if (s.spot !== PAT[n][0] || s.team !== PAT[n][1]) bad('pattern ' + pat + ' slam ' + (n + 1) + ' is ' + s.spot + ' (' + s.team + ') in the game; the guide\'s table has ' + PAT[n].join(' (') + ') (check B)');
+      if (hyp([s.x, s.y], ctx.UL_SOAK[s.spot]) > 0.01) bad('pattern ' + pat + ' slam ' + (n + 1) + ' isn\'t on the guide\'s soak spot for ' + s.spot + ' (check B)'); if (hyp([s.x, s.y], MEAS.soak[s.spot]) > 3.5) bad('the ' + s.spot + ' soak is ' + hyp([s.x, s.y], MEAS.soak[s.spot]).toFixed(1) + ' yards from where top kills soak it (check B)');
+      if (hyp(s.rim, ctx.UL_RIM[s.spot]) > 0.01) bad('the coil for ' + s.spot + ' doesn\'t rise at the guide\'s rim spot (check B)'); if (s.r !== 10) bad('a soak is ' + s.r + ' yards; 10 (check B)'); });
+    const got = ['Y', 'P', 'B'].map((g) => Sp.soaks.map((s, n) => (s.team === g ? n + 1 : 0)).filter(Boolean).join('-')).sort(), want = MEAS.split[pat].slice().sort();
+    if (got.join() !== want.join()) bad('pattern ' + pat + '\'s teams soak ' + got.join(' / ') + '; the kills\' Soul Constrictor splits them ' + want.join(' / ') + ' (check B)');
+    const blue = Sp.soaks.filter((s) => s.team === 'B').length; if (blue !== 2) bad('Blue soaks ' + blue + ' times on pattern ' + pat + '; only twice (the guide, check B)'); });
+  for (let seed = 1; seed <= 40; seed++) { const Sx = script({ seed }); const e = Sx.eggSets[0].eggs.find((q) => Object.values(ctx.UL_SOAK).some((s) => hyp([q.x, q.y], s) < 9.5)); if (e) { bad('seed ' + seed + ': ' + e.id + '\'s egg lands inside a soak circle at ' + e.x.toFixed(1) + ', ' + e.y.toFixed(1) + ' (check B)'); break; } }
+  // C. the bots
+  const free = { role: 'r', team: 'B', egg: false, pat: 0 }; const auditRuns = [];
+  try { dbg.P2.pick = free; for (const [east, seed] of [[false, 3], [true, 3], [true, 5], [false, 6], [true, 8], [false, 11], [true, 19], [false, 20], [true, 26]]) { const a = dbg.audit(east, seed); auditRuns.push(dbg.S.pat); a.filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + ' (pattern ' + dbg.S.pat + ', seed ' + seed + ', check C)')); }
+    for (const [pat, seed] of [[2, 4], [1, 29], [1, 39], [3, 16], [3, 29], [3, 40], [2, 13], [1, 7], [3, 22]]) { dbg.P2.pick = { ...free, pat }; auditRuns.push(pat); dbg.audit(false, seed).filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + ' (pattern ' + pat + ', seed ' + seed + ', check C; the review found carriers stuck on another egg\'s berth here)')); }
+    dbg.P2.pick = free;
+    if (new Set(auditRuns).size < 3) bad('the bots\' audit only played patterns ' + [...new Set(auditRuns)].join(', ') + ' (check C)'); }
+  catch (e) { bad('the bots\' audit crashed: ' + e.message + ' (check C)'); }
+  // D. your picked job
+  try { for (const role of ['m', 'r', 'h']) for (const team of ['Y', 'P', 'B']) for (const egg of [true, false]) { const pk = { role, team, egg, pat: 2 }, me = ctx.pgIntSlot(pk), J = ctx.pgIntJobs(me, pk);
+      if (me[0] !== role) bad('picking ' + role + ' plays ' + me + ' (check D)');
+      if (J.team[me] !== team) bad('picking the ' + P.TN[team] + ' team as ' + role + ' plays ' + me + ' on ' + P.TN[J.team[me]] + ' (check D)');
+      if (J.carry.has(me) !== egg) bad('picking ' + (egg ? 'an egg' : 'no egg') + ' (' + role + ', ' + P.TN[team] + ') gives ' + me + (J.carry.has(me) ? ' an egg' : ' none') + ' (check D)');
+      const sz = ['Y', 'P', 'B'].map((g) => J.list[g].length).join('/'); if (sz !== '7/6/7') bad('after your pick (' + role + ', ' + P.TN[team] + ', ' + (egg ? 'egg' : 'no egg') + ') the teams are ' + sz + '; 7/6/7 (check D)');
+      if (J.carry.size !== 8) bad('after your pick there are ' + J.carry.size + ' egg carriers; 8 (check D)');
+      if (Object.keys(J.team).length !== 20) bad('after your pick ' + Object.keys(J.team).length + ' raiders have a team (check D)'); }
+    for (const [pk, east, seed] of [[{ role: 'm', team: 'Y', egg: true, pat: 1 }, false, 4], [{ role: 'r', team: 'P', egg: true, pat: 3 }, true, 6], [{ role: 'h', team: 'B', egg: false, pat: 2 }, false, 7], [{ role: 'r', team: 'Y', egg: true, pat: 3 }, true, 9], [{ role: 'm', team: 'B', egg: true, pat: 2 }, false, 12],
+      [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 7], [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 12], [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 14], [{ role: 'm', team: 'Y', egg: true, pat: 2 }, false, 9], [{ role: 'm', team: 'Y', egg: true, pat: 2 }, false, 10], [{ role: 'r', team: 'Y', egg: true, pat: 3 }, false, 3]]) { /* (the review's egg cases: the hint led to the soak, then 'never picked up') */
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(); const r = dbg.sim(me, true, east, seed);
+      if (dbg.S.job.team[me] !== pk.team || dbg.S.job.carry.has(me) !== pk.egg) bad('the game plays ' + me + ' on ' + P.TN[dbg.S.job.team[me]] + (dbg.S.job.carry.has(me) ? ' with an egg' : ' without one') + ' for the pick ' + JSON.stringify(pk) + ' (check D)');
+      if (r.log.length || r.deaths.length) bad('the autopilot playing ' + JSON.stringify(pk) + ' (seed ' + seed + ') makes mistakes: ' + r.log.concat(r.deaths.map((d) => 'died ' + d)).join(' | ') + ' (check D)');
+      else if (dbg.grade().sc !== 100) bad('a clean run scores ' + dbg.grade().sc + ', not 100 (check E)'); } }
+  catch (e) { bad('your picked job crashed: ' + e.message + ' (check D)'); }
+  // E. the mistakes
+  try { dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(), r = dbg.sim(me, false, false, 4), lg = r.log.join(' | ');
+    [[/missed your coil soak/, 'a missed soak'], [/Your egg never went into a soak/, 'an egg never picked up'], [/No defensive for the last four slams/, 'no defensive for the back-to-back slams'], [/on a crack|threw you into the venom/, 'the Shattering where you stood']].forEach(([re, w]) => { if (!re.test(lg)) bad('standing still doesn\'t log ' + w + ': ' + lg + ' (check E)'); });
+    // (the Shattering, three spots: the middle, a crack, the edge; and the diamond line clean)
+    const shat = (p) => { dbg.at(T.shatter - 0.6, me, { seed: 4 }); dbg.G.log = []; dbg.G.x = p[0]; dbg.G.y = p[1]; for (let i = 0; i < 20; i++) dbg.stepOwn(1); return dbg.log.join(' | '); };
+    if (!/stood on a crack/.test(shat([2, 3]))) bad('standing in the middle, where the cracks cross, as it shatters isn\'t a mistake (check E)');
+    if (!/stood on a crack/.test(shat([1.5, -20]))) bad('standing on a crack line as it shatters isn\'t a mistake (check E)');
+    if (!/threw you into the venom/.test(shat([20, -27]))) bad('standing at the edge as the knockback comes isn\'t a mistake (check E)');
+    { const g = ctx.pgIntKb ? null : null; void g; const l = shat([9, -21.7]); if (l) bad('the diamond line, inside, isn\'t safe at the Shattering: ' + l + ' (check E)'); }
+    // (Soul Constrictor: in another team's slam just before your own; and an egg carried past the last slam)
+    dbg.P2.pick = { role: 'r', team: 'P', egg: false, pat: 2 }; const m2 = dbg.P2.slotOf(); dbg.at(T.slams[2] - 0.4, m2, { seed: 4 }); const s3 = dbg.S.soaks[2], s4 = dbg.S.soaks[3]; dbg.G.log = []; dbg.G.x = s3.x; dbg.G.y = s3.y; for (let i = 0; i < 12; i++) dbg.stepOwn(1);
+    dbg.G.x = s4.x; dbg.G.y = s4.y; while (dbg.G.t < s4.at + 0.2) dbg.stepOwn(1); if (!/Soul Constrictor/.test(dbg.log.join(' | '))) bad('taking another team\'s slam and then your own isn\'t a Soul Constrictor mistake: ' + dbg.log.join(' | ') + ' (check E)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const m3 = dbg.P2.slotOf(); dbg.at(T.slams[0] - 6, m3, { seed: 4 }); const myE = dbg.G.eggs.find((e) => e.id === m3); if (myE && myE.state !== 'held') { myE.state = 'held'; myE.who = m3; }
+    dbg.G.log = []; dbg.G.x = 0; dbg.G.y = 12; while (dbg.G.t < T.slams[7] + 0.5) dbg.stepOwn(1); if (!/still in your hands after the last slam/.test(dbg.log.join(' | '))) bad('an egg never carried into a soak isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)'); }
+  catch (e) { bad('the mistakes crashed: ' + e.message + ' (check E)'); }
+  // F. the wiring
+  try { const PJ = rd('practice.js'), P3 = rd('practice3d.js'), BP = rd('build.ps1'), keys = Object.keys(ctx.PG_PARTS["Ula'tek"]);
+    if (keys.join() !== 'm,m2,mint') bad('the Part switch reads ' + keys.join(', ') + '; Phase 1, Phase 2, Intermission (check F)');
+    const L3 = load(H, null, 'PG_PARTS["Ula\'tek"].m3 = { name: "Phase 3", d: "m", end: 600, roles: [{ id: "r1", name: "Ranged", job: "x" }], mod: () => null };'); const k3 = Object.keys(L3.ctx.PG_PARTS["Ula'tek"]).join();
+    if (k3 !== 'm,m2,mint,m3') bad('with phase 3 read first, the Part switch reads ' + k3 + '; the intermission goes between phase 2 and phase 3 (check F)');
+    const part = ctx.PG_PARTS["Ula'tek"].mint; if (!part || part.d !== 'm' || typeof part.mod !== 'function' || part.name !== 'Intermission') bad('the intermission isn\'t a Mythic part of Ula\'tek named Intermission with its own mod (check F)');
+    if (!/\/\[\?&#\]practice=\(int\)\\b\//.test(GJ) || !/pgOpen\(r, S\.gdzBoss, S\.gdzDiff, pk\)/.test(GJ)) bad('`?practice=int` on the guide no longer opens the intermission (check F)');
+    if (!BP.includes("'practice-int.js'") || !BP.includes("(& $read 'practice-int.js')")) bad('build.ps1 no longer checks src/practice-int.js or puts it into the page (check F)');
+    if (BP.indexOf("(& $read 'practice-int.js')") < BP.indexOf("(& $read 'practice-p2.js')")) bad('build.ps1 reads src/practice-int.js before src/practice-p2.js (check F)');
+    if (!/'=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('the score link no longer says which part (\'?practice=\' + P2.part, check F)');
+    if (!/A\.P2 && !A\.P2\.flat3d && typeof pg3dP2 === 'function'/.test(P3)) bad('practice3d.js builds phase 2\'s side ledges for the intermission (flat3d, check F)');
+    if (!/P2 && P2\.part === 2 \? 'Hatching Doom'/.test(PJ)) bad('the boss-mod bars give the intermission\'s eggs phase 2\'s Hatching Doom icon (check F)');
+    if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
+    const sh = dbg.P2.short(), li = (sh.match(/<li>/g) || []).length; if (li !== 4) bad('"your job in short" isn\'t four lines (' + li + ', check F)');
+    dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/diamond line/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and the diamond line: ' + s2 + ' (check F)');
+    // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 6 jobs a role, one sentence. Nov 16,
+    // Flex: "maybe leave it as an option for ranged just in case groups do it that way": a ranged may also take Yellow, with or without an egg)
+    const su = dbg.P2.setup; if (!su || typeof su.now !== 'function' || typeof su.jobs !== 'function' || typeof su.set !== 'function' || typeof su.say !== 'function') bad('the intermission gives the setup screen no setup (roles, now, jobs, set, say; check F)');
+    else { if (JSON.stringify(su.roles) !== '["m","r","h"]') bad('the setup\'s roles are ' + JSON.stringify(su.roles) + ' (check F)');
+      su.roles.forEach((r) => { const J0 = su.jobs(r); if (J0.length < 2 || J0.length > 6) bad('the setup offers ' + J0.length + ' jobs to ' + r + ' (2 to 6, check F)');
+        J0.forEach(([v, lab]) => { su.set(r, v); const nw = su.now(), pk = dbg.P2.pick, me = dbg.P2.slotOf(), J = ctx.pgIntJobs(me, pk);
+          if (nw.role !== r || nw.job !== v) bad('picking ' + r + ' / ' + lab + ' shows ' + nw.role + ' / ' + nw.job + ' (check F)');
+          if (me[0] !== r || J.team[me] !== v[0] || J.carry.has(me) !== /e$/.test(v)) bad('picking ' + r + ' / ' + lab + ' plays ' + me + ' on ' + J.team[me] + (J.carry.has(me) ? ' with an egg' : '') + ' (check F)');
+          if (!P.team[v[0]].some((id) => id[0] === r) && !(r === 'r' && v[0] === 'Y')) bad('the setup offers ' + r + ' the ' + P.TN[v[0]] + ' team, which has no ' + r + ' in the guide\'s plan (check F)');
+          const say = su.say(); if (!new RegExp(P.TM[v[0]]).test(say) || !/diamond line/.test(say) || !/Press Q/.test(say) || !/No kicks/.test(say) || /egg/.test(say) !== /e$/.test(v)) bad('the setup\'s sentence for ' + r + ' / ' + lab + ' doesn\'t name the mark, the egg, the defensive and the diamond line: ' + say + ' (check F)'); }); });
+      su.set('r', 'B'); } }
+  catch (e) { bad('the wiring check crashed:' + e.message + ' (check F)'); }
+  // G. the 3D shapes
+  try { dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(), A = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
+    const at = (t0) => { dbg.at(t0, me, { seed: 4 }); return ctx.pg3dShapes(A, dbg.G.t); };
+    const s3 = dbg.S.soaks[2], L1 = at(s3.at - 1); if (!L1.some((s) => s.k === 'ring' && Math.abs(s.r - 10) < 0.01 && hyp([s.x, s.y], [s3.x, s3.y]) < 0.01)) bad('in 3D your soak isn\'t drawn at its 10 yards where it hits (check G)');
+    if (!L1.some((s) => s.k === 'stail' && hyp([s.x, s.y], s3.rim) < 0.01)) bad('in 3D the coil doesn\'t rise at the rim (check G)');
+    const L2 = at(T.bubbles + 2); if (!L2.some((s) => s.k === 'rect' && Math.abs(s.w1 - P.CRACK) < 0.01)) bad('in 3D the crack lines aren\'t shown before the Shattering at their ' + P.CRACK + ' yards (check G)');
+    if (!L2.some((s) => s.k === 'fizz' && hyp([s.x, s.y], dbg.S.dive.to) < 0.01)) bad('in 3D her bubbles aren\'t shown at the corner where she comes up (check G)');
+    if (L2.some((s) => s.k === 'ring' && Math.hypot(s.x, s.y) < 0.01)) bad('in 3D a ring still marks the middle as where she comes up; she comes up at a corner (check G)');
+    const ga = [Math.cos(P.GA * Math.PI / 180) * P.GATHER, Math.sin(P.GA * Math.PI / 180) * P.GATHER]; if (!L2.some((s) => s.k === 'ring' && Math.abs(s.r - P.SPREAD) < 0.01 && hyp([s.x, s.y], ga) < 0.01)) bad('in 3D the diamond line spot isn\'t shown (check G)');
+    const L3 = at(T.shatter + 1); if (!L3.some((s) => s.k === 'rect' && s.c === '#24481c')) bad('in 3D the cracks don\'t turn to venom after the Shattering (check G)');
+    if (dbg.job(me).ob) bad('"Go here" still points after the Shattering (check G)'); }
+  catch (e) { bad('the 3D shapes crashed on the intermission: ' + e.message + ' (check G)'); }
+  // J. the independent review's fixes (Nov 15)
+  try { const Q = Object.values(P.Q), seen = new Set(); for (let seed = 1; seed <= 40; seed++) { const Sx = script({ seed }); if (!Q.some((c) => hyp(c, Sx.dive.to) < 0.01)) { bad('seed ' + seed + ': she comes up at ' + Sx.dive.to.join(', ') + ', not at a quarter\'s outer corner (17 kills: always a corner, check J)'); break; } seen.add(Sx.q1); }
+    if (seen.size < 4) bad('over 40 runs she comes up at only ' + [...seen].join(', ') + '; all four corners (the kills: north-east 3, north-west 5, south-west 4, south-east 5, check J)');
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.shatter + 0.5, me, { seed: 4 }); if (hyp(dbg.P2.bossAt(dbg.G.t).p, dbg.S.dive.to) > 0.01) bad('after the Shattering she isn\'t at the corner her bubbles showed (check J)');
+    if (!(T.defCue + 8 > T.slams[7]) || T.defCue > T.slams[4] - 0.5) bad('the defensive\'s cue (' + clkS(T.defCue) + ') doesn\'t let its 8 s cover all four slams (' + clkS(T.slams[4]) + ' to ' + clkS(T.slams[7]) + ', check J)');
+    { const w = dbg.S.warns.find((x) => /Personals now/.test(x.text)); if (!w || Math.abs(w.t - T.defCue) > 0.05) bad('the "Personals now" warning isn\'t at the defensive\'s cue (check J)'); }
+    if (dbg.S.timers.some((x) => /^Coil slam \d$/.test(x.name))) bad('the boss-mod timers include each coil by number, which shows your own before the pattern is called (check J)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 1 }; const mc = dbg.P2.slotOf(); dbg.at(T.call + 2, mc, { seed: 4 }); const mods = dbg.mods(); const eb = mods.find((b) => /egg/i.test(b.name)); if (!eb || eb.sp !== 'Call of the Serpent' || mods.some((b) => b.sp === 'Grasping Fangs')) bad('the egg\'s boss-mod bar doesn\'t take Call of the Serpent\'s icon: ' + JSON.stringify(mods.map((b) => [b.name, b.sp])) + ' (check J)');
+    // (a carried egg on a crack as it shatters hatches a Viper)
+    dbg.at(T.shatter - 0.6, mc, { seed: 4 }); { const e = dbg.G.eggs.find((q) => q.id === mc); e.state = 'held'; e.who = mc; } dbg.G.log = []; dbg.G.x = 1.5; dbg.G.y = -20; for (let i = 0; i < 20; i++) dbg.stepOwn(1);
+    if (!/Your egg went into the venom with you: a Viper hatched/.test(dbg.log.join(' | ')) || !dbg.G.adds.some((a) => a.kind === 'viper')) bad('a carried egg that falls into the crack venom doesn\'t hatch a Viper: ' + dbg.log.join(' | ') + ' (check J)');
+    // (after the Shattering: in the venom off the edge it says so, and never 'Well done' after a Shattering mistake; standing in the venom isn't charged twice)
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; dbg.at(T.shatter - 0.6, me, { seed: 4 }); dbg.G.x = 24; dbg.G.y = -24; for (let i = 0; i < 30; i++) dbg.stepOwn(1);
+    { const tx = dbg.P2.jobText(); if (!/in the venom/.test(tx) || /Well done/.test(tx)) bad('in the venom off the edge after the Shattering the hint says: ' + tx + ' (check J)'); const h0 = dbg.G.hp; dbg.G.x = 0.5; dbg.G.y = 36; dbg.G.kb = null; dbg.G.hp = 90; for (let i = 0; i < 20; i++) dbg.stepOwn(1); if (90 - dbg.G.hp > 12) bad('off the stone on a crack line after the Shattering you lose ' + (90 - dbg.G.hp).toFixed(1) + ' health a second: the venom is charged twice (check J)'); void h0; }
+    // (Rawlings: the moment ends as her bubbles show, the hint never says to kill Rawlings that aren't there, and 'pick one')
+    dbg.at(T.bubbles + 0.5, me, { seed: 4 }); if (dbg.dps().cat === 'rawling') bad('the Rawlings still count as a damage moment once her bubbles show (everyone holds the line then, check J)');
+    dbg.at(T.gather - 1, me, { seed: 4 }); dbg.G.adds = []; dbg.stepOwn(30); if (/Rawlings/.test(dbg.P2.jobText())) bad('with no Rawlings left the hint still says to kill them: ' + dbg.P2.jobText() + ' (check J)');
+    { const w = (dbg.P2.jobText() || ''); if (/Kill the Rawlings: press Tab to pick it/.test(w)) bad('the Rawling hint says "pick it": ' + w + ' (check J)'); }
+    for (const [pat, seed] of [[2, 5], [2, 7], [2, 8], [3, 8], [3, 11]]) { dbg.P2.pick = { role: 'm', team: 'Y', egg: true, pat }; const r = dbg.sim(dbg.P2.slotOf(), true, false, seed); if (r.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot (Yellow, egg, pattern ' + pat + ', seed ' + seed + ') holding the line as told is scored off the Rawlings: ' + r.log.join(' | ') + ' (check J)'); }
+    // (the clean-run text only says what this job did)
+    dbg.P2.pick = { role: 'h', team: 'B', egg: false, pat: 0 }; if (/egg/.test(dbg.P2.clean) || /pattern/.test(dbg.P2.clean)) bad('the clean-run text for a job with no egg mentions an egg or a pattern choice: ' + dbg.P2.clean + ' (check J)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 0 }; if (!/egg/.test(dbg.P2.clean)) bad('the clean-run text for an egg carrier doesn\'t mention the egg (check J)');
+    // (a late pickup broken in a later soak is not 'never picked up', nor 'still in your hands')
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const ml = dbg.P2.slotOf(); dbg.at(T.slams[3] + 0.5, ml, { seed: 3 }); { const e = dbg.G.eggs.find((q) => q.id === ml); e.state = 'floor'; e.who = null; e.shell = Math.min(e.shell, dbg.G.t - 1); }
+    dbg.G.log = []; while (dbg.G.t < T.end - 0.1) dbg.step(1); if (dbg.log.some((l) => /never went into a soak|still in your hands/.test(l))) bad('a late pickup broken in a later soak is still a mistake: ' + dbg.log.join(' | ') + ' (check J)'); }
+  catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check J)'); }
+  // K. the floating raid markers
+  try { dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(), A = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
+    dbg.at(330, me, { seed: 4 }); const L = ctx.pg3dShapes(A, dbg.G.t).filter((s) => s.k === 'wmark'), NM = ['Skull', 'Circle', 'Star', 'Cross', 'Square', 'Triangle', 'Diamond', 'Moon'];
+    if (L.length !== 8 || NM.some((n) => !L.some((s) => s.nm === n))) bad('in 3D the floating raid markers aren\'t all eight: ' + L.map((s) => s.nm).join(', ') + ' (check K)');
+    if (L.some((s) => Math.abs(Math.hypot(s.x, s.y) - 33) > 0.01)) bad('a floating raid marker isn\'t at the rim, 33 yards out (check K)');
+    // (each shape's outline, on a recording canvas)
+    const rec = () => { const c = { n: {} }; return new Proxy(c, { get: (o, k) => (k === 'n' ? o.n : k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : (...a) => { o.n[k] = (o.n[k] || 0) + 1; }), set: () => true }); };
+    const pts = (nm, bg) => { const g = rec(); ctx.pgIntMarkDraw(g, nm, 64, 64, 50, bg); return g.n; };
+    [['Star', 10], ['Cross', 12], ['Diamond', 4], ['Triangle', 3]].forEach(([nm, n]) => { const c = pts(nm); if ((c.moveTo || 0) + (c.lineTo || 0) !== n || !c.fill || !c.stroke) bad('the ' + nm + ' marker isn\'t its ' + n + '-point shape with a fill and a rim (' + JSON.stringify(c) + ', check K)'); });
+    { const c = pts('Skull'); if ((c.fill || 0) < 4) bad('the Skull marker has no eye sockets and nose (' + JSON.stringify(c) + ', check K)'); }
+    { const c = pts('Moon', '#000'), c2 = pts('Moon'); if ((c.fill || 0) < 2 || (c.arc || 0) < 2 || (c2.fill || 0) < 2) bad('the Moon marker isn\'t a crescent (' + JSON.stringify(c) + ', check K)'); }
+    { const c = pts('Square'), c2 = pts('Circle'); if (!c.rect || !c2.arc) bad('the Square or Circle marker isn\'t its shape (check K)'); }
+    // (the part's own 3D kit floats them: a sprite for each marker over its spot, bobbing, with a glow)
+    if (typeof dbg.P2.kit3d !== 'function') bad('the intermission brings no 3D kit for its floating markers (kit3d, check K)');
+    else { const made = []; class Spr { constructor(m) { this.material = m; this.position = { x: 0, y: 0, z: 0, set(x, y, z) { this.x = x; this.y = y; this.z = z; } }; this.scale = { set() {} }; made.push(this); } }
+      const K = { T: { Sprite: Spr, SpriteMaterial: function (o) { Object.assign(this, o); } }, keep: (x) => x, ctex: (c) => ({ c }), canvas: (w, h, fn) => { fn(rec(), w, h); return {}; }, pool: (mk) => { const P0 = []; return () => P0[0] || (P0[0] = mk()); }, baseY: () => 0, glw: () => {} };
+      const kit = dbg.P2.kit3d(K); if (!kit || typeof kit.put !== 'function' || typeof kit.frame !== 'function') bad('the intermission\'s 3D kit has no put and frame (check K)');
+      else { const ok = kit.put({ k: 'wmark', x: 12, y: -30, nm: 'Star', c: '#ffd23b' }, 1), sp = made[made.length - 1];
+        if (!ok || !sp || Math.abs(sp.position.x - 12) > 1e-9 || Math.abs(sp.position.z - 30) > 1e-9 || sp.position.y < 2.5 || sp.position.y > 4.5) bad('the 3D kit doesn\'t float the Star over its spot, about 3.4 yards up (check K)');
+        if (kit.put({ k: 'disc', x: 0, y: 0, r: 1 }, 1)) bad('the 3D kit takes shapes that aren\'t its markers (check K)'); } }
+    if (!/A\.P2 && A\.P2\.kit3d \? A\.P2\.kit3d\(\{[^}]*canvas, ctex/.test(rd('practice3d.js'))) bad('practice3d.js no longer hands a part\'s kit3d its pieces (canvas and ctex for the markers, check K)'); }
+  catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
+  // L. the measured splash and the egg shells
+  try { if (dbg.P2.splash != null) bad('the intermission sets its own Noxious Splash distance (' + dbg.P2.splash + '); the real edge is the game\'s 3 yards (170 pulls: 4 to 6 yards apart never splashed, check L)');
+    if (dbg.P2.calmCarriers !== true) bad('the intermission\'s egg carriers aren\'t the calmer ones (calmCarriers; Flex: "Yes, turn them on", check L)');
+    if (!/pgDist\(\[e\.x, e\.y\], \[ns\.x, ns\.y\]\) - \(ns\.r - 2\)\) \/ 7 \+ 0\.4/.test(rd('practice-int.js'))) bad('the egg plan times the walk to the soak faster than a calm carrier walks (7 yards a second, check L)');
+    if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
+    { const src = rd('practice-int.js'); if (/about 4 yards|SPLASH/.test(src) || !/Keep 3 yards from other carriers/.test(src) || !/3 yards from other carriers\. The slam breaks it/.test(src)) bad('the carriers\' words don\'t give the 3 yards (or still say about 4, check L)'); }
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);
+    if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/hit it to break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
+    dbg.G.log = []; while (dbg.G.t < T.slams[0]) dbg.step(1); { const e2 = dbg.G.eggs.find((q) => q.id === me); if (!e2 || e2.state === 'floor') bad('the autopilot didn\'t break its egg\'s shell and pick it up by the first slam (check L)'); } }
+  catch (e) { bad('the splash and shells check crashed: ' + e.message + ' (check L)'); }
+  // M. the unit frames like Flex's UI
+  try { const PJ = rd('practice.js'), rule = (sel) => ((new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(PJ) || [])[1] || '');
+    if (!/grid-template-areas: "job job job" "me acts tf"/.test(rule('.pg .pg-bot'))) bad('the bottom row isn\'t your frame, the hotbar, then your target\'s (Flex\'s UI, check M)');
+    if (!/display: contents/.test(rule('.pg .pg-bot > .pg-ufs'))) bad('the two frames can\'t join the hotbar\'s row (.pg-ufs must be display: contents, more specific than its flex rule, check M)');
+    if (!/"job job" "me tf" "acts acts"/.test(PJ)) bad('on a narrow screen the frames don\'t stack above the hotbar (check M)');
+    if (!/'K \| ' \+ hp \+ '%'/.test(PJ) || !/const PG_HP_K = 735;/.test(PJ)) bad('your frame doesn\'t read "735K | 100%" as Flex\'s does (check M)');
+    if (!/height: 28px/.test(rule('.pg .pg-uf .pg-bar')) || !/position: absolute/.test(rule('.pg .pg-uf .pg-nm'))) bad('the frames aren\'t one flat bar with the name inside (check M)');
+    if (!/content: attr\(data-n\)/.test(PJ) || !/class="pg-bar pg-bhp" data-n=/.test(PJ)) bad('the boss\'s name isn\'t in its bar (check M)');
+    if (!/class="pg-tot"/.test(PJ) || !/tot: tot \?/.test(PJ)) bad('the target frame doesn\'t show its target after a ">" (check M)');
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.slams[7] + 1, me, { seed: 4 }); const ra = dbg.G.adds.find((a) => a.kind === 'rawling'); if (ra) { dbg.tgt = ra.id; const f = dbg.tf(); if (!f || f.none || f.tot !== null) bad('a Rawling target shows a target of its own: ' + JSON.stringify(f) + ' (check M)'); } }
+  catch (e) { bad('the frames check crashed: ' + e.message + ' (check M)'); }
+  // N. the spot maps (Flex, Nov 16)
+  try { const HH = H || require('./site-helpers.js'), ex = ['POM_DEF', 'POM_MK', 'UL_GC', 'UL_VB', 'UL_PAGES', 'ulSvg'].map((n) => HH.grab(n, GJ)).join('\n');
+    const LM = load(HH, 'mint', ex), dm = LM.dbg, M = dm.P2 && dm.P2.setup && dm.P2.setup.maps, PK = () => dm.P2.pick, FN = ['tabs', 'page', 'hot', 'pick', 'extras', 'extra', 'random', 'role', 'say', 'sub'];
+    if (!M || FN.some((k) => typeof M[k] !== 'function')) bad('the intermission gives the setup no spot maps (setup.maps with ' + FN.join(', ') + '; Flex, Nov 16: "visual maps that lets them select the spot", check N)');
+    else {
+      const pHas = (r) => ['Y', 'P', 'B'].filter((g) => P.team[g].some((id) => id[0] === r)), pEggs = (r) => ['Y', 'P', 'B'].filter((g) => P.team[g].some((id) => id[0] === r && P.carry.includes(id)));
+      // (Flex, Nov 16, on the map: "theres no yellow group assignments", then "maybe leave it as an option for ranged just in case groups do it that way": a ranged
+      // may also take Yellow, with an egg; melee and healers keep the plan's teams)
+      const has = (r) => (r === 'r' ? ['Y', 'P', 'B'] : pHas(r)), eggs = (r) => (r === 'r' ? ['Y', 'P', 'B'].filter((g) => g === 'Y' || pEggs(r).includes(g)) : pEggs(r));
+      const X = (x) => +(340 + x * 2.083).toFixed(1), Y = (y) => +(240 - (y + 0.9) * 2.083).toFixed(1), S0 = script({ seed: 4 }), pkS = (j) => { dm.P2.pick = { pat: 0, ...j }; };
+      // (the setup screen shows them, on the Plan's own Groups page: its eight coil circles)
+      pkS({ role: 'r', team: 'P', egg: true }); M.tab = 'grp'; const html = dm.panel();
+      if (!/pg-sprow/.test(html) || !/data-mh="P"/.test(html) || /data-sj=/.test(html)) bad('with the Plan\'s maps loaded the setup screen doesn\'t show the spot maps: ' + html.replace(/<[^>]+>/g, ' ').slice(0, 160) + ' (check N)');
+      Object.entries(ctx.UL_SOAK).forEach(([k, s]) => { if (!html.includes('cx="' + X(s[0]) + '" cy="' + Y(s[1]) + '" r="16.7"')) bad('Your group isn\'t the Plan\'s Groups map: its ' + k + ' coil circle is missing (UL_PAGES.trans[0], check N)'); });
+      // (each role: the teams it's on in the guide's plan, where the game has them wait; Your egg only where its plan has it carry one; every pick plays as shown)
+      for (const r of ['m', 'r', 'h']) { pkS({ role: r === 'm' ? 'r' : 'm', team: 'B', egg: false }); M.role(r); const H0 = M.hot('grp'), rings = H0.filter((h) => !h.you);
+        if (rings.map((h) => h.id).join() !== has(r).join()) bad('Your group offers ' + r + ' the teams ' + rings.map((h) => h.id).join(', ') + '; the guide\'s plan has ' + r + ' on ' + has(r).join(', ') + ' (check N)');
+        rings.forEach((h) => { const d = hyp([h.x, h.y], S0.pre[h.id]); if (d > 0.01) bad('the ' + P.TN[h.id] + ' ring on Your group is ' + d.toFixed(1) + ' yards from where the game has that team wait (check N)'); });
+        if (H0.filter((h) => h.you).length !== 1) bad('Your group doesn\'t show You once (' + r + ', check N)');
+        const tabs = M.tabs().map((q) => q[0]).join(); if (tabs !== (eggs(r).length ? 'grp,egg' : 'grp')) bad('the map tabs for ' + r + ' are ' + tabs + (eggs(r).length ? '; Your group and Your egg' : '; Your group only (healers carry no egg)') + ' (check N)');
+        if (eggs(r).length && M.hot('egg').filter((h) => h.big).map((h) => h.id).join() !== eggs(r).join()) bad('Your egg offers ' + r + ' the teams ' + M.hot('egg').filter((h) => h.big).map((h) => h.id).join(', ') + '; the plan has ' + r + ' carry in ' + eggs(r).join(', ') + ' (check N)');
+        if (!eggs(r).length && M.extras().length) bad('a healer gets a No egg button (check N)');
+        for (const g of has(r)) for (const egg of eggs(r).includes(g) ? [true, false] : [false]) { M.tab = 'grp'; M.pick('grp', g); if (!!PK().egg !== egg) M.extra('noegg'); const pk = PK();
+          if (pk.team !== g || pk.egg !== egg || pk.role !== r) { bad('picking ' + P.TN[g] + (egg ? ' with an egg' : '') + ' on the map as ' + r + ' gives ' + JSON.stringify(pk) + ' (check N)'); continue; }
+          // (the card redraws after every click and asks the job list (setup.now); it must keep the map's pick. Nov 16 on the test copy: a ranged's Yellow click
+          // went back to Purple, the old fixed list had no Yellow for ranged)
+          dm.P2.setup.now(); if (PK().team !== g || PK().egg !== egg || !dm.P2.setup.jobs(r).some((o) => o[0] === g + (egg ? 'e' : ''))) { bad('the card\'s redraw turns the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ') into ' + JSON.stringify(PK()) + ' (check N)'); continue; }
+          const me = dm.P2.slotOf(); dm.at(320, me, { seed: 4 }); const want = dm.job(me).T, you = M.hot('grp').find((h) => h.you);
+          if (!you || hyp([you.x, you.y], want) > 0.01) bad('You on the map isn\'t where the game stands you while your team waits (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ': ' + (you ? you.x.toFixed(1) + ', ' + you.y.toFixed(1) : 'none') + ' on the map, ' + want.map((v) => v.toFixed(1)).join(', ') + ' in the game, check N)');
+          if (dm.S.job.team[me] !== g || dm.S.job.carry.has(me) !== egg) bad('the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ') plays ' + me + ' on ' + P.TN[dm.S.job.team[me]] + (dm.S.job.carry.has(me) ? ' with an egg' : ' without one') + ' (check N)');
+          const say = M.say(), sub = M.sub(); if (!say.includes(P.TM[g]) || /egg/.test(say) !== egg || !/diamond line/.test(say) || (say.match(/\. /g) || []).length || !sub.includes(P.TN[g] + ' team')) bad('the map\'s sentence or Play line for ' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ' doesn\'t say the mark, the egg and the diamond line in one sentence: ' + say + ' / ' + sub + ' (check N)');
+          // (the review, Nov 16: what the map picks is what you play: your own egg lands in your team's circle on Your egg (150 runs), and the autopilot plays the
+          // pick clean (every soak of your team, your egg broken in one), on each pattern in turn)
+          if (egg) { const h = M.hot('egg').find((q) => q.big && q.id === g); let n = 0, inn = 0, worst = 0; for (let seed = 2001; seed <= 2150; seed++) { const e = script({ seed, me, pick: pk }).eggSets[0].eggs.find((q) => q.id === me); if (!e) continue; n++; const d = hyp([e.x, e.y], [h.x, h.y]) - h.r; if (d <= 0) inn++; worst = Math.max(worst, d); }
+            if (!n || inn / n < 0.8 || worst > 3) bad('as ' + r + ' on ' + P.TN[g] + ' with an egg, your own egg lands in the circle on Your egg ' + (n ? Math.round(inn / n * 100) : 0) + '% of the time (the farthest ' + worst.toFixed(1) + ' yards out, check N)'); }
+          { const pt = 1 + (r.charCodeAt(0) + g.charCodeAt(0) + (egg ? 1 : 0)) % 3; dm.P2.pick = { ...pk, pat: pt }; const sr = dm.sim(me, true, pt === 2, 5 + pt); dm.P2.pick = pk;
+            if (sr.log.length || sr.deaths.length) bad('the autopilot playing the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ', pattern ' + pt + ') makes mistakes: ' + sr.log.concat(sr.deaths.map((d) => 'died ' + d)).join(' | ') + ' (check N)'); } } }
+      // (Your egg: each circle round where the game drops that team's eggs, 200 runs it never worked from; its eggs drawn in it, as many as the team carries)
+      const by = { Y: [], P: [], B: [] }; for (let seed = 1001; seed <= 1200; seed++) { const Sx = script({ seed }); Sx.eggSets[0].eggs.forEach((e) => by[Sx.job.team[e.id]].push([e.x, e.y])); }
+      const AR = {}; pkS({ role: 'r', team: 'P', egg: true }); M.hot('egg').filter((h) => h.big).forEach((h) => { AR[h.id] = h; }); pkS({ role: 'm', team: 'Y', egg: true }); M.hot('egg').filter((h) => h.big).forEach((h) => { AR[h.id] = h; });
+      ['Y', 'P', 'B'].forEach((g) => { const h = AR[g]; if (!h) { bad('Your egg has no circle for the ' + P.TN[g] + ' team (check N)'); return; } const L0 = by[g], inn = L0.filter((p) => hyp(p, [h.x, h.y]) <= h.r).length / L0.length, out = Math.max(...L0.map((p) => hyp(p, [h.x, h.y]) - h.r));
+        if (!h.big || inn < 0.9 || out > 3.5) bad('the ' + P.TN[g] + ' circle on Your egg holds ' + Math.round(inn * 100) + '% of where the game drops that team\'s eggs (200 runs; the farthest ' + out.toFixed(1) + ' yards outside it, check N)'); });
+      pkS({ role: 'r', team: 'P', egg: true }); { const n = (M.page('egg').svg.match(/<title>An egg<\/title>/g) || []).length, want = eggs('r').reduce((a, g) => a + P.team[g].filter((id) => P.carry.includes(id)).length, 0); if (n !== want) bad('Your egg draws ' + n + ' eggs for a ranged; ' + want + ', every egg of ' + eggs('r').join(', ') + ' (check N)'); }
+      // (the eggs drawn on Your egg sit where the game really drops that team's eggs, and You on one of yours, in your team's circle; no You without an egg.
+      // The review, Nov 16: they were drawn on a made-up ring round the circle's middle, one 3.6 yards from anywhere a Purple egg lands, and You on that middle)
+      for (const [r, g] of [['m', 'Y'], ['r', 'Y'], ['r', 'P'], ['r', 'B']]) { pkS({ role: r, team: g, egg: true }); const sv = M.page('egg').svg, HS = M.hot('egg'), C = HS.filter((h) => h.big), you = HS.filter((h) => h.you), mine = C.find((h) => h.id === g), E0 = [], re = /<ellipse cx="([\d.-]+)" cy="([\d.-]+)" rx="[\d.]+" ry="[\d.]+" fill="#e8dc96"/g; let m;
+        while ((m = re.exec(sv))) E0.push([(+m[1] - 340) / 2.083, (240 - +m[2]) / 2.083 - 0.9]);
+        E0.forEach((p) => { const h = C.slice().sort((a, b) => hyp(p, [a.x, a.y]) - hyp(p, [b.x, b.y]))[0], d = Math.min(...by[h.id].map((q) => hyp(p, q))); if (d > 1) bad('an egg drawn on Your egg (' + r + ') sits ' + d.toFixed(1) + ' yards from anywhere the game drops a ' + P.TN[h.id] + ' egg, at ' + p.map((v) => v.toFixed(1)).join(', ') + ' (check N)'); });
+        if (!mine || you.length !== 1 || !E0.some((p) => hyp(p, [you[0].x, you[0].y]) < 0.5) || hyp([you[0].x, you[0].y], [mine.x, mine.y]) > mine.r) bad('You on Your egg (' + r + ', ' + P.TN[g] + ') isn\'t on one of the ' + P.TN[g] + ' eggs drawn in its circle (check N)');
+        pkS({ role: r, team: g, egg: false }); if (M.hot('egg').some((h) => h.you)) bad('You shows on Your egg without an egg (' + r + ', ' + P.TN[g] + ', check N)'); }
+      // (the Plan's labels never on a spot you click)
+      for (const [r, key] of [['m', 'grp'], ['m', 'egg'], ['r', 'grp'], ['r', 'egg'], ['h', 'grp']]) { pkS({ role: r, team: has(r)[0], egg: true }); const sv = M.page(key).svg, HS = M.hot(key), re = /<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)" rx="[\d.]+" fill="#0b0d11" fill-opacity="\.88"/g; let m;
+        while ((m = re.exec(sv))) { const b = [+m[1], +m[2], +m[1] + +m[3], +m[2] + +m[4]]; const hit = HS.find((h) => { const cx = X(h.x), cy = Y(h.y), nx = Math.max(b[0], Math.min(cx, b[2])), ny = Math.max(b[1], Math.min(cy, b[3])); return Math.hypot(nx - cx, ny - cy) < h.r * 2.083; });
+          if (hit) bad('a label of the Plan\'s map sits on the ' + P.TN[hit.id] + ' spot you click (' + r + ', ' + key + ', check N)'); } }
+      // (every mechanic by default: a new role carries an egg where its team has one; it keeps the team it can be on, else goes where it carries)
+      for (const [from, r, team, egg] of [[{ role: 'h', team: 'Y' }, 'm', 'Y', true], [{ role: 'h', team: 'P' }, 'r', 'P', true], [{ role: 'h', team: 'P' }, 'm', 'Y', true], [{ role: 'h', team: 'B' }, 'r', 'B', true], [{ role: 'h', team: 'B' }, 'm', 'B', false], [{ role: 'm', team: 'Y', egg: true }, 'h', 'Y', false], [{ role: 'm', team: 'Y', egg: true }, 'r', 'Y', true], [{ role: 'r', team: 'P', egg: false }, 'm', 'Y', false]]) {
+        pkS({ egg: false, ...from }); M.role(r); const pk = PK(); if (pk.role !== r || pk.team !== team || pk.egg !== egg) bad('switching ' + JSON.stringify(from) + ' to ' + r + ' gives ' + JSON.stringify(pk) + '; ' + P.TN[team] + (egg ? ' with its egg' : ' without an egg') + ' (check N)'); }
+      { const L1 = load(HH, 'mint', ex); const p0 = L1.dbg.P2.pick; if (p0.role !== 'r' || p0.team !== 'P' || !p0.egg) bad('a first visit plays ' + JSON.stringify(p0) + '; every mechanic a ranged can do (Purple, with an egg) (check N)'); }
+      // (No egg off and on; a team you click keeps it off; a melee on Blue, whose plan has no melee egg, gets Yellow's)
+      pkS({ role: 'r', team: 'B', egg: true }); M.extra('noegg'); if (PK().egg || PK().team !== 'B') bad('No egg doesn\'t turn your egg off (check N)'); M.pick('grp', 'P'); if (PK().egg) bad('after No egg, picking another team brings the egg back (check N)');
+      M.extra('noegg'); if (!PK().egg || PK().team !== 'P') bad('No egg pressed again doesn\'t give your egg back (check N)');
+      pkS({ role: 'm', team: 'B', egg: false }); M.extra('noegg'); if (PK().team !== 'Y' || !PK().egg) bad('a melee on Blue pressing No egg off isn\'t moved to Yellow with its egg: ' + JSON.stringify(PK()) + ' (check N)');
+      pkS({ role: 'r', team: 'P', egg: false }); M.pick('egg', 'B'); if (PK().team !== 'B' || !PK().egg) bad('clicking Blue on Your egg doesn\'t make you Blue\'s carrier: ' + JSON.stringify(PK()) + ' (check N)');
+      // (a healer's click with Your egg left open still picks the team)
+      pkS({ role: 'r', team: 'P', egg: true }); M.tab = 'egg'; M.role('h'); M.pick(M.tab, 'B'); if (PK().team !== 'B') bad('a healer\'s click on Your group after Your egg was open picks nothing (check N)');
+      pkS({ role: 'h', team: 'Y', egg: false }); M.tab = 'egg'; M.pick(M.tab, 'P'); if (PK().team !== 'P') bad('a healer\'s click picks nothing while Your egg is the tab remembered (check N)');
+      // (🎲 Random: a team your role is on, with its egg where it has one; every such team comes up)
+      for (const r of ['m', 'r', 'h']) { const seen = new Set(); pkS({ role: r, team: has(r)[0], egg: false }); for (let i = 0; i < 80; i++) { M.random(); const pk = PK(); seen.add(pk.team);
+          if (pk.role !== r || !has(r).includes(pk.team) || pk.egg !== eggs(r).includes(pk.team)) { bad('🎲 Random as ' + r + ' gives ' + JSON.stringify(pk) + ' (check N)'); break; } }
+        if (seen.size !== has(r).length) bad('🎲 Random as ' + r + ' only ever gives ' + [...seen].join(', ') + ' (check N)'); }
+      // (the same buttons on both tabs, before and after a click: Flex, "clicking on your coil hides no egg")
+      for (const r of ['m', 'r']) { pkS({ role: r, team: eggs(r)[0], egg: true }); const btns = (t) => { M.tab = t; const L2 = []; const re = /<button[^>]*data-m([trx])="([^"]*)"[^>]*>([^<]*)<\/button>/g; let m; const h2 = dm.panel(); while ((m = re.exec(h2))) L2.push(m[1] + ':' + m[2] + ':' + m[3]); return L2.join(' | '); };
+        const a = btns('grp'), b = btns('egg'); M.pick('egg', eggs(r)[0]); const c = btns('egg'), d = btns('grp');
+        if (!/x:noegg:No egg/.test(a) || a !== b || b !== c || c !== d) bad('the map\'s buttons change between tabs (' + r + '): ' + [a, b, c, d].join(' / ') + ' (check N)'); } } }
+  catch (e) { bad('the spot maps crashed: ' + e.message + ' (check N)'); }
+  // H. phase 1 and phase 2, with this file loaded
+  try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
+    const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }
+  catch (e) { bad('phase 1 or 2 crashed with the intermission loaded: ' + e.message + ' (check H)'); }
+  // I. the damage moments
+  try { dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.slams[3] + 0.3, me, { seed: 4 });
+    if (!dbg.G.adds.some((a) => a.kind === 'rawling')) bad('no Rawling comes out of an egg broken in a soak (check I)'); else if (dbg.tgts().length && dbg.dps().cat) bad('the Rawlings are a damage moment during the coils (the raid kills them once the coils are done, check I)');
+    dbg.at(T.slams[7] + 1.5, me, { seed: 4 }); if (dbg.dps().cat !== 'rawling') bad('the Rawlings aren\'t the damage moment once the coils are done (check I)');
+    for (const pk of [{ role: 'r', team: 'B', egg: false, pat: 1 }, { role: 'm', team: 'Y', egg: true, pat: 1 }, { role: 'm', team: 'Y', egg: false, pat: 3 }]) { dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(), true, false, 4), DL = dbg.dpsList();
+      if (!DL.some((m) => m.kind === 'rawling')) bad('the autopilot as ' + JSON.stringify(pk) + ' had no Rawling moment (check I)'); else if (DL.some((m) => m.fr < 0.5)) bad('the autopilot as ' + JSON.stringify(pk) + ' was on the Rawlings under half the time: ' + r.log.join(' | ') + ' (check I)'); }
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 1 }; const st = dbg.sim(dbg.P2.slotOf(), false, false, 4); if (!st.log.some((l) => /Rawlings were up/.test(l))) bad('standing still doesn\'t miss the Rawlings (check I)');
+    if (dbg.P2.dpsNames([{ kind: 'rawling' }]) !== 'the Rawlings') bad('the end card doesn\'t name the Rawlings (check I)'); }
+  catch (e) { bad('the damage moments crashed: ' + e.message + ' (check I)'); }
+  // O. the release sweep (Nov 16)
+  try { const rawN = () => dbg.G.adds.filter((a) => a.kind === 'rawling').length;
+    // (one run as the game plays it: from 5:18, skipped ahead to `start` as the start card does, then your own steps (`player`) or the autopilot's)
+    const play = (pk, o) => { dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.start, me, { east: !!o.east, seed: o.seed }); if (o.start) dbg.ff(o.start); let n = 0;
+      while (dbg.G.t < dbg.S.end - 1e-9 && n++ < 5000) { if (o.player) { o.player(me); dbg.stepOwn(1); } else dbg.step(1); if (o.each) o.each(me); if (dbg.G.hp <= 0) dbg.G.hp = 100; } return me; };
+    // (your egg still on the floor after your last soak: the line said "Pick up your egg now: walk over it" and the arrow led there (for a melee, from 5:55 too);
+    // doing it added "Your egg was still in your hands after the last slam" on top of "Your egg never went into a soak". Blue ranged and Yellow melee with an egg,
+    // pattern 1, seed 1: soak only, then follow the job)
+    for (const pk of [{ role: 'r', team: 'B', egg: true, pat: 1 }, { role: 'm', team: 'Y', egg: true, pat: 1 }]) { const said = []; let mid = null;
+      play(pk, { seed: 1, player: (me) => { const t = dbg.G.t, S0 = dbg.S, last = S0.soaks.filter((s) => s.group.includes(me)).pop();
+        if (t <= last.at + 0.1) { const ns = S0.soaks.find((s) => s.group.includes(me) && s.at >= t - 0.15); dbg.walkTo(ns && t >= S0.soaks[0].cast ? [ns.x, ns.y] : S0.pre[S0.job.team[me]]); return; }
+        const tx = dbg.P2.jobText(), e = dbg.G.eggs.find((q) => q.id === me && q.state === 'floor'), h = dbg.hint(); if (/Pick up your egg/.test(tx)) said.push(tx);
+        if (e && h && hyp(h.T, [e.x, e.y]) < 1) said.push('the arrow points at your egg at ' + clkS(Math.round(t * 10) / 10)); if (!mid && e && t > last.at + 0.5) mid = tx;
+        dbg.walkTo(dbg.job(me).T); } });
+      const lg = dbg.log.join(' | '), who = pk.role === 'm' ? 'Yellow melee' : 'Blue ranged';
+      if (said.length) bad('your soaks done and your egg on the floor, the game still sends you to it: ' + said[0] + ' (the release sweep, Nov 16, ' + who + ', pattern 1, seed 1; check O)');
+      else if (!/leave your egg/.test(mid || '')) bad('your soaks done and your egg on the floor, the line doesn\'t say to leave it: ' + mid + ' (' + who + ', check O)');
+      if (!/never went into a soak/.test(lg) || /still in your hands/.test(lg)) bad('an egg left on the floor till your last soak isn\'t one egg mistake: ' + lg + ' (the release sweep, Nov 16, ' + who + '; check O)'); }
+    // (picked up anyway after "never went into a soak", it isn't "still in your hands" too; left on a crack as the platform shatters, its Viper still hatches
+    // but isn't a second mistake)
+    for (const pick of [true, false]) { const pk = { role: 'r', team: 'B', egg: true, pat: 1 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.slams[6] - 2, me, { seed: 1 }); const last = dbg.S.soaks.filter((s) => s.group.includes(me)).pop(), e = dbg.G.eggs.find((q) => q.id === me);
+      Object.assign(e, { state: 'floor', who: null, x: 1, y: -14, shell: dbg.G.t - 1, shp: 0 }); dbg.G.log = []; dbg.G.x = last.x; dbg.G.y = last.y; dbg.walkTo(null); while (dbg.G.t < last.at + 1) dbg.stepOwn(1);
+      if (pick) { dbg.G.x = e.x; dbg.G.y = e.y; dbg.stepOwn(4); } else { dbg.G.x = 9; dbg.G.y = -21.7; } while (dbg.G.t < (pick ? T.slams[7] + 0.5 : T.shatter + 1)) dbg.stepOwn(1);
+      const eg = dbg.G.log.filter((m) => m.kind === 'egg' || m.kind === 'viper'), vp = dbg.G.adds.some((a) => a.kind === 'viper');
+      if (pick && (e.state !== 'held' || eg.length !== 1)) bad('your egg picked up after "never went into a soak" gives ' + eg.length + ' egg mistakes: ' + eg.map((m) => m.text).join(' | ') + ' (one; the release sweep, Nov 16; check O)');
+      if (!pick && (eg.length !== 1 || !vp)) bad('your egg left on a crack after "never went into a soak" gives ' + eg.length + ' egg mistakes' + (vp ? '' : ' and no Viper') + ': ' + eg.map((m) => m.text).join(' | ') + ' (one, and its Viper still hatches; the release sweep, Nov 16; check O)'); }
+    // (a melee scored on Rawlings it couldn't reach: the 5:45 start cleared every Rawling from slams 1 to 4, and the last few died about 2 s into the moment;
+    // Yellow melee, pattern 3, seed 15 was on them 0%. And from 5:18, a Yellow melee with an egg on pattern 2 (last soak at Skull, across the room) was scored
+    // from 5:55 on Rawlings 20 yards away: 43 to 49%)
+    { const pk = { role: 'm', team: 'Y', egg: false, pat: 3 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(345, me, { seed: 15 }); const n0 = rawN(); dbg.at(T.start, me, { seed: 15 }); dbg.ff(345); const n1 = rawN();
+      if (!n0 || n1 !== n0) bad('starting at 5:45 leaves ' + n1 + ' Rawlings; ' + n0 + ' are up at 5:45 in a run from 5:18 (the release sweep, Nov 16; check O)');
+      play(pk, { seed: 15, start: 345 }); if (dbg.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot from 5:45 (Yellow, pattern 3, seed 15) is scored off the Rawlings: ' + dbg.log.join(' | ') + ' (the release sweep, Nov 16; check O)');
+      for (const seed of [11, 12, 15]) { play({ role: 'm', team: 'Y', egg: true, pat: 2 }, { seed }); if (dbg.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot (Yellow, egg, pattern 2, seed ' + seed + ', last soak across the room) is scored on Rawlings it couldn\'t reach yet: ' + dbg.log.join(' | ') + ' (the release sweep, Nov 16; check O)'); } }
+    // (a Rawling boiling at 6:03.5, just after the moment ends, charged to you while you pressed 1 all along: the raid only starts on them at 5:50.4.
+    // Yellow melee with an egg, pattern 2, seed 1; a Yellow healer, pattern 1, seed 12)
+    for (const [pk, seed] of [[{ role: 'm', team: 'Y', egg: true, pat: 2 }, 1], [{ role: 'h', team: 'Y', egg: false, pat: 1 }, 12]]) { play(pk, { seed }); const b = dbg.G.log.find((m) => m.kind === 'boil');
+      if (b) bad('a Rawling boiling is your mistake (' + JSON.stringify(pk) + ', seed ' + seed + '): ' + b.text + ' (the release sweep, Nov 16; check O)'); }
+    // (Q pressed at 5:24: the line still said "Press Q now" from 5:46.6 with 65 s of cooldown left, What's next showed "Defensive (Q)", and the mistake didn't
+    // say why. Purple ranged with an egg, pattern 2, seed 3)
+    { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(324.5, me, { seed: 3 }); dbg.G.def = dbg.G.t; dbg.G.log = [];
+      while (dbg.G.t < T.defFrom - 0.5) dbg.step(1); const un = dbg.upNext().map((x) => x.text); if (un.some((x) => /Defensive/.test(x))) bad('with Q cooling down What\'s next still shows ' + un.join(', ') + ' (the release sweep, Nov 16; check O)');
+      while (dbg.G.t < T.defCue + 0.5) dbg.step(1); const tx = dbg.P2.jobText(); if (/Press Q now/.test(tx) || !/cooling down/.test(tx)) bad('with Q cooling down the line says: ' + tx + ' (the release sweep, Nov 16; check O)');
+      while (dbg.G.t < T.defBy + 0.5) dbg.step(1); if (!dbg.log.some((l) => /No defensive for the last four slams.*You pressed Q at 5:24/.test(l))) bad('Q pressed at 5:24 gives: ' + dbg.log.join(' | ') + '; the mistake should say Q was pressed at 5:24 (the release sweep, Nov 16; check O)'); } }
+  catch (e) { bad('the release sweep\'s checks crashed: ' + e.message + ' (check O)'); }
+}
+
+module.exports = checks; module.exports.load = load;
+if (require.main === module) {
+  let n = 0; const t0 = Date.now(); checks(null, (a, b, t) => { n++; console.log('✗ ' + t); });
+  console.log(n ? n + ' problem(s)' : 'practice game, intermission: all checks pass', '(' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)');
+  if (process.argv.includes('--audit')) { const { dbg } = load(null, 'mint'); dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 0 }; for (let seed = 1; seed <= 30; seed++) for (const east of [false, true]) { const a = dbg.audit(east, seed); console.log('seed ' + seed + (east ? ' E' : ' W') + ' pattern ' + dbg.S.pat + ': ' + (a.length ? '\n  ' + a.join('\n  ') : 'clean')); } }
+  process.exitCode = n ? 1 : 0;
+}
