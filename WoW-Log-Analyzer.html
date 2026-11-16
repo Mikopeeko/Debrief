@@ -73238,7 +73238,11 @@ function pgOpen(root, boss, d, pk) {
   // name and a hostile red health bar. An add's own health; Ula'tek, her tail and her heart share hers (they are all her); a Wretch's by the clock, from waking
   // to dying; anything else (phase 2's targets have no health) a full bar with no number. No target: a dim frame, "Tab to pick". A hit flashes the bar ----
   const tgtFrame = (t) => { if (!G) return null; const o = tgtNow(t); if (!o) return { none: true, name: 'No target' }; let pct = null;
-    if (o.max) pct = Math.max(0, o.hp == null ? o.max : o.hp) / o.max * 100; else if ((o.kind === 'boss' || o.kind === 'tail' || o.kind === 'heart') && typeof G.bossHp === 'number') pct = G.bossHp;
+    // (Flex, Nov 15: "the health bars in p2 arent moving": phase 2's targets carried no health, so the frame showed a full bar that never moved. A part's
+    //  target can give hpFr (0 to 1), and an add in G.adds shows its own health whoever lists it)
+    const ad = !o.max && o.hpFr == null ? G.adds.find((q) => q.id === o.key) : null;
+    if (o.max) pct = Math.max(0, o.hp == null ? o.max : o.hp) / o.max * 100; else if (o.hpFr != null) pct = o.hpFr * 100; else if (ad) { const mx = ADD_HP[ad.kind] || 3; pct = Math.max(0, ad.hp == null ? mx : ad.hp) / mx * 100; }
+    else if ((o.kind === 'boss' || o.kind === 'tail' || o.kind === 'heart') && typeof G.bossHp === 'number') pct = G.bossHp;
     else if (o.kind === 'wretch') { const w = (S.wretches || []).find((q) => q.id === o.key); if (w && w.dies > w.awake) pct = Math.max(0, Math.min(1, (w.dies - t) / (w.dies - w.awake))) * 100; }
     return { none: false, key: o.key, name: o.name, pct: pct == null ? null : Math.max(0, Math.min(100, pct)), range: inRange(o) }; };
   let hitSeen = null, tfFlash = 0;
@@ -73283,9 +73287,15 @@ function pgOpen(root, boss, d, pk) {
   // (calls that come within 1.5 s of each other share one line, so one never covers the other: "a second Wretch!" showed for 0.2 s, Nov 15 review)
   // (the boss-mod timers: only your coil slam, named "Your coil", Nov 15 review)
   const myTimers = (t) => S.timers.filter((q) => q.t > t).filter((q) => { const m = /^Coil slam (\d)$/.exec(q.name); return !m || S.soaks.some((z) => Math.abs(z.at - q.t) < 0.01 && z.k === +m[1] - 1 && z.group.includes(me)); }).map((q) => (/^Coil slam \d$/.test(q.name) ? { ...q, name: 'Your coil' } : q)).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5);
-  const warns = () => { const now = []; while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) now.push(S.warns[G.warnI++]); if (!now.length) return; const el = $('.pg-warn');
-    const keep = G.lastWarn && G.t - G.lastWarn.t < 1.5 ? [G.lastWarn.text] : [], txt = keep.concat(now.map((w) => w.text)).filter((x, i, a) => a.indexOf(x) === i).join('  ·  ');
-    G.lastWarn = { t: G.t, text: now.map((w) => w.text).join('  ·  ') }; el.textContent = txt; el.style.color = now[now.length - 1].c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
+  // (Main, Nov 15, phase 3 at 7:10 and 8:25: four to six calls shared one line, ran to two lines and under the minimap. Now at most two calls show at
+  // once, the one about you first; the rest wait their turn, and a call that has waited 4 s is dropped: the boss-mod bars already have it)
+  const myCall = (w) => (/\b(you|your)\b/i.test(w.text) ? 1 : 0);
+  const warns = () => { const Q = G.warnQ || (G.warnQ = []); while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) Q.push({ ...S.warns[G.warnI++], q: G.t });
+    for (let i = Q.length - 1; i >= 0; i--) if (G.t - Q[i].q > 4) Q.splice(i, 1);
+    if (!Q.length) return; const L = G.lastWarn, age = L ? G.t - L.t : 99; if (L && L.n >= 2 && age < 2.2) return; /* (the line is full: the rest wait) */
+    Q.sort((a, b) => myCall(b) - myCall(a) || a.t - b.t); const join = !!L && L.n === 1 && age < 1.5, take = Q.splice(0, join ? 1 : 2).filter((w) => !(join && w.text === L.all[0]));
+    if (!take.length) return; const all = (join ? [L.all[0]] : []).concat(take.map((w) => w.text)), el = $('.pg-warn');
+    G.lastWarn = { t: G.t, n: all.length, all }; el.textContent = all.join('  ·  '); el.style.color = take[take.length - 1].c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
@@ -73370,7 +73380,7 @@ function pgOpen(root, boss, d, pk) {
     card.querySelector('.pg-go').onclick = begin; };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
-    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
+    G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; G.warnQ = []; G.lastWarn = null; if (P2) P2.ff(); };
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
   const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); } /* (it's really there when you keep going, Nov 15 audit) */
@@ -73453,7 +73463,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -73486,7 +73496,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-tmb span { position: absolute; left: 7px; right: 42px; top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px/22px var(--body, system-ui); color: #e8edf2; text-shadow: 0 1px 2px #000; }
 .pg .pg-tmb b { position: absolute; right: 7px; top: 0; font: 700 12.5px/22px var(--head, system-ui); color: #e8edf2; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
 .pg .pg-tm.soon { border-color: var(--c); } .pg .pg-tm.soon .pg-tmb i { opacity: .85; } .pg .pg-tm.soon .pg-tmb span, .pg .pg-tm.soon .pg-tmb b { color: #fff; font-weight: 800; }
-.pg-warn { position: absolute; top: 22%; left: 0; right: 0; text-align: center; font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
+.pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the boss-mod bars on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn.in { animation: pgWarn 3s ease-out forwards; } @keyframes pgWarn { 0% { opacity: 0; transform: scale(1.15); } 8% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
 .pg-float { position: absolute; top: 31%; left: 0; right: 0; text-align: center; font: 700 16px var(--head, system-ui); text-shadow: 0 1px 4px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-float.bad { color: #ff8f87; } .pg-float.ok { color: #7ee08f; } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
@@ -73520,7 +73530,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-acts .pg-act.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.6); animation: pgTabHot 1s ease-in-out infinite; } .pg .pg-acts .pg-act.hot span { color: #f3c969; }
 @keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } }
 .pg .pg-acts .pg-act.good { border-color: #7ee08f; box-shadow: 0 0 0 1px #7ee08f; } .pg .pg-acts .pg-act.good span { color: #7ee08f; }
-@media (max-width: 900px) { .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
+@media (max-width: 900px) { .pg .pg-warn { left: 250px; right: 170px; } .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
 @media (max-width: 640px) { .pg .pg-ufs { gap: 12px; } .pg .pg-ucol { width: calc(50vw - 20px); } .pg .pg-acts { gap: 10px; } .pg .pg-timers { width: 200px; } .pg .pg-job p { font-size: 13px; } }
 .pg-card { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,6,9,.62); z-index: 3; } .pg-card.on { display: flex; }
 .pg-cin { width: min(620px, 94%); max-height: 92%; overflow: auto; padding: 20px 22px; background: var(--bg, #0f1117); border: 1px solid var(--line2, rgba(255,255,255,.18)); border-radius: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.55); }
@@ -75020,8 +75030,8 @@ function pg3dP2(K) {
 // 3D only, like phase 2. tests/practice-p3.js plays it in Node on every build.
 const PG_P3_T = { start: 372, gate: 372.5, gateEnd: 400, up: 375.1, call: [377.1, 407.1, 505.1], clu: [382.2, 412.2, 510.2], gest: 8, wrath: [382.1, 467.1, 535.1],
   bite: [397.1, 461.1, 565.1], biteCast: 5, biteLand: 5.5, venom: 15, purge: 5, waves: [422.1, 477.1, 527.1, 571.1], wavesCast: 4.5, tails: [425.4, 480.5, 530.6, 574.4, 579.5],
-  womb: 429.3, wake: 449.3, incub: 435.3, prey: [432.1, 483.1, 544.1], preyCast: 8, fester: [[461.3, 465.3], [495.6, 497.6]], wdie: 509.5, shriek: 510.2, echoes: 526.8, echoCast: 3,
-  sdie: 533, gate2: [478, 492], gate2w: 487, rage: 577.1, heart: 583.6, end: 591.4 };
+  womb: 429.3, wake: 449.3, incub: 435.3, prey: [432.1, 483.1, 544.1], preyCast: 8, fester: [[461.3, 465.3], [495.6, 497.6]], wdie: 560, shriek: 510.2, echoes: 526.8, echoCast: 3,
+  sdie: 560, acid: 516.8, fester3: [527, 529], gate2: [478, 492], gate2w: 487, rage: 577.1, heart: 583.6, end: 591.4 };
 const PG_P3 = {
   // her corners (measured), by quarter: 0 north-east, 1 north-west, 2 south-west, 3 south-east (counter-clockwise, the way she moves)
   her: [[33.4, 31.4], [-33.1, 32.7], [-33.5, -32], [32.8, -32]], QN: ['north-east', 'north-west', 'south-west', 'south-east'],
@@ -75041,7 +75051,11 @@ const PG_P3 = {
   soak: { 1: ['r1', 'r2', 'r3'], 2: ['m1', 't1', 't2'], 3: ['h1', 't1', 't2'] }, kick: { 1: 'm2', 2: 'r4' }, dk: ['t2', 'm4'],
   // sizes: the bite's 7 yards (spell 1288879), the drain (picked), the Purge's burst, the bubble's 10 (spell 1310763), Circling Prey's 13 (spell
   // 1301510), kicks (melee 8, ranged 30), Vicious Echoes' reach (the whole room), Death Grip's 30
-  BITE: 7, DRAIN: 2.56, PURGE: 5, FB: 10, PREY: 13, KICK: { m: 8, t: 8, r: 30, h: 0 }, ECHO: 60, GRIP: 30, GAP: [5.5, 11] };
+  BITE: 7, DRAIN: 2.56, PURGE: 5, FB: 10, PREY: 13, KICK: { m: 8, t: 8, r: 30, h: 0 }, ECHO: 60, GRIP: 30, GAP: [5.5, 11],
+  // the adds' health (picked so the raid alone kills them on the kills' clock: the near clutches in 6 to 8 s, the Shriekers about 8:53, the Wretch about 8:50, so
+  // your hits bring the Wretch down by 8:27 to 8:32 as on the kills; a hit of yours: a clutch 1, a Shrieker 0.5, the Wretch 0.25). The far clutch, gripped in
+  // last (4.2 s), outlives its 10.2 s gestation without you
+  CLUTCH: { hp: 7, drain: 1.1, gest: 10.2 }, SHRIEK: { hp: 12, drain: 0.57, hit: 0.5, late: 40 }, WRETCH: { hp: 30, drain: 0.4, hit: 0.25 } };
 // (a point in her frame turned to quarter k: 0 as is, then 90 degrees counter-clockwise each step)
 const pgP3R = (p, k) => { k = ((k % 4) + 4) % 4; return k === 0 ? [p[0], p[1]] : k === 1 ? [-p[1], p[0]] : k === 2 ? [-p[0], -p[1]] : [p[1], -p[0]]; };
 // (which quarter a point is on: the cracks cross at about x 0.5, y -1)
@@ -75156,6 +75170,9 @@ function pgP3Script(o) {
   // the last burn
   cast('boss', 'Rage of the Shackled', T.rage, T.heart); warn(T.rage, 'Rage of the Shackled: burn the heart!', '#ff8a5a'); timer(T.heart, 'Heart open'); for (let t = T.heart; t < T.end; t += 4) S.pulses.push(t);
   S.heart = F(P.heart, 3);
+  { const al = [0, 0, 0, 0]; al[Qs[3]] = 1; for (let t = T.heart + 2.5; t < T.end - 1; t += 4) for (let j = 0; j < 2; j++) { let q = null; for (let k = 0; k < 40; k++) { const c = F([6 + rnd() * 14, 6 + rnd() * 14], 3); /* (picked: two every 4 s on the inner part of her quarter, away from the heart, the melee by it and the soakers spread at the rim) */ if (pgP3Floor(c[0], c[1], al, 3)) { q = c; break; } }
+    if (q) S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t + j * 0.25 - 2, at: t + j * 0.25, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Brown circles: step out before they land.' }); }
+    warn(T.heart + 0.3, 'The heart is open: burn it, step out of the brown circles!', '#c8a36a'); }
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
@@ -75170,10 +75187,10 @@ function pgP3(A) {
   let setUp = false; const setup = () => { if (setUp) return; setUp = true;
     if (A.DPS_SAY) Object.assign(A.DPS_SAY, { clutch: ['Hit the clutches', 'The clutches were up', 'Once the Death Knights grip the clutches onto the raid, press Tab to pick one, then keep pressing 1 until they die.', 'them'],
       wretch: ['Hit the Wretch', 'The Wretch was up', 'Press Tab to pick the Blightscale Wretch, then keep pressing 1: kill it before its third bubble.', 'it'], shrieker: ['Hit the Shriekers', 'The Shriekers were up', 'Press Tab to pick a Blightscale Shrieker, then keep pressing 1: they stack damage on the whole raid, so kill them fast.', 'them'] });
-    Object.assign(A.DEB, { bite: ['Serpent\'s Bite', '#ff4a4a'], purge: ['Volatile Purge', '#ff8a3b'], stun: ['Stunned', '#ffd23b'], echo: ['Vicious Echoes', '#ff9fb2'], corpse: ['Calcified Corpse', '#b8a88a'] });
+    Object.assign(A.DEB, { bite: ['Serpent\'s Bite', '#ff4a4a'], purge: ['Volatile Purge', '#ff8a3b'], stun: ['Stunned', '#ffd23b'], echo: ['Vicious Echoes', '#ff9fb2'], acid: ['Acidic Expulsion', '#a8e04a'], corpse: ['Calcified Corpse', '#b8a88a'] });
     ['prey', 'stone', 'soakmiss', 'stack', 'purge', 'kick', 'fester', 'wipe'].forEach((k) => A.MAJ.add(k)); };
   // ---- your job (the start card), remembered on this browser ----
-  const KEY = 'wla-pg-job3', job0 = () => ({ role: 'r', soak: 1, bite: 'random', kick: 0 });
+  const KEY = 'wla-pg-job3', job0 = () => ({ role: 'r', soak: 0, bite: 'random', kick: 2 });
   const jobOk = (j) => !!j && /^[mrh]$/.test(j.role) && [0, 1, 2, 3].includes(j.soak) && ['random', 'yes', 'no'].includes(j.bite) && [0, 1, 2].includes(j.kick);
   let pk = (() => { try { const j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (jobOk(j)) return j; } catch (e) { /* (no storage) */ } return job0(); })();
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(pk)); } catch (e) { /* (no storage) */ } };
@@ -75197,9 +75214,8 @@ function pgP3(A) {
   const kq = (x, y) => { const c = pgP3Cell(x, y), M = pgP3Mask(); return c >= 0 && M.q[c] >= 0 ? M.q[c] : -1; };
 
   // ---- the Wretch and the Shriekers and the clutches: where they are ----
-  const wrWant = (t) => { const W = S.wretch; if (t < W.land || t >= W.dies) return null; if (t < W.land + 25) return W.p0.slice(); /* (awake at 20 s, but it stays put until 25 s on all 17 kills, then reaches its bubble spot about 7:40) */ const f = W.fb; return t < f[0].at + 1 ? f[0].p.slice() : t >= T.prey[1] + 2.5 ? f[1].p.slice() : f[0].p.slice(); };
-  const shWant = (s, t) => { if (t < s.up || t >= s.dies) return null; if (t < s.up + 1.2) return s.p0.slice(); const c = FR(P.grasp, step(t)); return [c[0] + (s.k === 1 ? -2.5 : 2.5), c[1] + (s.k === 1 ? 1.5 : -1.5)]; };
-  const clAt = (c, t) => { if (t < c.land || t >= c.gone) return null; const st = G.p3.cl[c.id]; return st ? [st.x, st.y] : c.p.slice(); };
+  const wrWant = (t) => { const W = S.wretch; if (t < W.land || t >= W.dies || G.p3.wrDead) return null; if (t < W.land + 25) return W.p0.slice(); /* (awake at 20 s, but it stays put until 25 s on all 17 kills, then reaches its bubble spot about 7:40) */ const f = W.fb; return t < f[0].at + 1 ? f[0].p.slice() : t >= T.prey[1] + 2.5 ? f[1].p.slice() : f[0].p.slice(); };
+  const shWant = (s, t) => { if (t < s.up || t >= s.dies || G.p3.shDead[s.id]) return null; if (t < s.up + 1.2) return s.p0.slice(); const c = FR(P.grasp, step(t)); return [c[0] + (s.k === 1 ? -2.5 : 2.5), c[1] + (s.k === 1 ? 1.5 : -1.5)]; };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this; practice.js's shared dodge then keeps them out
   // of the waves) ----
@@ -75265,7 +75281,7 @@ function pgP3(A) {
 
   // ---- a new run ----
   const init = (G0) => { setup(); G = G0; S = A.S; G.t = T.start; G.wipes = 0; G.bossHp = bossHp(T.start);
-    G.p3 = { used: {}, lock: {}, lq: {}, kick: {}, stun: {}, kickCd: -99, cl: {}, sh: {}, wr: null, bite: {}, purge: [], stones: [], grips: [], missed: [], once: new Set() };
+    G.p3 = { used: {}, lock: {}, lq: {}, clDone: {}, shDead: {}, wrHp: P.WRETCH.hp, wrDead: null, kick: {}, stun: {}, kickCd: -99, cl: {}, sh: {}, wr: null, bite: {}, purge: [], stones: [], grips: [], missed: [], once: new Set() };
     GDZ_RAID.forEach((id) => { const p = home(id); if (id !== A.me) { G.bots[id].x = p[0]; G.bots[id].y = p[1]; } }); };
   const bossHp = (t) => Math.max(0, 40 - 34 * Math.min(1, (t - T.start) / (T.heart - T.start)) - (t > T.heart ? 6 * Math.min(1, (t - T.heart) / (T.end - T.heart)) : 0));
 
@@ -75290,13 +75306,19 @@ function pgP3(A) {
     S.echoes.forEach((e) => { const s = G.p3.sh[e.sh], who = GDZ_RAID.find((id) => S.job[id].kick === e.k); if (!cr(e.t1) || G.p3.kick[e.sh] || !s) return; G.p3.kick[e.sh] = 'none'; G.p3.missed.push([who, 'a Vicious Echoes not kicked ' + clk(e.t0)]);
       GDZ_RAID.forEach((id) => { if (pgDist(pos(id), [s.x, s.y]) <= P.ECHO) G.p3.stun[id] = t + 6; }); A.deb('stun', 6); A.deb('echo', 12, true); A.hurt(25);
       if (who === me) A.mistake('kick', 'You didn\'t kick Vicious Echoes (' + clk(e.t0) + '): the whole raid was stunned for 6 s.', 'Press E while the Shrieker glows pink ("Vicious Echoes: kick!"), within ' + range(me) + ' yards of it.', 0); else A.say('Vicious Echoes: stunned for 6 s.', true); }); };
-  // (the clutches: landed, gripped, pulled in by Gorefiend's Grasp, hatched into Rawlings, cleaved down)
-  const clutches = (t0, t, dt) => { const cr = (at) => at > t0 && at <= t;
-    S.clutches.forEach((c) => { let st = G.p3.cl[c.id]; if (t < c.land || t >= c.gone) { if (st && t >= c.gone) delete G.p3.cl[c.id]; return; }
-      if (!st) st = G.p3.cl[c.id] = { x: c.p[0], y: c.p[1], on: c.rel === 0, rawl: false };
+  // (the clutches: landed, gripped, pulled in by Gorefiend's Grasp, cleaved down. The audit, Nov 15, Flex: "if this skips any part of the fight that
+  // requires mechanical execution its not good enough": a clutch has health now. Broken before its Slithering Gestation ends (10.2 s, measured 10 to
+  // 10.4), it leaves a Rawling that stays until it's killed (practice.js's shared adds: the raid wears them down, one boils at 25 s); still whole, it
+  // hatches a Viper (LPDTjqfyrBQWx1Nc fight 21: three at 6:32). The raid breaks the near three on its own; the far one, gripped in last, needs your hits too)
+  const clutches = (t0, t, dt) => { const cr = (at) => at > t0 && at <= t, me = A.me;
+    S.clutches.forEach((c) => { let st = G.p3.cl[c.id]; if (t < c.land || c.done || G.p3.clDone[c.id]) return;
+      if (!st) st = G.p3.cl[c.id] = { x: c.p[0], y: c.p[1], on: c.rel === 0, hp: P.CLUTCH.hp };
       c.grips.forEach((g) => { if (!cr(g.at)) return; const d = pos(g.by), to = g.mid ? near(pgP3R(P.clutch[1], (S.Qs[c.n] + 1) % 4), t) : [d[0] + 1.5, d[1] - 1]; G.p3.grips.push({ by: g.by, from: [st.x, st.y], to, t0: t }); st.x = to[0]; st.y = to[1]; if (!g.mid) st.on = true; });
       if (cr(c.grasp)) { const q = near(FR(P.grasp, c.n), t); if (st.on) { const i = S.clutches.indexOf(c); st.x = q[0] + Math.cos(i * 2.1) * 1.4; st.y = q[1] + Math.sin(i * 2.1) * 1.4; } if (!G.p3.once.has('grasp' + c.ci)) { G.p3.once.add('grasp' + c.ci); G.p3.grips.push({ by: P.dk[0], grasp: q, t0: t }); } }
-      if (t >= c.hatch && !st.rawl) st.rawl = true;
+      if (st.on && t >= c.land + 0.5) st.hp -= P.CLUTCH.drain * dt; /* (the raid's cleave once it's with the raid) */
+      if (st.hp <= 0) { G.p3.clDone[c.id] = 'broken'; delete G.p3.cl[c.id]; G.adds.push({ kind: 'rawling', x: st.x, y: st.y, born: t }); return; }
+      if (t >= c.land + P.CLUTCH.gest) { G.p3.clDone[c.id] = 'viper'; delete G.p3.cl[c.id]; G.adds.push({ kind: 'viper', x: st.x, y: st.y, born: t }); G.vipers = (G.vipers || 0) + 1; A.deb('putrid', 20, true);
+        A.mistake('viper', 'A Slithering Clutch wasn\'t broken in time (' + clk(t) + '): it hatched a Viper, with Putrid Membrane on the raid.', 'Once the Death Knights grip a clutch in, press Tab to pick it and keep pressing 1: break each one within 10 s of landing.', 8); return; }
       // (before the grips, a clutch crawls for the venom, a yard a second)
       if (!c.grips.some((g) => t >= g.at) && c.rel !== 0) { const R = c.k, cen = pgP3R([20, 20], R), ex = st.x - cen[0], ey = st.y - cen[1], ee = Math.hypot(ex, ey) || 1; st.x += ex / ee * dt; st.y += ey / ee * dt; } });
     G.p3.grips = G.p3.grips.filter((g) => t - g.t0 < 0.7); };
@@ -75337,7 +75359,7 @@ function pgP3(A) {
   const spreadSpots = (who, n, t) => { const L = P.spread.map((q) => near(FR(q, n), t)), rest = GDZ_RAID.filter((id) => !who.includes(id)).map((id) => roleSpot(id, raidStep(t + T.purge), t + T.purge).concat([pos(id)])), used = [], out = {};
     const clear = (q) => Math.min(14, ...rest.map((r) => Math.min(pgDist(q, [r[0], r[1]]), pgDist(q, r[2])))); /* (from where the raid stands and where it's going) */
     const order = who.slice().sort((a, b) => (b === A.me) - (a === A.me)); order.forEach((id) => { const p = pos(id), free = L.filter((q) => used.every((u) => pgDist(u, q) >= 10));
-      const best = (free.length ? free : L).slice().sort((a, b) => clear(b) - clear(a) + 0.25 * (pgDist(a, p) - pgDist(b, p)))[0]; used.push(best); out[id] = best; }); return out; };
+      const wk = id === A.me ? 0.55 : 0.25, best = (free.length ? free : L).slice().sort((a, b) => clear(b) - clear(a) + wk * (pgDist(a, p) - pgDist(b, p)))[0]; /* (yours a nearer one: you walk slower than the bots, and may have to dodge on the way) */ used.push(best); out[id] = best; }); return out; };
   // (the Purge's three lanes from a soaker, and the turn of them that keeps farthest from everyone: each raider's distance from a lane within its 27 yards)
   const lanes = (p, a) => [0, 2 * Math.PI / 3, -2 * Math.PI / 3].map((da) => [Math.cos(a + da), Math.sin(a + da)]);
   const aim3 = (p, others, out) => { let best = out, bs = -1e9; for (let k = 0; k < 24; k++) { const a = out - Math.PI / 3 + k * Math.PI / 36, L = lanes(p, a); let m = 9;
@@ -75346,8 +75368,19 @@ function pgP3(A) {
   const check = (t0, t) => { sync(); const dt = t - t0, cr = (at) => at > t0 && at <= t, me = A.me;
     // the Wretch: asleep where it landed, then dragged to the raid; the Shriekers walk to their tank
     { const w = wrWant(t); if (!w) G.p3.wr = null; else { const c = G.p3.wr; if (!c || pgDist([c.x, c.y], w) > 60) G.p3.wr = { x: w[0], y: w[1] }; else { const ex = w[0] - c.x, ey = w[1] - c.y, ee = Math.hypot(ex, ey), sp = 7.5 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = w[0]; c.y = w[1]; } } } }
-    S.shriekers.forEach((s) => { const w = shWant(s, t); if (!w) { delete G.p3.sh[s.id]; return; } const c = G.p3.sh[s.id]; if (!c) { G.p3.sh[s.id] = { x: w[0], y: w[1] }; return; } const ex = w[0] - c.x, ey = w[1] - c.y, ee = Math.hypot(ex, ey), sp = 9 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = w[0]; c.y = w[1]; } });
+    S.shriekers.forEach((s) => { const w = shWant(s, t); if (!w) { delete G.p3.sh[s.id]; return; } const c = G.p3.sh[s.id]; if (!c) { G.p3.sh[s.id] = { x: w[0], y: w[1], hp: P.SHRIEK.hp }; return; } const ex = w[0] - c.x, ey = w[1] - c.y, ee = Math.hypot(ex, ey), sp = 9 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = w[0]; c.y = w[1]; } });
     gates(t); kicks(t0, t); clutches(t0, t, dt); bites(t0, t, dt);
+    // (the Shriekers and the Wretch have health (the audit, Nov 15): the raid wears them down once they're with it, your hits add)
+    { const c = FR(P.mel, raidStep(t)); Object.entries(G.p3.sh).forEach(([k, s]) => { if (pgDist([s.x, s.y], c) < 25) s.hp -= P.SHRIEK.drain * dt; if (s.hp <= 0) { G.p3.shDead[k] = t; delete G.p3.sh[k]; } });
+      const w = G.p3.wr; if (w && !G.p3.wrDead && t >= S.wretch.wake + 6 && pgDist([w.x, w.y], c) < 20) G.p3.wrHp -= P.WRETCH.drain * dt; if (w && G.p3.wrHp <= 0 && !G.p3.wrDead) { G.p3.wrDead = t; G.p3.wr = null; } }
+    // (Acidic Expulsion: each Shrieker alive 6.6 s after it hatches puts a stack on the whole raid for about 36 s (8:36.8 to 9:14.5 on the kills); alive at 40 s, again)
+    if (cr(T.acid)) Object.keys(G.p3.sh).forEach(() => A.deb('acid', 36, true));
+    if (cr(T.shriek + P.SHRIEK.late) && Object.keys(G.p3.sh).length) { Object.keys(G.p3.sh).forEach(() => A.deb('acid', 20, true)); if (once('shlate')) A.mistake('dps', 'The Shriekers lived 40 s (' + clk(t) + '): Acidic Expulsion again on the whole raid.', 'Press Tab to pick a Blightscale Shrieker, then keep pressing 1: kill them fast.', 0); }
+    if (A.has('acid')) G.hp -= 0.8 * G.debs.acid.n * dt * (A.has('def') ? 0.5 : 1);
+    if (A.has('echo')) G.hp -= 1.5 * G.debs.echo.n * dt * (A.has('def') ? 0.5 : 1); /* (Vicious Echoes' damage over time, stacking: the audit, Nov 15) */
+    // (the Wretch alive at its third bubble (on 2 of 17 kills it lived to a third and a fourth, 8:48 and 9:21): another, faster Fester Burst, and the reason why)
+    if (cr(T.fester3[0]) && G.p3.wr && !G.p3.wrDead) { const q = { i: 2, t0: T.fester3[0], at: T.fester3[1], p: near(FR(P.fb[1], 2), t) }; S.wretch.fb.push(q); S.casts.push({ who: 'wretch', name: 'Fester Burst', t0: q.t0, t1: q.at });
+      A.say('Fester Burst again: into the Wretch\'s bubble!', true); if (once('wr3')) A.mistake('dps', 'The Wretch lived to its third bubble (' + clk(t) + ').', 'Press Tab to pick the Blightscale Wretch and keep pressing 1 whenever it\'s up: kill it before its third bubble.', 0); }
     // Fester Burst: everyone farther than 10 yards from the Wretch is hit
     S.wretch.fb.forEach((q) => { if (!cr(q.at) || !G.p3.wr) return; if (pgDist([G.x, G.y], [G.p3.wr.x, G.p3.wr.y]) > P.FB) { A.deb('fester', 12); A.mistake('fester', 'Fester Burst: you were outside the Wretch\'s bubble (' + clk(q.at) + ').', 'Be within 10 yards of the Wretch when Fester Burst goes off: the bite\'s red circles stack inside it too.', 40); } });
     // Circling Prey: her quarter is destroyed with anyone on it; everyone takes a smaller hit
@@ -75365,7 +75398,7 @@ function pgP3(A) {
     if (pu) return t < pu.burst ? 'Volatile Purge in ' + Math.ceil(pu.burst - t) + ' s: walk to the edge (gold), 5 yards from everyone, with the raid behind you.' : 'Purge bursting: stay 5 yards from everyone.';
     if (bt) { const st = G.p3.bite[bt.i], left = Math.max(0, bt.end - t); if (bt.tg.includes(me)) return t < bt.land ? 'Serpent\'s Bite is coming: if it\'s on you, walk to the gold ring.' : 'Serpent\'s Bite on you: stand on the gold ring with the other red circle. The soakers come to you (' + Math.ceil(left) + ' s).';
       const v = st ? Math.max(0, ...bt.tg.map((id) => st.v[id] || 0)) : 100; return t < bt.land ? 'Your soak: Serpent\'s Bite ' + (bt.i + 1) + ' lands in ' + Math.ceil(bt.land - t) + ' s. Be on the gold ring.' : 'Soak: stand on the stacked red circles (' + Math.round(v) + '% left). Press Q just before they drain.'; }
-    for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) return qm === S.Qs[i] ? 'Circling Prey: move one quarter left (counter-clockwise) now, off her quarter (' + Math.ceil(S.hit[i] - t) + ' s).' + (i === 1 && !G.p3.used[me + 'g2'] ? (t < T.gate2w ? ' Let her waves pass, then the gateway (gold) takes you there.' : ' The gateway (gold) takes you there.') : '') : qm === S.Qs[i + 1] ? 'Off her quarter: good. Stack with the raid here.' : 'Get onto the next quarter to the left (counter-clockwise), where the raid is going.';
+    for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) return qm === S.Qs[i] ? 'Circling Prey: move one quarter left (counter-clockwise) now, off her quarter (' + Math.ceil(S.hit[i] - t) + ' s).' + (i === 1 && !G.p3.used[me + 'g2'] ? (t < T.gate2w ? ' Let her waves pass, then the gateway (gold) takes you there.' : ' The gateway (gold) takes you there.') : '') : qm === S.Qs[i + 1] ? 'Off her quarter: good. Stack with the raid here.' + (i ? ' Press Q (defensive) as it lands.' : '') : 'Get onto the next quarter to the left (counter-clockwise), where the raid is going.';
     const fb = S.wretch.fb.find((q) => t >= q.t0 - 2.5 && t <= q.at); if (fb && G.p3.wr) return 'Fester Burst in ' + Math.max(0, fb.at - t).toFixed(1) + ' s: into the Wretch\'s bubble (10 yards).';
     const ek = S.echoes.find((e) => j.kick === e.k && t >= e.t0 - 5 && t <= e.t1 && !G.p3.kick[e.sh]); if (ek) return t < ek.t0 ? 'Your kick: Shrieker ' + ek.k + '\'s Vicious Echoes in ' + Math.ceil(ek.t0 - t) + ' s. Press E as it glows pink ("Vicious Echoes: kick!").' : 'Kick Vicious Echoes now! (E)';
     const wv = S.waves.find((w) => (w.kind === 'her3' || w.kind === 'tail') && t >= w.t0 - (w.warn || 1) && t <= w.t0 + 3); if (wv) return wv.kind === 'her3' ? 'Her waves: step sideways into a gap (the dark lanes).' : 'Small tails\' rings from behind: stand in a gap.';
@@ -75376,11 +75409,12 @@ function pgP3(A) {
     const nx = S.timers.find((q) => q.t > t); return nx ? 'Stack with the raid. Next: ' + nx.name + ' in ' + Math.ceil(nx.t - t) + ' s.' : ''; };
   const upNext = (t) => { sync(); const me = A.me, j = S.job[me], L0 = [], add = (at, text, c) => { if (at > t && at - t <= 30) L0.push({ at, text, c }); };
     S.bites.forEach((b) => { if (b.so.includes(me)) add(b.land, 'Your soak: bite ' + (b.i + 1), '#ff5a6a'); else if (b.tg.includes(me)) add(b.land, 'Your red circle', '#ff5a6a'); else add(b.land, 'Serpent\'s Bite', '#ff8f87'); });
-    T.prey.forEach((p0, i) => add(p0, 'Circling Prey: move left', '#ff4a4a')); S.wretch.fb.forEach((q) => add(q.t0, 'Fester Burst', '#d8f22f')); S.wrath.forEach((q) => { if (q.tank !== me) add(q.at, 'Mother\'s Wrath: out of her reach', '#ff4a4a'); });
+    T.prey.forEach((p0, i) => { add(p0, 'Circling Prey: move left', '#ff4a4a'); if (i) add(S.hit[i] - 1, 'Circling Prey lands: Q', '#7fb8ff'); }); S.wretch.fb.forEach((q) => add(q.t0, 'Fester Burst', '#d8f22f')); S.wrath.forEach((q) => { if (q.tank !== me) add(q.at, 'Mother\'s Wrath: out of her reach', '#ff4a4a'); });
     T.waves.forEach((w0) => add(w0 + T.wavesCast, 'Her waves', '#9be13a')); S.echoes.forEach((e) => { if (j.kick === e.k) add(e.t0, 'Your kick: Shrieker ' + e.k, '#ff9fb2'); }); add(T.heart, 'Heart open', '#ff8a5a');
     return L0.sort((a, b) => a.at - b.at).slice(0, 3); };
   const acts = () => '<div class="pg-act" data-a="kick"><b>E</b><span>Kick</span><i></i></div>';
-  const hud = (t) => { const el = A.$('.pg-act[data-a="kick"]'); if (!el || !G.p3) return; const left = 15 - (t - G.p3.kickCd); el.querySelector('i').style.height = !range(A.me) ? '100%' : left > 0 ? (left / 15 * 100).toFixed(1) + '%' : '0'; el.title = range(A.me) ? 'Kick (E): ' + range(A.me) + ' yards' : 'Healers have no kick in Midnight'; };
+  const hud = (t) => { const el = A.$('.pg-act[data-a="kick"]'); if (!el || !G.p3) return; const left = 15 - (t - G.p3.kickCd); el.querySelector('i').style.height = !range(A.me) ? '100%' : left > 0 ? (left / 15 * 100).toFixed(1) + '%' : '0'; el.title = range(A.me) ? 'Kick (E): ' + range(A.me) + ' yards' : 'Healers have no kick in Midnight';
+    const due = range(A.me) && kickables(t).some((k) => k.who === A.me); el.style.borderColor = due ? '#ffd0dc' : ''; el.style.boxShadow = due ? '0 0 0 2px #ff9fb2, 0 0 16px rgba(255,159,178,.75)' : ''; };
 
   // ---- the start card: your role, your bite soak, the bite on you, your Shrieker kick ----
   const ui = { tab: 'bite' };
@@ -75420,7 +75454,7 @@ function pgP3(A) {
   // ---- the shared setup screen (practice.js, Nov 15, Flex via Main: "still too complex and confusing"): a role, then one job in plain words, as
   // phase 2's. The soak sets are the guide's plan's (the 1st a ranged's, the 2nd a melee's, the 3rd a healer's); a kick is a melee's or a ranged's;
   // the red circle comes at random, like the real fight (one melee and one ranged DPS each set since Nov 6) ----
-  const SJ = { m: [['s2', 'Soak the 2nd bite'], ['k1', 'Kick a Shrieker'], ['none', 'Stack and hit']], r: [['s1', 'Soak the 1st bite'], ['k2', 'Kick a Shrieker'], ['none', 'Stack and hit']], h: [['s3', 'Soak the 3rd bite'], ['none', 'Heal, no soak']] };
+  const SJ = { m: [['k1', 'Kick a Shrieker'], ['s2', 'Soak the 2nd bite'], ['none', 'Stack and hit']], r: [['k2', 'Kick a Shrieker'], ['s1', 'Soak the 1st bite'], ['none', 'Stack and hit']], h: [['s3', 'Soak the 3rd bite'], ['none', 'Heal, no soak']] };
   const jobNow = (j) => (j.soak ? 's' + j.soak : j.kick ? 'k' + j.kick : 'none');
   const setupCard = { roles: ['m', 'r', 'h'],
     now: () => { const e = eff(), r = e.role, v = jobNow(e); return { role: r, job: SJ[r].some((x) => x[0] === v) ? v : SJ[r][0][0] }; },
@@ -75441,9 +75475,10 @@ function pgP3(A) {
   // with the raid, the heart; most urgent first: a Viper, the Shriekers, the clutches, the heart, the Wretch ----
   const tgts = (t) => { sync(); const L0 = []; if (!G || !G.p3) return L0;
     G.adds.forEach((a) => { if (a.kind !== 'viper') return; a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6 }); });
-    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (st && st.on && t >= c.land) L0.push({ key: c.id, kind: 'clutch', name: st.rawl ? 'Blightscale Rawling' : 'Slithering Clutch', p: [st.x, st.y], r: 1.3 }); });
-    if (G.p3.wr && t >= S.wretch.wake) L0.push({ key: 'w3', kind: 'wretch', name: 'Blightscale Wretch', p: [G.p3.wr.x, G.p3.wr.y], r: 2.2 });
-    Object.entries(G.p3.sh).forEach(([k, s]) => L0.push({ key: k, kind: 'shrieker', name: 'Blightscale Shrieker', p: [s.x, s.y], r: 2 }));
+    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (st && st.on && t >= c.land) L0.push({ key: c.id, kind: 'clutch', name: 'Slithering Clutch', p: [st.x, st.y], r: 1.3, hp: st.hp, max: P.CLUTCH.hp }); });
+    G.adds.forEach((a) => { if (a.kind !== 'rawling') return; a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); L0.push({ key: a.id, kind: 'rawling', name: 'Blightscale Rawling', p: [a.x, a.y], r: 1.1, hp: a.hp == null ? 3 : a.hp, max: 3 }); });
+    if (G.p3.wr && t >= S.wretch.wake) L0.push({ key: 'w3', kind: 'wretch', name: 'Blightscale Wretch', p: [G.p3.wr.x, G.p3.wr.y], r: 2.2, hp: G.p3.wrHp, max: P.WRETCH.hp });
+    Object.entries(G.p3.sh).forEach(([k, s]) => L0.push({ key: k, kind: 'shrieker', name: 'Blightscale Shrieker', p: [s.x, s.y], r: 2, hp: s.hp, max: P.SHRIEK.hp }));
     if (t >= T.heart && t < T.end) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 4.5 }); /* (her heart is big: the melee hit it from the stone's edge) */
     return L0; };
   // (while your own job has you elsewhere (your red circle or your soak, your Purge, the walk off her quarter, the gateway), there's no damage
@@ -75451,9 +75486,9 @@ function pgP3(A) {
   const busy = (t) => { const me = A.me; if (myBite(t) || G.p3.purge.some((q) => q.who.includes(me) && t < q.burst + 2)) return true; const qm = kq(G.x, G.y);
     if (T.prey.some((p0, i) => t >= p0 - 2 && t < S.hit[i] + 1.5)) return true; const g1 = S.gates.find((g) => g.k === 1); return !!(g1 && t < T.gateEnd + 4 && qm !== S.Qs[0]); }; /* (and everyone, while the raid changes quarters) */
   const dpsCat = (t) => { sync(); if (!G || !G.p3) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (busy(t)) return null; const c = FR(P.mel, raidStep(t));
-    if (Object.values(G.p3.sh).some((s) => pgDist([s.x, s.y], c) < 25)) return 'shrieker'; if (S.clutches.some((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp)) return 'clutch';
+    if (Object.values(G.p3.sh).some((s) => pgDist([s.x, s.y], c) < 25)) return 'shrieker'; if (S.clutches.some((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp)) return 'clutch'; if (G.adds.some((a) => a.kind === 'rawling')) return 'rawling';
     if (t >= T.heart && t < T.end) return 'heart'; return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };
-  const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['clutch', 'wretch', 'shrieker', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ clutch: 'the clutches', wretch: 'the Wretch', shrieker: 'the Shriekers', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
+  const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['clutch', 'rawling', 'wretch', 'shrieker', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ clutch: 'the clutches', rawling: 'the Rawlings', wretch: 'the Wretch', shrieker: 'the Shriekers', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   const starts = [[0, '6:12 · Onto her quarter'], [392, '6:32 · The first bite'], [418, '6:58 · Waves, then Circling Prey'], [455, '7:35 · The Wretch\'s bubble and the second bite'], [476, '7:56 · The second Circling Prey'], [503, '8:23 · The Shriekers'], [540, '9:00 · The last quarter and the burn']];
 
   // ---- the minimap: the four quarters, as long as they stand ----
@@ -75462,7 +75497,7 @@ function pgP3(A) {
     for (let j = 0; j < MK.N; j += 2) for (let i = 0; i < MK.N; i++) { const k = MK.q[j * MK.N + i]; if (k < 0 || !al[k]) continue; const p = M(i + MK.X0 - 0.5, j + MK.X0 + 1.5); mx.fillStyle = k === S.Qs[raidStep(t)] ? 'rgba(170,150,110,.5)' : 'rgba(120,140,110,.32)'; mx.fillRect(p[0], p[1], sc + 0.5, 2 * sc + 0.5); }
     S.gates.forEach((g) => { if (t >= (g.shown || g.t0) && t <= g.t1) { dot(g.p[0], g.p[1], 2.6, t < g.t0 ? '#c084ff' : '#f3c969'); dot(g.to[0], g.to[1], 2, '#c084ff'); } });
     S.bites.forEach((b) => { const st = G.p3.bite[b.i]; if (!st || st.done) return; b.tg.forEach((id) => { const p = pos(id); dot(p[0], p[1], P.BITE * sc, 'rgba(255,74,74,.28)', '#ff4a4a'); }); });
-    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (st) dot(st.x, st.y, 1.6, st.rawl ? '#c9df9a' : '#8f9a5a'); });
+    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (st) dot(st.x, st.y, 1.6, '#8f9a5a'); });
     if (G.p3.wr) dot(G.p3.wr.x, G.p3.wr.y, 2.4, '#c89bff'); Object.values(G.p3.sh).forEach((s) => dot(s.x, s.y, 2.4, '#ff9fb2'));
     const B = bossAt(t); if (B.up) dot(B.p[0], B.p[1], 3.4, '#2f6a22', '#b6f23a');
     GDZ_RAID.forEach((id) => { if (id !== A.me) dot(G.bots[id].x, G.bots[id].y, 1.4, GDZ_ROLE[id[0]][1]); }); dot(G.x, G.y, 2.6, '#fff', '#000');
@@ -75498,7 +75533,8 @@ function pgP3(A) {
     G.p3.purge.forEach((q) => q.who.forEach((id) => { if (t > q.burst + 0.3) return; const p = pos(id); h.ring(p[0], p[1], P.PURGE, '#ff8a3b', 0.9, 0.3, true); if (id === me) { const sp = q.spot[me]; if (sp) { h.disc(sp[0], sp[1], 1.3, '#f3c969', 0.18); h.ring(sp[0], sp[1], 1.3, '#f3c969', 1, 0.25, true); h.label(sp[0], sp[1], 3, 'Spread here', '#f3c969', 13); } h.label(p[0], p[1], 6, 'Volatile Purge · ' + Math.max(0, q.burst - t).toFixed(1), '#ffb46a', 14); } }));
     G.p3.stones.forEach((q) => { P3({ k: 'stone', x: q.x, y: q.y }); if (t - q.t0 < 6) h.grow(q.x, q.y, 4 + (t - q.t0) % 1 * 30, '#b8a88a', 0.5); h.label(q.x, q.y, 5, 'Calcified Corpse', '#d8c8a8', 13); });
     // (the clutches, the grips, Gorefiend's Grasp)
-    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; if (st.rawl) P3({ k: 'add', kind: 'rawling', x: st.x, y: st.y }); else P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land }); });
+    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
+      P3({ k: 'arc', x: st.x, y: st.y, r: 2, f: left, c: left < 0.3 ? '#ff5a4f' : '#9bd94a', o: 0.95 }); if (st.on && left < 0.4) h.label(st.x, st.y, 3.4, 'Break it: ' + Math.ceil(left * P.CLUTCH.gest) + ' s', '#ff8f87', 13); });
     G.p3.grips.forEach((g) => { const d = pos(g.by); if (g.grasp) { h.grow(g.grasp[0], g.grasp[1], 8 * (1 - (t - g.t0) / 0.7), '#c0394f', 0.8); return; } P3({ k: 'grip', x0: d[0], y0: d[1], x1: g.to[0], y1: g.to[1] }); });
     if (S.clutches.some((c) => t >= c.land && t < c.land + 3) && G.p3.cl) { const c0 = S.clutches.find((c) => t >= c.land && t < c.land + 3), cc = FR(P.grasp, c0.n); h.label(cc[0], cc[1], 7, 'Death Knights: grip!', '#ff8a9a', 13); }
     // (the Wretch's bubble)
@@ -75512,7 +75548,10 @@ function pgP3(A) {
     if (t >= T.heart && t < T.end + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 4.5, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 4.5, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); void al; };
 
-  return { part: 3, dodges: true, walk,
+  // (your hits on this part's own targets: practice.js hitTgt calls P2.hit for anything that isn't one of its shared adds)
+  const hit = (key) => { sync(); if (!G || !G.p3) return; const c = G.p3.cl[key]; if (c) { c.hp -= 1; return; } const s = G.p3.sh[key]; if (s) { s.hp -= P.SHRIEK.hit; return; } if (key === 'w3' && G.p3.wr) G.p3.wrHp -= P.WRETCH.hit; };
+
+  return { part: 3, dodges: true, walk, hit,
     script: (o) => pgP3Script({ ...(o || {}), me: A.me, pick: mine() ? eff() : null }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => { sync(); return pgP3Floor(x, y, S && G && G.p3 ? alive(G.t) : [1, 1, 1, 1], 0.35); }, bossAt, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
     clean: 'Onto her quarter in time, every bite cleared and spread, out of every wave and off every quarter before it broke. Try another job.',
