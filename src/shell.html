@@ -21341,30 +21341,10 @@ coloured top edges. The extra Whole key button only shows while a pull is picked
 map and scrolls. The mistakes are cards with coloured edges. A picked pull's summary is the head of the side panel instead of a panel on top. The old You vs Fast
 run lane is gone (the Summary's run tells the key in time). The website only */
 @layer defaultTheme {
-/* the score banner */
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b { --gc: var(--gD); background: linear-gradient(90deg, color-mix(in srgb, var(--gc) 10%, transparent), rgba(255,255,255,.015) 45%) !important; border: 1px solid rgba(255,255,255,.08) !important; border-left: 4px solid var(--gc) !important; border-radius: 0 !important; padding: 16px 18px !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-S) { --gc: var(--gS); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-A) { --gc: var(--gA); }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-B) { --gc: var(--gB); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-C) { --gc: var(--gC); }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-D) { --gc: var(--gD); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b:has(.mrs-l b.g-F) { --gc: var(--gF); }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span { justify-items: center !important; gap: 6px !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span > b { display: flex !important; align-items: center !important; justify-content: center !important; width: 58px !important; height: 58px !important; background: var(--gc) !important; color: #15171b !important; font: 800 36px/1 var(--head, 'Barlow Condensed'), sans-serif !important; border-radius: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l { text-align: center !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-ts { gap: 8px !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t { background: rgba(255,255,255,.03) !important; border: 1px solid rgba(255,255,255,.07) !important; border-top: 3px solid rgba(255,255,255,.18) !important; border-radius: 0 !important; padding: 8px 12px 10px !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-g { border-top-color: var(--good) !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-y { border-top-color: var(--warn) !important; }
-html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t.mrs-r { border-top-color: var(--bad) !important; }
 /* one control row: Whole key only while a pull is picked (the stepper says Whole key otherwise) */
 html:not(.mpcard) body #view#view#view #mptCM#mptCM:not(.mpx-one) .mpt-mbar > .mpx-wk { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM.mpx-one .mpt-mbar > .mpx-wk::before { content: '\2039\00a0' !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM:not(.mpx-one) .mpt-mbar > .mpt-mstep { margin-left: auto !important; } /* (the stepper and Replay stay at the right, picked or not) */
-/* a phone: the badge on its own row over the tiles (the tiles had a narrow column beside it) */
-@media (max-width: 700px) {
-  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b { grid-template-columns: minmax(0, 1fr) !important; padding: 12px !important; }
-  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l { display: flex !important; align-items: center !important; gap: 12px !important; text-align: left !important; }
-  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-l .rcb-ring > span { justify-items: start !important; }
-  html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-b .mrs-t { padding: 6px 8px 8px !important; }
-}
 /* the map fills its frame (the map's own 16:10, so no dark bands); the side panel as tall as the map, scrolling inside */
 @media (min-width: 901px) {
   html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mgrid { align-items: stretch !important; }
@@ -21386,6 +21366,37 @@ html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum 
 html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > :is(p.mpx-ck:first-of-type, .mpx-cw) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important; margin: 10px 0 0 !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > p.mpx-ck { margin: 12px 0 4px !important; padding: 0 !important; border: 0 !important; }
+}
+/* Route's score as a banner in The key's own style (Nov 16, Flex: "I think the banner at the top of routes above the map is weakly designed", then of the mock:
+"yea much better"). It uses The key's banner (.mprs): the dungeon's art behind, the grade as a solid badge where the keystone sits, each part with its game icon,
+a big number coloured by how it did, and its detail under it. Under it is one slim line: the weakest part as a tag, what to do, and "Why these points" at its end.
+It's a container named like The key's (mpsb), so the banner's own narrow-width rules fold it the same way. It replaces the boxes from ce985802. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs.mrs-x { display: block !important; container: mpsb / inline-size !important; margin: 4px 0 12px !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs { --gc: var(--gD); margin: 0 !important; background: radial-gradient(300px 130px at 60px 50%, color-mix(in srgb, var(--gc) 22%, transparent), transparent 70%), linear-gradient(90deg, rgba(20,22,26,.92), rgba(20,22,26,.72)) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gS { --gc: var(--gS); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gA { --gc: var(--gA); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gB { --gc: var(--gB); }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gC { --gc: var(--gC); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gD { --gc: var(--gD); } html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mprs.mrs-gF { --gc: var(--gF); }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mrs-ts { display: contents !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-up > b.mrs-gb { flex: none !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 54px !important; height: 54px !important; border-radius: 0 !important; background: var(--gc) !important; color: #15171b !important; font: 800 36px/1 var(--head, 'Barlow Condensed'), sans-serif !important; box-shadow: 0 0 0 1px rgba(0,0,0,.85), 0 0 22px color-mix(in srgb, var(--gc) 35%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-up > span > b { color: #eef0f3 !important; font-size: 44px !important; text-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-up > span > i { color: #9ca3ad !important; letter-spacing: 0 !important; font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-s > span > b > em { font: 600 15px var(--body) !important; font-style: normal !important; color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-s.mrs-g > span > b { color: var(--good) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-s.mrs-y > span > b { color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-s.mrs-r > span > b { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x .mprs-s > span > small.mrs-tv { margin-top: 3px !important; letter-spacing: 0 !important; text-transform: none !important; font: 500 13px var(--body) !important; color: #c3c8d0 !important; }
+/* the weakest part: one slim line under the banner, its tag in the part's colour, "Why these points" at its end */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 6px 14px !important; padding: 10px 14px !important; border: 1px solid rgba(255,255,255,.07) !important; border-top: 0 !important; background: rgba(232,162,58,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk:has(> .mrs-tk-g) { background: rgba(69,193,92,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk:has(> .mrs-tk-r) { background: rgba(229,83,75,.06) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > p.mrs-tk { flex: 1 1 420px !important; margin: 0 !important; font: 500 14px/1.45 var(--body) !important; color: #c9cdd3 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk b.mrs-tkp { display: inline-block !important; margin-right: 8px !important; padding: 1px 9px !important; border: 1px solid color-mix(in srgb, var(--warn) 50%, transparent) !important; background: color-mix(in srgb, var(--warn) 12%, transparent) !important; color: var(--warn) !important; font: 700 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > .mrs-tk-r b.mrs-tkp { border-color: color-mix(in srgb, var(--bad) 55%, transparent) !important; background: var(--bad-bg) !important; color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d { flex: none !important; margin: 0 0 0 auto !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d > summary.mrs-ds { font: 600 13px var(--body) !important; color: #e6c27a !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d > summary.mrs-ds::after { content: ' \203A' !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d[open] { flex-basis: 100% !important; margin: 6px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d[open] > summary.mrs-ds::after { content: ' \25BE' !important; }
 }
 </style>
 </body>
