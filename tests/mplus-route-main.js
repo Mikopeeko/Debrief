@@ -38,8 +38,11 @@ module.exports = function mplusRouteMain(say) {
   if (css.lastIndexOf('/* Mythic+, Route is the main page (Nov 16') < css.lastIndexOf('<style')) bad('the look of Route as the main page is not in the page\'s last style');
   // 6. every mistake beside the map with the whole key picked
   if (s.indexOf("const sc = document.querySelector('#mptCM .mpt-mdtv[data-v=\"you\"] .mpt-mcard'); if (sc) { if (ca.parentNode !== sc) sc.appendChild(ca); }") < 0) bad('every mistake is no longer in the panel beside the map with the whole key picked');
+  // 6b. its rows read right there: the phone's layout at every width (Flex, Nov 16, with a picture of the Deaths list one word a line: "formatting bugs")
+  { const k = css.lastIndexOf('/* Mythic+, every mistake in the narrow panel beside Route\'s map (Nov 16'), b2 = k < 0 ? '' : css.slice(k);
+    if (k < 0 || b2.indexOf('#mptCM .mpt-mcard #mptCA :is(.mpx-r:not(.mpx-rd), .mpx-rd > summary, .mpx-sp .mpx-r:not(.mpx-rd)) { grid-template-columns: 46px minmax(0,1fr) auto !important;') < 0 || b2.indexOf('#mptCM .mpt-mcard #mptCA .mpx-dr { grid-template-columns: 30px minmax(0,1fr) 10px !important; }') < 0 || b2.indexOf('#mptCM .mpt-mcard #mptCA .mpx-r :is(.mpx-w, .mpx-o) { grid-column: 2 / -1 !important; }') < 0) bad('every mistake\'s rows keep their full-width columns in the narrow panel beside the map, so a death reads one word a line (Flex, Nov 16: "formatting bugs")'); }
   // 7. the replay: no line walked, zoomed in on the group
   if (/\.mrp-walk'\)\.setAttribute\('points'/.test(s)) bad('the replay draws the line walked again (Flex, Nov 16: "remove the movement lines they provide nothing useful")');
-  { const m = /\nconst MRP_VIEW_YD = (\d+);/.exec(s); if (!m || +m[1] > 80 || s.indexOf('st.vw = Math.min(D.W, MRP_VIEW_YD * st.ppy);') < 0) bad('the replay\'s camera shows more than 80 yards across again (Flex, Nov 16: "have the map zoomed in on the group during the replay"; it was 130)'); }
+  { const m = /\nconst MRP_VIEW_YD = (\d+);/.exec(s); if (!m || +m[1] > 80 || s.indexOf('st.vw = Math.min(D.W, (MRP_ZS[MRP.zi | 0] || MRP_VIEW_YD) * st.ppy);') < 0) bad('the replay\'s camera shows more than 80 yards across again (Flex, Nov 16: "have the map zoomed in on the group during the replay"; it was 130)'); }
 };
 if (require.main === module) { let n = 0; module.exports((a, b, m) => { n++; console.log('[' + b + '] ' + m); }); console.log('Mythic+ Route is the main page: ' + (n ? n + ' problem(s)' : 'OK')); process.exit(n ? 1 : 0); }

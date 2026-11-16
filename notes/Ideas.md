@@ -354,3 +354,11 @@ top players of their spec (DEF_TOP, built in). The Guilds like us switch doesn't
 - It reuses what exists: the practice game's hotbar and press-to-cast, the Rotation checks and their top-player numbers, the 12.1.5 talent data.
 - Main's take: 7/10. Raiders would come back to it, and nothing else does this. But each spec needs its own buttons and priority, and they must match 12.1.5 exactly. Start with one spec (Holy Paladin) and only its 5 or 6 core buttons, then add specs one at a time.
 - Owners when it starts: Rotation (the checks and spec data), the practice game chat (the hotbar), Design studio (the look).
+
+## Mythic+ replay: spell mechanics on the map, long-term project (Nov 16)
+- Flex: "long term project. Add spell mechanics to the replay map for both mobs and bosses. Add to ideas for mythic+".
+- Draw what the enemies and the bosses cast as it happens on the replay's map: the ground effects and their size (puddles, frontals, circles, beams), who a
+  spell targets, and where it lands, for trash and bosses alike.
+- Builds on what the replay has: each enemy's spot every second, its casts (R.ncast) and the replay's clock. Each spell needs its shape and size from the
+  12.1.5 spell data (the guide library and spell-data-first rules), so it is a spell list per dungeon, like the boss guides' maps.
+- Start with one dungeon's bosses (Kings' Rest), then its must-kick trash, then the other dungeons.

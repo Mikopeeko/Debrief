@@ -20870,6 +20870,92 @@ html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk:hover { color: var(--te
 html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk.on { color: var(--text) !important; border-color: var(--mpt-you, #7d9be8) !important; background: rgba(125,155,232,.12) !important; }
 html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk + .mpt-mstep { margin-left: 8px !important; }
 }
+/* Mythic+, every mistake in the narrow panel beside Route's map (Nov 16, Flex with a picture of the Deaths list, one word a line: "formatting bugs").
+The rows kept their full-width columns (a 156px pull column) in a 388px panel; there they take the phone's layout at every width: the time, the pull and
+what it cost on one line, what happened and what was ready under it. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA :is(.mpx-r:not(.mpx-rd), .mpx-rd > summary, .mpx-sp .mpx-r:not(.mpx-rd)) { grid-template-columns: 46px minmax(0,1fr) auto !important; padding-left: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-r :is(.mpx-w, .mpx-o) { grid-column: 2 / -1 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-r .mpx-e { grid-column: 3 !important; grid-row: 1 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA :is(.mpx-r .mpx-o:empty, .mpx-sp .mpx-r .mpx-e) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA :is(.mpx-sp > .mpt-nt, .mpx-rm) { margin-left: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr { grid-template-columns: 30px minmax(0,1fr) 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr .mpx-dd { grid-column: 2 !important; }
+}
+/* Mythic+ replay, the boss frames like the raid frames (Nov 16, Flex: "Can you make the boss healthbar like the player healthbars"): a bar filling the
+box, the name and the % on it, what the boss is casting under them; and an enemy says it has a hover (Flex: "mousing over the mobs in the replay should
+provide tooltip information on the mob"). The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-bf { width: 256px !important; gap: 2px !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff { display: block !important; position: relative !important; height: 38px !important; padding: 0 !important; background: rgba(11,12,14,.86) !important; border: 1px solid rgba(0,0,0,.7) !important; overflow: hidden !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff > .mrp-bfh { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; width: 100%; background: #c4433b !important; opacity: .82 !important; transition: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff > .mrp-bfn { position: relative !important; z-index: 1 !important; display: block !important; padding: 0 44px 0 7px !important; font: 700 12.5px/21px var(--body) !important; color: #fff !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff > .mrp-bfp { position: absolute !important; right: 6px !important; top: 0 !important; z-index: 1 !important; font: 700 12px/21px var(--body) !important; color: #fff !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff > .mrp-bft { position: relative !important; z-index: 1 !important; display: block !important; padding: 0 7px !important; font: 600 12px/14px var(--body) !important; color: rgba(255,255,255,.9) !important; text-shadow: 0 1px 2px #000, 0 0 2px #000 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff.dead > .mrp-bfh { width: 100% !important; background: #3a3d42 !important; opacity: .7 !important; }
+html:not(.mpcard) body #view#view#view .mrp-bff.dead > :is(.mrp-bfn, .mrp-bfp) { color: #9aa3ad !important; }
+html:not(.mpcard) body #view#view#view .mrp-e { cursor: help !important; }
+@media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-bf { width: 150px !important; } }
+}
+/* Mythic+ replay, its own zoom (Nov 16, Flex: "you can add a zoom in/out button"): + and − at the map's bottom right. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-zc { position: absolute !important; right: 10px !important; bottom: 10px !important; z-index: 3 !important; display: grid !important; gap: 2px !important; pointer-events: auto !important; }
+html:not(.mpcard) body #view#view#view .mrp-zc > button { width: 32px !important; height: 32px !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(11,12,14,.86) !important; font: 700 18px/1 var(--body) !important; color: var(--text) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view .mrp-zc > button:hover:not(:disabled) { border-color: var(--mpt-you, #7d9be8) !important; }
+html:not(.mpcard) body #view#view#view .mrp-zc > button:disabled { opacity: .35 !important; cursor: default !important; }
+}
+/* Mythic+ replay, a player's breakdown in the meter's box (Nov 16, Flex: "dont expand the box but it can be scrollable"). The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mrp-mt:not(.bd) > .mrp-mtb, html:not(.mpcard) body #view#view#view .mrp-mt.bd > .mrp-mtl { display: none !important; }
+html:not(.mpcard) body #view#view#view .mrp-mt.bd > .mrp-mtb { display: block !important; box-sizing: content-box !important; padding: 1px !important; overflow-y: auto !important; background: #0c0d0f !important; border: 1px solid #050506 !important; border-top: 0 !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdh { position: sticky !important; top: 0 !important; z-index: 1 !important; display: flex !important; align-items: baseline !important; gap: 8px !important; padding: 3px 6px !important; background: #15171a !important; font: 700 12.5px var(--body) !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdh > small { font: 500 12px var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdx { margin: 0 !important; padding: 0 4px 0 0 !important; border: 0 !important; background: none !important; font: 700 12px var(--body) !important; color: var(--muted) !important; cursor: pointer !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdx:hover { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdr { position: relative !important; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 8px !important; height: 22px !important; margin: 0 0 1px !important; padding: 0 6px !important; background: #1a1c20 !important; font: 600 12px var(--body) !important; color: #fff !important; cursor: default !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdr > i { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; opacity: .55 !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdr > :is(span, b) { position: relative !important; z-index: 1 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-shadow: 0 1px 2px #000 !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdr > b { flex: none !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdr > b > small { font: 500 12px var(--body) !important; color: rgba(255,255,255,.75) !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bde { justify-content: flex-start !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bde > .mrp-bdt { flex: none !important; min-width: 42px !important; color: var(--muted) !important; font-variant-numeric: tabular-nums !important; }
+html:not(.mpcard) body #view#view#view .mrp-mtb .mrp-bdn { margin: 0 !important; padding: 8px 6px !important; font: 500 12.5px var(--body) !important; color: var(--muted) !important; }
+}
+/* Mythic+ Route, every mistake in the panel beside the map in the panel's own look (Nov 16, Flex: "Giving you creative freedom on how to lay this section
+out. it looks a bit copy pasted/out of place with its current design"): a small label with the count, each kind one row (a count chip, its name, a muted
+line under it), the Clean line short, the "pick a pull" hint at the bottom. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM:not(.mpx-one) .mpt-mdtv .mpt-mcard:has(> #mptCA) { display: flex !important; flex-direction: column !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard > #mptCA { order: -1 !important; margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard:has(> #mptCA) > p.mpt-mc0 { margin: 12px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid var(--line) !important; font: 500 12.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+/* the label */
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA > .mpx-allm > .mpx-alls { display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 !important; padding: 0 0 8px !important; border: 0 !important; border-bottom: 1px solid var(--line) !important; background: none !important; pointer-events: none !important; list-style: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA > .mpx-allm > .mpx-alls > .mpx-allt { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA > .mpx-allm > .mpx-alls > .mpx-alln { min-width: 0 !important; margin: 0 !important; padding: 1px 6px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(255,255,255,.04) !important; font: 700 12px var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA > .mpx-allm > .mpx-alls > :is(.mpx-alld, i), html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dg > .mpt-fxh { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dg { margin: 0 !important; padding: 0 !important; }
+/* each kind: a count chip, its name, a muted line under it */
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr { grid-template-columns: 26px minmax(0,1fr) 10px !important; align-items: start !important; column-gap: 10px !important; row-gap: 2px !important; padding: 10px 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr > .mpx-dn { grid-row: 1 / span 2 !important; width: 26px !important; height: 24px !important; margin: 0 !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(255,255,255,.04) !important; font: 700 13px/22px var(--body) !important; text-align: center !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr.mpx-g-d > .mpx-dn { border-color: rgba(229,83,75,.55) !important; color: #f0938d !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr > .mpx-dl { font: 700 14px/1.3 var(--body) !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr > .mpx-dd { grid-column: 2 !important; font: 500 12.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dr > i { grid-column: 3 !important; grid-row: 1 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA .mpx-dkb { margin: 0 0 6px !important; padding: 0 0 0 36px !important; }
+/* clean */
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard #mptCA p.mpx-ok { margin: 10px 0 0 !important; font: 500 12.5px/1.45 var(--body) !important; color: var(--muted) !important; }
+}
+/* Mythic+ Route, the play by play beside the map, tighter (Nov 16, Flex: "Maybe this could be compacted more"): the time, then the player and what
+they did on one flowing line; the filter chips smaller so they sit on one row. A player's line has a hover with their pull. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li { display: block !important; padding: 3px 4px 3px 40px !important; text-indent: -40px !important; font: 500 13px/1.4 var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li > .t { display: inline-block !important; width: 36px !important; margin-right: 4px !important; text-indent: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li > :is(.w, .x) { display: inline !important; white-space: normal !important; overflow: visible !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li > .w { margin-right: 5px !important; font: 700 13px var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fl2 > li[data-who] { cursor: help !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-ff { gap: 4px !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-fc { gap: 4px !important; padding: 2px 7px !important; font-size: 12px !important; }
+}
 </style>
 </body>
 </html>
