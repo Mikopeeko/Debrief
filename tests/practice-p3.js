@@ -186,6 +186,39 @@ function checks(H, say) {
     L0 = at(586); if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - 4.5) < 0.01 && hyp([s.x, s.y], dbg.S.heart) < 0.01)) bad('in 3D the heart isn\'t drawn where it\'s hit, 4.5 yards round (check G)');
     ['qsink', 'gate', 'clutch', 'shrieker', 'wretch', 'dome', 'heart', 'boss'].forEach((k) => { if (!kinds.has(k)) bad('the 3D view draws no "' + k + '" in phase 3 (check G)'); });
   } catch (e) { bad('the 3D shapes crashed on phase 3: ' + e.message + ' (check G)'); } finally { reset(); }
+  // K. the independent review's findings (Nov 15, before the first push), each played or read here so it can't come back:
+  try {
+    const PJ2 = rd('practice.js'), P3S = rd('practice-p3.js');
+    // (a soaker's own Volatile Purge waves hit them while they walked to their spot: every 2nd-bite soaker died at 8:11 on three of four first quarters)
+    if (!/w\.from === me \|\| !inWave\(w, t, x, y\)/.test(PJ2) || !/w\.from !== b\.id/.test(PJ2)) bad('a soaker\'s own Volatile Purge waves can hit them again, or the bots dodge their own (practice.js w.from, check K)');
+    for (const q of [3, 0]) { const pk = { role: 'r', soak: 2, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const r = dbg.sim(dbg.P2.slotOf(pk), true, false, seedFor(ctx, q)); if (r.deaths.length || r.log.some((x) => /Volatile Purge hit you/.test(x))) bad('the 2nd bite\'s soaker (her first quarter ' + P.QN[q] + ') is hit by a Purge wave or dies: ' + r.log.concat(r.deaths).join(' | ') + ' (check K)'); }
+    // (a player who stepped clockwise at Circling Prey was praised, then routed across the quarter she was breaking)
+    { const pk = { role: 'r', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), seed = seedFor(ctx, 0); dbg.at(434, me, { seed }); const Qs = dbg.S.Qs; dbg.pos = ctx.pgP3R([20, 20], Qs[3]); dbg.stepOwn(1);
+      const T0 = dbg.job(me).T; if (ctx.pgP3Q(T0[0], T0[1]) === Qs[0] && dbg.P2.onPlat(T0[0], T0[1])) bad('a player who stepped clockwise at Circling Prey is routed back across her breaking quarter (check K)');
+      if (/Off her quarter: good/.test(dbg.P2.jobText())) bad('a player who stepped clockwise at Circling Prey is told "good" (check K)'); }
+    // (Mother's Wrath: a melee stand spot sat in her reach, with no warning or arrow)
+    { const pk = { role: 'm', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(383, me, { seed: 3 }); const wr = dbg.S.wrath[0];
+      const inReach = Object.keys(dbg.G.bots).filter((id) => id[0] === 'm' && hyp([dbg.G.bots[id].x, dbg.G.bots[id].y], wr.p) < 5.7); if (inReach.length) bad('melee stand in her reach as Mother\'s Wrath starts (' + inReach.join(' ') + ', check K)');
+      dbg.pos = wr.p.slice(); dbg.stepOwn(1); if (!/step out of her reach/.test(dbg.P2.jobText())) bad('standing in her reach during Mother\'s Wrath, the screen doesn\'t say to step out (check K)');
+      if (!dbg.P2.upNext(375).concat(dbg.P2.upNext(383)).some((u) => /Mother's Wrath/.test(u.text))) bad('Mother\'s Wrath isn\'t in "what\'s next" (check K)'); }
+    // (one tap on Healer wiped a saved kick and red circle; a soaker with "Yes, once" wasn't told about the red circle)
+    dbg.P2.pick = { role: 'h', soak: 3, bite: 'yes', kick: 2 }; if (dbg.P2.pick.kick !== 2 || dbg.P2.pick.bite !== 'yes') bad('picking Healer still wipes the saved kick and red circle (check K)'); if (/Kick/.test(dbg.P2.role().job)) bad('a healer still plays a kick (check K)');
+    dbg.P2.pick = { role: 'r', soak: 1, bite: 'yes', kick: 0 }; if (!/red circle will land on you/.test(dbg.P2.short())) bad('a soaker who picked "Yes, once" isn\'t told a red circle will land on them (check K)');
+    // (the drain cleared a three-soaker bite in 11 s; the kills take 13)
+    { dbg.P2.pick = PK0; dbg.sim(dbg.P2.slotOf(PK0), true, false, 3); const b = dbg.S.bites[0], st = dbg.G.p3.bite[0], cl = st && st.done ? st.done - b.land : null; if (cl == null || cl < 12.3 || cl > 14.2) bad('three soakers clear the 1st bite ' + (cl == null ? 'never' : cl.toFixed(1) + ' s') + ' after it lands; the kills take 13 (check K)'); }
+    // (the Wretch was dragged from 7:29; the kills leave it until 7:34 and have it at its bubble about 7:40; it died 2.6 s early)
+    { dbg.at(T.womb + 24, dbg.P2.slotOf(PK0), { seed: 3 }); const w = dbg.G.p3.wr; if (!w || hyp([w.x, w.y], dbg.S.wretch.p0) > 0.5) bad('the Wretch moves before 25 s after it lands; on all 17 kills it stays put until then (check K)');
+      if (T.wdie < 507.5 || T.wdie > 512) bad('the Wretch dies at ' + clkS(T.wdie) + '; on the kills about 8:27 to 8:32 (check K)'); }
+    // (the second gateway: the screen offered it to everyone, the arrow only to ranged and healers)
+    { const pk = { role: 'm', soak: 0, bite: 'no', kick: 0 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.gate2w - 0.3, me, { seed: 3 }); const g2 = dbg.S.gates.find((g) => g.k === 2); for (let i = 0; i < 12; i++) { dbg.pos = dbg.S.F2([18, 18], 1); dbg.stepOwn(1); } /* (from before the autopilot would take it, then held on her second quarter) */
+      if (g2 && hyp(dbg.job(me).T, g2.p) > 3) bad('a melee on her second quarter at 8:07 isn\'t sent to the gateway the screen offers (check K)'); }
+    // (3D: a ring whose radius changes each frame made a new ring every frame; the floor had half-yard slits; foam showed in the hole; waders floated)
+    if (/h\.ring\([^;]*\(t - /.test(P3S)) bad('a 3D ring in phase 3 still changes size every frame (a new ring each frame: use h.grow, check K)');
+    if (!/cells\(\(c\) => M\.q\[c\] === k, 0, true\)/.test(P3S) || !/M\.ck\[c\] === p/.test(P3S) || !/position\.y = WY \+ 0\.03/.test(P3S)) bad('phase 3\'s 3D floor lost its whole-cell quarters, its fords over the cracks or its cover over the old platform (check K)');
+    // (the texts: Vicious Echoes' cast bar hides under her waves' cast, so the kick is told by the pink glow; the gateway counts are the logs')
+    if (/cast bar/.test(P3S.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''))) bad('a phase 3 text still points at a cast bar that her waves\' cast can hide (check K)');
+    if (!/onto her first quarter \(5 of 17 kills/.test(P3S) || !/second Circling Prey \(7 of 17/.test(P3S)) bad('the header\'s gateway counts aren\'t the logs\' (5 and 7 of 17, check K)');
+  } catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check K)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
