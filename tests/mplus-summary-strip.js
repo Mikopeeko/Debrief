@@ -50,7 +50,7 @@ module.exports = function summaryStrip(say) {
     if (MK.clean.indexOf('no avoidable hits') < 0 || MK.clean.indexOf('nothing went off with a kick ready') < 0) bad('what was clean is not said');
     const L = X.mpxMomList(RK, MK);
     if ((L.match(/class="mpx-mor mpx-g-/g) || []).length !== 4 || L.indexOf('data-mpxk="cd">3 pulls with a big cooldown not pressed</button> <span class="mpx-mog">(pulls 5, 6, 14)</span>') < 0 || L.indexOf('data-mpxv="mis" data-mpxk="">Every mistake, kind by kind ›</button>') < 0) bad('the moments\' list lost a row, the "Also" line or the link to every mistake');
-    if ((L.match(/data-mpxv="sur" data-mpxat="mpxSvH">See the hit ›<\/button>/g) || []).length !== 2) bad('a close call\'s row in the moments no longer links to its hit in Big hits (or a death\'s row does; Nov 14, Big hits moved into the fold)');
+    if (L.indexOf('data-mpxv="sur"') >= 0 || L.indexOf('See the hit ›') >= 0) bad('a close call\'s row in the moments links to the Survival tab, which is gone (Nov 15, Flex, Nov 15: \"I feel like the survival section needs to just be removed. Its clutter at this point\")');
     if (L.indexOf('<span class="mpx-mon mpx-moh">1</span>') < 0 || L.indexOf('<span class="mpx-mon">2</span>') < 0) bad('a close call\'s number is no longer hollow, or a death\'s solid (two kinds share red)'); }
   // 3. a wipe is one moment, and more deaths than the list holds are counted
   { const D = D0(); D.death.push(dth(52, 2, 'A', 'Slam'), dth(55, 2, 'B'), dth(58, 2, 'C'), dth(61, 2, 'D'), dth(200, 9, 'E'));

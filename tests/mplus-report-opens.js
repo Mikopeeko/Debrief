@@ -21,7 +21,7 @@ module.exports = function reportOpens(say) {
   for (const v of ['run', 'mis']) if (T.MPX_OLD[v] !== 'deb') bad('an old link with &mpv=' + v + ' opens "' + T.MPX_OLD[v] + '" instead of Debrief, where it lives now');
   { const m = /if \(MP\.cv == null\) \{ const m = (\/[^\n]*?\/)\.exec\(location\.search\)/.exec(s); let re = null; try { re = m && vm.runInNewContext(m[1]); } catch (e) { re = null; }
     if (!re) bad('the address no longer reads the tab (&mpv=)');
-    else for (const [q, want] of [['?report=a&fight=2&tab=mplus&mpv=run', 'deb'], ['?mpv=hit', 'sur'], ['?mpv=sur', 'sur'], ['?mpv=cmp', 'map'], ['?mpv=deb', 'deb'], ['?mpv=map&x=1', 'map'], ['?tab=mplus', null]]) { const g = re.exec(q), v = g ? (T.MPX_OLD[g[1]] || g[1]) : null; if (v !== want) bad('the address ' + q + ' opens the tab "' + v + '" (it must be ' + (want || 'the first tab, Debrief') + ')'); } }
+    else for (const [q, want] of [['?report=a&fight=2&tab=mplus&mpv=run', 'deb'], ['?mpv=hit', 'gra'], ['?mpv=sur', 'gra'], ['?mpv=cmp', 'map'], ['?mpv=deb', 'deb'], ['?mpv=map&x=1', 'map'], ['?tab=mplus', null]]) { const g = re.exec(q), v = g ? (T.MPX_OLD[g[1]] || g[1]) : null; if (v !== want) bad('the address ' + q + ' opens the tab "' + v + '" (it must be ' + (want || 'the first tab, Debrief') + ')'); } }
   // 2. The key, in short and Fix first, run on made-up keys
   const run = (card) => vm.runInNewContext('const MPC_ON = ' + (card ? 'true' : 'false') + ', mpMine = () => "Flex", mpShim = () => \'<span class="mpt-shim"></span>\', document = { addEventListener: () => {} };' +
     'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +

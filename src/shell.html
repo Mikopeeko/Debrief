@@ -20639,108 +20639,6 @@ html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt { font:
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gt.bh-gtb { color: #e6b450 !important; }
 html:not(.mpcard) body #view#view#view #mptCH .bh-grp > .bh-gh2 > .bh-gs { font: 500 13px var(--body) !important; color: var(--muted) !important; }
 }
-/* Mythic+ Survival, a tab of its own (Nov 15, Flex: "what if we made a new tab, for survivability that highlighted players ability to use their kit to stay
-alive", then "Yes, build it" on the mock): panels like the other tabs', the numbers on top, a line a big hit (its casts behind a click), a row a player.
-The website only */
-@layer defaultTheme {
-html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCV):not(.mpc-tabs):not(.mpx-tb) { display: none !important; }
-html:not(.mpcard)[data-mpv="sur"] body #view#view#view #mptBody > #mptCV { display: block !important; margin-top: 14px !important; }
-html:not(.mpcard):not([data-mpv="sur"]) body #view#view#view #mptBody > #mptCV { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-sec { margin: 0 0 16px !important; padding: 16px 20px 18px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 4px !important; background: var(--panel, #171a22) linear-gradient(rgba(255,255,255,.055), rgba(255,255,255,0) 160px) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(0,0,0,.5), 0 14px 30px -16px rgba(0,0,0,.95) !important; scroll-margin-top: 64px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-sh { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 10px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-h3 { margin: 0 !important; font: 800 19px/1.15 'Barlow Condensed', sans-serif !important; color: var(--text) !important; letter-spacing: .01em !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-shs { font: 500 14px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-ok { color: #7ee08f !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-m { color: var(--muted) !important; font-weight: 500 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-sp { color: var(--text) !important; font-weight: 700 !important; }
-/* the top */
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-k { margin: 0 !important; font: 700 12px var(--body) !important; letter-spacing: .07em !important; text-transform: uppercase !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-h1 { margin: 6px 0 2px !important; font: 800 30px/1.1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-say { margin: 0 0 14px !important; font: 500 17px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { display: grid !important; grid-template-columns: repeat(5, minmax(0,1fr)) !important; margin: 10px 0 0 !important; border: 1px solid var(--line) !important; border-radius: 4px !important; overflow: hidden !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tl { padding: 11px 14px 12px !important; box-shadow: -1px 0 0 var(--line), 0 -1px 0 var(--line) !important; min-width: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tll { display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv { display: block !important; margin: 4px 0 2px !important; font: 800 28px/1 'Barlow Condensed', sans-serif !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-tlv.mpsv-ok { color: #7ee08f !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-tls { display: block !important; font: 500 13.5px/1.3 var(--body) !important; color: var(--muted) !important; }
-/* clean lines, notes, lists */
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-clean { margin: 2px 0 0 !important; font: 500 16px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ck { margin-right: 8px !important; font: 700 13px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #7ee08f !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-note { margin: 12px 0 0 !important; font: 500 13.5px/1.45 var(--body) !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-list { border-top: 1px solid var(--line) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r { border-bottom: 1px solid var(--line) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-list > .mpx-r:last-child { border-bottom: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-nt { margin: 0 0 8px !important; }
-/* the defensives on big hits: a part of the key, then a line a spell */
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-key { display: flex !important; flex-wrap: wrap !important; gap: 4px 18px !important; margin: -2px 0 4px !important; font: 500 13.5px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-kk { display: inline-flex !important; align-items: center !important; gap: 6px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-part { margin: 14px 0 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ph { display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 2px 10px !important; margin: 0 0 2px !important; padding: 0 0 6px !important; border-bottom: 1px solid var(--line2, #2a2e36) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt { font: 700 16px var(--body) !important; color: var(--text) !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-pt.mpsv-pb { color: #e6b450 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ps { font: 500 13px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit { border-bottom: 1px solid rgba(255,255,255,.05) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: grid !important; grid-template-columns: 26px minmax(0,1.6fr) minmax(56px,70px) minmax(96px,118px) minmax(0,1.15fr) minmax(104px,150px) 14px !important; gap: 12px !important; align-items: center !important; padding: 7px 0 !important; list-style: none !important; cursor: pointer !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs::-webkit-details-marker { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs:hover { background: rgba(255,255,255,.025) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .bh-ic { width: 24px !important; height: 24px !important; margin: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn { min-width: 0 !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-sp { font: 700 15px var(--body) !important; color: #c39bff !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-src { margin-left: 8px !important; font: 500 14px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-f { white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; min-width: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb { font-weight: 800 !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-bad { color: #ff8f87 !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-warn { color: #f2c46b !important; } html:not(.mpcard) body #view#view#view #mptCV .mpsv-fb.mpsv-ok { color: #7ee08f !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-up { display: flex !important; align-items: center !important; gap: 8px !important; min-width: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ub { position: relative !important; flex: 1 1 auto !important; min-width: 40px !important; height: 6px !important; border-radius: 0 !important; background: rgba(255,255,255,.08) !important; overflow: hidden !important; text-decoration: none !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ui { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; background: #7ee08f !important; opacity: .8 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ut { white-space: nowrap !important; font: 600 14px var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-cv { font: 700 15px var(--body) !important; font-style: normal !important; color: var(--faint) !important; text-align: right !important; transition: transform .15s !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-hit[open] > .mpsv-hs > .mpsv-cv { transform: rotate(90deg) !important; color: var(--text) !important; }
-/* a spell's grid (the Big hits chapter's own look) */
-html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin: 0 0 10px 38px !important; padding: 2px 0 4px !important; overflow-x: auto !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-gr { gap: 3px !important; margin-top: 3px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-c { flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 7px !important; height: 26px !important; padding: 0 7px 2px 9px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-c > b { flex: none !important; font-size: 14.5px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-bad > b { font-size: 15px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-c > .bh-di { min-width: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-c.bh-no { justify-content: center !important; box-shadow: none !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-pn { font-size: 13.5px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-di { display: inline-flex !important; align-items: center !important; gap: 3px !important; min-width: 0 !important; vertical-align: -4px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki { display: inline-flex !important; flex: none !important; width: 18px !important; height: 18px !important; margin: 0 !important; cursor: help !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-di > .mpt-rki :is(img, svg, .icw) { width: 18px !important; height: 18px !important; border-radius: 3px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .bh-di > small { font: 600 12px/1.15 var(--body) !important; color: #7ee08f !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
-/* each player's kit */
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1.6fr) minmax(110px,1fr) minmax(64px,.5fr) minmax(80px,.6fr) minmax(120px,1.2fr) !important; gap: 14px !important; align-items: center !important; padding: 10px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { display: grid !important; grid-template-columns: minmax(120px,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) !important; gap: 14px !important; align-items: center !important; padding: 9px 0 !important; border-top: 1px solid var(--line) !important; font: 500 15px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { padding: 2px 0 6px !important; border-top: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-sub2 { margin: 16px 0 4px !important; font: 700 15px var(--body) !important; color: var(--text) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-khl { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-wn { display: block !important; font: 700 16px var(--body) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ws, html:not(.mpcard) body #view#view#view #mptCV .mpsv-lw { display: block !important; font: 500 13px/1.3 var(--body) !important; color: var(--muted) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-dfs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 12px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-df { display: inline-flex !important; align-items: center !important; gap: 4px !important; white-space: nowrap !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di { display: inline-flex !important; align-items: center !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki { display: inline-flex !important; width: 22px !important; height: 22px !important; margin: 0 !important; cursor: help !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .mpt-rki :is(img, svg, .icw) { width: 22px !important; height: 22px !important; border-radius: 3px !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-df .bh-di > small { font: 600 13px var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-dx, html:not(.mpcard) body #view#view#view #mptCV .mpsv-dm { font: 600 14px var(--body) !important; color: var(--muted) !important; }
-@media (max-width: 900px) {
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-tiles { grid-template-columns: repeat(2, minmax(0,1fr)) !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 4px 10px !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-hn { flex: 1 1 0 !important; white-space: normal !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-src, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hn > .mpsv-src { display: block !important; margin: 0 !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f2 { display: none !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-f, html:not(.mpcard) body #view#view#view #mptCV .mpsv-hs > .mpsv-up { flex: 1 1 100% !important; margin-left: 36px !important; white-space: normal !important; order: 1 !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .bh-grid { margin-left: 0 !important; overflow-x: auto !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr.mpsv-kh, html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-kh { display: none !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; gap: 8px 14px !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-who { grid-column: 1 / -1 !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr > .mpsv-kc::before { content: attr(data-l) !important; display: block !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-who, html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > .mpsv-dfs { grid-column: 1 / -1 !important; }
-  html:not(.mpcard) body #view#view#view #mptCV .mpsv-kr > :is(.mpsv-kc, .mpsv-dfs)::before { content: attr(data-l) !important; display: block !important; flex: 0 0 100% !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--faint) !important; }
-}
-}
 /* Mythic+, the fresh reviewers' top three (Nov 15, Flex: "Yes, fix them"): the Report card's Next key list (one list instead of three "do this first"
 lines), its banner without the key's name and result a second time, Compare's bars against each player's own spec, and every tab in view on a phone */
 @layer defaultTheme {
@@ -20803,22 +20701,15 @@ html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bb { fill: rgba(230
 html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bl { stroke: #e6b450 !important; stroke-opacity: .7 !important; }
 html:not(.mpcard) body #view#view#view #mptCG .mpg-wrap .mpg-bn { fill: #e6b450 !important; font-size: 12px !important; font-weight: 700 !important; paint-order: stroke !important; stroke: rgba(10,11,13,.85) !important; stroke-width: 3px !important; stroke-linejoin: round !important; }
 }
-/* Mythic+ Survival (Nov 15, the fresh reviewers): with no Warlock the potions table has three columns; the "up" bars in the site's blue, so a short one doesn't
-read as a failed check (how often a defensive was up is not graded) */
-@layer defaultTheme {
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-p3 { grid-template-columns: minmax(120px,1fr) minmax(0,1fr) minmax(0,1.3fr) !important; }
-html:not(.mpcard) body #view#view#view #mptCV .mpsv-ui { background: #7d9be8 !important; opacity: .7 !important; }
-@media (max-width: 900px) { html:not(.mpcard) body #view#view#view #mptCV .mpsv-pr.mpsv-p3 { grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important; } }
-}
 /* Mythic+ in four tabs (Nov 15, Flex: "alright do whatever you want then make it good"): Debrief (The key, in short, Next key, the key pull by pull, every
-mistake), Players (Report card, Rotation and Survival, a row of three under the bar), Route (with where the time went under the map), Graphs. The website only */
+mistake), Players (Report card and Rotation, a row under the bar), Route (with where the time went under the map), Graphs. The website only */
 @layer defaultTheme {
 /* which parts each tab shows */
 html:not(.mpcard)[data-mpv="deb"] body #view#view#view #mptBody > *:not(#mptC1):not(#mptCD):not(#mptCA) { display: none !important; }
 html:not(.mpcard) body #view#view#view #mptBody > .mpx-sub { display: none !important; }
-html:not(.mpcard):is([data-mpv="rep"], [data-mpv="rot"], [data-mpv="sur"]) body #view#view#view #mptBody#mptBody#mptBody > .mpx-sub:not(#mptC1):not(#mptCS) { display: flex !important; }
+html:not(.mpcard):is([data-mpv="rep"], [data-mpv="rot"]) body #view#view#view #mptBody#mptBody#mptBody > .mpx-sub:not(#mptC1):not(#mptCS) { display: flex !important; }
 html:not(.mpcard) body #view#view#view #mptCC > p.mpt-chk, html:not(.mpcard) body #view#view#view #mptCCv > p.mpt-chk { display: none !important; }
-/* the Players row: Report card, Rotation, Survival */
+/* the Players row: Report card and Rotation */
 html:not(.mpcard) body #view#view#view #mptBody > .mpx-sub { flex-wrap: wrap !important; gap: 4px !important; margin: 2px 0 12px !important; padding: 0 !important; }
 html:not(.mpcard) body #view#view#view #mptBody > .mpx-sub > button { margin: 0 !important; padding: 6px 14px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(255,255,255,.02) !important; font: 700 14px var(--body) !important; color: var(--muted) !important; cursor: pointer !important; }
 html:not(.mpcard) body #view#view#view #mptBody > .mpx-sub > button:hover { color: var(--text) !important; }
@@ -20909,6 +20800,41 @@ html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff.pk { box-shadow: 0 0 0
 html:not(.mpcard) body #view#view#view .mrp-p.dm.dead { opacity: .15 !important; }
 html:not(.mpcard) body #view#view#view .mrp-rf > .mrp-rff.pk.lo { box-shadow: inset 0 0 0 1px #e5534b, 0 0 0 1px #fff !important; }
 @media (max-width: 900px) { html:not(.mpcard) body #view#view#view .mrp-side > .mrp-mt > .mrp-mtt > button { padding: 4px 3px !important; } html:not(.mpcard) body #view#view#view .mrp-side > .mrp-mt > .mrp-mth { white-space: normal !important; } }
+}
+/* Mythic+, fewer colours (Nov 15, Flex: "The mythic + tab as a whole feels hard to read, theres a lot of colors"). One meaning a colour, the site's own rule:
+names in class colours; spell and enemy names bold white; red only for what cost time or a life; gold for bosses and Debrief's voice (Next time, the labels);
+green only for a good result; a grade's colour only on its badge. The website only; Rotation, Graphs and the replay keep theirs */
+@layer defaultTheme {
+/* spell, mechanic and enemy names: bold white, as on every other page (they were purple or gold) */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCD, #mptCA, #mptCP, #mptCCv, #mptCM, #mptCC, #mptC5) b.mpt-ab, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD b.mpdb-sp, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCM small > b { color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCM :is(em.v-k, em.v-s) { color: var(--muted) !important; } /* (kicked, stopped and dispelled alike) */
+/* pull names and squares: their colours are the map's, and the map is on Route */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCD, #mptCA, #mptCP) .mpx-p { color: #d9dce1 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCD, #mptCA, #mptCP) .mpx-p > i, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD i.mpdb-sq { background: rgba(255,255,255,.32) !important; }
+/* the key pull by pull: trash bars plain, bosses gold; only deaths and close calls get a red mark */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD u.mpdb-db:not(.mpdb-dbb) { background: rgba(205,210,220,.38) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD .mpdb-e:not(.mpdb-bad) > .mpdb-ei { color: var(--muted) !important; filter: grayscale(1) !important; opacity: .75 !important; } /* (the filter: ⚡ draws as a coloured emoji that ignores the text colour) */
+/* Next key: one gold label, plain numbers and a plain box */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD .mprn { border-color: rgba(255,255,255,.12) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD .mprn-k { color: #d4b77d !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCD .mprn-n { color: #eef0f3 !important; border-color: rgba(255,255,255,.22) !important; }
+/* Next time is Debrief's voice: gold everywhere (it was green, the colour of a good result) */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCD, #mptCA, #mptCP, #mptCM, #mptCC) p.mpt-nt:not(.mpt-ntd) > b:first-child:not(.mpt-nm):not([style]) { color: #d4b77d !important; } /* (never a death line, never a class-coloured name: the fresh reviewers, Nov 15) */
+/* every mistake: the counts plain, "was ready" in grey */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCA b.mpx-dn, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP b.mpx-gn { color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCA, #mptCP) .mpx-o .mpt-a { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP b.mpx-rcmn { color: #eef0f3 !important; background: rgba(255,255,255,.08) !important; }
+/* Report card: a grade's colour on its badge only, the numbers beside it white; a check's 100% plain (its tick stays green, a miss stays red) */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .rcb-st b, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP span.rcb-v, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP span.rcb-g, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .tile.rcb-bt > .v.okv, html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP button.r437-t > b { color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP b.mpr-dps { color: #eef0f3 !important; } /* (its parse colour is in its hover; "vs spec" beside it says how it compares) */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP em.rqc-pc.ok,html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP span.rcb-d > em { color: var(--muted) !important; }
+/* a little behind is white, only the worst behind is red */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCP, #mptCCv) :is(.mpt-vs, .gbx-v).mpt-a { color: #eef0f3 !important; }
+/* Route: the score's numbers white (its bars keep their colour), trash plain and bosses gold, "never went off" in grey */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCM :is(b.mrs-p, b.mrs-tp) { color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCC .mpt-fxn.mpt-c-trash { color: #eef0f3 !important; background: rgba(255,255,255,.08) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpt-ktr > h4 { color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 span.mpt-g { color: var(--muted) !important; }
 }
 </style>
 </body>

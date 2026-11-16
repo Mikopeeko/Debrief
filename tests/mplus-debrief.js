@@ -1,7 +1,7 @@
 // Mythic+, the key in four tabs (Nov 15, Flex: "I just dont like the mythic + tab a lot right now", then "alright do whatever you want then make it good").
 // Six tabs built in pieces read as a data dump; now Debrief (opens first: The key, in short, Next key, the key pull by pull, every mistake), Players (Report
-// card, Rotation and Survival in a row of three), Route (with where the time went under the map) and Graphs.
-// This runs the page's own code on a made-up key and fails if: the tab row is not those four, Players loses one of its three parts, a view has no tab, the
+// card and Rotation in a row; Survival came off it the same day), Route (with where the time went under the map) and Graphs.
+// This runs the page's own code on a made-up key and fails if: the tab row is not those four, Players loses one of its two parts, a view has no tab, the
 // pull-by-pull list loses a pull, puts a boss wipe in the wrong part, gets a part's time or its gap to the fast run wrong, drops what happened in a pull
 // (a death and what killed it, close calls by spell, missed kicks, cooldowns, debuffs, avoidable hits, Lust), shows a clean pull as anything but "clean",
 // or shows on the Companion's card; or if the page's look stops showing Debrief, where the time went on Route, or the players against top players on the
@@ -14,10 +14,10 @@ module.exports = function mplusDebrief(say) {
   const line = (src, n) => { const m = src.match(new RegExp('\\n(?:const|function) ' + n + '\\b')); if (!m) throw new Error('src has no ' + n); const L = src.slice(m.index + 1).split('\n'), out = [];
     for (const l of L) { out.push(l); if (/;\s*(?:\/\*.*\*\/)?\s*$/.test(l)) break; } return '\n' + out.join('\n'); };
   const fn = (n) => { const a = s.indexOf('\nfunction ' + n + '('); if (a < 0) throw new Error('src/mptab.js has no function ' + n); let i = s.indexOf('{', a), d = 0; for (; i < s.length; i++) { const c = s[i]; if (c === '{') d++; else if (c === '}' && --d === 0) break; } return s.slice(a, i + 1); };
-  // 1. the tabs: four, Debrief first; Players is Report card, Rotation and Survival; every view a tab or a part of Players; old links land on a view that is there
+  // 1. the tabs: four, Debrief first; Players is Report card and Rotation; every view a tab or a part of Players; old links land on a view that is there
   let T; try { T = vm.runInNewContext(line(s, 'MPX_VIEWS') + line(s, 'MPX_OLD') + line(s, 'MPX_TABS') + '\n({ MPX_VIEWS, MPX_OLD, MPX_TABS, MPX_SUB })'); } catch (e) { bad('the four tabs are gone (MPX_TABS, MPX_SUB): ' + String(e.message).slice(0, 120)); return; }
   if (T.MPX_TABS.map((x) => x[1]).join(' | ') !== 'Debrief | Players | Route | Graphs') bad('the tab row is "' + T.MPX_TABS.map((x) => x[1]).join(' | ') + '", not Debrief | Players | Route | Graphs (Flex, Nov 15: "alright do whatever you want then make it good")');
-  if (T.MPX_SUB.map((x) => x[1]).join(' | ') !== 'Report card | Rotation | Survival' || (T.MPX_TABS.find((x) => x[1] === 'Players') || [])[0] !== T.MPX_SUB[0][0]) bad('Players is not Report card, Rotation and Survival, opening on the Report card');
+  if (T.MPX_SUB.map((x) => x[1]).join(' | ') !== 'Report card | Rotation' || (T.MPX_TABS.find((x) => x[1] === 'Players') || [])[0] !== T.MPX_SUB[0][0]) bad('Players is not Report card and Rotation, opening on the Report card (Survival came off it, Nov 15)');
   for (const [v] of T.MPX_VIEWS) if (!T.MPX_TABS.some((x) => x[0] === v) && !T.MPX_SUB.some((x) => x[0] === v)) bad('the view "' + v + '" has no tab and is not a part of Players, so nothing can open it');
   for (const [v, to] of Object.entries(T.MPX_OLD)) if (!T.MPX_VIEWS.some((x) => x[0] === to)) bad('an old link with &mpv=' + v + ' opens "' + to + '", which is not a view any more');
   if (T.MPX_OLD.cmp !== 'map') bad('an old link to Compare (&mpv=cmp) does not open Route, where the time went is now');
@@ -57,9 +57,9 @@ module.exports = function mplusDebrief(say) {
   { const R3 = key(); R3.run.clock = null; let h3 = ''; try { h3 = X.mpxPbp(R3, null); } catch (e) { h3 = ''; } if ((h3.match(/<button type="button" class="mpdb-r[ "]/g) || []).length !== 7) bad('a key with no timer (left early) loses its pull-by-pull list');
     if (h3.indexOf('<span class="mpdb-ps"> · ') >= 0 || h3.indexOf('<span class="mpdb-ps">2 pulls</span>') < 0) bad('a part with no time starts its line with a stray " · " (the review, Nov 15)'); }
   try { const Y = run(true); Y.set(data()); if (Y.mpxPbp(key(), fast()) !== '') bad('the key pull by pull shows on the Companion\'s card (its layout stays as it was)'); } catch (e) { bad('the key pull by pull crashes on the Companion: ' + String(e.message).slice(0, 100)); }
-  // 3. the page: Debrief shows its parts; where the time went is on Route; against top players on the Report card; the Players row shows on its three parts
+  // 3. the page: Debrief shows its parts; where the time went is on Route; against top players on the Report card; the Players row shows on its two parts
   if (!/\[data-mpv="deb"\] body #view#view#view #mptBody > \*:not\(#mptC1\):not\(#mptCD\):not\(#mptCA\) \{ display: none !important; \}/.test(css)) bad('the Debrief view no longer shows Debrief and every mistake (and only them)');
   if (!/\[data-mpv="map"\][^{]*:not\(#mptCM\):not\(#mptC5\):not\(#mptCC\),/.test(css) || !/\[data-mpv="rep"\][^{]*:not\(#mptC1\):not\(#mptCP\):not\(#mptCCv\),/.test(css)) bad('where the time went is not on Route, or the players against top players are not on the Report card');
-  if (!/:is\(\[data-mpv="rep"\], \[data-mpv="rot"\], \[data-mpv="sur"\]\) body #view#view#view #mptBody#mptBody#mptBody > \.mpx-sub:not\(#mptC1\):not\(#mptCS\) \{ display: flex !important; \}/.test(css)) bad('the Players row (Report card, Rotation, Survival) no longer shows on its three parts');
+  if (!/:is\(\[data-mpv="rep"\], \[data-mpv="rot"\]\) body #view#view#view #mptBody#mptBody#mptBody > \.mpx-sub:not\(#mptC1\):not\(#mptCS\) \{ display: flex !important; \}/.test(css)) bad('the Players row (Report card, Rotation) no longer shows on its two parts');
   if (s.indexOf("c4.insertAdjacentHTML('beforebegin', mpxDeb(R0, ") < 0 || s.indexOf("mpxView(MP.cv || 'deb'); }") < 0) bad('the key no longer draws Debrief or no longer opens on it');
 };
