@@ -15,7 +15,7 @@
 // takes no damage from 5:20 until the platform shatters at 6:09.4 (Falling on 8 to 18 players); standing within 3 yards of a crack line (the lines
 // through the middle, north to south and east to west) 53% landed in the venom, 3 to 6 yards 34%, 6 to 10 yards 9%; the raid gathered in the
 // south-east quarter (the diamond's) on 9 of 17 kills. Her next Call 6:17.2 (phase 3, src/practice-p3.js, from 6:12).
-// Picked, not measured: the shells breaking one by one from 5:31 to 5:40 (top kills pick the eggs up from about 5:30, half of them by 5:40); which
+// Picked, not measured: the fall's hit (a third of your health: the audit's 380k); the shells breaking one by one from 5:31 to 5:40 (top kills pick the eggs up from about 5:30, half of them by 5:40); which
 // raider carries which egg (three in each three-soak team, two in Blue) and where the eggs land (at random in each team's part of the room, from the
 // run's seed, 8 to 17 yards out between the soak circles, so no carrier has to step into another team's coil; the real ones land a median 21 out); the soak's 10 yards (as phase 1's); the cracks' 3.5 yards each side; her burst's 8 yards in the middle; the knockback's 6 yards out
 // from the middle (players move about 7 yards in the logs); the gathering spot on the diamond line 23.5 yards out (the guide: "toward the diamond, on
@@ -170,14 +170,18 @@ function pgInt(A) {
 
   // ---- what happens each step: the slams on everyone, the defensive, your egg, the Shattering ----
   const check = (t0, t) => { sync(); const cr = (at) => at > t0 && at <= t, me = A.me, x = G.x, y = G.y, dt = t - t0;
-    // (every slam hits the whole raid, the fewer in its circle the harder; practice.js hurts the ones inside)
-    S.soaks.forEach((s) => { if (!cr(s.at)) return; const inn = pgDist([x, y], [s.x, s.y]) <= s.r, n = GDZ_RAID.filter((id) => id !== me && pgDist(pos(id), [s.x, s.y]) <= s.r).length + (inn ? 1 : 0);
-      G.int.soakN.push([s.k, n]); if (!inn) A.hurt(Math.round(60 / Math.max(1, n))); });
-    // the Rawlings from the broken eggs: the raid kills them once the coils are done (measured: they die about 5:55 to 6:12)
-    G.adds.forEach((a) => { if (a.kind !== 'rawling') return; if (!a.intT) { a.intT = 1; a.t1 = T.gather + 3 + ((a.x * 7.3 + a.y * 3.1) % 1 + 1) % 1 * 6; }
-      // (and they crawl after the raid toward the diamond line, where it ends, stopping round it: slowly while the coils come, faster after)
+    // (every slam hits the whole raid, the fewer in its circle the harder: practice.js does that (slamHit); here only the count, for the audit)
+    S.soaks.forEach((s) => { if (!cr(s.at)) return; const inn = pgDist([x, y], [s.x, s.y]) <= s.r; G.int.soakN.push([s.k, GDZ_RAID.filter((id) => id !== me && pgDist(pos(id), [s.x, s.y]) <= s.r).length + (inn ? 1 : 0)]); });
+    // the Rawlings from the broken eggs stay until killed (practice.js), but the raid only starts on them as the coils end (measured: the first die
+    // about 5:52 to 5:57, the last by 6:12), so practice.js's helpers wait till then: its clock for them (born) is held back to 2 s before the last
+    // slam. They still boil 25 s after they hatched.
+    const RAW0 = T.slams[7] - 2, cx = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[0], 0) / GDZ_RAID.length, cy = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[1], 0) / GDZ_RAID.length;
+    G.adds.forEach((a) => { if (a.kind !== 'rawling') return; if (a.born != null && a.hatch == null) { a.hatch = a.born; if (t < RAW0) delete a.born; } if (a.born == null && t >= RAW0) a.born = a.hatch != null ? a.hatch : t;
+      // (and they crawl after the raid, toward its middle, stopping round it: slowly while the coils come, faster after; while she's coming up, never
+      // into her burst or onto a crack, so nobody chases them there)
       if (a.o == null) a.o = ((a.x * 1.7 + a.y * 0.9) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-      { const gq = pgIntGather(), tq = [gq[0] + Math.cos(a.o) * 6.5, gq[1] + Math.sin(a.o) * 6.5], d = pgDist([a.x, a.y], tq), st = (t >= T.gather ? 5 : 3) * dt; if (d > st) { a.x += (tq[0] - a.x) / d * st; a.y += (tq[1] - a.y) / d * st; } } });
+      { let tq = [cx + Math.cos(a.o) * 4.5, cy + Math.sin(a.o) * 4.5]; if (t >= T.bubbles - 3) { const gq = pgIntGather(); tq = [gq[0] + Math.cos(a.o) * 6, gq[1] + Math.sin(a.o) * 3]; }
+        const d = pgDist([a.x, a.y], tq), st = (t >= T.gather ? 5 : 3) * dt; if (d > st) { a.x += (tq[0] - a.x) / d * st; a.y += (tq[1] - a.y) / d * st; } } });
     // your defensive for the back-to-back slams (the guide: "personals around 5:50"; the autopilot, a careful player, presses it)
     if (window.__pgAuto && cr(T.defFrom + 1.5) && t - G.def >= 90) { G.def = t; A.deb('def', 8); }
     if (cr(T.defBy) && !(G.def >= T.defFrom - 1 && G.def <= T.defBy) && once('def')) A.mistake('def', 'No defensive for the last four slams (' + clk(T.slams[4]) + ' to ' + clk(T.slams[7]) + ').', 'Press Q at about 5:47: the last four slams come 2 s apart and each hits the whole raid. Personals and potions there.', 0);
@@ -193,7 +197,7 @@ function pgInt(A) {
     if (cr(T.shatter)) { G.int.shat = true; G.eggs.forEach((q) => { if (q.state === 'floor' || q.state === 'air') q.state = 'gone'; });
       GDZ_RAID.forEach((id) => { if (id === me) return; const p = pos(id), q = pgIntKb(p); G.int.kb[id] = { t0: t, x0: p[0], y0: p[1], x1: q[0], y1: q[1] }; G.int.fell.push([id, p.slice(), q]); });
       const q = pgIntKb([x, y]), dd = Math.hypot(x, y), onC = pgIntCrack(x, y), off = !PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1]);
-      G.kb = { t0: t, x0: x, y0: y, x1: q[0], y1: q[1] }; A.hurt(6); A.deb('fall', 1.5); G.done.add('venom' + Math.floor(t / 10)); G.done.add('venom' + Math.floor((t + 5) / 10));
+      G.kb = { t0: t, x0: x, y0: y, x1: q[0], y1: q[1] }; A.hurt(28); A.deb('fall', 1.5); /* (Falling: about 380k on landing, a third of a raider's health (the Nov 15 audit, engine.js)) */ G.done.add('venom' + Math.floor(t / 10)); G.done.add('venom' + Math.floor((t + 5) / 10));
       if (dd <= P.MID) A.mistake('shatter', 'She burst up under you in the middle of the platform.', 'Keep out of the middle before 6:09: watch for her bubbles there, she comes up right through them.', 35);
       else if (onC) { A.mistake('shatter', 'You stood on a crack as the platform shattered, and fell into the venom.', 'It breaks along the lines through the middle (north to south, east to west): stand inside a quarter, on the diamond line.', 25); A.deb('dvenom', 12); }
       else if (off) { A.mistake('shatter', 'The knockback threw you into the venom: you stood too close to the edge.', 'Stand on the inside, not at the edge: the burst knocks everyone about 6 yards out from the middle.', 25); A.deb('dvenom', 12); }
@@ -278,7 +282,7 @@ function pgInt(A) {
     now: () => { const r = pk.role; if (!SJ[r].some((x) => x[0] === jobNow(pk))) setupCard.set(r, SJ[r][0][0]); return { role: pk.role, job: jobNow(pk) }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
     set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, team: v[0], egg: v.length > 1, pat: 0 }; save(); },
-    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before she bursts up at 6:09.'; } };
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before she bursts up at 6:09. No kicks in this part.'; } };
   const starts = [[0, '5:18 · The eggs'], [330, '5:30 · The first coils'], [345, '5:45 · The back-to-back slams'], [356, '5:56 · The Shattering']];
   // ---- hitting the right thing: the Rawlings once the coils are done (the raid kills them then), any Viper at once ----
   const ADD_HP = { rawling: 3, viper: 5 };
