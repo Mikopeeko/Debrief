@@ -548,7 +548,7 @@ function pgP2(A) {
     const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (w === 'L' && wdUp(j.side)) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 1) ? 'Step off the egg: Warden\'s Protection nicks anyone on one while the Warden lives.' : 'The Warden: kill it with your half (about 3:38), off the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
     if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait by it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
-    if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). Keep your ring off theirs (about 4 yards). In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
+    if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
     const bt = j.big ? S.bigAt[j.side][j.big] : 0;
     if (bg && bg.state === 'floor' && t < T.doomEnd) return t < bt - 16 ? 'The ' + NS[j.big] + ' big egg waits at the ' + NS[j.big] + ' end of your ledge. Go to it at ' + clk(bt - 16) + ', pick it up at ' + clk(bt) + '.' : t < bt ? 'By the ' + NS[j.big] + ' big egg: pick it up in ' + Math.ceil(bt - t) + ' s, once the small eggs are in.' : 'Pick up the big egg now, before Hatching Doom ends (' + Math.ceil(T.doomEnd - t) + ' s).';
     if (bg && bg.state === 'held') return 'Big egg: into the cauldron before it hatches (' + Math.ceil(20 - (t - bg.at)) + ' s).';
@@ -621,8 +621,8 @@ function pgP2(A) {
     L0.push(['The Warden (2:55)', 'Kill it with your half (it dies about 3:38). Kill the glowing Clutches it makes first (3:04), then the Rawlings that come out of them.' + (pk.mal ? ' Kick its Malice (' + clk(T.malice) + ') with E.' : ' Its tank kicks its Malice.')]);
     L0.push(['Grasping Fangs (3:16)', ({ random: 'You always get a tether, the solo or one of the five at random. Solo: walk out past 25 yards at 3:26. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:26.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:26, five at 3:34).' })[pk.teth]]);
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. ' + (pk.egg === 'far' ? 'Go to it at 3:53, pick it up at 4:09' : 'Go to it at about 3:58, pick it up at 4:13 or 4:16 (one ledge\'s healer goes first, the other about 2.5 s later)') + ' (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
-    else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, keeping your ring off theirs (about 4 yards), and throw it in with the others at 3:56.']);
-    else L0.push(['No egg', 'Keep out of the carriers\' rings.']);
+    else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others at 3:56.']);
+    else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
     L0.push(['Small eggs in: Rawlings (3:56)', 'A Rawling climbs out of the cauldron for every egg: kill them before they boil (25 s).']); L0.push(['The Doomscales (about 4:26)', 'Behind or beside them, never in front: their frontal goes at the tank.' + (pk.cry ? ' Kick Doomscale ' + pk.cry + '\'s Anguished Cry each time (about ' + crN.map(clk).join(', ') + ').' : '')]);
     L0.push(['Back to her (4:38)', 'Take your gate back. The heart opens at 4:55: step out of the brown circles.']); L0.push(['Falling Debris', 'Also at 3:50, 4:30 and 5:17: step out of the brown circles.']);
     return '<ul class="pg-asg">' + L0.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
@@ -740,8 +740,9 @@ function pgP2(A) {
     // (back on the platform for the heart burn, the bots use practice.js's dodge too, for the small tails' waves: the platform is flat there, as in phase 1)
     // (a kicker with a kick due holds its place instead: a missed Cry stuns everyone, worse than a wave)
     dodges: (id, t) => !!(G && G.p2 && t >= T.rage),
-    // (Noxious Splash: two small-egg carriers within 4.3 yards hatch both eggs (21 real splashes, median 4.3; Flex, Nov 15: "Yes, use measured"))
-    splash: 4.3,
+    // (Noxious Splash: the game's 3 yards. The 21 logged splashes looked like 4.3, but the phase 3 chat's re-scan of 170 Mythic pulls found carriers 4 to
+    // 6 yards apart for about 80 minutes with no splash: those were measured after the burst. The carriers' spots stay 5 apart all the same)
+    splash: 3,
     // (and its escapes keep out of a Doomscale's frontal that's casting: a wave's way out mustn't lead into one)
     unsafe: (id, x, y, t) => !!(G && G.p2 && G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, x, y, 1.5))),
     // (after a start-at fast-forward: practice.js empties the adds, so the Rawlings alive then come back; the backup kick is the player's to have)

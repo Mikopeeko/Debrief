@@ -34,9 +34,10 @@
 //   K. the raid markers aren't the game's floating shapes (Flex, Nov 15: "make the markers have the floating marker shape like in game"): all eight
 //      at the rim in 3D, each its own shape and colour (a 10-point star, a 12-point cross, a 4-point diamond, a 3-point triangle, a skull with eye
 //      sockets, a crescent moon), drawn here and never Blizzard's art, floating over the stone through the part's own 3D kit (kit3d);
-//   L. the measured Noxious Splash and the egg shells (Flex, Nov 15: "Yes, use measured": carriers splash 4.3 yards apart, 21 real splashes; "The
-//      eggs have to be damaged to break the shield"): the part says splash 4.3, no bot carriers' rings touch at it (the audit's "rings touch"), the
-//      words say about 4 yards (not 3), and your egg's shell is up until you hit it, with a hint that says so.
+//   L. Noxious Splash at 3 yards and the egg shells: carriers splash inside each other's 3-yard ring, the game's rule everywhere (the phase 3 chat's
+//      re-scan of 170 Mythic pulls, Nov 15: carriers stood 4 to 6 yards apart for about 80 minutes without a splash; the 21 logged splashes were
+//      measured after the burst landed, so a 4.3-yard edge was pushed at 7055f8ec and undone). The part sets no splash of its own and the words say
+//      3 yards; and (Flex, Nov 15: "The eggs have to be damaged to break the shield") your egg's shell is up until you hit it, with a hint that says so.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -53,7 +54,7 @@ function load(H, part, extra) {
   return { dbg: win.__pgDbg, ctx };
 }
 const clkS = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0') + (s % 1 ? '.' + Math.round((s % 1) * 10) : '');
-const SERIOUS = /off the platform|under a landing egg|off their soak|soaked both|two carriers|rings touch|another team's slam|on a crack|thrown into the venom|in a crack|egg not broken|only \d soakers/;
+const SERIOUS = /off the platform|under a landing egg|off their soak|soaked both|two carriers|another team's slam|on a crack|thrown into the venom|in a crack|egg not broken|only \d soakers/;
 // (measured on the 17 top Mythic kills since the Nov 6 hotfix: the medians of the 16 on the clock; where each spot's soakers stood (their middle))
 const MEAS = { call: 319.0, callL: 323.0, land: 324.1, slams: [336.49, 338.5, 342.46, 344.47, 348.48, 350.44, 352.49, 354.49], lead: 4.0, shatter: 369.45,
   soak: { SSW: [-8.6, -23.2], NNE: [8.9, 25.7], WNW: [-24.7, 10], ESE: [23.1, -10], NNW: [-9.4, 25.4], SSE: [11.7, -22.2], WSW: [-21, -9], ENE: [23.2, 11.9] },
@@ -213,9 +214,9 @@ function checks(H, say) {
     if (!/A\.P2 && A\.P2\.kit3d \? A\.P2\.kit3d\(\{[^}]*canvas, ctex/.test(rd('practice3d.js'))) bad('practice3d.js no longer hands a part\'s kit3d its pieces (canvas and ctex for the markers, check K)'); }
   catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
   // L. the measured splash and the egg shells
-  try { if (dbg.P2.splash !== 4.3) bad('the intermission doesn\'t use the measured Noxious Splash (4.3 yards; Flex: "Yes, use measured"; it has ' + dbg.P2.splash + ', check L)');
+  try { if (dbg.P2.splash != null) bad('the intermission sets its own Noxious Splash distance (' + dbg.P2.splash + '); the real edge is the game\'s 3 yards (170 pulls: 4 to 6 yards apart never splashed, check L)');
     if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
-    const words = rd('practice-int.js').match(/'[^'\n]*(?:\\'[^'\n]*)*'/g).filter((s) => /yards? from (other )?(the )?(egg )?carriers|3-yard/.test(s)); if (words.length) bad('the words still give the old 3 yards between carriers: ' + words.join(' | ') + ' (check L)');
+    { const src = rd('practice-int.js'); if (/about 4 yards|SPLASH/.test(src) || !/Keep 3 yards from other carriers/.test(src) || !/3 yards from other carriers\. The slam breaks it/.test(src)) bad('the carriers\' words don\'t give the 3 yards (or still say about 4, check L)'); }
     dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);
     if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/hit it to break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
     dbg.G.log = []; while (dbg.G.t < T.slams[0]) dbg.step(1); { const e2 = dbg.G.eggs.find((q) => q.id === me); if (!e2 || e2.state === 'floor') bad('the autopilot didn\'t break its egg\'s shell and pick it up by the first slam (check L)'); } }
