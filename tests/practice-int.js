@@ -38,6 +38,8 @@
 //      re-scan of 170 Mythic pulls, Nov 15: carriers stood 4 to 6 yards apart for about 80 minutes without a splash; the 21 logged splashes were
 //      measured after the burst landed, so a 4.3-yard edge was pushed at 7055f8ec and undone). The part sets no splash of its own and the words say
 //      3 yards; and (Flex, Nov 15: "The eggs have to be damaged to break the shield") your egg's shell is up until you hit it, with a hint that says so;
+//      and the calmer egg carriers are on (Flex, Nov 15: "Yes, turn them on": a bot holding an egg walks at your speed and steps round you), with the
+//      egg plan timing the walk to the soak at 7 yards a second, so no carrier misses its soak (the bots' audit, check C);
 //   M. the unit frames don't look like Flex's own UI (Nov 15: "the player/target/boss frames should look more like this", his screenshot): your frame
 //      left of the hotbar and your target's right of it on one row (narrow screens: the frames side by side, the bar under them), one flat bar each with
 //      the name inside on the left and "735K | 100%" on the right, your class (or role) colour, the target's target after a ">", the boss's name in its bar.
@@ -218,6 +220,8 @@ function checks(H, say) {
   catch (e) { bad('the floating markers crashed: ' + e.message + ' (check K)'); }
   // L. the measured splash and the egg shells
   try { if (dbg.P2.splash != null) bad('the intermission sets its own Noxious Splash distance (' + dbg.P2.splash + '); the real edge is the game\'s 3 yards (170 pulls: 4 to 6 yards apart never splashed, check L)');
+    if (dbg.P2.calmCarriers !== true) bad('the intermission\'s egg carriers aren\'t the calmer ones (calmCarriers; Flex: "Yes, turn them on", check L)');
+    if (!/pgDist\(\[e\.x, e\.y\], \[ns\.x, ns\.y\]\) - \(ns\.r - 2\)\) \/ 7 \+ 0\.4/.test(rd('practice-int.js'))) bad('the egg plan times the walk to the soak faster than a calm carrier walks (7 yards a second, check L)');
     if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
     { const src = rd('practice-int.js'); if (/about 4 yards|SPLASH/.test(src) || !/Keep 3 yards from other carriers/.test(src) || !/3 yards from other carriers\. The slam breaks it/.test(src)) bad('the carriers\' words don\'t give the 3 yards (or still say about 4, check L)'); }
     dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);

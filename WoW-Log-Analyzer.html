@@ -76096,7 +76096,7 @@ function pgInt(A) {
   // (your own egg's Hardened shell has health since Nov 15 (practice.js, Flex: "The eggs have to be damaged to break the shield"): you go and break it
   // as soon as it lands, when your next soak allows: with your hits and the raid's it opens in about 3.6 s)
   const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor') return false; const opens = e.shp > 0 ? t + e.shp / 1.4 : e.shell; if (!(e.shp > 0) && t < opens - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
-    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
+    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / 7 + 0.4 <= ns.at - t; }; /* (the walk to the soak with the egg at 7 yards a second: a carrier holding an egg walks at your speed (calmCarriers, Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me")) */
   const homeAt = (id) => { const sg = S.east ? 1 : -1, i = GDZ_RAID.indexOf(id); return id[0] === 't' ? [34 * sg, id === 't1' ? -12 : 12] : id[0] === 'm' ? spiral([35.5 * sg, 0], i, 1.5) : spiral([25 * sg, 0], i, 5); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
@@ -76318,7 +76318,7 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), eggShells: true }; /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), eggShells: true, calmCarriers: true }; /* (calmCarriers: a bot holding an egg walks at your speed, Sprints 3 s in 30 only for a wave or a soak due, and steps round you a little (practice.js, Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me"; "Yes, turn them on" for the intermission)) */ /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
 // ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the
