@@ -272,6 +272,18 @@ function checks(H, say) {
     const su = dbg.P2.setup; if (!su) bad('no start card to check the kick picks (check N)'); else for (const r of ['m', 'r']) su.jobs(r).forEach(([v, label]) => { su.set(r, v); const p = dbg.P2.pick, me = dbg.P2.slotOf(p), J = ctx.pgP3Jobs(3, me, p).J;
       if (v !== 'none' && !(p.kick && J[me].kick)) bad('the ' + r + ' pick "' + label + '" has no Shrieker kick (check N)'); if (v === 'none' && (p.kick || !/no kick/.test(label))) bad('the ' + r + ' pick without a kick doesn\'t say "no kick": "' + label + '" (check N)'); });
   } catch (e) { bad('the kick check crashed: ' + e.message + ' (check N)'); } finally { reset(); }
+  // P. Main's playtest, Nov 15 (Flex: "Yes, send them"): the bite's end is about 1.2 million since Nov 6 (0.6 a circle), not 2; the calls no longer say "rings" (the fans
+  //    themselves wait for measured directions); and "burn the heart" walked a melee into the last bite's red circles at 9:43, which still sit by the heart as it opens
+  try {
+    const P3S = rd('practice-p3.js'); if (/2 million/.test(P3S.replace(/1\.2 million/g, ''))) bad('phase 3 still says the bite\'s end is 2 million; since Nov 6 it\'s about 1.2 million (check P)');
+    const S3 = script({ seed: 3 }); /* (the tails' fans wait for measured directions: see the note in src/practice-p3.js) */
+    if (S3.warns.some((w) => /rings/.test(w.text))) bad('a phase 3 call still says the small tails send rings (check P)');
+    const pk = { role: 'm', soak: 0, bite: 'no', kick: 1 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.heart + 0.2, me, { seed: 3 }); const b2 = dbg.G.p3.bite[2];
+    dbg.G.p3.bite[2] = { v: {}, by: new Set(), done: null }; /* (the last bite still draining as the heart opens) */
+    if (dbg.P2.dpsCat(dbg.G.t) === 'heart') bad('the heart\'s damage moment starts while the last bite\'s red circles still sit by it: it pulls the melee into them (check P)');
+    if (!/wait outside them/.test(dbg.P2.jobText())) bad('as the heart opens with the last red circles still draining, the job says "' + dbg.P2.jobText() + '", not to wait outside them (check P)');
+    dbg.G.p3.bite[2] = b2;
+  } catch (e) { bad('the playtest fixes check crashed: ' + e.message + ' (check P)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }
