@@ -21071,6 +21071,48 @@ html:not(.mpcard) body #view#view#view .mpsb-b { display: grid !important; justi
 html:not(.mpcard) body #view#view#view .mpsb-bar { display: block !important; width: 64px !important; height: 3px !important; background: rgba(255,255,255,.07) !important; }
 html:not(.mpcard) body #view#view#view .mpsb-bar > i { display: block !important; height: 100% !important; opacity: .85 !important; }
 }
+/* Mythic+ Summary, the run and the group with more life (Nov 16, Flex: "it looks boring can we flare it up a bit", "theres a lot more information you can
+add as well in the header"): the run's header a title and the result as chips; the dungeon's art faint behind; blocks with depth and labels; the bosses
+glowing gold; the finish glowing green; the group's rows striped and tinted in their class colour. Square edges, colour only with meaning. Website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view .mpgl.mpgl-art { overflow: hidden !important; isolation: isolate !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bg { position: absolute !important; inset: 0 !important; z-index: -1 !important; background: center 35% / cover no-repeat !important; opacity: .2 !important; filter: brightness(.6) saturate(.9) !important; -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 85%) !important; mask-image: linear-gradient(180deg, #000 0%, transparent 85%) !important; }
+/* the header */
+html:not(.mpcard) body #view#view#view .mpgl-hd { align-items: flex-start !important; margin: 0 0 10px !important; }
+html:not(.mpcard) body #view#view#view .mpgl-ttl { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px !important; }
+html:not(.mpcard) body #view#view#view .mpgl-ttl > b { margin: 0 8px 0 0 !important; font: 700 19px var(--head, 'Barlow Condensed'), sans-serif !important; letter-spacing: .02em !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-c { display: inline-flex !important; align-items: center !important; gap: 5px !important; height: 25px !important; padding: 0 9px !important; border: 1px solid rgba(255,255,255,.1) !important; border-radius: 3px !important; background: rgba(12,13,15,.55) !important; font: 600 13px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpgl-c > b { font-weight: 800 !important; }
+html:not(.mpcard) body #view#view#view .mpgl-c.ok { color: #7ee08f !important; border-color: rgba(126,224,143,.32) !important; background: rgba(126,224,143,.1) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-c.bad { color: #f0938d !important; border-color: rgba(229,83,75,.35) !important; background: rgba(229,83,75,.1) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-c.gold { color: #e6c27a !important; border-color: rgba(230,194,122,.32) !important; background: rgba(230,194,122,.08) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-dm { font-style: normal !important; letter-spacing: 1px !important; color: #e6c27a !important; }
+/* the bosses */
+html:not(.mpcard) body #view#view#view .mpgl-bo { transform: translateX(-23px) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bo > img, html:not(.mpcard) body #view#view#view .mpgl-bo > .mpgl-bp0 { width: 44px !important; height: 44px !important; border: 2px solid #d4b77d !important; box-shadow: 0 0 0 2px rgba(10,11,13,.8), 0 0 14px rgba(226,191,115,.35) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bo::after { left: 22px !important; top: 46px !important; background: linear-gradient(180deg, rgba(226,191,115,.7), rgba(226,191,115,.1)) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-bo > span > b { font-size: 14.5px !important; text-shadow: 0 1px 3px rgba(0,0,0,.7) !important; }
+/* the run: blocks with depth and labels */
+html:not(.mpcard) body #view#view#view .mpgl-t { height: 28px !important; background: repeating-linear-gradient(135deg, rgba(255,255,255,.04) 0 6px, rgba(255,255,255,.015) 6px 12px) !important; box-shadow: inset 0 0 0 1px rgba(0,0,0,.35) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.25) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b.mpgl-trash { background: linear-gradient(180deg, #8099d6 0%, #5670b2 100%) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b.mpgl-boss { background: linear-gradient(180deg, #e8c77f 0%, #b88d42 100%) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.25), 0 0 12px rgba(226,191,115,.28) !important; z-index: 1 !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b.mpgl-wipe { background: linear-gradient(180deg, #d96258 0%, #993530 100%) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b > span { position: absolute !important; inset: 0 !important; display: grid !important; place-items: center !important; font: 700 12.5px var(--body) !important; color: rgba(255,255,255,.95) !important; text-shadow: 0 1px 2px rgba(0,0,0,.65) !important; pointer-events: none !important; overflow: hidden !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpgl-t > .mpgl-b.mpgl-boss > span { color: #2a1f0b !important; text-shadow: 0 1px 0 rgba(255,240,200,.45) !important; font-weight: 800 !important; }
+html:not(.mpcard) body #view#view#view .mpgl-fin { width: 3px !important; margin-left: -1.5px !important; box-shadow: 0 0 10px rgba(126,224,143,.8) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-fin.mpgl-over { box-shadow: 0 0 10px rgba(229,83,75,.8) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-sp { background: repeating-linear-gradient(135deg, rgba(126,224,143,.18) 0 7px, rgba(126,224,143,.08) 7px 14px) !important; }
+html:not(.mpcard) body #view#view#view .mpgl-ks > i { background: linear-gradient(180deg, #a9bce4, #6f86b8) !important; opacity: .8 !important; }
+/* the group */
+html:not(.mpcard) body #view#view#view .mpsb-hd > b { font: 700 19px var(--head, 'Barlow Condensed'), sans-serif !important; letter-spacing: .02em !important; text-transform: none !important; color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r:not(.mpsb-h) { margin: 0 0 3px !important; padding: 7px 10px 7px 13px !important; border-bottom: 0 !important; background: linear-gradient(90deg, color-mix(in srgb, var(--c, #888) 18%, transparent) 0%, color-mix(in srgb, var(--c, #888) 5%, transparent) 40%, transparent 75%) !important; box-shadow: inset 3px 0 0 var(--c, #888) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r:not(.mpsb-h):hover { background: linear-gradient(90deg, color-mix(in srgb, var(--c, #888) 26%, transparent) 0%, color-mix(in srgb, var(--c, #888) 8%, transparent) 45%, rgba(255,255,255,.02) 80%) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > img { width: 34px !important; height: 34px !important; border: 1px solid rgba(0,0,0,.6) !important; box-shadow: 0 1px 4px rgba(0,0,0,.5) !important; }
+html:not(.mpcard) body #view#view#view .mpsb-p > span > b { font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view .mpsb-r { font-size: 14.5px !important; }
+html:not(.mpcard) body #view#view#view .mpsb-bar { width: 76px !important; height: 4px !important; }
+}
 </style>
 </body>
 </html>
