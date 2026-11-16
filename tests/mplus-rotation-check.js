@@ -3,7 +3,9 @@
 //   node tests/mplus-rotation-check.js <the page's address with &tab=mplus&mpv=rot>
 // Checks: 1. each pull's chip says as many "to fix" as that pull's card lists ("Clean" = none); 2. the Trash pulls and Bosses tiles say as many
 // "to fix" as the rows they show when tapped; 3. no check in What to fix is green in "Every check across the key", and none is in "Done right";
-// 4. on a pull's own page, each group's "N/M" in the summary agrees with its panel's "N of M done right". Exit code 1 with one line per problem.
+// 4. on a pull's own page, each group's "N/M" in the summary agrees with its panel's "N of M done right"; 5. no row to fix says "As good as top players",
+// and a row at or above top players (mpc-fine, listed under Done right, never counted) has the green dot (Kings' Rest +19, Nov 15: "BOSSES 2 to fix" in red
+// over two rows that said "As good as top players"; tests/mplus-rotation-top.js guards the logic on every build). Exit code 1 with one line per problem.
 'use strict';
 const { spawn } = require('child_process'), path = require('path'), os = require('os'), fs = require('fs');
 const EDGE = ['C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe'].find((p) => fs.existsSync(p));
@@ -25,10 +27,12 @@ if (!URL0 || !EDGE) { console.log(!EDGE ? 'Mythic+ Rotation check: skipped (no E
   // (settled: no cooldown still being read (the checks run again once they're in) and the tab the same for 4 s in a row)
   { let last = '', same = 0; for (let i = 0; i < 120 && same < 4; i++) { await sleep(1000); const t = await ev('(window.__wla && window.__wla.cdPending && window.__wla.cdPending() ? "pending" : "") + document.getElementById("mpcRot").innerText').catch(() => 'err'); same = t === last && !/^pending/.test(t) ? same + 1 : 0; last = t; } }
   // (the card's fix count: its rows and its "Show N more")
-  const rowsN = '(() => { const c = document.getElementById("mpcRot"), r = [...c.querySelectorAll(".mpc-rr")].filter((x) => !x.closest("#mpvDet, .mpv-all")).length, m = [...c.querySelectorAll("[data-mpcm]")].map((b) => +((b.innerText.match(/Show (\\d+) more/) || [])[1] || 0)).reduce((a, b) => a + b, 0); return r + m; })()';
+  const rowsN = '(() => { const c = document.getElementById("mpcRot"), r = [...c.querySelectorAll(".mpc-rr:not(.mpc-fine)")].filter((x) => !x.closest("#mpvDet, .mpv-all")).length, m = [...c.querySelectorAll("[data-mpcm]")].map((b) => +((b.innerText.match(/Show (\\d+) more/) || [])[1] || 0)).reduce((a, b) => a + b, 0); return r + m; })()';
   // 3. the whole key
-  const w = await ev('(() => { const c = document.getElementById("mpcRot"), fx = [...c.querySelectorAll(".mpc-rr .krt b")].map((b) => b.innerText.trim()), done = ((c.innerText.match(/Done right: ([^\\n]*)/) || [])[1] || "").replace(/[.]$/, "").split(/, /), all = Object.fromEntries([...c.querySelectorAll(".mpv-ar")].map((r) => [r.querySelector(".mpv-al").firstChild.textContent.trim(), getComputedStyle(r.querySelector(".kd")).backgroundColor])); return { fx, done, all }; })()');
+  const w = await ev('(() => { const c = document.getElementById("mpcRot"), fx = [...c.querySelectorAll(".mpc-rr:not(.mpc-fine) .krt b")].map((b) => b.innerText.trim()), top = [...c.querySelectorAll(".mpc-rr:not(.mpc-fine)")].filter((r) => !r.closest("#mpvDet, .mpv-all") && /As good as top players/.test(r.innerText)).map((r) => r.querySelector(".krt b").innerText.trim()), fineDot = [...c.querySelectorAll(".mpc-rr.mpc-fine .kd")].map((d) => getComputedStyle(d).backgroundColor), done = ((c.innerText.match(/Done right: ([^\\n]*)/) || [])[1] || "").replace(/[.]$/, "").split(/, /), all = Object.fromEntries([...c.querySelectorAll(".mpv-ar")].map((r) => [r.querySelector(".mpv-al").firstChild.textContent.trim(), getComputedStyle(r.querySelector(".kd")).backgroundColor])); return { fx, done, all, top, fineDot }; })()');
   seen.fix = w.fx.length; seen.all = Object.keys(w.all).length; for (const lb of w.fx) { if (w.all[lb] === 'rgb(69, 193, 92)') bad.push('Whole key: "' + lb + '" is in What to fix but green in Every check across the key.'); if (w.done.includes(lb)) bad.push('Whole key: "' + lb + '" is in both What to fix and Done right.'); }
+  for (const lb of w.top) bad.push('Whole key: "' + lb + '" says As good as top players but is still a row to fix (Kings\' Rest +19, Nov 15).');
+  for (const col of w.fineDot) if (col !== 'rgb(69, 193, 92)') bad.push('Whole key: a check at or above top players has a ' + col + ' dot, not the green one (Nov 15).');
   // 2. the tiles
   for (const k of ['trash', 'boss']) { const said = await ev('(() => { const t = document.querySelector("[data-mpcf=' + k + '] b"); return t ? t.innerText : ""; })()'); if (!said) continue;
     await click('[data-mpcf=' + k + ']'); await sleep(800); const n = await ev(rowsN), m = said.match(/^(\d+) to fix/), want = m ? +m[1] : 0;

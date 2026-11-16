@@ -18,7 +18,7 @@ module.exports = function summaryStrip(say) {
     'const mpT1 = (h) => " data-tt=\\"" + esc(h) + "\\"", mpShim = () => "<span class=\\"mpt-shim\\"></span>", mpGF = (v) => String(v), mpWho = (R, n) => "<b class=\\"mpt-nm\\">" + n + "</b>";' +
     'const mpPullName = (R, k) => (R.pulls[k] && R.pulls[k].boss ? R.pulls[k].boss : "pull " + (k + 1)), mpPNs = (R, ns) => "pulls " + ns.join(", "), mpClock = (R) => R._C || null, mpxData = (R) => R._D;' +
     'const mpxPull = (R, i) => "<button type=\\"button\\" class=\\"mpx-p\\" data-mpxpull=\\"" + i + "\\">P" + (i + 1) + "</button>";' +
-    line('mpMM') + line('mpAnd') + line('mpCap') + line('mpxTo') + line('mpDTo') + line('MPX_KIND') + '\n' + s.slice(a, z) + '\n({ mpxStory, mpxMoments, mpxMomList, mpxMarks, mpxGlance, mpxFix, MPX_KIND })');
+    line('mpMM') + line('mpAnd') + line('mpCap') + line('mpxTo') + line('mpDTo') + line('MPX_KIND') + '\n' + s.slice(a, z) + '\n({ mpxStory, mpxRisky, mpxMoments, mpxMomList, mpxMarks, mpxGlance, mpxFix, MPX_KIND })');
   let X; try { X = run(false); } catch (e) { bad('Summary\'s own code no longer runs by itself: ' + String(e.message).slice(0, 140)); return; }
   // a made-up key: 15 pulls of 20 s from 10 s, a 600 s timer, 15 s a death; tv is the plain clock
   const P = Array.from({ length: 15 }, (_, i) => ({ s: 10 + i * 20, e: 30 + i * 20, n: i + 1 }));
@@ -28,12 +28,17 @@ module.exports = function summaryStrip(say) {
   const cl = (t, i, who, spell, left, ready) => ({ t, at: '0:' + t, i, who, left, spell, id: 0, ready: ready || [] });
   // 1. the headline's sentence
   { const S = X.mpxStory;
-    const t1 = S({ lv: 1, risky: true, deaths: 2, near: 'in pull 1' }); if (t1 !== 'A near-wipe in pull 1 and two deaths nearly cost it.') bad('the headline\'s sentence for his Kings\' Rest reads "' + t1 + '" (it must read "A near-wipe in pull 1 and two deaths nearly cost it.")');
+    const kr = { lv: 1, spare: 95, lost: 30, pen: 15, n: 5, near: 'in pull 1' }; /* (his Kings' Rest: timed +1 with 1:35 to spare, two deaths that added 0:30, a near-wipe in pull 1) */
+    const t1 = S({ lv: 1, risky: X.mpxRisky(kr), deaths: 2, near: 'in pull 1' }); if (t1 !== 'A near-wipe in pull 1 and two deaths were the mistakes.') bad('the headline\'s sentence for his Kings\' Rest reads "' + t1 + '" (it must read "A near-wipe in pull 1 and two deaths were the mistakes.": with 1:35 to spare, deaths that cost 0:30 never nearly cost it; the fresh reviewers, Nov 15)');
+    for (const [o, want, what] of [[{ lv: 1, spare: 60, lost: 30, pen: 15, n: 5 }, false, 'two deaths that cost 0:30 with 1:00 to spare (the old rule called half the time to spare close)'], [{ lv: 1, spare: 25, lost: 30, pen: 15, n: 5 }, true, 'deaths that cost more than the time to spare'], [{ lv: 2, spare: 20, lost: 15, pen: 15, n: 5 }, true, 'a key timed with 0:20 to spare'], [{ lv: 1, spare: 60, lost: 0, pen: 15, n: 5, near: 'in pull 4' }, true, 'a near-wipe with 1:00 to spare (a full wipe adds 1:15 by itself)'], [{ lv: 1, spare: 60, lost: 0, pen: 0, n: 5, near: 'in pull 4' }, false, 'a near-wipe with 1:00 to spare in a key where deaths add no time'], [{ lv: 0, spare: -40, lost: 60, pen: 15, n: 5, wipe: 'in pull 2' }, false, 'a key that went over time']])
+      if (X.mpxRisky(o) !== want) bad('the headline ' + (want ? 'no longer says' : 'says') + ' "nearly cost it" for ' + what);
+    if (S({ lv: 2, risky: true, deaths: 1 }) !== 'One death nearly cost it.') bad('a death in a key timed with 0:20 to spare no longer reads "One death nearly cost it."');
+    if (s.indexOf('risky: mpxRisky({ lv, spare, lost: ck.deathCost,') < 0) bad('the headline no longer decides "nearly cost it" with mpxRisky from the numbers the lines under it show (the time to spare and what the deaths cost)');
     if (!/^A clean key/.test(S({ lv: 2, deaths: 0 }))) bad('a clean timed key is not told as a clean key');
-    const t3 = S({ lv: 1, risky: false, deaths: 1 }); if (t3 !== 'One death was the mistake, and there was still time to spare.') bad('one death in a key with time to spare reads "' + t3 + '"');
+    const t3 = S({ lv: 1, risky: false, deaths: 1 }); if (t3 !== 'One death was the mistake.') bad('one death in a key with time to spare reads "' + t3 + '" (it must read "One death was the mistake.": the result before it already says the time to spare)');
     const t4 = S({ lv: 0, cost: true, deaths: 6 }); if (t4 !== 'Six deaths cost it: without the deaths it was in time.') bad('an over-time key the deaths cost reads "' + t4 + '"');
     const t5 = S({ lv: 0, deaths: 6, wipe: 'in pull 3', wipeN: 5 }); if (t5 !== 'A wipe in pull 3 and one more death were the mistakes, and the rest of the time was in the pace.') bad('a wipe and one more death read "' + t5 + '"');
-    const t6 = S({ lv: 1, risky: false, kicks: 3 }); if (t6 !== 'Three casts that went off with a kick ready were the mistakes, and there was still time to spare.') bad('three missed kicks read "' + t6 + '"'); }
+    const t6 = S({ lv: 1, risky: false, kicks: 3 }); if (t6 !== 'Three casts that went off with a kick ready were the mistakes.') bad('three missed kicks read "' + t6 + '"'); }
   // 2. his Kings' Rest in small: two deaths (one after a pull), a cast that left four under 15%, one close call, three pulls with a cooldown not pressed
   const DK = D0(); DK.death.push(dth(118, 5, 'Sornarjr', 'unknown', true, ['Survival Instincts']), dth(172, 7, 'Flex', 'Putrid Seekers', false, ['Divine Shield', 'Divine Protection']));
   DK.close.push(cl(15, 0, 'Rage', 'Shadow Whirlwind', 3), cl(15, 0, 'Leaf', 'Shadow Whirlwind', 11), cl(15.4, 0, 'Sham', 'Shadow Whirlwind', 8), cl(15.6, 0, 'Flex', 'Shadow Whirlwind', 9, ['Divine Protection']), cl(152, 6, 'Flex', 'Purification Strike', 6, ['Divine Protection']));
@@ -83,4 +88,10 @@ module.exports = function summaryStrip(say) {
     if (X.mpxFix(null, true, true, null).indexOf('mpt-shim') < 0 || X.mpxFix(null, false, true, null) !== '') bad('Fix first has no placeholder while the fast run loads, or shows an empty card'); }
   // 7. the Companion's card keeps its layout
   { const Y = run(true); if (Y.mpxMarks(RK, null, null, MK) !== '' || Y.mpxGlance('<div class="mpt-ln">', RK, null, null) !== '' || Y.mpxMomList(RK, MK) !== '') bad('the Companion\'s card gets the website\'s story pieces'); }
+  // 8. the banner's points: what the key gained says "gained", and says it once when it is all of the key's points (the fresh reviewers, Nov 15, on his Kings'
+  // Rest: "~472 points (+472)", the same number twice). The Companion's card keeps its short "(+N)"
+  { let G = null, Gc = null; try { G = vm.runInNewContext('const MPC_ON = false;' + line('mpGainTxt') + '\nmpGainTxt'); Gc = vm.runInNewContext('const MPC_ON = true;' + line('mpGainTxt') + '\nmpGainTxt'); } catch (e) { bad('the banner\'s gain beside the points is gone (mpGainTxt): ' + String(e.message).slice(0, 120)); }
+    if (G && (G(472, 471.6) !== 'all gained' || G(12, 471.6) !== '+12 gained' || G(0, 471.6) !== '+0 gained')) bad('the banner\'s gain reads "(' + G(472, 471.6) + ')" for a first key and "(' + G(12, 471.6) + ')" for a key that added 12: it must say "all gained" once, or "+12 gained"');
+    if (Gc && Gc(472, 471.6) !== '+472') bad('the Companion\'s card lost its short "(+N)" beside the points');
+    if (s.indexOf("'>(' + mpGainTxt(g.x, rp.pts) + ')</span>'") < 0) bad('the banner no longer writes its gain with mpGainTxt'); }
 };

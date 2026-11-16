@@ -573,3 +573,17 @@ Then: "The mythic + tab as a whole feels hard to read, theres a lot of colors". 
 - everything else white or grey: the pull squares on Debrief (their colours are the map's), the pull-by-pull marks that are not deaths or close calls, the Next key box and its numbers, the counts in every mistake, "was ready", the route score's numbers (its bars keep their colour), "never went off".
 
 Rotation, Graphs and the replay keep their colours. The look is the "Mythic+, fewer colours" block at the end of style#look-nov13. Check: tests/mplus-calm.js (Survival stays off, Graphs keeps its Survival, each colour rule stays); it fails on acd07a20. tests/mplus-big-hits-order.js, which ran the Survival tab's own code, is retired with it.
+
+
+## Summary lines that agree with their rows (Nov 15, late)
+
+Flex: "thoughts on the mythic+ tab? rate it". Six fresh reviewers scored the page 6.7/10. The main reason was trust: a summary line sometimes said the opposite of the rows under it. Then: "Yes, fix them". Each summary is now built from the same data as its rows:
+- **Next key, the damage line.** It says what lower damage cost, from the same split as "Where your 5:35 went", and names the one or two players furthest behind their spec. It used to read "the group averaged a 53 parse", which named nobody, and 53 is above the goal.
+- **Route score, the pull plan reason.** It gives the real reason: area damage hits more enemies in a bigger pull. It only mentions time between pulls when that part cost 15 seconds or more.
+- **The big cooldowns line under the group's grade.** It names the pulls the pull rows mark. A long pull only counts as a miss for a player who had a big cooldown ready at its start. Ready means not pressed yet in the key, or pressed at least its shortest gap between two presses ago. A cooldown pressed only once before isn't counted, because how long it takes isn't known. The checklist counts the same pulls: "11 of 11 long pulls" on his key, where it used to say 11 of 12.
+- **Rotation.** A check at or above top players isn't "to fix". It sits under Done right with a green dot, so a box can say "Clean · 2 checks as good as top players". A check close to top players stays amber at most. One line explains what the squares count: "Judged on 10 pulls and 4 bosses. Pull 7 was too short to judge." The Colossus Smash sentence names its windows, and "a Arms Warrior" is now "an Arms Warrior".
+- **"Nearly cost it".** It only shows when what the mistakes cost came close to the time left (mpxRisky).
+- **DPS.** The players table and its group row use one time base: the whole key, walking included. The group row is the players added up, and its vs spec is the players against their specs' middle players. The in-pull 1.02m and its fast-run comparison stay in Group damage. On Graphs, the rail, the chart and the table say their base and show one number.
+- **Small wording fixes.** Graphs says Lust. The banner says "~472 points (all gained)".
+
+Checks: tests/mplus-cd-say.js, tests/mplus-dps-base.js and tests/mplus-rotation-top.js, plus new parts in tests/mplus-report-opens.js, tests/mplus-summary-strip.js and tests/look-review.js. All of them fail on 37cefaa3.

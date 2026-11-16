@@ -81,6 +81,18 @@ They act only when every pull on the page is a key's pull (`item.dungeon`).
 
 On the 14 keys the 70 players went from 67 to 100 (middle 94) to 80 to 100 (middle 98). The ones still under 92 have real marks: a Holy Paladin building at 5 Holy Power on two bosses, a Destruction Warlock whose Infernal waited 72 seconds.
 
+## Against top players (Nov 15)
+
+The fresh reviewers on Flex's Kings' Rest +19 (Ragemaxxing, Arms Warrior, 99): the Trash pulls and Bosses boxes said "1 to fix" and "2 to fix" in red, over rows that said "As good as top players" (Sudden Death 7 wasted, top 9; Always be pressing 82%, top 78%). Flex: "Yes, fix them".
+
+- Each check's whole-key total is set against the top players' (`mpTopGap`, 0 at top or better) and sorted once (`mpTopSide`).
+- **At or above top players:** not to fix. A green dot, listed under Done right with its numbers and where it came up (shut until opened). Neither box counts it. A box left with nothing says Clean.
+- **Close to top players** (within a tenth of the gap): still to fix, because it is behind them. Amber at most, never red, in the rows and the boxes alike.
+- **Further behind, or no top numbers:** as graded.
+- One source: `gapOf` in `mpcRotHtml` reads the whole key's own totals (`mpRwSum`'s `tot`). The rows and `mpvSide` (the boxes, and a tapped box's rows) both use it. The score and each pull's own marks don't change.
+- The rows count judged pulls and bosses. On the test key that is 10 pulls and 4 bosses: pull 7 lasted 8 seconds. The page says so once above the rows, and each row says where its check came up.
+- The checks: `tests/mplus-rotation-top.js` (run by `tests/contradictions.js` on every build) and check 5 of `tests/mplus-rotation-check.js` (in the browser).
+
 ## What is still open
 
 - Fire, Frost Mage, Affliction, Devastation, Augmentation, Outlaw, Assassination and Survival are in none of the fast +20 runs: their key rules come from the rules and guides only.

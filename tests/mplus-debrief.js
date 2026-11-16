@@ -25,7 +25,7 @@ module.exports = function mplusDebrief(say) {
   const run = (card) => vm.runInNewContext('const MPC_ON = ' + (card ? 'true' : 'false') + ', mpCC = () => "#fff";' +
     'const esc = (x) => String(x == null ? "" : x).replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;", "\'": "&#39;" }[c]));' +
     'let DATA = null; const mpxData = () => DATA;' + line(ui, 'plural') + line(s, 'mpMM') + line(s, 'mpCap') + line(s, 'mpT1') + line(s, 'mpWho') + line(s, 'mpxTo') + line(s, 'MP_PCOL') + line(s, 'mpNo') + line(s, 'mpPullName') +
-    '\n' + fn('mpClock') + '\n' + fn('mpChains') + line(s, 'mpChainN') + '\n' + fn('mpStretches') + '\n' + fn('mpxPbpData') + '\n' + fn('mpxPbp') + '\n({ mpxPbpData, mpxPbp, set: (d) => { DATA = d; } })');
+    '\n' + fn('mpClock') + '\n' + fn('mpChains') + line(s, 'mpChainN') + line(s, 'MP_FRAG_S') + line(s, 'mpFrag') + '\n' + fn('mpStretches') + '\n' + fn('mpxPbpData') + '\n' + fn('mpxPbp') + '\n({ mpxPbpData, mpxPbp, set: (d) => { DATA = d; } })');
   let X; try { X = run(false); } catch (e) { bad('the key pull by pull no longer runs by itself (mpxPbpData, mpxPbp): ' + String(e.message).slice(0, 140)); return; }
   const pull = (n, s0, e0, o) => Object.assign({ n, s: s0, e: e0, dur: e0 - s0, deaths: [], boss: '' }, o || {});
   const key = () => ({ run: { end: 750, clock: { time: 745, deathCost: 5 } }, people: [{ name: 'Flex', cls: 'Paladin' }, { name: 'Leafeon', cls: 'Death Knight' }],
