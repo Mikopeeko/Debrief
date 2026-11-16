@@ -210,6 +210,10 @@ function checks(H, say, pj) {
     if (!dbg.G.log.slice(n0).some((m) => /You stood in the venom beam/.test(m.text))) bad('standing in the venom beam, between the image and the off tank, is not a mistake (check I)');
     dbg.at(30, 'r3', { east: false, seed: 3 }); const other = dbg.G.eggs.find((e) => e.state === 'held' && e.who && e.who !== 'r3');
     if (!dbg.G.eggs.some((e) => e.who === 'r3' && e.state === 'held') || !other) bad('at 0:30 you or the other carriers hold no egg, so the ring warning can\'t be checked (check I)');
+    // (Nov 15: Noxious Splash stays at 3 yards. A move to 4.3, read from where 21 logged splashes landed, was undone: the phase 3 chat's scan of all 170
+    //  Mythic pulls found carriers 4 to 6 yards apart for about 80 minutes of pair time with no splash, and under 3 yards almost never. The 21 were the
+    //  burst landing a moment after the touch, both still moving. Noxious Shell 1307612 is 3 yards)
+    if (!/const b = G\.bots\[e\.who\]; if \(b && Math\.hypot\(x - b\.x, y - b\.y\) < 3\)/.test(PJ)) bad('Noxious Splash isn\'t at 3 yards (the 170-pull scan: carriers stand 4 to 6 yards apart safely) (check I)');
     else { const b = dbg.G.bots[other.who], lv = (d) => { b.x = dbg.G.x + d; b.y = dbg.G.y; return dbg.eggWarn(); }; if (lv(3.2) !== 2 || lv(4.5) !== 1 || lv(9) !== 0) bad('your egg ring doesn\'t turn red within 3.5 yards of another carrier, orange within 5 and clear beyond (check I)'); }
     if (!S0.warns.some((w) => /Run to the second Wretch/.test(w.text) && Math.abs(w.t - 101) < 0.1)) bad('at 1:41 there is no call to run to the second Wretch in front of her (check I)');
     if (!/calls that come within 1\.5 s of each other share one line/.test(PJ)) bad('calls that land together still cover each other (check I)');
