@@ -220,7 +220,7 @@ function pgP2(A) {
   const range = (id) => P.KICK[id[0]] || 0;
   const holder = (k, s, v) => Object.keys(S.job).find((id) => S.job[id].side === s && S.job[id][k] === v) || null;
   const bigIx = (s, w) => S.big.findIndex((b) => b.side === s && b.which === w);
-  const slot = (s, n) => { const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8.8, 10 + Math.max(0, o) * 33, s); } /* (8.8 yards out, 33 degrees apart: 5.0 yards between carriers, past the 4.3 a splash needs) */, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
+  const slot = (s, n) => { const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8, 25 + Math.max(0, o) * 27, s); }, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
   const TDIR = [10, -15, -32, -50, -68, -84];
   // (your way out of a tether: the safe heading (east round to south, away from the eggs and the venom) nearest your own side of the Warden)
   const outDir = (F, b0, s) => { const q = pgP2L(s, [b0.x - F[0], b0.y - F[1]]), b = Math.atan2(q[1], q[0]) * 180 / Math.PI, off = (a) => Math.abs((((a - b) % 360) + 540) % 360 - 180); return TDIR.reduce((m, a) => (off(a) < off(m) ? a : m), TDIR[0]); };
@@ -277,9 +277,9 @@ function pgP2(A) {
         else { const d = pgDist(T0, F); if (d > 19) T0 = [F[0] + (T0[0] - F[0]) * 19 / d, F[1] + (T0[1] - F[1]) * 19 / d]; } } }
     else if (!dsOut(s)) { // the eggs: yours once its shield breaks, to your lane spot at the cauldron, in together; the big eggs last
       const e = G.eggs.find((q) => q.id === id && q.state !== 'gone'), bi = j.big ? bigIx(s, j.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null;
-      if (e && e.state === 'floor') { const busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < 5.4); T0 = t >= e.shell - 0.8 && !busy ? [e.x, e.y] : (() => { const o = L(s, [3.2, 1.5]); return [e.x + o[0], e.y + o[1]]; })(); fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: e.shell, p: [e.x, e.y], r: 1 }; }
-      // (the lanes: down the ledge to your lane's gap at y 34 (5 yards apart, past a splash's 4.3), east of the ledge's inner notch, then to your spot at the cauldron; the lanes in the eggs' order, so none cross)
-      else if (e && e.state === 'held') { const o = Math.max(0, S.lane[s].indexOf(e.n)); T0 = b0.y > 36 ? L(s, [122 - o * 5, 34]) : slot(s, e.n); fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: T.throwAt, p: T0, r: 1.2 }; }
+      if (e && e.state === 'floor') { const busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < 4.6); T0 = t >= e.shell - 0.8 && !busy ? [e.x, e.y] : (() => { const o = L(s, [3.2, 1.5]); return [e.x + o[0], e.y + o[1]]; })(); fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: e.shell, p: [e.x, e.y], r: 1 }; }
+      // (the lanes: down the ledge to your lane's gap at y 34 (3.8 yards apart), east of the ledge's inner notch, then to your spot at the cauldron; the lanes in the eggs' order, so none cross)
+      else if (e && e.state === 'held') { const o = Math.max(0, S.lane[s].indexOf(e.n)); T0 = b0.y > 36 ? L(s, [120 - o * 3.8, 34]) : slot(s, e.n); fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: T.throwAt, p: T0, r: 1.2 }; }
       else if (bg && bg.state === 'floor' && t >= S.bigAt[s][j.big] - (id === A.me ? 16 : 11)) { const B = S.big[bi]; T0 = t >= S.bigAt[s][j.big] - 0.6 ? [B.x, B.y] : [B.x + (S.pits[s][0] - B.x) * 0.06, B.y + (S.pits[s][1] - B.y) * 0.06]; fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: T.bigUp, p: [B.x, B.y], r: 1 }; }
       else if (bg && bg.state === 'held') { T0 = bigSlot(s, j.big); fast = true; ob = { at: bg.at + T.hold, p: T0, r: 1.2 }; }
       else { const wsp = L(s, t >= T.throwAt && (t < S.bigAt[s].far + 6 || (t < dsNext(s) - 5 && (G.adds.some((a) => a.own && a.side === s && a.y < -20) || Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && c.y < -20)))) && j.big !== 'close' ? P.swait : P.wait); T0 = (id[0] === 'm' && meleeOn(id, s, b0)) || spiral(wsp, i, 5); } /* (once the small eggs are in, the half waits by the south eggs and the south big egg, where the kills kill the cauldron's Rawlings, and is back by the cauldron before its Doomscales and the 4:30 debris; the north egg's carrier stays by the cauldron, nearer to it) */
@@ -313,9 +313,9 @@ function pgP2(A) {
     // stone all the way there, and past each circle on the way before it lands)
     r.T = nearFloor(r.T); const imps = S.impacts.filter((m) => m.at >= t - 0.05 && m.at - t <= 2.4); if (!imps.length) { r.T = route(b0, r.T, id); return r; }
     const sp = (id === A.me ? 7 * (A.has('sprint') ? 1.4 : 1) : 9.8) * Math.max(0.3, slow(id, t)), near = (x, y, pad) => imps.some((q) => Math.hypot(x - q.x, y - q.y) <= q.r + pad);
-    // (a carrier's escape keeps out of the other carriers' rings too: 4.4 yards from them, just past a splash's 4.3)
+    // (a carrier's spot keeps out of the other carriers' 3-yard rings too)
     const held = G.eggs.some((e) => e.who === id && e.state === 'held'), rings = held ? G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== id).map((e) => pos(e.who)) : [];
-    const clear = (x, y) => { if (near(x, y, 1.6) || rings.some((o) => Math.hypot(x - o[0], y - o[1]) < 4.4)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
+    const clear = (x, y) => { if (near(x, y, 1.6) || rings.some((o) => Math.hypot(x - o[0], y - o[1]) < 3.9)) return false; const d = Math.hypot(x - b0.x, y - b0.y); for (let k = 1; k <= 10; k++) { const f = k / 10, px = b0.x + (x - b0.x) * f, py = b0.y + (y - b0.y) * f, tt = t + d * f / sp; if (!pgP2Floor(px, py) || imps.some((q) => tt >= q.at - 0.35 && tt <= q.at + 0.25 && Math.hypot(px - q.x, py - q.y) <= q.r + 1)) return false; } return true; };
     // (an escape, once picked, is kept while it stays clean until the circles land: a circle right on you has two equally good ways out, and
     // re-picking each step would swap between them and leave you in it (a Virulent Spit swirl lands on the raider it marked))
     const need = (near(r.T[0], r.T[1], 2.2) || near(b0.x, b0.y, 1.6)) && !clear(r.T[0], r.T[1]), es = G.p2.esc[id]; if (need && es && t < es.until && clear(es.T[0], es.T[1]) && !G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, es.T[0], es.T[1], 1.5))) { r.T = es.T; r.fast = true; r.T = route(b0, r.T, id); return r; }
@@ -741,7 +741,7 @@ function pgP2(A) {
     // (a kicker with a kick due holds its place instead: a missed Cry stuns everyone, worse than a wave)
     dodges: (id, t) => !!(G && G.p2 && t >= T.rage),
     // (Noxious Splash: the game's 3 yards. The 21 logged splashes looked like 4.3, but the phase 3 chat's re-scan of 170 Mythic pulls found carriers 4 to
-    // 6 yards apart for about 80 minutes with no splash: those were measured after the burst. The carriers' spots stay 5 apart all the same)
+    // 6 yards apart for about 80 minutes with no splash: those were measured after the burst)
     splash: 3,
     // (and its escapes keep out of a Doomscale's frontal that's casting: a wave's way out mustn't lead into one)
     unsafe: (id, x, y, t) => !!(G && G.p2 && G.p2.fan.some((f) => t >= f.t0 && t <= f.at + 0.2 && f.tank !== id && inFan(f, x, y, 1.5))),
