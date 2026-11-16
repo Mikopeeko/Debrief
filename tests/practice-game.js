@@ -150,6 +150,8 @@ function checks(H, say, pj) {
   if (!/class="pg-btn pg-go pg-play"><b>▶ Play<\/b><span class="pg-psub">' \+ esc\(playSub\(\)\)/.test(PJ)) bad('the setup has no big Play button that says what you\'ll play (check F)');
   if (!/class="pg-chip pg-hint"/.test(PJ) || !/class="pg-chip pg-spd"/.test(PJ) || !/class="pg-chip pg-atw">Start <select class="pg-at"/.test(PJ)) bad('hints, speed and where to start aren\'t three small chips under Play (check F)');
   if (!/const SETUP = P2 \? P2\.setup \|\| null : \{/.test(PJ)) bad('a later part can\'t give the card its own setup (P2.setup) (check F)');
+  // (the intermission chat, Nov 15: its part has no kick, but the keys line said "E: kick" for every later part)
+  if (!/\(P2 && P2\.acts && P2\.acts\(\) \? ' · E: kick' : ''\)/.test(PJ)) bad('the keys line says "E: kick" for a part with no Kick button (check F)');
   // G. Hitting the right thing (Nov 15, Flex: "include dps mechanics ... very simplified version", "just let the player get the idea of what they need to do
   //    and when"): the Rawlings after each coil soak, the heart while it's open, a Viper the moment it hatches; Tab or a click picks a target; a moment spent
   //    mostly on the right thing counts, a miss is one line in the report. (Before: nothing to hit.)
