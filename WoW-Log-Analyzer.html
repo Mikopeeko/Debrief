@@ -74538,7 +74538,7 @@ const PG_P2 = {
   // lives to its second Writhing Gestation and Malice), how many of your hits
   // kill a Rawling or a Clutch on their own, and the raid's pace on each ledge (Rawlings: oldest first, slower while the Warden or the Doomscales take
   // its damage; set so 7 or so boil a pull, as on the kills)
-  SHARE: 0.25, RHITS: 6, CHITS: 8, RPACE: { warden: 0.11, eggs: 0.24, ds: 0.1 }, CPACE: 0.34,
+  SHARE: 0.25, RHITS: 6, CHITS: 8, RPACE: { warden: 0.11, eggs: 0.24, ds: 0.17 }, CPACE: 0.34,
 };
 // (the small eggs' fixed spots, the guide's UL_EGGS: 7 on the west ledge, 8 on the east)
 const pgP2Eggs = () => (typeof UL_EGGS !== 'undefined' ? UL_EGGS : { L: [[-90.9, 57.5], [-74.9, 71.3], [-74.1, 66.8], [-69.7, 66.8], [-68.9, 71.4], [-68.3, 78.4], [-62.7, 71.8]], R: [[85.7, 59.6], [81.5, 63.7], [75, 71.5], [73.2, 66.6], [68.7, 67.5], [67.9, 73.9], [63.6, 80], [61.9, 72.1]] });
@@ -74668,7 +74668,7 @@ function pgP2Script(o) {
   // (-40,40) or (55,0)). As in phase 1's heart burn: three waves, 12.5 yards a second, its heading at the middle of the room and two more
   const tailSpots = [[[39, -39], [0, -56], [0, 57]], [[40, 40], [-40, -39], [-40, 40], [55, 0]]];
   T.rattle.forEach((at, k) => { const L0 = tailSpots[k], p = L0[Math.floor(rnd() * L0.length)], hd = Math.atan2(-p[1], -p[0]) * 180 / Math.PI; S.tails.push({ x: p[0], y: p[1], t0: at - 2.4, at });
-    timer(at, 'Small tails'); warn(at - 2.4, 'A small tail rises at the edge: step out of its waves!', '#ff8a6a');
+    timer(at, 'Small tails'); warn(at - 2.4, 'A small tail rises at the edge: a short fan of three waves, step out of them!', '#ff8a6a');
     [0, -(20 + rnd() * 45), 20 + rnd() * 45].forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: hd + off, v: 12.5, w: 9, d: 4, cres: [[-4.5, 4.5]], warn: 2.4, t0: at, t1: at + 8.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge sends three waves 2.4 s later: step out of their red lanes. Stunned, you can\'t.' })); });
   T.spit.forEach((at) => timer(at + 6.5, 'Virulent Spit'));
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
@@ -74720,6 +74720,9 @@ function pgP2(A) {
   // (your share of your ledge's damage: a damage dealer's fifth, a healer's hits a bonus; nobody's on the other ledge)
   const shareOf = (s) => { const j = S.job[A.me]; return j && j.side === s && (A.me[0] === 'm' || A.me[0] === 'r') ? P.SHARE : 0; };
   const hitVal = (v) => v * (A.me[0] === 'h' ? 0.25 : 1);
+  // (your share of a ledge's Rawlings or Clutches: only while they're your moment and one is in your reach soon; carrying an egg, or walking to your big
+  // egg, the raid doesn't wait on you (Main's playtest, Nov 15: Melee / South big egg let a cauldron Rawling live 35 s))
+  const addShare = (s, kind, L0) => { if (!shareOf(s) || dpsCat(G.t) !== kind) return 0; const reach = A.me[0] === 'm' ? 10 : 40; return L0.some((q) => pgDist([q.x, q.y], [G.x, G.y]) <= reach) ? shareOf(s) : 0; };
   // (a bot's kick lands a moment into the bar, as on the kills: Malice about 0.6 s (0.5 to 0.75), Anguished Cry about 0.9 s (0.7 to 1.2), a little
   // sooner under Revenge's 1.25 s bar; the same each time for a run's seed)
   const kdelay = (key, kind, rev) => { let h = (S.seed * 2654435761) >>> 0; for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619) >>> 0; const f = (h % 1000) / 1000;
@@ -74775,7 +74778,7 @@ function pgP2(A) {
       // (a big egg still in your hands once the first Doomscale is out: on to the cauldron with it)
       if (bg && bg.state === 'held' && bg.who === id) return { T: bigSlot(s, j.big), fast: true, ob: { at: bg.at + T.hold, p: bigSlot(s, j.big), r: 1.2 } };
       if (bg && bg.state === 'floor' && t < T.doomEnd) { const B = S.big[bi]; return { T: t >= S.bigAt[s][j.big] - 0.6 ? [B.x, B.y] : [B.x + (S.pits[s][0] - B.x) * 0.06, B.y + (S.pits[s][1] - B.y) * 0.06], fast: true, ob: { at: S.bigAt[s][j.big], p: [B.x, B.y], r: 1 } }; }
-      const ck = j.cry || bkCry(id); T0 = tk ? L(s, P.ds) : gone ? L(s, P.land) : ck ? behind(s, ck) || L(s, P.dsKick) : id[0] === 'm' ? (() => { const q = behind(s, 1 + (i % 2)); return q ? spiral(q, i, 2.2) : L(s, P.dsKick); })() : spiral(L(s, P.dsWait), i, 5); fast = gone; } /* (the melee: behind them, in reach (the damage moments, Nov 15)) */
+      const ck = j.cry || bkCry(id); T0 = tk ? L(s, P.ds) : gone ? L(s, P.land) : ck ? behind(s, ck) || L(s, P.dsKick) : id[0] === 'm' ? (() => { const b1 = behind(s, 1), b2 = behind(s, 2), q = id === A.me && b1 && b2 ? [(b1[0] + b2[0]) / 2, (b1[1] + b2[1]) / 2] : behind(s, 1 + (i % 2)) || behind(s, 2 - (i % 2)); return q ? spiral(q, i, 2.2) : L(s, P.dsKick); })() /* (you: behind the two of them, in reach of both, so killing them evenly costs no walking; anyone: behind whichever is out) */ : spiral(L(s, P.dsWait), i, 5); fast = gone; } /* (the melee: behind them, in reach (the damage moments, Nov 15)) */
     return { T: T0, fast, ob }; };
   const platJob = (id, t, j) => { const sg = S.east ? 1 : -1, PL = (x, y) => [x * sg, y], east = j.side === 'E';
     // (back by her, the Doomscales dragged in by the heart for the cleave (the guide): the east half's tank holds its two just south of the heart and
@@ -74875,7 +74878,7 @@ function pgP2(A) {
       G.p2.bk = { key: k.key, t, who: k.who, kind: k.kind }; if (!window.__pgAuto) { if (A.big) A.big('Backup! ' + A.nm(k.who) + '\'s kick is on cooldown: kick ' + k.kind + ' now (E)!', '#ffd34d'); A.say('You\'re the backup: kick ' + k.kind + ' now (E)!', true); } }); };
   const kicks = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me; backup(t);
     // (the plan's kickers kick a moment into the bar (0.6 s for Malice, 0.9 s for a Cry, as on the kills); you kick yourself unless the autopilot plays)
-    kickables(t).forEach((k) => { if (!k.who || stunned(k.who, t) || (k.who === me && !window.__pgAuto) || t < k.t0 + (k.who === me ? 0.25 : kdelay(k.key, k.kind, k.rev))) return; if (pgDist(pos(k.who), k.p) <= range(k.who) + (k.who === me ? 0 : G.p2.where[k.who] === 'p1' ? 10 : 3)) kicked(k, k.who, t); }); /* (the bots' kicks reach 3 yards further (10 back by her, where they dodge the small tails' waves too): the plan's kickers, never a miss of yours) */
+    kickables(t).forEach((k) => { if (!k.who || stunned(k.who, t) || (k.who === me && !window.__pgAuto) || t < k.t0 + (k.who === me ? 0.25 : kdelay(k.key, k.kind, k.rev))) return; if (pgDist(pos(k.who), k.p) <= range(k.who) + (k.who === me ? (G.p2.where[me] === 'p1' && window.__pgAuto ? 5 : 0) : G.p2.where[k.who] === 'p1' ? 10 : 3)) kicked(k, k.who, t); }); /* (the autopilot, back by her, reaches 5 more while it dodges the small tails; you kick from your own reach) */ /* (the bots' kicks reach 3 yards further (10 back by her, where they dodge the small tails' waves too): the plan's kickers, never a miss of yours) */
     S.malice.forEach((m) => { const key = 'm' + m.side + m.k, bk = G.p2.bk && G.p2.bk.key === key, who = bk ? me : holder('mal', m.side, 1);
       if (cr(m.by) && !G.p2.kick[key] && G.p2.wd[m.side]) { G.p2.kick[key] = 'none'; G.p2.gone.push(m); m.cc.name = 'Warden: Malice (not kicked)'; G.p2.missed.push([who, 'a Malice not kicked ' + clk(m.t0)]);
         if (who === me) A.mistake('kick', bk ? 'You were the backup and didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.' : 'You didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.', 'Press E while the Warden\'s cast bar runs (you have until just under a second into its channel), within ' + range(me) + ' yards of it.', 0); }
@@ -74951,7 +74954,7 @@ function pgP2(A) {
     S.clutches.forEach((c) => { if (!G.p2.cl[c.id] && t >= c.up && G.p2.wd[c.side]) G.p2.cl[c.id] = { id: c.id, side: c.side, x: c.x, y: c.y, born: t, hp: 1, dead: null, set: 1 }; });
     S.south.forEach((q) => { const se = G.p2.se[q.id]; if (se.state === 'gest' && t >= se.at) { se.state = 'clutch'; G.p2.cl['c' + q.id] = { id: 'c' + q.id, side: q.side, x: q.x, y: q.y, born: t, hp: 1, dead: null, set: 2 }; } });
     // (the raid cleaves them, the oldest first, from 1.5 s after they turn: about 6.9 s each on the kills; a Clutch that dies leaves a Rawling on its spot)
-    ['E', 'W'].forEach((s) => { const L0 = Object.values(G.p2.cl).filter((c) => c.side === s && c.dead == null && t >= c.born + 1.5).sort((a, b) => a.born - b.born); if (L0[0]) L0[0].hp -= P.CPACE * (1 - shareOf(s)) * dt; });
+    ['E', 'W'].forEach((s) => { const L0 = Object.values(G.p2.cl).filter((c) => c.side === s && c.dead == null && t >= c.born + 1.5).sort((a, b) => a.born - b.born); if (L0[0]) L0[0].hp -= P.CPACE * (1 - addShare(s, 'clutch', L0)) * dt; });
     Object.values(G.p2.cl).forEach((c) => { if (c.dead != null) return;
       if (c.hp <= 0) { c.dead = t; rawling(c.side, [c.x, c.y], t); return; }
       // (one the raid leaves 20 s hatches a Blightscale Viper (the guide; no kill let one live that long): Putrid Membrane on everyone)
@@ -74960,7 +74963,7 @@ function pgP2(A) {
   const rawlings = (t0, t, dt) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     ['E', 'W'].forEach((s) => { const L0 = G.adds.filter((a) => a.own && a.kind === 'rawling' && a.side === s).sort((a, b) => a.born - b.born);
       // (the raid's damage on the oldest; your share comes from your hits)
-      if (L0[0] && t >= L0[0].born + 1.1) { const a = L0[0]; a.hp -= rpace(s, t) * (1 - shareOf(s)) * P.RHITS * dt; }
+      if (L0[0] && t >= L0[0].born + 1.1) { const a = L0[0]; a.hp -= rpace(s, t) * (1 - addShare(s, 'rawling', L0)) * P.RHITS * dt; }
       L0.forEach((a) => { if (a.hp <= 0) { G.adds = G.adds.filter((q) => q !== a); if (G.tgt === a.id) G.tgt = null; return; }
         // (they go for their ledge's tank, as on the kills (98% of their hits are on tanks))
         const tp = pos(tankOf(s)), dx = tp[0] - a.x, dy = tp[1] - a.y, d = Math.hypot(dx, dy); if (d > 2.5) { const m = Math.min(d - 2.5, 4.5 * dt); a.x += dx / d * m; a.y += dy / d * m; } /* (slower than you, so a melee can catch one) */
@@ -75139,10 +75142,13 @@ function pgP2(A) {
   // (the moment that matters most now, on your ledge: a Viper, a Clutch (it hatches at 20 s), the heart, a Rawling, the Doomscales, the Warden)
   // (while you carry an egg, carrying it is your job: no damage moment then)
   const dpsCat = (t) => { sync(); if (!G || !G.p2) return null; const j = S.job[A.me], s = j && j.side, here = G.p2.where[A.me] === 'L' && G.p2.wside[A.me] === s, near = (p) => pgDist(p, [G.x, G.y]) < 45;
+    if (A.me[0] === 'h') return null; /* (Flex, Nov 15: healers stay simple, dodge and follow their spots) */
     if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (G.eggs.some((e) => e.who === A.me && e.state === 'held') || G.p2.big.some((b) => b.who === A.me && b.state === 'held')) return null;
+    { const bi = j && j.big ? bigIx(s, j.big) : -1; if (bi >= 0 && G.p2.big[bi].state === 'floor' && t >= S.bigAt[s][j.big] - 16) return null; } /* (on your way to your big egg: that's your job then) */
+    if (G.p2.where[A.me] === 'L' && t >= S.home[A.me] && t < T.heart) return null; /* (and on your way back to her through your gate) */
     if (here && Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && pgDist([c.x, c.y], [G.x, G.y]) < (A.me[0] === 'm' ? 12 : 40))) return 'clutch'; /* (one within your reach soon: a melee 12 yards (they die in seconds), others their 40) */
-    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (dsOut(s) && Object.keys(G.p2.ds).some((id) => G.p2.dsS[id] && t >= G.p2.dsS[id].up + 1.5)) return 'ds'; /* (once Doomscales are out, they come first: the raid cleaves the last Rawlings along, as on the kills) */ if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
-    if (Object.keys(G.p2.ds).some((id) => G.p2.dsS[id] && t >= G.p2.dsS[id].up + 1.5)) return 'ds'; return j && G.p2.wd[s] && t >= T.clutch ? 'warden' : null; };
+    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (S.ds.some((d) => d.side === s && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 45))) return 'ds'; /* (once Doomscales are out, they come first: the raid cleaves the last Rawlings along, as on the kills) */ if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
+    if (S.ds.some((d) => d.side === s && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 45))) return 'ds'; return j && G.p2.wd[s] && t >= T.clutch ? 'warden' : null; };
   const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['warden', 'clutch', 'rawling', 'ds', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ warden: 'the Warden', clutch: 'the Clutches', rawling: 'the Rawlings', ds: 'the Doomscales', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   // (the bar under your target's frame: your target's cast, gold when you can kick it; "Interrupted" a moment after a kick lands on it; with no target,
   // Ula'tek's own (Rage of the Shackled))
@@ -75330,7 +75336,7 @@ function pg3dP2(K) {
 //   three on the last, Gorefiend's Grasp 2 to 10 s after they land; Warlock gateways onto her first quarter (5 of 17 kills, 6:11 to 6:16) and from her
 //   second quarter to her third at the second Circling Prey (7 of 17, 7:58 to 8:12), the rest walk across the cracks.
 // Not measured, so picked and flagged where they're set: the raid landing on the south-east quarter after the Shattering (the commonest), the soakers'
-// 7-yard reach and a drain of 2.56 a second each (so three clear a bite in 13 s, as on the kills, four in 9.8, and two can't in 15), the 2 million as it ends, the Purge's 5-yard burst and its
+// 7-yard reach and a drain of 2.56 a second each (so three clear a bite in 13 s, as on the kills, four in 9.8, and two can't in 15), the 1.2 million as it ends (0.6 a circle since Nov 6), the Purge's 5-yard burst and its
 // three waves 120 degrees apart (the guide's picture), Vicious Echoes' 3 s cast, her health (40% to 0), the clutches hatching 8 s after they land (7.5
 // to 10 in the logs), the grip times, the Shriekers' walk to the raid, and the jobs (the guide's plan: soak sets of two Mages and a Hunter; a Rogue and
 // both tanks; a healer and both tanks; one kicker on each Shrieker; a Blood Death Knight tank and a melee Death Knight on the grips).
@@ -75461,8 +75467,9 @@ function pgP3Script(o) {
     cast('boss', 'Caustic Waves', w0, t0); timer(t0, 'Her waves'); warn(t0 - 2, 'Her waves: step into a gap beside you!', '#9be13a');
     S.waves.push({ kind: 'her3', x: B[0], y: B[1], deg, v: 12.5, w: 96, d: 5, cres, warn: 2.2, t0, t1: t0 + 9, name: 'Her Caustic Waves', tip: 'Her waves roll out from her quarter, the whole room wide: step sideways into a gap (the dark lanes).' }); });
   T.tails.forEach((b0, i) => { const n = stepAt(b0), L = i === 4 ? P.tails2 : P.tails, mid = F(P.mel, n); L.forEach((q) => { const O = F(q, n), st = 2 * Math.PI / 16, toR = Math.atan2(mid[1] - O[1], mid[0] - O[0]);
-    S.tails.push({ x: O[0], y: O[1], t0: b0, at: b0 + 2.4 }); S.waves.push({ kind: 'tail', ring: 1, x: O[0], y: O[1], n: 16, cw: 7, v: 12.5, d: 5, ph: toR + st / 2, t0: b0 + 2.4, t1: b0 + 2.4 + 9.5, name: 'A small tail\'s Caustic Waves', tip: 'In phase 3 two small tails rise at the far edges behind the raid: watch for their rings and stand in a gap.' }); });
-    if (i < 4) warn(b0 + 0.4, 'Small tails behind you: watch their rings!', '#ff8a6a'); });
+    /* (Main's playtest, Nov 15: the small tails send short fans of about three waves, not rings. Not changed yet: phase 3's fan directions aren't measured, and guessed ones (at the raid) pushed the tanks out of her reach and the beam) */
+    S.tails.push({ x: O[0], y: O[1], t0: b0, at: b0 + 2.4 }); S.waves.push({ kind: 'tail', ring: 1, x: O[0], y: O[1], n: 16, cw: 7, v: 12.5, d: 5, ph: toR + st / 2, t0: b0 + 2.4, t1: b0 + 2.4 + 9.5, name: 'A small tail\'s Caustic Waves', tip: 'In phase 3 two small tails rise at the far edges behind the raid: step out of their waves.' }); });
+    if (i < 4) warn(b0 + 0.4, 'Small tails behind you: step out of their waves!', '#ff8a6a'); });
   // the Wretch: Toxic Womb on the quarter across from hers (7 yards), awake 20 s later; the spectral image beams it, the off tank soaks the 5 impacts
   // (each sends two waves out square to the beam); dragged to the raid for its bubbles, dead about 8:27
   { const p0 = nf(F(P.womb, 0)), img = F(P.img, 0), bm = F(P.beam, 0), ba = Math.atan2(p0[1] - img[1], p0[0] - img[0]) * 180 / Math.PI;
@@ -75644,8 +75651,8 @@ function pgP3(A) {
       if (window.__pgAuto && st.by.has(me) && t - G.def >= 90 && Math.max(...b.tg.map((tg) => st.v[tg])) < 14) { G.def = t; A.deb('def', 8); }
       if (b.tg.every((tg) => st.v[tg] <= 0)) { st.done = t; if (G.debs.bite && b.tg.includes(me)) G.debs.bite.until = t;
         const who = [...st.by]; G.p3.purge.push({ i: b.i, who, burst: t + T.purge, spot: spreadSpots(who, b.n, t), waves: false });
-        if (who.includes(me)) { A.deb('purge', T.purge); if (!b.so.includes(me) && once('extra' + b.i)) A.mistake('extra', 'You soaked Serpent\'s Bite ' + (b.i + 1) + ' without being one of its soakers: you took its 2 million and a Volatile Purge too.', 'Soak with as few as possible: only the three assigned soakers stand in the red circles.', 0);
-          if (A.has('def')) { A.hurt(18); A.say('The bite cleared: spread out now, 5 yards from everyone, at the edge.'); } else A.mistake('def', 'You took the end of Serpent\'s Bite (about 2 million) without a defensive.', 'Press Q (your defensive) just before the red circles drain.', 40); }
+        if (who.includes(me)) { A.deb('purge', T.purge); if (!b.so.includes(me) && once('extra' + b.i)) A.mistake('extra', 'You soaked Serpent\'s Bite ' + (b.i + 1) + ' without being one of its soakers: you took its 1.2 million and a Volatile Purge too.', 'Soak with as few as possible: only the three assigned soakers stand in the red circles.', 0);
+          if (A.has('def')) { A.hurt(11); A.say('The bite cleared: spread out now, 5 yards from everyone, at the edge.'); } else A.mistake('def', 'You took the end of Serpent\'s Bite (about 1.2 million) without a defensive.', 'Press Q (your defensive) just before the red circles drain.', 24); }
         return; }
       if (t >= b.end) { st.done = t; b.tg.forEach((tg) => { if (st.v[tg] <= 0) return; const p = pos(tg); G.p3.stones.push({ x: p[0], y: p[1], t0: t, who: tg }); });
         const mineFail = (b.tg.includes(me) && st.v[me] > 0) || (b.so.includes(me) && !st.by.has(me)); A.deb('corpse', 6); A.hurt(20);
@@ -75713,7 +75720,8 @@ function pgP3(A) {
     for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) return qm === S.Qs[i] ? 'Circling Prey: move one quarter left (counter-clockwise) now, off her quarter (' + Math.ceil(S.hit[i] - t) + ' s).' + (i === 1 && !G.p3.used[me + 'g2'] ? (t < T.gate2w ? ' Let her waves pass, then the gateway (gold) takes you there.' : ' The gateway (gold) takes you there.') : '') : qm === S.Qs[i + 1] ? 'Off her quarter: good. Stack with the raid here.' + (i ? ' Press Q (defensive) as it lands.' : '') : 'Get onto the next quarter to the left (counter-clockwise), where the raid is going.';
     const fb = S.wretch.fb.find((q) => t >= q.t0 - 2.5 && t <= q.at); if (fb && G.p3.wr) return 'Fester Burst in ' + Math.max(0, fb.at - t).toFixed(1) + ' s: into the Wretch\'s bubble (10 yards).';
     const ek = S.echoes.find((e) => j.kick === e.k && t >= e.t0 - 5 && t <= e.t1 && !G.p3.kick[e.sh]); if (ek) return t < ek.t0 ? 'Your kick: Shrieker ' + ek.k + '\'s Vicious Echoes in ' + Math.ceil(ek.t0 - t) + ' s. Press E as it glows pink ("Vicious Echoes: kick!").' : 'Kick Vicious Echoes now! (E)';
-    const wv = S.waves.find((w) => (w.kind === 'her3' || w.kind === 'tail') && t >= w.t0 - (w.warn || 1) && t <= w.t0 + 3); if (wv) return wv.kind === 'her3' ? 'Her waves: step sideways into a gap (the dark lanes).' : 'Small tails\' rings from behind: stand in a gap.';
+    { /* (ahead of the waves: walking into the last circles costs 1.2 million and a Volatile Purge) */ const b3 = S.bites[2], up3 = b3 && t >= b3.land && t < b3.end && !(G.p3.bite[2] && G.p3.bite[2].done); if (up3 && t >= T.heart - 4) return 'The heart opens as the last red circles drain: wait outside them (7 yards), then burn it.'; }
+    const wv = S.waves.find((w) => (w.kind === 'her3' || w.kind === 'tail') && t >= w.t0 - (w.warn || 1) && t <= w.t0 + 3); if (wv) return wv.kind === 'her3' ? 'Her waves: step sideways into a gap (the dark lanes).' : 'Small tails behind the raid: step out of their red lanes.';
     const wrN = S.wrath.find((q) => t >= q.t0 && t <= q.at + 3.2 && q.tank !== me); if (wrN && pgDist([G.x, G.y], wrN.p) < 6.5) return 'Mother\'s Wrath: step out of her reach (the red circle in front of her).';
     const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (qm !== S.Qs[n] && qm >= 0) return 'Get onto her quarter (the ' + P.QN[S.Qs[n]] + ') and stack with the raid.';
@@ -75800,7 +75808,7 @@ function pgP3(A) {
     if (T.prey.some((p0, i) => t >= p0 - 2 && t < S.hit[i] + 1.5)) return true; const g1 = S.gates.find((g) => g.k === 1); return !!(g1 && t < T.gateEnd + 4 && qm !== S.Qs[0]); }; /* (and everyone, while the raid changes quarters) */
   const dpsCat = (t) => { sync(); if (!G || !G.p3) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (busy(t)) return null; const c = FR(P.mel, raidStep(t));
     if (Object.values(G.p3.sh).some((s) => pgDist([s.x, s.y], c) < 25)) return 'shrieker'; if (S.clutches.some((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp)) return 'clutch'; if (G.adds.some((a) => a.kind === 'rawling')) return 'rawling';
-    if (t >= T.heart && t < T.end) return 'heart'; return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };
+    if (t >= T.heart && t < T.end && (!S.bites[2] || (G.p3.bite[2] && G.p3.bite[2].done) || t >= S.bites[2].end)) return 'heart'; /* (not while the last bite's red circles still sit by it: following "burn the heart" walked you into them, Main's playtest, Nov 15) */ return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };
   const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['clutch', 'rawling', 'wretch', 'shrieker', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ clutch: 'the clutches', rawling: 'the Rawlings', wretch: 'the Wretch', shrieker: 'the Shriekers', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   const starts = [[0, '6:12 · Onto her quarter'], [392, '6:32 · The first bite'], [418, '6:58 · Waves, then Circling Prey'], [455, '7:35 · The Wretch\'s bubble and the second bite'], [476, '7:56 · The second Circling Prey'], [503, '8:23 · The Shriekers'], [540, '9:00 · The last quarter and the burn']];
 
