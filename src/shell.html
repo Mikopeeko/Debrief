@@ -21301,6 +21301,39 @@ html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-q em.mpk-r
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-kl3 { gap: 12px !important; padding-top: 0 !important; border-top: 0 !important; }
 @media (max-width: 700px) { html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-kl3 { grid-template-columns: minmax(0, 1fr) !important; } html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpt-ktr ul { columns: 1 !important; } }
 }
+/* Where your time went, merged into the run (Nov 16, Flex: "or could we simplify it and merge it into the timeline?"). The time each stretch lost is a bracket
+under the run's pulls (red a minute or more, amber 20 s, grey less). The cause bar, the grade and the one thing are the foot of The key, and the panel steps aside. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody#mptBody#mptBody > #mptCC.mpx-merged { display: none !important; }
+/* the brackets: a tinted box under the stretch's pulls, its top edge and end ticks in its colour, the time lost under it */
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-g > .mpgl-lb { position: relative !important; height: 30px !important; margin: 3px 0 4px !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l { position: absolute !important; top: 0 !important; height: 28px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-top: 2px solid currentColor !important; border-radius: 0 !important; background: linear-gradient(180deg, color-mix(in srgb, currentColor 16%, transparent), transparent) !important; color: #8b929c !important; cursor: pointer !important; font: inherit !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l::before, html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l::after { content: '' !important; position: absolute !important; top: -2px !important; width: 2px !important; height: 8px !important; background: currentColor !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l::before { left: 0 !important; } html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l::after { right: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l > span { position: absolute !important; left: 50% !important; top: 5px !important; transform: translateX(-50%) !important; font: 700 14px var(--body) !important; white-space: nowrap !important; color: currentColor !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l.mpgl-lx-n { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l.mpgl-lx-s { color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l:hover, html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l:focus-visible { filter: brightness(1.3) !important; outline: none !important; z-index: 2 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-key .mpgl-kl { display: inline-flex !important; align-items: center !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpgl-key i.mpgl-k-lost { display: inline-block !important; width: 12px !important; height: 5px !important; margin: 0 5px 0 12px !important; border: 2px solid #ff8f87 !important; border-bottom: 0 !important; background: none !important; border-radius: 0 !important; }
+/* the foot of The key: the title, its ⓘ and the bar's key on one line, the bar, the grade, the one thing, the numbers */
+html:not(.mpcard) body #view#view#view #mptCD .mpsb > .mpx-why { padding: 14px 18px 16px !important; border-top: 1px solid rgba(255,255,255,.07) !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-whyh { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-whyh > b { font: 700 17px var(--head) !important; color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-whyh > .mpt-sk { margin: 0 0 0 auto !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why > .mpt-sbar { margin: 9px 0 4px !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why > .mpt-sub { margin-top: 8px !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twg { display: flex !important; align-items: baseline !important; gap: 10px !important; margin: 10px 0 4px !important; font: 500 14px/1.45 var(--body) !important; color: #d6d9de !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twk { flex: none !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme { display: flex !important; align-items: baseline !important; gap: 14px !important; margin: 12px 0 4px !important; padding: 11px 14px !important; border: 1px solid rgba(214,178,104,.45) !important; background: rgba(214,178,104,.05) !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme > .mpx-twk { color: #e6c27a !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twb { flex: 1 1 auto !important; min-width: 0 !important; font: 500 14px/1.45 var(--body) !important; color: #d6d9de !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twb > b { color: #fff !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twb > .mpx-twv { color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twb > small { display: block !important; font: 500 13.5px var(--body) !important; color: #b3b9c4 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme > .linkbtn { flex: none !important; }
+@media (max-width: 700px) { html:not(.mpcard) body #view#view#view #mptCD .mpgl-lb > .mpgl-l > span { font-size: 12px !important; } html:not(.mpcard) body #view#view#view #mptCD .mpx-whyh > .mpt-sk { margin: 0 !important; } html:not(.mpcard) body #view#view#view #mptCD .mpx-why .mpx-twme { flex-wrap: wrap !important; } }
+}
 </style>
 </body>
 </html>

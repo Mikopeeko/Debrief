@@ -989,7 +989,7 @@ const mpxDefIc = (L) => '<span class="bh-di">' + (L || []).slice(0, 3).map((d) =
 // (Big hits' grids are all open on the website and don't fold: one opened and two shut read as three different things (Flex, Nov 14))
 document.addEventListener('click', (e) => { if (MPC_ON) return; const s = e.target.closest && e.target.closest('#mptCH .bh-hit > summary'); if (s && !e.target.closest('button, a')) e.preventDefault(); });
 // (Players and Dungeon are tabs of their own on the website, so their one part is always open and its Hide switch is gone)
-const mpxOpen = () => { if (MPC_ON) return; document.querySelectorAll('#mptC4 > details.mpt-fold, #mptC5 > details.mpt-fold').forEach((d) => { d.open = true; }); try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove(); mpxCmpMove(); mpxRowOn(); mpxTwPaint(); } catch (e) { console.error(e); } };
+const mpxOpen = () => { if (MPC_ON) return; document.querySelectorAll('#mptC4 > details.mpt-fold, #mptC5 > details.mpt-fold').forEach((d) => { d.open = true; }); try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove(); mpxCmpMove(); mpxRowOn(); mpxWhyPaint(); mpxTwPaint(); } catch (e) { console.error(e); } };
 // (Summary's tab is gone and Report card opens the key (Nov 15, Flex: "What if we just merge some of summary with report card, and make report card the
 // opening tab"): every mistake, kind by kind, with Big hits inside it, is a panel of its own under the Report card. Summary still draws them; the elements
 // move after each draw (a repaint of the Report card replaces only #mptCP, so the panel after it stays). A key with no timer has no fold: its Mistakes box
@@ -1641,7 +1641,7 @@ document.addEventListener('click', (e) => { const t = e.target.closest && e.targ
   if (t.dataset.mpxv === 'mis') { mpxMis(t.dataset.mpxk || '', t.dataset.mpxp || ''); return; } /* (Nov 14: no Mistakes tab; a kind opens in Summary's box, a player's in their card) */
   if (t.dataset.mpxk != null) MP.xk = t.dataset.mpxk;
   if (t.dataset.mpxp != null) MP.xp = t.dataset.mpxp;
-  if (t.dataset.mpxv) { mpxView(t.dataset.mpxv); mpxTop(); } if (t.dataset.mpxat === 'mptCH') mpxBhShow(); if (t.dataset.mpxat) { const c = document.getElementById(t.dataset.mpxat); if (c) c.scrollIntoView({ block: 'start' }); } /* (a link to a section further down its tab) */ });
+  if (t.dataset.mpxv) { mpxView(t.dataset.mpxv); mpxTop(); } if (t.dataset.mpxat === 'mptCH') mpxBhShow(); if (t.dataset.mpxat) { const c0 = document.getElementById(t.dataset.mpxat), c = c0 && c0.classList.contains('mpx-merged') ? document.querySelector('#mptCD .mpx-why') || c0 : c0; if (c) c.scrollIntoView({ block: 'start' }); } /* (a link to a section further down its tab) */ });
 // ---------- the map's pull card, in plain words (Flex, Nov 14, with a picture of the card: "Pull 1 1:09 · +7.7% · 7.7% total · 1.91m group DPS", "Most
 // mistakes", "! Demoralizing Shout ⚡ Lust 0:20 in Bolster ×6": "this section has a lot in it thats really confusing and unclear"). Every number gets its
 // name, the tags become sentences under "What went wrong" and "What else happened", and the three folds say what is inside them. The website only: the
@@ -1824,7 +1824,7 @@ function mpHtml(it, R, fx) {
       if (s.bossT - f.bossT >= 15) L.push({ c: 'boss', ps: yp.filter((p) => p.boss).map((p) => R.pulls.indexOf(p)), s: s.bossT - f.bossT, t: esc(s.boss), d: 'Your fight took ' + mpMM(s.bossT) + (s.tries > 1 ? ' over ' + s.tries + ' pulls' : '') + ', theirs took ' + mpMM(f.bossT) + '.', g: mpGdTags(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss), false), nt: mpNextBoss(R, F, yp.filter((p) => p.boss), fp.filter((p) => p.boss)) }); }
     if (ck.between - FC.ck.between >= 15) L.push({ c: 'stand', s: ck.between - FC.ck.between, t: 'Standing between pulls', d: 'You stood still for ' + mpMM(ck.between) + ' between pulls, the fast run for ' + mpMM(FC.ck.between) + '.', ...((w) => ({ g: w.h, nt: w.nt }))(mpWaits(R, F)) });
     for (const f of mpFixes(R, C, true)) L.push(f);
-    return L.filter((x) => x.s >= 15 || !x.s).sort((a, b) => b.s - a.s).slice(0, 6); })();
+    return L.filter((x) => x.s >= 15 || !x.s).sort((a, b) => b.s - a.s).slice(0, 6); })(); R._went = went; /* (for the run's brackets, Nov 16: mpxWhyPaint) */
   // (a thin bar under the lead: the gap split into longer fighting, standing between pulls and deaths, each with its hover, a key under it and
   // no words inside (they'd be cut off on a phone). The three add up to the gap: the fighting is what's left after the other two)
   // (the quick read (Nov 2, the Design studio's quick-read.md, Flex: "theres almost too much information… its a lot of alot"): a row shows its
@@ -2156,17 +2156,42 @@ function mpxRunGlance(R, F) { if (MPC_ON || !R || !(R.pulls || []).length) retur
 // and "Next key" are off the Summary: every fact in them is in the banner, the run or Where your time went (their grade line and the picked player's one
 // thing moved there, mpxTwPaint). mprShort still runs: it works out the grade's line (M._nx). A log that names no players: the run alone)
 function mpxDeb(R, fx) { if (MPC_ON || !R || !(R.pulls || []).length) return ''; const F = fx && fx.R ? fx.R : null; let bd = '';
-  if ((R.people || []).length) { const M = mprModel(R, fx); mprShort(R, M); R._twM = M; bd = mpxBoard(R, M, F); if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { try { mpxTwPaint(); } catch (e) { console.error(e); } }); }
+  if ((R.people || []).length) { const M = mprModel(R, fx); mprShort(R, M); R._twM = M; bd = mpxBoard(R, M, F); if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => { try { mpxWhyPaint(); mpxTwPaint(); } catch (e) { console.error(e); } }); }
   const gl = mpxRunGlance(R, F), all = bd && gl ? bd.replace(/<\/section>$/, gl + '</section>') : bd || gl; return all ? '<div class="mpdb mpx-whole" role="region" aria-label="The whole key" id="mptCD">' + all + '</div>' : ''; }
+// (Where your time went, merged into the run (Nov 16, Flex of its panel: "how can we reformat this to fit the page? It feels a little lost", then "or could
+// we simplify it and merge it into the timeline?"). Each stretch that lost time is a bracket under the run's pulls, with the time it lost: red for a minute
+// or more, amber for 20 s or more, grey for less. Hovering one gives why and its Next time; clicking one shows it on the map. The cause bar, the grade's line,
+// the picked player's one thing and the numbers fold sit at the foot of The key, and the panel itself steps aside. This only happens for "Where your X went"
+// (a key far behind the fast run); "What gets you +N" stays its own panel. The foot is drawn from the hidden panel each time, so a redraw of The key keeps it)
+function mpxLossHtml(R, L, box) { return (L || []).filter((f) => (f.c === 'trash' || f.c === 'boss') && f.ps && f.ps.length && f.s > 0) /* (trash and bosses only: deaths have their own marks on the run) */.map((f) => { const bx = f.ps.map(box).filter(Boolean); if (!bx.length) return '';
+  const a = Math.min(...bx.map((x) => x[0])), z = Math.max(...bx.map((x) => x[1])), cl = f.s >= 60 ? 'n' : f.s >= 20 ? 's' : 'q';
+  const nt = String(f.nt || '').replace(/<span class="ds-i[\s\S]*?<\/span>/g, '').replace(/^<p[^>]*><b>Next time<\/b>\s*/, '').replace(/<\/p>\s*$/, '').trim();
+  const tt = '<b>' + f.t + '</b>: ' + mpMM(f.s) + ' behind the fast run<br>' + (f.d || '') + (nt ? '<br><br><b>Next time</b> ' + nt : '') + '<br><br>Click to see it on the map.';
+  return '<button type="button" class="mpgl-l mpgl-lx-' + cl + '" style="left:' + a.toFixed(2) + '%;width:' + Math.max(0.6, z - a).toFixed(2) + '%" data-mpps="' + f.ps.join(',') + '" data-mpt="' + esc(f.t.replace(/<[^>]+>/g, '')) + '" data-mpl="' + esc(esc(mpPNs(R, f.ps.map((k) => k + 1)))) + '"' + mpT1(tt) + '><span>+' + mpMM(f.s) + '</span></button>'; }).join(''); }
+function mpxWhyPaint() { if (MPC_ON || typeof document === 'undefined') return; const it = MP.item, R = it && MP.R[mpK(it)], sb = document.querySelector('#mptCD .mpsb'), cc = document.getElementById('mptCC'); if (!R || !sb) return;
+  sb.querySelectorAll(':scope > .mpx-why').forEach((e) => e.remove()); sb.querySelectorAll('.mpgl-g > .mpgl-lb').forEach((e) => e.remove()); const k0 = sb.querySelector('.mpgl-key .mpgl-kl'); if (k0) k0.remove();
+  const sec = cc && cc.querySelector('section.mpt-fx'), bar = sec && sec.querySelector(':scope > .mpt-sbar'), on = !!(bar && (R._went || []).length); if (cc) cc.classList.toggle('mpx-merged', on); if (!on) return;
+  // (the foot: the title with its ⓘ (the fast run's sentence moved into it) and the key of the bar, then the bar, the numbers fold; the grade and the one thing go in after the bar (mpxTwPaint))
+  const h2 = sec.querySelector('.mpt-fxh h2'), i = sec.querySelector('.mpt-fxh > .mpt-i'), say = sec.querySelector('.mpt-fxh > .mpt-fxsay'), sk = sec.querySelector(':scope > .mpt-sk'), sub = cc.querySelector('details.mpt-sub'), w = document.createElement('div');
+  w.className = 'mpx-why'; w.setAttribute('role', 'region'); w.setAttribute('aria-label', h2 ? h2.textContent : 'Where the time went');
+  const hd = document.createElement('div'); hd.className = 'mpx-whyh'; hd.innerHTML = '<b>' + esc(h2 ? h2.textContent : 'Where the time went') + '</b>';
+  if (i) { const ic = i.cloneNode(true); ic.dataset.tt = (say ? say.innerHTML + '<br><br>' : '') + String(i.dataset.tt || '').replace('Click a row for the numbers behind it.', 'Each bracket under the run is a stretch that lost time: hover it for why, click it to see it on the map.'); hd.appendChild(ic); }
+  if (sk) hd.appendChild(sk.cloneNode(true)); w.append(hd, bar.cloneNode(true)); if (sub) { const s2 = sub.cloneNode(true); s2.open = false; w.appendChild(s2); } sb.appendChild(w);
+  // (the brackets, under the fast run's line, at the pulls' own places on the run)
+  const g = sb.querySelector('.mpgl > .mpgl-g'); if (!g) return;
+  const box = (k) => { const b = g.querySelector('.mpgl-t > .mpgl-b[data-mpxpull="' + k + '"]'); return b ? [parseFloat(b.style.left), parseFloat(b.style.left) + parseFloat(b.style.width)] : null; };
+  const hs = mpxLossHtml(R, R._went, box); if (!hs) return; const d = document.createElement('div'); d.className = 'mpgl-lb'; d.innerHTML = hs;
+  (g.querySelector(':scope > .mpgl-f') || g.querySelector(':scope > .mpgl-t')).after(d);
+  const key = sb.querySelector('.mpgl-key'); if (key) key.insertAdjacentHTML('beforeend', '<span class="mpgl-kl"><i class="mpgl-k-lost"></i>Time lost</span>'); }
 // (Where your time went, the Summary's second part: the grade's line under the time bar, and the picked player's one thing at its foot (the two Next key rows
 // that weren't the timer's; the timer's row is the list's first stretch already). Painted into the section after it is drawn, and again when the pick changes)
-function mpxTwPaint() { if (MPC_ON || typeof document === 'undefined') return; const it = MP.item, R = it && MP.R[mpK(it)], cc = document.getElementById('mptCC'), sec = cc && cc.querySelector('section.mpt-fx'); if (!R || !sec) return;
+function mpxTwPaint() { if (MPC_ON || typeof document === 'undefined') return; const it = MP.item, R = it && MP.R[mpK(it)], cc = document.getElementById('mptCC'), sec = document.querySelector('#mptCD .mpsb > .mpx-why') || (cc && cc.querySelector('section.mpt-fx')); if (!R || !sec) return; /* (merged into the run, Nov 16: The key's foot) */
   sec.querySelectorAll(':scope > .mpx-twg, :scope > .mpx-twme').forEach((e) => e.remove()); const M = R._twM; if (!M) return;
   if (M._nx && M._nx.t) { const g = document.createElement('p'); g.className = 'mpx-twg'; g.innerHTML = '<span class="mpx-twk">The grade</span><span class="mpx-twt">' + M._nx.t + '</span>'; const sk = sec.querySelector(':scope > .mpt-sk'); sec.insertBefore(g, sk ? sk.nextSibling : sec.querySelector(':scope > details')); } /* (under the bar's key, over the stretches) */
   const name = mpxPick(R), p = name && M.L ? M.L.find((y) => y.name === name) : null, fr = p && p.fixRow;
   if (fr) { const own = name === mpMine(R), d = document.createElement('div'); d.className = 'mpx-twme';
     d.innerHTML = '<span class="mpx-twk">' + (own ? 'Your one thing' : esc(p.name) + '\'s one thing') + '</span><span class="mpx-twb"><b>' + (fr.lh || esc(fr.l)) + '</b>' + (fr.v ? ' <span class="mpx-twv">· ' + esc(fr.v) + '</span>' : '') + '<small>' + (fr.note ? esc(fr.why || fr.note) : 'Goal: ' + esc(fr.rule)) + '</small></span><button type="button" class="linkbtn" data-mprnme="' + esc(p.name) + '">' + (own ? 'Your checklist' : 'Their checklist') + ' ›</button>';
-    sec.appendChild(d); } } /* (at the section's foot, under the stretches) */
+    sec.insertBefore(d, sec.querySelector(':scope > details.mpt-sub')); } } /* (at the section's foot, under the stretches; in The key's foot, over the numbers) */
 // (Know this dungeon was folded at the Summary's foot from c0b2de10 to the next round; Nov 16, Flex: "I really think this section should be more highlighted": it is open, second on the Summary)
 const mpxDebPaint = (R) => { if (MPC_ON) return; const el = document.getElementById('mptCD'), it = MP.item; if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpxDeb(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null); try { refreshIcons(); } catch (e) { /* (icons load later) */ } };
 // (the Players tab's two parts as a row under the bar: Report card and Rotation; one player picked in the bar for both)
