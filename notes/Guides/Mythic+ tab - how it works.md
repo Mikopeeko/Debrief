@@ -587,3 +587,17 @@ Flex: "thoughts on the mythic+ tab? rate it". Six fresh reviewers scored the pag
 - **Small wording fixes.** Graphs says Lust. The banner says "~472 points (all gained)".
 
 Checks: tests/mplus-cd-say.js, tests/mplus-dps-base.js and tests/mplus-rotation-top.js, plus new parts in tests/mplus-report-opens.js, tests/mplus-summary-strip.js and tests/look-review.js. All of them fail on 37cefaa3.
+
+
+## Route is the main page (Nov 16)
+
+Flex: "i feel like the route tab should just be the main page, and the debrief tab gets deleted". Then: "the pull by pull is already built in the [route] tab when you click on each pull". Then: "Maybe the section above the rotation/replay could be the summary for what you have selected. Either all pulls, or the single pull". He also said "I think the key feature of the mythic+ section is absolutely the route section, it has all the information in it" and "Try building it then we refine".
+
+- **Tabs.** The tabs are Route | Players | Graphs, and Route opens first. Old links to Debrief, Summary or the mistakes (&mpv=deb, mis, run) open Route.
+- **The pull picker.** The picker in the map's bar has a Whole key stop. It reads "Whole key" when no pull is picked, and the Whole key button sits beside the ◀ ▶ stepper. Stepping past the first or the last pull goes back to the whole key. The website no longer picks a pull by itself. The Companion's card still opens on the pull with the most mistakes.
+- **Whole key picked.** The top of Route (#mpxSel, before the Route panel) shows "The key, in short" and "Next key" (Debrief's old top, #mptCD), then the route score. "Every mistake, kind by kind" opens in the panel beside the map.
+- **One pull picked.** The top shows that pull's summary: its name, Lasted, Enemies, Count and Group DPS, its mistakes, Next time, and what else happened. This is the first part of its card (.mpx-sum), with a "‹ Whole key" button. The route score and every mistake step aside. The panel beside the map keeps the play by play, tips and more about the pull.
+- **Pull-by-pull table.** It is gone from the website, because picking a pull does its job. The time each part of the key lost against the fast run is still in "Where your 5:35 went" under the map.
+- **The replay.** The line where the group walked is gone (Flex: "remove the movement lines they provide nothing useful"). The camera shows about 75 yards across around the group instead of 130 (MRP_VIEW_YD; Flex: "have the map zoomed in on the group during the replay").
+
+Check: tests/mplus-route-main.js. It fails on 84f3d043.

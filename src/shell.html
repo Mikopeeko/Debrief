@@ -20836,6 +20836,40 @@ html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCC .mpt-fxn.mpt-c-tr
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpt-ktr > h4 { color: #eef0f3 !important; }
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 span.mpt-g { color: var(--muted) !important; }
 }
+/* Mythic+, Route is the main page (Nov 16, Flex: "i feel like the route tab should just be the main page, and the debrief tab gets deleted", "Maybe the
+section above the rotation/replay could be the summary for what you have selected. Either all pulls, or the single pull"). The top of Route (#mpxSel,
+before the Route panel) follows the pick: the whole key's summary and Next key (#mptCD), or the picked pull's summary (.mpx-selp, the first part of its
+card). With one pull picked the route score and every mistake step aside, and the panel beside the map keeps the play by play. The website only */
+@layer defaultTheme {
+html:not(.mpcard)[data-mpv="map"] body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody > :is(#mpxSel, #mptCD, #mptCA) { display: block !important; }
+html:not(.mpcard) body #view#view#view #mpxSel { margin: 14px 0 0 !important; }
+html:not(.mpcard) body #view#view#view #mpxSel > #mptCD { margin: 0 !important; }
+html:not(.mpcard) body #view#view#view #mpxSel.one > #mptCD, html:not(.mpcard) body #view#view#view #mpxSel:not(.one) > .mpx-selp { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM.mpx-one > .mrs, html:not(.mpcard) body #view#view#view #mptCM.mpx-one #mptCA { display: none !important; }
+/* every mistake, in the panel beside the map while the whole key is picked */
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard > #mptCA { margin: 12px 0 0 !important; padding: 0 !important; background: none !important; border: 0 !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mcard > #mptCA > .mpx-allm > .mpx-alls { padding-left: 0 !important; padding-right: 0 !important; }
+/* the picked pull's summary reads like its card: the same labels and rows */
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp p.mpx-ck { margin: 16px 0 6px !important; padding: 12px 0 0 !important; border-top: 1px solid var(--line) !important; font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp p.mpx-ck > span { margin-left: 9px !important; font: 500 12.5px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--faint) !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp .mpx-cr p { margin: 0 !important; font: 500 14px/1.4 var(--body) !important; color: var(--mpt-soft, #d6d1c6) !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp .mpx-cr.mpx-g-m p { color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp p.mpx-cok { margin: 2px 0 !important; font: 600 14px var(--body) !important; color: #7ee08f !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selp p.mpx-cnt { margin: 10px 0 0 !important; font: 500 14px/1.45 var(--body) !important; }
+html:not(.mpcard) body #view#view#view #mptCM .mpt-mside .mpx-sum { display: none !important; }
+/* the picked pull's summary, a panel like the key's summary */
+html:not(.mpcard) body #view#view#view #mpxSel > .mpx-selp { position: relative !important; margin: 0 0 16px !important; padding: 14px 18px 12px !important; background: rgb(25,28,31) !important; border: 1px solid rgba(255,255,255,.09) !important; border-radius: 4px !important; }
+html:not(.mpcard) body #view#view#view #mpxSel > .mpx-selp > .mpx-ch { margin: 0 0 10px !important; padding-right: 120px !important; }
+html:not(.mpcard) body #view#view#view #mpxSel > .mpx-selp > .mpx-ch > b { font-size: 22px !important; }
+html:not(.mpcard) body #view#view#view #mpxSel > .mpx-selp > .mpx-cf { max-width: 760px !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selx { position: absolute !important; top: 14px !important; right: 18px !important; margin: 0 !important; padding: 5px 12px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(255,255,255,.02) !important; font: 700 13px var(--body) !important; color: var(--muted) !important; cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mpxSel .mpx-selx:hover { color: var(--text) !important; }
+/* the Whole key button in the map's bar, beside the stepper */
+html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk { margin: 0 0 0 auto !important; padding: 6px 14px !important; border: 1px solid var(--line2, #2a2e36) !important; border-radius: 3px !important; background: rgba(255,255,255,.02) !important; font: 700 14px var(--body) !important; color: var(--muted) !important; cursor: pointer !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk:hover { color: var(--text) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk.on { color: var(--text) !important; border-color: var(--mpt-you, #7d9be8) !important; background: rgba(125,155,232,.12) !important; }
+html:not(.mpcard) body #view#view#view .mpt-mbar .mpx-wk + .mpt-mstep { margin-left: 8px !important; }
+}
 </style>
 </body>
 </html>
