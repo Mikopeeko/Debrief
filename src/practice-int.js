@@ -177,16 +177,16 @@ function pgInt(A) {
   // ---- a new run ----
   const init = (G0) => { setup(); G = G0; S = A.S; G.t = T.start; G.wipes = 0; G.bossHp = bossHp(T.start); G.done.add('left0'); /* (practice.js's "never picked up your egg" is phase 1's timing: this part has its own) */
     G.int = { once: new Set(), kb: {}, shat: false, soakN: [], fell: [] }; };
-  const bossHp = () => 44; /* (she is under the venom: no damage until she bursts up (measured)) */
+  const bossHp = () => 44; /* (she is under the venom: no damage until she comes up as it shatters (measured)) */
 
   // ---- what happens each step: the slams on everyone, the defensive, your egg, the Shattering ----
   const check = (t0, t) => { sync(); const cr = (at) => at > t0 && at <= t, me = A.me, x = G.x, y = G.y, dt = t - t0;
     // (every slam hits the whole raid, the fewer in its circle the harder: practice.js does that (slamHit); here only the count, for the audit)
     S.soaks.forEach((s) => { if (!cr(s.at)) return; const inn = pgDist([x, y], [s.x, s.y]) <= s.r; G.int.soakN.push([s.k, GDZ_RAID.filter((id) => id !== me && pgDist(pos(id), [s.x, s.y]) <= s.r).length + (inn ? 1 : 0)]); });
-    // the Rawlings from the broken eggs stay until killed (practice.js), but the raid only starts on them as the coils end (measured: the first die
-    // about 5:52 to 5:57, the last by 6:12), so practice.js's helpers wait till then: its clock for them (born) is held back to 2 s before the last
-    // slam. They still boil 25 s after they hatched.
-    const RAW0 = T.slams[7] - 2, cx = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[0], 0) / GDZ_RAID.length, cy = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[1], 0) / GDZ_RAID.length;
+    // the Rawlings from the broken eggs stay until killed (practice.js), but the raid only starts on them at the 6th slam (measured: the first die about
+    // 5:52 to 5:57, the last by 6:12, a median 21 s after they hatch), so practice.js's helpers wait till then: its clock for them (born) is held back to
+    // 5:50.4, then set to when each hatched. They still boil 25 s after they hatched, as 16% of the kills' Rawlings did.
+    const RAW0 = T.slams[5], cx = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[0], 0) / GDZ_RAID.length, cy = GDZ_RAID.reduce((s0, id) => s0 + pos(id)[1], 0) / GDZ_RAID.length;
     G.adds.forEach((a) => { if (a.kind !== 'rawling') return; if (a.born != null && a.hatch == null) { a.hatch = a.born; if (t < RAW0) delete a.born; } if (a.born == null && t >= RAW0) a.born = a.hatch != null ? a.hatch : t;
       // (and they crawl after the raid, toward its middle, stopping round it: slowly while the coils come, faster after; while she's coming up, never
       // into her burst or onto a crack, so nobody chases them there)
@@ -300,7 +300,7 @@ function pgInt(A) {
     now: () => { const r = pk.role; if (!SJ[r].some((x) => x[0] === jobNow(pk))) setupCard.set(r, SJ[r][0][0]); return { role: pk.role, job: jobNow(pk) }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
     set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, team: v[0], egg: v.length > 1, pat: 0 }; save(); },
-    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before she bursts up at 6:09. No kicks in this part.'; } };
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before the platform shatters at 6:09. No kicks in this part.'; } };
   const starts = [[0, '5:18 · The eggs'], [330, '5:30 · The first coils'], [345, '5:45 · The back-to-back slams'], [356, '5:56 · The Shattering']];
   // ---- hitting the right thing: the Rawlings once the coils are done (the raid kills them then), any Viper at once ----
   const ADD_HP = { rawling: 3, viper: 5 };
@@ -333,7 +333,7 @@ function pgInt(A) {
   const auditStep = (t0, t, add) => { sync(); const cr = (at) => at > t0 && at <= t;
     GDZ_RAID.forEach((id) => { const p = pos(id);
       S.soaks.forEach((s) => { if (!cr(s.at) || s.group.includes(id) || pgDist(p, [s.x, s.y]) > s.r) return; const nx = S.soaks.find((q) => q.group.includes(id) && q.at > s.at); if (nx && nx.at - s.at < 5.2) add('in another team\'s slam ' + clk(s.at) + ' before their own', id, t); });
-      if (cr(T.shatter)) { const q = pgIntKb(p); if (Math.hypot(p[0], p[1]) <= P.MID) add('in the middle as she burst up', id, t); else if (pgIntCrack(p[0], p[1])) add('on a crack at the Shattering', id, t); else if (!PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1])) add('thrown into the venom at the Shattering', id, t); }
+      if (cr(T.shatter)) { const q = pgIntKb(p); if (pgIntCrack(p[0], p[1])) add('on a crack at the Shattering', id, t); else if (!PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1])) add('thrown into the venom at the Shattering', id, t); }
       if (t > T.shatter + 0.6 && pgIntCrack(p[0], p[1]) && !G.int.kb[id]) add('in a crack after the Shattering', id, t); });
     if (cr(T.gather)) G.eggs.forEach((e) => { if (e.state !== 'gone') add('egg not broken by the last slam', e.id || '?', t); });
     G.int.soakN.splice(0).forEach(([k, n]) => { if (n < 5) add('slam ' + (k + 1) + ' had only ' + n + ' soakers', 'raid', t); }); };

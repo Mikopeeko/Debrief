@@ -150,6 +150,8 @@ function checks(H, say, pj) {
   if (!/class="pg-btn pg-go pg-play"><b>▶ Play<\/b><span class="pg-psub">' \+ esc\(playSub\(\)\)/.test(PJ)) bad('the setup has no big Play button that says what you\'ll play (check F)');
   if (!/class="pg-chip pg-hint"/.test(PJ) || !/class="pg-chip pg-spd"/.test(PJ) || !/class="pg-chip pg-atw">Start <select class="pg-at"/.test(PJ)) bad('hints, speed and where to start aren\'t three small chips under Play (check F)');
   if (!/const SETUP = P2 \? P2\.setup \|\| null : \{/.test(PJ)) bad('a later part can\'t give the card its own setup (P2.setup) (check F)');
+  // (the intermission chat, Nov 15: its part has no kick, but the keys line said "E: kick" for every later part)
+  if (!/\(P2 && P2\.acts && P2\.acts\(\) \? ' · E: kick' : ''\)/.test(PJ)) bad('the keys line says "E: kick" for a part with no Kick button (check F)');
   // G. Hitting the right thing (Nov 15, Flex: "include dps mechanics ... very simplified version", "just let the player get the idea of what they need to do
   //    and when"): the Rawlings after each coil soak, the heart while it's open, a Viper the moment it hatches; Tab or a click picks a target; a moment spent
   //    mostly on the right thing counts, a miss is one line in the report. (Before: nothing to hit.)
@@ -309,6 +311,11 @@ function checks(H, say, pj) {
     // a Rawling alive 25 s boils: Acidic Expulsion on you, a boss-mod bar before it
     dbg.at(44, 'r3'); { const a = raw()[0]; if (a) { a.born = dbg.G.t - 20; const up = dbg.upNext() || []; if (!up.some((u) => u.text === 'Rawlings boil')) K('the boss mods don\'t warn "Rawlings boil" while a Rawling is up');
       a.born = dbg.G.t - 26; a.hp = 99; dbg.stepOwn(2); if (!a.boil) K('a Rawling alive 25 s doesn\'t boil (Boiling Venom)'); if (!dbg.log.some((x) => /boiled/.test(x))) K('a boiling Rawling isn\'t in the report'); } }
+    // (phase 2 chat, Nov 15: a part that runs its own Rawlings from its own kills marks them own; the shared wear-down and boil leave them alone. Acidic
+    //  Expulsion starts 35 s after a Rawling spawns, measured 35.3 to 35.6 s on the 30 fastest kills)
+    { dbg.at(44, 'r3'); const o = { kind: 'rawling', x: dbg.G.x + 30, y: dbg.G.y, born: dbg.G.t - 30, hp: 3, own: true }; dbg.G.adds.push(o); dbg.stepOwn(20);
+      if (o.boil || o.hp !== 3) K('the shared wear-down or boil touched a part\'s own Rawling (own: true)'); dbg.G.adds = dbg.G.adds.filter((a) => a !== o); }
+    if (!/a\.boil && !a\.own && a\.born != null && G\.t - a\.born >= 35/.test(PJ)) K('a boiling Rawling\'s Acidic Expulsion doesn\'t wait for 35 s after it spawns, or counts a part\'s own Rawlings');
     // every coil slam hits the whole raid, smaller the more soak (before: only the soakers took it)
     { dbg.at(39.6, 'r7'); const g1 = dbg.S.soaks.find((q) => q.set === 0 && q.k === 0); if (g1 && !g1.group.includes('r7')) { dbg.pos = [g1.x + 25, g1.y]; const h0 = dbg.G.hp; dbg.stepOwn(10); if (!(dbg.G.hp < h0 - 3)) K('a raider outside the first coil takes nothing from its slam; every slam hits the whole raid'); } }
     // the tail's sweep hits everyone, with its DoT (before: only inside 35 yards)

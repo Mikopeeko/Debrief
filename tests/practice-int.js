@@ -47,7 +47,7 @@ function load(H, part, extra) {
   return { dbg: win.__pgDbg, ctx };
 }
 const clkS = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0') + (s % 1 ? '.' + Math.round((s % 1) * 10) : '');
-const SERIOUS = /off the platform|under a landing egg|off their soak|soaked both|two carriers|another team's slam|in the middle as|on a crack|thrown into the venom|in a crack|egg not broken|only \d soakers/;
+const SERIOUS = /off the platform|under a landing egg|off their soak|soaked both|two carriers|another team's slam|on a crack|thrown into the venom|in a crack|egg not broken|only \d soakers/;
 // (measured on the 17 top Mythic kills since the Nov 6 hotfix: the medians of the 16 on the clock; where each spot's soakers stood (their middle))
 const MEAS = { call: 319.0, callL: 323.0, land: 324.1, slams: [336.49, 338.5, 342.46, 344.47, 348.48, 350.44, 352.49, 354.49], lead: 4.0, shatter: 369.45,
   soak: { SSW: [-8.6, -23.2], NNE: [8.9, 25.7], WNW: [-24.7, 10], ESE: [23.1, -10], NNW: [-9.4, 25.4], SSE: [11.7, -22.2], WSW: [-21, -9], ENE: [23.2, 11.9] },
