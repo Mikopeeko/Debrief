@@ -345,7 +345,7 @@ function checks(H, say) {
   if (!/pg-part/.test(PJ) || !/pgOpen\(root, boss, d, b\.dataset\.v/.test(PJ)) bad('the start card has no Part switch that opens phase 2 (check F)');
   if (!/pgN = \(\/\[\?&#\]practice=\(\\d\)\//.test(GJ) || !/pgOpen\(r, S\.gdzBoss, S\.gdzDiff, pk\)/.test(GJ)) bad('`?practice=2` on the guide no longer opens phase 2 (check F)');
   if (!BP.includes("'practice-p2.js'") || !BP.includes("(& $read 'practice-p2.js')")) bad('build.ps1 no longer checks src/practice-p2.js or puts it into the page (check F)');
-  if (!/if \(v === '3d' \|\| P2\) view\(true\)/.test(PJ)) bad('phase 2 doesn\'t open in 3D (Flex: 3D only, check F)');
+  if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ)) bad('phase 2 doesn\'t open in 3D (Flex: 3D only, check F)');
   // G. 3D: phase 2's own shapes, where the hits are
   try {
     const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'five' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), kinds = new Set(), A = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };

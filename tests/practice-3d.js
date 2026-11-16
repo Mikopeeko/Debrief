@@ -86,7 +86,7 @@ module.exports = function practice3d(say, H) {
     if (!off.includes('v3 = null') || !off.includes("classList.remove('pg3')") || !/if \(why[^)]*\) say\(why/.test(off)) bad('off3d no longer drops the 3D view, shows the 2D map again and says why');
     if (!/fail: \(e\) => \{[^\n]*off3d\('/.test(PJ) || !/draw\(G\.t\); if \(v3\) \{ miniMap2\(G\.t\); return; \}/.test(PJ)) bad('a crash in the 3D view no longer puts the 2D map back in the same frame');
     if (!/const close = \(\) => \{[^\n]*v3\.dispose\(\)/.test(PJ)) bad('closing the game leaves the 3D view (and its WebGL) running');
-    if (!/try \{ v = localStorage\.getItem\('wla-pg-view'\); \} catch/.test(PJ)) bad('the 2D | 3D pick is no longer remembered inside a try/catch'); }
+    if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ) || !/\.pg-vw button\[data-v="2"\] \{ display: none; \} \.pg\.pg3 \.pg-vw \{ display: none; \}/.test(PJ)) bad('a part still opens in 2D or shows the 2D | 3D switch (Main\'s playtest, Nov 15: Flex said 3D only)'); }
   const loads = (mode) => new Promise((done) => { const win = {}, doc = { head: { appendChild: (s) => { s.parentNode = doc.head; setImmediate(() => { if (mode === 'ok') { win.THREE = { REVISION: '149', WebGLRenderer: function () {} }; s.onload(); } else s.onerror(); }); }, removeChild: (s) => { s.parentNode = null; } }, createElement: () => ({}) };
     const code = [grab('PG3D_THREE', P3), grab('PG3D_LIB', P3), grab('pg3dLoad', P3)]; if (code.some((x) => !x)) { done(null); return; }
     const ctx = vm.createContext({ window: win, document: doc, setTimeout, clearTimeout, Promise, Error });

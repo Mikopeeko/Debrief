@@ -16,6 +16,7 @@
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 //   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
 //   J. A raider's screen (Flex, Nov 15): your frame and your target's in the bottom stack, spell-icon buttons with keys, the target's health, boss-mod bars; see check J.
+//   L. Main's playtest (Nov 15): bot carriers keep clear of you, melee reach the heart, calls clear on the game's clock, the small tails' measured fan; see L.
 //   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
@@ -352,6 +353,33 @@ function checks(H, say, pj) {
     { const W = dbg.S.wretches; if (!W.every((w) => w.dies < 165)) K('a Wretch never dies in phase 1 (the second must die before its third bubble)');
       dbg.at(W[0].dies - 5, 'r3'); const dv = dbg.dps(); if (!dv || dv.cat !== 'wretch') K('5 s before the first Wretch dies there is no "Kill the Wretch" moment (it reads ' + (dv && dv.cat) + ')'); }
   } catch (e) { bad('the mechanics crashed the game: ' + e.message + ' (check K)'); }
+  finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
+  // L. Main's playtest of every part, role and job (Nov 15, 3bff3e05, Flex: "Yes, send them"), the phase 1 and shared fixes:
+  //    1. as the melee egg carrier, Ranged 5's spot at 0:31 was 0.8 yards from yours and it walked into you: both eggs hatched and you died at 0:40 on every
+  //       run (and stepping out of one carrier's ring pushed you into another's at 2:07). 2. melee stood at home in the heart burn, out of reach: "you were on
+  //       it 0% of the time". 3. phase 1 opened in 2D (checked in tests/practice-3d.js). 4. a call stayed up 13 s after its moment. 5. the small tails fired
+  //       three random lines 20 to 65 degrees apart, not the measured short fan, and the pair at 0:37.8 was missing.
+  try {
+    const L = (m) => bad(m + ' (check L)');
+    for (const [role, egg, east, seed] of [['m', 'm1', false, 3], ['m', 'm1', true, 7], ['m', 'm1', false, 11], ['r', 'r3', false, 3]]) { dbg.myJob = { role, egg, soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(), r = dbg.sim(slot, true, east, seed), sp = r.log.filter((x) => /carrying too/.test(x));
+      if (sp.length || r.deaths.length) L('following the plan as the ' + (role === 'm' ? 'melee' : 'ranged') + ' egg carrier (' + slot + ', seed ' + seed + '): ' + (sp[0] || 'died at ' + r.deaths.join(', '))); }
+    // (Flex, Nov 16: "its impossible to walk into another egg carrier now. Thats part of the fight people need to practice": the fix above made carriers step
+    //  back from you and moved their spots away from wherever you stood. They keep clear of your PLANNED spot; walk into one and both eggs hatch)
+    if (typeof dbg.walkTo !== 'function') L('there is no way to walk the player in the check (dbg.walkTo)');
+    else { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(30, 'r3'); const G0 = dbg.G, other = G0.eggs.find((e) => e.state === 'held' && e.who && e.who !== 'r3'), b = other && G0.bots[other.who];
+      if (!b || !G0.eggs.some((e) => e.who === 'r3' && e.state === 'held')) L('at 0:30 you or another carrier hold no egg, so walking into a carrier can\'t be checked');
+      else { const v0 = G0.vipers; for (let i = 0; i < 80 && dbg.G.vipers === v0; i++) { dbg.walkTo([b.x, b.y]); dbg.stepOwn(1); } if (!(dbg.G.vipers > v0)) L('walking straight into another egg carrier never splashes: the carrier keeps stepping away'); } }
+    for (const [east, seed] of [[false, 3], [true, 7]]) { dbg.myJob = { role: 'm', egg: null, soak: [2, 2], fb: [0, 0] }; dbg.sim(dbg.jobSlot(), true, east, seed); const H = dbg.dpsList().filter((m) => m.kind === 'heart');
+      if (!H.length || H.some((m) => m.fr < 0.5)) L('a melee following the plan is on the heart ' + H.map((m) => Math.round(m.fr * 100) + '%').join(', ') + ' of the burn; their spot must be in reach'); }
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(30, 'r3'); { const G0 = dbg.G, S0 = dbg.S, t = G0.t; S0.warns.splice(G0.warnI, 0, { t: t - 0.01, text: 'Circling Prey: move one quarter left, you have 8 s!', c: '#fff' }); G0.warnQ = []; G0.lastWarn = null;
+      const a = dbg.warnsNow(); if (!a || !a.items || a.items[0].by == null || Math.abs(a.items[0].by - (t + 8)) > 0.1) L('a call that says "you have 8 s" doesn\'t know when its 8 s end');
+      dbg.stepOwn(60); const m = dbg.warnsNow(); if (!m || !m.all.some((x) => /Circling Prey/.test(x))) L('a call that gives you 8 s is gone after 3 s; it stays up while its seconds count down');
+      dbg.stepOwn(120); const b = dbg.warnsNow(); if (b && b.all.some((x) => /Circling Prey/.test(x))) L('a call is still up after its 8 s ran out (9:05\'s Circling Prey was still on screen at 9:18)'); }
+    { dbg.at(30, 'r3'); const W = dbg.S.waves.filter((w) => w.kind === 'tail'), g = new Map(); W.forEach((w) => { const k = w.x.toFixed(1) + ',' + w.y.toFixed(1) + ',' + w.t0; (g.get(k) || g.set(k, []).get(k)).push(w.deg); });
+      [...g.entries()].forEach(([k, D]) => { const sp = Math.max(...D) - Math.min(...D); if (D.length !== 3 || sp > 46) L('a small tail at ' + k + ' fires ' + D.length + ' waves ' + sp.toFixed(0) + ' degrees across; the measured fan is three, about 15 degrees apart'); });
+      if (!W.some((w) => Math.abs(w.t0 - 37.8) < 0.05)) L('the two small tails at 0:37.8, just before the first coils, are missing');
+      if (/three waves 2\.4 s later: step out|small tails' rings/i.test(PJ)) L('the small tails are still described as random waves or rings'); }
+  } catch (e) { bad('the playtest fixes crashed the game: ' + e.message + ' (check L)'); }
   finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
 }
 
