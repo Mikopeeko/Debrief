@@ -171,6 +171,26 @@ function checks(H, say) {
     else if (!/West ledge/.test(sh) || !/north big egg/.test(sh) || !/2nd Malice \(3:18\)/.test(sh) || !/out with the five at 3:34/.test(sh) || !/heart/.test(sh)) bad('phase 2\'s "your job in short" doesn\'t name the picked ledge, egg, kick, tether and the heart: ' + sh.replace(/<[^>]+>/g, ' | ') + ' (check F)'); }
   catch (e) { bad('phase 2\'s "your job in short" crashed: ' + e.message + ' (check F)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // S. the shared setup screen (Nov 15, Flex via Main: "fix the setup menus ... still too complex and confusing"): phase 2 hands the card `setup` (roles,
+  //    2 to 4 plain jobs a role with the default first, now/set/say), and a job set there is the one the run plays: Kick Malice gives you the 1st Malice,
+  //    Kick the Cry a Doomscale's Cries, a big egg the healer's north one or the melee's south one, the tether at random; healers get no kick or small egg
+  try { const su = dbg.P2.setup;
+    if (!su || typeof su.now !== 'function' || typeof su.jobs !== 'function' || typeof su.set !== 'function' || typeof su.say !== 'function') bad('phase 2 gives the setup screen no setup (roles, now, jobs, set, say) (check S)');
+    else {
+      if (JSON.stringify(su.roles) !== '["m","r","h"]') bad('phase 2\'s setup roles are ' + JSON.stringify(su.roles) + ', not melee, ranged and healer (check S)');
+      su.roles.forEach((r) => { const J0 = su.jobs(r); if (J0.length < 2 || J0.length > 4) bad('phase 2\'s setup offers ' + J0.length + ' jobs to ' + r + ' (2 to 4, check S)');
+        if (r === 'h' && J0.some(([v]) => v === 'mal' || v === 'cry' || v === 'egg')) bad('phase 2\'s setup offers a healer a kick or a small egg (Midnight healers have no kick; healers carry no small eggs on the kills) (check S)');
+        J0.forEach(([v, label]) => { su.set(r, v); const nw = su.now(), pk = dbg.P2.pick, me = dbg.P2.slotOf(pk);
+          if (nw.role !== r || nw.job !== v) bad('phase 2\'s setup set ' + r + '/' + v + ' but now() says ' + nw.role + '/' + nw.job + ' (check S)');
+          if (pk.teth !== 'random') bad('phase 2\'s setup gives ' + r + '/' + v + ' a fixed tether (' + pk.teth + '), not a random one like the real fight (check S)');
+          if (dbg.P2.role().id !== me || me[0] !== r) bad('phase 2\'s setup ' + r + '/' + v + ' plays as ' + dbg.P2.role().id + ' (check S)');
+          const say = su.say(); if (!/^[A-Z].*\.$/.test(say) || /\. [A-Z]/.test(say) || /went wrong/i.test(say)) bad('phase 2\'s setup sentence for ' + r + '/' + v + ' isn\'t one plain sentence: ' + say + ' (check S)');
+          dbg.at(166.05, me, { east: false, seed: 3 }); const j = dbg.S.job[me], want = { mal: j.mal === 1 && !j.egg && !j.big, cry: j.cry > 0 && !j.mal && !j.egg && !j.big, egg: j.egg > 0 && !j.big && !j.mal && !j.cry, big: j.big === (r === 'h' ? 'close' : 'far') && !j.mal && !j.cry, none: !j.egg && !j.big && !j.mal && !j.cry }[v];
+          if (!want) bad('phase 2\'s setup ' + r + '/' + v + ' (' + label + ') plays a run with the job ' + JSON.stringify(j) + ' (check S)'); }); });
+      su.set('r', 'egg'); if (su.now().job !== 'egg') bad('phase 2\'s setup doesn\'t keep the default ranged small egg (check S)');
+      su.set('h', 'mal'); if (su.now().job !== 'big') bad('phase 2\'s setup takes a kick job for a healer instead of the default (check S)'); } }
+  catch (e) { bad('phase 2\'s setup crashed: ' + e.message + ' (check S)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // I. hitting the right thing (Nov 15, Flex: "can we look at adding the dps mechanics in"): your ledge's Warden while it lives, the Weakened
   //    Doomscales from 4:29, the heart from 4:55, any Viper first; Tab or a click picks, melee 5 yards, others 40; a moment mostly on it counts, a
   //    miss is one line, the end card says "Right target: N of M". (Before: phase 2 had no targets; Tab did nothing in it)

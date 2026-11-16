@@ -93,7 +93,14 @@ function checks(H, say, pj) {
   if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function' || typeof dbg.panel !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
   const sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and '), base = sizes(script({ seed: 3, east: false }));
   try {
-    const P = dbg.panel(); if (!/data-jr=/.test(P) || !/data-je=/.test(P) || !/data-jc=/.test(P) || /data-jf=|data-js=|data-jset=/.test(P)) bad('the job picker isn\'t the simple three rows (role, egg, coil team): it has ' + ['jr', 'je', 'jc', 'js', 'jset', 'jf'].filter((x) => P.includes('data-' + x + '=')).join(', ') + ' (check D)');
+    // (Flex via Main, Nov 15: "fix the setup menus in the game ... They are still too complex and confusing": two rows now, your role and your job, one
+    //  sentence, one big Play; the old three rows (role, egg area, coil team) with a map and a coil picture are gone)
+    const P = dbg.panel(), rows = (P.match(/class="pg-srow"/g) || []).length, rt = (P.match(/data-sr="/g) || []).length, jt = (P.match(/data-sj="/g) || []).length;
+    if (rows !== 2 || rt !== 3 || jt !== 3 || /data-j[rec]=|<details|<svg/.test(P) || !/class="pg-say"/.test(P)) bad('the setup isn\'t two rows (three roles, three jobs) and one sentence: ' + rows + ' rows, ' + rt + ' roles, ' + jt + ' jobs' + (/data-j[rec]=/.test(P) ? ', the old three-row picker' : '') + (/<details|<svg/.test(P) ? ', a fold or a picture' : '') + ' (check D)');
+    { const SU = dbg.setupApi && dbg.setupApi(); if (!SU) bad('the card has no setup for the part (check D)');
+      else { SU.set('h', 'c2'); const a = SU.now(); if (a.role !== 'h' || a.job !== 'c2' || dbg.myJob.egg !== null || dbg.myJob.soak[1] !== 2) bad('picking Healer, Second coil gives ' + JSON.stringify(a) + ' and ' + JSON.stringify(dbg.myJob) + ' (check D)');
+        SU.set('m', 'egg'); if (dbg.myJob.egg !== 'm1' || dbg.myJob.soak[0] !== 1 || SU.now().job !== 'egg') bad('picking Melee, Egg carrier doesn\'t give the egg by her on the first coil: ' + JSON.stringify(dbg.myJob) + ' (check D)');
+        if (!/It lands by her/.test(dbg.panel())) bad('the sentence for a melee egg carrier doesn\'t say where the egg lands (check D)'); } }
     dbg.myJob = { role: 'h', egg: 'm2', soak: [2, 2], fb: [0, 0] }; if (dbg.jobSlot() !== 'm2') bad('picking the egg area by her puts you in ' + dbg.jobSlot() + ', not a carrier\'s place there (check D)');
     const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
     if (team(0) !== '1' || team(1) !== '2') bad('an egg carrier on coil team 2 plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; carriers take the first coil in set 1 (in the Wretch\'s bubble), then team 2 (check D)');
@@ -106,9 +113,9 @@ function checks(H, say, pj) {
     if (slow.length) bad(slow.map((o) => o.id).join(', ') + ' walk from the 0:39 bubble to the coil that slams at 0:40; they should hurry (check D)');
     dbg.myJob = { role: 'r', egg: null, soak: [2, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.sim(slot, false, false, 3); const S4 = dbg.S;
     if (slot !== 'r7' || !S4.soaks.every((q) => (q.k === 1) === q.group.includes(slot))) bad('a ranged job with no egg on coil team 2 plays as ' + slot + ' on other teams (check D)');
-    // (Flex, Nov 15: "pressing these doesnt change the image": the picker's picture shows your coil, the first or second to appear, and changes with the team)
-    if (!/Your coil: the second to appear/.test(dbg.panel())) bad('picking coil team 2 does not change the picture in the picker to the second coil (check D)');
-    dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; if (!/Your coil: the first to appear/.test(dbg.panel())) bad('picking coil team 1 does not show the first coil in the picture in the picker (check D)');
+    // (Flex, Nov 15: "pressing these doesnt change the image": what the card shows follows your coil; since the one-screen setup it's the sentence)
+    if (!/You soak the second coil to appear/.test(dbg.panel())) bad('picking the second coil does not change the sentence on the setup (check D)');
+    dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; if (!/You soak the first coil to appear/.test(dbg.panel())) bad('picking the first coil does not change the sentence on the setup (check D)');
     // (Main, Nov 15: the job line read "coil team 1, then 1": one team says it once, two say "then team 2")
     if (/then 1$|, then 1\b/.test(dbg.jobRole().job) || !/coil team 1$/.test(dbg.jobRole().job)) bad('the job line reads "' + dbg.jobRole().job + '"; with one team it should end "coil team 1" (check D)');
     dbg.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; if (!/coil team 1, then team 2$/.test(dbg.jobRole().job)) bad('a carrier on team 2 reads "' + dbg.jobRole().job + '"; it should end "coil team 1, then team 2" (check D)');
@@ -136,8 +143,12 @@ function checks(H, say, pj) {
   const shortLines = (x) => (String(x).match(/<li>/g) || []).length, sh = dbg.short('r3'), shNo = dbg.short('r7');
   if (shortLines(sh) < 3 || shortLines(sh) > 4 || !/egg/.test(sh) || !/Coil team/.test(sh) || !/bubble/.test(sh)) bad('"your job in short" for an egg carrier has ' + shortLines(sh) + ' lines and should say the egg, the coil team and the bubble in three or four (check F)');
   if (!/No egg/.test(shNo)) bad('"your job in short" for a raider with no egg doesn\'t say so (check F)');
-  if (!/<details class="pg-more"[^>]*><summary>What happens in the fight<\/summary><div class="pg-asg0">/.test(PJ)) bad('the fight\'s rundown isn\'t folded under "What happens in the fight" on the start card (check F)');
-  if (!/<details class="pg-opts"><summary>Options: /.test(PJ) || !/class="pg-btn pg-go">Start<\/button><p class="pg-keys">/.test(PJ)) bad('the options aren\'t folded under one Options line, or the keys aren\'t beside Start (check F)');
+  // (Flex via Main, Nov 15: "still too complex and confusing": one screen, no folding: the part, your role, your job, one sentence, one big Play that says
+  //  what you'll play and is ready at once ("just play"), then hints, speed and where to start as three small chips, then the keys)
+  if (/<details class="pg-(more|opts)"/.test(PJ)) bad('the setup still folds things away ("What happens in the fight" or "Options"); it is one screen now (check F)');
+  if (!/class="pg-btn pg-go pg-play"><b>▶ Play<\/b><span class="pg-psub">' \+ esc\(playSub\(\)\)/.test(PJ)) bad('the setup has no big Play button that says what you\'ll play (check F)');
+  if (!/class="pg-chip pg-hint"/.test(PJ) || !/class="pg-chip pg-spd"/.test(PJ) || !/class="pg-chip pg-atw">Start <select class="pg-at"/.test(PJ)) bad('hints, speed and where to start aren\'t three small chips under Play (check F)');
+  if (!/const SETUP = P2 \? P2\.setup \|\| null : \{/.test(PJ)) bad('a later part can\'t give the card its own setup (P2.setup) (check F)');
   // G. Hitting the right thing (Nov 15, Flex: "include dps mechanics ... very simplified version", "just let the player get the idea of what they need to do
   //    and when"): the Rawlings after each coil soak, the heart while it's open, a Viper the moment it hatches; Tab or a click picks a target; a moment spent
   //    mostly on the right thing counts, a miss is one line in the report. (Before: nothing to hit.)
