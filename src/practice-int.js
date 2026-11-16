@@ -167,7 +167,7 @@ function pgInt(A) {
   // (your own egg's Hardened shell has health since Nov 15 (practice.js, Flex: "The eggs have to be damaged to break the shield"): you go and break it
   // as soon as it lands, when your next soak allows: with your hits and the raid's it opens in about 3.6 s)
   const eggFirst = (id, t, b0, e, ns) => { if (!e || e.state !== 'floor') return false; const opens = e.shp > 0 ? t + e.shp / 1.4 : e.shell; if (!(e.shp > 0) && t < opens - 4) return false; if (!ns || !called(t)) return true; const sp = id === A.me ? 7 : 9.8;
-    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / sp + 0.4 <= ns.at - t; };
+    return Math.max(pgDist([b0.x, b0.y], [e.x, e.y]) / sp, opens - t) + Math.max(0, pgDist([e.x, e.y], [ns.x, ns.y]) - (ns.r - 2)) / 7 + 0.4 <= ns.at - t; }; /* (the walk to the soak with the egg at 7 yards a second: a carrier holding an egg walks at your speed (calmCarriers, Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me")) */
   const homeAt = (id) => { const sg = S.east ? 1 : -1, i = GDZ_RAID.indexOf(id); return id[0] === 't' ? [34 * sg, id === 't1' ? -12 : 12] : id[0] === 'm' ? spiral([35.5 * sg, 0], i, 1.5) : spiral([25 * sg, 0], i, 5); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
