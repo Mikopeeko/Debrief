@@ -49,7 +49,7 @@ const PG_P3 = {
   soak: { 1: ['r1', 'r2', 'r3'], 2: ['m1', 't1', 't2'], 3: ['h1', 't1', 't2'] }, kick: { 1: 'm2', 2: 'r4' }, dk: ['t2', 'm4'],
   // sizes: the bite's 7 yards (spell 1288879), the drain (picked), the Purge's burst, the bubble's 10 (spell 1310763), Circling Prey's 13 (spell
   // 1301510), kicks (melee 8, ranged 30), Vicious Echoes' reach (the whole room), Death Grip's 30
-  BITE: 7, DRAIN: 3, PURGE: 5, FB: 10, PREY: 13, KICK: { m: 8, t: 8, r: 30, h: 0 }, ECHO: 60, GRIP: 30, GAP: [5.5, 11] };
+  BITE: 7, DRAIN: 2.67, PURGE: 5, FB: 10, PREY: 13, KICK: { m: 8, t: 8, r: 30, h: 0 }, ECHO: 60, GRIP: 30, GAP: [5.5, 11] };
 // (a point in her frame turned to quarter k: 0 as is, then 90 degrees counter-clockwise each step)
 const pgP3R = (p, k) => { k = ((k % 4) + 4) % 4; return k === 0 ? [p[0], p[1]] : k === 1 ? [-p[1], p[0]] : k === 2 ? [-p[0], -p[1]] : [p[1], -p[0]]; };
 // (which quarter a point is on: the cracks cross at about x 0.5, y -1)
@@ -211,7 +211,11 @@ function pgP3(A) {
   // of the waves) ----
   const roleSpot = (id, n, t) => { const i = GDZ_RAID.indexOf(id); if (id === S.herTank(t == null ? G.t : t)) return FR(P.tank, n); if (id === 't1' || id === 't2') return FR(P.off, n);
     return id[0] === 'm' ? spiral(FR(P.mel, n), i, 4.5) : id[0] === 'h' ? spiral(FR(P.heal, n), i, 3.8) : spiral(FR(P.rng, n), i, 5); };
+  // (what the melee stand round, when the raid is killing something: the Shriekers, the clutches gripped in, the Wretch once it's with the raid)
+  const meleeFoe = (t) => { const c = FR(P.mel, raidStep(t)), sh = Object.values(G.p3.sh).filter((s) => pgDist([s.x, s.y], c) < 25); if (sh.length) return [sh.reduce((a, s) => a + s.x, 0) / sh.length, sh.reduce((a, s) => a + s.y, 0) / sh.length];
+    const cl = S.clutches.find((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp); if (cl) return FR(P.grasp, cl.n); const w = G.p3.wr; return w && t >= S.wretch.wake + 6 && pgDist([w.x, w.y], c) < 20 ? [w.x, w.y] : null; };
   const job = (id, t) => { sync(); const n = raidStep(t), b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id]; let T0 = roleSpot(id, n, t), fast = false, ob = null;
+    if (id[0] === 'm') { const fo = meleeFoe(t); if (fo) T0 = spiral(fo, GDZ_RAID.indexOf(id), 3.6); }
     // the start: onto her first quarter, through the gateway when there is one
     const g1 = S.gates.find((g) => g.k === 1); if (g1 && t < T.gateEnd + 6 && kq(b0.x, b0.y) === P.land && !G.p3.used[id + 'g1']) { T0 = g1.p.slice(); fast = true; ob = { at: T.clu[0] - 3, p: g1.p, r: 1.2 }; }
     // the gateway to the third quarter at the second Circling Prey: the ranged and healers take it once her waves have passed its far end (6 of 17 kills
@@ -223,11 +227,14 @@ function pgP3(A) {
       else if (id === 't1' && t >= 450 && t < S.wretch.dies && G.p3.wr) { const w = G.p3.wr, c = FR(P.mel, n); const ex = w.x - c[0], ey = w.y - c[1], ee = Math.hypot(ex, ey) || 1; T0 = t < S.wretch.wake + 0.5 ? [w.x, w.y] : [w.x + ex / ee * 2.5, w.y + ey / ee * 2.5]; fast = pgDist([b0.x, b0.y], T0) > 4; }
       else if (id === 't1' && t >= T.shriek && t < T.sdie) { const sh = Object.values(G.p3.sh)[0]; if (sh && t < T.shriek + 1.5) { T0 = [sh.x, sh.y]; fast = true; } else T0 = FR([P.grasp[0] + 3, P.grasp[1] + 3], step(t)); } }
     // the bites: the targets to the stack spot, the soakers onto it; after it clears, the soakers out to the rim for the Purge
-    const bt = S.bites.find((b) => t >= b.land - 1.2 && t < b.end + 0.5 && !(G.p3.bite[b.i] && G.p3.bite[b.i].done)), pu = G.p3.purge.find((q) => q.who.includes(id) && t < q.burst + 0.6);
+    const bt = S.bites.find((b) => t >= b.land - 1.2 && t < b.end + 0.5 && !(G.p3.bite[b.i] && G.p3.bite[b.i].done)), pu = G.p3.purge.find((q) => q.who.includes(id) && t < q.burst + 2.1);
+    // (a soaker: out to their spot at the rim, and there until the waves have gone (their three lanes show red from 1.5 s before the burst))
     if (pu) { T0 = pu.spot[id] || T0; fast = true; ob = { at: pu.burst, p: T0, r: 1 }; }
     else if (bt && (bt.tg.includes(id) || bt.so.includes(id))) { const wr = S.wrath.find((q) => q.tank === id && t >= q.at - 1 && t <= q.at + 3.2);
       T0 = bt.tg.includes(id) ? [bt.stack[0] + (bt.tg.indexOf(id) ? 0.7 : -0.7), bt.stack[1]] : wr ? (() => { const ex = bt.stack[0] - wr.p[0], ey = bt.stack[1] - wr.p[1], ee = Math.hypot(ex, ey) || 1; return [wr.p[0] + ex / ee * Math.min(3.8, ee / 2), wr.p[1] + ey / ee * Math.min(3.8, ee / 2)]; })() : spiral(bt.stack, bt.so.indexOf(id) + 1, 2.2);
       fast = pgDist([b0.x, b0.y], T0) > 2; ob = { at: bt.end, p: bt.stack, r: 2 }; }
+    // (everyone else keeps 7 yards from the soakers, where they stand and where they're going, until the Purge has burst)
+    if (!pu) G.p3.purge.forEach((q) => { if (t >= q.burst + 0.3) return; q.who.forEach((s) => [pos(s), q.spot[s]].forEach((c) => { if (!c) return; const d = pgDist(T0, c); if (d < 7) { const a = d > 0.1 ? Math.atan2(T0[1] - c[1], T0[0] - c[0]) : 0; T0 = [c[0] + Math.cos(a) * 7.2, c[1] + Math.sin(a) * 7.2]; } })); });
     // (a red circle that isn't yours: keep out of its 7 yards, or you soak it too)
     if (!pu && !(bt && (bt.tg.includes(id) || bt.so.includes(id)))) S.bites.forEach((b) => { const st = G.p3.bite[b.i]; if (t < b.land - 0.5 || t >= b.end || (st && st.done) || b.tg.includes(id) || b.so.includes(id)) return;
       b.tg.forEach((tg) => { const p = tg === id ? null : pos(tg); if (!p) return; const d = pgDist(T0, p); if (d < P.BITE + 2) { const a = d > 0.1 ? Math.atan2(T0[1] - p[1], T0[0] - p[0]) : 0; T0 = [p[0] + Math.cos(a) * (P.BITE + 2.2), p[1] + Math.sin(a) * (P.BITE + 2.2)]; } }); });
@@ -247,7 +254,7 @@ function pgP3(A) {
     return { T: detour(b0, route(b0, T0, id), id), fast, ob }; };
   // (a walk between two quarters goes across the narrowest part of the crack between them, one quarter at a time; a point once picked is kept until you're on it)
   // (a straight walk that stays on the standing stone: the shared dodge asks before it picks an escape)
-  const walk = (ax, ay, bx, by) => { sync(); const al = alive(G.t), d = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(d)); for (let k = 1; k <= n; k++) { const f = k / n; if (!pgP3Floor(ax + (bx - ax) * f, ay + (by - ay) * f, al, 0.35)) return false; } return true; };
+  const walk = (ax, ay, bx, by) => { sync(); const al = alive(G.t), d = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.ceil(d * 2)); for (let k = 1; k <= n; k++) { const f = k / n; if (!pgP3Floor(ax + (bx - ax) * f, ay + (by - ay) * f, al, 0.7)) return false; /* (a wider margin than onPlat's 0.35, so no step along it lands off) */ } return true; };
   // (in a crack, a raider still belongs to the quarter they came from until they're on the next; the crossing, once reached, takes them on to the next)
   const route = (b0, T0, id) => { const a = [b0.x, b0.y], here = kq(a[0], a[1]); if (here >= 0) G.p3.lq[id] = here; const qa = G.p3.lq[id], qb = kq(T0[0], T0[1]);
     if (qa == null || qb < 0 || qa === qb) return T0;
@@ -319,10 +326,11 @@ function pgP3(A) {
     // the Purge: 5 s after the bite clears, a 5-yard burst on each soaker, then three waves out of each, 120 degrees apart, one straight away from the raid
     // (the three ways are turned as clear of the raid as they can be (the game picks them; the guide draws them that way), so a soaker at the edge
     // with the raid behind them sends all three clear, and one in the raid can't)
-    G.p3.purge.forEach((q) => { if (!q.waves && t >= q.burst) { q.waves = true; const c = FR(P.mel, step(q.burst));
-      q.who.forEach((id) => { const p = pos(id), others = GDZ_RAID.filter((o) => o !== id).map(pos), base = aim3(p, others, Math.atan2(p[1] - c[1], p[0] - c[0]));
+    G.p3.purge.forEach((q) => { if (!q.waves && t >= q.burst - 1.5) { q.waves = true; const c = FR(P.mel, step(q.burst));
+      const dest = {}; GDZ_RAID.forEach((o) => { dest[o] = job(o, t).T; }); /* (where each raider is heading too, so the lanes miss them there as well) */
+      q.who.forEach((id) => { const p = id === me || !q.spot[id] ? pos(id) : q.spot[id], others = /* (a bot's lanes from the spot it's walking to; yours from where you stand) */ GDZ_RAID.filter((o) => o !== id).flatMap((o) => (dest[o] ? [pos(o), dest[o]] : [pos(o)])), base = aim3(p, others, Math.atan2(p[1] - c[1], p[0] - c[0]));
         [0, 2 * Math.PI / 3, -2 * Math.PI / 3].forEach((da) => { const a = base + da, o = [p[0] + Math.cos(a) * 2.5, p[1] + Math.sin(a) * 2.5];
-          S.waves.push({ kind: 'purge', from: id, x: o[0], y: o[1], deg: a * 180 / Math.PI, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], t0: q.burst + 0.2, t1: q.burst + 2, name: 'Caustic Waves from a Volatile Purge', tip: 'Each soaker\'s Purge sends three waves out: keep out of their lanes.' }); });
+          S.waves.push({ kind: 'purge', from: id, x: o[0], y: o[1], deg: a * 180 / Math.PI, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], warn: 1.5, t0: q.burst + 0.2, t1: q.burst + 2, name: 'Caustic Waves from a Volatile Purge', tip: 'Each soaker\'s Purge sends three waves out: keep out of their lanes.' }); });
         if (id === me) { const hitN = others.filter((q2) => lanes(p, base).some((u) => { const dx = q2[0] - p[0], dy = q2[1] - p[1], al = dx * u[0] + dy * u[1]; return al > 1 && al < 27 && Math.abs(dy * u[0] - dx * u[1]) < 3.4; })).length;
           if (hitN && once('pw' + q.i)) A.mistake('purge', 'Your Volatile Purge waves headed through ' + hitN + ' raider' + (hitN > 1 ? 's' : '') + '.', 'Walk to the edge of the quarter, away from the raid, before it bursts: then its three waves miss everyone.', 0); } }); }
       if (!cr(q.burst)) return; const near5 = (id) => GDZ_RAID.filter((o) => o !== id && pgDist(pos(o), pos(id)) <= P.PURGE);

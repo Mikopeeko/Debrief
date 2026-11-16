@@ -135,7 +135,7 @@ function checks(H, say) {
     dbg.P2.pick = { role: 'r', soak: 0, bite: 'no', kick: 0 }; const meX = dbg.P2.slotOf(dbg.P2.pick); dbg.at(402.4, meX, { seed: 3 }); const b1 = dbg.S.bites[0]; for (let i = 0; i < 400 && !(dbg.G.p3.bite[0] && dbg.G.p3.bite[0].done); i++) { dbg.pos = b1.stack.slice(); dbg.stepOwn(1); }
     if (!dbg.log.some((x) => /without being one of its soakers/.test(x))) bad('standing in a red circle that isn\'t yours isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
     if (!dbg.log.some((x) => /without a defensive/.test(x))) bad('soaking to the end without a defensive isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
-    const mid = dbg.S.F2(P.mel, 0); for (let i = 0; i < 140; i++) { dbg.pos = mid.slice(); dbg.stepOwn(1); } if (!dbg.log.some((x) => /Volatile Purge burst on \d+ raider/.test(x))) bad('a Purge burst on the stack spot, in the raid, isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
+    const mid = dbg.S.F2(P.mel, 0); for (let i = 0; i < 140; i++) { dbg.pos = mid.slice(); dbg.stepOwn(1); } if (!dbg.log.some((x) => /Volatile Purge (burst on|waves headed through) \d+ raider/.test(x))) bad('a Purge burst in the middle of the raid isn\'t a mistake (its burst or its waves): ' + dbg.log.join(' | ') + ' (check E)');
     // (Vicious Echoes not kicked by its kicker)
     const pkK = { role: 'r', soak: 0, bite: 'no', kick: 1 }; dbg.P2.pick = pkK; const meK = dbg.P2.slotOf(pkK); dbg.at(520, meK, { seed: 3 }); for (let i = 0; i < 260; i++) dbg.stepOwn(1);
     if (!dbg.log.some((x) => /didn't kick Vicious Echoes/.test(x))) bad('the Shrieker 1 kicker who never kicks gets no mistake: ' + dbg.log.join(' | ') + ' (check E)');
