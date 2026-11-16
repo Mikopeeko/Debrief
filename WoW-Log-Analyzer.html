@@ -74531,7 +74531,7 @@ function pg3d(host, A) {
 // Cry in 1.25 s, Thrash in 1.5 s, double hits). A big egg left until Hatching Doom ends hatches a Ravenous Doomscale whose Dread Roar, 6 to 9 s later
 // (2.5 s), wipes the raid)
 const PG_P2_T = { start: 166, gate: 167, doom: 174, doomEnd: 264, wardens: 175, molt: 176.6, gest: 180.1, clutch: 183.4, malice: 183.9, fangs: 196, solo: 206, five: 214, wdie: 218.3, shells: 219, set2: 235,
-  throwAt: 236, back: 243, bigUp: 257.5, bigN: [256, 258.5], bigIn: 267.5, hold: 15, s2hit: 241.6, s2die: 255.6, dsUp: 268, home: 278.5, rage: 288, heart: 294.5, heartEnd: 314.5, debris: [230, 270, 317], end: 318,
+  throwAt: 236, back: 243, bigUp: 257.5, bigN: [255.5, 257], bigIn: 267.5, hold: 15, s2hit: 241.6, s2die: 253.5, dsUp: 268, home: 278.5, rage: 288, heart: 294.5, heartEnd: 314.5, debris: [230, 270, 317], end: 318,
   rattle: [292.8, 305.5], spit: [203.4, 223.5, 243.6, 263.6],
   W2: { molt: 46, gest: 49.8, malice: 55.3 }, CRY: [7.8, 23.6, 39.4], THRASH: [16.6, 34.9], DSLIFE: 43.9, RBOIL: 25, RACID: 35.5, RACID2: 12, CHATCH: 20, ROAR: 6.5 };
 const PG_P2 = {
@@ -74644,7 +74644,7 @@ function pgP2Script(o) {
   const nFirst = side() < 0.5 ? 'E' : 'W'; S.bigAt = { E: { far: T.bigUp, close: T.bigN[nFirst === 'E' ? 0 : 1] }, W: { far: T.bigUp + 0.5, close: T.bigN[nFirst === 'W' ? 0 : 1] } }; S.nFirst = nFirst;
   // (both of a ledge's big eggs go in on one count (the 30 fastest kills: a median 0.2 s apart, 22 of 30 within 2 s; south 4:28.0, north 4:29.2); the ledge whose
   // healer went first counts first, about 4:29 and 4:31)
-  S.bigIn = { E: S.bigAt.E.close + 12.6, W: S.bigAt.W.close + 12.6 }; /* (the count waits for the north healer's 100-yard run: on the kills the north egg goes in 9.8 s after its pickup) */
+  S.bigIn = { E: S.bigAt.E.close + 10.5, W: S.bigAt.W.close + 10.5 }; /* (the count waits for the north healer's 100-yard run (on the kills the north egg goes in 9.8 s after its pickup), and comes before the 4:30 debris lands on the cauldron) */
   S.big = ['E', 'W'].flatMap((s) => ['far', 'close'].map((w) => { const p = L(s, P[w]); return { side: s, which: w, x: p[0], y: p[1] }; }));
   S.pits = { E: L('E', P.pit), W: L('W', P.pit) };
   // the Wardens (2:55): pulled across the line, Shadow Molt toward the eggs (3 s), Writhing Gestation (3 s), killed by the raid about 3:38
@@ -74862,7 +74862,7 @@ function pgP2(A) {
     G.p2 = { where: {}, wside: {}, lock: {}, wp: {}, teth: {}, kick: {}, gone: [], stun: {}, kickCd: -99, wardT: -99, big: S.big.map(() => ({ state: 'floor', who: null, at: null })), ds: {}, wd: {}, fan: [], tlog: [], missed: [], veins: [], once: new Set(), crossT: null, backT: null,
       // (the adds' health: the Wardens, the Clutches, the south eggs, the Doomscales (from when each climbs out), the first Doomscale's death (Revenge),
       // your hits on each Doomscale, who kicked what and when (the Interrupted labels), the backup kick, the Ravenous Doomscales)
-      whp: { E: 1, W: 1 }, wdead: { E: null, W: null }, farGo: {}, settled: { E: true, W: true }, w2: { E: {}, W: {} }, cl: {}, se: {}, dsS: {}, dsAt: {}, rev: null, dsHits: {}, intr: [], bk: null, bkSeen: 0, rav: [], acid: new Set(), esc: {} };
+      whp: { E: 1, W: 1 }, wdead: { E: null, W: null }, farGo: {}, settled: { E: true, W: true }, landT: {}, w2: { E: {}, W: {} }, cl: {}, se: {}, dsS: {}, dsAt: {}, rev: null, dsHits: {}, intr: [], bk: null, bkSeen: 0, rav: [], acid: new Set(), esc: {} };
     S.south.forEach((q) => { G.p2.se[q.id] = { state: 'egg' }; });
     GDZ_RAID.forEach((id) => { G.p2.where[id] = 'p0'; G.p2.wside[id] = null; });
     G.eggs = S.eggs.map((e) => ({ id: holder('egg', e.side, e.n), side: e.side, n: e.n, x: e.x, y: e.y, land: T.wardens, shell: T.shells + S.eggs.filter((q) => q.side === e.side && pgDist([q.x, q.y], S.pits[e.side]) > pgDist([e.x, e.y], S.pits[e.side])).length * 1.1, set: 0, state: 'floor', who: null, lock: 'Its shield holds until the Warden is dead: wait.' })); };
@@ -74893,7 +74893,7 @@ function pgP2(A) {
         if (id !== me && (j.side !== g.side || t < (g.back ? S.home[id] : S.cross[id]))) return; if (id !== me && !(t >= g.t0 && t <= g.t1)) return;
         const q = g.back && t < T.home ? home(id) : spiral(g.to, idx(id), 2.6), dst = nearFloor(q); if (id === me) { G.x = dst[0]; G.y = dst[1]; G.kb = null; A.clearTarget(); } else { G.bots[id].x = dst[0]; G.bots[id].y = dst[1]; G.bots[id].esc = null; }
         G.p2.lock[id] = g.to.slice();
-        if (!g.back) { G.p2.where[id] = 'L'; G.p2.wside[id] = g.side; } else { G.p2.where[id] = t < T.home ? 'p0' : 'p1'; G.p2.wside[id] = null; }
+        if (!g.back) { G.p2.where[id] = 'L'; G.p2.wside[id] = g.side; } else { G.p2.where[id] = t < T.home ? 'p0' : 'p1'; G.p2.wside[id] = null; G.p2.landT[id] = t; }
         if (id !== me) return;
         if (!g.back) { G.p2.crossT = t; if (g.side !== j.side) { if (once('side' + g.side + Math.floor(t / 20))) A.mistake('side', 'You took the ' + SD[g.side] + ' gate: your half is on the ' + SD[j.side] + ' ledge.', 'Your gate is the gold ring on your ledge\'s side of the platform. Step off and back into this ledge\'s gate to go back.', 0); } else if (t > T.wardens + 1 && once('late0')) A.mistake('late', 'You crossed late (' + clk(t) + '): your half was already on the Warden.', 'Walk into your gate as it opens at 2:47.', 0); else A.say('On the ' + SD[g.side] + ' ledge.'); }
         else if (G.p2.where[id] === 'p1') { G.p2.backT = t; if (t > T.rage && once('late1')) A.mistake('late', 'You came back late (' + clk(t) + ') for the heart burn.', 'Take your gate back at 4:38, as the tank brings the Doomscales.', 0); else A.say('Back by her: burn the heart.'); } }); });
@@ -75015,7 +75015,7 @@ function pgP2(A) {
       T.THRASH.forEach((o) => { const a1 = at + o, len = st.rev != null ? 1.5 : 3; S.dthrash.push({ ds: d.id, side: d.side, t0: a1 - len, at: a1, c: cast('ds', 'Doomscale: Desperate Thrash', a1 - len, a1, { ds: d.id, side: d.side, spell: 'thrash' }) }); }); });
     // (a Thrash about to start while its Doomscale is still being dragged waits until it's settled by its tank (on the kills the drag takes about 13 s and the
     // first Thrash comes as it ends), so its frontal never goes off in the middle of the raid's walk)
-    S.dthrash.forEach((f) => { if (f.t0 <= t || f.t0 > t + dt + 0.01) return; const c = G.p2.ds[f.ds]; if (c && !G.p2.settled[f.side] && (f.held = (f.held || 0) + 1) < 120) { const k = dt + 0.05; f.t0 += k; f.at += k; f.c.t0 += k; f.c.t1 += k; } });
+    S.dthrash.forEach((f) => { if (f.t0 <= t || f.t0 > t + dt + 0.01) return; const c = G.p2.ds[f.ds], crossing = GDZ_RAID.some((id) => S.job[id].side === f.side && (G.p2.where[id] === 'L' ? G.p2.big.every((b) => b.who !== id) && t >= S.home[id] - 1 : t - (G.p2.landT[id] == null ? -99 : G.p2.landT[id]) < 4)); if (c && (!G.p2.settled[f.side] || crossing) && (f.held = (f.held || 0) + 1) < 160) { const k = dt + 0.05; f.t0 += k; f.at += k; f.c.t0 += k; f.c.t1 += k; } });
     S.ds.forEach((d) => { const st = G.p2.dsS[d.id]; if (!st || st.dead != null || t < st.up + 1.5) return; st.hp -= (1 - shareOf(d.side) / 2) / T.DSLIFE * dt;
       if (st.hp > 0) return; st.dead = t; delete G.p2.ds[d.id]; if (G.tgt === d.id) G.tgt = null;
       S.casts.forEach((c) => { if (c.ds === d.id && c.t1 > t) { c.t1 = Math.max(c.t0, Math.min(c.t1, t)); if (c.t0 > t) c.t0 = c.t1 = -9; } });
@@ -75032,7 +75032,7 @@ function pgP2(A) {
   const spit = (t0, t) => { const me = A.me; T.spit.forEach((at, k) => { if (!(at > t0 && at <= t)) return;
     ['E', 'W'].forEach((s) => { const ids = P.half[s].filter((id) => G.p2.where[id] === 'L' && G.p2.wside[id] === s); if (!ids.length) return;
       const who = ids.includes(me) && k % 2 === 0 ? me : ids.filter((id) => id !== me)[(S.seed * 7 + k * 3 + (s === 'E' ? 1 : 0)) % Math.max(1, ids.length - (ids.includes(me) ? 1 : 0))] || ids[0], p = pos(who);
-      S.impacts.push({ x: p[0], y: p[1], r: 5, t0: t, at: t + 6.5, name: 'Virulent Spit', dmg: 40, color: '#7ddc3a', fill: '#5fbf2a', tip: 'A green swirl under you: step out of it before it lands (6.5 s).' });
+      S.impacts.push({ x: p[0], y: p[1], r: 4, t0: t, at: t + 6.5, name: 'Virulent Spit', dmg: 40, color: '#7ddc3a', fill: '#5fbf2a', tip: 'A green swirl under you: step out of it before it lands (6.5 s).' });
       if (who === me && !window.__pgAuto && A.big) A.big('Virulent Spit under you: step out of the green swirl!', '#7ddc3a'); }); }); };
   // ---- the small eggs broken out by the raid (Flex, Nov 16; the 30 fastest kills: the north eggs are hit from 3:03 as the raid cleaves the Clutches and the
   // Warden, their Hardened shields break about 3:22 (15 s before the Warden dies), each egg breaks open about 6 s after it dies; the two south eggs a ledge
@@ -75063,6 +75063,9 @@ function pgP2(A) {
     gates(t); kicks(t0, t); tethers(t0, t); eggs(t0, t); big(t0, t); fans(t0, t); rawlings(t0, t, dt); spit(t0, t);
     // (the Ravenous Doomscale's Dread Roar lands: everyone stunned, a big hit)
     G.p2.rav.forEach((r) => { if (r.roar > t0 && r.roar <= t) { GDZ_RAID.forEach((id) => { G.p2.stun[id] = t + 6; }); A.deb('stun', 6); A.hurt(40); if (!window.__pgAuto) A.say('Dread Roar: everyone stunned. A wipe on a real pull.', true); } });
+    // (your big egg's count: 3, 2, 1, in, in the middle of the screen, as a raid leader calls it)
+    if (!window.__pgAuto && A.big) { const bi = S.job[me] && S.job[me].big ? bigIx(S.job[me].side, S.job[me].big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null, at = bi >= 0 ? S.bigIn[S.job[me].side] : 0;
+      if (bg && bg.state === 'held' && bg.who === me) [3, 2, 1, 0].forEach((k) => { if (at - k > t0 && at - k <= t) A.big(k ? 'Big eggs in together: ' + k + '…' : 'Big eggs in: now!', '#e6b450'); }); }
     // (your kick, a second before its bar: a call in the middle of the screen)
     if (!window.__pgAuto && A.big) { const k = myKicks(t + 1)[0]; if (k && t >= k.at - 1 && t < k.at && once('kc' + k.key)) A.big('Kick ' + k.kind + ' in 1 s: E!', '#ffd34d'); }
     if (A.has('vein')) G.hp -= 3 * G.debs.vein.n * dt * (A.has('def') ? 0.5 : 1);
@@ -75090,7 +75093,7 @@ function pgP2(A) {
     if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
     const bt = j.big ? S.bigAt[j.side][j.big] : 0;
     if (bg && bg.state === 'floor' && t < T.doomEnd) return t < bt - 16 ? 'The ' + NS[j.big] + ' big egg waits at the ' + NS[j.big] + ' end of your ledge. Go to it at ' + clk(bt - 16) + ', pick it up at ' + clk(bt) + '.' : t < bt ? 'By the ' + NS[j.big] + ' big egg: pick it up in ' + Math.ceil(bt - t) + ' s, once the small eggs are in.' : 'Pick up the big egg now, before Hatching Doom ends (' + Math.ceil(T.doomEnd - t) + ' s).';
-    if (bg && bg.state === 'held') return 'Big egg: into the cauldron before it hatches (' + Math.ceil(20 - (t - bg.at)) + ' s).';
+    if (bg && bg.state === 'held') { const cnt = S.bigIn[j.side] - t; return cnt > 0 ? 'Big egg: to your spot in the cauldron ring (gold), in together with the other on the count in ' + Math.ceil(cnt) + ' s. Stay in the ring.' : 'Big egg: into the cauldron now, together!'; }
     if (dsOut(j.side) && t < T.home) return 'Doomscales: behind or beside them, never in front (their frontal goes at the tank).';
     if (t >= T.heart) return 'The heart is open: step out of the brown circles.';
     if (w === 'p1') return 'By her for the heart burn at 4:55. Keep out of the front of the Doomscales.';
@@ -75100,7 +75103,7 @@ function pgP2(A) {
     myKicks(t).forEach((k) => add(k.at, 'Your kick: ' + k.kind, '#b06bff'));
     const th = G.p2.teth[me]; if (th && th.br == null) add(th.solo ? T.solo : T.five, th.solo ? 'Your solo break' : 'Break with the five', '#ff8a6a'); else if (t < T.fangs) add(T.fangs, 'Grasping Fangs', '#ff8a6a');
     const e = G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (e) { add(e.shell, 'Your egg opens', '#f3c969'); add(T.throwAt, 'Small eggs in', '#f5d33a'); }
-    if (j.big) add(S.bigAt[j.side][j.big], 'Pick up the ' + NS[j.big] + ' big egg', '#e6b450');
+    if (j.big) { add(S.bigAt[j.side][j.big], 'Pick up the ' + NS[j.big] + ' big egg', '#e6b450'); add(S.bigIn[j.side], 'Your big egg: in together', '#e6b450'); } /* ("Your ..." bars get the 3-2-1 beeps) */
     T.debris.forEach((d) => add(d - 2, 'Falling Debris', '#c8a36a')); add(S.home[me], 'Back to her', '#c084ff'); add(T.heart, 'Heart open', '#ff8a5a'); if (!dsOut(j.side)) add(dsNext(j.side), 'Doomscales', '#c9d98a'); add(T.clutch, 'Clutches: kill them', '#c38bff');
     return L0.sort((a, b) => a.at - b.at).slice(0, 3); };
   const acts = () => '<div class="pg-act" data-a="kick"><b>E</b><span>Kick</span><i></i></div>';
