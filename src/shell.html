@@ -20830,11 +20830,10 @@ html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP b.mpr-dps { color
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP em.rqc-pc.ok,html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP span.rcb-d > em { color: var(--muted) !important; }
 /* a little behind is white, only the worst behind is red */
 html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(#mptCP, #mptCCv) :is(.mpt-vs, .gbx-v).mpt-a { color: #eef0f3 !important; }
-/* Route: the score's numbers white (its bars keep their colour), trash plain and bosses gold, "never went off" in grey */
+/* Route: the score's numbers white (its bars keep their colour), trash plain and bosses gold ("never went off" in Know this dungeon is green again since Nov 16: a good result, Flex: "the page needs some color coding again") */
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCM :is(b.mrs-p, b.mrs-tp) { color: #eef0f3 !important; }
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCC .mpt-fxn.mpt-c-trash { color: #eef0f3 !important; background: rgba(255,255,255,.08) !important; }
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpt-ktr > h4 { color: #eef0f3 !important; }
-html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 span.mpt-g { color: var(--muted) !important; }
 }
 /* Mythic+, Route is the main page (Nov 16, Flex: "i feel like the route tab should just be the main page, and the debrief tab gets deleted", "Maybe the
 section above the rotation/replay could be the summary for what you have selected. Either all pulls, or the single pull"). The top of Route (#mpxSel,
@@ -21250,13 +21249,6 @@ html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > b { color: #fff !import
 html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > .mpx-twv { color: #9ca3ad !important; }
 html:not(.mpcard) body #view#view#view #mptCC .mpx-twb > small { display: block !important; font: 500 13.5px var(--body) !important; color: #b3b9c4 !important; }
 html:not(.mpcard) body #view#view#view #mptCC .mpx-twme > .linkbtn { flex: none !important; }
-/* Know this dungeon: folded shut, the title row opens it */
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5:not(.mpx-open) > :not(.mpt-chk) { display: none !important; }
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk { display: flex !important; align-items: baseline !important; cursor: pointer !important; }
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5:not(.mpx-open) > .mpt-chk { margin-bottom: 0 !important; }
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk::after { content: 'Open \25B8' !important; margin-left: auto !important; font: 600 13px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: #e6c27a !important; }
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5.mpx-open > .mpt-chk::after { content: 'Close \25B4' !important; }
-html:not(.mpcard) body #view#view#view #mptBody > #mptC5 > .mpt-chk:hover::after { color: #f3d79b !important; }
 /* Route: its score as one slim strip */
 html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b { grid-template-columns: 104px minmax(0, 1fr) !important; gap: 14px !important; padding: 12px 16px !important; margin: 4px 0 12px !important; }
 html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-h { display: none !important; }
@@ -21267,6 +21259,47 @@ html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > span
 html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l .rcb-ring > span > small { font: 600 13px var(--body) !important; color: var(--text) !important; white-space: nowrap !important; }
 html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-l::after { content: 'Route score' !important; display: block !important; margin-top: 2px !important; font: 500 12.5px var(--body) !important; color: #9ca3ad !important; }
 html:not(.mpcard) body #view#view#view #mptCM .mrs.mrs-b .mrs-r > .mrs-tk { margin: 8px 0 0 !important; font-size: 14px !important; }
+}
+/* Know this dungeon, marked from the key's log (Nov 16, Flex: "its so good at looking at what went well/wrong at a glance. I think the page needs some color
+coding again"): second on the Summary and open. Each line has a square mark: green done, red missed, amber worth a look, grey the log can't tell. Each card's
+top edge is its worst colour. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 6px 10px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum > b { display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 3px 10px !important; font: 600 14px var(--body) !important; border: 1px solid !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum > b.mpk-y { color: var(--good) !important; background: var(--good-bg) !important; border-color: color-mix(in srgb, var(--good) 45%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum > b.mpk-n { color: #ff8f87 !important; background: var(--bad-bg) !important; border-color: color-mix(in srgb, var(--bad) 55%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum > b.mpk-s { color: var(--warn) !important; background: var(--warn-bg) !important; border-color: color-mix(in srgb, var(--warn) 45%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-sum > .mpk-lg { font: 500 13px var(--body) !important; color: var(--faint) !important; }
+/* the cards: a tile each, the top edge in the card's worst colour, a faint wash of it */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-know { gap: 12px !important; margin-bottom: 12px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c { padding: 11px 14px 12px !important; background: rgba(255,255,255,.025) !important; border: 1px solid rgba(255,255,255,.07) !important; border-top: 3px solid rgba(255,255,255,.16) !important; border-radius: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c.mpk-ey { border-top-color: var(--good) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--good) 9%, transparent), transparent 80px), rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c.mpk-es { border-top-color: var(--warn) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 9%, transparent), transparent 80px), rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c.mpk-en { border-top-color: var(--bad) !important; background: linear-gradient(180deg, color-mix(in srgb, var(--bad) 10%, transparent), transparent 80px), rgba(255,255,255,.025) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c > h4 { margin: 0 0 2px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-c > .mpt-k { margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 p.mpk-bh { margin: 0 0 8px !important; font: 500 13.5px var(--body) !important; color: var(--muted) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 p.mpk-bh > b { color: #eef0f3 !important; font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 em.mpk-t { font-style: normal !important; font-weight: 600 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 em.mpk-t.mpk-y { color: var(--good) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 em.mpk-t.mpk-s { color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 em.mpk-t.mpk-n { color: #ff8f87 !important; }
+/* a line: its mark, then the plan, then what the log says in the mark's colour */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 ul.mpk-ul { list-style: none !important; margin: 0 !important; padding: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-l { display: flex !important; gap: 8px !important; align-items: flex-start !important; padding: 2px 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-l > span { min-width: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 i.mpk-m { flex: none !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 16px !important; height: 16px !important; margin-top: 2px !important; font: 700 12px/1 'Segoe UI Symbol', var(--body) !important; font-style: normal !important; color: var(--faint) !important; border-radius: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-y > i.mpk-m { color: var(--good) !important; background: color-mix(in srgb, var(--good) 20%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-n > i.mpk-m { color: #ff8f87 !important; background: color-mix(in srgb, var(--bad) 24%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-s > i.mpk-m { color: var(--warn) !important; background: color-mix(in srgb, var(--warn) 20%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 em.mpk-r { font-style: normal !important; font-weight: 500 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-y em.mpk-r { color: var(--good) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-n em.mpk-r { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-s em.mpk-r { color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 li.mpk-q em.mpk-r { color: var(--muted) !important; }
+/* the kick, dispel and purge cards under the bosses, side by side */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-kl3 { gap: 12px !important; padding-top: 0 !important; border-top: 0 !important; }
+@media (max-width: 700px) { html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpk-kl3 { grid-template-columns: minmax(0, 1fr) !important; } html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptC5 .mpt-ktr ul { columns: 1 !important; } }
 }
 </style>
 </body>

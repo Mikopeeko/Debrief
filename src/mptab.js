@@ -989,7 +989,7 @@ const mpxDefIc = (L) => '<span class="bh-di">' + (L || []).slice(0, 3).map((d) =
 // (Big hits' grids are all open on the website and don't fold: one opened and two shut read as three different things (Flex, Nov 14))
 document.addEventListener('click', (e) => { if (MPC_ON) return; const s = e.target.closest && e.target.closest('#mptCH .bh-hit > summary'); if (s && !e.target.closest('button, a')) e.preventDefault(); });
 // (Players and Dungeon are tabs of their own on the website, so their one part is always open and its Hide switch is gone)
-const mpxOpen = () => { if (MPC_ON) return; document.querySelectorAll('#mptC4 > details.mpt-fold, #mptC5 > details.mpt-fold').forEach((d) => { d.open = true; }); try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove(); mpxCmpMove(); mpxRowOn(); mpxTwPaint(); const k5 = document.querySelector('#mptC5 > .mpt-chk'); if (k5 && !k5.hasAttribute('role')) { k5.setAttribute('role', 'button'); k5.tabIndex = 0; k5.setAttribute('aria-expanded', String(k5.parentNode.classList.contains('mpx-open'))); } } catch (e) { console.error(e); } };
+const mpxOpen = () => { if (MPC_ON) return; document.querySelectorAll('#mptC4 > details.mpt-fold, #mptC5 > details.mpt-fold').forEach((d) => { d.open = true; }); try { mpxBh(); mpxBhFold(); mpxSelPaint(); mpxAllMove(); mpxCmpMove(); mpxRowOn(); mpxTwPaint(); } catch (e) { console.error(e); } };
 // (Summary's tab is gone and Report card opens the key (Nov 15, Flex: "What if we just merge some of summary with report card, and make report card the
 // opening tab"): every mistake, kind by kind, with Big hits inside it, is a panel of its own under the Report card. Summary still draws them; the elements
 // move after each draw (a repaint of the Report card replaces only #mptCP, so the panel after it stays). A key with no timer has no fold: its Mistakes box
@@ -1015,7 +1015,7 @@ const mpxMissed = (R, n) => { const m = R._mxk || (R._mxk = (() => { const c = {
 const mpxKickCell = (R, p) => { const l = MPC_ON ? 0 : mpxMissed(R, p.name); return '<span class="gbx-s mpt-gxn' + (p.kicks || l ? '' : ' mpt-g0') + '"' + (l ? ' tabindex="0"' + mpT1('<b>' + esc(p.name) + '</b><br>' + plural(p.kicks, 'kick') + '. ' + plural(l, 'must-kick cast') + ' went off with their kick ready.') : '') + '>' + p.kicks + (l ? ' <small class="mpt-t2k">(' + l + ')</small>' : '') + '</span>'; };
 // (a jump that used to scroll to a chapter opens that chapter's tab first: Your part's tiles, Big hits' own links)
 const MPX_BYID = { mptCD: 'map', mptCCv: 'rep', mptBand: 'map', mptCX: 'rt', mptCH: 'rt', mptCG: 'gra', mptCM: 'rt', mptC4: 'rep', mptPlayers: 'rep', mptCP: 'rep', mptC5: 'map', mptKnow: 'map', mptCR: 'rot', mptCC: 'map' };
-const mpxGoId = (id) => { if (!MPC_ON && (id === 'mptC5' || id === 'mptKnow')) mpxKnowOpen(true); /* (a link to the dungeon opens its fold) */ if (!MPC_ON && id === 'mptCH') { mpxMis('close'); return; } /* (a link to the big hits: Debrief's close calls, opened; Big hits and Survival are off the website since Nov 15) */ if (!MPC_ON && MPX_BYID[id]) { mpxView(MPX_BYID[id]); if (id === 'mptC4' || id === 'mptPlayers') setTimeout(() => { const t = document.querySelector('#mptCP .rcb-tbl'); if (t) t.scrollIntoView({ block: 'start' }); }, 0); /* (the players table is off the website's tab: its place is the ranked group) */ } };
+const mpxGoId = (id) => { if (!MPC_ON && id === 'mptCH') { mpxMis('close'); return; } /* (a link to the big hits: Debrief's close calls, opened; Big hits and Survival are off the website since Nov 15) */ if (!MPC_ON && MPX_BYID[id]) { mpxView(MPX_BYID[id]); if (id === 'mptC4' || id === 'mptPlayers') setTimeout(() => { const t = document.querySelector('#mptCP .rcb-tbl'); if (t) t.scrollIntoView({ block: 'start' }); }, 0); /* (the players table is off the website's tab: its place is the ranked group) */ } };
 // (a tab picked from further down the page starts at its top)
 // ---------- the key page in the raid review's flow, with its own look (Nov 14; Flex, on the page that copied the raid review's look: "I dont want it to
 // look or resemble the raid review, but have a similar flow to it. Similar tabs and stuff like that. Summary tab, rotation tab, graphs tab, report card,
@@ -1802,7 +1802,7 @@ function mpHtml(it, R, fx) {
     '<div class="mpt-grp">' + R.people.slice().sort(mpByRole).map((p) => { const sid = mpSpecId(p.spec, p.cls), ic = typeof NDZ_SPECIC !== 'undefined' && NDZ_SPECIC[sid] ? NDZ_SPECIC[sid] : 'inv_misc_questionmark';
       return '<span class="mpt-gm" style="color:' + mpCC(p.cls) + '"' + mpT1(esc(p.spec + ' ' + ((E.CLASSES[p.cls] || [])[0] || ''))) + '><img src="' + whIcon(ic) + '" alt="" loading="lazy" onerror="this.remove()"><b>' + esc(p.name) + '</b></span>'; }).join('') + '</div></div></div>';
   if (!C) return mpxKey(ban, '<p class="mpt-note">' + (run.left || !run.timeMs ? 'This key was left before the end, so there\'s no timer to judge. Everything that happened is below.' : 'Debrief doesn\'t know this dungeon\'s timer yet. Everything that happened is below.') + '</p>' + mpBand(R, fx, '', mpxDigest(R, F))) + mpxGraphs(R) + mpJumpBar(R, false) + mpBigChap(R) +
-    mpChap('mptCM', 'The route', 'every pull on the map, and where the mistakes were', mpRPFold(R, null, mpMapHtml(R, null, ''))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
+    mpChap('mptCM', 'The route', 'every pull on the map, and where the mistakes were', mpRPFold(R, null, mpMapHtml(R, null, ''))) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') + mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', MPC_ON ? 'for your next key' : 'each boss\'s plan, and how this key went', mpKnowHtml(R, true, fx));
   // what gets you the next level
   const T = ck.time, P = ck.par, lv = ck.up, tgt = lv === 0 ? P : lv === 1 ? P * 0.8 : lv === 2 ? P * 0.6 : null, need = tgt != null ? Math.max(1, Math.round(T - tgt)) : 0; /* (as the timer shows it: 24:06 against 24:00 is 6 s) */
   const head = lv === 0 ? 'What gets you in time' : lv === 3 ? 'What would save the most time' : 'What gets you +' + (lv + 1);
@@ -1939,9 +1939,9 @@ function mpHtml(it, R, fx) {
   const fixH = MPC_ON ? '' : mpxFix(fixW ? null : fix1, fixW || (waiting && tgt != null), true, fixW ? null : fixX); if (!MPC_ON && R._sx) { R._sx.fix = fixH; R._sx.fixC = fixW || !fix1 ? '' : fix1[0].c || ''; R._sx.fx = fixW || !fix1 ? null : { f: fix1[0], went: fix1[1], x: fixX }; R._sx.fxW = !R._sx.fx && !!(fixW || (waiting && tgt != null)); } /* (Fix first opens the Report card too, under its strip; fixC is its kind) */
   const scoreH = MPC_ON ? scoreT : heroH + fixH + mpxGlance(bh.tl, R, F, fixW ? null : fix1);
   if (!MPC_ON) return mpxKey(ban, scoreH + band) + mpxCmp(R, fx, fixes + behindH) + mpxGraphs(R) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'The route', 'every pull on the map, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
-    mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
+    mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', MPC_ON ? 'for your next key' : 'each boss\'s plan, and how this key went', mpKnowHtml(R, true, fx));
   return mpChap('mptC1', 'The key', '', ban + '<div class="mpt-ksum">' + keyLine.replace(/<\/p>$/, mpLastTime(it, R) + '</p>') + stats + '</div>' + band) + mpJumpBar(R, true) + mpBigChap(R) + mpChap('mptCM', 'The route', 'every pull on the map, and where the mistakes were', mpRPFold(R, F, mpMapHtml(R, F, bh.tl), waiting)) + (MP_ROT_ON ? (MP_RK_OLD ? mpChap('mptCR', 'Rotation', 'single target and AoE, over the whole key', mpRkHtml(R)) : mpChap('mptCR', 'Rotation', 'the whole run', mpRwHtml(R))) : '') +
-    mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', 'for your next key', mpKnowHtml(R, true));
+    mpChap('mptC4', 'Your group', 'kicks, deaths and each player', mpGroup(R, fx, waiting)) + mpChap('mptC5', 'Know this dungeon', MPC_ON ? 'for your next key' : 'each boss\'s plan, and how this key went', mpKnowHtml(R, true, fx));
 }
 // (five chapters (Nov 2, the Design studio's chapters.md, Flex: "the page is lacking depth. Maybe find a way to separate the information so its
 // more readable in sections", then "does it have depth like my other pages do?"): each one the site's own panel, the finish Debriefing's panels
@@ -2167,17 +2167,14 @@ function mpxTwPaint() { if (MPC_ON || typeof document === 'undefined') return; c
   if (fr) { const own = name === mpMine(R), d = document.createElement('div'); d.className = 'mpx-twme';
     d.innerHTML = '<span class="mpx-twk">' + (own ? 'Your one thing' : esc(p.name) + '\'s one thing') + '</span><span class="mpx-twb"><b>' + (fr.lh || esc(fr.l)) + '</b>' + (fr.v ? ' <span class="mpx-twv">· ' + esc(fr.v) + '</span>' : '') + '<small>' + (fr.note ? esc(fr.why || fr.note) : 'Goal: ' + esc(fr.rule)) + '</small></span><button type="button" class="linkbtn" data-mprnme="' + esc(p.name) + '">' + (own ? 'Your checklist' : 'Their checklist') + ' ›</button>';
     sec.appendChild(d); } } /* (at the section's foot, under the stretches) */
-// (Know this dungeon, the Summary's foot: folded shut, one click opens it; it is for the next key, not about this one. A link to it opens it)
-const mpxKnowOpen = (on) => { const c = document.getElementById('mptC5'); if (!c) return; c.classList.toggle('mpx-open', on); const k = c.querySelector(':scope > .mpt-chk'); if (k) k.setAttribute('aria-expanded', String(on)); };
-document.addEventListener('click', (e) => { if (MPC_ON) return; const k = e.target.closest && e.target.closest('#mptC5 > .mpt-chk'); if (!k) return; e.preventDefault(); mpxKnowOpen(!k.parentNode.classList.contains('mpx-open')); });
-document.addEventListener('keydown', (e) => { if (MPC_ON || (e.key !== 'Enter' && e.key !== ' ')) return; const k = e.target.closest && e.target.closest('#mptC5 > .mpt-chk'); if (!k) return; e.preventDefault(); mpxKnowOpen(!k.parentNode.classList.contains('mpx-open')); });
+// (Know this dungeon was folded at the Summary's foot from c0b2de10 to the next round; Nov 16, Flex: "I really think this section should be more highlighted": it is open, second on the Summary)
 const mpxDebPaint = (R) => { if (MPC_ON) return; const el = document.getElementById('mptCD'), it = MP.item; if (!el || !it || MP.R[mpK(it)] !== R) return; el.outerHTML = mpxDeb(R, MP.fastOf && MP.fastOf.k === mpK(it) ? MP.fastOf : null); try { refreshIcons(); } catch (e) { /* (icons load later) */ } };
 // (the Players tab's two parts as a row under the bar: Report card and Rotation; one player picked in the bar for both)
 const mpxSubOk = (b) => MPX_SUB.filter(([v]) => !MPX_NEED[v] || b.querySelector(':scope > #' + MPX_NEED[v])); /* (the parts this key has; the Players tab opens on the first) */
 const mpxSubRow = (b) => '<div class="mpx-sub" role="tablist" aria-label="Players">' + mpxSubOk(b).map(([v, l]) => '<button type="button" role="tab" data-mpcv="' + v + '">' + l + '</button>').join('') + '</div>';
 // (after each draw: where the time went sits under Route's map, against top players under the Report card)
 function mpxCmpMove() { if (MPC_ON) return; const cm = document.getElementById('mptCM'), cc = document.getElementById('mptCC'), cp = document.getElementById('mptCP'), cv = document.getElementById('mptCCv');
-  if (cm && cc && cm.nextElementSibling !== cc) cm.after(cc); if (cp && cv && cp.nextElementSibling !== cv) cp.after(cv); }
+  const c5 = document.getElementById('mptC5'), ca = c5 || cm; if (cm && c5 && cm.nextElementSibling !== c5) cm.after(c5); if (ca && cc && ca.nextElementSibling !== cc) ca.after(cc); /* (Know this dungeon second on the Summary, under The key (Nov 16, Flex: "this section should be more highlighted"); Route hides it) */ if (cp && cv && cp.nextElementSibling !== cv) cp.after(cv); }
 // (Survival was a part of the Players tab from Nov 15 (Flex: "what if we made a new tab, for survivability"); the same day it went (Flex, Nov 15: "I feel like the survival section needs to just be removed. Its clutter at this point", then "keep survival in graphs though"). Graphs keeps
 // its Survival (mpgSurv: defensives, Healthstones, potions and self-heals, combat potions, health over the key); the close calls, deaths and avoidable hits are on
 // Debrief, and each player's defensives, Healthstones and potions are graded on their Report card)
@@ -3261,9 +3258,65 @@ function mpRating(R, ck, it) {
   if (up) lines.push('From +12, each key level is worth 15 points. Finishing faster adds up to 15 more, full at 60% of the timer.', upLine);
   return { pts, est, tip: '<b>Rating points</b><br>' + lines.join('<br>') };
 }
+// (Know this dungeon on the website, marked from the key's own log (Nov 16, Flex with a picture of it: "I really think this section should be more
+// highlighted, its so good at looking at what went well/wrong at a glance. I think the page needs some color coding again"). Every line of the plan gets a
+// mark, and only with proof. A green ✓ is a must-kick that never went off, or a debuff that landed and was never left on too long. A red ✗ is a must-kick that
+// went off with a kick ready, a hit, death or close call from the spell the line names, or a debuff left on too long. An amber ! is a medium-danger kick that
+// went off. A grey dot means the log can't tell. Each boss's card says its fight against the fast run's and any wipes or deaths; its edge takes the worst
+// colour in it. The line on top counts each spell once, then the deaths, wipes and slow boss fights (amber or red against the fast run). It sits second on the Summary, open (it was folded at the foot))
+const MPK_W = { u: -2, q: -1, y: 0, s: 1, n: 2 }, MPK_MK = { y: '✓', n: '✗', s: '!', q: '•', u: '•' };
+function mpxKnow(R, K, F) {
+  const D = mpxData(R, F), lc = mpLc, off = new Map(), seen = new Map(), tot = { dead: 0, wipe: 0, slow: 0 };
+  for (const p of R.pulls) for (const t of (p.through || []).concat(p.minor || [])) off.set(lc(t.spell), (off.get(lc(t.spell)) || 0) + 1);
+  const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [lc(s), v])), SP = new Map((R.spam || []).map((x) => [lc(x.spell), x])), KK = new Set(K.k.map(lc));
+  const worse = (a, b) => (!a ? b : !b ? a : MPK_W[b] > MPK_W[a] ? b : a), note = (k, st) => { if (st === 'y' || st === 's' || st === 'n') seen.set(k, worse(seen.get(k), st)); };
+  const who = (L) => { const u = [...new Set(L)]; return u.length <= 3 ? mpAnd(u.map((n) => mpWho(R, n))) : u.slice(0, 2).map((n) => mpWho(R, n)).join(', ') + ' and ' + (u.length - 2) + ' more'; };
+  const kickJ = (s) => { const n = off.get(lc(s)) || 0, tr = TB.get(lc(s)) || 'high', sp = SP.get(lc(s));
+    if (tr === 'low') return { st: 'q', r: 'low danger' + (sp ? ': kicked ' + sp.kicked + ' of ' + sp.casts : '') }; /* (a low-danger spell going off is no mistake) */
+    if (!n) return { st: 'y', r: 'never went off' };
+    return { st: tr === 'high' ? 'n' : 's', r: 'went off ' + (n === 1 ? 'once' : n + ' times') + ' with a kick ready' + (tr === 'high' ? '' : ' (' + tr + ' danger)') }; };
+  const spJ = (s) => { const k = lc(s), r = []; let st = null;
+    if (KK.has(k)) { const j = kickJ(s); st = j.st; r.push(j.r); }
+    const A = D.avoid.filter((a) => lc(a.spell) === k); if (A.length) { st = worse(st, 'n'); const t = A.reduce((a, x) => a + (x.n || 1), 0); r.push('hit ' + who(A.map((a) => a.who)) + (t > A.length ? ' (' + t + ' hits)' : '')); }
+    const DD = D.death.filter((d) => lc(mpxTo(d.d && d.d.to)) === k); if (DD.length) { st = worse(st, 'n'); r.push('killed ' + who(DD.map((d) => d.who))); }
+    const CL = D.close.filter((c) => lc(c.spell) === k); if (CL.length) { st = worse(st, 'n'); r.push('left ' + who(CL.map((c) => c.who)) + ' under 15% health'); }
+    const DS = D.disp.filter((d) => lc(d.n) === k); if (DS.length) { st = worse(st, 'n'); r.push('stayed on ' + who(DS.map((d) => d.who)) + ' too long'); }
+    if (st) note(k, st); return st ? { st, r: r.join(' · ') } : null; };
+  const lineJ = (x) => { let st = null; const r = []; for (const m of String(x).matchAll(/\[\[(.+?)\]\]/g)) { const j = spJ(m[1]); if (j) { st = worse(st, j.st); r.push(j.r); } } return st ? { st, r: r.join(' · ') } : null; };
+  const li = (body, j) => { const st = j ? j.st : 'u'; return '<li class="mpk-l mpk-' + st + '"><i class="mpk-m" aria-hidden="true">' + MPK_MK[st] + '</i><span>' + body + (j && j.r ? ' <em class="mpk-r">' + j.r + '</em>' : '') + '</span></li>'; };
+  const card = (cls, h, sub, lis, e) => '<div class="mpt-kb2' + cls + ' mpk-c mpk-e' + (e === 'y' || e === 's' || e === 'n' ? e : 'u') + '"><h4>' + h + '</h4>' + (sub ? '<p class="mpk-bh">' + sub + '</p>' : '') + '<ul class="mpk-ul">' + lis + '</ul></div>';
+  const tag = (st, t) => '<em class="mpk-t mpk-' + st + '">' + t + '</em>';
+  // (each boss of the plan, found in the run by a shared word of its name ("Dazar, the First King" is the run's "King Dazar"), else by its place)
+  const kw = (s) => lc(s).split(/[^a-z']+/).filter((w) => w.length >= 4), runB = []; R.pulls.forEach((p) => { if (p.boss && !runB.includes(p.boss)) runB.push(p.boss); });
+  const findB = (n, j) => runB.find((b) => kw(b).some((w) => kw(n).includes(w))) || (runB.length === K.b.length ? runB[j] : null);
+  const bossH = (bn) => { if (!bn) return null; const P = R.pulls, ks = P.map((p, i) => i).filter((i) => P[i].boss === bn), kill = ks.find((i) => P[i].kill !== false), wipes = ks.filter((i) => P[i].kill === false).length;
+    const dead = ks.reduce((a, i) => a + (P[i].deaths || []).length, 0), p = kill != null ? P[kill] : null, fq = p && F ? (F.pulls || []).find((x) => x.boss === bn && x.kill !== false) : null, b = []; let st = null;
+    if (!p) { st = 'n'; b.push(tag('n', 'not killed')); }
+    else { b.push('<b>' + mpMM(p.dur) + '</b> fight');
+      if (fq && fq.dur > 0) { const d = p.dur - fq.dur, q = d / fq.dur; st = q <= 0.1 ? 'y' : q <= 0.25 ? 's' : 'n'; b.push(tag(st, Math.abs(d) < 5 ? 'as quick as the fast run' : (d > 0 && st === 'y' ? 'only ' : '') + mpMM(Math.abs(d)) + (d > 0 ? ' slower' : ' quicker') + ' than the fast run')); if (st !== 'y') tot.slow++; } }
+    if (wipes) { st = 'n'; tot.wipe += wipes; b.push(tag('n', plural(wipes, 'wipe'))); }
+    if (dead) { st = 'n'; tot.dead += dead; b.push(tag('n', plural(dead, 'death'))); }
+    return { st, h: b.join(' · ') }; };
+  const bosses = K.b.map(([n, L], j) => { const H = bossH(findB(n, j)); let e = H ? H.st : null; const lis = L.map((x) => { const J = lineJ(x); if (J) e = worse(e, J.st); return li(mpKm(x), J); }).join('');
+    return card('', esc(n), H ? H.h : '', lis, e); }).join('');
+  const tDead = R.pulls.reduce((a, p) => a + (p.boss ? 0 : (p.deaths || []).length), 0); let te = tDead ? 'n' : null; tot.dead += tDead;
+  const tl = K.t.map((x) => { const J = lineJ(x); if (J) te = worse(te, J.st); return li(mpKm(x), J); }).join('');
+  const trash = card(' mpt-ktr', 'Trash', tDead ? tag('n', plural(tDead, 'death')) : '', tl, te);
+  // (the kick, dispel and purge lists: each spell marked; a debuff judged only when it landed)
+  let ke = null; const kl = K.k.map((s) => { const J = kickJ(s); note(lc(s), J.st); ke = worse(ke, J.st); return li('<b class="mpt-ab">' + esc(s) + '</b>', J); }).join('');
+  const DL = mpDisp(R, F).list; let de = null;
+  const dl = K.d.map((s) => { const L = DL.filter((o) => lc(o.n) === lc(s)), lg = L.filter((o) => o.long).length, J = !L.length ? null : lg ? { st: 'n', r: 'left on too long ' + (lg === 1 ? 'once' : lg + ' times') } : { st: 'y', r: 'never left on too long' };
+    if (J) { note(lc(s), J.st); de = worse(de, J.st); } return li('<b class="mpt-ab">' + esc(s) + '</b>', J); }).join('');
+  const list = (a) => a.map((s) => esc(s)).join(', ').replace(/, ([^,]*)$/, ' and $1');
+  const body = '<div class="mpt-know mpk-know">' + bosses + trash + '</div><div class="mpt-kl3 mpk-kl3">' + card('', 'Kick', '', kl, ke).replace('<h4>Kick</h4>', '<p class="mpt-k">Kick</p>') +
+    (K.d.length ? card('', 'Dispel', '', dl, de).replace('<h4>Dispel</h4>', '<p class="mpt-k">Dispel</p>') : '') + (K.p.length ? '<div class="mpt-kb2 mpk-c mpk-eu"><p class="mpt-k">Purge or soothe</p><p>' + list(K.p) + '</p></div>' : '') + '</div>' +
+    '<p class="mpt-sm">Healers have no kick in Midnight, except Restoration Shamans.</p>';
+  const c = { y: 0, s: 0, n: 0 }; for (const st of seen.values()) c[st]++;
+  const intro = c.y + c.s + c.n + tot.dead + tot.wipe + tot.slow ? '<span class="mpk-sum">' + (c.y ? '<b class="mpk-y">' + MPK_MK.y + ' ' + c.y + ' went to plan</b>' : '') + (c.n ? '<b class="mpk-n">' + MPK_MK.n + ' ' + c.n + ' didn\'t</b>' : '') + (tot.dead ? '<b class="mpk-n">' + MPK_MK.n + ' ' + plural(tot.dead, 'death') + '</b>' : '') + (tot.wipe ? '<b class="mpk-n">' + MPK_MK.n + ' ' + plural(tot.wipe, 'wipe') + '</b>' : '') + (c.s ? '<b class="mpk-s">! ' + c.s + ' worth a look</b>' : '') + (tot.slow ? '<b class="mpk-s">! ' + plural(tot.slow, 'slow boss fight') + '</b>' : '') + '<span class="mpk-lg">' + MPK_MK.u + ' grey: the log can\'t tell</span></span>' : '';
+  return { intro, body, c, tot }; }
 // (know this dungeon: each boss's plan, the trash tips, and what to kick, dispel and purge, with how often each must-kick went off with a kick
 // ready in this key: high danger red, medium grey. Folded at the end, like the other reference parts)
-function mpKnowHtml(R, inCh) {
+function mpKnowHtml(R, inCh, fx) {
   const K = MP_KNOW[mpLc(R.run.dungeon)]; if (!K) return '';
   const off = new Map(); for (const p of R.pulls) for (const t of (p.through || []).concat(p.minor || [])) off.set(mpLc(t.spell), (off.get(mpLc(t.spell)) || 0) + 1);
   const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [mpLc(s), v])), SP = new Map((R.spam || []).map((x) => [mpLc(x.spell), x]));
@@ -3278,7 +3331,8 @@ function mpKnowHtml(R, inCh) {
     '<div class="mpt-kl3"><div><p class="mpt-k">Kick</p><ul>' + kicks + '</ul></div>' + (K.d.length ? '<div><p class="mpt-k">Dispel</p><p>' + list(K.d) + '</p></div>' : '') + (K.p.length ? '<div><p class="mpt-k">Purge or soothe</p><p>' + list(K.p) + '</p></div>' : '') + '</div>' +
     '<p class="mpt-sm">Healers have no kick in Midnight, except Restoration Shamans.</p>';
   const W = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'], cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  return mpSec('Know this dungeon', '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', body, R._prep ? '' : 'mptKnow', { fold: !R._prep, noTitle: !!inCh });
+  const J = !MPC_ON && !R._prep && (R.pulls || []).length ? mpxKnow(R, K, fx && fx.R ? fx.R : null) : null; /* (the website's key page: each line marked from the log, Nov 16) */
+  return mpSec('Know this dungeon', (J && J.intro) || '<b>' + cap(W[K.b.length] || String(K.b.length)) + ' bosses</b>, <b>' + (W[K.k.length] || K.k.length) + ' spells to kick</b>, and a plan for each boss.', J ? J.body : body, R._prep ? '' : 'mptKnow', { fold: !R._prep, noTitle: !!inCh });
 }
 
 // ---------- your route (step 3, Nov 1; the Design studio's route mockup, Flex: "Yes, the map dots"; enemy counts from Raider.IO, Flex's pick) ----------
