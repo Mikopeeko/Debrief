@@ -53,7 +53,7 @@ function pgUlScript(o) {
   // (0:15 to 0:19, 1:24 to 1:28), all on one tank: the off tank first, then the tank who took the first Mother's Wrath. The old Wretch dies as the new one lands.
   // (the guide: the first image rises on her tail's side, so the raid knows early where the coils will be)
   const IMG = [UL_EDGE.NW, UL_EDGE.SE];
-  S.wretches = [{ id: 'w1', cast: 1.8, land: 3, awake: 23, dies: 73, img: FT(IMG[0], 15), beam: 15, tank: 't2' }, { id: 'w2', cast: 70.8, land: 72, awake: 92, dies: 999, img: IMG[1], beam: 84, tank: S.herTank(27) }];
+  S.wretches = [{ id: 'w1', cast: 1.8, land: 3, awake: 23, dies: 73, img: FT(IMG[0], 15), beam: 15, tank: 't2' }, { id: 'w2', cast: 70.8, land: 72, awake: 92, dies: 160 /* (the raid kills it in the heart burn, before its third bubble at about 2:52: an estimate, engine.js "dies between the second and third bubble") */, img: IMG[1], beam: 84, tank: S.herTank(27) }];
   S.wretches.forEach((w, wi) => { cast('boss', 'Toxic Womb', w.cast, w.cast + 1.2); warn(w.cast, wi ? 'Toxic Womb: a second Wretch!' : 'Toxic Womb: stay out of the middle!', '#d8f22f'); timer(w.land, 'Toxic Womb lands');
     S.impacts.push({ x: 0, y: 0, r: 7, t0: w.cast + 0.4, at: w.land, name: 'Toxic Womb', dmg: 50, color: '#c8a36a', tip: 'Stay out of its 7 yards: the Womb lands in the middle.' });
     const B = [w.img[0] + (0 - w.img[0]) * 0.34, w.img[1] + (0 - w.img[1]) * 0.34], ba = Math.atan2(-w.img[1], -w.img[0]) * 180 / Math.PI; w.B = B;
@@ -210,7 +210,7 @@ function pgOpen(root, boss, d, pk) {
   const nearEdge = (x, y) => { if (onPlat(x, y)) return [x, y]; for (let r = 0.5; r < 20; r += 0.5) for (let i = 0; i < 16; i++) { const a = i * Math.PI / 8, qx = x + Math.cos(a) * r, qy = y + Math.sin(a) * r; if (onPlat(qx, qy)) return [qx, qy]; } return [0, 0]; };
 
   // ---- you: damage, debuffs, mistakes ----
-  const DEB = { venom: ['Caustic Venom', '#9be13a'], shell: ['Noxious Shell', '#3af2a8'], yolk: ['Rancid Yolk', '#e0c48c'], soul: ['Soul Constrictor', '#c89bff'], fester: ['Fester Burst', '#d8f22f'], putrid: ['Putrid Membrane', '#7fbf3a'], splash: ['Noxious Splash', '#ff6b5c'], sting: ['Petrifying Sting', '#cfc6b0'], def: ['Defensive', '#7fb8ff'], sprint: ['Sprint', '#7ee08f'] };
+  const DEB = { venom: ['Caustic Venom', '#9be13a'], shell: ['Noxious Shell', '#3af2a8'], yolk: ['Rancid Yolk', '#e0c48c'], soul: ['Soul Constrictor', '#c89bff'], fester: ['Fester Burst', '#d8f22f'], putrid: ['Putrid Membrane', '#7fbf3a'], splash: ['Noxious Splash', '#ff6b5c'], sting: ['Petrifying Sting', '#cfc6b0'], thrash: ['Mephitic Thrash', '#ff9b4a'], acid: ['Acidic Expulsion', '#c9df9a'], def: ['Defensive', '#7fb8ff'], sprint: ['Sprint', '#7ee08f'] };
   const deb = (k, dur, stack) => { const o = G.debs[k] && G.debs[k].until > G.t ? G.debs[k] : { n: 0 }; G.debs[k] = { until: G.t + dur, n: stack ? Math.min(9, o.n + 1) : 1 }; };
   const has = (k) => G.debs[k] && G.debs[k].until > G.t;
   let flashT = 0; const flash = () => { flashT = performance.now(); };
@@ -227,9 +227,12 @@ function pgOpen(root, boss, d, pk) {
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
-  const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : null);
+  // (the Nov 15 audit: the Wretches died on their own and your hits on them did nothing; their last 10 s are now a moment to help kill them)
+  const wretchDying = (t) => S.wretches.some((w) => t >= w.dies - 10 && t < w.dies && t >= w.awake && G.wr[w.id]);
+  const dpsCat = (t) => (P2 ? P2.dpsCat(t) : G.adds.some((a) => a.kind === 'viper') ? 'viper' : t >= 145.5 && t < 165 ? 'heart' : G.adds.some((a) => a.kind === 'rawling') ? 'rawling' : wretchDying(t) ? 'wretch' : null);
   const DPS_SAY = { viper: ['Kill the Viper', 'A Viper was up', 'Vipers are deadly: press Tab to pick it, then keep pressing 1 until it dies.'], heart: ['Hit the heart', 'The heart was open', 'When her heart opens, press Tab to pick the Venomous Heart, then keep pressing 1 while you stay in range.'],
-    rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.'] };
+    rawling: ['Kill the Rawlings', 'Rawlings were up', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.'],
+    wretch: ['Kill the Wretch', 'The Wretch was going down', 'Help kill each Wretch before its third bubble: press Tab to pick it, then keep pressing 1.', 'it'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
   const inRange = (o) => pgDist([G.x, G.y], o.p) - o.r <= (rl(me) === 'm' ? 5 : 40);
   const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
@@ -251,7 +254,7 @@ function pgOpen(root, boss, d, pk) {
   const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
     if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
-    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then keep pressing 1 to hit it.' : (cat === 'viper' ? 'A Viper! ' : 'Rawlings! ') + 'Press Tab to pick one, then keep pressing 1 to hit it.', '#f3c969'); } /* (once a run: how to attack) */
+    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then keep pressing 1 to hit it.' : (cat === 'viper' ? 'A Viper! ' : cat === 'wretch' ? 'The Wretch is going down! ' : 'Rawlings! ') + 'Press Tab to pick ' + (cat === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it.', '#f3c969'); } /* (once a run: how to attack) */
     atkStep(t); if (G.hitFx && G.hitFx.length && t - G.hitFx[0].t0 > 0.5) G.hitFx = G.hitFx.filter((x) => t - x.t0 <= 0.5);
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     if (D.cur) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
@@ -264,7 +267,7 @@ function pgOpen(root, boss, d, pk) {
   // (how close the nearest other carrier is to your egg: 0 clear, 1 within 5 yards, 2 within 3.5)
   const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 5 ? 1 : 0; };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
-  const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 30, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
+  const hatch = (e, why, tip) => { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
     if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
@@ -351,7 +354,7 @@ function pgOpen(root, boss, d, pk) {
   const check = (t0, t) => { const x = G.x, y = G.y, crossed = (at) => at > t0 && at <= t;
     // waves: a hit is huge stacking poison; an egg it touches hatches (in your hands or on the floor)
     S.waves.forEach((w, i) => { if (G.done.has('w' + i) || w.from === me || !inWave(w, t, x, y)) return; /* (w.from: a wave sent by a raider, phase 3's Volatile Purge, never hits them) */ G.done.add('w' + i); deb('venom', 10, true); mistake(w.ring ? 'ring' : 'wave', w.name + ' hit you.', w.tip, 28); const e = myEggHeld(); if (e) hatch(e, 'A wave touched your egg', 'Carrying an egg, a wave hatches it: dodge every one.'); });
-    G.eggs.forEach((e) => { if (e.id === me && e.state === 'floor' && S.waves.some((w) => w.kind !== 'incub' && inWave(w, t, e.x, e.y))) hatch(e, 'Your egg was still on the floor when a wave reached it', 'Pick your egg up as soon as its shell breaks.'); });
+    G.eggs.forEach((e) => { if (e.id === me && e.state === 'floor' && S.waves.some((w) => inWave(w, t, e.x, e.y))) hatch(e, 'Your egg was still on the floor when a wave reached it', 'Pick your egg up as soon as its shell breaks.'); });
     // impacts: the Womb, the debris
     S.impacts.forEach((m) => { if (crossed(m.at) && Math.hypot(x - m.x, y - m.y) <= m.r + PR * 0.5) mistake('impact', m.name + ' landed on you.', m.tip, m.dmg); });
     // (the venom beam, from the image to the off tank: a raider in its line takes it, the wipe of Wolfthorn's pull 1)
@@ -363,28 +366,39 @@ function pgOpen(root, boss, d, pk) {
       if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.2) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || 'Its shell isn\'t broken yet: wait a moment.'); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Another carrier inside it hatches a Viper.', '#3af2a8'); } } }
       if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
     // another carrier inside your 3-yard circle: Noxious Splash, it hatches at once
-    const mine = myEggHeld(); if (mine && !G.still) G.eggs.forEach((e) => { if (e.state !== 'held' || !e.who || e.who === me || !mine || mine.state !== 'held') return; const b = G.bots[e.who]; if (b && Math.hypot(x - b.x, y - b.y) < 3) { deb('splash', 10); hurt(30); hatch(mine, nm(e.who) + ' (carrying too) came inside your 3-yard circle', 'Two carriers within 3 yards: Noxious Splash. Keep your circle clear.'); } });
+    const mine = myEggHeld(); if (mine && !G.still) G.eggs.forEach((e) => { if (e.state !== 'held' || !e.who || e.who === me || !mine || mine.state !== 'held') return; const b = G.bots[e.who]; if (b && Math.hypot(x - b.x, y - b.y) < 3) { const wn = nm(e.who); deb('splash', 10); hurt(30); e.state = 'gone'; e.who = null; G.vipers++; G.adds.push({ kind: 'viper', x: b.x + 1, y: b.y + 1, born: t }); /* (both eggs burst: two Vipers, Nov 15 audit) */ hatch(mine, wn + ' (carrying too) came inside your 3-yard circle: both eggs hatched', 'Two carriers within 3 yards: Noxious Splash bursts both eggs. Keep your circle clear.'); } });
     // the coil slams: shared by everyone within 10 yards; carried eggs break; Soul Constrictor 5 s
     S.soaks.forEach((s) => { if (!crossed(s.at)) return; const n = 1 + GDZ_RAID.filter((id) => id !== me && Math.hypot(G.bots[id].x - s.x, G.bots[id].y - s.y) <= s.r).length, inn = Math.hypot(x - s.x, y - s.y) <= s.r;
       if (inn) { if (has('soul')) mistake('soul', 'Soul Constrictor: you took the slam before, so you couldn\'t help with this one.', 'Take only your own slam; the next one is the other group\'s.', 25);
-        else { hurt(Math.max(6, Math.round(80 / n))); const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; deb('yolk', 20); G.adds.push({ kind: 'rawling', x: x + 1.2, y: y + 1.2, t1: t + 9 }); say('Soaked: your egg broke (a Rawling). Rancid Yolk for 20 s.'); } else say('Soaked.'); } deb('soul', 5); }
-      else if (s.group.includes(me)) mistake('soak', 'You missed your coil soak (slam ' + (s.k + 1) + '): the others took more.', 'Be inside your group\'s 10-yard circle when it slams.', 0);
-      G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me && Math.hypot(G.bots[e.who].x - s.x, G.bots[e.who].y - s.y) <= s.r) { e.state = 'gone'; G.adds.push({ kind: 'rawling', x: G.bots[e.who].x + 1, y: G.bots[e.who].y + 1, t1: t + 9 }); e.who = null; } }); });
+        else { hurt(slamHit(n)); const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; deb('yolk', 20); G.adds.push({ kind: 'rawling', x: x + 1.2, y: y + 1.2, born: t }); say('Soaked: your egg broke (a Rawling). Rancid Yolk for 20 s.'); } else say('Soaked.'); } deb('soul', 5); }
+      else { hurt(slamHit(n)); if (s.group.includes(me)) mistake('soak', 'You missed your coil soak (slam ' + (s.k + 1) + '): the others took more.', 'Be inside your group\'s 10-yard circle when it slams.', 0); } /* (every slam hits the whole raid: the soakers only make it smaller, Nov 15 audit) */
+      G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me && Math.hypot(G.bots[e.who].x - s.x, G.bots[e.who].y - s.y) <= s.r) { e.state = 'gone'; G.adds.push({ kind: 'rawling', x: G.bots[e.who].x + 1, y: G.bots[e.who].y + 1, born: t }); e.who = null; } }); });
     // the bubbles: everyone farther than 10 yards from the Wretch is hit
     S.bubbles.forEach((q) => { if (!crossed(q.at)) return; const c = G.wr[q.w]; if (c && Math.hypot(x - c.x, y - c.y) > 10) { deb('fester', 12); mistake('fester', 'Fester Burst: you were outside the Wretch\'s bubble.', 'Be within 10 yards of the Wretch when Fester Burst goes off.', 40); } });
     // the tail's sweep: 35 yards, a big hit and a knockback
-    S.thrash.forEach((th) => { if (!crossed(th.at)) return; const dd = Math.hypot(x - th.x, y - th.y); if (dd <= th.r) { mistake('thrash', 'Mephitic Thrash: you were inside her tail\'s 35 yards.', 'Run out of 35 yards from her tail during the cast.', 45); const a = Math.atan2(y - th.y, x - th.x); G.kb = { t0: t, x0: x, y0: y, x1: th.x + Math.cos(a) * (dd + 14), y1: th.y + Math.sin(a) * (dd + 14) }; } });
+    S.thrash.forEach((th) => { if (!crossed(th.at)) return; const dd = Math.hypot(x - th.x, y - th.y); hurt(15); deb('thrash', 10); /* (everyone takes the sweep's hit and its DoT, Nov 15 audit) */
+      if (dd <= th.r) { mistake('thrash', 'Mephitic Thrash: you were inside her tail\'s 35 yards.', 'Run out of 35 yards from her tail during the cast.', 30); { const e = myEggHeld(); if (e) hatch(e, 'Mephitic Thrash hit your egg inside her tail\'s 35 yards', 'Carrying an egg, get out of 35 yards from her tail before the sweep.'); } const a = Math.atan2(y - th.y, x - th.x); G.kb = { t0: t, x0: x, y0: y, x1: th.x + Math.cos(a) * (dd + 14), y1: th.y + Math.sin(a) * (dd + 14) }; } });
     // Mother's Wrath: five bites in her reach
     S.wrath.forEach((wr) => { for (let k = 0; k < 5; k++) { if (crossed(wr.at + k * 0.6) && Math.hypot(x - wr.p[0], y - wr.p[1]) <= 5 + PR) mistake('bite', 'Mother\'s Wrath bit you: you were in her reach.', 'Only her tank stands in the red circle in front of her.', 30); } });
     // the venom off the platform: it hurts, and it hatches a carried egg
     if (inVenom(x, y)) { hurt(10 * (t - t0)); const e = myEggHeld(); if (e) hatch(e, 'You went into the venom with your egg', 'The water off the platform hatches eggs: stay on the stone.'); if (!G.done.has('venom' + Math.floor(t / 10))) { G.done.add('venom' + Math.floor(t / 10)); G.log.push({ t, kind: 'venom', text: 'You were in the venom off the platform.', tip: 'Stay on the stone.' }); } }
     // raid damage in the heart burn, and what's on you
     S.pulses.forEach((p) => { if (crossed(p)) hurt(6); });
-    const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0);
-    vipers(t0, t, x, y);
+    const dps = (has('venom') ? 3.5 * G.debs.venom.n : 0) + (myEggHeld() ? (has('yolk') ? 3.6 : 1.2) : 0) + (has('fester') ? 3 : 0) + (has('putrid') ? 1.2 * G.debs.putrid.n : 0) + (has('splash') ? 5 : 0) + (has('thrash') ? 1.5 : 0) + 2 * G.adds.filter((a) => a.boil).length; /* (each boiling Rawling's Acidic Expulsion on the raid) */
+    vipers(t0, t, x, y); addsStep(t0, t);
     G.hp -= dps * (t - t0) * (has('def') ? 0.5 : 1); G.hp = Math.min(100, G.hp + (has('sting') ? 0 : 5.5) * (t - t0)); /* (Petrifying Sting: no healing on you while it lasts) */
     if (P2) P2.check(t0, t);
     G.adds = G.adds.filter((a) => a.t1 == null || t < a.t1); dpsStep(t, t - t0); };
+  // (the audit of Nov 15, Flex: "theres also add spawns being missed ... in all phases": adds left on their own after a few seconds. Now an add with no
+  // t1 stays until it dies, and the raid helps: the other 19 wear down the oldest Rawling (about one hit a second between them) and join on a Viper after
+  // 4 s. A Rawling alive 25 s boils (Mythic: Boiling Venom 1313757, +100% haste and damage, and Acidic Expulsion on the raid: a tick on you while it lives).
+  // Every part uses this: a part's own adds only need born instead of t1)
+  const slamHit = (n) => Math.max(6, Math.round(80 / n));
+  const addsStep = (t0, t) => { const dt = t - t0; if (!(dt > 0) || !G.adds.length) return; const hp = (a) => (a.hp == null ? (a.hp = ADD_HP[a.kind] || 3) : a.hp);
+    const raws = G.adds.filter((a) => a.kind === 'rawling' && a.born != null).sort((p, q) => p.born - q.born); if (raws.length) { const a = raws[0]; a.hp = hp(a) - 1.1 * dt; }
+    G.adds.forEach((a) => { if (a.kind === 'viper' && t - (a.born == null ? t : a.born) >= 4) a.hp = hp(a) - 0.35 * dt;
+      if (a.kind === 'rawling' && a.born != null && !a.boil && t - a.born >= 25) { a.boil = true; if (!G.done.has('boil')) { G.done.add('boil'); G.log.push({ t, kind: 'boil', text: 'A Rawling lived 25 s and boiled: its Acidic Expulsion hit the raid.', tip: 'Kill Rawlings within 25 s: press Tab to pick one, then keep pressing 1.' }); } if (!window.__pgAuto) say('A Rawling boiled: kill it!', true); } });
+    if (G.adds.some((a) => a.hp != null && a.hp <= 0)) G.adds = G.adds.filter((a) => !(a.hp != null && a.hp <= 0)); };
   // (Flex, Nov 15: "If a viper spawns though it needs to be killed", "it shouldnt just vanish": a Viper no longer leaves after 8 s; it stays until you kill it.
   // The guide: a Viper is deadly, kill it at once; its Petrifying Sting is a big heal absorb. So it crawls to you and stings you every 3 s while it's close:
   // a little damage, and no healing on you while the sting lasts, stacking. Ignore it and it wears you down)
@@ -497,6 +511,7 @@ function pgOpen(root, boss, d, pk) {
     S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + (q.k ? '2nd' : '1st') + ' to appear)', '#24f2cb'));
     S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Bubble: get in', '#d8f22f'); });
     S.thrash.forEach((q) => add(q.at, 'Tail sweep: out of 35 yards', '#ff9b4a')); S.wings.forEach((w) => add(w.t + 6, 'Her waves', '#9be13a'));
+    { const r0 = G.adds.filter((a) => a.kind === 'rawling' && a.born != null && !a.boil).sort((p, q) => p.born - q.born)[0]; if (r0) add(r0.born + 25, 'Rawlings boil', '#ff8f87'); }
     S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open: hit it', '#ff8a5a');
     return L.sort((a, b) => a.at - b.at).slice(0, 3); };
   let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
@@ -658,7 +673,7 @@ function pgOpen(root, boss, d, pk) {
     G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; if (P2) P2.ff(); };
   const begin = () => { me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>';
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); } }; setTimeout(tick, 750); };
-  const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); }
+  const died = () => { stop(); paused = true; G.deaths++; const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); } /* (it's really there when you keep going, Nov 15 audit) */
     const why = G.adds.some((a) => a.kind === 'viper') && G.t - (G.lastSting == null ? -99 : G.lastSting) < 4 ? { text: 'The Viper\'s stings wore you down.', tip: 'Kill a Viper at once: press Tab to pick it, then keep pressing 1 until it dies.' } : G.log.slice(-4).reverse().find((m) => m.kind !== 'venom' && m.kind !== 'viper') || G.log[G.log.length - 1] || {};
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin"><span class="pg-k">' + pgClock(G.t) + '</span><h2>You died</h2><p>' + esc(why.text || '') + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(why.tip) + '</p>' : '') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">Start over</button></div></div>';

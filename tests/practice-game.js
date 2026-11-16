@@ -16,6 +16,7 @@
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 //   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
 //   J. A raider's screen (Flex, Nov 15): your frame and your target's in the bottom stack, spell-icon buttons with keys, the target's health, boss-mod bars; see check J.
+//   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -294,6 +295,34 @@ function checks(H, say, pj) {
           const k = (dbg.tgts().find((o) => o.kind === 'viper') || {}).key; dbg.tgt = k; for (let i = 0; i < 8 && vs().length > n0; i++) { dbg.atk(); dbg.stepOwn(21); }
           if (vs().length > n0) bad('pressing 1 on the Viper doesn\'t kill it (check J)'); } } }
   } catch (e) { bad('the raider\'s screen crashed the game: ' + e.message + ' (check J)'); }
+  finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
+  // K. Every mechanic (Nov 15, Flex: "if this skips any part of the fight that requires mechanical execution its not good enough", "theres also add spawns
+  //    being missed"): the mechanics audit (each gap checked twice against the guide's measured clocks and engine.js) found phase 1's adds leaving on their
+  //    own, a splash bursting only your egg, slams and the tail's sweep hurting only the people in them, and more. Each line below names its gap.
+  try {
+    const K = (m) => bad(m + ' (check K)'); dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] };
+    // Rawlings stay until they die, the raid wears them down (before: gone 9 s after the soak, nobody hit them)
+    dbg.at(44, 'r3'); const raw = () => dbg.G.adds.filter((a) => a.kind === 'rawling'), n0 = raw().length;
+    if (!n0) K('no Rawlings are up at 0:44, after the first coil soaks');
+    else { dbg.stepOwn(160); const n8 = raw().length; if (!n8) K('8 s on, every Rawling is gone; they stay until they are killed'); else if (n8 >= n0) K('the raid doesn\'t wear the Rawlings down (' + n0 + ' at 0:44, ' + n8 + ' 8 s later)'); }
+    if (raw().some((a) => a.t1 != null)) K('a Rawling still has a time to leave on its own (t1)');
+    // a Rawling alive 25 s boils: Acidic Expulsion on you, a boss-mod bar before it
+    dbg.at(44, 'r3'); { const a = raw()[0]; if (a) { a.born = dbg.G.t - 20; const up = dbg.upNext() || []; if (!up.some((u) => u.text === 'Rawlings boil')) K('the boss mods don\'t warn "Rawlings boil" while a Rawling is up');
+      a.born = dbg.G.t - 26; a.hp = 99; dbg.stepOwn(2); if (!a.boil) K('a Rawling alive 25 s doesn\'t boil (Boiling Venom)'); if (!dbg.log.some((x) => /boiled/.test(x))) K('a boiling Rawling isn\'t in the report'); } }
+    // every coil slam hits the whole raid, smaller the more soak (before: only the soakers took it)
+    { dbg.at(39.6, 'r7'); const g1 = dbg.S.soaks.find((q) => q.set === 0 && q.k === 0); if (g1 && !g1.group.includes('r7')) { dbg.pos = [g1.x + 25, g1.y]; const h0 = dbg.G.hp; dbg.stepOwn(10); if (!(dbg.G.hp < h0 - 3)) K('a raider outside the first coil takes nothing from its slam; every slam hits the whole raid'); } }
+    // the tail's sweep hits everyone, with its DoT (before: only inside 35 yards)
+    { const th = dbg.S.thrash[0]; dbg.at(th.at - 0.3, 'r7'); dbg.pos = [th.x + 50 * Math.sign(th.x || 1), th.y]; dbg.stepOwn(10); if (!(dbg.G.debs.thrash && dbg.G.debs.thrash.until > dbg.G.t)) K('outside her tail\'s 35 yards the sweep leaves no hit and DoT (Mephitic Thrash hits the whole raid)'); }
+    // the sweep inside 35 yards hatches a carried egg; the beam's side waves hatch an egg on the floor; a splash bursts both eggs; dying with an egg leaves a real Viper
+    if (!/Mephitic Thrash hit your egg inside her tail/.test(PJ)) K('Mephitic Thrash inside 35 yards doesn\'t hatch a carried egg');
+    if (/w\.kind !== 'incub' && inWave\(w, t, e\.x, e\.y\)/.test(PJ)) K('the venom beam\'s side waves still pass over an egg on the floor without hatching it (Wolfthorn pulls 1 and 7)');
+    if (!/both eggs hatched/.test(PJ) || !/G\.adds\.push\(\{ kind: 'viper', x: b\.x \+ 1, y: b\.y \+ 1, born: t \}\)/.test(PJ)) K('Noxious Splash bursts only your egg; it bursts both');
+    if (!/deb\('putrid', 20, true\); G\.adds\.push\(\{ kind: 'viper', x: G\.x \+ 1\.5, y: G\.y - 1, born: G\.t \}\); G\.log\.push\(\{ t: G\.t, kind: 'viper', text: 'You died holding your egg/.test(PJ)) K('dying with your egg says a Viper hatched but none is there when you keep going');
+    if (/deb\('putrid', 30/.test(PJ)) K('Putrid Membrane still lasts 30 s; it is 20 s since the Nov 6 hotfix');
+    // the second Wretch dies before phase 1 ends (before its third bubble); each Wretch's last 10 s are a moment to help kill it
+    { const W = dbg.S.wretches; if (!W.every((w) => w.dies < 165)) K('a Wretch never dies in phase 1 (the second must die before its third bubble)');
+      dbg.at(W[0].dies - 5, 'r3'); const dv = dbg.dps(); if (!dv || dv.cat !== 'wretch') K('5 s before the first Wretch dies there is no "Kill the Wretch" moment (it reads ' + (dv && dv.cat) + ')'); }
+  } catch (e) { bad('the mechanics crashed the game: ' + e.message + ' (check K)'); }
   finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
 }
 
