@@ -70,7 +70,7 @@ function checks(H, say) {
   // to 4.7). Before: all four at 4:14)
   if (!script({ seed: 1 }).bigAt) bad('the big eggs have no pickup times of their own: all four at once, not the south ones first and the two healers 2.5 s apart (check A)');
   else { const firsts = new Set(); for (let seed = 1; seed <= 20; seed++) { const B = script({ seed }).bigAt, n =[B.E.close, B.W.close].sort((a, b) => a - b), sth = Math.max(B.E.far, B.W.far);
-      firsts.add(B.E.close < B.W.close ? 'E' : 'W'); if (sth > n[0] - 2) { bad('the south big eggs (' + clkS(sth) + ') aren\'t picked up before the north ones (' + clkS(n[0]) + ') on seed ' + seed + '; top kills take the south ones first (check A)'); break; }
+      firsts.add(B.E.close < B.W.close ? 'E' : 'W'); /* (the south ones now go up when their ledge's two south small eggs are grabbed: check K) */
       if (n[1] - n[0] < 1.3 || n[1] - n[0] > 4.7) { bad('the two healers pick up their north eggs ' + (n[1] - n[0]).toFixed(1) + ' s apart on seed ' + seed + '; top kills: a median 2.5 s, middle half 1.3 to 4.7 (check A)'); break; }
       if ([B.E.far, B.W.far, B.E.close, B.W.close].some((x) => x < 246 || x > 263)) { bad('a big egg is picked up outside 4:06 to 4:23 on seed ' + seed + ' (check A)'); break; } }
     if (firsts.size < 2) bad('the same ledge\'s healer always picks up first over 20 runs; it should vary (check A)');
@@ -237,7 +237,7 @@ function checks(H, say) {
       bad('the Clutches: ' + set1.map((c) => c.side + '@' + clkS(c.born)).join(' ') + '; on the kills the Warden\'s Writhing Gestation turns 2 east and 3 west at about 3:03.4 (check K)');
     if (cls.some((c) => c.dead == null || c.dead - c.born > 12 || c.hatched)) bad('a Clutch lived past 12 s or hatched: ' + cls.map((c) => c.id + ' ' + (c.dead == null ? 'alive' : (c.dead - c.born).toFixed(1) + ' s')).join(', ') + '; the kills kill them in about 6.9 s (check K)');
     if (Object.keys(clDead).length !== cls.length) bad('only ' + Object.keys(clDead).length + ' of ' + cls.length + ' dead Clutches left a Rawling on their spot (200 of 202 on the kills, check K)');
-    if (rawAt !== 15) bad(rawAt + ' Rawlings came out of the cauldrons; one comes out for each of the 15 small eggs (check K)');
+    if (rawAt !== 19) bad(rawAt + ' Rawlings came out of the cauldrons; one comes out for each of the 15 north and 4 south small eggs (check K)');
     if (rawN < 20 || t1Seen) bad(rawN + ' Rawlings in a run (' + t1Seen + ' leaving on their own); the kills have 24 a pull and kill every one (check K)');
     if (G.adds.some((a) => a.own)) bad('Rawlings were still up at 5:18 (the raid kills them in about 21 s, check K)');
     ['E', 'W'].forEach((s) => { const d = G.p2.wdead[s]; if (d == null || d < 214 || d > 223) bad('the ' + s + ' Warden died at ' + (d == null ? 'never' : clkS(d)) + '; the raid kills it about 3:38 (3:36 to 3:41 on the kills, check K)'); });
@@ -246,14 +246,14 @@ function checks(H, say) {
       if (G.p2.big[B].state !== 'in' || Math.abs(st.up - inAt - 1) > 0.06) bad(id + ' climbed out at ' + clkS(st.up) + ', not 1.0 s after its egg went in (check K)');
       const cr = dbg.S.cries.filter((c) => c.ds === id).map((c) => +(c.t0 - st.up).toFixed(1)); if (cr.join() !== '7.8,23.6,39.4') bad(id + '\'s Cries come ' + cr.join(', ') + ' s after it climbs out; on the kills 7.8 s, then every 15.8 s (check K)');
       if (dbg.S.cries.some((c) => c.ds === id && !c.rev && Math.abs(c.t1 - c.t0 - 2.5) > 0.01)) bad(id + '\'s Cry bar isn\'t 2.5 s (2.50 to 2.52 on the kills, check K)');
-      if (st.dead == null || st.dead < 300 || st.dead > 318) bad(id + ' died at ' + (st.dead == null ? 'never' : clkS(st.dead)) + '; the kills kill them about 5:12, all four within a few seconds (check K)'); });
+      if ((st.dead == null && st.hp > 0.15) || (st.dead != null && st.dead < 300)) /* (on the kills they die 5:06 to 5:25, a median 5:12; the part ends at 5:18) */ bad(id + ' died at ' + (st.dead == null ? 'never' : clkS(st.dead)) + '; the kills kill them about 5:12, all four within a few seconds (check K)'); });
     // (Revenge: the first to die gives the rest +100%: a Cry that starts after it takes 1.25 s)
     if (G.p2.rev == null || !D.some(([, st]) => st.rev === G.p2.rev)) bad('no Doomscale got Revenge when the first one died (30 of 30 kills, check K)');
     if (dbg.S.cries.some((c) => c.t0 > G.p2.rev && G.p2.dsS[c.ds].dead > c.t0 && Math.abs(c.t1 - c.t0 - 1.25) > 0.01)) bad('a Cry after Revenge doesn\'t take 1.25 s (check K)');
     // (the bots kick a moment into the bar, not 0.2 s: Malice 0.45 to 0.8 s, a Cry 0.65 to 1.15 s)
     if (G.p2.intr.length < 0) bad('no kicks were seen (check K)');
     { const kt = []; dbg.at(166.05, meF, { east: false, seed: 5 }); while (dbg.G.t < 318) { dbg.step(1); dbg.G.p2.intr.forEach((q) => { if (!kt.some((x) => x.key === q.key)) { const c = dbg.S.malice.find((m) => 'm' + m.side + m.k === q.key) || dbg.S.cries.find((x) => 'c' + x.ds + x.i === q.key); if (c) kt.push({ key: q.key, d: q.t - c.t0, who: q.who }); } }); }
-      const bots = kt.filter((x) => x.who !== meF), lo = bots.filter((x) => x.d < 0.4), hi = bots.filter((x) => x.d > 1.25); if (!bots.length || lo.length || hi.length) bad('the bots kick ' + bots.map((x) => x.key + ' +' + x.d.toFixed(2)).join(', ') + '; on the kills Malice is kicked about 0.6 s in, a Cry about 0.9 s (check K)'); }
+      const bots = kt.filter((x) => x.who !== meF), lo = bots.filter((x) => x.d < 0.4), hi = bots.filter((x) => x.d > 2.3), md = bots.map((x) => x.d).sort((p, q) => p - q)[Math.floor(bots.length / 2)]; /* (the kills: a median 0.6 s for Malice and 0.9 s for a Cry, as late as 2.3 s when a kicker is still walking up) */ if (!bots.length || lo.length || hi.length || !(md >= 0.6 && md <= 1.2)) bad('the bots kick ' + bots.map((x) => x.key + ' +' + x.d.toFixed(2)).join(', ') + '; on the kills Malice is kicked about 0.6 s in, a Cry about 0.9 s (check K)'); }
     // (you see every kick: an "Interrupted" label stands over the caster with who kicked it; your target's bar shows its cast, gold when you can kick it)
     dbg.at(T.malice + 0.2, meF, { east: false, seed: 3 }); const mF = dbg.S.malice.slice().sort((a, b) => a.t0 - b.t0)[0].side; dbg.G.tgt = 'wd' + mF; const cb = dbg.P2.castOf(dbg.G.t); if (!cb || !/Malice/.test(cb.name) || !cb.kick) bad('your target\'s bar during its Malice reads ' + (cb ? cb.name + (cb.kick ? ' (kick)' : '') : 'nothing') + '; it should show Malice, gold to kick (check K)');
     for (let i = 0; i < 40 && !dbg.G.p2.intr.some((q) => q.caster === 'wd' + mF); i++) dbg.step(1); const iq = dbg.G.p2.intr.find((q) => q.caster === 'wd' + mF); dbg.G.tgt = 'wd' + mF; const cb2 = dbg.P2.castOf(dbg.G.t);
@@ -283,9 +283,26 @@ function checks(H, say) {
     for (let i = 0; i < 700; i++) { dbg.stepOwn(1); dbg.pos = [96, 9]; } const rv = dbg.G.p2.rav[0];
     if (!rv || Math.abs(rv.t - 264) > 0.2 || !dbg.S.casts.some((c) => /Dread Roar/.test(c.name) && Math.abs(c.t0 - 270.5) < 0.3)) bad('a big egg left until 4:24 doesn\'t raise a Ravenous Doomscale with its Dread Roar 6.5 s later (check K)');
     if (!dbg.log.some((x) => /Ravenous Doomscale stood up/.test(x))) bad('the big egg left until 4:24 isn\'t a wipe mistake naming the Ravenous Doomscale (check K)');
-    // (the south eggs: picking up the south big egg beside them turns them into Clutches 0.7 s later)
-    dbg.P2.pick = free; dbg.at(166.05, meF, { east: false, seed: 3 }); while (dbg.G.t < 262) dbg.step(1); const sc = Object.values(dbg.G.p2.cl).filter((c) => c.set === 2), pu = dbg.G.p2.big[dbg.S.big.findIndex((b) => b.side === 'E' && b.which === 'far')].at;
-    if (sc.filter((c) => c.side === 'E').length !== 2 || sc.some((c) => c.side === 'E' && Math.abs(c.born - pu - 0.7) > 0.1)) bad('the south big egg\'s pickup (' + clkS(pu) + ') doesn\'t turn the two south eggs beside it into Clutches 0.7 s later (check K)');
+    // (Flex, Nov 16: "when the raid goes to the opposite side theres two more small eggs that need to be broken out. The eggs also need to be broken out on the
+    // first side of p2 as well"; the 30 fastest kills: the north eggs' Hardened shields break about 3:22, each egg breaks open about 6 s after the Warden dies;
+    // the south eggs are broken out about 4:15.6 and carried in; the south big egg goes up as soon as they're grabbed; a ledge's two big eggs go in together,
+    // a median 0.2 s apart. Before: the north eggs opened on a timer 0.7 s after the Warden, the south eggs turned into Clutches, the big eggs went in 4 to 6 s apart)
+    dbg.P2.pick = free; dbg.at(166.05, meF, { east: false, seed: 3 }); let shOff = null, grab = {}, bigUp = {}, bigIn = {};
+    while (dbg.G.t < 290) { dbg.step(1); const G = dbg.G, t = G.t; if (shOff == null && G.eggs.some((e) => !e.south && e.state === 'floor') && G.eggs.filter((e) => !e.south && e.state === 'floor').every((e) => e.shp === 0)) shOff = t;
+      ['E', 'W'].forEach((sd) => { const se = G.eggs.filter((e) => e.south && e.side === sd); if (grab[sd] == null && se.length === 2 && se.every((e) => e.state !== 'floor')) grab[sd] = t;
+        dbg.S.big.forEach((B, i) => { if (B.side !== sd) return; const st = G.p2.big[i]; if (st.state === 'held' && bigUp[sd + B.which] == null) bigUp[sd + B.which] = t; if (st.state === 'in' && bigIn[sd + B.which] == null) bigIn[sd + B.which] = t; }); }); }
+    if (shOff == null || shOff < 198 || shOff > 207) bad('the north eggs' + Q + ' Hardened shields come off at ' + (shOff == null ? 'never' : clkS(shOff)) + '; the raid breaks them about 3:22 (check K)');
+    { const wd = dbg.G.p2.wdead.E, op = dbg.G.eggs.filter((e) => !e.south && e.side === 'E' && e.wd != null).map((e) => e.shell - wd); if (!op.length || Math.min(...op) < 2 || Math.max(...op) > 8.5 || op.sort((a, b) => a - b)[Math.floor(op.length / 2)] < 4) bad('the north eggs break open ' + op.map((x) => x.toFixed(1)).join(', ') + ' s after the Warden dies; the kills: a median 6.0, middle half 3.8 to 7.4 (check K)'); }
+    ['E', 'W'].forEach((sd) => { if (grab[sd] == null || grab[sd] < 250 || grab[sd] > 262) bad('the ' + sd + ' ledge' + Q + 's two south small eggs are grabbed at ' + (grab[sd] == null ? 'never' : clkS(grab[sd])) + '; the raid breaks them out about 4:15.6 (check K)');
+      else if (bigUp[sd + 'far'] == null || bigUp[sd + 'far'] - grab[sd] > 2.6 || bigUp[sd + 'far'] < grab[sd]) bad('the ' + sd + ' south big egg goes up at ' + (bigUp[sd + 'far'] == null ? 'never' : clkS(bigUp[sd + 'far'])) + ', not as soon as the south small eggs are grabbed (' + clkS(grab[sd]) + ', check K)');
+      if (bigIn[sd + 'far'] == null || bigIn[sd + 'close'] == null || Math.abs(bigIn[sd + 'far'] - bigIn[sd + 'close']) > 3) bad('the ' + sd + ' ledge' + Q + 's big eggs go in at ' + [bigIn[sd + 'far'], bigIn[sd + 'close']].map((x) => (x == null ? 'never' : clkS(x))).join(' and ') + '; on the kills they go in together on a count (check K)'); });
+    if (Object.values(dbg.G.p2.cl).some((c) => c.set === 2)) bad('the south eggs still turned into Clutches though the raid broke them out first (check K)');
+    // (and the north healer runs alone: nobody within 15 yards at the pickup (30 of 30 kills))
+    { dbg.at(166.05, meF, { east: false, seed: 3 }); let alone = null; while (dbg.G.t < 262 && alone == null) { dbg.step(1); const i = dbg.S.big.findIndex((b) => b.side === 'E' && b.which === 'close'), st = dbg.G.p2.big[i]; if (st.state === 'held') { const p = [dbg.G.bots[st.who].x, dbg.G.bots[st.who].y]; alone = Object.keys(dbg.G.bots).filter((id) => id !== st.who && Math.hypot(dbg.G.bots[id].x - p[0], dbg.G.bots[id].y - p[1]) < 15).length; } }
+      if (alone !== 0) bad('the north big egg' + Q + 's healer has ' + alone + ' raiders within 15 yards at the pickup; on the kills they run there alone (check K)'); }
+    // (picking the south big egg up before the south small eggs are grabbed turns them into Clutches, and it\'s a mistake)
+    { const pkF = { side: 'E', role: 'm', egg: 'far', mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkF; const meFar = dbg.P2.slotOf(pkF); dbg.at(240, meFar, { east: false, seed: 3 }); const B = dbg.S.big.find((b) => b.side === 'E' && b.which === 'far'); dbg.pos = [B.x, B.y]; dbg.stepOwn(4);
+      if (!dbg.log.some((x) => /small eggs still out/.test(x))) bad('picking up the south big egg before the south small eggs are grabbed isn\'t a mistake (check K)'); dbg.stepOwn(20); if (!Object.values(dbg.G.p2.cl).some((c) => c.set === 2)) bad('the south small eggs don\'t turn into Clutches when the south big egg goes up first (check K)'); }
     // (Flex, Nov 15: "Make the player always get one of the grasping fangs, randomize if its the early break or 5 break": with a random tether you get one
     // every run, the solo or one of the five, both over a few seeds, and the raid still has six, three a ledge, one solo)
     { const pkT2 = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }, meT2 = dbg.P2.slotOf(pkT2), kinds = new Set(); let none = 0, shape = 0;
@@ -337,7 +354,7 @@ function checks(H, say) {
     const W = dbg.G.p2.wd.E; if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.TETHER) < 0.01 && hyp([s.x, s.y], W) < 0.01)) bad('in 3D your tether doesn\'t show its ' + P.TETHER + '-yard break ring round the Warden (check G)');
     if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.WARD) < 0.01)) bad('in 3D the eggs\' ' + P.WARD + '-yard Warden\'s Protection rings are gone (check G)');
     if (!L0.some((s) => s.k === 'ring' && Math.abs(s.r - P.THROW) < 0.01 && hyp([s.x, s.y], dbg.S.pits.E) < 0.01)) bad('in 3D the cauldron\'s ' + P.THROW + '-yard ring isn\'t where it takes the eggs (check G)');
-    at(176).forEach((s) => kinds.add(s.k)); at(262).forEach((s) => kinds.add(s.k)); at(186).forEach((s) => kinds.add(s.k)); const LF = at(281); LF.forEach((s) => kinds.add(s.k)); at(300).forEach((s) => kinds.add(s.k));
+    at(176).forEach((s) => kinds.add(s.k)); at(262).forEach((s) => kinds.add(s.k)); at(186).forEach((s) => kinds.add(s.k)); const LF = at(287); LF.forEach((s) => kinds.add(s.k)); at(300).forEach((s) => kinds.add(s.k));
     const fan = LF.find((s) => s.k === 'fan'); if (!fan || Math.abs(fan.r - P.FAN.r) > 0.01) bad('in 3D the Doomscale\'s frontal isn\'t drawn at its ' + P.FAN.r + ' yards (check G)');
     ['gate', 'warden', 'tether', 'cauldron', 'begg', 'dscale', 'fan', 'heart', 'clutch', 'arc'].forEach((k) => { if (!kinds.has(k)) bad('the 3D view draws no "' + k + '" in phase 2 (check G)'); });
     // (the review, Nov 15: a click on a ledge's outer stone did nothing, since the 3D view dropped any floor click past 140 yards, phase 1's platform's size)

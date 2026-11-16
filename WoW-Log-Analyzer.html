@@ -74531,7 +74531,7 @@ function pg3d(host, A) {
 // Cry in 1.25 s, Thrash in 1.5 s, double hits). A big egg left until Hatching Doom ends hatches a Ravenous Doomscale whose Dread Roar, 6 to 9 s later
 // (2.5 s), wipes the raid)
 const PG_P2_T = { start: 166, gate: 167, doom: 174, doomEnd: 264, wardens: 175, molt: 176.6, gest: 180.1, clutch: 183.4, malice: 183.9, fangs: 196, solo: 206, five: 214, wdie: 218.3, shells: 219, set2: 235,
-  throwAt: 236, back: 243, bigUp: 249.5, bigN: [253.5, 256], bigIn: 267, hold: 15, dsUp: 268, home: 278.5, rage: 288, heart: 294.5, heartEnd: 314.5, debris: [230, 270, 317], end: 318,
+  throwAt: 236, back: 243, bigUp: 257.5, bigN: [256, 258.5], bigIn: 267.5, hold: 15, s2hit: 241.6, s2die: 255.6, dsUp: 268, home: 278.5, rage: 288, heart: 294.5, heartEnd: 314.5, debris: [230, 270, 317], end: 318,
   rattle: [292.8, 305.5], spit: [203.4, 223.5, 243.6, 263.6],
   W2: { molt: 46, gest: 49.8, malice: 55.3 }, CRY: [7.8, 23.6, 39.4], THRASH: [16.6, 34.9], DSLIFE: 43.9, RBOIL: 25, RACID: 35.5, RACID2: 12, CHATCH: 20, ROAR: 6.5 };
 const PG_P2 = {
@@ -74597,6 +74597,8 @@ function pgP2Jobs(seed, me, pk) {
   // (Flex, Nov 15: "Make the player always get one of the grasping fangs, randomize if its the early break or 5 break": with a random tether you
   // always get one, the solo or one of the five on a coin flip, so both get practised)
   if (me && J[me] && pk) pgP2Give(J, me, pk.teth === 'random' ? { ...pk, teth: rnd() < 0.5 ? 'solo' : 'five' } : pk);
+  // (the two south small eggs a ledge: two of its ranged or melee with no big egg carry them, the ranged first; never you)
+  SIDES.forEach((s) => { let k = 0; P.half[s].filter((id) => id !== me && !J[id].big && (id[0] === 'r' || id[0] === 'm')).sort((a, b) => (a[0] === 'r' ? 0 : 1) - (b[0] === 'r' ? 0 : 1)).slice(0, 2).forEach((id) => { J[id].south = ++k; }); });
   // (the one Malice comes at 3:04, the tethers at 3:16: a kicker never has both at once, so nothing is handed on)
   return J;
 }
@@ -74640,6 +74642,9 @@ function pgP2Script(o) {
   // the melee take the south eggs first, about 4:06 to 4:10; then the healers the north ones, the first a median 4:13, the second a median 2.5 s
   // later, middle half 1.3 to 4.7; which ledge's healer goes first, from the run's seed)
   const nFirst = side() < 0.5 ? 'E' : 'W'; S.bigAt = { E: { far: T.bigUp, close: T.bigN[nFirst === 'E' ? 0 : 1] }, W: { far: T.bigUp + 0.5, close: T.bigN[nFirst === 'W' ? 0 : 1] } }; S.nFirst = nFirst;
+  // (both of a ledge's big eggs go in on one count (the 30 fastest kills: a median 0.2 s apart, 22 of 30 within 2 s; south 4:28.0, north 4:29.2); the ledge whose
+  // healer went first counts first, about 4:29 and 4:31)
+  S.bigIn = { E: S.bigAt.E.close + 12.6, W: S.bigAt.W.close + 12.6 }; /* (the count waits for the north healer's 100-yard run: on the kills the north egg goes in 9.8 s after its pickup) */
   S.big = ['E', 'W'].flatMap((s) => ['far', 'close'].map((w) => { const p = L(s, P[w]); return { side: s, which: w, x: p[0], y: p[1] }; }));
   S.pits = { E: L('E', P.pit), W: L('W', P.pit) };
   // the Wardens (2:55): pulled across the line, Shadow Molt toward the eggs (3 s), Writhing Gestation (3 s), killed by the raid about 3:38
@@ -74663,11 +74668,12 @@ function pgP2Script(o) {
   // (each carrier's lane spot round the cauldron, in the order of the eggs round it (east frame: from the north-east round to the west), so no two paths cross)
   S.lane = {}; ['E', 'W'].forEach((s) => { const pit = L(s, P.pit), ang = (e) => { const q = L(s, [e.x - pit[0], e.y - pit[1]]); return Math.atan2(q[1], q[0]); }; S.lane[s] = S.eggs.filter((e) => e.side === s).sort((a, b) => ang(a) - ang(b)).map((e) => e.n); });
   timer(T.throwAt, 'Small eggs in'); warn(T.throwAt - 6, 'Small eggs: to the cauldron, in together at 3:56', '#f5d33a');
-  timer(T.set2, 'South eggs'); timer(T.bigUp, 'Big eggs up'); warn(T.bigUp - 1, 'Big eggs: the south ones now, the north ones a few seconds later; in by 4:24!', '#e6b450');
+  timer(T.set2, 'South eggs'); warn(T.set2, 'Two more small eggs by the south big egg: break them out and carry them in!', '#f5d33a'); timer(T.bigUp, 'Big eggs up'); timer(T.bigIn, 'Big eggs in');
+  warn(T.bigUp - 1, 'Big eggs: the south one once its small eggs are grabbed, the north healer runs alone; in together at ' + pgClock(T.bigIn) + '!', '#e6b450');
   // the Weakened Doomscales: one climbs out of each cauldron 1.0 s after each big egg goes in (Doomscale 1 from the south egg, 2 from the north). Their
   // casts are set when they climb out (below); the plan's times here are for the cards: the bots carry a big egg in 15 s after picking it up (the walk
   // from the ledge's end is about 100 yards; on the kills the Doomscales climb out about 4:26, 4:27, 4:29 and 4:31)
-  S.ds = ['E', 'W'].flatMap((s) => [1, 2].map((k) => ({ id: 'ds' + s + k, side: s, k, egg: k === 1 ? 'far' : 'close', up: S.bigAt[s][k === 1 ? 'far' : 'close'] + T.hold + 1 })));
+  S.ds = ['E', 'W'].flatMap((s) => [1, 2].map((k) => ({ id: 'ds' + s + k, side: s, k, egg: k === 1 ? 'far' : 'close', up: S.bigIn[s] + 1 })));
   timer(Math.min(...S.ds.map((d) => d.up)), 'Doomscales');
   // Anguished Cry (from every Doomscale, 7.8 s after it climbs out, then every 15.8 s; kicked 1,450 of 1,489 on the kills, never let through): a 2.5 s
   // cast, or everyone within 60 yards is hit and stunned 6 s. Desperate Thrash (16.6 s, then every 18.3 s): a 3 s cast, then a frontal at its tank.
@@ -74702,7 +74708,7 @@ function pgP2(A) {
   const T = PG_P2_T, P = PG_P2, L = pgP2L, away = pgP2Away, clk = pgClock, RN = { m: 'Melee', r: 'Ranged', h: 'Healer' }, SD = { E: 'east', W: 'west' }, NS = { far: 'south', close: 'north' };
   let S = null, G = null; const sync = () => { S = A.S; G = A.G; };
   // (the plan's Cry times for the cards: Doomscale 1 climbs out 1 s after the south egg goes in, 15 s after its 4:09 pickup)
-  const crN = T.CRY.map((o) => T.bigUp + T.hold + 1 + o);
+  const crN = T.CRY.map((o) => T.bigIn + 1 + o);
   // (its debuffs on your frame, and which mistakes count as big ones: added on the first run, once practice.js has made its lists)
   let setUp = false; const setup = () => { if (setUp) return; setUp = true;
     if (A.DPS_SAY) Object.assign(A.DPS_SAY, { warden: ['Hit the Warden', 'The Warden was up', 'Tab picks the Doomscale Warden: your half kills it about 3:38, before it starts over (Writhing Gestation again 50 s after it stood up). Stay in range.', 'it'], ds: ['Hit the Doomscales', 'The Doomscales were up', 'Tab picks a Weakened Doomscale: hit them from behind or beside (their frontal goes at the tank), and kill them evenly.', 'them'],
@@ -74726,7 +74732,7 @@ function pgP2(A) {
   const range = (id) => P.KICK[id[0]] || 0;
   const holder = (k, s, v) => Object.keys(S.job).find((id) => S.job[id].side === s && S.job[id][k] === v) || null;
   const bigIx = (s, w) => S.big.findIndex((b) => b.side === s && b.which === w);
-  const slot = (s, n) => { const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8, 25 + Math.max(0, o) * 27, s); }, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
+  const slot = (s, n) => { if (n > 100) return pgP2Away(S.pits[s], 8, 260 + (n - 100) * 26, s); const o = S.lane[s].indexOf(n); return pgP2Away(S.pits[s], 8, 25 + Math.max(0, o) * 27, s); }, bigSlot = (s, w) => away(S.pits[s], 8, w === 'far' ? 250 : 70, s);
   const TDIR = [10, -15, -32, -50, -68, -84];
   // (your way out of a tether: the safe heading (east round to south, away from the eggs and the venom) nearest your own side of the Warden)
   const outDir = (F, b0, s) => { const q = pgP2L(s, [b0.x - F[0], b0.y - F[1]]), b = Math.atan2(q[1], q[0]) * 180 / Math.PI, off = (a) => Math.abs((((a - b) % 360) + 540) % 360 - 180); return TDIR.reduce((m, a) => (off(a) < off(m) ? a : m), TDIR[0]); };
@@ -74790,7 +74796,7 @@ function pgP2(A) {
       // (the lanes: down the ledge to your lane's gap at y 34 (3.8 yards apart), east of the ledge's inner notch, then to your spot at the cauldron; the lanes in the eggs' order, so none cross)
       else if (e && e.state === 'held') { const o = Math.max(0, S.lane[s].indexOf(e.n)); T0 = b0.y > 36 ? L(s, [120 - o * 3.8, 34]) : slot(s, e.n); fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: T.throwAt, p: T0, r: 1.2 }; }
       else if (bg && bg.state === 'floor' && t >= S.bigAt[s][j.big] - (id === A.me ? 16 : 11)) { const B = S.big[bi]; T0 = t >= S.bigAt[s][j.big] - 0.6 ? [B.x, B.y] : [B.x + (S.pits[s][0] - B.x) * 0.06, B.y + (S.pits[s][1] - B.y) * 0.06]; fast = pgDist([b0.x, b0.y], T0) > 6; ob = { at: T.bigUp, p: [B.x, B.y], r: 1 }; }
-      else if (bg && bg.state === 'held') { T0 = bigSlot(s, j.big); fast = true; ob = { at: bg.at + T.hold, p: T0, r: 1.2 }; }
+      else if (bg && bg.state === 'held') { T0 = bigSlot(s, j.big); fast = true; ob = { at: S.bigIn[s], p: T0, r: 1.2 }; }
       else { const wsp = L(s, t >= T.throwAt && (t < S.bigAt[s].far + 6 || (t < dsNext(s) - 5 && (G.adds.some((a) => a.own && a.side === s && a.y < -20) || Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && c.y < -20)))) && j.big !== 'close' ? P.swait : P.wait); T0 = (id[0] === 'm' && meleeOn(id, s, b0)) || spiral(wsp, i, 5); } /* (once the small eggs are in, the half waits by the south eggs and the south big egg, where the kills kill the cauldron's Rawlings, and is back by the cauldron before its Doomscales and the 4:30 debris; the north egg's carrier stays by the cauldron, nearer to it) */
       if (j.cry && !(e && e.state === 'held') && !(bg && bg.state === 'held') && t >= dsNext(s) - 8) { T0 = spiral(L(s, P.dsKick), i, 2); fast = pgDist([b0.x, b0.y], T0) > 6; } /* (a Cry kicker by the cauldron before its Doomscale climbs out) */
       if (tk && t >= dsNext(s) - 4) { T0 = L(s, P.ds); fast = true; } }
@@ -74798,7 +74804,7 @@ function pgP2(A) {
       // (once their tank has taken them through the gate, everyone left on the ledge heads for it too: never at them across the venom)
       const gone = G.p2.where[tankOf(s)] === 'p1', bi = j.big ? bigIx(s, j.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null;
       // (a big egg still in your hands once the first Doomscale is out: on to the cauldron with it)
-      if (bg && bg.state === 'held' && bg.who === id) return { T: bigSlot(s, j.big), fast: true, ob: { at: bg.at + T.hold, p: bigSlot(s, j.big), r: 1.2 } };
+      if (bg && bg.state === 'held' && bg.who === id) return { T: bigSlot(s, j.big), fast: true, ob: { at: S.bigIn[s], p: bigSlot(s, j.big), r: 1.2 } };
       if (bg && bg.state === 'floor' && t < T.doomEnd) { const B = S.big[bi]; return { T: t >= S.bigAt[s][j.big] - 0.6 ? [B.x, B.y] : [B.x + (S.pits[s][0] - B.x) * 0.06, B.y + (S.pits[s][1] - B.y) * 0.06], fast: true, ob: { at: S.bigAt[s][j.big], p: [B.x, B.y], r: 1 } }; }
       const ck = j.cry || bkCry(id); T0 = tk ? L(s, P.ds) : gone ? L(s, P.land) : ck ? behind(s, ck) || L(s, P.dsKick) : id[0] === 'm' ? (() => { const b1 = behind(s, 1), b2 = behind(s, 2), q = id === A.me && b1 && b2 ? [(b1[0] + b2[0]) / 2, (b1[1] + b2[1]) / 2] : behind(s, 1 + (i % 2)) || behind(s, 2 - (i % 2)); return q ? spiral(q, i, 2.2) : L(s, P.dsKick); })() /* (you: behind the two of them, in reach of both, so killing them evenly costs no walking; anyone: behind whichever is out) */ : spiral(L(s, P.dsWait), i, 5); fast = gone; } /* (the melee: behind them, in reach (the damage moments, Nov 15)) */
     return { T: T0, fast, ob }; };
@@ -74806,7 +74812,9 @@ function pgP2(A) {
     // (back by her, the Doomscales dragged in by the heart for the cleave (the guide): the east half's tank holds its two just south of the heart and
     // the west half's just north, their frontals pointing away at the tanks; every melee by the heart, in reach of it and of their Doomscale (kicks
     // too); the ranged and healers a little back. The damage moments, Nov 15)
-    const i = GDZ_RAID.indexOf(id), T0 = id[0] === 't' ? PL(34, east ? -12 : 12) : id[0] === 'm' ? spiral(PL(35.5, 0), i, 1.5) : spiral(PL(25, 0), i, 5);
+    const i = GDZ_RAID.indexOf(id); let T0 = id[0] === 't' ? PL(34, east ? -12 : 12) : id[0] === 'm' ? spiral(PL(35.5, 0), i, 1.5) : spiral(PL(25, 0), i, 5);
+    // (a melee, until the heart opens: behind their ledge's Doomscales wherever the tank has them, both in reach (they follow the drag across the platform))
+    if (id[0] === 'm' && t < T.heart) { const b1 = behind(j.side, 1), b2 = behind(j.side, 2), q = b1 && b2 ? [(b1[0] + b2[0]) / 2, (b1[1] + b2[1]) / 2] : b1 || b2; if (q && PG_UL.onPlat(q[0], q[1])) T0 = j.cry && behind(j.side, j.cry) ? behind(j.side, j.cry) : q; }
     // (a kick due: the escapes from the small tails' waves keep you in reach of its caster)
     const kd = kickDue(id, t); return { T: T0, fast: false, ob: kd ? { at: t + 3, p: kd.slice(), r: Math.max(2, range(id) - 1.5) } : null }; };
   const job = (id, t) => { sync(); const j = S.job[id], s = j.side, w = G.p2.where[id], ws = G.p2.wside[id], b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id]; let r;
@@ -74841,7 +74849,7 @@ function pgP2(A) {
   // (a straight walk that would leave the stone (the ledges have inlets of venom): via the nearest point down the ledge's middle that it can reach
   // on the stone and that reaches the spot on the stone)
   const MID = [[100, 60], [100, 45], [100, 30], [100, 15], [100, 0], [100, -15], [100, -30], [100, -45], [80, 66], [78, -62]];
-  const onWay = (a, b) => { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(d / 1.5)); for (let k = 1; k <= n; k++) { const f = k / n; if (!pgP2Floor(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return false; } return true; };
+  const onWay = (a, b) => { const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(d / 0.75)); /* (every 0.75 yards: at 1.5 a walk south from the cauldron clipped the ledge's edge near (88, -30)) */ for (let k = 1; k <= n; k++) { const f = k / n; if (!pgP2Floor(a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f)) return false; } return true; };
   // (a route point, once picked, is kept until you're on it, so the walk doesn't wobble between two)
   const route = (b0, T0, id) => { const a = [b0.x, b0.y]; if (!pgP2Ledge(a[0], a[1], 0.4)) return T0; const st = G.p2.wp[id];
     if (st && pgDist(st.T, T0) < 3 && pgDist(a, st.q) > 2 && onWay(a, st.q)) return st.q; delete G.p2.wp[id]; if (onWay(a, T0)) return T0; const s = a[0] > 0 ? 'E' : 'W'; let best = null, bd = 1e9;
@@ -74854,7 +74862,7 @@ function pgP2(A) {
     G.p2 = { where: {}, wside: {}, lock: {}, wp: {}, teth: {}, kick: {}, gone: [], stun: {}, kickCd: -99, wardT: -99, big: S.big.map(() => ({ state: 'floor', who: null, at: null })), ds: {}, wd: {}, fan: [], tlog: [], missed: [], veins: [], once: new Set(), crossT: null, backT: null,
       // (the adds' health: the Wardens, the Clutches, the south eggs, the Doomscales (from when each climbs out), the first Doomscale's death (Revenge),
       // your hits on each Doomscale, who kicked what and when (the Interrupted labels), the backup kick, the Ravenous Doomscales)
-      whp: { E: 1, W: 1 }, wdead: { E: null, W: null }, w2: { E: {}, W: {} }, cl: {}, se: {}, dsS: {}, dsAt: {}, rev: null, dsHits: {}, intr: [], bk: null, bkSeen: 0, rav: [], acid: new Set(), esc: {} };
+      whp: { E: 1, W: 1 }, wdead: { E: null, W: null }, farGo: {}, settled: { E: true, W: true }, w2: { E: {}, W: {} }, cl: {}, se: {}, dsS: {}, dsAt: {}, rev: null, dsHits: {}, intr: [], bk: null, bkSeen: 0, rav: [], acid: new Set(), esc: {} };
     S.south.forEach((q) => { G.p2.se[q.id] = { state: 'egg' }; });
     GDZ_RAID.forEach((id) => { G.p2.where[id] = 'p0'; G.p2.wside[id] = null; });
     G.eggs = S.eggs.map((e) => ({ id: holder('egg', e.side, e.n), side: e.side, n: e.n, x: e.x, y: e.y, land: T.wardens, shell: T.shells + S.eggs.filter((q) => q.side === e.side && pgDist([q.x, q.y], S.pits[e.side]) > pgDist([e.x, e.y], S.pits[e.side])).length * 1.1, set: 0, state: 'floor', who: null, lock: 'Its shield holds until the Warden is dead: wait.' })); };
@@ -74936,15 +74944,18 @@ function pgP2(A) {
   const big = (t0, t) => { const me = A.me;
     S.big.forEach((B, i) => { const st = G.p2.big[i], hd = holder('big', B.side, B.which);
       if (st.state === 'floor') { const mineB = hd === me, who = mineB ? (Math.hypot(G.x - B.x, G.y - B.y) <= 2.2 ? me : null) : hd && t >= S.bigAt[B.side][B.which] && pgDist(pos(hd), [B.x, B.y]) <= 2.2 ? hd : null;
-        if (who) { st.state = 'held'; st.who = who; st.at = t; if (who === me) { A.deb('doom', 20); if (G.eggs.some((e) => e.side === B.side && e.state !== 'gone')) A.mistake('big', 'You picked up the big egg with small eggs still out.', 'Big eggs last (the plan): every small egg on your ledge goes into the cauldron first.', 0); else A.say('Big egg: into the cauldron within 20 s.'); }
+        if (who) { st.state = 'held'; st.who = who; st.at = t; if (who === me) { A.deb('doom', 20); if (G.eggs.some((e) => e.side === B.side && (e.south ? e.state === 'floor' : e.state !== 'gone'))) A.mistake('big', 'You picked up the big egg with small eggs still out.', 'Big eggs last (the plan): every small egg on your ledge is broken out and grabbed first.', 0); else A.say('Big egg: into the cauldron within 20 s.'); }
           // (the south egg's pickup turns the south small eggs beside it into Clutches, 0.7 s later: 16 of the 30 fastest kills let that happen and kill them)
-          if (B.which === 'far') S.south.forEach((q) => { const se = G.p2.se[q.id]; if (q.side === B.side && se.state === 'egg' && t >= q.up) { se.state = 'gest'; se.at = t + 0.7; } }); }
+          if (B.which === 'far') G.eggs.forEach((e) => { if (!e.south || e.side !== B.side || e.state !== 'floor') return; e.state = 'gone'; e.who = null; const se = G.p2.se[e.qid]; se.state = 'gest'; se.at = t + 0.7; }); } /* (a south egg not yet grabbed when the south big egg goes up turns into a Clutch: break them out and grab them first) */
         else if (t >= T.doomEnd) { st.state = 'hatched'; ravenous(B, [B.x, B.y], t, hd === me, 'Hatching Doom ran out on your big egg', 'Pick the big egg up by 4:24 (the plan: 4:09 for the south one, 4:13 or 4:16 for the north) and carry it straight in.'); } }
       else if (st.state === 'held') { const p = pos(st.who);
         if (t - st.at >= 20) { st.state = 'hatched'; ravenous(B, p, t, st.who === me, 'Your big egg hatched in your hands (20 s after you picked it up)', 'Once picked up, a big egg hatches in 20 s: carry it straight to the cauldron.'); }
-        else if (pgDist(p, S.pits[B.side]) <= P.THROW && (st.who === me || t >= st.at + T.hold)) { st.state = 'in'; G.p2.dsAt['ds' + B.side + (B.which === 'far' ? 1 : 2)] = t + 1; if (st.who === me) { if (G.debs.doom) G.debs.doom.until = t; A.say('Big egg in the cauldron: a Weakened Doomscale climbs out.'); } } } }); };
+        else if (pgDist(p, S.pits[B.side]) <= P.THROW && t < S.bigIn[B.side] && st.who === me) { if (once('bw' + i)) A.say('Wait here: both big eggs go in together at ' + clk(S.bigIn[B.side]) + '.'); }
+        else if (pgDist(p, S.pits[B.side]) <= P.THROW && t >= S.bigIn[B.side] && !partnerComing(B, i, t)) { st.state = 'in'; G.p2.dsAt['ds' + B.side + (B.which === 'far' ? 1 : 2)] = t + 1; if (st.who === me) { if (G.debs.doom) G.debs.doom.until = t; A.say('Big egg in the cauldron: a Weakened Doomscale climbs out.'); } } } }); };
   // (a big egg that hatches: a Ravenous Doomscale at full health stands up there and, 6.5 s later, casts Dread Roar (2.5 s): on the kills' wipes it
   // killed 15 of 17 in 3 s. A wipe on a real pull; here a 6 s stun and a big hit, so you can play on)
+  // (a ledge's two big eggs go in together: a carrier at the cauldron waits for the other one still on its way, up to 4 s past the count)
+  const partnerComing = (B, i, t) => { if (t >= S.bigIn[B.side] + 4) return false; const j = S.big.findIndex((q, k) => k !== i && q.side === B.side), st = G.p2.big[j]; return !!st && st.state === 'held' && pgDist(pos(st.who), S.pits[B.side]) > P.THROW; };
   const ravenous = (B, p, t, mine, why, tip) => { G.p2.rav.push({ side: B.side, x: p[0], y: p[1], t, roar: t + T.ROAR + 2.5, mine, c: cast('rav', 'Ravenous Doomscale: Dread Roar', t + T.ROAR, t + T.ROAR + 2.5, { side: B.side, spell: 'roar' }) });
     if (mine) { G.wipes++; A.mistake('wipe', why + ': a Ravenous Doomscale stood up and its Dread Roar wipes the raid on a real pull (here a 6 s stun, so you can play on).', tip, 0); }
     if (!window.__pgAuto && A.big) A.big('A Ravenous Doomscale! Dread Roar in ' + (T.ROAR + 2.5) + ' s: a wipe on a real pull', '#ff5a4f'); };
@@ -74961,7 +74972,7 @@ function pgP2(A) {
     S.wardens.forEach((w) => { const s = w.side; if (!G.p2.wd[s] || t < w.molt) return;
       G.p2.whp[s] -= (1 - shareOf(s)) / span * dt; /* (the raid's damage: it dies about 3:38 when you do your share) */
       if (G.p2.whp[s] <= 0) { G.p2.wdead[s] = t; delete G.p2.wd[s]; S.casts.forEach((c) => { if (c.who === 'warden' && c.side === s && c.t1 > t) c.t1 = Math.max(c.t0, t); });
-        G.eggs.forEach((e) => { if (e.side !== s || e.state !== 'floor') return; e.shell = t + 0.7 + S.eggs.filter((q) => q.side === s && pgDist([q.x, q.y], S.pits[s]) > pgDist([e.x, e.y], S.pits[s])).length * 1.1; }); /* (the shells open as the raid finishes them, the far ones first) */
+        G.eggs.forEach((e) => { if (e.side !== s || e.state !== 'floor') return; e.shell = t + 2.5 + S.eggs.filter((q) => q.side === s && pgDist([q.x, q.y], S.pits[s]) > pgDist([e.x, e.y], S.pits[s])).length * 0.8; e.wd = t; }); /* (the raid breaks them out 2.5 to 8.1 s after the Warden dies, the far ones first, apart enough that neighbours' carriers don't meet: on the kills a median 6.0 s, middle half 3.8 to 7.4) */
         if (S.job[me].side === s && G.p2.where[me] === 'L') A.say('The Warden is dead: the eggs open in a moment.'); return; }
       // (still up 46 s after it stood up: Shadow Molt again, Writhing Gestation again (more of its eggs turn), another Malice at 55.3 s)
       const r = G.p2.w2[s];
@@ -75002,6 +75013,9 @@ function pgP2(A) {
       if (once('dsw')) S.warns.push({ t: t + 0.05, text: 'Weakened Doomscales: kick Anguished Cry!', c: '#c9d98a' }), S.warns.sort((a, b) => a.t - b.t);
       T.CRY.forEach((o, i) => { const c0 = at + o, len = st.rev != null ? 1.25 : 2.5; S.cries.push({ ds: d.id, side: d.side, dk: d.k, i: i + 1, t0: c0, t1: c0 + len, rev: st.rev != null, c: cast('ds', 'Doomscale: Anguished Cry', c0, c0 + len, { ds: d.id, side: d.side, spell: 'cry', kick: true }) }); });
       T.THRASH.forEach((o) => { const a1 = at + o, len = st.rev != null ? 1.5 : 3; S.dthrash.push({ ds: d.id, side: d.side, t0: a1 - len, at: a1, c: cast('ds', 'Doomscale: Desperate Thrash', a1 - len, a1, { ds: d.id, side: d.side, spell: 'thrash' }) }); }); });
+    // (a Thrash about to start while its Doomscale is still being dragged waits until it's settled by its tank (on the kills the drag takes about 13 s and the
+    // first Thrash comes as it ends), so its frontal never goes off in the middle of the raid's walk)
+    S.dthrash.forEach((f) => { if (f.t0 <= t || f.t0 > t + dt + 0.01) return; const c = G.p2.ds[f.ds]; if (c && !G.p2.settled[f.side] && (f.held = (f.held || 0) + 1) < 120) { const k = dt + 0.05; f.t0 += k; f.at += k; f.c.t0 += k; f.c.t1 += k; } });
     S.ds.forEach((d) => { const st = G.p2.dsS[d.id]; if (!st || st.dead != null || t < st.up + 1.5) return; st.hp -= (1 - shareOf(d.side) / 2) / T.DSLIFE * dt;
       if (st.hp > 0) return; st.dead = t; delete G.p2.ds[d.id]; if (G.tgt === d.id) G.tgt = null;
       S.casts.forEach((c) => { if (c.ds === d.id && c.t1 > t) { c.t1 = Math.max(c.t0, Math.min(c.t1, t)); if (c.t0 > t) c.t0 = c.t1 = -9; } });
@@ -75020,14 +75034,30 @@ function pgP2(A) {
       const who = ids.includes(me) && k % 2 === 0 ? me : ids.filter((id) => id !== me)[(S.seed * 7 + k * 3 + (s === 'E' ? 1 : 0)) % Math.max(1, ids.length - (ids.includes(me) ? 1 : 0))] || ids[0], p = pos(who);
       S.impacts.push({ x: p[0], y: p[1], r: 5, t0: t, at: t + 6.5, name: 'Virulent Spit', dmg: 40, color: '#7ddc3a', fill: '#5fbf2a', tip: 'A green swirl under you: step out of it before it lands (6.5 s).' });
       if (who === me && !window.__pgAuto && A.big) A.big('Virulent Spit under you: step out of the green swirl!', '#7ddc3a'); }); }); };
+  // ---- the small eggs broken out by the raid (Flex, Nov 16; the 30 fastest kills: the north eggs are hit from 3:03 as the raid cleaves the Clutches and the
+  // Warden, their Hardened shields break about 3:22 (15 s before the Warden dies), each egg breaks open about 6 s after it dies; the two south eggs a ledge
+  // come up about 3:55, are hit from 4:01.6 and broken about 4:15.6, and their carriers take them in) ----
+  const eggFr = (e, t) => (e.south ? Math.max(0, e.ehp) : e.shp > 0 ? 0.5 + 0.5 * e.shp : e.wd == null ? 0.5 : Math.max(0, Math.min(0.5, 0.5 * (e.shell - t) / Math.max(0.1, e.shell - e.wd))));
+  const breakEggs = (t0, t, dt) => { const cr = (at) => at > t0 && at <= t;
+    G.eggs.forEach((e) => { if (e.state !== 'floor' || e.south) return; if (e.shp == null) e.shp = 1; if (t >= T.clutch && e.shp > 0) e.shp = Math.max(0, e.shp - dt / (202.4 - T.clutch)); });
+    if (cr(T.set2)) S.south.forEach((q, i) => { const k = +q.id.slice(-1), who = Object.keys(S.job).find((id) => S.job[id].side === q.side && S.job[id].south === k) || null; G.eggs.push({ id: who, side: q.side, n: 100 + k, x: q.x, y: q.y, land: t, shell: 1e9, set: 2, state: 'floor', who: null, south: true, qid: q.id, ehp: 1, lock: 'Break it out first: hit it (Tab, then 1).' }); });
+    G.eggs.forEach((e) => { if (!e.south || e.state !== 'floor' || e.shell < 1e8) return; if (t >= T.s2hit) e.ehp -= dt / (T.s2die - T.s2hit); if (e.ehp <= 0) { e.ehp = 0; e.shell = t; } });
+    // (the south big egg goes up as soon as the ledge's two south eggs are grabbed (in that kill, 2 s after the last); 4:22 at the latest)
+    ['E', 'W'].forEach((s) => { if (G.p2.farGo[s]) return; const se = G.eggs.filter((e) => e.south && e.side === s); if ((se.length === 2 && se.every((e) => e.state !== 'floor')) || t >= 262) { G.p2.farGo[s] = t; S.bigAt[s].far = Math.min(Math.max(t + 2, S.bigAt[s].far - 6), 262); } }); };
   // (your hits on the Warden, a Clutch or a Doomscale (practice.js's hitTgt: a Rawling or a Viper it takes itself): your share of the raid's damage)
   const hit = (key) => { sync(); if (!G || !G.p2) return;
     if (key === 'wdE' || key === 'wdW') { const s = key.slice(2); if (G.p2.wd[s]) G.p2.whp[s] -= hitVal(P.SHARE / 20); return; }
     const c = G.p2.cl[key]; if (c && c.dead == null) { c.hp -= hitVal(1 / P.CHITS); return; }
-    const st = G.p2.dsS[key]; if (st && st.dead == null) { st.hp -= hitVal(P.SHARE / 13.5); G.p2.dsHits[key] = (G.p2.dsHits[key] || 0) + 1; } };
+    const st = G.p2.dsS[key]; if (st && st.dead == null) { st.hp -= hitVal(P.SHARE / 13.5); G.p2.dsHits[key] = (G.p2.dsHits[key] || 0) + 1; return; }
+    // (an egg: a north one's shield first; its egg only once its Warden is dead (Warden\'s Protection); a south one, straight on)
+    const eg = /^egg(\d+)([EW])$/.exec(key), e = eg && G.eggs.find((q) => q.n === +eg[1] && q.side === eg[2] && q.state === 'floor'); if (!e) return; const t = G.t;
+    if (e.south) { if (e.shell > 1e8) { e.ehp -= hitVal(0.08); if (e.ehp <= 0) { e.ehp = 0; e.shell = t; } } return; }
+    if (e.shp > 0) { e.shp = Math.max(0, e.shp - hitVal(0.06)); return; } if (G.p2.wd[e.side]) { if (once('wp' + Math.floor(t / 5))) A.say('Warden\'s Protection: it can\'t break open while the Warden lives.', true); return; } e.shell = Math.max(t, e.shell - hitVal(0.6)); };
   const check = (t0, t) => { sync(); const dt = t - t0, me = A.me;
     S.wardens.forEach((w) => { const p = wdAt(w, t); if (p) G.p2.wd[w.side] = p; else delete G.p2.wd[w.side]; });
-    wardens(t0, t, dt); clutches(t0, t, dt); doomscales(t0, t, dt);
+    // (each ledge's tank: settled at its spot, or still dragging its Doomscales across)
+    ['E', 'W'].forEach((s) => { const tk = tankOf(s); G.p2.settled[s] = pgDist(pos(tk), job(tk, t).T) <= 2.5; });
+    wardens(t0, t, dt); clutches(t0, t, dt); doomscales(t0, t, dt); breakEggs(t0, t, dt);
     S.ds.forEach((d) => { const p = dsWant(d, t); if (!p) { delete G.p2.ds[d.id]; return; } const c = G.p2.ds[d.id]; if (!c || pgDist([c.x, c.y], p) > 40) { G.p2.ds[d.id] = { x: p[0], y: p[1] }; return; }
       if (S.casts.some((q) => q.ds === d.id && t >= q.t0 && t <= q.t1)) return; /* (it stands still to cast, as in WoW: its frontal goes off where it stood) */ const ex = p[0] - c.x, ey = p[1] - c.y, ee = Math.hypot(ex, ey), sp = 9 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = p[0]; c.y = p[1]; } });
     gates(t); kicks(t0, t); tethers(t0, t); eggs(t0, t); big(t0, t); fans(t0, t); rawlings(t0, t, dt); spit(t0, t);
@@ -75056,7 +75086,7 @@ function pgP2(A) {
     if (w === 'L' && t >= S.home[me] && t < T.heart) return 'Back to her: walk into your gate (the gold ring).';
     const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (w === 'L' && wdUp(j.side)) return G.eggs.some((q) => q.state === 'floor' && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 1) ? 'Step off the egg: Warden\'s Protection nicks anyone on one while the Warden lives.' : 'The Warden: kill it with your half (about 3:38), off the eggs.' + (e ? ' Your egg (#' + e.n + ') opens when it dies.' : '');
-    if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait by it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
+    if (e && e.state === 'floor') return t < e.shell ? 'Your egg (#' + e.n + ', gold) breaks open in ' + Math.ceil(e.shell - t) + ' s: hit it to help (Tab, then 1), then walk over it.' : 'Pick up your egg (#' + e.n + ') now: walk over it.';
     if (e && e.state === 'held') return t < T.throwAt ? 'Carry your egg to your lane spot by the cauldron (gold). 3 yards from other carriers. In together in ' + Math.ceil(T.throwAt - t) + ' s.' : 'Into the cauldron now: stand in its ring.';
     const bt = j.big ? S.bigAt[j.side][j.big] : 0;
     if (bg && bg.state === 'floor' && t < T.doomEnd) return t < bt - 16 ? 'The ' + NS[j.big] + ' big egg waits at the ' + NS[j.big] + ' end of your ledge. Go to it at ' + clk(bt - 16) + ', pick it up at ' + clk(bt) + '.' : t < bt ? 'By the ' + NS[j.big] + ' big egg: pick it up in ' + Math.ceil(bt - t) + ' s, once the small eggs are in.' : 'Pick up the big egg now, before Hatching Doom ends (' + Math.ceil(T.doomEnd - t) + ' s).';
@@ -75093,7 +75123,7 @@ function pgP2(A) {
   const clash = () => '';
   const card = () => { fix(); const heal = pk.role === 'h', tab = ui.tab; let body;
     if (tab === 'egg') body = '<div class="pg-jobp"><div class="pg-jmap">' + ledgeSvg() + '</div><div class="pg-jside"><p><b>Your egg.</b> Click your small egg (its number on your raid\'s plan) or a big egg.</p><p>' +
-      (pk.egg === 'far' || pk.egg === 'close' ? esc('Picked: the ' + NS[pk.egg] + ' big egg. Pick it up at ' + (pk.egg === 'far' ? '4:09' : '4:13 or 4:16 (one ledge\'s healer goes first)') + ', once the small eggs are in, and have it in by 4:27.') : pk.egg ? esc('Picked: small egg ' + pk.egg.slice(1) + '. Pick it up once the Warden is dead, then into the cauldron at 3:56.') : 'Picked: no egg.') + '</p>' +
+      (pk.egg === 'far' || pk.egg === 'close' ? esc('Picked: the ' + NS[pk.egg] + ' big egg. Pick it up at ' + (pk.egg === 'far' ? 'about 4:17, as soon as the two south small eggs are grabbed' : 'about 4:18, running there alone') + ', and throw it in with the other on the count, about 4:28.') : pk.egg ? esc('Picked: small egg ' + pk.egg.slice(1) + '. Pick it up once the Warden is dead, then into the cauldron at 3:56.') : 'Picked: no egg.') + '</p>' +
       '<button type="button" class="pg-btn pg-jno' + (pk.egg ? '' : ' on') + '" data-p2e="none" aria-pressed="' + !pk.egg + '">No egg</button></div></div>';
     else if (tab === 'kick') body = '<div class="pg-p2kick"><p><b>Malice.</b> Your ledge\'s Warden casts it once, at ' + clk(T.malice) + ' (its tank kicks it if you don\'t). Do you kick it?</p>' + seg('p2m', [[0, 'No'], [1, 'Kick it · ' + clk(T.malice)]], pk.mal, heal) +
       '<p><b>Anguished Cry.</b> Each Doomscale on your ledge casts it three times, 8 s after it climbs out (about 4:33) and every 16 s. Kick one Doomscale\'s three?</p>' + seg('p2c', [[0, 'None'], [1, 'Doomscale 1'], [2, 'Doomscale 2']], pk.cry, heal) +
@@ -75123,13 +75153,13 @@ function pgP2(A) {
     say: () => { const v = setupCard.now().job; return ({ mal: 'You cross to your ledge and kick the Warden\'s Malice at ' + clk(T.malice) + ' with E, then break your tether (alone at 3:26 or with the five at 3:34) and follow the plan to the heart burn.',
       cry: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), then kick your Doomscale\'s Anguished Cry with E each time it casts (about ' + crN.map(clk).join(', ') + ').',
       egg: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34) and carry a small egg into the cauldron once the Warden dies.',
-      big: 'You cross to your ledge and carry the ' + (pk.role === 'h' ? 'north' : 'south') + ' big egg into the cauldron before Hatching Doom runs out, after breaking your tether (alone at 3:26 or with the five at 3:34).',
+      big: pk.role === 'h' ? 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), then run alone to the north big egg and throw it in with the south one on the count (about 4:28).' : 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), pick up the south big egg as soon as the two south small eggs are grabbed, and throw it in with the north one on the count (about 4:28).',
       none: 'You cross to your ledge, break your tether (alone at 3:26 or with the five at 3:34), help kill the Warden and the Doomscales, and keep out of the frontals and the falling rocks.' })[v]; } };
   const asg = () => { fix(); const L0 = [], s = SD[pk.side];
     L0.push(['Cross over (2:47)', 'Walk into your gate (the gold ring on the ' + s + ' side of the platform). Your half fights on the ' + s + ' ledge.']);
     L0.push(['The Warden (2:55)', 'Kill it with your half (it dies about 3:38). Kill the glowing Clutches it makes first (3:04), then the Rawlings that come out of them.' + (pk.mal ? ' Kick its Malice (' + clk(T.malice) + ') with E.' : ' Its tank kicks its Malice.')]);
     L0.push(['Grasping Fangs (3:16)', ({ random: 'You always get a tether, the solo or one of the five at random. Solo: walk out past 25 yards at 3:26. One of the five: to the edge of your tether at 3:28, out together at 3:34.', solo: 'You break alone: walk out past 25 yards from the Warden at 3:26.', five: 'One of the five: to the edge of your tether (20 yards) at 3:28, out together at 3:34.', none: 'No tether: the bots break theirs (one at 3:26, five at 3:34).' })[pk.teth]]);
-    if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. ' + (pk.egg === 'far' ? 'Go to it at 3:53, pick it up at 4:09' : 'Go to it at about 3:58, pick it up at 4:13 or 4:16 (one ledge\'s healer goes first, the other about 2.5 s later)') + ' (after the small eggs), into the cauldron by 4:27. It hatches 20 s after you pick it up: a wipe.']);
+    if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. ' + (pk.egg === 'far' ? 'Wait there with the group while it breaks out the two south small eggs; pick the big egg up as soon as they are grabbed (about 4:17)' : 'Run there alone once the small eggs are in; pick it up about 4:18') + ', then into the cauldron with the other on the count (about 4:28). It hatches 20 s after you pick it up: a wipe.']);
     else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead (3:38) and Blight Vein has dropped. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others at 3:56.']);
     else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
     L0.push(['Small eggs in: Rawlings (3:56)', 'A Rawling climbs out of the cauldron for every egg: kill them before they boil (25 s).']); L0.push(['The Doomscales (about 4:26)', 'Behind or beside them, never in front: their frontal goes at the tank.' + (pk.cry ? ' Kick Doomscale ' + pk.cry + '\'s Anguished Cry each time (about ' + crN.map(clk).join(', ') + ').' : '')]);
@@ -75139,7 +75169,7 @@ function pgP2(A) {
   // lines, your ledge and gate, your egg and kicks, your tether, the heart; the full rundown (asg) folds away under it)
   const short = () => { fix(); const s = SD[pk.side], ord = ['', '1st', '2nd', '3rd'], L0 = [];
     L0.push(s[0].toUpperCase() + s.slice(1) + ' ledge: cross through your gate (the gold ring) at 2:47.');
-    const egg = pk.egg === 'far' || pk.egg === 'close' ? 'The ' + NS[pk.egg] + ' big egg: pick it up at ' + (pk.egg === 'far' ? '4:09' : '4:13 or 4:16') + ', in by 4:27' : pk.egg ? 'Small egg ' + pk.egg.slice(1) + ': pick it up when the Warden dies, into the cauldron at 3:56' : 'No egg: keep out of the carriers\' rings';
+    const egg = pk.egg === 'far' || pk.egg === 'close' ? 'The ' + NS[pk.egg] + ' big egg: ' + (pk.egg === 'far' ? 'pick it up once the south small eggs are grabbed (about 4:17)' : 'run there alone, pick it up about 4:18') + ', in together on the count (about 4:28)' : pk.egg ? 'Small egg ' + pk.egg.slice(1) + ': pick it up when the Warden dies, into the cauldron at 3:56' : 'No egg: keep out of the carriers\' rings';
     const kk = [pk.mal ? 'the Warden\'s Malice (' + clk(T.malice) + ')' : '', pk.cry ? 'Doomscale ' + pk.cry + '\'s Anguished Cry' : ''].filter(Boolean);
     L0.push(egg + (kk.length ? '. Kick (E) ' + kk.join(' and ') : '') + '.');
     L0.push(({ random: 'Tether: you get one every run, at random: break alone at 3:26 or with the five at 3:34.', solo: 'Tether: you break alone at 3:26, past 25 yards from the Warden.', five: 'Tether: to its edge at 3:28, out with the five at 3:34.', none: 'No tether: stay with your half.' })[pk.teth]);
@@ -75155,6 +75185,7 @@ function pgP2(A) {
       if (a.kind === 'viper') L0.push({ key: a.id, kind: 'viper', name: 'Blightscale Viper', p: [a.x, a.y], r: 1.6, hp: a.hp == null ? 5 : a.hp, max: 5, hpFr: Math.max(0, a.hp == null ? 1 : a.hp / 5) });
       else L0.push({ key: a.id, kind: 'rawling', side: a.side, name: 'Blightscale Rawling' + (a.boil ? ' (boiling)' : ''), p: [a.x, a.y], r: 1.1, hp: Math.max(0, a.hp), max: P.RHITS, hpFr: Math.max(0, a.hp / P.RHITS) }); });
     Object.values(G.p2.cl).forEach((c) => { if (c.dead == null) L0.push({ key: c.id, kind: 'clutch', side: c.side, name: 'Blightscale Clutch · ' + Math.max(0, Math.ceil(c.born + T.CHATCH - t)) + ' s', p: [c.x, c.y], r: 1.4, hp: Math.max(0, c.hp) * 10, max: 10, hpFr: Math.max(0, c.hp) }); });
+    { const e = G.eggs.find((q) => q.id === A.me && q.state === 'floor' && t < q.shell); if (e) L0.push({ key: 'egg' + e.n + e.side, kind: 'pegg', side: e.side, name: 'Your egg' + (!e.south && e.shp > 0 ? ' (Hardened shell)' : ''), p: [e.x, e.y], r: 1, hp: eggFr(e, t) * 10, max: 10, hpFr: eggFr(e, t) }); }
     if (t >= T.heart && t < T.heartEnd) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 3 });
     // (kill them evenly (the guide): on your ledge the right one is the one with the most health, or any within 5% of it)
     const js = (S.job[A.me] || {}).side, top = Math.max(0, ...S.ds.filter((d) => d.side === js && G.p2.ds[d.id] && G.p2.dsS[d.id]).map((d) => G.p2.dsS[d.id].hp));
@@ -75169,8 +75200,8 @@ function pgP2(A) {
     { const bi = j && j.big ? bigIx(s, j.big) : -1; if (bi >= 0 && G.p2.big[bi].state === 'floor' && t >= S.bigAt[s][j.big] - 16) return null; } /* (on your way to your big egg: that's your job then) */
     if (G.p2.where[A.me] === 'L' && t >= S.home[A.me] && t < T.heart) return null; /* (and on your way back to her through your gate) */
     if (here && Object.values(G.p2.cl).some((c) => c.side === s && c.dead == null && pgDist([c.x, c.y], [G.x, G.y]) < (A.me[0] === 'm' ? 12 : 40))) return 'clutch'; /* (one within your reach soon: a melee 12 yards (they die in seconds), others their 40) */
-    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (S.ds.some((d) => d.side === s && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 45))) return 'ds'; /* (once Doomscales are out, they come first: the raid cleaves the last Rawlings along, as on the kills) */ if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
-    if (S.ds.some((d) => d.side === s && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 25 : 45))) return 'ds'; return j && G.p2.wd[s] && t >= T.clutch ? 'warden' : null; };
+    if (t >= T.heart && t < T.heartEnd) return 'heart'; if (S.ds.some((d) => d.side === s && G.p2.settled[s] && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 12 : 45))) return 'ds'; /* (once Doomscales are out, they come first: the raid cleaves the last Rawlings along, as on the kills) */ if (G.adds.some((a) => a.own && a.side === s && pgDist([a.x, a.y], [G.x, G.y]) < (A.me[0] === 'm' ? 8 : 40) && pgP2Ledge(a.x, a.y, 0.4) === pgP2Ledge(G.x, G.y, 0.4))) return 'rawling'; /* (one on your side of the venom) */
+    if (S.ds.some((d) => d.side === s && G.p2.settled[s] && G.p2.ds[d.id] && G.p2.dsS[d.id] && t >= G.p2.dsS[d.id].up + 1.5 && pgDist([G.p2.ds[d.id].x, G.p2.ds[d.id].y], [G.x, G.y]) < (A.me[0] === 'm' ? 12 : 45))) return 'ds'; return j && G.p2.wd[s] && t >= T.clutch ? 'warden' : null; };
   const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['warden', 'clutch', 'rawling', 'ds', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ warden: 'the Warden', clutch: 'the Clutches', rawling: 'the Rawlings', ds: 'the Doomscales', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   // (the bar under your target's frame: your target's cast, gold when you can kick it; "Interrupted" a moment after a kick lands on it; with no target,
   // Ula'tek's own (Rage of the Shackled))
@@ -75210,8 +75241,8 @@ function pgP2(A) {
       G.p2.fan.forEach((f) => { if (cr(f.at) && f.tank !== id && inFan(f, p[0], p[1])) add('in a Desperate Thrash', id, t); }); });
     G.p2.tlog.splice(0).forEach(([id, bt, okT]) => { if (!okT) add('broke their tether off the count ' + clk(bt), id, bt); });
     G.p2.missed.splice(0).forEach(([id, what]) => add(what, id || '?', t));
-    if (cr(T.throwAt + 7)) G.eggs.forEach((e) => { if (e.state !== 'gone') add('small egg not in by 4:05', e.id || '?', t); });
-    S.big.forEach((B, i) => { if (cr(S.bigAt[B.side][B.which] + T.hold + 3) && G.p2.big[i].state !== 'in') add('big egg not in 18 s after its pickup', holder('big', B.side, B.which) || '?', t); });
+    if (cr(T.throwAt + 7)) G.eggs.forEach((e) => { if (e.state !== 'gone' && !e.south) add('small egg not in by 4:05', e.id || '?', t); });
+    S.big.forEach((B, i) => { if (cr(S.bigIn[B.side] + 5) && G.p2.big[i].state !== 'in') add('big egg not in on the count', holder('big', B.side, B.which) || '?', t); });
     Object.values(G.p2.cl).forEach((c) => { if (c.hatched && cr(c.dead)) add('a Clutch hatched a Viper', '?', t); }); };
 
   // ---- 3D: the shapes for this part (practice3d.js's pg3dShapes adds them to the list it draws) ----
@@ -75240,7 +75271,7 @@ function pgP2(A) {
     // (the Clutches: purple, glowing, pulsing faster as their 20 s run out; the south eggs before the big egg's pickup turns them; the Rawlings' boil and
     // Acidic Expulsion; a Ravenous Doomscale and its Dread Roar)
     Object.values(G.p2.cl).forEach((c) => { if (c.dead != null) return; const left = c.born + T.CHATCH - t; P3({ k: 'clutch', x: c.x, y: c.y, p: left }); if (c.side === j.side || pgDist([c.x, c.y], [G.x, G.y]) < 30) h.label(c.x, c.y, 3.6, 'Clutch · ' + Math.max(0, Math.ceil(left)) + ' s', left < 6 ? '#ff8f87' : '#d9b8ff', 13); });
-    S.south.forEach((q) => { const se = G.p2.se[q.id]; if (t >= q.up && se.state !== 'clutch') P3({ k: 'egg', x: q.x, y: q.y, h: 0 }); });
+    G.eggs.forEach((e) => { if (e.state !== 'floor') return; const fr = eggFr(e, t); if (fr < 0.999) P3({ k: 'arc', x: e.x, y: e.y, r: 1.9, f: Math.max(0.02, fr), c: e.south || e.shp <= 0 ? '#f5d33a' : '#9fd6ff', o: 0.9 }); }); /* (an egg being broken out: a ring that empties, blue while its Hardened shield holds) */
     G.adds.forEach((a) => { if (!a.own) return; const c = S.casts.find((q) => q.rid === a.id && t >= q.t0 && t <= q.t1); if (c) castRing(a.x, a.y, 2, c, 'rawling'); }); /* (a boiling one's red ring: practice3d.js draws it for every add with a.boil) */
     G.p2.rav.forEach((r) => { P3({ k: 'rav', x: r.x, y: r.y }); const c = r.c; if (t >= c.t0 && t <= c.t1) castRing(r.x, r.y, 5, c, 'rav'); else h.label(r.x, r.y, 10, 'Ravenous Doomscale', '#ff8f87', 15);
       if (t >= r.roar && t <= r.roar + 0.9) P3({ k: 'shock', x: r.x, y: r.y, r: 60 * Math.min(1, (t - r.roar) / 0.9), c: '#ff5a4f' }); });
