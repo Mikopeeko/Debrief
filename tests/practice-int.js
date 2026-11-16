@@ -24,8 +24,13 @@
 //   G. the 3D view doesn't draw the part where its hits are (the soak's 10 yards, the coil at the rim, the cracks' 3.5, her burst's 8, the
 //      diamond line), or "Go here" still points after the Shattering (found while building it);
 //   H. phase 1 or phase 2 change with this file loaded;
-//   I. the damage moments: the Rawlings only once the coils are done (the raid kills them then: measured 5:55 to 6:12), any Viper at once; the
-//      autopilot hits them as ranged and as melee (found while building it: a melee never walked over to them), standing still misses them.
+//   I. the damage moments: the Rawlings only once the coils are done (the raid kills them then: measured 5:55 to 6:12) and until her bubbles show,
+//      any Viper at once; the autopilot hits them as ranged and as melee (found while building it: a melee never walked over to them), standing
+//      still misses them;
+//   J. the independent review (Nov 15): the egg hint and the egg mistake follow one rule (carriers sent to their soak, then told they never picked
+//      their egg up); carriers never stuck on another egg's berth; melee never told to hold while the Rawlings still count; the defensive's cue
+//      covers all four slams; she comes up at one quarter's outer corner (17 kills: never the middle); a carried egg in the venom hatches; the
+//      boss-mod bars don't give the pattern away or the wrong icon; the hints after the Shattering, the clean-run text and "pick one" are true.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -81,6 +86,8 @@ function checks(H, say) {
   // C. the bots
   const free = { role: 'r', team: 'B', egg: false, pat: 0 }; const auditRuns = [];
   try { dbg.P2.pick = free; for (const [east, seed] of [[false, 3], [true, 3], [true, 5], [false, 6], [true, 8], [false, 11], [true, 19], [false, 20], [true, 26]]) { const a = dbg.audit(east, seed); auditRuns.push(dbg.S.pat); a.filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + ' (pattern ' + dbg.S.pat + ', seed ' + seed + ', check C)')); }
+    for (const [pat, seed] of [[2, 4], [1, 29], [1, 39], [3, 16], [3, 29], [3, 40], [2, 13], [1, 7], [3, 22]]) { dbg.P2.pick = { ...free, pat }; auditRuns.push(pat); dbg.audit(false, seed).filter((x) => SERIOUS.test(x)).forEach((x) => bad('a bot slips: ' + x + ' (pattern ' + pat + ', seed ' + seed + ', check C; the review found carriers stuck on another egg\'s berth here)')); }
+    dbg.P2.pick = free;
     if (new Set(auditRuns).size < 3) bad('the bots\' audit only played patterns ' + [...new Set(auditRuns)].join(', ') + ' (check C)'); }
   catch (e) { bad('the bots\' audit crashed: ' + e.message + ' (check C)'); }
   // D. your picked job
@@ -91,7 +98,8 @@ function checks(H, say) {
       const sz = ['Y', 'P', 'B'].map((g) => J.list[g].length).join('/'); if (sz !== '7/6/7') bad('after your pick (' + role + ', ' + P.TN[team] + ', ' + (egg ? 'egg' : 'no egg') + ') the teams are ' + sz + '; 7/6/7 (check D)');
       if (J.carry.size !== 8) bad('after your pick there are ' + J.carry.size + ' egg carriers; 8 (check D)');
       if (Object.keys(J.team).length !== 20) bad('after your pick ' + Object.keys(J.team).length + ' raiders have a team (check D)'); }
-    for (const [pk, east, seed] of [[{ role: 'm', team: 'Y', egg: true, pat: 1 }, false, 4], [{ role: 'r', team: 'P', egg: true, pat: 3 }, true, 6], [{ role: 'h', team: 'B', egg: false, pat: 2 }, false, 7], [{ role: 'r', team: 'Y', egg: true, pat: 3 }, true, 9], [{ role: 'm', team: 'B', egg: true, pat: 2 }, false, 12]]) {
+    for (const [pk, east, seed] of [[{ role: 'm', team: 'Y', egg: true, pat: 1 }, false, 4], [{ role: 'r', team: 'P', egg: true, pat: 3 }, true, 6], [{ role: 'h', team: 'B', egg: false, pat: 2 }, false, 7], [{ role: 'r', team: 'Y', egg: true, pat: 3 }, true, 9], [{ role: 'm', team: 'B', egg: true, pat: 2 }, false, 12],
+      [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 7], [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 12], [{ role: 'r', team: 'B', egg: true, pat: 3 }, false, 14], [{ role: 'm', team: 'Y', egg: true, pat: 2 }, false, 9], [{ role: 'm', team: 'Y', egg: true, pat: 2 }, false, 10], [{ role: 'r', team: 'Y', egg: true, pat: 3 }, false, 3]]) { /* (the review's egg cases: the hint led to the soak, then 'never picked up') */
       dbg.P2.pick = pk; const me = dbg.P2.slotOf(); const r = dbg.sim(me, true, east, seed);
       if (dbg.S.job.team[me] !== pk.team || dbg.S.job.carry.has(me) !== pk.egg) bad('the game plays ' + me + ' on ' + P.TN[dbg.S.job.team[me]] + (dbg.S.job.carry.has(me) ? ' with an egg' : ' without one') + ' for the pick ' + JSON.stringify(pk) + ' (check D)');
       if (r.log.length || r.deaths.length) bad('the autopilot playing ' + JSON.stringify(pk) + ' (seed ' + seed + ') makes mistakes: ' + r.log.concat(r.deaths.map((d) => 'died ' + d)).join(' | ') + ' (check D)');
@@ -99,10 +107,10 @@ function checks(H, say) {
   catch (e) { bad('your picked job crashed: ' + e.message + ' (check D)'); }
   // E. the mistakes
   try { dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(), r = dbg.sim(me, false, false, 4), lg = r.log.join(' | ');
-    [[/missed your coil soak/, 'a missed soak'], [/never picked up your egg/, 'an egg never picked up'], [/No defensive for the last four slams/, 'no defensive for the back-to-back slams'], [/on a crack|middle of the platform|threw you into the venom/, 'the Shattering where you stood']].forEach(([re, w]) => { if (!re.test(lg)) bad('standing still doesn\'t log ' + w + ': ' + lg + ' (check E)'); });
+    [[/missed your coil soak/, 'a missed soak'], [/Your egg never went into a soak/, 'an egg never picked up'], [/No defensive for the last four slams/, 'no defensive for the back-to-back slams'], [/on a crack|threw you into the venom/, 'the Shattering where you stood']].forEach(([re, w]) => { if (!re.test(lg)) bad('standing still doesn\'t log ' + w + ': ' + lg + ' (check E)'); });
     // (the Shattering, three spots: the middle, a crack, the edge; and the diamond line clean)
     const shat = (p) => { dbg.at(T.shatter - 0.6, me, { seed: 4 }); dbg.G.log = []; dbg.G.x = p[0]; dbg.G.y = p[1]; for (let i = 0; i < 20; i++) dbg.stepOwn(1); return dbg.log.join(' | '); };
-    if (!/burst up under you/.test(shat([2, 3]))) bad('standing in the middle as she bursts up isn\'t a mistake (check E)');
+    if (!/stood on a crack/.test(shat([2, 3]))) bad('standing in the middle, where the cracks cross, as it shatters isn\'t a mistake (check E)');
     if (!/stood on a crack/.test(shat([1.5, -20]))) bad('standing on a crack line as it shatters isn\'t a mistake (check E)');
     if (!/threw you into the venom/.test(shat([20, -27]))) bad('standing at the edge as the knockback comes isn\'t a mistake (check E)');
     { const g = ctx.pgIntKb ? null : null; void g; const l = shat([9, -21.7]); if (l) bad('the diamond line, inside, isn\'t safe at the Shattering: ' + l + ' (check E)'); }
@@ -144,11 +152,38 @@ function checks(H, say) {
     const s3 = dbg.S.soaks[2], L1 = at(s3.at - 1); if (!L1.some((s) => s.k === 'ring' && Math.abs(s.r - 10) < 0.01 && hyp([s.x, s.y], [s3.x, s3.y]) < 0.01)) bad('in 3D your soak isn\'t drawn at its 10 yards where it hits (check G)');
     if (!L1.some((s) => s.k === 'stail' && hyp([s.x, s.y], s3.rim) < 0.01)) bad('in 3D the coil doesn\'t rise at the rim (check G)');
     const L2 = at(T.bubbles + 2); if (!L2.some((s) => s.k === 'rect' && Math.abs(s.w1 - P.CRACK) < 0.01)) bad('in 3D the crack lines aren\'t shown before the Shattering at their ' + P.CRACK + ' yards (check G)');
-    if (!L2.some((s) => s.k === 'ring' && Math.abs(s.r - P.MID) < 0.01 && Math.hypot(s.x, s.y) < 0.01)) bad('in 3D her burst\'s ' + P.MID + ' yards in the middle aren\'t shown (check G)');
+    if (!L2.some((s) => s.k === 'fizz' && hyp([s.x, s.y], dbg.S.dive.to) < 0.01)) bad('in 3D her bubbles aren\'t shown at the corner where she comes up (check G)');
+    if (L2.some((s) => s.k === 'ring' && Math.hypot(s.x, s.y) < 0.01)) bad('in 3D a ring still marks the middle as where she comes up; she comes up at a corner (check G)');
     const ga = [Math.cos(P.GA * Math.PI / 180) * P.GATHER, Math.sin(P.GA * Math.PI / 180) * P.GATHER]; if (!L2.some((s) => s.k === 'ring' && Math.abs(s.r - P.SPREAD) < 0.01 && hyp([s.x, s.y], ga) < 0.01)) bad('in 3D the diamond line spot isn\'t shown (check G)');
     const L3 = at(T.shatter + 1); if (!L3.some((s) => s.k === 'rect' && s.c === '#24481c')) bad('in 3D the cracks don\'t turn to venom after the Shattering (check G)');
     if (dbg.job(me).ob) bad('"Go here" still points after the Shattering (check G)'); }
   catch (e) { bad('the 3D shapes crashed on the intermission: ' + e.message + ' (check G)'); }
+  // J. the independent review's fixes (Nov 15)
+  try { const Q = Object.values(P.Q), seen = new Set(); for (let seed = 1; seed <= 40; seed++) { const Sx = script({ seed }); if (!Q.some((c) => hyp(c, Sx.dive.to) < 0.01)) { bad('seed ' + seed + ': she comes up at ' + Sx.dive.to.join(', ') + ', not at a quarter\'s outer corner (17 kills: always a corner, check J)'); break; } seen.add(Sx.q1); }
+    if (seen.size < 4) bad('over 40 runs she comes up at only ' + [...seen].join(', ') + '; all four corners (the kills: north-east 3, north-west 5, south-west 4, south-east 5, check J)');
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.shatter + 0.5, me, { seed: 4 }); if (hyp(dbg.P2.bossAt(dbg.G.t).p, dbg.S.dive.to) > 0.01) bad('after the Shattering she isn\'t at the corner her bubbles showed (check J)');
+    if (!(T.defCue + 8 > T.slams[7]) || T.defCue > T.slams[4] - 0.5) bad('the defensive\'s cue (' + clkS(T.defCue) + ') doesn\'t let its 8 s cover all four slams (' + clkS(T.slams[4]) + ' to ' + clkS(T.slams[7]) + ', check J)');
+    { const w = dbg.S.warns.find((x) => /Personals now/.test(x.text)); if (!w || Math.abs(w.t - T.defCue) > 0.05) bad('the "Personals now" warning isn\'t at the defensive\'s cue (check J)'); }
+    if (dbg.S.timers.some((x) => /^Coil slam \d$/.test(x.name))) bad('the boss-mod timers include each coil by number, which shows your own before the pattern is called (check J)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 1 }; const mc = dbg.P2.slotOf(); dbg.at(T.call + 2, mc, { seed: 4 }); const mods = dbg.mods(); const eb = mods.find((b) => /egg/i.test(b.name)); if (!eb || eb.sp !== 'Call of the Serpent' || mods.some((b) => b.sp === 'Grasping Fangs')) bad('the egg\'s boss-mod bar doesn\'t take Call of the Serpent\'s icon: ' + JSON.stringify(mods.map((b) => [b.name, b.sp])) + ' (check J)');
+    // (a carried egg on a crack as it shatters hatches a Viper)
+    dbg.at(T.shatter - 0.6, mc, { seed: 4 }); { const e = dbg.G.eggs.find((q) => q.id === mc); e.state = 'held'; e.who = mc; } dbg.G.log = []; dbg.G.x = 1.5; dbg.G.y = -20; for (let i = 0; i < 20; i++) dbg.stepOwn(1);
+    if (!/Your egg went into the venom with you: a Viper hatched/.test(dbg.log.join(' | ')) || !dbg.G.adds.some((a) => a.kind === 'viper')) bad('a carried egg that falls into the crack venom doesn\'t hatch a Viper: ' + dbg.log.join(' | ') + ' (check J)');
+    // (after the Shattering: in the venom off the edge it says so, and never 'Well done' after a Shattering mistake; standing in the venom isn't charged twice)
+    dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; dbg.at(T.shatter - 0.6, me, { seed: 4 }); dbg.G.x = 24; dbg.G.y = -24; for (let i = 0; i < 30; i++) dbg.stepOwn(1);
+    { const tx = dbg.P2.jobText(); if (!/in the venom/.test(tx) || /Well done/.test(tx)) bad('in the venom off the edge after the Shattering the hint says: ' + tx + ' (check J)'); const h0 = dbg.G.hp; dbg.G.x = 0.5; dbg.G.y = 36; dbg.G.kb = null; dbg.G.hp = 90; for (let i = 0; i < 20; i++) dbg.stepOwn(1); if (90 - dbg.G.hp > 12) bad('off the stone on a crack line after the Shattering you lose ' + (90 - dbg.G.hp).toFixed(1) + ' health a second: the venom is charged twice (check J)'); void h0; }
+    // (Rawlings: the moment ends as her bubbles show, the hint never says to kill Rawlings that aren't there, and 'pick one')
+    dbg.at(T.bubbles + 0.5, me, { seed: 4 }); if (dbg.dps().cat === 'rawling') bad('the Rawlings still count as a damage moment once her bubbles show (everyone holds the line then, check J)');
+    dbg.at(T.gather - 1, me, { seed: 4 }); dbg.G.adds = []; dbg.stepOwn(30); if (/Rawlings/.test(dbg.P2.jobText())) bad('with no Rawlings left the hint still says to kill them: ' + dbg.P2.jobText() + ' (check J)');
+    { const w = (dbg.P2.jobText() || ''); if (/Kill the Rawlings: press Tab to pick it/.test(w)) bad('the Rawling hint says "pick it": ' + w + ' (check J)'); }
+    for (const [pat, seed] of [[2, 5], [2, 7], [2, 8], [3, 8], [3, 11]]) { dbg.P2.pick = { role: 'm', team: 'Y', egg: true, pat }; const r = dbg.sim(dbg.P2.slotOf(), true, false, seed); if (r.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot (Yellow, egg, pattern ' + pat + ', seed ' + seed + ') holding the line as told is scored off the Rawlings: ' + r.log.join(' | ') + ' (check J)'); }
+    // (the clean-run text only says what this job did)
+    dbg.P2.pick = { role: 'h', team: 'B', egg: false, pat: 0 }; if (/egg/.test(dbg.P2.clean) || /pattern/.test(dbg.P2.clean)) bad('the clean-run text for a job with no egg mentions an egg or a pattern choice: ' + dbg.P2.clean + ' (check J)');
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 0 }; if (!/egg/.test(dbg.P2.clean)) bad('the clean-run text for an egg carrier doesn\'t mention the egg (check J)');
+    // (a late pickup broken in a later soak is not 'never picked up', nor 'still in your hands')
+    dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const ml = dbg.P2.slotOf(); dbg.at(T.slams[3] + 0.5, ml, { seed: 3 }); { const e = dbg.G.eggs.find((q) => q.id === ml); e.state = 'floor'; e.who = null; e.shell = Math.min(e.shell, dbg.G.t - 1); }
+    dbg.G.log = []; while (dbg.G.t < T.end - 0.1) dbg.step(1); if (dbg.log.some((l) => /never went into a soak|still in your hands/.test(l))) bad('a late pickup broken in a later soak is still a mistake: ' + dbg.log.join(' | ') + ' (check J)'); }
+  catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check J)'); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with the intermission loaded (check H)');
     const L2 = load(H, 'm2'); if (!L2.dbg.P2 || L2.dbg.P2.part !== 2 || L2.dbg.S.end !== 318) bad('phase 2 no longer opens as itself with the intermission loaded (check H)'); }
