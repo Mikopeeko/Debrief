@@ -75336,7 +75336,7 @@ function pg3dP2(K) {
 //   three on the last, Gorefiend's Grasp 2 to 10 s after they land; Warlock gateways onto her first quarter (5 of 17 kills, 6:11 to 6:16) and from her
 //   second quarter to her third at the second Circling Prey (7 of 17, 7:58 to 8:12), the rest walk across the cracks.
 // Not measured, so picked and flagged where they're set: the raid landing on the south-east quarter after the Shattering (the commonest), the soakers'
-// 7-yard reach and a drain of 2.56 a second each (so three clear a bite in 13 s, as on the kills, four in 9.8, and two can't in 15), the 2 million as it ends, the Purge's 5-yard burst and its
+// 7-yard reach and a drain of 2.56 a second each (so three clear a bite in 13 s, as on the kills, four in 9.8, and two can't in 15), the 1.2 million as it ends (0.6 a circle since Nov 6), the Purge's 5-yard burst and its
 // three waves 120 degrees apart (the guide's picture), Vicious Echoes' 3 s cast, her health (40% to 0), the clutches hatching 8 s after they land (7.5
 // to 10 in the logs), the grip times, the Shriekers' walk to the raid, and the jobs (the guide's plan: soak sets of two Mages and a Hunter; a Rogue and
 // both tanks; a healer and both tanks; one kicker on each Shrieker; a Blood Death Knight tank and a melee Death Knight on the grips).
@@ -75467,8 +75467,9 @@ function pgP3Script(o) {
     cast('boss', 'Caustic Waves', w0, t0); timer(t0, 'Her waves'); warn(t0 - 2, 'Her waves: step into a gap beside you!', '#9be13a');
     S.waves.push({ kind: 'her3', x: B[0], y: B[1], deg, v: 12.5, w: 96, d: 5, cres, warn: 2.2, t0, t1: t0 + 9, name: 'Her Caustic Waves', tip: 'Her waves roll out from her quarter, the whole room wide: step sideways into a gap (the dark lanes).' }); });
   T.tails.forEach((b0, i) => { const n = stepAt(b0), L = i === 4 ? P.tails2 : P.tails, mid = F(P.mel, n); L.forEach((q) => { const O = F(q, n), st = 2 * Math.PI / 16, toR = Math.atan2(mid[1] - O[1], mid[0] - O[0]);
-    S.tails.push({ x: O[0], y: O[1], t0: b0, at: b0 + 2.4 }); S.waves.push({ kind: 'tail', ring: 1, x: O[0], y: O[1], n: 16, cw: 7, v: 12.5, d: 5, ph: toR + st / 2, t0: b0 + 2.4, t1: b0 + 2.4 + 9.5, name: 'A small tail\'s Caustic Waves', tip: 'In phase 3 two small tails rise at the far edges behind the raid: watch for their rings and stand in a gap.' }); });
-    if (i < 4) warn(b0 + 0.4, 'Small tails behind you: watch their rings!', '#ff8a6a'); });
+    /* (Main's playtest, Nov 15: the small tails send short fans of about three waves, not rings. Not changed yet: phase 3's fan directions aren't measured, and guessed ones (at the raid) pushed the tanks out of her reach and the beam) */
+    S.tails.push({ x: O[0], y: O[1], t0: b0, at: b0 + 2.4 }); S.waves.push({ kind: 'tail', ring: 1, x: O[0], y: O[1], n: 16, cw: 7, v: 12.5, d: 5, ph: toR + st / 2, t0: b0 + 2.4, t1: b0 + 2.4 + 9.5, name: 'A small tail\'s Caustic Waves', tip: 'In phase 3 two small tails rise at the far edges behind the raid: step out of their waves.' }); });
+    if (i < 4) warn(b0 + 0.4, 'Small tails behind you: step out of their waves!', '#ff8a6a'); });
   // the Wretch: Toxic Womb on the quarter across from hers (7 yards), awake 20 s later; the spectral image beams it, the off tank soaks the 5 impacts
   // (each sends two waves out square to the beam); dragged to the raid for its bubbles, dead about 8:27
   { const p0 = nf(F(P.womb, 0)), img = F(P.img, 0), bm = F(P.beam, 0), ba = Math.atan2(p0[1] - img[1], p0[0] - img[0]) * 180 / Math.PI;
@@ -75650,8 +75651,8 @@ function pgP3(A) {
       if (window.__pgAuto && st.by.has(me) && t - G.def >= 90 && Math.max(...b.tg.map((tg) => st.v[tg])) < 14) { G.def = t; A.deb('def', 8); }
       if (b.tg.every((tg) => st.v[tg] <= 0)) { st.done = t; if (G.debs.bite && b.tg.includes(me)) G.debs.bite.until = t;
         const who = [...st.by]; G.p3.purge.push({ i: b.i, who, burst: t + T.purge, spot: spreadSpots(who, b.n, t), waves: false });
-        if (who.includes(me)) { A.deb('purge', T.purge); if (!b.so.includes(me) && once('extra' + b.i)) A.mistake('extra', 'You soaked Serpent\'s Bite ' + (b.i + 1) + ' without being one of its soakers: you took its 2 million and a Volatile Purge too.', 'Soak with as few as possible: only the three assigned soakers stand in the red circles.', 0);
-          if (A.has('def')) { A.hurt(18); A.say('The bite cleared: spread out now, 5 yards from everyone, at the edge.'); } else A.mistake('def', 'You took the end of Serpent\'s Bite (about 2 million) without a defensive.', 'Press Q (your defensive) just before the red circles drain.', 40); }
+        if (who.includes(me)) { A.deb('purge', T.purge); if (!b.so.includes(me) && once('extra' + b.i)) A.mistake('extra', 'You soaked Serpent\'s Bite ' + (b.i + 1) + ' without being one of its soakers: you took its 1.2 million and a Volatile Purge too.', 'Soak with as few as possible: only the three assigned soakers stand in the red circles.', 0);
+          if (A.has('def')) { A.hurt(11); A.say('The bite cleared: spread out now, 5 yards from everyone, at the edge.'); } else A.mistake('def', 'You took the end of Serpent\'s Bite (about 1.2 million) without a defensive.', 'Press Q (your defensive) just before the red circles drain.', 24); }
         return; }
       if (t >= b.end) { st.done = t; b.tg.forEach((tg) => { if (st.v[tg] <= 0) return; const p = pos(tg); G.p3.stones.push({ x: p[0], y: p[1], t0: t, who: tg }); });
         const mineFail = (b.tg.includes(me) && st.v[me] > 0) || (b.so.includes(me) && !st.by.has(me)); A.deb('corpse', 6); A.hurt(20);
@@ -75719,7 +75720,8 @@ function pgP3(A) {
     for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) return qm === S.Qs[i] ? 'Circling Prey: move one quarter left (counter-clockwise) now, off her quarter (' + Math.ceil(S.hit[i] - t) + ' s).' + (i === 1 && !G.p3.used[me + 'g2'] ? (t < T.gate2w ? ' Let her waves pass, then the gateway (gold) takes you there.' : ' The gateway (gold) takes you there.') : '') : qm === S.Qs[i + 1] ? 'Off her quarter: good. Stack with the raid here.' + (i ? ' Press Q (defensive) as it lands.' : '') : 'Get onto the next quarter to the left (counter-clockwise), where the raid is going.';
     const fb = S.wretch.fb.find((q) => t >= q.t0 - 2.5 && t <= q.at); if (fb && G.p3.wr) return 'Fester Burst in ' + Math.max(0, fb.at - t).toFixed(1) + ' s: into the Wretch\'s bubble (10 yards).';
     const ek = S.echoes.find((e) => j.kick === e.k && t >= e.t0 - 5 && t <= e.t1 && !G.p3.kick[e.sh]); if (ek) return t < ek.t0 ? 'Your kick: Shrieker ' + ek.k + '\'s Vicious Echoes in ' + Math.ceil(ek.t0 - t) + ' s. Press E as it glows pink ("Vicious Echoes: kick!").' : 'Kick Vicious Echoes now! (E)';
-    const wv = S.waves.find((w) => (w.kind === 'her3' || w.kind === 'tail') && t >= w.t0 - (w.warn || 1) && t <= w.t0 + 3); if (wv) return wv.kind === 'her3' ? 'Her waves: step sideways into a gap (the dark lanes).' : 'Small tails\' rings from behind: stand in a gap.';
+    { /* (ahead of the waves: walking into the last circles costs 1.2 million and a Volatile Purge) */ const b3 = S.bites[2], up3 = b3 && t >= b3.land && t < b3.end && !(G.p3.bite[2] && G.p3.bite[2].done); if (up3 && t >= T.heart - 4) return 'The heart opens as the last red circles drain: wait outside them (7 yards), then burn it.'; }
+    const wv = S.waves.find((w) => (w.kind === 'her3' || w.kind === 'tail') && t >= w.t0 - (w.warn || 1) && t <= w.t0 + 3); if (wv) return wv.kind === 'her3' ? 'Her waves: step sideways into a gap (the dark lanes).' : 'Small tails behind the raid: step out of their red lanes.';
     const wrN = S.wrath.find((q) => t >= q.t0 && t <= q.at + 3.2 && q.tank !== me); if (wrN && pgDist([G.x, G.y], wrN.p) < 6.5) return 'Mother\'s Wrath: step out of her reach (the red circle in front of her).';
     const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     if (qm !== S.Qs[n] && qm >= 0) return 'Get onto her quarter (the ' + P.QN[S.Qs[n]] + ') and stack with the raid.';
@@ -75806,7 +75808,7 @@ function pgP3(A) {
     if (T.prey.some((p0, i) => t >= p0 - 2 && t < S.hit[i] + 1.5)) return true; const g1 = S.gates.find((g) => g.k === 1); return !!(g1 && t < T.gateEnd + 4 && qm !== S.Qs[0]); }; /* (and everyone, while the raid changes quarters) */
   const dpsCat = (t) => { sync(); if (!G || !G.p3) return null; if (G.adds.some((a) => a.kind === 'viper')) return 'viper'; if (busy(t)) return null; const c = FR(P.mel, raidStep(t));
     if (Object.values(G.p3.sh).some((s) => pgDist([s.x, s.y], c) < 25)) return 'shrieker'; if (S.clutches.some((q) => G.p3.cl[q.id] && G.p3.cl[q.id].on && t >= q.grasp)) return 'clutch'; if (G.adds.some((a) => a.kind === 'rawling')) return 'rawling';
-    if (t >= T.heart && t < T.end) return 'heart'; return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };
+    if (t >= T.heart && t < T.end && (!S.bites[2] || (G.p3.bite[2] && G.p3.bite[2].done) || t >= S.bites[2].end)) return 'heart'; /* (not while the last bite's red circles still sit by it: following "burn the heart" walked you into them, Main's playtest, Nov 15) */ return G.p3.wr && t >= S.wretch.wake + 6 ? 'wretch' : null; };
   const dpsNames = (DL) => { const k = new Set(DL.map((m) => m.kind)); return ['clutch', 'rawling', 'wretch', 'shrieker', 'heart', 'viper'].filter((x) => k.has(x)).map((x) => ({ clutch: 'the clutches', rawling: 'the Rawlings', wretch: 'the Wretch', shrieker: 'the Shriekers', heart: 'the heart', viper: 'the Vipers' })[x]).join(', '); };
   const starts = [[0, '6:12 · Onto her quarter'], [392, '6:32 · The first bite'], [418, '6:58 · Waves, then Circling Prey'], [455, '7:35 · The Wretch\'s bubble and the second bite'], [476, '7:56 · The second Circling Prey'], [503, '8:23 · The Shriekers'], [540, '9:00 · The last quarter and the burn']];
 
