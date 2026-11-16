@@ -45,6 +45,14 @@
 //      picked Shrieker doesn't kick it from where the map shows it; the Plan page behind doesn't draw each spot's own circle at the same MX/MY; a
 //      healer has a Your Shrieker tab with nothing to pick, or a click on a group does nothing for a healer whose tab was left on Your Shrieker;
 //      "No kick" saved with a group comes back with a kick (it did on every load); an old "Never" red circle isn't brought up to one.
+//   CB. the cast bars over the Shriekers' heads (Flex, Nov 16: "The interupts are impossible to track/see. The monsters should have cast bars over their
+//      heads"): a Vicious Echoes with no bar over its Shrieker, off it, not filling with its 3 s, yours when it isn't your kick (or not when it is), a bar
+//      before or after the cast (but the red "Interrupted" just after a kick), or a number in the words over its Shrieker.
+//   RS. the release sweep, Nov 16: your arrow at Circling Prey leads you over the hole in the middle (or shows only 2.5 s into the cast) and you're broken
+//      under; a soaker on the gold ring gets "Your Volatile Purge waves headed through N raiders" with the waves touching nobody, or a raider a wave rolls over
+//      isn't counted; a Group Soak 3 player is told to press Q at the 3rd Circling Prey, so it's cooling down for their soak; the small tails' line names
+//      red lanes the game doesn't draw; the bar under your target's frame shows her cast instead of your Shrieker's Vicious Echoes, or no "Interrupted".
+//      The release check, Nov 16 (RS6): "Press Q (defensive) as it lands" or "Circling Prey lands: Q" at a Circling Prey while Q is still cooling down then.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -151,7 +159,7 @@ function checks(H, say) {
     dbg.P2.pick = { role: 'r', soak: 0, bite: 'no', kick: 0 }; const meX = dbg.P2.slotOf(dbg.P2.pick); dbg.at(402.4, meX, { seed: 3 }); const b1 = dbg.S.bites[0]; for (let i = 0; i < 400 && !(dbg.G.p3.bite[0] && dbg.G.p3.bite[0].done); i++) { dbg.pos = b1.stack.slice(); dbg.stepOwn(1); }
     if (!dbg.log.some((x) => /without being one of its soakers/.test(x))) bad('standing in a red circle that isn\'t yours isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
     if (!dbg.log.some((x) => /without a defensive/.test(x))) bad('soaking to the end without a defensive isn\'t a mistake: ' + dbg.log.join(' | ') + ' (check E)');
-    const mid = dbg.S.F2(P.mel, 0); for (let i = 0; i < 140; i++) { dbg.pos = mid.slice(); dbg.stepOwn(1); } if (!dbg.log.some((x) => /Volatile Purge (burst on|waves headed through) \d+ raider/.test(x))) bad('a Purge burst in the middle of the raid isn\'t a mistake (its burst or its waves): ' + dbg.log.join(' | ') + ' (check E)');
+    const mid = dbg.S.F2(P.mel, 0); for (let i = 0; i < 140; i++) { dbg.pos = mid.slice(); dbg.stepOwn(1); } if (!dbg.log.some((x) => /Volatile Purge (burst on|waves hit) \d+ raider/.test(x))) bad('a Purge burst in the middle of the raid isn\'t a mistake (its burst or its waves): ' + dbg.log.join(' | ') + ' (check E)');
     // (Vicious Echoes not kicked by its kicker)
     const pkK = { role: 'r', soak: 0, bite: 'no', kick: 1 }; dbg.P2.pick = pkK; const meK = dbg.P2.slotOf(pkK); dbg.at(520, meK, { seed: 3 }); for (let i = 0; i < 260; i++) dbg.stepOwn(1);
     if (!dbg.log.some((x) => /didn't kick Vicious Echoes/.test(x))) bad('the Shrieker 1 kicker who never kicks gets no mistake: ' + dbg.log.join(' | ') + ' (check E)');
@@ -384,6 +392,130 @@ function checks(H, say) {
         if (by !== me || d > P.KICK[r]) bad('the autopilot on Shrieker ' + k + ' (' + r + ', her first quarter ' + P.QN[q] + ') ' + (by === me ? 'kicks it ' + d.toFixed(1) + ' yards from the map\'s spot, past its ' + P.KICK[r] + '-yard reach' : 'doesn\'t kick it (kicked by ' + by + ')') + ' (check Q)'); }
       M.tab = 'bite'; }
   } catch (e) { bad('the spot maps check crashed: ' + e.message + ' (check Q)'); } finally { reset(); }
+  // CB. the cast bars over the Shriekers' heads (Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their
+  //     heads i think to make it more visually clear theres something that needs to be interrupted", then "I appreceate the time stamps and everything on the
+  //     fight, but remember this is intended to be training wheels for people to do the fight"). Before it Vicious Echoes showed as a pink glow and a label,
+  //     and the target frame's bar showed it grey, as nothing to kick, under her waves' cast. Played step by step on several seeds and jobs (a melee on
+  //     Shrieker 1, a ranged on Shrieker 2, a healer, a ranged with no kick), once with the kicks landing and once with both kickers held off so the casts
+  //     run to their end: each Shrieker's cast has one bar over it (within 0.5 yd) through its 3 s, filling with it (within 0.05), yours exactly when it's
+  //     your kick (never a healer's), in reach exactly when you are; none before or after the cast but the red "Interrupted" for about 0.8 s after a kick;
+  //     and pg3dShapes draws a 'cast' for each bar, just over the Shrieker's head, with no number in any words over it.
+  try {
+    if (typeof dbg.P2.castBars !== 'function') bad('phase 3 has no cast bars over the Shriekers (castBars): Vicious Echoes shows only as a pink glow, and grey on your target\'s frame (check CB)');
+    else {
+      const errs = [], note = (m) => { if (errs.length < 10 && !errs.includes(m)) errs.push(m); };
+      for (const [pk, seed] of [[{ role: 'm', soak: 0, bite: 'no', kick: 1, v: 2 }, 3], [{ role: 'r', soak: 0, bite: 'no', kick: 2, v: 2 }, seedFor(ctx, 0)], [{ role: 'h', soak: 0, bite: 'no', kick: 0, v: 2 }, seedFor(ctx, 2)], [{ role: 'r', soak: 1, bite: 'no', kick: 0, v: 2 }, seedFor(ctx, 1)]]) for (const hold of [false, true]) {
+        dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), rg = P.KICK[me[0]] || 0, tag = pk.role + (pk.kick ? ' on Shrieker ' + pk.kick : '') + ' (seed ' + seed + (hold ? ', kicks held' : '') + ')';
+        const A3 = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
+        dbg.at(T.echoes - 1, me, { seed }); const S = dbg.S, kt = {}, seen = new Set(), full = new Set(), kseen = new Set(); let n = 0;
+        const kickers = (e) => Object.keys(S.job).filter((id) => S.job[id].kick === e.k);
+        while (dbg.G.t < T.echoes + T.echoCast + 2) { const G = dbg.G, t0 = G.t; let own = false;
+          if (hold) S.echoes.forEach((e) => { if (t0 >= e.t0 - 0.2 && t0 <= e.t1 && !G.p3.kick[e.sh]) kickers(e).forEach((id) => { if (id === me) own = true; else G.p3.stun[id] = t0 + 0.2; }); });
+          if (hold && own) dbg.stepOwn(1); else dbg.step(1); G.hp = 100; n++;
+          const t = G.t, bars = dbg.P2.castBars(t);
+          S.echoes.forEach((e) => { const k = G.p3.kick[e.sh]; if (k && k !== 'none' && kt[e.sh] == null) kt[e.sh] = t; }); /* (a kick lands at the end of the step it's in) */
+          bars.forEach((b) => { if (!S.echoes.some((e) => e.sh === b.key)) note(tag + ': a bar "' + b.key + '" at ' + clkS(t) + ' that is no Vicious Echoes'); if (b.caster !== b.key) note(tag + ': ' + b.key + '\'s bar names ' + b.caster);
+            if (!(b.h >= 5.6)) note(tag + ': ' + b.key + '\'s bar sits ' + b.h + ' yards up, in the Shrieker\'s head (at least 5.6)'); if (/\d/.test(String(b.name))) note(tag + ': a bar\'s words have a number in them: "' + b.name + '"'); if (b.mine && !rg) note(tag + ': a healer\'s bar says it\'s their kick'); });
+          S.echoes.forEach((e) => { const bs = bars.filter((b) => b.key === e.sh), s = G.p3.sh[e.sh], p = s ? [s.x, s.y] : null, k = G.p3.kick[e.sh], at = clkS(t) + ' (' + (t - e.t0).toFixed(2) + ' s in)';
+            if (k && k !== 'none') { const a = t - kt[e.sh];
+              if (a >= 0.02 && a <= 0.75 && p) { if (bs.length !== 1 || bs[0].state !== 'kicked') note(tag + ': ' + e.sh + ' kicked ' + a.toFixed(2) + ' s ago shows ' + (bs.length ? bs.map((b) => b.state).join(', ') : 'no bar') + ', not one red "Interrupted"'); else kseen.add(e.sh); }
+              else if (a > 0.85 && bs.length) note(tag + ': ' + e.sh + '\'s bar is still up ' + a.toFixed(2) + ' s after its kick'); return; }
+            if (t > e.t0 + 0.02 && t < e.t1 - 0.02 && !k && p) { const f = (t - e.t0) / (e.t1 - e.t0), b = bs[0];
+              if (bs.length !== 1) { note(tag + ': ' + e.sh + ' has ' + bs.length + ' bars over it at ' + at + ', in its cast, not one'); return; }
+              if (b.state !== 'cast') note(tag + ': ' + e.sh + '\'s bar at ' + at + ' is "' + b.state + '", not casting');
+              if (Math.hypot(b.x - p[0], b.y - p[1]) > 0.5) note(tag + ': ' + e.sh + '\'s bar is ' + Math.hypot(b.x - p[0], b.y - p[1]).toFixed(1) + ' yd off its Shrieker at ' + at);
+              if (!(Math.abs(b.f - f) <= 0.05)) note(tag + ': ' + e.sh + '\'s bar is ' + Math.round(b.f * 100) + '% full at ' + at + '; its cast is ' + Math.round(f * 100) + '% gone');
+              const mine = !!rg && !!S.job[me] && S.job[me].kick === e.k, near = !!rg && Math.hypot(p[0] - G.x, p[1] - G.y) <= rg;
+              if (b.mine !== mine) note(tag + ': ' + e.sh + '\'s bar ' + (mine ? 'doesn\'t say it\'s your kick, and it is' : 'says it\'s your kick, and it isn\'t') + ' (' + at + ')');
+              if (b.near !== near) note(tag + ': ' + e.sh + '\'s bar says you\'re ' + (b.near ? 'in' : 'out of') + ' reach at ' + at + ', and you\'re ' + (near ? 'in' : 'out of') + ' it');
+              seen.add(e.sh); if (f >= 0.9) full.add(e.sh); }
+            else if ((t < e.t0 - 0.02 || t > e.t1 + 0.02 || k === 'none') && bs.length) note(tag + ': ' + e.sh + ' has a bar at ' + clkS(t) + ', outside its cast (' + clkS(e.t0) + ' to ' + clkS(e.t1) + ')'); });
+          if (bars.length && n % 3 === 0) { const L3 = ctx.pg3dShapes(A3, t);
+            bars.forEach((b) => { if (!L3.some((s) => s.k === 'cast' && s.key === b.key && s.state === b.state && s.x === b.x && s.y === b.y)) note(tag + ': pg3dShapes draws no cast bar for ' + b.key + ' at ' + clkS(t));
+              const lb = L3.find((s) => s.k === 'label' && Math.hypot(s.x - b.x, s.y - b.y) < 0.6 && /\d/.test(s.text || '')); if (lb) note(tag + ': "' + lb.text + '" floats over ' + b.caster + ' with its cast bar at ' + clkS(t) + ' (training wheels: no seconds)'); }); } }
+        if (seen.size < 2) note(tag + ': only ' + seen.size + ' of the two Vicious Echoes had a bar');
+        if (hold && full.size < 2) note(tag + ': with the kicks held only ' + full.size + ' bars filled to the end of their cast');
+        if (!hold && kseen.size < 1) note(tag + ': no red "Interrupted" bar was seen after the kicks landed'); }
+      errs.forEach((m) => bad('the cast bars: ' + m + ' (check CB)')); }
+  } catch (e) { bad('the cast bars crashed phase 3: ' + e.message + ' (check CB)'); } finally { reset(); }
+  // RS. the release sweep, Nov 16 (Flex: "im trying to have this game in a released state for today, so i just need it to really work and be functional").
+  //     RS1 (p30): your arrow at Circling Prey pointed straight at the next quarter's spot, over the hole in the middle, and only from 2.5 s into the cast; a
+  //     player who walked along it stopped at the stone's edge and was broken under at 7:20 (healer seed 13, ranged on Shrieker 2 seed 5). Followed step by
+  //     step here, it shows from the start of the cast and gets you off her quarter every time.
+  try { const errs = [], note = (m) => { if (errs.length < 8 && !errs.includes(m)) errs.push(m); };
+    for (const [pk, seed, pis] of [[{ role: 'h', soak: 0, bite: 'no', kick: 0, v: 2 }, 13, [0, 2]], [{ role: 'r', soak: 0, bite: 'no', kick: 2, v: 2 }, 5, [0, 1]], [{ role: 'r', soak: 0, bite: 'no', kick: 2, v: 2 }, 2, [0]], [{ role: 'h', soak: 0, bite: 'no', kick: 0, v: 2 }, 10, [0]], [{ role: 'm', soak: 0, bite: 'no', kick: 1, v: 2 }, 4, [2]]]) for (const pi of pis) { /* (her first quarter north-east, south-west, north-west, south-east) */
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), tag = pk.role + ' (seed ' + seed + '), Circling Prey ' + (pi + 1); dbg.at(T.prey[pi] - 0.05, me, { seed }); const G = dbg.G, S = dbg.S, n0 = dbg.log.length; let early = null;
+      if (ctx.pgP3Q(G.x, G.y) !== S.Qs[pi]) { note(tag + ': you aren\'t on her quarter as the cast starts, so there\'s nothing to follow'); continue; }
+      while (G.t < S.hit[pi] + 0.3) { const h = dbg.hint(); if (early == null && G.t >= T.prey[pi] + 0.2) early = !!h; if (h) dbg.walkTo(h.T); dbg.stepOwn(1); G.hp = 100; }
+      const L = dbg.log.slice(n0); if (L.some((x) => /destroyed her quarter with you on it|venom off the platform/.test(x))) note(tag + ': walking where the arrow points: ' + L.join(' | '));
+      if (!early && pi !== 1) note(tag + ': no arrow 0.2 s into the cast, with you on the quarter she breaks'); } /* (at the 2nd it shows the gateway, in the raid's stack: often under 2.5 yards, so no arrow) */
+    errs.forEach((m) => bad('the arrow at Circling Prey: ' + m + ' (the release sweep, Nov 16, check RS1)'));
+  } catch (e) { bad('the arrow at Circling Prey crashed: ' + e.message + ' (check RS1)'); } finally { reset(); }
+  //     RS2 (p31): "Your Volatile Purge waves headed through N raiders" for a soaker standing on the gold ring whose waves touched nobody (healer Group Soak 3,
+  //     seed 21: "headed through 6"): the lanes were judged as they showed, against where everyone stood and where each bot was walking. Scored now on what
+  //     the waves really touch (the shape your own wave hits use), so the ring-stander is clean and a raider a wave rolls over still counts.
+  try { const onW = (w, t, p) => { if (t < w.t0 || t > w.t1) return false; const a = w.deg * Math.PI / 180, u = Math.cos(a), v = Math.sin(a), el = t - w.t0, rx = p[0] - (w.x + u * w.v * el), ry = p[1] - (w.y + v * w.v * el), s1 = rx * u + ry * v; return Math.abs(ry * u - rx * v) <= w.w / 2 + 0.7 && s1 >= -w.d / 2 - 0.7 && s1 <= w.d / 2 + 3.7; };
+    const pk = { role: 'h', soak: 3, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk);
+    { dbg.at(T.bite[2] - 1, me, { seed: 21 }); const G = dbg.G, S = dbg.S, n0 = dbg.log.length, touched = new Set(); let onRing = 0;
+      while (G.t < S.end - 0.01) { const pu = G.p3.purge.find((q) => q.who.includes(me) && G.t < q.burst + 2.1); if (pu && pu.spot[me]) { dbg.walkTo(pu.spot[me]); dbg.stepOwn(1); if (G.t >= pu.burst - 1.5 && G.t < pu.burst && hyp([G.x, G.y], pu.spot[me]) < 0.5) onRing++; } else dbg.step(1); G.hp = 100;
+        S.waves.forEach((w) => { if (w.kind === 'purge' && w.from === me) Object.keys(G.bots).forEach((id) => { if (id !== me && onW(w, G.t, [G.bots[id].x, G.bots[id].y])) touched.add(id); }); }); }
+      const L = dbg.log.slice(n0).filter((x) => /Volatile Purge waves/.test(x));
+      if (!onRing) bad('the Group Soak 3 healer (seed 21) never stood on their gold ring for the Purge, so the waves check tested nothing (check RS2)');
+      else if (L.length && !touched.size) bad('a soaker on the gold ring gets "' + L.join(' | ') + '" with their waves touching nobody (healer Group Soak 3, seed 21; the release sweep, Nov 16, check RS2)'); }
+    { dbg.at(T.bite[2] - 1, me, { seed: 21 }); const G = dbg.G, S = dbg.S, n0 = dbg.log.length; let w = null, held = null;
+      while (G.t < S.end - 0.01) { dbg.step(1); G.hp = 100; if (!w) { w = S.waves.find((x) => x.kind === 'purge' && x.from === me) || null; const q = w && G.p3.purge.find((z) => z.who.includes(me)); if (w) held = Object.keys(G.bots).find((id) => id !== me && !(q && q.who.includes(id))); }
+        if (w && held && G.t <= w.t1) { const a = w.deg * Math.PI / 180; G.bots[held].x = w.x + Math.cos(a) * 8; G.bots[held].y = w.y + Math.sin(a) * 8; } }
+      if (!w) bad('the Group Soak 3 healer (seed 21) sent no Purge waves (check RS2)');
+      else if (!dbg.log.slice(n0).some((x) => /Your Volatile Purge waves hit \d+ raiders?\./.test(x))) bad('a raider held in the way of your Purge wave isn\'t counted: ' + dbg.log.slice(n0).join(' | ') + ' (the release sweep, Nov 16, check RS2)'); }
+  } catch (e) { bad('the Purge waves check crashed: ' + e.message + ' (check RS2)'); } finally { reset(); }
+  //     RS3 (p32): "Press Q (defensive) as it lands" at the 3rd Circling Prey for a Group Soak 3 player, whose Q (90 s) was then still cooling down for their
+  //     soak's drain: "without a defensive" at 9:42 (healer seed 3 from 9:00, pressing Q when told). Now they're told to save it for the soak; everyone else,
+  //     and Group Soak 3 at the 2nd (it's back by 9:41), still press it.
+  try { const pk = { role: 'h', soak: 3, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk);
+    { dbg.at(T.start, me, { seed: 3 }); dbg.ff(540); const G = dbg.G, S = dbg.S, n0 = dbg.log.length, said = new Set(); let up = false;
+      while (G.t < S.end - 0.01) { const t = G.t, jt = dbg.P2.jobText(); if (t >= T.prey[2] && t < S.hit[2] && /^Off her quarter/.test(jt)) said.add(jt.replace(/^Off her quarter: good\. Stack with the raid here\.\s*/, ''));
+        if (t >= T.prey[2] && t < S.hit[2] && dbg.P2.upNext(t).some((u) => /lands: Q/.test(u.text))) up = true;
+        if (t >= S.hit[2] - 0.5 && t < S.hit[2] - 0.45 && /Press Q \(defensive\) as it lands/.test(jt) && t - G.def >= 90) { G.def = t; G.debs.def = { until: t + 8, n: 1 }; } /* (as you would: Q as she lands) */
+        dbg.step(1); G.hp = 100; }
+      const ss = [...said].join(' / ');
+      if (dbg.log.slice(n0).some((x) => /without a defensive/.test(x))) bad('a Group Soak 3 healer from 9:00 who presses Q when the screen says takes the end of the 3rd bite without one: ' + dbg.log.slice(n0).join(' | ') + ' (the release sweep, Nov 16, check RS3)');
+      if (/Press Q/.test(ss) || !/Save Q \(defensive\) for your soak at 9:30\./.test(ss)) bad('at the 3rd Circling Prey a Group Soak 3 player is told "' + ss + '", with their Q still cooling down at their soak (check RS3)');
+      if (up) bad('"What\'s next" says "Circling Prey lands: Q" at the 3rd Circling Prey to a Group Soak 3 player (check RS3)'); }
+    for (const [pk2, pi] of [[pk, 1], [{ role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }, 2]]) { dbg.P2.pick = pk2; const me2 = dbg.P2.slotOf(pk2); dbg.at(T.prey[pi] + 6, me2, { seed: 3 }); dbg.pos = dbg.S.F2([14, 14], pi + 1); dbg.stepOwn(1);
+      if (!/Press Q \(defensive\) as it lands\./.test(dbg.P2.jobText())) bad('at Circling Prey ' + (pi + 1) + ' ' + (pk2.soak ? 'a Group Soak ' + pk2.soak : 'a') + ' ' + pk2.role + ' with Q back in time isn\'t told to press it: ' + dbg.P2.jobText() + ' (check RS3)'); }
+  } catch (e) { bad('the Circling Prey Q check crashed: ' + e.message + ' (check RS3)'); } finally { reset(); }
+  //     RS4 (p33): the job line said to step out of the small tails' red lanes; the game draws none for them (rings of waves, no warning strip).
+  try { const pk = { role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; dbg.at(T.tails[0] + 2, dbg.P2.slotOf(pk), { seed: 3 }); const G = dbg.G, S = dbg.S; let seen = '';
+    while (G.t < T.tails[0] + 6.5 && !seen) { const jt = dbg.P2.jobText(); if (/Small tails/.test(jt)) seen = jt; dbg.step(1); }
+    if (!seen) bad('the small tails\' job line never shows (check RS4)'); else if (/red lanes/.test(seen) && S.waves.filter((w) => w.kind === 'tail').every((w) => !w.warn)) bad('the job line says "' + seen + '"; the small tails\' waves show no red lanes (the release sweep, Nov 16, check RS4)');
+  } catch (e) { bad('the small tails\' line check crashed: ' + e.message + ' (check RS4)'); } finally { reset(); }
+  //     RS5 (flow2): the bar under your target's frame showed her cast whatever you'd picked: your Shrieker read "Caustic Waves" through most of your kick, its
+  //     Vicious Echoes grey, with no "Interrupted (you)" after it (ranged on Shrieker 2, seed 3). Now, as in phase 2: your target's Vicious Echoes, gold to
+  //     kick (grey for a healer), then "Interrupted" for a moment; her cast with nothing of your target's.
+  try { if (typeof dbg.P2.castOf !== 'function') bad('phase 3 has no castOf: the bar under your target\'s frame shows her cast whatever you\'ve picked (the release sweep, Nov 16, check RS5)');
+    else { const errs = [], note = (m) => { if (errs.length < 8 && !errs.includes(m)) errs.push(m); };
+      for (const [pk, seed, hold] of [[{ role: 'r', soak: 0, bite: 'no', kick: 2, v: 2 }, 3, false], [{ role: 'm', soak: 0, bite: 'no', kick: 1, v: 2 }, 5, false], [{ role: 'r', soak: 0, bite: 'no', kick: 2, v: 2 }, 7, true], [{ role: 'h', soak: 0, bite: 'no', kick: 0, v: 2 }, 3, false]]) {
+        dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), k = 'sh' + (pk.kick || 2), tag = pk.role + ' on ' + k + ' (seed ' + seed + (hold ? ', the kick held' : '') + ')'; dbg.at(T.echoes - 0.3, me, { seed }); const G = dbg.G, S = dbg.S, e = S.echoes.find((q) => q.sh === k); let kt = null, sawK = false, sawI = false;
+        while (G.t < e.t1 + 1.5) { if (hold) dbg.stepOwn(1); else dbg.step(1); G.hp = 100; dbg.tgt = k; const t = G.t, c = dbg.P2.castOf(t), by = G.p3.kick[k], rd2 = c ? '"' + c.name + '"' + (c.intr ? '' : c.kick ? ' (kick)' : ' (grey)') : 'nothing'; if (by && by !== 'none' && kt == null) kt = t;
+          if (!G.p3.sh[k]) continue;
+          if (t > e.t0 + 0.02 && t < e.t1 - 0.02 && !by) { if (!c || c.name !== 'Vicious Echoes' || !!c.kick !== (pk.role !== 'h') || c.intr) note(tag + ': ' + (t - e.t0).toFixed(2) + ' s into its Vicious Echoes the bar reads ' + rd2); else sawK = true; }
+          else if (kt != null && t - kt >= 0.02 && t - kt <= 0.85) { if (!c || !c.intr || (by === me ? c.name !== 'Interrupted (you)' : !/^Interrupted \(.+\)$/.test(c.name))) note(tag + ': ' + (t - kt).toFixed(2) + ' s after the kick (by ' + by + ') the bar reads ' + rd2); else sawI = true; }
+          else if (kt != null && t - kt > 1) { const her = S.casts.find((q) => q.who === 'boss' && t >= q.t0 && t <= q.t1); if (her && (!c || c.name !== her.name)) note(tag + ': after the kick the bar reads ' + rd2 + ', not her ' + her.name); } }
+        if (!sawK) note(tag + ': the bar never shows its Vicious Echoes'); if (!hold && !sawI) note(tag + ': no "Interrupted" on the bar after the kick'); if (hold && kt != null) note(tag + ': held, and still kicked (by ' + G.p3.kick[k] + ')'); }
+      { dbg.tgt = null; const t = dbg.G.t, her = dbg.S.casts.find((q) => q.who === 'boss' && t >= q.t0 && t <= q.t1), c = dbg.P2.castOf(t); if (her && (!c || c.name !== her.name)) note('with nothing picked the bar reads ' + (c ? '"' + c.name + '"' : 'nothing') + ', not her ' + her.name); }
+      errs.forEach((m) => bad('the bar under your target\'s frame: ' + m + ' (the release sweep, Nov 16, check RS5)')); }
+  } catch (e) { bad('the target frame\'s bar check crashed: ' + e.message + ' (check RS5)'); } finally { reset(); }
+  //     RS6 (the release check, Nov 16): "Press Q (defensive) as it lands" and "Circling Prey lands: Q" showed while Q was still cooling down at the landing,
+  //     and pressing it then did nothing: a Group Soak 2 melee whose Q went on their soak at 7:58 was told to press it at 8:11 (back at 9:28; seed 3 from 7:35),
+  //     and a ranged who pressed it at 8:11 as told was told again at 9:12 (back at 9:41; seed 3). RS3 checks it's still asked for when Q is back in time.
+  try { for (const [pk, pi, q8] of [[{ role: 'm', soak: 2, bite: 'no', kick: 0, v: 2 }, 1, false], [{ role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }, 2, true]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), tag = pk.role + (pk.soak ? ' on Group Soak ' + pk.soak : ' with no soak') + ', Circling Prey ' + (pi + 1) + ' (seed 3)'; dbg.at(T.start, me, { seed: 3 }); dbg.ff(455); const G = dbg.G, S = dbg.S, said = new Set(), up = new Set();
+      while (G.t < S.hit[pi] - 0.1) { if (q8 && G.t >= S.hit[1] - 0.5 && G.t - G.def >= 90) { G.def = G.t; G.debs.def = { until: G.t + 8, n: 1 }; } /* (Q at 8:11, as told) */
+        if (G.t >= T.prey[pi]) { const jt = dbg.P2.jobText(); if (/^Off her quarter/.test(jt)) said.add(jt); dbg.P2.upNext(G.t).forEach((u) => { if (/lands: Q/.test(u.text)) up.add(u.text); }); } dbg.step(1); }
+      if (!(G.def + 90 > S.hit[pi])) bad(tag + ': Q isn\'t cooling down at the landing, so this tests nothing (check RS6)');
+      else { if ([...said].some((x) => /Press Q/.test(x))) bad(tag + ': the screen says "' + [...said].join(' / ') + '" with Q cooling down until ' + clkS(G.def + 90) + ' (the release check, Nov 16, check RS6)');
+        if (up.size) bad(tag + ': "What\'s next" says "Circling Prey lands: Q" with Q cooling down until ' + clkS(G.def + 90) + ' (the release check, Nov 16, check RS6)'); } }
+  } catch (e) { bad('the Q-on-cooldown check crashed: ' + e.message + ' (check RS6)'); } finally { reset(); }
   // H. phase 1 and phase 2, with this file loaded
   try { const L1 = load(H); if (L1.dbg.P2) bad('phase 1 opens with a later part switched on (check H)'); const r1 = L1.dbg.sim('r3', true, false, 3); if (!L1.dbg.S || L1.dbg.S.end !== 165 || !r1) bad('phase 1 no longer plays to 2:45 with phase 3 loaded (check H)'); }
   catch (e) { bad('phase 1 crashed with phase 3 loaded: ' + e.message + ' (check H)'); }

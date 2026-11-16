@@ -42,9 +42,15 @@
 //     own colour; a melee hit has no slash by you facing the target, or throws a bolt, or makes no spark; you don't lean into a hit; your target
 //     has no red circle under it as in WoW (or two, or the old white one too, or it covers the add's red health arc, or it no longer shows
 //     out of range by turning dashed); or put() doesn't draw the bolt, the impact or the slash.
+// 12. (Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads", then "remember this is
+//     intended to be training wheels") no cast bar over a caster you can kick: the bar's words aren't "Kick (E)" / "Get closer" on your kick (gold
+//     frame), the spell's name on someone else's (amber), "Interrupted" in red after a kick, or they have a number in them; a part's castBars aren't
+//     passed on as 'cast' shapes; put() doesn't draw them, or draws them unpooled, every frame, off the caster's head, too small or too wide to read,
+//     never freed, or under the labels and names.
 // contradictions.js runs it on every build (and `node tests/practice-3d.js` on its own). 1 to 3 fail on 9e8d89f9, the game before the 3D view;
 // 4 to 7 fail on a79ac9bd, the 3D view before the graphics pass; 8 fails on 47da0826, the graphics pass before its review; 9 fails on
-// 18efba7b, the plain grey tiles; 10 fails on 9051ebd6, the stone before its review; 11 fails on 44673a75, the attacks before they showed in 3D.
+// 18efba7b, the plain grey tiles; 10 fails on 9051ebd6, the stone before its review; 11 fails on 44673a75, the attacks before they showed in 3D;
+// 12 fails on 3cf6c8e1, the game before its cast bars.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 module.exports = function practice3d(say, H) {
@@ -313,6 +319,38 @@ module.exports = function practice3d(say, H) {
     if (!L1.some((s) => s.k === 'disc' && s.x === tg.p[0] && s.y === tg.p[1] && red(s))) nope('your target\'s red circle has no faint red fill under it');
     const pa = P3.indexOf('const put = '), pb = P3.indexOf('\n  // ---- the camera'), body = pa < 0 || pb < pa ? '' : P3.slice(pa, pb);
     ['bolt', 'impact', 'slash'].forEach((k) => { if (!body.includes("if (k === '" + k + "')")) nope('put() doesn\'t draw the ' + k + ' (pg3dShapes lists it, but nothing shows)'); }); }
+  // 12. cast bars over the casters you can kick (Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads
+  // i think to make it more visually clear theres something that needs to be interrupted", then "I appreceate the time stamps and everything on the fight,
+  // but remember this is intended to be training wheels for people to do the fight"). The parts' own checks (tests/practice-p2.js and practice-p3.js, check CB)
+  // play every cast; this one reads the look and the drawing: words, never numbers; your kick gold; a part's castBars passed on as 'cast' shapes; drawn,
+  // pooled and freed like the nameplates, just over the caster's head, about a nameplate wide, and kept clear of the labels and names
+  { const nope = (m) => bad('cast bars: ' + m);
+    if (!/function pg3dCastLook\(/.test(P3)) nope('practice3d.js has no cast bar look (pg3dCastLook): nothing is drawn over a caster you can kick but a ring on the floor with seconds');
+    else { try { vm.runInContext(grab('pg3dCastLook', P3) + '\nthis.look = pg3dCastLook;', ctx); } catch (e) { nope('pg3dCastLook no longer runs by itself: ' + String(e.message).slice(0, 140)); }
+      const look = (o) => { try { return ctx.look(o) || {}; } catch (e) { return {}; } };
+      const mN = look({ name: 'Malice', f: 0.3, mine: true, near: true, state: 'cast' }), mF = look({ name: 'Malice', f: 0.3, mine: true, near: false, state: 'cast' }), o = look({ name: 'Anguished Cry', f: 0.5, mine: false, near: true, state: 'cast' }), x = look({ name: 'Vicious Echoes', f: 0.4, mine: true, near: true, state: 'kicked' });
+      if (mN.text !== 'Kick (E)' || mF.text !== 'Get closer') nope('your kick\'s bar says "' + mN.text + '" in reach and "' + mF.text + '" out of it, not "Kick (E)" and "Get closer"');
+      if (!/^#f3c969$/i.test(mN.frame || '') || !mN.mine) nope('your kick\'s bar has no gold frame');
+      if (o.text !== 'Anguished Cry' || o.mine || !/^#e0a53a$/i.test(o.fill || '') || /^#f3c969$/i.test(o.frame || '')) nope('someone else\'s kick isn\'t the spell\'s name on an amber bar with a dark frame');
+      if (x.text !== 'Interrupted' || !/^#b8322a$/i.test(x.fill || '') || !x.full) nope('a kicked cast isn\'t a full red "Interrupted" bar');
+      [mN, mF, o, x].forEach((q) => { if (/\d/.test(q.text || '')) nope('a bar\'s words have a number in them: "' + q.text + '" (training wheels: no seconds)'); });
+      // (a part's castBars, one 'cast' shape each, as the part gave them; none for a part without them)
+      const BARS = [{ key: 'mE1', caster: 'wdE', x: 90, y: 47, h: 7.1, name: 'Malice', f: 0.4, mine: true, near: true, state: 'cast' }, { key: 'cdsE11', caster: 'dsE1', x: 112, y: 8.5, h: 4.6, name: 'Anguished Cry', f: 1, mine: false, near: false, state: 'kicked' }];
+      let LS = []; try { LS = ctx.shapes(Object.assign({}, A, { P2: { shapes() {}, castBars: () => BARS } }), 20); } catch (e) { nope('pg3dShapes crashed with a part\'s cast bars: ' + e.message); }
+      const cs = LS.filter((s) => s.k === 'cast'); if (cs.length !== 2 || BARS.some((b) => !cs.some((s) => Object.keys(b).every((k) => s[k] === b[k])))) nope('pg3dShapes doesn\'t pass a part\'s castBars on as one \'cast\' shape each');
+      if (at(20).some((s) => s.k === 'cast')) nope('a part with no castBars (phase 1) gets cast bars');
+      // (the drawing)
+      const pa = P3.indexOf('const put = '), pb = P3.indexOf('\n  // ---- the camera'), body = pa < 0 || pb < pa ? '' : P3.slice(pa, pb), cb = (/const castBar = [\s\S]*?CB\.push\(b\); \};/.exec(P3) || [''])[0];
+      if (!body.includes("if (k === 'cast') { castBar(s, t); return; }")) nope('put() doesn\'t draw the \'cast\' shapes (pg3dShapes lists them, but nothing shows)');
+      if (!/if \(b\.dk !== dk\)/.test(cb) || !/\* CBN\)/.test(cb)) nope('a bar\'s picture isn\'t drawn again only when its fill moves a step or its words change');
+      if (!/plSprite\(CBW, CBH\)/.test(cb) || !/CBF\.pop\(\)/.test(cb)) nope('the bars don\'t come from a pool of sprites made through plSprite (keep())');
+      const K = /const CBW = (\d+), CBH = (\d+), CBK = ([\d.]+)/.exec(P3), fz = /let f = (\d+); g\.font = '700 ' \+ f/.exec(cb);
+      if (!K || !fz || +fz[1] * +K[3] < 12 || +K[1] * +K[3] < 110 || +K[1] * +K[3] > 170) nope('a bar isn\'t about a nameplate wide (110 to 170 px on screen) with its words at least 12 px');
+      if (!/b\.sp\.position\.set\(s\.x, baseY\(s\.x, s\.y\) \+ \(s\.h \|\| 0\), -s\.y\)/.test(cb) || !/center\.set\(0\.5, -0\.25\)/.test(cb)) nope('a bar isn\'t placed just over its caster\'s head (h yards over its base, the gap in pixels)');
+      if (!/CBS\.forEach\(\(b, key\) => \{ if \(!b\.on\) \{ b\.sp\.visible = false; CBS\.delete\(key\); CBF\.push\(b\); \} \}\)/.test(P3)) nope('a bar that ends isn\'t hidden and put back in the pool each frame');
+      if (!/CBS\.clear\(\)/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the bars');
+      const nm = P3.slice(P3.indexOf('const names = '), P3.indexOf('\n  // ---- one shape on the screen'));
+      if (!/pg3dHud\(CQ, HB\)/.test(nm) || !/BX\.push\(q\)/.test(nm)) nope('the labels and names don\'t keep off the bars (their boxes don\'t join the call-outs\' in names())'); } }
   return loadP;
 };
 if (require.main === module) {

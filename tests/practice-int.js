@@ -52,6 +52,10 @@
 //      with its egg; the same buttons on both tabs; what you pick is what you play. (Before Nov 16 the intermission had no maps: a row of job buttons.)
 //      The review (Nov 16): the eggs drawn on Your egg sit on real landings (they were on a made-up ring, one 3.6 yards from anywhere a Purple egg lands),
 //      You sits on one of yours, your own egg lands in your circle, and the autopilot plays every pick the map offers clean.
+//   O. the release sweep (Nov 16): your egg still on the floor after your last soak and the game sends you to pick it up, or charges it twice ("never went
+//      into a soak" and "still in your hands", or its Viper on a crack); the 5:45 start loses the Rawlings from slams 1 to 4, or a melee is scored on
+//      Rawlings it couldn't reach yet (from 5:45, and from a last soak across the room); a Rawling boiling is charged to you; with Q pressed early in the
+//      part the line says "Press Q now", What's next shows "Defensive (Q)", or the mistake doesn't say Q was still cooling down.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -337,6 +341,50 @@ function checks(H, say) {
     dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 1 }; const st = dbg.sim(dbg.P2.slotOf(), false, false, 4); if (!st.log.some((l) => /Rawlings were up/.test(l))) bad('standing still doesn\'t miss the Rawlings (check I)');
     if (dbg.P2.dpsNames([{ kind: 'rawling' }]) !== 'the Rawlings') bad('the end card doesn\'t name the Rawlings (check I)'); }
   catch (e) { bad('the damage moments crashed: ' + e.message + ' (check I)'); }
+  // O. the release sweep (Nov 16)
+  try { const rawN = () => dbg.G.adds.filter((a) => a.kind === 'rawling').length;
+    // (one run as the game plays it: from 5:18, skipped ahead to `start` as the start card does, then your own steps (`player`) or the autopilot's)
+    const play = (pk, o) => { dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.start, me, { east: !!o.east, seed: o.seed }); if (o.start) dbg.ff(o.start); let n = 0;
+      while (dbg.G.t < dbg.S.end - 1e-9 && n++ < 5000) { if (o.player) { o.player(me); dbg.stepOwn(1); } else dbg.step(1); if (o.each) o.each(me); if (dbg.G.hp <= 0) dbg.G.hp = 100; } return me; };
+    // (your egg still on the floor after your last soak: the line said "Pick up your egg now: walk over it" and the arrow led there (for a melee, from 5:55 too);
+    // doing it added "Your egg was still in your hands after the last slam" on top of "Your egg never went into a soak". Blue ranged and Yellow melee with an egg,
+    // pattern 1, seed 1: soak only, then follow the job)
+    for (const pk of [{ role: 'r', team: 'B', egg: true, pat: 1 }, { role: 'm', team: 'Y', egg: true, pat: 1 }]) { const said = []; let mid = null;
+      play(pk, { seed: 1, player: (me) => { const t = dbg.G.t, S0 = dbg.S, last = S0.soaks.filter((s) => s.group.includes(me)).pop();
+        if (t <= last.at + 0.1) { const ns = S0.soaks.find((s) => s.group.includes(me) && s.at >= t - 0.15); dbg.walkTo(ns && t >= S0.soaks[0].cast ? [ns.x, ns.y] : S0.pre[S0.job.team[me]]); return; }
+        const tx = dbg.P2.jobText(), e = dbg.G.eggs.find((q) => q.id === me && q.state === 'floor'), h = dbg.hint(); if (/Pick up your egg/.test(tx)) said.push(tx);
+        if (e && h && hyp(h.T, [e.x, e.y]) < 1) said.push('the arrow points at your egg at ' + clkS(Math.round(t * 10) / 10)); if (!mid && e && t > last.at + 0.5) mid = tx;
+        dbg.walkTo(dbg.job(me).T); } });
+      const lg = dbg.log.join(' | '), who = pk.role === 'm' ? 'Yellow melee' : 'Blue ranged';
+      if (said.length) bad('your soaks done and your egg on the floor, the game still sends you to it: ' + said[0] + ' (the release sweep, Nov 16, ' + who + ', pattern 1, seed 1; check O)');
+      else if (!/leave your egg/.test(mid || '')) bad('your soaks done and your egg on the floor, the line doesn\'t say to leave it: ' + mid + ' (' + who + ', check O)');
+      if (!/never went into a soak/.test(lg) || /still in your hands/.test(lg)) bad('an egg left on the floor till your last soak isn\'t one egg mistake: ' + lg + ' (the release sweep, Nov 16, ' + who + '; check O)'); }
+    // (picked up anyway after "never went into a soak", it isn't "still in your hands" too; left on a crack as the platform shatters, its Viper still hatches
+    // but isn't a second mistake)
+    for (const pick of [true, false]) { const pk = { role: 'r', team: 'B', egg: true, pat: 1 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.slams[6] - 2, me, { seed: 1 }); const last = dbg.S.soaks.filter((s) => s.group.includes(me)).pop(), e = dbg.G.eggs.find((q) => q.id === me);
+      Object.assign(e, { state: 'floor', who: null, x: 1, y: -14, shell: dbg.G.t - 1, shp: 0 }); dbg.G.log = []; dbg.G.x = last.x; dbg.G.y = last.y; dbg.walkTo(null); while (dbg.G.t < last.at + 1) dbg.stepOwn(1);
+      if (pick) { dbg.G.x = e.x; dbg.G.y = e.y; dbg.stepOwn(4); } else { dbg.G.x = 9; dbg.G.y = -21.7; } while (dbg.G.t < (pick ? T.slams[7] + 0.5 : T.shatter + 1)) dbg.stepOwn(1);
+      const eg = dbg.G.log.filter((m) => m.kind === 'egg' || m.kind === 'viper'), vp = dbg.G.adds.some((a) => a.kind === 'viper');
+      if (pick && (e.state !== 'held' || eg.length !== 1)) bad('your egg picked up after "never went into a soak" gives ' + eg.length + ' egg mistakes: ' + eg.map((m) => m.text).join(' | ') + ' (one; the release sweep, Nov 16; check O)');
+      if (!pick && (eg.length !== 1 || !vp)) bad('your egg left on a crack after "never went into a soak" gives ' + eg.length + ' egg mistakes' + (vp ? '' : ' and no Viper') + ': ' + eg.map((m) => m.text).join(' | ') + ' (one, and its Viper still hatches; the release sweep, Nov 16; check O)'); }
+    // (a melee scored on Rawlings it couldn't reach: the 5:45 start cleared every Rawling from slams 1 to 4, and the last few died about 2 s into the moment;
+    // Yellow melee, pattern 3, seed 15 was on them 0%. And from 5:18, a Yellow melee with an egg on pattern 2 (last soak at Skull, across the room) was scored
+    // from 5:55 on Rawlings 20 yards away: 43 to 49%)
+    { const pk = { role: 'm', team: 'Y', egg: false, pat: 3 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(345, me, { seed: 15 }); const n0 = rawN(); dbg.at(T.start, me, { seed: 15 }); dbg.ff(345); const n1 = rawN();
+      if (!n0 || n1 !== n0) bad('starting at 5:45 leaves ' + n1 + ' Rawlings; ' + n0 + ' are up at 5:45 in a run from 5:18 (the release sweep, Nov 16; check O)');
+      play(pk, { seed: 15, start: 345 }); if (dbg.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot from 5:45 (Yellow, pattern 3, seed 15) is scored off the Rawlings: ' + dbg.log.join(' | ') + ' (the release sweep, Nov 16; check O)');
+      for (const seed of [11, 12, 15]) { play({ role: 'm', team: 'Y', egg: true, pat: 2 }, { seed }); if (dbg.log.some((l) => /Rawlings were up/.test(l))) bad('the melee autopilot (Yellow, egg, pattern 2, seed ' + seed + ', last soak across the room) is scored on Rawlings it couldn\'t reach yet: ' + dbg.log.join(' | ') + ' (the release sweep, Nov 16; check O)'); } }
+    // (a Rawling boiling at 6:03.5, just after the moment ends, charged to you while you pressed 1 all along: the raid only starts on them at 5:50.4.
+    // Yellow melee with an egg, pattern 2, seed 1; a Yellow healer, pattern 1, seed 12)
+    for (const [pk, seed] of [[{ role: 'm', team: 'Y', egg: true, pat: 2 }, 1], [{ role: 'h', team: 'Y', egg: false, pat: 1 }, 12]]) { play(pk, { seed }); const b = dbg.G.log.find((m) => m.kind === 'boil');
+      if (b) bad('a Rawling boiling is your mistake (' + JSON.stringify(pk) + ', seed ' + seed + '): ' + b.text + ' (the release sweep, Nov 16; check O)'); }
+    // (Q pressed at 5:24: the line still said "Press Q now" from 5:46.6 with 65 s of cooldown left, What's next showed "Defensive (Q)", and the mistake didn't
+    // say why. Purple ranged with an egg, pattern 2, seed 3)
+    { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(324.5, me, { seed: 3 }); dbg.G.def = dbg.G.t; dbg.G.log = [];
+      while (dbg.G.t < T.defFrom - 0.5) dbg.step(1); const un = dbg.upNext().map((x) => x.text); if (un.some((x) => /Defensive/.test(x))) bad('with Q cooling down What\'s next still shows ' + un.join(', ') + ' (the release sweep, Nov 16; check O)');
+      while (dbg.G.t < T.defCue + 0.5) dbg.step(1); const tx = dbg.P2.jobText(); if (/Press Q now/.test(tx) || !/cooling down/.test(tx)) bad('with Q cooling down the line says: ' + tx + ' (the release sweep, Nov 16; check O)');
+      while (dbg.G.t < T.defBy + 0.5) dbg.step(1); if (!dbg.log.some((l) => /No defensive for the last four slams.*You pressed Q at 5:24/.test(l))) bad('Q pressed at 5:24 gives: ' + dbg.log.join(' | ') + '; the mistake should say Q was pressed at 5:24 (the release sweep, Nov 16; check O)'); } }
+  catch (e) { bad('the release sweep\'s checks crashed: ' + e.message + ' (check O)'); }
 }
 
 module.exports = checks; module.exports.load = load;

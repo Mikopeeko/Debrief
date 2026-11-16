@@ -22,6 +22,9 @@
 //   K. Every mechanic (Flex, Nov 15): adds stay until killed and the raid helps, Rawlings boil, slams and the sweep hit everyone, splash bursts both eggs; see check K.
 //   O. Spot maps (Flex, Nov 16): Your egg and Your coil on the Plan's own maps, the spots where the Plan puts you and the game drops your egg, your role's spots
 //      only, 🎲 Random and No egg in the same place on both tabs, every pick the job the game plays; see check O.
+//   P. The release sweep (Nov 16): the Go-here arrow in time for the bubble at your walking speed, out of a coil that slams first, never on phase 2's shielded
+//      egg, and the job line on your coil before a later bubble; see check P.
+//   Q. The release check (Nov 16): phase 2's Go-here arrow stays off your small egg until its Warden is dead, also before the Wardens rise; see check Q.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -533,9 +536,89 @@ function checks(H, say, pj) {
       finally { try { if (D) D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; if (M) M.tab = 'egg'; } catch (e) { /* (no job) */ } }
     }
   } catch (e) { bad('the spot maps crashed the game: ' + e.message + ' (check O)'); }
+  releaseSweep(H, bad, pj, clk, hyp);
+  releaseCheck(H, bad, pj, clk, hyp);
 }
 
-module.exports = checks; module.exports.load = load; module.exports.stub = stub;
+// (phase 2 the way tests/practice-p2.js loads it: practice.js, practice3d.js and practice-p2.js in one scope, opened on its part; pj: practice.js's text, for a check
+//  run against older code)
+function loadP2(H, pj) {
+  H = H || require('./site-helpers.js'); const rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n'), GJ = rd('guides.js');
+  const fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS'].map((n) => H.grab(n, GJ)).join('\n');
+  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+  class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
+  const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
+  vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + (pj || rd('practice.js')) + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js'), ctx);
+  vm.runInContext('pgOpen(null, "Ula\'tek", "m", "m2")', ctx);
+  return { dbg: win.__pgDbg, ctx };
+}
+
+// P. The release sweep, Nov 16 (Flex: "im trying to have this game in a released state for today, so i just need it to really work and be functional"): the
+//    Go-here arrow and the job line say where to stand, and standing there is safe. Each failed on the code before its fix:
+//    - the arrow for the Wretch's bubble came 6 s before it popped (timed for the bots, who run 9.8 yards a second; you walk 7): a ranged with no egg who walked
+//      where it pointed from the far side of the room reached the 0:39 bubble late, Fester Burst (the job line, 8 s before, was in time);
+//    - after your 2:14 coil the arrow pointed at the 2:20 bubble's middle, 8 yards inside the 2:17 coil: walking there took its slam;
+//    - from 2:12 the job line called the 2:20 bubble over your coil, so the first coil's soakers walked off it to the Wretch and missed the 2:14 slam, and the
+//      second coil's never read "Your coil ... slams";
+//    - in phase 2 the arrow pointed at your small egg from 2:55 till the Warden died (the job gives no spot there, so it fell back on your egg on the floor):
+//      Warden's Protection, your tether broken early at 3:16, Malice out of a ranged's kick reach. (Phase 1's egg, with only its shell up, keeps its arrow.)
+function releaseSweep(H, bad, pj, clk, hyp) {
+  const P = (m) => bad(m + ' (the release sweep, Nov 16, check P)'), PJ = pj || fs.readFileSync(path.join(SRC, 'practice.js'), 'utf8'), HOOK = 'window.__pgDbg = { ';
+  // (the game with its job line readable: the debug hook gets jobText, as the screen's job box shows it)
+  if (!PJ.includes(HOOK)) { P('the test can\'t read the job line: no "' + HOOK + '" in src/practice.js'); return; }
+  let dbg; try { dbg = load(H, PJ.replace(HOOK, HOOK + 'jobText: () => jobText(), ')).dbg; } catch (e) { P('the game would not run for the arrow checks (' + e.message + ')'); return; }
+  try {
+    // (the 0:39 bubble from the far side: Ranged, No egg, first coil, her tail west. You stand at your start till the job line calls it, then follow the arrow)
+    { dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(30.9, slot, { east: false, seed: 1, tailEast: false }); const G = dbg.G, q = dbg.S.bubbles[0]; dbg.pos = [30, 12]; let first = null;
+      while (G.t < 39.3) { const h = dbg.hint(); if (h && first == null) first = G.t; dbg.walkTo(h ? h.T : null); dbg.stepOwn(1); }
+      const w = G.wr[q.w], dW = w ? hyp([G.x, G.y], [w.x, w.y]) : 99, burst = dbg.log.filter((m) => /^0:39 Fester Burst/.test(m));
+      if (first == null || first > 31.5 || burst.length) P('a ranged with no egg ' + hyp([30, 12], q.p).toFixed(0) + ' yards from the 0:39 bubble gets its arrow ' + (first == null ? 'never' : 'at ' + clk(first)) + ' (the job line calls it at 0:31) and, walking where it points, ends ' + dW.toFixed(1) + ' yards from the Wretch' + (burst.length ? ': ' + burst[0] : '')); }
+    // (the second coils, the first coil's soaker: Ranged, No egg, first coil, seed 1. In your coil to its 2:14 slam, then where the arrow points)
+    { dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(131.9, slot, { east: false, seed: 1 }); const G = dbg.G, S = dbg.S, mine = S.soaks.find((q) => q.set === 1 && q.group.includes(slot)), other = S.soaks.find((q) => q.set === 1 && !q.group.includes(slot));
+      if (!mine || !other || !(mine.at < other.at)) P('the test lost its setup: Ranged, No egg on the first coil should soak the 2:14 coil, before the other');
+      else { let jl = ''; while (G.t < 135.6) { dbg.pos = [mine.x, mine.y]; if (!jl && G.t >= 132.5) jl = dbg.jobText(); dbg.stepOwn(1); }
+        if (!/^Your coil \(the first to appear\) slams in/.test(jl)) P('at 2:12.5, your coil slamming at ' + clk(mine.at) + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s');
+        const j2 = dbg.jobText(); if (!/Stay out of the other coil until it slams/.test(j2)) P('at 2:15.6, your coil done and the other slamming at ' + clk(other.at) + ' inside the bubble, the job line reads "' + j2 + '"; it should say to stay out of the other coil');
+        const h = dbg.hint(); if (!h || hyp(h.T, [other.x, other.y]) <= other.r + 1) P('at 2:15.6 the arrow ' + (h ? 'points ' + hyp(h.T, [other.x, other.y]).toFixed(1) + ' yards from the middle of the coil that slams at ' + clk(other.at) + ' (its circle is ' + other.r + ')' : 'isn\'t there') + '; it should lead into the bubble outside that coil');
+        let tg = h ? h.T : null; while (G.t < other.at + 0.2) { const hh = dbg.hint(); if (hh) tg = hh.T; dbg.walkTo(tg); dbg.stepOwn(1); } /* (onto the ring the arrow points at, as you would) */
+        dbg.log.filter((m) => /^2:1[5-7] Soul Constrictor/.test(m)).forEach((m) => P('walking where the arrow points after your 2:14 coil: ' + m)); } }
+    // (the second coils, the second coil's soaker: Ranged, No egg, second coil, seed 1)
+    { dbg.myJob = { role: 'r', egg: null, soak: [2, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(134.5, slot, { east: false, seed: 1 }); const mine = dbg.S.soaks.find((q) => q.set === 1 && q.group.includes(slot)), jl = dbg.jobText();
+      if (!mine || !/^Your coil \(the second to appear\) slams in/.test(jl)) P('at 2:14.5, your coil slamming at ' + (mine ? clk(mine.at) : '?') + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s'); }
+    // (phase 1's egg with its shell up keeps its arrow: go to it and hit it)
+    { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(12, slot, { east: false, seed: 3 }); const e = dbg.G.eggs.find((q) => q.id === slot && q.state === 'floor'), n = e ? Math.hypot(e.x, e.y) || 1 : 1;
+      if (e) { dbg.pos = [e.x - e.x / n * 10, e.y - e.y / n * 10]; const h = dbg.hint(); if (!h || h.what !== 'egg' || hyp(h.T, [e.x, e.y]) > 0.5) P('in phase 1, 10 yards from your egg with its shell up (0:12), the arrow ' + (h ? 'points at ' + h.what : 'isn\'t there') + '; it should lead to your egg'); }
+      else P('the test lost its setup: the r3 egg should be on the floor at 0:12'); }
+  } catch (e) { P('the arrow checks crashed the game: ' + e.message); }
+  finally { try { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
+  // (phase 2: your small egg while its Warden lives; the autopilot plays your job, the arrow read each half second)
+  try { const D2 = loadP2(H, pj).dbg;
+    if (!D2 || !D2.P2) P('phase 2 didn\'t open for the arrow check');
+    else for (const [pk, seed, east] of [[{ side: 'E', role: 'r', egg: 'n6', mal: 1, cry: 1, teth: 'random' }, 3, false], [{ side: 'W', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'random' }, 2, true]]) {
+      D2.P2.pick = pk; const me2 = D2.P2.slotOf(pk); D2.hints = true; D2.at(176, me2, { east, seed }); const G2 = D2.G, on = [];
+      while (G2.t < 240 && G2.p2.wd[pk.side]) { const h = D2.hint(), e = G2.eggs.find((q) => q.id === me2 && q.state === 'floor'); if (h && e && hyp(h.T, [e.x, e.y]) < 3) on.push(G2.t); D2.step(10); }
+      if (on.length) P('in phase 2 (' + (pk.role === 'r' ? 'Ranged' : 'Melee') + ' ' + (pk.side === 'E' ? 'East' : 'West') + ', small egg ' + pk.egg.slice(1) + ', seed ' + seed + ') the Go-here arrow points at your egg while its Warden lives, from ' + clk(on[0]) + ' to ' + clk(on[on.length - 1]) + ': standing there is Warden\'s Protection, and out of your tether and kick'); }
+  } catch (e) { P('the phase 2 arrow check crashed: ' + e.message); }
+}
+
+// Q. The release check, Nov 16 (the skeptic's pass over check P's fixes): the Go-here arrow on phase 2's small egg before its Warden has died. Check P's fix kept
+//    the arrow off the egg while its Warden lived, but the Wardens rise at 2:55, and from 2:47.7 there was no living Warden yet: the arrow pointed at your egg
+//    90 yards away across the venom while the job line said to walk into your gate, and on the ledge led you off toward it. (practice.js's phase 1 shell code
+//    wears the phase 2 egg's shell down by 2:48.5, so the egg reads as open.) An egg held by something else gets the arrow only once its Warden is dead.
+function releaseCheck(H, bad, pj, clk, hyp) {
+  const Q = (m) => bad(m + ' (the release check, Nov 16, check Q)');
+  try { const D2 = loadP2(H, pj).dbg;
+    if (!D2 || !D2.P2) { Q('phase 2 didn\'t open for the egg arrow check'); return; }
+    [[{ side: 'E', role: 'r', egg: 'n6', mal: 1, cry: 1, teth: 'random' }, 3, false, 232], [{ side: 'W', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'random' }, 2, true, 176]].forEach(([pk, seed, east, upTo]) => {
+      D2.P2.pick = pk; const me2 = D2.P2.slotOf(pk), tag = (pk.role === 'r' ? 'Ranged' : 'Melee') + ' ' + (pk.side === 'E' ? 'East' : 'West') + ', small egg ' + pk.egg.slice(1) + ', seed ' + seed; D2.hints = true; D2.at(166, me2, { east, seed });
+      const G2 = D2.G, on = [], after = [];
+      while (G2.t < upTo) { const h = D2.hint(), e = G2.eggs.find((q) => q.id === me2 && q.state === 'floor'); if (h && e && hyp(h.T, [e.x, e.y]) < 3) (G2.p2.wdead[pk.side] == null ? on : after).push(G2.t); D2.step(5); }
+      if (on.length) Q('in phase 2 (' + tag + ') the Go-here arrow points at your small egg before its Warden is dead, from ' + clk(on[0]) + ' to ' + clk(on[on.length - 1]) + ' (the Wardens rise at 2:55): across the venom while the job line says to walk into your gate');
+      if (upTo > 230 && !after.length) Q('in phase 2 (' + tag + ') the Go-here arrow never leads to your small egg once its Warden is dead (to ' + clk(upTo) + ')'); });
+  } catch (e) { Q('the phase 2 egg arrow check crashed: ' + e.message); }
+}
+
+module.exports = checks; module.exports.load = load; module.exports.stub = stub; module.exports.releaseSweep = releaseSweep; module.exports.releaseCheck = releaseCheck;
 
 if (require.main === module) {
   let n = 0; const t0 = Date.now(); checks(null, (a, b, t) => { n++; console.log('✗ ' + t); });

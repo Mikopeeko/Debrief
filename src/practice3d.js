@@ -119,6 +119,10 @@ function pg3dShapes(A, t) {
   if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
   if (A.P2) A.P2.shapes(t, P, { disc, ring, grow, label }); /* (a later part's own shapes: src/practice-p2.js) */
+  // (cast bars over the casters you can kick, Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads",
+  // then "remember this is intended to be training wheels for people to do the fight": the part's castBars(t), one 'cast' shape each, drawn by pg3d as a
+  // WoW nameplate's cast bar over that caster's head (castBar below). A part with nothing to kick has no castBars)
+  if (A.P2 && A.P2.castBars) A.P2.castBars(t).forEach((b) => P({ k: 'cast', ...b }));
   if (t >= 145.5 && t < 165.5) { const hp = S.F(PG_UL.heart, t); disc(hp[0], hp[1], 3, '#5a0f22', 0.6); ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P({ k: 'heart', x: hp[0], y: hp[1] }); label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14, 'name'); }
   // the raid, then you (a gold ring), your defensive, where you clicked. Nameplates as in WoW: a thin bar over everyone, fainter far away; a name
   // only near you (7 yards), on your soak group's late ones (still outside its circle) while your coil is up, and on egg carriers near you (14
@@ -162,6 +166,13 @@ function pg3dPick(Q, cap) {
     if (!q.fix) { if (!q.free && n >= cap) continue; let hit = false; for (let i = 0; i < k && !hit; i++) { const o = Q[i]; hit = o.on && q.l < o.r && q.r > o.l && q.t < o.b && q.b > o.t; } if (hit) continue; if (!q.free) n++; }
     q.on = true; }
   return Q; }
+// pg3dCastLook: what a cast bar over a caster says and its colours (Nov 16, training wheels: words only, never seconds or a countdown). s: a part's
+// castBars entry ({ name, f, mine, near, state }). Someone else's kick: the spell's name on an amber bar (the target frame's .pg-cast gold); yours: a gold
+// frame, "Kick (E)" in reach, "Get closer" out of it (pg3d pulses it gently); just kicked: red, "Interrupted", full.
+function pg3dCastLook(s) {
+  if (s.state === 'kicked') return { text: 'Interrupted', fill: '#b8322a', frame: '#05070a', mine: false, full: true };
+  if (s.mine) return { text: s.near ? 'Kick (E)' : 'Get closer', fill: '#e0a53a', frame: '#f3c969', mine: true, full: false };
+  return { text: String(s.name || ''), fill: '#e0a53a', frame: '#05070a', mine: false, full: false }; }
 
 // ---- the stone (Nov 15, Flex: "Maybe the platform could have an actual texture similar to the platform in the game?") ----
 // The in-game platform as a texture drawn by code on a canvas once, when 3D opens (no picture is loaded or shipped): weathered grey-green
@@ -674,6 +685,21 @@ function pg3d(host, A) {
     const bk = s.bar + '|' + Math.round(s.hp * 40); if (p.bk !== bk) { p.bk = bk; const g = p.b.c.getContext('2d'), w = Math.round(62 * s.hp); g.clearRect(0, 0, 64, 8); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 64, 8); g.fillStyle = s.bar; g.fillRect(1, 1, w, 6); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(1, 1, w, 2); p.b.tx.needsUpdate = true; }
     const y = baseY(s.x, s.y) + 2.75; p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
     p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = true; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); };
+  // cast bars (Nov 16, Flex: "The monsters should have cast bars over their heads", "training wheels"): a WoW nameplate's cast bar over each caster you can
+  // kick, from pg3dShapes' 'cast' shapes (the part's castBars): a dark frame (gold when it's your kick), the bar filling left to right, the words in it
+  // (pg3dCastLook), about a nameplate wide and the same size on screen at any distance, just over the caster's head (h yards over its base, the gap in
+  // pixels). Its picture is drawn again only when its fill moves a step (CBN a cast) or its words change; yours pulses by its size alone. A bar that
+  // ends is hidden and goes back to a small pool for the next one; closing the game frees them with the rest (keep(), through plSprite).
+  const CBW = 264, CBH = 40, CBK = 0.5, CBN = 24, CBS = new Map(), CBF = [], CB = [];
+  const castBar = (s, t) => { let b = CBS.get(s.key); if (!b) { b = CBF.pop(); if (!b) { b = plSprite(CBW, CBH); b.sp.renderOrder = 995; b.sp.center.set(0.5, -0.25); b.q = { l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }; b.lq = { x: 0, y: 0, w: 0, h: 0, hide: false, off: false, b }; } b.dk = ''; CBS.set(s.key, b); }
+    const lk = pg3dCastLook(s), n = lk.full ? CBN : Math.round(Math.max(0, Math.min(1, +s.f || 0)) * CBN), dk = lk.text + '|' + lk.fill + '|' + lk.frame + '|' + n;
+    if (b.dk !== dk) { b.dk = dk; const g = b.c.getContext('2d'), fw = lk.mine ? 4 : 3, iw = CBW - 2 * fw, ih = CBH - 2 * fw, w = Math.round(iw * n / CBN); g.clearRect(0, 0, CBW, CBH);
+      g.fillStyle = lk.frame; g.fillRect(0, 0, CBW, CBH); g.fillStyle = 'rgba(14,16,20,.94)'; g.fillRect(fw, fw, iw, ih);
+      if (w > 0) { g.fillStyle = lk.fill; g.fillRect(fw, fw, w, ih); g.fillStyle = 'rgba(255,255,255,.2)'; g.fillRect(fw, fw, w, Math.round(ih * 0.38)); if (!lk.full && w < iw) { g.fillStyle = 'rgba(255,246,214,.95)'; g.fillRect(fw + w - 2, fw, 3, ih); } } /* (a sheen on top, a bright spark at the fill's end) */
+      let f = 25; g.font = '700 ' + f + 'px system-ui, sans-serif'; const tw = g.measureText(lk.text).width; if (tw > iw - 14) { f = Math.floor(f * (iw - 14) / tw); g.font = '700 ' + f + 'px system-ui, sans-serif'; }
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(lk.text, CBW / 2, CBH / 2 + 1); g.fillStyle = '#ffffff'; g.fillText(lk.text, CBW / 2, CBH / 2 + 1); b.tx.needsUpdate = true; }
+    const z = CBK * (lk.mine ? 1.12 + 0.06 * Math.sin(t * 6) : 1); b.w = CBW * z; b.hh = CBH * z; b.mine = lk.mine; b.sp.scale.set(b.w / pxK, b.hh / pxK, 1); b.sp.position.set(s.x, baseY(s.x, s.y) + (s.h || 0), -s.y);
+    b.sp.material.opacity = 1; b.sp.visible = true; b.on = true; CB.push(b); };
   // (the HUD's call-outs in the middle of the screen, practice.js's .pg-warn and .pg-float: where their words are while they show. Their box is
   // read again only when their words or the window's size change)
   const HUD = ['.pg-warn', '.pg-float'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, cs: getComputedStyle(el), key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
@@ -681,15 +707,23 @@ function pg3d(host, A) {
   // Since the raider-style screen (Nov 15) her boss frame and your Mistakes sit under them, and the boss-mod bars on the left: the labels keep out of those
   // too. The bars come and go, so every box is read each frame (the HUD is already laid out by then))
   const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
-  const RNG = document.createRange(), BX = [], LQ = [], PQ = [];
+  const RNG = document.createRange(), BX = [], LQ = [], PQ = [], HB = [], CQ = [];
   const bands = () => { BX.length = 0; let hr = null;
     for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
       if (B.key !== key) { B.key = key; hr = hr || host.getBoundingClientRect(); RNG.selectNodeContents(B.el); const r = RNG.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 3; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 3; }
       BX.push(B); }
+    HB.length = 0; for (let i = 0; i < BX.length; i++) HB.push(BX[i]); /* (the call-outs alone: a cast bar moves off these, not off the corner panels, which sit over the picture) */
     for (let i = 0; i < CRN.length; i++) { const B = CRN[i]; if (!B.el.offsetWidth || !B.el.offsetHeight) continue;
       hr = hr || host.getBoundingClientRect(); const r = B.el.getBoundingClientRect(); B.l = r.left - hr.left - 6; B.t = r.top - hr.top - 4; B.r = r.right - hr.left + 6; B.b = r.bottom - hr.top + 4;
       BX.push(B); } };
   const names = () => { bands();
+    // (the cast bars, Nov 16: each stays on its caster as a WoW nameplate's does; yours first, then the nearer. One that sits on a HUD call-out or an earlier
+    // bar moves just below it (pg3dHud), then its box joins the call-outs' so the labels and the raiders' names keep off it (pg3dHud, pg3dPick))
+    CQ.length = 0; for (let i = 0; i < CB.length; i++) { const b = CB[i]; V4.copy(b.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.3 || Math.abs(V4.y) > 1.3) continue;
+      const l = b.lq; l.x = (V4.x + 1) / 2 * W0; l.y = l.y0 = (1 - V4.y) / 2 * H0 - 0.75 * b.hh; l.z = V4.z; l.w = b.w + 4; l.h = b.hh + 4; CQ.push(l); }
+    CQ.sort((a, c) => (c.b.mine - a.b.mine) || (a.z - c.z)); pg3dHud(CQ, HB);
+    for (let i = 0; i < CQ.length; i++) { const l = CQ[i], b = l.b, q = b.q; if (l.y !== l.y0) { V4.set(l.x / W0 * 2 - 1, 1 - (l.y + 0.75 * b.hh) / H0 * 2, l.z).unproject(cam); b.sp.position.copy(V4); }
+      q.l = l.x - l.w / 2; q.r = l.x + l.w / 2; q.t = l.y - l.h / 2; q.b = l.y + l.h / 2; BX.push(q); }
     // (the labels: each one's box on the screen; a HUD call-out or an earlier label pushes it down below, or hides it if it only names a creature)
     LQ.length = 0; for (let i = 0; i < nL; i++) { const L = LBL[i]; V4.copy(L.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.3 || Math.abs(V4.y) > 1.3) continue;
       const q = L.q || (L.q = { L, i: 0, x: 0, y: 0, y0: 0, z: 0, w: 0, h: 0, hide: false, off: false, l: 0, t: 0, r: 0, b: 0, fix: true, free: false, pri: 0, on: true });
@@ -734,6 +768,7 @@ function pg3d(host, A) {
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
     if (k === 'plate') { plate(s); return; }
+    if (k === 'cast') { castBar(s, t); return; }
     if (k === 'egg') { const m = egg(), z = s.held ? 0.72 : 1; m.scale.set(0.9 * z, 1.17 * z, 0.9 * z); m.position.set(s.x, baseY(s.x, s.y) + s.h + (s.held ? Math.sin(t * 4) * 0.15 : 0), -s.y); m.rotation.set(s.fall ? t * 3 : 0, 0, 0); if (s.fall) blobAt(s.x, s.y, s.h - 1.2, 2.2); return; }
     if (k === 'rock') { const m = s.womb ? womb() : rock(), h = s.land > 0 ? 0 : 44 * (1 - s.f * s.f), by = baseY(s.x, s.y), sp = 1 - s.land;
       m.position.set(s.x, by + (s.womb ? 2.4 : 1.1) * (1 - 0.45 * s.land) + h, -s.y); m.rotation.set(s.sd + t * 2.3 * sp, s.sd * 1.7 + t * 1.6 * sp, 0); if (s.womb) m.scale.set(2.5, 2.9 * (1 - 0.4 * s.land), 2.5); else m.scale.setScalar(1.6 * (1 - 0.3 * s.land));
@@ -793,9 +828,10 @@ function pg3d(host, A) {
       el.style.display = ''; el.style.opacity = String(Math.max(0, 1 - e1 / 1.2)); el.style.transform = 'translate(' + ((V5.x + 1) / 2 * W0).toFixed(1) + 'px,' + ((1 - V5.y) / 2 * H0).toFixed(1) + 'px) translate(-50%,-50%)'; }
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
-    UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; });
+    UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
     const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
+    CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
     place(); cam.updateMatrixWorld(); names(); const bo = fade(boss, BOSSM, 12, BTW, 690); for (let i = 0; i < eyeGl.length; i++) eyeGl[i].material.opacity = eyeO * bo;
     fade(tail, TAILM, 6, TTW, 692); wretch.L.forEach((g) => fade(g, g.userData.mats, 2.4, g.userData.tw, 694)); fx(t);
@@ -814,7 +850,7 @@ function pg3d(host, A) {
   cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('wheel', wheel, { passive: false }); cv.addEventListener('contextmenu', noMenu); window.addEventListener('resize', kick);
   const dispose = () => { if (dead) return; dead = true; if (pend) cancelAnimationFrame(pend); window.removeEventListener('resize', kick);
     cv.removeEventListener('pointerdown', down); cv.removeEventListener('pointermove', move); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up); cv.removeEventListener('wheel', wheel); cv.removeEventListener('contextmenu', noMenu);
-    own.forEach((o) => { try { o.dispose(); } catch (e) { /* (already gone) */ } }); own.length = 0; RINGS.clear(); ARCS.clear(); WAVES.clear(); FX.clear(); UNITS.clear(); PLATES.clear(); scene.clear();
+    own.forEach((o) => { try { o.dispose(); } catch (e) { /* (already gone) */ } }); own.length = 0; RINGS.clear(); ARCS.clear(); WAVES.clear(); FX.clear(); UNITS.clear(); PLATES.clear(); CBS.clear(); CBF.length = 0; CB.length = 0; scene.clear();
     try { R.dispose(); R.forceContextLoss(); } catch (e) { /* (no context left) */ } host.textContent = ''; };
   resize();
   return { draw, resize, pick, dispose, fwd: () => [Math.cos(yaw), Math.sin(yaw)], info: () => ({ calls: R.info.render.calls, tris: R.info.render.triangles, geometries: R.info.memory.geometries, textures: R.info.memory.textures, programs: R.info.programs ? R.info.programs.length : 0 }),

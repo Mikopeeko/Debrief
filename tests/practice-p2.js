@@ -27,6 +27,13 @@
 //      job the run plays (with the Plan's map pieces out of src/guides.js: load(H, 'm2', { maps: true })).
 //   M2. the review of those maps (Nov 16): a Doomscale off its Kicks spot when your big egg goes in late, or its spot's words putting all three of its Cries
 //      there (the next two come by her); a ranged who doesn't start on Malice or can't take the south big egg (in M).
+//   CB. the cast bars over the casters you can kick (Flex, Nov 16: "The interupts are impossible to track/see. The monsters should have cast bars over their
+//      heads"): a Malice or an Anguished Cry with no bar over its caster, off its caster, not filling with its kick window, yours when it isn't your kick (or
+//      not when it is), a bar before or after the window (but the red "Interrupted" just after a kick), or seconds on the words over its caster.
+//   RS. the release sweep (Nov 16): a backup kick handed to a player whose own kick is due inside the 15 s cooldown (or the autopilot kicking on cooldown, or a
+//      cast counted once a step), E kicking your target's cast before your own, the arrow on a big egg before its pickup time or on a closed small egg, waiting
+//      spots on the carriers' lanes, a bot picking up beside you, a big egg's cauldron spot 8 yards in, a melee's damage moment out of reach, or a missed
+//      Malice still ticking on you after "Keep going" (revive).
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -356,7 +363,8 @@ function checks(H, say) {
     for (let i = 0; i < 40 && !dbg.G.p2.intr.some((q) => q.caster === 'wd' + mF); i++) dbg.step(1); const iq = dbg.G.p2.intr.find((q) => q.caster === 'wd' + mF); dbg.G.tgt = 'wd' + mF; const cb2 = dbg.P2.castOf(dbg.G.t);
     if (!iq) bad('the west Warden\'s Malice was kicked with no Interrupted label over it (check K)'); else if (!cb2 || !cb2.intr || !/Interrupted/.test(cb2.name)) bad('your target\'s bar doesn\'t say "Interrupted" after its Malice is kicked (' + (cb2 ? cb2.name : 'nothing') + ', check K)');
     { const A3 = { get G() { return dbg.G; }, get S() { return dbg.S; }, me: meF, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 }; const L3 = ctx.pg3dShapes(A3, dbg.G.t);
-      if (!L3.some((s) => s.k === 'label' && /Interrupted/.test(s.text || ''))) bad('in 3D no "Interrupted" label stands over the kicked Warden (check K)'); }
+      /* (since the cast bars, Nov 16: the Warden's bar turns red and says "Interrupted", in place of the old floating label; check CB plays them all) */
+      if (!L3.some((s) => s.k === 'cast' && s.caster === 'wd' + mF && s.state === 'kicked' && typeof ctx.pg3dCastLook === 'function' && ctx.pg3dCastLook(s).text === 'Interrupted')) bad('in 3D no red "Interrupted" bar stands over the kicked Warden (check K)'); }
     // (the backup: once a run a damage dealer with no kick of their own is the backup for a cast on their ledge and is told; a healer never)
     dbg.P2.pick = free; const rB = dbg.sim(meF, true, false, 4); if (!dbg.G.p2.bk || dbg.G.p2.kick[dbg.G.p2.bk.key] !== meF) bad('a ranged with no kick, played by the autopilot, is never the backup kicker, or doesn\'t kick it (' + JSON.stringify(dbg.G.p2.bk) + ', check K)');
     if (rB.log.length) bad('the backup run makes mistakes: ' + rB.log.join(' | ') + ' (check K)');
@@ -441,6 +449,126 @@ function checks(H, say) {
     const pkC = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pkC; const meC = dbg.P2.slotOf(pkC); dbg.at(232, meC, { east: false, seed: 3 }); if (dbg.G.eggs.some((e) => e.who === meC && e.state === 'held') && dbg.P2.dpsCat(dbg.G.t)) bad('carrying your egg you\'re asked to hit ' + dbg.P2.dpsCat(dbg.G.t) + '; carrying it is your job then (check K)');
     dbg.P2.pick = free; const tg = dbg.ff ? null : null; dbg.at(166.05, meF, { east: false, seed: 3 }); while (dbg.G.t < 240) dbg.step(1); const nUp = dbg.G.adds.filter((a) => a.own).length; dbg.G.adds = []; dbg.P2.ff(); if (nUp && dbg.G.adds.filter((a) => a.own).length !== nUp) bad('after a start-at the ' + nUp + ' Rawlings up then are gone (check K)');
   } catch (e) { bad('the adds and kicks crashed phase 2: ' + e.message + ' (check K)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // CB. the cast bars over the casters you can kick (Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their
+  //     heads i think to make it more visually clear theres something that needs to be interrupted", then "I appreceate the time stamps and everything on the
+  //     fight, but remember this is intended to be training wheels for people to do the fight"). Before it Malice and Anguished Cry showed as a ring on the
+  //     floor with a label counting seconds, and on your target's frame only while you had that caster targeted. Played step by step on several seeds and
+  //     jobs (a melee on Malice, a melee and a ranged on a Cry, a healer, a ranged with no kick), once with the kicks landing and once with every kicker held
+  //     off so each cast runs to its end: every Malice and Cry has one bar over its caster (within 0.5 yd) through its kick window (Malice: its bar and the
+  //     0.9 s of its channel you can still kick in), filling with it (within 0.05), yours exactly when it's your kick (your plan's or the backup's; never a
+  //     healer's), in reach exactly when you are; none before or after the window but the red "Interrupted" for about 0.8 s after a kick; and pg3dShapes
+  //     draws a 'cast' for each bar, just over its caster's head, with no number in any words over that caster.
+  try {
+    if (typeof dbg.P2.castBars !== 'function') bad('phase 2 has no cast bars over its casters (castBars): Malice and Anguished Cry still show as a ring on the floor with seconds, and on your target\'s frame only while you have that caster targeted (check CB)');
+    else {
+      const errs = [], note = (m) => { if (errs.length < 10 && !errs.includes(m)) errs.push(m); }, HEAD = { w: 7, d: 4.5 };
+      const wins = (S) => S.malice.map((m) => ({ key: 'm' + m.side + m.k, caster: 'wd' + m.side, t0: m.t0, t1: m.by, side: m.side, mal: true, dk: 1 }))
+        .concat(S.cries.filter((c) => c.t1 > c.t0).map((c) => ({ key: 'c' + c.ds + c.i, caster: c.ds, t0: c.t0, t1: c.t1, side: c.side, mal: false, dk: c.dk })));
+      const posOf = (G, w) => (w.mal ? G.p2.wd[w.side] || null : G.p2.ds[w.caster] ? [G.p2.ds[w.caster].x, G.p2.ds[w.caster].y] : null);
+      const kicker = (G, S, me, w) => (G.p2.bk && G.p2.bk.key === w.key ? me : Object.keys(S.job).find((id) => S.job[id].side === w.side && (w.mal ? S.job[id].mal === 1 : S.job[id].cry === w.dk)) || null);
+      const runs = [[{ side: 'E', role: 'm', egg: null, mal: 1, cry: 0, teth: 'none' }, 3, false], [{ side: 'W', role: 'm', egg: null, mal: 0, cry: 1, teth: 'none' }, 5, true], [{ side: 'E', role: 'h', egg: null, mal: 0, cry: 0, teth: 'none' }, 8, false],
+        [{ side: 'W', role: 'r', egg: null, mal: 0, cry: 2, teth: 'none' }, 6, true], [{ side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }, 4, false]];
+      for (const [pk, seed, east] of runs) for (const hold of [false, true]) {
+        dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), rg = P.KICK[me[0]] || 0, tag = pk.role + (pk.mal ? ' on Malice' : pk.cry ? ' on Cry ' + pk.cry : '') + ' (seed ' + seed + (hold ? ', kicks held' : '') + ')';
+        const A3 = { get G() { return dbg.G; }, get S() { return dbg.S; }, me, bossAt: dbg.P2.bossAt, tailAt: dbg.P2.tailAt, rl: (id) => id[0], nm: (id) => id, clsC: () => null, P2: dbg.P2 };
+        dbg.at(T.malice - 0.6, me, { east, seed }); const S = dbg.S, seen = new Set(), full = new Set(), kseen = new Set(); let n = 0;
+        while (dbg.G.t < T.end - 0.1) { const G = dbg.G, t0 = G.t, live = wins(S).filter((w) => t0 >= w.t0 - 0.2 && t0 <= w.t1 && !G.p2.kick[w.key]); let own = false;
+          /* (held: every kicker but you stunned through the window, and you don't press E, so each cast runs to its end) */
+          if (hold) live.forEach((w) => { const who = kicker(G, S, me, w); if (who === me) own = true; else if (who) G.p2.stun[who] = t0 + 0.2; });
+          if (hold && own) dbg.stepOwn(1); else dbg.step(1); G.hp = 100; n++;
+          const t = G.t, bars = dbg.P2.castBars(t), W = wins(S);
+          bars.forEach((b) => { const w = W.find((q) => q.key === b.key); if (!w) note(tag + ': a bar "' + b.key + '" at ' + clkS(t) + ' that is no Malice or Cry');
+            else { if (b.caster !== w.caster) note(tag + ': ' + b.key + '\'s bar names ' + b.caster + ', not its caster ' + w.caster); if (!(b.h >= HEAD[w.caster[0]])) note(tag + ': ' + b.key + '\'s bar sits ' + b.h + ' yards up, in its caster\'s head (at least ' + HEAD[w.caster[0]] + ')'); }
+            if (/\d/.test(String(b.name))) note(tag + ': a bar\'s words have a number in them: "' + b.name + '"'); if (b.mine && !rg) note(tag + ': a healer\'s bar says it\'s their kick'); });
+          W.forEach((w) => { const bs = bars.filter((b) => b.key === w.key), p = posOf(G, w), k = G.p2.kick[w.key], at = clkS(t) + ' (' + (t - w.t0).toFixed(2) + ' s in)';
+            if (k && k !== 'none') { const iq = G.p2.intr.find((q) => q.key === w.key), a = iq ? t - iq.t : 99;
+              if (a >= 0.02 && a <= 0.75 && p) { if (bs.length !== 1 || bs[0].state !== 'kicked') note(tag + ': ' + w.key + ' kicked ' + a.toFixed(2) + ' s ago shows ' + (bs.length ? bs.map((b) => b.state).join(', ') : 'no bar') + ', not one red "Interrupted"'); else kseen.add(w.key); }
+              else if (a > 0.85 && bs.length) note(tag + ': ' + w.key + '\'s bar is still up ' + a.toFixed(2) + ' s after its kick'); return; }
+            if (t > w.t0 + 0.02 && t < w.t1 - 0.02 && !k && p) { const f = (t - w.t0) / (w.t1 - w.t0), b = bs[0];
+              if (bs.length !== 1) { note(tag + ': ' + w.key + ' has ' + bs.length + ' bars over it at ' + at + ', in its kick window, not one'); return; }
+              if (b.state !== 'cast') note(tag + ': ' + w.key + '\'s bar at ' + at + ' is "' + b.state + '", not casting');
+              if (Math.hypot(b.x - p[0], b.y - p[1]) > 0.5) note(tag + ': ' + w.key + '\'s bar is ' + Math.hypot(b.x - p[0], b.y - p[1]).toFixed(1) + ' yd off its caster at ' + at);
+              if (!(Math.abs(b.f - f) <= 0.05)) note(tag + ': ' + w.key + '\'s bar is ' + Math.round(b.f * 100) + '% full at ' + at + '; its kick window is ' + Math.round(f * 100) + '% gone');
+              const mine = !!rg && kicker(G, S, me, w) === me, near = !!rg && Math.hypot(p[0] - G.x, p[1] - G.y) <= rg;
+              if (b.mine !== mine) note(tag + ': ' + w.key + '\'s bar ' + (mine ? 'doesn\'t say it\'s your kick, and it is' : 'says it\'s your kick, and it isn\'t') + ' (' + at + ')');
+              if (b.near !== near) note(tag + ': ' + w.key + '\'s bar says you\'re ' + (b.near ? 'in' : 'out of') + ' reach at ' + at + ', and you\'re ' + (near ? 'in' : 'out of') + ' it');
+              seen.add(w.key); if (f >= 0.9) full.add(w.key); }
+            else if ((t < w.t0 - 0.02 || t > w.t1 + 0.02 || k === 'none') && bs.length) note(tag + ': ' + w.key + ' has a bar at ' + clkS(t) + ', outside its kick window (' + clkS(w.t0) + ' to ' + clkS(w.t1) + ')'); });
+          if (bars.length && n % 5 === 0) { const L3 = ctx.pg3dShapes(A3, t);
+            bars.forEach((b) => { if (!L3.some((s) => s.k === 'cast' && s.key === b.key && s.state === b.state && s.x === b.x && s.y === b.y)) note(tag + ': pg3dShapes draws no cast bar for ' + b.key + ' at ' + clkS(t));
+              const lb = L3.find((s) => s.k === 'label' && Math.hypot(s.x - b.x, s.y - b.y) < 0.6 && /\d/.test(s.text || '')); if (lb) note(tag + ': "' + lb.text + '" floats over ' + b.caster + ' with its cast bar at ' + clkS(t) + ' (training wheels: no seconds)'); }); } }
+        const mal = [...seen].filter((k) => k[0] === 'm').length, cry = [...seen].filter((k) => k[0] === 'c').length;
+        if (mal < 2 || cry < 6) note(tag + ': only ' + mal + ' Malice and ' + cry + ' Cry bars were seen; both Malices and the Cries should have one');
+        if (hold && ([...full].filter((k) => k[0] === 'm').length < 2 || [...full].filter((k) => k[0] === 'c').length < 6)) note(tag + ': with the kicks held only ' + full.size + ' bars filled to the end of their window (' + [...full].join(' ') + ')');
+        if (!hold && kseen.size < 2) note(tag + ': only ' + kseen.size + ' red "Interrupted" bars were seen after the kicks landed'); }
+      errs.forEach((m) => bad('the cast bars: ' + m + ' (check CB)')); }
+  } catch (e) { bad('the cast bars crashed phase 2: ' + e.message + ' (check CB)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // RS. the release sweep, Nov 16 (Flex: "im trying to have this game in a released state for today, so i just need it to really work and be functional"). Each
+  //     failed on the code before its fix:
+  //     - the backup kick went to a player whose own kick came within the kick's 15 s cooldown: both of a ledge's Doomscales cast their Cry together, so the
+  //       default melee and ranged job (Malice and a Cry) always lost a Cry; and the autopilot's own kicks ignored the cooldown, so no check saw it;
+  //     - E went to your target's cast before your own: on the Doomscales (your damage target the other one) it kicked the other Cry and let yours through;
+  //     - the Go-here arrow sat on your big egg from 16 s before its pickup time: walking there picked it up with the small eggs still out;
+  //     - the small eggs' waiting spots sat on the other carriers' lanes (0.4 yards from one) and the arrow put you on your closed egg beside them: carriers
+  //       splashed with you on Melee East egg 5 and Ranged West egg 2 every run;
+  //     - your big egg's cauldron spot was 8 yards in, and the marker goes 2.5 yards from its spot: you could stop outside the 9-yard ring;
+  //     - a melee's Rawling and Doomscale moments came on 8 and 12 yards out (the reach is 5 past the add's edge), while the job held them off for the debris;
+  //     - a missed Malice kept ticking on you after "Keep going" (phase 2 had no revive).
+  try { const rs = (m) => bad(m + ' (the release sweep, Nov 16, check RS)');
+    // (the backup and the kick cooldown)
+    for (const [pk, seed, east] of [[{ side: 'W', role: 'r', egg: 'n6', mal: 1, cry: 2, teth: 'random' }, 8, true], [{ side: 'E', role: 'm', egg: 'far', mal: 1, cry: 1, teth: 'random' }, 2, false]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk), r = dbg.sim(me, true, east, seed), G = dbg.G, S = dbg.S, j = S.job[me], b = G.p2.bk, tag = pk.side + ' ' + pk.role + ' seed ' + seed;
+      const own = S.malice.filter((m) => m.side === j.side && j.mal).map((m) => ['m' + m.side + m.k, m.t0]).concat(S.cries.filter((c) => c.side === j.side && c.dk === j.cry).map((c) => ['c' + c.ds + c.i, c.t0]));
+      const clash = b && own.find(([k, t0]) => k !== b.key && t0 > b.t - 0.3 && t0 < b.t + 15); if (clash) rs('the default job (' + tag + ') was made the backup for ' + b.key + ' at ' + clkS(b.t) + ' with its own kick ' + clash[0] + ' at ' + clkS(clash[1]) + ', inside the 15 s cooldown: one of the two always goes through');
+      if (r.log.some((x) => /kick/.test(x))) rs('the autopilot playing the default job (' + tag + ') misses a kick: ' + r.log.join(' | ')); }
+    { const pk = { side: 'E', role: 'm', egg: null, mal: 1, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(170, me, { east: false, seed: 3 }); const m = dbg.S.malice.find((q) => q.side === 'E');
+      dbg.at(m.t0 - 1, me, { east: false, seed: 3 }); dbg.step(80); if (dbg.G.p2.kick.mE1 !== me || !(dbg.G.p2.kickCd >= m.t0 && dbg.G.p2.kickCd <= m.by)) rs('the autopilot\'s Malice kick (' + dbg.G.p2.kick.mE1 + ') doesn\'t put its kick on cooldown (kickCd ' + dbg.G.p2.kickCd + ')');
+      dbg.at(m.t0 - 1, me, { east: false, seed: 3 }); dbg.G.p2.kickCd = dbg.G.t - 5; dbg.step(80); if (dbg.G.p2.kick.mE1 === me) rs('the autopilot kicked Malice with its kick on cooldown (used 5 s before): its kicks skip the 15 s cooldown, so the checks never see a clash'); }
+    // (a free ranged on an odd seed is the backup on its second chance: each cast counts once, not once a 0.05 s step (which made it the first cast's)
+    { const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.sim(me, true, false, 5); const b = dbg.G.p2.bk;
+      if (!b || b.key === 'mE1') rs('a ranged with no kick on an odd seed is the backup for ' + (b ? b.key + ', its first chance' : 'nothing') + '; each cast counts once, so it should be its second'); }
+    // (E: your own kick first)
+    { const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 1, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(166.05, me, { east: false, seed: 3 }); while (dbg.G.t < 300 && !dbg.S.cries.some((c) => c.ds === 'dsE2' && c.i === 1)) dbg.step(20);
+      const c1 = dbg.S.cries.find((c) => c.ds === 'dsE1' && c.i === 1), c2 = dbg.S.cries.find((c) => c.ds === 'dsE2' && c.i === 1); dbg.at(c1.t0 - 0.4, me, { east: false, seed: 3 }); while (dbg.G.t < Math.max(c1.t0, c2.t0) + 0.3) dbg.stepOwn(1);
+      const kb = dbg.P2.castBars(dbg.G.t); if (!kb.some((q) => q.key === 'cdsE11' && q.near) || !kb.some((q) => q.key === 'cdsE21' && q.near)) rs('the test lost its setup: both east Doomscales\' first Cries should be casting in your reach at ' + clkS(dbg.G.t));
+      else { dbg.G.tgt = 'dsE2'; dbg.kick(); if (dbg.G.p2.kick.cdsE11 !== me) rs('with the other Doomscale your target, E kicked ' + (Object.keys(dbg.G.p2.kick).filter((k) => k[0] === 'c' && dbg.G.p2.kick[k] === me).join(' ') || 'nothing') + ', not your own Anguished Cry (cdsE11)'); } }
+    // (the arrow for a big egg)
+    for (const [pk, seed] of [[{ side: 'E', role: 'h', egg: 'close', mal: 0, cry: 0, teth: 'none' }, 1], [{ side: 'W', role: 'm', egg: 'far', mal: 0, cry: 0, teth: 'none' }, 2]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(240, me, { east: false, seed }); const B = dbg.S.big.find((q) => q.side === pk.side && q.which === pk.egg), bi = dbg.S.big.indexOf(B), on = [];
+      while (dbg.G.t < 262 && dbg.G.p2.big[bi].state === 'floor') { dbg.step(4); const at = dbg.S.bigAt[pk.side][pk.egg]; if (dbg.G.t < at - 0.7) { const jb = dbg.P2.job(me, dbg.G.t); if (jb.ob && hyp(jb.ob.p, [B.x, B.y]) < 3) on.push(clkS(dbg.G.t)); } }
+      if (on.length) rs('the Go-here arrow sits on your ' + (pk.egg === 'far' ? 'south' : 'north') + ' big egg at ' + on.slice(0, 3).join(', ') + ', before its pickup time: walking there picks it up with the small eggs still out');
+      const st = dbg.G.p2.big[bi]; if (st.state === 'held' && st.who === me) { const jb = dbg.P2.job(me, dbg.G.t); if (!jb.ob || hyp(jb.ob.p, dbg.S.pits[pk.side]) > P.THROW - 2.5) rs('your big egg\'s spot by the cauldron is ' + (jb.ob ? hyp(jb.ob.p, dbg.S.pits[pk.side]).toFixed(1) : '?') + ' yards from its centre; the marker goes 2.5 yards from it, so stopping there can leave you outside the ' + P.THROW + '-yard ring'); }
+      else rs('the autopilot didn\'t pick up its ' + pk.egg + ' big egg by 4:22 (' + st.state + ')'); }
+    // (the small eggs: the waiting spots, the arrow, and no carrier splashing with you)
+    { const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.wdie - 2, me, { east: false, seed: 3 }); const G = dbg.G, S = dbg.S, off = [];
+      while (G.t < 232 && (G.p2.wd.E || G.p2.wd.W)) dbg.step(1); dbg.step(4); /* (both Wardens just dead: every egg still closed, its carrier at its waiting spot) */
+      ['E', 'W'].forEach((s) => { const E = S.eggs.filter((q) => q.side === s), gap = (q) => { const o = Math.max(0, S.lane[s].indexOf(q.n)); return [(s === 'E' ? 1 : -1) * (120 - o * 3.8), 34]; }, segD = (p, a, c) => { const vx = c[0] - a[0], vy = c[1] - a[1], u = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (vx * vx + vy * vy))); return Math.hypot(p[0] - a[0] - vx * u, p[1] - a[1] - vy * u); };
+        G.eggs.filter((e) => e.side === s && !e.south && e.state === 'floor' && e.id && e.id !== me && G.t < e.shell - 0.9).forEach((e) => { const jb = dbg.P2.job(e.id, G.t), w = jb.ob && jb.ob.p; if (!w) { off.push(s + ' egg ' + e.n + ': no spot'); return; }
+          const eg = Math.min(...E.map((q) => hyp(w, [q.x, q.y]))), ln = Math.min(...E.filter((q) => q.n !== e.n).map((q) => segD(w, [q.x, q.y], gap(q)))); if (eg < 3.5 || ln < 2.5) off.push(s + ' egg ' + e.n + ' waits ' + eg.toFixed(1) + ' yd from an egg, ' + ln.toFixed(1) + ' from a lane'); }); });
+      if (off.length) rs('the small eggs\' waiting spots sit by the eggs or on the other carriers\' lanes (3.6 yards from every egg, off the lanes): ' + off.join('; ')); }
+    for (const [pk, seeds] of [[{ side: 'E', role: 'm', egg: 'n5', mal: 1, cry: 1, teth: 'random' }, [1, 2]], [{ side: 'W', role: 'r', egg: 'n2', mal: 1, cry: 1, teth: 'random' }, [1]]]) for (const seed of seeds) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.wdie - 1, me, { east: seed % 2 === 0, seed }); const G = dbg.G, e = G.eggs.find((q) => q.id === me), was = new Map(G.eggs.map((q) => [q, q.state])), tag = pk.side + ' ' + pk.role + ' egg ' + e.n + ', seed ' + seed; let onEgg = 0, near = 99;
+      while (G.t < T.throwAt + 4) { dbg.step(1); const soon = e.state === 'held' || (e.state === 'floor' && G.t >= e.shell - 1 && hyp([G.x, G.y], [e.x, e.y]) < 4);
+        if (e.state === 'floor' && G.t < e.shell - 0.9) { const jb = dbg.P2.job(me, G.t); if (jb.ob && hyp(jb.ob.p, [e.x, e.y]) < 2.5) onEgg++; }
+        G.eggs.forEach((q) => { if (was.get(q) === 'floor' && q.state === 'held' && q.who !== me && soon) near = Math.min(near, hyp([G.bots[q.who].x, G.bots[q.who].y], [G.x, G.y])); was.set(q, q.state); }); }
+      if (onEgg) rs('the Go-here arrow puts you (' + tag + ') on your egg while it\'s closed, beside the other carriers\' lanes, for ' + (onEgg / 20).toFixed(1) + ' s; it should show your waiting spot until it opens');
+      if (near < 3.6) rs('a bot picked up its egg ' + near.toFixed(1) + ' yards from you (' + tag + ') as you were about to pick up yours');
+      if (dbg.log.some((x) => /3-yard circle/.test(x))) rs('the autopilot carrying its egg (' + tag + ') splashes with a bot carrier: ' + dbg.log.filter((x) => /3-yard circle/.test(x)).join(' | ')); }
+    // (a melee's damage moments, in reach only, once the Warden is dead)
+    for (const [pk, seed, east] of [[{ side: 'W', role: 'm', egg: 'far', mal: 0, cry: 0, teth: 'random' }, 6, true], [{ side: 'E', role: 'm', egg: 'far', mal: 1, cry: 1, teth: 'random' }, 7, false]]) {
+      dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.wdie + 4, me, { east, seed }); const G = dbg.G, tag = pk.side + ' melee, seed ' + seed, R = { rawling: 1.1, clutch: 1.4, ds: 2.6 }, far = [];
+      while (G.t < 318) { dbg.step(1); const c = dbg.P2.dpsCat(G.t); if (!R[c] || G.p2.wd[pk.side]) continue; if (!dbg.P2.tgts(G.t).some((o) => o.kind === c && o.side === pk.side && hyp(o.p, [G.x, G.y]) < 5 + R[c] + 0.01)) far.push(clkS(G.t) + ' ' + c); }
+      if (far.length) rs('a melee (' + tag + ') has a damage moment with nothing of it in reach (5 yards past its edge): ' + [...new Set(far)].slice(0, 4).join(', '));
+      const r = dbg.sim(me, true, east, seed); if (r.log.some((x) => /were up|was up/.test(x))) rs('the autopilot melee (' + tag + '), following its job, misses a damage moment: ' + r.log.join(' | ')); }
+    // (Keep going after a death: a missed Malice's ticks left stop on you)
+    { const pk = { side: 'E', role: 'm', egg: null, mal: 1, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(170, me, { east: false, seed: 3 }); const m = dbg.S.malice.find((q) => q.side === 'E');
+      dbg.at(m.t0 - 1, me, { east: false, seed: 3 }); while (dbg.G.t < m.ch + 2.5) dbg.stepOwn(1);
+      if (dbg.G.p2.kick.mE1 !== 'none') rs('the test lost its setup: the 3:03 Malice should be missed (' + dbg.G.p2.kick.mE1 + ')');
+      else if (typeof dbg.P2.revive !== 'function') rs('phase 2 has no revive(): after "Keep going" a missed Malice keeps ticking on you (about half your health a tick) and kills you again');
+      else { dbg.G.hp = 100; dbg.G.debs = {}; dbg.P2.revive(); while (dbg.G.t < m.t1 + 1) dbg.stepOwn(1); if (dbg.G.hp < 99) rs('after "Keep going" (revive) a missed Malice still ticks on you: health ' + Math.round(dbg.G.hp)); } }
+  } catch (e) { bad('the release sweep checks crashed phase 2: ' + e.message + ' (check RS)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
   const PJ = rd('practice.js'), GJ = rd('guides.js'), BP = rd('build.ps1');
