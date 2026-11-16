@@ -15,6 +15,7 @@
 //   G. Hitting the right thing: the Rawlings, the heart, a Viper; Tab picks a target (Flex, Nov 15); see check G below.
 //   H. Attacking you can see: 1 attacks, adds die, the game keeps the keyboard, and the dive and wave calls name the right side (Flex, Nov 15); see check H.
 //   I. The mechanics play like the raid: her waves' halves on the floor, the venom beam, the egg ring warning, one call at a time, your coil's timer; see check I.
+//   J. A raider's screen (Flex, Nov 15): your frame and your target's in the bottom stack, spell-icon buttons with keys, the target's health, boss-mod bars; see check J.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -200,6 +201,78 @@ function checks(H, say, pj) {
     if (!/calls that come within 1\.5 s of each other share one line/.test(PJ)) bad('calls that land together still cover each other (check I)');
     dbg.at(125, 'r3', { east: false, seed: 3 }); const th = (dbg.timers ? dbg.timers() : []).join(' | '); if (!/Your coil/.test(th) || /Coil slam/.test(th)) bad('the timers at 2:05 read "' + th + '": they should show only your coil, as "Your coil" (check I)');
   } catch (e) { bad('the improvement pass crashed the game: ' + e.message + ' (check I)'); }
+  // J. A raider's screen (Nov 15, Flex: "the UI needs to look more like what a wow raider UI would look like. Player healthbar and target bar in the middle,
+  //    hotbars with spells on them for the attack/sprint/defensive. Boss mods. Etc." and "theres also no healthbar for the target"): your frame and your
+  //    target's side by side in the bottom stack, between your job and the action bar, her cast bar under the target; each button a spell icon (the attack's
+  //    is your role's) with its key; the target frame shows the target's health (an add's drops as you hit it and the bar flashes; Ula'tek, her tail and a
+  //    Wretch their own) and says "No target" and "Out of range"; the boss mods are one list of bars, five at most, soonest first, the same thing once; the
+  //    Mistakes counter is off the action bar, by the clock under the minimap. (Before: your frame top left, no target health, text buttons, "coming up"
+  //    chips in the job box, Mistakes a button on the bar, the minimap top left.)
+  if (typeof dbg.html !== 'function' || typeof dbg.tf !== 'function' || typeof dbg.mods !== 'function' || typeof dbg.deco !== 'function') { bad('the screen isn\'t laid out like a raider\'s UI: no target frame with its health, no boss-mod bars, no spell icons on the action bar (check J)'); return; }
+  try {
+    // (an element's inside, by one of its classes, counting its own tag's opens and closes)
+    const part = (h, cls) => { if (h == null) return null; const m = new RegExp('<(\\w+)\\b[^>]*\\bclass="(?:[^"]*\\s)?' + cls + '(?:\\s[^"]*)?"[^>]*>').exec(h); if (!m) return null;
+        const st = m.index + m[0].length, re = new RegExp('<(/?)' + m[1] + '\\b[^>]*>', 'g'); re.lastIndex = st; let dp = 1, q; while ((q = re.exec(h))) { if (q[1]) { if (--dp === 0) return h.slice(st, q.index); } else dp++; } return null; },
+      at = (h, cls) => (h == null ? -1 : h.search(new RegExp('class="(?:[^"]*\\s)?' + cls + '(?:\\s[^"]*)?"'))), has = (h, cls) => at(h, cls) >= 0;
+    const H0 = dbg.html(), bot = part(H0, 'pg-bot'), row = part(bot, 'pg-ufs'), acts = part(H0, 'pg-acts');
+    if (!row || !has(row, 'pg-me') || !has(row, 'pg-tf') || at(row, 'pg-me') > at(row, 'pg-tf')) bad('your frame and your target\'s frame don\'t sit side by side in the bottom stack, yours on the left (check J)');
+    if (!bot || !has(bot, 'pg-job') || !(at(bot, 'pg-job') < at(bot, 'pg-ufs') && at(bot, 'pg-ufs') < at(bot, 'pg-acts'))) bad('the bottom stack isn\'t your job, then the two frames, then the action bar (check J)');
+    if (!has(part(row, 'pg-tfc'), 'pg-cast') || has(part(H0, 'pg-bossf'), 'pg-cast')) bad('her cast bar isn\'t under the target frame (check J)');
+    if (!has(part(row, 'pg-me'), 'pg-hp') || !has(part(row, 'pg-me'), 'pg-debs') || !has(part(row, 'pg-tf'), 'pg-bar')) bad('your frame lost its health bar or debuffs, or the target frame has no health bar (check J)');
+    const tr = part(H0, 'pg-tr'); if (!has(tr, 'pg-mini') || !has(tr, 'pg-vw') || !has(tr, 'pg-bossf') || !has(part(tr, 'pg-bossf'), 'pg-clk') || at(tr, 'pg-mini') > at(tr, 'pg-bossf')) bad('the minimap, the 2D | 3D switch and her boss frame (with the clock) aren\'t together top right, the minimap first (check J)');
+    if (!acts || has(acts, 'pg-mis') || !has(tr, 'pg-mis') || !has(H0, 'pg-mc')) bad('the Mistakes counter is still on the action bar (or gone): it belongs top right by the clock (check J)');
+    if (has(part(H0, 'pg-job'), 'pg-up')) bad('the "coming up" chips are still in the job box; the boss-mod bars show them now (check J)');
+    // (every button: a spell icon by name and a key in its corner; phase 2's Kick gets its icon too)
+    const want = { tgt: 'ability_hunter_markedfordeath', atk: 'spell_fire_firebolt02', sprint: 'ability_rogue_sprint', def: 'spell_holy_divineprotection' }, btn = [...String(acts).matchAll(/<div class="pg-act(?: [^"]*)?" data-a="(\w+)"[^>]*>([\s\S]*?)<\/div>/g)];
+    if (Object.keys(want).some((a) => !btn.some((m) => m[1] === a))) bad('the action bar has ' + btn.map((m) => m[1]).join(', ') + '; it should have Target, Attack, Sprint and Defensive (check J)');
+    btn.forEach(([, a, inner]) => { const ic = (/<img class="pg-ai" data-ic="([a-z0-9_]+)"/.exec(inner) || [])[1], kb = (/<b>([^<]+)<\/b>/.exec(inner) || [])[1];
+      if (!ic || (want[a] && ic !== want[a])) bad('the ' + a + ' button\'s spell icon is ' + (ic || 'missing') + (want[a] ? '; it should be ' + want[a] : '') + ' (check J)'); if (!kb) bad('the ' + a + ' button has no key in its corner (check J)'); });
+    if (!/^<div class="pg-act" data-a="kick"><img class="pg-ai" data-ic="ability_kick" alt=""><b>E<\/b>/.test(dbg.deco('<div class="pg-act" data-a="kick"><b>E</b><span>Kick</span><i></i></div>'))) bad('phase 2\'s Kick button doesn\'t get its spell icon (check J)');
+    if (!/typeof loadOfficial === 'function'/.test(PJ) || !/wow\.zamimg\.com\/images\/wow\/icons\/large\/' \+ n \+ '\.jpg', 'https:\/\/render\.worldofwarcraft\.com\/us\/icons\/56\//.test(PJ)) bad('the action bar\'s icons don\'t load with the site\'s loader, or without it from Wowhead with Blizzard\'s as backup (check J)');
+    // (the attack's icon is your role's)
+    dbg.myJob = { role: 'h', egg: null, soak: [1, 1], fb: [0, 0] }; dbg.at(20, dbg.jobSlot(), { east: false, seed: 3 }); if (dbg.atkIc !== 'spell_holy_searinglight') bad('a healer\'s Attack button shows ' + dbg.atkIc + ', not the healer\'s spell_holy_searinglight (check J)');
+    dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; dbg.at(40.6, 'r3', { east: false, seed: 3 }); if (dbg.atkIc !== 'spell_fire_firebolt02') bad('a ranged Attack button shows ' + dbg.atkIc + ' after playing a healer, not spell_fire_firebolt02 (check J)');
+    // (the target frame: nothing, an add hit twice, Ula'tek, her tail, a Wretch, out of range)
+    dbg.tgt = null; const f0 = dbg.tf(); if (!f0 || !f0.none || f0.name !== 'No target') bad('with nothing targeted the target frame doesn\'t say "No target" (check J)');
+    const add = dbg.tgts().filter((o) => o.max && o.hp >= 2)[0];
+    if (!add) bad('no add with health to spare is up at 0:40.6 after the first coil, so the target frame can\'t be checked (check J)');
+    else { dbg.pos = [add.p[0] + 3, add.p[1]]; dbg.tgt = add.key; dbg.G.gcd0 = null; const f1 = dbg.tf(), fl0 = dbg.tfFlash;
+      if (!f1 || f1.none || f1.name !== add.name || Math.abs(f1.pct - add.hp / add.max * 100) > 0.5) bad('with ' + add.name + ' targeted the target frame reads ' + JSON.stringify(f1) + ' (check J)');
+      dbg.atk(); const f2 = dbg.tf(); if (!f1 || !f2 || f2.name !== add.name || !(f2.pct < f1.pct - 1)) bad('hitting ' + add.name + ' doesn\'t drop its health on the target frame (' + (f1 && f1.pct) + '% to ' + (f2 && f2.pct) + '%) (check J)');
+      if (!(dbg.tfFlash > fl0)) bad('a hit doesn\'t flash the target frame\'s bar (check J)'); }
+    dbg.tgt = 'boss'; const fb = dbg.tf(); if (!fb || fb.name !== 'Ula\'tek' || fb.pct == null || Math.abs(fb.pct - dbg.G.bossHp) > 0.01) bad('with Ula\'tek targeted the target frame reads ' + JSON.stringify(fb) + ', not her ' + dbg.G.bossHp.toFixed(1) + '% (check J)');
+    dbg.tgt = 'tail'; const ft = dbg.tf(); if (!ft || ft.name !== 'Gore Rattle' || ft.pct == null || Math.abs(ft.pct - dbg.G.bossHp) > 0.01) bad('with her tail targeted the target frame doesn\'t show her health (they are all her) (check J)');
+    const wr = dbg.tgts().find((o) => o.kind === 'wretch'), w1 = dbg.S.wretches.find((w) => wr && w.id === wr.key);
+    if (wr && w1) { dbg.tgt = wr.key; const fw = dbg.tf(), exp = (w1.dies - dbg.G.t) / (w1.dies - w1.awake) * 100; if (!fw || fw.pct == null || Math.abs(fw.pct - exp) > 0.5) bad('with the Wretch targeted the target frame reads ' + JSON.stringify(fw) + ', not its ' + exp.toFixed(0) + '% by the clock (check J)'); }
+    dbg.tgt = 'boss'; dbg.pos = [0, -33]; const fr = dbg.tf(); if (!fr || fr.range !== false) bad('far from Ula\'tek the target frame doesn\'t say out of range (check J)'); if (!/'Out of range'/.test(PJ)) bad('the target frame never says "Out of range" (check J)');
+    // (the boss mods: one list, five at most, soonest first, the same thing once, the hints only when hints are on)
+    dbg.at(10, 'r3', { east: false, seed: 3 });
+    for (const T of [10, 35.5, 52, 100, 125, 146]) { if (dbg.G.t < T) dbg.step(Math.round((T - dbg.G.t) / 0.05)); const M = dbg.mods() || [], tag = ' at ' + clk(dbg.G.t) + ' (check J)';
+      if (!M.length) bad('there are no boss-mod bars' + tag); if (M.length > 5) bad('the boss mods show ' + M.length + ' bars; five at most' + tag);
+      if (M.some((b, i) => i && b.at < M[i - 1].at)) bad('the boss-mod bars aren\'t soonest first: ' + M.map((b) => b.name + ' ' + clk(b.at)).join(', ') + tag);
+      if (new Set(M.map((b) => b.name)).size !== M.length || M.some((b, i) => M.some((c, j) => j > i && b.sp && b.sp === c.sp && Math.abs(b.at - c.at) <= 1.5))) bad('the boss mods show the same thing twice: ' + M.map((b) => b.name + ' ' + clk(b.at)).join(', ') + tag);
+      if (M.some((b) => !(b.left > 0) || !/^#[0-9a-f]{3,8}$/i.test(b.c))) bad('a boss-mod bar has no time left or no colour' + tag); }
+    dbg.at(35.5, 'r3', { east: false, seed: 3 }); const M1 = dbg.mods() || [], bub = M1.find((b) => /Bubble/.test(b.name)), coil = M1.filter((b) => /coil/i.test(b.name) && Math.abs(b.at - 40) < 0.6);
+    if (!bub || bub.sp !== 'Fester Burst') bad('at 0:35 the boss mods don\'t show the bubble with Fester Burst\'s icon: ' + M1.map((b) => b.name + ' (' + b.sp + ')').join(', ') + ' (check J)');
+    if (coil.length !== 1 || coil[0].sp !== 'Spectral Coils') bad('at 0:35 your coil shows ' + coil.length + ' time(s) in the boss mods, or without Spectral Coils\' icon; once (check J)');
+    dbg.hints = false; const M2 = dbg.mods() || []; dbg.hints = true;
+    if (M2.some((b) => /^Bubble: get in$/.test(b.name)) || !M2.some((b) => b.name === 'Your coil') || !M2.some((b) => b.name === 'Fester Burst')) bad('with hints off the boss mods aren\'t the plain timers: ' + M2.map((b) => b.name).join(', ') + ' (check J)');
+    // (review of the new screen, Nov 15, measured in Chrome with the site's own CSS: ".pg-me { align-items: flex-start }" (Home's "Which one is you?") made
+    //  your frame only as wide as its words, 197 px next to the target's 250; body.refine's 4 px corners on every button and the Plan page's "#main .pg-bar"
+    //  (in the site's defaultTheme layer, where only a rule in the same layer wins) rounded the close button, the 2D | 3D switch and every health bar; at
+    //  740 px wide Mistakes stuck out 21 px past the 150 px minimap column; six debuffs ran 9 px into the Target button; the boss mods' built-in icons were rounded)
+    { const SHt = (H || require('./site-helpers.js')).SH || '', rule = (sel) => ((new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}').exec(PJ) || [])[1] || ''), uc = rule('.pg .pg-ucol');
+      if (/(^|[\s}])\.pg-me \{[^}]*align-items/.test(SHt) && !/align-items: ?stretch/.test(uc)) bad('your frame\'s column doesn\'t say align-items: stretch, so the site\'s ".pg-me { align-items: flex-start }" shrinks your frame to its words (check J)');
+      if (!/:is\(\.pg-x, \.pg-vw button, \.pg-bar\) \{ ?border-radius: ?0 !important/.test(PJ) || (/#main :is\([^)]*\.pg-bar\)[^{]*\{[^}]*border-radius/.test(SHt) && !/@layer defaultTheme \{ ?html body #main \.pg\.pg \.pg-in \.pg-bar \{ ?border-radius: ?0 !important/.test(PJ))) bad('the close button, the 2D | 3D switch or the health bars take the site\'s rounded corners (body.refine\'s buttons, the Plan page\'s "#main .pg-bar" in its defaultTheme layer): the screen keeps square edges (check J)');
+      if (!/\.pg-tmi \.icw svg rect \{ ?rx: ?0/.test(PJ)) bad('the boss mods\' built-in icons keep their rounded corners until the real icon loads (check J)');
+      if (!/flex-wrap: ?wrap/.test(rule('.pg .pg-trow'))) bad('the 2D | 3D switch and Mistakes don\'t wrap in the narrow minimap column: Mistakes sticks out past the minimap at 740 px wide (check J)');
+      if (!/min-height: ?104px/.test(uc) || /(^|[^-])height: ?104px/.test(uc)) bad('your frame\'s column has a fixed height, so a long row of debuffs runs into the action bar instead of lifting the frames (check J)'); }
+    // (review of the 3D attacks, Nov 15: "Start at 2:18" fast-forwards with the autopilot pressing 1, and its last hit was still in the air when the game
+    //  began: a glowing bolt sat frozen at your hand through the 3-2-1, or a melee slash hung mid-swing. The jump clears the hits like everything else)
+    if (typeof dbg.ff !== 'function') bad('no way to check the "Start at" jump (dbg.ff) (check J)');
+    else for (const id of ['r1', 'm1', 'h1']) { dbg.at(130, id); dbg.ff(138.2); const fx = (dbg.dps() || {}).fx || []; if (fx.length) bad('after "Start at 2:18" as ' + id + ' ' + fx.length + ' hit(s) from the fast-forward are still in the air (check J)'); }
+  } catch (e) { bad('the raider\'s screen crashed the game: ' + e.message + ' (check J)'); }
+  finally { try { dbg.hints = true; dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; } catch (e) { /* (no job) */ } }
 }
 
 module.exports = checks; module.exports.load = load; module.exports.stub = stub;
