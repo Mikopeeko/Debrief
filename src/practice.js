@@ -89,12 +89,16 @@ function pgUlScript(o) {
   // edge 2.4 s before it fires and on Mythic sends 3 straight waves (game data: "reduced to 3 on Mythic"), 12.5 yards a second, about 9 yards
   // wide: its logged heading and two more at random. Spots in her-north yards (after the dive and in the heart burn, the measured her-west
   // spots turned back); the tail that comes with her waves rises on her west or east edge and goes straight across.
-  const withHer = () => (rnd() < 0.5 ? [[-40.8, -0.4], 0] : [[39.9, -0.7], 180]);
-  [[56, [withHer()]], [58.6, [[[-39.7, -40.2], 64.6], [[38.5, -39.6], 114]]], [69, [[[-55.8, -0.4], 39.4], [[54.8, -0.7], 139.2]]],
-    [113, [withHer()]], [115.6, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [126, [[[55.8, 0.1], 141.5], [[-39.6, -38.5], 65.8]]], [131.5, [[[-0.4, 55.8], 233.7], [[38.9, 39.5], 206.2]]],
-    [143.7, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [156.8, [[[-39.6, -38.5], 65.8], [[55.8, 0.1], 141.5]]]].forEach(([t, ts]) => { timer(t, 'Small tails');
-    ts.forEach(([q, hd]) => { const p = F(q, t), h = hd + rotAt(t); S.tails.push({ x: p[0], y: p[1], t0: t - 2.4, at: t });
-      [0, -(20 + rnd() * 45), 20 + rnd() * 45].forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: h + off, v: 12.5, w: 9, d: 4, cres: cres(9), warn: 2.4, t0: t, t1: t + 8.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge sends three waves 2.4 s later: step out of their red lanes.' })); }); });
+  // (Main's playtest, Nov 15: the small tails fire "a short fan of about 3 waves, along fixed lines from 8 fixed edge spots", the guide's UL_TAIL_SETS from
+  //  130 Mythic kills: each fan about 15 degrees apart round its facing (the measured angles where the logs resolve them: E at 1:09 18/28/44, N after the
+  //  dive 10/25/38), crescents 7 yards wide that run 9.5 s; the pair at 0:37.8 just before the first coils is in too. These spots and facings already
+  //  matched the guide; the fan was three random lines 20 to 65 degrees apart)
+  const withHer = () => (rnd() < 0.5 ? [[-40.8, -0.4], 0] : [[39.9, -0.7], 180]), FAN = [-15, 0, 15];
+  [[37.8, [[[54.8, 0.2], 180], [[39.6, 40.1], 206.3]], 1], [56, [withHer()]], [58.6, [[[-39.7, -40.2], 64.6], [[38.5, -39.6], 114]]], [69, [[[-55.8, -0.4], 39.4], [[54.8, -0.7], 139.2, [18, 28, 44]]]],
+    [113, [withHer()]], [115.6, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [126, [[[55.8, 0.1], 141.5, [10, 25, 38]], [[-39.6, -38.5], 65.8]]], [131.5, [[[-0.4, 55.8], 233.7], [[38.9, 39.5], 206.2]]],
+    [143.7, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [156.8, [[[-39.6, -38.5], 65.8], [[55.8, 0.1], 141.5, [10, 25, 38]]]]].forEach(([t, ts, side]) => { timer(t, 'Small tails'); /* (side: measured on pulls with her tail west, so it mirrors with her tail east: the 0:37.8 pair fires across the room into the coils' side, reaching the soaks after both slams) */
+    ts.forEach(([q, hd, fan]) => { const p = side ? FT(q, t) : F(q, t), h = side && tailEast ? 180 - hd : hd + rotAt(t); S.tails.push({ x: p[0], y: p[1], t0: t - 2.4, at: t });
+      (fan || FAN).forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: h + off, v: 12.5, w: 7, d: 4, cres: cres(7), warn: 2.4, t0: t, t1: t + 9.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.' })); }); });
   // the dive: Submerge, bubbles where she'll come up, she surfaces on the other side; her tank has to be there first
   S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch for the bubbles!', '#7fd8ff'); warn(SURF, 'She surfaces on the ' + (east ? 'EAST' : 'WEST') + ' edge, where the bubbles were!', '#7fd8ff'); timer(SURF, 'She surfaces');
   // Rage of the Shackled: 6.5 s cast, then her heart is open for 20 s; raid damage every 4 s; Falling Debris (7 yards) all over
@@ -280,7 +284,7 @@ function pgOpen(root, boss, d, pk) {
   const cycleTgt = () => { press('tgt'); const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
   const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), aoe: (G.aoeFx || []).filter((x) => t - x.t0 < 0.7).map((x) => ({ ...x, age: t - x.t0 })), aoeCd: aoeLeft(t), adds: tgtList(t).filter((o) => o.max) }; };
-  const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; el.textContent = text; el.style.color = c || '#fff'; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
+  const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; if (G) G.lastWarn = { t: G.t, n: 1, all: [text], items: [{ text, c, by: null }] }; /* (on the game's clock like every call, so an older call's clearing can't wipe it) */ el.textContent = text; el.style.color = c || '#fff'; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
   const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
   // ---- sounds (Flex, Nov 15: "I think sound alerts or sound ques are going to be a good addition", "Players are used to sound ques with boss mods so thats
   // a great way to simulate it"): short tones made here, no sound files and never a voice. A two-note ping for a call about you, three quick beeps for a
@@ -317,7 +321,10 @@ function pgOpen(root, boss, d, pk) {
     const a = M.get(id); return [ob.p[0] + Math.cos(a) * 6.5, ob.p[1] + Math.sin(a) * 6.5]; };
   // (the carriers' numbered bubble spots: the team plan's; without one, each carrier takes a free spot round the bubble)
   const fbList = (ek) => { if (!TEAM) return null; const f = TEAM.fb[ek]; return f && f.length ? f : null; };
-  const jobOf = (id, t) => { if (P2) return P2.job(id, t); let T = homeOf(id, t), fast = false; const b0 = id === me ? { x: G.x, y: G.y } : G.bots[id], myEgg = G.eggs.find((e) => e.id === id && (e.state === 'floor' || e.state === 'air') && e.land - t < 14);
+  // (Main's playtest, Nov 15: melee never hit the heart in the burn, "you were on it 0% of the time": their spot stayed at home, south of the middle, out of
+  //  reach. As her heart opens, each melee stands at her edge, spread along it, 7 yards or less from the heart's middle: in reach (its 3 yards and your 5))
+  const meleeBurn = (id, t) => { const M = GDZ_RAID.filter((q) => rl(q) === 'm'), k = Math.max(0, M.indexOf(id)), p = S.F([[-3.5, -1.2, 1.2, 3.5, 0][k % 5], 35.5], t); return PG_UL.onPlat(p[0], p[1]) ? p : PG_UL.inward(p); };
+  const jobOf = (id, t) => { if (P2) return P2.job(id, t); let T = homeOf(id, t), fast = false; if (rl(id) === 'm' && t >= 142 && t < 165) T = meleeBurn(id, t); const b0 = id === me ? { x: G.x, y: G.y } : G.bots[id], myEgg = G.eggs.find((e) => e.id === id && (e.state === 'floor' || e.state === 'air') && e.land - t < 14);
     // carriers: next to their egg once it's down, onto it when the shell breaks
     if (myEgg && t >= myEgg.land - 1.5) { T = t >= myEgg.shell - 0.4 ? [myEgg.x, myEgg.y] : [myEgg.x - 4.6, myEgg.y + 1]; }
     // the tanks (measured on 20 top kills): her tank in front of her, in her reach for Mother's Wrath, first to the bubbles in the dive; the other soaks the
@@ -369,6 +376,9 @@ function pgOpen(root, boss, d, pk) {
       //  walks at your speed, 7 yards a second, and only goes faster to get out of a wave, as you would with Sprint. With your egg held and you right in its path
       //  (7 yards ahead, inside 4.2 of its line) it sidesteps a little, onto safe floor only: "just a little, without making it super super easy")
       const held = (!P2 || !!P2.calmCarriers) && G.eggs.some((e) => e.state === 'held' && e.who === id), want = !!(b.esc && b.esc.t === t) || !!(j.ob && j.ob.at >= t && j.ob.at - t <= 3.5);
+      // (Main's playtest, Nov 15: as the melee egg carrier, Ranged 5's spot at 0:31 was 0.8 yards from yours and it walked into you, both eggs hatched on every
+      //  run; at 1:58 some carriers' spots are the same. While you both hold eggs, a raider with an egg keeps the spot it walks to 4.2 yards from you)
+      if (held && myEggHeld()) { const ex = T[0] - G.x, ey = T[1] - G.y, ee = Math.hypot(ex, ey); if (ee < 4.2) { const ux = ee > 0.01 ? ex / ee : 1, uy = ee > 0.01 ? ey / ee : 0, a = [G.x + ux * 4.2, G.y + uy * 4.2], c = [G.x - ux * 4.2, G.y - uy * 4.2]; T = onPlat(a[0], a[1]) ? a : onPlat(c[0], c[1]) ? c : a; } }
       if (held && want && !(b.spr != null && t - b.spr < 30)) b.spr = t; /* (Flex: "dont have them moving faster than wow speeds": Sprint like yours, 3 s every 30 s, for a wave or a soak due) */ const esc = held && b.spr != null && t - b.spr < 3; /* (still hurries for a wave, or when its soak or bubble is due within 3.5 s: the 0:39 bubble to the 0:40 coil. Phase 1; a later part opts in with calmCarriers, its routes planned for the old 1.4) */
       const dx = T[0] - b.x, dy = T[1] - b.y, dd = Math.hypot(dx, dy), sp = SPEED * (held ? (esc ? 1.4 : 1) : fast || dd > 15 ? 1.4 : 1) * dt * (P2 ? P2.slow(id, t) : 1); if (esc) b.rush = t;
       if (dd > sp) { let mx = dx / dd, my = dy / dd; if (held && myEggHeld()) { const wx = G.x - b.x, wy = G.y - b.y, along = wx * mx + wy * my, side = mx * wy - my * wx;
@@ -378,7 +388,10 @@ function pgOpen(root, boss, d, pk) {
     // carriers keep out of each other's 3-yard circles; nobody walks into yours (if you walk into theirs, that's yours)
     const car = G.eggs.filter((e) => e.state === 'held' && e.who && e.who !== me).map((e) => G.bots[e.who]); for (let it = 0; it < 2; it++) { for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i], c = car[j], ex = c.x - a.x, ey = c.y - a.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6) { const pu = (3.6 - ee) / 2; a.x -= ex / ee * pu; a.y -= ey / ee * pu; c.x += ex / ee * pu; c.y += ey / ee * pu; } }
       if (myEggHeld() && window.__pgAuto) for (const c of car) { const ex = G.x - c.x, ey = G.y - c.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6) { const nx = ex / ee, ny = ey / ee; G.x = c.x + nx * 3.6; G.y = c.y + ny * 3.6; if (target) { const tx = target[0] - G.x, ty = target[1] - G.y; if (tx * nx + ty * ny < 0) { const sd = tx * -ny + ty * nx >= 0 ? 1 : -1, d = SPEED * dt * 0.8; G.x -= ny * sd * d; G.y += nx * sd * d; } } } } /* (the autopilot, a careful player, steps round other carriers: out of their circle, and along its edge when they stand in the way) */
-      if (myEggHeld()) for (const c of car) { const ex = c.x - G.x, ey = c.y - G.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6 && (G.still || (pre[c.id] == null ? 9 : pre[c.id]) >= 3.6)) { c.x = G.x + ex / ee * 3.6; c.y = G.y + ey / ee * 3.6; } } }
+      if (myEggHeld()) for (const c of car) { const ex = c.x - G.x, ey = c.y - G.y, ee = Math.hypot(ex, ey) || 0.01; if (ee < 3.6 && (G.still || (pre[c.id] == null ? 9 : pre[c.id]) >= 3.6)) { c.x = G.x + ex / ee * 3.6; c.y = G.y + ey / ee * 3.6; }
+        // (Main's playtest, Nov 15: "Bots must keep 3 yards from YOU": stepping out of one carrier's ring pushed you into another's. A carrier you come at gives
+        //  way, stepping back at walking speed onto the stone; sprint straight into one and you can still splash, so keeping your ring clear still matters)
+        else if (ee < 3.6) { const st = Math.min(3.6 - ee, SPEED * dt), nx = c.x + ex / ee * st, ny = c.y + ey / ee * st; if (onPlat(nx, ny)) { c.x = nx; c.y = ny; } } } }
     // the Wretches follow
     S.wretches.forEach((w) => { const p = wretchAt(w, t); if (!p) { delete G.wr[w.id]; return; } const c = G.wr[w.id]; if (!c) { G.wr[w.id] = { x: p[0], y: p[1] }; return; } const ex = p[0] - c.x, ey = p[1] - c.y, ee = Math.hypot(ex, ey), sp = 9 * dt; if (ee > sp) { c.x += ex / ee * sp; c.y += ey / ee * sp; } else { c.x = p[0]; c.y = p[1]; } }); };
 
@@ -642,12 +655,20 @@ function pgOpen(root, boss, d, pk) {
   // (Main, Nov 15, phase 3 at 7:10 and 8:25: four to six calls shared one line, ran to two lines and under the minimap. Now at most two calls show at
   // once, the one about you first; the rest wait their turn, and a call that has waited 4 s is dropped: the boss-mod bars already have it)
   const myCall = (w) => (/\b(you|your)\b/i.test(w.text) ? 1 : 0);
+  // (Main's playtest, Nov 15: "Circling Prey: move one quarter left, you have 8 s!" said at 9:05 was still up at 9:18. The line only faded on a screen timer,
+  //  which stops when the page isn't in front. Now it goes by the game's clock: a call clears 3.2 s after it shows, a call that gives you N seconds counts
+  //  them down and clears when they run out (its moment has passed))
+  const callBy = (w) => (w.by != null ? w.by : ((m) => (m ? w.t + +m[1] : null))(/you have (\d+) s\b/.exec(w.text)));
+  const callTxt = (it, t) => (it.by != null ? it.text.replace(/you have \d+ s\b/, 'you have ' + Math.max(1, Math.ceil(it.by - t)) + ' s') : it.text);
   const warns = () => { const Q = G.warnQ || (G.warnQ = []); while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) Q.push({ ...S.warns[G.warnI++], q: G.t });
     for (let i = Q.length - 1; i >= 0; i--) if (G.t - Q[i].q > 4) Q.splice(i, 1);
+    { const L0 = G.lastWarn, e0 = $('.pg-warn'); if (L0 && L0.items) { const live = L0.items.filter((it) => (it.by != null ? G.t < it.by : G.t - L0.t < 3.2));
+      if (!live.length) { if (e0) { e0.textContent = ''; e0.classList.remove('in', 'hold'); } G.lastWarn = null; }
+      else if (live.length !== L0.items.length || live.some((it) => it.by != null)) { L0.items = live; L0.all = live.map((it) => it.text); L0.n = live.length; if (e0) { e0.textContent = live.map((it) => callTxt(it, G.t)).join('  ·  '); e0.classList.toggle('hold', live.some((it) => it.by != null)); } } } }
     if (!Q.length) return; const L = G.lastWarn, age = L ? G.t - L.t : 99; if (L && L.n >= 2 && age < 2.2) return; /* (the line is full: the rest wait) */
     Q.sort((a, b) => myCall(b) - myCall(a) || a.t - b.t); const join = !!L && L.n === 1 && age < 1.5, take = Q.splice(0, join ? 1 : 2).filter((w) => !(join && w.text === L.all[0]));
-    if (!take.length) return; sfx(take.some((w) => /\bnow\b/i.test(w.text)) ? 'now' : take.some(myCall) ? 'you' : 'call'); const all = (join ? [L.all[0]] : []).concat(take.map((w) => w.text)), el = $('.pg-warn');
-    G.lastWarn = { t: G.t, n: all.length, all }; el.textContent = all.join('  ·  '); el.style.color = take[take.length - 1].c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
+    if (!take.length) return; sfx(take.some((w) => /\bnow\b/i.test(w.text)) ? 'now' : take.some(myCall) ? 'you' : 'call'); const items = (join ? [L.items[0]] : []).concat(take.map((w) => ({ text: w.text, c: w.c, by: callBy(w) }))), all = items.map((it) => it.text), el = $('.pg-warn');
+    G.lastWarn = { t: G.t, n: all.length, all, items }; el.textContent = items.map((it) => callTxt(it, G.t)).join('  ·  '); el.style.color = take[take.length - 1].c; el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); el.classList.toggle('hold', items.some((it) => it.by != null)); };
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
@@ -660,7 +681,7 @@ function pgOpen(root, boss, d, pk) {
     if (TEAM) TEAM.fb.forEach((f, i) => { const j = f.indexOf(id); if (j >= 0) L.push(['Fester Burst ' + (i ? '1:48' : '0:39'), 'Your spot in the bubble: ' + (i ? 11 + j : 1 + j) + ' (a gold circle while you carry your egg).']); });
     else if (J && carrierOf(id)) L.push(['Fester Burst (0:39 and 1:48)', 'Your spot in the bubble is picked for you: the gold circle. Keep 3 yards from the other carriers.']);
     L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch at 0:39, 1:10, 1:48 and 2:20. At 1:48 stand on it from her tail\'s sweep at 1:46.']); L.push(['Her tail\'s sweep', 'Out of 35 yards from her tail at 0:49 and 1:46.']);
-    L.push(['Her waves', 'At 0:56 and 1:53: wait on the half she isn\'t pulling her wing back from, then cross behind the first wave.']); L.push(['Small tails', 'A tail rising at the edge sends three waves 2.4 s later: step out of their red lanes.']);
+    L.push(['Her waves', 'At 0:56 and 1:53: wait on the half she isn\'t pulling her wing back from, then cross behind the first wave.']); L.push(['Small tails', 'Two tails rise at the edge, always on the same spots, and 2.4 s later each fires a short fan of three waves: stand in a gap between their red lanes.']);
     L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive (1:17) and the heart (2:25)', 'She comes up on either side. In the heart burn, step out of the brown circles.']);
     return '<ul class="pg-asg">' + L.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
   // (the start card's glyphs, in the colours the fight uses: an egg, a coil, the Wretch's bubble, a wave; drawn here, no pictures)
@@ -786,7 +807,7 @@ function pgOpen(root, boss, d, pk) {
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
       .catch((e) => { console.error('Practice 3D:', e); off3d('3D didn\'t load' + (P2 ? ': ' + (P2.label || 'phase ' + (P2.part || 2)) + ' needs it. Press 3D to try again, or play phase 1 in 2D.' : ', so you\'re in 2D.')); }).finally(() => vw.classList.remove('busy')); };
   vw.onclick = (e) => { const b = e.target.closest('button'); if (b) { b.blur(); view(b.dataset.v === '3'); } };
-  { let v = ''; try { v = localStorage.getItem('wla-pg-view'); } catch (e) { /* (no storage) */ } if (v === '3d' || P2) view(true); } /* (a later part is 3D only (Flex): it opens in 3D, and doesn't change the view phase 1 remembers) */
+  view(true); /* (Flex, Nov 15: 3D only. Every part opens in 3D; the 2D picture is only the fallback when 3D can't load, and then a 3D button offers a retry) */
   window.__pg3dDbg = { get v3() { return v3; }, view };
   const close = () => { if (!ov.isConnected) return; stop(); if (v3) { v3.dispose(); v3 = null; } ov.remove(); document.documentElement.classList.remove('pg-open'); document.removeEventListener('keydown', kd, true); document.removeEventListener('keyup', ku, true); window.removeEventListener('blur', onBlur); };
   $('.pg-x').onclick = close;
@@ -851,7 +872,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-tmb b { position: absolute; right: 7px; top: 0; font: 700 12.5px/22px var(--head, system-ui); color: #e8edf2; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
 .pg .pg-tm.soon { border-color: var(--c); } .pg .pg-tm.soon .pg-tmb i { opacity: .85; } .pg .pg-tm.soon .pg-tmb span, .pg .pg-tm.soon .pg-tmb b { color: #fff; font-weight: 800; }
 .pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the boss-mod bars on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
-.pg-warn.in { animation: pgWarn 3s ease-out forwards; } @keyframes pgWarn { 0% { opacity: 0; transform: scale(1.15); } 8% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+.pg-warn.in { animation: pgWarn 3s ease-out forwards; } .pg-warn.in.hold { animation: pgWarnIn .3s ease-out forwards; } @keyframes pgWarnIn { 0% { opacity: 0; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } } /* (a countdown call stays up until its seconds run out, then the game clears it) */ @keyframes pgWarn { 0% { opacity: 0; transform: scale(1.15); } 8% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
 .pg-float { position: absolute; top: 31%; left: 0; right: 0; text-align: center; font: 700 16px var(--head, system-ui); text-shadow: 0 1px 4px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-float.bad { color: #ff8f87; } .pg-float.ok { color: #7ee08f; } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 /* (bottom centre, ElvUI style: your job, then your frame left of centre and your target's right of it (you stand between them), then the action bar) */
@@ -953,7 +974,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-vw { position: relative; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; pointer-events: auto; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
 .pg-snd { height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 0; background: rgba(10,12,16,.72); color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; pointer-events: auto; } .pg-snd.on { color: #fff; } .pg-snd:hover { color: #fff; }
-.pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-p2 .pg-vw button[data-v="2"] { display: none; }
+.pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-vw button[data-v="2"] { display: none; } .pg.pg3 .pg-vw { display: none; } /* (3D only, Flex: no 2D | 3D switch; the 3D button shows only to retry when 3D didn't load) */
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
 `;
   document.head.appendChild(st);

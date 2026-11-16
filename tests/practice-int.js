@@ -144,7 +144,7 @@ function checks(H, say) {
     if (!/'=' \+ \(P2\.part \|\| 2\)/.test(PJ)) bad('the score link no longer says which part (\'?practice=\' + P2.part, check F)');
     if (!/A\.P2 && !A\.P2\.flat3d && typeof pg3dP2 === 'function'/.test(P3)) bad('practice3d.js builds phase 2\'s side ledges for the intermission (flat3d, check F)');
     if (!/P2 && P2\.part === 2 \? 'Hatching Doom'/.test(PJ)) bad('the boss-mod bars give the intermission\'s eggs phase 2\'s Hatching Doom icon (check F)');
-    if (!/if \(v === '3d' \|\| P2\) view\(true\)/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
+    if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
     const sh = dbg.P2.short(), li = (sh.match(/<li>/g) || []).length; if (li !== 4) bad('"your job in short" isn\'t four lines (' + li + ', check F)');
     dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/diamond line/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and the diamond line: ' + s2 + ' (check F)');
     // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 4 jobs a role, one sentence)
