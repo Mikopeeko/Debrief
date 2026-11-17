@@ -67,11 +67,19 @@ const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/
 //  "A small tail rising at the edge fires ... 2.4 s later, on the same lines every pull: step out of their red lanes." -> "Step out of their red lanes")
 const PG_DO = /^(?:step|be|press|kill|stand|run|carry|dodge|wait|get|keep|help|save|stay|pick|hit|move|soak|break|kick|go|walk|leave|use|throw|bring|stack|burn|target|cross|sprint)\b/i;
 const pgEndHead = (s) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\([^)]*\)/g, '').replace(/[.]$/, '').trim();
-  x = x.replace(/you were on (them|it) \d+% of the time/i, (m0, w) => 'you weren\'t hitting ' + w).replace(/you were on (them|it) (?:only )?\d+%/i, (m0, w) => 'you weren\'t hitting ' + w); return x; };
+  x = x.replace(/you were on (them|it) \d+% of the time/i, (m0, w) => 'you weren\'t hitting ' + w).replace(/you were on (them|it) (?:only )?\d+%/i, (m0, w) => 'you weren\'t hitting ' + w);
+  return pgRealKeys(x); };
+// (the tips are for the real fight, not the practice game's keys (Flex, Nov 17: "the tips should be in game tips not the practice game"): Q is your defensive, E your
+//  interrupt, Shift your sprint; Tab and 1 aren't named. A damage moment's tip is why that add matters, from the game's own reasons (DPS_SAY), not how to target it)
+const pgRealKeys = (x) => String(x).replace(/\bpressed Q\b/gi, 'used your defensive').replace(/\bpress Q(?: \(defensive\))?/gi, 'use a defensive').replace(/\bSave Q\b/g, 'Save your defensive').replace(/\byour Q\b/gi, 'your defensive')
+  .replace(/\bQ \((?:your )?defensive\)/gi, 'a defensive').replace(/\bpress E\b/gi, 'interrupt').replace(/\s*\((?:E|Shift)\)/g, '').replace(/\bsprint \(Shift\)/gi, 'sprint');
+const PG_END_DPS = [[/^Rawlings\b/i, 'Kill the Rawlings before they boil'], [/^Clutches\b/, 'Kill the Clutches before they hatch'], [/^The clutches\b/i, 'Kill the Clutches once the Death Knights grip them onto the raid'],
+  [/Doomscale/i, 'Hit the Doomscales from behind or the side, and kill them evenly'], [/heart/i, 'Burn the heart while it\'s open'], [/Shrieker/i, 'Kill the Shriekers fast: they stack damage on the raid'],
+  [/Viper/i, 'Kill the Viper fast: it\'s deadly'], [/Warden/i, 'Kill the Warden before it starts a second Writhing Gestation'], [/Wretch/i, 'Kill each Wretch before its third bubble'], [/egg/i, 'Break your egg\'s shell, then pick it up']];
 const pgEndTip = (s, head) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/,?\s*\d+(?:\.\d+)? s later/g, '').replace(/[.]$/, '').trim();
-  if (/you weren't hitting/.test(head || '') || /^(?:press Tab|Tab, then 1)/i.test(x)) return 'Target ' + (/hitting it\b/.test(head || '') ? 'it' : 'them') + ' with Tab, then press 1'; /* (a damage moment: the how-to-press is the one thing to do) */
-  const k = x.lastIndexOf(': '); if (k > 0) { const a = x.slice(0, k), b = x.slice(k + 2); if (/^(?:press Tab|Tab, then 1)/i.test(b)) x = a; else if (PG_DO.test(b) && b.split(/\s+/).length >= 4) x = b; }
-  x = x.replace(/\btheir red lanes\b/i, 'the red lanes').replace(/^Carrying an egg, a wave hatches it: dodge every one$/i, 'With an egg, dodge every wave');
+  if (/you weren't hitting/.test(head || '') || /^(?:press Tab|Tab, then 1|Tab picks)/i.test(x)) { const e = PG_END_DPS.find(([re]) => re.test(head || '')); return e ? e[1] : 'Switch to them while they\'re up'; } /* (a damage moment: why that add matters) */
+  const k = x.lastIndexOf(': '); if (k > 0) { const a = x.slice(0, k), b = x.slice(k + 2); if (/^(?:press Tab|Tab, then 1)/i.test(b)) x = a; else if (PG_DO.test(b) && b.split(/\s+/).length >= 4) x = b; else if (PG_DO.test(a) && !PG_DO.test(b)) x = a; } /* (the order first, an explanation after: the order) */
+  x = pgRealKeys(x.replace(/\btheir red lanes\b/i, 'the red lanes').replace(/^Carrying an egg, a wave hatches it: dodge every one$/i, 'With an egg, dodge every wave'));
   return x.charAt(0).toUpperCase() + x.slice(1); };
 // (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
 const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) return 'Kill the ' + m[1].trim(); /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
