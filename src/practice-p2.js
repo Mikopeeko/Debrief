@@ -158,7 +158,7 @@ function pgP2Script(o) {
   // the Wardens (2:55): pulled across the line, Shadow Molt toward the eggs (3 s), Writhing Gestation (3 s), killed by the raid about 3:38
   S.wardens = ['E', 'W'].map((s) => ({ side: s, id: 'wd' + s, spawn: L(s, P.wSpawn), at: L(s, P.fight), up: T.wardens, molt: T.molt + 3, dies: T.wdie }));
   ['E', 'W'].forEach((s) => { cast('warden', 'Warden: Shadow Molt', T.molt, T.molt + 3, { side: s, spell: 'molt' }); cast('warden', 'Warden: Writhing Gestation', T.gest, T.gest + 3, { side: s, spell: 'gest' }); });
-  warn(T.wardens, heal ? 'Doomscale Wardens: Stay with your half, off the eggs' : 'Doomscale Wardens: Hit the Warden, stay off the eggs', '#b06bff', heal); timer(T.wardens, 'Wardens'); timer(T.gest + 3, 'Writhing Gestation');
+  warn(T.molt + 3 - 1, heal ? 'Doomscale Wardens: Stay with your half, off the eggs' : 'Doomscale Wardens: Hit the Warden, stay off the eggs', '#b06bff', heal); /* (1 s before it can be hit, as the skipping ahead ends: "Hit the Warden" at 2:55 came 4.6 s before its Shadow Molt ended, Nov 17) */ timer(T.wardens, 'Wardens'); timer(T.gest + 3, 'Writhing Gestation');
   // (the Clutches: the Warden's nearest small eggs, 0.3 s after its Writhing Gestation; the four south eggs come up about 3:55)
   S.clutches = ['E', 'W'].flatMap((s) => P.clutch[s].map((p, i) => ({ id: 'cl' + s + (i + 1), side: s, x: p[0], y: p[1], up: T.clutch + i * 0.15, set: 1 })));
   S.south = ['E', 'W'].flatMap((s) => P.south[s].map((p, i) => ({ id: 'se' + s + (i + 1), side: s, x: p[0], y: p[1], up: T.set2 })));
@@ -1074,7 +1074,7 @@ function pgP2(A) {
   // pause that feels off ... I think its just because the game was built around timings"): once you're through your gate onto your own ledge, the clock runs twice as
   // fast until 1.5 s before the Wardens stand up, so you land as they come. practice.js's frame loop reads it (never while paused) and shows "Skipping ahead". Nothing
   // else changes: the bots, your walk and every scripted moment only come sooner. From the Start list's first entry too (its fast-forward stops before the gates) ----
-  const RUSH = { k: 2, lead: 0.3, stop: T.wardens - 1.5 };
+  const RUSH = { k: 2, lead: 0.3, stop: T.molt + 3 - 1 }; /* (to 1 s before you can hit your Warden (its Shadow Molt ends: S.wardens' molt, T.molt + 3), not 1.5 s before it stands up: that left about 6 s at normal speed with nothing to hit, the pause Flex felt (Nov 17)) */
   const rush = (t) => { sync(); if (!G || !G.p2 || !S) return 1; const c = G.p2.crossT, j = S.job[A.me]; return c != null && !!j && G.p2.where[A.me] === 'L' && G.p2.wside[A.me] === j.side && t >= c + RUSH.lead && t < RUSH.stop ? RUSH.k : 1; };
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null, eggOf }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
     jobText, nextText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, hit, castOf, castBars, mini, draw2d, auditStep, shapes, rush,
