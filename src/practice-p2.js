@@ -176,7 +176,7 @@ function pgP2Script(o) {
   const tt = mj ? mj.teth : 0;
   // (the review of the prompt fixes, Nov 16: with no tether the call was marked yours ("no tether on you"), gold for nothing of yours; and "stay on the Warden" named
   //  another spot than the job line's "within 20 yards of the Warden". Now the tethered hear their order in gold, the rest a plain one)
-  if (mj && tt) warn(T.fangs, tt === 'solo' ? 'Grasping Fangs: You break first, alone!' : 'Grasping Fangs: You break second, with the 5!', GOLD, 1); /* (which break is yours, first thing: the call said "Stay within 20 yards" and the screen dropped the rest, Flex, Nov 17) */
+  if (mj && tt) warn(T.fangs, tt === 'solo' ? 'Grasping Fangs: You break first, alone! Stay within 20 yards of the Warden.' : 'Grasping Fangs: You break second, with the 5! Stay within 20 yards of the Warden.', GOLD, 1); /* (which break is yours, first thing: the call said "Stay within 20 yards" and the screen dropped the rest, Flex, Nov 17) */
   else if (mj) warn(T.fangs, heal ? 'Grasping Fangs: Stay with the group! No tether this time.' : 'Grasping Fangs: Keep hitting the Warden! No tether this time.', '#ff8a6a');
   else warn(T.fangs, 'Grasping Fangs: Six tethers, three on each ledge', '#ff8a6a');
   if (tt === 'solo') { timer(T.solo, 'Solo break'); warn(T.solo - 5.5, 'Your tether: Walk to its edge now!', GOLD, 1); warn(T.solo, 'Solo break: Walk out of your tether now!', GOLD, 1); }

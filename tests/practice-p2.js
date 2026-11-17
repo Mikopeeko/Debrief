@@ -639,7 +639,7 @@ function checks(H, say) {
     //  lines (they may say when a mistake happened), the bots' audit and the comments)
     { const src0 = rd('practice-p2.js').replace(/\/\*[\s\S]*?\*\//g, '').split('\n'), a0 = src0.findIndex((l) => /^ {2}const auditStep = /.test(l)), a1 = src0.findIndex((l, i) => i > a0 && /^ {2}const shapes = /.test(l)), off = [];
       const src = src0.filter((l, i) => !/^\s*\/\//.test(l) && (a0 < 0 || a1 < 0 || i < a0 || i >= a1)); /* (the bots' audit, auditStep, is for the build's checks, not the screen) */
-      src.forEach((l) => { if (/A\.mistake\(|ravenous\(B|missed\.push\(/.test(l)) return; (l.match(/'(?:[^'\\\n]|\\.)*'/g) || []).forEach((q) => { if (/\b\d{1,2}:\d\d\b|(?<![\w-])\d+(?:\.\d+)?\s?s\b/.test(q) || /^'\s?s[.)!:]?'$|^' s[ .)]/.test(q)) off.push(q); }); });
+      src.forEach((l) => { if (/A\.mistake\(|ravenous\(B|missed\.push\(|'Break tether in ' \+/.test(l)) return; /* (the tether countdown counts seconds on purpose: Flex, Nov 17, "Break tether in 20s"; tests/practice-shared.js check S10) */ (l.match(/'(?:[^'\\\n]|\\.)*'/g) || []).forEach((q) => { if (/\b\d{1,2}:\d\d\b|(?<![\w-])\d+(?:\.\d+)?\s?s\b/.test(q) || /^'\s?s[.)!:]?'$|^' s[ .)]/.test(q)) off.push(q); }); });
       if (off.length) pr('src/practice-p2.js still has words with a clock time or a seconds count in them: ' + off.slice(0, 6).join(', ')); }
     // (2) every call "Mechanic: order", and "your" (gold) only on the calls that are yours (marked you); the kick, the five's Q and the small eggs' "now"
     played.forEach(({ pk, warns, fl, S, me, follow }) => { const tag = ' (' + pk.role + ' on the ' + pk.side + ' ledge)';
