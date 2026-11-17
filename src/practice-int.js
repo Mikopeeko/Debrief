@@ -71,6 +71,9 @@ function pgIntMarkDraw(g, nm, cx, cy, r, bg) {
   g.restore(); }
 // (on a crack line once the platform shatters: within 3.5 yards of the line through the middle north to south, or east to west)
 const pgIntCrack = (x, y, m) => Math.abs(x) <= PG_INT.CRACK + (m || 0) || Math.abs(y) <= PG_INT.CRACK + (m || 0);
+// (her corner by the two raid markers either side of it, never a compass word (the prompts audit, Nov 16: "the south-east corner"): "between Diamond and Moon")
+const pgIntCorner = (q) => { const a = { NE: 45, NW: 135, SW: 225, SE: 315 }[q], L = Object.keys(PG_INT_MKA).filter((k) => Math.abs((((PG_INT_MKA[k] - a) % 360) + 540) % 360 - 180) < 23).map(pgIntMk);
+  return L.length === 2 ? 'between ' + L[0] + ' and ' + L[1] : 'where her bubbles are'; };
 const pgIntGather = () => pgIntAt(PG_INT.GA, PG_INT.GATHER);
 const pgIntOrd = (n) => n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
 // (where the knockback puts you: 6 yards further out from the middle; from inside her burst, out past it)
@@ -110,8 +113,13 @@ function pgIntScript(o) {
     dive: { t0: T.bubbles, gone: T.bubbles + 0.2, surf: T.shatter, to: [0, 0] } };
   const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c) => S.warns.push({ t, text, c: c || '#ff8f87' }), timer = (t, name) => S.timers.push({ t, name });
   S.job = pgIntJobs(o.me, o.pick);
-  warn(T.start, 'Intermission: go to your team\'s mark. Eggs and coils are coming!', '#c084ff');
-  cast('boss', 'Call of the Serpent', T.call, T.callL); warn(T.call, 'Call of the Serpent: eight eggs incoming!', '#e6e0c8'); timer(T.land, 'Call of the Serpent');
+  // (the centre calls, written "Mechanic: Order" (the prompts audit, Nov 16, Flex: "the alerts and training wheels could be better", then "All 10"): the
+  // big line is the order, verb first, the mechanic's name small; "your" only in the calls about your own job (practice.js draws those gold), never a
+  // clock time or a second count (Flex, Nov 16: "i feel like the game confuses people saying timestamps"): the boss-mod bars count. Yours from o.me)
+  const me = o.me, mine = !!me && !!S.job.team[me], iCarry = mine && S.job.carry.has(me);
+  warn(T.start, mine ? (iCarry ? 'Intermission: Run to your egg\'s gold circle! Stand beside it, not under it.' : 'Intermission: Go to your team\'s spot by ' + P.TM[S.job.team[me]] + '! Eggs are coming.') : 'Intermission: Go to your team\'s spot! Eggs are coming.', '#c084ff');
+  // (its bar "Eggs land": "egg" in the name gives it Call of the Serpent's icon, and a carrier's own "Your egg lands" stands in for it, one bar for one thing)
+  cast('boss', 'Call of the Serpent', T.call, T.callL); warn(T.call, 'Call of the Serpent: Dodge the falling eggs! Eight land all over the stone.', '#e6e0c8'); timer(T.land, 'Eggs land');
   // each team waits by its marker, 16 yards out (the guide's map)
   S.pre = { Y: pgIntPre('Y'), P: pgIntPre('P'), B: pgIntPre('B') };
   // the eggs: one for each carrier, at random in its team's part of the room, apart from each other and from the teams' waiting spots
@@ -125,20 +133,28 @@ function pgIntScript(o) {
     q = q || best || PG_UL.inward(pgIntAt((ar[0] + ar[1]) / 2, 9)); spots.push(q); return { id, x: q[0], y: q[1] }; });
   const rank = L.map((_, i) => i); for (let i = rank.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [rank[i], rank[j]] = [rank[j], rank[i]]; }
   S.eggSets = [{ si: 0, cast: T.call, land: T.land, rot: 0, eggs: L.map((e, i) => ({ ...e, land: T.land + i * 0.09, shell: T.shell0 + rank[i] * T.shellGap })) }];
-  warn(T.shell0, 'Egg shells are breaking: carriers, pick yours up and bring it into your soak.', '#f3c969');
+  // (no call when the shells break: your own egg's shell is up from its landing until you hit it open, so "Egg shells are breaking: carriers, pick yours
+  // up", gold to everyone at 5:31, was false for you and wrong for the rest (the prompts audit, Nov 16). The job line says it, for you)
   // the eight coils: the pattern's order (the guide's table), each slammed by its team; the coil rises at the rim 4 s before
   const PAT = pgIntPat()[pat - 1], SO = pgIntSoak(), RIM = pgIntRim();
   S.soaks = PAT.map(([k, g], n) => { const at = T.slams[n], q = SO[k]; return { set: 0, k: n, x: q[0], y: q[1], r: P.R, t0: at - T.lead, at, cast: at - T.lead, spot: k, team: g, rim: RIM[k].slice(), group: S.job.list[g].slice() }; });
   // (the boss-mod bars as a raid's would show them: when the coils start and when the last four come, not whose they are: a "Coil slam 1" timer
   // would show you yours before the pattern is called (the review, Nov 15). Yours come with the hints, once it's called)
   timer(S.soaks[0].at, 'Spectral Coils'); timer(S.soaks[4].at, 'Spectral Coils: the last four');
-  warn(S.soaks[0].cast, 'Pattern ' + pat + ': ' + P.PN[pat] + ' first! Your spots light up in gold.', '#24f2cb');
-  warn(T.defCue, 'Personals now: the last four slams come back to back!', '#7fb8ff');
-  warn(T.gather + 0.3, 'Coils done: kill the Rawlings, then to the diamond line, inside.', '#f3c969');
+  // (the pattern call names YOUR first soak in the big line, the raid's pattern small: "Triangle first" sent Yellow players, whose first soak is at Circle,
+  // looking at Triangle (the prompts audit, Nov 16))
+  { const f = mine && S.soaks.find((s) => s.group.includes(me)); warn(S.soaks[0].cast, f ? 'Spectral Coils: Go to your soak at ' + pgIntMk(f.spot) + '! ' + P.PN[pat] + ' first (pattern ' + pat + ').' : 'Spectral Coils: ' + P.PN[pat] + ' first! Pattern ' + pat + '.', '#24f2cb'); }
+  // (the defensive: the only call that needs a key, so it says Q and it's yours (gold). It was "Personals now" small under "the last four slams come back
+  // to back", and never named Q. check() below turns it into a plain warning when your Q can't be pressed for it, or is already up)
+  warn(T.defCue, mine ? 'Back-to-back slams: Press Q (your defensive) now!' : 'Back-to-back slams: Four slams in a row now!', '#7fb8ff');
+  // (the Rawlings: the ranged and healers hit them from the gold ring, the melee and tanks go to them first: the call said "kill the Rawlings, then to the
+  // diamond line" to everyone, the reverse of what the ranged do. At the moment the job line changes, not after it)
+  warn(T.gather, mine && /^[mt]/.test(me) ? 'Coils done: Kill the Rawlings! Then go to the gold ring by the Diamond.' : 'Coils done: Go to the gold ring by the Diamond! Hit the Rawlings from there.', '#c9df9a');
   // (where she comes up: one quarter's outer corner, from the run's seed (drawn last, so the eggs above stay the same for a seed))
   const QK = ['NE', 'NW', 'SW', 'SE'], q1 = QK[Math.min(3, Math.floor(rnd() * 4))]; S.q1 = q1; S.dive.to = P.Q[q1].slice();
-  warn(T.bubbles, 'Her bubbles at the ' + P.QN[q1] + ' corner: she comes up there at 6:09. Diamond line, inside, off the cracks!', '#7fd8ff'); timer(T.shatter, 'The Shattering');
-  warn(T.shatter, 'The platform shatters!', '#ff8a5a');
+  // (by the two markers either side of her corner, never a compass word or "at 6:09": the order first)
+  warn(T.bubbles, 'The Shattering: Stand on the gold ring by the Diamond! She comes up ' + pgIntCorner(q1) + '.', '#7fd8ff'); timer(T.shatter, 'The Shattering');
+  warn(T.shatter, 'The Shattering: Brace for the knockback!', '#ff8a5a');
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
@@ -172,7 +188,6 @@ function pgInt(A) {
   const once = (k) => (G.int.once.has(k) ? false : (G.int.once.add(k), true));
   const called = (t) => t >= S.soaks[0].cast; /* (the first coil rises on Star, Triangle or Cross: the caller calls the pattern, and every team knows its spots) */
   const nextSoak = (id, t) => S.soaks.find((s) => s.group.includes(id) && s.at >= t - 0.15) || null;
-  const ordOf = (s) => S.soaks.filter((q) => q.team === s.team && q.at <= s.at).length;
   // (each raider's spot in a soak: the carriers on a ring 5 yards out, apart, 8.7 yards apart, so their 3-yard rings never touch; the rest near the middle)
   const slotIn = (s, id) => { const car = s.group.filter((q) => S.job.carry.has(q)), i = car.indexOf(id); if (i >= 0) { const a = i / Math.max(3, car.length) * Math.PI * 2 + 0.6; return [s.x + Math.cos(a) * 5, s.y + Math.sin(a) * 5]; }
     return spiral([s.x, s.y], Math.max(0, s.group.filter((q) => !S.job.carry.has(q)).indexOf(id)), 3); };
@@ -189,33 +204,69 @@ function pgInt(A) {
   const homeAt = (id) => { const sg = S.east ? 1 : -1, i = GDZ_RAID.indexOf(id); return id[0] === 't' ? [34 * sg, id === 't1' ? -12 : 12] : id[0] === 'm' ? spiral([35.5 * sg, 0], i, 1.5) : spiral([25 * sg, 0], i, 5); };
 
   // ---- where each raider's job wants them (the bots, the autopilot and your hint arrow all follow this) ----
-  const job = (id, t) => { sync(); const b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id], sp = id === A.me ? 7 : 9.8, e = G.eggs.find((q) => q.id === id && q.state !== 'gone'), ns = nextSoak(id, t); let T0, fast = false, ob = null;
-    if (t >= T.gather) { T0 = spiral(pgIntGather(), GDZ_RAID.indexOf(id), P.SPREAD); ob = t < T.shatter ? { at: T.shatter, p: pgIntGather(), r: P.SPREAD } : null; fast = pgDist([b0.x, b0.y], T0) > 6; /* (the coils done: everyone to the diamond line for the Shattering) */
+  // (the eggs about to land, and the nearest spot out of all their circles from c, toward goal: one rule for the bots, the autopilot and your arrow)
+  const landing = (t) => G.eggs.filter((q) => q.state === 'air' && q.land - t <= 3);
+  const clearOf = (LE, c, goal) => { const inE = (p, r) => LE.some((q) => pgDist(p, [q.x, q.y]) < r); let best = null, bs = 1e9; for (const rr of [1, 2, 3.5, 5, 6.5, 8, 10, 13]) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, p = [c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]; if (!PG_UL.onPlat(p[0], p[1]) || inE(p, 5.8)) continue; const s = rr + 0.4 * pgDist(p, goal); if (s < bs) { bs = s; best = p; } } return best; };
+  const job = (id, t) => { sync(); const b0 = id === A.me ? { x: G.x, y: G.y } : G.bots[id], sp = id === A.me ? 7 : 9.8, e = G.eggs.find((q) => q.id === id && q.state !== 'gone'), ns = nextSoak(id, t); let T0, fast = false, ob = null, why = 'wait', busy = false;
+    if (t >= T.gather) { why = 'end'; T0 = spiral(pgIntGather(), GDZ_RAID.indexOf(id), P.SPREAD); ob = t < T.shatter ? { at: T.shatter, p: pgIntGather(), r: P.SPREAD } : null; fast = pgDist([b0.x, b0.y], T0) > 6; /* (the coils done: everyone to the diamond line for the Shattering) */
       // (the melee and tanks to the nearest Rawling first, until her bubbles show; the ranged and healers reach them from the line)
-      if ((id[0] === 'm' || id[0] === 't') && t < T.bubbles) { const ra = G.adds.filter((a) => a.kind === 'rawling').sort((a, b) => pgDist([b0.x, b0.y], [a.x, a.y]) - pgDist([b0.x, b0.y], [b.x, b.y]))[0]; if (ra) { const d = pgDist([b0.x, b0.y], [ra.x, ra.y]) || 1; T0 = d > 3 ? [ra.x + (b0.x - ra.x) / d * 2.5, ra.y + (b0.y - ra.y) / d * 2.5] : [b0.x, b0.y]; fast = d > 6;
-          // (no arrow here, as for every melee; with your egg left on the floor, a spot where you stand, so practice.js's arrow doesn't fall back to the egg (the
-          // release sweep, Nov 16: it pointed at it from 5:55, though your soaks were done))
+      if ((id[0] === 'm' || id[0] === 't') && t < T.bubbles) { const ra = G.adds.filter((a) => a.kind === 'rawling').sort((a, b) => pgDist([b0.x, b0.y], [a.x, a.y]) - pgDist([b0.x, b0.y], [b.x, b.y]))[0]; if (ra) { const d = pgDist([b0.x, b0.y], [ra.x, ra.y]) || 1; T0 = d > 3 ? [ra.x + (b0.x - ra.x) / d * 2.5, ra.y + (b0.y - ra.y) / d * 2.5] : [b0.x, b0.y]; fast = d > 6; why = 'raw';
+          // (with your egg left on the floor, a spot where you stand, so practice.js's arrow doesn't fall back to the egg (the release sweep, Nov 16: it
+          // pointed at it from 5:55, though your soaks were done). Your own arrow: arrowOb below)
           ob = id === A.me && e && e.state === 'floor' ? { at: T.bubbles, p: [b0.x, b0.y], r: 0 } : null; } } }
     else { const soakNow = !!ns && called(t), eggGo = eggFirst(id, t, b0, e, ns), dE = e ? pgDist([b0.x, b0.y], [e.x, e.y]) : 0; void sp;
-      if (eggGo) { const busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < 4.6); /* (another carrier by it: wait a step off, so the two rings never touch) */
+      if (eggGo) { why = 'egg'; busy = G.eggs.some((q) => q !== e && q.state === 'held' && q.who && q.who !== id && pgDist(pos(q.who), [e.x, e.y]) < 4.6); /* (another carrier by it: wait a step off, so the two rings never touch) */
         T0 = t >= e.shell - 0.3 && !busy ? [e.x, e.y] : [e.x + (e.x > 0 ? 1 : -1) * 3.2, e.y + 1.5]; fast = dE > 6; ob = { at: e.shell, p: [e.x, e.y], r: 1 }; }
-      else if (soakNow) { T0 = slotIn(ns, id); fast = pgDist([b0.x, b0.y], T0) > 4; ob = { at: ns.at, p: [ns.x, ns.y], r: P.R - 3 }; }
-      else if (!ns && called(t)) { T0 = spiral(pgIntGather(), GDZ_RAID.indexOf(id), P.SPREAD); ob = { at: T.shatter, p: pgIntGather(), r: P.SPREAD }; } /* (your soaks done: on toward the diamond line, round the other teams' circles) */
+      else if (soakNow) { why = 'soak'; T0 = slotIn(ns, id); fast = pgDist([b0.x, b0.y], T0) > 4; ob = { at: ns.at, p: [ns.x, ns.y], r: P.R - 3 }; }
+      else if (!ns && called(t)) { why = 'done'; T0 = spiral(pgIntGather(), GDZ_RAID.indexOf(id), P.SPREAD); ob = { at: T.shatter, p: pgIntGather(), r: P.SPREAD }; } /* (your soaks done: on toward the diamond line, round the other teams' circles) */
       else { T0 = preSpot(id); fast = pgDist([b0.x, b0.y], T0) > 10; } }
     // (two carriers' rings never touch: practice.js pushes carriers apart as they walk, and check() below holds a pickup back while another carrier
     // stands by. A berth pushed straight out round other eggs left carriers stuck on its edge, off their soak (the review, Nov 15): gone)
     // (out of a falling egg's 4 yards before it lands)
     // (all the landing eggs at once: two 8 yards apart trapped a tank between them when it stepped out of one into the other, Nov 15)
-    { const LE = G.eggs.filter((q) => q.state === 'air' && q.land - t <= 3), inE = (p, r) => LE.some((q) => pgDist(p, [q.x, q.y]) < r);
-      const clear = (c, goal) => { let best = null, bs = 1e9; for (const rr of [1, 2, 3.5, 5, 6.5, 8, 10, 13]) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, p = [c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]; if (!PG_UL.onPlat(p[0], p[1]) || inE(p, 5.8)) continue; const s = rr + 0.4 * pgDist(p, goal); if (s < bs) { bs = s; best = p; } } return best; };
-      if (LE.length) { if (inE(T0, 5.5)) T0 = clear(T0, T0) || T0; const soon = LE.filter((q) => q.land - t < 1.8); if (soon.some((q) => pgDist([b0.x, b0.y], [q.x, q.y]) < 5.3)) { T0 = clear([b0.x, b0.y], T0) || T0; fast = true; } } }
+    { const LE = landing(t), inE = (p, r) => LE.some((q) => pgDist(p, [q.x, q.y]) < r);
+      if (LE.length) { if (inE(T0, 5.5)) T0 = clearOf(LE, T0, T0) || T0; const soon = LE.filter((q) => q.land - t < 1.8); if (soon.some((q) => pgDist([b0.x, b0.y], [q.x, q.y]) < 5.3)) { T0 = clearOf(LE, [b0.x, b0.y], T0) || T0; fast = true; } } }
     // (another team's coil about to slam: never inside it (Soul Constrictor would keep you out of your own next one))
     S.soaks.forEach((s) => { if (s.group.includes(id) || t < s.t0 || t > s.at) return; const out = (p) => { const d = pgDist(p, [s.x, s.y]); if (d > s.r + 1.5) return p; const a = d > 0.1 ? Math.atan2(p[1] - s.y, p[0] - s.x) : Math.atan2(-s.y, -s.x); return [s.x + Math.cos(a) * (s.r + 2.2), s.y + Math.sin(a) * (s.r + 2.2)]; };
       T0 = out(T0); if (s.at - t < 1.6 && pgDist([b0.x, b0.y], [s.x, s.y]) <= s.r + 1) { T0 = out([b0.x, b0.y]); fast = true; } });
     // (after the Shattering the lines through the middle are venom)
     if (t >= T.shatter && pgIntCrack(T0[0], T0[1], 1)) T0 = [Math.abs(T0[0]) <= P.CRACK + 1 ? (T0[0] < 0 ? -1 : 1) * (P.CRACK + 2) : T0[0], Math.abs(T0[1]) <= P.CRACK + 1 ? (T0[1] < 0 ? -1 : 1) * (P.CRACK + 2) : T0[1]];
     if (!PG_UL.onPlat(T0[0], T0[1])) T0 = PG_UL.inward(T0);
-    return { T: T0, fast, ob }; };
+    // (your arrow, when you play it yourself: practice.js's hintNow points at ob.p and hides within 2.5 yards of it. The bots and the autopilot keep the ob
+    // above, which their dodging reads)
+    return { T: T0, fast, ob: id === A.me && !window.__pgAuto ? arrowOb(t, T0, why, e, ns, busy) : ob }; };
+  // ---- your arrow (the prompts audit, Nov 16, Flex: "the alerts and training wheels could be better in terms of the on screen prompts", then "All 10") ----
+  // It follows the job line: it shows from the moment the line names a place (your egg's gold circle from 5:18, not from its landing; your team's spot
+  // while you wait; your Rawling, for a melee), points at YOUR spot, and goes away only once you're inside the circle the game counts: your soak's 10
+  // yards (it said "Go here · 5 yd" for up to 26 s while the line said "stay inside"), the gold ring's 4, your egg's 2.8 pickup. Out of a falling egg
+  // first. It bends round anything it would walk you through: another team's coil before it slams, another carrier's 3-yard ring, a landing egg.
+  // `here`: no arrow (practice.js draws none for a spot where you stand; null would point it at your egg)
+  const arrowOb = (t, T0, why, e, ns, busy) => { if (t >= T.shatter) return null; const me = A.me, p0 = [G.x, G.y], here = { at: t + 1, p: p0, r: 0 }, g = teamOf(me);
+    const LE = landing(t), inE = (p, r) => LE.some((q) => pgDist(p, [q.x, q.y]) < r); let p = null, at = t + 1, r = 2.5;
+    if (inE(p0, 4 + 0.7)) { p = clearOf(LE, p0, T0) || T0; const d = pgDist(p0, p); if (d < 3) p = [p0[0] + (p[0] - p0[0]) / (d || 1) * 3, p0[1] + (p[1] - p0[1]) / (d || 1) * 3]; } /* (in a falling egg's circle: out first, a few steps, so the arrow doesn't vanish on its edge) */
+    else if (why === 'raw') { p = T0; at = T.bubbles; } /* (beside your Rawling, as it crawls: an arrow that stopped at 5 yards lost it at every step) */
+    else if (why === 'end' || why === 'done') { const ga = pgIntGather(), blk = S.soaks.some((s) => !s.group.includes(me) && t >= s.t0 - 0.5 && t <= s.at && pgDist(ga, [s.x, s.y]) <= s.r + 1); /* (the ring inside another team's live coil (pattern 2's sixth): where job() holds you, out of it) */
+      if (!blk && pgDist(p0, ga) <= P.SPREAD) return here; p = blk ? T0 : ga; at = T.shatter; r = P.SPREAD; }
+    else if (why === 'soak') { if (pgDist(p0, [ns.x, ns.y]) <= ns.r - 1) return here; p = slotIn(ns, me); at = ns.at; r = ns.r - 1; }
+    else if (why === 'egg') { p = busy ? T0 : [e.x, e.y]; at = e.shell; }
+    else if (e && e.state === 'air') { const ok = (q) => PG_UL.onPlat(q[0], q[1]) && pgDist(q, [e.x, e.y]) >= 4.8 && !G.eggs.some((o) => o !== e && o.state === 'air' && pgDist(q, [o.x, o.y]) < 5.6);
+      if (ok(p0) && pgDist(p0, [e.x, e.y]) <= 8) return here; /* (beside your egg's gold circle, out of every landing one: there) */
+      const d = pgDist(p0, [e.x, e.y]), a0 = d > 0.1 ? Math.atan2(p0[1] - e.y, p0[0] - e.x) : 0; for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) { const a = a0 + k * Math.PI / 6, q = [e.x + Math.cos(a) * 5.8, e.y + Math.sin(a) * 5.8]; if (ok(q)) { p = q; break; } }
+      p = p || T0; at = e.land; }
+    else { if (pgDist(p0, T0) <= 2.5 || (!(e && e.state === 'held') && pgDist(p0, S.pre[g]) <= 4.5)) return here; p = T0; } /* (your team's spot while you wait: inside the ring drawn there; a carrier on its own spot, clear of the others') */
+    return { at, p: bend(t, p0, p), r }; };
+  // (the arrow's way round: the first thing on the straight line from you to p that it must not walk you through, and a point on a circle round it a step
+  // ahead of you toward p (at most 43 degrees round, so the line from you to it stays clear); the other way round if that point is off the stone)
+  const bend = (t, p0, p) => { const me = A.me, held = G.eggs.some((q) => q.state === 'held' && q.who === me), O = [];
+    S.soaks.forEach((s) => { if (!s.group.includes(me) && t >= s.t0 - 0.5 && t <= s.at + 0.2) O.push([s.x, s.y, s.r + 1]); });
+    if (held) G.eggs.forEach((q) => { if (q.state === 'held' && q.who && q.who !== me && G.bots[q.who]) O.push([G.bots[q.who].x, G.bots[q.who].y, 3 + 1]); });
+    G.eggs.forEach((q) => { if (q.state === 'air' && q.land - t <= 6) O.push([q.x, q.y, 4 + 1]); }); /* (the eggs about to land, from before their circles show: walking through one's spot left you in it as it showed) */
+    const dx = p[0] - p0[0], dy = p[1] - p0[1], L2 = dx * dx + dy * dy; if (L2 < 1) return p; let hit = null, hu = 2;
+    O.forEach(([cx, cy, R]) => { if (pgDist(p, [cx, cy]) < R || pgDist(p0, [cx, cy]) < R) return; const u = Math.max(0, Math.min(1, ((cx - p0[0]) * dx + (cy - p0[1]) * dy) / L2)); if (pgDist([p0[0] + dx * u, p0[1] + dy * u], [cx, cy]) < R && u < hu) { hu = u; hit = [cx, cy, R]; } });
+    if (!hit) return p; const [cx, cy, R] = hit, a0 = Math.atan2(p0[1] - cy, p0[0] - cx), a1 = Math.atan2(p[1] - cy, p[0] - cx), da = ((a1 - a0 + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+    if (Math.abs(da) < 0.3) return p; const rr = R + 1, st = Math.min(Math.abs(da), 0.75);
+    for (const sg of [Math.sign(da), -Math.sign(da)]) { const a = a0 + sg * st, q = [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]; if (PG_UL.onPlat(q[0], q[1])) return q; }
+    return p; };
   const home = (id) => { sync(); return homeAt(id); };
   const slow = () => 1;
 
@@ -250,9 +301,12 @@ function pgInt(A) {
       else if (G.int.rawAt != null && t < G.int.rawAt && near <= 6.1) G.int.rawAt = t; }
     // your defensive for the back-to-back slams (the guide: "personals around 5:50"; the autopilot, a careful player, presses it)
     if (window.__pgAuto && cr(T.defCue) && t - G.def >= 90) { G.def = t; A.deb('def', 8); }
+    // (the call at the cue says "Press Q" only while your Q can be pressed for these slams and you haven't yet: pressed already, or still cooling down,
+    // it's a plain warning of the four slams (the prompts audit, Nov 16: the call never named Q; a "Press Q now" with Q cooling down would be false))
+    if (t < T.defCue && S.job.team[me]) { const w = S.warns.find((q) => q.t === T.defCue && /^Back-to-back slams:/.test(q.text)); if (w) w.text = G.def >= T.defFrom - 1 || G.def + 90 > T.defCue ? 'Back-to-back slams: Four slams in a row now!' : 'Back-to-back slams: Press Q (your defensive) now!'; }
     // (pressed early in the part, Q is still cooling down for these slams: the mistake says so (the release sweep, Nov 16))
     if (cr(T.defBy) && !(G.def >= T.defFrom - 1 && G.def <= T.defBy) && once('def')) { const early = G.def > 0 && G.def < T.defFrom - 1 && G.def + 90 > T.defFrom - 1;
-      A.mistake('def', 'No defensive for the last four slams (' + clk(T.slams[4]) + ' to ' + clk(T.slams[7]) + ').' + (early ? ' You pressed Q at ' + clk(G.def) + ', and it was still cooling down.' : ''), early ? 'Save Q for about 5:47: it has a 90 s cooldown. The last four slams come 2 s apart and each hits the whole raid.' : 'Press Q at about 5:47: the last four slams come 2 s apart and each hits the whole raid. Personals and potions there.', 0); }
+      A.mistake('def', 'No defensive for the last four slams (' + clk(T.slams[4]) + ' to ' + clk(T.slams[7]) + ').' + (early ? ' You pressed Q at ' + clk(G.def) + ', and it was still cooling down.' : ''), early ? 'Save Q for the back-to-back slams: it has a 90 s cooldown. The last four slams come back to back and each hits the whole raid.' : 'Press Q as the last four slams start: they come back to back and each hits the whole raid. Defensives and potions there.', 0); }
     // (a bot whose soak kept it from its egg walks to it after: practice.js would hand it over from afar 6 s after its shell breaks, next to another carrier)
     G.eggs.forEach((q) => { if (q.state === 'floor' && q.id !== me && t > q.shell + 5.5 && G.bots[q.id] && pgDist(pos(q.id), [q.x, q.y]) > 2.5) q.shell = t - 5.5; });
     // (nor does a bot pick its egg up with another carrier beside it: it waits a moment, so their 3-yard rings never touch)
@@ -267,11 +321,11 @@ function pgInt(A) {
     // the Shattering: she comes up at one quarter's outer corner, the platform breaks into four along the lines through the middle, and everyone is
     // knocked out 6 yards from the middle
     // (your egg left on the floor was already "never went into a soak": its Viper still hatches, but it isn't a second mistake (the release sweep, Nov 16))
-    if (cr(T.shatter)) { G.int.shat = true; G.eggs.forEach((q) => { if (q.state === 'floor' || q.state === 'air') { if (q.state === 'floor' && pgIntCrack(q.x, q.y)) { const left = q.id === me && G.int.once.has('eggleft'); vip(q.x, q.y, q.id === me && !left, 'Your egg was on a crack as the platform shattered', 'Pick your egg up and break it in a soak before 6:09.'); if (left) A.say('Your egg was on a crack as the platform shattered: a Viper hatched.', true); } q.state = 'gone'; } });
+    if (cr(T.shatter)) { G.int.shat = true; G.eggs.forEach((q) => { if (q.state === 'floor' || q.state === 'air') { if (q.state === 'floor' && pgIntCrack(q.x, q.y)) { const left = q.id === me && G.int.once.has('eggleft'); vip(q.x, q.y, q.id === me && !left, 'Your egg was on a crack as the platform shattered', 'Pick your egg up and break it in a soak before the platform shatters.'); if (left) A.say('Your egg was on a crack as the platform shattered: a Viper hatched.', true); } q.state = 'gone'; } });
       GDZ_RAID.forEach((id) => { if (id === me) return; const p = pos(id), q = pgIntKb(p); G.int.kb[id] = { t0: t, x0: p[0], y0: p[1], x1: q[0], y1: q[1] }; G.int.fell.push([id, p.slice(), q]); });
       const q = pgIntKb([x, y]), onC = pgIntCrack(x, y), off = !PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1]), held = G.eggs.find((z) => z.who === me && z.state === 'held');
       G.kb = { t0: t, x0: x, y0: y, x1: q[0], y1: q[1] }; A.hurt(28); A.deb('fall', 1.5); /* (Falling: about 380k on landing, a third of a raider's health (the Nov 15 audit, engine.js)) */ G.done.add('venom' + Math.floor(t / 10)); G.done.add('venom' + Math.floor((t + 5) / 10));
-      if (onC) { A.mistake('shatter', 'You stood on a crack as the platform shattered, and fell into the venom.', 'It breaks along the lines through the middle (north to south, east to west): stand inside a quarter, on the diamond line.', 25); A.deb('dvenom', 12); }
+      if (onC) { A.mistake('shatter', 'You stood on a crack as the platform shattered, and fell into the venom.', 'It breaks along the lines through the middle (north to south, east to west): stand inside a quarter, on the gold ring by the Diamond.', 25); A.deb('dvenom', 12); }
       else if (off) { A.mistake('shatter', 'The knockback threw you into the venom: you stood too close to the edge.', 'Stand on the inside, not at the edge: the burst knocks everyone about 6 yards out from the middle.', 25); A.deb('dvenom', 12); }
       else A.say('You rode out the Shattering on the stone.');
       if (held && (onC || off)) { held.state = 'gone'; held.who = null; vip(q[0], q[1], true, 'Your egg went into the venom with you', 'Carried eggs hatch in the venom: break yours in a soak before the Shattering.'); } }
@@ -283,29 +337,55 @@ function pgInt(A) {
 
   // ---- the screen: your job now, what's next ----
   const mkAt = (s) => pgIntMk(s.spot);
-  const jobText = () => { sync(); const t = G.t, me = A.me, g = teamOf(me), e = G.eggs.find((q) => q.id === me && q.state !== 'gone'), ns = nextSoak(me, t), tn = P.TN[g] + ' team';
-    if (G.int.shat) { if (t < T.shatter + 0.7) return ''; if (!PG_UL.onPlat(G.x, G.y)) return 'You\'re in the venom: get back onto the stone.'; if (pgIntCrack(G.x, G.y)) return 'You\'re in a crack: it\'s venom now. Step back onto the stone.';
-      return 'She\'s up at the ' + P.QN[S.q1] + ' corner: phase 3 starts on her quarter.' + (G.log.some((m) => m.kind === 'shatter') ? '' : ' Well done.'); }
-    if (t >= T.gather) { const d = pgDist([G.x, G.y], pgIntGather()), raw = G.adds.some((a) => a.kind === 'rawling'), dh = t < T.bubbles && A.dpsHint ? A.dpsHint() : null; if (dh) return dh;
-      return t < T.bubbles ? (raw ? 'Coils done. Kill the Rawlings, then go to the diamond line (the gold ring), inside, before 6:09.' : 'Coils done. Go to the diamond line (the gold ring), inside, before 6:09.')
-        : d > P.SPREAD + 1 ? 'To the diamond line now (the gold ring): the platform shatters at 6:09!' : 'Good: on the diamond line, inside, off the cracks. Her bubbles at the ' + P.QN[S.q1] + ' corner show where she comes up. It shatters in ' + Math.max(0, Math.ceil(T.shatter - t)) + ' s.'; }
-    if (t < T.land + 0.5) return e ? 'Go to the ' + tn + '\'s mark (' + P.TM[g] + '). Your egg lands at the gold circle at 5:24: stand beside it, not under it.' : 'Intermission: go to the ' + tn + '\'s mark (' + P.TM[g] + ') and wait. Eggs land at 5:24: step out of their circles.';
+  // (the job line (the prompts audit, Nov 16; Flex then: "i feel like the game confuses people saying timestamps"): one order about you, verb first, in
+  // plain words, never a clock time or a second count (the boss-mod bars and cast bars count). The first that applies: a dodge (an egg landing on you,
+  // another team's coil with you in it, another carrier's ring, the cracks and the edge), then your step due or the walk to it (your egg, your soak, the
+  // gold ring), then the right target, then where to wait. Q comes after the move line, never instead of it ("Press Q now: personals" replaced "head for
+  // the diamond line" from 5:51). In your soak, "Then: ..." names your next one (the long runs to it came with 2.3 s to spare, unannounced)
+  const RING = 'the gold ring by the Diamond';
+  const qDue = (t) => t >= T.defCue - 0.4 && t <= T.defBy && !(G.def >= T.defFrom - 1), qNow = (t) => qDue(t) && t - G.def >= 90;
+  const dodgeLine = (t) => { const me = A.me, p0 = [G.x, G.y];
+    const fe = G.eggs.find((q) => q.state === 'air' && q.land - t <= 3 && pgDist(p0, [q.x, q.y]) < 4 + 0.7); /* (its 4 yards, with room to spare) */
+    if (fe) return fe.id === me ? 'Step out of your egg\'s circle: it lands there!' : 'Step out of the white circle: an egg is landing on you!';
+    const oc = S.soaks.find((s) => !s.group.includes(me) && t >= s.t0 && t <= s.at && pgDist(p0, [s.x, s.y]) <= s.r + 0.5);
+    if (oc) return 'Step out of the ' + P.TN[oc.team] + ' soak: it isn\'t yours!';
+    if (G.eggs.some((q) => q.state === 'held' && q.who === me)) { let nb = null, dm = 4.5; G.eggs.forEach((q) => { if (q.state === 'held' && q.who && q.who !== me && G.bots[q.who]) { const d = pgDist(p0, [G.bots[q.who].x, G.bots[q.who].y]); if (d < dm) { dm = d; nb = q.who; } } });
+      if (nb) return 'Step away from ' + A.nm(nb) + '\'s egg: your rings almost touch!'; } /* (practice.js's own "Too close" line never ran here: the part's job line comes first) */
+    if (t >= T.bubbles && t < T.shatter) { if (pgIntCrack(G.x, G.y)) return 'Step off the crack: the floor breaks along it!'; const kq = pgIntKb(p0); if (!PG_UL.onPlat(kq[0], kq[1])) return 'Step in from the edge: the burst throws you off!'; if (pgIntCrack(kq[0], kq[1])) return 'Step away from the crack: the burst throws you onto it!'; }
+    return null; };
+  const jobText = () => { sync(); const t = G.t, me = A.me, g = teamOf(me), e = G.eggs.find((q) => q.id === me && q.state !== 'gone'), ns = nextSoak(me, t), held = !!e && e.state === 'held', mel = /^[mt]/.test(me);
+    if (G.int.shat) { if (t < T.shatter + 0.7) return ''; if (!PG_UL.onPlat(G.x, G.y)) return 'Get back onto the stone: you\'re in the venom.'; if (pgIntCrack(G.x, G.y)) return 'Step out of the crack: it\'s venom now.';
+      return 'She\'s up ' + pgIntCorner(S.q1) + ': phase 3 starts by her.' + (G.log.some((m) => m.kind === 'shatter') ? '' : ' Well done.'); }
+    const dz = dodgeLine(t); if (dz) return dz;
     // (Q pressed earlier in the part is still cooling down: say so, never "Press Q now" (the release sweep, Nov 16))
-    const qUp = t - G.def >= 90, q = t >= T.defCue - 0.4 && t <= T.defBy && !(G.def >= T.defFrom - 1) ? (qUp ? ' Press Q now: personals for the back-to-back slams.' : ' Your Q is still cooling down: you pressed it at ' + clk(G.def) + '.') : '', ef = eggFirst(me, t, { x: G.x, y: G.y }, e, ns);
-    if (ef) return (e.shp > 0 ? 'Your egg\'s shell is up: hit it to break it (Tab, then 1; 2 is your area attack), then walk over it.' : t < e.shell ? 'Your egg (gold) opens in ' + Math.ceil(e.shell - t) + ' s: wait beside it.' : 'Pick up your egg now: walk over it.') + q;
-    if (ns && called(t)) { const n = ordOf(ns), car = e && e.state === 'held' ? ' Bring your egg: the slam breaks it.' : e && e.state === 'floor' ? ' Get your egg after it.' : '', d = pgDist([G.x, G.y], [ns.x, ns.y]);
-      return (d <= ns.r - 1 ? 'In your ' + pgIntOrd(n) + ' soak at ' + mkAt(ns) + ': stay inside until it slams (' + Math.max(0, ns.at - t).toFixed(1) + ' s).' : 'Your ' + pgIntOrd(n) + ' soak: the gold circle at ' + mkAt(ns) + '. Get in before it slams (' + Math.max(0, Math.ceil(ns.at - t)) + ' s).') + car + q; }
-    if (!called(t)) return 'Wait by ' + P.TM[g] + ' with the ' + tn + '. The first coil sets the pattern: Star, Triangle or Cross.' + (e && e.state === 'floor' ? ' Your egg (gold) opens at ' + clk(e.shell) + '.' : e && e.state === 'held' ? ' Keep 3 yards from other carriers.' : '');
-    if (e && e.state === 'floor') return 'Your soaks are done, so leave your egg. Head for the diamond line (the gold ring), round the other teams\' circles.' + q; /* (no soak left to break it in: eggFirst) */
-    if (q && qUp) return q.trim();
-    if (!ns) return 'Your soaks are done: head for the diamond line (the gold ring), round the other teams\' circles. The last slam is at ' + clk(T.slams[7]) + '.' + q;
-    return 'Next: your ' + pgIntOrd(ordOf(ns)) + ' soak at ' + mkAt(ns) + ' in ' + Math.ceil(ns.at - t) + ' s.' + q; };
+    const q = qDue(t) ? (qNow(t) ? ' Press Q (defensive) now.' : ' Your Q is still cooling down.') : '';
+    if (t >= T.gather) { const onR = pgDist([G.x, G.y], pgIntGather()) <= P.SPREAD, raw = t < T.bubbles && G.adds.some((a) => a.kind === 'rawling'), off = !!(A.dpsHint && A.dpsHint());
+      // (the melee and tanks go to the Rawlings, then the gold ring; the ranged and healers the reverse, hitting them from the ring: the line said "Kill the
+      // Rawlings, then go to the diamond line" to them too, against the game's own plan)
+      if (raw && mel) { const near = Math.min(...G.adds.filter((a) => a.kind === 'rawling').map((a) => pgDist([G.x, G.y], [a.x, a.y])));
+        return (near > 6 ? 'Run to the Rawlings and kill them.' : off ? 'Kill the Rawlings: Tab, then 1.' : 'Keep hitting the Rawlings.') + ' Then: go to ' + RING + '.'; }
+      if (!onR) return 'Go to ' + RING + (t >= T.bubbles ? ' now: the floor breaks soon.' : '.' + (raw ? ' Hit the Rawlings from there.' : ''));
+      return raw ? (off ? 'Kill the Rawlings from here: Tab, then 1.' : 'Good spot. Keep hitting the Rawlings.') : 'Good spot. Stay here.'; }
+    if (e && e.state === 'air') return 'Run to your egg\'s gold circle. Stand beside it, not under it.';
+    if (t < T.land + 0.5 && !e) return 'Go to your team\'s spot by ' + P.TM[g] + '.';
+    if (eggFirst(me, t, { x: G.x, y: G.y }, e, ns)) { const far = pgDist([G.x, G.y], [e.x, e.y]) > 4.5;
+      return (e.shp > 0 ? (mel && far ? 'Run to your egg, then break it: Tab, then 1.' : 'Break your egg: Tab, then 1. Then: walk over it.') : t < e.shell ? 'Wait by your egg: its shell is breaking.' : 'Pick up your egg: walk over it.') + q; }
+    if (ns && called(t)) { const d = pgDist([G.x, G.y], [ns.x, ns.y]), mk = mkAt(ns), nx = S.soaks.find((s) => s.group.includes(me) && s.at > ns.at + 0.1);
+      if (d > ns.r - 1) { const late = (d - (ns.r - 1)) / 7 > ns.at - t - 0.6; return 'Get into your soak at ' + mk + (late ? ': sprint (Shift)!' : '.') + (held ? ' Bring your egg.' : e && e.state === 'floor' ? ' Get your egg after it.' : '') + q; }
+      return 'Stay in your soak at ' + mk + '.' + (q || (nx ? ' Then: run to ' + mkAt(nx) + (pgDist([ns.x, ns.y], [nx.x, nx.y]) > 28 ? ', across the room.' : '.') : ' Then: go to ' + RING + '.')); }
+    if (!called(t)) return 'Wait by ' + P.TM[g] + (held ? '. Keep 3 yards from other carriers.' : ' with your team.') + ' Then: run to your first soak when it lights up gold.';
+    if (e && e.state === 'floor') return 'Your soaks are done: leave your egg. Go to ' + RING + '.' + q; /* (no soak left to break it in: eggFirst) */
+    return (pgDist([G.x, G.y], pgIntGather()) <= P.SPREAD ? 'Good spot. Stay on the gold ring.' : 'Go to ' + RING + ', round the other soaks.') + q; };
+  // (the boss-mod bars: yours, named as the job line names them. No "Your egg opens": your egg's shell is up until you hit it open, so that bar jumped
+  // 13, 10, 6, 2 as you hit while the line said to break it (the prompts audit, Nov 16). "coil" in the soak's name: its bar takes Spectral Coils' icon and
+  // stands in for the raid's own coil bar at the same slam, one bar each)
   const upNext = (t) => { sync(); const me = A.me, L0 = [], add = (at, text, c) => { if (at > t && at - t <= 30) L0.push({ at, text, c }); }, e = G.eggs.find((q) => q.id === me && q.state !== 'gone');
-    if (e && e.state === 'air') add(e.land, 'Your egg lands', '#f3c969'); if (e && e.state !== 'held') add(e.shell, 'Your egg opens', '#f3c969'); /* ("egg" in the name: the boss-mod bar takes Call of the Serpent's icon, not Grasping Fangs' for "breaks") */
-    if (!called(t)) add(S.soaks[0].cast, 'The pattern is called', '#24f2cb'); else S.soaks.filter((s) => s.group.includes(me)).forEach((s) => add(s.at, 'Your coil at ' + mkAt(s), '#f3c969'));
+    if (e && e.state === 'air') add(e.land, 'Your egg lands', '#f3c969'); /* ("egg" in the name: the boss-mod bar takes Call of the Serpent's icon, not Grasping Fangs' for "breaks") */
+    if (!called(t)) add(S.soaks[0].cast, 'First coil rises', '#24f2cb'); else S.soaks.filter((s) => s.group.includes(me)).forEach((s) => add(s.at, 'Your coil soak at ' + mkAt(s), '#f3c969'));
     if (!(G.def >= T.defFrom - 1) && G.def + 90 <= T.defBy) add(T.defCue, 'Defensive (Q)', '#7fb8ff'); /* (not while Q can't be ready for it: the release sweep, Nov 16) */ add(T.shatter, 'The Shattering', '#ff8a5a');
     return L0.sort((a, b) => a.at - b.at).slice(0, 3); };
-  const acts = () => '', hud = () => {};
+  // (Q's "now" moment: its button glows gold from the cue until you press it, while it can be pressed for these slams (the prompts audit, Nov 16))
+  const acts = () => '', hud = (t) => { sync(); if (!G || !A.$) return; const b = A.$('.pg-act[data-a="def"]'); if (b && b.classList) b.classList.toggle('hot', qNow(t != null ? t : G.t)); };
 
   // ---- the start card: your role, team, egg and the pattern ----
   const seg = (k, opts, cur) => '<div class="pg-seg pg-jseg">' + opts.map(([v, t]) => '<button type="button" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '"' + (String(v) === String(cur) ? ' class="on"' : '') + '>' + esc(t) + '</button>').join('') + '</div>';
@@ -337,18 +417,20 @@ function pgInt(A) {
     save(); box.innerHTML = card(); refresh(); if (refocus && sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } }; };
   const role = () => ({ id: slotOf(pk), name: RN[pk.role], job: P.TN[pk.team] + ' team' + (pk.egg ? ' · egg' : '') + (pk.pat ? ' · pattern ' + pk.pat : '') });
   const asg = () => { const g = pk.team, L0 = [];
-    L0.push(['The eggs (5:24)', 'Eight eggs drop all over the stone at 5:24: step out of their circles.' + (pk.egg ? ' Yours is the gold one. Its shell breaks between 5:31 and 5:40: pick it up and carry it into your next soak, 3 yards from other carriers. The slam breaks it.' : ' Keep out of the egg carriers\' way.')]);
+    // (the start card in the order things happen, with no clock times (Flex, Nov 16: "i feel like the game confuses people saying timestamps"), and true:
+    // your egg lands with its shell up and you hit it open; it said the shell "breaks between 5:31 and 5:40", the prompts audit, Nov 16)
+    L0.push(['The eggs', 'Eight eggs drop all over the stone as it starts: step out of their circles.' + (pk.egg ? ' Yours is the gold one. It lands with a shell: hit it until it breaks, pick it up and carry it into your next soak, 3 yards from other carriers. The slam breaks it.' : ' Keep out of the egg carriers\' way.')]);
     L0.push(['Your team: ' + P.TN[g], 'Wait by ' + P.TM[g] + '. Your soaks: ' + [1, 2, 3].map((p) => P.PN[p] + ' first: ' + lst(soaksOf(g, p))).join('; ') + '.']);
-    L0.push(['The coils (5:36 to 5:54)', 'Eight slams, in pairs from opposite sides 2 s apart. Be inside your team\'s 10-yard circle when it slams. Never step into another team\'s: Soul Constrictor keeps you out of the next slam for 5 s.']);
-    L0.push(['Personals (5:47)', 'The last four slams come 2 s apart and each one hits the whole raid: press Q (defensive).']);
-    L0.push(['The Shattering (6:09)', 'From 6:03 her bubbles show at one quarter\'s outer corner: she comes up there as the platform breaks into four along the lines through the middle, with a knockback. Stand on the diamond line, inside: off the cracks, away from the middle and the edge.']);
+    L0.push(['The coils', 'Eight slams, one after another from opposite sides. Be inside your team\'s 10-yard circle when it slams. Never step into another team\'s: Soul Constrictor then keeps you out of your own.']);
+    L0.push(['Your defensive', 'The last four slams come back to back and each one hits the whole raid: press Q (defensive) as they start.']);
+    L0.push(['The Shattering', 'Last, her bubbles show at one quarter\'s outer corner: she comes up there as the platform breaks into four along the lines through the middle, with a knockback. Stand by the Diamond marker, halfway out: off the cracks, away from the middle and the edge.']);
     return '<ul class="pg-asg">' + L0.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
   // (the start card's "Your job in short": four plain lines, your team and soaks, your egg, the defensive, the Shattering)
   const short = () => { const g = pk.team, L0 = [];
     L0.push(pk.pat ? P.TN[g] + ' team, pattern ' + pk.pat + ' (' + P.PN[pk.pat] + ' first): wait by ' + P.TM[g] + ', then soak ' + lst(soaksOf(g, pk.pat)) + '.' : P.TN[g] + ' team: wait by ' + P.TM[g] + '. The first coil sets the pattern; then your ' + (g === 'B' ? 2 : 3) + ' soaks light up in gold.');
-    L0.push(pk.egg ? 'Carry an egg: pick it up when its shell breaks (5:31 to 5:40) and bring it into your next soak.' : 'No egg: step out of the falling eggs at 5:24 and keep out of the carriers\' way.');
-    L0.push('Press Q at 5:47: the last four slams come back to back.');
-    L0.push('By 6:09 stand on the diamond line, inside: off the cracks, away from the middle and the edge.');
+    L0.push(pk.egg ? 'Carry an egg: it lands with a shell, so hit it until it breaks, pick it up and bring it into your next soak.' : 'No egg: step out of the falling eggs and keep out of the carriers\' way.');
+    L0.push('Press Q as the last four slams start: they come back to back.');
+    L0.push('Before the floor breaks, stand by the Diamond marker, halfway out: off the cracks, away from the middle and the edge.');
     return '<ul class="pg-short">' + L0.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ul>'; };
   // (the one-screen setup (practice.js SETUP, Nov 15, Flex via Main: "still too complex and confusing"): your role, then your job, the team you soak
   // with and, for some, an egg: the guide's teams, so melee are Yellow or Blue, ranged Purple or Blue, healers any. The pattern is random each run,
@@ -391,7 +473,7 @@ function pgInt(A) {
   const MAPS = { tab: 'grp',
     tabs: () => (eggsOf(pk.role).length ? [['grp', 'Your group'], ['egg', 'Your egg']] : [['grp', 'Your group']]),
     page: (key) => mapPage(key === 'egg' && eggsOf(pk.role).length ? 'egg' : 'grp'),
-    hot: (key) => { if (key === 'egg') { const L = eggsOf(pk.role).map((g) => { const A = pgIntEggArea(g); return { id: g, x: A.c[0], y: A.c[1], r: A.r, big: true, on: pk.egg && pk.team === g, title: P.TN[g] + ' team: its eggs land in here at 5:24. Carry one into your soak' }; });
+    hot: (key) => { if (key === 'egg') { const L = eggsOf(pk.role).map((g) => { const A = pgIntEggArea(g); return { id: g, x: A.c[0], y: A.c[1], r: A.r, big: true, on: pk.egg && pk.team === g, title: P.TN[g] + ' team: its eggs land in here. Carry one into your soak' }; });
         /* (You on one of your team's drawn eggs, a real landing, not on the circle's middle) */ const Y0 = pk.egg && eggsOf(pk.role).includes(pk.team) ? pgIntEggArea(pk.team).you : null;
         return Y0 ? L.concat([{ id: pk.team, x: Y0[0], y: Y0[1], r: 0.8, on: true, you: true, title: 'You: your egg lands in the ' + P.TN[pk.team] + ' circle, somewhere new each pull' }]) : L; }
       const me = slotOf(pk), yp = pgIntPreAt(pgIntJobs(me, pk), me);
@@ -403,14 +485,15 @@ function pgInt(A) {
     extra: (id) => { if (id !== 'noegg' || !eggsOf(pk.role).length) return; if (pk.egg) put({ ...pk, egg: false }); else put({ ...pk, team: eggsOf(pk.role).includes(pk.team) ? pk.team : eggsOf(pk.role)[0], egg: true }); },
     random: () => { const L = grpsOf(pk.role); put({ ...pk, team: L[Math.floor(Math.random() * L.length)], egg: true }); }, /* (no plan yet: a team your role is on, with its egg if it has one) */
     role: (r) => { const L = grpsOf(r); if (!L.length) return; const w = want(); put({ role: r, team: L.includes(pk.team) ? pk.team : eggsOf(r)[0] || L[0], egg: w }); if (!eggsOf(r).length) MAPS.tab = 'grp'; },
-    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team' + (pk.egg ? ', carry an egg into your next soak' : '') + ' and soak ' + nSoak(g) + ' of the 8 coils as the pattern lights them up, then end on the diamond line before 6:09.'; },
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team' + (pk.egg ? ', carry an egg into your next soak' : '') + ' and soak ' + nSoak(g) + ' of the 8 coils as the pattern lights them up, then end by the Diamond marker before the floor breaks.'; },
     sub: () => P.TN[pk.team] + ' team' + (eggsOf(pk.role).length ? (pk.egg ? ' · egg' : ' · no egg') : '') };
   const setupCard = { roles: ['m', 'r', 'h'], maps: MAPS,
     now: () => { const r = pk.role; if (!SJ[r].some((x) => x[0] === jobNow(pk))) setupCard.set(r, SJ[r][0][0]); return { role: pk.role, job: jobNow(pk) }; },
     jobs: (r) => (SJ[r] || []).map((x) => x.slice()),
     set: (r, v) => { if (!SJ[r]) return; if (!SJ[r].some((x) => x[0] === v)) v = SJ[r][0][0]; pk = { role: r, team: v[0], egg: v.length > 1, pat: 0 }; save(); },
-    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q at 5:47, then end on the diamond line before the platform shatters at 6:09. No kicks in this part.'; } };
-  const starts = [[0, '5:18 · The eggs'], [330, '5:30 · The first coils'], [345, '5:45 · The back-to-back slams'], [356, '5:56 · The Shattering']];
+    say: () => { const g = pk.team; return 'You wait by ' + P.TM[g] + ' with the ' + P.TN[g] + ' team and soak your ' + (g === 'B' ? 2 : 3) + ' of the 8 coils as the pattern lights them up in gold' + (pk.egg ? ', carrying an egg into one' : '') + '. Press Q for the back-to-back slams, then end by the Diamond marker before the platform shatters. No kicks in this part.'; } };
+  // (where to start, by what happens there, not by the clock: Flex, Nov 16, "i feel like the game confuses people saying timestamps")
+  const starts = [[0, 'The eggs'], [330, 'The first coils'], [345, 'The back-to-back slams'], [356, 'The Shattering']];
   // ---- hitting the right thing: the Rawlings once the coils are done (the raid kills them then), any Viper at once ----
   const ADD_HP = { rawling: 3, viper: 5 };
   const tgts = () => { sync(); const L0 = []; if (!G) return L0; G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); const mx = ADD_HP[a.kind] || 3; if (a.hp == null) a.hp = mx; L0.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1, hp: a.hp, max: mx }); }); return L0; };
@@ -456,17 +539,21 @@ function pgInt(A) {
     Object.keys(PG_INT_MKA).forEach((k) => { const p = pgIntAt(PG_INT_MKA[k], 33), nm = pgIntMk(k), c = PG_INT_MKC[nm]; h.disc(p[0], p[1], 2, c, 0.2); h.ring(p[0], p[1], 2, c, 0.75, 0.16); P3({ k: 'wmark', x: p[0], y: p[1], nm, c }); h.label(p[0], p[1], 1.1, nm, c, 12); });
     // (her Call at her edge, then down into the venom with a splash)
     if (t >= T.callL + 0.6 && t < T.callL + 2.8) P3({ k: 'splash', x: S.her[0], y: S.her[1], p: (t - T.callL - 0.6) / 2.2, s: 1.5 });
-    // (where your team waits until the pattern is called)
-    if (!called(t) && t < T.gather) { const p = S.pre[g]; h.ring(p[0], p[1], 4.5, P.TC[g], 0.85, 0.25, true); h.label(p[0], p[1], 3.6, P.TN[g] + ' team waits here', P.TC[g], 13); }
-    // (your coming soaks once the pattern is called, numbered in your team's order (the guide's map); the one up now practice3d.js draws itself)
-    if (called(t)) S.soaks.forEach((s) => { if (s.team !== g || t >= s.t0) return; h.ring(s.x, s.y, s.r, '#f3c969', 0.55, 0.3, true); h.label(s.x, s.y, 3, 'Your ' + pgIntOrd(ordOf(s)) + ' soak · ' + mkAt(s), '#f3c969', 14); });
-    // (each coil: the spectral tail rises at the rim and slams its circle; the circle's team over it)
+    // (the floor's words, one label a spot (the prompts audit, Nov 16: up to 11 labels and the 8 marker names at once, two numberings side by side), words
+    // only, no counts: where your team waits; your next soak once the pattern is called ("Then here" while one of yours is up: practice3d.js labels that one
+    // YOUR SOAK), your later ones a ring only; the other teams' live circles by team; the gold ring only once you're on it (the arrow's own label marks it
+    // while you walk there); "Crack" on the red strips, beside you along each line)
+    if (!called(t) && t < T.gather) { const p = S.pre[g]; h.ring(p[0], p[1], 4.5, P.TC[g], 0.85, 0.25, true); h.label(p[0], p[1], 3.6, 'Wait here', P.TC[g], 13); }
+    if (called(t)) { const up = S.soaks.some((s) => s.team === g && t >= s.t0 && t <= s.at + 0.5); let first = true;
+      S.soaks.forEach((s) => { if (s.team !== g || t >= s.t0) return; h.ring(s.x, s.y, s.r, '#f3c969', first ? 0.55 : 0.35, 0.3, true); if (first) h.label(s.x, s.y, 3, up ? 'Then here' : 'Your next soak', '#f3c969', 14); first = false; }); }
+    // (each coil: the spectral tail rises at the rim and slams its circle; another team's circle has that team's name over it)
     S.soaks.forEach((s) => { if (t < s.t0 || t > s.at + 0.6) return; P3({ k: 'stail', x: s.rim[0], y: s.rim[1], f: cl((t - s.t0) / 1.2), sink: t > s.at ? cl((t - s.at) / 0.6) : 0 }); if (t < s.t0 + 1.1) P3({ k: 'splash', x: s.rim[0], y: s.rim[1], p: (t - s.t0) / 1.1, s: 0.6 });
-      h.label(s.rim[0], s.rim[1], 9, 'Spectral Coil', '#7ff2dc', 12); h.label(s.x, s.y, 7.5, P.TN[s.team] + ' team' + (s.team === g ? ' (yours)' : ''), P.TC[s.team], 13); });
+      if (s.team !== g) h.label(s.x, s.y, 7.5, P.TN[s.team] + ' team', P.TC[s.team], 13); });
     // (the end: where to stand, then the cracks and her burst lighting up red; after it the cracks are venom)
-    if ((t >= T.gather - 1 || (called(t) && !nextSoak(me, t))) && t < T.shatter + 1) { const p = pgIntGather(); h.disc(p[0], p[1], P.SPREAD, '#f3c969', 0.12); h.ring(p[0], p[1], P.SPREAD, '#f3c969', 1, 0.3, true); h.label(p[0], p[1], 4, 'Diamond line · stand here', '#f3c969', 14); }
+    if ((t >= T.gather - 1 || (called(t) && !nextSoak(me, t))) && t < T.shatter + 1) { const p = pgIntGather(); h.disc(p[0], p[1], P.SPREAD, '#f3c969', 0.12); h.ring(p[0], p[1], P.SPREAD, '#f3c969', 1, 0.3, true); if (pgDist([G.x, G.y], p) <= P.SPREAD && t < T.shatter) h.label(p[0], p[1], 4, 'Good spot', '#7ee08f', 14); }
     if (t >= T.bubbles && t < T.shatter) { const o = 0.16 + 0.1 * Math.sin(t * 6); [0, Math.PI / 2].forEach((a) => P3({ k: 'rect', x: 0, y: 0, a, f0: -38, f1: 38, w0: -P.CRACK, w1: P.CRACK, c: '#ff4a3a', o }));
-      h.label(S.dive.to[0], S.dive.to[1], 6, 'Her bubbles: she comes up here', '#7fd8ff', 14); }
+      const cy = Math.max(-30, Math.min(30, Math.abs(G.y) < 8 ? (G.y < 0 ? -8 : 8) : G.y)), cx = Math.max(-30, Math.min(30, Math.abs(G.x) < 8 ? (G.x < 0 ? -8 : 8) : G.x));
+      h.label(0, cy, 2.5, 'Crack', '#ff6a5a', 13); h.label(cx, 0, 2.5, 'Crack', '#ff6a5a', 13); } /* (her bubbles: practice3d.js labels them "Bubbles", once) */
     if (t >= T.shatter) [0, Math.PI / 2].forEach((a) => { P3({ k: 'rect', x: 0, y: 0, a, f0: -38, f1: 38, w0: -P.CRACK, w1: P.CRACK, c: '#24481c', o: 0.94 }); P3({ k: 'rect', x: 0, y: 0, a, f0: -38, f1: 38, w0: -P.CRACK * 0.6, w1: P.CRACK * 0.6, c: '#5fae2e', o: 0.35 + 0.1 * Math.sin(t * 4) }); }); };
 
   return { part: 'int', label: 'the intermission', flat3d: true,
@@ -474,7 +561,7 @@ function pgInt(A) {
     bossAt: (t) => { sync(); if (!S) return { p: [46, 0], up: true }; if (t >= T.shatter) return { p: S.dive.to.slice(), up: true }; if (t < T.callL + 0.6) return { p: S.her.slice(), up: true }; return { p: [0, 0], up: false }; }, tailAt: () => ({ p: [0, 0], up: false }),
     jobText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, ff: () => { sync(); if (G && G.int) { G.wipes = 0; G.int.soakN = []; /* (the Rawlings alive at your start stay: the release sweep, Nov 16) */ const back = (G.int.raws || []).filter((a) => !(a.hp != null && a.hp <= 0) && !G.adds.includes(a)); if (back.length) G.adds.push(...back); } },
     get clean() { return 'No mistakes: every soak on time' + (pk.egg ? ', your egg broken in a soak' : '') + ', your defensive for the back-to-back slams, and you rode out the Shattering on the stone. Try another team.'; }, /* (only what this job does: the review, Nov 15) */
-    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), eggShells: true, calmCarriers: true }; /* (calmCarriers: a bot holding an egg walks at your speed, Sprints 3 s in 30 only for a wave or a soak due, and steps round you a little (practice.js, Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me"; "Yes, turn them on" for the intermission)) */ /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
+    get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, kit3d: (K) => pg3dInt(K), eggShells: true, calmCarriers: true, qGlow: (t) => { sync(); return !!G && qNow(t != null ? t : G.t); } }; /* (calmCarriers: a bot holding an egg walks at your speed, Sprints 3 s in 30 only for a wave or a soak due, and steps round you a little (practice.js, Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me"; "Yes, turn them on" for the intermission)) */ /* (eggShells: your egg's Hardened shell you break by hitting it, as in phase 1 (practice.js, Nov 15); the intermission's eggs land Hardened too (measured: cast 1299650 at each landing)) */
 }
 // (the part on the start card's Part switch, after phase 2 and before phase 3 whichever file is read first; `?practice=int` on the guide opens it)
 // ---- 3D (practice3d.js calls pg3dInt(K) once when the 3D view opens for an intermission game, through the part's kit3d; K is its kit: three.js, the

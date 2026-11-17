@@ -56,6 +56,16 @@
 //      into a soak" and "still in your hands", or its Viper on a crack); the 5:45 start loses the Rawlings from slams 1 to 4, or a melee is scored on
 //      Rawlings it couldn't reach yet (from 5:45, and from a last soak across the room); a Rawling boiling is charged to you; with Q pressed early in the
 //      part the line says "Press Q now", What's next shows "Defensive (Q)", or the mistake doesn't say Q was still cooling down.
+//   P. the prompts audit (Nov 16; Flex: "the alerts and training wheels could be better in terms of the on screen prompts", then "All 10"), its ten fixes
+//      as they touch this part: 1 the arrow walks you through another team's live coil or another carrier's ring (it bends round now); 2 a falling egg,
+//      another team's coil, another carrier's ring, the cracks and the edge get words (and the red strips a "Crack" label); 3 the arrow goes away exactly
+//      where the game counts you (your soak's 10 yards, the gold ring's 4) and never says "Go here" while the line says stay; 4 the arrow from the moment
+//      the line names the place (your egg's gold circle from the start, your team's spot, a melee's Rawling), and a player who only follows the arrow and
+//      the lines plays clean on nine jobs (every melee carrier was "on it 28%"); 5 Q after the move line, never "Next: X in N s"; 6 nothing false (the
+//      ranged told to kill the Rawlings before the gold ring, "Egg shells are breaking" at 5:31, a "Your egg opens" bar while you break it, two bars for
+//      one egg); 7 the Rawlings call with its job line; 8 the pattern call names YOUR first soak, one label a circle; 9 every centre call "Mechanic: Order",
+//      gold only for your own job; 10 Q's "now" (the line and the glowing button). And Flex's rule (Nov 16: "i feel like the game confuses people saying
+//      timestamps"): no clock time or second count in any job line, centre call, floor label, start card, setup sentence, Play line or Start list.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
@@ -67,7 +77,7 @@ function load(H, part, extra) {
   class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
   const ctx = vm.createContext({ document: stub(), window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
   vm.runInContext(H.grab('esc') + '\n' + fromGuides + '\n' + rd('practice.js') + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + (extra || '') + '\n' + rd('practice-int.js') +
-    '\nthis.pgIntScript = pgIntScript; this.pgIntJobs = pgIntJobs; this.pgIntSlot = pgIntSlot; this.PG_INT = PG_INT; this.PG_INT_T = PG_INT_T; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.UL_PAT = UL_PAT; this.UL_SOAK = UL_SOAK; this.UL_RIM = UL_RIM; this.pgIntKb = pgIntKb; this.pg3dInt = pg3dInt; this.pgIntMarkDraw = pgIntMarkDraw;', ctx);
+    '\nthis.pgIntScript = pgIntScript; this.pgIntJobs = pgIntJobs; this.pgIntSlot = pgIntSlot; this.PG_INT = PG_INT; this.PG_INT_T = PG_INT_T; this.PG_PARTS = PG_PARTS; this.pg3dShapes = pg3dShapes; this.UL_PAT = UL_PAT; this.UL_SOAK = UL_SOAK; this.UL_RIM = UL_RIM; this.pgIntKb = pgIntKb; this.pg3dInt = pg3dInt; this.pgIntMarkDraw = pgIntMarkDraw; this.pgIntMk = pgIntMk;', ctx);
   if (part !== null) vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (part ? ', "' + part + '"' : '') + ')', ctx);
   return { dbg: win.__pgDbg, ctx };
 }
@@ -159,7 +169,7 @@ function checks(H, say) {
     if (!/P2 && P2\.part === 2 \? 'Hatching Doom'/.test(PJ)) bad('the boss-mod bars give the intermission\'s eggs phase 2\'s Hatching Doom icon (check F)');
     if (!/view\(true\); \/\* \(Flex, Nov 15: 3D only/.test(PJ)) bad('the intermission doesn\'t open in 3D (check F)');
     const sh = dbg.P2.short(), li = (sh.match(/<li>/g) || []).length; if (li !== 4) bad('"your job in short" isn\'t four lines (' + li + ', check F)');
-    dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/diamond line/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and the diamond line: ' + s2 + ' (check F)');
+    dbg.P2.pick = { role: 'r', team: 'Y', egg: true, pat: 2 }; const s2 = dbg.P2.short().replace(/<[^>]+>/g, ' | '); if (!/Yellow team, pattern 2/.test(s2) || !/2nd at Circle, the 5th at Star and the 8th at Skull/.test(s2) || !/Carry an egg/.test(s2) || !/Press Q/.test(s2) || !/Diamond marker/.test(s2)) bad('"your job in short" doesn\'t name the team, its soaks, the egg, the defensive and where to end (by the Diamond marker; it said "the diamond line" until the prompts audit, Nov 16): ' + s2 + ' (check F)');
     // (the one-screen setup, Nov 15: your role, then your job (your team, and an egg for some): the guide's teams, 2 to 6 jobs a role, one sentence. Nov 16,
     // Flex: "maybe leave it as an option for ranged just in case groups do it that way": a ranged may also take Yellow, with or without an egg)
     const su = dbg.P2.setup; if (!su || typeof su.now !== 'function' || typeof su.jobs !== 'function' || typeof su.set !== 'function' || typeof su.say !== 'function') bad('the intermission gives the setup screen no setup (roles, now, jobs, set, say; check F)');
@@ -169,7 +179,7 @@ function checks(H, say) {
           if (nw.role !== r || nw.job !== v) bad('picking ' + r + ' / ' + lab + ' shows ' + nw.role + ' / ' + nw.job + ' (check F)');
           if (me[0] !== r || J.team[me] !== v[0] || J.carry.has(me) !== /e$/.test(v)) bad('picking ' + r + ' / ' + lab + ' plays ' + me + ' on ' + J.team[me] + (J.carry.has(me) ? ' with an egg' : '') + ' (check F)');
           if (!P.team[v[0]].some((id) => id[0] === r) && !(r === 'r' && v[0] === 'Y')) bad('the setup offers ' + r + ' the ' + P.TN[v[0]] + ' team, which has no ' + r + ' in the guide\'s plan (check F)');
-          const say = su.say(); if (!new RegExp(P.TM[v[0]]).test(say) || !/diamond line/.test(say) || !/Press Q/.test(say) || !/No kicks/.test(say) || /egg/.test(say) !== /e$/.test(v)) bad('the setup\'s sentence for ' + r + ' / ' + lab + ' doesn\'t name the mark, the egg, the defensive and the diamond line: ' + say + ' (check F)'); }); });
+          const say = su.say(); if (!new RegExp(P.TM[v[0]]).test(say) || !/Diamond marker/.test(say) || !/Press Q/.test(say) || !/No kicks/.test(say) || /egg/.test(say) !== /e$/.test(v)) bad('the setup\'s sentence for ' + r + ' / ' + lab + ' doesn\'t name the mark, the egg, the defensive and the diamond line: ' + say + ' (check F)'); }); });
       su.set('r', 'B'); } }
   catch (e) { bad('the wiring check crashed:' + e.message + ' (check F)'); }
   // G. the 3D shapes
@@ -189,7 +199,7 @@ function checks(H, say) {
     if (seen.size < 4) bad('over 40 runs she comes up at only ' + [...seen].join(', ') + '; all four corners (the kills: north-east 3, north-west 5, south-west 4, south-east 5, check J)');
     dbg.P2.pick = { role: 'r', team: 'B', egg: false, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.shatter + 0.5, me, { seed: 4 }); if (hyp(dbg.P2.bossAt(dbg.G.t).p, dbg.S.dive.to) > 0.01) bad('after the Shattering she isn\'t at the corner her bubbles showed (check J)');
     if (!(T.defCue + 8 > T.slams[7]) || T.defCue > T.slams[4] - 0.5) bad('the defensive\'s cue (' + clkS(T.defCue) + ') doesn\'t let its 8 s cover all four slams (' + clkS(T.slams[4]) + ' to ' + clkS(T.slams[7]) + ', check J)');
-    { const w = dbg.S.warns.find((x) => /Personals now/.test(x.text)); if (!w || Math.abs(w.t - T.defCue) > 0.05) bad('the "Personals now" warning isn\'t at the defensive\'s cue (check J)'); }
+    { const w = dbg.S.warns.find((x) => /^Back-to-back slams: /.test(x.text)); if (!w || Math.abs(w.t - T.defCue) > 0.05) bad('the defensive\'s call ("Back-to-back slams: Press Q (your defensive) now!", "Personals now" until the prompts audit, Nov 16) isn\'t at the defensive\'s cue (check J)'); }
     if (dbg.S.timers.some((x) => /^Coil slam \d$/.test(x.name))) bad('the boss-mod timers include each coil by number, which shows your own before the pattern is called (check J)');
     dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 1 }; const mc = dbg.P2.slotOf(); dbg.at(T.call + 2, mc, { seed: 4 }); const mods = dbg.mods(); const eb = mods.find((b) => /egg/i.test(b.name)); if (!eb || eb.sp !== 'Call of the Serpent' || mods.some((b) => b.sp === 'Grasping Fangs')) bad('the egg\'s boss-mod bar doesn\'t take Call of the Serpent\'s icon: ' + JSON.stringify(mods.map((b) => [b.name, b.sp])) + ' (check J)');
     // (a carried egg on a crack as it shatters hatches a Viper)
@@ -239,7 +249,7 @@ function checks(H, say) {
     if (dbg.P2.eggShells !== true) bad('the intermission\'s eggs have no Hardened shell to break (eggShells, check L)');
     { const src = rd('practice-int.js'); if (/about 4 yards|SPLASH/.test(src) || !/Keep 3 yards from other carriers/.test(src) || !/3 yards from other carriers\. The slam breaks it/.test(src)) bad('the carriers\' words don\'t give the 3 yards (or still say about 4, check L)'); }
     dbg.P2.pick = { role: 'r', team: 'P', egg: true, pat: 2 }; const me = dbg.P2.slotOf(); dbg.at(T.land + 0.6, me, { seed: 4 }); const e = dbg.G.eggs.find((q) => q.id === me);
-    if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/hit it to break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
+    if (!e || !(e.shp > 0)) bad('your egg lands without a shell to break (check L)'); else { const tx = dbg.P2.jobText(); if (!/Break your egg|break it/.test(tx)) bad('with your egg\'s shell up the hint doesn\'t say to hit it: ' + tx + ' (check L)'); }
     dbg.G.log = []; while (dbg.G.t < T.slams[0]) dbg.step(1); { const e2 = dbg.G.eggs.find((q) => q.id === me); if (!e2 || e2.state === 'floor') bad('the autopilot didn\'t break its egg\'s shell and pick it up by the first slam (check L)'); } }
   catch (e) { bad('the splash and shells check crashed: ' + e.message + ' (check L)'); }
   // M. the unit frames like Flex's UI
@@ -283,7 +293,7 @@ function checks(H, say) {
           const me = dm.P2.slotOf(); dm.at(320, me, { seed: 4 }); const want = dm.job(me).T, you = M.hot('grp').find((h) => h.you);
           if (!you || hyp([you.x, you.y], want) > 0.01) bad('You on the map isn\'t where the game stands you while your team waits (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ': ' + (you ? you.x.toFixed(1) + ', ' + you.y.toFixed(1) : 'none') + ' on the map, ' + want.map((v) => v.toFixed(1)).join(', ') + ' in the game, check N)');
           if (dm.S.job.team[me] !== g || dm.S.job.carry.has(me) !== egg) bad('the map\'s pick (' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ') plays ' + me + ' on ' + P.TN[dm.S.job.team[me]] + (dm.S.job.carry.has(me) ? ' with an egg' : ' without one') + ' (check N)');
-          const say = M.say(), sub = M.sub(); if (!say.includes(P.TM[g]) || /egg/.test(say) !== egg || !/diamond line/.test(say) || (say.match(/\. /g) || []).length || !sub.includes(P.TN[g] + ' team')) bad('the map\'s sentence or Play line for ' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ' doesn\'t say the mark, the egg and the diamond line in one sentence: ' + say + ' / ' + sub + ' (check N)');
+          const say = M.say(), sub = M.sub(); if (!say.includes(P.TM[g]) || /egg/.test(say) !== egg || !/Diamond marker/.test(say) || (say.match(/\. /g) || []).length || !sub.includes(P.TN[g] + ' team')) bad('the map\'s sentence or Play line for ' + r + ', ' + P.TN[g] + (egg ? ', egg' : '') + ' doesn\'t say the mark, the egg and the diamond line in one sentence: ' + say + ' / ' + sub + ' (check N)');
           // (the review, Nov 16: what the map picks is what you play: your own egg lands in your team's circle on Your egg (150 runs), and the autopilot plays the
           // pick clean (every soak of your team, your egg broken in one), on each pattern in turn)
           if (egg) { const h = M.hot('egg').find((q) => q.big && q.id === g); let n = 0, inn = 0, worst = 0; for (let seed = 2001; seed <= 2150; seed++) { const e = script({ seed, me, pick: pk }).eggSets[0].eggs.find((q) => q.id === me); if (!e) continue; n++; const d = hyp([e.x, e.y], [h.x, h.y]) - h.r; if (d <= 0) inn++; worst = Math.max(worst, d); }
@@ -385,6 +395,115 @@ function checks(H, say) {
       while (dbg.G.t < T.defCue + 0.5) dbg.step(1); const tx = dbg.P2.jobText(); if (/Press Q now/.test(tx) || !/cooling down/.test(tx)) bad('with Q cooling down the line says: ' + tx + ' (the release sweep, Nov 16; check O)');
       while (dbg.G.t < T.defBy + 0.5) dbg.step(1); if (!dbg.log.some((l) => /No defensive for the last four slams.*You pressed Q at 5:24/.test(l))) bad('Q pressed at 5:24 gives: ' + dbg.log.join(' | ') + '; the mistake should say Q was pressed at 5:24 (the release sweep, Nov 16; check O)'); } }
   catch (e) { bad('the release sweep\'s checks crashed: ' + e.message + ' (check O)'); }
+  // P. the prompts audit (Nov 16; Flex: "the alerts and training wheels could be better in terms of the on screen prompts", then "All 10"; mid-run: "i feel
+  // like the game confuses people saying timestamps")
+  try { const G = () => dbg.G, put = (p) => { dbg.G.x = p[0]; dbg.G.y = p[1]; }, hint = () => dbg.hint(), jt = () => dbg.P2.jobText() || '', onP = (p) => dbg.P2.onPlat(p[0], p[1]);
+    const segNear = (a, b, c) => { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((c[0] - a[0]) * dx + (c[1] - a[1]) * dy) / L2)); return hyp([a[0] + dx * u, a[1] + dy * u], c); };
+    const labelsAt = (t) => { const L0 = []; dbg.P2.shapes(t, () => {}, { disc() {}, ring() {}, grow() {}, label: (x, y, h, text, c) => L0.push({ x, y, text, c }) }); return L0; };
+    const at = (t, pk, seed) => { dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(t, me, { seed: seed || 4 }); return me; }, tk = (t) => clkS(Math.round(t * 10) / 10);
+    const CLOCK = /\b\d{1,2}:\d\d\b/, SECS = /\b\d+(?:\.\d+)?\s?s\b/, DEC = /\b\d+\.\d+\b/, timey = (s) => CLOCK.test(s) || SECS.test(s) || DEC.test(s);
+    const SEEN = new Set(), LAB = new Set(), WARN = new Set();
+    // (an arrow-follower: walks only where the arrow points, picks the nearest right target (as Tab does) and keeps pressing 1 while the target line asks,
+    // presses Q when the job line says so)
+    const follow = (pk, seed, east, each) => { dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.start, me, { seed, east }); let n = 0, died = false;
+      while (G().t < T.end - 0.01 && n++ < 3000) { const h = hint(), dv = dbg.dps(), line = jt(), g = G(); dbg.walkTo(h ? h.T : null);
+        if (dv && dv.cat && dv.right.length && !(dv.cur && dv.inRange && dv.right.some((o) => o.key === dv.cur.key))) dbg.tgt = dv.right.slice().sort((a, b) => hyp(a.p, [g.x, g.y]) - hyp(b.p, [g.x, g.y]))[0].key;
+        if (dv && dv.cat && dv.inRange && dv.cd <= 0) { dbg.atk(); if (!(dv.aoeCd > 0)) dbg.aoe(); }
+        if (/Press Q/.test(line) && g.t - g.def >= 90) g.def = g.t;
+        if (each) each(me, h, line, n); dbg.stepOwn(1); if (G().hp <= 0) { died = true; G().hp = 100; } }
+      dbg.S.warns.forEach((w) => WARN.add(w.text)); return died; };
+    // fixes 1, 3, 4, 5 and 6 as one player meets them: a player who only follows the arrow and the lines plays clean on every job (the arrow came only as
+    // the egg landed: "Your egg's shell was up: you were on it 28%" for every melee carrier); the arrow never says "Go here" while the line says stay (it
+    // did for 8.5 to 26 s a run); it never walks you through another team's live coil
+    for (const [pk, seed, east] of [[{ role: 'm', team: 'Y', egg: true, pat: 1 }, 7, false], [{ role: 'm', team: 'Y', egg: true, pat: 2 }, 4, false], [{ role: 'm', team: 'Y', egg: true, pat: 3 }, 5, false], [{ role: 'r', team: 'P', egg: true, pat: 2 }, 4, false],
+      [{ role: 'r', team: 'P', egg: true, pat: 3 }, 6, true], [{ role: 'h', team: 'B', egg: false, pat: 1 }, 4, false], [{ role: 'r', team: 'B', egg: true, pat: 1 }, 3, false], [{ role: 'm', team: 'B', egg: true, pat: 2 }, 12, false], [{ role: 'h', team: 'Y', egg: false, pat: 2 }, 3, true]]) {
+      const tag = JSON.stringify(pk) + ', seed ' + seed; let stayGo = null, cross = null;
+      const died = follow(pk, seed, east, (me, h, line, n) => { SEEN.add(line); const t = G().t, p0 = [G().x, G().y]; if (n % 8 === 0) labelsAt(t).forEach((l) => LAB.add(l.text));
+        if (h && /^(Stay|Good spot)/.test(line) && !stayGo) stayGo = tk(t) + ' "' + line + '" with "Go here · ' + Math.round(h.d) + ' yd"';
+        if (h && !cross) dbg.S.soaks.forEach((s) => { if (!s.group.includes(me) && t >= s.t0 && t <= s.at && hyp(p0, [s.x, s.y]) > s.r + 1 && segNear(p0, h.T, [s.x, s.y]) < s.r - 0.5) cross = tk(t) + ', through the ' + P.TN[s.team] + ' soak'; }); });
+      if (dbg.log.length || died) bad('a player who only follows the arrow and the lines (' + tag + ') ' + (died ? 'dies' : 'makes mistakes') + ': ' + dbg.log.join(' | ') + ' (the prompts audit, Nov 16: the arrow came only as the egg landed, "Your egg\'s shell was up: you were on it 28%" for every melee carrier; check P, fix 4)');
+      if (stayGo) bad('the arrow says "Go here" while the job line says stay (' + tag + '): ' + stayGo + ' (the prompts audit, Nov 16: "Go here · 5 yd" for 8.5 to 26 s a run; check P, fix 3)');
+      if (cross) bad('the arrow walks you through another team\'s coil before it slams (' + tag + '): ' + cross + ' (the prompts audit, Nov 16; check P, fix 1)'); }
+    // fix 1: the arrow bends round another team's live coil and round another carrier's ring (it was a straight line through both)
+    { let found = 0; for (const pat of [1, 2, 3]) for (const team of ['Y', 'P', 'B']) { if (found) break; const pk = { role: 'h', team, egg: false, pat }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(T.start, me, { seed: 4 });
+        for (const ns of dbg.S.soaks.filter((s) => s.group.includes(me))) { if (found) break; const t = ns.t0 + 0.3; for (const s of dbg.S.soaks) { if (s.group.includes(me) || t < s.t0 || t > s.at - 1) continue; const d = hyp([s.x, s.y], [ns.x, ns.y]) || 1, u = [(s.x - ns.x) / d, (s.y - ns.y) / d];
+          /* (you just past the other team's circle, on the far side from your soak, so the straight line to your soak runs through it) */ let p = null; for (const k of [2.5, 3, 4, 5]) for (const l of [0, 1.5, -1.5]) { const q = [s.x + u[0] * (s.r + k) - u[1] * l, s.y + u[1] * (s.r + k) + u[0] * l]; if (!p && onP(q) && segNear(q, [ns.x, ns.y], [s.x, s.y]) < s.r - 2) p = q; } if (!p) continue;
+          at(t, pk); put(p); const h = hint(); found = 1; if (!h || segNear(p, h.T, [s.x, s.y]) < s.r || hyp(h.T, [s.x, s.y]) < s.r) bad('the arrow to your soak at ' + ctx.pgIntMk(ns.spot) + ' runs through the ' + P.TN[s.team] + ' coil before it slams (' + (h ? 'it points at ' + h.T.map((v) => v.toFixed(1)).join(', ') : 'no arrow') + '; pattern ' + pat + ', ' + P.TN[team] + ' at ' + tk(t) + '; the prompts audit, Nov 16: a straight line from you; check P, fix 1)'); break; } } }
+      if (!found) bad('the arrow-bend check found no other team\'s coil between you and your soak to test with (check P, fix 1)'); }
+    { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }, me = at(T.slams[0] - 4 + 0.3, pk), e = G().eggs.find((q) => q.id === me); Object.assign(e, { state: 'held', who: me });
+      const c = G().eggs.find((q) => q.id !== me && q.id && G().bots[q.id]); G().eggs.forEach((q) => { if (q !== e && q !== c) q.state = 'gone'; }); c.state = 'gone';
+      const ns = dbg.S.soaks.find((s) => s.group.includes(me)), d0 = hyp([ns.x, ns.y], [0, 0]) || 1, p = [-ns.x / d0 * 6, -ns.y / d0 * 6]; put(p); const h0 = hint();
+      if (!h0) bad('no arrow to your soak from the middle of the room (check P, fix 1)'); else { const mid = [(p[0] + h0.T[0]) / 2, (p[1] + h0.T[1]) / 2]; Object.assign(c, { state: 'held', who: c.id }); G().bots[c.id].x = mid[0]; G().bots[c.id].y = mid[1];
+        const h1 = hint(); if (!h1 || segNear(p, h1.T, mid) < 3) bad('carrying your egg, the arrow runs straight through another carrier\'s 3-yard ring (the prompts audit, Nov 16; check P, fix 1)'); } }
+    // fix 2: dodges with words: an egg about to land on you (and the arrow out of it), another team's coil with you in it, another carrier's ring, the cracks
+    // and the edge (with a "Crack" label on the red strips)
+    { const pk = { role: 'h', team: 'B', egg: false, pat: 1 }; at(T.land - 2, pk); const eg = G().eggs.find((q) => q.state === 'air'); put([eg.x, eg.y]); const tx = jt(), h = hint();
+      if (!/egg is landing on you/.test(tx)) bad('standing where an egg lands, 2 s before, the line says: ' + tx + ' (the prompts audit, Nov 16: falling eggs had no words; check P, fix 2)');
+      if (!h || hyp(h.T, [eg.x, eg.y]) < 4.7) bad('standing where an egg lands, the arrow doesn\'t lead out of its circle (check P, fix 2)');
+      const so = dbg.S.soaks.find((s) => !s.group.includes(dbg.P2.slotOf())), me = at(so.t0 + 1, pk); void me; put([so.x, so.y]); if (!/isn't yours/.test(jt())) bad('standing in another team\'s coil as it rises, the line says: ' + jt() + ' (check P, fix 2)');
+      at(T.bubbles + 2, pk); put([1.5, -20]); if (!/Step off the crack/.test(jt())) bad('standing on a crack after her bubbles show, the line says: ' + jt() + ' (the prompts audit, Nov 16: "To the diamond line now" wherever you stood; check P, fix 2)');
+      put([20, -27]); if (!/edge/.test(jt())) bad('standing at the edge after her bubbles show, the line says: ' + jt() + ' (check P, fix 2)');
+      if (labelsAt(G().t).filter((l) => l.text === 'Crack').length < 2) bad('the red crack strips have no "Crack" label (the prompts audit, Nov 16; check P, fix 2)'); }
+    { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }, me = at(T.slams[0] - 6, pk), e = G().eggs.find((q) => q.id === me); Object.assign(e, { state: 'held', who: me }); put([0, 12]);
+      const c = G().eggs.find((q) => q.id !== me && q.id && G().bots[q.id]); Object.assign(c, { state: 'held', who: c.id }); G().bots[c.id].x = 3; G().bots[c.id].y = 12;
+      if (!/^Step away from .*'s egg/.test(jt())) bad('carrying your egg 3 yards from another carrier, the line says: ' + jt() + ' (the prompts audit, Nov 16: practice.js\'s "Too close" line never ran in the intermission; check P, fix 2)'); }
+    // fix 3: the arrow goes away exactly where the game counts you (inside your soak's 10 yards; on the gold ring's 4), and the line says stay there
+    { const pk = { role: 'h', team: 'B', egg: false, pat: 1 }, me = at(339, pk), ns = dbg.S.soaks.find((s) => s.group.includes(me)), d0 = hyp([ns.x, ns.y], [0, 0]), u = [-ns.x / d0, -ns.y / d0];
+      put([ns.x + u[0] * 8.5, ns.y + u[1] * 8.5]); if (hint() || !/^Stay in your soak/.test(jt())) bad('8.5 yards inside your soak (10) the arrow ' + (hint() ? 'still says "Go here"' : 'is gone') + ' and the line says: ' + jt() + ' (the prompts audit, Nov 16: "In your 1st soak at Circle: stay inside until it slams (5.0 s)" with "Go here · 5 yd"; check P, fix 3)');
+      put([ns.x + u[0] * 11.5, ns.y + u[1] * 11.5]); if (!hint() || !/^Get into your soak/.test(jt())) bad('outside your soak the arrow or the line doesn\'t send you in: ' + jt() + ' (check P, fix 3)');
+      at(T.bubbles + 1, pk); const ga = [Math.cos(P.GA * Math.PI / 180) * P.GATHER, Math.sin(P.GA * Math.PI / 180) * P.GATHER]; put([ga[0] + 3.5, ga[1]]); if (hint() || !/^Good spot/.test(jt())) bad('3.5 yards inside the gold ring (4) the arrow ' + (hint() ? 'still shows' : 'is gone') + ' and the line says: ' + jt() + ' (check P, fix 3)');
+      put([ga[0] + 6, ga[1] + 6]); if (!hint() || !/^Go to the gold ring/.test(jt())) bad('off the gold ring the arrow or the line doesn\'t send you there: ' + jt() + ' (check P, fix 3)'); }
+    // fix 4: the arrow from the moment the line names the place: beside your egg's gold circle from the start (not from its landing), your team's spot, and
+    // for a melee the nearest Rawling once the coils are done
+    { const me = at(T.start + 0.5, { role: 'm', team: 'Y', egg: true, pat: 1 }); void me; if (!hint() || !/^Run to your egg's gold circle/.test(jt())) bad('at the start an egg carrier has ' + (hint() ? 'an arrow' : 'no arrow') + ' and the line: ' + jt() + ' (the prompts audit, Nov 16: no arrow until the egg landed, 37 to 47 yards away; check P, fix 4)');
+      at(T.start + 0.5, { role: 'h', team: 'B', egg: false, pat: 1 }); put([20, 20]); if (!hint() || !/^Go to your team's spot by Square/.test(jt())) bad('at the start a healer far from its team has ' + (hint() ? 'an arrow' : 'no arrow') + ' and the line: ' + jt() + ' (check P, fix 4)');
+      at(T.gather + 0.5, { role: 'm', team: 'Y', egg: false, pat: 1 }); const RL = G().adds.filter((a) => a.kind === 'rawling'); if (!RL.length) bad('no Rawlings at 5:55.5 to test the melee arrow with (check P, fix 4)');
+      else { const far = [[-25, 20], [25, 20], [-25, -15], [25, -15]].sort((a, b) => Math.min(...RL.map((r) => hyp(b, [r.x, r.y]))) - Math.min(...RL.map((r) => hyp(a, [r.x, r.y]))))[0]; put(far); if (!hint() || !/Rawlings/.test(jt())) bad('a melee far from the Rawlings once the coils are done has ' + (hint() ? 'an arrow' : 'no arrow') + ' and the line: ' + jt() + ' (the prompts audit, Nov 16: melee got no arrow toward them; check P, fix 4)'); } }
+    // fix 5: Q after the move line, never instead of it; never another player's timer or "Next: X in N s"
+    { const pk = { role: 'm', team: 'Y', egg: false, pat: 1 }; at(351, pk); G().def = -1e9; const tx = jt(); if (!/gold ring.*Press Q/.test(tx)) bad('your soaks done at 5:51 with Q unpressed, the line says: ' + tx + ' (the prompts audit, Nov 16: "Press Q now: personals" replaced "head for the diamond line"; check P, fix 5)');
+      const nx = [...SEEN].filter((s) => /^Next: /.test(s)); if (nx.length) bad('the job line reads out a timer: ' + nx[0] + ' (check P, fix 5)'); }
+    // fix 6: lines that said something false: the ranged told to kill the Rawlings before the gold ring; "Egg shells are breaking" gold to everyone at 5:31;
+    // a "Your egg opens" bar while its shell is up for you to break
+    { at(T.gather + 0.5, { role: 'r', team: 'P', egg: false, pat: 1 }); put([-15, 10]); const tx = jt(); if (!/^Go to the gold ring/.test(tx)) bad('a ranged off the gold ring once the coils are done reads: ' + tx + ' (the prompts audit, Nov 16: "Kill the Rawlings, then go to the diamond line", the reverse of the plan; check P, fix 6)');
+      const w = dbg.S.warns.find((x) => Math.abs(x.t - T.gather) < 1); if (!w || !/^Coils done: Go to the gold ring/.test(w.text)) bad('the ranged\'s Rawlings call is: ' + (w && w.text) + ' (check P, fix 6)');
+      if (dbg.S.warns.some((x) => /shells are breaking/i.test(x.text) || Math.abs(x.t - T.shell0) < 0.05)) bad('a call still says the egg shells are breaking at 5:31 (the prompts audit, Nov 16: your shell is up until you hit it; check P, fix 6)');
+      at(T.land + 1, { role: 'm', team: 'Y', egg: true, pat: 1 }); const mb = dbg.mods().map((b) => b.name); if (mb.some((n) => /opens/.test(n))) bad('with your egg\'s shell up for you to break, the bars show ' + mb.join(', ') + ' (it jumped 13, 10, 6, 2 as you hit; check P, fix 6)');
+      const me2 = at(T.call + 2, { role: 'm', team: 'Y', egg: true, pat: 1 }), e2 = G().eggs.find((q) => q.id === me2), m2 = dbg.mods().filter((b) => Math.abs(b.at - e2.land) < 1.5);
+      if (m2.length !== 1) bad('your egg\'s landing has ' + m2.length + ' boss-mod bars: ' + m2.map((b) => b.name).join(', ') + ' (one, yours: "Your egg lands" stood next to "Call of the Serpent"; the prompts audit, Nov 16; check P, fix 6)'); }
+    // fix 7: the Rawlings call fires with the job line, not after it
+    { const w = dbg.S.warns.find((x) => /Rawlings/.test(x.text)); if (!w || w.t > T.gather + 1e-6) bad('the Rawlings call comes ' + (w ? ((w.t - T.gather) * 1000).toFixed(0) + ' ms after' : 'never, nor with') + ' the job line that sends you to them (the prompts audit, Nov 16; check P, fix 7)'); }
+    // fix 8: the pattern call names YOUR first soak (it said "Triangle first" to a Yellow player whose first soak is at Circle); your own circle has no team
+    // label, the others' have their team's without "(yours)"
+    { const me = at(T.slams[1] - 1, { role: 'm', team: 'Y', egg: false, pat: 2 }), f = dbg.S.soaks.find((s) => s.group.includes(me)), w = dbg.S.warns.find((x) => Math.abs(x.t - dbg.S.soaks[0].cast) < 0.01 && /Spectral Coils/.test(x.text));
+      if (!w || !w.text.includes('your soak at ' + ctx.pgIntMk(f.spot))) bad('the pattern call doesn\'t name your first soak (' + ctx.pgIntMk(f.spot) + '): ' + (w && w.text) + ' (the prompts audit, Nov 16: big "Triangle first" for Yellow on pattern 2; check P, fix 8)');
+      const L0 = labelsAt(G().t), mineL = L0.filter((l) => hyp([l.x, l.y], [f.x, f.y]) < 0.01 && /team/.test(l.text)); if (mineL.length || L0.some((l) => /\(yours\)|Spectral Coil/.test(l.text))) bad('the floor labels your own soak by team, or still says "(yours)" or "Spectral Coil": ' + L0.map((l) => l.text).join(' ; ') + ' (the prompts audit, Nov 16: up to 11 labels; check P, fix 8)'); }
+    // fix 9: centre calls "Mechanic: Order", the order capitalised in the big line; gold only for the calls about your own job
+    { at(T.start + 0.2, { role: 'r', team: 'P', egg: true, pat: 2 }); const W = dbg.S.warns;
+      W.forEach((w) => { if (!/^[A-Z][^:!?]{2,39}: [A-Z]/.test(w.text)) bad('a centre call isn\'t "Mechanic: Order" with the order capitalised: ' + w.text + ' (the prompts audit, Nov 16: "go to your team\'s mark", "eight eggs incoming"; check P, fix 9)'); });
+      const gold = (w) => /class="pg-al you/.test(dbg.alerts([{ text: w.text, c: w.c }]));
+      [[T.defCue, true, 'the defensive (Q)'], [dbg.S.soaks[0].cast, true, 'your first soak'], [T.start, true, 'your egg'], [T.call, false, 'the falling eggs (raid-wide)'], [T.bubbles, false, 'the Shattering (raid-wide)'], [T.shatter, false, 'the Shattering (raid-wide)']].forEach(([t0, want, what]) => {
+        const L0 = W.filter((w) => Math.abs(w.t - t0) < 0.01); if (!L0.length) bad('no call for ' + what + ' (check P, fix 9)');
+        L0.forEach((w) => { if (gold(w) !== want) bad('the call for ' + what + ' is ' + (want ? 'not gold' : 'gold') + ': ' + w.text + ' (the prompts audit, Nov 16: the only key-press call was white, "Personals now"; check P, fix 9)'); }); }); }
+    // fix 10: Q's "now": at the cue the line adds "Press Q" after the move line and the Q button glows; once pressed, neither
+    { at(T.defCue + 0.2, { role: 'h', team: 'B', egg: false, pat: 1 }); G().def = -1e9; const tx = jt();
+      if (!/\. Press Q/.test(tx) || !(dbg.P2.qGlow && dbg.P2.qGlow())) bad('at the defensive\'s cue the line is "' + tx + '" and the Q button ' + (dbg.P2.qGlow && dbg.P2.qGlow() ? 'glows' : 'doesn\'t glow') + ' (the prompts audit, Nov 16: no "now" moment for Q; check P, fix 10)');
+      G().def = G().t; if (/Press Q/.test(jt()) || (dbg.P2.qGlow && dbg.P2.qGlow())) bad('after pressing Q the line or the button still asks for it (check P, fix 10)'); }
+    // Flex's rule (Nov 16, "i feel like the game confuses people saying timestamps"): no clock time and no second count in anything the player reads from this
+    // part: job lines, centre calls, floor labels, the start card, the setup's sentences, the Play line, the Start list (the bars count; the report may say
+    // when a mistake happened)
+    { const SET = new Set(); const sv = dbg.P2.pick;
+      for (const [role, team, egg] of [['m', 'Y', true], ['m', 'B', false], ['r', 'P', true], ['r', 'B', false], ['h', 'Y', false], ['h', 'B', false]]) for (const pat of [0, 2]) { dbg.P2.pick = { role, team, egg, pat };
+        [dbg.P2.short(), dbg.P2.asg(), dbg.P2.card().replace(/<svg[\s\S]*?<\/svg>/g, ' ')].forEach((h) => SET.add(h.replace(/<[^>]+>/g, ' | ')));
+        const su = dbg.P2.setup, M = su && su.maps; if (su) SET.add(su.say()); if (M) { SET.add(M.say()); SET.add(M.sub()); ['grp', 'egg'].forEach((k) => M.hot(k).forEach((x) => SET.add(x.title || ''))); }
+        SET.add(dbg.P2.role().job); SET.add(dbg.P2.clean); }
+      dbg.P2.pick = sv; dbg.P2.starts.forEach(([, n]) => SET.add(n));
+      (rd('practice-int.js').match(/A\.say\('(?:[^'\\]|\\.)*'/g) || []).forEach((s) => SET.add(s));
+      const all = [['job line', SEEN], ['centre call', WARN], ['floor label', LAB], ['start card or setup', SET]];
+      all.forEach(([what, S0]) => { const hit = [...S0].filter((s) => s && timey(s)); if (hit.length) bad('a ' + what + ' says a clock time or counts seconds: "' + hit.slice(0, 3).join('" / "') + '"' + (hit.length > 3 ? ' and ' + (hit.length - 3) + ' more' : '') + ' (Flex, Nov 16: "i feel like the game confuses people saying timestamps"; the prompts audit; check P)'); });
+      if (SEEN.size < 25 || LAB.size < 6 || WARN.size < 7) bad('the timestamp scan saw too little to judge (' + SEEN.size + ' job lines, ' + LAB.size + ' labels, ' + WARN.size + ' calls; check P)');
+      const src = rd('practice-int.js'), body = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i + 1); return i >= 0 && j > i ? src.slice(i, j) : ''; }, jb = body('const dodgeLine = ', 'const upNext = ');
+      if (!jb || /clk\(|toFixed\(|Math\.ceil\(/.test(jb)) bad('the job line\'s code formats a clock time or a count again (clk, toFixed or Math.ceil in jobText; check P)'); } }
+  catch (e) { bad('the prompts audit\'s checks crashed: ' + e.message + ' (check P)'); }
 }
 
 module.exports = checks; module.exports.load = load;
