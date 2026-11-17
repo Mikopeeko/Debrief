@@ -189,7 +189,7 @@ function checks(H, say) {
     try { d.at(30, 'r3', { seed: 3 }); const c = die(); const h = c ? c.innerHTML : ''; if (!/Keep going/.test(h)) bad('the death card has no Keep going (check L)');
       const btn = c && c.querySelector('.pg-again'); if (!btn || typeof btn.onclick !== 'function') bad('the death card\'s second button does nothing (check L)');
       else { btn.onclick(); const e = R.card().innerHTML; if (!/pg-end/.test(e) || /pg-setup/.test(e)) bad('the death card\'s second button opens ' + (/pg-setup/.test(e) ? 'the setup card with no result' : 'no result screen') + ': a death ends with the grade and your mistakes (check L)');
-        else { if (!/stopped at 0:30/.test(e)) bad('a run ended at 0:30 from the death card doesn\'t say where it stopped (check L)'); if (!/<b>You died<\/b>/.test(e)) bad('the result screen\'s list leaves out your death (check L)'); if (/A clean run|Every wave dodged/.test(e)) bad('a run ended by a death reads as a clean run (check L)'); } } } catch (x) { bad('the death card check crashed: ' + x.message + ' (check L)'); }
+        else { if (!/stopped early/.test(e)) bad('a run ended at 0:30 from the death card doesn\'t say it stopped early (check L)'); if (/\b\d{1,2}:\d\d\b/.test(e.replace(/<[^>]*>/g, ' '))) bad('the end screen shows a clock time (Flex, Nov 17: "dont put timestamps in the ending"; check L)'); if (!/<b>You died<\/b>/.test(e)) bad('the result screen\'s list leaves out your death (check L)'); if (/A clean run|Every wave dodged/.test(e)) bad('a run ended by a death reads as a clean run (check L)'); } } } catch (x) { bad('the death card check crashed: ' + x.message + ' (check L)'); }
     try { const RI = recLoad(H, 'mint'), di = RI.dbg; di.P2.pick = { role: 'r', team: 'P', egg: false, pat: 1 }; const me = di.P2.slotOf(); di.at(330, me, { seed: 3 }); const P2o = di.P2, had = Object.prototype.hasOwnProperty.call(P2o, 'revive'), old = P2o.revive; let rv = 0;
       P2o.revive = function () { rv++; return typeof old === 'function' ? old.apply(this, arguments) : undefined; };
       try { di.G.hp = -1; di.play(); RI.frames(2); const c = RI.card(), go = c && c.querySelector('.pg-go'); if (!c || !/You died/.test(c.innerHTML) || !go || typeof go.onclick !== 'function') bad('no Keep going on the intermission\'s death card (check L)');
@@ -201,7 +201,7 @@ function checks(H, say) {
       const e = R.card().innerHTML, m = /Right target: <b>[^<]*<\/b> moments \(([^)]*)\)/.exec(e), kinds = new Set(d.dpsList().map((q) => q.kind)), want = { egg: 'your egg', rawling: 'the Rawlings', wretch: 'the Wretch', heart: 'the heart', viper: 'the Vipers' };
       if (!m) bad('the end card at ' + end + ' s has no "Right target" line (check J)');
       else Object.entries(want).forEach(([k, w]) => { if (kinds.has(k) !== m[1].includes(w)) bad('"Right target" lists "' + m[1] + '" for moments of ' + [...kinds].join(', ') + ' (check J)'); });
-      if (/stopped at/.test(e)) bad('a run played to its end says it stopped early (check J)');
+      if (/stopped early/.test(e)) bad('a run played to its end says it stopped early (check J)'); if (/\b\d{1,2}:\d\d\b/.test(e.replace(/<[^>]*>/g, ' '))) bad('the end screen shows a clock time (Flex, Nov 17: "dont put timestamps in the ending"; check J)');
     } catch (x) { bad('the end card check crashed: ' + x.message + ' (check J)'); }
   }
 }
