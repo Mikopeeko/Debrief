@@ -21577,6 +21577,14 @@ html body #view#view .rqc-under.rvc .rvc-hide.rvc-hide.rvc-hide { display: none 
   html body.rvg #view section.pf-bars.gb-card > .g8-lg { position: absolute !important; top: 28px !important; left: 150px !important; margin: 0 !important; z-index: 1; }
   html body.rvg #view section.pf-bars.gb-card > .g8-lg .g8-lgh { display: none !important; }
 }
+
+/* The Replay tab (Nov 17, Flex: "i thnk we should move the replay into its own tab, called replay. Keep the summary overview the default for summary"):
+   Summary is always its Overview, with no Timeline / Overview switch; Replay shows only the replay (the map, the play by play and the mechanics under it).
+   In the defaultTheme layer: the score strip's own display rule is there, and a layer's !important outranks unlayered rules. */
+@layer defaultTheme {
+html:not([data-rv="replay"]) body #view#view section.dbt > .dbt-vt { display: none !important; }
+html[data-rv="replay"] body #view#view > .r212-sb.r212-sb, html[data-rv="replay"] body #view#view > .phf, html[data-rv="replay"] body #view#view section.dbt > .dbt-note, html[data-rv="replay"] body #view#view section.dbt > .dbt-why, html[data-rv="replay"] body #view#view section.dbt > .dbt-vt { display: none !important; }
+}
 </style>
 </body>
 </html>

@@ -109,7 +109,7 @@ async function snRaid() { if (snSec() === 'raid') { window.scrollTo({ top: 0 });
 // ---- each page's extras on a desktop ----
 // (the keys, at the right of Raid review's sub tabs)
 function snKeys() { const bar = $('#main > .tabbar:not(.pg-tabbar)'); if (!bar || bar.querySelector('.snv-keys')) return;
-  bar.insertAdjacentHTML('beforeend', '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>5</kbd> sub tabs · <kbd>←</kbd><kbd>→</kbd> pulls</span>'); }
+  bar.insertAdjacentHTML('beforeend', '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>' + ([...bar.querySelectorAll('.tabs > .tab')].filter((b) => b.offsetParent !== null).length || 6) + '</kbd> sub tabs · <kbd>←</kbd><kbd>→</kbd> pulls</span>'); }
 // (the context bar: the night picker and ‹ › in front of the pull and player pickers)
 function snCtx() { const tb = $('#main > .r300-tb'); if (!tb || S.page !== 'pull') return; const op = snOpen(); if (!op) return;
   let box = tb.querySelector('.snv-ctx'); const nights = snNights(), key = op.k + '|' + nights.length + '|' + (op.code || '');

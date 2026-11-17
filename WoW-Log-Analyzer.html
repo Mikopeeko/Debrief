@@ -28628,10 +28628,10 @@ function cacheTrim() { /* (Nov 15, Main's review: Summary's kept grades let go w
 // pulls) and Players. The keys stay as they were ('perf' is Graphs), so saved spots and links still open the same page.
 // (Oct 18, your pick: option B of the getting-around review: one row of tabs, and the pull strip picks one pull or the
 // whole night for every tab; Night summary is Recap on the whole night)
-const TABS = [['audit', 'Summary'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['gdz', 'Guides'], ['cmp', 'Compare']];
+const TABS = [['audit', 'Summary'], ['replay', 'Replay'], ['overview', 'Assignments'], ['rot', 'Rotation'], ['perf', 'Graphs'], ['player', 'Report card'], ['gdz', 'Guides'], ['cmp', 'Compare']];
 // (the tabs still being built: a construction sign and a hazard stripe on the tab, and a banner on the page (your call, Oct 19))
 const WIP_TABS = new Set([]); /* (your call, Oct 19: no under-construction marks on the tabs: no 🚧, no hazard stripes) */
-const TAB_ORDER = ['audit', 'rot', 'perf', 'player', 'cmp']; /* (Homework is part of each raider's Report card now (your call, Oct 22)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
+const TAB_ORDER = ['audit', 'replay', 'rot', 'perf', 'player', 'cmp']; /* (Replay, its own tab after Summary (Nov 17, Flex: "i thnk we should move the replay into its own tab, called replay. Keep the summary overview the default for summary")) */ /* (Homework is part of each raider's Report card now (your call, Oct 22)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Assignments is the Plan tab beside Home now (your call, Oct 21)) */ /* (Assignments is its own tab again: making and importing notes (your call, Oct 20)) */ /* (Guides is its own page from the menu now (your call, Oct 20)) */ /* (Assignments is inside Debriefing (your call, Oct 20)) */ // (Recap is merged into Debriefing (Oct 19))
 // (Rotation and Graphs are one page underneath: Rotation always shows Spec checks, Graphs every other view)
 const PF_TAB = (t) => t === 'perf' || t === 'rot';
 // One pull or all pulls (S.scope): Summary is the all-pulls page (every pull's mechanics and assignments, with their
@@ -28654,9 +28654,10 @@ function nightResult(it) {
   return { cls: 'best', txt: best ? 'Best: ' + pullLabel(best.b) + ' (pull ' + best.b.pull + ')' : 'No kill yet', big: best ? 'Best: ' + pullLabel(best.b) : 'No kill yet', left: best ? best.v : null, pull: best ? best.b.pull : null };
 }
 // the tabs' icons (drawn here, no game art)
-const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', hw: 'check', gdz: 'book', cmp: 'scale' };
+const TAB_IC = { me: 'home', live: 'clock', overview: 'list', audit: 'target', replay: 'play', rot: 'cycle', perf: 'bars', night: 'chart', player: 'users', hw: 'check', gdz: 'book', cmp: 'scale' };
 // what each tab is, shown when hovering it
 const TAB_TIP = {
+  replay: 'Watch the pull play out on the map, with every mechanic as it happens and the play by play beside it.',
   gdz: 'How each boss works, phase by phase: every mechanic in plain words, what to do, an animated map, and notes for tanks, healers and DPS.',
   cmp: 'One player side by side with the top players of their spec on this boss, with a teammate, or with raids that killed this boss with a group like yours.',
   live: 'The pull you picked, at a glance: the mistakes and what to fix before the next pull. It follows live logging.',
@@ -28668,7 +28669,7 @@ const TAB_TIP = {
 
   player: 'Each player\'s page, for this pull or all pulls. It shows one grade from their mechanics and Rotation, what they should fix first, and their prep.',
 };
-const TICO = { check: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/>', home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
+const TICO = { play: '<circle cx="12" cy="12" r="8.5"/><path d="M10 8.3v7.4l5.8-3.7z"/>', check: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/>', home: '<path d="M3.5 11.5 12 4.5l8.5 7"/><path d="M6 10v9.5h4.5v-5h3v5H18V10"/>', clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', list: '<rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 12.5l2 2 4.5-4.5"/>',
   target: '<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>', chart: '<path d="M4 19.5h16"/><path d="M5.5 15.5 10 10l3.5 3 5-7"/>',
   bars: '<path d="M4 20h16"/><path d="M6.5 17v-5M11 17V7M15.5 17v-8M20 17v-3"/>',
   cycle: '<path d="M19 12a7 7 0 0 1-12 4.95M5 12a7 7 0 0 1 12-4.95"/><path d="M17.5 3.5v3.8h-3.8M6.5 20.5v-3.8h3.8"/>',
@@ -29213,7 +29214,8 @@ const PATCH_NOTES = [
       'Mythic+ Summary: under the run, How we compare says what the fast run, your spec and top mean.',
       'Grades: every score now has its letter beside it in the same colour, and the raid grade is a solid tile like every other grade. S is a brighter gold, so it no longer looks like C.',
       'Report card: a raider\'s checklist opens only what needs work. Each list shows its score, passed checks fold into one green line, and each check is one plain sentence.',
-      'Graphs: the boss banner folds into the thin strip at the top and the chart is shorter, so 18 of 20 raiders fit on the first screen instead of 6.'],
+      'Graphs: the boss banner folds into the thin strip at the top and the chart is shorter, so 18 of 20 raiders fit on the first screen instead of 6.',
+      'Replay has its own tab, right after Summary: the map plays the pull with every mechanic, and the play by play sits beside it. Summary always opens on its Overview.'],
     f: ['Practice Ula\'tek: the Wretch\'s name bar goes down as you hit it in phase 1.',
       'Practice Ula\'tek: the end screen has no clock times, and its tips are real raid tips.',
       'Practice Ula\'tek: you can target Ula\'tek in phase 3.',
@@ -30465,7 +30467,11 @@ function killFlags() { const R = document.documentElement, r = S.rep, it = r && 
   R.classList.toggle('is-kill', kill); R.classList.toggle('is-first-kill', kill && first); }
 /* (Oct 29, the flicker (the user: "watch how it flickers")): a redraw of the same single pull keeps the timeline on screen as a still copy
    until the fresh one replaces it; a first draw hides the old layout until the timeline is built (2.5 s at most)) */
-function renderMain() { const one = () => S.tab === 'audit' && S.rep && !S.rep.allPulls && S.scope !== 'all', /* round 475 no wait on all pulls */ v0 = document.getElementById('view'), same = one() && v0 && v0._dbtItem === S.item;
+/* (Replay is Summary's page with only the replay showing: 'replay' from a link, a tab or Back becomes Summary's tab with S.dview 'replay'; the page
+   reads html[data-rv]. One pull only: on All pulls there's no replay, so Summary shows (Nov 17, Flex: "i thnk we should move the replay into its own tab, called replay. Keep the summary overview the default for summary")) */
+const rvNorm = () => { if (S.tab === 'replay') { S.tab = 'audit'; S.dview = 'replay'; } try { document.documentElement.dataset.rv = S.tab === 'audit' && S.dview === 'replay' && S.scope !== 'all' ? 'replay' : ''; } catch (e) { /* (Summary) */ } };
+const rvOnTab = (k) => (k === 'replay' ? S.tab === 'audit' && S.dview === 'replay' && S.scope !== 'all' : k === 'audit' ? S.tab === 'audit' && !(S.dview === 'replay' && S.scope !== 'all') : S.tab === k);
+function renderMain() { rvNorm(); const one = () => S.tab === 'audit' && S.rep && !S.rep.allPulls && S.scope !== 'all', /* round 475 no wait on all pulls */ v0 = document.getElementById('view'), same = one() && v0 && v0._dbtItem === S.item;
   const g0 = same ? v0.querySelector(':scope > .dbt') : null, gc = g0 ? g0.cloneNode(true) : null, gcl = v0 ? ['dbt-on', 'dbt-full'].filter((c) => v0.classList.contains(c)) : [];
   const out = renderMain0(), v1 = document.getElementById('view');
   if (v1) v1._dbtOne = one(); if (v1 && one()) { v1._dbtItem = S.item; if (gc && !v1.querySelector(':scope > .dbt')) { gc.classList.add('dbt-ghost'); v1.insertBefore(gc, v1.firstChild); gcl.forEach((c) => v1.classList.add(c)); }
@@ -30506,15 +30512,15 @@ function renderMain0() {
     // the Pull recap first (with a red dot while live logging is on), then the rest, each group under its label;
     // every tab is about this raid (your teams are under Your teams in the top bar, on every page)
     '<div class="tabbar"><nav class="tabs" role="tablist">' + (() => { const name = new Map([['live', 'Recap']].concat(TABS));
-      const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()) || soon, tt = soon ? 'Coming soon' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
-        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (S.tab === k || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
+      const tab = (k) => { const l = name.get(k), soon = (k === 'cmp' && CMP_OFF()) || (k === 'gdz' && GDZ_OFF()), off = (k === 'perf' && PERF_OFF()) || (k === 'rot' && SPEC_OFF()) || (k === 'overview' && ASG_OFF()) || (k === 'replay' && S.scope === 'all') || soon, tt = soon ? 'Coming soon' : k === 'replay' && off ? 'Pick one pull to watch its replay' : k === 'overview' && off ? 'In Development' : off ? 'Under development' : TAB_TIP[k] || '';
+        return '<button class="tab' + (WIP_TABS.has(k) ? ' tab-uc' : '') + (rvOnTab(k) || (k === 'audit' && S.tab === 'overview' && !TAB_ORDER.includes('overview')) ? ' on' : '') + (k === 'live' && LIVE.on ? ' tab-live' : '') + (off ? ' tab-off' : '') + '" data-t="' + k + '" role="tab"' + (off ? ' aria-disabled="true"' : '') + ' data-tt="' + esc(tt) + '" aria-description="' + esc(tt) + '">' + (k === 'live' && LIVE.on ? '<span class="tl-live"></span>' : tabIco(k)) + l +
         (k === 'audit' && LIVE.on ? '<span class="tab-lv" title="Following live: new pulls show up here" aria-label="Live">Live</span>' : '') /* (your idea, Oct 20: a live icon on Debriefing) */ /* (round 455: no count badge on Debriefing; Flex: "no one would know what it is") */ + (WIP_TABS.has(k) ? '<span class="tab-wip" title="Under construction" aria-label="Under construction">🚧</span>' : '') + (soon ? '<span class="tab-soon">Coming soon</span>' : '') + '</button>'; };
       if (S.page === 'guides') S.page = 'pull'; /* round 479 guides tab: a raid page is being drawn, so Guides isn't lit (from a guide, a raid tab drew both lit) */
       return meTabHtml(S.tab === 'me') + TAB_ORDER.map(tab).join('') + mpTabHtml(); })() + '</nav>' + topPick() + tbPull() + '</div>' + /* (Mythic+ when the open report has a key, Nov 1) */
     (WIP_TABS.has(S.tab) ? '<div class="cz-slot">' + (S.tab === 'rot' ? rotSite() : rotSite('the ' + ({ overview: 'Assignments', player: 'Report card', cmp: 'Compare' }[S.tab] || 'this') + ' tab', 'it')) + '</div>' : '') + // (the building site, outside the view, so a page that redraws itself keeps it)
     '<section id="view"></section>';
   bindTopPick();
-  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } if (b.dataset.t === 'me') { home(); return; } /* (the one Home: the same as the logo and the front page (Flex, Nov 6)) */ S.tab = b.dataset.t; renderMain(); }));
+  $('#main').querySelectorAll('.tab').forEach((b) => (b.onclick = () => { if (b.classList.contains('tab-off')) { b.focus(); return; } if (b.dataset.t === 'me') { home(); return; } /* (the one Home: the same as the logo and the front page (Flex, Nov 6)) */ S.tab = b.dataset.t; if (S.tab === 'audit') S.dview = 'sum'; renderMain(); }));
   // (the pinned bar's ‹ › open the boss's earlier or later pull on the same tab; ☰ goes up to the menu and opens it)
   { const m = $('#main .tbp-menu'); if (m) m.onclick = () => { window.scrollTo({ top: 0 }); const t = $('#tbMenu'); if (t) t.click(); }; }
   renderList(); // (the pull strip follows the pull and the scope on screen; the wipe filter sits at its right end)
@@ -62275,7 +62281,7 @@ const navSel = () => (S.tab === 'rot' ? S.specSel : S.tab === 'player' ? S.rcbSe
 // (and back: a link's or a step's player goes onto its tab)
 function navApplySel(tab, p) { if (tab === 'hw') tab = 'player'; /* (old Homework links (Oct 22)) */ if (!p) return; if (tab === 'rot') S.specSel = p; else if (tab === 'player') S.rcbSel = p; else if (tab === 'hw') S.hwSel = p; else if (tab === 'audit') setOneP(p); }
 function navState() {
-  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab, scope: S.scope || 'pull', ...(S.tier && S.scope === 'all' ? { tier: 1 } : {}), sel: navSel(), ...(S.tab === 'me' && S.progMine ? { mine: 1, g: S.progView } : {}) /* (round 342 summary back) */ }; }
+  if (S.page === 'pull' && S.item) { const it = S.item; return { nav: 1, v: 'p', code: it.wcl ? it.wcl.code : null, fight: it.wcl ? it.wcl.fight : null, bi: S.index && S.index.bosses ? S.index.bosses.indexOf(it) : -1, ...shrNav(it), tab: S.tab === 'audit' && S.dview === 'replay' && S.scope !== 'all' ? 'replay' : S.tab, scope: S.scope || 'pull', ...(S.tier && S.scope === 'all' ? { tier: 1 } : {}), sel: navSel(), ...(S.tab === 'me' && S.progMine ? { mine: 1, g: S.progView } : {}) /* (round 342 summary back) */ }; }
   if (S.page === 'prog') return { nav: 1, v: 'g', g: S.progView == null ? null : S.progView, mine: S.progMine ? 1 : 0 }; // (mine: your own page, not your team's)
   if (S.page === 'home') return { nav: 1, v: 'h' };
   if (S.page === 'guides') return { nav: 1, v: 'gd', b: S.gdzBoss || null, d: S.gdzDiff || null };
@@ -87643,7 +87649,7 @@ async function snRaid() { if (snSec() === 'raid') { window.scrollTo({ top: 0 });
 // ---- each page's extras on a desktop ----
 // (the keys, at the right of Raid review's sub tabs)
 function snKeys() { const bar = $('#main > .tabbar:not(.pg-tabbar)'); if (!bar || bar.querySelector('.snv-keys')) return;
-  bar.insertAdjacentHTML('beforeend', '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>5</kbd> sub tabs · <kbd>←</kbd><kbd>→</kbd> pulls</span>'); }
+  bar.insertAdjacentHTML('beforeend', '<span class="snv-keys" aria-hidden="true">Keys <kbd>1</kbd>–<kbd>' + ([...bar.querySelectorAll('.tabs > .tab')].filter((b) => b.offsetParent !== null).length || 6) + '</kbd> sub tabs · <kbd>←</kbd><kbd>→</kbd> pulls</span>'); }
 // (the context bar: the night picker and ‹ › in front of the pull and player pickers)
 function snCtx() { const tb = $('#main > .r300-tb'); if (!tb || S.page !== 'pull') return; const op = snOpen(); if (!op) return;
   let box = tb.querySelector('.snv-ctx'); const nights = snNights(), key = op.k + '|' + nights.length + '|' + (op.code || '');
@@ -89021,7 +89027,7 @@ function dsGuides() {
         return '<div><span>' + E(k) + '</span><b' + (/death/i.test(k) && +val > 0 ? ' class="dbt-r"' : vc ? ' style="color:' + vc + '"' : '') + '>' + E(val) + '</b><em class="' + cl + '">' + E(s) + '</em></div>'; }).join('') +
       '<i></i>' + '' /* (Every player: removed (the user, Oct 28: this can be removed); the table stays on Graphs) */ + '' /* (Raid lead's recap: removed (the user, Oct 28: "Outdated, dont need it"); the old recap box stays hidden) */ + '</div>';
     var d = document.createElement('section'); d.className = 'dbt'; d._cs = cs; d._M = M; /* (the moments, for the Why rows' last pass (Nov 3)) */ d.innerHTML = h; v.insertBefore(d, v.firstChild);
-    noteLine(v); { var pv = ''; try { pv = localStorage.getItem('wla-dbt-view') || ''; } catch (e) { pv = ''; } full(v, d, pv === 'full', true); if (pv === 'full') [0, 80, 400].forEach(function (ms) { setTimeout(function () { if (d.isConnected && !v.classList.contains('dbt-full') && d.querySelector('.dbt-vt [data-dbt="full"].on')) full(v, d, true, true); }, ms); }); } /* (the viewer's own choice of layout) */ { var wk = d.querySelector('.dbt-why > .dbt-k'); if (wk && TOPC) wk.insertAdjacentHTML('afterend', '<span class="dbt-c5w">' + TOPC + '</span>'); } { var nb = d.querySelector('.dbt-nums'), vt = d.querySelector('.dbt-vt'); if (nb && vt) d.insertBefore(nb, vt); } /* (the numbers sit under the top card, above the timeline (the user, Oct 28)) */ v.classList.add('dbt-on'); v.classList.remove('dbt-full');
+    noteLine(v); { var pv = document.documentElement.dataset.rv === 'replay' ? 'tl' : 'full'; /* (Summary is always the Overview; the replay is the Replay tab (Nov 17, Flex: "i thnk we should move the replay into its own tab, called replay. Keep the summary overview the default for summary")) */ full(v, d, pv === 'full', true); if (pv === 'full') [0, 80, 400].forEach(function (ms) { setTimeout(function () { if (d.isConnected && !v.classList.contains('dbt-full') && d.querySelector('.dbt-vt [data-dbt="full"].on')) full(v, d, true, true); }, ms); }); } /* (the viewer's own choice of layout) */ { var wk = d.querySelector('.dbt-why > .dbt-k'); if (wk && TOPC) wk.insertAdjacentHTML('afterend', '<span class="dbt-c5w">' + TOPC + '</span>'); } { var nb = d.querySelector('.dbt-nums'), vt = d.querySelector('.dbt-vt'); if (nb && vt) d.insertBefore(nb, vt); } /* (the numbers sit under the top card, above the timeline (the user, Oct 28)) */ v.classList.add('dbt-on'); v.classList.remove('dbt-full');
     var tl = d.querySelector('.dbt-tl'), side = d.querySelector('.dbt-side');
     var svG = function (m) { var lv = m.death || m.dead ? 5 : (m.sv || 2); return lv >= 4 ? 's' : lv === 3 ? 'm' : 'n'; };
     var vis = function (m) { if (F.role && !hasRole(m, F.role)) return 0; if (m.st !== 'ok' && !F.sev[svG(m)]) return 0; return vis0(m); };
@@ -97896,6 +97902,14 @@ html body #view#view .rqc-under.rvc .rvc-hide.rvc-hide.rvc-hide { display: none 
   html body.rvg #view section.pf-bars.gb-card { position: relative !important; }
   html body.rvg #view section.pf-bars.gb-card > .g8-lg { position: absolute !important; top: 28px !important; left: 150px !important; margin: 0 !important; z-index: 1; }
   html body.rvg #view section.pf-bars.gb-card > .g8-lg .g8-lgh { display: none !important; }
+}
+
+/* The Replay tab (Nov 17, Flex: "i thnk we should move the replay into its own tab, called replay. Keep the summary overview the default for summary"):
+   Summary is always its Overview, with no Timeline / Overview switch; Replay shows only the replay (the map, the play by play and the mechanics under it).
+   In the defaultTheme layer: the score strip's own display rule is there, and a layer's !important outranks unlayered rules. */
+@layer defaultTheme {
+html:not([data-rv="replay"]) body #view#view section.dbt > .dbt-vt { display: none !important; }
+html[data-rv="replay"] body #view#view > .r212-sb.r212-sb, html[data-rv="replay"] body #view#view > .phf, html[data-rv="replay"] body #view#view section.dbt > .dbt-note, html[data-rv="replay"] body #view#view section.dbt > .dbt-why, html[data-rv="replay"] body #view#view section.dbt > .dbt-vt { display: none !important; }
 }
 </style>
 </body>
