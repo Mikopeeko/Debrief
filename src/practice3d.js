@@ -959,7 +959,8 @@ function pg3d(host, A) {
   // (the minimap and the "2D | 3D" switch under it: the labels and names keep out of that corner too. Main, Nov 15: at 0:42 a name sat over the switch.
   // Since the raider-style screen (Nov 15) her boss frame and your Mistakes sit under them, and the boss-mod bars on the left: the labels keep out of those
   // too. The bars come and go, so every box is read each frame (the HUD is already laid out by then))
-  const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
+  // (look C, Nov 16: the fight path sits in .pg-timers' place, and the coach card and the result chips on the left: the labels keep out of those too)
+  const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers', '.pg-coach', '.pg-res'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
   const RNG = document.createRange(), BX = [], LQ = [], PQ = [], HB = [], CQ = [];
   const bands = () => { BX.length = 0; let hr = null;
     for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
