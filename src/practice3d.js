@@ -67,7 +67,8 @@ const PG3D_MON = {
   ravenous: { url: 'https://cdn.jsdelivr.net/gh/castle-engine/castle-engine@deb5d9091322aa64aad042c9428f6ce330b79ede/examples/delphi/cpp_builder/window/data/Dino.gltf', h: 6.2, tint: '#ff9a8a', clips: { idle: /^idle$/i, move: /^walk$/i } },
   wretch: { url: 'https://cdn.jsdelivr.net/gh/jtydhr88/ComfyUI-mesh2motion@11fe6b7aaa5eac60afa3d726389cd9dd870ed1f6/mesh2motion-ui/animations/kaiju-animations.glb', h: 5, tint: '#c8d46a', clips: { idle: /^idle$/i, move: /^walk$/i } },
   clutch: { url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /|idle$/i, move: /|walk$/i } },
-  viper: { url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 3.2, hover: 1.6, turn: -Math.PI / 2, clips: { idle: /wasp_flying/i, move: /wasp_flying/i } }, /* (a stinging wasp; it faces +x, so a quarter turn) */
+  viper: { url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 4.4, hover: 1.6, paint: { Yellow: [0.30, 0.48, 0.35], Black: [0.15, 0.38, 0.26], Orange: [0.38, 0.07, 0.05], LightBlue: [0.10, 0.26, 0.17] },
+    bones: { WingL: [1.7, 1.7, 1.7], WingR: [1.7, 1.7, 1.7], Abdomen: [1, 1.3, 1], Abdomen2: [0.88, 1.2, 0.88], Abdomen3: [0.85, 1.2, 0.85], Sting: [0.8, 1.1, 0.8], TopLeg1L: [0.01, 0.01, 0.01], TopLeg1R: [0.01, 0.01, 0.01], MidLeg1L: [0.01, 0.01, 0.01], MidLeg1R: [0.01, 0.01, 0.01], BottomLeg1L: [0.01, 0.01, 0.01], BottomLeg1R: [0.01, 0.01, 0.01] }, /* (more serpent, Flex: "making the wings a bit bigger and more serpent looking": big dark wings, a long curled tail, no legs) */ turn: -Math.PI / 2, clips: { idle: /wasp_flying/i, move: /wasp_flying/i } }, /* (a stinging wasp; it faces +x, so a quarter turn) */
   shrieker: { url: 'https://static.poly.pizza/90ed3740-d8c4-4910-88ce-ac2ed426022d.glb', h: 3.2, hover: 2.2, clips: { idle: /|flying_idle$/i, move: /|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
@@ -210,7 +211,7 @@ function pg3dShapes(A, t) {
     P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
   // (the monsters' plates, Flex, Nov 16: "Put healthbars over the monsters heads with the names though": every mob you can hit within 45 yd
   //  gets its name and a red health bar over its head (as tall as its model); the floating name labels they had are dropped)
-  const MOBH = { rawling: 1.6, viper: 4.9, wretch: 5, warden: 5.8, clutch: 2.4, shrieker: 5.5, ds: 5.8, dsx: 5.8, doomscale: 5.8, rav: 6.2, ravenous: 6.2 }, mobs = [];
+  const MOBH = { rawling: 1.6, viper: 6.1, wretch: 5, warden: 5.8, clutch: 2.4, shrieker: 5.5, ds: 5.8, dsx: 5.8, doomscale: 5.8, rav: 6.2, ravenous: 6.2 }, mobs = [];
   (A.tgts ? A.tgts() : []).forEach((o) => { if (!o || !o.p || !/rawling|viper|wretch|warden|clutch|shriek|^ds|doom|rav/i.test(String(o.kind || ''))) return; const d = Math.hypot(o.p[0] - G.x, o.p[1] - G.y); if (d > 45) return;
     mobs.push(o.p); P({ k: 'plate', id: 'mob:' + (o.key || o.kind + ':' + o.p.join(',')), x: o.p[0], y: o.p[1], name: String(o.name || o.kind).slice(0, 34), c: '#ffb0a3', bar: '#d8483e', hp: o.max ? Math.max(0, Math.min(1, o.hp / o.max)) : 1, o: 1, show: false, why: 'mob', mob: true, h: MOBH[o.kind] || 2.75, d }); });
   for (let i = out.length - 1; i >= 0; i--) { const q = out[i]; if (q.k === 'label' && /Rawling|Viper|Wretch|Warden|Doomscale|Clutch|Shrieker/.test(q.text || '') && mobs.some((p) => Math.hypot(p[0] - q.x, p[1] - q.y) < 5)) out.splice(i, 1); }
@@ -745,6 +746,8 @@ function pg3d(host, A) {
     Promise.all([pg3dMeLoad(T, F.url), F.anim ? pg3dMeLoad(T, F.anim) : null]).then(([g, g2]) => { if (dead) return; const root = g.scene;
     (F.hide || []).forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
     const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = (F.h || 2.3) / h; root.scale.set(k * (F.wide || 1), k, k * (F.wide || 1)); /* (a raider 2.3 yd tall; a monster as tall as its old shape, F.h) */
+    if (F.bones) Object.keys(F.bones).forEach((n) => { const b = root.getObjectByName(n), v = F.bones[n]; if (b) b.scale.set(v[0], v[1], v[2]); }); /* (bones: a part made bigger, longer or gone; the model's clips don't scale bones, so it stays) */
+    if (F.paint) root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { const c = F.paint[x.name]; if (c && x.color) x.color.setRGB(c[0], c[1], c[2]); }); }); /* (paint: a material's own colour by name, e.g. the wasp in the snakes' greens) */
     if (F.tint) root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { if (x.color) x.color.multiply(new T.Color(F.tint)); }); }); /* (a monster's own colours, tinted: this load's materials only) */
     (F.hold || []).forEach(([n, b]) => { const o = g2 && g2.scene.getObjectByName(n), bone = root.getObjectByName(b); if (o && bone) bone.add(o); }); /* (a borrowed staff, sword or shield in its hand) */
     const anim = g2 ? (g2.animations || []).map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !!root.getObjectByName(T.PropertyBinding.parseTrackName(tr.name).nodeName)); return c1; }) : (g.animations || []); /* (borrowed clips, only the tracks for bones it has) */
