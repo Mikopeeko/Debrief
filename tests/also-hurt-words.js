@@ -22,10 +22,11 @@ module.exports = function alsoHurtWords(say) {
   has("'Venomfang stayed on ' + took + ' before ' + nm0(x.by) + ' dispelled it.'", 'Venomfang reads "X took N s to dispel it" again', en);
   has("free[0] + ': dispel the next Venomfang as soon as it lands.'", 'Venomfang\'s next step reads "X takes the next Venomfang" again', en);
   has("' and had to pick up soul fragments too.'", 'the Gloombomb clip reads "so they also had to collect souls" again', en);
-  has("'Was mind controlled again when their own ghost caught up with them.'", 'a ghost that caught its player reads "reached them and mind controlled them again" again', en);
-  has("' was mind controlled again at ' + h.fmtT(x.t) + ' when their own ghost caught up with them.'", 'the ghost panel reads "reached them at" again', en);
+  has("'Their ghost caught up with them, and they were mind controlled.'", 'a ghost that caught its player says "again" or "reached them" again (Dreadmarch is the mind control, Manifestation of Dread the ghosts)', en);
+  has("'\\'s ghost caught up with them at ' + h.fmtT(x.t) + ', and they were mind controlled.'", 'the ghost panel says "again" or "reached them at" again', en);
   has('/^(?:Got|Was) clipped by/.test(q.detail', 'the wipe reader stopped counting the bombs that went off in a feared raid (with the new clip words, bcA9 fight 10 and agt6 fight 4 lost their bombs)', en);
-  let ak = ''; try { ak = fs.readFileSync(path.join(__dirname, 'answer-key.js'), 'utf8'); } catch (e) { ak = ''; } if (ak && (ak.match(/own ghost caught up with them/g) || []).length < 2) bad('the answer key no longer reads the new ghost words, so it finds no ghost that caught its player (57 mismatches on Nov 17)');
+  let ak = ''; try { ak = fs.readFileSync(path.join(__dirname, 'answer-key.js'), 'utf8'); } catch (e) { ak = ''; } if (ak && (ak.match(/ghost caught up with them, and they were mind controlled/g) || []).length < 2) bad('the answer key no longer reads the new ghost words, so it finds no ghost that caught its player (57 mismatches on Nov 17)');
+  if (sh.indexOf('.dbt-why .dbt-add .ah-ln .ahg-ln:not(:has(> .ahg-ln))::before') < 0) bad('Also hurt lost its bullets: each time on its own line (Nov 17, Flex: "format this with bullets so you can see each line clearly")', sh);
   if (en.indexOf("(free.length === 1 ? ' had a dispel ready' : ' had dispels ready')") < 0) bad('the Venomfang sentence lost "had dispels ready", which the answer key reads to count the dispellers');
 };
 if (require.main === module) { let n = 0; module.exports((a, b, m) => { n++; console.log('[' + b + '] ' + m); }); console.log('Also hurt wording, Nov 17: ' + (n ? n + ' problem(s)' : 'OK')); process.exit(n ? 1 : 0); }

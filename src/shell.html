@@ -21635,6 +21635,14 @@ html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > .dbt-cht { col
 html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > .sm-resic { display: inline-grid; place-items: center; width: 20px; height: 20px; color: #45c15c; font-weight: 800; }
 html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > b { color: #45c15c; font-weight: 700; }
 }
+
+/* Also hurt: each time on its own bulleted line (Nov 17, Flex: "Is there any way to format this with bullets so you can see each line clearly?"). Styling only. */
+@layer defaultTheme {
+html body #view#view#view .dbt-why .dbt-add .ah-ln .ahg-ln:not(:has(> .ahg-ln)), html body #view#view#view .dbt-why .dbt-add .ah-ln:not(:has(.ahg-ln)) { position: relative; display: block; padding-left: 16px !important; margin: 0 0 4px !important; }
+html body #view#view#view .dbt-why .dbt-add .ah-ln .ahg-ln:not(:has(> .ahg-ln))::before, html body #view#view#view .dbt-why .dbt-add .ah-ln:not(:has(.ahg-ln))::before { content: ''; position: absolute; left: 3px; top: .62em; width: 5px; height: 5px; border-radius: 50%; background: #8b929c; }
+html body #view#view#view .dbt-why .dbt-add .ah-ln .ahg-ln:has(> .ahg-ln) { padding-left: 0 !important; margin: 0 !important; }
+html body #view#view#view .dbt-why .dbt-add .ahg-nx { margin-top: 6px !important; }
+}
 </style>
 </body>
 </html>

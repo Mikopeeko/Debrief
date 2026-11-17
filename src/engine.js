@@ -4851,8 +4851,8 @@ function buildCoiledAltar(ev, r, h) {
       reach.push({ t: e.t, g: e.dst });
     }
     for (const x of reach) {
-      M(x.t, pname(x.g), 'manifestation of dread', 'Medium', 'Was mind controlled again when their own ghost caught up with them.', 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
-      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true, say: pname(x.g) + ' was mind controlled again at ' + h.fmtT(x.t) + ' when their own ghost caught up with them.' }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { txt: '' }] });
+      M(x.t, pname(x.g), 'manifestation of dread', 'Medium', 'Their ghost caught up with them, and they were mind controlled.' /* (no "again": Dreadmarch is the mind control and Manifestation of Dread the ghosts, two mechanics (Nov 17, Flex)) */, 'Your ghost only moves while you aren\'t looking at it. Turn to face it as soon as it spawns and keep it in view.');
+      ghItems.push({ t: x.t, row: [{ txt: 'Ghost reached its player', bad: true, say: pname(x.g) + '\'s ghost caught up with them at ' + h.fmtT(x.t) + ', and they were mind controlled.' }, { t: x.t }, { p: pname(x.g) }, { txt: 'mind controlled again', bad: true }, { txt: '' }] });
     }
     /* (Nov 8, Flex: a ghost that wasn't in the frontal is its player's Manifestation of Dread mistake, so it sits with the ghosts; three or more missed by one cast stay the frontal's aim (M7)) */
     for (const r0 of (sSs ? sSs.rows : [])) { if (!r0[4] || !r0[4].warn || +r0[4].txt >= 3) continue; ghItems.push({ t: r0[0].t, row: [{ txt: 'Ghost missed the frontal', warn: true, say: r0[4].why }, { t: r0[0].t }, { txt: '' }, { txt: r0[4].why, warn: true, why: r0[4].why, next: r0[4].next }, { txt: '' }] }); }
