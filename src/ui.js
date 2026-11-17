@@ -2147,7 +2147,9 @@ const PATCH_NOTES = [
       'Grades: every score now has its letter beside it in the same colour, and the raid grade is a solid tile like every other grade. S is a brighter gold, so it no longer looks like C.',
       'Report card: a raider\'s checklist opens only what needs work. Each list shows its score, passed checks fold into one green line, and each check is one plain sentence.',
       'Graphs: the boss banner folds into the thin strip at the top and the chart is shorter, so 18 of 20 raiders fit on the first screen instead of 6.',
-      'Replay has its own tab, right after Summary: the map plays the pull with every mechanic, and the play by play sits beside it. Summary always opens on its Overview.'],
+      'Replay has its own tab, right after Summary: the map plays the pull with every mechanic, and the play by play sits beside it. Summary always opens on its Overview.',
+      'Summary, How it went: one phase label above the rows instead of P2 on every row, the root cause as one row, deaths tagged plainly so only the root cause is in red, and ▶ Watch on every row opens Replay at that second.',
+      'Summary: the "No NSRT note" box is one quiet line.'],
     f: ['Practice Ula\'tek: the Wretch\'s name bar goes down as you hit it in phase 1.',
       'Practice Ula\'tek: the end screen has no clock times, and its tips are real raid tips.',
       'Practice Ula\'tek: you can target Ula\'tek in phase 3.',
@@ -40674,6 +40676,44 @@ function rvcCard() { document.querySelectorAll('.rqc-under.r437').forEach((g) =>
 const rvgOn = () => { const on = !!document.querySelector('.tabbar .tab.on[data-t="perf"]') && !!document.querySelector('#bossHead header.fight'); if (document.body.classList.contains('rvg') !== on) { document.body.classList.toggle('rvg', on); window.dispatchEvent(new Event('scroll')); } };
 (function () { const f11 = dsBars; dsBars = function (root) { f11(root); try { rvgOn(); } catch (e) { /* (the banner stays) */ } }; })();
 document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.tabbar [data-t]')) [0, 250, 800].forEach((t) => setTimeout(() => { try { rvgOn(); } catch (x) { /* (the banner stays) */ } }, t)); }, true);
+// ===== Summary, how it looks (Nov 17, Flex: "ok go for it", of the marked mock-up; round 1 of 2, the looks only). How it went: one phase label above
+// its rows instead of "P2" on every row; the root cause as one row (the mechanic's row takes the deaths it caused; the old root row stays in the page,
+// hidden, so every count reads it as before); deaths tagged a quiet "Death" and only the root cause in red; ▶ Watch on every row opens Replay at that
+// second. A display pass over the finished rows: it changes nothing the counts or the wipe reading use. Owner: the Design studio chat. =====
+const smE = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const smSec = (t) => { const m = String(t || '').match(/(\d+):(\d\d)/); return m ? +m[1] * 60 + +m[2] : null; };
+const smPhaseName = (chip) => { let nm = ''; try { const r0 = window.dbtMapKit && window.dbtMapKit().S.rep, ps = (r0 && r0.module && r0.module.phases) || []; const g = /^P(\d+)$/i.exec(chip || ''); const p = ps.find((q) => (g ? new RegExp('^P' + g[1] + '\\b', 'i').test(q.name || '') : String(q.name || '').toLowerCase().startsWith(String(chip || '').toLowerCase()))); nm = p ? p.name : ''; } catch (e) { nm = ''; }
+  const g2 = /^P(\d+)\s*(.*)$/i.exec(nm || chip || ''); return g2 ? 'Phase ' + g2[1] + (g2[2] ? ' · ' + g2[2] : '') : /^int/i.test(chip || '') ? 'Intermission' : (nm || chip || ''); };
+function smDisplay() { document.querySelectorAll('#view .dbt-why .dbt-chn').forEach((chn) => { try {
+  const rows = [...chn.querySelectorAll(':scope > .dbt-chr, :scope > .hiw-fold > .dbt-chr')];
+  // (1. the phase: one label above each run of rows in the same phase)
+  /* (it only touches the page when something has to change: an unchanged pass writes nothing, so it never wakes the page's own redraws (Nov 17: a pass that took its labels out and put them back each time kept the page redrawing)) */
+  const want = new Map(); let last = null;
+  for (const r of rows) { const box = r.parentElement.classList.contains('hiw-fold') ? r.parentElement : r; if (box.style.display === 'none' || r.style.display === 'none' || r.classList.contains('sm-hid')) continue; const c = r.querySelector('.dbt-chp'), ch = c ? c.textContent.trim() : '';
+    if (ch && ch !== last) want.set(box, smPhaseName(ch)); if (ch) last = ch; }
+  const nextOf = (x) => { let n = x.nextElementSibling; while (n && n.classList.contains('sm-res')) n = n.nextElementSibling; return n; };
+  chn.querySelectorAll(':scope > .sm-ph').forEach((x) => { const nx = nextOf(x); if (!(nx && want.get(nx) === x.textContent)) x.remove(); });
+  for (const [box, txt] of want) { let pv = box.previousElementSibling; while (pv && pv.classList.contains('sm-res')) pv = pv.previousElementSibling; if (!(pv && pv.classList.contains('sm-ph') && pv.textContent === txt)) { const l = document.createElement('div'); l.className = 'sm-ph'; l.textContent = txt; box.before(l); } }
+  // (2. the root cause as one row: the mechanic's own row just before it takes the deaths)
+  const root = chn.querySelector(':scope > .dbt-chr.wrt-rootrow:not(.sm-hid)');
+  if (root) { let prev = root.previousElementSibling; while (prev && (prev.classList.contains('sm-ph') || prev.style.display === 'none')) prev = prev.previousElementSibling;
+    const sid = (e) => { const i = e && e.querySelector('.dbt-ic img[data-sid]'); return i ? i.getAttribute('data-sid') : ''; }, tR = smSec((root.querySelector('.dbt-cht') || {}).textContent), tP = prev ? smSec((prev.querySelector('.dbt-cht') || {}).textContent) : null;
+    if (prev && prev.classList.contains('dbt-chr') && !prev.classList.contains('end') && sid(prev) && sid(prev) === sid(root) && tR != null && tP != null && tR - tP <= 10) {
+      const say = (e) => [...e.children].find((x) => x.tagName === 'SPAN' && !x.classList.contains('dbt-cht') && !x.classList.contains('dbt-ic') && !x.classList.contains('sm-watch'));
+      const sp = say(prev), sr = say(root); if (sp && sr && !prev.dataset.smRoot) { const tail = sr.cloneNode(true); tail.querySelectorAll('em.wrt-by').forEach((x) => x.remove()); sp.innerHTML = sp.innerHTML.replace(/\.\s*$/, '') + ': ' + tail.innerHTML; prev.dataset.smRoot = '1'; }
+      if (!prev.classList.contains('sm-root')) prev.classList.add('sm-root'); if (!root.classList.contains('sm-hid')) root.classList.add('sm-hid'); }
+    else if (!root.classList.contains('sm-root')) root.classList.add('sm-root'); }
+  // (3. ▶ Watch on every row: Replay, at that second)
+  for (const r of rows) { if (r.classList.contains('end') || r.querySelector(':scope > .sm-watch')) continue; const t = smSec((r.querySelector('.dbt-cht') || {}).textContent); if (t == null) continue;
+    r.insertAdjacentHTML('beforeend', '<span class="sm-watch" role="button" tabindex="0" data-smt="' + t + '" title="Watch it on the Replay tab, from ' + smE((r.querySelector('.dbt-cht') || {}).textContent.trim().split(/\s/)[0]) + '">▶ Watch</span>'); }
+} catch (e) { console.warn('summary look', e); } });
+  document.querySelectorAll('#view .dbt-why .dbt-add .dbt-addr').forEach((r) => { if (r.querySelector(':scope > .sm-watch')) return; const t = smSec((r.querySelector('.ahg-ln') || r).textContent); if (t == null) return; r.insertAdjacentHTML('beforeend', '<span class="sm-watch" role="button" tabindex="0" data-smt="' + t + '" title="Watch it on the Replay tab">▶ Watch</span>'); }); }
+const smWatch = (t) => { const tab = document.querySelector('.tabbar .tab[data-t="replay"]'); if (!tab) return; tab.click(); let n = 0; const go = () => { const box = document.querySelector('#view section.dbt .dtm'); if (box && box._jumpTo && box.getBoundingClientRect().height > 0) { const at = Math.max(0, t - 3); /* (the replay picks its own first moment as it opens: the jump goes in after it) */ [0, 700, 1600, 2800].forEach((ms) => setTimeout(() => { try { box._jumpTo(null, at); } catch (e) { /* (the replay opens at its start) */ } }, ms)); try { box.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (e) { /* (where it is) */ } return; } if (++n < 40) setTimeout(go, 250); }; setTimeout(go, 300); };
+document.addEventListener('click', (e) => { const w = e.target.closest && e.target.closest('#view .dbt-why .sm-watch'); if (!w) return; e.preventDefault(); e.stopPropagation(); smWatch(+w.dataset.smt || 0); }, true);
+document.addEventListener('keydown', (e) => { const w = e.target.closest && e.target.closest('#view .dbt-why .sm-watch'); if (!w || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); e.stopPropagation(); smWatch(+w.dataset.smt || 0); }, true);
+(function () { const f12 = dsBars; dsBars = function (root) { f12(root); try { smDisplay(); [400, 1500, 3500].forEach((ms) => setTimeout(() => { try { smDisplay(); } catch (x) { /* (as drawn) */ } }, ms)); } catch (e) { /* (as drawn) */ } }; })();
+(function () { const f0 = window.dbtFoldRun; if (typeof f0 !== 'function') return; window.dbtFoldRun = function () { const out = f0.apply(this, arguments); try { smDisplay(); } catch (e) { /* (as drawn) */ } return out; }; })();
+
 
 
 // ===== Design studio round 438 (Nov 1): no fade when a page first opens (it froze halfway while the numbers were worked out);
