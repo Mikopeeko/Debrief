@@ -146,8 +146,9 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
 // (if wago.tools is slow, down or turns Debrief away (Main, Nov 16: "Wowhead already blocked you", and a raid night is 20 people loading at
 //  once): a real model that fails, throws or isn't in after ms (12 s) gives way to drawn(), the model made before, and a late answer is ignored;
 //  while either loads the old shape stays, so a creature is never missing. -> what drawn() gives, or [the real model, null, true])
-const pg3dWowOr = (wow, drawn, ms) => new Promise((ok) => { let done = false; const fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
-  Promise.resolve().then(wow).then((g) => { if (done) return; done = true; clearTimeout(tm); ok([g, null, true]); }, () => { clearTimeout(tm); fb(); }); });
+const PG3D_WR = { n: 0, d: 0 }; /* (real models asked for, and settled (in, or failed): practice.js's Play waits for d === n, Nov 17) */
+const pg3dWowOr = (wow, drawn, ms, late) => new Promise((ok) => { let done = false, set = false; PG3D_WR.n++; const fin = () => { if (!set) { set = true; PG3D_WR.d++; } }, fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
+  Promise.resolve().then(wow).then((g) => { fin(); if (done) { if (late) { try { late([g, null, true]); } catch (e) { /* (the drawn one stays) */ } } return; } done = true; clearTimeout(tm); ok([g, null, true]); }, () => { fin(); clearTimeout(tm); fb(); }); }); /* (late: the real model arrived after the wait; it swaps in then, never ignored) */
 const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 }, tail: { m2: 7234132 } }; /* (tail: Gore Rattle, creature/ulatektentacle/ulatektentacle01.m2; the small tails use it too) */ /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
 
 // (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
@@ -764,10 +765,11 @@ function pg3d(host, A) {
   // (her real model, Flex, Nov 16: "including ulatek": read like the mobs' (pg3dWow); once it's in, the drawn neck, head and hood hide and hers
   //  stands in their place, moved and turned by the same code (rearing, biting, sinking); her body's coils stay. BRH: how tall she's drawn.)
   let BRM = null; const BRH = 24, bossDrawn = boss.children.slice(); /* (all of the drawn her, her body's coils too: Flex, Nov 16, "ulateks old tails are in" (the purple humps beside her real model)) */
-  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.boss), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
+  const herIn = (r) => { if (dead || !r || BRM) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
     root.scale.setScalar(k); root.position.y = -box.min.y * k + WATER - 2; root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
     const a = g.animations.find((c) => /^a0$/.test(c.name)) || g.animations[0]; BRM = new T.AnimationMixer(root); g.animations.forEach((c) => { if (c === a || /^g\d+$/.test(c.name)) BRM.clipAction(c).play(); }); /* (her stand, and her always-on movement) */
-    bossDrawn.forEach((c) => { c.visible = false; }); boss.add(root); }).catch(() => { /* (no answer: the drawn one stays) */ });
+    bossDrawn.forEach((c) => { c.visible = false; }); boss.add(root); };
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.boss), () => null, 20000, herIn).then(herIn).catch(() => { /* (no answer: the drawn one stays) */ }); /* (her real model whenever it arrives, however late: Main, Nov 17) */
   // ---- her tail (Gore Rattle): ridged segments rising from the venom just off the stone, its rattle at the tip; it lifts and slams for the Thrash ----
   const SEGG = keep(new T.LatheGeometry([[0, -0.5], [0.8, -0.5], [0.97, -0.36], [1, -0.12], [0.9, 0.22], [0.72, 0.5], [0, 0.5]].map(([x, y]) => new T.Vector2(x, y)), 14));
   const TAILSM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.48, metalness: 0.15, emissive: 0x140826, transparent: true })), BONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45, emissive: 0xff7a2a, emissiveIntensity: 0.06, transparent: true })), TSPIKEM = spikeM();
@@ -801,12 +803,13 @@ function pg3d(host, A) {
   //  Once it's in, the drawn tails hide; Gore Rattle sways on its stand and plays its real slam (a16, the hit 0.87 s in) for Mephitic Thrash; each small tail
   //  is a smaller copy rising from the venom. Its root is scaled 3 times in every clip, so a clip always plays. TRH, STH: how tall they're drawn)
   let TRM = null, TRS = null, TRK = null, STPL = null, slamAt = null; const TRH = 23, STH = 11, tailDrawn = tail.children.slice();
-  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.tail), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1;
+  const tailIn = (r) => { if (dead || !r || TRM) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1;
     root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
     STPL = { root, anim: g.animations, box, h }; const R0 = T.SkeletonUtils.clone(root), k = TRH / 1.35 / h; R0.scale.setScalar(k); R0.position.y = (-box.min.y - 0.122 * h) * k; /* (its base, 12%, under the venom) */
     TRM = new T.AnimationMixer(R0); const a0 = g.animations.find((c) => c.name === 'a0') || g.animations[0], sl = g.animations.find((c) => c.name === 'a16'); if (a0) TRK = TRM.clipAction(a0).play();
     if (sl) { TRS = TRM.clipAction(sl); TRS.setLoop(T.LoopOnce, 1); TRM.addEventListener('finished', (e) => { if (e.action === TRS && TRK) { TRK.reset().fadeIn(0.25).play(); TRS.fadeOut(0.25); } }); }
-    tailDrawn.forEach((c) => { c.visible = false; }); tail.add(R0); stail.L.forEach((g) => stailReal(g)); }).catch(() => { /* (no answer: the drawn tails stay) */ });
+    tailDrawn.forEach((c) => { c.visible = false; }); tail.add(R0); stail.L.forEach((g) => stailReal(g)); };
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.tail), () => null, 20000, tailIn).then(tailIn).catch(() => { /* (no answer: the drawn tails stay) */ }); /* (whenever it arrives: Nov 17) */
   const stailReal = (g) => { if (!STPL || g.userData.R) return; const R1 = T.SkeletonUtils.clone(STPL.root), k1 = STH / STPL.h, M1 = new T.AnimationMixer(R1), a0 = STPL.anim.find((c) => c.name === 'a0') || STPL.anim[0]; R1.scale.setScalar(k1); if (a0) M1.clipAction(a0).play(); g.add(R1); g.userData.R = R1; g.userData.M = M1; g.userData.y0 = (-STPL.box.min.y - 0.122 * STPL.h) * k1; g.userData.C.seg.forEach((m) => { m.visible = false; }); }; /* (a small tail: a copy of the real one, made with its pool item, never while drawing) */
   // (the spectral image that beams the Wretch: her neck and head, see-through and glowing)
   const GHOSTM = keep(new T.MeshBasicMaterial({ color: 0x3af2a8, transparent: true, opacity: 0.32, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
@@ -834,7 +837,7 @@ function pg3d(host, A) {
     return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
   const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F0 = rk.indexOf('mon:') === 0 ? PG3D_MON[rk.slice(4)] : PG3D_FIG[rk]; /* (mon: a monster, PG3D_MON) */
     const drawn = () => Promise.all([pg3dMeLoad(T, F0.url), F0.anim ? pg3dMeLoad(T, F0.anim) : null]);
-    (F0.wow && S3TC ? pg3dWowOr(() => pg3dWowLoad(T, F0.wow), drawn) : drawn()).then(([g, g2, real]) => { if (dead) return; const root = g.scene;
+    const build = ([g, g2, real]) => { if (dead) return; const root = g.scene;
     const F = real ? Object.assign({}, F0, { flat: null, hue: null, paint: null, tint: null, bones: null, face: null, hold: null, turn: 0, clips: { idle: /^a0$/, move: /^a4$/ } }, F0.wow) : F0; /* (the real model: its own colours and shape; wow can set h, hover, turn, clips) */
     (F.hide || []).forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
     const box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = (F.h || 2.3) / h; /* (g.box: a real model's standing size) */ root.scale.set(k * (F.wide || 1), k, k * (F.wide || 1)); /* (a raider 2.3 yd tall; a monster as tall as its old shape, F.h) */
@@ -851,7 +854,10 @@ function pg3d(host, A) {
     let anim = g2 ? (g2.animations || []).map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !!root.getObjectByName(T.PropertyBinding.parseTrackName(tr.name).nodeName)); return c1; }) : (g.animations || []); /* (borrowed clips, only the tracks for bones it has) */
     if (F.bones) anim = anim.map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !(/.scale$/.test(tr.name) && F.bones[T.PropertyBinding.parseTrackName(tr.name).nodeName])); return c1; }); /* (a clip that scales a bone we reshaped would undo it) */
     root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { if (F.metal != null && x.metalness > F.metal) x.metalness = F.metal; own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
-    TPL[rk] = { root, anim, y0: -box.min.y * k, F }; }).catch(() => { TPL[rk] = false; /* (no model: the capsule stays) */ }); };
+    TPL[rk] = { root, anim, y0: -box.min.y * k, F, real: !!real }; };
+    const lateIn = (r) => { if (dead || (TPL[rk] && TPL[rk].real)) return; build(r); const kd = rk.slice(4); if (MONFREE[kd]) MONFREE[kd].forEach((f) => { f.root.visible = false; }); MONFREE[kd] = []; MONF.forEach((f, key) => { if (f.rk === rk) { f.root.visible = false; MONF.delete(key); } }); }; /* (the real one arrived late: it takes over, the drawn ones go) */
+    (F0.wow && S3TC ? pg3dWowOr(() => pg3dWowLoad(T, F0.wow), drawn, 12000, lateIn) : drawn()).then(build).catch(() => { TPL[rk] = false; /* (no model: the capsule stays) */ }); };
+  if (S3TC) Object.keys(PG3D_MON).forEach((kd) => { if (PG3D_MON[kd].wow) figLoad('mon:' + kd); }); /* (all of them now, while you read the start card: Nov 17) */
   const figMake = (rk, mine, x, y, who) => { const P0 = TPL[rk]; if (!P0) { figLoad(rk); return null; }
     const root = T.SkeletonUtils.clone(P0.root); root.traverse((m) => { if (m.isSkinnedMesh && m.skeleton) own.push(m.skeleton); }); /* (a clone shares the model's geometry and materials; its own bones are freed on close) */
     const anim = P0.anim, mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
@@ -930,7 +936,8 @@ function pg3d(host, A) {
     if (p.nk !== nk) { p.nk = nk; const g = p.n.c.getContext('2d'); g.clearRect(0, 0, 256, 40); g.font = '700 26px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.name, 128, 21); g.fillStyle = s.c; g.fillText(s.name, 128, 21); p.w = Math.min(256, g.measureText(s.name).width + 12) * PLN; p.n.tx.needsUpdate = true; }
     const bk = s.bar + '|' + Math.round(s.hp * 40); if (p.bk !== bk) { p.bk = bk; const g = p.b.c.getContext('2d'), w = Math.round(62 * s.hp); g.clearRect(0, 0, 64, 8); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 64, 8); g.fillStyle = s.bar; g.fillRect(1, 1, w, 6); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(1, 1, w, 2); p.b.tx.needsUpdate = true; }
     const RM = s.mob && TPL['mon:' + (PG3D_MONK[s.kind] || s.kind)], y = baseY(s.x, s.y) + (s.h != null ? (RM && RM.F.ph != null ? RM.F.ph : s.h) + 0.5 : 2.75); /* (RM: a mob wearing its real model has its bar at that model's height, ph) */ p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); /* (a monster's plate over its head) */
-    if (s.role) { if (!p.r) { p.r = plSprite(160, 30); p.r.sp.center.set(0.5, 0.2); } const rk = s.role + '|' + s.rc; if (p.rk !== rk) { p.rk = rk; const g = p.r.c.getContext('2d'); g.clearRect(0, 0, 160, 30); g.font = '700 21px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.role, 80, 16); g.fillStyle = s.rc || '#cfd6df'; g.fillText(s.role, 80, 16); p.r.tx.needsUpdate = true; }
+    if (s.role) { if (!p.r) { p.r = plSprite(160, 30); p.r.sp.center.set(0.5, 0.2); } const rt = s.show && s.name ? s.name : s.role, rk = rt + '|' + s.rc; /* (one tag a raider: its role, with its number ("Melee 2") when it matters (near you, your soak group, a carrier near you), never a second big name on top: Flex, Nov 17, "some of the bots have double names") */
+      if (p.rk !== rk) { p.rk = rk; const g = p.r.c.getContext('2d'); g.clearRect(0, 0, 160, 30); g.font = '700 21px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(rt, 80, 16); g.fillStyle = s.rc || '#cfd6df'; g.fillText(rt, 80, 16); p.r.tx.needsUpdate = true; }
       const kr = PLN / pxK * 0.78; p.r.sp.position.set(s.x, y, -s.y); p.r.sp.scale.set(160 * kr, 30 * kr, 1); p.r.sp.material.opacity = s.o; p.r.sp.visible = true; } else if (p.r) p.r.sp.visible = false; /* (a raider's role in place of its health bar) */
     // (a mob's plate, Flex: "make the mob health bars a little bigger they are normally larger", "put the mob name in the health bar to save space": one
     //  wide red bar, its name written inside, drawn again only when the health moves a step)
@@ -989,7 +996,7 @@ function pg3d(host, A) {
       if (q.y !== q.y0) { V4.set(q.x / W0 * 2 - 1, 1 - q.y / H0 * 2, q.z).unproject(cam); q.L.sp.position.copy(V4); }
       q.l = q.x - q.w / 2; q.r = q.x + q.w / 2; q.t = q.y - q.h / 2; q.b = q.y + q.h / 2; q.fix = !q.free; q.pri = 50 + q.i; PQ.push(q); }
     // (the names: you, the labels and the call-outs stay; then the late soak mates and carriers, then the nearest, where they sit on nothing)
-    for (let k = 0; k < PL.length; k++) { const p = PL[k], s = p.s; if (!s.show) continue; V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
+    for (let k = 0; k < PL.length; k++) { const p = PL[k], s = p.s; if (!s.show || s.role) continue; /* (a raider's name is in its role tag: no big name over it too, Nov 17) */ V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
       const q = p.q || (p.q = { p, l: 0, t: 0, r: 0, b: 0, fix: false, free: false, pri: 0, on: false }), x = (V4.x + 1) / 2 * W0, y = (1 - V4.y) / 2 * H0, hw = p.w / 2 + 2;
       q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you || !!s.mob; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); } /* (a monster's name always shows, like yours) */
     pg3dPick(PQ, 4); for (let i = 0; i < PQ.length; i++) { const q = PQ[i]; if (q.p) q.p.n.sp.visible = q.on; else if (q.L && !q.on) q.L.sp.visible = false; } };

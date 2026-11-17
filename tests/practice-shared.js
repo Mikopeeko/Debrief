@@ -80,18 +80,22 @@ function checks(H, say) {
   // D. sounds like a boss mod (Flex, Nov 15: "I think sound alerts or sound ques are going to be a good addition", "Players are used to sound ques with boss
   //    mods so thats a great way to simulate it"): tones only, played through a pretend speaker here. A call about you pings (880 then 1320 Hz), a "now"
   //    call beeps (square), other calls blip; 3-2-1 before your own bar; a buzz for a mistake; nothing when muted or for the autopilot
-  try { const played = []; class FakeAC { constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; } createOscillator() { const o = { type: '', frequency: { value: 0 }, connect() {}, start() { played.push({ f: o.frequency.value, type: o.type }); }, stop() {} }; return o; }
-      createGain() { return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect() {} }; } resume() { return Promise.resolve(); } }
+  //    (Nov 17, the better cues: each meaning its own sound: your job a two-note bell (1318.5 then 1760 Hz), "now" square pulses, a raid call a soft bell (659.3),
+  //     a tick a wood knock (1250), a mistake a soft bonk (230), sound back on a chime (1046.5 ...); the pretend speaker takes filters, noise and sliding tones)
+  try { const played = []; const par = (v) => { const p = { value: v, setValueAtTime(x) { if (!p.set) { p.set = true; p.value = x; } }, exponentialRampToValueAtTime() {}, linearRampToValueAtTime() {} }; return p; };
+    class FakeAC { constructor() { this.state = 'running'; this.currentTime = 0; this.destination = {}; this.sampleRate = 8000; } createOscillator() { const o = { type: '', frequency: par(0), connect() {}, start() { played.push({ f: Math.round(o.frequency.value * 10) / 10, type: o.type }); }, stop() {} }; return o; }
+      createGain() { return { gain: par(1), connect() {} }; } createBiquadFilter() { return { type: '', frequency: par(0), Q: par(1), connect() {} }; } createBuffer(ch, n) { const d = new Float32Array(n); return { sampleRate: 8000, getChannelData: () => d }; }
+      createBufferSource() { return { buffer: null, connect() {}, start() {}, stop() {} }; } resume() { return Promise.resolve(); } }
     win.AudioContext = FakeAC; const fs0 = () => played.map((p) => p.f), call = (text) => { const g = G(); played.length = 0; dbg.S.warns.splice(g.warnI, 0, { t: g.t - 0.01, text, c: '#fff' }); g.warnQ = []; g.lastWarn = null; dbg.warnsNow(); return fs0(); };
     dbg.snd(true); dbg.at(30, 'r3', { seed: 3 });
-    const you = call('Your coil: soak it!'); if (!(you.includes(880) && you.includes(1320))) bad('a call about you plays no ping (' + you.join(',') + ') (check D)');
-    call('Kick now: your Shrieker\'s Vicious Echoes (E)!'); if (!played.some((p) => p.type === 'square')) bad('a "now" call plays no quick beeps (check D)');
-    const other = call('Mephitic Thrash: out of her tail\'s 35 yards!'); if (!other.includes(660)) bad('another call plays no blip (' + other.join(',') + ') (check D)');
-    const bar = (dbg.mods() || []).find((q) => /^Your\b/.test(q.name) && q.at > G().t); if (!bar) bad('no "Your ..." boss-mod bar to count down (check D)'); else { played.length = 0; G().t = bar.at - 2.9; dbg.cdn(); if (!fs0().includes(740)) bad('no countdown beep 3 s before "' + bar.name + '" ends (check D)'); }
-    dbg.at(20, 'r3', { seed: 3 }); played.length = 0; if (dbg.hatchMine() && !fs0().includes(155)) bad('a mistake plays no buzz (check D)');
-    dbg.snd(false); const muted = call('Your coil: soak it!'); if (muted.length) bad('muted, a call still plays a sound (check D)'); played.length = 0; dbg.snd(true); if (!fs0().includes(988)) bad('turning sound back on plays no chime (check D)');
+    const you = call('Your coil: soak it!'); if (!(you.includes(1318.5) && you.includes(1760))) bad('a call about you plays no rising bell (' + you.join(',') + ') (check D)');
+    call('Kick now: your Shrieker\'s Vicious Echoes (E)!'); if (!played.some((p) => p.type === 'square')) bad('a "now" call plays no quick pulses (check D)');
+    const other = call('Mephitic Thrash: out of her tail\'s 35 yards!'); if (!other.includes(659.3)) bad('another call plays no soft bell (' + other.join(',') + ') (check D)');
+    const bar = (dbg.mods() || []).find((q) => /^Your\b/.test(q.name) && q.at > G().t); if (!bar) bad('no "Your ..." boss-mod bar to count down (check D)'); else { played.length = 0; G().t = bar.at - 2.9; dbg.cdn(); if (!fs0().includes(1250)) bad('no countdown tick 3 s before "' + bar.name + '" ends (check D)'); }
+    dbg.at(20, 'r3', { seed: 3 }); played.length = 0; if (dbg.hatchMine() && !fs0().includes(230)) bad('a mistake plays no bonk (check D)');
+    dbg.snd(false); const muted = call('Your coil: soak it!'); if (muted.length) bad('muted, a call still plays a sound (check D)'); played.length = 0; dbg.snd(true); if (!fs0().includes(1046.5)) bad('turning sound back on plays no chime (check D)');
     played.length = 0; dbg.sim('r3', true, false, 1); if (played.length) bad('the autopilot\'s run plays ' + played.length + ' sounds; it should play none (check D)');
-    { const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8'); if (!/class=\\"pg-snd on\\"|class="pg-snd on"/.test(src) || !/e\.code === 'KeyM'\) \{ sndSet\(!sndOn\)/.test(src) || !/M: sound/.test(src)) bad('no Sound button by the 2D | 3D switch, no M key, or no "M: sound" on the keys line (check D)'); }
+    { const src = require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8'); if (!/class=\\"pg-snd on\\"|class="pg-snd on"/.test(src) || !/e\.code === 'KeyM'\) \{ sndNext\(\)/.test(src) || !/M: sound/.test(src)) bad('no Sound button by the 2D | 3D switch, no M key, or no "M: sound" on the keys line (check D)'); }
   } catch (x) { bad('the sound check crashed: ' + x.message + ' (check D)'); } finally { try { delete win.AudioContext; } catch (e) { /* (none) */ } }
   // E. egg holders (Flex, Nov 15: "maybe the egg holders should try to avoid the player just a little, without making it super super easy but they tend to
   //    pause and then move a lot faster than the player and will run right into me if im in their path"): a raider holding an egg walks at your speed
@@ -370,6 +374,33 @@ function simpleScreen(H, say, pj) {
       if (cdBad || !cdN) bad('the tether countdown: ' + (cdBad || 'never showed') + tag + ' (check S10)');
       if (!cdNow && !(d.G.p2.teth[me] && d.G.p2.teth[me].br != null && d.G.p2.teth[me].br <= tb + 0.3)) bad('no "Break tether now!" alert at your break' + tag + ' (check S10)');
       if (!W.slice(W2).some((w) => /\.pg-cds/.test(w.at) && /Break tether in \d+s/.test(w.v))) bad('the countdown alert isn\'t drawn on the screen (.pg-cds)' + tag + ' (check S10)'); } }
+  // S11. the sound cues (Flex, Nov 17: "Would it be a difficult task to improve the sound alerts", "Yes, improve sounds"): a sound for each meaning (your job, now,
+  //      dodge, a raid-wide call, tick, go, done right, a mistake); the tether countdown ticks on 3, 2 and 1 and sounds "go" at "Break tether now!"; the NOW line
+  //      turning to a dodge sounds the dodge alarm; Loud, Soft and Off on the button and M, every sound (the mechanic sounds too) through the one volume.
+  { const SK = ['you', 'now', 'dodge', 'call', 'tick', 'go', 'ok', 'bad'], cue = (/const CUE = \{[\s\S]*?\} \};/.exec(PJ) || [''])[0];
+    SK.forEach((k) => { if (!new RegExp('\\b' + k + ': \\(c, t\\) =>').test(cue)) bad('the "' + k + '" cue has no sound of its own (check S11)'); });
+    if (!/const SND_VOL = \{ loud: 1, soft: 0\.4, off: 0 \};/.test(PJ) || !/const sndNext = \(\) => sndSet\(sndLvl === 'loud' \? 'soft' : sndLvl === 'soft' \? 'off' : 'loud'\);/.test(PJ) || !/KeyM'\) \{ sndNext\(\); return; \}/.test(PJ) || !/onclick = \(e\) => \{ e\.stopPropagation\(\); sndNext\(\);/.test(PJ)) bad('the sound has no Loud, Soft and Off on its button and M (check S11)');
+    if (/g\.connect\(c\.destination\)/.test(PJ) || !/actx\.pgOut\.connect\(actx\.destination\)/.test(PJ)) bad('a sound skips the one volume (check S11)');
+    let T2 = null; try { T2 = vm.runInContext('PG_P2_T', ctx); } catch (e) { T2 = null; }
+    if (T2) { const d = L.open('m2'); d.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'solo' }; const me = d.P2.slotOf(d.P2.pick); d.at(T2.fangs - 12, me, { seed: 3 }); L.win.__pgSndLog = [];
+      while (d.G.t < T2.solo + 1.5) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
+      const ticks = lg.filter((q) => q.k === 'tick' && q.t >= T2.solo - 3.6 && q.t < T2.solo), go = lg.some((q) => q.k === 'go' && q.t >= T2.solo - 0.2 && q.t < T2.solo + 1.5);
+      if (ticks.length !== 3 || !go) bad('the tether countdown sounds ' + ticks.length + ' ticks before the break' + (go ? '' : ' and no "go"') + ' (3, 2, 1, then go; check S11)');
+      // (each sound once: live, every tick played twice (the tether's bar and its alert both counted) and "go", the "now" call and a dodge alarm stacked within half a second)
+      const dup = lg.filter((q, i) => lg.slice(i + 1).some((r) => r.k === q.k && (q.k === 'tick' ? r.t - q.t < 0.45 : q.k === 'go' ? r.t - q.t < 0.95 : false)));
+      const pile = lg.filter((q) => (q.k === 'now' || q.k === 'dodge') && lg.some((g0) => g0.k === 'go' && q.t >= g0.t && q.t - g0.t < 0.95));
+      if (dup.length || pile.length) bad('the tether break sounds twice or piles up: ' + dup.concat(pile).map((q) => q.k + '@' + q.t.toFixed(1)).join(' ') + ' (check S11)'); }
+    { const d = L.open(); d.at(0, d.role.id, { seed: 3 }); L.win.__pgSndLog = []; while (d.G.t < 60) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
+      if (!lg.some((q) => q.k === 'dodge')) bad('the NOW line turned to a dodge in phase 1\'s first minute without the dodge alarm (check S11)'); } }
+  // S12. How to play and Space: pause (Flex, Nov 17: "maybe before the game starts, some quick tutorial and also letting the player know they can press spacebar to
+  //      pause"): one screen before the first run in a browser (the keys, Space to pause, how to read the NOW line), its button on the start card, and a Pause button
+  //      with Space on the hotbar that also works while paused; phase 2 and 3 list the kick, the intermission doesn't.
+  { if (!/onclick = \(\) => \(howSeen\(\) \? waitModels\(begin\) : howTo\(\(\) => waitModels\(begin\)\)\)/.test(PJ) /* (then the real models: Nov 17) */ || !/localStorage\.getItem\('wla-pg-howto'\) === '1'/.test(PJ) || !/<button type="button" class="pg-howb">How to play<\/button>/.test(PJ)) bad('there is no How to play before the first run, or no button for it on the start card (check S12)');
+    if (!/data-a="pause"[^>]*title="Pause or go on \(Space\)\.">[\s\S]{0,400}?<b>Space<\/b><span>Pause<\/span>/.test(PJ) || !/if \(b && b\.dataset\.a === 'pause'\) \{ pauseT\(\); return; \}[^\n]*if \(!b \|\| !G \|\| paused\) return;/.test(PJ)) bad('the hotbar has no Pause button with Space that also works while paused (check S12)');
+    for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk), h = typeof d.howTo === 'function' ? plain(d.howTo()) : '', name = ctx.PG_PARTS["Ula'tek"][pk].name, kick = !!(d.P2 && d.P2.acts && d.P2.acts());
+      if (!/How to play/.test(h) || !/W A S D/.test(h) || !/Tab Pick a target/.test(h) || !/1 Attack/.test(h) || !/Q Your defensive/.test(h) || !/Space Pause any time/.test(h) || !/what to do now/.test(h)) bad('How to play in ' + name + ' reads "' + h.slice(0, 200) + '" (check S12)');
+      if (kick !== /E Kick/.test(h)) bad('How to play in ' + name + (kick ? ' leaves out the kick (E)' : ' lists a kick this part has none of') + ' (check S12)');
+      if (/\b\d{1,2}:\d\d\b/.test(h)) bad('How to play shows a clock time in ' + name + ' (check S12)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.
