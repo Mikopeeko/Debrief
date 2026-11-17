@@ -319,6 +319,12 @@ function simpleScreen(H, say, pj) {
     if (!doneRx) bad('there is no list of what counts as done (PG_DONE)');
     else { ['Egg picked up.', 'Soaked: your egg broke (a Rawling).', 'Kicked: Vicious Echoes interrupted.', 'Tether broken on time.', 'Rawling killed.'].forEach((x) => { if (!doneRx.test(x)) bad('"' + x + '" doesn\'t get the green done chip'); });
       ['Not open yet: hit it (Tab, then 1).', 'Kick is on cooldown.', 'Its shell is still up: hit it (Tab, then 1) to break it.', 'The tank taunted the Viper: kill it with the raid!', 'Back by her: burn the heart.'].forEach((x) => { if (doneRx.test(x)) bad('"' + x + '" gets the green done chip, as if done'); }); } }
+  // S6. every monster with a name bar over its head has its health, so the bar goes down as it's hit (Flex, Nov 17, of phase 1's Wretch: "wretch nameplate
+  //     health isnt going down in p1"; its target entry had no hp, so the bar stayed full). The kinds are the ones practice3d.js puts a plate on.
+  { const P3J = fs.readFileSync(path.join(__dirname, '..', 'src', 'practice3d.js'), 'utf8'), km = /if \(!o \|\| !o\.p \|\| !\/([^/]+)\/i\.test\(String\(o\.kind/.exec(P3J), MOB = km ? new RegExp(km[1], 'i') : /rawling|viper|wretch|warden|clutch|shriek|^ds|doom|rav/i, miss = new Map();
+    for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk); try { d.at(0, d.role.id, { seed: 3 }); } catch (e) { continue; } const G = d.G, S = d.S; let n = 0;
+      while (G.t < S.end - 0.3 && n++ < 4000) { d.step(10); (d.tgts() || []).forEach((o) => { if (MOB.test(String(o.kind || '')) && (!(o.max > 0) || !Number.isFinite(o.hp))) miss.set(pk + o.kind, ctx.PG_PARTS["Ula'tek"][pk].name + ': ' + o.name); }); } }
+    if (miss.size) bad('a monster\'s name bar has no health to show, so it stays full: ' + [...miss.values()].join(', ') + ' (check S6)'); }
   // S5. the setup card's switches and lists: a tidy two by two grid, the lists flat in their frames (Flex, Nov 17, of the row 'Hints on | Normal speed | Look [Auto (your class or role)]' with 'Start [The pull]' alone on a second row: 'weird formatting/glitches')
   if (!/\.pg-chips \{ display: grid; grid-template-columns: 1fr 1fr;/.test(PJ) || !/\.pg-chip select \{[^}]*background: transparent;/.test(PJ)) bad('the setup card\'s Hints, Speed, Look and Start wrap unevenly, or the lists sit as boxes inside their frames (check S5)');
 }
