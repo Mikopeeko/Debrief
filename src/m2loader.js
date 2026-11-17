@@ -2,7 +2,7 @@
    models. Used by the practice game (Nov 16) to show the fight's real creatures, read at play time from wago.tools (nothing from the game is
    stored here). Changes from the original: it uses the page's three.js (passed in, loaded only when 3D is picked); bone clones keep their
    pivot; separate animation files are asked for through M2Loader.animUrl; each part keeps its part id
-   (mesh.userData.geoset). Nothing runs until pg3dM2Lib(THREE) is called.
+   (mesh.userData.geoset); a broken file reaches onError instead of hanging. Nothing runs until pg3dM2Lib(THREE) is called.
 
    MIT License
    
@@ -67,7 +67,7 @@ class M2Loader extends Loader {
 
 			try {
 
-				this.parse( buffer, url, options ).then( onLoad );
+				this.parse( buffer, url, options ).then( onLoad, ( e ) => { if ( onError ) onError( e ); else console.error( e ); this.manager.itemError( url ); } );
 
 			} catch ( e ) {
 

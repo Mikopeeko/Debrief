@@ -135,6 +135,11 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
     scene.traverse((m) => { if (!m.isSkinnedMesh) return; const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i += 2) { v.fromBufferAttribute(p, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); box.expandByPoint(v); } });
     mx.stopAllAction(); mx.uncacheRoot(scene);
     return { scene, animations, box: box.isEmpty() ? null : box }; }); };
+// (if wago.tools is slow, down or turns Debrief away (Main, Nov 16: "Wowhead already blocked you", and a raid night is 20 people loading at
+//  once): a real model that fails, throws or isn't in after ms (12 s) gives way to drawn(), the model made before, and a late answer is ignored;
+//  while either loads the old shape stays, so a creature is never missing. -> what drawn() gives, or [the real model, null, true])
+const pg3dWowOr = (wow, drawn, ms) => new Promise((ok) => { let done = false; const fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
+  Promise.resolve().then(wow).then((g) => { if (done) return; done = true; clearTimeout(tm); ok([g, null, true]); }, () => { clearTimeout(tm); fb(); }); });
 const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 } }; /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
 
 // (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
@@ -253,7 +258,7 @@ function pg3dShapes(A, t) {
   RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id) || pg3dClassC(pg3dClassOf(A, id)), d = Math.hypot(b.x - G.x, b.y - G.y);
     ring(b.x, b.y, 0.95, cc || rc, 0.9, 0.16); P({ k: 'unit', id, x: b.x, y: b.y, c: cc || rc }); /* (the ring in the class colour: the raid's figures show the role, the ring the class) */
     const ms = mates.get(id), why = d <= NEAR ? 'near' : ms && Math.hypot(b.x - ms.x, b.y - ms.y) > ms.r ? 'soak' : carry.has(id) && d <= CARRY ? 'egg' : '';
-    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d, role: GDZ_ROLE[A.rl(id)][0], rc }); }); /* (role: shown over the raider in place of a health bar) */
+    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d, role: GDZ_ROLE[A.rl(id)][0], rc: cc || rc }); }); /* (role: shown over the raider in place of a health bar, in its class colour, Flex, Nov 16: "can you color the bot names by class color") */
   if (G.debs.def && G.debs.def.until > t) P({ k: 'dome', x: G.x, y: G.y, r: 1.9, c: '#7fb8ff', o: 0.18 });
   const hp = cl((G.hp == null ? 100 : G.hp) / 100);
   ring(G.x, G.y, 1.25, '#f3c969', 1, 0.32); P({ k: 'unit', id: me, x: G.x, y: G.y, c: A.clsC(me) || GDZ_ROLE[A.rl(me)][1], you: true, la: lean ? lean.a : 0, lf: lean ? lean.f : 0 });
@@ -746,7 +751,7 @@ function pg3d(host, A) {
   // (her real model, Flex, Nov 16: "including ulatek": read like the mobs' (pg3dWow); once it's in, the drawn neck, head and hood hide and hers
   //  stands in their place, moved and turned by the same code (rearing, biting, sinking); her body's coils stay. BRH: how tall she's drawn.)
   let BRM = null; const BRH = 24, bossDrawn = boss.children.filter((c) => !humps.some((h) => h.m === c));
-  if (S3TC) pg3dWow.load(T, pg3dWow.boss).then((g) => { if (dead) return; const root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.boss), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
     root.scale.setScalar(k); root.position.y = -box.min.y * k + WATER - 2; root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
     const a = g.animations.find((c) => /^a0$/.test(c.name)) || g.animations[0]; BRM = new T.AnimationMixer(root); g.animations.forEach((c) => { if (c === a || /^g\d+$/.test(c.name)) BRM.clipAction(c).play(); }); /* (her stand, and her always-on movement) */
     bossDrawn.forEach((c) => { c.visible = false; }); boss.add(root); }).catch(() => { /* (no answer: the drawn one stays) */ });
@@ -805,7 +810,7 @@ function pg3d(host, A) {
     return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
   const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F0 = rk.indexOf('mon:') === 0 ? PG3D_MON[rk.slice(4)] : PG3D_FIG[rk]; /* (mon: a monster, PG3D_MON) */
     const drawn = () => Promise.all([pg3dMeLoad(T, F0.url), F0.anim ? pg3dMeLoad(T, F0.anim) : null]);
-    (F0.wow && S3TC ? pg3dWowLoad(T, F0.wow).then((g) => [g, null, true], drawn) : drawn()).then(([g, g2, real]) => { if (dead) return; const root = g.scene;
+    (F0.wow && S3TC ? pg3dWowOr(() => pg3dWowLoad(T, F0.wow), drawn) : drawn()).then(([g, g2, real]) => { if (dead) return; const root = g.scene;
     const F = real ? Object.assign({}, F0, { flat: null, hue: null, paint: null, tint: null, bones: null, face: null, hold: null, turn: 0, clips: { idle: /^a0$/, move: /^a4$/ } }, F0.wow) : F0; /* (the real model: its own colours and shape; wow can set h, hover, turn, clips) */
     (F.hide || []).forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
     const box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = (F.h || 2.3) / h; /* (g.box: a real model's standing size) */ root.scale.set(k * (F.wide || 1), k, k * (F.wide || 1)); /* (a raider 2.3 yd tall; a monster as tall as its old shape, F.h) */
