@@ -84,7 +84,7 @@ module.exports = function practice3d(say, H) {
   const own = (P3.match(/pg3dLoad\(\)/g) || []).length; if (own) bad('practice3d.js calls pg3dLoad() itself (' + own + ' time(s)): only the 2D | 3D switch may load three.js');
   { const n = (PJ.match(/pg3dLoad\(\)/g) || []).length, a = PJ.indexOf('const view = (on) =>'), b = a < 0 ? -1 : PJ.indexOf('\n  vw.onclick', a), at = PJ.indexOf('pg3dLoad()');
     if (n !== 1 || a < 0 || b < 0 || at < a || at > b) bad('practice.js must load three.js in one place, the switch (view): it has ' + n + ' call(s)' + (a < 0 ? ' and no view()' : '')); }
-  if (!BP.includes("'practice3d.js'") || !BP.includes("(& $read 'practice.js') + \"`n\" + (& $read 'practice3d.js')")) bad('build.ps1 no longer checks src/practice3d.js or puts it into the page right after practice.js');
+  if (!BP.includes("'practice3d.js'") || !BP.includes("(& $read 'practice.js') + \"`n\" + (& $read 'm2loader.js') + \"`n\" + (& $read 'practice3d.js')")) bad( /* (the WoW model reader sits between them since Nov 16, check 16) */'build.ps1 no longer checks src/practice3d.js or puts it into the page right after practice.js');
 
   // 2. a failed load goes back to 2D and says so; the next click tries again; a crash while drawing and closing the game end the 3D view
   { const view = PJ.slice(PJ.indexOf('const view = (on) =>'), PJ.indexOf('\n  vw.onclick')), off = (/const off3d = \(why\) => \{[^\n]*/.exec(PJ) || [''])[0];
@@ -105,7 +105,7 @@ module.exports = function practice3d(say, H) {
     if (!o.ok || !o.lib) bad('a three.js that loads isn\'t handed to the 3D view (or isn\'t kept for the next time)'); }).catch((e) => bad('the load check crashed: ' + e.message));
 
   // 3. the shapes against the hit code: the same radii as check(), the same wave areas as inWave()
-  const code = [grab('PG_UL', PJ), grab('GDZ_ROLE', GJ), grab('GDZ_RAID', GJ), grab('pg3dShapes', P3)];
+  const code = [grab('PG_UL', PJ), grab('GDZ_ROLE', GJ), grab('GDZ_RAID', GJ), grab('PG3D_MIX', P3), grab('pg3dClassOf', P3), grab('pg3dClassC', P3), grab('pg3dShapes', P3)]; /* (the class mix the rings use, check 13) */
   const iw = grab('inWave', PJ), chk = (/const check = \(t0, t\) => \{[\s\S]*?G\.adds = G\.adds\.filter/.exec(PJ) || [''])[0];
   if (code.some((x) => !x) || !iw) return loadP;
   const ctx = vm.createContext({ Math, Object, Array });
@@ -125,7 +125,7 @@ module.exports = function practice3d(say, H) {
   const A = { G, S, me: 'r3', nm: (id) => id, rl: (id) => id[0], clsC: () => null, bossAt: (t) => (t < S.dive.gone ? { p: [0, 46], up: true } : { p: S.dive.to, up: t >= S.dive.surf }), tailAt: () => ({ p: [-41, 0], up: true }), spot: () => null, target: null };
   const at = (t) => { try { return ctx.shapes(A, t); } catch (e) { bad('pg3dShapes crashed at ' + t + ' s: ' + e.message); return []; } };
   const has = (L, k, x, y, r) => L.some((s) => s.k === k && Math.abs(s.x - x) < 1e-9 && Math.abs(s.y - y) < 1e-9 && Math.abs(s.r - r) < 1e-9);
-  { const L = at(40); if (!has(L, 'disc', -25, 8, 10) || !L.some((s) => s.k === 'label' && s.text === 'YOUR SOAK')) bad('your coil soak isn\'t drawn at its spot with its radius (s.r) and "YOUR SOAK"'); }
+  { const L = at(40); if (!has(L, 'disc', -25, 8, 10) || !L.some((s) => s.k === 'label' && s.text === 'Your coil')) bad('your coil soak isn\'t drawn at its spot with its radius (s.r) and "Your coil" (one name for it since the prompts audit, Nov 16)'); }
   { const L = at(43); if (!has(L, 'disc', -25, -8, 9.5)) bad('a coil soak\'s radius isn\'t its own s.r (9.5 here)'); }
   { const L = at(37); if (R_BUB != null && !has(L, 'dome', -18, 4, R_BUB)) bad('the Fester Burst bubble isn\'t a ' + R_BUB + '-yard dome round the Wretch\'s live spot (G.wr), as check() hits it'); if (L.some((s) => s.k === 'dome' && s.x === -26 && s.y === 2)) bad('the bubble is drawn at its planned spot (q.p), not where the Wretch is'); }
   { const L = at(47); if (!has(L, 'disc', -41, 0, 35)) bad('Mephitic Thrash isn\'t drawn with its own radius (th.r, 35) round her tail'); }
@@ -187,8 +187,8 @@ module.exports = function practice3d(say, H) {
     if (loose.length) bad('a three.js ' + [...new Set(loose)].join(', ') + ' is made without keep(), so closing the game wouldn\'t free it');
     if (!/own\.forEach\(\(o\) => \{ try \{ o\.dispose\(\); \}/.test(P3)) bad('dispose() no longer frees everything keep() holds'); }
   // 8. the review of the graphics pass (Nov 15)
-  { const lb = (L, re) => L.find((s) => s.k === 'label' && re.test(s.text)), ys = lb(at(40), /^YOUR SOAK$/), bb = lb(at(37), /^Into the bubble/);
-    if (!ys || ys.h > 6) bad('the "YOUR SOAK" label floats ' + (ys ? ys.h : '?') + ' yards up, over the HUD\'s call-outs and far from its circle (0:39): keep it low (6 at most)');
+  { const lb = (L, re) => L.find((s) => s.k === 'label' && re.test(s.text)), ys = lb(at(40), /^Your coil$/), bb = lb(at(37), /^Into the bubble/);
+    if (!ys || ys.h > 6) bad('the "Your coil" label floats ' + (ys ? ys.h : '?') + ' yards up, over the HUD\'s call-outs and far from its circle (0:39): keep it low (6 at most)');
     if (!bb || bb.h > 6) bad('the "Into the bubble" label floats ' + (bb ? bb.h : '?') + ' yards up, on the HUD\'s call-outs (0:39, under "Egg picked up"): keep it low (6 at most)');
     if (at(20).some((s) => s.k === 'label' && /^Ula'tek$/.test(s.text))) bad('the "Ula\'tek" label is back: it sat half under the boss bar, which already names her');
     const gl = at(48).find((s) => s.k === 'label' && s.text === 'Gore Rattle'); if (!gl || gl.how !== 'name') bad('"Gore Rattle" isn\'t marked as a creature\'s name (how: \'name\'), so it would move off a HUD call-out instead of hiding'); }
@@ -239,8 +239,8 @@ module.exports = function practice3d(say, H) {
     if (!/keep\(\{ dispose: STN\.free \}\)/.test(P3)) nope('its canvases aren\'t emptied on close (keep({ dispose: STN.free }))');
     const calls = [...P3.matchAll(/pg3dStoneDraw\((?!mk, px\))/g)].map((q) => q.index), a = P3.indexOf('const put = '), b = P3.indexOf('\n  // ---- the camera'), c = P3.indexOf('const draw1 = '), d = P3.indexOf('\n  const draw = ');
     if (calls.length !== 1 || calls.some((i) => (i > a && i < b) || (i > c && i < d)) || !/const STN = pg3dStoneDraw\(/.test(P3)) nope('it must be drawn once, when the 3D view opens (one pg3dStoneDraw call, in pg3d and not in put or draw1): ' + calls.length + ' call(s)');
-    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;)/]) if (re.test(P3)) url.push(String(re));
-    if ((P3.match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s');
+    const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;| src;)/]) if (re.test(P3)) url.push(String(re)); /* (PG3D_GLTF: the loader for your figure, check 13; the stone still draws by code) */
+    if ((P3.replace(/const PG3D_(GLTF|SKU|KK2?|MQ|WAGO) = '[^']+'/g, '').replace(/const PG3D_FIG = \{[\s\S]*?\} \};/, '').replace(/const PG3D_MON = \{[\s\S]*?\n\};/, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s, the figures\' and the monsters\' (checks 13, 14)');
     if (url.length) nope('a texture or picture loads from an address (' + url.join(', ') + '): the stone must be drawn by code, never a picture');
     if (!/const P = \(x, y\) => \[\(x \+ S \/ 2\) \* K, \(S \/ 2 - y\) \* K\]/.test(P3) || !/S = PL\.span, K = px \/ S/.test(P3) || !/map: stx\(STN\.col, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5\)/.test(P3) || !/normalMap: stx\(STN\.nrm, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5/.test(P3)) nope('the texture doesn\'t span the plan (1 / span, the stone\'s middle at 0.5) the way pg3dStoneDraw draws it ((x + S / 2) * K, (S / 2 - y) * K): the carving would slide off the octagon');
     const sc = (() => { try { const x = vm.createContext({ Math, Uint8Array, Uint8ClampedArray }); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('pg3dStonePlan', P3) + '\n' + H.grab('pg3dNormals', P3) + '\n' + H.grab('pg3dStoneDraw', P3) + '\nthis.plan = pg3dStonePlan; this.nrm = pg3dNormals; this.draw = pg3dStoneDraw; this.on = PG_UL.onPlat;', x); return x; } catch (e) { nope('pg3dStonePlan, pg3dNormals or pg3dStoneDraw don\'t run by themselves (' + String(e.message).slice(0, 140) + ')'); return null; } })();
@@ -351,7 +351,258 @@ module.exports = function practice3d(say, H) {
       if (!/CBS\.clear\(\)/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the bars');
       const nm = P3.slice(P3.indexOf('const names = '), P3.indexOf('\n  // ---- one shape on the screen'));
       if (!/pg3dHud\(CQ, HB\)/.test(nm) || !/BX\.push\(q\)/.test(nm)) nope('the labels and names don\'t keep off the bars (their boxes don\'t join the call-outs\' in names())'); } }
-  return loadP;
+  // 13. the figures (Nov 16, Flex: "download and use one of those models ... for just the player", then "No wizard option for ranged classes? Or
+  //     clerics for healers?", "another one for ranged classes like a hunter", "can you apply these to all of the characters in the game?
+  //     including the raid members", "you can use that guys versions", "Are there models that can match each class in wow?", "yes! do as many
+  //     as you can"): free (CC0) KayKit figures loaded at runtime from pinned commits (never a branch, never bundled), read by three.js's
+  //     plain-script GLTFLoader and cloned with its SkeletonUtils (r147), only inside the 3D view; each look loads once and every wearer gets a
+  //     clone; if a model can't load, that body stays a capsule; you stand, run and swing, the raid stands and runs; one figure per WoW class
+  //     (plus the Knight), picked by the card's Look list (yours) or each raider's class on the team plan, else the role; the rings under the
+  //     raid in class colours; everything freed when the game closes; drawing makes nothing new.
+  { const nope = (m) => bad('the figures: ' + m + ' (check 13)');
+    const kk = /const PG3D_KK = '([^']+)'/.exec(P3), kk2 = /const PG3D_KK2 = '([^']+)'/.exec(P3), gl = /const PG3D_GLTF = '([^']+)'/.exec(P3), sku = /const PG3D_SKU = '([^']+)'/.exec(P3), fig = (/const PG3D_FIG = \{[\s\S]*?\} \};/.exec(P3) || [''])[0];
+    if (!kk || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/KayKit-Game-Assets\/KayKit-Character-Pack-Adventures-1\.0@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk[1])) nope('the free figures must be KayKit\'s CC0 models from one pinned commit on jsdelivr (PG3D_KK)');
+    if (!kk2 || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(kk2[1])) nope('the re-hosted packs must come from one pinned commit on jsdelivr (PG3D_KK2)');
+    if (!gl || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/loaders\/GLTFLoader\.js$/.test(gl[1])) nope('the model loader must be three.js\'s plain-script GLTFLoader r147 (PG3D_GLTF)');
+    if (!sku || !/^https:\/\/cdn\.jsdelivr\.net\/npm\/three@0\.147\.0\/examples\/js\/utils\/SkeletonUtils\.js$/.test(sku[1])) nope('the cloner must be three.js\'s plain-script SkeletonUtils r147 (PG3D_SKU)');
+    if (!/one\(PG3D_GLTF, /.test(P3) || !/one\(PG3D_SKU, /.test(P3)) nope('pg3dMeLoad must load just the loader and the cloner (one(PG3D_GLTF ...), one(PG3D_SKU ...))');
+    const LK = ['knight', 'warrior', 'paladin', 'hunter', 'rogue', 'priest', 'deathknight', 'shaman', 'mage', 'warlock', 'monk', 'druid', 'demonhunter', 'evoker'], urls = [...fig.matchAll(/url: ([^,]+),/g)].map((q) => q[1]);
+    if (LK.some((k) => !new RegExp('\\b' + k + ': \\{ url: ').test(fig)) || urls.length !== LK.length) nope('PG3D_FIG must have the knight and a look for every class: ' + LK.join(', '));
+    if (urls.some((x) => !/^PG3D_KK2? \+ '[\w%./-]+\.glb'$/.test(x))) nope('a figure loads from an address that isn\'t one of the two pinned commits');
+    if (!/mage: \{ url: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/rogue: \{ url: PG3D_KK \+ 'Rogue\.glb'/.test(fig) || !/priest: \{ url: PG3D_KK2 \+ '[^']*Cleric\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(fig) || !/paladin: \{ url: PG3D_KK2 \+ '[^']*Paladin(_with_Helmet)?\.glb', anim: PG3D_KK \+ 'Knight\.glb'/.test(fig) || !/warlock: \{ url: PG3D_KK2 \+ '[^']*Necromancer\.glb'/.test(fig) || !/druid: \{ url: PG3D_KK2 \+ '[^']*Druid\.glb'/.test(fig)) nope('a class is on the wrong model');
+    if ([...fig.matchAll(/url: PG3D_KK2 \+ [^}]*\}/g)].some((q) => !/anim: PG3D_KK \+ '(Knight|Mage|Rogue|Barbarian)\.glb'/.test(q[0]))) nope('a figure from the re-hosted packs has no clips to borrow (anim)');
+    const ln = (/const LOOKN = \{[^}]*\}, LOOKS = Object\.keys\(LOOKN\);/.exec(PJ) || [''])[0];
+    if (!['auto'].concat(LK).every((k) => new RegExp('\\b' + k + ': ').test(ln)) || !/<select class="pg-look">/.test(PJ) || !/look: \(\) => look/.test(PJ) || !/cls: \(id\) =>/.test(PJ)) nope('the card has no Look list with Auto and every look, or the 3D view can\'t read it or a raider\'s class');
+    if (!/c1\.tracks = c1\.tracks\.filter\(\(tr\) => !!root\.getObjectByName\(T\.PropertyBinding\.parseTrackName\(tr\.name\)\.nodeName\)\)/.test(P3)) nope('borrowed clips keep tracks for bones the figure doesn\'t have');
+    const calls = P3.split('pg3dMeLoad(T, F0.url)').length - 1, pgA = P3.indexOf('function pg3d(host, A)'); /* (F0: the look's entry; since Nov 16 a real WoW model can come first, check 16) */
+    if (calls !== 1 || P3.indexOf('pg3dMeLoad(T, F0.url)') < pgA) nope('a model must load only inside pg3d (figLoad: ' + calls + ' call(s))');
+    if (!/if \(rk in TPL\) return; TPL\[rk\] = null;/.test(P3)) nope('a look\'s model can load more than once in a 3D view (TPL)');
+    if (!/\}\)\.catch\(\(\) => \{ TPL\[rk\] = false;/.test(P3)) nope('a model that can\'t load must leave that body a capsule (no .catch)');
+    if (!/const root = T\.SkeletonUtils\.clone\(P0\.root\); root\.traverse\(\(m\) => \{ if \(m\.isSkinnedMesh && m\.skeleton\) own\.push\(m\.skeleton\); \}\);/.test(P3)) nope('each wearer must get a SkeletonUtils clone, its bones freed on close');
+    if (!/const L = mine && A\.look \? A\.look\(\) : 'auto'; if \(PG3D_FIG\[L\]\) return L;/.test(P3) || !/if \(c !== 'knight' && PG3D_FIG\[c\]\) return c;/.test(P3) || !/return r === 'r' \? 'mage' : r === 'h' \? 'priest' : r === 't' \|\| mine \? 'knight' : 'warrior';/.test(P3)) nope('a look isn\'t picked by the Look list (yours), else by the raider\'s class, else by role (ranged the mage, healers the priest, tanks and your melee the knight, the raid\'s melee the warrior)');
+    if (!/if \(k === 'unit' && s\.you && meNow\(\)\) \{ figPose\(ME, s, A\.G\.lastHitT\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for your figure');
+    if (!/if \(k === 'unit' && !s\.you\) \{ const f = botNow\(s\); if \(f\) \{ const bt = botSwing\(f, s\); figPose\(f, s, bt\);[^\n]*? return; \} \}/.test(P3)) nope( /* (bt: since Nov 16 its beat also casts its spell, check 17) */'put() doesn\'t swap a raider\'s capsule for its figure');
+    const fp = (/const figPose = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];
+    if (!fp) nope('there is no figPose (the figures\' moves)');
+    else { if (/new T\./.test(fp)) nope('the figures make new three.js objects while drawing');
+      if (!/'atk'/.test(fp) || !/'run'/.test(fp) || !/'idle'/.test(fp)) nope('the figures don\'t switch between standing, running and attacking'); }
+    if (!/atk: rk\.indexOf\('mon:'\) === 0 \? null : act\(/.test(P3)) nope('you and the raid must swing or cast (monsters don\'t)');
+    // (the raid at work, Flex: "Would it take much to have the bots attacking things that are supposed to be attacked?", "as long as the bots don't look like they are just standing around vibing")
+    if (!/BT = botAims\(t\);/.test(P3) || !/right: \(\(dv && dv\.right\) \|\| \[\]\)\.map\(\(o\) => o\.p\)/.test(P3) || !/if \(r === 'h'\) B\.tanks\.forEach\(near\); else \{ B\.right\.forEach\(near\); if \(!tp && B\.boss\) near\(B\.boss\); \}/.test(P3) || !/const bt = botSwing\(f, s\); figPose\(f, s, bt\);/.test(P3)) nope('the raid doesn\'t face and hit what it should (the game\'s right targets, else Ula\'tek; healers the tanks)');
+    const bs = (/const botSwing = [\s\S]*?\}; \/\*/.exec(P3) || [''])[0]; if (!bs || /new T\./.test(bs) || /G\.(hp|log|adds\.push)|mistake\(|hurt\(/.test(bs)) nope('botSwing must only aim and time the swing (no new objects, nothing that changes the fight or the score)');
+    if (!/for \(let i = 0; i < FIGL\.length; i\+\+\) FIGL\[i\]\.on = false;/.test(P3) || !/for \(let i = 0; i < FIGL\.length; i\+\+\) \{ const f = FIGL\[i\]; f\.root\.visible = f\.on; if \(f\.on\) f\.mixer\.update\(dt\); \}/.test(P3)) nope('draw1 doesn\'t move the figures\' animations on, or doesn\'t hide one that isn\'t drawn');
+    if (!/FIGL\.length = 0; BOTF\.clear\(\);/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the figures');
+    if (!/own\.push\(m\.geometry\)/.test(P3)) nope('the models\' geometry, materials and textures aren\'t freed when the game closes (own)');
+    if (!/ring\(b\.x, b\.y, 0\.95, cc \|\| rc, 0\.9, 0\.16\)/.test(P3)) nope('the rings under the raid aren\'t in class colours (the figures show the role, the ring the class)'); }
+  // 14. the monsters (Nov 16, Flex: "Can you also find a model pack to use for the monsters in the fight as well? Ideally serpent type", "there
+  //     should only be one model for each of the mobs", "Rawlings should not be the same as vipers, try to find unique models for each one",
+  //     "both the shrieker and vipers are flying creatures"): one CC0 model per mob (PG3D_MON), every one a different file, each at a pinned
+  //     address; drawn as tall as the old shape so the hits stay where they were; a flier hovers over its spot with a ring on the floor under a
+  //     Viper; the old shape stays until its model loads (or if it can't); phase 1's adds and Wretches, phase 2's Warden, Doomscales, Ravenous
+  //     Doomscales and Clutches, phase 3's Clutches and Shriekers; pooled, nothing new while drawing.
+  { const nope = (m) => bad('the monsters: ' + m + ' (check 14)');
+    const mt = (/const PG3D_MON = \{[\s\S]*?\n\};/.exec(P3) || [''])[0], mq = /const PG3D_MQ = '([^']+)'/.exec(P3);
+    if (!mt) nope('there is no PG3D_MON (one model per mob)');
+    const ent = [...mt.matchAll(/^\s+(\w+): \{ (?:wow: \{[^}]*\}, )?url: ([^,]+),/gm)].map((q) => [q[1], q[2]]), urls = ent.map((e) => e[1]);
+    ['rawling', 'viper', 'doomscale', 'warden', 'ravenous', 'wretch', 'clutch', 'shrieker'].forEach((k) => { if (!ent.some((e) => e[0] === k)) nope('no model for the ' + k); });
+    if (new Set(urls).size !== urls.length) nope('two mobs share a model (each mob must have its own)');
+    if (!mq || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(mq[1])) nope('the snakes must come from one pinned commit (PG3D_MQ)');
+    if (urls.some((u) => !/^PG3D_(MQ|KK2) \+ '[\w%./-]+\.glb'$/.test(u) && !/^'https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w%./-]+\.(glb|gltf)'$/.test(u) && !/^'https:\/\/static\.poly\.pizza\/[0-9a-f-]{36}\.glb'$/.test(u))) nope('a monster loads from an address that isn\'t pinned (a jsdelivr commit, or a poly.pizza file id)');
+    // (Nov 16, Flex: "he didn't have any animations he was just falling down over and over the whole time": the Warden's, the Clutch's and the Shrieker's clip names were written with a bare '|', so they matched every clip and played the first, Death)
+    if (/clips: \{[^}]*\/\|/.test(mt)) nope('a monster\'s clip name starts with a bare | (it matches every clip, so the monster plays Death over and over); write \\| ');
+    { const vm2 = require('vm'), cl = vm2.runInNewContext('(' + JSON.stringify(ent.map((e) => e[0])) + ')'); void cl; const rx = [...mt.matchAll(/clips: \{ idle: (\/[^,]+\/i), move: (\/[^}]+\/i) \}/g)]; rx.forEach((q) => { const re = vm2.runInNewContext(q[1]); if (re.test('') || re.test('CharacterArmature|Death|CharacterArmature|Dea')) nope('a monster\'s idle clip name ' + q[1] + ' also matches Death (it would fall over and over)'); }); }
+    if (!/warden: \{ (?:wow: \{[^}]*\}, )?url: PG3D_KK2 \+ '[^']*Monster\.glb', anim: PG3D_KK \+ 'Mage\.glb'/.test(mt)) nope('the Warden must be the pale lizard-man on the Mage\'s clips, not the shark (Flex: "the warden just looks like a shark")');
+    if (ent.some((e) => !new RegExp('\\b' + e[0] + ': \\{ (?:wow: \\{[^}]*\\}, )?url: [^}]*\\bh: [\\d.]+').test(mt))) nope('a monster has no height (h: as tall as its old shape)');
+    if (!/const F0 = rk\.indexOf\('mon:'\) === 0 \? PG3D_MON\[rk\.slice\(4\)\] : PG3D_FIG\[rk\];/.test(P3) || !/k = \(F\.h \|\| 2\.3\) \/ h;/.test(P3)) nope('the loader doesn\'t read monsters from PG3D_MON at their own height');
+    const mf = (/const mon = [\s\S]*?return true; \};/.exec(P3) || [''])[0];
+    if (!mf || /new T\./.test(mf) || !/MONFREE\[kind\]/.test(mf) || !/figMake\('mon:' \+ kind, false, x, y\)/.test(mf) || !/f\.hover/.test(mf)) nope('mon() must reuse pooled monsters, make new ones only through figMake, hover the fliers, and make nothing while drawing');
+    if (!/const monEnd = [^\n]*MONFREE/.test(P3) || !/monEnd\(\); for \(let i = 0; i < FIGL\.length; i\+\+\)/.test(P3)) nope('monsters not drawn this frame aren\'t put back in their pool');
+    if (!/if \(k === 'add' && mon\(s\.ref \|\| s, s\.kind === 'viper' \? 'viper' : 'rawling', s\.x, s\.y\)\) return;/.test(P3) || !/P\(\{ k: 'add', kind: a\.kind, x: a\.x, y: a\.y, ref: a \}\)/.test(P3)) nope('phase 1\'s Vipers and Rawlings don\'t draw their monsters (keyed by the add, so each keeps its pose)');
+    if (!/if \(a\.kind === 'viper'\) ring\(a\.x, a\.y, /.test(P3)) nope('a flying Viper has no ring on the floor at its real spot');
+    // (the real mobs' colours, Flex: "maybe the colors of the actual mobs": the Wretch pink, the Rawling bone, the Doomscales and the Shrieker purple, the Warden pale)
+    if (!/kaiju-animations\.glb', h: [\d.]+, hover: -[\d.]+, flat: \[0\.45, 0\.1, 0\.18\]/.test(P3) || !/Snake\.glb', h: [\d.]+, paint: \{ DarkGreen: \[0\.42, 0\.3, 0\.17\], LightGreen: \[0\.78, 0\.66, 0\.46\] \}/.test(P3) || !/Dino\.gltf', h: [\d.]+, hue: \[0\.78, /.test(P3) || !/x\.color\.getHSL\(HS\); if \(HS\.s > 0\.15/.test(P3)) nope('the mobs must wear the real mobs\' colours (pink Wretch, bone Rawling, purple Doomscales)');
+    if (!/kaiju-animations\.glb', h: [\d.]+, hover: -[\d.]+, /.test(P3) || !/bones: \{ Back_Leg_Pelvis_L: \[0\.01, 0\.01, 0\.01\]/.test(P3) || !/if \(F\.bones\) anim = anim\.map\(\(c0\) => \{ const c1 = c0\.clone\(\);/.test(P3)) nope('the Wretch must be a legless bloated serpent sunk to the floor, its clips\' bone scales dropped (Flex: "it just looks like a dinosaur")');
+    // (Flex: "give the wasp snake fangs too and a more snake face", "make the wretch face more snake like with snake fangs, and give it arms")
+    if (!/Front_Leg_Shoulder_L: \[1\.25, 1\.25, 1\.25\]/.test(P3)) nope('the Wretch must keep its arms');
+    if ((P3.match(/face: \[?\{ bone: '[Hh]ead', parts: /g) || []).length < 4 || (P3.match(/\['cone', PG3D_FC\.fang, /g) || []).length < 4 || !/\['box', PG3D_FC\.slit, /.test(P3)) nope('the Wretch and the Vipers must have snake faces (fangs, slit eyes), the Doomscales and the Warden their crests');
+    const fc = (/if \(F\.face\) \{[\s\S]*?fb\.attach\(m\); \}\); \}\); \}/.exec(P3) || [''])[0];
+    if (!fc || !/FG = \{ ball: keep\(new T\.SphereGeometry/.test(fc) || !/keep\(new T\.MeshStandardMaterial/.test(fc) || !/\[\]\.concat\(F\.face\)\.forEach/.test(fc) || P3.indexOf('if (F.face) {') < P3.indexOf('if (F.bones) Object.keys(F.bones)')) nope('the face pieces must be made once per model (keep(), freed on close), after the bones are reshaped, and attached to their bones');
+    // (Nov 16: the base colours were painted after the spikes, crests and faces were added, so flat/hue/tint covered them: the Wretch's mane came out dark pink)
+    if (!(P3.indexOf('if (F.flat || F.hue) {') < P3.indexOf('if (F.face) {') && P3.indexOf('if (F.tint) root.traverse(') < P3.indexOf('if (F.face) {'))) nope('a monster\'s base colours must be painted before its spikes, crests and face are added, or they cover them');
+    // (the real mobs, seen in Wowhead's 3D viewer, Nov 16: the Viper golden with a dark back and teal wings; the Wretch dark pink-red with a spiky mane, a glowing throat and a spiky glowing tail; the Doomscales purple-grey with glowing bellies and teal crests; the Warden pale with a red crest)
+    if (!/viper: \{ (?:wow: \{[^}]*\}, )?url: PG3D_MQ \+ 'easy_enemies_pack\/Wasp\.glb', h: 4\.4, hover: 1\.6, paint: \{ Yellow: \[0\.72, 0\.45, 0\.05\], Black: \[0\.05, 0\.05, 0\.07\]/.test(P3) || !/const c = F\.paint\[x\.name\]; if \(c && x\.color\) \{ x\.color\.setRGB/.test(P3)) nope('the Vipers must be big wasps in the real Viper\'s colours (golden, dark back, teal wings)');
+    if (!/flat: \[0\.45, 0\.1, 0\.18\]/.test(P3) || !/bone: 'Tail_Mid', parts: pg3dRow\(/.test(P3) || !/doomscale: \{[^\n]*paint: \{ DarkGreen: \[0\.1, 0\.08, 0\.17\], LightGreen: \[0\.42, 0\.66, 0\.04, [\d.]+\] \}/.test(P3) || !/emissiveIntensity: c\[3\] \|\| 0/.test(P3)) nope('the Wretch, the Doomscales and their glowing parts must follow the real mobs');
+    if (!/bones: \{ WingL: \[1\.7, 1\.7, 1\.7\], WingR: \[1\.7, 1\.7, 1\.7\], Abdomen: \[1, 1\.3, 1\]/.test(P3) || !/TopLeg1L: \[0\.01, 0\.01, 0\.01\]/.test(P3) || !/if \(F\.bones\) Object\.keys\(F\.bones\)\.forEach/.test(P3)) nope('the Vipers must look more serpent: bigger wings, a long tail, no legs (Flex: "making the wings a bit bigger and more serpent looking")');
+    if (!/if \(k === 'wretch' && mon\('wr' \+ s\.id, 'wretch', /.test(P3)) nope('the Wretch doesn\'t draw its monster');
+    if (!/kit3d\(\{ mon, /.test(P3) || !/pg3dP2\(\{ mon, /.test(P3) || !/pg3dP3\(\{ mon, /.test(P3)) nope('the parts\' 3D kits aren\'t given mon');
+    const P2J = rd('practice-p2.js'), P3J = rd('practice-p3.js');
+    if (!/K\.mon\(s\.ref, k === 'rav' \? 'ravenous' : k, /.test(P2J) || !/K\.mon\(s\.ref, 'doomscale', /.test(P2J) || !/k: 'warden', x: p\[0\], y: p\[1\], ref: w/.test(P2J) || !/ref: d \}\)/.test(P2J) || !/p: left, ref: c \}\)/.test(P2J) || !/k: 'rav', x: r\.x, y: r\.y, ref: r/.test(P2J)) nope('phase 2\'s Warden, Doomscales, Ravenous Doomscales and Clutches don\'t draw their monsters');
+    if (!/K\.mon\(s\.ref, k === 'clutch' \? 'slither' : k, s\.x, s\.y, /.test(P3J) || /* (phase 3's clutch is the Slithering Clutch, its own model, check 21) */ !/ph: c\.land, ref: st \}\)/.test(P3J) || !/k: 'shrieker', x: s\.x, y: s\.y, ref: s/.test(P3J)) nope('phase 3\'s Clutches and Shriekers don\'t draw their monsters'); }
+  // 15. (Nov 16, Flex: "can you have a variety of classes for the bots so its representing various classes?", "don't put healthbars over the bots
+  //     heads, put their role. Put healthbars over the monsters heads with the names though.") Without a team plan the raid is a fixed mix of
+  //     classes by role (the rings in those classes' colours); a raider's plate shows its role and no health bar; every mob in 45 yd gets its
+  //     name and a red health bar over its head, and its old floating name label goes.
+  { const nope = (m) => bad('the raid and the mobs: ' + m + ' (check 15)');
+    const mix = (/const PG3D_MIX = \{[\s\S]*?\};/.exec(P3) || [''])[0];
+    if (!['t', 'm', 'r', 'h'].every((r) => new RegExp('\\b' + r + ": \\['").test(mix))) nope('PG3D_MIX must give each role a list of classes');
+    if (!/c = mine \? String\(A\.cls \? A\.cls\(id\) : ''\)\.toLowerCase\(\)\.replace\(\/\[\^a-z\]\/g, ''\) : pg3dClassOf\(A, id\)/.test(P3)) nope('the raid\'s figures don\'t use the class mix');
+    if (!/cc = A\.clsC\(id\) \|\| pg3dClassC\(pg3dClassOf\(A, id\)\)/.test(P3)) nope('the rings don\'t take the mixed classes\' colours');
+    if (!/role: GDZ_ROLE\[A\.rl\(id\)\]\[0\], rc: cc \|\| rc \}\)/.test(P3)) nope('a raider\'s role tag must be in its class colour (Flex, Nov 16: "can you color the bot names by class color")');
+    if (!/role: GDZ_ROLE\[A\.rl\(id\)\]\[0\], rc: /.test(P3) ||!/p\.b\.sp\.visible = !s\.role && !s\.mob;/.test(P3) || !/if \(s\.role\) \{ if \(!p\.r\) \{ p\.r = plSprite\(/.test(P3)) nope('a raider\'s plate must show its role and no health bar');
+    if (!/A\.tgts \? A\.tgts\(\) : \[\]/.test(P3) || !/show: false, why: 'mob', mob: true, kind: o\.kind, h: MOBH\[o\.kind\]/.test(P3) || !/tgts: \(\) => \(G \? tgtList\(G\.t\) : \[\]\)/.test(PJ)) nope('the mobs don\'t get a plate with their name and health bar');
+    // (Flex: "make the mob health bars a little bigger they are normally larger", "put the mob name in the health bar to save space")
+    if (!/if \(s\.mob\) \{ if \(!p\.m\) p\.m = plSprite\(240, 28\);/.test(P3) || !/g\.fillText\(s\.name, 120, 15\)/.test(P3) || !/p\.m\.sp\.scale\.set\(132 \/ pxK, 15\.4 \/ pxK, 1\)/.test(P3)) nope('a mob\'s plate must be one wide red bar with its name inside');
+    if (!/if \(tw > 226\) \{ fz = Math\.max\(11, Math\.floor\(fz \* 226 \/ tw\)\);/.test(P3) || !/\.slice\(0, 34\), c: '#ffb0a3'/.test(P3)) nope('a long mob name ("Weakened Doomscale (Skull)") is cut off instead of shrinking to fit its bar');
+    if (!/if \(q\.k === 'label' && \/Rawling\|Viper\|Wretch\|Warden\|Doomscale\|Clutch\|Shrieker\/\.test/.test(P3)) nope('the mobs\' old floating name labels stay next to their new plates');
+    if (!/if \(p\.r\) p\.r\.sp\.visible = false; if \(p\.m\) p\.m\.sp\.visible = false; \} \}\);/.test(P3)) nope('a role tag or a mob\'s bar stays up after it is gone'); }
+  let fbP = null; /* (check 16's fallback cases run on timers: the result waits for them) */
+  // 16. the fight's real creatures (Nov 16, Flex: "can you try to just find the wow models online somewhere", "Yes, add it", "just get it done
+  //     and pull the models into the game, including ulatek"): wago.tools hands out the game's own files by number, open to any page, and
+  //     src/m2loader.js (three-m2loader 5.2.0 by Mugen87, MIT, its licence kept) reads them while you play; nothing from the game is stored in
+  //     Debrief. Every mob but the Clutch, and Ula'tek herself, has its real model; it is used only where the card reads WoW's packed textures
+  //     (S3TC), and the model drawn before stays when it can't or wago.tools doesn't answer. The real one keeps its own colours and shape.
+  //     First test link, Nov 16: the real Wretch came out about 25 yards long over the camera: it was sized from its raw pose (lying low; the
+  //     Rawling's and the Shrieker's raw poses stand upright), so each is now sized from its standing pose (a0). The helpers' file check, Nov 16:
+  //     the Warden's file holds six armour sets drawn on top of each other (one part per group now, the Warden's 101, 203, 303), and the
+  //     Rawling's lift off the floor is in its always-on movement (g0), dropped at first (it sat half under the floor).
+  { const nope = (m) => bad('the real creatures: ' + m + ' (check 16)');
+    const ML = rd('m2loader.js') || '', mt = (/const PG3D_MON = \{[\s\S]*?\n\};/.exec(P3) || [''])[0];
+    if (!/^\/\* three-m2loader 5\.2\.0 by Mugen87/.test(ML) || !/MIT License\s+Copyright \(c\) 2022 Mugen87/.test(ML) || !/Permission is hereby granted/.test(ML)) nope('src/m2loader.js must be three-m2loader 5.2.0 with its MIT licence kept');
+    if (!/\nfunction pg3dM2Lib\( THREE \) \{\n/.test(ML) || /^\s*(import|export)\b/m.test(ML) || !/return \{ M2Loader, M2Options, BLPLoader \};\n\n\}\n$/.test(ML)) nope('the reader must be wrapped in pg3dM2Lib(THREE), with no import or export, so it runs only when 3D is picked');
+    try { new (require('vm').Script)(ML); } catch (e) { nope('src/m2loader.js doesn\'t parse: ' + e.message); }
+    if (!/copy\( source, recursive \) \{\n\n\t\tsuper\.copy\( source, recursive \);\n\t\tif \( source\.pivot \) this\.pivot\.copy\( source\.pivot \);/.test(ML)) nope('a cloned bone loses its pivot (every mob after the first would fold up)');
+    if (!/'practice\.js', 'm2loader\.js', 'practice3d\.js'/.test(BP) || !/\(& \$read 'm2loader\.js'\) \+ "`n" \+ \(& \$read 'practice3d\.js'\)/.test(BP)) nope('the build doesn\'t check and put in src/m2loader.js just before practice3d.js');
+    if (!/const PG3D_WAGO = 'https:\/\/wago\.tools\/api\/casc\/';/.test(P3)) nope('the real models must come from wago.tools by file number (PG3D_WAGO)');
+    ['rawling', 'viper', 'doomscale', 'warden', 'ravenous', 'wretch', 'shrieker'].forEach((k) => { if (!new RegExp('\\n  ' + k + ': \\{ wow: \\{ m2: \\d+, skin: \\[\\d+(, \\d+)*\\]').test(mt)) nope('the ' + k + ' has no real model (wow: { m2, skin })'); });
+    if (!/boss: \{ m2: 7234130 \}/.test(P3)) nope('Ula\'tek has no real model (creature/ulatekboss/ulatekboss01.m2, 7234130)');
+    if (!/const S3TC = (PG3D_REAL && )?!!\(R\.extensions && R\.extensions\.has\('WEBGL_compressed_texture_s3tc'\)\);/.test(P3)) /* (PG3D_REAL: the switch, check 22) */ nope('the game doesn\'t ask the card whether it reads WoW\'s packed textures (S3TC)');
+    if (!/\(F0\.wow && S3TC \? pg3dWowOr\(\(\) => pg3dWowLoad\(T, F0\.wow\), drawn\) : drawn\(\)\)/.test(P3)) nope('a mob must fall back to the model drawn before when the card can\'t read the real one or wago.tools doesn\'t answer');
+    // (Main, Nov 16: "if wago.tools is slow, down, or blocks requests from debriefme.io (Wowhead already blocked you), every creature falls back
+    //  to the figures you made, with no error and no empty spots": a reader that drops a broken file's error would hang forever, and so would a
+    //  request wago.tools never answers; pg3dWowOr gives way to the drawn model on an error, a throw or 12 s of silence, and ignores a late answer)
+    if (!/this\.parse\( buffer, url, options \)\.then\( onLoad, \( e \) => \{ if \( onError \) onError\( e \);/.test(ML)) nope('a broken model file must reach onError; the original reader drops the error and the creature waits forever');
+    if (!/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(T, pg3dWow\.boss\), \(\) => null, 20000\)\.then\(\(r\) => \{ if \(dead \|\| !r\) return;/.test(P3) || !/\}\)\.catch\(\(\) => \{ \/\* \(no answer: the drawn one stays\) \*\/ \}\);/.test(P3)) nope('Ula\'tek must keep her drawn model when her real one fails or is late (her drawn parts hide only once the real one is in)');
+    if (!/\}\)\.catch\(\(\) => \{ TPL\[rk\] = false;/.test(P3) || !/const figMake = \(rk, mine, x, y, who\) => \{ const P0 = TPL\[rk\]; if \(!P0\) \{ figLoad\(rk\); return null; \}/.test(P3) || !/f = fr && fr\.length \? fr\.pop\(\) : figMake\('mon:' \+ kind, false, x, y\); if \(!f\) return false;/.test(P3)) nope('while a creature\'s model loads, or if every model fails, mon() must return false so the old shape is drawn (never an empty spot)');
+    // (Main, Nov 17: on a busy build machine, four headless browsers beside it, every case failed "still waiting after 1 s" though the game was fine. The
+    //  time limit now runs on a fake clock: pg3dWowOr's timers and the cases' own are queued, and time moves only when the check moves it, to 1 s, 40 times
+    //  the 25 ms limit. So a slow machine can't fail it; only code with no time limit (that would wait forever) can)
+    const clk = { now: 0, q: [], id: 0 }, fset = (fn, ms) => { const id = ++clk.id; clk.q.push({ id, at: clk.now + Math.max(0, +ms || 0), fn }); return id; }, fclear = (id) => { clk.q = clk.q.filter((x) => x.id !== id); };
+    const flush = async () => { for (let i = 0; i < 20; i++) await new Promise((ok) => setImmediate(ok)); }, runTo = async (until) => { await flush(); for (;;) { clk.q.sort((a, b) => a.at - b.at || a.id - b.id); const n = clk.q[0]; if (!n || n.at > until) break; clk.q.shift(); clk.now = n.at; try { n.fn(); } catch (e) { /* (a timer's own error) */ } await flush(); } clk.now = until; await flush(); };
+    const wf = (() => { try { const c = vm.createContext({ setTimeout: fset, clearTimeout: fclear, Promise }); vm.runInContext(H.grab('pg3dWowOr', P3) + '\nthis.f = pg3dWowOr;', c); return c.f; } catch (e) { nope('pg3dWowOr doesn\'t run by itself (' + e.message + ')'); return null; } })();
+    if (wf) { const never = () => new Promise(() => {}), cases = [
+      ['wago.tools turns the request away', () => Promise.reject(new Error('403')), 'drawn'], ['the reader throws', () => { throw new Error('bad file'); }, 'drawn'],
+      ['wago.tools never answers', never, 'drawn'], ['the real model loads', () => Promise.resolve('real'), 'real'],
+      ['the real model comes in after the wait', () => new Promise((ok) => fset(() => ok('late'), 60)), 'drawn']];
+      fbP = (async () => { const st = cases.map(([what, wow, want]) => { const o = { what, want, calls: 0, done: false, r: undefined };
+          Promise.resolve().then(() => wf(wow, () => { o.calls++; return 'drawn'; }, 25)).then((r) => { o.done = true; o.r = r; }, (e) => { o.done = true; o.r = 'threw: ' + (e && e.message); }); return o; });
+        await runTo(1000); /* (a late answer, at 60 ms, has come and gone by then: drawn() still called once) */
+        st.forEach(({ what, want, calls, done, r }) => { if (!done) { nope('when ' + what + ', the creature is still waiting after 1 s on the check\'s clock, 40 times its 25 ms limit (it would wait forever)'); return; }
+          const got = Array.isArray(r) ? r[0] : r; if (got !== want || (want === 'drawn' && calls !== 1) || (want === 'real' && (calls || !Array.isArray(r) || r[2] !== true))) nope('when ' + what + ', the creature got ' + JSON.stringify(got) + ' (drawn() called ' + calls + ' time(s)), not ' + want); }); })(); }
+    if (!/const F = real \? Object\.assign\(\{\}, F0, \{ flat: null, hue: null, paint: null, tint: null, bones: null, face: null, hold: null, turn: 0, clips: \{ idle: \/\^a0\$\/, move: \/\^a4\$\/ \} \}, F0\.wow\) : F0;/.test(P3)) nope('the real model must keep its own colours and shape (no paint, faces or reshaped bones), stand on a0 and walk on a4');
+    if (!/nm\.set\(b\.uuid, \(b\.name = 'wb' \+ i\)\)/.test(P3) || !/t1\.name = n \+ '\.' \+ p\.propertyName;/.test(P3)) nope('the real model\'s clips must name its bones (the reader names tracks by uuid, which a clone doesn\'t keep)');
+    if (!/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(T, pg3dWow\.boss\)/.test(P3) ||!/bossDrawn\.forEach\(\(c\) => \{ c\.visible = false; \}\); boss\.add\(root\);/.test(P3) || !/if \(BRM && boss\.visible\) BRM\.update\(dt\);/.test(P3)) nope('Ula\'tek\'s real model must take the drawn head\'s place (moved by the same code) and move');
+    const hOf = (k, re) => { const m = new RegExp('\\n  ' + k + ': \\{ wow: \\{[^}]*\\b' + re + ': ([\\d.]+)').exec(mt); return m ? +m[1] : null; };
+    ['wretch', 'doomscale', 'ravenous'].forEach((k) => { const h = hOf(k, 'h'); if (h == null || h > 6) nope('the real ' + k + ' is long-bodied: it needs its own height of 6 yd or less (the Wretch came out about 25 yards long)'); });
+    if (!/m\.boneTransform\(i, v\); v\.applyMatrix4\(m\.matrixWorld\); box\.expandByPoint\(v\);/.test(P3) || !/const st = animations\.find\(\(c\) => c\.name === 'a0'\)/.test(P3) || !/const box = g\.box \|\| new T\.Box3\(\)\.setFromObject\(root\), h = /.test(P3) || !/box = g\.box \|\| new T\.Box3\(\)\.setFromObject\(root\), k = BRH \//.test(P3)) nope('a real model must be sized from its standing pose (a0), not its raw pose (the Wretch came out about 25 yards long)');
+    if (!/mesh\.userData\.geoset = skinData\.submeshes\[ batch\.skinSectionIndex \]\.skinSectionId;/.test(ML) || !/pick = w != null \? w : ids\.includes\(\+k \* 100 \+ 1\) \? \+k \* 100 \+ 1 : Math\.min\(\.\.\.ids\);/.test(P3) || !/warden: \{ wow: \{[^}]*geo: \[101, 203, 303\]/.test(mt)) nope('a model must show one part per group (the Warden\'s six armour sets were drawn on top of each other)');
+    if (!/sm\.globalSequences\.forEach\(\(q, j\) => \{ clipOf\('g' \+ j,/.test(P3) || !/if \(P0\.F\.wow\) anim\.forEach\(\(c\) => \{ if \(\/\^g\\d\+\$\/\.test\(c\.name\)\) mixer\.clipAction\(c\)\.play\(\); \}\);/.test(P3)) nope('a real model\'s always-on movement (g0...) must play under every clip (the Rawling sat half under the floor without it)');
+    if (!/const RM = s\.mob && TPL\['mon:' \+ \(PG3D_MONK\[s\.kind\] \|\| s\.kind\)\], y = baseY\(s\.x, s\.y\) \+ \(s\.h != null \? \(RM && RM\.F\.ph != null \? RM\.F\.ph : s\.h\) \+ 0\.5 : 2\.75\);/.test(P3)) nope('a mob in its real model doesn\'t have its bar at that model\'s height (ph)'); }
+  // 17. the raid's spells (Nov 16, Flex: "how difficult would it be to give the casters/ranged classes/healers simple spell animations like the
+  //     player gets?", "I mean the healers can be other classes too", "Yes, add them"): on each beat a ranged raider throws a small bolt in its
+  //     class colour at what it's hitting, a healer of any class a soft green glow onto the tank it faces; melee and tanks only swing. Your bolt
+  //     and burst, drawn smaller and fainter (sm) so the mechanics stay easy to read, at most 24 at once; the look only.
+  { const nope = (m) => bad('the raid\'s spells: ' + m + ' (check 17)');
+    if (!/const botCast = \(f, s\) => \{ (BBN\.beats\+\+; )?const r = A\.rl \? A\.rl\(s\.id\) : 'm'; if \(\(r !== 'r' && r !== 'h'\) \|\| !f\.tp\) return;( BBN\.cast\+\+;)? if \(BB\.length >= 24\) BB\.shift\(\);/.test(P3)) nope('only ranged raiders and healers cast, at most 24 spells at once');
+    if (!/c: r === 'h' \? '#8cffb4' : s\.c \|\| '#ff6a2a', heal: r === 'h' \}/.test(P3) || !/c: cc \|\| rc \}\); \/\* \(the ring in the class colour/.test(P3)) nope('a ranged raider\'s bolt must be in its class colour, a healer\'s glow green');
+    if (!/f\.tp = tp; f\.tpB = tp === B\.boss;/.test(P3) || !/const bt = botSwing\(f, s\); figPose\(f, s, bt\); if \(bt != null && bt !== f\.bb\) \{ if \(f\.bb != null\) botCast\(f, s\); f\.bb = bt; \}/.test(P3)) nope('a raider must cast at what it is hitting, once per beat, with its swing');
+    if (!/if \(b\.heal\) \{ put\(\{ k: 'impact', x: b\.x1, y: b\.y1, h: 1\.4, r: 0\.6, p: age \/ BBF\.end, c: b\.c, sm: 0?\.\d+ \}, t\); continue; \}/.test(P3)) nope('a healer\'s spell must be a glow on the tank, not a bolt');
+    { const bf0 = (/const botFx = [\s\S]*?\} \};/.exec(P3) || [''])[0], sms = [...bf0.matchAll(/sm: ([\d.]+) \}/g)].map((q) => +q[1]), sos = [...P3.matchAll(/so = s\.sm \? ([\d.]+) : 1;/g)].map((q) => +q[1]);
+      if (sms.length !== 3 || sms.some((v) => !(v > 0 && v < 1)) || sos.length !== 2 || sos.some((v) => !(v > 0 && v < 1)) || !/m\.scale\.set\(0\.36 \* sm, len, 0\.36 \* sm\)/.test(P3) || !/\* \(s\.sm \|\| 1\), so = s\.sm \?/.test(P3)) nope('the raid\'s bolts and bursts must be smaller and fainter than yours (sm and so under 1), so the mechanics stay readable'); }
+    // (the first test link, Nov 16: drawn at 0.55 and 0.3 s they were there but too small to see, most of them landing on your glowing egg: bigger, slower)
+    if (!/const BB = \[\], BBF = \{ fly: 0\.45, end: 0\.95 \};/.test(P3)) nope('a raider\'s bolt must fly slower than yours (0.45 s) so it is seen in flight (at 0.3 s and 0.55 size they were too small to notice)');
+    if (!/put\(L\[i\], t\); botFx\(now, t\); if \(P2K\)/.test(P3)) nope('the raid\'s spells must be drawn each frame, after the raiders cast them');
+    // (the first test link, Nov 16: no spell ever showed. Each was cast during the frame, a moment after the frame's clock (now), so its age came out
+    //  below zero and it was dropped as if from the future)
+    if (!/age = Math\.max\(0, \(now - b\.t0\) \/ 1000\)/.test(P3) || /age < 0\) \{ BB\.splice/.test(P3)) nope('a spell cast this frame is dropped as if from the future (its age is below zero), so no spell ever shows');
+    const bf = (/const botFx = [\s\S]*?\} \};/.exec(P3) || [''])[0]; if (!bf || /new T\./.test(bf)) nope('the raid\'s spells must use the pooled bolt and burst (nothing new while drawing)'); }
+  // 18. click a mob to target it (Nov 16, Flex: "Can you make the mouse cursor so someone can click on the mobs to target them instead of only
+  //     tabbing"): a mob is under the mouse when the mouse is near the line from its feet to the top of its head as drawn on screen (a flying
+  //     Viper is clicked on its body; before, only a click on the floor right under it targeted it, and a click on its body walked you away);
+  //     the cursor turns to a pointer over one; a click on one targets it (practice.js tgtKey, only a target that exists, never while paused),
+  //     a click anywhere else does nothing: no click to move (Flex, Nov 16: "also, completely remove click to move dont need it"; you move with the
+  //     keys; the tests' own walkTo stays). Phase 3 lists Ula'tek as a target while she's up, as phase 1 does (Flex, Nov 16: "I cant target ulatek in
+  //     p3": its list had only the adds and the heart, so neither Tab nor a click could pick her).
+  { const nope = (m) => bad('clicking a mob: ' + m + ' (check 18)');
+    const sd = (() => { try { const c = vm.createContext({ Math }); vm.runInContext(H.grab('pg3dSegD', P3) + '\nthis.f = pg3dSegD;', c); return c.f; } catch (e) { nope('pg3dSegD doesn\'t run by itself (' + e.message + ')'); return null; } })();
+    if (sd) { const near = (a, b) => Math.abs(a - b) < 1e-6; if (!near(sd(5, 5, 0, 0, 0, 10), 5) || !near(sd(0, -3, 0, 0, 0, 10), 3) || !near(sd(0, 14, 0, 0, 0, 10), 4) || !near(sd(3, 4, 0, 0, 0, 0), 5)) nope('pg3dSegD doesn\'t measure how far the mouse is from a mob drawn on screen (point to segment)'); }
+    if (!/const onTgt = \(X, Y\) => \{[\s\S]{0,400}?A\.tgts\(\)\.forEach/.test(P3) || !/TV1\.set\(o\.p\[0\], b \+ tgtTop\(o\), -o\.p\[1\]\)\.project\(cam\);/.test(P3) || !/d = pg3dSegD\(X, Y, ax, ay, bx, by\); if \(d <= reach && d < bd\)/.test(P3)) nope('a mob must be picked by where it is drawn on screen, feet to head, the nearest winning');
+    if (!/const o = onTgt\(e\.clientX, e\.clientY\); if \(o && A\.tgtKey\) A\.tgtKey\(o\.key\); kick\(\); \}/.test(P3)) nope('a click on a mob must target it');
+    if (/A\.walk\b/.test(P3) || /\bwalk: \(p\) =>/.test(PJ) || /if \(!pickTgtAt\(wp\)\) target = wp;/.test(PJ)) nope('a click must never walk you anywhere (no click to move, in 3D or 2D)');
+    if (/W A S D or click/.test(PJ) || !/Move: W A S D · Click a mob or Tab: target/.test(PJ)) nope('the controls line must say you move with W A S D and target with Tab or a click (it still said "W A S D or click" after click to move went, Nov 16)');
+    { const P3J = rd('practice-p3.js') || ''; if (!/const B = bossAt\(t\); if \(B\.up\) L0\.push\(\{ key: 'boss', kind: 'boss', name: "Ula'tek", p: B\.p\.slice\(\), r: 6\.5 \}\);/.test(P3J)) nope('phase 3 must list Ula\'tek as a target while she\'s up (you couldn\'t target her in phase 3)'); }
+    // (the first test link, Nov 16: a mob behind the camera projected to wild screen points with a huge reach, so the whole screen counted as on it)
+    if (!/if \(TV0\.z > 1 \|\| TV1\.z > 1 \|\| TV0\.z < -1 \|\| TV1\.z < -1 \|\| Math\.abs\(TV0\.x\) > 1\.6 \|\| Math\.abs\(TV0\.y\) > 1\.6\) return;/.test(P3) || !/const reach = Math\.min\(120, Math\.max\(16, /.test(P3)) nope('a mob behind the camera or off screen must not count, and a mob\'s reach on screen must stay between 16 and 120 px (the whole screen counted as on a mob)');
+    if (!/const move = \(e\) => \{ if \(!drag\) \{ hover\(e\); return; \}/.test(P3) || !/cv\.style\.cursor = o \? 'pointer' : 'crosshair';/.test(P3)) nope('the cursor must turn to a pointer over a mob you can target');
+    if (!/tgtKey: \(k\) => \{ if \(paused \|\| !G \|\| !tgtList\(G\.t\)\.some\(\(o\) => o\.key === k\)\) return false; press\('tgt'\); G\.tgt = k; hud\(true\); return true; \}/.test(PJ)) nope('practice.js must let the 3D view target a mob by its key (only one that exists, never while paused)'); }
+  // 19. the guide governs the game (Nov 16, Flex: "for the first and second set of spectral coils in phase 1 all of the eggs were being soaked in one soak
+  //     instead of them being split between the two", "The game should not be pulling from the teams set plan, it should only use the maps as the setup",
+  //     "The guide governs the game"): the game never reads a plan made on the Plan page (a signed-in raider's team plan used to replace the setup, and
+  //     its two coil teams soaked both sets as they were); the coil soak groups follow the plan's Egg Clear map (guides.js ulSoaks: Right Soak #1 the
+  //     melee and left zones' carriers, Left Soak #2 the right and far zones'), the same in both sets, 4 eggs a soak (Flex: "it should be 4 and 4"; set 1
+  //     used to send all 8 to the first coil, and for an hour the coil walkthrough's G1/G2 split them 3 and 5); a carrier soaks with their zone's group.
+  { const nope = (m) => bad('the guide governs the game: ' + m + ' (check 19)');
+    if (!/\n  const TEAM = null;\n/.test(PJ) || /\bpnGet\(|\bulRead\(|\bpnPeople\(/.test(PJ)) nope('the game must not read a plan made on the Plan page (TEAM stays null)');
+    const gm = /const Z = i \? \(D\.ez\.right \|\| \[\]\)\.concat\(D\.ez\.far \|\| \[\]\) : \(D\.ez\.melee \|\| \[\]\)\.concat\(D\.ez\.left \|\| \[\]\);/.exec(GJ); let U = null; try { const c = vm.createContext({}); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('jobSoak', PJ) + '\nthis.U = PG_UL; this.js = jobSoak;', c); U = c; } catch (e) { nope('PG_UL or jobSoak doesn\'t run by itself (' + e.message + ')'); }
+    if (!gm) nope('the plan\'s Egg Clear map (ulSoaks) no longer puts the melee and left zones\' carriers in Soak #1 and the right and far zones\' in Soak #2: check the game against it');
+    if (gm && U) { const car = Object.keys(U.U.eggO), zone = (c) => U.U.eggQ[c][0], want = [car.filter((c) => ['melee', 'left'].includes(zone(c))).sort().join(' '), car.filter((c) => ['right', 'far'].includes(zone(c))).sort().join(' ')];
+      U.U.soak.forEach((two, si) => { const got = two.map((g) => g.filter((x) => car.includes(x)).sort().join(' ')); if (got[0] !== want[0] || got[1] !== want[1]) nope('coil set ' + (si + 1) + ': the carriers must be the plan map\'s, 4 and 4 (' + want.join(' | ') + '), not ' + got.join(' | '));
+        const others = two.map((g) => g.filter((x) => !car.includes(x)).length); if (Math.abs(others[0] - others[1]) > 1) nope('coil set ' + (si + 1) + ': everyone else must be split evenly between the soaks (' + others.join(' and ') + ')');
+        if (!two[0].some((x) => car.includes(x)) || !two[1].some((x) => car.includes(x))) nope('coil set ' + (si + 1) + ': the carriers\' eggs must break in both soaks, not all in one'); });
+      const sj = U.js('r2', { soak: [1, 1] }), so = U.js('m3', { soak: [2, 2] });
+      if (!sj.every((g) => g[1].includes('r2') && !g[0].includes('r2'))) nope('a carrier must soak with their zone\'s group from the guide\'s map, whatever they pick');
+      if (!so.every((g) => g[1].includes('m3') && !g[0].includes('m3'))) nope('someone who isn\'t carrying must still be able to pick their soak group'); }
+    if (!/soakSets: jobMine\(\) \? jobSoak\(me, myJob\) : null \}\);/.test(PJ) || /teamSoak/.test(PJ)) nope('the fight must take its soak groups from the guide (no team-plan groups)'); }
+  // 20. phase 3's Volatile Purge (Nov 16, Flex: "The soak arrows that appear after the red soaks dont go on the player if they got the mechanic. Also the
+  //     arrows that point out should be arrows from the moment the soak ends"): the three wave lanes were made 1.5 s before the burst, fixed where the
+  //     soaker stood then (a bot's at its spread spot), so they weren't on you and came late. Now each soaker's three ways are picked when the soak ends
+  //     (purgeAim), three arrows sit on the soaker from then to the burst wherever they walk, and the waves leave from where they stand at the burst.
+  { const nope = (m) => bad('phase 3 Purge arrows: ' + m + ' (check 20)'); const PP = rd('practice-p3.js') || '';
+    if (!/G\.p3\.purge\.push\(pq\); purgeAim\(pq, t\);/.test(PP) || !/const purgeAim = \(q, t\) => \{/.test(PP)) nope('the three ways must be picked the moment the soak ends');
+    if (!/if \(q\.dir && q\.dir\[id\] != null && !q\.waves\) \[0, 2 \* Math\.PI \/ 3, -2 \* Math\.PI \/ 3\]\.forEach/.test(PP) || !/P3\(\{ k: 'rect', x: p\[0\], y: p\[1\], a, f0: 1\.6, f1: 7\.4,/.test(PP)) nope('each soaker must carry three arrows, on them (pos), from the soak\'s end until the lanes show');
+    // (the same night: lanes shown only at the burst gave the autopilot no warning, and lanes moving with their soaker swept over the people beside them;
+    //  so the lanes show 1.5 s ahead, aimed again then, from where you stand (a bot: its spread spot), and hold still)
+    if (!/G\.p3\.purge\.forEach\(\(q\) => \{ if \(!q\.waves && t >= q\.burst - 1\.5\) \{ q\.waves = true; purgeAim\(q, t\);/.test(PP) || !/q\.who\.forEach\(\(id\) => \{ const p = id === me \|\| !q\.spot\[id\] \? pos\(id\) : q\.spot\[id\], base = q\.dir\[id\];/.test(PP) || !/kind: 'purge', from: id, pi: q\.i, fa: a, [^}]*warn: 1\.5,/.test(PP) || /w\.kind === 'purge' && w\.fa != null && t < w\.t0/.test(PP)) nope('the lanes must show 1.5 s before the burst, aimed then from where you stand (a bot: its spread spot), and hold still'); }
+  // 21. her tail, the small tails and the Clutches in their real models (Nov 16, Flex: "gore rattle needs its model from in game", "the slithering clutch
+  //     needs in game models"): Gore Rattle and the small tails are creature/ulatektentacle/ulatektentacle01.m2 (7234132); the drawn tails hide once it's
+  //     in, Gore Rattle plays its real slam (a16, the hit 0.87 s in) on the Thrash, each small tail is a copy made with its pool item. Phase 2's Blightscale
+  //     Clutch is an egg pod (7926158), phase 3's Slithering Clutch a green ooze (390813, skins 390992 and 390999), each showing only its body's parts
+  //     (keep: their death splashes, shards and glow sprites sized the egg pod three times too small).
+  { const nope = (m) => bad('the real tails and Clutches: ' + m + ' (check 21)'); const PP = rd('practice-p3.js') || '', ML2 = rd('m2loader.js') || '';
+    if (!/tail: \{ m2: 7234132 \}/.test(P3) || !/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(T, pg3dWow\.tail\), \(\) => null, 20000\)/.test(P3) || !/tailDrawn\.forEach\(\(c\) => \{ c\.visible = false; \}\); tail\.add\(R0\);/.test(P3)) nope('Gore Rattle must be the real tail (ulatektentacle01, 7234132), the drawn one hidden once it\'s in, and kept when it can\'t load');
+    if (!/sl = g\.animations\.find\(\(c\) => c\.name === 'a16'\)/.test(P3) || !/TRS\.time = Math\.max\(0, 0\.87 - s\.hit\);/.test(P3) || !/at: th \? th\.at : null, hit: th \? th\.at - t : null \}\);/.test(P3) || !/if \(TRM && tail\.visible\) TRM\.update\(dt\);/.test(P3)) nope('Gore Rattle must play its real slam with the hit on the Thrash, and move');
+    if (!/const stailReal = \(g\) => \{/.test(P3) || !/if \(STPL\) stailReal\(g\); return g; \}\);/.test(P3) || !/g\.userData\.M\.update\(dt\)/.test(P3)) nope('the small tails must be copies of the real tail, made with their pool items (never while drawing), and move');
+    if (!/mesh\.userData\.batch = i;/.test(ML2) || !/if \(W\.keep\) \{ const ms = \[\]; g\.traverse/.test(P3)) nope('the reader must keep each part\'s batch, and a model can show only the parts in keep');
+    if (!/clutch: \{ wow: \{ m2: 7926158, h: [\d.]+, ph: [\d.]+, keep: \[2, 4, 6, 8\] \}/.test(P3) || !/PG3D_MON\.slither = \{ wow: \{ m2: 390813, skin: \[390992, 390999\], h: [\d.]+, ph: [\d.]+, keep: \[0, 4, 5\] \}/.test(P3) || !/K\.mon\(s\.ref, k === 'clutch' \? 'slither' : k,/.test(PP)) nope('phase 2\'s Clutch must be the egg pod and phase 3\'s the Slithering Clutch ooze, each showing only its body'); }
+  // 22. the real WoW models switch (Main, Nov 17, for Flex's go-live call: "one switch near the top of src/practice3d.js that turns the real models off and
+  //     shows the figures everywhere"): PG3D_REAL in the file's first lines; every real-model load sits behind S3TC, and S3TC needs PG3D_REAL.
+  { const nope = (m) => bad('the real models switch: ' + m + ' (check 22)');
+    if (!/^\/\/ ===== THE REAL WOW MODELS SWITCH[^\n]*\n[^\n]*\nconst PG3D_REAL = (true|false);\n/.test(P3)) nope('const PG3D_REAL = true/false must be the first line of code in src/practice3d.js, under its two-line note');
+    if (!/const S3TC = PG3D_REAL && !!\(R\.extensions && R\.extensions\.has\('WEBGL_compressed_texture_s3tc'\)\);/.test(P3)) nope('S3TC must need PG3D_REAL, so the switch turns every real model off');
+    const loads = [...P3.matchAll(/pg3dWow\.load\(|pg3dWowLoad\(T, F0\.wow\)/g)].length, gated = (P3.match(/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(/g) || []).length + (P3.match(/F0\.wow && S3TC \? pg3dWowOr\(\(\) => pg3dWowLoad\(T, F0\.wow\)/g) || []).length;
+    if (!loads || loads !== gated) nope(loads + ' real-model loads, ' + gated + ' behind the switch: every one must be behind S3TC'); }
+  // 23. a real model is sized from the parts it shows (Nov 17, the egg helpers' find, behind Flex's "THE CLUtches were pretty small"): every part shares the model's
+  //     whole vertex list, so measuring the list counted the hidden parts (death splash, glow sprites) and the Clutch came out a third of its height, floating.
+  if (!/const p = m\.geometry\.attributes\.position, ix = m\.geometry\.index, n = ix \? ix\.count : p\.count; for \(let k = 0; k < n; k \+= 2\) \{ const i = ix \? ix\.getX\(k\) : k;/.test(P3)) bad('a real model must be sized from the parts it shows (its index), not the whole shared vertex list: the Clutches came out a third of their height (check 23)');
+  // 24. the real eggs (Nov 16, Flex: "can you find the models for the eggs that people dps and pick up"): an egg on the floor is the snakeoid egg cluster
+  //     (Blightscale Spawn 265644, 7277182, its body only: keep [6, 9, 10, 11, 12, 13], or the burst's parked shards show), a carried egg the single egg (7277176,
+  //     keep [2]); keyed by the egg and whether it's carried, so each keeps its pose; the drawn egg stays when the real one can't load or while it falls.
+  { const nope = (m) => bad('the real eggs: ' + m + ' (check 24)');
+    if (!/PG3D_MON\.egg = \{ wow: \{ m2: 7277182, h: [\d.]+, ph: [\d.]+, keep: \[6, 9, 10, 11, 12, 13\] \}/.test(P3) || !/PG3D_MON\.eggc = \{ wow: \{ m2: 7277176, h: [\d.]+, keep: \[2\] \}/.test(P3)) nope('the floor egg must be the egg cluster (7277182, its body only) and the carried egg the single egg (7277176)');
+    if (!/if \(k === 'egg' && !s\.fall && s\.ref && mon\('egg' \+ \(s\.held \? 'c' : 'f'\) \+ s\.ref\.id \+ ':' \+ s\.ref\.set, s\.held \? 'eggc' : 'egg', /.test(P3) || !/P\(\{ k: 'egg', x, y, h, held: !!e\.who, ref: e \}\);/.test(P3)) nope('each egg must draw its real model (keyed by the egg and carried or not), falling eggs and failed loads keeping the drawn egg'); }
+  // 25. her old drawn coils hide under her real model (Nov 16, Flex: "ulateks old tails are in", showing the purple spiky humps beside her real model): all of
+  //     the drawn her hides once the real one is in, coils too, and no foam rings are drawn round the hidden coils.
+  if (!/bossDrawn = boss\.children\.slice\(\);/.test(P3) || !/ws\(0, -13\.2, 13, 0\); if \(!BRM\) humps\.forEach/.test(P3)) bad('her drawn body coils must hide under her real model, with no foam rings round them (they showed beside her as purple spiky humps) (check 25)');
+  return Promise.all([loadP, fbP]);
 };
 if (require.main === module) {
   const P = []; Promise.resolve(module.exports((a, b, c) => P.push(a + ' [' + b + '] ' + c))).then(() => { P.forEach((x) => console.log(x)); console.log('Practice 3D check: ' + (P.length ? P.length + ' problem(s)' : 'OK')); process.exit(P.length ? 1 : 0); });

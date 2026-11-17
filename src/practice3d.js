@@ -1,8 +1,11 @@
+// ===== THE REAL WOW MODELS SWITCH (Main, Nov 17, for Flex's go-live call): true = the boss, the mobs and the tails wear their real game models, read from
+// wago.tools while you play (nothing from the game is stored in Debrief); false = the figures and drawn models everywhere, as before Nov 16. One line to change.
+const PG3D_REAL = true;
 // ===== Practice in 3D (Nov 15; Flex picked 3D for the practice game, "theres nothing else like this out there", after the mock in
 // notes/Practice game - 3D mock.html) =====
 // The same fight as the 2D map, drawn in three.js. practice.js keeps the clock, the moves, the hits, the mistakes and the score; this file only
 // draws it and runs a WoW-style camera: behind you and gliding after you, drag the mouse to turn it, the wheel zooms, W walks where it looks,
-// a click on the floor walks there. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
+// a click on a mob targets it. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
 // "2D | 3D" switch by the minimap. three.js comes from jsdelivr, one exact version, only once 3D is picked: if it can't load (or the PC has no
 // WebGL), the switch goes back to 2D and says so. Every floor shape is the hit code's own (the same centres, radii and time windows as
 // practice.js's draw(), check() and inWave()): pg3dShapes lists them, pg3d draws the list, tests/practice-3d.js checks the list against inWave.
@@ -25,7 +28,137 @@ const pg3dLoad = () => { if (PG3D_LIB) return PG3D_LIB;
     sc.src = PG3D_THREE; document.head.appendChild(sc); });
   p.catch(() => { if (PG3D_LIB === p) PG3D_LIB = null; }); /* (a failed try is forgotten: the next click tries again) */
   return p; };
+// ---- your character: one free (CC0) animated figure instead of your capsule (Flex, Nov 16: "download and use one of those models ... for just
+// the player", "I just wanna see what it looks like in action"). Loaded at runtime like the icons, nothing bundled; if it can't load, you stay
+// the capsule. three.js's own GLTFLoader reads it (the last plain-script one, r147, on the page's r149). A fresh copy each time the 3D view opens (the browser keeps the file),
+// so closing the game frees all of it. ----
+const PG3D_GLTF = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js'; /* (the last version with a plain-script loader: r148 dropped examples/js; it uses the page's three.js) */
+// (the figures, Flex, Nov 16: "download and use one of those models ... for just the player", then a wizard for ranged and a cleric for
+//  healers, "another one for ranged classes like a hunter", the whole raid, and "Are there models that can match each class in wow? like
+//  rogues, warlocks, etc?" / "yes! do as many as you can": a figure for each WoW class (keys as the team plan's class names, lower case), plus
+//  the Knight for tanks and melee without a class. Each lists the props its model holds by default that it shouldn't, and its swing.)
+const PG3D_KK = 'https://cdn.jsdelivr.net/gh/KayKit-Game-Assets/KayKit-Character-Pack-Adventures-1.0@672074b73ba276876a19e8816ecdc5241817ab47/addons/kaykit_character_pack_adventures/Characters/gltf/';
+// (PG3D_KK2: Kay Lousberg's other packs (same style, CC0, some from his paid monthly series), from a re-hosted copy at one pinned commit (Flex:
+//  "you can use that guys versions", "if they vanish they vanish we will find new ones"; if it goes, those bodies fall back to capsules). They
+//  carry no clips and no props: anim names the free model whose clips they borrow (their skeleton is a subset of its), hold the props taken
+//  from it into their hands, metal tames mirror-black plate. Stand-ins for classes with no figure of their own say so.)
+const PG3D_KK2 = 'https://cdn.jsdelivr.net/gh/GeorgeQLe/assets-kaykit-3d-characters@af08a62d3669370ec4636ae6314b38cdcd5dd759/assets/kaykit/';
+const PG3D_FIG = {
+  knight: { url: PG3D_KK + 'Knight.glb', hide: ['2H_Sword', '1H_Sword_Offhand', 'Rectangle_Shield', 'Spike_Shield', 'Round_Shield'], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i] },
+  warrior: { url: PG3D_KK + 'Barbarian.glb', hide: ['1H_Axe', '1H_Axe_Offhand', 'Barbarian_Round_Shield', 'Mug'], atk: [/^2h_melee_attack_chop$/i, /(2h|melee).*(chop|slice)/i] }, /* (the Barbarian with the big two-handed axe: the plate Warrior looked just like the Knight) */
+  paladin: { url: PG3D_KK2 + 'mystery-monthly-series-4/10%20-%20April%202024%20-%20Paladin/characters/gltf/Paladin_with_Helmet.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['Badge_Shield', 'handslotl']], metal: 0.3, hide: [], atk: [/^1h_melee_attack_slice_diagonal$/i, /(1h|melee).*(slash|slice|chop)/i], cast: [/^spellcast_shoot$/i] },
+  hunter: { url: PG3D_KK2 + 'adventurers-2.0/Characters/gltf/Ranger.glb', anim: PG3D_KK + 'Rogue.glb', hold: [['2H_Crossbow', 'handslotr']], hide: [], atk: [/^2h_ranged_shoot$/i] },
+  rogue: { url: PG3D_KK + 'Rogue.glb', hide: ['1H_Crossbow', '2H_Crossbow', 'Throwable'], atk: [/^dualwield_melee_attack_slice$/i, /dualwield.*(slice|stab|chop)/i] },
+  priest: { url: PG3D_KK2 + 'mystery-monthly-series-6/3%20-%20September%202025%20-%20Cleric/characters/Cleric.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  deathknight: { url: PG3D_KK2 + 'skeletons-1.1/characters/gltf/Skeleton_Warrior.glb', anim: PG3D_KK + 'Knight.glb', hold: [['2H_Sword', 'handslotr']], hide: [], atk: [/^2h_melee_attack_slice$/i, /2h_melee_attack/i] }, /* (the undead Skeleton Warrior with a greatsword) */
+  shaman: { url: PG3D_KK2 + 'mystery-monthly-series-5/8%20-%20February%202025%20-%20Caveman/characters/Caveman.glb', anim: PG3D_KK + 'Barbarian.glb', hold: [['1H_Axe', 'handslotr'], ['Barbarian_Round_Shield', 'handslotl']], hide: [], atk: [/^1h_melee_attack_chop$/i, /(1h|melee).*(chop|slash|slice)/i], cast: [/^spellcast_shoot$/i] }, /* (a stand-in: the tribal Caveman with an axe and shield, no shaman figure exists in the set) */
+  mage: { url: PG3D_KK + 'Mage.glb', hide: ['1H_Wand', 'Spellbook', 'Spellbook_open'], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  warlock: { url: PG3D_KK2 + 'skeletons-1.1/characters/gltf/Necromancer.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  monk: { url: PG3D_KK2 + 'mystery-monthly-series-4/8%20-%20February%202024%20-%20Ninja/character/Ninja.glb', anim: PG3D_KK + 'Knight.glb', hide: ['Ninja_Mask', 'Ninja_Headband'], atk: [/^unarmed_melee_attack_punch_a$/i, /unarmed_melee_attack_punch/i] }, /* (the Ninja, unmasked: an unarmed fighter in a gi) */
+  druid: { url: PG3D_KK2 + 'adventurers-2.0/Characters/gltf/Druid.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
+  demonhunter: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['1H_Sword_Offhand', 'handslotl']], hide: [], atk: [/^dualwield_melee_attack_slice$/i, /dualwield.*(slice|chop|stab)/i] },
+  evoker: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Mage.glb', hold: [['1H_Wand', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] } }; /* (evoker: a stand-in, no dragon-kin figure exists in the set) */
+// (the monsters: one model per mob (Flex: "there should only be one model for each of the mobs", "Rawlings should not be the same as vipers,
+//  try to find unique models for each one"), all CC0: Quaternius's snake (Easy Enemy Pack), Mako and Dino (Ultimate Monsters), horned slime,
+//  and Mesh2Motion's kaiju, each at a pinned address. h: as tall as the old shape (yards), wide: fatter, tint: multiplied into its colours,
+//  hover: a flier's height over its spot, clips: its idle and move clips.)
+const PG3D_MQ = 'https://cdn.jsdelivr.net/gh/trebeljahr/quaternius-showcase@0128ca510d653bb04d6d1e4885bd8890b5050b4f/public/glb/';
+const PG3D_FC = { fang: [0.95, 0.93, 0.85], eye: [0.9, 0.75, 0.1], slit: [0.02, 0.02, 0.02], tongue: [0.8, 0.08, 0.12], hood: [0.10, 0.26, 0.15], skin: [0.30, 0.48, 0.35], crown: [0.15, 0.38, 0.26] }; /* (the snake faces' colours) */
+const pg3dRing = (n, r, len, w, y, z, cols, tilt, full) => Array.from({ length: n }, (_, i) => { const A = full ? Math.PI * 2 * i / n + Math.PI / 2 : Math.PI * (0.12 + 0.76 * i / (n - 1)); /* (full: all the way round, a mane) */ return ['cone', cols[i % cols.length], [Math.cos(A) * (r + len / 2), y + Math.sin(A) * (r + len / 2), z], [w, len, w], [tilt || 0, 0, A - Math.PI / 2]]; }); /* (a mane or crest: n spikes fanned over the top, pointing outward) */
+const pg3dRow = (n, len, w, col, dz, y0) => Array.from({ length: n }, (_, i) => ['cone', col, [0, y0, -dz * i], [w, len * (1 - 0.35 * i / Math.max(1, n - 1)), w]]); /* (a row of spikes standing up along a bone) */
+const PG3D_MON = {
+  rawling: { wow: { m2: 125938, skin: [125939, 125940], h: 2.6, ph: 2.8 }, url: PG3D_MQ + 'easy_enemies_pack/Snake.glb', h: 2.4, paint: { DarkGreen: [0.42, 0.3, 0.17], LightGreen: [0.78, 0.66, 0.46] }, /* (bone, like the real skeletal serpent) */
+    face: { bone: 'Neck', parts: [['ball', [0.05, 0.38, 0.42], [0.62, 0.05, -0.12], [0.62, 0.025, 0.32], [0, 0.25, 0.42]], ['ball', [0.05, 0.38, 0.42], [-0.62, 0.05, -0.12], [0.62, 0.025, 0.32], [0, -0.25, -0.42]],
+      ['cone', [0.82, 0.72, 0.52], [0.6, 0.2, -0.05], [0.035, 1.05, 0.035], [0, 0.25, -1.15]], ['cone', [0.82, 0.72, 0.52], [-0.6, 0.2, -0.05], [0.035, 1.05, 0.035], [0, -0.25, 1.15]],
+      ['cone', [0.82, 0.72, 0.52], [0.55, -0.02, -0.25], [0.025, 0.7, 0.025], [0.3, 0.25, -1.35]], ['cone', [0.82, 0.72, 0.52], [-0.55, -0.02, -0.25], [0.025, 0.7, 0.025], [0.3, -0.25, 1.35]]] }, /* (bony wings with teal membranes) */ clips: { idle: /snake_idle/i, move: /snake_walk/i } },
+  doomscale: { wow: { m2: 7133445, skin: [7569645, 7569637, 7569639], h: 4.2, ph: 4.6 }, url: PG3D_MQ + 'easy_enemies_pack/Snake_angry.glb', h: 5.8, paint: { DarkGreen: [0.1, 0.08, 0.17], LightGreen: [0.42, 0.66, 0.04, 0.45] }, /* (the real Doomscale: dark purple-grey, a glowing yellow-green belly) */
+    face: { bone: 'Head', parts: pg3dRing(7, 0.2, 0.75, 0.085, 0.85, -0.12, [[0.04, 0.5, 0.55, 0.25], [0.06, 0.38, 0.62, 0.25]], -0.7) }, /* (a teal feather crest on top of its head) */ clips: { idle: /snake_idle/i, move: /snake_walk/i } },
+  warden: { wow: { m2: 7224879, skin: [7322088, 7322089, 7322094], geo: [101, 203, 303] }, url: PG3D_KK2 + 'mystery-monthly-series-4/3%20-%20September%202023%20-%20Monster%20Costume/character/gltf/Monster.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr', [0.45, 0.85, 0.1, 0.7]]], h: 5.8, flat: [0.7, 0.64, 0.84], /* (the real Warden is a pale snake-man: KayKit's lizard-man, pale lavender-white, a staff for its spear) */
+    face: { bone: 'head', parts: pg3dRing(7, 0.12, 0.42, 0.05, 1.05, -0.18, [[0.7, 0.05, 0.1, 0.2], [0.5, 0.03, 0.07, 0.2]], -0.6) }, clips: { idle: /^idle$/i, move: /^walking_a$/i } }, /* (its red spiky crest) */
+  ravenous: { wow: { m2: 7133445, skin: [7569645, 7569637, 7569639], h: 4.6, ph: 5 }, url: 'https://cdn.jsdelivr.net/gh/castle-engine/castle-engine@deb5d9091322aa64aad042c9428f6ce330b79ede/examples/delphi/cpp_builder/window/data/Dino.gltf', h: 6.2, hue: [0.78, 1.1], paint: { Dino_Main: [0.12, 0.09, 0.2], Dino_Secondary: [0.42, 0.66, 0.04, 0.5] }, /* (the real skyfiend: dark purple-grey, a glowing yellow-green belly) */
+    face: { bone: 'Head', parts: pg3dRing(7, 0.14, 0.55, 0.07, 0.5, -0.18, [[0.04, 0.5, 0.55, 0.25], [0.06, 0.38, 0.62, 0.25]], -0.6) }, clips: { idle: /^idle$/i, move: /^walk$/i } },
+  wretch: { wow: { m2: 7545081, skin: [7670348, 7670350], h: 5, hover: 0, ph: 5.2 }, url: 'https://cdn.jsdelivr.net/gh/jtydhr88/ComfyUI-mesh2motion@11fe6b7aaa5eac60afa3d726389cd9dd870ed1f6/mesh2motion-ui/animations/kaiju-animations.glb', h: 7, hover: -2, flat: [0.45, 0.1, 0.18], /* (dark pink-red, like the real venomfang) */ clips: { idle: /^idle$/i, move: /^walk$/i },
+    bones: { Back_Leg_Pelvis_L: [0.01, 0.01, 0.01], Back_Leg_Pelvis_R: [0.01, 0.01, 0.01], Front_Leg_Shoulder_L: [1.25, 1.25, 1.25], Front_Leg_Shoulder_R: [1.25, 1.25, 1.25], Stomach: [2.1, 1.6, 2.1], Spine_1: [1.25, 1, 1.25], Spine_2: [1.3, 1, 1.3], Spine_2001: [0.7, 1.15, 0.7], Spine_3: [0.95, 1.2, 0.95], Head: [1.3, 1, 1.3], Tail_Base: [1.15, 1.05, 1.15], Tail_Mid: [0.95, 1, 0.95] },
+    face: [{ bone: 'Head', parts: pg3dRing(18, 0.13, 0.46, 0.045, 0.02, -0.06, [[0.62, 0.12, 0.85, 0.35], [0.95, 0.22, 0.6, 0.35], [0.2, 0.32, 0.95, 0.35]], 0, true).concat(pg3dRing(14, 0.11, 0.34, 0.04, 0.02, -0.14, [[0.95, 0.22, 0.6, 0.35], [0.2, 0.32, 0.95, 0.35], [0.62, 0.12, 0.85, 0.35]], -0.55, true)).concat([['ball', [0.45, 0.75, 0.05, 0.9], [0, -0.15, 0.1], [0.1, 0.16, 0.08]], ['cone', PG3D_FC.fang, [0.07, -0.13, 0.33], [0.022, 0.13, 0.022], [Math.PI, 0, 0]], ['cone', PG3D_FC.fang, [-0.07, -0.13, 0.33], [0.022, 0.13, 0.022], [Math.PI, 0, 0]],
+      ['ball', PG3D_FC.eye, [0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['ball', PG3D_FC.eye, [-0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['box', PG3D_FC.slit, [0.15, 0.05, 0.215], [0.008, 0.055, 0.008]], ['box', PG3D_FC.slit, [-0.15, 0.05, 0.215], [0.008, 0.055, 0.008]],
+      ['box', PG3D_FC.tongue, [0, -0.09, 0.47], [0.02, 0.01, 0.14]], ['box', PG3D_FC.tongue, [0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, 0.5, 0]], ['box', PG3D_FC.tongue, [-0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, -0.5, 0]]]) },
+      { bone: 'Tail_Mid', parts: pg3dRow(3, 0.16, 0.03, [0.45, 0.85, 0.08, 1], 0.12, 0.06) }, { bone: 'Tail_Mid001', parts: pg3dRow(3, 0.13, 0.025, [0.45, 0.85, 0.08, 1], 0.13, 0.05) }, { bone: 'Tail_Mid002', parts: pg3dRow(3, 0.1, 0.02, [0.45, 0.85, 0.08, 1], 0.14, 0.04) }] }, /* (the real Wretch: a spiky feathered mane, a glowing throat, a spiky glowing tail) (a bloated serpent with arms and a cobra's hooded, fanged face; Flex: "give it arms") (a bloated serpent, Flex: "the wretch needs the most work, it just looks like a dinosaur": no legs or arms, a swollen body, a taller neck, sunk to the floor) */
+  clutch: { wow: { m2: 7926158, h: 3.2, ph: 3.5, keep: [2, 4, 6, 8] }, url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
+  viper: { wow: { m2: 7456394, skin: [7509169] }, url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 4.4, hover: 1.6, paint: { Yellow: [0.72, 0.45, 0.05], Black: [0.05, 0.05, 0.07], Orange: [0.55, 0.06, 0.03], LightBlue: [0.02, 0.32, 0.34] }, /* (the real Viper: golden head and belly, dark back, teal feathered wings) */
+    bones: { WingL: [1.7, 1.7, 1.7], WingR: [1.7, 1.7, 1.7], Abdomen: [1, 1.3, 1], Abdomen2: [0.88, 1.2, 0.88], Abdomen3: [0.85, 1.2, 0.85], Sting: [0.8, 1.1, 0.8], TopLeg1L: [0.01, 0.01, 0.01], TopLeg1R: [0.01, 0.01, 0.01], MidLeg1L: [0.01, 0.01, 0.01], MidLeg1R: [0.01, 0.01, 0.01], BottomLeg1L: [0.01, 0.01, 0.01], BottomLeg1R: [0.01, 0.01, 0.01], Head: [0.55, 0.55, 0.55] },
+    face: { bone: 'Head', parts: [['ball', [0.72, 0.45, 0.05], [0.36, 0.02, 0.03], [0.62, 0.36, 0.44]], ['ball', [0.02, 0.28, 0.3], [0.4, 0.17, 0.03], [0.5, 0.14, 0.38]], ['ball', [0.72, 0.45, 0.05], [0.86, -0.06, 0.03], [0.34, 0.2, 0.3]],
+      ['cone', [0.02, 0.36, 0.38], [0.1, 0.42, 0.03], [0.07, 0.5, 0.07], [0, 0, 0.6]], ['cone', [0.02, 0.36, 0.38], [-0.05, 0.4, 0.2], [0.06, 0.45, 0.06], [0.35, 0, 0.75]], ['cone', [0.02, 0.36, 0.38], [-0.05, 0.4, -0.14], [0.06, 0.45, 0.06], [-0.35, 0, 0.75]], /* (a teal feather crest) */
+      ['cone', PG3D_FC.fang, [0.96, -0.28, 0.16], [0.05, 0.26, 0.05], [Math.PI, 0, 0]], ['cone', PG3D_FC.fang, [0.96, -0.28, -0.1], [0.05, 0.26, 0.05], [Math.PI, 0, 0]], ['ball', PG3D_FC.eye, [0.56, 0.16, 0.3], [0.12, 0.1, 0.09]], ['ball', PG3D_FC.eye, [0.56, 0.16, -0.24], [0.12, 0.1, 0.09]],
+      ['box', PG3D_FC.slit, [0.64, 0.16, 0.36], [0.025, 0.14, 0.02]], ['box', PG3D_FC.slit, [0.64, 0.16, -0.3], [0.025, 0.14, 0.02]], ['box', PG3D_FC.tongue, [1.29, -0.12, 0.03], [0.32, 0.025, 0.05]], ['box', PG3D_FC.tongue, [1.48, -0.12, 0.07], [0.1, 0.02, 0.03], [0, 0.5, 0]], ['box', PG3D_FC.tongue, [1.48, -0.12, -0.01], [0.1, 0.02, 0.03], [0, -0.5, 0]]] }, /* (more serpent, Flex: "making the wings a bit bigger and more serpent looking": big dark wings, a long curled tail, no legs) */ turn: -Math.PI / 2, clips: { idle: /wasp_flying/i, move: /wasp_flying/i } }, /* (a stinging wasp; it faces +x, so a quarter turn) */
+  shrieker: { wow: { m2: 7109496, skin: [7667917], h: 4.3, ph: 6.6 }, url: 'https://static.poly.pizza/90ed3740-d8c4-4910-88ce-ac2ed426022d.glb', h: 3.2, hover: 2.2, hue: [0.76, 1.1], /* (purple, like the real wind serpent) */
+    face: { bone: 'Head', parts: pg3dRing(6, 0.12, 0.42, 0.06, 0.42, -0.16, [[0.05, 0.5, 0.55, 0.3], [0.08, 0.35, 0.6, 0.3]], -0.65) }, /* (the wind serpents' teal feather crest) */ clips: { idle: /\|flying_idle$/i, move: /\|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
+};
+const pg3dSegD = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, q = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0; return Math.hypot(px - ax - dx * q, py - ay - dy * q); }; /* (how far a point is from a line segment: the mouse from a mob drawn on screen) */
+PG3D_MON.egg = { wow: { m2: 7277182, h: 2.6, ph: 2.8, keep: [6, 9, 10, 11, 12, 13] }, h: 1.2 }; /* (an egg on the floor: Blightscale Spawn 265644, the snakeoid egg cluster, its body only; no stand-in: without it the drawn egg stays) */
+PG3D_MON.eggc = { wow: { m2: 7277176, h: 1.4, keep: [2] }, h: 1 }; /* (an egg being carried: the single snakeoid egg) */
+PG3D_MON.slither = { wow: { m2: 390813, skin: [390992, 390999], h: 2.2, ph: 2.6, keep: [0, 4, 5] }, h: 2.2 }; /* (bigger, Flex, Nov 16: "THE CLUtches were pretty small") (phase 3's Slithering Clutch, a green ooze (display 146650); no drawn stand-in: without its real model the old shape stays) */
+const PG3D_MONK = { ds: 'doomscale', dsx: 'doomscale', dscale: 'doomscale', rav: 'ravenous' }; /* (a shape's kind -> its monster, for the bar's height) */
+if (typeof window !== 'undefined') { window.__pg3dMon = PG3D_MON; window.__pg3dWow = () => pg3dWow; } /* (for the lineup pictures) */
+// (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
+//  model is loaded, and each raider gets a clone of it from three.js's SkeletonUtils, the same r147 plain-script set as the loader)
+const PG3D_SKU = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/SkeletonUtils.js';
+let PG3D_GLTF_LIB = null;
+const pg3dMeLoad = (T, url) => {
+  if (!PG3D_GLTF_LIB) { const one = (src, has, what) => new Promise((ok, no) => { if (has()) { ok(); return; } const sc = document.createElement('script');
+      const tm = setTimeout(() => no(new Error(what + ' took too long')), 20000);
+      sc.onload = () => { clearTimeout(tm); if (has()) ok(); else no(new Error(what + ' loaded empty')); }; sc.onerror = () => { clearTimeout(tm); no(new Error(what + ' could not load')); };
+      sc.src = src; document.head.appendChild(sc); });
+    const p = PG3D_GLTF_LIB = one(PG3D_GLTF, () => !!T.GLTFLoader, 'the model loader').then(() => one(PG3D_SKU, () => !!T.SkeletonUtils, 'the model cloner')).then(() => T.GLTFLoader);
+    p.catch(() => { if (PG3D_GLTF_LIB === p) PG3D_GLTF_LIB = null; }); }
+  return PG3D_GLTF_LIB.then((L) => new Promise((ok, no) => { new L().load(url, ok, undefined, no); })); };
 
+// (the fight's real creatures, Flex, Nov 16: "can you try to just find the wow models online somewhere", then "just get it done and pull the
+//  models into the game, including ulatek": wago.tools hands out the game's own files by number, open to any page, and src/m2loader.js
+//  (three-m2loader by Mugen87, MIT) reads them. They're read while you play; nothing from the game is kept in Debrief. A mob with wow: { m2, skin }
+//  wears its real model where the graphics card reads WoW's packed textures (S3TC: desktops; most phones don't), and keeps the model drawn
+//  before when it can't, or when wago.tools doesn't answer. Its clips are named by the game's animation number: a0 stand, a4 walk, a5 run.)
+const PG3D_WAGO = 'https://wago.tools/api/casc/';
+let PG3D_M2 = null;
+const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2Loader, M2Options } = PG3D_M2;
+  const man = new T.LoadingManager(); man.setURLModifier((u) => { const k = /(\d+)\.(skin|blp)$/.exec(u); return k ? PG3D_WAGO + k[1] + '?download' : u; }); /* (the reader asks for '<number>.skin' and '<number>.blp') */
+  const o = new M2Options(); if (W.skin) o.setSkin(W.skin[0] || null, W.skin[1] || null, W.skin[2] || null); /* (skin: its colour, the game's textures for this mob) */
+  return new M2Loader(man).loadAsync(PG3D_WAGO + W.m2 + '?download', undefined, o).then((g) => {
+    const sm = g.userData.sequenceManager, nm = new Map(); let bones = null;
+    g.traverse((m) => { if (m.isSkinnedMesh && !bones) bones = m.skeleton.bones; });
+    (bones || []).forEach((b, i) => { nm.set(b.uuid, (b.name = 'wb' + i)); }); /* (bones named, so a clone's clips find its own bones) */
+    const animations = [], clipOf = (name, e) => { if (!e) return; const tr = e.clip.tracks.map((t0) => { const p = T.PropertyBinding.parseTrackName(t0.name), n = nm.get(p.nodeName); if (!n) return null; const t1 = t0.clone(); t1.name = n + '.' + p.propertyName; return t1; }).filter(Boolean);
+      if (tr.length) animations.push(new T.AnimationClip(name, -1, tr)); };
+    sm.sequences.forEach((q, j) => { if (sm.isEmbeddedSequence(j)) clipOf('a' + q.id + (q.variationIndex ? '.' + q.variationIndex : ''), (sm._sequenceMap.get(q.id + '-' + q.variationIndex) || []).find((a) => a.root === g)); });
+    sm.globalSequences.forEach((q, j) => { clipOf('g' + j, (sm._globalSequenceMap.get(j) || []).find((a) => a.root === g)); }); /* (g0, g1...: the always-on movement, e.g. the Rawling's lift off the floor; played with every clip) */
+    // (parts, the helpers' check of the files, Nov 16: a model holds every choice of some parts (the Warden all six armour sets): one per group shows,
+    //  W.geo's, else the 01 one, else the first; the others are taken out)
+    if (W.keep) { const ms = []; g.traverse((m) => { if (m.isMesh && m.userData.batch != null) ms.push(m); }); ms.forEach((m) => { if (!W.keep.includes(m.userData.batch)) m.parent.remove(m); }); } /* (keep: the parts to show, by batch: a model's death splash, shards and glow sprites have no part ids, Nov 16) */
+    const GS = {}; g.traverse((m) => { const id = m.isMesh ? m.userData.geoset : null; if (id != null && id >= 100) (GS[Math.floor(id / 100)] = GS[Math.floor(id / 100)] || []).push(m); });
+    Object.keys(GS).forEach((k) => { const L = GS[k], ids = L.map((m) => m.userData.geoset), w = (W.geo || []).find((x) => Math.floor(x / 100) === +k), pick = w != null ? w : ids.includes(+k * 100 + 1) ? +k * 100 + 1 : Math.min(...ids);
+      L.forEach((m) => { if (m.userData.geoset !== pick) m.parent.remove(m); }); });
+    g.rotation.set(-Math.PI / 2, 0, -Math.PI / 2); const scene = new T.Group(); scene.add(g); /* (WoW models stand on z and face x: turned to stand on y and face z, like the figures) */
+    // (its size from its standing pose: the raw pose of some is upright (the Rawling, the Shrieker), and the Wretch measured that way came out 25 yards long)
+    const st = animations.find((c) => c.name === 'a0') || animations.find((c) => /^a/.test(c.name)), mx = new T.AnimationMixer(scene), box = new T.Box3(), v = new T.Vector3();
+    animations.forEach((c) => { if (c === st || /^g/.test(c.name)) mx.clipAction(c).play(); }); mx.update(0); scene.updateMatrixWorld(true);
+    scene.traverse((m) => { if (!m.isSkinnedMesh) return; const p = m.geometry.attributes.position, ix = m.geometry.index, n = ix ? ix.count : p.count; for (let k = 0; k < n; k += 2) { const i = ix ? ix.getX(k) : k; v.fromBufferAttribute(p, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); box.expandByPoint(v); } }); /* (only the parts shown: every part shares the model's whole vertex list, so measuring the list counted hidden parts too, and the Clutches came out a third of their height, floating, Nov 17) */
+    mx.stopAllAction(); mx.uncacheRoot(scene);
+    return { scene, animations, box: box.isEmpty() ? null : box }; }); };
+// (if wago.tools is slow, down or turns Debrief away (Main, Nov 16: "Wowhead already blocked you", and a raid night is 20 people loading at
+//  once): a real model that fails, throws or isn't in after ms (12 s) gives way to drawn(), the model made before, and a late answer is ignored;
+//  while either loads the old shape stays, so a creature is never missing. -> what drawn() gives, or [the real model, null, true])
+const pg3dWowOr = (wow, drawn, ms) => new Promise((ok) => { let done = false; const fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
+  Promise.resolve().then(wow).then((g) => { if (done) return; done = true; clearTimeout(tm); ok([g, null, true]); }, () => { clearTimeout(tm); fb(); }); });
+const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 }, tail: { m2: 7234132 } }; /* (tail: Gore Rattle, creature/ulatektentacle/ulatektentacle01.m2; the small tails use it too) */ /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
+
+// (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
+//  team plan when there is one; else a mix by role, the same every run (t1, t2... take the next class in their role's list): tanks Warrior,
+//  Paladin, Death Knight, Druid, Monk, Demon Hunter; melee Rogue, Warrior, Death Knight, Paladin, Shaman, Monk, Demon Hunter, Druid; ranged
+//  Mage, Warlock, Hunter, Priest, Druid, Shaman, Evoker; healers Priest, Paladin, Shaman, Druid, Monk, Evoker. The look only.)
+const PG3D_MIX = { t: ['warrior', 'paladin', 'deathknight', 'druid', 'monk', 'demonhunter'], m: ['rogue', 'warrior', 'deathknight', 'paladin', 'shaman', 'monk', 'demonhunter', 'druid'],
+  r: ['mage', 'warlock', 'hunter', 'priest', 'druid', 'shaman', 'evoker'], h: ['priest', 'paladin', 'shaman', 'druid', 'monk', 'evoker'] };
+const pg3dClassOf = (A, id) => { const c = String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, ''); if (c) return c; const L = PG3D_MIX[A.rl ? A.rl(id) : id[0]]; const n = parseInt(String(id).slice(1), 10);
+  return L && n > 0 ? L[(n - 1) % L.length] : ''; };
+const pg3dClassC = (k) => { const E0 = typeof window !== 'undefined' && window.ENGINE; const c = k && E0 && E0.CLASSES && E0.CLASSES[k.toUpperCase()]; return c ? c[1] : null; }; /* (a class's colour, from the engine's class list) */
 // ---- what to draw at time t: a list of shapes, each from the numbers the hit code uses (practice.js draw(), line for line) ----
 // A: practice.js's window on the game (G, S, me, nm, rl, clsC, bossAt, tailAt, spot, target, hint). Floor shapes: disc, ring (fixed size), grow
 // (a ring that grows or shrinks), arc, rect (a strip: f0..f1 along angle a, w0..w1 across it, from x,y); wave (a wave wall over its rect: exactly
@@ -46,14 +179,17 @@ function pg3dShapes(A, t) {
   S.soaks.forEach((s) => { if (t >= s.t0 && t <= s.at + 0.5) { const mine = s.group.includes(me), f = Math.min(1, (t - s.t0) / (s.at - s.t0)), c = mine ? '#f3c969' : '#24f2cb';
     disc(s.x, s.y, s.r, '#24f2cb', t > s.at ? 0.4 : 0.08); ring(s.x, s.y, s.r, c, 1, mine ? 0.45 : 0.3, mine); grow(s.x, s.y, s.r * f, '#24f2cb', 0.7);
     P({ k: 'wall', x: s.x, y: s.y, r: s.r, h: 2 + 3 * f, c, o: 0.08 + 0.14 * f }); P({ k: 'coil', x: s.x, y: s.y, r: s.r, f, slam: t > s.at ? cl((t - s.at) / 0.5) : 0 });
-    label(s.x, s.y, 5, mine ? 'YOUR SOAK' : 'Soak ' + (s.k + 1), c, 15); } }); /* (low over its circle: higher up it sat on the HUD's call-outs, review of Nov 15) */
+    if (mine || !A.P2) label(s.x, s.y, 5, A.P2 ? 'YOUR SOAK' : mine ? 'Your coil' : 'Not yours', c, 15); } }); /* (low over its circle: higher up it sat on the HUD's call-outs, review of Nov 15) */
+  /* (the prompts audit, Nov 16: phase 1's coil has one name, "Your coil", as the bar, the call and the job line say it, and the other says it isn't yours ("Soak 1" and
+     "Soak 2" said nothing about which was yours); a later part keeps "YOUR SOAK" on yours and drops "Soak N" from the others, one label fewer on a crowded floor) */
   S.bubbles.forEach((q) => { const c = G.wr[q.w]; if (c && t >= q.t0 && t <= q.at + 0.4) { const f = Math.min(1, (t - q.t0) / (q.at - q.t0));
     P({ k: 'dome', x: c.x, y: c.y, r: 10, c: '#d8f22f', o: 0.14 + 0.16 * f, f }); ring(c.x, c.y, 10, '#d8f22f', 1, 0.4); grow(c.x, c.y, 10 * (1 - f), '#d8f22f', 0.55); if (t > q.at) disc(c.x, c.y, 10, '#d8f22f', 0.45);
-    label(c.x, c.y, 5, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 15); } });
+    label(c.x, c.y, 5, 'Into the bubble', '#e8ff6a', 15); } }); /* (no countdown on the floor: Flex, Nov 16, "i feel like the game confuses people saying timestamps"; the boss-mod bar and the cast bar count) */
   // (impacts; the Womb and the Falling Debris drop out of the sky onto their circles)
   S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); disc(m.x, m.y, m.r, m.fill || '#c8a36a', 0.16); ring(m.x, m.y, m.r, m.color || '#c8a36a', 1, 0.3); disc(m.x, m.y, m.r * f, '#ff5a3c', 0.25);
     if (m.name === 'Falling Debris' || m.name === 'Toxic Womb') P({ k: 'rock', x: m.x, y: m.y, f, land: t > m.at ? cl((t - m.at) / 0.3) : 0, womb: m.name === 'Toxic Womb', sd: m.x * 0.37 + m.y * 0.71 }); } });
-  G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 2.5) { const f = Math.min(1, (t - e.land + 2.5) / 2.5); disc(e.x, e.y, 4, '#e6e0c8', 0.12); ring(e.x, e.y, 4, '#e6e0c8', 1, 0.25); disc(e.x, e.y, 4 * f, '#ff5a3c', 0.22);
+  // (a falling egg's circle from 3 s before it lands, as the job line warns you: the prompts audit, Nov 16, found 2.5 s too short to read and step out)
+  G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 3) { const f = Math.min(1, (t - e.land + 3) / 3); disc(e.x, e.y, 4, '#e6e0c8', 0.12); ring(e.x, e.y, 4, '#e6e0c8', 1, 0.25); disc(e.x, e.y, 4 * f, '#ff5a3c', 0.22);
     P({ k: 'egg', x: e.x, y: e.y, h: 1.2 + 32 * (1 - f * f), fall: true }); } }); /* (falling from the sky until it lands, its shadow shrinking under it) */
   // the beam: from the spectral image to the tank in it (b.tank, else the off tank)
   S.beams.forEach((b) => { const tk = G.bots[b.tank || 't2']; if (t >= b.t0 && t <= b.t1 && tk) P({ k: 'beam', x0: b.from[0], y0: b.from[1], x1: tk.x, y1: tk.y });
@@ -72,7 +208,7 @@ function pg3dShapes(A, t) {
   // eggs: on the floor (its shell, and yours in gold), or riding over their carrier with the 3-yard circle
   G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let x = e.x, y = e.y, h = 1.2;
     if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; disc(b.x, b.y, 3, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, 3, ec, 0.9, ew ? 0.32 : 0.2); }
-    P({ k: 'egg', x, y, h, held: !!e.who });
+    P({ k: 'egg', x, y, h, held: !!e.who, ref: e });
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: e.shpMax ? 1 - Math.max(0, e.shp) / e.shpMax : (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); /* (your egg: its shell's health, Flex, Nov 15) */ P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? (e.shp > 0 ? 'Your egg: hit it to break the shell' : 'Your egg (shell up)') : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
@@ -100,11 +236,11 @@ function pg3dShapes(A, t) {
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35));
     if (dv.cur) { const q = dv.cur, R = q.r + 0.3; disc(q.p[0], q.p[1], R, '#ff2a1a', dv.inRange ? 0.16 : 0.07); ring(q.p[0], q.p[1], R, '#ff3b2f', dv.inRange ? 0.95 : 0.6, 0.24, !dv.inRange); } }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
-  if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
+  if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, hn && hn.wait ? 'Wait' : 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot; "Wait" while the way is blocked) */
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
   // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
   // (nine names piled up in one heap, review of Nov 15)
-  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); if (a.taunt != null && t - a.taunt < 0.9) ring(a.x, a.y, 1.6 + (t - a.taunt) * 2.5, '#ff6b5c', 1, 0.6 * (1 - (t - a.taunt) / 0.9)); /* (the tank's taunt, Nov 15) */ if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
+  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y, ref: a }); if (a.kind === 'viper') ring(a.x, a.y, 1.3, '#9be86a', 0.55, 0.14); /* (a flying Viper's spot on the floor) */ if (a.taunt != null && t - a.taunt < 0.9) ring(a.x, a.y, 1.6 + (t - a.taunt) * 2.5, '#ff6b5c', 1, 0.6 * (1 - (t - a.taunt) / 0.9)); /* (the tank's taunt, Nov 15) */ if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
     if (!q) packs.push(q = { kind: a.kind, x0: a.x, y0: a.y, sx: 0, sy: 0, n: 0 }); q.sx += a.x; q.sy += a.y; q.n++; });
   packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : '') + (!vp && G.adds.some((a) => a.boil && a.kind === 'rawling' && Math.hypot(a.x - x, a.y - y) < 6) ? ' (boiling)' : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
   S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up });
@@ -116,7 +252,7 @@ function pg3dShapes(A, t) {
   if (t >= D.t0 + 0.4 && t < D.gone + 1) { const p0 = A.bossAt(D.t0).p; P({ k: 'splash', x: p0[0], y: p0[1], p: (t - D.t0 - 0.4) / (D.gone + 0.6 - D.t0), s: 1.5 }); }
   if (t >= D.surf && t < D.surf + 2.4) P({ k: 'splash', x: B.p[0], y: B.p[1], p: (t - D.surf) / 2.4, s: 2 });
   // (her tail: it lifts through Mephitic Thrash's cast and slams down on the stone's edge as it lands)
-  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
+  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0, at: th ? th.at : null, hit: th ? th.at - t : null }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
   if (A.P2) A.P2.shapes(t, P, { disc, ring, grow, label }); /* (a later part's own shapes: src/practice-p2.js) */
   // (cast bars over the casters you can kick, Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads",
@@ -130,18 +266,26 @@ function pg3dShapes(A, t) {
   const RAID = typeof GDZ_RAID !== 'undefined' ? GDZ_RAID : Object.keys(G.bots), NEAR = 7, CARRY = 14, mates = new Map(), carry = new Set();
   S.soaks.forEach((s) => { if (s.group.includes(me) && t >= s.cast - 0.5 && t <= s.at + 0.5) s.group.forEach((id) => { if (!mates.has(id)) mates.set(id, s); }); });
   G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) carry.add(e.who); });
-  RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id), d = Math.hypot(b.x - G.x, b.y - G.y);
-    ring(b.x, b.y, 0.95, rc, 0.9, 0.16); P({ k: 'unit', id, x: b.x, y: b.y, c: cc || rc });
+  RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id) || pg3dClassC(pg3dClassOf(A, id)), d = Math.hypot(b.x - G.x, b.y - G.y);
+    ring(b.x, b.y, 0.95, cc || rc, 0.9, 0.16); P({ k: 'unit', id, x: b.x, y: b.y, c: cc || rc }); /* (the ring in the class colour: the raid's figures show the role, the ring the class) */
     const ms = mates.get(id), why = d <= NEAR ? 'near' : ms && Math.hypot(b.x - ms.x, b.y - ms.y) > ms.r ? 'soak' : carry.has(id) && d <= CARRY ? 'egg' : '';
-    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d }); });
+    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d, role: GDZ_ROLE[A.rl(id)][0], rc: cc || rc }); }); /* (role: shown over the raider in place of a health bar, in its class colour, Flex, Nov 16: "can you color the bot names by class color") */
   if (G.debs.def && G.debs.def.until > t) P({ k: 'dome', x: G.x, y: G.y, r: 1.9, c: '#7fb8ff', o: 0.18 });
   const hp = cl((G.hp == null ? 100 : G.hp) / 100);
   ring(G.x, G.y, 1.25, '#f3c969', 1, 0.32); P({ k: 'unit', id: me, x: G.x, y: G.y, c: A.clsC(me) || GDZ_ROLE[A.rl(me)][1], you: true, la: lean ? lean.a : 0, lf: lean ? lean.f : 0 });
   P({ k: 'plate', id: me, x: G.x, y: G.y, name: 'YOU', c: '#ffd34d', bar: hp < 0.35 ? '#d8483e' : hp < 0.65 ? '#d9a93a' : '#3fbf5a', hp, o: 1, show: true, why: 'you', d: 0, you: true });
   const tg = A.target; if (tg) ring(tg[0], tg[1], 0.6, '#ffffff', 0.6, 0.15);
   // the hint (practice.js hintNow: where your job wants you now): an arrow at your feet and a "Go here" ring with the yards, gold as in 2D
-  if (hn && hn.T && hn.d > 0) { P({ k: 'arrow', x: G.x, y: G.y, a: Math.atan2(hn.T[1] - G.y, hn.T[0] - G.x), d: hn.d }); disc(hn.T[0], hn.T[1], 1.4, '#f3c969', 0.14); ring(hn.T[0], hn.T[1], 1.4, '#f3c969', 1, 0.25, true);
-    P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
+  // (the prompts audit, Nov 16: while the way is blocked (hn.wait: a wave crossing it, or no way round) no arrow, and the ring says "Wait"; the arrow comes back once it's clear. A bend round a coil
+  //  or a carrier's ring is just another spot to walk to (hint().T), then the arrow turns to yours)
+  if (hn && hn.T && hn.d > 0) { if (!hn.wait) P({ k: 'arrow', x: G.x, y: G.y, a: Math.atan2(hn.T[1] - G.y, hn.T[0] - G.x), d: hn.d }); disc(hn.T[0], hn.T[1], 1.4, '#f3c969', 0.14); ring(hn.T[0], hn.T[1], 1.4, '#f3c969', 1, 0.25, true);
+    P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, hn.wait ? 'Wait' : 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
+  // (the monsters' plates, Flex, Nov 16: "Put healthbars over the monsters heads with the names though": every mob you can hit within 45 yd
+  //  gets its name and a red health bar over its head (as tall as its model); the floating name labels they had are dropped)
+  const MOBH = { rawling: 2.4, viper: 6.1, wretch: 5.6, warden: 5.8, clutch: 2.4, shrieker: 5.5, ds: 5.8, dsx: 5.8, doomscale: 5.8, rav: 6.2, ravenous: 6.2 }, mobs = [];
+  (A.tgts ? A.tgts() : []).forEach((o) => { if (!o || !o.p || !/rawling|viper|wretch|warden|clutch|shriek|^ds|doom|rav/i.test(String(o.kind || ''))) return; const d = Math.hypot(o.p[0] - G.x, o.p[1] - G.y); if (d > 45) return;
+    mobs.push(o.p); P({ k: 'plate', id: 'mob:' + (o.key || o.kind + ':' + o.p.join(',')), x: o.p[0], y: o.p[1], name: String(o.name || o.kind).slice(0, 34), c: '#ffb0a3', bar: '#d8483e', hp: o.max ? Math.max(0, Math.min(1, o.hp / o.max)) : 1, o: 1, show: false, why: 'mob', mob: true, kind: o.kind, h: MOBH[o.kind] || 2.75, d }); });
+  for (let i = out.length - 1; i >= 0; i--) { const q = out[i]; if (q.k === 'label' && /Rawling|Viper|Wretch|Warden|Doomscale|Clutch|Shrieker/.test(q.text || '') && mobs.some((p) => Math.hypot(p[0] - q.x, p[1] - q.y) < 5)) out.splice(i, 1); }
   return out;
 }
 
@@ -349,6 +493,7 @@ function pg3d(host, A) {
   const T = window.THREE, TAU = Math.PI * 2, WATER = -0.55, own = [], keep = (o) => { own.push(o); return o; };
   const R = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   R.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1)); R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap;
+  const S3TC = PG3D_REAL && !!(R.extensions && R.extensions.has('WEBGL_compressed_texture_s3tc')); /* (PG3D_REAL false: no real models anywhere, the figures and drawn models instead) */ /* (WoW's packed textures: the real models only where the card reads them) */
   const cv = R.domElement; cv.className = 'pg3-cv'; cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none';
   const fxL = document.createElement('div'), flL = document.createElement('div'), vgL = document.createElement('div');
   fxL.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden';
@@ -616,6 +761,13 @@ function pg3d(host, A) {
     [[-5.5, -27, 0.5, 1], [4.5, -38, -0.45, 0.85], [-2.5, -48.5, 0.3, 0.7]].forEach(([x, z, yaw, s], i) => { const h = new T.Mesh(HUMPG, SCALEM); h.castShadow = true; h.position.set(x, -2.6 * s, z); h.rotation.y = Math.PI / 2 + yaw; h.scale.setScalar(s);
       [-0.5, 0, 0.5].forEach((da) => { const a = Math.PI / 2 + da, c = new T.Mesh(CONEG, SPIKEM); c.position.set(Math.cos(a) * 6.1, Math.sin(a) * 6.1, 0); c.rotation.z = a - Math.PI / 2; c.scale.set(0.7, 0.8, 0.7); h.add(c); }); boss.add(h); humps.push({ m: h, x, z, s, y0: -2.6 * s, i }); }); }
   const BTW = twins(boss); let eyeO = 1; scene.add(boss);
+  // (her real model, Flex, Nov 16: "including ulatek": read like the mobs' (pg3dWow); once it's in, the drawn neck, head and hood hide and hers
+  //  stands in their place, moved and turned by the same code (rearing, biting, sinking); her body's coils stay. BRH: how tall she's drawn.)
+  let BRM = null; const BRH = 24, bossDrawn = boss.children.slice(); /* (all of the drawn her, her body's coils too: Flex, Nov 16, "ulateks old tails are in" (the purple humps beside her real model)) */
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.boss), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
+    root.scale.setScalar(k); root.position.y = -box.min.y * k + WATER - 2; root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
+    const a = g.animations.find((c) => /^a0$/.test(c.name)) || g.animations[0]; BRM = new T.AnimationMixer(root); g.animations.forEach((c) => { if (c === a || /^g\d+$/.test(c.name)) BRM.clipAction(c).play(); }); /* (her stand, and her always-on movement) */
+    bossDrawn.forEach((c) => { c.visible = false; }); boss.add(root); }).catch(() => { /* (no answer: the drawn one stays) */ });
   // ---- her tail (Gore Rattle): ridged segments rising from the venom just off the stone, its rattle at the tip; it lifts and slams for the Thrash ----
   const SEGG = keep(new T.LatheGeometry([[0, -0.5], [0.8, -0.5], [0.97, -0.36], [1, -0.12], [0.9, 0.22], [0.72, 0.5], [0, 0.5]].map(([x, y]) => new T.Vector2(x, y)), 14));
   const TAILSM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.48, metalness: 0.15, emissive: 0x140826, transparent: true })), BONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45, emissive: 0xff7a2a, emissiveIntensity: 0.06, transparent: true })), TSPIKEM = spikeM();
@@ -644,7 +796,18 @@ function pg3d(host, A) {
   // (the small tails: the same ridged tail, smaller, rising out of the venom and sinking back once they've fired)
   const STAILM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.5, emissive: 0x140826 })), SBONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45 }));
   const STREST = [[0, -5, -3.5], [0, -0.5, -2.4], [0, 3.6, -1.2], [0, 6.2, 0.6], [0, 6.8, 2.8]], ST = STREST.map(() => [0, 0, 0]);
-  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); return g; });
+  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); if (STPL) stailReal(g); return g; });
+  // (her tail and the small tails in the real model, Flex, Nov 16: "gore rattle needs its model from in game": ulatektentacle01, the small tails use it too.
+  //  Once it's in, the drawn tails hide; Gore Rattle sways on its stand and plays its real slam (a16, the hit 0.87 s in) for Mephitic Thrash; each small tail
+  //  is a smaller copy rising from the venom. Its root is scaled 3 times in every clip, so a clip always plays. TRH, STH: how tall they're drawn)
+  let TRM = null, TRS = null, TRK = null, STPL = null, slamAt = null; const TRH = 23, STH = 11, tailDrawn = tail.children.slice();
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.tail), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1;
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
+    STPL = { root, anim: g.animations, box, h }; const R0 = T.SkeletonUtils.clone(root), k = TRH / 1.35 / h; R0.scale.setScalar(k); R0.position.y = (-box.min.y - 0.122 * h) * k; /* (its base, 12%, under the venom) */
+    TRM = new T.AnimationMixer(R0); const a0 = g.animations.find((c) => c.name === 'a0') || g.animations[0], sl = g.animations.find((c) => c.name === 'a16'); if (a0) TRK = TRM.clipAction(a0).play();
+    if (sl) { TRS = TRM.clipAction(sl); TRS.setLoop(T.LoopOnce, 1); TRM.addEventListener('finished', (e) => { if (e.action === TRS && TRK) { TRK.reset().fadeIn(0.25).play(); TRS.fadeOut(0.25); } }); }
+    tailDrawn.forEach((c) => { c.visible = false; }); tail.add(R0); stail.L.forEach((g) => stailReal(g)); }).catch(() => { /* (no answer: the drawn tails stay) */ });
+  const stailReal = (g) => { if (!STPL || g.userData.R) return; const R1 = T.SkeletonUtils.clone(STPL.root), k1 = STH / STPL.h, M1 = new T.AnimationMixer(R1), a0 = STPL.anim.find((c) => c.name === 'a0') || STPL.anim[0]; R1.scale.setScalar(k1); if (a0) M1.clipAction(a0).play(); g.add(R1); g.userData.R = R1; g.userData.M = M1; g.userData.y0 = (-STPL.box.min.y - 0.122 * STPL.h) * k1; g.userData.C.seg.forEach((m) => { m.visible = false; }); }; /* (a small tail: a copy of the real one, made with its pool item, never while drawing) */
   // (the spectral image that beams the Wretch: her neck and head, see-through and glowing)
   const GHOSTM = keep(new T.MeshBasicMaterial({ color: 0x3af2a8, transparent: true, opacity: 0.32, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
   const ghost = pool(() => { const g = new T.Group(), nk = new T.Mesh(NECKG, GHOSTM), hd = new T.Group(), sk = new T.Mesh(SKULLG, GHOSTM); hd.position.copy(headG.position); hd.scale.setScalar(3.4); hd.rotation.x = 0.2; hd.add(sk); g.add(nk, hd); g.scale.setScalar(0.45); return g; });
@@ -662,6 +825,89 @@ function pg3d(host, A) {
   const beacon = new T.Mesh(WALLG, fxMat(3, '#f3c969', true)); arrow.renderOrder = 902; arrowB.renderOrder = 901; beacon.renderOrder = 650; scene.add(arrow, arrowB, beacon);
   // the raid: a capsule each in its class colour (role colour without a team plan)
   const CAPG = keep(new T.CapsuleGeometry(0.55, 1.2, 4, 12)), UNITS = new Map();
+  // (your figure, once it loads: as tall as the capsule (2.3 yd), feet on the stone; it stands, runs when you move, swings when you hit,
+  //  and turns to the way you walk. Until it loads you are the capsule. The raid wears figures too (standing and running, no swings): each
+  //  look is loaded once (TPL) the first time someone wears it, and you and each raider get a clone of it.)
+  let ME = null; const TPL = {}, MEF = {}, BOTF = new Map(), FIGL = [];
+  const lookOf = (id, mine) => { const L = mine && A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (yours can be picked on the card) */
+    const r = A.rl ? A.rl(id) : 'm', c = mine ? String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, '') : pg3dClassOf(A, id); if (c !== 'knight' && PG3D_FIG[c]) return c; /* (a raider's class: the team plan's, else the mix; yours only from the team plan) */
+    return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
+  const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F0 = rk.indexOf('mon:') === 0 ? PG3D_MON[rk.slice(4)] : PG3D_FIG[rk]; /* (mon: a monster, PG3D_MON) */
+    const drawn = () => Promise.all([pg3dMeLoad(T, F0.url), F0.anim ? pg3dMeLoad(T, F0.anim) : null]);
+    (F0.wow && S3TC ? pg3dWowOr(() => pg3dWowLoad(T, F0.wow), drawn) : drawn()).then(([g, g2, real]) => { if (dead) return; const root = g.scene;
+    const F = real ? Object.assign({}, F0, { flat: null, hue: null, paint: null, tint: null, bones: null, face: null, hold: null, turn: 0, clips: { idle: /^a0$/, move: /^a4$/ } }, F0.wow) : F0; /* (the real model: its own colours and shape; wow can set h, hover, turn, clips) */
+    (F.hide || []).forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
+    const box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = (F.h || 2.3) / h; /* (g.box: a real model's standing size) */ root.scale.set(k * (F.wide || 1), k, k * (F.wide || 1)); /* (a raider 2.3 yd tall; a monster as tall as its old shape, F.h) */
+    if (F.flat || F.hue) { /* (the colours first, so the spikes, crests and faces added next keep their own) */ const HS = { h: 0, s: 0, l: 0 }; root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { if (!x.color) return;
+      if (F.flat) { x.map = null; x.color.setRGB(F.flat[0], F.flat[1], F.flat[2]); x.needsUpdate = true; return; } /* (flat: the model's picture dropped for one colour) */
+      x.color.getHSL(HS); if (HS.s > 0.15 && HS.l > 0.04 && HS.l < 0.96) x.color.setHSL(F.hue[0], Math.min(1, HS.s * F.hue[1]), HS.l); }); }); } /* (hue: the real mob's colour, Flex: "maybe the colors of the actual mobs"; greys, black and white stay) */
+    if (F.paint) root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { const c = F.paint[x.name]; if (c && x.color) { x.color.setRGB(c[0], c[1], c[2]); if (c[3] && x.emissive) { x.emissive.setRGB(c[0], c[1], c[2]); x.emissiveIntensity = c[3]; } } }); }); /* (a 4th number: it glows) */ /* (paint: a material's own colour by name, e.g. the wasp in the snakes' greens) */
+    if (F.tint) root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { if (x.color) x.color.multiply(new T.Color(F.tint)); }); }); /* (a monster's own colours, tinted: this load's materials only) */
+    if (F.bones) Object.keys(F.bones).forEach((n) => { const b = root.getObjectByName(n), v = F.bones[n]; if (b) b.scale.set(v[0], v[1], v[2]); }); /* (bones: a part made bigger, longer or gone; the model's clips don't scale bones, so it stays) */
+    if (F.face) { const FG = { ball: keep(new T.SphereGeometry(1, 14, 10)), cone: keep(new T.ConeGeometry(1, 1, 10)), box: keep(new T.BoxGeometry(1, 1, 1)) }, FM = {}; [].concat(F.face).forEach((FF) => { const fb = root.getObjectByName(FF.bone); if (!fb) return; root.updateMatrixWorld(true); const bp = new T.Vector3(); fb.getWorldPosition(bp); root.worldToLocal(bp); /* (the bone's spot in the model's own units, after the bones are reshaped) */
+      FF.parts.forEach(([sh, c, p, sc, r]) => { const key = c.join(','), mt = FM[key] || (FM[key] = keep(new T.MeshStandardMaterial({ color: new T.Color().setRGB(c[0], c[1], c[2]), roughness: 0.55, metalness: 0.1, emissive: new T.Color().setRGB(c[3] ? c[0] : 0, c[3] ? c[1] : 0, c[3] ? c[2] : 0), emissiveIntensity: c[3] || 0 }))), m = new T.Mesh(FG[sh], mt);
+        m.position.set(bp.x + p[0], bp.y + p[1], bp.z + p[2]); m.scale.set(sc[0], sc[1], sc[2]); if (r) m.rotation.set(r[0], r[1], r[2]); m.castShadow = true; root.add(m); m.updateMatrixWorld(true); fb.attach(m); }); }); } /* (face: fangs, slit eyes, a tongue, a hood, Flex: "give the wasp snake fangs too and a more snake face", "make the wretch face more snake like with snake fangs") */
+    (F.hold || []).forEach(([n, b, pc]) => { const o = g2 && g2.scene.getObjectByName(n), bone = root.getObjectByName(b); if (o && bone) { bone.add(o); if (pc) o.traverse((m) => { if (m.isMesh) { m.material = keep(m.material.clone()); m.material.map = null; m.material.color.setRGB(pc[0], pc[1], pc[2]); if (pc[3]) { m.material.emissive.setRGB(pc[0], pc[1], pc[2]); m.material.emissiveIntensity = pc[3]; } m.material.needsUpdate = true; } }); } }); /* (pc: the borrowed prop repainted, e.g. the Warden's glowing green spear) */ /* (a borrowed staff, sword or shield in its hand) */
+    let anim = g2 ? (g2.animations || []).map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !!root.getObjectByName(T.PropertyBinding.parseTrackName(tr.name).nodeName)); return c1; }) : (g.animations || []); /* (borrowed clips, only the tracks for bones it has) */
+    if (F.bones) anim = anim.map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !(/.scale$/.test(tr.name) && F.bones[T.PropertyBinding.parseTrackName(tr.name).nodeName])); return c1; }); /* (a clip that scales a bone we reshaped would undo it) */
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { if (F.metal != null && x.metalness > F.metal) x.metalness = F.metal; own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
+    TPL[rk] = { root, anim, y0: -box.min.y * k, F }; }).catch(() => { TPL[rk] = false; /* (no model: the capsule stays) */ }); };
+  const figMake = (rk, mine, x, y, who) => { const P0 = TPL[rk]; if (!P0) { figLoad(rk); return null; }
+    const root = T.SkeletonUtils.clone(P0.root); root.traverse((m) => { if (m.isSkinnedMesh && m.skeleton) own.push(m.skeleton); }); /* (a clone shares the model's geometry and materials; its own bones are freed on close) */
+    const anim = P0.anim, mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
+    const act = (c, once) => { if (!c) return null; const a = mixer.clipAction(c); if (once) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } return a; };
+    const role = A.rl ? A.rl(who || A.me) : 'm', swing = (P0.F.cast && role !== 'm' ? P0.F.cast : P0.F.atk) || [], C = P0.F.clips || {}; /* (a Paladin healing casts; a Paladin in melee swings; a monster names its clips) */
+    const acts = { idle: act((C.idle && find(C.idle)) || find(/^idle$/i) || find(/idle/i) || anim[0]), run: act((C.move && find(C.move)) || find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
+      atk: rk.indexOf('mon:') === 0 ? null : act(swing.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (you and every raider swing or cast; monsters don't) */ /* (melee swing a sword; ranged and healers cast) */
+    if (P0.F.wow) anim.forEach((c) => { if (/^g\d+$/.test(c.name)) mixer.clipAction(c).play(); }); /* (a real model's always-on movement, under every clip) */
+    root.visible = false; scene.add(root);
+    const f = { rk, root, mixer, acts, cur: '', y0: P0.y0, turn: P0.F.turn || 0, hover: P0.F.hover || 0, face: Math.atan2(-x, y), mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null, every: 1.5 + Math.random() * 0.9, ph: Math.random() }; FIGL.push(f); return f; }; /* (every, ph: a raider's own swing rhythm) */ /* (a new one faces the middle) */
+  const meNow = () => { const rk = lookOf(A.me, true); if (!MEF[rk]) MEF[rk] = figMake(rk, true, A.G.x, A.G.y); const F = MEF[rk] || null; if (F !== ME) { if (ME) { ME.root.visible = false; ME.on = false; } ME = F; } return ME; };
+  const botNow = (s) => { const rk = lookOf(s.id, false); let f = BOTF.get(s.id); if (f && f.rk === rk) return f; if (f) { f.root.visible = false; f.on = false; } f = figMake(rk, false, s.x, s.y, s.id); if (f) BOTF.set(s.id, f); return f; };
+  // (the raid at work, Flex: "Would it take much to have the bots attacking things that are supposed to be attacked?", "as long as the bots don't
+  //  look like they are just standing around vibing": each frame botAims lists what the raid should be hitting (the game's right targets now,
+  //  else Ula'tek while she's up) and the tanks; a raider faces its nearest target in reach (melee 14 yd, ranged 60) and swings or casts on its
+  //  own rhythm, a healer faces the nearest tank and casts. The look only: the bots' damage and the score are the game's, untouched.)
+  let BT = null;
+  const botAims = (t) => { const G = A.G, dv = A.dps ? A.dps() : null, b = A.bossAt ? A.bossAt(t) : null, tanks = [];
+    Object.keys(G.bots || {}).forEach((id) => { if (A.rl && A.rl(id) === 't') tanks.push([G.bots[id].x, G.bots[id].y]); });
+    return { right: ((dv && dv.right) || []).map((o) => o.p).filter(Boolean), boss: b && b.up && b.p ? b.p : null, tanks }; };
+  const botSwing = (f, s) => { const B = BT, r = A.rl ? A.rl(s.id) : 'm'; if (!B) return null; let tp = null, bd = 1e9; const near = (q) => { const d = Math.hypot(q[0] - s.x, q[1] - s.y); if (d > 0.5 && d < bd) { bd = d; tp = q; } };
+    if (r === 'h') B.tanks.forEach(near); else { B.right.forEach(near); if (!tp && B.boss) near(B.boss); }
+    if (!tp || bd > (r === 'm' || r === 't' ? 14 : 60) || performance.now() - f.mvAt < 300) return null; /* (nothing in reach, or on the move: no swing) */
+    if (performance.now() - f.mvAt > 300) { const a = Math.atan2(tp[0] - s.x, -(tp[1] - s.y)); let d = a - f.face; d = Math.atan2(Math.sin(d), Math.cos(d)); f.face += d * 0.25; } /* (standing: turn to the target) */
+    f.tp = tp; f.tpB = tp === B.boss; /* (what it's hitting, for its spell: botCast) */
+    return Math.floor(performance.now() / 1000 / f.every + f.ph); }; /* (a new number each beat: figPose swings once per beat) */
+  // (the raid's spells, Flex, Nov 16: "how difficult would it be to give the casters/ranged classes/healers simple spell animations like the
+  //  player gets?", "Yes, add them": on each beat a ranged raider throws a small bolt in its class colour at what it's hitting, and a healer (any
+  //  healing class) sends a soft green glow onto the tank it faces. Your bolt and burst, smaller and fainter (sm), so the mechanics stay easy to
+  //  read; at most 24 at once. The look only: the raid's damage and healing are the game's, untouched.)
+  const BB = [], BBF = { fly: 0.45, end: 0.95 }; /* (fly 0.45 s: slower than yours (0.22) so a raider's bolt is seen in flight) */
+  const BBN = { beats: 0, cast: 0, drawn: 0, live: 0 }; if (typeof window !== 'undefined') window.__pg3dSpells = BBN; /* (counts, for the test link) */
+  const botCast = (f, s) => { BBN.beats++; const r = A.rl ? A.rl(s.id) : 'm'; if ((r !== 'r' && r !== 'h') || !f.tp) return; BBN.cast++; if (BB.length >= 24) BB.shift();
+    BB.push({ x0: s.x, y0: s.y, x1: f.tp[0], y1: f.tp[1], h1: f.tpB ? 7 : 1.6, t0: performance.now(), c: r === 'h' ? '#8cffb4' : s.c || '#ff6a2a', heal: r === 'h' }); };
+  const botFx = (now, t) => { BBN.live = BB.length; for (let i = BB.length - 1; i >= 0; i--) { BBN.drawn++; const b = BB[i], age = Math.max(0, (now - b.t0) / 1000); if (age > BBF.end) { BB.splice(i, 1); continue; } /* (max 0: a spell cast this frame started just after its clock, now; dropping it as "from the future" threw every spell away, test link Nov 16) */
+    if (b.heal) { put({ k: 'impact', x: b.x1, y: b.y1, h: 1.4, r: 0.6, p: age / BBF.end, c: b.c, sm: 0.9 }, t); continue; } /* (a healer: the glow on the tank) */
+    const dx = b.x1 - b.x0, dy = b.y1 - b.y0, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, fl = (q) => [b.x0 + ux * d * q, b.y0 + uy * d * q, 2 + (b.h1 - 2) * q + 0.4 * Math.sin(Math.PI * q)];
+    if (age < BBF.fly) { const p = age / BBF.fly, h = fl(p), e = fl(Math.max(0, p - Math.min(2, d * p) / d)); put({ k: 'bolt', x: h[0], y: h[1], h: h[2], tx: e[0], ty: e[1], th: e[2], p, c: b.c, sm: 0.8 }, t); }
+    else put({ k: 'impact', x: b.x1 - ux * 0.6, y: b.y1 - uy * 0.6, h: b.h1, r: 0.5, p: (age - BBF.fly) / (BBF.end - BBF.fly), c: b.c, sm: 0.7 }, t); } };
+  const figPose = (M, s, hitT) => { const now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
+    const dx = s.x - M.x, dy = s.y - M.y; if (Math.hypot(dx, dy) > 0.004) { M.mvAt = now; const a = Math.atan2(dx, -dy); let d = a - M.face; d = Math.atan2(Math.sin(d), Math.cos(d)); M.face += d * Math.min(1, 0.35); } M.x = s.x; M.y = s.y;
+    if (hitT != null && hitT !== M.hitSeen) { M.hitSeen = hitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
+    const want = now < M.atkTo ? 'atk' : now - M.mvAt < 140 ? 'run' : 'idle', nx = M.acts[want] || M.acts.idle;
+    if (want !== M.cur && nx) { const pv = M.acts[M.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.fadeIn(0.12).play(); if (pv && pv !== nx) pv.fadeOut(0.12); M.cur = want; }
+    M.root.position.set(s.x, baseY(s.x, s.y) + M.y0, -s.y); M.root.rotation.set(0, M.face + (M.turn || 0), 0); M.on = true; }; /* (turn: a model that faces +x) */
+  // (the monsters, Flex, Nov 16: "find a model pack to use for the monsters in the fight as well? Ideally serpent type", "there should only be
+  //  one model for each of the mobs", "Rawlings should not be the same as vipers, try to find unique models for each one", "both the shrieker and
+  //  vipers are flying creatures": one model per mob (PG3D_MON), as tall as its old shape so the hits stay where they were drawn; a flier hovers
+  //  over its spot. mon(key, kind, x, y, o) draws one (key: the add itself, so it keeps its pose), false while its model loads (the old shape then).
+  //  Unused ones go back to their pool each frame.)
+  const MONF = new Map(), MONFREE = {}; let monSeen = new Set();
+  const mon = (key, kind, x, y, o) => { const D = PG3D_MON[kind]; if (!D) return false; let f = MONF.get(key);
+    if (!f) { const fr = MONFREE[kind]; f = fr && fr.length ? fr.pop() : figMake('mon:' + kind, false, x, y); if (!f) return false; f.x = null; MONF.set(key, f); }
+    monSeen.add(key); if (o && o.face != null) f.face = o.face; figPose(f, { x, y }, null);
+    f.root.position.y += (f.hover ? f.hover + (f.hover > 0 ? Math.sin(performance.now() / 380 + x) * 0.18 : 0) : 0) + ((o && o.dy) || 0); return true; }; /* (f.hover: the loaded model's, the real one's can differ) */
+  const monEnd = () => { MONF.forEach((f, key) => { if (!monSeen.has(key)) { MONF.delete(key); const kd = f.rk.slice(4); (MONFREE[kd] = MONFREE[kd] || []).push(f); } }); monSeen = new Set(); };
   const unitOf = (id) => { let u = UNITS.get(id); if (!u) { u = { m: new T.Mesh(CAPG, keep(new T.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05 }))), x: 0, y: 0, on: false }; u.m.castShadow = true; scene.add(u.m); UNITS.set(id, u); } return u; };
   // labels: a sprite each, the same size on screen at any distance
   const LBL = []; let nL = 0, W0 = 0, H0 = 0, pxK = 800;
@@ -679,12 +925,19 @@ function pg3d(host, A) {
   const PLATES = new Map(), PL = [], PLN = 12.5 / 26;
   const plSprite = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const tx = keep(new T.CanvasTexture(c)); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false;
     const sp = new T.Sprite(keep(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }))); sp.renderOrder = 990; sp.visible = false; scene.add(sp); return { c, tx, sp }; };
-  const plateOf = (id) => { let p = PLATES.get(id); if (!p) { p = { n: plSprite(256, 40), b: plSprite(64, 8), nk: '', bk: '', w: 0, on: false, s: null }; p.n.sp.center.set(0.5, -0.3); PLATES.set(id, p); } return p; };
+  const plateOf = (id) => { let p = PLATES.get(id); if (!p) { p = { n: plSprite(256, 40), b: plSprite(64, 8), r: null, rk: '', m: null, mk: '', nk: '', bk: '', w: 0, on: false, s: null }; p.n.sp.center.set(0.5, -0.3); PLATES.set(id, p); } return p; };
   const plate = (s) => { const p = plateOf(s.id), nk = s.name + '|' + s.c;
     if (p.nk !== nk) { p.nk = nk; const g = p.n.c.getContext('2d'); g.clearRect(0, 0, 256, 40); g.font = '700 26px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.name, 128, 21); g.fillStyle = s.c; g.fillText(s.name, 128, 21); p.w = Math.min(256, g.measureText(s.name).width + 12) * PLN; p.n.tx.needsUpdate = true; }
     const bk = s.bar + '|' + Math.round(s.hp * 40); if (p.bk !== bk) { p.bk = bk; const g = p.b.c.getContext('2d'), w = Math.round(62 * s.hp); g.clearRect(0, 0, 64, 8); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 64, 8); g.fillStyle = s.bar; g.fillRect(1, 1, w, 6); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(1, 1, w, 2); p.b.tx.needsUpdate = true; }
-    const y = baseY(s.x, s.y) + 2.75; p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
-    p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = true; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); };
+    const RM = s.mob && TPL['mon:' + (PG3D_MONK[s.kind] || s.kind)], y = baseY(s.x, s.y) + (s.h != null ? (RM && RM.F.ph != null ? RM.F.ph : s.h) + 0.5 : 2.75); /* (RM: a mob wearing its real model has its bar at that model's height, ph) */ p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); /* (a monster's plate over its head) */
+    if (s.role) { if (!p.r) { p.r = plSprite(160, 30); p.r.sp.center.set(0.5, 0.2); } const rk = s.role + '|' + s.rc; if (p.rk !== rk) { p.rk = rk; const g = p.r.c.getContext('2d'); g.clearRect(0, 0, 160, 30); g.font = '700 21px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.role, 80, 16); g.fillStyle = s.rc || '#cfd6df'; g.fillText(s.role, 80, 16); p.r.tx.needsUpdate = true; }
+      const kr = PLN / pxK * 0.78; p.r.sp.position.set(s.x, y, -s.y); p.r.sp.scale.set(160 * kr, 30 * kr, 1); p.r.sp.material.opacity = s.o; p.r.sp.visible = true; } else if (p.r) p.r.sp.visible = false; /* (a raider's role in place of its health bar) */
+    // (a mob's plate, Flex: "make the mob health bars a little bigger they are normally larger", "put the mob name in the health bar to save space": one
+    //  wide red bar, its name written inside, drawn again only when the health moves a step)
+    if (s.mob) { if (!p.m) p.m = plSprite(240, 28); const mk = s.name + '|' + Math.round(s.hp * 60); if (p.mk !== mk) { p.mk = mk; const g = p.m.c.getContext('2d'), w = Math.round(236 * s.hp); g.clearRect(0, 0, 240, 28); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 240, 28); g.fillStyle = '#b8322a'; g.fillRect(2, 2, w, 24); g.fillStyle = 'rgba(255,255,255,.16)'; g.fillRect(2, 2, w, 10);
+        let fz = 17; g.font = '700 ' + fz + 'px system-ui, sans-serif'; const tw = g.measureText(s.name).width; if (tw > 226) { fz = Math.max(11, Math.floor(fz * 226 / tw)); g.font = '700 ' + fz + 'px system-ui, sans-serif'; } /* (a long name shrinks to fit the bar) */ g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.name, 120, 15); g.fillStyle = '#ffffff'; g.fillText(s.name, 120, 15); p.m.tx.needsUpdate = true; }
+      p.m.sp.position.set(s.x, y, -s.y); p.m.sp.scale.set(132 / pxK, 15.4 / pxK, 1); p.m.sp.material.opacity = s.o; p.m.sp.visible = true; } else if (p.m) p.m.sp.visible = false; const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
+    p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = !s.role && !s.mob; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); }; /* (no health bar over a raider: its role instead) */
   // cast bars (Nov 16, Flex: "The monsters should have cast bars over their heads", "training wheels"): a WoW nameplate's cast bar over each caster you can
   // kick, from pg3dShapes' 'cast' shapes (the part's castBars): a dark frame (gold when it's your kick), the bar filling left to right, the words in it
   // (pg3dCastLook), about a nameplate wide and the same size on screen at any distance, just over the caster's head (h yards over its base, the gap in
@@ -706,7 +959,8 @@ function pg3d(host, A) {
   // (the minimap and the "2D | 3D" switch under it: the labels and names keep out of that corner too. Main, Nov 15: at 0:42 a name sat over the switch.
   // Since the raider-style screen (Nov 15) her boss frame and your Mistakes sit under them, and the boss-mod bars on the left: the labels keep out of those
   // too. The bars come and go, so every box is read each frame (the HUD is already laid out by then))
-  const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
+  // (look C, Nov 16: the fight path sits in .pg-timers' place, and the coach card and the result chips on the left: the labels keep out of those too)
+  const CRN = ['.pg-mini', '.pg-vw', '.pg-mis', '.pg-bossf', '.pg-timers', '.pg-coach', '.pg-res'].map((c) => host.parentNode && host.parentNode.querySelector(c)).filter(Boolean).map((el) => ({ el, key: '', l: 0, t: 0, r: 0, b: 0, fix: true, pri: -1, on: true }));
   const RNG = document.createRange(), BX = [], LQ = [], PQ = [], HB = [], CQ = [];
   const bands = () => { BX.length = 0; let hr = null;
     for (let i = 0; i < HUD.length; i++) { const B = HUD[i], txt = B.el.textContent; if (!txt || !(parseFloat(B.cs.opacity) > 0.04)) continue; const key = txt + '|' + W0 + '|' + H0;
@@ -737,7 +991,7 @@ function pg3d(host, A) {
     // (the names: you, the labels and the call-outs stay; then the late soak mates and carriers, then the nearest, where they sit on nothing)
     for (let k = 0; k < PL.length; k++) { const p = PL[k], s = p.s; if (!s.show) continue; V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
       const q = p.q || (p.q = { p, l: 0, t: 0, r: 0, b: 0, fix: false, free: false, pri: 0, on: false }), x = (V4.x + 1) / 2 * W0, y = (1 - V4.y) / 2 * H0, hw = p.w / 2 + 2;
-      q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); }
+      q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you || !!s.mob; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); } /* (a monster's name always shows, like yours) */
     pg3dPick(PQ, 4); for (let i = 0; i < PQ.length; i++) { const q = PQ[i]; if (q.p) q.p.n.sp.visible = q.on; else if (q.L && !q.on) q.L.sp.visible = false; } };
 
   // ---- one shape on the screen ----
@@ -745,9 +999,9 @@ function pg3d(host, A) {
   // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
   // (flat3d: a part on phase 1's platform alone, no side ledges: the intermission, src/practice-int.js; kit3d: a part that brings its own 3D pieces from
   // its module (the intermission's floating raid markers, Nov 15))
-  const P2K = A.P2 && A.P2.kit3d ? A.P2.kit3d({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, canvas, ctex, BALL, CONEG, BEAMG, WALLG, UDISC, URING })
-    : A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
-    : A.P2 && !A.P2.flat3d && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
+  const P2K = A.P2 && A.P2.kit3d ? A.P2.kit3d({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, canvas, ctex, BALL, CONEG, BEAMG, WALLG, UDISC, URING })
+    : A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
+    : A.P2 && !A.P2.flat3d && typeof pg3dP2 === 'function' ? pg3dP2({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
   const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'ring') { flat(ringG(s.r, s.w, s.dash), s.x, s.y, 1, 1, s.dash ? t * 0.3 : 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
@@ -764,18 +1018,23 @@ function pg3d(host, A) {
       u.fl.visible = u.fc.visible = sl > 0; if (sl > 0) { const q = 1 - sl; u.fl.scale.set(s.r, 1, s.r); u.flm.opacity = 0.8 * q * q; u.fc.scale.set(s.r * 0.95, 16 * (0.4 + 0.6 * q), s.r * 0.95); u.fcm.uniforms.uO.value = 0.75 * q; } return; }
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
+    if (k === 'unit' && s.you && meNow()) { figPose(ME, s, A.G.lastHitT); return; } /* (your animated figure in place of your capsule) */
+    if (k === 'unit' && !s.you) { const f = botNow(s); if (f) { const bt = botSwing(f, s); figPose(f, s, bt); if (bt != null && bt !== f.bb) { if (f.bb != null) botCast(f, s); f.bb = bt; } return; } } /* (a raider's figure, once its look has loaded; a new beat casts its spell) */
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
     if (k === 'plate') { plate(s); return; }
     if (k === 'cast') { castBar(s, t); return; }
+    if (k === 'egg' && !s.fall && s.ref && mon('egg' + (s.held ? 'c' : 'f') + s.ref.id + ':' + s.ref.set, s.held ? 'eggc' : 'egg', s.x, s.y, s.held ? { dy: s.h - 0.7 } : null)) return; /* (the real egg: a snake egg cluster on the floor, one egg over its carrier; Flex, Nov 16: "can you find the models for the eggs that people dps and pick up") */
     if (k === 'egg') { const m = egg(), z = s.held ? 0.72 : 1; m.scale.set(0.9 * z, 1.17 * z, 0.9 * z); m.position.set(s.x, baseY(s.x, s.y) + s.h + (s.held ? Math.sin(t * 4) * 0.15 : 0), -s.y); m.rotation.set(s.fall ? t * 3 : 0, 0, 0); if (s.fall) blobAt(s.x, s.y, s.h - 1.2, 2.2); return; }
     if (k === 'rock') { const m = s.womb ? womb() : rock(), h = s.land > 0 ? 0 : 44 * (1 - s.f * s.f), by = baseY(s.x, s.y), sp = 1 - s.land;
       m.position.set(s.x, by + (s.womb ? 2.4 : 1.1) * (1 - 0.45 * s.land) + h, -s.y); m.rotation.set(s.sd + t * 2.3 * sp, s.sd * 1.7 + t * 1.6 * sp, 0); if (s.womb) m.scale.set(2.5, 2.9 * (1 - 0.4 * s.land), 2.5); else m.scale.setScalar(1.6 * (1 - 0.3 * s.land));
       const near = cam.position.distanceTo(m.position) < 11; if (near) m.visible = false; /* (one falling right past the camera would fill the screen) */
       blobAt(s.x, s.y, h, s.womb ? 5 : 3.2); if (h > 2 && !near) glw(s.x, by + h + 0.6, -s.y, s.womb ? 4 : 3.2, s.womb ? '#b8ff6a' : '#ff9a3c', 0.85, 2.6, 0.15);
       if (s.land > 0) flat(URING, s.x, s.y, 2 + 6 * s.land, 2 + 6 * s.land, 0, s.womb ? '#d8f22f' : '#e8c89a', 0.8 * (1 - s.land), low(s.x, s.y, 1)); return; }
+    if (k === 'add' && mon(s.ref || s, s.kind === 'viper' ? 'viper' : 'rawling', s.x, s.y)) return; /* (its monster, once loaded) */
     if (k === 'add') { const g = s.kind === 'viper' ? viper() : rawl(); g.position.set(s.x, baseY(s.x, s.y) + (s.kind === 'viper' ? 0 : 0.8), -s.y); if (s.kind === 'viper') g.rotation.y = t * 1.6 + s.x; return; }
+    if (k === 'wretch' && mon('wr' + s.id, 'wretch', s.x, s.y, s.awake ? null : { dy: -0.6 })) return;
     if (k === 'wretch') { const g = wretch(), ud = g.userData; if (ud.x != null && Math.hypot(s.x - ud.x, s.y - ud.y) > 0.02) g.rotation.y = Math.atan2(s.x - ud.x, -(s.y - ud.y)); ud.x = s.x; ud.y = s.y;
       g.position.set(s.x, baseY(s.x, s.y), -s.y); g.scale.set(1, s.awake ? 1 : 0.6, 1); col(ud.m, s.awake ? '#9b5cff' : '#5b3e7a'); return; }
     if (k === 'boss') { const rear = s.rear || 0, bite = s.bite >= 0 ? Math.sin(s.bite * Math.PI) : 0, fy = faceIn(s.x, s.y), sy = Math.sin(fy), cy = Math.cos(fy), bx = s.x, bz = -s.y;
@@ -784,10 +1043,12 @@ function pg3d(host, A) {
       eyeO = 0.75 + 0.25 * Math.sin(t * 4); /* (the eyes' glow: set after fade() in draw1, times how see-through she is) */
       humps.forEach((h) => { h.m.position.y = h.y0 + Math.sin(t * 1.1 + h.i * 1.7) * 0.45 * h.s; });
       if (s.sink < 0.85) { const fo1 = 0.6 * (1 - s.sink), ws = (lx, lz, sz, i) => foamAt(bx + lx * cy + lz * sy, bz - lx * sy + lz * cy, sz * (1 + 0.06 * Math.sin(t * 2.3 + i)), fo1, t * 0.2 + i);
-        ws(0, -13.2, 13, 0); humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
+        ws(0, -13.2, 13, 0); if (!BRM) humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
       return; }
-    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t); const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
+    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t);
+      if (TRS && s.at != null && s.hit <= 0.87 && s.hit > -0.4 && slamAt !== s.at) { slamAt = s.at; TRS.reset(); TRS.time = Math.max(0, 0.87 - s.hit); TRS.setEffectiveWeight(1).fadeIn(0.08).play(); if (TRK) TRK.fadeOut(0.08); } /* (its real slam, the hit on the Thrash) */ const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
     if (k === 'stail') { const g = stail(), C = g.userData.C, rise = 1 - Math.pow(1 - s.f, 3), dn = -9 * (1 - rise) - 10 * (s.sink || 0); g.position.set(s.x, WATER, -s.y); g.rotation.y = faceIn(s.x, s.y);
+      if (g.userData.R) { g.userData.R.position.y = g.userData.y0 + dn * STH / 9; if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
       for (let i = 0; i < 5; i++) { ST[i][0] = STREST[i][0] + Math.sin(t * 3.1 + i) * 0.35 * i / 4; ST[i][1] = STREST[i][1] + dn; ST[i][2] = STREST[i][2]; } pose(C, ST, t, 1, 1.5, 0.8, 1.0); if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
     if (k === 'splash') { if (s.p < 0 || s.p > 1) return; const g = splash(), u = g.userData, oy = onP(s.x, s.y) ? 0.04 : WATER + 0.02; g.position.set(s.x, oy, -s.y); u.pm.uniforms.uP.value = s.p; u.pm.uniforms.uS.value = s.s;
       u.f.scale.set((2 + 9 * Math.sqrt(s.p)) * s.s * 2, 1, (2 + 9 * Math.sqrt(s.p)) * s.s * 2); u.fm.opacity = 0.8 * (1 - s.p); const hh = Math.sin(Math.min(1, s.p * 1.5) * Math.PI) * 5 * s.s; u.c.visible = hh > 0.1; u.c.scale.set(2.4 * s.s * (1 + s.p), hh + 0.01, 2.4 * s.s * (1 + s.p)); u.cm.uniforms.uO.value = 0.4 * (1 - s.p); return; }
@@ -800,12 +1061,13 @@ function pg3d(host, A) {
     // (your attacks: the bolt, a bright head and its streak back along its path; the impact, a white flash, a coloured glow and a ring opening out,
     // and a spark for melee; the slash at chest height, tilted, swept round toward the target)
     if (k === 'bolt') { V1.set(s.x, s.h, -s.y); V2.set(s.tx, s.th, -s.ty); V3.subVectors(V2, V1); const len = V3.length(), m = streak(), U = m.material.uniforms;
-      m.visible = len > 0.05; if (m.visible) { m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.divideScalar(len)); m.scale.set(0.36, len, 0.36); ucol(U.uC, s.c); U.uO.value = 0.95; }
-      glw(V1.x, V1.y, V1.z, 2.6, s.c, 0.95); glw(V1.x, V1.y, V1.z, 1, '#fffbe8', 1); return; }
+      const sm = s.sm || 1, so = s.sm ? 0.9 : 1; /* (sm: a raider's bolt, smaller and fainter than yours) */
+      m.visible = len > 0.05; if (m.visible) { m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.divideScalar(len)); m.scale.set(0.36 * sm, len, 0.36 * sm); ucol(U.uC, s.c); U.uO.value = 0.95 * so; }
+      glw(V1.x, V1.y, V1.z, 2.6 * sm, s.c, 0.95 * so); glw(V1.x, V1.y, V1.z, 1 * sm, '#fffbe8', so); return; }
     if (k === 'impact') { VI.set(s.x, s.h, -s.y); VJ.subVectors(cam.position, VI).setLength(Math.min(2.2, 0.4 + s.r * 0.6)); VI.add(VJ); /* (on the side facing you, so the target's body doesn't hide it) */
-      const q = Math.max(0, Math.min(1, s.p)), e = 1 - q, X = VI.x, Y = VI.y, Z = VI.z, sz = Math.min(2.2, 0.9 + s.r * 0.3) * (s.melee ? 0.85 : 1);
-      glw(X, Y, Z, (2.2 - 0.8 * q) * sz, '#ffffff', Math.max(0, 1 - q * 2.4)); glw(X, Y, Z, (1.6 + 2.2 * q) * sz, s.c, 0.9 * e * e);
-      const rg = hitRing(), rs = (0.8 + 3.6 * (1 - e * e)) * sz; rg.position.set(X, Y, Z); rg.scale.set(rs, rs, 1); col(rg.material, s.c); rg.material.opacity = Math.pow(e, 1.5);
+      const q = Math.max(0, Math.min(1, s.p)), e = 1 - q, X = VI.x, Y = VI.y, Z = VI.z, sz = Math.min(2.2, 0.9 + s.r * 0.3) * (s.melee ? 0.85 : 1) * (s.sm || 1), so = s.sm ? 0.85 : 1; /* (sm: a raider's, smaller and fainter) */
+      glw(X, Y, Z, (2.2 - 0.8 * q) * sz, '#ffffff', so * Math.max(0, 1 - q * 2.4)); glw(X, Y, Z, (1.6 + 2.2 * q) * sz, s.c, so * 0.9 * e * e);
+      const rg = hitRing(), rs = (0.8 + 3.6 * (1 - e * e)) * sz; rg.position.set(X, Y, Z); rg.scale.set(rs, rs, 1); col(rg.material, s.c); rg.material.opacity = so * Math.pow(e, 1.5);
       if (s.melee) { const sp = hitSpark(), ss = (1.4 + 1.6 * q) * sz; sp.position.set(X, Y, Z); sp.scale.set(ss, ss, 1); sp.material.rotation = (s.x * 7.3 + s.y * 3.1) % TAU; col(sp.material, '#ffffff'); sp.material.opacity = Math.max(0, 1 - q * 1.7); } return; }
     if (k === 'slash') { const g = slash(), m = g.userData.m, f = Math.max(0, Math.min(1, s.f)), ez = 1 - Math.pow(1 - f, 2.2);
       g.position.set(s.x, baseY(s.x, s.y) + 1.4, -s.y); g.rotation.set(0.5, s.a, 0); m.rotation.y = -0.9 + 1.8 * ez; m.scale.setScalar(0.9 + 0.2 * ez); col(m.material, s.c); m.material.opacity = f < 0.55 ? 1 : Math.max(0, 1 - (f - 0.55) / 0.45); return; }
@@ -829,8 +1091,11 @@ function pg3d(host, A) {
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
-    const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
-    for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
+    for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); botFx(now, t); if (P2K) P2K.frame(G); /* (botFx: the raid's spells, after the raiders cast them this frame) */
+    monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
+    if (BRM && boss.visible) BRM.update(dt); /* (her real model's own movement) */
+    if (TRM && tail.visible) TRM.update(dt); for (let i = 0; i < stail.L.length; i++) { const g = stail.L[i]; if (g.visible && g.userData.M) g.userData.M.update(dt); } /* (the tails' real movement) */
+    for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) { p.n.sp.visible = p.b.sp.visible = false; if (p.r) p.r.sp.visible = false; if (p.m) p.m.sp.visible = false; } });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
     place(); cam.updateMatrixWorld(); names(); const bo = fade(boss, BOSSM, 12, BTW, 690); for (let i = 0; i < eyeGl.length; i++) eyeGl[i].material.opacity = eyeO * bo;
@@ -838,19 +1103,33 @@ function pg3d(host, A) {
     if (A.flashT && A.flashT !== flashSeen) { flashSeen = A.flashT; const left = 400 - (performance.now() - flashSeen); if (left > 0 && flL.animate) flL.animate([{ opacity: left / 400 }, { opacity: 0 }], { duration: left, easing: 'linear' }); } /* (the red hurt flash fades on its own, paused or not) */
     R.render(scene, cam); };
   const draw = (t) => { if (dead) return; try { draw1(t); } catch (e) { if (A.fail) A.fail(e); else throw e; } };
-  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on the floor walks there ----
+  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on a mob targets it (no click to move since Nov 16) ----
   const kick = () => { if (pend || dead) return; pend = requestAnimationFrame(() => { pend = 0; if (performance.now() - lastDraw > 30) draw(lastT); }); }; /* (a redraw while the fight is paused) */
   const down = (e) => { if (e.button !== 0 && e.button !== 2) return; drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, b: e.button }; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ } e.preventDefault(); };
-  const move = (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
+  const move = (e) => { if (!drag) { hover(e); return; } const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
     drag.moved = true; cv.style.cursor = 'grabbing'; yaw -= dx * 0.0065; pitch = Math.max(0.1, Math.min(1.35, pitch + dy * 0.0045)); kick(); };
+  // (click a mob to target it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing": a mob is under the mouse when the mouse is
+  //  within its reach of the line from its feet to the top of its head as drawn on screen (so a flying Viper is clicked on its body, not the floor
+  //  under it); the nearest wins. The cursor turns to a pointer over one; a click on one targets it, a click anywhere else still walks there.)
+  const TV0 = new T.Vector3(), TV1 = new T.Vector3();
+  const tgtTop = (o) => { const RM = TPL['mon:' + (PG3D_MONK[o.kind] || o.kind)], F = RM && RM.F; if (F) return F.ph != null ? F.ph : (F.h || 2.5) + (F.hover > 0 ? F.hover : 0);
+    return o.kind === 'boss' ? 22 : o.kind === 'tail' ? 8 : o.kind === 'viper' ? 6.1 : o.kind === 'egg' ? 1.2 : 2.6; }; /* (how tall it's drawn: its model's, else the old shape's) */
+  const onTgt = (X, Y) => { const r = cv.getBoundingClientRect(); if (!r.width || !r.height || !A.tgts || !camAt) return null; cam.updateMatrixWorld(); let best = null, bd = 1e9;
+    A.tgts().forEach((o) => { if (!o || !o.p) return; const b = baseY(o.p[0], o.p[1]); TV0.set(o.p[0], b, -o.p[1]).project(cam); TV1.set(o.p[0], b + tgtTop(o), -o.p[1]).project(cam);
+      if (TV0.z > 1 || TV1.z > 1 || TV0.z < -1 || TV1.z < -1 || Math.abs(TV0.x) > 1.6 || Math.abs(TV0.y) > 1.6) return; /* (behind the camera or far off screen: its projection is meaningless, and made the whole screen count as on it, test link Nov 16) */
+      const ax = r.left + (TV0.x + 1) / 2 * r.width, ay = r.top + (1 - TV0.y) / 2 * r.height, bx = r.left + (TV1.x + 1) / 2 * r.width, by = r.top + (1 - TV1.y) / 2 * r.height;
+      const reach = Math.min(120, Math.max(16, Math.hypot(bx - ax, by - ay) / Math.max(1, tgtTop(o)) * Math.max(0.8, o.r || 1))), d = pg3dSegD(X, Y, ax, ay, bx, by); if (d <= reach && d < bd) { bd = d; best = o; } }); /* (reach: its size on screen, 16 to 120 px) */
+    return best; };
+  if (typeof window !== 'undefined') window.__pg3dPick = (X, Y) => { const o = onTgt(X, Y); return o ? o.key : null; }; /* (for the test link) */
+  const hover = (e) => { const o = onTgt(e.clientX, e.clientY); cv.style.cursor = o ? 'pointer' : 'crosshair'; };
   const up = (e) => { if (!drag) return; const d = drag; drag = null; cv.style.cursor = 'crosshair'; try { cv.releasePointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ }
-    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const p = pick(e.clientX, e.clientY); if (p && A.walk) A.walk(p); kick(); } };
+    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (o && A.tgtKey) A.tgtKey(o.key); kick(); } }; /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it"; you move with the keys) */
   const wheel = (e) => { e.preventDefault(); dist = Math.max(8, Math.min(85, dist * (e.deltaY > 0 ? 1.1 : 1 / 1.1))); kick(); };
   const noMenu = (e) => { e.preventDefault(); };
   cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('wheel', wheel, { passive: false }); cv.addEventListener('contextmenu', noMenu); window.addEventListener('resize', kick);
   const dispose = () => { if (dead) return; dead = true; if (pend) cancelAnimationFrame(pend); window.removeEventListener('resize', kick);
     cv.removeEventListener('pointerdown', down); cv.removeEventListener('pointermove', move); cv.removeEventListener('pointerup', up); cv.removeEventListener('pointercancel', up); cv.removeEventListener('wheel', wheel); cv.removeEventListener('contextmenu', noMenu);
-    own.forEach((o) => { try { o.dispose(); } catch (e) { /* (already gone) */ } }); own.length = 0; RINGS.clear(); ARCS.clear(); WAVES.clear(); FX.clear(); UNITS.clear(); PLATES.clear(); CBS.clear(); CBF.length = 0; CB.length = 0; scene.clear();
+    own.forEach((o) => { try { o.dispose(); } catch (e) { /* (already gone) */ } }); own.length = 0; RINGS.clear(); ARCS.clear(); WAVES.clear(); FX.clear(); UNITS.clear(); PLATES.clear(); FIGL.length = 0; BOTF.clear(); CBS.clear(); CBF.length = 0; CB.length = 0; scene.clear();
     try { R.dispose(); R.forceContextLoss(); } catch (e) { /* (no context left) */ } host.textContent = ''; };
   resize();
   return { draw, resize, pick, dispose, fwd: () => [Math.cos(yaw), Math.sin(yaw)], info: () => ({ calls: R.info.render.calls, tris: R.info.render.triangles, geometries: R.info.memory.geometries, textures: R.info.memory.textures, programs: R.info.programs ? R.info.programs.length : 0 }),
