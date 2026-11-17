@@ -144,7 +144,7 @@ function pgP2Script(o) {
   warn(T.start, 'Phase 2: Go to your ledge!', '#c084ff', 1); timer(T.gate, 'Gates open');
   // Hatching Doom (2:54): each ledge's two big Doomscale Eggs, 90 s to pick up
   // (its order only to whoever it's for (the review, Nov 16: "pick up the big eggs" went to every role): a big egg's carrier hears it comes last, the rest to leave them)
-  if (mj && mj.big) warn(T.doom, 'Hatching Doom: Pick up your big egg last!', GOLD, 1); else warn(T.doom, 'Hatching Doom: Leave the big eggs to their carriers!', '#e6b450');
+  if (mj && mj.big) warn(T.doom, 'Hatching Doom: Get your big egg after the small eggs!', GOLD, 1); else warn(T.doom, 'Hatching Doom: Leave the big eggs to their carriers!', '#e6b450');
   timer(T.doomEnd, 'Hatching Doom ends');
   // (the big eggs' pickups (Flex, Nov 15: "i think the first healer picks it up right away, and the second one is delayed"; the 30 fastest Mythic kills:
   // the melee take the south eggs first, about 4:06 to 4:10; then the healers the north ones, the first a median 4:13, the second a median 2.5 s
@@ -196,14 +196,14 @@ function pgP2Script(o) {
   //  in. per: practice.js asks as the call comes; o.eggOf, the part's: 'held', 'floor', 'in' once it went into the cauldron, 'lost'. At the count it may have gone in
   //  on the step just before the call shows)
   const eggOf = (id) => (o.eggOf ? o.eggOf(id) : 'held');
-  if (mj && mj.egg) { S.warns.push({ t: T.throwAt - 6, text: 'Small eggs: Carry your egg to your spot by the cauldron!', c: GOLD, you: 1, per: (id) => (eggOf(id) === 'held' ? null : false) });
+  if (mj && mj.egg) { S.warns.push({ t: T.throwAt - 6, text: 'Small eggs: Carry your egg to the cauldron! Your spot is the gold ring.', c: GOLD, you: 1, per: (id) => (eggOf(id) === 'held' ? null : false) });
     S.warns.push({ t: T.throwAt, text: 'Your egg: Step into the cauldron ring now!', c: GOLD, you: 1, per: (id) => (eggOf(id) === 'held' || eggOf(id) === 'in' ? null : false) }); }
   else warn(T.throwAt - 6, 'Small eggs: Keep out of the carriers\' rings!', '#f5d33a');
   // (the two south eggs: only the south big egg's carrier waits on them (they're never yours to carry); the big eggs' own calls come at your pickup time and
   //  as yours goes in (big(), in the part): the old fixed call for everyone named the wrong time, and the bars "Big eggs up" and "Big eggs in" weren't yours)
   // (outside its gold ring: that ring picks it up, so "wait by your big egg" picked it up early, with the south eggs still out (the review, Nov 16))
   timer(T.set2, 'South eggs');
-  if (mj && mj.big === 'far') warn(T.set2, 'South eggs: Wait outside your big egg\'s ring until both are carried off', GOLD, 1);
+  if (mj && mj.big === 'far') warn(T.set2, 'South eggs: Stay outside your big egg\'s ring! Wait until both are carried off.', GOLD, 1); /* (the big line 40 characters at most, Nov 17 review) */
   if (mj && mj.big) timer(S.bigIn[mj.side], 'Your big egg: in together');
   // the Weakened Doomscales: one climbs out of each cauldron 1.0 s after each big egg goes in (Doomscale 1 from the south egg, 2 from the north). Their
   // casts are set when they climb out (below); the plan's times here are for the cards: the bots carry a big egg in 15 s after picking it up (the walk
@@ -349,7 +349,7 @@ function pgP2(A) {
   // (in reach of your next kick's caster, with a yard of slack once you are: in from half a yard inside your reach, out again only half a yard past it. The review,
   //  Nov 16: as a Doomscale walked across the reach line the job line flipped between "press E when its bar starts" and "get close to it" twice in half a second.
   //  G.p2.kIn, the kick last shown in reach, is kept by the job line; the arrow and the floor's "Get closer" read it too)
-  const kickIn = (key, p, q) => { const rg = range(A.me), d = pgDist(p, q || [G.x, G.y]); return !!rg && (d <= rg - 0.5 || (G.p2.kIn === key && d <= rg + 0.5)); };
+  const kickIn = (key, p, q) => { const rg = range(A.me), d = pgDist(p, q || [G.x, G.y]); return !!rg && (d <= rg - 1 || (G.p2.kIn === key && d <= rg)); }; /* (the slack stays inside your reach: at rg + 0.5 the line said "press E" and the kick failed as "too far", Nov 17 review) */
   const KLEAD = 6; /* (your kick's line and arrow: 6 s before its bar, so a melee walks into reach in time) */
   const ledgeJob = (id, t, j, s, b0) => { const tk = id[0] === 't', i = idx(id), F = L(s, P.fight), me = id === A.me, mk = me ? myKickAt(t, KLEAD) : null; let T0, fast = false, ob = null;
     // (you, with a kick of yours coming: within reach of its caster, 3 yards inside it so stopping where the arrow goes away still reaches; the arrow while you're out of reach)
@@ -778,6 +778,7 @@ function pgP2(A) {
     if (thOn) return 'Stay within 20 yards of the Warden: ' + (th.solo ? 'you break alone, first.' : 'you break with the five.');
     if (w === 'L') {
       if (t < T.wardens) return 'The Warden stands up next: wait here, off the eggs.';
+      if (wdUp(s) && t < Math.min(...S.wardens.map((w) => w.molt))) return 'The Warden lands next: hit it once its cast ends.'; /* (before its Shadow Molt ends Tab picks nothing: "Hit the Warden" was false there, Nov 17 review) */
       if (wdUp(s)) return heal ? (t < T.fangs ? 'Stay with your half, within 20 yards of the Warden.' : 'Stay with your half, off the eggs.') : e ? 'Hit the Warden: your egg (#' + e.n + ') opens once it dies.' : j.big ? 'Hit the Warden: your big egg comes later.' : 'Hit the Warden with your half, off the eggs.';
       if (dsOut(s)) return 'Stand behind or beside the Doomscales, never in front.';
       if (bg && bg.state === 'floor') return 'Stay with your half: your big egg comes later.';

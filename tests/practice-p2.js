@@ -877,6 +877,22 @@ function checks(H, say) {
     if (!/<span class="pg-rush"[^>]*>▸▸ Skipping ahead<\/span>/.test(rd('practice.js'))) op('the tag "▸▸ Skipping ahead" by the clock is gone (no numbers in it)');
   } catch (e) { bad('the opening\'s checks crashed phase 2: ' + e.message + ' (check OP, Nov 16)'); }
   finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
+  // RV2. the second review (Nov 17): the kick's "in reach" slack stays inside your reach (at reach + 0.5 the line said press E and the kick failed as too far); every
+  //      call's big line fits the 40 characters (the South eggs call was 59, so it couldn't split); the carriers' Hatching Doom call says after what; the job line never
+  //      says "Hit the Warden" before its Shadow Molt ends (Tab picks nothing then); the Blight Vein bar has its icon; the "Skipping ahead" tag's colour applies
+  try { const rv2 = (m) => bad(m + ' (the second review, Nov 17, check RV2)'), src = rd('practice-p2.js'), PJ2 = rd('practice.js');
+    if (!/d <= rg - 1 \|\| \(G\.p2\.kIn === key && d <= rg\)/.test(src)) rv2('the kick\'s "in reach" slack goes past your reach: at reach + 0.5 the line said "press E" and the kick failed as too far');
+    const big = (x) => { const m = /^([^:!?]{3,40}):\s*(.+)$/.exec(x), r = m ? m[2] : x, s1 = /^(.+?)[!.](\s|$)/.exec(r); let o = s1 ? s1[1] : r; if (o.length > 40) { const k = o.indexOf(', '); if (k > 8) o = o.slice(0, k); } return o; };
+    const lits = [...src.matchAll(/warn\([^,]+,\s*'((?:[^'\\]|\\.)*)'/g), ...src.matchAll(/text: '((?:[^'\\]|\\.)*)'/g), ...src.matchAll(/\? '([A-Z][^:'\\]{2,39}: (?:[^'\\]|\\.)*)' : '((?:[^'\\]|\\.)*)'/g)].flatMap((m) => m.slice(1)).filter((x) => x && /^[A-Z][^:]{2,39}: [A-Z]/.test(x)).map((x) => x.replace(/\\'/g, '\''));
+    if (lits.length < 15) rv2('the call scan found only ' + lits.length + ' calls in practice-p2.js');
+    lits.forEach((x) => { const o = big(x); if (o.length > 40) rv2('a call\'s big line is ' + o.length + ' characters, over the 40 the screen holds: "' + o + '" (from "' + x + '")'); });
+    if (/Pick up your big egg last!/.test(src) || !/Hatching Doom: Get your big egg after the small eggs!/.test(src)) rv2('the big egg carriers\' Hatching Doom call doesn\'t say after what ("Pick up your big egg last!")');
+    const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(177.5, me, { east: false, seed: 3 }); const jt = dbg.P2.jobText() || '';
+    if (/Hit the Warden/.test(jt) && dbg.G.t < Math.min(...dbg.S.wardens.map((w) => w.molt))) rv2('before the Warden\'s Shadow Molt ends the line says "' + jt + '": Tab picks nothing yet');
+    if (!/\[\/vein\/i, 'Blight Vein'\]/.test(PJ2)) rv2('the "Blight Vein: press Q" bar has no icon (no vein rule in practice.js MOD_SP)');
+    if (!/\.pg \.pg-nm \.pg-rush/.test(PJ2)) rv2('the "Skipping ahead" tag\'s colour loses to .pg .pg-nm span (it showed grey, its purple never applied)'); }
+  catch (e) { bad('the second review\'s checks crashed phase 2: ' + e.message + ' (check RV2, Nov 17)'); }
+  finally { try { dbg.P2.pick = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'random' }; } catch (e) { /* (no part) */ } }
   // F. the wiring
   const PJ = rd('practice.js'), GJ = rd('guides.js'), BP = rd('build.ps1');
   if (!ctx.PG_PARTS["Ula'tek"].m2 || ctx.PG_PARTS["Ula'tek"].m2.d !== 'm' || typeof ctx.PG_PARTS["Ula'tek"].m2.mod !== 'function') bad('phase 2 isn\'t a Mythic part of Ula\'tek with its own mod in PG_PARTS (check F)');
