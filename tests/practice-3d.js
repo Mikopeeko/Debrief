@@ -475,7 +475,7 @@ module.exports = function practice3d(say, H) {
     if (!/const PG3D_WAGO = 'https:\/\/wago\.tools\/api\/casc\/';/.test(P3)) nope('the real models must come from wago.tools by file number (PG3D_WAGO)');
     ['rawling', 'viper', 'doomscale', 'warden', 'ravenous', 'wretch', 'shrieker'].forEach((k) => { if (!new RegExp('\\n  ' + k + ': \\{ wow: \\{ m2: \\d+, skin: \\[\\d+(, \\d+)*\\]').test(mt)) nope('the ' + k + ' has no real model (wow: { m2, skin })'); });
     if (!/boss: \{ m2: 7234130 \}/.test(P3)) nope('Ula\'tek has no real model (creature/ulatekboss/ulatekboss01.m2, 7234130)');
-    if (!/const S3TC = !!\(R\.extensions && R\.extensions\.has\('WEBGL_compressed_texture_s3tc'\)\);/.test(P3)) nope('the game doesn\'t ask the card whether it reads WoW\'s packed textures (S3TC)');
+    if (!/const S3TC = (PG3D_REAL && )?!!\(R\.extensions && R\.extensions\.has\('WEBGL_compressed_texture_s3tc'\)\);/.test(P3)) /* (PG3D_REAL: the switch, check 22) */ nope('the game doesn\'t ask the card whether it reads WoW\'s packed textures (S3TC)');
     if (!/\(F0\.wow && S3TC \? pg3dWowOr\(\(\) => pg3dWowLoad\(T, F0\.wow\), drawn\) : drawn\(\)\)/.test(P3)) nope('a mob must fall back to the model drawn before when the card can\'t read the real one or wago.tools doesn\'t answer');
     // (Main, Nov 16: "if wago.tools is slow, down, or blocks requests from debriefme.io (Wowhead already blocked you), every creature falls back
     //  to the figures you made, with no error and no empty spots": a reader that drops a broken file's error would hang forever, and so would a
@@ -575,6 +575,25 @@ module.exports = function practice3d(say, H) {
     if (!/const stailReal = \(g\) => \{/.test(P3) || !/if \(STPL\) stailReal\(g\); return g; \}\);/.test(P3) || !/g\.userData\.M\.update\(dt\)/.test(P3)) nope('the small tails must be copies of the real tail, made with their pool items (never while drawing), and move');
     if (!/mesh\.userData\.batch = i;/.test(ML2) || !/if \(W\.keep\) \{ const ms = \[\]; g\.traverse/.test(P3)) nope('the reader must keep each part\'s batch, and a model can show only the parts in keep');
     if (!/clutch: \{ wow: \{ m2: 7926158, h: [\d.]+, ph: [\d.]+, keep: \[2, 4, 6, 8\] \}/.test(P3) || !/PG3D_MON\.slither = \{ wow: \{ m2: 390813, skin: \[390992, 390999\], h: [\d.]+, ph: [\d.]+, keep: \[0, 4, 5\] \}/.test(P3) || !/K\.mon\(s\.ref, k === 'clutch' \? 'slither' : k,/.test(PP)) nope('phase 2\'s Clutch must be the egg pod and phase 3\'s the Slithering Clutch ooze, each showing only its body'); }
+  // 22. the real WoW models switch (Main, Nov 17, for Flex's go-live call: "one switch near the top of src/practice3d.js that turns the real models off and
+  //     shows the figures everywhere"): PG3D_REAL in the file's first lines; every real-model load sits behind S3TC, and S3TC needs PG3D_REAL.
+  { const nope = (m) => bad('the real models switch: ' + m + ' (check 22)');
+    if (!/^\/\/ ===== THE REAL WOW MODELS SWITCH[^\n]*\n[^\n]*\nconst PG3D_REAL = (true|false);\n/.test(P3)) nope('const PG3D_REAL = true/false must be the first line of code in src/practice3d.js, under its two-line note');
+    if (!/const S3TC = PG3D_REAL && !!\(R\.extensions && R\.extensions\.has\('WEBGL_compressed_texture_s3tc'\)\);/.test(P3)) nope('S3TC must need PG3D_REAL, so the switch turns every real model off');
+    const loads = [...P3.matchAll(/pg3dWow\.load\(|pg3dWowLoad\(T, F0\.wow\)/g)].length, gated = (P3.match(/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(/g) || []).length + (P3.match(/F0\.wow && S3TC \? pg3dWowOr\(\(\) => pg3dWowLoad\(T, F0\.wow\)/g) || []).length;
+    if (!loads || loads !== gated) nope(loads + ' real-model loads, ' + gated + ' behind the switch: every one must be behind S3TC'); }
+  // 23. a real model is sized from the parts it shows (Nov 17, the egg helpers' find, behind Flex's "THE CLUtches were pretty small"): every part shares the model's
+  //     whole vertex list, so measuring the list counted the hidden parts (death splash, glow sprites) and the Clutch came out a third of its height, floating.
+  if (!/const p = m\.geometry\.attributes\.position, ix = m\.geometry\.index, n = ix \? ix\.count : p\.count; for \(let k = 0; k < n; k \+= 2\) \{ const i = ix \? ix\.getX\(k\) : k;/.test(P3)) bad('a real model must be sized from the parts it shows (its index), not the whole shared vertex list: the Clutches came out a third of their height (check 23)');
+  // 24. the real eggs (Nov 16, Flex: "can you find the models for the eggs that people dps and pick up"): an egg on the floor is the snakeoid egg cluster
+  //     (Blightscale Spawn 265644, 7277182, its body only: keep [6, 9, 10, 11, 12, 13], or the burst's parked shards show), a carried egg the single egg (7277176,
+  //     keep [2]); keyed by the egg and whether it's carried, so each keeps its pose; the drawn egg stays when the real one can't load or while it falls.
+  { const nope = (m) => bad('the real eggs: ' + m + ' (check 24)');
+    if (!/PG3D_MON\.egg = \{ wow: \{ m2: 7277182, h: [\d.]+, ph: [\d.]+, keep: \[6, 9, 10, 11, 12, 13\] \}/.test(P3) || !/PG3D_MON\.eggc = \{ wow: \{ m2: 7277176, h: [\d.]+, keep: \[2\] \}/.test(P3)) nope('the floor egg must be the egg cluster (7277182, its body only) and the carried egg the single egg (7277176)');
+    if (!/if \(k === 'egg' && !s\.fall && s\.ref && mon\('egg' \+ \(s\.held \? 'c' : 'f'\) \+ s\.ref\.id \+ ':' \+ s\.ref\.set, s\.held \? 'eggc' : 'egg', /.test(P3) || !/P\(\{ k: 'egg', x, y, h, held: !!e\.who, ref: e \}\);/.test(P3)) nope('each egg must draw its real model (keyed by the egg and carried or not), falling eggs and failed loads keeping the drawn egg'); }
+  // 25. her old drawn coils hide under her real model (Nov 16, Flex: "ulateks old tails are in", showing the purple spiky humps beside her real model): all of
+  //     the drawn her hides once the real one is in, coils too, and no foam rings are drawn round the hidden coils.
+  if (!/bossDrawn = boss\.children\.slice\(\);/.test(P3) || !/ws\(0, -13\.2, 13, 0\); if \(!BRM\) humps\.forEach/.test(P3)) bad('her drawn body coils must hide under her real model, with no foam rings round them (they showed beside her as purple spiky humps) (check 25)');
   return Promise.all([loadP, fbP]);
 };
 if (require.main === module) {

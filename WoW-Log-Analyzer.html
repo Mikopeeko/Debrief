@@ -77167,6 +77167,9 @@ return { M2Loader, M2Options, BLPLoader };
 
 }
 
+// ===== THE REAL WOW MODELS SWITCH (Main, Nov 17, for Flex's go-live call): true = the boss, the mobs and the tails wear their real game models, read from
+// wago.tools while you play (nothing from the game is stored in Debrief); false = the figures and drawn models everywhere, as before Nov 16. One line to change.
+const PG3D_REAL = true;
 // ===== Practice in 3D (Nov 15; Flex picked 3D for the practice game, "theres nothing else like this out there", after the mock in
 // notes/Practice game - 3D mock.html) =====
 // The same fight as the 2D map, drawn in three.js. practice.js keeps the clock, the moves, the hits, the mistakes and the score; this file only
@@ -77249,7 +77252,7 @@ const PG3D_MON = {
       ['ball', PG3D_FC.eye, [0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['ball', PG3D_FC.eye, [-0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['box', PG3D_FC.slit, [0.15, 0.05, 0.215], [0.008, 0.055, 0.008]], ['box', PG3D_FC.slit, [-0.15, 0.05, 0.215], [0.008, 0.055, 0.008]],
       ['box', PG3D_FC.tongue, [0, -0.09, 0.47], [0.02, 0.01, 0.14]], ['box', PG3D_FC.tongue, [0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, 0.5, 0]], ['box', PG3D_FC.tongue, [-0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, -0.5, 0]]]) },
       { bone: 'Tail_Mid', parts: pg3dRow(3, 0.16, 0.03, [0.45, 0.85, 0.08, 1], 0.12, 0.06) }, { bone: 'Tail_Mid001', parts: pg3dRow(3, 0.13, 0.025, [0.45, 0.85, 0.08, 1], 0.13, 0.05) }, { bone: 'Tail_Mid002', parts: pg3dRow(3, 0.1, 0.02, [0.45, 0.85, 0.08, 1], 0.14, 0.04) }] }, /* (the real Wretch: a spiky feathered mane, a glowing throat, a spiky glowing tail) (a bloated serpent with arms and a cobra's hooded, fanged face; Flex: "give it arms") (a bloated serpent, Flex: "the wretch needs the most work, it just looks like a dinosaur": no legs or arms, a swollen body, a taller neck, sunk to the floor) */
-  clutch: { wow: { m2: 7926158, h: 4.6, ph: 4.9, keep: [2, 4, 6, 8] }, url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
+  clutch: { wow: { m2: 7926158, h: 3.2, ph: 3.5, keep: [2, 4, 6, 8] }, url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
   viper: { wow: { m2: 7456394, skin: [7509169] }, url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 4.4, hover: 1.6, paint: { Yellow: [0.72, 0.45, 0.05], Black: [0.05, 0.05, 0.07], Orange: [0.55, 0.06, 0.03], LightBlue: [0.02, 0.32, 0.34] }, /* (the real Viper: golden head and belly, dark back, teal feathered wings) */
     bones: { WingL: [1.7, 1.7, 1.7], WingR: [1.7, 1.7, 1.7], Abdomen: [1, 1.3, 1], Abdomen2: [0.88, 1.2, 0.88], Abdomen3: [0.85, 1.2, 0.85], Sting: [0.8, 1.1, 0.8], TopLeg1L: [0.01, 0.01, 0.01], TopLeg1R: [0.01, 0.01, 0.01], MidLeg1L: [0.01, 0.01, 0.01], MidLeg1R: [0.01, 0.01, 0.01], BottomLeg1L: [0.01, 0.01, 0.01], BottomLeg1R: [0.01, 0.01, 0.01], Head: [0.55, 0.55, 0.55] },
     face: { bone: 'Head', parts: [['ball', [0.72, 0.45, 0.05], [0.36, 0.02, 0.03], [0.62, 0.36, 0.44]], ['ball', [0.02, 0.28, 0.3], [0.4, 0.17, 0.03], [0.5, 0.14, 0.38]], ['ball', [0.72, 0.45, 0.05], [0.86, -0.06, 0.03], [0.34, 0.2, 0.3]],
@@ -77260,7 +77263,9 @@ const PG3D_MON = {
     face: { bone: 'Head', parts: pg3dRing(6, 0.12, 0.42, 0.06, 0.42, -0.16, [[0.05, 0.5, 0.55, 0.3], [0.08, 0.35, 0.6, 0.3]], -0.65) }, /* (the wind serpents' teal feather crest) */ clips: { idle: /\|flying_idle$/i, move: /\|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
 const pg3dSegD = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, q = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0; return Math.hypot(px - ax - dx * q, py - ay - dy * q); }; /* (how far a point is from a line segment: the mouse from a mob drawn on screen) */
-PG3D_MON.slither = { wow: { m2: 390813, skin: [390992, 390999], h: 3, ph: 3.4, keep: [0, 4, 5] }, h: 3 }; /* (bigger, Flex, Nov 16: "THE CLUtches were pretty small") (phase 3's Slithering Clutch, a green ooze (display 146650); no drawn stand-in: without its real model the old shape stays) */
+PG3D_MON.egg = { wow: { m2: 7277182, h: 2.6, ph: 2.8, keep: [6, 9, 10, 11, 12, 13] }, h: 1.2 }; /* (an egg on the floor: Blightscale Spawn 265644, the snakeoid egg cluster, its body only; no stand-in: without it the drawn egg stays) */
+PG3D_MON.eggc = { wow: { m2: 7277176, h: 1.4, keep: [2] }, h: 1 }; /* (an egg being carried: the single snakeoid egg) */
+PG3D_MON.slither = { wow: { m2: 390813, skin: [390992, 390999], h: 2.2, ph: 2.6, keep: [0, 4, 5] }, h: 2.2 }; /* (bigger, Flex, Nov 16: "THE CLUtches were pretty small") (phase 3's Slithering Clutch, a green ooze (display 146650); no drawn stand-in: without its real model the old shape stays) */
 const PG3D_MONK = { ds: 'doomscale', dsx: 'doomscale', dscale: 'doomscale', rav: 'ravenous' }; /* (a shape's kind -> its monster, for the bar's height) */
 if (typeof window !== 'undefined') { window.__pg3dMon = PG3D_MON; window.__pg3dWow = () => pg3dWow; } /* (for the lineup pictures) */
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
@@ -77304,7 +77309,7 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
     // (its size from its standing pose: the raw pose of some is upright (the Rawling, the Shrieker), and the Wretch measured that way came out 25 yards long)
     const st = animations.find((c) => c.name === 'a0') || animations.find((c) => /^a/.test(c.name)), mx = new T.AnimationMixer(scene), box = new T.Box3(), v = new T.Vector3();
     animations.forEach((c) => { if (c === st || /^g/.test(c.name)) mx.clipAction(c).play(); }); mx.update(0); scene.updateMatrixWorld(true);
-    scene.traverse((m) => { if (!m.isSkinnedMesh) return; const p = m.geometry.attributes.position; for (let i = 0; i < p.count; i += 2) { v.fromBufferAttribute(p, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); box.expandByPoint(v); } });
+    scene.traverse((m) => { if (!m.isSkinnedMesh) return; const p = m.geometry.attributes.position, ix = m.geometry.index, n = ix ? ix.count : p.count; for (let k = 0; k < n; k += 2) { const i = ix ? ix.getX(k) : k; v.fromBufferAttribute(p, i); m.boneTransform(i, v); v.applyMatrix4(m.matrixWorld); box.expandByPoint(v); } }); /* (only the parts shown: every part shares the model's whole vertex list, so measuring the list counted hidden parts too, and the Clutches came out a third of their height, floating, Nov 17) */
     mx.stopAllAction(); mx.uncacheRoot(scene);
     return { scene, animations, box: box.isEmpty() ? null : box }; }); };
 // (if wago.tools is slow, down or turns Debrief away (Main, Nov 16: "Wowhead already blocked you", and a raid night is 20 people loading at
@@ -77369,7 +77374,7 @@ function pg3dShapes(A, t) {
   // eggs: on the floor (its shell, and yours in gold), or riding over their carrier with the 3-yard circle
   G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let x = e.x, y = e.y, h = 1.2;
     if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; if (!b) return; x = b.x; y = b.y; h = 3.9; const ew = e.who === me && A.eggWarn ? A.eggWarn() : 0, ec = ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : '#3af2a8'; disc(b.x, b.y, 3, ec, ew ? 0.16 : 0.08); ring(b.x, b.y, 3, ec, 0.9, ew ? 0.32 : 0.2); }
-    P({ k: 'egg', x, y, h, held: !!e.who });
+    P({ k: 'egg', x, y, h, held: !!e.who, ref: e });
     if (e.state === 'floor' && t < e.shell) { ring(e.x, e.y, 2, '#e6e0c8', 1, 0.3); P({ k: 'arc', x: e.x, y: e.y, r: 2, f: e.shpMax ? 1 - Math.max(0, e.shp) / e.shpMax : (t - e.land) / (e.shell - e.land), c: '#ffd36b', o: 1 }); /* (your egg: its shell's health, Flex, Nov 15) */ P({ k: 'dome', x: e.x, y: e.y, r: 1.7, c: '#3af2a8', o: 0.22 }); }
     if (e.id === me && e.state === 'floor') { ring(e.x, e.y, 2.8, '#f3c969', 1, 0.3, true); label(e.x, e.y, 4.2, t < e.shell ? (e.shp > 0 ? 'Your egg: hit it to break the shell' : 'Your egg (shell up)') : 'Your egg: pick it up', '#f3c969', 14); } });
   // (hitting the right thing, Nov 15: the targets that matter now pulse gold; yours has a white ring, red while it's out of range)
@@ -77652,7 +77657,7 @@ function pg3d(host, A) {
   const T = window.THREE, TAU = Math.PI * 2, WATER = -0.55, own = [], keep = (o) => { own.push(o); return o; };
   const R = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
   R.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1)); R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap;
-  const S3TC = !!(R.extensions && R.extensions.has('WEBGL_compressed_texture_s3tc')); /* (WoW's packed textures: the real models only where the card reads them) */
+  const S3TC = PG3D_REAL && !!(R.extensions && R.extensions.has('WEBGL_compressed_texture_s3tc')); /* (PG3D_REAL false: no real models anywhere, the figures and drawn models instead) */ /* (WoW's packed textures: the real models only where the card reads them) */
   const cv = R.domElement; cv.className = 'pg3-cv'; cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none';
   const fxL = document.createElement('div'), flL = document.createElement('div'), vgL = document.createElement('div');
   fxL.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:hidden';
@@ -77922,7 +77927,7 @@ function pg3d(host, A) {
   const BTW = twins(boss); let eyeO = 1; scene.add(boss);
   // (her real model, Flex, Nov 16: "including ulatek": read like the mobs' (pg3dWow); once it's in, the drawn neck, head and hood hide and hers
   //  stands in their place, moved and turned by the same code (rearing, biting, sinking); her body's coils stay. BRH: how tall she's drawn.)
-  let BRM = null; const BRH = 24, bossDrawn = boss.children.filter((c) => !humps.some((h) => h.m === c));
+  let BRM = null; const BRH = 24, bossDrawn = boss.children.slice(); /* (all of the drawn her, her body's coils too: Flex, Nov 16, "ulateks old tails are in" (the purple humps beside her real model)) */
   if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.boss), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), k = BRH / ((box.max.y - box.min.y) || 1);
     root.scale.setScalar(k); root.position.y = -box.min.y * k + WATER - 2; root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
     const a = g.animations.find((c) => /^a0$/.test(c.name)) || g.animations[0]; BRM = new T.AnimationMixer(root); g.animations.forEach((c) => { if (c === a || /^g\d+$/.test(c.name)) BRM.clipAction(c).play(); }); /* (her stand, and her always-on movement) */
@@ -78183,6 +78188,7 @@ function pg3d(host, A) {
       u.m.visible = true; u.on = true; return; }
     if (k === 'plate') { plate(s); return; }
     if (k === 'cast') { castBar(s, t); return; }
+    if (k === 'egg' && !s.fall && s.ref && mon('egg' + (s.held ? 'c' : 'f') + s.ref.id + ':' + s.ref.set, s.held ? 'eggc' : 'egg', s.x, s.y, s.held ? { dy: s.h - 0.7 } : null)) return; /* (the real egg: a snake egg cluster on the floor, one egg over its carrier; Flex, Nov 16: "can you find the models for the eggs that people dps and pick up") */
     if (k === 'egg') { const m = egg(), z = s.held ? 0.72 : 1; m.scale.set(0.9 * z, 1.17 * z, 0.9 * z); m.position.set(s.x, baseY(s.x, s.y) + s.h + (s.held ? Math.sin(t * 4) * 0.15 : 0), -s.y); m.rotation.set(s.fall ? t * 3 : 0, 0, 0); if (s.fall) blobAt(s.x, s.y, s.h - 1.2, 2.2); return; }
     if (k === 'rock') { const m = s.womb ? womb() : rock(), h = s.land > 0 ? 0 : 44 * (1 - s.f * s.f), by = baseY(s.x, s.y), sp = 1 - s.land;
       m.position.set(s.x, by + (s.womb ? 2.4 : 1.1) * (1 - 0.45 * s.land) + h, -s.y); m.rotation.set(s.sd + t * 2.3 * sp, s.sd * 1.7 + t * 1.6 * sp, 0); if (s.womb) m.scale.set(2.5, 2.9 * (1 - 0.4 * s.land), 2.5); else m.scale.setScalar(1.6 * (1 - 0.3 * s.land));
@@ -78200,7 +78206,7 @@ function pg3d(host, A) {
       eyeO = 0.75 + 0.25 * Math.sin(t * 4); /* (the eyes' glow: set after fade() in draw1, times how see-through she is) */
       humps.forEach((h) => { h.m.position.y = h.y0 + Math.sin(t * 1.1 + h.i * 1.7) * 0.45 * h.s; });
       if (s.sink < 0.85) { const fo1 = 0.6 * (1 - s.sink), ws = (lx, lz, sz, i) => foamAt(bx + lx * cy + lz * sy, bz - lx * sy + lz * cy, sz * (1 + 0.06 * Math.sin(t * 2.3 + i)), fo1, t * 0.2 + i);
-        ws(0, -13.2, 13, 0); humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
+        ws(0, -13.2, 13, 0); if (!BRM) humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
       return; }
     if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t);
       if (TRS && s.at != null && s.hit <= 0.87 && s.hit > -0.4 && slamAt !== s.at) { slamAt = s.at; TRS.reset(); TRS.time = Math.max(0, 0.87 - s.hit); TRS.setEffectiveWeight(1).fadeIn(0.08).play(); if (TRK) TRK.fadeOut(0.08); } /* (its real slam, the hit on the Thrash) */ const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
