@@ -500,14 +500,14 @@ function checks(H, say) {
       /* (since the prompts audit, Nov 16: "Press Q (defensive) now!" in the last second too, so any line in the cast counts) */
       while (G.t < S.end - 0.01) { const t = G.t, jt = dbg.P2.jobText(); if (t >= T.prey[2] && t < S.hit[2] && (/^Off her quarter/.test(jt) || /Press Q/.test(jt))) said.add(jt.replace(/^Off her quarter: good\.\s*/, ''));
         if (t >= T.prey[2] && t < S.hit[2] && dbg.P2.upNext(t).some((u) => /lands: Q/.test(u.text))) up = true;
-        if (t >= S.hit[2] - 0.5 && t < S.hit[2] - 0.45 && /Press Q \(defensive\) as it lands/.test(jt) && t - G.def >= 90) { G.def = t; G.debs.def = { until: t + 8, n: 1 }; } /* (as you would: Q as she lands) */
+        if (t >= S.hit[2] - 0.5 && t < S.hit[2] - 0.45 && /Press Q as it lands/.test(jt) && t - G.def >= 90) { G.def = t; G.debs.def = { until: t + 8, n: 1 }; } /* (as you would: Q as she lands) */
         dbg.step(1); G.hp = 100; }
       const ss = [...said].join(' / ');
       if (dbg.log.slice(n0).some((x) => /without a defensive/.test(x))) bad('a Group Soak 3 healer from 9:00 who presses Q when the screen says takes the end of the 3rd bite without one: ' + dbg.log.slice(n0).join(' | ') + ' (the release sweep, Nov 16, check RS3)');
       if (/Press Q/.test(ss) || !/Save your defensive \(Q\) for your soak\./.test(ss)) bad('at the 3rd Circling Prey a Group Soak 3 player is told "' + ss + '", with their Q still cooling down at their soak (check RS3)');
       if (up) bad('"What\'s next" says "Circling Prey lands: Q" at the 3rd Circling Prey to a Group Soak 3 player (check RS3)'); }
     for (const [pk2, pi] of [[pk, 1], [{ role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }, 2]]) { dbg.P2.pick = pk2; const me2 = dbg.P2.slotOf(pk2); dbg.at(T.prey[pi] + 6, me2, { seed: 3 }); dbg.pos = dbg.S.F2([14, 14], pi + 1); dbg.stepOwn(1);
-      if (!/Press Q \(defensive\) as it lands\./.test(dbg.P2.jobText())) bad('at Circling Prey ' + (pi + 1) + ' ' + (pk2.soak ? 'a Group Soak ' + pk2.soak : 'a') + ' ' + pk2.role + ' with Q back in time isn\'t told to press it: ' + dbg.P2.jobText() + ' (check RS3)'); }
+      if (!/Press Q as it lands\./.test(dbg.P2.jobText())) bad('at Circling Prey ' + (pi + 1) + ' ' + (pk2.soak ? 'a Group Soak ' + pk2.soak : 'a') + ' ' + pk2.role + ' with Q back in time isn\'t told to press it: ' + dbg.P2.jobText() + ' (check RS3)'); }
   } catch (e) { bad('the Circling Prey Q check crashed: ' + e.message + ' (check RS3)'); } finally { reset(); }
   //     RS4 (p33): the job line said to step out of the small tails' red lanes; the game draws none for them (rings of waves, no warning strip).
   //     (since the prompts audit, Nov 16, the line shows when their waves will reach your spot: stood here where one will)
