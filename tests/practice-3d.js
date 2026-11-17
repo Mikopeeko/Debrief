@@ -517,6 +517,20 @@ module.exports = function practice3d(say, H) {
     //  below zero and it was dropped as if from the future)
     if (!/age = Math\.max\(0, \(now - b\.t0\) \/ 1000\)/.test(P3) || /age < 0\) \{ BB\.splice/.test(P3)) nope('a spell cast this frame is dropped as if from the future (its age is below zero), so no spell ever shows');
     const bf = (/const botFx = [\s\S]*?\} \};/.exec(P3) || [''])[0]; if (!bf || /new T\./.test(bf)) nope('the raid\'s spells must use the pooled bolt and burst (nothing new while drawing)'); }
+  // 18. click a mob to target it (Nov 16, Flex: "Can you make the mouse cursor so someone can click on the mobs to target them instead of only
+  //     tabbing"): a mob is under the mouse when the mouse is near the line from its feet to the top of its head as drawn on screen (a flying
+  //     Viper is clicked on its body; before, only a click on the floor right under it targeted it, and a click on its body walked you away);
+  //     the cursor turns to a pointer over one; a click on one targets it (practice.js tgtKey, only a target that exists, never while paused),
+  //     a click anywhere else still walks there.
+  { const nope = (m) => bad('clicking a mob: ' + m + ' (check 18)');
+    const sd = (() => { try { const c = vm.createContext({ Math }); vm.runInContext(H.grab('pg3dSegD', P3) + '\nthis.f = pg3dSegD;', c); return c.f; } catch (e) { nope('pg3dSegD doesn\'t run by itself (' + e.message + ')'); return null; } })();
+    if (sd) { const near = (a, b) => Math.abs(a - b) < 1e-6; if (!near(sd(5, 5, 0, 0, 0, 10), 5) || !near(sd(0, -3, 0, 0, 0, 10), 3) || !near(sd(0, 14, 0, 0, 0, 10), 4) || !near(sd(3, 4, 0, 0, 0, 0), 5)) nope('pg3dSegD doesn\'t measure how far the mouse is from a mob drawn on screen (point to segment)'); }
+    if (!/const onTgt = \(X, Y\) => \{[\s\S]{0,400}?A\.tgts\(\)\.forEach/.test(P3) || !/TV1\.set\(o\.p\[0\], b \+ tgtTop\(o\), -o\.p\[1\]\)\.project\(cam\);/.test(P3) || !/d = pg3dSegD\(X, Y, ax, ay, bx, by\); if \(d <= reach && d < bd\)/.test(P3)) nope('a mob must be picked by where it is drawn on screen, feet to head, the nearest winning');
+    if (!/const o = onTgt\(e\.clientX, e\.clientY\); if \(!\(o && A\.tgtKey && A\.tgtKey\(o\.key\)\)\) \{ const p = pick\(e\.clientX, e\.clientY\); if \(p && A\.walk\) A\.walk\(p\); \}/.test(P3)) nope('a click on a mob must target it, and a click anywhere else must still walk there');
+    // (the first test link, Nov 16: a mob behind the camera projected to wild screen points with a huge reach, so the whole screen counted as on it)
+    if (!/if \(TV0\.z > 1 \|\| TV1\.z > 1 \|\| TV0\.z < -1 \|\| TV1\.z < -1 \|\| Math\.abs\(TV0\.x\) > 1\.6 \|\| Math\.abs\(TV0\.y\) > 1\.6\) return;/.test(P3) || !/const reach = Math\.min\(120, Math\.max\(16, /.test(P3)) nope('a mob behind the camera or off screen must not count, and a mob\'s reach on screen must stay between 16 and 120 px (the whole screen counted as on a mob)');
+    if (!/const move = \(e\) => \{ if \(!drag\) \{ hover\(e\); return; \}/.test(P3) || !/cv\.style\.cursor = o \? 'pointer' : 'crosshair';/.test(P3)) nope('the cursor must turn to a pointer over a mob you can target');
+    if (!/tgtKey: \(k\) => \{ if \(paused \|\| !G \|\| !tgtList\(G\.t\)\.some\(\(o\) => o\.key === k\)\) return false; press\('tgt'\); G\.tgt = k; hud\(true\); return true; \}/.test(PJ)) nope('practice.js must let the 3D view target a mob by its key (only one that exists, never while paused)'); }
   return Promise.all([loadP, fbP]);
 };
 if (require.main === module) {

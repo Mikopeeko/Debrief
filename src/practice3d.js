@@ -90,6 +90,7 @@ const PG3D_MON = {
   shrieker: { wow: { m2: 7109496, skin: [7667917], h: 4.3, ph: 6.6 }, url: 'https://static.poly.pizza/90ed3740-d8c4-4910-88ce-ac2ed426022d.glb', h: 3.2, hover: 2.2, hue: [0.76, 1.1], /* (purple, like the real wind serpent) */
     face: { bone: 'Head', parts: pg3dRing(6, 0.12, 0.42, 0.06, 0.42, -0.16, [[0.05, 0.5, 0.55, 0.3], [0.08, 0.35, 0.6, 0.3]], -0.65) }, /* (the wind serpents' teal feather crest) */ clips: { idle: /\|flying_idle$/i, move: /\|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
+const pg3dSegD = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, q = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0; return Math.hypot(px - ax - dx * q, py - ay - dy * q); }; /* (how far a point is from a line segment: the mouse from a mob drawn on screen) */
 const PG3D_MONK = { ds: 'doomscale', dsx: 'doomscale', dscale: 'doomscale', rav: 'ravenous' }; /* (a shape's kind -> its monster, for the bar's height) */
 if (typeof window !== 'undefined') { window.__pg3dMon = PG3D_MON; window.__pg3dWow = () => pg3dWow; } /* (for the lineup pictures) */
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
@@ -1077,10 +1078,24 @@ function pg3d(host, A) {
   // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on the floor walks there ----
   const kick = () => { if (pend || dead) return; pend = requestAnimationFrame(() => { pend = 0; if (performance.now() - lastDraw > 30) draw(lastT); }); }; /* (a redraw while the fight is paused) */
   const down = (e) => { if (e.button !== 0 && e.button !== 2) return; drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, b: e.button }; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ } e.preventDefault(); };
-  const move = (e) => { if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
+  const move = (e) => { if (!drag) { hover(e); return; } const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
     drag.moved = true; cv.style.cursor = 'grabbing'; yaw -= dx * 0.0065; pitch = Math.max(0.1, Math.min(1.35, pitch + dy * 0.0045)); kick(); };
+  // (click a mob to target it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing": a mob is under the mouse when the mouse is
+  //  within its reach of the line from its feet to the top of its head as drawn on screen (so a flying Viper is clicked on its body, not the floor
+  //  under it); the nearest wins. The cursor turns to a pointer over one; a click on one targets it, a click anywhere else still walks there.)
+  const TV0 = new T.Vector3(), TV1 = new T.Vector3();
+  const tgtTop = (o) => { const RM = TPL['mon:' + (PG3D_MONK[o.kind] || o.kind)], F = RM && RM.F; if (F) return F.ph != null ? F.ph : (F.h || 2.5) + (F.hover > 0 ? F.hover : 0);
+    return o.kind === 'boss' ? 22 : o.kind === 'tail' ? 8 : o.kind === 'viper' ? 6.1 : o.kind === 'egg' ? 1.2 : 2.6; }; /* (how tall it's drawn: its model's, else the old shape's) */
+  const onTgt = (X, Y) => { const r = cv.getBoundingClientRect(); if (!r.width || !r.height || !A.tgts || !camAt) return null; cam.updateMatrixWorld(); let best = null, bd = 1e9;
+    A.tgts().forEach((o) => { if (!o || !o.p) return; const b = baseY(o.p[0], o.p[1]); TV0.set(o.p[0], b, -o.p[1]).project(cam); TV1.set(o.p[0], b + tgtTop(o), -o.p[1]).project(cam);
+      if (TV0.z > 1 || TV1.z > 1 || TV0.z < -1 || TV1.z < -1 || Math.abs(TV0.x) > 1.6 || Math.abs(TV0.y) > 1.6) return; /* (behind the camera or far off screen: its projection is meaningless, and made the whole screen count as on it, test link Nov 16) */
+      const ax = r.left + (TV0.x + 1) / 2 * r.width, ay = r.top + (1 - TV0.y) / 2 * r.height, bx = r.left + (TV1.x + 1) / 2 * r.width, by = r.top + (1 - TV1.y) / 2 * r.height;
+      const reach = Math.min(120, Math.max(16, Math.hypot(bx - ax, by - ay) / Math.max(1, tgtTop(o)) * Math.max(0.8, o.r || 1))), d = pg3dSegD(X, Y, ax, ay, bx, by); if (d <= reach && d < bd) { bd = d; best = o; } }); /* (reach: its size on screen, 16 to 120 px) */
+    return best; };
+  if (typeof window !== 'undefined') window.__pg3dPick = (X, Y) => { const o = onTgt(X, Y); return o ? o.key : null; }; /* (for the test link) */
+  const hover = (e) => { const o = onTgt(e.clientX, e.clientY); cv.style.cursor = o ? 'pointer' : 'crosshair'; };
   const up = (e) => { if (!drag) return; const d = drag; drag = null; cv.style.cursor = 'crosshair'; try { cv.releasePointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ }
-    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const p = pick(e.clientX, e.clientY); if (p && A.walk) A.walk(p); kick(); } };
+    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (!(o && A.tgtKey && A.tgtKey(o.key))) { const p = pick(e.clientX, e.clientY); if (p && A.walk) A.walk(p); } kick(); } };
   const wheel = (e) => { e.preventDefault(); dist = Math.max(8, Math.min(85, dist * (e.deltaY > 0 ? 1.1 : 1 / 1.1))); kick(); };
   const noMenu = (e) => { e.preventDefault(); };
   cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('wheel', wheel, { passive: false }); cv.addEventListener('contextmenu', noMenu); window.addEventListener('resize', kick);
