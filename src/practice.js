@@ -685,7 +685,12 @@ function pgOpen(root, boss, d, pk) {
   const pathClear = (a, b, s) => !!G && !!S && !pathBlock(a, b, G.t, s == null ? 2 : s);
   // (round one thing in the way (a spot beside it), or in from straight outside your spot, away from the middle of the circle it sits in (C): the bubble's carriers
   //  stand in a ring 5 yards apart, so the straight way to your spot across it passes inside someone's 3 yards. Wait only when nothing works, or for a wave)
-  const route = (a, T, t, C) => { const b0 = pathBlock(a, T, t, 2); if (!b0) return { P: T, wait: false }; if (b0.k === 'wave') return { P: T, wait: true };
+  const route = (a, T, t, C, dd) => { const b0 = pathBlock(a, T, t, 2); if (!b0) return { P: T, wait: false }; if (b0.k === 'wave') return { P: T, wait: true };
+    // (a carrier standing on your spot: the last step was always blocked, so the arrow said Wait until the bubble burst (check R1's ranged egg carrier, seed 5,
+    //  after the merge of the four parts' audits, Nov 16). Then the nearest clear point beside their ring, on the side of the circle you're going into (C))
+    if (!dd && b0.k === 'ring' && b0.c && pgDist(T, b0.c) < b0.r + 0.2) { let alt = null, as = 1e9, clr = null, cs = 1e9; for (let i = 0; i < 16; i++) { const an = i * Math.PI / 8, W = [b0.c[0] + Math.cos(an) * (b0.r + 0.4), b0.c[1] + Math.sin(an) * (b0.r + 0.4)]; if (!onPlat(W[0], W[1])) continue;
+        const sc = pgDist(W, T) + (C ? pgDist(W, C) * 0.6 : 0); if (sc < as) { as = sc; alt = W; } if (sc < cs && !pathBlock(a, W, t, 2, true)) { cs = sc; clr = W; } } /* (clr: walked to clear and standing clear; else one more try round what's in the way, never deeper) */
+      if (clr) return { P: clr, wait: false, bend: true }; if (alt) return route(a, alt, t, null, 1); }
     const around = (p, q, ob) => { const ux = q[0] - p[0], uy = q[1] - p[1], L = Math.hypot(ux, uy) || 1, nx = -uy / L, ny = ux / L, out = []; [ob.r + 0.6, ob.r + 2, ob.r + 4].forEach((R) => [1, -1].forEach((sg) => out.push([ob.c[0] + nx * R * sg, ob.c[1] + ny * R * sg]))); return out.filter((w) => onPlat(w[0], w[1])); };
     const ok = (p, q, last) => !pathBlock(p, q, t, last ? 0 : 2, !last); let best = null;
     const take = (pts) => { let len = 0; for (let i = 1; i < pts.length; i++) len += pgDist(pts[i - 1], pts[i]); if (!best || len < best.len) best = { P: pts[1], len }; };
@@ -784,12 +789,12 @@ function pgOpen(root, boss, d, pk) {
     // (the prompts audit, Nov 16: phase 1's arrow follows your step (stepSpot: from when the job line names it, to your spot, gone only inside what the game counts);
     //  a later part's goes to its job's spot and goes away inside that spot's ob.r, the radius it counts (2.5 when it gives none); every part's bends round a
     //  coil that isn't yours or another carrier's ring, and says Wait while a wave crosses the way or nothing gets round (route))
-    const t = G.t; let T = null, what = '', rad = 2.5, h = null, C = null;
-    if (P2) { const j = jobOf(me, t), eg = G.eggs.find((e) => e.id === me && e.state === 'floor' && (!e.lock || (t >= e.shell - 1 && !!(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null))));
+    const t = G.t; let T = null, what = '', rad = 2.5, h = null, C = null, via = null; /* (via: a part that bends its own arrow (the intermission) gives the next waypoint; the arrow points there, no second bend; p and r stay the spot and its circle) */
+    if (P2) { const j = jobOf(me, t); if (j.ob && j.ob.via) via = j.ob.via; const eg = G.eggs.find((e) => e.id === me && e.state === 'floor' && (!e.lock || (t >= e.shell - 1 && !!(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null))));
       if (j.ob) { T = spotIn(j.ob, me) || j.ob.p.slice(); what = 'spot'; } else if (eg) { T = [eg.x, eg.y]; what = 'egg'; }
       if (j.ob && j.ob.r > 0) rad = j.ob.r; if (j.ob) C = j.ob.p; }
     else { const sp = stepSpot(curStep(t), t); if (sp && !sp.inside(G.x, G.y)) { T = sp.T; what = sp.what; rad = sp.rad; C = sp.C; } }
-    if (T && pgDist(T, [G.x, G.y]) > (P2 ? rad : 0.05)) { const rt = route([G.x, G.y], T, t, C); h = { T: rt.P, d: pgDist(rt.P, [G.x, G.y]), what, wait: rt.wait, fin: T, rad }; }
+    if (T && pgDist(T, [G.x, G.y]) > (P2 ? rad : 0.05)) { const rt = via ? { P: via, wait: false } : route([G.x, G.y], T, t, C); h = { T: rt.P, d: pgDist(rt.P, [G.x, G.y]), what, wait: rt.wait, fin: T, rad }; }
     hintC = { t, me, S, h }; return h; };
   const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
     if (!force && key === hudKey) return; hudKey = key;
@@ -872,7 +877,7 @@ function pgOpen(root, boss, d, pk) {
   // (the prompts audit, Nov 16: a call is yours, gold, first in line and pinging, because it is marked so (me, worked out for you as it fires, or a part's gold
   //  colour), or because it names your own thing first ("Your coil: ...", "Your kick: ..."). Not because it says "you" somewhere: 10 of 14 phase 3 calls
   //  drew gold that way, and "Venom beam ... only the tank stands in it" went gold to everyone)
-  const myCall = (w) => (w.me != null ? (w.me ? 1 : 0) : w.c === '#f3c969' || /^Your\b/.test(w.text) ? 1 : 0), nowCall = (w) => (/\bnow\b/i.test(w.text) ? 1 : 0);
+  const myCall = (w) => (w.me != null ? (w.me ? 1 : 0) : w.you || w.mine || w.c === '#f3c969' || /^Your\b/.test(w.text) ? 1 : 0) /* (the parts' own marks count too: phase 2's you, phase 3's mine; merge of the four parts' audits, Nov 16) */, nowCall = (w) => (/\bnow\b/i.test(w.text) ? 1 : 0);
   // (Main's playtest, Nov 15: "Circling Prey: move one quarter left, you have 8 s!" said at 9:05 was still up at 9:18. The line only faded on a screen timer,
   //  which stops when the page isn't in front. Now it goes by the game's clock: a call clears 3.2 s after it shows, a call that gives you N seconds counts
   //  them down and clears when they run out (its moment has passed))

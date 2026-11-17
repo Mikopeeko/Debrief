@@ -111,13 +111,13 @@ function pgIntScript(o) {
     // (her bubbles from 6:03 at the corner where she comes up as the platform shatters: practice3d.js draws the bubbles and her rise from this; `to`
     // is set below, once the eggs have their spots, so a run's seed still gives the same eggs)
     dive: { t0: T.bubbles, gone: T.bubbles + 0.2, surf: T.shatter, to: [0, 0] } };
-  const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c) => S.warns.push({ t, text, c: c || '#ff8f87' }), timer = (t, name) => S.timers.push({ t, name });
+  const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c, o) => S.warns.push({ t, text, c: c || '#ff8f87', ...(o || {}) }), timer = (t, name) => S.timers.push({ t, name });
   S.job = pgIntJobs(o.me, o.pick);
   // (the centre calls, written "Mechanic: Order" (the prompts audit, Nov 16, Flex: "the alerts and training wheels could be better", then "All 10"): the
   // big line is the order, verb first, the mechanic's name small; "your" only in the calls about your own job (practice.js draws those gold), never a
   // clock time or a second count (Flex, Nov 16: "i feel like the game confuses people saying timestamps"): the boss-mod bars count. Yours from o.me)
   const me = o.me, mine = !!me && !!S.job.team[me], iCarry = mine && S.job.carry.has(me);
-  warn(T.start, mine ? (iCarry ? 'Intermission: Run to your egg\'s gold circle! Stand beside it, not under it.' : 'Intermission: Go to your team\'s spot by ' + P.TM[S.job.team[me]] + '! Eggs are coming.') : 'Intermission: Go to your team\'s spot! Eggs are coming.', '#c084ff');
+  warn(T.start, mine ? (iCarry ? 'Intermission: Run to your egg\'s gold circle! Stand beside it, not under it.' : 'Intermission: Go to your team\'s spot by ' + P.TM[S.job.team[me]] + '! Eggs are coming.') : 'Intermission: Go to your team\'s spot! Eggs are coming.', '#c084ff', mine ? { me: 1 } : null); /* (yours, gold: practice.js no longer turns a call gold for saying "your", Nov 16) */
   // (its bar "Eggs land": "egg" in the name gives it Call of the Serpent's icon, and a carrier's own "Your egg lands" stands in for it, one bar for one thing)
   cast('boss', 'Call of the Serpent', T.call, T.callL); warn(T.call, 'Call of the Serpent: Dodge the falling eggs! Eight land all over the stone.', '#e6e0c8'); timer(T.land, 'Eggs land');
   // each team waits by its marker, 16 yards out (the guide's map)
@@ -143,10 +143,10 @@ function pgIntScript(o) {
   timer(S.soaks[0].at, 'Spectral Coils'); timer(S.soaks[4].at, 'Spectral Coils: the last four');
   // (the pattern call names YOUR first soak in the big line, the raid's pattern small: "Triangle first" sent Yellow players, whose first soak is at Circle,
   // looking at Triangle (the prompts audit, Nov 16))
-  { const f = mine && S.soaks.find((s) => s.group.includes(me)); warn(S.soaks[0].cast, f ? 'Spectral Coils: Go to your soak at ' + pgIntMk(f.spot) + '! ' + P.PN[pat] + ' first (pattern ' + pat + ').' : 'Spectral Coils: ' + P.PN[pat] + ' first! Pattern ' + pat + '.', '#24f2cb'); }
+  { const f = mine && S.soaks.find((s) => s.group.includes(me)); warn(S.soaks[0].cast, f ? 'Spectral Coils: Go to your soak at ' + pgIntMk(f.spot) + '! ' + P.PN[pat] + ' first (pattern ' + pat + ').' : 'Spectral Coils: ' + P.PN[pat] + ' first! Pattern ' + pat + '.', '#24f2cb', f ? { me: 1 } : null); }
   // (the defensive: the only call that needs a key, so it says Q and it's yours (gold). It was "Personals now" small under "the last four slams come back
   // to back", and never named Q. check() below turns it into a plain warning when your Q can't be pressed for it, or is already up)
-  warn(T.defCue, mine ? 'Back-to-back slams: Press Q (your defensive) now!' : 'Back-to-back slams: Four slams in a row now!', '#7fb8ff');
+  warn(T.defCue, mine ? 'Back-to-back slams: Press Q (your defensive) now!' : 'Back-to-back slams: Four slams in a row now!', '#7fb8ff', mine ? { me: 1 } : null);
   // (the Rawlings: the ranged and healers hit them from the gold ring, the melee and tanks go to them first: the call said "kill the Rawlings, then to the
   // diamond line" to everyone, the reverse of what the ranged do. At the moment the job line changes, not after it)
   warn(T.gather, mine && /^[mt]/.test(me) ? 'Coils done: Kill the Rawlings! Then go to the gold ring by the Diamond.' : 'Coils done: Go to the gold ring by the Diamond! Hit the Rawlings from there.', '#c9df9a');
@@ -248,7 +248,7 @@ function pgInt(A) {
     const oc = S.soaks.find((s) => !s.group.includes(me) && t >= s.t0 - 0.5 && t <= s.at + 0.2 && pgDist(p0, [s.x, s.y]) < s.r + 1);
     if (oc && !inE(p0, 4 + 0.7)) { const d = pgDist(p0, [oc.x, oc.y]) || 0.01, k = Math.max(oc.r + 2.2, d + 3); a0 = Math.atan2(p0[1] - oc.y, p0[0] - oc.x);
       for (const n of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) { const a = a0 + n * Math.PI / 6, q = [oc.x + Math.cos(a) * k, oc.y + Math.sin(a) * k]; if (PG_UL.onPlat(q[0], q[1])) { p = q; break; } } /* (straight out, or round its edge when that is off the stone) */
-      return { at: oc.at, p: p || T0, r: 1 }; }
+      return { at: oc.at, p: p || T0, r: 0.5, via: p || T0 }; }
     if (inE(p0, 4 + 0.7)) { p = clearOf(LE, p0, T0) || T0; const d = pgDist(p0, p); if (d < 3) p = [p0[0] + (p[0] - p0[0]) / (d || 1) * 3, p0[1] + (p[1] - p0[1]) / (d || 1) * 3]; } /* (in a falling egg's circle: out first, a few steps, so the arrow doesn't vanish on its edge) */
     else if (why === 'raw') { p = T0; at = T.bubbles; } /* (beside your Rawling, as it crawls: an arrow that stopped at 5 yards lost it at every step) */
     else if (why === 'end' || why === 'done') { const ga = pgIntGather(), blk = S.soaks.some((s) => !s.group.includes(me) && t >= s.t0 - 0.5 && t <= s.at && pgDist(ga, [s.x, s.y]) <= s.r + 1); /* (the ring inside another team's live coil (pattern 2's sixth): where job() holds you, out of it) */
@@ -260,7 +260,7 @@ function pgInt(A) {
       const d = pgDist(p0, [e.x, e.y]), a0 = d > 0.1 ? Math.atan2(p0[1] - e.y, p0[0] - e.x) : 0; for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) { const a = a0 + k * Math.PI / 6, q = [e.x + Math.cos(a) * 5.8, e.y + Math.sin(a) * 5.8]; if (ok(q)) { p = q; break; } }
       p = p || T0; at = e.land; }
     else { if (pgDist(p0, T0) <= 2.5 || (!(e && e.state === 'held') && pgDist(p0, S.pre[g]) <= 4.5)) return here; p = T0; } /* (your team's spot while you wait: inside the ring drawn there; a carrier on its own spot, clear of the others') */
-    return { at, p: bend(t, p0, p), r }; };
+    void r; return { at, p, r: 0.5, via: bend(t, p0, p) }; }; /* (p your spot, via the next waypoint round what's in the way: practice.js points the arrow at via and adds no bend of its own. r 0.5: this part says "here" itself (the returns above), so the shared arrow mustn't vanish at its own radius round a waypoint; merge of the four parts' audits, Nov 16) */
   // (the arrow's way round: the first thing on the straight line from you to p that it must not walk you through, and a point on a circle round it a step
   // ahead of you toward p (at most 43 degrees round, so the line from you to it stays clear); the other way round if that point is off the stone)
   const bend = (t, p0, p) => { const me = A.me, held = G.eggs.some((q) => q.state === 'held' && q.who === me), O = [];
@@ -314,7 +314,7 @@ function pgInt(A) {
     // call sent a Purple carrier to Triangle while the line said "Break your egg"))
     if (t < S.soaks[0].cast && S.job.team[me]) { const w = S.warns.find((q) => q.t === S.soaks[0].cast && /^Spectral Coils:/.test(q.text)), f = S.soaks.find((s) => s.group.includes(me)), e0 = G.eggs.find((q) => q.id === me && q.state !== 'gone');
       if (w && f) w.text = 'Spectral Coils: ' + (eggFirst(me, S.soaks[0].cast, { x, y }, e0, f) ? 'Get your egg, then your soak at ' : 'Go to your soak at ') + pgIntMk(f.spot) + '! ' + P.PN[S.pat] + ' first (pattern ' + S.pat + ').'; }
-    if (t < T.defCue && S.job.team[me]) { const w = S.warns.find((q) => q.t === T.defCue && /^Back-to-back slams:/.test(q.text)); if (w) w.text = G.def >= T.defFrom - 1 || G.def + 90 > T.defCue ? 'Back-to-back slams: Four slams in a row now!' : 'Back-to-back slams: Press Q (your defensive) now!'; }
+    if (t < T.defCue && S.job.team[me]) { const w = S.warns.find((q) => q.t === T.defCue && /^Back-to-back slams:/.test(q.text)); if (w) { const off = G.def >= T.defFrom - 1 || G.def + 90 > T.defCue; w.text = off ? 'Back-to-back slams: Four slams in a row now!' : 'Back-to-back slams: Press Q (your defensive) now!'; w.me = off ? 0 : 1; } }
     // (pressed early in the part, Q is still cooling down for these slams: the mistake says so (the release sweep, Nov 16))
     if (cr(T.defBy) && !(G.def >= T.defFrom - 1 && G.def <= T.defBy) && once('def')) { const early = G.def > 0 && G.def < T.defFrom - 1 && G.def + 90 > T.defFrom - 1;
       A.mistake('def', 'No defensive for the last four slams.' + (early ? ' You pressed Q too early: it was still cooling down.' : ''), early ? 'Save Q for the back-to-back slams: it takes a minute and a half to come back. The last four slams come back to back and each hits the whole raid.' : 'Press Q as the last four slams start: they come back to back and each hits the whole raid. Defensives and potions there.', 0); }

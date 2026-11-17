@@ -480,7 +480,7 @@ function checks(H, say) {
     // fix 9: centre calls "Mechanic: Order", the order capitalised in the big line; gold only for the calls about your own job
     { at(T.start + 0.2, { role: 'r', team: 'P', egg: true, pat: 2 }); const W = dbg.S.warns;
       W.forEach((w) => { if (!/^[A-Z][^:!?]{2,39}: [A-Z]/.test(w.text)) bad('a centre call isn\'t "Mechanic: Order" with the order capitalised: ' + w.text + ' (the prompts audit, Nov 16: "go to your team\'s mark", "eight eggs incoming"; check P, fix 9)'); });
-      const gold = (w) => /class="pg-al you/.test(dbg.alerts([{ text: w.text, c: w.c }]));
+      const gold = (w) => /class="pg-al you/.test(dbg.alerts([Object.assign({}, w)])); /* (the whole call, its me mark too: practice.js goes by the mark, not by "your" in the words, since the merge, Nov 16) */
       [[T.defCue, true, 'the defensive (Q)'], [dbg.S.soaks[0].cast, true, 'your first soak'], [T.start, true, 'your egg'], [T.call, false, 'the falling eggs (raid-wide)'], [T.bubbles, false, 'the Shattering (raid-wide)'], [T.shatter, false, 'the Shattering (raid-wide)']].forEach(([t0, want, what]) => {
         const L0 = W.filter((w) => Math.abs(w.t - t0) < 0.01); if (!L0.length) bad('no call for ' + what + ' (check P, fix 9)');
         L0.forEach((w) => { if (gold(w) !== want) bad('the call for ' + what + ' is ' + (want ? 'not gold' : 'gold') + ': ' + w.text + ' (the prompts audit, Nov 16: the only key-press call was white, "Personals now"; check P, fix 9)'); }); }); }
