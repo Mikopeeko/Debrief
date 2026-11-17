@@ -1284,8 +1284,8 @@ function pgOpen(root, boss, d, pk) {
     const sb = card.querySelector('.pg-spd'); sb.onclick = () => { speed = speed < 1 ? 1 : 0.5; sb.textContent = speed < 1 ? 'Half speed' : 'Normal speed'; sb.setAttribute('aria-pressed', String(speed < 1)); };
     const lb = card.querySelector('.pg-look'); if (lb) lb.onchange = (e) => { look = LOOKS.includes(e.target.value) ? e.target.value : 'auto'; try { localStorage.setItem('wla-pg-look', look); } catch (er) { /* (no storage) */ } };
     card.querySelector('.pg-at').onchange = (e) => { startAt = +e.target.value || 0; };
-    card.querySelector('.pg-go').onclick = () => (howSeen() ? begin() : howTo(begin)); /* (the first run in this browser: How to play first) */
-    { const hw = card.querySelector('.pg-howb'); if (hw) hw.onclick = () => howTo(begin); } };
+    card.querySelector('.pg-go').onclick = () => (howSeen() ? waitModels(begin) : howTo(() => waitModels(begin))); /* (the first run in this browser: How to play first; then the real models) */
+    { const hw = card.querySelector('.pg-howb'); if (hw) hw.onclick = () => howTo(() => waitModels(begin)); } };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
     G.eggs.forEach((e) => { if (e.id === me && e.state === 'gone') { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (e.shell < T0 && sk && T0 < sk.at) { e.state = 'held'; e.who = me; } } });
     // (the release sweep, Nov 16: an egg of yours the fast-forward left whole after your last coil for it (it missed the 2:17 coil in 12 of 408 runs) is broken
@@ -1300,6 +1300,12 @@ function pgOpen(root, boss, d, pk) {
       row(k('Q'), 'Your defensive.') + row(k('Shift'), 'Sprint.') + (P2 && P2.acts && P2.acts() ? row(k('E'), 'Kick (interrupt).') : '') + row(k('Space'), 'Pause any time.') + '</ul>' +
       '<p class="pg-howr">The line at the bottom says what to do <b>now</b>, and what\'s next under it. Gold is your job. The bars on the left show what\'s coming.</p>' +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-howgo">Got it, start</button></div></div>'; };
+  // (the real models before the fight (Flex, Nov 17: "Just have all the mobs spawn as their normal models"): Play waits while the 3D view is loading them, saying how many are
+  //  in, 30 s at most (a slow first visit to wago.tools); whatever comes later swaps in when it arrives (practice3d.js, pg3dWowOr's late)
+  const modelsReady = () => !want3 || (!!v3 && (typeof PG3D_WR === 'undefined' || PG3D_WR.d >= PG3D_WR.n));
+  const waitModels = (next) => { if (modelsReady()) { next(); return; } const t0 = Date.now(), b = card.querySelector('.pg-go'), lab = b ? b.innerHTML : '';
+    const step = () => { if (!ov.isConnected) return; if (modelsReady() || Date.now() - t0 > 30000) { if (b) { b.disabled = false; b.innerHTML = lab; } next(); return; }
+      if (b) { b.disabled = true; b.textContent = 'Loading models' + (typeof PG3D_WR !== 'undefined' && PG3D_WR.n ? ' ' + PG3D_WR.d + ' of ' + PG3D_WR.n : '') + '…'; } setTimeout(step, 250); }; step(); };
   const howSeen = () => { try { return localStorage.getItem('wla-pg-howto') === '1'; } catch (e) { return true; } };
   const howTo = (next) => { card.className = 'pg-card on'; card.innerHTML = howToHtml(); const b = card.querySelector('.pg-howgo'); if (!b) { next(); return; } b.onclick = () => { try { localStorage.setItem('wla-pg-howto', '1'); } catch (e) { /* (no storage) */ } next(); }; if (b.focus) b.focus(); };
   const begin = () => { { const c = sndOn ? sndCtx() : null; if (c && c.state === 'suspended' && c.resume) c.resume().catch(() => {}); } me = role.id; reset(); ffTo(startAt); { const rs = $('.pg-res'); if (rs) rs.innerHTML = ''; } draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick');
