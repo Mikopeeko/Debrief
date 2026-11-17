@@ -78023,7 +78023,21 @@ function pg3d(host, A) {
     if (r === 'h') B.tanks.forEach(near); else { B.right.forEach(near); if (!tp && B.boss) near(B.boss); }
     if (!tp || bd > (r === 'm' || r === 't' ? 14 : 60) || performance.now() - f.mvAt < 300) return null; /* (nothing in reach, or on the move: no swing) */
     if (performance.now() - f.mvAt > 300) { const a = Math.atan2(tp[0] - s.x, -(tp[1] - s.y)); let d = a - f.face; d = Math.atan2(Math.sin(d), Math.cos(d)); f.face += d * 0.25; } /* (standing: turn to the target) */
+    f.tp = tp; f.tpB = tp === B.boss; /* (what it's hitting, for its spell: botCast) */
     return Math.floor(performance.now() / 1000 / f.every + f.ph); }; /* (a new number each beat: figPose swings once per beat) */
+  // (the raid's spells, Flex, Nov 16: "how difficult would it be to give the casters/ranged classes/healers simple spell animations like the
+  //  player gets?", "Yes, add them": on each beat a ranged raider throws a small bolt in its class colour at what it's hitting, and a healer (any
+  //  healing class) sends a soft green glow onto the tank it faces. Your bolt and burst, smaller and fainter (sm), so the mechanics stay easy to
+  //  read; at most 24 at once. The look only: the raid's damage and healing are the game's, untouched.)
+  const BB = [], BBF = { fly: 0.45, end: 0.95 }; /* (fly 0.45 s: slower than yours (0.22) so a raider's bolt is seen in flight) */
+  const BBN = { beats: 0, cast: 0, drawn: 0, live: 0 }; if (typeof window !== 'undefined') window.__pg3dSpells = BBN; /* (counts, for the test link) */
+  const botCast = (f, s) => { BBN.beats++; const r = A.rl ? A.rl(s.id) : 'm'; if ((r !== 'r' && r !== 'h') || !f.tp) return; BBN.cast++; if (BB.length >= 24) BB.shift();
+    BB.push({ x0: s.x, y0: s.y, x1: f.tp[0], y1: f.tp[1], h1: f.tpB ? 7 : 1.6, t0: performance.now(), c: r === 'h' ? '#8cffb4' : s.c || '#ff6a2a', heal: r === 'h' }); };
+  const botFx = (now, t) => { BBN.live = BB.length; for (let i = BB.length - 1; i >= 0; i--) { BBN.drawn++; const b = BB[i], age = Math.max(0, (now - b.t0) / 1000); if (age > BBF.end) { BB.splice(i, 1); continue; } /* (max 0: a spell cast this frame started just after its clock, now; dropping it as "from the future" threw every spell away, test link Nov 16) */
+    if (b.heal) { put({ k: 'impact', x: b.x1, y: b.y1, h: 1.4, r: 0.6, p: age / BBF.end, c: b.c, sm: 0.9 }, t); continue; } /* (a healer: the glow on the tank) */
+    const dx = b.x1 - b.x0, dy = b.y1 - b.y0, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, fl = (q) => [b.x0 + ux * d * q, b.y0 + uy * d * q, 2 + (b.h1 - 2) * q + 0.4 * Math.sin(Math.PI * q)];
+    if (age < BBF.fly) { const p = age / BBF.fly, h = fl(p), e = fl(Math.max(0, p - Math.min(2, d * p) / d)); put({ k: 'bolt', x: h[0], y: h[1], h: h[2], tx: e[0], ty: e[1], th: e[2], p, c: b.c, sm: 0.8 }, t); }
+    else put({ k: 'impact', x: b.x1 - ux * 0.6, y: b.y1 - uy * 0.6, h: b.h1, r: 0.5, p: (age - BBF.fly) / (BBF.end - BBF.fly), c: b.c, sm: 0.7 }, t); } };
   const figPose = (M, s, hitT) => { const now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
     const dx = s.x - M.x, dy = s.y - M.y; if (Math.hypot(dx, dy) > 0.004) { M.mvAt = now; const a = Math.atan2(dx, -dy); let d = a - M.face; d = Math.atan2(Math.sin(d), Math.cos(d)); M.face += d * Math.min(1, 0.35); } M.x = s.x; M.y = s.y;
     if (hitT != null && hitT !== M.hitSeen) { M.hitSeen = hitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
@@ -78151,7 +78165,7 @@ function pg3d(host, A) {
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
     if (k === 'unit' && s.you && meNow()) { figPose(ME, s, A.G.lastHitT); return; } /* (your animated figure in place of your capsule) */
-    if (k === 'unit' && !s.you) { const f = botNow(s); if (f) { figPose(f, s, botSwing(f, s)); return; } } /* (a raider's figure, once its look has loaded) */
+    if (k === 'unit' && !s.you) { const f = botNow(s); if (f) { const bt = botSwing(f, s); figPose(f, s, bt); if (bt != null && bt !== f.bb) { if (f.bb != null) botCast(f, s); f.bb = bt; } return; } } /* (a raider's figure, once its look has loaded; a new beat casts its spell) */
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
@@ -78190,12 +78204,13 @@ function pg3d(host, A) {
     // (your attacks: the bolt, a bright head and its streak back along its path; the impact, a white flash, a coloured glow and a ring opening out,
     // and a spark for melee; the slash at chest height, tilted, swept round toward the target)
     if (k === 'bolt') { V1.set(s.x, s.h, -s.y); V2.set(s.tx, s.th, -s.ty); V3.subVectors(V2, V1); const len = V3.length(), m = streak(), U = m.material.uniforms;
-      m.visible = len > 0.05; if (m.visible) { m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.divideScalar(len)); m.scale.set(0.36, len, 0.36); ucol(U.uC, s.c); U.uO.value = 0.95; }
-      glw(V1.x, V1.y, V1.z, 2.6, s.c, 0.95); glw(V1.x, V1.y, V1.z, 1, '#fffbe8', 1); return; }
+      const sm = s.sm || 1, so = s.sm ? 0.9 : 1; /* (sm: a raider's bolt, smaller and fainter than yours) */
+      m.visible = len > 0.05; if (m.visible) { m.position.copy(V1); m.quaternion.setFromUnitVectors(UP, V3.divideScalar(len)); m.scale.set(0.36 * sm, len, 0.36 * sm); ucol(U.uC, s.c); U.uO.value = 0.95 * so; }
+      glw(V1.x, V1.y, V1.z, 2.6 * sm, s.c, 0.95 * so); glw(V1.x, V1.y, V1.z, 1 * sm, '#fffbe8', so); return; }
     if (k === 'impact') { VI.set(s.x, s.h, -s.y); VJ.subVectors(cam.position, VI).setLength(Math.min(2.2, 0.4 + s.r * 0.6)); VI.add(VJ); /* (on the side facing you, so the target's body doesn't hide it) */
-      const q = Math.max(0, Math.min(1, s.p)), e = 1 - q, X = VI.x, Y = VI.y, Z = VI.z, sz = Math.min(2.2, 0.9 + s.r * 0.3) * (s.melee ? 0.85 : 1);
-      glw(X, Y, Z, (2.2 - 0.8 * q) * sz, '#ffffff', Math.max(0, 1 - q * 2.4)); glw(X, Y, Z, (1.6 + 2.2 * q) * sz, s.c, 0.9 * e * e);
-      const rg = hitRing(), rs = (0.8 + 3.6 * (1 - e * e)) * sz; rg.position.set(X, Y, Z); rg.scale.set(rs, rs, 1); col(rg.material, s.c); rg.material.opacity = Math.pow(e, 1.5);
+      const q = Math.max(0, Math.min(1, s.p)), e = 1 - q, X = VI.x, Y = VI.y, Z = VI.z, sz = Math.min(2.2, 0.9 + s.r * 0.3) * (s.melee ? 0.85 : 1) * (s.sm || 1), so = s.sm ? 0.85 : 1; /* (sm: a raider's, smaller and fainter) */
+      glw(X, Y, Z, (2.2 - 0.8 * q) * sz, '#ffffff', so * Math.max(0, 1 - q * 2.4)); glw(X, Y, Z, (1.6 + 2.2 * q) * sz, s.c, so * 0.9 * e * e);
+      const rg = hitRing(), rs = (0.8 + 3.6 * (1 - e * e)) * sz; rg.position.set(X, Y, Z); rg.scale.set(rs, rs, 1); col(rg.material, s.c); rg.material.opacity = so * Math.pow(e, 1.5);
       if (s.melee) { const sp = hitSpark(), ss = (1.4 + 1.6 * q) * sz; sp.position.set(X, Y, Z); sp.scale.set(ss, ss, 1); sp.material.rotation = (s.x * 7.3 + s.y * 3.1) % TAU; col(sp.material, '#ffffff'); sp.material.opacity = Math.max(0, 1 - q * 1.7); } return; }
     if (k === 'slash') { const g = slash(), m = g.userData.m, f = Math.max(0, Math.min(1, s.f)), ez = 1 - Math.pow(1 - f, 2.2);
       g.position.set(s.x, baseY(s.x, s.y) + 1.4, -s.y); g.rotation.set(0.5, s.a, 0); m.rotation.y = -0.9 + 1.8 * ez; m.scale.setScalar(0.9 + 0.2 * ez); col(m.material, s.c); m.material.opacity = f < 0.55 ? 1 : Math.max(0, 1 - (f - 0.55) / 0.45); return; }
@@ -78219,7 +78234,7 @@ function pg3d(host, A) {
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
-    for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
+    for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); botFx(now, t); if (P2K) P2K.frame(G); /* (botFx: the raid's spells, after the raiders cast them this frame) */
     monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
     if (BRM && boss.visible) BRM.update(dt); /* (her real model's own movement) */
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) { p.n.sp.visible = p.b.sp.visible = false; if (p.r) p.r.sp.visible = false; if (p.m) p.m.sp.visible = false; } });
