@@ -21612,6 +21612,14 @@ html:not([data-rv="replay"]) body #view#view#view .dbn-bar.dbn-add .dbn-t b { fo
 html:not([data-rv="replay"]) body #view#view#view .dbn-bar.dbn-add > .btn { background: none !important; border: 0 !important; padding: 0 !important; height: auto !important; min-height: 0 !important; color: #e6b450 !important; text-decoration: underline !important; font: 500 13px var(--body) !important; box-shadow: none !important; }
 html:not([data-rv="replay"]) body #view#view#view .dbt-note:has(> .dbn-bar.dbn-add) { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
 }
+
+/* Summary round 2 (Nov 17, Flex: "ok go for it"): a battle res as its own row in How it went (smRes in ui.js). */
+@layer defaultTheme {
+html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res { display: grid; grid-template-columns: 46px 22px auto minmax(0, 1fr); align-items: center; gap: 0 9px; padding: 8px 0 8px 14px; font-size: 13.5px; color: #c9c5bc; }
+html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > .dbt-cht { color: #8b929c; font-variant-numeric: tabular-nums; }
+html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > .sm-resic { display: inline-grid; place-items: center; width: 20px; height: 20px; color: #45c15c; font-weight: 800; }
+html body #view#view#view#view#view .dbt-why .dbt-chn > .sm-res > b { color: #45c15c; font-weight: 700; }
+}
 </style>
 </body>
 </html>
