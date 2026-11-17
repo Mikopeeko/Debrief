@@ -53,7 +53,7 @@ const PG_SHORT = [
   [/^Wait outside your egg's gold ring until .*$/i, 'Wait outside your egg\'s ring'], [/^Step away from (.+?)'s egg: your rings almost touch!?$/i, 'Step away from $1\'s egg!'], [/^Too close to (.+?)'s egg: step away from them!?$/i, 'Too close to $1\'s egg!'],
   [/^Run alone to your big egg at the (north|south) end$/i, 'Run alone to the $1 big egg'], [/^Stay out of the line and its side waves!?$/i, 'Dodge the beam and its side waves!'], [/^Your soaks are done: leave your egg$/i, 'Leave your egg, go to the gold ring'], [/^Hit the heart, and step out of the brown circles$/i, 'Hit the heart, dodge the brown circles'], [/^She's up (.+?): phase 3 starts by her$/i, 'She\'s up $1: go to her'],
 ];
-const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into)/i; /* (must be done now: never held back, never covered by a call) */
+const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into|Walk to your tether)/i; /* (must be done now: never held back, never covered by a call) */
 const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim(); if (!x) return '';
   x = x.replace(/^(?:Good spot|Off her quarter: good)[.!]?\s+(?=[A-Z])/, ''); /* (praise, then the order: the order) */
   x = x.replace(/:\s*press Tab(?: to pick (?:it|one))?,? then keep pressing 1(?: to hit it)?/gi, '').replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/:\s*Tab, then 1/gi, '')

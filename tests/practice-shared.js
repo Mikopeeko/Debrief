@@ -333,6 +333,23 @@ function simpleScreen(H, say, pj) {
   { const W1 = W.length; for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk); try { d.at(40, d.role.id, { seed: 3 }); d.frame(); } catch (e) { /* (a part that starts later) */ } }
     const hs = W.slice(W1).filter((w) => /\.pg-timers/.test(w.at)).map((w) => w.v); if (!hs.some((h) => /class="pgb[ "]/.test(h) && /class="pgb-ic"/.test(h) && /class="pgb-bar"/.test(h))) bad('no boss-mod bar (icon, name, fill) was drawn in any part (check S7)');
     hs.forEach((h) => { const x = h.replace(/<[^>]*>/g, ' ').replace(/&#?[a-z0-9]+;/gi, ' '); if (/\d/.test(x)) bad('a boss-mod bar shows a number: "' + x.replace(/\s+/g, ' ').trim().slice(0, 80) + '" (check S7)'); }); }
+  // S9. phase 2's tethers (Flex, Nov 17, via Main: "The tether break alerts in p2 are kind of confusing. Its not clear if youre the early break or the late break
+  //     with the 5. The on screen alert changes a lot during that section"; the guide, 131 kills: one breaks alone first, about 8 s later the five together): from
+  //     the moment the tethers land the NOW line says which break is yours ("You break first, alone" / "You break second, with the 5") and holds it, then the walk
+  //     to the edge (naming it again), then "Break now"; at most 5 changes from the landing to just after your break. Before: "Stay within 20 yards of the Warden"
+  //     with the rest cut off, flipping with "Hit the Warden" every second.
+  { let T2 = null; try { T2 = vm.runInContext('PG_P2_T', ctx); } catch (e) { T2 = null; }
+    if (!T2 || !ctx.PG_PARTS["Ula'tek"].m2) bad('phase 2 isn\'t loaded for the tether check (check S9)');
+    else for (const [teth, role, side, want] of [['solo', 'r', 'E', /break first/i], ['five', 'm', 'W', /with the 5/i]]) {
+      const d = L.open('m2'); d.P2.pick = { side, role, egg: null, mal: 0, cry: 0, teth }; const me = d.P2.slotOf(d.P2.pick), tb = teth === 'solo' ? T2.solo : T2.five, tag = ' (' + teth + ', ' + role + ' on the ' + side + ' ledge)';
+      try { d.at(T2.fangs - 12, me, { seed: 3 }); } catch (e) { bad('the tether run didn\'t start' + tag + ': ' + e.message + ' (check S9)'); continue; }
+      let prev = null, changes = 0, named = 0, samples = 0, broke = false;
+      while (d.G.t < tb + 1.5) { d.step(2); d.frame(); const t = d.G.t, now = plain(d.nowHtml()), k = now.replace(/[!.]+$/, '');
+        if (t >= T2.fangs + 0.5) { if (prev !== null && k !== prev) changes++; prev = k; }
+        if (t >= T2.fangs + 3 && t < tb - 5.5) { samples++; if (want.test(now)) named++; } if (t >= tb && t < tb + 1 && /^Break now/.test(now)) broke = true; }
+      if (!samples || named < samples * 0.6) bad('while tethered the NOW line names your break in only ' + named + ' of ' + samples + ' moments' + tag + ' (check S9)');
+      if (changes > 5) bad('the NOW line changes ' + changes + ' times from the tethers landing to your break' + tag + ' (5 at most; check S9)');
+      if (!broke) bad('the NOW line doesn\'t say "Break now" as your break comes' + tag + ' (check S9)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.

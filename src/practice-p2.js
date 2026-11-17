@@ -176,7 +176,7 @@ function pgP2Script(o) {
   const tt = mj ? mj.teth : 0;
   // (the review of the prompt fixes, Nov 16: with no tether the call was marked yours ("no tether on you"), gold for nothing of yours; and "stay on the Warden" named
   //  another spot than the job line's "within 20 yards of the Warden". Now the tethered hear their order in gold, the rest a plain one)
-  if (mj && tt) warn(T.fangs, 'Grasping Fangs: Stay within 20 yards of the Warden! You break ' + (tt === 'solo' ? 'alone first.' : 'with the five.'), GOLD, 1);
+  if (mj && tt) warn(T.fangs, tt === 'solo' ? 'Grasping Fangs: You break first, alone!' : 'Grasping Fangs: You break second, with the 5!', GOLD, 1); /* (which break is yours, first thing: the call said "Stay within 20 yards" and the screen dropped the rest, Flex, Nov 17) */
   else if (mj) warn(T.fangs, heal ? 'Grasping Fangs: Stay with the group! No tether this time.' : 'Grasping Fangs: Keep hitting the Warden! No tether this time.', '#ff8a6a');
   else warn(T.fangs, 'Grasping Fangs: Six tethers, three on each ledge', '#ff8a6a');
   if (tt === 'solo') { timer(T.solo, 'Solo break'); warn(T.solo - 5.5, 'Your tether: Walk to its edge now!', GOLD, 1); warn(T.solo, 'Solo break: Walk out of your tether now!', GOLD, 1); }
@@ -544,7 +544,7 @@ function pgP2(A) {
       if (who === me) A.mistake('kick', (bk ? 'You were the backup and didn\'t kick Anguished Cry (' : 'You didn\'t kick Anguished Cry (') + clk(c.t0) + ')' + (c.rev ? ', in 1.25 s with Revenge' : '') + ': everyone within 60 yards was stunned for 6 s.', c.rev ? 'With Revenge its bar is half as long: press E the moment it starts.' : 'Press E during the Doomscale\'s cast bar, within ' + range(me) + ' yards.', 0); }); };
   const tethers = (t0, t) => { const cr = (at) => at > t0 && at <= t, me = A.me;
     if (cr(T.fangs)) { const n = { E: 0, W: 0 }; Object.keys(S.job).forEach((id) => { const j = S.job[id]; if (!j.teth) return; G.p2.teth[id] = { solo: j.teth === 'solo', br: null, side: j.side, n: n[j.side]++ };
-      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break alone, first.' : 'you break with the five.'), true); } }); }
+      if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break first, alone.' : 'you break second, with the 5.'), true); } }); }
     // (the five's break puts five stacks of Blight Vein on everyone at once: 640 to 960k each on the kills, under raid cooldowns; your defensive halves it)
     if (cr(T.five - 1.5) && !window.__pgAuto && A.big && G.p2.where[me] === 'L') A.big('The five break: Press Q (defensive) now!', '#7fb8ff'); /* (not "your defensive": a call that says "your" reads as yours, and this one is everyone's) */
     if (t < T.fangs) return;
@@ -756,7 +756,7 @@ function pgP2(A) {
     if (kNow) return kickLine(k);
     const thOn = th && th.br == null && t >= T.fangs && wdUp(th.side), tb = th ? (th.solo ? T.solo : T.five) : 0;
     if (thOn && t >= tb) return 'Break now: walk out past 25 yards!';
-    if (thOn && t >= tb - 5.5) return 'Walk to the edge of your tether (the arrow), then wait.';
+    if (thOn && t >= tb - 5.5) return th.solo ? 'Walk to your tether\'s edge: you break first.' : 'Walk to your tether\'s edge: you break with the 5.';
     if (e && e.state === 'floor' && wDead && t >= e.shell) return 'Pick up your egg (#' + e.n + ') now: walk over it!';
     if (bg && bg.state === 'floor' && t < T.doomEnd && t >= bt) return 'Pick up your big egg now: walk onto it!';
     if (e && e.state === 'held' && t >= T.throwAt) return inRing ? 'Into the cauldron now: hold still in the gold ring.' : 'Into the cauldron now: step into the gold ring!';
@@ -772,10 +772,12 @@ function pgP2(A) {
       return j.big === 'far' ? (far ? 'Walk to your big egg at the south end (the arrow).' : 'Wait outside your egg\'s gold ring until both south eggs are carried off.') : (far ? 'Run alone to your big egg at the north end (the arrow).' : 'Wait outside your egg\'s gold ring until the call.'); }
     if (j.cry && w === 'L' && !dsOut(s) && t >= dsNext(s) - (bg && bg.state === 'floor' ? 8 : 10)) return (pgDist(here, L(s, P.dsKick)) > 6 ? 'Back to the cauldron' : 'Wait by the cauldron') + ': your ' + P.mk[s][j.cry - 1] + ' Doomscale climbs out next.';
     if (w === 'L' && wd && t >= T.fangs - 8 && t < T.fangs && pgDist(here, wd) > 19) return 'Tethers come next: stand within 20 yards of the Warden.';
+    // (a tether on you: which break is yours, steady from the moment it lands until the walk to its edge; before the right target, which flipped the line every
+    //  second between "Hit the Warden" and the tether: Flex, Nov 17, "its not clear if youre the early break or the late break with the 5")
+    if (thOn) return th.solo ? 'You break first, alone: stay by the Warden.' : 'You break second, with the 5: stay by the Warden.';
     // (d) the right target
     const dh = A.dpsHint && A.dpsHint(); if (dh) return dh;
     // (e) your standing job (a tether on you: where to stay until your walk, and which break is yours; the NEXT line names the walk)
-    if (thOn) return 'Stay within 20 yards of the Warden: ' + (th.solo ? 'you break alone, first.' : 'you break with the five.');
     if (w === 'L') {
       if (t < T.wardens) return 'The Warden stands up next: wait here, off the eggs.';
       if (wdUp(s) && t < Math.min(...S.wardens.map((w) => w.molt))) return 'The Warden lands next: hit it once its cast ends.'; /* (before its Shadow Molt ends Tab picks nothing: "Hit the Warden" was false there, Nov 17 review) */
