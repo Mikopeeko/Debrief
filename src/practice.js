@@ -895,7 +895,7 @@ function pgOpen(root, boss, d, pk) {
   //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
   //  Then a figure for every WoW class (Flex: "Are there models that can match each class in wow?", "yes! do as many as you can"): auto picks
   //  each raider's class from the team plan (else the role), and the card's Look list picks yours.)
-  const LOOKN = { auto: 'Auto (your class or role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
+  const LOOKN = { auto: 'Auto (class or role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
   let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   // (the boss-mod bars' names, one per mechanic from start to end, as the calls and the job line say them (the audit: "Fester Burst" turned into "Bubble: get in"
   //  halfway, "Mephitic Thrash" into "Tail sweep: out of 35 yards"))
@@ -1540,9 +1540,10 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-srow select.pg-me { flex: 1; min-width: 0; height: 38px; padding: 0 8px; border: 1px solid rgba(255,255,255,.2); background: #0f1117; color: #fff; font: 600 14px var(--body, system-ui); }
 .pg-play { width: 100%; height: 60px; margin-top: 16px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .pg-play b { font: 800 20px var(--head, system-ui); letter-spacing: .02em; color: #1a1405; } .pg-psub { font: 600 13px var(--body, system-ui); color: #3b2f0c; }
-.pg-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
-.pg-chip { height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); background: none; color: #aab4c0; font: 600 12.5px var(--body, system-ui); cursor: pointer; }
-.pg-chip:hover { color: #fff; border-color: rgba(255,255,255,.4); } .pg-chip select { height: 22px; max-width: 220px; border: 0; background: #0f1117; color: #e8edf2; font: 600 12.5px var(--body, system-ui); }
+.pg-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-width: 460px; margin: 12px auto 0; } /* (two switches, then two lists, same size: they wrapped unevenly, Start alone on a row, Flex Nov 17: 'weird formatting/glitches') */
+.pg-chip { height: 30px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); background: none; color: #aab4c0; font: 600 12.5px var(--body, system-ui); cursor: pointer; }
+.pg-chip:hover { color: #fff; border-color: rgba(255,255,255,.4); } .pg-chip select { flex: 1 1 auto; min-width: 0; max-width: none; height: 28px; padding: 0 4px; border: 0; background: transparent; color: #e8edf2; font: 600 12.5px var(--body, system-ui); cursor: pointer; } .pg-chip select option { background: #0f1117; color: #e8edf2; }
+.pg-chip.pg-lookw, .pg-chip.pg-atw { justify-content: flex-start; padding: 0 0 0 10px; cursor: default; } /* (a list sits flat in its frame, no box in a box) */
 .pg-setup .pg-keys { text-align: center; margin: 8px 0 0 !important; } .pg-setup .pg-head .pg-part { margin-top: 2px; }
 .pg.pg .pg-in :is(.pg-tile, .pg-chip, .pg-play, .pg-chip select, .pg-srow select) { border-radius: 0 !important; }
 @media (max-width: 640px) { .pg-srow { flex-direction: column; align-items: stretch; gap: 6px; } .pg-say { padding-left: 0; } .pg-tile { height: 44px; font-size: 13.5px; } }
