@@ -29205,6 +29205,7 @@ const PATCH_NOTES = [
       'Practice Ula\'tek: clearer sound cues, a sound for each kind of call, a 3, 2, 1 tick before your tether break, and Loud, Soft or Off on the speaker button.',
       'Practice Ula\'tek: a quick How to play before your first run, and a Pause button (Space) on the hotbar.',
       'Practice Ula\'tek: the mouse is a normal arrow. Over a mob it turns into a sword, and the mob lights up with a white circle and its name, so you know what a click will target.',
+      'Practice Ula\'tek: clearer wording everywhere. Every order names what to hit, like "DPS your egg to break its shell", and every defensive call reads "Press Q now!" with no brackets.',
       'Mythic+ Graphs: the chart is smoother, its layers fade, and boss names, Lust and deaths sit above it in bigger text.',
       'Grade letters have new colours everywhere: S gold, A green, B teal, C amber, D orange, F red.',
       'Mythic+ Summary: under the run, How we compare says what the fast run, your spec and top mean.'],
@@ -73127,9 +73128,9 @@ const PG_SHORT = [
   [/^Mother's Wrath: step out of .*$/i, 'Step out of the red circle!'], [/^(?:An egg is falling on you: step out of the white circle|Step out of the white circle: an egg is landing on you!?)$/i, 'Step out of the white circle!'], [/^Step out of your egg's circle: it lands there!?$/i, 'Step out of your egg\'s circle!'],
   [/^Move one quarter left now, before she breaks this one$/i, 'Move one quarter left now!'], [/^Stay(?: with your half,)? within 20 yards of the Warden(?:: .*)?$/i, 'Stay within 20 yards of the Warden'], [/^Hit the Warden with your half, off the eggs$/i, 'Hit the Warden, off the eggs'],
   [/^Hit the Warden: your (?:egg \(#\d+\) opens once it dies|big egg comes later)$/i, 'Hit the Warden'], [/^Carry your egg to your coil, clear of other carriers$/i, 'Carry your egg to your coil'], [/^Carry your egg to your spot by the cauldron.*$/i, 'Carry your egg to the cauldron'],
-  [/^Go to the gold ring by the Diamond.*$/i, 'Go to the gold ring by Diamond'], [/^Your gate opens next: stand by it$/i, 'Stand by your gate'], [/^Walk into your gate to cross to the (?:east|west) ledge$/i, 'Walk into your gate'],
+  [/^Go to the gold ring by (?:the )?Diamond.*$/i, 'Go to the gold ring by Diamond'], [/^Your gate opens next: stand by it$/i, 'Stand by your gate'], [/^Walk into your gate to cross to the (?:east|west) ledge$/i, 'Walk into your gate'],
   [/^Walk to the edge of your tether, then wait$/i, 'Walk to your tether\'s edge, then wait'], [/^The Warden stands up next: wait here, off the eggs$/i, 'Wait here, off the eggs'], [/^The Warden lands next: hit it once its cast ends$/i, 'Wait: the Warden is landing'],
-  [/^Pick up your egg(?: \(#\d+\))?(?: now)?: walk over it!?$/i, 'Pick up your egg'], [/^Break your egg$/i, 'DPS your egg'], [/^Run to your egg, then break it$/i, 'Run to your egg and DPS it'], [/^Wait by your egg(?: \(#\d+\))?: hit it to open it$/i, 'DPS your egg'],
+  [/^Pick up your egg(?: \(#\d+\))?(?: now)?: walk over it!?$/i, 'Pick up your egg'], [/^Break your egg$/i, 'DPS your egg to break its shell'], [/^Run to your egg, then break it$/i, 'Run to your egg and DPS it'], [/^Wait by your egg(?: \(#\d+\))?: hit (?:it|your egg) to open it$/i, 'DPS your egg to open it'],
   [/^Wait by your egg: its shell is breaking$/i, 'Wait by your egg'], [/^Go to her edge: hit the heart from there$/i, 'Go to her edge, hit the heart'], [/^Back to her: walk into your gate$/i, 'Walk back through your gate'], [/^Walk into the gateway to reach her$/i, 'Walk into the gateway'],
   [/^Go through the gateway now$/i, 'Go through the gateway now!'], [/^Stay with your half(?:, out of the carriers' rings|[:,] your big egg comes later|, off the eggs)$/i, 'Stay with your half'], [/^Wait outside the red circles, then burn the heart$/i, 'Wait outside the red circles'],
   [/^Go next to your egg's gold circle, not under it$/i, 'Go next to your egg\'s gold circle'], [/^Your kick is next: press E when .*$/i, 'Your kick is next: wait for the cast'], [/^Your kick is next: get close to (.+)$/i, 'Get close to $1'],
@@ -73142,7 +73143,7 @@ const PG_SHORT = [
   [/^Wait outside your egg's gold ring until .*$/i, 'Wait outside your egg\'s ring'], [/^Step away from (.+?)'s egg: your rings almost touch!?$/i, 'Step away from $1\'s egg!'], [/^Too close to (.+?)'s egg: step away from them!?$/i, 'Too close to $1\'s egg!'],
   [/^Run alone to your big egg at the (north|south) end$/i, 'Run alone to the $1 big egg'], [/^Stay out of the line and its side waves!?$/i, 'Dodge the beam and its side waves!'], [/^Your soaks are done: leave your egg$/i, 'Leave your egg, go to the gold ring'], [/^Hit the heart, and step out of the brown circles$/i, 'Hit the heart, dodge the brown circles'], [/^She's up (.+?): phase 3 starts by her$/i, 'She\'s up $1: go to her'],
 ];
-const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into|Walk to your tether)/i; /* (must be done now: never held back, never covered by a call) */
+const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Press E|Break now|Cross into|Walk to your tether)/i; /* (must be done now: never held back, never covered by a call) */
 const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim(); if (!x) return '';
   x = x.replace(/^(?:Good spot|Off her quarter: good)[.!]?\s+(?=[A-Z])/, ''); /* (praise, then the order: the order) */
   x = x.replace(/:\s*press Tab(?: to pick (?:it|one))?,? then keep pressing 1(?: to hit it)?/gi, '').replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/:\s*Tab, then 1/gi, '')
@@ -73171,7 +73172,7 @@ const pgEndTip = (s, head) => { let x = pgNoClock(String(s == null ? '' : s)).sp
   x = pgRealKeys(x.replace(/\btheir red lanes\b/i, 'the red lanes').replace(/^Carrying an egg, a wave hatches it: dodge every one$/i, 'With an egg, dodge every wave'));
   return x.charAt(0).toUpperCase() + x.slice(1); };
 // (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
-const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) return 'Kill the ' + m[1].trim(); /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
+const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) { const nm = m[1].trim(); return PG_DO.test(nm) ? pgShort(nm) : 'Kill the ' + nm; } /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys. A name that is already an order is said as one: "Break your egg: press Tab to pick it" read "Kill the Break your egg", Flex, Nov 17) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
   if (yn) o = o.replace(/\bits\b/, 'your ' + yn[1] + '\'s').replace(/\bthe (first|second) one\b/, 'the $1 ' + yn[1]); return pgShort(o); };
 // ---- the coach card's words (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): one entry a mechanic, keyed by its name;
 // "@int" or "@3" for a part where it plays differently. t: the title, "Name (Short instruction)" as notes/Guides/Mechanic titles - the rule.md has it; w: one
@@ -73197,12 +73198,12 @@ const PG_COACH = {
   Malice: { t: 'Malice (Kick it)', w: 'The Warden casts Malice, which hits everyone every second unless someone kicks it.', j: 'Kick it with E when it\'s yours.', sp: 'Malice' },
   'Grasping Fangs': { t: 'Grasping Fangs (One break, then five together)', w: 'Tethers bind three players on each ledge, and every break puts a stacking poison on the whole raid.', j: 'Walk out of your tether when it\'s your turn.', sp: 'Grasping Fangs' },
   Clutches: { t: 'Clutches (Kill them)', w: 'The eggs near a Warden turn into Clutches, and each one hatches unless it dies first.', j: 'Press Tab to pick one, then keep pressing 1.', sp: 'Writhing Gestation' },
-  'Clutches@3': { t: 'Slithering Clutches (Kill them)', w: 'Clutches crawl toward the venom, and any that reach it hatch.', j: 'Hit them once they\'re pulled in.', sp: 'Call of the Serpent' },
+  'Clutches@3': { t: 'Slithering Clutches (Kill them)', w: 'Clutches crawl toward the venom, and any that reach it hatch.', j: 'Hit the clutches once they\'re pulled in.', sp: 'Call of the Serpent' },
   'Doomscale Eggs': { t: 'Doomscale Eggs (Small first, the big one last)', w: 'Each ledge carries its small eggs into the cauldron first, then its big Doomscale Egg.', j: 'Carry your egg into the cauldron ring.', sp: 'Hatching Doom' },
   'Anguished Cry': { t: 'Weakened Doomscale (Kick and kill)', w: 'A Weakened Doomscale climbs out of the cauldron and casts Anguished Cry, which stuns everyone near it unless someone kicks it.', j: 'Kick its Cry if it\'s yours, and stay out of its front.', sp: 'Anguished Cry' },
   'Desperate Thrash': { t: 'Desperate Thrash (Stay out of its front)', w: 'A Doomscale sweeps the floor in front of it, at its tank.', j: 'Stand behind or beside the Doomscale.', sp: 'Desperate Thrash' },
   'Virulent Spit': { t: 'Virulent Spit (Step out of the swirl)', w: 'Ula\'tek spits a green swirl under a raider, and it lands a moment later.', j: 'Step out of the green swirl.', sp: 'Virulent Spit' },
-  'The Shattering': { t: 'The Shattering (Stand on the gold ring)', w: 'The platform breaks into four quarters, and anyone on a crack falls into the venom.', j: 'Stand on the gold ring by the Diamond marker.', sp: 'The Shattering' },
+  'The Shattering': { t: 'The Shattering (Stand on the gold ring)', w: 'The platform breaks into four quarters, and anyone on a crack falls into the venom.', j: 'Stand on the gold ring by Diamond.', sp: 'The Shattering' },
   'Serpent\'s Bite': { t: 'Serpent\'s Bite (Soak with 3)', w: 'Two players get red circles that leech venom until three soakers stand in them.', j: 'Keep out of the red circles unless you soak.', sp: 'Serpent\'s Bite' },
   'Volatile Purge': { t: 'Volatile Purge (Spread out)', w: 'Each soaker erupts in venom after the bite and sends waves out.', j: 'Spread out from the others.', sp: 'Volatile Purge' },
   'Circling Prey': { t: 'Circling Prey (One quarter counter-clockwise)', w: 'Ula\'tek breaks the quarter she stands on, so everyone moves to the next one.', j: 'Move one quarter on with the raid.', sp: 'Circling Prey' },
@@ -73294,7 +73295,7 @@ function pgUlScript(o) {
   const B1 = (p) => FT(first[0] ? [p[0], -p[1]] : p, 30);
   [{ w: 'w1', t0: 35, at: 39, p: B1([-26, 2]), m: B1, tank: 't2' }, { w: 'w1', t0: 66, at: 70, p: [4, 20], tank: 't2' }, { w: 'w2', t0: 104, at: 108, p: F([0, 26], 108), tank: S.herTank(108), stack: 101.5 },
     { w: 'w2', t0: 136, at: 140, p: FT([-25, 0], 140), tank: S.herTank(108) === 't1' ? 't2' : 't1' }].forEach((b) => {
-    S.bubbles.push(b); cast('wretch', 'Fester Burst', b.t0, b.at); if (!b.stack) warn(b.t0, 'Fester Burst: get in the bubble!', NEU, { at: b.at }); /* (the 1:48 one has its own call at 1:41: run to it) */ timer(b.at, 'Bubble'); });
+    S.bubbles.push(b); cast('wretch', 'Fester Burst', b.t0, b.at); if (!b.stack) warn(b.t0, 'Fester Burst: get in the bubble!', NEU, { at: b.at }); /* (the 1:48 one has its own call at 1:41: run to it) */ timer(b.at, 'Wretch\'s bubble'); });
   // Mother's Wrath: 5 s cast, her tank knocked back, then five bites in her reach (the red circle in front of her)
   [22, 92].forEach((t) => { cast('boss', 'Mother\'s Wrath', t, t + 5); warn(t, 'Mother\'s Wrath: stay out of her reach!', RED); timer(t + 5, 'Her bites'); S.wrath.push({ t0: t, at: t + 5, p: F(PG_UL.reach, t + 1), tank: S.herTank(t + 5) }); });
   // Spectral Coils: two 10-yard soaks beside her tail, wherever it is (set 1 west or east, set 2 south), slamming 0:40 and 0:43, 2:14 and 2:17; either one can
@@ -73336,9 +73337,9 @@ function pgUlScript(o) {
   S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch where the bubbles rise!', NEU); warn(SURF, 'Ula\'tek surfaces: turn to where the bubbles were!', NEU); /* ("face her new spot, where the bubbles were" lost its second half to the small line, and "face" is tank wording: the review of Nov 16, check T5) */ timer(SURF, 'She surfaces');
   // Rage of the Shackled: 6.5 s cast, then her heart is open for 20 s; raid damage every 4 s; Falling Debris (7 yards) all over
   // (the call that says hit it comes as it opens: the prompts audit, Nov 16, found the 2:19 call gone from the screen when the heart opened at 2:25.5)
-  cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: get ready to hit the heart!', NEU, { at: 145.5 }); warn(145.5, 'Heart open: hit it now (Tab, then 1)!', NEU); timer(145.5, 'Heart open');
+  cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: get ready to hit the heart!', NEU, { at: 145.5 }); warn(145.5, 'Heart open: hit the heart now (Tab, then 1)!', NEU); timer(145.5, 'Heart open');
   for (let t = 145.5; t < 165; t += 4) S.pulses.push(t);
-  for (let t = 147; t < 164.5; t += 3.4) for (let j = 0; j < 3; j++) { let q; for (let k = 0; k < 30; k++) { q = [-30 + rnd() * 60, -30 + rnd() * 62]; if (PG_UL.onPlat(q[0], q[1])) break; } S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t - 1.8, at: t + j * 0.25, name: 'Falling Debris', dmg: 55, color: '#c8a36a', tip: 'Brown circles in the heart burn: step out before they land.' }); }
+  for (let t = 147; t < 164.5; t += 3.4) for (let j = 0; j < 3; j++) { let q; for (let k = 0; k < 30; k++) { q = [-30 + rnd() * 60, -30 + rnd() * 62]; if (PG_UL.onPlat(q[0], q[1])) break; } S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t - 1.8, at: t + j * 0.25, name: 'Falling Debris', dmg: 55, color: '#c8a36a', tip: 'Brown circles in the heart burn: step out of the brown circles before they land.' }); }
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
@@ -73493,7 +73494,7 @@ function pgOpen(root, boss, d, pk) {
   const nearestRight = (t) => { const cat = dpsCat(t), L = tgtList(t), d = (o) => pgDist([G.x, G.y], o.p); return (cat ? L.filter((o) => isRight(cat, o)) : L.filter((o) => o.kind !== 'boss' && o.kind !== 'tail')).sort((a, b) => d(a) - d(b))[0] || L.sort((a, b) => d(a) - d(b))[0] || null; };
   const atkKey = () => { if (!G) return false; if (has('stun')) { if (!window.__pgAuto) say('You\'re stunned: you can\'t attack.', true); return false; } /* (stunned, as by an Anguished Cry nobody kicked: no attacks, Nov 15 audit) */ const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
     if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false; /* (still cooling down) */
-    if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 1.' : 'Too far away: get closer.', true); return false; }
+    if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get closer, then press 1.' : 'Too far away: get closer.', true); return false; }
     G.gcd0 = t; hitTgt(o, t); hud(true); return true; };
   const hitTgt = (o, t, quiet) => { if (!quiet) feel(rl(me) === 'm' ? 'slash' : rl(me) === 'h' ? 'holy' : 'fire'); if (!quiet) (G.hitFx = G.hitFx || []).push({ x0: G.x, y0: G.y, x1: o.p[0], y1: o.p[1], r: o.r, t0: t, melee: rl(me) === 'm' });
     const cat = dpsCat(t); G.hits = (G.hits || 0) + 1; if (!quiet) { G.lastHitT = t; G.lastHitCat = cat && isRight(cat, o) ? cat : null; } /* (the area attack's extra hits don't change what you're on) */
@@ -73503,7 +73504,7 @@ function pgOpen(root, boss, d, pk) {
   const aoeLeft = (t) => Math.max(0, AOE.cd - (t - (G.aoe0 == null ? -99 : G.aoe0)));
   const aoeKey = () => { if (!G) return false; if (has('stun')) { if (!window.__pgAuto) say('You\'re stunned: you can\'t attack.', true); return false; } const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
     if (aoeLeft(t) > 0) { if (!window.__pgAuto) say('Area attack isn\'t ready yet.', true); return false; } if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false;
-    if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 2.' : 'Too far away: get closer.', true); return false; }
+    if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get closer, then press 2.' : 'Too far away: get closer.', true); return false; }
     G.aoe0 = t; G.gcd0 = t; const c = o.p.slice(), L = tgtList(t).filter((q) => q.key !== o.key && q.kind !== 'boss' && q.kind !== 'tail' && q.kind !== 'heart' && pgDist(q.p, c) - (q.r || 0) <= AOE.r);
     hitTgt(o, t); L.forEach((q) => hitTgt(q, t, true)); feel('whirl'); (G.aoeFx = G.aoeFx || []).push({ x: c[0], y: c[1], r: AOE.r, t0: t, n: L.length + 1 }); hud(true); return true; };
   const aoeWorth = (t) => { const o = tgtNow(t); return !!o && aoeLeft(t) <= 0 && tgtList(t).filter((q) => q.max && pgDist(q.p, o.p) - (q.r || 0) <= AOE.r).length >= 2; };
@@ -73529,7 +73530,7 @@ function pgOpen(root, boss, d, pk) {
   // (Nov 17: the green chip only for something you did ("Egg picked up", "Soaked", "Kicked", "Tether broken on time"); an order or a "not yet" ("Not open yet: hit
   //  it", "Kick is on cooldown") shows in the middle without a tick, and every float says it short: one sentence (pgShort))
   const PG_DONE = /^(?:Egg picked up|Big egg picked up|Shell broken|Soaked|Kicked|Tether broken|The Warden is dead|Through the gateway|Your egg is in the cauldron|Big egg in the cauldron|You rode out|In the ring|Defensive on|[A-Z][a-z]+(?: [A-Z][a-z]+)? killed)\b/;
-  const say = (text, bad) => { said.push({ t: G ? G.t : 0, text: String(text) }); if (said.length > 300) said.shift(); if (!bad && PG_DONE.test(String(text))) { resChip(String(text).split(/[.:](?:\s|$)/)[0]); return; } const f = $('.pg-float'); f.textContent = pgShort(text); f.className = 'pg-float' + (bad ? ' bad' : ''); void f.offsetWidth; f.classList.add('in'); };
+  const say = (text, bad) => { said.push({ t: G ? G.t : 0, text: String(text) }); if (said.length > 300) said.shift(); if (!bad && PG_DONE.test(String(text))) { resChip(String(text).split(/[.:](?:\s|$)/)[0]); return; } const f = $('.pg-float'); f.textContent = bad ? pgEndHead(text) : pgShort(text); f.className = 'pg-float' + (bad ? ' bad' : ''); void f.offsetWidth; f.classList.add('in'); };
   // (look C, Nov 16: a step done is a short green chip under the fight path ("Egg picked up", "Soaked", "Kicked: Malice interrupted") that fades; a mistake
   //  stays where it was, in the middle, as a red chip of the same shape (.pg-float). Three chips at most, each gone 3.2 s later on the game's clock)
   const resChip = (text) => { const el = $('.pg-res'); if (!el || typeof document === 'undefined' || !document.createElement) return; const c = document.createElement('div'); c.className = 'pg-okc';
@@ -73605,7 +73606,7 @@ function pgOpen(root, boss, d, pk) {
   const eggLocked = (e) => !!e.lock && !(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null);
   const shellHit = (n, t) => { const e = myShell(); if (!e) return; e.shp -= n; if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; };
   const hatch = (e, why, tip) => { feel('hiss'); e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
-    if (!window.__pgAuto) bigCall('Viper hatched: kill it now (Tab, then 1)!', '#ff8f87'); }; /* (it stays until you kill it: vipers() below. "Mechanic: Order": the big line read "A Viper hatched", the review of Nov 16, check T6) */
+    if (!window.__pgAuto) bigCall('Viper hatched: kill the Viper now (Tab, then 1)!', '#ff8f87'); }; /* (it stays until you kill it: vipers() below. "Mechanic: Order": the big line read "A Viper hatched", the review of Nov 16, check T6) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
   // (egg carriers stand on their own spots in a bubble or a soak: a ring 6.5 yards out, about 5 yards apart, in the same order every time, so
@@ -73735,13 +73736,13 @@ function pgOpen(root, boss, d, pk) {
     (S.beams || []).forEach((bm, bi) => { if (P2 || t < bm.t0 || t > bm.t1 || G.done.has('beam' + bi)) return; const ax = bm.from[0], ay = bm.from[1], tk = G.bots[bm.tank] || { x: bm.at[0], y: bm.at[1] }, vx = tk.x - ax, vy = tk.y - ay, L2 = vx * vx + vy * vy || 1, u = Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / L2));
       if (Math.hypot(x - (ax + vx * u), y - (ay + vy * u)) <= 1.6) { G.done.add('beam' + bi); mistake('beam', 'You stood in the venom beam: only the off tank stands in it.', 'The spectral image beams the off tank: keep out of the line between them.', 35); } });
     // the eggs land (4 yards), their shells break, carriers pick theirs up
-    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 14) feel('thud'); if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
+    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 14) feel('thud'); if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard white circles: step out of the white circles.', 25); }
       if (e.state === 'floor' && e.id === me && e.shp > 0 && !eggLocked(e)) { e.shp -= SHELL.raid * (t - t0); if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; }
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id], byYou = b && myEggHeld() && Math.hypot(b.x - x, b.y - y) < 3.6; /* (the release sweep, Nov 16: a raider doesn't pick its egg up inside 3.6 yards of you while you carry yours; it waits for you to pass) */ if ((b && !byYou && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
       // (the release sweep, Nov 16: you pick your egg up anywhere inside its gold 2.8-yard ring, the one drawn round it. It was 2.2, so a player who stopped
       //  inside the ring, or where the Go here arrow went away at 2.5, kept waiting with "Pick up your egg now")
       if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.8) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock ? (eggLocked(e) ? e.lock : 'Not open yet: hit it (Tab, then 1).') : (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('Your egg\'s ring: keep clear of other carriers!', '#f3c969'); /* (the release sweep, Nov 16: only your own step splashes. "Mechanic: Order" and gold, yours: it had no order and lost its gold, the review of Nov 16, check T6) */ } } }
-      if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
+      if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick up your egg once its shell breaks.', 0); } } });
     // you walk into another carrier's 3-yard circle: Noxious Splash, both eggs hatch at once. (The release sweep, Nov 16: only when YOUR step closed the gap
     //  below 3 yards, G.walkIn from moveBots. Before, any step of yours counted while a carrier was close, even one away from it or one it walked into, and
     //  the words blamed the other carrier for it)
@@ -73756,7 +73757,7 @@ function pgOpen(root, boss, d, pk) {
     S.bubbles.forEach((q) => { if (!crossed(q.at)) return; const c = G.wr[q.w]; if (c) feel('pop'); if (c && Math.hypot(x - c.x, y - c.y) > 10) { deb('fester', 12); mistake('fester', 'Fester Burst: you were outside the Wretch\'s bubble.', 'Be within 10 yards of the Wretch when Fester Burst goes off.', 40); } });
     // the tail's sweep: 35 yards, a big hit and a knockback
     S.thrash.forEach((th) => { if (!crossed(th.at)) return; feel('sweep'); const dd = Math.hypot(x - th.x, y - th.y); hurt(15); deb('thrash', 10); /* (everyone takes the sweep's hit and its DoT, Nov 15 audit) */
-      if (dd <= th.r) { mistake('thrash', 'Mephitic Thrash: you were inside her tail\'s 35 yards.', 'Run out of 35 yards from her tail during the cast.', 30); { const e = myEggHeld(); if (e) hatch(e, 'Mephitic Thrash hit your egg inside her tail\'s 35 yards', 'Carrying an egg, get out of 35 yards from her tail before the sweep.'); } const a = Math.atan2(y - th.y, x - th.x); G.kb = { t0: t, x0: x, y0: y, x1: th.x + Math.cos(a) * (dd + 14), y1: th.y + Math.sin(a) * (dd + 14) }; } });
+      if (dd <= th.r) { mistake('thrash', 'Mephitic Thrash: you were inside her tail\'s 35 yards.', 'Get 35 yards away from her tail during the cast.', 30); { const e = myEggHeld(); if (e) hatch(e, 'Mephitic Thrash hit your egg inside her tail\'s 35 yards', 'Carrying an egg, get out of 35 yards from her tail before the sweep.'); } const a = Math.atan2(y - th.y, x - th.x); G.kb = { t0: t, x0: x, y0: y, x1: th.x + Math.cos(a) * (dd + 14), y1: th.y + Math.sin(a) * (dd + 14) }; } });
     // Mother's Wrath: five bites in her reach
     S.wrath.forEach((wr) => { for (let k = 0; k < 5; k++) { if (crossed(wr.at + k * 0.6) && Math.hypot(x - wr.p[0], y - wr.p[1]) <= 5 + PR) mistake('bite', 'Mother\'s Wrath bit you: you were in her reach.', 'Only her tank stands in the red circle in front of her.', 30); } });
     // the venom off the platform: it hurts, and it hatches a carried egg
@@ -74033,7 +74034,7 @@ function pgOpen(root, boss, d, pk) {
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));
     if (!car) S.eggSets.forEach((e) => add(e.land, 'Eggs land', '#e6e0c8'));
     S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + ORD(q) + ')', '#24f2cb'));
-    S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Bubble', '#d8f22f'); });
+    S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Wretch\'s bubble', '#d8f22f'); });
     S.thrash.forEach((q) => add(q.at, 'Tail sweep', '#ff9b4a')); S.wings.forEach((w) => add(w.t + 6, 'Her waves', '#9be13a'));
     { const r0 = G.adds.filter((a) => a.kind === 'rawling' && a.born != null && !a.boil).sort((p, q) => p.born - q.born)[0]; if (r0) add(r0.born + 25, 'Rawlings boil', '#ff8f87'); }
     S.wrath.forEach((q) => add(q.at, 'Her bites', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open', '#ff8a5a');
@@ -74174,7 +74175,7 @@ function pgOpen(root, boss, d, pk) {
     .replace(/\bred (lanes?|circle|half)\b/g, '<span class="pg-kr">$&</span>').replace(/\borange circle\b/g, '<span class="pg-ko">$&</span>').replace(/\bbrown circles?\b/g, '<span class="pg-kd">$&</span>');
   const nowHtml = (text) => { const s = String(text || '').trim(); if (!s) return ''; const m = /^(.+?[.!?])\s+(\S.*)$/.exec(s), big = (m ? m[1] : s).replace(/\.$/, ''), rest = m ? m[2] : '';
     return '<b>' + kwHtml(esc(big)) + '</b>' + (rest ? ' <small>' + kwHtml(esc(rest)) + '</small>' : ''); };
-  const nextHtml = (jl, t) => { const nx = nextText(jl); if (nx) return '<span class="pg-nxk">Next</span><span class="pg-nxm">' + kwHtml(esc(capS(String(nx).replace(/^Then:\s*/i, '')))) + '</span>';
+  const nextHtml = (jl, t) => { const nx = nextText(jl); if (nx) return '<span class="pg-nxk">Next</span><span class="pg-nxm">' + kwHtml(esc(capS(String(nx).replace(/^Then:\s*/i, '').replace(/\.$/, '')))) + '</span>';
     const sk = jl && jl.st ? stepKey(jl.st) : null, ck = G.coachS && G.coachS.cur ? G.coachS.cur.k : null, b = modBars(t).find((q) => q.left <= 15 && !(sk && pgCoachKey(q.name) === sk) && !(ck && pgCoachKey(q.name) === ck)); /* (not the step NOW is on, nor the one the coach card is about) */
     return b ? '<span class="pg-nxk">Next</span><span>' + esc(b.name) + '</span>' : ''; };
   // (your job as a gold tag under your frame, short: "Egg left · Right Soak #1", as the setup's Play button says it)
@@ -74250,7 +74251,7 @@ function pgOpen(root, boss, d, pk) {
     else L.push(['Coil soaks', 'First set: team ' + sets[0] + '. Second set: team ' + sets[1] + '. Team 1 takes the first coil to appear, team 2 the next. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
     if (TEAM) TEAM.fb.forEach((f, i) => { const j = f.indexOf(id); if (j >= 0) L.push(['Fester Burst (' + (i ? 'third' : 'first') + ' bubble)', 'Your spot in the bubble: ' + (i ? 11 + j : 1 + j) + ' (a gold circle while you carry your egg).']); });
     else if (J && carrierOf(id)) L.push(['Fester Burst (first and third bubbles)', 'Your spot in the bubble is picked for you: the gold circle. Keep 3 yards from the other carriers.']);
-    L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch each time it swells, four times. For the third, run to it in front of her as her tail sweeps.']); L.push(['Her tail\'s sweep', 'Run out of 35 yards from her tail, twice.']);
+    L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch each time it swells, four times. For the third, run to it in front of her as her tail sweeps.']); L.push(['Her tail\'s sweep', 'Get 35 yards away from her tail, twice.']);
     L.push(['Her waves', 'Twice: wait in the green half, then cross behind the first wave as the floor swaps.']); L.push(['Small tails', 'Two tails rise at the edge, always on the same spots, and each fires a short fan of three waves: stand in a gap between their red lanes.']);
     L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive and the heart', 'She comes up on either side. When her heart opens, hit it and step out of the brown circles.']);
     return '<ul class="pg-asg">' + L.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
@@ -74503,7 +74504,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, jobPick: () => jobPick(), next: () => nextText(jobPick()), said: () => said.slice(), v3a: v3api, steps: () => mySteps(G.t).map((s) => ({ k: s.k, at: s.at, from: s.from })), stepSpot: () => { const sp = stepSpot(curStep(G.t), G.t); return sp ? { T: sp.T, rad: sp.rad, inside: sp.inside(G.x, G.y) } : null; }, pathClear: (a, b, s) => pathClear(a, b, s), alertTexts: (items) => items.map((it) => { const h = alertOf(it, G.t, false); return { mine: /class="pg-al you/.test(h), order: (/pg-alo">([^<]*)/.exec(h) || [])[1] || '', detail: (/pg-ald">([^<]*)/.exec(h) || [])[1] || '', num: /pg-aln/.test(h) }; }), myCall: (w) => myCall(w), kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, pathView: () => pathView(G.t), coach: () => { const c = coachNow(G.t); return c ? { k: c.k, name: c.name, at: c.at, title: c.t, what: c.w, job: c.job } : null; }, nowHtml: () => nowHtml(G.nowD ? G.nowD.text : pgShort(jobPick().text)), nextHtml: () => nextHtml(jobPick(), G.t), /* (look C, Nov 16: tests/practice-shared.js check N) */ jobSlot: () => jobSlot(myJob), howTo: () => howToHtml(), pause: () => { paused = true; stop(); }, get rushing() { return rushK() > 1; }, panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, alerts: (items) => alertsHtml(items, G.t), walkTo: (p) => { target = p; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), aoe: () => aoeKey(), snd: (on) => { if (on != null) sndSet(on); return sndOn; }, cdn: () => countdown(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, get dpsSay() { return DPS_SAY; }, jobPick: () => jobPick(), next: () => nextText(jobPick()), said: () => said.slice(), v3a: v3api, steps: () => mySteps(G.t).map((s) => ({ k: s.k, at: s.at, from: s.from })), stepSpot: () => { const sp = stepSpot(curStep(G.t), G.t); return sp ? { T: sp.T, rad: sp.rad, inside: sp.inside(G.x, G.y) } : null; }, pathClear: (a, b, s) => pathClear(a, b, s), alertTexts: (items) => items.map((it) => { const h = alertOf(it, G.t, false); return { mine: /class="pg-al you/.test(h), order: (/pg-alo">([^<]*)/.exec(h) || [])[1] || '', detail: (/pg-ald">([^<]*)/.exec(h) || [])[1] || '', num: /pg-aln/.test(h) }; }), myCall: (w) => myCall(w), kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, pathView: () => pathView(G.t), coach: () => { const c = coachNow(G.t); return c ? { k: c.k, name: c.name, at: c.at, title: c.t, what: c.w, job: c.job } : null; }, nowHtml: () => nowHtml(G.nowD ? G.nowD.text : pgShort(jobPick().text)), nextHtml: () => nextHtml(jobPick(), G.t), /* (look C, Nov 16: tests/practice-shared.js check N) */ jobSlot: () => jobSlot(myJob), howTo: () => howToHtml(), pause: () => { paused = true; stop(); }, get rushing() { return rushK() > 1; }, panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, alerts: (items) => alertsHtml(items, G.t), walkTo: (p) => { target = p; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), aoe: () => aoeKey(), snd: (on) => { if (on != null) sndSet(on); return sndOn; }, cdn: () => countdown(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -79445,12 +79446,12 @@ function pgP2Script(o) {
   //  says it's coming: the old one said "burn the heart" 6.5 s early and nothing came as it opened)
   warn(o.me && S.home[o.me] != null ? S.home[o.me] : T.home, 'Back to her: Walk into your gate now!', '#c084ff', 1); timer(T.home, 'Back to her');
   cast('boss', 'Rage of the Shackled', T.rage, T.heart); warn(T.rage, 'Rage of the Shackled: Get ready, the heart opens soon', '#ff8a5a'); timer(T.heart, 'Heart open');
-  warn(T.heart, heal ? 'Heart open: Step out of the brown circles!' : 'Heart open: Hit it (Tab, then 1)!', '#ff8a5a');
+  warn(T.heart, heal ? 'Heart open: Step out of the brown circles!' : 'Heart open: Hit the heart (Tab, then 1)!', '#ff8a5a');
   for (let t = T.heart; t < T.heartEnd; t += 4) S.pulses.push(t);
   // Falling Debris: three times in stage 2 (about 3:50, 4:30 and 5:17; 264k to 458k a hit since Nov 6), by each half, and all over the stone in the heart burn
   const near = (c, r, onF) => { let q = c; for (let k = 0; k < 40; k++) { const a = rnd() * Math.PI * 2, d = 2 + rnd() * r; q = [c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d]; if (onF(q[0], q[1])) break; } return q; };
   // (its circles show 3.5 s before they land, with the call: at 2 s a raider walking from the landing spot was hit three times (the prompts audit, Nov 16))
-  const fall = (q, at) => S.impacts.push({ x: q[0], y: q[1], r: 7, t0: at - 3.5, at, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Brown circles: step out before they land.' });
+  const fall = (q, at) => S.impacts.push({ x: q[0], y: q[1], r: 7, t0: at - 3.5, at, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Step out of the brown circles before they land.' });
   // (on the ledges: never right at an edge, so there's stone to step out on either side)
   [[T.debris[0], [104, 24]], [T.debris[1], [104, 6]]].forEach(([at, c]) => ['E', 'W'].forEach((s) => { for (let j = 0; j < 4; j++) fall(near(L(s, c), 13, (x, y) => pgP2Ledge(x, y, 7)), at + j * 0.3); }));
   for (let j = 0; j < 3; j++) fall(near([24 * sg, 2], 16, PG_UL.onPlat), T.debris[2] + j * 0.3);
@@ -79760,7 +79761,7 @@ function pgP2(A) {
     kickables(t).forEach((k) => { if (!k.who || stunned(k.who, t) || (k.who === me && (!window.__pgAuto || t - G.p2.kickCd < 15)) || t < k.t0 + (k.who === me ? 0.25 : kdelay(k.key, k.kind, k.rev))) return; if (pgDist(pos(k.who), k.p) <= range(k.who) + (k.who === me ? (G.p2.where[me] === 'p1' && window.__pgAuto ? 5 : 0) : G.p2.where[k.who] === 'p1' ? 10 : 3)) { if (k.who === me) G.p2.kickCd = t; kicked(k, k.who, t); } }); /* (the autopilot's own kicks keep the 15 s cooldown, as yours do (the release sweep, Nov 16), so the checks see a clash) */ /* (the autopilot, back by her, reaches 5 more while it dodges the small tails; you kick from your own reach) */ /* (the bots' kicks reach 3 yards further (10 back by her, where they dodge the small tails' waves too): the plan's kickers, never a miss of yours) */
     S.malice.forEach((m) => { const key = 'm' + m.side + m.k, bk = G.p2.bk && G.p2.bk.key === key, who = bk ? me : holder('mal', m.side, 1);
       if (cr(m.by) && !G.p2.kick[key] && G.p2.wd[m.side]) { G.p2.kick[key] = 'none'; G.p2.gone.push(m); m.cc.name = 'Warden: Malice (not kicked)'; G.p2.missed.push([who, 'a Malice not kicked ' + clk(m.t0)]);
-        if (who === me) A.mistake('kick', bk ? 'You were the backup and didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.' : 'You didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.', 'Press E while the Warden\'s cast bar runs (you have until just under a second into its channel), within ' + range(me) + ' yards of it.', 0); }
+        if (who === me) A.mistake('kick', bk ? 'You were the backup and didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.' : 'You didn\'t kick Malice (' + clk(m.t0) + '): it hit everyone every second for 6 s.', 'Press E while the Warden\'s cast bar runs, within ' + range(me) + ' yards of it.', 0); }
       // (its ticks: 792k unmitigated on every living player, a second apart from a second after the bar; close to half a raider's health each)
       if (G.p2.kick[key] === 'none' && G.p2.malCut[key] == null) for (let k = 1; k <= 6; k++) if (cr(m.ch + k) && G.p2.wd[m.side]) { A.hurt(45); A.deb('malice', 1.2); } }); /* (malCut: its ticks left on you stop when you're revived (revive)) */
     S.cries.forEach((c) => { const key = 'c' + c.ds + c.i, d = G.p2.ds[c.ds], bk = G.p2.bk && G.p2.bk.key === key, who = bk ? me : holder('cry', c.side, c.dk); if (!cr(c.t1) || G.p2.kick[key] || !d) return; G.p2.kick[key] = 'none'; G.p2.missed.push([who, 'an Anguished Cry not kicked ' + clk(c.t0)]);
@@ -79772,7 +79773,7 @@ function pgP2(A) {
     if (cr(T.fangs)) { const n = { E: 0, W: 0 }; Object.keys(S.job).forEach((id) => { const j = S.job[id]; if (!j.teth) return; G.p2.teth[id] = { solo: j.teth === 'solo', br: null, side: j.side, n: n[j.side]++ };
       if (id === me) { A.deb('fangs', 30); A.say('Grasping Fangs on you: ' + (j.teth === 'solo' ? 'you break first, alone.' : 'you break second, with the 5.'), true); } }); }
     // (the five's break puts five stacks of Blight Vein on everyone at once: 640 to 960k each on the kills, under raid cooldowns; your defensive halves it)
-    if (cr(T.five - 1.5) && !window.__pgAuto && A.big && G.p2.where[me] === 'L') A.big('The five break: Press Q (defensive) now!', '#7fb8ff'); /* (not "your defensive": a call that says "your" reads as yours, and this one is everyone's) */
+    if (cr(T.five - 1.5) && !window.__pgAuto && A.big && G.p2.where[me] === 'L') A.big('The five break: Press Q now!', '#7fb8ff'); /* (not "your defensive": a call that says "your" reads as yours, and this one is everyone's) */
     if (t < T.fangs) return;
     Object.entries(G.p2.teth).forEach(([id, th]) => { if (th.br != null) return; const W = G.p2.wd[th.side]; if (!W) { if (G.p2.wdead[th.side] != null) th.br = 'gone'; return; } /* (its Warden dead: the tether goes with it) */ const d = pgDist(pos(id), W), bt = th.solo ? T.solo : T.five, lo = th.solo ? bt - 1.5 : bt - 1, hi = th.solo ? bt + 3 : bt + 1.5;
       const late = id === me && !window.__pgAuto && t > hi + 1;
@@ -79789,14 +79790,14 @@ function pgP2(A) {
       if (t < T.throwAt) { if (e.who === me && once('wait' + e.n)) A.say('In the ring: the small eggs go in together.'); return; }
       e.state = 'gone'; e.inAt = t; { const q = pgP2Away(S.pits[e.side], 3, e.n * 47, e.side); rawling(e.side, q, t); } /* (a Rawling climbs out of the cauldron for every small egg, as on the kills) */
       if (e.id === me) { if (t > T.throwAt + 7) A.mistake('late', 'Your egg went into the cauldron late (' + clk(t) + ').', 'Be at your lane spot by the cauldron before the call: in together.', 0); else A.say('Your egg is in the cauldron.'); } e.who = null; });
-    if (cr(T.bigUp + 0.5)) G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone') return; if (e.state === 'floor') A.mistake('egg', 'You never picked up your egg (#' + e.n + ').', 'Your egg sits at the north end of your ledge (the gold circle): pick it up once the Warden is dead.', 0); else A.mistake('egg', 'Your egg (#' + e.n + ') wasn\'t in the cauldron before the big eggs were picked up.', 'Carry it to the cauldron and throw it in with the others on the call.', 0); }); };
+    if (cr(T.bigUp + 0.5)) G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone') return; if (e.state === 'floor') A.mistake('egg', 'You never picked up your egg (#' + e.n + ').', 'Your egg sits at the north end of your ledge (the gold circle): pick up your egg once the Warden is dead.', 0); else A.mistake('egg', 'Your egg (#' + e.n + ') wasn\'t in the cauldron before the big eggs were picked up.', 'Carry it to the cauldron and throw it in with the others on the call.', 0); }); };
   const big = (t0, t) => { const me = A.me;
     S.big.forEach((B, i) => { const st = G.p2.big[i], hd = holder('big', B.side, B.which);
       if (st.state === 'floor') { const mineB = hd === me, who = mineB ? (Math.hypot(G.x - B.x, G.y - B.y) <= P.BIG ? me : null) : hd && t >= S.bigAt[B.side][B.which] && pgDist(pos(hd), [B.x, B.y]) <= 2.2 ? hd : null; /* (you: anywhere inside its drawn 3-yard ring (the prompts audit, Nov 16: 2.2, so players who stopped in the ring, where the arrow went away, let it hatch); the bots as before) */
         if (who) { st.state = 'held'; st.who = who; st.at = t; if (who === me) { A.deb('doom', 20); if (G.eggs.some((e) => e.side === B.side && (e.south ? e.state === 'floor' : e.state !== 'gone'))) A.mistake('big', 'You picked up the big egg with small eggs still out.', 'Big eggs last (the plan): every small egg on your ledge is broken out and grabbed first.', 0); else A.say('Big egg picked up: carry it straight to the cauldron.'); }
           // (the south egg's pickup turns the south small eggs beside it into Clutches, 0.7 s later: 16 of the 30 fastest kills let that happen and kill them)
           if (B.which === 'far') G.eggs.forEach((e) => { if (!e.south || e.side !== B.side || e.state !== 'floor') return; e.state = 'gone'; e.who = null; const se = G.p2.se[e.qid]; se.state = 'gest'; se.at = t + 0.7; }); } /* (a south egg not yet grabbed when the south big egg goes up turns into a Clutch: break them out and grab them first) */
-        else if (t >= T.doomEnd) { st.state = 'hatched'; ravenous(B, [B.x, B.y], t, hd === me, 'Hatching Doom ran out on your big egg', 'Pick the big egg up on its call, before the Hatching Doom bar runs out, and carry it straight in.'); } }
+        else if (t >= T.doomEnd) { st.state = 'hatched'; ravenous(B, [B.x, B.y], t, hd === me, 'Your big egg hatched', 'Pick up your big egg on its call and carry it straight in.'); } }
       else if (st.state === 'held') { const p = pos(st.who);
         if (t - st.at >= 20) { st.state = 'hatched'; ravenous(B, p, t, st.who === me, 'Your big egg hatched in your hands (20 s after you picked it up)', 'Once picked up, a big egg hatches when the Doomscale Egg bar on your frame runs out: carry it straight to the cauldron.'); }
         else if (pgDist(p, S.pits[B.side]) <= P.THROW && t < S.bigIn[B.side] && st.who === me) { if (once('bw' + i)) A.say('In the ring: both big eggs go in together.'); }
@@ -79811,7 +79812,7 @@ function pgP2(A) {
   // (a ledge's two big eggs go in together: a carrier at the cauldron waits for the other one still on its way, up to 4 s past the count)
   const partnerComing = (B, i, t) => { if (t >= S.bigIn[B.side] + 4) return false; const j = S.big.findIndex((q, k) => k !== i && q.side === B.side), st = G.p2.big[j]; return !!st && st.state === 'held' && pgDist(pos(st.who), S.pits[B.side]) > P.THROW; };
   const ravenous = (B, p, t, mine, why, tip) => { G.p2.rav.push({ side: B.side, x: p[0], y: p[1], t, roar: t + T.ROAR + 2.5, mine, c: cast('rav', 'Ravenous Doomscale: Dread Roar', t + T.ROAR, t + T.ROAR + 2.5, { side: B.side, spell: 'roar' }) });
-    if (mine) { G.wipes++; A.mistake('wipe', why + ': a Ravenous Doomscale stood up and its Dread Roar wipes the raid on a real pull (here a stun, so you can play on).', tip, 0); }
+    if (mine) { G.wipes++; A.mistake('wipe', why + ': a Ravenous Doomscale stood up (its Dread Roar wipes a real raid; here it only stuns, so you can play on).', tip, 0); }
     // (an order, not news (the review, Nov 16: "a big egg hatched! Its roar wipes a real pull."): Q halves its hit. Q lasts 8 s and the roar lands 9 s after the hatch,
     //  so "now" waits for its cast bar (check())
     if (!window.__pgAuto && A.big) A.big('Ravenous Doomscale: Press Q when it roars!', '#ff5a4f'); };
@@ -79836,12 +79837,12 @@ function pgP2(A) {
         G.eggs.forEach((e) => { if (e.side === s && e.state === 'floor' && !e.south) e.lock = 'Not open yet: hit it (Tab, then 1), or wait a moment.'; });
         const jm = S.job[me]; if (jm.side === s && G.p2.where[me] === 'L') { A.say('The Warden is dead.');
           const myEgg = G.eggs.some((e) => e.id === me && e.state === 'floor' && !e.south);
-          const [tx, you] = myEgg ? ['Warden dead: Wait by your egg, it opens soon', 1] : jm.big ? ['Warden dead: Stay with your half, your big egg comes later', 1] : me[0] === 'h' ? ['Warden dead: Stay with your half, off the carriers\' rings', 1] : ['Warden dead: Kill the Rawlings (Tab, then 1)', 0];
+          const [tx, you] = myEgg ? ['Warden dead: Wait by your egg: it opens soon', 1] : jm.big ? ['Warden dead: Stay with your half, your big egg comes later', 1] : me[0] === 'h' ? ['Warden dead: Stay with your half, off the carriers\' rings', 1] : ['Warden dead: Kill the Rawlings (Tab, then 1)', 0];
           S.warns.push({ t: t + 0.05, text: tx, c: '#f5d33a', ...(you ? { you: 1 } : {}) }); S.warns.sort((a, b) => a.t - b.t); }
         return; }
       // (still up 46 s after it stood up: Shadow Molt again, Writhing Gestation again (more of its eggs turn), another Malice at 55.3 s)
       const r = G.p2.w2[s];
-      if (cr(W2T(w, 'molt'))) { cast('warden', 'Warden: Shadow Molt', t, t + 3, { side: s, spell: 'molt' }); if (S.job[me].side === s && me[0] !== 'h' && !window.__pgAuto && A.big) A.big('Warden still up: Kill it before it turns more eggs!', '#c38bff'); }
+      if (cr(W2T(w, 'molt'))) { cast('warden', 'Warden: Shadow Molt', t, t + 3, { side: s, spell: 'molt' }); if (S.job[me].side === s && me[0] !== 'h' && !window.__pgAuto && A.big) A.big('Warden still up: Kill the Warden before it turns more eggs!', '#c38bff'); }
       if (cr(W2T(w, 'gest'))) r.gest = cast('warden', 'Warden: Writhing Gestation', t, t + 3, { side: s, spell: 'gest' });
       if (r.gest && !r.done && t >= r.gest.t1 + 0.3 && r.gest.t1 > r.gest.t0 + 2.9) { r.done = true; const W = w.at, near = G.eggs.filter((e) => e.side === s && e.state === 'floor').sort((a, b) => pgDist([a.x, a.y], W) - pgDist([b.x, b.y], W)).slice(0, s === 'E' ? 2 : 3);
         near.forEach((e, i) => { e.state = 'gone'; e.who = null; G.p2.cl['c2' + s + i] = { id: 'c2' + s + i, side: s, x: e.x, y: e.y, born: t, hp: 1, dead: null, set: 3 }; if (e.id === me) A.mistake('add', 'Your egg (#' + e.n + ') turned into a Clutch: the Warden lived long enough for a second Writhing Gestation.', 'Hit the Warden (Tab, then 1) so it dies before it starts over.', 0); });
@@ -79875,7 +79876,7 @@ function pgP2(A) {
   // to die gives the rest Revenge)
   const doomscales = (t0, t, dt) => { const me = A.me;
     S.ds.forEach((d) => { const at = G.p2.dsAt[d.id]; if (G.p2.dsS[d.id] || at == null || t < at) return; const st = G.p2.dsS[d.id] = { up: at, hp: 1, dead: null, rev: G.p2.rev };
-      if (once('dsw')) { const jm = S.job[me] || {}; S.warns.push(jm.cry ? { t: t + 0.05, text: 'Weakened Doomscales: Kick your ' + P.mk[jm.side][jm.cry - 1] + ' Doomscale\'s Cry (E)!', c: '#f3c969', you: 1 } : { t: t + 0.05, text: 'Weakened Doomscales: Stay behind them, out of the front', c: '#c9d98a' }); S.warns.sort((a, b) => a.t - b.t); } /* (the kick only to a kicker: healers have none (the prompts audit, Nov 16)) */
+      if (once('dsw')) { const jm = S.job[me] || {}; S.warns.push(jm.cry ? { t: t + 0.05, text: 'Weakened Doomscales: Kick your ' + P.mk[jm.side][jm.cry - 1] + ' Doomscale\'s Cry (E)!', c: '#f3c969', you: 1 } : { t: t + 0.05, text: 'Weakened Doomscales: Stay behind the Doomscales, out of their front', c: '#c9d98a' }); S.warns.sort((a, b) => a.t - b.t); } /* (the kick only to a kicker: healers have none (the prompts audit, Nov 16)) */
       T.CRY.forEach((o, i) => { const c0 = at + o, len = st.rev != null ? 1.25 : 2.5; S.cries.push({ ds: d.id, side: d.side, dk: d.k, i: i + 1, t0: c0, t1: c0 + len, rev: st.rev != null, c: cast('ds', 'Doomscale: Anguished Cry', c0, c0 + len, { ds: d.id, side: d.side, spell: 'cry', kick: true }) }); });
       T.THRASH.forEach((o) => { const a1 = at + o, len = st.rev != null ? 1.5 : 3; S.dthrash.push({ ds: d.id, side: d.side, t0: a1 - len, at: a1, c: cast('ds', 'Doomscale: Desperate Thrash', a1 - len, a1, { ds: d.id, side: d.side, spell: 'thrash' }) }); }); });
     // (a Thrash about to start while its Doomscale is still being dragged waits until it's settled by its tank (on the kills the drag takes about 13 s and the
@@ -79897,7 +79898,7 @@ function pgP2(A) {
   const spit = (t0, t) => { const me = A.me; T.spit.forEach((at, k) => { if (!(at > t0 && at <= t)) return;
     ['E', 'W'].forEach((s) => { const ids = P.half[s].filter((id) => G.p2.where[id] === 'L' && G.p2.wside[id] === s); if (!ids.length) return;
       const who = ids.includes(me) && k % 2 === 0 ? me : ids.filter((id) => id !== me)[(S.seed * 7 + k * 3 + (s === 'E' ? 1 : 0)) % Math.max(1, ids.length - (ids.includes(me) ? 1 : 0))] || ids[0], p = pos(who);
-      S.impacts.push({ x: p[0], y: p[1], r: 4, t0: t, at: t + 6.5, name: 'Virulent Spit', dmg: 40, color: '#7ddc3a', fill: '#5fbf2a', tip: 'A green swirl under you: step out of it before it lands.' });
+      S.impacts.push({ x: p[0], y: p[1], r: 4, t0: t, at: t + 6.5, name: 'Virulent Spit', dmg: 40, color: '#7ddc3a', fill: '#5fbf2a', tip: 'A green swirl under you: step out of the green swirl before it lands.' });
       if (who === me && !window.__pgAuto && A.big) A.big('Virulent Spit: Step out of the green swirl!', '#ff5a4f'); }); }); }; /* (not "under you": a red dodge call, not gold (the review, Nov 16)) */
   // ---- the small eggs broken out by the raid (Flex, Nov 16; the 30 fastest kills: the north eggs are hit from 3:03 as the raid cleaves the Clutches and the
   // Warden, their Hardened shields break about 3:22 (15 s before the Warden dies), each egg breaks open about 6 s after it dies; the two south eggs a ledge
@@ -79934,11 +79935,11 @@ function pgP2(A) {
     // (your big egg's "pick it up now" at your pickup time (the south one's moves with its small eggs); its "now" as they go in together comes from big(), on the step it
     //  goes in. The prompts audit, Nov 16: a 3, 2, 1 count timed for the bots ran while you were still 40 to 19 yards out; the bar counts, the call says when)
     if (!window.__pgAuto && A.big) { const jm = S.job[me], bi = jm && jm.big ? bigIx(jm.side, jm.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null;
-      if (bg && bg.state === 'floor' && t < T.doomEnd && t >= S.bigAt[jm.side][jm.big] && once('bigup')) A.big('Your big egg: Pick it up now!', '#f3c969'); }
+      if (bg && bg.state === 'floor' && t < T.doomEnd && t >= S.bigAt[jm.side][jm.big] && once('bigup')) A.big('Your big egg: Pick up your big egg now!', '#f3c969'); }
     // (your kick, as its bar starts, the same moment the job line says "now"; your way into reach if you're not in it. The backup's has its own call. Gold, as yours:
     //  the review, Nov 16, found it in another yellow that the screen didn't count as yours)
     if (!window.__pgAuto && A.big) { const k = myKicksNow(t)[0]; if (k && t >= k.at && t < k.at + 0.5 && !(G.p2.bk && G.p2.bk.key === k.key) && once('kc' + k.key)) { const p = kickPos(k.key), inR = !!p && pgDist(p, [G.x, G.y]) <= range(me);
-      A.big(inR ? k.kind + ': Press E now, it\'s your kick!' : k.kind + ': Get close to ' + casterName(k.key) + ', it\'s your kick!', '#f3c969'); } }
+      A.big(inR ? k.kind + ': Press E now: your kick!' : k.kind + ': Your kick: get close to ' + casterName(k.key) + '!', '#f3c969'); } }
     if (A.has('vein')) G.hp -= 3 * G.debs.vein.n * dt * (A.has('def') ? 0.5 : 1);
     if (A.has('acid')) G.hp -= 2.2 * G.debs.acid.n * dt * (A.has('def') ? 0.5 : 1);
     G.p2.intr = G.p2.intr.filter((q) => t - q.t <= 1.6); G.p2.own = G.adds.filter((a) => a.own);
@@ -79994,7 +79995,7 @@ function pgP2(A) {
     if (bg && bg.state === 'held' && t >= S.bigIn[s]) return inRing ? 'Wait in the ring: the other big egg is coming.' : 'Into the cauldron now: sprint (Shift) into the gold ring!';
     // (c) the walk to your next step, from when it's named
     if (k && t >= k.at - KLEAD) { const p = kickPos(k.key), inR = !!p && kickIn(k.key, p); G.p2.kIn = inR ? k.key : null; return inR ? 'Your kick is next: press E when ' + casterName(k.key) + '\'s bar starts.' : 'Your kick is next: get close to ' + casterName(k.key) + ' (the arrow).'; }
-    if (e && e.state === 'floor' && wDead) return 'Wait by your egg (#' + e.n + '): hit it to open it (Tab, then 1).';
+    if (e && e.state === 'floor' && wDead) return 'Wait by your egg (#' + e.n + '): hit your egg to open it (Tab, then 1).';
     if (e && e.state === 'held') return inRing ? 'Wait in the gold ring: the small eggs go in together.' : 'Carry your egg to your spot by the cauldron (gold).';
     if (bg && bg.state === 'held') return inRing ? 'Wait in the gold ring: both big eggs go in together.' : 'Sprint (Shift) to the cauldron: your spot in the gold ring.';
     // (outside its gold ring: stepping into it picks it up (the review, Nov 16: "Wait by your big egg" took a player 2.6 yards from it, inside the ring, who picked it
@@ -80169,7 +80170,7 @@ function pgP2(A) {
     if (pk.egg === 'far' || pk.egg === 'close') L0.push(['The ' + NS[pk.egg] + ' big egg', 'It waits at your ledge\'s ' + (pk.egg === 'far' ? 'south' : 'north') + ' end. ' + (pk.egg === 'far' ? 'Wait there with the group while it breaks out the two south small eggs; pick the big egg up as soon as they are grabbed' : 'Run there alone once the small eggs are in; pick it up on the call') + ', then into the cauldron with the other on the call. Carry it straight in: it hatches in your hands, a wipe.']);
     else if (pk.egg) L0.push(['Small egg ' + pk.egg.slice(1), 'Pick it up once the Warden is dead and its shield is gone. Carry it to your lane spot at the cauldron, 3 yards from other carriers, and throw it in with the others on the call.']);
     else L0.push(['No egg', 'Keep out of the carriers\' 3-yard rings.']);
-    L0.push(['Small eggs in: Rawlings', 'A Rawling climbs out of the cauldron for every egg: kill them before they boil.']); L0.push(['The Doomscales', 'Behind or beside them, never in front: their frontal goes at the tank.' + (pk.cry ? ' Kick the ' + P.mk[pk.side][pk.cry - 1] + ' Doomscale\'s Anguished Cry each time: once by the cauldron, then twice by her.' : '')]);
+    L0.push(['Small eggs in: Rawlings', 'A Rawling climbs out of the cauldron for every egg: kill the Rawlings before they boil.']); L0.push(['The Doomscales', 'Behind or beside them, never in front: their frontal goes at the tank.' + (pk.cry ? ' Kick the ' + P.mk[pk.side][pk.cry - 1] + ' Doomscale\'s Anguished Cry each time: once by the cauldron, then twice by her.' : '')]);
     L0.push(['Back to her', 'Take your gate back as the tank brings the Doomscales. Then the heart opens: hit it, and step out of the brown circles.']); L0.push(['Falling Debris', 'Three times in this phase: step out of the brown circles.']);
     return '<ul class="pg-asg">' + L0.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
   // (the start card's "Your job in short" (practice.js pick(), Nov 15, Flex: "improve the setup screens. Still a little convoluted"): four plain
@@ -80563,7 +80564,7 @@ function pgP3Script(o) {
       // in two grips; then Gorefiend's Grasp onto the raid)
       const grips = rel === 0 ? [] : rel === 1 ? [{ at: T.clu[ci] + 0.8, by: P.dk[0] }] : rel === 3 ? [{ at: T.clu[ci] + 1.4, by: P.dk[1] }] : [{ at: T.clu[ci] + 2.6, by: P.dk[1], mid: true }, { at: T.clu[ci] + 4.2, by: P.dk[0] }];
       S.clutches.push({ id, ci, k, rel, p, land: T.clu[ci], grips, grasp: T.clu[ci] + 5, hatch: T.clu[ci] + T.gest, gone: T.clu[ci] + T.gest + 4, n }); }); });
-  warn(T.clu[0], 'Clutches: hit them once they\'re pulled in!');
+  warn(T.clu[0], 'Clutches: hit the clutches once they\'re pulled in!');
   // Mother's Wrath (5 s): on her tank, in her reach in front of her
   T.wrath.forEach((w0, i) => { const n = stepAt(w0 + 5), tk = herTank(w0 + 5); S.wrath.push({ t0: w0, at: w0 + 5, p: F(P.tank, n), tank: tk }); cast('boss', 'Mother\'s Wrath', w0, w0 + 5); timer(w0 + 5, 'Mother\'s Wrath'); });
   // Serpent's Bite: two red circles 0.5 s after the cast, 15 s of venom; the two stack, three soakers stand in both
@@ -80604,14 +80605,14 @@ function pgP3Script(o) {
   S.shriekers = P.shriek.map((q, i) => ({ id: 'sh' + (i + 1), k: i + 1, p0: F(q, 2), up: T.shriek, dies: T.sdie }));
   // (which one is yours: the gold ring under it (shapes()), never a clock time ("your kick is Shrieker 1 at 8:47"))
   const mk = o.me && S.job[o.me] ? S.job[o.me].kick : 0;
-  warn(T.shriek, mk ? 'Shriekers: kick your Shrieker (gold ring) as it casts!' : 'Shriekers: kill them fast!', null, !!mk); if (mk) warn(T.echoes, 'Vicious Echoes: kick your Shrieker now (E)!', null, true);
+  warn(T.shriek, mk ? 'Shriekers: kick your Shrieker (gold ring) as it casts!' : 'Shriekers: kill the Shriekers fast!', null, !!mk); if (mk) warn(T.echoes, 'Vicious Echoes: kick your Shrieker now (E)!', null, true);
   S.echoes = S.shriekers.map((s) => ({ sh: s.id, k: s.k, t0: T.echoes, t1: T.echoes + T.echoCast, c: cast('shrieker', 'Shrieker: Vicious Echoes', T.echoes, T.echoes + T.echoCast) })); timer(T.echoes, mk ? 'Your kick' : 'Vicious Echoes');
   // the last burn
   cast('boss', 'Rage of the Shackled', T.rage, T.heart); timer(T.heart, 'Heart open'); for (let t = T.heart; t < T.end; t += 4) S.pulses.push(t);
   S.heart = F(P.heart, 3);
   { const al = [0, 0, 0, 0]; al[Qs[3]] = 1; for (let t = T.heart + 2.5; t < T.end - 1; t += 4) for (let j = 0; j < 2; j++) { let q = null; for (let k = 0; k < 40; k++) { const c = F([6 + rnd() * 14, 6 + rnd() * 14], 3); /* (picked: two every 4 s on the inner part of her quarter, away from the heart, the melee by it and the soakers spread at the rim) */ if (pgP3Floor(c[0], c[1], al, 3)) { q = c; break; } }
-    if (q) S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t + j * 0.25 - 2, at: t + j * 0.25, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Brown circles: step out before they land.' }); }
-    warn(T.heart + 0.3, 'Heart open: burn it, dodge the brown circles!'); }
+    if (q) S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t + j * 0.25 - 2, at: t + j * 0.25, name: 'Falling Debris', dmg: 30, color: '#c8a36a', tip: 'Step out of the brown circles before they land.' }); }
+    warn(T.heart + 0.3, 'Heart open: burn the heart, dodge the brown circles!'); }
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
 }
@@ -81011,7 +81012,7 @@ function pgP3(A) {
     const mb = hp.mb, onRing = !!mb && t >= mb.land - 0.5 && (pgDist(here, mb.stack) <= SPOT_R + 2 || (mb.so.includes(me) && inRed(t, mb, here))), kickNow = !!hp.ek && t >= hp.ek.t0;
     // (0) a dodge: a wave or brown circle due on your spot, a red circle that isn't yours, her reach, a wave crossing your way to your next spot
     if (hp.th) { const k = hp.th.kind; return say(k === 'her3' ? (onRing ? 'Her waves: step into a gap, then back to your ring.' : kickNow ? 'Step into a gap in her waves, then kick (E)!' : 'Her waves: step sideways into a gap, out of the red.')
-      : k === 'tail' ? (onRing ? 'Small tails: step into a gap, then back to your ring.' : 'Small tails: step through a gap in their waves.') : k === 'purge' ? 'Soakers\' waves: step out of the red lane.' : k === 'bite' ? 'Red circles: step out, they\'re for the soakers.' : 'Brown circle: step out of it before it lands.', 0); }
+      : k === 'tail' ? (onRing ? 'Small tails: step into a gap, then back to your ring.' : 'Small tails: step through a gap in their waves.') : k === 'purge' ? 'Soakers\' waves: step out of the red lane.' : k === 'bite' ? 'Step out of the red circles: soakers only!' : 'Falling Debris: step out of the brown circle!', 0); }
     /* ("her reach (the red circle)" read as the bite's red circle, at the second bite (the review, Nov 16)) */
     const wrN = S.wrath.find((q) => t >= q.t0 && t <= q.at + 3.2 && q.tank !== me); if (wrN && pgDist(here, wrN.p) < 6.5) return say('Mother\'s Wrath: step out of the red circle in front of her.', 0);
     if (hp.wait) return say('Wait: let it pass, then go.', 0); /* (phase 1's words: the "Wait" on the floor is at where you're going, not "here", and it waits for brown circles and Purge lanes too (the review, Nov 16)) */
@@ -81024,7 +81025,7 @@ function pgP3(A) {
     if (pu) { const inR = !!pu.spot[me] && pgDist(here, pu.spot[me]) <= SPOT_R; return say(!inR ? 'Walk to your gold ring at the edge, away from the raid.' : t >= pu.burst - 1.5 ? 'Hold still: your Purge bursts soon.' : 'Stay on your gold ring: keep 5 yards from everyone.', 1); }
     for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) { const g2 = S.gates.find((g) => g.k === 2);
       if (qm === S.Qs[i]) return say(i === 1 && g2 && !G.p3.used[me + 'g2'] ? (t < g2.t0 ? (pgDist(here, g2.p) > 6 ? 'Walk to the gateway: it opens after her wave.' : 'Wait by the gateway: let her wave pass.') : 'Go through the gateway (gold ring) now.') : 'Move one quarter left now, before she breaks this one.', 1);
-      if (qm === S.Qs[i + 1]) return say(qNow(t) === 'prey' ? 'Press Q (defensive) now!' : hp.jn ? 'Keep going: join the raid on this quarter.' : 'Off her quarter: good. ' + (i ? (saveQ(i) ? 'Save Q (defensive) for your soak.' : qBack(i) ? 'Press Q (defensive) as it lands.' : 'Stack with the raid here.') : 'Stack with the raid here.'), 1);
+      if (qm === S.Qs[i + 1]) return say(qNow(t) === 'prey' ? 'Press Q now!' : hp.jn ? 'Keep going: join the raid on this quarter.' : 'Off her quarter: good. ' + (i ? (saveQ(i) ? 'Save your defensive (Q) for your soak.' : qBack(i) ? 'Press Q as it lands.' : 'Stack with the raid here.') : 'Stack with the raid here.'), 1);
       return say('Get onto the next quarter left, where the raid is going.', 1); }
     if (hp.jn) return say('Keep going: join the raid on this quarter.', 1);
     const fb = S.wretch.fb.find((q) => t >= q.t0 - 2.5 && t <= q.at); if (fb && G.p3.wr && hp.bw) { const w = hp.bw, inB = pgDist(here, w) <= BUB_R; /* (where the bubble will be, as the arrow) */
@@ -81035,9 +81036,9 @@ function pgP3(A) {
     if (mb) { const tg = mb.tg.includes(me), on = tg ? pgDist(here, mb.stack) <= SPOT_R : inRed(t, mb, here);
       if (t < mb.land) return say(tg ? (on ? 'Stay on the gold ring: your red circle lands soon.' : 'Walk to the gold ring now: your red circle lands soon.') : on ? 'Stay on your gold ring: you soak the red circles.' : 'Walk to your gold ring now: you soak the red circles.', 1);
       if (tg) return say(on ? 'Stay on the gold ring: the soakers come to you.' : 'Walk to the gold ring with your red circle.', 1);
-      return say(!on ? 'Walk into the red circles (gold ring).' : qNow(t) === 'soak' ? 'Press Q (defensive) now! Stay in the red circles.' : qReady(t) ? 'Stay in the red circles: press Q as they drain.' : 'Stay in the red circles until they drain.', 1); }
+      return say(!on ? 'Walk into the red circles (gold ring).' : qNow(t) === 'soak' ? 'Press Q now! Stay in the red circles.' : qReady(t) ? 'Stay in the red circles: press Q as they drain.' : 'Stay in the red circles until they drain.', 1); }
     if (hp.ek) { const s = G.p3.sh[hp.ek.sh], rg = range(me), inR = !!rg && pgDist(here, [s.x, s.y]) <= rg;
-      return say(t < hp.ek.t0 ? (inR ? 'Stay near your Shrieker (gold ring): its kick is next.' : 'Walk to your Shrieker (gold ring): its kick is next.') : inR ? 'Kick your Shrieker now (E)!' : 'Get closer to your Shrieker, then kick (E)!', 1); }
+      return say(t < hp.ek.t0 ? (inR ? 'Stay near your Shrieker (gold ring): you kick it next.' : 'Walk to your Shrieker (gold ring): you kick it next.') : inR ? 'Kick your Shrieker now (E)!' : 'Get closer to your Shrieker, then kick (E)!', 1); }
     { /* (ahead of the waves: walking into the last circles costs 1.2 million and a Volatile Purge) */ const b3 = S.bites[2], up3 = b3 && t >= b3.land && t < b3.end && !(G.p3.bite[2] && G.p3.bite[2].done); if (up3 && t >= T.heart - 4) return say('Wait outside the red circles, then burn the heart.', 1); }
     // (2) the right target, then your standing job (never another raider's timer: "Next: Vicious Echoes in 17 s" to a healer)
     const dh = A.dpsHint && A.dpsHint(); if (dh) { const c = dpsCat(t), s0 = A.DPS_SAY && A.DPS_SAY[c] ? A.DPS_SAY[c][0] : 'Hit the right target'; return say(s0 + ': press Tab, then keep pressing 1.', 2, 'tgt'); }
@@ -81471,14 +81472,14 @@ function pgIntScript(o) {
   { const f = mine && S.soaks.find((s) => s.group.includes(me)); warn(S.soaks[0].cast, f ? 'Spectral Coils: Go to your soak at ' + pgIntMk(f.spot) + '! ' + P.PN[pat] + ' first (pattern ' + pat + ').' : 'Spectral Coils: ' + P.PN[pat] + ' first! Pattern ' + pat + '.', '#24f2cb', f ? { me: 1 } : null); }
   // (the defensive: the only call that needs a key, so it says Q and it's yours (gold). It was "Personals now" small under "the last four slams come back
   // to back", and never named Q. check() below turns it into a plain warning when your Q can't be pressed for it, or is already up)
-  warn(T.defCue, mine ? 'Back-to-back slams: Press Q (your defensive) now!' : 'Back-to-back slams: Four slams in a row now!', '#7fb8ff', mine ? { me: 1 } : null);
+  warn(T.defCue, mine ? 'Back-to-back slams: Press Q now!' : 'Back-to-back slams: Four slams in a row now!', '#7fb8ff', mine ? { me: 1 } : null);
   // (the Rawlings: the ranged and healers hit them from the gold ring, the melee and tanks go to them first: the call said "kill the Rawlings, then to the
   // diamond line" to everyone, the reverse of what the ranged do. At the moment the job line changes, not after it)
-  warn(T.gather, mine && /^[mt]/.test(me) ? 'Coils done: Kill the Rawlings! Then go to the gold ring by the Diamond.' : 'Coils done: Go to the gold ring by the Diamond! Hit the Rawlings from there.', '#c9df9a');
+  warn(T.gather, mine && /^[mt]/.test(me) ? 'Coils done: Kill the Rawlings! Then go to the gold ring by Diamond.' : 'Coils done: Go to the gold ring by Diamond! Hit the Rawlings from there.', '#c9df9a');
   // (where she comes up: one quarter's outer corner, from the run's seed (drawn last, so the eggs above stay the same for a seed))
   const QK = ['NE', 'NW', 'SW', 'SE'], q1 = QK[Math.min(3, Math.floor(rnd() * 4))]; S.q1 = q1; S.dive.to = P.Q[q1].slice();
   // (by the two markers either side of her corner, never a compass word or "at 6:09": the order first)
-  warn(T.bubbles, 'The Shattering: Stand on the gold ring by the Diamond! She comes up ' + pgIntCorner(q1) + '.', '#7fd8ff'); timer(T.shatter, 'The Shattering');
+  warn(T.bubbles, 'The Shattering: Stand on the gold ring by Diamond! She comes up ' + pgIntCorner(q1) + '.', '#7fd8ff'); timer(T.shatter, 'The Shattering');
   warn(T.shatter, 'The Shattering: Brace for the knockback!', '#ff8a5a');
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
   return S;
@@ -81639,7 +81640,7 @@ function pgInt(A) {
     // call sent a Purple carrier to Triangle while the line said "Break your egg"))
     if (t < S.soaks[0].cast && S.job.team[me]) { const w = S.warns.find((q) => q.t === S.soaks[0].cast && /^Spectral Coils:/.test(q.text)), f = S.soaks.find((s) => s.group.includes(me)), e0 = G.eggs.find((q) => q.id === me && q.state !== 'gone');
       if (w && f) w.text = 'Spectral Coils: ' + (eggFirst(me, S.soaks[0].cast, { x, y }, e0, f) ? 'Get your egg, then your soak at ' : 'Go to your soak at ') + pgIntMk(f.spot) + '! ' + P.PN[S.pat] + ' first (pattern ' + S.pat + ').'; }
-    if (t < T.defCue && S.job.team[me]) { const w = S.warns.find((q) => q.t === T.defCue && /^Back-to-back slams:/.test(q.text)); if (w) { const off = G.def >= T.defFrom - 1 || G.def + 90 > T.defCue; w.text = off ? 'Back-to-back slams: Four slams in a row now!' : 'Back-to-back slams: Press Q (your defensive) now!'; w.me = off ? 0 : 1; } }
+    if (t < T.defCue && S.job.team[me]) { const w = S.warns.find((q) => q.t === T.defCue && /^Back-to-back slams:/.test(q.text)); if (w) { const off = G.def >= T.defFrom - 1 || G.def + 90 > T.defCue; w.text = off ? 'Back-to-back slams: Four slams in a row now!' : 'Back-to-back slams: Press Q now!'; w.me = off ? 0 : 1; } }
     // (pressed early in the part, Q is still cooling down for these slams: the mistake says so (the release sweep, Nov 16))
     if (cr(T.defBy) && !(G.def >= T.defFrom - 1 && G.def <= T.defBy) && once('def')) { const early = G.def > 0 && G.def < T.defFrom - 1 && G.def + 90 > T.defFrom - 1;
       A.mistake('def', 'No defensive for the last four slams.' + (early ? ' You pressed Q too early: it was still cooling down.' : ''), early ? 'Save Q for the back-to-back slams: it takes a minute and a half to come back. The last four slams come back to back and each hits the whole raid.' : 'Press Q as the last four slams start: they come back to back and each hits the whole raid. Defensives and potions there.', 0); }
@@ -81650,7 +81651,7 @@ function pgInt(A) {
     // your egg: into one of your soaks by your last one (one mistake or the other, never both: the review, Nov 15). The rule the hint follows
     // (eggFirst) may skip a soak to fetch it first or after; your last soak is the deadline either way
     const e = G.eggs.find((q) => q.id === me), last = S.soaks.filter((s) => s.group.includes(me)).pop();
-    if (e && last && cr(last.at + 0.3) && e.state === 'floor' && once('eggleft')) A.mistake('egg', 'Your egg never went into a soak: you didn\'t pick it up.', 'Your egg is the gold one: pick it up once its shell breaks, then carry it into your next soak.', 0);
+    if (e && last && cr(last.at + 0.3) && e.state === 'floor' && once('eggleft')) A.mistake('egg', 'Your egg never went into a soak: you didn\'t pick it up.', 'Your egg is the gold one: pick up your egg once its shell breaks, then carry it into your next soak.', 0);
     if (cr(T.slams[7] + 0.2) && e && e.state === 'held' && e.who === me && !G.int.once.has('eggleft') && once('eggkept')) A.mistake('egg', 'Your egg was still in your hands after the last slam.', 'Carry your egg into your own soak: the slam breaks it (and leaves a Rawling to kill).', 0);
     // (an egg in the venom hatches a Viper (the guide's rule; practice.js does it off the edge): on a crack as it shatters, or carried into one after)
     const vip = (px, py, mineE, why, tip) => { G.vipers++; G.adds.push({ kind: 'viper', x: px + 1.2, y: py - 1, born: t }); A.deb('putrid', 20, true); if (mineE) A.mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8); };
@@ -81661,7 +81662,7 @@ function pgInt(A) {
       GDZ_RAID.forEach((id) => { if (id === me) return; const p = pos(id), q = pgIntKb(p); G.int.kb[id] = { t0: t, x0: p[0], y0: p[1], x1: q[0], y1: q[1] }; G.int.fell.push([id, p.slice(), q]); });
       const q = pgIntKb([x, y]), onC = pgIntCrack(x, y), off = !PG_UL.onPlat(q[0], q[1]) || pgIntCrack(q[0], q[1]), held = G.eggs.find((z) => z.who === me && z.state === 'held');
       G.kb = { t0: t, x0: x, y0: y, x1: q[0], y1: q[1] }; A.hurt(28); A.deb('fall', 1.5); /* (Falling: about 380k on landing, a third of a raider's health (the Nov 15 audit, engine.js)) */ G.done.add('venom' + Math.floor(t / 10)); G.done.add('venom' + Math.floor((t + 5) / 10));
-      if (onC) { A.mistake('shatter', 'You stood on a crack as the platform shattered, and fell into the venom.', 'It breaks along the lines through the middle (north to south, east to west): stand inside a quarter, on the gold ring by the Diamond.', 25); A.deb('dvenom', 12); }
+      if (onC) { A.mistake('shatter', 'You stood on a crack as the platform shattered, and fell into the venom.', 'It breaks along the lines through the middle (north to south, east to west): stand inside a quarter, on the gold ring by Diamond.', 25); A.deb('dvenom', 12); }
       else if (off) { A.mistake('shatter', 'The knockback threw you into the venom: you stood too close to the edge.', 'Stand on the inside, not at the edge: the burst knocks everyone about 6 yards out from the middle.', 25); A.deb('dvenom', 12); }
       else A.say('You rode out the Shattering on the stone.');
       if (held && (onC || off)) { held.state = 'gone'; held.who = null; vip(q[0], q[1], true, 'Your egg went into the venom with you', 'Carried eggs hatch in the venom: break yours in a soak before the Shattering.'); } }
@@ -81678,7 +81679,7 @@ function pgInt(A) {
   // another team's coil with you in it, another carrier's ring, the cracks and the edge), then your step due or the walk to it (your egg, your soak, the
   // gold ring), then the right target, then where to wait. Q comes after the move line, never instead of it ("Press Q now: personals" replaced "head for
   // the diamond line" from 5:51). In your soak, "Then: ..." names your next one (the long runs to it came with 2.3 s to spare, unannounced)
-  const RING = 'the gold ring by the Diamond';
+  const RING = 'the gold ring by Diamond';
   const qDue = (t) => t >= T.defCue && t <= T.defBy && !(G.def >= T.defFrom - 1), qNow = (t) => qDue(t) && t - G.def >= 90;
   const dodgeLine = (t) => { const me = A.me, p0 = [G.x, G.y];
     const fe = G.eggs.find((q) => q.state === 'air' && q.land - t <= 2.5 && pgDist(p0, [q.x, q.y]) < 4 + 0.7); /* (its 4 yards, with room to spare; from 2.5 s, when practice3d.js draws its circle) */
@@ -81694,7 +81695,7 @@ function pgInt(A) {
       return 'She\'s up ' + pgIntCorner(S.q1) + ': phase 3 starts by her.' + (G.log.some((m) => m.kind === 'shatter') ? '' : ' Well done.'); }
     const dz = dodgeLine(t); if (dz) return dz;
     // (Q pressed earlier in the part is still cooling down: say so, never "Press Q now" (the release sweep, Nov 16))
-    const q = qDue(t) ? (qNow(t) ? ' Press Q (defensive) now.' : ' Your Q is still cooling down.') : '';
+    const q = qDue(t) ? (qNow(t) ? ' Press Q now.' : ' Your Q is still cooling down.') : '';
     if (t >= T.gather) { const onR = pgDist([G.x, G.y], pgIntGather()) <= P.SPREAD, raw = t < T.bubbles && G.adds.some((a) => a.kind === 'rawling'), off = !!(A.dpsHint && A.dpsHint());
       // (the melee and tanks go to the Rawlings, then the gold ring; the ranged and healers the reverse, hitting them from the ring: the line said "Kill the
       // Rawlings, then go to the diamond line" to them too, against the game's own plan)
@@ -81707,7 +81708,7 @@ function pgInt(A) {
     if (eggFirst(me, t, { x: G.x, y: G.y }, e, ns)) { const far = pgDist([G.x, G.y], [e.x, e.y]) > 4.5;
       return (e.shp > 0 ? (mel && far ? 'Run to your egg, then break it: Tab, then 1.' : 'Break your egg: Tab, then 1. Then: walk over it.') : t < e.shell ? 'Wait by your egg: its shell is breaking.' : 'Pick up your egg: walk over it.') + q; }
     if (ns && called(t)) { const d = pgDist([G.x, G.y], [ns.x, ns.y]), mk = mkAt(ns), nx = S.soaks.find((s) => s.group.includes(me) && s.at > ns.at + 0.1);
-      if (d > ns.r - 1) { const late = (d - (ns.r - 1)) / 7 > ns.at - t - 0.6; return 'Get into your soak at ' + mk + (late ? ': sprint (Shift)!' : '.') + (held ? ' Bring your egg.' : e && e.state === 'floor' ? ' Get your egg after it.' : '') + q; }
+      if (d > ns.r - 1) { const late = (d - (ns.r - 1)) / 7 > ns.at - t - 0.6; return (late ? 'Sprint into your soak at ' + mk + '!' : 'Get into your soak at ' + mk + '.') + (held ? ' Bring your egg.' : e && e.state === 'floor' ? ' Get your egg after it.' : '') + q; }
       return 'Stay in your soak at ' + mk + '.' + (q || (nx ? ' Then: run to ' + mkAt(nx) + (pgDist([ns.x, ns.y], [nx.x, nx.y]) > 28 ? ', across the room.' : '.') : ' Then: go to ' + RING + '.')); }
     if (!called(t)) return 'Wait by ' + P.TM[g] + (held ? '. Keep 3 yards from other carriers.' : ' with your team.'); /* (12 words at most: the gold call and your soak's ring say what's next) */
     if (e && e.state === 'floor') return 'Your soaks are done: leave your egg. Go to ' + RING + '.' + q; /* (no soak left to break it in: eggFirst) */

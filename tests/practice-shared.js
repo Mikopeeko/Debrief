@@ -316,7 +316,7 @@ function simpleScreen(H, say, pj) {
   if (!/\.pg \.pg-coach, \.pg \.pg-coach\.on, \.pg \.pg-warn \.pg-al \{ display: none !important; \}/.test(PJ)) bad('the coach card or the call boxes can still show (no CSS hiding .pg-coach and .pg-warn .pg-al)');
   { const cd = (/const coachDraw = \(t\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!cd || /coachNow\(/.test(cd)) bad('coachDraw still draws the coach card (Flex: "i dont think we need these")'); }
   [['Your egg: wait next to its gold circle!', 'Wait next to your egg\'s gold circle!'], ['Your coil: soak the first one to appear!', 'Soak the first coil to appear!'], ['Call of the Serpent: Dodge the falling eggs! Eight land all over the stone.', 'Dodge the falling eggs!']].forEach(([a, b]) => { const g = callShort(a); if (g !== b) bad('the NOW line says the call "' + a + '" as "' + g + '", not "' + b + '"'); });
-  [['Break your egg: Tab, then 1. Then: walk over it.', 'DPS your egg'], ['Kill the Rawlings: press Tab, then keep pressing 1 (melee: get close)', 'Kill the Rawlings'], ['Good spot. Keep hitting the Rawlings.', 'Keep hitting the Rawlings'], ['Wait: let it pass, then go.', 'Wait for the wave to pass']].forEach(([a, b]) => { const g = short(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '"'); });
+  [['Break your egg: Tab, then 1. Then: walk over it.', 'DPS your egg to break its shell'], ['Kill the Rawlings: press Tab, then keep pressing 1 (melee: get close)', 'Kill the Rawlings'], ['Good spot. Keep hitting the Rawlings.', 'Keep hitting the Rawlings'], ['Wait: let it pass, then go.', 'Wait for the wave to pass']].forEach(([a, b]) => { const g = short(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '"'); });
   // S4
   { void W; const say0 = (/  const say = \(text, bad\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!/PG_DONE\.test/.test(say0)) bad('every float that isn\'t a mistake still becomes a green done chip ("Not open yet: hit it" got a tick)');
     const dm = /const PG_DONE = (\/.*\/);/.exec(PJ), doneRx = dm ? new Function('return ' + dm[1])() : null; /* (inside pgOpen: read from the source) */
@@ -401,6 +401,31 @@ function simpleScreen(H, say, pj) {
       if (!/How to play/.test(h) || !/W A S D/.test(h) || !/Tab Pick a target/.test(h) || !/1 Attack/.test(h) || !/Q Your defensive/.test(h) || !/Space Pause any time/.test(h) || !/what to do now/.test(h)) bad('How to play in ' + name + ' reads "' + h.slice(0, 200) + '" (check S12)');
       if (kick !== /E Kick/.test(h)) bad('How to play in ' + name + (kick ? ' leaves out the kick (E)' : ' lists a kick this part has none of') + ' (check S12)');
       if (/\b\d{1,2}:\d\d\b/.test(h)) bad('How to play shows a clock time in ' + name + ' (check S12)'); } }
+  // S13. no mashed or bare orders (Flex, Nov 17, a screenshot of the NOW line "Kill the Break your egg", then "that should read something like 'Dps the egg to
+  //      break the barrier'" and "maybe do a wording/phrasing pass of the whole addon"): the NOW line put "Kill the" in front of a call whose name was already an
+  //      order ("Break your egg: press Tab to pick it" -> "Kill the Break your egg", "Kill the Kill the Rawlings", "Kill the Kill the Viper"); a call's "it" lost
+  //      its name once the mechanic was dropped ("Heart open: Hit it" -> "Hit it!", "Shriekers: kill them fast!" -> "Kill them fast!"); keys sat in brackets
+  //      ("sprint (Shift)!", "Press Q (your defensive) now!"); end-screen tips read "Step out of them". They showed only when you stand still or fall behind, which
+  //      the played runs above never do, so every call the game can make is said here as the NOW line says it: each part's timeline calls as every role and job,
+  //      the calls made in the moment (A.big, bigCall), each part's damage call, the coach words' jobs, and every tip as the end screen says it. Failed on the commit before.
+  { const MASH = /\b(?:the|your|a|an) (?:Break|Kill|DPS|Hit|Pick|Run|Stand|Go|Wait|Soak|Dodge|Step|Stay|Move|Carry|Walk|Get|Keep|Press|Burn)\b|\b(\w+ \w+) \1\b/,
+      BARE = /^(?:Hit|Kill|Pick|DPS|Break|Burn|Get close to|Stay behind|Step out of)(?: up)? (?:it|them)\b|^Step out before/i, ODD = /\((?:Shift|your defensive|defensive)\)|, (?:it's|it opens|it is)\b/i;
+    const PJ2 = ['practice.js', 'practice-p2.js', 'practice-int.js', 'practice-p3.js'].map((f) => fs.readFileSync(path.join(__dirname, '..', 'src', f), 'utf8').replace(/\r\n/g, '\n'));
+    let tip = null; try { tip = vm.runInContext('pgEndTip', ctx); } catch (e) { /* (S8 says so) */ }
+    const why = (g) => (MASH.test(g) ? 'mashed' : BARE.test(g) ? '"it" or "them" with nothing named' : ODD.test(g) ? 'a key in brackets, or two sentences run together' : ''), bads = new Map();
+    const test = (src, x, f) => { const g = (f || callShort)(x), w = why(g); if (w) bads.set(g, '"' + String(x).slice(0, 90) + '" reads "' + g + '" (' + w + '; ' + src + ')'); };
+    for (const pk of PARTS) { const name = ctx.PG_PARTS["Ula'tek"][pk].name, d0 = L.open(pk === 'm' ? null : pk), S0 = d0.P2 ? d0.P2.setup : d0.setupApi(); let dsSeen = false;
+      for (const r of S0.roles) for (const jb of S0.jobs(r).map((j) => j[0])) { const d = L.open(pk === 'm' ? null : pk), su = d.P2 ? d.P2.setup : d.setupApi(); su.set(r, jb);
+        const slot = d.P2 ? d.P2.slotOf(d.P2.pick) : d.jobSlot(); try { d.at(0, slot, { seed: 3 }); } catch (e) { continue; }
+        (d.S.warns || []).forEach((w) => test(name + ', ' + r + ' ' + jb, w.text));
+        const ds = d.dpsSay; if (ds) { dsSeen = true; Object.keys(ds).forEach((k) => ['it', 'one'].forEach((p) => test(name + '\'s damage call for ' + k, ds[k][0] + ': press Tab to pick ' + p + ', then keep pressing 1.'))); } }
+      if (!dsSeen) bad('the test can\'t read ' + name + '\'s damage calls (window.__pgDbg.dpsSay) (check S13)'); }
+    PJ2.forEach((src) => { for (const m of src.matchAll(/(?:A\.big|bigCall)\(\s*'((?:[^'\\]|\\.)*)'/g)) test('a call made in the moment', m[1].replace(/\\'/g, '\''));
+      for (const m of src.matchAll(/'((?:[^'\\]|\\.){12,})'/g)) { const x = m[1].replace(/\\'/g, '\''); if (tip && /[.!]$/.test(x) && /: [a-z]/.test(x)) test('a tip on the end screen', x, (q) => tip(q, 'x')); } });
+    ['Malice', 'Anguished Cry'].forEach((k) => { test('your kick, in reach', k + ': Your kick: press E now!'); test('your kick, out of reach', k + ': Your kick: get close to the Warden!'); });
+    if (ctx.PG_COACH) Object.entries(ctx.PG_COACH).forEach(([k, e]) => [e.j, e.jf].forEach((x) => { if (x) test('the coach words\' job for ' + k, x, short); }));
+    if (bads.size) bad(bads.size + ' lines are mashed, say "it" with nothing named, or put a key in brackets, e.g. ' + [...bads.values()].slice(0, 6).join(' / ') + ' (check S13)');
+    [['Break your egg: press Tab to pick it, then keep pressing 1.', 'DPS your egg to break its shell'], ['Kill the Rawlings: press Tab to pick one, then keep pressing 1.', 'Kill the Rawlings'], ['Clutches: press Tab to pick one, then keep pressing 1.', 'Kill the Clutches']].forEach(([a, b]) => { const g = callShort(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '" (Flex, Nov 17: "Dps the egg to break the barrier") (check S13)'); }); }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.

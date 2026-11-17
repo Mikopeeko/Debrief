@@ -504,7 +504,7 @@ function checks(H, say) {
         dbg.step(1); G.hp = 100; }
       const ss = [...said].join(' / ');
       if (dbg.log.slice(n0).some((x) => /without a defensive/.test(x))) bad('a Group Soak 3 healer from 9:00 who presses Q when the screen says takes the end of the 3rd bite without one: ' + dbg.log.slice(n0).join(' | ') + ' (the release sweep, Nov 16, check RS3)');
-      if (/Press Q/.test(ss) || !/Save Q \(defensive\) for your soak\./.test(ss)) bad('at the 3rd Circling Prey a Group Soak 3 player is told "' + ss + '", with their Q still cooling down at their soak (check RS3)');
+      if (/Press Q/.test(ss) || !/Save your defensive \(Q\) for your soak\./.test(ss)) bad('at the 3rd Circling Prey a Group Soak 3 player is told "' + ss + '", with their Q still cooling down at their soak (check RS3)');
       if (up) bad('"What\'s next" says "Circling Prey lands: Q" at the 3rd Circling Prey to a Group Soak 3 player (check RS3)'); }
     for (const [pk2, pi] of [[pk, 1], [{ role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }, 2]]) { dbg.P2.pick = pk2; const me2 = dbg.P2.slotOf(pk2); dbg.at(T.prey[pi] + 6, me2, { seed: 3 }); dbg.pos = dbg.S.F2([14, 14], pi + 1); dbg.stepOwn(1);
       if (!/Press Q \(defensive\) as it lands\./.test(dbg.P2.jobText())) bad('at Circling Prey ' + (pi + 1) + ' ' + (pk2.soak ? 'a Group Soak ' + pk2.soak : 'a') + ' ' + pk2.role + ' with Q back in time isn\'t told to press it: ' + dbg.P2.jobText() + ' (check RS3)'); }
@@ -671,9 +671,9 @@ function checks(H, say) {
   //     "Press Q just before they drain" for 13 s), and in the last second of Circling Prey 2 off her quarter with Q back.
   try { const pk = { role: 'r', soak: 1, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk); dbg.at(T.bite[0] + 4, me, { seed: 3 }); const G = dbg.G, b = dbg.S.bites[0]; let said = '';
     while (G.t < b.end && !(G.p3.bite[0] && G.p3.bite[0].done)) { dbg.pos = b.stack.slice(); dbg.stepOwn(1); G.hp = 100; const st = G.p3.bite[0], v = st ? Math.max(...b.tg.map((id) => st.v[id] || 0)) : 100; if (v < 12 && v > 0) { said = dbg.P2.jobText(); break; } }
-    if (!/^Press Q \(defensive\) now/.test(said)) bad('in your soak with the circles under 15%, the job line says "' + said + '", not "Press Q now" (check PA10)');
+    if (!/^Press Q now/.test(said)) bad('in your soak with the circles under 15%, the job line says "' + said + '", not "Press Q now" (check PA10)');
     const pk2 = { role: 'r', soak: 0, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk2; const me2 = dbg.P2.slotOf(pk2); dbg.at(T.prey[1] + 2, me2, { seed: 3 }); const sp = dbg.S.F2([14, 14], 2);
-    while (dbg.G.t < dbg.S.hit[1] - 0.8) { dbg.pos = sp; dbg.stepOwn(1); dbg.G.hp = 100; } const jq = dbg.P2.jobText(); if (!/^Press Q \(defensive\) now/.test(jq)) bad('0.8 s before the 2nd Circling Prey lands, off her quarter with Q back, the job line says "' + jq + '" (check PA10)');
+    while (dbg.G.t < dbg.S.hit[1] - 0.8) { dbg.pos = sp; dbg.stepOwn(1); dbg.G.hp = 100; } const jq = dbg.P2.jobText(); if (!/^Press Q now/.test(jq)) bad('0.8 s before the 2nd Circling Prey lands, off her quarter with Q back, the job line says "' + jq + '" (check PA10)');
     const P3S = rd('practice-p3.js'); if (!/const qb = A\.\$\('\.pg-act\[data-a="def"\]'\)[^\n]*qNow\(t\)[^\n]*boxShadow/.test(P3S)) bad('the Q button no longer lights up at Q\'s "now" (hud, check PA10)');
   } catch (e) { bad('the Q check crashed: ' + e.message + ' (check PA10)'); } finally { reset(); }
   // RV. the review of the prompts audit's fixes (Nov 16: a skeptic played them with players who do as the screen says, on the game branch). Each fails on the commit
@@ -696,11 +696,11 @@ function checks(H, say) {
     let p = null; for (let k = 0; k < 16 && !p; k++) { const q = [b.stack[0] + Math.cos(k * Math.PI / 8) * 4, b.stack[1] + Math.sin(k * Math.PI / 8) * 4]; if (SP(q) && tg.every((c) => hyp(c, q) < 6.2)) p = q; }
     if (!p) bad('no spot 4 yards from the 1st bite\'s gold ring inside both red circles (check RV1)');
     else { const said = new Set(), n0 = dbg.log.length; let arrows = 0, pressed = false;
-      while (G.t < b.end && !(G.p3.bite[0] && G.p3.bite[0].done)) { dbg.pos = p; dbg.stepOwn(1); G.hp = 100; if (G.p3.bite[0] && G.p3.bite[0].done) break; const jt = dbg.P2.jobText(), h = dbg.hint(); said.add(jt); if (h && !h.wait) arrows++; if (/^Press Q \(defensive\) now/.test(jt) && G.t - G.def >= 90) { G.def = G.t; G.debs.def = { until: G.t + 8, n: 1 }; pressed = true; } }
+      while (G.t < b.end && !(G.p3.bite[0] && G.p3.bite[0].done)) { dbg.pos = p; dbg.stepOwn(1); G.hp = 100; if (G.p3.bite[0] && G.p3.bite[0].done) break; const jt = dbg.P2.jobText(), h = dbg.hint(); said.add(jt); if (h && !h.wait) arrows++; if (/^Press Q now/.test(jt) && G.t - G.def >= 90) { G.def = G.t; G.debs.def = { until: G.t + 8, n: 1 }; pressed = true; } }
       const st = G.p3.bite[0], ss = [...said].join(' / ');
       if (!st || !st.by.has(me)) bad('standing 4 yards off the gold ring inside both red circles isn\'t counted as a soak, so this tests nothing (check RV1)');
       else { if ([...said].some((x) => /^Walk into the red circles|^Walk to your gold ring/.test(x)) || arrows) bad('a soaker inside both red circles, 4 yards off the gold ring, is told "' + ss + '"' + (arrows ? ' with the arrow up ' + (arrows * 0.05).toFixed(1) + ' s' : '') + ' (the review, Nov 16, ranged Group Soak 1, seed 3, check RV1)');
-        if (!pressed) bad('a soaker inside both red circles, off the gold ring, is never told "Press Q (defensive) now": ' + ss + ' (check RV1)');
+        if (!pressed) bad('a soaker inside both red circles, off the gold ring, is never told "Press Q now": ' + ss + ' (check RV1)');
         if (dbg.log.slice(n0).some((x) => /without a defensive/.test(x))) bad('a soaker off the gold ring who presses Q when told still takes the end without a defensive (6:55, check RV1)'); } }
   } catch (e) { bad('the off-centre soak check crashed: ' + e.message + ' (check RV1)'); } finally { reset(); }
   //     RV2 and RV3, played by players who do as they're told (walk where the arrow points, not while the floor says Wait; step aside when the line says dodge; else
@@ -748,7 +748,7 @@ function checks(H, say) {
   try { const errs = [], pk = { role: 'm', soak: 0, bite: 'no', kick: 0, v: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(pk);
     for (const bi of [0, 2]) { dbg.at(T.bite[bi] + 6, me, { seed: 3 }); const b = dbg.S.bites[bi], tp = b.tg.map((id) => [dbg.G.bots[id].x, dbg.G.bots[id].y]); let q = null;
       for (const r of [3, 4, 5, 2.5]) for (let k = 0; k < 16 && !q; k++) { const p = [tp[0][0] + Math.cos(k * Math.PI / 8) * r, tp[0][1] + Math.sin(k * Math.PI / 8) * r]; if (SP(p) && !dbg.S.wrath.some((w) => hyp(p, w.p) < 7.5)) q = p; }
-      if (!q) { errs.push('no spot by the ' + (bi + 1) + (bi ? 'rd' : 'st') + ' bite\'s red circle'); continue; } dbg.pos = q; fresh(); const jt = dbg.P2.jobText(); if (jt !== 'Red circles: step out, they\'re for the soakers.') errs.push('with no job, ' + hyp(q, tp[0]).toFixed(1) + ' yards from a red circle at the ' + (bi + 1) + (bi ? 'rd' : 'st') + ' bite, the job line says "' + jt + '"'); }
+      if (!q) { errs.push('no spot by the ' + (bi + 1) + (bi ? 'rd' : 'st') + ' bite\'s red circle'); continue; } dbg.pos = q; fresh(); const jt = dbg.P2.jobText(); if (jt !== 'Step out of the red circles: soakers only!') errs.push('with no job, ' + hyp(q, tp[0]).toFixed(1) + ' yards from a red circle at the ' + (bi + 1) + (bi ? 'rd' : 'st') + ' bite, the job line says "' + jt + '"'); }
     { dbg.at(T.wrath[1] + 1, me, { seed: 3 }); const wr = dbg.S.wrath[1], b = dbg.S.bites[1], tp = b.tg.map((id) => [dbg.G.bots[id].x, dbg.G.bots[id].y]); let q = null;
       for (const r of [2, 3, 4, 5]) for (let k = 0; k < 16 && !q; k++) { const p = [wr.p[0] + Math.cos(k * Math.PI / 8) * r, wr.p[1] + Math.sin(k * Math.PI / 8) * r]; if (SP(p) && tp.every((c) => hyp(p, c) > P.BITE + 1.5)) q = p; }
       if (!q) errs.push('no spot in her reach clear of the 2nd bite\'s red circles'); else { dbg.pos = q; fresh(); const jt = dbg.P2.jobText(); if (jt !== 'Mother\'s Wrath: step out of the red circle in front of her.') errs.push('in her reach at Mother\'s Wrath, clear of the red circles, the job line says "' + jt + '"'); } }

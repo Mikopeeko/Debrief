@@ -2134,6 +2134,7 @@ const PATCH_NOTES = [
       'Practice Ula\'tek: clearer sound cues, a sound for each kind of call, a 3, 2, 1 tick before your tether break, and Loud, Soft or Off on the speaker button.',
       'Practice Ula\'tek: a quick How to play before your first run, and a Pause button (Space) on the hotbar.',
       'Practice Ula\'tek: the mouse is a normal arrow. Over a mob it turns into a sword, and the mob lights up with a white circle and its name, so you know what a click will target.',
+      'Practice Ula\'tek: clearer wording everywhere. Every order names what to hit, like "DPS your egg to break its shell", and every defensive call reads "Press Q now!" with no brackets.',
       'Mythic+ Graphs: the chart is smoother, its layers fade, and boss names, Lust and deaths sit above it in bigger text.',
       'Grade letters have new colours everywhere: S gold, A green, B teal, C amber, D orange, F red.',
       'Mythic+ Summary: under the run, How we compare says what the fast run, your spec and top mean.'],

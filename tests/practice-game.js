@@ -144,7 +144,7 @@ function checks(H, say, pj) {
   if (typeof dbg.hint !== 'function' || typeof dbg.upNext !== 'function') { bad('the game shows no hints of what\'s coming next for you (check E)'); return; }
   try {
     dbg.at(35.5, 'r3', { east: false, seed: 3 }); const up = dbg.upNext() || [], b1 = dbg.S.bubbles[0];
-    if (!up.some((u) => /Bubble/.test(u.text) && Math.abs(u.at - b1.at) < 0.1) || !up.some((u) => /Your coil/.test(u.text))) bad('at 0:35 the "coming up" line reads ' + JSON.stringify(up.map((u) => u.text)) + '; it should name the bubble at 0:39 and your coil (check E)');
+    if (!up.some((u) => /Wretch's bubble/.test(u.text) && Math.abs(u.at - b1.at) < 0.1) || !up.some((u) => /Your coil/.test(u.text))) bad('at 0:35 the "coming up" line reads ' + JSON.stringify(up.map((u) => u.text)) + '; it should name the bubble at 0:39 and your coil (check E)');
     if (up.length > 3) bad('the "coming up" line lists ' + up.length + ' things; three at most, or it clutters (check E)');
     dbg.pos = [25, -20]; const h = dbg.hint();
     if (!h || !(h.d > 2.5) || hyp(h.fin || h.T, b1.p) > 10.5) bad('far from the bubble at 0:35, the hint arrow ' + (h ? 'points ' + hyp(h.fin || h.T, b1.p).toFixed(0) + ' yards from the bubble' : 'isn\'t there') + ' (check E)');
@@ -287,11 +287,11 @@ function checks(H, say, pj) {
       if (M.some((b, i) => i && b.at < M[i - 1].at)) bad('the boss-mod bars aren\'t soonest first: ' + M.map((b) => b.name + ' ' + clk(b.at)).join(', ') + tag);
       if (new Set(M.map((b) => b.name)).size !== M.length || M.some((b, i) => M.some((c, j) => j > i && b.sp && b.sp === c.sp && Math.abs(b.at - c.at) <= 1.5))) bad('the boss mods show the same thing twice: ' + M.map((b) => b.name + ' ' + clk(b.at)).join(', ') + tag);
       if (M.some((b) => !(b.left > 0) || !/^#[0-9a-f]{3,8}$/i.test(b.c))) bad('a boss-mod bar has no time left or no colour' + tag); }
-    dbg.at(35.5, 'r3', { east: false, seed: 3 }); const M1 = dbg.mods() || [], bub = M1.find((b) => /Bubble/.test(b.name)), coil = M1.filter((b) => /coil/i.test(b.name) && Math.abs(b.at - 40) < 0.6);
+    dbg.at(35.5, 'r3', { east: false, seed: 3 }); const M1 = dbg.mods() || [], bub = M1.find((b) => /Wretch's bubble/.test(b.name)), coil = M1.filter((b) => /coil/i.test(b.name) && Math.abs(b.at - 40) < 0.6);
     if (!bub || bub.sp !== 'Fester Burst') bad('at 0:35 the boss mods don\'t show the bubble with Fester Burst\'s icon: ' + M1.map((b) => b.name + ' (' + b.sp + ')').join(', ') + ' (check J)');
     if (coil.length !== 1 || coil[0].sp !== 'Spectral Coils') bad('at 0:35 your coil shows ' + coil.length + ' time(s) in the boss mods, or without Spectral Coils\' icon; once (check J)');
     dbg.hints = false; const M2 = dbg.mods() || []; dbg.hints = true;
-    if (M2.some((b) => !(dbg.timers() || []).includes(b.name)) || !M2.some((b) => /^Your coil/.test(b.name)) || !M2.some((b) => b.name === 'Bubble')) bad('with hints off the boss mods aren\'t the plain timers: ' + M2.map((b) => b.name).join(', ') + ' (check J)');
+    if (M2.some((b) => !(dbg.timers() || []).includes(b.name)) || !M2.some((b) => /^Your coil/.test(b.name)) || !M2.some((b) => b.name === "Wretch's bubble")) bad('with hints off the boss mods aren\'t the plain timers: ' + M2.map((b) => b.name).join(', ') + ' (check J)');
     // (review of the new screen, Nov 15, measured in Chrome with the site's own CSS: ".pg-me { align-items: flex-start }" (Home's "Which one is you?") made
     //  your frame only as wide as its words, 197 px next to the target's 250; body.refine's 4 px corners on every button and the Plan page's "#main .pg-bar"
     //  (in the site's defaultTheme layer, where only a rule in the same layer wins) rounded the close button, the 2D | 3D switch and every health bar; at
