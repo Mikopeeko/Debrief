@@ -381,7 +381,11 @@ function simpleScreen(H, say, pj) {
     if (T2) { const d = L.open('m2'); d.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'solo' }; const me = d.P2.slotOf(d.P2.pick); d.at(T2.fangs - 12, me, { seed: 3 }); L.win.__pgSndLog = [];
       while (d.G.t < T2.solo + 1.5) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
       const ticks = lg.filter((q) => q.k === 'tick' && q.t >= T2.solo - 3.6 && q.t < T2.solo), go = lg.some((q) => q.k === 'go' && q.t >= T2.solo - 0.2 && q.t < T2.solo + 1.5);
-      if (ticks.length !== 3 || !go) bad('the tether countdown sounds ' + ticks.length + ' ticks before the break' + (go ? '' : ' and no "go"') + ' (3, 2, 1, then go; check S11)'); }
+      if (ticks.length !== 3 || !go) bad('the tether countdown sounds ' + ticks.length + ' ticks before the break' + (go ? '' : ' and no "go"') + ' (3, 2, 1, then go; check S11)');
+      // (each sound once: live, every tick played twice (the tether's bar and its alert both counted) and "go", the "now" call and a dodge alarm stacked within half a second)
+      const dup = lg.filter((q, i) => lg.slice(i + 1).some((r) => r.k === q.k && (q.k === 'tick' ? r.t - q.t < 0.45 : q.k === 'go' ? r.t - q.t < 0.95 : false)));
+      const pile = lg.filter((q) => (q.k === 'now' || q.k === 'dodge') && lg.some((g0) => g0.k === 'go' && q.t >= g0.t && q.t - g0.t < 0.95));
+      if (dup.length || pile.length) bad('the tether break sounds twice or piles up: ' + dup.concat(pile).map((q) => q.k + '@' + q.t.toFixed(1)).join(' ') + ' (check S11)'); }
     { const d = L.open(); d.at(0, d.role.id, { seed: 3 }); L.win.__pgSndLog = []; while (d.G.t < 60) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
       if (!lg.some((q) => q.k === 'dodge')) bad('the NOW line turned to a dodge in phase 1\'s first minute without the dodge alarm (check S11)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont

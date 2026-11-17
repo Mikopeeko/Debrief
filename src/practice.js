@@ -469,7 +469,10 @@ function pgOpen(root, boss, d, pk) {
     go: (c, t) => { bell(c, t, 1174.7, 0.07, 0.7); bell(c, t, 1568, 0.06, 0.7); bell(c, t, 2349.3, 0.03, 0.5); },
     ok: (c, t) => { bell(c, t, 1046.5, 0.05, 0.3); bell(c, t + 0.08, 1318.5, 0.05, 0.3); bell(c, t + 0.16, 1568, 0.055, 0.45); },
     bad: (c, t) => { tn(c, t, 0.28, 0.09, 'sine', 230, 110); nz(c, t, 0.12, 0.03, 'lowpass', 700, 200); } };
-  const sfx = (k) => { if (window.__pgSndLog) window.__pgSndLog.push({ k, t: G ? G.t : 0, on: sndOn }); if (!sndOn || window.__pgAuto || !CUE[k]) return; const c = sndCtx(); if (!c) return;
+  const sfx = (k) => { if (!sndOn || window.__pgAuto || !CUE[k]) return;
+    if (G) { const L0 = G.sndLast || (G.sndLast = {}), t = G.t; /* (each sound once: a tick at most every half second (the tether's bar and its alert both counted), and right after "go" no "now" or dodge on top of it) */
+      if ((k === 'tick' && L0.tick > t - 0.5 && L0.tick <= t) || (k === 'go' && L0.go > t - 1 && L0.go <= t) || ((k === 'now' || k === 'dodge') && L0.go > t - 1 && L0.go <= t)) return; L0[k] = t; }
+    if (window.__pgSndLog) window.__pgSndLog.push({ k, t: G ? G.t : 0 }); const c = sndCtx(); if (!c) return;
     try { if (c.state === 'suspended' && c.resume) c.resume(); CUE[k](c, c.currentTime + 0.01); } catch (e) { /* (no sound here) */ } };
   // (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can": what a mechanic feels
   // like, made the same way, from noise and sliding tones: a whoosh as a wave passes you, a deep boom for a coil's slam, a wet pop for the Wretch's bubble, a
