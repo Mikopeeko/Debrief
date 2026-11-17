@@ -15,7 +15,7 @@ module.exports = function mplusPlayersLook(say) {
   let s, css; try { s = fs.readFileSync(path.join(__dirname, '..', 'src', 'mptab.js'), 'utf8'); css = fs.readFileSync(path.join(__dirname, '..', 'src', 'shell.html'), 'utf8'); } catch (e) { bad('could not read src: ' + e.message); return; }
   // the Report card
   if (s.indexOf("const gban = '<section class=\"mpr-gban\" aria-label=\"The group\"><div class=\"mprs mpx-ban' + (GL ? ' mrs-g' + GL : '') + '\"") < 0 || s.indexOf("+ gban + '<div class=\"rcb-2 ds-rc\">'") < 0) bad('the Report card no longer opens with the group banner in The key\'s style (Flex, Nov 16: "Players tab makeover", "Yes, build it")');
-  if (s.indexOf("'<span class=\"mprs-s mpr-gs\" tabindex=\"0\" data-tt=\"' + esc(why) + '\">' + rcbIc(ic) + '<span><small>' + l + '</small><b>' + Math.round(av) + gradeChip(letterOf(av)) + '</b><small class=\"mpr-gsb\">Best: ") < 0) bad('a subject in the group banner lost its icon, its number with a grade chip or the best player');
+  if (s.indexOf("'<span class=\"mprs-s mpr-gs\" tabindex=\"0\" data-tt=\"' + esc(why) + '\">' + rcbIc(ic) + '<span><small>' + l + '</small><b>' + Math.round(av) + gradeChip(letterOf(av)) + '</b><small class=\"mpr-gsb\">' + (tN === l0.length && tN > 1 ? 'Everyone: '") < 0) bad('a subject in the group banner lost its icon, its number with a grade chip or the best player');
   if (s.indexOf('<section class="rcb-ban') >= 0 && /function mpxRep\(R, fx\)[\s\S]{0,4000}<section class="rcb-ban/.test(s)) bad('the Report card\'s old banner with its stat boxes is back');
   if (/function mpxRep\(R, fx\)[\s\S]{0,6000}<h3>The group\\'s report card<\/h3>/.test(s)) bad('the group\'s report card is a second section again under the banner');
   { const a = s.indexOf('\nfunction mpxRep(R, fx)'), b = a < 0 ? -1 : s.indexOf('\nfunction ', a + 5), f = a < 0 ? '' : s.slice(a, b);
@@ -33,6 +33,7 @@ module.exports = function mplusPlayersLook(say) {
       if (f) { const h = f({ run: { dungeon: "Kings' Rest" } }, 'Flex', 97, 'Holy Paladin', { cls: 'PALADIN' }, '<div class="mpv-tiles mpk-t3"><div class="mpv-tile mpk-tile"><small>Damage while the group is healthy</small><b class="ok">78%</b><i>x</i></div><button type="button" class="mpv-tile" data-mpcf="trash"><small>Trash pulls</small><b class="warn">1 to fix</b><i>y</i></button></div>');
         if (h.indexOf('<b class="mrs-gb g-S">S</b>') < 0 || h.indexOf('mrs-gS') < 0 || h.indexOf('kr.jpg') < 0) bad('Rotation\'s banner lost its grade badge (97 is an S) or the dungeon\'s art');
         if (h.indexOf('<img class="mpx-ti" src="ability_warrior_innerrage.jpg"') < 0 || h.indexOf('<img class="mpx-ti" src="achievement_bg_killxenemies_generalsroom.jpg"') < 0 || h.indexOf('data-mpcf="trash"') < 0) bad('Rotation\'s tiles lost their icons in the banner, or stopped being buttons'); } } }
+  if (/function mpxRep\(R, fx\)[\s\S]{0,12000}rct-roles/.test(s)) bad('the ranked group has its Everyone / Tank / Healer / DPS filter again (Flex, Nov 16: "remove this")');
   // the look
   const a = css.indexOf("/* Players' makeover (Nov 16"), z = a < 0 ? -1 : css.indexOf('</style>', a), blk = a < 0 || z < 0 ? '' : css.slice(a, z);
   if (!blk) { bad('the Players makeover\'s look is gone'); return; }
