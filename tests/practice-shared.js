@@ -268,7 +268,7 @@ function lookC(H, say, pj) {
     if (typeof d.nextHtml !== 'function' || !nexts) bad('the NEXT line never showed' + tag);
     // (every word written on the screen: no clock time, no count of seconds; the cast bar, the tags under your frame and the hotbar's buttons no numbers at all
     //  (stacks on a tag are "×2"), the fight path only its "3 of 31 done")
-    W.slice(W0).forEach(({ at, v }) => { const x = plain(v); if (!x) return; if (timey(x)) note('a clock time or a count of seconds on the screen' + tag + ' at "' + at.trim() + '"', x);
+    W.slice(W0).forEach(({ at, v }) => { const x = plain(v); if (!x || /\.pg-cds\b/.test(at)) return; /* (your countdown alerts count on purpose: Flex, Nov 17, '"Break tether in 20s" and it slowly counts down'; check S10) */ if (timey(x)) note('a clock time or a count of seconds on the screen' + tag + ' at "' + at.trim() + '"', x);
       if ((/\.pg-cdn\b|\.pg-clk\b/.test(at) && /\d/.test(x)) || (/\.pg-cast\b/.test(at) && /\s\d+(?:\.\d+)?$/.test(x))) note('a number counting down on her cast bar, a button or a clock' + tag + ' at "' + at.trim() + '"', x); /* ("Interrupted (Melee 2)" is a name) */
       if (/\.pg-debs\b/.test(at) && /\d/.test(plain(v.replace(/<span class="pg-tag pg-jtag"[^>]*>[^<]*<\/span>/g, '')).replace(/×\d+/g, ''))) note('seconds on the tags under your frame' + tag, x); /* (your job's own tag may say "Right Soak #1") */
       if (/\.pg-timers\b/.test(at) && /\d/.test(x.split(name).join('').replace(/\b\d+ of \d+ done\b/g, ''))) note('a number on the fight path (other than "3 of 31 done")' + tag, x); });
@@ -343,13 +343,22 @@ function simpleScreen(H, say, pj) {
     else for (const [teth, role, side, want] of [['solo', 'r', 'E', /break first/i], ['five', 'm', 'W', /with the 5/i]]) {
       const d = L.open('m2'); d.P2.pick = { side, role, egg: null, mal: 0, cry: 0, teth }; const me = d.P2.slotOf(d.P2.pick), tb = teth === 'solo' ? T2.solo : T2.five, tag = ' (' + teth + ', ' + role + ' on the ' + side + ' ledge)';
       try { d.at(T2.fangs - 12, me, { seed: 3 }); } catch (e) { bad('the tether run didn\'t start' + tag + ': ' + e.message + ' (check S9)'); continue; }
-      let prev = null, changes = 0, named = 0, samples = 0, broke = false;
+      let prev = null, changes = 0, named = 0, samples = 0, broke = false, cdBad = null, cdN = 0, cdNow = false; const W2 = W.length;
       while (d.G.t < tb + 1.5) { d.step(2); d.frame(); const t = d.G.t, now = plain(d.nowHtml()), k = now.replace(/[!.]+$/, '');
         if (t >= T2.fangs + 0.5) { if (prev !== null && k !== prev) changes++; prev = k; }
-        if (t >= T2.fangs + 3 && t < tb - 5.5) { samples++; if (want.test(now)) named++; } if (t >= tb && t < tb + 1 && /^Break now/.test(now)) broke = true; }
+        if (t >= T2.fangs + 3 && t < tb - 5.5) { samples++; if (want.test(now)) named++; } if (t >= tb && t < tb + 1 && /^Break now/.test(now)) broke = true;
+        // (S10. the countdown alert (Flex, Nov 17: '"Break tether in 20s" and it slowly counts down'): from the landing to your break, "Break tether in Ns" with N the
+        //  whole seconds left, then "Break tether now!" until you're out)
+        const al = typeof d.P2.alerts === 'function' ? (d.P2.alerts(t) || []).map((a) => a.text) : null, th = d.G.p2.teth[me];
+        if (!al) cdBad = cdBad || 'phase 2 gives no countdown alerts (P2.alerts)';
+        else if (t >= T2.fangs + 0.2 && t < tb - 0.05 && th && th.br == null) { const m = /^Break tether in (\d+)s$/.exec(al[0] || ''); if (!m || +m[1] !== Math.ceil(tb - t - 1e-6)) cdBad = cdBad || 'at ' + (t - T2.fangs).toFixed(1) + ' s after the landing the alert reads "' + (al[0] || 'nothing') + '", not "Break tether in ' + Math.ceil(tb - t - 1e-6) + 's"'; else cdN++; }
+        else if (t >= tb && t < tb + 1 && al.includes('Break tether now!')) cdNow = true; }
       if (!samples || named < samples * 0.6) bad('while tethered the NOW line names your break in only ' + named + ' of ' + samples + ' moments' + tag + ' (check S9)');
       if (changes > 5) bad('the NOW line changes ' + changes + ' times from the tethers landing to your break' + tag + ' (5 at most; check S9)');
-      if (!broke) bad('the NOW line doesn\'t say "Break now" as your break comes' + tag + ' (check S9)'); } }
+      if (!broke) bad('the NOW line doesn\'t say "Break now" as your break comes' + tag + ' (check S9)');
+      if (cdBad || !cdN) bad('the tether countdown: ' + (cdBad || 'never showed') + tag + ' (check S10)');
+      if (!cdNow && !(d.G.p2.teth[me] && d.G.p2.teth[me].br != null && d.G.p2.teth[me].br <= tb + 0.3)) bad('no "Break tether now!" alert at your break' + tag + ' (check S10)');
+      if (!W.slice(W2).some((w) => /\.pg-cds/.test(w.at) && /Break tether in \d+s/.test(w.v))) bad('the countdown alert isn\'t drawn on the screen (.pg-cds)' + tag + ' (check S10)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.

@@ -277,6 +277,7 @@ function pgOpen(root, boss, d, pk) {
     '<div class="pg-timers pg-path" aria-label="Coming up in the fight"></div><div class="pg-res" aria-live="polite"></div><div class="pg-coach" aria-live="polite"></div>' +
     '<span class="pg-rush" title="Nothing to do here yet: the game runs faster until the next thing comes">▸▸ Skipping ahead</span>' + /* (top centre, its own: look C hides her frame's name row, where it sat, Nov 17) */
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
+    '<div class="pg-cds" aria-live="polite"></div>' + /* (countdown alerts, stacked above the NOW line: Flex, Nov 17) */
     '<div class="pg-bot"><div class="pg-job pg-now"><div class="pg-nowl">' + PG_CHEV_SVG + '<span class="pg-nowk">Now</span><p class="pg-nowt"></p></div><p class="pg-nx"></p></div>' +
     '<div class="pg-ufs"><div class="pg-ucol pg-me"><div class="pg-uf"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div></div><div class="pg-debs"></div></div>' +
     '<div class="pg-ucol pg-tfc"><div class="pg-uf pg-tf none"><div class="pg-nm"><b class="pg-tfn">No target</b><span class="pg-tfr">Tab to pick</span></div><div class="pg-bar pg-tfh"><i></i><span></span></div></div>' +
@@ -949,6 +950,7 @@ function pgOpen(root, boss, d, pk) {
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : ''); /* (the bar empties; no seconds on it, look C) */
       cb.classList.toggle('intr', !!c.intr); cb.classList.toggle('nok', !!P2 && !c.kick && !c.intr); } else cb.style.display = 'none'; /* (phase 2, as in WoW: gold you can kick, grey you can't, red "Interrupted") */
     modsDraw(t); coachDraw(t); resPrune(t);
+    { const ce = $('.pg-cds'), AL = P2 && typeof P2.alerts === 'function' ? P2.alerts(t) || [] : [], ch = AL.map((a) => '<div class="pg-cd' + (a.now ? ' now' : '') + '" style="--c:' + (/^#[0-9a-f]{3,8}$/i.test(a.c || '') ? a.c : '#f3c969') + '">' + esc(a.text) + '</div>').join(''); if (ce && ce.dataset.k !== ch) { ce.dataset.k = ch; ce.innerHTML = ch; } } /* (your countdowns: "Break tether in 12s", Flex, Nov 17) */
     // (a line stays up at least 2.5 s, unless a dodge or a step due now takes over; NEXT under it while hints are on. Look C: the order big, the rest of the
     //  line small after it, the key words in their colours on the floor (the yellow bubble, the green half, your gold circle))
     { const jl = jobPick(), J = G.jobShow, calm = (r) => r === 'c' || r === 'w' || r === 'd' || r === 'e', hold = !!J && J.text !== jl.text && G.t >= J.t && G.t - J.t < 2.5 && calm(J.r) && calm(jl.r);
@@ -1438,6 +1440,9 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg:has(.pg-card.on) :is(.pg-coach, .pg-res) { display: none; }
 .pg .pg-coach, .pg .pg-coach.on, .pg .pg-warn .pg-al { display: none !important; } /* (Flex, Nov 17: no coach card, no call boxes: the NOW line says it; the paused line still shows in .pg-warn) */
 .pg .pgp-st.past .pgp-mk { background: rgba(9,11,15,.6); border: 1px solid rgba(255,255,255,.3); } /* (passed, not ticked, Nov 17) */
+.pg .pg-cds { position: absolute; left: 0; right: 0; top: 18%; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 6; } /* (countdown alerts, Flex, Nov 17) */
+.pg .pg-cd { padding: 6px 20px; font: 700 clamp(20px, 1.6vw, 26px)/1.2 var(--head, system-ui); letter-spacing: .01em; color: #1a1405; background: var(--c); box-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.6); }
+.pg .pg-cd.now { animation: pgCdNow .5s ease-in-out infinite alternate; } @keyframes pgCdNow { from { filter: brightness(1); } to { filter: brightness(1.35); } } .pg:has(.pg-card.on) .pg-cds { display: none; }
 .pg .pg-in > .pg-rush { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); z-index: 6; padding: 4px 12px; background: rgba(9,11,15,.72); border: 1px solid rgba(255,255,255,.14); pointer-events: none; } /* (its own spot, top centre, Nov 17) */
 .pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the path and the coach card on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn { display: flex; flex-direction: column; align-items: center; gap: 8px; }

@@ -742,6 +742,11 @@ function pgP2(A) {
     if (S.waves.some((wv) => waveAt(wv, P0, t, -0.3, 3))) return 'Small tails: step out of the red lane!';
     if (G.eggs.some((q) => q.state === 'floor' && wdUp(q.side) && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 1)) return 'Step off the egg: its shield hurts you while the Warden lives.';
     return null; };
+  // (your countdown alerts (Flex, Nov 17: '"Break tether in 20s" and it slowly counts down'): from the moment your tether lands, "Break tether in Ns" to your
+  //  break, whole seconds, then "Break tether now!" until you're out (1.5 s at most). Nothing once it's broken or its Warden is dead)
+  const alerts = (t) => { sync(); if (!G || !G.p2 || !S) return []; const th = G.p2.teth[A.me]; if (!th || t < T.fangs || th.br != null || !wdUp(th.side)) return [];
+    const tb = th.solo ? T.solo : T.five, left = tb - t; if (left > 0) return [{ key: 'teth', text: 'Break tether in ' + Math.ceil(left - 1e-6) + 's', c: '#f3c969' }];
+    return t < tb + 1.5 ? [{ key: 'teth', text: 'Break tether now!', c: '#f3c969', now: 1 }] : []; };
   const jobText = () => { sync(); const t = G.t, me = A.me, j = S.job[me], s = j.side, w = G.p2.where[me], th = G.p2.teth[me], e = G.eggs.find((q) => q.id === me && q.state !== 'gone'), bi = j.big ? bigIx(s, j.big) : -1, bg = bi >= 0 ? G.p2.big[bi] : null, k = myKicksNow(t)[0];
     const heal = me[0] === 'h', here = [G.x, G.y], inRing = pgDist(here, S.pits[s]) <= P.THROW, wDead = G.p2.wdead[s] != null, wd = G.p2.wd[s], bt = j.big ? S.bigAt[s][j.big] : 0;
     if (stunned(me, t)) return 'Stunned: wait for it to wear off.';
@@ -1080,7 +1085,7 @@ function pgP2(A) {
   const RUSH = { k: 2, lead: 0.3, stop: T.molt + 3 - 1 }; /* (to 1 s before you can hit your Warden (its Shadow Molt ends: S.wardens' molt, T.molt + 3), not 1.5 s before it stands up: that left about 6 s at normal speed with nothing to hit, the pause Flex felt (Nov 17)) */
   const rush = (t) => { sync(); if (!G || !G.p2 || !S) return 1; const c = G.p2.crossT, j = S.job[A.me]; return c != null && !!j && G.p2.where[A.me] === 'L' && G.p2.wside[A.me] === j.side && t >= c + RUSH.lead && t < RUSH.stop ? RUSH.k : 1; };
   return { part: 2, script: (o) => pgP2Script({ ...(o || {}), me: A.me, pick: mine() ? pk : null, eggOf }), init, home, job, slow, check, kick, bossHp, onPlat: pgP2Floor, bossAt: () => ({ p: (A.S || {}).her || [46, 0], up: true }), tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, nextText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, hit, castOf, castBars, mini, draw2d, auditStep, shapes, rush,
+    jobText, nextText, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, hit, castOf, castBars, mini, draw2d, auditStep, shapes, rush, alerts,
     // (back on the platform for the heart burn, the bots use practice.js's dodge too, for the small tails' waves: the platform is flat there, as in phase 1)
     // (a kicker with a kick due holds its place instead: a missed Cry stuns everyone, worse than a wave)
     dodges: (id, t) => !!(G && G.p2 && t >= T.rage),
