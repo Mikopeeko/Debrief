@@ -179,14 +179,17 @@ function pg3dShapes(A, t) {
   S.soaks.forEach((s) => { if (t >= s.t0 && t <= s.at + 0.5) { const mine = s.group.includes(me), f = Math.min(1, (t - s.t0) / (s.at - s.t0)), c = mine ? '#f3c969' : '#24f2cb';
     disc(s.x, s.y, s.r, '#24f2cb', t > s.at ? 0.4 : 0.08); ring(s.x, s.y, s.r, c, 1, mine ? 0.45 : 0.3, mine); grow(s.x, s.y, s.r * f, '#24f2cb', 0.7);
     P({ k: 'wall', x: s.x, y: s.y, r: s.r, h: 2 + 3 * f, c, o: 0.08 + 0.14 * f }); P({ k: 'coil', x: s.x, y: s.y, r: s.r, f, slam: t > s.at ? cl((t - s.at) / 0.5) : 0 });
-    label(s.x, s.y, 5, mine ? 'YOUR SOAK' : 'Soak ' + (s.k + 1), c, 15); } }); /* (low over its circle: higher up it sat on the HUD's call-outs, review of Nov 15) */
+    if (mine || !A.P2) label(s.x, s.y, 5, A.P2 ? 'YOUR SOAK' : mine ? 'Your coil' : 'Not yours', c, 15); } }); /* (low over its circle: higher up it sat on the HUD's call-outs, review of Nov 15) */
+  /* (the prompts audit, Nov 16: phase 1's coil has one name, "Your coil", as the bar, the call and the job line say it, and the other says it isn't yours ("Soak 1" and
+     "Soak 2" said nothing about which was yours); a later part keeps "YOUR SOAK" on yours and drops "Soak N" from the others, one label fewer on a crowded floor) */
   S.bubbles.forEach((q) => { const c = G.wr[q.w]; if (c && t >= q.t0 && t <= q.at + 0.4) { const f = Math.min(1, (t - q.t0) / (q.at - q.t0));
     P({ k: 'dome', x: c.x, y: c.y, r: 10, c: '#d8f22f', o: 0.14 + 0.16 * f, f }); ring(c.x, c.y, 10, '#d8f22f', 1, 0.4); grow(c.x, c.y, 10 * (1 - f), '#d8f22f', 0.55); if (t > q.at) disc(c.x, c.y, 10, '#d8f22f', 0.45);
-    label(c.x, c.y, 5, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 15); } });
+    label(c.x, c.y, 5, 'Into the bubble', '#e8ff6a', 15); } }); /* (no countdown on the floor: Flex, Nov 16, "i feel like the game confuses people saying timestamps"; the boss-mod bar and the cast bar count) */
   // (impacts; the Womb and the Falling Debris drop out of the sky onto their circles)
   S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); disc(m.x, m.y, m.r, m.fill || '#c8a36a', 0.16); ring(m.x, m.y, m.r, m.color || '#c8a36a', 1, 0.3); disc(m.x, m.y, m.r * f, '#ff5a3c', 0.25);
     if (m.name === 'Falling Debris' || m.name === 'Toxic Womb') P({ k: 'rock', x: m.x, y: m.y, f, land: t > m.at ? cl((t - m.at) / 0.3) : 0, womb: m.name === 'Toxic Womb', sd: m.x * 0.37 + m.y * 0.71 }); } });
-  G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 2.5) { const f = Math.min(1, (t - e.land + 2.5) / 2.5); disc(e.x, e.y, 4, '#e6e0c8', 0.12); ring(e.x, e.y, 4, '#e6e0c8', 1, 0.25); disc(e.x, e.y, 4 * f, '#ff5a3c', 0.22);
+  // (a falling egg's circle from 3 s before it lands, as the job line warns you: the prompts audit, Nov 16, found 2.5 s too short to read and step out)
+  G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 3) { const f = Math.min(1, (t - e.land + 3) / 3); disc(e.x, e.y, 4, '#e6e0c8', 0.12); ring(e.x, e.y, 4, '#e6e0c8', 1, 0.25); disc(e.x, e.y, 4 * f, '#ff5a3c', 0.22);
     P({ k: 'egg', x: e.x, y: e.y, h: 1.2 + 32 * (1 - f * f), fall: true }); } }); /* (falling from the sky until it lands, its shadow shrinking under it) */
   // the beam: from the spectral image to the tank in it (b.tank, else the off tank)
   S.beams.forEach((b) => { const tk = G.bots[b.tank || 't2']; if (t >= b.t0 && t <= b.t1 && tk) P({ k: 'beam', x0: b.from[0], y0: b.from[1], x1: tk.x, y1: tk.y });
@@ -233,7 +236,7 @@ function pg3dShapes(A, t) {
   const dv = A.dps ? A.dps() : null; if (dv) { dv.right.forEach((o) => ring(o.p[0], o.p[1], o.r + 1.2, '#f3c969', 0.6 + 0.35 * Math.sin(t * 8), 0.35));
     if (dv.cur) { const q = dv.cur, R = q.r + 0.3; disc(q.p[0], q.p[1], R, '#ff2a1a', dv.inRange ? 0.16 : 0.07); ring(q.p[0], q.p[1], R, '#ff3b2f', dv.inRange ? 0.95 : 0.6, 0.24, !dv.inRange); } }
   const hn = A.hint ? A.hint() : null, ys = A.spot ? A.spot() : null;
-  if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot) */
+  if (ys) { disc(ys[0], ys[1], 1.3, '#f3c969', 0.18); ring(ys[0], ys[1], 1.3, '#f3c969', 1, 0.25, true); if (!(hn && hn.T && Math.hypot(hn.T[0] - ys[0], hn.T[1] - ys[1]) < 2)) label(ys[0], ys[1], 2.8, hn && hn.wait ? 'Wait' : 'Your spot', '#f3c969', 13); } /* (the hint's "Go here" says it when they're the same spot; "Wait" while the way is blocked) */
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
   // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
   // (nine names piled up in one heap, review of Nov 15)
@@ -273,8 +276,10 @@ function pg3dShapes(A, t) {
   P({ k: 'plate', id: me, x: G.x, y: G.y, name: 'YOU', c: '#ffd34d', bar: hp < 0.35 ? '#d8483e' : hp < 0.65 ? '#d9a93a' : '#3fbf5a', hp, o: 1, show: true, why: 'you', d: 0, you: true });
   const tg = A.target; if (tg) ring(tg[0], tg[1], 0.6, '#ffffff', 0.6, 0.15);
   // the hint (practice.js hintNow: where your job wants you now): an arrow at your feet and a "Go here" ring with the yards, gold as in 2D
-  if (hn && hn.T && hn.d > 0) { P({ k: 'arrow', x: G.x, y: G.y, a: Math.atan2(hn.T[1] - G.y, hn.T[0] - G.x), d: hn.d }); disc(hn.T[0], hn.T[1], 1.4, '#f3c969', 0.14); ring(hn.T[0], hn.T[1], 1.4, '#f3c969', 1, 0.25, true);
-    P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
+  // (the prompts audit, Nov 16: while the way is blocked (hn.wait: a wave crossing it, or no way round) no arrow, and the ring says "Wait"; the arrow comes back once it's clear. A bend round a coil
+  //  or a carrier's ring is just another spot to walk to (hint().T), then the arrow turns to yours)
+  if (hn && hn.T && hn.d > 0) { if (!hn.wait) P({ k: 'arrow', x: G.x, y: G.y, a: Math.atan2(hn.T[1] - G.y, hn.T[0] - G.x), d: hn.d }); disc(hn.T[0], hn.T[1], 1.4, '#f3c969', 0.14); ring(hn.T[0], hn.T[1], 1.4, '#f3c969', 1, 0.25, true);
+    P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, hn.wait ? 'Wait' : 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
   // (the monsters' plates, Flex, Nov 16: "Put healthbars over the monsters heads with the names though": every mob you can hit within 45 yd
   //  gets its name and a red health bar over its head (as tall as its model); the floating name labels they had are dropped)
   const MOBH = { rawling: 2.4, viper: 6.1, wretch: 5.6, warden: 5.8, clutch: 2.4, shrieker: 5.5, ds: 5.8, dsx: 5.8, doomscale: 5.8, rav: 6.2, ravenous: 6.2 }, mobs = [];

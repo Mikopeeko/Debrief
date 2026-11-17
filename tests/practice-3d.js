@@ -125,7 +125,7 @@ module.exports = function practice3d(say, H) {
   const A = { G, S, me: 'r3', nm: (id) => id, rl: (id) => id[0], clsC: () => null, bossAt: (t) => (t < S.dive.gone ? { p: [0, 46], up: true } : { p: S.dive.to, up: t >= S.dive.surf }), tailAt: () => ({ p: [-41, 0], up: true }), spot: () => null, target: null };
   const at = (t) => { try { return ctx.shapes(A, t); } catch (e) { bad('pg3dShapes crashed at ' + t + ' s: ' + e.message); return []; } };
   const has = (L, k, x, y, r) => L.some((s) => s.k === k && Math.abs(s.x - x) < 1e-9 && Math.abs(s.y - y) < 1e-9 && Math.abs(s.r - r) < 1e-9);
-  { const L = at(40); if (!has(L, 'disc', -25, 8, 10) || !L.some((s) => s.k === 'label' && s.text === 'YOUR SOAK')) bad('your coil soak isn\'t drawn at its spot with its radius (s.r) and "YOUR SOAK"'); }
+  { const L = at(40); if (!has(L, 'disc', -25, 8, 10) || !L.some((s) => s.k === 'label' && s.text === 'Your coil')) bad('your coil soak isn\'t drawn at its spot with its radius (s.r) and "Your coil" (one name for it since the prompts audit, Nov 16)'); }
   { const L = at(43); if (!has(L, 'disc', -25, -8, 9.5)) bad('a coil soak\'s radius isn\'t its own s.r (9.5 here)'); }
   { const L = at(37); if (R_BUB != null && !has(L, 'dome', -18, 4, R_BUB)) bad('the Fester Burst bubble isn\'t a ' + R_BUB + '-yard dome round the Wretch\'s live spot (G.wr), as check() hits it'); if (L.some((s) => s.k === 'dome' && s.x === -26 && s.y === 2)) bad('the bubble is drawn at its planned spot (q.p), not where the Wretch is'); }
   { const L = at(47); if (!has(L, 'disc', -41, 0, 35)) bad('Mephitic Thrash isn\'t drawn with its own radius (th.r, 35) round her tail'); }
@@ -187,8 +187,8 @@ module.exports = function practice3d(say, H) {
     if (loose.length) bad('a three.js ' + [...new Set(loose)].join(', ') + ' is made without keep(), so closing the game wouldn\'t free it');
     if (!/own\.forEach\(\(o\) => \{ try \{ o\.dispose\(\); \}/.test(P3)) bad('dispose() no longer frees everything keep() holds'); }
   // 8. the review of the graphics pass (Nov 15)
-  { const lb = (L, re) => L.find((s) => s.k === 'label' && re.test(s.text)), ys = lb(at(40), /^YOUR SOAK$/), bb = lb(at(37), /^Into the bubble/);
-    if (!ys || ys.h > 6) bad('the "YOUR SOAK" label floats ' + (ys ? ys.h : '?') + ' yards up, over the HUD\'s call-outs and far from its circle (0:39): keep it low (6 at most)');
+  { const lb = (L, re) => L.find((s) => s.k === 'label' && re.test(s.text)), ys = lb(at(40), /^Your coil$/), bb = lb(at(37), /^Into the bubble/);
+    if (!ys || ys.h > 6) bad('the "Your coil" label floats ' + (ys ? ys.h : '?') + ' yards up, over the HUD\'s call-outs and far from its circle (0:39): keep it low (6 at most)');
     if (!bb || bb.h > 6) bad('the "Into the bubble" label floats ' + (bb ? bb.h : '?') + ' yards up, on the HUD\'s call-outs (0:39, under "Egg picked up"): keep it low (6 at most)');
     if (at(20).some((s) => s.k === 'label' && /^Ula'tek$/.test(s.text))) bad('the "Ula\'tek" label is back: it sat half under the boss bar, which already names her');
     const gl = at(48).find((s) => s.k === 'label' && s.text === 'Gore Rattle'); if (!gl || gl.how !== 'name') bad('"Gore Rattle" isn\'t marked as a creature\'s name (how: \'name\'), so it would move off a HUD call-out instead of hiding'); }
