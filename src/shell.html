@@ -21643,6 +21643,31 @@ html body #view#view#view .dbt-why .dbt-add .ah-ln .ahg-ln:not(:has(> .ahg-ln)):
 html body #view#view#view .dbt-why .dbt-add .ah-ln .ahg-ln:has(> .ahg-ln) { padding-left: 0 !important; margin: 0 !important; }
 html body #view#view#view .dbt-why .dbt-add .ahg-nx { margin-top: 6px !important; }
 }
+
+/* ▶ Watch, quiet (Nov 17, Flex: "the watch button is kind of an eyesore"): a small grey ▶ in a fixed column that turns gold on its row's hover, no box;
+   the tags one width, so every row's ▶ and tag line up. Styling only. */
+@layer defaultTheme {
+html body #view#view#view#view#view#view .dbt-why .sm-watch { width: 22px !important; min-width: 22px !important; height: 22px !important; padding: 0 !important; margin: 0 6px 0 10px !important; border: 0 !important; background: none !important; font-size: 0 !important; color: transparent !important; display: inline-grid !important; place-items: center !important; border-radius: 50% !important; }
+html body #view#view#view#view#view#view .dbt-why .sm-watch::before { content: ''; width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 8px; border-color: transparent transparent transparent #6b7280; margin-left: 2px; }
+html body #view#view#view#view#view#view .dbt-why :is(.dbt-chr, .dbt-addr):hover .sm-watch::before, html body #view#view#view#view#view#view .dbt-why .sm-watch:focus-visible::before { border-left-color: #e6b450; }
+html body #view#view#view#view#view#view .dbt-why .sm-watch:hover { background: rgba(230, 180, 80, .14) !important; }
+html body #view#view#view#view#view#view .dbt-why .dbt-chn .dbt-chr .dbt-lv, html body #view#view#view#view#view#view .dbt-why .dbt-add .dbt-addr > .dbt-lv { min-width: 84px !important; box-sizing: border-box !important; text-align: center !important; justify-content: center !important; }
+/* (the ▶ and the tag on each Also hurt row's first line, in the same columns as How it went (Nov 17, Flex: "this too")) */
+@media (min-width: 761px) { html body #view#view#view#view#view#view .dbt-why .dbt-addr > .sm-watch { right: 92px !important; top: 4px !important; transform: none !important; grid-area: auto !important; } html body #view#view#view#view#view#view .dbt-why .dbt-add .dbt-addr > .dbt-lv { position: absolute !important; right: 0 !important; top: 6px !important; margin: 0 !important; } html body #view#view#view#view#view#view .dbt-why .dbt-addr { padding-right: 136px !important; } }
+@media (max-width: 760px) { html body #view#view#view#view#view#view .dbt-why .dbt-addr { padding-right: 8px !important; } html body #view#view#view#view#view#view .dbt-why .dbt-add .dbt-addr > .dbt-lv { align-self: start !important; } html body #view#view#view#view#view#view .dbt-why .dbt-addr > .sm-watch { right: 92px !important; top: 4px !important; transform: none !important; grid-area: auto !important; } html body #view#view#view#view#view#view .dbt-why .dbt-addr > b { padding-right: 34px !important; } }
+}
+
+/* Home: the ranks beside the team's name in Warcraft Logs' colours (Nov 17, Flex: "Can you color code the stats based on how warcraftlogs does it?"),
+   the same colours the site uses for every Warcraft Logs rank (grey, green, blue, purple, orange, pink, gold). */
+@layer defaultTheme {
+html body #main .pgc b.trv.q1 { color: #a3a7b0 !important; }
+html body #main .pgc b.trv.q2 { color: #52d65a !important; }
+html body #main .pgc b.trv.q3 { color: #4f9dff !important; }
+html body #main .pgc b.trv.q4 { color: #b981f5 !important; }
+html body #main .pgc b.trv.q5 { color: #ff9a3c !important; }
+html body #main .pgc b.trv.q6 { color: #f07ab8 !important; }
+html body #main .pgc b.trv.q7 { color: #e8d18e !important; }
+}
 </style>
 </body>
 </html>

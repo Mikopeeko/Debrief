@@ -15,6 +15,8 @@ module.exports = function summaryLook(say) {
   if (/root\.remove\(\)|sm-hid[^;]*remove\(\)/.test(s.slice(s.indexOf('function smDisplay()'), s.indexOf('function smDisplay()') + 6000))) bad('the old root row is taken out of the page, so the counts that read it change');
   has(".dbt-chr:not(.sm-root) .dbt-lv.l5::after { content: 'Death';", 'deaths wear the red Serious tag again', css);
   has(".dbt-chr.sm-root .dbt-lv::after { content: 'Root cause';", 'the root cause lost its red tag', css);
+  has(".dbt-why .sm-watch::before { content: ''; width: 0; height: 0; border-style: solid;", '▶ Watch is a gold box on every row again (Nov 17, Flex: "the watch button is kind of an eyesore")', css);
+  has('.dbt-why .dbt-add .dbt-addr > .dbt-lv { position: absolute !important; right: 0 !important; top: 6px !important;', 'Also hurt\'s tag sits mid-row again and its ▶ floats lower, away from it (Nov 17, Flex: "this too")', css);
   has('box._jumpTo(null, at);', '▶ Watch can no longer jump the replay to its second'); has('box._jumpTo = function (k, t, pre) {', 'the replay lost the jump ▶ Watch uses');
   has("const smWatch = (t) => { const tab = document.querySelector('.tabbar .tab[data-t=\"replay\"]');", '▶ Watch no longer opens the Replay tab');
   has('<span class="sm-watch" role="button" tabindex="0" data-smt="', 'How it went lost its ▶ Watch buttons');
