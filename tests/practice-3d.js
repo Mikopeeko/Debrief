@@ -105,7 +105,7 @@ module.exports = function practice3d(say, H) {
     if (!o.ok || !o.lib) bad('a three.js that loads isn\'t handed to the 3D view (or isn\'t kept for the next time)'); }).catch((e) => bad('the load check crashed: ' + e.message));
 
   // 3. the shapes against the hit code: the same radii as check(), the same wave areas as inWave()
-  const code = [grab('PG_UL', PJ), grab('GDZ_ROLE', GJ), grab('GDZ_RAID', GJ), grab('pg3dShapes', P3)];
+  const code = [grab('PG_UL', PJ), grab('GDZ_ROLE', GJ), grab('GDZ_RAID', GJ), grab('PG3D_MIX', P3), grab('pg3dClassOf', P3), grab('pg3dClassC', P3), grab('pg3dShapes', P3)]; /* (the class mix the rings use, check 13) */
   const iw = grab('inWave', PJ), chk = (/const check = \(t0, t\) => \{[\s\S]*?G\.adds = G\.adds\.filter/.exec(PJ) || [''])[0];
   if (code.some((x) => !x) || !iw) return loadP;
   const ctx = vm.createContext({ Math, Object, Array });
@@ -404,7 +404,7 @@ module.exports = function practice3d(say, H) {
     const mt = (/const PG3D_MON = \{[\s\S]*?\n\};/.exec(P3) || [''])[0], mq = /const PG3D_MQ = '([^']+)'/.exec(P3);
     if (!mt) nope('there is no PG3D_MON (one model per mob)');
     const ent = [...mt.matchAll(/^\s+(\w+): \{ url: ([^,]+),/gm)].map((q) => [q[1], q[2]]), urls = ent.map((e) => e[1]);
-    ['rawling', 'doomscale', 'warden', 'ravenous', 'wretch', 'clutch'].forEach((k) => { if (!ent.some((e) => e[0] === k)) nope('no model for the ' + k); });
+    ['rawling', 'viper', 'doomscale', 'warden', 'ravenous', 'wretch', 'clutch', 'shrieker'].forEach((k) => { if (!ent.some((e) => e[0] === k)) nope('no model for the ' + k); });
     if (new Set(urls).size !== urls.length) nope('two mobs share a model (each mob must have its own)');
     if (!mq || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(mq[1])) nope('the snakes must come from one pinned commit (PG3D_MQ)');
     if (urls.some((u) => !/^PG3D_MQ \+ '[\w%./-]+\.glb'$/.test(u) && !/^'https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w%./-]+\.(glb|gltf)'$/.test(u) && !/^'https:\/\/static\.poly\.pizza\/[0-9a-f-]{36}\.glb'$/.test(u))) nope('a monster loads from an address that isn\'t pinned (a jsdelivr commit, or a poly.pizza file id)');
@@ -420,6 +420,20 @@ module.exports = function practice3d(say, H) {
     const P2J = rd('practice-p2.js'), P3J = rd('practice-p3.js');
     if (!/K\.mon\(s\.ref, k === 'rav' \? 'ravenous' : k, /.test(P2J) || !/K\.mon\(s\.ref, 'doomscale', /.test(P2J) || !/k: 'warden', x: p\[0\], y: p\[1\], ref: w/.test(P2J) || !/ref: d \}\)/.test(P2J) || !/p: left, ref: c \}\)/.test(P2J) || !/k: 'rav', x: r\.x, y: r\.y, ref: r/.test(P2J)) nope('phase 2\'s Warden, Doomscales, Ravenous Doomscales and Clutches don\'t draw their monsters');
     if (!/K\.mon\(s\.ref, k, s\.x, s\.y, /.test(P3J) || !/ph: c\.land, ref: st \}\)/.test(P3J) || !/k: 'shrieker', x: s\.x, y: s\.y, ref: s/.test(P3J)) nope('phase 3\'s Clutches and Shriekers don\'t draw their monsters'); }
+  // 15. (Nov 16, Flex: "can you have a variety of classes for the bots so its representing various classes?", "don't put healthbars over the bots
+  //     heads, put their role. Put healthbars over the monsters heads with the names though.") Without a team plan the raid is a fixed mix of
+  //     classes by role (the rings in those classes' colours); a raider's plate shows its role and no health bar; every mob in 45 yd gets its
+  //     name and a red health bar over its head, and its old floating name label goes.
+  { const nope = (m) => bad('the raid and the mobs: ' + m + ' (check 15)');
+    const mix = (/const PG3D_MIX = \{[\s\S]*?\};/.exec(P3) || [''])[0];
+    if (!['t', 'm', 'r', 'h'].every((r) => new RegExp('\\b' + r + ": \\['").test(mix))) nope('PG3D_MIX must give each role a list of classes');
+    if (!/c = mine \? String\(A\.cls \? A\.cls\(id\) : ''\)\.toLowerCase\(\)\.replace\(\/\[\^a-z\]\/g, ''\) : pg3dClassOf\(A, id\)/.test(P3)) nope('the raid\'s figures don\'t use the class mix');
+    if (!/cc = A\.clsC\(id\) \|\| pg3dClassC\(pg3dClassOf\(A, id\)\)/.test(P3)) nope('the rings don\'t take the mixed classes\' colours');
+    if (!/role: GDZ_ROLE\[A\.rl\(id\)\]\[0\], rc \}\)/.test(P3) || !/p\.b\.sp\.visible = !s\.role;/.test(P3) || !/if \(s\.role\) \{ if \(!p\.r\) \{ p\.r = plSprite\(/.test(P3)) nope('a raider\'s plate must show its role and no health bar');
+    if (!/A\.tgts \? A\.tgts\(\) : \[\]/.test(P3) || !/why: 'mob', mob: true, h: MOBH\[o\.kind\]/.test(P3) || !/tgts: \(\) => \(G \? tgtList\(G\.t\) : \[\]\)/.test(PJ)) nope('the mobs don\'t get a plate with their name and health bar');
+    if (!/q\.fix = !!s\.you \|\| !!s\.mob;/.test(P3)) nope('a mob\'s name can be hidden by the raid\'s names');
+    if (!/if \(q\.k === 'label' && \/Rawling\|Viper\|Wretch\|Warden\|Doomscale\|Clutch\|Shrieker\/\.test/.test(P3)) nope('the mobs\' old floating name labels stay next to their new plates');
+    if (!/if \(p\.r\) p\.r\.sp\.visible = false; \} \}\);/.test(P3)) nope('a role tag stays up after its raider is gone'); }
   return loadP;
 };
 if (require.main === module) {

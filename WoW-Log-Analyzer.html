@@ -73654,7 +73654,7 @@ function pgOpen(root, boss, d, pk) {
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
-  const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt, look: () => look, cls: (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].cls || '') : ''),
+  const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt, tgts: () => (G ? tgtList(G.t) : []), look: () => look, cls: (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].cls || '') : ''),
     spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G && !pickTgtAt(p)) target = p; }, dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
@@ -73916,9 +73916,10 @@ const PG3D_MON = {
   doomscale: { url: PG3D_MQ + 'easy_enemies_pack/Snake_angry.glb', h: 4.4, clips: { idle: /snake_idle/i, move: /snake_walk/i } },
   warden: { url: 'https://static.poly.pizza/0b3ab2a2-9944-4672-abb5-0c3d2dcaafb8.glb', h: 5.8, clips: { idle: /|idle|/i, move: /|walk|/i } },
   ravenous: { url: 'https://cdn.jsdelivr.net/gh/castle-engine/castle-engine@deb5d9091322aa64aad042c9428f6ce330b79ede/examples/delphi/cpp_builder/window/data/Dino.gltf', h: 6.2, tint: '#ff9a8a', clips: { idle: /^idle$/i, move: /^walk$/i } },
-  wretch: { url: 'https://cdn.jsdelivr.net/gh/jtydhr88/ComfyUI-mesh2motion@11fe6b7aaa5eac60afa3d726389cd9dd870ed1f6/mesh2motion-ui/animations/kaiju-animations.glb', h: 3.6, tint: '#c8d46a', clips: { idle: /^idle$/i, move: /^walk$/i } },
+  wretch: { url: 'https://cdn.jsdelivr.net/gh/jtydhr88/ComfyUI-mesh2motion@11fe6b7aaa5eac60afa3d726389cd9dd870ed1f6/mesh2motion-ui/animations/kaiju-animations.glb', h: 5, tint: '#c8d46a', clips: { idle: /^idle$/i, move: /^walk$/i } },
   clutch: { url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /|idle$/i, move: /|walk$/i } },
-  /*FLYERS*/
+  viper: { url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 1.5, hover: 1.5, turn: -Math.PI / 2, clips: { idle: /wasp_flying/i, move: /wasp_flying/i } }, /* (a stinging wasp; it faces +x, so a quarter turn) */
+  shrieker: { url: 'https://static.poly.pizza/90ed3740-d8c4-4910-88ce-ac2ed426022d.glb', h: 3.2, hover: 2.2, clips: { idle: /|flying_idle$/i, move: /|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
 //  model is loaded, and each raider gets a clone of it from three.js's SkeletonUtils, the same r147 plain-script set as the loader)
@@ -73933,6 +73934,15 @@ const pg3dMeLoad = (T, url) => {
     p.catch(() => { if (PG3D_GLTF_LIB === p) PG3D_GLTF_LIB = null; }); }
   return PG3D_GLTF_LIB.then((L) => new Promise((ok, no) => { new L().load(url, ok, undefined, no); })); };
 
+// (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
+//  team plan when there is one; else a mix by role, the same every run (t1, t2... take the next class in their role's list): tanks Warrior,
+//  Paladin, Death Knight, Druid, Monk, Demon Hunter; melee Rogue, Warrior, Death Knight, Paladin, Shaman, Monk, Demon Hunter, Druid; ranged
+//  Mage, Warlock, Hunter, Priest, Druid, Shaman, Evoker; healers Priest, Paladin, Shaman, Druid, Monk, Evoker. The look only.)
+const PG3D_MIX = { t: ['warrior', 'paladin', 'deathknight', 'druid', 'monk', 'demonhunter'], m: ['rogue', 'warrior', 'deathknight', 'paladin', 'shaman', 'monk', 'demonhunter', 'druid'],
+  r: ['mage', 'warlock', 'hunter', 'priest', 'druid', 'shaman', 'evoker'], h: ['priest', 'paladin', 'shaman', 'druid', 'monk', 'evoker'] };
+const pg3dClassOf = (A, id) => { const c = String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, ''); if (c) return c; const L = PG3D_MIX[A.rl ? A.rl(id) : id[0]]; const n = parseInt(String(id).slice(1), 10);
+  return L && n > 0 ? L[(n - 1) % L.length] : ''; };
+const pg3dClassC = (k) => { const E0 = typeof window !== 'undefined' && window.ENGINE; const c = k && E0 && E0.CLASSES && E0.CLASSES[k.toUpperCase()]; return c ? c[1] : null; }; /* (a class's colour, from the engine's class list) */
 // ---- what to draw at time t: a list of shapes, each from the numbers the hit code uses (practice.js draw(), line for line) ----
 // A: practice.js's window on the game (G, S, me, nm, rl, clsC, bossAt, tailAt, spot, target, hint). Floor shapes: disc, ring (fixed size), grow
 // (a ring that grows or shrinks), arc, rect (a strip: f0..f1 along angle a, w0..w1 across it, from x,y); wave (a wave wall over its rect: exactly
@@ -74037,10 +74047,10 @@ function pg3dShapes(A, t) {
   const RAID = typeof GDZ_RAID !== 'undefined' ? GDZ_RAID : Object.keys(G.bots), NEAR = 7, CARRY = 14, mates = new Map(), carry = new Set();
   S.soaks.forEach((s) => { if (s.group.includes(me) && t >= s.cast - 0.5 && t <= s.at + 0.5) s.group.forEach((id) => { if (!mates.has(id)) mates.set(id, s); }); });
   G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) carry.add(e.who); });
-  RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id), d = Math.hypot(b.x - G.x, b.y - G.y);
+  RAID.forEach((id) => { const b = G.bots[id]; if (id === me || !b) return; const rc = GDZ_ROLE[A.rl(id)][1], cc = A.clsC(id) || pg3dClassC(pg3dClassOf(A, id)), d = Math.hypot(b.x - G.x, b.y - G.y);
     ring(b.x, b.y, 0.95, cc || rc, 0.9, 0.16); P({ k: 'unit', id, x: b.x, y: b.y, c: cc || rc }); /* (the ring in the class colour: the raid's figures show the role, the ring the class) */
     const ms = mates.get(id), why = d <= NEAR ? 'near' : ms && Math.hypot(b.x - ms.x, b.y - ms.y) > ms.r ? 'soak' : carry.has(id) && d <= CARRY ? 'egg' : '';
-    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d }); });
+    P({ k: 'plate', id, x: b.x, y: b.y, name: A.nm(id).slice(0, 12), c: cc || '#cfd6df', bar: cc || '#3fbf5a', hp: 1, o: d < 16 ? 1 : Math.max(0.3, 1 - (d - 16) / 40), show: !!why, why, d, role: GDZ_ROLE[A.rl(id)][0], rc }); }); /* (role: shown over the raider in place of a health bar) */
   if (G.debs.def && G.debs.def.until > t) P({ k: 'dome', x: G.x, y: G.y, r: 1.9, c: '#7fb8ff', o: 0.18 });
   const hp = cl((G.hp == null ? 100 : G.hp) / 100);
   ring(G.x, G.y, 1.25, '#f3c969', 1, 0.32); P({ k: 'unit', id: me, x: G.x, y: G.y, c: A.clsC(me) || GDZ_ROLE[A.rl(me)][1], you: true, la: lean ? lean.a : 0, lf: lean ? lean.f : 0 });
@@ -74049,6 +74059,12 @@ function pg3dShapes(A, t) {
   // the hint (practice.js hintNow: where your job wants you now): an arrow at your feet and a "Go here" ring with the yards, gold as in 2D
   if (hn && hn.T && hn.d > 0) { P({ k: 'arrow', x: G.x, y: G.y, a: Math.atan2(hn.T[1] - G.y, hn.T[0] - G.x), d: hn.d }); disc(hn.T[0], hn.T[1], 1.4, '#f3c969', 0.14); ring(hn.T[0], hn.T[1], 1.4, '#f3c969', 1, 0.25, true);
     P({ k: 'beacon', x: hn.T[0], y: hn.T[1] }); label(hn.T[0], hn.T[1], 3.4, 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 14); }
+  // (the monsters' plates, Flex, Nov 16: "Put healthbars over the monsters heads with the names though": every mob you can hit within 45 yd
+  //  gets its name and a red health bar over its head (as tall as its model); the floating name labels they had are dropped)
+  const MOBH = { rawling: 1.6, viper: 3.1, wretch: 5, warden: 5.8, clutch: 2.4, shrieker: 5.5, ds: 4.4, dsx: 4.4, doomscale: 4.4, rav: 6.2, ravenous: 6.2 }, mobs = [];
+  (A.tgts ? A.tgts() : []).forEach((o) => { if (!o || !o.p || !/rawling|viper|wretch|warden|clutch|shriek|^ds|doom|rav/i.test(String(o.kind || ''))) return; const d = Math.hypot(o.p[0] - G.x, o.p[1] - G.y); if (d > 45) return;
+    mobs.push(o.p); P({ k: 'plate', id: 'mob:' + (o.key || o.kind + ':' + o.p.join(',')), x: o.p[0], y: o.p[1], name: String(o.name || o.kind).slice(0, 22), c: '#ffb0a3', bar: '#d8483e', hp: o.max ? Math.max(0, Math.min(1, o.hp / o.max)) : 1, o: 1, show: true, why: 'mob', mob: true, h: MOBH[o.kind] || 2.75, d }); });
+  for (let i = out.length - 1; i >= 0; i--) { const q = out[i]; if (q.k === 'label' && /Rawling|Viper|Wretch|Warden|Doomscale|Clutch|Shrieker/.test(q.text || '') && mobs.some((p) => Math.hypot(p[0] - q.x, p[1] - q.y) < 5)) out.splice(i, 1); }
   return out;
 }
 
@@ -74574,7 +74590,7 @@ function pg3d(host, A) {
   //  look is loaded once (TPL) the first time someone wears it, and you and each raider get a clone of it.)
   let ME = null; const TPL = {}, MEF = {}, BOTF = new Map(), FIGL = [];
   const lookOf = (id, mine) => { const L = mine && A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (yours can be picked on the card) */
-    const r = A.rl ? A.rl(id) : 'm', c = String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, ''); if (c !== 'knight' && PG3D_FIG[c]) return c; /* (the raider's class on the team plan) */
+    const r = A.rl ? A.rl(id) : 'm', c = mine ? String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, '') : pg3dClassOf(A, id); if (c !== 'knight' && PG3D_FIG[c]) return c; /* (a raider's class: the team plan's, else the mix; yours only from the team plan) */
     return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
   const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F = rk.indexOf('mon:') === 0 ? PG3D_MON[rk.slice(4)] : PG3D_FIG[rk]; /* (mon: a monster, PG3D_MON) */
     Promise.all([pg3dMeLoad(T, F.url), F.anim ? pg3dMeLoad(T, F.anim) : null]).then(([g, g2]) => { if (dead) return; const root = g.scene;
@@ -74593,7 +74609,7 @@ function pg3d(host, A) {
     const acts = { idle: act((C.idle && find(C.idle)) || find(/^idle$/i) || find(/idle/i) || anim[0]), run: act((C.move && find(C.move)) || find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
       atk: rk.indexOf('mon:') === 0 ? null : act(swing.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (you and every raider swing or cast; monsters don't) */ /* (melee swing a sword; ranged and healers cast) */
     root.visible = false; scene.add(root);
-    const f = { rk, root, mixer, acts, cur: '', y0: P0.y0, face: Math.atan2(-x, y), mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null, every: 1.5 + Math.random() * 0.9, ph: Math.random() }; FIGL.push(f); return f; }; /* (every, ph: a raider's own swing rhythm) */ /* (a new one faces the middle) */
+    const f = { rk, root, mixer, acts, cur: '', y0: P0.y0, turn: P0.F.turn || 0, face: Math.atan2(-x, y), mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null, every: 1.5 + Math.random() * 0.9, ph: Math.random() }; FIGL.push(f); return f; }; /* (every, ph: a raider's own swing rhythm) */ /* (a new one faces the middle) */
   const meNow = () => { const rk = lookOf(A.me, true); if (!MEF[rk]) MEF[rk] = figMake(rk, true, A.G.x, A.G.y); const F = MEF[rk] || null; if (F !== ME) { if (ME) { ME.root.visible = false; ME.on = false; } ME = F; } return ME; };
   const botNow = (s) => { const rk = lookOf(s.id, false); let f = BOTF.get(s.id); if (f && f.rk === rk) return f; if (f) { f.root.visible = false; f.on = false; } f = figMake(rk, false, s.x, s.y, s.id); if (f) BOTF.set(s.id, f); return f; };
   // (the raid at work, Flex: "Would it take much to have the bots attacking things that are supposed to be attacked?", "as long as the bots don't
@@ -74614,7 +74630,7 @@ function pg3d(host, A) {
     if (hitT != null && hitT !== M.hitSeen) { M.hitSeen = hitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
     const want = now < M.atkTo ? 'atk' : now - M.mvAt < 140 ? 'run' : 'idle', nx = M.acts[want] || M.acts.idle;
     if (want !== M.cur && nx) { const pv = M.acts[M.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.fadeIn(0.12).play(); if (pv && pv !== nx) pv.fadeOut(0.12); M.cur = want; }
-    M.root.position.set(s.x, baseY(s.x, s.y) + M.y0, -s.y); M.root.rotation.set(0, M.face, 0); M.on = true; };
+    M.root.position.set(s.x, baseY(s.x, s.y) + M.y0, -s.y); M.root.rotation.set(0, M.face + (M.turn || 0), 0); M.on = true; }; /* (turn: a model that faces +x) */
   // (the monsters, Flex, Nov 16: "find a model pack to use for the monsters in the fight as well? Ideally serpent type", "there should only be
   //  one model for each of the mobs", "Rawlings should not be the same as vipers, try to find unique models for each one", "both the shrieker and
   //  vipers are flying creatures": one model per mob (PG3D_MON), as tall as its old shape so the hits stay where they were drawn; a flier hovers
@@ -74643,12 +74659,14 @@ function pg3d(host, A) {
   const PLATES = new Map(), PL = [], PLN = 12.5 / 26;
   const plSprite = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const tx = keep(new T.CanvasTexture(c)); tx.minFilter = T.LinearFilter; tx.generateMipmaps = false;
     const sp = new T.Sprite(keep(new T.SpriteMaterial({ map: tx, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false, fog: false }))); sp.renderOrder = 990; sp.visible = false; scene.add(sp); return { c, tx, sp }; };
-  const plateOf = (id) => { let p = PLATES.get(id); if (!p) { p = { n: plSprite(256, 40), b: plSprite(64, 8), nk: '', bk: '', w: 0, on: false, s: null }; p.n.sp.center.set(0.5, -0.3); PLATES.set(id, p); } return p; };
+  const plateOf = (id) => { let p = PLATES.get(id); if (!p) { p = { n: plSprite(256, 40), b: plSprite(64, 8), r: null, rk: '', nk: '', bk: '', w: 0, on: false, s: null }; p.n.sp.center.set(0.5, -0.3); PLATES.set(id, p); } return p; };
   const plate = (s) => { const p = plateOf(s.id), nk = s.name + '|' + s.c;
     if (p.nk !== nk) { p.nk = nk; const g = p.n.c.getContext('2d'); g.clearRect(0, 0, 256, 40); g.font = '700 26px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.name, 128, 21); g.fillStyle = s.c; g.fillText(s.name, 128, 21); p.w = Math.min(256, g.measureText(s.name).width + 12) * PLN; p.n.tx.needsUpdate = true; }
     const bk = s.bar + '|' + Math.round(s.hp * 40); if (p.bk !== bk) { p.bk = bk; const g = p.b.c.getContext('2d'), w = Math.round(62 * s.hp); g.clearRect(0, 0, 64, 8); g.fillStyle = 'rgba(0,0,0,.85)'; g.fillRect(0, 0, 64, 8); g.fillStyle = s.bar; g.fillRect(1, 1, w, 6); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(1, 1, w, 2); p.b.tx.needsUpdate = true; }
-    const y = baseY(s.x, s.y) + 2.75; p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
-    p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = true; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); };
+    const y = baseY(s.x, s.y) + (s.h != null ? s.h + 0.5 : 2.75); p.n.sp.position.set(s.x, y, -s.y); p.b.sp.position.set(s.x, y, -s.y); /* (a monster's plate over its head) */
+    if (s.role) { if (!p.r) { p.r = plSprite(160, 30); p.r.sp.center.set(0.5, 0.2); } const rk = s.role + '|' + s.rc; if (p.rk !== rk) { p.rk = rk; const g = p.r.c.getContext('2d'); g.clearRect(0, 0, 160, 30); g.font = '700 21px system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 5; g.strokeStyle = 'rgba(0,0,0,.9)'; g.strokeText(s.role, 80, 16); g.fillStyle = s.rc || '#cfd6df'; g.fillText(s.role, 80, 16); p.r.tx.needsUpdate = true; }
+      const kr = PLN / pxK * 0.78; p.r.sp.position.set(s.x, y, -s.y); p.r.sp.scale.set(160 * kr, 30 * kr, 1); p.r.sp.material.opacity = s.o; p.r.sp.visible = true; } else if (p.r) p.r.sp.visible = false; /* (a raider's role in place of its health bar) */ const kn = PLN / pxK; p.n.sp.scale.set(256 * kn, 40 * kn, 1); p.b.sp.scale.set((s.you ? 56 : 44) / pxK, (s.you ? 6 : 5) / pxK, 1);
+    p.n.sp.material.opacity = s.o; p.b.sp.material.opacity = s.o * 0.9; p.b.sp.visible = !s.role; p.n.sp.visible = false; p.on = true; p.s = s; PL.push(p); }; /* (no health bar over a raider: its role instead) */
   // cast bars (Nov 16, Flex: "The monsters should have cast bars over their heads", "training wheels"): a WoW nameplate's cast bar over each caster you can
   // kick, from pg3dShapes' 'cast' shapes (the part's castBars): a dark frame (gold when it's your kick), the bar filling left to right, the words in it
   // (pg3dCastLook), about a nameplate wide and the same size on screen at any distance, just over the caster's head (h yards over its base, the gap in
@@ -74701,7 +74719,7 @@ function pg3d(host, A) {
     // (the names: you, the labels and the call-outs stay; then the late soak mates and carriers, then the nearest, where they sit on nothing)
     for (let k = 0; k < PL.length; k++) { const p = PL[k], s = p.s; if (!s.show) continue; V4.copy(p.n.sp.position).project(cam); if (V4.z > 1 || Math.abs(V4.x) > 1.2 || Math.abs(V4.y) > 1.2) continue;
       const q = p.q || (p.q = { p, l: 0, t: 0, r: 0, b: 0, fix: false, free: false, pri: 0, on: false }), x = (V4.x + 1) / 2 * W0, y = (1 - V4.y) / 2 * H0, hw = p.w / 2 + 2;
-      q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); }
+      q.l = x - hw; q.r = x + hw; q.t = y - 25; q.b = y - 5; q.fix = !!s.you || !!s.mob; q.pri = (s.why === 'near' ? 2 : 1) + s.d / 1000; PQ.push(q); } /* (a monster's name always shows, like yours) */
     pg3dPick(PQ, 4); for (let i = 0; i < PQ.length; i++) { const q = PQ[i]; if (q.p) q.p.n.sp.visible = q.on; else if (q.L && !q.on) q.L.sp.visible = false; } };
 
   // ---- one shape on the screen ----
@@ -74799,7 +74817,7 @@ function pg3d(host, A) {
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
     for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
     monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
-    for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
+    for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) { p.n.sp.visible = p.b.sp.visible = false; if (p.r) p.r.sp.visible = false; } });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
     place(); cam.updateMatrixWorld(); names(); const bo = fade(boss, BOSSM, 12, BTW, 690); for (let i = 0; i < eyeGl.length; i++) eyeGl[i].material.opacity = eyeO * bo;
