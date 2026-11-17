@@ -393,7 +393,7 @@ function checks(H, say) {
     { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }; dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(324.5, me, { seed: 3 }); dbg.G.def = dbg.G.t; dbg.G.log = [];
       while (dbg.G.t < T.defFrom - 0.5) dbg.step(1); const un = dbg.upNext().map((x) => x.text); if (un.some((x) => /Defensive/.test(x))) bad('with Q cooling down What\'s next still shows ' + un.join(', ') + ' (the release sweep, Nov 16; check O)');
       while (dbg.G.t < T.defCue + 0.5) dbg.step(1); const tx = dbg.P2.jobText(); if (/Press Q now/.test(tx) || !/cooling down/.test(tx)) bad('with Q cooling down the line says: ' + tx + ' (the release sweep, Nov 16; check O)');
-      while (dbg.G.t < T.defBy + 0.5) dbg.step(1); if (!dbg.log.some((l) => /No defensive for the last four slams.*You pressed Q at 5:24/.test(l))) bad('Q pressed at 5:24 gives: ' + dbg.log.join(' | ') + '; the mistake should say Q was pressed at 5:24 (the release sweep, Nov 16; check O)'); } }
+      while (dbg.G.t < T.defBy + 0.5) dbg.step(1); if (!dbg.log.some((l) => /No defensive for the last four slams\. You pressed Q too early: it was still cooling down\./.test(l))) bad('Q pressed at 5:24 gives: ' + dbg.log.join(' | ') + '; the mistake should say Q was pressed too early, with no clock time (the release sweep, Nov 16, and the review of the prompts audit; check O)'); } }
   catch (e) { bad('the release sweep\'s checks crashed: ' + e.message + ' (check O)'); }
   // P. the prompts audit (Nov 16; Flex: "the alerts and training wheels could be better in terms of the on screen prompts", then "All 10"; mid-run: "i feel
   // like the game confuses people saying timestamps")
@@ -504,6 +504,56 @@ function checks(H, say) {
       const src = rd('practice-int.js'), body = (a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i + 1); return i >= 0 && j > i ? src.slice(i, j) : ''; }, jb = body('const dodgeLine = ', 'const upNext = ');
       if (!jb || /clk\(|toFixed\(|Math\.ceil\(/.test(jb)) bad('the job line\'s code formats a clock time or a count again (clk, toFixed or Math.ceil in jobText; check P)'); } }
   catch (e) { bad('the prompts audit\'s checks crashed: ' + e.message + ' (check P)'); }
+  // Q. the review of the prompts audit (Nov 16, night): what a skeptic found playing the commit headless. Each fails on the commit before it.
+  try { const G = () => dbg.G, put = (p) => { dbg.G.x = p[0]; dbg.G.y = p[1]; }, hint = () => dbg.hint(), jt = () => dbg.P2.jobText() || '', onP = (p) => dbg.P2.onPlat(p[0], p[1]);
+    const segNear = (a, b, c) => { const dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1, u = Math.max(0, Math.min(1, ((c[0] - a[0]) * dx + (c[1] - a[1]) * dy) / L2)); return hyp([a[0] + dx * u, a[1] + dy * u], c); };
+    const at = (t, pk, seed) => { dbg.P2.pick = pk; const me = dbg.P2.slotOf(); dbg.at(t, me, { seed: seed || 4 }); return me; }, CLOCK = /\b\d{1,2}:\d\d\b/, words = (s) => s.trim().split(/\s+/).length;
+    const run = (until) => { let k = 0; while (G().t < until && k++ < 20000) { dbg.stepOwn(1); if (G().hp <= 0) G().hp = 100; } }; /* (you idle, no autopilot; a death can't freeze the loop) */
+    // 1. inside another team's live coil, the arrow led on through its middle (bend() skips a circle you stand in) while the line said to step out: it must
+    //    end beyond its edge and lead outward, 5 yards in and on its 10.5-11 yard rim
+    { let n = 0; for (const pat of [1, 2]) for (const team of ['Y', 'P', 'B']) { const pk = { role: 'h', team, egg: false, pat }; dbg.P2.pick = pk; const me0 = dbg.P2.slotOf(); dbg.at(T.start, me0, { seed: 4 });
+        const s = dbg.S.soaks.find((q) => !q.group.includes(me0) && q.at - 1.6 > T.land + 1); if (!s) continue; const me = at(s.at - 1.6, pk); void me; const d0 = hyp([s.x, s.y], [0, 0]) || 1, u = [-s.x / d0, -s.y / d0];
+        for (const k of [5, 10.7]) { const p = [s.x + u[0] * (s.r - (k === 5 ? 5 : s.r - k)), s.y + u[1] * (s.r - (k === 5 ? 5 : s.r - k))]; if (!onP(p)) continue; put(p); G().eggs.forEach((q) => { if (q.state === 'air') q.state = 'floor'; }); const h = hint(), c = [s.x, s.y]; n++;
+          if (!h || hyp(h.T, c) < s.r + 1 || segNear(p, h.T, c) < hyp(p, c) - 0.05) bad('inside the ' + P.TN[s.team] + ' coil (' + hyp(p, c).toFixed(1) + ' yards from its middle, pattern ' + pat + ', ' + P.TN[team] + '), the arrow ' + (h ? 'ends ' + hyp(h.T, c).toFixed(1) + ' yards from its middle and comes ' + segNear(p, h.T, c).toFixed(1) + ' close' : 'is missing') + ': it must lead out past its edge (the review, Nov 16: it ran through the middle, Soul Constrictor; check Q1)');
+          if (!/isn't yours/.test(jt())) bad('inside the ' + P.TN[s.team] + ' coil (' + hyp(p, c).toFixed(1) + ' yards in), the line says: ' + jt() + ' (the review, Nov 16: nothing said so on its 10.5-11 yard rim; check Q1)'); } }
+      if (n < 4) bad('the coil-escape check found only ' + n + ' spots to test (check Q1)'); }
+    // 2. 4.85 yards from an egg landing in 2 s, the arrow to your team's spot crossed its 4-yard impact (bend() sees eggs 6 s ahead, 5 yards round; the
+    //    get-out step only 3 s and 4.7)
+    { const pk = { role: 'h', team: 'B', egg: false, pat: 1 }; let tried = 0; for (let i = 0; i < 8 && !tried; i++) { const me = at(T.land - 2, pk, 3); void me; const eg = G().eggs.filter((q) => q.state === 'air')[i]; if (!eg) break;
+        const sp = dbg.S.pre.B, d = hyp([eg.x, eg.y], sp) || 1, p = [eg.x + (eg.x - sp[0]) / d * 4.85, eg.y + (eg.y - sp[1]) / d * 4.85]; if (!onP(p) || d < 8) continue; put(p); const h = hint(); tried = 1;
+        if (h && segNear(p, h.T, [eg.x, eg.y]) < 4) bad('4.85 yards from an egg landing in 2 s, the arrow passes ' + segNear(p, h.T, [eg.x, eg.y]).toFixed(1) + ' yards from its middle, inside its 4-yard impact (the review, Nov 16; check Q2)'); }
+      if (!tried) bad('the landing-egg arrow check found no egg to test with (check Q2)'); }
+    // 3. no clock time in a mistake: each shows on screen as it happens ("No defensive for the last four slams (5:48 to 5:54)", "its shell broke at 5:28")
+    { const seen = []; for (const [pk, seed] of [[{ role: 'r', team: 'P', egg: true, pat: 2 }, 3], [{ role: 'm', team: 'Y', egg: true, pat: 1 }, 5], [{ role: 'h', team: 'B', egg: false, pat: 3 }, 7]]) { at(T.start, pk, seed);
+        run(T.end - 0.05); G().log.forEach((m) => seen.push(m.text || '')); } /* (the text the float shows; dbg.log puts the time in front, as the report does) */
+      const hit = seen.filter((s) => CLOCK.test(s)); if (hit.length) bad('a mistake shown on screen says a clock time: "' + hit.slice(0, 3).join('" / "') + '" (Flex, Nov 16: "i feel like the game confuses people saying timestamps"; the review; check Q3)');
+      if (seen.length < 3) bad('the mistake scan saw only ' + seen.length + ' mistakes from three idle runs (check Q3)'); }
+    // 4. the pattern call sent a carrier to its soak while the line said to break its egg first: the two agree
+    { const pk = { role: 'r', team: 'P', egg: true, pat: 2 }; let c0 = 0, eggSeen = 0;
+      for (let seed = 1; seed <= 6; seed++) { const me = at(T.start, pk, seed); c0 = dbg.S.soaks[0].cast; run(c0 - 1); const e = G().eggs.find((q) => q.id === me); if (!e || e.state !== 'floor') continue;
+        put([e.x + 1, e.y]); run(c0 + 0.05); const w = dbg.S.warns.find((x) => Math.abs(x.t - c0) < 0.01 && /^Spectral Coils:/.test(x.text)), tx = jt(), eggF = /^(Break|Run to|Pick up|Wait by) your egg/.test(tx); if (eggF) eggSeen++;
+        if (eggF !== !!(w && /Get your egg, then your soak at/.test(w.text))) bad('as the coils are called, a carrier beside its unbroken egg hears "' + (w && w.text) + '" while the line says "' + tx + '" (seed ' + seed + '; the review, Nov 16: Purple ranged, pattern 2, sent to Triangle while told to break its egg; check Q4)'); }
+      if (!eggSeen) bad('no carrier beside its unbroken egg was told to break it first as the coils were called, so the call\'s egg wording went untested (check Q4)');
+      at(T.start, { role: 'h', team: 'B', egg: false, pat: 2 }, 3); run(c0 + 0.05); const w2 = dbg.S.warns.find((x) => Math.abs(x.t - c0) < 0.01 && /^Spectral Coils:/.test(x.text));
+      if (!w2 || !/: Go to your soak at /.test(w2.text)) bad('without an egg the pattern call is: ' + (w2 && w2.text) + ' (check Q4)'); }
+    // 5. the Q prompt and glow came 0.4 s before its call: a call fires with its line or before it
+    { at(T.defCue - 0.3, { role: 'h', team: 'B', egg: false, pat: 1 }); G().def = -1e9; if (/Press Q/.test(jt()) || (dbg.P2.qGlow && dbg.P2.qGlow())) bad('0.3 s before the defensive\'s call the line says "' + jt() + '" or Q glows (the review, Nov 16; check Q5)'); }
+    // 6. "Go to your team's spot by Square" while standing on it (the arrow gone): wait there
+    { at(T.start + 0.5, { role: 'h', team: 'B', egg: false, pat: 1 }); put(dbg.S.pre.B); const tx = jt(); if (!new RegExp('^Wait by ' + P.TM.B + ' with your team').test(tx)) bad('standing on your team\'s spot before the eggs land, the line says: ' + tx + ' (the review, Nov 16; check Q6)'); }
+    // 7. "Step out of the white circle" 0.5 s before the circle is drawn (practice3d.js draws a landing egg's circle from 2.5 s)
+    { const pk = { role: 'h', team: 'B', egg: false, pat: 1 }; at(T.start, pk, 4); const eg0 = G().eggs.filter((q) => q.state === 'air').sort((a, b) => a.land - b.land)[0], i0 = G().eggs.indexOf(eg0);
+      at(eg0.land - 2.8, pk, 4); let eg = G().eggs[i0]; put([eg.x, eg.y]); G().eggs.forEach((q) => { if (q !== eg && q.state === 'air' && q.land - G().t <= 2.5) q.state = 'floor'; });
+      if (/landing on you|your egg's circle/.test(jt())) bad('2.8 s before an egg lands, before its circle shows, the line says: ' + jt() + ' (the review, Nov 16; check Q7)');
+      at(eg0.land - 2.2, pk, 4); eg = G().eggs[i0]; put([eg.x, eg.y]); if (!/landing on you|your egg's circle/.test(jt())) bad('2.2 s before an egg lands on you, the line says: ' + jt() + ' (check Q7)'); }
+    // 8. the waiting line ran to 17-20 words ("... Then: run to your first soak when it lights up gold."): 12 at most
+    { const c0 = (pk) => { const me = at(T.start, pk, 4), c = dbg.S.soaks[0].cast; at(c - 1.5, pk, 4); return me; };
+      const me = c0({ role: 'h', team: 'B', egg: false, pat: 1 }); void me; put(dbg.S.pre.B); const a = jt();
+      const me2 = c0({ role: 'r', team: 'P', egg: true, pat: 2 }), e = G().eggs.find((q) => q.id === me2); Object.assign(e, { state: 'held', who: me2 }); G().eggs.forEach((q) => { if (q !== e && q.state === 'held') q.state = 'gone'; }); put(dbg.S.pre.P); const b = jt();
+      [a, b].forEach((s) => { if (!/^Wait by /.test(s) || words(s) > 12) bad('the waiting line is "' + s + '" (' + words(s) + ' words; the review, Nov 16: 12 at most; check Q8)'); }); }
+    // 9. the start card's words: "Last, her bubbles show" and "by the Diamond marker, halfway out" (the gold ring is two-thirds out, inside the marker)
+    { const sv = dbg.P2.pick; for (const team of ['Y', 'P', 'B']) { dbg.P2.pick = { role: 'h', team, egg: false, pat: 0 }; const tx = (dbg.P2.short() + dbg.P2.asg()).replace(/<[^>]+>/g, ' ');
+        if (/halfway out|Last, her/.test(tx) || !/gold ring, just inside the Diamond marker/.test(tx)) bad('the start card says "halfway out" or "Last, her", or doesn\'t name the gold ring by the Diamond marker (the review, Nov 16; check Q9)'); } dbg.P2.pick = sv; } }
+  catch (e) { bad('the review\'s checks crashed: ' + e.message + ' (check Q)'); }
 }
 
 module.exports = checks; module.exports.load = load;
