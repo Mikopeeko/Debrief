@@ -180,6 +180,7 @@ function checks(H, say) {
     try { d.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; d.at(30, 'r3', { seed: 3 }); let g = d.G; g.adds = g.adds.filter((a) => a.kind !== 'viper');
       g.log.push({ t: g.t - 1, kind: 'wave', text: 'Her Caustic Waves hit you.', tip: 'Dodge.' }); g.log.push({ t: g.t - 12, kind: 'dps', text: 'A Viper was up: you were on it 0% of the time.', tip: 'Vipers are deadly.' });
       let c = die(); if (!c || !/You died/.test(c.innerHTML)) bad('no death card at hp 0 (check M)');
+      else if (/\b\d{1,2}:\d{2}\b/.test(c.innerHTML.replace(/<[^>]*>/g, ' '))) bad('the death card shows a clock time ("' + ((/<span class="pg-k">([^<]*)</.exec(c.innerHTML) || [])[1] || '') + '"); look C, Nov 16 (Flex: "remove the timestamps"): only the end report keeps times (check N)');
       else if (!/Her Caustic Waves hit you/.test(c.innerHTML) || /A Viper was up/.test(c.innerHTML)) bad('the death card blames "' + ((/<p>([^<]*)<\/p>/.exec(c.innerHTML) || [])[1] || '') + '"; a wave hit you 1 s before, and a damage-moment line is never what killed you (check M)');
       d.at(30, 'r3', { seed: 3 }); g = d.G; g.adds = g.adds.filter((a) => a.kind !== 'viper'); g.log.push({ t: g.t - 20, kind: 'bite', text: 'Mother\'s Wrath bit you: you were in her reach.' }); g.debs.venom = { until: g.t + 5, n: 2 };
       c = die(); if (!c || !/Caustic Venom \(2 stacks\)/.test(c.innerHTML)) bad('dying 20 s after your last mistake with 2 stacks of Caustic Venom, the death card says "' + (c ? ((/<p>([^<]*)<\/p>/.exec(c.innerHTML) || [])[1] || '') : '') + '"; it should name the venom (check M)');
@@ -204,8 +205,123 @@ function checks(H, say) {
     } catch (x) { bad('the end card check crashed: ' + x.message + ' (check J)'); }
   }
 }
-module.exports = checks;
+// N. Look C "Minimal" (Flex, Nov 16: "Yes, go with C", after "The prompts dont feel like a guide through the fight at all", "I also think the UI could look
+//    more polished and put together", "just make sure the wording is clear, not jumbled and easy to understand", "clean up the setup interface and remove the
+//    timestamps"), for every part:
+//    N1. the screen has the fight path (in the boss-mod bars' place, .pg-timers), the result chips, the coach card, and the NOW line with NEXT under it above the
+//        dock; the coach card's words are "Name (Short instruction)", one sentence of what happens, and a job, with no clock time or second count.
+//    N2. in a played run of each part the path names the coming step and the next one and ticks the done ones, the coach card comes before a new mechanic
+//        with its title, what happens and YOUR JOB, never for something that isn't a mechanic, and the NOW line always has an order.
+//    N3. nothing written on the screen over a played run of each part, nor the setup card it opens with, has a clock time or a second count. Before look C her
+//        frame ran the fight clock ("2:05"), her cast bar counted down ("Venom beam  2.6"), the boss-mod bars counted ("4.3", "12"), the tags on your frame
+//        counted their seconds and the hotbar its cooldowns, and phase 3's Start list read "6:12 · Onto her quarter".
+//    N4. phase 1's setup card and Start list have no clock time, and the shared setup card strips one from any part's words.
+//    Each failed on the commit before (08a45c58): run lookC(null, say, oldPracticeJs).
+function lookLoad(H, pj) {
+  H = H || require('./site-helpers.js'); const fs = require('fs'), vm = require('vm'), SRC = path.join(__dirname, '..', 'src'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
+  // (a page that writes down every word put on it: each element is known by the selectors that found it, and every textContent / innerHTML set is kept)
+  const W = [], node = (p, last) => new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => 0 : k === 'then' ? undefined : k === Symbol.iterator ? function* () {} : k === 'dataset' ? (t.ds || (t.ds = {})) : k === 'style' ? (t.st || (t.st = {})) : node(p, k)),
+    set: (t, k, v) => { if (k === 'textContent' || k === 'innerHTML' || k === 'innerText') W.push({ at: p, v: String(v) }); return true; }, apply: (t, th, a) => node(last === 'querySelector' || last === 'querySelectorAll' ? (p + ' ' + a[0]).slice(-160) : p) });
+  const GJ = rd('guides.js'), fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS', 'UL_RIM', 'UL_SOAK', 'UL_CMK', 'UL_PAT'].map((n) => H.grab(n, GJ)).join('\n');
+  const win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+  class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
+  const ctx = vm.createContext({ document: node(''), window: win, navigator: node(''), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: () => 0, cancelAnimationFrame() {}, localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, E: { CLASSES: {} }, console, MouseEvent: function () {} });
+  vm.runInContext(H.grab('esc') + '\n' + H.grab('guideSlug') + '\n' + fromGuides + '\n' + (pj || rd('practice.js')) + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + rd('practice-int.js') + '\n' + rd('practice-p3.js') +
+    '\nthis.PG_PARTS = PG_PARTS; this.PG_COACH = typeof PG_COACH === "undefined" ? null : PG_COACH; this.pgNoClock = typeof pgNoClock === "undefined" ? null : pgNoClock;', ctx);
+  return { W, ctx, win, open: (pk) => { vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (pk ? ', "' + pk + '"' : '') + ')', ctx); return win.__pgDbg; } };
+}
+function lookC(H, say, pj) {
+  const bad = (t) => say("Ula'tek practice game (shared rules)", 'bad', t + ' (look C, Nov 16, check N)');
+  const CLOCK = /\b\d{1,2}:\d{2}\b/, SECS = /\b\d+(?:\.\d+)?\s?s\b/, TENTHS = /\b\d+\.\d\b/, timey = (x) => CLOCK.test(x) || SECS.test(x) || TENTHS.test(x);
+  const plain = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const TITLE = /^[A-Z][^()]{1,40} \([A-Z][^()]{2,60}\)$/, ONE = /^[A-Z][^.!?]*[.!?]$/, NOT_MECH = /^(Back to her|Gates open|Your gate opens|Rawlings boil|Be on her quarter|Wardens die|Defensive \(Q\))$/;
+  let L; try { L = lookLoad(H, pj); } catch (e) { bad('the game didn\'t load for the look check: ' + e.message); return; }
+  const { W, ctx } = L;
+  // N1. the pieces, and the coach card's own words
+  { const d = L.open(), h = d && typeof d.html === 'function' ? d.html() : '', has = (c) => new RegExp('class="(?:[^"]*\\s)?' + c + '(?:\\s[^"]*)?"').test(h), at = (c) => h.search(new RegExp('class="(?:[^"]*\\s)?' + c + '(?:\\s[^"]*)?"'));
+    [['pg-path', 'the fight path'], ['pg-timers', 'the fight path in the boss-mod bars\' place (.pg-timers, which the 3D labels keep out of)'], ['pg-res', 'the result chips'], ['pg-coach', 'the coach card'], ['pg-nowt', 'the NOW line'], ['pg-nx', 'the NEXT line']].forEach(([c, w]) => { if (!has(c)) bad('the screen has no ' + w + ' (.' + c + ')'); });
+    if (has('pg-nowt') && !(at('pg-nowt') < at('pg-nx') && at('pg-nx') < at('pg-ufs'))) bad('the NOW line, then NEXT, don\'t sit above the dock (your frame, the hotbar, your target)');
+    if (!/\.pg-coach/.test(require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice3d.js'), 'utf8'))) bad('the 3D labels don\'t keep out of the coach card (practice3d.js CRN)');
+    const C = ctx.PG_COACH; if (!C) bad('there are no coach card words (PG_COACH)');
+    else Object.entries(C).forEach(([k, e]) => { if (!TITLE.test(e.t || '')) bad('the coach card for ' + k + ' is titled "' + e.t + '"; the rule is "Name (Short instruction)"'); if (!ONE.test(e.w || '')) bad('the coach card for ' + k + ' says "' + e.w + '"; one plain sentence of what happens');
+      if (!(e.j || e.jf)) bad('the coach card for ' + k + ' has no job of its own for when the game has none'); [e.t, e.w, e.j, e.jf].forEach((x) => { if (x && (timey(x) || /went wrong/i.test(x))) bad('the coach card for ' + k + ' says "' + x + '"'); }); });
+    const nc = ctx.pgNoClock; if (typeof nc !== 'function') bad('the setup card has no way to drop a part\'s clock times (pgNoClock)');
+    else [['6:12 · Onto her quarter', 'Onto her quarter'], ['6:12 - Onto her quarter', 'Onto her quarter'], ['Group Soak 2 7:46', 'Group Soak 2'], ['You soak Group Soak 2 at 7:46.', 'You soak Group Soak 2.'], ['The first bite (6:32)', 'The first bite'], ['Egg left · Right Soak #1', 'Egg left · Right Soak #1']].forEach(([a, b]) => { const g = nc(a); if (g !== b) bad('the setup card turns "' + a + '" into "' + g + '", not "' + b + '"'); }); }
+  // N2 + N3. a played run of each part: the autopilot plays it, the screen is drawn every quarter second, and every word written on it is read
+  const PARTS = Object.keys(ctx.PG_PARTS["Ula'tek"] || {}), seen = new Map(), note = (where, x) => { const k = where + '|' + x; if (!seen.has(k)) seen.set(k, where + ': "' + String(x).slice(0, 120) + '"'); };
+  for (const pk of PARTS) {
+    const W0 = W.length; let d; try { d = L.open(pk === 'm' ? null : pk); } catch (e) { bad('the ' + pk + ' part didn\'t open: ' + e.message); continue; }
+    const name = ((ctx.PG_PARTS["Ula'tek"] || {})[pk] || {}).name || pk, tag = ' (' + name + ')';
+    try { d.at(0, d.role.id, { seed: 3 }); } catch (e) { bad('the ' + name + ' run didn\'t start: ' + e.message); continue; }
+    ['pathView', 'coach', 'nowHtml', 'nextHtml'].forEach((f) => { if (typeof d[f] !== 'function') bad('the test can\'t read the screen\'s ' + ({ pathView: 'fight path', coach: 'coach card', nowHtml: 'NOW line', nextHtml: 'NEXT line' })[f] + ' (window.__pgDbg.' + f + ')' + tag); });
+    const S = d.S, G = d.G; let named = 0, ticked = 0, cards = new Map(), noNow = 0, frames = 0, nexts = 0;
+    while (G.t < S.end - 0.3) { d.step(5); try { d.frame(); d.warnsNow(); } catch (e) { bad('drawing the screen crashed at ' + G.t.toFixed(1) + tag + ': ' + e.message); break; } frames++;
+      const pv = typeof d.pathView === 'function' ? d.pathView() : null; if (pv && pv.steps[0] && pv.steps[0].st === 'now' && pv.steps[0].name && (!pv.steps[1] || pv.steps[1].st === 'next')) named++; if (pv && pv.done.length) ticked++;
+      const c = typeof d.coach === 'function' ? d.coach() : null; if (c && !cards.has(c.k + c.at)) cards.set(c.k + c.at, c);
+      if (typeof d.nowHtml === 'function' && !plain(d.nowHtml())) noNow++; if (typeof d.nextHtml === 'function' && plain(d.nextHtml())) nexts++; }
+    if (typeof d.pathView !== 'function' || named < frames * 0.5) bad('the fight path names the coming step and the next one in only ' + named + ' of ' + frames + ' moments' + tag);
+    if (!ticked) bad('the fight path never ticks a done step' + tag);
+    if (typeof d.coach !== 'function' || !cards.size) bad('no coach card came before a mechanic in the whole run' + tag);
+    cards.forEach((c) => { if (NOT_MECH.test(c.name)) bad('a coach card came for "' + c.name + '", which isn\'t a mechanic' + tag);
+      if (!TITLE.test(c.title || '') || !ONE.test(c.what || '') || !c.job) bad('the coach card before "' + c.name + '" reads "' + c.title + '" / "' + c.what + '" / your job "' + c.job + '"' + tag); });
+    if (typeof d.nowHtml !== 'function' || noNow > frames * 0.05) bad('the NOW line was empty in ' + noNow + ' of ' + frames + ' moments' + tag);
+    if (typeof d.nextHtml !== 'function' || !nexts) bad('the NEXT line never showed' + tag);
+    // (every word written on the screen: no clock time, no count of seconds; the cast bar, the tags under your frame and the hotbar's buttons no numbers at all
+    //  (stacks on a tag are "×2"), the fight path only its "3 of 31 done")
+    W.slice(W0).forEach(({ at, v }) => { const x = plain(v); if (!x) return; if (timey(x)) note('a clock time or a count of seconds on the screen' + tag + ' at "' + at.trim() + '"', x);
+      if ((/\.pg-cdn\b|\.pg-clk\b/.test(at) && /\d/.test(x)) || (/\.pg-cast\b/.test(at) && /\s\d+(?:\.\d+)?$/.test(x))) note('a number counting down on her cast bar, a button or a clock' + tag + ' at "' + at.trim() + '"', x); /* ("Interrupted (Melee 2)" is a name) */
+      if (/\.pg-debs\b/.test(at) && /\d/.test(plain(v.replace(/<span class="pg-tag pg-jtag"[^>]*>[^<]*<\/span>/g, '')).replace(/×\d+/g, ''))) note('seconds on the tags under your frame' + tag, x); /* (your job's own tag may say "Right Soak #1") */
+      if (/\.pg-timers\b/.test(at) && /\d/.test(x.split(name).join('').replace(/\b\d+ of \d+ done\b/g, ''))) note('a number on the fight path (other than "3 of 31 done")' + tag, x); });
+  }
+  [...seen.values()].slice(0, 10).forEach((m) => bad('Flex, Nov 16, "remove the timestamps": ' + m));
+  // N4. phase 1's setup card and its Start list
+  { const d = L.open(), PJ = pj || require('fs').readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8'), st = (/const START = (\[\[[^;]*\]\]);/.exec(PJ) || [])[1] || '';
+    (st.match(/'[^']*'/g) || []).forEach((x) => { if (timey(x)) bad('phase 1\'s Start list reads ' + x); });
+    for (const jb of [{ role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }, { role: 'h', egg: null, soak: [2, 2], fb: [0, 0] }, { role: 'm', egg: 'm1', soak: [1, 1], fb: [0, 0] }]) { d.myJob = jb; const x = plain(d.panel()); if (timey(x)) bad('phase 1\'s setup card reads "' + x.slice(0, 140) + '"'); } }
+}
+// S. The simple screen (Flex, Nov 17, after playing it: "Youre expecting someone to read 3 sentences, and execute the mechanic within 3 seconds. The prompts on
+//    the screen should be simple more like 'DPS your egg, then pick it up'"; of the coach card, "i dont think we need these"; "Make sure the instructions and text
+//    is clear and not jumbled"). A 37-run playtest found the NOW line changing 50-78 times in phase 1, 81 of its 156 lines over 9 words, and the calls, the coach
+//    card and the NOW line giving different orders at once.
+//    S1. over a played run of each part as each role, the NOW line is one short command: at most 9 words, one sentence, no "Then:", no how-to-press.
+//    S2. it holds: a new line comes at least 2 s after the last unless it's something to do now (PG_URGENT).
+//    S3. no coach card and no call boxes on screen; a call's order goes into the NOW line, the mechanic's name dropped ("Your egg: wait next to its gold circle!"
+//        -> "Wait next to your egg's gold circle!").
+//    S4. the green done chip only for something you did; an order or a "not yet" goes to the middle, short, with no tick.
+//    Each failed on the commit before (3cbf6ad0 plus phase 3's fixes).
+function simpleScreen(H, say, pj) {
+  const bad = (t) => say("Ula'tek practice game (shared rules)", 'bad', t + ' (the simple screen, Nov 17, check S)'), vm = require('vm'), fs = require('fs');
+  const plain = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/\s+([,!.?])/g, '$1').trim();
+  const PJ = pj || fs.readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8');
+  let L; try { L = lookLoad(H, pj); } catch (e) { bad('the game didn\'t load: ' + e.message); return; }
+  const { W, ctx } = L; let URG = null, short = null, callShort = null; try { URG = vm.runInContext('PG_URGENT', ctx); short = vm.runInContext('pgShort', ctx); callShort = vm.runInContext('pgCallShort', ctx); } catch (e) { bad('the screen has no short-line rules (PG_URGENT, pgShort, pgCallShort)'); return; }
+  // S1 + S2
+  const long = new Map(), flick = new Map(), PARTS = Object.keys(ctx.PG_PARTS["Ula'tek"] || {});
+  for (const pk of PARTS) { const d0 = L.open(pk === 'm' ? null : pk), S0 = d0.P2 ? d0.P2.setup : d0.setupApi(), name = ctx.PG_PARTS["Ula'tek"][pk].name;
+    for (const r of S0.roles) { const jb = S0.jobs(r)[0][0], d = L.open(pk === 'm' ? null : pk), su = d.P2 ? d.P2.setup : d.setupApi(); su.set(r, jb); const slot = d.P2 ? d.P2.slotOf(d.P2.pick) : d.jobSlot(), tag = ' (' + name + ', ' + r + ' ' + jb + ')';
+      try { d.at(0, slot, { seed: 3 }); } catch (e) { bad('the run didn\'t start' + tag + ': ' + e.message); continue; }
+      const G = d.G, S = d.S; let prev = '', prevT = -9, n = 0;
+      while (G.t < S.end - 0.3 && n++ < 4000) { d.step(5); try { d.frame(); d.warnsNow(); } catch (e) { bad('drawing crashed' + tag + ': ' + e.message); break; } const now = plain(d.nowHtml());
+        if (now.replace(/[!.]+$/, '') === prev.replace(/[!.]+$/, '')) { prev = now; continue; } const w = now ? now.split(/\s+/).length : 0;
+        if (w > 9 || /[.!?]\s+[A-Z]/.test(now) || /\bThen:|press Tab|keep pressing 1|\(Tab|\(melee/i.test(now)) long.set(now, now + tag);
+        if (prev && now && !URG.test(now) && prev.replace(/[!.]+$/, '') !== now.replace(/[!.]+$/, '') && G.t - prevT < 2 - 0.3) flick.set(prev + '>' + now, '"' + prev + '" then "' + now + '" ' + (G.t - prevT).toFixed(2) + ' s apart' + tag);
+        prev = now; prevT = G.t; } } }
+  if (long.size) bad(long.size + ' NOW lines aren\'t one short command (9 words at most, one sentence, no "Then:", no how-to-press), e.g. "' + [...long.values()].slice(0, 4).join('" / "') + '"');
+  if (flick.size) bad('the NOW line changes again within 2 s without anything urgent (' + flick.size + ' times), e.g. ' + [...flick.values()].slice(0, 3).join('; '));
+  // S3
+  if (!/\.pg \.pg-coach, \.pg \.pg-coach\.on, \.pg \.pg-warn \.pg-al \{ display: none !important; \}/.test(PJ)) bad('the coach card or the call boxes can still show (no CSS hiding .pg-coach and .pg-warn .pg-al)');
+  { const cd = (/const coachDraw = \(t\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!cd || /coachNow\(/.test(cd)) bad('coachDraw still draws the coach card (Flex: "i dont think we need these")'); }
+  [['Your egg: wait next to its gold circle!', 'Wait next to your egg\'s gold circle!'], ['Your coil: soak the first one to appear!', 'Soak the first coil to appear!'], ['Call of the Serpent: Dodge the falling eggs! Eight land all over the stone.', 'Dodge the falling eggs!']].forEach(([a, b]) => { const g = callShort(a); if (g !== b) bad('the NOW line says the call "' + a + '" as "' + g + '", not "' + b + '"'); });
+  [['Break your egg: Tab, then 1. Then: walk over it.', 'DPS your egg'], ['Kill the Rawlings: press Tab, then keep pressing 1 (melee: get close)', 'Kill the Rawlings'], ['Good spot. Keep hitting the Rawlings.', 'Keep hitting the Rawlings'], ['Wait: let it pass, then go.', 'Wait for the wave to pass']].forEach(([a, b]) => { const g = short(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '"'); });
+  // S4
+  { void W; const say0 = (/  const say = \(text, bad\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!/PG_DONE\.test/.test(say0)) bad('every float that isn\'t a mistake still becomes a green done chip ("Not open yet: hit it" got a tick)');
+    const dm = /const PG_DONE = (\/.*\/);/.exec(PJ), doneRx = dm ? new Function('return ' + dm[1])() : null; /* (inside pgOpen: read from the source) */
+    if (!doneRx) bad('there is no list of what counts as done (PG_DONE)');
+    else { ['Egg picked up.', 'Soaked: your egg broke (a Rawling).', 'Kicked: Vicious Echoes interrupted.', 'Tether broken on time.', 'Rawling killed.'].forEach((x) => { if (!doneRx.test(x)) bad('"' + x + '" doesn\'t get the green done chip'); });
+      ['Not open yet: hit it (Tab, then 1).', 'Kick is on cooldown.', 'Its shell is still up: hit it (Tab, then 1) to break it.', 'The tank taunted the Viper: kill it with the raid!', 'Back by her: burn the heart.'].forEach((x) => { if (doneRx.test(x)) bad('"' + x + '" gets the green done chip, as if done'); }); } }
+}
+module.exports = (H, say) => { checks(H, say); lookC(H, say); simpleScreen(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad; module.exports.simpleScreen = simpleScreen;
 if (require.main === module) {
-  process.chdir(__dirname); let n = 0; const t0 = Date.now(); checks(null, (a, b, t) => { n++; console.log('✗ ' + t); });
+  process.chdir(__dirname); let n = 0; const t0 = Date.now(); const pr = (a, b, t) => { n++; console.log('✗ ' + t); }; checks(null, pr); lookC(null, pr); simpleScreen(null, pr);
   console.log(n ? n + ' problem(s)' : 'practice game, shared rules: all checks pass', '(' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)'); process.exitCode = n ? 1 : 0;
 }

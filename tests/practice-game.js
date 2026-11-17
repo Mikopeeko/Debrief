@@ -25,6 +25,11 @@
 //   P. The release sweep (Nov 16): the Go-here arrow in time for the bubble at your walking speed, out of a coil that slams first, never on phase 2's shielded
 //      egg, and the job line on your coil before a later bubble; see check P.
 //   Q. The release check (Nov 16): phase 2's Go-here arrow stays off your small egg until its Warden is dead, also before the Wardens rise; see check Q.
+//   R. The prompts audit (Nov 16): no clock times or second counts in what you read, the arrow round danger and only gone where the game counts you, words for
+//      every dodge, the job line's order, which coil is yours, "Mechanic: ORDER" calls, wait then cross for her waves; see check R.
+//   T. The review of the prompts fixes (Nov 16): the job line agrees with the arrow (Wait, now, Stay), NEXT never repeats NOW, calls keep their whole order, 12
+//      words at most, one name per thing, and the checks R left out; see check T.
+//   S. Mistakes on screen (Nov 16): no clock time and no second count in a mistake's float or on the death card, in any part; see check S.
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const SRC = path.join(__dirname, '..', 'src');
@@ -64,7 +69,7 @@ function checks(H, say, pj) {
   want('the coils slam', S.soaks.map((q) => q.at), [40, 43, 134, 137]); want('Mephitic Thrash lands', S.thrash.map((q) => q.at), [49, 106]);
   want('her waves start', [...new Set(S.waves.filter((w) => w.kind === 'her').map((w) => w.t0))].filter((t, i, a) => !a.some((u) => u < t && t - u < 7)), [56, 113]);
   want('she dives', [S.dive.t0], [77]);
-  if (!/0:39, 1:10, 1:48 and 2:20/.test(PJ) || /1:14|2:22/.test(PJ)) bad('the start card\'s bubble times don\'t read 0:39, 1:10, 1:48 and 2:20 (check A)');
+  if (/1:14|2:22/.test(PJ)) bad('the start card names bubbles at 1:14 or 2:22 (check A; since the prompts audit, Nov 16, it names no clock times at all: check R0)');
   // B. the sides
   const runs = Array.from({ length: 40 }, (_, i) => script({ seed: i + 1 })), tE = runs.filter((r) => r.tailEast).length, f0 = runs.filter((r) => r.first && r.first[0]).length, f1 = runs.filter((r) => r.first && r.first[1]).length;
   if (tE < 10 || tE > 30) bad('her tail rose east in ' + tE + ' of 40 runs; it should be west or east about evenly (check B)');
@@ -100,8 +105,8 @@ function checks(H, say, pj) {
     if (!(thrashIn >= 17)) bad('only ' + thrashIn + ' raiders are in the second Wretch\'s bubble as the Thrash lands at 1:46; top kills have 17 to 20' + tag + ' (check C)');
   }
   // D. Your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment", then "its a bit overkill"): three rows, your role,
-  //    your egg area and one coil team. Your egg area picks your place, your team holds (egg carriers take the first coil in set 1, where the bubble
-  //    sits on it), both teams stay even, your bubble spot is picked for you, and the run plays that job clean. (Before: three tabs, two maps and
+  //    your egg area and one coil team. Your egg area picks your place, your team holds (an egg carrier soaks with their egg zone's team in both sets,
+  //    the plan's Egg Clear map (Flex, Nov 16: "it should be 4 and 4"); before, every carrier took the first coil in set 1), both teams stay even, your bubble spot is picked for you, and the run plays that job clean. (Before: three tabs, two maps and
   //    numbered bubble spots; before that, only three fixed jobs.)
   if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function' || typeof dbg.panel !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
   const sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and '), base = sizes(script({ seed: 3, east: false }));
@@ -116,7 +121,7 @@ function checks(H, say, pj) {
         if (!/It lands by her/.test(dbg.panel())) bad('the sentence for a melee egg carrier doesn\'t say where the egg lands (check D)'); } }
     dbg.myJob = { role: 'h', egg: 'm2', soak: [2, 2], fb: [0, 0] }; if (dbg.jobSlot() !== 'm2') bad('picking the egg area by her puts you in ' + dbg.jobSlot() + ', not a carrier\'s place there (check D)');
     const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
-    if (team(0) !== '1' || team(1) !== '2') bad('an egg carrier on coil team 2 plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; carriers take the first coil in set 1 (in the Wretch\'s bubble), then team 2 (check D)');
+    if (team(0) !== '1' || team(1) !== '1') bad('the egg carrier by her (m2) plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; a carrier soaks with their egg zone\'s team in both sets, and by her is Right Soak #1 (the plan\'s Egg Clear map) (check D)');
     if (sizes(S2) !== base) bad('picking a coil team leaves the teams at ' + sizes(S2) + ' instead of ' + base + ' (check D)');
     r.log.filter((x) => /missed your coil soak|Soul Constrictor|Fester Burst/.test(x)).forEach((x) => bad('the picked job, played by the autopilot: ' + x + ' (check D)'));
     if (!/picked for you/.test(dbg.asg('m2'))) bad('the start card doesn\'t say your bubble spot is picked for you (check D)');
@@ -131,7 +136,7 @@ function checks(H, say, pj) {
     dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; if (!/You soak the first coil to appear/.test(dbg.panel())) bad('picking the first coil does not change the sentence on the setup (check D)');
     // (Main, Nov 15: the job line read "coil team 1, then 1": one team says it once, two say "then team 2")
     if (/then 1$|, then 1\b/.test(dbg.jobRole().job) || !/coil team 1$/.test(dbg.jobRole().job)) bad('the job line reads "' + dbg.jobRole().job + '"; with one team it should end "coil team 1" (check D)');
-    dbg.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; if (!/coil team 1, then team 2$/.test(dbg.jobRole().job)) bad('a carrier on team 2 reads "' + dbg.jobRole().job + '"; it should end "coil team 1, then team 2" (check D)');
+    dbg.myJob = { role: 'r', egg: 'r6', soak: [1, 1], fb: [0, 0] }; if (!/coil team 2$/.test(dbg.jobRole().job)) bad('the right inner egg carrier reads "' + dbg.jobRole().job + '"; it should end "coil team 2": the right zone\'s carriers are Left Soak #2 in both sets, whatever they pick (the plan\'s Egg Clear map, Nov 16) (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   finally { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; }
   // E. Hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next things for you with their
@@ -142,7 +147,7 @@ function checks(H, say, pj) {
     if (!up.some((u) => /Bubble/.test(u.text) && Math.abs(u.at - b1.at) < 0.1) || !up.some((u) => /Your coil/.test(u.text))) bad('at 0:35 the "coming up" line reads ' + JSON.stringify(up.map((u) => u.text)) + '; it should name the bubble at 0:39 and your coil (check E)');
     if (up.length > 3) bad('the "coming up" line lists ' + up.length + ' things; three at most, or it clutters (check E)');
     dbg.pos = [25, -20]; const h = dbg.hint();
-    if (!h || !(h.d > 2.5) || hyp(h.T, b1.p) > 10.5) bad('far from the bubble at 0:35, the hint arrow ' + (h ? 'points ' + hyp(h.T, b1.p).toFixed(0) + ' yards from the bubble' : 'isn\'t there') + ' (check E)');
+    if (!h || !(h.d > 2.5) || hyp(h.fin || h.T, b1.p) > 10.5) bad('far from the bubble at 0:35, the hint arrow ' + (h ? 'points ' + hyp(h.fin || h.T, b1.p).toFixed(0) + ' yards from the bubble' : 'isn\'t there') + ' (check E)');
     dbg.hints = false; if (dbg.hint()) bad('with hints off, the arrow still shows (check E)'); dbg.hints = true;
     // (Flex, Nov 15: "the move here thing should only be for specific mechanics ... where to stand for things like soaks, not how to dodge waves")
     dbg.at(58, 'r3', { east: false, seed: 3 }); dbg.pos = [20, -20]; const hw = dbg.hint(); if (hw) bad('during her waves at 0:58 the "Go here" arrow shows (' + hw.what + '); it is only for where to stand: soaks, bubbles, your egg (check E)');
@@ -201,7 +206,7 @@ function checks(H, say, pj) {
     dbg.at(147, 'r3', { east: false, seed: 3 }); dbg.tgt = 'heart'; dbg.G.gcd0 = null; dbg.G.heartHits = 0; for (let i = 0; i < 6; i++) { dbg.atk(); dbg.stepOwn(21); }
     if (!(dbg.G.heartHits >= 6)) bad('pressing 1 six times a second apart on the heart gave ' + dbg.G.heartHits + ' hits; each ready press should hit (check H)');
     const runs = Array.from({ length: 12 }, (_, i) => script({ seed: i + 21 }));
-    for (const r of runs) { const sw = r.warns.find((w) => /She surfaces on the/.test(w.text)); if (!sw || !sw.text.includes(r.east ? 'EAST' : 'WEST')) { bad('the dive warning reads "' + (sw && sw.text) + '" but she comes up ' + (r.east ? 'east' : 'west') + ' (seed ' + r.seed + ', check H)'); break; }
+    for (const r of runs) { const sw = r.warns.find((w) => /surfaces/.test(w.text)); if (!sw || Math.abs(sw.t - r.dive.surf) > 0.05 || !/where the bubbles were/.test(sw.text) || /\b(east|west|north|south)\b/i.test(sw.text)) { bad('the call as she surfaces reads "' + (sw && sw.text) + '"; it should point at the bubbles, with no compass word (the prompts audit, Nov 16; seed ' + r.seed + ', check H)'); break; }
       const wg = r.wings[1], hw = r.waves.filter((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1), ax = hw.reduce((a, w) => a + w.x, 0) / hw.length - r.dive.to[0], ay = hw.reduce((a, w) => a + w.y, 0) / hw.length - r.dive.to[1], real = Math.abs(ax) > Math.abs(ay) ? (ax < 0 ? 'WEST' : 'EAST') : (ay < 0 ? 'SOUTH' : 'NORTH');
       if (wg.first !== real) { bad('after the dive her first waves come down the ' + real + ' half but the call says ' + wg.first + ' (seed ' + r.seed + ', check H)'); break; } }
   } catch (e) { bad('attacking crashed the game: ' + e.message + ' (check H)'); }
@@ -226,8 +231,8 @@ function checks(H, say, pj) {
     //  Mythic pulls found carriers 4 to 6 yards apart for about 80 minutes of pair time with no splash, and under 3 yards almost never. The 21 were the
     //  burst landing a moment after the touch, both still moving. Noxious Shell 1307612 is 3 yards)
     if (!/const b = G\.bots\[e\.who\]; if \(b && Math\.hypot\(x - b\.x, y - b\.y\) < 3\)/.test(PJ)) bad('Noxious Splash isn\'t at 3 yards (the 170-pull scan: carriers stand 4 to 6 yards apart safely) (check I)');
-    else { const b = dbg.G.bots[other.who], lv = (d) => { b.x = dbg.G.x + d; b.y = dbg.G.y; return dbg.eggWarn(); }; if (lv(3.2) !== 2 || lv(4.5) !== 1 || lv(9) !== 0) bad('your egg ring doesn\'t turn red within 3.5 yards of another carrier, orange within 5 and clear beyond (check I)'); }
-    if (!S0.warns.some((w) => /Run to the second Wretch/.test(w.text) && Math.abs(w.t - 101) < 0.1)) bad('at 1:41 there is no call to run to the second Wretch in front of her (check I)');
+    else { const b = dbg.G.bots[other.who], lv = (d) => { b.x = dbg.G.x + d; b.y = dbg.G.y; return dbg.eggWarn(); }; if (lv(3.2) !== 2 || lv(4.5) !== 1 || lv(5.5) !== 1 || lv(9) !== 0) bad('your egg ring doesn\'t turn red within 3.5 yards of another carrier, orange within 6 and clear beyond (check I; orange from 6 since the prompts audit, Nov 16)'); }
+    if (!S0.warns.some((w) => /run to the Wretch in front of her/i.test(w.text) && Math.abs(w.t - 101) < 0.1)) bad('at 1:41 there is no call to run to the second Wretch in front of her (check I)');
     if (!/calls that come within 1\.5 s of each other share one line/.test(PJ)) bad('calls that land together still cover each other (check I)');
     dbg.at(125, 'r3', { east: false, seed: 3 }); const th = (dbg.timers ? dbg.timers() : []).join(' | '); if (!/Your coil/.test(th) || /Coil slam/.test(th)) bad('the timers at 2:05 read "' + th + '": they should show only your coil, as "Your coil" (check I)');
   } catch (e) { bad('the improvement pass crashed the game: ' + e.message + ' (check I)'); }
@@ -286,7 +291,7 @@ function checks(H, say, pj) {
     if (!bub || bub.sp !== 'Fester Burst') bad('at 0:35 the boss mods don\'t show the bubble with Fester Burst\'s icon: ' + M1.map((b) => b.name + ' (' + b.sp + ')').join(', ') + ' (check J)');
     if (coil.length !== 1 || coil[0].sp !== 'Spectral Coils') bad('at 0:35 your coil shows ' + coil.length + ' time(s) in the boss mods, or without Spectral Coils\' icon; once (check J)');
     dbg.hints = false; const M2 = dbg.mods() || []; dbg.hints = true;
-    if (M2.some((b) => /^Bubble: get in$/.test(b.name)) || !M2.some((b) => b.name === 'Your coil') || !M2.some((b) => b.name === 'Fester Burst')) bad('with hints off the boss mods aren\'t the plain timers: ' + M2.map((b) => b.name).join(', ') + ' (check J)');
+    if (M2.some((b) => !(dbg.timers() || []).includes(b.name)) || !M2.some((b) => /^Your coil/.test(b.name)) || !M2.some((b) => b.name === 'Bubble')) bad('with hints off the boss mods aren\'t the plain timers: ' + M2.map((b) => b.name).join(', ') + ' (check J)');
     // (review of the new screen, Nov 15, measured in Chrome with the site's own CSS: ".pg-me { align-items: flex-start }" (Home's "Which one is you?") made
     //  your frame only as wide as its words, 197 px next to the target's 250; body.refine's 4 px corners on every button and the Plan page's "#main .pg-bar"
     //  (in the site's defaultTheme layer, where only a rule in the same layer wins) rounded the close button, the 2D | 3D switch and every health bar; at
@@ -395,12 +400,12 @@ function checks(H, say, pj) {
   // N. Boss-mod alerts (Flex, Nov 16: "I think the alerts need some work", then "Yes" to the mock): each call an alert with the spell's icon, a short order in
   //    big letters, the spell and the rest under it, a live countdown; gold when it's about you, the call's colour otherwise; two at most, the second smaller
   try { const N = (m) => bad(m + ' (check N)'); if (typeof dbg.alerts !== 'function') N('the calls aren\'t drawn as alerts (dbg.alerts)');
-    else { dbg.at(30, 'r3'); const t = dbg.G.t, h = dbg.alerts([{ text: 'Fester Burst: into the Wretch\'s bubble, you have 4 s!', c: '#d8f22f', by: t + 4 }, { text: 'Caustic Waves: wait on the east half, then cross behind the first wave.', c: '#9be13a', by: null }]);
+    else { dbg.at(30, 'r3'); const t = dbg.G.t, h = dbg.alerts([{ text: 'Fester Burst: into the Wretch\'s bubble, you have 4 s!', c: '#d8f22f', by: t + 4, me: true }, { text: 'Caustic Waves: wait on the east half, then cross behind the first wave.', c: '#9be13a', by: null }]);
       const al = h.split('<div class="pg-al').slice(1); if (al.length !== 2) N('two calls didn\'t make two alerts');
       else { if (!/^ you"/.test(al[0]) || !/--c:#f3c969/.test(al[0])) N('a call about you isn\'t gold');
         if (!/<b class="pg-alo">into the Wretch&#39;s bubble<\/b>/.test(al[0]) && !/<b class="pg-alo">into the Wretch's bubble<\/b>/.test(al[0])) N('the order isn\'t the short part after the spell: ' + (/pg-alo">([^<]*)/.exec(al[0]) || [])[1]);
         if (!/<span class="pg-ald">Fester Burst<\/span>/.test(al[0])) N('the spell isn\'t named under the order');
-        if (!/<em class="pg-aln">4<\/em>/.test(al[0])) N('a call that gives you 4 s shows no countdown');
+        if (/class="pg-aln"/.test(al[0])) N('a call that gives you 4 s shows a countdown number; the boss-mod bars count (Flex, Nov 16: "i feel like the game confuses people saying timestamps")');
         if (!/^ small"/.test(al[1]) || !/--c:#9be13a/.test(al[1]) || !/pg-alo">wait on the east half<\/b>/.test(al[1]) || !/Caustic Waves · then cross behind the first wave/.test(al[1])) N('the second alert isn\'t smaller, in its own colour, with a short order and the rest under it'); }
       if (!/class="pg-ali"/.test(h)) N('the alerts have no icon box'); } } catch (e) { bad('the alerts crashed: ' + e.message + ' (check N)'); }
   // M. Sounds you can feel (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can"):
@@ -497,21 +502,21 @@ function checks(H, say, pj) {
           if (!/first coil to appear/.test(HS[0].title) || !/Left Soak #2/.test(HS[1].title)) O('Your coil\'s spots read "' + HS.map((h) => h.title).join('" and "') + '"; Right Soak #1 takes the first coil to appear, Left Soak #2 the next');
           HS.forEach((h) => { if (!circ.some(([x, y, r]) => Math.abs(x - PX(h.x)) < 0.15 && Math.abs(y - PY(h.y)) < 0.15 && Math.abs(r - h.r * 2.083) < 0.15)) O('the ' + h.id + ' coil spot isn\'t on the Plan map\'s own soak circle' + tag);
             const d = drawn.find((q) => q.id === h.id); if (!d || Math.abs(d.cx - PX(h.x)) > 0.1 || Math.abs(d.cy - PY(h.y)) > 0.1) O('the ' + h.id + ' coil spot is drawn off its circle' + tag); });
-          const mine = HS.find((h) => h.id === 't' + tm), other = HS.find((h) => h.id !== 't' + tm), you = youIn(String(pg || '')).concat(youIn(String(hs || '')));
+          const eff = egg ? 1 : tm, /* (r3, the left quadrant's outer egg: Right Soak #1 on the plan's Egg Clear map, whatever you pick) */ mine = HS.find((h) => h.id === 't' + eff), other = HS.find((h) => h.id !== 't' + eff), you = youIn(String(pg || '')).concat(youIn(String(hs || '')));
           if (!mine.on || other.on) O('Your coil lights ' + (HS.filter((h) => h.on).map((h) => h.id).join(', ') || 'nothing') + tag);
           if (you.length !== 1 || you[0].fill !== '#f3c969') O('Your coil draws ' + (you.length === 1 ? 'you, but not in gold' : you.length + ' You tokens') + '; it draws you once, in gold' + tag);
           else { const yx = YX(you[0].cx), yy = YY(you[0].cy), yd = Math.hypot(yx - mine.x, yy - mine.y);
             if (yd >= mine.r) O('Your coil draws you at ' + yx.toFixed(1) + ', ' + yy.toFixed(1) + ', ' + yd.toFixed(1) + ' yards from the middle of your circle (radius ' + mine.r + '): outside it, while the game stands you in your coil' + tag); }
           // (the game's own run: which coil this job soaks in each set, and the sentence saying the same)
           const slot = D.jobSlot(); D.at(0.05, slot, { seed: 3 }); const kk = [0, 1].map((si) => { const q = D.S.soaks.find((s) => s.set === si && s.group.includes(slot)); return q ? q.k + 1 : 0; }), say = M.say();
-          if (kk[1] !== tm || kk[0] !== (egg ? 1 : tm)) O('the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second; your pick (Soak #' + tm + ') is the second set\'s, and the first set\'s too without an egg (egg carriers take the first coil there)' + tag);
-          if (kk[0] !== kk[1] ? !/first coil/.test(say) || !/Left Soak #2 in the second set/.test(say) : /second set/.test(say) || !(kk[1] === 2 ? /Left Soak #2/ : /Right Soak #1/).test(say)) O('the sentence reads "' + say + '" while the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second' + tag); }
+          if (kk[0] !== eff || kk[1] !== eff) O('the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second; it should be Soak #' + eff + ' in both (' + (egg ? 'your egg zone\'s team on the plan\'s Egg Clear map' : 'your pick') + ')' + tag);
+          if (/second set/.test(say) || !(eff === 2 ? /Left Soak #2/ : /Right Soak #1/).test(say)) O('the sentence reads "' + say + '" while the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second' + tag); }
         M.tab = 'egg';
         // (each pick is the job the game plays)
         D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] };
-        M.pick('egg', 'r6'); if (D.myJob.egg !== 'r6' || D.jobSlot() !== 'r6' || D.myJob.role !== 'r' || D.myJob.soak.join() !== '1,1') O('picking the right inner egg spot gives ' + JSON.stringify(D.myJob) + ', not the r6 egg with your role and coil kept');
+        M.pick('egg', 'r6'); if (D.myJob.egg !== 'r6' || D.jobSlot() !== 'r6' || D.myJob.role !== 'r' || D.myJob.soak.join() !== '2,2') O('picking the right inner egg spot gives ' + JSON.stringify(D.myJob) + ', not the r6 egg with your role kept and its zone\'s coil, Left Soak #2 (the plan\'s Egg Clear map, Nov 16)');
         M.pick('coil', 't2'); if (D.myJob.soak.join() !== '2,2' || D.myJob.egg !== 'r6') O('picking Left Soak #2 gives ' + JSON.stringify(D.myJob) + ', not coil team 2 with your egg kept');
-        if (!/coil team 1, then team 2$/.test(D.jobRole().job)) O('an egg carrier on Left Soak #2 plays "' + D.jobRole().job + '"; carriers take the first coil in set 1 (in the bubble), then team 2');
+        if (!/coil team 2$/.test(D.jobRole().job)) O('the right inner egg carrier plays "' + D.jobRole().job + '"; the right zone\'s carriers are coil team 2 in both sets (the plan\'s Egg Clear map)');
         if (!/Left Soak #2/.test(M.say()) || !/Left Soak #2/.test(M.sub()) || !/right/i.test(M.sub())) O('after picking the right egg and Left Soak #2, the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"');
         { D.at(20, D.jobSlot(), { seed: 3 }); const e = D.G.eggs.find((q) => q.set === 0 && q.who === 'r6' && q.state === 'held'); /* (the game's own run, on its autopilot: the egg you pick is the one you carry) */
           if (!e || e.id !== 'r6' || quad([e.x, e.y]) !== 0) O('after picking the right inner egg spot the game\'s run has you holding ' + (e ? 'the ' + e.id + ' egg from ' + e.x.toFixed(0) + ', ' + e.y.toFixed(0) : 'no egg') + ' at 0:20; you carry the r6 egg, from the right quadrant'); }
@@ -522,7 +527,7 @@ function checks(H, say, pj) {
           if (!/coil team 2$/.test(D.jobRole().job) || /then/.test(D.jobRole().job)) O('no egg on Left Soak #2 plays "' + D.jobRole().job + '"; it should be coil team 2');
           if (!/^No egg/.test(M.say()) || !/^No egg/.test(M.sub())) O('with No egg the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"'); }
         M.pick('coil', 't1'); if (D.myJob.soak.join() !== '1,1' || D.myJob.egg !== null) O('picking Right Soak #1 with no egg gives ' + JSON.stringify(D.myJob));
-        M.pick('egg', 'r2'); if (D.myJob.egg !== 'r2' || D.jobSlot() !== 'r2' || D.myJob.soak.join() !== '1,1' || (M.extras().find((q) => q[0] === 'noegg') || [])[2]) O('picking an egg spot after No egg gives ' + JSON.stringify(D.myJob) + ' (No egg should go dark)');
+        M.pick('egg', 'r2'); if (D.myJob.egg !== 'r2' || D.jobSlot() !== 'r2' || D.myJob.soak.join() !== '2,2' || /* (the far zone's coil: Left Soak #2) */ (M.extras().find((q) => q[0] === 'noegg') || [])[2]) O('picking an egg spot after No egg gives ' + JSON.stringify(D.myJob) + ' (No egg should go dark)');
         // (a new role keeps the spots it can take and moves the rest)
         D.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; M.role('h'); if (D.myJob.role !== 'h' || D.myJob.egg !== 'r3' || D.myJob.soak.join() !== '2,2') O('switching Ranged to Healer gives ' + JSON.stringify(D.myJob) + '; a healer can keep the same egg and coil');
         M.role('m'); if (D.myJob.role !== 'm' || !EGG.m.includes(D.myJob.egg) || D.myJob.soak.join() !== '2,2') O('switching to Melee gives ' + JSON.stringify(D.myJob) + '; a melee takes an egg by her and keeps the coil');
@@ -538,6 +543,9 @@ function checks(H, say, pj) {
   } catch (e) { bad('the spot maps crashed the game: ' + e.message + ' (check O)'); }
   releaseSweep(H, bad, pj, clk, hyp);
   releaseCheck(H, bad, pj, clk, hyp);
+  promptsAudit(H, bad, pj, null, clk, hyp);
+  reviewChecks(H, bad, pj, clk, hyp);
+  mistakeTimes(H, bad, pj);
 }
 
 // (phase 2 the way tests/practice-p2.js loads it: practice.js, practice3d.js and practice-p2.js in one scope, opened on its part; pj: practice.js's text, for a check
@@ -577,14 +585,14 @@ function releaseSweep(H, bad, pj, clk, hyp) {
     { dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(131.9, slot, { east: false, seed: 1 }); const G = dbg.G, S = dbg.S, mine = S.soaks.find((q) => q.set === 1 && q.group.includes(slot)), other = S.soaks.find((q) => q.set === 1 && !q.group.includes(slot));
       if (!mine || !other || !(mine.at < other.at)) P('the test lost its setup: Ranged, No egg on the first coil should soak the 2:14 coil, before the other');
       else { let jl = ''; while (G.t < 135.6) { dbg.pos = [mine.x, mine.y]; if (!jl && G.t >= 132.5) jl = dbg.jobText(); dbg.stepOwn(1); }
-        if (!/^Your coil \(the first to appear\) slams in/.test(jl)) P('at 2:12.5, your coil slamming at ' + clk(mine.at) + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s');
-        const j2 = dbg.jobText(); if (!/Stay out of the other coil until it slams/.test(j2)) P('at 2:15.6, your coil done and the other slamming at ' + clk(other.at) + ' inside the bubble, the job line reads "' + j2 + '"; it should say to stay out of the other coil');
-        const h = dbg.hint(); if (!h || hyp(h.T, [other.x, other.y]) <= other.r + 1) P('at 2:15.6 the arrow ' + (h ? 'points ' + hyp(h.T, [other.x, other.y]).toFixed(1) + ' yards from the middle of the coil that slams at ' + clk(other.at) + ' (its circle is ' + other.r + ')' : 'isn\'t there') + '; it should lead into the bubble outside that coil');
+        if (!/^Stand in your coil until it slams|^Small tail: step out of its red lane, stay in your circle/.test(jl)) P( /* (the words since the review of Nov 16: 12 at most, the small tail's lane named) */'at 2:12.5, your coil slamming at ' + clk(mine.at) + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s');
+        const j2 = dbg.jobText(); if (!/outside the (first|second) coil|stay out of the (first|second) coil|^Small tail: /i.test(j2)) P('at 2:15.6, your coil done and the other slamming at ' + clk(other.at) + ' inside the bubble, the job line reads "' + j2 + '"; it should say to stay out of the other coil');
+        const h = dbg.hint(), inB = hyp([G.x, G.y], S.bubbles[3].p) <= 9 && hyp([G.x, G.y], [other.x, other.y]) > other.r + 1; /* (no arrow when you already stand where the bubble counts you, outside that coil: the prompts audit, Nov 16) */ if (h ? hyp(h.T, [other.x, other.y]) <= other.r + 1 : !inB) P('at 2:15.6 the arrow ' + (h ? 'points ' + hyp(h.T, [other.x, other.y]).toFixed(1) + ' yards from the middle of the coil that slams at ' + clk(other.at) + ' (its circle is ' + other.r + ')' : 'isn\'t there') + '; it should lead into the bubble outside that coil');
         let tg = h ? h.T : null; while (G.t < other.at + 0.2) { const hh = dbg.hint(); if (hh) tg = hh.T; dbg.walkTo(tg); dbg.stepOwn(1); } /* (onto the ring the arrow points at, as you would) */
         dbg.log.filter((m) => /^2:1[5-7] Soul Constrictor/.test(m)).forEach((m) => P('walking where the arrow points after your 2:14 coil: ' + m)); } }
     // (the second coils, the second coil's soaker: Ranged, No egg, second coil, seed 1)
     { dbg.myJob = { role: 'r', egg: null, soak: [2, 2], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(134.5, slot, { east: false, seed: 1 }); const mine = dbg.S.soaks.find((q) => q.set === 1 && q.group.includes(slot)), jl = dbg.jobText();
-      if (!mine || !/^Your coil \(the second to appear\) slams in/.test(jl)) P('at 2:14.5, your coil slamming at ' + (mine ? clk(mine.at) : '?') + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s'); }
+      if (!mine || !/^Stand in your coil until it slams|^Get in your gold coil now|^Step onto the gold ring in your coil|^Small tail: step out of its red lane, stay in your circle/.test(jl)) P( /* (the words since the review of Nov 16; in your coil off the arrow's spot, step onto its ring) */'at 2:14.5, your coil slamming at ' + (mine ? clk(mine.at) : '?') + ', the job line reads "' + jl + '"; it should be your coil\'s line, not the 2:20 bubble\'s'); }
     // (phase 1's egg with its shell up keeps its arrow: go to it and hit it)
     { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; const slot = dbg.jobSlot(); dbg.at(12, slot, { east: false, seed: 3 }); const e = dbg.G.eggs.find((q) => q.id === slot && q.state === 'floor'), n = e ? Math.hypot(e.x, e.y) || 1 : 1;
       if (e) { dbg.pos = [e.x - e.x / n * 10, e.y - e.y / n * 10]; const h = dbg.hint(); if (!h || h.what !== 'egg' || hyp(h.T, [e.x, e.y]) > 0.5) P('in phase 1, 10 yards from your egg with its shell up (0:12), the arrow ' + (h ? 'points at ' + h.what : 'isn\'t there') + '; it should lead to your egg'); }
@@ -618,7 +626,289 @@ function releaseCheck(H, bad, pj, clk, hyp) {
   } catch (e) { Q('the phase 2 egg arrow check crashed: ' + e.message); }
 }
 
-module.exports = checks; module.exports.load = load; module.exports.stub = stub; module.exports.releaseSweep = releaseSweep; module.exports.releaseCheck = releaseCheck;
+// R. The prompts audit, Nov 16 (Flex: "Lets improve the curated experience as the game guides players onto what they need to do next. I think the alerts and
+//    training wheels could be better in terms of the on screen prompts", then "All 10", then mid-run: "i feel like the game confuses people saying timestamps").
+//    Each failed on the code before the fix (run promptsAudit with the old practice.js and practice3d.js as pj and p3j):
+//    R0. no clock time and no second count in anything you read while playing (your job, NEXT, the calls, the floats, the floor labels, the start card): the job
+//        line read "Fester Burst in 6.3 s", "Next: Coil slam 2 in 3 s", the floor "Into the bubble · 2.0", the card "at 0:39, 1:10, 1:48 and 2:20", a call a
+//        big countdown number. The result screen keeps the time a mistake happened (since the review of Nov 16 the floats and the death card don't: check S).
+//    R1. the arrow walked you into danger: a Soak #2 player who followed it took the first coil's slam at 0:40 (and the 2:14 one in the second set), then Soul
+//        Constrictor; a carrier walked into another carrier's ring. It bends round them now, or says Wait.
+//    R2. dodges had no words: small tails (no job line, no call, the bar merged into "Her waves"), an egg falling on a raider who carries none (hit at 0:10 and
+//        1:21), and its circle showed only 2.5 s before.
+//    R3. the arrow stopped short of where the game counts you, or ended where it doesn't (inside the coil that isn't yours).
+//    R4. the arrow came too late: from 1.6 s before you needed to move, the second egg none until it landed, melee none to the heart.
+//    R5. the job line picked the wrong thing: "Next: Coil slam 2 in 3 s" to the first coil's soakers (the other team's coil), and "Kill the Rawlings ... get close"
+//        to a melee with them in the tail's sweep.
+//    R6. a false line: phase 2's egg read "Shell broken" and opened at 2:48.5 under its Warden's shield.
+//    R7. a teaching call covered a step due now: "Rawlings! Press Tab..." as a Soak #2 healer's coil slammed at 0:43; and no call when the heart opened.
+//    R8. the coil call didn't say which one is yours ("team 1 takes the first coil to appear", white, the same for both teams).
+//    R9. the big line wasn't the order ("only the tank stands in it", "eggs incoming") and a call went gold because it said "you".
+//    R10. her waves had no "now": one line for 14 s, nothing at the swap, compass words for halves the camera turns.
+function promptsAudit(H, bad, pj, p3j, clk, hyp) {
+  const R = (m) => bad(m + ' (the prompts audit, Nov 16, check R)'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8'), PJ = pj || rd('practice.js'), P3J = p3j || rd('practice3d.js'), HOOK = 'window.__pgDbg = { ';
+  if (!PJ.includes(HOOK)) { R('the test can\'t read the job line: no "' + HOOK + '" in src/practice.js'); return; }
+  let L0; try { L0 = load(H, PJ.replace(HOOK, HOOK + 'jobText: () => jobText(), defQ: () => defKey(), ')); vm.runInContext(P3J + '\nthis.pg3dShapes = pg3dShapes;', L0.ctx); } catch (e) { R('the game would not run for the prompts checks (' + e.message + ')'); return; }
+  const dbg = L0.dbg, ctx = L0.ctx, PG_UL = L0.PG_UL, job = (role, egg, soak) => ({ role, egg, soak: [soak, soak], fb: [0, 0] });
+  const CLOCK = /\b\d{1,2}:\d{2}\b/, SECS = /\b\d+(?:\.\d+)?\s?s\b/, TENTHS = /\b\d+\.\d\b/, timey = (x) => CLOCK.test(x) || SECS.test(x) || TENTHS.test(x);
+  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&#39;/g, '\'').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  // (the 3D floor's words, read with the game's own window on itself when it gives one, else a stand-in built from what the debug hook has)
+  const A3 = () => dbg.v3a || { G: dbg.G, S: dbg.S, me: dbg.role.id, nm: (id) => id, rl: (id) => id[0], clsC: () => null, hint: () => dbg.hint(), spot: () => null, target: null,
+    bossAt: (t) => ({ p: t < dbg.S.dive.gone ? PG_UL.boss.slice() : dbg.S.dive.to, up: t < dbg.S.dive.gone || t >= dbg.S.dive.surf }), tailAt: (t) => ({ p: dbg.S.FT(PG_UL.tail, t), up: true }) };
+  const labels = (t) => { try { return ctx.pg3dShapes(A3(), t).filter((s) => s.k === 'label').map((s) => s.text); } catch (e) { return ['(pg3dShapes crashed: ' + e.message + ')']; } };
+  try {
+    // R0. timestamps: four whole runs, read every quarter second
+    const seen = new Map(), note = (where, x) => { if (x && timey(x) && !seen.has(where + x)) seen.set(where + x, where + ': "' + x + '"'); };
+    if (typeof dbg.said !== 'function') R('the test can\'t read the floats (dbg.said), so it can\'t check them for clock times');
+    for (const [jb, seed, east] of [[job('r', 'r3', 1), 3, false], [job('h', null, 2), 3, false], [job('m', null, 1), 1, true], [job('m', 'm1', 2), 7, false]]) {
+      dbg.myJob = jb; const slot = dbg.jobSlot(); dbg.hints = true; dbg.at(0.05, slot, { seed, east }); const G = dbg.G, n0 = dbg.said ? dbg.said().length : 0; let keys = 0;
+      while (G.t < 164.8) { note('the job line', dbg.jobText()); if (dbg.next) note('the NEXT line', dbg.next());
+        const w = dbg.warnsNow(); if (w && w.items) { const h = dbg.alerts(w.items); note('a call', strip(h)); if (/class="pg-aln"/.test(h)) note('a call\'s countdown', 'a number counting down: ' + strip(h) + ' 9 s'); }
+        // (Q and 2 pressed by hand, as a player would: dbg.step runs the autopilot, which keeps the floats for your defensive and your area attack quiet, so a
+        //  "Defensive: half damage for 8 s." or "Area attack is cooling down: 6 s." came back unseen. The review of the prompts fixes, Nov 16)
+        if (keys < 2 && G.t >= (keys ? 100 : 20)) { keys++; if (dbg.defQ) dbg.defQ(); const o = (dbg.tgts() || []).find((q) => q.kind !== 'tail') || (dbg.tgts() || [])[0]; if (o) { dbg.tgt = o.key; dbg.pos = [o.p[0] + (o.r || 1) + 1, o.p[1]]; } G.gcd0 = -99; dbg.aoe(); dbg.aoe(); }
+        labels(G.t).forEach((x) => note('the floor', x)); dbg.step(5); }
+      // (every float, mistakes too: since the review of Nov 16 a mistake's float has no time either (check S); only the result screen keeps when)
+      if (dbg.said) { const fl = dbg.said().slice(n0); fl.forEach((x) => note('a float', x.text)); if (!fl.some((x) => /^Defensive/.test(x.text)) || !fl.some((x) => /^Area attack/.test(x.text))) R('the test lost its setup: pressing Q and 2 twice by hand said ' + JSON.stringify(fl.filter((x) => /Defensive|Area attack|Too far/.test(x.text)).map((x) => x.text)) + '; it should float your defensive and your area attack cooling down (R0)'); } }
+    { const SU = dbg.setupApi(); for (const jb of [job('r', 'r3', 1), job('h', null, 2), job('m', 'm1', 2), job('r', null, 1)]) { dbg.myJob = jb; const slot = dbg.jobSlot();
+      [dbg.panel(), dbg.short(slot), dbg.asg(slot), SU && SU.say(), SU && SU.maps && SU.maps.say(), SU && SU.maps && SU.maps.sub()].forEach((x) => strip(x).split(/(?<=[.!?])\s+/).forEach((y) => note('the start card', y))); }
+      const st = (/const START = (\[\[[^;]*\]\]);/.exec(PJ) || [])[1] || ''; (st.match(/'[^']*'/g) || []).forEach((x) => note('the Start list', x.slice(1, -1))); }
+    if (/label\([^;\n]*toFixed\(/.test((/const draw = \(\) => \{[\s\S]*?\n {2}\};/.exec(PJ) || [''])[0])) note('the 2D floor', 'a label with a countdown (toFixed) 2.0');
+    [...seen.values()].slice(0, 8).forEach((m) => R('Flex, Nov 16, "i feel like the game confuses people saying timestamps": ' + m + ' has a clock time or a second count (R0)'));
+    // R1. follow the arrow: Soak #2 into the first set's bubble and coil, Soak #1 after its 2:14 coil, a carrier into the bubble; nothing that isn't yours
+    for (const [jb, seed, more, T0, T1, tag] of [[job('h', null, 2), 3, {}, 30.5, 43.6, 'a Soak #2 healer, 0:30 to 0:43'], [job('r', null, 2), 2, { first: [true, false] }, 30.5, 43.6, 'a Soak #2 ranged, the other coil first'], [job('r', null, 1), 1, {}, 131.9, 137.5, 'a Soak #1 ranged after the 2:14 coil'], [job('m', 'm1', 1), 2, {}, 30.5, 40.5, 'the melee egg carrier'], [job('r', 'r6', 1), 5, {}, 30.5, 40.5, 'a ranged egg carrier']]) {
+      dbg.myJob = jb; const slot = dbg.jobSlot(); dbg.hints = true; dbg.at(T0, slot, { seed, east: false, ...more }); const G = dbg.G, n0 = G.log.length; let tg = null;
+      while (G.t < T1) { const h = dbg.hint(); tg = h && !h.wait ? h.T : null; dbg.walkTo(tg); dbg.stepOwn(1); G.hp = 100; } /* (as a player would: walk where it points, stand while it says Wait) */
+      G.log.slice(n0).filter((m) => /Soul Constrictor|carrying too|missed your coil|Fester Burst: you were outside/.test(m.text)).forEach((m) => R('following the arrow as ' + tag + ' (seed ' + seed + '): ' + clk(m.t) + ' ' + m.text + ' (R1)')); }
+    // R2. dodges with words: a small tail's lanes over you, an egg falling on you; the small tails' own bar and call; the falling egg's circle 3 s ahead
+    { dbg.myJob = job('h', null, 1); const slot = dbg.jobSlot(); dbg.at(55.4, slot, { seed: 3, east: false }); const S = dbg.S, w = S.waves.find((q) => q.kind === 'tail' && q.t0 > 56.5 && q.t0 < 60);
+      if (!w) R('the test lost its setup: no small tail between 0:56.5 and 1:00 (R2)');
+      else { dbg.step(Math.round((w.t0 - 1 - dbg.G.t) / 0.05)); const a = w.deg * Math.PI / 180; let p = null; for (let d = 12; d <= 34 && !p; d += 1) { const q = [w.x + Math.cos(a) * d, w.y + Math.sin(a) * d]; if (PG_UL.onPlat(q[0], q[1]) && Math.hypot(q[0], q[1]) < 30) p = q; }
+        if (p) { dbg.pos = p; const j = dbg.jobText(); if (!/small tail/i.test(j)) R('standing in a small tail\'s red lane 1 s before it fires (' + clk(dbg.G.t) + '), the job line reads "' + j + '"; it should say to step into a gap (R2)'); } }
+      if (!S.warns.some((q) => /^Small tails: /.test(q.text))) R('the small tails have no call (R2)');
+      dbg.hints = true; dbg.at(54, slot, { seed: 3, east: false }); const M = dbg.mods() || [], st = M.find((b) => b.name === 'Small tails'), hw = M.find((b) => /^Her waves/.test(b.name) || /Caustic Waves$/.test(b.name));
+      if (!st || (hw && st.sp === hw.sp)) R('at 0:54 the small tails have no boss-mod bar of their own (' + M.map((b) => b.name + ' [' + b.sp + ']').join(', ') + '): it shares Her waves\' key and the de-dupe hides it (R2)'); }
+    { dbg.myJob = job('h', null, 1); const slot = dbg.jobSlot(); dbg.at(6.5, slot, { seed: 3, east: false }); const e = dbg.G.eggs.find((q) => q.state === 'air' && q.land > 7.2);
+      if (!e) R('the test lost its setup: no egg in the air at 0:06.5 (R2)'); else { dbg.step(Math.round((e.land - 2.6 - dbg.G.t) / 0.05)); dbg.pos = [e.x + 1, e.y]; const j = dbg.jobText(); if (!/egg is falling on you/i.test(j)) R('a healer with no egg stands under a falling egg 2.6 s before it lands; the job line reads "' + j + '" (R2)');
+        const sh = ctx.pg3dShapes(A3(), e.land - 2.8); if (!sh.some((s) => s.k === 'disc' && Math.abs(s.x - e.x) < 1e-6 && Math.abs(s.y - e.y) < 1e-6 && Math.abs(s.r - 4) < 1e-6)) R('a falling egg\'s 4-yard circle isn\'t on the floor 2.8 s before it lands; it shows from 3 s (R2)'); } }
+    // R3 + R4. the arrow from when the step is named, gone only where the game counts you
+    { const walkIn = (tag, ok) => { const G = dbg.G; let gone = null; for (let i = 0; i < 400; i++) { const h = dbg.hint(); if (!h) { gone = [G.x, G.y]; break; } const d = Math.hypot(h.T[0] - G.x, h.T[1] - G.y), s = Math.min(0.25, d); dbg.pos = [G.x + (h.T[0] - G.x) / d * s, G.y + (h.T[1] - G.y) / d * s]; }
+        if (!gone) R(tag + ': walking along the arrow, it never goes away (R3)'); else { const why = ok(gone); if (why) R(tag + ': the arrow went away at ' + gone.map((v) => v.toFixed(1)).join(', ') + ', ' + why + ' (R3)'); } };
+      for (const [jb, seed, more, T, tag] of [[job('h', null, 2), 3, {}, 34.5, 'Soak #2 at the 0:39 bubble'], [job('r', null, 1), 1, {}, 31.2, 'Soak #1 at the 0:39 bubble'], [job('h', null, 2), 4, { first: [true, true] }, 133, 'Soak #2 at the 2:17 coil']]) {
+        dbg.myJob = jb; const slot = dbg.jobSlot(); dbg.at(T, slot, { seed, east: false, ...more }); const S = dbg.S, t = dbg.G.t, q = S.bubbles.find((b) => b.at > t), mine = S.soaks.find((s) => s.group.includes(slot) && s.at > t), bub = q && q.at < mine.at;
+        const fromT = bub ? Math.min(q.t0 - 2, q.at - 8) : mine.cast - 0.5, c0 = bub ? q.p : [mine.x, mine.y], n0 = Math.hypot(c0[0], c0[1]) || 1; dbg.pos = [c0[0] - c0[0] / n0 * 20, c0[1] - c0[1] / n0 * 20]; /* (20 yards in from it, toward the middle) */
+        if (t >= fromT + 0.1 && !dbg.hint()) R(tag + ': 20 yards from it at ' + clk(t) + ', named at ' + clk(fromT) + ', there is no arrow (R4)');
+        walkIn(tag, (p) => { const oth = S.soaks.filter((s) => !s.group.includes(slot) && s.at >= dbg.G.t && s.at <= (bub ? q.at + 2 : mine.at + 4) && (bub || s.set === mine.set)); const o = oth.find((s) => Math.hypot(p[0] - s.x, p[1] - s.y) <= s.r);
+          return o ? 'inside the coil that isn\'t yours (slams ' + clk(o.at) + ')' : bub ? (Math.hypot(p[0] - q.p[0], p[1] - q.p[1]) > 10 ? 'outside the bubble' : '') : Math.hypot(p[0] - mine.x, p[1] - mine.y) > mine.r ? 'outside your coil' : ''; }); }
+      dbg.myJob = job('r', 'r3', 1); dbg.at(71.5, 'r3', { seed: 5, east: false }); { const e = dbg.G.eggs.find((q) => q.id === 'r3' && q.state === 'air'); if (!e) R('the test lost its setup: r3\'s second egg isn\'t in the air at 1:11.5 (R4)'); else { if (dbg.G.t < e.land - 8) dbg.step(Math.round((e.land - 7.6 - dbg.G.t) / 0.05)); const h = dbg.hint(); if (!h || hyp(h.fin || h.T, [e.x, e.y]) > 8) R('7.6 s before your second egg lands (' + clk(e.land) + ') there is no arrow to it (R4)'); } }
+      dbg.myJob = job('m', null, 2); const ms = dbg.jobSlot(); dbg.at(143.5, ms, { seed: 3, east: false }); dbg.pos = [0, -20]; { const h = dbg.hint(); if (!h) R('a melee 30 yards from the heart at 2:23.5 gets no arrow to her edge (R4)'); }
+      dbg.myJob = job('r', 'r3', 1); dbg.at(12, 'r3', { seed: 3, east: false }); { const e = dbg.G.eggs.find((q) => q.id === 'r3' && q.state === 'floor'); if (e) { dbg.pos = [e.x + 6, e.y]; walkIn('your egg at 0:12', (p) => (Math.hypot(p[0] - e.x, p[1] - e.y) > 2.8 ? 'outside its 2.8-yard pickup ring' : '')); } } }
+    // R5. the job line: the first coil's soakers after their slam, a melee with the Rawlings in the tail's sweep
+    { dbg.myJob = job('h', null, 1); const slot = dbg.jobSlot(); dbg.at(40.4, slot, { seed: 3, east: false }); const o = dbg.S.soaks.find((s) => s.set === 0 && !s.group.includes(slot)), J = [];
+      for (let i = 0; i < 9; i++) { dbg.pos = i ? [o.x + Math.cos(i * 0.8) * 4, o.y + Math.sin(i * 0.8) * 4] : [o.x, o.y]; J.push(dbg.jobText()); } /* (a few spots in it: a small tail's lane over one says dodge first) */
+      if (!J.some((j) => /stay out of the second coil/i.test(j)) || J.some((j) => /^Next:/.test(j))) R('a Soak #1 healer standing in the second coil at 0:40.4 reads "' + J[0] + '"; it should say to stay out of it, it\'s the other team\'s (R5)'); }
+    { dbg.myJob = job('m', null, 1); const slot = dbg.jobSlot(); dbg.at(41.5, slot, { seed: 3, east: false }); const th = dbg.S.thrash[0], G = dbg.G; dbg.pos = [th.x > 0 ? -30 : 30, 0]; dbg.tgt = null;
+      const inS = G.adds.filter((a) => a.kind === 'rawling' && Math.hypot(a.x - th.x, a.y - th.y) < th.r).length; if (!inS) R('the test lost its setup: no Rawling in the tail\'s sweep at 0:41.5 (R5)');
+      else { const j = dbg.jobText(); if (!/wait/i.test(j) || /get close/i.test(j)) R('a melee at 0:41.5, with the Rawlings in the 0:49 tail sweep, reads "' + j + '"; it should say to wait and hit them after (R5)'); } }
+    // R7 + R8. the teaching call waits for your coil; the heart's call as it opens; the coil call says which is yours, in gold
+    { dbg.myJob = job('h', null, 2); const slot = dbg.jobSlot(); dbg.at(40.2, slot, { seed: 3, east: false }); dbg.G.taught = false; dbg.stepOwn(16); const early = dbg.G.taught; dbg.stepOwn(70);
+      if (early || !dbg.G.taught) R('a Soak #2 healer\'s "how to attack" call ' + (early ? 'shows at 0:41, 2 s before its own coil slams at 0:43' : 'never shows after its coil') + ' (R7)');
+      if (!dbg.S.warns.some((w) => Math.abs(w.t - 145.5) < 0.05 && /heart/i.test(w.text))) R('no call as the heart opens at 2:25.5 (R7)');
+      const cw = dbg.S.warns.find((w) => Math.abs(w.t - 36) < 0.05 && /coil/i.test(w.text)), rv = (id) => { if (!cw) return null; const p = typeof cw.per === 'function' ? cw.per(id) : null; return p ? { ...cw, ...p } : cw; };
+      const a1 = rv(dbg.S.soaks[0].group.find((id) => id[0] !== 't')), a2 = rv(dbg.S.soaks[1].group.find((id) => id[0] !== 't'));
+      if (!a1 || !a2 || a1.text === a2.text || !dbg.myCall || !dbg.myCall(a1) || !dbg.myCall(a2) || !/first/i.test(a1.text) || !/second/i.test(a2.text)) R('the 0:36 coil call reads "' + (a1 && a1.text) + '" for Soak #1 and "' + (a2 && a2.text) + '" for Soak #2; each should say which coil is theirs, in gold (R8)'); }
+    // R9. "Mechanic: ORDER", the order big and verb first; gold only when marked as yours
+    const R9 = new Set();
+    { const VERB = /^(get|stay|run|stand|dodge|wait|cross|soak|hit|step|watch|face|kill|break|pick|go|keep|walk|carry|move|press|turn|take|let|stack|spread|kick)\b/i; dbg.at(1, 'r3', { seed: 3, east: false });
+      const ids = ['r3', 'h2', 'm4', 'r1']; dbg.S.warns.forEach((w) => ids.forEach((id) => { const p = typeof w.per === 'function' ? w.per(id) : null, x = p ? { ...w, ...p } : w, m = /^([^:!?]{3,40}):\s*(.+)$/.exec(x.text);
+        const ord = m ? m[2].replace(/,?\s*you have \d+ s\b/i, '').split(/[!.](?:\s|$)/)[0] : ''; if (!m || !VERB.test(ord.trim())) R9.add('"' + x.text + '"'); })); }
+    [...R9].slice(0, 6).forEach((m) => R('the call ' + m + ' isn\'t "Mechanic: ORDER" with the order (verb first) after the colon (R9)'));
+    { const h = dbg.alerts([{ text: 'Venom beam: stay out of the line, you have 4 s!', c: '#ff8f87', by: dbg.G.t + 4 }]); if (/class="pg-al you/.test(h) || /--c:#f3c969/.test(h)) R('a call goes gold because it says "you"; gold is only for one marked as yours (R9)'); }
+    // R10. her waves: wait in the green half, then cross now
+    { dbg.myJob = job('r', null, 1); const slot = dbg.jobSlot(); dbg.at(53, slot, { seed: 3, east: false }); const wg = dbg.S.wings[0], d = wg.d1, safe = [-d[0] * 14, -d[1] * 14];
+      dbg.pos = safe; let j = dbg.jobText(); if (!/wait in the green half/i.test(j)) R('in the safe half at 0:53, before her first waves, the job line reads "' + j + '" (R10)');
+      if (!dbg.S.warns.some((w) => Math.abs(w.t - (wg.t + 10.5)) < 0.05 && /\bnow\b/i.test(w.text) && /cross/i.test(w.text))) R('no "cross now" call as the floor swaps behind her first wave (R10)');
+      dbg.step(Math.round((wg.t + 10.8 - dbg.G.t) / 0.05)); dbg.pos = safe; j = dbg.jobText(); if (!/cross|green half/i.test(j) || /\b(west|east|north|south)\b/i.test(j)) R('still in the half her second waves come down, as the floor swaps, the job line reads "' + j + '"; it should say cross into the green half now (R10)'); }
+  } catch (e) { R('the prompts checks crashed: ' + e.stack); }
+  finally { try { dbg.hints = true; dbg.myJob = job('r', 'r3', 1); } catch (e) { /* (no job) */ } }
+  // R6. phase 2: your small egg stays shut under its Warden's shield, with no "Shell broken"
+  try { const D2 = loadP2(H, pj).dbg; if (!D2 || !D2.P2) R('phase 2 didn\'t open for the egg shell check');
+    else { const pk = { side: 'E', role: 'r', egg: 'n6', mal: 1, cry: 1, teth: 'random' }; D2.P2.pick = pk; const me2 = D2.P2.slotOf(pk); D2.at(166, me2, { east: false, seed: 3 }); const G2 = D2.G, n0 = D2.said ? D2.said().length : 0; let open = null;
+      // (your own steps, not the autopilot's: dbg.step keeps the "Shell broken" float quiet, so this check could never fail. And the egg given a shell as phase 2's
+      //  had one (e.shp; it keeps its shield in e.hs since the merge), so the check still reads practice.js's guard, eggLocked. The review of the prompts fixes, Nov 16)
+      { const e0 = G2.eggs.find((q) => q.id === me2 && q.state === 'floor'); if (!e0 || !e0.lock) R('the test lost its setup: phase 2\'s small egg isn\'t on the floor under its Warden\'s shield at 2:46 (R6)'); else e0.shp = 1; }
+      while (G2.t < 214) { const e = G2.eggs.find((q) => q.id === me2 && q.state === 'floor'); if (e && G2.p2.wdead && G2.p2.wdead[pk.side] == null && G2.t > 172 && e.shell <= G2.t && open == null) open = G2.t; D2.stepOwn(5); G2.hp = 100; }
+      if (open != null) R('phase 2\'s small egg opens at ' + clk(open) + ' while its Warden still lives (this file\'s shell code wore its shell down under the shield) (R6)');
+      if (D2.said && D2.said().slice(n0).some((x) => /Shell broken/.test(x.text))) R('phase 2 says "Shell broken" while your egg is still under its Warden\'s shield (R6)'); } }
+  catch (e) { R('the phase 2 egg shell check crashed: ' + e.message); }
+}
+
+// T. The review of the prompts fixes, Nov 16 (the skeptic's read of check R's fixes, "review p1"). Each failed on the code before its fix, bc75ad8c (T9 to T13
+//    guard fixes of the prompts audit that check R left unguarded: they fail on the code before it, 08a45c58~1):
+//    T1. a line stayed up 2.5 s whatever it said, so "Wait: let it pass, then go." stayed with the arrow back and "Go here" on the floor (a Soak #2 healer at
+//        1:04, seed 3; a melee carrier on Soak #2 at 1:04.6, seed 7). Wait is never held now, and nothing is held over a Wait.
+//    T2. "Get in your gold coil now!" and "Get in the yellow bubble now!" while the floor said Wait (2:14.1, a melee carrier on Soak #2, seed 7; 0:36, r6, seed 5).
+//    T3. "Stay in the yellow bubble", "Stand in your coil" and "Wait outside the first coil" with the arrow still pointing away, up to 27 yards: the job line
+//        used its own, bigger circles. It uses the arrow's own test now; in the circle but off the arrow's spot it says to step onto its gold ring.
+//    T4. NEXT named the step you were on whenever a dodge, wave or target line had the job line ("Then: get in the yellow bubble" to a healer standing in it).
+//    T5. a call's order cut at its comma, the rest on the small line: "STAY OUT OF THE FIRST ONE" for Soak #2's coil, "FACE HER NEW SPOT".
+//    T6. big calls that weren't "Mechanic: Order" ("A Viper hatched! Kill it now: ...", "This ring is your egg's 3 yards. ..."), and the ring call not gold.
+//    T7. job lines over 12 words ("Stand in your coil (the first to appear) until it slams. Your egg breaks there.", 15).
+//    T8. one name per thing: "it's the other team's" next to "it isn't yours" and the floor's "Not yours"; "Her wave:" next to the bar's "Her waves"; a small
+//        tail's "clear side" of nothing.
+//    T9. walking where the arrow points never walks you into a wave (R1 counted no wave hits).
+//    T10. the 2:16 bubble call waits for a Soak #2 player's 2:17 coil.
+//    T11. the how-to-attack call names what is up (it said "Rawlings!" with a Viper or the heart up).
+//    T12. the floor says "Not yours" over the coil that isn't yours and "Your coil" over yours.
+//    T13. the floats as you break your egg and pick it up give no order ("Shell broken: walk over your egg to pick it up" talked over the job line).
+//    T14. "Too close to ...'s egg" came and went three times in 0.7 s at 0:38 as r3 stood 3.6 yards from another carrier; it holds till 4.2 yards now.
+//    T15. "Her waves: cross into the green half now!" went to players already in it.
+function reviewChecks(H, bad, pj, clk, hyp, p3j) {
+  const T = (m) => bad(m + ' (the review of the prompts fixes, Nov 16, check T)'), rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8'), PJ = pj || rd('practice.js'), HOOK = 'window.__pgDbg = { ';
+  if (!PJ.includes(HOOK)) { T('the test can\'t read the job line: no "' + HOOK + '" in src/practice.js'); return; }
+  // (the job line as the screen shows it, after hud()'s hold, and whether NEXT names the step NOW is on)
+  const XH = 'jobText: () => jobText(), shownJob: () => { hud(true); return G.jobShow ? G.jobShow.text : \'\'; }, shownDodge: () => !!G.jobShow && G.jobShow.r === \'a\', nextIsNow: () => { if (typeof curStep !== \'function\' || typeof stepSay !== \'function\') return false; const c = curStep(G.t), n = nextText(jobPick()); return !!c && !!n && n === stepSay(c); }, ';
+  let L0; try { L0 = load(H, PJ.replace(HOOK, HOOK + XH)); vm.runInContext((p3j || rd('practice3d.js')) + '\nthis.pg3dShapes = pg3dShapes;', L0.ctx); } catch (e) { T('the game would not run for the review checks (' + e.message + ')'); return; }
+  const dbg = L0.dbg, ctx = L0.ctx, job = (role, egg, soak) => ({ role, egg, soak: [soak, soak], fb: [0, 0] }), WAIT = 'Wait: let it pass, then go.';
+  const STAND = /^(Stay in the yellow bubble|Stand in your coil|Wait outside the|Wait here)/, NOW = /\bnow[.!]$/, words = (s) => s.split(/\s+/).filter((w) => /[A-Za-z0-9]/.test(w)).length;
+  const VERB = /^(get|stay|run|stand|dodge|wait|cross|soak|hit|step|watch|turn|kill|break|pick|go|keep|walk|carry|move|press|take|let|stack|spread|kick)\b/i, unesc = (s) => String(s || '').replace(/&#39;/g, '\'').replace(/&amp;/g, '&');
+  const sub = (tag, f) => { try { f(); } catch (e) { T('the ' + tag + ' check crashed: ' + e.message); } };
+  const fmt = (x) => { const m = /^([^:!?]{3,40}):\s*(.+)$/.exec(x || ''), ord = m ? m[2].split(/[!.](?:\s|$)/)[0].trim() : ''; return !!m && VERB.test(ord); };
+  const BIG = [...PJ.matchAll(/bigCall\('((?:[^'\\]|\\.)*)'(?:,\s*'([^']*)')?/g)].map((m) => [m[1].replace(/\\'/g, '\''), m[2] || '']), lines = new Map(), saw = (x, where) => { if (x && !lines.has(x)) lines.set(x, where); };
+  const A3 = () => dbg.v3a || { G: dbg.G, S: dbg.S, me: dbg.role.id, nm: (id) => id, rl: (id) => id[0], clsC: () => null, hint: () => dbg.hint(), spot: () => null, target: null, bossAt: () => ({ p: L0.PG_UL.boss.slice(), up: true }), tailAt: (t) => ({ p: dbg.S.FT(L0.PG_UL.tail, t), up: true }) };
+  try {
+    // T1 to T4 and T9: walk where the arrow points, stand while it says Wait, and read the screen every step
+    const got = new Map(), put = (k, m) => { if (!got.has(k)) got.set(k, m); };
+    // (each job's walks in one run: the autopilot plays the gaps between them)
+    const RUNS = [[job('h', null, 2), 3, [[30.5, 44], [58, 72], [127, 138]], 'a Soak #2 healer'], [job('m', 'm1', 2), 7, [[30.5, 44], [58, 72], [127, 138]], 'a melee carrier on Soak #2'],
+      [job('r', 'r6', 1), 5, [[30.5, 41]], 'the r6 carrier'], [job('h', null, 1), 4, [[127, 138]], 'a Soak #1 healer'], [job('r', 'r3', 1), 3, [[30.5, 41]], 'the r3 carrier']];
+    for (const [jb, seed, wins, tag] of RUNS) { dbg.myJob = jb; const slot = dbg.jobSlot(); dbg.hints = true; dbg.at(wins[0][0], slot, { seed, east: false }); const G = dbg.G, id = tag + ' (seed ' + seed + ')';
+     for (const [T0, T1] of wins) { while (G.t < T0 - 1e-6) dbg.step(1); let dodged = -99;
+      while (G.t < T1) { const h0 = dbg.hint(), walking = !!h0 && !h0.wait; dbg.walkTo(walking ? h0.T : null); const nl = G.log.length; dbg.stepOwn(1); G.hp = 100;
+        // (T9: a wave that hits you as you walk where the arrow points, with no dodge line in the last 1.5 s: the arrow walked you into it unwarned. A wave that
+        //  would have hit you standing still too is the dodge line's job, and this walker only follows the arrow)
+        if (walking && G.t - dodged > 1.5) G.log.slice(nl).forEach((m) => { if (/Caustic Waves/.test(m.text)) put('t9' + id + m.t, 'walking where the arrow points, with no dodge line, ' + id + ' took "' + m.text + '" at ' + clk(m.t) + ' (T9)'); });
+        const sh = dbg.shownJob(), h = dbg.hint(), arrow = !!h && !h.wait, at = id + ' at ' + clk(G.t); saw(sh, at); if (dbg.shownDodge()) dodged = G.t;
+        if (sh === WAIT && arrow) put('t1' + id, at + ': the job line holds "' + WAIT + '" with the arrow back, "Go here" ' + h.d.toFixed(1) + ' yards away (T1)');
+        if (NOW.test(sh) && h && h.wait) put('t2' + id + sh, at + ': "' + sh + '" while the floor says Wait (T2)');
+        if (STAND.test(sh) && arrow) put('t3' + id + sh.slice(0, 14), at + ': "' + sh + '" while the arrow points ' + h.d.toFixed(1) + ' yards away (T3)');
+        if (dbg.nextIsNow()) put('t4' + id, at + ': NEXT reads "' + dbg.next() + '" under "' + sh + '", the step you\'re on (T4)'); } } }
+    // (T2 off the walks too: round your step's spot while it's due, wherever the floor says Wait the job line says it, never "now": the healer's second coil at
+    //  0:40.4, seed 3, and the 0:39 bubble at 0:36.1, seed 4, both read "now" under a Wait 0.5 s apart on the old code)
+    for (const [jb, seed, kind, T0] of [[job('h', null, 2), 3, 'coil', 40.4], [job('h', null, 2), 4, 'bubble', 36.1]]) { dbg.myJob = jb; const slot = dbg.jobSlot(); dbg.at(T0, slot, { seed, east: false });
+      const G = dbg.G, S = dbg.S, st = kind === 'coil' ? S.soaks.find((s) => s.group.includes(slot) && s.at > G.t) : S.bubbles.find((q) => q.at > G.t), c = kind === 'coil' ? [st.x, st.y] : st.p; let w = 0;
+      for (let k = 0; k < 4; k++) { for (let r = 12; r <= 32; r += 4) for (let i = 0; i < 16; i++) { const p = [c[0] + Math.cos(i * Math.PI / 8) * r, c[1] + Math.sin(i * Math.PI / 8) * r]; if (!L0.PG_UL.onPlat(p[0], p[1])) continue; dbg.pos = p; const h = dbg.hint(); if (!h || !h.wait) continue;
+        w++; const j = dbg.jobText(); if (NOW.test(j)) put('t2' + kind + slot + seed, 'a Soak #2 healer (seed ' + seed + ') ' + p.map((v) => v.toFixed(0)).join(', ') + ' from the middle at ' + clk(G.t) + ', your ' + kind + ' due: "' + j + '" while the floor says Wait (T2)'); } dbg.stepOwn(5); }
+      if (!w) T('the test lost its setup: no spot round the ' + kind + ' at ' + clk(T0) + ' (seed ' + seed + ') where the floor says Wait (T2)'); }
+    ['t1', 't2', 't3', 't4', 't9'].forEach((k) => [...got.entries()].filter(([q]) => q.startsWith(k)).slice(0, 3).forEach(([, m]) => T(m)));
+    // T5. every call's order whole on the big line (worked out for each role, and for her waves' call, where you stand)
+    sub('T5', () => { dbg.at(1, 'r3', { seed: 3, east: false }); const cut = new Set(), ids = ['r3', 'h2', 'm4', 'r1', 't1'], pts = [undefined, { x: 30, y: 0 }, { x: -30, y: 0 }, { x: 0, y: 30 }, { x: 0, y: -30 }];
+      const whole = (text, c) => { const m = /^([^:!?]{3,40}):\s*(.+)$/.exec(text); if (!m) return; const want = m[2].replace(/,?\s*you have \d+ s\b/i, '').trim().split(/[!.](?:\s|$)/)[0].trim(), big = unesc(dbg.alertTexts([{ text, c, by: null }])[0].order); if (big !== want) cut.add('"' + text + '" shows "' + big + '" in big letters and the rest under it'); };
+      dbg.S.warns.forEach((w) => ids.forEach((id) => pts.forEach((p) => { const q = typeof w.per === 'function' ? w.per(id, p) : null; if (q !== false) whole((q && q.text) || w.text, w.c); })));
+      BIG.forEach(([x, c]) => whole(x, c)); [...cut].slice(0, 6).forEach((m) => T('the call ' + m + ' (T5)')); });
+    // T6. phase 1's own big calls, "Mechanic: Order"; the Viper's as it hatches
+    sub('T6', () => { if (BIG.length < 2) T('the test can\'t find phase 1\'s big calls (bigCall(\'...\')) in src/practice.js (T6)');
+      BIG.forEach(([x]) => { if (!fmt(x)) T('the big call "' + x + '" isn\'t "Mechanic: Order" with the order, verb first, after the colon (T6)'); });
+      dbg.myJob = job('r', 'r3', 1); dbg.at(12, 'r3', { seed: 3, east: false }); dbg.G.lastWarn = null; if (!dbg.hatchMine()) T('the test lost its setup: r3 has no egg to hatch at 0:12 (T6)');
+      else { const w = dbg.G.lastWarn, x = w && w.all ? w.all[0] : ''; if (!fmt(x)) T('as a Viper hatches the big call reads "' + x + '"; it should be "Mechanic: Order" (T6)'); } });
+    // T13 + T6's ring call: break your egg and pick it up by hand; the floats give no order, and the ring's call is "Mechanic: Order" in gold, yours
+    sub('T13', () => { dbg.myJob = job('r', 'r3', 1); dbg.at(8, 'r3', { seed: 3, east: false }); const G = dbg.G, e = G.eggs.find((q) => q.id === 'r3' && q.set === 0), n0 = dbg.said().length;
+      if (!e) T('the test lost its setup: r3 has no first egg at 0:08 (T13)');
+      else { while (G.t < e.land + 0.3) dbg.stepOwn(1); G.x = e.x; G.y = e.y; G.tgt = 'egg'; for (let i = 0; i < 12 && e.state === 'floor'; i++) { G.gcd0 = -99; dbg.atk(); dbg.stepOwn(6); G.hp = 100; } dbg.stepOwn(4);
+        const fl = dbg.said().slice(n0).map((x) => x.text), w = G.lastWarn, ring = w && w.items ? w.items.find((it) => /ring/i.test(it.text)) : null;
+        if (e.state !== 'held') T('the test lost its setup: hitting r3\'s egg at 0:1x by hand didn\'t let it pick the egg up (' + e.state + ') (T13)');
+        else { fl.filter((x) => /^(Shell broken|Egg picked up)/.test(x) && /:\s*\S/.test(x)).forEach((x) => T('the float "' + x + '" gives an order, over the job line (T13)'));
+          if (!ring || !fmt(ring.text) || !dbg.myCall(ring)) T('picking up your egg, the ring\'s call reads "' + (ring ? ring.text : (w && w.all || []).join(' | ')) + '"' + (ring && !dbg.myCall(ring) ? ', not gold' : '') + '; it should be "Mechanic: Order", gold, yours (T6)'); } } });
+    // T7 + T8: forced spots for lines the walks don't reach
+    sub('T7 and T8', () => { dbg.myJob = job('r', 'r3', 1); dbg.at(25, 'r3', { seed: 3, east: false }); saw(dbg.jobText(), 'r3 carrying at 0:25');
+      dbg.at(39.2, 'r3', { seed: 3, east: false }); const sp = dbg.stepSpot(); if (sp) { dbg.pos = sp.T; dbg.G.eggs.forEach((e) => { const b = e.state === 'held' && e.who && e.who !== 'r3' ? dbg.G.bots[e.who] : null; if (b && hyp([b.x, b.y], sp.T) < 6) { b.x += 20; } }); /* (the other carriers out of the way: this reads the coil's own line) */ const j = dbg.jobText(); saw(j, 'r3 on its coil spot at 0:39.2'); if (!/^Stand in your coil/.test(j)) T('the test lost its setup: r3 on its spot in its coil at 0:39.2 reads "' + j + '" (T7)'); }
+      dbg.myJob = job('m', null, 1); const ms = dbg.jobSlot(); dbg.at(102.5, ms, { seed: 3, east: false }); const th = dbg.S.thrash[1]; dbg.pos = [th.x * 0.6, th.y * 0.6]; { const j = dbg.jobText(); saw(j, 'a melee by her tail at 1:42.5'); if (!/^Run to the Wretch/.test(j)) T('the test lost its setup: a melee by her tail at 1:42.5, the 1:48 bubble stacking, reads "' + j + '" (T7)'); }
+      // (her waves' lane over you, 1 s before the first wave reaches you)
+      dbg.myJob = job('r', null, 1); const rs = dbg.jobSlot(); dbg.at(54.5, rs, { seed: 3, east: false }); { const w = dbg.S.waves.find((q) => q.kind === 'her' && q.t0 >= 55), a = w ? w.deg * Math.PI / 180 : 0; let j = '';
+        for (let k = 0.5; k <= 2.5 && !/^Her wave/.test(j); k += 0.25) { const d = w.v * (dbg.G.t + k - w.t0) + 1, p = [w.x + Math.cos(a) * d, w.y + Math.sin(a) * d]; if (!L0.PG_UL.onPlat(p[0], p[1])) continue; dbg.pos = p; j = dbg.jobText(); }
+        saw(j, 'in her waves\' lane at 0:54.5'); if (!/^Her waves: /.test(j)) T('in her waves\' lane just before they reach you, the job line reads "' + j + '"; it should start "Her waves:", the bar\'s and the call\'s name (T8)'); }
+      // (a small tail's lane over you in your coil: a Soak #1 healer, the second coils)
+      dbg.myJob = job('h', null, 1); const hs = dbg.jobSlot(); let tl = '';
+      dbg.at(130.5, hs, { seed: 3, east: false }); for (let T0 = 130.5; T0 <= 133.5 && !tl; T0 += 0.5) { while (dbg.G.t < T0 - 1e-6) dbg.step(1); const s = dbg.S.soaks.find((q) => q.group.includes(hs) && q.at > T0); if (!s) break;
+        for (let r = 0; r <= 8 && !tl; r += 2) for (let i = 0; i < 12 && !tl; i++) { dbg.pos = [s.x + Math.cos(i * Math.PI / 6) * r, s.y + Math.sin(i * Math.PI / 6) * r]; const j = dbg.jobText(); if (/^Small tail: /.test(j) && /circle/.test(j)) tl = j; } }
+      if (!tl) T('the test lost its setup: no small tail\'s lane over a Soak #1 healer in its 2:14 coil (T8)'); else { saw(tl, 'a small tail over your coil'); if (/clear side/.test(tl) || !/red lane/.test(tl)) T('a small tail\'s lane over you in your coil reads "' + tl + '"; it should name the red lane to step out of (T8)'); }
+      // (the coil that isn't yours: one name for it)
+      dbg.myJob = job('h', null, 1); const h1 = dbg.jobSlot(); dbg.at(40.4, h1, { seed: 3, east: false }); const o = dbg.S.soaks.find((s) => s.set === 0 && !s.group.includes(h1)), J = [];
+      for (let i = 0; i < 9; i++) { dbg.pos = i ? [o.x + Math.cos(i * 0.8) * 4, o.y + Math.sin(i * 0.8) * 4] : [o.x, o.y]; J.push(dbg.jobText()); }
+      if (J.some((j) => /other team/.test(j)) || !J.some((j) => /it isn't yours/.test(j))) T('standing in the coil that isn\'t yours at 0:40.4 reads "' + (J.find((j) => /coil/.test(j)) || J[0]) + '"; it should say "it isn\'t yours", as the floor\'s "Not yours" (T8)');
+      [...lines.entries()].filter(([x]) => words(x) > 12).slice(0, 6).forEach(([x, where]) => T('the job line "' + x + '" (' + where + ') has ' + words(x) + ' words; 12 at most (T7)')); });
+    // T10. the 2:16 bubble call waits for a Soak #2 player's 2:17 coil
+    sub('T10', () => { dbg.myJob = job('h', null, 2); const slot = dbg.jobSlot(); dbg.at(135.5, slot, { seed: 4, east: false }); dbg.G.warnQ = []; dbg.G.lastWarn = null; /* (at() fast-forwards with one warns() at the end, which queues every call so far: clear them) */ const G = dbg.G, mine = dbg.S.soaks.find((s) => s.set === 1 && s.group.includes(slot)); let first = null;
+      while (G.t < 139.5 && first == null) { dbg.stepOwn(1); G.hp = 100; const w = dbg.warnsNow(); if (w && w.all && w.all.some((x) => /^Fester Burst: get in the bubble/.test(x))) first = G.t; }
+      if (!mine || mine.at < 136.5) T('the test lost its setup: a Soak #2 healer should soak the 2:17 coil (T10)'); else if (first == null || first < mine.at - 0.3) T('the 2:20 bubble\'s call shows at ' + (first == null ? 'no time before 2:19.5' : clk(first)) + ', before a Soak #2 healer\'s coil slams at ' + clk(mine.at) + '; it should wait for it (T10)');
+      // (T11 on the same run: the how-to-attack call with the heart open)
+      while (G.t < 146.5) dbg.step(1); G.taught = false; G.lastWarn = null; dbg.stepOwn(2);
+      const x = G.lastWarn && G.lastWarn.all ? G.lastWarn.all[0] : ''; if (!/heart/i.test(x)) T('with the heart open at 2:26.5, the how-to-attack call reads "' + x + '"; it should name the heart (T11)'); });
+    // T11. the how-to-attack call names what is up: a Viper, and phase 2's own adds
+    sub('T11', () => { let x = ''; dbg.myJob = job('r', 'r3', 1); dbg.at(12, 'r3', { seed: 3, east: false }); dbg.hatchMine(); dbg.G.taught = false; dbg.G.lastWarn = null; dbg.stepOwn(2); x = dbg.G.lastWarn && dbg.G.lastWarn.all ? dbg.G.lastWarn.all[0] : '';
+      if (!/Viper/.test(x) || /Rawling/.test(x)) T('with a Viper up at 0:12, the how-to-attack call reads "' + x + '"; it should name the Viper (T11)');
+      // (phase 2, its own add from its DPS_SAY lines: "Rawlings! Press Tab..." with the Warden up, over "Kick Malice")
+      const D2 = loadP2(H, pj).dbg, pk = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'none' }; D2.P2.pick = pk; const me2 = D2.P2.slotOf(pk); D2.at(186, me2, { east: false, seed: 3 }); D2.G.taught = false; D2.G.lastWarn = null; D2.stepOwn(2);
+      x = D2.G.lastWarn && D2.G.lastWarn.all ? D2.G.lastWarn.all[0] : ''; if (!/Warden|Doomscale|Clutch/.test(x) || /Rawling/.test(x)) T('in phase 2 at 3:06 the how-to-attack call reads "' + x + '"; it should name phase 2\'s own add up, the Warden, the Clutches or the Doomscales (T11)'); });
+    // T12. "Not yours" and "Your coil" on the floor
+    sub('T12', () => { dbg.myJob = job('h', null, 1); const slot = dbg.jobSlot(); dbg.at(39.7, slot, { seed: 3, east: false }); let L = []; /* (both coils are up from 0:39.4 till the first slams) */ try { L = ctx.pg3dShapes(A3(), dbg.G.t).filter((s) => s.k === 'label'); } catch (e) { T('pg3dShapes crashed: ' + e.message + ' (T12)'); }
+      const mine = dbg.S.soaks.find((s) => s.set === 0 && s.group.includes(slot)), oth = dbg.S.soaks.find((s) => s.set === 0 && !s.group.includes(slot)), near = (s, txt) => L.some((q) => q.text === txt && Math.hypot(q.x - s.x, q.y - s.y) < 1);
+      if (!near(oth, 'Not yours') || !near(mine, 'Your coil')) T('at 0:39.7 the floor over the coils reads ' + JSON.stringify(L.filter((q) => /coil|yours|soak/i.test(q.text)).map((q) => q.text)) + '; "Your coil" over yours and "Not yours" over the other (T12)'); });
+    // T14. the ring warning holds till you're 4.2 yards clear
+    sub('T14', () => { dbg.myJob = job('r', 'r3', 1); dbg.at(30, 'r3', { seed: 3, east: false }); const G = dbg.G, other = G.eggs.find((e) => e.state === 'held' && e.who && e.who !== 'r3');
+      if (!other || !G.eggs.some((e) => e.who === 'r3' && e.state === 'held')) T('the test lost its setup: no two carriers at 0:30 (T14)');
+      else { const b = G.bots[other.who], at = (d) => { b.x = G.x + d; b.y = G.y; G.mv = null; G.still = true; return /^Too close/.test(dbg.jobText()); }, seq = [3.5, 3.8, 3.5, 3.9, 4.5].map(at);
+        if (seq.join() !== 'true,true,true,true,false') T('another carrier at 3.5, 3.8, 3.5, 3.9 then 4.5 yards: "Too close" reads ' + seq.map((v) => (v ? 'on' : 'off')).join(', ') + '; it should stay up, not come and go, till 4.2 yards (T14)');
+        at(3.5); for (let i = 0; i < 24; i++) { b.x = G.x + 3.8; b.y = G.y; dbg.stepOwn(1); G.hp = 100; } if (at(3.8)) T('a carrier settled 3.8 yards from you keeps "Too close" up after 1.2 s; it holds a second, not for good (T14)'); } });
+    // T15. "cross now" only to players still in the half her second waves come down
+    sub('T15', () => { dbg.myJob = job('r', null, 1); const slot = dbg.jobSlot(); dbg.at(1, slot, { seed: 3, east: false }); const wg = dbg.S.wings[0], d = wg.d1, cw = dbg.S.warns.find((w) => Math.abs(w.t - (wg.t + 10.5)) < 0.05 && /cross/i.test(w.text));
+      dbg.at(wg.t + 10.2, slot, { seed: 3, east: false }); const G = dbg.G; G.warnQ = []; G.lastWarn = null; let seen = '';
+      while (G.t < wg.t + 12) { dbg.pos = [d[0] * 14, d[1] * 14]; dbg.stepOwn(1); G.hp = 100; const w = dbg.warnsNow(); if (w && w.all) seen += w.all.join(' | ') + ' | '; } /* (already across: in the half her first waves have passed) */
+      if (/cross into the green half now/i.test(seen)) T('a player already in the green half as her waves swap gets "Her waves: cross into the green half now!" (T15)');
+      const still = cw && typeof cw.per === 'function' ? cw.per(slot, { x: -d[0] * 14, y: -d[1] * 14 }) : null; if (!cw || (still && !/cross into the green half now/i.test(still.text))) T('a player still in the half her second waves come down no longer gets "cross into the green half now" (T15)'); });
+  } catch (e) { T('the review checks crashed: ' + e.stack); }
+  finally { try { dbg.hints = true; dbg.myJob = job('r', 'r3', 1); } catch (e) { /* (no job) */ } }
+}
+
+// S. No clock time and no second count in a mistake while you play, in any part (Flex, Nov 16: "i feel like the game confuses people saying timestamps"): the
+//    float as it happened and the death card read "You didn't kick Malice (3:04): it hit everyone every second for 6 s.", the card under the time of the death,
+//    "3:09". Played runs of all four parts, each mistake as its float showed it and on a death card read back from the card; the result screen keeps when.
+function mistakeTimes(H, bad, pj) {
+  const SB = (m) => bad(m + ' (mistakes on screen, Nov 16, check S)'); H = H || require('./site-helpers.js');
+  const rd = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n'), GJ = rd('guides.js'), CLOCK = /\b\d{1,2}:\d{2}\b/, SECS = /\b\d+(?:\.\d+)?\s?s\b/, timey = (x) => CLOCK.test(x) || SECS.test(x);
+  const fromGuides = ['GDZ_ROLE', 'GDZ_RAID', 'gdzName', 'UX', 'UX_MEL', 'UX_HOME', 'UX_ZONE', 'UL_EDGE', 'UL_FB', 'GDZ_FLOOR', 'UL_EGGS', 'UL_RIM', 'UL_SOAK', 'UL_CMK', 'UL_PAT'].map((n) => H.grab(n, GJ)).join('\n');
+  const strip = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&#39;/g, '\'').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  // (a page that remembers what it's given, as tests/practice-shared.js's recLoad, with all four parts: the death card is read back from the card itself)
+  const page = (part) => { const made = [], el = () => { const kids = new Map(), o = { innerHTML: '', className: '', textContent: '', style: {}, dataset: {}, isConnected: true, kids }, cl = { add() {}, remove() {}, toggle() {}, contains: (c) => String(o.className).split(/\s+/).includes(c) };
+      const p = new Proxy(o, { get: (t, k) => (k in t ? t[k] : k === 'classList' ? cl : k === 'querySelector' ? (s) => { if (!kids.has(s)) kids.set(s, el()); return kids.get(s); } : k === 'querySelectorAll' ? () => [] : stub()), set: (t, k, v) => { if (k === 'innerHTML') kids.clear(); t[k] = v; return true; } }); made.push(p); return p; };
+    const raf = [], doc = new Proxy({}, { get: (t, k) => (k === 'createElement' ? () => el() : stub()) }), win = { devicePixelRatio: 1, addEventListener() {}, removeEventListener() {} };
+    class Img { constructor() { this.complete = false; this.naturalWidth = 0; } }
+    const ctx = vm.createContext({ document: doc, window: win, navigator: stub(), performance, Image: Img, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame: (f) => raf.push(f), cancelAnimationFrame: (i) => { if (i) raf[i - 1] = null; }, localStorage: stub(), E: { CLASSES: {} }, console, MouseEvent: function () {} });
+    vm.runInContext(H.grab('esc') + '\n' + H.grab('guideSlug') + '\n' + fromGuides + '\n' + (pj || rd('practice.js')) + '\n' + rd('practice3d.js') + '\n' + rd('practice-p2.js') + '\n' + rd('practice-int.js') + '\n' + rd('practice-p3.js'), ctx);
+    vm.runInContext('pgOpen(null, "Ula\'tek", "m"' + (part ? ', "' + part + '"' : '') + ')', ctx);
+    let cur = 0, now = 1000; const frames = (n) => { while (n-- > 0 && cur < raf.length) { const f = raf[cur++]; if (f) f(now += 50); else n++; } };
+    return { dbg: win.__pgDbg, frames, card: () => { const o = made.find((e) => e.kids.has('.pg-card')); return o ? o.kids.get('.pg-card') : null; } }; };
+  // (each part played twice standing still, the most mistakes; phase 1's carrier and Soak #2 melee, phase 2's both ledges, the intermission's egg teams, phase 3's soakers)
+  const PARTS = [[null, 'phase 1', [['r3', 3], ['m1', 7]]], ['m2', 'phase 2', [[{ side: 'E', role: 'r', egg: 'n6', mal: 1, cry: 1, teth: 'random' }, 3], [{ side: 'W', role: 'm', egg: 'n4', mal: 1, cry: 1, teth: 'solo' }, 2]]],
+    ['mint', 'the intermission', [[{ role: 'r', team: 'P', egg: true, pat: 2 }, 4], [{ role: 'm', team: 'Y', egg: true, pat: 1 }, 5]]], ['m3', 'phase 3', [[{ role: 'r', soak: 1, bite: 'random', kick: 0 }, 3], [{ role: 'm', soak: 2, bite: 'random', kick: 1 }, 5]]]];
+  const found = new Map(); let timed = 0;
+  for (const [part, name, runs] of PARTS) { let P; try { P = page(part); } catch (e) { SB('the game would not open ' + name + ' for the check (' + e.message + ')'); continue; }
+    const d = P.dbg, logs = new Map();
+    for (const [pk, seed] of runs) { try { let id = pk; if (part) { d.P2.pick = pk; id = d.P2.slotOf(pk); } const n0 = d.said().length; d.sim(id, false, false, seed);
+      d.said().slice(n0).forEach((x) => { if (timey(x.text)) found.set(name + '|f|' + x.text, name + ', the float "' + x.text + '"'); }); d.G.log.forEach((m) => { if (!logs.has(m.text)) logs.set(m.text, m); }); } catch (e) { SB(name + ' crashed in a played run (' + e.message + ')'); } }
+    if (logs.size < 3) { SB('the test lost its setup: ' + name + '\'s played runs made ' + logs.size + ' mistakes to read'); continue; }
+    if ([...logs.values()].some((m) => timey(m.text + ' ' + (m.tip || '')))) timed++;
+    // (each one as the newest hit, so it is what the death card says killed you)
+    // (the death doesn't move the clock, so each goes in a hair after anything already there, and comes out again after its card)
+    const G = d.G; for (const m of logs.values()) { G.adds = G.adds.filter((a) => a.kind !== 'viper'); const q = { t: G.t + 0.005, kind: 'x', text: m.text, tip: m.tip }; G.log.push(q); G.hp = -1; d.play(); P.frames(2); const c = P.card(), h = c ? c.innerHTML : ''; G.log.splice(G.log.indexOf(q), 1);
+      if (!/You died/.test(h)) { found.set(name + '|nocard', name + ': no death card came up to read'); break; } const w = strip(h).replace(/\s*Keep going\s*End the run\s*$/, '');
+      if (w.indexOf(strip(m.text).slice(0, 12)) < 0 && w.indexOf(strip(m.text).replace(/\s*\(\d+:\d{2}\)/g, '').slice(0, 12)) < 0) { found.set(name + '|wrong', name + ': the death card read "' + w + '" for "' + m.text + '", so the test can\'t read each mistake on it'); break; }
+      if (timey(w)) found.set(name + '|c|' + m.text, name + ', the death card "' + w + '"'); } }
+  PARTS.forEach(([, name]) => [...found.entries()].filter(([k]) => k.startsWith(name + '|')).slice(0, 4).forEach(([k, m]) => SB(m + (/\|(nocard|wrong)$/.test(k) ? '' : ' has a clock time or a second count'))));
+  if (timed < 2) SB('the test lost its setup: only ' + timed + ' part(s) made a mistake with a time in the result screen\'s words, so the screen\'s clean-up is hardly tried');
+}
+
+module.exports = checks; module.exports.load = load; module.exports.promptsAudit = promptsAudit; module.exports.stub = stub; module.exports.releaseSweep = releaseSweep; module.exports.releaseCheck = releaseCheck; module.exports.reviewChecks = reviewChecks; module.exports.mistakeTimes = mistakeTimes;
 
 if (require.main === module) {
   let n = 0; const t0 = Date.now(); checks(null, (a, b, t) => { n++; console.log('✗ ' + t); });

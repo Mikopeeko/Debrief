@@ -12,6 +12,100 @@ const pgClock = (s) => { s = Math.max(0, Math.floor(s)); return Math.floor(s / 6
 const pgRot = (p, deg) => { if (!deg) return [p[0], p[1]]; const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c]; };
 const pgDist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const PG_HP_K = 735; /* (your frame's health in thousands at full: Flex's own, from his screenshot of his UI, Nov 15) */
+// (look C's small pictures, drawn here: the sound and close buttons, the NOW line's chevrons, the green tick on a done step or a result chip)
+const PG_SND_SVG = ['<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6 H5 L9 2.5 V13.5 L5 10 H2 Z" fill="currentColor"/><path d="M11.2 5.6 L14.6 9 M14.6 5.6 L11.2 9" stroke="currentColor" stroke-width="1.4"/></svg>',
+  '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6 H5 L9 2.5 V13.5 L5 10 H2 Z" fill="currentColor"/><path d="M11 5.2 Q13 8 11 10.8" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'];
+const PG_X_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5" stroke="currentColor" stroke-width="1.6"/></svg>';
+const PG_CHEV_SVG = '<svg class="pg-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5 L12 12 L3 19 Z M11 5 L20 12 L11 19 Z" fill="#f3c969"/></svg>';
+const PG_TICK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.4 L4.8 9 L10 3.2" fill="none" stroke="#a8eaa8" stroke-width="2"/></svg>';
+// (no clock time on screen, Flex, Nov 16: "clean up the setup interface and remove the timestamps". The shared setup card runs every part's own words
+//  through this: "6:12 · Onto her quarter" -> "Onto her quarter", "Group Soak 2 7:46" -> "Group Soak 2", "You soak at 7:46" -> "You soak")
+const pgNoClock = (s) => String(s == null ? '' : s).replace(/\s*\(\s*\d{1,2}:\d{2}(?:\.\d+)?\s*\)/g, '').replace(/\s+(?:at|from|by|until|till|before|after)\s+\d{1,2}:\d{2}(?:\.\d+)?\b/gi, '')
+  .replace(/^\s*\d{1,2}:\d{2}(?:\.\d+)?\s*[·:\-–—]?\s*/, '').replace(/\s*[·\-–—]?\s*\b\d{1,2}:\d{2}(?:\.\d+)?\b/g, '').replace(/\s{2,}/g, ' ').trim();
+// ---- what the screen says (Flex, Nov 17, after playing it: "Youre expecting someone to read 3 sentences, and execute the mechanic within 3 seconds. The
+// prompts on the screen should be simple more like 'DPS your egg, then pick it up'", then "Make sure the instructions and text is clear and not jumbled").
+// One short command, eight words or so, the order first: no how-to-press (the hotbar shows the keys), no "Then: ..." (NEXT says what's next), no second
+// sentence, praise dropped for the order after it. The parts' own lines stay as they are (the tests and the report read them); this is how the NOW line,
+// the floats and a call folded into the NOW line say them. Each rule is a line the 37-run playtest saw. ----
+const PG_SHORT = [
+  [/^Stack with the raid and hit what's up$/i, 'Stack with the raid and DPS'], [/^Small tails?: step (?:into a gap between the red lanes|out of the red lane ?!?|through a gap in their waves)$/i, 'Dodge the red lanes'],
+  [/^Small tail: step out of its red lane, stay in your circle$/i, 'Dodge the red lane, stay in your circle'], [/^Beam waves: step out of the red lanes$/i, 'Dodge the red lanes'],
+  [/^Hit Ula'tek and dodge what comes$/i, 'Hit Ula\'tek'], [/^Stay in the (?:yellow )?bubble until it (?:pops|bursts)$/i, 'Stay in the yellow bubble'], [/^Get in the bubble round the Wretch now!?$/i, 'Get in the yellow bubble now!'],
+  [/^Wait(?: here)?: let (?:it|the wave) pass, then go$/i, 'Wait for the wave to pass'], [/^Wait by the gateway: let her wave pass$/i, 'Wait for her wave to pass'], [/^Keep pressing 1: you're on the right target$/i, 'Keep hitting your target'],
+  [/^Her waves: step sideways into a gap, out of the red$/i, 'Dodge the wave: step into a gap'], [/^Her waves: step into a gap, then back to your ring$/i, 'Dodge the wave, then back to your ring'], [/^Her waves: step out of the lane, into the green half$/i, 'Dodge into the green half'],
+  [/^Now cross into the green half, behind the wave$/i, 'Cross into the green half now!'], [/^Stand behind or beside the Doomscales, never in front$/i, 'Stay behind the Doomscales'], [/^Stay by her, out of the front of the Doomscales$/i, 'Stay by her, behind the Doomscales'],
+  [/^Virulent Spit: step out of the green swirl!?$/i, 'Step out of the green swirl!'], [/^(?:Falling Debris: step out of the brown circle|Brown circle: step out of it before it lands) ?!?$/i, 'Step out of the brown circle!'], [/^Step out of the brown circles as they fall$/i, 'Dodge the brown circles'],
+  [/^Mother's Wrath: step out of .*$/i, 'Step out of the red circle!'], [/^(?:An egg is falling on you: step out of the white circle|Step out of the white circle: an egg is landing on you!?)$/i, 'Step out of the white circle!'], [/^Step out of your egg's circle: it lands there!?$/i, 'Step out of your egg\'s circle!'],
+  [/^Move one quarter left now, before she breaks this one$/i, 'Move one quarter left now!'], [/^Stay(?: with your half,)? within 20 yards of the Warden(?:: .*)?$/i, 'Stay within 20 yards of the Warden'], [/^Hit the Warden with your half, off the eggs$/i, 'Hit the Warden, off the eggs'],
+  [/^Hit the Warden: your (?:egg \(#\d+\) opens once it dies|big egg comes later)$/i, 'Hit the Warden'], [/^Carry your egg to your coil, clear of other carriers$/i, 'Carry your egg to your coil'], [/^Carry your egg to your spot by the cauldron.*$/i, 'Carry your egg to the cauldron'],
+  [/^Go to the gold ring by the Diamond.*$/i, 'Go to the gold ring by Diamond'], [/^Your gate opens next: stand by it$/i, 'Stand by your gate'], [/^Walk into your gate to cross to the (?:east|west) ledge$/i, 'Walk into your gate'],
+  [/^Walk to the edge of your tether, then wait$/i, 'Walk to your tether\'s edge, then wait'], [/^The Warden stands up next: wait here, off the eggs$/i, 'Wait here, off the eggs'], [/^The Warden lands next: hit it once its cast ends$/i, 'Wait: the Warden is landing'],
+  [/^Pick up your egg(?: \(#\d+\))?(?: now)?: walk over it!?$/i, 'Pick up your egg'], [/^Break your egg$/i, 'DPS your egg'], [/^Run to your egg, then break it$/i, 'Run to your egg and DPS it'], [/^Wait by your egg(?: \(#\d+\))?: hit it to open it$/i, 'DPS your egg'],
+  [/^Wait by your egg: its shell is breaking$/i, 'Wait by your egg'], [/^Go to her edge: hit the heart from there$/i, 'Go to her edge, hit the heart'], [/^Back to her: walk into your gate$/i, 'Walk back through your gate'], [/^Walk into the gateway to reach her$/i, 'Walk into the gateway'],
+  [/^Go through the gateway now$/i, 'Go through the gateway now!'], [/^Stay with your half(?:, out of the carriers' rings|[:,] your big egg comes later|, off the eggs)$/i, 'Stay with your half'], [/^Wait outside the red circles, then burn the heart$/i, 'Wait outside the red circles'],
+  [/^Go next to your egg's gold circle, not under it$/i, 'Go next to your egg\'s gold circle'], [/^Your kick is next: press E when .*$/i, 'Your kick is next: wait for the cast'], [/^Your kick is next: get close to (.+)$/i, 'Get close to $1'],
+  [/^Walk to the gateway: it opens after her wave$/i, 'Walk to the gateway'], [/^Stay in the red circles: press Q as they drain$/i, 'Stay in the red circles, press Q'], [/^Stay in the red circles until they drain$/i, 'Stay in the red circles'],
+  [/^Run away from her tail: out of the orange circle$/i, 'Run out of the orange circle!'], [/^Go to your coil \(the (first|second) to appear\).*$/i, 'Go to the $1 coil'], [/^Stay near your Shrieker: its kick is next$/i, 'Stay near your Shrieker'],
+  [/^Into the cauldron now: .*$/i, 'Into the cauldron now!'], [/^Sprint \(Shift\) to the cauldron.*$/i, 'Sprint to the cauldron'], [/^Walk to (your|the) gold ring(?: now)?(?:: .*|, .*| with your red circle| at the edge.*)$/i, 'Walk to $1 gold ring'],
+  [/^Wait: the Rawlings are in the tail sweep$/i, 'Wait: Rawlings are in the sweep'], [/^Wait outside the first coil: yours is the second$/i, 'Wait outside the first coil'], [/^Stay out of the (first|second) coil: it(?: isn't yours|'s the other team's)$/i, 'Stay out of the $1 coil'],
+  [/^Get in the yellow bubble, outside the second coil: it isn't yours$/i, 'Get in the yellow bubble, outside the second coil'], [/^Stand in your coil until it slams$/i, 'Stay in your coil'], [/^Hold still: your Purge .*$/i, 'Hold still!'],
+  [/^Stay on (?:the|your) gold ring ?: .*$/i, 'Stay on your gold ring'], [/^Run to the Wretch in front of her: out of the sweep$/i, 'Run to the Wretch in front of her'], [/^Back to the cauldron: .*$/i, 'Back to the cauldron'],
+  [/^Wait outside your egg's gold ring until .*$/i, 'Wait outside your egg\'s ring'], [/^Step away from (.+?)'s egg: your rings almost touch!?$/i, 'Step away from $1\'s egg!'], [/^Too close to (.+?)'s egg: step away from them!?$/i, 'Too close to $1\'s egg!'],
+  [/^Run alone to your big egg at the (north|south) end$/i, 'Run alone to the $1 big egg'], [/^Stay out of the line and its side waves!?$/i, 'Dodge the beam and its side waves!'], [/^Your soaks are done: leave your egg$/i, 'Leave your egg, go to the gold ring'], [/^Hit the heart, and step out of the brown circles$/i, 'Hit the heart, dodge the brown circles'], [/^She's up (.+?): phase 3 starts by her$/i, 'She\'s up $1: go to her'],
+];
+const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into)/i; /* (must be done now: never held back, never covered by a call) */
+const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim(); if (!x) return '';
+  x = x.replace(/^(?:Good spot|Off her quarter: good)[.!]?\s+(?=[A-Z])/, ''); /* (praise, then the order: the order) */
+  x = x.replace(/:\s*press Tab(?: to pick (?:it|one))?,? then keep pressing 1(?: to hit it)?/gi, '').replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/:\s*Tab, then 1/gi, '')
+    .replace(/\s*\(\s*(?:the arrow|the gold ring|gold ring|gold)\s*\)/gi, ''); /* (how to press, and asides the floor already shows) */
+  x = x.replace(/\s+Then:.*$/, ''); { const m = /^(.+?[.!?])\s+[A-Z(]/.exec(x); if (m) x = m[1]; } x = x.replace(/[.]$/, '').trim(); /* (one sentence) */
+  for (const [re, to] of PG_SHORT) if (re.test(x)) { x = x.replace(re, to); break; }
+  x = x.replace(/\s+([,!.])/g, '$1').replace(/\s{2,}/g, ' ').trim(); return x.charAt(0).toUpperCase() + x.slice(1); };
+// (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
+const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) return 'Kill the ' + m[1].trim(); /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
+  if (yn) o = o.replace(/\bits\b/, 'your ' + yn[1] + '\'s').replace(/\bthe (first|second) one\b/, 'the $1 ' + yn[1]); return pgShort(o); };
+// ---- the coach card's words (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): one entry a mechanic, keyed by its name;
+// "@int" or "@3" for a part where it plays differently. t: the title, "Name (Short instruction)" as notes/Guides/Mechanic titles - the rule.md has it; w: one
+// plain sentence of what happens, from notes/Guides/Bosses/8 Ula'tek.md (Mythic); j: the job when the game has no words of its own for you (jf: this job
+// even when a call has one); sp: the spell whose icon the card shows. No clock times and no second counts in any of it. A name with no entry gets no card ----
+const PG_COACH = {
+  'Toxic Womb': { t: 'Toxic Womb (Stay out of the middle)', w: 'A Blightscale Wretch lands in the middle of the stone and hits everyone within 7 yards.', j: 'Stay out of the middle.', sp: 'Toxic Womb' },
+  'Toxic Womb@3': { t: 'Toxic Womb (Stay out of its circle)', w: 'A third Blightscale Wretch lands and hits everyone within 7 yards.', j: 'Stay out of its landing circle.', sp: 'Toxic Womb' },
+  Eggs: { t: 'Eggs (Don\'t let them hatch)', w: 'Eight eggs fall onto the stone, and each one hits everyone in its 4-yard circle.', j: 'Step out of the white circles.', sp: 'Call of the Serpent' },
+  'Toxic Incubation': { t: 'Toxic Incubation (Off-tank soaks the beam)', w: 'A spectral Ula\'tek beams the Wretch, and the off tank stands in the beam as waves roll out sideways.', j: 'Stay out of the beam and its side waves.', sp: 'Toxic Incubation' },
+  'Mother\'s Wrath': { t: 'Mother\'s Wrath (Her tank takes the bites)', w: 'Ula\'tek knocks her tank back, then bites in the red circle in front of her.', j: 'Stay out of the red circle in front of her.', sp: 'Mother\'s Wrath' },
+  'Small tails': { t: 'Small tails (Step into a gap)', w: 'Two small tails rise at the edge, and each fires three waves down red lanes.', j: 'Step into a gap between the red lanes.', sp: 'Gore Rattle' },
+  'Fester Burst': { t: 'Fester Burst (Stand in its bubble)', w: 'The Blightscale Wretch bursts, and everyone more than 10 yards from it takes a big hit.', j: 'Get in the yellow bubble.', sp: 'Fester Burst' },
+  'Spectral Coils': { t: 'Spectral Coils (Soak the circles)', w: 'Two circles rise beside her tail and slam one after the other, and the players inside share the hit.', j: 'Soak your team\'s coil, never both.', sp: 'Spectral Coils' },
+  'Spectral Coils@int': { t: 'Spectral Coils (Three groups, eight soaks)', w: 'Tails rise round the room and slam coils one after another, in a pattern that lights up.', j: 'Soak your coils as the pattern lights them up.', sp: 'Spectral Coils' },
+  'Mephitic Thrash': { t: 'Mephitic Thrash (Get 35 yards away)', w: 'Her tail sweeps the floor and knocks back everyone within 35 yards.', j: 'Run away from her tail.', sp: 'Mephitic Thrash' },
+  'Caustic Waves': { t: 'Caustic Waves (Go to the other half)', w: 'She pulls one wing back, and waves roll down that half first, then the other half.', jf: 'Wait in the green half, then cross behind the first wave.', sp: 'Caustic Waves' },
+  'Caustic Waves@3': { t: 'Caustic Waves (Step into a gap)', w: 'Waves roll across the stone with gaps between them.', j: 'Stand in a gap, out of the red.', sp: 'Caustic Waves' },
+  Submerge: { t: 'Submerge (Face her new spot)', w: 'Ula\'tek dives under the stone and comes up where the bubbles rise.', j: 'Watch where the bubbles rise.', sp: 'Submerge' },
+  'Rage of the Shackled': { t: 'Rage of the Shackled (Burst the heart)', w: 'Her Venomous Heart opens and takes double damage while rocks fall all over the stone.', j: 'Hit the heart and step out of the brown circles.', it: 'the heart', sp: 'Rage of the Shackled' },
+  'Falling Debris': { t: 'Falling Debris (Step out of the brown circles)', w: 'Rocks fall all over the stone, each in a brown 7-yard circle.', j: 'Step out of the brown circles.', sp: 'Falling Debris' },
+  'Doomscale Wardens': { t: 'Doomscale Warden (Kick and kill)', w: 'A Doomscale Warden rises on each ledge, and its shield keeps the eggs near it shut.', j: 'Hit the Warden and stay off the eggs.', sp: 'Malice' },
+  Malice: { t: 'Malice (Kick it)', w: 'The Warden casts Malice, which hits everyone every second unless someone kicks it.', j: 'Kick it with E when it\'s yours.', sp: 'Malice' },
+  'Grasping Fangs': { t: 'Grasping Fangs (One break, then five together)', w: 'Tethers bind three players on each ledge, and every break puts a stacking poison on the whole raid.', j: 'Walk out of your tether when it\'s your turn.', sp: 'Grasping Fangs' },
+  Clutches: { t: 'Clutches (Kill them)', w: 'The eggs near a Warden turn into Clutches, and each one hatches unless it dies first.', j: 'Press Tab to pick one, then keep pressing 1.', sp: 'Writhing Gestation' },
+  'Clutches@3': { t: 'Slithering Clutches (Kill them)', w: 'Clutches crawl toward the venom, and any that reach it hatch.', j: 'Hit them once they\'re pulled in.', sp: 'Call of the Serpent' },
+  'Doomscale Eggs': { t: 'Doomscale Eggs (Small first, the big one last)', w: 'Each ledge carries its small eggs into the cauldron first, then its big Doomscale Egg.', j: 'Carry your egg into the cauldron ring.', sp: 'Hatching Doom' },
+  'Anguished Cry': { t: 'Weakened Doomscale (Kick and kill)', w: 'A Weakened Doomscale climbs out of the cauldron and casts Anguished Cry, which stuns everyone near it unless someone kicks it.', j: 'Kick its Cry if it\'s yours, and stay out of its front.', sp: 'Anguished Cry' },
+  'Desperate Thrash': { t: 'Desperate Thrash (Stay out of its front)', w: 'A Doomscale sweeps the floor in front of it, at its tank.', j: 'Stand behind or beside the Doomscale.', sp: 'Desperate Thrash' },
+  'Virulent Spit': { t: 'Virulent Spit (Step out of the swirl)', w: 'Ula\'tek spits a green swirl under a raider, and it lands a moment later.', j: 'Step out of the green swirl.', sp: 'Virulent Spit' },
+  'The Shattering': { t: 'The Shattering (Stand on the gold ring)', w: 'The platform breaks into four quarters, and anyone on a crack falls into the venom.', j: 'Stand on the gold ring by the Diamond marker.', sp: 'The Shattering' },
+  'Serpent\'s Bite': { t: 'Serpent\'s Bite (Soak with 3)', w: 'Two players get red circles that leech venom until three soakers stand in them.', j: 'Keep out of the red circles unless you soak.', sp: 'Serpent\'s Bite' },
+  'Volatile Purge': { t: 'Volatile Purge (Spread out)', w: 'Each soaker erupts in venom after the bite and sends waves out.', j: 'Spread out from the others.', sp: 'Volatile Purge' },
+  'Circling Prey': { t: 'Circling Prey (One quarter counter-clockwise)', w: 'Ula\'tek breaks the quarter she stands on, so everyone moves to the next one.', j: 'Move one quarter on with the raid.', sp: 'Circling Prey' },
+  'Vicious Echoes': { t: 'Blightscale Shrieker (Kick and kill)', w: 'Eggs that fall into the venom hatch Shriekers, and their Vicious Echoes stuns the raid unless someone kicks it.', j: 'Kick your Shrieker, or help kill them fast.', sp: 'Vicious Echoes' },
+};
+// (a boss-mod bar's name, or a call's mechanic, to its entry above: "Your coil (first)", "Spectral Coils: ..." and "Coil slam" are all Spectral Coils)
+const PG_COACH_RE = [[/serpent's bite|^your soak$|red circle/i, 'Serpent\'s Bite'], [/purge/i, 'Volatile Purge'], [/circling prey/i, 'Circling Prey'], [/echoes|shrieker|^your kick$/i, 'Vicious Echoes'], [/malice/i, 'Malice'],
+  [/anguished cry|\bcry\b|^doomscales$|weakened doomscale/i, 'Anguished Cry'], [/frontal|desperate thrash/i, 'Desperate Thrash'], [/fangs|tether|solo break|five break|break with the five|^the five$/i, 'Grasping Fangs'], [/clutch|gestation/i, 'Clutches'],
+  [/^(doomscale )?wardens?$/i, 'Doomscale Wardens'], [/hatching doom|big egg|small eggs?\b|egg opens|south eggs/i, 'Doomscale Eggs'], [/spit/i, 'Virulent Spit'], [/shattering/i, 'The Shattering'], [/womb/i, 'Toxic Womb'], [/beam|incubation/i, 'Toxic Incubation'],
+  [/bubble|fester/i, 'Fester Burst'], [/wrath|bites/i, 'Mother\'s Wrath'], [/tail sweep|mephitic|thrash/i, 'Mephitic Thrash'], [/small tail/i, 'Small tails'], [/her waves|caustic waves/i, 'Caustic Waves'], [/dives|surfaces|submerge/i, 'Submerge'],
+  [/heart|rage of the shackled/i, 'Rage of the Shackled'], [/debris/i, 'Falling Debris'], [/coil/i, 'Spectral Coils'], [/call of the serpent|eggs? lands?\b/i, 'Eggs']];
+const pgCoachKey = (name) => { const m = PG_COACH_RE.find(([re]) => re.test(String(name || ''))); return m ? m[1] : null; };
 // (a little seeded randomness, so a run can be replayed and tested)
 const pgRng = (seed) => { let s = seed >>> 0 || 1; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; };
 
@@ -28,9 +122,12 @@ const PG_UL = {
   // centre carrier about 14 yards in on the quadrant's line and the edge carrier at the rim. GENERAL PLACES, not where eggs land (Flex, Nov 16: "The plans layout is
   // just general locations not exact egg spots remember"): the eggs land at random, one inner and one outer in each quadrant (eggLand), and you take yours)
   planEgg: { m1: [0, 14], m2: [0, 35], r5: [-14, 0], r3: [-41, 0], r6: [14, 0], r4: [41, 0], r1: [0, -14], r2: [0, -40] }, eggQ: { m1: ['melee', 0], m2: ['melee', 1], r5: ['left', 0], r3: ['left', 1], r6: ['right', 0], r4: ['right', 1], r1: ['far', 0], r2: ['far', 1] }, qAx: { melee: 90, left: 180, right: 0, far: 270 },
-  // (the coil soak groups: set 1, every carrier takes the first slam inside the Wretch's bubble and group two the second; set 2, the carriers split)
-  soak: [[['m1', 'm2', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'h1', 'h3', 'm3'], ['m4', 'm5', 'm6', 'm7', 'h2', 'h4', 'r7']],
-    [['r1', 'r3', 'r5', 'm1', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r2', 'r4', 'r6', 'm2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
+  // (the coil soak groups, the plan's Egg Clear map (guides.js ulSoaks; Flex, Nov 16: "The guide governs the game", "the only thing from the plan should be the maps
+  //  to set up the game", "it should be 4 and 4"): Right Soak #1 takes the first coil with the carriers of the melee and left zones (m1 m2, r5 r3), Left Soak #2 the
+  //  next with the right and far zones' (r6 r4, r1 r2); the same teams in both sets; everyone else split evenly, 9 a soak. Before Nov 16, set 1 sent all 8 carriers
+  //  to the first coil (a line of guide text), and for an hour the coil walkthrough's groups split them 3 and 5)
+  soak: [[['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']],
+    [['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
 };
 
 // the fight, second by second (the measured top Mythic kills, the guide's plan); east: she surfaces on the east edge
@@ -49,22 +146,26 @@ function pgUlScript(o) {
   // (her tank: t1 until the dive; then the tank who took the first Mother's Wrath soaks the second beam and takes the new tail, and the other has her)
   const S = { ROT, SURF, rotAt, F, FT, end: 165, east, tailEast, first, seed: o.seed || 1, herTank: (t) => (t < DIVE ? 't1' : 't2') };
   S.casts = []; S.warns = []; S.timers = []; S.waves = []; S.impacts = []; S.soaks = []; S.bubbles = []; S.thrash = []; S.wrath = []; S.tails = []; S.beams = []; S.pulses = [];
-  const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c) => S.warns.push({ t, text, c: c || '#ff8f87' }), timer = (t, name) => S.timers.push({ t, name });
+  // (a call: "Mechanic: ORDER", the order is the big line (the prompts audit, Nov 16). Red for danger on or near you, neutral for the raid, green for safe; a call is
+  //  gold only when it is marked as yours (o.me, or o.per(id) -> { text, me } worked out for the player as it fires), never because it says "you". o.at: the moment
+  //  a call is about, so it waits while a step of yours comes first (warns() in pgOpen); o.tail: a small tail's call, shown only when its lanes come near you)
+  const cast = (who, name, t0, t1) => S.casts.push({ who, name, t0, t1 }), warn = (t, text, c, o) => S.warns.push({ t, text, c: c || '#ff8f87', ...(o || {}) }), timer = (t, name) => S.timers.push({ t, name });
+  const RED = '#ff8f87', NEU = '#e8edf2', GRN = '#7ee08f';
   const cres = (w) => { const n = Math.max(1, Math.round(w / 7)), wd = w / n, out = []; for (let i = 0; i < n; i++) out.push([-w / 2 + wd * i + (i ? 0.6 : 0), -w / 2 + wd * (i + 1) - (i < n - 1 ? 0.6 : 0)]); return out; };
   // eggs: Call of the Serpent, 8 eggs into the carriers' zones (they turn with her), 4-yard landings, a shell for 3.6 s
   S.eggSets = [{ cast: 1, land: 10, rot: 0 }, { cast: 71, land: 80, rot: ROT }].map((e, si) => ({ ...e, si, eggs: Object.keys(PG_UL.eggO).map((id, i) => { const [z, out] = PG_UL.eggQ[id], a = (PG_UL.qAx[z] + (eggRnd() * 2 - 1) * 28) * Math.PI / 180, dd = out ? 24 + eggRnd() * 10 : 9 + eggRnd() * 9;
     const p = PG_UL.inward(pgRot([Math.cos(a) * dd, Math.sin(a) * dd], e.rot)); /* (at random in your quadrant, the inner or the outer one (Flex, Nov 16: the Plan's places are general)) */ return { id, x: p[0], y: p[1], land: e.land + (i % 3) * 0.7, shell: e.land + (i % 3) * 0.7 + 3.6 }; }) }));
-  S.eggSets.forEach((e) => { cast('boss', 'Call of the Serpent', e.cast, e.cast + 1.4); warn(e.cast, e.si ? 'Call of the Serpent: eight more eggs!' : 'Call of the Serpent: eggs incoming!', '#e6e0c8'); timer(e.land, 'Eggs land'); });
+  S.eggSets.forEach((e) => { cast('boss', 'Call of the Serpent', e.cast, e.cast + 1.4); warn(e.cast, 'Call of the Serpent: dodge the falling eggs!', RED, { per: (id) => (PG_UL.eggO[id] ? { text: 'Your egg: wait next to its gold circle!', me: true } : null) }); timer(e.land, 'Eggs land'); });
   // the Wretches: Toxic Womb lands in the middle (7 yards) at 0:03 and 1:12, it wakes 20 s later; a spectral image beams it, five impacts a second apart
   // (0:15 to 0:19, 1:24 to 1:28), all on one tank: the off tank first, then the tank who took the first Mother's Wrath. The old Wretch dies as the new one lands.
   // (the guide: the first image rises on her tail's side, so the raid knows early where the coils will be)
   const IMG = [UL_EDGE.NW, UL_EDGE.SE];
   S.wretches = [{ id: 'w1', cast: 1.8, land: 3, awake: 23, dies: 73, img: FT(IMG[0], 15), beam: 15, tank: 't2' }, { id: 'w2', cast: 70.8, land: 72, awake: 92, dies: 160 /* (the raid kills it in the heart burn, before its third bubble at about 2:52: an estimate, engine.js "dies between the second and third bubble") */, img: IMG[1], beam: 84, tank: S.herTank(27) }];
-  S.wretches.forEach((w, wi) => { cast('boss', 'Toxic Womb', w.cast, w.cast + 1.2); warn(w.cast, wi ? 'Toxic Womb: a second Wretch!' : 'Toxic Womb: stay out of the middle!', '#d8f22f'); timer(w.land, 'Toxic Womb lands');
+  S.wretches.forEach((w, wi) => { cast('boss', 'Toxic Womb', w.cast, w.cast + 1.2); warn(w.cast, 'Toxic Womb: stay out of the middle!', RED); timer(w.land, 'Toxic Womb lands');
     S.impacts.push({ x: 0, y: 0, r: 7, t0: w.cast + 0.4, at: w.land, name: 'Toxic Womb', dmg: 50, color: '#c8a36a', tip: 'Stay out of its 7 yards: the Womb lands in the middle.' });
     const B = [w.img[0] + (0 - w.img[0]) * 0.34, w.img[1] + (0 - w.img[1]) * 0.34], ba = Math.atan2(-w.img[1], -w.img[0]) * 180 / Math.PI; w.B = B;
     S.beams.push({ from: w.img, to: [0, 0], at: B, t0: w.beam - 0.4, t1: w.beam + 4.3, hits: [0, 1, 2, 3, 4].map((i) => w.beam + i), wretch: w.id, tank: w.tank });
-    warn(w.beam - 2, 'Venom beam on the off tank: only the tank stands in it. Stay out of its side waves!', '#3af2a8'); timer(w.beam, 'Venom beam');
+    warn(w.beam - 2, 'Venom beam: stay out of the line and its side waves!', RED); timer(w.beam, 'Venom beam');
     for (let i = 0; i < 5; i++) [90, -90].forEach((a) => S.waves.push({ kind: 'incub', tank: w.tank, warn: 1.5, x: B[0], y: B[1], deg: ba + a, v: 12.5, w: 10, d: 5, cres: cres(10), t0: w.beam + i, t1: w.beam + 9.5 + i, name: 'Caustic Waves from the off tank', tip: 'The off tank\'s beam sends waves out sideways: stay clear of their lanes.' })); });
   // (the random eggs land clear of the venom beam's spot, where the beam tank has to stand: one landed on the 1:24 beam spot (Nov 16). Turned round the middle
   //  in 12-degree steps until 8 yards clear, staying in the same quadrant band)
@@ -84,22 +185,27 @@ function pgUlScript(o) {
   const B1 = (p) => FT(first[0] ? [p[0], -p[1]] : p, 30);
   [{ w: 'w1', t0: 35, at: 39, p: B1([-26, 2]), m: B1, tank: 't2' }, { w: 'w1', t0: 66, at: 70, p: [4, 20], tank: 't2' }, { w: 'w2', t0: 104, at: 108, p: F([0, 26], 108), tank: S.herTank(108), stack: 101.5 },
     { w: 'w2', t0: 136, at: 140, p: FT([-25, 0], 140), tank: S.herTank(108) === 't1' ? 't2' : 't1' }].forEach((b) => {
-    S.bubbles.push(b); cast('wretch', 'Fester Burst', b.t0, b.at); warn(b.t0, 'Fester Burst: into the Wretch\'s bubble!', '#d8f22f'); timer(b.at, 'Fester Burst'); });
+    S.bubbles.push(b); cast('wretch', 'Fester Burst', b.t0, b.at); if (!b.stack) warn(b.t0, 'Fester Burst: get in the bubble!', NEU, { at: b.at }); /* (the 1:48 one has its own call at 1:41: run to it) */ timer(b.at, 'Bubble'); });
   // Mother's Wrath: 5 s cast, her tank knocked back, then five bites in her reach (the red circle in front of her)
-  [22, 92].forEach((t) => { cast('boss', 'Mother\'s Wrath', t, t + 5); warn(t, 'Mother\'s Wrath on her tank: stay out of her reach', '#ff8f87'); timer(t + 5, 'Mother\'s Wrath bites'); S.wrath.push({ t0: t, at: t + 5, p: F(PG_UL.reach, t + 1), tank: S.herTank(t + 5) }); });
+  [22, 92].forEach((t) => { cast('boss', 'Mother\'s Wrath', t, t + 5); warn(t, 'Mother\'s Wrath: stay out of her reach!', RED); timer(t + 5, 'Her bites'); S.wrath.push({ t0: t, at: t + 5, p: F(PG_UL.reach, t + 1), tank: S.herTank(t + 5) }); });
   // Spectral Coils: two 10-yard soaks beside her tail, wherever it is (set 1 west or east, set 2 south), slamming 0:40 and 0:43, 2:14 and 2:17; either one can
   // appear first, and team 1 soaks the first to appear (Flex); Soul Constrictor 5 s on Mythic; carried eggs break
-  [{ set: 0, cast: 36, a: 40, b: 43 }, { set: 1, cast: 130, a: 134, b: 137 }].forEach((c) => { cast('tail', 'Spectral Coils', c.cast, c.cast + 0.8); warn(c.cast, 'Spectral Coils: team 1 takes the first coil to appear!', '#24f2cb');
+  // (the coil call says which one is yours, in gold: the prompts audit, Nov 16, found "team 1 takes the first coil to appear" the same, in white, for both teams.
+  //  Its order fits the big line whole: "stay out of the first one, soak the second" was cut at the comma to STAY OUT OF THE FIRST ONE, the review of Nov 16, check T5)
+  [{ set: 0, cast: 36, a: 40, b: 43 }, { set: 1, cast: 130, a: 134, b: 137 }].forEach((c) => { cast('tail', 'Spectral Coils', c.cast, c.cast + 0.8);
+    warn(c.cast, 'Spectral Coils: stay out of both circles!', RED, { per: (id) => { const k = S.soaks.filter((q) => q.set === c.set).findIndex((q) => q.group.includes(id)); return k === 0 ? { text: 'Your coil: soak the first one to appear!', me: true } : k === 1 ? { text: 'Your coil: soak the second one, not the first!', me: true } : null; } });
     const P0 = first[c.set] ? PG_UL.soakB : PG_UL.soakA, P1 = first[c.set] ? PG_UL.soakA : PG_UL.soakB;
     [[c.a, P0, 0], [c.b, P1, 1]].forEach(([at, p, k]) => { const q = FT(p, at); S.soaks.push({ set: c.set, k, x: q[0], y: q[1], r: 10, t0: k ? c.a - 0.6 : c.cast + 0.8, at, cast: c.cast, group: (o.soakSets && o.soakSets[c.set] && o.soakSets[c.set][k]) || (o.soak && o.soak[k] && o.soak[k].length ? o.soak[k] : PG_UL.soak[c.set][k]) }); timer(at, 'Coil slam ' + (k + 1)); }); });
   // Mephitic Thrash: her tail sweeps 35 yards (a big hit and a knockback): everyone near it runs out, its tank too
-  warn(101, 'Run to the second Wretch in front of her: its bubble is outside the tail\'s sweep!', '#d8f22f'); /* (the 1:48 stack that wiped Wolfthorn's pulls 7, 8 and 10) */
-  [45, 102].forEach((t) => { const p = FT(PG_UL.tail, t); cast('tail', 'Mephitic Thrash', t, t + 4); warn(t, 'Mephitic Thrash: out of her tail\'s 35 yards!', '#ff9b4a'); timer(t + 4, 'Mephitic Thrash'); S.thrash.push({ t0: t, at: t + 4, x: p[0], y: p[1], r: 35 }); });
+  warn(101, 'Fester Burst: run to the Wretch in front of her!', NEU, { at: 108 }); /* (the 1:48 stack that wiped Wolfthorn's pulls 7, 8 and 10: its bubble is outside the tail's sweep) */
+  [45, 102].forEach((t) => { const p = FT(PG_UL.tail, t); cast('tail', 'Mephitic Thrash', t, t + 4); warn(t, 'Mephitic Thrash: run away from her tail!', RED); timer(t + 4, 'Tail sweep'); S.thrash.push({ t0: t, at: t + 4, x: p[0], y: p[1], r: 35 }); });
   // Caustic Waves: 6 s cast, she pulls one wing back; that half gets two waves first, the other half 6.5 s later, rolling away from her
   S.wings = [];
   [50, 107].forEach((t) => { const west = rnd() < 0.5, T0 = t + 6, rot = rotAt(T0), d1 = pgRot([west ? -1 : 1, 0], rot), side = (v) => (Math.abs(v[0]) > Math.abs(v[1]) ? (v[0] < 0 ? 'WEST' : 'EAST') : (v[1] < 0 ? 'SOUTH' : 'NORTH')), wFirst = side(d1), wSafe = side([-d1[0], -d1[1]]);
     S.wings.push({ t, west, first: wFirst, safe: wSafe, d1 }); /* (the half of the room her first waves come down, turned with her after the dive) */
-    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Ula\'tek pulls her wing back: the ' + wFirst + ' half goes first!', '#9be13a'); timer(T0, 'Caustic Waves'); timer(T0 + 6.5, 'Caustic Waves (second half)');
+    // (no compass words in the calls: the floor shows the halves red and green, and the camera turns. Two steps, each with its moment (the prompts audit, Nov 16):
+    //  wait in the green half, then, as the first wave goes by and the floor swaps (halvesAt, 10.5 s into her cast), cross now)
+    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Her waves: wait in the green half!', GRN); warn(t + 10.5, 'Her waves: cross into the green half now!', GRN, { per: (id, at) => (at && at.x != null && at.x * d1[0] + at.y * d1[1] > 0 ? { text: 'Her waves: stay in the green half!' } : null) }); /* (to a player already across, in the half the first waves have passed: stay. The review of Nov 16, check T15) */ timer(T0, 'Her waves'); timer(T0 + 6.5, 'Her waves (second half)');
     const first = west ? [-12, -36] : [12, 36], second = west ? [12, 36] : [-12, -36];
     [[first, T0], [second, T0 + 6.5]].forEach(([xs, t0]) => xs.forEach((x) => { const p = pgRot([x, 46], rot); S.waves.push({ kind: 'her', x: p[0], y: p[1], deg: 270 + rot, v: 12.5, w: 24, d: 5, cres: cres(24), warn: 2.2, t0, t1: t0 + 7.6, name: 'Caustic Waves', tip: 'Wait on the half that goes second, then cross behind the first wave.' }); })); });
   // the small tails (Gore Rattle), from the 12 measured top Mythic kills (notes/Guides/Bosses/8 Ula'tek.md, "Tail waves"): each rises at the
@@ -114,12 +220,14 @@ function pgUlScript(o) {
   [[37.8, [[[54.8, 0.2], 180], [[39.6, 40.1], 206.3]], 1], [56, [withHer()]], [58.6, [[[-39.7, -40.2], 64.6], [[38.5, -39.6], 114]]], [69, [[[-55.8, -0.4], 39.4], [[54.8, -0.7], 139.2, [18, 28, 44]]]],
     [113, [withHer()]], [115.6, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [126, [[[55.8, 0.1], 141.5, [10, 25, 38]], [[-39.6, -38.5], 65.8]]], [131.5, [[[-0.4, 55.8], 233.7], [[38.9, 39.5], 206.2]]],
     [143.7, [[[-0.7, -54.8], 90.5], [[39.2, -39.6], 115.7]]], [156.8, [[[-39.6, -38.5], 65.8], [[55.8, 0.1], 141.5, [10, 25, 38]]]]].forEach(([t, ts, side]) => { timer(t, 'Small tails'); /* (side: measured on pulls with her tail west, so it mirrors with her tail east: the 0:37.8 pair fires across the room into the coils' side, reaching the soaks after both slams) */
+    warn(t - 2.4, 'Small tails: dodge the red lanes!', RED, { tail: t }); /* (as they rise, for a player their lanes come near: the prompts audit, Nov 16, the most common mistake had no words) */
     ts.forEach(([q, hd, fan]) => { const p = side ? FT(q, t) : F(q, t), h = side && tailEast ? 180 - hd : hd + rotAt(t); S.tails.push({ x: p[0], y: p[1], t0: t - 2.4, at: t });
       (fan || FAN).forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: h + off, v: 12.5, w: 7, d: 4, cres: cres(7), warn: 2.4, t0: t, t1: t + 9.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.' })); }); });
   // the dive: Submerge, bubbles where she'll come up, she surfaces on the other side; her tank has to be there first
-  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch for the bubbles!', '#7fd8ff'); warn(SURF, 'She surfaces on the ' + (east ? 'EAST' : 'WEST') + ' edge, where the bubbles were!', '#7fd8ff'); timer(SURF, 'She surfaces');
+  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch where the bubbles rise!', NEU); warn(SURF, 'Ula\'tek surfaces: turn to where the bubbles were!', NEU); /* ("face her new spot, where the bubbles were" lost its second half to the small line, and "face" is tank wording: the review of Nov 16, check T5) */ timer(SURF, 'She surfaces');
   // Rage of the Shackled: 6.5 s cast, then her heart is open for 20 s; raid damage every 4 s; Falling Debris (7 yards) all over
-  cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: burn the heart, watch the floor!', '#ff8a5a'); timer(145.5, 'Heart open');
+  // (the call that says hit it comes as it opens: the prompts audit, Nov 16, found the 2:19 call gone from the screen when the heart opened at 2:25.5)
+  cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: get ready to hit the heart!', NEU, { at: 145.5 }); warn(145.5, 'Heart open: hit it now (Tab, then 1)!', NEU); timer(145.5, 'Heart open');
   for (let t = 145.5; t < 165; t += 4) S.pulses.push(t);
   for (let t = 147; t < 164.5; t += 3.4) for (let j = 0; j < 3; j++) { let q; for (let k = 0; k < 30; k++) { q = [-30 + rnd() * 60, -30 + rnd() * 62]; if (PG_UL.onPlat(q[0], q[1])) break; } S.impacts.push({ x: q[0], y: q[1], r: 7, t0: t - 1.8, at: t + j * 0.25, name: 'Falling Debris', dmg: 55, color: '#c8a36a', tip: 'Brown circles in the heart burn: step out before they land.' }); }
   S.timers.sort((a, b) => a.t - b.t); S.warns.sort((a, b) => a.t - b.t);
@@ -133,20 +241,31 @@ function pgOpen(root, boss, d, pk) {
   const P2API = { get G() { return G; }, get S() { return S; }, get me() { return me; }, get v3() { return v3; }, get busy() { return vw.classList.contains('busy'); }, get DEB() { return DEB; }, get MAJ() { return MAJ; },
     get DPS_SAY() { return DPS_SAY; }, dpsHint: () => { const t = G.t, dc = dpsCat(t); return dc && !onRight(dc, tgtNow(t)) ? DPS_SAY[dc][0] + ': press Tab to pick ' + (DPS_SAY[dc][3] === 'them' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.' : null; },
     mistake: (...a) => mistake(...a), hurt: (n) => hurt(n), deb: (...a) => deb(...a), has: (k) => has(k), say: (...a) => say(...a), sfx: (k) => sfx(k), $: (s) => $(s), hud: (f) => hud(f), clearTarget: () => { target = null; },
-    big: (text, c) => bigCall(text, c), nm: (id) => nm(id) }; /* (phase 2's big calls (your kick, the backup, the five's defensive) and the bots' names on its Interrupted labels) */
+    big: (text, c) => bigCall(text, c), nm: (id) => nm(id),
+    /* (the prompts audit, Nov 16: your arrow as the screen draws it ({ T, d, what, wait, fin, rad }: wait true while the way is blocked, a wave crossing it or no way round, so the floor says Wait),
+       and pathClear(from, to, s): true when walking from one spot to the other meets no wave in the next s seconds (2 by default), no other carrier's ring
+       while you carry, and in phase 1 no coil that isn't yours) */
+    hint: () => hintNow(), pathClear: (a, b, s) => pathClear(a, b, s) }; /* (phase 2's big calls (your kick, the backup, the five's defensive) and the bots' names on its Interrupted labels) */
   const P2 = part.mod ? part.mod(P2API) : null;
   const ov = document.createElement('div'); ov.className = 'pg' + (P2 ? ' pg-p2' : ''); ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-label', 'Practice ' + boss + ' ' + part.name);
   // (the screen, laid out like a raider's UI (Nov 15, Flex: "Player healthbar and target bar in the middle, hotbars with spells on them for the attack/sprint/
   // defensive. Boss mods. Etc. Nothing fancy, just a better more familiar layout"): top right the minimap, the 2D | 3D switch and your mistakes, then her boss
   // frame; on the left the boss-mod timer bars; bottom centre your job, then your frame and your target's side by side (her cast bar under the target), then
   // the action bar, filled in once your role is known (actsHtml))
+  // (look C "Minimal", Nov 16, Flex: "Yes, go with C", after "The prompts dont feel like a guide through the fight at all" and "I also think the UI could look
+  //  more polished and put together": top left the fight path (the part, then a diamond for each coming mechanic, a thin bar under each named one that empties
+  //  as it nears) where the boss-mod bars were, green result chips under it, the coach card "Coming up" on the left before a new mechanic, the NOW line big at
+  //  the bottom with NEXT under it, then one dock (your frame, the hotbar, your target); top right your mistakes, sound and close, the minimap, her frame.
+  //  No clock times and no second counts anywhere you read while playing: tests/practice-shared.js check N)
   const HUD = '<div class="pg-in"><canvas class="pg-cv"></canvas><div class="pg-3d"></div>' +
-    '<div class="pg-tr"><canvas class="pg-mini" width="200" height="200"></canvas><div class="pg-trow"><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div>' +
-    '<button type="button" class="pg-snd on" aria-pressed="true" title="Sound cues, like a boss mod (M)">Sound</button><div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span>Mistakes</span></div></div>' +
-    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk">0:00</span></div><div class="pg-bar pg-bhp" data-n="' + esc(boss) + '"><i></i><span></span></div></div></div>' +
-    '<button type="button" class="pg-x" aria-label="Close">✕</button><div class="pg-timers"></div>' +
+    '<div class="pg-tr"><div class="pg-trow"><div class="pg-mis" title="Your mistakes so far"><b class="pg-mc">0</b><span class="pg-mcw">mistakes</span></div><div class="pg-vw" role="group" aria-label="View"><button type="button" data-v="2" class="on">2D</button><button type="button" data-v="3" title="3D: drag to turn the camera, W walks where it looks">3D</button></div>' +
+    '<button type="button" class="pg-snd on" aria-pressed="true" aria-label="Sound" title="Sound cues, like a boss mod (M)">' + PG_SND_SVG[1] + '</button><button type="button" class="pg-x" aria-label="Close" title="Close (Esc)">' + PG_X_SVG + '</button></div>' +
+    '<canvas class="pg-mini" width="200" height="200"></canvas>' +
+    '<div class="pg-bossf"><div class="pg-nm"><b>' + esc(boss) + '</b><span class="pg-clk"></span></div><div class="pg-bar pg-bhp" data-n="' + esc(boss) + '"><i></i><span></span></div></div></div>' +
+    '<div class="pg-timers pg-path" aria-label="Coming up in the fight"></div><div class="pg-res" aria-live="polite"></div><div class="pg-coach" aria-live="polite"></div>' +
+    '<span class="pg-rush" title="Nothing to do here yet: the game runs faster until the next thing comes">▸▸ Skipping ahead</span>' + /* (top centre, its own: look C hides her frame's name row, where it sat, Nov 17) */
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
-    '<div class="pg-bot"><div class="pg-job"><span>Your job now</span><p></p></div>' +
+    '<div class="pg-bot"><div class="pg-job pg-now"><div class="pg-nowl">' + PG_CHEV_SVG + '<span class="pg-nowk">Now</span><p class="pg-nowt"></p></div><p class="pg-nx"></p></div>' +
     '<div class="pg-ufs"><div class="pg-ucol pg-me"><div class="pg-uf"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div></div><div class="pg-debs"></div></div>' +
     '<div class="pg-ucol pg-tfc"><div class="pg-uf pg-tf none"><div class="pg-nm"><b class="pg-tfn">No target</b><span class="pg-tfr">Tab to pick</span></div><div class="pg-bar pg-tfh"><i></i><span></span></div></div>' +
     '<div class="pg-bar pg-cast" style="display:none"><i></i><span></span></div><div class="pg-tgt"></div></div></div>' +
@@ -162,33 +281,18 @@ function pgOpen(root, boss, d, pk) {
   // ---- the game ----
   let S = null, G = null, me = part.roles[0].id, role = part.roles[0], speed = 1, startAt = 0, raf = null, last = 0, paused = true, keys = {}, target = null, Z = 13, cam = null, dpr = 1;
   const SPEED = 7, PR = 0.7, carrierOf = (id) => !!PG_UL.eggO[id];
-  // ---- your team's plan: signed in, with a Mythic plan for this boss (the one the Plan page shows), you play as yourself and the others are
-  // your raiders on the plan's jobs: each egg area's two (the first is the centre, the second the edge), the coil soaks, the Fester Burst
-  // spots; the rest by role. Without one, the guide's plan. ----
-  let teamWhy = '', pickedMe = false; /* (why there's no team plan in the game: for the audit) */
-  const TEAM = (() => { try { if (P2) { teamWhy = 'a later part: picked jobs'; return null; } if (d !== 'm' || typeof pnGet !== 'function' || typeof pnState !== 'function' || typeof ulRead !== 'function') { teamWhy = 'no plan code (d=' + d + ')'; return null; }
-      const o = pnGet(), st = pnState(o, boss), lc = (x) => String(x).split('-')[0].toLowerCase(), on = new Set(((o.on || {})[boss] || []).map(lc));
-      const L = notesOf(boss).list.filter((q) => !q.example && !q.pgEmpty && pnNoteDiff(q) === 'Mythic'), chId = typeof planChosenGet === 'function' ? planChosenGet(o.rid, boss) : null, sc = (q) => { const t = noteResolve(q.text); return [...on].filter((x) => noteHas(t, x)).length; };
-      const n = (st && st.n && pnNoteDiff(st.n) === 'Mythic' ? st.n : null) || L.find((q) => q.id === chId) || L.slice().sort((a, b) => sc(b) - sc(a) || (b.saved || 0) - (a.saved || 0))[0] || null;
-      teamWhy = 'state ' + (st && st.k) + ', plans ' + L.length + ', picked ' + (n ? planNm(n) : 'none') + ', on ' + on.size; if (!n) return null;
-      const U = ulRead(noteResolve(n.text));
-      const P = pnPeople(o).filter((q) => !q.bench && (!on.size || on.has(lc(q.n)))); teamWhy += ', people ' + P.length + ', teams ' + U.teams.map((x) => x.length).join('/'); if (P.length < 10) return null;
-      const byN = new Map(P.map((q) => [lc(q.n), q])), mains = P.map((q) => String(q.n).split('-')[0]), AM = new Map(pnPeople(o, { alts: true }).filter((q) => q.alt).map((q) => [lc(q.n), lc(q.alt)])), al = (x) => { const k = lc(x); if (byN.has(k)) return k; if (AM.has(k) && byN.has(AM.get(k))) return AM.get(k); if (typeof altOf !== 'function') return k; const m = altOf(String(x).split('-')[0], mains); return m ? lc(m) : k; }; /* (an alt in the plan counts as their main) */
-      const id2 = {}, used = new Set(), put = (x, id) => { const q = byN.get(al(x)); if (q && !used.has(q) && !id2[id]) { id2[id] = q; used.add(q); } };
-      [['melee', ['m1', 'm2']], ['left', ['r5', 'r3']], ['right', ['r6', 'r4']], ['far', ['r1', 'r2']]].forEach(([z, ids]) => (U.ez[z] || []).slice(0, 2).forEach((x, i) => put(x, ids[i])));
-      const free = (L) => GDZ_RAID.filter((id) => L.includes(id[0]) && !id2[id]), rk = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 1 : 2);
-      P.filter((q) => !used.has(q)).sort((a, b) => rk(a) - rk(b)).forEach((q) => { const w = q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r';
-        const id = free([w])[0] || free(w === 'm' ? ['r', 'h'] : w === 'r' ? ['m', 'h'] : ['m', 'r'])[0] || free(['t', 'h', 'm', 'r'])[0]; if (id) { id2[id] = q; used.add(q); } });
-      const n2 = new Map(Object.entries(id2).map(([id, q]) => [lc(q.n), id])), ids = (L) => [...new Set((L || []).map((x) => n2.get(al(x))).filter(Boolean))];
-      const T = { name: planNm(n), id2, soak: [ids(U.teams[0]), ids(U.teams[1])], ce: [ids(U.ce[0]), ids(U.ce[1])], fb: (U.fb || []).map(ids), you: n2.get(lc((typeof tpMe === 'function' && tpMe()) || (typeof tpWho === 'function' && tpWho()) || '')) || null };
-      teamWhy += ', ok ' + T.soak.map((x) => x.length).join('/') + ', me ' + ((typeof tpMe === 'function' && tpMe()) || '-') + '/' + ((typeof tpWho === 'function' && tpWho()) || '-') + ' -> ' + (T.you || 'none') + ', not placed: ' + [...new Set([...U.teams[0], ...U.teams[1], ...(U.fb || []).flat()])].filter((x) => !n2.has(al(x))).join(' ') + ', left out: ' + P.filter((q) => !used.has(q)).map((q) => q.n).join(' '); return T.soak[0].length && T.soak[1].length ? T : null; } catch (e) { teamWhy += ' error ' + e; return null; } })();
+  // ---- the setup: the guide governs the game (Flex, Nov 16: "The game should not be pulling from the teams set plan, it should only use the maps as the
+  // setup", "The guide governs the game"): the raid, the egg zones, the coil soak groups and the bubbles come from the guide's maps, never from a plan made
+  // on the Plan page. (Before Nov 16 a signed-in raider's team plan replaced them, and its two coil teams soaked both coil sets as they were.) ----
+  let teamWhy = 'the guide governs the game', pickedMe = false; /* (for the audit) */
+  const TEAM = null;
   const nm = (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].n).split('-')[0] : gdzName(id));
   const rl = (id) => { const q = TEAM && TEAM.id2[id]; return q ? (q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r') : id === me && jobMine() ? myJob.role : id[0]; };
   const clsC = (id) => { const q = TEAM && TEAM.id2[id], c = q && E.CLASSES && E.CLASSES[q.cls]; return c ? c[1] : null; };
   // (the quadrants by name only, as the setup's maps say them: they turn with her dive, so a compass word was wrong for the 1:20 egg. The release sweep, Nov 16:
   //  the frame said "left (west)" all pull while that egg landed north)
   const ZN = { m1: ['by her', 'inner'], m2: ['by her', 'outer'], r5: ['left quadrant', 'inner'], r3: ['left quadrant', 'outer'], r6: ['right quadrant', 'inner'], r4: ['right quadrant', 'outer'], r1: ['far quadrant', 'inner'], r2: ['far quadrant', 'outer'] };
-  const teamRole = (id) => { const sk = TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
+  const teamRole = (id) => { const sk = PG_UL.soak[0][0].includes(id) ? 1 : PG_UL.soak[0][1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
   // ---- your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment, for those who arent using my website for
   // assignments", then "its a bit overkill"): three rows of buttons, your role, your egg area (or none) and your coil team. The rest is picked for
   // you: the egg spot in your area, a free bubble spot (shown in gold), and team 1 in set 1 for egg carriers. The other 19 take the jobs left and
@@ -200,7 +304,9 @@ function pgOpen(root, boss, d, pk) {
   const jobSlot = (j) => (j.egg && PG_UL.eggO[j.egg] ? j.egg : { m: 'm3', r: 'r7', h: 'h2' }[j.role]);
   const jobMine = () => !P2 && !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
   // (the coil teams with you on the one you picked: you change places with someone on it, a carrier for a carrier, the same role if there is one)
-  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], want = si === 0 && PG_UL.eggO[slot] ? 0 : j.soak[si] === 2 ? 1 : 0, /* (set 1: carriers take the first coil, in the Wretch's bubble) */ have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1;
+  const eggTeam = (slot) => (PG_UL.soak[0][1].includes(slot) ? 2 : 1); /* (an egg zone's coil team on the plan's Egg Clear map: melee and left Soak #1, right and far Soak #2) */
+  const myTeam = () => (myJob.egg && PG_UL.eggO[myJob.egg] ? eggTeam(myJob.egg) : myJob.soak[1] === 2 ? 2 : 1); /* (your coil: your egg's team, else your pick) */
+  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1, want = PG_UL.eggO[slot] && have >= 0 ? have : j.soak[si] === 2 ? 1 : 0; /* (a carrier: their zone's group, as the guide's map has it) */
     if (have === want) return g; if (have < 0) { g[want].push(slot); return g; }
     const car = (x) => !!PG_UL.eggO[x], pool = g[want], mate = pool.find((x) => car(x) === car(slot) && x[0] === slot[0]) || pool.find((x) => car(x) === car(slot)) || pool[pool.length - 1];
     g[have] = g[have].filter((x) => x !== slot).concat([mate]); g[want] = g[want].filter((x) => x !== mate).concat([slot]); return g; });
@@ -210,7 +316,7 @@ function pgOpen(root, boss, d, pk) {
     S.eggSets.forEach((e) => e.eggs.forEach((q) => G.eggs.push({ ...q, set: e.si, state: 'air', who: null })));
     GDZ_RAID.forEach((id) => { const p = homeOf(id, 0); G.bots[id] = { id, x: p[0], y: p[1], esc: null }; });
     const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; if (P2) P2.init(G); };
-  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
+  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
   // where each raider stands when nothing is happening: her tank in front of her, melee round her, carriers in their zones, the rest inside; turned with her
   const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.find((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
     // (an egg carrier waits and holds the first set's egg at the Plan's place for it, where the setup's ring is: the map review, Nov 16, found the game holding
@@ -286,7 +392,7 @@ function pgOpen(root, boss, d, pk) {
     else if (o.key === 'heart') G.heartHits = (G.heartHits || 0) + 1; else if (o.kind === 'egg') shellHit(1, t); else if (P2 && P2.hit) P2.hit(o.key); };
   const aoeLeft = (t) => Math.max(0, AOE.cd - (t - (G.aoe0 == null ? -99 : G.aoe0)));
   const aoeKey = () => { if (!G) return false; if (has('stun')) { if (!window.__pgAuto) say('You\'re stunned: you can\'t attack.', true); return false; } const t = G.t; let o = tgtNow(t); if (!o) { o = nearestRight(t); if (o) G.tgt = o.key; } if (!o) return false;
-    if (aoeLeft(t) > 0) { if (!window.__pgAuto) say('Area attack is cooling down: ' + Math.ceil(aoeLeft(t)) + ' s.', true); return false; } if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false;
+    if (aoeLeft(t) > 0) { if (!window.__pgAuto) say('Area attack isn\'t ready yet.', true); return false; } if (t - (G.gcd0 == null ? -99 : G.gcd0) < GCD) return false;
     if (!inRange(o)) { if (!window.__pgAuto) say(rl(me) === 'm' ? 'Too far: get close to it, then press 2.' : 'Too far away: get closer.', true); return false; }
     G.aoe0 = t; G.gcd0 = t; const c = o.p.slice(), L = tgtList(t).filter((q) => q.key !== o.key && q.kind !== 'boss' && q.kind !== 'tail' && q.kind !== 'heart' && pgDist(q.p, c) - (q.r || 0) <= AOE.r);
     hitTgt(o, t); L.forEach((q) => hitTgt(q, t, true)); feel('whirl'); (G.aoeFx = G.aoeFx || []).push({ x: c[0], y: c[1], r: AOE.r, t0: t, n: L.length + 1 }); hud(true); return true; };
@@ -297,7 +403,9 @@ function pgOpen(root, boss, d, pk) {
   const dpsStep = (t, dt) => { const D = G.dpsM = G.dpsM || { list: [], cur: null }, cat = dpsCat(t);
     if (G.tgt && !tgtNow(t)) G.tgt = null;
     if (window.__pgAuto && cat && !onRight(cat, tgtNow(t))) { const o = tgtList(t).filter((q) => isRight(cat, q)).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p))[0]; if (o) G.tgt = o.key; } /* (the autopilot, a careful player, picks the right thing) */
-    if (cat && !G.taught && !window.__pgAuto) { G.taught = true; bigCall(cat === 'heart' ? 'Her heart is open! Press Tab to pick it, then keep pressing 1 to hit it.' : (cat === 'viper' ? 'A Viper! ' : cat === 'egg' ? 'Your egg has a shell! ' : cat === 'wretch' ? 'The Wretch is going down! ' : 'Rawlings! ') + 'Press Tab to pick ' + (cat === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it.', '#f3c969'); } /* (once a run: how to attack) */
+    // (once a run: how to attack, named by what's really up (a later part's own lines in DPS_SAY), and never while a step of yours is under 3 s away. The prompts
+    //  audit, Nov 16: "Rawlings! Press Tab..." covered "Kick Malice in 1 s" with Clutches up, and a Soak #2 healer's coil slam at 0:43)
+    if (cat && !G.taught && !window.__pgAuto && !stepSoon(t)) { G.taught = true; const ds = DPS_SAY[cat]; bigCall((ds ? ds[0] : 'Hit the right target') + ': press Tab to pick ' + (cat === 'rawling' || (ds && ds[3] === 'them') ? 'one' : 'it') + ', then keep pressing 1.', '#f3c969'); }
     atkStep(t); if (G.hitFx && G.hitFx.length && t - G.hitFx[0].t0 > 0.5) G.hitFx = G.hitFx.filter((x) => t - x.t0 <= 0.5);
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     // (her tail's Mephitic Thrash sends everyone 35 yards out, past a ranged player's reach of the Rawlings: that run doesn't count you off target)
@@ -307,7 +415,16 @@ function pgOpen(root, boss, d, pk) {
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
   const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), aoe: (G.aoeFx || []).filter((x) => t - x.t0 < 0.7).map((x) => ({ ...x, age: t - x.t0 })), aoeCd: aoeLeft(t), adds: tgtList(t).filter((o) => o.max) }; };
   const bigCall = (text, c) => { const el = $('.pg-warn'); if (!el) return; const its = [{ text, c: c || '#e8edf2', by: null }]; if (G) G.lastWarn = { t: G.t, n: 1, all: [text], items: its }; /* (on the game's clock like every call, so an older call's clearing can't wipe it) */ alPut(el, its, G ? G.t : 0); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); };
-  const say = (text, bad) => { const f = $('.pg-float'); f.textContent = text; f.className = 'pg-float ' + (bad ? 'bad' : 'ok'); void f.offsetWidth; f.classList.add('in'); };
+  const said = []; /* (the last floats, for the tests' read of what the screen said) */
+  // (Nov 17: the green chip only for something you did ("Egg picked up", "Soaked", "Kicked", "Tether broken on time"); an order or a "not yet" ("Not open yet: hit
+  //  it", "Kick is on cooldown") shows in the middle without a tick, and every float says it short: one sentence (pgShort))
+  const PG_DONE = /^(?:Egg picked up|Big egg picked up|Shell broken|Soaked|Kicked|Tether broken|The Warden is dead|Through the gateway|Your egg is in the cauldron|Big egg in the cauldron|You rode out|In the ring|Defensive on|[A-Z][a-z]+(?: [A-Z][a-z]+)? killed)\b/;
+  const say = (text, bad) => { said.push({ t: G ? G.t : 0, text: String(text) }); if (said.length > 300) said.shift(); if (!bad && PG_DONE.test(String(text))) { resChip(String(text).split(/[.:](?:\s|$)/)[0]); return; } const f = $('.pg-float'); f.textContent = pgShort(text); f.className = 'pg-float' + (bad ? ' bad' : ''); void f.offsetWidth; f.classList.add('in'); };
+  // (look C, Nov 16: a step done is a short green chip under the fight path ("Egg picked up", "Soaked", "Kicked: Malice interrupted") that fades; a mistake
+  //  stays where it was, in the middle, as a red chip of the same shape (.pg-float). Three chips at most, each gone 3.2 s later on the game's clock)
+  const resChip = (text) => { const el = $('.pg-res'); if (!el || typeof document === 'undefined' || !document.createElement) return; const c = document.createElement('div'); c.className = 'pg-okc';
+    c.innerHTML = PG_TICK_SVG + '<span>' + esc(text) + '</span><i></i>'; c.dataset.t = String(G ? G.t : 0); el.appendChild(c); const k = el.children; if (k && k.length > 3 && k[0] && k[0].remove) k[0].remove(); };
+  const resPrune = (t) => { const el = $('.pg-res'), k = el && el.children; if (!k || !(k.length > 0)) return; for (let i = k.length - 1; i >= 0; i--) { const c = k[i], t0 = c && c.dataset ? +c.dataset.t : NaN; if (c && c.remove && !(t - t0 < 3.2 && t0 <= t + 0.5)) c.remove(); } };
   // ---- sounds (Flex, Nov 15: "I think sound alerts or sound ques are going to be a good addition", "Players are used to sound ques with boss mods so thats
   // a great way to simulate it"): short tones made here, no sound files and never a voice. A two-note ping for a call about you, three quick beeps for a
   // "now" call, a soft blip for the others; 3-2-1 beeps and a high one as your own boss-mod bar ("Your ...") runs out; a chime when you kick, break your
@@ -335,18 +452,30 @@ function pgOpen(root, boss, d, pk) {
     fire: (c, t) => { nz(c, t, 0.24, 0.06, 'bandpass', 600, 2400, 1.1); nz(c, t + 0.22, 0.22, 0.05, 'highpass', 1800, 900); }, holy: (c, t) => { tn(c, t, 0.6, 0.045, 'sine', 1318, 1310); tn(c, t, 0.45, 0.02, 'sine', 2637, 2620); },
     slash: (c, t) => { nz(c, t, 0.14, 0.07, 'highpass', 1500, 5200, 0.7); tn(c, t + 0.06, 0.12, 0.07, 'sine', 160, 70); }, whirl: (c, t) => { nz(c, t, 0.45, 0.06, 'bandpass', 500, 2600, 1.4); nz(c, t + 0.15, 0.35, 0.05, 'bandpass', 2600, 700, 1.4); } };
   const feel = (k) => { if (!sndOn || window.__pgAuto || !FX[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); FX[k](c, c.currentTime + 0.01); } catch (e) { /* (no sound here) */ } };
-  const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.textContent = sndOn ? 'Sound' : 'Muted'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); };
+  const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.innerHTML = PG_SND_SVG[sndOn ? 1 : 0]; b.title = (sndOn ? 'Sound on' : 'Sound off') + ': boss-mod sound cues (M)'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); }; /* (look C: a speaker icon, crossed out when muted) */
   const sndSet = (on) => { sndOn = !!on; try { localStorage.setItem('wla-pg-sound', sndOn ? 'on' : 'off'); } catch (e) { /* (no storage) */ } sndUi(); if (sndOn) sfx('ok'); };
   const countdown = () => { if (!sndOn || !G) return; const t = G.t, D = G.cdn || (G.cdn = new Set()); modBars(t).forEach((q) => { if (!/^Your\b/.test(q.name)) return; const left = q.at - t, id = q.name + '|' + q.at.toFixed(1) + '|';
     [3, 2, 1].forEach((n) => { if (left <= n && left > n - 0.5 && !D.has(id + n)) { D.add(id + n); sfx('tick'); } }); if (left <= 0.15 && !D.has(id + 0)) { D.add(id + 0); sfx('go'); } }); };
-  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); sfx('bad'); };
-  // (how close the nearest other carrier is to your egg: 0 clear, 1 within 5 yards, 2 within 3.5)
-  const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 5 ? 1 : 0; };
+  // (a mistake as the screen shows it while you play, the float as it happens and the death card: no clock time and no second count (Flex, Nov 16: "i feel like
+  //  the game confuses people saying timestamps"; the death card read "3:09 ... You didn't kick Malice (3:04): it hit everyone every second for 6 s."). Every
+  //  part's mistakes come through here; the result screen keeps the time of each. tests/practice-game.js check S)
+  const TM = '\\d{1,2}:\\d{2}(?:\\.\\d+)?(?:\\s*(?:to|-|–)\\s*\\d{1,2}:\\d{2}(?:\\.\\d+)?)?', SN = '\\d+(?:\\.\\d+)? ?s\\b';
+  const NO_T = [[new RegExp('\\s*\\((?:at |from )?' + TM + '\\)', 'g'), ''], [new RegExp('\\s+(?:at|from|by|until|till|since)\\s+' + TM, 'g'), ''], [new RegExp('\\s*\\(' + SN + '\\)', 'g'), ''],
+    [new RegExp('\\blived ' + SN, 'g'), 'lived too long'], [new RegExp('\\blasts ' + SN, 'g'), 'stays a while'], [new RegExp('\\bwithin ' + SN + ' of\\b', 'g'), 'soon after'],
+    [new RegExp('\\b' + SN + ' (?:later|after)\\b', 'g'), 'soon after'], [new RegExp(',?\\s+(?:for|in|within|at|after) (?:about )?' + SN, 'g'), '']];
+  const noTimes = (s) => NO_T.reduce((a, [re, to]) => a.replace(re, to), String(s == null ? '' : s)).replace(/\s+([,.:;!?)])/g, '$1').replace(/\(\s+/g, '(').replace(/\s{2,}/g, ' ').trim();
+  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(noTimes(text), true); sfx('bad'); };
+  // (how close the nearest other carrier is to your egg: 0 clear, 1 within 6 yards (orange), 2 within 3.5 (red). The prompts audit, Nov 16: the warning came at 3.5
+  //  yards, about 0.07 s before the splash at walking speed; it starts at 6 now)
+  const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 6 ? 1 : 0; };
   const myEggHeld = () => G.eggs.find((e) => e.who === me && e.state === 'held');
-  const shellBreak = (e, t) => { e.shp = 0; e.shell = Math.min(e.shell, t); if (!window.__pgAuto) { say('Shell broken: walk over your egg to pick it up.'); sfx('ok'); } };
+  const shellBreak = (e, t) => { e.shp = 0; e.shell = Math.min(e.shell, t); if (!window.__pgAuto) { say('Shell broken.'); sfx('ok'); } };
+  // (an egg held by something else (phase 2's e.lock: its Warden's shield) stays shut until that is gone. The prompts audit, Nov 16: this file's shell code wore the
+  //  phase 2 egg's shell down by 2:48.5 under the Warden's shield and said "Shell broken: walk over your egg", while it stayed shut till its Warden died)
+  const eggLocked = (e) => !!e.lock && !(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null);
   const shellHit = (n, t) => { const e = myShell(); if (!e) return; e.shp -= n; if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; };
   const hatch = (e, why, tip) => { feel('hiss'); e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
-    if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
+    if (!window.__pgAuto) bigCall('Viper hatched: kill it now (Tab, then 1)!', '#ff8f87'); }; /* (it stays until you kill it: vipers() below. "Mechanic: Order": the big line read "A Viper hatched", the review of Nov 16, check T6) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
   // (egg carriers stand on their own spots in a bubble or a soak: a ring 6.5 yards out, about 5 yards apart, in the same order every time, so
@@ -357,7 +486,7 @@ function pgOpen(root, boss, d, pk) {
     if (ob.fb >= 0 && typeof UL_FB !== 'undefined' && UL_FB[ob.fb] && ob.car.indexOf(id) < UL_FB[ob.fb].length) { const u = UL_FB[ob.fb][ob.car.indexOf(id)], q = ob.fb ? pgRot(u, S.rotAt(ob.at) - 90) : ob.m ? ob.m(u) : u; return [ob.p[0] + q[0] * 10, ob.p[1] + q[1] * 10]; } const RC = S._ring = S._ring || new Map(), key = ob.at + ',' + ob.p.join(','); let M = RC.get(key);
     if (!M) { const n = Math.max(5, ob.car.length), D = 2 * Math.PI / n, th = ob.car.map((c) => { const z = S.F(UX_ZONE[c] || UX_HOME[c] || [0, 0], ob.at); return [c, Math.atan2(z[1] - ob.p[1], z[0] - ob.p[0])]; }).sort((a, b) => a[1] - b[1]);
       let sx = 0, sy = 0; th.forEach(([, a], i) => { sx += Math.cos(a - i * D); sy += Math.sin(a - i * D); }); const c0 = Math.atan2(sy, sx); M = new Map(th.map(([c], i) => [c, c0 + i * D])); RC.set(key, M); }
-    const a = M.get(id); return [ob.p[0] + Math.cos(a) * 6.5, ob.p[1] + Math.sin(a) * 6.5]; };
+    const a = M.get(id), rad = ob.bub || ob.car.length > 5 ? 6.5 : 3.8; return [ob.p[0] + Math.cos(a) * rad, ob.p[1] + Math.sin(a) * rad]; }; /* (rad: a soak's 4 carriers (the plan's 4 and 4, Nov 16) stand 3.8 yards out, still more than 3 yards apart, with room to dodge a small tail's wave inside the circle; at 6.5 they stepped out of it) */
   // (the carriers' numbered bubble spots: the team plan's; without one, each carrier takes a free spot round the bubble)
   const fbList = (ek) => { if (!TEAM) return null; const f = TEAM.fb[ek]; return f && f.length ? f : null; };
   // (Main's playtest, Nov 15: melee never hit the heart in the burn, "you were on it 0% of the time": their spot stayed at home, south of the middle, out of
@@ -377,11 +506,18 @@ function pgOpen(root, boss, d, pk) {
     // (you, and your arrow (hintNow): at your 7 yards a second, and a bubble is yours from when the job line calls it, 8 s before it pops. The release sweep,
     //  Nov 16: your arrow came 6 s before the pop, timed for the bots' run, so from the far side of the room you walked where it said and got there late)
     const vW = id === me ? SPEED : 8, due = (at, p, from) => at >= t && t >= from && at - t <= Math.max(4.6, pgDist([b0.x, b0.y], p) / vW + 1.6);
-    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
+    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { bub: true, at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
     for (const s of S.soaks) if (s.group.includes(id) && due(s.at, [s.x, s.y], s.cast - 0.5) && (!ob || s.at < ob.at)) ob = { at: s.at, p: [s.x, s.y], r: 5, car: CAR8.filter((c) => s.group.includes(c)) };
     if (ob) { const sp = spotIn(ob, id); if (sp) T = sp; else { const ix = GDZ_RAID.indexOf(id), a = ix * 2.39996, rr = (ob.car ? 3.2 : ob.r) * Math.sqrt(((ix % 11) + 0.5) / 11); T = [ob.p[0] + Math.cos(a) * rr, ob.p[1] + Math.sin(a) * rr]; } const dT = pgDist(T, [b0.x, b0.y]); fast = dT > 10 || (ob.at - t < 2.5 && dT > 1.5); } /* (hurry when it's close: from a far bubble spot to the coil a second later) */
+    // (a bubble that bursts just before your coil (set 1: it sits between the two circles): stand where the bubble and your coil's circle overlap, out of the
+    //  other circle, the carriers 3.6 yards apart across it, so you're in the bubble and already in your soak. Nov 16, the plan's 4 and 4: Soak #2's carriers
+    //  stood on the bubble's ring, partly in the first circle, ran out of it a second before the bubble burst, and reached the second circle late)
+    if (ob && ob.bub) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > ob.at && q.at - ob.at <= 6), c = ns && [ns.x, ns.y], d = c ? pgDist(ob.p, c) : 99;
+      if (ns && d < 16) { const ux = (c[0] - ob.p[0]) / (d || 1), uy = (c[1] - ob.p[1]) / (d || 1), M = [ob.p[0] + ux * d / 2, ob.p[1] + uy * d / 2], car = ns.group.filter((x) => CAR8.includes(x)), ci = car.indexOf(id);
+        if (ci >= 0) { const off = (ci - (car.length - 1) / 2) * 3.6; T = [M[0] - uy * off, M[1] + ux * off]; } else { const ot = ns.group.filter((x) => !CAR8.includes(x)), ix = Math.max(0, ot.indexOf(id)), a2 = ix * 2.39996, rr = 2.4 * Math.sqrt(((ix % 7) + 0.5) / 7); T = [M[0] + ux * 1.6 + Math.cos(a2) * rr, M[1] + uy * 1.6 + Math.sin(a2) * rr]; }
+        const dT2 = pgDist(T, [b0.x, b0.y]); fast = dT2 > 10 || (ob.at - t < 2.5 && dT2 > 1.5); } }
     // her waves: on the half that goes second, then behind the first wave into the half it just left
-    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t)) { const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
+    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t) && !(ob && !ob.bub && ob.at - t <= 5)) { /* (not over a soak of yours 5 s off: set 2 slams while her waves still roll, and the safe-half spot kept m2 (by her) from its circle, Nov 16) */ const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
       const front = fw ? 46 - fw.v * Math.max(0, t - fw.t0) : 46, crossed = t > wg.t + 6 && front < Math.min(q[1], 26) - 5, lx = Math.max(6, Math.min(18, Math.abs(q[0]) + 4)) * (crossed ? -side : side);
       if (t <= wg.t + 6 + 6.5 + 4) { T = pgRot([lx, Math.max(-26, Math.min(24, q[1]))], rot); fast = true; } }
     // the tail's sweep: out of its 35 yards before it lands (its tank too)
@@ -390,11 +526,11 @@ function pgOpen(root, boss, d, pk) {
     for (const wr of S.wrath) if (t >= wr.t0 && t <= wr.at + 3.2 && id !== wr.tank && pgDist(T, wr.p) < 8) { const a = Math.atan2(T[1] - wr.p[1], T[0] - wr.p[0]); T = [wr.p[0] + Math.cos(a) * 9, wr.p[1] + Math.sin(a) * 9]; }
     // coil circles that aren't yours: stay out
     // (a soak of yours coming, its coils not out yet: wait on her tail's side of the middle (the tail is up before its coils), close enough to reach either circle)
-    if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
+    let wait = null; if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); wait = A; if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
     for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(id) && !(ob && ob.at < s.at - 0.3) && pgDist(T, [s.x, s.y]) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; }
     if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]);
-    return { T, fast, ob }; };
-  const dodge = (b, T, t, fast, ob) => { if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
+    return { T, fast, ob, wait }; }; /* (wait: the spot by her tail where a soaker waits for their coils, which dodge keeps them near) */
+  const dodge = (b, T, t, fast, ob0, wait) => { const ob = ob0 || (wait ? { p: wait, r: 9, bub: true, at: t + 99, wait: true } : null); /* (waiting for your coils: dodge near the waiting spot first, Nov 16: m2 drifted 15 yards east dodging a small tail and missed set 2) */ if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
     const imps = S.impacts.filter((m) => m.at >= t && m.at - t <= 2.4).concat(G.eggs.filter((e) => e.state === 'air' && e.land >= t && e.land - t <= 2.4).map((e) => ({ x: e.x, y: e.y, r: 4, at: e.land })),
       b.id === 't1' || b.id === 't2' ? [] : S.soaks.filter((q) => !q.group.includes(b.id) && t >= q.t0 && q.at >= t && q.at - t <= 2.4).map((q) => ({ x: q.x, y: q.y, r: q.r, at: q.at, mg: 0.5 })));
     if (!act.length && !imps.length) { b.esc = null; return { T, fast }; }
@@ -408,14 +544,14 @@ function pgOpen(root, boss, d, pk) {
     const unsafe = (x, y) => S.soaks.some((q) => !q.group.includes(b.id) && q.at >= t && q.at - t <= 3.5 && Math.hypot(x - q.x, y - q.y) <= q.r + 1.2) || others.some((o) => Math.hypot(x - o.x, y - o.y) < 4) || !!(P2 && P2.unsafe && P2.unsafe(b.id, x, y, t)); /* (a part's own danger the escape must keep out of: phase 2's Doomscale frontals) */
     if (b.esc && t - b.esc.t < 2 && !path(b.esc.x, b.esc.y, vEsc) && !unsafe(b.esc.x, b.esc.y) && !(P2 && P2.walk && !P2.walk(b.x, b.y, b.esc.x, b.esc.y))) return { T: [b.esc.x, b.esc.y], fast: true };
     // (no clean spot: the one that meets the danger latest, rather than walking on into it)
-    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && ob.at - t <= 3.5; /* (a bubble or their soak due: dodge inside it first) */
-    for (let pass = keepIn ? 0 : 1; pass < 2 && !best; pass++) for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
+    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && (ob.wait || ob.at - t <= (ob.bub ? 3.5 : 6)); /* (a bubble or their soak due: dodge inside it first; a soak from 6 s off, so a wave doesn't send them away from it: m2 in set 2, Nov 16) */
+    for (let pass = keepIn ? 0 : 1; pass < (keepIn && !ob.bub ? 1 : 2) && !best; pass++) /* (a soak about to slam: dodge only inside it, or stay and take the wave; Nov 16, Soak #2 carriers stepped out for a small tail's wave and missed it) */ for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
     if (best) { b.esc = { x: best[0], y: best[1], t }; return { T: best, fast: true }; } if (late) return { T: late, fast: true }; return { T, fast }; };
   const moveBots = (t, dt, px, py) => { const pre = {}, myT = myEggHeld() && G.eggs.some((e) => e.state === 'held' && e.who && e.who !== me) ? (window.__pgAuto ? [G.x, G.y] : jobOf(me, t).T) : null; /* (your planned spot, for the carriers to keep clear of; for the tests' autopilot, where it stands, as the checks were built on) */
     // (the release sweep, Nov 16: who closed the gap. pre: each raider from where you stand now, before they move; G.walkIn: the ones YOUR step brought inside 3 yards
     //  (they were farther before it). Only those can splash on you: a carrier picking up its egg beside you, or walking at you, is never your mistake)
     G.walkIn = {}; GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id], d1 = Math.hypot(b.x - G.x, b.y - G.y), d0 = px == null ? d1 : Math.hypot(b.x - px, b.y - py); pre[id] = d1; if (d1 < 3 && d1 < d0 - 1e-6) G.walkIn[id] = true; });
-    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob));
+    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob, j.wait));
       // (Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me if im in their path": a raider holding an egg
       //  walks at your speed, 7 yards a second, and only goes faster to get out of a wave, as you would with Sprint. With your egg held and you right in its path
       //  (7 yards ahead, inside 4.2 of its line) it sidesteps a little, onto safe floor only: "just a little, without making it super super easy")
@@ -454,7 +590,7 @@ function pgOpen(root, boss, d, pk) {
       const mm = Math.hypot(mx, my); if (mm > 1) { mx /= mm; my /= mm; } let sp = SPEED * (has('sprint') ? 1.4 : 1) * (inVenom(G.x, G.y) ? 0.6 : 1) * dt * (P2 ? P2.slow(me, t) : 1);
       if (!byKeys && target) sp = Math.min(sp, Math.hypot(target[0] - G.x, target[1] - G.y));
       const nx = G.x + mx * sp, ny = G.y + my * sp; if (onPlat(nx, ny) || inVenom(G.x, G.y)) { G.x = nx; G.y = ny; } else if (onPlat(nx, G.y)) G.x = nx; else if (onPlat(G.x, ny)) G.y = ny; }
-    G.still = !G.kb && Math.hypot(G.x - px, G.y - py) < 1e-4; G.t = t; moveBots(t, dt, px, py); check(t0, t);
+    G.still = !G.kb && Math.hypot(G.x - px, G.y - py) < 1e-4; if (!G.still && !G.kb) G.mv = [G.x - px, G.y - py]; /* (your last step's way, for "Carrier ahead") */ G.t = t; moveBots(t, dt, px, py); check(t0, t);
     G.bossHp = P2 ? P2.bossHp(t) : Math.max(52, 100 - 30 * Math.min(1, t / 139) - (t > 145.5 ? 14 * Math.min(1, (t - 145.5) / 19.5) : 0) - Math.min(4, (G.heartHits || 0) * 0.12)); /* (your hits on the heart take her down a little faster) */ };
   const check = (t0, t) => { const x = G.x, y = G.y, crossed = (at) => at > t0 && at <= t;
     // waves: a hit is huge stacking poison; an egg it touches hatches (in your hands or on the floor)
@@ -470,11 +606,11 @@ function pgOpen(root, boss, d, pk) {
       if (Math.hypot(x - (ax + vx * u), y - (ay + vy * u)) <= 1.6) { G.done.add('beam' + bi); mistake('beam', 'You stood in the venom beam: only the off tank stands in it.', 'The spectral image beams the off tank: keep out of the line between them.', 35); } });
     // the eggs land (4 yards), their shells break, carriers pick theirs up
     G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land) { e.state = 'floor'; if (Math.hypot(x - e.x, y - e.y) <= 14) feel('thud'); if (e.id === me && shellsOn()) { e.shpMax = SHELL.hp; e.shp = SHELL.hp; e.shell = t + SHELL.hp / SHELL.raid; } if (Math.hypot(x - e.x, y - e.y) <= 4 + PR * 0.5) mistake('impact', 'An egg landed on you.', 'Eggs fall in 4-yard circles: step out of them.', 25); }
-      if (e.state === 'floor' && e.id === me && e.shp > 0) { e.shp -= SHELL.raid * (t - t0); if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; }
+      if (e.state === 'floor' && e.id === me && e.shp > 0 && !eggLocked(e)) { e.shp -= SHELL.raid * (t - t0); if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; }
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id], byYou = b && myEggHeld() && Math.hypot(b.x - x, b.y - y) < 3.6; /* (the release sweep, Nov 16: a raider doesn't pick its egg up inside 3.6 yards of you while you carry yours; it waits for you to pass) */ if ((b && !byYou && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
       // (the release sweep, Nov 16: you pick your egg up anywhere inside its gold 2.8-yard ring, the one drawn round it. It was 2.2, so a player who stopped
       //  inside the ring, or where the Go here arrow went away at 2.5, kept waiting with "Pick up your egg now")
-      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.8) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock || (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up: keep it out of every wave and away from other carriers.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Walk into another carrier\'s ring and both eggs hatch.', '#3af2a8'); /* (the release sweep, Nov 16: only your own step splashes) */ } } }
+      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.8) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock ? (eggLocked(e) ? e.lock : 'Not open yet: hit it (Tab, then 1).') : (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('Your egg\'s ring: keep clear of other carriers!', '#f3c969'); /* (the release sweep, Nov 16: only your own step splashes. "Mechanic: Order" and gold, yours: it had no order and lost its gold, the review of Nov 16, check T6) */ } } }
       if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
     // you walk into another carrier's 3-yard circle: Noxious Splash, both eggs hatch at once. (The release sweep, Nov 16: only when YOUR step closed the gap
     //  below 3 yards, G.walkIn from moveBots. Before, any step of yours counted while a carrier was close, even one away from it or one it walked into, and
@@ -483,7 +619,7 @@ function pgOpen(root, boss, d, pk) {
     // the coil slams: shared by everyone within 10 yards; carried eggs break; Soul Constrictor 5 s
     S.soaks.forEach((s) => { if (!crossed(s.at)) return; feel('slam'); const n = 1 + GDZ_RAID.filter((id) => id !== me && Math.hypot(G.bots[id].x - s.x, G.bots[id].y - s.y) <= s.r).length, inn = Math.hypot(x - s.x, y - s.y) <= s.r;
       if (inn) { if (has('soul')) mistake('soul', 'Soul Constrictor: you took the slam before, so you couldn\'t help with this one.', 'Take only your own slam; the next one is the other group\'s.', 25);
-        else { hurt(slamHit(n)); const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; deb('yolk', 20); G.adds.push({ kind: 'rawling', x: x + 1.2, y: y + 1.2, born: t }); say('Soaked: your egg broke (a Rawling). Rancid Yolk for 20 s.'); } else say('Soaked.'); } deb('soul', 5); }
+        else { hurt(slamHit(n)); const e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; deb('yolk', 20); G.adds.push({ kind: 'rawling', x: x + 1.2, y: y + 1.2, born: t }); say('Soaked: your egg broke (a Rawling).'); } else say('Soaked.'); } deb('soul', 5); }
       else { hurt(slamHit(n)); if (s.group.includes(me)) mistake('soak', 'You missed your coil soak (slam ' + (s.k + 1) + '): the others took more.', 'Be inside your group\'s 10-yard circle when it slams.', 0); } /* (every slam hits the whole raid: the soakers only make it smaller, Nov 15 audit) */
       G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me && Math.hypot(G.bots[e.who].x - s.x, G.bots[e.who].y - s.y) <= s.r) { e.state = 'gone'; G.adds.push({ kind: 'rawling', x: G.bots[e.who].x + 1, y: G.bots[e.who].y + 1, born: t }); e.who = null; } }); });
     // the bubbles: everyone farther than 10 yards from the Wretch is hit
@@ -534,11 +670,11 @@ function pgOpen(root, boss, d, pk) {
     // ground: the thrash zone, her reach, coil circles (yours gold), bubbles, impacts, the beam
     S.thrash.forEach((th) => { if (t >= th.t0 && t <= th.at + 0.4) { const f = Math.min(1, (t - th.t0) / (th.at - th.t0)); circ(th.x, th.y, th.r, 'rgba(255,140,60,' + (0.06 + 0.1 * f).toFixed(3) + ')', 'rgba(255,155,74,.9)', 2.5, [10, 6]); if (t > th.at) circ(th.x, th.y, th.r, 'rgba(255,120,40,.35)'); } });
     S.wrath.forEach((wr) => { if (t >= wr.t0 && t <= wr.at + 3.2) circ(wr.p[0], wr.p[1], 5, 'rgba(255,60,60,.22)', '#ff4a4a', 2); });
-    S.soaks.forEach((s) => { if (t >= s.t0 && t <= s.at + 0.5) { const mineS = s.group.includes(me), f = Math.min(1, (t - s.t0) / (s.at - s.t0)); circ(s.x, s.y, s.r, 'rgba(36,242,203,' + (t > s.at ? 0.4 : 0.08) + ')', mineS ? '#f3c969' : '#24f2cb', mineS ? 3.5 : 2, mineS ? [12, 6] : null); circ(s.x, s.y, s.r * f, null, 'rgba(36,242,203,.7)', 1.5); label(s.x, s.y, mineS ? 'YOUR SOAK' : 'Soak ' + (s.k + 1), mineS ? '#f3c969' : '#24f2cb', 13); } });
+    S.soaks.forEach((s) => { if (t >= s.t0 && t <= s.at + 0.5) { const mineS = s.group.includes(me), f = Math.min(1, (t - s.t0) / (s.at - s.t0)); circ(s.x, s.y, s.r, 'rgba(36,242,203,' + (t > s.at ? 0.4 : 0.08) + ')', mineS ? '#f3c969' : '#24f2cb', mineS ? 3.5 : 2, mineS ? [12, 6] : null); circ(s.x, s.y, s.r * f, null, 'rgba(36,242,203,.7)', 1.5); label(s.x, s.y, mineS ? 'Your coil' : 'Not yours', mineS ? '#f3c969' : '#24f2cb', 13); } });
     S.bubbles.forEach((q) => { const c = G.wr[q.w]; if (c && t >= q.t0 && t <= q.at + 0.4) { const f = Math.min(1, (t - q.t0) / (q.at - q.t0)), [sx, sy] = P(c.x, c.y), g = cx.createRadialGradient(sx, sy, 0, sx, sy, 10 * k); g.addColorStop(0, 'rgba(216,242,47,.04)'); g.addColorStop(0.85, 'rgba(216,242,47,' + (0.1 + 0.14 * f).toFixed(3) + ')'); g.addColorStop(1, 'rgba(216,242,47,' + (0.25 + 0.2 * f).toFixed(3) + ')');
-      cx.fillStyle = g; cx.beginPath(); cx.arc(sx, sy, 10 * k, 0, Math.PI * 2); cx.fill(); circ(c.x, c.y, 10, null, '#d8f22f', 2.5); circ(c.x, c.y, 10 * (1 - f), null, 'rgba(216,242,47,.55)', 1.5); if (t > q.at) circ(c.x, c.y, 10, 'rgba(216,242,47,.45)'); label(c.x, c.y, 'Into the bubble · ' + Math.max(0, q.at - t).toFixed(1), '#e8ff6a', 13, 10 * k / dpr + 16); } });
+      cx.fillStyle = g; cx.beginPath(); cx.arc(sx, sy, 10 * k, 0, Math.PI * 2); cx.fill(); circ(c.x, c.y, 10, null, '#d8f22f', 2.5); circ(c.x, c.y, 10 * (1 - f), null, 'rgba(216,242,47,.55)', 1.5); if (t > q.at) circ(c.x, c.y, 10, 'rgba(216,242,47,.45)'); label(c.x, c.y, 'Into the bubble', '#e8ff6a', 13, 10 * k / dpr + 16); } });
     S.impacts.forEach((m) => { if (t >= m.t0 && t <= m.at + 0.3) { const f = Math.min(1, (t - m.t0) / (m.at - m.t0)); circ(m.x, m.y, m.r, 'rgba(200,163,106,.16)', m.color, 2); circ(m.x, m.y, m.r * f, 'rgba(255,90,60,.25)'); } });
-    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 2.5) { const f = Math.min(1, (t - e.land + 2.5) / 2.5); circ(e.x, e.y, 4, 'rgba(230,224,200,.12)', '#e6e0c8', 1.6); circ(e.x, e.y, 4 * f, 'rgba(255,90,60,.22)'); } });
+    G.eggs.forEach((e) => { if (e.state === 'air' && t >= e.land - 3) { const f = Math.min(1, (t - e.land + 3) / 3); circ(e.x, e.y, 4, 'rgba(230,224,200,.12)', '#e6e0c8', 1.6); circ(e.x, e.y, 4 * f, 'rgba(255,90,60,.22)'); } });
     S.beams.forEach((b) => { if (t >= b.t0 && t <= b.t1) { const [ax, ay] = P(b.from[0], b.from[1]), tk = G.bots[b.tank] || G.bots.t2, [bx, by] = P(tk.x, tk.y); cx.lineWidth = 6 * dpr; cx.strokeStyle = 'rgba(58,242,168,.55)'; cx.beginPath(); cx.moveTo(ax, ay); cx.lineTo(bx, by); cx.stroke(); } if (t >= b.t0 - 1 && t <= b.t1) { circ(b.from[0], b.from[1], 3, 'rgba(58,242,168,.25)', '#3af2a8', 2); label(b.from[0], b.from[1], 'Spectral Ula\'tek', '#3af2a8', 12, -18); } });
     S.tails.forEach((q) => { if (t >= q.t0 && t <= q.at + 0.6) { circ(q.x, q.y, 3, 'rgba(255,90,58,.35)', '#ff5a3a', 2); label(q.x, q.y, 'Tail', '#ff8a6a', 11, -14); } });
     if (t >= S.dive.gone && t < S.dive.surf) { const p = S.dive.to; circ(p[0], p[1], 5, 'rgba(127,216,255,.25)', '#7fd8ff', 2, [6, 4]); label(p[0], p[1], 'Bubbles', '#7fd8ff', 12, -16); }
@@ -555,7 +691,7 @@ function pgOpen(root, boss, d, pk) {
     G.eggs.forEach((e) => { if (e.state === 'air' || e.state === 'gone') return; let p = [e.x, e.y]; if (e.who) { const b = e.who === me ? { x: G.x, y: G.y } : G.bots[e.who]; p = [b.x + 0.9, b.y + 0.9]; const ew = e.who === me ? eggWarnAt() : 0; circ(b.x, b.y, 3, ew === 2 ? 'rgba(255,90,58,.18)' : ew === 1 ? 'rgba(255,155,74,.14)' : 'rgba(58,242,168,.08)', ew === 2 ? '#ff5a3a' : ew === 1 ? '#ff9b4a' : 'rgba(58,242,168,.85)', ew ? 2.4 : 1.6); }
       circ(p[0], p[1], 0.9, '#e9e2c6', '#5a5136', 1.5); if (e.state === 'floor' && t < e.shell) { circ(e.x, e.y, 2, null, '#e6e0c8', 2.5); const f = (t - e.land) / (e.shell - e.land), [sx, sy] = P(e.x, e.y); cx.beginPath(); cx.arc(sx, sy, 2 * k, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); cx.lineWidth = 3 * dpr; cx.strokeStyle = '#ffd36b'; cx.stroke(); }
       if (e.id === me && e.state === 'floor') { circ(e.x, e.y, 2.8, null, '#f3c969', 2.5, [5, 4]); label(e.x, e.y, t < e.shell ? 'Your egg (shell up)' : 'Your egg: pick it up', '#f3c969', 12, -22); } });
-    if (myEggHeld()) { const jm = jobOf(me, t), ys = jm.ob && spotIn(jm.ob, me); if (ys) { circ(ys[0], ys[1], 1.3, 'rgba(243,201,105,.18)', '#f3c969', 2.5, [5, 4]); label(ys[0], ys[1], 'Your spot', '#f3c969', 12, -14); } }
+    { const ys = mySpot(), hy = hintNow(); if (ys) { circ(ys[0], ys[1], 1.3, 'rgba(243,201,105,.18)', '#f3c969', 2.5, [5, 4]); if (!(hy && pgDist(hy.T, ys) < 2)) label(ys[0], ys[1], hy && hy.wait ? 'Wait' : 'Your spot', '#f3c969', 12, -14); } }
     const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { circ(nextEgg.x, nextEgg.y, 4.5, 'rgba(243,201,105,.08)', '#f3c969', 2, [8, 5]); label(nextEgg.x, nextEgg.y, 'Your egg lands here', '#f3c969', 12, -26); }
     G.adds.forEach((a) => { circ(a.x, a.y, a.kind === 'viper' ? 1.6 : 1.1, a.kind === 'viper' ? '#ff3b3b' : '#a7c46b', '#000', 1.5); label(a.x, a.y, a.kind === 'viper' ? 'Viper' : 'Rawling', a.kind === 'viper' ? '#ff8f87' : '#c9df9a', 11, -14); });
     S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; circ(c.x, c.y, 2.2, t < w.awake ? '#5b3e7a' : '#9b5cff', '#1a0d2b', 2); label(c.x, c.y, t < w.awake ? 'Wretch (asleep)' : 'Blightscale Wretch', '#c89bff', 12, -22); });
@@ -575,8 +711,8 @@ function pgOpen(root, boss, d, pk) {
       dv3.adds.forEach((o) => { if (o.hp >= o.max) return; const [sx, sy] = P(o.p[0], o.p[1] + o.r + 1.2), w = 30 * dpr, h2 = 4 * dpr; cx.fillStyle = 'rgba(0,0,0,.8)'; cx.fillRect(sx - w / 2 - dpr, sy - h2 - dpr, w + 2 * dpr, h2 + 2 * dpr); cx.fillStyle = '#ff6b5c'; cx.fillRect(sx - w / 2, sy - h2, w * Math.max(0, o.hp / o.max), h2); }); }
     const dv2 = dpsView(); if (dv2) { const pu = (0.55 + 0.4 * Math.sin(performance.now() / 150)).toFixed(2); dv2.right.forEach((o) => circ(o.p[0], o.p[1], o.r + 1.2, null, 'rgba(243,201,105,' + pu + ')', 2.5)); if (dv2.cur) circ(dv2.cur.p[0], dv2.cur.p[1], dv2.cur.r + 0.7, null, dv2.inRange ? '#ffffff' : '#ff8f87', 2, [4, 3]); }
     const hn = hintNow(); if (hn) { const ux = (hn.T[0] - G.x) / hn.d, uy = (hn.T[1] - G.y) / hn.d, A = (r, s2) => P(G.x + ux * r - uy * s2, G.y + uy * r + ux * s2), a0 = A(2.2, 0), a1 = A(4.6, 0), w1 = A(3.6, -0.9), w2 = A(3.6, 0.9), pulse = 0.65 + 0.35 * Math.sin(performance.now() / 160);
-      cx.globalAlpha = pulse; cx.lineWidth = 3 * dpr; cx.strokeStyle = '#f3c969'; cx.beginPath(); cx.moveTo(a0[0], a0[1]); cx.lineTo(a1[0], a1[1]); cx.moveTo(w1[0], w1[1]); cx.lineTo(a1[0], a1[1]); cx.lineTo(w2[0], w2[1]); cx.stroke(); cx.globalAlpha = 1;
-      circ(hn.T[0], hn.T[1], 1.4, 'rgba(243,201,105,.14)', '#f3c969', 2, [4, 3]); label(hn.T[0], hn.T[1], 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 12, -16); }
+      if (!hn.wait) { cx.globalAlpha = pulse; cx.lineWidth = 3 * dpr; cx.strokeStyle = '#f3c969'; cx.beginPath(); cx.moveTo(a0[0], a0[1]); cx.lineTo(a1[0], a1[1]); cx.moveTo(w1[0], w1[1]); cx.lineTo(a1[0], a1[1]); cx.lineTo(w2[0], w2[1]); cx.stroke(); cx.globalAlpha = 1; } /* (no arrow while the way is blocked: "Wait") */
+      circ(hn.T[0], hn.T[1], 1.4, 'rgba(243,201,105,.14)', '#f3c969', 2, [4, 3]); label(hn.T[0], hn.T[1], hn.wait ? 'Wait' : 'Go here · ' + Math.round(hn.d) + ' yd', '#f3c969', 12, -16); }
     if (target && !window.__pgAuto) circ(target[0], target[1], 0.6, null, 'rgba(255,255,255,.6)', 1.5);
     G.fx = G.fx.filter((f) => t - f.t0 < 1.2); G.fx.forEach((f) => { const [sx, sy] = P(f.x, f.y), el = t - f.t0; cx.globalAlpha = Math.max(0, 1 - el / 1.2); cx.font = '800 ' + Math.round(18 * dpr) + 'px system-ui, sans-serif'; cx.textAlign = 'center'; cx.lineWidth = 4 * dpr; cx.strokeStyle = '#000'; cx.strokeText(f.text, sx, sy - (30 + el * 30) * dpr); cx.fillStyle = f.c; cx.fillText(f.text, sx, sy - (30 + el * 30) * dpr); cx.globalAlpha = 1; });
     miniMap2(t);
@@ -600,39 +736,179 @@ function pgOpen(root, boss, d, pk) {
   // ---- the screen: your frame, her frame and cast, timers, warnings, your job, the action bar ----
   let hudKey = '';
   const castNow = (t) => (P2 && P2.castOf ? P2.castOf(t) : S.casts.filter((c) => t >= c.t0 && t <= c.t1).sort((a) => (a.who === 'boss' ? -1 : 1))[0]); /* (phase 2: your target's cast, as in WoW, gold when you can kick it) */
-  const jobText = () => { if (P2) return P2.jobText(); const t = G.t, e = G.eggs.find((q) => q.id === me && (q.state === 'floor' || q.state === 'air') && q.land - t < 14), held = myEggHeld();
-    const sk = S.soaks.find((s) => s.group.includes(me) && s.at > t && s.at - t <= 9), bb = S.bubbles.find((q) => q.at > t && q.at - t <= 8 && G.wr[q.w]), th = S.thrash.find((q) => t >= q.t0 - 1 && t <= q.at), wg = S.wings.find((w) => t >= w.t && t <= w.t + 14);
-    if (th && Math.hypot(G.x - th.x, G.y - th.y) < 38) return 'Mephitic Thrash in ' + Math.max(0, Math.ceil(th.at - t)) + ' s: ' + (S.bubbles.some((q) => q.stack && t >= q.stack - 1 && t < q.at) ? 'run to the second Wretch in front of her, outside the 35 yards!' : 'run out of 35 yards from her tail!');
-    // (whichever comes first, your coil or the bubble, as your arrow and the bots go. The release sweep, Nov 16: from 2:12 the 2:20 bubble's line replaced
-    //  your coil's, so the first coil's soakers walked off the 2:14 coil to the Wretch, and the second coil's never saw their line)
-    //  (and with your coil done and the other one still to slam before the bubble, 2:14 to 2:17: out of it, where your arrow keeps you)
-    if (bb && !(sk && sk.at < bb.at)) { const oc = S.soaks.find((s) => !s.group.includes(me) && t >= s.t0 && s.at > t && s.at < bb.at - 0.3); return 'Fester Burst in ' + Math.ceil(bb.at - t) + ' s: get within 10 yards of the Wretch (the yellow bubble).' + (oc ? ' Stay out of the other coil until it slams.' : ''); }
-    if (sk && t < sk.t0) return 'Soak #' + (sk.k + 1) + ': ' + (sk.k ? 'the second coil to appear is yours. Wait for it beside her tail.' : 'the first coil to appear beside her tail is yours.') + (held ? ' Your egg breaks there.' : '');
-    if (sk) return 'Your coil (the ' + (sk.k ? 'second' : 'first') + ' to appear) slams in ' + Math.ceil(sk.at - t) + ' s: stand in the gold circle.' + (held ? ' Your egg breaks there.' : '');
-    const ew = eggWarnAt(); if (ew === 2) { const nb = G.eggs.filter((q) => q.state === 'held' && q.who && q.who !== me).map((q) => q.who).sort((a, b) => Math.hypot(G.bots[a].x - G.x, G.bots[a].y - G.y) - Math.hypot(G.bots[b].x - G.x, G.bots[b].y - G.y))[0]; return 'Too close to ' + nm(nb) + '\'s egg: step away before your rings touch!'; }
-    const dc = !P2 && dpsCat(t); if (dc && !onRight(dc, tgtNow(t)) && !(e && e.state !== 'gone')) return DPS_SAY[dc][0] + ': press Tab to pick ' + (dc === 'rawling' ? 'one' : 'it') + ', then keep pressing 1 to hit it' + (rl(me) === 'm' ? ' (melee: get close to it)' : '') + '.';
-    if (wg) return 'The ' + wg.first.toLowerCase() + ' half goes first: wait on the ' + wg.safe.toLowerCase() + ' half, then cross behind the first wave.';
-    if (e && e.state === 'air') return 'Your egg lands in ' + Math.max(0, Math.ceil(e.land - t)) + ' s (the gold circle): stay out of the 4-yard impact, then wait by it.';
-    if (e && t < e.shell) return e.shp > 0 ? 'Your egg\'s shell is up: hit it to break it (Tab, then 1; 2 is your area attack), then walk over it.' : 'Your egg\'s shell breaks in ' + Math.ceil(e.shell - t) + ' s: wait by it.';
-    if (e) return 'Pick up your egg now: walk over it.';
-    if (has('yolk')) return 'Rancid Yolk: no new egg for ' + Math.ceil(G.debs.yolk.until - t) + ' s.';
-    if (held) return 'Carrying your egg: no waves, no venom, keep other carriers out of your 3-yard circle. Break it in your coil soak.';
-    if (t >= 145.5) return 'The heart is open: step out of the brown circles.';
-    const nx = S.timers.find((q) => q.t > t); return nx ? 'Next: ' + nx.name + ' in ' + Math.ceil(nx.t - t) + ' s.' : ''; };
+  // ---- your job now, and next (the prompts audit, Nov 16, Flex: "Lets improve the curated experience as the game guides players onto what they need to do next",
+  // then "All 10", then "i feel like the game confuses people saying timestamps"). Two lines talk to you: NOW, one order about you, and NEXT under it, your next
+  // step and where it is. No clock times and no second counts in either: the boss-mod bars and cast bars do the counting. NOW shows the first that applies:
+  // (a) dodge: something lands on you or reaches you within 3 s; (b) your step is due now (your coil, the bubble, your egg); (c) walk to your next step from the
+  // moment it is named; (w) her waves' two steps, wait in the green half, then cross now; (d) hit the right target; (e) your standing job. Never another player's
+  // timer and never "Next: X in N s" (it read "Next: Coil slam 2 in 3 s" to the first coil's soakers, the other team's coil). tests/practice-game.js check R ----
+  const DUE = 3, ORD = (s) => (s.k ? 'second' : 'first'), WAITTXT = 'Wait: let it pass, then go.';
+  // (your steps in order, phase 1: your egg as it falls, breaking and picking it up, each bubble, your coils, the heart. at: its moment; from: when the job line
+  //  names it and your arrow shows (a bubble 8 s before it pops, the 1:48 one from the raid's stack, a coil from its cast, your egg 8 s before it lands; the
+  //  audit: the arrow came about 1.6 s before you needed it, timed for the bots' run, and the second egg had none until it landed))
+  let stepC = null;
+  const mySteps = (t) => { if (P2 || !S || !G) return []; if (stepC && stepC.t === t && stepC.me === me && stepC.S === S) return stepC.L; const L = [];
+    G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone' || e.state === 'held') return; if (e.state === 'air') { L.push({ k: 'egg', id: 'e' + e.set, at: e.land, from: e.land - 8, e }); return; }
+      const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) return; L.push({ k: e.shp > 0 ? 'shell' : 'pick', id: 'p' + e.set, at: Math.min(e.shell, t), from: e.land, e }); });
+    S.bubbles.forEach((q, i) => { const w = S.wretches.find((z) => z.id === q.w); if (!w || q.at >= w.dies || q.at < t) return; L.push({ k: 'bubble', id: 'b' + i, at: q.at, from: Math.min(q.stack || 1e9, q.t0 - 2, q.at - 8), q }); });
+    S.soaks.forEach((s, i) => { if (s.group.includes(me) && s.at >= t) L.push({ k: 'coil', id: 's' + i, at: s.at, from: s.cast - 0.5, s }); });
+    if (t < 165) L.push({ k: 'heart', id: 'h', at: 145.5, from: 142, mel: rl(me) === 'm' });
+    const ord = (s) => (s.k === 'pick' || s.k === 'shell' ? -1 : s.at); L.sort((a, b) => ord(a) - ord(b)); stepC = { t, me, S, L }; return L; };
+  // (the step your job line is on: the first one named; a bubble or coil due within 3 s comes before picking up your egg or walking to the heart)
+  const curStep = (t) => { const L = mySteps(t).filter((s) => t >= s.from); if (!L.length) return null; let c = L[0];
+    if (c.k === 'pick' || c.k === 'shell' || c.k === 'heart') { const due = L.find((s) => (s.k === 'bubble' || s.k === 'coil') && s.at - t <= DUE); if (due) c = due; } return c; };
+  // (a step of yours under 3 s away, before `before` if given: teaching tips and calls about a later moment wait for it. A later part can give its own, P2.stepSoon)
+  const stepSoon = (t, before) => (P2 ? !!(typeof P2.stepSoon === 'function' && P2.stepSoon(t, before)) : mySteps(t).some((s) => (s.k === 'bubble' || s.k === 'coil' || s.k === 'egg') && s.at > t && s.at - t < DUE && (before == null || s.at < before - 0.3)));
+  // (where a step puts you, and when the game counts you there: T your spot; rad, how close to T is inside what the game counts (the bubble's 10 yards round the
+  //  Wretch, your coil's circle, your egg's 2.8-yard pickup ring), less a margin, and outside every coil that isn't yours. The arrow goes away only inside rad.
+  //  The audit: the arrow went away at 2.5 yards whatever the step, and at 0:34 pointed a Soak #2 player 7 yards inside the first coil (Soul Constrictor at 0:43))
+  const bubOb = (q) => { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; return { at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; };
+  const spreadSpot = (p, r0) => { const ix = GDZ_RAID.indexOf(me), a = ix * 2.39996, rr = r0 * Math.sqrt(((ix % 11) + 0.5) / 11); return [p[0] + Math.cos(a) * rr, p[1] + Math.sin(a) * rr]; }; /* (as jobOf spreads the raid) */
+  // (the nearest spot to T0 inside the circle (c, r), outside each circle in out, inside pref when it can be, and on the stone)
+  const fitSpot = (T0, c, r, out, pref) => { const ok = (p, wp) => onPlat(p[0], p[1]) && pgDist(p, c) <= r && out.every((o) => pgDist(p, o.c) >= o.r) && (!wp || pgDist(p, wp.c) <= wp.r);
+    for (const wp of pref ? [pref, null] : [null]) { if (ok(T0, wp)) return T0.slice(); let best = null, bd = 1e9; for (let rr = 0; rr <= r + 1e-6; rr += 0.5) for (let i = 0; i < 32; i++) { const a = i * Math.PI / 16, p = [c[0] + Math.cos(a) * rr, c[1] + Math.sin(a) * rr]; if (!ok(p, wp)) continue; const dd = pgDist(p, T0); if (dd < bd) { bd = dd; best = p; } } if (best) return best; }
+    return T0.slice(); };
+  const stepSpot = (st, t) => { if (!st || P2) return null; const held = !!myEggHeld();
+    if (st.k === 'egg') { const e = st.e, dx = G.x - e.x, dy = G.y - e.y, a0 = Math.hypot(dx, dy) > 0.1 ? Math.atan2(dy, dx) : 0; let T = null; /* (next to it on your side, not under it) */
+      for (const da of [0, 0.6, -0.6, 1.2, -1.2, 1.8, -1.8, 2.6, -2.6, Math.PI]) { const p = [e.x + Math.cos(a0 + da) * 6.2, e.y + Math.sin(a0 + da) * 6.2]; if (onPlat(p[0], p[1])) { T = p; break; } }
+      return { T: T || [e.x, e.y], C: [e.x, e.y], what: 'egg', rad: 1.4, inside: (x, y) => { const d = Math.hypot(x - e.x, y - e.y); return d >= 5.6 && d <= 7.8; /* (clear of the "falling on you" warning's 5.2) */ } }; }
+    if (st.k === 'shell' || st.k === 'pick') { const e = st.e; return { T: [e.x, e.y], C: null, what: 'egg', rad: 2.5, inside: (x, y) => Math.hypot(x - e.x, y - e.y) <= 2.5 }; }
+    if (st.k === 'heart') { if (!st.mel) return null; const T = meleeBurn(me, t), hp = S.F(PG_UL.heart, t); return { T, C: hp, what: 'spot', rad: 1.2, inside: (x, y) => Math.hypot(x - hp[0], y - hp[1]) - 3 <= 4.5 }; } /* (in reach of the heart: its 3 yards and your 5) */
+    let C, R, T0, pref = null, car = false, others;
+    if (st.k === 'bubble') { const q = st.q, ob = bubOb(q); C = q.p; R = 10; car = !!(ob.car && ob.car.includes(me)); T0 = spotIn(ob, me) || spreadSpot(q.p, ob.car ? 3.2 : 5.5);
+      others = S.soaks.filter((s) => !s.group.includes(me) && s.at >= t && s.at <= q.at + 2); /* (a coil that slams while you stand there, or a second after: 0:39's bubble sits on the 0:40 coil) */
+      const nx = S.soaks.find((s) => s.group.includes(me) && s.at > q.at && s.at - q.at <= 6); if (nx) pref = { c: [nx.x, nx.y], r: nx.r - 2 }; } /* (your coil right after: where the bubble and it overlap) */
+    else { const s = st.s, ob = { at: s.at, p: [s.x, s.y], r: 5, car: CAR8.filter((c) => s.group.includes(c)) }; C = [s.x, s.y]; R = s.r; car = ob.car.includes(me); T0 = spotIn(ob, me) || spreadSpot(C, 3.2);
+      others = S.soaks.filter((z) => z.set === s.set && !z.group.includes(me) && z.at >= t); } /* (the other coil, before or after yours: in both, Soul Constrictor) */
+    const out = others.map((s) => ({ c: [s.x, s.y], r: s.r + 2.5 })), FC = S._fit = S._fit || new Map(), key = st.id + '|' + me + '|' + out.map((o) => o.c.join(',')).join(';') + '|' + (pref ? 1 : 0) + '|' + T0.map((v) => v.toFixed(1)).join(',');
+    let T = FC.get(key); if (!T) { T = fitSpot(T0, C, R - 2, out, pref); FC.set(key, T); }
+    let rad = R - 0.8 - pgDist(T, C); out.forEach((o) => { rad = Math.min(rad, pgDist(T, o.c) - (o.r - 1.3)); }); if (pref && pgDist(T, pref.c) <= pref.r) rad = Math.min(rad, pref.r + 1.2 - pgDist(T, pref.c));
+    rad = car && held ? Math.max(1, Math.min(rad, 1.6)) : Math.max(1.2, rad); /* (a carrier keeps to its own spot, 3 yards from the others') */
+    // (inside: on your spot, or (without an egg to keep apart) anywhere well inside the circle that counts, clear of the other coils, and in your next coil when it follows)
+    const own = car && held, inArea = (x, y) => pgDist([x, y], C) <= R - 1.2 && out.every((o) => pgDist([x, y], o.c) >= o.r - 1.3) && (!pref || pgDist([x, y], pref.c) <= pref.r + 1.2);
+    return { T, what: 'spot', rad, C, R, out, inside: (x, y) => Math.hypot(x - T[0], y - T[1]) <= rad || (!own && inArea(x, y)) }; };
+  // (the way to your spot: blocked by a coil that isn't yours, another carrier's ring while you carry, or a wave that would reach you on the way within 2 s when
+  //  standing still wouldn't. route() bends round a circle, or says Wait. The audit: the straight arrow walked carriers into other carriers' rings (0:36.9, 0:40.2,
+  //  1:45.4) and Soak #2 through the first coil. pathClear(from, to, s) works for any part: true when the walk is clear for the next s seconds (2 by default))
+  const segDist = (p, a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1], u = Math.max(0, Math.min(1, ((p[0] - a[0]) * vx + (p[1] - a[1]) * vy) / (vx * vx + vy * vy || 1))); return Math.hypot(p[0] - a[0] - vx * u, p[1] - a[1] - vy * u); };
+  const pathBlock = (a, b, t, hz, mid) => { const L = pgDist(a, b); if (L < 0.05) return null; /* (mid: b is a spot on the way, so it mustn't sit in anything either; your own spot may) */
+    if (!P2) for (const s of S.soaks) { if (s.group.includes(me) || t < s.t0 - 0.5 || t > s.at) continue; const c = [s.x, s.y], R = s.r + 1; if (pgDist(a, c) <= R || (!mid && pgDist(b, c) <= R)) continue; if (pgDist(b, c) <= R || segDist(c, a, b) < R) return { k: 'coil', c, r: R }; }
+    if (myEggHeld()) for (const e of G.eggs) { if (e.state !== 'held' || !e.who || e.who === me) continue; const o = G.bots[e.who]; if (!o) continue; const c = [o.x, o.y], R = 4, da = pgDist(a, c), db = pgDist(b, c);
+      if (da <= R) { if (segDist(c, a, b) < Math.min(da, 3.4) - 0.05) return { k: 'ring', c, r: R }; continue; } /* (already close: only a walk that takes you closer to its ring is blocked) */
+      if (db <= 3.4) return { k: 'ring', c, r: R }; if (db <= R && !mid) continue; if (segDist(c, a, b) < R) return { k: 'ring', c, r: R }; }
+    if (hz > 0) { const W = (S.waves || []).filter((w) => w.from !== me && !(w.kind === 'incub' && w.tank === me) && w.t1 >= t && w.t0 - (w.warn || 1.5) <= t + hz);
+      if (W.length) { const hit = (f) => { for (let k = 0; k <= hz + 1e-6; k += 0.25) { const g = f(k); if (W.some((w) => inWave(w, t + k, g[0], g[1], 0.6))) return true; } return false; };
+        if (hit((k) => { const f = Math.min(1, SPEED * k / L); return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; }) && !hit(() => a)) return { k: 'wave' }; } }
+    return null; };
+  const pathClear = (a, b, s) => !!G && !!S && !pathBlock(a, b, G.t, s == null ? 2 : s);
+  // (round one thing in the way (a spot beside it), or in from straight outside your spot, away from the middle of the circle it sits in (C): the bubble's carriers
+  //  stand in a ring 5 yards apart, so the straight way to your spot across it passes inside someone's 3 yards. Wait only when nothing works, or for a wave)
+  const route = (a, T, t, C, dd) => { const b0 = pathBlock(a, T, t, 2); if (!b0) return { P: T, wait: false }; if (b0.k === 'wave') return { P: T, wait: true };
+    // (a carrier standing on your spot: the last step was always blocked, so the arrow said Wait until the bubble burst (check R1's ranged egg carrier, seed 5,
+    //  after the merge of the four parts' audits, Nov 16). Then the nearest clear point beside their ring, on the side of the circle you're going into (C))
+    if (!dd && b0.k === 'ring' && b0.c && pgDist(T, b0.c) < b0.r + 0.2) { let alt = null, as = 1e9, clr = null, cs = 1e9; for (let i = 0; i < 16; i++) { const an = i * Math.PI / 8, W = [b0.c[0] + Math.cos(an) * (b0.r + 0.4), b0.c[1] + Math.sin(an) * (b0.r + 0.4)]; if (!onPlat(W[0], W[1])) continue;
+        const sc = pgDist(W, T) + (C ? pgDist(W, C) * 0.6 : 0); if (sc < as) { as = sc; alt = W; } if (sc < cs && !pathBlock(a, W, t, 2, true)) { cs = sc; clr = W; } } /* (clr: walked to clear and standing clear; else one more try round what's in the way, never deeper) */
+      if (clr) return { P: clr, wait: false, bend: true }; if (alt) return route(a, alt, t, null, 1); }
+    const around = (p, q, ob) => { const ux = q[0] - p[0], uy = q[1] - p[1], L = Math.hypot(ux, uy) || 1, nx = -uy / L, ny = ux / L, out = []; [ob.r + 0.6, ob.r + 2, ob.r + 4].forEach((R) => [1, -1].forEach((sg) => out.push([ob.c[0] + nx * R * sg, ob.c[1] + ny * R * sg]))); return out.filter((w) => onPlat(w[0], w[1])); };
+    const ok = (p, q, last) => !pathBlock(p, q, t, last ? 0 : 2, !last); let best = null;
+    const take = (pts) => { let len = 0; for (let i = 1; i < pts.length; i++) len += pgDist(pts[i - 1], pts[i]); if (!best || len < best.len) best = { P: pts[1], len }; };
+    around(a, T, b0).forEach((W) => { if (ok(a, W) && ok(W, T, true)) take([a, W, T]); });
+    if (C) { const ux = T[0] - C[0], uy = T[1] - C[1], L = Math.hypot(ux, uy); if (L > 0.5) [4.5, 7, 10].forEach((k) => { const W2 = [T[0] + ux / L * k, T[1] + uy / L * k]; if (!onPlat(W2[0], W2[1]) || !ok(W2, T, true)) return;
+      if (ok(a, W2)) { take([a, W2, T]); return; } const b1 = pathBlock(a, W2, t, 2, true); if (b1 && b1.c) around(a, W2, b1).forEach((W1) => { if (ok(a, W1) && ok(W1, W2)) take([a, W1, W2, T]); }); }); }
+    return best ? { P: best.P, wait: false, bend: true } : { P: T, wait: true }; };
+  const whereOf = (p, at) => { const TL = tailAt(at).p, B = bossAt(at).p; return pgDist(p, TL) < 24 ? 'by her tail' : pgDist(p, B) < 32 ? 'in front of her' : 'in the middle'; };
+  // (another carrier's ring: too close, or straight ahead within 6 yards as you walk. Every part, before its own job line: the audit found the intermission never
+  //  ran it, and phase 1's came at 3.5 yards, about 0.07 s before the splash)
+  const ringWarn = () => { if (!G || !myEggHeld()) { if (G) G.ringT = null; return null; } let nb = null, dn = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) { const d = Math.hypot(b.x - G.x, b.y - G.y); if (d < dn) { dn = d; nb = e.who; } } } });
+    // (once it says too close, it stays a second unless you're 4.2 yards clear: at 0:38 it came and went three times in 0.7 s as r3 stood on its own spot by
+    //  another carrier at 3.6 yards. Only a second, so a carrier settling at 3.7 doesn't keep it up. The review of Nov 16, check T14)
+    if (!nb) return null; if (dn < 3.6) G.ringT = G.t; if (dn < 3.6 || (dn < 4.2 && G.ringT != null && G.t - G.ringT < 1)) return 'Too close to ' + nm(nb) + '\'s egg: step away from them!';
+    if (dn < 6 && !G.still && G.mv && false) { /* ("Carrier ahead: walk round X's ring" is off: it flickered in and out every second at the bubble (Flex, Nov 17: clear, not jumbled); "Too close" stays) */ const b = G.bots[nb], vx = G.mv[0], vy = G.mv[1], vl = Math.hypot(vx, vy) || 1, rx = b.x - G.x, ry = b.y - G.y; if ((rx * vx + ry * vy) / vl > 0 && Math.abs(rx * vy - ry * vx) / vl < 3.8) return 'Carrier ahead: walk round ' + nm(nb) + '\'s ring.'; }
+    return null; };
+  // (a: what reaches you within 3 s, soonest first: a small tail's lanes (the most common mistake, no words before), her waves, the beam's waves, a falling egg
+  //  (non-carriers had nothing: hit at 0:10 and 1:21), the Womb and the debris; then her tail's sweep, her bites, the beam's line and a coil that isn't yours)
+  const dangerNow = (t) => { const x = G.x, y = G.y; if (inVenom(x, y)) return 'Get back on the stone: the venom hurts.';
+    const rw = ringWarn(); if (rw) return rw;
+    const st = curStep(t), sp = st && (st.k === 'coil' || st.k === 'bubble') && st.at - t <= 4 ? stepSpot(st, t) : null, inStep = !!sp && pgDist([x, y], sp.C) <= sp.R - 0.5;
+    let best = null; const put = (k, text) => { if (!best || k < best.k) best = { k, text }; };
+    for (const w of S.waves) { if (w.from === me || (w.kind === 'incub' && w.tank === me) || w.t1 < t || w.t0 - (w.warn || 1.5) > t) continue;
+      for (let k = 0; k <= DUE + 1e-6; k += 0.25) if (inWave(w, t + k, x, y, 0.8)) { put(k, w.kind === 'tail' ? (inStep ? 'Small tail: step out of its red lane, stay in your circle.' : 'Small tail: step into a gap between the red lanes.') : w.kind === 'her' ? 'Her waves: step out of the lane, into the green half.' : 'Beam waves: step out of the red lanes.'); break; } }
+    /* ("the clear side" said not of what, and "Her wave" wasn't the bar's and the call's "Her waves": the review of Nov 16, check T8) */
+    G.eggs.forEach((e) => { if (e.state === 'air' && e.land >= t && e.land - t <= DUE && Math.hypot(x - e.x, y - e.y) <= 5.2) put(e.land - t, 'An egg is falling on you: step out of the white circle.'); });
+    S.impacts.forEach((m) => { if (t >= m.t0 && m.at >= t && m.at - t <= DUE && Math.hypot(x - m.x, y - m.y) <= m.r + 1.2) put(m.at - t, m.name === 'Toxic Womb' ? 'The Womb lands in the middle: step out of its circle.' : 'Step out of the brown circle.'); });
+    if (best) return best.text;
+    for (const th of S.thrash) if (t >= th.t0 - 1 && t <= th.at && Math.hypot(x - th.x, y - th.y) < th.r + 3) return S.bubbles.some((q) => q.stack && t >= q.stack - 1 && t < q.at) ? 'Run to the Wretch in front of her: out of the sweep.' : 'Run away from her tail: out of the orange circle.'; /* (12 words at most: the review of Nov 16, check T7) */
+    for (const wr of S.wrath) if (t >= wr.t0 && t <= wr.at + 3.2 && wr.tank !== me && Math.hypot(x - wr.p[0], y - wr.p[1]) <= 7) return 'Step out of the red circle in front of her.';
+    for (const bm of S.beams || []) { if (t < bm.t0 || t > bm.t1 || bm.tank === me) continue; const tk = G.bots[bm.tank]; if (tk && segDist([x, y], bm.from, [tk.x, tk.y]) <= 3) return 'Step out of the venom beam\'s line.'; }
+    for (const s of S.soaks) if (!s.group.includes(me) && t >= s.t0 - 0.5 && s.at >= t && s.at - t <= 3.5 && Math.hypot(x - s.x, y - s.y) <= s.r + 1) return 'Stay out of the ' + ORD(s) + ' coil: it isn\'t yours.'; /* (one name for it, as the bubble line and the floor's "Not yours" say it: the review of Nov 16, check T8) */
+    return null; };
+  // (a melee told to get close to a target in her tail's sweep or the half her waves hit first: wait, then hit it. The audit: 0:41 to 0:57, "Kill the Rawlings ...
+  //  get close to it" sent melee into the 0:49 sweep and the half hit first)
+  const tgtUnsafe = (t, dc) => { if (P2 || rl(me) !== 'm' || (dc !== 'rawling' && dc !== 'wretch')) return null; const o = nearestRight(t); if (!o || (o.kind !== 'rawling' && o.kind !== 'wretch')) return null; const w2 = dc === 'rawling' ? ['the Rawlings are', 'them'] : ['the Wretch is', 'it'];
+    for (const th of S.thrash) if (t >= th.t0 - 4 && t <= th.at && pgDist(o.p, [th.x, th.y]) <= th.r + 1) return 'Wait: ' + w2[0] + ' in the tail sweep. Hit ' + w2[1] + ' after.';
+    const hv = halvesAt(t); if (hv && t <= hv.t0 + 15.5) { const inFirst = o.p[0] * hv.d[0] + o.p[1] * hv.d[1] > 0; if (hv.swap ? !inFirst : inFirst) return 'Wait: ' + w2[0] + ' in the red half. Hit ' + w2[1] + ' after.'; } /* (12 words at most: the review of Nov 16, check T7) */
+    return null; };
+  const jobPick = () => { if (!G || !S) return { text: '', r: 'e' }; const rw = ringWarn(); if (P2) return rw ? { text: rw, r: 'a' } : { text: P2.jobText() || '', r: 'p' };
+    const t = G.t, dz = dangerNow(t); if (dz) return { text: dz, r: 'a' };
+    const st = curStep(t), held = !!myEggHeld(), sp = stepSpot(st, t), mineIn = !!sp && sp.inside(G.x, G.y), rt = sp && !mineIn ? route([G.x, G.y], sp.T, t, sp.C) : null, wait = !!(rt && rt.wait), egT = held ? ' Your egg breaks there.' : '';
+    // (the review of Nov 16, checks T1 to T3: the line and the arrow agree. A standing line ("Stay in", "Stand in", "Wait here", "Wait outside") only where the
+    //  arrow has gone (mineIn, the arrow's own test; with hints off, no arrow, so the circle the game counts); in the circle but off the arrow's spot, step onto
+    //  its gold ring; the way blocked, Wait, also when the step is due ("Get in your gold coil now!" showed under a "Wait" on the floor). Wait and the standing
+    //  lines are never held on screen against a new line (r 'wt' and 'b': the hold in hud() keeps only calm lines), so Wait goes as the arrow comes back)
+    if (st) { const due = st.at - t <= DUE, WT = { text: WAITTXT, r: 'wt', st };
+      if (st.k === 'egg') { if (mineIn) return { text: 'Wait here, next to your egg\'s gold circle.', r: 'b', st }; if (wait) return WT;
+        return due ? { text: 'Go next to your egg\'s gold circle now.', r: 'b', st } : { text: 'Go next to your egg\'s gold circle, not under it.', r: 'c', st }; }
+      if (st.k === 'shell') return { text: 'Break your egg: Tab, then 1.', r: 'b', st };
+      if (st.k === 'pick') return { text: 'Pick up your egg: walk over it.', r: 'b', st };
+      if (st.k === 'bubble') { const q = st.q, oc = S.soaks.find((s) => !s.group.includes(me) && s.at >= t && s.at <= q.at + 2 && t >= s.cast), inB = pgDist([G.x, G.y], q.p) <= 9.2 && !(oc && pgDist([G.x, G.y], [oc.x, oc.y]) <= oc.r + 0.8);
+        if (hints ? mineIn : inB) return { text: 'Stay in the yellow bubble' + (oc ? ', outside the ' + ORD(oc) + ' coil.' : ' until it pops.'), r: 'b', st }; if (wait) return WT;
+        if (inB) return { text: 'Step onto the gold ring in the bubble.', r: 'b', st }; if (due) return { text: 'Get in the yellow bubble now!', r: 'b', st };
+        return { text: oc ? 'Get in the yellow bubble, outside the ' + ORD(oc) + ' coil: it isn\'t yours.' : 'Get in the yellow bubble ' + whereOf(q.p, q.at) + '.', r: 'c', st }; }
+      if (st.k === 'coil') { const s = st.s, pre = S.soaks.find((z) => z.set === s.set && !z.group.includes(me) && z.at > t && z.at < s.at), inC = pgDist([G.x, G.y], [s.x, s.y]) <= s.r - 0.6 && !(pre && pgDist([G.x, G.y], [pre.x, pre.y]) <= pre.r + 0.8);
+        if (hints ? mineIn : inC) return { text: pre ? 'Wait outside the ' + ORD(pre) + ' coil: yours is the ' + ORD(s) + '.' : 'Stand in your coil until it slams.' + egT, r: 'b', st }; if (wait) return WT;
+        if (inC) return { text: 'Step onto the gold ring in your coil.', r: 'b', st }; if (due) return { text: 'Get in your gold coil now!', r: 'b', st };
+        return { text: 'Go to your coil (the ' + ORD(s) + ' to appear)' + (pre ? ', not the ' + ORD(pre) + '.' : ' by her tail.'), r: 'c', st }; }
+      if (st.k === 'heart' && sp && !mineIn) return wait ? WT : { text: 'Go to her edge: hit the heart from there.', r: 'c', st }; }
+    // (w: her waves in two steps, by the floor's colours, never a compass word: wait in the green half, then as the first wave goes by, cross now. The audit: one
+    //  line for 14 s and nothing at the 1:00.5 swap; "the west half" meant little with the 3D camera turning)
+    const hv = halvesAt(t); if (hv) { const inFirst = G.x * hv.d[0] + G.y * hv.d[1] > 0, inGreen = hv.swap ? inFirst : !inFirst;
+      return { text: hv.swap ? (inGreen ? 'Stay in the green half.' : 'Now cross into the green half, behind the wave.') : (inGreen ? 'Wait in the green half.' : 'Get into the green half.'), r: 'w' }; }
+    const dc = dpsCat(t); if (dc && !onRight(dc, tgtNow(t))) return { text: tgtUnsafe(t, dc) || DPS_SAY[dc][0] + ': press Tab, then keep pressing 1' + (rl(me) === 'm' ? ' (melee: get close).' : '.'), r: 'd' };
+    if (held) return { text: 'Carry your egg to your coil, clear of other carriers.', r: 'e' }; /* (12 words at most, one order: the review of Nov 16, check T7) */
+    if (t >= 145.5) return { text: 'Keep hitting the heart. Step out of the brown circles.', r: 'e' };
+    return { text: dc ? 'Keep pressing 1: you\'re on the right target.' : 'Hit Ula\'tek and dodge what comes.', r: 'e' }; };
+  const jobText = () => jobPick().text;
+  // (NEXT: your next step after the one NOW is on, and where, from 10 s before it. Hidden when nothing of yours is coming. A later part gives its own, P2.nextText)
+  const stepSay = (s) => (s.k === 'bubble' ? 'Then: get in the yellow bubble ' + whereOf(s.q.p, s.q.at) + '.' : s.k === 'coil' ? 'Then: soak your coil, the ' + ORD(s.s) + ' to appear, by her tail.' : s.k === 'egg' ? 'Then: go next to your egg\'s gold circle.' : s.k === 'heart' ? (s.mel ? 'Then: hit the heart from her edge.' : 'Then: hit the heart.') : 'Then: break your egg and pick it up.');
+  // (the step NOW is on: the job line's, else the one you're on while a dodge, wave or target line has the job line. The review of Nov 16, check T4: a dodge
+  //  line has no step, so NEXT named the step you were on, "Then: get in the yellow bubble" to a Soak #2 healer standing in it)
+  const nextStep = (jl) => { if (!G || !S || P2) return null; const t = G.t, L = mySteps(t).filter((s) => s.k !== 'pick' && s.k !== 'shell' && !(s.k === 'heart' && t >= 145.5)), now = (jl && jl.st) || curStep(t);
+    const n = now ? L.find((s) => s.id !== now.id && s.at > now.at + 0.3) : L[0]; return n && n.at - t <= 10 ? n : null; };
+  const nextText = (jl) => { if (!G || !S) return ''; if (P2) return typeof P2.nextText === 'function' ? P2.nextText() || '' : ''; const n = nextStep(jl); return n ? stepSay(n) : ''; };
+  // (the gold "Your spot" on the floor while you carry your egg: your spot in the bubble or your coil)
+  const mySpot = () => { if (!G || !S || !myEggHeld()) return null; if (P2) { const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; } const st = curStep(G.t); if (!st || (st.k !== 'bubble' && st.k !== 'coil')) return null; const sp = stepSpot(st, G.t); return sp ? sp.T : null; };
   // ---- hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next three things that
   // matter to you, and an arrow at your feet to where your job wants you now (the same target the bots and the autopilot follow, round the waves
   // the way they dodge), with a "Go here" ring. On by default; a switch on the start card, remembered. ----
   let hints = (() => { try { return localStorage.getItem('wla-pg-hints') !== '0'; } catch (e) { return true; } })();
+  // (your look in 3D, Flex, Nov 16: a wizard for ranged, a cleric for healers, "another one for ranged classes like a hunter": Auto picks by your
+  //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
+  //  Then a figure for every WoW class (Flex: "Are there models that can match each class in wow?", "yes! do as many as you can"): auto picks
+  //  each raider's class from the team plan (else the role), and the card's Look list picks yours.)
+  const LOOKN = { auto: 'Auto (your class or role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
+  let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
+  // (the boss-mod bars' names, one per mechanic from start to end, as the calls and the job line say them (the audit: "Fester Burst" turned into "Bubble: get in"
+  //  halfway, "Mephitic Thrash" into "Tail sweep: out of 35 yards"))
   const upNext = (t) => { if (P2) return P2.upNext(t); const L = [], add = (at, text, c) => { if (at > t && at - t <= 30) L.push({ at, text, c }); }, car = carrierOf(me);
     G.eggs.filter((e) => e.id === me && e.state === 'air').forEach((e) => add(e.land, 'Your egg lands', '#f3c969'));
-    if (!car) S.eggSets.forEach((e) => add(e.land, 'Eggs land: dodge the circles', '#e6e0c8'));
-    S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + (q.k ? '2nd' : '1st') + ' to appear)', '#24f2cb'));
-    S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Bubble: get in', '#d8f22f'); });
-    S.thrash.forEach((q) => add(q.at, 'Tail sweep: out of 35 yards', '#ff9b4a')); S.wings.forEach((w) => add(w.t + 6, 'Her waves', '#9be13a'));
+    if (!car) S.eggSets.forEach((e) => add(e.land, 'Eggs land', '#e6e0c8'));
+    S.soaks.filter((q) => q.group.includes(me)).forEach((q) => add(q.at, 'Your coil (' + ORD(q) + ')', '#24f2cb'));
+    S.bubbles.forEach((q) => { const w = S.wretches.find((z) => z.id === q.w); if (w && q.at < w.dies) add(q.at, 'Bubble', '#d8f22f'); });
+    S.thrash.forEach((q) => add(q.at, 'Tail sweep', '#ff9b4a')); S.wings.forEach((w) => add(w.t + 6, 'Her waves', '#9be13a'));
     { const r0 = G.adds.filter((a) => a.kind === 'rawling' && a.born != null && !a.boil).sort((p, q) => p.born - q.born)[0]; if (r0) add(r0.born + 25, 'Rawlings boil', '#ff8f87'); }
-    S.wrath.forEach((q) => add(q.at, 'Her bites: out of her reach', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open: hit it', '#ff8a5a');
+    S.wrath.forEach((q) => add(q.at, 'Her bites', '#ff8f87')); add(S.dive.t0, 'She dives', '#7fd8ff'); add(145.5, 'Heart open', '#ff8a5a');
     return L.sort((a, b) => a.at - b.at).slice(0, 3); };
-  let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t) return hintC.h;
+  let hintC = null; const hintNow = () => { if (!hints || !G || !S || window.__pgAuto || G.kb) return null; if (hintC && hintC.t === G.t && hintC.me === me && hintC.S === S) return hintC.h;
     // (Flex, Nov 15: "the move here thing should only be for specific mechanics ... where to stand for things like soaks, not how to dodge waves": your coil
     // soak, the Wretch's bubble and your egg; never the waves, the tail's sweep or her reach)
     // (your egg on the floor: from its landing when only its own shell holds it (phase 1, the intermission: go and hit it); one held by something else
@@ -640,28 +916,44 @@ function pgOpen(root, boss, d, pk) {
     //  pointed at your shielded egg from 2:55 till the Warden died: Warden's Protection, your tether broken early, Malice out of your kick's reach)
     //  (its Warden dead, not just not up: the release check, Nov 16. Before the Wardens rise at 2:55 none was up, so from 2:47.7 the arrow pointed at your egg
     //  across the venom while the job line said to walk into your gate. tests/practice-game.js check Q)
-    const t = G.t, j = jobOf(me, t), eg = G.eggs.find((e) => e.id === me && e.state === 'floor' && (!e.lock || (t >= e.shell - 1 && !!(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null)))); let T = null, what = '';
-    if (j.ob) { T = spotIn(j.ob, me) || j.ob.p.slice(); what = 'spot'; } else if (eg) { T = [eg.x, eg.y]; what = 'egg'; }
-    // (a coil that isn't yours, out and slamming before your spot is due: the arrow keeps out of its circle, as the bots' spots do (jobOf). The release sweep,
-    //  Nov 16: after your 2:14 coil the arrow pointed at the 2:20 bubble's middle, 8 yards inside the 2:17 coil, and walking there took its slam)
-    if (T && !P2) for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(me) && !(j.ob && j.ob.at < s.at - 0.3) && Math.hypot(T[0] - s.x, T[1] - s.y) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]); }
-    const d = T ? Math.hypot(T[0] - G.x, T[1] - G.y) : 0, h = T && d > 2.5 ? { T, d, what } : null; hintC = { t, h }; return h; };
-  const hud = (force) => { const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
+    // (the prompts audit, Nov 16: phase 1's arrow follows your step (stepSpot: from when the job line names it, to your spot, gone only inside what the game counts);
+    //  a later part's goes to its job's spot and goes away inside that spot's ob.r, the radius it counts (2.5 when it gives none); every part's bends round a
+    //  coil that isn't yours or another carrier's ring, and says Wait while a wave crosses the way or nothing gets round (route))
+    const t = G.t; let T = null, what = '', rad = 2.5, h = null, C = null, via = null; /* (via: a part that bends its own arrow (the intermission) gives the next waypoint; the arrow points there, no second bend; p and r stay the spot and its circle) */
+    if (P2) { const j = jobOf(me, t); if (j.ob && j.ob.via) via = j.ob.via; const eg = G.eggs.find((e) => e.id === me && e.state === 'floor' && (!e.lock || (t >= e.shell - 1 && !!(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null))));
+      if (j.ob) { T = spotIn(j.ob, me) || j.ob.p.slice(); what = 'spot'; } else if (eg) { T = [eg.x, eg.y]; what = 'egg'; }
+      if (j.ob && j.ob.r > 0) rad = j.ob.r; if (j.ob) C = j.ob.p; }
+    else { const sp = stepSpot(curStep(t), t); if (sp && !sp.inside(G.x, G.y)) { T = sp.T; what = sp.what; rad = sp.rad; C = sp.C; } }
+    if (T && pgDist(T, [G.x, G.y]) > (P2 ? rad : 0.05)) { const rt = via ? { P: via, wait: false } : route([G.x, G.y], T, t, C); h = { T: rt.P, d: pgDist(rt.P, [G.x, G.y]), what, wait: rt.wait, fin: T, rad }; }
+    hintC = { t, me, S, h }; return h; };
+  const hud = (force) => { rushTag(rushK() > 1); const t = G.t, c = castNow(t), dv = dpsView(), key = Math.floor(t * 4) + '|' + Math.round(G.hp) + '|' + G.log.length + '|' + (c ? c.name : '') + '|' + (G.tgt || '') + (dv && dv.inRange ? 'i' : 'o') + '|' + (G.lastHitT || 0) + '|' + (dv && dv.cd > 0 ? Math.ceil(dv.cd * 8) : 0);
     if (!force && key === hudKey) return; hudKey = key;
     $('.pg-mn').textContent = role.name + ' (you)'; { const mj = $('.pg-mj'); mj.textContent = role.job; mj.title = role.job; } /* (cut short in the frame: the whole job on hover) */
     const hp = Math.max(0, Math.round(G.hp)), hb = $('.pg-hp'); hb.querySelector('i').style.width = hp + '%'; hb.querySelector('span').textContent = Math.round(PG_HP_K * hp / 100) + 'K | ' + hp + '%'; /* (as Flex's own frame reads, Nov 15: "735K | 100%") */
     hb.querySelector('i').style.background = clsC(me) || (GDZ_ROLE[rl(me)] || GDZ_ROLE.r)[1]; /* (your class colour, else your role's: one colour, as in the game) */ hb.className = 'pg-bar pg-hp ' + (hp < 35 ? 'low' : hp < 65 ? 'mid' : '');
-    $('.pg-debs').innerHTML = Object.entries(G.debs).filter(([, v]) => v.until > t).concat(myEggHeld() ? [['shell', { until: t + 99, n: 1 }]] : []).map(([kk, v]) => { const dd = DEB[kk]; return '<span style="border-color:' + dd[1] + ';color:' + dd[1] + '">' + esc(dd[0]) + (v.n > 1 ? ' ×' + v.n : '') + (v.until - t < 60 ? ' <em>' + Math.ceil(v.until - t) + '</em>' : '') + '</span>'; }).join('');
-    $('.pg-clk').textContent = pgClock(t); const bh = $('.pg-bhp'); bh.querySelector('i').style.width = G.bossHp.toFixed(1) + '%'; bh.querySelector('span').textContent = Math.round(G.bossHp) + '%';
-    const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : '') + '  ' + Math.max(0, c.t1 - t).toFixed(1);
+    /* (look C, Nov 16: what's on you as square tags under your frame, by name and stacks, no seconds left; your job last, in gold) */
+    $('.pg-debs').innerHTML = Object.entries(G.debs).filter(([, v]) => v.until > t).concat(myEggHeld() ? [['shell', { until: t + 99, n: 1 }]] : []).map(([kk, v]) => { const dd = DEB[kk]; return '<span class="pg-tag" style="--c:' + dd[1] + '"><i></i>' + esc(dd[0]) + (v.n > 1 ? ' ×' + v.n : '') + '</span>'; }).join('') + jobTag();
+    /* (her frame: her name and health. No fight clock in it: Flex, Nov 16, "remove the timestamps"; .pg-clk stays, empty and hidden) */ const bh = $('.pg-bhp'); bh.querySelector('i').style.width = G.bossHp.toFixed(1) + '%'; bh.querySelector('span').textContent = Math.round(G.bossHp) + '%';
+    const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : ''); /* (the bar empties; no seconds on it, look C) */
       cb.classList.toggle('intr', !!c.intr); cb.classList.toggle('nok', !!P2 && !c.kick && !c.intr); } else cb.style.display = 'none'; /* (phase 2, as in WoW: gold you can kick, grey you can't, red "Interrupted") */
-    modsDraw(t);
-    $('.pg-job p').textContent = jobText(); $('.pg-mc').textContent = G.log.length;
+    modsDraw(t); coachDraw(t); resPrune(t);
+    // (a line stays up at least 2.5 s, unless a dodge or a step due now takes over; NEXT under it while hints are on. Look C: the order big, the rest of the
+    //  line small after it, the key words in their colours on the floor (the yellow bubble, the green half, your gold circle))
+    { const jl = jobPick(), J = G.jobShow, calm = (r) => r === 'c' || r === 'w' || r === 'd' || r === 'e', hold = !!J && J.text !== jl.text && G.t >= J.t && G.t - J.t < 2.5 && calm(J.r) && calm(jl.r);
+      if (!hold && (!J || J.text !== jl.text)) G.jobShow = { text: jl.text, r: jl.r, t: G.t };
+      // (Flex, Nov 17: one place to read. The NOW line says the job line short (pgShort); a call's order takes it for its first 2.5 s, its box gone, unless the
+      //  line is something to do now (PG_URGENT); it changes at most every 2 s unless the new line is urgent: it flipped 9 times in 9 s at the first bubble)
+      const sj = pgShort(G.jobShow.text), L0 = G.lastWarn, cw = L0 && L0.items && L0.items[0] && G.t >= L0.t && G.t - L0.t < 2.5 ? pgCallShort(L0.items[0].text) : '', want = cw && !PG_URGENT.test(sj) ? cw : sj, D = G.nowD;
+      const bare = (x) => String(x || '').replace(/[!.]+$/, ''); /* (the same words with or without its "!" are the same line) */
+      if (!D || (bare(D.text) !== bare(want) && (PG_URGENT.test(want) || !D.text || G.t - D.t >= 2 || G.t < D.t))) G.nowD = { text: want, t: G.t };
+      const nt = $('.pg-job .pg-nowt'), nh = nowHtml(G.nowD.text); if (nt && nt.dataset.k !== nh) { nt.dataset.k = nh; nt.innerHTML = nh; } $('.pg-job').classList.toggle('none', !G.nowD.text);
+      const nx = $('.pg-job .pg-nx'), xh = hints ? nextHtml(jl, t) : ''; if (nx && nx.dataset.k !== xh) { nx.dataset.k = xh; nx.innerHTML = xh; } }
+    $('.pg-mc').textContent = G.log.length; $('.pg-mcw').textContent = G.log.length === 1 ? 'mistake' : 'mistakes'; $('.pg-mis').classList.toggle('has', G.log.length > 0);
     tfDraw(tgtFrame(t)); const tg = $('.pg-tgt'); if (tg) tg.innerHTML = tgtHint(dv);
     { const tb = $('.pg-tab'); if (tb) { const hot = !!(dv && dv.cat && !dv.ok), good = !!(dv && dv.ok); tb.classList.toggle('hot', hot); tb.classList.toggle('good', good); tb.querySelector('span').textContent = dv && dv.cur ? dv.cur.name.split(' ').pop() : 'Target'; }
       const ab = $('.pg-atk'); if (ab) { const rdy = !!dv && dv.cd <= 0, ai = atkIc(); ab.classList.toggle('hot', !!(dv && dv.cat && rdy && !dv.ok)); ab.classList.toggle('good', !!(dv && dv.ok)); ab.classList.toggle('far', !!(dv && dv.cur && !dv.inRange)); ab.classList.remove('on'); ab.querySelector('span').textContent = dv && dv.cur && !dv.inRange ? 'Too far' : 'Attack'; ab.querySelector('i').style.height = dv && dv.cd > 0 ? (dv.cd / GCD * 100).toFixed(1) + '%' : '0';
-        const an = ab.querySelector('.pg-cdn'); if (an) an.textContent = dv && dv.cd > 1 ? Math.ceil(dv.cd) : ''; if (ai !== atkShown) { atkShown = ai; icSet(ab, ai); } } } /* (the attack's icon is your role's: a melee strike, a firebolt, a healer's smite) */
-    [['sprint', G.sprint, 30], ['def', G.def, 90], ['aoe', G.aoe0 == null ? -99 : G.aoe0, AOE.cd]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; const n = $('.pg-act[data-a="' + kk + '"] .pg-cdn'); if (n) n.textContent = left > 1 ? Math.ceil(left) : ''; }); if (P2) P2.hud(t); };
+        const an = ab.querySelector('.pg-cdn'); if (an) an.textContent = ''; /* (no seconds on a button: the dark sweep shows the cooldown, look C) */ if (ai !== atkShown) { atkShown = ai; icSet(ab, ai); } } } /* (the attack's icon is your role's: a melee strike, a firebolt, a healer's smite) */
+    [['sprint', G.sprint, 30], ['def', G.def, 90], ['aoe', G.aoe0 == null ? -99 : G.aoe0, AOE.cd]].forEach(([kk, at, cd]) => { const el = $('.pg-act[data-a="' + kk + '"] i'), left = cd - (t - at); el.style.height = left > 0 ? (left / cd * 100).toFixed(1) + '%' : '0'; const n = $('.pg-act[data-a="' + kk + '"] .pg-cdn'); if (n) n.textContent = ''; }); if (P2) P2.hud(t); };
   // ---- the target frame (Nov 15, Flex: "theres also no healthbar for the target. This should look/feel like youre playing the game(kind of)"): your target's
   // name and a hostile red health bar. An add's own health; Ula'tek, her tail and her heart share hers (they are all her); a Wretch's by the clock, from waking
   // to dying; anything else (phase 2's targets have no health) a full bar with no number. No target: a dim frame, "Tab to pick". A hit flashes the bar ----
@@ -680,23 +972,77 @@ function pgOpen(root, boss, d, pk) {
     const bar = $('.pg-tfh'); bar.querySelector('i').style.width = (tf.none ? 0 : tf.pct == null ? 100 : tf.pct).toFixed(1) + '%'; bar.querySelector('span').textContent = tf.none || tf.pct == null ? '' : Math.round(tf.pct) + '%';
     const h = G.hits || 0; if (h !== hitSeen) { const nw = hitSeen != null && h > hitSeen; hitSeen = h; if (nw && !window.__pgAuto) { tfFlash++; el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit'); } } }; /* (by the hit count: two hits in one step still flash) */
   // (the line under it: what to do about your target, only while a moment needs one: the wrong one picked, too far, or not hitting it)
-  const tgtHint = (dv) => { if (!dv || !dv.cat || dv.ok) return ''; const s0 = (DPS_SAY[dv.cat] || ['Hit the right target'])[0], right = !!dv.cur && isRight(dv.cat, dv.cur);
+  const tgtHint = (dv) => { if (!dv || !dv.cat || dv.ok) return ''; { const un = tgtUnsafe(G.t, dv.cat); if (un) return '<span class="pg-tgr">' + esc(/sweep/.test(un) ? 'Wait: hit after the sweep' : 'Wait: hit after the wave') + '</span>'; } /* (never "get close" into the sweep or the red half: the prompts audit, Nov 16) */ const s0 = (DPS_SAY[dv.cat] || ['Hit the right target'])[0], right = !!dv.cur && isRight(dv.cat, dv.cur);
     return '<span class="pg-tgr">' + esc(!right ? s0 + ': press Tab' : !dv.inRange ? (rl(me) === 'm' ? 'Too far: get close to it' : 'Too far: get closer') : s0 + ': keep pressing 1') + '</span>'; };
   // ---- the boss mods (Nov 15, Flex: "Boss mods"): timer bars like DBM or BigWigs on the left, the coming-up hints (when hints are on) and the boss-mod timers
   // in one list, the same thing once (by name, or the same spell within 1.5 s), soonest first, five at most. Each bar has its spell's icon (the site's, by the
   // fight's spell names in the engine), its name, the seconds left and a fill that empties as the time runs out; under 5 s it lights up ----
-  const MOD_SP = [[/coil/i, 'Spectral Coils'], [/womb/i, 'Toxic Womb'], [/beam/i, 'Toxic Incubation'], [/bubble|fester/i, 'Fester Burst'], [/wrath|bites/i, 'Mother\'s Wrath'], [/thrash|tail sweep/i, 'Mephitic Thrash'],
-    [/heart|rage/i, 'Rage of the Shackled'], [/debris/i, 'Falling Debris'], [/wave|small tails/i, 'Caustic Waves'], [/malice/i, 'Malice'], [/cry|doomscale/i, 'Anguished Cry'], [/fangs|break/i, 'Grasping Fangs'], [/egg/i, null]];
+  const MOD_SP = [[/vein/i, 'Blight Vein'], [/coil/i, 'Spectral Coils'], [/womb/i, 'Toxic Womb'], [/beam/i, 'Toxic Incubation'], [/bubble|fester/i, 'Fester Burst'], [/wrath|bites/i, 'Mother\'s Wrath'], [/thrash|tail sweep/i, 'Mephitic Thrash'],
+    [/heart|rage/i, 'Rage of the Shackled'], [/debris/i, 'Falling Debris'], [/small tail/i, 'Gore Rattle'], [/wave/i, 'Caustic Waves'], /* ("Small tails" its own bar: the prompts audit, Nov 16, found it merged into "Her waves" at 0:56 and 1:53) */ [/malice/i, 'Malice'], [/frontal/i, 'Desperate Thrash'], [/warden/i, 'Writhing Gestation'], /* (phase 2's "Doomscale frontal" bar and call took the Cry's icon, and could drop your "Your kick: Anguished Cry" bar as the same spell (the review, Nov 16); the Wardens' calls too) */ [/cry|doomscale/i, 'Anguished Cry'], [/prey/i, 'Circling Prey'], [/echoes/i, 'Vicious Echoes'], [/bite/i, 'Serpent\'s Bite'], [/purge/i, 'Volatile Purge'], /* (phase 3's: one bar per mechanic, the personal one first; the prompts audit, Nov 16, found three bars for one Circling Prey) */ [/fangs|break/i, 'Grasping Fangs'], [/egg/i, null]];
   const modSp = (n) => { const m = MOD_SP.find(([re]) => re.test(n)); return !m ? null : m[1] || (P2 && P2.part === 2 ? 'Hatching Doom' : 'Call of the Serpent'); }; /* (the intermission's eggs are Call of the Serpent's, Nov 15) */
-  const modBars = (t) => { const L = [], put = (at, name, c) => { if (!(at > t) || !name) return; const sp = modSp(name); if (L.some((q) => q.name === name || (sp && q.sp === sp && Math.abs(q.at - at) <= 1.5))) return;
+  const modBars = (t, all) => { const L = [], put = (at, name, c) => { if (!(at > t) || !name) return; const sp = modSp(name); if (L.some((q) => q.name === name || (sp && q.sp === sp && Math.abs(q.at - at) <= 1.5))) return;
       L.push({ at, name, c: /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : '#5a8cdc', sp, left: at - t, soon: at - t < 5 }); };
     if (hints) upNext(t).forEach((u) => put(u.at, u.text, u.c)); myTimers(t).forEach((q) => put(q.t, q.name, null));
-    return L.sort((a, b) => a.at - b.at).slice(0, 5); };
-  const modIcon = (b) => { if (b.sp && typeof spellIcon === 'function') { try { return '<span class="pg-tmi">' + spellIcon(0, b.sp) + '</span>'; } catch (e) { /* (no icon: the colour square) */ } } return '<span class="pg-tmi pg-tmq"></span>'; };
-  let modKey = null; /* (the bars are made again only when the list changes, so their icons don't flicker; the fills and seconds are set every time) */
-  const modsDraw = (t) => { const el = $('.pg-timers'); if (!el) return; const B = modBars(t), k = B.map((b) => b.name + '@' + b.at).join('|');
-    if (k !== modKey) { modKey = k; el.innerHTML = B.map((b) => '<div class="pg-tm" style="--c:' + b.c + '">' + modIcon(b) + '<div class="pg-tmb"><i></i><span>' + esc(b.name) + '</span><b></b></div></div>').join(''); if (typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (the colour squares stay) */ } } }
-    const rows = el.children; B.forEach((b, i) => { const r = rows && rows[i]; if (!r) return; r.classList.toggle('soon', b.soon); r.querySelector('.pg-tmb i').style.width = Math.max(0, Math.min(100, b.left / 30 * 100)).toFixed(1) + '%'; r.querySelector('.pg-tmb b').textContent = b.soon ? b.left.toFixed(1) : String(Math.ceil(b.left)); }); };
+    L.sort((a, b) => a.at - b.at); return all ? L : L.slice(0, 5); };
+  // ---- the fight path (look C, Nov 16: it takes the boss-mod bars' place and their list, modBars): the part's name and how many of its steps are done, then a
+  // row of diamonds: the last two done (ticked green), the coming one (gold, named), the next (named), a later one (named, dim), the rest small. A thin bar
+  // under each named step empties as it nears: no seconds, no clock. The steps counted: every bar the part shows from where you started (pathPlan) ----
+  const pathPlan = () => { const key = (hints ? 1 : 0) + '|' + me; if (G.pathP && G.pathP.key === key) return G.pathP.L; const L = [], t0 = G.t;
+    for (let k = t0; k < S.end; k += 2) modBars(k, true).forEach((b) => { if (!L.some((q) => q.name === b.name && Math.abs(q.at - b.at) < 4)) L.push({ name: b.name, at: b.at }); });
+    L.sort((a, b) => a.at - b.at); G.pathP = { key, L }; return L; };
+  const pathView = (t) => { if (!G || !S) return null; const up = modBars(t), P = pathPlan(), done = P.filter((q) => q.at <= t);
+    return { label: part.name, n: done.length, of: P.length, done: done.slice(-2).map((q) => q.name),
+      steps: up.map((b, i) => ({ name: b.name, at: b.at, f: Math.max(0, Math.min(1, b.left / 30)), st: i === 0 ? 'now' : i === 1 ? 'next' : 'later', mine: /^Your\b/.test(b.name) })) }; };
+  const pathHtml = (V) => '<div class="pgp-l">' + esc(V.label) + '' /* (no "3 of 31 done": it counted every bar and repeat, Nov 17) */ + '</div><div class="pgp-row">' +
+    V.done.map(() => '<div class="pgp-st past"><i class="pgp-mk"></i></div><b class="pgp-cn"></b>') /* (passed, not ticked: a step you got wrong got a green tick too, Nov 17) */.join('') +
+    V.steps.map((s, i) => (i ? '<b class="pgp-cn"></b>' : '') + '<div class="pgp-st ' + s.st + (i > 2 ? ' sm' : '') + (s.mine ? ' mine' : '') + '"><i class="pgp-mk"></i>' + (i <= 2 ? '<div class="pgp-tx"><b>' + esc(s.name) + '</b><span class="pgp-bar"><i style="width:' + (s.f * 100).toFixed(1) + '%"></i></span></div>' : '') + '</div>').join('') + '</div>';
+  let modKey = null; /* (the path is made again only when its steps change; the bars' fills are set every time) */
+  const modsDraw = (t) => { const el = $('.pg-timers'); if (!el) return; const V = pathView(t); if (!V) return; const k = [V.label, V.n, V.of, V.done.join('~'), V.steps.map((s) => s.name + '@' + s.at.toFixed(1)).join('|')].join('#');
+    if (k !== modKey) { modKey = k; el.innerHTML = pathHtml(V); }
+    const bars = el.querySelectorAll ? el.querySelectorAll('.pgp-bar > i') : null; if (bars) for (let i = 0; i < bars.length && i < V.steps.length; i++) if (bars[i] && bars[i].style) bars[i].style.width = (V.steps[i].f * 100).toFixed(1) + '%'; };
+  // ---- the coach card "Coming up" (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): about 8 s before a mechanic that's new
+  // in this run it slides in on the left and stays until it happens: its title (Name (Short instruction)), one sentence of what happens (PG_COACH), and YOUR JOB in
+  // gold, in the game's own words for you (your step's line in phase 1, else the call it gives you, else the entry's). Your own steps come first; a card that
+  // showed under 2 s comes back the next time. Only while hints are on; never for something that isn't a mechanic (no entry) ----
+  const COACH_LEAD = 8, COACH_SEEN = 2, coachPart = () => (P2 ? (P2.part === 'int' ? 'int' : String(P2.part || 2)) : '1'), coachOf = (k) => (k ? PG_COACH[k + '@' + coachPart()] || PG_COACH[k] || null : null);
+  const stepKey = (s) => (!s ? null : s.k === 'bubble' ? 'Fester Burst' : s.k === 'coil' ? 'Spectral Coils' : s.k === 'heart' ? 'Rage of the Shackled' : s.k === 'egg' || s.k === 'shell' || s.k === 'pick' ? 'Eggs' : null);
+  const capS = (x) => { const s = String(x || '').trim(); return s ? s[0].toUpperCase() + s.slice(1) : ''; };
+  const coachJob = (key, at, t) => { const E0 = coachOf(key) || {}, clean = (x) => pgNoClock(String(x || '').replace(/,?\s*you have \d+ s\b/i, '')).trim();
+    if (!P2) { const st = mySteps(t).filter((s) => stepKey(s) === key).sort((a, b) => Math.abs(a.at - at) - Math.abs(b.at - at))[0]; if (st) return clean(capS(stepSay(st).replace(/^Then:\s*/i, ''))); }
+    if (E0.jf) return E0.jf;
+    /* (the call that's up as the card shows, else the first one after it, up to the mechanic's moment; "Heart open: hit it" says "Hit the heart") */
+    let best = null; (S.warns || []).forEach((w) => { if (w.t > at + 0.3 || at - w.t > 16) return; const p = typeof w.per === 'function' ? w.per(me) : null; if (p === false) return; const x = p ? { ...w, ...p } : w, m = /^([^:!?]{3,40}):\s*(.+)$/.exec(String(x.text || ''));
+      if (!m || pgCoachKey(m[1]) !== key) return; const sc = w.t <= t + 1 ? t + 1 - w.t : 100 + w.t - t; if (!best || sc < best.sc) best = { sc, text: m[2] }; });
+    if (best) { let o = clean(best.text); const s1 = /^(.+?[.!?])(\s|$)/.exec(o); o = (s1 ? s1[1] : o).replace(/!$/, '.'); if (!/[.!?]$/.test(o)) o += '.'; if (E0.it) o = o.replace(/\bit\b/, E0.it); if (o.length > 3) return capS(o); }
+    return E0.j || ''; };
+  // (which card: the highest-priority unseen mechanic due within 8 s (yours first), then the soonest. A card starts only with 2 s or more to read it, and a lower
+  //  one doesn't flash up for a moment when one of yours is about to come: it waits. Seen once it has shown 2 s; a card cut shorter comes back next time)
+  const COACH_MIN = 2, COACH_RAID = new Set(['Fester Burst', 'Rage of the Shackled', 'Circling Prey', 'The Shattering']);
+  const coachNow = (t) => { if (!G || !S || !hints) return null; const C = G.coachS || (G.coachS = { seen: new Set(), cur: null }), seen = (c) => { if (c && t - c.t0 >= COACH_SEEN) C.seen.add(c.k); };
+    if (C.cur && C.cur.t0 > t + 0.01) C.cur = null; /* (the clock went back: a new start) */ if (C.cur && t >= C.cur.at) { seen(C.cur); C.cur = null; }
+    const mine = (k, name) => /^Your\b/.test(name) || COACH_RAID.has(k) || (!P2 && mySteps(t).some((s) => stepKey(s) === k)); /* (the bubble, the heart, Circling Prey and the Shattering are everyone's job) */
+    const L = modBars(t, true).filter((b) => b.at - t <= COACH_LEAD + 2.5).map((b) => { const k = pgCoachKey(b.name); return { k, name: b.name, at: b.at, prio: mine(k, b.name) ? 2 : 1 }; }).filter((q) => q.k && coachOf(q.k) && !C.seen.has(q.k) && (!C.cur || q.k !== C.cur.k)).sort((a, b) => b.prio - a.prio || a.at - b.at);
+    const top = L[0], b = top && top.at - t <= COACH_LEAD ? top : top && top.prio > 1 ? null : L.find((q) => q.at - t <= COACH_LEAD); /* (one of yours just outside the window holds the lower ones back) */
+    if (b && b.at - t >= COACH_MIN && (!C.cur || b.prio > C.cur.prio)) { seen(C.cur); const E0 = coachOf(b.k); C.cur = { ...b, t0: t, t: E0.t, w: E0.w, sp: E0.sp, job: coachJob(b.k, b.at, t) }; }
+    return C.cur; };
+  let coachKey0 = null;
+  const coachDraw = (t) => { const el0 = $('.pg-coach'); if (el0 && el0.classList) el0.classList.remove('on'); }; /* (Flex, Nov 17, of the coach card: "i dont think we need these". The NOW line is the one place to read; the card's old drawing stays below, unused) */
+  const coachDrawOld = (t) => { const el = $('.pg-coach'); if (!el) return; const c = coachNow(t), k = c ? c.k + '|' + c.at.toFixed(1) + '|' + c.job : '';
+    if (k === coachKey0) return; coachKey0 = k; el.classList.toggle('on', !!c); if (!c) { el.innerHTML = ''; return; }
+    const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(c.t) || [0, c.t, '']; let ic = ''; if (c.sp && typeof spellIcon === 'function') { try { ic = spellIcon(0, c.sp); } catch (e) { ic = ''; } }
+    el.innerHTML = '<span class="pgk-k">Coming up</span><h3 class="pgk-t"><span class="pgk-i">' + (ic || '<i class="pgk-d"></i>') + '</span><span>' + esc(m[1]) + '</span>' + (m[2] ? ' <small>(' + esc(m[2]) + ')</small>' : '') + '</h3>' +
+      '<p class="pgk-w">' + esc(c.w) + '</p>' + (c.job ? '<div class="pgk-j"><span>Your job</span><p>' + esc(c.job) + '</p></div>' : '');
+    if (ic && typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (the drawn icon stays) */ } } };
+  // (the NOW line: the order big, anything after it small; the floor's colours on their words. NEXT: your next step in gold, else the next mechanic by name)
+  const kwHtml = (h) => h.replace(/yellow bubble/g, '<span class="pg-kb">$&</span>').replace(/green half/g, '<span class="pg-kg">$&</span>').replace(/\bgold (coil|circle|ring)\b/g, '<span class="pg-km">$&</span>')
+    .replace(/\bred (lanes?|circle|half)\b/g, '<span class="pg-kr">$&</span>').replace(/\borange circle\b/g, '<span class="pg-ko">$&</span>').replace(/\bbrown circles?\b/g, '<span class="pg-kd">$&</span>');
+  const nowHtml = (text) => { const s = String(text || '').trim(); if (!s) return ''; const m = /^(.+?[.!?])\s+(\S.*)$/.exec(s), big = (m ? m[1] : s).replace(/\.$/, ''), rest = m ? m[2] : '';
+    return '<b>' + kwHtml(esc(big)) + '</b>' + (rest ? ' <small>' + kwHtml(esc(rest)) + '</small>' : ''); };
+  const nextHtml = (jl, t) => { const nx = nextText(jl); if (nx) return '<span class="pg-nxk">Next</span><span class="pg-nxm">' + kwHtml(esc(capS(String(nx).replace(/^Then:\s*/i, '')))) + '</span>';
+    const sk = jl && jl.st ? stepKey(jl.st) : null, ck = G.coachS && G.coachS.cur ? G.coachS.cur.k : null, b = modBars(t).find((q) => q.left <= 15 && !(sk && pgCoachKey(q.name) === sk) && !(ck && pgCoachKey(q.name) === ck)); /* (not the step NOW is on, nor the one the coach card is about) */
+    return b ? '<span class="pg-nxk">Next</span><span>' + esc(b.name) + '</span>' : ''; };
+  // (your job as a gold tag under your frame, short: "Egg left · Right Soak #1", as the setup's Play button says it)
+  const jobTag = () => { let s = ''; try { s = mapsOn() ? SETUP.maps.sub() : jobMine() ? (myJob.egg ? 'Egg · ' : '') + (myTeam() === 2 ? 'Left Soak #2' : 'Right Soak #1') : role.job; } catch (e) { s = role.job; } s = pgNoClock(s); return s ? '<span class="pg-tag pg-jtag" title="' + esc(pgNoClock(role.job)) + '">' + esc(s) + '</span>' : ''; };
   // ---- the action bar (Nov 15, Flex: "hotbars with spells on them for the attack/sprint/defensive"): square spell icons with the key in the corner and a
   // short name under each, the cooldown's dark sweep and its seconds; the gold glow when it's the thing to press. Icons by name (loaded at runtime, the site's
   // loader when it's there); a button whose icon can't load stays a plain dark square with its key. Phase 2's Kick gets its icon here too ----
@@ -717,10 +1063,13 @@ function pgOpen(root, boss, d, pk) {
   const press = (a) => { const el = $('.pg-act[data-a="' + a + '"]'); if (!el) return; el.classList.remove('pr'); void el.offsetWidth; el.classList.add('pr'); }; /* (a key or a click shows the button pressed) */
   // (calls that come within 1.5 s of each other share one line, so one never covers the other: "a second Wretch!" showed for 0.2 s, Nov 15 review)
   // (the boss-mod timers: only your coil slam, named "Your coil", Nov 15 review)
-  const myTimers = (t) => S.timers.filter((q) => q.t > t).filter((q) => { const m = /^Coil slam (\d)$/.exec(q.name); return !m || S.soaks.some((z) => Math.abs(z.at - q.t) < 0.01 && z.k === +m[1] - 1 && z.group.includes(me)); }).map((q) => (/^Coil slam \d$/.test(q.name) ? { ...q, name: 'Your coil' } : q)).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5);
+  const myTimers = (t) => S.timers.filter((q) => q.t > t).filter((q) => { const m = /^Coil slam (\d)$/.exec(q.name); return !m || S.soaks.some((z) => Math.abs(z.at - q.t) < 0.01 && z.k === +m[1] - 1 && z.group.includes(me)); }).map((q) => { const m = /^Coil slam (\d)$/.exec(q.name); return m ? { ...q, name: 'Your coil (' + (m[1] === '1' ? 'first' : 'second') + ')' } : q; }).filter((q, i, a) => a.findIndex((z) => z.name === q.name) === i).slice(0, 5);
   // (Main, Nov 15, phase 3 at 7:10 and 8:25: four to six calls shared one line, ran to two lines and under the minimap. Now at most two calls show at
   // once, the one about you first; the rest wait their turn, and a call that has waited 4 s is dropped: the boss-mod bars already have it)
-  const myCall = (w) => (/\b(you|your)\b/i.test(w.text) ? 1 : 0);
+  // (the prompts audit, Nov 16: a call is yours, gold, first in line and pinging, because it is marked so (me, worked out for you as it fires, or a part's gold
+  //  colour), or because it names your own thing first ("Your coil: ...", "Your kick: ..."). Not because it says "you" somewhere: 10 of 14 phase 3 calls
+  //  drew gold that way, and "Venom beam ... only the tank stands in it" went gold to everyone)
+  const myCall = (w) => (w.me != null ? (w.me ? 1 : 0) : w.you || w.mine || w.c === '#f3c969' || /^Your\b/.test(w.text) ? 1 : 0) /* (the parts' own marks count too: phase 2's you, phase 3's mine; merge of the four parts' audits, Nov 16) */, nowCall = (w) => (/\bnow\b/i.test(w.text) ? 1 : 0);
   // (Main's playtest, Nov 15: "Circling Prey: move one quarter left, you have 8 s!" said at 9:05 was still up at 9:18. The line only faded on a screen timer,
   //  which stops when the page isn't in front. Now it goes by the game's clock: a call clears 3.2 s after it shows, a call that gives you N seconds counts
   //  them down and clears when they run out (its moment has passed))
@@ -728,38 +1077,45 @@ function pgOpen(root, boss, d, pk) {
   // the spell and the rest under it, a live countdown on the right; gold when it's about you, the call's own colour otherwise; two at most, the second smaller)
   const alSplit = (r) => { const s1 = /^(.+?)[!.](\s|$)/.exec(r); let o = s1 ? s1[1] : r, d = s1 ? r.slice(s1[0].length).trim() : ''; if (o.length > 40) { const k = o.indexOf(', '); if (k > 8) { d = (o.slice(k + 2) + (d ? ' ' + d : '')).trim(); o = o.slice(0, k); } } return [o.trim(), d]; };
   const alertOf = (it, t, small) => { const m = /^([^:!?]{3,40}):\s*(.+)$/.exec(it.text), title = m ? m[1].trim() : '', rest = (m ? m[2] : it.text).replace(/,?\s*you have \d+ s\b/i, '').trim(), [order, detail] = alSplit(rest || it.text);
-    const left = it.by != null ? Math.max(1, Math.ceil(it.by - t)) : null, mine = !!myCall(it), col = mine ? '#f3c969' : it.c || '#e8edf2', sp = modSp(title || it.text); let ic = '';
+    const mine = !!myCall(it), col = mine ? '#f3c969' : it.c || '#e8edf2', sp = modSp(title || it.text); let ic = '';
     if (sp && typeof spellIcon === 'function') { try { ic = spellIcon(0, sp); } catch (e) { ic = ''; } }
     return '<div class="pg-al' + (mine ? ' you' : '') + (small ? ' small' : '') + '" style="--c:' + col + '"><span class="pg-ali">' + ic + '</span><span class="pg-alt"><b class="pg-alo">' + esc(order) + '</b>' +
-      (title || detail ? '<span class="pg-ald">' + esc([title, detail].filter(Boolean).join(' · ')) + '</span>' : '') + '</span>' + (left != null ? '<em class="pg-aln">' + left + '</em>' : '') + '</div>'; };
+      (title || detail ? '<span class="pg-ald">' + esc([title, detail].filter(Boolean).join(' · ')) + '</span>' : '') + '</span></div>'; }; /* (no countdown number on a call: Flex, Nov 16, "i feel like the game confuses people saying timestamps"; a call that gives you N s still stays up till they run out, and the boss-mod bars count) */
   const alertsHtml = (items, t) => items.map((it, i) => alertOf(it, t, i > 0)).join('');
-  const alKey = (items, t) => items.map((it) => it.text + '|' + (it.by != null ? Math.max(1, Math.ceil(it.by - t)) : '')).join('~');
+  const alKey = (items) => items.map((it) => it.text + '|' + (myCall(it) ? 1 : 0)).join('~');
   const alPut = (el, items, t) => { const k = alKey(items, t); if (el.dataset.k === k) return; el.dataset.k = k; el.innerHTML = alertsHtml(items, t); if (typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (no icons here) */ } } };
   const callBy = (w) => (w.by != null ? w.by : ((m) => (m ? w.t + +m[1] : null))(/you have (\d+) s\b/.exec(w.text)));
   const callTxt = (it, t) => (it.by != null ? it.text.replace(/you have \d+ s\b/, 'you have ' + Math.max(1, Math.ceil(it.by - t)) + ' s') : it.text);
-  const warns = () => { const Q = G.warnQ || (G.warnQ = []); while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) Q.push({ ...S.warns[G.warnI++], q: G.t });
-    for (let i = Q.length - 1; i >= 0; i--) if (G.t - Q[i].q > 4) Q.splice(i, 1);
+  // (the prompts audit, Nov 16: a call worked out for you as it fires (per: your coil, your egg); a small tail's call only when its lanes come near you or your spot;
+  //  a call about a later moment (at) waits while a step of yours under 3 s away comes first (the 2:16 bubble call covered a Soak #2 player's 2:17 coil), and
+  //  doesn't age out while it waits; yours first, then the "now" calls)
+  const tailNear = (tt) => { const sp = mySpot(); return (S.waves || []).some((w) => w.kind === 'tail' && Math.abs(w.t0 - tt) < 0.05 && [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6].some((k) => inWave(w, w.t0 + k, G.x, G.y, 5) || (sp && inWave(w, w.t0 + k, sp[0], sp[1], 3)))); };
+  const waitsFor = (w) => w.at != null && stepSoon(G.t, w.at);
+  const warns = () => { const Q = G.warnQ || (G.warnQ = []);
+    while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w0 = S.warns[G.warnI++], pw = typeof w0.per === 'function' ? w0.per(me, { x: G.x, y: G.y, t: G.t }) : null; /* (per(id, where you stand as it fires)) */ if (pw === false || (w0.tail != null && !tailNear(w0.tail))) continue; Q.push({ ...w0, ...(pw || {}), q: G.t }); }
+    for (let i = Q.length - 1; i >= 0; i--) { if (waitsFor(Q[i])) Q[i].q = G.t; else if (G.t - Q[i].q > 4) Q.splice(i, 1); }
     { const L0 = G.lastWarn, e0 = $('.pg-warn'); if (L0 && L0.items) { const live = L0.items.filter((it) => (it.by != null ? G.t < it.by : G.t - L0.t < 3.2));
       if (!live.length) { if (e0) { e0.innerHTML = ''; e0.dataset.k = ''; e0.classList.remove('in', 'hold'); } G.lastWarn = null; }
       else if (live.length !== L0.items.length || live.some((it) => it.by != null)) { L0.items = live; L0.all = live.map((it) => it.text); L0.n = live.length; if (e0) { alPut(e0, live, G.t); e0.classList.toggle('hold', live.some((it) => it.by != null)); } } } }
     if (!Q.length) return; const L = G.lastWarn, age = L ? G.t - L.t : 99; if (L && L.n >= 2 && age < 2.2) return; /* (the line is full: the rest wait) */
-    Q.sort((a, b) => myCall(b) - myCall(a) || a.t - b.t); const join = !!L && L.n === 1 && age < 1.5, take = Q.splice(0, join ? 1 : 2).filter((w) => !(join && w.text === L.all[0]));
-    if (!take.length) return; sfx(take.some((w) => /\bnow\b/i.test(w.text)) ? 'now' : take.some(myCall) ? 'you' : 'call'); const items = (join ? [L.items[0]] : []).concat(take.map((w) => ({ text: w.text, c: w.c, by: callBy(w) }))), all = items.map((it) => it.text), el = $('.pg-warn');
+    const ready = Q.filter((w) => !waitsFor(w)).sort((a, b) => myCall(b) - myCall(a) || nowCall(b) - nowCall(a) || a.t - b.t); if (!ready.length) return;
+    const join = !!L && L.n === 1 && age < 1.5, take = ready.slice(0, join ? 1 : 2); take.forEach((w) => Q.splice(Q.indexOf(w), 1)); const take2 = take.filter((w) => !(join && w.text === L.all[0]));
+    if (!take2.length) return; sfx(take2.some(nowCall) ? 'now' : take2.some(myCall) ? 'you' : 'call'); const items = (join ? [L.items[0]] : []).concat(take2.map((w) => ({ text: w.text, c: w.c, by: callBy(w), me: w.me }))), all = items.map((it) => it.text), el = $('.pg-warn');
     G.lastWarn = { t: G.t, n: all.length, all, items }; alPut(el, items, G.t); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); el.classList.toggle('hold', items.some((it) => it.by != null)); };
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
-    if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her (the gold circle shows it). Wait for its shell, walk over it, carry it clean, break it in your coil soak.']);
+    const sets = SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
+    if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there first. The second time, it lands in your zone turned with her (the gold circle shows it). Break its shell, walk over it, carry it clean, break it in your coil soak.']);
     else L.push(['No egg', 'Keep out of the carriers\' way.']);
-    if (TEAM && sets[0]) L.push(['Coil soaks', 'Soak #' + sets[0] + (TEAM.ce[sets[0] - 1].includes(id) ? ' with your egg' : ' (filler)') + ': ' + (sets[0] === 1 ? 'the first coil to appear, 0:40 and 2:14' : 'the second coil to appear, 0:43 and 2:17') + '. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
+    if (TEAM && sets[0]) L.push(['Coil soaks', 'Soak #' + sets[0] + (TEAM.ce[sets[0] - 1].includes(id) ? ' with your egg' : ' (filler)') + ': ' + (sets[0] === 1 ? 'the first coil to appear, both times' : 'the second coil to appear, both times') + '. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
     else if (TEAM) L.push(['Coil soaks', 'Not yours: stay out of both circles.']);
-    else L.push(['Coil soaks', 'First set (0:40): team ' + sets[0] + '. Second set (2:14): team ' + sets[1] + '. Team 1 takes the first coil to appear, team 2 the next. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
-    if (TEAM) TEAM.fb.forEach((f, i) => { const j = f.indexOf(id); if (j >= 0) L.push(['Fester Burst ' + (i ? '1:48' : '0:39'), 'Your spot in the bubble: ' + (i ? 11 + j : 1 + j) + ' (a gold circle while you carry your egg).']); });
-    else if (J && carrierOf(id)) L.push(['Fester Burst (0:39 and 1:48)', 'Your spot in the bubble is picked for you: the gold circle. Keep 3 yards from the other carriers.']);
-    L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch at 0:39, 1:10, 1:48 and 2:20. At 1:48 stand on it from her tail\'s sweep at 1:46.']); L.push(['Her tail\'s sweep', 'Out of 35 yards from her tail at 0:49 and 1:46.']);
-    L.push(['Her waves', 'At 0:56 and 1:53: wait on the half she isn\'t pulling her wing back from, then cross behind the first wave.']); L.push(['Small tails', 'Two tails rise at the edge, always on the same spots, and 2.4 s later each fires a short fan of three waves: stand in a gap between their red lanes.']);
-    L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive (1:17) and the heart (2:25)', 'She comes up on either side. In the heart burn, step out of the brown circles.']);
+    else L.push(['Coil soaks', 'First set: team ' + sets[0] + '. Second set: team ' + sets[1] + '. Team 1 takes the first coil to appear, team 2 the next. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
+    if (TEAM) TEAM.fb.forEach((f, i) => { const j = f.indexOf(id); if (j >= 0) L.push(['Fester Burst (' + (i ? 'third' : 'first') + ' bubble)', 'Your spot in the bubble: ' + (i ? 11 + j : 1 + j) + ' (a gold circle while you carry your egg).']); });
+    else if (J && carrierOf(id)) L.push(['Fester Burst (first and third bubbles)', 'Your spot in the bubble is picked for you: the gold circle. Keep 3 yards from the other carriers.']);
+    L.push(['The Wretch\'s bubble', 'Within 10 yards of the Wretch each time it swells, four times. For the third, run to it in front of her as her tail sweeps.']); L.push(['Her tail\'s sweep', 'Run out of 35 yards from her tail, twice.']);
+    L.push(['Her waves', 'Twice: wait in the green half, then cross behind the first wave as the floor swaps.']); L.push(['Small tails', 'Two tails rise at the edge, always on the same spots, and each fires a short fan of three waves: stand in a gap between their red lanes.']);
+    L.push(['Her reach', 'The red circle in front of her is her tank\'s.']); L.push(['The dive and the heart', 'She comes up on either side. When her heart opens, hit it and step out of the brown circles.']);
     return '<ul class="pg-asg">' + L.map(([a, b]) => '<li><b>' + esc(a) + '</b><span>' + esc(b) + '</span></li>').join('') + '</ul>'; };
   // (the start card's glyphs, in the colours the fight uses: an egg, a coil, the Wretch's bubble, a wave; drawn here, no pictures)
   const pgGlyph = (k) => '<svg class="pg-gl" viewBox="0 0 16 16" aria-hidden="true">' + ({
@@ -770,15 +1126,15 @@ function pgOpen(root, boss, d, pk) {
     wave: '<path d="M1.5 11.5Q8 1.5 14.5 11.5Q8 7 1.5 11.5Z" fill="#9be13a" stroke="#06260e" stroke-width=".8"/>' }[k] || '') + '</svg>';
   // (your job in short: three or four plain lines for the start card; the full rundown is one click away)
   const short = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
+    const sets = SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
     const G4 = [carrierOf(id) ? 'egg' : 'noegg', 'coil', 'bubble', 'wave'];
-    L.push(carrierOf(id) ? 'You carry an egg (' + ZN[id][0] + '). It lands at 0:10 and 1:20: pick it up once its shell breaks.' : 'No egg: keep out of the egg carriers\' way.');
-    L.push(sets[0] || sets[1] ? 'Coil team ' + sets[0] + (sets[1] !== sets[0] ? ' at 0:40, team ' + sets[1] + ' at 2:14' : ' at 0:40 and 2:14') + '. Team 1 takes the first coil to appear.' : 'No coil soak: stay out of both circles.');
+    L.push(carrierOf(id) ? 'You carry an egg (' + ZN[id][0] + '). It lands twice: pick it up once its shell breaks.' : 'No egg: keep out of the egg carriers\' way.');
+    L.push(sets[0] || sets[1] ? 'Coil team ' + sets[0] + (sets[1] !== sets[0] ? ' first, then team ' + sets[1] : ' both times') + '. Team 1 takes the first coil to appear.' : 'No coil soak: stay out of both circles.');
     const fbn = TEAM ? TEAM.fb.map((q, i) => { const j = q.indexOf(id); return j >= 0 ? (i ? 11 + j : 1 + j) : 0; }).filter(Boolean) : [];
-    L.push('Get in the Wretch\'s bubble at 0:39, 1:10, 1:48 and 2:20.' + (fbn.length ? ' Your spot: ' + fbn.join(' and ') + '.' : ''));
-    L.push('Dodge every wave. Get out of her tail\'s 35 yards at 0:49 and 1:46.');
+    L.push('Get in the Wretch\'s bubble each time it swells.' + (fbn.length ? ' Your spot: ' + fbn.join(' and ') + '.' : ''));
+    L.push('Dodge every wave. Run out of her tail\'s 35 yards when it sweeps.');
     return '<ul class="pg-short">' + L.map((x, i) => '<li>' + pgGlyph(G4[i]) + esc(x) + '</li>').join('') + '</ul>'; };
-  const START = [[0, 'The pull'], [30, '0:30 · First coils and the bubble'], [44, '0:44 · Tail sweep, then her waves'], [66, '1:06 · Second eggs and the dive'], [98, '1:38 · The hardest waves'], [124, '2:04 · Second coils'], [138, '2:18 · The last bubble and the heart burn']];
+  const START = [[0, 'The pull'], [30, 'First coils and the bubble'], [44, 'Tail sweep, then her waves'], [66, 'Second eggs and the dive'], [98, 'The hardest waves'], [124, 'Second coils'], [138, 'The last bubble and the heart burn']]; /* (no clock times on the card: Flex, Nov 16) */
   // ---- the setup: one screen (Flex via Main, Nov 15: "fix the setup menus in the game ... They are still too complex and confusing"). The part,
   // then two choices, your role and your job, each one row of big buttons, one plain sentence about the job, and one big Play that says what you'll
   // play: it's ready the moment the card opens (a sensible job, or the last one you played), so pressing Play is "just play". Hints, speed and where
@@ -792,17 +1148,17 @@ function pgOpen(root, boss, d, pk) {
     jobs: () => [['egg', 'Egg carrier'], ['c1', 'First coil'], ['c2', 'Second coil']],
     set: (r, jb) => { const keep = jb === 'egg' && myJob.egg && myJob.role === r; myJob = { role: r, egg: jb === 'egg' ? (keep ? myJob.egg : EGG_BY[r]) : null, soak: jb === 'c2' ? [2, 2] : [1, 1], fb: [0, 0] }; jobSave(); },
     say: () => { const slot = jobSlot(myJob); return myJob.egg ? (myJob.role === 'h' ? HEAL_EGG : '') + 'You carry an egg. It lands ' + (ZN[slot][0] === 'by her' ? 'by her' : 'in the ' + ZN[slot][0]) + ': pick it up once its shell breaks, soak the first coil with it, then get in the Wretch\'s bubble.' :
-      myJob.soak[1] === 2 ? 'You soak the second coil to appear (0:43 and 2:17) and get in the Wretch\'s bubble.' : 'You soak the first coil to appear (0:40 and 2:14) and get in the Wretch\'s bubble.'; },
+      myJob.soak[1] === 2 ? 'You soak the second coil to appear, both times, and get in the Wretch\'s bubble.' : 'You soak the first coil to appear, both times, and get in the Wretch\'s bubble.'; },
   };
   const ric = (v) => (typeof GDZ_ROLE !== 'undefined' && GDZ_ROLE[v] ? '<img class="pg-ric" src="https://wow.zamimg.com/images/wow/icons/medium/' + GDZ_ROLE[v][2] + '.jpg" alt="" onerror="this.remove()">' : '');
-  const tiles = (k, opts, cur) => '<div class="pg-tiles" role="group">' + opts.map(([v, t]) => '<button type="button" class="pg-tile' + (String(v) === String(cur) ? ' on' : '') + '" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '">' + (k === 'sr' ? ric(v) : '') + '<span>' + esc(t) + '</span></button>').join('') + '</div>';
+  const tiles = (k, opts, cur) => '<div class="pg-tiles" role="group">' + opts.map(([v, t]) => '<button type="button" class="pg-tile' + (String(v) === String(cur) ? ' on' : '') + '" data-' + k + '="' + v + '" aria-pressed="' + (String(v) === String(cur)) + '">' + (k === 'sr' ? ric(v) : '') + '<span>' + esc(pgNoClock(t)) + '</span></button>').join('') + '</div>';
   const setupHtml = () => { if (TEAM) return '<div class="pg-srow"><span class="pg-sl">You</span><select class="pg-me">' + GDZ_RAID.filter((id) => TEAM.id2[id] && rl(id) !== 't').map((id) => '<option value="' + id + '"' + (id === role.id ? ' selected' : '') + '>' + esc(nm(id)) + ' · ' + esc(teamRole(id).job) + '</option>').join('') + '</select></div>' +
       '<p class="pg-say">Your job comes from <b>' + esc(TEAM.name) + '</b>: ' + esc(role.job) + '.</p>';
     if (!SETUP) return '<div class="pg-job0">' + P2.card() + '</div>'; /* (a part that has no setup yet keeps its own picker) */
     const nw = SETUP.now();
-    if (mapsOn()) { try { return '<div class="pg-srow"><span class="pg-sl">Role</span>' + tiles('sr', SETUP.roles.map((r) => [r, SROLE[r]]), nw.role) + '</div>' + mapsHtml(SETUP.maps) + '<p class="pg-say">' + esc(SETUP.maps.say()) + '</p>'; } catch (e) { console.error('Practice setup maps:', e); /* (no maps here: the job row) */ } }
+    if (mapsOn()) { try { return '<div class="pg-srow"><span class="pg-sl">Role</span>' + tiles('sr', SETUP.roles.map((r) => [r, SROLE[r]]), nw.role) + '</div>' + mapsHtml(SETUP.maps) + '<p class="pg-say">' + esc(pgNoClock(SETUP.maps.say())) + '</p>'; } catch (e) { console.error('Practice setup maps:', e); /* (no maps here: the job row) */ } }
     return '<div class="pg-srow"><span class="pg-sl">Role</span>' + tiles('sr', SETUP.roles.map((r) => [r, SROLE[r]]), nw.role) + '</div>' +
-      '<div class="pg-srow"><span class="pg-sl">Job</span>' + tiles('sj', SETUP.jobs(nw.role), nw.job) + '</div><p class="pg-say">' + esc(SETUP.say()) + '</p>'; };
+      '<div class="pg-srow"><span class="pg-sl">Job</span>' + tiles('sj', SETUP.jobs(nw.role), nw.job) + '</div><p class="pg-say">' + esc(pgNoClock(SETUP.say())) + '</p>'; };
   // (Flex, Nov 16: "each role should ideally be tested on as many mechanics as they are elgible to get", and "assigned positions in soaks, or where they pick
   // up eggs ... let them select those spots without it being crazy complex. I think visual maps that lets them select the spot is best, you should use the
   // plans maps so its something familiar". Phase 1: under your role, the Plan's own maps (ulSvg, UL_PAGES, as Plan draws them for the team's wowutils plan):
@@ -821,12 +1177,12 @@ function pgOpen(root, boss, d, pk) {
   // (a tab with no Plan map (page(key) -> null) shows its spots as plain buttons instead: { id, lab, note, on }. Flex, Nov 16, on a made-up phase 3 map:
   // "where did this come from? Theres no map like this in the plan section", "the soak assignments are just who stands in the soaks", "the soaks are not
   // spread out on mythic". Only the Plan's own maps are drawn; a job that isn't a place is a button)
-  const spotBtns = (M, tab) => '<div class="pg-seg pg-spl" role="group" aria-label="Pick one">' + M.hot(tab).map((h) => '<button type="button" data-mh="' + esc(h.id) + '"' + (h.on ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (h.title ? ' title="' + esc(h.title) + '"' : '') + '><span class="pg-spn">' + esc(h.lab || h.title) + '</span>' + (h.note ? '<span class="pg-spt">' + esc(h.note) + '</span>' : '') + '</button>').join('') + '</div>';
+  const spotBtns = (M, tab) => '<div class="pg-seg pg-spl" role="group" aria-label="Pick one">' + M.hot(tab).map((h) => '<button type="button" data-mh="' + esc(h.id) + '"' + (h.on ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + (h.title ? ' title="' + esc(pgNoClock(h.title)) + '"' : '') + '><span class="pg-spn">' + esc(pgNoClock(h.lab || h.title)) + '</span>' + (h.note ? '<span class="pg-spt">' + esc(pgNoClock(h.note)) + '</span>' : '') + '</button>').join('') + '</div>';
   const mapsHtml = (M) => { const T = M.tabs(), tab = T.some((q) => q[0] === M.tab) ? M.tab : T[0][0], pg = M.page(tab), vb = pg ? pg.vb : [0, 0, 380], k = vb[2] / 380;
-    const hot = pg && M.hot(tab).map((h) => '<circle class="pg-hs' + (h.on ? ' on' : '') + (h.big ? ' big' : '') + '" data-mh="' + esc(h.id) + '" cx="' + MX(h.x) + '" cy="' + MY(h.y) + '" r="' + (h.r * 2.083).toFixed(1) + '"><title>' + esc(h.title) + '</title></circle>' +
+    const hot = pg && M.hot(tab).map((h) => '<circle class="pg-hs' + (h.on ? ' on' : '') + (h.big ? ' big' : '') + '" data-mh="' + esc(h.id) + '" cx="' + MX(h.x) + '" cy="' + MY(h.y) + '" r="' + (h.r * 2.083).toFixed(1) + '"><title>' + esc(pgNoClock(h.title)) + '</title></circle>' +
       (h.you ? '<g pointer-events="none"><circle cx="' + MX(h.x) + '" cy="' + MY(h.y) + '" r="' + (9 * k).toFixed(1) + '" fill="#f3c969" stroke="#0b0d11" stroke-width="' + (1.2 * k).toFixed(2) + '"/><text x="' + MX(h.x) + '" y="' + (MY(h.y) + 3.1 * k).toFixed(1) + '" text-anchor="middle" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="' + (8.5 * k).toFixed(1) + '" fill="#0d1014">You</text></g>' : '')).join('');
-    return '<div class="pg-srow pg-sprow"><span class="pg-sl">Spots</span><div class="pg-spw"><div class="pg-seg pg-sptab" role="group" aria-label="Map">' + T.map(([v, t]) => '<button type="button" data-mt="' + esc(v) + '"' + (v === tab ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(t) + '</button>').join('') +
-      '<button type="button" class="pg-rnd" data-mr="1" title="No assignments yet? Pick random spots your role can take">🎲 Random</button>' + (M.extras ? M.extras() : []).map(([id, t, on]) => '<button type="button" class="pg-mx' + (on ? ' on' : '') + '" data-mx="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(t) + '</button>').join('') + '</div>' +
+    return '<div class="pg-srow pg-sprow"><span class="pg-sl">Spots</span><div class="pg-spw"><div class="pg-seg pg-sptab" role="group" aria-label="Map">' + T.map(([v, t]) => '<button type="button" data-mt="' + esc(v) + '"' + (v === tab ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(pgNoClock(t)) + '</button>').join('') +
+      '<button type="button" class="pg-rnd" data-mr="1" title="No assignments yet? Pick random spots your role can take">🎲 Random</button>' + (M.extras ? M.extras() : []).map(([id, t, on]) => '<button type="button" class="pg-mx' + (on ? ' on' : '') + '" data-mx="' + esc(id) + '" aria-pressed="' + !!on + '">' + esc(pgNoClock(t)) + '</button>').join('') + '</div>' +
       (pg ? '<div class="pg-spmap">' + pg.svg + '<svg class="pg-hot" viewBox="' + [vb[0], vb[1], vb[2], vb[2]].join(' ') + '" xmlns="http://www.w3.org/2000/svg">' + hot + '</svg></div>' : spotBtns(M, tab)) + '</div></div>'; };
   // phase 1's maps: Your egg (the Plan's Pick up eggs page: the eight spots, melee by her, left, right, far, the centre and the edge one, drawn where the game drops
   // each egg in the first set) and Your coil (its Coil soaks page: Right Soak #1, the first coil to appear, or Left Soak #2). You carry an egg and soak a coil by default
@@ -835,23 +1191,23 @@ function pgOpen(root, boss, d, pk) {
   const eggAt = (slot) => PG_UL.inward(PG_UL.planEgg[slot]); /* (the Plan's general place for that egg, on the stone: the egg itself lands at random in that quadrant.
     DO NOT move these rings onto the eggs' landing spots: Flex, Nov 16, "The plans layout is just general locations not exact egg spots remember". Check O holds it) */
   const P1MAPS = { tab: 'egg', tabs: () => [['egg', 'Your egg'], ['coil', 'Your coil']],
-    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myJob.soak[1] === 2 ? 1 : 0;
+    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myTeam() === 2 ? 1 : 0;
       if (key === 'coil' && myJob.egg) { D.teams[ti] = ['You']; D.ce[ti] = ['You']; } const pg = key === 'egg' ? UL_PAGES.eggs[0] : UL_PAGES.coils[0]; /* (an egg carrier on the Plan's numbered spot in the circle; without an egg, You is drawn in the middle of your circle (hot: you), where the game stands you, not in the Plan's list under it (review, Nov 16)) */
       return { svg: ulSvg(pg, D, new Map([['you', { color: '#f3c969' }]]), {}), vb: UL_VB[pg.vb] || UL_VB.mid }; },
     hot: (key) => (key === 'egg' ? EGG_SP.filter(([slot, z]) => eggFor(myJob.role, z) || slot === myJob.egg).map(([slot, z, i]) => { const p = eggAt(slot), on = slot === myJob.egg; return { id: slot, x: p[0], y: p[1], r: 7.2, title: (z === 'melee' ? 'By her' : ZNAME[z][0].toUpperCase() + ZNAME[z].slice(1) + ' quadrant') + ': the ' + (i ? 'outer' : 'inner') + ' egg (it lands somewhere there)', on, you: on }; })
-      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = (myJob.soak[1] === 2 ? 2 : 1) === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' + (myJob.egg ? ' (egg carriers: in the second set)' : '') }; })),
-    pick: (key, id) => { if (key === 'egg') myJob = { ...myJob, egg: id, fb: [0, 0] }; else { const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
+      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = myTeam() === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' }; })),
+    pick: (key, id) => { if (key === 'egg') { const te = PG_UL.eggO[id] ? eggTeam(id) : myJob.soak[1]; myJob = { ...myJob, egg: id, soak: [te, te], fb: [0, 0] }; } else { /* (an egg takes its zone's coil team, as on the plan's Egg Clear map) */ const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
     extras: () => [['noegg', 'No egg', !myJob.egg]], extra: (id) => { if (id === 'noegg') { myJob = { ...myJob, egg: null, fb: [0, 0] }; jobSave(); } },
     random: () => { const ok = EGG_SP.filter((q) => eggFor(myJob.role, q[1])), q = ok[Math.floor(Math.random() * ok.length)], tm = Math.random() < 0.5 ? 1 : 2; myJob = { ...myJob, egg: q ? q[0] : null, soak: [tm, tm], fb: [0, 0] }; jobSave(); },
     role: (r) => { const es = EGG_SP.find((q) => q[0] === myJob.egg), keep = es && eggFor(r, es[1]); myJob = { ...myJob, role: r, egg: myJob.egg ? (keep ? myJob.egg : EGG_BY[r]) : null, fb: [0, 0] }; jobSave(); },
     // (an egg carrier takes the first coil in set 1, in the bubble, whatever their pick (jobSoak); Left Soak #2 is theirs in the second set only. The sentence said
     //  "pick it up, then soak Left Soak #2" while the game stood them in the first coil (review, Nov 16))
-    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myJob.soak[1] === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'take the first coil in the Wretch\'s bubble with the other egg carriers, and Left Soak #2 in the second set.' : 'soak Right Soak #1, the first coil to appear, and get in the Wretch\'s bubble.')
+    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myTeam() === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'break it in Left Soak #2, the second coil to appear (both sets), and get in the Wretch\'s bubble.' : 'break it in Right Soak #1, the first coil to appear (both sets), and get in the Wretch\'s bubble.')
       : 'No egg: you soak ' + (t2 ? 'Left Soak #2, the second coil to appear' : 'Right Soak #1, the first coil to appear') + ', and get in the Wretch\'s bubble.'; },
-    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myJob.soak[1] === 2 ? (myJob.egg ? 'Soak #1, then Left Soak #2' : 'Left Soak #2') : 'Right Soak #1') };
+    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myTeam() === 2 ? 'Left Soak #2' : 'Right Soak #1') };
   if (SETUP && !P2) SETUP.maps = P1MAPS;
   const panel = () => setupHtml(); /* (for the test) */
-  const playSub = () => role.name + ' · ' + (TEAM ? role.job : mapsOn() ? SETUP.maps.sub() : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job);
+  const playSub = () => pgNoClock(role.name + ' · ' + (TEAM ? role.job : mapsOn() ? SETUP.maps.sub() : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job)); /* (no clock time on the Play button, Nov 16) */
   const pick = () => { stop(); paused = true; card.className = 'pg-card on'; if (TEAM && (!pickedMe || !role || !TEAM.id2[role.id] || rl(role.id) === 't')) pickedMe = true, role = teamRole(TEAM.you && rl(TEAM.you) !== 't' ? TEAM.you : CAR8.find((c) => TEAM.id2[c]) || GDZ_RAID.find((c) => TEAM.id2[c] && rl(c) !== 't'));
     if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob);
     const parts = Object.keys(PG_PARTS[boss] || {}).filter((k) => k === d || PG_PARTS[boss][k].d === d), pkNow = pk || d; /* (the parts of the fight you can practise) */
@@ -861,9 +1217,9 @@ function pgOpen(root, boss, d, pk) {
       (parts.length > 1 ? '<div class="pg-seg pg-part" role="group" aria-label="Part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div>' : '') + '</div>' +
       '<div class="pg-sbox">' + setupHtml() + '</div>' +
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
-      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button>' +
-      '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
-      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
+      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="Your figure in 3D">Look <select class="pg-look">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
+      '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(pgNoClock(n)) + '</option>').join('') + '</select></label></div>' +
+      '<p class="pg-keys">Move: W A S D · Click a mob or Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Play) */ } }; /* (the picture behind the card is you) */
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
@@ -878,6 +1234,7 @@ function pgOpen(root, boss, d, pk) {
     card.querySelectorAll('.pg-part button').forEach((b) => (b.onclick = () => { if (b.dataset.v === pkNow) return; close(); pgOpen(root, boss, d, b.dataset.v === d ? null : b.dataset.v); }));
     const hb = card.querySelector('.pg-hint'); hb.onclick = () => { hints = !hints; try { localStorage.setItem('wla-pg-hints', hints ? '1' : '0'); } catch (e) { /* (no storage) */ } hb.textContent = hints ? 'Hints on' : 'Hints off'; hb.setAttribute('aria-pressed', String(hints)); };
     const sb = card.querySelector('.pg-spd'); sb.onclick = () => { speed = speed < 1 ? 1 : 0.5; sb.textContent = speed < 1 ? 'Half speed' : 'Normal speed'; sb.setAttribute('aria-pressed', String(speed < 1)); };
+    const lb = card.querySelector('.pg-look'); if (lb) lb.onchange = (e) => { look = LOOKS.includes(e.target.value) ? e.target.value : 'auto'; try { localStorage.setItem('wla-pg-look', look); } catch (er) { /* (no storage) */ } };
     card.querySelector('.pg-at').onchange = (e) => { startAt = +e.target.value || 0; };
     card.querySelector('.pg-go').onclick = begin; };
   const ffTo = (T0) => { if (!(T0 > 0)) return; window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; }
@@ -886,8 +1243,12 @@ function pgOpen(root, boss, d, pk) {
     //  in that coil, as the plan has it. Starting at 2:18 you held an egg with no coil left to break it, and the job line told you to break it in your soak)
     G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone' || !(e.land < T0)) return; const mineS = S.soaks.filter((s) => s.at > e.land && s.group.includes(me)); if (mineS.length && !mineS.some((s) => s.at > T0)) { e.state = 'gone'; e.who = null; } });
     G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.aoe0 = -99; G.aoeFx = []; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; G.warnQ = []; G.lastWarn = null; if (P2) P2.ff(); };
-  const begin = () => { { const c = sndOn ? sndCtx() : null; if (c && c.state === 'suspended' && c.resume) c.resume().catch(() => {}); } me = role.id; reset(); ffTo(startAt); draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick');
+  const begin = () => { { const c = sndOn ? sndCtx() : null; if (c && c.state === 'suspended' && c.resume) c.resume().catch(() => {}); } me = role.id; reset(); ffTo(startAt); { const rs = $('.pg-res'); if (rs) rs.innerHTML = ''; } draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick');
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick'); setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; sfx('go'); go(); } }; setTimeout(tick, 750); };
+  // (the death card: what killed you and the tip, with no clock time on top and none in the words (it read "3:09 ... You didn't kick Malice (3:04): it hit
+  //  everyone every second for 6 s.", Nov 16); the result screen's list keeps when. tests/practice-game.js check S)
+  const deathCard = (why) => '<div class="pg-cin pg-died"><span class="pg-k">' + esc(part.name) + '</span><h2>You died</h2><p>' + esc(noTimes(why.text)) + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(noTimes(why.tip)) + '</p>' : '') +
+    '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">End the run</button></div></div>';
   const died = () => { stop(); paused = true; G.deaths++; const L0 = G.log.slice(), e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); } /* (it's really there when you keep going, Nov 15 audit) */
     // (what killed you, the release sweep, Nov 16: the newest thing that hit you in the last 6 s by its time, then an egg that hatched on you, then the venom
     //  off the platform, then the poison on you. A damage-moment line (kind dps) is never it: it is dated at the moment's start and pushed when the moment
@@ -896,8 +1257,7 @@ function pgOpen(root, boss, d, pk) {
     const why = G.adds.some((a) => a.kind === 'viper') && G.t - (G.lastSting == null ? -99 : G.lastSting) < 4 ? { text: 'The Viper\'s stings wore you down.', tip: 'Kill a Viper at once: press Tab to pick it, then keep pressing 1 until it dies.' } : last6((m) => m.kind !== 'venom' && m.kind !== 'viper' && m.kind !== 'dps') || last6((m) => m.kind === 'viper') || last6((m) => m.kind === 'venom') ||
       (dots.length ? { text: dots.join(' and ') + ' wore you down.', tip: has('venom') ? 'Caustic Venom stacks each time a wave hits you: dodge every wave.' : '' } : { text: 'Your health ran out.' });
     (G.deathAt = G.deathAt || []).push({ t: G.t, why: why.text || '' }); /* (for the result screen's list) */
-    card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin"><span class="pg-k">' + pgClock(G.t) + '</span><h2>You died</h2><p>' + esc(why.text || '') + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(why.tip) + '</p>' : '') +
-      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">End the run</button></div></div>';
+    card.className = 'pg-card on'; card.innerHTML = deathCard(why);
     // (Keep going stays: a death still costs its 20 points. A part can clear what was still hurting you, P2.revive: phase 2 cancels a missed Malice's last ticks,
     //  so one miss can't kill you twice. End the run shows the result screen with your grade and mistakes; it went straight to the setup card, no result.
     //  The release sweep, Nov 16: "there are no retrys in the game, only failures and wipes")
@@ -919,11 +1279,16 @@ function pgOpen(root, boss, d, pk) {
     card.querySelector('.pg-copy').onclick = async (e) => { const b = e.currentTarget; let done = false; try { await navigator.clipboard.writeText(txt); done = true; } catch (er) { /* (no clipboard) */ } b.textContent = done ? 'Copied: post it in Discord' : txt; }; };
 
   // ---- the loop ----
+  // (a part may run its clock faster through a stretch with nothing to do: P2.rush(t), 2 or 1 (phase 2's walk from the gates to the Wardens, Flex, Nov 16: "a weird
+  //  timing pause that feels off"). Only while playing, never paused; the steps are the same, they just come sooner, and the tag by the clock says so)
+  const rushK = () => (G && !paused && P2 && typeof P2.rush === 'function' ? Math.max(1, Math.min(2, +P2.rush(G.t) || 1)) : 1);
+  const rushTag = (on) => { const el = $('.pg-rush'); if (el && el.classList) el.classList.toggle('on', !!on); };
+  const advance = (dt) => { let left = dt * speed * rushK(); while (left > 1e-6) { const h = Math.min(0.02, left); step1(h); left -= h; if (G.hp <= 0 || G.t >= S.end) break; } };
   const frame = (now) => { raf = null; if (!ov.isConnected || paused) return; const dt = last ? Math.min(0.05, (now - last) / 1000) : 0; last = now;
-    let left = dt * speed; while (left > 1e-6) { const h = Math.min(0.02, left); step1(h); left -= h; if (G.hp <= 0 || G.t >= S.end) break; }
+    advance(dt);
     countdown(); warns(); draw(); hud(); if (G.hp <= 0) { died(); return; } if (G.t >= S.end) { end(); return; } raf = requestAnimationFrame(frame); };
   const go = () => { last = 0; if (!raf) raf = requestAnimationFrame(frame); };
-  const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; };
+  const stop = () => { if (raf) cancelAnimationFrame(raf); raf = null; rushTag(false); };
   const pauseT = () => { if (!G || card.classList.contains('on')) return; paused = !paused; if (paused) { stop(); const w = $('.pg-warn'); w.textContent = 'Paused (Space to go on)'; w.style.color = '#fff'; w.classList.remove('in'); void w.offsetWidth; w.classList.add('in'); } else go(); };
   const K = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
   const kd = (e) => { if (!ov.isConnected) return; const tg = e.target && e.target.tagName, typing = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
@@ -937,17 +1302,17 @@ function pgOpen(root, boss, d, pk) {
     if (G && !paused && e.code === 'KeyQ') { defKey(e); return; }
     const k = K[e.code]; if (k) { e.preventDefault(); keys[k] = true; target = null; } };
   const sprintKey = (e) => { if (!(e && e.repeat)) press('sprint'); if (G.t - G.sprint >= 30) { G.sprint = G.t; deb('sprint', 3); hud(true); } };
-  const defKey = (e) => { if (!(e && e.repeat)) press('def'); if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } };
+  const defKey = (e) => { if (!(e && e.repeat)) press('def'); if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive on: half damage.'); hud(true); } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
   document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
-  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
+  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); pickTgtAt(wp); }); /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it") */
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
-  const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt,
-    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G && !pickTgtAt(p)) target = p; }, dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
+  const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt, tgts: () => (G ? tgtList(G.t) : []), look: () => look, cls: (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].cls || '') : ''),
+    spot: () => mySpot(), tgtKey: (k) => { if (paused || !G || !tgtList(G.t).some((o) => o.key === k)) return false; press('tgt'); G.tgt = k; hud(true); return true; }, /* (a click on a mob in 3D targets it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing") */ dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
@@ -984,7 +1349,7 @@ function pgOpen(root, boss, d, pk) {
       const car = G.eggs.filter((e) => e.state === 'held' && e.who).map((e) => e.who); for (let i = 0; i < car.length; i++) for (let j = i + 1; j < car.length; j++) { const a = car[i] === me ? { x: G.x, y: G.y } : G.bots[car[i]], c = car[j] === me ? { x: G.x, y: G.y } : G.bots[car[j]]; if (Math.hypot(a.x - c.x, a.y - c.y) < 3) add('two carriers within 3 yards', car[i] + '+' + car[j], t); }
       if (P2) P2.auditStep(t0, t, add); const ht = S.herTank(S.dive.surf); if (!P2 && t > S.dive.surf && t0 <= S.dive.surf && pgDist([G.bots[ht].x, G.bots[ht].y], S.dive.to) > 12) add('her tank not at the bubbles when she surfaced', ht, t); } } finally { window.__pgAuto = false; }
     return Object.entries(out).sort((a, b) => b[1].n - a[1].n).map(([kk, v]) => kk + ' × ' + v.n + ' [' + [...v.who].join(' ') + '] ' + v.t.join(' ')); };
-  window.__pgDbg = { get P2() { return P2; }, kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, jobSlot: () => jobSlot(myJob), panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, alerts: (items) => alertsHtml(items, G.t), walkTo: (p) => { target = p; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), aoe: () => aoeKey(), snd: (on) => { if (on != null) sndSet(on); return sndOn; }, cdn: () => countdown(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
+  window.__pgDbg = { get P2() { return P2; }, jobPick: () => jobPick(), next: () => nextText(jobPick()), said: () => said.slice(), v3a: v3api, steps: () => mySteps(G.t).map((s) => ({ k: s.k, at: s.at, from: s.from })), stepSpot: () => { const sp = stepSpot(curStep(G.t), G.t); return sp ? { T: sp.T, rad: sp.rad, inside: sp.inside(G.x, G.y) } : null; }, pathClear: (a, b, s) => pathClear(a, b, s), alertTexts: (items) => items.map((it) => { const h = alertOf(it, G.t, false); return { mine: /class="pg-al you/.test(h), order: (/pg-alo">([^<]*)/.exec(h) || [])[1] || '', detail: (/pg-ald">([^<]*)/.exec(h) || [])[1] || '', num: /pg-aln/.test(h) }; }), myCall: (w) => myCall(w), kick: () => P2 && P2.kick(), html: () => hudHtml(), tf: () => tgtFrame(G.t), mods: () => modBars(G.t), deco: (h) => actDeco(h), get atkIc() { return atkShown; }, get tfFlash() { return tfFlash; }, get role() { return role; }, get log() { return G ? G.log.map((m) => pgClock(m.t) + ' ' + m.text) : []; }, grade: () => grade(), get teamWhy() { return teamWhy; }, get G() { return G; }, get S() { return S; }, get myJob() { return myJob; }, set myJob(j) { myJob = j; }, hint: () => { hintC = null; return hintNow(); }, upNext: () => upNext(G.t), set hints(v) { hints = !!v; }, pathView: () => pathView(G.t), coach: () => { const c = coachNow(G.t); return c ? { k: c.k, name: c.name, at: c.at, title: c.t, what: c.w, job: c.job } : null; }, nowHtml: () => nowHtml(G.nowD ? G.nowD.text : pgShort(jobPick().text)), nextHtml: () => nextHtml(jobPick(), G.t), /* (look C, Nov 16: tests/practice-shared.js check N) */ jobSlot: () => jobSlot(myJob), pause: () => { paused = true; stop(); }, get rushing() { return rushK() > 1; }, panel: () => panel(), setupApi: () => SETUP, asg: (id) => asg(id), short: (id) => short(id), jobRole: () => jobRole(myJob), dps: () => dpsView(), ff: (T0) => { ffTo(T0); return G.t; }, alerts: (items) => alertsHtml(items, G.t), walkTo: (p) => { target = p; }, warnsNow: () => { warns(); return G.lastWarn; }, hatchMine: () => { const e = myEggHeld() || G.eggs.find((q) => q.id === me && q.state !== 'gone'); if (!e) return false; hatch(e, 'Check', 'Check'); return true; }, dpsList: () => (G.dpsM && G.dpsM.list) || [], stepOwn: (n) => { for (let i = 0; i < n; i++) step1(0.05); return G.t; }, tgts: () => tgtList(G.t), set tgt(k) { G.tgt = k; }, get tgt() { return G.tgt; }, atk: () => atkKey(), aoe: () => aoeKey(), snd: (on) => { if (on != null) sndSet(on); return sndOn; }, cdn: () => countdown(), halves: () => halvesAt(G.t), eggWarn: () => eggWarnAt(), timers: () => myTimers(G.t).map((q) => q.name), sim, audit, step: (n) => { window.__pgAuto = true; try { for (let i = 0; i < n; i++) step1(0.05); } finally { window.__pgAuto = false; } return G.t; }, job: (id) => jobOf(id, G.t), play: () => { card.className = 'pg-card'; card.innerHTML = ''; paused = false; go(); }, set pos(p) { G.x = p[0]; G.y = p[1]; }, frame: () => { draw(); hud(true); }, at: (T0, id, more) => { stop(); paused = true; me = id || me; role = TEAM && TEAM.id2[me] ? teamRole(me) : part.roles.find((r) => r.id === me) || role; reset({ east: false, seed: 3, tailEast: false, first: [false, false], ...(more || {}) }); window.__pgAuto = true; try { while (G.t < T0) step1(0.05); } finally { window.__pgAuto = false; } draw(); hud(true); warns(); return G.t; } };
 }
 
 function pgCss() {
@@ -994,75 +1359,126 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg { position: fixed; inset: 0; z-index: 72; background: #05070a; }
 .pg-in { position: absolute; inset: 0; overflow: hidden; font-family: var(--body, system-ui, sans-serif); color: #e8edf2; user-select: none; }
 .pg-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
-/* (the screen, Nov 15: laid out like a raider's UI; every rule under .pg so none of it reaches the site's own pg- classes) */
+/* (the screen, look C "Minimal", Nov 16, Flex: "Yes, go with C": glass panels with a hairline, square corners, gold only for what's yours, the floor's
+   colours on their words; laid out like a raider's UI. Every rule under .pg so none of it reaches the site's own pg- classes) */
+.pg { --pgg: #e6b450; --pgm: #f3c969; --pgok: #7ee08f; --pgbad: #ff8f87; --pgbub: #e3f55a; --pgtx: #eef1f5; --pgmu: #a4abb8; --pgdim: #7d8592; --pgglass: rgba(9,11,15,.72); --pgln: rgba(255,255,255,.10); --pgln2: rgba(255,255,255,.18); }
+.pg .pg-in { font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
 .pg .pg-nm { display: flex; align-items: baseline; gap: 8px; min-width: 0; margin-bottom: 4px; } .pg .pg-nm b { flex: none; font: 700 14px var(--head, system-ui); color: #fff; text-shadow: 0 1px 3px #000; }
 .pg .pg-nm span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #c2cbd5; text-shadow: 0 1px 3px #000; }
-.pg .pg-bar { position: relative; height: 20px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.18); overflow: hidden; }
-.pg .pg-bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #3fbf5a; transition: width .1s linear; } .pg .pg-bar span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000; }
-.pg .pg-hp.mid i { background: #d9a93a; } .pg .pg-hp.low i { background: #d8483e; }
-/* (top right, where WoW's minimap is: the minimap, the 2D | 3D switch and your mistakes under it, then her boss frame; the close button in the corner) */
-.pg .pg-tr { position: absolute; top: 12px; right: 54px; width: 200px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-.pg .pg-mini { display: block; width: 200px; height: 200px; border: 1px solid rgba(255,255,255,.2); pointer-events: none; }
-.pg .pg-trow { display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 6px; } /* (wraps in the 150 px column on a narrow window: Mistakes stuck out past the minimap) */
-.pg .pg-mis { display: flex; align-items: center; gap: 6px; padding: 0 9px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.18); font: 600 12px var(--body, system-ui); color: #aab4c0; } .pg .pg-mis b { font: 800 16px var(--head, system-ui); color: #ff8f87; font-variant-numeric: tabular-nums; }
-.pg .pg-bossf { padding: 5px 6px 6px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.2); } .pg .pg-bossf .pg-nm { justify-content: space-between; } .pg .pg-clk { font: 800 15px var(--head, system-ui) !important; color: #fff !important; font-variant-numeric: tabular-nums; }
-.pg .pg-bhp i { background: #b0303a; }
-.pg .pg-x { position: absolute; top: 12px; right: 14px; z-index: 6; width: 32px; height: 32px; border: 1px solid rgba(255,255,255,.25); background: rgba(10,12,16,.85); color: #cfd6de; font-size: 15px; cursor: pointer; } .pg .pg-x:hover { border-color: #f3c969; color: #fff; }
-/* (left side: the boss mods, timer bars like DBM's: an icon, the name, the seconds; the fill empties as the time runs out, brighter under 5 s) */
-.pg .pg-timers { position: absolute; left: 14px; top: 36%; width: 270px; display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
-.pg .pg-tm { display: flex; height: 24px; background: rgba(10,12,16,.85); border: 1px solid rgba(255,255,255,.16); }
-.pg .pg-tmi { position: relative; flex: none; width: 22px; height: 22px; overflow: hidden; background: #0b0d11; border-right: 1px solid #000; } .pg .pg-tmq { background: var(--c); opacity: .7; }
-.pg .pg-tmi .icw { display: block; width: 22px; height: 22px; margin: 0; vertical-align: top; } .pg .pg-tmi .icw img.oi { border-radius: 0; box-shadow: none; } .pg .pg-tmi .icw svg rect { rx: 0; }
-.pg .pg-tmb { position: relative; flex: 1; min-width: 0; } .pg .pg-tmb i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); opacity: .38; transition: width .25s linear; }
-.pg .pg-tmb span { position: absolute; left: 7px; right: 42px; top: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12.5px/22px var(--body, system-ui); color: #e8edf2; text-shadow: 0 1px 2px #000; }
-.pg .pg-tmb b { position: absolute; right: 7px; top: 0; font: 700 12.5px/22px var(--head, system-ui); color: #e8edf2; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
-.pg .pg-tm.soon { border-color: var(--c); } .pg .pg-tm.soon .pg-tmb i { opacity: .85; } .pg .pg-tm.soon .pg-tmb span, .pg .pg-tm.soon .pg-tmb b { color: #fff; font-weight: 800; }
-.pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the boss-mod bars on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
+.pg .pg-bar { position: relative; height: 22px; background: rgba(20,23,29,.92); border: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.10); overflow: hidden; }
+.pg .pg-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: #3fbf5a; transition: width .1s linear; } .pg .pg-bar > i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,0) 55%, rgba(0,0,0,.18)); }
+.pg .pg-bar span { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; font: 700 13px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.pg .pg-hp.mid > i { background: #d9a93a !important; } .pg .pg-hp.low > i { background: #d8483e !important; }
+.pg .glass, .pg .pg-mini, .pg .pg-bossf, .pg .pg-coach, .pg .pg-snd, .pg .pg-x { backdrop-filter: blur(10px) saturate(1.15); -webkit-backdrop-filter: blur(10px) saturate(1.15); }
+/* (top right, where WoW's minimap is: your mistakes, sound and close in one row, then the minimap, then her frame) */
+.pg .pg-tr { position: absolute; top: 16px; right: 20px; width: 200px; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.pg .pg-trow { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; } /* (wraps in the 150 px column on a narrow window: Mistakes stuck out past the minimap) */
+.pg .pg-mis { margin-right: auto; display: flex; align-items: baseline; gap: 6px; padding: 0; background: none; border: 0; font: 600 13px var(--body, system-ui); color: var(--pgmu); text-shadow: 0 1px 3px #000; }
+.pg .pg-mis b { font: 700 17px var(--head, system-ui); color: #dfe4ea; font-variant-numeric: tabular-nums; } .pg .pg-mis.has b { color: var(--pgbad); }
+.pg .pg-snd, .pg .pg-x { position: static; flex: none; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 1px solid var(--pgln); background: var(--pgglass); color: #cfd6de; cursor: pointer; pointer-events: auto; }
+.pg .pg-snd svg, .pg .pg-x svg { display: block; width: 15px; height: 15px; } .pg .pg-snd:not(.on) { color: var(--pgdim); } .pg .pg-snd:hover, .pg .pg-x:hover { color: #fff; border-color: rgba(243,201,105,.6); }
+.pg .pg-mini { display: block; width: 200px; height: 200px; border: 1px solid var(--pgln); background: var(--pgglass); pointer-events: none; }
+.pg .pg-bossf { padding: 8px 9px 9px; background: var(--pgglass); border: 1px solid var(--pgln); } .pg .pg-bossf .pg-nm { display: none; } .pg .pg-clk { display: none !important; }
+.pg .pg-bhp > i { background: linear-gradient(90deg, #8f2530, #b8323d); }
+.pg .pg-x:focus-visible, .pg .pg-snd:focus-visible { outline: 1px solid var(--pgm); outline-offset: 1px; }
+/* (top left, the fight path (look C): the part, how many steps are done, then the diamonds; a thin bar under each named step empties as it nears, no seconds) */
+.pg .pg-timers { position: absolute; left: 28px; top: 22px; max-width: calc(100% - 290px); pointer-events: none; }
+.pg .pgp-l { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgmu); text-shadow: 0 1px 3px #000; }
+.pg .pgp-l em { font-style: normal; font-weight: 600; letter-spacing: .04em; color: var(--pgdim); }
+.pg .pgp-row { display: flex; align-items: flex-start; flex-wrap: nowrap; overflow: hidden; }
+.pg .pgp-st { flex: none; display: flex; align-items: flex-start; gap: 9px; min-width: 0; }
+.pg .pgp-mk { flex: none; width: 18px; height: 18px; margin-top: 1px; display: grid; place-items: center; transform: rotate(45deg); }
+.pg .pgp-mk > svg { width: 11px; height: 11px; transform: rotate(-45deg); }
+.pg .pgp-st.done .pgp-mk { background: rgba(95,211,95,.18); border: 1px solid rgba(126,224,143,.7); }
+.pg .pgp-st.now .pgp-mk { width: 20px; height: 20px; margin-top: 0; background: var(--pgm); border: 1px solid #fff3c9; box-shadow: 0 0 0 4px rgba(243,201,105,.18), 0 0 18px rgba(243,201,105,.75); }
+.pg .pgp-st.next .pgp-mk, .pg .pgp-st.later .pgp-mk { background: rgba(9,11,15,.6); border: 1px solid rgba(255,255,255,.42); }
+.pg .pgp-st.later .pgp-mk { width: 14px; height: 14px; margin-top: 3px; border-color: rgba(255,255,255,.24); } .pg .pgp-st.sm .pgp-mk { width: 10px; height: 10px; margin-top: 5px; }
+.pg .pgp-cn { flex: none; width: 22px; height: 2px; margin: 10px 8px 0; background: rgba(255,255,255,.22); } .pg .pgp-cn.done { width: 12px; margin: 10px 3px 0; background: rgba(126,224,143,.55); }
+.pg .pgp-tx { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.pg .pgp-tx b { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 15px/20px var(--body, system-ui); color: #fff; text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.6); }
+.pg .pgp-st.next .pgp-tx b { color: #dfe4ea; font-weight: 600; } .pg .pgp-st.later .pgp-tx b { color: var(--pgmu); font-weight: 600; font-size: 14px; }
+.pg .pgp-bar { position: relative; display: block; width: 100%; min-width: 92px; height: 3px; background: rgba(255,255,255,.14); }
+.pg .pgp-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,255,255,.55); transition: width .25s linear; } .pg .pgp-st.now .pgp-bar > i { background: var(--pgm); box-shadow: 0 0 8px rgba(243,201,105,.8); }
+.pg .pg-tmi .icw svg rect { rx: 0; } /* (the old boss-mod bars' icons, kept square wherever an icon like them shows) */
+/* (under the path, look C: a short green chip for a step done; it fades) */
+.pg .pg-res { position: absolute; left: 28px; top: 92px; max-width: 280px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; pointer-events: none; }
+.pg .pg-okc { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 28px; padding: 4px 12px 4px 10px; background: rgba(95,211,95,.12); border: 1px solid rgba(126,224,143,.38); color: #b6efbf; font: 600 14px/1.25 var(--body, system-ui); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 4px 18px rgba(0,0,0,.35); animation: pgOk 3.2s ease-out forwards; }
+.pg .pg-okc > svg { flex: none; width: 14px; height: 14px; } .pg .pg-okc > i { position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px; background: var(--pgok); opacity: .8; transform-origin: left center; animation: pgOkBar 3.2s linear forwards; }
+@keyframes pgOk { 0% { opacity: 0; transform: translateX(-8px); } 6% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } } @keyframes pgOkBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+/* (left, look C: the coach card "Coming up" slides in before a new mechanic: its name and instruction, what happens, your job in gold) */
+.pg .pg-coach { position: absolute; left: 28px; top: 42%; width: min(400px, calc(100% - 56px)); display: none; padding: 14px 16px 16px 18px; background: var(--pgglass); border: 1px solid var(--pgln); border-left: 3px solid var(--pgg); box-shadow: 0 10px 30px rgba(0,0,0,.45), -12px 0 30px -14px rgba(230,180,80,.35); pointer-events: none; }
+.pg .pg-coach.on { display: block; animation: pgCoach .35s ease-out; } @keyframes pgCoach { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+.pg .pgk-k { display: block; font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgg); }
+.pg .pg-coach h3.pgk-t { margin: 6px 0 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px; font: 700 19px/1.15 var(--head, system-ui); color: #fff; }
+.pg .pgk-t small { font: 400 18px/1.15 var(--head, system-ui); color: var(--pgmu); }
+.pg .pgk-i { flex: none; width: 22px; height: 22px; overflow: hidden; } .pg .pgk-i .icw { display: block; width: 22px; height: 22px; margin: 0; vertical-align: top; } .pg .pgk-i .icw svg, .pg .pgk-i .icw img { display: block; width: 100%; height: 100%; border-radius: 0 !important; box-shadow: none; } .pg .pgk-i .icw svg rect { rx: 0; }
+.pg .pgk-d { display: block; width: 12px; height: 12px; margin: 5px; background: var(--pgm); transform: rotate(45deg); }
+.pg .pg-coach p.pgk-w { margin: 0 0 10px; font: 400 14px/1.4 var(--body, system-ui); color: #c9d0d9; }
+.pg .pgk-j > span { display: block; margin-bottom: 3px; font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgm); } .pg .pgk-j > p { margin: 0; font: 600 15px/1.35 var(--body, system-ui); color: var(--pgm); }
+.pg:has(.pg-card.on) :is(.pg-coach, .pg-res) { display: none; }
+.pg .pg-coach, .pg .pg-coach.on, .pg .pg-warn .pg-al { display: none !important; } /* (Flex, Nov 17: no coach card, no call boxes: the NOW line says it; the paused line still shows in .pg-warn) */
+.pg .pgp-st.past .pgp-mk { background: rgba(9,11,15,.6); border: 1px solid rgba(255,255,255,.3); } /* (passed, not ticked, Nov 17) */
+.pg .pg-in > .pg-rush { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); z-index: 6; padding: 4px 12px; background: rgba(9,11,15,.72); border: 1px solid rgba(255,255,255,.14); pointer-events: none; } /* (its own spot, top centre, Nov 17) */
+.pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the path and the coach card on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.pg-al { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 6px 16px 6px 6px; text-align: left; background: linear-gradient(90deg, rgba(8,10,14,.9), rgba(8,10,14,.62)); border-left: 4px solid var(--c); box-shadow: 0 6px 24px rgba(0,0,0,.45); }
+.pg-al { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 6px 16px 6px 6px; text-align: left; background: linear-gradient(90deg, rgba(8,10,14,.9), rgba(8,10,14,.62)); border-left: 4px solid var(--c); box-shadow: 0 6px 24px rgba(0,0,0,.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .pg-al.small { transform: scale(.85); transform-origin: center top; opacity: .92; margin-top: -6px; }
 .pg-ali { flex: none; width: 46px; height: 46px; overflow: hidden; border: 2px solid var(--c); background: var(--c); } .pg-ali .icw { display: block; width: 100%; height: 100%; margin: 0; } .pg-ali .icw svg, .pg-ali .icw img { display: block; width: 100%; height: 100%; } .pg-ali .icw svg rect { rx: 0; }
 .pg-alt { display: flex; flex-direction: column; min-width: 0; } .pg .pg-alo { font: 800 26px/1.08 var(--head, system-ui); color: var(--c); text-transform: uppercase; letter-spacing: .02em; text-shadow: 0 2px 6px #000; }
 .pg .pg-ald { font: 600 14.5px/1.3 var(--body, system-ui); color: #e8edf2; text-shadow: 0 1px 3px #000; } .pg .pg-aln { font: 800 36px/1 var(--head, system-ui); color: #fff; font-style: normal; margin-left: 8px; min-width: 30px; text-align: right; text-shadow: 0 2px 6px #000; }
 @media (max-width: 900px) { .pg .pg-alo { font-size: 20px; } .pg .pg-ali { width: 36px; height: 36px; } }
 .pg-warn.in { animation: pgWarn 3s ease-out forwards; } .pg-warn.in.hold { animation: pgWarnIn .3s ease-out forwards; } @keyframes pgWarnIn { 0% { opacity: 0; transform: scale(1.15); } 100% { opacity: 1; transform: scale(1); } } /* (a countdown call stays up until its seconds run out, then the game clears it) */ @keyframes pgWarn { 0% { opacity: 0; transform: scale(1.15); } 8% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
-.pg-float { position: absolute; top: 31%; left: 0; right: 0; text-align: center; font: 700 16px var(--head, system-ui); text-shadow: 0 1px 4px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
-.pg-float.bad { color: #ff8f87; } .pg-float.ok { color: #7ee08f; } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
-/* (bottom centre, ElvUI style: your job, then your frame left of centre and your target's right of it (you stand between them), then the action bar) */
-.pg .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 250px auto 250px; grid-template-areas: "job job job" "me acts tf"; justify-content: center; justify-items: center; align-items: start; gap: 8px 12px; padding: 0 14px 8px; pointer-events: none; }
-.pg .pg-bot > .pg-job { grid-area: job; } .pg .pg-bot > .pg-ufs { display: contents; } .pg .pg-ufs > .pg-me { grid-area: me; width: 250px; } .pg .pg-ufs > .pg-tfc { grid-area: tf; width: 250px; } .pg .pg-bot > .pg-acts { grid-area: acts; } /* (Flex's UI, Nov 15: your frame left of the hotbar, your target's right of it) */
-.pg .pg-job { max-width: min(520px, 100%); padding: 6px 12px 7px; text-align: center; background: rgba(10,12,16,.85); border: 1px solid rgba(243,201,105,.45); } .pg .pg-job span { display: block; font: 700 12px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #f3c969; } .pg .pg-job p { margin: 1px 0 0; font: 600 14px/1.35 var(--body, system-ui); color: #e8edf2; }
+/* (a mistake, look C: where it always was, in the middle, as a red chip the shape of the green ones) */
+.pg-float { position: absolute; top: 31%; left: 50%; transform: translateX(-50%); width: max-content; max-width: min(560px, 70vw); min-height: 30px; padding: 5px 14px; text-align: center; font: 600 15px/1.3 var(--body, system-ui); color: #ffc2bc; background: rgba(229,83,75,.16); border: 1px solid rgba(255,143,135,.45); box-shadow: 0 4px 18px rgba(0,0,0,.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-shadow: 0 1px 3px #000; opacity: 0; pointer-events: none; }
+.pg-float:empty { display: none; } .pg-float.bad { color: #ffc2bc; } .pg-float.ok { color: #b6efbf; background: rgba(95,211,95,.12); border-color: rgba(126,224,143,.38); } .pg-float.in { animation: pgFl 2.6s ease-out forwards; } @keyframes pgFl { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+/* (bottom centre, look C: the NOW line big with NEXT under it, then one dock: your frame left of the hotbar, your target's right of it, as in Flex's UI) */
+.pg .pg-bot { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: 262px auto 262px; grid-template-areas: "job job job" "me acts tf"; justify-content: center; justify-items: center; align-items: start; gap: 10px 22px; padding: 0 14px 10px; pointer-events: none; }
+.pg .pg-bot > .pg-job { grid-area: job; } .pg .pg-bot > .pg-ufs { display: contents; } .pg .pg-ufs > .pg-me { grid-area: me; width: 262px; } .pg .pg-ufs > .pg-tfc { grid-area: tf; width: 262px; } .pg .pg-bot > .pg-acts { grid-area: acts; } /* (Flex's UI, Nov 15: your frame left of the hotbar, your target's right of it) */
+.pg .pg-job { max-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; text-align: center; background: none; border: 0; } .pg .pg-job.none { visibility: hidden; }
+.pg .pg-nowl { display: flex; align-items: center; gap: 14px; max-width: min(1120px, 96vw); padding: 7px 34px 8px; background: linear-gradient(90deg, rgba(6,8,11,0), rgba(6,8,11,.74) 16%, rgba(6,8,11,.74) 84%, rgba(6,8,11,0)); }
+.pg .pg-chev { flex: none; width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(243,201,105,.7)); }
+.pg .pg-nowk { flex: none; padding-right: 14px; border-right: 1px solid rgba(243,201,105,.35); font: 700 12px/22px var(--head, system-ui); letter-spacing: .12em; text-transform: uppercase; color: var(--pgm); }
+.pg .pg-job p.pg-nowt { margin: 0; min-width: 0; text-align: left; font: 500 16px/1.25 var(--body, system-ui); color: #cdd3db; text-shadow: 0 2px 8px rgba(0,0,0,.9); }
+.pg .pg-nowt b { font: 700 clamp(20px, 1.7vw, 27px)/1.15 var(--head, system-ui); letter-spacing: .005em; color: #fff; } .pg .pg-nowt small { font: 500 clamp(14px, 1.05vw, 16px)/1.25 var(--body, system-ui); color: #cdd3db; }
+.pg .pg-kb { color: var(--pgbub); } .pg .pg-kg { color: var(--pgok); } .pg .pg-km { color: var(--pgm); } .pg .pg-kr { color: var(--pgbad); } .pg .pg-ko { color: #ff9b4a; } .pg .pg-kd { color: #d8b37a; }
+.pg .pg-job p.pg-nx { margin: 0; display: flex; align-items: center; gap: 8px; font: 500 14.5px/1.3 var(--body, system-ui); color: #cdd3db; text-shadow: 0 1px 3px #000, 0 0 6px #000; } .pg .pg-job p.pg-nx:empty { display: none; } /* (NEXT: your next step, under your job now; the prompts audit, Nov 16) */
+.pg .pg-nxk { font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgmu); } .pg .pg-nxm { font-weight: 600; color: var(--pgm); }
 .pg .pg-ufs { display: flex; justify-content: center; gap: 140px; }
-.pg .pg-ucol { position: relative; width: 250px; min-height: 104px; display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.pg .pg-ucol { position: relative; width: 262px; min-height: 104px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
 /* (the site's own rules reach in here: ".pg-me { align-items: flex-start }" (Home's "Which one is you?") shrank your frame to its words, and body.refine
    rounds every button and "#main .pg-bar" (the Plan page's bar, inside the site's defaultTheme layer, so this one has to be in that layer too) by 4 px;
    the screen keeps square edges) */
 .pg.pg .pg-in :is(.pg-x, .pg-vw button, .pg-bar) { border-radius: 0 !important; } @layer defaultTheme { html body #main .pg.pg .pg-in .pg-bar { border-radius: 0 !important; } }
-.pg .pg-uf { position: relative; padding: 0; background: none; border: 0; } .pg .pg-uf .pg-bar { height: 28px; background: #2b2f36; border: 1px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,.14); } .pg .pg-uf .pg-bar span { justify-content: flex-end; padding-right: 9px; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
-.pg .pg-uf .pg-nm { position: absolute; left: 0; right: 0; top: 0; height: 28px; z-index: 2; margin: 0; padding: 0 9px; align-items: center; gap: 6px; pointer-events: none; } .pg .pg-uf .pg-nm b { font: 700 13px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64%; flex: 0 1 auto; } .pg .pg-uf .pg-mj { display: none; } .pg .pg-tot { font-style: normal; } .pg .pg-uf .pg-nm .pg-tfr { font-size: 12px; text-shadow: 0 1px 2px #000; } /* (Flex's UI, Nov 15) */
-.pg .pg-bossf .pg-nm b { display: none; } .pg .pg-bossf .pg-nm { justify-content: flex-end; } .pg .pg-bossf .pg-bar { height: 24px; background: #2b2f36; border: 1px solid #000; } .pg .pg-bhp::before { content: attr(data-n); position: absolute; left: 8px; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; } .pg .pg-bossf .pg-bar span { justify-content: flex-end; padding-right: 8px; z-index: 2; }
-.pg .pg-debs { display: flex; flex-wrap: wrap; gap: 3px; } .pg .pg-debs span { padding: 1px 5px; border: 1px solid; background: rgba(10,12,16,.85); font: 600 12px var(--body, system-ui); } .pg .pg-debs em { font-style: normal; color: #fff; margin-left: 3px; }
-.pg .pg-tfh i { background: #c0352c; } .pg .pg-tf .pg-tfr { color: #ff8f87; font-weight: 700; } .pg .pg-tf.far .pg-tfh i { background: #7c2a25; }
+.pg.pg .pg-in :is(.pg-snd, .pg-act, .pg-okc, .pg-float, .pg-coach, .pg-tag, .pg-mini, .pg-bossf) { border-radius: 0 !important; }
+.pg .pg-uf { position: relative; padding: 0; background: none; border: 0; } .pg .pg-uf .pg-bar { height: 28px; background: rgba(20,23,29,.92); border: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.10); } .pg .pg-uf .pg-bar span { justify-content: flex-end; padding-right: 9px; font: 600 13px var(--head, system-ui); color: #e9edf2; text-shadow: 0 1px 2px #000, 0 0 2px #000; }
+.pg .pg-uf .pg-nm { position: absolute; left: 0; right: 0; top: 0; height: 28px; z-index: 2; margin: 0; padding: 0 9px; align-items: center; gap: 6px; pointer-events: none; } .pg .pg-uf .pg-nm b { font: 700 14px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 64%; flex: 0 1 auto; } .pg .pg-uf .pg-mj { display: none; } .pg .pg-tot { font-style: normal; } .pg .pg-uf .pg-nm .pg-tfr { font-size: 12px; text-shadow: 0 1px 2px #000; } /* (Flex's UI, Nov 15) */
+.pg .pg-bossf .pg-bar { height: 20px; } .pg .pg-bhp::before { content: attr(data-n); position: absolute; left: 9px; top: 0; bottom: 0; z-index: 2; display: flex; align-items: center; font: 700 13px var(--head, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; } .pg .pg-bossf .pg-bar span { justify-content: flex-end; padding-right: 9px; z-index: 2; font-weight: 600; }
+.pg .pg-debs { display: flex; flex-wrap: wrap; gap: 6px; }
+.pg .pg-debs .pg-tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border: 1px solid var(--pgln2); background: rgba(9,11,15,.78); color: var(--pgtx); font: 600 12.5px var(--body, system-ui); white-space: nowrap; }
+.pg .pg-debs .pg-tag > i { flex: none; width: 8px; height: 8px; background: var(--c); box-shadow: 0 0 6px var(--c); } .pg .pg-debs .pg-jtag { max-width: 170px; overflow: hidden; text-overflow: ellipsis; border-color: rgba(243,201,105,.55); color: var(--pgm); }
+.pg .pg-tfh > i { background: linear-gradient(90deg, #9e2b25, #c63a31); } .pg .pg-tf .pg-tfr { color: var(--pgbad); font-weight: 700; } .pg .pg-tf.far .pg-tfh > i { background: #7c2a25; }
+.pg .pg-rush, .pg .pg-nm .pg-rush { display: none; font: 700 12px var(--head, system-ui); color: #aab4c0; letter-spacing: .03em; text-shadow: 0 1px 2px #000; } .pg .pg-rush.on { display: inline; animation: pgRush 1s ease-in-out infinite alternate; } @keyframes pgRush { from { opacity: .55; } to { opacity: 1; } } /* (phase 2's opening runs fast: the tag by the fight clock, no numbers (Flex, Nov 16)) */
 .pg .pg-tf.none { opacity: .6; } .pg .pg-tf.none .pg-tfn { color: #aab4c0; } .pg .pg-tf.none .pg-tfr { color: #8d97a3; font-weight: 600; }
 .pg .pg-tfh::after { content: ''; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; } .pg .pg-tf.hit .pg-tfh::after { animation: pgHit .15s ease-out; } @keyframes pgHit { 0% { opacity: .5; } 100% { opacity: 0; } }
-.pg .pg-cast { height: 18px; } .pg .pg-cast i { background: #e0a53a; } .pg .pg-cast span { font-size: 12px; } .pg .pg-cast.nok i { background: #7d8590; } .pg .pg-cast.intr i { background: #b8322a; }
-.pg .pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; } .pg .pg-tgt:empty { display: none; } .pg .pg-tgt span { padding: 1px 8px; background: rgba(10,12,16,.85); border: 1px solid #f3c969; color: #f3c969; font: 700 12.5px var(--body, system-ui); }
-/* (the action bar: square spell icons, the key in the corner, the name under it; the cooldown's dark sweep and its seconds; the gold proc glow, green when right) */
-.pg .pg-acts { display: flex; gap: 14px; padding-bottom: 18px; }
-.pg .pg-acts .pg-act { position: relative; isolation: isolate; flex: none; width: 46px; height: 46px; background: #11141a; border: 1px solid rgba(255,255,255,.3); box-shadow: 0 0 0 1px #000; pointer-events: auto; cursor: pointer; }
+.pg .pg-cast { height: 18px; } .pg .pg-cast > i { background: linear-gradient(90deg, #b98325, #e3a83c); } .pg .pg-cast span { justify-content: flex-start; padding-left: 9px; font-size: 12px; font-weight: 600; } .pg .pg-cast.nok > i { background: #7d8590; } .pg .pg-cast.intr > i { background: #b8322a; }
+.pg .pg-tgt { display: flex; flex-wrap: wrap; gap: 6px; } .pg .pg-tgt:empty { display: none; } .pg .pg-tgt span { padding: 1px 8px; background: rgba(9,11,15,.78); border: 1px solid rgba(243,201,105,.55); color: var(--pgm); font: 600 12.5px var(--body, system-ui); }
+/* (the action bar: square spell icons, the key in the corner, the name under it; the cooldown's dark sweep (no seconds, look C); the gold proc glow, green when right) */
+.pg .pg-acts { display: flex; gap: 10px; padding-bottom: 20px; }
+.pg .pg-acts .pg-act { position: relative; isolation: isolate; flex: none; width: 48px; height: 48px; background: #11141a; border: 0; box-shadow: 0 0 0 1px #000, 0 0 0 2px rgba(255,255,255,.22); pointer-events: auto; cursor: pointer; }
 .pg .pg-acts .pg-act img.pg-ai { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.has img.pg-ai { opacity: 1; }
-.pg .pg-acts .pg-act b { position: absolute; left: 3px; top: 1px; z-index: 3; font: 800 12.5px var(--head, system-ui); color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
-.pg .pg-acts .pg-act span { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); max-width: 62px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 12px var(--body, system-ui); color: #c2cbd5; text-shadow: 0 1px 2px #000; pointer-events: none; }
+.pg .pg-acts .pg-act b { position: absolute; left: 3px; top: 1px; z-index: 3; font: 700 12.5px var(--head, system-ui); color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
+.pg .pg-acts .pg-act span { position: absolute; left: 50%; top: calc(100% + 5px); transform: translateX(-50%); max-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 12px var(--body, system-ui); color: #b9c1cb; text-shadow: 0 1px 2px #000; pointer-events: none; }
 .pg .pg-acts .pg-act i { position: absolute; left: 0; right: 0; bottom: 0; height: 0; z-index: 1; background: rgba(0,0,0,.62); pointer-events: none; }
 .pg .pg-acts .pg-act em { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; padding-top: 12px; font: 800 16px var(--head, system-ui); font-style: normal; color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; pointer-events: none; }
 .pg .pg-acts .pg-act::before { content: ''; position: absolute; inset: 0; z-index: 1; background: rgba(200,30,30,.45); opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.far::before { opacity: 1; }
 .pg .pg-acts .pg-act::after { content: ''; position: absolute; inset: 0; z-index: 4; background: rgba(255,240,200,.5); opacity: 0; pointer-events: none; } .pg .pg-acts .pg-act.pr::after { animation: pgPr .16s ease-out; } @keyframes pgPr { 0% { opacity: 1; } 100% { opacity: 0; } }
-.pg .pg-acts .pg-act:hover { border-color: #f3c969; }
-.pg .pg-acts .pg-act.hot { border-color: #f3c969; box-shadow: 0 0 0 1px #f3c969, 0 0 14px rgba(243,201,105,.6); animation: pgTabHot 1s ease-in-out infinite; } .pg .pg-acts .pg-act.hot span { color: #f3c969; }
-@keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #f3c969, 0 0 4px rgba(243,201,105,.2); } }
-.pg .pg-acts .pg-act.good { border-color: #7ee08f; box-shadow: 0 0 0 1px #7ee08f; } .pg .pg-acts .pg-act.good span { color: #7ee08f; }
-@media (max-width: 900px) { .pg .pg-bot { grid-template-columns: 1fr 1fr; grid-template-areas: "job job" "me tf" "acts acts"; } .pg .pg-ufs > .pg-me, .pg .pg-ufs > .pg-tfc { width: 230px; } .pg .pg-warn { left: 250px; right: 170px; } .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { width: 230px; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
-@media (max-width: 640px) { .pg .pg-ufs { gap: 12px; } .pg .pg-ucol { width: calc(50vw - 20px); } .pg .pg-acts { gap: 10px; } .pg .pg-timers { width: 200px; } .pg .pg-job p { font-size: 13px; } }
+.pg .pg-acts .pg-act:hover { box-shadow: 0 0 0 1px #000, 0 0 0 2px rgba(243,201,105,.8); }
+.pg .pg-acts .pg-act.hot { box-shadow: 0 0 0 1px #000, 0 0 0 2px #f3c969, 0 0 14px rgba(243,201,105,.6); animation: pgTabHot 1s ease-in-out infinite; } .pg .pg-acts .pg-act.hot span { color: #f3c969; }
+@keyframes pgTabHot { 50% { box-shadow: 0 0 0 1px #000, 0 0 0 2px #f3c969, 0 0 4px rgba(243,201,105,.2); } }
+.pg .pg-acts .pg-act.good { box-shadow: 0 0 0 1px #000, 0 0 0 2px #7ee08f; } .pg .pg-acts .pg-act.good span { color: #7ee08f; }
+@media (max-width: 1100px) { .pg .pg-bot { grid-template-columns: 230px auto 230px; gap: 8px 14px; } .pg .pg-ufs > .pg-me, .pg .pg-ufs > .pg-tfc, .pg .pg-ucol { width: 230px; } .pg .pg-coach { width: 340px; } }
+@media (max-width: 900px) { .pg .pg-bot { grid-template-columns: 1fr 1fr; grid-template-areas: "job job" "me tf" "acts acts"; } .pg .pg-ufs > .pg-me, .pg .pg-ufs > .pg-tfc { width: 230px; } .pg .pg-warn { left: 250px; right: 170px; } .pg .pg-tr { width: 150px; } .pg .pg-mini { width: 150px; height: 150px; } .pg .pg-timers { max-width: calc(100% - 200px); } .pg .pg-coach { width: 300px; top: 38%; } .pg .pg-ufs { gap: 60px; } .pg .pg-ucol { width: 230px; } }
+@media (max-width: 640px) { .pg .pg-ufs { gap: 12px; } .pg .pg-ucol { width: calc(50vw - 20px); } .pg .pg-acts { gap: 10px; } .pg .pg-timers { max-width: calc(100% - 180px); } .pg .pgp-st.later, .pg .pgp-cn ~ .pgp-st.sm { display: none; } .pg .pg-coach { display: none !important; } .pg .pg-nowt b { font-size: 17px; } .pg .pg-nowl { padding: 6px 14px; gap: 8px; } }
 .pg-card { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(5,6,9,.62); z-index: 3; } .pg-card.on { display: flex; }
 .pg-cin { width: min(620px, 94%); max-height: 92%; overflow: auto; padding: 20px 22px; background: var(--bg, #0f1117); border: 1px solid var(--line2, rgba(255,255,255,.18)); border-radius: 4px; box-shadow: 0 12px 40px rgba(0,0,0,.55); }
 .pg-cin h2 { margin: 2px 0 8px; font: 800 24px/1.15 var(--head, system-ui); color: #fff; } .pg-k { display: block; font: 700 11.5px var(--head, system-ui); letter-spacing: .04em; text-transform: uppercase; color: #aab4c0; }
@@ -1133,10 +1549,20 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-3d { position: absolute; inset: 0; display: none; } .pg3 .pg-3d { display: block; } .pg3 .pg-cv { visibility: hidden; }
 .pg-vw { position: relative; z-index: 6; display: inline-flex; border: 1px solid rgba(255,255,255,.2); background: #0a0c10; pointer-events: auto; }
 .pg-vw button { height: 28px; min-width: 44px; padding: 0 10px; border: 0; background: none; color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; } .pg-vw button:hover { color: #fff; } .pg-vw button.on { background: rgba(255,255,255,.12); color: #fff; }
-.pg-snd { height: 28px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 0; background: rgba(10,12,16,.72); color: #aab4c0; font: 700 13px var(--head, system-ui); cursor: pointer; pointer-events: auto; } .pg-snd.on { color: #fff; } .pg-snd:hover { color: #fff; }
+.pg-snd { cursor: pointer; pointer-events: auto; } /* (look C: an icon button by the minimap, .pg .pg-snd above) */
 .pg-vw.busy button[data-v="3"] { cursor: progress; opacity: .6; } .pg-vw button[data-v="2"] { display: none; } .pg.pg3 .pg-vw { display: none; } /* (3D only, Flex: no 2D | 3D switch; the 3D button shows only to retry when 3D didn't load) */
 .pg:has(.pg-card.on) .pg-vw { display: none; } /* (the setup card covers the picture: no view switch over it; after the real .pg-vw rule, which tests/practice-3d.js reads first) */
 .pg-p2kick { margin: 10px 0 2px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; } .pg-p2kick p { margin: 0 !important; font-size: 13.5px !important; } .pg-p2kick b { color: #fff; } .pg-seg button:disabled { opacity: .45; cursor: not-allowed; }
+/* (the cards, look C, Nov 16 (Flex: "clean up the setup interface and remove the timestamps"): the screen's glass panel with a gold edge, square corners, gold
+   small labels; no clock time on them (pgNoClock runs every part's words through the setup card)) */
+.pg .pg-card { background: rgba(4,6,9,.55); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.pg .pg-cin { background: rgba(9,11,15,.9); border: 1px solid rgba(255,255,255,.10); border-left: 3px solid #e6b450; box-shadow: 0 18px 50px rgba(0,0,0,.6), -14px 0 34px -16px rgba(230,180,80,.35); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); }
+.pg .pg-head { background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)); border-bottom: 1px solid rgba(255,255,255,.08); }
+.pg .pg-k { font: 700 12px var(--head, system-ui); letter-spacing: .08em; color: #e6b450; } .pg .pg-sl { letter-spacing: .08em; color: #a4abb8; }
+.pg .pg-cin > .pg-row:last-child { background: rgba(9,11,15,.96); }
+.pg .pg-chip { border-color: rgba(255,255,255,.14); background: rgba(255,255,255,.02); } .pg .pg-chip[aria-pressed="true"] { color: #f3c969; border-color: rgba(243,201,105,.5); }
+.pg.pg .pg-in :is(.pg-cin, .pg-btn, .pg-at, .pg-role, .pg-seg, .pg-seg button, .pg-beta, .pg-spmap) { border-radius: 0 !important; }
+.pg .pg-died h2 { color: #ffc2bc; }
 `;
   document.head.appendChild(st);
 }
