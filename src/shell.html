@@ -1019,7 +1019,7 @@ svg.trend.big .tw:hover { r: 6px; } .pc-legend.nc-leg2 { margin: 8px 0 0; font-s
 /* grades in WoW item-quality colours: S legendary, A epic, B rare, C uncommon, D common; F red (epic and rare a touch
    lighter than in game, so the letter reads on a dark panel) */
 /* (the grade colours, softer (Nov 4): one set the badges, score numbers, bars, rings and night cards share) */
-:root { --gS: #e6b450; --gA: #45c15c; --gB: #3fc7b4; --gC: #e8a23a; --gD: #f0803c; --gF: #ef6b63; /* (Nov 17, Flex: "do these as well": a green C read as good and an orange S as trouble; the letters now follow the page's own good-to-bad colours. Parses keep Warcraft Logs' own) */ }
+:root { --gS: #ffd84a; --gA: #45c15c; --gB: #3fc7b4; --gC: #e8a23a; --gD: #f0803c; --gF: #ef6b63; /* (Nov 17, Flex: "do these as well": a green C read as good and an orange S as trouble; the letters now follow the page's own good-to-bad colours. Parses keep Warcraft Logs' own) */ }
 .grade.g-S { --gc: var(--gS); } .grade.g-A { --gc: var(--gA); } .grade.g-B { --gc: var(--gB); }
 .grade.g-C { --gc: var(--gC); } .grade.g-D { --gc: var(--gD); } .grade.g-F { --gc: var(--gF); }
 .nc-card { margin-top: 12px; display: flex; align-items: stretch; gap: 14px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
@@ -21475,6 +21475,107 @@ html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mp
 html:not(.mpcard) body #view#view#view #mptCD .mpx-how { position: relative !important; display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 4px 16px !important; margin: 10px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.07) !important; font: 500 13px/1.4 var(--body) !important; color: #9ca3ad !important; }
 html:not(.mpcard) body #view#view#view #mptCD .mpx-how > b { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #c3c8d0 !important; }
 html:not(.mpcard) body #view#view#view #mptCD .mpx-how em { font-style: normal !important; font-weight: 700 !important; color: #e6c27a !important; margin-right: 4px !important; }
+}
+
+/* Build my mock picks (Nov 17, Flex: "Build my mock picks"), pick 1, scores option B: one slim strip, the letter after the number, number and
+   letter in one colour everywhere (Summary's strip and its hovers, the Report card's raid tiles, roster and raid grade). Parses keep Warcraft Logs' colours. */
+html body #view#view .sc5-n .sc5-v { display: inline-block !important; vertical-align: middle !important; }
+html body #view#view .sc5-n .sc5-gl { margin-left: 8px !important; vertical-align: middle !important; position: relative; top: 1px; }
+html body #view#view .sc5-n .sc5-k::before { content: ''; display: inline-block; width: 16px; height: 16px; margin-right: 7px; vertical-align: -3px; background: center / cover no-repeat; border: 1px solid rgba(0,0,0,.6); border-radius: 2px; }
+html body #view#view .sc5-n[data-k="night"] .sc5-k::before { border: 0; background-color: rgba(230,180,80,.1); background-size: 12px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e6b450' stroke-width='2' stroke-linejoin='round'%3E%3Cpath d='M12 2.5 20 5.5v6.2c0 4.6-3.3 8.3-8 9.8-4.7-1.5-8-5.2-8-9.8V5.5z'/%3E%3Cpath d='M9.5 8.5h3.2a3.3 3.3 0 0 1 0 6.6H9.5z'/%3E%3C/svg%3E"); }
+html body #view#view .sc5-n[data-k="perf"] .sc5-k::before { background-image: url("https://wow.zamimg.com/images/wow/icons/large/ability_warrior_innerrage.jpg"); }
+html body #view#view .sc5-n[data-k="mech"] .sc5-k::before { background-image: url("https://wow.zamimg.com/images/wow/icons/large/spell_holy_borrowedtime.jpg"); }
+html body #view#view .sc5-n[data-k="alive"] .sc5-k::before { background-image: url("https://wow.zamimg.com/images/wow/icons/large/spell_holy_ardentdefender.jpg"); }
+html body #view#view .sc5-n[data-k="prep"] .sc5-k::before { background-image: url("https://wow.zamimg.com/images/wow/icons/large/inv_alchemy_90_flask_green.jpg"); }
+html body #view#view .sc5-v[data-g="S"], html body .spc-tt .sc5-th > b[data-g="S"], html body #view#view .rcb-tr .rcb-v[data-g="S"], html body #view#view .rcb-subs > .rcb-st > b[data-g="S"], html body #view#view .rcb-tr .rcb-g:has(.g-S) { color: var(--gS) !important; }
+html body #view#view .sc5-v[data-g="A"], html body .spc-tt .sc5-th > b[data-g="A"], html body #view#view .rcb-tr .rcb-v[data-g="A"], html body #view#view .rcb-subs > .rcb-st > b[data-g="A"], html body #view#view .rcb-tr .rcb-g:has(.g-A) { color: var(--gA) !important; }
+html body #view#view .sc5-v[data-g="B"], html body .spc-tt .sc5-th > b[data-g="B"], html body #view#view .rcb-tr .rcb-v[data-g="B"], html body #view#view .rcb-subs > .rcb-st > b[data-g="B"], html body #view#view .rcb-tr .rcb-g:has(.g-B) { color: var(--gB) !important; }
+html body #view#view .sc5-v[data-g="C"], html body .spc-tt .sc5-th > b[data-g="C"], html body #view#view .rcb-tr .rcb-v[data-g="C"], html body #view#view .rcb-subs > .rcb-st > b[data-g="C"], html body #view#view .rcb-tr .rcb-g:has(.g-C) { color: var(--gC) !important; }
+html body #view#view .sc5-v[data-g="D"], html body .spc-tt .sc5-th > b[data-g="D"], html body #view#view .rcb-tr .rcb-v[data-g="D"], html body #view#view .rcb-subs > .rcb-st > b[data-g="D"], html body #view#view .rcb-tr .rcb-g:has(.g-D) { color: var(--gD) !important; }
+html body #view#view .sc5-v[data-g="F"], html body .spc-tt .sc5-th > b[data-g="F"], html body #view#view .rcb-tr .rcb-v[data-g="F"], html body #view#view .rcb-subs > .rcb-st > b[data-g="F"], html body #view#view .rcb-tr .rcb-g:has(.g-F) { color: var(--gF) !important; }
+html body .spc-tt .sc5-tb > i[data-g="S"] { background: var(--gS) !important; } html body .spc-tt .sc5-tb > i[data-g="A"] { background: var(--gA) !important; } html body .spc-tt .sc5-tb > i[data-g="B"] { background: var(--gB) !important; }
+html body .spc-tt .sc5-tb > i[data-g="C"] { background: var(--gC) !important; } html body .spc-tt .sc5-tb > i[data-g="D"] { background: var(--gD) !important; } html body .spc-tt .sc5-tb > i[data-g="F"] { background: var(--gF) !important; }
+/* the raid's report card tiles: icon and name on top, then the number with its letter after it (the bar under it said the same thing) */
+html body #view#view .rcb-subs > .rcb-st { display: flex !important; flex-wrap: wrap !important; align-items: center !important; column-gap: 10px !important; row-gap: 6px !important; }
+html body #view#view .rcb-subs > .rcb-st > .rcb-sth { display: contents !important; }
+html body #view#view .rcb-subs > .rcb-st > .rcb-sth > img { order: 1; margin: 0 !important; }
+html body #view#view .rcb-subs > .rcb-st > .rcb-sth > span:not(.grade) { order: 2; flex: 1 1 calc(100% - 40px) !important; margin: 0 !important; }
+html body #view#view .rcb-subs > .rcb-st > b { order: 3; margin: 0 !important; font-size: 26px !important; line-height: 1 !important; }
+html body #view#view .rcb-subs > .rcb-st > .rcb-sth > .grade { order: 4; margin: 0 !important; position: static !important; }
+html body #view#view .rcb-subs > .rcb-st > .rcb-bar { display: none !important; }
+html body #view#view .rcb-subs > .rcb-st > .sub { order: 6; flex: 1 1 100% !important; margin: 0 !important; }
+/* the raid grade and a raider's grade: a solid tile, then "84 out of 100" */
+html body #view#view .rcb-ring.rcb-gt { width: auto !important; height: auto !important; display: inline-flex !important; align-items: center !important; gap: 14px !important; }
+html body #view#view .rcb-ring.rcb-gt > span:not(.grade) { position: static !important; inset: auto !important; display: block !important; }
+html body #view#view .rcb-ring.rcb-gt small { display: block !important; font: 400 13.5px/1.2 var(--body) !important; color: var(--muted) !important; white-space: nowrap !important; }
+html body #view#view .rcb-ring.rcb-gt small em { font: 700 26px/1 var(--head) !important; font-style: normal !important; margin-right: 3px; }
+html body #view#view .rcb-banr:has(.rcb-gt) { display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 6px !important; }
+html body #view#view .rcb-subs > .rcb-st { flex-direction: row !important; height: auto !important; align-content: flex-start !important; }
+html body #view#view .rcb-ring.rcb-gt > .grade { position: static !important; inset: auto !important; }
+html body #view#view .rcb-ban:has(.rcb-gt) { grid-template-columns: minmax(0, 1fr) auto !important; }
+html body #view#view .rcb-banr:has(.rcb-gt) { width: auto !important; min-width: 0 !important; padding-right: 8px !important; }
+
+/* Build my mock picks (Nov 17), pick 2, checklist option C: only what needs work is open (rvcCard in ui.js). Website only. */
+html body #view#view .rqc-under.rvc .r437-tiles, html body #view#view .rqc-under.rvc .rvc-hide, html body #view#view .rqc-under.rvc .rqc-parts { display: none !important; }
+html body #view#view .rqc-under.rvc .rqc-grid { display: block !important; }
+html body #view#view .rqc-under.rvc .rqc-sec { margin: 0 0 18px !important; padding: 0 !important; }
+/* the list headers: letter, name, score, then what's left to look at */
+html body #view#view .rqc-under.rvc .rqc-sec > h5.rvc-h { display: flex !important; align-items: center !important; gap: 12px !important; margin: 18px 0 2px !important; padding: 0 2px 8px !important; border-bottom: 2px solid var(--gc, var(--line)) !important; font: 700 13px var(--head) !important; letter-spacing: .07em !important; text-transform: uppercase !important; color: #d6d2c8 !important; }
+html body #view#view .rqc-under.rvc h5.rvc-h[data-g="S"] { --gc: var(--gS); } html body #view#view .rqc-under.rvc h5.rvc-h[data-g="A"] { --gc: var(--gA); } html body #view#view .rqc-under.rvc h5.rvc-h[data-g="B"] { --gc: var(--gB); }
+html body #view#view .rqc-under.rvc h5.rvc-h[data-g="C"] { --gc: var(--gC); } html body #view#view .rqc-under.rvc h5.rvc-h[data-g="D"] { --gc: var(--gD); } html body #view#view .rqc-under.rvc h5.rvc-h[data-g="F"] { --gc: var(--gF); }
+html body #view#view .rqc-under.rvc h5.rvc-h > span:first-of-type { min-width: 120px; }
+html body #view#view .rqc-under.rvc h5.rvc-h .rvc-sc { font: 700 24px/1 var(--head) !important; color: var(--gc) !important; letter-spacing: 0 !important; text-transform: none !important; }
+html body #view#view .rqc-under.rvc h5.rvc-h .rvc-sc small { font: 400 13px var(--body) !important; color: var(--muted) !important; }
+html body #view#view .rqc-under.rvc h5.rvc-h .rvc-n { margin-left: auto !important; font: 500 13px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--muted) !important; }
+html body #view#view .rqc-under.rvc h5.rvc-h .rvc-n em { font-style: normal !important; font-weight: 700 !important; color: var(--warn, #e8a23a) !important; } html body #view#view .rqc-under.rvc h5.rvc-h .rvc-n em.g { color: var(--good, #45c15c) !important; }
+/* one line a check: icon, name, %, count, a plain sentence, See pulls */
+html body #view#view .rqc-under.rvc .rqc-row { display: grid !important; grid-template-columns: 22px 230px 48px 130px minmax(0, 1fr) 96px !important; column-gap: 12px !important; align-items: start !important; padding: 9px 4px !important; border-bottom: 1px solid rgba(255,255,255,.05) !important; border-top: 0 !important; }
+html body #view#view .rqc-under.rvc .rqc-row > span:nth-child(2) { display: contents !important; }
+html body #view#view .rqc-under.rvc .rqc-row .rqc-i { grid-column: 1 !important; grid-row: 1 !important; }
+html body #view#view .rqc-under.rvc .rqc-row .rqc-nm { grid-column: 2 !important; grid-row: 1 !important; white-space: normal !important; }
+html body #view#view .rqc-under.rvc .rqc-row .rqc-pc { grid-column: 3 !important; grid-row: 1 !important; text-align: right !important; font-size: 13px !important; }
+html body #view#view .rqc-under.rvc .rqc-row .rvc-ct { grid-column: 4 !important; grid-row: 1 !important; font: 700 13.5px var(--head); color: var(--text); white-space: nowrap; }
+html body #view#view .rqc-under.rvc .rqc-row .rvc-say, html body #view#view .rqc-under.rvc .rqc-row .rqc-wn { grid-column: 5 !important; grid-row: 1 !important; font-size: 13.5px !important; line-height: 1.4 !important; color: #d8d4cb !important; white-space: normal !important; min-width: 0; }
+html body #view#view .rqc-under.rvc .rqc-row .rqc-wn .rqc-why { display: inline !important; white-space: normal !important; font-size: 13.5px !important; }
+html body #view#view .rqc-under.rvc .rqc-row > b { grid-column: 6 !important; grid-row: 1 !important; text-align: right !important; font-size: 13px !important; }
+html body #view#view .rqc-under.rvc .rqc-row .rqc-bar, html body #view#view .rqc-under.rvc .rqc-row small, html body #view#view .rqc-under.rvc .rqc-row .rqc-note { display: none !important; }
+/* the folded lines: passed (green) and for your information (grey) */
+html body #view#view .rqc-under.rvc .rvc-ok, html body #view#view .rqc-under.rvc .rvc-info, html body #view#view .rqc-under.rvc .rqc-clean { position: relative; margin: 0 !important; padding: 9px 4px 9px 38px !important; border-bottom: 1px solid rgba(255,255,255,.05); font-size: 13.5px !important; line-height: 1.45; color: #c9c5bc !important; }
+html body #view#view .rqc-under.rvc .rvc-ok::before, html body #view#view .rqc-under.rvc .rqc-clean::before { content: '✓'; position: absolute; left: 4px; top: 8px; width: 18px; height: 18px; display: grid; place-items: center; border: 1.5px solid var(--good, #45c15c); border-radius: 50%; color: var(--good, #45c15c); font-size: 12px; font-weight: 800; }
+html body #view#view .rqc-under.rvc .rvc-ok .rvc-k, html body #view#view .rqc-under.rvc .rqc-clean > b:first-child { color: var(--good, #45c15c) !important; font-weight: 700 !important; }
+html body #view#view .rqc-under.rvc .rvc-ok b:not(.rvc-k) { color: var(--text) !important; }
+html body #view#view .rqc-under.rvc .rvc-info::before { content: '–'; position: absolute; left: 4px; top: 8px; width: 18px; height: 18px; display: grid; place-items: center; border: 1.5px solid var(--line2, #353b49); border-radius: 50%; color: var(--muted); font-size: 12px; font-weight: 800; }
+html body #view#view .rqc-under.rvc .rvc-info { color: var(--muted) !important; }
+/* Fix first: the check that cost the most, in one sentence */
+html body #view#view .rqc-under.rvc .rvc-fix { display: flex !important; align-items: center !important; gap: 12px !important; flex-wrap: nowrap !important; }
+html body #view#view .rqc-under.rvc .rvc-fix .rvc-fic .icw, html body #view#view .rqc-under.rvc .rvc-fix .rvc-fic img { width: 22px !important; height: 22px !important; }
+html body #view#view .rqc-under.rvc .rvc-fix > b { white-space: nowrap; font-size: 14px !important; }
+html body #view#view .rqc-under.rvc .rvc-fix .rvc-fs { flex: 1 1 auto; color: #d8d4cb; font-size: 13.5px; }
+html body #view#view .rqc-under.rvc .rvc-fix .rvc-fsp { margin-left: auto; white-space: nowrap; color: var(--gold); font: 600 13px var(--head); }
+@media (max-width: 899px) {
+  html body #view#view .rqc-under.rvc .rqc-row { grid-template-columns: 22px minmax(0, 1fr) 44px 92px !important; row-gap: 4px !important; }
+  html body #view#view .rqc-under.rvc .rqc-row .rvc-ct { grid-column: 4 !important; } html body #view#view .rqc-under.rvc .rqc-row .rqc-pc { grid-column: 3 !important; }
+  html body #view#view .rqc-under.rvc .rqc-row .rvc-say, html body #view#view .rqc-under.rvc .rqc-row .rqc-wn { grid-column: 2 / -1 !important; grid-row: 2 !important; }
+  html body #view#view .rqc-under.rvc .rqc-row > b { grid-column: 2 / -1 !important; grid-row: 3 !important; text-align: left !important; }
+  html body #view#view .rqc-under.rvc .rvc-fix { flex-wrap: wrap !important; }
+  html body #view#view .rqc-under.rvc .rqc-sec > h5.rvc-h { flex-wrap: wrap !important; row-gap: 4px !important; }
+  html body #view#view .rqc-under.rvc h5.rvc-h > span:first-of-type { min-width: 0 !important; }
+  html body #view#view .rqc-under.rvc h5.rvc-h .rvc-sc small { white-space: nowrap !important; }
+  html body #view#view .rqc-under.rvc h5.rvc-h .rvc-n { flex: 1 1 100% !important; margin-left: 0 !important; }
+}
+html body #view#view .rqc-under.rvc .rvc-hide.rvc-hide.rvc-hide { display: none !important; }
+
+/* Build my mock picks (Nov 17), pick 3, Graphs option B: slim top, chart kept (rvgOn in ui.js). Desktop only: on a phone the thin strip is off, so the banner stays. */
+@media (min-width: 900px) {
+  html body.rvg.snv-on #bossHead header.fight { display: none !important; }
+  html body.rvg.snv-on #bossHead { height: 46px !important; min-height: 46px !important; }
+  /* the chart's title and its controls on one line */
+  html body.rvg #view .gb-chart249 > .gb-hd.r308-hd { flex-wrap: nowrap !important; align-items: center !important; min-height: 0 !important; }
+  html body.rvg #view .gb-chart249 > .gb-hd.r308-hd > .r308-ctl { margin-left: auto !important; flex: none !important; }
+  /* the table's key (Own damage, Pets) sits in its title line */
+  html body.rvg #view section.pf-bars.gb-card { position: relative !important; }
+  html body.rvg #view section.pf-bars.gb-card > .g8-lg { position: absolute !important; top: 28px !important; left: 150px !important; margin: 0 !important; z-index: 1; }
+  html body.rvg #view section.pf-bars.gb-card > .g8-lg .g8-lgh { display: none !important; }
 }
 </style>
 </body>

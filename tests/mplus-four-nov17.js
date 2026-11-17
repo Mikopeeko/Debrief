@@ -15,7 +15,7 @@ module.exports = function mplusFourNov17(say) {
   has("&& (((RR.people || []).find((p) => p.name === nm) || {}).role || 'dps') !== 'healer');", '1. "Big cooldowns not pressed" can name the healer again');
   has("const mpxHow = (F) => (F ? '<p class=\"mpx-how\"><b>How we compare</b><span><em>Fast run</em> the middle of the 20 fastest keys", '2. the page no longer says what "fast run", "spec" and "top" mean');
   has("ticks.join('') + '</div></div>' + (typeof mpxHow === 'function' ? mpxHow(F) : '') + '</section>'; }", '2. "How we compare" is no longer at the foot of the run');
-  if (css.indexOf('--gS: #e6b450; --gA: #45c15c; --gB: #3fc7b4; --gC: #e8a23a; --gD: #f0803c; --gF: #ef6b63;') < 0) bad('3. a grade letter\'s colour no longer follows good and bad (a green C read as good, an orange S as trouble)');
+  if (css.indexOf('--gS: #ffd84a; --gA: #45c15c; --gB: #3fc7b4; --gC: #e8a23a; --gD: #f0803c; --gF: #ef6b63;') < 0) bad('3. a grade letter\'s colour no longer follows good and bad (a green C read as good, an orange S as trouble)');
   has('for (let j = -12; j <= 12; j++) { const q = i + j; if (q < 0 || q >= N) continue; const wt = Math.exp(-(j * j) / 40);', '4. Graphs\' chart is jagged again (smoothing)');
   has(`stop-opacity=".62"/><stop offset="1" stop-color="' + l.c + '" stop-opacity=".1"/>`, '4. Graphs\' layers are solid blocks again (no fade)');
   has(`y="' + (T0 - 10) + '" font-size="12" font-weight="600" fill="#e6c27a">`, '4. boss names sit on the chart\'s baseline again (not in the strip above it)');
