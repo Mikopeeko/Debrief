@@ -21445,6 +21445,31 @@ html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .mpr-vsb > i { po
 html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .mpr-vsb > em { position: absolute !important; top: -2px !important; bottom: -2px !important; width: 2px !important; background: #fff !important; }
 html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody#mptBody#mptBody > #mptCCv { display: none !important; } /* (Against top players: in the ranked group's vs spec now) */
 }
+/* The picked pull's head in the side panel beside the map, slimmer (Nov 16, Flex of that panel: "this section still feels like it needs work", then "giving you
+creative freedom with whats displayed in that section and how its displayed"). One title row, then one row of numbers with no boxes, then the moments as
+short tags (Lust in gold; a buff or debuff all removed in green, some left in amber; a wait or a chain plain), each with its sentence on hover. The play by play
+under it gets the room: about 12 rows instead of 3. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum { margin: 0 0 10px !important; padding: 0 0 10px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpt-mch { margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpt-mch > b { font: 700 18px var(--head) !important; }
+/* the numbers: one row, no boxes, a thin line between them */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf { display: flex !important; flex-wrap: wrap !important; gap: 4px 0 !important; margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf > .mpx-f1 { display: grid !important; grid-template-columns: auto auto !important; grid-template-areas: "l l" "b i" !important; align-items: baseline !important; column-gap: 5px !important; min-width: 0 !important; margin: 0 !important; padding: 0 12px !important; border: 0 !important; border-left: 1px solid rgba(255,255,255,.1) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf > .mpx-f1:first-child { padding-left: 0 !important; border-left: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf > .mpx-f1 > small { grid-area: l !important; margin: 0 0 1px !important; font: 600 12px var(--body) !important; letter-spacing: .05em !important; text-transform: uppercase !important; color: #8b929c !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf > .mpx-f1 > b { grid-area: b !important; font: 700 19px/1.1 var(--head, 'Barlow Condensed'), sans-serif !important; color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-cf > .mpx-f1 > i { grid-area: i !important; font: 500 12px var(--body) !important; font-style: normal !important; color: #9ca3ad !important; white-space: nowrap !important; }
+/* the moments: short tags, the sentence on hover (the long list is for the Companion's card) */
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > :is(p.mpx-ck, ul.mpx-ce) { display: none !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg { display: flex !important; flex-wrap: wrap !important; gap: 5px !important; margin: 9px 0 0 !important; }
+html:not(.mpcard) #view .mpx-tg { display: none; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1 { display: inline-flex !important; align-items: center !important; gap: 5px !important; padding: 2px 8px !important; border: 1px solid rgba(255,255,255,.12) !important; border-radius: 0 !important; background: rgba(255,255,255,.03) !important; font: 600 12.5px var(--body) !important; color: #c9cdd3 !important; cursor: help !important; white-space: nowrap !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1 > i { font-style: normal !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-l { border-color: rgba(230,180,80,.5) !important; background: rgba(230,180,80,.10) !important; color: #e6c27a !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-ok { border-color: rgba(69,193,92,.45) !important; background: rgba(69,193,92,.08) !important; color: #9fdcaa !important; }
+html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-x { border-color: rgba(232,162,58,.5) !important; background: rgba(232,162,58,.10) !important; color: #f0c27a !important; }
+}
 </style>
 </body>
 </html>
