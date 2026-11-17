@@ -28,9 +28,12 @@ const PG_UL = {
   // centre carrier about 14 yards in on the quadrant's line and the edge carrier at the rim. GENERAL PLACES, not where eggs land (Flex, Nov 16: "The plans layout is
   // just general locations not exact egg spots remember"): the eggs land at random, one inner and one outer in each quadrant (eggLand), and you take yours)
   planEgg: { m1: [0, 14], m2: [0, 35], r5: [-14, 0], r3: [-41, 0], r6: [14, 0], r4: [41, 0], r1: [0, -14], r2: [0, -40] }, eggQ: { m1: ['melee', 0], m2: ['melee', 1], r5: ['left', 0], r3: ['left', 1], r6: ['right', 0], r4: ['right', 1], r1: ['far', 0], r2: ['far', 1] }, qAx: { melee: 90, left: 180, right: 0, far: 270 },
-  // (the coil soak groups: set 1, every carrier takes the first slam inside the Wretch's bubble and group two the second; set 2, the carriers split)
-  soak: [[['m1', 'm2', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'h1', 'h3', 'm3'], ['m4', 'm5', 'm6', 'm7', 'h2', 'h4', 'r7']],
-    [['r1', 'r3', 'r5', 'm1', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r2', 'r4', 'r6', 'm2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
+  // (the coil soak groups, the plan's Egg Clear map (guides.js ulSoaks; Flex, Nov 16: "The guide governs the game", "the only thing from the plan should be the maps
+  //  to set up the game", "it should be 4 and 4"): Right Soak #1 takes the first coil with the carriers of the melee and left zones (m1 m2, r5 r3), Left Soak #2 the
+  //  next with the right and far zones' (r6 r4, r1 r2); the same teams in both sets; everyone else split evenly, 9 a soak. Before Nov 16, set 1 sent all 8 carriers
+  //  to the first coil (a line of guide text), and for an hour the coil walkthrough's groups split them 3 and 5)
+  soak: [[['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']],
+    [['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
 };
 
 // the fight, second by second (the measured top Mythic kills, the guide's plan); east: she surfaces on the east edge
@@ -162,33 +165,18 @@ function pgOpen(root, boss, d, pk) {
   // ---- the game ----
   let S = null, G = null, me = part.roles[0].id, role = part.roles[0], speed = 1, startAt = 0, raf = null, last = 0, paused = true, keys = {}, target = null, Z = 13, cam = null, dpr = 1;
   const SPEED = 7, PR = 0.7, carrierOf = (id) => !!PG_UL.eggO[id];
-  // ---- your team's plan: signed in, with a Mythic plan for this boss (the one the Plan page shows), you play as yourself and the others are
-  // your raiders on the plan's jobs: each egg area's two (the first is the centre, the second the edge), the coil soaks, the Fester Burst
-  // spots; the rest by role. Without one, the guide's plan. ----
-  let teamWhy = '', pickedMe = false; /* (why there's no team plan in the game: for the audit) */
-  const TEAM = (() => { try { if (P2) { teamWhy = 'a later part: picked jobs'; return null; } if (d !== 'm' || typeof pnGet !== 'function' || typeof pnState !== 'function' || typeof ulRead !== 'function') { teamWhy = 'no plan code (d=' + d + ')'; return null; }
-      const o = pnGet(), st = pnState(o, boss), lc = (x) => String(x).split('-')[0].toLowerCase(), on = new Set(((o.on || {})[boss] || []).map(lc));
-      const L = notesOf(boss).list.filter((q) => !q.example && !q.pgEmpty && pnNoteDiff(q) === 'Mythic'), chId = typeof planChosenGet === 'function' ? planChosenGet(o.rid, boss) : null, sc = (q) => { const t = noteResolve(q.text); return [...on].filter((x) => noteHas(t, x)).length; };
-      const n = (st && st.n && pnNoteDiff(st.n) === 'Mythic' ? st.n : null) || L.find((q) => q.id === chId) || L.slice().sort((a, b) => sc(b) - sc(a) || (b.saved || 0) - (a.saved || 0))[0] || null;
-      teamWhy = 'state ' + (st && st.k) + ', plans ' + L.length + ', picked ' + (n ? planNm(n) : 'none') + ', on ' + on.size; if (!n) return null;
-      const U = ulRead(noteResolve(n.text));
-      const P = pnPeople(o).filter((q) => !q.bench && (!on.size || on.has(lc(q.n)))); teamWhy += ', people ' + P.length + ', teams ' + U.teams.map((x) => x.length).join('/'); if (P.length < 10) return null;
-      const byN = new Map(P.map((q) => [lc(q.n), q])), mains = P.map((q) => String(q.n).split('-')[0]), AM = new Map(pnPeople(o, { alts: true }).filter((q) => q.alt).map((q) => [lc(q.n), lc(q.alt)])), al = (x) => { const k = lc(x); if (byN.has(k)) return k; if (AM.has(k) && byN.has(AM.get(k))) return AM.get(k); if (typeof altOf !== 'function') return k; const m = altOf(String(x).split('-')[0], mains); return m ? lc(m) : k; }; /* (an alt in the plan counts as their main) */
-      const id2 = {}, used = new Set(), put = (x, id) => { const q = byN.get(al(x)); if (q && !used.has(q) && !id2[id]) { id2[id] = q; used.add(q); } };
-      [['melee', ['m1', 'm2']], ['left', ['r5', 'r3']], ['right', ['r6', 'r4']], ['far', ['r1', 'r2']]].forEach(([z, ids]) => (U.ez[z] || []).slice(0, 2).forEach((x, i) => put(x, ids[i])));
-      const free = (L) => GDZ_RAID.filter((id) => L.includes(id[0]) && !id2[id]), rk = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 1 : 2);
-      P.filter((q) => !used.has(q)).sort((a, b) => rk(a) - rk(b)).forEach((q) => { const w = q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r';
-        const id = free([w])[0] || free(w === 'm' ? ['r', 'h'] : w === 'r' ? ['m', 'h'] : ['m', 'r'])[0] || free(['t', 'h', 'm', 'r'])[0]; if (id) { id2[id] = q; used.add(q); } });
-      const n2 = new Map(Object.entries(id2).map(([id, q]) => [lc(q.n), id])), ids = (L) => [...new Set((L || []).map((x) => n2.get(al(x))).filter(Boolean))];
-      const T = { name: planNm(n), id2, soak: [ids(U.teams[0]), ids(U.teams[1])], ce: [ids(U.ce[0]), ids(U.ce[1])], fb: (U.fb || []).map(ids), you: n2.get(lc((typeof tpMe === 'function' && tpMe()) || (typeof tpWho === 'function' && tpWho()) || '')) || null };
-      teamWhy += ', ok ' + T.soak.map((x) => x.length).join('/') + ', me ' + ((typeof tpMe === 'function' && tpMe()) || '-') + '/' + ((typeof tpWho === 'function' && tpWho()) || '-') + ' -> ' + (T.you || 'none') + ', not placed: ' + [...new Set([...U.teams[0], ...U.teams[1], ...(U.fb || []).flat()])].filter((x) => !n2.has(al(x))).join(' ') + ', left out: ' + P.filter((q) => !used.has(q)).map((q) => q.n).join(' '); return T.soak[0].length && T.soak[1].length ? T : null; } catch (e) { teamWhy += ' error ' + e; return null; } })();
+  // ---- the setup: the guide governs the game (Flex, Nov 16: "The game should not be pulling from the teams set plan, it should only use the maps as the
+  // setup", "The guide governs the game"): the raid, the egg zones, the coil soak groups and the bubbles come from the guide's maps, never from a plan made
+  // on the Plan page. (Before Nov 16 a signed-in raider's team plan replaced them, and its two coil teams soaked both coil sets as they were.) ----
+  let teamWhy = 'the guide governs the game', pickedMe = false; /* (for the audit) */
+  const TEAM = null;
   const nm = (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].n).split('-')[0] : gdzName(id));
   const rl = (id) => { const q = TEAM && TEAM.id2[id]; return q ? (q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r') : id === me && jobMine() ? myJob.role : id[0]; };
   const clsC = (id) => { const q = TEAM && TEAM.id2[id], c = q && E.CLASSES && E.CLASSES[q.cls]; return c ? c[1] : null; };
   // (the quadrants by name only, as the setup's maps say them: they turn with her dive, so a compass word was wrong for the 1:20 egg. The release sweep, Nov 16:
   //  the frame said "left (west)" all pull while that egg landed north)
   const ZN = { m1: ['by her', 'inner'], m2: ['by her', 'outer'], r5: ['left quadrant', 'inner'], r3: ['left quadrant', 'outer'], r6: ['right quadrant', 'inner'], r4: ['right quadrant', 'outer'], r1: ['far quadrant', 'inner'], r2: ['far quadrant', 'outer'] };
-  const teamRole = (id) => { const sk = TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
+  const teamRole = (id) => { const sk = PG_UL.soak[0][0].includes(id) ? 1 : PG_UL.soak[0][1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
   // ---- your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment, for those who arent using my website for
   // assignments", then "its a bit overkill"): three rows of buttons, your role, your egg area (or none) and your coil team. The rest is picked for
   // you: the egg spot in your area, a free bubble spot (shown in gold), and team 1 in set 1 for egg carriers. The other 19 take the jobs left and
@@ -200,7 +188,9 @@ function pgOpen(root, boss, d, pk) {
   const jobSlot = (j) => (j.egg && PG_UL.eggO[j.egg] ? j.egg : { m: 'm3', r: 'r7', h: 'h2' }[j.role]);
   const jobMine = () => !P2 && !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
   // (the coil teams with you on the one you picked: you change places with someone on it, a carrier for a carrier, the same role if there is one)
-  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], want = si === 0 && PG_UL.eggO[slot] ? 0 : j.soak[si] === 2 ? 1 : 0, /* (set 1: carriers take the first coil, in the Wretch's bubble) */ have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1;
+  const eggTeam = (slot) => (PG_UL.soak[0][1].includes(slot) ? 2 : 1); /* (an egg zone's coil team on the plan's Egg Clear map: melee and left Soak #1, right and far Soak #2) */
+  const myTeam = () => (myJob.egg && PG_UL.eggO[myJob.egg] ? eggTeam(myJob.egg) : myJob.soak[1] === 2 ? 2 : 1); /* (your coil: your egg's team, else your pick) */
+  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1, want = PG_UL.eggO[slot] && have >= 0 ? have : j.soak[si] === 2 ? 1 : 0; /* (a carrier: their zone's group, as the guide's map has it) */
     if (have === want) return g; if (have < 0) { g[want].push(slot); return g; }
     const car = (x) => !!PG_UL.eggO[x], pool = g[want], mate = pool.find((x) => car(x) === car(slot) && x[0] === slot[0]) || pool.find((x) => car(x) === car(slot)) || pool[pool.length - 1];
     g[have] = g[have].filter((x) => x !== slot).concat([mate]); g[want] = g[want].filter((x) => x !== mate).concat([slot]); return g; });
@@ -210,7 +200,7 @@ function pgOpen(root, boss, d, pk) {
     S.eggSets.forEach((e) => e.eggs.forEach((q) => G.eggs.push({ ...q, set: e.si, state: 'air', who: null })));
     GDZ_RAID.forEach((id) => { const p = homeOf(id, 0); G.bots[id] = { id, x: p[0], y: p[1], esc: null }; });
     const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; if (P2) P2.init(G); };
-  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
+  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
   // where each raider stands when nothing is happening: her tank in front of her, melee round her, carriers in their zones, the rest inside; turned with her
   const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.find((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
     // (an egg carrier waits and holds the first set's egg at the Plan's place for it, where the setup's ring is: the map review, Nov 16, found the game holding
@@ -357,7 +347,7 @@ function pgOpen(root, boss, d, pk) {
     if (ob.fb >= 0 && typeof UL_FB !== 'undefined' && UL_FB[ob.fb] && ob.car.indexOf(id) < UL_FB[ob.fb].length) { const u = UL_FB[ob.fb][ob.car.indexOf(id)], q = ob.fb ? pgRot(u, S.rotAt(ob.at) - 90) : ob.m ? ob.m(u) : u; return [ob.p[0] + q[0] * 10, ob.p[1] + q[1] * 10]; } const RC = S._ring = S._ring || new Map(), key = ob.at + ',' + ob.p.join(','); let M = RC.get(key);
     if (!M) { const n = Math.max(5, ob.car.length), D = 2 * Math.PI / n, th = ob.car.map((c) => { const z = S.F(UX_ZONE[c] || UX_HOME[c] || [0, 0], ob.at); return [c, Math.atan2(z[1] - ob.p[1], z[0] - ob.p[0])]; }).sort((a, b) => a[1] - b[1]);
       let sx = 0, sy = 0; th.forEach(([, a], i) => { sx += Math.cos(a - i * D); sy += Math.sin(a - i * D); }); const c0 = Math.atan2(sy, sx); M = new Map(th.map(([c], i) => [c, c0 + i * D])); RC.set(key, M); }
-    const a = M.get(id); return [ob.p[0] + Math.cos(a) * 6.5, ob.p[1] + Math.sin(a) * 6.5]; };
+    const a = M.get(id), rad = ob.bub || ob.car.length > 5 ? 6.5 : 3.8; return [ob.p[0] + Math.cos(a) * rad, ob.p[1] + Math.sin(a) * rad]; }; /* (rad: a soak's 4 carriers (the plan's 4 and 4, Nov 16) stand 3.8 yards out, still more than 3 yards apart, with room to dodge a small tail's wave inside the circle; at 6.5 they stepped out of it) */
   // (the carriers' numbered bubble spots: the team plan's; without one, each carrier takes a free spot round the bubble)
   const fbList = (ek) => { if (!TEAM) return null; const f = TEAM.fb[ek]; return f && f.length ? f : null; };
   // (Main's playtest, Nov 15: melee never hit the heart in the burn, "you were on it 0% of the time": their spot stayed at home, south of the middle, out of
@@ -377,11 +367,18 @@ function pgOpen(root, boss, d, pk) {
     // (you, and your arrow (hintNow): at your 7 yards a second, and a bubble is yours from when the job line calls it, 8 s before it pops. The release sweep,
     //  Nov 16: your arrow came 6 s before the pop, timed for the bots' run, so from the far side of the room you walked where it said and got there late)
     const vW = id === me ? SPEED : 8, due = (at, p, from) => at >= t && t >= from && at - t <= Math.max(4.6, pgDist([b0.x, b0.y], p) / vW + 1.6);
-    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
+    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { bub: true, at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
     for (const s of S.soaks) if (s.group.includes(id) && due(s.at, [s.x, s.y], s.cast - 0.5) && (!ob || s.at < ob.at)) ob = { at: s.at, p: [s.x, s.y], r: 5, car: CAR8.filter((c) => s.group.includes(c)) };
     if (ob) { const sp = spotIn(ob, id); if (sp) T = sp; else { const ix = GDZ_RAID.indexOf(id), a = ix * 2.39996, rr = (ob.car ? 3.2 : ob.r) * Math.sqrt(((ix % 11) + 0.5) / 11); T = [ob.p[0] + Math.cos(a) * rr, ob.p[1] + Math.sin(a) * rr]; } const dT = pgDist(T, [b0.x, b0.y]); fast = dT > 10 || (ob.at - t < 2.5 && dT > 1.5); } /* (hurry when it's close: from a far bubble spot to the coil a second later) */
+    // (a bubble that bursts just before your coil (set 1: it sits between the two circles): stand where the bubble and your coil's circle overlap, out of the
+    //  other circle, the carriers 3.6 yards apart across it, so you're in the bubble and already in your soak. Nov 16, the plan's 4 and 4: Soak #2's carriers
+    //  stood on the bubble's ring, partly in the first circle, ran out of it a second before the bubble burst, and reached the second circle late)
+    if (ob && ob.bub) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > ob.at && q.at - ob.at <= 6), c = ns && [ns.x, ns.y], d = c ? pgDist(ob.p, c) : 99;
+      if (ns && d < 16) { const ux = (c[0] - ob.p[0]) / (d || 1), uy = (c[1] - ob.p[1]) / (d || 1), M = [ob.p[0] + ux * d / 2, ob.p[1] + uy * d / 2], car = ns.group.filter((x) => CAR8.includes(x)), ci = car.indexOf(id);
+        if (ci >= 0) { const off = (ci - (car.length - 1) / 2) * 3.6; T = [M[0] - uy * off, M[1] + ux * off]; } else { const ot = ns.group.filter((x) => !CAR8.includes(x)), ix = Math.max(0, ot.indexOf(id)), a2 = ix * 2.39996, rr = 2.4 * Math.sqrt(((ix % 7) + 0.5) / 7); T = [M[0] + ux * 1.6 + Math.cos(a2) * rr, M[1] + uy * 1.6 + Math.sin(a2) * rr]; }
+        const dT2 = pgDist(T, [b0.x, b0.y]); fast = dT2 > 10 || (ob.at - t < 2.5 && dT2 > 1.5); } }
     // her waves: on the half that goes second, then behind the first wave into the half it just left
-    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t)) { const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
+    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t) && !(ob && !ob.bub && ob.at - t <= 5)) { /* (not over a soak of yours 5 s off: set 2 slams while her waves still roll, and the safe-half spot kept m2 (by her) from its circle, Nov 16) */ const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
       const front = fw ? 46 - fw.v * Math.max(0, t - fw.t0) : 46, crossed = t > wg.t + 6 && front < Math.min(q[1], 26) - 5, lx = Math.max(6, Math.min(18, Math.abs(q[0]) + 4)) * (crossed ? -side : side);
       if (t <= wg.t + 6 + 6.5 + 4) { T = pgRot([lx, Math.max(-26, Math.min(24, q[1]))], rot); fast = true; } }
     // the tail's sweep: out of its 35 yards before it lands (its tank too)
@@ -390,11 +387,11 @@ function pgOpen(root, boss, d, pk) {
     for (const wr of S.wrath) if (t >= wr.t0 && t <= wr.at + 3.2 && id !== wr.tank && pgDist(T, wr.p) < 8) { const a = Math.atan2(T[1] - wr.p[1], T[0] - wr.p[0]); T = [wr.p[0] + Math.cos(a) * 9, wr.p[1] + Math.sin(a) * 9]; }
     // coil circles that aren't yours: stay out
     // (a soak of yours coming, its coils not out yet: wait on her tail's side of the middle (the tail is up before its coils), close enough to reach either circle)
-    if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
+    let wait = null; if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); wait = A; if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
     for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(id) && !(ob && ob.at < s.at - 0.3) && pgDist(T, [s.x, s.y]) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; }
     if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]);
-    return { T, fast, ob }; };
-  const dodge = (b, T, t, fast, ob) => { if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
+    return { T, fast, ob, wait }; }; /* (wait: the spot by her tail where a soaker waits for their coils, which dodge keeps them near) */
+  const dodge = (b, T, t, fast, ob0, wait) => { const ob = ob0 || (wait ? { p: wait, r: 9, bub: true, at: t + 99, wait: true } : null); /* (waiting for your coils: dodge near the waiting spot first, Nov 16: m2 drifted 15 yards east dodging a small tail and missed set 2) */ if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
     const imps = S.impacts.filter((m) => m.at >= t && m.at - t <= 2.4).concat(G.eggs.filter((e) => e.state === 'air' && e.land >= t && e.land - t <= 2.4).map((e) => ({ x: e.x, y: e.y, r: 4, at: e.land })),
       b.id === 't1' || b.id === 't2' ? [] : S.soaks.filter((q) => !q.group.includes(b.id) && t >= q.t0 && q.at >= t && q.at - t <= 2.4).map((q) => ({ x: q.x, y: q.y, r: q.r, at: q.at, mg: 0.5 })));
     if (!act.length && !imps.length) { b.esc = null; return { T, fast }; }
@@ -408,14 +405,14 @@ function pgOpen(root, boss, d, pk) {
     const unsafe = (x, y) => S.soaks.some((q) => !q.group.includes(b.id) && q.at >= t && q.at - t <= 3.5 && Math.hypot(x - q.x, y - q.y) <= q.r + 1.2) || others.some((o) => Math.hypot(x - o.x, y - o.y) < 4) || !!(P2 && P2.unsafe && P2.unsafe(b.id, x, y, t)); /* (a part's own danger the escape must keep out of: phase 2's Doomscale frontals) */
     if (b.esc && t - b.esc.t < 2 && !path(b.esc.x, b.esc.y, vEsc) && !unsafe(b.esc.x, b.esc.y) && !(P2 && P2.walk && !P2.walk(b.x, b.y, b.esc.x, b.esc.y))) return { T: [b.esc.x, b.esc.y], fast: true };
     // (no clean spot: the one that meets the danger latest, rather than walking on into it)
-    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && ob.at - t <= 3.5; /* (a bubble or their soak due: dodge inside it first) */
-    for (let pass = keepIn ? 0 : 1; pass < 2 && !best; pass++) for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
+    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && (ob.wait || ob.at - t <= (ob.bub ? 3.5 : 6)); /* (a bubble or their soak due: dodge inside it first; a soak from 6 s off, so a wave doesn't send them away from it: m2 in set 2, Nov 16) */
+    for (let pass = keepIn ? 0 : 1; pass < (keepIn && !ob.bub ? 1 : 2) && !best; pass++) /* (a soak about to slam: dodge only inside it, or stay and take the wave; Nov 16, Soak #2 carriers stepped out for a small tail's wave and missed it) */ for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
     if (best) { b.esc = { x: best[0], y: best[1], t }; return { T: best, fast: true }; } if (late) return { T: late, fast: true }; return { T, fast }; };
   const moveBots = (t, dt, px, py) => { const pre = {}, myT = myEggHeld() && G.eggs.some((e) => e.state === 'held' && e.who && e.who !== me) ? (window.__pgAuto ? [G.x, G.y] : jobOf(me, t).T) : null; /* (your planned spot, for the carriers to keep clear of; for the tests' autopilot, where it stands, as the checks were built on) */
     // (the release sweep, Nov 16: who closed the gap. pre: each raider from where you stand now, before they move; G.walkIn: the ones YOUR step brought inside 3 yards
     //  (they were farther before it). Only those can splash on you: a carrier picking up its egg beside you, or walking at you, is never your mistake)
     G.walkIn = {}; GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id], d1 = Math.hypot(b.x - G.x, b.y - G.y), d0 = px == null ? d1 : Math.hypot(b.x - px, b.y - py); pre[id] = d1; if (d1 < 3 && d1 < d0 - 1e-6) G.walkIn[id] = true; });
-    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob));
+    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob, j.wait));
       // (Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me if im in their path": a raider holding an egg
       //  walks at your speed, 7 yards a second, and only goes faster to get out of a wave, as you would with Sprint. With your egg held and you right in its path
       //  (7 yards ahead, inside 4.2 of its line) it sidesteps a little, onto safe floor only: "just a little, without making it super super easy")
@@ -755,7 +752,7 @@ function pgOpen(root, boss, d, pk) {
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
+    const sets = SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
     if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her (the gold circle shows it). Wait for its shell, walk over it, carry it clean, break it in your coil soak.']);
     else L.push(['No egg', 'Keep out of the carriers\' way.']);
     if (TEAM && sets[0]) L.push(['Coil soaks', 'Soak #' + sets[0] + (TEAM.ce[sets[0] - 1].includes(id) ? ' with your egg' : ' (filler)') + ': ' + (sets[0] === 1 ? 'the first coil to appear, 0:40 and 2:14' : 'the second coil to appear, 0:43 and 2:17') + '. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
@@ -776,7 +773,7 @@ function pgOpen(root, boss, d, pk) {
     wave: '<path d="M1.5 11.5Q8 1.5 14.5 11.5Q8 7 1.5 11.5Z" fill="#9be13a" stroke="#06260e" stroke-width=".8"/>' }[k] || '') + '</svg>';
   // (your job in short: three or four plain lines for the start card; the full rundown is one click away)
   const short = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
+    const sets = SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
     const G4 = [carrierOf(id) ? 'egg' : 'noegg', 'coil', 'bubble', 'wave'];
     L.push(carrierOf(id) ? 'You carry an egg (' + ZN[id][0] + '). It lands at 0:10 and 1:20: pick it up once its shell breaks.' : 'No egg: keep out of the egg carriers\' way.');
     L.push(sets[0] || sets[1] ? 'Coil team ' + sets[0] + (sets[1] !== sets[0] ? ' at 0:40, team ' + sets[1] + ' at 2:14' : ' at 0:40 and 2:14') + '. Team 1 takes the first coil to appear.' : 'No coil soak: stay out of both circles.');
@@ -841,20 +838,20 @@ function pgOpen(root, boss, d, pk) {
   const eggAt = (slot) => PG_UL.inward(PG_UL.planEgg[slot]); /* (the Plan's general place for that egg, on the stone: the egg itself lands at random in that quadrant.
     DO NOT move these rings onto the eggs' landing spots: Flex, Nov 16, "The plans layout is just general locations not exact egg spots remember". Check O holds it) */
   const P1MAPS = { tab: 'egg', tabs: () => [['egg', 'Your egg'], ['coil', 'Your coil']],
-    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myJob.soak[1] === 2 ? 1 : 0;
+    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myTeam() === 2 ? 1 : 0;
       if (key === 'coil' && myJob.egg) { D.teams[ti] = ['You']; D.ce[ti] = ['You']; } const pg = key === 'egg' ? UL_PAGES.eggs[0] : UL_PAGES.coils[0]; /* (an egg carrier on the Plan's numbered spot in the circle; without an egg, You is drawn in the middle of your circle (hot: you), where the game stands you, not in the Plan's list under it (review, Nov 16)) */
       return { svg: ulSvg(pg, D, new Map([['you', { color: '#f3c969' }]]), {}), vb: UL_VB[pg.vb] || UL_VB.mid }; },
     hot: (key) => (key === 'egg' ? EGG_SP.filter(([slot, z]) => eggFor(myJob.role, z) || slot === myJob.egg).map(([slot, z, i]) => { const p = eggAt(slot), on = slot === myJob.egg; return { id: slot, x: p[0], y: p[1], r: 7.2, title: (z === 'melee' ? 'By her' : ZNAME[z][0].toUpperCase() + ZNAME[z].slice(1) + ' quadrant') + ': the ' + (i ? 'outer' : 'inner') + ' egg (it lands somewhere there)', on, you: on }; })
-      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = (myJob.soak[1] === 2 ? 2 : 1) === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' + (myJob.egg ? ' (egg carriers: in the second set)' : '') }; })),
-    pick: (key, id) => { if (key === 'egg') myJob = { ...myJob, egg: id, fb: [0, 0] }; else { const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
+      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = myTeam() === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' }; })),
+    pick: (key, id) => { if (key === 'egg') { const te = PG_UL.eggO[id] ? eggTeam(id) : myJob.soak[1]; myJob = { ...myJob, egg: id, soak: [te, te], fb: [0, 0] }; } else { /* (an egg takes its zone's coil team, as on the plan's Egg Clear map) */ const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
     extras: () => [['noegg', 'No egg', !myJob.egg]], extra: (id) => { if (id === 'noegg') { myJob = { ...myJob, egg: null, fb: [0, 0] }; jobSave(); } },
     random: () => { const ok = EGG_SP.filter((q) => eggFor(myJob.role, q[1])), q = ok[Math.floor(Math.random() * ok.length)], tm = Math.random() < 0.5 ? 1 : 2; myJob = { ...myJob, egg: q ? q[0] : null, soak: [tm, tm], fb: [0, 0] }; jobSave(); },
     role: (r) => { const es = EGG_SP.find((q) => q[0] === myJob.egg), keep = es && eggFor(r, es[1]); myJob = { ...myJob, role: r, egg: myJob.egg ? (keep ? myJob.egg : EGG_BY[r]) : null, fb: [0, 0] }; jobSave(); },
     // (an egg carrier takes the first coil in set 1, in the bubble, whatever their pick (jobSoak); Left Soak #2 is theirs in the second set only. The sentence said
     //  "pick it up, then soak Left Soak #2" while the game stood them in the first coil (review, Nov 16))
-    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myJob.soak[1] === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'take the first coil in the Wretch\'s bubble with the other egg carriers, and Left Soak #2 in the second set.' : 'soak Right Soak #1, the first coil to appear, and get in the Wretch\'s bubble.')
+    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myTeam() === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'break it in Left Soak #2, the second coil to appear (both sets), and get in the Wretch\'s bubble.' : 'break it in Right Soak #1, the first coil to appear (both sets), and get in the Wretch\'s bubble.')
       : 'No egg: you soak ' + (t2 ? 'Left Soak #2, the second coil to appear' : 'Right Soak #1, the first coil to appear') + ', and get in the Wretch\'s bubble.'; },
-    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myJob.soak[1] === 2 ? (myJob.egg ? 'Soak #1, then Left Soak #2' : 'Left Soak #2') : 'Right Soak #1') };
+    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myTeam() === 2 ? 'Left Soak #2' : 'Right Soak #1') };
   if (SETUP && !P2) SETUP.maps = P1MAPS;
   const panel = () => setupHtml(); /* (for the test) */
   const playSub = () => role.name + ' · ' + (TEAM ? role.job : mapsOn() ? SETUP.maps.sub() : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job);
@@ -869,7 +866,7 @@ function pgOpen(root, boss, d, pk) {
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
       '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="Your figure in 3D">Look <select class="pg-look">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
-      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
+      '<p class="pg-keys">Move: W A S D · Click a mob or Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Play) */ } }; /* (the picture behind the card is you) */
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
@@ -947,14 +944,14 @@ function pgOpen(root, boss, d, pk) {
   const defKey = (e) => { if (!(e && e.repeat)) press('def'); if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
   document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
-  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
+  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); pickTgtAt(wp); }); /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it") */
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
   const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt, tgts: () => (G ? tgtList(G.t) : []), look: () => look, cls: (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].cls || '') : ''),
-    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G && !pickTgtAt(p)) target = p; }, tgtKey: (k) => { if (paused || !G || !tgtList(G.t).some((o) => o.key === k)) return false; press('tgt'); G.tgt = k; hud(true); return true; }, /* (a click on a mob in 3D targets it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing") */ dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
+    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, tgtKey: (k) => { if (paused || !G || !tgtList(G.t).some((o) => o.key === k)) return false; press('tgt'); G.tgt = k; hud(true); return true; }, /* (a click on a mob in 3D targets it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing") */ dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })

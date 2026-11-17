@@ -2,7 +2,7 @@
 // notes/Practice game - 3D mock.html) =====
 // The same fight as the 2D map, drawn in three.js. practice.js keeps the clock, the moves, the hits, the mistakes and the score; this file only
 // draws it and runs a WoW-style camera: behind you and gliding after you, drag the mouse to turn it, the wheel zooms, W walks where it looks,
-// a click on the floor walks there. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
+// a click on a mob targets it. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
 // "2D | 3D" switch by the minimap. three.js comes from jsdelivr, one exact version, only once 3D is picked: if it can't load (or the PC has no
 // WebGL), the switch goes back to 2D and says so. Every floor shape is the hit code's own (the same centres, radii and time windows as
 // practice.js's draw(), check() and inWave()): pg3dShapes lists them, pg3d draws the list, tests/practice-3d.js checks the list against inWave.
@@ -80,7 +80,7 @@ const PG3D_MON = {
       ['ball', PG3D_FC.eye, [0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['ball', PG3D_FC.eye, [-0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['box', PG3D_FC.slit, [0.15, 0.05, 0.215], [0.008, 0.055, 0.008]], ['box', PG3D_FC.slit, [-0.15, 0.05, 0.215], [0.008, 0.055, 0.008]],
       ['box', PG3D_FC.tongue, [0, -0.09, 0.47], [0.02, 0.01, 0.14]], ['box', PG3D_FC.tongue, [0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, 0.5, 0]], ['box', PG3D_FC.tongue, [-0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, -0.5, 0]]]) },
       { bone: 'Tail_Mid', parts: pg3dRow(3, 0.16, 0.03, [0.45, 0.85, 0.08, 1], 0.12, 0.06) }, { bone: 'Tail_Mid001', parts: pg3dRow(3, 0.13, 0.025, [0.45, 0.85, 0.08, 1], 0.13, 0.05) }, { bone: 'Tail_Mid002', parts: pg3dRow(3, 0.1, 0.02, [0.45, 0.85, 0.08, 1], 0.14, 0.04) }] }, /* (the real Wretch: a spiky feathered mane, a glowing throat, a spiky glowing tail) (a bloated serpent with arms and a cobra's hooded, fanged face; Flex: "give it arms") (a bloated serpent, Flex: "the wretch needs the most work, it just looks like a dinosaur": no legs or arms, a swollen body, a taller neck, sunk to the floor) */
-  clutch: { url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
+  clutch: { wow: { m2: 7926158, h: 4.6, ph: 4.9, keep: [2, 4, 6, 8] }, url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
   viper: { wow: { m2: 7456394, skin: [7509169] }, url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 4.4, hover: 1.6, paint: { Yellow: [0.72, 0.45, 0.05], Black: [0.05, 0.05, 0.07], Orange: [0.55, 0.06, 0.03], LightBlue: [0.02, 0.32, 0.34] }, /* (the real Viper: golden head and belly, dark back, teal feathered wings) */
     bones: { WingL: [1.7, 1.7, 1.7], WingR: [1.7, 1.7, 1.7], Abdomen: [1, 1.3, 1], Abdomen2: [0.88, 1.2, 0.88], Abdomen3: [0.85, 1.2, 0.85], Sting: [0.8, 1.1, 0.8], TopLeg1L: [0.01, 0.01, 0.01], TopLeg1R: [0.01, 0.01, 0.01], MidLeg1L: [0.01, 0.01, 0.01], MidLeg1R: [0.01, 0.01, 0.01], BottomLeg1L: [0.01, 0.01, 0.01], BottomLeg1R: [0.01, 0.01, 0.01], Head: [0.55, 0.55, 0.55] },
     face: { bone: 'Head', parts: [['ball', [0.72, 0.45, 0.05], [0.36, 0.02, 0.03], [0.62, 0.36, 0.44]], ['ball', [0.02, 0.28, 0.3], [0.4, 0.17, 0.03], [0.5, 0.14, 0.38]], ['ball', [0.72, 0.45, 0.05], [0.86, -0.06, 0.03], [0.34, 0.2, 0.3]],
@@ -91,6 +91,7 @@ const PG3D_MON = {
     face: { bone: 'Head', parts: pg3dRing(6, 0.12, 0.42, 0.06, 0.42, -0.16, [[0.05, 0.5, 0.55, 0.3], [0.08, 0.35, 0.6, 0.3]], -0.65) }, /* (the wind serpents' teal feather crest) */ clips: { idle: /\|flying_idle$/i, move: /\|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
 const pg3dSegD = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, q = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0; return Math.hypot(px - ax - dx * q, py - ay - dy * q); }; /* (how far a point is from a line segment: the mouse from a mob drawn on screen) */
+PG3D_MON.slither = { wow: { m2: 390813, skin: [390992, 390999], h: 3, ph: 3.4, keep: [0, 4, 5] }, h: 3 }; /* (bigger, Flex, Nov 16: "THE CLUtches were pretty small") (phase 3's Slithering Clutch, a green ooze (display 146650); no drawn stand-in: without its real model the old shape stays) */
 const PG3D_MONK = { ds: 'doomscale', dsx: 'doomscale', dscale: 'doomscale', rav: 'ravenous' }; /* (a shape's kind -> its monster, for the bar's height) */
 if (typeof window !== 'undefined') { window.__pg3dMon = PG3D_MON; window.__pg3dWow = () => pg3dWow; } /* (for the lineup pictures) */
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
@@ -126,6 +127,7 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
     sm.globalSequences.forEach((q, j) => { clipOf('g' + j, (sm._globalSequenceMap.get(j) || []).find((a) => a.root === g)); }); /* (g0, g1...: the always-on movement, e.g. the Rawling's lift off the floor; played with every clip) */
     // (parts, the helpers' check of the files, Nov 16: a model holds every choice of some parts (the Warden all six armour sets): one per group shows,
     //  W.geo's, else the 01 one, else the first; the others are taken out)
+    if (W.keep) { const ms = []; g.traverse((m) => { if (m.isMesh && m.userData.batch != null) ms.push(m); }); ms.forEach((m) => { if (!W.keep.includes(m.userData.batch)) m.parent.remove(m); }); } /* (keep: the parts to show, by batch: a model's death splash, shards and glow sprites have no part ids, Nov 16) */
     const GS = {}; g.traverse((m) => { const id = m.isMesh ? m.userData.geoset : null; if (id != null && id >= 100) (GS[Math.floor(id / 100)] = GS[Math.floor(id / 100)] || []).push(m); });
     Object.keys(GS).forEach((k) => { const L = GS[k], ids = L.map((m) => m.userData.geoset), w = (W.geo || []).find((x) => Math.floor(x / 100) === +k), pick = w != null ? w : ids.includes(+k * 100 + 1) ? +k * 100 + 1 : Math.min(...ids);
       L.forEach((m) => { if (m.userData.geoset !== pick) m.parent.remove(m); }); });
@@ -141,7 +143,7 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
 //  while either loads the old shape stays, so a creature is never missing. -> what drawn() gives, or [the real model, null, true])
 const pg3dWowOr = (wow, drawn, ms) => new Promise((ok) => { let done = false; const fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
   Promise.resolve().then(wow).then((g) => { if (done) return; done = true; clearTimeout(tm); ok([g, null, true]); }, () => { clearTimeout(tm); fb(); }); });
-const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 } }; /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
+const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 }, tail: { m2: 7234132 } }; /* (tail: Gore Rattle, creature/ulatektentacle/ulatektentacle01.m2; the small tails use it too) */ /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
 
 // (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
 //  team plan when there is one; else a mix by role, the same every run (t1, t2... take the next class in their role's list): tanks Warrior,
@@ -242,7 +244,7 @@ function pg3dShapes(A, t) {
   if (t >= D.t0 + 0.4 && t < D.gone + 1) { const p0 = A.bossAt(D.t0).p; P({ k: 'splash', x: p0[0], y: p0[1], p: (t - D.t0 - 0.4) / (D.gone + 0.6 - D.t0), s: 1.5 }); }
   if (t >= D.surf && t < D.surf + 2.4) P({ k: 'splash', x: B.p[0], y: B.p[1], p: (t - D.surf) / 2.4, s: 2 });
   // (her tail: it lifts through Mephitic Thrash's cast and slams down on the stone's edge as it lands)
-  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
+  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0, at: th ? th.at : null, hit: th ? th.at - t : null }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
   if (A.P2) A.P2.shapes(t, P, { disc, ring, grow, label }); /* (a later part's own shapes: src/practice-p2.js) */
   // (cast bars over the casters you can kick, Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads",
@@ -784,7 +786,18 @@ function pg3d(host, A) {
   // (the small tails: the same ridged tail, smaller, rising out of the venom and sinking back once they've fired)
   const STAILM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.5, emissive: 0x140826 })), SBONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45 }));
   const STREST = [[0, -5, -3.5], [0, -0.5, -2.4], [0, 3.6, -1.2], [0, 6.2, 0.6], [0, 6.8, 2.8]], ST = STREST.map(() => [0, 0, 0]);
-  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); return g; });
+  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); if (STPL) stailReal(g); return g; });
+  // (her tail and the small tails in the real model, Flex, Nov 16: "gore rattle needs its model from in game": ulatektentacle01, the small tails use it too.
+  //  Once it's in, the drawn tails hide; Gore Rattle sways on its stand and plays its real slam (a16, the hit 0.87 s in) for Mephitic Thrash; each small tail
+  //  is a smaller copy rising from the venom. Its root is scaled 3 times in every clip, so a clip always plays. TRH, STH: how tall they're drawn)
+  let TRM = null, TRS = null, TRK = null, STPL = null, slamAt = null; const TRH = 23, STH = 11, tailDrawn = tail.children.slice();
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.tail), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1;
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
+    STPL = { root, anim: g.animations, box, h }; const R0 = T.SkeletonUtils.clone(root), k = TRH / 1.35 / h; R0.scale.setScalar(k); R0.position.y = (-box.min.y - 0.122 * h) * k; /* (its base, 12%, under the venom) */
+    TRM = new T.AnimationMixer(R0); const a0 = g.animations.find((c) => c.name === 'a0') || g.animations[0], sl = g.animations.find((c) => c.name === 'a16'); if (a0) TRK = TRM.clipAction(a0).play();
+    if (sl) { TRS = TRM.clipAction(sl); TRS.setLoop(T.LoopOnce, 1); TRM.addEventListener('finished', (e) => { if (e.action === TRS && TRK) { TRK.reset().fadeIn(0.25).play(); TRS.fadeOut(0.25); } }); }
+    tailDrawn.forEach((c) => { c.visible = false; }); tail.add(R0); stail.L.forEach((g) => stailReal(g)); }).catch(() => { /* (no answer: the drawn tails stay) */ });
+  const stailReal = (g) => { if (!STPL || g.userData.R) return; const R1 = T.SkeletonUtils.clone(STPL.root), k1 = STH / STPL.h, M1 = new T.AnimationMixer(R1), a0 = STPL.anim.find((c) => c.name === 'a0') || STPL.anim[0]; R1.scale.setScalar(k1); if (a0) M1.clipAction(a0).play(); g.add(R1); g.userData.R = R1; g.userData.M = M1; g.userData.y0 = (-STPL.box.min.y - 0.122 * STPL.h) * k1; g.userData.C.seg.forEach((m) => { m.visible = false; }); }; /* (a small tail: a copy of the real one, made with its pool item, never while drawing) */
   // (the spectral image that beams the Wretch: her neck and head, see-through and glowing)
   const GHOSTM = keep(new T.MeshBasicMaterial({ color: 0x3af2a8, transparent: true, opacity: 0.32, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
   const ghost = pool(() => { const g = new T.Group(), nk = new T.Mesh(NECKG, GHOSTM), hd = new T.Group(), sk = new T.Mesh(SKULLG, GHOSTM); hd.position.copy(headG.position); hd.scale.setScalar(3.4); hd.rotation.x = 0.2; hd.add(sk); g.add(nk, hd); g.scale.setScalar(0.45); return g; });
@@ -1020,8 +1033,10 @@ function pg3d(host, A) {
       if (s.sink < 0.85) { const fo1 = 0.6 * (1 - s.sink), ws = (lx, lz, sz, i) => foamAt(bx + lx * cy + lz * sy, bz - lx * sy + lz * cy, sz * (1 + 0.06 * Math.sin(t * 2.3 + i)), fo1, t * 0.2 + i);
         ws(0, -13.2, 13, 0); humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
       return; }
-    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t); const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
+    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t);
+      if (TRS && s.at != null && s.hit <= 0.87 && s.hit > -0.4 && slamAt !== s.at) { slamAt = s.at; TRS.reset(); TRS.time = Math.max(0, 0.87 - s.hit); TRS.setEffectiveWeight(1).fadeIn(0.08).play(); if (TRK) TRK.fadeOut(0.08); } /* (its real slam, the hit on the Thrash) */ const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
     if (k === 'stail') { const g = stail(), C = g.userData.C, rise = 1 - Math.pow(1 - s.f, 3), dn = -9 * (1 - rise) - 10 * (s.sink || 0); g.position.set(s.x, WATER, -s.y); g.rotation.y = faceIn(s.x, s.y);
+      if (g.userData.R) { g.userData.R.position.y = g.userData.y0 + dn * STH / 9; if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
       for (let i = 0; i < 5; i++) { ST[i][0] = STREST[i][0] + Math.sin(t * 3.1 + i) * 0.35 * i / 4; ST[i][1] = STREST[i][1] + dn; ST[i][2] = STREST[i][2]; } pose(C, ST, t, 1, 1.5, 0.8, 1.0); if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
     if (k === 'splash') { if (s.p < 0 || s.p > 1) return; const g = splash(), u = g.userData, oy = onP(s.x, s.y) ? 0.04 : WATER + 0.02; g.position.set(s.x, oy, -s.y); u.pm.uniforms.uP.value = s.p; u.pm.uniforms.uS.value = s.s;
       u.f.scale.set((2 + 9 * Math.sqrt(s.p)) * s.s * 2, 1, (2 + 9 * Math.sqrt(s.p)) * s.s * 2); u.fm.opacity = 0.8 * (1 - s.p); const hh = Math.sin(Math.min(1, s.p * 1.5) * Math.PI) * 5 * s.s; u.c.visible = hh > 0.1; u.c.scale.set(2.4 * s.s * (1 + s.p), hh + 0.01, 2.4 * s.s * (1 + s.p)); u.cm.uniforms.uO.value = 0.4 * (1 - s.p); return; }
@@ -1067,6 +1082,7 @@ function pg3d(host, A) {
     for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); botFx(now, t); if (P2K) P2K.frame(G); /* (botFx: the raid's spells, after the raiders cast them this frame) */
     monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
     if (BRM && boss.visible) BRM.update(dt); /* (her real model's own movement) */
+    if (TRM && tail.visible) TRM.update(dt); for (let i = 0; i < stail.L.length; i++) { const g = stail.L[i]; if (g.visible && g.userData.M) g.userData.M.update(dt); } /* (the tails' real movement) */
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) { p.n.sp.visible = p.b.sp.visible = false; if (p.r) p.r.sp.visible = false; if (p.m) p.m.sp.visible = false; } });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
@@ -1075,7 +1091,7 @@ function pg3d(host, A) {
     if (A.flashT && A.flashT !== flashSeen) { flashSeen = A.flashT; const left = 400 - (performance.now() - flashSeen); if (left > 0 && flL.animate) flL.animate([{ opacity: left / 400 }, { opacity: 0 }], { duration: left, easing: 'linear' }); } /* (the red hurt flash fades on its own, paused or not) */
     R.render(scene, cam); };
   const draw = (t) => { if (dead) return; try { draw1(t); } catch (e) { if (A.fail) A.fail(e); else throw e; } };
-  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on the floor walks there ----
+  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on a mob targets it (no click to move since Nov 16) ----
   const kick = () => { if (pend || dead) return; pend = requestAnimationFrame(() => { pend = 0; if (performance.now() - lastDraw > 30) draw(lastT); }); }; /* (a redraw while the fight is paused) */
   const down = (e) => { if (e.button !== 0 && e.button !== 2) return; drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, b: e.button }; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ } e.preventDefault(); };
   const move = (e) => { if (!drag) { hover(e); return; } const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
@@ -1095,7 +1111,7 @@ function pg3d(host, A) {
   if (typeof window !== 'undefined') window.__pg3dPick = (X, Y) => { const o = onTgt(X, Y); return o ? o.key : null; }; /* (for the test link) */
   const hover = (e) => { const o = onTgt(e.clientX, e.clientY); cv.style.cursor = o ? 'pointer' : 'crosshair'; };
   const up = (e) => { if (!drag) return; const d = drag; drag = null; cv.style.cursor = 'crosshair'; try { cv.releasePointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ }
-    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (!(o && A.tgtKey && A.tgtKey(o.key))) { const p = pick(e.clientX, e.clientY); if (p && A.walk) A.walk(p); } kick(); } };
+    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (o && A.tgtKey) A.tgtKey(o.key); kick(); } }; /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it"; you move with the keys) */
   const wheel = (e) => { e.preventDefault(); dist = Math.max(8, Math.min(85, dist * (e.deltaY > 0 ? 1.1 : 1 / 1.1))); kick(); };
   const noMenu = (e) => { e.preventDefault(); };
   cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('wheel', wheel, { passive: false }); cv.addEventListener('contextmenu', noMenu); window.addEventListener('resize', kick);

@@ -100,8 +100,8 @@ function checks(H, say, pj) {
     if (!(thrashIn >= 17)) bad('only ' + thrashIn + ' raiders are in the second Wretch\'s bubble as the Thrash lands at 1:46; top kills have 17 to 20' + tag + ' (check C)');
   }
   // D. Your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment", then "its a bit overkill"): three rows, your role,
-  //    your egg area and one coil team. Your egg area picks your place, your team holds (egg carriers take the first coil in set 1, where the bubble
-  //    sits on it), both teams stay even, your bubble spot is picked for you, and the run plays that job clean. (Before: three tabs, two maps and
+  //    your egg area and one coil team. Your egg area picks your place, your team holds (an egg carrier soaks with their egg zone's team in both sets,
+  //    the plan's Egg Clear map (Flex, Nov 16: "it should be 4 and 4"); before, every carrier took the first coil in set 1), both teams stay even, your bubble spot is picked for you, and the run plays that job clean. (Before: three tabs, two maps and
   //    numbered bubble spots; before that, only three fixed jobs.)
   if (!Object.getOwnPropertyDescriptor(dbg, 'myJob') || typeof dbg.jobSlot !== 'function' || typeof dbg.panel !== 'function') { bad('there is no way to pick your own job without a team plan (check D)'); return; }
   const sizes = (S2) => [0, 1].map((st) => S2.soaks.filter((q) => q.set === st).map((q) => q.group.length).join('/')).join(' and '), base = sizes(script({ seed: 3, east: false }));
@@ -116,7 +116,7 @@ function checks(H, say, pj) {
         if (!/It lands by her/.test(dbg.panel())) bad('the sentence for a melee egg carrier doesn\'t say where the egg lands (check D)'); } }
     dbg.myJob = { role: 'h', egg: 'm2', soak: [2, 2], fb: [0, 0] }; if (dbg.jobSlot() !== 'm2') bad('picking the egg area by her puts you in ' + dbg.jobSlot() + ', not a carrier\'s place there (check D)');
     const r = dbg.sim('m2', true, false, 3), S2 = dbg.S, team = (st) => S2.soaks.filter((q) => q.set === st && q.group.includes('m2')).map((q) => q.k + 1).join(',');
-    if (team(0) !== '1' || team(1) !== '2') bad('an egg carrier on coil team 2 plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; carriers take the first coil in set 1 (in the Wretch\'s bubble), then team 2 (check D)');
+    if (team(0) !== '1' || team(1) !== '1') bad('the egg carrier by her (m2) plays as team ' + (team(0) || 'none') + ', then ' + (team(1) || 'none') + '; a carrier soaks with their egg zone\'s team in both sets, and by her is Right Soak #1 (the plan\'s Egg Clear map) (check D)');
     if (sizes(S2) !== base) bad('picking a coil team leaves the teams at ' + sizes(S2) + ' instead of ' + base + ' (check D)');
     r.log.filter((x) => /missed your coil soak|Soul Constrictor|Fester Burst/.test(x)).forEach((x) => bad('the picked job, played by the autopilot: ' + x + ' (check D)'));
     if (!/picked for you/.test(dbg.asg('m2'))) bad('the start card doesn\'t say your bubble spot is picked for you (check D)');
@@ -131,7 +131,7 @@ function checks(H, say, pj) {
     dbg.myJob = { role: 'r', egg: null, soak: [1, 1], fb: [0, 0] }; if (!/You soak the first coil to appear/.test(dbg.panel())) bad('picking the first coil does not change the sentence on the setup (check D)');
     // (Main, Nov 15: the job line read "coil team 1, then 1": one team says it once, two say "then team 2")
     if (/then 1$|, then 1\b/.test(dbg.jobRole().job) || !/coil team 1$/.test(dbg.jobRole().job)) bad('the job line reads "' + dbg.jobRole().job + '"; with one team it should end "coil team 1" (check D)');
-    dbg.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; if (!/coil team 1, then team 2$/.test(dbg.jobRole().job)) bad('a carrier on team 2 reads "' + dbg.jobRole().job + '"; it should end "coil team 1, then team 2" (check D)');
+    dbg.myJob = { role: 'r', egg: 'r6', soak: [1, 1], fb: [0, 0] }; if (!/coil team 2$/.test(dbg.jobRole().job)) bad('the right inner egg carrier reads "' + dbg.jobRole().job + '"; it should end "coil team 2": the right zone\'s carriers are Left Soak #2 in both sets, whatever they pick (the plan\'s Egg Clear map, Nov 16) (check D)');
   } catch (e) { bad('the picked job crashed the game: ' + e.message + ' (check D)'); }
   finally { dbg.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }; }
   // E. Hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next things for you with their
@@ -497,21 +497,21 @@ function checks(H, say, pj) {
           if (!/first coil to appear/.test(HS[0].title) || !/Left Soak #2/.test(HS[1].title)) O('Your coil\'s spots read "' + HS.map((h) => h.title).join('" and "') + '"; Right Soak #1 takes the first coil to appear, Left Soak #2 the next');
           HS.forEach((h) => { if (!circ.some(([x, y, r]) => Math.abs(x - PX(h.x)) < 0.15 && Math.abs(y - PY(h.y)) < 0.15 && Math.abs(r - h.r * 2.083) < 0.15)) O('the ' + h.id + ' coil spot isn\'t on the Plan map\'s own soak circle' + tag);
             const d = drawn.find((q) => q.id === h.id); if (!d || Math.abs(d.cx - PX(h.x)) > 0.1 || Math.abs(d.cy - PY(h.y)) > 0.1) O('the ' + h.id + ' coil spot is drawn off its circle' + tag); });
-          const mine = HS.find((h) => h.id === 't' + tm), other = HS.find((h) => h.id !== 't' + tm), you = youIn(String(pg || '')).concat(youIn(String(hs || '')));
+          const eff = egg ? 1 : tm, /* (r3, the left quadrant's outer egg: Right Soak #1 on the plan's Egg Clear map, whatever you pick) */ mine = HS.find((h) => h.id === 't' + eff), other = HS.find((h) => h.id !== 't' + eff), you = youIn(String(pg || '')).concat(youIn(String(hs || '')));
           if (!mine.on || other.on) O('Your coil lights ' + (HS.filter((h) => h.on).map((h) => h.id).join(', ') || 'nothing') + tag);
           if (you.length !== 1 || you[0].fill !== '#f3c969') O('Your coil draws ' + (you.length === 1 ? 'you, but not in gold' : you.length + ' You tokens') + '; it draws you once, in gold' + tag);
           else { const yx = YX(you[0].cx), yy = YY(you[0].cy), yd = Math.hypot(yx - mine.x, yy - mine.y);
             if (yd >= mine.r) O('Your coil draws you at ' + yx.toFixed(1) + ', ' + yy.toFixed(1) + ', ' + yd.toFixed(1) + ' yards from the middle of your circle (radius ' + mine.r + '): outside it, while the game stands you in your coil' + tag); }
           // (the game's own run: which coil this job soaks in each set, and the sentence saying the same)
           const slot = D.jobSlot(); D.at(0.05, slot, { seed: 3 }); const kk = [0, 1].map((si) => { const q = D.S.soaks.find((s) => s.set === si && s.group.includes(slot)); return q ? q.k + 1 : 0; }), say = M.say();
-          if (kk[1] !== tm || kk[0] !== (egg ? 1 : tm)) O('the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second; your pick (Soak #' + tm + ') is the second set\'s, and the first set\'s too without an egg (egg carriers take the first coil there)' + tag);
-          if (kk[0] !== kk[1] ? !/first coil/.test(say) || !/Left Soak #2 in the second set/.test(say) : /second set/.test(say) || !(kk[1] === 2 ? /Left Soak #2/ : /Right Soak #1/).test(say)) O('the sentence reads "' + say + '" while the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second' + tag); }
+          if (kk[0] !== eff || kk[1] !== eff) O('the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second; it should be Soak #' + eff + ' in both (' + (egg ? 'your egg zone\'s team on the plan\'s Egg Clear map' : 'your pick') + ')' + tag);
+          if (/second set/.test(say) || !(eff === 2 ? /Left Soak #2/ : /Right Soak #1/).test(say)) O('the sentence reads "' + say + '" while the game has you on coil ' + kk[0] + ' in the first set and ' + kk[1] + ' in the second' + tag); }
         M.tab = 'egg';
         // (each pick is the job the game plays)
         D.myJob = { role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] };
-        M.pick('egg', 'r6'); if (D.myJob.egg !== 'r6' || D.jobSlot() !== 'r6' || D.myJob.role !== 'r' || D.myJob.soak.join() !== '1,1') O('picking the right inner egg spot gives ' + JSON.stringify(D.myJob) + ', not the r6 egg with your role and coil kept');
+        M.pick('egg', 'r6'); if (D.myJob.egg !== 'r6' || D.jobSlot() !== 'r6' || D.myJob.role !== 'r' || D.myJob.soak.join() !== '2,2') O('picking the right inner egg spot gives ' + JSON.stringify(D.myJob) + ', not the r6 egg with your role kept and its zone\'s coil, Left Soak #2 (the plan\'s Egg Clear map, Nov 16)');
         M.pick('coil', 't2'); if (D.myJob.soak.join() !== '2,2' || D.myJob.egg !== 'r6') O('picking Left Soak #2 gives ' + JSON.stringify(D.myJob) + ', not coil team 2 with your egg kept');
-        if (!/coil team 1, then team 2$/.test(D.jobRole().job)) O('an egg carrier on Left Soak #2 plays "' + D.jobRole().job + '"; carriers take the first coil in set 1 (in the bubble), then team 2');
+        if (!/coil team 2$/.test(D.jobRole().job)) O('the right inner egg carrier plays "' + D.jobRole().job + '"; the right zone\'s carriers are coil team 2 in both sets (the plan\'s Egg Clear map)');
         if (!/Left Soak #2/.test(M.say()) || !/Left Soak #2/.test(M.sub()) || !/right/i.test(M.sub())) O('after picking the right egg and Left Soak #2, the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"');
         { D.at(20, D.jobSlot(), { seed: 3 }); const e = D.G.eggs.find((q) => q.set === 0 && q.who === 'r6' && q.state === 'held'); /* (the game's own run, on its autopilot: the egg you pick is the one you carry) */
           if (!e || e.id !== 'r6' || quad([e.x, e.y]) !== 0) O('after picking the right inner egg spot the game\'s run has you holding ' + (e ? 'the ' + e.id + ' egg from ' + e.x.toFixed(0) + ', ' + e.y.toFixed(0) : 'no egg') + ' at 0:20; you carry the r6 egg, from the right quadrant'); }
@@ -522,7 +522,7 @@ function checks(H, say, pj) {
           if (!/coil team 2$/.test(D.jobRole().job) || /then/.test(D.jobRole().job)) O('no egg on Left Soak #2 plays "' + D.jobRole().job + '"; it should be coil team 2');
           if (!/^No egg/.test(M.say()) || !/^No egg/.test(M.sub())) O('with No egg the sentence or the Play button doesn\'t say so: "' + M.say() + '", "' + M.sub() + '"'); }
         M.pick('coil', 't1'); if (D.myJob.soak.join() !== '1,1' || D.myJob.egg !== null) O('picking Right Soak #1 with no egg gives ' + JSON.stringify(D.myJob));
-        M.pick('egg', 'r2'); if (D.myJob.egg !== 'r2' || D.jobSlot() !== 'r2' || D.myJob.soak.join() !== '1,1' || (M.extras().find((q) => q[0] === 'noegg') || [])[2]) O('picking an egg spot after No egg gives ' + JSON.stringify(D.myJob) + ' (No egg should go dark)');
+        M.pick('egg', 'r2'); if (D.myJob.egg !== 'r2' || D.jobSlot() !== 'r2' || D.myJob.soak.join() !== '2,2' || /* (the far zone's coil: Left Soak #2) */ (M.extras().find((q) => q[0] === 'noegg') || [])[2]) O('picking an egg spot after No egg gives ' + JSON.stringify(D.myJob) + ' (No egg should go dark)');
         // (a new role keeps the spots it can take and moves the rest)
         D.myJob = { role: 'r', egg: 'r3', soak: [2, 2], fb: [0, 0] }; M.role('h'); if (D.myJob.role !== 'h' || D.myJob.egg !== 'r3' || D.myJob.soak.join() !== '2,2') O('switching Ranged to Healer gives ' + JSON.stringify(D.myJob) + '; a healer can keep the same egg and coil');
         M.role('m'); if (D.myJob.role !== 'm' || !EGG.m.includes(D.myJob.egg) || D.myJob.soak.join() !== '2,2') O('switching to Melee gives ' + JSON.stringify(D.myJob) + '; a melee takes an egg by her and keeps the coil');

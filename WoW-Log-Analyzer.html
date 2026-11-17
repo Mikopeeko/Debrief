@@ -72729,9 +72729,12 @@ const PG_UL = {
   // centre carrier about 14 yards in on the quadrant's line and the edge carrier at the rim. GENERAL PLACES, not where eggs land (Flex, Nov 16: "The plans layout is
   // just general locations not exact egg spots remember"): the eggs land at random, one inner and one outer in each quadrant (eggLand), and you take yours)
   planEgg: { m1: [0, 14], m2: [0, 35], r5: [-14, 0], r3: [-41, 0], r6: [14, 0], r4: [41, 0], r1: [0, -14], r2: [0, -40] }, eggQ: { m1: ['melee', 0], m2: ['melee', 1], r5: ['left', 0], r3: ['left', 1], r6: ['right', 0], r4: ['right', 1], r1: ['far', 0], r2: ['far', 1] }, qAx: { melee: 90, left: 180, right: 0, far: 270 },
-  // (the coil soak groups: set 1, every carrier takes the first slam inside the Wretch's bubble and group two the second; set 2, the carriers split)
-  soak: [[['m1', 'm2', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'h1', 'h3', 'm3'], ['m4', 'm5', 'm6', 'm7', 'h2', 'h4', 'r7']],
-    [['r1', 'r3', 'r5', 'm1', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r2', 'r4', 'r6', 'm2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
+  // (the coil soak groups, the plan's Egg Clear map (guides.js ulSoaks; Flex, Nov 16: "The guide governs the game", "the only thing from the plan should be the maps
+  //  to set up the game", "it should be 4 and 4"): Right Soak #1 takes the first coil with the carriers of the melee and left zones (m1 m2, r5 r3), Left Soak #2 the
+  //  next with the right and far zones' (r6 r4, r1 r2); the same teams in both sets; everyone else split evenly, 9 a soak. Before Nov 16, set 1 sent all 8 carriers
+  //  to the first coil (a line of guide text), and for an hour the coil walkthrough's groups split them 3 and 5)
+  soak: [[['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']],
+    [['m1', 'm2', 'r5', 'r3', 'h1', 'h3', 'm3', 'm4', 'm5'], ['r6', 'r4', 'r1', 'r2', 'h2', 'h4', 'm6', 'm7', 'r7']]],
 };
 
 // the fight, second by second (the measured top Mythic kills, the guide's plan); east: she surfaces on the east edge
@@ -72863,33 +72866,18 @@ function pgOpen(root, boss, d, pk) {
   // ---- the game ----
   let S = null, G = null, me = part.roles[0].id, role = part.roles[0], speed = 1, startAt = 0, raf = null, last = 0, paused = true, keys = {}, target = null, Z = 13, cam = null, dpr = 1;
   const SPEED = 7, PR = 0.7, carrierOf = (id) => !!PG_UL.eggO[id];
-  // ---- your team's plan: signed in, with a Mythic plan for this boss (the one the Plan page shows), you play as yourself and the others are
-  // your raiders on the plan's jobs: each egg area's two (the first is the centre, the second the edge), the coil soaks, the Fester Burst
-  // spots; the rest by role. Without one, the guide's plan. ----
-  let teamWhy = '', pickedMe = false; /* (why there's no team plan in the game: for the audit) */
-  const TEAM = (() => { try { if (P2) { teamWhy = 'a later part: picked jobs'; return null; } if (d !== 'm' || typeof pnGet !== 'function' || typeof pnState !== 'function' || typeof ulRead !== 'function') { teamWhy = 'no plan code (d=' + d + ')'; return null; }
-      const o = pnGet(), st = pnState(o, boss), lc = (x) => String(x).split('-')[0].toLowerCase(), on = new Set(((o.on || {})[boss] || []).map(lc));
-      const L = notesOf(boss).list.filter((q) => !q.example && !q.pgEmpty && pnNoteDiff(q) === 'Mythic'), chId = typeof planChosenGet === 'function' ? planChosenGet(o.rid, boss) : null, sc = (q) => { const t = noteResolve(q.text); return [...on].filter((x) => noteHas(t, x)).length; };
-      const n = (st && st.n && pnNoteDiff(st.n) === 'Mythic' ? st.n : null) || L.find((q) => q.id === chId) || L.slice().sort((a, b) => sc(b) - sc(a) || (b.saved || 0) - (a.saved || 0))[0] || null;
-      teamWhy = 'state ' + (st && st.k) + ', plans ' + L.length + ', picked ' + (n ? planNm(n) : 'none') + ', on ' + on.size; if (!n) return null;
-      const U = ulRead(noteResolve(n.text));
-      const P = pnPeople(o).filter((q) => !q.bench && (!on.size || on.has(lc(q.n)))); teamWhy += ', people ' + P.length + ', teams ' + U.teams.map((x) => x.length).join('/'); if (P.length < 10) return null;
-      const byN = new Map(P.map((q) => [lc(q.n), q])), mains = P.map((q) => String(q.n).split('-')[0]), AM = new Map(pnPeople(o, { alts: true }).filter((q) => q.alt).map((q) => [lc(q.n), lc(q.alt)])), al = (x) => { const k = lc(x); if (byN.has(k)) return k; if (AM.has(k) && byN.has(AM.get(k))) return AM.get(k); if (typeof altOf !== 'function') return k; const m = altOf(String(x).split('-')[0], mains); return m ? lc(m) : k; }; /* (an alt in the plan counts as their main) */
-      const id2 = {}, used = new Set(), put = (x, id) => { const q = byN.get(al(x)); if (q && !used.has(q) && !id2[id]) { id2[id] = q; used.add(q); } };
-      [['melee', ['m1', 'm2']], ['left', ['r5', 'r3']], ['right', ['r6', 'r4']], ['far', ['r1', 'r2']]].forEach(([z, ids]) => (U.ez[z] || []).slice(0, 2).forEach((x, i) => put(x, ids[i])));
-      const free = (L) => GDZ_RAID.filter((id) => L.includes(id[0]) && !id2[id]), rk = (q) => (q.role === 'tank' ? 0 : q.role === 'healer' ? 1 : 2);
-      P.filter((q) => !used.has(q)).sort((a, b) => rk(a) - rk(b)).forEach((q) => { const w = q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r';
-        const id = free([w])[0] || free(w === 'm' ? ['r', 'h'] : w === 'r' ? ['m', 'h'] : ['m', 'r'])[0] || free(['t', 'h', 'm', 'r'])[0]; if (id) { id2[id] = q; used.add(q); } });
-      const n2 = new Map(Object.entries(id2).map(([id, q]) => [lc(q.n), id])), ids = (L) => [...new Set((L || []).map((x) => n2.get(al(x))).filter(Boolean))];
-      const T = { name: planNm(n), id2, soak: [ids(U.teams[0]), ids(U.teams[1])], ce: [ids(U.ce[0]), ids(U.ce[1])], fb: (U.fb || []).map(ids), you: n2.get(lc((typeof tpMe === 'function' && tpMe()) || (typeof tpWho === 'function' && tpWho()) || '')) || null };
-      teamWhy += ', ok ' + T.soak.map((x) => x.length).join('/') + ', me ' + ((typeof tpMe === 'function' && tpMe()) || '-') + '/' + ((typeof tpWho === 'function' && tpWho()) || '-') + ' -> ' + (T.you || 'none') + ', not placed: ' + [...new Set([...U.teams[0], ...U.teams[1], ...(U.fb || []).flat()])].filter((x) => !n2.has(al(x))).join(' ') + ', left out: ' + P.filter((q) => !used.has(q)).map((q) => q.n).join(' '); return T.soak[0].length && T.soak[1].length ? T : null; } catch (e) { teamWhy += ' error ' + e; return null; } })();
+  // ---- the setup: the guide governs the game (Flex, Nov 16: "The game should not be pulling from the teams set plan, it should only use the maps as the
+  // setup", "The guide governs the game"): the raid, the egg zones, the coil soak groups and the bubbles come from the guide's maps, never from a plan made
+  // on the Plan page. (Before Nov 16 a signed-in raider's team plan replaced them, and its two coil teams soaked both coil sets as they were.) ----
+  let teamWhy = 'the guide governs the game', pickedMe = false; /* (for the audit) */
+  const TEAM = null;
   const nm = (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].n).split('-')[0] : gdzName(id));
   const rl = (id) => { const q = TEAM && TEAM.id2[id]; return q ? (q.role === 'tank' ? 't' : q.role === 'healer' ? 'h' : q.kind === 'melee' ? 'm' : 'r') : id === me && jobMine() ? myJob.role : id[0]; };
   const clsC = (id) => { const q = TEAM && TEAM.id2[id], c = q && E.CLASSES && E.CLASSES[q.cls]; return c ? c[1] : null; };
   // (the quadrants by name only, as the setup's maps say them: they turn with her dive, so a compass word was wrong for the 1:20 egg. The release sweep, Nov 16:
   //  the frame said "left (west)" all pull while that egg landed north)
   const ZN = { m1: ['by her', 'inner'], m2: ['by her', 'outer'], r5: ['left quadrant', 'inner'], r3: ['left quadrant', 'outer'], r6: ['right quadrant', 'inner'], r4: ['right quadrant', 'outer'], r1: ['far quadrant', 'inner'], r2: ['far quadrant', 'outer'] };
-  const teamRole = (id) => { const sk = TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
+  const teamRole = (id) => { const sk = PG_UL.soak[0][0].includes(id) ? 1 : PG_UL.soak[0][1].includes(id) ? 2 : 0; return { id, name: nm(id), job: (carrierOf(id) ? 'Egg carrier, ' + ZN[id][0] : rl(id) === 'h' ? 'Healer' : rl(id) === 't' ? 'Tank' : 'No egg') + (sk ? ' · soak #' + sk : '') }; };
   // ---- your own job, without a team plan (Nov 15, Flex: "letting the player pick their assignment, for those who arent using my website for
   // assignments", then "its a bit overkill"): three rows of buttons, your role, your egg area (or none) and your coil team. The rest is picked for
   // you: the egg spot in your area, a free bubble spot (shown in gold), and team 1 in set 1 for egg carriers. The other 19 take the jobs left and
@@ -72901,7 +72889,9 @@ function pgOpen(root, boss, d, pk) {
   const jobSlot = (j) => (j.egg && PG_UL.eggO[j.egg] ? j.egg : { m: 'm3', r: 'r7', h: 'h2' }[j.role]);
   const jobMine = () => !P2 && !TEAM && !!myJob && jobSlot(myJob) === me; /* (the picked job is the one played: no team plan, and you're in its slot) */
   // (the coil teams with you on the one you picked: you change places with someone on it, a carrier for a carrier, the same role if there is one)
-  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], want = si === 0 && PG_UL.eggO[slot] ? 0 : j.soak[si] === 2 ? 1 : 0, /* (set 1: carriers take the first coil, in the Wretch's bubble) */ have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1;
+  const eggTeam = (slot) => (PG_UL.soak[0][1].includes(slot) ? 2 : 1); /* (an egg zone's coil team on the plan's Egg Clear map: melee and left Soak #1, right and far Soak #2) */
+  const myTeam = () => (myJob.egg && PG_UL.eggO[myJob.egg] ? eggTeam(myJob.egg) : myJob.soak[1] === 2 ? 2 : 1); /* (your coil: your egg's team, else your pick) */
+  const jobSoak = (slot, j) => PG_UL.soak.map((two, si) => { const g = [two[0].slice(), two[1].slice()], have = g[0].includes(slot) ? 0 : g[1].includes(slot) ? 1 : -1, want = PG_UL.eggO[slot] && have >= 0 ? have : j.soak[si] === 2 ? 1 : 0; /* (a carrier: their zone's group, as the guide's map has it) */
     if (have === want) return g; if (have < 0) { g[want].push(slot); return g; }
     const car = (x) => !!PG_UL.eggO[x], pool = g[want], mate = pool.find((x) => car(x) === car(slot) && x[0] === slot[0]) || pool.find((x) => car(x) === car(slot)) || pool[pool.length - 1];
     g[have] = g[have].filter((x) => x !== slot).concat([mate]); g[want] = g[want].filter((x) => x !== mate).concat([slot]); return g; });
@@ -72911,7 +72901,7 @@ function pgOpen(root, boss, d, pk) {
     S.eggSets.forEach((e) => e.eggs.forEach((q) => G.eggs.push({ ...q, set: e.si, state: 'air', who: null })));
     GDZ_RAID.forEach((id) => { const p = homeOf(id, 0); G.bots[id] = { id, x: p[0], y: p[1], esc: null }; });
     const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; target = null; keys = {}; cam = null; if (P2) P2.init(G); };
-  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soak: TEAM && TEAM.soak, soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
+  const reset = (o) => { o = o || {}; S = (P2 ? P2.script : pgUlScript)({ east: o.east, tailEast: o.tailEast, first: o.first, seed: o.seed || ((Date.now() & 0xffff) || 7), soakSets: jobMine() ? jobSoak(me, myJob) : null }); newG(); };
   // where each raider stands when nothing is happening: her tank in front of her, melee round her, carriers in their zones, the rest inside; turned with her
   const homeOf = (id, t) => { if (P2) return P2.home(id, t); const rot = S.rotAt(t), egg = G && G.eggs.find((e) => (e.who === id && e.state === 'held') || (e.id === id && e.state !== 'gone' && e.state !== 'held' && e.land - t < 14));
     // (an egg carrier waits and holds the first set's egg at the Plan's place for it, where the setup's ring is: the map review, Nov 16, found the game holding
@@ -73058,7 +73048,7 @@ function pgOpen(root, boss, d, pk) {
     if (ob.fb >= 0 && typeof UL_FB !== 'undefined' && UL_FB[ob.fb] && ob.car.indexOf(id) < UL_FB[ob.fb].length) { const u = UL_FB[ob.fb][ob.car.indexOf(id)], q = ob.fb ? pgRot(u, S.rotAt(ob.at) - 90) : ob.m ? ob.m(u) : u; return [ob.p[0] + q[0] * 10, ob.p[1] + q[1] * 10]; } const RC = S._ring = S._ring || new Map(), key = ob.at + ',' + ob.p.join(','); let M = RC.get(key);
     if (!M) { const n = Math.max(5, ob.car.length), D = 2 * Math.PI / n, th = ob.car.map((c) => { const z = S.F(UX_ZONE[c] || UX_HOME[c] || [0, 0], ob.at); return [c, Math.atan2(z[1] - ob.p[1], z[0] - ob.p[0])]; }).sort((a, b) => a[1] - b[1]);
       let sx = 0, sy = 0; th.forEach(([, a], i) => { sx += Math.cos(a - i * D); sy += Math.sin(a - i * D); }); const c0 = Math.atan2(sy, sx); M = new Map(th.map(([c], i) => [c, c0 + i * D])); RC.set(key, M); }
-    const a = M.get(id); return [ob.p[0] + Math.cos(a) * 6.5, ob.p[1] + Math.sin(a) * 6.5]; };
+    const a = M.get(id), rad = ob.bub || ob.car.length > 5 ? 6.5 : 3.8; return [ob.p[0] + Math.cos(a) * rad, ob.p[1] + Math.sin(a) * rad]; }; /* (rad: a soak's 4 carriers (the plan's 4 and 4, Nov 16) stand 3.8 yards out, still more than 3 yards apart, with room to dodge a small tail's wave inside the circle; at 6.5 they stepped out of it) */
   // (the carriers' numbered bubble spots: the team plan's; without one, each carrier takes a free spot round the bubble)
   const fbList = (ek) => { if (!TEAM) return null; const f = TEAM.fb[ek]; return f && f.length ? f : null; };
   // (Main's playtest, Nov 15: melee never hit the heart in the burn, "you were on it 0% of the time": their spot stayed at home, south of the middle, out of
@@ -73078,11 +73068,18 @@ function pgOpen(root, boss, d, pk) {
     // (you, and your arrow (hintNow): at your 7 yards a second, and a bubble is yours from when the job line calls it, 8 s before it pops. The release sweep,
     //  Nov 16: your arrow came 6 s before the pop, timed for the bots' run, so from the far side of the room you walked where it said and got there late)
     const vW = id === me ? SPEED : 8, due = (at, p, from) => at >= t && t >= from && at - t <= Math.max(4.6, pgDist([b0.x, b0.y], p) / vW + 1.6);
-    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
+    let ob = null; for (const q of S.bubbles) if (id !== 't1' && id !== 't2' && ((q.stack && t >= q.stack && t <= q.at) || due(q.at, q.p, id === me ? Math.min(q.t0 - 2, q.at - 8) : q.t0 - 2)) && (!ob || q.at < ob.at)) { const w = S.wretches.find((z) => z.id === q.w); if (w && t < w.dies) { const ek = S.bubbles.filter((z) => eggsHeldAt(z.at)).indexOf(q), fb = ek >= 0 ? fbList(ek) : null; ob = { bub: true, at: q.at, p: q.p, m: q.m, r: 5.5, car: eggsHeldAt(q.at) ? (fb ? fb.concat(CAR8.filter((c) => !fb.includes(c))) : CAR8) : null, fb: fb ? ek : -1 }; } }
     for (const s of S.soaks) if (s.group.includes(id) && due(s.at, [s.x, s.y], s.cast - 0.5) && (!ob || s.at < ob.at)) ob = { at: s.at, p: [s.x, s.y], r: 5, car: CAR8.filter((c) => s.group.includes(c)) };
     if (ob) { const sp = spotIn(ob, id); if (sp) T = sp; else { const ix = GDZ_RAID.indexOf(id), a = ix * 2.39996, rr = (ob.car ? 3.2 : ob.r) * Math.sqrt(((ix % 11) + 0.5) / 11); T = [ob.p[0] + Math.cos(a) * rr, ob.p[1] + Math.sin(a) * rr]; } const dT = pgDist(T, [b0.x, b0.y]); fast = dT > 10 || (ob.at - t < 2.5 && dT > 1.5); } /* (hurry when it's close: from a far bubble spot to the coil a second later) */
+    // (a bubble that bursts just before your coil (set 1: it sits between the two circles): stand where the bubble and your coil's circle overlap, out of the
+    //  other circle, the carriers 3.6 yards apart across it, so you're in the bubble and already in your soak. Nov 16, the plan's 4 and 4: Soak #2's carriers
+    //  stood on the bubble's ring, partly in the first circle, ran out of it a second before the bubble burst, and reached the second circle late)
+    if (ob && ob.bub) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > ob.at && q.at - ob.at <= 6), c = ns && [ns.x, ns.y], d = c ? pgDist(ob.p, c) : 99;
+      if (ns && d < 16) { const ux = (c[0] - ob.p[0]) / (d || 1), uy = (c[1] - ob.p[1]) / (d || 1), M = [ob.p[0] + ux * d / 2, ob.p[1] + uy * d / 2], car = ns.group.filter((x) => CAR8.includes(x)), ci = car.indexOf(id);
+        if (ci >= 0) { const off = (ci - (car.length - 1) / 2) * 3.6; T = [M[0] - uy * off, M[1] + ux * off]; } else { const ot = ns.group.filter((x) => !CAR8.includes(x)), ix = Math.max(0, ot.indexOf(id)), a2 = ix * 2.39996, rr = 2.4 * Math.sqrt(((ix % 7) + 0.5) / 7); T = [M[0] + ux * 1.6 + Math.cos(a2) * rr, M[1] + uy * 1.6 + Math.sin(a2) * rr]; }
+        const dT2 = pgDist(T, [b0.x, b0.y]); fast = dT2 > 10 || (ob.at - t < 2.5 && dT2 > 1.5); } }
     // her waves: on the half that goes second, then behind the first wave into the half it just left
-    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t)) { const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
+    const wg = S.wings.find((w) => t >= w.t + 1 && t <= w.t + 16); if (wg && id !== S.herTank(t) && !(ob && !ob.bub && ob.at - t <= 5)) { /* (not over a soak of yours 5 s off: set 2 slams while her waves still roll, and the safe-half spot kept m2 (by her) from its circle, Nov 16) */ const rot = S.rotAt(wg.t + 6), q = pgRot(T, -rot), side = wg.west ? 1 : -1, fw = S.waves.find((w) => w.kind === 'her' && Math.abs(w.t0 - (wg.t + 6)) < 0.1);
       const front = fw ? 46 - fw.v * Math.max(0, t - fw.t0) : 46, crossed = t > wg.t + 6 && front < Math.min(q[1], 26) - 5, lx = Math.max(6, Math.min(18, Math.abs(q[0]) + 4)) * (crossed ? -side : side);
       if (t <= wg.t + 6 + 6.5 + 4) { T = pgRot([lx, Math.max(-26, Math.min(24, q[1]))], rot); fast = true; } }
     // the tail's sweep: out of its 35 yards before it lands (its tank too)
@@ -73091,11 +73088,11 @@ function pgOpen(root, boss, d, pk) {
     for (const wr of S.wrath) if (t >= wr.t0 && t <= wr.at + 3.2 && id !== wr.tank && pgDist(T, wr.p) < 8) { const a = Math.atan2(T[1] - wr.p[1], T[0] - wr.p[0]); T = [wr.p[0] + Math.cos(a) * 9, wr.p[1] + Math.sin(a) * 9]; }
     // coil circles that aren't yours: stay out
     // (a soak of yours coming, its coils not out yet: wait on her tail's side of the middle (the tail is up before its coils), close enough to reach either circle)
-    if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
+    let wait = null; if (!ob) { const ns = S.soaks.find((q) => q.group.includes(id) && q.at > t && q.at - t <= 12 && t < q.cast - 0.5); if (ns && id !== 't1' && id !== 't2') { const A = S.FT([-17, 0], ns.at), d0 = pgDist(T, A); wait = A; if (d0 > 7) T = [A[0] + (T[0] - A[0]) * 7 / d0, A[1] + (T[1] - A[1]) * 7 / d0]; } }
     for (const s of S.soaks) if (t >= s.t0 && t <= s.at && !s.group.includes(id) && !(ob && ob.at < s.at - 0.3) && pgDist(T, [s.x, s.y]) < 11.5) { const a = Math.atan2(T[1] - s.y, T[0] - s.x); T = [s.x + Math.cos(a) * 12.5, s.y + Math.sin(a) * 12.5]; }
     if (!onPlat(T[0], T[1])) T = nearEdge(T[0], T[1]);
-    return { T, fast, ob }; };
-  const dodge = (b, T, t, fast, ob) => { if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
+    return { T, fast, ob, wait }; }; /* (wait: the spot by her tail where a soaker waits for their coils, which dodge keeps them near) */
+  const dodge = (b, T, t, fast, ob0, wait) => { const ob = ob0 || (wait ? { p: wait, r: 9, bub: true, at: t + 99, wait: true } : null); /* (waiting for your coils: dodge near the waiting spot first, Nov 16: m2 drifted 15 yards east dodging a small tail and missed set 2) */ if (P2 && !(typeof P2.dodges === 'function' ? P2.dodges(b.id, t) : P2.dodges)) return { T, fast }; /* (phase 2 dodges in its own job: src/practice-p2.js; phase 3 asks for this one: src/practice-p3.js) */ const act = S.waves.filter((w) => w.t1 >= t && w.t0 <= t + Math.max(1.5, w.warn || 0) && !(w.kind === 'incub' && b.id === w.tank) && w.from !== b.id);
     const imps = S.impacts.filter((m) => m.at >= t && m.at - t <= 2.4).concat(G.eggs.filter((e) => e.state === 'air' && e.land >= t && e.land - t <= 2.4).map((e) => ({ x: e.x, y: e.y, r: 4, at: e.land })),
       b.id === 't1' || b.id === 't2' ? [] : S.soaks.filter((q) => !q.group.includes(b.id) && t >= q.t0 && q.at >= t && q.at - t <= 2.4).map((q) => ({ x: q.x, y: q.y, r: q.r, at: q.at, mg: 0.5 })));
     if (!act.length && !imps.length) { b.esc = null; return { T, fast }; }
@@ -73109,14 +73106,14 @@ function pgOpen(root, boss, d, pk) {
     const unsafe = (x, y) => S.soaks.some((q) => !q.group.includes(b.id) && q.at >= t && q.at - t <= 3.5 && Math.hypot(x - q.x, y - q.y) <= q.r + 1.2) || others.some((o) => Math.hypot(x - o.x, y - o.y) < 4) || !!(P2 && P2.unsafe && P2.unsafe(b.id, x, y, t)); /* (a part's own danger the escape must keep out of: phase 2's Doomscale frontals) */
     if (b.esc && t - b.esc.t < 2 && !path(b.esc.x, b.esc.y, vEsc) && !unsafe(b.esc.x, b.esc.y) && !(P2 && P2.walk && !P2.walk(b.x, b.y, b.esc.x, b.esc.y))) return { T: [b.esc.x, b.esc.y], fast: true };
     // (no clean spot: the one that meets the danger latest, rather than walking on into it)
-    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && ob.at - t <= 3.5; /* (a bubble or their soak due: dodge inside it first) */
-    for (let pass = keepIn ? 0 : 1; pass < 2 && !best; pass++) for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
+    let best = null, bd = Infinity, late = null, lk = firstBad(T[0], T[1], vT); const keepIn = ob && (ob.wait || ob.at - t <= (ob.bub ? 3.5 : 6)); /* (a bubble or their soak due: dodge inside it first; a soak from 6 s off, so a wave doesn't send them away from it: m2 in set 2, Nov 16) */
+    for (let pass = keepIn ? 0 : 1; pass < (keepIn && !ob.bub ? 1 : 2) && !best; pass++) /* (a soak about to slam: dodge only inside it, or stay and take the wave; Nov 16, Soak #2 carriers stepped out for a small tail's wave and missed it) */ for (const rr of (pass === 0 ? [0, 2.5, 5, 7, 8.6, -1, -2, -3] : [2, 3.5, 5.5, 8, 11, 14])) for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, o = pass === 0 && rr >= 0 ? ob.p : [b.x, b.y], r0 = Math.abs(rr), x = o[0] + Math.cos(a) * r0, y = o[1] + Math.sin(a) * r0; if (!onPlat(x, y) || (pass === 0 && Math.hypot(x - ob.p[0], y - ob.p[1]) > (ob.r === 5 ? 9.2 : 9.2)) || unsafe(x, y) || (P2 && P2.walk && !P2.walk(b.x, b.y, x, y))) continue; /* (P2.walk: phase 3's broken floor, src/practice-p3.js: never an escape across the venom) */ const fk = firstBad(x, y, vEsc); if (fk < Infinity) { if (fk > lk) { lk = fk; late = [x, y]; } continue; } const dd = Math.hypot(x - T[0], y - T[1]) + Math.hypot(x - b.x, y - b.y) * 0.4; if (dd < bd) { bd = dd; best = [x, y]; } }
     if (best) { b.esc = { x: best[0], y: best[1], t }; return { T: best, fast: true }; } if (late) return { T: late, fast: true }; return { T, fast }; };
   const moveBots = (t, dt, px, py) => { const pre = {}, myT = myEggHeld() && G.eggs.some((e) => e.state === 'held' && e.who && e.who !== me) ? (window.__pgAuto ? [G.x, G.y] : jobOf(me, t).T) : null; /* (your planned spot, for the carriers to keep clear of; for the tests' autopilot, where it stands, as the checks were built on) */
     // (the release sweep, Nov 16: who closed the gap. pre: each raider from where you stand now, before they move; G.walkIn: the ones YOUR step brought inside 3 yards
     //  (they were farther before it). Only those can splash on you: a carrier picking up its egg beside you, or walking at you, is never your mistake)
     G.walkIn = {}; GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id], d1 = Math.hypot(b.x - G.x, b.y - G.y), d0 = px == null ? d1 : Math.hypot(b.x - px, b.y - py); pre[id] = d1; if (d1 < 3 && d1 < d0 - 1e-6) G.walkIn[id] = true; });
-    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob));
+    GDZ_RAID.forEach((id) => { if (id === me) return; const b = G.bots[id]; const j = jobOf(id, t); let { T, fast } = j; ({ T, fast } = dodge(b, T, t, fast, j.ob, j.wait));
       // (Flex, Nov 15: "they tend to pause and then move a lot faster than the player and will run right into me if im in their path": a raider holding an egg
       //  walks at your speed, 7 yards a second, and only goes faster to get out of a wave, as you would with Sprint. With your egg held and you right in its path
       //  (7 yards ahead, inside 4.2 of its line) it sidesteps a little, onto safe floor only: "just a little, without making it super super easy")
@@ -73456,7 +73453,7 @@ function pgOpen(root, boss, d, pk) {
 
   // ---- the cards: pick your role, the countdown, a death, the end ----
   const asg = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
+    const sets = SK.map((s) => (s[0].includes(id) ? 1 : s[1].includes(id) ? 2 : 0));
     if (carrierOf(id)) L.push(['Your egg', 'Your area: ' + ZN[id][0] + ', the ' + ZN[id][1] + ' spot. It lands there at 0:10. At 1:20 it lands in your zone turned with her (the gold circle shows it). Wait for its shell, walk over it, carry it clean, break it in your coil soak.']);
     else L.push(['No egg', 'Keep out of the carriers\' way.']);
     if (TEAM && sets[0]) L.push(['Coil soaks', 'Soak #' + sets[0] + (TEAM.ce[sets[0] - 1].includes(id) ? ' with your egg' : ' (filler)') + ': ' + (sets[0] === 1 ? 'the first coil to appear, 0:40 and 2:14' : 'the second coil to appear, 0:43 and 2:17') + '. They rise beside her tail, on either side. Your circle is gold. Never both: Soul Constrictor.']);
@@ -73477,7 +73474,7 @@ function pgOpen(root, boss, d, pk) {
     wave: '<path d="M1.5 11.5Q8 1.5 14.5 11.5Q8 7 1.5 11.5Z" fill="#9be13a" stroke="#06260e" stroke-width=".8"/>' }[k] || '') + '</svg>';
   // (your job in short: three or four plain lines for the start card; the full rundown is one click away)
   const short = (id) => { const J = !TEAM && myJob && jobSlot(myJob) === id ? myJob : null, SK = J ? jobSoak(id, J) : PG_UL.soak, L = [];
-    const sets = TEAM ? [0, 1].map(() => (TEAM.soak[0].includes(id) ? 1 : TEAM.soak[1].includes(id) ? 2 : 0)) : SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
+    const sets = SK.map((s2) => (s2[0].includes(id) ? 1 : s2[1].includes(id) ? 2 : 0));
     const G4 = [carrierOf(id) ? 'egg' : 'noegg', 'coil', 'bubble', 'wave'];
     L.push(carrierOf(id) ? 'You carry an egg (' + ZN[id][0] + '). It lands at 0:10 and 1:20: pick it up once its shell breaks.' : 'No egg: keep out of the egg carriers\' way.');
     L.push(sets[0] || sets[1] ? 'Coil team ' + sets[0] + (sets[1] !== sets[0] ? ' at 0:40, team ' + sets[1] + ' at 2:14' : ' at 0:40 and 2:14') + '. Team 1 takes the first coil to appear.' : 'No coil soak: stay out of both circles.');
@@ -73542,20 +73539,20 @@ function pgOpen(root, boss, d, pk) {
   const eggAt = (slot) => PG_UL.inward(PG_UL.planEgg[slot]); /* (the Plan's general place for that egg, on the stone: the egg itself lands at random in that quadrant.
     DO NOT move these rings onto the eggs' landing spots: Flex, Nov 16, "The plans layout is just general locations not exact egg spots remember". Check O holds it) */
   const P1MAPS = { tab: 'egg', tabs: () => [['egg', 'Your egg'], ['coil', 'Your coil']],
-    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myJob.soak[1] === 2 ? 1 : 0;
+    page: (key) => { const D = { ez: { melee: [], left: [], right: [], far: [], backup: [] }, shields: [], teams: [[], []], ce: [[], []], cf: [[], []], trans: [], side: { L: {}, R: {} } }, ti = myTeam() === 2 ? 1 : 0;
       if (key === 'coil' && myJob.egg) { D.teams[ti] = ['You']; D.ce[ti] = ['You']; } const pg = key === 'egg' ? UL_PAGES.eggs[0] : UL_PAGES.coils[0]; /* (an egg carrier on the Plan's numbered spot in the circle; without an egg, You is drawn in the middle of your circle (hot: you), where the game stands you, not in the Plan's list under it (review, Nov 16)) */
       return { svg: ulSvg(pg, D, new Map([['you', { color: '#f3c969' }]]), {}), vb: UL_VB[pg.vb] || UL_VB.mid }; },
     hot: (key) => (key === 'egg' ? EGG_SP.filter(([slot, z]) => eggFor(myJob.role, z) || slot === myJob.egg).map(([slot, z, i]) => { const p = eggAt(slot), on = slot === myJob.egg; return { id: slot, x: p[0], y: p[1], r: 7.2, title: (z === 'melee' ? 'By her' : ZNAME[z][0].toUpperCase() + ZNAME[z].slice(1) + ' quadrant') + ': the ' + (i ? 'outer' : 'inner') + ' egg (it lands somewhere there)', on, you: on }; })
-      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = (myJob.soak[1] === 2 ? 2 : 1) === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' + (myJob.egg ? ' (egg carriers: in the second set)' : '') }; })),
-    pick: (key, id) => { if (key === 'egg') myJob = { ...myJob, egg: id, fb: [0, 0] }; else { const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
+      : [[1, 19], [2, -19]].map(([tm, cx]) => { const on = myTeam() === tm; return { id: 't' + tm, x: cx, y: 6, r: 15, big: true, on, you: on && !myJob.egg, title: tm === 1 ? 'Right Soak #1: the first coil to appear' : 'Left Soak #2: the second coil to appear' }; })),
+    pick: (key, id) => { if (key === 'egg') { const te = PG_UL.eggO[id] ? eggTeam(id) : myJob.soak[1]; myJob = { ...myJob, egg: id, soak: [te, te], fb: [0, 0] }; } else { /* (an egg takes its zone's coil team, as on the plan's Egg Clear map) */ const tm = id === 't2' ? 2 : 1; myJob = { ...myJob, soak: [tm, tm], fb: [0, 0] }; } jobSave(); },
     extras: () => [['noegg', 'No egg', !myJob.egg]], extra: (id) => { if (id === 'noegg') { myJob = { ...myJob, egg: null, fb: [0, 0] }; jobSave(); } },
     random: () => { const ok = EGG_SP.filter((q) => eggFor(myJob.role, q[1])), q = ok[Math.floor(Math.random() * ok.length)], tm = Math.random() < 0.5 ? 1 : 2; myJob = { ...myJob, egg: q ? q[0] : null, soak: [tm, tm], fb: [0, 0] }; jobSave(); },
     role: (r) => { const es = EGG_SP.find((q) => q[0] === myJob.egg), keep = es && eggFor(r, es[1]); myJob = { ...myJob, role: r, egg: myJob.egg ? (keep ? myJob.egg : EGG_BY[r]) : null, fb: [0, 0] }; jobSave(); },
     // (an egg carrier takes the first coil in set 1, in the bubble, whatever their pick (jobSoak); Left Soak #2 is theirs in the second set only. The sentence said
     //  "pick it up, then soak Left Soak #2" while the game stood them in the first coil (review, Nov 16))
-    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myJob.soak[1] === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'take the first coil in the Wretch\'s bubble with the other egg carriers, and Left Soak #2 in the second set.' : 'soak Right Soak #1, the first coil to appear, and get in the Wretch\'s bubble.')
+    say: () => { const es = EGG_SP.find((q) => q[0] === myJob.egg), t2 = myTeam() === 2; return es ? (myJob.role === 'h' ? HEAL_EGG : '') + 'Your egg lands somewhere ' + (es[1] === 'melee' ? 'by her' : 'in the ' + ZNAME[es[1]] + ' quadrant') + ' (the ' + (es[2] ? 'outer' : 'inner') + ' one): pick it up, then ' + (t2 ? 'break it in Left Soak #2, the second coil to appear (both sets), and get in the Wretch\'s bubble.' : 'break it in Right Soak #1, the first coil to appear (both sets), and get in the Wretch\'s bubble.')
       : 'No egg: you soak ' + (t2 ? 'Left Soak #2, the second coil to appear' : 'Right Soak #1, the first coil to appear') + ', and get in the Wretch\'s bubble.'; },
-    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myJob.soak[1] === 2 ? (myJob.egg ? 'Soak #1, then Left Soak #2' : 'Left Soak #2') : 'Right Soak #1') };
+    sub: () => (myJob.egg ? 'Egg ' + ZNAME[(EGG_SP.find((q) => q[0] === myJob.egg) || [0, 'far'])[1]] : 'No egg') + ' · ' + (myTeam() === 2 ? 'Left Soak #2' : 'Right Soak #1') };
   if (SETUP && !P2) SETUP.maps = P1MAPS;
   const panel = () => setupHtml(); /* (for the test) */
   const playSub = () => role.name + ' · ' + (TEAM ? role.job : mapsOn() ? SETUP.maps.sub() : SETUP ? ((SETUP.jobs(SETUP.now().role).find((o) => o[0] === SETUP.now().job) || [0, ''])[1]) : role.job);
@@ -73570,7 +73567,7 @@ function pgOpen(root, boss, d, pk) {
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
       '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="Your figure in 3D">Look <select class="pg-look">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(n) + '</option>').join('') + '</select></label></div>' +
-      '<p class="pg-keys">Move: W A S D or click · Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
+      '<p class="pg-keys">Move: W A S D · Click a mob or Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
     const seeMe = () => { if (!G || !S) return; me = role.id; const p0 = homeOf(me, 0); G.x = p0[0]; G.y = p0[1]; cam = null; try { draw(); hud(true); } catch (e) { /* (drawn on Play) */ } }; /* (the picture behind the card is you) */
     const redo = (sel) => { if (P2) role = P2.role(); else if (!TEAM) role = jobRole(myJob); box.innerHTML = setupHtml(); card.querySelector('.pg-psub').textContent = playSub(); bindBox(); seeMe(); if (sel) { const nb = box.querySelector(sel); if (nb && nb.focus) nb.focus(); } };
@@ -73648,14 +73645,14 @@ function pgOpen(root, boss, d, pk) {
   const defKey = (e) => { if (!(e && e.repeat)) press('def'); if (G.t - G.def >= 90) { G.def = G.t; deb('def', 8); say('Defensive: half damage for 8 s.'); hud(true); } };
   const ku = (e) => { const k = K[e.code]; if (k) keys[k] = false; };
   document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
-  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); if (!pickTgtAt(wp)) target = wp; });
+  cv.addEventListener('pointerdown', (e) => { if (paused || !G || !cam) return; const r = cv.getBoundingClientRect(), sx = (e.clientX - r.left) * dpr, sy = (e.clientY - r.top) * dpr; const wp = [cam[0] + (sx - cv.width / 2) / (Z * dpr), cam[1] - (sy - cv.height / 2) / (Z * dpr)]; e.preventDefault(); pickTgtAt(wp); }); /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it") */
   cv.addEventListener('wheel', (e) => { e.preventDefault(); Z = Math.min(26, Math.max(6, Z * (e.deltaY > 0 ? 1 / 1.12 : 1.12))); if (paused && G) draw(); }, { passive: false });
   const onBlur = () => { keys = {}; }; window.addEventListener('blur', onBlur);
   // ---- the 3D view (src/practice3d.js; Nov 15, Flex: "theres nothing else like this out there"): the 2D | 3D switch by the minimap, remembered.
   // three.js loads only when 3D is picked; if it can't (or the PC has no WebGL, or drawing fails), the switch goes back to 2D and says so ----
   let v3 = null, want3 = false; const vw = $('.pg-vw');
   const v3api = { halves: () => (G && !P2 ? halvesAt(G.t) : null), eggWarn: () => (G ? eggWarnAt() : 0), hint: () => hintNow(), P2, onPlat: (x, y) => onPlat(x, y), get G() { return G; }, get S() { return S; }, get me() { return me; }, get target() { return window.__pgAuto ? null : target; }, get flashT() { return flashT; }, nm, rl, clsC, bossAt, tailAt, tgts: () => (G ? tgtList(G.t) : []), look: () => look, cls: (id) => (TEAM && TEAM.id2[id] ? String(TEAM.id2[id].cls || '') : ''),
-    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, walk: (p) => { if (!paused && G && !pickTgtAt(p)) target = p; }, tgtKey: (k) => { if (paused || !G || !tgtList(G.t).some((o) => o.key === k)) return false; press('tgt'); G.tgt = k; hud(true); return true; }, /* (a click on a mob in 3D targets it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing") */ dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
+    spot: () => { if (!myEggHeld()) return null; const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; }, tgtKey: (k) => { if (paused || !G || !tgtList(G.t).some((o) => o.key === k)) return false; press('tgt'); G.tgt = k; hud(true); return true; }, /* (a click on a mob in 3D targets it, Flex, Nov 16: "click on the mobs to target them instead of only tabbing") */ dps: () => dpsView(), fail: (e) => { console.error('Practice 3D:', e); off3d('3D stopped working, so you\'re back in 2D.'); } };
   const off3d = (why) => { want3 = false; if (v3) v3.dispose(); v3 = null; ov.classList.remove('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '2')); try { if (!P2) localStorage.setItem('wla-pg-view', '2d'); } catch (e) { /* (no storage) */ } if (why && ov.isConnected) say(why, true); };
   const view = (on) => { want3 = on; if (!on) { off3d(); if (G) draw(); return; } if (v3 || vw.classList.contains('busy')) return; vw.classList.add('busy');
     pg3dLoad().then(() => { if (!ov.isConnected || v3 || !want3) return; v3 = pg3d($('.pg-3d'), v3api); ov.classList.add('pg3'); vw.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === '3')); try { if (!P2) localStorage.setItem('wla-pg-view', '3d'); } catch (e) { /* (no storage) */ } if (G) draw(); })
@@ -74257,6 +74254,7 @@ class M2Loader extends Loader {
 			}
 
 			mesh.userData.geoset = skinData.submeshes[ batch.skinSectionIndex ].skinSectionId;
+			mesh.userData.batch = i;
 			group.add( mesh );
 
 		}
@@ -77173,7 +77171,7 @@ return { M2Loader, M2Options, BLPLoader };
 // notes/Practice game - 3D mock.html) =====
 // The same fight as the 2D map, drawn in three.js. practice.js keeps the clock, the moves, the hits, the mistakes and the score; this file only
 // draws it and runs a WoW-style camera: behind you and gliding after you, drag the mouse to turn it, the wheel zooms, W walks where it looks,
-// a click on the floor walks there. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
+// a click on a mob targets it. Read into ui.js's scope right after practice.js (build.ps1, /*PRACTICE*/); practice.js holds the
 // "2D | 3D" switch by the minimap. three.js comes from jsdelivr, one exact version, only once 3D is picked: if it can't load (or the PC has no
 // WebGL), the switch goes back to 2D and says so. Every floor shape is the hit code's own (the same centres, radii and time windows as
 // practice.js's draw(), check() and inWave()): pg3dShapes lists them, pg3d draws the list, tests/practice-3d.js checks the list against inWave.
@@ -77251,7 +77249,7 @@ const PG3D_MON = {
       ['ball', PG3D_FC.eye, [0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['ball', PG3D_FC.eye, [-0.12, 0.05, 0.2], [0.045, 0.04, 0.035]], ['box', PG3D_FC.slit, [0.15, 0.05, 0.215], [0.008, 0.055, 0.008]], ['box', PG3D_FC.slit, [-0.15, 0.05, 0.215], [0.008, 0.055, 0.008]],
       ['box', PG3D_FC.tongue, [0, -0.09, 0.47], [0.02, 0.01, 0.14]], ['box', PG3D_FC.tongue, [0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, 0.5, 0]], ['box', PG3D_FC.tongue, [-0.02, -0.09, 0.56], [0.012, 0.008, 0.05], [0, -0.5, 0]]]) },
       { bone: 'Tail_Mid', parts: pg3dRow(3, 0.16, 0.03, [0.45, 0.85, 0.08, 1], 0.12, 0.06) }, { bone: 'Tail_Mid001', parts: pg3dRow(3, 0.13, 0.025, [0.45, 0.85, 0.08, 1], 0.13, 0.05) }, { bone: 'Tail_Mid002', parts: pg3dRow(3, 0.1, 0.02, [0.45, 0.85, 0.08, 1], 0.14, 0.04) }] }, /* (the real Wretch: a spiky feathered mane, a glowing throat, a spiky glowing tail) (a bloated serpent with arms and a cobra's hooded, fanged face; Flex: "give it arms") (a bloated serpent, Flex: "the wretch needs the most work, it just looks like a dinosaur": no legs or arms, a swollen body, a taller neck, sunk to the floor) */
-  clutch: { url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
+  clutch: { wow: { m2: 7926158, h: 4.6, ph: 4.9, keep: [2, 4, 6, 8] }, url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /\|idle$/i, move: /\|walk$/i } },
   viper: { wow: { m2: 7456394, skin: [7509169] }, url: PG3D_MQ + 'easy_enemies_pack/Wasp.glb', h: 4.4, hover: 1.6, paint: { Yellow: [0.72, 0.45, 0.05], Black: [0.05, 0.05, 0.07], Orange: [0.55, 0.06, 0.03], LightBlue: [0.02, 0.32, 0.34] }, /* (the real Viper: golden head and belly, dark back, teal feathered wings) */
     bones: { WingL: [1.7, 1.7, 1.7], WingR: [1.7, 1.7, 1.7], Abdomen: [1, 1.3, 1], Abdomen2: [0.88, 1.2, 0.88], Abdomen3: [0.85, 1.2, 0.85], Sting: [0.8, 1.1, 0.8], TopLeg1L: [0.01, 0.01, 0.01], TopLeg1R: [0.01, 0.01, 0.01], MidLeg1L: [0.01, 0.01, 0.01], MidLeg1R: [0.01, 0.01, 0.01], BottomLeg1L: [0.01, 0.01, 0.01], BottomLeg1R: [0.01, 0.01, 0.01], Head: [0.55, 0.55, 0.55] },
     face: { bone: 'Head', parts: [['ball', [0.72, 0.45, 0.05], [0.36, 0.02, 0.03], [0.62, 0.36, 0.44]], ['ball', [0.02, 0.28, 0.3], [0.4, 0.17, 0.03], [0.5, 0.14, 0.38]], ['ball', [0.72, 0.45, 0.05], [0.86, -0.06, 0.03], [0.34, 0.2, 0.3]],
@@ -77262,6 +77260,7 @@ const PG3D_MON = {
     face: { bone: 'Head', parts: pg3dRing(6, 0.12, 0.42, 0.06, 0.42, -0.16, [[0.05, 0.5, 0.55, 0.3], [0.08, 0.35, 0.6, 0.3]], -0.65) }, /* (the wind serpents' teal feather crest) */ clips: { idle: /\|flying_idle$/i, move: /\|flying_idle$/i } }, /* (Quaternius's Dragon Evolved: an orange dragon screaming, mouth wide open) */
 };
 const pg3dSegD = (px, py, ax, ay, bx, by) => { const dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy, q = L2 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L2)) : 0; return Math.hypot(px - ax - dx * q, py - ay - dy * q); }; /* (how far a point is from a line segment: the mouse from a mob drawn on screen) */
+PG3D_MON.slither = { wow: { m2: 390813, skin: [390992, 390999], h: 3, ph: 3.4, keep: [0, 4, 5] }, h: 3 }; /* (bigger, Flex, Nov 16: "THE CLUtches were pretty small") (phase 3's Slithering Clutch, a green ooze (display 146650); no drawn stand-in: without its real model the old shape stays) */
 const PG3D_MONK = { ds: 'doomscale', dsx: 'doomscale', dscale: 'doomscale', rav: 'ravenous' }; /* (a shape's kind -> its monster, for the bar's height) */
 if (typeof window !== 'undefined') { window.__pg3dMon = PG3D_MON; window.__pg3dWow = () => pg3dWow; } /* (for the lineup pictures) */
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
@@ -77297,6 +77296,7 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
     sm.globalSequences.forEach((q, j) => { clipOf('g' + j, (sm._globalSequenceMap.get(j) || []).find((a) => a.root === g)); }); /* (g0, g1...: the always-on movement, e.g. the Rawling's lift off the floor; played with every clip) */
     // (parts, the helpers' check of the files, Nov 16: a model holds every choice of some parts (the Warden all six armour sets): one per group shows,
     //  W.geo's, else the 01 one, else the first; the others are taken out)
+    if (W.keep) { const ms = []; g.traverse((m) => { if (m.isMesh && m.userData.batch != null) ms.push(m); }); ms.forEach((m) => { if (!W.keep.includes(m.userData.batch)) m.parent.remove(m); }); } /* (keep: the parts to show, by batch: a model's death splash, shards and glow sprites have no part ids, Nov 16) */
     const GS = {}; g.traverse((m) => { const id = m.isMesh ? m.userData.geoset : null; if (id != null && id >= 100) (GS[Math.floor(id / 100)] = GS[Math.floor(id / 100)] || []).push(m); });
     Object.keys(GS).forEach((k) => { const L = GS[k], ids = L.map((m) => m.userData.geoset), w = (W.geo || []).find((x) => Math.floor(x / 100) === +k), pick = w != null ? w : ids.includes(+k * 100 + 1) ? +k * 100 + 1 : Math.min(...ids);
       L.forEach((m) => { if (m.userData.geoset !== pick) m.parent.remove(m); }); });
@@ -77312,7 +77312,7 @@ const pg3dWowLoad = (T, W) => { if (!PG3D_M2) PG3D_M2 = pg3dM2Lib(T); const { M2
 //  while either loads the old shape stays, so a creature is never missing. -> what drawn() gives, or [the real model, null, true])
 const pg3dWowOr = (wow, drawn, ms) => new Promise((ok) => { let done = false; const fb = () => { if (done) return; done = true; ok(drawn()); }, tm = setTimeout(fb, ms || 12000);
   Promise.resolve().then(wow).then((g) => { if (done) return; done = true; clearTimeout(tm); ok([g, null, true]); }, () => { clearTimeout(tm); fb(); }); });
-const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 } }; /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
+const pg3dWow = { load: pg3dWowLoad, boss: { m2: 7234130 }, tail: { m2: 7234132 } }; /* (tail: Gore Rattle, creature/ulatektentacle/ulatektentacle01.m2; the small tails use it too) */ /* (Ula'tek herself: creature/ulatekboss/ulatekboss01.m2, her textures are her own) */
 
 // (each raider's class, Flex, Nov 16: "can you have a variety of classes for the bots so its representing various classes?": the class on the
 //  team plan when there is one; else a mix by role, the same every run (t1, t2... take the next class in their role's list): tanks Warrior,
@@ -77413,7 +77413,7 @@ function pg3dShapes(A, t) {
   if (t >= D.t0 + 0.4 && t < D.gone + 1) { const p0 = A.bossAt(D.t0).p; P({ k: 'splash', x: p0[0], y: p0[1], p: (t - D.t0 - 0.4) / (D.gone + 0.6 - D.t0), s: 1.5 }); }
   if (t >= D.surf && t < D.surf + 2.4) P({ k: 'splash', x: B.p[0], y: B.p[1], p: (t - D.surf) / 2.4, s: 2 });
   // (her tail: it lifts through Mephitic Thrash's cast and slams down on the stone's edge as it lands)
-  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0 }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
+  if (TL.up) { const th = S.thrash.find((q) => t >= q.t0 && t <= q.at + 0.8); P({ k: 'tail', x: TL.p[0], y: TL.p[1], wig: th ? cl((t - th.t0) / (th.at - th.t0)) : 0, slam: th && t > th.at ? cl((t - th.at) / 0.8) : 0, at: th ? th.at : null, hit: th ? th.at - t : null }); label(TL.p[0], TL.p[1], 15, 'Gore Rattle', '#e8d6a8', 13, 'name');
     if (th && t > th.at && t < th.at + 0.9) { const dd = Math.hypot(TL.p[0], TL.p[1]) || 1; P({ k: 'splash', x: TL.p[0] - TL.p[0] / dd * 7, y: TL.p[1] - TL.p[1] / dd * 7, p: (t - th.at) / 0.9, s: 0.9 }); } }
   if (A.P2) A.P2.shapes(t, P, { disc, ring, grow, label }); /* (a later part's own shapes: src/practice-p2.js) */
   // (cast bars over the casters you can kick, Nov 16, Flex: "The interupts are impossible to track/see. The monsters should have cast bars over their heads",
@@ -77955,7 +77955,18 @@ function pg3d(host, A) {
   // (the small tails: the same ridged tail, smaller, rising out of the venom and sinking back once they've fired)
   const STAILM = keep(new T.MeshStandardMaterial({ color: 0x6a4596, map: SCALET, roughness: 0.5, emissive: 0x140826 })), SBONEM = keep(new T.MeshStandardMaterial({ color: 0xd2ae74, roughness: 0.45 }));
   const STREST = [[0, -5, -3.5], [0, -0.5, -2.4], [0, 3.6, -1.2], [0, 6.2, 0.6], [0, 6.8, 2.8]], ST = STREST.map(() => [0, 0, 0]);
-  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); return g; });
+  const stail = pool(() => { const g = new T.Group(); g.userData.C = chain(g, 9, 3, 0.55, STAILM, SBONEM, null); if (STPL) stailReal(g); return g; });
+  // (her tail and the small tails in the real model, Flex, Nov 16: "gore rattle needs its model from in game": ulatektentacle01, the small tails use it too.
+  //  Once it's in, the drawn tails hide; Gore Rattle sways on its stand and plays its real slam (a16, the hit 0.87 s in) for Mephitic Thrash; each small tail
+  //  is a smaller copy rising from the venom. Its root is scaled 3 times in every clip, so a clip always plays. TRH, STH: how tall they're drawn)
+  let TRM = null, TRS = null, TRK = null, STPL = null, slamAt = null; const TRH = 23, STH = 11, tailDrawn = tail.children.slice();
+  if (S3TC) pg3dWowOr(() => pg3dWow.load(T, pg3dWow.tail), () => null, 20000).then((r) => { if (dead || !r) return; const g = r[0], root = g.scene, box = g.box || new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1;
+    root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { own.push(x); if (x.map) own.push(x.map); }); } });
+    STPL = { root, anim: g.animations, box, h }; const R0 = T.SkeletonUtils.clone(root), k = TRH / 1.35 / h; R0.scale.setScalar(k); R0.position.y = (-box.min.y - 0.122 * h) * k; /* (its base, 12%, under the venom) */
+    TRM = new T.AnimationMixer(R0); const a0 = g.animations.find((c) => c.name === 'a0') || g.animations[0], sl = g.animations.find((c) => c.name === 'a16'); if (a0) TRK = TRM.clipAction(a0).play();
+    if (sl) { TRS = TRM.clipAction(sl); TRS.setLoop(T.LoopOnce, 1); TRM.addEventListener('finished', (e) => { if (e.action === TRS && TRK) { TRK.reset().fadeIn(0.25).play(); TRS.fadeOut(0.25); } }); }
+    tailDrawn.forEach((c) => { c.visible = false; }); tail.add(R0); stail.L.forEach((g) => stailReal(g)); }).catch(() => { /* (no answer: the drawn tails stay) */ });
+  const stailReal = (g) => { if (!STPL || g.userData.R) return; const R1 = T.SkeletonUtils.clone(STPL.root), k1 = STH / STPL.h, M1 = new T.AnimationMixer(R1), a0 = STPL.anim.find((c) => c.name === 'a0') || STPL.anim[0]; R1.scale.setScalar(k1); if (a0) M1.clipAction(a0).play(); g.add(R1); g.userData.R = R1; g.userData.M = M1; g.userData.y0 = (-STPL.box.min.y - 0.122 * STPL.h) * k1; g.userData.C.seg.forEach((m) => { m.visible = false; }); }; /* (a small tail: a copy of the real one, made with its pool item, never while drawing) */
   // (the spectral image that beams the Wretch: her neck and head, see-through and glowing)
   const GHOSTM = keep(new T.MeshBasicMaterial({ color: 0x3af2a8, transparent: true, opacity: 0.32, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }));
   const ghost = pool(() => { const g = new T.Group(), nk = new T.Mesh(NECKG, GHOSTM), hd = new T.Group(), sk = new T.Mesh(SKULLG, GHOSTM); hd.position.copy(headG.position); hd.scale.setScalar(3.4); hd.rotation.x = 0.2; hd.add(sk); g.add(nk, hd); g.scale.setScalar(0.45); return g; });
@@ -78191,8 +78202,10 @@ function pg3d(host, A) {
       if (s.sink < 0.85) { const fo1 = 0.6 * (1 - s.sink), ws = (lx, lz, sz, i) => foamAt(bx + lx * cy + lz * sy, bz - lx * sy + lz * cy, sz * (1 + 0.06 * Math.sin(t * 2.3 + i)), fo1, t * 0.2 + i);
         ws(0, -13.2, 13, 0); humps.forEach((h) => { const a = Math.PI / 2 + [0.5, -0.45, 0.3][h.i], ex = Math.cos(a) * 3.6 * h.s, ez = -Math.sin(a) * 3.6 * h.s; ws(h.x + ex, h.z + ez, 7 * h.s, h.i * 2 + 1); ws(h.x - ex, h.z - ez, 7 * h.s, h.i * 2 + 2); }); }
       return; }
-    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t); const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
+    if (k === 'tail') { tail.visible = true; tail.position.set(s.x, 0, -s.y); tail.rotation.set(0, faceIn(s.x, s.y), 0); tailPose(s.wig, s.slam, t);
+      if (TRS && s.at != null && s.hit <= 0.87 && s.hit > -0.4 && slamAt !== s.at) { slamAt = s.at; TRS.reset(); TRS.time = Math.max(0, 0.87 - s.hit); TRS.setEffectiveWeight(1).fadeIn(0.08).play(); if (TRK) TRK.fadeOut(0.08); } /* (its real slam, the hit on the Thrash) */ const fy = faceIn(s.x, s.y), lx = -8.4 * 1.35, lz = -10.2 * 1.35; foamAt(s.x + lx * Math.cos(fy) + lz * Math.sin(fy), -s.y - lx * Math.sin(fy) + lz * Math.cos(fy), 10, 0.55, t * 0.25); return; }
     if (k === 'stail') { const g = stail(), C = g.userData.C, rise = 1 - Math.pow(1 - s.f, 3), dn = -9 * (1 - rise) - 10 * (s.sink || 0); g.position.set(s.x, WATER, -s.y); g.rotation.y = faceIn(s.x, s.y);
+      if (g.userData.R) { g.userData.R.position.y = g.userData.y0 + dn * STH / 9; if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
       for (let i = 0; i < 5; i++) { ST[i][0] = STREST[i][0] + Math.sin(t * 3.1 + i) * 0.35 * i / 4; ST[i][1] = STREST[i][1] + dn; ST[i][2] = STREST[i][2]; } pose(C, ST, t, 1, 1.5, 0.8, 1.0); if (s.sink < 0.9) foamAt(s.x, -s.y, 4.5, 0.5 * rise * (1 - (s.sink || 0)), t * 0.4); return; }
     if (k === 'splash') { if (s.p < 0 || s.p > 1) return; const g = splash(), u = g.userData, oy = onP(s.x, s.y) ? 0.04 : WATER + 0.02; g.position.set(s.x, oy, -s.y); u.pm.uniforms.uP.value = s.p; u.pm.uniforms.uS.value = s.s;
       u.f.scale.set((2 + 9 * Math.sqrt(s.p)) * s.s * 2, 1, (2 + 9 * Math.sqrt(s.p)) * s.s * 2); u.fm.opacity = 0.8 * (1 - s.p); const hh = Math.sin(Math.min(1, s.p * 1.5) * Math.PI) * 5 * s.s; u.c.visible = hh > 0.1; u.c.scale.set(2.4 * s.s * (1 + s.p), hh + 0.01, 2.4 * s.s * (1 + s.p)); u.cm.uniforms.uO.value = 0.4 * (1 - s.p); return; }
@@ -78238,6 +78251,7 @@ function pg3d(host, A) {
     for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); botFx(now, t); if (P2K) P2K.frame(G); /* (botFx: the raid's spells, after the raiders cast them this frame) */
     monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
     if (BRM && boss.visible) BRM.update(dt); /* (her real model's own movement) */
+    if (TRM && tail.visible) TRM.update(dt); for (let i = 0; i < stail.L.length; i++) { const g = stail.L[i]; if (g.visible && g.userData.M) g.userData.M.update(dt); } /* (the tails' real movement) */
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) { p.n.sp.visible = p.b.sp.visible = false; if (p.r) p.r.sp.visible = false; if (p.m) p.m.sp.visible = false; } });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
@@ -78246,7 +78260,7 @@ function pg3d(host, A) {
     if (A.flashT && A.flashT !== flashSeen) { flashSeen = A.flashT; const left = 400 - (performance.now() - flashSeen); if (left > 0 && flL.animate) flL.animate([{ opacity: left / 400 }, { opacity: 0 }], { duration: left, easing: 'linear' }); } /* (the red hurt flash fades on its own, paused or not) */
     R.render(scene, cam); };
   const draw = (t) => { if (dead) return; try { draw1(t); } catch (e) { if (A.fail) A.fail(e); else throw e; } };
-  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on the floor walks there ----
+  // ---- the mouse: drag (either button) turns the camera, the wheel zooms, a click on a mob targets it (no click to move since Nov 16) ----
   const kick = () => { if (pend || dead) return; pend = requestAnimationFrame(() => { pend = 0; if (performance.now() - lastDraw > 30) draw(lastT); }); }; /* (a redraw while the fight is paused) */
   const down = (e) => { if (e.button !== 0 && e.button !== 2) return; drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: false, b: e.button }; try { cv.setPointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ } e.preventDefault(); };
   const move = (e) => { if (!drag) { hover(e); return; } const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; if (!drag.moved && Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
@@ -78266,7 +78280,7 @@ function pg3d(host, A) {
   if (typeof window !== 'undefined') window.__pg3dPick = (X, Y) => { const o = onTgt(X, Y); return o ? o.key : null; }; /* (for the test link) */
   const hover = (e) => { const o = onTgt(e.clientX, e.clientY); cv.style.cursor = o ? 'pointer' : 'crosshair'; };
   const up = (e) => { if (!drag) return; const d = drag; drag = null; cv.style.cursor = 'crosshair'; try { cv.releasePointerCapture(e.pointerId); } catch (er) { /* (an old browser) */ }
-    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (!(o && A.tgtKey && A.tgtKey(o.key))) { const p = pick(e.clientX, e.clientY); if (p && A.walk) A.walk(p); } kick(); } };
+    if (!d.moved && d.b === 0 && e.type === 'pointerup') { const o = onTgt(e.clientX, e.clientY); if (o && A.tgtKey) A.tgtKey(o.key); kick(); } }; /* (a click only targets: no click to move, Flex, Nov 16: "completely remove click to move dont need it"; you move with the keys) */
   const wheel = (e) => { e.preventDefault(); dist = Math.max(8, Math.min(85, dist * (e.deltaY > 0 ? 1.1 : 1 / 1.1))); kick(); };
   const noMenu = (e) => { e.preventDefault(); };
   cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('wheel', wheel, { passive: false }); cv.addEventListener('contextmenu', noMenu); window.addEventListener('resize', kick);
@@ -79642,7 +79656,7 @@ function pgP3(A) {
       // (the autopilot, a careful soaker, presses its defensive just before the circles drain)
       if (window.__pgAuto && st.by.has(me) && t - G.def >= 90 && Math.max(...b.tg.map((tg) => st.v[tg])) < 14) { G.def = t; A.deb('def', 8); }
       if (b.tg.every((tg) => st.v[tg] <= 0)) { st.done = t; if (G.debs.bite && b.tg.includes(me)) G.debs.bite.until = t;
-        const who = [...st.by]; G.p3.purge.push({ i: b.i, who, burst: t + T.purge, spot: spreadSpots(who, b.n, t), waves: false });
+        const who = [...st.by], pq = { i: b.i, who, burst: t + T.purge, spot: spreadSpots(who, b.n, t), waves: false }; G.p3.purge.push(pq); purgeAim(pq, t);
         if (who.includes(me)) { A.deb('purge', T.purge); if (!b.so.includes(me) && once('extra' + b.i)) A.mistake('extra', 'You soaked Serpent\'s Bite ' + (b.i + 1) + ' without being one of its soakers: you took its 1.2 million and a Volatile Purge too.', 'Soak with as few as possible: only the three assigned soakers stand in the red circles.', 0);
           if (A.has('def')) { A.hurt(11); A.say('The bite cleared: spread out now, 5 yards from everyone, at the edge.'); } else A.mistake('def', 'You took the end of Serpent\'s Bite (about 1.2 million) without a defensive.', 'Press Q (your defensive) just before the red circles drain.', 24); }
         return; }
@@ -79654,11 +79668,13 @@ function pgP3(A) {
     // the Purge: 5 s after the bite clears, a 5-yard burst on each soaker, then three waves out of each, 120 degrees apart, one straight away from the raid
     // (the three ways are turned as clear of the raid as they can be (the game picks them; the guide draws them that way), so a soaker at the edge
     // with the raid behind them sends all three clear, and one in the raid can't)
-    G.p3.purge.forEach((q) => { if (!q.waves && t >= q.burst - 1.5) { q.waves = true; const c = FR(P.mel, step(q.burst));
-      const dest = {}; GDZ_RAID.forEach((o) => { dest[o] = job(o, t).T; }); /* (where each raider is heading too, so the lanes miss them there as well) */
-      q.who.forEach((id) => { const p = id === me || !q.spot[id] ? pos(id) : q.spot[id], others = /* (a bot's lanes from the spot it's walking to; yours from where you stand) */ GDZ_RAID.filter((o) => o !== id).flatMap((o) => (dest[o] ? [pos(o), dest[o]] : [pos(o)])), base = aim3(p, others, Math.atan2(p[1] - c[1], p[0] - c[0]));
+    // (Flex, Nov 16: "The soak arrows that appear after the red soaks dont go on the player if they got the mechanic. Also the arrows that point out should be
+    //  arrows from the moment the soak ends": the lanes used to be made 1.5 s before the burst, fixed where you stood then; now each soaker carries three arrows
+    //  from the moment the soak ends (shapes), and at the burst the waves leave from where they stand, along those arrows)
+    G.p3.purge.forEach((q) => { if (!q.waves && t >= q.burst - 1.5) { q.waves = true; purgeAim(q, t); /* (aimed again as the lanes appear, clear of where the raid is now: aimed only at the soak's end, 5 s before, the raid had moved into them) */ /* (the lanes show 1.5 s ahead and move with the soaker until the waves leave: the autopilot got hit when they only showed at the burst) */
+      q.who.forEach((id) => { const p = id === me || !q.spot[id] ? pos(id) : q.spot[id], base = q.dir[id]; /* (yours from where you stand as the lanes show; a bot's from its spread spot, where it walked) */
         [0, 2 * Math.PI / 3, -2 * Math.PI / 3].forEach((da) => { const a = base + da, o = [p[0] + Math.cos(a) * 4.5, p[1] + Math.sin(a) * 4.5]; /* (from 4.5 yards out: a soaker still stepping can't walk into their own wave) */
-          S.waves.push({ kind: 'purge', from: id, pi: q.i, x: o[0], y: o[1], deg: a * 180 / Math.PI, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], warn: 1.5, t0: q.burst + 0.2, t1: q.burst + 2, name: 'Caustic Waves from a Volatile Purge', tip: 'Each soaker\'s Purge sends three waves out: keep out of their lanes.' }); }); }); }
+          S.waves.push({ kind: 'purge', from: id, pi: q.i, fa: a, x: o[0], y: o[1], deg: a * 180 / Math.PI, v: 14, w: 5, d: 3, cres: [[-2.5, 2.5]], warn: 1.5, t0: q.burst + 0.2, t1: q.burst + 2, name: 'Caustic Waves from a Volatile Purge', tip: 'Each soaker\'s Purge sends three waves out: keep out of their lanes.' }); }); }); }
       if (!cr(q.burst)) return; const near5 = (id) => GDZ_RAID.filter((o) => o !== id && pgDist(pos(o), pos(id)) <= P.PURGE);
       if (q.who.includes(me)) { const n = near5(me).length; if (G.debs.purge) G.debs.purge.until = t; G.p3.dot = t + 18; A.hurt(8); if (n) A.mistake('purge', 'Your Volatile Purge burst on ' + n + ' raider' + (n > 1 ? 's' : '') + ' within 5 yards.', 'Spread out once the bite clears: 5 yards from everyone, at the edge, before the burst (5 s).', 12); }
       else if (q.who.some((id) => pgDist(pos(id), [G.x, G.y]) <= P.PURGE)) A.mistake('purge', 'A soaker\'s Volatile Purge burst on you.', 'Keep 5 yards from the bite soakers when their Purge bursts, 5 s after the circles clear.', 20); });
@@ -79680,6 +79696,8 @@ function pgP3(A) {
       const wk = id === A.me ? 0.55 : 0.25, best = (free.length ? free : L).slice().sort((a, b) => clear(b) - clear(a) + wk * (pgDist(a, p) - pgDist(b, p)))[0]; /* (yours a nearer one: you walk slower than the bots, and may have to dodge on the way) */ used.push(best); out[id] = best; }); return out; };
   // (the Purge's three lanes from a soaker, and the turn of them that keeps farthest from everyone: each raider's distance from a lane within its 27 yards)
   const lanes = (p, a) => [0, 2 * Math.PI / 3, -2 * Math.PI / 3].map((da) => [Math.cos(a + da), Math.sin(a + da)]);
+  const purgeAim = (q, t) => { const c = FR(P.mel, step(q.burst)), dest = {}; GDZ_RAID.forEach((o) => { dest[o] = job(o, t).T; }); q.dir = {};
+    q.who.forEach((id) => { const p = id === A.me || !q.spot[id] ? pos(id) : q.spot[id], others = GDZ_RAID.filter((o) => o !== id).flatMap((o) => (dest[o] ? [pos(o), dest[o]] : [pos(o)])); q.dir[id] = aim3(p, others, Math.atan2(p[1] - c[1], p[0] - c[0])); }); }; /* (each soaker's three ways, once, when the soak ends) */
   const aim3 = (p, others, out) => { let best = out, bs = -1e9; for (let k = 0; k < 24; k++) { const a = out - Math.PI / 3 + k * Math.PI / 36, L = lanes(p, a); let m = 9;
       for (const q of others) for (const u of L) { const dx = q[0] - p[0], dy = q[1] - p[1], al = dx * u[0] + dy * u[1]; if (al > -2 && al < 27) m = Math.min(m, Math.abs(dy * u[0] - dx * u[1])); }
       const sc = m + 0.02 * Math.cos(a - out); if (sc > bs) { bs = sc; best = a; } } return best; };
@@ -79832,6 +79850,7 @@ function pgP3(A) {
     if (G.p3.wr && t >= S.wretch.wake) L0.push({ key: 'w3', kind: 'wretch', name: 'Blightscale Wretch', p: [G.p3.wr.x, G.p3.wr.y], r: 2.2, hp: G.p3.wrHp, max: P.WRETCH.hp });
     Object.entries(G.p3.sh).forEach(([k, s]) => L0.push({ key: k, kind: 'shrieker', name: 'Blightscale Shrieker', p: [s.x, s.y], r: 2, hp: s.hp, max: P.SHRIEK.hp }));
     if (t >= T.heart && t < T.end) L0.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.heart.slice(), r: 4.5 }); /* (her heart is big: the melee hit it from the stone's edge) */
+    { const B = bossAt(t); if (B.up) L0.push({ key: 'boss', kind: 'boss', name: "Ula'tek", p: B.p.slice(), r: 6.5 }); } /* (Ula'tek herself while she's up, as in phase 1 (Flex, Nov 16: "I cant target ulatek in p3"): Tab or a click picks her; the moments to hit, dpsCat, stay the adds and the heart) */
     return L0; };
   // (while your own job has you elsewhere (your red circle or your soak, your Purge, the walk off her quarter, the gateway), there's no damage
   // moment for you: training wheels, so a soaker isn't told they missed the Wretch)
@@ -79884,7 +79903,9 @@ function pgP3(A) {
     S.bites.forEach((b) => { const st = G.p3.bite[b.i], yours = b.tg.includes(me) || b.so.includes(me);
       if (yours && t >= b.land - 3 && t < b.end && !(st && st.done)) { h.disc(b.stack[0], b.stack[1], 1.6, '#f3c969', 0.2); h.ring(b.stack[0], b.stack[1], 1.6, '#f3c969', 1, 0.3, true); h.label(b.stack[0], b.stack[1], 3.2, b.tg.includes(me) ? 'Stack here' : 'Soak here', '#f3c969', 14); }
       if (!st || st.done) return; b.tg.forEach((id) => { const p = pos(id), v = Math.max(0, st.v[id] || 0); h.disc(p[0], p[1], P.BITE, '#ff3b3b', 0.12); h.ring(p[0], p[1], P.BITE, '#ff4a4a', 1, 0.35); P3({ k: 'arc', x: p[0], y: p[1], r: P.BITE - 0.6, f: v / 100, c: '#ff8a8a', o: 0.9 }); h.label(p[0], p[1], 5.5, 'Serpent\'s Bite · ' + Math.round(v) + '%', '#ffb0b0', 13); }); });
-    G.p3.purge.forEach((q) => q.who.forEach((id) => { if (t > q.burst + 0.3) return; const p = pos(id); h.ring(p[0], p[1], P.PURGE, '#ff8a3b', 0.9, 0.3, true); if (id === me) { const sp = q.spot[me]; if (sp) { h.disc(sp[0], sp[1], 1.3, '#f3c969', 0.18); h.ring(sp[0], sp[1], 1.3, '#f3c969', 1, 0.25, true); h.label(sp[0], sp[1], 3, 'Spread here', '#f3c969', 13); } h.label(p[0], p[1], 6, 'Volatile Purge · ' + Math.max(0, q.burst - t).toFixed(1), '#ffb46a', 14); } }));
+    G.p3.purge.forEach((q) => q.who.forEach((id) => { if (t > q.burst + 0.3) return; const p = pos(id); h.ring(p[0], p[1], P.PURGE, '#ff8a3b', 0.9, 0.3, true);
+      if (q.dir && q.dir[id] != null && !q.waves) [0, 2 * Math.PI / 3, -2 * Math.PI / 3].forEach((da) => { /* (until the lanes show, 1.5 s before the burst; then the lanes, on the soaker) */ const a = q.dir[id] + da, tip = [p[0] + Math.cos(a) * 8, p[1] + Math.sin(a) * 8], o = id === me ? 0.95 : 0.7; /* (its three waves' ways: an arrow each, on the soaker) */
+        P3({ k: 'rect', x: p[0], y: p[1], a, f0: 1.6, f1: 7.4, w0: -0.32, w1: 0.32, c: '#ff8a3b', o }); [0.6, -0.6].forEach((s2) => P3({ k: 'rect', x: tip[0], y: tip[1], a: a + Math.PI + s2, f0: 0, f1: 2, w0: -0.3, w1: 0.3, c: '#ff8a3b', o })); }); if (id === me) { const sp = q.spot[me]; if (sp) { h.disc(sp[0], sp[1], 1.3, '#f3c969', 0.18); h.ring(sp[0], sp[1], 1.3, '#f3c969', 1, 0.25, true); h.label(sp[0], sp[1], 3, 'Spread here', '#f3c969', 13); } h.label(p[0], p[1], 6, 'Volatile Purge · ' + Math.max(0, q.burst - t).toFixed(1), '#ffb46a', 14); } }));
     G.p3.stones.forEach((q) => { P3({ k: 'stone', x: q.x, y: q.y }); if (t - q.t0 < 6) h.grow(q.x, q.y, 4 + (t - q.t0) % 1 * 30, '#b8a88a', 0.5); h.label(q.x, q.y, 5, 'Calcified Corpse', '#d8c8a8', 13); });
     // (the clutches, the grips, Gorefiend's Grasp)
     S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land, ref: st }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
@@ -79961,7 +79982,7 @@ function pg3dP3(K) {
   const put = (s, t) => { const k = s.k;
     if (k === 'qsink') { const m = Q[s.q]; if (m) { m.position.y = -7 * s.f; m.visible = s.f < 1; m.userData.f = s.f; CK.forEach((c, p) => { c.visible = !Q[p].userData.f && !Q[(p + 1) % 4].userData.f; }); } return true; }
     if (k === 'gate') { const by = K.baseY(s.x, s.y), g = gate(), u = g.userData; g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.8; K.col(u.rm, s.c); u.cm.uniforms.uO.value = 0.5 + 0.15 * Math.sin(t * 4); glw(s.x, by + 1.5, -s.y, 5, s.c, 0.5); return true; }
-    if (K.mon && s.ref && (k === 'clutch' || k === 'shrieker') && K.mon(s.ref, k, s.x, s.y, k === 'shrieker' ? { face: Math.atan2(-s.x, s.y) } : null)) return true; /* (its monster model, src/practice3d.js PG3D_MON) */
+    if (K.mon && s.ref && (k === 'clutch' || k === 'shrieker') && K.mon(s.ref, k === 'clutch' ? 'slither' : k, s.x, s.y, k === 'shrieker' ? { face: Math.atan2(-s.x, s.y) } : null)) return true; /* (its monster model, src/practice3d.js PG3D_MON) */
     if (k === 'clutch') { const g = clutch(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.6 + (s.ph || 0); g.children.forEach((c, i) => { c.position.y = 0.8 + (i === 3 ? 0.7 : 0) + Math.sin(t * 5 + i) * 0.12; }); glw(s.x, by + 1, -s.y, 2.2, '#9bd94a', 0.3); return true; }
     if (k === 'shrieker') { const g = shrieker(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = Math.atan2(-s.x, s.y) + Math.sin(t) * 0.1; return true; }
     if (k === 'stone') { const g = stone(); g.position.set(s.x, K.baseY(s.x, s.y), -s.y); return true; }

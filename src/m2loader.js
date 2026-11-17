@@ -406,6 +406,7 @@ class M2Loader extends Loader {
 			}
 
 			mesh.userData.geoset = skinData.submeshes[ batch.skinSectionIndex ].skinSectionId;
+			mesh.userData.batch = i;
 			group.add( mesh );
 
 		}

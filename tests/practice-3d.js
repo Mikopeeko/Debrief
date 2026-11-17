@@ -437,7 +437,7 @@ module.exports = function practice3d(say, H) {
     if (!/kit3d\(\{ mon, /.test(P3) || !/pg3dP2\(\{ mon, /.test(P3) || !/pg3dP3\(\{ mon, /.test(P3)) nope('the parts\' 3D kits aren\'t given mon');
     const P2J = rd('practice-p2.js'), P3J = rd('practice-p3.js');
     if (!/K\.mon\(s\.ref, k === 'rav' \? 'ravenous' : k, /.test(P2J) || !/K\.mon\(s\.ref, 'doomscale', /.test(P2J) || !/k: 'warden', x: p\[0\], y: p\[1\], ref: w/.test(P2J) || !/ref: d \}\)/.test(P2J) || !/p: left, ref: c \}\)/.test(P2J) || !/k: 'rav', x: r\.x, y: r\.y, ref: r/.test(P2J)) nope('phase 2\'s Warden, Doomscales, Ravenous Doomscales and Clutches don\'t draw their monsters');
-    if (!/K\.mon\(s\.ref, k, s\.x, s\.y, /.test(P3J) || !/ph: c\.land, ref: st \}\)/.test(P3J) || !/k: 'shrieker', x: s\.x, y: s\.y, ref: s/.test(P3J)) nope('phase 3\'s Clutches and Shriekers don\'t draw their monsters'); }
+    if (!/K\.mon\(s\.ref, k === 'clutch' \? 'slither' : k, s\.x, s\.y, /.test(P3J) || /* (phase 3's clutch is the Slithering Clutch, its own model, check 21) */ !/ph: c\.land, ref: st \}\)/.test(P3J) || !/k: 'shrieker', x: s\.x, y: s\.y, ref: s/.test(P3J)) nope('phase 3\'s Clutches and Shriekers don\'t draw their monsters'); }
   // 15. (Nov 16, Flex: "can you have a variety of classes for the bots so its representing various classes?", "don't put healthbars over the bots
   //     heads, put their role. Put healthbars over the monsters heads with the names though.") Without a team plan the raid is a fixed mix of
   //     classes by role (the rings in those classes' colours); a raider's plate shows its role and no health bar; every mob in 45 yd gets its
@@ -521,16 +521,60 @@ module.exports = function practice3d(say, H) {
   //     tabbing"): a mob is under the mouse when the mouse is near the line from its feet to the top of its head as drawn on screen (a flying
   //     Viper is clicked on its body; before, only a click on the floor right under it targeted it, and a click on its body walked you away);
   //     the cursor turns to a pointer over one; a click on one targets it (practice.js tgtKey, only a target that exists, never while paused),
-  //     a click anywhere else still walks there.
+  //     a click anywhere else does nothing: no click to move (Flex, Nov 16: "also, completely remove click to move dont need it"; you move with the
+  //     keys; the tests' own walkTo stays). Phase 3 lists Ula'tek as a target while she's up, as phase 1 does (Flex, Nov 16: "I cant target ulatek in
+  //     p3": its list had only the adds and the heart, so neither Tab nor a click could pick her).
   { const nope = (m) => bad('clicking a mob: ' + m + ' (check 18)');
     const sd = (() => { try { const c = vm.createContext({ Math }); vm.runInContext(H.grab('pg3dSegD', P3) + '\nthis.f = pg3dSegD;', c); return c.f; } catch (e) { nope('pg3dSegD doesn\'t run by itself (' + e.message + ')'); return null; } })();
     if (sd) { const near = (a, b) => Math.abs(a - b) < 1e-6; if (!near(sd(5, 5, 0, 0, 0, 10), 5) || !near(sd(0, -3, 0, 0, 0, 10), 3) || !near(sd(0, 14, 0, 0, 0, 10), 4) || !near(sd(3, 4, 0, 0, 0, 0), 5)) nope('pg3dSegD doesn\'t measure how far the mouse is from a mob drawn on screen (point to segment)'); }
     if (!/const onTgt = \(X, Y\) => \{[\s\S]{0,400}?A\.tgts\(\)\.forEach/.test(P3) || !/TV1\.set\(o\.p\[0\], b \+ tgtTop\(o\), -o\.p\[1\]\)\.project\(cam\);/.test(P3) || !/d = pg3dSegD\(X, Y, ax, ay, bx, by\); if \(d <= reach && d < bd\)/.test(P3)) nope('a mob must be picked by where it is drawn on screen, feet to head, the nearest winning');
-    if (!/const o = onTgt\(e\.clientX, e\.clientY\); if \(!\(o && A\.tgtKey && A\.tgtKey\(o\.key\)\)\) \{ const p = pick\(e\.clientX, e\.clientY\); if \(p && A\.walk\) A\.walk\(p\); \}/.test(P3)) nope('a click on a mob must target it, and a click anywhere else must still walk there');
+    if (!/const o = onTgt\(e\.clientX, e\.clientY\); if \(o && A\.tgtKey\) A\.tgtKey\(o\.key\); kick\(\); \}/.test(P3)) nope('a click on a mob must target it');
+    if (/A\.walk\b/.test(P3) || /\bwalk: \(p\) =>/.test(PJ) || /if \(!pickTgtAt\(wp\)\) target = wp;/.test(PJ)) nope('a click must never walk you anywhere (no click to move, in 3D or 2D)');
+    if (/W A S D or click/.test(PJ) || !/Move: W A S D · Click a mob or Tab: target/.test(PJ)) nope('the controls line must say you move with W A S D and target with Tab or a click (it still said "W A S D or click" after click to move went, Nov 16)');
+    { const P3J = rd('practice-p3.js') || ''; if (!/const B = bossAt\(t\); if \(B\.up\) L0\.push\(\{ key: 'boss', kind: 'boss', name: "Ula'tek", p: B\.p\.slice\(\), r: 6\.5 \}\);/.test(P3J)) nope('phase 3 must list Ula\'tek as a target while she\'s up (you couldn\'t target her in phase 3)'); }
     // (the first test link, Nov 16: a mob behind the camera projected to wild screen points with a huge reach, so the whole screen counted as on it)
     if (!/if \(TV0\.z > 1 \|\| TV1\.z > 1 \|\| TV0\.z < -1 \|\| TV1\.z < -1 \|\| Math\.abs\(TV0\.x\) > 1\.6 \|\| Math\.abs\(TV0\.y\) > 1\.6\) return;/.test(P3) || !/const reach = Math\.min\(120, Math\.max\(16, /.test(P3)) nope('a mob behind the camera or off screen must not count, and a mob\'s reach on screen must stay between 16 and 120 px (the whole screen counted as on a mob)');
     if (!/const move = \(e\) => \{ if \(!drag\) \{ hover\(e\); return; \}/.test(P3) || !/cv\.style\.cursor = o \? 'pointer' : 'crosshair';/.test(P3)) nope('the cursor must turn to a pointer over a mob you can target');
     if (!/tgtKey: \(k\) => \{ if \(paused \|\| !G \|\| !tgtList\(G\.t\)\.some\(\(o\) => o\.key === k\)\) return false; press\('tgt'\); G\.tgt = k; hud\(true\); return true; \}/.test(PJ)) nope('practice.js must let the 3D view target a mob by its key (only one that exists, never while paused)'); }
+  // 19. the guide governs the game (Nov 16, Flex: "for the first and second set of spectral coils in phase 1 all of the eggs were being soaked in one soak
+  //     instead of them being split between the two", "The game should not be pulling from the teams set plan, it should only use the maps as the setup",
+  //     "The guide governs the game"): the game never reads a plan made on the Plan page (a signed-in raider's team plan used to replace the setup, and
+  //     its two coil teams soaked both sets as they were); the coil soak groups follow the plan's Egg Clear map (guides.js ulSoaks: Right Soak #1 the
+  //     melee and left zones' carriers, Left Soak #2 the right and far zones'), the same in both sets, 4 eggs a soak (Flex: "it should be 4 and 4"; set 1
+  //     used to send all 8 to the first coil, and for an hour the coil walkthrough's G1/G2 split them 3 and 5); a carrier soaks with their zone's group.
+  { const nope = (m) => bad('the guide governs the game: ' + m + ' (check 19)');
+    if (!/\n  const TEAM = null;\n/.test(PJ) || /\bpnGet\(|\bulRead\(|\bpnPeople\(/.test(PJ)) nope('the game must not read a plan made on the Plan page (TEAM stays null)');
+    const gm = /const Z = i \? \(D\.ez\.right \|\| \[\]\)\.concat\(D\.ez\.far \|\| \[\]\) : \(D\.ez\.melee \|\| \[\]\)\.concat\(D\.ez\.left \|\| \[\]\);/.exec(GJ); let U = null; try { const c = vm.createContext({}); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('jobSoak', PJ) + '\nthis.U = PG_UL; this.js = jobSoak;', c); U = c; } catch (e) { nope('PG_UL or jobSoak doesn\'t run by itself (' + e.message + ')'); }
+    if (!gm) nope('the plan\'s Egg Clear map (ulSoaks) no longer puts the melee and left zones\' carriers in Soak #1 and the right and far zones\' in Soak #2: check the game against it');
+    if (gm && U) { const car = Object.keys(U.U.eggO), zone = (c) => U.U.eggQ[c][0], want = [car.filter((c) => ['melee', 'left'].includes(zone(c))).sort().join(' '), car.filter((c) => ['right', 'far'].includes(zone(c))).sort().join(' ')];
+      U.U.soak.forEach((two, si) => { const got = two.map((g) => g.filter((x) => car.includes(x)).sort().join(' ')); if (got[0] !== want[0] || got[1] !== want[1]) nope('coil set ' + (si + 1) + ': the carriers must be the plan map\'s, 4 and 4 (' + want.join(' | ') + '), not ' + got.join(' | '));
+        const others = two.map((g) => g.filter((x) => !car.includes(x)).length); if (Math.abs(others[0] - others[1]) > 1) nope('coil set ' + (si + 1) + ': everyone else must be split evenly between the soaks (' + others.join(' and ') + ')');
+        if (!two[0].some((x) => car.includes(x)) || !two[1].some((x) => car.includes(x))) nope('coil set ' + (si + 1) + ': the carriers\' eggs must break in both soaks, not all in one'); });
+      const sj = U.js('r2', { soak: [1, 1] }), so = U.js('m3', { soak: [2, 2] });
+      if (!sj.every((g) => g[1].includes('r2') && !g[0].includes('r2'))) nope('a carrier must soak with their zone\'s group from the guide\'s map, whatever they pick');
+      if (!so.every((g) => g[1].includes('m3') && !g[0].includes('m3'))) nope('someone who isn\'t carrying must still be able to pick their soak group'); }
+    if (!/soakSets: jobMine\(\) \? jobSoak\(me, myJob\) : null \}\);/.test(PJ) || /teamSoak/.test(PJ)) nope('the fight must take its soak groups from the guide (no team-plan groups)'); }
+  // 20. phase 3's Volatile Purge (Nov 16, Flex: "The soak arrows that appear after the red soaks dont go on the player if they got the mechanic. Also the
+  //     arrows that point out should be arrows from the moment the soak ends"): the three wave lanes were made 1.5 s before the burst, fixed where the
+  //     soaker stood then (a bot's at its spread spot), so they weren't on you and came late. Now each soaker's three ways are picked when the soak ends
+  //     (purgeAim), three arrows sit on the soaker from then to the burst wherever they walk, and the waves leave from where they stand at the burst.
+  { const nope = (m) => bad('phase 3 Purge arrows: ' + m + ' (check 20)'); const PP = rd('practice-p3.js') || '';
+    if (!/G\.p3\.purge\.push\(pq\); purgeAim\(pq, t\);/.test(PP) || !/const purgeAim = \(q, t\) => \{/.test(PP)) nope('the three ways must be picked the moment the soak ends');
+    if (!/if \(q\.dir && q\.dir\[id\] != null && !q\.waves\) \[0, 2 \* Math\.PI \/ 3, -2 \* Math\.PI \/ 3\]\.forEach/.test(PP) || !/P3\(\{ k: 'rect', x: p\[0\], y: p\[1\], a, f0: 1\.6, f1: 7\.4,/.test(PP)) nope('each soaker must carry three arrows, on them (pos), from the soak\'s end until the lanes show');
+    // (the same night: lanes shown only at the burst gave the autopilot no warning, and lanes moving with their soaker swept over the people beside them;
+    //  so the lanes show 1.5 s ahead, aimed again then, from where you stand (a bot: its spread spot), and hold still)
+    if (!/G\.p3\.purge\.forEach\(\(q\) => \{ if \(!q\.waves && t >= q\.burst - 1\.5\) \{ q\.waves = true; purgeAim\(q, t\);/.test(PP) || !/q\.who\.forEach\(\(id\) => \{ const p = id === me \|\| !q\.spot\[id\] \? pos\(id\) : q\.spot\[id\], base = q\.dir\[id\];/.test(PP) || !/kind: 'purge', from: id, pi: q\.i, fa: a, [^}]*warn: 1\.5,/.test(PP) || /w\.kind === 'purge' && w\.fa != null && t < w\.t0/.test(PP)) nope('the lanes must show 1.5 s before the burst, aimed then from where you stand (a bot: its spread spot), and hold still'); }
+  // 21. her tail, the small tails and the Clutches in their real models (Nov 16, Flex: "gore rattle needs its model from in game", "the slithering clutch
+  //     needs in game models"): Gore Rattle and the small tails are creature/ulatektentacle/ulatektentacle01.m2 (7234132); the drawn tails hide once it's
+  //     in, Gore Rattle plays its real slam (a16, the hit 0.87 s in) on the Thrash, each small tail is a copy made with its pool item. Phase 2's Blightscale
+  //     Clutch is an egg pod (7926158), phase 3's Slithering Clutch a green ooze (390813, skins 390992 and 390999), each showing only its body's parts
+  //     (keep: their death splashes, shards and glow sprites sized the egg pod three times too small).
+  { const nope = (m) => bad('the real tails and Clutches: ' + m + ' (check 21)'); const PP = rd('practice-p3.js') || '', ML2 = rd('m2loader.js') || '';
+    if (!/tail: \{ m2: 7234132 \}/.test(P3) || !/if \(S3TC\) pg3dWowOr\(\(\) => pg3dWow\.load\(T, pg3dWow\.tail\), \(\) => null, 20000\)/.test(P3) || !/tailDrawn\.forEach\(\(c\) => \{ c\.visible = false; \}\); tail\.add\(R0\);/.test(P3)) nope('Gore Rattle must be the real tail (ulatektentacle01, 7234132), the drawn one hidden once it\'s in, and kept when it can\'t load');
+    if (!/sl = g\.animations\.find\(\(c\) => c\.name === 'a16'\)/.test(P3) || !/TRS\.time = Math\.max\(0, 0\.87 - s\.hit\);/.test(P3) || !/at: th \? th\.at : null, hit: th \? th\.at - t : null \}\);/.test(P3) || !/if \(TRM && tail\.visible\) TRM\.update\(dt\);/.test(P3)) nope('Gore Rattle must play its real slam with the hit on the Thrash, and move');
+    if (!/const stailReal = \(g\) => \{/.test(P3) || !/if \(STPL\) stailReal\(g\); return g; \}\);/.test(P3) || !/g\.userData\.M\.update\(dt\)/.test(P3)) nope('the small tails must be copies of the real tail, made with their pool items (never while drawing), and move');
+    if (!/mesh\.userData\.batch = i;/.test(ML2) || !/if \(W\.keep\) \{ const ms = \[\]; g\.traverse/.test(P3)) nope('the reader must keep each part\'s batch, and a model can show only the parts in keep');
+    if (!/clutch: \{ wow: \{ m2: 7926158, h: [\d.]+, ph: [\d.]+, keep: \[2, 4, 6, 8\] \}/.test(P3) || !/PG3D_MON\.slither = \{ wow: \{ m2: 390813, skin: \[390992, 390999\], h: [\d.]+, ph: [\d.]+, keep: \[0, 4, 5\] \}/.test(P3) || !/K\.mon\(s\.ref, k === 'clutch' \? 'slither' : k,/.test(PP)) nope('phase 2\'s Clutch must be the egg pod and phase 3\'s the Slithering Clutch ooze, each showing only its body'); }
   return Promise.all([loadP, fbP]);
 };
 if (require.main === module) {
