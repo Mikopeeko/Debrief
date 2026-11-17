@@ -319,6 +319,8 @@ function simpleScreen(H, say, pj) {
     if (!doneRx) bad('there is no list of what counts as done (PG_DONE)');
     else { ['Egg picked up.', 'Soaked: your egg broke (a Rawling).', 'Kicked: Vicious Echoes interrupted.', 'Tether broken on time.', 'Rawling killed.'].forEach((x) => { if (!doneRx.test(x)) bad('"' + x + '" doesn\'t get the green done chip'); });
       ['Not open yet: hit it (Tab, then 1).', 'Kick is on cooldown.', 'Its shell is still up: hit it (Tab, then 1) to break it.', 'The tank taunted the Viper: kill it with the raid!', 'Back by her: burn the heart.'].forEach((x) => { if (doneRx.test(x)) bad('"' + x + '" gets the green done chip, as if done'); }); } }
+  // S5. the setup card's switches and lists: a tidy two by two grid, the lists flat in their frames (Flex, Nov 17, of the row 'Hints on | Normal speed | Look [Auto (your class or role)]' with 'Start [The pull]' alone on a second row: 'weird formatting/glitches')
+  if (!/\.pg-chips \{ display: grid; grid-template-columns: 1fr 1fr;/.test(PJ) || !/\.pg-chip select \{[^}]*background: transparent;/.test(PJ)) bad('the setup card\'s Hints, Speed, Look and Start wrap unevenly, or the lists sit as boxes inside their frames (check S5)');
 }
 module.exports = (H, say) => { checks(H, say); lookC(H, say); simpleScreen(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad; module.exports.simpleScreen = simpleScreen;
 if (require.main === module) {
