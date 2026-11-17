@@ -2130,12 +2130,12 @@ function mpxBoard(R, M, F) { if (MPC_ON || !R || !(R.people || []).length) retur
   const num = (v) => (v > 0 ? '<span class="mpbn-n">' + fm(v) + '</span>' : z), bar = (k, v) => (v > 0 ? '<span class="mpbn-n mpbn-bar' + (top(k, v) ? ' mpbn-best' : '') + '" style="--w:' + Math.max(0.04, v / (mx(k) || v)).toFixed(3) + '">' + fm(v) + '</span>' : z);
   const rio = typeof mpxRio === 'function' ? mpxRio(R) : null, me = typeof mpxPick === 'function' ? mpxPick(R) : typeof MP !== 'undefined' ? MP.pp || '' : '';
   const rt = (n) => { const c = rio && rio[n]; return c ? '<span class="mpbn-n mpbn-rt"' + (/^#[0-9a-f]{6}$/i.test(c.col || '') ? ' style="--rc:' + c.col + '"' : '') + ' data-mprt="' + esc(n) + '"' + mpT1('Their Mythic+ rating today, from Raider.IO.') + '>' + Number(c.score).toLocaleString('en-US') + '</span>' : '<span class="mpbn-n mpbn-rt mpbn-z" data-mprt="' + esc(n) + '">–</span>'; };
-  const H = [['Player'], ['Rating', 'Each player\'s Mythic+ rating today, from Raider.IO.'], ['Deaths'], ['Damage taken'], ['Avoidable', 'Damage taken from things that can be dodged.'], ['Damage'], ['DPS'], ['Healing'], ['HPS'], ['Interrupts'], ['Dispels', 'Dispels and purges.']];
+  const H = [['Player'], ['Rating', 'Each player\'s Mythic+ rating today, from Raider.IO.'], ['Deaths'], ['Damage taken'], ['Avoidable', (R.dodge || []).length ? 'Hits top players dodge: ' + mpAnd(R.dodge.map((s) => esc(s))) + '. A hit counts past the few top players take too.' : R.dodge ? 'Not tracked for this dungeon yet.' : 'Damage taken from things that can be dodged.'], ['Damage'], ['DPS'], ['Healing'], ['HPS'], ['Interrupts'], ['Dispels', 'Dispels and purges.']];
   const head = '<div class="mpbn-r mpbn-h">' + H.map(([t, tip]) => '<span' + (tip ? ' tabindex="0"' + mpT1(tip) : '') + '>' + t + '</span>').join('') + '</div>';
   const body = rows.map((r) => { const c = mpCC(r.p.cls), role = r.p.role === 'tank' || r.p.role === 'healer' ? r.p.role : 'dps', sc = [r.p.spec, cn(r.p)].filter(Boolean).join(' '); /* (the game's board: the item level under the name; the spec's icon, the class colour and the role mark say the rest, the full spec on hover) */
     return '<div class="mpbn-r mpbn-b' + (r.p.name === me ? ' mpbn-me' : '') + '" style="--c:' + c + '" role="button" tabindex="0" data-mpxv="mis" data-mpxp="' + esc(r.p.name) + '"><span class="mpbn-p"><span class="mpbn-pic"' + mpT1(sc + ', ' + (role === 'tank' ? 'tank' : role === 'healer' ? 'healer' : 'damage')) + '>' + mpxWhoIc(r.p) + '<i class="mpbn-role mpbn-role-' + role + '"></i></span><span><b>' + esc(r.p.name) + '</b><small>' + (r.il ? r.il + ' item level' : esc(sc)) + '</small></span></span>' +
       rt(r.p.name) + (r.d ? '<span class="mpbn-n mpbn-bad">' + r.d + '</span>' : z) + num(r.tk) +
-      (r.av ? '<span class="mpbn-n mpbn-warn" tabindex="0"' + mpT1(plural(r.avn, 'avoidable hit') + ' took ' + mpGF(r.av) + '.') + '>' + fm(r.av) + '</span>' : z) +
+      (r.av ? '<span class="mpbn-n mpbn-warn" tabindex="0"' + mpT1(plural(r.avn, 'avoidable hit') + ' took ' + mpGF(r.av) + '.') + '>' + fm(r.av) + '</span>' : R.dodge && !R.dodge.length ? '<span class="mpbn-n mpbn-z" tabindex="0"' + mpT1('Not tracked for this dungeon yet.') + '>–</span>' : z) +
       num(r.dm) + bar('dps', r.dps) + num(r.he) + bar('hps', r.hps) +
       (r.ki ? '<span class="mpbn-n mpbn-ki' + (top('ki', r.ki) ? ' mpbn-top' : '') + '">' + r.ki + '</span>' : z) + (r.di ? '<span class="mpbn-n mpbn-di' + (top('di', r.di) ? ' mpbn-top' : '') + '">' + r.di + '</span>' : z) + '</div>'; }).join('');
   return '<section class="mpsb" aria-label="The key at a glance"><p class="mpsb-hd"><b>The key</b><small>click a player for their Report card</small></p>' + mpxResult(R, F) + '<div class="mpsb-t">' + head + body + '</div></section>'; }
@@ -3300,7 +3300,7 @@ function mpRating(R, ck, it) {
 // colour in it. The line on top counts each spell once, then the deaths, wipes and slow boss fights (amber or red against the fast run). It sits second on the Summary, open (it was folded at the foot))
 const MPK_W = { u: -2, q: -1, y: 0, s: 1, n: 2 }, MPK_MK = { y: '✓', n: '✗', s: '!', q: '•', u: '•' };
 function mpxKnow(R, K, F) {
-  const D = mpxData(R, F), lc = mpLc, off = new Map(), seen = new Map(), tot = { dead: 0, wipe: 0, slow: 0 };
+  const D = mpxData(R, F), lc = mpLc, off = new Map(), seen = new Map(), tot = { dead: 0, wipe: 0, slow: 0 }, DG = new Set((R.dodge || []).map((s) => lc(s)));
   for (const p of R.pulls) for (const t of (p.through || []).concat(p.minor || [])) off.set(lc(t.spell), (off.get(lc(t.spell)) || 0) + 1);
   const TB = new Map(Object.entries(R.tiers || {}).map(([s, v]) => [lc(s), v])), SP = new Map((R.spam || []).map((x) => [lc(x.spell), x])), KK = new Set(K.k.map(lc));
   const worse = (a, b) => (!a ? b : !b ? a : MPK_W[b] > MPK_W[a] ? b : a), note = (k, st) => { if (st === 'y' || st === 's' || st === 'n') seen.set(k, worse(seen.get(k), st)); };
@@ -3315,6 +3315,7 @@ function mpxKnow(R, K, F) {
     const DD = D.death.filter((d) => lc(mpxTo(d.d && d.d.to)) === k); if (DD.length) { st = worse(st, 'n'); r.push('killed ' + who(DD.map((d) => d.who))); }
     const CL = D.close.filter((c) => lc(c.spell) === k); if (CL.length) { st = worse(st, 'n'); r.push('left ' + who(CL.map((c) => c.who)) + ' under 15% health'); }
     const DS = D.disp.filter((d) => lc(d.n) === k); if (DS.length) { st = worse(st, 'n'); r.push('stayed on ' + who(DS.map((d) => d.who)) + ' too long'); }
+    if (!st && DG.has(k)) { st = 'y'; r.push('no more hits than top players take'); } /* (a tracked dodge nobody took past top players' allowance (Nov 16)) */
     if (st) note(k, st); return st ? { st, r: r.join(' · ') } : null; };
   const lineJ = (x) => { let st = null; const r = []; for (const m of String(x).matchAll(/\[\[(.+?)\]\]/g)) { const j = spJ(m[1]); if (j) { st = worse(st, j.st); r.push(j.r); } } return st ? { st, r: r.join(' · ') } : null; };
   const li = (body, j) => { const st = j ? j.st : 'u'; return '<li class="mpk-l mpk-' + st + '"><i class="mpk-m" aria-hidden="true">' + MPK_MK[st] + '</i><span>' + body + (j && j.r ? ' <em class="mpk-r">' + j.r + '</em>' : '') + '</span></li>'; };

@@ -32,21 +32,27 @@ const KNOCK = new Set(['thunderstorm', 'typhoon', 'ursol\'s vortex', 'ring of pe
 // - Kings' Rest's Gilded Destruction (12 of 12, 3 hits each);
 // - Voidscar Arena's Poison Splash (12 of 12, 6 or 7) and Void Beam (12 of 12, 1 to 5).
 // Den of Nalorakk's Rotten Ground (10 of 12, up to 7) counts past 7.)
+// Measured again Nov 16 (Flex: "Yes, fix it next", after the fresh-eyes review found every Kings' Rest player at "0 avoidable"): the 4 fastest +18s of each
+// dungeon, every enemy spell's direct hits on non-tanks. A guide's dodge tip joins its list unless its casts hit every non-tank at once (then it can't be
+// dodged: Gilded Destruction 100%, Voidscar's Poison Splash 93%, Dark Bloom 94%, Cosmic Crash 92%, Ruby's Hailburst 91%, Chillstorm 88%). free is the
+// most hits 9 in 10 of those top players took. Added: Kings' Rest's Spit Gold (5 free), Burn Corruption (2) and Quaking Leap (4, extra hits mean not spread),
+// Murder Row's Fire Bomb (3), Voidscar's Void Cascade; free hits for Altar's Septic Spatter (3) and the Blinding Vale's Lightmaw Beams (2), Lightsower Dash,
+// Belch Spores and Lightwarden's Blight (1 each).
 const LISTS = {
   'altar of fangs': { kick: ['Piercing Hiss', 'Toxic Atrophy', 'Mass Envenom'], cc: [['Evolve', 'Evolved']],
-    dispel: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], purge: ['Ravenous Claws'], dodge: ['Regurgitate', 'Burrowing Charge', 'Axegrinder', 'Septic Spatter'] },
+    dispel: ['Paralyzing Shots', 'Regurgitate', 'Envenom'], purge: ['Ravenous Claws'], dodge: ['Regurgitate', 'Burrowing Charge', 'Axegrinder', 'Septic Spatter'], free: { 'Septic Spatter': 3 } },
   'murder row': { kick: ['Fel Missiles', 'Seduction', 'Felstorm', 'Fel Rage', 'Health Funnel', 'Chaos Bolt'], chan: ['Health Funnel', 'Fel Missiles', 'Felstorm'],
-    dispel: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike'] },
+    dispel: ['Corroding Spittle', 'Heartstop Poison', 'Curse of Doom'], purge: ['Back to Work!'], dodge: ['Legion Strike', 'Fire Bomb'], free: { 'Fire Bomb': 3 } },
   'den of nalorakk': { kick: ['Scavenge', 'Healing Breeze', 'Frigid Roar', 'Winter\'s Shroud', 'Arc Lightning'],
     dispel: ['Insatiable Hunger', 'Toxic Spores', 'Cryo Surge', 'Glacial Torment'], purge: ['Mother\'s Wrath', 'Bestial Wrath'], dodge: ['Earthshatter Slam'], pool: ['Rotten Ground'], free: { 'Rotten Ground': 7 } },
   'the blinding vale': { kick: ['Light Bolt Volley', 'Light Bolt@Kezkitt', 'Disorienting Screech', 'Warden\'s Wrath', 'Lightspore Shot'],
-    dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"] },
+    dispel: ['Bloodthorn Roots'], purge: [], dodge: ['Lightsower Dash', 'Fan of Thorns', 'Lightmaw Beams', 'Belch Spores', "Lightwarden's Blight"], free: { 'Lightmaw Beams': 2, 'Lightsower Dash': 1, 'Belch Spores': 1, "Lightwarden's Blight": 1 } },
   'voidscar arena': { kick: ['Demoralizing Shout', 'Shadowbolt Volley', 'Violent Sand', 'Mad Shriek', 'Mending Void'], chan: ['Mending Void'],
-    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Unstable Singularity'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
+    dispel: ['Melt Armor', 'Corrosive Essence'], purge: ['Bolster'], dodge: ['Nether Dash', 'Unstable Singularity', 'Void Cascade'], own: ['Nether Dash'] }, /* (Nether Dash: "Dodge Other Lines. Targets each player with a line attack.") */
   'ruby life pools': { kick: ['Ice Shield', 'Frigid Shard', 'Fiery Blast', 'Blaze Volley'], chan: ['Ice Shield'],
     dispel: ['Cold Claws', 'Rolling Thunder', 'Stormslam'], purge: ['Blaze of Glory', 'Stormcloud Barrier'], dodge: ['Molten Boulder', 'Roaring Firebreath', 'Flame Breath'] },
   'kings\' rest': { kick: ['Hex Volley', 'Bind Soul', 'Unholy Mending', 'Wretched Discharge', 'Hex', 'Poison Nova', 'Deathly Roar'],
-    dispel: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], purge: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'], dodge: ['Suppression Slam'] },
+    dispel: ['Lingering Fluid', 'Putrid Seekers', 'Savage Maul'], purge: ['Bound by Shadow', 'Ancestral Fury', 'Bestial Berserk', 'Captain\'s Bulwark', 'Unholy Mending'], dodge: ['Suppression Slam', 'Spit Gold', 'Burn Corruption', 'Quaking Leap'], free: { 'Spit Gold': 5, 'Burn Corruption': 2, 'Quaking Leap': 4 } },
   'temple of sethraliss': { kick: ['Poisoned Cheap Shot', 'Addle Mind', 'Poison Spit', 'Essence Disruption', 'Flame Shock'], chan: ['Essence Disruption'],
     dispel: ['Cytotoxin', 'Imbued Conduction'], purge: ['Accumulate Charge'], dodge: ['Burrow'], unconf: ['Essence Disruption'] }, /* (Essence Disruption: never seen cast in 9 Temple keys, so not counted until it is (Nov 1)) */
 };
@@ -110,7 +116,7 @@ function bigHits(ev, players, pullOf, DEF, defIds, E, LIST) {
   // (the hits on non-tanks, by spell; a cast is that spell's hits within 1.5 s of the last)
   const by = new Map(), deaths = ev.filter((x) => x[1] === 'died');
   for (const x of ev) { if (x[1] !== 'hit' || x[7] || !x[10] || x[4] === 'Melee' || !x[10][1] || tank(x[2])) continue;
-    if (LIST && LIST.dodge.has(lc(x[4]))) continue; /* (Main's review, Nov 14: a hit on the dungeon's dodge list is never a big hit. The fix there is to dodge, not a defensive, and Avoidable hits already counts it) */ if (!by.has(x[4])) by.set(x[4], []); by.get(x[4]).push(x); }
+    if (LIST && LIST.dodge.has(lc(x[4])) && !(LIST.free.get(lc(x[4])) > 0)) continue; /* (Nov 16: only a pure dodge (top players take none) is never a big hit; a hit top players take a few of, like Quaking Leap, can still need a defensive) */ /* (Main's review, Nov 14: a hit on the dungeon's dodge list is never a big hit. The fix there is to dodge, not a defensive, and Avoidable hits already counts it) */ if (!by.has(x[4])) by.set(x[4], []); by.get(x[4]).push(x); }
   const hits = [], close = [], per = {};
   for (const [spell, L] of by) { const pc = L.map((x) => x[10][0] / x[10][1]).sort((a, b) => a - b), med = pc[pc.length >> 1]; if (med < BH_BIG - 0.005) continue;
     const casts = []; let last = -1e9;
@@ -278,7 +284,7 @@ function build(text, E) {
       if (c && x[0] - c.t0 <= 1) { c.who.add(x[2]); c.xs.push(x); } else { shut(c); open.set(k, { t0: x[0], who: new Set([x[2]]), xs: [x] }); } }
     for (const c of open.values()) shut(c); }
   const seenN = new Map(), counts = (x) => { const k = x[2] + '|' + lc(x[4]), n = (seenN.get(k) || 0) + 1; seenN.set(k, n); return n > (LIST.free.get(lc(x[4])) || 0); }; /* (past the spell's free hits for this key) */
-  const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(); // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
+  const recent = new Map(), inPool = new Set(), lastHit = new Map(), ownAt = new Map(), cntHit = new Map(); /* (cntHit: whether the hit going on now counts, past the free ones, so only its damage is avoidable damage (Nov 16)) */ // player -> last hits; player|puddle stepped into, not ticked yet; player|spell -> its last hit; player|spell -> their own line's hit
   for (const x of ev) {
     const pi = pullOf(x[0]), o = out[pi]; if (!o) continue;
     if (x[1] === 'dmg') addTo(o.dmg, x[2], x[3]);
@@ -287,7 +293,7 @@ function build(text, E) {
       /* (avoidable damage: a dodge-list spell's direct hit (not the damage-over-time some leave) on anyone but a tank, who may be standing in a frontal on purpose;
          a beam or breath that hits every second while you stand in it is one hit until you're out of it for 1.6 s (Nov 1)) */
       if (LIST && (players.get(x[2]) || {}).role !== 'tank') { if (!x[7] && LIST.dodge.has(lc(x[4])) && LIST.own.has(lc(x[4])) && !(ownAt.get(x[2] + '|' + lc(x[4])) > x[0] - 8)) ownAt.set(x[2] + '|' + lc(x[4]), x[0]); /* (their own line this cast: not a mistake) */
-      else if (!x[7] && LIST.dodge.has(lc(x[4])) && !allHit.has(x)) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6) && counts(x)) { a.n++; a.ts.push(+x[0].toFixed(1)); } lastHit.set(k, x[0]); a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { inPool.delete(k); if (counts(x)) { a.n++; a.ts.push(+x[0].toFixed(1)); } } a.dmg += x[3]; } } }
+      else if (!x[7] && LIST.dodge.has(lc(x[4])) && !allHit.has(x)) { const a = avoidOf(o, x[2], x[4]); if (!a.id && x[8]) a.id = x[8]; const k = x[2] + '|' + lc(x[4]); if (!(lastHit.get(k) > x[0] - 1.6)) { cntHit.set(k, counts(x)); if (cntHit.get(k)) { a.n++; a.ts.push(+x[0].toFixed(1)); } } lastHit.set(k, x[0]); if (cntHit.get(k)) a.dmg += x[3]; } else if (x[7] && LIST.pool.has(lc(x[4]))) { const a = avoidOf(o, x[2], x[4]), k = x[2] + '|' + lc(x[4]); if (inPool.has(k)) { inPool.delete(k); if (counts(x)) { a.n++; a.ts.push(+x[0].toFixed(1)); } } a.dmg += x[3]; } } }
     /* (a puddle: one hit each time someone stepped in and it ticked on them; out again within a second isn't a mistake. Its ticks are the damage) */
     else if (x[1] === 'pool') inPool.add(x[2] + '|' + lc(x[3]));
     else if (x[1] === 'aura' && defIds.has(x[3])) o.defs.push({ t: x[0], who: x[2], name: defIds.get(x[3]) });
@@ -360,7 +366,7 @@ function build(text, E) {
   const tiers = {}; for (const c of casts) if (danger(c)) tiers[c.spell] = tierOf(c); /* (high, medium or low (Nov 1)) */
   const big = bigHits(ev, players, pullOf, BH_DEF, defIds, E, LIST);
   return { run, people, pulls: out, list: !!LIST, big, spam: [...KS.values()].sort((a, b) => b.casts - a.casts), tiers, casts: { total: casts.length, kicked: casts.filter((c) => c.res === 'kicked').length, stopped: casts.filter((c) => c.res === 'stopped').length,
-    through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length, minor: out.reduce((a, o) => a + o.minor.length, 0) }, avoid: people.reduce((a, p) => a + p.avoid, 0) };
+    through: thr.filter((x) => !x.cc).length, ccThrough: thr.filter((x) => x.cc).length, minor: out.reduce((a, o) => a + o.minor.length, 0) }, avoid: people.reduce((a, p) => a + p.avoid, 0), dodge: ((LISTS[lc(run.dungeon || '')] || {}).dodge || []).concat((LISTS[lc(run.dungeon || '')] || {}).pool || []) }; /* (the dungeon's tracked dodges, for the website's Avoidable column and Know this dungeon, Nov 16) */
 }
 // ---- Rotation per pull (Nov 1, Flex: "will this also include rotation break down pull by pull?"): the website's own Rotation checks on each
 // pull of the key, as the boss card has them. It needs the website's engine and its specRun (the app has both): each pull's lines, with the
