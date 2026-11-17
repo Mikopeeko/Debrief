@@ -2140,6 +2140,7 @@ const PATCH_NOTES = [
       'Practice Ula\'tek: the cauldron line says "Sprint" when you can only make it with a sprint, the intermission shows "Press Q now!" at the last four slams, each kick shows one line, and a mistake made again shows once with ×2, ×3.',
       'Practice Ula\'tek: boss-mod style countdowns for every danger, like "Tail sweep in 3: run 35 yards from her tail", and dodge lines that say which way to step, like "Step left out of the red lane!", from where your camera faces.',
       'Practice Ula\'tek: phase 3\'s Slithering Clutches use the egg-pod model from the game instead of a flat green puddle.',
+      'Practice Ula\'tek: the tail sweep says which way to run ("Run left, out of the orange circle!"), "Pick up your egg" goes away once that egg is lost, and a raid-wide dodge call no longer covers your own dodge line.',
       'Mythic+ Graphs: the chart is smoother, its layers fade, and boss names, Lust and deaths sit above it in bigger text.',
       'Grade letters have new colours everywhere: S gold, A green, B teal, C amber, D orange, F red.',
       'Mythic+ Summary: under the run, How we compare says what the fast run, your spec and top mean.',

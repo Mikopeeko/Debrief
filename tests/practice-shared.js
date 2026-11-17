@@ -498,6 +498,24 @@ function simpleScreen(H, say, pj) {
         if (/Press Q/.test(now) && G.t - G.def >= 90) G.def = G.t; if (/sprint/i.test(now) && G.t - G.sprint >= 30) G.sprint = G.t;
         d.stepOwn(1); if (G.hp <= 0) G.hp = 100; }
       const hits = G.log.filter((m) => /Caustic Waves/.test(m.text)).length; if (hits > 4) bad('phase 1 as a ranged egg carrier who only follows the words is hit by ' + hits + ' waves (4 at most): the dodge lines don\'t say which way (check S15)'); } }
+  // S16. three things Flex watched in the live run of all four parts (Nov 17, "Yes, fix them"):
+  //      a. the tail sweep's countdown came, then "Run out of the orange circle!" with no way to run: it says which way, away from her tail, from your camera.
+  //      b. phase 2 said "Pick up your egg" for a minute after "You never picked up your egg": once the egg is lost, no line and no arrow for it.
+  //      c. a call to dodge ("Dodge the red lanes!") took the NOW line over your own line that said which way: a dodge call never covers the job line.
+  { const d = L.open(null); d.at(30, d.role.id, { seed: 3 }); const th = d.S.thrash && d.S.thrash[0];
+    if (!th) bad('phase 1 has no tail sweep to test (check S16)');
+    else { d.at(th.t0 + 0.2, d.role.id, { seed: 3 }); const dd = Math.hypot(th.x, th.y) || 1, P0 = [th.x - th.x / dd * 10, th.y - th.y / dd * 10], wd = vm.runInContext('pgDirWord', ctx)(P0[0] - th.x, P0[1] - th.y, [0, 1]); /* (10 yards in from her tail, on the stone; the way out is away from it) */
+      d.pos = P0; d.frame(); const jt = d.jobPick().text, now = plain(d.nowHtml()), want = 'Run ' + wd + ', away from her tail: out of the orange circle.';
+      if (jt !== want && !/^Run to the Wretch/.test(jt)) bad('standing 10 yards in from her tail in its sweep, the job line reads "' + jt + '", not "' + want + '" (check S16)');
+      if (jt === want && now !== 'Run ' + wd + ', out of the orange circle!') bad('the NOW line reads "' + now + '" for the tail sweep, not "Run ' + wd + ', out of the orange circle!" (check S16)'); } }
+  { const d = L.open('m2'), su = d.P2.setup; su.set('r', su.jobs('r')[0][0]); const me = d.P2.slotOf(d.P2.pick); d.at(250, me, { seed: 3 }); const G = d.G; let n = 0, missed = false, stale = '', arrow = false;
+    { const e0 = G.eggs.find((q) => q.id === me); if (e0) { e0.state = 'floor'; e0.who = null; e0.x = 400; e0.y = 400; } } /* (your small egg left on the floor, far out of anyone's way, before the big eggs' pickup: the miss at 4:18) */
+    while (G.t < d.S.end - 0.3 && n++ < 4000) { const h0 = d.hint(); d.walkTo(h0 && h0.T && !h0.wait && h0.what !== 'egg' ? h0.T.slice() : null); /* (follows the arrow everywhere but to its egg, as in the live run) */
+      d.stepOwn(1); G.hp = 100; if (!missed && G.log.some((m) => /never picked up your egg/.test(m.text))) missed = true;
+      if (missed) { const jt = d.P2.jobText(), h = d.hint(); if (!stale && /Pick up your egg|Wait by your egg/.test(jt)) stale = jt; if (h && h.what === 'egg') arrow = true; } } /* (live it read "Pick up your egg" from 4:59 to 5:17) */
+    if (!missed) bad('the test lost its setup: a phase 2 player standing still never got "You never picked up your egg" (check S16)');
+    else { if (stale) bad('after "You never picked up your egg", the job line still reads "' + stale + '" (check S16)'); if (arrow) bad('after "You never picked up your egg", the arrow still points at that egg (check S16)'); } }
+  if (!PJ.includes("!pgSameGoal(cw, sj) && !/^(?:Dodge|Step)\\b/i.test(cw) ? cw : sj")) bad('a call to dodge can still take the NOW line over your own line that says which way (check S16)');
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.

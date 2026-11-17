@@ -563,7 +563,7 @@ function pgP2(A) {
       if (t < T.throwAt) { if (e.who === me && once('wait' + e.n)) A.say('In the ring: the small eggs go in together.'); return; }
       e.state = 'gone'; e.inAt = t; { const q = pgP2Away(S.pits[e.side], 3, e.n * 47, e.side); rawling(e.side, q, t); } /* (a Rawling climbs out of the cauldron for every small egg, as on the kills) */
       if (e.id === me) { if (t > T.throwAt + 7) A.mistake('late', 'Your egg went into the cauldron late (' + clk(t) + ').', 'Be at your lane spot by the cauldron before the call: in together.', 0); else A.say('Your egg is in the cauldron.'); } e.who = null; });
-    if (cr(T.bigUp + 0.5)) G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone') return; if (e.state === 'floor') A.mistake('egg', 'You never picked up your egg (#' + e.n + ').', 'Your egg sits at the north end of your ledge (the gold circle): pick up your egg once the Warden is dead.', 0); else A.mistake('egg', 'Your egg (#' + e.n + ') wasn\'t in the cauldron before the big eggs were picked up.', 'Carry it to the cauldron and throw it in with the others on the call.', 0); }); };
+    if (cr(T.bigUp + 0.5)) G.eggs.forEach((e) => { if (e.id !== me || e.state === 'gone') return; if (e.state === 'floor' && (e.missed = true)) A.mistake('egg', 'You never picked up your egg (#' + e.n + ').', 'Your egg sits at the north end of your ledge (the gold circle): pick up your egg once the Warden is dead.', 0); else A.mistake('egg', 'Your egg (#' + e.n + ') wasn\'t in the cauldron before the big eggs were picked up.', 'Carry it to the cauldron and throw it in with the others on the call.', 0); }); };
   const big = (t0, t) => { const me = A.me;
     S.big.forEach((B, i) => { const st = G.p2.big[i], hd = holder('big', B.side, B.which);
       if (st.state === 'floor') { const mineB = hd === me, who = mineB ? (Math.hypot(G.x - B.x, G.y - B.y) <= P.BIG ? me : null) : hd && t >= S.bigAt[B.side][B.which] && pgDist(pos(hd), [B.x, B.y]) <= 2.2 ? hd : null; /* (you: anywhere inside its drawn 3-yard ring (the prompts audit, Nov 16: 2.2, so players who stopped in the ring, where the arrow went away, let it hatch); the bots as before) */
@@ -762,14 +762,14 @@ function pgP2(A) {
     const thOn = th && th.br == null && t >= T.fangs && wdUp(th.side), tb = th ? (th.solo ? T.solo : T.five) : 0;
     if (thOn && t >= tb) return 'Break now: walk out past 25 yards!';
     if (thOn && t >= tb - 5.5) return th.solo ? 'Walk to your tether\'s edge: you break first.' : 'Walk to your tether\'s edge: you break with the 5.';
-    if (e && e.state === 'floor' && wDead && t >= e.shell) return 'Pick up your egg (#' + e.n + ') now: walk over it!';
+    if (e && e.state === 'floor' && !e.missed && wDead && t >= e.shell) return 'Pick up your egg (#' + e.n + ') now: walk over it!';
     if (bg && bg.state === 'floor' && t < T.doomEnd && t >= bt) return 'Pick up your big egg now: walk onto it!';
     if (e && e.state === 'held' && t >= T.throwAt) return inRing ? 'Into the cauldron now: hold still in the gold ring.' : 'Into the cauldron now: sprint (Shift) into the gold ring!';
     if (bg && bg.state === 'held' && t >= S.bigIn[s]) return inRing ? 'Wait in the ring: the other big egg is coming.' : 'Into the cauldron now: sprint (Shift) into the gold ring!';
     // (c) the walk to your next step, from when it's named
     if (k && t >= k.at - KLEAD) { const p = kickPos(k.key), inR = !!p && kickIn(k.key, p); G.p2.kIn = inR ? k.key : null; const dk = inR ? dpsCat(t) : null; if (dk && A.DPS_SAY && A.DPS_SAY[dk]) return A.DPS_SAY[dk][0] + ', kick ' + k.kind + ' at the cast.'; /* (#3: "wait for the cast" while the Clutches were up) */
       return inR ? 'Your kick is next: press E when ' + casterName(k.key) + '\'s bar starts.' : 'Your kick is next: get close to ' + casterName(k.key) + ' (the arrow).'; }
-    if (e && e.state === 'floor' && wDead) return 'Wait by your egg (#' + e.n + '): hit your egg to open it (Tab, then 1).';
+    if (e && e.state === 'floor' && !e.missed && wDead) return 'Wait by your egg (#' + e.n + '): hit your egg to open it (Tab, then 1).';
     if (e && e.state === 'held') return inRing ? 'Wait in the gold ring: the small eggs go in together.' : (pgDist(here, S.pits[s]) - P.THROW) / 7 > T.throwAt - t - 0.5 ? 'Sprint (Shift) to the cauldron: your spot in the gold ring.' : 'Carry your egg to your spot by the cauldron (gold).'; /* (#4: walking, 7 yards a second, you'd be late: Flex watched "Into the cauldron now!" come with the egg 8 s away) */
     if (bg && bg.state === 'held') return inRing ? 'Wait in the gold ring: both big eggs go in together.' : 'Sprint (Shift) to the cauldron: your spot in the gold ring.';
     // (outside its gold ring: stepping into it picks it up (the review, Nov 16: "Wait by your big egg" took a player 2.6 yards from it, inside the ring, who picked it
