@@ -1019,7 +1019,7 @@ svg.trend.big .tw:hover { r: 6px; } .pc-legend.nc-leg2 { margin: 8px 0 0; font-s
 /* grades in WoW item-quality colours: S legendary, A epic, B rare, C uncommon, D common; F red (epic and rare a touch
    lighter than in game, so the letter reads on a dark panel) */
 /* (the grade colours, softer (Nov 4): one set the badges, score numbers, bars, rings and night cards share) */
-:root { --gS: #ff9a3c; --gA: #b98cf0; --gB: #5aa2ff; --gC: #5fd46f; --gD: #c9cdd3; --gF: #ef6b63; }
+:root { --gS: #e6b450; --gA: #45c15c; --gB: #3fc7b4; --gC: #e8a23a; --gD: #f0803c; --gF: #ef6b63; /* (Nov 17, Flex: "do these as well": a green C read as good and an orange S as trouble; the letters now follow the page's own good-to-bad colours. Parses keep Warcraft Logs' own) */ }
 .grade.g-S { --gc: var(--gS); } .grade.g-A { --gc: var(--gA); } .grade.g-B { --gc: var(--gB); }
 .grade.g-C { --gc: var(--gC); } .grade.g-D { --gc: var(--gD); } .grade.g-F { --gc: var(--gF); }
 .nc-card { margin-top: 12px; display: flex; align-items: stretch; gap: 14px; background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
@@ -21469,6 +21469,12 @@ html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mp
 html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-l { border-color: rgba(230,180,80,.5) !important; background: rgba(230,180,80,.10) !important; color: #e6c27a !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-ok { border-color: rgba(69,193,92,.45) !important; background: rgba(69,193,92,.08) !important; color: #9fdcaa !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM#mptCM .mpt-mside .mpt-mc .mpx-sum > .mpx-tg > .mpx-t1-x { border-color: rgba(232,162,58,.5) !important; background: rgba(232,162,58,.10) !important; color: #f0c27a !important; }
+}
+/* How we compare, said once under the run in The key (Nov 17, Flex: "do these as well"): what "fast run", "spec" and "top" mean. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptCD .mpx-how { position: relative !important; display: flex !important; flex-wrap: wrap !important; align-items: baseline !important; gap: 4px 16px !important; margin: 10px 0 0 !important; padding: 10px 0 0 !important; border-top: 1px solid rgba(255,255,255,.07) !important; font: 500 13px/1.4 var(--body) !important; color: #9ca3ad !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-how > b { font: 700 12px var(--body) !important; letter-spacing: .06em !important; text-transform: uppercase !important; color: #c3c8d0 !important; }
+html:not(.mpcard) body #view#view#view #mptCD .mpx-how em { font-style: normal !important; font-weight: 700 !important; color: #e6c27a !important; margin-right: 4px !important; }
 }
 </style>
 </body>
