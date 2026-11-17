@@ -148,9 +148,10 @@ function pgUlScript(o) {
   [22, 92].forEach((t) => { cast('boss', 'Mother\'s Wrath', t, t + 5); warn(t, 'Mother\'s Wrath: stay out of her reach!', RED); timer(t + 5, 'Her bites'); S.wrath.push({ t0: t, at: t + 5, p: F(PG_UL.reach, t + 1), tank: S.herTank(t + 5) }); });
   // Spectral Coils: two 10-yard soaks beside her tail, wherever it is (set 1 west or east, set 2 south), slamming 0:40 and 0:43, 2:14 and 2:17; either one can
   // appear first, and team 1 soaks the first to appear (Flex); Soul Constrictor 5 s on Mythic; carried eggs break
-  // (the coil call says which one is yours, in gold: the prompts audit, Nov 16, found "team 1 takes the first coil to appear" the same, in white, for both teams)
+  // (the coil call says which one is yours, in gold: the prompts audit, Nov 16, found "team 1 takes the first coil to appear" the same, in white, for both teams.
+  //  Its order fits the big line whole: "stay out of the first one, soak the second" was cut at the comma to STAY OUT OF THE FIRST ONE, the review of Nov 16, check T5)
   [{ set: 0, cast: 36, a: 40, b: 43 }, { set: 1, cast: 130, a: 134, b: 137 }].forEach((c) => { cast('tail', 'Spectral Coils', c.cast, c.cast + 0.8);
-    warn(c.cast, 'Spectral Coils: stay out of both circles!', RED, { per: (id) => { const k = S.soaks.filter((q) => q.set === c.set).findIndex((q) => q.group.includes(id)); return k === 0 ? { text: 'Your coil: soak the first one to appear!', me: true } : k === 1 ? { text: 'Your coil: stay out of the first one, soak the second!', me: true } : null; } });
+    warn(c.cast, 'Spectral Coils: stay out of both circles!', RED, { per: (id) => { const k = S.soaks.filter((q) => q.set === c.set).findIndex((q) => q.group.includes(id)); return k === 0 ? { text: 'Your coil: soak the first one to appear!', me: true } : k === 1 ? { text: 'Your coil: soak the second one, not the first!', me: true } : null; } });
     const P0 = first[c.set] ? PG_UL.soakB : PG_UL.soakA, P1 = first[c.set] ? PG_UL.soakA : PG_UL.soakB;
     [[c.a, P0, 0], [c.b, P1, 1]].forEach(([at, p, k]) => { const q = FT(p, at); S.soaks.push({ set: c.set, k, x: q[0], y: q[1], r: 10, t0: k ? c.a - 0.6 : c.cast + 0.8, at, cast: c.cast, group: (o.soakSets && o.soakSets[c.set] && o.soakSets[c.set][k]) || (o.soak && o.soak[k] && o.soak[k].length ? o.soak[k] : PG_UL.soak[c.set][k]) }); timer(at, 'Coil slam ' + (k + 1)); }); });
   // Mephitic Thrash: her tail sweeps 35 yards (a big hit and a knockback): everyone near it runs out, its tank too
@@ -162,7 +163,7 @@ function pgUlScript(o) {
     S.wings.push({ t, west, first: wFirst, safe: wSafe, d1 }); /* (the half of the room her first waves come down, turned with her after the dive) */
     // (no compass words in the calls: the floor shows the halves red and green, and the camera turns. Two steps, each with its moment (the prompts audit, Nov 16):
     //  wait in the green half, then, as the first wave goes by and the floor swaps (halvesAt, 10.5 s into her cast), cross now)
-    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Her waves: wait in the green half!', GRN); warn(t + 10.5, 'Her waves: cross into the green half now!', GRN); timer(T0, 'Her waves'); timer(T0 + 6.5, 'Her waves (second half)');
+    cast('boss', 'Caustic Waves', t, T0); warn(t, 'Her waves: wait in the green half!', GRN); warn(t + 10.5, 'Her waves: cross into the green half now!', GRN, { per: (id, at) => (at && at.x != null && at.x * d1[0] + at.y * d1[1] > 0 ? { text: 'Her waves: stay in the green half!' } : null) }); /* (to a player already across, in the half the first waves have passed: stay. The review of Nov 16, check T15) */ timer(T0, 'Her waves'); timer(T0 + 6.5, 'Her waves (second half)');
     const first = west ? [-12, -36] : [12, 36], second = west ? [12, 36] : [-12, -36];
     [[first, T0], [second, T0 + 6.5]].forEach(([xs, t0]) => xs.forEach((x) => { const p = pgRot([x, 46], rot); S.waves.push({ kind: 'her', x: p[0], y: p[1], deg: 270 + rot, v: 12.5, w: 24, d: 5, cres: cres(24), warn: 2.2, t0, t1: t0 + 7.6, name: 'Caustic Waves', tip: 'Wait on the half that goes second, then cross behind the first wave.' }); })); });
   // the small tails (Gore Rattle), from the 12 measured top Mythic kills (notes/Guides/Bosses/8 Ula'tek.md, "Tail waves"): each rises at the
@@ -181,7 +182,7 @@ function pgUlScript(o) {
     ts.forEach(([q, hd, fan]) => { const p = side ? FT(q, t) : F(q, t), h = side && tailEast ? 180 - hd : hd + rotAt(t); S.tails.push({ x: p[0], y: p[1], t0: t - 2.4, at: t });
       (fan || FAN).forEach((off) => S.waves.push({ kind: 'tail', x: p[0], y: p[1], deg: h + off, v: 12.5, w: 7, d: 4, cres: cres(7), warn: 2.4, t0: t, t1: t + 9.5, name: 'Caustic Waves from a small tail', tip: 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.' })); }); });
   // the dive: Submerge, bubbles where she'll come up, she surfaces on the other side; her tank has to be there first
-  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch where the bubbles rise!', NEU); warn(SURF, 'Ula\'tek surfaces: face her new spot, where the bubbles were!', NEU); timer(SURF, 'She surfaces');
+  S.dive = { t0: 77, gone: 78.6, surf: SURF, to: pgRot(PG_UL.boss, ROT) }; cast('boss', 'Submerge', 77, 78.6); warn(77, 'Ula\'tek dives: watch where the bubbles rise!', NEU); warn(SURF, 'Ula\'tek surfaces: turn to where the bubbles were!', NEU); /* ("face her new spot, where the bubbles were" lost its second half to the small line, and "face" is tank wording: the review of Nov 16, check T5) */ timer(SURF, 'She surfaces');
   // Rage of the Shackled: 6.5 s cast, then her heart is open for 20 s; raid damage every 4 s; Falling Debris (7 yards) all over
   // (the call that says hit it comes as it opens: the prompts audit, Nov 16, found the 2:19 call gone from the screen when the heart opened at 2:25.5)
   cast('boss', 'Rage of the Shackled', 139, 145.5); warn(139, 'Rage of the Shackled: get ready to hit the heart!', NEU, { at: 145.5 }); warn(145.5, 'Heart open: hit it now (Tab, then 1)!', NEU); timer(145.5, 'Heart open');
@@ -409,7 +410,15 @@ function pgOpen(root, boss, d, pk) {
   const sndSet = (on) => { sndOn = !!on; try { localStorage.setItem('wla-pg-sound', sndOn ? 'on' : 'off'); } catch (e) { /* (no storage) */ } sndUi(); if (sndOn) sfx('ok'); };
   const countdown = () => { if (!sndOn || !G) return; const t = G.t, D = G.cdn || (G.cdn = new Set()); modBars(t).forEach((q) => { if (!/^Your\b/.test(q.name)) return; const left = q.at - t, id = q.name + '|' + q.at.toFixed(1) + '|';
     [3, 2, 1].forEach((n) => { if (left <= n && left > n - 0.5 && !D.has(id + n)) { D.add(id + n); sfx('tick'); } }); if (left <= 0.15 && !D.has(id + 0)) { D.add(id + 0); sfx('go'); } }); };
-  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(text, true); sfx('bad'); };
+  // (a mistake as the screen shows it while you play, the float as it happens and the death card: no clock time and no second count (Flex, Nov 16: "i feel like
+  //  the game confuses people saying timestamps"; the death card read "3:09 ... You didn't kick Malice (3:04): it hit everyone every second for 6 s."). Every
+  //  part's mistakes come through here; the result screen keeps the time of each. tests/practice-game.js check S)
+  const TM = '\\d{1,2}:\\d{2}(?:\\.\\d+)?(?:\\s*(?:to|-|–)\\s*\\d{1,2}:\\d{2}(?:\\.\\d+)?)?', SN = '\\d+(?:\\.\\d+)? ?s\\b';
+  const NO_T = [[new RegExp('\\s*\\((?:at |from )?' + TM + '\\)', 'g'), ''], [new RegExp('\\s+(?:at|from|by|until|till|since)\\s+' + TM, 'g'), ''], [new RegExp('\\s*\\(' + SN + '\\)', 'g'), ''],
+    [new RegExp('\\blived ' + SN, 'g'), 'lived too long'], [new RegExp('\\blasts ' + SN, 'g'), 'stays a while'], [new RegExp('\\bwithin ' + SN + ' of\\b', 'g'), 'soon after'],
+    [new RegExp('\\b' + SN + ' (?:later|after)\\b', 'g'), 'soon after'], [new RegExp(',?\\s+(?:for|in|within|at|after) (?:about )?' + SN, 'g'), '']];
+  const noTimes = (s) => NO_T.reduce((a, [re, to]) => a.replace(re, to), String(s == null ? '' : s)).replace(/\s+([,.:;!?)])/g, '$1').replace(/\(\s+/g, '(').replace(/\s{2,}/g, ' ').trim();
+  const mistake = (kind, text, tip, dmg) => { G.log.push({ t: G.t, kind, text, tip }); hurt(dmg || 0); say(noTimes(text), true); sfx('bad'); };
   // (how close the nearest other carrier is to your egg: 0 clear, 1 within 6 yards (orange), 2 within 3.5 (red). The prompts audit, Nov 16: the warning came at 3.5
   //  yards, about 0.07 s before the splash at walking speed; it starts at 6 now)
   const eggWarnAt = () => { if (!G || !G.eggs.some((e) => e.who === me && e.state === 'held')) return 0; let dmin = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) dmin = Math.min(dmin, Math.hypot(b.x - G.x, b.y - G.y)); } }); return dmin < 3.5 ? 2 : dmin < 6 ? 1 : 0; };
@@ -420,7 +429,7 @@ function pgOpen(root, boss, d, pk) {
   const eggLocked = (e) => !!e.lock && !(G.p2 && G.p2.wdead && G.p2.wdead[e.side] != null);
   const shellHit = (n, t) => { const e = myShell(); if (!e) return; e.shp -= n; if (e.shp <= 0) shellBreak(e, t); else e.shell = t + e.shp / SHELL.raid; };
   const hatch = (e, why, tip) => { feel('hiss'); e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); mistake('viper', why + ': a Viper hatched (Putrid Membrane on the whole raid).', tip, 8);
-    if (!window.__pgAuto) bigCall('A Viper hatched! Kill it now: Tab, then keep pressing 1.', '#ff8f87'); }; /* (it stays until you kill it: vipers() below) */
+    if (!window.__pgAuto) bigCall('Viper hatched: kill it now (Tab, then 1)!', '#ff8f87'); }; /* (it stays until you kill it: vipers() below. "Mechanic: Order": the big line read "A Viper hatched", the review of Nov 16, check T6) */
 
   // ---- the others: where their job puts them right now, then out of the way of anything coming ----
   // (egg carriers stand on their own spots in a bubble or a soak: a ring 6.5 yards out, about 5 yards apart, in the same order every time, so
@@ -555,7 +564,7 @@ function pgOpen(root, boss, d, pk) {
       if (e.state === 'floor' && e.id !== me && t >= e.shell + 0.3) { const b = G.bots[e.id], byYou = b && myEggHeld() && Math.hypot(b.x - x, b.y - y) < 3.6; /* (the release sweep, Nov 16: a raider doesn't pick its egg up inside 3.6 yards of you while you carry yours; it waits for you to pass) */ if ((b && !byYou && Math.hypot(b.x - e.x, b.y - e.y) < 2.5) || t > e.shell + 6) { e.state = 'held'; e.who = e.id; } }
       // (the release sweep, Nov 16: you pick your egg up anywhere inside its gold 2.8-yard ring, the one drawn round it. It was 2.2, so a player who stopped
       //  inside the ring, or where the Go here arrow went away at 2.5, kept waiting with "Pick up your egg now")
-      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.8) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock ? (eggLocked(e) ? e.lock : 'Not open yet: hit it (Tab, then 1).') : (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('This ring is your egg\'s 3 yards. Walk into another carrier\'s ring and both eggs hatch.', '#3af2a8'); /* (the release sweep, Nov 16: only your own step splashes) */ } } }
+      if (e.state === 'floor' && e.id === me && Math.hypot(x - e.x, y - e.y) <= 2.8) { if (t < e.shell) { if (!G.done.has('sh' + e.set)) { G.done.add('sh' + e.set); say(e.lock ? (eggLocked(e) ? e.lock : 'Not open yet: hit it (Tab, then 1).') : (e.shp > 0 ? 'Its shell is still up: hit it (Tab, then 1) to break it.' : 'Its shell isn\'t broken yet: wait a moment.')); } } else { if (has('yolk')) mistake('yolk', 'You picked up an egg with Rancid Yolk on you.', 'Rancid Yolk lasts 20 s after your egg breaks: let it drop first.', 15); e.state = 'held'; e.who = me; say('Egg picked up.'); sfx('ok'); if (!G.eggTaught) { G.eggTaught = true; bigCall('Your egg\'s ring: keep clear of other carriers!', '#f3c969'); /* (the release sweep, Nov 16: only your own step splashes. "Mechanic: Order" and gold, yours: it had no order and lost its gold, the review of Nov 16, check T6) */ } } }
       if (e.state === 'floor' && e.id === me && !G.done.has('left' + e.set)) { const sk = S.soaks.find((s) => s.at > e.land && s.group.includes(me)); if (sk && t > sk.at) { G.done.add('left' + e.set); mistake('egg', 'You never picked up your egg.', 'Your egg lands in your zone (the gold circle): pick it up once the shell breaks.', 0); } } });
     // you walk into another carrier's 3-yard circle: Noxious Splash, both eggs hatch at once. (The release sweep, Nov 16: only when YOUR step closed the gap
     //  below 3 yards, G.walkIn from moveBots. Before, any step of yours counted while a carrier was close, even one away from it or one it walked into, and
@@ -764,8 +773,10 @@ function pgOpen(root, boss, d, pk) {
   const whereOf = (p, at) => { const TL = tailAt(at).p, B = bossAt(at).p; return pgDist(p, TL) < 24 ? 'by her tail' : pgDist(p, B) < 32 ? 'in front of her' : 'in the middle'; };
   // (another carrier's ring: too close, or straight ahead within 6 yards as you walk. Every part, before its own job line: the audit found the intermission never
   //  ran it, and phase 1's came at 3.5 yards, about 0.07 s before the splash)
-  const ringWarn = () => { if (!G || !myEggHeld()) return null; let nb = null, dn = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) { const d = Math.hypot(b.x - G.x, b.y - G.y); if (d < dn) { dn = d; nb = e.who; } } } });
-    if (!nb) return null; if (dn < 3.6) return 'Too close to ' + nm(nb) + '\'s egg: step away from them!';
+  const ringWarn = () => { if (!G || !myEggHeld()) { if (G) G.ringT = null; return null; } let nb = null, dn = 99; G.eggs.forEach((e) => { if (e.state === 'held' && e.who && e.who !== me) { const b = G.bots[e.who]; if (b) { const d = Math.hypot(b.x - G.x, b.y - G.y); if (d < dn) { dn = d; nb = e.who; } } } });
+    // (once it says too close, it stays a second unless you're 4.2 yards clear: at 0:38 it came and went three times in 0.7 s as r3 stood on its own spot by
+    //  another carrier at 3.6 yards. Only a second, so a carrier settling at 3.7 doesn't keep it up. The review of Nov 16, check T14)
+    if (!nb) return null; if (dn < 3.6) G.ringT = G.t; if (dn < 3.6 || (dn < 4.2 && G.ringT != null && G.t - G.ringT < 1)) return 'Too close to ' + nm(nb) + '\'s egg: step away from them!';
     if (dn < 6 && !G.still && G.mv) { const b = G.bots[nb], vx = G.mv[0], vy = G.mv[1], vl = Math.hypot(vx, vy) || 1, rx = b.x - G.x, ry = b.y - G.y; if ((rx * vx + ry * vy) / vl > 0 && Math.abs(rx * vy - ry * vx) / vl < 3.8) return 'Carrier ahead: walk round ' + nm(nb) + '\'s ring.'; }
     return null; };
   // (a: what reaches you within 3 s, soonest first: a small tail's lanes (the most common mistake, no words before), her waves, the beam's waves, a falling egg
@@ -775,49 +786,59 @@ function pgOpen(root, boss, d, pk) {
     const st = curStep(t), sp = st && (st.k === 'coil' || st.k === 'bubble') && st.at - t <= 4 ? stepSpot(st, t) : null, inStep = !!sp && pgDist([x, y], sp.C) <= sp.R - 0.5;
     let best = null; const put = (k, text) => { if (!best || k < best.k) best = { k, text }; };
     for (const w of S.waves) { if (w.from === me || (w.kind === 'incub' && w.tank === me) || w.t1 < t || w.t0 - (w.warn || 1.5) > t) continue;
-      for (let k = 0; k <= DUE + 1e-6; k += 0.25) if (inWave(w, t + k, x, y, 0.8)) { put(k, w.kind === 'tail' ? (inStep ? 'Small tail: stay in your circle, step to the clear side.' : 'Small tail: step into a gap between the red lanes.') : w.kind === 'her' ? 'Her wave: step out of its lane, into the green half.' : 'Beam waves: step out of the red lanes.'); break; } }
+      for (let k = 0; k <= DUE + 1e-6; k += 0.25) if (inWave(w, t + k, x, y, 0.8)) { put(k, w.kind === 'tail' ? (inStep ? 'Small tail: step out of its red lane, stay in your circle.' : 'Small tail: step into a gap between the red lanes.') : w.kind === 'her' ? 'Her waves: step out of the lane, into the green half.' : 'Beam waves: step out of the red lanes.'); break; } }
+    /* ("the clear side" said not of what, and "Her wave" wasn't the bar's and the call's "Her waves": the review of Nov 16, check T8) */
     G.eggs.forEach((e) => { if (e.state === 'air' && e.land >= t && e.land - t <= DUE && Math.hypot(x - e.x, y - e.y) <= 5.2) put(e.land - t, 'An egg is falling on you: step out of the white circle.'); });
     S.impacts.forEach((m) => { if (t >= m.t0 && m.at >= t && m.at - t <= DUE && Math.hypot(x - m.x, y - m.y) <= m.r + 1.2) put(m.at - t, m.name === 'Toxic Womb' ? 'The Womb lands in the middle: step out of its circle.' : 'Step out of the brown circle.'); });
     if (best) return best.text;
-    for (const th of S.thrash) if (t >= th.t0 - 1 && t <= th.at && Math.hypot(x - th.x, y - th.y) < th.r + 3) return S.bubbles.some((q) => q.stack && t >= q.stack - 1 && t < q.at) ? 'Run to the Wretch in front of her, out of the orange circle.' : 'Run away from her tail: out of the orange circle.';
+    for (const th of S.thrash) if (t >= th.t0 - 1 && t <= th.at && Math.hypot(x - th.x, y - th.y) < th.r + 3) return S.bubbles.some((q) => q.stack && t >= q.stack - 1 && t < q.at) ? 'Run to the Wretch in front of her: out of the sweep.' : 'Run away from her tail: out of the orange circle.'; /* (12 words at most: the review of Nov 16, check T7) */
     for (const wr of S.wrath) if (t >= wr.t0 && t <= wr.at + 3.2 && wr.tank !== me && Math.hypot(x - wr.p[0], y - wr.p[1]) <= 7) return 'Step out of the red circle in front of her.';
     for (const bm of S.beams || []) { if (t < bm.t0 || t > bm.t1 || bm.tank === me) continue; const tk = G.bots[bm.tank]; if (tk && segDist([x, y], bm.from, [tk.x, tk.y]) <= 3) return 'Step out of the venom beam\'s line.'; }
-    for (const s of S.soaks) if (!s.group.includes(me) && t >= s.t0 - 0.5 && s.at >= t && s.at - t <= 3.5 && Math.hypot(x - s.x, y - s.y) <= s.r + 1) return 'Stay out of the ' + ORD(s) + ' coil: it\'s the other team\'s.';
+    for (const s of S.soaks) if (!s.group.includes(me) && t >= s.t0 - 0.5 && s.at >= t && s.at - t <= 3.5 && Math.hypot(x - s.x, y - s.y) <= s.r + 1) return 'Stay out of the ' + ORD(s) + ' coil: it isn\'t yours.'; /* (one name for it, as the bubble line and the floor's "Not yours" say it: the review of Nov 16, check T8) */
     return null; };
   // (a melee told to get close to a target in her tail's sweep or the half her waves hit first: wait, then hit it. The audit: 0:41 to 0:57, "Kill the Rawlings ...
   //  get close to it" sent melee into the 0:49 sweep and the half hit first)
   const tgtUnsafe = (t, dc) => { if (P2 || rl(me) !== 'm' || (dc !== 'rawling' && dc !== 'wretch')) return null; const o = nearestRight(t); if (!o || (o.kind !== 'rawling' && o.kind !== 'wretch')) return null; const w2 = dc === 'rawling' ? ['the Rawlings are', 'them'] : ['the Wretch is', 'it'];
     for (const th of S.thrash) if (t >= th.t0 - 4 && t <= th.at && pgDist(o.p, [th.x, th.y]) <= th.r + 1) return 'Wait: ' + w2[0] + ' in the tail sweep. Hit ' + w2[1] + ' after.';
-    const hv = halvesAt(t); if (hv && t <= hv.t0 + 15.5) { const inFirst = o.p[0] * hv.d[0] + o.p[1] * hv.d[1] > 0; if (hv.swap ? !inFirst : inFirst) return 'Wait: ' + w2[0] + ' in the red half. Hit ' + w2[1] + ' after the wave.'; }
+    const hv = halvesAt(t); if (hv && t <= hv.t0 + 15.5) { const inFirst = o.p[0] * hv.d[0] + o.p[1] * hv.d[1] > 0; if (hv.swap ? !inFirst : inFirst) return 'Wait: ' + w2[0] + ' in the red half. Hit ' + w2[1] + ' after.'; } /* (12 words at most: the review of Nov 16, check T7) */
     return null; };
   const jobPick = () => { if (!G || !S) return { text: '', r: 'e' }; const rw = ringWarn(); if (P2) return rw ? { text: rw, r: 'a' } : { text: P2.jobText() || '', r: 'p' };
     const t = G.t, dz = dangerNow(t); if (dz) return { text: dz, r: 'a' };
     const st = curStep(t), held = !!myEggHeld(), sp = stepSpot(st, t), mineIn = !!sp && sp.inside(G.x, G.y), rt = sp && !mineIn ? route([G.x, G.y], sp.T, t, sp.C) : null, wait = !!(rt && rt.wait), egT = held ? ' Your egg breaks there.' : '';
-    if (st) { const due = st.at - t <= DUE;
-      if (st.k === 'egg') return due ? { text: mineIn ? 'Wait here, next to your egg\'s gold circle.' : 'Go next to your egg\'s gold circle now.', r: 'b', st } : { text: wait ? WAITTXT : 'Go next to your egg\'s gold circle, not under it.', r: 'c', st };
+    // (the review of Nov 16, checks T1 to T3: the line and the arrow agree. A standing line ("Stay in", "Stand in", "Wait here", "Wait outside") only where the
+    //  arrow has gone (mineIn, the arrow's own test; with hints off, no arrow, so the circle the game counts); in the circle but off the arrow's spot, step onto
+    //  its gold ring; the way blocked, Wait, also when the step is due ("Get in your gold coil now!" showed under a "Wait" on the floor). Wait and the standing
+    //  lines are never held on screen against a new line (r 'wt' and 'b': the hold in hud() keeps only calm lines), so Wait goes as the arrow comes back)
+    if (st) { const due = st.at - t <= DUE, WT = { text: WAITTXT, r: 'wt', st };
+      if (st.k === 'egg') { if (mineIn) return { text: 'Wait here, next to your egg\'s gold circle.', r: 'b', st }; if (wait) return WT;
+        return due ? { text: 'Go next to your egg\'s gold circle now.', r: 'b', st } : { text: 'Go next to your egg\'s gold circle, not under it.', r: 'c', st }; }
       if (st.k === 'shell') return { text: 'Break your egg: Tab, then 1.', r: 'b', st };
       if (st.k === 'pick') return { text: 'Pick up your egg: walk over it.', r: 'b', st };
       if (st.k === 'bubble') { const q = st.q, oc = S.soaks.find((s) => !s.group.includes(me) && s.at >= t && s.at <= q.at + 2 && t >= s.cast), inB = pgDist([G.x, G.y], q.p) <= 9.2 && !(oc && pgDist([G.x, G.y], [oc.x, oc.y]) <= oc.r + 0.8);
-        if (due) return { text: inB ? 'Stay in the yellow bubble until it pops.' : 'Get in the yellow bubble now!', r: 'b', st };
-        return { text: wait ? WAITTXT : oc ? 'Get in the yellow bubble, outside the ' + ORD(oc) + ' coil: it isn\'t yours.' : 'Get in the yellow bubble ' + whereOf(q.p, q.at) + '.', r: 'c', st }; }
+        if (hints ? mineIn : inB) return { text: 'Stay in the yellow bubble' + (oc ? ', outside the ' + ORD(oc) + ' coil.' : ' until it pops.'), r: 'b', st }; if (wait) return WT;
+        if (inB) return { text: 'Step onto the gold ring in the bubble.', r: 'b', st }; if (due) return { text: 'Get in the yellow bubble now!', r: 'b', st };
+        return { text: oc ? 'Get in the yellow bubble, outside the ' + ORD(oc) + ' coil: it isn\'t yours.' : 'Get in the yellow bubble ' + whereOf(q.p, q.at) + '.', r: 'c', st }; }
       if (st.k === 'coil') { const s = st.s, pre = S.soaks.find((z) => z.set === s.set && !z.group.includes(me) && z.at > t && z.at < s.at), inC = pgDist([G.x, G.y], [s.x, s.y]) <= s.r - 0.6 && !(pre && pgDist([G.x, G.y], [pre.x, pre.y]) <= pre.r + 0.8);
-        if (inC || due) return { text: inC ? 'Stand in your coil (the ' + ORD(s) + ' to appear) until it slams.' + egT : 'Get in your gold coil now!', r: 'b', st };
-        if (pre) return { text: 'Wait outside the ' + ORD(pre) + ' coil: yours is the ' + ORD(s) + '.', r: 'c', st };
-        return { text: wait ? WAITTXT : t < s.t0 ? 'Wait by her tail: your coil is the ' + ORD(s) + ' to appear.' : 'Go to your coil (the ' + ORD(s) + ' to appear) by her tail.', r: 'c', st }; }
-      if (st.k === 'heart' && sp && !mineIn) return { text: wait ? WAITTXT : 'Go to her edge: hit the heart from there.', r: 'c', st }; }
+        if (hints ? mineIn : inC) return { text: pre ? 'Wait outside the ' + ORD(pre) + ' coil: yours is the ' + ORD(s) + '.' : 'Stand in your coil until it slams.' + egT, r: 'b', st }; if (wait) return WT;
+        if (inC) return { text: 'Step onto the gold ring in your coil.', r: 'b', st }; if (due) return { text: 'Get in your gold coil now!', r: 'b', st };
+        return { text: 'Go to your coil (the ' + ORD(s) + ' to appear)' + (pre ? ', not the ' + ORD(pre) + '.' : ' by her tail.'), r: 'c', st }; }
+      if (st.k === 'heart' && sp && !mineIn) return wait ? WT : { text: 'Go to her edge: hit the heart from there.', r: 'c', st }; }
     // (w: her waves in two steps, by the floor's colours, never a compass word: wait in the green half, then as the first wave goes by, cross now. The audit: one
     //  line for 14 s and nothing at the 1:00.5 swap; "the west half" meant little with the 3D camera turning)
     const hv = halvesAt(t); if (hv) { const inFirst = G.x * hv.d[0] + G.y * hv.d[1] > 0, inGreen = hv.swap ? inFirst : !inFirst;
       return { text: hv.swap ? (inGreen ? 'Stay in the green half.' : 'Now cross into the green half, behind the wave.') : (inGreen ? 'Wait in the green half.' : 'Get into the green half.'), r: 'w' }; }
     const dc = dpsCat(t); if (dc && !onRight(dc, tgtNow(t))) return { text: tgtUnsafe(t, dc) || DPS_SAY[dc][0] + ': press Tab, then keep pressing 1' + (rl(me) === 'm' ? ' (melee: get close).' : '.'), r: 'd' };
-    if (held) return { text: 'Carry it to your coil. Dodge waves, keep out of other carriers\' rings.', r: 'e' };
+    if (held) return { text: 'Carry your egg to your coil, clear of other carriers.', r: 'e' }; /* (12 words at most, one order: the review of Nov 16, check T7) */
     if (t >= 145.5) return { text: 'Keep hitting the heart. Step out of the brown circles.', r: 'e' };
     return { text: dc ? 'Keep pressing 1: you\'re on the right target.' : 'Hit Ula\'tek and dodge what comes.', r: 'e' }; };
   const jobText = () => jobPick().text;
   // (NEXT: your next step after the one NOW is on, and where, from 10 s before it. Hidden when nothing of yours is coming. A later part gives its own, P2.nextText)
   const stepSay = (s) => (s.k === 'bubble' ? 'Then: get in the yellow bubble ' + whereOf(s.q.p, s.q.at) + '.' : s.k === 'coil' ? 'Then: soak your coil, the ' + ORD(s.s) + ' to appear, by her tail.' : s.k === 'egg' ? 'Then: go next to your egg\'s gold circle.' : s.k === 'heart' ? (s.mel ? 'Then: hit the heart from her edge.' : 'Then: hit the heart.') : 'Then: break your egg and pick it up.');
-  const nextText = (jl) => { if (!G || !S) return ''; if (P2) return typeof P2.nextText === 'function' ? P2.nextText() || '' : ''; const t = G.t, L = mySteps(t).filter((s) => s.k !== 'pick' && s.k !== 'shell' && !(s.k === 'heart' && t >= 145.5)), now = jl && jl.st;
-    const n = now ? L.find((s) => s.id !== now.id && s.at > now.at + 0.3) : L[0]; return n && n.at - t <= 10 ? stepSay(n) : ''; };
+  // (the step NOW is on: the job line's, else the one you're on while a dodge, wave or target line has the job line. The review of Nov 16, check T4: a dodge
+  //  line has no step, so NEXT named the step you were on, "Then: get in the yellow bubble" to a Soak #2 healer standing in it)
+  const nextStep = (jl) => { if (!G || !S || P2) return null; const t = G.t, L = mySteps(t).filter((s) => s.k !== 'pick' && s.k !== 'shell' && !(s.k === 'heart' && t >= 145.5)), now = (jl && jl.st) || curStep(t);
+    const n = now ? L.find((s) => s.id !== now.id && s.at > now.at + 0.3) : L[0]; return n && n.at - t <= 10 ? n : null; };
+  const nextText = (jl) => { if (!G || !S) return ''; if (P2) return typeof P2.nextText === 'function' ? P2.nextText() || '' : ''; const n = nextStep(jl); return n ? stepSay(n) : ''; };
   // (the gold "Your spot" on the floor while you carry your egg: your spot in the bubble or your coil)
   const mySpot = () => { if (!G || !S || !myEggHeld()) return null; if (P2) { const jm = jobOf(me, G.t); return jm.ob ? spotIn(jm.ob, me) : null; } const st = curStep(G.t); if (!st || (st.k !== 'bubble' && st.k !== 'coil')) return null; const sp = stepSpot(st, G.t); return sp ? sp.T : null; };
   // ---- hints (Nov 15, Flex: "maybe having some warnings on screen of whats coming next to help the player a bit"): the next three things that
@@ -1019,7 +1040,7 @@ function pgOpen(root, boss, d, pk) {
   const tailNear = (tt) => { const sp = mySpot(); return (S.waves || []).some((w) => w.kind === 'tail' && Math.abs(w.t0 - tt) < 0.05 && [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6].some((k) => inWave(w, w.t0 + k, G.x, G.y, 5) || (sp && inWave(w, w.t0 + k, sp[0], sp[1], 3)))); };
   const waitsFor = (w) => w.at != null && stepSoon(G.t, w.at);
   const warns = () => { const Q = G.warnQ || (G.warnQ = []);
-    while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w0 = S.warns[G.warnI++], pw = typeof w0.per === 'function' ? w0.per(me) : null; if (pw === false || (w0.tail != null && !tailNear(w0.tail))) continue; Q.push({ ...w0, ...(pw || {}), q: G.t }); }
+    while (G.warnI < S.warns.length && S.warns[G.warnI].t <= G.t) { const w0 = S.warns[G.warnI++], pw = typeof w0.per === 'function' ? w0.per(me, { x: G.x, y: G.y, t: G.t }) : null; /* (per(id, where you stand as it fires)) */ if (pw === false || (w0.tail != null && !tailNear(w0.tail))) continue; Q.push({ ...w0, ...(pw || {}), q: G.t }); }
     for (let i = Q.length - 1; i >= 0; i--) { if (waitsFor(Q[i])) Q[i].q = G.t; else if (G.t - Q[i].q > 4) Q.splice(i, 1); }
     { const L0 = G.lastWarn, e0 = $('.pg-warn'); if (L0 && L0.items) { const live = L0.items.filter((it) => (it.by != null ? G.t < it.by : G.t - L0.t < 3.2));
       if (!live.length) { if (e0) { e0.innerHTML = ''; e0.dataset.k = ''; e0.classList.remove('in', 'hold'); } G.lastWarn = null; }
@@ -1172,6 +1193,10 @@ function pgOpen(root, boss, d, pk) {
     G.log = []; G.hp = 100; G.deaths = 0; G.debs = {}; G.adds = []; G.dpsM = null; G.tgt = null; G.kb = null; G.fx = []; G.hitFx = []; G.sprint = -99; G.def = -99; G.aoe0 = -99; G.aoeFx = []; G.vipers = 0; target = null; cam = null; G.warnI = S.warns.findIndex((w) => w.t > G.t); if (G.warnI < 0) G.warnI = S.warns.length; G.warnQ = []; G.lastWarn = null; if (P2) P2.ff(); };
   const begin = () => { { const c = sndOn ? sndCtx() : null; if (c && c.state === 'suspended' && c.resume) c.resume().catch(() => {}); } me = role.id; reset(); ffTo(startAt); { const rs = $('.pg-res'); if (rs) rs.innerHTML = ''; } draw(); hud(true); let n = 3; card.className = 'pg-card on pg-cd'; card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick');
     const tick = () => { if (!ov.isConnected) return; n--; if (n > 0) { card.innerHTML = '<div class="pg-n">' + n + '</div>'; sfx('tick'); setTimeout(tick, 750); } else { card.className = 'pg-card'; card.innerHTML = ''; paused = false; sfx('go'); go(); } }; setTimeout(tick, 750); };
+  // (the death card: what killed you and the tip, with no clock time on top and none in the words (it read "3:09 ... You didn't kick Malice (3:04): it hit
+  //  everyone every second for 6 s.", Nov 16); the result screen's list keeps when. tests/practice-game.js check S)
+  const deathCard = (why) => '<div class="pg-cin pg-died"><span class="pg-k">' + esc(part.name) + '</span><h2>You died</h2><p>' + esc(noTimes(why.text)) + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(noTimes(why.tip)) + '</p>' : '') +
+    '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">End the run</button></div></div>';
   const died = () => { stop(); paused = true; G.deaths++; const L0 = G.log.slice(), e = myEggHeld(); if (e) { e.state = 'gone'; e.who = null; G.vipers++; deb('putrid', 20, true); G.adds.push({ kind: 'viper', x: G.x + 1.5, y: G.y - 1, born: G.t }); G.log.push({ t: G.t, kind: 'viper', text: 'You died holding your egg: a Viper hatched.', tip: 'A carrier\'s death hatches the egg.' }); } /* (it's really there when you keep going, Nov 15 audit) */
     // (what killed you, the release sweep, Nov 16: the newest thing that hit you in the last 6 s by its time, then an egg that hatched on you, then the venom
     //  off the platform, then the poison on you. A damage-moment line (kind dps) is never it: it is dated at the moment's start and pushed when the moment
@@ -1180,8 +1205,7 @@ function pgOpen(root, boss, d, pk) {
     const why = G.adds.some((a) => a.kind === 'viper') && G.t - (G.lastSting == null ? -99 : G.lastSting) < 4 ? { text: 'The Viper\'s stings wore you down.', tip: 'Kill a Viper at once: press Tab to pick it, then keep pressing 1 until it dies.' } : last6((m) => m.kind !== 'venom' && m.kind !== 'viper' && m.kind !== 'dps') || last6((m) => m.kind === 'viper') || last6((m) => m.kind === 'venom') ||
       (dots.length ? { text: dots.join(' and ') + ' wore you down.', tip: has('venom') ? 'Caustic Venom stacks each time a wave hits you: dodge every wave.' : '' } : { text: 'Your health ran out.' });
     (G.deathAt = G.deathAt || []).push({ t: G.t, why: why.text || '' }); /* (for the result screen's list) */
-    card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-died"><span class="pg-k">' + esc(part.name) + '</span><h2>You died</h2><p>' + esc(why.text || '') + '</p>' + (why.tip ? '<p class="pg-tip">' + esc(why.tip) + '</p>' : '') +
-      '<div class="pg-row"><button type="button" class="pg-btn pg-go">Keep going</button><button type="button" class="pg-btn pg-again">End the run</button></div></div>';
+    card.className = 'pg-card on'; card.innerHTML = deathCard(why);
     // (Keep going stays: a death still costs its 20 points. A part can clear what was still hurting you, P2.revive: phase 2 cancels a missed Malice's last ticks,
     //  so one miss can't kill you twice. End the run shows the result screen with your grade and mistakes; it went straight to the setup card, no result.
     //  The release sweep, Nov 16: "there are no retrys in the game, only failures and wipes")
