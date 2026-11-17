@@ -21398,6 +21398,53 @@ html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.m
 html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d[open] { flex-basis: 100% !important; margin: 6px 0 0 !important; }
 html:not(.mpcard) body #view#view#view #mptCM#mptCM .mrs-x > .mrs-wk > details.mrs-d[open] > summary.mrs-ds::after { content: ' \25BE' !important; }
 }
+/* Players' makeover (Nov 16, Flex: "Players tab makeover", then of the mock: "Yes, build it"). The Report card opens with one group banner in The key's style:
+the group grade as a solid badge, then the four subjects with their icons, each number with a small solid grade chip and the best player under it. Under it is
+one slim line with the findings as tags (green done, amber to fix), group damage and totals. The ranked group's rows are tinted in class colour. vs spec carries
+the against-top bar (filled to the best of the spec, a white mark at its middle player), so "Against top players" folds in and its own section steps aside.
+Rotation opens with the same banner, its tiles as the parts, and no second Player picker. The website only */
+@layer defaultTheme {
+html:not(.mpcard) body #view#view#view #mptBody#mptBody :is(.mpr-gban, .mpx-banw) { container: mpsb / inline-size !important; margin: 0 0 14px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban { --gc: var(--gD); margin: 0 !important; background: radial-gradient(300px 130px at 60px 50%, color-mix(in srgb, var(--gc) 22%, transparent), transparent 70%), linear-gradient(90deg, rgba(20,22,26,.92), rgba(20,22,26,.72)) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gS { --gc: var(--gS); } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gA { --gc: var(--gA); } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gB { --gc: var(--gB); }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gC { --gc: var(--gC); } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gD { --gc: var(--gD); } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban.mrs-gF { --gc: var(--gF); }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban :is(.mrs-ts, .mpv-tiles) { display: contents !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-up > b.mrs-gb { flex: none !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 54px !important; height: 54px !important; border-radius: 0 !important; background: var(--gc) !important; color: #15171b !important; font: 800 36px/1 var(--head, 'Barlow Condensed'), sans-serif !important; box-shadow: 0 0 0 1px rgba(0,0,0,.85), 0 0 22px color-mix(in srgb, var(--gc) 35%, transparent) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-up > span > b { color: #eef0f3 !important; font-size: 44px !important; text-shadow: none !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-up > span > i { color: #9ca3ad !important; letter-spacing: 0 !important; font-size: 15px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-up > span > small > b.mpx-bn { font-weight: 700 !important; letter-spacing: 0 !important; text-transform: none !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-up > span > small { text-transform: none !important; letter-spacing: 0 !important; white-space: nowrap !important; }
+/* the Report card's subjects: the number, a small solid grade chip, the best player under it */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-s > span > b > .grade { display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 20px !important; height: 20px !important; margin: 0 0 0 7px !important; padding: 0 !important; vertical-align: 4px !important; border: 0 !important; border-radius: 0 !important; background: var(--gc) !important; color: #15171b !important; font: 800 13px/1 var(--head, 'Barlow Condensed'), sans-serif !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mprs-s > span > small.mpr-gsb { margin-top: 3px !important; letter-spacing: 0 !important; text-transform: none !important; font: 500 13px var(--body) !important; color: #c3c8d0 !important; }
+/* Rotation's tiles as the banner's parts: an icon, the label, the number in its colour, the detail (still buttons: Trash pulls and Bosses narrow the rows) */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile { flex: 1 1 0 !important; min-width: 0 !important; display: grid !important; grid-template-columns: auto minmax(0, 1fr) !important; column-gap: 12px !important; align-items: center !important; align-content: center !important; margin: 0 !important; padding: 2px 18px !important; border: 0 !important; border-left: 1px solid rgba(255,255,255,.12) !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; text-align: left !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban button.mpv-tile { cursor: pointer !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban button.mpv-tile:hover { background: rgba(255,255,255,.04) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile.on { box-shadow: inset 0 -2px 0 var(--gold) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > img.mpx-ti { grid-row: 1 / span 3 !important; width: 40px !important; height: 40px !important; border-radius: 0 !important; box-shadow: 0 0 0 1px rgba(0,0,0,.8), 0 0 0 2px rgba(201,163,90,.45) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > small { grid-column: 2 !important; margin: 0 0 3px !important; font: 600 13px var(--body) !important; letter-spacing: 0 !important; text-transform: none !important; color: #9ca3ad !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > b { grid-column: 2 !important; margin: 0 !important; font: 700 24px/1 var(--head, 'Barlow Condensed'), sans-serif !important; color: #eef0f3 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > b.ok { color: var(--good) !important; } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > b.warn { color: var(--warn) !important; } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > b.bad { color: #ff8f87 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > i { grid-column: 2 !important; margin: 3px 0 0 !important; font: 500 13px var(--body) !important; font-style: normal !important; color: #c3c8d0 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; }
+@container mpsb (max-width: 950px) { html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile > img.mpx-ti { display: none !important; } html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile { padding: 2px 12px !important; } }
+@container mpsb (max-width: 700px) { html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpx-ban .mpv-tile { flex: 1 1 45% !important; border-left: 0 !important; padding: 2px 4px !important; } }
+/* the Report card's findings: one slim line under the banner */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gban > .mpr-gwk { padding: 10px 14px 8px !important; border: 1px solid rgba(255,255,255,.07) !important; border-top: 0 !important; background: rgba(255,255,255,.02) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk .mpr-grp { margin: 0 !important; padding: 0 !important; border: 0 !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk p.mpr-cos { display: flex !important; flex-wrap: wrap !important; gap: 6px 8px !important; margin: 0 0 6px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk span.mpr-co { display: inline-block !important; margin: 0 !important; padding: 2px 9px !important; border: 1px solid rgba(232,162,58,.5) !important; border-radius: 0 !important; background: rgba(232,162,58,.10) !important; font: 600 13px var(--body) !important; color: #d6d9de !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk span.mpr-co.mpr-co-ok { border-color: rgba(69,193,92,.45) !important; background: rgba(69,193,92,.08) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk span.mpr-co::before { content: '! ' !important; font-weight: 800 !important; color: var(--warn) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk span.mpr-co.mpr-co-ok::before { content: '\2713\00a0' !important; color: var(--good) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody .mpr-gwk p.mpr-gf { margin: 2px 0 0 !important; }
+/* the ranked group: each row tinted in its player's class colour; vs spec with the against-top bar */
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .rcb-tr[data-mprp] { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 16%, transparent), rgba(255,255,255,.015) 55%) !important; border-left: 3px solid var(--c) !important; margin-bottom: 3px !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .mpr-vsb { position: relative !important; display: block !important; width: 80px !important; height: 5px !important; margin: 4px auto 0 !important; background: rgba(255,255,255,.1) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .mpr-vsb > i { position: absolute !important; left: 0 !important; top: 0 !important; bottom: 0 !important; background: var(--c) !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody #mptCP .mpr-vsb > em { position: absolute !important; top: -2px !important; bottom: -2px !important; width: 2px !important; background: #fff !important; }
+html:not(.mpcard) body #view#view#view #mptBody#mptBody#mptBody#mptBody#mptBody#mptBody#mptBody > #mptCCv { display: none !important; } /* (Against top players: in the ranked group's vs spec now) */
+}
 </style>
 </body>
 </html>
