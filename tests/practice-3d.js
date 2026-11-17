@@ -429,11 +429,13 @@ module.exports = function practice3d(say, H) {
     if (!['t', 'm', 'r', 'h'].every((r) => new RegExp('\\b' + r + ": \\['").test(mix))) nope('PG3D_MIX must give each role a list of classes');
     if (!/c = mine \? String\(A\.cls \? A\.cls\(id\) : ''\)\.toLowerCase\(\)\.replace\(\/\[\^a-z\]\/g, ''\) : pg3dClassOf\(A, id\)/.test(P3)) nope('the raid\'s figures don\'t use the class mix');
     if (!/cc = A\.clsC\(id\) \|\| pg3dClassC\(pg3dClassOf\(A, id\)\)/.test(P3)) nope('the rings don\'t take the mixed classes\' colours');
-    if (!/role: GDZ_ROLE\[A\.rl\(id\)\]\[0\], rc \}\)/.test(P3) || !/p\.b\.sp\.visible = !s\.role;/.test(P3) || !/if \(s\.role\) \{ if \(!p\.r\) \{ p\.r = plSprite\(/.test(P3)) nope('a raider\'s plate must show its role and no health bar');
-    if (!/A\.tgts \? A\.tgts\(\) : \[\]/.test(P3) || !/why: 'mob', mob: true, h: MOBH\[o\.kind\]/.test(P3) || !/tgts: \(\) => \(G \? tgtList\(G\.t\) : \[\]\)/.test(PJ)) nope('the mobs don\'t get a plate with their name and health bar');
-    if (!/q\.fix = !!s\.you \|\| !!s\.mob;/.test(P3)) nope('a mob\'s name can be hidden by the raid\'s names');
+    if (!/role: GDZ_ROLE\[A\.rl\(id\)\]\[0\], rc \}\)/.test(P3) || !/p\.b\.sp\.visible = !s\.role && !s\.mob;/.test(P3) || !/if \(s\.role\) \{ if \(!p\.r\) \{ p\.r = plSprite\(/.test(P3)) nope('a raider\'s plate must show its role and no health bar');
+    if (!/A\.tgts \? A\.tgts\(\) : \[\]/.test(P3) || !/show: false, why: 'mob', mob: true, h: MOBH\[o\.kind\]/.test(P3) || !/tgts: \(\) => \(G \? tgtList\(G\.t\) : \[\]\)/.test(PJ)) nope('the mobs don\'t get a plate with their name and health bar');
+    // (Flex: "make the mob health bars a little bigger they are normally larger", "put the mob name in the health bar to save space")
+    if (!/if \(s\.mob\) \{ if \(!p\.m\) p\.m = plSprite\(240, 28\);/.test(P3) || !/g\.fillText\(s\.name, 120, 15\)/.test(P3) || !/p\.m\.sp\.scale\.set\(132 \/ pxK, 15\.4 \/ pxK, 1\)/.test(P3)) nope('a mob\'s plate must be one wide red bar with its name inside');
+    if (!/if \(tw > 226\) \{ fz = Math\.max\(11, Math\.floor\(fz \* 226 \/ tw\)\);/.test(P3) || !/\.slice\(0, 34\), c: '#ffb0a3'/.test(P3)) nope('a long mob name ("Weakened Doomscale (Skull)") is cut off instead of shrinking to fit its bar');
     if (!/if \(q\.k === 'label' && \/Rawling\|Viper\|Wretch\|Warden\|Doomscale\|Clutch\|Shrieker\/\.test/.test(P3)) nope('the mobs\' old floating name labels stay next to their new plates');
-    if (!/if \(p\.r\) p\.r\.sp\.visible = false; \} \}\);/.test(P3)) nope('a role tag stays up after its raider is gone'); }
+    if (!/if \(p\.r\) p\.r\.sp\.visible = false; if \(p\.m\) p\.m\.sp\.visible = false; \} \}\);/.test(P3)) nope('a role tag or a mob\'s bar stays up after it is gone'); }
   return loadP;
 };
 if (require.main === module) {
