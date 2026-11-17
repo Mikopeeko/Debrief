@@ -53,7 +53,7 @@ const PG_SHORT = [
   [/^Wait outside your egg's gold ring until .*$/i, 'Wait outside your egg\'s ring'], [/^Step away from (.+?)'s egg: your rings almost touch!?$/i, 'Step away from $1\'s egg!'], [/^Too close to (.+?)'s egg: step away from them!?$/i, 'Too close to $1\'s egg!'],
   [/^Run alone to your big egg at the (north|south) end$/i, 'Run alone to the $1 big egg'], [/^Stay out of the line and its side waves!?$/i, 'Dodge the beam and its side waves!'], [/^Your soaks are done: leave your egg$/i, 'Leave your egg, go to the gold ring'], [/^Hit the heart, and step out of the brown circles$/i, 'Hit the heart, dodge the brown circles'], [/^She's up (.+?): phase 3 starts by her$/i, 'She\'s up $1: go to her'],
 ];
-const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into)/i; /* (must be done now: never held back, never covered by a call) */
+const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Break now|Cross into|Walk to your tether)/i; /* (must be done now: never held back, never covered by a call) */
 const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim(); if (!x) return '';
   x = x.replace(/^(?:Good spot|Off her quarter: good)[.!]?\s+(?=[A-Z])/, ''); /* (praise, then the order: the order) */
   x = x.replace(/:\s*press Tab(?: to pick (?:it|one))?,? then keep pressing 1(?: to hit it)?/gi, '').replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/:\s*Tab, then 1/gi, '')
@@ -61,6 +61,18 @@ const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/
   x = x.replace(/\s+Then:.*$/, ''); { const m = /^(.+?[.!?])\s+[A-Z(]/.exec(x); if (m) x = m[1]; } x = x.replace(/[.]$/, '').trim(); /* (one sentence) */
   for (const [re, to] of PG_SHORT) if (re.test(x)) { x = x.replace(re, to); break; }
   x = x.replace(/\s+([,!.])/g, '$1').replace(/\s{2,}/g, ' ').trim(); return x.charAt(0).toUpperCase() + x.slice(1); };
+// (the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont just do
+//  the top 3", "just make the explanations simplified"): every mistake stays, each in one short sentence with no asides in brackets or percentages, and its tip the
+//  one thing to do, without the how-it-works first. "Rawlings were up: you were on them 0% of the time." -> "Rawlings were up: you weren't hitting them";
+//  "A small tail rising at the edge fires ... 2.4 s later, on the same lines every pull: step out of their red lanes." -> "Step out of their red lanes")
+const PG_DO = /^(?:step|be|press|kill|stand|run|carry|dodge|wait|get|keep|help|save|stay|pick|hit|move|soak|break|kick|go|walk|leave|use|throw|bring|stack|burn|target|cross|sprint)\b/i;
+const pgEndHead = (s) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\([^)]*\)/g, '').replace(/[.]$/, '').trim();
+  x = x.replace(/you were on (them|it) \d+% of the time/i, (m0, w) => 'you weren\'t hitting ' + w).replace(/you were on (them|it) (?:only )?\d+%/i, (m0, w) => 'you weren\'t hitting ' + w); return x; };
+const pgEndTip = (s, head) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/,?\s*\d+(?:\.\d+)? s later/g, '').replace(/[.]$/, '').trim();
+  if (/you weren't hitting/.test(head || '') || /^(?:press Tab|Tab, then 1)/i.test(x)) return 'Target ' + (/hitting it\b/.test(head || '') ? 'it' : 'them') + ' with Tab, then press 1'; /* (a damage moment: the how-to-press is the one thing to do) */
+  const k = x.lastIndexOf(': '); if (k > 0) { const a = x.slice(0, k), b = x.slice(k + 2); if (/^(?:press Tab|Tab, then 1)/i.test(b)) x = a; else if (PG_DO.test(b) && b.split(/\s+/).length >= 4) x = b; }
+  x = x.replace(/\btheir red lanes\b/i, 'the red lanes').replace(/^Carrying an egg, a wave hatches it: dodge every one$/i, 'With an egg, dodge every wave');
+  return x.charAt(0).toUpperCase() + x.slice(1); };
 // (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
 const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) return 'Kill the ' + m[1].trim(); /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
   if (yn) o = o.replace(/\bits\b/, 'your ' + yn[1] + '\'s').replace(/\bthe (first|second) one\b/, 'the $1 ' + yn[1]); return pgShort(o); };
@@ -265,6 +277,7 @@ function pgOpen(root, boss, d, pk) {
     '<div class="pg-timers pg-path" aria-label="Coming up in the fight"></div><div class="pg-res" aria-live="polite"></div><div class="pg-coach" aria-live="polite"></div>' +
     '<span class="pg-rush" title="Nothing to do here yet: the game runs faster until the next thing comes">▸▸ Skipping ahead</span>' + /* (top centre, its own: look C hides her frame's name row, where it sat, Nov 17) */
     '<div class="pg-warn" aria-live="polite"></div><div class="pg-float"></div>' +
+    '<div class="pg-cds" aria-live="polite"></div>' + /* (countdown alerts, stacked above the NOW line: Flex, Nov 17) */
     '<div class="pg-bot"><div class="pg-job pg-now"><div class="pg-nowl">' + PG_CHEV_SVG + '<span class="pg-nowk">Now</span><p class="pg-nowt"></p></div><p class="pg-nx"></p></div>' +
     '<div class="pg-ufs"><div class="pg-ucol pg-me"><div class="pg-uf"><div class="pg-nm"><b class="pg-mn"></b><span class="pg-mj"></span></div><div class="pg-bar pg-hp"><i></i><span></span></div></div><div class="pg-debs"></div></div>' +
     '<div class="pg-ucol pg-tfc"><div class="pg-uf pg-tf none"><div class="pg-nm"><b class="pg-tfn">No target</b><span class="pg-tfr">Tab to pick</span></div><div class="pg-bar pg-tfh"><i></i><span></span></div></div>' +
@@ -365,7 +378,7 @@ function pgOpen(root, boss, d, pk) {
   const tgtList0 = (t) => { if (P2) return P2.tgts(t); /* (a later part's own targets and moments: src/practice-p2.js) */ const L = [], B = bossAt(t), TL = tailAt(t);
     G.adds.forEach((a) => { a.id = a.id || 'a' + (G.addN = (G.addN || 0) + 1); const mx = ADD_HP[a.kind] || 3; if (a.hp == null) a.hp = mx; L.push({ key: a.id, kind: a.kind, name: a.kind === 'viper' ? 'Blightscale Viper' : 'Blightscale Rawling', p: [a.x, a.y], r: a.kind === 'viper' ? 1.6 : 1.1, hp: a.hp, max: mx }); });
     if (t >= 145.5 && t < 165) L.push({ key: 'heart', kind: 'heart', name: 'Venomous Heart', p: S.F(PG_UL.heart, t), r: 3 });
-    S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2 }); });
+    S.wretches.forEach((w) => { const c = G.wr[w.id]; if (c && t >= w.awake) L.push({ key: w.id, kind: 'wretch', name: 'Blightscale Wretch', p: [c.x, c.y], r: 2.2, hp: w.dies > w.awake ? Math.max(0, Math.min(1, (w.dies - t) / (w.dies - w.awake))) * 100 : 100, max: 100 }); }); /* (its health, as the target frame works it out: the bar over its head stayed full, Flex, Nov 17 "wretch nameplate health isnt going down in p1") */
     if (B.up) L.push({ key: 'boss', kind: 'boss', name: 'Ula\'tek', p: B.p, r: 6.5 }); if (TL.up) L.push({ key: 'tail', kind: 'tail', name: 'Gore Rattle', p: TL.p, r: 3.4 });
     return L; };
   // (the Nov 15 audit: the Wretches died on their own and your hits on them did nothing; their last 10 s are now a moment to help kill them)
@@ -894,8 +907,8 @@ function pgOpen(root, boss, d, pk) {
   // (your look in 3D, Flex, Nov 16: a wizard for ranged, a cleric for healers, "another one for ranged classes like a hunter": Auto picks by your
   //  role (and Hunter by your class on the team plan); the chip on the card goes round the figures. Saved in this browser only.)
   //  Then a figure for every WoW class (Flex: "Are there models that can match each class in wow?", "yes! do as many as you can"): auto picks
-  //  each raider's class from the team plan (else the role), and the card's Look list picks yours.)
-  const LOOKN = { auto: 'Auto (your class or role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
+  //  each raider's class from the team plan (else the role), and the card's Class list picks yours.)
+  const LOOKN = { auto: 'Auto (by role)', knight: 'Knight', warrior: 'Warrior', paladin: 'Paladin', hunter: 'Hunter', rogue: 'Rogue', priest: 'Priest', deathknight: 'Death Knight', shaman: 'Shaman', mage: 'Mage', warlock: 'Warlock', monk: 'Monk', druid: 'Druid', demonhunter: 'Demon Hunter', evoker: 'Evoker' }, LOOKS = Object.keys(LOOKN);
   let look = (() => { try { const v = localStorage.getItem('wla-pg-look'); return LOOKS.includes(v) ? v : 'auto'; } catch (e) { return 'auto'; } })();
   // (the boss-mod bars' names, one per mechanic from start to end, as the calls and the job line say them (the audit: "Fester Burst" turned into "Bubble: get in"
   //  halfway, "Mephitic Thrash" into "Tail sweep: out of 35 yards"))
@@ -937,6 +950,7 @@ function pgOpen(root, boss, d, pk) {
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : ''); /* (the bar empties; no seconds on it, look C) */
       cb.classList.toggle('intr', !!c.intr); cb.classList.toggle('nok', !!P2 && !c.kick && !c.intr); } else cb.style.display = 'none'; /* (phase 2, as in WoW: gold you can kick, grey you can't, red "Interrupted") */
     modsDraw(t); coachDraw(t); resPrune(t);
+    { const ce = $('.pg-cds'), AL = P2 && typeof P2.alerts === 'function' ? P2.alerts(t) || [] : [], ch = AL.map((a) => '<div class="pg-cd' + (a.now ? ' now' : '') + '" style="--c:' + (/^#[0-9a-f]{3,8}$/i.test(a.c || '') ? a.c : '#f3c969') + '">' + esc(a.text) + '</div>').join(''); if (ce && ce.dataset.k !== ch) { ce.dataset.k = ch; ce.innerHTML = ch; } } /* (your countdowns: "Break tether in 12s", Flex, Nov 17) */
     // (a line stays up at least 2.5 s, unless a dodge or a step due now takes over; NEXT under it while hints are on. Look C: the order big, the rest of the
     //  line small after it, the key words in their colours on the floor (the yellow bubble, the green half, your gold circle))
     { const jl = jobPick(), J = G.jobShow, calm = (r) => r === 'c' || r === 'w' || r === 'd' || r === 'e', hold = !!J && J.text !== jl.text && G.t >= J.t && G.t - J.t < 2.5 && calm(J.r) && calm(jl.r);
@@ -992,14 +1006,18 @@ function pgOpen(root, boss, d, pk) {
     L.sort((a, b) => a.at - b.at); G.pathP = { key, L }; return L; };
   const pathView = (t) => { if (!G || !S) return null; const up = modBars(t), P = pathPlan(), done = P.filter((q) => q.at <= t);
     return { label: part.name, n: done.length, of: P.length, done: done.slice(-2).map((q) => q.name),
-      steps: up.map((b, i) => ({ name: b.name, at: b.at, f: Math.max(0, Math.min(1, b.left / 30)), st: i === 0 ? 'now' : i === 1 ? 'next' : 'later', mine: /^Your\b/.test(b.name) })) }; };
+      steps: up.map((b, i) => ({ name: b.name, at: b.at, f: Math.max(0, Math.min(1, b.left / 30)), st: i === 0 ? 'now' : i === 1 ? 'next' : 'later', mine: /^Your\b/.test(b.name), sp: b.sp, c: b.c })) }; };
   const pathHtml = (V) => '<div class="pgp-l">' + esc(V.label) + '' /* (no "3 of 31 done": it counted every bar and repeat, Nov 17) */ + '</div><div class="pgp-row">' +
     V.done.map(() => '<div class="pgp-st past"><i class="pgp-mk"></i></div><b class="pgp-cn"></b>') /* (passed, not ticked: a step you got wrong got a green tick too, Nov 17) */.join('') +
     V.steps.map((s, i) => (i ? '<b class="pgp-cn"></b>' : '') + '<div class="pgp-st ' + s.st + (i > 2 ? ' sm' : '') + (s.mine ? ' mine' : '') + '"><i class="pgp-mk"></i>' + (i <= 2 ? '<div class="pgp-tx"><b>' + esc(s.name) + '</b><span class="pgp-bar"><i style="width:' + (s.f * 100).toFixed(1) + '%"></i></span></div>' : '') + '</div>').join('') + '</div>';
   let modKey = null; /* (the path is made again only when its steps change; the bars' fills are set every time) */
+  // (Flex, Nov 17, of the fight path's diamonds across the top: "can you change this back into the boss mods style bars on the left side of the screen?". Boss-mod
+  //  bars down the left: the spell's icon, its name, a bar that empties as it nears; no numbers (Flex, Nov 16: no timestamps on screen); yours in gold, first in line)
+  const barsHtml = (V) => V.steps.map((s, i) => { let ic = ''; if (s.sp && typeof spellIcon === 'function') { try { ic = spellIcon(0, s.sp); } catch (e) { ic = ''; } }
+    return '<div class="pgb' + (s.mine ? ' mine' : '') + (i === 0 ? ' now' : '') + '" style="--c:' + (s.mine ? '#f3c969' : s.c || '#5a8cdc') + '"><span class="pgb-ic">' + (ic || '<i class="pgb-d"></i>') + '</span><span class="pgb-bar"><i style="width:' + (s.f * 100).toFixed(1) + '%"></i><b>' + esc(s.name) + '</b></span></div>'; }).join('');
   const modsDraw = (t) => { const el = $('.pg-timers'); if (!el) return; const V = pathView(t); if (!V) return; const k = [V.label, V.n, V.of, V.done.join('~'), V.steps.map((s) => s.name + '@' + s.at.toFixed(1)).join('|')].join('#');
-    if (k !== modKey) { modKey = k; el.innerHTML = pathHtml(V); }
-    const bars = el.querySelectorAll ? el.querySelectorAll('.pgp-bar > i') : null; if (bars) for (let i = 0; i < bars.length && i < V.steps.length; i++) if (bars[i] && bars[i].style) bars[i].style.width = (V.steps[i].f * 100).toFixed(1) + '%'; };
+    if (k !== modKey) { modKey = k; el.innerHTML = barsHtml(V); if (typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (the drawn icon stays) */ } } }
+    const bars = el.querySelectorAll ? el.querySelectorAll('.pgb-bar > i') : null; if (bars) for (let i = 0; i < bars.length && i < V.steps.length; i++) if (bars[i] && bars[i].style) bars[i].style.width = (V.steps[i].f * 100).toFixed(1) + '%'; };
   // ---- the coach card "Coming up" (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): about 8 s before a mechanic that's new
   // in this run it slides in on the left and stays until it happens: its title (Name (Short instruction)), one sentence of what happens (PG_COACH), and YOUR JOB in
   // gold, in the game's own words for you (your step's line in phase 1, else the call it gives you, else the entry's). Your own steps come first; a card that
@@ -1217,7 +1235,7 @@ function pgOpen(root, boss, d, pk) {
       (parts.length > 1 ? '<div class="pg-seg pg-part" role="group" aria-label="Part">' + parts.map((k) => '<button type="button" data-v="' + k + '"' + (k === pkNow ? ' class="on" aria-pressed="true"' : ' aria-pressed="false"') + '>' + esc(PG_PARTS[boss][k].name) + '</button>').join('') + '</div>' : '') + '</div>' +
       '<div class="pg-sbox">' + setupHtml() + '</div>' +
       '<button type="button" class="pg-btn pg-go pg-play"><b>▶ Play</b><span class="pg-psub">' + esc(playSub()) + '</span></button>' +
-      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="Your figure in 3D">Look <select class="pg-look">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
+      '<div class="pg-chips"><button type="button" class="pg-chip pg-hint" aria-pressed="' + hints + '">' + (hints ? 'Hints on' : 'Hints off') + '</button><button type="button" class="pg-chip pg-spd" aria-pressed="' + (speed < 1) + '">' + (speed < 1 ? 'Half speed' : 'Normal speed') + '</button><label class="pg-chip pg-lookw" title="The class your figure plays in 3D">Class <select class="pg-look" aria-label="Class">' + LOOKS.map((k) => '<option value="' + k + '"' + (k === look ? ' selected' : '') + '>' + LOOKN[k] + '</option>').join('') + '</select></label>' +
       '<label class="pg-chip pg-atw">Start <select class="pg-at" aria-label="Where to start">' + (P2 ? P2.starts : START).map(([t0, n]) => '<option value="' + t0 + '"' + (t0 === startAt ? ' selected' : '') + '>' + esc(pgNoClock(n)) + '</option>').join('') + '</select></label></div>' +
       '<p class="pg-keys">Move: W A S D · Click a mob or Tab: target · 1: attack (keep pressing) · 2: area attack · Shift: sprint · Q: defensive' + (P2 && P2.acts && P2.acts() ? ' · E: kick' : '') /* (only a part with a Kick button: the intermission has none, Nov 15) */ + ' · M: sound · Space: pause · 3D: drag to turn, wheel to zoom</p></div>';
     const box = card.querySelector('.pg-sbox');
@@ -1269,13 +1287,13 @@ function pgOpen(root, boss, d, pk) {
   //  Rawlings and the heart)
   const P1DPS = { egg: 'your egg', rawling: 'the Rawlings', wretch: 'the Wretch', heart: 'the heart', viper: 'the Vipers' }, p1Names = (DL) => Object.keys(P1DPS).filter((k) => DL.some((m) => m.kind === k)).map((k) => P1DPS[k]).join(', ');
   const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [], early = G.t < S.end - 0.5, quiet = early || G.deaths > 0;
-    const rows = G.log.map((m) => ({ t: m.t, b: m.text, s: m.tip })).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: q.why }))).sort((a, b) => a.t - b.t);
-    card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + (early ? ' · stopped at ' + pgClock(G.t) : '') + '</span>' +
+    const rows = G.log.map((m) => { const b = pgEndHead(m.text); return { t: m.t, b, s: pgEndTip(m.tip, b) }; }).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: pgEndHead(q.why) }))).sort((a, b) => a.t - b.t); /* (every mistake, said simply: pgEndHead, pgEndTip) */
+    card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + esc(pgNoClock(((P2 ? P2.starts : START).find((q) => q[0] === startAt) || [0, 'the middle'])[1])) : '') + (early ? ' · stopped early' : '') /* (no clock times on the end screen either, Flex, Nov 17: "dont put timestamps in the ending") */ + '</span>' +
       '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : quiet ? 'No mistakes' : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (' + (P2 ? P2.dpsNames(DL) : p1Names(DL)) + ').</p>' : '') +
-      (rows.length ? '<ol class="pg-sum">' + rows.map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.b) + '</b>' + (m.s ? '<span>' + esc(m.s) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (early ? 'No mistakes up to ' + pgClock(G.t) + '.' : P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
+      (rows.length ? '<ol class="pg-sum">' + rows.map((m) => '<li><div><b>' + esc(m.b) + '</b>' + (m.s ? '<span>' + esc(m.s) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (early ? 'No mistakes before you stopped.' : P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
-    const txt = 'Debrief practice · ' + boss + ' ' + dn + ', ' + part.name + ' · ' + role.name + ': ' + g + ' (' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'no mistakes') + ', ' + G.deaths + ' death' + (G.deaths === 1 ? '' : 's') + (early ? ', stopped at ' + pgClock(G.t) : '') + ')' + (speed < 1 ? ' at half speed' : '') + ' · https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?practice' + (P2 ? '=' + (P2.part || 2) : '');
+    const txt = 'Debrief practice · ' + boss + ' ' + dn + ', ' + part.name + ' · ' + role.name + ': ' + g + ' (' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'no mistakes') + ', ' + G.deaths + ' death' + (G.deaths === 1 ? '' : 's') + (early ? ', stopped early' : '') + ')' + (speed < 1 ? ' at half speed' : '') + ' · https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?practice' + (P2 ? '=' + (P2.part || 2) : '');
     card.querySelector('.pg-copy').onclick = async (e) => { const b = e.currentTarget; let done = false; try { await navigator.clipboard.writeText(txt); done = true; } catch (er) { /* (no clipboard) */ } b.textContent = done ? 'Copied: post it in Discord' : txt; }; };
 
   // ---- the loop ----
@@ -1382,7 +1400,11 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-bhp > i { background: linear-gradient(90deg, #8f2530, #b8323d); }
 .pg .pg-x:focus-visible, .pg .pg-snd:focus-visible { outline: 1px solid var(--pgm); outline-offset: 1px; }
 /* (top left, the fight path (look C): the part, how many steps are done, then the diamonds; a thin bar under each named step empties as it nears, no seconds) */
-.pg .pg-timers { position: absolute; left: 28px; top: 22px; max-width: calc(100% - 290px); pointer-events: none; }
+.pg .pg-timers { position: absolute; left: 14px; top: 30%; width: 270px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; } /* (boss-mod bars down the left, Flex, Nov 17) */
+.pg .pgb { display: flex; align-items: stretch; height: 24px; } .pg .pgb-ic { flex: none; width: 24px; height: 24px; overflow: hidden; background: #0b0d11; box-shadow: 0 0 0 1px #000; } .pg .pgb-ic > * { display: block; width: 100%; height: 100%; } .pg .pgb-d { display: block; width: 100%; height: 100%; background: var(--c); opacity: .6; }
+.pg .pgb-bar { position: relative; flex: 1 1 auto; min-width: 0; background: rgba(20,23,29,.86); box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); }
+.pg .pgb-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); opacity: .75; transition: width .25s linear; } .pg .pgb.now .pgb-bar > i { opacity: .95; }
+.pg .pgb-bar > b { position: relative; z-index: 1; display: flex; align-items: center; height: 100%; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 600 13px var(--body, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; } .pg .pgb.mine .pgb-bar > b { font-weight: 700; }
 .pg .pgp-l { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgmu); text-shadow: 0 1px 3px #000; }
 .pg .pgp-l em { font-style: normal; font-weight: 600; letter-spacing: .04em; color: var(--pgdim); }
 .pg .pgp-row { display: flex; align-items: flex-start; flex-wrap: nowrap; overflow: hidden; }
@@ -1418,6 +1440,9 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg:has(.pg-card.on) :is(.pg-coach, .pg-res) { display: none; }
 .pg .pg-coach, .pg .pg-coach.on, .pg .pg-warn .pg-al { display: none !important; } /* (Flex, Nov 17: no coach card, no call boxes: the NOW line says it; the paused line still shows in .pg-warn) */
 .pg .pgp-st.past .pgp-mk { background: rgba(9,11,15,.6); border: 1px solid rgba(255,255,255,.3); } /* (passed, not ticked, Nov 17) */
+.pg .pg-cds { position: absolute; left: 0; right: 0; top: 18%; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 6; } /* (countdown alerts, Flex, Nov 17) */
+.pg .pg-cd { padding: 6px 20px; font: 700 clamp(20px, 1.6vw, 26px)/1.2 var(--head, system-ui); letter-spacing: .01em; color: #1a1405; background: var(--c); box-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.6); }
+.pg .pg-cd.now { animation: pgCdNow .5s ease-in-out infinite alternate; } @keyframes pgCdNow { from { filter: brightness(1); } to { filter: brightness(1.35); } } .pg:has(.pg-card.on) .pg-cds { display: none; }
 .pg .pg-in > .pg-rush { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); z-index: 6; padding: 4px 12px; background: rgba(9,11,15,.72); border: 1px solid rgba(255,255,255,.14); pointer-events: none; } /* (its own spot, top centre, Nov 17) */
 .pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the path and the coach card on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -1540,9 +1565,14 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg-srow select.pg-me { flex: 1; min-width: 0; height: 38px; padding: 0 8px; border: 1px solid rgba(255,255,255,.2); background: #0f1117; color: #fff; font: 600 14px var(--body, system-ui); }
 .pg-play { width: 100%; height: 60px; margin-top: 16px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .pg-play b { font: 800 20px var(--head, system-ui); letter-spacing: .02em; color: #1a1405; } .pg-psub { font: 600 13px var(--body, system-ui); color: #3b2f0c; }
-.pg-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 12px; }
-.pg-chip { height: 28px; display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); background: none; color: #aab4c0; font: 600 12.5px var(--body, system-ui); cursor: pointer; }
-.pg-chip:hover { color: #fff; border-color: rgba(255,255,255,.4); } .pg-chip select { height: 22px; max-width: 220px; border: 0; background: #0f1117; color: #e8edf2; font: 600 12.5px var(--body, system-ui); }
+.pg-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; max-width: 460px; margin: 12px auto 0; } /* (two switches, then two lists, same size: they wrapped unevenly, Start alone on a row, Flex Nov 17: 'weird formatting/glitches') */
+.pg-chip { height: 30px; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); background: none; color: #aab4c0; font: 600 12.5px var(--body, system-ui); cursor: pointer; }
+.pg-chip:hover { color: #fff; border-color: rgba(255,255,255,.4); } .pg-chip select { flex: 1 1 auto; min-width: 0; max-width: none; height: 28px; padding: 0 4px; border: 0; background: transparent; color: #e8edf2; font: 600 12.5px var(--body, system-ui); cursor: pointer; } .pg-chip select option { background: #0f1117; color: #e8edf2; }
+.pg-chip.pg-lookw, .pg-chip.pg-atw { justify-content: flex-start; padding: 0 0 0 10px; cursor: default; }
+/* (one control each: the label and its list in one frame, one border. The site's refine look forces a border, a background, round corners and 32px on every select
+   with !important, one rule through :is(#view, #main); so these win by the same id. Flex, Nov 17: "visual glitch on the drop downs. looks weird") */
+:is(#view, #main, #app) .pg.pg .pg-card .pg-chips .pg-chip select, .pg.pg .pg-card .pg-chips .pg-chip select { border: 0 !important; border-radius: 0 !important; background: transparent !important; background-color: transparent !important; box-shadow: none !important; min-height: 0 !important; height: 28px !important; padding: 0 4px !important; }
+@layer defaultTheme { html:not([data-theme]) body.refine :is(#view, #main, #app) .pg.pg .pg-card .pg-chips .pg-chip select { border: 0 !important; border-radius: 0 !important; background: transparent !important; background-color: transparent !important; box-shadow: none !important; min-height: 0 !important; height: 28px !important; padding: 0 4px !important; } } /* (the site's default look forces its select style from inside this layer; a layered !important beats any unlayered one, so the override lives here too, only on the game's own card: the site's own rules stay as they are, Nov 17) */ /* (a list sits flat in its frame, no box in a box) */
 .pg-setup .pg-keys { text-align: center; margin: 8px 0 0 !important; } .pg-setup .pg-head .pg-part { margin-top: 2px; }
 .pg.pg .pg-in :is(.pg-tile, .pg-chip, .pg-play, .pg-chip select, .pg-srow select) { border-radius: 0 !important; }
 @media (max-width: 640px) { .pg-srow { flex-direction: column; align-items: stretch; gap: 6px; } .pg-say { padding-left: 0; } .pg-tile { height: 44px; font-size: 13.5px; } }

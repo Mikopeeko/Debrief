@@ -189,7 +189,7 @@ function checks(H, say) {
     try { d.at(30, 'r3', { seed: 3 }); const c = die(); const h = c ? c.innerHTML : ''; if (!/Keep going/.test(h)) bad('the death card has no Keep going (check L)');
       const btn = c && c.querySelector('.pg-again'); if (!btn || typeof btn.onclick !== 'function') bad('the death card\'s second button does nothing (check L)');
       else { btn.onclick(); const e = R.card().innerHTML; if (!/pg-end/.test(e) || /pg-setup/.test(e)) bad('the death card\'s second button opens ' + (/pg-setup/.test(e) ? 'the setup card with no result' : 'no result screen') + ': a death ends with the grade and your mistakes (check L)');
-        else { if (!/stopped at 0:30/.test(e)) bad('a run ended at 0:30 from the death card doesn\'t say where it stopped (check L)'); if (!/<b>You died<\/b>/.test(e)) bad('the result screen\'s list leaves out your death (check L)'); if (/A clean run|Every wave dodged/.test(e)) bad('a run ended by a death reads as a clean run (check L)'); } } } catch (x) { bad('the death card check crashed: ' + x.message + ' (check L)'); }
+        else { if (!/stopped early/.test(e)) bad('a run ended at 0:30 from the death card doesn\'t say it stopped early (check L)'); if (/\b\d{1,2}:\d\d\b/.test(e.replace(/<[^>]*>/g, ' '))) bad('the end screen shows a clock time (Flex, Nov 17: "dont put timestamps in the ending"; check L)'); if (!/<b>You died<\/b>/.test(e)) bad('the result screen\'s list leaves out your death (check L)'); if (/A clean run|Every wave dodged/.test(e)) bad('a run ended by a death reads as a clean run (check L)'); } } } catch (x) { bad('the death card check crashed: ' + x.message + ' (check L)'); }
     try { const RI = recLoad(H, 'mint'), di = RI.dbg; di.P2.pick = { role: 'r', team: 'P', egg: false, pat: 1 }; const me = di.P2.slotOf(); di.at(330, me, { seed: 3 }); const P2o = di.P2, had = Object.prototype.hasOwnProperty.call(P2o, 'revive'), old = P2o.revive; let rv = 0;
       P2o.revive = function () { rv++; return typeof old === 'function' ? old.apply(this, arguments) : undefined; };
       try { di.G.hp = -1; di.play(); RI.frames(2); const c = RI.card(), go = c && c.querySelector('.pg-go'); if (!c || !/You died/.test(c.innerHTML) || !go || typeof go.onclick !== 'function') bad('no Keep going on the intermission\'s death card (check L)');
@@ -201,7 +201,7 @@ function checks(H, say) {
       const e = R.card().innerHTML, m = /Right target: <b>[^<]*<\/b> moments \(([^)]*)\)/.exec(e), kinds = new Set(d.dpsList().map((q) => q.kind)), want = { egg: 'your egg', rawling: 'the Rawlings', wretch: 'the Wretch', heart: 'the heart', viper: 'the Vipers' };
       if (!m) bad('the end card at ' + end + ' s has no "Right target" line (check J)');
       else Object.entries(want).forEach(([k, w]) => { if (kinds.has(k) !== m[1].includes(w)) bad('"Right target" lists "' + m[1] + '" for moments of ' + [...kinds].join(', ') + ' (check J)'); });
-      if (/stopped at/.test(e)) bad('a run played to its end says it stopped early (check J)');
+      if (/stopped early/.test(e)) bad('a run played to its end says it stopped early (check J)'); if (/\b\d{1,2}:\d\d\b/.test(e.replace(/<[^>]*>/g, ' '))) bad('the end screen shows a clock time (Flex, Nov 17: "dont put timestamps in the ending"; check J)');
     } catch (x) { bad('the end card check crashed: ' + x.message + ' (check J)'); }
   }
 }
@@ -268,7 +268,7 @@ function lookC(H, say, pj) {
     if (typeof d.nextHtml !== 'function' || !nexts) bad('the NEXT line never showed' + tag);
     // (every word written on the screen: no clock time, no count of seconds; the cast bar, the tags under your frame and the hotbar's buttons no numbers at all
     //  (stacks on a tag are "×2"), the fight path only its "3 of 31 done")
-    W.slice(W0).forEach(({ at, v }) => { const x = plain(v); if (!x) return; if (timey(x)) note('a clock time or a count of seconds on the screen' + tag + ' at "' + at.trim() + '"', x);
+    W.slice(W0).forEach(({ at, v }) => { const x = plain(v); if (!x || /\.pg-cds\b/.test(at)) return; /* (your countdown alerts count on purpose: Flex, Nov 17, '"Break tether in 20s" and it slowly counts down'; check S10) */ if (timey(x)) note('a clock time or a count of seconds on the screen' + tag + ' at "' + at.trim() + '"', x);
       if ((/\.pg-cdn\b|\.pg-clk\b/.test(at) && /\d/.test(x)) || (/\.pg-cast\b/.test(at) && /\s\d+(?:\.\d+)?$/.test(x))) note('a number counting down on her cast bar, a button or a clock' + tag + ' at "' + at.trim() + '"', x); /* ("Interrupted (Melee 2)" is a name) */
       if (/\.pg-debs\b/.test(at) && /\d/.test(plain(v.replace(/<span class="pg-tag pg-jtag"[^>]*>[^<]*<\/span>/g, '')).replace(/×\d+/g, ''))) note('seconds on the tags under your frame' + tag, x); /* (your job's own tag may say "Right Soak #1") */
       if (/\.pg-timers\b/.test(at) && /\d/.test(x.split(name).join('').replace(/\b\d+ of \d+ done\b/g, ''))) note('a number on the fight path (other than "3 of 31 done")' + tag, x); });
@@ -319,6 +319,67 @@ function simpleScreen(H, say, pj) {
     if (!doneRx) bad('there is no list of what counts as done (PG_DONE)');
     else { ['Egg picked up.', 'Soaked: your egg broke (a Rawling).', 'Kicked: Vicious Echoes interrupted.', 'Tether broken on time.', 'Rawling killed.'].forEach((x) => { if (!doneRx.test(x)) bad('"' + x + '" doesn\'t get the green done chip'); });
       ['Not open yet: hit it (Tab, then 1).', 'Kick is on cooldown.', 'Its shell is still up: hit it (Tab, then 1) to break it.', 'The tank taunted the Viper: kill it with the raid!', 'Back by her: burn the heart.'].forEach((x) => { if (doneRx.test(x)) bad('"' + x + '" gets the green done chip, as if done'); }); } }
+  // S6. every monster with a name bar over its head has its health, so the bar goes down as it's hit (Flex, Nov 17, of phase 1's Wretch: "wretch nameplate
+  //     health isnt going down in p1"; its target entry had no hp, so the bar stayed full). The kinds are the ones practice3d.js puts a plate on.
+  { const P3J = fs.readFileSync(path.join(__dirname, '..', 'src', 'practice3d.js'), 'utf8'), km = /if \(!o \|\| !o\.p \|\| !\/([^/]+)\/i\.test\(String\(o\.kind/.exec(P3J), MOB = km ? new RegExp(km[1], 'i') : /rawling|viper|wretch|warden|clutch|shriek|^ds|doom|rav/i, miss = new Map();
+    for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk); try { d.at(0, d.role.id, { seed: 3 }); } catch (e) { continue; } const G = d.G, S = d.S; let n = 0;
+      while (G.t < S.end - 0.3 && n++ < 4000) { d.step(10); (d.tgts() || []).forEach((o) => { if (MOB.test(String(o.kind || '')) && (!(o.max > 0) || !Number.isFinite(o.hp))) miss.set(pk + o.kind, ctx.PG_PARTS["Ula'tek"][pk].name + ': ' + o.name); }); } }
+    if (miss.size) bad('a monster\'s name bar has no health to show, so it stays full: ' + [...miss.values()].join(', ') + ' (check S6)'); }
+  // S5. the setup card's switches and lists: a tidy two by two grid, the lists flat in their frames (Flex, Nov 17, of the row 'Hints on | Normal speed | Look [Auto (your class or role)]' with 'Start [The pull]' alone on a second row: 'weird formatting/glitches')
+  if (!/\.pg-chips \{ display: grid; grid-template-columns: 1fr 1fr;/.test(PJ) || !/\.pg-chip select \{[^}]*background: transparent;/.test(PJ)) bad('the setup card\'s Hints, Speed, Class and Start wrap unevenly, or the lists sit as boxes inside their frames (check S5)');
+  // (Flex, Nov 17, via Main: "visual glitch on the drop downs. looks weird. also no one knows what look means rename it class": the site's refine look forces a
+  //  border, a background, round corners and 32px on every select with !important, one rule through :is(#view, #main), so the game's flat lists lost to it)
+  // (Main, Nov 17: the fix must only reach the game's own card and change nothing in the site's shared dropdown look: the Design studio owns it. The site's two
+  //  shared select rules, exactly as they were on Nov 17, and every game rule that touches a select inside @layer defaultTheme scoped to .pg-card)
+  { const SH = fs.readFileSync(path.join(__dirname, '..', 'src', 'shell.html'), 'utf8'), A = 'html:not([data-theme]) body.refine :is(#view, #main) select { background-color: rgba(255,255,255,.03) !important; }',
+      B = 'html:not([data-theme]) body.refine :is(.btn, select, .seg > button, .gb-auk > button) {\n    min-height: 32px !important;\n    border: 1px solid var(--line2) !important;\n    border-radius: 4px !important;\n    background: var(--raised) !important;';
+    if (!SH.includes(A) || !SH.replace(/\r\n/g, '\n').includes(B)) bad('the site\'s shared dropdown rules in src/shell.html changed (the game\'s fix must not touch them; the Design studio owns them) (check S5)');
+    (PJ.match(/@layer defaultTheme \{[^\n]*/g) || []).forEach((r) => { if (/select/.test(r) && !/\.pg\.pg \.pg-card /.test(r)) bad('a game rule inside the site\'s defaultTheme layer reaches selects outside the game\'s card: ' + r.slice(0, 120) + ' (check S5)'); }); }
+  if (!/>Class <select class="pg-look"/.test(PJ) || />Look <select/.test(PJ)) bad('the figure list on the start card is still called "Look", not "Class" (check S5)');
+  if (!/:is\(#view, #main, #app\) \.pg\.pg \.pg-card \.pg-chips \.pg-chip select, \.pg\.pg \.pg-card \.pg-chips \.pg-chip select \{ border: 0 !important;[^}]*background-color: transparent !important;[^}]*min-height: 0 !important;/.test(PJ)
+    || !/@layer defaultTheme \{ html:not\(\[data-theme\]\) body\.refine :is\(#view, #main, #app\) \.pg\.pg \.pg-card \.pg-chips \.pg-chip select \{ border: 0 !important;[^}]*min-height: 0 !important;/.test(PJ)) bad( /* (the site's rule sits in @layer defaultTheme, and a layered !important beats any unlayered one: the override must be in that layer too) */'the start card\'s lists keep the site\'s own border and background inside their frames (the site\'s rule wins with !important through #view): a box in a box (check S5)');
+  // S7. boss-mod bars down the left, not the fight path's diamonds across the top (Flex, Nov 17: "can you change this back into the boss mods style bars on the left
+  //     side of the screen?"): each bar its spell's icon, its name and a fill that empties, no numbers; drawn in a played run of each part
+  if (!/el\.innerHTML = barsHtml\(V\)/.test(PJ) || !/\.pg \.pg-timers \{ position: absolute; left: 14px; top: 30%;[^}]*flex-direction: column;/.test(PJ)) bad('the coming mechanics aren\'t boss-mod bars down the left (check S7)');
+  { const W1 = W.length; for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk); try { d.at(40, d.role.id, { seed: 3 }); d.frame(); } catch (e) { /* (a part that starts later) */ } }
+    const hs = W.slice(W1).filter((w) => /\.pg-timers/.test(w.at)).map((w) => w.v); if (!hs.some((h) => /class="pgb[ "]/.test(h) && /class="pgb-ic"/.test(h) && /class="pgb-bar"/.test(h))) bad('no boss-mod bar (icon, name, fill) was drawn in any part (check S7)');
+    hs.forEach((h) => { const x = h.replace(/<[^>]*>/g, ' ').replace(/&#?[a-z0-9]+;/gi, ' '); if (/\d/.test(x)) bad('a boss-mod bar shows a number: "' + x.replace(/\s+/g, ' ').trim().slice(0, 80) + '" (check S7)'); }); }
+  // S9. phase 2's tethers (Flex, Nov 17, via Main: "The tether break alerts in p2 are kind of confusing. Its not clear if youre the early break or the late break
+  //     with the 5. The on screen alert changes a lot during that section"; the guide, 131 kills: one breaks alone first, about 8 s later the five together): from
+  //     the moment the tethers land the NOW line says which break is yours ("You break first, alone" / "You break second, with the 5") and holds it, then the walk
+  //     to the edge (naming it again), then "Break now"; at most 5 changes from the landing to just after your break. Before: "Stay within 20 yards of the Warden"
+  //     with the rest cut off, flipping with "Hit the Warden" every second.
+  { let T2 = null; try { T2 = vm.runInContext('PG_P2_T', ctx); } catch (e) { T2 = null; }
+    if (!T2 || !ctx.PG_PARTS["Ula'tek"].m2) bad('phase 2 isn\'t loaded for the tether check (check S9)');
+    else for (const [teth, role, side, want] of [['solo', 'r', 'E', /break first/i], ['five', 'm', 'W', /with the 5/i]]) {
+      const d = L.open('m2'); d.P2.pick = { side, role, egg: null, mal: 0, cry: 0, teth }; const me = d.P2.slotOf(d.P2.pick), tb = teth === 'solo' ? T2.solo : T2.five, tag = ' (' + teth + ', ' + role + ' on the ' + side + ' ledge)';
+      try { d.at(T2.fangs - 12, me, { seed: 3 }); } catch (e) { bad('the tether run didn\'t start' + tag + ': ' + e.message + ' (check S9)'); continue; }
+      let prev = null, changes = 0, named = 0, samples = 0, broke = false, cdBad = null, cdN = 0, cdNow = false; const W2 = W.length;
+      while (d.G.t < tb + 1.5) { d.step(2); d.frame(); const t = d.G.t, now = plain(d.nowHtml()), k = now.replace(/[!.]+$/, '');
+        if (t >= T2.fangs + 0.5) { if (prev !== null && k !== prev) changes++; prev = k; }
+        if (t >= T2.fangs + 3 && t < tb - 5.5) { samples++; if (want.test(now)) named++; } if (t >= tb && t < tb + 1 && /^Break now/.test(now)) broke = true;
+        // (S10. the countdown alert (Flex, Nov 17: '"Break tether in 20s" and it slowly counts down'): from the landing to your break, "Break tether in Ns" with N the
+        //  whole seconds left, then "Break tether now!" until you're out)
+        const al = typeof d.P2.alerts === 'function' ? (d.P2.alerts(t) || []).map((a) => a.text) : null, th = d.G.p2.teth[me];
+        if (!al) cdBad = cdBad || 'phase 2 gives no countdown alerts (P2.alerts)';
+        else if (t >= T2.fangs + 0.2 && t < tb - 0.05 && th && th.br == null) { const m = /^Break tether in (\d+)s$/.exec(al[0] || ''); if (!m || +m[1] !== Math.ceil(tb - t - 1e-6)) cdBad = cdBad || 'at ' + (t - T2.fangs).toFixed(1) + ' s after the landing the alert reads "' + (al[0] || 'nothing') + '", not "Break tether in ' + Math.ceil(tb - t - 1e-6) + 's"'; else cdN++; }
+        else if (t >= tb && t < tb + 1 && al.includes('Break tether now!')) cdNow = true; }
+      if (!samples || named < samples * 0.6) bad('while tethered the NOW line names your break in only ' + named + ' of ' + samples + ' moments' + tag + ' (check S9)');
+      if (changes > 5) bad('the NOW line changes ' + changes + ' times from the tethers landing to your break' + tag + ' (5 at most; check S9)');
+      if (!broke) bad('the NOW line doesn\'t say "Break now" as your break comes' + tag + ' (check S9)');
+      if (cdBad || !cdN) bad('the tether countdown: ' + (cdBad || 'never showed') + tag + ' (check S10)');
+      if (!cdNow && !(d.G.p2.teth[me] && d.G.p2.teth[me].br != null && d.G.p2.teth[me].br <= tb + 0.3)) bad('no "Break tether now!" alert at your break' + tag + ' (check S10)');
+      if (!W.slice(W2).some((w) => /\.pg-cds/.test(w.at) && /Break tether in \d+s/.test(w.v))) bad('the countdown alert isn\'t drawn on the screen (.pg-cds)' + tag + ' (check S10)'); } }
+  // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
+  //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
+  //     the one thing to do. Run on the rows of Flex's screenshot.
+  { let H0 = null, T0 = null; try { H0 = vm.runInContext('pgEndHead', ctx); T0 = vm.runInContext('pgEndTip', ctx); } catch (e) { /* (none) */ }
+    if (!H0 || !T0 || !/const rows = G\.log\.map\(\(m\) => \{ const b = pgEndHead\(m\.text\); return \{ t: m\.t, b, s: pgEndTip\(m\.tip, b\) \}; \}\)/.test(PJ)) bad('the result screen lists the mistakes and tips as the game logs them, not said simply (check S8)');
+    else [['Rawlings were up: you were on them 0% of the time.', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.', 'Rawlings were up: you weren\'t hitting them', 'Target them with Tab, then press 1'],
+      ['Caustic Waves from a small tail hit you.', 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.', 'Caustic Waves from a small tail hit you', 'Step out of the red lanes'],
+      ['A wave touched your egg: a Viper hatched (Putrid Membrane on the whole raid).', 'Carrying an egg, a wave hatches it: dodge every one.', 'A wave touched your egg: a Viper hatched', 'With an egg, dodge every wave'],
+      ['The Wretch was going down: you were on it 0% of the time.', 'Help kill each Wretch before its third bubble: press Tab to pick it, then keep pressing 1.', 'The Wretch was going down: you weren\'t hitting it', 'Target it with Tab, then press 1']].forEach(([h, t, wh, wt]) => {
+      const gh = H0(h), gt = T0(t, gh); if (gh !== wh || gt !== wt) bad('the result screen says "' + h + '" / "' + t + '" as "' + gh + '" / "' + gt + '", not "' + wh + '" / "' + wt + '" (check S8)'); }); }
 }
 module.exports = (H, say) => { checks(H, say); lookC(H, say); simpleScreen(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad; module.exports.simpleScreen = simpleScreen;
 if (require.main === module) {
