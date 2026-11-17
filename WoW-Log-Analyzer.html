@@ -73906,6 +73906,20 @@ const PG3D_FIG = {
   druid: { url: PG3D_KK2 + 'adventurers-2.0/Characters/gltf/Druid.glb', anim: PG3D_KK + 'Mage.glb', hold: [['2H_Staff', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] },
   demonhunter: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Knight.glb', hold: [['1H_Sword', 'handslotr'], ['1H_Sword_Offhand', 'handslotl']], hide: [], atk: [/^dualwield_melee_attack_slice$/i, /dualwield.*(slice|chop|stab)/i] },
   evoker: { url: PG3D_KK2 + 'mystery-monthly-series-5/12%20-%20June%202025%20-%20Tiefling/characters/Tiefling.glb', anim: PG3D_KK + 'Mage.glb', hold: [['1H_Wand', 'handslotr']], hide: [], atk: [/^spellcast_shoot$/i, /spellcast/i] } }; /* (evoker: a stand-in, no dragon-kin figure exists in the set) */
+// (the monsters: one model per mob (Flex: "there should only be one model for each of the mobs", "Rawlings should not be the same as vipers,
+//  try to find unique models for each one"), all CC0: Quaternius's snake (Easy Enemy Pack), Mako and Dino (Ultimate Monsters), horned slime,
+//  and Mesh2Motion's kaiju, each at a pinned address. h: as tall as the old shape (yards), wide: fatter, tint: multiplied into its colours,
+//  hover: a flier's height over its spot, clips: its idle and move clips.)
+const PG3D_MQ = 'https://cdn.jsdelivr.net/gh/trebeljahr/quaternius-showcase@0128ca510d653bb04d6d1e4885bd8890b5050b4f/public/glb/';
+const PG3D_MON = {
+  rawling: { url: PG3D_MQ + 'easy_enemies_pack/Snake.glb', h: 1.6, clips: { idle: /snake_idle/i, move: /snake_walk/i } },
+  doomscale: { url: PG3D_MQ + 'easy_enemies_pack/Snake_angry.glb', h: 4.4, clips: { idle: /snake_idle/i, move: /snake_walk/i } },
+  warden: { url: 'https://static.poly.pizza/0b3ab2a2-9944-4672-abb5-0c3d2dcaafb8.glb', h: 5.8, clips: { idle: /|idle|/i, move: /|walk|/i } },
+  ravenous: { url: 'https://cdn.jsdelivr.net/gh/castle-engine/castle-engine@deb5d9091322aa64aad042c9428f6ce330b79ede/examples/delphi/cpp_builder/window/data/Dino.gltf', h: 6.2, tint: '#ff9a8a', clips: { idle: /^idle$/i, move: /^walk$/i } },
+  wretch: { url: 'https://cdn.jsdelivr.net/gh/jtydhr88/ComfyUI-mesh2motion@11fe6b7aaa5eac60afa3d726389cd9dd870ed1f6/mesh2motion-ui/animations/kaiju-animations.glb', h: 3.6, tint: '#c8d46a', clips: { idle: /^idle$/i, move: /^walk$/i } },
+  clutch: { url: 'https://cdn.jsdelivr.net/gh/layoutit/polycss@04a1b663046fe25b5bec5bc656a466ed87890b1a/website/public/gallery/glb/poly-pizza/animated-slime-enemy.glb', h: 2.4, tint: '#d9b8ff', clips: { idle: /|idle$/i, move: /|walk$/i } },
+  /*FLYERS*/
+};
 // (the raid wears them too, Flex: "can you apply these to all of the characters in the game? including the raid members": one copy of each
 //  model is loaded, and each raider gets a clone of it from three.js's SkeletonUtils, the same r147 plain-script set as the loader)
 const PG3D_SKU = 'https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/SkeletonUtils.js';
@@ -73997,7 +74011,7 @@ function pg3dShapes(A, t) {
   const nextEgg = G.eggs.find((e) => e.id === me && e.state === 'air' && e.land - t < 14); if (nextEgg) { disc(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 0.08); ring(nextEgg.x, nextEgg.y, 4.5, '#f3c969', 1, 0.3, true); label(nextEgg.x, nextEgg.y, 4.5, 'Your egg lands here', '#f3c969', 14); }
   // the adds, the Wretches, her, her tail, the heart. The adds: one label for each pack near you ("Rawlings ×9" at its middle), not one each
   // (nine names piled up in one heap, review of Nov 15)
-  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y }); if (a.taunt != null && t - a.taunt < 0.9) ring(a.x, a.y, 1.6 + (t - a.taunt) * 2.5, '#ff6b5c', 1, 0.6 * (1 - (t - a.taunt) / 0.9)); /* (the tank's taunt, Nov 15) */ if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
+  const packs = []; G.adds.forEach((a) => { P({ k: 'add', kind: a.kind, x: a.x, y: a.y, ref: a }); if (a.kind === 'viper') ring(a.x, a.y, 1.3, '#9be86a', 0.55, 0.14); /* (a flying Viper's spot on the floor) */ if (a.taunt != null && t - a.taunt < 0.9) ring(a.x, a.y, 1.6 + (t - a.taunt) * 2.5, '#ff6b5c', 1, 0.6 * (1 - (t - a.taunt) / 0.9)); /* (the tank's taunt, Nov 15) */ if (a.boil) ring(a.x, a.y, 1.5, '#ff4632', 0.95, 0.22); /* (a Rawling alive 25 s boils, Nov 15) */ let q = null; for (const o of packs) if (o.kind === a.kind && Math.hypot(o.x0 - a.x, o.y0 - a.y) < 6) { q = o; break; }
     if (!q) packs.push(q = { kind: a.kind, x0: a.x, y0: a.y, sx: 0, sy: 0, n: 0 }); q.sx += a.x; q.sy += a.y; q.n++; });
   packs.forEach((q) => { const x = q.sx / q.n, y = q.sy / q.n, vp = q.kind === 'viper'; if (Math.hypot(x - G.x, y - G.y) <= 15) label(x, y, 2.6, (vp ? 'Viper' : 'Rawling') + (q.n > 1 ? 's ×' + q.n : '') + (!vp && G.adds.some((a) => a.boil && a.kind === 'rawling' && Math.hypot(a.x - x, a.y - y) < 6) ? ' (boiling)' : ''), vp ? '#ff8f87' : '#c9df9a', 12, 'add'); });
   S.wretches.forEach((w) => { const c = G.wr[w.id]; if (!c) return; const up = t >= w.awake; P({ k: 'wretch', id: w.id, x: c.x, y: c.y, awake: up });
@@ -74562,31 +74576,56 @@ function pg3d(host, A) {
   const lookOf = (id, mine) => { const L = mine && A.look ? A.look() : 'auto'; if (PG3D_FIG[L]) return L; /* (yours can be picked on the card) */
     const r = A.rl ? A.rl(id) : 'm', c = String(A.cls ? A.cls(id) : '').toLowerCase().replace(/[^a-z]/g, ''); if (c !== 'knight' && PG3D_FIG[c]) return c; /* (the raider's class on the team plan) */
     return r === 'r' ? 'mage' : r === 'h' ? 'priest' : r === 't' || mine ? 'knight' : 'warrior'; }; /* (no class: ranged the mage, healers the priest, tanks and your melee the knight, the raid's melee the warrior) */
-  const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F = PG3D_FIG[rk];
+  const figLoad = (rk) => { if (rk in TPL) return; TPL[rk] = null; const F = rk.indexOf('mon:') === 0 ? PG3D_MON[rk.slice(4)] : PG3D_FIG[rk]; /* (mon: a monster, PG3D_MON) */
     Promise.all([pg3dMeLoad(T, F.url), F.anim ? pg3dMeLoad(T, F.anim) : null]).then(([g, g2]) => { if (dead) return; const root = g.scene;
-    F.hide.forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
-    const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = 2.3 / h; root.scale.setScalar(k);
+    (F.hide || []).forEach((n) => { const o = root.getObjectByName(n); if (o) o.visible = false; }); /* (the figures hold their whole kit at once: one weapon stays) */
+    const box = new T.Box3().setFromObject(root), h = (box.max.y - box.min.y) || 1, k = (F.h || 2.3) / h; root.scale.set(k * (F.wide || 1), k, k * (F.wide || 1)); /* (a raider 2.3 yd tall; a monster as tall as its old shape, F.h) */
+    if (F.tint) root.traverse((m) => { if (m.isMesh) [].concat(m.material).forEach((x) => { if (x.color) x.color.multiply(new T.Color(F.tint)); }); }); /* (a monster's own colours, tinted: this load's materials only) */
     (F.hold || []).forEach(([n, b]) => { const o = g2 && g2.scene.getObjectByName(n), bone = root.getObjectByName(b); if (o && bone) bone.add(o); }); /* (a borrowed staff, sword or shield in its hand) */
     const anim = g2 ? (g2.animations || []).map((c0) => { const c1 = c0.clone(); c1.tracks = c1.tracks.filter((tr) => !!root.getObjectByName(T.PropertyBinding.parseTrackName(tr.name).nodeName)); return c1; }) : (g.animations || []); /* (borrowed clips, only the tracks for bones it has) */
     root.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.frustumCulled = false; own.push(m.geometry); [].concat(m.material).forEach((x) => { if (F.metal != null && x.metalness > F.metal) x.metalness = F.metal; own.push(x); ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap'].forEach((k) => { if (x[k]) own.push(x[k]); }); }); } });
     TPL[rk] = { root, anim, y0: -box.min.y * k, F }; }).catch(() => { TPL[rk] = false; /* (no model: the capsule stays) */ }); };
-  const figMake = (rk, mine, x, y) => { const P0 = TPL[rk]; if (!P0) { figLoad(rk); return null; }
+  const figMake = (rk, mine, x, y, who) => { const P0 = TPL[rk]; if (!P0) { figLoad(rk); return null; }
     const root = T.SkeletonUtils.clone(P0.root); root.traverse((m) => { if (m.isSkinnedMesh && m.skeleton) own.push(m.skeleton); }); /* (a clone shares the model's geometry and materials; its own bones are freed on close) */
     const anim = P0.anim, mixer = new T.AnimationMixer(root), find = (re) => anim.find((c) => re.test(c.name)) || null;
     const act = (c, once) => { if (!c) return null; const a = mixer.clipAction(c); if (once) { a.setLoop(T.LoopOnce, 1); a.clampWhenFinished = true; } return a; };
-    const swing = P0.F.cast && A.rl && A.rl(A.me) !== 'm' ? P0.F.cast : P0.F.atk; /* (a Paladin healing casts; a Paladin in melee swings) */
-    const acts = { idle: act(find(/^idle$/i) || find(/idle/i) || anim[0]), run: act(find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
-      atk: mine ? act(swing.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) : null }; /* (melee swing a sword; ranged and healers cast) */
+    const role = A.rl ? A.rl(who || A.me) : 'm', swing = (P0.F.cast && role !== 'm' ? P0.F.cast : P0.F.atk) || [], C = P0.F.clips || {}; /* (a Paladin healing casts; a Paladin in melee swings; a monster names its clips) */
+    const acts = { idle: act((C.idle && find(C.idle)) || find(/^idle$/i) || find(/idle/i) || anim[0]), run: act((C.move && find(C.move)) || find(/^running_a$/i) || find(/run(?!.*(back|strafe))/i) || find(/walk/i)),
+      atk: rk.indexOf('mon:') === 0 ? null : act(swing.map(find).find(Boolean) || find(/attack|slash|chop|cast/i), true) }; /* (you and every raider swing or cast; monsters don't) */ /* (melee swing a sword; ranged and healers cast) */
     root.visible = false; scene.add(root);
-    const f = { rk, root, mixer, acts, cur: '', y0: P0.y0, face: Math.atan2(-x, y), mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null }; FIGL.push(f); return f; }; /* (a new one faces the middle) */
+    const f = { rk, root, mixer, acts, cur: '', y0: P0.y0, face: Math.atan2(-x, y), mvAt: -1e9, hitSeen: null, atkTo: 0, on: false, x: null, y: null, every: 1.5 + Math.random() * 0.9, ph: Math.random() }; FIGL.push(f); return f; }; /* (every, ph: a raider's own swing rhythm) */ /* (a new one faces the middle) */
   const meNow = () => { const rk = lookOf(A.me, true); if (!MEF[rk]) MEF[rk] = figMake(rk, true, A.G.x, A.G.y); const F = MEF[rk] || null; if (F !== ME) { if (ME) { ME.root.visible = false; ME.on = false; } ME = F; } return ME; };
-  const botNow = (s) => { const rk = lookOf(s.id, false); let f = BOTF.get(s.id); if (f && f.rk === rk) return f; if (f) { f.root.visible = false; f.on = false; } f = figMake(rk, false, s.x, s.y); if (f) BOTF.set(s.id, f); return f; };
+  const botNow = (s) => { const rk = lookOf(s.id, false); let f = BOTF.get(s.id); if (f && f.rk === rk) return f; if (f) { f.root.visible = false; f.on = false; } f = figMake(rk, false, s.x, s.y, s.id); if (f) BOTF.set(s.id, f); return f; };
+  // (the raid at work, Flex: "Would it take much to have the bots attacking things that are supposed to be attacked?", "as long as the bots don't
+  //  look like they are just standing around vibing": each frame botAims lists what the raid should be hitting (the game's right targets now,
+  //  else Ula'tek while she's up) and the tanks; a raider faces its nearest target in reach (melee 14 yd, ranged 60) and swings or casts on its
+  //  own rhythm, a healer faces the nearest tank and casts. The look only: the bots' damage and the score are the game's, untouched.)
+  let BT = null;
+  const botAims = (t) => { const G = A.G, dv = A.dps ? A.dps() : null, b = A.bossAt ? A.bossAt(t) : null, tanks = [];
+    Object.keys(G.bots || {}).forEach((id) => { if (A.rl && A.rl(id) === 't') tanks.push([G.bots[id].x, G.bots[id].y]); });
+    return { right: ((dv && dv.right) || []).map((o) => o.p).filter(Boolean), boss: b && b.up && b.p ? b.p : null, tanks }; };
+  const botSwing = (f, s) => { const B = BT, r = A.rl ? A.rl(s.id) : 'm'; if (!B) return null; let tp = null, bd = 1e9; const near = (q) => { const d = Math.hypot(q[0] - s.x, q[1] - s.y); if (d > 0.5 && d < bd) { bd = d; tp = q; } };
+    if (r === 'h') B.tanks.forEach(near); else { B.right.forEach(near); if (!tp && B.boss) near(B.boss); }
+    if (!tp || bd > (r === 'm' || r === 't' ? 14 : 60) || performance.now() - f.mvAt < 300) return null; /* (nothing in reach, or on the move: no swing) */
+    if (performance.now() - f.mvAt > 300) { const a = Math.atan2(tp[0] - s.x, -(tp[1] - s.y)); let d = a - f.face; d = Math.atan2(Math.sin(d), Math.cos(d)); f.face += d * 0.25; } /* (standing: turn to the target) */
+    return Math.floor(performance.now() / 1000 / f.every + f.ph); }; /* (a new number each beat: figPose swings once per beat) */
   const figPose = (M, s, hitT) => { const now = performance.now(); if (M.x == null) { M.x = s.x; M.y = s.y; }
     const dx = s.x - M.x, dy = s.y - M.y; if (Math.hypot(dx, dy) > 0.004) { M.mvAt = now; const a = Math.atan2(dx, -dy); let d = a - M.face; d = Math.atan2(Math.sin(d), Math.cos(d)); M.face += d * Math.min(1, 0.35); } M.x = s.x; M.y = s.y;
     if (hitT != null && hitT !== M.hitSeen) { M.hitSeen = hitT; if (M.acts.atk) M.atkTo = now + Math.min(900, M.acts.atk.getClip().duration * 1000); }
     const want = now < M.atkTo ? 'atk' : now - M.mvAt < 140 ? 'run' : 'idle', nx = M.acts[want] || M.acts.idle;
     if (want !== M.cur && nx) { const pv = M.acts[M.cur]; nx.reset(); nx.setEffectiveWeight(1); nx.fadeIn(0.12).play(); if (pv && pv !== nx) pv.fadeOut(0.12); M.cur = want; }
     M.root.position.set(s.x, baseY(s.x, s.y) + M.y0, -s.y); M.root.rotation.set(0, M.face, 0); M.on = true; };
+  // (the monsters, Flex, Nov 16: "find a model pack to use for the monsters in the fight as well? Ideally serpent type", "there should only be
+  //  one model for each of the mobs", "Rawlings should not be the same as vipers, try to find unique models for each one", "both the shrieker and
+  //  vipers are flying creatures": one model per mob (PG3D_MON), as tall as its old shape so the hits stay where they were drawn; a flier hovers
+  //  over its spot. mon(key, kind, x, y, o) draws one (key: the add itself, so it keeps its pose), false while its model loads (the old shape then).
+  //  Unused ones go back to their pool each frame.)
+  const MONF = new Map(), MONFREE = {}; let monSeen = new Set();
+  const mon = (key, kind, x, y, o) => { const D = PG3D_MON[kind]; if (!D) return false; let f = MONF.get(key);
+    if (!f) { const fr = MONFREE[kind]; f = fr && fr.length ? fr.pop() : figMake('mon:' + kind, false, x, y); if (!f) return false; f.x = null; MONF.set(key, f); }
+    monSeen.add(key); if (o && o.face != null) f.face = o.face; figPose(f, { x, y }, null);
+    f.root.position.y += (D.hover ? D.hover + Math.sin(performance.now() / 380 + x) * 0.18 : 0) + ((o && o.dy) || 0); return true; };
+  const monEnd = () => { MONF.forEach((f, key) => { if (!monSeen.has(key)) { MONF.delete(key); const kd = f.rk.slice(4); (MONFREE[kd] = MONFREE[kd] || []).push(f); } }); monSeen = new Set(); };
   const unitOf = (id) => { let u = UNITS.get(id); if (!u) { u = { m: new T.Mesh(CAPG, keep(new T.MeshStandardMaterial({ roughness: 0.5, metalness: 0.05 }))), x: 0, y: 0, on: false }; u.m.castShadow = true; scene.add(u.m); UNITS.set(id, u); } return u; };
   // labels: a sprite each, the same size on screen at any distance
   const LBL = []; let nL = 0, W0 = 0, H0 = 0, pxK = 800;
@@ -74670,9 +74709,9 @@ function pg3d(host, A) {
   // (a later part's own pieces: its room and creatures (src/practice-p2.js pg3dP2), drawn from this kit)
   // (flat3d: a part on phase 1's platform alone, no side ledges: the intermission, src/practice-int.js; kit3d: a part that brings its own 3D pieces from
   // its module (the intermission's floating raid markers, Nov 15))
-  const P2K = A.P2 && A.P2.kit3d ? A.P2.kit3d({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, canvas, ctex, BALL, CONEG, BEAMG, WALLG, UDISC, URING })
-    : A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
-    : A.P2 && !A.P2.flat3d && typeof pg3dP2 === 'function' ? pg3dP2({ T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
+  const P2K = A.P2 && A.P2.kit3d ? A.P2.kit3d({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, canvas, ctex, BALL, CONEG, BEAMG, WALLG, UDISC, URING })
+    : A.P2 && A.P2.part === 3 ? (typeof pg3dP3 === 'function' ? pg3dP3({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING, plat }) : null) /* (phase 3's broken quarters: src/practice-p3.js) */
+    : A.P2 && !A.P2.flat3d && typeof pg3dP2 === 'function' ? pg3dP2({ mon, T, scene, keep, pool, flat, flatG, fxMat, glw, col, ucol, baseY, slab, sun, BALL, CONEG, BEAMG, WALLG, UDISC, URING }) : null;
   const put = (s, t) => { const k = s.k; if (P2K && P2K.put(s, t)) return;
     if (k === 'disc' || k === 'grow') { if (s.r > 0.05) flat(k === 'disc' ? UDISC : URING, s.x, s.y, s.r, s.r, 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
     if (k === 'ring') { flat(ringG(s.r, s.w, s.dash), s.x, s.y, 1, 1, s.dash ? t * 0.3 : 0, s.c, s.o, low(s.x, s.y, s.r)); return; }
@@ -74690,7 +74729,7 @@ function pg3d(host, A) {
     if (k === 'beam') { const d = Math.hypot(s.x0, s.y0) || 1, sx = s.x0 * (1 - 2.9 / d), sy = s.y0 * (1 - 2.9 / d); V1.set(sx, 7.6, -sy); V2.set(s.x1, baseY(s.x1, s.y1) + 1.3, -s.y1); V3.subVectors(V2, V1); const len = V3.length(), g = beam(); g.position.copy(V1); g.quaternion.setFromUnitVectors(UP, V3.normalize()); g.scale.set(1, len, 1);
       g.userData.im.uniforms.uLen.value = len * 1.4; g.userData.sm.uniforms.uO.value = 1; const pu = 0.75 + 0.25 * Math.sin(t * 13); glw(V2.x, V2.y, V2.z, 4.2 * pu, '#7affd0', 0.9); glw(V1.x, V1.y, V1.z, 5, '#3af2a8', 0.8); return; }
     if (k === 'unit' && s.you && meNow()) { figPose(ME, s, A.G.lastHitT); return; } /* (your animated figure in place of your capsule) */
-    if (k === 'unit' && !s.you) { const f = botNow(s); if (f) { figPose(f, s, null); return; } } /* (a raider's figure, once its look has loaded) */
+    if (k === 'unit' && !s.you) { const f = botNow(s); if (f) { figPose(f, s, botSwing(f, s)); return; } } /* (a raider's figure, once its look has loaded) */
     if (k === 'unit') { const u = unitOf(s.id); col(u.m.material, s.c); u.m.material.emissive.setHex(s.you ? 0x2a2008 : 0); const mv = Math.hypot(s.x - u.x, s.y - u.y) > 0.005; u.x = s.x; u.y = s.y; u.m.position.set(s.x, baseY(s.x, s.y) + 1.15 + (mv ? Math.abs(Math.sin(t * 16)) * 0.14 : 0), -s.y);
       const lf = s.lf || 0, lx = Math.cos(s.la || 0), lz = -Math.sin(s.la || 0); u.m.rotation.set(0.24 * lf * lz, 0, -0.24 * lf * lx); if (lf) { u.m.position.x += lx * 0.22 * lf; u.m.position.z += lz * 0.22 * lf; } /* (you lean into a hit) */
       u.m.visible = true; u.on = true; return; }
@@ -74702,7 +74741,9 @@ function pg3d(host, A) {
       const near = cam.position.distanceTo(m.position) < 11; if (near) m.visible = false; /* (one falling right past the camera would fill the screen) */
       blobAt(s.x, s.y, h, s.womb ? 5 : 3.2); if (h > 2 && !near) glw(s.x, by + h + 0.6, -s.y, s.womb ? 4 : 3.2, s.womb ? '#b8ff6a' : '#ff9a3c', 0.85, 2.6, 0.15);
       if (s.land > 0) flat(URING, s.x, s.y, 2 + 6 * s.land, 2 + 6 * s.land, 0, s.womb ? '#d8f22f' : '#e8c89a', 0.8 * (1 - s.land), low(s.x, s.y, 1)); return; }
+    if (k === 'add' && mon(s.ref || s, s.kind === 'viper' ? 'viper' : 'rawling', s.x, s.y)) return; /* (its monster, once loaded) */
     if (k === 'add') { const g = s.kind === 'viper' ? viper() : rawl(); g.position.set(s.x, baseY(s.x, s.y) + (s.kind === 'viper' ? 0 : 0.8), -s.y); if (s.kind === 'viper') g.rotation.y = t * 1.6 + s.x; return; }
+    if (k === 'wretch' && mon('wr' + s.id, 'wretch', s.x, s.y, s.awake ? null : { dy: -0.6 })) return;
     if (k === 'wretch') { const g = wretch(), ud = g.userData; if (ud.x != null && Math.hypot(s.x - ud.x, s.y - ud.y) > 0.02) g.rotation.y = Math.atan2(s.x - ud.x, -(s.y - ud.y)); ud.x = s.x; ud.y = s.y;
       g.position.set(s.x, baseY(s.x, s.y), -s.y); g.scale.set(1, s.awake ? 1 : 0.6, 1); col(ud.m, s.awake ? '#9b5cff' : '#5b3e7a'); return; }
     if (k === 'boss') { const rear = s.rear || 0, bite = s.bite >= 0 ? Math.sin(s.bite * Math.PI) : 0, fy = faceIn(s.x, s.y), sy = Math.sin(fy), cy = Math.cos(fy), bx = s.x, bz = -s.y;
@@ -74756,8 +74797,8 @@ function pg3d(host, A) {
     for (const [f, el] of FX) if (!live.has(f)) { el.remove(); FX.delete(f); } };
   const draw1 = (t) => { lastT = t; const now = performance.now(), dt = prevNow ? Math.min(0.1, (now - prevNow) / 1000) : 0.016; prevNow = now; lastDraw = now; resize(); const G = A.G; if (!G) return;
     UT.value = t; nF = 0; nL = 0; PL.length = 0; pools.forEach((p) => { p.n = 0; }); boss.visible = tail.visible = heart.visible = hfl.visible = fizz.visible = arrow.visible = arrowB.visible = beacon.visible = false; UNITS.forEach((u) => { u.on = false; }); PLATES.forEach((p) => { p.on = false; }); CB.length = 0; CBS.forEach((b) => { b.on = false; });
-    for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
-    for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
+    for (let i = 0; i < FIGL.length; i++) FIGL[i].on = false; BT = botAims(t); const L = pg3dShapes(A, t); for (let i = 0; i < L.length; i++) put(L[i], t); if (P2K) P2K.frame(G);
+    monEnd(); for (let i = 0; i < FIGL.length; i++) { const f = FIGL[i]; f.root.visible = f.on; if (f.on) f.mixer.update(dt); } /* (the figures: shown only while drawn, their animation moved on by the real time) */
     for (let i = nF; i < FLAT.length; i++) FLAT[i].visible = false; for (let i = nL; i < LBL.length; i++) LBL[i].sp.visible = false; pools.forEach((p) => { for (let i = p.n; i < p.L.length; i++) p.L[i].visible = false; }); UNITS.forEach((u) => { u.m.visible = u.on; }); PLATES.forEach((p) => { if (!p.on) p.n.sp.visible = p.b.sp.visible = false; });
     CBS.forEach((b, key) => { if (!b.on) { b.sp.visible = false; CBS.delete(key); CBF.push(b); } }); /* (a cast bar that ended: hidden, back to the pool) */
     const px = G.x, py = G.y, ph = baseY(px, py); if (!camAt || Math.hypot(camAt[0] - px, camAt[1] - py) > 25) camAt = [px, py, ph]; else { const q = 1 - Math.exp(-dt * 9); camAt[0] += (px - camAt[0]) * q; camAt[1] += (py - camAt[1]) * q; camAt[2] += (ph - camAt[2]) * q; }
@@ -75654,7 +75695,7 @@ function pgP2(A) {
     const bars = castBars(t), barOn = (id) => bars.some((b) => b.caster === id);
     const castRing = (x, y, r, c, who) => { const f = Math.max(0.02, Math.min(1, (t - c.t0) / Math.max(0.1, c.t1 - c.t0)));
       P3({ k: 'arc', x, y, r, f, c: '#b06bff', o: 1 }); h.label(x, y, who === 'ds' ? 7.8 : 8.6, c.name.replace(/^[^:]+: /, '') + ' ' + Math.max(0, c.t1 - t).toFixed(1), '#e3c7ff', 13); };
-    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (!p) return; P3({ k: 'warden', x: p[0], y: p[1] }); const go = G.p2.gone.find((q) => q.side === w.side && t >= q.by && t <= q.t1), c = S.casts.find((q) => q.who === 'warden' && q.side === w.side && t >= q.t0 && t <= q.t1);
+    S.wardens.forEach((w) => { const p = G.p2.wd[w.side]; if (!p) return; P3({ k: 'warden', x: p[0], y: p[1], ref: w }); const go = G.p2.gone.find((q) => q.side === w.side && t >= q.by && t <= q.t1), c = S.casts.find((q) => q.who === 'warden' && q.side === w.side && t >= q.t0 && t <= q.t1);
       if (go) P3({ k: 'dome', x: p[0], y: p[1], r: 4, c: '#b06bff', o: 0.22 + 0.1 * Math.sin(t * 12) });
       if (!barOn(w.id)) { if (c) castRing(p[0], p[1], 3.6, c, 'warden'); else h.label(p[0], p[1], 7.5, 'Doomscale Warden', '#c89bff', 13); }
       if (j.mal && j.side === w.side && G.p2.wdead[w.side] == null) h.ring(p[0], p[1], 4.4, '#f3c969', 0.7, 0.2); /* (your kick's caster: a gold ring under it) */
@@ -75662,17 +75703,17 @@ function pgP2(A) {
     S.big.forEach((B, i) => { const st = G.p2.big[i], mineB = holder('big', B.side, B.which) === me; if (st.state === 'floor') { P3({ k: 'begg', x: B.x, y: B.y, h: 0 }); if (mineB) { h.ring(B.x, B.y, 3, '#f3c969', 1, 0.3, true); h.label(B.x, B.y, 6.5, 'Your big egg' + (t >= T.doom ? ' · ' + Math.max(0, Math.ceil(T.doomEnd - t)) + ' s' : ''), '#f3c969', 14); } else if (t >= T.back) h.label(B.x, B.y, 6, 'Doomscale Egg', '#e6b450', 12); }
       else if (st.state === 'held') { const q = pos(st.who); P3({ k: 'begg', x: q[0], y: q[1], h: 4.4 }); if (st.who === me) h.label(q[0], q[1], 8.5, 'Into the cauldron · ' + Math.max(0, 20 - (t - st.at)).toFixed(0) + ' s', '#f3c969', 14); } });
     S.ds.forEach((d) => { const c = G.p2.ds[d.id], st = G.p2.dsS[d.id]; if (!c || !st) return; const cc = S.casts.find((q) => q.ds === d.id && t >= q.t0 && t <= q.t1), rv = st.rev != null;
-      P3({ k: 'dscale', id: d.id, x: c.x, y: c.y, climb: Math.min(1, (t - st.up) / 1.5), rev: rv });
+      P3({ k: 'dscale', id: d.id, x: c.x, y: c.y, climb: Math.min(1, (t - st.up) / 1.5), rev: rv, ref: d });
       if (!barOn(d.id)) { if (cc) castRing(c.x, c.y, 3.6, cc, 'ds'); else h.label(c.x, c.y, 7, 'Weakened Doomscale (' + P.mk[d.side][d.k - 1] + ')' + (rv ? ' · Revenge' : ''), rv ? '#ff9b8a' : '#c9d98a', 13); } /* (by the Plan's marker, the one your setup's Kicks map names) */
       if (j.side === d.side && (j.cry === d.k || bkCry(me) === d.k)) { h.ring(c.x, c.y, 4.2, '#f3c969', 0.8, 0.22, true); h.label(c.x, c.y, 10, 'Your kick', '#f3c969', 13); } /* (your Doomscale, marked as a raid marks it) */
       const gone = S.cries.find((q) => q.ds === d.id && G.p2.kick['c' + q.ds + q.i] === 'none' && t >= q.t1 && t <= q.t1 + 0.8); if (gone) P3({ k: 'shock', x: c.x, y: c.y, r: P.CRY * Math.min(1, (t - gone.t1) / 0.8), c: '#ffd23b' }); });
     G.p2.fan.forEach((f) => { if (t >= f.t0 && t <= f.at + 0.3) P3({ k: 'fan', x: f.p[0], y: f.p[1], a: f.dir, r: P.FAN.r, half: P.FAN.half * Math.PI / 180, c: '#ff9b4a', o: t > f.at ? 0.45 : 0.14 + 0.16 * Math.min(1, (t - f.t0) / (f.at - f.t0)) }); });
     // (the Clutches: purple, glowing, pulsing faster as their 20 s run out; the south eggs before the big egg's pickup turns them; the Rawlings' boil and
     // Acidic Expulsion; a Ravenous Doomscale and its Dread Roar)
-    Object.values(G.p2.cl).forEach((c) => { if (c.dead != null) return; const left = c.born + T.CHATCH - t; P3({ k: 'clutch', x: c.x, y: c.y, p: left }); if (c.side === j.side || pgDist([c.x, c.y], [G.x, G.y]) < 30) h.label(c.x, c.y, 3.6, 'Clutch · ' + Math.max(0, Math.ceil(left)) + ' s', left < 6 ? '#ff8f87' : '#d9b8ff', 13); });
+    Object.values(G.p2.cl).forEach((c) => { if (c.dead != null) return; const left = c.born + T.CHATCH - t; P3({ k: 'clutch', x: c.x, y: c.y, p: left, ref: c }); if (c.side === j.side || pgDist([c.x, c.y], [G.x, G.y]) < 30) h.label(c.x, c.y, 3.6, 'Clutch · ' + Math.max(0, Math.ceil(left)) + ' s', left < 6 ? '#ff8f87' : '#d9b8ff', 13); });
     G.eggs.forEach((e) => { if (e.state !== 'floor') return; const fr = eggFr(e, t); if (fr < 0.999) P3({ k: 'arc', x: e.x, y: e.y, r: 1.9, f: Math.max(0.02, fr), c: e.south || e.shp <= 0 ? '#f5d33a' : '#9fd6ff', o: 0.9 }); }); /* (an egg being broken out: a ring that empties, blue while its Hardened shield holds) */
     G.adds.forEach((a) => { if (!a.own) return; const c = S.casts.find((q) => q.rid === a.id && t >= q.t0 && t <= q.t1); if (c) castRing(a.x, a.y, 2, c, 'rawling'); }); /* (a boiling one's red ring: practice3d.js draws it for every add with a.boil) */
-    G.p2.rav.forEach((r) => { P3({ k: 'rav', x: r.x, y: r.y }); const c = r.c; if (t >= c.t0 && t <= c.t1) castRing(r.x, r.y, 5, c, 'rav'); else h.label(r.x, r.y, 10, 'Ravenous Doomscale', '#ff8f87', 15);
+    G.p2.rav.forEach((r) => { P3({ k: 'rav', x: r.x, y: r.y, ref: r }); const c = r.c; if (t >= c.t0 && t <= c.t1) castRing(r.x, r.y, 5, c, 'rav'); else h.label(r.x, r.y, 10, 'Ravenous Doomscale', '#ff8f87', 15);
       if (t >= r.roar && t <= r.roar + 0.9) P3({ k: 'shock', x: r.x, y: r.y, r: 60 * Math.min(1, (t - r.roar) / 0.9), c: '#ff5a4f' }); });
     if (t >= T.heart && t < T.heartEnd + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 3, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 3, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
     if (stunned(me, t)) h.label(G.x, G.y, 5.2, 'STUNNED', '#ffd23b', 15); };
@@ -75755,6 +75796,8 @@ function pg3dP2(K) {
   const put = (s, t) => { const k = s.k, by = K.baseY(s.x, s.y);
     if (k === 'gate') { const g = gate(), u = g.userData; g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.8; K.col(u.rm, s.c); u.cm.uniforms.uO.value = 0.5 + 0.15 * Math.sin(t * 4); u.sw.rotation.y = -t * 2; glw(s.x, by + 1.5, -s.y, 5, s.c, 0.5); return true; }
     if (k === 'cauldron') { const g = caul(); g.position.set(s.x, by, -s.y); g.userData.bub.children.forEach((b, i) => { const ph = (t * 0.7 + i * 0.37) % 1, a = i * 2.4, rr = 0.6 + (i % 4) * 0.7; b.position.set(Math.cos(a) * rr, 1.1 + ph * 0.8, Math.sin(a) * rr); b.scale.setScalar(0.25 + 0.2 * Math.sin(ph * Math.PI)); }); glw(s.x, by + 2.2, -s.y, 9, '#9a4dff', 0.45); return true; }
+    if (K.mon && s.ref && (k === 'warden' || k === 'rav' || k === 'clutch') && K.mon(s.ref, k === 'rav' ? 'ravenous' : k, s.x, s.y, k === 'clutch' ? null : { face: Math.atan2(-s.x, s.y) })) return true; /* (its monster model, src/practice3d.js PG3D_MON) */
+    if (K.mon && s.ref && k === 'dscale' && K.mon(s.ref, 'doomscale', s.x, s.y, { face: Math.atan2(-s.x, s.y), dy: -5 * (1 - (s.climb == null ? 1 : s.climb)) })) return true;
     if (k === 'warden') { const g = warden(); g.position.set(s.x, by, -s.y); g.rotation.y = faceIn(s.x, s.y) + Math.PI + Math.sin(t * 0.9) * 0.08; return true; }
     if (k === 'dscale') { const g = dscale(), c = s.climb == null ? 1 : s.climb; g.position.set(s.x, by - 5 * (1 - c), -s.y); g.rotation.y = faceIn(s.x, s.y) + Math.PI + Math.sin(t * 1.1) * 0.1; if (s.rev) glw(s.x, by + 2.5, -s.y, 6, '#ff3b2f', 0.4 + 0.15 * Math.sin(t * 6)); return true; }
     if (k === 'clutch') { const m = clutch(), sp = s.p < 6 ? 9 : 4, z = 1 + 0.08 * Math.sin(t * sp); m.scale.set(1.05 * z, 1.35 * z, 1.05 * z); m.position.set(s.x, by + 1.3, -s.y); glw(s.x, by + 1.3, -s.y, 3.6, s.p < 6 ? '#ff6bd0' : '#b06bff', 0.45 + 0.2 * Math.sin(t * sp)); return true; }
@@ -76391,7 +76434,7 @@ function pgP3(A) {
     G.p3.purge.forEach((q) => q.who.forEach((id) => { if (t > q.burst + 0.3) return; const p = pos(id); h.ring(p[0], p[1], P.PURGE, '#ff8a3b', 0.9, 0.3, true); if (id === me) { const sp = q.spot[me]; if (sp) { h.disc(sp[0], sp[1], 1.3, '#f3c969', 0.18); h.ring(sp[0], sp[1], 1.3, '#f3c969', 1, 0.25, true); h.label(sp[0], sp[1], 3, 'Spread here', '#f3c969', 13); } h.label(p[0], p[1], 6, 'Volatile Purge · ' + Math.max(0, q.burst - t).toFixed(1), '#ffb46a', 14); } }));
     G.p3.stones.forEach((q) => { P3({ k: 'stone', x: q.x, y: q.y }); if (t - q.t0 < 6) h.grow(q.x, q.y, 4 + (t - q.t0) % 1 * 30, '#b8a88a', 0.5); h.label(q.x, q.y, 5, 'Calcified Corpse', '#d8c8a8', 13); });
     // (the clutches, the grips, Gorefiend's Grasp)
-    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
+    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land, ref: st }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
       P3({ k: 'arc', x: st.x, y: st.y, r: 2, f: left, c: left < 0.3 ? '#ff5a4f' : '#9bd94a', o: 0.95 }); if (st.on && left < 0.4) h.label(st.x, st.y, 3.4, 'Break it: ' + Math.ceil(left * P.CLUTCH.gest) + ' s', '#ff8f87', 13); });
     G.p3.grips.forEach((g) => { const d = pos(g.by); if (g.grasp) { h.grow(g.grasp[0], g.grasp[1], 8 * (1 - (t - g.t0) / 0.7), '#c0394f', 0.8); return; } P3({ k: 'grip', x0: d[0], y0: d[1], x1: g.to[0], y1: g.to[1] }); });
     if (S.clutches.some((c) => t >= c.land && t < c.land + 3) && G.p3.cl) { const c0 = S.clutches.find((c) => t >= c.land && t < c.land + 3), cc = FR(P.grasp, c0.n); h.label(cc[0], cc[1], 7, 'Death Knights: grip!', '#ff8a9a', 13); }
@@ -76402,7 +76445,7 @@ function pgP3(A) {
     // (the Shriekers, and Vicious Echoes)
     // (its pink glow while Vicious Echoes casts; the cast bar over its head says the rest (castBars, Nov 16), so its name label waits until the bar has gone)
     const bars = castBars(t);
-    Object.entries(G.p3.sh).forEach(([k, s]) => { const e = S.echoes.find((q) => q.sh === k && t >= q.t0 && t <= q.t1 && !G.p3.kick[k]), mineK = S.job[me] && S.echoes.some((q) => q.sh === k && S.job[me].kick === q.k); P3({ k: 'shrieker', x: s.x, y: s.y });
+    Object.entries(G.p3.sh).forEach(([k, s]) => { const e = S.echoes.find((q) => q.sh === k && t >= q.t0 && t <= q.t1 && !G.p3.kick[k]), mineK = S.job[me] && S.echoes.some((q) => q.sh === k && S.job[me].kick === q.k); P3({ k: 'shrieker', x: s.x, y: s.y, ref: s });
       if (e) P3({ k: 'dome', x: s.x, y: s.y, r: 3.4, c: '#ff9fb2', o: 0.22 + 0.1 * Math.sin(t * 12) }); if (!bars.some((b) => b.caster === k)) h.label(s.x, s.y, 6.5, 'Shrieker ' + k.slice(2) + (mineK ? ' · yours' : ''), '#ff9fb2', 13);
       const gone = S.echoes.find((q) => q.sh === k && G.p3.kick[k] === 'none' && t >= q.t1 && t <= q.t1 + 0.8); if (gone) P3({ k: 'shock', x: s.x, y: s.y, r: P.ECHO * Math.min(1, (t - gone.t1) / 0.8), c: '#ffd23b' }); });
     if (t >= T.heart && t < T.end + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 4.5, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 4.5, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
@@ -76465,6 +76508,7 @@ function pg3dP3(K) {
   const put = (s, t) => { const k = s.k;
     if (k === 'qsink') { const m = Q[s.q]; if (m) { m.position.y = -7 * s.f; m.visible = s.f < 1; m.userData.f = s.f; CK.forEach((c, p) => { c.visible = !Q[p].userData.f && !Q[(p + 1) % 4].userData.f; }); } return true; }
     if (k === 'gate') { const by = K.baseY(s.x, s.y), g = gate(), u = g.userData; g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.8; K.col(u.rm, s.c); u.cm.uniforms.uO.value = 0.5 + 0.15 * Math.sin(t * 4); glw(s.x, by + 1.5, -s.y, 5, s.c, 0.5); return true; }
+    if (K.mon && s.ref && (k === 'clutch' || k === 'shrieker') && K.mon(s.ref, k, s.x, s.y, k === 'shrieker' ? { face: Math.atan2(-s.x, s.y) } : null)) return true; /* (its monster model, src/practice3d.js PG3D_MON) */
     if (k === 'clutch') { const g = clutch(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.6 + (s.ph || 0); g.children.forEach((c, i) => { c.position.y = 0.8 + (i === 3 ? 0.7 : 0) + Math.sin(t * 5 + i) * 0.12; }); glw(s.x, by + 1, -s.y, 2.2, '#9bd94a', 0.3); return true; }
     if (k === 'shrieker') { const g = shrieker(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = Math.atan2(-s.x, s.y) + Math.sin(t) * 0.1; return true; }
     if (k === 'stone') { const g = stone(); g.position.set(s.x, K.baseY(s.x, s.y), -s.y); return true; }

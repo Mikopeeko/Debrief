@@ -620,7 +620,7 @@ function pgP3(A) {
     G.p3.purge.forEach((q) => q.who.forEach((id) => { if (t > q.burst + 0.3) return; const p = pos(id); h.ring(p[0], p[1], P.PURGE, '#ff8a3b', 0.9, 0.3, true); if (id === me) { const sp = q.spot[me]; if (sp) { h.disc(sp[0], sp[1], 1.3, '#f3c969', 0.18); h.ring(sp[0], sp[1], 1.3, '#f3c969', 1, 0.25, true); h.label(sp[0], sp[1], 3, 'Spread here', '#f3c969', 13); } h.label(p[0], p[1], 6, 'Volatile Purge · ' + Math.max(0, q.burst - t).toFixed(1), '#ffb46a', 14); } }));
     G.p3.stones.forEach((q) => { P3({ k: 'stone', x: q.x, y: q.y }); if (t - q.t0 < 6) h.grow(q.x, q.y, 4 + (t - q.t0) % 1 * 30, '#b8a88a', 0.5); h.label(q.x, q.y, 5, 'Calcified Corpse', '#d8c8a8', 13); });
     // (the clutches, the grips, Gorefiend's Grasp)
-    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
+    S.clutches.forEach((c) => { const st = G.p3.cl[c.id]; if (!st) return; P3({ k: 'clutch', x: st.x, y: st.y, ph: c.land, ref: st }); const left = Math.max(0, 1 - (t - c.land) / P.CLUTCH.gest); /* (its Slithering Gestation running out: a ring that empties, red at the end) */
       P3({ k: 'arc', x: st.x, y: st.y, r: 2, f: left, c: left < 0.3 ? '#ff5a4f' : '#9bd94a', o: 0.95 }); if (st.on && left < 0.4) h.label(st.x, st.y, 3.4, 'Break it: ' + Math.ceil(left * P.CLUTCH.gest) + ' s', '#ff8f87', 13); });
     G.p3.grips.forEach((g) => { const d = pos(g.by); if (g.grasp) { h.grow(g.grasp[0], g.grasp[1], 8 * (1 - (t - g.t0) / 0.7), '#c0394f', 0.8); return; } P3({ k: 'grip', x0: d[0], y0: d[1], x1: g.to[0], y1: g.to[1] }); });
     if (S.clutches.some((c) => t >= c.land && t < c.land + 3) && G.p3.cl) { const c0 = S.clutches.find((c) => t >= c.land && t < c.land + 3), cc = FR(P.grasp, c0.n); h.label(cc[0], cc[1], 7, 'Death Knights: grip!', '#ff8a9a', 13); }
@@ -631,7 +631,7 @@ function pgP3(A) {
     // (the Shriekers, and Vicious Echoes)
     // (its pink glow while Vicious Echoes casts; the cast bar over its head says the rest (castBars, Nov 16), so its name label waits until the bar has gone)
     const bars = castBars(t);
-    Object.entries(G.p3.sh).forEach(([k, s]) => { const e = S.echoes.find((q) => q.sh === k && t >= q.t0 && t <= q.t1 && !G.p3.kick[k]), mineK = S.job[me] && S.echoes.some((q) => q.sh === k && S.job[me].kick === q.k); P3({ k: 'shrieker', x: s.x, y: s.y });
+    Object.entries(G.p3.sh).forEach(([k, s]) => { const e = S.echoes.find((q) => q.sh === k && t >= q.t0 && t <= q.t1 && !G.p3.kick[k]), mineK = S.job[me] && S.echoes.some((q) => q.sh === k && S.job[me].kick === q.k); P3({ k: 'shrieker', x: s.x, y: s.y, ref: s });
       if (e) P3({ k: 'dome', x: s.x, y: s.y, r: 3.4, c: '#ff9fb2', o: 0.22 + 0.1 * Math.sin(t * 12) }); if (!bars.some((b) => b.caster === k)) h.label(s.x, s.y, 6.5, 'Shrieker ' + k.slice(2) + (mineK ? ' · yours' : ''), '#ff9fb2', 13);
       const gone = S.echoes.find((q) => q.sh === k && G.p3.kick[k] === 'none' && t >= q.t1 && t <= q.t1 + 0.8); if (gone) P3({ k: 'shock', x: s.x, y: s.y, r: P.ECHO * Math.min(1, (t - gone.t1) / 0.8), c: '#ffd23b' }); });
     if (t >= T.heart && t < T.end + 0.5) { const hp = S.heart; h.disc(hp[0], hp[1], 4.5, '#5a0f22', 0.6); h.ring(hp[0], hp[1], 4.5, '#ff5a7a', 1, 0.3); P3({ k: 'heart', x: hp[0], y: hp[1] }); h.label(hp[0], hp[1], 6.5, 'Venomous Heart', '#ff9fb2', 14); }
@@ -694,6 +694,7 @@ function pg3dP3(K) {
   const put = (s, t) => { const k = s.k;
     if (k === 'qsink') { const m = Q[s.q]; if (m) { m.position.y = -7 * s.f; m.visible = s.f < 1; m.userData.f = s.f; CK.forEach((c, p) => { c.visible = !Q[p].userData.f && !Q[(p + 1) % 4].userData.f; }); } return true; }
     if (k === 'gate') { const by = K.baseY(s.x, s.y), g = gate(), u = g.userData; g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.8; K.col(u.rm, s.c); u.cm.uniforms.uO.value = 0.5 + 0.15 * Math.sin(t * 4); glw(s.x, by + 1.5, -s.y, 5, s.c, 0.5); return true; }
+    if (K.mon && s.ref && (k === 'clutch' || k === 'shrieker') && K.mon(s.ref, k, s.x, s.y, k === 'shrieker' ? { face: Math.atan2(-s.x, s.y) } : null)) return true; /* (its monster model, src/practice3d.js PG3D_MON) */
     if (k === 'clutch') { const g = clutch(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = t * 0.6 + (s.ph || 0); g.children.forEach((c, i) => { c.position.y = 0.8 + (i === 3 ? 0.7 : 0) + Math.sin(t * 5 + i) * 0.12; }); glw(s.x, by + 1, -s.y, 2.2, '#9bd94a', 0.3); return true; }
     if (k === 'shrieker') { const g = shrieker(), by = K.baseY(s.x, s.y); g.position.set(s.x, by, -s.y); g.rotation.y = Math.atan2(-s.x, s.y) + Math.sin(t) * 0.1; return true; }
     if (k === 'stone') { const g = stone(); g.position.set(s.x, K.baseY(s.x, s.y), -s.y); return true; }

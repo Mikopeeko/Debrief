@@ -240,7 +240,7 @@ module.exports = function practice3d(say, H) {
     const calls = [...P3.matchAll(/pg3dStoneDraw\((?!mk, px\))/g)].map((q) => q.index), a = P3.indexOf('const put = '), b = P3.indexOf('\n  // ---- the camera'), c = P3.indexOf('const draw1 = '), d = P3.indexOf('\n  const draw = ');
     if (calls.length !== 1 || calls.some((i) => (i > a && i < b) || (i > c && i < d)) || !/const STN = pg3dStoneDraw\(/.test(P3)) nope('it must be drawn once, when the 3D view opens (one pg3dStoneDraw call, in pg3d and not in put or draw1): ' + calls.length + ' call(s)');
     const url = []; for (const re of [/TextureLoader|ImageLoader|ImageBitmapLoader|FileLoader|createImageBitmap|XMLHttpRequest/, /new Image\b/, /\bfetch\(/, /url\(/, /data:image/, /\.src\s*=(?! PG3D_THREE;| src;)/]) if (re.test(P3)) url.push(String(re)); /* (PG3D_GLTF: the loader for your figure, check 13; the stone still draws by code) */
-    if ((P3.replace(/const PG3D_(GLTF|SKU|KK2?) = '[^']+'/g, '').replace(/const PG3D_FIG = \{[\s\S]*?\} \};/, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s and your figure\'s (check 13)');
+    if ((P3.replace(/const PG3D_(GLTF|SKU|KK2?|MQ) = '[^']+'/g, '').replace(/const PG3D_FIG = \{[\s\S]*?\} \};/, '').replace(/const PG3D_MON = \{[\s\S]*?\n\};/, '').match(/https?:\/\//g) || []).length !== 1) url.push('an address besides three.js\'s, the figures\' and the monsters\' (checks 13, 14)');
     if (url.length) nope('a texture or picture loads from an address (' + url.join(', ') + '): the stone must be drawn by code, never a picture');
     if (!/const P = \(x, y\) => \[\(x \+ S \/ 2\) \* K, \(S \/ 2 - y\) \* K\]/.test(P3) || !/S = PL\.span, K = px \/ S/.test(P3) || !/map: stx\(STN\.col, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5\)/.test(P3) || !/normalMap: stx\(STN\.nrm, 1 \/ STN\.span, 1 \/ STN\.span, 0\.5, 0\.5/.test(P3)) nope('the texture doesn\'t span the plan (1 / span, the stone\'s middle at 0.5) the way pg3dStoneDraw draws it ((x + S / 2) * K, (S / 2 - y) * K): the carving would slide off the octagon');
     const sc = (() => { try { const x = vm.createContext({ Math, Uint8Array, Uint8ClampedArray }); vm.runInContext(H.grab('PG_UL', PJ) + '\n' + H.grab('pg3dStonePlan', P3) + '\n' + H.grab('pg3dNormals', P3) + '\n' + H.grab('pg3dStoneDraw', P3) + '\nthis.plan = pg3dStonePlan; this.nrm = pg3dNormals; this.draw = pg3dStoneDraw; this.on = PG_UL.onPlat;', x); return x; } catch (e) { nope('pg3dStonePlan, pg3dNormals or pg3dStoneDraw don\'t run by themselves (' + String(e.message).slice(0, 140) + ')'); return null; } })();
@@ -381,16 +381,45 @@ module.exports = function practice3d(say, H) {
     if (!/const root = T\.SkeletonUtils\.clone\(P0\.root\); root\.traverse\(\(m\) => \{ if \(m\.isSkinnedMesh && m\.skeleton\) own\.push\(m\.skeleton\); \}\);/.test(P3)) nope('each wearer must get a SkeletonUtils clone, its bones freed on close');
     if (!/const L = mine && A\.look \? A\.look\(\) : 'auto'; if \(PG3D_FIG\[L\]\) return L;/.test(P3) || !/if \(c !== 'knight' && PG3D_FIG\[c\]\) return c;/.test(P3) || !/return r === 'r' \? 'mage' : r === 'h' \? 'priest' : r === 't' \|\| mine \? 'knight' : 'warrior';/.test(P3)) nope('a look isn\'t picked by the Look list (yours), else by the raider\'s class, else by role (ranged the mage, healers the priest, tanks and your melee the knight, the raid\'s melee the warrior)');
     if (!/if \(k === 'unit' && s\.you && meNow\(\)\) \{ figPose\(ME, s, A\.G\.lastHitT\); return; \}/.test(P3)) nope('put() doesn\'t swap your capsule for your figure');
-    if (!/if \(k === 'unit' && !s\.you\) \{ const f = botNow\(s\); if \(f\) \{ figPose\(f, s, null\); return; \} \}/.test(P3)) nope('put() doesn\'t swap a raider\'s capsule for its figure');
+    if (!/if \(k === 'unit' && !s\.you\) \{ const f = botNow\(s\); if \(f\) \{ figPose\(f, s, botSwing\(f, s\)\); return; \} \}/.test(P3)) nope('put() doesn\'t swap a raider\'s capsule for its figure');
     const fp = (/const figPose = [\s\S]*?M\.on = true; \};/.exec(P3) || [''])[0];
     if (!fp) nope('there is no figPose (the figures\' moves)');
     else { if (/new T\./.test(fp)) nope('the figures make new three.js objects while drawing');
       if (!/'atk'/.test(fp) || !/'run'/.test(fp) || !/'idle'/.test(fp)) nope('the figures don\'t switch between standing, running and attacking'); }
-    if (!/atk: mine \? act\(/.test(P3)) nope('only your figure swings (the raid stands and runs)');
+    if (!/atk: rk\.indexOf\('mon:'\) === 0 \? null : act\(/.test(P3)) nope('you and the raid must swing or cast (monsters don\'t)');
+    // (the raid at work, Flex: "Would it take much to have the bots attacking things that are supposed to be attacked?", "as long as the bots don't look like they are just standing around vibing")
+    if (!/BT = botAims\(t\);/.test(P3) || !/right: \(\(dv && dv\.right\) \|\| \[\]\)\.map\(\(o\) => o\.p\)/.test(P3) || !/if \(r === 'h'\) B\.tanks\.forEach\(near\); else \{ B\.right\.forEach\(near\); if \(!tp && B\.boss\) near\(B\.boss\); \}/.test(P3) || !/figPose\(f, s, botSwing\(f, s\)\)/.test(P3)) nope('the raid doesn\'t face and hit what it should (the game\'s right targets, else Ula\'tek; healers the tanks)');
+    const bs = (/const botSwing = [\s\S]*?\}; \/\*/.exec(P3) || [''])[0]; if (!bs || /new T\./.test(bs) || /G\.(hp|log|adds\.push)|mistake\(|hurt\(/.test(bs)) nope('botSwing must only aim and time the swing (no new objects, nothing that changes the fight or the score)');
     if (!/for \(let i = 0; i < FIGL\.length; i\+\+\) FIGL\[i\]\.on = false;/.test(P3) || !/for \(let i = 0; i < FIGL\.length; i\+\+\) \{ const f = FIGL\[i\]; f\.root\.visible = f\.on; if \(f\.on\) f\.mixer\.update\(dt\); \}/.test(P3)) nope('draw1 doesn\'t move the figures\' animations on, or doesn\'t hide one that isn\'t drawn');
     if (!/FIGL\.length = 0; BOTF\.clear\(\);/.test(P3.slice(P3.indexOf('const dispose = ')))) nope('closing the game doesn\'t let go of the figures');
     if (!/own\.push\(m\.geometry\)/.test(P3)) nope('the models\' geometry, materials and textures aren\'t freed when the game closes (own)');
     if (!/ring\(b\.x, b\.y, 0\.95, cc \|\| rc, 0\.9, 0\.16\)/.test(P3)) nope('the rings under the raid aren\'t in class colours (the figures show the role, the ring the class)'); }
+  // 14. the monsters (Nov 16, Flex: "Can you also find a model pack to use for the monsters in the fight as well? Ideally serpent type", "there
+  //     should only be one model for each of the mobs", "Rawlings should not be the same as vipers, try to find unique models for each one",
+  //     "both the shrieker and vipers are flying creatures"): one CC0 model per mob (PG3D_MON), every one a different file, each at a pinned
+  //     address; drawn as tall as the old shape so the hits stay where they were; a flier hovers over its spot with a ring on the floor under a
+  //     Viper; the old shape stays until its model loads (or if it can't); phase 1's adds and Wretches, phase 2's Warden, Doomscales, Ravenous
+  //     Doomscales and Clutches, phase 3's Clutches and Shriekers; pooled, nothing new while drawing.
+  { const nope = (m) => bad('the monsters: ' + m + ' (check 14)');
+    const mt = (/const PG3D_MON = \{[\s\S]*?\n\};/.exec(P3) || [''])[0], mq = /const PG3D_MQ = '([^']+)'/.exec(P3);
+    if (!mt) nope('there is no PG3D_MON (one model per mob)');
+    const ent = [...mt.matchAll(/^\s+(\w+): \{ url: ([^,]+),/gm)].map((q) => [q[1], q[2]]), urls = ent.map((e) => e[1]);
+    ['rawling', 'doomscale', 'warden', 'ravenous', 'wretch', 'clutch'].forEach((k) => { if (!ent.some((e) => e[0] === k)) nope('no model for the ' + k); });
+    if (new Set(urls).size !== urls.length) nope('two mobs share a model (each mob must have its own)');
+    if (!mq || !/^https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w./-]+\/$/.test(mq[1])) nope('the snakes must come from one pinned commit (PG3D_MQ)');
+    if (urls.some((u) => !/^PG3D_MQ \+ '[\w%./-]+\.glb'$/.test(u) && !/^'https:\/\/cdn\.jsdelivr\.net\/gh\/[\w.-]+\/[\w.-]+@[0-9a-f]{40}\/[\w%./-]+\.(glb|gltf)'$/.test(u) && !/^'https:\/\/static\.poly\.pizza\/[0-9a-f-]{36}\.glb'$/.test(u))) nope('a monster loads from an address that isn\'t pinned (a jsdelivr commit, or a poly.pizza file id)');
+    if (ent.some((e) => !new RegExp('\\b' + e[0] + ': \\{ url: [^}]*\\bh: [\\d.]+').test(mt))) nope('a monster has no height (h: as tall as its old shape)');
+    if (!/const F = rk\.indexOf\('mon:'\) === 0 \? PG3D_MON\[rk\.slice\(4\)\] : PG3D_FIG\[rk\];/.test(P3) || !/k = \(F\.h \|\| 2\.3\) \/ h;/.test(P3)) nope('the loader doesn\'t read monsters from PG3D_MON at their own height');
+    const mf = (/const mon = [\s\S]*?return true; \};/.exec(P3) || [''])[0];
+    if (!mf || /new T\./.test(mf) || !/MONFREE\[kind\]/.test(mf) || !/figMake\('mon:' \+ kind, false, x, y\)/.test(mf) || !/D\.hover/.test(mf)) nope('mon() must reuse pooled monsters, make new ones only through figMake, hover the fliers, and make nothing while drawing');
+    if (!/const monEnd = [^\n]*MONFREE/.test(P3) || !/monEnd\(\); for \(let i = 0; i < FIGL\.length; i\+\+\)/.test(P3)) nope('monsters not drawn this frame aren\'t put back in their pool');
+    if (!/if \(k === 'add' && mon\(s\.ref \|\| s, s\.kind === 'viper' \? 'viper' : 'rawling', s\.x, s\.y\)\) return;/.test(P3) || !/P\(\{ k: 'add', kind: a\.kind, x: a\.x, y: a\.y, ref: a \}\)/.test(P3)) nope('phase 1\'s Vipers and Rawlings don\'t draw their monsters (keyed by the add, so each keeps its pose)');
+    if (!/if \(a\.kind === 'viper'\) ring\(a\.x, a\.y, /.test(P3)) nope('a flying Viper has no ring on the floor at its real spot');
+    if (!/if \(k === 'wretch' && mon\('wr' \+ s\.id, 'wretch', /.test(P3)) nope('the Wretch doesn\'t draw its monster');
+    if (!/kit3d\(\{ mon, /.test(P3) || !/pg3dP2\(\{ mon, /.test(P3) || !/pg3dP3\(\{ mon, /.test(P3)) nope('the parts\' 3D kits aren\'t given mon');
+    const P2J = rd('practice-p2.js'), P3J = rd('practice-p3.js');
+    if (!/K\.mon\(s\.ref, k === 'rav' \? 'ravenous' : k, /.test(P2J) || !/K\.mon\(s\.ref, 'doomscale', /.test(P2J) || !/k: 'warden', x: p\[0\], y: p\[1\], ref: w/.test(P2J) || !/ref: d \}\)/.test(P2J) || !/p: left, ref: c \}\)/.test(P2J) || !/k: 'rav', x: r\.x, y: r\.y, ref: r/.test(P2J)) nope('phase 2\'s Warden, Doomscales, Ravenous Doomscales and Clutches don\'t draw their monsters');
+    if (!/K\.mon\(s\.ref, k, s\.x, s\.y, /.test(P3J) || !/ph: c\.land, ref: st \}\)/.test(P3J) || !/k: 'shrieker', x: s\.x, y: s\.y, ref: s/.test(P3J)) nope('phase 3\'s Clutches and Shriekers don\'t draw their monsters'); }
   return loadP;
 };
 if (require.main === module) {
