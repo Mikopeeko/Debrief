@@ -467,6 +467,37 @@ function simpleScreen(H, say, pj) {
         d.stepOwn(1); if (G.hp <= 0) G.hp = 100; }
       const off = G.log.filter((m) => /were up|was open|was up|was going down|went into the cauldron late|No defensive/.test(m.text)).map((m) => m.text);
       if (off.length) bad((pk0 === 'm2' ? 'phase 2' : 'the intermission') + ' as ' + r0 + ' ' + jb + ', a player who only follows the screen is marked: ' + off.join(' / ') + ' (#3, #4, check S14)'); } }
+  // S15. alerts, not arrows (Flex, Nov 17, after a player who only follows the screen walked into wave after wave: "i dont want TOO much hand holding in terms
+  //      of where to move. More just good alerts of whats happening/whats coming", "Yes, start alerts"):
+  //      a. every boss-mod bar that hurts gets a countdown in the big alert stack from 5 s out, with what to do ("Tail sweep in 3: run 35 yards from her tail"),
+  //         the soonest two, a part's own words where it differs (phase 3's waves: "step into a gap"); phase 3's small tails and falling rocks have bars now.
+  //      b. a dodge line says which way, from where your camera looks, as A, D, W and S move you: "Step left out of the red lane!" (pgDirWord, stepDir).
+  //      c. played: phase 1 as a ranged egg carrier who only follows the words (steps the way the line says) is hit by at most 4 waves; it was 8 before.
+  { let X = null; try { X = { da: vm.runInContext('pgDangerAlerts', ctx), dw: vm.runInContext('pgDirWord', ctx) }; } catch (e) { bad('the screen has no pgDangerAlerts or pgDirWord (check S15)'); }
+    if (X) {
+      const a1 = X.da([{ name: 'Tail sweep', left: 3.2 }, { name: 'Heart open', left: 2 }, { name: 'Small tails', left: 6 }, { name: 'Falling Debris', left: 1.1 }, { name: 'Her waves', left: 4.5 }]);
+      if (a1.map((q) => q.text).join(' / ') !== 'Falling Debris in 2: out of the brown circles / Tail sweep in 4: run 35 yards from her tail') bad('the danger countdowns read "' + a1.map((q) => q.text).join(' / ') + '" (the soonest two dangers within 5 s, each with what to do) (check S15)');
+      const a2 = X.da([{ name: 'Her waves', left: 2 }], { 'Her waves': 'step into a gap' }); if (!a2[0] || a2[0].text !== 'Her waves in 2: step into a gap') bad('a part\'s own words for a danger aren\'t used: ' + JSON.stringify(a2) + ' (check S15)');
+      [[[1, 0], [0, 1], 'right'], [[-1, 0], [0, 1], 'left'], [[0, 1], [0, 1], 'forward'], [[0, -1], [0, 1], 'back'], [[0, -1], [1, 0], 'right'], [[0, 1], [1, 0], 'left']].forEach(([v, f, w]) => { if (X.dw(v[0], v[1], f) !== w) bad('a step ' + JSON.stringify(v) + ' with the camera facing ' + JSON.stringify(f) + ' reads "' + X.dw(v[0], v[1], f) + '", not "' + w + '" (A, D, W, S) (check S15)'); }); }
+    [['Small tail: step left out of its red lane.', 'Step left out of the red lane!'], ['Small tail: step back, off its red lane, in your circle.', 'Step back, stay in your circle!'], ['Her waves: step forward into the green half.', 'Step forward into the green half!'],
+      ['An egg is falling on you: step right out of the white circle.', 'Step right out of the white circle!'], ['Virulent Spit: step left out of the green swirl!', 'Step left out of the green swirl!'], ['Falling Debris: step back out of the brown circle!', 'Step back out of the brown circle!'],
+      ['Her waves: step left into a gap, out of the red.', 'Step left into a gap!'], ['Small tails: step right through a gap in their waves.', 'Step right through a gap!'], ['Mother\'s Wrath: step left out of the red circle in front of her.', 'Step left out of the red circle!'], ['Get back on the stone: step left!', 'Get back on the stone: step left!']].forEach(([x, w]) => { const g = short(x); if (g !== w) bad('the NOW line says "' + x + '" as "' + g + '", not "' + w + '" (check S15)'); });
+    const P3J = fs.readFileSync(path.join(__dirname, '..', 'src', 'practice-p3.js'), 'utf8');
+    if (!P3J.includes("S.tails.forEach((q) => add(q.at, 'Small tails', '#ff8f87'))") || !P3J.includes("add(nd.at, 'Falling Debris', '#c8a36a')") || !P3J.includes("dangerTips: { 'Her waves': 'step into a gap' }")) bad('phase 3\'s small tails and falling rocks have no bar (so no countdown), or its waves read "wait in the green half" (check S15)');
+    if (!PJ.includes('.concat(pgDangerAlerts(modBars(t, true), P2 && P2.dangerTips))')) bad('the alert stack doesn\'t show the danger countdowns (check S15)');
+    // (played, every part: the countdowns show; then phase 1 by a player who only follows the words)
+    for (const pk of PARTS) { const W0 = W.length, d = L.open(pk === 'm' ? null : pk); try { d.at(0, d.P2 ? d.P2.slotOf(d.P2.pick) : d.role.id, { seed: 3 }); } catch (e) { continue; } const G = d.G, S = d.S; let n = 0;
+      while (G.t < S.end - 0.3 && n++ < 4000) { d.step(5); d.frame(); }
+      const cds = W.slice(W0).filter((w) => /\.pg-cds\b/.test(w.at)).map((w) => plain(w.v)).join(' | '); if (!/ in \d: /.test(cds)) bad(ctx.PG_PARTS["Ula'tek"][pk].name + ' shows no danger countdown in a whole run (check S15)'); }
+    { const d = L.open(null), su = d.setupApi(); su.set('r', su.jobs('r')[0][0]); const me = d.jobSlot(); d.at(0, me, { seed: 3 }); const G = d.G, S = d.S; let n = 0, st = null;
+      while (G.t < S.end - 0.3 && n++ < 8000) { const h = d.hint(), dv = d.dps(); d.walkTo(h && h.T && !h.wait ? h.T.slice() : null);
+        if (dv && dv.cat && dv.right && dv.right.length && !(dv.cur && dv.inRange && dv.right.some((o) => o.key === dv.cur.key))) d.tgt = dv.right.slice().sort((a, b) => Math.hypot(a.p[0] - G.x, a.p[1] - G.y) - Math.hypot(b.p[0] - G.x, b.p[1] - G.y))[0].key;
+        if (dv && dv.cat && dv.inRange && !(dv.cd > 0)) { d.atk(); if (!(dv.aoeCd > 0)) d.aoe(); }
+        d.frame(); const now = plain(d.nowHtml()); if (/^Get closer/.test(now) && dv && dv.cur && dv.cur.p) d.walkTo(dv.inRange ? null : dv.cur.p.slice());
+        const sm = /(?:^|: )[Ss]tep (left|right|forward|back)\b/.exec(now); if (sm) { if (!st || st.w !== sm[1] || Math.hypot(G.x - st.p[0], G.y - st.p[1]) < 0.3) { const V = { right: [1, 0], left: [-1, 0], forward: [0, 1], back: [0, -1] }[sm[1]]; st = { w: sm[1], p: [G.x + V[0] * 2.5, G.y + V[1] * 2.5] }; } d.walkTo(st.p.slice()); } else st = null;
+        if (/Press Q/.test(now) && G.t - G.def >= 90) G.def = G.t; if (/sprint/i.test(now) && G.t - G.sprint >= 30) G.sprint = G.t;
+        d.stepOwn(1); if (G.hp <= 0) G.hp = 100; }
+      const hits = G.log.filter((m) => /Caustic Waves/.test(m.text)).length; if (hits > 4) bad('phase 1 as a ranged egg carrier who only follows the words is hit by ' + hits + ' waves (4 at most): the dodge lines don\'t say which way (check S15)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.

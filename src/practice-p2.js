@@ -737,9 +737,9 @@ function pgP2(A) {
   // ((a): a circle landing on you soon, a frontal you're in, a small tail's wave about to cross you, an egg's shield)
   const dangerText = (t) => { const me = A.me, P0 = [G.x, G.y];
     const m = S.impacts.find((q) => t >= q.t0 && t <= q.at && q.at - t <= 3.5 && pgDist(P0, [q.x, q.y]) < q.r + 1); /* (a green swirl's own call comes as it appears; the job line from 3.5 s before it lands, so it doesn't hide a step due now) */
-    if (m) return m.name === 'Virulent Spit' ? 'Virulent Spit: step out of the green swirl!' : 'Falling Debris: step out of the brown circle!';
+    if (m) { const dw = A.stepDir ? A.stepDir((px, py) => pgDist([px, py], [m.x, m.y]) < m.r + 1.5, 'imp' + m.x + ',' + m.y) : ''; return m.name === 'Virulent Spit' ? 'Virulent Spit: step ' + (dw ? dw + ' ' : '') + 'out of the green swirl!' : 'Falling Debris: step ' + (dw ? dw + ' ' : '') + 'out of the brown circle!'; } /* (which way, Nov 17) */
     if (G.p2.fan.some((f) => t >= f.t0 && t <= f.at && f.tank !== me && inFan(f, G.x, G.y, 1))) return 'Doomscale frontal: step behind it!';
-    if (S.waves.some((wv) => waveAt(wv, P0, t, -0.3, 3))) return 'Small tails: step out of the red lane!';
+    if (S.waves.some((wv) => waveAt(wv, P0, t, -0.3, 3))) { const dw = A.stepDir ? A.stepDir((px, py) => S.waves.some((wv) => waveAt(wv, [px, py], t, -0.3, 3.5)), 'tails') : ''; return 'Small tails: step ' + (dw ? dw + ' ' : '') + 'out of the red lane!'; }
     if (G.eggs.some((q) => q.state === 'floor' && wdUp(q.side) && Math.hypot(G.x - q.x, G.y - q.y) < P.WARD + 1)) return 'Step off the egg: its shield hurts you while the Warden lives.';
     return null; };
   // (your countdown alerts (Flex, Nov 17: '"Break tether in 20s" and it slowly counts down'): from the moment your tether lands, "Break tether in Ns" to your

@@ -723,10 +723,10 @@ function checks(H, say) {
     { const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; D.P2.pick = pk; const me = D.P2.slotOf(pk); D.at(T2.spit[0] + 3.5, me, { east: false, seed: 3 }); const m = D.S.impacts.find((q) => q.name === 'Virulent Spit' && Math.abs(q.at - T2.spit[0] - 6.5) < 0.1 && q.x > 0);
       if (!m) pr('the check lost its setup: no green swirl on the east ledge at 3:27');
       else { D.pos = [m.x, m.y]; const on = D.P2.jobText(); D.pos = [m.x + m.r + 2, m.y]; const off = D.P2.jobText();
-        if (on !== 'Virulent Spit: step out of the green swirl!') pr('standing in a green swirl about to land, the line reads "' + on + '", not "Virulent Spit: step out of the green swirl!"');
+        if (!/^Virulent Spit: step (?:(?:left|right|forward|back) )?out of the green swirl!$/.test(on)) pr('standing in a green swirl about to land, the line reads "' + on + '", not "Virulent Spit: step out of the green swirl!"');
         if (/Virulent Spit|Falling Debris/.test(off)) pr('2 yards outside a green swirl, the line still says to step out: "' + off + '"'); } }
     { const pk = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'none' }; D.P2.pick = pk; const me = D.P2.slotOf(pk); D.at(T2.rattle[0] - 0.3, me, { east: false, seed: 3 }); const w = D.S.waves.find((q) => q.kind === 'tail'), a = w.deg * Math.PI / 180;
-      D.pos = [w.x + Math.cos(a) * w.v * 2.5, w.y + Math.sin(a) * w.v * 2.5]; const jt = D.P2.jobText(); if (jt !== 'Small tails: step out of the red lane!') pr('standing in a small tail\'s red lane 2.8 s before its wave reaches you, the line reads "' + jt + '"'); }
+      D.pos = [w.x + Math.cos(a) * w.v * 2.5, w.y + Math.sin(a) * w.v * 2.5]; const jt = D.P2.jobText(); if (!/^Small tails: step (?:(?:left|right|forward|back) )?out of the red lane!$/.test(jt)) pr('standing in a small tail\'s red lane 2.8 s before its wave reaches you, the line reads "' + jt + '"'); }
     // (11) your small egg stays shut while its Warden lives: no "Shell broken", no pickup on the ledge
     { const pk = { side: 'E', role: 'r', egg: 'n6', mal: 0, cry: 0, teth: 'none' }; D.P2.pick = pk; const me = D.P2.slotOf(pk); D.at(171, me, { east: false, seed: 3 }); said(); const e = D.G.eggs.find((q) => q.id === me);
       while (D.G.t < 205 && D.G.p2.wdead.E == null) { D.pos = [e.x + 0.5, e.y]; D.stepOwn(1); } const fl = said().map((q) => q.text);

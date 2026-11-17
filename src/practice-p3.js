@@ -604,10 +604,11 @@ function pgP3(A) {
     if (hp.venom) return say('Step out of the venom onto the stone.', 0); /* (its arrow goes to the nearest stone: the review, Nov 16, had no line for it) */
     const mb = hp.mb, onRing = !!mb && t >= mb.land - 0.5 && (pgDist(here, mb.stack) <= SPOT_R + 2 || (mb.so.includes(me) && inRed(t, mb, here))), kickNow = !!hp.ek && t >= hp.ek.t0;
     // (0) a dodge: a wave or brown circle due on your spot, a red circle that isn't yours, her reach, a wave crossing your way to your next spot
-    if (hp.th) { const k = hp.th.kind; return say(k === 'her3' ? (onRing ? 'Her waves: step into a gap, then back to your ring.' : kickNow ? 'Step into a gap in her waves, then kick (E)!' : 'Her waves: step sideways into a gap, out of the red.')
-      : k === 'tail' ? (onRing ? 'Small tails: step into a gap, then back to your ring.' : 'Small tails: step through a gap in their waves.') : k === 'purge' ? 'Soakers\' waves: step out of the red lane.' : k === 'bite' ? 'Step out of the red circles: soakers only!' : 'Falling Debris: step out of the brown circle!', 0); }
+    if (hp.th) { const k = hp.th.kind, dw = A.stepDir ? A.stepDir((px, py) => !!threat(t, px, py, null), 'th' + k) : '', sw = dw ? dw + ' ' : ''; /* (which way, Nov 17) */
+      return say(k === 'her3' ? (onRing ? 'Her waves: step into a gap, then back to your ring.' : kickNow ? 'Step into a gap in her waves, then kick (E)!' : dw ? 'Her waves: step ' + dw + ' into a gap, out of the red.' : 'Her waves: step sideways into a gap, out of the red.')
+      : k === 'tail' ? (onRing ? 'Small tails: step into a gap, then back to your ring.' : 'Small tails: step ' + sw + 'through a gap in their waves.') : k === 'purge' ? 'Soakers\' waves: step ' + sw + 'out of the red lane.' : k === 'bite' ? 'Step ' + sw + 'out of the red circles: soakers only!' : 'Falling Debris: step ' + sw + 'out of the brown circle!', 0); }
     /* ("her reach (the red circle)" read as the bite's red circle, at the second bite (the review, Nov 16)) */
-    const wrN = S.wrath.find((q) => t >= q.t0 && t <= q.at + 3.2 && q.tank !== me); if (wrN && pgDist(here, wrN.p) < 6.5) return say('Mother\'s Wrath: step out of the red circle in front of her.', 0);
+    const wrN = S.wrath.find((q) => t >= q.t0 && t <= q.at + 3.2 && q.tank !== me); if (wrN && pgDist(here, wrN.p) < 6.5) { const dw = A.stepDir ? A.stepDir((px, py) => pgDist([px, py], wrN.p) < 7, 'wrath' + wrN.at) : ''; return say('Mother\'s Wrath: step ' + (dw ? dw + ' ' : '') + 'out of the red circle in front of her.', 0); }
     if (hp.wait) return say('Wait: let it pass, then go.', 0); /* (phase 1's words: the "Wait" on the floor is at where you're going, not "here", and it waits for brown circles and Purge lanes too (the review, Nov 16)) */
     // (1) your step
     const g1 = S.gates.find((g) => g.k === 1); if (g1 && t < T.gateEnd && qm !== S.Qs[0] && !G.p3.used[me + 'g1']) return say(t < T.clu[0] - 4 ? 'Walk into the gateway (gold ring) to reach her.' : 'Hurry: walk into the gateway (gold ring) now.', 1);
@@ -616,8 +617,9 @@ function pgP3(A) {
     // 17 to 23 yards (the review, Nov 16: melee Group Soak 2 seeds 3 and 9 at 8:03, healer Group Soak 3 seed 2 at 9:46.6))
     const pu = G.p3.purge.find((q) => q.who.includes(me) && t < q.burst);
     if (pu) { const inR = !!pu.spot[me] && pgDist(here, pu.spot[me]) <= SPOT_R; return say(!inR ? 'Walk to your gold ring at the edge, away from the raid.' : t >= pu.burst - 1.5 ? 'Hold still: your Purge bursts soon.' : 'Stay on your gold ring: keep 5 yards from everyone.', 1); }
-    for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) { const g2 = S.gates.find((g) => g.k === 2);
-      if (qm === S.Qs[i]) return say(i === 1 && g2 && !G.p3.used[me + 'g2'] ? (t < g2.t0 ? (pgDist(here, g2.p) > 6 ? 'Walk to the gateway: it opens after her wave.' : 'Wait by the gateway: let her wave pass.') : 'Go through the gateway (gold ring) now.') : 'Move one quarter left now, before she breaks this one.', 1);
+    for (let i = 0; i < 3; i++) if (t >= T.prey[i] && t < S.hit[i]) { const g2 = S.gates.find((g) => g.k === 2), lq = G.p3.lq; if (qm !== S.Qs[i]) G.p3.lq = { i, t };
+      const back = qm === S.Qs[i] && !!lq && lq.i === i && t >= lq.t && t - lq.t < 1; /* (stepped off your quarter in the last second: on the crack it read "Move one quarter left now" and "Get onto the next quarter left" by turns, 3 times in 0.25 s (7:15, melee no soak seed 5, check RV3, Nov 17)) */
+      if (qm === S.Qs[i] && !back) return say(i === 1 && g2 && !G.p3.used[me + 'g2'] ? (t < g2.t0 ? (pgDist(here, g2.p) > 6 ? 'Walk to the gateway: it opens after her wave.' : 'Wait by the gateway: let her wave pass.') : 'Go through the gateway (gold ring) now.') : 'Move one quarter left now, before she breaks this one.', 1);
       if (qm === S.Qs[i + 1]) return say(qNow(t) === 'prey' ? 'Press Q now!' : hp.jn ? 'Keep going: join the raid on this quarter.' : 'Off her quarter: good. ' + (i ? (saveQ(i) ? 'Save your defensive (Q) for your soak.' : qBack(i) ? 'Press Q as it lands.' : 'Stack with the raid here.') : 'Stack with the raid here.'), 1);
       return say('Get onto the next quarter left, where the raid is going.', 1); }
     if (hp.jn) return say('Keep going: join the raid on this quarter.', 1);
@@ -654,6 +656,7 @@ function pgP3(A) {
     S.bites.forEach((b) => { if (b.so.includes(me)) add(b.land, 'Your soak', PG_P3_C.gold); else if (b.tg.includes(me)) add(b.land, 'Your red circle', PG_P3_C.gold); else add(b.land, 'Serpent\'s Bite', '#ff8f87'); });
     if (G && G.p3) G.p3.purge.forEach((q) => { if (q.who.includes(me)) add(q.burst, 'Your Purge', '#ff8a3b'); });
     T.prey.forEach((p0, i) => add(S.hit[i], 'Circling Prey', '#ff4a4a')); S.wretch.fb.forEach((q) => add(q.at, 'Fester Burst', '#d8f22f')); S.wrath.forEach((q) => { if (q.tank !== me) add(q.at, 'Mother\'s Wrath', '#ff4a4a'); });
+    S.tails.forEach((q) => add(q.at, 'Small tails', '#ff8f87')); { const nd = S.impacts.filter((m) => m.name === 'Falling Debris' && m.at > t).sort((a, b) => a.at - b.at)[0]; if (nd) add(nd.at, 'Falling Debris', '#c8a36a'); } /* (phase 3's two biggest killers in Flex's live run had no bar, so no countdown: Nov 17) */
     T.waves.forEach((w0) => add(w0 + T.wavesCast, 'Her waves', '#9be13a')); S.echoes.forEach((e) => { if (j.kick === e.k) add(e.t0, 'Your kick', PG_P3_C.gold); }); add(T.heart, 'Heart open', '#ff8a5a');
     return L0.sort((a, b) => a.at - b.at).slice(0, 3); };
   const acts = () => '<div class="pg-act" data-a="kick"><b>E</b><span>Kick</span><i></i></div>';
@@ -855,7 +858,7 @@ function pgP3(A) {
 
   return { part: 3, dodges: true, autoAoe: true, walk, hit,
     script: (o) => pgP3Script({ ...(o || {}), me: A.me, pick: mine() ? eff() : null }), init, home, job, slow, check, kick, bossHp, onPlat: (x, y) => { sync(); return pgP3Floor(x, y, S && G && G.p3 ? alive(G.t) : [1, 1, 1, 1], 0.35); }, bossAt, tailAt: () => ({ p: [0, 0], up: false }),
-    jobText, nextLine, nextText: nextLine /* (the name practice.js reads, as phase 2's: under nextLine only, the NEXT line never showed (the review, Nov 16)) */, upNext, acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, castBars, castOf, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.pwHit = {}; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
+    jobText, nextLine, nextText: nextLine /* (the name practice.js reads, as phase 2's: under nextLine only, the NEXT line never showed (the review, Nov 16)) */, upNext, dangerTips: { 'Her waves': 'step into a gap' }, /* (her phase 3 waves have gaps, not a green half: the countdown's words, Nov 17) */ acts, hud, card, bind, role, asg, short, setup: setupCard, starts, tgts, dpsCat, dpsNames, mini, draw2d, auditStep, shapes, castBars, castOf, ff: () => { sync(); if (G && G.p3) { G.wipes = 0; G.p3.kickCd = -99; G.p3.stun = {}; G.p3.missed = []; G.p3.pwHit = {}; G.p3.once = new Set([...G.p3.once].filter((k) => !/^(extra|pw|late1)/.test(k))); } },
     clean: 'Onto her quarter in time, every bite cleared and spread, out of every wave and off every quarter before it broke. Try another job.',
     get pick() { return pk; }, set pick(j) { if (jobOk(j)) pk = j; }, slotOf, mine, get T() { return T; }, alive: (t) => { sync(); return alive(t); }, raidStep: (t) => { sync(); return raidStep(t); } };
 }
