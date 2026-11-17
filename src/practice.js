@@ -450,12 +450,27 @@ function pgOpen(root, boss, d, pk) {
   // a great way to simulate it"): short tones made here, no sound files and never a voice. A two-note ping for a call about you, three quick beeps for a
   // "now" call, a soft blip for the others; 3-2-1 beeps and a high one as your own boss-mod bar ("Your ...") runs out; a chime when you kick, break your
   // egg's shell or pick it up; a low buzz for a mistake. The Sound button or M turns them off (remembered). Nothing plays for the autopilot or a jump
-  let sndOn = (() => { try { return localStorage.getItem('wla-pg-sound') !== 'off'; } catch (e) { return true; } })(), actx = null;
-  const sndCtx = () => { if (actx) return actx; const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext); if (!AC) return null; try { actx = new AC(); } catch (e) { actx = null; } return actx; };
-  const SND = { you: [[880, 0, 0.11], [1320, 0.12, 0.16]], now: [[1046, 0, 0.07], [1046, 0.1, 0.07], [1568, 0.2, 0.12]], call: [[660, 0, 0.08]], tick: [[740, 0, 0.06]], go: [[1175, 0, 0.16]], ok: [[988, 0, 0.08], [1319, 0.09, 0.14]], bad: [[155, 0, 0.22]] };
-  const sfx = (k) => { if (!sndOn || window.__pgAuto || !SND[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); const t0 = c.currentTime + 0.01;
-    SND[k].forEach(([f, at, d]) => { const o = c.createOscillator(), g = c.createGain(), v = k === 'call' || k === 'tick' ? 0.05 : k === 'bad' ? 0.06 : 0.09; o.type = k === 'bad' ? 'sawtooth' : k === 'now' ? 'square' : 'sine'; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t0 + at); g.gain.exponentialRampToValueAtTime(v, t0 + at + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + at + d); o.connect(g); g.connect(c.destination); o.start(t0 + at); o.stop(t0 + at + d + 0.03); }); } catch (e) { /* (no sound here) */ } };
+  // (Loud, Soft or Off on the speaker button and M (Flex, Nov 17: "improve the sound alerts"); kept in this browser: 'on' is loud, as before)
+  let sndLvl = (() => { try { const v = localStorage.getItem('wla-pg-sound'); return v === 'off' ? 'off' : v === 'soft' ? 'soft' : 'loud'; } catch (e) { return 'loud'; } })(), sndOn = sndLvl !== 'off', actx = null;
+  const SND_VOL = { loud: 1, soft: 0.4, off: 0 };
+  const sndCtx = () => { if (actx) return actx; const AC = typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext); if (!AC) return null; try { actx = new AC(); actx.pgOut = actx.createGain(); actx.pgOut.gain.value = SND_VOL[sndLvl] || 0.0001; actx.pgOut.connect(actx.destination); } catch (e) { actx = null; } return actx; };
+  const out = (c) => c.pgOut || c.destination; /* (every sound through one volume) */
+  // (the cues, each its own sound so you know it without reading (Flex, Nov 17): your job a rising two-note bell; "now" quick bright pulses; a dodge a two-tone alarm;
+  //  a raid-wide call one soft low bell; a countdown tick a short wood knock; "go" a bright chord; done right a cheerful three-note chime; a mistake a soft low bonk.
+  //  Made here from tones and noise: no sound files, no voice)
+  const bell = (c, t0, f, v, d) => [[1, 1], [2, 0.32], [3, 0.12], [4.2, 0.05]].forEach(([m, k]) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f * m;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v * k, t0 + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d / (m > 1 ? m * 0.7 : 1)); o.connect(g); g.connect(out(c)); o.start(t0); o.stop(t0 + d + 0.05); });
+  const pulse = (c, t0, f, v, d) => { const o = c.createOscillator(), fl = c.createBiquadFilter(), g = c.createGain(); o.type = 'square'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = 2600;
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(fl); fl.connect(g); g.connect(out(c)); o.start(t0); o.stop(t0 + d + 0.03); };
+  const CUE = { you: (c, t) => { bell(c, t, 1318.5, 0.07, 0.5); bell(c, t + 0.13, 1760, 0.075, 0.6); },
+    now: (c, t) => { pulse(c, t, 1046.5, 0.05, 0.07); pulse(c, t + 0.1, 1046.5, 0.05, 0.07); pulse(c, t + 0.2, 1568, 0.06, 0.12); },
+    dodge: (c, t) => { pulse(c, t, 880, 0.055, 0.09); pulse(c, t + 0.11, 660, 0.055, 0.09); pulse(c, t + 0.22, 880, 0.055, 0.12); },
+    call: (c, t) => bell(c, t, 659.3, 0.045, 0.45), tick: (c, t) => { nz(c, t, 0.05, 0.05, 'bandpass', 1900, 1500, 3); tn(c, t, 0.06, 0.05, 'sine', 1250, 900); },
+    go: (c, t) => { bell(c, t, 1174.7, 0.07, 0.7); bell(c, t, 1568, 0.06, 0.7); bell(c, t, 2349.3, 0.03, 0.5); },
+    ok: (c, t) => { bell(c, t, 1046.5, 0.05, 0.3); bell(c, t + 0.08, 1318.5, 0.05, 0.3); bell(c, t + 0.16, 1568, 0.055, 0.45); },
+    bad: (c, t) => { tn(c, t, 0.28, 0.09, 'sine', 230, 110); nz(c, t, 0.12, 0.03, 'lowpass', 700, 200); } };
+  const sfx = (k) => { if (window.__pgSndLog) window.__pgSndLog.push({ k, t: G ? G.t : 0, on: sndOn }); if (!sndOn || window.__pgAuto || !CUE[k]) return; const c = sndCtx(); if (!c) return;
+    try { if (c.state === 'suspended' && c.resume) c.resume(); CUE[k](c, c.currentTime + 0.01); } catch (e) { /* (no sound here) */ } };
   // (Flex, Nov 16: "Maybe try to include some sounds of what some mechanics might feel like or add attack sounds as well if you can": what a mechanic feels
   // like, made the same way, from noise and sliding tones: a whoosh as a wave passes you, a deep boom for a coil's slam, a wet pop for the Wretch's bubble, a
   // heavy sweep for the tail's Thrash, a thud when something lands near you, a hiss when a Viper hatches and a zip when it stings, a low roar as she dives and
@@ -463,9 +478,9 @@ function pgOpen(root, boss, d, pk) {
   // whirl for the area attack. Quiet, under the calls; nothing for the autopilot)
   let NZ = null; const noise = (c) => { if (NZ && NZ.sampleRate === c.sampleRate) return NZ; NZ = c.createBuffer(1, Math.floor(c.sampleRate * 1.6), c.sampleRate); const d = NZ.getChannelData(0); let v = 0; for (let i = 0; i < d.length; i++) { v = v * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = v * 1.6; } return NZ; };
   const nz = (c, t0, d, v, type, f0, f1, q) => { const n = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); n.buffer = noise(c); fl.type = type; fl.frequency.setValueAtTime(f0, t0); fl.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + d); fl.Q.value = q || 0.8;
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + Math.min(0.04, d * 0.3)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); n.connect(fl); fl.connect(g); g.connect(c.destination); n.start(t0); n.stop(t0 + d + 0.05); };
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + Math.min(0.04, d * 0.3)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); n.connect(fl); fl.connect(g); g.connect(out(c)); n.start(t0); n.stop(t0 + d + 0.05); };
   const tn = (c, t0, d, v, type, f0, f1) => { const o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + d);
-    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + d + 0.05); };
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d); o.connect(g); g.connect(out(c)); o.start(t0); o.stop(t0 + d + 0.05); };
   const FX = { wave: (c, t) => nz(c, t, 0.7, 0.07, 'bandpass', 380, 1500, 1.2), slam: (c, t) => { tn(c, t, 0.5, 0.16, 'sine', 95, 38); nz(c, t, 0.35, 0.08, 'lowpass', 900, 120); },
     pop: (c, t) => { tn(c, t, 0.18, 0.09, 'sine', 420, 90); nz(c, t + 0.02, 0.25, 0.05, 'lowpass', 1800, 300); }, sweep: (c, t) => { nz(c, t, 1.1, 0.09, 'lowpass', 2200, 160); tn(c, t + 0.6, 0.45, 0.1, 'sine', 70, 40); },
     thud: (c, t) => { tn(c, t, 0.28, 0.11, 'sine', 120, 45); nz(c, t, 0.18, 0.05, 'lowpass', 600, 120); }, hiss: (c, t) => nz(c, t, 0.7, 0.06, 'highpass', 2600, 5200, 0.7), zip: (c, t) => tn(c, t, 0.12, 0.05, 'sawtooth', 1800, 600),
@@ -473,8 +488,10 @@ function pgOpen(root, boss, d, pk) {
     fire: (c, t) => { nz(c, t, 0.24, 0.06, 'bandpass', 600, 2400, 1.1); nz(c, t + 0.22, 0.22, 0.05, 'highpass', 1800, 900); }, holy: (c, t) => { tn(c, t, 0.6, 0.045, 'sine', 1318, 1310); tn(c, t, 0.45, 0.02, 'sine', 2637, 2620); },
     slash: (c, t) => { nz(c, t, 0.14, 0.07, 'highpass', 1500, 5200, 0.7); tn(c, t + 0.06, 0.12, 0.07, 'sine', 160, 70); }, whirl: (c, t) => { nz(c, t, 0.45, 0.06, 'bandpass', 500, 2600, 1.4); nz(c, t + 0.15, 0.35, 0.05, 'bandpass', 2600, 700, 1.4); } };
   const feel = (k) => { if (!sndOn || window.__pgAuto || !FX[k]) return; const c = sndCtx(); if (!c) return; try { if (c.state === 'suspended' && c.resume) c.resume(); FX[k](c, c.currentTime + 0.01); } catch (e) { /* (no sound here) */ } };
-  const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.innerHTML = PG_SND_SVG[sndOn ? 1 : 0]; b.title = (sndOn ? 'Sound on' : 'Sound off') + ': boss-mod sound cues (M)'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); }; /* (look C: a speaker icon, crossed out when muted) */
-  const sndSet = (on) => { sndOn = !!on; try { localStorage.setItem('wla-pg-sound', sndOn ? 'on' : 'off'); } catch (e) { /* (no storage) */ } sndUi(); if (sndOn) sfx('ok'); };
+  const sndUi = () => { const b = $('.pg-snd'); if (!b) return; b.classList.toggle('on', sndOn); b.classList.toggle('soft', sndLvl === 'soft'); b.innerHTML = PG_SND_SVG[sndOn ? 1 : 0] + (sndLvl === 'soft' ? '<i class="pg-sndl">Soft</i>' : ''); b.title = 'Sound: ' + (sndLvl === 'loud' ? 'loud' : sndLvl === 'soft' ? 'soft' : 'off') + ' (click or M: loud, soft, off)'; b.setAttribute('aria-pressed', sndOn ? 'true' : 'false'); b.setAttribute('aria-label', b.title); }; /* (look C: a speaker icon, crossed out when muted) */
+  const sndSet = (lv) => { sndLvl = lv === true ? 'loud' : lv === false ? 'off' : SND_VOL[lv] != null ? lv : 'loud'; sndOn = sndLvl !== 'off'; try { localStorage.setItem('wla-pg-sound', sndLvl === 'loud' ? 'on' : sndLvl); } catch (e) { /* (no storage) */ }
+    if (actx && actx.pgOut) actx.pgOut.gain.value = SND_VOL[sndLvl] || 0.0001; sndUi(); if (sndOn) sfx('ok'); };
+  const sndNext = () => sndSet(sndLvl === 'loud' ? 'soft' : sndLvl === 'soft' ? 'off' : 'loud'); /* (loud, soft, off, loud) */
   const countdown = () => { if (!sndOn || !G) return; const t = G.t, D = G.cdn || (G.cdn = new Set()); modBars(t).forEach((q) => { if (!/^Your\b/.test(q.name)) return; const left = q.at - t, id = q.name + '|' + q.at.toFixed(1) + '|';
     [3, 2, 1].forEach((n) => { if (left <= n && left > n - 0.5 && !D.has(id + n)) { D.add(id + n); sfx('tick'); } }); if (left <= 0.15 && !D.has(id + 0)) { D.add(id + 0); sfx('go'); } }); };
   // (a mistake as the screen shows it while you play, the float as it happens and the death card: no clock time and no second count (Flex, Nov 16: "i feel like
@@ -958,7 +975,8 @@ function pgOpen(root, boss, d, pk) {
     const cb = $('.pg-cast'); if (c) { cb.style.display = 'block'; cb.querySelector('i').style.width = (c.intr ? 100 : Math.min(100, (t - c.t0) / (c.t1 - c.t0) * 100)) + '%'; cb.querySelector('span').textContent = c.intr ? c.name : (c.who === 'tail' ? 'Gore Rattle: ' : c.who === 'wretch' ? 'Wretch: ' : '') + c.name + (P2 && c.kick ? ' · kick!' : ''); /* (the bar empties; no seconds on it, look C) */
       cb.classList.toggle('intr', !!c.intr); cb.classList.toggle('nok', !!P2 && !c.kick && !c.intr); } else cb.style.display = 'none'; /* (phase 2, as in WoW: gold you can kick, grey you can't, red "Interrupted") */
     modsDraw(t); coachDraw(t); resPrune(t);
-    { const ce = $('.pg-cds'), AL = P2 && typeof P2.alerts === 'function' ? P2.alerts(t) || [] : [], ch = AL.map((a) => '<div class="pg-cd' + (a.now ? ' now' : '') + '" style="--c:' + (/^#[0-9a-f]{3,8}$/i.test(a.c || '') ? a.c : '#f3c969') + '">' + esc(a.text) + '</div>').join(''); if (ce && ce.dataset.k !== ch) { ce.dataset.k = ch; ce.innerHTML = ch; } } /* (your countdowns: "Break tether in 12s", Flex, Nov 17) */
+    { const ce = $('.pg-cds'), AL = P2 && typeof P2.alerts === 'function' ? P2.alerts(t) || [] : [], ch = AL.map((a) => '<div class="pg-cd' + (a.now ? ' now' : '') + '" style="--c:' + (/^#[0-9a-f]{3,8}$/i.test(a.c || '') ? a.c : '#f3c969') + '">' + esc(a.text) + '</div>').join(''); if (ce && ce.dataset.k !== ch) { ce.dataset.k = ch; ce.innerHTML = ch; }
+      const A0 = G.cdA || (G.cdA = {}); AL.forEach((a) => { const m = /in (\d+)s$/.exec(a.text || ''), n = m ? +m[1] : null, k0 = a.key || a.text; if (n != null && n <= 3 && A0[k0] !== n) { A0[k0] = n; sfx('tick'); } if (a.now && A0[k0] !== 'now') { A0[k0] = 'now'; sfx('go'); } }); } /* (a tick on 3, 2 and 1, then the go chord: Flex, Nov 17) */ /* (your countdowns: "Break tether in 12s", Flex, Nov 17) */
     // (a line stays up at least 2.5 s, unless a dodge or a step due now takes over; NEXT under it while hints are on. Look C: the order big, the rest of the
     //  line small after it, the key words in their colours on the floor (the yellow bubble, the green half, your gold circle))
     { const jl = jobPick(), J = G.jobShow, calm = (r) => r === 'c' || r === 'w' || r === 'd' || r === 'e', hold = !!J && J.text !== jl.text && G.t >= J.t && G.t - J.t < 2.5 && calm(J.r) && calm(jl.r);
@@ -967,7 +985,7 @@ function pgOpen(root, boss, d, pk) {
       //  line is something to do now (PG_URGENT); it changes at most every 2 s unless the new line is urgent: it flipped 9 times in 9 s at the first bubble)
       const sj = pgShort(G.jobShow.text), L0 = G.lastWarn, cw = L0 && L0.items && L0.items[0] && G.t >= L0.t && G.t - L0.t < 2.5 ? pgCallShort(L0.items[0].text) : '', want = cw && !PG_URGENT.test(sj) ? cw : sj, D = G.nowD;
       const bare = (x) => String(x || '').replace(/[!.]+$/, ''); /* (the same words with or without its "!" are the same line) */
-      if (!D || (bare(D.text) !== bare(want) && (PG_URGENT.test(want) || !D.text || G.t - D.t >= 2 || G.t < D.t))) G.nowD = { text: want, t: G.t };
+      if (!D || (bare(D.text) !== bare(want) && (PG_URGENT.test(want) || !D.text || G.t - D.t >= 2 || G.t < D.t))) { G.nowD = { text: want, t: G.t }; if (want !== cw && /^(?:Step|Dodge|Run out|Move one quarter|Get out|Cross into)/.test(want) && !(G.dodgeS > G.t - 1.2) && G.t >= (G.dodgeS || -9)) { G.dodgeS = G.t; sfx('dodge'); } } /* (the NOW line turns to a dodge: the alarm, unless a call just sounded for it) */
       const nt = $('.pg-job .pg-nowt'), nh = nowHtml(G.nowD.text); if (nt && nt.dataset.k !== nh) { nt.dataset.k = nh; nt.innerHTML = nh; } $('.pg-job').classList.toggle('none', !G.nowD.text);
       const nx = $('.pg-job .pg-nx'), xh = hints ? nextHtml(jl, t) : ''; if (nx && nx.dataset.k !== xh) { nx.dataset.k = xh; nx.innerHTML = xh; } }
     $('.pg-mc').textContent = G.log.length; $('.pg-mcw').textContent = G.log.length === 1 ? 'mistake' : 'mistakes'; $('.pg-mis').classList.toggle('has', G.log.length > 0);
@@ -1319,7 +1337,7 @@ function pgOpen(root, boss, d, pk) {
   const K = { KeyW: 'u', ArrowUp: 'u', KeyS: 'd', ArrowDown: 'd', KeyA: 'l', ArrowLeft: 'l', KeyD: 'r', ArrowRight: 'r' };
   const kd = (e) => { if (!ov.isConnected) return; const tg = e.target && e.target.tagName, typing = tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT';
     if (!(e.ctrlKey || e.metaKey || e.altKey)) { e.stopPropagation(); if (/^[0-9]$/.test(e.key) && !typing) e.preventDefault(); } /* (the site's own keys never see the game's: 1 switched the guide to Heroic and closed it) */
-    if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; } if (e.code === 'KeyM') { sndSet(!sndOn); return; }
+    if (e.key === 'Escape') { close(); return; } if (e.code === 'Space' || e.code === 'KeyP') { e.preventDefault(); pauseT(); return; } if (e.code === 'KeyM') { sndNext(); return; }
     if (G && !paused && (e.code === 'ShiftLeft' || e.code === 'ShiftRight')) { sprintKey(e); return; }
     if (G && !paused && P2 && e.code === 'KeyE') { if (!e.repeat) press('kick'); P2.kick(); return; }
     if (G && !paused && e.code === 'Tab') { e.preventDefault(); cycleTgt(); return; }
@@ -1351,7 +1369,7 @@ function pgOpen(root, boss, d, pk) {
   // (the action bar goes in now that your role is known (the attack's icon is your role's), its icons load, and every button is clickable like a WoW bar)
   { const ba = $('.pg-acts'); if (ba) { ba.innerHTML = actsHtml(); atkShown = atkIc(); ba.querySelectorAll('img.pg-ai').forEach((im) => icLoad(im, im.dataset.ic));
     ba.addEventListener('click', (e) => { const b = e.target && e.target.closest ? e.target.closest('.pg-act') : null; if (!b || !G || paused) return; const a = b.dataset.a; if (a === 'sprint') sprintKey(); else if (a === 'def') defKey(); else if (a === 'aoe') { aoeKey(); press('aoe'); } else if (a === 'kick' && P2) { press('kick'); P2.kick(); } }); } }
-  { const sb = $('.pg-snd'); if (sb) { sndUi(); sb.onclick = (e) => { e.stopPropagation(); sndSet(!sndOn); sb.blur(); }; } }
+  { const sb = $('.pg-snd'); if (sb) { sndUi(); sb.onclick = (e) => { e.stopPropagation(); sndNext(); sb.blur(); }; } }
   { const ab = $('.pg-atk'); if (ab) { ab.onclick = () => { if (G && !paused) { atkKey(); press('atk'); } }; ab.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) { atkKey(); press('atk'); } } }; } }
   { const tb = $('.pg-tab'); if (tb) { tb.onclick = () => { if (G && !paused) cycleTgt(); }; tb.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (G && !paused) cycleTgt(); } }; } }
   reset(); draw(); hud(true); pick(); [300, 1000, 2500].forEach((ms) => setTimeout(() => { if (G && paused && ov.isConnected) draw(); }, ms));
@@ -1451,6 +1469,7 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-cds { position: absolute; left: 0; right: 0; top: 18%; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; z-index: 6; } /* (countdown alerts, Flex, Nov 17) */
 .pg .pg-cd { padding: 6px 20px; font: 700 clamp(20px, 1.6vw, 26px)/1.2 var(--head, system-ui); letter-spacing: .01em; color: #1a1405; background: var(--c); box-shadow: 0 4px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.6); }
 .pg .pg-cd.now { animation: pgCdNow .5s ease-in-out infinite alternate; } @keyframes pgCdNow { from { filter: brightness(1); } to { filter: brightness(1.35); } } .pg:has(.pg-card.on) .pg-cds { display: none; }
+.pg .pg-snd .pg-sndl { margin-left: 4px; font: 600 12px var(--body, system-ui); font-style: normal; } .pg .pg-snd.soft { width: auto; padding: 0 8px; } /* (Soft beside the speaker, Nov 17) */
 .pg .pg-in > .pg-rush { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); z-index: 6; padding: 4px 12px; background: rgba(9,11,15,.72); border: 1px solid rgba(255,255,255,.14); pointer-events: none; } /* (its own spot, top centre, Nov 17) */
 .pg-warn { position: absolute; top: 22%; left: 300px; right: 230px; text-align: center; /* (between the path and the coach card on the left and the minimap column on the right, Main, Nov 15) */ font: 800 26px var(--head, system-ui); text-shadow: 0 2px 6px #000, 0 0 2px #000; opacity: 0; pointer-events: none; padding: 0 20px; }
 .pg-warn { display: flex; flex-direction: column; align-items: center; gap: 8px; }

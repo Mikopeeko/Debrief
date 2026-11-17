@@ -370,6 +370,20 @@ function simpleScreen(H, say, pj) {
       if (cdBad || !cdN) bad('the tether countdown: ' + (cdBad || 'never showed') + tag + ' (check S10)');
       if (!cdNow && !(d.G.p2.teth[me] && d.G.p2.teth[me].br != null && d.G.p2.teth[me].br <= tb + 0.3)) bad('no "Break tether now!" alert at your break' + tag + ' (check S10)');
       if (!W.slice(W2).some((w) => /\.pg-cds/.test(w.at) && /Break tether in \d+s/.test(w.v))) bad('the countdown alert isn\'t drawn on the screen (.pg-cds)' + tag + ' (check S10)'); } }
+  // S11. the sound cues (Flex, Nov 17: "Would it be a difficult task to improve the sound alerts", "Yes, improve sounds"): a sound for each meaning (your job, now,
+  //      dodge, a raid-wide call, tick, go, done right, a mistake); the tether countdown ticks on 3, 2 and 1 and sounds "go" at "Break tether now!"; the NOW line
+  //      turning to a dodge sounds the dodge alarm; Loud, Soft and Off on the button and M, every sound (the mechanic sounds too) through the one volume.
+  { const SK = ['you', 'now', 'dodge', 'call', 'tick', 'go', 'ok', 'bad'], cue = (/const CUE = \{[\s\S]*?\} \};/.exec(PJ) || [''])[0];
+    SK.forEach((k) => { if (!new RegExp('\\b' + k + ': \\(c, t\\) =>').test(cue)) bad('the "' + k + '" cue has no sound of its own (check S11)'); });
+    if (!/const SND_VOL = \{ loud: 1, soft: 0\.4, off: 0 \};/.test(PJ) || !/const sndNext = \(\) => sndSet\(sndLvl === 'loud' \? 'soft' : sndLvl === 'soft' \? 'off' : 'loud'\);/.test(PJ) || !/KeyM'\) \{ sndNext\(\); return; \}/.test(PJ) || !/onclick = \(e\) => \{ e\.stopPropagation\(\); sndNext\(\);/.test(PJ)) bad('the sound has no Loud, Soft and Off on its button and M (check S11)');
+    if (/g\.connect\(c\.destination\)/.test(PJ) || !/actx\.pgOut\.connect\(actx\.destination\)/.test(PJ)) bad('a sound skips the one volume (check S11)');
+    let T2 = null; try { T2 = vm.runInContext('PG_P2_T', ctx); } catch (e) { T2 = null; }
+    if (T2) { const d = L.open('m2'); d.P2.pick = { side: 'E', role: 'r', egg: null, mal: 0, cry: 0, teth: 'solo' }; const me = d.P2.slotOf(d.P2.pick); d.at(T2.fangs - 12, me, { seed: 3 }); L.win.__pgSndLog = [];
+      while (d.G.t < T2.solo + 1.5) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
+      const ticks = lg.filter((q) => q.k === 'tick' && q.t >= T2.solo - 3.6 && q.t < T2.solo), go = lg.some((q) => q.k === 'go' && q.t >= T2.solo - 0.2 && q.t < T2.solo + 1.5);
+      if (ticks.length !== 3 || !go) bad('the tether countdown sounds ' + ticks.length + ' ticks before the break' + (go ? '' : ' and no "go"') + ' (3, 2, 1, then go; check S11)'); }
+    { const d = L.open(); d.at(0, d.role.id, { seed: 3 }); L.win.__pgSndLog = []; while (d.G.t < 60) { d.step(2); d.frame(); } const lg = L.win.__pgSndLog; L.win.__pgSndLog = null;
+      if (!lg.some((q) => q.k === 'dodge')) bad('the NOW line turned to a dodge in phase 1\'s first minute without the dodge alarm (check S11)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.
