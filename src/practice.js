@@ -1423,7 +1423,7 @@ function pgCss() {
 html.pg-open, html.pg-open body { overflow: hidden; }
 .pg { position: fixed; inset: 0; z-index: 72; background: #05070a; }
 .pg-in { position: absolute; inset: 0; overflow: hidden; font-family: var(--body, system-ui, sans-serif); color: #e8edf2; user-select: none; }
-.pg-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+.pg-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: default; } /* (no + cursor, Flex, Nov 17) */
 /* (the screen, look C "Minimal", Nov 16, Flex: "Yes, go with C": glass panels with a hairline, square corners, gold only for what's yours, the floor's
    colours on their words; laid out like a raider's UI. Every rule under .pg so none of it reaches the site's own pg- classes) */
 .pg { --pgg: #e6b450; --pgm: #f3c969; --pgok: #7ee08f; --pgbad: #ff8f87; --pgbub: #e3f55a; --pgtx: #eef1f5; --pgmu: #a4abb8; --pgdim: #7d8592; --pgglass: rgba(9,11,15,.72); --pgln: rgba(255,255,255,.10); --pgln2: rgba(255,255,255,.18); }
