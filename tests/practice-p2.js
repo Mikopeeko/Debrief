@@ -653,7 +653,7 @@ function checks(H, say) {
     //  saying "you") and the kick calls in a yellow the screen didn't count as yours went unchecked. Every call, the script's and the big ones, is "Mechanic: Order" with the
     //  order capitalised; a big call says "you"/"your" only when it is gold (the screen's "yours": gold, or "Your ..." first), and a gold one only with them; a script call in
     //  gold is marked yours. practice.js's own shared calls (the Viper, the egg ring's lesson) are its chat's)
-    { const rv = (m) => bad(m + ' (the review of the prompt fixes, Nov 16, check RV)'), CAP = /^[A-Z][^:!?]{2,39}: [A-Z]/, SHARED = /^(A Viper hatched|This ring is your egg)/;
+    { const rv = (m) => bad(m + ' (the review of the prompt fixes, Nov 16, check RV)'), CAP = /^[A-Z][^:!?]{2,39}: [A-Z]/, SHARED = /^(A Viper hatched|This ring is your egg|Your egg's ring|Viper hatched)/;
       played.forEach(({ pk, warns, fl }) => { const tag = ' (' + pk.role + ' on the ' + pk.side + ' ledge)';
         warns.forEach((w) => { if (!CAP.test(w.text)) rv('the call "' + w.text + '" isn\'t "Mechanic: Order" with the order capitalised' + tag); if (w.c === '#f3c969' && !w.you) rv('the call "' + w.text + '" is gold but not marked yours' + tag); });
         fl.filter((q) => q.k === 'big' && !SHARED.test(q.text)).forEach((q) => { const gold = q.c === '#f3c969' || /^Your\b/.test(q.text), you = /\byour?\b/i.test(q.text);

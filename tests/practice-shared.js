@@ -279,8 +279,49 @@ function lookC(H, say, pj) {
     (st.match(/'[^']*'/g) || []).forEach((x) => { if (timey(x)) bad('phase 1\'s Start list reads ' + x); });
     for (const jb of [{ role: 'r', egg: 'r3', soak: [1, 1], fb: [0, 0] }, { role: 'h', egg: null, soak: [2, 2], fb: [0, 0] }, { role: 'm', egg: 'm1', soak: [1, 1], fb: [0, 0] }]) { d.myJob = jb; const x = plain(d.panel()); if (timey(x)) bad('phase 1\'s setup card reads "' + x.slice(0, 140) + '"'); } }
 }
-module.exports = (H, say) => { checks(H, say); lookC(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad;
+// S. The simple screen (Flex, Nov 17, after playing it: "Youre expecting someone to read 3 sentences, and execute the mechanic within 3 seconds. The prompts on
+//    the screen should be simple more like 'DPS your egg, then pick it up'"; of the coach card, "i dont think we need these"; "Make sure the instructions and text
+//    is clear and not jumbled"). A 37-run playtest found the NOW line changing 50-78 times in phase 1, 81 of its 156 lines over 9 words, and the calls, the coach
+//    card and the NOW line giving different orders at once.
+//    S1. over a played run of each part as each role, the NOW line is one short command: at most 9 words, one sentence, no "Then:", no how-to-press.
+//    S2. it holds: a new line comes at least 2 s after the last unless it's something to do now (PG_URGENT).
+//    S3. no coach card and no call boxes on screen; a call's order goes into the NOW line, the mechanic's name dropped ("Your egg: wait next to its gold circle!"
+//        -> "Wait next to your egg's gold circle!").
+//    S4. the green done chip only for something you did; an order or a "not yet" goes to the middle, short, with no tick.
+//    Each failed on the commit before (3cbf6ad0 plus phase 3's fixes).
+function simpleScreen(H, say, pj) {
+  const bad = (t) => say("Ula'tek practice game (shared rules)", 'bad', t + ' (the simple screen, Nov 17, check S)'), vm = require('vm'), fs = require('fs');
+  const plain = (h) => String(h || '').replace(/<[^>]*>/g, ' ').replace(/&#39;/g, '\'').replace(/&quot;/g, '"').replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&').replace(/\s+/g, ' ').replace(/\s+([,!.?])/g, '$1').trim();
+  const PJ = pj || fs.readFileSync(path.join(__dirname, '..', 'src', 'practice.js'), 'utf8');
+  let L; try { L = lookLoad(H, pj); } catch (e) { bad('the game didn\'t load: ' + e.message); return; }
+  const { W, ctx } = L; let URG = null, short = null, callShort = null; try { URG = vm.runInContext('PG_URGENT', ctx); short = vm.runInContext('pgShort', ctx); callShort = vm.runInContext('pgCallShort', ctx); } catch (e) { bad('the screen has no short-line rules (PG_URGENT, pgShort, pgCallShort)'); return; }
+  // S1 + S2
+  const long = new Map(), flick = new Map(), PARTS = Object.keys(ctx.PG_PARTS["Ula'tek"] || {});
+  for (const pk of PARTS) { const d0 = L.open(pk === 'm' ? null : pk), S0 = d0.P2 ? d0.P2.setup : d0.setupApi(), name = ctx.PG_PARTS["Ula'tek"][pk].name;
+    for (const r of S0.roles) { const jb = S0.jobs(r)[0][0], d = L.open(pk === 'm' ? null : pk), su = d.P2 ? d.P2.setup : d.setupApi(); su.set(r, jb); const slot = d.P2 ? d.P2.slotOf(d.P2.pick) : d.jobSlot(), tag = ' (' + name + ', ' + r + ' ' + jb + ')';
+      try { d.at(0, slot, { seed: 3 }); } catch (e) { bad('the run didn\'t start' + tag + ': ' + e.message); continue; }
+      const G = d.G, S = d.S; let prev = '', prevT = -9, n = 0;
+      while (G.t < S.end - 0.3 && n++ < 4000) { d.step(5); try { d.frame(); d.warnsNow(); } catch (e) { bad('drawing crashed' + tag + ': ' + e.message); break; } const now = plain(d.nowHtml());
+        if (now.replace(/[!.]+$/, '') === prev.replace(/[!.]+$/, '')) { prev = now; continue; } const w = now ? now.split(/\s+/).length : 0;
+        if (w > 9 || /[.!?]\s+[A-Z]/.test(now) || /\bThen:|press Tab|keep pressing 1|\(Tab|\(melee/i.test(now)) long.set(now, now + tag);
+        if (prev && now && !URG.test(now) && prev.replace(/[!.]+$/, '') !== now.replace(/[!.]+$/, '') && G.t - prevT < 2 - 0.3) flick.set(prev + '>' + now, '"' + prev + '" then "' + now + '" ' + (G.t - prevT).toFixed(2) + ' s apart' + tag);
+        prev = now; prevT = G.t; } } }
+  if (long.size) bad(long.size + ' NOW lines aren\'t one short command (9 words at most, one sentence, no "Then:", no how-to-press), e.g. "' + [...long.values()].slice(0, 4).join('" / "') + '"');
+  if (flick.size) bad('the NOW line changes again within 2 s without anything urgent (' + flick.size + ' times), e.g. ' + [...flick.values()].slice(0, 3).join('; '));
+  // S3
+  if (!/\.pg \.pg-coach, \.pg \.pg-coach\.on, \.pg \.pg-warn \.pg-al \{ display: none !important; \}/.test(PJ)) bad('the coach card or the call boxes can still show (no CSS hiding .pg-coach and .pg-warn .pg-al)');
+  { const cd = (/const coachDraw = \(t\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!cd || /coachNow\(/.test(cd)) bad('coachDraw still draws the coach card (Flex: "i dont think we need these")'); }
+  [['Your egg: wait next to its gold circle!', 'Wait next to your egg\'s gold circle!'], ['Your coil: soak the first one to appear!', 'Soak the first coil to appear!'], ['Call of the Serpent: Dodge the falling eggs! Eight land all over the stone.', 'Dodge the falling eggs!']].forEach(([a, b]) => { const g = callShort(a); if (g !== b) bad('the NOW line says the call "' + a + '" as "' + g + '", not "' + b + '"'); });
+  [['Break your egg: Tab, then 1. Then: walk over it.', 'DPS your egg'], ['Kill the Rawlings: press Tab, then keep pressing 1 (melee: get close)', 'Kill the Rawlings'], ['Good spot. Keep hitting the Rawlings.', 'Keep hitting the Rawlings'], ['Wait: let it pass, then go.', 'Wait for the wave to pass']].forEach(([a, b]) => { const g = short(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '"'); });
+  // S4
+  { void W; const say0 = (/  const say = \(text, bad\) => \{[^\n]*/.exec(PJ) || [''])[0]; if (!/PG_DONE\.test/.test(say0)) bad('every float that isn\'t a mistake still becomes a green done chip ("Not open yet: hit it" got a tick)');
+    const dm = /const PG_DONE = (\/.*\/);/.exec(PJ), doneRx = dm ? new Function('return ' + dm[1])() : null; /* (inside pgOpen: read from the source) */
+    if (!doneRx) bad('there is no list of what counts as done (PG_DONE)');
+    else { ['Egg picked up.', 'Soaked: your egg broke (a Rawling).', 'Kicked: Vicious Echoes interrupted.', 'Tether broken on time.', 'Rawling killed.'].forEach((x) => { if (!doneRx.test(x)) bad('"' + x + '" doesn\'t get the green done chip'); });
+      ['Not open yet: hit it (Tab, then 1).', 'Kick is on cooldown.', 'Its shell is still up: hit it (Tab, then 1) to break it.', 'The tank taunted the Viper: kill it with the raid!', 'Back by her: burn the heart.'].forEach((x) => { if (doneRx.test(x)) bad('"' + x + '" gets the green done chip, as if done'); }); } }
+}
+module.exports = (H, say) => { checks(H, say); lookC(H, say); simpleScreen(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad; module.exports.simpleScreen = simpleScreen;
 if (require.main === module) {
-  process.chdir(__dirname); let n = 0; const t0 = Date.now(); const pr = (a, b, t) => { n++; console.log('✗ ' + t); }; checks(null, pr); lookC(null, pr);
+  process.chdir(__dirname); let n = 0; const t0 = Date.now(); const pr = (a, b, t) => { n++; console.log('✗ ' + t); }; checks(null, pr); lookC(null, pr); simpleScreen(null, pr);
   console.log(n ? n + ' problem(s)' : 'practice game, shared rules: all checks pass', '(' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)'); process.exitCode = n ? 1 : 0;
 }
