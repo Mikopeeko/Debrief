@@ -712,7 +712,7 @@ function pgP2(A) {
     // (your kick, as its bar starts, the same moment the job line says "now"; your way into reach if you're not in it. The backup's has its own call. Gold, as yours:
     //  the review, Nov 16, found it in another yellow that the screen didn't count as yours)
     if (!window.__pgAuto && A.big) { const k = myKicksNow(t)[0]; if (k && t >= k.at && t < k.at + 0.5 && !(G.p2.bk && G.p2.bk.key === k.key) && once('kc' + k.key)) { const p = kickPos(k.key), inR = !!p && pgDist(p, [G.x, G.y]) <= range(me);
-      A.big(inR ? k.kind + ': Press E now: your kick!' : k.kind + ': Your kick: get close to ' + casterName(k.key) + '!', '#f3c969'); } }
+      A.big(inR ? k.kind + ': Kick your ' + k.kind + ' now (E)!' : k.kind + ': Get close to ' + casterName(k.key) + ' for your kick!', '#f3c969'); /* (the job line's own words: Flex watched two lines for one kick, Nov 17) */ } }
     if (A.has('vein')) G.hp -= 3 * G.debs.vein.n * dt * (A.has('def') ? 0.5 : 1);
     if (A.has('acid')) G.hp -= 2.2 * G.debs.acid.n * dt * (A.has('def') ? 0.5 : 1);
     G.p2.intr = G.p2.intr.filter((q) => t - q.t <= 1.6); G.p2.own = G.adds.filter((a) => a.own);
@@ -733,7 +733,7 @@ function pgP2(A) {
   // (e) your standing job. Never another player's timer ("Next: Virulent Spit in 11 s" to someone the swirl wasn't under). The way back through your gate comes
   // before a kick, and a kick due on the way goes after it, never in its place (a kick line had pushed it out, and a player stayed on the ledge) ----
   const kickLine = (k) => { const p = kickPos(k.key), inR = !!p && pgDist(p, [G.x, G.y]) <= range(A.me), bk = G.p2.bk && G.p2.bk.key === k.key;
-    return inR ? (bk ? 'Backup: kick ' : 'Kick ') + k.kind + ' now (E)!' + (k.rev ? ' Its bar is short (Revenge).' : '') : (bk ? 'Backup: get close to ' : 'Get close to ') + casterName(k.key) + ', then press E!'; };
+    return inR ? (bk ? 'Backup: kick ' : 'Kick your ') + k.kind + ' now (E)!' + (k.rev ? ' Its bar is short (Revenge).' : '') : bk ? 'Backup: get close to ' + casterName(k.key) + ', then press E!' : 'Get close to ' + casterName(k.key) + ' for your kick!'; };
   // ((a): a circle landing on you soon, a frontal you're in, a small tail's wave about to cross you, an egg's shield)
   const dangerText = (t) => { const me = A.me, P0 = [G.x, G.y];
     const m = S.impacts.find((q) => t >= q.t0 && t <= q.at && q.at - t <= 3.5 && pgDist(P0, [q.x, q.y]) < q.r + 1); /* (a green swirl's own call comes as it appears; the job line from 3.5 s before it lands, so it doesn't hide a step due now) */
@@ -764,18 +764,19 @@ function pgP2(A) {
     if (thOn && t >= tb - 5.5) return th.solo ? 'Walk to your tether\'s edge: you break first.' : 'Walk to your tether\'s edge: you break with the 5.';
     if (e && e.state === 'floor' && wDead && t >= e.shell) return 'Pick up your egg (#' + e.n + ') now: walk over it!';
     if (bg && bg.state === 'floor' && t < T.doomEnd && t >= bt) return 'Pick up your big egg now: walk onto it!';
-    if (e && e.state === 'held' && t >= T.throwAt) return inRing ? 'Into the cauldron now: hold still in the gold ring.' : 'Into the cauldron now: step into the gold ring!';
+    if (e && e.state === 'held' && t >= T.throwAt) return inRing ? 'Into the cauldron now: hold still in the gold ring.' : 'Into the cauldron now: sprint (Shift) into the gold ring!';
     if (bg && bg.state === 'held' && t >= S.bigIn[s]) return inRing ? 'Wait in the ring: the other big egg is coming.' : 'Into the cauldron now: sprint (Shift) into the gold ring!';
     // (c) the walk to your next step, from when it's named
-    if (k && t >= k.at - KLEAD) { const p = kickPos(k.key), inR = !!p && kickIn(k.key, p); G.p2.kIn = inR ? k.key : null; return inR ? 'Your kick is next: press E when ' + casterName(k.key) + '\'s bar starts.' : 'Your kick is next: get close to ' + casterName(k.key) + ' (the arrow).'; }
+    if (k && t >= k.at - KLEAD) { const p = kickPos(k.key), inR = !!p && kickIn(k.key, p); G.p2.kIn = inR ? k.key : null; const dk = inR ? dpsCat(t) : null; if (dk && A.DPS_SAY && A.DPS_SAY[dk]) return A.DPS_SAY[dk][0] + ', kick ' + k.kind + ' at the cast.'; /* (#3: "wait for the cast" while the Clutches were up) */
+      return inR ? 'Your kick is next: press E when ' + casterName(k.key) + '\'s bar starts.' : 'Your kick is next: get close to ' + casterName(k.key) + ' (the arrow).'; }
     if (e && e.state === 'floor' && wDead) return 'Wait by your egg (#' + e.n + '): hit your egg to open it (Tab, then 1).';
-    if (e && e.state === 'held') return inRing ? 'Wait in the gold ring: the small eggs go in together.' : 'Carry your egg to your spot by the cauldron (gold).';
+    if (e && e.state === 'held') return inRing ? 'Wait in the gold ring: the small eggs go in together.' : (pgDist(here, S.pits[s]) - P.THROW) / 7 > T.throwAt - t - 0.5 ? 'Sprint (Shift) to the cauldron: your spot in the gold ring.' : 'Carry your egg to your spot by the cauldron (gold).'; /* (#4: walking, 7 yards a second, you'd be late: Flex watched "Into the cauldron now!" come with the egg 8 s away) */
     if (bg && bg.state === 'held') return inRing ? 'Wait in the gold ring: both big eggs go in together.' : 'Sprint (Shift) to the cauldron: your spot in the gold ring.';
     // (outside its gold ring: stepping into it picks it up (the review, Nov 16: "Wait by your big egg" took a player 2.6 yards from it, inside the ring, who picked it
     //  up early with the south eggs still out, and they turned into Clutches))
     if (bg && bg.state === 'floor' && t < T.doomEnd && t >= bt - 16) { const far = pgDist(here, [S.big[bi].x, S.big[bi].y]) > 12;
       return j.big === 'far' ? (far ? 'Walk to your big egg at the south end (the arrow).' : 'Wait outside your egg\'s gold ring until both south eggs are carried off.') : (far ? 'Run alone to your big egg at the north end (the arrow).' : 'Wait outside your egg\'s gold ring until the call.'); }
-    if (j.cry && w === 'L' && !dsOut(s) && t >= dsNext(s) - (bg && bg.state === 'floor' ? 8 : 10)) return (pgDist(here, L(s, P.dsKick)) > 6 ? 'Back to the cauldron' : 'Wait by the cauldron') + ': your ' + P.mk[s][j.cry - 1] + ' Doomscale climbs out next.';
+    if (j.cry && w === 'L' && !dsOut(s) && t >= dsNext(s) - (bg && bg.state === 'floor' ? 8 : 10)) { const nearC = pgDist(here, L(s, P.dsKick)) <= 6, dc = nearC ? dpsCat(t) : null; return dc && A.DPS_SAY && A.DPS_SAY[dc] ? A.DPS_SAY[dc][0] + ', stay by the cauldron.' : (nearC ? 'Wait by the cauldron' : 'Back to the cauldron') + ': your ' + P.mk[s][j.cry - 1] + ' Doomscale climbs out next.'; } /* (#3: "Wait by the cauldron" while the Rawlings were up) */
     if (w === 'L' && wd && t >= T.fangs - 8 && t < T.fangs && pgDist(here, wd) > 19) return 'Tethers come next: stand within 20 yards of the Warden.';
     // (a tether on you: which break is yours, steady from the moment it lands until the walk to its edge; before the right target, which flipped the line every
     //  second between "Hit the Warden" and the tether: Flex, Nov 17, "its not clear if youre the early break or the late break with the 5")

@@ -46,7 +46,7 @@ const PG_SHORT = [
   [/^Go next to your egg's gold circle, not under it$/i, 'Go next to your egg\'s gold circle'], [/^Your kick is next: press E when .*$/i, 'Your kick is next: wait for the cast'], [/^Your kick is next: get close to (.+)$/i, 'Get close to $1'],
   [/^Walk to the gateway: it opens after her wave$/i, 'Walk to the gateway'], [/^Stay in the red circles: press Q as they drain$/i, 'Stay in the red circles, press Q'], [/^Stay in the red circles until they drain$/i, 'Stay in the red circles'],
   [/^Run away from her tail: out of the orange circle$/i, 'Run out of the orange circle!'], [/^Go to your coil \(the (first|second) to appear\).*$/i, 'Go to the $1 coil'], [/^Stay near your Shrieker: its kick is next$/i, 'Stay near your Shrieker'],
-  [/^Into the cauldron now: .*$/i, 'Into the cauldron now!'], [/^Sprint \(Shift\) to the cauldron.*$/i, 'Sprint to the cauldron'], [/^Walk to (your|the) gold ring(?: now)?(?:: .*|, .*| with your red circle| at the edge.*)$/i, 'Walk to $1 gold ring'],
+  [/^Into the cauldron now: sprint.*$/i, 'Sprint into the cauldron now!'], [/^Into the cauldron now: .*$/i, 'Into the cauldron now!'], [/^Sprint \(Shift\) to the cauldron.*$/i, 'Sprint to the cauldron'], [/^Walk to (your|the) gold ring(?: now)?(?:: .*|, .*| with your red circle| at the edge.*)$/i, 'Walk to $1 gold ring'],
   [/^Wait: the Rawlings are in the tail sweep$/i, 'Wait: Rawlings are in the sweep'], [/^Wait outside the first coil: yours is the second$/i, 'Wait outside the first coil'], [/^Stay out of the (first|second) coil: it(?: isn't yours|'s the other team's)$/i, 'Stay out of the $1 coil'],
   [/^Get in the yellow bubble, outside the second coil: it isn't yours$/i, 'Get in the yellow bubble, outside the second coil'], [/^Stand in your coil until it slams$/i, 'Stay in your coil'], [/^Hold still: your Purge .*$/i, 'Hold still!'],
   [/^Stay on (?:the|your) gold ring ?: .*$/i, 'Stay on your gold ring'], [/^Run to the Wretch in front of her: out of the sweep$/i, 'Run to the Wretch in front of her'], [/^Back to the cauldron: .*$/i, 'Back to the cauldron'],
@@ -55,6 +55,7 @@ const PG_SHORT = [
 ];
 const PG_URGENT = /^(?:Step|Dodge|Too close|Run out|Hold still|Move one quarter|Get out|Wait for|Wait:|Sprint|Into the cauldron|Kick|Backup|Press Q|Press E|Break now|Cross into|Walk to your tether)/i; /* (must be done now: never held back, never covered by a call) */
 const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/\s+/g, ' ').trim(); if (!x) return '';
+  if (/[.!?] Press Q now[.!]?$/.test(x)) return 'Press Q now!'; /* (#4's family, Flex, Nov 17: a line ending "Press Q now." kept only its first sentence, so the intermission's Q order never showed and a player who follows the screen had no defensive for the last four slams) */
   x = x.replace(/^(?:Good spot|Off her quarter: good)[.!]?\s+(?=[A-Z])/, ''); /* (praise, then the order: the order) */
   x = x.replace(/:\s*press Tab(?: to pick (?:it|one))?,? then keep pressing 1(?: to hit it)?/gi, '').replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/:\s*Tab, then 1/gi, '')
     .replace(/\s*\(\s*(?:the arrow|the gold ring|gold ring|gold)\s*\)/gi, ''); /* (how to press, and asides the floor already shows) */
@@ -84,6 +85,20 @@ const pgEndTip = (s, head) => { let x = pgNoClock(String(s == null ? '' : s)).sp
 // (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
 const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) { const nm = m[1].trim(); return PG_DO.test(nm) ? pgShort(nm) : 'Kill the ' + nm; } /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys. A name that is already an order is said as one: "Break your egg: press Tab to pick it" read "Kill the Break your egg", Flex, Nov 17) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
   if (yn) o = o.replace(/\bits\b/, 'your ' + yn[1] + '\'s').replace(/\bthe (first|second) one\b/, 'the $1 ' + yn[1]); return pgShort(o); };
+// (#3, the damage score judges you only while the screen tells you to hit that target (Flex, Nov 17, "#3 yes", after watching it played: the kicker read
+//  "Your kick is next: wait for the cast" and was marked "Clutches were up: you were on them 10%"; "Hit the Doomscales" showed while the Rawlings were scored).
+//  A moment counts only while the NOW line names that target ("Kill the Rawlings", "Get closer, then hit the heart") or says plainly to keep hitting; any
+//  other order (a move, a dodge, your kick, Q, a stay) is what the screen asked of you then. Phase 1's melee was marked off the Rawlings while it said
+//  "Get into the green half". With no NOW line drawn (a headless step) every moment counts, as before)
+const PG_TGT_WORDS = { egg: /\begg/i, viper: /\bViper/i, heart: /\bheart\b/i, rawling: /\bRawling/i, wretch: /\bWretch/i, warden: /\bWarden/i, clutch: /\bclutch/i, ds: /\bDoomscale/i, shrieker: /\bShrieker/i, boss: /\bUla'tek\b/i };
+const pgDpsExcused = (cat, now) => { const s = String(now || '').trim(); if (!s || !cat) return false; const mine = PG_TGT_WORDS[cat];
+  if (mine && mine.test(s) && !PG_URGENT.test(s)) return false; return !/^Keep hitting your target\b/i.test(s); };
+// (#5, a call that orders what you're already doing waits (Flex watched it: "Stay in the yellow bubble", then "Get in the bubble!" while in it): the job line says
+//  "Stay in" or "Keep in" the same place. A call to do something now (PG_URGENT: cross, dodge) still shows)
+const pgGoal = (s) => { const m = /\b(?:in|into|onto|on|inside)\s+(?:the\s+|your\s+)?(?:[a-z]+\s+)?(bubble|coil|ring|circles?|half|soak)\b/i.exec(String(s || '')); return m ? m[1].toLowerCase().replace(/s$/, '') : ''; };
+const pgSameGoal = (call, job) => /^(?:Stay|Keep)\b/i.test(String(job || '')) && !PG_URGENT.test(String(call || '')) && !!pgGoal(call) && pgGoal(call) === pgGoal(job);
+// (#5, the end screen: a mistake made again is one row with its count (Flex, Nov 17: "#5 yes"; four rows of "Caustic Waves from a small tail hit you" read as one, x4)
+const pgEndRows = (rows) => { const out = [], at = new Map(); rows.forEach((r) => { const k = r.b + '\u0000' + (r.s || ''), o = at.get(k); if (o) o.n++; else { const q = Object.assign({}, r, { n: 1 }); at.set(k, q); out.push(q); } }); return out; };
 // ---- the coach card's words (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): one entry a mechanic, keyed by its name;
 // "@int" or "@3" for a part where it plays differently. t: the title, "Name (Short instruction)" as notes/Guides/Mechanic titles - the rule.md has it; w: one
 // plain sentence of what happens, from notes/Guides/Bosses/8 Ula'tek.md (Mythic); j: the job when the game has no words of its own for you (jf: this job
@@ -398,6 +413,8 @@ function pgOpen(root, boss, d, pk) {
     wretch: ['Kill the Wretch', 'The Wretch was going down', 'Help kill each Wretch before its third bubble: press Tab to pick it, then keep pressing 1.', 'it'] };
   const isRight = (cat, o) => !!o && (cat === 'heart' ? o.key === 'heart' : o.kind === cat);
   const inRange = (o) => pgDist([G.x, G.y], o.p) - o.r <= (rl(me) === 'm' ? 5 : 40);
+  const farSay = (w, dv) => { if (!dv || !dv.cat || !dv.cur || !dv.cur.p || !isRight(dv.cat, dv.cur) || !DPS_SAY[dv.cat]) return w; const far = !inRange(dv.cur), wd = PG_TGT_WORDS[dv.cat], o0 = DPS_SAY[dv.cat][0];
+    return far && wd && wd.test(w) && /^(?:Hit|Kill|Burn|DPS|Keep hitting|Break)\b/i.test(w) ? 'Get closer, then ' + o0.charAt(0).toLowerCase() + o0.slice(1) : w; }; /* (#3: "Hit the heart" with the heart far out of reach read as stand and hit, and the player stood at 0%) */
   const tgtNow = (t) => (G.tgt ? tgtList(t).find((o) => o.key === G.tgt) || null : null);
   const GCD = 1; /* (one hit a press, then the button cools down for a second, like a spell on a WoW action bar) */
   const onRight = (cat, o) => !!cat && isRight(cat, o) && inRange(o) && G.lastHitCat === cat && G.t - (G.lastHitT == null ? -99 : G.lastHitT) <= GCD + 0.6;
@@ -431,7 +448,10 @@ function pgOpen(root, boss, d, pk) {
     if (cat !== (D.cur && D.cur.kind)) { dpsClose(); if (cat) D.cur = { kind: cat, t0: t, tot: 0, ok: 0 }; }
     // (her tail's Mephitic Thrash sends everyone 35 yards out, past a ranged player's reach of the Rawlings: that run doesn't count you off target)
     const away = (S.thrash || []).some((q) => t >= q.t0 && t <= q.at + 3);
-    if (D.cur && !away) { D.cur.tot += dt; if (onRight(cat, tgtNow(t))) D.cur.ok += dt; } };
+    const nowS = G.nowD && G.t - (G.nowSeen == null ? -9 : G.nowSeen) < 0.5 ? G.nowD.text : '', tc = tgtNow(t), dNow = cat && tc && isRight(cat, tc) ? pgDist([G.x, G.y], tc.p) : null;
+    const closing = /^Get closer\b/.test(nowS) && dNow != null && G.farD != null && dNow < G.farD - 0.02; G.farD = dNow; /* (#3: on your way in, as the line says, isn't time off it) */
+    const walking = !!nowS && (() => { const h = hintNow(); return !!(h && h.T && !h.wait); })(); /* (#3: the gold arrow is up: walking to your spot is your job then (phase 1's melee was marked off the Rawlings walking the arrow to her edge for the heart) */
+    const on = onRight(cat, tc); if (D.cur && !away && (on || (!closing && !walking && !pgDpsExcused(cat, nowS)))) { D.cur.tot += dt; if (on) D.cur.ok += dt; } }; /* (#3: time off it doesn't count while the NOW line, as just drawn, says to do something else; time on it always does, so a score only goes up) */
   const cycleTgt = () => { press('tgt'); const L = tgtList(G.t).sort((a, b) => pgDist([G.x, G.y], a.p) - pgDist([G.x, G.y], b.p)); if (!L.length) return; const i = L.findIndex((o) => o.key === G.tgt); G.tgt = L[(i + 1) % L.length].key; hud(true); };
   const pickTgtAt = (p) => { if (!G) return false; const o = tgtList(G.t).filter((q) => pgDist(p, q.p) <= q.r + 1.5).sort((a, b) => pgDist(p, a.p) - pgDist(p, b.p))[0]; if (!o) return false; G.tgt = o.key; hud(true); return true; };
   const dpsView = () => { if (!G) return null; const t = G.t, cat = dpsCat(t), cur = tgtNow(t); return { cat, cur, cd: Math.max(0, GCD - (t - (G.gcd0 == null ? -99 : G.gcd0))), right: cat ? tgtList(t).filter((o) => isRight(cat, o)) : [], inRange: cur ? inRange(cur) : false, ok: cat ? onRight(cat, cur) : false, fx: (G.hitFx || []).map((x) => ({ ...x, age: t - x.t0 })), aoe: (G.aoeFx || []).filter((x) => t - x.t0 < 0.7).map((x) => ({ ...x, age: t - x.t0 })), aoeCd: aoeLeft(t), adds: tgtList(t).filter((o) => o.max) }; };
@@ -986,7 +1006,7 @@ function pgOpen(root, boss, d, pk) {
       if (!hold && (!J || J.text !== jl.text)) G.jobShow = { text: jl.text, r: jl.r, t: G.t };
       // (Flex, Nov 17: one place to read. The NOW line says the job line short (pgShort); a call's order takes it for its first 2.5 s, its box gone, unless the
       //  line is something to do now (PG_URGENT); it changes at most every 2 s unless the new line is urgent: it flipped 9 times in 9 s at the first bubble)
-      const sj = pgShort(G.jobShow.text), L0 = G.lastWarn, cw = L0 && L0.items && L0.items[0] && G.t >= L0.t && G.t - L0.t < 2.5 ? pgCallShort(L0.items[0].text) : '', want = cw && !PG_URGENT.test(sj) ? cw : sj, D = G.nowD;
+      const sj = pgShort(G.jobShow.text), L0 = G.lastWarn, cw = L0 && L0.items && L0.items[0] && G.t >= L0.t && G.t - L0.t < 2.5 ? pgCallShort(L0.items[0].text) : '', want = farSay(cw && !PG_URGENT.test(sj) && !pgSameGoal(cw, sj) ? cw : sj, dv), D = G.nowD; G.nowSeen = G.t;
       const bare = (x) => String(x || '').replace(/[!.]+$/, ''); /* (the same words with or without its "!" are the same line) */
       if (!D || (bare(D.text) !== bare(want) && (PG_URGENT.test(want) || !D.text || G.t - D.t >= 2 || G.t < D.t))) { G.nowD = { text: want, t: G.t }; if (want !== cw && /^(?:Step|Dodge|Run out|Move one quarter|Get out|Cross into)/.test(want) && !(G.dodgeS > G.t - 1.2) && G.t >= (G.dodgeS || -9)) { G.dodgeS = G.t; sfx('dodge'); } } /* (the NOW line turns to a dodge: the alarm, unless a call just sounded for it) */
       const nt = $('.pg-job .pg-nowt'), nh = nowHtml(G.nowD.text); if (nt && nt.dataset.k !== nh) { nt.dataset.k = nh; nt.innerHTML = nh; } $('.pg-job').classList.toggle('none', !G.nowD.text);
@@ -1334,10 +1354,10 @@ function pgOpen(root, boss, d, pk) {
   //  Rawlings and the heart)
   const P1DPS = { egg: 'your egg', rawling: 'the Rawlings', wretch: 'the Wretch', heart: 'the heart', viper: 'the Vipers' }, p1Names = (DL) => Object.keys(P1DPS).filter((k) => DL.some((m) => m.kind === k)).map((k) => P1DPS[k]).join(', ');
   const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [], early = G.t < S.end - 0.5, quiet = early || G.deaths > 0;
-    const rows = G.log.map((m) => { const b = pgEndHead(m.text); return { t: m.t, b, s: pgEndTip(m.tip, b) }; }).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: pgEndHead(q.why) }))).sort((a, b) => a.t - b.t); /* (every mistake, said simply: pgEndHead, pgEndTip) */
+    const rows = pgEndRows(G.log.map((m) => { const b = pgEndHead(m.text); return { t: m.t, b, s: pgEndTip(m.tip, b) }; }).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: pgEndHead(q.why) }))).sort((a, b) => a.t - b.t)); /* (every mistake, said simply: pgEndHead, pgEndTip) */
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + esc(pgNoClock(((P2 ? P2.starts : START).find((q) => q[0] === startAt) || [0, 'the middle'])[1])) : '') + (early ? ' · stopped early' : '') /* (no clock times on the end screen either, Flex, Nov 17: "dont put timestamps in the ending") */ + '</span>' +
       '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : quiet ? 'No mistakes' : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (' + (P2 ? P2.dpsNames(DL) : p1Names(DL)) + ').</p>' : '') +
-      (rows.length ? '<ol class="pg-sum">' + rows.map((m) => '<li><div><b>' + esc(m.b) + '</b>' + (m.s ? '<span>' + esc(m.s) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (early ? 'No mistakes before you stopped.' : P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
+      (rows.length ? '<ol class="pg-sum">' + rows.map((m) => '<li><div><b>' + esc(m.b + (m.n > 1 ? ' ×' + m.n : '')) + '</b>' + (m.s ? '<span>' + esc(m.s) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (early ? 'No mistakes before you stopped.' : P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
       '<div class="pg-row"><button type="button" class="pg-btn pg-go pg-copy">Copy my score</button><button type="button" class="pg-btn pg-again">Play again</button><button type="button" class="pg-btn pg-close2">Close</button></div></div>';
     card.querySelector('.pg-again').onclick = pick; card.querySelector('.pg-close2').onclick = close;
     const txt = 'Debrief practice · ' + boss + ' ' + dn + ', ' + part.name + ' · ' + role.name + ': ' + g + ' (' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : 'no mistakes') + ', ' + G.deaths + ' death' + (G.deaths === 1 ? '' : 's') + (early ? ', stopped early' : '') + ')' + (speed < 1 ? ' at half speed' : '') + ' · https://debriefme.io/guide/' + guideSlug(boss) + '/' + (d === 'h' ? 'heroic' : 'mythic') + '?practice' + (P2 ? '=' + (P2.part || 2) : '');

@@ -422,15 +422,56 @@ function simpleScreen(H, say, pj) {
       if (!dsSeen) bad('the test can\'t read ' + name + '\'s damage calls (window.__pgDbg.dpsSay) (check S13)'); }
     PJ2.forEach((src) => { for (const m of src.matchAll(/(?:A\.big|bigCall)\(\s*'((?:[^'\\]|\\.)*)'/g)) test('a call made in the moment', m[1].replace(/\\'/g, '\''));
       for (const m of src.matchAll(/'((?:[^'\\]|\\.){12,})'/g)) { const x = m[1].replace(/\\'/g, '\''); if (tip && /[.!]$/.test(x) && /: [a-z]/.test(x)) test('a tip on the end screen', x, (q) => tip(q, 'x')); } });
-    ['Malice', 'Anguished Cry'].forEach((k) => { test('your kick, in reach', k + ': Your kick: press E now!'); test('your kick, out of reach', k + ': Your kick: get close to the Warden!'); });
+    ['Malice', 'Anguished Cry'].forEach((k) => { test('your kick, in reach', k + ': Kick your ' + k + ' now (E)!'); test('your kick, out of reach', k + ': Get close to the Warden for your kick!'); });
     if (ctx.PG_COACH) Object.entries(ctx.PG_COACH).forEach(([k, e]) => [e.j, e.jf].forEach((x) => { if (x) test('the coach words\' job for ' + k, x, short); }));
     if (bads.size) bad(bads.size + ' lines are mashed, say "it" with nothing named, or put a key in brackets, e.g. ' + [...bads.values()].slice(0, 6).join(' / ') + ' (check S13)');
     [['Break your egg: press Tab to pick it, then keep pressing 1.', 'DPS your egg to break its shell'], ['Kill the Rawlings: press Tab to pick one, then keep pressing 1.', 'Kill the Rawlings'], ['Clutches: press Tab to pick one, then keep pressing 1.', 'Kill the Clutches']].forEach(([a, b]) => { const g = callShort(a); if (g !== b) bad('the NOW line says "' + a + '" as "' + g + '", not "' + b + '" (Flex, Nov 17: "Dps the egg to break the barrier") (check S13)'); }); }
+  // S14. what a player who only follows the screen ran into (Flex, Nov 17, watching it played live: "#3 yes", "Yes fix #4", "#5 yes go ahead"):
+  //      #3 the damage score marked the kicker "Clutches were up: you were on them 10%" while the line said "Your kick is next: wait for the cast", the Rawlings
+  //         44% while it said "Hit the Doomscales", and the heart 0% while it said "Hit the heart" with the heart out of reach. Now the score counts a moment only
+  //         while the screen says to hit that target (pgDpsExcused), walking in on "Get closer" isn't time off it, an order to hit something out of reach says
+  //         "Get closer, then ...", and kick duty names both jobs ("Kill the Clutches, kick Malice at the cast"). Played: phase 2 as three jobs by a player who
+  //         only follows the screen is never marked off a target (the commit before: "The heart was open: you were on it 0%").
+  //      #4 "Into the cauldron now: sprint (Shift) into the gold ring!" read "Into the cauldron now!", and following it put the egg in 8 s late: every line that
+  //         says sprint keeps "Sprint" on the NOW line, and a carrier who can't walk it in time is told to sprint.
+  //      #5 one line a kick ("Kick Malice now (E)!" then "Press E now: your kick!"), no "Get in the bubble!" while the line says "Stay in the yellow bubble",
+  //         and a mistake made again is one end-screen row with its count.
+  { let X = null; try { X = { ex: vm.runInContext('pgDpsExcused', ctx), same: vm.runInContext('pgSameGoal', ctx), rows: vm.runInContext('pgEndRows', ctx) }; } catch (e) { bad('the screen has no pgDpsExcused, pgSameGoal or pgEndRows (check S14)'); }
+    const P2J = fs.readFileSync(path.join(__dirname, '..', 'src', 'practice-p2.js'), 'utf8').replace(/\r\n/g, '\n');
+    if (X) {
+      [['rawling', 'Kick Malice now (E)!', true], ['rawling', 'Hit the Doomscales', true], ['clutch', 'Your kick is next: wait for the cast', true], ['rawling', 'Hit Ula\'tek', true], ['rawling', 'Step out of the brown circles!', true],
+        ['rawling', 'Kill the Rawlings', false], ['clutch', 'Kill the Clutches, kick Malice at the cast', false], ['heart', 'Get closer, then hit the heart', false], ['rawling', 'Keep hitting your target', false], ['rawling', '', false],
+        ['rawling', 'Get into the green half', true], ['rawling', 'Stay in the yellow bubble', true], ['rawling', 'Stay with your half', true]].forEach(([c, x, w]) => {
+        if (X.ex(c, x) !== w) bad('with ' + c + ' to hit and the NOW line "' + x + '", the damage score ' + (w ? 'still counts that moment against you' : 'lets it off') + ' (#3, check S14)'); });
+      [['Get in the bubble!', 'Stay in the yellow bubble', true], ['Get in your gold coil now!', 'Stay in your coil', true], ['Cross into the green half now!', 'Stay in the green half', false], ['Get in the bubble!', 'Run to the Wretch in front of her!', false], ['Dodge the red lanes!', 'Stay in the yellow bubble', false]].forEach(([c, j, w]) => {
+        if (X.same(c, j) !== w) bad('the call "' + c + '" ' + (w ? 'still covers' : 'is held back for') + ' the line "' + j + '" (#5, check S14)'); });
+      const r = X.rows([{ t: 1, b: 'A', s: 'x' }, { t: 2, b: 'A', s: 'x' }, { t: 3, b: 'B', s: 'y' }, { t: 4, b: 'A', s: 'x' }, { t: 5, b: 'A', s: 'z' }]);
+      if (r.map((q) => q.b + q.s + q.n).join(' ') !== 'Ax3 By1 Az1') bad('the end screen doesn\'t list a mistake made again as one row with its count: ' + JSON.stringify(r) + ' (#5, check S14)'); }
+    if (!/esc\(m\.b \+ \(m\.n > 1 \? ' ×' \+ m\.n : ''\)\)/.test(PJ) || !PJ.includes('const rows = pgEndRows(')) bad('the end screen doesn\'t show a repeated mistake once with its count (#5, check S14)');
+    if (!PJ.includes('!pgSameGoal(cw, sj)') || !PJ.includes('want = farSay(')) bad('the NOW line doesn\'t hold a call back while you already do it, or doesn\'t say "Get closer" (#3, #5, check S14)');
+    if (!P2J.includes("A.big(inR ? k.kind + ': Kick your ' + k.kind + ' now (E)!' : k.kind + ': Get close to ' + casterName(k.key) + ' for your kick!'")) bad('your kick\'s call doesn\'t say the job line\'s words, so one kick shows two lines (#5, check S14)');
+    [['Into the cauldron now: sprint (Shift) into the gold ring!', callShort], ['Sprint (Shift) to the cauldron: your spot in the gold ring.', short]].forEach(([x, f]) => { if (!/\bSprint\b/.test(f(x))) bad('"' + x + '" reads "' + f(x) + '": the sprint is gone (#4, check S14)'); });
+    ['practice.js', 'practice-p2.js', 'practice-int.js', 'practice-p3.js'].forEach((fn) => { const src = fs.readFileSync(path.join(__dirname, '..', 'src', fn), 'utf8');
+      for (const m of src.matchAll(/'((?:[^'\\]|\\.)*\bsprint\b(?:[^'\\]|\\.)*)'/gi)) { const x = m[1].replace(/\\'/g, '\''); if (!/^[A-Z]/.test(x) || !/[.!]$/.test(x) || /Sprint on|sprinted|sprinting|can sprint|Shift: sprint/i.test(x)) continue;
+        /* (as a job line (pgShort) and, when it starts with a mechanic's name before its colon, as a call (pgCallShort)) */
+        [short(x)].concat(/^[^:]{2,40}: /.test(x) && !/sprint/i.test(x.split(':')[0]) ? [callShort(x)] : []).forEach((g) => { if (!/\bSprint\b/i.test(g)) bad('"' + x + '" (' + fn + ') reads "' + g + '" on the NOW line: the sprint is gone (#4, check S14)'); }); } });
+    // (played: a player who only follows the screen. Walks where the arrow points and closer when the line says "Get closer"; Tab and 1 on the target that
+    //  matters; Q, E and Shift when the NOW line says so)
+    for (const [pk0, r0, ji] of [['m2', 'm', 0], ['m2', 'm', 1], ['m2', 'r', 0], ['mint', 'r', 0]]) { const d = L.open(pk0), su = d.P2.setup, jb = su.jobs(r0)[ji][0]; su.set(r0, jb); const me = d.P2.slotOf(d.P2.pick); try { d.at(0, me, { seed: 5 }); } catch (e) { bad('phase 2 didn\'t start for the follow check (check S14)'); continue; }
+      const G = d.G, S = d.S; let n = 0, late = false;
+      while (G.t < S.end - 0.3 && n++ < 8000) { const h = d.hint(); d.walkTo(h && h.T && !h.wait ? h.T.slice() : null); const dv = d.dps();
+        if (dv && dv.cat && dv.right && dv.right.length && !(dv.cur && dv.inRange && dv.right.some((o) => o.key === dv.cur.key))) d.tgt = dv.right.slice().sort((a, b) => Math.hypot(a.p[0] - G.x, a.p[1] - G.y) - Math.hypot(b.p[0] - G.x, b.p[1] - G.y))[0].key;
+        if (dv && dv.cat && dv.inRange && !(dv.cd > 0)) { d.atk(); if (!(dv.aoeCd > 0)) d.aoe(); }
+        d.frame(); const now = plain(d.nowHtml()); if (/^Get closer/.test(now) && dv && dv.cur && dv.cur.p) d.walkTo(dv.cur.p.slice());
+        if (/Press Q/.test(now) && G.t - G.def >= 90) G.def = G.t; if (/sprint/i.test(now) && G.t - G.sprint >= 30) G.sprint = G.t; if (/Press E now|now \(E\)|Backup: kick/i.test(now)) d.kick();
+        d.stepOwn(1); if (G.hp <= 0) G.hp = 100; }
+      const off = G.log.filter((m) => /were up|was open|was up|was going down|went into the cauldron late|No defensive/.test(m.text)).map((m) => m.text);
+      if (off.length) bad((pk0 === 'm2' ? 'phase 2' : 'the intermission') + ' as ' + r0 + ' ' + jb + ', a player who only follows the screen is marked: ' + off.join(' / ') + ' (#3, #4, check S14)'); } }
   // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
   //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
   //     the one thing to do. Run on the rows of Flex's screenshot.
   { let H0 = null, T0 = null; try { H0 = vm.runInContext('pgEndHead', ctx); T0 = vm.runInContext('pgEndTip', ctx); } catch (e) { /* (none) */ }
-    if (!H0 || !T0 || !/const rows = G\.log\.map\(\(m\) => \{ const b = pgEndHead\(m\.text\); return \{ t: m\.t, b, s: pgEndTip\(m\.tip, b\) \}; \}\)/.test(PJ)) bad('the result screen lists the mistakes and tips as the game logs them, not said simply (check S8)');
+    if (!H0 || !T0 || !/const rows = (?:pgEndRows\()?G\.log\.map\(\(m\) => \{ const b = pgEndHead\(m\.text\); return \{ t: m\.t, b, s: pgEndTip\(m\.tip, b\) \}; \}\)/.test(PJ)) bad('the result screen lists the mistakes and tips as the game logs them, not said simply (check S8)');
     else { [['Rawlings were up: you were on them 0% of the time.', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.', 'Rawlings were up: you weren\'t hitting them', 'Kill the Rawlings before they boil'],
       ['Caustic Waves from a small tail hit you.', 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.', 'Caustic Waves from a small tail hit you', 'Step out of the red lanes'],
       ['A wave touched your egg: a Viper hatched (Putrid Membrane on the whole raid).', 'Carrying an egg, a wave hatches it: dodge every one.', 'A wave touched your egg: a Viper hatched', 'With an egg, dodge every wave'],

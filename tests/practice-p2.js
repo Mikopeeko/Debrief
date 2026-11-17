@@ -645,7 +645,7 @@ function checks(H, say) {
     played.forEach(({ pk, warns, fl, S, me, follow }) => { const tag = ' (' + pk.role + ' on the ' + pk.side + ' ledge)';
       warns.forEach((w) => { if (!/^[^:!?]{3,40}: \S/.test(w.text)) pr('the call "' + w.text + '" isn\'t "Mechanic: order"' + tag); if (/\byour?\b/i.test(w.text) !== !!w.you) pr('the call "' + w.text + '" ' + (w.you ? 'is marked yours with no "your" in it' : 'says "your" (gold) but isn\'t yours') + tag); });
       if (pk.mal && follow) { const m =S.malice.find((q) => q.side === pk.side && q.k === 1), big = fl.filter((q) => q.k === 'big');
-        if (!big.some((q) => /^Malice: Press E now/.test(q.text) && q.t >= m.t0 - 0.01 && q.t <= m.t0 + 0.5)) pr('no "Malice: Press E now" call as your Malice\'s bar starts' + tag + ' (it said "in 1 s", before it)');
+        if (!big.some((q) => /^Malice: Kick your Malice now \(E\)!/.test(q.text) && q.t >= m.t0 - 0.01 && q.t <= m.t0 + 0.5)) pr('no "Malice: Kick your Malice now (E)!" call as your Malice\'s bar starts' + tag + ' (it said "in 1 s", before it)');
         if (big.some((q) => /\bin \d+ s\b/.test(q.text))) pr('a kick call still counts seconds' + tag); }
       if (pk.teth === 'five' && follow && !fl.some((q) => q.k === 'big' && /Press Q.*now/.test(q.text))) pr('the five\'s break has no "Press Q ... now" call' + tag);
       if (pk.egg && pk.egg[0] === 'n' && !warns.some((w) => Math.abs(w.t - T2.throwAt) < 0.01 && /now/.test(w.text))) pr('a small egg\'s carrier gets no "now" call as the small eggs go in' + tag); });
