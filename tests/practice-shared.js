@@ -327,6 +327,22 @@ function simpleScreen(H, say, pj) {
     if (miss.size) bad('a monster\'s name bar has no health to show, so it stays full: ' + [...miss.values()].join(', ') + ' (check S6)'); }
   // S5. the setup card's switches and lists: a tidy two by two grid, the lists flat in their frames (Flex, Nov 17, of the row 'Hints on | Normal speed | Look [Auto (your class or role)]' with 'Start [The pull]' alone on a second row: 'weird formatting/glitches')
   if (!/\.pg-chips \{ display: grid; grid-template-columns: 1fr 1fr;/.test(PJ) || !/\.pg-chip select \{[^}]*background: transparent;/.test(PJ)) bad('the setup card\'s Hints, Speed, Look and Start wrap unevenly, or the lists sit as boxes inside their frames (check S5)');
+  // S7. boss-mod bars down the left, not the fight path's diamonds across the top (Flex, Nov 17: "can you change this back into the boss mods style bars on the left
+  //     side of the screen?"): each bar its spell's icon, its name and a fill that empties, no numbers; drawn in a played run of each part
+  if (!/el\.innerHTML = barsHtml\(V\)/.test(PJ) || !/\.pg \.pg-timers \{ position: absolute; left: 14px; top: 30%;[^}]*flex-direction: column;/.test(PJ)) bad('the coming mechanics aren\'t boss-mod bars down the left (check S7)');
+  { const W1 = W.length; for (const pk of PARTS) { const d = L.open(pk === 'm' ? null : pk); try { d.at(40, d.role.id, { seed: 3 }); d.frame(); } catch (e) { /* (a part that starts later) */ } }
+    const hs = W.slice(W1).filter((w) => /\.pg-timers/.test(w.at)).map((w) => w.v); if (!hs.some((h) => /class="pgb[ "]/.test(h) && /class="pgb-ic"/.test(h) && /class="pgb-bar"/.test(h))) bad('no boss-mod bar (icon, name, fill) was drawn in any part (check S7)');
+    hs.forEach((h) => { const x = h.replace(/<[^>]*>/g, ' ').replace(/&#?[a-z0-9]+;/gi, ' '); if (/\d/.test(x)) bad('a boss-mod bar shows a number: "' + x.replace(/\s+/g, ' ').trim().slice(0, 80) + '" (check S7)'); }); }
+  // S8. the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont
+  //     just do the top 3", "just make the explanations simplified"): every mistake stays; each line one sentence with no asides in brackets or percentages, its tip
+  //     the one thing to do. Run on the rows of Flex's screenshot.
+  { let H0 = null, T0 = null; try { H0 = vm.runInContext('pgEndHead', ctx); T0 = vm.runInContext('pgEndTip', ctx); } catch (e) { /* (none) */ }
+    if (!H0 || !T0 || !/const rows = G\.log\.map\(\(m\) => \{ const b = pgEndHead\(m\.text\); return \{ t: m\.t, b, s: pgEndTip\(m\.tip, b\) \}; \}\)/.test(PJ)) bad('the result screen lists the mistakes and tips as the game logs them, not said simply (check S8)');
+    else [['Rawlings were up: you were on them 0% of the time.', 'Each broken egg leaves a Rawling: press Tab to pick one, then keep pressing 1 until they die.', 'Rawlings were up: you weren\'t hitting them', 'Target them with Tab, then press 1'],
+      ['Caustic Waves from a small tail hit you.', 'A small tail rising at the edge fires a short fan of three waves 2.4 s later, on the same lines every pull: step out of their red lanes.', 'Caustic Waves from a small tail hit you', 'Step out of the red lanes'],
+      ['A wave touched your egg: a Viper hatched (Putrid Membrane on the whole raid).', 'Carrying an egg, a wave hatches it: dodge every one.', 'A wave touched your egg: a Viper hatched', 'With an egg, dodge every wave'],
+      ['The Wretch was going down: you were on it 0% of the time.', 'Help kill each Wretch before its third bubble: press Tab to pick it, then keep pressing 1.', 'The Wretch was going down: you weren\'t hitting it', 'Target it with Tab, then press 1']].forEach(([h, t, wh, wt]) => {
+      const gh = H0(h), gt = T0(t, gh); if (gh !== wh || gt !== wt) bad('the result screen says "' + h + '" / "' + t + '" as "' + gh + '" / "' + gt + '", not "' + wh + '" / "' + wt + '" (check S8)'); }); }
 }
 module.exports = (H, say) => { checks(H, say); lookC(H, say); simpleScreen(H, say); }; module.exports.lookC = lookC; module.exports.lookLoad = lookLoad; module.exports.simpleScreen = simpleScreen;
 if (require.main === module) {

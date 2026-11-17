@@ -61,6 +61,18 @@ const pgShort = (s) => { let x = pgNoClock(String(s == null ? '' : s)).replace(/
   x = x.replace(/\s+Then:.*$/, ''); { const m = /^(.+?[.!?])\s+[A-Z(]/.exec(x); if (m) x = m[1]; } x = x.replace(/[.]$/, '').trim(); /* (one sentence) */
   for (const [re, to] of PG_SHORT) if (re.test(x)) { x = x.replace(re, to); break; }
   x = x.replace(/\s+([,!.])/g, '$1').replace(/\s{2,}/g, ' ').trim(); return x.charAt(0).toUpperCase() + x.slice(1); };
+// (the result screen's list, said simply (Flex, Nov 17: "this screen at the end of the run needs to be simplified a bit and easier to understand", "no dont just do
+//  the top 3", "just make the explanations simplified"): every mistake stays, each in one short sentence with no asides in brackets or percentages, and its tip the
+//  one thing to do, without the how-it-works first. "Rawlings were up: you were on them 0% of the time." -> "Rawlings were up: you weren't hitting them";
+//  "A small tail rising at the edge fires ... 2.4 s later, on the same lines every pull: step out of their red lanes." -> "Step out of their red lanes")
+const PG_DO = /^(?:step|be|press|kill|stand|run|carry|dodge|wait|get|keep|help|save|stay|pick|hit|move|soak|break|kick|go|walk|leave|use|throw|bring|stack|burn|target|cross|sprint)\b/i;
+const pgEndHead = (s) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\([^)]*\)/g, '').replace(/[.]$/, '').trim();
+  x = x.replace(/you were on (them|it) \d+% of the time/i, (m0, w) => 'you weren\'t hitting ' + w).replace(/you were on (them|it) (?:only )?\d+%/i, (m0, w) => 'you weren\'t hitting ' + w); return x; };
+const pgEndTip = (s, head) => { let x = pgNoClock(String(s == null ? '' : s)).split(/(?<=[.!?])\s+(?=[A-Z])/)[0].replace(/\s*\((?:Tab, then 1|melee: get close(?: to it)?)\)/gi, '').replace(/,?\s*\d+(?:\.\d+)? s later/g, '').replace(/[.]$/, '').trim();
+  if (/you weren't hitting/.test(head || '') || /^(?:press Tab|Tab, then 1)/i.test(x)) return 'Target ' + (/hitting it\b/.test(head || '') ? 'it' : 'them') + ' with Tab, then press 1'; /* (a damage moment: the how-to-press is the one thing to do) */
+  const k = x.lastIndexOf(': '); if (k > 0) { const a = x.slice(0, k), b = x.slice(k + 2); if (/^(?:press Tab|Tab, then 1)/i.test(b)) x = a; else if (PG_DO.test(b) && b.split(/\s+/).length >= 4) x = b; }
+  x = x.replace(/\btheir red lanes\b/i, 'the red lanes').replace(/^Carrying an egg, a wave hatches it: dodge every one$/i, 'With an egg, dodge every wave');
+  return x.charAt(0).toUpperCase() + x.slice(1); };
 // (a call, as the NOW line says it: its order without the mechanic's name, "its"/"the first one" named when the call is "Your egg: ..." or "Your coil: ...")
 const pgCallShort = (s) => { const t = pgNoClock(String(s == null ? '' : s)).trim(), m = /^([^:!?]{2,40}):\s*(.+)$/.exec(t); if (!m) return pgShort(t); let o = m[2]; if (/^press Tab to pick/i.test(o)) return 'Kill the ' + m[1].trim(); /* ("Clutches: Press Tab to pick one...": the hotbar shows the keys) */ const yn = /^Your ([a-z' ]+)$/i.exec(m[1].trim());
   if (yn) o = o.replace(/\bits\b/, 'your ' + yn[1] + '\'s').replace(/\bthe (first|second) one\b/, 'the $1 ' + yn[1]); return pgShort(o); };
@@ -992,14 +1004,18 @@ function pgOpen(root, boss, d, pk) {
     L.sort((a, b) => a.at - b.at); G.pathP = { key, L }; return L; };
   const pathView = (t) => { if (!G || !S) return null; const up = modBars(t), P = pathPlan(), done = P.filter((q) => q.at <= t);
     return { label: part.name, n: done.length, of: P.length, done: done.slice(-2).map((q) => q.name),
-      steps: up.map((b, i) => ({ name: b.name, at: b.at, f: Math.max(0, Math.min(1, b.left / 30)), st: i === 0 ? 'now' : i === 1 ? 'next' : 'later', mine: /^Your\b/.test(b.name) })) }; };
+      steps: up.map((b, i) => ({ name: b.name, at: b.at, f: Math.max(0, Math.min(1, b.left / 30)), st: i === 0 ? 'now' : i === 1 ? 'next' : 'later', mine: /^Your\b/.test(b.name), sp: b.sp, c: b.c })) }; };
   const pathHtml = (V) => '<div class="pgp-l">' + esc(V.label) + '' /* (no "3 of 31 done": it counted every bar and repeat, Nov 17) */ + '</div><div class="pgp-row">' +
     V.done.map(() => '<div class="pgp-st past"><i class="pgp-mk"></i></div><b class="pgp-cn"></b>') /* (passed, not ticked: a step you got wrong got a green tick too, Nov 17) */.join('') +
     V.steps.map((s, i) => (i ? '<b class="pgp-cn"></b>' : '') + '<div class="pgp-st ' + s.st + (i > 2 ? ' sm' : '') + (s.mine ? ' mine' : '') + '"><i class="pgp-mk"></i>' + (i <= 2 ? '<div class="pgp-tx"><b>' + esc(s.name) + '</b><span class="pgp-bar"><i style="width:' + (s.f * 100).toFixed(1) + '%"></i></span></div>' : '') + '</div>').join('') + '</div>';
   let modKey = null; /* (the path is made again only when its steps change; the bars' fills are set every time) */
+  // (Flex, Nov 17, of the fight path's diamonds across the top: "can you change this back into the boss mods style bars on the left side of the screen?". Boss-mod
+  //  bars down the left: the spell's icon, its name, a bar that empties as it nears; no numbers (Flex, Nov 16: no timestamps on screen); yours in gold, first in line)
+  const barsHtml = (V) => V.steps.map((s, i) => { let ic = ''; if (s.sp && typeof spellIcon === 'function') { try { ic = spellIcon(0, s.sp); } catch (e) { ic = ''; } }
+    return '<div class="pgb' + (s.mine ? ' mine' : '') + (i === 0 ? ' now' : '') + '" style="--c:' + (s.mine ? '#f3c969' : s.c || '#5a8cdc') + '"><span class="pgb-ic">' + (ic || '<i class="pgb-d"></i>') + '</span><span class="pgb-bar"><i style="width:' + (s.f * 100).toFixed(1) + '%"></i><b>' + esc(s.name) + '</b></span></div>'; }).join('');
   const modsDraw = (t) => { const el = $('.pg-timers'); if (!el) return; const V = pathView(t); if (!V) return; const k = [V.label, V.n, V.of, V.done.join('~'), V.steps.map((s) => s.name + '@' + s.at.toFixed(1)).join('|')].join('#');
-    if (k !== modKey) { modKey = k; el.innerHTML = pathHtml(V); }
-    const bars = el.querySelectorAll ? el.querySelectorAll('.pgp-bar > i') : null; if (bars) for (let i = 0; i < bars.length && i < V.steps.length; i++) if (bars[i] && bars[i].style) bars[i].style.width = (V.steps[i].f * 100).toFixed(1) + '%'; };
+    if (k !== modKey) { modKey = k; el.innerHTML = barsHtml(V); if (typeof hydrateIcons === 'function') { try { hydrateIcons(); } catch (e) { /* (the drawn icon stays) */ } } }
+    const bars = el.querySelectorAll ? el.querySelectorAll('.pgb-bar > i') : null; if (bars) for (let i = 0; i < bars.length && i < V.steps.length; i++) if (bars[i] && bars[i].style) bars[i].style.width = (V.steps[i].f * 100).toFixed(1) + '%'; };
   // ---- the coach card "Coming up" (look C, Nov 16, Flex: "The prompts dont feel like a guide through the fight at all"): about 8 s before a mechanic that's new
   // in this run it slides in on the left and stays until it happens: its title (Name (Short instruction)), one sentence of what happens (PG_COACH), and YOUR JOB in
   // gold, in the game's own words for you (your step's line in phase 1, else the call it gives you, else the entry's). Your own steps come first; a card that
@@ -1269,7 +1285,7 @@ function pgOpen(root, boss, d, pk) {
   //  Rawlings and the heart)
   const P1DPS = { egg: 'your egg', rawling: 'the Rawlings', wretch: 'the Wretch', heart: 'the heart', viper: 'the Vipers' }, p1Names = (DL) => Object.keys(P1DPS).filter((k) => DL.some((m) => m.kind === k)).map((k) => P1DPS[k]).join(', ');
   const end = () => { stop(); paused = true; dpsClose(); const { sc, g } = grade(), n = G.log.length, DL = (G.dpsM && G.dpsM.list) || [], early = G.t < S.end - 0.5, quiet = early || G.deaths > 0;
-    const rows = G.log.map((m) => ({ t: m.t, b: m.text, s: m.tip })).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: q.why }))).sort((a, b) => a.t - b.t);
+    const rows = G.log.map((m) => { const b = pgEndHead(m.text); return { t: m.t, b, s: pgEndTip(m.tip, b) }; }).concat((G.deathAt || []).map((q) => ({ t: q.t, b: 'You died', s: pgEndHead(q.why) }))).sort((a, b) => a.t - b.t); /* (every mistake, said simply: pgEndHead, pgEndTip) */
     card.className = 'pg-card on'; card.innerHTML = '<div class="pg-cin pg-end"><span class="pg-k">' + esc(boss) + ' ' + dn + ' · ' + esc(part.name) + ' · ' + esc(role.name) + (speed < 1 ? ' · half speed' : '') + (startAt ? ' · from ' + pgClock(startAt) : '') + (early ? ' · stopped at ' + pgClock(G.t) : '') + '</span>' +
       '<div class="pg-grade"><b class="g' + g + '">' + g + '</b><div><h2>' + (n ? n + ' mistake' + (n > 1 ? 's' : '') : quiet ? 'No mistakes' : 'A clean run') + (G.deaths ? ', ' + G.deaths + ' death' + (G.deaths > 1 ? 's' : '') : '') + '</h2><p>' + sc + ' / 100' + (G.vipers ? ' · ' + G.vipers + ' Viper' + (G.vipers > 1 ? 's' : '') + ' hatched' : '') + '</p></div></div>' + (DL.length ? '<p class="pg-dpsl">Right target: <b>' + DL.filter((m) => m.fr >= 0.5).length + ' of ' + DL.length + '</b> moments (' + (P2 ? P2.dpsNames(DL) : p1Names(DL)) + ').</p>' : '') +
       (rows.length ? '<ol class="pg-sum">' + rows.map((m) => '<li><time>' + pgClock(m.t) + '</time><div><b>' + esc(m.b) + '</b>' + (m.s ? '<span>' + esc(m.s) + '</span>' : '') + '</div></li>').join('') + '</ol>' : '<p>' + (early ? 'No mistakes up to ' + pgClock(G.t) + '.' : P2 ? esc(P2.clean) : 'Every wave dodged, every soak and bubble taken, your eggs carried clean. Try another role.') + '</p>') +
@@ -1382,7 +1398,11 @@ html.pg-open, html.pg-open body { overflow: hidden; }
 .pg .pg-bhp > i { background: linear-gradient(90deg, #8f2530, #b8323d); }
 .pg .pg-x:focus-visible, .pg .pg-snd:focus-visible { outline: 1px solid var(--pgm); outline-offset: 1px; }
 /* (top left, the fight path (look C): the part, how many steps are done, then the diamonds; a thin bar under each named step empties as it nears, no seconds) */
-.pg .pg-timers { position: absolute; left: 28px; top: 22px; max-width: calc(100% - 290px); pointer-events: none; }
+.pg .pg-timers { position: absolute; left: 14px; top: 30%; width: 270px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; } /* (boss-mod bars down the left, Flex, Nov 17) */
+.pg .pgb { display: flex; align-items: stretch; height: 24px; } .pg .pgb-ic { flex: none; width: 24px; height: 24px; overflow: hidden; background: #0b0d11; box-shadow: 0 0 0 1px #000; } .pg .pgb-ic > * { display: block; width: 100%; height: 100%; } .pg .pgb-d { display: block; width: 100%; height: 100%; background: var(--c); opacity: .6; }
+.pg .pgb-bar { position: relative; flex: 1 1 auto; min-width: 0; background: rgba(20,23,29,.86); box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08); }
+.pg .pgb-bar > i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--c); opacity: .75; transition: width .25s linear; } .pg .pgb.now .pgb-bar > i { opacity: .95; }
+.pg .pgb-bar > b { position: relative; z-index: 1; display: flex; align-items: center; height: 100%; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font: 600 13px var(--body, system-ui); color: #fff; text-shadow: 0 1px 2px #000, 0 0 2px #000; } .pg .pgb.mine .pgb-bar > b { font-weight: 700; }
 .pg .pgp-l { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; font: 700 12px var(--head, system-ui); letter-spacing: .08em; text-transform: uppercase; color: var(--pgmu); text-shadow: 0 1px 3px #000; }
 .pg .pgp-l em { font-style: normal; font-weight: 600; letter-spacing: .04em; color: var(--pgdim); }
 .pg .pgp-row { display: flex; align-items: flex-start; flex-wrap: nowrap; overflow: hidden; }
